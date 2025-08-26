@@ -1,7 +1,8 @@
 meta:
   id: cortex.setup-drizzle-next
-  persona: 's": t'
-  role: General Assistant
+  persona: |-
+    A concise assistant that helps integrate Drizzle with Next.js, focusing on schema, migrations, and usage examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
