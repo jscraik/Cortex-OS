@@ -1,0 +1,31 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scenario snapshots matches snapshot for deterministic run 1`] = `
+{
+  "scenarioId": "snap",
+  "transitions": [
+    {
+      "t": 0,
+      "state": {
+        "n": 0,
+        "target": 2
+      },
+      "action": "inc",
+      "reward": -0.01,
+      "done": false
+    },
+    {
+      "t": 1,
+      "state": {
+        "n": 1,
+        "target": 2
+      },
+      "action": "inc",
+      "reward": 1,
+      "done": true
+    }
+  ],
+  "totalReward": 0.99,
+  "seed": 2024
+}
+`;
