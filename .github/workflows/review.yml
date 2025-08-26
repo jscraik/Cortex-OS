@@ -1,0 +1,24 @@
+name: review
+on:
+  pull_request:
+  schedule: [{ cron: "0 2 * * *" }]
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22.x', cache: 'pnpm' }
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - run: pnpm -r i --frozen-lockfile
+      - run: pnpm review
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with: { name: review-report, path: .artifacts/*.json }
+      - name: OSV summary
+        if: always()
+        run: cat .artifacts/osv.json || true
