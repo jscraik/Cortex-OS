@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "allowedPaths": {
+    "apps": ["cortex-os"],
+    "apps/cortex-os/packages": ["agents", "mvp", "mvp-server"],
+    "packages": ["a2a","mcp","memories","orchestration","rag","simlab"],
+    "services": ["ml-inference","data-pipeline"],
+    "libs/typescript": ["contracts","types","utils","telemetry","testing"],
+    "libs/python": ["cortex_core","cortex_ml"],
+    "tools": ["structure-guard","eslint-config","lockfile-sync"]
+  },
+  "filePatterns": {
+    "typescript": {
+      "required": ["package.json","tsconfig.json"],
+      "requireOneOf": ["src/index.ts","src/index.js","index.ts"],
+      "allowed": ["*.ts","*.tsx","*.js","*.json","*.md","tests/**/*","**/*.spec.ts","**/*.test.ts"]
+    },
+    "python": {
+      "required": ["pyproject.toml"],
+      "requireOneOf": ["src/__init__.py","__init__.py","src/main.py"],
+      "allowed": ["*.py","*.pyi","*.toml","*.md","tests/**/*","**/*_test.py","**/test_*.py"]
+    }
+  },
+  "maxFilesPerChange": 15,
+  "overrideRules": {
+    "migrationMode": false,
+    "overrideRequiresApproval": ["@cortex-os/architects"],
+    "maxFilesWithOverride": 50
+  },
+  "protectedFiles": [
+    "pnpm-workspace.yaml","turbo.json","uv.toml",".github/CODEOWNERS",
+    "tools/structure-guard/**/*","docs/architecture/decisions/*.md"
+  ],
+  "importRules": {
+    "bannedPatterns": [
+      "^@cortex-os/.*/dist/.*$","^@cortex-os/.*/node_modules/.*$","\\.\\./\\.\\./\\.\\./.*","^packages/.*/packages/.*"
+    ],
+    "allowedCrossPkgImports": [
+      "@cortex-os/contracts","@cortex-os/types","@cortex-os/utils","@cortex-os/telemetry","@cortex-os/testing"
+    ]
+  },
+  "testRequirements": {
+    "minCoverage": 80,
+    "requiredTestDirs": ["tests","test","__tests__","src/**/*.spec.ts","src/**/*.test.ts"],
+    "excludeFromCoverage": ["*.config.*","*.setup.*","*.mock.*"]
+  }
+}
