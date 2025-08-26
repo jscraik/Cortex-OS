@@ -87,7 +87,7 @@
    - *Acceptance:* `axe` reports 0 serious issues on examples.
 
 ## Test Coverage Summary
-Tests failed to run due to missing `vitest`; coverage unavailable【0206fb†L1-L13】
+Tests failed to run due to missing `vitest`; coverage unavailable
 
 ## Commands
 - Install deps: `pnpm install`
