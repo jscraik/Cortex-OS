@@ -206,4 +206,23 @@
       "@playwright/test": "1.54.2"
     }
   }
+}{
+  "name": "cortex-os-security-update",
+  "version": "1.0.0",
+  "description": "Security improvements for Cortex-OS",
+  "scripts": {
+    "security:scan": "semgrep --config=.semgrep/owasp-top-10-improved.yaml .",
+    "security:scan:errors": "semgrep --config=.semgrep/owasp-top-10-improved.yaml --severity=ERROR .",
+    "security:scan:warnings": "semgrep --config=.semgrep/owasp-top-10-improved.yaml --severity=WARNING .",
+    "security:fix:ssrf": "node scripts/fix-ssrf.js",
+    "security:validate": "node scripts/security-validator.js"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "helmet": "^7.1.0",
+    "rate-limiter-flexible": "^5.0.3"
+  },
+  "devDependencies": {
+    "semgrep": "^1.132.0"
+  }
 }
