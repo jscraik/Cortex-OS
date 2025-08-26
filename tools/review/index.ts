@@ -27,7 +27,7 @@ run("pnpm -s vulns");
 findings.vulns = JSON.parse(run("cat .artifacts/osv.json || echo '{}'"));
 
 const scores: Score[] = [
-  { name: "Security", weight: 0.20, score: (findings.vulns as any)?.results ? 3 : 2, notes: [] },
+  { name: "Security", weight: 0.20, score: (findings.vulns as any)?.results ? 2 : 3, notes: [] },
   { name: "CodeQuality", weight: 0.15, score: /0 problems/.test(findings.eslint as string) ? 4.5 : 3, notes: [] },
   { name: "TypeSafety", weight: 0.10, score: /error TS/.test(findings.ts as string) ? 2.5 : 4, notes: [] },
   { name: "Architecture", weight: 0.15, score: /violations: 0/.test(findings.depgraph as string) ? 4 : 3, notes: [] },
