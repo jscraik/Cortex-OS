@@ -1,0 +1,66 @@
+{
+  "name": "@cortex-os/faiss-client",
+  "version": "1.0.0",
+  "description": "TypeScript gRPC client for FAISS vector search sidecar service",
+  "type": "module",
+  "main": "dist/client.js",
+  "types": "dist/client.d.ts",
+  "files": [
+    "dist/**/*",
+    "faissd.proto"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:integration": "vitest run integration.test.ts",
+    "proto:generate": "grpc_tools_node_protoc --js_out=import_style=commonjs,binary:./generated --grpc_out=grpc_js:./generated --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` faissd.proto",
+    "proto:ts": "grpc_tools_node_protoc --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --ts_out=grpc_js:./generated faissd.proto",
+    "lint": "eslint *.ts",
+    "format": "prettier --write *.ts"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.10.1",
+    "@grpc/proto-loader": "^0.7.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "grpc-tools": "^1.12.4",
+    "grpc_tools_node_protoc_ts": "^5.3.3",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "eslint": "^9.33.0",
+    "prettier": "^3.6.2"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "keywords": [
+    "faiss",
+    "vector-search",
+    "grpc",
+    "embeddings",
+    "similarity-search",
+    "content-addressed",
+    "deterministic"
+  ],
+  "author": "Cortex OS Team",
+  "license": "(Apache-2.0 OR Commercial)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cortex-os/cortex-os",
+    "directory": "src/rag/index"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/client.js",
+      "require": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./proto": "./faissd.proto"
+  }
+}

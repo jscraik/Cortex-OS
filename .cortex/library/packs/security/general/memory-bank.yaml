@@ -11,9 +11,9 @@ meta:
     - researcher
   stack_tags: []
   risk_flags:
-      persona: |-
-        A compact memory bank assistant that stores and retrieves short summaries and notes for multi-turn tasks.
-      role: assistant
+    persona: |-
+      A compact memory bank assistant that stores and retrieves short summaries and notes for multi-turn tasks.
+    role: assistant
   a11y_flags:
     - opt-in
     - screen-reader

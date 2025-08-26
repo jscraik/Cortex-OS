@@ -1,0 +1,50 @@
+{
+  "name": "@cortex-os/rag",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./chunk": {
+      "types": "./dist/chunk/index.d.ts",
+      "default": "./dist/chunk/index.js"
+    },
+    "./pipeline/ingest": {
+      "types": "./dist/pipeline/ingest.d.ts",
+      "default": "./dist/pipeline/ingest.js"
+    },
+    "./pipeline/query": {
+      "types": "./dist/pipeline/query.d.ts",
+      "default": "./dist/pipeline/query.js"
+    },
+    "./embed/python-client": {
+      "types": "./dist/embed/python-client.d.ts",
+      "default": "./dist/embed/python-client.js"
+    },
+    "./store/memory": {
+      "types": "./dist/store/memory.d.ts",
+      "default": "./dist/store/memory.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

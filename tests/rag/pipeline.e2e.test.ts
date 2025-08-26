@@ -1,7 +1,7 @@
-import { ingestText } from '@cortex-os/rag-pipeline/ingest';
-import { query } from '@cortex-os/rag-pipeline/query';
-import { PyEmbedder } from '@cortex-os/rag-embed/python-client';
-import { memoryStore } from '@cortex-os/rag-store/memory';
+import { PyEmbedder } from '@cortex-os/rag/embed/python-client';
+import { ingestText } from '@cortex-os/rag/pipeline/ingest';
+import { query } from '@cortex-os/rag/pipeline/query';
+import { memoryStore } from '@cortex-os/rag/store/memory';
 import { expect, it } from 'vitest';
 
 async function isUp(url: string) {
