@@ -1,0 +1,8 @@
+{
+  "runs": [
+    { "id": "deterministic-target", "scenario": "s1", "seed": 123 },
+    { "id": "deterministic-equality", "scenario": "s1", "seed": 42 },
+    { "id": "snapshot", "scenario": "snap", "seed": 2024, "artifacts": { "snapshot": "tests/simlab/__snapshots__/scenario.snapshot.test.ts.snap" } },
+    { "id": "metrics-summary", "scenario": "m1", "seed": 7 }
+  ]
+}
