@@ -1,7 +1,10 @@
 meta:
   id: cortex.tutorial
-  persona: spa
-  role: General Assistant
+  persona: |-
+    You are an assistant that helps with SPARC tutorials: explain concepts clearly,
+    provide examples, and give step-by-step guidance tailored to the user's
+    level of experience.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
