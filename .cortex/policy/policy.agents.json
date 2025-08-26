@@ -1,4 +1,4 @@
-agents_policy_content='{
+{
   "version": "1.0.0",
   "agents": {
     "assistant": {
@@ -26,6 +26,4 @@ agents_policy_content='{
       }
     }
   }
-}'
-
-smart_merge "$agents_policy_content" "$CLEAN_DIR/.cortex/policy/policy.agents.json" "agents policy"
+}

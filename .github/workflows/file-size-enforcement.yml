@@ -1,0 +1,119 @@
+name: File Size Enforcement
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  enforce-file-sizes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check file sizes against 500-line hard cap
+        run: |
+          MAX_LINES=500
+          EXIT_CODE=0
+          VIOLATIONS=()
+          TEST_VIOLATIONS=()
+          
+          echo "🔍 Enforcing 500-line hard cap across codebase..."
+          
+          # Check all code files
+          find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.java" -o -name "*.go" -o -name "*.rs" -o -name "*.php" -o -name "*.rb" -o -name "*.swift" -o -name "*.kt" \) \
+            -not -path "./node_modules/*" \
+            -not -path "./.git/*" \
+            -not -path "./dist/*" \
+            -not -path "./build/*" \
+            -not -path "./.next/*" \
+            -not -path "./coverage/*" | \
+          while read -r file; do
+            line_count=$(wc -l < "$file")
+            if [ "$line_count" -gt $MAX_LINES ]; then
+              if [[ "$file" == *".test."* || "$file" == *".spec."* || "$file" == *"test_"* || "$file" == *"_test."* ]]; then
+                echo "❌ TEST VIOLATION: $file has $line_count lines (max: $MAX_LINES)"
+                echo "$file:$line_count" >> test_violations.txt
+              else
+                echo "❌ VIOLATION: $file has $line_count lines (max: $MAX_LINES)"
+                echo "$file:$line_count" >> violations.txt
+              fi
+              EXIT_CODE=1
+            elif [ "$line_count" -gt 400 ]; then
+              echo "⚠️  WARNING: $file has $line_count lines (approaching limit)"
+            fi
+          done
+          
+          if [ -f violations.txt ]; then
+            echo ""
+            echo "🚨 FILE SIZE VIOLATIONS DETECTED"
+            echo "The following files exceed the 500-line hard cap:"
+            echo ""
+            cat violations.txt
+            echo ""
+            echo "📖 See: .github/instructions/file-size-standards.md"
+            echo "🔧 Files must be split into focused modules before merging"
+            exit 1
+          fi
+          
+          echo "✅ All files comply with 500-line limit"
+
+      - name: Generate file size report
+        if: always()
+        run: |
+          echo "📊 FILE SIZE REPORT - $(date)"
+          echo "Largest files in the codebase:"
+          
+          find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" \) \
+            -not -path "./node_modules/*" \
+            -not -path "./.git/*" \
+            -not -path "./dist/*" \
+            -not -path "./build/*" \
+            -not -path "./.next/*" \
+            -not -path "./coverage/*" \
+            -exec wc -l {} + | \
+            sort -nr | \
+            head -20 | \
+            awk 'NR>1 { printf "📄 %s: %d lines\n", $2, $1 }'
+
+      - name: Comment PR with violations
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            if (fs.existsSync('violations.txt')) {
+              const violations = fs.readFileSync('violations.txt', 'utf8').trim();
+              const violationLines = violations.split('\n');
+              
+              let comment = `## 🚨 File Size Violations Detected\n\n`;
+              comment += `The following files exceed the **500-line hard cap** specified in \`.github/instructions/copilot-codeReview.instructions.md\`:\n\n`;
+              
+              violationLines.forEach(line => {
+                const [file, lines] = line.split(':');
+                const excess = parseInt(lines) - 500;
+                const percentage = Math.round((excess / 500) * 100);
+                comment += `- ❌ \`${file}\`: **${lines} lines** (+${excess} lines, ${percentage}% over limit)\n`;
+              });
+              
+              comment += `\n### Required Actions\n\n`;
+              comment += `1. **Split oversized files** into focused modules\n`;
+              comment += `2. **Follow modularization patterns** from \`.github/instructions/file-size-standards.md\`\n`;
+              comment += `3. **Ensure each module has single responsibility**\n`;
+              comment += `4. **Re-run CI** after fixes\n\n`;
+              comment += `### Resources\n\n`;
+              comment += `- 📖 [File Size Standards](.github/instructions/file-size-standards.md)\n`;
+              comment += `- 📖 [Code Review Guidelines](.github/instructions/copilot-codeReview.instructions.md)\n`;
+              comment += `- 🔧 [Modularization Examples](.github/instructions/file-size-standards.md#how-to-split-files)\n`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }

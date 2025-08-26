@@ -1,38 +1,53 @@
 import Ajv from 'ajv';
 import { readFileSync } from 'fs';
 import { glob } from 'glob';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ajv = new Ajv();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 console.log('Validating policies against schemas...');
 
-// Load all schemas
-const schemaFiles = glob.sync('./schemas/*.schema.json');
-const schemas = {};
-
-for (const schemaFile of schemaFiles) {
-  const schema = JSON.parse(readFileSync(schemaFile, 'utf8'));
-  schemas[schema.$id] = schema;
-  ajv.addSchema(schema);
-}
-
 // Validate all policy files
-const policyFiles = glob.sync('./policy/*.json');
+const policyFiles = glob.sync(join(__dirname, '..', 'policy', '*.json'));
 let valid = true;
 
 for (const policyFile of policyFiles) {
-  const policy = JSON.parse(readFileSync(policyFile, 'utf8'));
-  const schemaId = `https://cortex-os.dev/schemas/${policyFile.split('/').pop()}`;
+  // Skip backup files
+  if (policyFile.includes('.backup.')) {
+    continue;
+  }
   
-  if (schemas[schemaId]) {
-    const validate = ajv.getSchema(schemaId);
-    if (!validate(policy)) {
-      console.error(`❌ ${policyFile} validation failed:`);
-      console.error(validate.errors);
-      valid = false;
-    } else {
-      console.log(`✅ ${policyFile} is valid`);
+  try {
+    const policy = JSON.parse(readFileSync(policyFile, 'utf8'));
+    const filename = policyFile.split('/').pop();
+    const schemaFilename = filename.replace('.json', '.schema.json');
+    const schemaPath = join(__dirname, '..', 'schemas', schemaFilename);
+    
+    // Check if schema exists
+    try {
+      const schemaData = readFileSync(schemaPath, 'utf8');
+      const schema = JSON.parse(schemaData);
+      
+      // Validate with AJV
+      const ajv = new Ajv();
+      const validate = ajv.compile(schema);
+      const isValid = validate(policy);
+      
+      if (!isValid) {
+        console.error(`❌ ${policyFile} validation failed:`);
+        console.error(validate.errors);
+        valid = false;
+      } else {
+        console.log(`✅ ${policyFile} is valid`);
+      }
+    } catch (schemaErr) {
+      console.log(`⚠️  No schema found for ${policyFile}, skipping validation`);
     }
+  } catch (err) {
+    console.error(`❌ Failed to parse ${policyFile}:`, err.message);
+    valid = false;
   }
 }
 
