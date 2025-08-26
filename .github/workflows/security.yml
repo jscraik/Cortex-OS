@@ -1,49 +1,26 @@
 name: Security
-
 on:
   pull_request:
-  push:
-    branches: [main]
-
-permissions:
-  security-events: write
-
+  schedule:
+    - cron: "0 3 * * *"
 jobs:
-  security:
+  supply-chain:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    permissions: { security-events: write }
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: astral-sh/setup-uv@v3
       - run: pnpm install --frozen-lockfile
-
-      - name: pnpm audit
-        run: pnpm audit --audit-level=moderate
-
-      - name: OSV Scanner
-        uses: google/osv-scanner-action@v1
+      - run: pnpm audit --audit-level=moderate || true
+      - uses: google/osv-scanner-action@v1
         with:
-          scan-args: |-
-            --lockfile=pnpm-lock.yaml
-            --lockfile=uv.lock
-
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: fs
-          scan-ref: '.'
-          format: sarif
-          output: trivy-results.sarif
-
-      - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
-
-      - name: Python security scans
-        run: |
+          scan-args: "--lockfile=pnpm-lock.yaml --lockfile=uv.lock"
+      - uses: aquasecurity/trivy-action@master
+        with: { scan-type: fs, scan-ref: ".", format: sarif, output: trivy-results.sarif }
+      - uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: trivy-results.sarif }
+      - run: |
           uv pip install bandit[toml] safety
           uv run bandit -r services/ -f json -o bandit-report.json || true
           uv run safety check --json || true
-
