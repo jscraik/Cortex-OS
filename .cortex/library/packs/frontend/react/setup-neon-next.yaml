@@ -1,7 +1,8 @@
 meta:
   id: cortex.setup-neon-next
-  persona: '>?sslmode='
-  role: General Assistant
+  persona: |-
+    A concise assistant that helps integrate Neon (serverless Postgres) with Next.js, focusing on configuration and examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

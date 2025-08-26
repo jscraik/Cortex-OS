@@ -1,12 +1,9 @@
 meta:
   id: cortex.setup-clerk-next
   persona: |-
-    }</div>;
-    }
-    ```
-
-    ## CO
-  role: General Assistant
+    A practical assistant that guides developers through integrating Clerk
+    into Next.js applications with secure patterns and examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

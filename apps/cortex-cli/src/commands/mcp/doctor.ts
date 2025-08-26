@@ -25,7 +25,7 @@ export const mcpDoctor = new Command('doctor')
           } else if (s.transport === 'https') {
             const url = new URL(s.endpoint ?? '');
             const health = new URL('/healthz', url);
-            const res = await fetch(health).catch(() => fetch(url));
+            const res = await fetch(health, { timeout: 5000 }).catch(() => fetch(url, { timeout: 5000 }));
             item.ok = !!res && (res as any).ok !== false;
           } else if (s.transport === 'sse') {
             const c = createSSE(s);

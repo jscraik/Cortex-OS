@@ -27,8 +27,10 @@ async function loadSQLiteWrapper() {
 }
 
 export class DatabaseManager extends EventEmitter {
+  // TODO: Implement SecureDatabaseWrapper for all database operations
   private static instance: DatabaseManager;
   private db: any; // Database instance or in-memory fallback
+  private secureDb: SecureDatabaseWrapper;
   private statements: Map<string, any>;
   private dbPath: string;
   private isInMemory: boolean = false;
@@ -67,6 +69,37 @@ export class DatabaseManager extends EventEmitter {
       this.initializeInMemoryFallback();
       return;
     }
+
+    try {
+      // Ensure data directory exists
+      const dataDir = path.join(process.cwd(), "data");
+      await fs.mkdir(dataDir, { recursive: true });
+
+      // Set database path
+      this.dbPath = path.join(dataDir, "hive-mind.db");
+
+      // Open database
+      this.db = await createDatabase(this.dbPath);
+
+      // Initialize SecureDatabaseWrapper
+      this.secureDb = new SecureDatabaseWrapper(this.db);
+
+      // Enable foreign keys
+      this.db.pragma("foreign_keys = ON");
+
+      // Load schema
+      await this.loadSchema();
+
+      // Prepare statements
+      this.prepareStatements();
+
+      this.emit("initialized");
+    } catch (error) {
+      console.error("Failed to initialize SQLite database:", error);
+      console.warn("Falling back to in-memory storage");
+      this.initializeInMemoryFallback();
+    }
+  }
 
     try {
       // Ensure data directory exists
@@ -302,7 +335,19 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   // Swarm operations
 
   async createSwarm(data: any): Promise<void> {
-    this.statements.get("createSwarm")!.run(data);
+    // Validate input data
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to createSwarm');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun("INSERT INTO swarms (id, name, description, config, created_at) VALUES (?, ?, ?, ?, ?)", 
+        data.id, data.name, data.description, JSON.stringify(data.config), data.created_at);
+    } catch (error) {
+      console.error('Error creating swarm:', error);
+      throw error;
+    }
   }
 
   async getSwarm(id: string): Promise<any> {
@@ -315,7 +360,23 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async setActiveSwarm(id: string): Promise<void> {
-    this.statements.get("setActiveSwarm")!.run(id);
+    // Validate input id
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid id provided to setActiveSwarm');
+    }
+    
+    // Validate id format
+    if (!this.secureDb.validateInput(id, 'id')) {
+      throw new Error('Invalid id format');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun("UPDATE swarm_state SET active_swarm_id = ?, updated_at = CURRENT_TIMESTAMP", id);
+    } catch (error) {
+      console.error('Error setting active swarm:', error);
+      throw error;
+    }
   }
 
   async getAllSwarms(): Promise<any[]> {
@@ -335,7 +396,26 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   // Agent operations
 
   async createAgent(data: any): Promise<void> {
-    this.statements.get("createAgent")!.run(data);
+    // Validate input data
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to createAgent');
+    }
+    
+    // Validate required fields
+    if (!data.id || !data.name) {
+      throw new Error('Missing required fields in agent data');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun(
+        "INSERT INTO agents (id, swarm_id, name, role, status, config, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        data.id, data.swarm_id, data.name, data.role, data.status, JSON.stringify(data.config), data.created_at
+      );
+    } catch (error) {
+      console.error('Error creating agent:', error);
+      throw error;
+    }
   }
 
   async getAgent(id: string): Promise<any> {
@@ -347,31 +427,72 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async updateAgent(id: string, updates: any): Promise<void> {
+    // Validate input data
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid id provided to updateAgent');
+    }
+    
+    if (!updates || typeof updates !== 'object') {
+      throw new Error('Invalid updates provided to updateAgent');
+    }
+    
+    // Build set clauses and values
     const setClauses: string[] = [];
     const values: any[] = [];
-
+    
     for (const [key, value] of Object.entries(updates)) {
-      if (value && typeof value === "object" && value._raw) {
-        setClauses.push(`${key} = ${value._raw}`);
-      } else {
-        setClauses.push(`${key} = ?`);
-        values.push(value);
+      // Prevent raw SQL injection
+      if (value && typeof value === "object" && (value as any)._raw) {
+        throw new Error('Raw SQL injection detected');
       }
+      
+      setClauses.push(key + " = ?");
+      values.push(value);
     }
-
+    
+    // Validate that we have something to update
+    if (setClauses.length === 0) {
+      throw new Error('No updates provided');
+    }
+    
     values.push(id);
-
-    const stmt = this.db.prepare(`
-      UPDATE agents SET ${setClauses.join(", ")} WHERE id = ?
-    `);
-
-    stmt.run(...values);
-  }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      const query = "UPDATE agents SET " + setClauses.join(", ") + " WHERE id = ?";
+      this.secureDb.secureRun(query, ...values);
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      throw error;
+    }
+  
 
   async updateAgentStatus(id: string, status: string): Promise<void> {
-    this.db
-      .prepare("UPDATE agents SET status = ? WHERE id = ?")
-      .run(status, id);
+    // Validate input data
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid id provided to updateAgentStatus');
+    }
+    
+    if (!status || typeof status !== 'string') {
+      throw new Error('Invalid status provided to updateAgentStatus');
+    }
+    
+    // Validate id and status formats
+    if (!this.secureDb.validateInput(id, 'id')) {
+      throw new Error('Invalid id format');
+    }
+    
+    if (!this.secureDb.validateInput(status, 'status')) {
+      throw new Error('Invalid status format');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun("UPDATE agents SET status = ? WHERE id = ?", status, id);
+    } catch (error) {
+      console.error('Error updating agent status:', error);
+      throw error;
+    }
   }
 
   async getAgentPerformance(agentId: string): Promise<any> {
@@ -389,10 +510,26 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   // Task operations
 
   async createTask(data: any): Promise<void> {
-    this.statements.get("createTask")!.run({
-      ...data,
-      requireConsensus: data.requireConsensus ? 1 : 0,
-    });
+    // Validate input data
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to createTask');
+    }
+    
+    // Validate required fields
+    if (!data.id || !data.swarm_id) {
+      throw new Error('Missing required fields in task data');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun(
+        "INSERT INTO tasks (id, swarm_id, name, description, priority, status, config, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        data.id, data.swarm_id, data.name, data.description, data.priority, data.status, JSON.stringify(data.config), data.created_at
+      );
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
+    }
   }
 
   async getTask(id: string): Promise<any> {
@@ -404,14 +541,45 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async updateTask(id: string, updates: any): Promise<void> {
+    // Validate input data
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid id provided to updateTask');
+    }
+    
+    if (!updates || typeof updates !== 'object') {
+      throw new Error('Invalid updates provided to updateTask');
+    }
+    
+    // Build set clauses and values
     const setClauses: string[] = [];
     const values: any[] = [];
-
+    
     for (const [key, value] of Object.entries(updates)) {
-      setClauses.push(`${key} = ?`);
+      // Prevent raw SQL injection
+      if (value && typeof value === "object" && (value as any)._raw) {
+        throw new Error('Raw SQL injection detected');
+      }
+      
+      setClauses.push(key + " = ?");
       values.push(value);
     }
-
+    
+    // Validate that we have something to update
+    if (setClauses.length === 0) {
+      throw new Error('No updates provided');
+    }
+    
+    values.push(id);
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      const query = "UPDATE tasks SET " + setClauses.join(", ") + " WHERE id = ?";
+      this.secureDb.secureRun(query, ...values);
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
+  }
     values.push(id);
 
     const stmt = this.db.prepare(`
@@ -422,7 +590,31 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async updateTaskStatus(id: string, status: string): Promise<void> {
-    this.statements.get("updateTaskStatus")!.run(status, id);
+    // Validate input data
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid id provided to updateTaskStatus');
+    }
+    
+    if (!status || typeof status !== 'string') {
+      throw new Error('Invalid status provided to updateTaskStatus');
+    }
+    
+    // Validate id and status formats
+    if (!this.secureDb.validateInput(id, 'id')) {
+      throw new Error('Invalid id format');
+    }
+    
+    if (!this.secureDb.validateInput(status, 'status')) {
+      throw new Error('Invalid status format');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun("UPDATE tasks SET status = ? WHERE id = ?", status, id);
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      throw error;
+    }
   }
 
   async getPendingTasks(swarmId: string): Promise<any[]> {
@@ -472,7 +664,26 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   // Memory operations
 
   async storeMemory(data: any): Promise<void> {
-    this.statements.get("storeMemory")!.run(data);
+    // Validate input data
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to storeMemory');
+    }
+    
+    // Validate required fields
+    if (!data.key || !data.namespace) {
+      throw new Error('Missing required fields in memory data');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun(
+        "INSERT OR REPLACE INTO memory (key, namespace, value, ttl, created_at, last_accessed_at) VALUES (?, ?, ?, ?, ?, ?)",
+        data.key, data.namespace, data.value, data.ttl, data.created_at, data.last_accessed_at
+      );
+    } catch (error) {
+      console.error('Error storing memory:', error);
+      throw error;
+    }
   }
 
   async getMemory(key: string, namespace: string): Promise<any> {
@@ -480,15 +691,34 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async updateMemoryAccess(key: string, namespace: string): Promise<void> {
-    this.db
-      .prepare(
-        `
-      UPDATE memory
-      SET access_count = access_count + 1, last_accessed_at = CURRENT_TIMESTAMP
-      WHERE key = ? AND namespace = ?
-    `,
-      )
-      .run(key, namespace);
+    // Validate input data
+    if (!key || typeof key !== 'string') {
+      throw new Error('Invalid key provided to updateMemoryAccess');
+    }
+    
+    if (!namespace || typeof namespace !== 'string') {
+      throw new Error('Invalid namespace provided to updateMemoryAccess');
+    }
+    
+    // Validate key and namespace formats
+    if (!this.secureDb.validateInput(key, 'key')) {
+      throw new Error('Invalid key format');
+    }
+    
+    if (!this.secureDb.validateInput(namespace, 'namespace')) {
+      throw new Error('Invalid namespace format');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun(
+        "UPDATE memory SET access_count = access_count + 1, last_accessed_at = CURRENT_TIMESTAMP WHERE key = ? AND namespace = ?",
+        key, namespace
+      );
+    } catch (error) {
+      console.error('Error updating memory access:', error);
+      throw error;
+    }
   }
 
   async searchMemory(options: any): Promise<any[]> {
@@ -504,9 +734,31 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async deleteMemory(key: string, namespace: string): Promise<void> {
-    this.db
-      .prepare("DELETE FROM memory WHERE key = ? AND namespace = ?")
-      .run(key, namespace);
+    // Validate input data
+    if (!key || typeof key !== 'string') {
+      throw new Error('Invalid key provided to deleteMemory');
+    }
+    
+    if (!namespace || typeof namespace !== 'string') {
+      throw new Error('Invalid namespace provided to deleteMemory');
+    }
+    
+    // Validate key and namespace formats
+    if (!this.secureDb.validateInput(key, 'key')) {
+      throw new Error('Invalid key format');
+    }
+    
+    if (!this.secureDb.validateInput(namespace, 'namespace')) {
+      throw new Error('Invalid namespace format');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun("DELETE FROM memory WHERE key = ? AND namespace = ?", key, namespace);
+    } catch (error) {
+      console.error('Error deleting memory:', error);
+      throw error;
+    }
   }
 
   async listMemory(namespace: string, limit: number): Promise<any[]> {
@@ -582,21 +834,26 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   }
 
   async updateMemoryEntry(entry: any): Promise<void> {
-    this.db
-      .prepare(
-        `
-      UPDATE memory
-      SET value = ?, access_count = ?, last_accessed_at = ?
-      WHERE key = ? AND namespace = ?
-    `,
-      )
-      .run(
-        entry.value,
-        entry.accessCount,
-        entry.lastAccessedAt,
-        entry.key,
-        entry.namespace,
+    // Validate input data
+    if (!entry || typeof entry !== 'object') {
+      throw new Error('Invalid entry provided to updateMemoryEntry');
+    }
+    
+    // Validate required fields
+    if (!entry.key || !entry.namespace || !entry.value) {
+      throw new Error('Missing required fields in memory entry');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun(
+        "UPDATE memory SET value = ?, access_count = ?, last_accessed_at = ? WHERE key = ? AND namespace = ?",
+        entry.value, entry.accessCount, entry.lastAccessedAt, entry.key, entry.namespace
       );
+    } catch (error) {
+      console.error('Error updating memory entry:', error);
+      throw error;
+    }
   }
 
   async clearMemory(swarmId: string): Promise<void> {
@@ -641,7 +898,26 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
   // Communication operations
 
   async createCommunication(data: any): Promise<void> {
-    this.statements.get("createCommunication")!.run(data);
+    // Validate input data
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid data provided to createCommunication');
+    }
+    
+    // Validate required fields
+    if (!data.from_agent_id || !data.to_agent_id || !data.message_type) {
+      throw new Error('Missing required fields in communication data');
+    }
+    
+    // Use SecureDatabaseWrapper to execute the operation
+    try {
+      this.secureDb.secureRun(
+        "INSERT INTO communications (from_agent_id, to_agent_id, swarm_id, message_type, content, priority, requires_response, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        data.from_agent_id, data.to_agent_id, data.swarm_id, data.message_type, data.content, data.priority, data.requires_response ? 1 : 0, data.timestamp
+      );
+    } catch (error) {
+      console.error('Error creating communication:', error);
+      throw error;
+    }
   }
 
   async getPendingMessages(agentId: string): Promise<any[]> {

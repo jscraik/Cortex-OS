@@ -1,9 +1,9 @@
 meta:
   id: cortex.claude-flow-help
   persona: |-
-    claude-flow-help
-    desc
-  role: General Assistant
+    Assistant that explains Claude-Flow commands and batch-optimized
+    orchestration patterns for architects and infra engineers.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

@@ -1,12 +1,9 @@
 meta:
   id: cortex.rule-angular-19-min
   persona: |-
-    s.
-
-    ### Usage
-
-    - Use A
-  role: General Assistant
+    An assistant that provides concise Angular 19 coding standards and
+    best practices for maintainable projects.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

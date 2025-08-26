@@ -1,9 +1,9 @@
 meta:
   id: cortex.setup-firebase-angular
   persona: |-
-    }}!</h1>
-          <butto
-  role: General Assistant
+    A helpful assistant that provides step-by-step guidance for integrating
+    Firebase into Angular applications with secure defaults and examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

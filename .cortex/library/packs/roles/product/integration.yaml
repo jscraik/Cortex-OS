@@ -1,7 +1,8 @@
 meta:
   id: cortex.integration
-  persona: spa
-  role: General Assistant
+  role: assistant
+  persona: |-
+    A pragmatic product integration assistant focused on cross-team requirements and release coordination.
   version: 1.1.0
   model_targets:
     - general

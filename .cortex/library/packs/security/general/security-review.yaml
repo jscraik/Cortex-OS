@@ -328,8 +328,9 @@ blocks:
 
       // CI/CD Security Gate
 
-      const securityGate = async (commit) => {
-        const results = await batchtools.parallel([
+      persona: |-
+        A concise security reviewer assistant that inspects infrastructure and code for misconfigurations and vulnerabilities, and returns clear, actionable recommendations.
+      role: assistant
           () => scanCommitForSecrets(commit),
           () => checkNewDependencies(commit),
           () => validateSecurityPolicies(commit),

@@ -1,7 +1,8 @@
 meta:
   id: cortex.setup-auth0-remix
-  persona: p
-  role: General Assistant
+  persona: |-
+    A concise assistant that helps integrate Auth0 with Remix, focusing on secure configuration and practical examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

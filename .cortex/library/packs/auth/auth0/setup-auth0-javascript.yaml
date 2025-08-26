@@ -1,10 +1,10 @@
 meta:
   id: cortex.setup-auth0-javascript
   persona: |-
-    ,
-                );
-              } catch (e
-  role: '>Auth0 Authe'
+    A security-minded assistant that provides step-by-step guidance for
+    integrating Auth0 into JavaScript applications, emphasizing secure
+    defaults and best practices.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

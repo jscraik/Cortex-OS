@@ -1,7 +1,8 @@
 meta:
   id: cortex.rule-clerk-svelte-coding-standards
-  persona: Assistant
-  role: General Assistant
+  persona: |-
+    A concise assistant that provides Clerk + Svelte integration best practices and coding standards.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

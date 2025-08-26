@@ -2,11 +2,11 @@ name: Security
 on:
   pull_request:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: '0 3 * * *'
 jobs:
   supply-chain:
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       security-events: write
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
             echo "No OSV scanner available; skipping OSV step"
           fi
       - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.11.0
+        uses: aquasecurity/trivy-action@v0.12.0
         with:
           scan-type: fs
           scan-ref: .

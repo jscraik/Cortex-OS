@@ -1,14 +1,9 @@
 meta:
   id: cortex.setup-better-auth-tanstack
   persona: |-
-    }!</p>
-        </div>
-      );
-    }
-    ```
-
-    ## CO
-  role: General Assistant
+    A practical assistant that provides steps to integrate Better Auth with
+    TanStack apps and secure authentication patterns.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

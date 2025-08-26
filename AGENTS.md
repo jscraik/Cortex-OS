@@ -3,19 +3,65 @@
 AGENTS.md is authoritative for structure and behavior. Deviations are blocked by CI.
 
 ## Roles
-Describe agent roles across MCP, A2A, RAG, and Simlab, including responsibilities and limits.
+
+Define agent roles across MCP, A2A, RAG, and Simlab domains:
+
+- **MCP Agents**: Model Context Protocol handlers for external tool integration
+- **A2A Agents**: Agent-to-Agent communication coordinators
+- **RAG Agents**: Retrieval-Augmented Generation processors for knowledge queries
+- **Simlab Agents**: Simulation environment controllers
+
+Each role has explicit responsibilities and operational limits defined in their respective modules.
 
 ## Boundaries
-Explicit boundaries between domains and allowed cross-domain interactions. No deep src/dist imports.
+
+Strict domain separation with controlled interfaces:
+
+- No direct cross-domain imports (`src/` or `dist/`)
+- Communication through defined message contracts only
+- Shared utilities via common interfaces
+- Clear separation of concerns between agent types
 
 ## Inputs
-All inputs validated with Zod or JSON schema. Use deterministic seeds and caps.
+
+All agent inputs must be validated:
+
+```typescript
+// Use Zod schemas for validation
+const inputSchema = z.object({
+  seed: z.number().int().positive(),
+  maxTokens: z.number().max(4096),
+  // ... other fields
+});
+```
+
+- Deterministic seeds for reproducible behavior
+- Resource caps to prevent runaway execution
+- JSON schema validation for external inputs
 
 ## Outputs
-Machine-readable JSON options (`--json`) and human defaults. ISO-8601 timestamps.
+
+Standardized output formats:
+
+- Default: Human-readable text with context
+- `--json` flag: Machine-readable JSON with metadata
+- ISO-8601 timestamps for all temporal data
+- Structured error responses with error codes
 
 ## Memory
-Deterministic, bounded memory footprints. Use stores behind interfaces.
+
+Bounded and deterministic memory management:
+
+- Interface-based memory stores (no direct persistence access)
+- Configurable memory limits per agent type
+- Deterministic cleanup and garbage collection
+- State serialization for agent persistence
 
 ## Governance
-This document is enforced by .cortex control-centre checks in CI and pre-commit.
+
+Enforcement through automated checks:
+
+- `.cortex` control-centre validation in CI pipeline
+- Pre-commit hooks for agent contract compliance
+- Schema validation for agent configurations
+- Documentation synchronization checks

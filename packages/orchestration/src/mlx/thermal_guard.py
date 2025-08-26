@@ -114,7 +114,11 @@ class ThermalGuard:
                 return False
             
             # Check for Apple Silicon indicators
-            result = subprocess.run(
+            # SECURITY NOTE: This subprocess call is safe because:
+        # 1. The command is hardcoded and not user-controlled
+        # 2. Only system information is retrieved
+        # 3. A timeout is enforced
+        result = subprocess.run(
                 ["sysctl", "-n", "machdep.cpu.brand_string"],
                 capture_output=True,
                 text=True,

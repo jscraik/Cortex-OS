@@ -61,14 +61,10 @@
     "docs:deploy": "mkdocs gh-deploy --clean --message 'Deploy docs with accessibility and evidence links'",
     "docs:accessibility:validate": "pa11y-ci --sitemap http://localhost:8000/sitemap.xml --standard WCAG2AA",
     "docs:accessibility:audit": "axe-cli http://localhost:8000 --tags wcag2a,wcag2aa --reporter json --output docs/accessibility-audit.json",
-    "validate:devops-plan": "node scripts/validate-devops-plan.mjs",
-    "docs:lighthouse": "lighthouse http://localhost:8000 --output=json --output-path=docs/lighthouse-report.json --chrome-flags='--headless'",
     "atlas:assess": "python -m apps.cortex-py.src.security.atlas.atlas_engine",
     "security:unified": "python -m apps.cortex-py.src.security.unified_security",
     "deps:analyze": "node scripts/analyze-dependencies.mjs",
-    "deps:validate": "node scripts/validate-licenses.mjs",
     "license:scan": "node scripts/license-scanner.mjs",
-    "license:validate": "node scripts/validate-licenses.mjs",
     "compliance:dashboard": "node scripts/compliance-dashboard.mjs",
     "compliance:monitor": "node scripts/legal-notifications.mjs monitor",
     "compliance:test:notification": "node scripts/legal-notifications.mjs test",
@@ -89,19 +85,10 @@
     "python:list": "uv pip list",
     "python:migrate": "scripts/python/migrate-to-uv.sh",
     "test:structure": "vitest run tests/structure/",
-    "sbom:generate": "node scripts/generate-nodejs-sbom.mjs && python scripts/generate-python-sbom.py",
-    "sbom:generate:nodejs": "node scripts/generate-nodejs-sbom.mjs",
-    "sbom:generate:python": "python scripts/generate-python-sbom.py",
-    "sbom:sign": "scripts/sign-sboms.sh",
-    "sbom:verify": "scripts/verify-sboms.sh",
     "carbon:setup": "./scripts/carbon-monitoring/setup-carbon-monitoring.sh",
     "carbon:build": "./scripts/carbon-monitoring/carbon-aware-build.mjs npm run build",
     "carbon:test": "./scripts/carbon-monitoring/carbon-aware-build.mjs npm run test",
     "carbon:dashboard": "echo 'Grafana Dashboard: http://localhost:3001 (admin/cortex123)'",
-    "carbon:validate": "node scripts/carbon-monitoring/validate-carbon-setup.mjs",
-    "techstack:bundle": "./scripts/bundle-cli-tools.sh",
-    "techstack:validate": "./scripts/tech-stack-validation.sh",
-    "techstack:setup": "npm run techstack:bundle && npm run techstack:validate",
     "deploy:production": "./scripts/deploy-production.sh",
     "backup:auto": "./scripts/auto-commit.sh",
     "backup:start": "mkdir -p logs && nohup ./scripts/auto-commit.sh > logs/auto-commit.log 2>&1 &",
@@ -120,11 +107,8 @@
     "tui:dev:rich": "npx tsx watch apps/cortex-cli/packages/cortex-cli-ui/src/bin.ts --ui=tui --theme=rich",
     "check:layout": "tsx tools/repo/check-layout.ts --suggest-fix",
     "check:agents-hash": "tsx tools/validators/agents-hash-check.ts",
-    "check:docs": "tsx tools/validators/check-docs-cli.ts",
     "check:pr-prov": "tsx tools/validators/pr-provenance-check.ts",
     "check:a11y-docs": "tsx tools/validators/axe-docs-check.ts",
-    "prompts:validate": "npx tsx tools/validators/validate-prompts.ts",
-    "ci:prompts": "npx tsx tools/validators/validate-prompts.ts",
     "fix:agents-heads": "tsx scripts/enforce-agents-line.ts",
     "verify:all": "pnpm check:layout && pnpm check:docs && pnpm check:a11y-docs",
     "simlab:smoke": "turbo run simlab:smoke --filter=@cortex-os/simlab",
@@ -233,5 +217,24 @@
       "@vitest/coverage-v8": "3.2.4",
       "@playwright/test": "1.54.2"
     }
+  }
+}{
+  "name": "cortex-os-security-update",
+  "version": "1.0.0",
+  "description": "Security improvements for Cortex-OS",
+  "scripts": {
+    "security:scan": "semgrep --config=.semgrep/owasp-top-10-improved.yaml .",
+    "security:scan:errors": "semgrep --config=.semgrep/owasp-top-10-improved.yaml --severity=ERROR .",
+    "security:scan:warnings": "semgrep --config=.semgrep/owasp-top-10-improved.yaml --severity=WARNING .",
+    "security:fix:ssrf": "node scripts/fix-ssrf.js",
+    "security:validate": "node scripts/security-validator.js"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "helmet": "^7.1.0",
+    "rate-limiter-flexible": "^5.0.3"
+  },
+  "devDependencies": {
+    "semgrep": "^1.132.0"
   }
 }

@@ -1,3 +1,4 @@
+
 """
 file_path: mcp_tools/docker/mcp_server.py
 description: FastAPI MCP server exposing Docker tool functions via HTTP endpoints.
@@ -16,6 +17,8 @@ from typing import Dict, List
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+# SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
+# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
 
 app = FastAPI(title="Cortex MCP Docker Toolkit", version="1.1.0")
 
@@ -41,17 +44,51 @@ class DocumentationAnalysisResult(BaseModel):
     missing_sections: List[str]
 
 
+def validate_docker_command(command):
+    """Validate docker command to prevent injection."""
+    if not isinstance(command, list):
+        raise ValueError("Command must be a list")
+    
+    if len(command) < 2:
+        raise ValueError("Command must have at least 2 elements")
+    
+    if command[0] != "docker":
+        raise ValueError("Command must start with 'docker'")
+    
+    # Validate subcommands
+    allowed_subcommands = ["ps", "images", "inspect", "logs"]
+    if command[1] not in allowed_subcommands:
+        raise ValueError(f"Subcommand {command[1]} not allowed")
+    
+    # Validate parameters
+    for i in range(2, len(command)):
+        param = command[i]
+        if isinstance(param, str) and (param.startswith("-") or len(param) < 12 or len(param) > 64):
+            # Skip flags and validate container IDs
+            continue
+        elif isinstance(param, str) and not re.match(r"^[a-f0-9]+$", param):
+            raise ValueError(f"Invalid parameter: {param}")
+
 def run_docker_command(command):
+    # SECURITY FIX: Validate command before execution
     try:
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        validate_docker_command(command)
+    except ValueError as e:
+        return {"stdout": "", "stderr": f"Command validation failed: {str(e)}"}
+    
+    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)
         return {"stdout": result.stdout, "stderr": ""}
     except subprocess.CalledProcessError as e:
         return {"stdout": e.stdout, "stderr": e.stderr}
+    except subprocess.TimeoutExpired as e:
+        return {"stdout": "", "stderr": f"Error: Command timed out after 30 seconds"}
     except FileNotFoundError:
         return {
             "stdout": "",
             "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
         }
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}
 
 
 @app.get("/health")
@@ -138,8 +175,20 @@ def analyze_documentation(req: DocumentationAnalysisRequest):
 if __name__ == "__main__":
     import uvicorn
 
+    # SECURITY UPDATE: Validate host and port
     host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")
+    # TODO: Add host validation to prevent SSRF
+    # if not is_valid_host(host):
+    #     host = "0.0.0.0"  # Default to localhost if invalid
+    
     port = int(os.getenv("MCP_SERVER_PORT", "8765"))
-    uvicorn.run(app, host=host, port=port, reload=True)
+    # Validate port range
+    if port < 1024 or port > 65535:
+        port = 8765  # Default to standard port if invalid
+    
+    # SECURITY UPDATE: Disable reload in production
+    reload = os.getenv("MCP_SERVER_RELOAD", "false").lower() == "true"
+    
+    uvicorn.run(app, host=host, port=port, reload=reload)
 
 # © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

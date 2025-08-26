@@ -1,9 +1,10 @@
 meta:
   id: cortex.az-cost-optimize.prompt
   persona: |-
-    >`
-       - Fo
-  role: Fo
+    An Azure cost optimization assistant that analyzes cloud resources and
+    infrastructure-as-code files to identify cost-saving opportunities and
+    create actionable GitHub issues for optimizations.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

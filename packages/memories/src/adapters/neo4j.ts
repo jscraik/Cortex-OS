@@ -1,4 +1,5 @@
 import neo4j, { Driver } from 'neo4j-driver';
+import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';
 import { KGNode, KGRel, Subgraph } from '../types.js';
 
 export interface INeo4j {
@@ -20,8 +21,57 @@ function assertLabelOrType(s: string) {
 
 export class Neo4j implements INeo4j {
   private driver: Driver;
+  private secureNeo4j: SecureNeo4j;
+  
   constructor(uri: string, user: string, pass: string) {
     this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });
+    // Initialize SecureNeo4j for secure operations
+    this.secureNeo4j = new SecureNeo4j(uri, user, pass);
+  }
+  
+  async close() {
+    await this.driver.close();
+  }
+
+  async upsertNode(node: KGNode) {
+    // Use SecureNeo4j for node upsert with validation
+    try {
+      await this.secureNeo4j.upsertNode({
+        id: node.id,
+        label: node.label,
+        props: node.props
+      });
+    } catch (error) {
+      console.error('Error upserting node:', error);
+      throw error;
+    }
+  }
+
+  async upsertRel(rel: KGRel) {
+    // Use SecureNeo4j for relationship upsert with validation
+    try {
+      await this.secureNeo4j.upsertRel({
+        from: rel.from,
+        to: rel.to,
+        type: rel.type,
+        props: rel.props
+      });
+    } catch (error) {
+      console.error('Error upserting relationship:', error);
+      throw error;
+    }
+  }
+
+  async neighborhood(nodeId: string, depth = 2): Promise<Subgraph> {
+    // Use SecureNeo4j for neighborhood query with validation
+    try {
+      return await this.secureNeo4j.neighborhood(nodeId, depth);
+    } catch (error) {
+      console.error('Error querying neighborhood:', error);
+      throw error;
+    }
+  }
+});
   }
   async close() {
     await this.driver.close();
@@ -31,10 +81,12 @@ export class Neo4j implements INeo4j {
     const label = assertLabelOrType(node.label);
     const s = this.driver.session();
     try {
-      await s.run(`MERGE (n:${label} {id:$id}) SET n += $props`, {
-        id: node.id,
-        props: node.props,
-      });
+      // SECURITY FIX: Validate label before using in query
+    const safeLabel = this.validateLabel(label);
+    await s.run(`MERGE (n:${safeLabel} {id:$id}) SET n += $props`, {
+      id: node.id,
+      props: node.props,
+    });
     } finally {
       await s.close();
     }

@@ -1,7 +1,0 @@
-
-> @cortex-os/agents@0.1.0 test /Users/jamiecraik/.Cortex-OS-clean/apps/cortex-os/packages/agents
-> vitest run
-
-
- RUN  v2.1.9 /Users/jamiecraik/.Cortex-OS-clean/apps/cortex-os/packages/agents
-

@@ -1,11 +1,9 @@
 meta:
   id: cortex.system-2025-04-16
   persona: |-
-    space web {
-      type
-  role: |-
-    at the
-    begi
+    System persona providing general assistant behavior and guidance for
+    iOS mobile agent scenarios.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
