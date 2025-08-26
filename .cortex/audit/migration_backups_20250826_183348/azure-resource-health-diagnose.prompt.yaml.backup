@@ -1,7 +1,6 @@
 meta:
   id: cortex.azure-resource-health-diagnose.prompt
-  persona: a
-  role: s fo
+  role: system
   version: 1.1.0
   model_targets:
     - general
