@@ -1,10 +1,9 @@
 meta:
   id: cortex.setup-appwrite-tanstack
   persona: |-
-    ,
-        }: {
-          email: st
-  role: '= fo'
+    A practical assistant that guides integrating Appwrite with TanStack
+    Query, including setup and example patterns.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

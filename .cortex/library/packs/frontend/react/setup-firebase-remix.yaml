@@ -1,9 +1,9 @@
 meta:
   id: cortex.setup-firebase-remix
   persona: |-
-    ="email"
-                type="email"
-  role: '= fo'
+    A practical assistant that guides integrating Firebase with Remix apps,
+    providing secure setup instructions and code examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
