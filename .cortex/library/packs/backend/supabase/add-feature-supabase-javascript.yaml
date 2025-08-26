@@ -1,10 +1,9 @@
 meta:
   id: cortex.add-feature-supabase-javascript
   persona: |-
-    ")
-      .select()
-      .eq("colum
-  role: General Assistant
+    A practical assistant that guides adding features to JavaScript apps
+    using Supabase, with secure patterns and clear examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
