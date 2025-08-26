@@ -1,9 +1,9 @@
 meta:
   id: cortex.add-feature-auth0-javascript
   persona: |-
-    );
-        }
-  role: '-Based Access Co'
+    A guide-focused assistant for adding Auth0 features to JavaScript apps,
+    emphasizing secure defaults and step-by-step instructions.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

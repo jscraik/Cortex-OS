@@ -1,10 +1,9 @@
 meta:
   id: cortex.setup-shadcn-uni
   persona: |-
-    ="vite">
-
-    1. Check if Vite is i
-  role: '>Ast'
+    An assistant that provides step-by-step guidance to install and configure
+    ShadCN UI across frameworks (Vite, Next.js, Astro).
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
