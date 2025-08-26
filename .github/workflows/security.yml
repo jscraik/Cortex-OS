@@ -2,11 +2,11 @@ name: Security
 on:
   pull_request:
   schedule:
-    - cron: "0 3 * * *"
+    - cron: '0 3 * * *'
 jobs:
   supply-chain:
     runs-on: ubuntu-latest
-    permissions: 
+    permissions:
       security-events: write
     steps:
       - uses: actions/checkout@v4

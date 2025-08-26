@@ -7,7 +7,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "micromatch": "^4.0.7"
+    "micromatch": "^4.0.8"
   },
   "devDependencies": {
     "vitest": "^2.0.5"

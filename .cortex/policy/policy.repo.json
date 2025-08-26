@@ -5,7 +5,9 @@
     "packages": ["a2a", "agents", "mcp", "memories", "orchestration", "rag", "simlab"],
     "services": ["ml-inference", "data-pipeline"],
     "libs": ["typescript", "python"],
-    "tools": ["structure-guard", "eslint-config", "lockfile-sync", "scripts", "schemas", "python"]
+    "tools": ["structure-guard", "eslint-config", "lockfile-sync", "scripts", "schemas", "python"],
+    "tests": ["simlab", "rag", "mcp", "a2a"],
+    "infra": ["docker"]
   },
   "fileTypes": {
     "allowed": [

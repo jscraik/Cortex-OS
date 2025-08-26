@@ -1,7 +1,0 @@
-{
-  "$schema": "https://stryker-mutator.io/stryker.schema.json",
-  "testRunner": "vitest",
-  "packageManager": "pnpm",
-  "mutate": ["packages/**/*.ts", "apps/**/*.ts", "libs/typescript/**/*.ts"],
-  "tempDirName": ".stryker-tmp"
-}

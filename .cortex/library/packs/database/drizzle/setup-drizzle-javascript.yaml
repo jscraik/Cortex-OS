@@ -1,11 +1,10 @@
 meta:
   id: cortex.setup-drizzle-javascript
   persona: |-
-    >
-    ```
-
-    2. C
-  role: General Assistant
+    A pragmatic assistant that provides clear, secure guidance for setting
+    up Drizzle ORM with JavaScript projects, including concise code
+    snippets and configuration advice.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
