@@ -1,15 +1,10 @@
 meta:
   id: cortex.add-feature-react
   persona: |-
-    }</div>
-          ))}
-        </div>
-      );
-    }
-    ```
-
-    Key Patte
-  role: '"Featu'
+    A practical assistant that guides developers through adding features to
+    React applications with clear code examples, patterns, and migration
+    advice.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
