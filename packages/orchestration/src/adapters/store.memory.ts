@@ -1,38 +1,51 @@
 import type { Store } from "../ports/Store.js";
 import type { RunState, Workflow } from "../domain/types.js";
+import { uuid } from "@cortex-os/utils";
 
-export class InMemoryStore implements Store {
-  private wfs = new Map<string, Workflow>();
-  private runs = new Map<string, RunState>();
-  async saveWorkflow(wf: Workflow) {
-    this.wfs.set(wf.id, wf);
-  }
-  async getWorkflow(id: string) {
-    return this.wfs.get(id) ?? null;
-  }
-  async createRun(wf: Workflow) {
-    const now = new Date().toISOString();
-    const rs: RunState = {
-      wf,
-      runId: crypto.randomUUID(),
-      status: "pending",
-      cursor: wf.entry,
-      startedAt: now,
-      updatedAt: now,
-      context: {},
-    };
-    this.runs.set(rs.runId, rs);
-    return rs;
-  }
-  async getRun(id: string) {
-    return this.runs.get(id) ?? null;
-  }
-  async updateRun(id: string, patch: Partial<RunState>) {
-    const cur = this.runs.get(id);
-    if (!cur) return;
-    this.runs.set(id, { ...cur, ...patch, updatedAt: new Date().toISOString() });
-  }
-  async appendEvent(_id: string, _event: Record<string, unknown>) {}
-  async recordToken(_t: any) {}
-}
+export type InMemoryStore = Store;
 
+export const createInMemoryStore = (): InMemoryStore => {
+  const state = {
+    wfs: new Map<string, Workflow>(),
+    runs: new Map<string, RunState>()
+  };
+
+  return {
+    saveWorkflow: async (wf) => {
+      state.wfs.set(wf.id, wf);
+    },
+    
+    getWorkflow: async (id) => {
+      return state.wfs.get(id) ?? null;
+    },
+    
+    createRun: async (wf) => {
+      const now = new Date().toISOString();
+      const rs: RunState = {
+        wf,
+        runId: uuid(),
+        status: "pending",
+        cursor: wf.entry,
+        startedAt: now,
+        updatedAt: now,
+        context: {},
+      };
+      state.runs.set(rs.runId, rs);
+      return rs;
+    },
+    
+    getRun: async (id) => {
+      return state.runs.get(id) ?? null;
+    },
+    
+    updateRun: async (id, patch) => {
+      const cur = state.runs.get(id);
+      if (!cur) return;
+      state.runs.set(id, { ...cur, ...patch, updatedAt: new Date().toISOString() });
+    },
+    
+    appendEvent: async (_id, _event) => {},
+    
+    recordToken: async (_t) => {}
+  };
+};

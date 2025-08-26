@@ -1,10 +1,14 @@
 import type { MemoryService } from "@cortex-os/memories";
+import { uuid } from "@cortex-os/utils";
 
-export class MemoriesBridge {
-  constructor(private mem: MemoryService) {}
-  checkpoint(runId: string, data: unknown) {
-    const id = `wf:${runId}:${crypto.randomUUID()}`;
-    return (this.mem as any).save({
+export type MemoriesBridge = {
+  checkpoint: (runId: string, data: unknown) => Promise<any>;
+};
+
+export const createMemoriesBridge = (mem: MemoryService): MemoriesBridge => ({
+  checkpoint: async (runId, data) => {
+    const id = `wf:${runId}:${uuid()}`;
+    return (mem as any).save({
       id,
       kind: "artifact",
       text: JSON.stringify(data),
@@ -14,5 +18,4 @@ export class MemoriesBridge {
       provenance: { source: "system" },
     });
   }
-}
-
+});
