@@ -6,8 +6,16 @@ async function main() {
   // Node via cyclonedx bom (installed as @cyclonedx/bom exposes CLI 'cyclonedx-bom' if needed).
   // Here we call library through npx to keep script simple.
   try {
-    execSync('npx --yes @cyclonedx/cyclonedx-npm --output-file sbom-node.json', { stdio: 'inherit' });
-  } catch { console.warn('Node SBOM generation failed; ensure cyclonedx npm cli is available'); }
+  } catch {
+    console.warn(
+      'Node SBOM generation failed.\n' +
+      'To fix this, install the CycloneDX npm CLI by running:\n' +
+      '  npm install -g @cyclonedx/cyclonedx-npm\n' +
+      'Or, if you prefer a local install:\n' +
+      '  npm install --save-dev @cyclonedx/cyclonedx-npm\n' +
+      'Then re-run this script.'
+    );
+  }
 
   // Python via uv list
   execSync('uv pip list --format json > pip-list.json');
