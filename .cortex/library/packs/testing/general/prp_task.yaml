@@ -1,11 +1,9 @@
 meta:
   id: cortex.prp_task
   persona: |-
-    ]
-
-      gotchas:
-        - issue: "Lib
-  role: General Assistant
+    A structured task-generator assistant that emits concise, validated
+    task templates for implementation and validation.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

@@ -1,9 +1,9 @@
 meta:
   id: cortex.csharp-mstest.prompt
   persona: |-
-    ].Tests`
-    -
-  role: General Assistant
+    An assistant that helps authors write robust MSTest unit tests with clear
+    examples and best practices.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

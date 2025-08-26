@@ -1,11 +1,9 @@
 meta:
   id: cortex.get-docs
   persona: |-
-    }.md
-    ```
-
-    2.
-  role: General Assistant
+    A helper agent that fetches and extracts framework documentation to
+    generate installation guides in markdown.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
