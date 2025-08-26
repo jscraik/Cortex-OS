@@ -1,9 +1,9 @@
 meta:
   id: cortex.ai-prompt-engineering-safety-review.prompt
-  persona: l ha
+  persona: AI Safety Reviewer
   role: |-
-    -based,
-      hyb
+    Performs comprehensive safety review of AI prompts, focusing on bias, security vulnerabilities, effectiveness, and providing detailed improvement recommendations.
+    
   version: 1.1.0
   model_targets:
     - general
