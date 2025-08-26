@@ -1,76 +1,33 @@
-import fs from 'fs';
-import path from 'path';
-import micromatch from 'micromatch';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { spawnSync } from 'child_process';
+#!/usr/bin/env tsx
+import { globby } from "globby";
+import micromatch from "micromatch";
+import { readFileSync } from "node:fs";
+import { z } from "zod";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+type Policy = { protectedFiles: string[]; allowedGlobs: string[] };
+const policySchema = z.object({
+  protectedFiles: z.array(z.string()),
+  allowedGlobs: z.array(z.string())
+});
+const policy: Policy = policySchema.parse(
+  JSON.parse(readFileSync("tools/structure-guard/policy.json", "utf8"))
+);
 
-type Policy = {
-  allowedPaths: Record<string, string[]>;
-  protectedFiles: string[];
-  maxFilesPerChange: number;
-};
+const files = await globby([
+  "**/*",
+  "!**/node_modules/**",
+  "!**/dist/**",
+  "!**/.git/**"
+], { dot: true });
 
-// Normalize to forward slashes for consistent globbing
-function toPosix(p: string): string {
-  return p.split(path.sep).join('/');
+const bad = files.filter(f => !micromatch.isMatch(f, policy.allowedGlobs));
+if (bad.length) {
+  console.error("Disallowed paths:\n" + bad.join("\n"));
+  process.exitCode = 2;
 }
 
-function loadPolicy(): Policy {
-  const p = JSON.parse(fs.readFileSync(path.join(__dirname, 'policy.json'), 'utf8'));
-  return p;
+const missing = policy.protectedFiles.filter(p => !micromatch.any(files, [p]));
+if (missing.length) {
+  console.error("Missing protected paths:\n" + missing.join("\n"));
+  process.exitCode = 3;
 }
-
-function listChangedFiles(): string[] {
-  const fromCli = process.argv.includes('--files');
-  if (fromCli) {
-    const idx = process.argv.indexOf('--files');
-    return process.argv.slice(idx + 1).map(toPosix);
-  }
-  const res = spawnSync('git', ['diff', '--cached', '--name-only'], { encoding: 'utf8' });
-  return res.stdout.split('\n').filter(Boolean).map(toPosix);
-}
-
-function validatePaths(files: string[], policy: Policy): string[] {
-  const errors: string[] = [];
-  const allowedRoots = Object.entries(policy.allowedPaths).flatMap(([root, kids]) =>
-    kids.length ? kids.map(k => toPosix(path.join(root, k))) : [toPosix(root)]
-  );
-  for (const f of files) {
-    // Allow exact prefixes and glob patterns in allowedRoots
-    const ok = allowedRoots.some(r =>
-      f === r ||
-      f.startsWith(r.endsWith('/') ? r : r + '/') ||
-      micromatch.isMatch(f, r)
-    );
-    if (!ok) errors.push(`Path not allowed by policy: ${f}`);
-  }
-  return errors;
-}
-
-function checkProtected(files: string[], policy: Policy): string[] {
-  const errs: string[] = [];
-  const patterns = policy.protectedFiles.map(toPosix);
-  for (const f of files) {
-    if (micromatch.isMatch(f, patterns, { dot: true })) {
-      errs.push(`Protected file modified without approval: ${f}`);
-    }
-  }
-  return errs;
-}
-
-function main() {
-  const policy = loadPolicy();
-  const files = listChangedFiles();
-  if (files.length > policy.maxFilesPerChange && !process.argv.includes('--override')) {
-    console.error(`${files.length} files exceed limit of ${policy.maxFilesPerChange}`);
-    process.exit(1);
-  }
-  const errs = [...validatePaths(files, policy), ...checkProtected(files, policy)];
-  if (errs.length) { errs.forEach(e => console.error(e)); process.exit(1); }
-  if (process.argv.includes('--validate')) { console.log('OK'); }
-}
-main();
