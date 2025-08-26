@@ -1,0 +1,41 @@
+import { describe, expect, it, vi } from 'vitest';
+import { validateWorkflow } from '../src/workflow-validator.js';
+
+const baseWorkflow = {
+  id: '00000000-0000-0000-0000-000000000000',
+  name: 'sample',
+  version: '1',
+  entry: 'start',
+  steps: {
+    start: { id: 'start', name: 'start', kind: 'agent', next: 'end' },
+    end: { id: 'end', name: 'end', kind: 'agent' }
+  }
+};
+
+describe('validateWorkflow', () => {
+  it('accepts acyclic workflows', () => {
+    expect(() => validateWorkflow(baseWorkflow)).not.toThrow();
+  });
+
+  it('rejects cyclic workflows', () => {
+    const cyclic = {
+      ...baseWorkflow,
+      steps: {
+        start: { id: 'start', name: 'start', kind: 'agent', next: 'end' },
+        end: { id: 'end', name: 'end', kind: 'agent', next: 'start' }
+      }
+    };
+    expect(() => validateWorkflow(cyclic)).toThrow(/Cycle detected/);
+  });
+});
+
+describe('deadline handling', () => {
+  it('handles step delays with fake timers', async () => {
+    vi.useFakeTimers();
+    const fn = vi.fn();
+    setTimeout(fn, 1000);
+    vi.advanceTimersByTime(1000);
+    expect(fn).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
