@@ -25,6 +25,30 @@ jobs:
           cache: pnpm
           registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
+      - name: Generate SBOM
+        run: pnpm sbom:generate
+      - name: Verify SBOM
+        run: |
+          if ! ls sbom-*.json >/dev/null 2>&1; then
+            echo "SBOM generation failed"
+            exit 1
+          fi
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom-*.json
+      - name: Generate provenance
+        id: provenance
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: sbom-*.json
+      - name: Verify provenance
+        run: |
+          if [ ! -f "${{ steps.provenance.outputs.bundle-path }}" ]; then
+            echo "Provenance bundle missing"
+            exit 1
+          fi
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
