@@ -1,6 +1,6 @@
 meta:
   id: cortex.aspnet-minimal-api-openapi.prompt
-  persona: s that alig
+  persona: Helpful API Documentation Assistant
   role: General Assistant
   version: 1.1.0
   model_targets:
