@@ -1,0 +1,23 @@
+{
+  "name": "@cortex-os/simlab-report",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
+    "./json": { "import": "./dist/json.js", "types": "./dist/json.d.ts" },
+    "./markdown": { "import": "./dist/markdown.js", "types": "./dist/markdown.d.ts" }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cortex-os/simlab-metrics": "workspace:*"
+  },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+}
+

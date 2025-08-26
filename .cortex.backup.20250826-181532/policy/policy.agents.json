@@ -1,0 +1,9 @@
+{
+  "$schema": "../schemas/policy.agents.schema.json",
+  "defaultBudget": { "wallClockMs": 30000, "maxSteps": 16, "tokens": 0, "costUSD": 0 },
+  "agents": {
+    "agent.echo": { "tools": [], "egress": [], "maxConcurrency": 8 },
+    "agent.rag":  { "tools": ["memories.search", "memories.save"], "egress": [], "maxConcurrency": 4 }
+  }
+}
+

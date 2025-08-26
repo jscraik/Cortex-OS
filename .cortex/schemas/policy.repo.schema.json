@@ -1,26 +1,37 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cortex-os.dev/schemas/policy.repo.json",
+  "title": "Repository Structure Policy",
   "type": "object",
-  "required": ["allowedRoots", "packages", "deny"],
+  "required": ["version", "allowedPaths", "fileTypes", "sizeLimits"],
   "properties": {
-    "$schema": { "type": "string" },
-    "allowedRoots": { "type": "array", "items": { "type": "string" } },
-    "packages": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": { "type": "string" }
-      }
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
-    "deny": {
+    "allowedPaths": {
       "type": "object",
       "properties": {
-        "extensions": { "type": "array", "items": { "type": "string" } },
-        "maxFileKB": { "type": "number", "minimum": 1 },
-        "maxNewFilesPerPR": { "type": "number", "minimum": 1 }
-      },
-      "required": ["extensions", "maxFileKB", "maxNewFilesPerPR"]
+        "apps": {"type": "array", "items": {"type": "string"}},
+        "packages": {"type": "array", "items": {"type": "string"}},
+        "services": {"type": "array", "items": {"type": "string"}},
+        "libs": {"type": "array", "items": {"type": "string"}},
+        "tools": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "fileTypes": {
+      "type": "object",
+      "properties": {
+        "allowed": {"type": "array", "items": {"type": "string"}},
+        "blocked": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "sizeLimits": {
+      "type": "object",
+      "properties": {
+        "maxFileSize": {"type": "string"},
+        "maxTotalSize": {"type": "string"}
+      }
     }
   }
 }
-

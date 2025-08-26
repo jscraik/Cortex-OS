@@ -1,0 +1,14 @@
+{
+  "name": ".cortex-gates",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo gates-ready"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "globby": "^14.0.1",
+    "micromatch": "^4.0.5"
+  }
+}
+

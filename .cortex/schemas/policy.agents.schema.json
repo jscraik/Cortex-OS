@@ -1,31 +1,30 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cortex-os.dev/schemas/policy.agents.json",
+  "title": "Agent Permissions Policy",
   "type": "object",
-  "required": ["defaultBudget", "agents"],
+  "required": ["version", "agents"],
   "properties": {
-    "$schema": { "type": "string" },
-    "defaultBudget": {
-      "type": "object",
-      "properties": {
-        "wallClockMs": { "type": "number" },
-        "maxSteps": { "type": "number" },
-        "tokens": { "type": "number" },
-        "costUSD": { "type": "number" }
-      },
-      "required": ["wallClockMs", "maxSteps", "tokens", "costUSD"]
-    },
+    "version": {"type": "string"},
     "agents": {
       "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "tools": { "type": "array", "items": { "type": "string" } },
-          "egress": { "type": "array", "items": { "type": "string" } },
-          "maxConcurrency": { "type": "number" }
-        },
-        "required": ["tools", "egress", "maxConcurrency"]
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "type": "object",
+          "required": ["allowedTools", "quotas"],
+          "properties": {
+            "allowedTools": {"type": "array", "items": {"type": "string"}},
+            "quotas": {
+              "type": "object",
+              "properties": {
+                "fileOps": {"type": "integer"},
+                "networkCalls": {"type": "integer"},
+                "computeMinutes": {"type": "integer"}
+              }
+            }
+          }
+        }
       }
     }
   }
 }
-

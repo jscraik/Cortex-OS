@@ -1,0 +1,7 @@
+
+> @cortex-os/memories@0.1.0 test /Users/jamiecraik/.Cortex-OS-clean/packages/memories
+> vitest run
+
+
+ RUN  v2.1.9 /Users/jamiecraik/.Cortex-OS-clean/packages/memories
+

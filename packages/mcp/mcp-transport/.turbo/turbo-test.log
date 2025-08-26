@@ -1,0 +1,11 @@
+
+> @cortex-os/mcp-transport@0.1.0 test /Users/jamiecraik/.Cortex-OS-clean/packages/mcp/mcp-transport
+> vitest run
+
+
+ RUN  v2.1.9 /Users/jamiecraik/.Cortex-OS-clean/packages/mcp/mcp-transport
+
+include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*
+
+No test files found, exiting with code 1

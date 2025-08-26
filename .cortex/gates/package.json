@@ -1,14 +1,19 @@
 {
-  "name": ".cortex-gates",
-  "private": true,
+  "name": "@cortex-os/governance-gates",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo gates-ready"
+    "validate": "node validate-policies.js && node validate-structure.js && node validate-docs.js",
+    "validate:policies": "node validate-policies.js",
+    "validate:structure": "node validate-structure.js", 
+    "validate:docs": "node validate-docs.js"
   },
   "dependencies": {
     "ajv": "^8.12.0",
-    "globby": "^14.0.1",
-    "micromatch": "^4.0.5"
+    "glob": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   }
 }
-

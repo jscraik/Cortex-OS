@@ -1,0 +1,154 @@
+meta:
+  id: cortex.spec-pseudocode
+  persona: spa
+  role: General Assistant
+  version: 1.1.0
+  model_targets:
+    - general
+    - coder
+    - planner
+    - auditor
+    - researcher
+  stack_tags: []
+  risk_flags:
+    - hallucination-check
+    - unsafe-command-block
+    - loop-detection
+  a11y_flags:
+    - opt-in
+    - screen-reader
+    - keyboard-nav
+    - no-color-only
+  inputs_schema: .cortex/library/schemas/inputs.core.ts
+  outputs_schema: .cortex/library/schemas/outputs.core.ts
+blocks:
+  - task_context: >
+      ## Functional Requirements\n",
+              },
+              { old_string: "", new_string: "## Non-Functional Requirements\n" },
+              { old_string: "", new_string: "## Edge Cases\n" },
+            ],
+          },
+        },
+
+        // Phase 2: Flow Diagrams (Concurrent)
+        {
+          tool: "Write",
+          params: {
+            file_path: "specs/02_auth_flow.md",
+            content: generateAuthFlowPseudocode(),
+          },
+        },
+
+        // Phase 3: Data Structures (Parallel)
+        {
+          tool: "Write",
+          params: {
+            file_path: "specs/03_data_structures.md",
+            content: generateDataStructureSpecs(),
+          },
+        },
+      ];
+
+      ```
+
+
+      ## Groups/Permissions
+
+
+      - read
+
+      - edit
+
+      - batchtools
+
+
+      ## Usage
+
+
+      To use this SPARC mode, you can:
+
+
+      1. Run directly: `npx claude-flow sparc run spec-pseudocode "your task"`
+
+      2. Use in workflow: Include `spec-pseudocode` in your SPARC workflow
+
+      3. Delegate tasks: Use `new_task` to assign work to this mode
+
+
+      ## Example
+
+
+      ```bash
+
+      # Generate comprehensive system specs with parallel analysis
+
+      npx claude-flow sparc run spec-pseudocode "create full system
+      specification using parallel codebase analysis"
+
+
+      # Build API specifications with concurrent pattern matching
+
+      npx claude-flow sparc run spec-pseudocode "generate REST API specs with
+      batch endpoint analysis"
+
+
+      # Create data model specifications with parallel schema extraction
+
+      npx claude-flow sparc run spec-pseudocode "document database architecture
+      using concurrent model analysis"
+
+      ```
+
+
+      ## Batchtools Best Practices
+
+
+      1. **Comprehensive Analysis**: Use parallel operations to analyze the
+      entire codebase simultaneously
+
+      2. **Pattern Extraction**: Leverage concurrent grep to identify all
+      relevant patterns and
+         conventions
+      3. **Modular Generation**: Create multiple specification files in parallel
+      for different system
+         aspects
+      4. **Cross-Reference Building**: Use batch operations to build
+      relationships between specifications
+
+
+      ## Performance Benefits
+
+
+      - **20x faster** specification generation for large codebases
+
+      - **Complete coverage** through parallel analysis
+
+      - **Consistent specs** via simultaneous pattern matching
+
+      - **Rapid iteration** with batch pseudocode generation
+
+
+      ## Advanced Techniques
+
+
+      1. **Dependency Mapping**: Use parallel file reading to build complete
+      dependency graphs
+
+      2. **Convention Detection**: Identify coding patterns across the entire
+      codebase simultaneously
+
+      3. **Gap Analysis**: Compare existing code with requirements using
+      parallel operations
+
+      4. **Test Coverage Mapping**: Analyze test files and source files
+      concurrently for coverage insights
+  - tone_context: ''
+  - background: ''
+  - rules: ''
+  - examples: ''
+  - conversation_history: <history>{{HISTORY}}</history>
+  - immediate_request: <question>{{QUESTION}}</question>
+  - deliberation: reasoning_effort=medium
+  - output_format: '```json'
+  - prefill: '{ "result": null }'

@@ -1,19 +1,71 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "allowJs": false,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
+    "outDir": "dist",
+    "module": "es2022",
+    "target": "es2022",
+    "moduleResolution": "node",
     "esModuleInterop": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
+    "strict": true,
+    "types": ["node", "vitest/globals"],
+    "jsx": "react-jsx",
+    "experimentalDecorators": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": false,
     "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "downlevelIteration": true,
     "baseUrl": ".",
     "paths": {
-      "@cortex-os/*": ["./*"]
+      "@cortex-os-app/*": ["apps/cortex-os/src/*"],
+      "@cortex-cli/*": ["apps/cortex-cli/src/*"],
+      "@testing/*": ["packages/testing/src/*"],
+      "@security/*": ["packages/security/src/*"],
+      "@utils/*": ["packages/utils/src/*"],
+      "@sdk/*": ["apps/cortex-os/packages/sdk/src/*"],
+      "@telemetry/*": ["apps/cortex-os/packages/telemetry/src/*"],
+      "@cortex-os/*": ["apps/cortex-os/packages/*/src", "apps/cortex-os/packages/*"],
+
+      "@brain/*": ["apps/cortex-os/brain/*"],
+      "@brain/rag/*": ["apps/cortex-os/brain/rag/src/*"],
+      "@brain/router/*": ["apps/cortex-os/brain/router/src/*"],
+      "@brain/planner/*": ["apps/cortex-os/brain/planner/*"],
+      "@brain/policy/*": ["apps/cortex-os/brain/policy/*"],
+      "@brain/evidence/*": ["apps/cortex-os/brain/evidence/*"],
+      "@brain/adapters/*": ["apps/cortex-os/brain/adapters/*"],
+
+      "@bridge/*": ["apps/cortex-os/packages/bridge/src/*"],
+      "@orchestration/*": ["apps/cortex-os/brain/planner/orchestration/src/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "coverage"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "external/**",
+    "vendor/**",
+    "**/*.config.js",
+    "**/*.config.ts"
+  ],
+  "references": [
+    { "path": "./apps/cortex-cli" },
+    { "path": "./apps/cortex-os" },
+    { "path": "./apps/cortex-os/packages" },
+    { "path": "./apps/cortex-os/brain/planner/orchestration" },
+    { "path": "./apps/cortex-os/brain/router" },
+    { "path": "./apps/cortex-os/brain/rag" },
+    { "path": "./apps/cortex-os/packages/sdk" },
+    { "path": "./apps/cortex-os/packages/telemetry" },
+    { "path": "./packages/testing" }
+  ]
 }

@@ -1,0 +1,185 @@
+{
+  "name": "Test-Driven Development Workflow",
+  "version": "1.0.0",
+  "description": "Complete TDD workflow implementing the red-green-refactor cycle for robust software development",
+  "category": "development",
+  "variables": {
+    "feature": "new feature",
+    "testFramework": "vitest",
+    "language": "typescript",
+    "targetBranch": "main"
+  },
+  "agents": [
+    {
+      "id": "test-designer",
+      "type": "tester",
+      "name": "Test Designer",
+      "capabilities": ["test_design", "tdd", "test_automation"],
+      "config": {
+        "preferredFramework": "${testFramework}",
+        "language": "${language}"
+      }
+    },
+    {
+      "id": "implementer",
+      "type": "coder",
+      "name": "Code Implementer",
+      "capabilities": ["code_generation", "refactoring", "debugging"],
+      "config": {
+        "language": "${language}",
+        "codingStandards": "strict"
+      }
+    },
+    {
+      "id": "reviewer",
+      "type": "reviewer",
+      "name": "Code Reviewer",
+      "capabilities": ["code_review", "quality_assurance", "security_review"],
+      "config": {
+        "reviewChecklist": ["security", "performance", "maintainability"]
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "write-failing-test",
+      "name": "Write Failing Test",
+      "type": "test-design",
+      "description": "Write a failing test that specifies the expected behavior for ${feature}",
+      "assignTo": "test-designer",
+      "priority": "high",
+      "timeout": 900000,
+      "input": {
+        "feature": "${feature}",
+        "framework": "${testFramework}",
+        "testType": "unit"
+      },
+      "condition": "always"
+    },
+    {
+      "id": "verify-test-fails",
+      "name": "Verify Test Fails",
+      "type": "test-execution",
+      "description": "Run the test to confirm it fails as expected (RED phase)",
+      "assignTo": "test-designer",
+      "depends": ["write-failing-test"],
+      "priority": "high",
+      "timeout": 300000,
+      "input": {
+        "testFile": "${write-failing-test.output.testFile}"
+      }
+    },
+    {
+      "id": "implement-minimal",
+      "name": "Implement Minimal Code",
+      "type": "implementation",
+      "description": "Write the minimal amount of code to make the test pass (GREEN phase)",
+      "assignTo": "implementer",
+      "depends": ["verify-test-fails"],
+      "priority": "high",
+      "timeout": 1800000,
+      "input": {
+        "testRequirements": "${write-failing-test.output.requirements}",
+        "testFile": "${write-failing-test.output.testFile}"
+      }
+    },
+    {
+      "id": "verify-test-passes",
+      "name": "Verify Test Passes",
+      "type": "test-execution",
+      "description": "Run the test to confirm it now passes",
+      "assignTo": "test-designer",
+      "depends": ["implement-minimal"],
+      "priority": "high",
+      "timeout": 300000,
+      "input": {
+        "testFile": "${write-failing-test.output.testFile}",
+        "implementation": "${implement-minimal.output.implementationFile}"
+      }
+    },
+    {
+      "id": "refactor-code",
+      "name": "Refactor Code",
+      "type": "refactoring",
+      "description": "Improve the code structure while keeping all tests green (REFACTOR phase)",
+      "assignTo": "implementer",
+      "depends": ["verify-test-passes"],
+      "priority": "medium",
+      "timeout": 1200000,
+      "input": {
+        "implementation": "${implement-minimal.output.implementationFile}",
+        "refactoringGoals": ["readability", "maintainability", "performance"]
+      }
+    },
+    {
+      "id": "run-all-tests",
+      "name": "Run Full Test Suite",
+      "type": "test-execution",
+      "description": "Execute the complete test suite to ensure no regressions",
+      "assignTo": "test-designer",
+      "depends": ["refactor-code"],
+      "priority": "high",
+      "timeout": 600000,
+      "input": {
+        "testSuite": "full",
+        "implementation": "${refactor-code.output.implementationFile}"
+      }
+    },
+    {
+      "id": "code-review",
+      "name": "Code Review",
+      "type": "code-review",
+      "description": "Comprehensive review of implementation and tests",
+      "assignTo": "reviewer",
+      "depends": ["run-all-tests"],
+      "priority": "medium",
+      "timeout": 900000,
+      "input": {
+        "implementation": "${refactor-code.output.implementationFile}",
+        "tests": "${write-failing-test.output.testFile}",
+        "testResults": "${run-all-tests.output.results}"
+      }
+    },
+    {
+      "id": "merge-to-main",
+      "name": "Merge to Main Branch",
+      "type": "deployment",
+      "description": "Merge the completed feature to the main branch",
+      "assignTo": "implementer",
+      "depends": ["code-review"],
+      "priority": "low",
+      "timeout": 300000,
+      "condition": "${code-review.output.approved} === true",
+      "input": {
+        "targetBranch": "${targetBranch}",
+        "implementation": "${refactor-code.output.implementationFile}",
+        "tests": "${write-failing-test.output.testFile}"
+      }
+    }
+  ],
+  "dependencies": {
+    "verify-test-fails": ["write-failing-test"],
+    "implement-minimal": ["verify-test-fails"],
+    "verify-test-passes": ["implement-minimal"],
+    "refactor-code": ["verify-test-passes"],
+    "run-all-tests": ["refactor-code"],
+    "code-review": ["run-all-tests"],
+    "merge-to-main": ["code-review"]
+  },
+  "settings": {
+    "maxConcurrency": 1,
+    "timeout": 7200000,
+    "retryPolicy": "immediate",
+    "failurePolicy": "fail-fast"
+  },
+  "metadata": {
+    "author": "Cortex OS Template Library",
+    "created": "2025-01-28",
+    "tags": ["tdd", "testing", "development", "quality", "ci-cd"],
+    "complexity": "medium",
+    "estimatedDuration": 7200000,
+    "prerequisites": ["test framework setup", "project structure"],
+    "outputs": ["tested feature implementation", "comprehensive test suite"],
+    "version": "1.0.0"
+  }
+}
