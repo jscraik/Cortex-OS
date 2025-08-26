@@ -20,10 +20,6 @@ members = [
   "libs/python/cortex_ml"
 ]
 
-[tool.uv.sources]
-cortex_core = { workspace = true }
-cortex_ml = { workspace = true }
-
 [tool.ruff]
 line-length = 88
 indent-width = 4
@@ -56,34 +52,16 @@ namespace_packages = true
 minversion = "8.0"
 testpaths = ["tests", "services/*/tests", "libs/python/*/tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = [
-  "--cov=services",
-  "--cov=libs/python",
-  "--cov-report=term-missing",
-  "--cov-report=xml",
-  "--cov-report=html",
-  "--cov-fail-under=80",
-  "--strict-markers",
-  "-vv"
-]
+addopts = ["--cov=services","--cov=libs/python","--cov-report=term-missing","--cov-report=xml","--cov-report=html","--cov-fail-under=80","--strict-markers","-vv"]
 
 [tool.bandit]
-exclude_dirs = ["tests", "*/tests/*"]
+exclude_dirs = ["tests","*/tests/*"]
 skips = ["B101"]
 
 [tool.coverage.run]
 branch = true
 parallel = true
-omit = ["*/tests/*", "*/__pycache__/*", "*/site-packages/*"]
+omit = ["*/tests/*","*/__pycache__/*","*/site-packages/*"]
 
 [tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self.debug:",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
-  "class .*\\bProtocol\\):",
-  "@(abc\\.)?abstractmethod"
-]
+exclude_lines = ["pragma: no cover","def __repr__","if self.debug:","raise AssertionError","raise NotImplementedError","if __name__ == .__main__.:","class .*\\bProtocol\\):"," @(abc\\.)?abstractmethod"]
