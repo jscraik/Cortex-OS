@@ -7,8 +7,7 @@ module.exports = {
       severity: "error",
       from: { path: "^packages/([^/]+)/" },
       to: {
-        path: "^packages/\\1/",
-        pathNot: "^packages/\\1/",
+        path: "^packages/(?!\\1/)[^/]+/",
         moreThanOneDependencyType: false
       }
     }
