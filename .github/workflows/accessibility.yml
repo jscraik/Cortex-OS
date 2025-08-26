@@ -8,5 +8,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec axe --dir ./apps/cortex-os/dist --exit || true
+      - name: Build (if applicable)
+        run: |
+          # build workspace if a root build script exists; skip otherwise
+          if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
+            pnpm -w run build
+          else
+            echo "no root build script; skipping build"
+          fi
+      - name: Run axe accessibility checks
+        run: pnpm exec axe --dir ./apps/cortex-os/dist --exit

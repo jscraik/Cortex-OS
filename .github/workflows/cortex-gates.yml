@@ -11,15 +11,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: 'pnpm'
       - uses: pnpm/action-setup@v4
         with:
           version: 9
       - run: pnpm install --frozen-lockfile
+      - name: Build gates
+        run: pnpm --filter .cortex-gates run build
       - name: Run cortex gates
         run: |
-          pnpm --filter .cortex-gates run build || true
           pnpm -s tsx .cortex/gates/validate-structure.ts
           pnpm -s tsx .cortex/gates/validate-policies.ts
           pnpm -s tsx .cortex/gates/validate-docs.ts
