@@ -4,6 +4,7 @@ import { IQdrant, Qdrant } from './adapters/qdrant.js';
 import { enforceWrite, checkRead } from './policy.js';
 import { KGNode, KGRel, MemoryRecord, TenantCtx, VectorHit, VectorQuery } from './types.js';
 import { VectorSizeError } from './errors.js';
+import { redactPII } from './privacy/redact.js';
 
 export type Embedder = { embed(texts: string[]): Promise<number[][]> };
 
@@ -64,12 +65,13 @@ export class MemoryService {
     policy?: MemoryRecord['policy'],
     sourceURI?: string,
   ): Promise<string> {
-    const vec = await this.embedOne(text);
+    const cleanText = redactPII(text);
+    const vec = await this.embedOne(cleanText);
     const rec: MemoryRecord = {
       id: randomUUID(),
       tenantId: ctx.tenantId,
       kind,
-      text,
+      text: cleanText,
       metadata,
       embedding: vec,
       createdAt: new Date().toISOString(),
