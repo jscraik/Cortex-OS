@@ -134,7 +134,12 @@ export const startCommand = new Command()
 
           try {
             const { exec } = await import("child_process");
-            exec(`${openCommand} http://localhost:${options.port}/console`);
+            // SECURITY FIX: Use child_process.spawn instead of exec for better security
+    const { spawn } = require('child_process');
+    spawn(openCommand, [`http://localhost:${options.port}/console`], {
+      detached: true,
+      stdio: 'ignore'
+    }).unref();
           } catch {
             // Browser opening failed, that's okay
           }
