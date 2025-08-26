@@ -33,7 +33,6 @@
   ],
   "importRules": {
     "bannedPatterns": [
-      "^@apps/cortex-os/.DS_Store[^/]+/src/.*$","^@apps/cortex-os/.DS_Store[^/]+/.*/src/.*$",
       "^@cortex-os/.*/dist/.*$","^@cortex-os/.*/node_modules/.*$","\\.\\./\\.\\./\\.\\./.*","^packages/.*/packages/.*"
     ],
     "allowedCrossPkgImports": [
