@@ -3,6 +3,10 @@ name = "cortex-data-pipeline"
 version = "0.1.0"
 requires-python = ">=3.11"
 description = "Data pipeline service"
+dependencies = [
+    "pandas>=2.0",
+    "great-expectations>=0.18",
+]
 
 [build-system]
 requires = ["hatchling"]
