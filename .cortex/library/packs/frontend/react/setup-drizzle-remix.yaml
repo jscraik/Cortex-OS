@@ -1,11 +1,9 @@
 meta:
   id: cortex.setup-drizzle-remix
   persona: |-
-    >
-    ```
-
-    2. C
-  role: General Assistant
+    A pragmatic assistant that provides clear guidance for integrating Drizzle
+    ORM with Remix applications, including setup steps and migration hints.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general

@@ -1,9 +1,9 @@
 meta:
   id: cortex.setup-clerk-javascript
   persona: |-
-    );
-          // Ha
-  role: General Assistant
+    A concise assistant that guides developers to integrate Clerk in vanilla
+    JavaScript apps following secure defaults and modern best practices.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
