@@ -18,7 +18,7 @@
 - MemoriesTool executes arbitrary methods without schema validation【F:apps/cortex-os/packages/agents/src/adapters/tools/tool.memories.ts†L4-L17】
 
 ## Evaluation (20)
-- Vitest tests exist but coverage run fails: `Cannot find package 'vitest'`【0206fb†L1-L13】
+- Vitest tests exist but coverage run fails: `Cannot find package 'vitest'`
 - No regression datasets or seeded evaluation harness.
 
 ## Data Handling (10)
