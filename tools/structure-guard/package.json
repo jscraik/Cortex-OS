@@ -1,0 +1,15 @@
+{
+  "name": "@cortex-os/structure-guard",
+  "private": true,
+  "type": "module",
+  "main": "guard.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "micromatch": "^4.0.7"
+  },
+  "devDependencies": {
+    "vitest": "^2.0.5"
+  }
+}
