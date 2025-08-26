@@ -26,7 +26,7 @@ if (bad.length) {
   process.exitCode = 2;
 }
 
-const missing = policy.protectedFiles.filter(p => !micromatch.any(files, [p]));
+const missing = policy.protectedFiles.filter(p => !files.some(f => micromatch.isMatch(f, p)));
 if (missing.length) {
   console.error("Missing protected paths:\n" + missing.join("\n"));
   process.exitCode = 3;
