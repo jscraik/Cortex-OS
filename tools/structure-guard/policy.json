@@ -19,5 +19,8 @@
     "package.json",
     "pnpm-workspace.yaml",
     ".changeset/**"
+  ],
+  "deniedGlobs": [
+    "**/*.secret"
   ]
 }

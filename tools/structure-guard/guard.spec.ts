@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import micromatch from 'micromatch';
+import { readFileSync } from 'node:fs';
+import { globby } from 'globby';
+import { z } from 'zod';
 
 describe('protected globs', () => {
   const patterns = [
@@ -27,5 +30,35 @@ describe('protected globs', () => {
 
   it('matches dotfiles', () => {
     expect(micromatch.isMatch('.github/CODEOWNERS', patterns, { dot: true } as any)).toBe(true);
+  });
+});
+
+const policySchema = z.object({
+  protectedFiles: z.array(z.string()),
+  allowedGlobs: z.array(z.string()),
+  deniedGlobs: z.array(z.string()).default([])
+});
+const policy = policySchema.parse(
+  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'))
+);
+
+describe('path policy', () => {
+  it('allows and denies paths', () => {
+    expect(micromatch.isMatch('apps/demo/index.ts', policy.allowedGlobs)).toBe(true);
+    expect(micromatch.isMatch('unknown/file.ts', policy.allowedGlobs)).toBe(false);
+    expect(micromatch.isMatch('secrets/cred.secret', policy.deniedGlobs)).toBe(true);
+  });
+
+  it('handles negated patterns', () => {
+    const patterns = ['**/*.ts', '!**/*.spec.ts'];
+    expect(micromatch.isMatch('src/main.ts', patterns)).toBe(true);
+    expect(micromatch.isMatch('src/main.spec.ts', patterns)).toBe(false);
+  });
+});
+
+describe('globby ignores', () => {
+  it('skips node_modules and dist', async () => {
+    const files = await globby(['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'], { dot: true });
+    expect(files.some(f => f.includes('node_modules'))).toBe(false);
   });
 });
