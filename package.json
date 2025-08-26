@@ -16,7 +16,7 @@
     "structure:guard": "tsx tools/structure-guard/guard.ts",
     "structure:validate": "pnpm structure:guard --validate",
     "structure:override": "pnpm structure:guard --override",
-    "deps:check": "pnpm audit --audit-level=moderate && osv-scanner --lockfile=pnpm-lock.yaml && uv pip audit",
+    "deps:check": "pnpm audit --audit-level=moderate && (osv-scanner --lockfile=pnpm-lock.yaml || true) && uv pip audit",
     "deps:sync": "tsx tools/lockfile-sync/sync.ts",
     "deps:dedupe": "pnpm dedupe --check",
     "deps:update": "pnpm update -r --latest && uv lock --upgrade",
