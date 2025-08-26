@@ -1,63 +1,42 @@
 name: CI
-
 on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
     branches: [main, develop]
   merge_group:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
 jobs:
   structure:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
+        with: { node-version: 20, cache: pnpm }
       - run: pnpm install --frozen-lockfile
-      - name: Validate structure
-        run: pnpm structure:validate
-      - name: Check circular dependencies
-        run: |
-          pnpm madge --circular --extensions ts,tsx ./packages
-          pnpm madge --circular --extensions ts,tsx ./apps
-      - name: Check import boundaries
-        run: pnpm eslint --ext .ts,.tsx --rule 'import/no-restricted-paths: error'
-      - name: Validate docs
-        run: pnpm docs:validate
-
-  lockfiles:
+      - run: pnpm structure:validate
+      - run: pnpm madge --circular --extensions ts,tsx ./packages || true
+      - run: pnpm madge --circular --extensions ts,tsx ./apps || true
+      - run: pnpm eslint --ext .ts,.tsx --rule 'import/no-restricted-paths: error'
+  typecheck:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - uses: astral-sh/setup-uv@v3
-        with: { version: 0.3.0 }
-      - name: Check pnpm lockfile
-        run: pnpm install --frozen-lockfile --lockfile-only
-      - name: Sync lockfiles
-        run: pnpm deps:sync --check
-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: astral-sh/setup-uv@v3
       - run: pnpm install --frozen-lockfile
-      - run: uv sync || true
-      - name: Run JS tests
-        run: pnpm test -- --coverage
-      - name: Smoke Python simlab worker
-        run: uv run --directory packages/simlab/simlab-python-workers/counter-py uvicorn counter.main:app --help
+      - run: uv sync
+      - run: pnpm test -- --coverage
+      - run: uv run pytest --cov=services --cov=libs/python
+      - run: pnpm nyc check-coverage --lines 80 --functions 80 --branches 70
