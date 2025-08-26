@@ -1,0 +1,11 @@
+{
+  "name": "@cortex-os/rag-ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }, "./clean": { "import": "./dist/clean.js", "types": "./dist/clean.d.ts" }, "./chunk": { "import": "./dist/chunk.js", "types": "./dist/chunk.d.ts" } },
+  "scripts": { "build": "tsup src/**/*.ts --dts --format esm", "test": "vitest run", "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+}

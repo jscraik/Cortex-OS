@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.github
+.turbo
+coverage
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+sbom-*.json
+*.intoto.jsonl

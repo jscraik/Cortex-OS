@@ -1,0 +1,89 @@
+[project]
+name = "cortex-os"
+version = "1.0.0"
+requires-python = ">=3.11"
+description = "ASBR Cortex-OS Platform"
+license = { text = "MIT" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+  "services/ml-inference",
+  "services/data-pipeline",
+  "libs/python/cortex_core",
+  "libs/python/cortex_ml"
+]
+
+[tool.uv.sources]
+cortex_core = { workspace = true }
+cortex_ml = { workspace = true }
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py311"
+src = ["services", "libs/python"]
+
+[tool.ruff.lint]
+select = ["E","F","I","N","W","B","SIM","S","UP","RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+namespace_packages = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests", "services/*/tests", "libs/python/*/tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = [
+  "--cov=services",
+  "--cov=libs/python",
+  "--cov-report=term-missing",
+  "--cov-report=xml",
+  "--cov-report=html",
+  "--cov-fail-under=80",
+  "--strict-markers",
+  "-vv"
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "*/tests/*"]
+skips = ["B101"]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+omit = ["*/tests/*", "*/__pycache__/*", "*/site-packages/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod"
+]

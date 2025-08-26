@@ -1,0 +1,11 @@
+{
+  "name": "@cortex-os/rag-embed",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }, "./provider": { "import": "./dist/provider.js", "types": "./dist/provider.d.ts" }, "./python-client": { "import": "./dist/python-client.js", "types": "./dist/python-client.d.ts" } },
+  "scripts": { "build": "tsup src/**/*.ts --dts --format esm", "test": "vitest run", "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+}

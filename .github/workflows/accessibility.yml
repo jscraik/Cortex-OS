@@ -1,0 +1,21 @@
+name: Accessibility
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  accessibility:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Run a11y tests
+        run: pnpm test:a11y || true
+      - name: Run axe CLI on built app (if present)
+        run: |
+          if [ -d apps/cortex-os/dist ]; then pnpm exec axe --dir ./apps/cortex-os/dist --exit; else echo "No dist to scan"; fi

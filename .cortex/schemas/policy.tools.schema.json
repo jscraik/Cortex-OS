@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["egress", "fs"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "egress": {
+      "type": "object",
+      "properties": {
+        "http": {
+          "type": "object",
+          "properties": {
+            "allow": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["allow"]
+        }
+      },
+      "required": ["http"]
+    },
+    "fs": {
+      "type": "object",
+      "properties": {
+        "writeAllow": { "type": "array", "items": { "type": "string" } },
+        "denyHidden": { "type": "boolean" }
+      },
+      "required": ["writeAllow", "denyHidden"]
+    }
+  }
+}
+

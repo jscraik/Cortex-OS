@@ -1,0 +1,10 @@
+{
+  "name": "@cortex-os/eslint-config",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

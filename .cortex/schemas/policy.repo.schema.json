@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["allowedRoots", "packages", "deny"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "allowedRoots": { "type": "array", "items": { "type": "string" } },
+    "packages": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "deny": {
+      "type": "object",
+      "properties": {
+        "extensions": { "type": "array", "items": { "type": "string" } },
+        "maxFileKB": { "type": "number", "minimum": 1 },
+        "maxNewFilesPerPR": { "type": "number", "minimum": 1 }
+      },
+      "required": ["extensions", "maxFileKB", "maxNewFilesPerPR"]
+    }
+  }
+}
+

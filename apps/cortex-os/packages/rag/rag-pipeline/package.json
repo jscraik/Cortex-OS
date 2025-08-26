@@ -1,0 +1,12 @@
+{
+  "name": "@cortex-os/rag-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }, "./ingest": { "import": "./dist/ingest.js", "types": "./dist/ingest.d.ts" }, "./query": { "import": "./dist/query.js", "types": "./dist/query.d.ts" } },
+  "scripts": { "build": "tsup src/**/*.ts --dts --format esm", "test": "vitest run", "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "dependencies": { "@cortex-os/rag-ingest": "workspace:*", "@cortex-os/rag-embed": "workspace:*", "@cortex-os/rag-store": "workspace:*", "@cortex-os/rag-contracts": "workspace:*" },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+}

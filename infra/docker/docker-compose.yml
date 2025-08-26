@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  cortex-node:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.node
+  cortex-python:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.python

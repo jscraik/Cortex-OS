@@ -1,0 +1,11 @@
+{
+  "name": "@cortex-os/rag-retriever",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }, "./mmr": { "import": "./dist/mmr.js", "types": "./dist/mmr.d.ts" } },
+  "scripts": { "build": "tsup src/**/*.ts --dts --format esm", "test": "vitest run", "typecheck": "tsc -p tsconfig.json --noEmit" },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+}

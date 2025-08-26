@@ -1,0 +1,10 @@
+{
+  "name": "@cortex-os/lockfile-sync",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "sync.ts",
+  "dependencies": {
+    "@iarna/toml": "^2.2.5"
+  }
+}

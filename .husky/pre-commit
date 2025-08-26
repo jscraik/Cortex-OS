@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-commit checks..."
+
+CHANGED_FILES=$(git diff --cached --name-only)
+COUNT=$(printf "%s" "$CHANGED_FILES" | grep -c "." || true)
+MAX_FILES=15
+
+if [ "$COUNT" -gt "$MAX_FILES" ]; then
+  if [ -f .structure-override ]; then
+    echo "Override present; proceeding"
+  else
+    echo "Too many files changed ($COUNT > $MAX_FILES). Use 'pnpm structure:override'."
+    exit 1
+  fi
+fi
+
+echo "$CHANGED_FILES" | xargs pnpm structure:guard --files || exit 1
+
+pnpm circular:check || exit 1
+
+pnpm -s tsx .cortex/tooling/check-structure.ts || exit 1
+pnpm -s tsx .cortex/tooling/check-agents.ts || exit 1
+
+pnpm --filter .cortex-gates build || true
+pnpm -s tsx .cortex/gates/validate-structure.ts || exit 1
+pnpm -s tsx .cortex/gates/validate-policies.ts || exit 1
+pnpm -s tsx .cortex/gates/validate-docs.ts || exit 1
+
+exit 0

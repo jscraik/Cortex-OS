@@ -1,0 +1,47 @@
+# Global owners
+* @cortex-os/platform-team
+
+# Architecture & Infrastructure
+/docs/architecture/ @cortex-os/architects
+/tools/structure-guard/ @cortex-os/architects
+/tools/scripts/ @cortex-os/architects @cortex-os/security
+/infra/ @cortex-os/devops
+/.github/workflows/ @cortex-os/devops @cortex-os/security
+
+# Core packages ownership
+/packages/a2a/ @cortex-os/events-team
+/packages/mcp/ @cortex-os/integrations-team
+/packages/memories/ @cortex-os/state-team
+/packages/orchestration/ @cortex-os/workflow-team
+/packages/rag/ @cortex-os/ai-team
+/packages/simlab/ @cortex-os/simulation-team
+
+# Apps ownership
+/apps/cortex-os/ @cortex-os/runtime-team
+/apps/cortex-os/packages/agents/ @cortex-os/agents-team
+/apps/cortex-os/packages/mvp/ @cortex-os/core-team
+/apps/cortex-os/packages/mvp-server/ @cortex-os/api-team
+
+# Services ownership
+/services/ml-inference/ @cortex-os/ml-team
+/services/data-pipeline/ @cortex-os/data-team
+
+# Libraries ownership
+/libs/typescript/ @cortex-os/frontend-team
+/libs/python/ @cortex-os/ml-team
+
+# Protected configuration - requires multiple approvals
+/pnpm-workspace.yaml @cortex-os/architects @cortex-os/devops
+/turbo.json @cortex-os/architects @cortex-os/devops
+/uv.toml @cortex-os/ml-team @cortex-os/devops
+/.github/CODEOWNERS @cortex-os/architects @cortex-os/security
+/.gitattributes @cortex-os/architects @cortex-os/devops
+/cliff.toml @cortex-os/architects
+/package.json @cortex-os/architects
+/pyproject.toml @cortex-os/ml-team @cortex-os/architects
+/tools/schemas/ @cortex-os/architects @cortex-os/security
+/.cortex/** @cortex-os/architects @cortex-os/security
+/.cortex/indexes/** @cortex-os/architects @cortex-os/runtime-team
+/.cortex/policy/** @cortex-os/architects @cortex-os/security
+/.cortex/tooling/** @cortex-os/architects
+AGENTS.md @cortex-os/architects @cortex-os/security

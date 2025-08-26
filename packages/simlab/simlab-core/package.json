@@ -1,0 +1,22 @@
+{
+  "name": "@cortex-os/simlab-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
+    "./runner": { "import": "./dist/runner.js", "types": "./dist/runner.d.ts" },
+    "./registry": { "import": "./dist/registry.js", "types": "./dist/registry.d.ts" },
+    "./rng": { "import": "./dist/rng.js", "types": "./dist/rng.d.ts" },
+    "./recorder": { "import": "./dist/recorder.js", "types": "./dist/recorder.d.ts" }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+}
+

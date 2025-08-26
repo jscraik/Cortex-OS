@@ -1,0 +1,8 @@
+[project]
+name = "brainwav-mvp"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2.8"]
+
+[tool.uv]
+

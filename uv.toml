@@ -1,0 +1,14 @@
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = [
+  "services/ml-inference",
+  "services/data-pipeline",
+  "libs/python/cortex_core",
+  "libs/python/cortex_ml"
+]
+
+[tool.uv.sources]
+cortex_core = { workspace = true }
+cortex_ml = { workspace = true }
