@@ -1,12 +1,3 @@
-export * from "./domain/types.js";
-export * from "./ports/Agent.js";
-export * from "./ports/Tool.js";
-export * from "./service/agent-registry.js";
-export * from "./service/executor.js";
-export * from "./service/Middleware.js";
-export * from "./adapters/agents/EchoAgent.js";
-export * from "./adapters/agents/RagAgent.js";
-export * from "./adapters/tools/tool.mcp.js";
-export * from "./adapters/tools/tool.memories.js";
-export * from "./adapters/tools/tool.http.js";
-export * from "./adapters/bus.local.js";
+// Placeholder entrypoint to satisfy TypeScript inputs while legacy code is being retired.
+// This file intentionally exports nothing.
+export {};

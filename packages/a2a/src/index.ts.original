@@ -1,0 +1,414 @@
+/**
+ * Core A2A Request interface with strict typing
+ */
+export interface A2ARequest<TAction extends string = string, TParams = unknown> {
+  /** The action to be performed by the agent */
+  action: TAction;
+  /** Parameters specific to the action */
+  params: TParams;
+  /** Unique request identifier for correlation */
+  id?: string;
+  /** Request timestamp */
+  timestamp?: number;
+  /** Source agent identifier */
+  source?: string;
+  /** Target agent identifier */
+  target?: string;
+}
+
+/**
+ * Core A2A Response interface with strict typing
+ */
+export interface A2AResponse<TResult = unknown> {
+  /** Whether the operation was successful */
+  ok: boolean;
+  /** Result data if successful */
+  result?: TResult;
+  /** Error message if failed */
+  error?: string;
+  /** Request ID for correlation */
+  id?: string;
+  /** Response timestamp */
+  timestamp?: number;
+  /** Processing duration in milliseconds */
+  duration?: number;
+}
+
+/**
+ * Git-specific action types
+ */
+export type GitAction =
+  | 'git.status'
+  | 'git.diff'
+  | 'git.commit'
+  | 'git.push'
+  | 'git.pull'
+  | 'git.branch'
+  | 'git.checkout'
+  | 'git.log';
+
+/**
+ * Git commit parameters
+ */
+export interface GitCommitParams {
+  /** Commit message */
+  message: string;
+  /** Files to stage (optional, defaults to all changes) */
+  files?: string[];
+  /** Whether to include untracked files */
+  includeUntracked?: boolean;
+  /** Whether to amend the previous commit */
+  amend?: boolean;
+  /** Author information */
+  author?: {
+    name: string;
+    email: string;
+  };
+}
+
+/**
+ * Git status result
+ */
+export interface GitStatusResult {
+  /** Modified files */
+  modified: string[];
+  /** Added files */
+  added: string[];
+  /** Deleted files */
+  deleted: string[];
+  /** Untracked files */
+  untracked: string[];
+  /** Current branch */
+  branch: string;
+  /** Whether the working directory is clean */
+  clean: boolean;
+}
+
+/**
+ * Git commit result
+ */
+export interface GitCommitResult {
+  /** Commit hash */
+  hash: string;
+  /** Commit message */
+  message: string;
+  /** Files included in the commit */
+  files: string[];
+  /** Author information */
+  author: {
+    name: string;
+    email: string;
+  };
+  /** Commit timestamp */
+  timestamp: string;
+}
+
+/**
+ * Git diff result
+ */
+export interface GitDiffResult {
+  /** Raw diff output */
+  diff: string;
+  /** Number of files changed */
+  filesChanged: number;
+  /** Number of insertions */
+  insertions: number;
+  /** Number of deletions */
+  deletions: number;
+}
+
+/**
+ * Typed Git request interfaces
+ */
+export type GitStatusRequest = A2ARequest<'git.status', void>;
+export type GitDiffRequest = A2ARequest<'git.diff', { staged?: boolean; files?: string[] }>;
+export type GitCommitRequest = A2ARequest<'git.commit', GitCommitParams>;
+
+/**
+ * Typed Git response interfaces
+ */
+export type GitStatusResponse = A2AResponse<GitStatusResult>;
+export type GitDiffResponse = A2AResponse<GitDiffResult>;
+export type GitCommitResponse = A2AResponse<GitCommitResult>;
+
+/**
+ * Union type for all Git requests
+ */
+export type GitRequest = GitStatusRequest | GitDiffRequest | GitCommitRequest;
+
+/**
+ * Union type for all Git responses
+ */
+export type GitResponse = GitStatusResponse | GitDiffResponse | GitCommitResponse;
+
+/**
+ * A2A Agent handler function type
+ */
+export type A2AHandler<TRequest extends A2ARequest = A2ARequest, TResponse extends A2AResponse = A2AResponse> = (
+  request: TRequest
+) => Promise<TResponse>;
+
+/**
+ * Git agent handler type
+ */
+export type GitHandler = A2AHandler<GitRequest, GitResponse>;
+
+/**
+ * Error types for A2A communication
+ */
+export enum A2AErrorType {
+  UNKNOWN_ACTION = 'UNKNOWN_ACTION',
+  INVALID_PARAMS = 'INVALID_PARAMS',
+  EXECUTION_ERROR = 'EXECUTION_ERROR',
+  TIMEOUT = 'TIMEOUT',
+  AGENT_NOT_FOUND = 'AGENT_NOT_FOUND',
+  PERMISSION_DENIED = 'PERMISSION_DENIED'
+}
+
+/**
+ * A2A Error class
+ */
+export class A2AError extends Error {
+  constructor(
+    public type: A2AErrorType,
+    message: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = 'A2AError';
+  }
+}
+
+/**
+ * Utility function to create a successful response
+ */
+export function createSuccessResponse<T>(result: T, id?: string): A2AResponse<T> {
+  return {
+    ok: true,
+    result,
+    id,
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Utility function to create an error response
+ */
+export function createErrorResponse(error: string | Error, id?: string): A2AResponse {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : error,
+    id,
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Utility function to create a request with metadata
+ */
+export function createRequest<TAction extends string, TParams>(
+  action: TAction,
+  params: TParams,
+  options?: {
+    id?: string;
+    source?: string;
+    target?: string;
+  }
+): A2ARequest<TAction, TParams> {
+  return {
+    action,
+    params,
+    id: options?.id || crypto.randomUUID(),
+    timestamp: Date.now(),
+    source: options?.source,
+    target: options?.target
+  };
+}
+
+// Re-export all security types and functions
+export * from './security.js';
+
+// Re-export all discovery types and functions
+export * from './discovery.js';
+
+// Re-export all negotiation types and functions
+export * from './negotiation.js';
+
+// Re-export all validation types and functions
+export * from './validation.js';
+ * Git commit parameters
+ */
+export interface GitCommitParams {
+  /** Commit message */
+  message: string;
+  /** Files to stage (optional, defaults to all changes) */
+  files?: string[];
+  /** Whether to include untracked files */
+  includeUntracked?: boolean;
+  /** Whether to amend the previous commit */
+  amend?: boolean;
+  /** Author information */
+  author?: {
+    name: string;
+    email: string;
+  };
+}
+
+/**
+ * Git status result
+ */
+export interface GitStatusResult {
+  /** Modified files */
+  modified: string[];
+  /** Added files */
+  added: string[];
+  /** Deleted files */
+  deleted: string[];
+  /** Untracked files */
+  untracked: string[];
+  /** Current branch */
+  branch: string;
+  /** Whether the working directory is clean */
+  clean: boolean;
+}
+
+/**
+ * Git commit result
+ */
+export interface GitCommitResult {
+  /** Commit hash */
+  hash: string;
+  /** Commit message */
+  message: string;
+  /** Files included in the commit */
+  files: string[];
+  /** Author information */
+  author: {
+    name: string;
+    email: string;
+  };
+  /** Commit timestamp */
+  timestamp: string;
+}
+
+/**
+ * Git diff result
+ */
+export interface GitDiffResult {
+  /** Raw diff output */
+  diff: string;
+  /** Number of files changed */
+  filesChanged: number;
+  /** Number of insertions */
+  insertions: number;
+  /** Number of deletions */
+  deletions: number;
+}
+
+/**
+ * Typed Git request interfaces
+ */
+export type GitStatusRequest = A2ARequest<'git.status', void>;
+export type GitDiffRequest = A2ARequest<'git.diff', { staged?: boolean; files?: string[] }>;
+export type GitCommitRequest = A2ARequest<'git.commit', GitCommitParams>;
+
+/**
+ * Typed Git response interfaces
+ */
+export type GitStatusResponse = A2AResponse<GitStatusResult>;
+export type GitDiffResponse = A2AResponse<GitDiffResult>;
+export type GitCommitResponse = A2AResponse<GitCommitResult>;
+
+/**
+ * Union type for all Git requests
+ */
+export type GitRequest = GitStatusRequest | GitDiffRequest | GitCommitRequest;
+
+/**
+ * Union type for all Git responses
+ */
+export type GitResponse = GitStatusResponse | GitDiffResponse | GitCommitResponse;
+
+/**
+ * A2A Agent handler function type
+ */
+export type A2AHandler<TRequest extends A2ARequest = A2ARequest, TResponse extends A2AResponse = A2AResponse> = (
+  request: TRequest
+) => Promise<TResponse>;
+
+/**
+ * Git agent handler type
+ */
+export type GitHandler = A2AHandler<GitRequest, GitResponse>;
+
+/**
+ * Error types for A2A communication
+ */
+export enum A2AErrorType {
+  UNKNOWN_ACTION = 'UNKNOWN_ACTION',
+  INVALID_PARAMS = 'INVALID_PARAMS',
+  EXECUTION_ERROR = 'EXECUTION_ERROR',
+  TIMEOUT = 'TIMEOUT',
+  AGENT_NOT_FOUND = 'AGENT_NOT_FOUND',
+  PERMISSION_DENIED = 'PERMISSION_DENIED'
+}
+
+/**
+ * A2A Error class
+ */
+export class A2AError extends Error {
+  constructor(
+    public type: A2AErrorType,
+    message: string,
+    public details?: unknown
+  ) {
+    super(message);
+    this.name = 'A2AError';
+  }
+}
+
+/**
+ * Utility function to create a successful response
+ */
+export function createSuccessResponse<T>(result: T, id?: string): A2AResponse<T> {
+  return {
+    ok: true,
+    result,
+    id,
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Utility function to create an error response
+ */
+export function createErrorResponse(error: string | Error, id?: string): A2AResponse {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : error,
+    id,
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Utility function to create a request with metadata
+ */
+export function createRequest<TAction extends string, TParams>(
+  action: TAction,
+  params: TParams,
+  options?: {
+    id?: string;
+    source?: string;
+    target?: string;
+  }
+): A2ARequest<TAction, TParams> {
+  return {
+    action,
+    params,
+    id: options?.id || crypto.randomUUID(),
+    timestamp: Date.now(),
+    source: options?.source,
+    target: options?.target
+  };
+}

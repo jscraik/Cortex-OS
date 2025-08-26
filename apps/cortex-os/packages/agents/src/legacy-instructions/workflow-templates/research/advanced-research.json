@@ -1,0 +1,315 @@
+{
+  "name": "Advanced Research and Analysis Workflow",
+  "version": "1.0.0",
+  "description": "Comprehensive research workflow with systematic information gathering, analysis, and documentation",
+  "category": "research",
+  "variables": {
+    "researchTopic": "emerging technology",
+    "researchDepth": "comprehensive",
+    "sourceTypes": "academic,industry,documentation,patents",
+    "analysisType": "comparative",
+    "outputFormat": "markdown"
+  },
+  "agents": [
+    {
+      "id": "primary-researcher",
+      "type": "researcher",
+      "name": "Primary Researcher",
+      "capabilities": [
+        "information_gathering",
+        "source_validation",
+        "academic_research"
+      ],
+      "config": {
+        "databases": ["arxiv", "ieee", "acm", "google-scholar"],
+        "languages": ["english", "auto-detect"],
+        "qualityThreshold": "peer-reviewed"
+      }
+    },
+    {
+      "id": "data-analyst",
+      "type": "analyst",
+      "name": "Data Analyst",
+      "capabilities": [
+        "data_analysis",
+        "statistical_analysis",
+        "trend_identification"
+      ],
+      "config": {
+        "analysisTools": ["python", "r", "excel"],
+        "visualizationLibs": ["matplotlib", "plotly", "d3"]
+      }
+    },
+    {
+      "id": "domain-expert",
+      "type": "analyst",
+      "name": "Domain Expert",
+      "capabilities": [
+        "domain_knowledge",
+        "technical_validation",
+        "expert_review"
+      ],
+      "config": {
+        "expertiseAreas": ["technology", "business", "science"],
+        "validationMethods": ["peer-review", "expert-consensus"]
+      }
+    },
+    {
+      "id": "technical-writer",
+      "type": "documenter",
+      "name": "Technical Writer",
+      "capabilities": [
+        "technical_writing",
+        "markdown",
+        "visualization",
+        "report_formatting"
+      ],
+      "config": {
+        "outputFormats": ["${outputFormat}", "pdf", "html"],
+        "writingStyle": "academic"
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "id": "research-planning",
+      "name": "Research Planning and Scoping",
+      "type": "planning",
+      "description": "Define research objectives, methodology, and scope for ${researchTopic}",
+      "assignTo": "domain-expert",
+      "priority": "urgent",
+      "timeout": 1800000,
+      "input": {
+        "topic": "${researchTopic}",
+        "depth": "${researchDepth}",
+        "timeframe": "6-months",
+        "objectives": "auto-generate"
+      }
+    },
+    {
+      "id": "literature-search",
+      "name": "Comprehensive Literature Search",
+      "type": "research",
+      "description": "Systematic search across academic and industry sources",
+      "assignTo": "primary-researcher",
+      "depends": ["research-planning"],
+      "priority": "high",
+      "timeout": 2400000,
+      "input": {
+        "searchTerms": "${research-planning.output.keywords}",
+        "sourceTypes": "${sourceTypes}",
+        "timeRange": "2020-2025",
+        "qualityFilter": "high"
+      }
+    },
+    {
+      "id": "patent-research",
+      "name": "Patent and IP Research",
+      "type": "research",
+      "description": "Search and analyze relevant patents and intellectual property",
+      "assignTo": "primary-researcher",
+      "depends": ["research-planning"],
+      "priority": "medium",
+      "timeout": 1800000,
+      "input": {
+        "patentDatabases": ["uspto", "epo", "wipo"],
+        "searchTerms": "${research-planning.output.keywords}",
+        "analysisDepth": "claims-and-descriptions"
+      }
+    },
+    {
+      "id": "industry-analysis",
+      "name": "Industry Trend Analysis",
+      "type": "analysis",
+      "description": "Analyze industry reports, market data, and business trends",
+      "assignTo": "data-analyst",
+      "depends": ["literature-search"],
+      "priority": "high",
+      "timeout": 2100000,
+      "input": {
+        "industryReports": "${literature-search.output.industryData}",
+        "marketData": "auto-gather",
+        "trendAnalysis": "5-year-projection"
+      }
+    },
+    {
+      "id": "source-validation",
+      "name": "Source Validation and Quality Assessment",
+      "type": "validation",
+      "description": "Validate sources for credibility, bias, and methodological rigor",
+      "assignTo": "domain-expert",
+      "depends": ["literature-search", "patent-research"],
+      "priority": "high",
+      "timeout": 1500000,
+      "input": {
+        "sources": "all_gathered_sources",
+        "validationCriteria": [
+          "peer-review",
+          "citation-count",
+          "author-credibility"
+        ],
+        "biasAssessment": true
+      }
+    },
+    {
+      "id": "data-synthesis",
+      "name": "Data Synthesis and Pattern Recognition",
+      "type": "analysis",
+      "description": "Synthesize information and identify patterns, gaps, and opportunities",
+      "assignTo": "data-analyst",
+      "depends": ["source-validation", "industry-analysis"],
+      "priority": "high",
+      "timeout": 2700000,
+      "input": {
+        "validatedSources": "${source-validation.output.validSources}",
+        "industryData": "${industry-analysis.output.trends}",
+        "analysisType": "${analysisType}",
+        "patternRecognition": "ml-assisted"
+      }
+    },
+    {
+      "id": "comparative-analysis",
+      "name": "Comparative Technology Assessment",
+      "type": "analysis",
+      "description": "Compare different approaches, technologies, or solutions identified",
+      "assignTo": "domain-expert",
+      "depends": ["data-synthesis"],
+      "priority": "medium",
+      "timeout": 2100000,
+      "input": {
+        "synthesizedData": "${data-synthesis.output.patterns}",
+        "comparisonFramework": "multi-criteria-analysis",
+        "evaluationCriteria": [
+          "technical-merit",
+          "commercial-viability",
+          "adoption-potential"
+        ]
+      }
+    },
+    {
+      "id": "gap-analysis",
+      "name": "Research Gap Identification",
+      "type": "analysis",
+      "description": "Identify gaps in current knowledge and future research directions",
+      "assignTo": "domain-expert",
+      "depends": ["comparative-analysis"],
+      "priority": "medium",
+      "timeout": 1500000,
+      "input": {
+        "comparativeResults": "${comparative-analysis.output.comparison}",
+        "researchLandscape": "${data-synthesis.output.landscape}",
+        "gapTypes": ["technical", "commercial", "regulatory"]
+      }
+    },
+    {
+      "id": "expert-validation",
+      "name": "Expert Review and Validation",
+      "type": "validation",
+      "description": "Expert review of findings and conclusions",
+      "assignTo": "domain-expert",
+      "depends": ["gap-analysis"],
+      "priority": "high",
+      "timeout": 1800000,
+      "input": {
+        "researchFindings": "all_analysis_outputs",
+        "validationMethod": "structured-review",
+        "expertNetwork": "industry-academic"
+      }
+    },
+    {
+      "id": "visualization-creation",
+      "name": "Data Visualization and Charts",
+      "type": "visualization",
+      "description": "Create comprehensive visualizations of research findings",
+      "assignTo": "data-analyst",
+      "depends": ["expert-validation"],
+      "priority": "medium",
+      "timeout": 1200000,
+      "input": {
+        "validatedFindings": "${expert-validation.output.validated}",
+        "chartTypes": ["trends", "comparisons", "networks", "timelines"],
+        "interactivity": "static-and-interactive"
+      }
+    },
+    {
+      "id": "executive-summary",
+      "name": "Executive Summary Creation",
+      "type": "documentation",
+      "description": "Create concise executive summary for stakeholders",
+      "assignTo": "technical-writer",
+      "depends": ["visualization-creation"],
+      "priority": "high",
+      "timeout": 1200000,
+      "input": {
+        "researchFindings": "all_validated_outputs",
+        "targetAudience": "executives",
+        "length": "2-pages",
+        "keyInsights": "top-5"
+      }
+    },
+    {
+      "id": "technical-report",
+      "name": "Comprehensive Technical Report",
+      "type": "documentation",
+      "description": "Create detailed technical report with methodology and findings",
+      "assignTo": "technical-writer",
+      "depends": ["visualization-creation"],
+      "priority": "medium",
+      "timeout": 2400000,
+      "input": {
+        "allFindings": "comprehensive_dataset",
+        "methodology": "${research-planning.output.methodology}",
+        "visualizations": "${visualization-creation.output.charts}",
+        "appendices": "source-list,raw-data"
+      }
+    },
+    {
+      "id": "future-recommendations",
+      "name": "Future Research Recommendations",
+      "type": "planning",
+      "description": "Develop recommendations for future research and development",
+      "assignTo": "domain-expert",
+      "depends": ["technical-report"],
+      "priority": "low",
+      "timeout": 1500000,
+      "input": {
+        "gapAnalysis": "${gap-analysis.output.gaps}",
+        "researchPriorities": "stakeholder-driven",
+        "timeframes": ["short-term", "medium-term", "long-term"],
+        "resourceRequirements": "estimate"
+      }
+    }
+  ],
+  "settings": {
+    "maxConcurrency": 2,
+    "timeout": 18000000,
+    "retryPolicy": "immediate",
+    "failurePolicy": "continue"
+  },
+  "metadata": {
+    "author": "Cortex OS Research Team",
+    "created": "2025-01-28",
+    "tags": [
+      "research",
+      "analysis",
+      "documentation",
+      "literature-review",
+      "trend-analysis"
+    ],
+    "complexity": "complex",
+    "estimatedDuration": 18000000,
+    "prerequisites": [
+      "research databases access",
+      "domain expertise",
+      "analysis tools"
+    ],
+    "outputs": [
+      "executive summary",
+      "technical report",
+      "data visualizations",
+      "recommendations"
+    ],
+    "qualityGates": ["expert validation", "source verification", "peer review"],
+    "version": "1.0.0"
+  }
+}
