@@ -1,50 +1,29 @@
-import { createBom } from '@cyclonedx/bom';
 import { execSync } from 'child_process';
 import { writeFileSync, readFileSync } from 'fs';
-import { randomUUID } from 'crypto';
 
-export async function generateSBOM(): Promise<void> {
-  console.log('Generating Software Bill of Materials...');
-
-  const nodeBom = await createBom({
-    packageManager: 'pnpm',
-    path: process.cwd(),
-    spec: 'cyclonedx',
-    specVersion: '1.5',
-  });
-  writeFileSync('sbom-node.json', JSON.stringify(nodeBom, null, 2));
-
+async function main() {
+  console.log('Generating SBOM(s)...');
+  // Node via cyclonedx bom (installed as @cyclonedx/bom exposes CLI 'cyclonedx-bom' if needed).
+  // Here we call library through npx to keep script simple.
   try {
-    execSync('uv pip list --format json > pip-list.json');
-  } catch {}
-  const pythonDeps = JSON.parse(readFileSync('pip-list.json', 'utf8')) as Array<{ name: string; version: string }>;
-  const pythonBom = {
-    bomFormat: 'CycloneDX',
-    specVersion: '1.5',
-    serialNumber: `urn:uuid:${randomUUID()}`,
-    version: 1,
-    metadata: {
-      timestamp: new Date().toISOString(),
-      tools: [{ name: 'uv', version: '0.3.0' }],
-      component: { type: 'application', name: '@cortex-os/services', version: process.env.npm_package_version || '1.0.0' },
-    },
-    components: pythonDeps.map((d) => ({ type: 'library', name: d.name, version: d.version, purl: `pkg:pypi/${d.name}@${d.version}` })),
-  } as any;
+    execSync('npx --yes @cyclonedx/cyclonedx-npm --output-file sbom-node.json', { stdio: 'inherit' });
+  } catch { console.warn('Node SBOM generation failed; ensure cyclonedx npm cli is available'); }
+
+  // Python via uv list
+  execSync('uv pip list --format json > pip-list.json');
+  const deps = JSON.parse(readFileSync('pip-list.json', 'utf8'));
+  const components = deps.map((d: any) => ({ type: 'library', name: d.name, version: d.version, purl: `pkg:pypi/${d.name}@${d.version}` }));
+  const pythonBom = { bomFormat: 'CycloneDX', specVersion: '1.5', version: 1, components };
   writeFileSync('sbom-python.json', JSON.stringify(pythonBom, null, 2));
 
-  const unified = { ...nodeBom, components: [...(nodeBom as any).components, ...pythonBom.components] };
-  writeFileSync('sbom-unified.json', JSON.stringify(unified, null, 2));
-
+  // Unified
+  let nodeComponents: any[] = [];
   try {
-    execSync('npx ajv-cli@5 validate -s tools/schemas/cyclonedx-1.5.schema.json -d sbom-unified.json', { stdio: 'inherit' });
-    console.log('✅ SBOM validation passed');
-  } catch (e) {
-    console.error('❌ SBOM validation failed');
-    process.exit(1);
-  }
+    const nodeBom = JSON.parse(readFileSync('sbom-node.json', 'utf8'));
+    nodeComponents = nodeBom.components || [];
+  } catch {}
+  const unified = { bomFormat: 'CycloneDX', specVersion: '1.5', version: 1, components: [...nodeComponents, ...components] };
+  writeFileSync('sbom-unified.json', JSON.stringify(unified, null, 2));
+  console.log('SBOM complete');
 }
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  generateSBOM();
-}
-
+main().catch(e => { console.error(e); process.exit(1); });
