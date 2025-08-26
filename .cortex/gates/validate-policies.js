@@ -7,7 +7,7 @@ const ajv = new Ajv();
 console.log('Validating policies against schemas...');
 
 // Load all schemas
-const schemaFiles = glob.sync('../schemas/*.schema.json');
+const schemaFiles = glob.sync('./schemas/*.schema.json');
 const schemas = {};
 
 for (const schemaFile of schemaFiles) {
@@ -17,7 +17,7 @@ for (const schemaFile of schemaFiles) {
 }
 
 // Validate all policy files
-const policyFiles = glob.sync('../policy/*.json');
+const policyFiles = glob.sync('./policy/*.json');
 let valid = true;
 
 for (const policyFile of policyFiles) {

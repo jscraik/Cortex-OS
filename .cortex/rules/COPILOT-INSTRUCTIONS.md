@@ -1,6 +1,3 @@
-<<<<<<< EXISTING (cortex-os-clean)
-AGENTS.md is the canonical authority for agent policy. All model guides MUST defer to AGENTS.md.
-=======
 Developer: <!--
 file_path: ".github/instructions/copilot-instructions.md"
 description: "Documentation for Copilot operational instructions"
@@ -69,7 +66,7 @@ Begin with a concise checklist (3-7 bullets) of what you will do; keep items con
   - Keep functions small, prefer early returns
 - **Python:**
   - Enforce type hints and Ruff for public APIs
-  - Security modules are TDD’d; preserve guarantees
+  - Security modules are TDD'd; preserve guarantees
 - **Accessibility:** WCAG 2.2 AA compliance is required. For UI changes, include `jest-axe` and/or Playwright assertions.
 
 ## Allowed Actions
@@ -101,4 +98,3 @@ Begin with a concise checklist (3-7 bullets) of what you will do; keep items con
 3. Add a brief test plan plus screenshots/logs for UX/CLI
 
 After each tool call or code edit, validate the result in 1-2 lines and proceed or self-correct if validation fails.
->>>>>>> MIGRATING (cortex-os)

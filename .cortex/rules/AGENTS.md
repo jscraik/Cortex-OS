@@ -1,9 +1,3 @@
-<<<<<<< EXISTING (cortex-os-clean)
-AGENTS.md is the canonical authority for agent policy. All model guides (CLAUDE.md, COPILOT-INSTRUCTIONS.md, GEMINI.md, QWEN.md) MUST defer to AGENTS.md.
-
-## Scope
-- Define agent roles, boundaries, inputs, outputs, memory, and governance.
-=======
 # AGENTS.md
 
 > **Authority:** This file is the single source of truth for agent roles in Cortex-OS.  
@@ -294,4 +288,3 @@ Brief → plan → generate → review → refactor
 📍 **Next Step**: Wire CI to check that `packages/agents/*` exports match this spec.
 
 ---
->>>>>>> MIGRATING (cortex-os)

@@ -1,16 +1,3 @@
-<<<<<<< EXISTING (cortex-os-clean)
-{
-  "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
-  "tasks": {
-    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"], "env": ["NODE_ENV"] },
-    "dev": { "cache": false, "persistent": true },
-    "test": { "dependsOn": ["build"], "outputs": ["coverage/**"], "env": ["NODE_ENV"] },
-    "lint": { "outputs": [] },
-    "typecheck": { "dependsOn": ["^build"], "outputs": [] }
-  }
-}
-=======
 {
   "$schema": "https://turbo.build/schema.json",
   "pipeline": {
@@ -142,4 +129,3 @@
     }
   }
 }
->>>>>>> MIGRATING (cortex-os)

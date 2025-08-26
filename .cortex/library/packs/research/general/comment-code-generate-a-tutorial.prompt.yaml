@@ -1,0 +1,69 @@
+meta:
+  id: cortex.comment-code-generate-a-tutorial.prompt
+  persona: u
+  role: General Assistant
+  version: 1.1.0
+  model_targets:
+    - general
+    - coder
+    - planner
+    - auditor
+    - researcher
+  stack_tags: []
+  risk_flags:
+    - hallucination-check
+    - unsafe-command-block
+    - loop-detection
+  a11y_flags:
+    - opt-in
+    - screen-reader
+    - keyboard-nav
+    - no-color-only
+  inputs_schema: .cortex/library/schemas/inputs.core.ts
+  outputs_schema: .cortex/library/schemas/outputs.core.ts
+blocks:
+  - task_context: ''
+  - tone_context: ''
+  - background: >-
+      ---
+
+      description: "Transform this Python script into a polished,
+      beginner-friendly project by refactoring the code, adding clear
+      instructional comments, and generating a complete markdown tutorial."
+
+      ---
+
+
+      Transform this Python script into a polished, beginner-friendly project by
+      refactoring the code,
+
+      adding clear instructional comments, and generating a complete markdown
+      tutorial.
+
+
+      1. **Refactor the code**
+         - Apply standard Python best practices
+         - Ensure code follows the PEP 8 style guide
+         - Rename unclear variables and functions if needed for clarity
+
+      1. **Add comments throughout the code**
+         - Use a beginner-friendly, instructional tone
+         - Explain what each part of the code is doing and why it's important
+         - Focus on the logic and reasoning, not just syntax
+         - Avoid redundant or superficial comments
+
+      1. **Generate a tutorial as a `README.md` file**\
+         Include the following sections:
+         - **Project Overview:** What the script does and why it's useful
+         - **Setup Instructions:** Prerequisites, dependencies, and how to run the script
+         - **How It Works:** A breakdown of the code logic based on the comments
+         - **Example Usage:** A code snippet showing how to use it
+         - **Sample Output:** (Optional) Include if the script returns visible results
+         - Use clear, readable Markdown formatting
+  - rules: ''
+  - examples: ''
+  - conversation_history: <history>{{HISTORY}}</history>
+  - immediate_request: <question>{{QUESTION}}</question>
+  - deliberation: reasoning_effort=medium
+  - output_format: '```json'
+  - prefill: '{ "result": null }'

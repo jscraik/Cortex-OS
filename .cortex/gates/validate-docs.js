@@ -1,16 +1,19 @@
 import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 console.log('Validating documentation authority chain...');
 
+const repoRoot = join(process.cwd(), '..', '..');
 const requiredDocs = [
-  '.cortex/rules/AGENTS.md',
-  '.cortex/rules/RULES_OF_AI.md'
+  join('.cortex', 'rules', 'AGENTS.md'),
+  join('.cortex', 'rules', 'RULES_OF_AI.md')
 ];
 
 let valid = true;
 
 for (const doc of requiredDocs) {
-  if (!existsSync(doc)) {
+  const fullPath = join(repoRoot, doc);
+  if (!existsSync(fullPath)) {
     console.error(`❌ Required document missing: ${doc}`);
     valid = false;
   } else {
@@ -18,10 +21,11 @@ for (const doc of requiredDocs) {
   }
 }
 
-// Check for "AGENTS.md is the boss" reference
-if (existsSync('.cortex/rules/AGENTS.md')) {
-  const agentsContent = readFileSync('.cortex/rules/AGENTS.md', 'utf8');
-  if (!agentsContent.includes('AGENTS.md is the boss')) {
+// Check for authority declaration in AGENTS.md
+const agentsPath = join(repoRoot, '.cortex', 'rules', 'AGENTS.md');
+if (existsSync(agentsPath)) {
+  const agentsContent = readFileSync(agentsPath, 'utf8');
+  if (!agentsContent.includes('single source of truth for agent roles')) {
     console.error('❌ AGENTS.md missing authority declaration');
     valid = false;
   }

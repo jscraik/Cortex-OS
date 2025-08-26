@@ -1,0 +1,40 @@
+{
+  "servers": {
+    "gitmcp": {
+      "transport": "sse",
+      "url": "https://gitmcp.io/idosal/git-mcp",
+      "cache": {
+        "ttlSeconds": 900
+      },
+      "name": "gitmcp",
+      "type": "sse"
+    },
+    "Ref": {
+      "name": "Ref",
+      "type": "http",
+      "transport": "http",
+      "url": "https://api.ref.tools/mcp",
+      "headers": {
+        "Authorization": "Bearer ref-e672788111c76ba32bc1"
+      },
+      "environment": {},
+      "timeout": 30000,
+      "connectionMode": "lenient",
+      "maxRetries": 3,
+      "sandbox": true,
+      "allowedCapabilities": [
+        "read"
+      ],
+      "approved": true,
+      "approvedAt": "2025-08-20T18:26:04.790Z",
+      "hash": "57e27634d7e713be",
+      "securityLevel": "low",
+      "installedAt": "2025-08-20T18:26:04.791Z"
+    }
+  },
+  "metadata": {
+    "lastUpdated": "2025-08-20T18:26:04.791Z",
+    "version": "1.0.0",
+    "totalServers": 2
+  }
+}
