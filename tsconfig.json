@@ -1,16 +1,19 @@
 {
-  "files": [],
-  "references": [],
   "compilerOptions": {
-    "composite": true,
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "skipLibCheck": true,
-    "strict": true,
-    "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": ["node"],
-    "baseUrl": "."
-  }
+    "allowJs": false,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@cortex-os/*": ["./*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "coverage"]
 }
