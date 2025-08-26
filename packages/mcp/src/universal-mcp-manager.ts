@@ -10,6 +10,11 @@
 import { createHash, randomBytes } from 'crypto';
 import { URL } from 'url';
 import { z } from 'zod';
+import {
+  type SecurityPolicy,
+  defaultSecurityPolicy,
+  logSecurityEvent,
+} from './security-policy';
 import { mcpConfigStorage } from './mcp-config-storage.js';
 
 // Security validation schemas
@@ -68,16 +73,6 @@ const McpServerRequestSchema = z.object({
 
 type McpServerRequest = z.infer<typeof McpServerRequestSchema>;
 
-interface SecurityPolicy {
-  allowedDomains: string[];
-  blockedDomains: string[];
-  requireApiKey: boolean;
-  requireUserApproval: boolean;
-  maxConnections: number;
-  sandbox: boolean;
-  allowedCapabilities: string[];
-}
-
 interface ValidationResult {
   isValid: boolean;
   errors: string[];
@@ -90,15 +85,7 @@ interface ValidationResult {
  * Universal MCP server manager with security validation
  */
 export class UniversalMcpManager {
-  private readonly defaultSecurityPolicy: SecurityPolicy = {
-    allowedDomains: ['localhost', '127.0.0.1', 'api.ref.tools'],
-    blockedDomains: ['127.0.0.2', '0.0.0.0', '169.254.169.254'], // Block metadata services
-    requireApiKey: true,
-    requireUserApproval: true,
-    maxConnections: 10,
-    sandbox: true,
-    allowedCapabilities: ['read', 'search', 'info'],
-  };
+  private readonly defaultSecurityPolicy: SecurityPolicy = defaultSecurityPolicy;
 
   /**
    * Parse and validate MCP server addition command from any CLI format
@@ -222,6 +209,7 @@ export class UniversalMcpManager {
    * Validate MCP server request against security policies
    */
   async validateMcpServer(request: McpServerRequest): Promise<ValidationResult> {
+    logSecurityEvent('validate-mcp-server', request);
     const errors: string[] = [];
     const warnings: string[] = [];
     let securityLevel: 'low' | 'medium' | 'high' = 'low';
@@ -328,6 +316,10 @@ export class UniversalMcpManager {
    * Generate a secure configuration from the validated request
    */
   generateSecureConfig(request: McpServerRequest, approved: boolean = false) {
+    logSecurityEvent('generate-secure-config', {
+      name: request.name,
+      transport: request.transport,
+    });
     const config = {
       name: request.name,
       type: request.transport,

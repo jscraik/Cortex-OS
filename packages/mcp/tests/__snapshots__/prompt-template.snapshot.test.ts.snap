@@ -1,0 +1,6 @@
+exports[`web-mcp-interface examples remain stable 1`] = `
+<strong>Examples:</strong><br>
+            • cortex mcp add --transport http Ref "https://api.ref.tools/mcp?apiKey=ref-e672788111c76ba32bc1"<br>
+            • claude mcp add --transport http ref-server https://api.ref.tools/mcp --header "Authorization: Bearer token"<br>
+            • gemini mcp add ref-server --url https://api.ref.tools/mcp --key ref-e672788111c76ba32bc1
+`;
