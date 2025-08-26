@@ -1,21 +1,57 @@
-import neo4j, { Driver } from 'neo4j-driver';
+import neo4j, { Driver, Session } from 'neo4j-driver';
 import { validateNeo4jInput } from '@cortex-os/mvp-core/src/validation';
 
 // Secure Neo4j wrapper that prevents injection vulnerabilities
 export class SecureNeo4j {
   private driver: Driver;
+  private sessionPool: Session[] = [];
+  private maxPoolSize: number = 10;
+  private activeSessions: number = 0;
 
   constructor(uri: string, user: string, pass: string) {
     this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { 
       userAgent: 'cortex-os/0.1',
       // Add security configurations
       encrypted: true,
-      trust: 'TRUST_SYSTEM_CA_SIGNED_CERTIFICATES'
+      trust: 'TRUST_SYSTEM_CA_SIGNED_CERTIFICATES',
+      // Add connection pooling configurations
+      maxConnectionPoolSize: this.maxPoolSize,
+      connectionAcquisitionTimeout: 60000,
+      connectionTimeout: 30000
     });
   }
 
   async close() {
+    // Close all sessions in the pool
+    for (const session of this.sessionPool) {
+      await session.close();
+    }
+    this.sessionPool = [];
     await this.driver.close();
+  }
+
+  // Get a session from the pool or create a new one
+  private getSession(): Session {
+    if (this.sessionPool.length > 0) {
+      return this.sessionPool.pop()!;
+    }
+    
+    if (this.activeSessions < this.maxPoolSize) {
+      this.activeSessions++;
+      return this.driver.session();
+    }
+    
+    throw new Error('Maximum session pool size reached');
+  }
+
+  // Return a session to the pool
+  private returnSession(session: Session) {
+    if (this.sessionPool.length < this.maxPoolSize) {
+      this.sessionPool.push(session);
+    } else {
+      session.close();
+      this.activeSessions--;
+    }
   }
 
   // Secure node upsert with validation
@@ -35,19 +71,18 @@ export class SecureNeo4j {
     // Validate properties
     this.validateProperties(node.props);
     
-    const session = this.driver.session();
+    const session = this.getSession();
     try {
       // Use parameterized query to prevent injection
-      // SECURITY FIX: Use validated label directly
-    await session.run(
-      `MERGE (n:${labelValidation.data} {id: $id}) SET n += $props`,
-      {
-        id: idValidation.data,
-        props: node.props
-      }
-    );
+      await session.run(
+        `MERGE (n:${labelValidation.data} {id: $id}) SET n += $props`,
+        {
+          id: idValidation.data,
+          props: node.props
+        }
+      );
     } finally {
-      await session.close();
+      this.returnSession(session);
     }
   }
 
@@ -75,7 +110,7 @@ export class SecureNeo4j {
       this.validateProperties(rel.props);
     }
     
-    const session = this.driver.session();
+    const session = this.getSession();
     try {
       // Use parameterized query to prevent injection
       await session.run(
@@ -89,7 +124,7 @@ export class SecureNeo4j {
         }
       );
     } finally {
-      await session.close();
+      this.returnSession(session);
     }
   }
 
@@ -106,7 +141,7 @@ export class SecureNeo4j {
       throw new Error('Depth must be between 1 and 5');
     }
     
-    const session = this.driver.session();
+    const session = this.getSession();
     try {
       // Use parameterized query to prevent injection
       const result = await session.run(
@@ -142,7 +177,7 @@ export class SecureNeo4j {
         rels: rels.map((r) => ({ from: r.from, to: r.to, type: r.type, props: r.props })),
       };
     } finally {
-      await session.close();
+      this.returnSession(session);
     }
   }
 
@@ -163,7 +198,7 @@ export class SecureNeo4j {
         }
         
         // Prevent dangerous patterns in strings
-        if (/[;'"`<>(){}]/.test(value)) {
+        if (/[;'\"`<>(){}]/.test(value)) {
           throw new Error(`Invalid characters in property value for key: ${key}`);
         }
       } else if (typeof value === 'object' && value !== null) {
@@ -171,5 +206,14 @@ export class SecureNeo4j {
         this.validateProperties(value);
       }
     }
+  }
+
+  // Get connection pool statistics
+  getPoolStats() {
+    return {
+      activeSessions: this.activeSessions,
+      pooledSessions: this.sessionPool.length,
+      maxPoolSize: this.maxPoolSize
+    };
   }
 }
