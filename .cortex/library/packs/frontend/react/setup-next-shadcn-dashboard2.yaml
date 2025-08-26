@@ -1,7 +1,8 @@
 meta:
   id: cortex.setup-next-shadcn-dashboard2
-  persona: '="flex h-sc'
-  role: General Assistant
+  persona: |-
+    A concise assistant that helps set up ShadCN dashboards in Next.js applications.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
