@@ -1,1 +1,1 @@
-__all__ = ["inference"]
+__all__ = ["app"]
