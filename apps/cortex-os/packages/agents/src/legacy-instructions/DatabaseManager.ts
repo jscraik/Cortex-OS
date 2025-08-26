@@ -27,6 +27,7 @@ async function loadSQLiteWrapper() {
 }
 
 export class DatabaseManager extends EventEmitter {
+  // TODO: Implement SecureDatabaseWrapper for all database operations
   private static instance: DatabaseManager;
   private db: any; // Database instance or in-memory fallback
   private statements: Map<string, any>;
@@ -301,7 +302,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
 
   // Swarm operations
 
-  async createSwarm(data: any): Promise<void> {
+  async createSwarm(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("createSwarm")!.run(data);
   }
 
@@ -314,7 +316,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
     return result ? result.id : null;
   }
 
-  async setActiveSwarm(id: string): Promise<void> {
+  async setActiveSwarm(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("setActiveSwarm")!.run(id);
   }
 
@@ -334,7 +337,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
 
   // Agent operations
 
-  async createAgent(data: any): Promise<void> {
+  async createAgent(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("createAgent")!.run(data);
   }
 
@@ -346,7 +350,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
     return this.statements.get("getAgents")!.all(swarmId);
   }
 
-  async updateAgent(id: string, updates: any): Promise<void> {
+  async updateAgent(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     const setClauses: string[] = [];
     const values: any[] = [];
 
@@ -368,7 +373,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
     stmt.run(...values);
   }
 
-  async updateAgentStatus(id: string, status: string): Promise<void> {
+  async updateAgentStatus(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.db
       .prepare("UPDATE agents SET status = ? WHERE id = ?")
       .run(status, id);
@@ -388,7 +394,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
 
   // Task operations
 
-  async createTask(data: any): Promise<void> {
+  async createTask(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("createTask")!.run({
       ...data,
       requireConsensus: data.requireConsensus ? 1 : 0,
@@ -403,7 +410,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
     return this.statements.get("getTasks")!.all(swarmId);
   }
 
-  async updateTask(id: string, updates: any): Promise<void> {
+  async updateTask(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     const setClauses: string[] = [];
     const values: any[] = [];
 
@@ -421,7 +429,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
     stmt.run(...values);
   }
 
-  async updateTaskStatus(id: string, status: string): Promise<void> {
+  async updateTaskStatus(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("updateTaskStatus")!.run(status, id);
   }
 
@@ -471,7 +480,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
 
   // Memory operations
 
-  async storeMemory(data: any): Promise<void> {
+  async storeMemory(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("storeMemory")!.run(data);
   }
 
@@ -479,7 +489,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
     return this.statements.get("getMemory")!.get(key, namespace);
   }
 
-  async updateMemoryAccess(key: string, namespace: string): Promise<void> {
+  async updateMemoryAccess(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.db
       .prepare(
         `
@@ -503,7 +514,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
       );
   }
 
-  async deleteMemory(key: string, namespace: string): Promise<void> {
+  async deleteMemory(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.db
       .prepare("DELETE FROM memory WHERE key = ? AND namespace = ?")
       .run(key, namespace);
@@ -581,7 +593,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
       .all(daysOld);
   }
 
-  async updateMemoryEntry(entry: any): Promise<void> {
+  async updateMemoryEntry(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.db
       .prepare(
         `
@@ -640,7 +653,8 @@ For persistent storage options, see: https://github.com/ruvnet/claude-code-flow/
 
   // Communication operations
 
-  async createCommunication(data: any): Promise<void> {
+  async createCommunication(...) {
+    // TODO: Use SecureDatabaseWrapper for this operation
     this.statements.get("createCommunication")!.run(data);
   }
 
