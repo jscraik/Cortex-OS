@@ -1,19 +1,26 @@
 packages:
-  - "apps/cortex-os"
-  - "apps/cortex-os/packages/agents"
-  - "apps/cortex-os/packages/mvp"
-  - "apps/cortex-os/packages/mvp-server"
-  - "packages/a2a"
-  - "packages/mcp"
-  - "packages/memories"
-  - "packages/orchestration"
-  - "packages/rag"
-  - "packages/simlab"
-  - "libs/typescript/contracts"
-  - "libs/typescript/types"
-  - "libs/typescript/utils"
-  - "libs/typescript/telemetry"
-  - "libs/typescript/testing"
-  - "tools/structure-guard"
-  - "tools/eslint-config"
-  - "tools/lockfile-sync"
+  # Apps (ASBR structure)
+  - "apps/*"
+  
+  # Packages (shared libraries)
+  - "packages/*"
+  
+  # Services (backend services)
+  - "services/*"
+  
+  # Libraries (framework libraries)
+  - "libs/*"
+  - "libs/typescript/*"
+  - "libs/python/*"
+  
+  # External integrations
+  - "external/*"
+
+excludes:
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/.next/**"
+  - "**/coverage/**"
+  - "**/tmp/**"
+  - "**/temp/**"
