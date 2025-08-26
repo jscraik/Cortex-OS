@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "allowedRoots": [
+    "apps/cortex-os",
+    "apps/cortex-cli",
+    "apps/cortex-os/packages/mcp",
+    "apps/cortex-os/packages/a2a",
+    "apps/cortex-os/packages/rag",
+    "apps/cortex-os/packages/simlab",
+    "packages",
+    ".cortex",
+    ".github",
+    "scripts",
+    "tools",
+    "libs",
+    "services",
+    "docs"
+  ],
+  "denyPatterns": [
+    "^tmp/.*$"
+  ],
+  "maxFilesChangedPerPR": 15
+}
+

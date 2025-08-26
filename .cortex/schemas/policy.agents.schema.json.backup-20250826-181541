@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["defaultBudget", "agents"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "defaultBudget": {
+      "type": "object",
+      "properties": {
+        "wallClockMs": { "type": "number" },
+        "maxSteps": { "type": "number" },
+        "tokens": { "type": "number" },
+        "costUSD": { "type": "number" }
+      },
+      "required": ["wallClockMs", "maxSteps", "tokens", "costUSD"]
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "tools": { "type": "array", "items": { "type": "string" } },
+          "egress": { "type": "array", "items": { "type": "string" } },
+          "maxConcurrency": { "type": "number" }
+        },
+        "required": ["tools", "egress", "maxConcurrency"]
+      }
+    }
+  }
+}
+

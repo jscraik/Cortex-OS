@@ -1,9 +1,31 @@
-{
-  "$schema": "../schemas/policy.agents.schema.json",
-  "defaultBudget": { "wallClockMs": 30000, "maxSteps": 16, "tokens": 0, "costUSD": 0 },
+agents_policy_content='{
+  "version": "1.0.0",
   "agents": {
-    "agent.echo": { "tools": [], "egress": [], "maxConcurrency": 8 },
-    "agent.rag":  { "tools": ["memories.search", "memories.save"], "egress": [], "maxConcurrency": 4 }
+    "assistant": {
+      "allowedTools": ["file-read", "search", "memory-query"],
+      "quotas": {
+        "fileOps": 100,
+        "networkCalls": 50,
+        "computeMinutes": 30
+      }
+    },
+    "developer": {
+      "allowedTools": ["file-read", "file-write", "terminal", "git"],
+      "quotas": {
+        "fileOps": 500,
+        "networkCalls": 20,
+        "computeMinutes": 60
+      }
+    },
+    "reviewer": {
+      "allowedTools": ["file-read", "diff-view", "memory-query"],
+      "quotas": {
+        "fileOps": 200,
+        "networkCalls": 10,
+        "computeMinutes": 45
+      }
+    }
   }
-}
+}'
 
+smart_merge "$agents_policy_content" "$CLEAN_DIR/.cortex/policy/policy.agents.json" "agents policy"

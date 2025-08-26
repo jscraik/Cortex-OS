@@ -1,20 +1,23 @@
 {
-  "$schema": "../schemas/policy.repo.schema.json",
-  "allowedRoots": [
-    ".github/**", ".cortex/**", "apps/cortex-os/**", "packages/**", "services/**",
-    "libs/**", "tools/**", "infra/**", "docs/**", ".husky/**"
-  ],
-  "packages": {
-    "apps/cortex-os/packages/agents": ["src/**", "tests/**"],
-    "apps/cortex-os/packages/mvp": ["**"],
-    "apps/cortex-os/packages/mvp-server": ["src/**", "tests/**"],
-    "packages/orchestration": ["src/**", "tests/**"],
-    "packages/memories": ["src/**", "tests/**", "prisma/**"]
+  "version": "1.0.0",
+  "allowedPaths": {
+    "apps": ["cortex-os"],
+    "packages": ["a2a", "mcp", "memories", "orchestration", "rag", "simlab"],
+    "services": ["ml-inference", "data-pipeline"],
+    "libs": ["typescript"],
+    "tools": ["structure-guard", "eslint-config"]
   },
-  "deny": {
-    "extensions": [".env", ".pem", ".key", ".p12"],
-    "maxFileKB": 2560,
-    "maxNewFilesPerPR": 60
+  "fileTypes": {
+    "allowed": [
+      "*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.md", "*.yml", "*.yaml",
+      "*.py", "*.pyi", "*.toml", "*.txt", "*.css", "*.scss", "*.html"
+    ],
+    "blocked": [
+      "*.log", "*.cache", "*.tmp", "*.sqlite", "*.db"
+    ]
+  },
+  "sizeLimits": {
+    "maxFileSize": "10MB",
+    "maxTotalSize": "100MB"
   }
 }
-
