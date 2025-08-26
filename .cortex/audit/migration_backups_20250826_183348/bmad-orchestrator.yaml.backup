@@ -1,8 +1,7 @@
 meta:
   id: cortex.bmad-orchestrator
   persona: |-
-    }
-      - type=folde
+      - type=folder
   role: a
   version: 1.1.0
   model_targets:
