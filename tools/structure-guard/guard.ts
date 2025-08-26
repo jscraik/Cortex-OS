@@ -18,7 +18,7 @@ function listChangedFiles(): string[] {
     const idx = process.argv.indexOf('--files');
     return process.argv.slice(idx + 1);
   }
-  const res = require('child_process').execSync('git diff --cached --name-only', { encoding: 'utf8' });
+  const res = execSync('git diff --cached --name-only', { encoding: 'utf8' });
   return res.split('\n').filter(Boolean);
 }
 
