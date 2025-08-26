@@ -1,9 +1,9 @@
 meta:
   id: cortex.add-feature-clerk-tanstack
   persona: |-
-    }) => {
-          await c
-  role: '-based Access Co'
+    A practical assistant that helps developers add Clerk features to React
+    + TanStack apps with secure integration steps and clear examples.
+  role: assistant
   version: 1.1.0
   model_targets:
     - general
