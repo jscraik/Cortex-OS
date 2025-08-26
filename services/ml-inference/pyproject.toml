@@ -3,10 +3,19 @@ name = "cortex-ml-inference"
 version = "0.1.0"
 requires-python = ">=3.11"
 description = "ML inference microservice"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "prometheus-client",
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv]
-dev-dependencies = []
+dev-dependencies = [
+  "httpx",
+  "pytest",
+  "pytest-asyncio",
+]
