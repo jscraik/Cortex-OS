@@ -34,6 +34,8 @@
       "@sdk/*": ["apps/cortex-os/packages/sdk/src/*"],
       "@telemetry/*": ["apps/cortex-os/packages/telemetry/src/*"],
       "@cortex-os/*": ["apps/cortex-os/packages/*/src", "apps/cortex-os/packages/*"],
+  "@cortex-os/rag": ["packages/rag/src/index.ts"],
+  "@cortex-os/rag/*": ["packages/rag/src/*"],
 
       "@brain/*": ["apps/cortex-os/brain/*"],
       "@brain/rag/*": ["apps/cortex-os/brain/rag/src/*"],
@@ -67,5 +69,6 @@
     { "path": "./apps/cortex-os/packages/sdk" },
     { "path": "./apps/cortex-os/packages/telemetry" },
     { "path": "./packages/testing" }
+  ,{ "path": "./packages/rag" }
   ]
 }

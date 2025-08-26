@@ -1,0 +1,235 @@
+syntax = "proto3";
+
+package faissd;
+
+// FAISS Sidecar Service for content-addressed vector indexing
+service FaissService {
+  // Build a new FAISS index from document embeddings
+  rpc BuildIndex(BuildRequest) returns (BuildResponse);
+  
+  // Search for similar vectors in an existing index
+  rpc SearchIndex(SearchRequest) returns (SearchResponse);
+  
+  // Get build status and manifest info
+  rpc GetBuildStatus(BuildStatusRequest) returns (BuildStatusResponse);
+  
+  // Health check endpoint
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Request to build a new FAISS index
+message BuildRequest {
+  // Content hash of the corpus used for content-addressed storage
+  string corpus_hash = 1;
+  
+  // Embedding model identifier (e.g., "text-embedding-3-small")
+  string embed_model = 2;
+  
+  // Document embeddings to index
+  repeated DocumentEmbedding documents = 3;
+  
+  // Index configuration
+  IndexConfig config = 4;
+  
+  // Optional metadata for the build
+  map<string, string> metadata = 5;
+}
+
+// Response from building a FAISS index
+message BuildResponse {
+  // Content-addressed snapshot ID (SHA256 hash)
+  string snapshot_id = 1;
+  
+  // Whether this was a cache hit or new build
+  bool cache_hit = 2;
+  
+  // Number of documents indexed
+  int32 document_count = 3;
+  
+  // Build timestamp
+  int64 build_timestamp = 4;
+  
+  // Index statistics
+  IndexStats stats = 5;
+  
+  // Any build warnings or notices
+  repeated string warnings = 6;
+}
+
+// Request to search a FAISS index
+message SearchRequest {
+  // Snapshot ID to search against
+  string snapshot_id = 1;
+  
+  // Query vector
+  repeated float query_vector = 2;
+  
+  // Number of top results to return
+  int32 top_k = 3;
+  
+  // Optional search filters
+  SearchFilters filters = 4;
+  
+  // Whether to include document content in results
+  bool include_content = 5;
+}
+
+// Response from searching a FAISS index
+message SearchResponse {
+  // Search results ordered by similarity score
+  repeated SearchResult results = 1;
+  
+  // Search latency in milliseconds
+  float search_latency_ms = 2;
+  
+  // Total number of indexed documents searched
+  int32 total_documents = 3;
+  
+  // Search metadata
+  map<string, string> search_metadata = 4;
+}
+
+// Document with embedding vector
+message DocumentEmbedding {
+  // Unique document identifier
+  string doc_id = 1;
+  
+  // Document embedding vector
+  repeated float embedding = 2;
+  
+  // Optional document content/text
+  string content = 3;
+  
+  // Document metadata
+  map<string, string> metadata = 4;
+  
+  // Document source URI or path
+  string source = 5;
+}
+
+// FAISS index configuration
+message IndexConfig {
+  // Vector dimension
+  int32 dimension = 1;
+  
+  // Index type (e.g., "IndexFlatIP", "IndexIVFFlat")
+  string index_type = 2;
+  
+  // Distance metric ("cosine", "euclidean", "inner_product")
+  string distance_metric = 3;
+  
+  // Number of clusters for IVF indices
+  int32 n_clusters = 4;
+  
+  // Training parameters
+  map<string, string> training_params = 5;
+}
+
+// Index statistics
+message IndexStats {
+  // Total vectors in index
+  int32 total_vectors = 1;
+  
+  // Index size in bytes
+  int64 index_size_bytes = 2;
+  
+  // Build duration in milliseconds
+  float build_duration_ms = 3;
+  
+  // Memory usage during build
+  int64 peak_memory_bytes = 4;
+  
+  // Index efficiency metrics
+  map<string, float> efficiency_metrics = 5;
+}
+
+// Search result
+message SearchResult {
+  // Document ID from the original corpus
+  string doc_id = 1;
+  
+  // Similarity score (higher = more similar)
+  float score = 2;
+  
+  // Result rank (1-based)
+  int32 rank = 3;
+  
+  // Optional document content if requested
+  string content = 4;
+  
+  // Document metadata
+  map<string, string> metadata = 5;
+  
+  // Source URI or path
+  string source = 6;
+}
+
+// Search filters for query refinement
+message SearchFilters {
+  // Minimum similarity threshold
+  float min_score = 1;
+  
+  // Maximum similarity threshold  
+  float max_score = 2;
+  
+  // Metadata filters (key-value pairs)
+  map<string, string> metadata_filters = 3;
+  
+  // Source filters (include/exclude patterns)
+  repeated string source_includes = 4;
+  repeated string source_excludes = 5;
+}
+
+// Build status request
+message BuildStatusRequest {
+  // Snapshot ID to check status for
+  string snapshot_id = 1;
+}
+
+// Build status response
+message BuildStatusResponse {
+  // Build status ("building", "completed", "failed", "not_found")
+  string status = 1;
+  
+  // Progress percentage (0-100)
+  float progress = 2;
+  
+  // Build start timestamp
+  int64 start_timestamp = 3;
+  
+  // Build completion timestamp (if completed)
+  int64 completion_timestamp = 4;
+  
+  // Error message if build failed
+  string error_message = 5;
+  
+  // Current build stage
+  string current_stage = 6;
+}
+
+// Health check request
+message HealthCheckRequest {
+  // Optional service component to check
+  string component = 1;
+}
+
+// Health check response
+message HealthCheckResponse {
+  // Health status ("healthy", "unhealthy", "degraded")
+  string status = 1;
+  
+  // Server uptime in seconds
+  int64 uptime_seconds = 2;
+  
+  // Active index count
+  int32 active_indices = 3;
+  
+  // Memory usage in bytes
+  int64 memory_usage_bytes = 4;
+  
+  // Service version
+  string version = 5;
+  
+  // Health check details
+  map<string, string> details = 6;
+}

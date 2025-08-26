@@ -1,0 +1,4 @@
+
+> @cortex-os/retrieval-layer@0.1.0 typecheck /Users/jamiecraik/.cortex-os/apps/cortex-os/brain/rag/retrieval-layer
+> pnpm -w exec tsc -p apps/cortex-os/brain/rag/retrieval-layer/tsconfig.typecheck.json --noEmit
+

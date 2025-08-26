@@ -1,4 +1,4 @@
-import { byChars } from '@cortex-os/rag-ingest/chunk';
+import { byChars } from '@cortex-os/rag/chunk';
 import { expect, it } from 'vitest';
 
 it('chunks with overlap', () => {

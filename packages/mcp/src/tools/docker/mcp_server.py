@@ -18,7 +18,7 @@ from typing import Dict, List
 from fastapi import FastAPI
 from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
-# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
+from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
 
 app = FastAPI(title="Cortex MCP Docker Toolkit", version="1.1.0")
 
@@ -70,11 +70,35 @@ def validate_docker_command(command):
             raise ValueError(f"Invalid parameter: {param}")
 
 def run_docker_command(command):
-    # SECURITY FIX: Validate command before execution
+    """Execute Docker command using SecureCommandExecutor."""
+    # Validate command before execution
     try:
         validate_docker_command(command)
     except ValueError as e:
         return {"stdout": "", "stderr": f"Command validation failed: {str(e)}"}
+    
+    # Use SecureCommandExecutor for safe command execution
+    try:
+        # SECURITY UPDATE: Execute command using Python SecureCommandExecutor
+        result = SecureCommandExecutor.execute_command_sync(command, timeout=30)
+        return result
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}"}"}
+    
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)
+        return {"stdout": result.stdout, "stderr": ""}
+    except subprocess.CalledProcessError as e:
+        return {"stdout": e.stdout, "stderr": e.stderr}
+    except subprocess.TimeoutExpired as e:
+        return {"stdout": "", "stderr": f"Error: Command timed out after 30 seconds"}
+    except FileNotFoundError:
+        return {
+            "stdout": "",
+            "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
+        }
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}"}
     
     result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)
         return {"stdout": result.stdout, "stderr": ""}
@@ -107,22 +131,50 @@ def health():
 
 @app.get("/docker/containers")
 def docker_list_containers():
-    return run_docker_command(["docker", "ps", "-a"])
+    """List all Docker containers using SecureCommandExecutor."""
+    # SECURITY UPDATE: Use SecureCommandExecutor directly
+    try:
+        from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
+        result = SecureCommandExecutor.execute_docker_command("ps", ["-a"])
+        return result
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}
 
 
 @app.get("/docker/images")
 def docker_list_images():
-    return run_docker_command(["docker", "images"])
+    """List all Docker images using SecureCommandExecutor."""
+    # SECURITY UPDATE: Use SecureCommandExecutor directly
+    try:
+        from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
+        result = SecureCommandExecutor.execute_docker_command("images")
+        return result
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}
 
 
 @app.post("/docker/inspect")
 def docker_inspect_container(req: DockerInspectRequest):
-    return run_docker_command(["docker", "inspect", req.container_id])
+    """Inspect a Docker container using SecureCommandExecutor."""
+    # SECURITY UPDATE: Use SecureCommandExecutor directly
+    try:
+        from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
+        result = SecureCommandExecutor.execute_docker_command("inspect", [req.container_id])
+        return result
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}
 
 
 @app.post("/docker/logs")
 def docker_get_container_logs(req: DockerLogsRequest):
-    return run_docker_command(["docker", "logs", req.container_id])
+    """Get logs from a Docker container using SecureCommandExecutor."""
+    # SECURITY UPDATE: Use SecureCommandExecutor directly
+    try:
+        from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
+        result = SecureCommandExecutor.execute_docker_command("logs", [req.container_id])
+        return result
+    except Exception as e:
+        return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}
 
 
 @app.post("/docker/analyze_documentation")
