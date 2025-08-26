@@ -9,7 +9,12 @@ mkdirSync(".artifacts", { recursive: true });
 
 function run(cmd: string) {
   try { return execSync(cmd, { stdio: "pipe" }).toString(); }
-  catch (e: any) { return e.stdout?.toString() ?? e.message; }
+  catch (e) {
+    if (typeof e === "object" && e !== null && "stdout" in e && typeof (e as any).stdout === "object") {
+      return (e as { stdout?: Buffer }).stdout?.toString() ?? (e as Error).message;
+    }
+    return (e as Error).message;
+  }
 }
 
 const findings: Record<string, unknown> = {};
