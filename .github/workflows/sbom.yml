@@ -9,6 +9,14 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: pnpm install --frozen-lockfile
       - run: pnpm sbom:generate
+      - name: Verify SBOM
+        run: |
+          if ! ls sbom-*.json >/dev/null 2>&1; then
+            echo "SBOM generation failed"
+            exit 1
+          fi
       - name: Upload SBOM
         uses: actions/upload-artifact@v4
-        with: { name: sbom-${{ github.sha }}, path: "sbom-*.json" }
+        with:
+          name: sbom-${{ github.sha }}
+          path: sbom-*.json
