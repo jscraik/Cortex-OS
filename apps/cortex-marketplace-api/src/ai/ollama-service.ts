@@ -36,7 +36,7 @@ export const createOllamaService = (config: OllamaConfig) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -59,7 +59,7 @@ export const createOllamaService = (config: OllamaConfig) => {
     healthCheck: async (): Promise<boolean> => {
       try {
         const response = await fetch(`${config.baseUrl}/api/tags`, {
-          method: 'GET'
+          method: 'GET',
         });
         return response.ok;
       } catch {
@@ -73,12 +73,12 @@ export const createOllamaService = (config: OllamaConfig) => {
     generateEmbedding: async (text: string): Promise<OllamaEmbeddingResult> => {
       const result = await makeRequest('/api/embeddings', {
         model: config.defaultModel,
-        prompt: text
+        prompt: text,
       });
 
       return {
         embedding: result.embedding,
-        model: config.defaultModel
+        model: config.defaultModel,
       };
     },
 
@@ -102,7 +102,7 @@ Response:`;
           model: 'phi4-mini-reasoning:latest',
           prompt,
           stream: false,
-          options: { temperature: 0.3 }
+          options: { temperature: 0.3 },
         });
 
         // Parse JSON from response
@@ -120,7 +120,9 @@ Response:`;
     /**
      * Validate server quality
      */
-    validateServerQuality: async (server: ServerManifest): Promise<{
+    validateServerQuality: async (
+      server: ServerManifest,
+    ): Promise<{
       qualityScore: number;
       safetyAssessment: { safe: boolean; concerns: string[] };
       suggestions: string[];
@@ -144,7 +146,7 @@ Response:`;
           model: config.defaultModel,
           prompt,
           stream: false,
-          options: { temperature: 0.2 }
+          options: { temperature: 0.2 },
         });
 
         const jsonMatch = result.response.match(/\{[\s\S]*\}/);
@@ -161,72 +163,78 @@ Response:`;
     /**
      * Calculate semantic similarity
      */
-    calculateSimilarity: async (query: string, servers: ServerManifest[]): Promise<Array<{ server: ServerManifest; similarity: number }>> => {
+    calculateSimilarity: async (
+      query: string,
+      servers: ServerManifest[],
+    ): Promise<Array<{ server: ServerManifest; similarity: number }>> => {
       try {
         const queryEmbedding = await generateEmbedding(query);
-        
+
         const results = [];
         const batchSize = 5;
-        
+
         for (let i = 0; i < servers.length; i += batchSize) {
           const batch = servers.slice(i, i + batchSize);
-          
+
           const batchResults = await Promise.all(
             batch.map(async (server) => {
               const serverText = `${server.name} ${server.description} ${server.tags?.join(' ') || ''}`;
               try {
                 const serverEmbedding = await generateEmbedding(serverText);
-                const similarity = cosineSimilarity(queryEmbedding.embedding, serverEmbedding.embedding);
+                const similarity = cosineSimilarity(
+                  queryEmbedding.embedding,
+                  serverEmbedding.embedding,
+                );
                 return { server, similarity };
               } catch {
                 return { server, similarity: 0 };
               }
-            })
+            }),
           );
-          
+
           results.push(...batchResults);
-          
+
           // Rate limiting
           if (i + batchSize < servers.length) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
         }
-        
+
         return results.sort((a, b) => b.similarity - a.similarity);
       } catch (error) {
         console.warn('Semantic similarity failed:', error);
-        return servers.map(server => ({ server, similarity: 0 }));
+        return servers.map((server) => ({ server, similarity: 0 }));
       }
-    }
+    },
   };
 
   // Helper functions
 
   function cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) return 0;
-    
+
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
-    
+
     for (let i = 0; i < a.length; i++) {
       dotProduct += a[i] * b[i];
       normA += a[i] * a[i];
       normB += b[i] * b[i];
     }
-    
+
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
   async function generateEmbedding(text: string): Promise<OllamaEmbeddingResult> {
     const result = await makeRequest('/api/embeddings', {
       model: config.defaultModel,
-      prompt: text
+      prompt: text,
     });
 
     return {
       embedding: result.embedding,
-      model: config.defaultModel
+      model: config.defaultModel,
     };
   }
 };
