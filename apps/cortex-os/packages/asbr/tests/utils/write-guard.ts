@@ -1,4 +1,4 @@
-// Test write guard: prevent writing image files like *.png during tests.
+// Test write guard: prevent writing image files like *.png, *.jpg, *.jpeg, *.gif, *.bmp, *.webp, *.svg during tests.
 // This avoids cluttering the repo or interrupting developer workflows.
 import * as fs from "fs";
 import * as os from "os";
