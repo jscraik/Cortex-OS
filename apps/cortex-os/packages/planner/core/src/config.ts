@@ -1,15 +1,18 @@
-import { promises as fs } from "node:fs";
+import { promises as fs, existsSync } from "node:fs";
 import * as path from "node:path";
 
 export type JsonObject = { [key: string]: any };
 
 function getRepoRoot(): string {
-  // Assume this file lives under <repo>/packages/cortex-core/src/config.ts
-  // Resolve repo root three levels up from this file
-  return path.resolve(
-    path.dirname(new URL(import.meta.url).pathname),
-    "../../..",
-  );
+  let dir = path.dirname(new URL(import.meta.url).pathname);
+  while (!existsSync(path.join(dir, "cortex-config.json"))) {
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      throw new Error("Unable to locate repository root from config.ts");
+    }
+    dir = parent;
+  }
+  return dir;
 }
 
 function deepGet(obj: JsonObject, keyPath: string): any {
@@ -71,12 +74,6 @@ export class ConfigManager {
     const content = JSON.stringify(config, null, 2) + "\n";
     await fs.writeFile(this.configPath, content, "utf-8");
   }
-
-  getValueSync = (key: string): any => {
-    throw new Error(
-      "getValueSync is not supported in ESM context; use getValue()",
-    );
-  };
 
   async getValue(key: string): Promise<any> {
     const cfg = await this.loadFile();
