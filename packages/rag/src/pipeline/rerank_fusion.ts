@@ -2,26 +2,11 @@ export function fusionRerank(
   query: string,
   docs: { id: string; text: string; emb: number[] }[],
   bm25: Map<string, number>,
-  // Backwards-compatible: callers previously passed alpha as 4th arg.
-  // To allow an optional `queryEmb` without breaking callers we accept
-  // either a number (alpha) or an array (query embedding) as the 4th param.
-  maybeAlphaOrQueryEmb: number | number[] = 0.7,
-  // If the 4th param was a query embedding, the 5th may be alpha.
-  maybeAlpha?: number,
+  queryEmb?: number[],
+  alpha = 0.7,
 ) {
   if (!Array.isArray(docs)) throw new TypeError('docs must be an array');
   if (docs.length === 0) return [];
-
-  const isFourthAnEmb = Array.isArray(maybeAlphaOrQueryEmb);
-  let queryEmb: number[] | undefined;
-  let alpha = 0.7;
-
-  if (isFourthAnEmb) {
-    queryEmb = maybeAlphaOrQueryEmb as number[];
-    if (typeof maybeAlpha === 'number') alpha = maybeAlpha;
-  } else {
-    if (typeof maybeAlphaOrQueryEmb === 'number') alpha = maybeAlphaOrQueryEmb;
-  }
 
   // helpers extracted to small, single-purpose functions
   const dot = (a: number[], b: number[]) => {
