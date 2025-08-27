@@ -30,6 +30,10 @@
       "types": "./dist/pipeline/query.d.ts",
       "default": "./dist/pipeline/query.js"
     },
+    "./pipeline/batch-ingest": {
+      "types": "./dist/pipeline/batch-ingest.d.ts",
+      "default": "./dist/pipeline/batch-ingest.js"
+    },
     "./store/memory": {
       "types": "./dist/store/memory.d.ts",
       "default": "./dist/store/memory.js"
@@ -47,7 +51,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "zod": "^4.1.4"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
