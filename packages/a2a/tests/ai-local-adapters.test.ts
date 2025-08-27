@@ -333,15 +333,19 @@ describe('Local Adapters', () => {
         success: true,
       });
 
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/api/generate', {
-        model: 'llama2',
-        prompt: expect.stringContaining('Test prompt'),
-        stream: false,
-        options: {
-          temperature: 0.7,
-          num_predict: 1000,
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+        '/api/generate',
+        {
+          model: 'llama2',
+          prompt: expect.stringContaining('Test prompt'),
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 1000,
+          },
         },
-  }, expect.any(Object));
+        expect.any(Object),
+      );
     });
 
     it('should handle streaming responses', async () => {
@@ -722,7 +726,7 @@ describe('Local Adapters', () => {
         capability: AICapability.SEMANTIC_ROUTING,
       };
 
-  const mockAxiosInstance = createCancelableMockAxios();
+      const mockAxiosInstance = createCancelableMockAxios();
 
       (axios.create as any).mockReturnValue(mockAxiosInstance);
 

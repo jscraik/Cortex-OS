@@ -133,9 +133,12 @@ Local development and reference implementations:
 
 ### Service Integration
 
+- **Clean Architecture**: Restructured MCP package with functional patterns
+- **Transport Bridges**: stdio ↔ HTTP/SSE for remote server support
+- **AI-Enhanced Search**: MLX (Qwen3) primary, Ollama fallback
+- **Security First**: Content validation, safety checks, supply chain security
 - **No Direct Imports**: Services communicate via A2A events or contracts
 - **Dependency Injection**: ASBR runtime wires dependencies
-- **MCP Integration**: External tools via Model Context Protocol
 
 ## 🛡️ Governance & Validation
 
