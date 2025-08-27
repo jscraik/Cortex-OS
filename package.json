@@ -28,7 +28,7 @@
     "test:integration:security": "cross-env VITEST_MAX_THREADS=3 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=3 VITEST_MIN_FORKS=1 vitest run tests/integration/security-validation.test.ts",
     "test:accessibility": "turbo run test:accessibility",
     "test:a11y": "turbo run test:a11y",
-    "wcag3:assess": "python scripts/wcag3-tracker.mjs assess",
+    "wcag3:assess": "node scripts/wcag3-tracker.mjs assess",
     "wcag3:status": "cat a11y/wcag-roadmap.md",
     "test:security": "npm run test:integration:security",
     "test:security:unit": "vitest run tests/security/database-wrapper.unit.test.ts tests/security/neo4j-wrapper.unit.test.ts tests/security/command-executor.unit.test.ts",
