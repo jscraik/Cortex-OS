@@ -7,6 +7,12 @@
 import type { SimRunnerConfig } from './runner';
 import type { SimScenario, SimTurn } from './types';
 
+interface PersonaStyle {
+  formality: 'casual' | 'professional' | 'technical';
+  locale: string;
+  tone: string;
+}
+
 /**
  * Simulates user behavior and responses based on personas and scenarios
  */
@@ -28,20 +34,16 @@ export class UserSimulator {
   /**
    * Generate the initial message from the user based on scenario
    */
-  async generateInitialMessage(scenario: SimScenario): Promise<string> {
+  generateInitialMessage(scenario: SimScenario): Promise<string> {
     const { persona, goal } = scenario;
-
-    // Adjust message style based on persona
     const style = this.getPersonaStyle(persona);
-
-    // Generate initial message based on goal and persona
-    return this.formatMessage(goal, style);
+    return Promise.resolve(this.formatMessage(goal, style));
   }
 
   /**
    * Generate a user response based on conversation history and agent response
    */
-  async generateResponse(
+  generateResponse(
     scenario: SimScenario,
     conversationHistory: SimTurn[],
     agentResponse: string,
@@ -58,20 +60,20 @@ export class UserSimulator {
     const style = this.getPersonaStyle(persona);
 
     if (this.isHelpful(agentResponse)) {
-      return this.generatePositiveResponse(style);
+      return Promise.resolve(this.generatePositiveResponse(style));
     }
 
     if (this.needsClarification(agentResponse)) {
-      return this.generateClarificationRequest(style);
+      return Promise.resolve(this.generateClarificationRequest(style));
     }
 
-    return this.generateFollowUpResponse(style, agentResponse);
+    return Promise.resolve(this.generateFollowUpResponse(style));
   }
 
   /**
    * Get communication style based on persona
    */
-  private getPersonaStyle(persona: SimScenario['persona']) {
+  private getPersonaStyle(persona: SimScenario['persona']): PersonaStyle {
     return {
       formality: this.getTechFormalityLevel(persona.tech_fluency),
       locale: persona.locale,
@@ -100,7 +102,7 @@ export class UserSimulator {
   /**
    * Format initial message based on goal and style
    */
-  private formatMessage(goal: string, style: any): string {
+  private formatMessage(goal: string, style: PersonaStyle): string {
     if (style.formality === 'casual') {
       return `Hi! ${goal}`;
     }
@@ -161,7 +163,7 @@ export class UserSimulator {
   /**
    * Generate positive response
    */
-  private generatePositiveResponse(style: any): string {
+  private generatePositiveResponse(style: PersonaStyle): string {
     const responses = [
       'Thank you, that helps!',
       'Great, that works for me.',
@@ -174,7 +176,7 @@ export class UserSimulator {
   /**
    * Generate clarification request
    */
-  private generateClarificationRequest(style: any): string {
+  private generateClarificationRequest(style: PersonaStyle): string {
     const responses = [
       'Could you explain that in more detail?',
       'I need a bit more information about that.',
@@ -187,7 +189,7 @@ export class UserSimulator {
   /**
    * Generate follow-up response
    */
-  private generateFollowUpResponse(style: any, _agentResponse: string): string {
+  private generateFollowUpResponse(style: PersonaStyle): string {
     const responses = [
       'I see. What should I do next?',
       'Okay, can you help me with the next step?',
@@ -200,9 +202,17 @@ export class UserSimulator {
   /**
    * Select random response (deterministic if seeded)
    */
-  private selectRandomResponse(responses: string[], _style: any): string {
-    const index = Math.floor(this.rng() * responses.length);
-    return responses[index] || responses[0];
+  private selectRandomResponse(responses: string[], style: PersonaStyle): string {
+    let options = responses;
+    if (style.formality === 'casual') {
+      options = responses.map((r) =>
+        r.replace(/Thank you/gi, 'Thanks').replace(/Hello/gi, 'Hey'),
+      );
+    } else if (style.formality === 'technical') {
+      options = responses.map((r) => `Technical: ${r}`);
+    }
+    const index = Math.floor(this.rng() * options.length);
+    return options[index] || options[0];
   }
 
   /**
