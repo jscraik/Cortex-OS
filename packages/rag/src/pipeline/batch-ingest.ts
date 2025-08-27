@@ -63,7 +63,8 @@ export async function ingestFiles(params: IngestFilesParams): Promise<void> {
 
   async function worker() {
     while (queue.length) {
-      const file = queue.shift()!;
+      const file = queue.shift();
+      if (!file) break;
       const text = await fs.readFile(file, 'utf8');
       const chunks: Chunk[] = byChars(text, chunkSize, overlap).map((t, i) => ({
         id: `${path.basename(file)}#${i}`,
