@@ -50,7 +50,7 @@ export interface ExtensionResult {
 
 /**
  * Behavior Extension Manager
- * 
+ *
  * Manages adaptive behavior modifications based on captured examples
  * and learned patterns from user interactions.
  */
@@ -69,7 +69,7 @@ export class BehaviorExtensionManager {
    */
   async applyExtensions(
     state: PRPState,
-    context: Partial<ExtensionContext> = {}
+    context: Partial<ExtensionContext> = {},
   ): Promise<{
     modifiedState: PRPState;
     appliedExtensions: { extension: BehaviorExtension; result: ExtensionResult }[];
@@ -85,13 +85,13 @@ export class BehaviorExtensionManager {
 
     // Apply extensions in order of confidence
     const sortedExtensions = Array.from(this.extensions.values())
-      .filter(ext => ext.trigger(state))
+      .filter((ext) => ext.trigger(state))
       .sort((a, b) => b.confidence - a.confidence);
 
     for (const extension of sortedExtensions) {
       try {
         const result = await extension.modify(modifiedState, extensionContext);
-        
+
         if (result.modified) {
           // Apply modifications to state
           modifiedState = this.applyModifications(modifiedState, result);
@@ -124,7 +124,7 @@ export class BehaviorExtensionManager {
       name: `Extension: ${pattern.name}`,
       description: `Auto-generated from pattern: ${pattern.description}`,
       trigger: (state: PRPState) => this.evaluatePatternTrigger(pattern, state),
-      modify: async (state: PRPState, context: ExtensionContext) => 
+      modify: async (state: PRPState, context: ExtensionContext) =>
         this.applyPatternModification(pattern, state, context),
       confidence: pattern.effectiveness,
       basedOnPatterns: [pattern.id],
@@ -143,7 +143,7 @@ export class BehaviorExtensionManager {
    */
   updateExtensionEffectiveness(
     extensionId: string,
-    outcome: { success: boolean; userSatisfaction?: number }
+    outcome: { success: boolean; userSatisfaction?: number },
   ): void {
     const extension = this.extensions.get(extensionId);
     if (!extension) return;
@@ -151,10 +151,11 @@ export class BehaviorExtensionManager {
     // Simple confidence adjustment
     const adjustment = outcome.success ? 0.05 : -0.1;
     const userAdjustment = outcome.userSatisfaction ? (outcome.userSatisfaction - 0.5) * 0.1 : 0;
-    
-    extension.confidence = Math.max(0.1, Math.min(1.0, 
-      extension.confidence + adjustment + userAdjustment
-    ));
+
+    extension.confidence = Math.max(
+      0.1,
+      Math.min(1.0, extension.confidence + adjustment + userAdjustment),
+    );
 
     this.extensions.set(extensionId, extension);
   }
@@ -176,15 +177,17 @@ export class BehaviorExtensionManager {
         if (projectComplexity === 'simple' && historicalSuccess > 0.8) {
           return {
             modified: true,
-            changes: [{
-              type: 'validation_adjustment',
-              description: 'Relaxed validation for simple, successful project pattern',
-              impact: 'low',
-              parameters: {
-                maxMajorsAllowed: 5, // Increased from 3
-                skipMinorValidations: true,
+            changes: [
+              {
+                type: 'validation_adjustment',
+                description: 'Relaxed validation for simple, successful project pattern',
+                impact: 'low',
+                parameters: {
+                  maxMajorsAllowed: 5, // Increased from 3
+                  skipMinorValidations: true,
+                },
               },
-            }],
+            ],
             reasoning: 'Project appears simple and follows successful patterns',
           };
         }
@@ -203,19 +206,21 @@ export class BehaviorExtensionManager {
       trigger: (state) => state.phase === 'build',
       modify: async (state, context) => {
         const projectType = this.inferProjectType(state.blueprint);
-        
+
         if (projectType === 'documentation-only') {
           return {
             modified: true,
-            changes: [{
-              type: 'gate_modification',
-              description: 'Skip compilation gates for documentation project',
-              impact: 'medium',
-              parameters: {
-                skipGates: ['backend-compilation', 'frontend-performance'],
-                reason: 'Documentation project detected',
+            changes: [
+              {
+                type: 'gate_modification',
+                description: 'Skip compilation gates for documentation project',
+                impact: 'medium',
+                parameters: {
+                  skipGates: ['backend-compilation', 'frontend-performance'],
+                  reason: 'Documentation project detected',
+                },
               },
-            }],
+            ],
             reasoning: 'Documentation projects do not require compilation validation',
           };
         }
@@ -234,21 +239,24 @@ export class BehaviorExtensionManager {
       trigger: (state) => state.evidence.length < 3,
       modify: async (state, context) => {
         const evidenceNeeds = this.assessEvidenceNeeds(state);
-        
+
         if (evidenceNeeds.additional.length > 0) {
           return {
             modified: true,
-            changes: [{
-              type: 'workflow_alteration',
-              description: 'Enhanced evidence collection for project type',
-              impact: 'low',
-              parameters: {
-                additionalEvidence: evidenceNeeds.additional,
-                priority: evidenceNeeds.priority,
+            changes: [
+              {
+                type: 'workflow_alteration',
+                description: 'Enhanced evidence collection for project type',
+                impact: 'low',
+                parameters: {
+                  additionalEvidence: evidenceNeeds.additional,
+                  priority: evidenceNeeds.priority,
+                },
               },
-            }],
+            ],
             reasoning: `Project requires additional evidence: ${evidenceNeeds.additional.join(', ')}`,
-            suggestedFeedback: 'System automatically enhanced evidence collection based on project analysis',
+            suggestedFeedback:
+              'System automatically enhanced evidence collection based on project analysis',
           };
         }
 
@@ -264,7 +272,7 @@ export class BehaviorExtensionManager {
    */
   private evaluatePatternTrigger(pattern: TeachingPattern, state: PRPState): boolean {
     const conditions = pattern.trigger.conditions;
-    
+
     // Simple condition matching - in real implementation would be more sophisticated
     if (conditions.phase && conditions.phase !== state.phase) {
       return false;
@@ -279,19 +287,21 @@ export class BehaviorExtensionManager {
   private async applyPatternModification(
     pattern: TeachingPattern,
     state: PRPState,
-    context: ExtensionContext
+    context: ExtensionContext,
   ): Promise<ExtensionResult> {
     // Extract modification from pattern
     const modification = pattern.adaptation;
-    
+
     return {
       modified: true,
-      changes: [{
-        type: modification.type as any,
-        description: `Applied pattern: ${pattern.name}`,
-        impact: 'medium',
-        parameters: modification.parameters,
-      }],
+      changes: [
+        {
+          type: modification.type as any,
+          description: `Applied pattern: ${pattern.name}`,
+          impact: 'medium',
+          parameters: modification.parameters,
+        },
+      ],
       reasoning: `Pattern-based modification: ${pattern.description}`,
     };
   }
@@ -359,24 +369,30 @@ export class BehaviorExtensionManager {
   /**
    * Assessment helper methods
    */
-  private assessProjectComplexity(blueprint: PRPState['blueprint']): 'simple' | 'medium' | 'complex' {
+  private assessProjectComplexity(
+    blueprint: PRPState['blueprint'],
+  ): 'simple' | 'medium' | 'complex' {
     const requirementCount = blueprint.requirements?.length || 0;
     const descriptionLength = blueprint.description.length;
-    
+
     if (requirementCount <= 3 && descriptionLength < 200) return 'simple';
     if (requirementCount <= 8 && descriptionLength < 500) return 'medium';
     return 'complex';
   }
 
   private getHistoricalSuccessRate(blueprint: PRPState['blueprint']): number {
-    // Mock historical success rate - in real implementation would query actual history
-    return 0.75;
+    const examples = this.captureSystem.getExamples({ type: 'workflow' });
+    if (examples.length === 0) {
+      return 0;
+    }
+    const successes = examples.filter((ex) => ex.outcome.success).length;
+    return successes / examples.length;
   }
 
   private inferProjectType(blueprint: PRPState['blueprint']): string {
     const title = blueprint.title.toLowerCase();
     const description = blueprint.description.toLowerCase();
-    
+
     if (title.includes('doc') || description.includes('documentation')) {
       return 'documentation-only';
     }
@@ -386,20 +402,20 @@ export class BehaviorExtensionManager {
     if (title.includes('ui') || description.includes('frontend')) {
       return 'frontend-application';
     }
-    
+
     return 'full-stack';
   }
 
   private assessEvidenceNeeds(state: PRPState): { additional: string[]; priority: string } {
     const needs: string[] = [];
-    
-    if (state.phase === 'strategy' && !state.evidence.some(e => e.type === 'analysis')) {
+
+    if (state.phase === 'strategy' && !state.evidence.some((e) => e.type === 'analysis')) {
       needs.push('architecture-analysis');
     }
-    if (state.phase === 'build' && !state.evidence.some(e => e.type === 'test')) {
+    if (state.phase === 'build' && !state.evidence.some((e) => e.type === 'test')) {
       needs.push('test-execution');
     }
-    
+
     return {
       additional: needs,
       priority: needs.length > 1 ? 'high' : 'medium',
@@ -413,7 +429,7 @@ export class BehaviorExtensionManager {
     extension: BehaviorExtension,
     originalState: PRPState,
     modifiedState: PRPState,
-    result: ExtensionResult
+    result: ExtensionResult,
   ): void {
     this.captureSystem.captureExample(
       'workflow',
@@ -438,7 +454,7 @@ export class BehaviorExtensionManager {
       },
       {
         tags: ['extension', 'auto-adaptation', originalState.phase],
-      }
+      },
     );
   }
 
