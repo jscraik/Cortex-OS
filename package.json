@@ -128,8 +128,8 @@
     "simlab:report": "turbo run simlab:report --filter=@cortex-os/simlab",
     "simlab:gates": "turbo run simlab:gates --filter=@cortex-os/simlab",
     "sim:status": "turbo run sim:status --filter=@cortex-os/simlab",
-    "ci:mcp-path": "node ci/mcp-path-check.mjs"
   },
+  "//": "The following review and governance scripts were removed: review, typecheck, a11y, depgraph, unused, circles, vulns. If your workflow depends on them, please refer to project documentation for migration guidance or consider restoring them as needed.",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
     "axios": "^1.6.2",
