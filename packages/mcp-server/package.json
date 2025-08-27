@@ -4,13 +4,12 @@
   "version": "0.1.1",
   "type": "module",
   "engines": {
-    "node": ">=18 <=22"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "node --watch --enable-source-maps --trace-warnings ./dist/server.js",
     "build": "tsc -p tsconfig.json",
     "start": "node --enable-source-maps ./dist/server.js",
-    "check:node": "node -e \"const v=process.versions.node.split('.')[0]; if(+v>22||+v<18) process.exit(1)\" && echo OK",
     "lint": "eslint ."
   },
   "dependencies": {
