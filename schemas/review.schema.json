@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-2020-12/schema",
+  "title": "Cortex-OS Review Evidence",
+  "description": "A schema for machine-readable review evidence emitted by the Reviewer neuron.",
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "description": "The ID of the run being reviewed.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "review_timestamp": {
+      "description": "ISO 8601 timestamp of the review.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "description": "The overall status of the review.",
+      "type": "string",
+      "enum": ["approved", "rejected", "warning"]
+    },
+    "checks": {
+      "description": "An array of specific checks that were performed.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "check_id": {
+            "description": "A unique identifier for the type of check.",
+            "type": "string",
+            "enum": [
+              "contract_adherence",
+              "policy_compliance",
+              "security_vulnerability",
+              "code_quality",
+              "test_coverage"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "warn"]
+          },
+          "description": {
+            "description": "A human-readable description of the check result.",
+            "type": "string"
+          },
+          "evidence": {
+            "description": "A pointer to the evidence (e.g., file path and line number).",
+            "type": "object",
+            "properties": {
+              "file": {"type": "string"},
+              "line_start": {"type": "integer"},
+              "line_end": {"type": "integer"}
+            },
+            "required": ["file"]
+          }
+        },
+        "required": ["check_id", "status", "description"]
+      }
+    }
+  },
+  "required": ["run_id", "review_timestamp", "status", "checks"]
+}

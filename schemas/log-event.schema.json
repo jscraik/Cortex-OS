@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Cortex Log Event",
+  "type": "object",
+  "required": ["timestamp", "severityText", "body", "resource"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "severityText": { "type": "string", "enum": ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"] },
+    "severityNumber": { "type": "integer" },
+    "body": { "type": ["string", "object", "array", "number", "boolean", "null"] },
+    "attributes": { "type": "object" },
+    "resource": { "type": "object" },
+    "traceId": { "type": "string" },
+    "spanId": { "type": "string" },
+    "id": { "type": "string", "description": "ULID" }
+  }
+}
