@@ -22,10 +22,9 @@ describe('Purge Expired Memories Implementation Verification', () => {
 
   it('InMemoryStore correctly purges expired memories', async () => {
     const store = new InMemoryStore();
-    const now = new Date().toISOString();
     const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago
-    
-    // Insert expired memory
+    const now = new Date().toISOString();
+
     const expiredMemory: Memory = {
       id: '1',
       kind: 'note',
@@ -36,8 +35,7 @@ describe('Purge Expired Memories Implementation Verification', () => {
       updatedAt: past,
       provenance: { source: 'user' },
     };
-    
-    // Insert fresh memory
+
     const freshMemory: Memory = {
       id: '2',
       kind: 'note',
@@ -48,8 +46,7 @@ describe('Purge Expired Memories Implementation Verification', () => {
       updatedAt: now,
       provenance: { source: 'user' },
     };
-    
-    // Insert memory without TTL
+
     const noTtlMemory: Memory = {
       id: '3',
       kind: 'note',
@@ -63,14 +60,14 @@ describe('Purge Expired Memories Implementation Verification', () => {
     await store.upsert(expiredMemory);
     await store.upsert(freshMemory);
     await store.upsert(noTtlMemory);
-    
+
     // Verify all memories are stored initially
     expect(await store.get('1')).not.toBeNull();
     expect(await store.get('2')).not.toBeNull();
     expect(await store.get('3')).not.toBeNull();
-    
+
     // Purge expired memories
-    const purgedCount = await store.purgeExpired(now);
+    const purgedCount = await store.purgeExpired(new Date().toISOString());
     
     // Should purge only the expired memory
     expect(purgedCount).toBe(1);

@@ -60,8 +60,8 @@ export class MLXEmbedder implements Embedder {
       // Fallback to direct Python execution
       return await this.embedViaPython(texts);
     } catch (error) {
-      console.warn('MLX embedding failed, falling back to OpenAI:', error);
-      throw error; // Let the caller handle fallback to other embedders
+      console.warn('MLX embedding failed:', error);
+      throw error;
     }
   }
 

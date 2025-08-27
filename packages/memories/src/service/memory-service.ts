@@ -23,7 +23,7 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
     save: async (raw) => {
       return withSpan("memories.save", async () => {
         const m = memoryZ.parse(raw);
-        const needsVector = !m.vector && m.text && effectiveEmbedder;
+        const needsVector = !m.vector && m.text;
         const withVec = needsVector
           ? { ...m, vector: (await effectiveEmbedder.embed([m.text!]))[0], embeddingModel: effectiveEmbedder.name() }
           : m;
@@ -35,11 +35,12 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
     search: async (q) => {
       return withSpan("memories.search", async () => {
         const topK = q.topK ?? 8;
-        if (q.vector) return store.searchByVector({ vector: q.vector, topK, filterTags: q.tags });
+        if (q.vector) {
+          return store.searchByVector({ vector: q.vector, topK, filterTags: q.tags });
+        }
         if (q.text) {
-          const v = effectiveEmbedder ? (await effectiveEmbedder.embed([q.text]))[0] : undefined;
-          return v ? store.searchByVector({ vector: v, topK, filterTags: q.tags })
-                  : store.searchByText({ text: q.text, topK, filterTags: q.tags });
+          const v = (await effectiveEmbedder.embed([q.text]))[0];
+          return store.searchByVector({ vector: v, topK, filterTags: q.tags });
         }
         return [];
       });
