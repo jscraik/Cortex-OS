@@ -134,19 +134,16 @@ export class UnifiedAIEvidenceWorkflow {
       concurrencyLimit: config.concurrencyLimit || 5,
       timeoutMs: config.timeoutMs || 300000, // 5 minutes
       cacheEnabled: config.cacheEnabled ?? true,
-      mockMode: config.mockMode ?? (process.env.NODE_ENV === 'test'), // Configurable with environment fallback
+      mockMode: config.mockMode ?? false,
     };
 
     // Initialize core components
-    this.asbrIntegration = new ASBRAIIntegration({
-      mockMode: this.config.mockMode,
-    });
+    this.asbrIntegration = new ASBRAIIntegration();
 
     this.embeddingAdapter = new EmbeddingAdapter({
       provider: 'sentence-transformers',
       model: this.config.embeddingModel,
       dimensions: 1024,
-      mockMode: this.config.mockMode,
     });
   }
 

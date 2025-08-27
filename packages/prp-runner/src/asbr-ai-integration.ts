@@ -216,25 +216,8 @@ export class ASBRAIIntegration {
 
       return { relatedClaims, suggestedSources };
     } catch (error) {
-      console.warn('AI-enhanced search failed, returning empty results:', error);
-      // Return fallback results for graceful degradation only in tests that expect results
-      // For error handling test, return empty results to prevent enhancement tagging
-      if (error.message.includes('Embedding service down')) {
-        return { relatedClaims: [], suggestedSources: [] };
-      }
-      return { 
-        relatedClaims: [{
-          claim: 'Fallback related claim from basic analysis',
-          similarity: 0.5,
-          source: 'fallback',
-          confidence: 0.6
-        }], 
-        suggestedSources: [{
-          type: 'documentation',
-          location: 'fallback-docs',
-          relevanceScore: 0.5
-        }] 
-      };
+      console.warn('AI-enhanced search failed:', error);
+      throw error;
     }
   }
 

@@ -10,7 +10,7 @@ import { spawn } from 'child_process';
 import crypto from 'crypto';
 
 export interface EmbeddingConfig {
-  provider: 'sentence-transformers' | 'openai' | 'local' | 'mock';
+  provider: 'sentence-transformers' | 'local' | 'mock';
   model?: string;
   dimensions?: number;
   batchSize?: number;
@@ -74,7 +74,7 @@ export class EmbeddingAdapter {
    * Validate embedding configuration
    */
   private validateConfig(): void {
-    if (!['sentence-transformers', 'openai', 'local', 'mock'].includes(this.config.provider)) {
+    if (!['sentence-transformers', 'local', 'mock'].includes(this.config.provider)) {
       throw new Error(`Unsupported embedding provider: ${this.config.provider}`);
     }
   }
@@ -88,8 +88,6 @@ export class EmbeddingAdapter {
     switch (this.config.provider) {
       case 'sentence-transformers':
         return this.generateWithSentenceTransformers(textArray);
-      case 'openai':
-        return this.generateWithOpenAI(textArray);
       case 'local':
         return this.generateWithLocal(textArray);
       case 'mock':
@@ -205,57 +203,31 @@ export class EmbeddingAdapter {
    */
   private async generateWithSentenceTransformers(texts: string[]): Promise<number[][]> {
     const model = this.config.model || 'Qwen/Qwen3-Embedding-0.6B';
-    
+
     const pythonScript = `
 import json
 import sys
 import os
 
-# Set HuggingFace cache to external drive
 cache_path = os.environ.get('HF_CACHE_PATH', os.path.expanduser('~/.cache/huggingface'))
 os.environ['HF_HOME'] = cache_path
 os.environ['TRANSFORMERS_CACHE'] = cache_path
 
-try:
-    from sentence_transformers import SentenceTransformer
-    
-    # Try Qwen model first
-    model_name = '${model}'
-    model = SentenceTransformer(model_name)
-    texts = json.loads(sys.argv[1])
-    embeddings = model.encode(texts).tolist()
-    print(json.dumps(embeddings))
-except Exception as e:
-    # Fallback to smaller model if Qwen fails
-    try:
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer('all-MiniLM-L6-v2')
-        texts = json.loads(sys.argv[1])
-        embeddings = model.encode(texts).tolist()
-        print(json.dumps(embeddings))
-    except Exception as e2:
-        print(f"Error: {e2}", file=sys.stderr)
-        sys.exit(1)
+from sentence_transformers import SentenceTransformer
+
+model_name = '${model}'
+model = SentenceTransformer(model_name)
+texts = json.loads(sys.argv[1])
+embeddings = model.encode(texts).tolist()
+print(json.dumps(embeddings))
 `;
 
     try {
       const result = await this.executePythonScript(pythonScript, [JSON.stringify(texts)]);
       return JSON.parse(result);
     } catch (error) {
-      // Fallback to mock embeddings if all else fails
-      console.warn('All embedding models failed, falling back to mock embeddings:', error);
-      return this.generateMockEmbeddings(texts);
+      throw new Error(`SentenceTransformers embedding failed: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
-
-  /**
-   * Generate embeddings using OpenAI API
-   */
-  private async generateWithOpenAI(texts: string[]): Promise<number[][]> {
-    // This would require OpenAI API key and internet connection
-    // For now, fall back to mock
-    console.warn('OpenAI embeddings not implemented, falling back to mock');
-    return this.generateMockEmbeddings(texts);
   }
 
   /**
@@ -306,8 +278,7 @@ except Exception as e:
       const result = await this.executePythonScript(pythonScript, [JSON.stringify(texts)]);
       return JSON.parse(result);
     } catch (error) {
-      console.warn('Local Qwen embeddings failed, falling back to mock:', error);
-      return this.generateMockEmbeddings(texts);
+      throw new Error(`Local Qwen embeddings failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -531,11 +502,6 @@ export const createEmbeddingAdapter = (provider: EmbeddingConfig['provider'] = '
       provider: 'sentence-transformers',
       model: 'Qwen/Qwen3-Embedding-0.6B', // Use Qwen model by default
       dimensions: 1024,
-    },
-    'openai': {
-      provider: 'openai',
-      model: 'text-embedding-ada-002',
-      dimensions: 1536,
     },
     'local': {
       provider: 'local',
