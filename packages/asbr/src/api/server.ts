@@ -8,19 +8,21 @@ import { readFile } from 'fs/promises';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
 import { Server } from 'http';
+import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import {
-    type ArtifactRef,
-    type Event,
-    NotFoundError,
-    type Profile,
-    ProfileSchema,
-    type Task,
-    type TaskInput,
-    TaskInputSchema,
-    ValidationError,
+  type ArtifactRef,
+  type Event,
+  NotFoundError,
+  type Profile,
+  ProfileSchema,
+  type Task,
+  type TaskInput,
+  TaskInputSchema,
+  ValidationError,
 } from '../types/index.js';
 import { initializeXDG } from '../xdg/index.js';
+import { getEventManager } from '../core/events.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
 
 export interface ASBRServerOptions {
@@ -34,6 +36,7 @@ export interface ASBRServerOptions {
 export class ASBRServer {
   private app: express.Application;
   private server?: Server;
+  private io?: IOServer;
   private port: number;
   private host: string;
   private tasks = new Map<string, Task>();
@@ -45,7 +48,7 @@ export class ASBRServer {
   private readonly CACHE_TTL = 30000; // 30 seconds
   // Note: Connection pooling and request deduplication infrastructure
   // Currently unused but reserved for future database integration
-  // private connectionPool = new Map<string, unknown>(); // Connection pooling for database operations  
+  // private connectionPool = new Map<string, unknown>(); // Connection pooling for database operations
   // private requestQueue = new Map<string, Promise<unknown>>(); // Request deduplication
 
   constructor(options: ASBRServerOptions = {}) {
@@ -558,6 +561,9 @@ export class ASBRServer {
     // Invalidate cache for this task
     const cacheKey = `events:${event.taskId}`;
     this.responseCache.delete(cacheKey);
+
+    const manager = await getEventManager();
+    await manager.emitEvent(event);
   }
 
   async start(): Promise<void> {
@@ -568,7 +574,7 @@ export class ASBRServer {
     this.setupCacheCleanup();
 
     return new Promise((resolve) => {
-      this.server = this.app.listen(this.port, this.host, () => {
+      this.server = this.app.listen(this.port, this.host, async () => {
         // Optimize server settings for performance
         if (this.server) {
           this.server.keepAliveTimeout = 65000; // Slightly higher than ALB's 60s
@@ -576,6 +582,10 @@ export class ASBRServer {
           this.server.requestTimeout = 30000; // 30s request timeout
           this.server.maxConnections = 1000; // Limit concurrent connections
         }
+
+        this.io = new IOServer(this.server!, { transports: ['websocket', 'polling'] });
+        const manager = await getEventManager();
+        manager.attachIO(this.io);
 
         // eslint-disable-next-line no-console -- informational server start log
         console.log(`ASBR API server listening on http://${this.host}:${this.port}`);
@@ -590,6 +600,10 @@ export class ASBRServer {
         // Clean up caches and intervals
         this.responseCache.clear();
         this.idempotencyCache.clear();
+        if (this.io) {
+          this.io.close();
+          this.io = undefined;
+        }
 
         this.server.close(() => {
           // eslint-disable-next-line no-console -- informational server stop log
