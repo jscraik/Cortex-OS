@@ -13,13 +13,8 @@
 */
 
 import { z } from 'zod';
-
-// Local minimal Tool interface (avoid importing missing ../tool.js during lint pass)
-interface Tool {
-  name: string;
-  description?: string;
-  run(args: unknown): Promise<any>;
-}
+import fs from 'node:fs/promises';
+import { Tool } from '../tool.js';
 
 /**
  * Configuration validation schemas
@@ -470,26 +465,61 @@ export class ConfigValidator implements Tool {
   }
 
   private async validateDependencies(
-    _configType: string,
-    _config: unknown,
-  ): Promise<
-    Array<{
-      path: string;
-      message: string;
-      suggestion?: string;
-    }>
-  > {
-    const warnings: Array<{
-      path: string;
-      message: string;
-      suggestion?: string;
-    }> = [];
+      configType: string,
+      config: unknown,
+    ): Promise<
+      Array<{
+        path: string;
+        message: string;
+        suggestion?: string;
+      }>
+    > {
+      const warnings: Array<{
+        path: string;
+        message: string;
+        suggestion?: string;
+      }> = [];
 
-    // This would typically validate external dependencies,
-    // file paths, network endpoints, etc.
-    // For now, we'll return an empty array
-    return warnings;
+      if (configType === 'cortex') {
+        const cfg = config as any;
+        const standardsPath = cfg?.agentOS?.standardsPath;
+        if (typeof standardsPath === 'string') {
+          try {
+            await fs.access(standardsPath);
+          } catch {
+            warnings.push({
+              path: 'agentOS.standardsPath',
+              message: 'Referenced standards path not found',
+              suggestion: 'Ensure standardsPath points to an existing file',
+            });
+          }
+        }
+      } else if (configType === 'mcp') {
+        const cfg = config as any;
+        if (Array.isArray(cfg?.servers)) {
+          cfg.servers.forEach((s: any, i: number) => {
+            if (typeof s.url === 'string' && !s.url.startsWith('https://')) {
+              warnings.push({
+                path: `servers[${i}].url`,
+                message: 'Server URL should use https',
+                suggestion: 'Update server url to use https',
+              });
+            }
+          });
+        }
+      } else if (configType === 'cli') {
+        const cfg = config as any;
+        if (cfg?.telemetry?.enabled && !cfg.telemetry.endpoint) {
+          warnings.push({
+            path: 'telemetry.endpoint',
+            message: 'Telemetry enabled but endpoint is missing',
+            suggestion: 'Provide telemetry.endpoint or disable telemetry',
+          });
+        }
+      }
+
+      return warnings;
+    }
   }
-}
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.
