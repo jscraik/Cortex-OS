@@ -3,7 +3,7 @@
  * Tests accessibility features according to the blueprint requirements
  */
 
-// Use jsdom for DOM APIs in accessibility tests
+// jsdom environment required for DOM APIs used in accessibility testing
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
