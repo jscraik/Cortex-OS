@@ -17,6 +17,7 @@ export const validateDatabaseInput = {
     z.string().min(1).max(maxLength).safeParse(value)
 };
 
+
 // Neo4j validation
 export const validateNeo4jInput = {
   nodeId: (value: string) => idSchema.safeParse(value),
@@ -34,36 +35,50 @@ export const validateNeo4jInput = {
 
 // Command execution validation
 export const validateCommandInput = {
-  dockerCommand: (command: string[]) => {
-    // Only allow specific docker commands
-    const allowedCommands = ['docker'];
+  docker: (command: string[]) => {
     const allowedSubcommands = ['ps', 'images', 'inspect', 'logs'];
-    
+
     if (command.length < 2) {
       return { success: false, error: 'Invalid command format' };
     }
-    
+
     if (command[0] !== 'docker') {
       return { success: false, error: 'Only docker commands are allowed' };
     }
-    
+
     if (!allowedSubcommands.includes(command[1])) {
       return { success: false, error: `Docker subcommand ${command[1]} is not allowed` };
     }
-    
-    // Validate container IDs in the command
+
     for (let i = 2; i < command.length; i++) {
       const param = command[i];
-      if (param.startsWith('-')) continue; // Skip flags
-      
-      // Validate container ID format
+      if (param.startsWith('-')) continue;
+
       const containerIdSchema = z.string().min(12).max(64).regex(/^[a-f0-9]+$/);
       const result = containerIdSchema.safeParse(param);
       if (!result.success) {
         return { success: false, error: `Invalid container ID: ${param}` };
       }
     }
-    
+
+    return { success: true };
+  },
+
+  generic: (command: string[]) => {
+    if (command.length === 0) {
+      return { success: false, error: 'Command cannot be empty' };
+    }
+
+    for (const part of command) {
+      if (part.length > 1000) {
+        return { success: false, error: 'Argument too long' };
+      }
+
+      if (/[;&|`$(){}[\]<>]/.test(part)) {
+        return { success: false, error: `Invalid characters in argument: ${part}` };
+      }
+    }
+
     return { success: true };
   }
 };

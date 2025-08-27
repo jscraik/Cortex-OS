@@ -1,4 +1,4 @@
-import { validateDatabaseInput } from '@cortex-os/mvp-core/src/validation';
+import { validateDatabaseInput } from './validation.js';
 
 // Secure database wrapper that prevents injection vulnerabilities
 export class SecureDatabaseWrapper {
@@ -17,8 +17,12 @@ export class SecureDatabaseWrapper {
 
     // Validate all parameters
     for (const param of params) {
-      if (typeof param === 'object' && param !== null) {
-        // For objects, check that they don't contain dangerous properties
+      if (typeof param === 'string') {
+        const result = validateDatabaseInput.string(param);
+        if (!result.success) {
+          throw new Error('Invalid string parameter');
+        }
+      } else if (typeof param === 'object' && param !== null) {
         if ('_raw' in param) {
           throw new Error('Raw SQL injection detected');
         }
@@ -45,20 +49,5 @@ export class SecureDatabaseWrapper {
     const stmt = this.securePrepare(query, params);
     return stmt.all(...params);
   }
-
-  // Validate and sanitize database inputs
-  validateInput(input: any, type: string): boolean {
-    switch (type) {
-      case 'id':
-        return validateDatabaseInput.id(input).success;
-      case 'namespace':
-        return validateDatabaseInput.namespace(input).success;
-      case 'status':
-        return validateDatabaseInput.status(input).success;
-      case 'key':
-        return validateDatabaseInput.key(input).success;
-      default:
-        return validateDatabaseInput.string(input).success;
-    }
-  }
 }
+
