@@ -7,8 +7,8 @@ import { SupportedClient } from '@cortex-os/mcp-registry/types';
 export const mcpAdd = new Command('add')
   .description('Add an MCP server (from marketplace or manual configuration)')
   .argument('<name-or-id>', 'Server name/ID from marketplace, or custom name for manual config')
-  .option('--transport <stdio|sse|https>', 'Transport type (required for manual config)')
-  .option('--endpoint <url>', 'Endpoint URL (for sse/https transport)')
+  .option('--transport <stdio|sse|streamableHttp>', 'Transport type (required for manual config)')
+  .option('--endpoint <url>', 'Endpoint URL (for sse/streamableHttp transport)')
   .option('--command <path>', 'Command path (for stdio transport)')
   .option('--args <args>', 'JSON array of command arguments', '[]')
   .option('--client <type>', 'Client type for marketplace install (claude, cline, devin, cursor, continue, windsurf)')
@@ -100,7 +100,7 @@ async function addFromMarketplace(serverId: string, opts: any) {
   } else if (transportType === 'streamableHttp' && 'url' in transportConfig) {
     serverInfo = {
       name: server.id,
-      transport: 'https' as const,
+      transport: 'streamableHttp' as const,
       endpoint: transportConfig.url,
     };
   } else {

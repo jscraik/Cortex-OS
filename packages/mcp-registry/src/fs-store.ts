@@ -1,16 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { dirname, join } from 'node:path';
 import os from 'node:os';
-
-// For now, using a simple type until we can import from mcp-core
-interface ServerInfo {
-  name: string;
-  transport: 'stdio' | 'sse' | 'https';
-  endpoint?: string;
-  command?: string;
-  args?: string[];
-  env?: Record<string, string>;
-}
+import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
 
 const DB = join(os.homedir(), '.cortex', 'mcp', 'servers.json');
 

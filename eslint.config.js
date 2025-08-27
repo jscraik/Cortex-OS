@@ -6,6 +6,7 @@ export default [
   js.configs.recommended,
   ...ts.configs.recommendedTypeChecked,
   importPlugin.flatConfigs.recommended,
+  importPlugin.flatConfigs.typescript,
   { ignores: ['**/dist/**', '**/.artifacts/**'] },
   {
     settings: {
@@ -22,7 +23,6 @@ export default [
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: { parserOptions: { project: ['tsconfig.eslint.json'] } },
-    extends: [importPlugin.flatConfigs.typescript],
     rules: {
       'no-console': ['warn', { allow: ['error'] }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
