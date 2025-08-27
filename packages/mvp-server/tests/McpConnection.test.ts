@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { WebSocket } from 'ws';
 import { McpConnection } from '../src/McpConnection';
-import { ToolRegistry } from '../src/ToolRegistry';
+import { ToolRegistry } from '../src/ToolRegistry.js';
 
 // Mock WebSocket
 class MockWebSocket extends WebSocket {
