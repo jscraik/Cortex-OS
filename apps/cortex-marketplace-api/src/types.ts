@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 // MCP Protocol version support
 export const MCP_VERSION = '2025-06-18';
-export const SUPPORTED_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
+export const SUPPORTED_VERSIONS = ['2025-06-18'];
 
 /**
  * Transport types (Streamable HTTP is now primary, stdio for local)

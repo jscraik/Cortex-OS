@@ -10,7 +10,7 @@ import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import { z } from 'zod';
-import type { FastifyInstance, FastifyServerOptions } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { MarketplaceService } from './services/marketplace-service.js';
 import { RegistryService } from './services/registry-service.js';
 import { healthRoutes } from './routes/health.js';
