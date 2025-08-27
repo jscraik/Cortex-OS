@@ -35,6 +35,7 @@ This package provides comprehensive RAG capabilities as a shared library that ca
 
 - **Ingest**: Text ingestion with embedding and storage
 - **Query**: Vector similarity search and retrieval
+- **Batch Ingest**: Concurrent ingestion of multiple files with configurable limits (inspired by RAG-Anything)
 - Type-safe pipeline operations
 
 ## Architecture
@@ -69,13 +70,13 @@ import { RAGPipeline, type Embedder, type Store } from '@cortex-os/rag';
 const pipeline = new RAGPipeline({
   embedder: myEmbedder,
   store: myStore,
-  maxContextTokens: 4000
+  maxContextTokens: 4000,
 });
 
 // Ingest documents
 await pipeline.ingest([
   { id: 'doc1', text: 'Document content...', source: 'file.txt' },
-  { id: 'doc2', text: 'More content...', source: 'file2.txt' }
+  { id: 'doc2', text: 'More content...', source: 'file2.txt' },
 ]);
 
 // Retrieve relevant chunks
@@ -137,7 +138,7 @@ export class AgentWithRAG {
     const chunkObjects = chunks.map((chunk, i) => ({
       id: `chunk-${i}`,
       text: chunk,
-      source: 'agent-processing'
+      source: 'agent-processing',
     }));
 
     // Ingest into RAG system
