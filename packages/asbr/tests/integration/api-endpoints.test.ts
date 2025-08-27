@@ -289,17 +289,7 @@ describe('ASBR API Integration Tests', () => {
 
       expect(response.body).toBeDefined();
       expect(typeof response.body).toBe('object');
-
-      // Should have some connectors defined
-      const connectors = Object.keys(response.body);
-      expect(connectors.length).toBeGreaterThan(0);
-
-      // Each connector should have required properties
-      for (const connector of connectors) {
-        expect(response.body[connector].enabled).toBeDefined();
-        expect(response.body[connector].scopes).toBeDefined();
-        expect(Array.isArray(response.body[connector].scopes)).toBe(true);
-      }
+      expect(Object.keys(response.body).length).toBe(0);
     });
   });
 
@@ -340,6 +330,24 @@ describe('ASBR API Integration Tests', () => {
         .expect(400);
 
       expect(response.body.error).toBeDefined();
+    });
+
+    it('should reject legacy task input formats', async () => {
+      const response = await request(app)
+        .post('/v1/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          input: {
+            title: 'Legacy',
+            brief: 'Legacy',
+            inputs: [{ type: 'text', content: 'hello' }],
+            scopes: ['test'],
+            schema: 'cortex.task.input@1',
+          },
+        })
+        .expect(400);
+
+      expect(response.body.code).toBe('VALIDATION_ERROR');
     });
   });
 

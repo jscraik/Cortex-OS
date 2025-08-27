@@ -149,27 +149,6 @@ export async function validateToken(token: string): Promise<TokenInfo> {
   const tokens = await loadTokens();
   const tokenInfo = tokens.find((t) => t.token === token);
 
-  // In test mode, if no tokens are configured, accept any token and
-  // return a temporary admin token so tests that rely on auth can run
-  // deterministically without touching global XDG config.
-  if (!tokenInfo && process.env.NODE_ENV === "test" && tokens.length === 0) {
-    const id = createHash("sha256")
-      .update(token)
-      .digest("hex")
-      .substring(0, 16);
-    const now = new Date();
-    const longExpiry = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
-    const temp: TokenInfo = {
-      id,
-      token,
-      scopes: ["*"],
-      expiresAt: longExpiry.toISOString(),
-      createdAt: now.toISOString(),
-    };
-    // Don't persist this token to disk; it's test-only in-memory.
-    return temp;
-  }
-
   if (!tokenInfo) {
     throw new AuthenticationError('Invalid token');
   }
@@ -216,6 +195,8 @@ export async function cleanupExpiredTokens(): Promise<number> {
  * Update token usage timestamp
  */
 async function updateTokenUsage(tokenId: string): Promise<void> {
+  if (process.env.NODE_ENV === 'test') return;
+
   const tokens = await loadTokens();
   const token = tokens.find((t) => t.id === tokenId);
 
