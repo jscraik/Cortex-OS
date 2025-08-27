@@ -17,17 +17,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const ROOT = process.env.CORTEX_MCP_ROOT || process.cwd();
-const REQUIRE_TOKEN = process.env.CORTEX_MCP_TOKEN;
+const TOKEN = process.env.CORTEX_MCP_TOKEN;
 
-// Enforce secure default: require token unless explicitly disabled
-if (!REQUIRE_TOKEN && process.env.CORTEX_MCP_AUTH_DISABLED !== 'true') {
+if (!TOKEN) {
   // eslint-disable-next-line no-console
-  console.error(
-    '[cortex-mcp] ERROR: CORTEX_MCP_TOKEN is not set. Refusing to start without authentication token.\n' +
-      'Set CORTEX_MCP_TOKEN to enable authentication, or set CORTEX_MCP_AUTH_DISABLED=true to explicitly disable authentication (not recommended for production).',
-  );
+  console.error('[cortex-mcp] ERROR: CORTEX_MCP_TOKEN is not set. Refusing to start without authentication token.');
   process.exit(1);
 }
+
 
 // Allowlist of permitted hostnames for http_get tool
 const HTTP_GET_ALLOWLIST = ['example.com', 'api.example.com'];

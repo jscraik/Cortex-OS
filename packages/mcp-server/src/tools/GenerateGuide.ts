@@ -4,6 +4,8 @@
  */
 
 import { Tool } from '../tool.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 export interface GenerateGuideArgs {
   topic: string;
@@ -439,12 +441,11 @@ export class GenerateGuide implements Tool {
   }
 
   private async saveToFile(result: GenerateGuideResult, outputPath: string): Promise<string> {
-    // In a real implementation, this would write to the file system
-    // For this MCP tool, we'll return the intended file path
     const extension = result.format === 'markdown' ? 'md' : result.format;
-    const fileName = `${outputPath}.${extension}`;
-
-    return fileName;
+    const filePath = `${outputPath}.${extension}`;
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, result.content, 'utf8');
+    return filePath;
   }
 }
 

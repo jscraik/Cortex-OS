@@ -5,6 +5,9 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GenerateGuide, type GenerateGuideArgs } from '../src/tools/GenerateGuide.js';
+import fs from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 describe('GenerateGuide Tool', () => {
   let tool: GenerateGuide;
@@ -369,35 +372,32 @@ describe('GenerateGuide Tool', () => {
   });
 
   describe('File Output', () => {
-    it('should return file path when output_path is specified', async () => {
+    it('should write file when output_path is specified', async () => {
+      const base = path.join(tmpdir(), `test-guide-${Date.now()}`);
       const args: GenerateGuideArgs = {
         topic: 'Test Guide',
-        output_path: '/tmp/test-guide',
+        output_path: base,
       };
 
       const result = await tool.run(args);
-
-      expect(result.file_path).toBe('/tmp/test-guide.md');
+      expect(result.file_path).toBe(`${base}.md`);
+      const fileContent = await fs.readFile(result.file_path!, 'utf8');
+      expect(fileContent).toBe(result.content);
+      await fs.unlink(result.file_path!);
     });
 
     it('should use correct file extension for format', async () => {
-      const htmlArgs: GenerateGuideArgs = {
-        topic: 'HTML Guide',
-        format: 'html',
-        output_path: '/tmp/html-guide',
-      };
+      const baseHtml = path.join(tmpdir(), `html-guide-${Date.now()}`);
+      const htmlResult = await tool.run({ topic: 'HTML Guide', format: 'html', output_path: baseHtml });
+      expect(htmlResult.file_path).toBe(`${baseHtml}.html`);
+      expect(await fs.readFile(htmlResult.file_path!, 'utf8')).toBe(htmlResult.content);
+      await fs.unlink(htmlResult.file_path!);
 
-      const htmlResult = await tool.run(htmlArgs);
-      expect(htmlResult.file_path).toBe('/tmp/html-guide.html');
-
-      const jsonArgs: GenerateGuideArgs = {
-        topic: 'JSON Guide',
-        format: 'json',
-        output_path: '/tmp/json-guide',
-      };
-
-      const jsonResult = await tool.run(jsonArgs);
-      expect(jsonResult.file_path).toBe('/tmp/json-guide.json');
+      const baseJson = path.join(tmpdir(), `json-guide-${Date.now()}`);
+      const jsonResult = await tool.run({ topic: 'JSON Guide', format: 'json', output_path: baseJson });
+      expect(jsonResult.file_path).toBe(`${baseJson}.json`);
+      expect(await fs.readFile(jsonResult.file_path!, 'utf8')).toBe(jsonResult.content);
+      await fs.unlink(jsonResult.file_path!);
     });
   });
 });
