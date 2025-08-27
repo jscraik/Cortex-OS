@@ -3,7 +3,8 @@
  * Tests the complete API surface according to the blueprint
  */
 
-// Run server integration tests in Node environment so Node builtins (crypto) resolve correctly
+// Node environment required for server integration tests to access Node builtins like 'crypto'.
+// These tests interact directly with the server and require Node APIs that are not available in other environments (e.g., jsdom).
 // @vitest-environment node
 
 import request from 'supertest';
