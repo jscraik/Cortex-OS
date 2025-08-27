@@ -28,7 +28,7 @@ export const BridgeConfigSchema = z.object({
       headers: z.record(z.string()).optional(),
     }),
   ]),
-  
+
   // Target configuration (what we're bridging to)
   target: z.discriminatedUnion('type', [
     z.object({
@@ -41,13 +41,15 @@ export const BridgeConfigSchema = z.object({
       host: z.string().default('localhost'),
     }),
   ]),
-  
+
   // Bridge options
-  options: z.object({
-    timeout: z.number().int().min(1000).default(30000),
-    retries: z.number().int().min(0).default(3),
-    logging: z.boolean().default(false),
-  }).default({}),
+  options: z
+    .object({
+      timeout: z.number().int().min(1000).default(30000),
+      retries: z.number().int().min(0).default(3),
+      logging: z.boolean().default(false),
+    })
+    .default({}),
 });
 
 export type BridgeConfig = z.infer<typeof BridgeConfigSchema>;
@@ -77,7 +79,7 @@ export class McpBridge {
     try {
       await this.initializeSource();
       await this.initializeTarget();
-      
+
       this.isRunning = true;
       this.log('✅ MCP bridge started successfully');
     } catch (error) {
@@ -129,9 +131,8 @@ export class McpBridge {
       details.childProcessPid = this.childProcess.pid;
     }
 
-    const healthy = this.isRunning && 
-      (details.clientConnected !== false) && 
-      (details.childProcessAlive !== false);
+    const healthy =
+      this.isRunning && details.clientConnected !== false && details.childProcessAlive !== false;
 
     return { healthy, details };
   }
@@ -144,22 +145,22 @@ export class McpBridge {
 
     if (source.type === 'streamableHttp') {
       // Connect to remote Streamable HTTP server
-      const transport = new StreamableHTTPClientTransport(
-        source.url,
-        source.headers
-      );
+      const transport = new StreamableHTTPClientTransport(source.url, source.headers);
 
-      this.client = new Client({
-        name: 'mcp-bridge-client',
-        version: '1.0.0',
-      }, {
-        capabilities: {
-          tools: true,
-          resources: true,
-          prompts: true,
-          logging: true,
+      this.client = new Client(
+        {
+          name: 'mcp-bridge-client',
+          version: '1.0.0',
         },
-      });
+        {
+          capabilities: {
+            tools: true,
+            resources: true,
+            prompts: true,
+            logging: true,
+          },
+        },
+      );
 
       await this.client.connect(transport);
       this.log(`📡 Connected to Streamable HTTP server: ${source.url}`);
@@ -177,7 +178,7 @@ export class McpBridge {
       const transport = new StdioServerTransport();
       // Note: This is a simplified example. In practice, you'd need to properly
       // handle the stdio connection to the child process
-      
+
       this.log(`🔧 Started stdio process: ${source.command}`);
     }
   }
@@ -191,22 +192,25 @@ export class McpBridge {
     if (target.type === 'stdio') {
       // Expose stdio interface
       const transport = new StdioServerTransport();
-      
-      this.server = new Server({
-        name: 'mcp-bridge-server',
-        version: '1.0.0',
-      }, {
-        capabilities: {
-          tools: true,
-          resources: true,
-          prompts: true,
-          logging: this.config.options.logging,
+
+      this.server = new Server(
+        {
+          name: 'mcp-bridge-server',
+          version: '1.0.0',
         },
-      });
+        {
+          capabilities: {
+            tools: true,
+            resources: true,
+            prompts: true,
+            logging: this.config.options.logging,
+          },
+        },
+      );
 
       // Proxy all methods from client to server
       await this.setupMethodProxying();
-      
+
       await this.server.connect(transport);
       this.log('📤 Exposed stdio interface');
     } else if (target.type === 'streamableHttp') {
@@ -261,30 +265,32 @@ export class McpBridge {
     const cleanupTasks = [];
 
     if (this.client) {
-      cleanupTasks.push(this.client.close().catch(err => 
-        this.log(`⚠️  Error closing client: ${err.message}`)
-      ));
+      cleanupTasks.push(
+        this.client.close().catch((err) => this.log(`⚠️  Error closing client: ${err.message}`)),
+      );
     }
 
     if (this.server) {
-      cleanupTasks.push(this.server.close().catch(err => 
-        this.log(`⚠️  Error closing server: ${err.message}`)
-      ));
+      cleanupTasks.push(
+        this.server.close().catch((err) => this.log(`⚠️  Error closing server: ${err.message}`)),
+      );
     }
 
     if (this.childProcess && !this.childProcess.killed) {
-      cleanupTasks.push(new Promise<void>((resolve) => {
-        this.childProcess!.on('exit', () => resolve());
-        this.childProcess!.kill('SIGTERM');
-        
-        // Force kill after timeout
-        setTimeout(() => {
-          if (!this.childProcess!.killed) {
-            this.childProcess!.kill('SIGKILL');
-          }
-          resolve();
-        }, 5000);
-      }));
+      cleanupTasks.push(
+        new Promise<void>((resolve) => {
+          this.childProcess!.on('exit', () => resolve());
+          this.childProcess!.kill('SIGTERM');
+
+          // Force kill after timeout
+          setTimeout(() => {
+            if (!this.childProcess!.killed) {
+              this.childProcess!.kill('SIGKILL');
+            }
+            resolve();
+          }, 5000);
+        }),
+      );
     }
 
     await Promise.all(cleanupTasks);
@@ -303,7 +309,7 @@ export class McpBridge {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const errorMessage = error.errors
-          .map(err => `${err.path.join('.')}: ${err.message}`)
+          .map((err) => `${err.path.join('.')}: ${err.message}`)
           .join(', ');
         throw new Error(`Invalid bridge configuration: ${errorMessage}`);
       }
@@ -343,7 +349,7 @@ export async function bridgeStdioToHttp(
   options?: {
     headers?: Record<string, string>;
     logging?: boolean;
-  }
+  },
 ): Promise<McpBridge> {
   const config: BridgeConfig = {
     source: {
@@ -373,7 +379,7 @@ export async function bridgeHttpToStdio(
     host?: string;
     env?: Record<string, string>;
     logging?: boolean;
-  }
+  },
 ): Promise<McpBridge> {
   const config: BridgeConfig = {
     source: {

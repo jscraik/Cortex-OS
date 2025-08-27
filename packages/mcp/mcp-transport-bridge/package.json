@@ -1,5 +1,5 @@
 {
-  "name": "@cortex-os/mcp-bridge",
+  "name": "@cortex-os/mcp-transport-bridge",
   "version": "1.0.0",
   "description": "Bridge between stdio and Streamable HTTP transports for MCP servers",
   "type": "module",
