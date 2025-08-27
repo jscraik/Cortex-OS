@@ -139,7 +139,6 @@ export interface McpClientOptions {
   retryDelay: number;
   heartbeatInterval: number;
   enableMetrics: boolean;
-  fallbackMode: boolean;
 }
 
 /**
@@ -199,7 +198,6 @@ export class McpClient extends EventEmitter {
       retryDelay: 1000,
       heartbeatInterval: 30000,
       enableMetrics: true,
-      fallbackMode: false,
     },
   ) {
     super();
@@ -604,7 +602,6 @@ export function createMcpClient(
     retryDelay: 1000,
     heartbeatInterval: 30000,
     enableMetrics: true,
-    fallbackMode: false,
     ...options,
   };
 

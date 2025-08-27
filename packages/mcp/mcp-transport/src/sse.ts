@@ -43,7 +43,7 @@
  * ```
  */
 
-import { EventSource } from 'eventsource';
+import EventSource from 'eventsource';
 import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
 
 /**
@@ -95,26 +95,18 @@ export function createSSE(si: ServerInfo) {
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (messageCallback) {
-          messageCallback(data);
-        }
+        messageCallback?.(data);
       } catch (error) {
-        if (errorCallback) {
-          errorCallback(error);
-        }
+        errorCallback?.(error);
       }
     };
     
     eventSource.onerror = (error) => {
-      if (errorCallback) {
-        errorCallback(error);
-      }
+      errorCallback?.(error);
     };
     
     eventSource.onopen = () => {
-      if (openCallback) {
-        openCallback();
-      }
+      openCallback?.();
     };
   };
   
@@ -161,7 +153,7 @@ export function createSSE(si: ServerInfo) {
    * - Provides data sanitization
    * - Handles authentication
    */
-  const send = (msg: unknown) => {
+  const send = async (msg: unknown) => {
     if (!eventSource) {
       throw new Error('Not connected');
     }
@@ -169,11 +161,18 @@ export function createSSE(si: ServerInfo) {
     // For SSE, we typically send messages via HTTP POST
     // This is a simplified implementation - in a real system, you'd have
     // a separate endpoint for sending messages
-    return fetch(new URL('/mcp/send', si.endpoint), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(msg),
-    });
+    try {
+      const res = await fetch(new URL('/mcp/send', si.endpoint), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(msg),
+      });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    } catch (error) {
+      throw new Error(`Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
   
   /**

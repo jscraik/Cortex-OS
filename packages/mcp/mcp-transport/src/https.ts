@@ -57,6 +57,7 @@ class RateLimiter {
   private requests: Map<string, number[]> = new Map();
   private readonly windowMs: number;
   private readonly maxRequests: number;
+  private cleanupInterval: NodeJS.Timeout;
   
   /**
    * Creates a new rate limiter
@@ -67,6 +68,11 @@ class RateLimiter {
   constructor(windowMs: number = 60000, maxRequests: number = 60) {
     this.windowMs = windowMs;
     this.maxRequests = maxRequests;
+    
+    // Add periodic cleanup every 5 minutes
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 300000);
   }
   
   /**
@@ -110,6 +116,31 @@ class RateLimiter {
     const recentRequests = requests.filter(timestamp => timestamp > windowStart);
     
     return Math.max(0, this.maxRequests - recentRequests.length);
+  }
+  
+  /**
+   * Cleans up old entries to prevent memory leaks
+   */
+  private cleanup() {
+    const now = Date.now();
+    const cutoff = now - (2 * this.windowMs); // Keep 2 windows worth of data
+    
+    for (const [key, timestamps] of this.requests.entries()) {
+      const recent = timestamps.filter(ts => ts > cutoff);
+      if (recent.length === 0) {
+        this.requests.delete(key);
+      } else {
+        this.requests.set(key, recent);
+      }
+    }
+  }
+  
+  /**
+   * Disposes of the rate limiter and cleans up resources
+   */
+  dispose() {
+    clearInterval(this.cleanupInterval);
+    this.requests.clear();
   }
 }
 
@@ -165,14 +196,18 @@ export function createHTTPS(si: { endpoint?: string }) {
       throw new Error(`Rate limit exceeded for tool ${name}`);
     }
     
-    const res = await fetch(new URL('/mcp', si.endpoint), {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: Date.now(), tool: name, params: payload }),
-    });
-    
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    try {
+      const res = await fetch(new URL('/mcp', si.endpoint), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: Date.now(), tool: name, params: payload }),
+      });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    } catch (error) {
+      throw new Error(`Failed to call tool ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
   
   /**
@@ -203,4 +238,13 @@ export function createHTTPS(si: { endpoint?: string }) {
      */
     getRateLimitInfo,
   };
+}
+
+/**
+ * Disposes of global resources used by the HTTPS transport
+ * 
+ * Should be called when shutting down the application to prevent resource leaks
+ */
+export function disposeHTTPS() {
+  rateLimiter.dispose();
 }

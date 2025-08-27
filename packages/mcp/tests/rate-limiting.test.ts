@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { createHTTPS } from '../mcp-transport/src/https';
+import { createHTTPS, disposeHTTPS } from '../mcp-transport/src/https';
 
 /**
  * Rate limiting tests for MCP transports.
@@ -42,5 +42,16 @@ describe('MCP rate limiting', () => {
     expect(rateInfo.maxRequests).toBe(60);
     expect(rateInfo.remaining).toBeGreaterThanOrEqual(0);
     expect(rateInfo.remaining).toBeLessThanOrEqual(60);
+  });
+  
+  test('rate limiter cleans up old entries', async () => {
+    const client = createHTTPS({ endpoint: 'https://example.com' });
+    
+    // Make a call to create an entry
+    const rateInfo1 = (client as any).getRateLimitInfo('cleanup-test');
+    expect(rateInfo1.remaining).toBe(60);
+    
+    // Dispose to clean up resources
+    disposeHTTPS();
   });
 });

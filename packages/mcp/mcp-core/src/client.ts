@@ -14,17 +14,26 @@ export function createClient(si: ServerInfo) {
   }
 }
 
-// Add utility functions for rate limiting and process monitoring
+// Type definitions for enhanced type safety
+interface RateLimitAwareClient {
+  getRateLimitInfo(toolName: string): { remaining: number; windowMs: number; maxRequests: number };
+}
+
+interface ProcessAwareClient {
+  getProcessInfo(): { pid: number; connected: boolean; killed: boolean; resourceLimits: any };
+}
+
+// Add utility functions for rate limiting and process monitoring with proper type safety
 export function getRateLimitInfo(client: ReturnType<typeof createClient>, toolName: string) {
-  if ('getRateLimitInfo' in client) {
-    return (client as any).getRateLimitInfo(toolName);
+  if (typeof (client as RateLimitAwareClient).getRateLimitInfo === 'function') {
+    return (client as RateLimitAwareClient).getRateLimitInfo(toolName);
   }
   return null;
 }
 
 export function getProcessInfo(client: ReturnType<typeof createClient>) {
-  if ('getProcessInfo' in client) {
-    return (client as any).getProcessInfo();
+  if (typeof (client as ProcessAwareClient).getProcessInfo === 'function') {
+    return (client as ProcessAwareClient).getProcessInfo();
   }
   return null;
 }

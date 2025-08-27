@@ -105,22 +105,11 @@ export class McpConfigStorage {
     try {
       const content = await fs.readFile(configPath, 'utf-8');
       const rawConfig = JSON.parse(content);
+      const config = rawConfig as McpRuntimeConfig;
 
-      // Handle legacy format where servers is an object with names as keys
-      if (rawConfig.servers && !Array.isArray(rawConfig.servers)) {
-        // Convert object format to array format
-        const serversObject = rawConfig.servers as Record<string, Omit<McpServerConfig, 'name'>>;
-        rawConfig.servers = {};
-
-        for (const [name, serverData] of Object.entries(serversObject)) {
-          const transportType = this.detectTransportType(serverData);
-          rawConfig.servers[name] = {
-            ...serverData,
-            name,
-            type: transportType,
-            transport: transportType,
-          };
-        }
+      // Ensure servers object exists
+      if (!config.servers) {
+        config.servers = {};
       }
 
       const config = rawConfig as McpRuntimeConfig;
@@ -147,21 +136,6 @@ export class McpConfigStorage {
   /**
    * Helper method to detect transport type from legacy config
    */
-  private detectTransportType(config: Record<string, unknown>): 'stdio' | 'sse' | 'http' {
-    if (config.transport && typeof config.transport === 'string') {
-      return config.transport as 'stdio' | 'sse' | 'http';
-    }
-
-    if (config.command) {
-      return 'stdio';
-    }
-
-    if (config.url && typeof config.url === 'string') {
-      return config.url.includes('/sse') ? 'sse' : 'http';
-    }
-
-    return 'stdio';
-  }
 
   /**
    * Write MCP runtime configuration

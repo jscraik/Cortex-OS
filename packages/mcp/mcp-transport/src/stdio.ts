@@ -108,6 +108,11 @@ export function createStdIo(si: ServerInfo) {
     }
   }, resourceLimits.timeout);
   
+  // Clear timeout when process exits
+  child.on('exit', () => {
+    clearTimeout(timeoutId);
+  });
+  
   // Simple JSONL framing
   const send = (msg: unknown) => {
     // Redact sensitive data before sending
@@ -135,7 +140,9 @@ export function createStdIo(si: ServerInfo) {
   
   const dispose = () => {
     clearTimeout(timeoutId);
-    child.kill();
+    if (!child.killed) {
+      child.kill();
+    }
   };
   
   // Add process monitoring

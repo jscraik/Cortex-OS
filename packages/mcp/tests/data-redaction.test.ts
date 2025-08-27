@@ -22,4 +22,16 @@ describe('MCP data redaction', () => {
       expect(redacted).toMatch(/\[REDACTED\]/);
     }
   });
+  
+  test('redaction preserves data structure', () => {
+    const input = '{"apiKey": "sk-1234567890abcdef", "name": "test"}';
+    const redacted = redactSensitiveData(input);
+    
+    // Should still be valid JSON
+    expect(() => JSON.parse(redacted)).not.toThrow();
+    
+    // Should preserve non-sensitive data
+    const parsed = JSON.parse(redacted);
+    expect(parsed.name).toBe('test');
+  });
 });
