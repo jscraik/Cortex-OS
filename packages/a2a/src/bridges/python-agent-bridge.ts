@@ -1,43 +1,26 @@
 /**
  * @file Python Agent Bridge
- * @description Bridge for communicating with Python-based agents through IPC
+ * @description Functional bridge for communicating with Python-based agents through IPC
  * Follows Agent-OS methodology with comprehensive error handling and security
  */
 
-import { spawn, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import path from 'path';
-
-/**
- * Agent task interface for Python agents
- */
-export interface AgentTask {
-  coordinationId: string;
-  phaseId: string;
-  phaseName: string;
-  requirements: string[];
-  agentType: 'langgraph' | 'crewai' | 'autogen';
-}
-
-/**
- * Agent execution result
- */
-export interface AgentExecutionResult {
-  success: boolean;
-  agent_id: string;
-  result?: unknown;
-  error?: string;
-  metadata?: Record<string, unknown>;
-}
+import { ProcessFactory, ProcessLike, createProcessFactory } from '../lib/child-process-factory.js';
+import { IdGenerator, createIdGenerator } from '../lib/message-id.js';
+import { AgentExecutionResult, AgentTask, ResponseMessageSchema } from '../lib/schemas.js';
+import { withTimeout } from '../lib/timeout.js';
 
 /**
  * Bridge configuration
  */
 export interface BridgeConfig {
   pythonPath?: string;
-  scriptPath?: string;
+  scriptPath: string; // Required - no fallback
   timeout?: number;
   maxRetries?: number;
+  processFactory?: ProcessFactory;
+  idGenerator?: IdGenerator;
+  logger?: Console;
 }
 
 /**
@@ -45,24 +28,34 @@ export interface BridgeConfig {
  * Manages lifecycle and communication with Python-based agents
  */
 export class PythonAgentBridge extends EventEmitter {
-  private process: ChildProcess | null = null;
-  private config: Required<BridgeConfig>;
+  private readonly config: Required<BridgeConfig>;
+  private process: ProcessLike | null = null;
   private isInitialized = false;
-  private pendingMessages = new Map<string, { resolve: Function; reject: Function; timeout: NodeJS.Timeout }>();
+  private readonly pendingMessages = new Map<
+    string,
+    {
+      resolve: (value: any) => void;
+      reject: (error: Error) => void;
+      timeout: NodeJS.Timeout;
+    }
+  >();
 
-  constructor(config: BridgeConfig = {}) {
+  constructor(config: BridgeConfig) {
     super();
-    
+
     this.config = {
       pythonPath: config.pythonPath || 'python3',
-      scriptPath: config.scriptPath || path.join(__dirname, '../python/a2a_server.py'),
+      scriptPath: config.scriptPath,
       timeout: config.timeout || 30000,
-      maxRetries: config.maxRetries || 3
+      maxRetries: config.maxRetries || 3,
+      processFactory: config.processFactory || createProcessFactory(),
+      idGenerator: config.idGenerator || createIdGenerator(),
+      logger: config.logger || console,
     };
   }
 
   /**
-   * Initialize the Python agent bridge
+   * Initialize the Python agent bridge with handshake
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
@@ -71,11 +64,12 @@ export class PythonAgentBridge extends EventEmitter {
 
     try {
       await this.startPythonProcess();
+      await this.waitForReady();
       this.isInitialized = true;
       this.emit('initialized');
     } catch (error) {
       this.emit('error', error);
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
 
@@ -90,13 +84,16 @@ export class PythonAgentBridge extends EventEmitter {
     const message = {
       type: 'execute_task',
       task,
-      message_id: this.generateMessageId(),
-      timestamp: Date.now()
+      message_id: this.config.idGenerator.generate(),
+      timestamp: Date.now(),
     };
 
     try {
-      const result = await this.sendMessage(message);
-      
+      const result = await withTimeout(this.sendMessage(message), {
+        timeout: this.config.timeout,
+        errorMessage: 'Agent task timeout',
+      });
+
       // Map result to expected format for tests
       if (task.agentType === 'langgraph') {
         return {
@@ -106,8 +103,8 @@ export class PythonAgentBridge extends EventEmitter {
           metadata: {
             coordination_id: task.coordinationId,
             phase_id: task.phaseId,
-            agent_type: task.agentType
-          }
+            agent_type: task.agentType,
+          },
         };
       }
 
@@ -120,8 +117,8 @@ export class PythonAgentBridge extends EventEmitter {
         metadata: {
           coordination_id: task.coordinationId,
           phase_id: task.phaseId,
-          agent_type: task.agentType
-        }
+          agent_type: task.agentType,
+        },
       };
     }
   }
@@ -135,7 +132,7 @@ export class PythonAgentBridge extends EventEmitter {
     }
 
     return new Promise((resolve, reject) => {
-      const messageId = (message as any).message_id || this.generateMessageId();
+      const messageId = (message as any).message_id || this.config.idGenerator.generate();
       const timeout = setTimeout(() => {
         this.pendingMessages.delete(messageId);
         reject(new Error('Message timeout'));
@@ -152,7 +149,7 @@ export class PythonAgentBridge extends EventEmitter {
       } catch (error) {
         this.pendingMessages.delete(messageId);
         clearTimeout(timeout);
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
@@ -163,9 +160,9 @@ export class PythonAgentBridge extends EventEmitter {
   private async startPythonProcess(): Promise<void> {
     return new Promise((resolve, reject) => {
       const args = [this.config.scriptPath];
-      
-      this.process = spawn(this.config.pythonPath, args, {
-        stdio: ['pipe', 'pipe', 'pipe']
+
+      this.process = this.config.processFactory.spawn(this.config.pythonPath, args, {
+        stdio: ['pipe', 'pipe', 'pipe'],
       });
 
       if (!this.process) {
@@ -176,7 +173,7 @@ export class PythonAgentBridge extends EventEmitter {
       // Handle process errors
       this.process.on('error', (error) => {
         this.emit('error', error);
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       });
 
       // Handle process exit
@@ -188,61 +185,75 @@ export class PythonAgentBridge extends EventEmitter {
       // Handle stdout messages
       this.process.stdout?.on('data', (data) => {
         try {
-          const lines = data.toString().split('\n').filter((line: string) => line.trim());
-          
+          const lines = data
+            .toString()
+            .split('\n')
+            .filter((line: string) => line.trim());
+
           for (const line of lines) {
+            if (line.includes('BRIDGE_READY')) {
+              this.emit('ready');
+              continue;
+            }
+
             const response = JSON.parse(line);
             this.handleResponse(response);
           }
         } catch (error) {
-          this.emit('error', new Error(`Failed to parse Python response: ${error}`));
+          this.config.logger.error(`Failed to parse Python response: ${error}`);
         }
       });
 
       // Handle stderr messages
       this.process.stderr?.on('data', (data) => {
         const errorMsg = data.toString();
-        this.emit('error', new Error(`Python process error: ${errorMsg}`));
+        this.config.logger.error(`Python process error: ${errorMsg}`);
       });
 
-      // Resolve once process is ready
-      setTimeout(() => {
-        if (this.process && !this.process.killed) {
-          resolve();
-        } else {
-          reject(new Error('Python process failed to start'));
-        }
-      }, 1000);
+      resolve();
     });
+  }
+
+  /**
+   * Wait for the Python process to signal readiness
+   */
+  private async waitForReady(): Promise<void> {
+    return withTimeout(
+      new Promise<void>((resolve) => {
+        this.once('ready', resolve);
+      }),
+      { timeout: 10000, errorMessage: 'Python process ready timeout' },
+    );
   }
 
   /**
    * Handle response from Python process
    */
   private handleResponse(response: any): void {
-    const messageId = response.message_id;
-    
-    if (messageId && this.pendingMessages.has(messageId)) {
-      const { resolve, reject, timeout } = this.pendingMessages.get(messageId)!;
-      this.pendingMessages.delete(messageId);
-      clearTimeout(timeout);
+    // Validate response with Zod
+    try {
+      const validatedResponse = ResponseMessageSchema.parse(response);
+      const messageId = validatedResponse.message_id;
 
-      if (response.error) {
-        reject(new Error(response.error));
+      if (messageId && this.pendingMessages.has(messageId)) {
+        const pending = this.pendingMessages.get(messageId);
+        if (pending) {
+          this.pendingMessages.delete(messageId);
+          clearTimeout(pending.timeout);
+
+          if (validatedResponse.error) {
+            pending.reject(new Error(validatedResponse.error));
+          } else {
+            pending.resolve(validatedResponse.result || validatedResponse);
+          }
+        }
       } else {
-        resolve(response.result || response);
+        // Handle unsolicited messages (events, notifications)
+        this.emit('message', validatedResponse);
       }
-    } else {
-      // Handle unsolicited messages (events, notifications)
-      this.emit('message', response);
+    } catch (error) {
+      this.config.logger.error('Invalid response from Python process:', error);
     }
-  }
-
-  /**
-   * Generate a unique message ID
-   */
-  private generateMessageId(): string {
-    return `bridge_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
   /**
@@ -263,7 +274,7 @@ export class PythonAgentBridge extends EventEmitter {
     // Terminate Python process
     if (this.process) {
       this.process.kill('SIGTERM');
-      
+
       // Wait for graceful shutdown or force kill
       await new Promise<void>((resolve) => {
         if (!this.process) {
@@ -282,11 +293,26 @@ export class PythonAgentBridge extends EventEmitter {
           resolve();
         });
       });
-      
+
       this.process = null;
     }
 
     this.isInitialized = false;
     this.emit('shutdown');
+  }
+
+  /**
+   * Get bridge statistics
+   */
+  getStatistics(): {
+    isInitialized: boolean;
+    pendingMessages: number;
+    processId: number | null;
+  } {
+    return {
+      isInitialized: this.isInitialized,
+      pendingMessages: this.pendingMessages.size,
+      processId: this.process?.pid || null,
+    };
   }
 }

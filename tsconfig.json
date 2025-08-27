@@ -82,18 +82,15 @@
       "@cortex-os/prp-runner/*": ["packages/prp-runner/src/*"],
 
       // Shared Library Packages
-      "@cortex-os/rag": ["packages/rag/src/index.ts"],
-      "@cortex-os/rag/*": ["packages/rag/src/*"],
+      "@cortex-os/orchestration": ["packages/orchestration/src/index.ts"],
+      "@cortex-os/orchestration/*": ["packages/orchestration/src/*"],
 
-      "@brain/*": ["apps/cortex-os/brain/*"],
-      "@brain/rag/*": ["apps/cortex-os/brain/rag/src/*"],
-      "@brain/router/*": ["apps/cortex-os/brain/router/src/*"],
-      "@brain/planner/*": ["apps/cortex-os/brain/planner/*"],
-      "@brain/policy/*": ["apps/cortex-os/brain/policy/*"],
-      "@brain/evidence/*": ["apps/cortex-os/brain/evidence/*"],
-      "@brain/adapters/*": ["apps/cortex-os/brain/adapters/*"],
+      "@brain/*": ["apps/cortex-os/packages/*"],
+      "@brain/evidence/*": ["apps/cortex-os/packages/evidence/*"],
+      "@brain/ingest/*": ["apps/cortex-os/packages/ingest/src/*"],
+      "@brain/planner/*": ["apps/cortex-os/packages/planner/*"],
 
-      "@orchestration/*": ["apps/cortex-os/brain/planner/orchestration/src/*"]
+      "@orchestration/*": ["apps/cortex-os/packages/planner/orchestration/src/*"]
     }
   },
   "exclude": [
@@ -110,10 +107,8 @@
     "**/dist/**",
     "**/build/**",
     "**/*.d.ts",
-    "**/*.test.ts",
     "**/*.spec.ts",
     "**/test/**",
-    "**/tests/**",
     "**/tools/**",
     "security_backups/**",
     "**/__*/**",

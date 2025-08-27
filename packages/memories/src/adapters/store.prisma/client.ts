@@ -1,7 +1,23 @@
-// Prisma-backed MemoryStore. Accepts a Prisma client-like instance to avoid
-// hard dependency on @prisma/client at build time.
+// Prisma-backed MemoryStore with full vector search and TTL support
 import type { Memory } from "../../domain/types.js";
 import type { MemoryStore, TextQuery, VectorQuery } from "../../ports/MemoryStore.js";
+
+// Helper function to calculate cosine similarity
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error('Vectors must have the same length');
+  }
+  
+  const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
+  const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+  const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+  
+  if (magnitudeA === 0 || magnitudeB === 0) {
+    return 0;
+  }
+  
+  return dotProduct / (magnitudeA * magnitudeB);
+}
 
 type PrismaLike = {
   memory: {
@@ -9,6 +25,7 @@ type PrismaLike = {
     findUnique(args: any): Promise<any>;
     delete(args: any): Promise<any>;
     findMany(args: any): Promise<any[]>;
+    deleteMany(args: any): Promise<any>;
   };
 };
 
@@ -48,11 +65,81 @@ export class PrismaStore implements MemoryStore {
   }
 
   async searchByVector(q: VectorQuery): Promise<Memory[]> {
-    const rows = await this.prisma.memory.findMany({ take: q.topK, orderBy: { updatedAt: "desc" } });
-    return rows.map(prismaToDomain);
+    // Fetch candidates with vectors and matching tags
+    const candidateRows = await this.prisma.memory.findMany({
+      where: {
+        vector: { not: undefined },
+        ...(q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {})
+      },
+      orderBy: { updatedAt: "desc" },
+      take: q.topK * 10 // Fetch more candidates for similarity matching
+    });
+    
+    // Convert to domain objects and filter out those without vectors
+    const candidates = candidateRows
+      .map(prismaToDomain)
+      .filter(memory => memory.vector) as Memory[];
+    
+    // Perform similarity matching in memory
+    const scoredCandidates = candidates
+      .map(memory => ({
+        memory,
+        score: cosineSimilarity(q.vector, memory.vector!)
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, q.topK)
+      .map(item => item.memory);
+    
+    return scoredCandidates;
   }
 
-  async purgeExpired(_nowISO: string): Promise<number> { return 0; }
+  async purgeExpired(nowISO: string): Promise<number> {
+    const now = new Date(nowISO).getTime();
+    
+    // Fetch all memories with TTL to check expiration in application code
+    const allRows = await this.prisma.memory.findMany({
+      where: { ttl: { not: null } }
+    });
+    
+    const expiredIds: string[] = [];
+    
+    for (const row of allRows) {
+      try {
+        const memory = prismaToDomain(row);
+        if (memory.ttl) {
+          const created = new Date(memory.createdAt).getTime();
+          // Parse ISO duration format
+          const match = memory.ttl.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
+          if (match) {
+            const days = Number(match[1] || 0);
+            const hours = Number(match[2] || 0);
+            const minutes = Number(match[3] || 0);
+            const seconds = Number(match[4] || 0);
+            const ttlMs = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
+            
+            if (created + ttlMs <= now) {
+              expiredIds.push(memory.id);
+            }
+          }
+        }
+      } catch (error) {
+        // Ignore invalid TTL formats
+        console.warn(`Invalid TTL format for memory ${row.id}: ${row.ttl}`);
+      }
+    }
+    
+    // Delete expired memories
+    if (expiredIds.length > 0) {
+      const result = await this.prisma.memory.deleteMany({
+        where: {
+          id: { in: expiredIds }
+        }
+      });
+      return result.count;
+    }
+    
+    return 0;
+  }
 }
 
 function prismaToDomain(row: any): Memory {

@@ -4,7 +4,9 @@
   "type": "module",
   "main": "guard.ts",
   "scripts": {
-    "test": "vitest run"
+    "test": "cd ../.. && npx vitest run tools/structure-guard/guard.spec.ts",
+    "test:enhanced": "cd ../.. && npx vitest run tools/structure-guard/guard-enhanced.spec.ts tools/structure-guard/mutation-tests.spec.ts",
+    "validate": "cd ../.. && npx tsx tools/structure-guard/guard-enhanced.ts"
   },
   "dependencies": {
     "globby": "^14.1.0",

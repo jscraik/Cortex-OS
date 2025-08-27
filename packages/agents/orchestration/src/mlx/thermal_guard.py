@@ -20,6 +20,7 @@ import logging
 import platform
 import subprocess
 import time
+import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Callable, Any
@@ -139,6 +140,7 @@ class AppleSiliconThermalMonitor:
         self._last_temp_cache = {}
         self._cache_timestamp = 0
         self._cache_ttl_ms = 100  # 100ms cache for rapid polling
+        self._allow_sudo = os.environ.get("CORTEX_ALLOW_SUDO", "").strip().lower() in {"1", "true", "yes"}
         
     def _detect_apple_silicon(self) -> bool:
         """Detect if running on Apple Silicon."""
@@ -221,13 +223,27 @@ class AppleSiliconThermalMonitor:
         """Get GPU temperature from system sensors."""
         try:
             # Try powermetrics first (most accurate for Apple Silicon)
-            result = await asyncio.create_subprocess_exec(
-                "sudo", "powermetrics", "-n", "1", "-i", "100",
+            base_cmd = [
+                "powermetrics", "-n", "1", "-i", "100",
                 "--samplers", "gpu_power",
+            ]
+            # First attempt without sudo
+            result = await asyncio.create_subprocess_exec(
+                *base_cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await result.communicate()
+            stdout, _ = await result.communicate()
+            
+            if result.returncode != 0 and self._allow_sudo:
+                # Optional retry with sudo -n if explicitly allowed
+                sudo_cmd = ["sudo", "-n", *base_cmd]
+                result = await asyncio.create_subprocess_exec(
+                    *sudo_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, _ = await result.communicate()
             
             if result.returncode == 0:
                 # Parse powermetrics output for GPU temp
@@ -254,7 +270,7 @@ class AppleSiliconThermalMonitor:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            stdout, stderr = await result.communicate()
+            stdout, _ = await result.communicate()
             
             if result.returncode == 0:
                 thermal_state = int(stdout.decode().strip())
@@ -278,7 +294,7 @@ class AppleSiliconThermalMonitor:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            stdout, stderr = await result.communicate()
+            stdout, _ = await result.communicate()
             
             if result.returncode == 0:
                 thermal_state = int(stdout.decode().strip())
@@ -311,7 +327,7 @@ class AppleSiliconThermalMonitor:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            stdout, stderr = await result.communicate()
+            stdout, _ = await result.communicate()
             
             if result.returncode == 0:
                 thermal_state = int(stdout.decode().strip())

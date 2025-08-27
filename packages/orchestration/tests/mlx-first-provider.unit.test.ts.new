@@ -1,0 +1,421 @@
+/**
+ * MLX-First Provider Unit Tests
+ * Tests the actual MLXFirstModelProvider with mocked dependencies
+ */
+
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MLXFirstModelProvider } from '../src/providers/mlx-first-provider.js';
+
+// Test constants
+const TEST_CONSTANTS = {
+  TASKS: {
+    QUICK_REASONING: 'quickReasoning',
+    EMBEDDINGS: 'embeddings',
+    RERANKING: 'reranking',
+    UNKNOWN: 'unknown-task',
+  },
+  PROVIDERS: {
+    MLX: 'mlx',
+    OLLAMA: 'ollama',
+  },
+  MODELS: {
+    MLX_DEFAULT: 'mlx-model',
+    OLLAMA_DEFAULT: 'ollama-model',
+  },
+  URLS: {
+    MLX: 'http://localhost:8765',
+    OLLAMA: 'http://localhost:11434',
+  },
+} as const;
+
+// Mock fetch globally
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+// Mock environment variables
+vi.mock('../../../../config/model-strategy.js', () => ({
+  MODEL_STRATEGY: {
+    [TEST_CONSTANTS.TASKS.QUICK_REASONING]: {
+      primary: { model: TEST_CONSTANTS.MODELS.MLX_DEFAULT },
+      fallback: { model: TEST_CONSTANTS.MODELS.OLLAMA_DEFAULT },
+      performance: { memory: 'light' },
+    },
+    [TEST_CONSTANTS.TASKS.EMBEDDINGS]: {
+      primary: { model: TEST_CONSTANTS.MODELS.MLX_DEFAULT },
+      fallback: { model: TEST_CONSTANTS.MODELS.OLLAMA_DEFAULT },
+      performance: { memory: 'heavy' },
+    },
+    [TEST_CONSTANTS.TASKS.RERANKING]: {
+      primary: { model: TEST_CONSTANTS.MODELS.MLX_DEFAULT },
+      fallback: { model: TEST_CONSTANTS.MODELS.OLLAMA_DEFAULT },
+      performance: { memory: 'moderate' },
+    },
+  },
+}));
+
+// Mock setInterval to prevent background health checks during tests
+const originalSetInterval = global.setInterval;
+global.setInterval = vi.fn() as any;
+
+describe('MLXFirstModelProvider', () => {
+  let provider: MLXFirstModelProvider;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFetch.mockReset();
+    provider = new MLXFirstModelProvider();
+  });
+
+  afterAll(() => {
+    global.setInterval = originalSetInterval;
+  });
+
+  describe('generate', () => {
+    it('should use MLX service when healthy', async () => {
+      const mockRequest = { 
+        prompt: 'test prompt',
+      };
+      const mockResponse = { 
+        content: 'test response',
+      };
+
+      // Mock MLX health check (200 response)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+
+      // Mock MLX generate call
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await provider.generate(TEST_CONSTANTS.TASKS.QUICK_REASONING, mockRequest);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenNthCalledWith(1, `${TEST_CONSTANTS.URLS.MLX}/health`);
+      expect(mockFetch).toHaveBeenNthCalledWith(2, `${TEST_CONSTANTS.URLS.MLX}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: TEST_CONSTANTS.MODELS.MLX_DEFAULT,
+          ...mockRequest,
+        }),
+      });
+      expect(result.content).toBe(mockResponse.content);
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.MLX);
+    });
+
+    it('should fallback to Ollama when MLX is unhealthy', async () => {
+      const mockRequest = { 
+        prompt: 'test prompt',
+      };
+      const mockResponse = { 
+        response: 'ollama response',
+      };
+
+      // Mock MLX health check (unhealthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      });
+
+      // Mock Ollama health check (healthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+
+      // Mock Ollama generate call
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await provider.generate(TEST_CONSTANTS.TASKS.QUICK_REASONING, mockRequest);
+
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch).toHaveBeenNthCalledWith(1, `${TEST_CONSTANTS.URLS.MLX}/health`);
+      expect(mockFetch).toHaveBeenNthCalledWith(2, `${TEST_CONSTANTS.URLS.OLLAMA}/api/tags`);
+      expect(mockFetch).toHaveBeenNthCalledWith(3, `${TEST_CONSTANTS.URLS.OLLAMA}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: TEST_CONSTANTS.MODELS.OLLAMA_DEFAULT,
+          prompt: mockRequest.prompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 1000,
+          },
+        }),
+      });
+      expect(result.content).toBe(mockResponse.response);
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.OLLAMA);
+    });
+
+    it('should throw error when both services are unhealthy', async () => {
+      // Mock both services as unhealthy
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+      });
+
+      await expect(
+        provider.generate(TEST_CONSTANTS.TASKS.QUICK_REASONING, { prompt: 'test' })
+      ).rejects.toThrow(`All providers failed for task: ${TEST_CONSTANTS.TASKS.QUICK_REASONING}`);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw error for unknown task', async () => {
+      await expect(
+        provider.generate(TEST_CONSTANTS.TASKS.UNKNOWN, { prompt: 'test' })
+      ).rejects.toThrow(`Unknown task: ${TEST_CONSTANTS.TASKS.UNKNOWN}`);
+      
+      // Should not make any fetch calls for unknown task
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('embed', () => {
+    it('should use MLX service for embeddings when healthy', async () => {
+      const mockRequest = { texts: ['embed this text'] };
+      const mockResponse = { 
+        embeddings: [[0.1, 0.2, 0.3]],
+        dimensions: 3
+      };
+
+      // Mock MLX health check
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+
+      // Mock MLX embed call
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await provider.embed(mockRequest);
+
+      expect(mockFetch).toHaveBeenNthCalledWith(2, `${TEST_CONSTANTS.URLS.MLX}/embed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: TEST_CONSTANTS.MODELS.MLX_DEFAULT,
+          texts: mockRequest.texts,
+        }),
+      });
+      expect(result.embeddings).toEqual(mockResponse.embeddings);
+      expect(result.dimensions).toEqual(mockResponse.dimensions);
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.MLX);
+    });
+
+    it('should fallback to Ollama for embeddings when MLX is unhealthy', async () => {
+      const mockRequest = { texts: ['embed this text'] };
+      
+      // Mock successful Ollama generation (for semantic vectors)
+      const mockOllamaResponse = { response: '0.1,0.2,0.3' };
+
+      // Mock MLX health check (unhealthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      });
+
+      // Mock Ollama health check (healthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: true, 
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+
+      // Mock Ollama generate call (for each text in the array)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockOllamaResponse),
+      });
+
+      const result = await provider.embed(mockRequest);
+
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.OLLAMA);
+      expect(result.embeddings).toBeDefined();
+      expect(Array.isArray(result.embeddings)).toBe(true);
+      expect(result.embeddings.length).toBe(1); // One embedding per text
+      expect(result.dimensions).toBeGreaterThan(0);
+    });
+  });
+
+  describe('rerank', () => {
+    it('should use MLX service for reranking when healthy', async () => {
+      const query = 'test query';
+      const documents = ['doc1', 'doc2'];
+      const mockResponse = { scores: [0.9, 0.7] };
+
+      // Mock MLX health check
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+
+      // Mock MLX rerank call
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const result = await provider.rerank(query, documents);
+
+      expect(mockFetch).toHaveBeenNthCalledWith(2, `${TEST_CONSTANTS.URLS.MLX}/rerank`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: TEST_CONSTANTS.MODELS.MLX_DEFAULT,
+          query,
+          documents,
+        }),
+      });
+      expect(result.scores).toEqual(mockResponse.scores);
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.MLX);
+    });
+
+    it('should fallback to Ollama for reranking when MLX is unhealthy', async () => {
+      const query = 'test query';
+      const documents = ['doc1', 'doc2'];
+      
+      // Mock MLX health check (unhealthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      });
+
+      // Mock Ollama health check (healthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+
+      // Mock Ollama generate calls (one for each document)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ response: '0.8' }),
+      });
+      
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ response: '0.6' }),
+      });
+
+      const result = await provider.rerank(query, documents);
+
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.OLLAMA);
+      expect(result.scores).toHaveLength(2);
+      expect(result.scores.every(score => score >= 0 && score <= 1)).toBe(true);
+    });
+  });
+
+  describe('getOptimalModel', () => {
+    it('should return primary model when MLX is healthy', () => {
+      const result = provider.getOptimalModel(TEST_CONSTANTS.TASKS.QUICK_REASONING);
+      expect(result).toEqual({
+        model: TEST_CONSTANTS.MODELS.MLX_DEFAULT,
+      });
+    });
+
+    it('should return fallback model when MLX is unhealthy', () => {
+      // Mark MLX as unhealthy
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+      });
+      
+      // Make the health check run immediately
+      (provider as any).checkMLXHealth();
+      
+      const result = provider.getOptimalModel(TEST_CONSTANTS.TASKS.QUICK_REASONING);
+      expect(result).toEqual({
+        model: TEST_CONSTANTS.MODELS.OLLAMA_DEFAULT,
+      });
+    });
+
+    it('should honor latency constraints', () => {
+      const result = provider.getOptimalModel(TEST_CONSTANTS.TASKS.QUICK_REASONING, { maxLatency: 50 });
+      expect(result).toEqual({
+        model: TEST_CONSTANTS.MODELS.MLX_DEFAULT,
+      });
+    });
+
+    it('should return null for unknown task', () => {
+      const result = provider.getOptimalModel(TEST_CONSTANTS.TASKS.UNKNOWN);
+      expect(result).toBeNull();
+    });
+    
+    it('should honor memory constraints', () => {
+      const lightResult = provider.getOptimalModel(TEST_CONSTANTS.TASKS.QUICK_REASONING, { maxMemory: 'light' });
+      expect(lightResult).toEqual({
+        model: TEST_CONSTANTS.MODELS.MLX_DEFAULT, 
+      });
+      
+      const heavyResult = provider.getOptimalModel(TEST_CONSTANTS.TASKS.EMBEDDINGS, { maxMemory: 'light' });
+      expect(heavyResult).toEqual({
+        model: TEST_CONSTANTS.MODELS.OLLAMA_DEFAULT,
+      });
+    });
+  });
+
+  describe('error handling', () => {
+    it('should catch and log MLX errors during generation', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      // Mock MLX health check (healthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+      
+      // Mock MLX generate call (failure)
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+      
+      // Mock Ollama health check (healthy)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ status: 'healthy' }),
+      });
+      
+      // Mock Ollama generate call (success)
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ response: 'fallback response' }),
+      });
+      
+      const result = await provider.generate(TEST_CONSTANTS.TASKS.QUICK_REASONING, { prompt: 'test' });
+      
+      expect(consoleWarnSpy).toHaveBeenCalled();
+      expect(result.provider).toBe(TEST_CONSTANTS.PROVIDERS.OLLAMA);
+      
+      consoleWarnSpy.mockRestore();
+    });
+  });
+});

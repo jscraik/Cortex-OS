@@ -1,0 +1,58 @@
+{
+  "$id": "create-user",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Create User Command",
+  "description": "CloudEvent schema for user creation command",
+  "type": "object",
+  "required": ["specversion", "type", "source", "id", "data"],
+  "properties": {
+    "specversion": {
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "type": {
+      "type": "string",
+      "const": "com.cortex.user.create"
+    },
+    "source": {
+      "type": "string",
+      "format": "uri-reference"
+    },
+    "id": {
+      "type": "string"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "data": {
+      "type": "object",
+      "required": ["email", "username", "password"],
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50,
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "password": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "firstName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "lastName": {
+          "type": "string",
+          "maxLength": 100
+        }
+      }
+    }
+  }
+}

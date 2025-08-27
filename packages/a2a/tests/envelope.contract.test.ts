@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { describe, expect, it } from 'vitest';
+import { Envelope } from '../a2a-contracts/src/envelope.js';
 
 const base = {
   id: '00000000-0000-0000-0000-000000000000',
   type: 'event.test.v1',
+  source: 'http://localhost/test',
+  specversion: '1.0',
   occurredAt: '2024-01-01T00:00:00.000Z',
   headers: {},
   payload: {},

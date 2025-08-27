@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, expect } from 'vitest';
-import { Bus } from '@cortex-os/a2a-core/bus';
-import { fsQueue } from '@cortex-os/a2a-transport/fsq';
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
 import os from 'node:os';
+import { join } from 'node:path';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { Bus } from '../a2a-core/src/bus.js';
+import { fsQueue } from '../a2a-transport/src/fsq.js';
 
 const queueName = 'durability-test';
 const queueDir = join(os.homedir(), '.cortex', 'a2a', queueName);
@@ -23,12 +23,26 @@ describe('fsQueue durability', () => {
       payload: {},
     };
     let count = 0;
-    await bus.bind([{ type: 'event.durable.v1', handle: async () => { count++; } }]);
+    await bus.bind([
+      {
+        type: 'event.durable.v1',
+        handle: async () => {
+          count++;
+        },
+      },
+    ]);
     await bus.publish(msg as any);
     expect(count).toBe(1);
 
     const bus2 = new Bus(fsQueue(queueName));
-    await bus2.bind([{ type: 'event.durable.v1', handle: async () => { count++; } }]);
+    await bus2.bind([
+      {
+        type: 'event.durable.v1',
+        handle: async () => {
+          count++;
+        },
+      },
+    ]);
     expect(count).toBe(1);
   });
 });

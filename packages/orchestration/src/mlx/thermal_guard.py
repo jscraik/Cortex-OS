@@ -106,6 +106,15 @@ class ThermalGuard:
         self._shutdown_event = asyncio.Event()
         
         logger.info(f"Thermal Guard initialized (Apple Silicon: {self.is_apple_silicon})")
+
+    def _allow_sudo(self) -> bool:
+        """Whether sudo is explicitly allowed for system probes.
+
+        Defaults to False to avoid password prompts in dev/CI. Opt-in with:
+        CORTEX_ALLOW_SUDO=true (or 1/yes)
+        """
+        val = os.environ.get("CORTEX_ALLOW_SUDO", "").strip().lower()
+        return val in {"1", "true", "yes"}
     
     def _detect_apple_silicon(self) -> bool:
         """Detect if running on Apple Silicon"""
@@ -115,10 +124,10 @@ class ThermalGuard:
             
             # Check for Apple Silicon indicators
             # SECURITY NOTE: This subprocess call is safe because:
-        # 1. The command is hardcoded and not user-controlled
-        # 2. Only system information is retrieved
-        # 3. A timeout is enforced
-        result = subprocess.run(
+            # 1. The command is hardcoded and not user-controlled
+            # 2. Only system information is retrieved
+            # 3. A timeout is enforced
+            result = subprocess.run(
                 ["sysctl", "-n", "machdep.cpu.brand_string"],
                 capture_output=True,
                 text=True,
@@ -229,18 +238,31 @@ class ThermalGuard:
             return 70.0  # Mock temperature for non-Apple Silicon
         
         try:
-            # Use powermetrics to get GPU temperature
-            result = await asyncio.create_subprocess_exec(
-                "sudo", "powermetrics", 
+            # Use powermetrics to get GPU temperature (no sudo by default)
+            base_cmd = [
+                "powermetrics",
                 "--samplers", "gpu_power",
                 "--sample-count", "1",
                 "--format", "plist",
+            ]
+            # First attempt without sudo
+            result = await asyncio.create_subprocess_exec(
+                *base_cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
+            stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
             
-            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=10.0)
-            
+            if result.returncode != 0 and self._allow_sudo():
+                # Optional retry with sudo -n if explicitly allowed
+                sudo_cmd = ["sudo", "-n", *base_cmd]
+                result = await asyncio.create_subprocess_exec(
+                    *sudo_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
+
             if result.returncode == 0:
                 # Parse plist output for GPU temperature
                 # This is a simplified parser - in production use plistlib
@@ -276,7 +298,7 @@ class ThermalGuard:
                 stderr=asyncio.subprocess.PIPE
             )
             
-            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=5.0)
+            stdout, _ = await asyncio.wait_for(result.communicate(), timeout=5.0)
             
             if result.returncode == 0:
                 # Parse thermal state and convert to approximate temperature
@@ -303,7 +325,7 @@ class ThermalGuard:
                 stderr=asyncio.subprocess.PIPE
             )
             
-            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=5.0)
+            stdout, _ = await asyncio.wait_for(result.communicate(), timeout=5.0)
             
             if result.returncode == 0:
                 output = stdout.decode()
@@ -323,18 +345,29 @@ class ThermalGuard:
     async def _get_power_draw(self) -> float:
         """Get system power draw in watts"""
         try:
-            # Use powermetrics for power measurement
-            result = await asyncio.create_subprocess_exec(
-                "sudo", "powermetrics",
+            # Use powermetrics for power measurement (no sudo by default)
+            base_cmd = [
+                "powermetrics",
                 "--samplers", "cpu_power,gpu_power",
                 "--sample-count", "1",
                 "--format", "plist",
+            ]
+            result = await asyncio.create_subprocess_exec(
+                *base_cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
-            
-            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=10.0)
-            
+            stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
+
+            if result.returncode != 0 and self._allow_sudo():
+                sudo_cmd = ["sudo", "-n", *base_cmd]
+                result = await asyncio.create_subprocess_exec(
+                    *sudo_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
+
             if result.returncode == 0:
                 output = stdout.decode()
                 

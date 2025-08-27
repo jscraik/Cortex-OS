@@ -1,0 +1,74 @@
+{
+  "$id": "https://cortex-os.org/contracts/cloudevents/agent-coordination-requested",
+  "title": "Agent Coordination Requested",
+  "description": "Schema for agent coordination request events following CloudEvents specification",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier"
+    },
+    "type": {
+      "type": "string",
+      "const": "agent.coordination.requested",
+      "description": "Event type identifier"
+    },
+    "source": {
+      "type": "string",
+      "description": "Event source identifier"
+    },
+    "specversion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "CloudEvents specification version"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "coordinationId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique coordination identifier"
+        },
+        "workflowType": {
+          "type": "string",
+          "description": "Type of workflow to be executed"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of participating agent IDs"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Workflow-specific data payload"
+        },
+        "deadline": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Workflow deadline"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "default": "medium",
+          "description": "Workflow priority level"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional metadata"
+        }
+      },
+      "required": ["coordinationId", "workflowType", "participants", "payload"]
+    }
+  },
+  "required": ["id", "type", "source", "specversion", "time", "data"]
+}

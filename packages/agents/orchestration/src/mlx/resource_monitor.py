@@ -299,15 +299,25 @@ class ActivityMonitorIntegration:
             return {'utilization_percent': 0.0, 'memory_used_gb': 0.0, 'memory_total_gb': 0.0}
             
         try:
-            # Use powermetrics to get GPU info
+            # Use powermetrics to get GPU info (no sudo by default)
+            allow_sudo = os.environ.get("CORTEX_ALLOW_SUDO", "").strip().lower() in {"1", "true", "yes"}
+            base_cmd = ["powermetrics", "-n", "1", "-i", "200", "--samplers", "gpu_power"]
             result = await asyncio.create_subprocess_exec(
-                "sudo", "powermetrics", "-n", "1", "-i", "200",
-                "--samplers", "gpu_power",
+                *base_cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(result.communicate(), timeout=3.0)
-            
+            stdout, _ = await asyncio.wait_for(result.communicate(), timeout=3.0)
+
+            if result.returncode != 0 and allow_sudo:
+                sudo_cmd = ["sudo", "-n", *base_cmd]
+                result = await asyncio.create_subprocess_exec(
+                    *sudo_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, _ = await asyncio.wait_for(result.communicate(), timeout=3.0)
+
             if result.returncode == 0:
                 return self._parse_powermetrics_gpu(stdout.decode())
                 

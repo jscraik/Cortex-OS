@@ -4,12 +4,14 @@ packages:
 
   # Packages (shared libraries)
   - 'packages/*'
+  - 'packages/model-gateway'
 
   # Nested packages within major packages
   - 'packages/a2a/a2a-*'
   - 'packages/mcp/mcp-*'
 
   # Services (backend services)
+  - 'packages/orchestration/src/lib/outbox'
   - 'services/*'
 
   # Libraries (framework libraries)

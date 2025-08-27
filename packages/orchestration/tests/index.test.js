@@ -9,6 +9,8 @@
  * @ai_provenance_hash N/A
  */
 
+import { describe, expect, it } from 'vitest';
+
 describe('orchestration', () => {
   it('should be properly structured', () => {
     expect(true).toBe(true);

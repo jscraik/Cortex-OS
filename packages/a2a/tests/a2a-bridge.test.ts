@@ -1,9 +1,11 @@
-import { PythonAgentBridge } from '../src/bridges/python-agent-bridge';
-import { A2AMessage } from '../src/bridges/a2a';
+import { describe, expect, it } from 'vitest';
+import { PythonAgentBridge } from '../src/bridges/python-agent-bridge.js';
 
 describe('PythonAgentBridge', () => {
   it('should send and receive A2A messages', async () => {
-    const bridge = new PythonAgentBridge();
+    const bridge = new PythonAgentBridge({
+      scriptPath: '/test/path/script.py', // Now required, no fallback
+    });
     await bridge.initialize();
 
     const task = {

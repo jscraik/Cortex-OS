@@ -1,0 +1,65 @@
+{
+  "id": "filesystem",
+  "name": "Filesystem Server",
+  "description": "Secure filesystem access with read/write capabilities for development workflows",
+  "mcpVersion": "2025-06-18",
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": false
+  },
+  "publisher": {
+    "name": "ModelContextProtocol",
+    "email": "mcp@anthropic.com", 
+    "verified": true
+  },
+  "version": "1.0.0",
+  "repository": "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem",
+  "homepage": "https://modelcontextprotocol.io/servers/filesystem",
+  "license": "MIT",
+  "category": "development",
+  "tags": ["filesystem", "files", "development"],
+  "transport": {
+    "stdio": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"]
+    },
+    "streamableHttp": {
+      "url": "https://api.mcp.dev/filesystem",
+      "headers": {
+        "User-Agent": "Cortex-MCP/1.0"
+      },
+      "auth": {
+        "type": "bearer"
+      }
+    }
+  },
+  "install": {
+    "claude": "claude mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /path/to/allowed/directory",
+    "json": {
+      "mcpServers": {
+        "filesystem": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/directory"]
+        }
+      }
+    },
+    "cline": "Install via Cline MCP settings with command: npx -y @modelcontextprotocol/server-filesystem",
+    "cursor": "Add to Cursor settings: @modelcontextprotocol/server-filesystem",
+    "continue": "Configure in Continue with: npx -y @modelcontextprotocol/server-filesystem"
+  },
+  "permissions": [
+    "files:read",
+    "files:write",
+    "files:list"
+  ],
+  "security": {
+    "riskLevel": "medium",
+    "sigstore": "https://registry.mcp.dev/attestations/filesystem.sigstore.json",
+    "sbom": "https://registry.mcp.dev/sboms/filesystem.spdx.json"
+  },
+  "featured": true,
+  "downloads": 15420,
+  "rating": 4.8,
+  "updatedAt": "2025-01-15T10:30:00Z"
+}

@@ -1,0 +1,74 @@
+{
+  "id": "github",
+  "name": "GitHub Integration",
+  "description": "Complete GitHub API integration with repository management, issue tracking, and pull request workflows",
+  "mcpVersion": "2025-06-18",
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": true
+  },
+  "publisher": {
+    "name": "GitHub",
+    "email": "opensource@github.com",
+    "verified": true
+  },
+  "version": "2.1.0",
+  "repository": "https://github.com/modelcontextprotocol/servers/tree/main/src/github",
+  "homepage": "https://docs.github.com/en/rest",
+  "license": "MIT",
+  "category": "development",
+  "tags": ["github", "git", "repository", "issues", "pr"],
+  "transport": {
+    "stdio": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<required>"
+      }
+    },
+    "streamableHttp": {
+      "url": "https://api.mcp.dev/github",
+      "headers": {
+        "User-Agent": "Cortex-MCP/1.0"
+      },
+      "auth": {
+        "type": "oauth2",
+        "clientId": "cortex-mcp-github",
+        "scopes": ["repo", "read:user", "user:email"]
+      }
+    }
+  },
+  "install": {
+    "claude": "claude mcp add github -- npx -y @modelcontextprotocol/server-github",
+    "json": {
+      "mcpServers": {
+        "github": {
+          "command": "npx",
+          "args": ["-y", "@modelcontextprotocol/server-github"],
+          "env": {
+            "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-token>"
+          }
+        }
+      }
+    },
+    "cline": "Install GitHub MCP server via: npx -y @modelcontextprotocol/server-github",
+    "cursor": "Configure GitHub integration in Cursor MCP settings",
+    "continue": "Add GitHub server to Continue configuration"
+  },
+  "permissions": [
+    "network:http",
+    "network:https",
+    "data:read",
+    "data:write"
+  ],
+  "security": {
+    "riskLevel": "low",
+    "sigstore": "https://registry.mcp.dev/attestations/github.sigstore.json",
+    "sbom": "https://registry.mcp.dev/sboms/github.spdx.json"
+  },
+  "featured": true,
+  "downloads": 28340,
+  "rating": 4.9,
+  "updatedAt": "2025-01-14T16:45:00Z"
+}

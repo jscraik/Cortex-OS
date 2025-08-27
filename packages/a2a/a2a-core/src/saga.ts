@@ -37,7 +37,7 @@ export enum SagaState {
   COMPLETED = 'COMPLETED',
   COMPENSATING = 'COMPENSATING',
   COMPENSATED = 'COMPENSATED',
-  FAILED = 'FAILED'
+  FAILED = 'FAILED',
 }
 
 /**
@@ -102,11 +102,14 @@ export class SagaOrchestrator<TCtx = any> {
   /**
    * Execute the saga with compensation support
    */
-  async execute(initialContext: TCtx, options?: {
-    sagaId?: string;
-    correlationId?: string;
-    metadata?: Record<string, any>;
-  }): Promise<SagaResult<TCtx>> {
+  async execute(
+    initialContext: TCtx,
+    options?: {
+      sagaId?: string;
+      correlationId?: string;
+      metadata?: Record<string, any>;
+    },
+  ): Promise<SagaResult<TCtx>> {
     const sagaId = options?.sagaId || randomUUID();
     const correlationId = options?.correlationId || randomUUID();
 
@@ -117,7 +120,7 @@ export class SagaOrchestrator<TCtx = any> {
       currentStep: 0,
       executedSteps: [],
       startTime: new Date(),
-      metadata: options?.metadata || {}
+      metadata: options?.metadata || {},
     };
 
     let currentContext = initialContext;
@@ -138,7 +141,7 @@ export class SagaOrchestrator<TCtx = any> {
           span.setAttributes({
             'saga.id': sagaId,
             'saga.step': step.name,
-            'saga.stepIndex': i
+            'saga.stepIndex': i,
           });
 
           try {
@@ -152,31 +155,40 @@ export class SagaOrchestrator<TCtx = any> {
             if (this.contextStore) {
               await this.contextStore.update(sagaId, {
                 currentStep: i + 1,
-                executedSteps: sagaContext.executedSteps
+                executedSteps: sagaContext.executedSteps,
               });
             }
 
-            logWithSpan('info', `Saga step completed`, {
-              sagaId,
-              step: step.name,
-              stepIndex: i
-            }, span);
-
+            logWithSpan(
+              'info',
+              `Saga step completed`,
+              {
+                sagaId,
+                step: step.name,
+                stepIndex: i,
+              },
+              span,
+            );
           } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
 
-            logWithSpan('error', `Saga step failed`, {
-              sagaId,
-              step: step.name,
-              error: err.message
-            }, span);
+            logWithSpan(
+              'error',
+              `Saga step failed`,
+              {
+                sagaId,
+                step: step.name,
+                error: err.message,
+              },
+              span,
+            );
 
             // Start compensation
             sagaContext.state = SagaState.COMPENSATING;
             sagaContext.error = {
               step: step.name,
               message: err.message,
-              stack: err.stack
+              stack: err.stack,
             };
 
             if (this.contextStore) {
@@ -204,9 +216,8 @@ export class SagaOrchestrator<TCtx = any> {
         success: true,
         context: currentContext,
         sagaContext,
-        compensationPerformed: false
+        compensationPerformed: false,
       };
-
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
 
@@ -222,7 +233,7 @@ export class SagaOrchestrator<TCtx = any> {
         context: currentContext,
         sagaContext,
         error: err,
-        compensationPerformed
+        compensationPerformed,
       };
     }
   }
@@ -230,10 +241,7 @@ export class SagaOrchestrator<TCtx = any> {
   /**
    * Execute a single step with retry logic
    */
-  private async executeStepWithRetry(
-    step: SagaStep<TCtx>,
-    context: TCtx
-  ): Promise<TCtx> {
+  private async executeStepWithRetry(step: SagaStep<TCtx>, context: TCtx): Promise<TCtx> {
     const retryPolicy = step.retryPolicy || { maxRetries: 0, backoffMs: 1000 };
     let lastError: Error | null = null;
 
@@ -245,7 +253,7 @@ export class SagaOrchestrator<TCtx = any> {
 
         if (attempt < retryPolicy.maxRetries) {
           const delay = retryPolicy.backoffMs * Math.pow(2, attempt);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
     }
@@ -259,14 +267,14 @@ export class SagaOrchestrator<TCtx = any> {
   private async compensate(
     sagaContext: SagaContext,
     context: TCtx,
-    originalError: Error
+    originalError: Error,
   ): Promise<TCtx> {
     let currentContext = context;
 
     // Compensate in reverse order
     const executedStepIds = new Set(sagaContext.executedSteps);
     const compensatableSteps = this.steps
-      .filter(step => executedStepIds.has(step.id) && step.compensate)
+      .filter((step) => executedStepIds.has(step.id) && step.compensate)
       .reverse();
 
     for (const step of compensatableSteps) {
@@ -274,25 +282,31 @@ export class SagaOrchestrator<TCtx = any> {
         await withSpan(`saga.compensate.${step.name}`, async (span) => {
           span.setAttributes({
             'saga.id': sagaContext.sagaId,
-            'saga.step': step.name
+            'saga.step': step.name,
           });
 
           currentContext = await step.compensate(currentContext, originalError);
 
-          logWithSpan('info', `Saga compensation completed`, {
-            sagaId: sagaContext.sagaId,
-            step: step.name
-          }, span);
+          logWithSpan(
+            'info',
+            `Saga compensation completed`,
+            {
+              sagaId: sagaContext.sagaId,
+              step: step.name,
+            },
+            span,
+          );
         });
       } catch (compensationError) {
-        const err = compensationError instanceof Error
-          ? compensationError
-          : new Error(String(compensationError));
+        const err =
+          compensationError instanceof Error
+            ? compensationError
+            : new Error(String(compensationError));
 
         logWithSpan('error', `Saga compensation failed`, {
           sagaId: sagaContext.sagaId,
           step: step.name,
-          error: err.message
+          error: err.message,
         });
 
         // Continue with other compensations even if one fails
@@ -347,7 +361,7 @@ export class SagaOrchestrator<TCtx = any> {
 
       for (let i = lastCompensatedIndex; i >= 0; i--) {
         const stepId = sagaContext.executedSteps[i];
-        const step = this.steps.find(s => s.id === stepId);
+        const step = this.steps.find((s) => s.id === stepId);
 
         if (!step?.compensate) continue;
 
@@ -356,7 +370,7 @@ export class SagaOrchestrator<TCtx = any> {
             span.setAttributes({
               'saga.id': sagaContext.sagaId,
               'saga.step': step.name,
-              'saga.resume': true
+              'saga.resume': true,
             });
 
             const originalError = sagaContext.error
@@ -365,20 +379,26 @@ export class SagaOrchestrator<TCtx = any> {
 
             currentContext = await step.compensate(currentContext, originalError);
 
-            logWithSpan('info', `Saga compensation resumed and completed`, {
-              sagaId: sagaContext.sagaId,
-              step: step.name
-            }, span);
+            logWithSpan(
+              'info',
+              `Saga compensation resumed and completed`,
+              {
+                sagaId: sagaContext.sagaId,
+                step: step.name,
+              },
+              span,
+            );
           });
         } catch (compensationError) {
-          const err = compensationError instanceof Error
-            ? compensationError
-            : new Error(String(compensationError));
+          const err =
+            compensationError instanceof Error
+              ? compensationError
+              : new Error(String(compensationError));
 
           logWithSpan('error', `Saga compensation resume failed`, {
             sagaId: sagaContext.sagaId,
             step: step.name,
-            error: err.message
+            error: err.message,
           });
 
           sagaContext.state = SagaState.FAILED;
@@ -389,7 +409,7 @@ export class SagaOrchestrator<TCtx = any> {
             context: currentContext,
             sagaContext,
             error: err,
-            compensationPerformed: true
+            compensationPerformed: true,
           };
         }
       }
@@ -402,9 +422,8 @@ export class SagaOrchestrator<TCtx = any> {
         success: false, // Compensation completed but original saga failed
         context: currentContext,
         sagaContext,
-        compensationPerformed: true
+        compensationPerformed: true,
       };
-
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
 
@@ -417,7 +436,7 @@ export class SagaOrchestrator<TCtx = any> {
         context: {} as TCtx,
         sagaContext,
         error: err,
-        compensationPerformed: true
+        compensationPerformed: true,
       };
     }
   }
@@ -445,7 +464,7 @@ export class SagaOrchestrator<TCtx = any> {
             'saga.id': sagaContext.sagaId,
             'saga.step': step.name,
             'saga.stepIndex': i,
-            'saga.resume': true
+            'saga.resume': true,
           });
 
           try {
@@ -458,30 +477,39 @@ export class SagaOrchestrator<TCtx = any> {
             // Update saga context
             await this.contextStore.update(sagaContext.sagaId, {
               currentStep: i + 1,
-              executedSteps: sagaContext.executedSteps
+              executedSteps: sagaContext.executedSteps,
             });
 
-            logWithSpan('info', `Saga step resumed and completed`, {
-              sagaId: sagaContext.sagaId,
-              step: step.name,
-              stepIndex: i
-            }, span);
-
+            logWithSpan(
+              'info',
+              `Saga step resumed and completed`,
+              {
+                sagaId: sagaContext.sagaId,
+                step: step.name,
+                stepIndex: i,
+              },
+              span,
+            );
           } catch (error) {
             const err = error instanceof Error ? error : new Error(String(error));
 
-            logWithSpan('error', `Saga step resume failed`, {
-              sagaId: sagaContext.sagaId,
-              step: step.name,
-              error: err.message
-            }, span);
+            logWithSpan(
+              'error',
+              `Saga step resume failed`,
+              {
+                sagaId: sagaContext.sagaId,
+                step: step.name,
+                error: err.message,
+              },
+              span,
+            );
 
             // Start compensation
             sagaContext.state = SagaState.COMPENSATING;
             sagaContext.error = {
               step: step.name,
               message: err.message,
-              stack: err.stack
+              stack: err.stack,
             };
 
             await this.contextStore.update(sagaContext.sagaId, sagaContext);
@@ -503,9 +531,8 @@ export class SagaOrchestrator<TCtx = any> {
         success: true,
         context: currentContext,
         sagaContext,
-        compensationPerformed: false
+        compensationPerformed: false,
       };
-
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
 
@@ -515,10 +542,10 @@ export class SagaOrchestrator<TCtx = any> {
 
       return {
         success: false,
-        context: currentContext || {} as TCtx,
+        context: currentContext || ({} as TCtx),
         sagaContext,
         error: err,
-        compensationPerformed: true
+        compensationPerformed: true,
       };
     }
   }
@@ -543,12 +570,16 @@ export class SagaBuilder<TCtx = any> {
   /**
    * Add a step with both execute and compensate actions
    */
-  step(name: string, execute: (ctx: TCtx) => Promise<TCtx>, compensate?: (ctx: TCtx, error?: Error) => Promise<TCtx>): this {
+  step(
+    name: string,
+    execute: (ctx: TCtx) => Promise<TCtx>,
+    compensate?: (ctx: TCtx, error?: Error) => Promise<TCtx>,
+  ): this {
     this.orchestrator.addStep({
       id: randomUUID(),
       name,
       execute,
-      compensate
+      compensate,
     });
     return this;
   }

@@ -1219,7 +1219,7 @@ components:
           description: Error details if saga failed
         compensationPerformed:
           type: boolean
-          description: Whether compensation was performed    # Transactional Outbox Messages
+          description: Whether compensation was performed # Transactional Outbox Messages
     OutboxMessage:
       name: OutboxMessage
       title: Outbox Message

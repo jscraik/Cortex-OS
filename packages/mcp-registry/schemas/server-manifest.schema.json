@@ -1,0 +1,324 @@
+{
+  "$id": "https://cortex-os.dev/mcp/server-manifest.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Server Manifest",
+  "description": "Complete manifest for an MCP server with transport, install, and security metadata",
+  "type": "object",
+  "required": ["id", "name", "owner", "category", "transports", "install", "scopes"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$",
+      "minLength": 1,
+      "maxLength": 63,
+      "description": "Unique identifier for the server (DNS-safe)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Human-readable name"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Organization or individual maintaining this server"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?(\\+[a-zA-Z0-9.-]+)?$",
+      "description": "Semantic version of the server"
+    },
+    "repo": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source repository URL"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Project homepage or documentation"
+    },
+    "logo": {
+      "type": "string",
+      "format": "uri",
+      "description": "Logo image URL"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "development",
+        "productivity",
+        "data",
+        "communication",
+        "finance",
+        "media",
+        "security",
+        "testing",
+        "ai-ml",
+        "integration",
+        "utility",
+        "other"
+      ],
+      "description": "Primary category for discovery"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "maxItems": 10,
+      "uniqueItems": true,
+      "description": "Additional searchable tags"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Detailed description of functionality"
+    },
+    "license": {
+      "type": "string",
+      "enum": [
+        "MIT",
+        "Apache-2.0",
+        "GPL-3.0",
+        "BSD-3-Clause",
+        "ISC",
+        "LGPL-2.1",
+        "MPL-2.0",
+        "Unlicense",
+        "Proprietary"
+      ],
+      "description": "SPDX license identifier"
+    },
+    "transports": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "stdio": {
+          "type": "object",
+          "required": ["command"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Command to execute"
+            },
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Command arguments"
+            },
+            "env": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Z_][A-Z0-9_]*$": {
+                  "type": "string"
+                }
+              },
+              "description": "Environment variables"
+            }
+          }
+        },
+        "sse": {
+          "type": "object",
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "description": "SSE endpoint URL (HTTPS required)"
+            },
+            "headers": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Za-z-]+$": {
+                  "type": "string"
+                }
+              },
+              "description": "Default headers to include"
+            }
+          }
+        },
+        "streamableHttp": {
+          "type": "object",
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://",
+              "description": "Streamable HTTP endpoint URL (HTTPS required)"
+            },
+            "headers": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Za-z-]+$": {
+                  "type": "string"
+                }
+              },
+              "description": "Default headers to include"
+            }
+          }
+        }
+      },
+      "description": "Available transport methods"
+    },
+    "install": {
+      "type": "object",
+      "required": ["claude"],
+      "properties": {
+        "claude": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Command for Claude Code CLI"
+        },
+        "json": {
+          "type": "object",
+          "description": "JSON configuration for direct config file usage"
+        },
+        "cline": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Installation command for Cline"
+        },
+        "devin": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Installation command for Devin"
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Installation command for Cursor"
+        },
+        "continue": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Installation command for Continue"
+        },
+        "windsurf": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Installation command for Windsurf"
+        }
+      },
+      "description": "Per-client installation commands"
+    },
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$",
+        "examples": [
+          "files:read",
+          "files:write",
+          "network:http",
+          "system:exec"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Required permission scopes"
+    },
+    "oauth": {
+      "type": "object",
+      "required": ["authType"],
+      "properties": {
+        "authType": {
+          "type": "string",
+          "enum": ["none", "apiKey", "oauth2", "bearer"],
+          "description": "Authentication method"
+        },
+        "authorizationEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "OAuth2 authorization endpoint"
+        },
+        "tokenEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "OAuth2 token endpoint"
+        },
+        "clientId": {
+          "type": "string",
+          "description": "OAuth2 client ID"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "OAuth2 scopes required"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authType": {
+                "const": "oauth2"
+              }
+            }
+          },
+          "then": {
+            "required": ["authorizationEndpoint", "tokenEndpoint", "clientId"]
+          }
+        }
+      ],
+      "description": "Authentication configuration"
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "sigstoreBundle": {
+          "type": "string",
+          "format": "uri",
+          "description": "Sigstore bundle URL for verification"
+        },
+        "sbom": {
+          "type": "string",
+          "format": "uri",
+          "description": "Software Bill of Materials URL (SPDX format)"
+        },
+        "riskLevel": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "medium",
+          "description": "Assessed risk level"
+        },
+        "verifiedPublisher": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether publisher identity is verified"
+        }
+      },
+      "description": "Security metadata and attestations"
+    },
+    "manifest": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Content hash for integrity verification"
+        }
+      },
+      "description": "Manifest metadata"
+    }
+  }
+}

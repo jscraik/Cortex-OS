@@ -24,7 +24,7 @@ export class RAGPipeline {
   constructor(private readonly opts: RAGOptions) {}
 
   async ingest(chunks: Chunk[]): Promise<void> {
-    const texts = chunks.map(c => c.text);
+    const texts = chunks.map((c) => c.text);
     const embeddings = await this.opts.embedder.embed(texts);
     const toStore = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
     await this.opts.store.upsert(toStore);
@@ -35,3 +35,19 @@ export class RAGPipeline {
     return this.opts.store.query(embedding, k);
   }
 }
+
+// Re-export policy and dispatcher for consumers needing planning/dispatch layer
+export * from './chunkers';
+export * as Policy from './policy';
+
+// Export reranking interfaces and implementations
+export * from './pipeline/qwen3-reranker';
+
+// Export generation interfaces and implementations
+export * from './generation/multi-model';
+
+// Export enhanced RAG pipeline
+export * from './enhanced-pipeline';
+
+// Export embedding implementations
+export * from './embed/qwen3';

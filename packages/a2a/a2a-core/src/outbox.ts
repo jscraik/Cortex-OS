@@ -1,15 +1,3 @@
-import {
-  type OutboxMessage,
-  type OutboxRepository,
-  type OutboxPublisher,
-  type OutboxProcessor,
-  type OutboxConfig,
-  type OutboxProcessingResult,
-  OutboxMessageStatus
-} from '@cortex-os/a2a-contracts/outbox-types';
-import { extractTraceContext } from '@cortex-os/a2a-contracts/trace-context';
-import { getCurrentTraceContext } from './trace-context-manager';
-
 /**
  * CloudEvents 1.0 compliant envelope - local interface definition for outbox
  */
@@ -35,6 +23,18 @@ export interface Envelope {
   payload?: unknown;
 }
 
+import { getCurrentTraceContext } from './trace-context-manager';
+import {
+  OutboxMessageStatus,
+  OutboxMessage,
+  OutboxConfig,
+  OutboxProcessingResult,
+  OutboxRepository,
+  OutboxPublisher,
+  OutboxProcessor
+} from '../../a2a-contracts/src/outbox-types';
+import { createTraceParent } from '../../a2a-contracts/src/trace-context';
+
 /**
  * Enhanced Transactional Outbox Pattern Implementation
  * Ensures reliable event publishing with database transaction consistency
@@ -55,6 +55,9 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
     private readonly transport: { publish: (envelope: Envelope) => Promise<void> },
     private readonly config: OutboxConfig = {}
   ) {}
+  publishBatch(messages: OutboxMessage[]): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
 
   async publish(message: OutboxMessage): Promise<void> {
     // Create envelope from outbox message
@@ -72,8 +75,18 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
       baggage: message.baggage
     };
 
-    // Publish with trace context
-    await this.transport.publish(envelope);
+    try {
+      // Inject current trace context
+    const traceContext = getCurrentTraceContext();
+    if (traceContext) {
+      message.traceparent = createTraceParent(traceContext);
+      message.tracestate = traceContext.traceState;
+      message.baggage = traceContext.baggage;
+    }
+
+    // Save to repository
+
+      // Publish the message
   }
 
   async publishBatch(messages: OutboxMessage[]): Promise<void> {

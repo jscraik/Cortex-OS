@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 
-export default new Command('report')
+export const simlabReport = new Command('report')
   .description('Render a Markdown report from a JSON RunResult (stdin)')
   .action(async () => {
     const chunks: Buffer[] = [];
@@ -13,3 +13,4 @@ export default new Command('report')
         '\n```\n',
     );
   });
+// no default export

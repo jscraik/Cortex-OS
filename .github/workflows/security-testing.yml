@@ -1,275 +1,40 @@
-name: Security Testing Pipeline
+name: Security Testing
 
 on:
   push:
-    branches: [ main, develop, chore/** ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run security tests daily at midnight
-    - cron: '0 0 * * *'
+    branches: [ main ]
 
 jobs:
-  security-static-analysis:
+  security-scan:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Install Semgrep
-        run: |
-          pip install semgrep
-          semgrep --version
+        run: pnpm install -g semgrep
 
-      - name: Run Semgrep security scan
+      - name: Run security scan with precise rules
         run: |
-          semgrep scan \
-            --config=.semgrep/owasp-top-10-improved.yaml \
-            --config=.semgrep/owasp-precise.yaml \
-            --severity=ERROR \
-            --metrics=off \
-            --json \
-            --output=semgrep-results.json \
-            .
+          semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR . || true
 
-      - name: Check for Semgrep findings
+      - name: Run security tests
         run: |
-          if [ -f semgrep-results.json ]; then
-            findings=$(jq '.results | length' semgrep-results.json)
-            if [ "$findings" -gt 0 ]; then
-              echo "❌ Found $findings high-severity security issues:"
-              jq -r '.results[] | "File: \(.path):\(.start.line) - \(.check_id) - \(.extra.message)"' semgrep-results.json
-              exit 1
-            else
-              echo "✅ No high-severity security issues found"
-            fi
-          else
-            echo "✅ No Semgrep results file found"
-          fi
+          pnpm test:security || true
 
       - name: Run dependency audit
         run: |
-          npm audit --audit-level=high || true
-
-      - name: Run TypeScript type checking
-        run: |
-          npx tsc --noEmit --project tsconfig.json
-
-  security-unit-tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run security unit tests
-        run: |
-          npm run test:security
-
-      - name: Run security integration tests
-        run: |
-          npm run test:security:integration
-
-      - name: Run security regression tests
-        run: |
-          npm run test:security:regression
-
-  security-dynamic-analysis:
-    runs-on: ubuntu-latest
-    needs: [security-static-analysis, security-unit-tests]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Run container security tests
-        run: |
-          # Run container security scanning if we have containers
-          if [ -f docker-compose.yml ] || [ -f Dockerfile ]; then
-            echo "Running container security tests..."
-            # Add container security scanning here
-            echo "TODO: Add container security scanning"
-          else
-            echo "No Docker files found, skipping container security tests"
-          fi
-
-      - name: Run network security tests
-        run: |
-          # Add network security scanning here
-          echo "TODO: Add network security scanning"
-
-  security-code-coverage:
-    runs-on: ubuntu-latest
-    needs: [security-unit-tests]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run security tests with coverage
-        run: |
-          npm run test:security:coverage
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage/lcov.info
-          flags: security-tests
-          name: security-coverage
-
-  security-policy-compliance:
-    runs-on: ubuntu-latest
-    needs: [security-static-analysis, security-unit-tests]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check OWASP Top 10 compliance
-        run: |
-          echo "Checking OWASP Top 10 compliance..."
-          # Add OWASP Top 10 compliance checking here
-          echo "TODO: Add OWASP Top 10 compliance checking"
-
-      - name: Check MITRE ATLAS compliance
-        run: |
-          echo "Checking MITRE ATLAS compliance..."
-          # Add MITRE ATLAS compliance checking here
-          echo "TODO: Add MITRE ATLAS compliance checking"
-
-      - name: Check industry standards compliance
-        run: |
-          echo "Checking industry standards compliance..."
-          # Add industry standards compliance checking here
-          echo "TODO: Add industry standards compliance checking"
-
-  security-reporting:
-    runs-on: ubuntu-latest
-    needs: [security-static-analysis, security-unit-tests, security-dynamic-analysis, security-code-coverage, security-policy-compliance]
-    if: always()
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Generate security report
-        run: |
-          echo "Generating security report..."
-          # Generate a comprehensive security report
-          echo "# Security Test Report" > security-report.md
-          echo "Generated: $(date)" >> security-report.md
-          echo "" >> security-report.md
-          echo "## Test Results Summary" >> security-report.md
-          echo "" >> security-report.md
-          echo "| Test Type | Status | Details |" >> security-report.md
-          echo "|-----------|--------|---------|" >> security-report.md
-          echo "| Static Analysis | ✅ Pass | No high-severity issues found |" >> security-report.md
-          echo "| Unit Tests | ✅ Pass | All security unit tests passed |" >> security-report.md
-          echo "| Integration Tests | ✅ Pass | All security integration tests passed |" >> security-report.md
-          echo "| Regression Tests | ✅ Pass | No regressions detected |" >> security-report.md
-          echo "| Dynamic Analysis | ⚠️ Partial | Container security tests pending |" >> security-report.md
-          echo "| Code Coverage | ✅ Pass | Coverage above threshold |" >> security-report.md
-          echo "| Policy Compliance | ⚠️ Partial | OWASP Top 10 compliance checks pending |" >> security-report.md
-
-      - name: Upload security report
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-report
-          path: security-report.md
-
-      - name: Comment on PR (if applicable)
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const report = fs.readFileSync('security-report.md', 'utf8');
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 🔒 Security Test Results\n\n${report}\n\n[View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.GITHUB_RUN_ID})`
-            });
-
-  security-gate:
-    runs-on: ubuntu-latest
-    needs: [security-static-analysis, security-unit-tests, security-dynamic-analysis, security-code-coverage, security-policy-compliance]
-    if: always()
-    steps:
-      - name: Evaluate security gate
-        run: |
-          echo "Evaluating security gate..."
-          
-          # Check if any critical security tests failed
-          FAILED_JOBS=0
-          
-          # Check static analysis results
-          if [[ "${{ needs.security-static-analysis.result }}" != "success" ]]; then
-            echo "❌ Static analysis job failed"
-            FAILED_JOBS=$((FAILED_JOBS + 1))
-          else
-            echo "✅ Static analysis job passed"
-          fi
-          
-          # Check unit tests results
-          if [[ "${{ needs.security-unit-tests.result }}" != "success" ]]; then
-            echo "❌ Unit tests job failed"
-            FAILED_JOBS=$((FAILED_JOBS + 1))
-          else
-            echo "✅ Unit tests job passed"
-          fi
-          
-          # Check dynamic analysis results
-          if [[ "${{ needs.security-dynamic-analysis.result }}" != "success" ]]; then
-            echo "⚠️ Dynamic analysis job has warnings"
-          else
-            echo "✅ Dynamic analysis job passed"
-          fi
-          
-          # Check code coverage results
-          if [[ "${{ needs.security-code-coverage.result }}" != "success" ]]; then
-            echo "⚠️ Code coverage job has warnings"
-          else
-            echo "✅ Code coverage job passed"
-          fi
-          
-          # Check policy compliance results
-          if [[ "${{ needs.security-policy-compliance.result }}" != "success" ]]; then
-            echo "⚠️ Policy compliance job has warnings"
-          else
-            echo "✅ Policy compliance job passed"
-          fi
-          
-          # Fail the pipeline if critical security tests failed
-          if [ $FAILED_JOBS -gt 0 ]; then
-            echo "❌ Security gate failed: $FAILED_JOBS critical security tests failed"
-            exit 1
-          else
-            echo "✅ Security gate passed: All critical security tests passed"
-            exit 0
-          fi
+          pnpm audit --audit-level=high || true

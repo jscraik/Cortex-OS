@@ -19,3 +19,11 @@ export interface Memory {
   embeddingModel?: string;
 }
 
+export interface CacheManager {
+  get(key: string): Promise<unknown | null>;
+  set(key: string, value: unknown, ttl?: number): Promise<void>;
+  has(key: string): Promise<boolean>;
+  clear(): Promise<void>;
+  size(): Promise<number>;
+}
+

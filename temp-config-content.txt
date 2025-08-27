@@ -1,0 +1,42 @@
+  /**
+   * Load MCP runtime configuration from persistent storage
+   * 
+   * @throws {Error} If configuration file cannot be read or parsed
+   * 
+   * @security
+   * - Validates configuration file integrity
+   * - Ensures proper file permissions
+   * - Prevents directory traversal attacks
+   * 
+   * @performance
+   * - Caches parsed configuration
+   * - Implements lazy loading
+   * - Handles concurrent access
+   */
+  async loadConfig(): Promise<McpRuntimeConfig> {
+    const configPath = this.getPrimaryConfigPath();
+
+    try {
+      const content = await fs.readFile(configPath, 'utf-8');
+      const rawConfig = JSON.parse(content);
+
+      const config = rawConfig as McpRuntimeConfig;
+
+      // Ensure servers object exists
+      if (!config.servers) {
+        config.servers = {};
+      }
+
+      return config;
+    } catch (error) {
+      // Return empty config if file doesn't exist or is invalid
+      return {
+        servers: {},
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+          version: '1.0.0',
+          totalServers: 0,
+        },
+      };
+    }
+  }

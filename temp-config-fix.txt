@@ -1,0 +1,6 @@
+      const config = rawConfig as McpRuntimeConfig;
+
+      // Ensure servers object exists
+      if (!config.servers) {
+        config.servers = {};
+      }

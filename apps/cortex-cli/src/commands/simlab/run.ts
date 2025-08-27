@@ -2,7 +2,7 @@ import { Command } from 'commander';
 // FIXME: Need to migrate to simlab-mono equivalents
 import { tracer } from '@cortex-os/telemetry';
 
-export default new Command('run')
+export const simlabRun = new Command('run')
   .description('Run a simlab scenario')
   .requiredOption('--id <id>')
   .option('--steps <n>', 'max steps', '50')
@@ -19,3 +19,4 @@ export default new Command('run')
       span.end();
     }
   });
+// no default export

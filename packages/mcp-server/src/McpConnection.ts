@@ -83,5 +83,3 @@ export class McpConnection {
     }
   }
 }
-
-export default McpConnection;

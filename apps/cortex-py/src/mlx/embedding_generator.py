@@ -189,6 +189,7 @@ def main():
                        help="Embedding model to use")
     parser.add_argument("--no-normalize", action="store_true", help="Don't normalize embeddings")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    parser.add_argument("--json-only", action="store_true", help="Output only JSON embeddings")
     
     args = parser.parse_args()
     
@@ -199,22 +200,26 @@ def main():
         # Create embedding generator
         generator = MLXEmbeddingGenerator(args.model)
         
-        # Print model info
-        model_info = generator.get_model_info()
-        print(f"Model Info: {json.dumps(model_info, indent=2)}")
-        
         # Generate embeddings
         start_time = time.time()
         embeddings = generator.generate_embeddings(args.texts, not args.no_normalize)
         end_time = time.time()
         
-        # Print results
-        print(f"\nGenerated {len(embeddings)} embeddings in {end_time - start_time:.2f}s")
-        for i, (text, embedding) in enumerate(zip(args.texts, embeddings)):
-            print(f"\nText {i+1}: {text[:50]}{'...' if len(text) > 50 else ''}")
-            print(f"Embedding: [{embedding[0]:.4f}, {embedding[1]:.4f}, ..., {embedding[-1]:.4f}]")
-            print(f"Dimensions: {len(embedding)}")
-            print(f"L2 Norm: {np.linalg.norm(embedding):.4f}")
+        if args.json_only:
+            # Output only JSON for machine consumption
+            print(json.dumps(embeddings))
+        else:
+            # Print model info
+            model_info = generator.get_model_info()
+            print(f"Model Info: {json.dumps(model_info, indent=2)}")
+            
+            # Print results
+            print(f"\nGenerated {len(embeddings)} embeddings in {end_time - start_time:.2f}s")
+            for i, (text, embedding) in enumerate(zip(args.texts, embeddings)):
+                print(f"\nText {i+1}: {text[:50]}{'...' if len(text) > 50 else ''}")
+                print(f"Embedding: [{embedding[0]:.4f}, {embedding[1]:.4f}, ..., {embedding[-1]:.4f}]")
+                print(f"Dimensions: {len(embedding)}")
+                print(f"L2 Norm: {np.linalg.norm(embedding):.4f}")
             
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

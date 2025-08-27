@@ -1,8 +1,24 @@
-import { defineWorkspace } from 'vitest/config'
+import { defineWorkspace } from 'vitest/config';
 
 export default defineWorkspace([
   'apps/cortex-os',
-  'packages/*',
-  'libs/typescript/*',
-  'tools/structure-guard',
-])
+  'packages/a2a',
+  'packages/a2a-services/schema-registry',
+  'packages/orchestration/src/lib/outbox',
+  'packages/a2a-services/common',
+  'packages/agents',
+  'packages/asbr',
+  'packages/kernel',
+  'packages/mcp',
+  'packages/mcp-bridge',
+  'packages/mcp-server',
+  'packages/memories',
+  'packages/mvp',
+  'packages/mvp-core',
+  'packages/mvp-server',
+  'packages/orchestration',
+  'packages/prp-runner',
+  'packages/rag',
+  'packages/simlab-mono',
+  'libs/typescript/contracts',
+]);

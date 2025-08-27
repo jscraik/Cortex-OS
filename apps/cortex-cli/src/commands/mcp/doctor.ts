@@ -1,8 +1,6 @@
 import { Command } from 'commander';
 import { readAll } from '@cortex-os/mcp-registry/fs-store';
-import { createStdIo } from '@cortex-os/mcp-transport/stdio';
-import { createHTTPS } from '@cortex-os/mcp-transport/https';
-import { createSSE } from '@cortex-os/mcp-transport/sse';
+import { createClient } from '@cortex-os/mcp-core/client';
 import { tracer } from '@cortex-os/telemetry';
 
 export const mcpDoctor = new Command('doctor')
@@ -17,19 +15,21 @@ export const mcpDoctor = new Command('doctor')
         const item: any = { name: s.name, transport: s.transport, ok: false };
         try {
           if (s.transport === 'stdio') {
-            const c = createStdIo(s);
-            // give the process a brief moment, then dispose
+            const client = await createClient(s);
+            // Test basic connectivity
             await new Promise((res) => setTimeout(res, 150));
-            c.dispose();
+            await client.close();
             item.ok = true;
           } else if (s.transport === 'https') {
             const url = new URL(s.endpoint ?? '');
             const health = new URL('/healthz', url);
-            const res = await fetch(health, { timeout: 5000 }).catch(() => fetch(url, { timeout: 5000 }));
-            item.ok = !!res && (res as any).ok !== false;
+            const res = await fetch(health, { signal: AbortSignal.timeout(5000) }).catch(() => fetch(url, { signal: AbortSignal.timeout(5000) }));
+            item.ok = !!res && res.ok;
           } else if (s.transport === 'sse') {
-            const c = createSSE(s);
-            await c.connect();
+            const client = await createClient(s);
+            // Test SSE connectivity
+            await new Promise((res) => setTimeout(res, 150));
+            await client.close();
             item.ok = true;
           }
         } catch (e: any) {

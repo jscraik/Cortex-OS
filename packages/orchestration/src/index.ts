@@ -100,6 +100,8 @@ export const name = '@cortex-os/orchestration';
 // Export new production agent orchestration components
 export { MLXAgent } from './integrations/mlx-agent.js';
 export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
+export { loadCheckpointHistory, loadLatestCheckpoint, saveCheckpoint } from './lib/checkpoints.js';
+export { runSupervisor } from './lib/supervisor.js';
 export { A2AProtocol } from './protocols/a2a-protocol.js';
 export type {
   A2AConfig,
@@ -120,3 +122,7 @@ export function createPRPOrchestrationEngine(
 ): PRPOrchestrationEngine {
   return new PRPOrchestrationEngine(config);
 }
+
+// Audit publisher adapter exports
+export { configureAuditPublisherWithBus } from './lib/audit-a2a-adapter.js';
+export { pickModel } from './lib/model-router.js';

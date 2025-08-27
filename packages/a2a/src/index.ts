@@ -10,24 +10,41 @@ import { randomUUID } from 'crypto';
 export * from './types.js';
 
 // Export security components
-export * from './security/prompt-injection-guard.js';
-export * from './security/secure-secret-manager.js';
-export * from './security/rate-limiter.js';
 export * from './security/output-sanitizer.js';
+export * from './security/prompt-injection-guard.js';
+export * from './security/rate-limiter.js';
+export * from './security/secure-secret-manager.js';
 
 // Export secure handlers and gateway
-export * from './secure-message-handler.js';
 export * from './secure-gateway.js';
+export * from './secure-message-handler.js';
+
+// Export AI modules
+export * from './ai/adapter.js';
+export * from './ai/config.js';
+export * from './ai/frontier-adapter.js';
+export * from './ai/load-balancer.js';
+export * from './ai/manager.js';
+export * from './ai/mlx-adapter.js';
+export * from './ai/ollama-adapter.js';
+export * from './ai/priority-ranker.js';
+export * from './ai/router.js';
+export {
+  SemanticMessageValidator,
+  ValidationContextSchema,
+  ValidationResultSchema,
+  type ValidationContext,
+} from './ai/validator.js';
 
 // Import key types for helper functions
 import type {
-  SendMessageRequest,
-  SendMessageSuccessResponse,
+  JSONRPCError,
   JSONRPCErrorResponse,
   Message,
-  Task,
-  JSONRPCError,
   MessageSendParams,
+  SendMessageRequest,
+  SendMessageSuccessResponse,
+  Task,
 } from './types.js';
 
 /**
@@ -40,7 +57,7 @@ export enum A2AErrorType {
   METHOD_NOT_FOUND = -32601,
   INVALID_PARAMS = -32602,
   INTERNAL_ERROR = -32603,
-  
+
   // A2A-specific errors
   TASK_NOT_FOUND = -32001,
   TASK_NOT_CANCELABLE = -32002,
@@ -63,13 +80,9 @@ function isValidA2AMethod(method: string): method is 'message/send' {
  */
 function isMessageSendParams(params: unknown): params is MessageSendParams {
   if (!params || typeof params !== 'object') return false;
-  
+
   const p = params as Record<string, unknown>;
-  return (
-    p.message !== undefined &&
-    typeof p.message === 'object' &&
-    p.message !== null
-  );
+  return p.message !== undefined && typeof p.message === 'object' && p.message !== null;
 }
 
 /**
@@ -78,18 +91,18 @@ function isMessageSendParams(params: unknown): params is MessageSendParams {
 export function createRequest(
   method: string,
   params: unknown,
-  id?: string | number
+  id?: string | number,
 ): SendMessageRequest {
   // Validate method
   if (!isValidA2AMethod(method)) {
     throw new Error(`Invalid A2A method: ${method}. Supported methods: message/send`);
   }
-  
+
   // Validate params
   if (!isMessageSendParams(params)) {
     throw new Error('Invalid params: must be valid MessageSendParams with message property');
   }
-  
+
   return {
     jsonrpc: '2.0',
     method,
@@ -103,7 +116,7 @@ export function createRequest(
  */
 export function createSuccessResponse(
   result: Message | Task,
-  id?: string | number | null
+  id?: string | number | null,
 ): SendMessageSuccessResponse {
   return {
     jsonrpc: '2.0',
@@ -117,7 +130,7 @@ export function createSuccessResponse(
  */
 export function createErrorResponse(
   error: JSONRPCError,
-  id?: string | number | null
+  id?: string | number | null,
 ): JSONRPCErrorResponse {
   return {
     jsonrpc: '2.0',
@@ -129,11 +142,7 @@ export function createErrorResponse(
 /**
  * Create a standardized A2A error object
  */
-export function createA2AError(
-  code: A2AErrorType,
-  message: string,
-  data?: any
-): JSONRPCError {
+export function createA2AError(code: A2AErrorType, message: string, data?: any): JSONRPCError {
   return {
     code,
     message,
@@ -150,23 +159,21 @@ export function isValidRequest(obj: any): obj is SendMessageRequest {
     typeof obj === 'object' &&
     obj.jsonrpc === '2.0' &&
     typeof obj.method === 'string' &&
-    (obj.id === undefined || 
-     typeof obj.id === 'string' || 
-     typeof obj.id === 'number')
+    (obj.id === undefined || typeof obj.id === 'string' || typeof obj.id === 'number')
   );
 }
 
 /**
  * Validate if an object is a valid JSON-RPC 2.0 response
  */
-export function isValidResponse(obj: any): obj is SendMessageSuccessResponse | JSONRPCErrorResponse {
+export function isValidResponse(
+  obj: any,
+): obj is SendMessageSuccessResponse | JSONRPCErrorResponse {
   return (
     obj &&
     typeof obj === 'object' &&
     obj.jsonrpc === '2.0' &&
-    (obj.id === null || 
-     typeof obj.id === 'string' || 
-     typeof obj.id === 'number') &&
+    (obj.id === null || typeof obj.id === 'string' || typeof obj.id === 'number') &&
     ('result' in obj || 'error' in obj)
   );
 }

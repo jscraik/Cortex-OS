@@ -1,0 +1,251 @@
+{
+  "asyncapi": "2.6.0",
+  "info": {
+    "title": "Cortex-OS Agent Messaging API",
+    "version": "1.0.0",
+    "description": "AsyncAPI specification for Cortex-OS agent-to-agent messaging patterns",
+    "license": {
+      "name": "(Apache-2.0 OR Commercial)"
+    }
+  },
+  "servers": {
+    "nats": {
+      "url": "nats://localhost:4222",
+      "protocol": "nats",
+      "description": "NATS messaging server for agent communication"
+    }
+  },
+  "channels": {
+    "agent.task.{taskType}": {
+      "description": "Channel for agent task requests and responses",
+      "parameters": {
+        "taskType": {
+          "description": "Type of task (e.g., data.process, data.analyze)",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "publish": {
+        "summary": "Publish task requests to agents",
+        "message": {
+          "oneOf": [
+            {
+              "$ref": "#/components/messages/AgentTaskRequested"
+            }
+          ]
+        }
+      },
+      "subscribe": {
+        "summary": "Subscribe to task responses from agents",
+        "message": {
+          "oneOf": [
+            {
+              "$ref": "#/components/messages/AgentTaskCompleted"
+            },
+            {
+              "$ref": "#/components/messages/AgentTaskFailed"
+            }
+          ]
+        }
+      }
+    },
+    "agent.coordination.{workflowType}": {
+      "description": "Channel for agent coordination requests and responses",
+      "parameters": {
+        "workflowType": {
+          "description": "Type of workflow (e.g., document.process)",
+          "schema": {
+            "type": "string"
+          }
+        }
+      },
+      "publish": {
+        "summary": "Publish coordination requests to coordinator agents",
+        "message": {
+          "oneOf": [
+            {
+              "$ref": "#/components/messages/AgentCoordinationRequested"
+            }
+          ]
+        }
+      },
+      "subscribe": {
+        "summary": "Subscribe to coordination progress and completion",
+        "message": {
+          "oneOf": [
+            {
+              "$ref": "#/components/messages/AgentCoordinationProgress"
+            },
+            {
+              "$ref": "#/components/messages/AgentCoordinationCompleted"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "components": {
+    "messages": {
+      "AgentTaskRequested": {
+        "name": "AgentTaskRequested",
+        "title": "Agent Task Requested",
+        "summary": "Message sent when an agent task is requested",
+        "payload": {
+          "$ref": "#/components/schemas/AgentTaskRequested"
+        }
+      },
+      "AgentTaskCompleted": {
+        "name": "AgentTaskCompleted",
+        "title": "Agent Task Completed",
+        "summary": "Message sent when an agent task is completed successfully",
+        "payload": {
+          "$ref": "#/components/schemas/AgentTaskCompleted"
+        }
+      },
+      "AgentTaskFailed": {
+        "name": "AgentTaskFailed",
+        "title": "Agent Task Failed",
+        "summary": "Message sent when an agent task fails",
+        "payload": {
+          "$ref": "#/components/schemas/AgentTaskFailed"
+        }
+      },
+      "AgentCoordinationRequested": {
+        "name": "AgentCoordinationRequested",
+        "title": "Agent Coordination Requested",
+        "summary": "Message sent when agent coordination is requested",
+        "payload": {
+          "$ref": "#/components/schemas/AgentCoordinationRequested"
+        }
+      },
+      "AgentCoordinationProgress": {
+        "name": "AgentCoordinationProgress",
+        "title": "Agent Coordination Progress",
+        "summary": "Message sent to report coordination progress",
+        "payload": {
+          "$ref": "#/components/schemas/AgentCoordinationProgress"
+        }
+      },
+      "AgentCoordinationCompleted": {
+        "name": "AgentCoordinationCompleted",
+        "title": "Agent Coordination Completed",
+        "summary": "Message sent when agent coordination is completed",
+        "payload": {
+          "$ref": "#/components/schemas/AgentCoordinationCompleted"
+        }
+      }
+    },
+    "schemas": {
+      "AgentTaskRequested": {
+        "$ref": "./cloudevents/agent-task-requested.json"
+      },
+      "AgentTaskCompleted": {
+        "$ref": "./cloudevents/agent-task-completed.json"
+      },
+      "AgentTaskFailed": {
+        "$ref": "./cloudevents/agent-task-failed.json"
+      },
+      "AgentCoordinationRequested": {
+        "$ref": "./cloudevents/agent-coordination-requested.json"
+      },
+      "AgentCoordinationProgress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "const": "agent.coordination.progress"
+          },
+          "source": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "coordinationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "progress": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "currentStep": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object"
+              }
+            },
+            "required": ["coordinationId", "progress", "currentStep", "message"]
+          }
+        },
+        "required": ["id", "type", "source", "subject", "time", "data"]
+      },
+      "AgentCoordinationCompleted": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "const": "agent.coordination.completed"
+          },
+          "source": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "coordinationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "result": {
+                "type": "object"
+              },
+              "executionTime": {
+                "type": "number"
+              },
+              "participants": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "object"
+              }
+            },
+            "required": ["coordinationId", "result", "executionTime", "participants"]
+          }
+        },
+        "required": ["id", "type", "source", "subject", "time", "data"]
+      }
+    }
+  }
+}

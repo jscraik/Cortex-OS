@@ -1,30 +1,18 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ToolGrant",
   "type": "object",
-  "required": ["egress", "fs"],
   "properties": {
-    "$schema": { "type": "string" },
-    "egress": {
+    "tool": { "type": "string" },
+    "actions": { "type": "array", "items": { "type": "string" } },
+    "args": { "type": "object", "additionalProperties": true },
+    "dataClass": { "enum": ["public", "internal", "sensitive"] },
+    "rate": {
       "type": "object",
-      "properties": {
-        "http": {
-          "type": "object",
-          "properties": {
-            "allow": { "type": "array", "items": { "type": "string" } }
-          },
-          "required": ["allow"]
-        }
-      },
-      "required": ["http"]
+      "properties": { "perMinute": { "type": "integer", "minimum": 1 } },
+      "required": ["perMinute"]
     },
-    "fs": {
-      "type": "object",
-      "properties": {
-        "writeAllow": { "type": "array", "items": { "type": "string" } },
-        "denyHidden": { "type": "boolean" }
-      },
-      "required": ["writeAllow", "denyHidden"]
-    }
-  }
+    "fsScope": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["tool", "actions", "rate"]
 }
-

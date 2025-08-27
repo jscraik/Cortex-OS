@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { spawnSync } from 'node:child_process';
 
-export default new Command('check')
+export const ctlCheck = new Command('check')
   .description('Run .cortex control-centre checks')
   .option('--json', 'JSON output')
   .action((opts: any) => {
@@ -11,4 +11,4 @@ export default new Command('check')
     }
     if (opts.json) process.stdout.write(JSON.stringify({ ok: true }) + '\n');
   });
-
+// no default export

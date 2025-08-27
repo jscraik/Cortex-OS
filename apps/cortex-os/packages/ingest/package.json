@@ -1,0 +1,35 @@
+{
+  "name": "@cortex-os/ingest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Data ingestion and processing feature package for Cortex-OS",
+  "keywords": [
+    "cortex-os",
+    "ingest",
+    "data-processing",
+    "pipeline"
+  ],
+  "license": "(Apache-2.0 OR Commercial)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cortex-os/asbr": "workspace:*",
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/a2a": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "eslint": "^8.0.0"
+  }
+}

@@ -25,14 +25,14 @@ export enum ErrorCategory {
   EXTERNAL_SERVICE = 'EXTERNAL_SERVICE',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   POISON_MESSAGE = 'POISON_MESSAGE',
-  UNKNOWN = 'UNKNOWN'
+  UNKNOWN = 'UNKNOWN',
 }
 
 export enum QuarantineLevel {
-  SOFT = 'SOFT',         // Temporary failures, can be retried immediately
-  MEDIUM = 'MEDIUM',     // Moderate failures, delayed retry
-  HARD = 'HARD',         // Severe failures, manual intervention required
-  PERMANENT = 'PERMANENT' // Never retry, permanently quarantined
+  SOFT = 'SOFT', // Temporary failures, can be retried immediately
+  MEDIUM = 'MEDIUM', // Moderate failures, delayed retry
+  HARD = 'HARD', // Severe failures, manual intervention required
+  PERMANENT = 'PERMANENT', // Never retry, permanently quarantined
 }
 
 export interface ErrorClassification {
@@ -129,24 +129,33 @@ export function classifyError(error: Error): ErrorClassification {
   const code = (error as any).code;
 
   // Network errors
-  if (message.includes('network') || message.includes('connection') || message.includes('timeout')) {
+  if (
+    message.includes('network') ||
+    message.includes('connection') ||
+    message.includes('timeout')
+  ) {
     return {
       category: ErrorCategory.NETWORK,
       severity: 'MEDIUM',
       recoverable: true,
       quarantineLevel: QuarantineLevel.SOFT,
-      suggestedAction: 'Retry with exponential backoff'
+      suggestedAction: 'Retry with exponential backoff',
     };
   }
 
   // Authentication/Authorization
-  if (message.includes('unauthorized') || message.includes('forbidden') || code === '401' || code === '403') {
+  if (
+    message.includes('unauthorized') ||
+    message.includes('forbidden') ||
+    code === '401' ||
+    code === '403'
+  ) {
     return {
       category: ErrorCategory.AUTHENTICATION,
       severity: 'HIGH',
       recoverable: false,
       quarantineLevel: QuarantineLevel.HARD,
-      suggestedAction: 'Check credentials and permissions'
+      suggestedAction: 'Check credentials and permissions',
     };
   }
 
@@ -157,29 +166,38 @@ export function classifyError(error: Error): ErrorClassification {
       severity: 'HIGH',
       recoverable: false,
       quarantineLevel: QuarantineLevel.PERMANENT,
-      suggestedAction: 'Fix message format or schema'
+      suggestedAction: 'Fix message format or schema',
     };
   }
 
   // Resource exhausted
-  if (message.includes('rate limit') || message.includes('quota') || message.includes('exhausted')) {
+  if (
+    message.includes('rate limit') ||
+    message.includes('quota') ||
+    message.includes('exhausted')
+  ) {
     return {
       category: ErrorCategory.RESOURCE_EXHAUSTED,
       severity: 'MEDIUM',
       recoverable: true,
       quarantineLevel: QuarantineLevel.MEDIUM,
-      suggestedAction: 'Retry after delay'
+      suggestedAction: 'Retry after delay',
     };
   }
 
   // External service errors
-  if (message.includes('service unavailable') || message.includes('bad gateway') || code === '502' || code === '503') {
+  if (
+    message.includes('service unavailable') ||
+    message.includes('bad gateway') ||
+    code === '502' ||
+    code === '503'
+  ) {
     return {
       category: ErrorCategory.EXTERNAL_SERVICE,
       severity: 'MEDIUM',
       recoverable: true,
       quarantineLevel: QuarantineLevel.MEDIUM,
-      suggestedAction: 'Retry with circuit breaker'
+      suggestedAction: 'Retry with circuit breaker',
     };
   }
 
@@ -190,7 +208,7 @@ export function classifyError(error: Error): ErrorClassification {
       severity: 'CRITICAL',
       recoverable: false,
       quarantineLevel: QuarantineLevel.PERMANENT,
-      suggestedAction: 'Quarantine permanently, manual review required'
+      suggestedAction: 'Quarantine permanently, manual review required',
     };
   }
 
@@ -200,7 +218,7 @@ export function classifyError(error: Error): ErrorClassification {
     severity: 'HIGH',
     recoverable: true,
     quarantineLevel: QuarantineLevel.MEDIUM,
-    suggestedAction: 'Retry with backoff, investigate root cause'
+    suggestedAction: 'Retry with backoff, investigate root cause',
   };
 }
 
@@ -223,7 +241,7 @@ export class DeadLetterQueue {
         failureCount: 0,
         lastFailureTime: 0,
         state: 'CLOSED',
-        nextAttemptTime: 0
+        nextAttemptTime: 0,
       };
     }
 
@@ -249,7 +267,7 @@ export class DeadLetterQueue {
         failureCount: 0,
         lastFailureTime: 0,
         state: 'CLOSED',
-        nextAttemptTime: 0
+        nextAttemptTime: 0,
       };
       this.circuitBreakers.set(messageType, state);
     }
@@ -292,10 +310,15 @@ export class DeadLetterQueue {
       // Check circuit breaker
       const circuitState = await this.checkCircuitBreaker(envelope.type);
       if (circuitState.state === 'OPEN') {
-        logWithSpan('warn', 'Circuit breaker open, rejecting message', {
-          envelopeId: envelope.id,
-          messageType: envelope.type
-        }, span);
+        logWithSpan(
+          'warn',
+          'Circuit breaker open, rejecting message',
+          {
+            envelopeId: envelope.id,
+            messageType: envelope.type,
+          },
+          span,
+        );
         return 'circuit_open';
       }
 
@@ -304,13 +327,18 @@ export class DeadLetterQueue {
         // Update circuit breaker on failure
         await this.updateCircuitBreaker(envelope.type, true);
 
-        logWithSpan('info', `Retrying message`, {
-          envelopeId: envelope.id,
-          retryCount: retryCount + 1,
-          maxRetries: this.retryPolicy.maxRetries,
-          errorCategory: classification.category,
-          quarantineLevel: classification.quarantineLevel
-        }, span);
+        logWithSpan(
+          'info',
+          `Retrying message`,
+          {
+            envelopeId: envelope.id,
+            retryCount: retryCount + 1,
+            maxRetries: this.retryPolicy.maxRetries,
+            errorCategory: classification.category,
+            quarantineLevel: classification.quarantineLevel,
+          },
+          span,
+        );
 
         return 'retry';
       }
@@ -341,14 +369,13 @@ export class DeadLetterQueue {
         circuitBreakerState: circuitState,
         metadata: {
           processingAttempts: retryCount + 1,
-          totalProcessingTime: (envelope.headers['processing-time']
-            ? parseInt(envelope.headers['processing-time'])
-            : 0) + processingTime,
+          totalProcessingTime:
+            (envelope.headers['processing-time']
+              ? parseInt(envelope.headers['processing-time'])
+              : 0) + processingTime,
           lastProcessorId: processorId,
-          relatedMessageIds: envelope.correlationId
-            ? [envelope.correlationId]
-            : []
-        }
+          relatedMessageIds: envelope.correlationId ? [envelope.correlationId] : [],
+        },
       };
 
       await this.store.enqueue(dlqEnvelope);
@@ -356,14 +383,19 @@ export class DeadLetterQueue {
       // Update circuit breaker on DLQ entry
       await this.updateCircuitBreaker(envelope.type, true);
 
-      logWithSpan('error', `Message moved to DLQ`, {
-        envelopeId: envelope.id,
-        error: error.message,
-        retryCount,
-        totalFailures: dlqEnvelope.failureReasons.length,
-        quarantineLevel: classification.quarantineLevel,
-        errorCategory: classification.category
-      }, span);
+      logWithSpan(
+        'error',
+        `Message moved to DLQ`,
+        {
+          envelopeId: envelope.id,
+          error: error.message,
+          retryCount,
+          totalFailures: dlqEnvelope.failureReasons.length,
+          quarantineLevel: classification.quarantineLevel,
+          errorCategory: classification.category,
+        },
+        span,
+      );
 
       return 'dlq';
     });
@@ -442,10 +474,10 @@ export class DeadLetterQueue {
       await this.store.requeue(ids);
 
       // Reset circuit breakers for recovered messages
-      const messages = await Promise.all(ids.map(id => this.store.findByCorrelationId(id)));
+      const messages = await Promise.all(ids.map((id) => this.store.findByCorrelationId(id)));
       const messageTypes = new Set<string>();
 
-      messages.flat().forEach(msg => {
+      messages.flat().forEach((msg) => {
         if (msg) messageTypes.add(msg.type);
       });
 
@@ -453,10 +485,15 @@ export class DeadLetterQueue {
         await this.updateCircuitBreaker(type, false);
       }
 
-      logWithSpan('info', `Bulk requeued messages from DLQ`, {
-        count: ids.length,
-        affectedTypes: Array.from(messageTypes)
-      }, span);
+      logWithSpan(
+        'info',
+        `Bulk requeued messages from DLQ`,
+        {
+          count: ids.length,
+          affectedTypes: Array.from(messageTypes),
+        },
+        span,
+      );
     });
   }
 
@@ -472,20 +509,26 @@ export class DeadLetterQueue {
         'expired.count': expiredMessages.length,
       });
 
-      const recoverableMessages = expiredMessages.filter(msg =>
-        msg.quarantineLevel !== QuarantineLevel.PERMANENT &&
-        msg.error.category !== ErrorCategory.POISON_MESSAGE
+      const recoverableMessages = expiredMessages.filter(
+        (msg) =>
+          msg.quarantineLevel !== QuarantineLevel.PERMANENT &&
+          msg.error.category !== ErrorCategory.POISON_MESSAGE,
       );
 
       if (recoverableMessages.length > 0) {
-        const ids = recoverableMessages.map(msg => msg.id);
+        const ids = recoverableMessages.map((msg) => msg.id);
         await this.bulkRequeueMessages(ids);
 
-        logWithSpan('info', `Processed expired quarantine messages`, {
-          expiredCount: expiredMessages.length,
-          recoverableCount: recoverableMessages.length,
-          requeuedCount: ids.length
-        }, span);
+        logWithSpan(
+          'info',
+          `Processed expired quarantine messages`,
+          {
+            expiredCount: expiredMessages.length,
+            recoverableCount: recoverableMessages.length,
+            requeuedCount: ids.length,
+          },
+          span,
+        );
       }
     });
   }
@@ -530,16 +573,22 @@ export class DeadLetterQueue {
         failureCount: state === 'OPEN' ? this.quarantinePolicy.circuitBreakerThreshold : 0,
         lastFailureTime: state === 'OPEN' ? Date.now() : 0,
         state,
-        nextAttemptTime: state === 'OPEN' ? Date.now() + this.quarantinePolicy.quarantineDurationMs : 0
+        nextAttemptTime:
+          state === 'OPEN' ? Date.now() + this.quarantinePolicy.quarantineDurationMs : 0,
       };
 
       this.circuitBreakers.set(messageType, circuitState);
       await this.store.updateCircuitBreaker(messageType, circuitState);
 
-      logWithSpan('info', `Forced circuit breaker state change`, {
-        messageType,
-        newState: state
-      }, span);
+      logWithSpan(
+        'info',
+        `Forced circuit breaker state change`,
+        {
+          messageType,
+          newState: state,
+        },
+        span,
+      );
     });
   }
 
@@ -613,8 +662,8 @@ export class InMemoryDeadLetterStore implements DeadLetterStore {
 
   async findExpiredQuarantine(currentTime: Date): Promise<DeadLetterEnvelope[]> {
     const now = currentTime.getTime();
-    return Array.from(this.messages.values()).filter((msg) =>
-      msg.nextRetryAt && new Date(msg.nextRetryAt).getTime() <= now
+    return Array.from(this.messages.values()).filter(
+      (msg) => msg.nextRetryAt && new Date(msg.nextRetryAt).getTime() <= now,
     );
   }
 
@@ -660,7 +709,7 @@ export class InMemoryDeadLetterStore implements DeadLetterStore {
       byError,
       byQuarantineLevel,
       byErrorCategory,
-      circuitBreakerStates: Object.fromEntries(this.circuitBreakers.entries())
+      circuitBreakerStates: Object.fromEntries(this.circuitBreakers.entries()),
     };
   }
 }

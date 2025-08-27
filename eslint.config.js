@@ -1,13 +1,28 @@
 import js from '@eslint/js';
+import importPlugin from 'eslint-plugin-import';
 import ts from 'typescript-eslint';
 
 export default [
   js.configs.recommended,
   ...ts.configs.recommendedTypeChecked,
+  importPlugin.flatConfigs.recommended,
   { ignores: ['**/dist/**', '**/.artifacts/**'] },
   {
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: ['tsconfig.eslint.json'],
+        },
+        node: {
+          extensions: ['.js', '.ts', '.tsx'],
+        },
+      },
+    },
+  },
+  {
     files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: { parserOptions: { project: ['tsconfig.json'] } },
+    languageOptions: { parserOptions: { project: ['tsconfig.eslint.json'] } },
+    extends: [importPlugin.flatConfigs.typescript],
     rules: {
       'no-console': ['warn', { allow: ['error'] }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',

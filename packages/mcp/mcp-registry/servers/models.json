@@ -1,0 +1,5 @@
+[
+  { "name": "mlx-local", "transport": "http", "url": "http://127.0.0.1:8081" },
+  { "name": "ollama", "transport": "http", "url": "http://127.0.0.1:11434" },
+  { "name": "frontier-gateway", "transport": "http", "url": "http://127.0.0.1:8082" }
+]

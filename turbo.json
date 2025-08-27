@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**", "*.tsbuildinfo"],
@@ -26,16 +26,7 @@
         "!**/*.test.*"
       ]
     },
-    "format": {
-      "outputs": [],
-      "inputs": [
-        "src/**",
-        "packages/**/src/**",
-        "apps/**/src/**",
-        ".prettierrc*",
-        "prettier.config.*"
-      ]
-    },
+
     "dev": {
       "cache": false,
       "persistent": true,

@@ -16,7 +16,9 @@
     "lint": "eslint src --ext .ts",
     "test": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "replay": "tsx src/cli/replay.ts",
+    "approve": "tsx src/cli/approve.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",

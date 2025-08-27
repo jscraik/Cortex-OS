@@ -1,27 +1,33 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { a2aDoctor } from './commands/a2a/doctor.js';
+import { a2aList } from './commands/a2a/list.js';
+import { a2aSend } from './commands/a2a/send.js';
+import { ctlCheck } from './commands/ctl/check.js';
 import { mcpAdd } from './commands/mcp/add.js';
+import { mcpBridge } from './commands/mcp/bridge.js';
+import { mcpDoctor } from './commands/mcp/doctor.js';
 import { mcpList } from './commands/mcp/list.js';
 import { mcpRemove } from './commands/mcp/remove.js';
-import { mcpDoctor } from './commands/mcp/doctor.js';
-import { a2aSend } from './commands/a2a/send.js';
-import { a2aList } from './commands/a2a/list.js';
-import { a2aDoctor } from './commands/a2a/doctor.js';
-import ragIngest from './commands/rag/ingest.js';
-import ragQuery from './commands/rag/query.js';
-import ragEval from './commands/rag/eval.js';
-import simlabRun from './commands/simlab/run.js';
-import simlabBench from './commands/simlab/bench.js';
-import simlabReport from './commands/simlab/report.js';
-import simlabList from './commands/simlab/list.js';
-import ctlCheck from './commands/ctl/check.js';
+import { mcpSearch } from './commands/mcp/search.js';
+import { mcpShow } from './commands/mcp/show.js';
+import { ragEval } from './commands/rag/eval.js';
+import { ragIngest } from './commands/rag/ingest.js';
+import { ragQuery } from './commands/rag/query.js';
+import { simlabBench } from './commands/simlab/bench.js';
+import { simlabList } from './commands/simlab/list.js';
+import { simlabReport } from './commands/simlab/report.js';
+import { simlabRun } from './commands/simlab/run.js';
 
 const program = new Command('cortex');
 const mcp = new Command('mcp');
 mcp.addCommand(mcpAdd);
+mcp.addCommand(mcpBridge);
+mcp.addCommand(mcpDoctor);
 mcp.addCommand(mcpList);
 mcp.addCommand(mcpRemove);
-mcp.addCommand(mcpDoctor);
+mcp.addCommand(mcpSearch);
+mcp.addCommand(mcpShow);
 
 program.addCommand(mcp);
 
