@@ -176,8 +176,7 @@ export class DiffGenerator {
     const oldLines = oldContent.split('\n');
     const newLines = newContent.split('\n');
 
-    const context = options.context || 3;
-    const hunks = this.generateHunks(oldLines, newLines, context);
+    const hunks = this.generateHunks(oldLines, newLines);
 
     let diff = '';
 
@@ -194,7 +193,7 @@ export class DiffGenerator {
     return diff.trim();
   }
 
-  private generateHunks(oldLines: string[], newLines: string[], _context: number): string[] {
+  private generateHunks(oldLines: string[], newLines: string[]): string[] {
     const lcs = this.longestCommonSubsequence(oldLines, newLines);
     const hunks: string[] = [];
 

@@ -2,12 +2,19 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { performance } from 'perf_hooks';
 import supertest from 'supertest';
 import { ASBRServer } from '../../src/api/server.js';
+import { initializeAuth } from '../../src/api/auth.js';
+import { initializeXDG } from '../../src/xdg/index.js';
 
 describe('ASBR API Performance Tests', () => {
   let server: ASBRServer;
   let request: supertest.SuperTest<supertest.Test>;
+  let authToken: string;
 
   beforeAll(async () => {
+    await initializeXDG();
+    const tokenInfo = await initializeAuth();
+    authToken = tokenInfo.token;
+
     server = new ASBRServer({ port: 7440 });
     await server.start();
     request = supertest(`http://127.0.0.1:7440`);
@@ -36,13 +43,14 @@ describe('ASBR API Performance Tests', () => {
 
     const response = await request
       .post('/v1/tasks')
-      .set('Authorization', 'Bearer test-token')
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
         input: {
           title: 'Performance Test Task',
           brief: 'Testing task creation performance',
           inputs: [],
           scopes: ['tasks:create'],
+          schema: 'cortex.task.input@1',
         },
       })
       .expect(200);
@@ -57,13 +65,14 @@ describe('ASBR API Performance Tests', () => {
     // First create a task
     const createResponse = await request
       .post('/v1/tasks')
-      .set('Authorization', 'Bearer test-token')
+      .set('Authorization', `Bearer ${authToken}`)
       .send({
         input: {
           title: 'Retrieve Performance Test',
           brief: 'Testing task retrieval performance',
           inputs: [],
           scopes: ['tasks:create'],
+          schema: 'cortex.task.input@1',
         },
       });
 
@@ -73,7 +82,7 @@ describe('ASBR API Performance Tests', () => {
 
     const response = await request
       .get(`/v1/tasks/${taskId}`)
-      .set('Authorization', 'Bearer test-token')
+      .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
     const duration = performance.now() - start;
@@ -89,13 +98,14 @@ describe('ASBR API Performance Tests', () => {
     const promises = Array.from({ length: 10 }, (_, i) =>
       request
         .post('/v1/tasks')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           input: {
             title: `Concurrent Test Task ${i}`,
             brief: 'Testing concurrent performance',
             inputs: [],
             scopes: ['tasks:create'],
+            schema: 'cortex.task.input@1',
           },
         }),
     );
@@ -118,7 +128,7 @@ describe('ASBR API Performance Tests', () => {
 
     const response = await request
       .get('/v1/events')
-      .set('Authorization', 'Bearer test-token')
+      .set('Authorization', `Bearer ${authToken}`)
       .expect(200);
 
     const duration = performance.now() - start;
@@ -132,7 +142,7 @@ describe('ASBR API Performance Tests', () => {
 
     const response = await request
       .get('/v1/events?stream=sse')
-      .set('Authorization', 'Bearer test-token')
+      .set('Authorization', `Bearer ${authToken}`)
       .set('Accept', 'text/event-stream');
 
     const duration = performance.now() - start;
