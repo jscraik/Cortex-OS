@@ -6,7 +6,7 @@
 
 import type { SimScenario, SimResult, SimBatchResult, SimTurn } from './types';
 import { UserSimulator } from './user-sim';
-import { AgentAdapter } from './agent-adapter';
+import { AgentAdapter, PRPExecutor, AgentResponse } from './agent-adapter';
 import { Judge } from './judge';
 import { SimReporter } from './report';
 
@@ -16,6 +16,7 @@ export interface SimRunnerConfig {
   maxTurns?: number;
   timeout?: number;
   debug?: boolean;
+  executor?: PRPExecutor;
 }
 
 export class SimRunner {
@@ -24,6 +25,7 @@ export class SimRunner {
   private readonly judge: Judge;
   private readonly reporter: SimReporter;
   private readonly config: SimRunnerConfig;
+  private readonly rng: () => number;
 
   constructor(config: SimRunnerConfig = {}) {
     this.config = {
@@ -31,11 +33,16 @@ export class SimRunner {
       maxTurns: 10,
       timeout: 30000,
       debug: false,
-  ...config,
+      ...config,
     };
 
+    this.rng =
+      this.config.deterministic && typeof this.config.seed === 'number'
+        ? this.createSeededRNG(this.config.seed)
+        : Math.random;
+
     this.userSim = new UserSimulator(this.config);
-    this.agentAdapter = new AgentAdapter();
+    this.agentAdapter = new AgentAdapter(this.config.executor);
     this.judge = new Judge();
     this.reporter = new SimReporter();
   }
@@ -150,9 +157,9 @@ export class SimRunner {
     return this.reporter.createBatchResult(batchId, results);
   }
 
-  private shouldEndConversation(agentResponse: any, scenario: SimScenario): boolean {
+  private shouldEndConversation(agentResponse: AgentResponse, scenario: SimScenario): boolean {
     // Check if agent indicated completion
-    if (agentResponse.completed || agentResponse.goalAchieved) {
+    if (agentResponse.completed) {
       return true;
     }
 
@@ -169,6 +176,15 @@ export class SimRunner {
   }
 
   private generateBatchId(): string {
-    return `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const rand = Math.floor(this.rng() * 1e9).toString(36);
+    return `batch-${rand}`;
+  }
+
+  private createSeededRNG(seed: number): () => number {
+    let state = seed;
+    return () => {
+      state = (state * 9301 + 49297) % 233280;
+      return state / 233280;
+    };
   }
 }

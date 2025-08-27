@@ -9,7 +9,7 @@ export type { SimRunnerConfig } from './runner';
 
 export { UserSimulator } from './user-sim';
 export { AgentAdapter } from './agent-adapter';
-export type { AgentRequest, AgentResponse } from './agent-adapter';
+export type { AgentRequest, AgentResponse, PRPExecutor } from './agent-adapter';
 
 export { Judge } from './judge';
 export type { JudgeConfig } from './judge';
