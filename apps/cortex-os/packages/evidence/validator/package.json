@@ -8,12 +8,12 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "typecheck": "pnpm -w exec tsc -p apps/cortex-os/brain/evidence/validator/tsconfig.typecheck.json --noEmit",
+    "typecheck": "pnpm -w exec tsc -p apps/cortex-os/packages/evidence/validator/tsconfig.typecheck.json --noEmit",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch",
     "test:accessibility": "echo 'No UI components in evidence-validator package'",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\""
   },
   "keywords": [
@@ -26,9 +26,5 @@
   "license": "(Apache-2.0 OR Commercial)",
   "engines": {
     "node": ">=18.0.0"
-  },
-  "devDependencies": {
-    "fs-extra": "^11.2.0",
-    "@types/fs-extra": "^11.0.4"
   }
 }
