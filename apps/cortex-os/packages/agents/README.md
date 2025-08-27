@@ -29,4 +29,3 @@ const memoriesSvc = { async search(i:any){ return { hits: [] }; } } as unknown a
 registry.register(new EchoAgent());
 registry.register(new RagAgent({ memories: new MemoriesTool(memoriesSvc) }));
 ```
-
