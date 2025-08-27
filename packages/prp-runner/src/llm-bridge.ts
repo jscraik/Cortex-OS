@@ -72,14 +72,9 @@ export class LLMBridge {
    */
   private initializeAdapters(): void {
     if (this.config.provider === 'ollama') {
-      // Minimal Ollama adapter implementation for tests
+      // Minimal Ollama adapter implementation
       this.ollamaAdapter = {
         generate: async (options) => {
-          // Mock implementation for TDD - will be replaced with real adapter
-          if (!globalThis.fetch) {
-            return { text: `Mock Ollama response for: ${options.prompt}` };
-          }
-          
           try {
             const response = await fetch(`${this.config.endpoint}/api/generate`, {
               method: 'POST',
@@ -94,16 +89,15 @@ export class LLMBridge {
                 },
               }),
             });
-            
+
             if (!response.ok) {
               throw new Error(`Ollama API error: ${response.status}`);
             }
-            
+
             const data = await response.json();
-            return { text: data.response || 'Ollama generated response' };
+            return { text: data.response || '' };
           } catch (error) {
-            // Fallback for tests when Ollama server not available
-            return { text: `Mock Ollama response for: ${options.prompt}` };
+            throw new Error(`Ollama request failed: ${error instanceof Error ? error.message : String(error)}`);
           }
         },
       };
@@ -174,9 +168,6 @@ export class LLMBridge {
     } else if (this.config.provider === 'ollama') {
       // Simple Ollama health check
       try {
-        if (!globalThis.fetch) {
-          return { healthy: false, message: 'Fetch not available' };
-        }
         const response = await fetch(`${this.config.endpoint}/api/tags`);
         return { healthy: response.ok, message: response.ok ? 'Ollama healthy' : `Ollama error: ${response.status}` };
       } catch (error) {
@@ -246,6 +237,15 @@ export class LLMBridge {
     } catch (error) {
       // If MLX fails, provide informative error
       throw new Error(`MLX generation failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Properly shutdown underlying resources
+   */
+  async shutdown(): Promise<void> {
+    if (this.mlxAdapter && typeof (this.mlxAdapter as any).shutdown === 'function') {
+      await (this.mlxAdapter as any).shutdown();
     }
   }
 }

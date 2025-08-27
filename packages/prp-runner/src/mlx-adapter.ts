@@ -7,7 +7,6 @@
  */
 
 import { spawn } from 'child_process';
-import { promisify } from 'util';
 
 export interface MLXConfig {
   modelName: string;
@@ -15,6 +14,7 @@ export interface MLXConfig {
   temperature?: number;
   knifePath?: string;
   cachePath?: string;
+  timeoutMs?: number;
 }
 
 export interface MLXGenerateOptions {
@@ -53,6 +53,9 @@ export class MLXAdapter {
   private validateConfig(): void {
     if (!this.config.modelName) {
       throw new Error('MLX model name is required');
+    }
+    if (this.config.timeoutMs !== undefined && this.config.timeoutMs <= 0) {
+      throw new Error('timeoutMs must be positive');
     }
   }
 
