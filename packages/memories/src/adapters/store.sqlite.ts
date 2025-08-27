@@ -1,6 +1,6 @@
 import type { MemoryStore, TextQuery, VectorQuery } from "../ports/MemoryStore.js";
 import type { Memory, MemoryId } from "../domain/types.js";
-import { Database } from 'better-sqlite3';
+import Database from 'better-sqlite3';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -20,16 +20,13 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export class SQLiteStore implements MemoryStore {
-  private db: any; // Using 'any' to avoid dependency on better-sqlite3 types
-  
+  private db: Database;
+
   constructor(path: string) {
-    try {
-      // Dynamically import better-sqlite3 to avoid hard dependency
-      const sqlite3 = require('better-sqlite3');
-      this.db = new sqlite3(path);
-      
-      // Create table if it doesn't exist
-      this.db.exec(`
+    this.db = new Database(path);
+
+    // Create table if it doesn't exist
+    this.db.exec(`
         CREATE TABLE IF NOT EXISTS memories (
           id TEXT PRIMARY KEY,
           kind TEXT NOT NULL,
@@ -44,22 +41,13 @@ export class SQLiteStore implements MemoryStore {
           embeddingModel TEXT
         )
       `);
-      
-      // Create indexes
-      this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
-      this.db.exec('CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)');
-    } catch (error) {
-      console.warn('SQLite not available, using in-memory fallback');
-      // Fallback to in-memory implementation if SQLite is not available
-      this.db = null;
-    }
+
+    // Create indexes
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)');
   }
 
   async upsert(m: Memory): Promise<Memory> {
-    if (!this.db) {
-      throw new Error("SQLiteStore not available - no database connection");
-    }
-    
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO memories 
       (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel)
@@ -84,10 +72,6 @@ export class SQLiteStore implements MemoryStore {
   }
 
   async get(id: MemoryId): Promise<Memory | null> {
-    if (!this.db) {
-      throw new Error("SQLiteStore not available - no database connection");
-    }
-    
     const stmt = this.db.prepare('SELECT * FROM memories WHERE id = ?');
     const row = stmt.get(id);
     
@@ -97,19 +81,11 @@ export class SQLiteStore implements MemoryStore {
   }
 
   async delete(id: MemoryId): Promise<void> {
-    if (!this.db) {
-      throw new Error("SQLiteStore not available - no database connection");
-    }
-    
     const stmt = this.db.prepare('DELETE FROM memories WHERE id = ?');
     stmt.run(id);
   }
 
   async searchByText(q: TextQuery): Promise<Memory[]> {
-    if (!this.db) {
-      throw new Error("SQLiteStore not available - no database connection");
-    }
-    
     let sql = 'SELECT * FROM memories WHERE text IS NOT NULL';
     const params: any[] = [];
     
@@ -140,10 +116,6 @@ export class SQLiteStore implements MemoryStore {
   }
 
   async searchByVector(q: VectorQuery): Promise<Memory[]> {
-    if (!this.db) {
-      throw new Error("SQLiteStore not available - no database connection");
-    }
-    
     // SQLite doesn't have native vector search capabilities
     // We'll fetch candidates and perform similarity matching in memory
     let sql = 'SELECT * FROM memories WHERE vector IS NOT NULL';
@@ -182,10 +154,6 @@ export class SQLiteStore implements MemoryStore {
   }
 
   async purgeExpired(nowISO: string): Promise<number> {
-    if (!this.db) {
-      throw new Error("SQLiteStore not available - no database connection");
-    }
-    
     const now = new Date(nowISO).getTime();
     let purgedCount = 0;
     

@@ -2,17 +2,13 @@ packages/memories/FINAL_ORGANIZATION_SUMMARY.md
 packages/memories/LICENSE
 packages/memories/project.json
 packages/memories/prisma/schema.prisma
-packages/memories/tests/compatibility/memory-service-compat.test.ts
 packages/memories/tests/ttl.expiration.spec.ts
 packages/memories/tests/persistence.roundtrip.spec.ts
 packages/memories/tests/vector-search-verification.spec.ts
 packages/memories/tests/util/local-embedder.ts
 packages/memories/tests/persistence.prisma.roundtrip.spec.ts
-packages/memories/tests/privacy.redaction.spec.ts
 packages/memories/tests/service.spec.ts
-packages/memories/tests/MemoryService.security.spec.ts
 packages/memories/tests/load-recall.enhanced.spec.ts
-packages/memories/tests/neo4j.spec.ts
 packages/memories/tests/compaction.spec.ts
 packages/memories/tests/purge-expired-verification.spec.ts
 packages/memories/tests/contract.spec.ts
@@ -20,8 +16,6 @@ packages/memories/tests/load-recall.spec.ts
 packages/memories/tests/embedders.spec.ts
 packages/memories/tests/memory-cache.spec.ts
 packages/memories/tests/sqlite-store.spec.ts
-packages/memories/tests/MemoryService.decoupling.spec.ts
-packages/memories/tests/memory.spec.ts
 packages/memories/tests/privacy.redaction.enhanced.spec.ts
 packages/memories/IMPROVEMENTS_SUMMARY.md
 packages/memories/FINAL_IMPLEMENTATION_SUMMARY.md
