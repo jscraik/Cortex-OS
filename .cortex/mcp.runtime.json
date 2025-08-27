@@ -15,16 +15,14 @@
       "transport": "http",
       "url": "https://api.ref.tools/mcp",
       "headers": {
-        "Authorization": "Bearer ref-e672788111c76ba32bc1"
+        "Authorization": "Bearer ${REF_MCP_TOKEN}"
       },
       "environment": {},
       "timeout": 30000,
       "connectionMode": "lenient",
       "maxRetries": 3,
       "sandbox": true,
-      "allowedCapabilities": [
-        "read"
-      ],
+      "allowedCapabilities": ["read"],
       "approved": true,
       "approvedAt": "2025-08-20T18:26:04.790Z",
       "hash": "57e27634d7e713be",
