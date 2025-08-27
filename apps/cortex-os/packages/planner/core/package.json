@@ -17,8 +17,8 @@
   ],
   "scripts": {
     "build": "echo \"No build step required for this package\"",
-    "typecheck": "pnpm -w exec tsc -p apps/cortex-os/brain/planner/core/tsconfig.typecheck.json --noEmit",
-    "test": "echo \"No tests defined for this package\""
+    "typecheck": "pnpm -w exec tsc -p apps/cortex-os/packages/planner/core/tsconfig.typecheck.json --noEmit",
+    "test": "vitest run"
   },
   "license": "(Apache-2.0 OR Commercial)"
 }

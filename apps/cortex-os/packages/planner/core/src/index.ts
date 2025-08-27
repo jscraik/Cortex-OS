@@ -1,5 +1,5 @@
 /**
- * @file_path packages/cortex-core/src/index.ts
+ * @file_path apps/cortex-os/packages/planner/core/src/index.ts
  * @description Entry point for @cortex-os/core
  * @maintainer @jamiescottcraik
  * @last_updated 2025-08-08
@@ -10,9 +10,7 @@
  */
 
 export * from "./config.js";
-export * from "./models";
-export * from "./config";
-export * from "./models";
-export * from "./permission";
+export * from "./models.js";
+export * from "./permission.js";
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.
