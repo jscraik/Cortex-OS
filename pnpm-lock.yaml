@@ -571,7 +571,7 @@ importers:
         version: link:../a2a
       '@cortex-os/mcp-bridge':
         specifier: workspace:*
-        version: link:../mcp/mcp-bridge
+        version: link:../mcp-bridge
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -829,7 +829,23 @@ importers:
         specifier: ^5.6.2
         version: 5.9.2
 
-  packages/mcp/mcp-bridge:
+  packages/mcp/mcp-core:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.17.4
+        version: 1.17.4
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+
+  packages/mcp/mcp-transport-bridge:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.4
@@ -871,22 +887,6 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(@vitest/ui@3.2.4)(jsdom@24.1.3)(tsx@4.20.5)(yaml@2.8.1)
-
-  packages/mcp/mcp-core:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.17.4
-        version: 1.17.4
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-    devDependencies:
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
 
   packages/memories:
     dependencies:

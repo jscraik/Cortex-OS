@@ -3,12 +3,12 @@
  * @description Bridge utilities for MCP transport interoperability
  */
 
-export { 
-  McpBridge, 
-  createBridge, 
-  bridgeStdioToHttp, 
+export {
+  McpBridge,
+  createBridge,
+  bridgeStdioToHttp,
   bridgeHttpToStdio,
-  type BridgeConfig 
+  type BridgeConfig,
 } from './bridge.js';
 
 export { BridgeConfigSchema } from './bridge.js';

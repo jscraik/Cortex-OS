@@ -29,7 +29,7 @@ program
   .option('--no-logging', 'Disable logging')
   .action(async (options) => {
     const spinner = ora('Starting stdio to HTTP bridge...').start();
-    
+
     try {
       // Parse headers
       const headers: Record<string, string> = {};
@@ -83,7 +83,7 @@ program
   .option('--no-logging', 'Disable logging')
   .action(async (options) => {
     const spinner = ora('Starting HTTP to stdio bridge...').start();
-    
+
     try {
       // Parse environment variables
       const env: Record<string, string> = {};
@@ -135,7 +135,7 @@ program
   .option('-c, --config <file>', 'Configuration file path', 'mcp-bridge.json')
   .action(async (options) => {
     const spinner = ora('Loading bridge configuration...').start();
-    
+
     try {
       if (!existsSync(options.config)) {
         throw new Error(`Configuration file not found: ${options.config}`);
@@ -143,17 +143,15 @@ program
 
       const configData = await readFile(options.config, 'utf-8');
       const config: BridgeConfig = JSON.parse(configData);
-      
+
       spinner.text = 'Starting bridge...';
       const bridge = new McpBridge(config);
       await bridge.start();
 
-      const sourceDesc = config.source.type === 'stdio' 
-        ? `${config.source.command}` 
-        : config.source.url;
-      const targetDesc = config.target.type === 'stdio' 
-        ? 'stdio' 
-        : `${config.target.host}:${config.target.port}`;
+      const sourceDesc =
+        config.source.type === 'stdio' ? `${config.source.command}` : config.source.url;
+      const targetDesc =
+        config.target.type === 'stdio' ? 'stdio' : `${config.target.host}:${config.target.port}`;
 
       spinner.succeed(`Bridge started: ${chalk.blue(sourceDesc)} → ${chalk.blue(targetDesc)}`);
       console.log(chalk.gray('Bridge is running. Press Ctrl+C to stop.'));
@@ -190,7 +188,7 @@ program
         type: 'streamableHttp',
         url: 'https://api.example.com/mcp',
         headers: {
-          'Authorization': 'Bearer YOUR_TOKEN_HERE',
+          Authorization: 'Bearer YOUR_TOKEN_HERE',
         },
       },
       target: {
@@ -223,11 +221,11 @@ program
   .option('-p, --port <port>', 'Bridge health check port', '8081')
   .action(async (options) => {
     const spinner = ora('Checking bridge health...').start();
-    
+
     try {
       const response = await fetch(`http://localhost:${options.port}/health`);
       const health = await response.json();
-      
+
       if (health.healthy) {
         spinner.succeed('Bridge is healthy');
         console.log(chalk.green('✅ Status: Healthy'));
@@ -235,7 +233,7 @@ program
         spinner.warn('Bridge is unhealthy');
         console.log(chalk.yellow('⚠️  Status: Unhealthy'));
       }
-      
+
       console.log(chalk.gray('Details:'));
       console.log(JSON.stringify(health.details, null, 2));
     } catch (error) {
