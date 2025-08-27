@@ -34,4 +34,16 @@ describe('Judge', () => {
     expect(result.passed).toBe(false);
     expect(result.failures).toContain('missing_evidence');
   });
+
+  it('flags contradiction as factual inaccuracy', async () => {
+    const judge = new Judge();
+    const turns: SimTurn[] = [
+      { role: 'user', content: 'Can you help?' },
+      { role: 'agent', content: 'I can help you with that.' },
+      { role: 'user', content: 'Thanks' },
+      { role: 'agent', content: 'I cannot help with that.' },
+    ];
+    const result = await judge.evaluate(scenario, turns);
+    expect(result.failures).toContain('factual_inaccuracy');
+  });
 });
