@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import { validateCommandInput } from '@cortex-os/mvp-core/src/validation';
+import { validateCommandInput } from './validation.js';
 
 // Secure command execution wrapper that prevents command injection
 export class SecureCommandExecutor {
@@ -39,7 +39,10 @@ export class SecureCommandExecutor {
 
     try {
       // Validate the command
-      const validation = validateCommandInput.dockerCommand(command);
+      const validation =
+        command[0] === 'docker'
+          ? validateCommandInput.docker(command)
+          : validateCommandInput.generic(command);
       if (!validation.success) {
         throw new Error(`Command validation failed: ${validation.error}`);
       }
@@ -51,10 +54,9 @@ export class SecureCommandExecutor {
 
       // Sanitize command parameters
       const sanitizedCommand = this.sanitizeCommand(command);
-      
+
       // Spawn the process with strict security settings
       const child = spawn(sanitizedCommand[0], sanitizedCommand.slice(1), {
-        timeout: timeout,
         killSignal: 'SIGTERM',
         stdio: ['ignore', 'pipe', 'pipe'],
         // Run with reduced privileges
@@ -65,9 +67,7 @@ export class SecureCommandExecutor {
           PATH: process.env.PATH,
           HOME: process.env.HOME,
           // Only include essential environment variables
-        },
-        // Resource limits
-        maxBuffer: this.DEFAULT_MEMORY_LIMIT
+        }
       });
 
       let stdout = '';
@@ -121,14 +121,6 @@ export class SecureCommandExecutor {
       this.concurrentProcesses--;
       throw error;
     }
-  }
-
-  // Synchronous version for Python interop
-  static executeCommandSync(command: string[], timeout: number = this.DEFAULT_TIMEOUT): { stdout: string; stderr: string; exitCode: number } {
-    // This is a placeholder for Python interop
-    // In a real implementation, this would use a synchronous execution method
-    // For now, we'll simulate synchronous behavior
-    throw new Error('executeCommandSync not implemented - use executeCommand instead');
   }
 
   // Sanitize command parameters to prevent injection

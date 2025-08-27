@@ -1,5 +1,5 @@
 import neo4j, { Driver, Session } from 'neo4j-driver';
-import { validateNeo4jInput } from '@cortex-os/mvp-core/src/validation';
+import { validateNeo4jInput } from './validation.js';
 
 // Secure Neo4j wrapper that prevents injection vulnerabilities
 export class SecureNeo4j {
