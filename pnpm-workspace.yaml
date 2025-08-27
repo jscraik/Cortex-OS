@@ -8,6 +8,7 @@ packages:
 
   # Nested packages within major packages
   - 'packages/a2a/a2a-*'
+  - 'packages/a2a-services/*'
   - 'packages/mcp/mcp-*'
 
   # Services (backend services)
