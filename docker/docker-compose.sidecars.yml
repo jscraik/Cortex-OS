@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  mcp_python:
+    build: ./containers/mcp-python
+    environment:
+      - PYREPL_NO_NET=1
+    ports:
+      - '8081:8081'
+    mem_limit: 768m
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true

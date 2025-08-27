@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  presidio-analyzer:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    command: ['python', '/app/presidio_analyzer/app.py']
+    ports:
+      - '5001:3000'
+    environment:
+      - PORT=3000
+    restart: unless-stopped
+
+  gitleaks:
+    image: zricethezav/gitleaks:latest
+    entrypoint: ['sleep', 'infinity']
+    # Run ad-hoc: docker exec -it <container> gitleaks detect --source=/scan ...
+    restart: unless-stopped

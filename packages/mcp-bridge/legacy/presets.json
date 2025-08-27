@@ -1,0 +1,29 @@
+{
+  "recommended": [
+    {
+      "name": "github",
+      "repo": "modelcontextprotocol/servers",
+      "note": "PRs, issues, search"
+    },
+    {
+      "name": "playwright",
+      "repo": "modelcontextprotocol/servers",
+      "note": "web+scrape+assertions"
+    },
+    {
+      "name": "firecrawl",
+      "repo": "mcp/firecrawl",
+      "note": "crawl → markdown"
+    },
+    {
+      "name": "context7",
+      "repo": "context7/mcp",
+      "note": "project-wide context synthesis"
+    },
+    {
+      "name": "marketitdown",
+      "repo": "marketitdown/mcp",
+      "note": "marketing copy"
+    }
+  ]
+}

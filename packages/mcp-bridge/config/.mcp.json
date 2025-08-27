@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "genai-toolbox": { "type": "http", "url": "http://127.0.0.1:5000/mcp" },
+    "my-fastapi": { "type": "http", "url": "http://localhost:8000/mcp" },
+    "chrome": { "type": "sse", "url": "http://127.0.0.1:11420/sse" },
+    "gitmcp": { "type": "sse", "url": "https://gitmcp.io/sse" },
+    "claude-context": {
+      "command": "npx",
+      "args": ["@zilliz/claude-context-mcp@latest"]
+    },
+    "ios-simulator": { "command": "npx", "args": ["ios-simulator-mcp"] },
+    "hexstrike-ai": {
+      "command": "python3",
+      "args": ["hexstrike_mcp.py", "--server", "http://localhost:8888"]
+    },
+    "shadcn-ui": {
+      "command": "npx",
+      "args": ["@jpisnice/shadcn-ui-mcp-server@latest"],
+      "env": { "GITHUB_API_TOKEN": "${GITHUB_API_TOKEN:-}" }
+    },
+    "a2a": { "type": "http", "url": "http://localhost:8000/mcp" },
+    "gpt5": {
+      "command": "npx",
+      "args": ["@dannyboy2042/gpt5-mcp-server"],
+      "env": { "OPENAI_API_KEY": "${OPENAI_API_KEY}" }
+    }
+  }
+}

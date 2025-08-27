@@ -1,0 +1,68 @@
+#
+# file_path: docker-compose.visualization.yml
+# description: Docker Compose configuration for terminal visualization services with GPL tool isolation
+# maintainer: @jamiescottcraik
+# last_updated: 2025-08-05
+# version: 1.0.0
+# status: active
+# ai_generated_by: claude-3-5-sonnet-20241022
+# ai_provenance_hash: sha256:abcd1234...
+
+version: '3.8'
+
+services:
+  gpl-tools:
+    build:
+      context: ./docker/gpl-tools
+      dockerfile: Dockerfile
+    container_name: cortex-gpl-tools
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8765:8765' # Bind to localhost only for security
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SAFE_IMAGE_DIR=/app/images
+    volumes:
+      # Bind mount for image uploads (read-only for security)
+      - ./tmp/cortex-images:/app/images:ro
+    networks:
+      - cortex-visualization
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8765/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /app/tmp:noexec,nosuid,size=50m
+
+networks:
+  cortex-visualization:
+    driver: bridge
+    name: cortex-visualization
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  gpl-tools-data:
+    driver: local
+    name: cortex-gpl-tools-data
+# © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

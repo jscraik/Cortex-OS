@@ -1,0 +1,422 @@
+# docker-compose.pii.yml
+# Presidio PII Analyzer with Enhanced Security Configuration
+# Security: GDPR/CCPA Compliance & Data Protection
+
+version: "3.8"
+
+services:
+  presidio-analyzer:
+    # Microsoft Presidio Analyzer with pinned digest
+    image: mcr.microsoft.com/presidio-analyzer@sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+    container_name: cortex-presidio-analyzer-${SCAN_ID:-default}
+
+    # Security: Read-only root filesystem
+    read_only: true
+
+    # Security: Drop all capabilities and run as non-root
+    cap_drop:
+      - ALL
+    user: '1000:1000' # presidio user
+
+    # Security: Enhanced security options
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:./config/presidio-seccomp.json
+      - apparmor:presidio-profile
+
+    # Security: Strict resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.0"
+          pids: 50
+        reservations:
+          memory: 512M
+          cpus: '1.0'
+
+    # Security: Complete network isolation
+    network_mode: none
+
+    # Security: Secure temporary filesystems
+    tmpfs:
+      - /tmp:noexec,nosuid,nodev,size=100m
+      - /var/tmp:noexec,nosuid,nodev,size=50m
+      - /var/cache:noexec,nosuid,nodev,size=50m
+
+    # Volume configuration for PII scanning
+    volumes:
+      - type: bind
+        source: ${SCAN_PATH:-/tmp/pii-scan}
+        target: /data
+        read_only: true
+        bind:
+          propagation: private
+
+      - type: bind
+        source: ${OUTPUT_PATH:-/tmp/presidio-output}
+        target: /output
+        read_only: false
+        bind:
+          propagation: private
+
+      # Custom PII models and configuration
+      - type: bind
+        source: ./config/presidio-config.yaml
+        target: /app/config.yaml
+        read_only: true
+
+      - type: bind
+        source: ./models/custom-pii-models
+        target: /app/models
+        read_only: true
+
+    # Environment variables for PII detection
+    environment:
+      - PRESIDIO_ANALYZER_HOST=127.0.0.1
+      - PRESIDIO_ANALYZER_PORT=5001
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONPATH=/app
+      - HOME=/tmp
+
+      # PII Detection Configuration
+      - DEFAULT_LANGUAGE=en
+      - SUPPORTED_LANGUAGES=en,es,fr,de,it
+      - CONFIDENCE_THRESHOLD=${CONFIDENCE_THRESHOLD:-0.5}
+      - CUSTOM_RECOGNIZERS_ENABLED=true
+
+      # Data Protection Settings
+      - GDPR_COMPLIANCE=true
+      - DATA_RETENTION_HOURS=0 # No data retention
+      - AUDIT_LOGGING=true
+
+      # Security Settings
+      - DISABLE_TELEMETRY=true
+      - ENABLE_SECURITY_HEADERS=true
+      - MAX_REQUEST_SIZE=10MB
+
+    # Startup command with security considerations
+    command:
+      [
+        'python',
+        '-m',
+        'presidio_analyzer',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        '5001',
+        '--config-file',
+        '/app/config.yaml',
+        '--log-level',
+        '${LOG_LEVEL:-INFO}',
+        '--disable-check-unique-values',
+        '--ad-hoc-recognizers',
+        '/app/models/custom-recognizers.yaml',
+      ]
+
+    # Health check for service availability
+    healthcheck:
+      test: ['CMD', 'python', '-c', "from presidio_analyzer import AnalyzerEngine; print('OK')"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+
+    # No automatic restart for security
+    restart: 'no'
+
+    # Secure logging configuration
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+        labels: 'service=presidio,security=pii-detection,compliance=gdpr'
+
+    # Security and compliance labels
+    labels:
+      - 'security.compliance=gdpr-ccpa'
+      - 'security.pii-detection=enabled'
+      - 'security.data-protection=maximum'
+      - 'maintainer=security-team'
+      - 'version=2.0.0'
+
+  presidio-anonymizer:
+    # Presidio Anonymizer for PII redaction
+    image: mcr.microsoft.com/presidio-anonymizer@sha256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321
+    container_name: cortex-presidio-anonymizer-${SCAN_ID:-default}
+
+    read_only: true
+    cap_drop:
+      - ALL
+    user: '1000:1000'
+
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:./config/presidio-seccomp.json
+      - apparmor:presidio-profile
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+          pids: 25
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+
+    network_mode: none
+
+    tmpfs:
+      - /tmp:noexec,nosuid,nodev,size=50m
+
+    volumes:
+      - type: bind
+        source: ${OUTPUT_PATH:-/tmp/presidio-output}
+        target: /data
+        read_only: false
+        bind:
+          propagation: private
+
+      - type: bind
+        source: ./config/anonymizer-config.yaml
+        target: /app/config.yaml
+        read_only: true
+
+    environment:
+      - PRESIDIO_ANONYMIZER_HOST=127.0.0.1
+      - PRESIDIO_ANONYMIZER_PORT=5002
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - HOME=/tmp
+
+      # Anonymization Settings
+      - DEFAULT_ANONYMIZER=redact
+      - KEEP_ORIGINAL_LENGTH=false
+      - HASH_SALT_SECRET=${HASH_SALT:-random-salt-value}
+
+      # Security Settings
+      - DISABLE_TELEMETRY=true
+      - AUDIT_ANONYMIZATION=true
+      - SECURE_DELETION=true
+
+    command:
+      [
+        'python',
+        '-m',
+        'presidio_anonymizer',
+        '--host',
+        '127.0.0.1',
+        '--port',
+        '5002',
+        '--config-file',
+        '/app/config.yaml',
+        '--log-level',
+        '${LOG_LEVEL:-INFO}',
+      ]
+
+    healthcheck:
+      test: ['CMD', 'python', '-c', "from presidio_anonymizer import AnonymizerEngine; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    restart: 'no'
+
+    depends_on:
+      - presidio-analyzer
+
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+        labels: 'service=presidio-anonymizer,security=data-anonymization'
+
+  # PII Detection Audit Logger
+  pii-audit-logger:
+    image: alpine:3.18
+    container_name: cortex-pii-audit-${SCAN_ID:-default}
+
+    read_only: true
+    cap_drop:
+      - ALL
+    user: '65534:65534'
+
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:default
+
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.1"
+        reservations:
+          memory: 32M
+          cpus: '0.05'
+
+    network_mode: none
+
+    volumes:
+      - type: bind
+        source: ${AUDIT_LOG_PATH:-/tmp/pii-audit}
+        target: /audit
+        read_only: false
+
+      - type: bind
+        source: ${OUTPUT_PATH:-/tmp/presidio-output}
+        target: /data
+        read_only: true
+
+    environment:
+      - AUDIT_RETENTION_DAYS=${AUDIT_RETENTION_DAYS:-7}
+      - AUDIT_LEVEL=DETAILED
+      - GDPR_COMPLIANCE=true
+
+    command: [
+        'sh',
+        '-c',
+        'while true; do
+        echo "[$(date -Iseconds)] PII Scan Audit: $(ls -la /data/ | wc -l) files processed" >> /audit/pii-audit.log;
+        find /audit -name ''*.log'' -mtime +${AUDIT_RETENTION_DAYS:-7} -delete;
+        sleep 300;
+        done',
+      ]
+
+    restart: 'no'
+
+    depends_on:
+      - presidio-analyzer
+      - presidio-anonymizer
+
+  # Data Loss Prevention Monitor
+  dlp-monitor:
+    image: nginx:1.24-alpine
+    container_name: cortex-dlp-monitor-${SCAN_ID:-default}
+
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    user: '101:101' # nginx user
+
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:default
+
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.2"
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+
+    tmpfs:
+      - /var/cache/nginx:noexec,nosuid,size=10m
+      - /var/run:noexec,nosuid,size=5m
+      - /tmp:noexec,nosuid,size=5m
+
+    volumes:
+      - type: bind
+        source: ./config/dlp-nginx.conf
+        target: /etc/nginx/nginx.conf
+        read_only: true
+
+      - type: bind
+        source: ${AUDIT_LOG_PATH:-/tmp/pii-audit}
+        target: /usr/share/nginx/html/audit
+        read_only: true
+
+    ports:
+      - '127.0.0.1:8080:80' # Local access only
+
+    environment:
+      - NGINX_WORKER_PROCESSES=1
+      - NGINX_WORKER_CONNECTIONS=50
+
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+    restart: 'no'
+
+# Secure network configuration
+networks:
+  pii-isolated:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_icc: 'false'
+      com.docker.network.bridge.enable_ip_masquerade: 'false'
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/24
+    labels:
+      - 'security.network=isolated'
+      - 'compliance.gdpr=enabled'
+
+# Secure volumes
+volumes:
+  pii-models:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=200m,uid=1000,gid=1000,mode=0755
+
+  audit-logs:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${AUDIT_LOG_PATH:-/tmp/pii-audit}
+      o: bind,uid=65534,gid=65534
+
+# Security secrets
+secrets:
+  presidio-config:
+    file: ./config/presidio-security.yaml
+
+  pii-detection-models:
+    file: ./models/custom-pii-detection.bin
+
+  hash-salt:
+    external: true
+    name: presidio-hash-salt
+
+# Configuration templates
+configs:
+  presidio-analyzer-config:
+    file: ./config/presidio-analyzer.yaml
+
+  presidio-anonymizer-config:
+    file: ./config/presidio-anonymizer.yaml
+
+  dlp-policy:
+    file: ./config/dlp-policy.json
+
+# Security and compliance defaults
+x-security-defaults: &security-defaults
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+    - seccomp:default
+  tmpfs:
+    - /tmp:noexec,nosuid,nodev,size=10m
+
+x-compliance-labels: &compliance-labels
+  labels:
+    - 'compliance.gdpr=enabled'
+    - 'compliance.ccpa=enabled'
+    - 'security.pii-protection=maximum'
+    - 'audit.enabled=true'

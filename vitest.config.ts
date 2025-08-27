@@ -58,16 +58,21 @@ export default defineConfig({
         'apps/cortex-os/packages/telemetry/vitest.config.ts',
         'packages/testing/vitest.config.ts',
         'packages/mvp-core/vitest.config.ts',
-        'packages/asbr-ui/vitest.config.ts',
 
-        // Shared packages located under apps/cortex-os/packages
-        'apps/cortex-os/packages/a2a/vitest.config.ts',
+        // ASBR Feature Packages (mounted by cortex-os app)
         'apps/cortex-os/packages/asbr/vitest.config.ts',
-        'apps/cortex-os/packages/bridge/vitest.config.ts',
-        'apps/cortex-os/packages/mcp/vitest.config.ts',
-        'apps/cortex-os/packages/mcp-server/vitest.config.ts',
-        'apps/cortex-os/packages/memory/vitest.config.ts',
-        'apps/cortex-os/packages/orchestration/vitest.config.ts',
+        'apps/cortex-os/packages/agents/vitest.config.ts',
+        'apps/cortex-os/packages/mvp/vitest.config.ts',
+        'apps/cortex-os/packages/mvp-core/vitest.config.ts',
+        'apps/cortex-os/packages/mvp-server/vitest.config.ts',
+
+        // Shared Library Packages
+        'packages/a2a/vitest.config.ts',
+        'packages/mcp/vitest.config.ts',
+        'packages/memories/vitest.config.ts',
+        'packages/orchestration/vitest.config.ts',
+        'packages/rag/vitest.config.ts',
+        'packages/simlab/vitest.config.ts',
 
         // Brain modules relocated from packages/* → apps/cortex-os/brain/*
         'apps/cortex-os/brain/evidence/validator/vitest.config.ts',

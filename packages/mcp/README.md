@@ -36,7 +36,7 @@ Client utilities for interacting with MCP servers, plugin management, marketplac
 ## Directory Structure
 
 ```text
-apps/cortex-os/packages/mcp/
+packages/mcp/
 ├── src/                    # Main source code
 │   ├── universal-mcp-manager.ts    # 🆕 Universal secure MCP management
 │   ├── universal-cli-handler.ts    # 🆕 CLI interface for all frontends

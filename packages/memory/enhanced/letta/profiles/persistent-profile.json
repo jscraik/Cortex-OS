@@ -1,0 +1,8 @@
+{
+  "name": "persistent",
+  "description": "Persistent memory for critical system information and knowledge",
+  "retention_days": -1,
+  "compression_enabled": true,
+  "cache_priority": "low",
+  "storage_location": "hdd"
+}

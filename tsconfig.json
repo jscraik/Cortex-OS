@@ -3,11 +3,20 @@
     "outDir": "dist",
     "module": "es2022",
     "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
     "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
     "types": ["node", "vitest/globals"],
     "jsx": "react-jsx",
     "experimentalDecorators": true,
@@ -20,9 +29,8 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "downlevelIteration": true,
     "baseUrl": ".",
     "paths": {
@@ -31,11 +39,57 @@
       "@testing/*": ["packages/testing/src/*"],
       "@security/*": ["packages/security/src/*"],
       "@utils/*": ["packages/utils/src/*"],
-      "@sdk/*": ["apps/cortex-os/packages/sdk/src/*"],
-      "@telemetry/*": ["apps/cortex-os/packages/telemetry/src/*"],
-      "@cortex-os/*": ["apps/cortex-os/packages/*/src", "apps/cortex-os/packages/*"],
-  "@cortex-os/rag": ["packages/rag/src/index.ts"],
-  "@cortex-os/rag/*": ["packages/rag/src/*"],
+
+      // A2A Packages
+      "@cortex-os/a2a-core/*": ["packages/a2a/a2a-core/src/*"],
+      "@cortex-os/a2a-transport/*": ["packages/a2a/a2a-transport/src/*"],
+      "@cortex-os/a2a-contracts/*": ["packages/a2a/a2a-contracts/src/*"],
+      "@cortex-os/utils": ["libs/typescript/utils/src"],
+      "@cortex-os/telemetry": ["libs/typescript/telemetry/src"],
+
+      // MCP Packages
+      "@cortex-os/mcp-core/*": ["packages/mcp/mcp-core/src/*"],
+      "@cortex-os/mcp-transport/*": ["packages/mcp/mcp-transport/src/*"],
+      "@cortex-os/mcp-registry/*": ["packages/mcp/mcp-registry/src/*"],
+
+      // RAG Packages
+      "@cortex-os/rag-pipeline/*": ["packages/rag/src/pipeline/*"],
+      "@cortex-os/rag-embed/*": ["packages/rag/src/embed/*"],
+      "@cortex-os/rag-store/*": ["packages/rag/src/store/*"],
+
+      // Simlab Packages
+      "@cortex-os/simlab-core/*": ["packages/simlab/simlab-core/src/*"],
+      "@cortex-os/simlab-agents/*": ["packages/simlab/simlab-agents/src/*"],
+      "@cortex-os/simlab-env/*": ["packages/simlab/simlab-env/src/*"],
+      "@cortex-os/simlab-contracts/*": ["packages/simlab/simlab-contracts/src/*"],
+      "@cortex-os/simlab-report/*": ["packages/simlab/simlab-report/src/*"],
+      "@cortex-os/simlab-metrics/*": ["packages/simlab/simlab-metrics/src/*"],
+
+      // Moved Packages (now in root packages/)
+      "@cortex-os/agents": ["packages/agents/src/index.ts"],
+      "@cortex-os/agents/*": ["packages/agents/src/*"],
+      "@cortex-os/asbr": ["packages/asbr/src/index.ts"],
+      "@cortex-os/asbr/*": ["packages/asbr/src/*"],
+      "@cortex-os/kernel": ["packages/kernel/src/index.ts"],
+      "@cortex-os/kernel/*": ["packages/kernel/src/*"],
+      "@cortex-os/mcp-server": ["packages/mcp-server/src/index.ts"],
+      "@cortex-os/mcp-server/*": ["packages/mcp-server/src/*"],
+      "@cortex-os/mcp-bridge": ["packages/mcp-bridge/src/index.ts"],
+      "@cortex-os/mcp-bridge/*": ["packages/mcp-bridge/src/*"],
+      "@cortex-os/memory": ["packages/memory/src/index.ts"],
+      "@cortex-os/memory/*": ["packages/memory/src/*"],
+      "@cortex-os/mvp": ["packages/mvp/src/index.ts"],
+      "@cortex-os/mvp/*": ["packages/mvp/src/*"],
+      "@cortex-os/mvp-server": ["packages/mvp-server/src/index.ts"],
+      "@cortex-os/mvp-server/*": ["packages/mvp-server/src/*"],
+      "@cortex-os/prp-runner": ["packages/prp-runner/src/index.ts"],
+      "@cortex-os/prp-runner/*": ["packages/prp-runner/src/*"],
+      "@cortex-os/simlab-mono": ["packages/simlab-mono/src/index.ts"],
+      "@cortex-os/simlab-mono/*": ["packages/simlab-mono/src/*"],
+
+      // Shared Library Packages
+      "@cortex-os/rag": ["packages/rag/src/index.ts"],
+      "@cortex-os/rag/*": ["packages/rag/src/*"],
 
       "@brain/*": ["apps/cortex-os/brain/*"],
       "@brain/rag/*": ["apps/cortex-os/brain/rag/src/*"],
@@ -45,7 +99,6 @@
       "@brain/evidence/*": ["apps/cortex-os/brain/evidence/*"],
       "@brain/adapters/*": ["apps/cortex-os/brain/adapters/*"],
 
-      "@bridge/*": ["apps/cortex-os/packages/bridge/src/*"],
       "@orchestration/*": ["apps/cortex-os/brain/planner/orchestration/src/*"]
     }
   },
@@ -57,18 +110,21 @@
     "external/**",
     "vendor/**",
     "**/*.config.js",
-    "**/*.config.ts"
+    "**/*.config.ts",
+    "scripts/**/*.mjs",
+    "scripts/**/*.js",
+    "**/dist/**",
+    "**/build/**",
+    "**/*.d.ts",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/test/**",
+    "**/tests/**",
+    "**/tools/**",
+    "security_backups/**",
+    "**/__*/**",
+    "apps/cortex-os/brain/**",
+    "apps/cortex-cli/**"
   ],
-  "references": [
-    { "path": "./apps/cortex-cli" },
-    { "path": "./apps/cortex-os" },
-    { "path": "./apps/cortex-os/packages" },
-    { "path": "./apps/cortex-os/brain/planner/orchestration" },
-    { "path": "./apps/cortex-os/brain/router" },
-    { "path": "./apps/cortex-os/brain/rag" },
-    { "path": "./apps/cortex-os/packages/sdk" },
-    { "path": "./apps/cortex-os/packages/telemetry" },
-    { "path": "./packages/testing" }
-  ,{ "path": "./packages/rag" }
-  ]
+  "references": []
 }

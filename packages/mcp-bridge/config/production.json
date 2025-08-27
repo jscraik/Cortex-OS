@@ -1,0 +1,42 @@
+{
+  "connectors": {
+    "policy": "default-deny",
+    "allowlist": [
+      {
+        "name": "local-fs",
+        "scopes": ["read"],
+        "paths": ["/workspace", "/tmp"],
+        "ttl": 3600,
+        "description": "Local filesystem access for workspace operations"
+      },
+      {
+        "name": "github-api",
+        "scopes": ["read"],
+        "domains": ["api.github.com"],
+        "rateLimit": "5000/hour",
+        "auth": "bearer",
+        "description": "GitHub API access for repository operations"
+      }
+    ],
+    "blocklist": ["context7", "*-writer", "*-admin", "*-unsafe"],
+    "network": {
+      "egress": "disabled",
+      "exceptions": [],
+      "timeout": 5000
+    },
+    "audit": {
+      "enabled": true,
+      "format": "jsonl",
+      "fields": ["timestamp", "connector", "scope", "result", "duration_ms", "user_id"],
+      "destination": "telemetry",
+      "retention": "30d"
+    },
+    "security": {
+      "pii_detection": true,
+      "prompt_injection_guard": true,
+      "output_validation": true,
+      "max_tokens": 50000,
+      "max_requests_per_minute": 100
+    }
+  }
+}

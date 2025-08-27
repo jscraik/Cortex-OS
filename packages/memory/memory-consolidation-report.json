@@ -1,0 +1,164 @@
+{
+  "timestamp": "2025-08-20T15:20:03.226Z",
+  "auditResults": [
+    {
+      "location": "/cortex-memories",
+      "type": "standalone",
+      "hasPackageJson": false,
+      "hasTests": false,
+      "hasDocs": false,
+      "technologies": ["Graphiti", "Mem0", "Letta"],
+      "dependencies": [],
+      "purpose": "Enhanced memory with Mem0/Graphiti/Letta",
+      "codeSize": 96,
+      "lastModified": "2025-08-20T14:27:02.557Z",
+      "conflicts": ["Implements memory technologies: Graphiti, Mem0, Letta"],
+      "uniqueValue": [
+        "Advanced library integrations (Mem0, Graphiti, Letta)",
+        "Unified memory management system",
+        "Cross-library synchronization"
+      ]
+    },
+    {
+      "location": "/memory",
+      "type": "standalone",
+      "hasPackageJson": false,
+      "hasTests": false,
+      "hasDocs": true,
+      "technologies": ["Docker"],
+      "dependencies": [],
+      "purpose": "Standalone memory with Qdrant/Neo4j",
+      "codeSize": 11,
+      "lastModified": "2025-08-19T20:26:55.199Z",
+      "conflicts": ["Uses \"memory\" in path - potential naming conflict"],
+      "uniqueValue": [
+        "Production-ready Qdrant integration",
+        "Neo4j graph database setup",
+        "Docker compose configuration"
+      ]
+    },
+    {
+      "location": "/apps/cortex-os/packages/memory",
+      "type": "package",
+      "hasPackageJson": true,
+      "hasTests": true,
+      "hasDocs": true,
+      "technologies": ["TypeScript/Node.js", "Testing", "Qdrant", "Neo4j"],
+      "dependencies": [
+        "neo4j-driver",
+        "undici",
+        "zod",
+        "@types/node",
+        "typescript",
+        "vitest",
+        "eslint",
+        "prettier"
+      ],
+      "purpose": "Monorepo memory package",
+      "codeSize": 43,
+      "lastModified": "2025-08-19T23:37:14.027Z",
+      "conflicts": [
+        "Implements memory technologies: Qdrant, Neo4j",
+        "Uses \"memory\" in path - potential naming conflict"
+      ],
+      "uniqueValue": ["Proper monorepo package structure", "Existing workspace integration"]
+    },
+    {
+      "location": "/packages/brainwav-memory",
+      "type": "package",
+      "hasPackageJson": true,
+      "hasTests": true,
+      "hasDocs": true,
+      "technologies": ["TypeScript/Node.js"],
+      "dependencies": [],
+      "purpose": "Brainwav-specific memory implementation",
+      "codeSize": 2,
+      "lastModified": "2025-08-19T20:26:55.209Z",
+      "conflicts": ["Uses \"memory\" in path - potential naming conflict"],
+      "uniqueValue": ["Brainwav-specific implementations"]
+    },
+    {
+      "location": "/packages/memu",
+      "type": "package",
+      "hasPackageJson": true,
+      "hasTests": true,
+      "hasDocs": true,
+      "technologies": ["TypeScript/Node.js"],
+      "dependencies": [],
+      "purpose": "MemU Cloud API client",
+      "codeSize": 23,
+      "lastModified": "2025-08-19T20:53:26.778Z",
+      "conflicts": [],
+      "uniqueValue": ["MemU Cloud API client", "External service integration"]
+    },
+    {
+      "location": "/dev",
+      "type": "development",
+      "hasPackageJson": false,
+      "hasTests": false,
+      "hasDocs": false,
+      "technologies": [],
+      "dependencies": [],
+      "purpose": "Development artifacts and documentation",
+      "codeSize": 5,
+      "lastModified": "2025-08-19T23:40:43.182Z",
+      "conflicts": [],
+      "uniqueValue": ["Development documentation", "Change logs and bug tracking"]
+    }
+  ],
+  "canonicalLocation": "/packages/memory",
+  "migrations": [
+    {
+      "source": "/cortex-memories",
+      "action": "merge",
+      "reason": "Merge valuable features into canonical memory package",
+      "conflicts": ["Implements memory technologies: Graphiti, Mem0, Letta"]
+    },
+    {
+      "source": "/memory",
+      "action": "merge",
+      "reason": "Merge valuable features into canonical memory package",
+      "conflicts": ["Uses \"memory\" in path - potential naming conflict"]
+    },
+    {
+      "source": "/apps/cortex-os/packages/memory",
+      "action": "merge",
+      "reason": "Merge valuable features into canonical memory package",
+      "conflicts": [
+        "Implements memory technologies: Qdrant, Neo4j",
+        "Uses \"memory\" in path - potential naming conflict"
+      ]
+    },
+    {
+      "source": "/packages/brainwav-memory",
+      "action": "merge",
+      "reason": "Merge Brainwav-specific features into canonical memory package",
+      "conflicts": ["Uses \"memory\" in path - potential naming conflict"]
+    },
+    {
+      "source": "/packages/memu",
+      "action": "relocate",
+      "reason": "Keep as separate package - different purpose (API client)",
+      "conflicts": []
+    },
+    {
+      "source": "/dev",
+      "action": "merge",
+      "reason": "Merge development docs into canonical package documentation",
+      "conflicts": []
+    }
+  ],
+  "dependencies": {
+    "toUpdate": ["@cortex-os/memory references", "import paths"],
+    "toRemove": ["duplicate dependencies", "conflicting configurations"],
+    "toAdd": ["unified dependencies in canonical package"]
+  },
+  "recommendations": [
+    "Establish packages/memory as the single source of truth for memory functionality",
+    "Create clear interfaces for different memory backends (Qdrant, Neo4j, Mem0, etc.)",
+    "Maintain backward compatibility during migration",
+    "Update all imports and references to use canonical package",
+    "Deprecate root-level memory directories",
+    "Document migration path for consumers"
+  ]
+}

@@ -1,0 +1,204 @@
+import { spawn } from 'child_process';
+import { validateCommandInput } from '@cortex-os/mvp-core/src/validation';
+
+// Secure command execution wrapper that prevents command injection
+export class SecureCommandExecutor {
+  // Whitelisted commands for safe execution
+  private static readonly ALLOWED_COMMANDS = new Set([
+    'docker',
+    'git',
+    'ls',
+    'pwd',
+    'echo',
+    'cat',
+    'grep',
+    'find'
+  ]);
+
+  // Whitelisted Docker subcommands
+  private static readonly ALLOWED_DOCKER_SUBCOMMANDS = new Set([
+    'ps', 'images', 'inspect', 'logs', 'version', 'info'
+  ]);
+
+  // Resource limits
+  private static readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
+  private static readonly DEFAULT_MEMORY_LIMIT = 1024 * 1024 * 100; // 100 MB
+  private static readonly MAX_CONCURRENT_PROCESSES = 10;
+
+  // Process tracking
+  private static concurrentProcesses = 0;
+
+  // Execute a command with strict validation
+  static async executeCommand(command: string[], timeout: number = this.DEFAULT_TIMEOUT): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    // Check concurrent process limit
+    if (this.concurrentProcesses >= this.MAX_CONCURRENT_PROCESSES) {
+      throw new Error(`Maximum concurrent processes (${this.MAX_CONCURRENT_PROCESSES}) reached`);
+    }
+
+    this.concurrentProcesses++;
+
+    try {
+      // Validate the command
+      const validation = validateCommandInput.dockerCommand(command);
+      if (!validation.success) {
+        throw new Error(`Command validation failed: ${validation.error}`);
+      }
+
+      // Check if command is whitelisted
+      if (!this.ALLOWED_COMMANDS.has(command[0])) {
+        throw new Error(`Command ${command[0]} is not allowed`);
+      }
+
+      // Sanitize command parameters
+      const sanitizedCommand = this.sanitizeCommand(command);
+      
+      // Spawn the process with strict security settings
+      const child = spawn(sanitizedCommand[0], sanitizedCommand.slice(1), {
+        timeout: timeout,
+        killSignal: 'SIGTERM',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        // Run with reduced privileges
+        uid: process.getuid ? process.getuid() : undefined,
+        gid: process.getgid ? process.getgid() : undefined,
+        // Disable environment variables inheritance
+        env: {
+          PATH: process.env.PATH,
+          HOME: process.env.HOME,
+          // Only include essential environment variables
+        },
+        // Resource limits
+        maxBuffer: this.DEFAULT_MEMORY_LIMIT
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout?.on('data', (data) => {
+        // Limit stdout size
+        if (stdout.length + data.length > this.DEFAULT_MEMORY_LIMIT) {
+          child.kill('SIGTERM');
+          throw new Error('Output exceeded memory limit');
+        }
+        stdout += data.toString();
+      });
+
+      child.stderr?.on('data', (data) => {
+        // Limit stderr size
+        if (stderr.length + data.length > this.DEFAULT_MEMORY_LIMIT) {
+          child.kill('SIGTERM');
+          throw new Error('Error output exceeded memory limit');
+        }
+        stderr += data.toString();
+      });
+
+      return new Promise((resolve, reject) => {
+        let timeoutId: NodeJS.Timeout;
+
+        child.on('close', (code) => {
+          clearTimeout(timeoutId);
+          this.concurrentProcesses--;
+          resolve({
+            stdout: stdout,
+            stderr: stderr,
+            exitCode: code || 0
+          });
+        });
+
+        child.on('error', (error) => {
+          clearTimeout(timeoutId);
+          this.concurrentProcesses--;
+          reject(new Error(`Command execution failed: ${error.message}`));
+        });
+
+        // Handle timeout
+        timeoutId = setTimeout(() => {
+          child.kill('SIGTERM');
+          this.concurrentProcesses--;
+          reject(new Error(`Command timed out after ${timeout}ms`));
+        }, timeout);
+      });
+    } catch (error) {
+      this.concurrentProcesses--;
+      throw error;
+    }
+  }
+
+  // Synchronous version for Python interop
+  static executeCommandSync(command: string[], timeout: number = this.DEFAULT_TIMEOUT): { stdout: string; stderr: string; exitCode: number } {
+    // This is a placeholder for Python interop
+    // In a real implementation, this would use a synchronous execution method
+    // For now, we'll simulate synchronous behavior
+    throw new Error('executeCommandSync not implemented - use executeCommand instead');
+  }
+
+  // Sanitize command parameters to prevent injection
+  private static sanitizeCommand(command: string[]): string[] {
+    return command.map(param => {
+      // Remove dangerous characters
+      return param.replace(/[;&|`$(){}[\]<>]/g, '');
+    });
+  }
+
+  // Execute Docker command with additional security
+  static async executeDockerCommand(subcommand: string, args: string[] = [], timeout: number = this.DEFAULT_TIMEOUT): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    // Validate subcommand
+    if (!this.ALLOWED_DOCKER_SUBCOMMANDS.has(subcommand)) {
+      throw new Error(`Docker subcommand ${subcommand} is not allowed`);
+    }
+
+    // Validate arguments
+    for (const arg of args) {
+      if (typeof arg !== 'string') {
+        throw new Error('All arguments must be strings');
+      }
+      
+      // Prevent very long arguments that could be used for DoS
+      if (arg.length > 1000) {
+        throw new Error('Argument too long');
+      }
+      
+      // Prevent dangerous patterns in arguments
+      if (/[;&|`$(){}[\]<>]/.test(arg)) {
+        throw new Error('Invalid characters in argument');
+      }
+    }
+
+    // Build the full command
+    const command = ['docker', subcommand, ...args];
+    
+    // Execute with security wrapper
+    return this.executeCommand(command, timeout);
+  }
+
+  // Get current process statistics
+  static getProcessStats() {
+    return {
+      concurrentProcesses: this.concurrentProcesses,
+      maxConcurrentProcesses: this.MAX_CONCURRENT_PROCESSES
+    };
+  }
+
+  // Execute a command with output sanitization
+  static async executeCommandWithSanitization(command: string[], timeout: number = this.DEFAULT_TIMEOUT): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+    const result = await this.executeCommand(command, timeout);
+    
+    // Sanitize output to prevent XSS or other injection
+    return {
+      stdout: this.sanitizeOutput(result.stdout),
+      stderr: this.sanitizeOutput(result.stderr),
+      exitCode: result.exitCode
+    };
+  }
+
+  // Sanitize output to prevent XSS or other injection
+  private static sanitizeOutput(output: string): string {
+    // Remove potentially dangerous HTML/JavaScript
+    return output
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/vbscript:/gi, '')
+      .replace(/on\w+="[^"]*"/gi, '')
+      .replace(/on\w+='[^']*'/gi, '')
+      .replace(/on\w+=[^\s>]+/gi, '');
+  }
+}

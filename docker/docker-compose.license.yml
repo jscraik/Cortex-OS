@@ -1,0 +1,207 @@
+# docker-compose.license.yml
+# ScanCode Toolkit with Enhanced Security Configuration
+# Security: OWASP Container Security Top-10 Compliance
+
+version: "3.8"
+
+services:
+  scancode-toolkit:
+    # Use pinned digest for supply chain security
+    image: scancode-toolkit@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+    container_name: cortex-scancode-${SCAN_ID:-default}
+
+    # Security: Read-only root filesystem
+    read_only: true
+
+    # Security: Drop all capabilities and run as non-root
+    cap_drop:
+      - ALL
+    user: '65534:65534' # nobody:nobody
+
+    # Security: Disable new privileges
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:default
+      - apparmor:default
+
+    # Security: Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+          pids: 100
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+
+    # Security: Network isolation
+    network_mode: none
+
+    # Security: Temporary filesystems with restrictions
+    tmpfs:
+      - /tmp:noexec,nosuid,size=50m
+      - /var/tmp:noexec,nosuid,size=10m
+      - /run:noexec,nosuid,size=5m
+
+    # Volume configuration - read-only scan directory
+    volumes:
+      - type: bind
+        source: ${SCAN_PATH:-/tmp/scan}
+        target: /scan
+        read_only: true
+        bind:
+          propagation: private
+
+      # Security: Secure output directory with limited permissions
+      - type: bind
+        source: ${OUTPUT_PATH:-/tmp/scancode-output}
+        target: /output
+        read_only: false
+        bind:
+          propagation: private
+
+    # Environment variables with security considerations
+    environment:
+      - SCANCODE_TIMEOUT=${SCANCODE_TIMEOUT:-300}
+      - SCANCODE_PROCESSES=${SCANCODE_PROCESSES:-2}
+      - SCANCODE_MEMORY_LIMIT=400M
+      - PYTHONPATH=/opt/scancode-toolkit
+      - HOME=/tmp
+
+    # Command with security parameters
+    command:
+      [
+        'scancode',
+        '--license',
+        '--copyright',
+        '--json-pp',
+        '--timeout',
+        '${SCANCODE_TIMEOUT:-300}',
+        '--processes',
+        '${SCANCODE_PROCESSES:-2}',
+        '--max-memory',
+        '400',
+        '--strip-root',
+        '--quiet',
+        '/scan',
+        '--output-file',
+        '/output/scan-results.json',
+      ]
+
+    # Health check
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import scancode; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Restart policy
+    restart: 'no'
+
+    # Logging configuration
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+        labels: 'service=scancode,security=enabled'
+
+    # Labels for security and compliance
+    labels:
+      - 'security.compliance=owasp-container-top10'
+      - 'security.scan.type=license'
+      - 'security.isolation=enabled'
+      - 'maintainer=security-team'
+      - 'version=1.0.0'
+
+  # Security scanner sidecar for monitoring
+  security-monitor:
+    image: falcosecurity/falco:latest
+    container_name: cortex-security-monitor-${SCAN_ID:-default}
+
+    privileged: false
+    read_only: true
+
+    cap_add:
+      - SYS_PTRACE
+    cap_drop:
+      - ALL
+
+    security_opt:
+      - no-new-privileges:true
+
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock:ro
+      - /dev:/host/dev:ro
+      - /proc:/host/proc:ro
+      - /boot:/host/boot:ro
+      - /lib/modules:/host/lib/modules:ro
+      - /usr:/host/usr:ro
+      - /etc:/host/etc:ro
+
+    environment:
+      - FALCO_BPF_PROBE=""
+
+    command:
+      [
+        'falco',
+        '--pidfile=/var/run/falco.pid',
+        '--disable-source=k8s_audit',
+        '--disable-source=k8s_nodestat',
+        '--disable-source=syscall',
+      ]
+
+    depends_on:
+      - scancode-toolkit
+
+    restart: 'no'
+
+# Networks with security restrictions
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_icc: 'false'
+      com.docker.network.bridge.enable_ip_masquerade: 'false'
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+
+# Volumes with security configuration
+volumes:
+  scancode-cache:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=100m,uid=65534,gid=65534,mode=0755
+
+# Secrets management
+secrets:
+  scancode-config:
+    file: ./config/scancode-security.toml
+
+  container-policy:
+    file: ./config/container-security-policy.json
+
+# Security configuration for the entire stack
+x-security-defaults: &security-defaults
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+    - seccomp:default
+  tmpfs:
+    - /tmp:noexec,nosuid,size=10m
+
+# Development override (disabled in production)
+x-development-overrides: &dev-overrides
+  volumes:
+    - ./logs:/logs:rw
+  environment:
+    - DEBUG=${DEBUG:-false}
+    - LOG_LEVEL=${LOG_LEVEL:-INFO}

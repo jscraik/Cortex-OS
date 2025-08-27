@@ -1,0 +1,301 @@
+/**
+ * @file mcp/adapter.ts
+ * @description MCP Adapter for Cortex Kernel Integration
+ * @author Cortex-OS Team
+ * @version 1.0.0
+ */
+
+import { PRPState } from '../state.js';
+
+// Neuron interface definition - compatible with prp-runner
+interface Neuron {
+  id: string;
+  role: string;
+  phase: 'strategy' | 'build' | 'evaluation';
+  dependencies: string[];
+  tools: string[];
+  requiresLLM?: boolean;
+  execute(state: any, context: any): Promise<NeuronResult>;
+}
+
+interface NeuronResult {
+  output: any;
+  evidence: any[];
+  nextSteps: string[];
+  artifacts: any[];
+  metrics: ExecutionMetrics;
+}
+
+interface ExecutionMetrics {
+  startTime: string;
+  endTime: string;
+  duration: number;
+  toolsUsed: string[];
+  filesCreated: number;
+  filesModified: number;
+  commandsExecuted: number;
+}
+
+/**
+ * MCP Tool interface for kernel integration
+ */
+export interface MCPTool {
+  name: string;
+  description: string;
+  inputSchema: any;
+  execute(params: any, context: MCPContext): Promise<any>;
+}
+
+/**
+ * MCP Context for tool execution
+ */
+export interface MCPContext {
+  prpState: PRPState;
+  workingDirectory: string;
+  toolsEnabled: string[];
+  securityPolicy: {
+    allowFileSystem: boolean;
+    allowNetwork: boolean;
+    allowExecution: boolean;
+  };
+}
+
+/**
+ * Cortex Kernel MCP Adapter
+ * 
+ * Converts MCP tools into Cortex kernel nodes and integrates
+ * them into the PRP workflow state machine.
+ */
+export class MCPAdapter {
+  private tools: Map<string, MCPTool> = new Map();
+  private contexts: Map<string, MCPContext> = new Map();
+
+  /**
+   * Register MCP tool for kernel integration
+   */
+  registerTool(tool: MCPTool): void {
+    this.tools.set(tool.name, tool);
+  }
+
+  /**
+   * Create MCP context for PRP execution
+   */
+  createContext(prpState: PRPState, options: {
+    workingDirectory?: string;
+    enabledTools?: string[];
+    securityPolicy?: Partial<MCPContext['securityPolicy']>;
+  } = {}): MCPContext {
+    const context: MCPContext = {
+      prpState,
+      workingDirectory: options.workingDirectory || process.cwd(),
+      toolsEnabled: options.enabledTools || Array.from(this.tools.keys()),
+      securityPolicy: {
+        allowFileSystem: true,
+        allowNetwork: false,
+        allowExecution: true,
+        ...options.securityPolicy,
+      },
+    };
+
+    this.contexts.set(prpState.runId, context);
+    return context;
+  }
+
+  /**
+   * Execute MCP tool within kernel context
+   */
+  async executeTool(
+    toolName: string,
+    params: any,
+    runId: string
+  ): Promise<{
+    result: any;
+    evidence: {
+      toolName: string;
+      params: any;
+      result: any;
+      timestamp: string;
+    };
+  }> {
+    const tool = this.tools.get(toolName);
+    if (!tool) {
+      throw new Error(`MCP tool not found: ${toolName}`);
+    }
+
+    const context = this.contexts.get(runId);
+    if (!context) {
+      throw new Error(`MCP context not found for run: ${runId}`);
+    }
+
+    if (!context.toolsEnabled.includes(toolName)) {
+      throw new Error(`MCP tool not enabled: ${toolName}`);
+    }
+
+    try {
+      const result = await tool.execute(params, context);
+      
+      const evidence = {
+        toolName,
+        params,
+        result,
+        timestamp: new Date().toISOString(),
+      };
+
+      return { result, evidence };
+    } catch (error) {
+      throw new Error(`MCP tool execution failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Convert MCP tools to kernel-compatible neurons
+   */
+  createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
+    return {
+      id: `mcp-${tool.name}`,
+      role: `mcp-tool-${tool.name}`,
+      phase,
+      dependencies: [],
+      tools: [tool.name],
+      requiresLLM: false,
+      execute: async (state: PRPState, context: any) => {
+        const mcpContext = this.createContext(state, {
+          workingDirectory: context.workingDirectory,
+        });
+
+        // Extract parameters from blueprint for tool execution
+        const params = this.extractToolParams(state.blueprint, tool);
+        const execution = await this.executeTool(tool.name, params, state.runId);
+
+        return {
+          output: {
+            toolName: tool.name,
+            result: execution.result,
+            mcpIntegration: true,
+          },
+          evidence: [{
+            id: `mcp-${tool.name}-${Date.now()}`,
+            type: 'command',
+            source: `mcp-${tool.name}`,
+            content: JSON.stringify(execution.evidence),
+            timestamp: new Date().toISOString(),
+            phase,
+          }],
+          nextSteps: [`Review ${tool.name} output`],
+          artifacts: [],
+          metrics: {
+            startTime: new Date().toISOString(),
+            endTime: new Date().toISOString(),
+            duration: 0,
+            toolsUsed: [tool.name],
+            filesCreated: 0,
+            filesModified: 0,
+            commandsExecuted: 1,
+          },
+        };
+      },
+    };
+  }
+
+  /**
+   * Extract tool parameters from blueprint
+   */
+  private extractToolParams(blueprint: PRPState['blueprint'], tool: MCPTool): any {
+    // Simple parameter extraction - in real implementation would be more sophisticated
+    return {
+      title: blueprint.title,
+      description: blueprint.description,
+      requirements: blueprint.requirements,
+      toolName: tool.name,
+    };
+  }
+
+  /**
+   * Get available tools
+   */
+  getAvailableTools(): MCPTool[] {
+    return Array.from(this.tools.values());
+  }
+
+  /**
+   * Get context for run
+   */
+  getContext(runId: string): MCPContext | undefined {
+    return this.contexts.get(runId);
+  }
+
+  /**
+   * Cleanup context after PRP completion
+   */
+  cleanupContext(runId: string): void {
+    this.contexts.delete(runId);
+  }
+}
+
+/**
+ * Default MCP tools for Cortex Kernel
+ */
+export const createDefaultMCPTools = (): MCPTool[] => [
+  {
+    name: 'file_read',
+    description: 'Read file contents for analysis',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string' },
+      },
+      required: ['path'],
+    },
+    execute: async (params, context) => {
+      if (!context.securityPolicy.allowFileSystem) {
+        throw new Error('File system access not allowed');
+      }
+      // Implementation would read actual file
+      return { content: `Mock file content for ${params.path}` };
+    },
+  },
+  {
+    name: 'code_analysis',
+    description: 'Analyze code quality and structure',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string' },
+        language: { type: 'string' },
+      },
+      required: ['code'],
+    },
+    execute: async (params, context) => {
+      // Mock code analysis
+      return {
+        complexity: 'medium',
+        issues: [],
+        score: 85,
+        suggestions: ['Add more comments', 'Consider refactoring'],
+      };
+    },
+  },
+  {
+    name: 'test_runner',
+    description: 'Execute tests and report results',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        testPath: { type: 'string' },
+        framework: { type: 'string' },
+      },
+    },
+    execute: async (params, context) => {
+      if (!context.securityPolicy.allowExecution) {
+        throw new Error('Code execution not allowed');
+      }
+      // Mock test execution
+      return {
+        passed: 42,
+        failed: 0,
+        coverage: 87,
+        duration: 1200,
+      };
+    },
+  },
+];

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import 'dotenv/config';
-import { MemoryService } from './apps/cortex-os/packages/memory/src/MemoryService.js';
+import { MemoryService } from '../MemoryService.js';
 
 (async () => {
   const embedder = {

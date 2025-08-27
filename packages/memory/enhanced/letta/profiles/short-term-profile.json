@@ -1,0 +1,8 @@
+{
+  "name": "short_term",
+  "description": "Short-term memory for immediate context and recent interactions",
+  "retention_days": 7,
+  "compression_enabled": false,
+  "cache_priority": "high",
+  "storage_location": "ssd"
+}

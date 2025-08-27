@@ -1,0 +1,34 @@
+import { describe, expect, it } from 'vitest';
+import { Evidence, validateEvidence } from '../src/index';
+
+describe('Evidence Validator', () => {
+  it('should validate valid evidence', async () => {
+    const validEvidence: Evidence = {
+      type: 'security-scan',
+      data: { results: [], status: 'completed' },
+      metadata: {
+        timestamp: new Date(),
+        source: 'automated-test',
+      },
+    };
+
+    const result = await validateEvidence(validEvidence);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should reject invalid evidence', async () => {
+    // @ts-expect-error Testing invalid input
+    const invalidEvidence = {
+      // Missing type and data fields
+      metadata: {
+        timestamp: new Date(),
+      },
+    };
+
+    const result = await validateEvidence(invalidEvidence as Evidence);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.length).toBeGreaterThan(0);
+  });
+});

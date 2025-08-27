@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "enhanced": true,
+  "externalStorage": true,
+  "libraries": {
+    "mem0": {
+      "configured": false,
+      "path": null
+    },
+    "graphiti": {
+      "configured": false,
+      "path": null
+    },
+    "letta": {
+      "configured": false,
+      "path": null
+    }
+  },
+  "storage": {
+    "ssd": {
+      "device": "cortex-ssd-critical",
+      "path": "/Volumes/ExternalSSD",
+      "purpose": "critical-high-performance"
+    },
+    "hdd": {
+      "device": "cortex-hdd-features",
+      "path": "/Volumes/ExternalSSD",
+      "purpose": "features-long-term"
+    }
+  }
+}

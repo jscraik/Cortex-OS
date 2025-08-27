@@ -1,5 +1,5 @@
-import { Executor } from "@cortex-os/agents";
 import type { Agent } from "@cortex-os/agents";
+import { Executor } from "@cortex-os/agents";
 import type { Step } from "../domain/types.js";
 
 export type AgentBridge = {

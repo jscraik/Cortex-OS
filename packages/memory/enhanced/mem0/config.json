@@ -1,0 +1,20 @@
+{
+  "version": "3.0.0",
+  "enabled": true,
+  "storage": {
+    "ssd_path": "/Volumes/ExternalSSD/cortex-data/mem0",
+    "hdd_path": "/Volumes/ExternalHDD/cortex-cache/mem0",
+    "database_url": "/Volumes/ExternalSSD/cortex-data/mem0/mem0.db"
+  },
+  "features": {
+    "vector_search": true,
+    "semantic_memory": true,
+    "context_management": true,
+    "memory_graphs": true
+  },
+  "performance": {
+    "cache_size": 1000,
+    "batch_size": 32,
+    "index_type": "HNSW"
+  }
+}

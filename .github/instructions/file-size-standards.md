@@ -20,6 +20,7 @@ Ensure all code files remain maintainable, readable, and comply with the **500-l
 ### Recent Violation Analysis
 
 **2025-08-20**: Two system.ts files exceeded limits by **500%+**:
+
 - `resources/prompts/system.ts`: 1,020 lines (504% over limit)
 - `prompts/system.ts`: 1,002 lines (500% over limit)
 
@@ -31,20 +32,20 @@ Ensure all code files remain maintainable, readable, and comply with the **500-l
 
 ### Hard Limits (Per copilot-codeReview.instructions.md §5)
 
-| File Type | Hard Cap | Enforcement |
-|-----------|----------|-------------|
+| File Type          | Hard Cap  | Enforcement |
+| ------------------ | --------- | ----------- |
 | **All Code Files** | 500 lines | CI blocking |
-| Functions | 40 lines | ESLint rule |
-| Components | 40 lines | ESLint rule |
+| Functions          | 40 lines  | ESLint rule |
+| Components         | 40 lines  | ESLint rule |
 
 ### Recommended Targets
 
-| File Type | Target | Rationale |
-|-----------|--------|-----------|
+| File Type                 | Target    | Rationale              |
+| ------------------------- | --------- | ---------------------- |
 | **TypeScript/JavaScript** | 300 lines | Optimal cognitive load |
-| **Python** | 300 lines | PEP 8 alignment |
-| **React Components** | 200 lines | Single responsibility |
-| **Configuration** | 100 lines | Simple maintenance |
+| **Python**                | 300 lines | PEP 8 alignment        |
+| **React Components**      | 200 lines | Single responsibility  |
+| **Configuration**         | 100 lines | Simple maintenance     |
 
 ---
 
@@ -128,12 +129,14 @@ jobs:
 ### When to Split Files
 
 **Immediate Split Required (>500 lines):**
+
 - System/configuration files
 - Large component files
 - Utility collections
 - API route handlers
 
 **Recommended Split (>300 lines):**
+
 - Complex components
 - Service classes
 - Helper modules
@@ -142,6 +145,7 @@ jobs:
 ### How to Split Files
 
 #### 1. **Single Responsibility Extraction**
+
 ```
 Original: user-management.ts (600 lines)
 Split into:
@@ -152,6 +156,7 @@ Split into:
 ```
 
 #### 2. **Feature-Based Modules**
+
 ```
 Original: dashboard.tsx (800 lines)
 Split into:
@@ -163,6 +168,7 @@ Split into:
 ```
 
 #### 3. **Layer-Based Separation**
+
 ```
 Original: api-handlers.ts (700 lines)
 Split into:
@@ -189,12 +195,14 @@ Split into:
 ### Exception Process
 
 **Rare cases** where 500+ lines are justified:
+
 1. **Document reasoning** in file header
 2. **Get explicit approval** from maintainer
 3. **Add `// Reason: [justification]` comment**
 4. **Plan for future refactoring**
 
 Example:
+
 ```typescript
 /**
  * EXCEPTION: This file exceeds 500 lines due to legacy API compatibility
@@ -227,6 +235,7 @@ find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "
 ### Dashboard Integration
 
 Add file size metrics to project dashboards:
+
 - Track largest files over time
 - Monitor trends and violations
 - Alert on threshold breaches
@@ -236,11 +245,13 @@ Add file size metrics to project dashboards:
 ## Success Metrics
 
 ### Target Outcomes
+
 - **Zero files >500 lines** (hard requirement)
 - **<5% files >300 lines** (recommended target)
 - **Average file size <200 lines** (optimal)
 
 ### Enforcement Success
+
 - Pre-commit hook blocks 100% of violations
 - CI catches any bypassed violations
 - Regular audits maintain compliance
@@ -250,6 +261,7 @@ Add file size metrics to project dashboards:
 ## Implementation Checklist
 
 ### Immediate (Critical)
+
 - [ ] Install pre-commit hooks across all dev environments
 - [ ] Enable ESLint max-lines rules
 - [ ] Add CI file size checks
@@ -257,12 +269,14 @@ Add file size metrics to project dashboards:
 - [ ] Document approved exceptions
 
 ### Short-term (1-2 weeks)
+
 - [ ] Split any remaining oversized files
 - [ ] Train team on modularization patterns
 - [ ] Establish file size monitoring
 - [ ] Create refactoring guidelines
 
-### Long-term (1-3 months)  
+### Long-term (1-3 months)
+
 - [ ] Integrate with code quality metrics
 - [ ] Automate refactoring suggestions
 - [ ] Track and reduce average file sizes

@@ -5,6 +5,10 @@
 # against command injection and resource exhaustion attacks.
 
 
+# SECURITY UPDATE: This module now uses SecureCommandExecutor for additional protection
+# against command injection and resource exhaustion attacks.
+
+
 This module runs code in a separate Python process, using timeouts and
 resource limits to reduce blast radius. It communicates over stdin/stdout
 using a simple JSON protocol.
@@ -23,9 +27,27 @@ from typing import Tuple
 DEFAULT_TIMEOUT = 3  # seconds
 MAX_TIMEOUT = 10  # Maximum allowed timeout
 MAX_CODE_LENGTH = 10000  # Maximum code length in characters
+MAX_TIMEOUT = 10  # Maximum allowed timeout
+MAX_CODE_LENGTH = 10000  # Maximum code length in characters
 
 
 def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
+    """Run `code` in a subprocess, return (exit_code, stdout, stderr).
+    
+    NOTE: Input validation and resource limits have been added for security.
+    """
+    # Validate inputs
+    if not isinstance(code, str):
+        raise TypeError("Code must be a string")
+    
+    if len(code) > MAX_CODE_LENGTH:
+        raise ValueError(f"Code exceeds maximum length of {MAX_CODE_LENGTH} characters")
+    
+    if not isinstance(timeout, int) or timeout <= 0:
+        raise ValueError("Timeout must be a positive integer")
+    
+    if timeout > MAX_TIMEOUT:
+        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")
     """Run `code` in a subprocess, return (exit_code, stdout, stderr).
     
     NOTE: Input validation and resource limits have been added for security.

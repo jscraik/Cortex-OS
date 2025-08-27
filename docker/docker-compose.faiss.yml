@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  faissd:
+    build:
+      context: .
+      dockerfile: packages/faissd/Dockerfile
+    environment:
+      - FAISSD_PORT=50051
+      - FAISSD_SNAPSHOTS_DIR=/data/snapshots
+    ports:
+      - '50051:50051'
+    volumes:
+      - faissd-data:/data/snapshots
+    restart: unless-stopped
+
+volumes:
+  faissd-data:
+    driver: local

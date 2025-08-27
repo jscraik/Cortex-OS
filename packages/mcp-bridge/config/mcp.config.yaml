@@ -1,0 +1,10 @@
+mcpServers:
+  gitmcp:
+    transport: sse
+    url: 'https://gitmcp.io'
+    headers: {}
+    cache:
+      ttlSeconds: 900
+    retry:
+      max: 5
+      backoffMs: 750

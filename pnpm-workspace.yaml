@@ -1,26 +1,22 @@
 packages:
   # Apps (ASBR structure)
-  - "apps/*"
-  
-  # Packages (shared libraries)
-  - "packages/*"
-  
-  # Services (backend services)
-  - "services/*"
-  
-  # Libraries (framework libraries)
-  - "libs/*"
-  - "libs/typescript/*"
-  - "libs/python/*"
-  
-  # External integrations
-  - "external/*"
+  - 'apps/*'
 
-excludes:
-  - "**/node_modules/**"
-  - "**/dist/**"
-  - "**/build/**"
-  - "**/.next/**"
-  - "**/coverage/**"
-  - "**/tmp/**"
-  - "**/temp/**"
+  # Packages (shared libraries)
+  - 'packages/*'
+
+  # Nested packages within major packages
+  - 'packages/a2a/a2a-*'
+  - 'packages/mcp/mcp-*'
+  - 'packages/simlab/simlab-*'
+
+  # Services (backend services)
+  - 'services/*'
+
+  # Libraries (framework libraries)
+  - 'libs/*'
+  - 'libs/typescript/*'
+  - 'libs/python/*'
+
+  # External integrations
+  - 'external/*'

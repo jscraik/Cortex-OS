@@ -1,0 +1,122 @@
+[
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/index.ts",
+    "lines": "10",
+    "severity": "medium",
+    "category": "import-mismatch",
+    "description": "Export points to non-existent 'graph-simple.js' instead of correct graph implementation",
+    "evidence": "Line 10: export { CortexKernel } from './graph-simple.js' - file exports kernel from wrong module",
+    "fix": "Verify actual graph implementation file name and update import path",
+    "tests_to_add": "Test that all exports resolve correctly"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/package.json",
+    "lines": "10-13",
+    "severity": "high", 
+    "category": "export-path-mismatch",
+    "description": "Package exports reference non-existent files in dist directory",
+    "evidence": "Lines 10-13: exports reference './dist/graph.js' and other files that don't match src structure",
+    "fix": "Update package.json exports to match actual build output structure",
+    "tests_to_add": "Integration test to verify all package exports work"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/graph-simple.ts",
+    "lines": "229-231",
+    "severity": "low",
+    "category": "non-deterministic-behavior",
+    "description": "simulateWork uses setTimeout which breaks determinism guarantees",
+    "evidence": "Line 229: setTimeout creates timing-dependent behavior that violates determinism",
+    "fix": "Replace setTimeout with deterministic delay mechanism or make it optional",
+    "tests_to_add": "Test determinism with and without timing simulation"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/graph-simple.ts",
+    "lines": "13-16",
+    "severity": "medium",
+    "category": "interface-compatibility",
+    "description": "PRPOrchestrator interface mismatch with actual prp-runner implementation",
+    "evidence": "Line 13-16: Interface doesn't match PRPOrchestrator from packages/prp-runner",
+    "fix": "Import interface from @cortex-os/prp-runner or align interface definitions",
+    "tests_to_add": "Integration test with actual PRPOrchestrator instance"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/nodes/strategy.ts",
+    "lines": "28-36",
+    "severity": "low",
+    "category": "id-collision",
+    "description": "Evidence ID generation uses timestamp which can cause collisions",
+    "evidence": "Line 29: Date.now() for IDs can create duplicates in rapid execution",
+    "fix": "Use nanoid for evidence IDs like in other parts of the system",
+    "tests_to_add": "Test rapid evidence generation doesn't create duplicate IDs"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/nodes/build.ts",
+    "lines": "125",
+    "severity": "medium",
+    "category": "logic-error",
+    "description": "API schema validation always returns true regardless of hasAPI value",
+    "evidence": "Line 125: returns 'hasAPI ? true : true' which is always true",
+    "fix": "Fix logic to properly validate API schema when API is present",
+    "tests_to_add": "Test API schema validation with missing schema"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/nodes/evaluation.ts",
+    "lines": "192-193",
+    "severity": "medium",
+    "category": "incorrect-validation",
+    "description": "Pre-cerebrum validation logic has incorrect condition checking",
+    "evidence": "Line 192-193: uses || instead of && for checking if all phases passed",
+    "fix": "Change to && to ensure all phases actually passed",
+    "tests_to_add": "Test pre-cerebrum validation with mixed phase results"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/mcp/adapter.ts",
+    "lines": "124-168",
+    "severity": "high",
+    "category": "type-safety-violation",
+    "description": "createNeuronFromTool returns untyped object that doesn't match Neuron interface",
+    "evidence": "Line 124-168: returned object structure doesn't match Neuron interface from prp-runner",
+    "fix": "Import Neuron interface and ensure returned object implements it correctly",
+    "tests_to_add": "Test MCP neuron creation with type checking"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/teaching/behavior-extension.ts",
+    "lines": "104",
+    "severity": "low",
+    "category": "error-handling",
+    "description": "Extension failures are logged but not properly tracked for debugging",
+    "evidence": "Line 104: console.error without proper error tracking or recovery",
+    "fix": "Add proper error tracking and consider extension failure policies",
+    "tests_to_add": "Test behavior when extensions fail"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/teaching/example-capture.ts",
+    "lines": "80",
+    "severity": "low",
+    "category": "weak-id-generation",
+    "description": "Example ID generation uses weak random string that could collide",
+    "evidence": "Line 80: Math.random().toString(36).substr(2, 9) is not cryptographically secure",
+    "fix": "Use nanoid for consistent ID generation like other parts of the system",
+    "tests_to_add": "Test example ID uniqueness under load"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/tests/determinism.test.ts",
+    "lines": "32-33",
+    "severity": "medium",
+    "category": "test-inadequacy",
+    "description": "Determinism test doesn't actually test determinism due to timing differences",
+    "evidence": "Line 32-33: Tests run workflows but timing in simulateWork makes results non-deterministic",
+    "fix": "Mock timing mechanisms or disable timing simulation for determinism tests",
+    "tests_to_add": "True determinism test with identical execution environments"
+  },
+  {
+    "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/state.ts",
+    "lines": "144-145",
+    "severity": "low",
+    "category": "non-deterministic-ids",
+    "description": "State ID generation uses Date.now() which breaks determinism",
+    "evidence": "Line 144-145: Date.now() creates time-dependent IDs that violate determinism guarantees", 
+    "fix": "Accept ID parameter or use deterministic ID generation",
+    "tests_to_add": "Test state creation with deterministic IDs"
+  }
+]

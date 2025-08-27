@@ -18,6 +18,8 @@ from typing import Dict, List
 from fastapi import FastAPI
 from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
+# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
+# SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
 from cortex_os.mvp_core.secure_executor import SecureCommandExecutor
 
 app = FastAPI(title="Cortex MCP Docker Toolkit", version="1.1.0")
@@ -70,23 +72,13 @@ def validate_docker_command(command):
             raise ValueError(f"Invalid parameter: {param}")
 
 def run_docker_command(command):
-    """Execute Docker command using SecureCommandExecutor."""
-    # Validate command before execution
+    # SECURITY FIX: Validate command before execution
     try:
         validate_docker_command(command)
     except ValueError as e:
         return {"stdout": "", "stderr": f"Command validation failed: {str(e)}"}
     
-    # Use SecureCommandExecutor for safe command execution
-    try:
-        # SECURITY UPDATE: Execute command using Python SecureCommandExecutor
-        result = SecureCommandExecutor.execute_command_sync(command, timeout=30)
-        return result
-    except Exception as e:
-        return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}"}"}
-    
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)
+    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)
         return {"stdout": result.stdout, "stderr": ""}
     except subprocess.CalledProcessError as e:
         return {"stdout": e.stdout, "stderr": e.stderr}

@@ -1,0 +1,56 @@
+{
+  "name": "@cortex-os/kernel",
+  "version": "1.0.0",
+  "description": "Deterministic kernel for Cortex-OS with LangGraph state management",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./graph": "./dist/graph-simple.js",
+    "./state": "./dist/state.js",
+    "./nodes": "./dist/nodes/index.js",
+    "./mcp": "./dist/mcp/adapter.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "test:ci": "vitest run --coverage --reporter=verbose",
+    "gates:determinism": "vitest run tests/determinism.test.ts --reporter=dot",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "nanoid": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "@vitest/coverage-v8": "^1.1.0",
+    "eslint": "^8.53.0",
+    "typescript": "^5.2.2",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "cortex-os",
+    "kernel",
+    "langgraph",
+    "deterministic",
+    "mcp",
+    "prp"
+  ],
+  "author": "Cortex-OS Team",
+  "license": "(Apache-2.0 OR Commercial)"
+}

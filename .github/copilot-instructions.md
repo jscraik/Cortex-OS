@@ -8,8 +8,11 @@ Read this first. Keep guidance short, specific, and aligned with how this repo a
 
 ## Big picture (how components interact)
 
-- Agents talk via A2A (packages/a2a). External tools via MCP (packages/mcp). Long-term state via Memories (packages/memories). Orchestration coordinates flows (packages/orchestration). Apps wire these together (apps/\*).
-- Domain separation: no direct cross-domain imports; communicate via defined contracts (Zod/JSON schemas). See AGENTS.md and libs/typescript/\*.
+- **ASBR Runtime** (`apps/cortex-os/`) coordinates feature packages and provides CLI/HTTP/UI interfaces
+- **Feature Packages** (`apps/cortex-os/packages/`) contain domain-specific logic (agents, asbr, mvp, etc.)
+- **Shared Services**: A2A bus (`packages/a2a`), MCP tools (`packages/mcp`), Memories (`packages/memories`), Orchestration (`packages/orchestration`)
+- **Communication**: No direct cross-feature imports; use A2A events, service interfaces via DI, or MCP tools
+- Domain separation: communicate via defined contracts (Zod/JSON schemas). See AGENTS.md and libs/typescript/\*.
 
 ## Daily workflow (repo root)
 
@@ -28,17 +31,20 @@ Read this first. Keep guidance short, specific, and aligned with how this repo a
 
 ## Key integration patterns
 
-- A2A messaging: packages/a2a provides broker, discovery, retries, circuit breaker, and load-balancing. Use broker.sendMessage(...) for cross-agent ops; do not import other agents directly.
-- MCP: packages/mcp centralizes Model Context Protocol clients and the Universal MCP Manager. Use pnpm mcp:\* scripts to run/smoke.
-- Memories: packages/memories exposes a MemoryService via ports/adapters; bind from apps and expose HTTP routes as needed.
-- Orchestration: packages/orchestration coordinates multi-agent workflows; TS <-> Python bridge is used when enabled by the package.
+- **A2A messaging**: packages/a2a provides event bus for async feature communication. Use broker.publish/subscribe; avoid direct feature imports.
+- **MCP integration**: packages/mcp manages external tools and capabilities. Use MCP manager for external systems integration.
+- **Memory service**: packages/memories provides persistent state. Access via service interfaces, not direct imports.
+- **Orchestration**: packages/orchestration coordinates multi-agent workflows using A2A events and service contracts.
+- **Feature mounting**: ASBR runtime (`apps/cortex-os/`) mounts feature packages (`apps/cortex-os/packages/`) via dependency injection.
 
 ## Where to look
 
-- Contracts and shared types: libs/typescript/{contracts,types,utils}
-- Agent rules and governance: .cortex/\*\* and AGENTS.md
-- Tests: tests/\*\* and package-local tests; vitest workspace at vitest.workspace.ts
-- Pipelines: turbo.json; workspace layout in pnpm-workspace.yaml
+- **ASBR Runtime**: apps/cortex-os/ (main application, coordination, DI container)
+- **Feature packages**: apps/cortex-os/packages/ (agents, asbr, mvp components)
+- **Shared services**: packages/ (a2a, mcp, memories, orchestration, rag, simlab)
+- **Contracts and types**: libs/typescript/{contracts,types,utils}
+- **Tests**: tests/ and package-local tests; vitest workspace at vitest.workspace.ts
+- **Configuration**: turbo.json, pnpm-workspace.yaml, tsconfig.json
 
 ## Running the right tests
 
@@ -52,8 +58,11 @@ Read this first. Keep guidance short, specific, and aligned with how this repo a
 - Before PR: pnpm format && pnpm lint && pnpm test; update README/docs for behavior changes. Attach a brief test plan/logs for UX/CLI.
 - Do not modify CI workflows, secrets, or repo-wide deps. Keep changes scoped. Respect import boundaries and agent contracts.
 
-## Quick example (cross-agent call)
+## Quick example (cross-feature communication)
 
-- Use A2A broker with discovery instead of importing another agent's code. Place message contracts in libs/typescript/contracts and validate with Zod.
+- Use A2A broker for async events: `packages/a2a` provides publish/subscribe
+- Use service interfaces for sync calls: contracts in `libs/typescript/contracts`, implementations wired by ASBR
+- Use MCP tools for external systems: `packages/mcp` manages external integrations
+- **Never directly import between feature packages** (`apps/cortex-os/packages/`)
 
-If any section is unclear (e.g., exact service wiring in apps/cortex-os), say so and we will refine this document.
+If any section is unclear about ASBR architecture or feature mounting, say so and we will refine this document.

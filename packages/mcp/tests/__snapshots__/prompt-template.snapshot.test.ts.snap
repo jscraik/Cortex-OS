@@ -1,3 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
 exports[`web-mcp-interface examples remain stable 1`] = `
 <strong>Examples:</strong><br>
             • cortex mcp add --transport http Ref "https://api.ref.tools/mcp?apiKey=ref-e672788111c76ba32bc1"<br>
