@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "cortex": "./dist/index.js" },
+  "bin": {
+    "cortex": "./dist/index.js"
+  },
   "main": "./dist/index.js",
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm",
@@ -16,12 +18,11 @@
     "@cortex-os/mcp-registry": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
-    "@cortex-os/simlab-contracts": "workspace:*",
-    "@cortex-os/simlab-core": "workspace:*",
-    "@cortex-os/simlab-env": "workspace:*",
-    "@cortex-os/simlab-agents": "workspace:*",
-    "@cortex-os/simlab-report": "workspace:*",
-    "@cortex-os/simlab-metrics": "workspace:*"
+    "@cortex-os/simlab-mono": "workspace:*"
   },
-  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4", "tsx": "^4.19.0" }
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.4",
+    "tsx": "^4.19.0"
+  }
 }

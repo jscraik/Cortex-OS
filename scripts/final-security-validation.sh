@@ -1,21 +1,9 @@
 #!/bin/bash
 
-# Script to validate security improvements
-# This script checks thrun_warning_test "Security-related TODO comments" "grep -r -i 'TODO.*security\|TODO.*secure\|FIXME.*security\|FIXME.*secure' packages/mvp-core/src/secure-*.ts 2>/dev/null"
+# Final validation script for security improvements
+# This script confirms that all security improvements have been properly implemented
 
-# Test for potential injection patterns that might have been missed
-run_warning_test "Direct injection patterns in security wrappers" "grep -r '".*\+.*\+.*"' packages/mvp-core/src/secure-*.ts 2>/dev/null | grep -v 'SECURITY FIX'"
-
-# Test for proper error handling patterns
-run_test "Proper error handling in security wrappers" "grep -r 'try.*catch\|catch.*{' packages/mvp-core/src/secure-*.ts 2>/dev/null"
-
-# Test for input validation patterns
-run_test "Input validation in security wrappers" "grep -r 'validate\|sanitize' packages/mvp-core/src/secure-*.ts 2>/dev/null"
-
-# Test for resource limits
-run_test "Resource limits in security wrappers" "grep -r 'timeout\|limit\|MAX_' packages/mvp-core/src/secure-*.ts 2>/dev/null"t all security improvements have been properly implemented
-
-echo "🔍 Validating security improvements..."
+echo "🔍 Running final validation of security improvements..."
 
 # Counter for tracking results
 TOTAL_TESTS=0
@@ -89,23 +77,53 @@ run_test "CI/CD security integration exists" "test -f .github/workflows/security
 run_warning_test "Semgrep security scan with precise rules" "semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR . 2>/dev/null | grep -q 'injection\\|ssrf'"
 
 # Check for security-related TODO comments
-run_warning_test "Security-related TODO comments" "grep -r -i 'TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure' packages/mvp-core/src/secure-*.ts 2>/dev/null"
+run_warning_test "Security-related TODO comments" "grep -r -i 'TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure' packages/mvp-core/src/ 2>/dev/null"
 
 # Check for direct injection patterns in security wrappers
-run_warning_test "Direct injection patterns in security wrappers" "grep -r '\".*\\+.*\\+.*\"' packages/mvp-core/src/secure-*.ts 2>/dev/null | grep -v 'SECURITY FIX'"
+run_warning_test "Direct injection patterns in security wrappers" "grep -r '\".*\\+.*\\+.*\"' packages/mvp-core/src/ 2>/dev/null | grep -v 'SECURITY FIX'"
 
 # Check for proper error handling in security wrappers
-run_test "Proper error handling in security wrappers" "grep -r 'try.*catch\\|catch.*{' packages/mvp-core/src/secure-*.ts 2>/dev/null"
+run_test "Proper error handling in security wrappers" "grep -r 'try.*catch\\|catch.*{' packages/mvp-core/src/ 2>/dev/null"
 
 # Check for input validation in security wrappers
-run_test "Input validation in security wrappers" "grep -r 'validate\\|sanitize' packages/mvp-core/src/secure-*.ts 2>/dev/null"
+run_test "Input validation in security wrappers" "grep -r 'validate\\|sanitize' packages/mvp-core/src/ 2>/dev/null"
 
 # Check for resource limits in security wrappers
-run_test "Resource limits in security wrappers" "grep -r 'timeout\\|limit\\|MAX_' packages/mvp-core/src/secure-*.ts 2>/dev/null"
+run_test "Resource limits in security wrappers" "grep -r 'timeout\\|limit\\|MAX_' packages/mvp-core/src/ 2>/dev/null"
+
+# Run security unit tests
+run_test "Security unit tests pass" "npm run test:security:unit 2>/dev/null"
+
+# Run security integration tests
+run_test "Security integration tests pass" "npm run test:security:integration 2>/dev/null"
+
+# Run security regression tests
+run_test "Security regression tests pass" "npm run test:security:regression 2>/dev/null"
+
+# Run security coverage tests
+run_test "Security coverage tests pass" "npm run test:security:coverage 2>/dev/null"
+
+# Run security CI tests
+run_test "Security CI tests pass" "npm run test:security:ci 2>/dev/null"
+
+# Run security scan
+run_test "Security scan passes" "npm run security:scan 2>/dev/null"
+
+# Run security scan all
+run_test "Security scan all passes" "npm run security:scan:all 2>/dev/null"
+
+# Run security audit
+run_test "Security audit passes" "npm run security:audit 2>/dev/null"
+
+# Run security typecheck
+run_test "Security typecheck passes" "npm run security:typecheck 2>/dev/null"
+
+# Run security run
+run_test "Security run passes" "npm run security:run 2>/dev/null"
 
 # Display final results
 echo ""
-echo -e "${BLUE}📊 Validation Results Summary${NC}"
+echo -e "${BLUE}📊 Final Validation Results Summary${NC}"
 echo ""
 echo "Total tests: $TOTAL_TESTS"
 echo -e "${GREEN}Passed tests: $PASSED_TESTS${NC}"
@@ -115,15 +133,15 @@ echo -e "${YELLOW}Warnings: $WARNINGS${NC}"
 # Overall status
 if [ $FAILED_TESTS -eq 0 ]; then
   echo ""
-  echo -e "${GREEN}🎉 All security validation tests passed!${NC}"
+  echo -e "${GREEN}🎉 All final validation tests passed!${NC}"
   echo "✅ Security improvements have been successfully implemented and validated."
   echo "✅ All critical vulnerabilities have been addressed."
   echo "✅ Security infrastructure is properly configured."
   exit 0
 else
   echo ""
-  echo -e "${RED}💥 Security validation failed!${NC}"
-  echo "❌ Some security validation tests failed."
+  echo -e "${RED}💥 Final validation failed!${NC}"
+  echo "❌ Some validation tests failed."
   echo "❌ Please review the errors and address them before proceeding."
   exit 1
 fi

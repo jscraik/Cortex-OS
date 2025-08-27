@@ -1,8 +1,0 @@
-{
-  "name": "long_term",
-  "description": "Long-term memory for important information and patterns",
-  "retention_days": 365,
-  "compression_enabled": true,
-  "cache_priority": "medium",
-  "storage_location": "hybrid"
-}

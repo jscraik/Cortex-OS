@@ -56,6 +56,9 @@ export { UniversalCliHandler, universalCliHandler } from './universal-cli-handle
 export { universalMcpManager } from './universal-mcp-manager.js';
 export * from './web-mcp-interface.js';
 
+// Event Bus Integration
+export { MCPEventBusAdapter, createMCPEventBusAdapter } from './mcp-event-bus-adapter.js';
+
 // MLX Integration
 export { MLXMcpIntegration, mlxMcpIntegration } from './mlx-mcp-integration.js';
 export { MLXMcpServer } from './mlx-mcp-server.js';

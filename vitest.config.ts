@@ -54,17 +54,20 @@ export default defineConfig({
         // Shared packages with vitest configs (top-level)
         'packages/repo-guardrails/vitest.config.ts',
         'packages/evidence-validator/vitest.config.ts',
-        'apps/cortex-os/packages/sdk/vitest.config.ts',
-        'apps/cortex-os/packages/telemetry/vitest.config.ts',
         'packages/testing/vitest.config.ts',
         'packages/mvp-core/vitest.config.ts',
 
-        // ASBR Feature Packages (mounted by cortex-os app)
-        'apps/cortex-os/packages/asbr/vitest.config.ts',
-        'apps/cortex-os/packages/agents/vitest.config.ts',
-        'apps/cortex-os/packages/mvp/vitest.config.ts',
-        'apps/cortex-os/packages/mvp-core/vitest.config.ts',
-        'apps/cortex-os/packages/mvp-server/vitest.config.ts',
+        // ASBR Feature Packages (now in packages/)
+        'packages/asbr/vitest.config.ts',
+        'packages/agents/vitest.config.ts',
+        'packages/mvp/vitest.config.ts',
+        'packages/mvp-server/vitest.config.ts',
+        'packages/kernel/vitest.config.ts',
+        'packages/memory/vitest.config.ts',
+        'packages/mcp-server/vitest.config.ts',
+        'packages/mcp-bridge/vitest.config.ts',
+        'packages/prp-runner/vitest.config.ts',
+        'packages/simlab-mono/vitest.config.ts',
 
         // Shared Library Packages
         'packages/a2a/vitest.config.ts',

@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "neo4j-driver": "^5.0.0"
+  },
+  "scripts": {
+    "graphiti:install": "pip install -r requirements-graphiti.txt",
+    "graphiti:test": "python -m pytest cortex-memories/graphiti/tests/",
+    "graphiti:bridge:test": "vitest cortex-memories/graphiti/bridge/",
+    "graphiti:graph:init": "python cortex-memories/graphiti/scripts/init-graphs.py"
+  }
+}

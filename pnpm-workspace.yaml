@@ -8,7 +8,6 @@ packages:
   # Nested packages within major packages
   - 'packages/a2a/a2a-*'
   - 'packages/mcp/mcp-*'
-  - 'packages/simlab/simlab-*'
 
   # Services (backend services)
   - 'services/*'
