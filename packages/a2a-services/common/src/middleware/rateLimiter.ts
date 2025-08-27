@@ -1,34 +1,43 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 
 interface RequestRecord {
   count: number;
   startTime: number;
 }
 
-const requestMap = new Map<string, RequestRecord>();
-const LIMIT = 5; // Max 5 requests
-const WINDOW_SIZE = 60 * 1000; // 1 minute
+export interface RateLimiterOptions {
+  limit?: number;
+  windowMs?: number;
+}
 
-export function rateLimiter(req: Request, res: Response, next: NextFunction) {
-  const ip = req.ip; // In a real application, use a more robust identifier
-  const currentTime = Date.now();
+export function createRateLimiter({ limit = 5, windowMs = 60_000 }: RateLimiterOptions = {}) {
+  const requestMap = new Map<string, RequestRecord>();
 
-  let record = requestMap.get(ip);
+  return function rateLimiter(req: Request, res: Response, next: NextFunction) {
+    const ip = req.ip;
+    const currentTime = Date.now();
 
-  if (!record || currentTime - record.startTime > WINDOW_SIZE) {
-    // New window or window reset
-    record = { count: 1, startTime: currentTime };
-    requestMap.set(ip, record);
-    next();
-  } else {
-    // Within the current window
-    record.count++;
-    requestMap.set(ip, record);
+    // cleanup stale entries
+    for (const [key, record] of requestMap) {
+      if (currentTime - record.startTime >= windowMs) {
+        requestMap.delete(key);
+      }
+    }
 
-    if (record.count > LIMIT) {
+    const record = requestMap.get(ip);
+
+    if (!record || currentTime - record.startTime >= windowMs) {
+      requestMap.set(ip, { count: 1, startTime: currentTime });
+      return next();
+    }
+
+    record.count += 1;
+    if (record.count > limit) {
       res.status(429).send('Too Many Requests');
     } else {
       next();
     }
-  }
+  };
 }
+
+export const rateLimiter = createRateLimiter();
