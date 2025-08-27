@@ -1,38 +1,54 @@
+import { generateKeyPairSync, sign } from 'crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PluginValidator } from '../plugin-validator.js';
 import type { PluginMetadata } from '../types.js';
 
+const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+const trustedKeys = {
+  'Test Author': publicKey.export({ type: 'spki', format: 'pem' }).toString(),
+};
+
 // Helper function to create a valid plugin metadata object
-const createValidPlugin = (overrides: Partial<PluginMetadata> = {}): PluginMetadata => ({
-  name: 'test-plugin',
-  version: '1.0.0',
-  description: 'A test plugin',
-  author: 'Test Author',
-  homepage: 'https://example.com',
-  repository: 'https://github.com/test/plugin',
-  license: 'MIT',
-  keywords: ['test'],
-  category: 'utilities',
-  dependencies: [],
-  cortexOsVersion: '>=1.0.0',
-  mcpVersion: '1.0.0',
-  capabilities: ['read'],
-  permissions: [],
-  entrypoint: 'index.js',
-  signature: 'test-signature',
-  downloadUrl: 'https://plugins.brainwav.ai/test-plugin',
-  installSize: 1024,
-  created: '2025-01-01T00:00:00Z',
-  updated: '2025-01-01T00:00:00Z',
-  verified: true,
-  ...overrides,
-});
+const createValidPlugin = (overrides: Partial<PluginMetadata> = {}): PluginMetadata => {
+  const plugin: PluginMetadata = {
+    name: 'test-plugin',
+    version: '1.0.0',
+    description: 'A test plugin',
+    author: 'Test Author',
+    homepage: 'https://example.com',
+    repository: 'https://github.com/test/plugin',
+    license: 'MIT',
+    keywords: ['test'],
+    category: 'utilities',
+    dependencies: [],
+    cortexOsVersion: '>=1.0.0',
+    mcpVersion: '1.0.0',
+    capabilities: ['read'],
+    permissions: [],
+    entrypoint: 'index.js',
+    downloadUrl: 'https://plugins.brainwav.ai/test-plugin',
+    installSize: 1024,
+    created: '2025-01-01T00:00:00Z',
+    updated: '2025-01-01T00:00:00Z',
+    verified: true,
+    ...overrides,
+  };
+  const data = JSON.stringify({
+    name: plugin.name,
+    version: plugin.version,
+    entrypoint: plugin.entrypoint,
+  });
+  plugin.signature = Object.prototype.hasOwnProperty.call(overrides, 'signature')
+    ? (overrides as any).signature
+    : sign(null, Buffer.from(data), privateKey).toString('base64');
+  return plugin;
+};
 
 describe('PluginValidator', () => {
   let validator: PluginValidator;
 
   beforeEach(() => {
-    validator = new PluginValidator();
+    validator = new PluginValidator(trustedKeys);
   });
 
   describe('validatePlugin', () => {
@@ -222,44 +238,19 @@ describe('PluginValidator', () => {
     });
   });
 
-  describe('mock signature verification behavior', () => {
-    it('should demonstrate current mock implementation behavior', async () => {
-      // Test verified plugin (should pass signature verification)
-      const verifiedPlugin = createValidPlugin({
-        name: 'verified-plugin',
-        description: 'A verified plugin',
-        verified: true, // This makes mock return true
-        signature: 'mock-signature',
-      });
-
-      const result = await validator.validatePlugin(verifiedPlugin);
+  describe('signature verification', () => {
+    it('should accept valid signatures', async () => {
+      const plugin = createValidPlugin();
+      const result = await validator.validatePlugin(plugin);
       expect(result.valid).toBe(true);
-      expect(result.details?.hasSignature).toBe(true);
-      expect(result.details?.isVerified).toBe(true);
-
-      // Test unverified plugin (should fail signature verification)
-      const unverifiedPlugin = createValidPlugin({
-        name: 'unverified-plugin',
-        verified: false,
-        signature: 'mock-signature',
-      });
-
-      const result2 = await validator.validatePlugin(unverifiedPlugin);
-      expect(result2.valid).toBe(false);
-      expect(result2.errors.some((error) => error.includes('signature'))).toBe(true);
     });
 
-    it('should handle plugins without signatures appropriately', async () => {
-      const noSignaturePlugin = createValidPlugin({
-        name: 'no-signature',
-        description: 'Plugin without signature',
-        verified: false,
-        signature: undefined,
-      });
-
-      const result = await validator.validatePlugin(noSignaturePlugin);
-      expect(result.details?.hasSignature).toBe(false);
-      expect(result.warnings.some((warning) => warning.includes('signed'))).toBe(true);
+    it('should reject tampered signatures', async () => {
+      const plugin = createValidPlugin();
+      plugin.signature = plugin.signature!.slice(0, -2) + 'ab';
+      const result = await validator.validatePlugin(plugin);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes('signature'))).toBe(true);
     });
   });
 });
