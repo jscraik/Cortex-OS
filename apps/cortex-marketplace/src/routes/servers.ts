@@ -14,13 +14,12 @@ const SearchQuerySchema = z.object({
   publisher: z.string().optional(),
   minRating: z.coerce.number().min(0).max(5).optional(),
   tags: z.string().transform(str => str.split(',')).optional(),
-  capabilities: z.string().transform(str => str.split(',') as Array<'tools' | 'resources' | 'prompts'>).optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
-  offset: z.coerce.number().min(0).default(0),
-  sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-  aiEnhanced: z.coerce.boolean().default(false)
-});
+    capabilities: z.string().transform(str => str.split(',') as Array<'tools' | 'resources' | 'prompts'>).optional(),
+    limit: z.coerce.number().min(1).max(100).default(20),
+    offset: z.coerce.number().min(0).default(0),
+    sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
+    sortOrder: z.enum(['asc', 'desc']).default('desc')
+  });
 
 const ServerIdSchema = z.string().regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/, 'Invalid server ID format');
 
@@ -29,8 +28,8 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/servers/search', {
     schema: {
       tags: ['servers'],
-      summary: 'Search MCP servers',
-      description: 'Search and filter MCP servers with optional AI enhancement',
+        summary: 'Search MCP servers',
+        description: 'Search and filter MCP servers',
       querystring: {
         type: 'object',
         properties: {
@@ -45,10 +44,9 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
           limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
           offset: { type: 'integer', minimum: 0, default: 0 },
           sortBy: { type: 'string', enum: ['relevance', 'downloads', 'rating', 'updated'], default: 'relevance' },
-          sortOrder: { type: 'string', enum: ['asc', 'desc'], default: 'desc' },
-          aiEnhanced: { type: 'boolean', default: false, description: 'Use AI for enhanced search results' }
-        }
-      },
+            sortOrder: { type: 'string', enum: ['asc', 'desc'], default: 'desc' }
+          }
+        },
       response: {
         200: {
           type: 'object',
@@ -244,24 +242,26 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
     let command = '';
     let config = {};
     
-    switch (client) {
-      case 'claude':
-        command = installData.claude || '';
-        instructions = `Run this command in Claude Desktop: ${command}`;
-        config = installData.json || {};
-        break;
-      case 'cline':
-        command = installData.cline || installData.claude || '';
-        instructions = installData.cline || `Install via Cline MCP settings: ${command}`;
-        break;
-      case 'cursor':
-        command = installData.cursor || '';
-        instructions = installData.cursor || `Add to Cursor MCP configuration`;
-        break;
-      case 'continue':
-        command = installData.continue || '';
-        instructions = installData.continue || `Configure in Continue settings`;
-        break;
+      switch (client) {
+        case 'claude':
+          command = installData.claude || '';
+          instructions = `Run this command in Claude Desktop: ${command}`;
+          config = installData.json || {};
+          break;
+        case 'cline':
+          command = installData.cline || '';
+          instructions = installData.cline
+            ? `Run this command in Cline: ${command}`
+            : 'Install via Cline MCP settings';
+          break;
+        case 'cursor':
+          command = installData.cursor || '';
+          instructions = installData.cursor || 'Add to Cursor MCP configuration';
+          break;
+        case 'continue':
+          command = installData.continue || '';
+          instructions = installData.continue || 'Configure in Continue settings';
+          break;
       default:
         // Return all available installation options
         return {

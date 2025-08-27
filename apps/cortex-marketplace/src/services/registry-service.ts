@@ -3,8 +3,8 @@
  * @description Handles registry management and caching
  */
 
-import { readFile, writeFile, mkdir, stat } from 'fs/promises';
-import { existsSync } from 'fs';
+import { readFile, writeFile } from 'fs/promises';
+import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 import fetch from 'node-fetch';
 import type { RegistryData } from '@cortex-os/mcp-registry';
@@ -13,6 +13,7 @@ export interface RegistryConfig {
   registries: Record<string, string>;
   cacheDir: string;
   cacheTtl: number;
+  fetchTimeout?: number;
 }
 
 export interface RegistryInfo {
@@ -151,30 +152,37 @@ export class RegistryService {
    * Fetch registry data from URL
    */
   private async fetchRegistry(url: string): Promise<RegistryData> {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Cortex-OS-Marketplace/1.0',
-        'Accept': 'application/json'
-      },
-      timeout: 10000
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.config.fetchTimeout ?? 10000);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Cortex-OS-Marketplace/1.0',
+          'Accept': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Basic validation
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid registry data: not an object');
+      }
+
+      if (!Array.isArray(data.servers)) {
+        throw new Error('Invalid registry data: servers must be an array');
+      }
+
+      return data as RegistryData;
+    } finally {
+      clearTimeout(timeout);
     }
-    
-    const data = await response.json();
-    
-    // Basic validation
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid registry data: not an object');
-    }
-    
-    if (!Array.isArray(data.servers)) {
-      throw new Error('Invalid registry data: servers must be an array');
-    }
-    
-    return data as RegistryData;
   }
 
   /**
@@ -240,10 +248,10 @@ export class RegistryService {
   /**
    * Ensure cache directory exists
    */
-  private async ensureCacheDir(): Promise<void> {
+  private ensureCacheDir(): void {
     try {
       if (!existsSync(this.config.cacheDir)) {
-        await mkdir(this.config.cacheDir, { recursive: true });
+        mkdirSync(this.config.cacheDir, { recursive: true });
       }
     } catch (error) {
       console.warn('Failed to create cache directory:', error);
