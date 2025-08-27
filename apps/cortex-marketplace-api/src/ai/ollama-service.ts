@@ -2,9 +2,7 @@
  * @file Ollama Integration for Marketplace
  * @description Ollama service integration as fallback for MLX
  */
-
-import fetch from 'node-fetch';
-import type { ServerManifest } from '@cortex-os/mcp-registry';
+import type { ServerManifest } from '../types.js';
 
 export interface OllamaConfig {
   baseUrl: string;
