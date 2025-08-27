@@ -4,6 +4,7 @@
  */
 
 import { createHash } from 'crypto';
+import { readFile } from 'fs/promises';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
 import { Server } from 'http';
@@ -21,9 +22,6 @@ import {
 } from '../types/index.js';
 import { initializeXDG } from '../xdg/index.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
-
-// Lightweight local type used when assigning test-mode auth on the request object
-type AuthLike = { tokenId: string; scopes: string[] };
 
 export interface ASBRServerOptions {
   port?: number;
@@ -115,15 +113,6 @@ export class ASBRServer {
 
     // Authentication middleware (applies to /v1 routes)
     this.app.use('/v1', (req, res, next) => {
-      // Test-mode bypass: Accept a fixed token for tests to reduce coupling on disk tokens
-      const auth = String(req.headers['authorization'] || '');
-      if (process.env.NODE_ENV === 'test' && auth === 'Bearer test-token') {
-        (req as unknown as { auth?: AuthLike }).auth = {
-          tokenId: 'test',
-          scopes: ['*'],
-        };
-        return next();
-      }
       return (createAuthMiddleware() as RequestHandler)(req, res, next);
     });
   }
@@ -193,63 +182,7 @@ export class ASBRServer {
     try {
       const { input, idempotencyKey } = req.body;
 
-      // Validate input
-      // Normalize legacy input shapes used in tests and provide defaults
-      const normalizedInput = (() => {
-        const legacyInputs = Array.isArray(input?.inputs)
-          ? input.inputs.map((item: unknown) => {
-              if (!item || typeof item !== 'object') return item;
-
-              const itemObj = item as Record<string, unknown>;
-
-              // Support legacy test shape { type, content }
-              if (itemObj.type === 'text' && typeof itemObj.content === 'string') {
-                return { kind: 'text', value: itemObj.content };
-              }
-              if (itemObj.type === 'repo' && typeof itemObj.path === 'string') {
-                return { kind: 'repo', path: itemObj.path };
-              }
-              if (itemObj.type === 'doc' && typeof itemObj.path === 'string') {
-                return { kind: 'doc', path: itemObj.path };
-              }
-
-              // Support legacy E2E shape using { kind, value|path }
-              if (itemObj.kind === 'text' && typeof itemObj.value === 'string') {
-                return { kind: 'text', value: itemObj.value };
-              }
-              if (itemObj.kind === 'file') {
-                const path = typeof itemObj.path === 'string' ? itemObj.path : itemObj.value;
-                if (typeof path === 'string') return { kind: 'doc', path };
-              }
-              if (itemObj.kind === 'repository') {
-                const path = typeof itemObj.path === 'string' ? itemObj.path : itemObj.value;
-                if (typeof path === 'string') return { kind: 'repo', path };
-              }
-
-              return item;
-            })
-          : input?.inputs;
-
-        // Only default scopes if undefined; allow empty array to trigger validation error as tests expect
-        const scopes = Array.isArray(input?.scopes) ? input!.scopes : ['tasks:create'];
-
-        return {
-          ...input,
-          inputs: legacyInputs,
-          schema: input?.schema ?? 'cortex.task.input@1',
-          scopes,
-        } as Partial<TaskInput>;
-      })();
-
-      // Enforce non-empty scopes (LLM08: Excessive Agency)
-      if (Array.isArray(normalizedInput?.scopes) && normalizedInput.scopes.length === 0) {
-        throw new ValidationError('Scopes must not be empty', {
-          field: 'scopes',
-          rule: 'non_empty',
-        });
-      }
-
-      const validationResult = TaskInputSchema.safeParse(normalizedInput as unknown);
+      const validationResult = TaskInputSchema.safeParse(input);
       if (!validationResult.success) {
         const issues = (validationResult.error as unknown as { issues?: unknown }).issues;
         throw new ValidationError('Invalid task input', {
@@ -258,6 +191,13 @@ export class ASBRServer {
       }
 
       const taskInput: TaskInput = validationResult.data;
+
+      if (taskInput.scopes.length === 0) {
+        throw new ValidationError('Scopes must not be empty', {
+          field: 'scopes',
+          rule: 'non_empty',
+        });
+      }
 
       // Handle idempotency
       let actualIdempotencyKey = idempotencyKey;
@@ -571,8 +511,13 @@ export class ASBRServer {
       throw new NotFoundError('Artifact');
     }
 
-    // Mock artifact content for now
-    const content = Buffer.from(`Mock artifact content for ${id}`);
+    let content: Buffer;
+    try {
+      content = await readFile(artifact.path);
+    } catch {
+      throw new NotFoundError('Artifact');
+    }
+
     const digest = `sha-256:${createHash('sha256').update(content).digest('base64')}`;
     const etag = `"${artifact.digest}"`;
 
@@ -583,22 +528,7 @@ export class ASBRServer {
   }
 
   private async getServiceMap(_req: Request, res: Response): Promise<void> {
-    // Mock service map - in real implementation, this would query actual connectors
-    res.json({
-      'vs-code': {
-        enabled: false,
-        scopes: ['editor:read', 'editor:write'],
-      },
-      terminal: {
-        enabled: false,
-        scopes: ['shell:read'],
-      },
-      github: {
-        enabled: false,
-        scopes: ['repo:read'],
-        ttl: 3600,
-      },
-    });
+    res.json({});
   }
 
   private generateIdempotencyKey(input: TaskInput): string {

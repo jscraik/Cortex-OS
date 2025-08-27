@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import supertest from 'supertest';
 import { ASBRServer } from '../../src/api/server.js';
 import { initializeAuth } from '../../src/api/auth.js';
+import { initializeXDG } from '../../src/xdg/index.js';
 
 describe('ASBR End-to-End Workflow Tests', () => {
   let server: ASBRServer;
@@ -9,6 +10,7 @@ describe('ASBR End-to-End Workflow Tests', () => {
   let authToken: string;
 
   beforeAll(async () => {
+    await initializeXDG();
     // Initialize auth
     const tokenInfo = await initializeAuth();
     authToken = tokenInfo.token;
@@ -34,7 +36,7 @@ describe('ASBR End-to-End Workflow Tests', () => {
             brief: 'Complete end-to-end test workflow',
             inputs: [
               { kind: 'text', value: 'Process this text input' },
-              { kind: 'file', value: '/test/data.json' },
+              { kind: 'doc', path: '/test/data.json' },
             ],
             scopes: ['filesystem:read', 'ai:analyze'],
             schema: 'cortex.task.input@1',
@@ -90,7 +92,7 @@ describe('ASBR End-to-End Workflow Tests', () => {
           input: {
             title: 'Multi-Agent Analysis Task',
             brief: 'Analyze code quality, security, and performance',
-            inputs: [{ kind: 'repository', value: 'https://github.com/example/repo' }],
+            inputs: [{ kind: 'repo', path: 'https://github.com/example/repo' }],
             scopes: ['code:analyze', 'security:scan', 'performance:benchmark'],
             agents: ['security-analyst', 'performance-expert', 'code-reviewer'],
             schema: 'cortex.task.input@1',

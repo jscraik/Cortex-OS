@@ -1,12 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import supertest from 'supertest';
 import { ASBRServer } from '../../src/api/server.js';
+import { initializeAuth } from '../../src/api/auth.js';
+import { initializeXDG } from '../../src/xdg/index.js';
 
 describe('OWASP LLM Top 10 Compliance Tests', () => {
   let server: ASBRServer;
   let request: supertest.SuperTest<supertest.Test>;
+  let authToken: string;
 
   beforeAll(async () => {
+    await initializeXDG();
+    const tokenInfo = await initializeAuth();
+    authToken = tokenInfo.token;
+
     server = new ASBRServer({ port: 7441 });
     await server.start();
     request = supertest(`http://127.0.0.1:7441`);
@@ -29,13 +36,14 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
       for (const prompt of maliciousPrompts) {
         const response = await request
           .post('/v1/tasks')
-          .set('Authorization', 'Bearer test-token')
+          .set('Authorization', `Bearer ${authToken}`)
           .send({
             input: {
               title: prompt,
               brief: prompt,
-              inputs: [{ type: 'text', content: prompt }],
+              inputs: [{ kind: 'text', value: prompt }],
               scopes: ['tasks:create'],
+              schema: 'cortex.task.input@1',
             },
           });
 
@@ -59,13 +67,14 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
     it('should validate JSON responses are properly escaped', async () => {
       const response = await request
         .post('/v1/tasks')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           input: {
             title: '<script>alert("xss")</script>',
             brief: 'Testing XSS prevention',
             inputs: [],
             scopes: ['tasks:create'],
+            schema: 'cortex.task.input@1',
           },
         })
         .expect(200);
@@ -81,18 +90,16 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
       // Test with potentially poisoned training data patterns
       const response = await request
         .post('/v1/tasks')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           input: {
             title: 'Legitimate task',
             brief: 'This should work normally',
             inputs: [
-              {
-                type: 'text',
-                content: 'Normal input that should be processed safely',
-              },
+              { kind: 'text', value: 'Normal input that should be processed safely' },
             ],
             scopes: ['tasks:create'],
+            schema: 'cortex.task.input@1',
           },
         })
         .expect(200);
@@ -107,13 +114,14 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
 
       const response = await request
         .post('/v1/tasks')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           input: {
             title: largeInput,
             brief: largeInput,
             inputs: [],
             scopes: ['tasks:create'],
+            schema: 'cortex.task.input@1',
           },
         });
 
@@ -144,7 +152,7 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
     it('should not expose sensitive information in responses', async () => {
       const response = await request
         .get('/v1/connectors/service-map')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       // Should not contain sensitive keys or tokens
@@ -155,7 +163,7 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
     it('should sanitize error messages', async () => {
       const response = await request
         .get('/v1/tasks/nonexistent-task-id')
-        .set('Authorization', 'Bearer test-token');
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Task not found');
@@ -169,7 +177,7 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
     it('should validate connector permissions', async () => {
       const response = await request
         .get('/v1/connectors/service-map')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       // Each connector should have defined scopes
@@ -184,13 +192,14 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
     it('should require explicit scopes for operations', async () => {
       const response = await request
         .post('/v1/tasks')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           input: {
             title: 'Test Task',
             brief: 'Testing scope validation',
             inputs: [],
             scopes: [], // Empty scopes should be rejected
+            schema: 'cortex.task.input@1',
           },
         });
 
@@ -203,13 +212,14 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
     it('should provide confidence indicators', async () => {
       const response = await request
         .post('/v1/tasks')
-        .set('Authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           input: {
             title: 'Analysis Task',
             brief: 'Testing confidence indicators',
             inputs: [],
             scopes: ['tasks:create'],
+            schema: 'cortex.task.input@1',
           },
         })
         .expect(200);
