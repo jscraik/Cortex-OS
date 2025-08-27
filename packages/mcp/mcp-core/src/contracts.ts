@@ -8,7 +8,7 @@ export const ToolSchema = z.object({
 
 export const ServerInfoSchema = z.object({
   name: z.string(),
-  transport: z.enum(['stdio', 'sse', 'https']),
+  transport: z.enum(['stdio', 'sse', 'streamableHttp']),
   endpoint: z.string().optional(),
   command: z.string().optional(),
   args: z.array(z.string()).optional(),

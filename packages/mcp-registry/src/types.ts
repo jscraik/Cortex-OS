@@ -29,7 +29,7 @@ export const TransportsSchema = z.object({
   stdio: StdioTransportSchema.optional(),
   sse: SseTransportSchema.optional(),
   streamableHttp: StreamableHttpTransportSchema.optional(),
-}).refine(transports => Object.keys(transports).length > 0, {
+}).refine(transports => Object.values(transports).some(Boolean), {
   message: 'At least one transport must be defined',
 });
 
