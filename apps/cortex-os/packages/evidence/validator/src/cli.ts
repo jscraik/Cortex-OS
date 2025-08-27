@@ -3,27 +3,25 @@
  * @description CLI implementation matching the specification
  */
 
-import { readFile } from "fs-extra";
-import * as path from "path";
-import { Finding, FindingSchema } from "./types";
-import { EvidenceValidator } from "./validator";
+import { readFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import * as path from 'path';
+import { Finding, FindingSchema } from './types';
+import { EvidenceValidator } from './validator';
 
 /**
  * Validate findings from JSON file as per specification
  */
 
-export async function validateFindings(
-  repositoryRoot: string,
-  inputFile: string,
-): Promise<void> {
+export async function validateFindings(repositoryRoot: string, inputFile: string): Promise<void> {
   try {
     // Load findings from JSON file
-    const findingsData = await readFile(inputFile, "utf-8");
-    const findings = JSON.parse(findingsData);
+    const findingsData = await readFile(inputFile, 'utf-8');
+    const findings: unknown = JSON.parse(findingsData);
 
     // Validate JSON structure
     if (!Array.isArray(findings)) {
-      throw new Error("Findings file must contain an array of findings");
+      throw new Error('Findings file must contain an array of findings');
     }
 
     // Parse and validate each finding
@@ -55,12 +53,11 @@ export async function validateFindings(
     for (const result of results) {
       if (!result.isValid) {
         errors.push(
-          `Finding validation failed for ${result.finding.path}: ${result.errors.join(", ")}`,
+          `Finding validation failed for ${result.finding.path}: ${result.errors.join(', ')}`,
         );
       }
 
       // Additional checks as per specification
-      const filePath = path.resolve(repositoryRoot, result.finding.path);
       const fileExists = result.metadata.fileExists;
 
       if (!fileExists) {
@@ -80,13 +77,11 @@ export async function validateFindings(
 
     // Report results
     if (errors.length > 0) {
-      console.error("Validation failed:");
+      console.error('Validation failed:');
       errors.forEach((error) => console.error(`  ${error}`));
       process.exit(1);
     } else {
-      console.log(
-        `Successfully validated ${validatedFindings.length} findings`,
-      );
+      console.log(`Successfully validated ${validatedFindings.length} findings`);
 
       // Generate collection summary
       const collection = await validator.validateCollection(validatedFindings);
@@ -109,7 +104,7 @@ export async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
   if (args.length !== 2) {
-    console.error("Usage: validate-evidence <repository-root> <findings-file>");
+    console.error('Usage: validate-evidence <repository-root> <findings-file>');
     process.exit(1);
   }
 
@@ -119,7 +114,7 @@ export async function main(): Promise<void> {
 }
 
 // Run CLI if this file is executed directly
-if (require.main === module) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   main().catch((error) => {
     console.error(error);
     process.exit(1);

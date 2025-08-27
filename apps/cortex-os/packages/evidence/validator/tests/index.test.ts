@@ -31,4 +31,33 @@ describe('Evidence Validator', () => {
     expect(result.errors).toBeDefined();
     expect(result.errors?.length).toBeGreaterThan(0);
   });
+
+  it('should reject evidence with missing metadata fields', async () => {
+    const incompleteMetadata = {
+      type: 'security-scan',
+      data: {},
+      metadata: {
+        source: 'automated-test',
+      },
+    } as unknown as Evidence;
+
+    const result = await validateEvidence(incompleteMetadata);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  it('should reject evidence with invalid metadata types', async () => {
+    const invalidMetadataTypes = {
+      type: 'security-scan',
+      data: {},
+      metadata: {
+        timestamp: 'not-a-date',
+        source: 'automated-test',
+      },
+    } as unknown as Evidence;
+
+    const result = await validateEvidence(invalidMetadataTypes);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
 });
