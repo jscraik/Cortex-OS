@@ -111,6 +111,7 @@
     "pw:test:ui": "playwright test --ui",
     "ci:governance": "pnpm format:check && pnpm lint && pnpm test:security && pnpm structure:validate && pnpm license:validate && pnpm ci:mcp-path",
     "cli:check": "npx tsx apps/cortex-cli/packages/cli-tools/src/consolidation/check-consolidation.ts",
+    "codemap": "tsx tools/scripts/generate-code-map.ts",
     "tui:preview": "npx tsx apps/cortex-cli/packages/cortex-cli-ui/src/bin.ts --ui=tui",
     "tui:preview:plain": "npx tsx apps/cortex-cli/packages/cortex-cli-ui/src/bin.ts --ui=tui --theme=plain",
     "tui:preview:rich": "npx tsx apps/cortex-cli/packages/cortex-cli-ui/src/bin.ts --ui=tui --theme=rich",
