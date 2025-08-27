@@ -6,8 +6,8 @@ A runtime schema registry service for serving Cortex-OS contract schemas via RES
 
 - **REST API Endpoints**: Serve contract schemas at runtime
 - **Schema Discovery**: List all available schemas and categories
-- **Schema Validation**: Basic event validation against schemas
-- **CORS Support**: Configurable CORS for web applications
+- **Schema Validation**: Event validation against JSON schemas
+- **CORS Support**: Default CORS for local development
 - **Security**: Helmet middleware for security headers
 
 ## API Endpoints
@@ -57,12 +57,11 @@ Returns all schemas in a specific category (e.g., `cloudevents`, `asyncapi`).
 ### Starting the Service
 
 ```typescript
-import SchemaRegistry from '@cortex-os/registry';
+import { SchemaRegistry } from '@cortex-os/registry';
 
 const registry = new SchemaRegistry({
   port: 3001,
   contractsPath: './contracts',
-  corsOrigin: ['http://localhost:3000'],
 });
 
 registry.start();
@@ -71,8 +70,7 @@ registry.start();
 ### Configuration Options
 
 - `port`: Server port (default: 3001)
-- `contractsPath`: Path to contracts directory (default: '../../../contracts')
-- `corsOrigin`: Allowed CORS origins (default: localhost ports)
+- `contractsPath`: Path to contracts directory (default: `process.cwd()/contracts`)
 
 ## Development
 

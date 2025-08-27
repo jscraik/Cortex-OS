@@ -12,7 +12,6 @@ describe('SchemaRegistry Unit Tests', () => {
     const registry = new SchemaRegistry({
       port: 4000,
       contractsPath: '/custom/path',
-      corsOrigin: ['http://localhost:3000'],
     });
     expect(registry).toBeDefined();
   });
