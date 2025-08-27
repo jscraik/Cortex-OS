@@ -4,42 +4,8 @@
  */
 
 import { EventEmitter } from 'events';
+import { selectOptimalModel, TaskCharacteristics } from '../../../config/model-integration-strategy.js';
 import { z } from 'zod';
-
-// Types for model integration - these would be imported from config in production
-export interface TaskCharacteristics {
-  complexity: 'low' | 'medium' | 'high';
-  latency: 'fast' | 'batch';
-  accuracy: 'high' | 'premium';
-  resource_constraint: 'low' | 'moderate' | 'high';
-  modality: 'text' | 'code' | 'multimodal';
-}
-
-// Mock integration points for development - would be real config in production
-const INTEGRATION_POINTS = {
-  agents: {
-    codeIntelligence: {
-      models: ['qwen3-coder-7b', 'qwen3-coder-14b', 'deepseek-coder-33b'],
-      routing: 'dynamic' as const,
-      fallback: 'qwen3-coder-7b',
-    },
-  },
-};
-
-// Mock model selection - would be real implementation in production
-function selectOptimalModel(
-  domain: string,
-  capability: string,
-  characteristics: TaskCharacteristics,
-): string {
-  if (characteristics.accuracy === 'premium') {
-    return 'deepseek-coder-33b';
-  }
-  if (characteristics.latency === 'fast') {
-    return 'qwen3-coder-7b';
-  }
-  return 'qwen3-coder-14b';
-}
 
 export type UrgencyLevel = 'low' | 'medium' | 'high';
 export type AnalysisType = 'review' | 'refactor' | 'optimize' | 'architecture' | 'security';
@@ -158,24 +124,7 @@ const rawAnalysisResultSchema = z.object({
   confidence: z.number(),
 });
 
-const COMPLEXITY_THRESHOLDS = {
-  HIGH: { lines: 200, indicators: 20 },
-  MEDIUM: { lines: 50, indicators: 10 },
-};
-
-const MODEL_CONFIG = {
-  'qwen3-coder': {
-    temperature: 0.1,
-    top_p: 0.9,
-    num_predict: 2048,
-  },
-  'deepseek-coder': {
-    temperature: 0.2,
-    top_p: 0.9,
-    num_predict: 1500,
-  },
-};
-
+// thresholds/config not required; keep prompts inline for simplicity
 export class CodeIntelligenceAgent extends EventEmitter {
   private readonly ollamaEndpoint: string;
   private readonly analysisHistory: Map<string, CodeAnalysisResult>;
@@ -202,6 +151,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
       return cached;
     }
 
+    // Determine optimal model based on task characteristics
     const characteristics: TaskCharacteristics = {
       complexity: this.assessComplexity(request.code),
       latency: request.urgency === 'high' ? 'fast' : 'batch',
@@ -319,61 +269,15 @@ Urgency: ${request.urgency}`;
   }
 
   private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
-    // Check if this is a security analysis based on model type or content
-    const isSecurityAnalysis =
-      modelType.includes('deepseek') || response.toLowerCase().includes('security');
-    const hasCriticalVulns =
-      response.toLowerCase().includes('critical') ||
-      response.toLowerCase().includes('vulnerability');
+    let raw: unknown;
+    try {
+      raw = JSON.parse(response);
+    } catch {
+      throw new Error('Model response is not valid JSON');
+    }
 
-    return {
-      suggestions: [
-        {
-          type: hasCriticalVulns ? 'bug_fix' : 'improvement',
-          line: 1,
-          description: hasCriticalVulns
-            ? 'Critical security vulnerability detected'
-            : 'Consider adding input validation',
-          code: hasCriticalVulns
-            ? 'const sanitizedInput = sanitize(userInput);'
-            : '// Add validation logic here',
-          rationale: hasCriticalVulns
-            ? 'Prevents security exploits'
-            : 'Improves security and error handling',
-          priority: hasCriticalVulns ? 'critical' : 'medium',
-        },
-      ],
-      complexity: {
-        cyclomatic: 5,
-        cognitive: 3,
-        maintainability: 'high',
-        hotspots: ['function processData()'],
-      },
-      security: {
-        vulnerabilities:
-          isSecurityAnalysis && hasCriticalVulns
-            ? [
-                {
-                  type: 'SQL Injection',
-                  severity: 'critical' as const,
-                  line: 1,
-                  description: 'Critical security vulnerability detected',
-                  mitigation: 'Use parameterized queries',
-                },
-              ]
-            : [],
-        riskLevel: isSecurityAnalysis && hasCriticalVulns ? 'critical' : 'low',
-        recommendations: ['Add input sanitization', 'Implement proper error handling'],
-      },
-      performance: {
-        bottlenecks: [],
-        memoryUsage: 'efficient',
-        optimizations: ['Consider caching repeated calculations'],
-      },
-      confidence: 0.85,
-      modelUsed: modelType,
-      processingTime: 1, // Will be overridden by caller
-    };
+    const parsed = rawAnalysisResultSchema.parse(raw);
+    return { ...parsed, modelUsed: modelType, processingTime: 0 };
   }
 
   private assessComplexity(code: string): 'low' | 'medium' | 'high' {
