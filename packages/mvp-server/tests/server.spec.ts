@@ -12,5 +12,5 @@ describe('mvp-server', () => {
     } finally {
       await app.close();
     }
-  }, 10000); // 10 second timeout
+  }, 10000);
 });
