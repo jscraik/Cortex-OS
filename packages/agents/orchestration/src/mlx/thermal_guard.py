@@ -2,7 +2,7 @@
 Thermal management system for MLX inference on Apple Silicon.
 
 Provides real-time GPU temperature monitoring, intelligent throttling at 85°C,
-and graceful CPU-only fallback at 90°C to prevent thermal damage while
+and an emergency shutdown at 90°C to prevent thermal damage while
 maintaining system performance.
 
 Performance requirements:
@@ -27,17 +27,9 @@ from typing import Dict, List, Optional, Callable, Any
 import threading
 from datetime import datetime, timedelta
 
-try:
-    import psutil
-except ImportError:
-    psutil = None
-
-try:
-    from opentelemetry import metrics
-    from opentelemetry.metrics import get_meter
-    OTEL_AVAILABLE = True
-except ImportError:
-    OTEL_AVAILABLE = False
+import psutil
+from opentelemetry import metrics
+from opentelemetry.metrics import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +48,6 @@ class ThrottleAction(Enum):
     NONE = "none"
     REDUCE_BATCH_SIZE = "reduce_batch_size"
     LOWER_INFERENCE_RATE = "lower_inference_rate"
-    SWITCH_TO_CPU = "switch_to_cpu"
     EMERGENCY_STOP = "emergency_stop"
 
 
@@ -136,7 +127,8 @@ class AppleSiliconThermalMonitor:
     """Apple Silicon thermal monitoring using system tools."""
     
     def __init__(self):
-        self.is_apple_silicon = self._detect_apple_silicon()
+        if not self._detect_apple_silicon():
+            raise RuntimeError("Apple Silicon is required for thermal monitoring")
         self._last_temp_cache = {}
         self._cache_timestamp = 0
         self._cache_ttl_ms = 100  # 100ms cache for rapid polling
@@ -189,11 +181,7 @@ class AppleSiliconThermalMonitor:
     async def _fetch_thermal_data(self) -> ThermalMetrics:
         """Fetch thermal data from system sensors."""
         metrics = ThermalMetrics()
-        
-        if not self.is_apple_silicon:
-            logger.warning("Not running on Apple Silicon - using mock thermal data")
-            return self._get_mock_thermal_data()
-        
+
         try:
             # Get GPU temperature using powermetrics (requires sudo)
             gpu_temp = await self._get_gpu_temperature()
@@ -308,15 +296,13 @@ class AppleSiliconThermalMonitor:
     
     async def _get_power_consumption(self) -> float:
         """Get current power consumption."""
-        if psutil:
-            try:
-                # Use psutil for power monitoring if available
-                sensors = psutil.sensors_battery()
-                if sensors and hasattr(sensors, 'power_plugged'):
-                    return 15.0 if sensors.power_plugged else 8.0
-            except Exception:
-                pass
-        
+        try:
+            sensors = psutil.sensors_battery()
+            if sensors and hasattr(sensors, 'power_plugged'):
+                return 15.0 if sensors.power_plugged else 8.0
+        except Exception:
+            pass
+
         return 12.0  # Default power estimate for Apple Silicon
     
     async def _get_thermal_pressure(self) -> float:
@@ -352,21 +338,6 @@ class AppleSiliconThermalMonitor:
         else:
             return ThermalState.CRITICAL
     
-    def _get_mock_thermal_data(self) -> ThermalMetrics:
-        """Get mock thermal data for non-Apple Silicon systems."""
-        import random
-        
-        # Generate realistic mock data
-        base_temp = 45.0 + random.uniform(-5, 10)
-        
-        return ThermalMetrics(
-            gpu_temp_celsius=base_temp + random.uniform(0, 5),
-            cpu_temp_celsius=base_temp,
-            power_draw_watts=12.0 + random.uniform(-2, 8),
-            thermal_pressure=random.uniform(0.1, 0.3),
-            thermal_state=ThermalState.NORMAL
-        )
-
 
 class ThermalGuard:
     """
@@ -375,7 +346,7 @@ class ThermalGuard:
     Features:
     - Real-time temperature monitoring (<1ms overhead)
     - Intelligent throttling at 85°C
-    - CPU-only fallback at 90°C  
+    - Emergency shutdown at 90°C
     - Graceful degradation under thermal pressure
     - OpenTelemetry metrics export
     """
@@ -414,7 +385,7 @@ class ThermalGuard:
     
     def _setup_metrics(self):
         """Setup OpenTelemetry metrics."""
-        if not OTEL_AVAILABLE or not self.config.metrics_export_enabled:
+        if not self.config.metrics_export_enabled:
             self._otel_meter = None
             return
             
@@ -623,7 +594,7 @@ class ThermalGuard:
         if state == ThermalState.CRITICAL:
             return ThrottleAction.EMERGENCY_STOP
         elif state == ThermalState.THROTTLING:
-            return ThrottleAction.SWITCH_TO_CPU
+            return ThrottleAction.LOWER_INFERENCE_RATE
         elif state == ThermalState.HOT:
             # Gradual throttling based on time in hot state
             if time_in_state > 30.0:  # 30 seconds
@@ -758,7 +729,7 @@ class ThermalGuard:
         
         if action == ThrottleAction.REDUCE_BATCH_SIZE:
             return max(1, int(normal_batch_size * self.config.batch_size_reduction_factor))
-        elif action in [ThrottleAction.SWITCH_TO_CPU, ThrottleAction.EMERGENCY_STOP]:
+        elif action == ThrottleAction.EMERGENCY_STOP:
             return 1  # Minimal batch size
         else:
             return normal_batch_size
@@ -772,15 +743,10 @@ class ThermalGuard:
         
         if action == ThrottleAction.LOWER_INFERENCE_RATE:
             return normal_rate * self.config.inference_rate_reduction_factor
-        elif action in [ThrottleAction.SWITCH_TO_CPU, ThrottleAction.EMERGENCY_STOP]:
+        elif action == ThrottleAction.EMERGENCY_STOP:
             return normal_rate * 0.3  # Significant reduction
         else:
             return normal_rate
-    
-    def should_use_cpu_only(self) -> bool:
-        """Check if should switch to CPU-only inference."""
-        return (self.current_metrics.thermal_state in [ThermalState.THROTTLING, ThermalState.CRITICAL] or
-                self.current_metrics.throttle_action in [ThrottleAction.SWITCH_TO_CPU, ThrottleAction.EMERGENCY_STOP])
     
     async def emergency_shutdown(self) -> None:
         """Emergency thermal shutdown."""

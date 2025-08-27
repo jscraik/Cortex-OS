@@ -5,10 +5,10 @@
 
 import { EventEmitter } from 'events';
 import {
-  INTEGRATION_POINTS,
   selectOptimalModel,
   TaskCharacteristics,
 } from '../../../config/model-integration-strategy.js';
+import { z } from 'zod';
 
 export type UrgencyLevel = 'low' | 'medium' | 'high';
 export type AnalysisType = 'review' | 'refactor' | 'optimize' | 'architecture' | 'security';
@@ -77,6 +77,56 @@ export interface PerformanceBottleneck {
   suggestion: string;
 }
 
+const suggestionSchema = z.object({
+  type: z.enum(['improvement', 'refactor', 'bug_fix', 'optimization']),
+  line: z.number().optional(),
+  description: z.string(),
+  code: z.string().optional(),
+  rationale: z.string(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+});
+
+const complexitySchema = z.object({
+  cyclomatic: z.number(),
+  cognitive: z.number(),
+  maintainability: z.enum(['low', 'medium', 'high']),
+  hotspots: z.array(z.string()),
+});
+
+const securityVulnerabilitySchema = z.object({
+  type: z.string(),
+  severity: z.enum(['info', 'warning', 'error', 'critical']),
+  line: z.number().optional(),
+  description: z.string(),
+  mitigation: z.string(),
+});
+
+const securitySchema = z.object({
+  vulnerabilities: z.array(securityVulnerabilitySchema),
+  riskLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  recommendations: z.array(z.string()),
+});
+
+const performanceBottleneckSchema = z.object({
+  location: z.string(),
+  impact: z.enum(['low', 'medium', 'high']),
+  suggestion: z.string(),
+});
+
+const performanceSchema = z.object({
+  bottlenecks: z.array(performanceBottleneckSchema),
+  memoryUsage: z.enum(['efficient', 'moderate', 'high', 'excessive']),
+  optimizations: z.array(z.string()),
+});
+
+const rawAnalysisResultSchema = z.object({
+  suggestions: z.array(suggestionSchema),
+  complexity: complexitySchema,
+  security: securitySchema,
+  performance: performanceSchema,
+  confidence: z.number(),
+});
+
 export class CodeIntelligenceAgent extends EventEmitter {
   private readonly ollamaEndpoint: string;
   private readonly mlxEndpoint: string;
@@ -89,13 +139,24 @@ export class CodeIntelligenceAgent extends EventEmitter {
     } = {},
   ) {
     super();
-    this.ollamaEndpoint = config.ollamaEndpoint || 'http://localhost:11434';
-    this.mlxEndpoint = config.mlxEndpoint || 'http://localhost:8765';
+    this.ollamaEndpoint =
+      config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
+    this.mlxEndpoint =
+      config.mlxEndpoint ?? process.env.MLX_ENDPOINT ?? '';
+    if (!this.ollamaEndpoint || !this.mlxEndpoint) {
+      throw new Error('Ollama and MLX endpoints must be provided');
+    }
     this.analysisHistory = new Map();
   }
 
   async analyzeCode(request: CodeAnalysisRequest): Promise<CodeAnalysisResult> {
     const startTime = Date.now();
+
+    const cacheKey = this.generateCacheKey(request);
+    const cached = this.analysisHistory.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     // Determine optimal model based on task characteristics
     const characteristics: TaskCharacteristics = {
@@ -124,7 +185,6 @@ export class CodeIntelligenceAgent extends EventEmitter {
       result.modelUsed = modelId;
 
       // Cache result
-      const cacheKey = this.generateCacheKey(request);
       this.analysisHistory.set(cacheKey, result);
 
       this.emit('analysis_complete', { request, result });
@@ -194,8 +254,6 @@ export class CodeIntelligenceAgent extends EventEmitter {
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
-    const analysisTypes = INTEGRATION_POINTS.agents.codeIntelligence;
-
     return `As an expert code analyst, perform a comprehensive ${request.analysisType} analysis of the following ${request.language} code.
 
 Context: ${request.context || 'No additional context provided'}
@@ -220,39 +278,15 @@ Urgency: ${request.urgency}`;
   }
 
   private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
-    // This would need sophisticated parsing logic
-    // For now, return a structured example
-    return {
-      suggestions: [
-        {
-          type: 'improvement',
-          line: 1,
-          description: 'Consider adding input validation',
-          code: '// Add validation logic here',
-          rationale: 'Improves security and error handling',
-          priority: 'medium',
-        },
-      ],
-      complexity: {
-        cyclomatic: 5,
-        cognitive: 3,
-        maintainability: 'high',
-        hotspots: ['function processData()'],
-      },
-      security: {
-        vulnerabilities: [],
-        riskLevel: 'low',
-        recommendations: ['Add input sanitization', 'Implement proper error handling'],
-      },
-      performance: {
-        bottlenecks: [],
-        memoryUsage: 'efficient',
-        optimizations: ['Consider caching repeated calculations'],
-      },
-      confidence: 0.85,
-      modelUsed: modelType,
-      processingTime: 0, // Will be set by caller
-    };
+    let raw: unknown;
+    try {
+      raw = JSON.parse(response);
+    } catch {
+      throw new Error('Model response is not valid JSON');
+    }
+
+    const parsed = rawAnalysisResultSchema.parse(raw);
+    return { ...parsed, modelUsed: modelType, processingTime: 0 };
   }
 
   private assessComplexity(code: string): 'low' | 'medium' | 'high' {
