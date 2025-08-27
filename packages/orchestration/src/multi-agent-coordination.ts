@@ -253,7 +253,13 @@ export class MultiAgentCoordinationEngine extends EventEmitter {
         errors: [error instanceof Error ? error.message : String(error)],
       };
     } finally {
-      await this.cleanupCoordination(coordinationId);
+      // Check if coordination was cancelled and perform appropriate cleanup
+      const state = this.coordinationStates.get(coordinationId);
+      if (state?.coordination.status === 'cancelled') {
+        await this.cleanupOnCancellation(coordinationId);
+      } else {
+        await this.cleanupCoordination(coordinationId);
+      }
     }
   }
 
@@ -1416,7 +1422,101 @@ export class MultiAgentCoordinationEngine extends EventEmitter {
     }
   }
 
+  /**
+   * Comprehensive cleanup on cancellation with proper resource management
+   */
+  private async cleanupOnCancellation(coordinationId: string, signal?: AbortSignal): Promise<void> {
+    if (signal?.aborted) return;
+
+    this.logger.info(`Starting cancellation cleanup for coordination ${coordinationId}`);
+
+    try {
+      // 1. Cancel all active agent executions
+      const activeExecution = this.activeExecutions.get(coordinationId);
+      if (activeExecution) {
+        try {
+          // Try to cancel the promise if it supports cancellation
+          if (typeof (activeExecution as any).abort === 'function') {
+            (activeExecution as any).abort();
+          }
+        } catch (error) {
+          this.logger.warn(`Error aborting active execution for ${coordinationId}`, {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+        this.activeExecutions.delete(coordinationId);
+      }
+
+      // 2. Close and cleanup communication channels
+      const channels = this.agentCommunications.get(coordinationId) || [];
+      for (const channel of channels) {
+        channel.status = 'cancelled' as any;
+        // Clear any pending messages
+        channel.messageQueue.splice(0);
+      }
+
+      // 3. Cancel synchronization points and notify waiting agents
+      const syncPoints = this.synchronizationPoints.get(coordinationId) || [];
+      for (const syncPoint of syncPoints) {
+        syncPoint.status = 'cancelled' as any;
+        // Clear waiting agents
+        syncPoint.waitingAgents.splice(0);
+      }
+
+      // 4. Release resource locks and allocations
+      const resourceLocks = this.resourceAllocations.get(coordinationId);
+      if (resourceLocks) {
+        for (const [agentId, resources] of resourceLocks) {
+          this.logger.debug(`Releasing resources for agent ${agentId}`, {
+            coordinationId,
+            memoryRequirement: resources.memoryRequirement,
+            computeRequirement: resources.computeRequirement,
+          });
+        }
+        resourceLocks.clear();
+      }
+
+      // 5. Notify agents about cancellation
+      const state = this.coordinationStates.get(coordinationId);
+      if (state) {
+        for (const participant of state.coordination.participants) {
+          try {
+            await this.a2aProtocol.sendMessage({
+              to: participant.agentId,
+              type: 'coordination-cancelled',
+              priority: 'high',
+              payload: {
+                coordinationId,
+                reason: 'cancelled',
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (error) {
+            this.logger.warn(`Failed to notify agent ${participant.agentId} of cancellation`, {
+              coordinationId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
+      }
+
+      // 6. Update coordination state
+      if (state) {
+        state.coordination.status = 'cancelled';
+        state.coordination.endTime = new Date();
+      }
+
+      this.logger.info(`Completed cancellation cleanup for coordination ${coordinationId}`);
+    } catch (error) {
+      this.logger.error(`Error during cancellation cleanup for ${coordinationId}`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
   private async cleanupCoordination(coordinationId: string): Promise<void> {
+    // Perform final cleanup
     this.coordinationStates.delete(coordinationId);
     this.agentCommunications.delete(coordinationId);
     this.synchronizationPoints.delete(coordinationId);
