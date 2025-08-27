@@ -65,7 +65,6 @@ export interface TeachingPattern {
 export class ExampleCaptureSystem {
   private examples: Map<string, CapturedExample> = new Map();
   private patterns: Map<string, TeachingPattern> = new Map();
-  private activeCapture: boolean = true;
 
   /**
    * Capture user interaction as learning example
@@ -363,10 +362,4 @@ export class ExampleCaptureSystem {
     return Array.from(this.patterns.values());
   }
 
-  /**
-   * Enable or disable example capture
-   */
-  setCapture(enabled: boolean): void {
-    this.activeCapture = enabled;
-  }
 }

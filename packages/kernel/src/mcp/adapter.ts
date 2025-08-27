@@ -6,6 +6,7 @@
  */
 
 import { PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
 
 // Neuron interface definition - compatible with prp-runner
 interface Neuron {
@@ -174,7 +175,7 @@ export class MCPAdapter {
             mcpIntegration: true,
           },
           evidence: [{
-            id: `mcp-${tool.name}-${Date.now()}`,
+            id: generateId(`mcp-${tool.name}`, state.metadata.deterministic),
             type: 'command',
             source: `mcp-${tool.name}`,
             content: JSON.stringify(execution.evidence),
