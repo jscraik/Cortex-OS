@@ -5,7 +5,7 @@
 
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
-import path from 'path';
+import * as path from 'node:path';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
 import Fuse from 'fuse.js';
