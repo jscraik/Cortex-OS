@@ -114,8 +114,8 @@ export async function createClient(si: ServerInfo) {
       if (!si.endpoint) throw new Error('sse requires endpoint');
       transport = new SSEClientTransport(new URL(si.endpoint));
       break;
-    case 'https':
-      if (!si.endpoint) throw new Error('https requires endpoint');
+    case 'streamableHttp':
+      if (!si.endpoint) throw new Error('streamableHttp requires endpoint');
       transport = new StreamableHTTPClientTransport(new URL(si.endpoint));
       break;
     default:

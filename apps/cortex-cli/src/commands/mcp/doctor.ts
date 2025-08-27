@@ -20,7 +20,7 @@ export const mcpDoctor = new Command('doctor')
             await new Promise((res) => setTimeout(res, 150));
             await client.close();
             item.ok = true;
-          } else if (s.transport === 'https') {
+          } else if (s.transport === 'streamableHttp') {
             const url = new URL(s.endpoint ?? '');
             const health = new URL('/healthz', url);
             const res = await fetch(health, { signal: AbortSignal.timeout(5000) }).catch(() => fetch(url, { signal: AbortSignal.timeout(5000) }));

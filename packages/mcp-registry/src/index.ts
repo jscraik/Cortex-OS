@@ -4,8 +4,6 @@
  */
 
 export * from './validator.js';
-export * from './signer.js';
-export * from './registry.js';
 export * from './types.js';
 
 // Re-export schemas for external use
