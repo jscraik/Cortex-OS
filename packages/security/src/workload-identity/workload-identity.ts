@@ -3,22 +3,14 @@
  * @description Workload identity attestation and management for SPIFFE/SPIRE
  */
 
+import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import {
   SpiffeId,
   WorkloadIdentity,
   WorkloadIdentityError,
   WorkloadIdentitySchema,
 } from '../types.ts';
-
-// Temporary stub implementations for telemetry until the telemetry package is fixed
-const withSpan = async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
-  return fn();
-};
-
-const logWithSpan = (level: string, message: string, attributes?: Record<string, unknown>) => {
-  // eslint-disable-next-line no-console
-  console.log(`[${level}] ${message}`, attributes);
-};
+import { extractTrustDomain, extractWorkloadPath } from '../utils/security-utils.ts';
 
 /**
  * Workload Identity Manager
@@ -51,14 +43,11 @@ export class WorkloadIdentityManager {
           return cached.identity;
         }
 
-        // Parse SPIFFE ID to extract components
-        const spiffeParts = spiffeId.split('/');
-        if (spiffeParts.length < 3) {
+        const trustDomain = extractTrustDomain(spiffeId);
+        const workloadPath = extractWorkloadPath(spiffeId);
+        if (!trustDomain || !workloadPath) {
           throw new WorkloadIdentityError(`Invalid SPIFFE ID format: ${spiffeId}`);
         }
-
-        const trustDomain = spiffeParts[1];
-        const workloadPath = '/' + spiffeParts.slice(2).join('/');
 
         // Create workload identity
         const identity: WorkloadIdentity = {
@@ -193,11 +182,17 @@ export class WorkloadIdentityManager {
  * Workload Identity Attestor
  * Handles the attestation process for workloads
  */
+export interface WorkloadAPIClient {
+  attestWorkload(spiffeId: SpiffeId): Promise<WorkloadIdentity>;
+}
+
 export class WorkloadIdentityAttestor {
   private readonly manager: WorkloadIdentityManager;
+  private readonly apiClient?: WorkloadAPIClient;
 
-  constructor(manager: WorkloadIdentityManager) {
+  constructor(manager: WorkloadIdentityManager, apiClient?: WorkloadAPIClient) {
     this.manager = manager;
+    this.apiClient = apiClient;
   }
 
   /**
@@ -210,9 +205,11 @@ export class WorkloadIdentityAttestor {
           spiffeId,
         });
 
-        // This would integrate with the actual SPIFFE Workload API
-        // For now, we'll use the manager's attest method
-        return await this.manager.attestWorkload(spiffeId);
+        if (!this.apiClient) {
+          throw new WorkloadIdentityError('Workload API client not configured', spiffeId);
+        }
+
+        return await this.apiClient.attestWorkload(spiffeId);
       } catch (error) {
         logWithSpan('error', 'Workload API attestation failed', {
           spiffeId,
