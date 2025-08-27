@@ -30,10 +30,6 @@
       "types": "./dist/pipeline/query.d.ts",
       "default": "./dist/pipeline/query.js"
     },
-    "./embed/python-client": {
-      "types": "./dist/embed/python-client.d.ts",
-      "default": "./dist/embed/python-client.js"
-    },
     "./store/memory": {
       "types": "./dist/store/memory.d.ts",
       "default": "./dist/store/memory.js"
