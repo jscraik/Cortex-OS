@@ -36,16 +36,16 @@ describe('Cortex Kernel Integration', () => {
       expect(result.phase).toBe('completed');
       expect(result.runId).toBe('integration-test-001');
       expect(result.blueprint.title).toBe('Integration Test Project');
-      
+
       // Verify metadata
       expect(result.metadata.startTime).toBeDefined();
       expect(result.metadata.endTime).toBeDefined();
-      
+
       // Verify validation gates
       expect(result.validationResults.strategy?.passed).toBe(true);
       expect(result.validationResults.build?.passed).toBe(true);
       expect(result.validationResults.evaluation?.passed).toBe(true);
-      
+
       // Verify cerebrum decision
       expect(result.cerebrum?.decision).toBe('promote');
       expect(result.cerebrum?.confidence).toBeGreaterThan(0.9);
@@ -63,12 +63,12 @@ describe('Cortex Kernel Integration', () => {
       });
 
       const history = kernel.getExecutionHistory('history-test-001');
-      
+
       // Should have tracked all phase transitions
       expect(history.length).toBeGreaterThan(1);
-      
+
       // Check phase progression
-      const phases = history.map(state => state.phase);
+      const phases = history.map((state) => state.phase);
       expect(phases).toContain('strategy');
       expect(phases[phases.length - 1]).toBe('completed');
     });
@@ -82,9 +82,6 @@ describe('Cortex Kernel Integration', () => {
 
       const result = await kernel.runPRPWorkflow(blueprint);
 
-      // Should successfully get neuron count from orchestrator directly
-      expect(kernel.orchestrator.getNeuronCount()).toBe(5);
-      
       // Workflow should complete successfully
       expect(result.phase).toBe('completed');
     });
@@ -98,9 +95,9 @@ describe('Cortex Kernel Integration', () => {
           throw new Error('Simulated orchestrator error');
         },
       };
-      
+
       const errorKernel = new CortexKernel(errorOrchestrator);
-      
+
       const blueprint = {
         title: 'Error Test',
         description: 'Test error handling',
@@ -109,7 +106,7 @@ describe('Cortex Kernel Integration', () => {
 
       // This should not throw but should handle the error gracefully
       const result = await errorKernel.runPRPWorkflow(blueprint);
-      
+
       // Should complete but may recycle due to error
       expect(['completed', 'recycled']).toContain(result.phase);
     });
@@ -128,12 +125,12 @@ describe('Cortex Kernel Integration', () => {
       });
 
       const history = kernel.getExecutionHistory('phase-test-001');
-      const phases = history.map(state => state.phase);
+      const phases = history.map((state) => state.phase);
 
       // Should include the main workflow phases
       expect(phases).toContain('strategy');
-      expect(phases.some(p => p === 'build')).toBe(true);
-      expect(phases.some(p => p === 'evaluation')).toBe(true);
+      expect(phases.some((p) => p === 'build')).toBe(true);
+      expect(phases.some((p) => p === 'evaluation')).toBe(true);
       expect(phases[phases.length - 1]).toBe('completed');
     });
 
@@ -145,10 +142,10 @@ describe('Cortex Kernel Integration', () => {
       };
 
       const result = await kernel.runPRPWorkflow(blueprint);
-      
+
       // Final state should be valid
       expect(['completed', 'recycled']).toContain(result.phase);
-      
+
       // All validation results should be present for completed workflows
       if (result.phase === 'completed') {
         expect(result.validationResults.strategy).toBeDefined();

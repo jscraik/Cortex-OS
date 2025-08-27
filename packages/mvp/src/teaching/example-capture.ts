@@ -58,7 +58,7 @@ export interface TeachingPattern {
 
 /**
  * Example Capture and Replay System
- * 
+ *
  * Captures user interactions and system decisions to build
  * adaptive behavior patterns for the Cortex Kernel.
  */
@@ -75,8 +75,11 @@ export class ExampleCaptureSystem {
     context: CapturedExample['context'],
     userAction: CapturedExample['userAction'],
     outcome: CapturedExample['outcome'],
-    metadata: Partial<CapturedExample['metadata']> = {}
-  ): CapturedExample {
+    metadata: Partial<CapturedExample['metadata']> = {},
+  ): CapturedExample | null {
+    if (!this.activeCapture) {
+      return null;
+    }
     const example: CapturedExample = {
       id: `example-${nanoid()}`,
       type,
@@ -92,10 +95,10 @@ export class ExampleCaptureSystem {
     };
 
     this.examples.set(example.id, example);
-    
+
     // Trigger pattern learning
     this.updatePatternsFromExample(example);
-    
+
     return example;
   }
 
@@ -106,8 +109,8 @@ export class ExampleCaptureSystem {
     prpState: PRPState,
     originalValidation: { passed: boolean; blockers: string[]; majors: string[] },
     userOverride: { passed: boolean; reasoning: string; adjustments: any },
-    finalOutcome: { success: boolean; feedback: string }
-  ): CapturedExample {
+    finalOutcome: { success: boolean; feedback: string },
+  ): CapturedExample | null {
     return this.captureExample(
       'validation',
       {
@@ -131,7 +134,7 @@ export class ExampleCaptureSystem {
       },
       {
         tags: ['validation', 'override', prpState.phase],
-      }
+      },
     );
   }
 
@@ -145,8 +148,8 @@ export class ExampleCaptureSystem {
       description: string;
       changes: any;
     },
-    outcome: { improved: boolean; metrics: any }
-  ): CapturedExample {
+    outcome: { improved: boolean; metrics: any },
+  ): CapturedExample | null {
     return this.captureExample(
       'workflow',
       {
@@ -167,14 +170,17 @@ export class ExampleCaptureSystem {
       },
       {
         tags: ['workflow', modification.type, prpState.phase],
-      }
+      },
     );
   }
 
   /**
    * Replay captured example to validate or extend behavior
    */
-  async replayExample(exampleId: string, currentState: PRPState): Promise<{
+  async replayExample(
+    exampleId: string,
+    currentState: PRPState,
+  ): Promise<{
     applicable: boolean;
     suggestedAction?: any;
     confidence: number;
@@ -185,14 +191,11 @@ export class ExampleCaptureSystem {
     }
 
     // Analyze context similarity
-    const contextSimilarity = this.calculateContextSimilarity(
-      example.context,
-      {
-        prpPhase: currentState.phase,
-        blueprint: currentState.blueprint,
-        inputState: currentState,
-      }
-    );
+    const contextSimilarity = this.calculateContextSimilarity(example.context, {
+      prpPhase: currentState.phase,
+      blueprint: currentState.blueprint,
+      inputState: currentState,
+    });
 
     if (contextSimilarity < 0.6) {
       return { applicable: false, confidence: 0 };
@@ -200,7 +203,7 @@ export class ExampleCaptureSystem {
 
     // Suggest action based on example
     const suggestedAction = this.adaptExampleToCurrentContext(example, currentState);
-    
+
     return {
       applicable: true,
       suggestedAction,
@@ -214,7 +217,7 @@ export class ExampleCaptureSystem {
   private updatePatternsFromExample(example: CapturedExample): void {
     // Simple pattern extraction - in real implementation would use ML
     const patternKey = `${example.type}-${example.context.prpPhase}-${example.userAction.type}`;
-    
+
     let pattern = this.patterns.get(patternKey);
     if (!pattern) {
       pattern = {
@@ -240,9 +243,9 @@ export class ExampleCaptureSystem {
       pattern.examples.push(example.id);
       const totalExamples = pattern.examples.length;
       const successfulExamples = pattern.examples
-        .map(id => this.examples.get(id))
-        .filter(ex => ex?.outcome.success).length;
-      
+        .map((id) => this.examples.get(id))
+        .filter((ex) => ex?.outcome.success).length;
+
       pattern.effectiveness = successfulExamples / totalExamples;
       pattern.trigger.confidence = Math.min(0.9, pattern.trigger.confidence + 0.1);
     }
@@ -255,7 +258,7 @@ export class ExampleCaptureSystem {
    */
   private calculateContextSimilarity(
     context1: CapturedExample['context'],
-    context2: CapturedExample['context']
+    context2: CapturedExample['context'],
   ): number {
     let similarity = 0;
 
@@ -299,9 +302,10 @@ export class ExampleCaptureSystem {
    */
   private extractKeywords(blueprint: PRPState['blueprint']): string[] {
     const text = `${blueprint.title} ${blueprint.description} ${blueprint.requirements?.join(' ')}`;
-    return text.toLowerCase()
+    return text
+      .toLowerCase()
       .split(/\s+/)
-      .filter(word => word.length > 3)
+      .filter((word) => word.length > 3)
       .slice(0, 10); // Top 10 keywords
   }
 
@@ -311,9 +315,9 @@ export class ExampleCaptureSystem {
   private calculateKeywordOverlap(keywords1: string[], keywords2: string[]): number {
     const set1 = new Set(keywords1);
     const set2 = new Set(keywords2);
-    const intersection = new Set([...set1].filter(x => set2.has(x)));
+    const intersection = new Set([...set1].filter((x) => set2.has(x)));
     const union = new Set([...set1, ...set2]);
-    
+
     return union.size > 0 ? intersection.size / union.size : 0;
   }
 
@@ -324,8 +328,8 @@ export class ExampleCaptureSystem {
     // Simple structural comparison
     const keys1 = Object.keys(state1);
     const keys2 = Object.keys(state2);
-    const commonKeys = keys1.filter(key => keys2.includes(key));
-    
+    const commonKeys = keys1.filter((key) => keys2.includes(key));
+
     return commonKeys.length / Math.max(keys1.length, keys2.length, 1);
   }
 
@@ -341,14 +345,14 @@ export class ExampleCaptureSystem {
 
     if (filter) {
       if (filter.type) {
-        examples = examples.filter(ex => ex.type === filter.type);
+        examples = examples.filter((ex) => ex.type === filter.type);
       }
       if (filter.phase) {
-        examples = examples.filter(ex => ex.context.prpPhase === filter.phase);
+        examples = examples.filter((ex) => ex.context.prpPhase === filter.phase);
       }
       if (filter.tags) {
-        examples = examples.filter(ex => 
-          filter.tags!.some(tag => ex.metadata.tags.includes(tag))
+        examples = examples.filter((ex) =>
+          filter.tags!.some((tag) => ex.metadata.tags.includes(tag)),
         );
       }
     }
