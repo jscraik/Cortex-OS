@@ -109,17 +109,13 @@ export class UniversalMcpManager {
     // claude mcp add --transport http ref-server https://api.ref.tools/mcp --header "Authorization: Bearer token"
     // gemini mcp add ref-server --url https://api.ref.tools/mcp --key ref-e672788111c76ba32bc1
 
-    const parts = command.trim().split(/\s+/);
-
-    // Remove the CLI prefix (cortex, claude, gemini, etc.)
-    let startIndex = 0;
-    if (parts[0] && !parts[0].startsWith('-')) {
-      startIndex = 1; // Skip CLI name
+    const tokens = command.trim().split(/\s+/);
+    const mcpIndex = tokens.indexOf('mcp');
+    if (mcpIndex === -1 || tokens[mcpIndex + 1] !== 'add') {
+      return null;
     }
-    if (parts[startIndex] === 'mcp') startIndex++;
-    if (parts[startIndex] === 'add') startIndex++;
 
-    const args = parts.slice(startIndex);
+    const args = tokens.slice(mcpIndex + 2);
     const parsed: Partial<McpServerRequest> = {
       scopes: ['read'],
       autoApprove: false,

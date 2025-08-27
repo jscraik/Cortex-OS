@@ -9,6 +9,9 @@
  * @ai_provenance_hash N/A
  */
 
+import { promises as fs } from 'fs';
+import { homedir } from 'os';
+import { dirname, join } from 'path';
 import { getMockMarketplaceIndex } from './mocks/marketplace.js';
 import {
   MarketplaceIndex,
@@ -17,19 +20,28 @@ import {
   PluginMetadata,
   PluginSearchOptions,
   PluginStatus,
+  PluginStatusSchema,
 } from './types.js';
 
 export class PluginRegistry {
   private readonly MARKETPLACE_URL = 'https://plugins.brainwav.ai/index.json';
-  private readonly INSTALLED_PLUGINS_PATH = '.cortex-os/plugins/installed.json';
+  private readonly INSTALLED_PLUGINS_PATH = join(
+    homedir(),
+    '.cortex-os',
+    'plugins',
+    'installed.json',
+  );
   private marketplaceIndex: MarketplaceIndex | null = null;
   private marketplaceRefreshPromise: Promise<void> | null = null;
   private installedPlugins: Map<string, PluginStatus> = new Map();
   private installDelayMs: number;
 
   constructor() {
-    this.loadInstalledPlugins();
     this.installDelayMs = process.env.NODE_ENV === 'test' ? 10 : 1000;
+    this.loadInstalledPlugins().catch((error) => {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to load installed plugins:', error);
+    });
   }
 
   /**
@@ -288,15 +300,32 @@ export class PluginRegistry {
   /**
    * Load installed plugins from storage
    */
+  private async ensurePluginsDir(): Promise<void> {
+    const dir = dirname(this.INSTALLED_PLUGINS_PATH);
+    await fs.mkdir(dir, { recursive: true });
+  }
+
+  /**
+   * Load installed plugins from storage
+   */
   private async loadInstalledPlugins(): Promise<void> {
-    // TODO: Implement real persistence for loading installed plugins.
     try {
-      // Mock loading for now - in real implementation would read from file
-      this.installedPlugins = new Map();
+      await this.ensurePluginsDir();
+      const content = await fs.readFile(this.INSTALLED_PLUGINS_PATH, 'utf-8');
+      const data = JSON.parse(content) as unknown[];
+      this.installedPlugins = new Map(
+        data.map((p) => {
+          const plugin = PluginStatusSchema.parse(p);
+          return [plugin.name, plugin];
+        }),
+      );
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to load installed plugins:', error);
       this.installedPlugins = new Map();
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT') {
+        // eslint-disable-next-line no-console
+        console.warn('Failed to load installed plugins:', error);
+      }
     }
   }
 
@@ -304,14 +333,10 @@ export class PluginRegistry {
    * Save installed plugins to storage
    */
   private async saveInstalledPlugins(): Promise<void> {
-    // TODO: Implement real persistence for installed plugins.
     try {
-      // Mock saving for now - in real implementation would write to file
-      const data = Array.from(this.installedPlugins.values());
-      if (process.env.NODE_ENV === 'test') {
-        // eslint-disable-next-line no-console
-        console.log('Saving installed plugins:', data);
-      }
+      await this.ensurePluginsDir();
+      const data = JSON.stringify(Array.from(this.installedPlugins.values()), null, 2);
+      await fs.writeFile(this.INSTALLED_PLUGINS_PATH, data, 'utf-8');
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to save installed plugins:', error);
