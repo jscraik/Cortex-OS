@@ -4,15 +4,20 @@
  * This module provides tools for validating security and compliance evidence.
  */
 
-export interface Evidence {
-  type: string;
-  data: unknown;
-  metadata: {
-    timestamp: Date;
-    source: string;
-    [key: string]: unknown;
-  };
-}
+import { z } from 'zod';
+
+const EvidenceSchema = z.object({
+  type: z.string().min(1),
+  data: z.unknown(),
+  metadata: z
+    .object({
+      timestamp: z.date(),
+      source: z.string().min(1),
+    })
+    .catchall(z.unknown()),
+});
+
+export type Evidence = z.infer<typeof EvidenceSchema>;
 
 export interface ValidationResult {
   valid: boolean;
@@ -25,17 +30,13 @@ export interface ValidationResult {
  * @param evidence The evidence to validate
  * @returns Validation result with status and any errors
  */
-export function validateEvidence(evidence: Evidence): ValidationResult {
-  // Basic validation placeholder
-  if (!evidence?.type || evidence.data == null) {
+export function validateEvidence(evidence: unknown): ValidationResult {
+  const result = EvidenceSchema.safeParse(evidence);
+  if (!result.success) {
     return {
       valid: false,
-      errors: ['Invalid evidence format: missing required fields'],
+      errors: result.error.errors.map((e) => e.message),
     };
   }
-
-  // This is a placeholder implementation
-  return {
-    valid: true,
-  };
+  return { valid: true };
 }
