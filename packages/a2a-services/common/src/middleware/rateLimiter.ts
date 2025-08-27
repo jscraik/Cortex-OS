@@ -23,7 +23,9 @@ export function createRateLimiter({ limit = 5, windowMs = 60_000 }: RateLimiterO
   const requestMap = new Map<string, RequestRecord>();
 
   return function rateLimiter(req: Request, res: Response, next: NextFunction) {
-    const ip = (req.headers['x-forwarded-for'] as string) || req.ip;
+  const xff = req.headers['x-forwarded-for'];
+  const forwarded = Array.isArray(xff) ? xff[0] : xff;
+  const ip: string = (forwarded ?? req.ip ?? '').toString();
     const currentTime = Date.now();
 
     // cleanup stale entries

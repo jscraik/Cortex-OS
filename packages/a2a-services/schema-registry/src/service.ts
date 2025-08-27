@@ -61,7 +61,8 @@ export function createService() {
     if (candidates.length === 0) {
       return res.status(404).send('Schema not found');
     }
-    const latest = candidates.sort((a, b) => compareVersions(a.version, b.version))[0];
+  const sorted = candidates.slice().sort((a, b) => compareVersions(a.version, b.version));
+  const latest = sorted[0];
     res.json(latest);
   });
 

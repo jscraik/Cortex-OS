@@ -9,7 +9,7 @@ function mockRequest(ip = '127.0.0.1', headers: Record<string, string> = {}): Re
 interface MockResponse extends Response {
   statusCode: number;
   sendCalled: boolean;
-  headers: Record<string, unknown>;
+  headers: Record<string, number>;
 }
 
 function mockResponse(): MockResponse {
@@ -25,7 +25,7 @@ function mockResponse(): MockResponse {
       res.sendCalled = true;
       return res as MockResponse;
     },
-    setHeader(name: string, value: unknown) {
+    setHeader(name: string, value: number) {
       if (res.headers) {
         res.headers[name] = value;
       }
