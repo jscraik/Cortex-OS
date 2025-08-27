@@ -9,75 +9,16 @@
 
 import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
 import { ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
-
-// Local A2A type definitions (fallback when package not available)
-export enum TransportProtocol {
-  HTTP = 'http',
-  HTTPS = 'https',
-  WS = 'ws',
-  WSS = 'wss'
-}
-
-export interface AgentProvider {
-  organization: string;
-  url: string;
-}
-
-export interface AgentExtension {
-  uri: string;
-  description?: string;
-  required?: boolean;
-}
-
-export interface AgentCapabilities {
-  streaming?: boolean;
-  pushNotifications?: boolean;
-  stateTransitionHistory?: boolean;
-  extensions?: AgentExtension[];
-}
-
-export interface AgentSkill {
-  name: string;
-  description: string;
-  longDescription?: string;
-  parameters?: object;
-  response?: object;
-  implementation?: string;
-}
-
-export interface AgentInterface {
-  transport: TransportProtocol;
-  uri: string;
-  fallback?: {
-    transport: TransportProtocol;
-    uri: string;
-  }[];
-}
-
-export interface AgentCard {
-  agent: {
-    name: string;
-    version: string;
-    description?: string;
-    provider?: AgentProvider;
-    capabilities?: AgentCapabilities;
-    license?: string;
-    documentation?: string;
-    tags?: string[];
-  };
-  interface: AgentInterface;
-  skills: AgentSkill[];
-}
-
-export interface A2AMessage {
-  sender_id: string;
-  receiver_id: string;
-  action: string;
-  params: Record<string, unknown>;
-  message_id: string;
-  timestamp: string;
-  metadata: Record<string, unknown>;
-}
+import {
+  AgentCard,
+  AgentSkill,
+  AgentInterface,
+  AgentCapabilities,
+  AgentExtension,
+  AgentProvider,
+  TransportProtocol,
+  A2AMessage
+} from '@cortex-os/a2a';
 
 /**
  * A2A AI Agent - Exposes AI capabilities as agent skills for multi-agent coordination
