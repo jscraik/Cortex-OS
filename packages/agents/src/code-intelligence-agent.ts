@@ -4,40 +4,11 @@
  */
 
 import { EventEmitter } from 'events';
-// Types for model integration - these would be imported from config in production
-export interface TaskCharacteristics {
-  complexity: 'low' | 'medium' | 'high';
-  latency: 'fast' | 'batch';
-  accuracy: 'high' | 'premium';
-  resource_constraint: 'low' | 'moderate' | 'high';
-  modality: 'text' | 'code' | 'multimodal';
-}
-
-// Mock integration points for development - would be real config in production
-const INTEGRATION_POINTS = {
-  agents: {
-    codeIntelligence: {
-      models: ['qwen3-coder-7b', 'qwen3-coder-14b', 'deepseek-coder-33b'],
-      routing: 'dynamic' as const,
-      fallback: 'qwen3-coder-7b'
-    }
-  }
-};
-
-// Mock model selection - would be real implementation in production
-function selectOptimalModel(
-  domain: string,
-  capability: string, 
-  characteristics: TaskCharacteristics
-): string {
-  if (characteristics.accuracy === 'premium') {
-    return 'deepseek-coder-33b';
-  }
-  if (characteristics.latency === 'fast') {
-    return 'qwen3-coder-7b';
-  }
-  return 'qwen3-coder-14b';
-}
+import {
+  selectOptimalModel,
+  TaskCharacteristics,
+} from '../../../config/model-integration-strategy.js';
+import { z } from 'zod';
 
 export type UrgencyLevel = 'low' | 'medium' | 'high';
 export type AnalysisType = 'review' | 'refactor' | 'optimize' | 'architecture' | 'security';
@@ -106,6 +77,56 @@ export interface PerformanceBottleneck {
   suggestion: string;
 }
 
+const suggestionSchema = z.object({
+  type: z.enum(['improvement', 'refactor', 'bug_fix', 'optimization']),
+  line: z.number().optional(),
+  description: z.string(),
+  code: z.string().optional(),
+  rationale: z.string(),
+  priority: z.enum(['low', 'medium', 'high', 'critical']),
+});
+
+const complexitySchema = z.object({
+  cyclomatic: z.number(),
+  cognitive: z.number(),
+  maintainability: z.enum(['low', 'medium', 'high']),
+  hotspots: z.array(z.string()),
+});
+
+const securityVulnerabilitySchema = z.object({
+  type: z.string(),
+  severity: z.enum(['info', 'warning', 'error', 'critical']),
+  line: z.number().optional(),
+  description: z.string(),
+  mitigation: z.string(),
+});
+
+const securitySchema = z.object({
+  vulnerabilities: z.array(securityVulnerabilitySchema),
+  riskLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  recommendations: z.array(z.string()),
+});
+
+const performanceBottleneckSchema = z.object({
+  location: z.string(),
+  impact: z.enum(['low', 'medium', 'high']),
+  suggestion: z.string(),
+});
+
+const performanceSchema = z.object({
+  bottlenecks: z.array(performanceBottleneckSchema),
+  memoryUsage: z.enum(['efficient', 'moderate', 'high', 'excessive']),
+  optimizations: z.array(z.string()),
+});
+
+const rawAnalysisResultSchema = z.object({
+  suggestions: z.array(suggestionSchema),
+  complexity: complexitySchema,
+  security: securitySchema,
+  performance: performanceSchema,
+  confidence: z.number(),
+});
+
 export class CodeIntelligenceAgent extends EventEmitter {
   private readonly ollamaEndpoint: string;
   private readonly mlxEndpoint: string;
@@ -118,13 +139,24 @@ export class CodeIntelligenceAgent extends EventEmitter {
     } = {},
   ) {
     super();
-    this.ollamaEndpoint = config.ollamaEndpoint || 'http://localhost:11434';
-    this.mlxEndpoint = config.mlxEndpoint || 'http://localhost:8765';
+    this.ollamaEndpoint =
+      config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
+    this.mlxEndpoint =
+      config.mlxEndpoint ?? process.env.MLX_ENDPOINT ?? '';
+    if (!this.ollamaEndpoint || !this.mlxEndpoint) {
+      throw new Error('Ollama and MLX endpoints must be provided');
+    }
     this.analysisHistory = new Map();
   }
 
   async analyzeCode(request: CodeAnalysisRequest): Promise<CodeAnalysisResult> {
     const startTime = Date.now();
+
+    const cacheKey = this.generateCacheKey(request);
+    const cached = this.analysisHistory.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
 
     // Determine optimal model based on task characteristics
     const characteristics: TaskCharacteristics = {
@@ -149,11 +181,10 @@ export class CodeIntelligenceAgent extends EventEmitter {
         throw new Error(`Unsupported model: ${modelId}`);
       }
 
-      result.processingTime = Math.max(1, Date.now() - startTime);
+      result.processingTime = Date.now() - startTime;
       result.modelUsed = modelId;
 
       // Cache result
-      const cacheKey = this.generateCacheKey(request);
       this.analysisHistory.set(cacheKey, result);
 
       this.emit('analysis_complete', { request, result });
@@ -189,7 +220,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
       throw new Error(`Qwen3-Coder analysis failed: ${response.statusText}`);
     }
 
-    const data = await response.json() as { response: string };
+    const data = await response.json();
     return this.parseCodeAnalysisResponse(data.response, 'qwen3-coder');
   }
 
@@ -218,13 +249,11 @@ export class CodeIntelligenceAgent extends EventEmitter {
       throw new Error(`DeepSeek-Coder analysis failed: ${response.statusText}`);
     }
 
-    const data = await response.json() as { response: string };
+    const data = await response.json();
     return this.parseCodeAnalysisResponse(data.response, 'deepseek-coder');
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
-    const analysisTypes = INTEGRATION_POINTS.agents.codeIntelligence;
-
     return `As an expert code analyst, perform a comprehensive ${request.analysisType} analysis of the following ${request.language} code.
 
 Context: ${request.context || 'No additional context provided'}
@@ -249,56 +278,24 @@ Urgency: ${request.urgency}`;
   }
 
   private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
-    // Check if this is a security analysis based on model type or content
-    const isSecurityAnalysis = modelType.includes('deepseek') || response.toLowerCase().includes('security');
-    const hasCriticalVulns = response.toLowerCase().includes('critical') || response.toLowerCase().includes('vulnerability');
-    
-    return {
-      suggestions: [
-        {
-          type: hasCriticalVulns ? 'bug_fix' : 'improvement',
-          line: 1,
-          description: hasCriticalVulns ? 'Critical security vulnerability detected' : 'Consider adding input validation',
-          code: hasCriticalVulns ? 'const sanitizedInput = sanitize(userInput);' : '// Add validation logic here',
-          rationale: hasCriticalVulns ? 'Prevents security exploits' : 'Improves security and error handling',
-          priority: hasCriticalVulns ? 'critical' : 'medium',
-        },
-      ],
-      complexity: {
-        cyclomatic: 5,
-        cognitive: 3,
-        maintainability: 'high',
-        hotspots: ['function processData()'],
-      },
-      security: {
-        vulnerabilities: isSecurityAnalysis && hasCriticalVulns ? [{
-          type: 'SQL Injection',
-          severity: 'critical' as const,
-          line: 1,
-          description: 'Critical security vulnerability detected',
-          mitigation: 'Use parameterized queries'
-        }] : [],
-        riskLevel: isSecurityAnalysis && hasCriticalVulns ? 'critical' : 'low',
-        recommendations: ['Add input sanitization', 'Implement proper error handling'],
-      },
-      performance: {
-        bottlenecks: [],
-        memoryUsage: 'efficient',
-        optimizations: ['Consider caching repeated calculations'],
-      },
-      confidence: 0.85,
-      modelUsed: modelType,
-      processingTime: 1, // Will be overridden by caller
-    };
+    let raw: unknown;
+    try {
+      raw = JSON.parse(response);
+    } catch {
+      throw new Error('Model response is not valid JSON');
+    }
+
+    const parsed = rawAnalysisResultSchema.parse(raw);
+    return { ...parsed, modelUsed: modelType, processingTime: 0 };
   }
 
   private assessComplexity(code: string): 'low' | 'medium' | 'high' {
-    const lines = code.split('\n').filter(line => line.trim().length > 0).length;
+    const lines = code.split('\n').length;
     const complexityIndicators = (code.match(/if|for|while|switch|catch|function|class/g) || [])
       .length;
 
-    if (lines > 100 || complexityIndicators > 15) return 'high';
-    if (lines > 10 || complexityIndicators > 3) return 'medium';
+    if (lines > 200 || complexityIndicators > 20) return 'high';
+    if (lines > 50 || complexityIndicators > 10) return 'medium';
     return 'low';
   }
 
