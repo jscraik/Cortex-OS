@@ -19,8 +19,8 @@ export interface Document {
 export interface EnhancedRAGConfig {
   /** Embedding model size (0.6B, 4B, or 8B) */
   embeddingModelSize?: '0.6B' | '4B' | '8B';
-  /** Available generation models with MLX-first priority */
-  generationModels: ModelSpec[];
+  /** Generation model specification */
+  generationModel: ModelSpec;
   /** Top-k documents to retrieve */
   topK?: number;
   /** Reranking configuration */
@@ -31,12 +31,12 @@ export interface EnhancedRAGConfig {
 }
 
 /**
- * Enhanced RAG pipeline with MLX-first multi-model support
+ * Enhanced RAG pipeline
  *
  * Features:
  * - Qwen3 embedding models (configurable sizes)
  * - Qwen3 reranking for improved relevance
- * - MLX-first generation with Ollama fallback
+ * - Configurable generation model
  * - Comprehensive error handling and performance tracking
  */
 export class EnhancedRAGPipeline {
@@ -57,7 +57,7 @@ export class EnhancedRAGPipeline {
     this.embedder = new Qwen3Embedder({ modelSize: this.config.embeddingModelSize });
     this.reranker = new Qwen3Reranker();
     this.generator = new MultiModelGenerator({
-      models: this.config.generationModels,
+      model: this.config.generationModel,
       defaultConfig: {
         maxTokens: 2048,
         temperature: 0.7,
@@ -65,80 +65,6 @@ export class EnhancedRAGPipeline {
       },
       timeout: 30000,
     });
-  }
-
-  /**
-   * Create MLX-first model configuration
-   */
-  static createMLXFirstConfig(): ModelSpec[] {
-    return [
-      // MLX models (priority 100+ automatically added)
-      {
-        model: '/Volumes/SSD500/Models/MLX/qwen2.5-coder-32b-instruct-q4',
-        backend: 'mlx',
-        name: 'Qwen2.5 Coder 32B',
-        description: 'High-performance coding model',
-        useCases: ['code generation', 'technical writing'],
-        priority: 10,
-      },
-      {
-        model: '/Volumes/SSD500/Models/MLX/qwen2.5-72b-instruct-q4',
-        backend: 'mlx',
-        name: 'Qwen2.5 72B',
-        description: 'Large general-purpose model',
-        useCases: ['complex reasoning', 'analysis'],
-        priority: 9,
-      },
-      {
-        model: '/Volumes/SSD500/Models/MLX/glm-4.5-9b-chat-1m-q4',
-        backend: 'mlx',
-        name: 'GLM-4.5 9B',
-        description: 'Efficient long-context model',
-        useCases: ['document analysis', 'summarization'],
-        priority: 8,
-      },
-      {
-        model: '/Volumes/SSD500/Models/MLX/phi-3.5-mini-instruct-q4',
-        backend: 'mlx',
-        name: 'Phi-3.5 Mini',
-        description: 'Fast lightweight model',
-        useCases: ['quick queries', 'chat'],
-        priority: 7,
-      },
-      // Ollama fallback models (priority 0-10, will be sorted after MLX)
-      {
-        model: 'qwen3-coder:30b',
-        backend: 'ollama',
-        name: 'Qwen3 Coder 30B (Ollama)',
-        description: 'Reliable coding fallback',
-        useCases: ['code generation'],
-        priority: 5,
-      },
-      {
-        model: 'phi4-mini-reasoning',
-        backend: 'ollama',
-        name: 'Phi4 Mini Reasoning (Ollama)',
-        description: 'Reasoning fallback',
-        useCases: ['analysis', 'reasoning'],
-        priority: 4,
-      },
-      {
-        model: 'gemma3n',
-        backend: 'ollama',
-        name: 'Gemma3N (Ollama)',
-        description: 'General purpose fallback',
-        useCases: ['general queries'],
-        priority: 3,
-      },
-      {
-        model: 'deepseek-coder',
-        backend: 'ollama',
-        name: 'DeepSeek Coder (Ollama)',
-        description: 'Code analysis fallback',
-        useCases: ['code review'],
-        priority: 2,
-      },
-    ];
   }
 
   /**
@@ -273,23 +199,17 @@ Question: ${query}
 Answer:`;
   }
 
-  /**
-   * Get model information and priority order
-   */
-  getModelPriority(): Array<{ model: string; backend: string; priority: number }> {
-    return this.generator['models'].map((model) => ({
-      model: model.model,
-      backend: model.backend,
-      priority: (model.priority || 0) + (model.backend === 'mlx' ? 100 : 0),
-    }));
-  }
 }
 
 // Example usage and factory functions
 export const createProductionRAGPipeline = () => {
   return new EnhancedRAGPipeline({
     embeddingModelSize: '4B', // Good balance of performance and quality
-    generationModels: EnhancedRAGPipeline.createMLXFirstConfig(),
+    generationModel: {
+      model: '/Volumes/SSD500/Models/MLX/qwen2.5-coder-32b-instruct-q4',
+      backend: 'mlx',
+      name: 'Qwen2.5 Coder 32B',
+    },
     topK: 10,
     rerank: { enabled: true, topK: 5 },
   });
@@ -298,7 +218,11 @@ export const createProductionRAGPipeline = () => {
 export const createFastRAGPipeline = () => {
   return new EnhancedRAGPipeline({
     embeddingModelSize: '0.6B', // Faster embedding
-    generationModels: EnhancedRAGPipeline.createMLXFirstConfig().slice(0, 4), // Fewer models
+    generationModel: {
+      model: '/Volumes/SSD500/Models/MLX/phi-3.5-mini-instruct-q4',
+      backend: 'mlx',
+      name: 'Phi-3.5 Mini',
+    },
     topK: 5,
     rerank: { enabled: false }, // Skip reranking for speed
   });
@@ -307,7 +231,11 @@ export const createFastRAGPipeline = () => {
 export const createHighQualityRAGPipeline = () => {
   return new EnhancedRAGPipeline({
     embeddingModelSize: '8B', // Best embedding quality
-    generationModels: EnhancedRAGPipeline.createMLXFirstConfig(),
+    generationModel: {
+      model: '/Volumes/SSD500/Models/MLX/qwen2.5-72b-instruct-q4',
+      backend: 'mlx',
+      name: 'Qwen2.5 72B',
+    },
     topK: 15,
     rerank: { enabled: true, topK: 8 }, // More comprehensive reranking
   });

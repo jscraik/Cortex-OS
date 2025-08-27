@@ -1,6 +1,6 @@
 /**
  * Enhanced Qwen3 Embedding Integration for Cortex RAG
- * Supports all Qwen3-Embedding models (0.6B, 4B, 8B) with automatic fallback
+ * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
 
 import { spawn } from 'child_process';
@@ -10,7 +10,6 @@ export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
 export interface Qwen3EmbedOptions {
   modelSize?: Qwen3ModelSize;
-  fallbackChain?: Qwen3ModelSize[];
   maxTokens?: number;
   batchSize?: number;
   useGPU?: boolean;
@@ -19,14 +18,12 @@ export interface Qwen3EmbedOptions {
 
 export class Qwen3Embedder implements Embedder {
   private readonly modelSize: Qwen3ModelSize;
-  private readonly fallbackChain: Qwen3ModelSize[];
   private readonly cacheDir: string;
   private readonly maxTokens: number;
   private readonly batchSize: number;
 
   constructor(options: Qwen3EmbedOptions = {}) {
     this.modelSize = options.modelSize || '4B';
-    this.fallbackChain = options.fallbackChain || ['4B', '0.6B', '8B'];
     this.cacheDir = options.cacheDir || '/Volumes/ExternalSSD/.cache/huggingface';
     this.maxTokens = options.maxTokens || 512;
     this.batchSize = options.batchSize || 32;
@@ -47,15 +44,7 @@ export class Qwen3Embedder implements Embedder {
   }
 
   private async embedBatch(texts: string[]): Promise<number[][]> {
-    for (const modelSize of this.fallbackChain) {
-      try {
-        return await this.embedWithModel(texts, modelSize);
-      } catch (error) {
-        console.warn(`Qwen3-Embedding-${modelSize} failed, trying next model:`, error);
-        continue;
-      }
-    }
-    throw new Error('All Qwen3 embedding models failed');
+    return this.embedWithModel(texts, this.modelSize);
   }
 
   private async embedWithModel(texts: string[], modelSize: Qwen3ModelSize): Promise<number[][]> {
@@ -157,7 +146,6 @@ export const Qwen3Presets = {
   development: (): Qwen3Embedder =>
     createQwen3Embedder({
       modelSize: '0.6B',
-      fallbackChain: ['0.6B'],
       batchSize: 64,
     }),
 
@@ -165,7 +153,6 @@ export const Qwen3Presets = {
   production: (): Qwen3Embedder =>
     createQwen3Embedder({
       modelSize: '4B',
-      fallbackChain: ['4B', '0.6B'],
       batchSize: 32,
     }),
 
@@ -173,7 +160,6 @@ export const Qwen3Presets = {
   research: (): Qwen3Embedder =>
     createQwen3Embedder({
       modelSize: '8B',
-      fallbackChain: ['8B', '4B', '0.6B'],
       batchSize: 16,
     }),
 } as const;

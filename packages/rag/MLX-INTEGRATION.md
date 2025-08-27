@@ -152,17 +152,20 @@ const reranker = new Qwen3Reranker();
 const reranked = await reranker.rerank(query, documents, 5);
 ```
 
-### 3. Generation (Multi-Model)
+### 3. Generation
 
 ```typescript
-// MLX-first with Ollama fallback
+// Single model configuration
 const generator = new MultiModelGenerator({
-  models: EnhancedRAGPipeline.createMLXFirstConfig(),
+  model: {
+    model: '/Volumes/SSD500/Models/MLX/qwen2.5-coder-32b-instruct-q4',
+    backend: 'mlx',
+  },
   timeout: 30000,
 });
 
 const response = await generator.generate(prompt);
-console.log(response.provider); // 'mlx' or 'ollama'
+console.log(response.provider); // 'mlx'
 ```
 
 ## 🔧 Advanced Usage
