@@ -43,6 +43,13 @@ export class CortexKernel {
   }
 
   /**
+   * Expose orchestrator neuron count
+   */
+  getNeuronCount(): number {
+    return this.orchestrator.getNeuronCount();
+  }
+
+  /**
    * Run a complete PRP workflow
    */
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {

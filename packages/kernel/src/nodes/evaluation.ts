@@ -6,6 +6,7 @@
  */
 
 import { PRPState, Evidence } from '../state.js';
+import { generateId } from '../utils/id.js';
 
 /**
  * Evaluation Phase Gates:
@@ -27,7 +28,7 @@ export class EvaluationNode {
     }
 
     evidence.push({
-      id: `eval-tdd-${Date.now()}`,
+      id: generateId('eval-tdd', state.metadata.deterministic),
       type: 'test',
       source: 'tdd_validator',
       content: JSON.stringify(tddValidation),
@@ -45,7 +46,7 @@ export class EvaluationNode {
     }
 
     evidence.push({
-      id: `eval-review-${Date.now()}`,
+      id: generateId('eval-review', state.metadata.deterministic),
       type: 'analysis',
       source: 'code_reviewer',
       content: JSON.stringify(reviewValidation),
@@ -66,7 +67,7 @@ export class EvaluationNode {
     }
 
     evidence.push({
-      id: `eval-budgets-${Date.now()}`,
+      id: generateId('eval-budgets', state.metadata.deterministic),
       type: 'validation',
       source: 'quality_budgets',
       content: JSON.stringify(budgetValidation),
@@ -157,9 +158,6 @@ export class EvaluationNode {
     security: { passed: boolean; score: number };
   }> {
     // Extract scores from build phase validation
-    const buildValidation = state.validationResults?.build;
-    const buildEvidence = buildValidation?.evidence || [];
-    
     // Mock quality scores - in real implementation would extract from actual tools
     const accessibilityScore = 95; // From Axe results
     const performanceScore = 94;   // From Lighthouse results
