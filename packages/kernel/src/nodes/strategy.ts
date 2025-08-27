@@ -6,6 +6,7 @@
  */
 
 import { PRPState, Evidence } from '../state.js';
+import { generateId } from '../utils/id.js';
 
 /**
  * Strategy Phase Gates:
@@ -26,7 +27,7 @@ export class StrategyNode {
     }
 
     evidence.push({
-      id: `strategy-blueprint-${Date.now()}`,
+      id: generateId('strategy-blueprint', state.metadata.deterministic),
       type: 'validation',
       source: 'strategy_node',
       content: `Blueprint validation: ${state.blueprint.title}`,
@@ -41,7 +42,7 @@ export class StrategyNode {
     }
 
     evidence.push({
-      id: `strategy-security-${Date.now()}`,
+      id: generateId('strategy-security', state.metadata.deterministic),
       type: 'analysis',
       source: 'security_baseline',
       content: JSON.stringify(securityBaseline),
@@ -134,7 +135,6 @@ export class StrategyNode {
       passed: hasArchitecture,
       details: {
         architectureElements: hasArchitecture ? ['system-design', 'components'] : [],
-        repoConsistency: true, // Placeholder for actual repo structure check
       },
     };
   }

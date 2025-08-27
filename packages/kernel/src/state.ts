@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { generateId } from './utils/id.js';
 
 /**
  * Evidence captured during PRP execution
@@ -87,6 +88,7 @@ export const PRPStateSchema = z.object({
       model: z.string().optional(),
     }).optional(),
     executionContext: z.record(z.any()).optional(),
+    deterministic: z.boolean().optional(),
     // Teaching layer extensions
     validationAdjustments: z.record(z.any()).optional(),
     gateModifications: z.record(z.any()).optional(),
@@ -142,8 +144,8 @@ export const createInitialPRPState = (
   } = {}
 ): PRPState => {
   const now = options.deterministic ? '2025-08-21T00:00:00.000Z' : new Date().toISOString();
-  const id = options.id ?? (options.deterministic ? `prp-deterministic` : `prp-${crypto.randomUUID()}`);
-  const runId = options.runId ?? (options.deterministic ? `run-deterministic` : `run-${crypto.randomUUID()}`);
+  const id = options.id ?? generateId('prp', options.deterministic);
+  const runId = options.runId ?? generateId('run', options.deterministic);
   
   return {
     id,
@@ -156,6 +158,7 @@ export const createInitialPRPState = (
     metadata: {
       startTime: now,
       llmConfig: options.llmConfig,
+      deterministic: options.deterministic,
     },
   };
 };
