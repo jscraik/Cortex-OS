@@ -63,8 +63,9 @@ async function main() {
     if (!ok) anyFailed = true;
   }
   if (anyFailed) {
-    // Let readiness thresholds still run; exit code 0 here to allow reporting
-    log('One or more package tests failed. Readiness check may fail thresholds.');
+    log('One or more package tests failed.');
+    // Propagate failure so CI surfaces the error
+    process.exitCode = 1;
   } else {
     log('All package tests completed.');
   }
