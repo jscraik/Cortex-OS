@@ -4,10 +4,15 @@ import os from 'node:os';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Transport } from '@cortex-os/a2a-core/bus';
 
-export function fsQueue(queueName = 'default'): Transport {
+export async function fsQueue(queueName = 'default'): Promise<Transport> {
   const dir = join(os.homedir(), '.cortex', 'a2a', queueName);
+  try {
+    await fs.mkdir(dir, { recursive: true });
+  } catch (err) {
+    console.error(`Failed to create A2A transport directory ${dir}. Transport will not function properly.`, err);
+    throw err;
+  }
   let listeners: ((m: Envelope) => Promise<void>)[] = [];
-  (async () => fs.mkdir(dir, { recursive: true }))();
 
   return {
     async publish(m) {
