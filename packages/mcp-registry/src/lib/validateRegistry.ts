@@ -95,4 +95,3 @@ export function validateRegistry(
   };
 }
 
-export default validateRegistry;
