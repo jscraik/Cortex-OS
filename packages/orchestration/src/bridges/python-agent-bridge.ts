@@ -51,7 +51,6 @@ export interface AgentBridgeMessage {
     result?: AgentTaskResult;
     error?: string;
     data?: unknown;
-    // Some older bridge variants may place the coordinationId under `id`
     id?: string;
   };
 }
@@ -189,17 +188,6 @@ export class PythonAgentBridge extends EventEmitter {
     });
   }
 
-  /**
-   * Executes a task assigned to the agent.
-   *
-   * This method is provided as an alias for {@link executeAgentTask} to ensure compatibility with frameworks
-   * such as "SomeFramework" and "OtherFramework" (replace with actual framework names) that expect an agent interface
-   * to expose a method named `executeTask`. These frameworks rely on this method name for integration and automatic
-   * task dispatch. Maintaining this alias ensures seamless interoperability without requiring changes to framework code.
-   */
-  async executeTask(payload: AgentTaskPayload): Promise<AgentTaskResult> {
-    return this.executeAgentTask(payload);
-  }
 
   /**
    * Get agent status
@@ -383,12 +371,10 @@ export class PythonAgentBridge extends EventEmitter {
 
   private handleTaskResult(payload: {
     coordinationId?: string;
-    id?: string;
     result?: AgentTaskResult;
   }): void {
     this.logger.info('Handling task result', { payload });
-    const coordinationId = payload.coordinationId || payload.id;
-    const result = payload.result as AgentTaskResult | undefined;
+    const { coordinationId, result } = payload;
 
     if (!coordinationId || !result) {
       this.logger.warn('Malformed task result payload', { payload });
