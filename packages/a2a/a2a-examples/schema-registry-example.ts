@@ -9,11 +9,7 @@ import {
 } from '@cortex-os/a2a-contracts/schema-validation-utils';
 import { z } from 'zod';
 
-const createChildMessage = (parent: Envelope, options: Parameters<typeof createEnvelope>[0]) => {
-  const msg = createEnvelope(options);
-  injectTraceContext(msg, extractTraceContext(parent));
-  return msg;
-};
+import { createChildMessage } from './utils/childMessage';
 
 /**
  * Example demonstrating Event Schema Registry usage and validation
