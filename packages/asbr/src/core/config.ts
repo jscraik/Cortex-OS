@@ -8,9 +8,11 @@ import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import {
   ConfigSchema,
   ValidationError,
+  VersionPinsSchema,
   type Config,
   type MCPAllowlistEntry,
   type SecurityPolicy,
+  type VersionPins,
 } from '../types/index.js';
 import { getConfigPath, pathExists } from '../xdg/index.js';
 
@@ -178,7 +180,7 @@ export async function saveMCPAllowlist(allowlist: MCPAllowlistEntry[]): Promise<
 /**
  * Load version pins from version-pins.yaml
  */
-export async function loadVersionPins(): Promise<Record<string, string>> {
+export async function loadVersionPins(): Promise<VersionPins> {
   const pinsPath = getConfigPath('version-pins.yaml');
 
   if (!(await pathExists(pinsPath))) {
@@ -189,11 +191,15 @@ export async function loadVersionPins(): Promise<Record<string, string>> {
     const content = await readFile(pinsPath, 'utf-8');
     const rawData = yamlLoad(content);
 
-    if (typeof rawData !== 'object' || rawData === null) {
-      throw new ValidationError('Version pins must be an object');
+    const result = VersionPinsSchema.safeParse(rawData);
+    if (!result.success) {
+      throw new ValidationError('Invalid version pins', {
+        errors: result.error.errors,
+        path: pinsPath,
+      });
     }
 
-    return rawData as Record<string, string>;
+    return result.data;
   } catch (error) {
     if (error instanceof ValidationError) {
       throw error;

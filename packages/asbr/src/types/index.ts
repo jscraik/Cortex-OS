@@ -248,6 +248,13 @@ export const ConfigSchema = z.object({
 
 export type Config = z.infer<typeof ConfigSchema>;
 
+export const VersionPinsSchema = z.record(
+  z.string(),
+  z.string().regex(/^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/),
+);
+
+export type VersionPins = z.infer<typeof VersionPinsSchema>;
+
 // XDG Directory Structure
 export interface XDGPaths {
   config: string; // $XDG_CONFIG_HOME/cortex/asbr/
