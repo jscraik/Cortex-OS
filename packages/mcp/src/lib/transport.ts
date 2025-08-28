@@ -72,8 +72,8 @@ export function createTransport(config: TransportConfig) {
         .strict();
       try {
         msgSchema.parse(message);
-      } catch {
-        /* ignore malformed messages */
+      } catch (err) {
+        console.error('Malformed message in transport.send:', err, message);
       }
     },
   };
