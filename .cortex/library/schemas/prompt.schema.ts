@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { z } from "zod";
 
 export const BlockKeys = [
@@ -14,6 +16,19 @@ export const BlockKeys = [
 ] as const;
 
 const BlockKeyEnum = z.enum(BlockKeys);
+
+const validateSchemaPath = (p: string): boolean => {
+  const full = resolve(process.cwd(), p);
+  if (!existsSync(full)) return false;
+  if (p.endsWith(".schema.json")) {
+    try {
+      JSON.parse(readFileSync(full, "utf-8"));
+    } catch {
+      return false;
+    }
+  }
+  return true;
+};
 
 export const BlocksSchema = z.array(
   z.object({
@@ -46,14 +61,20 @@ export const PromptMetaSchema = z.object({
   inputs_schema: z
     .string()
     .min(1)
-    .regex(/\.schema\.json$/, {
-      message: "inputs_schema must reference a JSON schema file"
+    .regex(/\.(schema\.json|ts)$/, {
+      message: "inputs_schema must reference a .schema.json or .ts file"
+    })
+    .refine((p) => validateSchemaPath(p), {
+      message: "inputs_schema file must exist and be valid"
     }),
   outputs_schema: z
     .string()
     .min(1)
-    .regex(/\.schema\.json$/, {
-      message: "outputs_schema must reference a JSON schema file"
+    .regex(/\.(schema\.json|ts)$/, {
+      message: "outputs_schema must reference a .schema.json or .ts file"
+    })
+    .refine((p) => validateSchemaPath(p), {
+      message: "outputs_schema file must exist and be valid"
     }),
 });
 
