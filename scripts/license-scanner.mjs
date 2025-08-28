@@ -11,6 +11,7 @@ import parseSpdx from 'spdx-expression-parse';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
+const reportsDir = path.join(repoRoot, 'reports', 'compliance');
 
 // Configure allowed SPDX license IDs (expand as needed)
 const ALLOWED = new Set([
@@ -227,6 +228,102 @@ async function main() {
       '\nPython (uv) not available or no packages detected; skipping Python license scan.',
     );
   }
+
+  // Prepare reports (JSON + Markdown)
+  const toRel = (p) => (p && p.path ? path.relative(repoRoot, p.path) : '');
+  const report = {
+    generatedAt: new Date().toISOString(),
+    policy: { allowed: Array.from(ALLOWED).sort() },
+    node: {
+      total: nodeSummary.total,
+      allowed: nodeSummary.allowed,
+      unknownCount: nodeSummary.unknown.length,
+      disallowedCount: nodeSummary.disallowed.length,
+      unknown: nodeSummary.unknown.map((p) => ({
+        name: p.name,
+        version: p.version,
+        license: p.license || null,
+        path: toRel(p),
+      })),
+      disallowed: nodeSummary.disallowed.map((p) => ({
+        name: p.name,
+        version: p.version,
+        license: p.license,
+        path: toRel(p),
+      })),
+    },
+  };
+  // Attach Python section when available
+  if (pyPkgs.length) {
+    const pyUnknown = pyPkgs.filter((p) => !p.license);
+    const pyDisallowed = pyPkgs.filter((p) => p.license && !isLicenseAllowed(p.license));
+    report.python = {
+      total: pyPkgs.length,
+      unknownCount: pyUnknown.length,
+      disallowedCount: pyDisallowed.length,
+      unknown: pyUnknown.map((p) => ({ name: p.name, version: p.version, license: null })),
+      disallowed: pyDisallowed.map((p) => ({ name: p.name, version: p.version, license: p.license })),
+    };
+  }
+
+  // Ensure output directory and write files
+  await fs.mkdir(reportsDir, { recursive: true });
+  const jsonPath = path.join(reportsDir, 'license-scan.json');
+  const mdPath = path.join(reportsDir, 'license-scan.md');
+  await fs.writeFile(jsonPath, JSON.stringify(report, null, 2));
+
+  const lines = [];
+  lines.push('# License Scan Report');
+  lines.push('');
+  lines.push(`Generated: ${report.generatedAt}`);
+  lines.push('');
+  lines.push('## Policy');
+  lines.push('Allowed SPDX IDs:');
+  for (const id of report.policy.allowed) lines.push(`- ${id}`);
+  lines.push('');
+  lines.push('## Node (pnpm) summary');
+  lines.push(`- Total: ${report.node.total}`);
+  lines.push(`- Allowed: ${report.node.allowed}`);
+  lines.push(`- Unknown: ${report.node.unknownCount}`);
+  lines.push(`- Disallowed: ${report.node.disallowedCount}`);
+  lines.push('');
+  if (report.node.unknownCount) {
+    lines.push('### Unknown');
+    for (const p of report.node.unknown) {
+      lines.push(`- ${p.name}@${p.version} license: <missing>${p.path ? ` (${p.path})` : ''}`);
+    }
+    lines.push('');
+  }
+  if (report.node.disallowedCount) {
+    lines.push('### Disallowed');
+    for (const p of report.node.disallowed) {
+      lines.push(`- ${p.name}@${p.version} license: ${p.license}${p.path ? ` (${p.path})` : ''}`);
+    }
+    lines.push('');
+  }
+  if (report.python) {
+    lines.push('## Python (uv) summary');
+    lines.push(`- Total: ${report.python.total}`);
+    lines.push(`- Unknown: ${report.python.unknownCount}`);
+    lines.push(`- Disallowed: ${report.python.disallowedCount}`);
+    lines.push('');
+    if (report.python.unknownCount) {
+      lines.push('### Python Unknown');
+      for (const p of report.python.unknown) {
+        lines.push(`- ${p.name}@${p.version} license: <missing>`);
+      }
+      lines.push('');
+    }
+    if (report.python.disallowedCount) {
+      lines.push('### Python Disallowed');
+      for (const p of report.python.disallowed) {
+        lines.push(`- ${p.name}@${p.version} license: ${p.license}`);
+      }
+      lines.push('');
+    }
+  }
+  await fs.writeFile(mdPath, lines.join('\n'));
+  console.log(`\nReports written:\n - ${path.relative(repoRoot, jsonPath)}\n - ${path.relative(repoRoot, mdPath)}`);
 
   const failed =
     nodeSummary.disallowed.length > 0 ||

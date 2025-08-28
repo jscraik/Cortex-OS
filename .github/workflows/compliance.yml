@@ -24,6 +24,15 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: License validation
         run: pnpm license:validate
+      - name: Upload license reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report-${{ github.sha }}
+          path: |
+            reports/compliance/license-scan.json
+            reports/compliance/license-scan.md
+          if-no-files-found: warn
       - name: Generate SBOM
         run: pnpm sbom:generate
       - name: Upload SBOM
