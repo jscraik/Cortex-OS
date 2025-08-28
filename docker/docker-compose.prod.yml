@@ -19,8 +19,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
+      - ../infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../infra/nginx/ssl:/etc/nginx/ssl:ro
       - nginx_logs:/var/log/nginx
     environment:
       - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
@@ -41,8 +41,8 @@ services:
   # FastAPI Backend
   cortex-api:
     build:
-      context: ./apps/cortex-py
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: apps/cortex-py/Dockerfile.prod
       args:
         - BUILD_ENV=production
     environment:
@@ -60,7 +60,7 @@ services:
       - SECURITY_HEADERS_ENABLED=true
     volumes:
       - api_logs:/app/logs
-      - ./data:/app/data:ro
+      - ../data:/app/data:ro
     depends_on:
       qdrant:
         condition: service_healthy
@@ -92,8 +92,8 @@ services:
   # Next.js Frontend
   cortex-web:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: apps/cortex-web/Dockerfile.prod
       args:
         - BUILD_ENV=production
         - NEXT_PUBLIC_API_URL=https://api.cortex.example.com
@@ -474,12 +474,12 @@ networks:
 
 secrets:
   neo4j_password:
-    file: ./secrets/neo4j_password.txt
+    file: ../secrets/neo4j_password.txt
   openai_api_key:
-    file: ./secrets/openai_api_key.txt
+    file: ../secrets/openai_api_key.txt
   grafana_admin_password:
-    file: ./secrets/grafana_admin_password.txt
+    file: ../secrets/grafana_admin_password.txt
   elasticsearch_password:
-    file: ./secrets/elasticsearch_password.txt
+    file: ../secrets/elasticsearch_password.txt
 
 # © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.
