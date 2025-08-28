@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Cortex-OS Review Evidence",
   "description": "A schema for machine-readable review evidence emitted by the Reviewer neuron.",
   "type": "object",
