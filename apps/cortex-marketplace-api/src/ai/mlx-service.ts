@@ -10,6 +10,9 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 // Note: Marketplace uses an extended manifest vs. the base registry type.
 // Use the local manifest type explicitly to avoid cross-package type drift.
+// Use local Marketplace manifest. It is schema-compatible with the registry's
+// ServerManifest for the fields we consume. We also validate at runtime with
+// Zod to prevent drift.
 import type { ServerManifest as MarketplaceServer } from '../types.js';
 import { ServerManifestSchema } from '../types.js';
 
@@ -146,7 +149,7 @@ except Exception as e:
         return results.sort((a, b) => b.relevanceScore - a.relevanceScore);
       } catch (error) {
         console.warn('MLX semantic search failed:', error);
-  return servers.map((server) => ({
+        return servers.map((server) => ({
           server,
           similarity: 0,
           relevanceScore: calculateBasicRelevance(query, server),
