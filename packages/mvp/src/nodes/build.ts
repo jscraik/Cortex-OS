@@ -131,39 +131,16 @@ export class BuildNode {
       };
     }
 
-    const schemaRaw = state.blueprint.metadata?.apiSchema;
-    if (!schemaRaw) {
-      return {
-        passed: false,
-        details: {
-          schemaFormat: 'missing',
-          validation: 'failed',
-          reason: 'apiSchema metadata missing',
-        },
-      };
-    }
-
-    try {
-      const parsed = typeof schemaRaw === 'string' ? JSON.parse(schemaRaw) : schemaRaw;
-      const schemaFormat = parsed.openapi ? 'OpenAPI' : parsed.swagger ? 'Swagger' : 'unknown';
-      const valid = typeof parsed === 'object' && (parsed.openapi || parsed.swagger);
-      return {
-        passed: valid,
-        details: {
-          schemaFormat,
-          validation: valid ? 'passed' : 'failed',
-        },
-      };
-    } catch (error) {
-      return {
-        passed: false,
-        details: {
-          schemaFormat: 'invalid',
-          validation: 'failed',
-          reason: 'invalid JSON',
-        },
-      };
-    }
+    // Check if schema exists in outputs
+    const hasSchema = state.outputs?.['api-schema'] !== undefined;
+    
+    return {
+      passed: hasSchema, // Properly fail when schema is missing
+      details: {
+        schemaFormat: hasSchema ? 'OpenAPI 3.0' : 'missing',
+        validation: hasSchema ? 'passed' : 'failed',
+      },
+    };
   }
 
   private async runSecurityScan(

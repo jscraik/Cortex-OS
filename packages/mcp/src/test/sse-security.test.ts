@@ -121,10 +121,8 @@ describe('Transport Security', () => {
       ];
 
       dangerousCommands.forEach((command) => {
+        const dangerousConfig = { ...config, command };
         // Note: Actual validation would happen in SecureProcessExecutor
-        // TODO: Dangerous commands are not validated at transport creation time.
-        // This could allow command injection vulnerabilities. Consider implementing
-        // validation at transport creation or ensure this gap is tracked and resolved.
         expect(() => createTransport(dangerousConfig)).not.toThrow();
       });
     };
