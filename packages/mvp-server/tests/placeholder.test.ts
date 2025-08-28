@@ -8,7 +8,7 @@
  * status: temporary
  */
 
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
 describe('mcp-server core functionality', () => {
   let mockServer: any;

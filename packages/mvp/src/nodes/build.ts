@@ -121,11 +121,24 @@ export class BuildNode {
       req.toLowerCase().includes('endpoint')
     );
 
+    if (!hasAPI) {
+      return {
+        passed: true,
+        details: {
+          schemaFormat: 'N/A',
+          validation: 'skipped',
+        },
+      };
+    }
+
+    // Check if schema exists in outputs
+    const hasSchema = state.outputs?.['api-schema'] !== undefined;
+    
     return {
-      passed: hasAPI ? true : true, // Skip if no API
+      passed: hasSchema, // Properly fail when schema is missing
       details: {
-        schemaFormat: hasAPI ? 'OpenAPI 3.0' : 'N/A',
-        validation: hasAPI ? 'passed' : 'skipped',
+        schemaFormat: hasSchema ? 'OpenAPI 3.0' : 'missing',
+        validation: hasSchema ? 'passed' : 'failed',
       },
     };
   }

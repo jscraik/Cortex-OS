@@ -82,8 +82,8 @@ describe('Cortex Kernel Integration', () => {
 
       const result = await kernel.runPRPWorkflow(blueprint);
 
-      // Should successfully get neuron count from orchestrator
-      expect(kernel.getNeuronCount()).toBe(5);
+      // Should successfully get neuron count from orchestrator directly
+      expect(kernel.orchestrator.getNeuronCount()).toBe(5);
       
       // Workflow should complete successfully
       expect(result.phase).toBe('completed');

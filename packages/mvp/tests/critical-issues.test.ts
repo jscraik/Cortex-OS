@@ -200,7 +200,7 @@ describe('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
       expect(kernel.getNeuronCount).toBeUndefined(); // Should not exist
       
       // Direct access should be preferred
-      expect(kernel.orchestrator?.getNeuronCount()).toBe(5);
+      expect(kernel.orchestrator.getNeuronCount()).toBe(5);
     });
   });
 

@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { nanoid } from 'nanoid';
 
 /**
  * Evidence captured during PRP execution
@@ -137,13 +138,20 @@ export const createInitialPRPState = (
   options: {
     id?: string;
     runId?: string;
-    llmConfig?: PRPState['metadata']['llmConfig'];
     deterministic?: boolean;
   } = {}
 ): PRPState => {
-  const now = options.deterministic ? '2025-08-21T00:00:00.000Z' : new Date().toISOString();
-  const id = options.id ?? (options.deterministic ? `prp-deterministic` : `prp-${crypto.randomUUID()}`);
-  const runId = options.runId ?? (options.deterministic ? `run-deterministic` : `run-${crypto.randomUUID()}`);
+  const now = options.deterministic 
+    ? '2025-01-01T00:00:00.000Z' 
+    : new Date().toISOString();
+  
+  const id = options.id ?? (options.deterministic 
+    ? `prp-${Math.abs(JSON.stringify(blueprint).split('').reduce((a,b) => ((a << 5) - a + b.charCodeAt(0))|0, 0))}`
+    : `prp-${crypto.randomUUID?.() || nanoid()}`);
+  
+  const runId = options.runId ?? (options.deterministic 
+    ? `run-${Math.abs(JSON.stringify(blueprint).split('').reduce((a,b) => ((a << 5) - a + b.charCodeAt(0))|0, 0))}`
+    : `run-${crypto.randomUUID?.() || nanoid()}`);
   
   return {
     id,

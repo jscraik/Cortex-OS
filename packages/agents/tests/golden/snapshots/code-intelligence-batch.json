@@ -1,0 +1,55 @@
+{
+  "input": [
+    {
+      "code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
+      "language": "javascript",
+      "context": "Test function for data processing",
+      "analysisType": "review",
+      "urgency": "medium"
+    },
+    {
+      "code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
+      "language": "javascript",
+      "context": "Test function for data processing",
+      "analysisType": "optimize",
+      "urgency": "medium"
+    },
+    {
+      "code": "function complex() { for(let i=0; i<10; i++) { if(a) { if(b) { return c; } } } }",
+      "language": "javascript",
+      "context": "Test function for data processing",
+      "analysisType": "review",
+      "urgency": "medium"
+    }
+  ],
+  "output": [
+    {
+      "requestType": "review",
+      "urgency": "medium",
+      "confidence": 0.85,
+      "modelUsed": "qwen3-coder-14b",
+      "processingTime": 1
+    },
+    {
+      "requestType": "optimize",
+      "urgency": "medium",
+      "confidence": 0.85,
+      "modelUsed": "qwen3-coder-14b",
+      "processingTime": 1
+    },
+    {
+      "requestType": "review",
+      "urgency": "medium",
+      "confidence": 0.85,
+      "modelUsed": "qwen3-coder-14b",
+      "processingTime": 1
+    }
+  ],
+  "metadata": {
+    "seed": 12345,
+    "testType": "batch-analysis"
+  },
+  "timestamp": 1756323507520,
+  "seed": 12345,
+  "nodeVersion": "v24.6.0"
+}
