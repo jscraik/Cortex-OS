@@ -8,8 +8,8 @@ meta:
   stack_tags: []
   risk_flags: []
   a11y_flags: []
-  inputs_schema: .cortex/library/schemas/inputs.core.schema.json
-  outputs_schema: .cortex/library/schemas/outputs.core.schema.json
+  inputs_schema: ../../../schemas/inputs.core.schema.json
+  outputs_schema: ../../../schemas/outputs.core.schema.json
 blocks:
   - task_context: >-
       Verify a prompt adheres to the Cortex-OS 10-block standard and declares
@@ -27,8 +27,8 @@ blocks:
   - examples: |-
       compliant:
         meta:
-          inputs_schema: .cortex/library/schemas/inputs.core.schema.json
-          outputs_schema: .cortex/library/schemas/outputs.core.schema.json
+          inputs_schema: ../../../schemas/inputs.core.schema.json
+          outputs_schema: ../../../schemas/outputs.core.schema.json
         blocks:
           - task_context: example task
       non_compliant:
