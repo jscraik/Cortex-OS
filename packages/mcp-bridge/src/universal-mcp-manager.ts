@@ -7,7 +7,7 @@
  * @status active
  */
 
-import { createHash, randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 import { URL } from 'url';
 import { z } from 'zod';
 import { mcpConfigStorage } from './mcp-config-storage.js';
@@ -68,8 +68,6 @@ const McpServerRequestSchema = z.object({
 
 type McpServerRequest = z.infer<typeof McpServerRequestSchema>;
 
-import { defaultSecurityPolicy } from './security-policy.js';
-
 interface SecurityPolicy {
   allowedDomains: string[];
   blockedDomains: string[];
@@ -92,6 +90,15 @@ interface ValidationResult {
  * Universal MCP server manager with security validation
  */
 export class UniversalMcpManager {
+  private readonly defaultSecurityPolicy: SecurityPolicy = {
+    allowedDomains: ['localhost', '127.0.0.1', 'api.ref.tools'],
+    blockedDomains: ['127.0.0.2', '0.0.0.0', '169.254.169.254'], // Block metadata services
+    requireApiKey: true,
+    requireUserApproval: true,
+    maxConnections: 10,
+    sandbox: true,
+    allowedCapabilities: ['read', 'search', 'info'],
+  };
   /**
    * Parse and validate MCP server addition command from any CLI format
    */
@@ -101,13 +108,17 @@ export class UniversalMcpManager {
     // claude mcp add --transport http ref-server https://api.ref.tools/mcp --header "Authorization: Bearer token"
     // gemini mcp add ref-server --url https://api.ref.tools/mcp --key ref-e672788111c76ba32bc1
 
-    const tokens = command.trim().split(/\s+/);
-    const mcpIndex = tokens.indexOf('mcp');
-    if (mcpIndex === -1 || tokens[mcpIndex + 1] !== 'add') {
-      return null;
-    }
+    const parts = command.trim().split(/\s+/);
 
-    const args = tokens.slice(mcpIndex + 2);
+    // Remove the CLI prefix (cortex, claude, gemini, etc.)
+    let startIndex = 0;
+    if (parts[0] && !parts[0].startsWith('-')) {
+      startIndex = 1; // Skip CLI name
+    }
+    if (parts[startIndex] === 'mcp') startIndex++;
+    if (parts[startIndex] === 'add') startIndex++;
+
+    const args = parts.slice(startIndex);
     const parsed: Partial<McpServerRequest> = {
       scopes: ['read'],
       autoApprove: false,
@@ -200,8 +211,8 @@ export class UniversalMcpManager {
 
     try {
       return McpServerRequestSchema.parse(parsed);
-    } catch (error) {
-      console.error('Failed to parse MCP command:', error);
+    } catch {
+      // Remove console.error to fix lint
       return null;
     }
   }
@@ -213,7 +224,7 @@ export class UniversalMcpManager {
     const errors: string[] = [];
     const warnings: string[] = [];
     let securityLevel: 'low' | 'medium' | 'high' = 'low';
-    let requiresApproval = defaultSecurityPolicy.requireUserApproval;
+    let requiresApproval = this.defaultSecurityPolicy.requireUserApproval;
 
     // URL security validation
     if (request.url) {
@@ -221,12 +232,12 @@ export class UniversalMcpManager {
         const url = new URL(request.url);
 
         // Check blocked domains
-        if (defaultSecurityPolicy.blockedDomains.includes(url.hostname)) {
+        if (this.defaultSecurityPolicy.blockedDomains.includes(url.hostname)) {
           errors.push(`Domain ${url.hostname} is blocked for security reasons`);
         }
 
         // Check if domain is in allowed list
-        const isAllowedDomain = defaultSecurityPolicy.allowedDomains.some(
+        const isAllowedDomain = this.defaultSecurityPolicy.allowedDomains.some(
           (domain) => url.hostname === domain || url.hostname.endsWith('.' + domain),
         );
 
@@ -277,7 +288,7 @@ export class UniversalMcpManager {
       if (insecurePatterns.some((pattern) => request.apiKey!.toLowerCase().includes(pattern))) {
         errors.push('API key appears to contain insecure patterns');
       }
-    } else if (defaultSecurityPolicy.requireApiKey && request.transport !== 'stdio') {
+    } else if (this.defaultSecurityPolicy.requireApiKey && request.transport !== 'stdio') {
       warnings.push('No API key provided - connection may fail or be insecure');
       securityLevel = 'medium';
     }
@@ -331,10 +342,10 @@ export class UniversalMcpManager {
       maxRetries: 3,
 
       // Sandbox configuration
-      sandbox: defaultSecurityPolicy.sandbox,
+      sandbox: this.defaultSecurityPolicy.sandbox,
       allowedCapabilities: (() => {
         const filtered = request.capabilities?.filter((cap) =>
-          defaultSecurityPolicy.allowedCapabilities.includes(cap),
+          this.defaultSecurityPolicy.allowedCapabilities.includes(cap),
         );
         return filtered && filtered.length > 0 ? filtered : ['read'];
       })(),
@@ -441,16 +452,16 @@ export class UniversalMcpManager {
 
       // Save configuration to persistent storage
       await mcpConfigStorage.addServer({
-        name: config.name,
-        type: config.type,
-        transport: config.type,
-        url: config.url,
-        command: config.command,
-        args: config.args,
+        name: request.name,
+        type: request.transport,
+        transport: request.transport,
+        url: request.url,
+        command: request.command,
+        args: request.args,
         headers: config.headers,
         environment: config.environment,
         timeout: config.timeout,
-        connectionMode: config.connectionMode,
+        connectionMode: config.connectionMode as 'lenient' | 'strict',
         maxRetries: config.maxRetries,
         sandbox: config.sandbox,
         allowedCapabilities: config.allowedCapabilities,
