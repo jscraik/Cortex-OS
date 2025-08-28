@@ -183,6 +183,13 @@ export class LicenseScanner {
       throw new Error('Container image must use verified digest');
     }
 
+    // Normalize container image/digest: allow passing only a sha256:... digest
+    let imageToken = this.options.containerDigest || this.defaultContainerImage;
+    if (imageToken.startsWith('sha256:')) {
+      // Prepend trusted registry and expected image name when only a digest is provided
+      imageToken = `${this.options.trustedRegistry}/scancode-toolkit@${imageToken}`;
+    }
+
     // Build secure Docker command
     const dockerCommand = [
       'docker run',
@@ -201,7 +208,7 @@ export class LicenseScanner {
       '--pids-limit=100',
       `--user 65534:65534`, // nobody:nobody
       `--volume "${resolve(scanPath)}:${mountPath}:ro"`,
-      this.options.containerDigest,
+      imageToken,
       'scancode',
       '--license',
       '--copyright',
@@ -292,13 +299,17 @@ export class LicenseScanner {
       }
 
       // Security: Check for prompt injection in license text
+      let fileQuarantined = false;
       for (const license of file.licenses) {
         if (this.detectPromptInjection(license.matched_text || license.short_name)) {
           promptInjectionAttempts++;
           quarantinedFiles.push(file.path);
-          continue;
+          fileQuarantined = true;
+          break; // stop scanning licenses for this file
         }
       }
+
+      if (fileQuarantined) continue;
 
       // License analysis
       const fileLicenses = file.licenses.map((l) => l.key.toLowerCase());
@@ -316,6 +327,9 @@ export class LicenseScanner {
         blockedLicenses.push(
           ...fileLicenses.filter((l) => this.options.blockedLicenses.includes(l)),
         );
+        if (hasConflictingLicenses) {
+          conflictingLicenses.push(file.path);
+        }
       } else if (hasUnknownLicense) {
         quarantinedFiles.push(file.path);
         unknownLicenses.push(...fileLicenses.filter((l) => !l || l === 'unknown'));
@@ -373,13 +387,16 @@ export class LicenseScanner {
   }
 
   private detectConflictingLicenses(licenses: string[]): boolean {
-    // Check for GPL + proprietary combinations
+    // Check for conflicts such as GPL combined with proprietary or with other non-GPL licenses
     const hasGPL = licenses.some((l) => l.includes('gpl'));
     const hasProprietary = licenses.some((l) =>
       ['proprietary', 'commercial', 'closed-source'].some((prop) => l.includes(prop)),
     );
 
-    return hasGPL && hasProprietary;
+    // Also consider GPL combined with any other non-GPL license (e.g., permissive) as a conflict
+    const hasOtherNonGPL = licenses.some((l) => l && !l.includes('gpl') && l !== 'unknown');
+
+    return (hasGPL && hasProprietary) || (hasGPL && hasOtherNonGPL);
   }
 
   private sanitizeOutputForLLM(scanResult: ScanCodeResult): string {
@@ -415,7 +432,7 @@ export class LicenseScanner {
       // But ensure cleanup in case of errors
       execSync(`docker rm -f ${containerId}`, { stdio: 'ignore' });
     } catch (error) {
-      // Container likely already removed, ignore error
+      console.debug('container rm cleanup:', error);
     }
 
     // Cleanup any orphaned volumes
