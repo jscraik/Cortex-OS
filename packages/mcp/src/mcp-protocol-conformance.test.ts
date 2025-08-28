@@ -329,33 +329,24 @@ describe('MCP Protocol Conformance Tests', () => {
   });
 
   describe('Rate Limiting Tests', () => {
-    class MockRateLimiter {
-      private requests = new Map<string, number[]>();
+    function createRateLimiter(windowMs: number, maxRequests: number) {
+      const requests = new Map<string, number[]>();
 
-      constructor(
-        private windowMs: number,
-        private maxRequests: number,
-      ) {}
-
-      isAllowed(key: string): boolean {
-        const now = Date.now();
-        const requests = this.requests.get(key) || [];
-
-        // Clean old requests
-        const validRequests = requests.filter((time) => now - time < this.windowMs);
-
-        if (validRequests.length >= this.maxRequests) {
-          return false;
-        }
-
-        validRequests.push(now);
-        this.requests.set(key, validRequests);
-        return true;
-      }
+      return {
+        isAllowed(key: string) {
+          const now = Date.now();
+          const timestamps = requests.get(key) || [];
+          const valid = timestamps.filter((t) => now - t < windowMs);
+          if (valid.length >= maxRequests) return false;
+          valid.push(now);
+          requests.set(key, valid);
+          return true;
+        },
+      };
     }
 
     it('should enforce rate limits per client', () => {
-      const rateLimiter = new MockRateLimiter(60000, 60); // 60 requests per minute
+      const rateLimiter = createRateLimiter(60000, 60); // 60 requests per minute
 
       // Test within limits
       for (let i = 0; i < 60; i++) {
@@ -370,7 +361,7 @@ describe('MCP Protocol Conformance Tests', () => {
     });
 
     it('should handle concurrent rate limiting', () => {
-      const rateLimiter = new MockRateLimiter(1000, 5); // 5 requests per second
+      const rateLimiter = createRateLimiter(1000, 5); // 5 requests per second
 
       const clients = ['client-1', 'client-2', 'client-3'];
 
