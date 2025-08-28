@@ -232,7 +232,7 @@ export class AutoGenManager extends EventEmitter {
         agentType: 'autogen',
       };
 
-      await this.pythonBridge.executeTask(taskPayload);
+      await this.pythonBridge.executeAgentTask(taskPayload);
 
       // Initialize conversation history
       if (this.config.conversationMemory) {
@@ -287,7 +287,7 @@ export class AutoGenManager extends EventEmitter {
         agentType: 'autogen',
       };
 
-      const result = await this.pythonBridge.executeTask(taskPayload);
+      const result = await this.pythonBridge.executeAgentTask(taskPayload);
 
       const taskDistribution = result.data.taskDistribution || {};
 
@@ -341,7 +341,7 @@ export class AutoGenManager extends EventEmitter {
         agentType: 'autogen',
       };
 
-      const result = await this.pythonBridge.executeTask(taskPayload);
+      const result = await this.pythonBridge.executeAgentTask(taskPayload);
 
       const taskResult: AutoGenTaskResult = {
         taskId,
@@ -392,7 +392,7 @@ export class AutoGenManager extends EventEmitter {
         agentType: 'autogen',
       };
 
-      await this.pythonBridge.executeTask(taskPayload);
+      await this.pythonBridge.executeAgentTask(taskPayload);
 
       this.emit('group-chat-created', {
         groupChatId,
@@ -433,7 +433,7 @@ export class AutoGenManager extends EventEmitter {
       agentType: 'autogen',
     };
 
-    await this.pythonBridge.executeTask(taskPayload);
+    await this.pythonBridge.executeAgentTask(taskPayload);
 
     this.emit('tool-integrated', { taskId, toolName, toolConfig });
   }

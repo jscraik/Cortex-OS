@@ -183,24 +183,22 @@ export class EvaluationNode {
 
   private async preCerebrumValidation(state: PRPState): Promise<{ readyForCerebrum: boolean; details: any }> {
     // Final validation before Cerebrum decision
-    const hasAllPhases = !!(
-      state.validationResults?.strategy &&
-      state.validationResults?.build &&
-      state.validationResults?.evaluation
-    );
-
-    const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {})
-      .every(result => result?.passed || (result?.blockers.length === 0));
+    const strategyPassed = state.validationResults?.strategy?.passed ?? false;
+    const buildPassed = state.validationResults?.build?.passed ?? false;
+    const evaluationPassed = state.validationResults?.evaluation?.passed ?? false;
+    
+    // Use && instead of || to require ALL phases to pass
+    const allPhasesPassed = strategyPassed && buildPassed && evaluationPassed;
 
     const sufficientEvidence = state.evidence.length >= 5; // Minimum evidence threshold
 
-    const readyForCerebrum = hasAllPhases && allPhasesPassedOrAcceptable && sufficientEvidence;
+    const readyForCerebrum = allPhasesPassed && sufficientEvidence;
 
     return {
       readyForCerebrum,
       details: {
-        phasesComplete: hasAllPhases,
-        phasesAcceptable: allPhasesPassedOrAcceptable,
+        phasesComplete: strategyPassed && buildPassed && evaluationPassed,
+        phasesAcceptable: allPhasesPassed,
         evidenceCount: state.evidence.length,
         evidenceThreshold: 5,
       },

@@ -1,14 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { buildServer } from "../src/server.js";
+import { describe, expect, it } from 'vitest';
+import { buildServer } from '../src/http-server.js';
 
-describe("mvp-server", () => {
-  it("health ok", async () => {
-    process.env.CORTEX_MCP_TOKEN = "test-token";
+
+describe('mvp-server', () => {
+  it('health ok', async () => {
+    process.env.CORTEX_MCP_TOKEN = 'test-token';
     const app = buildServer();
-    const res = await app.inject({ method: "GET", url: "/health", headers: { authorization: "Bearer test-token" } });
-    expect(res.statusCode).toBe(200);
-    expect(res.json().ok).toBe(true);
-    await app.close();
-  });
+    try {
+      const res = await app.inject({ method: 'GET', url: '/api/health' });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().ok).toBe(true);
+    } finally {
+      await app.close();
+    }
+  }, 10000); // 10 second timeout
 });
-

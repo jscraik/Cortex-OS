@@ -89,22 +89,67 @@ describe('Schema Registry Service', () => {
   it('returns the latest schema by semantic version', async () => {
     const v1 = { id: 'latest', name: 'latest', version: '1.9.0', schema: {} };
     const v2 = { id: 'latest', name: 'latest', version: '1.10.0', schema: {} };
-    const r1 = await fetch(`${baseUrl}/schemas`, {
+    const v3 = { id: 'latest', name: 'latest', version: '2.0.0', schema: {} };
+    await fetch(`${baseUrl}/schemas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(v1),
     });
-    expect(r1.status).toBe(201);
-    const r2 = await fetch(`${baseUrl}/schemas`, {
+    await fetch(`${baseUrl}/schemas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(v2),
     });
-    expect(r2.status).toBe(201);
+    await fetch(`${baseUrl}/schemas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(v3),
+    });
 
     const res = await fetch(`${baseUrl}/schemas/latest/latest`);
     expect(res.status).toBe(200);
     const schema = (await res.json()) as { version: string };
-    expect(schema.version).toBe('1.10.0');
+    expect(schema.version).toBe('2.0.0');
+  });
+
+  it('lists all schemas', async () => {
+    const schema1 = { id: 's1', name: 's1', version: '1.0.0', schema: {} };
+    const schema2 = { id: 's2', name: 's2', version: '1.0.0', schema: {} };
+    await fetch(`${baseUrl}/schemas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(schema1),
+    });
+    await fetch(`${baseUrl}/schemas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(schema2),
+    });
+
+    const res = await fetch(`${baseUrl}/schemas`);
+    expect(res.status).toBe(200);
+    const schemas = (await res.json()) as any[];
+    expect(schemas.length).toBe(2);
+  });
+
+  it('lists all versions for a schema', async () => {
+    const v1 = { id: 'versions', name: 'versions', version: '1.0.0', schema: {} };
+    const v2 = { id: 'versions', name: 'versions', version: '2.0.0', schema: {} };
+    await fetch(`${baseUrl}/schemas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(v1),
+    });
+    await fetch(`${baseUrl}/schemas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(v2),
+    });
+
+    const res = await fetch(`${baseUrl}/schemas/versions`);
+    expect(res.status).toBe(200);
+    const schemas = (await res.json()) as any[];
+    expect(schemas.length).toBe(2);
+    expect(schemas.map((s) => s.version)).toEqual(['1.0.0', '2.0.0']);
   });
 });

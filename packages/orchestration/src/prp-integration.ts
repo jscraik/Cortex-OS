@@ -40,8 +40,6 @@ export class PRPOrchestrationEngine extends EventEmitter {
     this.config = {
       maxConcurrentOrchestrations: config.maxConcurrentOrchestrations || 10,
       defaultStrategy: config.defaultStrategy || 'neural_prp',
-      enableReActPlanning: false, // Replaced by PRP neurons
-      enableLangChainIntegration: false, // Replaced by PRP neurons  
       enableMultiAgentCoordination: true, // Handled by neural orchestration
       enableAdaptiveDecisions: true, // Handled by cerebrum
       planningTimeout: config.planningTimeout || 300000,
