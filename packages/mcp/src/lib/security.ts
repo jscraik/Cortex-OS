@@ -1,30 +1,57 @@
 import { z } from 'zod';
 
+// Data redaction patterns for strings
+const SENSITIVE_PATTERNS = [
+  // API key patterns
+  /(["']?(?:apiKey|api_key|api-key)["']?\s*[:=]\s*["']?)([^"'}\s,)]+)(["']?)/gi,
+  // Token patterns
+  /(["']?(?:token|auth)["']?\s*[:=]\s*["']?)([^"'}\s,)]+)(["']?)/gi,
+  // Password/secrets patterns
+  /(["']?(?:password|secret|credential)["']?\s*[:=]\s*["']?)([^"'}\s,)]+)(["']?)/gi,
+  // Authorization header patterns
+  /(["']?authorization["']?\s*[:=]\s*["']?bearer\s+)([^"'}\s,)]+)(["']?)/gi,
+];
+
+const REDACT_KEY_REGEX = /key|password|token|secret|authorization|auth/i;
+
 /**
- * Redact sensitive values in an object recursively.
+ * Redact sensitive values in strings or objects recursively.
  */
-export function redactSensitiveData<T extends Record<string, any>>(data: T): T {
-  const objSchema = z.record(z.any());
-  objSchema.parse(data);
-
-  const redactKeys = /key|password|token|secret/i;
-
-  const recurse = (value: any): any => {
-    if (Array.isArray(value)) {
-      return value.map(recurse);
+export function redactSensitiveData(data: any): any {
+  const redactString = (str: string): string => {
+    let redacted = str;
+    for (const pattern of SENSITIVE_PATTERNS) {
+      redacted = redacted.replace(pattern, '$1[REDACTED]$3');
     }
-    if (value && typeof value === 'object') {
-      return Object.fromEntries(
-        Object.entries(value).map(([k, v]) => [
-          k,
-          redactKeys.test(k) ? '[REDACTED]' : recurse(v),
-        ]),
-      );
-    }
-    return value;
+    return redacted;
   };
 
-  return recurse(data);
+  if (typeof data === 'string') {
+    return redactString(data);
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => redactSensitiveData(item));
+  }
+
+  if (data && typeof data === 'object') {
+    const objSchema = z.record(z.any());
+    objSchema.parse(data);
+
+    return Object.fromEntries(
+      Object.entries(data).map(([k, v]) => {
+        if (REDACT_KEY_REGEX.test(k)) {
+          if (typeof v === 'string' && /^bearer\s+/i.test(v)) {
+            return [k, 'bearer [REDACTED]'];
+          }
+          return [k, '[REDACTED]'];
+        }
+        return [k, redactSensitiveData(v)];
+      }),
+    );
+  }
+
+  return data;
 }
 
 /**
