@@ -59,7 +59,19 @@ describe('Transport Integration', () => {
     await transport.connect();
     const message = { jsonrpc: '2.0' as const, id: 2, method: 'ping' };
     await transport.send(message);
-    await new Promise((r) => setTimeout(r, 100));
+    // Wait until the server has received the message, up to 2 seconds
+    await new Promise((resolve, reject) => {
+      const start = Date.now();
+      const interval = setInterval(() => {
+        if (received.length > 0) {
+          clearInterval(interval);
+          resolve(undefined);
+        } else if (Date.now() - start > 2000) {
+          clearInterval(interval);
+          reject(new Error('Timeout waiting for server to receive message'));
+        }
+      }, 10);
+    });
     expect(received[0]).toEqual(JSON.stringify(message));
     await transport.disconnect();
     await new Promise((resolve) => server.close(resolve));
