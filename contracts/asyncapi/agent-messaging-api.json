@@ -1614,7 +1614,7 @@
               "const": "schema.validation.request"
             },
             "data": {
-              "$ref": "#/components/schemas/SchemaValidationRequest"
+              "$ref": "#/components/schemas/SchemaValidationRequestData"
             }
           }
         }
