@@ -57,6 +57,9 @@ importers:
       web-tree-sitter:
         specifier: ^0.25.8
         version: 0.25.8
+      which:
+        specifier: ^2.0.2
+        version: 2.0.2
       zod:
         specifier: ^3.22.4
         version: 3.25.76

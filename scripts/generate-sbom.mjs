@@ -4,6 +4,7 @@ import { execa } from 'execa';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { which } from 'which';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -12,7 +13,7 @@ const outFile = path.join(outDir, 'sbom.cdx.json');
 
 async function hasBinary(cmd) {
   try {
-    await execa('bash', ['-lc', `command -v ${cmd}`]);
+    await which(cmd);
     return true;
   } catch {
     return false;
