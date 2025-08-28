@@ -1,12 +1,19 @@
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { extractTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts/trace-context';
 import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 import {
   PredefinedSchemas,
   SchemaValidationUtils,
 } from '@cortex-os/a2a-contracts/schema-validation-utils';
 import { z } from 'zod';
+
+const createChildMessage = (parent: Envelope, options: Parameters<typeof createEnvelope>[0]) => {
+  const msg = createEnvelope(options);
+  injectTraceContext(msg, extractTraceContext(parent));
+  return msg;
+};
 
 /**
  * Example demonstrating Event Schema Registry usage and validation
@@ -51,7 +58,7 @@ export async function runSchemaRegistryExample() {
   console.log('✅ Schemas registered successfully\n');
 
   // Create bus with schema validation
-  const bus = new Bus(inproc(), undefined, registry);
+  const bus = createBus(inproc(), undefined, registry);
 
   // Set up event handlers
   const handlers = [
@@ -63,7 +70,7 @@ export async function runSchemaRegistryExample() {
         console.log(`   Email: ${msg.data.email}`);
 
         // Create order event
-        const orderMsg = bus.createChildMessage(msg, {
+        const orderMsg = createChildMessage(msg, {
           type: 'order.created.v1',
           source: '/order-service',
           data: {
@@ -95,7 +102,7 @@ export async function runSchemaRegistryExample() {
         console.log(`   Items: ${msg.data.items.length}`);
 
         // Create payment event
-        const paymentMsg = bus.createChildMessage(msg, {
+        const paymentMsg = createChildMessage(msg, {
           type: 'payment.processed.v1',
           source: '/payment-service',
           data: {
@@ -123,7 +130,7 @@ export async function runSchemaRegistryExample() {
         console.log(`   Status: ${msg.data.status}`);
 
         // Create shipping event
-        const shippingMsg = bus.createChildMessage(msg, {
+        const shippingMsg = createChildMessage(msg, {
           type: 'order.shipped.v1',
           source: '/shipping-service',
           data: {

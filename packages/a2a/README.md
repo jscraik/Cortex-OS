@@ -28,7 +28,7 @@ The core of the protocol is the `Envelope`, a message format compliant with the 
 Here's how to set up a simple in-process message bus.
 
 ```typescript
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { createEnvelope, Envelope } from '@cortex-os/a2a-contracts/envelope';
 
@@ -36,7 +36,7 @@ import { createEnvelope, Envelope } from '@cortex-os/a2a-contracts/envelope';
 const transport = inproc();
 
 // 2. Create a message bus
-const bus = new Bus(transport);
+const bus = createBus(transport);
 
 // 3. Define a handler for a specific message type
 const myHandler = {
