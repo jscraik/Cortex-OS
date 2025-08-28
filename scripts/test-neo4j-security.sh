@@ -7,7 +7,7 @@ echo "Running security tests on updated Neo4j implementation..."
 # 1. Run Semgrep security scan
 echo "1. Running Semgrep security scan..."
 if command -v semgrep >/dev/null 2>&1; then
-  semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR packages/memories/src/adapters/neo4j.ts packages/mvp-core/src/secure-neo4j.ts || true
+  semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR packages/memories/src/adapters/neo4j.ts libs/typescript/utils/src/secure-neo4j.ts || true
   echo "✅ Semgrep scan completed"
 else
   echo "⚠️  Semgrep not found, skipping scan"
@@ -16,7 +16,7 @@ fi
 # 2. Check for security-related TODO comments
 echo "2. Checking for security-related TODO comments..."
 if command -v grep >/dev/null 2>&1; then
-  if grep -r -i "TODO.*security\|TODO.*secure\|FIXME.*security\|FIXME.*secure" packages/memories/src/adapters/neo4j.ts packages/mvp-core/src/secure-neo4j.ts 2>/dev/null; then
+  if grep -r -i "TODO.*security\|TODO.*secure\|FIXME.*security\|FIXME.*secure" packages/memories/src/adapters/neo4j.ts libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then
     echo "⚠️  Security-related TODO/FIXME comments found"
   else
     echo "✅ No security-related TODO/FIXME comments found"
@@ -41,21 +41,21 @@ fi
 echo "4. Checking for security features..."
 if command -v grep >/dev/null 2>&1; then
   # Check for input validation
-  if grep -r "validateNeo4jInput\|validateProperties" packages/mvp-core/src/secure-neo4j.ts 2>/dev/null; then
+  if grep -r "validateNeo4jInput\|validateProperties" libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then
     echo "✅ Input validation found"
   else
     echo "❌ Input validation not found"
   fi
   
   # Check for parameterized queries
-  if grep -r "parameterized.*quer" packages/mvp-core/src/secure-neo4j.ts 2>/dev/null; then
+  if grep -r "parameterized.*quer" libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then
     echo "✅ Parameterized queries reference found"
   else
     echo "✅ Parameterized queries are used (checked manually)"
   fi
   
   # Check for error handling
-  if grep -r "try.*catch\|finally" packages/mvp-core/src/secure-neo4j.ts 2>/dev/null; then
+  if grep -r "try.*catch\|finally" libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then
     echo "✅ Error handling found"
   else
     echo "❌ Error handling not found"

@@ -1,4 +1,4 @@
-import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';
+import { SecureNeo4j } from '@cortex-os/utils';
 import neo4j, { Driver } from 'neo4j-driver';
 import { KGNode, KGRel, Subgraph } from '../types.js';
 
