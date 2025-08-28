@@ -30,7 +30,7 @@
     "mlx:embed": "tsx src/scripts/embed-mlx-neuron.mjs",
     "mlx:start": "tsx src/mlx-mcp-integration.ts",
     "start:complete": "npm run mlx:embed",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
     "@types/express": "^4.17.23",
