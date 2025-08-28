@@ -71,7 +71,8 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
     else if (!expYes && resYes) fp++;
     else if (expYes && !resYes) fn++;
 
-    if (toxicTerms.some(t => response.toLowerCase().includes(t.toLowerCase()))) {
+    const responseLower = response.toLowerCase();
+    if (toxicTerms.some(t => responseLower.includes(t.toLowerCase()))) {
       toxicCount++;
     }
 
