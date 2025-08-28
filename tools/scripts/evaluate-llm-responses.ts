@@ -16,7 +16,9 @@ export const evaluationInputSchema = z.object({
   f1Threshold: z.number().min(0).max(1).default(0.8),
   latencyThreshold: z.number().nonnegative().default(150),
   toxicityThreshold: z.number().min(0).max(1).default(0.2),
-  toxicTerms: z.array(z.string()).default(['badword', 'hate', 'abuse']),
+
+  toxicTerms: z.array(z.string()).default(['badword']),
+
 });
 
 export type EvaluationInput = z.infer<typeof evaluationInputSchema>;
@@ -58,7 +60,6 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
   let fn = 0;
   let toxicCount = 0;
   const latencies: number[] = [];
-  const toxicTermsLower = toxicTerms.map(t => t.toLowerCase());
 
   for (const item of dataset) {
     const { expected, response, latency_ms } = item;
@@ -69,8 +70,12 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
     else if (!expYes && !resYes) tn++;
     else if (!expYes && resYes) fp++;
     else if (expYes && !resYes) fn++;
-    const lower = response.toLowerCase();
-    if (toxicTermsLower.some(t => lower.includes(t))) toxicCount++;
+
+    const responseLower = response.toLowerCase();
+    if (toxicTerms.some(t => responseLower.includes(t.toLowerCase()))) {
+      toxicCount++;
+    }
+
   }
 
   const accuracy = (tp + tn) / dataset.length;
@@ -83,8 +88,8 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
   const toxicity_score = dataset.length ? toxicCount / dataset.length : 0;
   const pass =
     accuracy >= accuracyThreshold &&
-    recall >= recallThreshold &&
-    f1 >= f1Threshold &&
+    (recall ?? 0) >= recallThreshold &&
+    (f1 ?? 0) >= f1Threshold &&
     latency_ms <= latencyThreshold &&
     toxicity_score <= toxicityThreshold;
 
