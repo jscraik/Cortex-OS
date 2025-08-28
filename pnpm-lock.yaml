@@ -356,6 +356,9 @@ importers:
       inversify:
         specifier: ^6.0.1
         version: 6.2.2(reflect-metadata@0.2.2)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
 
   libs/typescript/accessibility:
     devDependencies:
@@ -843,6 +846,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.4
         version: 1.17.4
+      rate-limiter-flexible:
+        specifier: ^7.2.0
+        version: 7.2.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -7289,6 +7295,9 @@ packages:
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
+
+  rate-limiter-flexible@7.2.0:
+    resolution: {integrity: sha512-hrf0vIS/WOBegnHg+uPXxsXhuQYlNGfZiCmK5Wgudb12xlZUhpv9yD23yp/EW6BKQosshqnIQRQV+r3jyfIGQg==}
 
   raw-body@2.5.2:
     resolution: {integrity: sha512-8zGqypfENjCIqGhgXToC8aB2r7YrBX+AQAfIPs/Mlk+BtPTztOvTS01NRW/3Eh60J+a48lt8qsCzirQ6loCVfA==}
@@ -15504,6 +15513,8 @@ snapshots:
   quote-unquote@1.0.0: {}
 
   range-parser@1.2.1: {}
+
+  rate-limiter-flexible@7.2.0: {}
 
   raw-body@2.5.2:
     dependencies:
