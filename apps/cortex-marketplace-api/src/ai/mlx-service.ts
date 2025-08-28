@@ -1,14 +1,13 @@
-/**
+git pull origin main/**
  * @file MLX Integration for Marketplace
  * @description Production-ready MLX model integration for semantic search and safety
  */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, no-console */
 
-import { spawn } from 'child_process';
-import { writeFile } from 'fs/promises';
+import { spawn, type ChildProcess } from 'child_process';
+import { writeFile, readFile } from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import type { ServerManifest } from '../types.js';
+import type { ServerManifest } from '@cortex-os/mcp-registry';
 
 export interface MLXConfig {
   modelsPath: string;
@@ -44,7 +43,7 @@ export const createMLXService = (config: MLXConfig) => {
     /**
      * Generate embeddings using Qwen3 models
      */
-    async generateEmbedding(text: string): Promise<EmbeddingResult> {
+    generateEmbedding: async (text: string): Promise<EmbeddingResult> => {
       const modelSize = config.embeddingModel.replace('qwen3-', '').toUpperCase();
       
       const script = `
@@ -102,14 +101,14 @@ except Exception as e:
     /**
      * Perform semantic search using embeddings
      */
-    async semanticSearch(query: string, servers: ServerManifest[]): Promise<SemanticSearchResult[]> {
+    semanticSearch: async (query: string, servers: ServerManifest[]): Promise<SemanticSearchResult[]> => {
       try {
-        const queryEmbedding = await this.generateEmbedding(query);
+        const queryEmbedding = await generateEmbedding(query);
         
         const results = await Promise.all(
           servers.map(async (server) => {
             const serverText = `${server.name} ${server.description} ${server.tags?.join(' ') || ''}`;
-            const serverEmbedding = await this.generateEmbedding(serverText);
+            const serverEmbedding = await generateEmbedding(serverText);
             
             const similarity = cosineSimilarity(queryEmbedding.embedding, serverEmbedding.embedding);
             const relevanceScore = calculateRelevanceScore(similarity, server);
@@ -132,7 +131,7 @@ except Exception as e:
     /**
      * Validate content safety
      */
-    async validateSafety(content: string): Promise<SafetyResult> {
+    validateSafety: async (content: string): Promise<SafetyResult> => {
       const script = `
 import re
 from typing import List, Tuple
@@ -194,22 +193,22 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
   await writeFile(scriptPath, script);
   
   return new Promise((resolve, reject) => {
-    const child = spawn(pythonPath, [scriptPath], {
+    const process = spawn(pythonPath, [scriptPath], {
       env: { ...process.env, PYTHONPATH: process.env.PYTHONPATH }
     });
     
     let output = '';
     let error = '';
     
-    child.stdout.on('data', (data) => {
+    process.stdout.on('data', (data) => {
       output += data.toString();
     });
     
-    child.stderr.on('data', (data) => {
+    process.stderr.on('data', (data) => {
       error += data.toString();
     });
     
-    child.on('close', (code) => {
+    process.on('close', (code) => {
       if (code === 0) {
         resolve(output);
       } else {
@@ -218,7 +217,7 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
     });
     
     setTimeout(() => {
-      child.kill();
+      process.kill();
       reject(new Error('Script timeout'));
     }, 10000);
   });
