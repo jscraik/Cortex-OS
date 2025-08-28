@@ -166,8 +166,37 @@ if FASTAPI_AVAILABLE:
 else:
     class InferenceRequest:
         def __init__(self, **kwargs):
+            # Required fields
+            required_fields = ["model", "prompt"]
+            for field in required_fields:
+                if field not in kwargs:
+                    raise ValueError(f"Missing required field: {field}")
+
+            # Validate max_tokens
+            max_tokens = kwargs.get("max_tokens", 1000)
+            if not isinstance(max_tokens, int) or not (1 <= max_tokens <= 4096):
+                raise ValueError("max_tokens must be an integer between 1 and 4096")
+
+            # Validate temperature
+            temperature = kwargs.get("temperature", 0.7)
+            if not isinstance(temperature, (int, float)) or not (0 <= temperature <= 1):
+                raise ValueError("temperature must be a float between 0 and 1")
+
+            # Sanitize prompt
+            prompt = kwargs["prompt"]
+            if "<script" in prompt.lower():
+                raise ValueError("Potential prompt injection detected")
+            sanitized_prompt = re.sub(r"<[^>]+>", "", prompt)
+
+            # Set attributes
+            self.model = kwargs["model"]
+            self.prompt = sanitized_prompt
+            self.max_tokens = max_tokens
+            self.temperature = temperature
+            # Set any other attributes
             for k, v in kwargs.items():
-                setattr(self, k, v)
+                if k not in ["model", "prompt", "max_tokens", "temperature"]:
+                    setattr(self, k, v)
 
 # Initialize managers
 memory_manager = MLXMemoryManager()
