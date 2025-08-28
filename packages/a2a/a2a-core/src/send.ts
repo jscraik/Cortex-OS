@@ -1,7 +1,6 @@
 import { createEnvelope, Envelope } from '@cortex-os/a2a-contracts/envelope';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
-import { OutboxMessage } from '@cortex-os/orchestration/outbox/schema';
 
 const options = {
   timeout: 3000, // If our service takes longer than 3 seconds, trigger a failure
@@ -15,7 +14,6 @@ export async function send(params: {
   source: string;
   data: unknown;
   outboxUrl: string;
-  simulateFailure?: boolean;
 }): Promise<Envelope> {
   const envelope = createEnvelope({
     type: params.type,

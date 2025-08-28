@@ -10,10 +10,7 @@ import { existsSync } from 'fs';
 console.log('🔍 Checking TypeScript template file exclusion...\n');
 
 // Check if template files exist
-const templateFiles = [
-  'scripts/templates/neo4j-secure-class.template', 
-  'scripts/templates/neo4j-secure-standalone.ts'
-];
+const templateFiles = ['scripts/neo4j-secure-class.template', 'scripts/neo4j-secure-standalone.ts'];
 
 templateFiles.forEach((file) => {
   if (existsSync(file)) {
@@ -34,7 +31,7 @@ try {
 
   // Try to compile just the standalone file to see if it's excluded
   try {
-    execSync('npx tsc --noEmit scripts/templates/neo4j-secure-standalone.ts', {
+    execSync('npx tsc --noEmit scripts/neo4j-secure-standalone.ts', {
       stdio: 'pipe',
       encoding: 'utf-8',
     });
@@ -51,5 +48,5 @@ try {
 }
 
 console.log('\n✅ Template system is properly configured!');
-console.log('📄 Use scripts/templates/neo4j-secure-class.template for string replacement');
-console.log('📝 See scripts/templates/README.md for detailed usage instructions');
+console.log('📄 Use scripts/neo4j-secure-class.template for string replacement');
+console.log('📝 See scripts/README-neo4j-templates.md for detailed usage instructions');

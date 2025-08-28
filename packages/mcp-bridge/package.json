@@ -28,7 +28,7 @@
     "demo": "tsx src/mcp-demo-server.ts",
     "demo:build": "tsc && node dist/mcp-demo-server.js",
     "mlx:embed": "tsx src/scripts/embed-mlx-neuron.mjs",
-    "mlx:start": "tsx src/mlx-mcp-integration.ts",
+    "mlx:start": "tsx src/scripts/embed-mlx-neuron.mjs",
     "start:complete": "npm run mlx:embed",
     "prepublishOnly": "pnpm run build"
   },

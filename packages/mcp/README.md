@@ -65,6 +65,15 @@ const validator = new PluginValidator();
 const result = validator.validatePlugin(pluginMetadata);
 ```
 
+## Environment Variables
+
+| Variable                  | Description                                                                                                |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `CORTEX_MCP_ROOT`         | Absolute path to the repository root used by the `repo_file` tool. Required.                               |
+| `CORTEX_MCP_TOKEN`        | Authentication token required to start the MCP server.                                                     |
+| `CORTEX_GATEWAY_URL`      | Base URL for the Cortex Gateway used with private Git repositories. Required when accessing private repos. |
+| `CORTEX_LOCAL_BRIDGE_URL` | Base URL for the local GitMCP bridge used with public or local repositories.                               |
+
 ## Scripts
 
 From the repository root:

@@ -7,6 +7,7 @@ import { openSSE } from '../../../utils/sse';
 
 type Model = { id: string; label: string; speed?: string; costTier?: string };
 type ChatMessage = { id: string; role: 'user' | 'assistant' | 'system'; content: string };
+type ToolEvent = { id: string; name: string; args?: Record<string, unknown>; status?: string };
 
 export default function ChatPage() {
   const [models, setModels] = useState<Model[]>([]);
@@ -17,14 +18,16 @@ export default function ChatPage() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [toolEvents, setToolEvents] = useState<ToolEvent[]>([]);
 
   // load models and create session lazily
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiFetch<{ models: Model[] }>('/api/models');
+        const res = await apiFetch<{ models: Model[]; default?: string }>('/api/models');
         setModels(res.models);
-        if (res.models.length && !activeModel) setActiveModel(res.models[0].id);
+        const def = res.default || res.models[0]?.id || '';
+        if (!activeModel && def) setActiveModel(def);
       } catch (e: any) {
         setError(e.message);
       }
@@ -36,9 +39,20 @@ export default function ChatPage() {
   }, [messages, streaming]);
 
   async function ensureSession() {
-    if (sessionId) return sessionId;
-    const sid = crypto.randomUUID();
-    setSessionId(sid);
+    let sid = sessionId;
+    if (!sid) {
+      sid = crypto.randomUUID();
+      // Set session state and wait for it to be updated before proceeding
+      setSessionId(sid);
+    }
+    // Always use the local sid for API calls and return value
+    try {
+      const res = await apiFetch<{ events: ToolEvent[] }>(`/api/chat/${sid}/tools`);
+      setToolEvents(res.events);
+    } catch (e: any) {
+      console.error('Failed to load tool events:', e);
+      setError(e?.message || 'Failed to load tool events');
+    }
     return sid;
   }
 
@@ -87,7 +101,17 @@ export default function ChatPage() {
             try {
               const ev = JSON.parse(data);
               if (ev.type === 'token') appendToken(ev.data);
-              else if (ev.type === 'done') {
+              else if (ev.type === 'tool') {
+                setToolEvents((xs) => [
+                  ...xs,
+                  {
+                    id: ev.id || crypto.randomUUID(),
+                    name: ev.name,
+                    args: ev.args,
+                    status: ev.status,
+                  },
+                ]);
+              } else if (ev.type === 'done') {
                 finalizeStream(ev.messageId, ev.text);
                 close();
               } else if (ev.type === 'error') {
@@ -110,6 +134,9 @@ export default function ChatPage() {
 
   return (
     <main className="p-4 grid gap-3" aria-label="Chat interface">
+      <a href="#composer" className="sr-only focus:not-sr-only focus:underline">
+        Skip to composer
+      </a>
       <header className="flex items-center gap-2">
         <h1 className="text-xl">Chat</h1>
         <label className="sr-only" htmlFor="model">
@@ -130,23 +157,51 @@ export default function ChatPage() {
         </select>
       </header>
 
-      <section
-        className="border rounded p-2 min-h-64"
-        aria-live="polite"
-        aria-relevant="additions text"
-      >
-        {messages.map((m) => (
-          <div key={m.id} className="my-2">
-            <div className="text-xs text-gray-500">{m.role}</div>
-            <div className="whitespace-pre-wrap">{m.content}</div>
-          </div>
-        ))}
-        {streaming && (
-          <output className="text-sm text-gray-500" aria-live="polite">
-            Streaming…
-          </output>
-        )}
-        <div ref={bottomRef} />
+      <section className="grid md:grid-cols-[2fr_1fr] gap-3" aria-label="Conversation and tools">
+        <div
+          className="border rounded p-2 min-h-64"
+          aria-live="polite"
+          aria-relevant="additions text"
+          aria-busy={streaming}
+        >
+          <ul>
+            {messages.map((m) => (
+              <li key={m.id} className="my-2">
+                <div className="text-xs text-gray-500">{m.role}</div>
+                <div className="whitespace-pre-wrap">{m.content}</div>
+              </li>
+            ))}
+          </ul>
+          {streaming && (
+            <output className="text-sm text-gray-500" aria-live="polite">
+              Streaming…
+            </output>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        <section className="border rounded p-2" aria-labelledby="tool-calls-heading">
+          <h2 id="tool-calls-heading" className="text-sm font-semibold">
+            Tool activity
+          </h2>
+          {toolEvents.length === 0 ? (
+            <p className="text-xs text-gray-500">No tools used yet.</p>
+          ) : (
+            <ul className="text-sm break-words">
+              {toolEvents.map((t) => (
+                <li key={t.id} className="py-1 border-b last:border-b-0">
+                  <div className="font-mono text-xs">{t.name}</div>
+                  {t.status && <div className="text-xs text-gray-500">{t.status}</div>}
+                  {t.args && (
+                    <pre className="text-xs bg-gray-50 rounded p-2 overflow-auto">
+                      {JSON.stringify(t.args, null, 2)}
+                    </pre>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </section>
 
       {error && (
@@ -160,7 +215,7 @@ export default function ChatPage() {
           Message
         </label>
         <textarea
-          id="message"
+          id="composer"
           required
           value={input}
           onChange={(e) => setInput(e.target.value)}

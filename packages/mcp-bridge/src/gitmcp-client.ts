@@ -42,14 +42,23 @@ export async function callGitMcp<T = unknown>(baseUrl: string, body: GitMcpReque
 
 /**
  * Utility: pick an appropriate base URL for the given repo visibility.
- * - private → CORTEX_GATEWAY_URL or a safe default placeholder
- * - public/local dev → CORTEX_LOCAL_BRIDGE_URL or http://localhost:4321
+ * - private → CORTEX_GATEWAY_URL (required)
+ * - public/local dev → CORTEX_LOCAL_BRIDGE_URL (required)
  */
 export type Visibility = 'public' | 'private' | 'local';
 
 export function pickGitMcpBaseUrl(visibility: Visibility): string {
   if (visibility === 'private') {
-    return process.env.CORTEX_GATEWAY_URL || 'https://cortex.local';
+    const gateway = process.env.CORTEX_GATEWAY_URL;
+    if (!gateway) {
+      throw new Error('CORTEX_GATEWAY_URL is not set');
+    }
+    return gateway;
   }
-  return process.env.CORTEX_LOCAL_BRIDGE_URL || 'http://localhost:4321';
+
+  const bridge = process.env.CORTEX_LOCAL_BRIDGE_URL;
+  if (!bridge) {
+    throw new Error('CORTEX_LOCAL_BRIDGE_URL is not set');
+  }
+  return bridge;
 }
