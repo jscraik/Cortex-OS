@@ -43,13 +43,18 @@ export default function ChatPage() {
   }
 
   function appendToken(token: string) {
-    setMessages((xs) => xs.map((m) => (m.id === 'stream' ? { ...m, content: m.content + token } : m)));
+    setMessages((xs) =>
+      xs.map((m) => (m.id === 'stream' ? { ...m, content: m.content + token } : m)),
+    );
   }
 
   function finalizeStream(messageId?: string, text?: string) {
     setStreaming(false);
     setMessages((xs) => xs.filter((m) => m.id !== 'stream'));
-    setMessages((xs) => [...xs, { id: messageId ?? crypto.randomUUID(), role: 'assistant', content: text ?? '' }]);
+    setMessages((xs) => [
+      ...xs,
+      { id: messageId ?? crypto.randomUUID(), role: 'assistant', content: text ?? '' },
+    ]);
   }
 
   async function sendMessage(e: React.FormEvent) {
@@ -66,29 +71,37 @@ export default function ChatPage() {
       // fire-and-forget send
       await apiFetch(`/api/chat/${sid}/messages`, {
         method: 'POST',
-        body: JSON.stringify({ content: userMsg.content, modelId: activeModel, messageId: userMsg.id }),
+        body: JSON.stringify({
+          content: userMsg.content,
+          modelId: activeModel,
+          messageId: userMsg.id,
+        }),
       });
 
       // attach stream
-      const close = openSSE(`/api/chat/${sid}/stream`, {}, {
-        onMessage: (data) => {
-          try {
-            const ev = JSON.parse(data);
-            if (ev.type === 'token') appendToken(ev.data);
-            else if (ev.type === 'done') {
-              finalizeStream(ev.messageId, ev.text);
-              close();
-            } else if (ev.type === 'error') {
-              setStreaming(false);
-              setError(ev.error || 'Stream error');
-              close();
+      const close = openSSE(
+        `/api/chat/${sid}/stream`,
+        {},
+        {
+          onMessage: (data) => {
+            try {
+              const ev = JSON.parse(data);
+              if (ev.type === 'token') appendToken(ev.data);
+              else if (ev.type === 'done') {
+                finalizeStream(ev.messageId, ev.text);
+                close();
+              } else if (ev.type === 'error') {
+                setStreaming(false);
+                setError(ev.error || 'Stream error');
+                close();
+              }
+            } catch {
+              appendToken(data);
             }
-          } catch {
-            appendToken(data);
-          }
+          },
+          onError: () => setStreaming(false),
         },
-        onError: () => setStreaming(false),
-      });
+      );
     } catch (e: any) {
       setStreaming(false);
       setError(e.message);
@@ -99,7 +112,9 @@ export default function ChatPage() {
     <main className="p-4 grid gap-3" aria-label="Chat interface">
       <header className="flex items-center gap-2">
         <h1 className="text-xl">Chat</h1>
-        <label className="sr-only" htmlFor="model">Model</label>
+        <label className="sr-only" htmlFor="model">
+          Model
+        </label>
         <select
           id="model"
           value={activeModel}
@@ -115,7 +130,11 @@ export default function ChatPage() {
         </select>
       </header>
 
-      <section className="border rounded p-2 min-h-64" aria-live="polite" aria-relevant="additions text">
+      <section
+        className="border rounded p-2 min-h-64"
+        aria-live="polite"
+        aria-relevant="additions text"
+      >
         {messages.map((m) => (
           <div key={m.id} className="my-2">
             <div className="text-xs text-gray-500">{m.role}</div>
@@ -148,7 +167,12 @@ export default function ChatPage() {
           className="border rounded p-2 flex-1 min-h-20"
           placeholder="Type a message…"
         />
-        <button className="border rounded px-3" type="submit" disabled={streaming} aria-disabled={streaming}>
+        <button
+          className="border rounded px-3"
+          type="submit"
+          disabled={streaming}
+          aria-disabled={streaming}
+        >
           Send
         </button>
       </form>

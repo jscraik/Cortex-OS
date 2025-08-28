@@ -8,8 +8,8 @@ export default function RepoMap() {
 
   useEffect(() => {
     (async () => {
-  await fetch('/api/context-map').then((r) => r.json());
-  // note: render graph using response.files in a follow-up
+      await fetch('/api/context-map').then((r) => r.json());
+      // note: render graph using response.files in a follow-up
     })();
   }, []);
 
@@ -18,7 +18,7 @@ export default function RepoMap() {
       <h1 className="text-xl" aria-live="polite">
         Repo Map
       </h1>
-  <figure ref={ref} aria-label="Dependency graph" className="border rounded-2xl p-2 min-h-96" />
+      <figure ref={ref} aria-label="Dependency graph" className="border rounded-2xl p-2 min-h-96" />
       <p className="mt-2 text-sm" aria-live="polite">
         Pointer at {x}, {y}
       </p>

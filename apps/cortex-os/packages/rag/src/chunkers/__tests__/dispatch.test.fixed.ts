@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ProcessingDispatcher, DispatchResult } from '../dispatch';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProcessingStrategy } from '../../policy/mime';
+import { ProcessingDispatcher } from '../dispatch';
 
 // Mock chunkers
 const mockTextChunker = vi.hoisted(() => ({
@@ -184,9 +184,7 @@ describe('ProcessingDispatcher', () => {
         },
       };
 
-      const expectedChunks = [
-        { id: 'ocr-1', content: 'OCR content', metadata: { page: 1 } },
-      ];
+      const expectedChunks = [{ id: 'ocr-1', content: 'OCR content', metadata: { page: 1 } }];
 
       mockOcrChunker.chunk.mockResolvedValue(expectedChunks);
 
@@ -245,24 +243,24 @@ describe('ProcessingDispatcher', () => {
       };
 
       const expectedChunks = [
-        { 
+        {
           id: '/test/document.txt-unstructured-1-1',
-          content: 'Heading content from page 1, element 1', 
-          metadata: { 
+          content: 'Heading content from page 1, element 1',
+          metadata: {
             type: 'heading',
             page: 1,
             element: 1,
-            apiProvider: 'unstructured'
-          } 
+            apiProvider: 'unstructured',
+          },
         },
         {
           id: '/test/document.txt-unstructured-1-2',
           content: 'Paragraph content from page 1, element 2',
-          metadata: { 
+          metadata: {
             type: 'paragraph',
             page: 1,
             element: 2,
-            apiProvider: 'unstructured'
+            apiProvider: 'unstructured',
           },
         },
       ];
@@ -411,7 +409,7 @@ describe('ProcessingDispatcher', () => {
 
   it('should have a health check method', async () => {
     const health = await dispatcher.healthCheck();
-    
+
     expect(health).toHaveProperty('textChunker');
     expect(health).toHaveProperty('pdfChunker');
     expect(health).toHaveProperty('ocrChunker');
