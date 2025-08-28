@@ -1,21 +1,26 @@
 /**
  * ASBR Event System
- * Implements SSE and poll fallback with heartbeat and backoff as per blueprint
+ * Implements SSE and WebSocket transport with heartbeat as per blueprint
  */
 
 import { EventEmitter } from 'events';
 import { appendFile } from 'fs/promises';
-import type { Server as IOServer, Socket } from 'socket.io';
+import type { Response } from 'express';
+import type { Server as IOServer, Socket, DefaultEventsMap } from 'socket.io';
 import type { Config, Event, EventType } from '../types/index.js';
 import { getStatePath } from '../xdg/index.js';
 import { loadConfig } from './config.js';
+
+interface SocketData {
+  subscriptionId?: string;
+}
 
 export interface EventSubscription {
   id: string;
   taskId?: string;
   eventTypes: EventType[];
   callback: (event: Event) => void;
-  transport: 'socket' | 'sse' | 'poll';
+  transport: 'socket' | 'sse';
   lastEventId?: string;
   createdAt: number;
 }
@@ -23,12 +28,12 @@ export interface EventSubscription {
 export interface EventStreamOptions {
   taskId?: string;
   eventTypes?: EventType[];
-  transport?: 'socket' | 'sse' | 'poll';
+  transport?: 'socket' | 'sse';
   lastEventId?: string;
 }
 
 /**
- * Event Manager with SSE and poll support
+ * Event Manager with SSE and WebSocket support
  */
 export class EventManager extends EventEmitter {
   private config: Config;
@@ -47,42 +52,45 @@ export class EventManager extends EventEmitter {
 
   attachIO(io: IOServer): void {
     this.io = io;
-    io.on('connection', (socket: Socket) => {
-      socket.on(
-        'subscribe',
-        (
-          { taskId, eventTypes }: { taskId?: string; eventTypes?: EventType[] },
-          ack?: (res: unknown) => void,
-        ) => {
-          const subId = this.subscribe({ taskId, eventTypes, transport: 'socket' }, (event) => {
-            socket.emit(event.type, event);
-          });
-          (socket.data as any).subscriptionId = subId;
-          if (taskId) socket.join(taskId);
-          ack?.({ ok: true });
-        },
-      );
+    io.on(
+      'connection',
+      (socket: Socket<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, SocketData>) => {
+        socket.on(
+          'subscribe',
+          (
+            { taskId, eventTypes }: { taskId?: string; eventTypes?: EventType[] },
+            ack?: (res: unknown) => void,
+          ) => {
+            const subId = this.subscribe({ taskId, eventTypes }, (event) => {
+              socket.emit(event.type, event);
+            });
+            socket.data.subscriptionId = subId;
+            if (taskId) socket.join(taskId);
+            ack?.({ ok: true });
+          },
+        );
 
-      socket.on(
-        'unsubscribe',
-        ({ taskId }: { taskId?: string } = {}, ack?: (res: unknown) => void) => {
-          const subId = (socket.data as any).subscriptionId;
+        socket.on(
+          'unsubscribe',
+          ({ taskId }: { taskId?: string } = {}, ack?: (res: unknown) => void) => {
+            const subId = socket.data.subscriptionId;
+            if (subId) {
+              this.unsubscribe(subId);
+              socket.data.subscriptionId = undefined;
+            }
+            if (taskId) socket.leave(taskId);
+            ack?.({ ok: true });
+          },
+        );
+
+        socket.on('disconnect', () => {
+          const subId = socket.data.subscriptionId;
           if (subId) {
             this.unsubscribe(subId);
-            (socket.data as any).subscriptionId = undefined;
           }
-          if (taskId) socket.leave(taskId);
-          ack?.({ ok: true });
-        },
-      );
-
-      socket.on('disconnect', () => {
-        const subId = (socket.data as any).subscriptionId;
-        if (subId) {
-          this.unsubscribe(subId);
-        }
-      });
-    });
+        });
+      },
+    );
   }
 
   /**
@@ -172,39 +180,9 @@ export class EventManager extends EventEmitter {
   }
 
   /**
-   * Get events for polling
-   */
-  getEvents(options: EventStreamOptions): Event[] {
-    const { taskId, eventTypes, lastEventId } = options;
-
-    let events: Event[];
-
-    if (taskId) {
-      events = this.eventBuffer.get(taskId) || [];
-    } else {
-      events = this.globalEvents;
-    }
-
-    // Filter by event types if specified
-    if (eventTypes && eventTypes.length > 0) {
-      events = events.filter((e) => eventTypes.includes(e.type));
-    }
-
-    // Filter by lastEventId if specified
-    if (lastEventId) {
-      const lastIndex = events.findIndex((e) => e.id === lastEventId);
-      if (lastIndex >= 0) {
-        events = events.slice(lastIndex + 1);
-      }
-    }
-
-    return events;
-  }
-
-  /**
    * Create SSE stream for Express response
    */
-  createSSEStream(res: any, options: EventStreamOptions): string {
+  createSSEStream(res: Response, options: EventStreamOptions): string {
     const subscriptionId = this.subscribe(options, (event) => {
       this.writeSSEEvent(res, event);
     });
@@ -230,32 +208,6 @@ export class EventManager extends EventEmitter {
     res.on('error', cleanup);
 
     return subscriptionId;
-  }
-
-  /**
-   * Get polling events with backoff support
-   */
-  async pollEvents(
-    options: EventStreamOptions,
-    attempt: number = 0,
-  ): Promise<{
-    events: Event[];
-    backoffMs?: number;
-  }> {
-    const events = this.getEvents(options);
-
-    if (events.length === 0 && attempt > 0) {
-      // Calculate backoff delay
-      const backoffMs = Math.min(
-        this.config.events.backoff.base_ms *
-          Math.pow(this.config.events.backoff.factor, attempt - 1),
-        this.config.events.backoff.max_ms,
-      );
-
-      return { events: [], backoffMs };
-    }
-
-    return { events };
   }
 
   /**
@@ -320,7 +272,7 @@ export class EventManager extends EventEmitter {
     this.heartbeatIntervals.set(subscriptionId, interval);
   }
 
-  private writeSSEEvent(res: any, event: Event): void {
+  private writeSSEEvent(res: Response, event: Event): void {
     const eventId = this.eventCounter++;
     const data = JSON.stringify(event);
 
@@ -329,17 +281,24 @@ export class EventManager extends EventEmitter {
     res.write(`data: ${data}\n\n`);
   }
 
-  private writeSSEHeartbeat(res: any): void {
+  private writeSSEHeartbeat(res: Response): void {
     res.write('event: heartbeat\n');
     res.write('data: {}\n\n');
   }
 
   private sendMissedEvents(subscription: EventSubscription): void {
-    const events = this.getEvents({
-      taskId: subscription.taskId,
-      eventTypes: subscription.eventTypes,
-      lastEventId: subscription.lastEventId,
-    });
+    let events = subscription.taskId
+      ? this.eventBuffer.get(subscription.taskId) || []
+      : this.globalEvents;
+
+    events = events.filter((e) => subscription.eventTypes.includes(e.type));
+
+    if (subscription.lastEventId) {
+      const lastIndex = events.findIndex((e) => e.id === subscription.lastEventId);
+      if (lastIndex >= 0) {
+        events = events.slice(lastIndex + 1);
+      }
+    }
 
     for (const event of events) {
       subscription.callback(event);
