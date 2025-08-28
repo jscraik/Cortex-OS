@@ -38,15 +38,20 @@ export class Bus {
   async bind(handlers: Handler[]) {
     const map = new Map(handlers.map((h) => [h.type, h.handle] as const));
     return this.transport.subscribe([...map.keys()], async (m) => {
-      this.validate(m);
-      const handler = map.get(m.type);
-      if (handler) {
-        // Set up trace context for the handler execution
-        const currentContext = getCurrentTraceContext();
-        if (currentContext) {
-          injectTraceContext(m, currentContext);
+      try {
+        this.validate(m);
+        const handler = map.get(m.type);
+        if (handler) {
+          // Set up trace context for the handler execution
+          const currentContext = getCurrentTraceContext();
+          if (currentContext) {
+            injectTraceContext(m, currentContext);
+          }
+          await handler(m);
         }
-        await handler(m);
+      } catch (error) {
+        console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
+        // Depending on desired strategy, you might want to forward to a DLQ
       }
     });
   }
