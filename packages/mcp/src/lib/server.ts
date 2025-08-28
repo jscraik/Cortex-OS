@@ -196,6 +196,7 @@ export function createMcpServer(options: { name: string; version: string }) {
         jsonrpc: '2.0' as const,
         id: parsed.id,
         error: { code: -32603, message: 'Method not supported' },
+
       };
     },
   };

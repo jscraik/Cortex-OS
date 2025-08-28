@@ -9,6 +9,16 @@
     "cortex": "./bin/cortex",
     "cortex-cli": "./packages/cortex-cli/dist/index.js"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
     "readiness:check": "node tools/readiness/check-readiness.mjs",

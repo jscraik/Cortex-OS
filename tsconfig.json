@@ -20,8 +20,8 @@
     "types": ["node", "vitest/globals"],
     "jsx": "react-jsx",
     "experimentalDecorators": true,
-    "declaration": false,
-    "declarationMap": false,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
@@ -50,7 +50,7 @@
       // MCP Packages
       "@cortex-os/mcp-core/*": ["packages/mcp/mcp-core/src/*"],
       "@cortex-os/mcp-transport/*": ["packages/mcp/mcp-transport/src/*"],
-      "@cortex-os/mcp-registry/*": ["packages/mcp-registry/src/*"],
+      "@cortex-os/mcp-registry/*": ["packages/mcp/mcp-registry/src/*"],
 
       // RAG Packages
       "@cortex-os/rag-pipeline/*": ["packages/rag/src/pipeline/*"],
