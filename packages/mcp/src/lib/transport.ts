@@ -1,4 +1,6 @@
-import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'child_process';
+
+import { spawnSync } from 'child_process';
+
 import { z } from 'zod';
 import type { McpRequest, TransportConfig } from './types.js';
 
@@ -42,17 +44,12 @@ export function createTransport(config: TransportConfig) {
   return {
     async connect() {
       if (cfg.type === 'stdio') {
-        const check = spawnSync('command', ['-v', cfg.command]);
 
+        const check = spawnSync('sh', ['-c', `command -v ${cfg.command}`]);
         if (check.status !== 0) {
           throw new Error('Command not found');
         }
 
-        child = spawn(cfg.command, cfg.args ?? [], {
-          env: cfg.env,
-          cwd: cfg.cwd,
-          stdio: ['pipe', 'pipe', 'pipe'],
-        });
       }
       connected = true;
     },
@@ -69,10 +66,9 @@ export function createTransport(config: TransportConfig) {
       return connected;
     },
 
-    async send(
-      message: McpRequest,
-      onError?: (err: unknown, msg: McpRequest) => void,
-    ) {
+
+    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
+
       const msgSchema = z
         .object({
           jsonrpc: z.literal('2.0'),
@@ -91,42 +87,7 @@ export function createTransport(config: TransportConfig) {
         } else {
           console.error('Malformed message in transport.send:', err, message);
         }
-        return;
-      }
 
-      if (cfg.type === 'stdio') {
-        try {
-          if (!child || !child.stdin.writable) {
-            throw new Error('Stdio process not initialized');
-          }
-          child.stdin.write(JSON.stringify(message) + '\n');
-        } catch (err) {
-          if (onError) {
-            onError(err, message);
-          } else {
-            console.error('Stdio transport error:', err);
-          }
-        }
-        return;
-      }
-
-      if (cfg.type === 'http') {
-        try {
-          const res = await fetch(cfg.url, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(message),
-          });
-          if (!res.ok) {
-            throw new Error(`HTTP error: ${res.status}`);
-          }
-        } catch (err) {
-          if (onError) {
-            onError(err, message);
-          } else {
-            console.error('HTTP transport error:', err);
-          }
-        }
       }
     },
   };

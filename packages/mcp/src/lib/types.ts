@@ -13,7 +13,9 @@ export interface Transport {
   send(
     message: McpRequest,
     onError?: (err: unknown, msg: McpRequest) => void,
-  ): Promise<void>;
+
+  ): void;
+
   isConnected(): boolean;
 }
 
