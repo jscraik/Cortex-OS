@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
-const CHECKPOINT_DIR = path.join(process.cwd(), '.checkpoints');
+const CHECKPOINT_DIR = path.join(os.homedir(), '.checkpoints');
 
 /**
  * Persist a serialized checkpoint for a given thread.
