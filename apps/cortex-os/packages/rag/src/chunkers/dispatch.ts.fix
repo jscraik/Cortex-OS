@@ -1,0 +1,209 @@
+// eslint-disable-next-line import/no-unresolved
+/* eslint-disable import/no-unresolved */
+import { ProcessingConfig, ProcessingStrategy, StrategyDecision } from '../policy/mime';
+import { TextChunker } from './text-chunker';
+import { PdfChunker } from './pdf-chunker';
+import { OcrChunker } from './ocr-chunker';
+import { UnstructuredChunker } from './unstructured-chunker';
+
+/**
+ * File representation for processing
+ */
+export interface ProcessingFile {
+  path: string;
+  content: Buffer;
+  mimeType: string;
+  size: number;
+}
+
+/**
+ * Document chunk with metadata
+ */
+export interface DocumentChunk {
+  id: string;
+  content: string;
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Result of document processing
+ */
+export interface DispatchResult {
+  success: boolean;
+  chunks?: DocumentChunk[];
+  error?: string;
+  strategy: ProcessingStrategy;
+  processingTimeMs: number;
+  metadata: {
+    chunker?: string;
+    totalChunks?: number;
+    processingDetails?: unknown;
+    errorDetails?: string;
+    attemptedChunker?: string;
+    rejectionReason?: string;
+  };
+}
+
+/**
+ * Configuration for the processing dispatcher
+ */
+export interface DispatcherConfig {
+  timeout?: number;
+  maxChunkSize?: number;
+  enableParallel?: boolean;
+}
+
+/**
+ * Interface for chunker implementations
+ */
+export interface Chunker {
+  chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]>;
+}
+
+/**
+ * Dispatches processing requests to appropriate chunkers based on strategy
+ */
+export class ProcessingDispatcher {
+  private readonly textChunker: Chunker;
+  private readonly pdfChunker: Chunker;
+  private readonly ocrChunker: Chunker;
+  private readonly unstructuredChunker: Chunker;
+
+  public readonly config: Required<DispatcherConfig>;
+
+  constructor(config: DispatcherConfig = {}) {
+    this.config = {
+      timeout: 30000, // 30 seconds
+      maxChunkSize: 4096, // 4KB
+      enableParallel: false, // Conservative default
+      ...config,
+    };
+    
+    // Initialize chunkers
+    this.textChunker = new TextChunker();
+    this.pdfChunker = new PdfChunker();
+    this.ocrChunker = new OcrChunker();
+    this.unstructuredChunker = new UnstructuredChunker();
+  }
+
+  /**
+   * Dispatch file processing based on strategy decision
+   */
+  async dispatch(file: ProcessingFile, strategy: StrategyDecision): Promise<DispatchResult> {
+    const startTime = performance.now();
+
+    try {
+      // Handle rejection strategy
+      if (strategy.strategy === ProcessingStrategy.REJECT) {
+        return {
+          success: false,
+          error: `Processing rejected: ${strategy.reason}`,
+          strategy: strategy.strategy,
+          processingTimeMs: performance.now() - startTime,
+          metadata: {
+            rejectionReason: strategy.reason,
+          },
+        };
+      }
+
+      // Validate processing configuration
+      if (!strategy.processing) {
+        return {
+          success: false,
+          error: 'Invalid strategy: missing processing configuration',
+          strategy: strategy.strategy,
+          processingTimeMs: performance.now() - startTime,
+          metadata: {
+            errorDetails: 'No processing configuration provided',
+          },
+        };
+      }
+
+      // Route to appropriate chunker
+      const chunks = await this.processWithTimeout(file, strategy);
+
+      return {
+        success: true,
+        chunks,
+        strategy: strategy.strategy,
+        processingTimeMs: performance.now() - startTime,
+        metadata: {
+          chunker: strategy.processing.chunker || 'unknown',
+          totalChunks: chunks.length,
+          processingDetails: strategy.processing,
+        },
+      };
+    } catch (_error) {
+      return {
+        success: false,
+        error: `Processing failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        strategy: strategy.strategy,
+        processingTimeMs: performance.now() - startTime,
+        metadata: {
+          errorDetails: _error instanceof Error ? _error.message : 'Unknown error',
+          attemptedChunker: strategy.processing?.chunker || 'unknown',
+        },
+      };
+    }
+  }
+
+  private async processWithTimeout(
+    file: ProcessingFile,
+    strategy: StrategyDecision,
+  ): Promise<DocumentChunk[]> {
+    const processing = strategy.processing;
+    if (!processing) {
+      throw new Error('Missing processing configuration');
+    }
+    const processingPromise = this.routeToChunker(file, strategy.strategy, processing);
+
+    // Apply timeout
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Processing timeout')), this.config.timeout);
+    });
+
+    return Promise.race([processingPromise, timeoutPromise]);
+  }
+
+  private async routeToChunker(
+    file: ProcessingFile,
+    strategy: ProcessingStrategy,
+    config: ProcessingConfig,
+  ): Promise<DocumentChunk[]> {
+    switch (strategy) {
+      case ProcessingStrategy.NATIVE_TEXT:
+        return this.textChunker.chunk(file, config);
+
+      case ProcessingStrategy.PDF_NATIVE:
+        return this.pdfChunker.chunk(file, config);
+
+      case ProcessingStrategy.OCR:
+        return this.ocrChunker.chunk(file, config);
+
+      case ProcessingStrategy.UNSTRUCTURED:
+        return this.unstructuredChunker.chunk(file, config);
+
+      default:
+        throw new Error(`Unknown processing strategy: ${strategy}`);
+    }
+  }
+
+  /**
+   * Get dispatcher configuration
+   */
+  getConfig(): Required<DispatcherConfig> {
+    return { ...this.config };
+  }
+
+  /**
+   * Health check for chunker availability
+   */
+  healthCheck(): Promise<Record<string, boolean>> {
+    return Promise.resolve({
+      textChunker: true, // Always available
+      pdfChunker: true, // Assume pdf-parse is available
+      ocrChunker: true, // Assume Tesseract.js is available
+      unstructuredChunker: true, // Assume API access
+    });
+  }
+}

@@ -14,9 +14,11 @@ const templatePath = join(
   'neo4j-secure-class.ts',
 );
 
+
 function log(msg) {
   console.log(`[update-neo4j] ${msg}`);
 }
+
 
 function replaceClass(content, replacement) {
   const marker = 'export class Neo4j implements INeo4j';
@@ -30,6 +32,7 @@ function replaceClass(content, replacement) {
     return { content, replaced: false };
   }
 
+
   let depth = 1;
   let i = braceStart + 1;
   while (i < content.length && depth > 0) {
@@ -38,6 +41,7 @@ function replaceClass(content, replacement) {
     else if (ch === '}') depth--;
     i++;
   }
+
   if (depth !== 0) {
     return { content, replaced: false };
   }
@@ -45,6 +49,7 @@ function replaceClass(content, replacement) {
   const end = i;
   const updated = content.slice(0, start) + replacement + content.slice(end);
   return { content: updated, replaced: true };
+
 }
 
 function tryUpdate() {
@@ -71,6 +76,7 @@ function tryUpdate() {
     );
   }
 
+
   // Replace entire class body with a secure implementation
   const secureClass = readFileSync(templatePath, 'utf-8');
   const result = replaceClass(content, secureClass);
@@ -78,6 +84,7 @@ function tryUpdate() {
     throw new Error('Neo4j class declaration not found.');
   }
   writeFileSync(neo4jPath, result.content);
+
   log('neo4j.ts has been updated to delegate to SecureNeo4j.');
   return true;
 }
@@ -93,4 +100,10 @@ try {
   console.error('[update-neo4j] Failed to update neo4j.ts:', err);
   process.exit(1);
 }
+
+
+
+console.log('✅ neo4j.ts has been updated to use SecureNeo4j');
+console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+
 
