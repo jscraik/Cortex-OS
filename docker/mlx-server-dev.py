@@ -7,6 +7,7 @@ This is the development version that creates mock managers when dependencies are
 """
 
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -141,12 +142,32 @@ try:
     import uvicorn
     from fastapi import FastAPI, HTTPException
     from fastapi.responses import JSONResponse
+    from pydantic import BaseModel, Field, field_validator
 
     FASTAPI_AVAILABLE = True
     logger.info("FastAPI available")
 except ImportError:
     FASTAPI_AVAILABLE = False
     logger.warning("FastAPI not available - server will run in mock mode")
+
+if FASTAPI_AVAILABLE:
+    class InferenceRequest(BaseModel):
+        model: str
+        prompt: str
+        max_tokens: int = Field(default=1000, ge=1, le=4096)
+        temperature: float = Field(default=0.7, ge=0, le=1)
+
+        @field_validator("prompt")
+        @classmethod
+        def sanitize_prompt(cls, v: str) -> str:
+            if "<script" in v.lower():
+                raise ValueError("Potential prompt injection detected")
+            return re.sub(r"<[^>]+>", "", v)
+else:
+    class InferenceRequest:
+        def __init__(self, **kwargs):
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
 # Initialize managers
 memory_manager = MLXMemoryManager()
@@ -215,8 +236,8 @@ class MLXServer:
                     raise HTTPException(
                         status_code=400, detail=f"Failed to load model {model_name}"
                     )
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+            except Exception:
+                raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post("/models/{model_name}/unload")
         async def unload_model(model_name: str):
@@ -229,34 +250,23 @@ class MLXServer:
                     raise HTTPException(
                         status_code=400, detail=f"Model {model_name} not loaded"
                     )
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+            except Exception:
+                raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post("/inference")
-        async def inference(request: dict):
+        async def inference(req: InferenceRequest):
             """Generate text using a loaded model"""
             try:
-                model = request.get("model")
-                prompt = request.get("prompt")
-                max_tokens = request.get("max_tokens", 1000)
-                temperature = request.get("temperature", 0.7)
-
-                if not model or not prompt:
-                    raise HTTPException(
-                        status_code=400, detail="Model and prompt are required"
-                    )
-
                 result = await model_manager.generate(
-                    model=model,
-                    prompt=prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
+                    model=req.model,
+                    prompt=req.prompt,
+                    max_tokens=req.max_tokens,
+                    temperature=req.temperature,
                 )
 
                 return result
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
-
+            except Exception:
+                raise HTTPException(status_code=500, detail="Internal server error")
         return app
 
     # Mock server methods for when FastAPI is not available
