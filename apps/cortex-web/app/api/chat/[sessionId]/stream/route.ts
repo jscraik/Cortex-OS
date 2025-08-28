@@ -1,4 +1,5 @@
 import { getSession, addMessage } from '../../../../../utils/chat-store';
+import { streamChat } from '../../../../../utils/chat-gateway';
 
 export const runtime = 'nodejs';
 
@@ -7,25 +8,35 @@ export async function GET(_req: Request, { params }: { params: { sessionId: stri
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      // For MVP, echo last user message with a simple transformation
       const enc = new TextEncoder();
       const session = getSession(sessionId);
       const lastUser = [...session.messages].reverse().find((m) => m.role === 'user');
       if (!lastUser) {
-        controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'error', error: 'no message' })}\n\n`));
+        controller.enqueue(
+          enc.encode(`data: ${JSON.stringify({ type: 'error', error: 'no message' })}\n\n`),
+        );
         controller.close();
         return;
       }
 
-      const text = `Echo: ${lastUser.content}`;
-      for (const ch of text) {
-        controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'token', data: ch })}\n\n`));
-        await new Promise((r) => setTimeout(r, 10));
-      }
+      // Write a start event (Open WebUI compatible)
+      controller.enqueue(
+        enc.encode(`data: ${JSON.stringify({ type: 'start', model: session.modelId })}\n\n`),
+      );
+
+      const { text } = await streamChat(
+        { model: session.modelId || 'qwen2.5-0.5b', messages: session.messages },
+        (tok) =>
+          controller.enqueue(
+            enc.encode(`data: ${JSON.stringify({ type: 'token', data: tok })}\n\n`),
+          ),
+      );
 
       const finalId = crypto.randomUUID();
       addMessage(sessionId, { id: finalId, role: 'assistant', content: text });
-      controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'done', messageId: finalId, text })}\n\n`));
+      controller.enqueue(
+        enc.encode(`data: ${JSON.stringify({ type: 'done', messageId: finalId, text })}\n\n`),
+      );
       controller.close();
     },
   });
