@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+import('../apps/cortex-cli/dist/index.js');
