@@ -131,7 +131,7 @@ export default function ChatPage() {
       <a href="#composer" className="sr-only focus:not-sr-only focus:underline">
         Skip to composer
       </a>
-  <header className="flex items-center gap-2">
+      <header className="flex items-center gap-2">
         <h1 className="text-xl">Chat</h1>
         <label className="sr-only" htmlFor="model">
           Model
@@ -175,7 +175,9 @@ export default function ChatPage() {
         </div>
 
         <section className="border rounded p-2" aria-labelledby="tool-calls-heading">
-          <h2 id="tool-calls-heading" className="text-sm font-semibold">Tool activity</h2>
+          <h2 id="tool-calls-heading" className="text-sm font-semibold">
+            Tool activity
+          </h2>
           {toolEvents.length === 0 ? (
             <p className="text-xs text-gray-500">No tools used yet.</p>
           ) : (
@@ -193,7 +195,7 @@ export default function ChatPage() {
               ))}
             </ul>
           )}
-  </section>
+        </section>
       </section>
 
       {error && (

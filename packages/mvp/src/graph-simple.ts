@@ -13,12 +13,8 @@ import {
   PRPState,
   validateStateTransition,
 } from './state.js';
-
-// Import real interfaces from prp-runner
-interface PRPOrchestrator {
-  getNeuronCount(): number;
-  // Real orchestrator interface - simplified for testing
-}
+import { PRPOrchestrator } from './mcp/adapter.js';
+import { startSpan, recordMetric } from './observability/otel.js';
 
 interface Blueprint {
   title: string;
@@ -29,6 +25,7 @@ interface Blueprint {
 interface RunOptions {
   runId?: string;
   deterministic?: boolean;
+  id?: string;
 }
 
 /**
@@ -51,55 +48,65 @@ export class SimplePRPGraph {
    * Run a complete PRP workflow
    */
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
-    const runId =
-      options.runId ||
-      (options.deterministic
-        ? `prp-deterministic-${generateDeterministicHash(blueprint)}`
-        : nanoid());
-
-    const deterministic = options.deterministic || false;
-    const state = createInitialPRPState(blueprint, { runId, deterministic });
-
-    // Initialize execution history
-    this.executionHistory.set(runId, []);
-    this.addToHistory(runId, state);
+    const workflowSpan = startSpan('prp.workflow');
+    const startTime = Date.now();
 
     try {
-      // Execute strategy phase
-      const strategyState = await this.executeStrategyPhase(state, deterministic);
-      this.addToHistory(runId, strategyState);
+      const deterministic = options.deterministic || false;
+      const runId =
+        options.runId ||
+        (deterministic ? `prp-deterministic-${generateDeterministicHash(blueprint)}` : nanoid());
 
-      // Check if we should proceed or recycle
-      if (strategyState.phase === 'recycled') {
-        return strategyState;
+      const state = createInitialPRPState(blueprint, {
+        runId,
+        deterministic,
+        id: options.id,
+      });
+
+      // Initialize execution history
+      this.executionHistory.set(runId, []);
+      this.addToHistory(runId, state);
+
+      try {
+        // Execute strategy phase
+        const strategyState = await this.executeStrategyPhase(state, deterministic);
+        this.addToHistory(runId, strategyState);
+
+        // Check if we should proceed or recycle
+        if (strategyState.phase === 'recycled') {
+          return strategyState;
+        }
+
+        // Execute build phase
+        const buildState = await this.executeBuildPhase(strategyState, deterministic);
+        this.addToHistory(runId, buildState);
+
+        if (buildState.phase === 'recycled') {
+          return buildState;
+        }
+
+        // Execute evaluation phase
+        const evaluationState = await this.executeEvaluationPhase(buildState, deterministic);
+        this.addToHistory(runId, evaluationState);
+
+        // Record metrics
+        const duration = Date.now() - startTime;
+        recordMetric('prp.duration', duration, 'milliseconds');
+        recordMetric('prp.phases.completed', 3);
+
+        // Final state
+        workflowSpan.setStatus('OK');
+        return evaluationState;
+      } catch (error) {
+        workflowSpan.setStatus('ERROR');
+        workflowSpan.setAttribute(
+          'error.message',
+          error instanceof Error ? error.message : 'Unknown error',
+        );
+        throw error;
       }
-
-      // Execute build phase
-      const buildState = await this.executeBuildPhase(strategyState, deterministic);
-      this.addToHistory(runId, buildState);
-
-      if (buildState.phase === 'recycled') {
-        return buildState;
-      }
-
-      // Execute evaluation phase
-      const evaluationState = await this.executeEvaluationPhase(buildState, deterministic);
-      this.addToHistory(runId, evaluationState);
-
-      // Final state
-      return evaluationState;
-    } catch (error) {
-      const errorState: PRPState = {
-        ...state,
-        phase: 'recycled',
-        metadata: {
-          ...state.metadata,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          endTime: new Date().toISOString(),
-        },
-      };
-      this.addToHistory(runId, errorState);
-      return errorState;
+    } finally {
+      workflowSpan.end();
     }
   }
 
@@ -107,114 +114,156 @@ export class SimplePRPGraph {
    * Execute strategy phase
    */
   private async executeStrategyPhase(state: PRPState, deterministic = false): Promise<PRPState> {
-    const newState: PRPState = {
-      ...state,
-      phase: 'strategy',
-      metadata: {
-        ...state.metadata,
-        currentNeuron: 'strategy-neuron',
-      },
-    };
+    const strategySpan = startSpan('prp.strategy');
 
-    // Simulate strategy work
-    await this.simulateWork(100, { deterministic });
+    try {
+      const newState: PRPState = {
+        ...state,
+        phase: 'strategy',
+        metadata: {
+          ...state.metadata,
+          currentNeuron: 'strategy-neuron',
+        },
+      };
 
-    // Add strategy validation results
-    newState.validationResults.strategy = {
-      passed: true,
-      blockers: [],
-      majors: [],
-      evidence: [],
-      timestamp: deterministic ? '2025-08-21T00:00:01.000Z' : new Date().toISOString(),
-    };
+      // Simulate strategy work
+      await this.simulateWork(100, { deterministic });
 
-    // Transition to build
-    const buildState: PRPState = {
-      ...newState,
-      phase: 'build',
-    };
+      // Add strategy validation results
+      newState.validationResults.strategy = {
+        passed: true,
+        blockers: [],
+        majors: [],
+        evidence: [],
+        timestamp: deterministic ? '2025-08-21T00:00:01.000Z' : new Date().toISOString(),
+      };
 
-    return validateStateTransition(newState, buildState) ? buildState : newState;
+      // Transition to build
+      const buildState: PRPState = {
+        ...newState,
+        phase: 'build',
+      };
+
+      strategySpan.setStatus('OK');
+      return validateStateTransition(newState, buildState) ? buildState : newState;
+    } catch (error) {
+      strategySpan.setStatus('ERROR');
+      strategySpan.setAttribute(
+        'error.message',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      throw error;
+    } finally {
+      strategySpan.end();
+    }
   }
 
   /**
    * Execute build phase
    */
   private async executeBuildPhase(state: PRPState, deterministic = false): Promise<PRPState> {
-    const newState: PRPState = {
-      ...state,
-      phase: 'build',
-      metadata: {
-        ...state.metadata,
-        currentNeuron: 'build-neuron',
-      },
-    };
+    const buildSpan = startSpan('prp.build');
 
-    // Simulate build work
-    await this.simulateWork(150, { deterministic });
+    try {
+      const newState: PRPState = {
+        ...state,
+        phase: 'build',
+        metadata: {
+          ...state.metadata,
+          currentNeuron: 'build-neuron',
+        },
+      };
 
-    // Add build validation results
-    newState.validationResults.build = {
-      passed: true,
-      blockers: [],
-      majors: [],
-      evidence: [],
-      timestamp: deterministic ? '2025-08-21T00:00:02.000Z' : new Date().toISOString(),
-    };
+      // Simulate build work
+      await this.simulateWork(150, { deterministic });
 
-    // Transition to evaluation
-    const evaluationState: PRPState = {
-      ...newState,
-      phase: 'evaluation',
-    };
+      // Add build validation results
+      newState.validationResults.build = {
+        passed: true,
+        blockers: [],
+        majors: [],
+        evidence: [],
+        timestamp: deterministic ? '2025-08-21T00:00:02.000Z' : new Date().toISOString(),
+      };
 
-    return validateStateTransition(newState, evaluationState) ? evaluationState : newState;
+      // Transition to evaluation
+      const evaluationState: PRPState = {
+        ...newState,
+        phase: 'evaluation',
+      };
+
+      buildSpan.setStatus('OK');
+      return validateStateTransition(newState, evaluationState) ? evaluationState : newState;
+    } catch (error) {
+      buildSpan.setStatus('ERROR');
+      buildSpan.setAttribute(
+        'error.message',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      throw error;
+    } finally {
+      buildSpan.end();
+    }
   }
 
   /**
    * Execute evaluation phase
    */
   private async executeEvaluationPhase(state: PRPState, deterministic = false): Promise<PRPState> {
-    const newState: PRPState = {
-      ...state,
-      phase: 'evaluation',
-      metadata: {
-        ...state.metadata,
-        currentNeuron: 'evaluation-neuron',
-      },
-    };
+    const evaluationSpan = startSpan('prp.evaluation');
 
-    // Simulate evaluation work
-    await this.simulateWork(100, { deterministic });
+    try {
+      const newState: PRPState = {
+        ...state,
+        phase: 'evaluation',
+        metadata: {
+          ...state.metadata,
+          currentNeuron: 'evaluation-neuron',
+        },
+      };
 
-    // Add evaluation validation results
-    newState.validationResults.evaluation = {
-      passed: true,
-      blockers: [],
-      majors: [],
-      evidence: [],
-      timestamp: deterministic ? '2025-08-21T00:00:03.000Z' : new Date().toISOString(),
-    };
+      // Simulate evaluation work
+      await this.simulateWork(100, { deterministic });
 
-    // Final cerebrum decision
-    newState.cerebrum = {
-      decision: 'promote',
-      reasoning: 'All validation gates passed successfully',
-      confidence: 0.95,
-      timestamp: deterministic ? '2025-08-21T00:00:04.000Z' : new Date().toISOString(),
-    };
+      // Add evaluation validation results
+      newState.validationResults.evaluation = {
+        passed: true,
+        blockers: [],
+        majors: [],
+        evidence: [],
+        timestamp: deterministic ? '2025-08-21T00:00:03.000Z' : new Date().toISOString(),
+      };
 
-    // Complete the workflow
-    const completedState: PRPState = {
-      ...newState,
-      phase: 'completed',
-      metadata: {
-        ...newState.metadata,
-        endTime: deterministic ? '2025-08-21T00:00:05.000Z' : new Date().toISOString(),
-      },
-    };
+      // Final cerebrum decision
+      newState.cerebrum = {
+        decision: 'promote',
+        reasoning: 'All validation gates passed successfully',
+        confidence: 0.95,
+        timestamp: deterministic ? '2025-08-21T00:00:04.000Z' : new Date().toISOString(),
+      };
 
-    return validateStateTransition(newState, completedState) ? completedState : newState;
+      // Complete the workflow
+      const completedState: PRPState = {
+        ...newState,
+        phase: 'completed',
+        metadata: {
+          ...newState.metadata,
+          endTime: deterministic ? '2025-08-21T00:00:05.000Z' : new Date().toISOString(),
+        },
+      };
+
+      evaluationSpan.setStatus('OK');
+      return validateStateTransition(newState, completedState) ? completedState : newState;
+    } catch (error) {
+      evaluationSpan.setStatus('ERROR');
+      evaluationSpan.setAttribute(
+        'error.message',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      throw error;
+    } finally {
+      evaluationSpan.end();
+    }
   }
 
   /**

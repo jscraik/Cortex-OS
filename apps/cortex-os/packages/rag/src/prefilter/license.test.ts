@@ -21,6 +21,7 @@ vi.mock('fs', () => ({
   rmSync: vi.fn(),
   readFileSync: vi.fn(),
   existsSync: vi.fn(() => true), // Mock existsSync to return true for test directory
+  mkdtempSync: vi.fn(() => '/tmp/license-scan-mock'),
 }));
 
 describe('LicenseScanner - TDD Security Tests', () => {

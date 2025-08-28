@@ -6,14 +6,15 @@
  * @security OWASP LLM Top-10 Compliance
  */
 
-import { describe, test, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
 import { execSync } from 'child_process';
-import { writeFileSync, readFileSync } from 'fs';
-import { SecretsRedactor, PIIRedactor, RedactionOptions, RedactionResult } from './redact';
+import { afterEach, beforeEach, describe, expect, MockedFunction, test, vi } from 'vitest';
+import { PIIRedactor, SecretsRedactor } from './redact';
 
 // Mock external dependencies
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
+  // Spawn is used for Docker-based GitLeaks calls in the redactor implementation
+  spawnSync: vi.fn(() => ({ status: 0, stdout: '' })),
 }));
 
 vi.mock('fs', () => ({
@@ -21,6 +22,8 @@ vi.mock('fs', () => ({
   readFileSync: vi.fn(),
   existsSync: vi.fn(() => true),
   mkdirSync: vi.fn(),
+  // mkdtempSync is used by the implementation to create secure temp dirs
+  mkdtempSync: vi.fn(() => '/tmp/gitleaks-scan-mock'),
 }));
 
 describe('SecretsRedactor - TDD Security Tests', () => {

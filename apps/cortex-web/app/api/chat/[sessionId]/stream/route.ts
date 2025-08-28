@@ -1,5 +1,6 @@
 import { streamChat } from '../../../../../utils/chat-gateway';
 import { addMessage, getSession } from '../../../../../utils/chat-store';
+import { logEvent, makeDoneEvent, makeStartEvent } from '../../../../../utils/observability';
 import { addToolEvent } from '../../../../../utils/tool-store';
 
 export const runtime = 'nodejs';
@@ -25,11 +26,8 @@ export async function GET(_req: Request, { params }: { params: { sessionId: stri
       const OBS =
         process.env.CHAT_OBSERVABILITY === '1' || process.env.CHAT_OBSERVABILITY === 'true';
       if (OBS) {
-        // lightweight structured log for observability
-        console.log(
-          JSON.stringify({
-            ts: new Date().toISOString(),
-            evt: 'chat.stream.start',
+        logEvent(
+          makeStartEvent({
             sessionId,
             model: session.modelId,
             lastUserId: lastUser.id,
@@ -86,10 +84,8 @@ export async function GET(_req: Request, { params }: { params: { sessionId: stri
         ),
       );
       if (OBS) {
-        console.log(
-          JSON.stringify({
-            ts: new Date().toISOString(),
-            evt: 'chat.stream.done',
+        logEvent(
+          makeDoneEvent({
             sessionId,
             model: session.modelId,
             messageId: finalId,
