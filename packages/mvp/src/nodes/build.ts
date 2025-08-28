@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { PRPState, Evidence } from '../state.js';
+import { Evidence, PRPState } from '../state.js';
 
 /**
  * Build Phase Gates:
@@ -133,7 +133,7 @@ export class BuildNode {
 
     // Check if schema exists in outputs
     const hasSchema = state.outputs?.['api-schema'] !== undefined;
-    
+
     return {
       passed: hasSchema, // Properly fail when schema is missing
       details: {
