@@ -5,6 +5,15 @@ import type { McpRequest, TransportConfig, Transport } from './types.js';
 import { parseTransportConfig } from './transport-schema.js';
 
 
+export function validateTransportConfig(config: TransportConfig) {
+  const baseSchema = {
+    allowNetwork: z.boolean().optional(),
+    sandbox: z.boolean().optional(),
+    timeoutMs: z.number().int().nonnegative().optional(),
+    maxMemoryMB: z.number().int().nonnegative().optional(),
+  };
+
+
 function validateMessage(message: McpRequest): void {
   const schema = z
     .object({
@@ -20,34 +29,50 @@ function validateMessage(message: McpRequest): void {
 }
 
 
-function createConnect(cfg: TransportConfig, state: { connected: boolean }) {
-  return async () => {
-    if (cfg.type === 'stdio') {
-      try {
-        await commandExists(cfg.command);
-      } catch {
-        throw new Error('Command not found');
-      }
+  return z.union([stdioSchema, httpSchema]).parse(config);
+}
+
+function ensureCommandExists(command: string) {
+  const check = spawnSync('command', ['-v', command]);
+  if (check.status !== 0) {
+    throw new Error('Command not found');
+  }
+}
+
+export function validateMessage(
+  message: McpRequest,
+  onError?: (err: unknown, msg: McpRequest) => void,
+) {
+  const msgSchema = z
+    .object({
+      jsonrpc: z.literal('2.0'),
+      id: z.union([z.string(), z.number()]),
+      method: z.string().optional(),
+      params: z.unknown().optional(),
+      result: z.unknown().optional(),
+      error: z.unknown().optional(),
+    })
+    .strict();
+  try {
+    msgSchema.parse(message);
+  } catch (err) {
+    if (onError) {
+      onError(err, message);
+    } else {
+      console.error('Malformed message in transport.send:', err, message);
     }
-    state.connected = true;
-  };
+  }
 }
 
-function createDisconnect(state: { connected: boolean }) {
-  return async () => {
-    state.connected = false;
-  };
-}
+export function createTransport(config: TransportConfig) {
+  const cfg = validateTransportConfig(config);
+  let connected = false;
 
-function createSend() {
-  return (message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) => {
-    try {
-      validateMessage(message);
-    } catch (err) {
-      if (onError) {
-        onError(err, message);
-      } else {
-        console.error('Malformed message in transport.send:', err, message);
+  return {
+    async connect() {
+      if (cfg.type === 'stdio') {
+        ensureCommandExists(cfg.command);
+
       }
     }
   };
@@ -65,5 +90,11 @@ export function createTransport(config: TransportConfig): Transport {
     isConnected: () => state.connected,
     send: createSend(),
 
+
+    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
+      validateMessage(message, onError);
+    },
+
   };
 }
+
