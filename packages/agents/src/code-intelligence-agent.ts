@@ -110,10 +110,6 @@ export interface PerformanceBottleneck {
   impact: 'low' | 'medium' | 'high';
   suggestion: string;
 }
-const COMPLEXITY_THRESHOLDS = {
-  lines: { medium: 10, high: 100 },
-  indicators: { medium: 3, high: 15 },
-} as const;
 
 const suggestionSchema = z.object({
   type: z.enum(['improvement', 'refactor', 'bug_fix', 'optimization']),
