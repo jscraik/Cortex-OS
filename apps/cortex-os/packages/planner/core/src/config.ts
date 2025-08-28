@@ -1,34 +1,45 @@
-import { promises as fs, existsSync } from "node:fs";
-import * as path from "node:path";
+import { promises as fs, existsSync } from 'node:fs';
+import * as path from 'node:path';
 
-export type JsonObject = { [key: string]: any };
+/**
+ * ConfigManager provides typed access to the repository configuration.
+ * Module contract: interacts only with filesystem and exposes no side effects
+ * outside of reading/writing `cortex-config.json`.
+ */
+
+export type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
 
 function getRepoRoot(): string {
   let dir = path.dirname(new URL(import.meta.url).pathname);
-  while (!existsSync(path.join(dir, "cortex-config.json"))) {
+  while (!existsSync(path.join(dir, 'cortex-config.json'))) {
     const parent = path.dirname(dir);
     if (parent === dir) {
-      throw new Error("Unable to locate repository root from config.ts");
+      throw new Error('Unable to locate repository root from config.ts');
     }
     dir = parent;
   }
   return dir;
 }
 
-function deepGet(obj: JsonObject, keyPath: string): any {
-  if (!keyPath) return obj;
+function deepGet<T = JsonValue>(obj: JsonObject, keyPath: string): T | undefined {
+  if (!keyPath) return obj as unknown as T;
   return keyPath
-    .split(".")
-    .reduce((acc: any, k) => (acc == null ? undefined : acc[k]), obj);
+    .split('.')
+    .reduce<
+      JsonValue | undefined
+    >((acc, k) => (acc == null ? undefined : (acc as JsonObject)[k]), obj) as T | undefined;
 }
 
-function deepSet(obj: JsonObject, keyPath: string, value: any): JsonObject {
-  const parts = keyPath.split(".");
-  let cur: any = obj;
+function deepSet(obj: JsonObject, keyPath: string, value: JsonValue): JsonObject {
+  const parts = keyPath.split('.');
+  let cur: JsonObject = obj;
   for (let i = 0; i < parts.length - 1; i++) {
     const p = parts[i];
-    if (typeof cur[p] !== "object" || cur[p] === null) cur[p] = {};
-    cur = cur[p];
+    if (typeof cur[p] !== 'object' || cur[p] === null) cur[p] = {};
+    cur = cur[p] as JsonObject;
   }
   cur[parts[parts.length - 1]] = value;
   return obj;
@@ -41,7 +52,7 @@ export class ConfigManager {
 
   private constructor() {
     // Primary config file at repo root
-    this.configPath = path.resolve(getRepoRoot(), "cortex-config.json");
+    this.configPath = path.resolve(getRepoRoot(), 'cortex-config.json');
   }
 
   static getInstance(): ConfigManager {
@@ -51,15 +62,15 @@ export class ConfigManager {
 
   async loadFile(): Promise<JsonObject> {
     try {
-      const raw = await fs.readFile(this.configPath, "utf-8");
-      const json = JSON.parse(raw);
+      const raw = await fs.readFile(this.configPath, 'utf-8');
+      const json: JsonObject = JSON.parse(raw);
       if (Object.keys(this.baseline).length === 0) {
         // Keep the first loaded copy as baseline for reset()
         this.baseline = JSON.parse(raw);
       }
       return json;
-    } catch (err: any) {
-      if (err.code === "ENOENT") {
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err !== null && (err as { code?: string }).code === 'ENOENT') {
         // Initialize with defaults
         const defaults: JsonObject = {};
         await this.saveFile(defaults);
@@ -71,16 +82,16 @@ export class ConfigManager {
   }
 
   async saveFile(config: JsonObject): Promise<void> {
-    const content = JSON.stringify(config, null, 2) + "\n";
-    await fs.writeFile(this.configPath, content, "utf-8");
+    const content = JSON.stringify(config, null, 2) + '\n';
+    await fs.writeFile(this.configPath, content, 'utf-8');
   }
 
-  async getValue(key: string): Promise<any> {
+  async getValue<T = JsonValue>(key: string): Promise<T | undefined> {
     const cfg = await this.loadFile();
-    return deepGet(cfg, key);
+    return deepGet<T>(cfg, key);
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async set(key: string, value: JsonValue): Promise<void> {
     const cfg = await this.loadFile();
     deepSet(cfg, key, value);
     await this.saveFile(cfg);
