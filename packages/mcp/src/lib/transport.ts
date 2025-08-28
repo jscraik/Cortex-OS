@@ -47,7 +47,8 @@ export function createTransport(config: TransportConfig) {
   return {
     async connect() {
       if (cfg.type === 'stdio') {
-        const check = spawnSync('sh', ['-c', `command -v ${cfg.command}`]);
+        const check = spawnSync('command', ['-v', cfg.command]);
+
         if (check.status !== 0) {
           throw new Error('Command not found');
         }
