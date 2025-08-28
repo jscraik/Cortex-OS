@@ -46,10 +46,6 @@ export class ASBRServer {
   private idempotencyCache = new Map<string, string>(); // idempotency key -> task ID
   private responseCache = new Map<string, { data: unknown; expiry: number }>();
   private readonly CACHE_TTL = 30000; // 30 seconds
-  // Note: Connection pooling and request deduplication infrastructure
-  // Currently unused but reserved for future database integration
-  // private connectionPool = new Map<string, unknown>(); // Connection pooling for database operations
-  // private requestQueue = new Map<string, Promise<unknown>>(); // Request deduplication
 
   constructor(options: ASBRServerOptions = {}) {
     this.app = express();
