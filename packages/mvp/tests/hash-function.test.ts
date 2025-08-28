@@ -3,7 +3,7 @@
  * @description Test for the generateDeterministicHash helper function
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateDeterministicHash } from '../src/state.js';
 
 describe('generateDeterministicHash', () => {

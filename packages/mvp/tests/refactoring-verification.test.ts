@@ -3,9 +3,9 @@
  * @description Test to verify the hash function refactoring works correctly
  */
 
-import { describe, it, expect } from 'vitest';
-import { generateDeterministicHash, createInitialPRPState } from '../src/state.js';
+import { describe, expect, it } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
+import { createInitialPRPState, generateDeterministicHash } from '../src/state.js';
 
 describe('Hash Function Refactoring Verification', () => {
   it('should use the same hash function in both state.ts and graph-simple.ts', () => {
