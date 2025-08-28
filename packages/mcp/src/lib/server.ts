@@ -195,7 +195,7 @@ export function createMcpServer(options: { name: string; version: string }) {
       return {
         jsonrpc: '2.0' as const,
         id: parsed.id,
-        error: { code: -32603, message: `Unknown method: ${parsed.method}` },
+        error: { code: -32601, message: `Unknown method: ${parsed.method}` },
       };
     },
   };
