@@ -13,7 +13,8 @@ describe('EvidenceStorage', () => {
   beforeAll(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'asbr-storage-'));
     process.env.XDG_DATA_HOME = tmpDir;
-    process.env.ASBR_ENCRYPTION_KEY = 'test-key';
+    // Use a proper 32-byte key for AES-256 (here, a hardcoded hex string for testing)
+    process.env.ASBR_ENCRYPTION_KEY = '0123456789abcdef0123456789abcdef';
   });
 
   afterAll(async () => {
