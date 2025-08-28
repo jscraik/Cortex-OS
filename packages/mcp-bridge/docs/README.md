@@ -16,10 +16,10 @@ The MCP Bridge mediates communication between Cortex OS and external MCP servers
 
 ## Build and Test
 
-```bash
-pnpm --filter @cortex-os/mcp-bridge build
-pnpm --filter @cortex-os/mcp-bridge test
-```
+<!--
+The build and test commands are currently non-functional due to missing modules.
+Please refer to project setup instructions or ensure all dependencies are installed before running build/test commands.
+-->
 
 ## Example
 
