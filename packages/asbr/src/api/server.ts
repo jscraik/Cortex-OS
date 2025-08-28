@@ -25,7 +25,7 @@ import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { initializeXDG } from '../xdg/index.js';
-import { getEventManager } from '../core/events.js';
+import { getEventManager, stopEventManager } from '../core/events.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
 
 export interface ASBRServerOptions {
@@ -465,11 +465,13 @@ export class ASBRServer {
         }
 
         this.server.close(() => {
+          stopEventManager();
           // eslint-disable-next-line no-console -- informational server stop log
           console.log('ASBR API server stopped');
           resolve();
         });
       } else {
+        stopEventManager();
         resolve();
       }
     });
