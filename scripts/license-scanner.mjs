@@ -20,6 +20,8 @@ const ALLOWED = new Set([
   'BSD-3-Clause',
   'ISC',
   'CC0-1.0',
+  'CC-BY-4.0',
+  'MPL-2.0',
   'Unlicense',
   'Zlib',
 ]);
