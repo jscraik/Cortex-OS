@@ -10,8 +10,12 @@ import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const ROOT = process.env.CORTEX_MCP_ROOT || process.cwd();
+const ROOT = process.env.CORTEX_MCP_ROOT;
 const TOKEN = process.env.CORTEX_MCP_TOKEN;
+
+if (!ROOT) {
+  throw new Error('[cortex-mcp] CORTEX_MCP_ROOT is not set.');
+}
 
 if (!TOKEN) {
   // eslint-disable-next-line no-console
