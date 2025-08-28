@@ -31,14 +31,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const output = fs.createWriteStream(outputPath, { encoding: 'utf8' });
   const rl = readline.createInterface({ input, crlfDelay: Infinity });
 
+  let lineNumber = 0;
   rl.on('line', (line) => {
+    lineNumber++;
     if (!line.trim()) return;
     try {
       const event = JSON.parse(line);
       const sanitized = sanitizeEvent(event);
       output.write(`${JSON.stringify(sanitized)}\n`);
     } catch (err) {
-      console.error('Failed to sanitize line', err);
+      const truncatedLine = line.length > 100 ? line.slice(0, 100) + '...' : line;
+      console.error(`Failed to sanitize line ${lineNumber}: "${truncatedLine}"`, err);
     }
   });
 
