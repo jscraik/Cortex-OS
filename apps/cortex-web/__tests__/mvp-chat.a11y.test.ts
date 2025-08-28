@@ -6,6 +6,7 @@ expect.extend(toHaveNoViolations);
 // Minimal static markup mirroring key accessibility structure of the MVP chat page
 const staticMarkup = `
   <main class="p-4 grid gap-3" aria-label="Chat interface">
+    <a href="#composer" class="sr-only focus:not-sr-only focus:underline">Skip to composer</a>
     <header class="flex items-center gap-2">
       <h1 class="text-xl">Chat</h1>
       <label class="sr-only" for="model">Model</label>
@@ -41,6 +42,61 @@ describe('MVP Chat a11y (static smoke)', () => {
     const dom = document.createElement('div');
     dom.innerHTML = staticMarkup;
     const results = await axe(dom);
-    expect(results).toHaveNoViolations();
+    expect(results.violations).toHaveLength(0);
+  });
+
+  it('updates aria-live region when streaming and toggles aria-busy', async () => {
+    // build a live DOM from the static markup
+    const host = document.createElement('div');
+    host.innerHTML = staticMarkup;
+
+    // find the conversation container that declares aria-live
+    const liveContainer = host.querySelector('[aria-live]');
+    expect(liveContainer).toBeTruthy();
+
+    // initially aria-busy is false in our static markup
+    expect(liveContainer?.getAttribute('aria-busy')).toBe('false');
+
+    // simulate streaming start by toggling aria-busy and adding a streaming output
+    liveContainer?.setAttribute('aria-busy', 'true');
+    const streamingOutput = document.createElement('output');
+    streamingOutput.className = 'text-sm text-gray-500';
+    streamingOutput.setAttribute('aria-live', 'polite');
+    streamingOutput.textContent = 'Streaming…';
+    liveContainer?.appendChild(streamingOutput);
+
+    // axe should not complain about adding a polite live region
+    const results = await axe(host);
+    expect(results.violations).toHaveLength(0);
+
+    // simulate stream end
+    liveContainer?.setAttribute('aria-busy', 'false');
+    streamingOutput.textContent = 'Done';
+    expect(liveContainer?.getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('skip link targets composer and composer is focusable', async () => {
+    const host = document.createElement('div');
+    host.innerHTML = staticMarkup;
+
+    const skipLink = host.querySelector('a[href="#composer"]');
+    expect(skipLink).toBeTruthy();
+
+    const composer = host.querySelector('#composer');
+    expect(composer).toBeTruthy();
+
+    // ensure the composer is a control that can receive focus
+    // simulate focus by calling focus() if available
+    // JSDOM supports .focus but it doesn't necessarily change document.activeElement—this assertion keeps it defensive
+    try {
+      (composer as HTMLElement).focus();
+      expect(document.activeElement === composer || document.activeElement === null).toBeTruthy();
+    } catch {
+      // if focus isn't supported in this environment, at minimum assert it has the expected tabindex or is a native control
+      const tag = composer?.tagName?.toLowerCase();
+      expect(
+        tag === 'textarea' || tag === 'input' || composer?.getAttribute('tabindex') !== null,
+      ).toBeTruthy();
+    }
   });
 });

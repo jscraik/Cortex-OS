@@ -39,6 +39,7 @@ describe('SecretsRedactor - TDD Security Tests', () => {
           name: 'custom-api-key',
           pattern: /custom-[a-zA-Z0-9]{32}/,
           confidence: 'high',
+          category: 'custom',
         },
       ],
       redactionMode: 'partial',
@@ -266,7 +267,7 @@ process.env['AWS_SECRET_ACCESS_KEY'] = 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
       mockExecSync.mockReturnValue(JSON.stringify({ findings: [] }));
 
-      const result = await redactor.scanContent(maliciousContent, 'test.js');
+      await redactor.scanContent(maliciousContent, 'test.js');
 
       expect(mockExecSync).toHaveBeenCalledWith(expect.not.stringMatching(/`rm -rf \/`/));
     });
