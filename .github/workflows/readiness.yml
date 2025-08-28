@@ -15,7 +15,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Generate readiness.yml files (if missing)
         run: node tools/readiness/generate-readiness-yml.mjs
-      - name: Run tests with coverage (packages)
-        run: pnpm test:coverage || pnpm test -- --coverage
-      - name: Enforce coverage thresholds per package
+      - name: Run package tests with coverage (per package)
+        run: node tools/readiness/run-package-tests.mjs
+      - name: Enforce coverage thresholds per package (>=95%)
         run: node tools/readiness/check-readiness.mjs

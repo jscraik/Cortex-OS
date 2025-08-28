@@ -64,8 +64,20 @@ This guide makes the whole project executable locally and in CI with consistent 
 ## Readiness gates (coverage ≥ 95%)
 
 - Initialize per-package readiness files: pnpm readiness:init
-- Run tests with coverage and enforce thresholds: pnpm test:coverage && pnpm readiness:check
-- CI runs the same via workflow `.github/workflows/readiness.yml`
+- Run tests with coverage and enforce thresholds:
+  - pnpm readiness:init
+  - node tools/readiness/run-package-tests.mjs
+  - pnpm readiness:check
+- CI enforces the same via `.github/workflows/readiness.yml`
+
+## Open a PR with test plan
+
+- Create a feature branch and push changes
+- Ensure CI passes: readiness, security-and-sbom, and governance
+- In the PR description, include:
+  - Summary of changes and impacted packages
+  - Test plan with coverage deltas (paste text-summary)
+  - Any a11y and security notes (semgrep highlights)
 
 ## Troubleshooting
 
