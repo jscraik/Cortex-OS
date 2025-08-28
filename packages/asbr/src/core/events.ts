@@ -1,6 +1,6 @@
 /**
  * ASBR Event System
- * Implements SSE and poll fallback with heartbeat and backoff as per blueprint
+ * Implements SSE and WebSocket support with heartbeat as per blueprint
  */
 
 import { EventEmitter } from 'events';
@@ -15,7 +15,7 @@ export interface EventSubscription {
   taskId?: string;
   eventTypes: EventType[];
   callback: (event: Event) => void;
-  transport: 'socket' | 'sse' | 'poll';
+  transport: 'socket' | 'sse';
   lastEventId?: string;
   createdAt: number;
 }
@@ -23,12 +23,12 @@ export interface EventSubscription {
 export interface EventStreamOptions {
   taskId?: string;
   eventTypes?: EventType[];
-  transport?: 'socket' | 'sse' | 'poll';
+  transport?: 'socket' | 'sse';
   lastEventId?: string;
 }
 
 /**
- * Event Manager with SSE and poll support
+ * Event Manager with SSE and WebSocket support
  */
 export class EventManager extends EventEmitter {
   private config: Config;
@@ -119,7 +119,7 @@ export class EventManager extends EventEmitter {
   }
 
   /**
-   * Subscribe to events with SSE or poll transport
+   * Subscribe to events with SSE or WebSocket transport
    */
   subscribe(options: EventStreamOptions, callback: (event: Event) => void): string {
     const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2)}`;
@@ -172,7 +172,7 @@ export class EventManager extends EventEmitter {
   }
 
   /**
-   * Get events for polling
+   * Retrieve events
    */
   getEvents(options: EventStreamOptions): Event[] {
     const { taskId, eventTypes, lastEventId } = options;
@@ -230,32 +230,6 @@ export class EventManager extends EventEmitter {
     res.on('error', cleanup);
 
     return subscriptionId;
-  }
-
-  /**
-   * Get polling events with backoff support
-   */
-  async pollEvents(
-    options: EventStreamOptions,
-    attempt: number = 0,
-  ): Promise<{
-    events: Event[];
-    backoffMs?: number;
-  }> {
-    const events = this.getEvents(options);
-
-    if (events.length === 0 && attempt > 0) {
-      // Calculate backoff delay
-      const backoffMs = Math.min(
-        this.config.events.backoff.base_ms *
-          Math.pow(this.config.events.backoff.factor, attempt - 1),
-        this.config.events.backoff.max_ms,
-      );
-
-      return { events: [], backoffMs };
-    }
-
-    return { events };
   }
 
   /**

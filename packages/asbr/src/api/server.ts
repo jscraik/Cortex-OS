@@ -315,84 +315,57 @@ export class ASBRServer {
       taskId?: string;
     };
 
-    // Check cache for recent responses (non-streaming only)
-    if (stream !== 'sse' && taskId) {
-      const cacheKey = `events:${taskId}`;
-      const cached = this.responseCache.get(cacheKey);
-      if (cached && cached.expiry > Date.now()) {
-        res.json(cached.data);
-        return;
-      }
+    if (stream !== 'sse') {
+      res.status(400).json({ error: 'Unsupported stream type' });
+      return;
     }
 
-    if (stream === 'sse') {
-      // Set up Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      });
+    // Set up Server-Sent Events
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    });
 
-      // Send heartbeat every 10 seconds
-      const heartbeat = setInterval(() => {
-        res.write('event: heartbeat\ndata: {}\n\n');
-      }, 10000);
+    // Send heartbeat every 10 seconds
+    const heartbeat = setInterval(() => {
+      res.write('event: heartbeat\ndata: {}\n\n');
+    }, 10000);
 
-      // Send existing events for the task
-      const events = taskId
-        ? this.events.get(taskId) || []
-        : Array.from(this.events.values()).flat();
-      events.forEach((event) => {
-        res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
-      });
+    // Send existing events for the task
+    const events = taskId ? this.events.get(taskId) || [] : Array.from(this.events.values()).flat();
+    events.forEach((event) => {
+      res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+    });
 
-      // If running under test, close the stream quickly so test runners (supertest)
-      // which wait for the response to end don't hang. In normal operation keep the
-      // connection open and send heartbeats.
-      const shouldAutoClose =
-        process.env.NODE_ENV === 'test' ||
-        String(req.headers['user-agent'] || '').includes('supertest') ||
-        (String(req.headers['accept'] || '').includes('text/event-stream') &&
-          process.env.VITEST !== undefined);
+    // If running under test, close the stream quickly so test runners (supertest)
+    // which wait for the response to end don't hang. In normal operation keep the
+    // connection open and send heartbeats.
+    const shouldAutoClose =
+      process.env.NODE_ENV === 'test' ||
+      String(req.headers['user-agent'] || '').includes('supertest') ||
+      (String(req.headers['accept'] || '').includes('text/event-stream') &&
+        process.env.VITEST !== undefined);
 
-      let autoCloseTimer: NodeJS.Timeout | undefined;
-      if (shouldAutoClose) {
-        // Give the client a short moment to receive initial data, then end.
-        autoCloseTimer = setTimeout(() => {
-          clearInterval(heartbeat);
-          try {
-            res.end();
-          } catch (_e) {
-            /* swallow */
-          }
-        }, 50);
-      }
-
-      // Clean up on client disconnect
-      req.on('close', () => {
+    let autoCloseTimer: NodeJS.Timeout | undefined;
+    if (shouldAutoClose) {
+      // Give the client a short moment to receive initial data, then end.
+      autoCloseTimer = setTimeout(() => {
         clearInterval(heartbeat);
-        if (autoCloseTimer) clearTimeout(autoCloseTimer);
-      });
-    } else {
-      // Poll mode - return recent events
-      const events = taskId
-        ? this.events.get(taskId) || []
-        : Array.from(this.events.values()).flat();
-
-      const response = { events };
-
-      // Cache response for performance
-      if (taskId) {
-        const cacheKey = `events:${taskId}`;
-        this.responseCache.set(cacheKey, {
-          data: response,
-          expiry: Date.now() + this.CACHE_TTL,
-        });
-      }
-
-      res.json(response);
+        try {
+          res.end();
+        } catch (_e) {
+          /* swallow */
+        }
+      }, 50);
     }
+
+    // Clean up on client disconnect
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      if (autoCloseTimer) clearTimeout(autoCloseTimer);
+    });
   }
 
   private async createProfile(req: Request, res: Response): Promise<void> {
@@ -583,7 +556,7 @@ export class ASBRServer {
           this.server.maxConnections = 1000; // Limit concurrent connections
         }
 
-        this.io = new IOServer(this.server!, { transports: ['websocket', 'polling'] });
+        this.io = new IOServer(this.server!, { transports: ['websocket'] });
         const manager = await getEventManager();
         manager.attachIO(this.io);
 

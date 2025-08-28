@@ -20,14 +20,8 @@ import { getConfigPath, pathExists } from '../xdg/index.js';
 export const DEFAULT_CONFIG: Config = {
   events: {
     transport: 'socket',
-    poll_interval_ms: 1500,
     heartbeat_ms: 10000,
     idle_timeout_ms: 60000,
-    backoff: {
-      base_ms: 500,
-      max_ms: 8000,
-      factor: 2.0,
-    },
   },
   determinism: {
     max_normalize_bytes: 5_000_000,

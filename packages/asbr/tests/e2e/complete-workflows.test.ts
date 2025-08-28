@@ -49,12 +49,11 @@ describe('ASBR End-to-End Workflow Tests', () => {
 
       // Step 2: Monitor task progress via events
       const eventsResponse = await request
-        .get(`/v1/events?taskId=${taskId}`)
+        .get(`/v1/events?stream=sse&taskId=${taskId}`)
         .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
+        .set('Accept', 'text/event-stream');
 
-      expect(eventsResponse.body.events).toBeInstanceOf(Array);
-      expect(eventsResponse.body.events.length).toBeGreaterThan(0);
+      expect(eventsResponse.status).toBe(200);
 
       // Step 3: Retrieve task status
       const statusResponse = await request
