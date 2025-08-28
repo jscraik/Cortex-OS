@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tutor.review.schema.json",
+  "title": "Tutor Review",
+  "type": "object",
+  "properties": {
+    "labId": { "type": "string" },
+    "score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "feedback": { "type": "string" },
+    "citations": { "type": "array", "items": { "type": "string", "format": "uri" } }
+  },
+  "required": ["labId", "score"]
+}

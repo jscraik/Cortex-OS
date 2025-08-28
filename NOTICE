@@ -11,8 +11,10 @@ Unless required by applicable law or agreed to in writing, software distributed 
 This NOTICE file is for informational purposes only and does not modify the License. Any additional attributions included below are provided for convenience.
 
 Third-party notices and attributions:
+
 - This product may include software components licensed under their respective open-source licenses. See individual source files and package manifests for details.
 - A complete list of third-party licenses is available in dependency manifests (e.g., package.json, pyproject.toml) and any generated SBOMs.
 
 Trademarks:
+
 - "Cortex-OS" and related marks are trademarks or registered trademarks of their respective owners. Use of trademarks is subject to applicable trademark policies.

@@ -4,7 +4,11 @@ Vendor-neutral. Local-first. Deterministic. Accessibility-aware.
 
 ## Vision Statement
 
-Cortex-OS is the local-first, evidence-driven AI operating layer that lets Jamie—and any solo developer—work like a disciplined team. It orchestrates agents, memory, and tools through a governed ASBR so you ship faster with traceable decisions, accessible UX, and reproducible results.
+A governed second brain that plans, builds, and teaches with proofs. One runtime (ASBR) coordinates agents, tools, and data to give a solo developer team-grade velocity, safety, and auditability.
+
+## Operating principles
+
+Vendor-neutral. Local-first. Deterministic by contract. Evidence-backed. Accessibility-aware. ASBR owns plan→contract→route→enforce.
 
 ## Tagline
 

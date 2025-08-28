@@ -83,6 +83,14 @@ Deliverables: External integration diagram, connection points, config examples, 
 - Agents
   - packages/agents call MCP tools and publish results to A2A
 
+Guardrails
+
+- No cross-feature imports (`@cortex-os/*/src/*` banned by lint + CI)
+- Only A2A events, DI services, or MCP tools for inter-package comms
+- Filesystem writes restricted to `/var/cortex/tmp` and `./.cortex/tmp`
+- Event catalog centralized in `packages/a2a` with Zod schemas
+- Review-neuron gate blocks merges on blockers > 0
+
 ---
 
 ## External Integration Map
