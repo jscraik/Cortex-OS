@@ -1,9 +1,9 @@
 [
-  { "name": "mlx-local", "transport": "streamableHttp", "endpoint": "https://127.0.0.1:8081" },
-  { "name": "ollama", "transport": "streamableHttp", "endpoint": "https://127.0.0.1:11434" },
+  { "name": "mlx-local", "transport": "streamableHttps", "endpoint": "https://127.0.0.1:8081" },
+  { "name": "ollama", "transport": "streamableHttps", "endpoint": "https://127.0.0.1:11434" },
   {
     "name": "frontier-gateway",
-    "transport": "streamableHttp",
+    "transport": "streamableHttps",
     "endpoint": "https://127.0.0.1:8082"
   }
 ]
