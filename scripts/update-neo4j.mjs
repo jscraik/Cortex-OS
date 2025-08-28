@@ -1,18 +1,19 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* global console, process */
 
 // Idempotent updater: replace the entire Neo4j class with a
-// SecureNeo4j-backed implementation using a readable template file.
+
+// SecureNeo4j-backed implementation using a separate template file.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
-const templatePath = join(
-  dirname(fileURLToPath(import.meta.url)),
-  'templates',
-  'neo4j-secure-class.ts',
-);
+
+const templatePath = join('scripts', 'neo4j-secure-class.ts');
+const secureClass = readFileSync(templatePath, 'utf-8');
 
 
 function log(msg) {
@@ -78,12 +79,10 @@ function tryUpdate() {
 
 
   // Replace entire class body with a secure implementation
-  const secureClass = readFileSync(templatePath, 'utf-8');
-  const result = replaceClass(content, secureClass);
-  if (!result.replaced) {
-    throw new Error('Neo4j class declaration not found.');
-  }
-  writeFileSync(neo4jPath, result.content);
+
+  const classRegex = /export class Neo4j implements INeo4j {[\s\S]*?}\n?$/;
+  content = content.replace(classRegex, secureClass);
+  writeFileSync(neo4jPath, content);
 
   log('neo4j.ts has been updated to delegate to SecureNeo4j.');
   return true;
