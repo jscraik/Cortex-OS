@@ -41,7 +41,9 @@
     "seed": 12345,
     "analysisType": "security"
   },
-  "timestamp": 1756323507484,
+  "timestamp": 1756406226857,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+
+  "nodeVersion": "v20.19.4"
+
 }

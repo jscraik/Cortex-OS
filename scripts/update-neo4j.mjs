@@ -84,3 +84,10 @@ try {
   console.error('[update-neo4j] Failed to update neo4j.ts:', err);
   process.exit(1);
 }
+
+
+
+console.log('✅ neo4j.ts has been updated to use SecureNeo4j');
+console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+
+

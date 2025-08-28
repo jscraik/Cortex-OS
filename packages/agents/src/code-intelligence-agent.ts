@@ -5,6 +5,7 @@
 
 import { EventEmitter } from 'events';
 import { z } from 'zod';
+import { COMPLEXITY_THRESHOLDS } from '@cortex-os/utils';
 
 // Types for model integration - these would be imported from config in production
 export interface TaskCharacteristics {
@@ -160,11 +161,6 @@ const rawAnalysisResultSchema = z.object({
   confidence: z.number(),
 });
 
-const COMPLEXITY_THRESHOLDS = {
-  HIGH: { lines: 200, indicators: 20 },
-  MEDIUM: { lines: 50, indicators: 10 },
-};
-
 const MODEL_CONFIG = {
   'qwen3-coder': {
     temperature: 0.1,
@@ -243,8 +239,11 @@ export class CodeIntelligenceAgent extends EventEmitter {
   private async _analyzeWithModel(
     request: CodeAnalysisRequest,
     modelId: string,
+    modelKey: keyof typeof MODEL_CONFIG,
   ): Promise<CodeAnalysisResult> {
     const prompt = this.buildCodeAnalysisPrompt(request);
+    const modelKey = this.getModelKey(modelId);
+    const options = MODEL_CONFIG[modelKey] ?? { temperature: 0.1, top_p: 0.9, num_predict: 2048 };
 
     const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
       method: 'POST',
@@ -253,11 +252,8 @@ export class CodeIntelligenceAgent extends EventEmitter {
         model: modelId,
         prompt,
         stream: false,
-        options: {
-          temperature: 0.1,
-          top_p: 0.9,
-          num_predict: 2048,
-        },
+
+        options,
       }),
     });
 
@@ -266,33 +262,35 @@ export class CodeIntelligenceAgent extends EventEmitter {
     }
 
     const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, 'qwen3-coder');
+
+    return this.parseCodeAnalysisResponse(
+      data.response,
+      modelKey === 'deepseek-coder' ? 'deepseek-coder' : 'qwen3-coder',
+    );
+  }
+
+  private getModelKey(modelId: string): keyof typeof MODEL_CONFIG {
+    if (modelId.includes('deepseek-coder')) return 'deepseek-coder';
+    return 'qwen3-coder';
+  }
+
+
+  private async analyzeWithQwen3Coder(
+    request: CodeAnalysisRequest,
+    modelId: string,
+  ): Promise<CodeAnalysisResult> {
+
+    return this._analyzeWithModel(request, modelId);
+
   }
 
   private async analyzeWithDeepSeekCoder(
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
-    const prompt = this.buildCodeAnalysisPrompt(request);
-    const modelOptions = MODEL_CONFIG[modelKey as keyof typeof MODEL_CONFIG];
 
-    const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelId,
-        prompt,
-        stream: false,
-        options: modelOptions,
-      }),
-    });
+    return this._analyzeWithModel(request, modelId);
 
-    if (!response.ok) {
-      throw new Error(`${modelId} analysis failed: ${response.statusText}`);
-    }
-
-    const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, 'deepseek-coder');
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
@@ -381,9 +379,10 @@ Urgency: ${request.urgency}`;
     const lines = code.split('\n').filter((line) => line.trim().length > 0).length;
     const complexityIndicators = (code.match(/if|for|while|switch|catch|function|class/g) || [])
       .length;
+    const { lines: lineThresholds, indicators } = COMPLEXITY_THRESHOLDS;
 
-    if (lines > 100 || complexityIndicators > 15) return 'high';
-    if (lines > 10 || complexityIndicators > 3) return 'medium';
+    if (lines > lineThresholds.high || complexityIndicators > indicators.high) return 'high';
+    if (lines > lineThresholds.medium || complexityIndicators > indicators.medium) return 'medium';
 
     return 'low';
   }

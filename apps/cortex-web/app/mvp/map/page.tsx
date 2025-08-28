@@ -1,18 +1,15 @@
 // page.tsx (Next 14+ App Router)
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useMousePosition } from '../../hooks/useMousePosition';
 
-export default function Map() {
-  const [data, setData] = useState<{ nodes: any[]; links: any[] }>({ nodes: [], links: [] });
+export default function RepoMap() {
   const ref = useRef<HTMLDivElement>(null);
   const { x, y } = useMousePosition(true);
 
   useEffect(() => {
     (async () => {
-      const cm = await fetch('/api/context-map').then((r) => r.json());
-      const nodes = cm.files.map((f: any) => ({ id: f.path, label: f.path.split('/').pop() }));
-      const links: any[] = []; // derive from imports/exports if present
-      setData({ nodes, links });
+  await fetch('/api/context-map').then((r) => r.json());
+  // note: render graph using response.files in a follow-up
     })();
   }, []);
 
@@ -21,12 +18,7 @@ export default function Map() {
       <h1 className="text-xl" aria-live="polite">
         Repo Map
       </h1>
-      <div
-        ref={ref}
-        role="figure"
-        aria-label="Dependency graph"
-        className="border rounded-2xl p-2 min-h-96"
-      />
+  <figure ref={ref} aria-label="Dependency graph" className="border rounded-2xl p-2 min-h-96" />
       <p className="mt-2 text-sm" aria-live="polite">
         Pointer at {x}, {y}
       </p>
