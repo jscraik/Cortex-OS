@@ -1,6 +1,9 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import request from 'supertest';
-import { ASBRServer } from '../../src/api/server.js';
+
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import supertest from 'supertest';
+import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
+import { initializeAuth } from '../../src/api/auth.js';
+
 import { initializeXDG } from '../../src/xdg/index.js';
 
 // This file runs integration tests for complete workflows
@@ -12,7 +15,13 @@ describe('Complete Workflows', () => {
 
   beforeAll(async () => {
     await initializeXDG();
-    server = new ASBRServer({ port: 0, host: '127.0.0.1' });
+
+    // Initialize auth
+    const tokenInfo = await initializeAuth();
+    authToken = tokenInfo.token;
+
+    server = createASBRServer({ port: 7442 });
+
     await server.start();
     app = server['app'];
   });

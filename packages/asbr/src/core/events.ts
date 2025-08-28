@@ -32,10 +32,29 @@ export interface EventStreamOptions {
   lastEventId?: string;
 }
 
+export interface EventManager extends EventEmitter {
+  attachIO(io: IOServer): void;
+  emitEvent(event: Event): Promise<void>;
+  subscribe(options: EventStreamOptions, callback: (event: Event) => void): string;
+  unsubscribe(subscriptionId: string): void;
+  getEvents(options: EventStreamOptions): Event[];
+  createSSEStream(res: any, options: EventStreamOptions): string;
+  pollEvents(
+    options: EventStreamOptions,
+    attempt?: number,
+  ): Promise<{ events: Event[]; backoffMs?: number }>;
+  getStats(): {
+    totalEvents: number;
+    activeSubscriptions: number;
+    bufferSizes: Record<string, number>;
+  };
+}
+
 /**
  * Event Manager with SSE and WebSocket support
  */
-export class EventManager extends EventEmitter {
+/** @deprecated Use createEventManager instead */
+export class EventManagerClass extends EventEmitter {
   private config: Config;
   private subscriptions = new Map<string, EventSubscription>();
   private eventBuffer = new Map<string, Event[]>(); // taskId -> events
@@ -358,12 +377,16 @@ export class EventManager extends EventEmitter {
 /**
  * Create event manager singleton
  */
+export function createEventManager(config: Config): EventManager {
+  return new EventManagerClass(config) as EventManager;
+}
+
 let eventManagerInstance: EventManager | null = null;
 
 export async function getEventManager(): Promise<EventManager> {
   if (!eventManagerInstance) {
     const config = await loadConfig();
-    eventManagerInstance = new EventManager(config);
+    eventManagerInstance = createEventManager(config);
   }
   return eventManagerInstance;
 }
