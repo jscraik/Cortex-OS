@@ -214,9 +214,9 @@ async function updateTokenUsage(tokenId: string): Promise<void> {
   let tokens: TokenInfo[];
   try {
     tokens = await loadTokens();
-  } catch {
-    // If tokens can't be loaded, skip usage update
-    return;
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to update token usage: ${msg}`);
   }
   const token = tokens.find((t) => t.id === tokenId);
 
