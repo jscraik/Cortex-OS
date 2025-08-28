@@ -95,7 +95,15 @@ export class InstallCommandGenerator {
    * Generate JSON configuration
    */
   private generateJsonCommand(server: ServerManifest): InstallCommand {
-    const config: Record<string, unknown> = {
+    type MCPServersConfig = {
+      mcpServers: {
+        [id: string]: {
+          serverUrl: string;
+          headers: Record<string, string>;
+        };
+      };
+    };
+    const config: MCPServersConfig = {
       mcpServers: {
         [server.id]: {
           serverUrl: server.transport.streamableHttp.url,
