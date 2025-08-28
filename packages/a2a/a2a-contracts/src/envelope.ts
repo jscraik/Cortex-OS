@@ -9,9 +9,23 @@ export const Envelope = z
     // CloudEvents 1.0 Required Attributes
     id: z.string().min(1).describe('Unique identifier for this event'),
     type: z.string().min(1).describe('Event type identifier'),
-    // CloudEvents spec requires a URI-reference; accept strings and validate at boundaries
-    // to remain flexible across internal tests while promoting proper URI usage.
-    source: z.string().min(1).describe('Source URI of the event producer'),
+    // CloudEvents spec requires a URI-reference; enforce valid URI usage.
+    source: z
+      .string()
+      .min(1)
+      .refine(
+        (src) => {
+          try {
+            // eslint-disable-next-line no-new
+            new URL(src);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { message: 'Source must be a valid URI' },
+      )
+      .describe('Source URI of the event producer'),
     specversion: z.literal('1.0').describe('CloudEvents specification version'),
 
     // CloudEvents 1.0 Optional Attributes
@@ -38,20 +52,6 @@ export const Envelope = z
     ...env,
     // Ensure time is always set
     time: env.time || new Date().toISOString(),
-    // Normalize source to a valid URI-reference.
-    source: (() => {
-      const src = env.source ?? '';
-      try {
-        // A valid URI-reference is required. We use URL for a reasonable check.
-        // For stricter validation, a dedicated URI library could be used.
-        // eslint-disable-next-line no-new
-        new URL(src);
-        return src;
-      } catch {
-        // If source is not a valid URL, it's a violation of the spec.
-        throw new Error('Invalid source URI');
-      }
-    })(),
   }));
 
 export type Envelope = z.infer<typeof Envelope>;

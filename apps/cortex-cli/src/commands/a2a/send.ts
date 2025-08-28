@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { uuid } from '@cortex-os/utils';
 
@@ -8,7 +8,7 @@ export const a2aSend = new Command('send')
   .requiredOption('--type <string>')
   .requiredOption('--payload <json>')
   .action(async (opts: any) => {
-    const bus = new Bus(inproc());
+    const bus = createBus(inproc());
     await bus.publish({
       id: uuid(),
       type: opts.type,

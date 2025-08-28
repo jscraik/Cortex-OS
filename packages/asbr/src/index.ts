@@ -24,6 +24,7 @@ export { getFullConfig, loadConfig, saveConfig } from './core/config.js';
 export { getXDGPaths, initializeXDG } from './xdg/index.js';
 
 // Event system
+
 export {
   createA11yEvent,
   createEventManager,
@@ -31,6 +32,7 @@ export {
   EventManagerClass as DeprecatedEventManager,
 } from './core/events.js';
 export type { EventManager } from './core/events.js';
+
 
 // Diff and normalization
 export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
