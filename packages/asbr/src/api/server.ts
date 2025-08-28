@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   type ArtifactRef,
   type Event,
+  type EventType,
   NotFoundError,
   type Profile,
   ProfileSchema,
@@ -42,10 +43,7 @@ export class ASBRServer {
   private tasks = new Map<string, Task>();
   private profiles = new Map<string, Profile>();
   private artifacts = new Map<string, ArtifactRef>();
-  private events = new Map<string, Event[]>();
   private idempotencyCache = new Map<string, string>(); // idempotency key -> task ID
-  private responseCache = new Map<string, { data: unknown; expiry: number }>();
-  private readonly CACHE_TTL = 30000; // 30 seconds
   // Note: Connection pooling and request deduplication infrastructure
   // Currently unused but reserved for future database integration
   // private connectionPool = new Map<string, unknown>(); // Connection pooling for database operations
@@ -310,89 +308,35 @@ export class ASBRServer {
   }
 
   private async getEvents(req: Request, res: Response): Promise<void> {
-    const { stream, taskId } = req.query as {
-      stream?: string;
-      taskId?: string;
-    };
+    const { taskId, events } = req.query as { taskId?: string; events?: string };
 
-    // Check cache for recent responses (non-streaming only)
-    if (stream !== 'sse' && taskId) {
-      const cacheKey = `events:${taskId}`;
-      const cached = this.responseCache.get(cacheKey);
-      if (cached && cached.expiry > Date.now()) {
-        res.json(cached.data);
-        return;
-      }
+    const manager = await getEventManager();
+    manager.createSSEStream(res, {
+      taskId,
+      eventTypes: events ? (events.split(',') as EventType[]) : undefined,
+      transport: 'sse',
+    });
+
+    const shouldAutoClose =
+      process.env.NODE_ENV === 'test' ||
+      String(req.headers['user-agent'] || '').includes('supertest') ||
+      (String(req.headers['accept'] || '').includes('text/event-stream') &&
+        process.env.VITEST !== undefined);
+
+    let autoCloseTimer: NodeJS.Timeout | undefined;
+    if (shouldAutoClose) {
+      autoCloseTimer = setTimeout(() => {
+        try {
+          res.end();
+        } catch {
+          /* swallow */
+        }
+      }, 50);
     }
 
-    if (stream === 'sse') {
-      // Set up Server-Sent Events
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      });
-
-      // Send heartbeat every 10 seconds
-      const heartbeat = setInterval(() => {
-        res.write('event: heartbeat\ndata: {}\n\n');
-      }, 10000);
-
-      // Send existing events for the task
-      const events = taskId
-        ? this.events.get(taskId) || []
-        : Array.from(this.events.values()).flat();
-      events.forEach((event) => {
-        res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
-      });
-
-      // If running under test, close the stream quickly so test runners (supertest)
-      // which wait for the response to end don't hang. In normal operation keep the
-      // connection open and send heartbeats.
-      const shouldAutoClose =
-        process.env.NODE_ENV === 'test' ||
-        String(req.headers['user-agent'] || '').includes('supertest') ||
-        (String(req.headers['accept'] || '').includes('text/event-stream') &&
-          process.env.VITEST !== undefined);
-
-      let autoCloseTimer: NodeJS.Timeout | undefined;
-      if (shouldAutoClose) {
-        // Give the client a short moment to receive initial data, then end.
-        autoCloseTimer = setTimeout(() => {
-          clearInterval(heartbeat);
-          try {
-            res.end();
-          } catch (_e) {
-            /* swallow */
-          }
-        }, 50);
-      }
-
-      // Clean up on client disconnect
-      req.on('close', () => {
-        clearInterval(heartbeat);
-        if (autoCloseTimer) clearTimeout(autoCloseTimer);
-      });
-    } else {
-      // Poll mode - return recent events
-      const events = taskId
-        ? this.events.get(taskId) || []
-        : Array.from(this.events.values()).flat();
-
-      const response = { events };
-
-      // Cache response for performance
-      if (taskId) {
-        const cacheKey = `events:${taskId}`;
-        this.responseCache.set(cacheKey, {
-          data: response,
-          expiry: Date.now() + this.CACHE_TTL,
-        });
-      }
-
-      res.json(response);
-    }
+    req.on('close', () => {
+      if (autoCloseTimer) clearTimeout(autoCloseTimer);
+    });
   }
 
   private async createProfile(req: Request, res: Response): Promise<void> {
@@ -460,14 +404,6 @@ export class ASBRServer {
       offset = 0,
     } = req.query as Record<string, string | number | undefined>;
 
-    // Generate cache key for this query
-    const cacheKey = `artifacts:${kind || 'all'}:${createdAfter || ''}:${createdBefore || ''}:${limit}:${offset}`;
-    const cached = this.responseCache.get(cacheKey);
-    if (cached && cached.expiry > Date.now()) {
-      res.json(cached.data);
-      return;
-    }
-
     let artifacts = Array.from(this.artifacts.values());
 
     // Optimize filtering with early termination
@@ -496,12 +432,6 @@ export class ASBRServer {
       page: Math.floor(numOffset / numLimit) + 1,
       pageSize: numLimit,
     };
-
-    // Cache the response
-    this.responseCache.set(cacheKey, {
-      data: response,
-      expiry: Date.now() + this.CACHE_TTL,
-    });
 
     res.json(response);
   }
@@ -546,22 +476,6 @@ export class ASBRServer {
   }
 
   private async emitEvent(event: Event): Promise<void> {
-    if (!this.events.has(event.taskId)) {
-      this.events.set(event.taskId, []);
-    }
-
-    const taskEvents = this.events.get(event.taskId)!;
-    taskEvents.push(event);
-
-    // Keep only last 100 events per task
-    if (taskEvents.length > 100) {
-      taskEvents.splice(0, taskEvents.length - 100);
-    }
-
-    // Invalidate cache for this task
-    const cacheKey = `events:${event.taskId}`;
-    this.responseCache.delete(cacheKey);
-
     const manager = await getEventManager();
     await manager.emitEvent(event);
   }
@@ -569,9 +483,6 @@ export class ASBRServer {
   async start(): Promise<void> {
     // Initialize XDG directories
     await initializeXDG();
-
-    // Set up cache cleanup interval
-    this.setupCacheCleanup();
 
     return new Promise((resolve) => {
       this.server = this.app.listen(this.port, this.host, async () => {
@@ -583,7 +494,7 @@ export class ASBRServer {
           this.server.maxConnections = 1000; // Limit concurrent connections
         }
 
-        this.io = new IOServer(this.server!, { transports: ['websocket', 'polling'] });
+        this.io = new IOServer(this.server!, { transports: ['websocket'] });
         const manager = await getEventManager();
         manager.attachIO(this.io);
 
@@ -598,7 +509,6 @@ export class ASBRServer {
     return new Promise((resolve) => {
       if (this.server) {
         // Clean up caches and intervals
-        this.responseCache.clear();
         this.idempotencyCache.clear();
         if (this.io) {
           this.io.close();
@@ -614,20 +524,5 @@ export class ASBRServer {
         resolve();
       }
     });
-  }
-
-  private setupCacheCleanup(): void {
-    // Clean up expired cache entries every 5 minutes
-    setInterval(
-      () => {
-        const now = Date.now();
-        for (const [key, value] of this.responseCache.entries()) {
-          if (value.expiry <= now) {
-            this.responseCache.delete(key);
-          }
-        }
-      },
-      5 * 60 * 1000,
-    );
   }
 }
