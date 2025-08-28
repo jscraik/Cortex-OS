@@ -142,7 +142,11 @@ try:
     import uvicorn
     from fastapi import FastAPI, HTTPException
     from fastapi.responses import JSONResponse
-    from pydantic import BaseModel, Field, field_validator
+    from pydantic import BaseModel, Field
+    try:
+        from pydantic import field_validator
+    except ImportError:  # Pydantic v1
+        from pydantic import validator as field_validator
 
     FASTAPI_AVAILABLE = True
     logger.info("FastAPI available")
