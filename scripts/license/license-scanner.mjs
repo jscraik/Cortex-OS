@@ -25,8 +25,9 @@ function validatePackageName(packageName) {
 
   // npm package names can only contain URL-safe characters
   // See: https://docs.npmjs.com/cli/v8/configuring-npm/package-json#name
+  // For security, tildes (~) are excluded from the validation pattern to reduce risk of command injection.
   const validNamePattern =
-    /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+    /^(@[a-z0-9-][a-z0-9-._]*\/)?[a-z0-9-][a-z0-9-._]*$/;
   return validNamePattern.test(packageName) && packageName.length <= 214;
 }
 
