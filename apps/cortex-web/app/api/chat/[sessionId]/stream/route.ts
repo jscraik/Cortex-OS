@@ -25,55 +25,56 @@ export async function GET(_req: Request, { params }: { params: { sessionId: stri
       let tokenCount = 0;
       const OBS =
         process.env.CHAT_OBSERVABILITY === '1' || process.env.CHAT_OBSERVABILITY === 'true';
+      const model = session.modelId || 'qwen2.5-0.5b';
       if (OBS) {
         logEvent(
           makeStartEvent({
             sessionId,
-            model: session.modelId,
+            model,
             lastUserId: lastUser.id,
           }),
         );
       }
       // Write a start event (Open WebUI compatible)
-      controller.enqueue(
-        enc.encode(`data: ${JSON.stringify({ type: 'start', model: session.modelId })}\n\n`),
-      );
+      controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'start', model })}\n\n`));
 
-      // Example: announce a fictional tool call (placeholder for real tool invocations)
-      const toolId = crypto.randomUUID();
-      const startTool = addToolEvent(sessionId, {
-        id: toolId,
-        name: 'policy/redaction-check',
-        status: 'start',
-        args: { sample: 'Checking content policy', token: 'shh-should-be-redacted' },
+      const DEMO_TOOL_EVENTS =
+        process.env.DEMO_TOOL_EVENTS === '1' || process.env.DEMO_TOOL_EVENTS === 'true';
+      let toolId: string | undefined;
+      if (DEMO_TOOL_EVENTS) {
+        // Example: announce a fictional tool call (placeholder for real tool invocations)
+        toolId = crypto.randomUUID();
+        const startTool = addToolEvent(sessionId, {
+          id: toolId,
+          name: 'policy/redaction-check',
+          status: 'start',
+          args: { sample: 'Checking content policy', token: 'shh-should-be-redacted' },
+        });
+        controller.enqueue(
+          enc.encode(
+            `data: ${JSON.stringify({ type: 'tool', id: startTool.id, name: startTool.name, status: startTool.status, args: startTool.args })}\n\n`,
+          ),
+        );
+      }
+
+      const { text } = await streamChat({ model, messages: session.messages }, (tok) => {
+        tokenCount += tok.length;
+        controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'token', data: tok })}\n\n`));
       });
-      controller.enqueue(
-        enc.encode(
-          `data: ${JSON.stringify({ type: 'tool', id: startTool.id, name: startTool.name, status: startTool.status, args: startTool.args })}\n\n`,
-        ),
-      );
 
-      const { text } = await streamChat(
-        { model: session.modelId || 'qwen2.5-0.5b', messages: session.messages },
-        (tok) => {
-          tokenCount += tok.length;
-          controller.enqueue(
-            enc.encode(`data: ${JSON.stringify({ type: 'token', data: tok })}\n\n`),
-          );
-        },
-      );
-
-      // Mark tool completion
-      const endTool = addToolEvent(sessionId, {
-        id: toolId,
-        name: 'policy/redaction-check',
-        status: 'complete',
-      });
-      controller.enqueue(
-        enc.encode(
-          `data: ${JSON.stringify({ type: 'tool', id: endTool.id, name: endTool.name, status: endTool.status })}\n\n`,
-        ),
-      );
+      if (DEMO_TOOL_EVENTS && toolId) {
+        // Mark tool completion
+        const endTool = addToolEvent(sessionId, {
+          id: toolId,
+          name: 'policy/redaction-check',
+          status: 'complete',
+        });
+        controller.enqueue(
+          enc.encode(
+            `data: ${JSON.stringify({ type: 'tool', id: endTool.id, name: endTool.name, status: endTool.status })}\n\n`,
+          ),
+        );
+      }
 
       const finalId = crypto.randomUUID();
       addMessage(sessionId, { id: finalId, role: 'assistant', content: text });
@@ -87,7 +88,7 @@ export async function GET(_req: Request, { params }: { params: { sessionId: stri
         logEvent(
           makeDoneEvent({
             sessionId,
-            model: session.modelId,
+            model,
             messageId: finalId,
             durationMs,
             tokenCount,

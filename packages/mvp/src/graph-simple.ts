@@ -99,11 +99,15 @@ export class SimplePRPGraph {
         return evaluationState;
       } catch (error) {
         workflowSpan.setStatus('ERROR');
-        workflowSpan.setAttribute(
-          'error.message',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
-        throw error;
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        workflowSpan.setAttribute('error.message', message);
+        const errorState: PRPState = {
+          ...state,
+          phase: 'recycled',
+          metadata: { ...state.metadata, error: message },
+        };
+        this.addToHistory(runId, errorState);
+        return errorState;
       }
     } finally {
       workflowSpan.end();

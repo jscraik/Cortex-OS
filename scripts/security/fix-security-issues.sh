@@ -20,9 +20,16 @@ NC='\033[0m' # No Color
 apply_fix() {
   local description="$1"
   local fix_command="$2"
-  
+  local script_path="$3"
+
   echo -e "${BLUE}[FIX]${NC} $description"
-  
+
+  if [ ! -f "$script_path" ]; then
+    SKIPPED_ISSUES=$((SKIPPED_ISSUES + 1))
+    echo -e "  ${YELLOW}⚠️  SKIPPED - script not found${NC}"
+    return
+  fi
+
   if eval "$fix_command" >/dev/null 2>&1; then
     FIXED_ISSUES=$((FIXED_ISSUES + 1))
     echo -e "  ${GREEN}✅ APPLIED${NC}"
@@ -33,19 +40,19 @@ apply_fix() {
 }
 
 # Apply fixes for database injection vulnerabilities
-apply_fix "Fix database injection vulnerabilities in DatabaseManager.ts" "node scripts/fix-db-injection.mjs"
+apply_fix "Fix database injection vulnerabilities in DatabaseManager.ts" "node scripts/fix-db-injection.mjs" "scripts/fix-db-injection.mjs"
 
 # Apply fixes for Neo4j injection vulnerabilities
-apply_fix "Fix Neo4j injection vulnerabilities in neo4j.ts" "node scripts/fix-neo4j-injection.mjs"
+apply_fix "Fix Neo4j injection vulnerabilities in neo4j.ts" "node scripts/fix-neo4j-injection.mjs" "scripts/fix-neo4j-injection.mjs"
 
 # Apply fixes for command injection vulnerabilities
-apply_fix "Fix command injection vulnerabilities in executor.py and mcp_server.py" "node scripts/fix-command-injection.mjs"
+apply_fix "Fix command injection vulnerabilities in executor.py and mcp_server.py" "node scripts/fix-command-injection.mjs" "scripts/fix-command-injection.mjs"
 
 # Apply targeted fixes for specific injection vulnerabilities
-apply_fix "Apply targeted fixes for specific injection vulnerabilities" "node scripts/fix-targeted-injection.mjs"
+apply_fix "Apply targeted fixes for specific injection vulnerabilities" "node scripts/fix-targeted-injection.mjs" "scripts/fix-targeted-injection.mjs"
 
 # Apply fixes for remaining injection vulnerabilities
-apply_fix "Apply fixes for remaining injection vulnerabilities" "node scripts/fix-remaining-injection.mjs"
+apply_fix "Apply fixes for remaining injection vulnerabilities" "node scripts/fix-remaining-injection.mjs" "scripts/fix-remaining-injection.mjs"
 
 # Display final results
 echo ""
