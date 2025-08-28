@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import type { Transport } from '@cortex-os/a2a-core/bus';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 
 export function stdio(
   command: string,
