@@ -468,6 +468,63 @@ export class SecretsRedactor {
       return count + (matches ? matches.length : 0);
     }, 0);
   }
+
+  /**
+   * Scan content for secrets using GitLeaks and custom patterns
+   */
+  async scanContent(content: string, filePath: string): Promise<RedactionResult> {
+    const scanId = randomUUID();
+    const timestamp = new Date().toISOString();
+
+    // Use GitLeaks for secret detection
+    const secretResults = await this.detectSecrets(content, filePath);
+
+    // Apply custom pattern detection
+    const customPatternResults = this.detectCustomPatterns(content);
+
+    // Combine results
+    const allSecrets = [...secretResults.secrets, ...customPatternResults];
+
+    // Apply redaction
+    let redactedContent = content;
+    for (const secret of allSecrets) {
+      redactedContent = this.redactSecret(redactedContent, secret);
+    }
+
+    // Security analysis
+    const securityAnalysis = this.analyzeSecurityThreats(redactedContent);
+    redactedContent = this.sanitizePromptInjections(redactedContent);
+
+    const riskScore = this.calculateRiskScore(allSecrets, securityAnalysis);
+
+    return {
+      scanId,
+      timestamp,
+      redactedContent,
+      secretsFound: allSecrets,
+      entitiesFound: [],
+      summary: {
+        totalSecrets: allSecrets.length,
+        highRiskSecrets: allSecrets.filter((s) => s.confidence === 'high').length,
+        totalPII: 0,
+        highSensitivityPII: 0,
+        secretTypes: [...new Set(allSecrets.map((s) => s.type))],
+        entityTypes: [],
+        customPatternMatches: customPatternResults.length,
+        encodedSecrets: secretResults.encodedSecrets,
+        obfuscatedSecrets: secretResults.obfuscatedSecrets,
+        obfuscatedPatterns: 0, // Not provided by detectSecrets
+        maskedPatterns: 0, // Not provided by detectSecrets
+        environmentSecrets: secretResults.environmentSecrets,
+        indirectPII: 0,
+        correlatedEntities: 0,
+        emailAddresses: 0,
+        phoneNumbers: 0,
+      },
+      riskScore,
+      security: securityAnalysis,
+    };
+  }
 }
 
 export class PIIRedactor {

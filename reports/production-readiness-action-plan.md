@@ -45,7 +45,7 @@ The following concrete actions provided by the team are now part of the plan. Th
 
 - Architecture: Enforce module boundaries between core subsystems.
 - Reliability: Add watchdog timers and comprehensive logging.
-- Security: Harden memory management and perform static analysis (Semgrep).
+- Security: Harden memory management and perform static analysis (Semgrep)
 - Testing: Build regression test suite for scheduler and I/O primitives.
 - Documentation: Expand developer guides covering extension points.
 - Accessibility: Ensure command-line flags have long and short forms with documentation.
@@ -53,7 +53,7 @@ The following concrete actions provided by the team are now part of the plan. Th
 ### mcp
 
 - Architecture: Stabilize plugin interface and separate transport from protocol logic.
-- Reliability: Provide backpressure handling for high-load scenarios.
+- Reliability: Provide back-pressure handling for high-load scenarios.
 - Security: Enforce TLS for all network links and rotate secrets.
 - Testing: Use contract tests for plugins with mock transports.
 - Documentation: Add versioned API reference.
@@ -143,7 +143,7 @@ The following concrete actions provided by the team are now part of the plan. Th
 ### prp-runner
 
 - Architecture: Streamline pipeline stages into separate modules.
-- Reliability: Add checkpointing and failure recovery.
+- Reliability: Add check-pointing and failure recovery.
 - Security: Sign runner artifacts and verify integrity.
 - Testing: Build pipeline simulation tests driven by specs.
 - Documentation: Document runner setup and environment variables.
@@ -176,7 +176,7 @@ The following concrete actions provided by the team are now part of the plan. Th
 - Documentation: Document threat models and mitigation steps.
 - Accessibility: Ensure security warnings are understandable.
 
-### simlab-mono
+### sim-lab-mono
 
 - Architecture: Break monolithic simulation code into modular packages.
 - Reliability: Add deterministic simulation modes with seed control.

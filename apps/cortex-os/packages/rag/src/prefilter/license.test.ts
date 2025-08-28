@@ -6,11 +6,9 @@
  * @security OWASP LLM Top-10 Compliance
  */
 
-import { describe, test, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
 import { execSync } from 'child_process';
-import { writeFileSync, mkdirSync, rmSync, readFileSync } from 'fs';
-import { join } from 'path';
-import { LicenseScanner, ScanCodeResult, LicenseScanOptions } from './license';
+import { afterEach, beforeEach, describe, expect, MockedFunction, test, vi } from 'vitest';
+import { LicenseScanner, LicenseScanOptions, ScanCodeResult } from './license';
 
 // Mock external dependencies
 vi.mock('child_process', () => ({
@@ -22,7 +20,7 @@ vi.mock('fs', () => ({
   mkdirSync: vi.fn(),
   rmSync: vi.fn(),
   readFileSync: vi.fn(),
-  existsSync: vi.fn(),
+  existsSync: vi.fn(() => true), // Mock existsSync to return true for test directory
 }));
 
 describe('LicenseScanner - TDD Security Tests', () => {

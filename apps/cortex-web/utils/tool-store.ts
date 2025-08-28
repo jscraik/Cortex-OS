@@ -13,12 +13,21 @@ export function getToolEvents(sessionId: string): ToolEvent[] {
   return toolStore.get(sessionId) || [];
 }
 
-export function addToolEvent(sessionId: string, event: Omit<ToolEvent, 'createdAt' | 'id'> & { id?: string }) {
+export function addToolEvent(
+  sessionId: string,
+  event: Omit<ToolEvent, 'createdAt' | 'id'> & { id?: string },
+) {
   const list = toolStore.get(sessionId) || [];
   const createdAt = new Date().toISOString();
   const id = event.id || crypto.randomUUID();
   const redactedArgs = event.args ? redactArgs(event.args) : undefined;
-  const e: ToolEvent = { id, name: event.name, args: redactedArgs, status: event.status, createdAt };
+  const e: ToolEvent = {
+    id,
+    name: event.name,
+    args: redactedArgs,
+    status: event.status,
+    createdAt,
+  };
   list.push(e);
   toolStore.set(sessionId, list);
   return e;
@@ -38,9 +47,9 @@ export function redactArgs<T extends Record<string, unknown>>(args: T): T {
     return out;
   };
   const sanitize = (val: unknown): unknown => {
-  if (typeof val === 'string') return sanitizeString(val);
-  if (Array.isArray(val)) return val.map(sanitize);
-  if (val && typeof val === 'object') {
+    if (typeof val === 'string') return sanitizeString(val);
+    if (Array.isArray(val)) return val.map(sanitize);
+    if (val && typeof val === 'object') {
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(val)) {
         if (isSensitiveKey(k)) out[k] = '[REDACTED]';

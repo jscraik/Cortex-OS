@@ -28,7 +28,15 @@ The server emits JSON over `text/event-stream`:
 Additionally, tool-call telemetry may be emitted:
 
 ```jsonc
-{ "type": "tool", "id": "<uuid>", "name": "policy/redaction-check", "status": "start|complete", "args": { /* redacted */ } }
+{
+  "type": "tool",
+  "id": "<uuid>",
+  "name": "policy/redaction-check",
+  "status": "start|complete",
+  "args": {
+    /* redacted */
+  },
+}
 ```
 
 ## Models
