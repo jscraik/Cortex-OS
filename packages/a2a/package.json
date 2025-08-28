@@ -2,37 +2,5 @@
   "name": "@cortex-os/a2a",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest",
-    "lint": "eslint src --ext ts --ignore-pattern src/examples.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "dev": "tsc -p tsconfig.build.json --watch",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest --run",
-    "test:coverage": "vitest --coverage",
-    "lint:fix": "eslint src --ext ts --ignore-pattern src/examples.ts --fix",
-    "clean": "rm -rf dist"
-  },
-  "dependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/uuid": "^10.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "uuid": "^11.0.3",
-    "zod": "^3.22.4",
-    "axios": "^1.6.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
-    "@vitest/ui": "^3.2.4",
-    "eslint": "^9.33.0",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
-  }
+  "type": "module"
 }
