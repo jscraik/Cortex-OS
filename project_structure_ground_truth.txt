@@ -23,7 +23,6 @@ fix-terminal.sh
 infra
 knip.jsonc
 libs
-mcp-official-sdk
 memory-systems-enhancements.patch
 new-files-list.txt
 nx.json
@@ -749,7 +748,6 @@ vector.ts
 ./libs/typescript/utils/tests:
 env.test.ts
 
-./mcp-official-sdk:
 
 ./packages:
 a2a
