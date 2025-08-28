@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process';
 import { z } from 'zod';
 import type { McpRequest, TransportConfig } from './types.js';
 
@@ -45,8 +46,11 @@ export function createTransport(config: TransportConfig) {
 
   return {
     async connect() {
-      if (cfg.type === 'stdio' && cfg.command.includes('nonexistent')) {
-        throw new Error('Command not found');
+      if (cfg.type === 'stdio') {
+        const check = spawnSync('sh', ['-c', `command -v ${cfg.command}`]);
+        if (check.status !== 0) {
+          throw new Error('Command not found');
+        }
       }
       connected = true;
     },
@@ -59,21 +63,25 @@ export function createTransport(config: TransportConfig) {
       return connected;
     },
 
-    send(message: McpRequest) {
+    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
       const msgSchema = z
         .object({
           jsonrpc: z.literal('2.0'),
           id: z.union([z.string(), z.number()]),
           method: z.string().optional(),
-          params: z.any().optional(),
-          result: z.any().optional(),
-          error: z.any().optional(),
+          params: z.unknown().optional(),
+          result: z.unknown().optional(),
+          error: z.unknown().optional(),
         })
         .strict();
       try {
         msgSchema.parse(message);
       } catch (err) {
-        console.error('Malformed message in transport.send:', err, message);
+        if (onError) {
+          onError(err, message);
+        } else {
+          console.error('Malformed message in transport.send:', err, message);
+        }
       }
     },
   };
