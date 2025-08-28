@@ -195,9 +195,9 @@ describe('Transport Security', () => {
       }));
 
       // Should handle multiple requests without crashing
-      requests.forEach((req) => {
-        expect(() => transport.send(req)).not.toThrow();
-      });
+      for (const req of requests) {
+        await expect(transport.send(req)).resolves.toBeUndefined();
+      }
 
       await transport.disconnect();
     });
@@ -215,7 +215,7 @@ describe('Transport Security', () => {
         params: {},
       };
 
-      expect(() => transport.send(validMessage)).not.toThrow();
+      await expect(transport.send(validMessage)).resolves.toBeUndefined();
 
       await transport.disconnect();
     });
@@ -232,10 +232,10 @@ describe('Transport Security', () => {
         { invalidStructure: true },
       ];
 
-      malformedMessages.forEach((msg) => {
+      for (const msg of malformedMessages) {
         // Should handle malformed messages gracefully
-        expect(() => transport.send(msg as any)).not.toThrow();
-      });
+        await expect(transport.send(msg as any)).resolves.toBeUndefined();
+      }
 
       await transport.disconnect();
     });

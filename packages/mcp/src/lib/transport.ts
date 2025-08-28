@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process';
+import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'child_process';
 import { z } from 'zod';
 import type { McpRequest, TransportConfig } from './types.js';
 
@@ -37,6 +37,7 @@ export function createTransport(config: TransportConfig) {
   const cfg = schema.parse(config);
 
   let connected = false;
+  let child: ChildProcessWithoutNullStreams | null = null;
 
   return {
     async connect() {
@@ -46,11 +47,21 @@ export function createTransport(config: TransportConfig) {
         if (check.status !== 0) {
           throw new Error('Command not found');
         }
+
+        child = spawn(cfg.command, cfg.args ?? [], {
+          env: cfg.env,
+          cwd: cfg.cwd,
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
       }
       connected = true;
     },
 
     async disconnect() {
+      if (cfg.type === 'stdio' && child) {
+        child.kill();
+        child = null;
+      }
       connected = false;
     },
 
@@ -58,7 +69,10 @@ export function createTransport(config: TransportConfig) {
       return connected;
     },
 
-    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
+    async send(
+      message: McpRequest,
+      onError?: (err: unknown, msg: McpRequest) => void,
+    ) {
       const msgSchema = z
         .object({
           jsonrpc: z.literal('2.0'),
@@ -76,6 +90,42 @@ export function createTransport(config: TransportConfig) {
           onError(err, message);
         } else {
           console.error('Malformed message in transport.send:', err, message);
+        }
+        return;
+      }
+
+      if (cfg.type === 'stdio') {
+        try {
+          if (!child || !child.stdin.writable) {
+            throw new Error('Stdio process not initialized');
+          }
+          child.stdin.write(JSON.stringify(message) + '\n');
+        } catch (err) {
+          if (onError) {
+            onError(err, message);
+          } else {
+            console.error('Stdio transport error:', err);
+          }
+        }
+        return;
+      }
+
+      if (cfg.type === 'http') {
+        try {
+          const res = await fetch(cfg.url, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(message),
+          });
+          if (!res.ok) {
+            throw new Error(`HTTP error: ${res.status}`);
+          }
+        } catch (err) {
+          if (onError) {
+            onError(err, message);
+          } else {
+            console.error('HTTP transport error:', err);
+          }
         }
       }
     },
