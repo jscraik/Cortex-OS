@@ -14,7 +14,7 @@ let content = readFileSync(neo4jPath, 'utf-8');
 if (!content.includes('SecureNeo4j')) {
   content = content.replace(
     "import neo4j, { Driver } from 'neo4j-driver';",
-    "import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';"
+    "import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/utils';"
   );
 }
 

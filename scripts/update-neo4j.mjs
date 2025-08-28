@@ -15,7 +15,7 @@ if (!content.includes('SecureNeo4j')) {
   content = content.replace(
     \"import neo4j, { Driver } from 'neo4j-driver';\",
     \"import neo4j, { Driver } from 'neo4j-driver';\
-import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';\"
+import { SecureNeo4j } from '@cortex-os/utils';\"
   );
 }
 
