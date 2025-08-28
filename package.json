@@ -41,6 +41,7 @@
     "security:scan:all": "semgrep scan --config=.semgrep/owasp-precise.yaml --config=.semgrep/owasp-top-10-improved.yaml .",
     "security:audit": "npm audit --audit-level=high",
     "security:typecheck": "npx tsc --noEmit --project tsconfig.json",
+    "typecheck": "npx tsc --noEmit --project tsconfig.json",
     "security:run": "node scripts/run-security-tests.mjs",
     "mcp:start": "cd packages/mcp && npm start",
     "mcp:dev": "cd packages/mcp && npm run dev",
