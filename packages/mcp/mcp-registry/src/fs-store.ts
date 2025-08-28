@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import { dirname, join } from 'node:path';
 import os from 'node:os';
-import { ServerInfoSchema, type ServerInfo } from '@cortex-os/mcp-core/contracts';
+import { ServerInfoSchema, type ServerInfo } from '@cortex-os/mcp-core';
 
 const DB = join(os.homedir(), '.cortex', 'mcp', 'servers.json');
 

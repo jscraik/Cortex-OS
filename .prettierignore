@@ -1,0 +1,14 @@
+# Exclude virtual envs, build artifacts, and caches
+**/.venv/
+**/.pytest_cache/
+**/__pycache__/
+**/dist/
+**/out/
+**/build/
+**/coverage/
+**/.turbo/
+**/.npm/
+**/.pnpm-store/
+**/node_modules/
+**/.cache/
+**/.DS_Store

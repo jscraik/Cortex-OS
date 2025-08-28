@@ -48,9 +48,9 @@
             "description": "A pointer to the evidence (e.g., file path and line number).",
             "type": "object",
             "properties": {
-              "file": {"type": "string"},
-              "line_start": {"type": "integer"},
-              "line_end": {"type": "integer"}
+              "file": { "type": "string" },
+              "line_start": { "type": "integer" },
+              "line_end": { "type": "integer" }
             },
             "required": ["file"]
           }
