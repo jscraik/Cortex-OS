@@ -9,6 +9,7 @@ import { writeFile } from 'fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import type { ServerManifest } from '../types.js';
+import { ServerManifestSchema } from '../types.js';
 
 export interface MLXConfig {
   modelsPath: string;
@@ -49,7 +50,6 @@ import sys
 import numpy as np
 from transformers import AutoTokenizer
 import os
-import path
 
 try:
     # Use pre-trained tokenizer for consistent embeddings
@@ -116,16 +116,28 @@ except Exception as e:
 
         const results = await Promise.all(
           servers.map(async (server) => {
-            const serverText = `${server.name} ${server.description} ${server.tags?.join(' ') || ''}`;
+            // Validate/normalize server shape defensively to avoid type drift
+            let validated: ServerManifest;
+            try {
+              validated = ServerManifestSchema.parse(server);
+            } catch {
+              return {
+                server,
+                similarity: 0,
+                relevanceScore: 0,
+              } as SemanticSearchResult;
+            }
+
+            const serverText = `${validated.name} ${validated.description} ${validated.tags?.join(' ') || ''}`;
             const serverEmbedding = await runGenerateEmbedding(serverText);
 
             const similarity = cosineSimilarity(
               queryEmbedding.embedding,
               serverEmbedding.embedding,
             );
-            const relevanceScore = calculateRelevanceScore(similarity, server);
+            const relevanceScore = calculateRelevanceScore(similarity, validated);
 
-            return { server, similarity, relevanceScore };
+            return { server: validated, similarity, relevanceScore };
           }),
         );
 
