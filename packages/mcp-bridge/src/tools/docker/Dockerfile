@@ -9,5 +9,4 @@ FROM python:3.11.6-slim
 WORKDIR /app
 COPY --from=builder /install /usr/local
 COPY mcp_server.py ./
-HEALTHCHECK CMD ["python", "-c", "import urllib.request,sys; urllib.request.urlopen('http://localhost:8000/health')"]
 CMD ["python", "mcp_server.py"]
