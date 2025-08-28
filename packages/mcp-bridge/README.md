@@ -19,6 +19,8 @@ The MCP Bridge connects external Model Context Protocol (MCP) servers to Cortex 
 
 ```bash
 pnpm --filter @cortex-os/mcp-bridge build
+# WARNING: The following test command is known to fail with module resolution errors.
+# See [Troubleshooting](./docs/getting-started.md#troubleshooting) for more information.
 pnpm --filter @cortex-os/mcp-bridge test
 ```
 
