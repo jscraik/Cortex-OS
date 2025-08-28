@@ -10,8 +10,8 @@
     "cortex-cli": "./packages/cortex-cli/dist/index.js"
   },
   "scripts": {
-  "readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
-  "readiness:check": "node tools/readiness/check-readiness.mjs",
+    "readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
+    "readiness:check": "node tools/readiness/check-readiness.mjs",
     "archive:docs:dry": "node scripts/maintenance/relocate-files.mjs --dry",
     "archive:docs": "node scripts/maintenance/relocate-files.mjs",
     "test": "vitest run",
@@ -153,7 +153,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-  "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.0",
     "@axe-core/playwright": "^4.10.2",
     "@eslint/js": "^9.34.0",
     "@playwright/test": "1.54.2",

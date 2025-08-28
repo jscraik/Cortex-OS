@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+import yaml from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
-import yaml from 'js-yaml';
 
 const pkgsDir = path.resolve(process.cwd(), 'packages');
-const packages = fs.readdirSync(pkgsDir).filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
+const packages = fs
+  .readdirSync(pkgsDir)
+  .filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
 
 const defaultChecklist = {
   tdd: true,
@@ -13,7 +15,7 @@ const defaultChecklist = {
   security: false,
   docs: false,
   architecture: false,
-  reliability: false
+  reliability: false,
 };
 
 for (const pkg of packages) {
@@ -24,7 +26,7 @@ for (const pkg of packages) {
     package: pkg,
     coverage: { statements: 0, branches: 0, functions: 0, lines: 0 },
     thresholds: { statements: 95, branches: 95, functions: 95, lines: 95 },
-    checklist: defaultChecklist
+    checklist: defaultChecklist,
   };
   fs.writeFileSync(filePath, yaml.dump(doc));
   console.log(`Created ${path.relative(process.cwd(), filePath)}`);

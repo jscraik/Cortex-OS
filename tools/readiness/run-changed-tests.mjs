@@ -43,7 +43,9 @@ async function getUpstreamRef() {
 
 async function refExists(ref) {
   try {
-    await execa('git', ['show-ref', '--verify', `refs/remotes/${ref.replace('origin/', '')}`], { stdio: 'ignore' });
+    await execa('git', ['show-ref', '--verify', `refs/remotes/${ref.replace('origin/', '')}`], {
+      stdio: 'ignore',
+    });
     return true;
   } catch {
     return false;
@@ -60,7 +62,8 @@ function isDocsOrConfigFile(fpRel) {
     p.startsWith('a11y/') ||
     p.startsWith('mkdocs/') ||
     p.startsWith('docker/')
-  ) return true;
+  )
+    return true;
 
   const base = path.basename(p).toLowerCase();
   if (['license', 'notice'].includes(base)) return true;
@@ -102,7 +105,9 @@ async function getChangedFiles(repoRoot) {
     }
   }
 
-  const diff = await git(['diff', '--name-only', '--diff-filter=ACMRTUXB', baseRef, 'HEAD'], { cwd: repoRoot });
+  const diff = await git(['diff', '--name-only', '--diff-filter=ACMRTUXB', baseRef, 'HEAD'], {
+    cwd: repoRoot,
+  });
   const files = diff.split('\n').filter(Boolean);
   return files;
 }
@@ -124,7 +129,8 @@ function findNearestPackageDir(repoRoot, filePathRel) {
 async function runPackageTests(pkgDir, opts = {}) {
   const useCoverage = process.env.PREPUSH_COVERAGE === '1';
   const args = ['exec', 'vitest', 'run', '--reporter=dot'];
-  if (useCoverage) args.push('--coverage', '--coverage.reporter=json-summary', '--coverage.reporter=text-summary');
+  if (useCoverage)
+    args.push('--coverage', '--coverage.reporter=json-summary', '--coverage.reporter=text-summary');
   log(`Testing ${path.relative(process.cwd(), pkgDir)}${useCoverage ? ' (coverage)' : ''}`);
   try {
     await execa('pnpm', args, { cwd: pkgDir, stdio: 'inherit' });
@@ -149,14 +155,12 @@ async function main() {
 
   const docOnly = files.every((f) => isDocsOrConfigFile(f));
   const pkgDirs = Array.from(
-    new Set(
-      files
-        .map((f) => findNearestPackageDir(repoRoot, f))
-        .filter(Boolean)
-    )
+    new Set(files.map((f) => findNearestPackageDir(repoRoot, f)).filter(Boolean)),
   );
 
-  log(`Changed files: ${files.length}, mapped packages: ${pkgDirs.length}, doc/config-only: ${docOnly}`);
+  log(
+    `Changed files: ${files.length}, mapped packages: ${pkgDirs.length}, doc/config-only: ${docOnly}`,
+  );
   if (argv.has('--dry')) {
     const list = pkgDirs.map((d) => ' - ' + path.relative(repoRoot, d)).join('\n') || ' (none)';
     log('Dry run: would test packages ->\n' + list);

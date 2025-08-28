@@ -1,8 +1,8 @@
 #!/usr/bin/env node
+import { execa } from 'execa';
+import fg from 'fast-glob';
 import fs from 'node:fs';
 import path from 'node:path';
-import fg from 'fast-glob';
-import { execa } from 'execa';
 
 // Runs vitest with coverage inside each package directory that has a package.json
 // Produces coverage/coverage-summary.json in each package, so check-readiness can enforce thresholds.
@@ -42,12 +42,14 @@ async function runCoverage(pkgDir) {
         '--coverage.reporter=json-summary',
         '--coverage.reporter=text-summary',
       ],
-      { cwd: pkgDir, stdio: 'inherit' }
+      { cwd: pkgDir, stdio: 'inherit' },
     );
     return true;
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error(`[readiness:test] tests failed in ${pkgDir}: ${err?.shortMessage || err?.message}`);
+    console.error(
+      `[readiness:test] tests failed in ${pkgDir}: ${err?.shortMessage || err?.message}`,
+    );
     return false;
   }
 }

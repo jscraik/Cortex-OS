@@ -1,7 +1,7 @@
 # Bind your tunnel to the local MCP app (macOS)
-tunnel: ${TUNNEL_UUID}   # set via environment variable
-credentials-file: ${CLOUDFLARED_CREDENTIALS_FILE}   # set via environment variable
+tunnel: ${TUNNEL_UUID} # set via environment variable
+credentials-file: ${CLOUDFLARED_CREDENTIALS_FILE} # set via environment variable
 ingress:
   - hostname: mcp.brainwav.io
-    service: http://localhost:3000        # your Node 18 app
+    service: http://localhost:3000 # your Node 18 app
   - service: http_status:404

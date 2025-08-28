@@ -15,7 +15,7 @@ if (!content.includes('SecureNeo4j')) {
   content = content.replace(
     "import neo4j, { Driver } from 'neo4j-driver';",
     `import neo4j, { Driver } from 'neo4j-driver';
-import { SecureNeo4j } from '@cortex-os/utils';`
+import { SecureNeo4j } from '@cortex-os/utils';`,
   );
 }
 
@@ -42,8 +42,8 @@ content = content.replace(
     const s = this.driver.session();
     try {
       await s.run(` +
-        "`MERGE (n:${label} {id:$id}) SET n += $props`" +
-        `, {
+    '`MERGE (n:${label} {id:$id}) SET n += $props`' +
+    `, {
         id: node.id,
         props: node.props,
       });
@@ -58,8 +58,8 @@ content = content.replace(
     const s = this.driver.session();
     try {
       await s.run(` +
-        "`MATCH (a {id:$from}), (b {id:$to})\n         MERGE (a)-[r:${type}]->(b)\n         SET r += $props`" +
-        `,
+    '`MATCH (a {id:$from}), (b {id:$to})\n         MERGE (a)-[r:${type}]->(b)\n         SET r += $props`' +
+    `,
         { from: rel.from, to: rel.to, props: rel.props ?? {} },
       );
     } finally {
@@ -72,8 +72,8 @@ content = content.replace(
     const s = this.driver.session();
     try {
       const res = await s.run(` +
-        "`\n        MATCH (n {id:$id})-[r*1..$d]-(m)\n        WITH collect(distinct n) + collect(distinct m) AS ns\n        UNWIND ns AS x\n        WITH collect(distinct x) AS nodes\n        MATCH (x)-[e]-(y) WHERE x IN nodes AND y IN nodes\n        RETURN`" +
-        `,
+    '`\n        MATCH (n {id:$id})-[r*1..$d]-(m)\n        WITH collect(distinct n) + collect(distinct m) AS ns\n        UNWIND ns AS x\n        WITH collect(distinct x) AS nodes\n        MATCH (x)-[e]-(y) WHERE x IN nodes AND y IN nodes\n        RETURN`' +
+    `,
         { id: nodeId, d: depth },
       );
       // TODO: map res to Subgraph
@@ -83,7 +83,7 @@ content = content.replace(
     }
   }
 }
-`
+`,
 );
 
 // Write the updated content back to the file

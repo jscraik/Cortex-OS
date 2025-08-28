@@ -61,6 +61,10 @@ This guide makes the whole project executable locally and in CI with consistent 
 
 - Run: VS Code task "code-quality-check" (node scripts/code-quality-check.mjs)
 
+## Packaging & release
+
+- For packaging instructions, see the Packaging and Release Guide: [docs/PACKAGING.md](docs/PACKAGING.md)
+
 ## Readiness gates (coverage ≥ 95%)
 
 - Initialize per-package readiness files: pnpm readiness:init
