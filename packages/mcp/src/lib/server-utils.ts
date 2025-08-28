@@ -22,7 +22,11 @@ export const resourceReadParamsSchema = z.object({ uri: z.string() });
 export type JsonSchema = { required?: string[]; properties?: Record<string, { type?: string; maxLength?: number }> };
 export const validateToolArgs = (schema: JsonSchema | undefined, args: Record<string, unknown>) => {
   if (!schema) return;
-  for (const f of schema.required || []) if (!(f in args)) throw new Error(`Invalid input: ${f} is required`);
+  for (const f of schema.required || []) {
+    if (!(f in args)) {
+      throw new Error(`Invalid input: ${f} is required`);
+    }
+  }
   const props = schema.properties || {};
   for (const [k, v] of Object.entries(args)) {
     const p = props[k];
