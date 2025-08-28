@@ -11,6 +11,4 @@ class Message(BaseModel):
 app = FastAPI()
 
 
-@app.post("/mcp")
-async def mcp(req: Message) -> JSONResponse:
-    return JSONResponse({"id": req.id, "result": {"ok": True, "echo": req.dict()}})
+    return JSONResponse({"id": req.id, "result": {"ok": True, "echo": req.model_dump()}})
