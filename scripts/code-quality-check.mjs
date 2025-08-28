@@ -120,17 +120,35 @@ function analyseFile(filePath) {
   }
   // Naming conventions
   const badNames = [];
-  const nameRegex = ext === '.py' ? /def\s+([A-Za-z][A-Za-z0-9]+)/g : /function\s+([A-Za-z][A-Za-z0-9]*)|const\s+([A-Za-z][A-Za-z0-9]*)\s*=|let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
+  // Extract regexes for each language for maintainability
+  const pythonFuncRegex = /def\s+([A-Za-z][A-Za-z0-9_]+)/g;
+  const jsFuncRegex = /function\s+([A-Za-z][A-Za-z0-9]*)/g;
+  const jsConstRegex = /const\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
+  const jsLetRegex = /let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
   let match;
-  while ((match = nameRegex.exec(content))) {
-    const name = match[1] || match[2] || match[3];
-    if (!name) continue;
-    if (ext === '.py') {
+  if (ext === '.py') {
+    while ((match = pythonFuncRegex.exec(content))) {
+      const name = match[1];
+      if (!name) continue;
       // Python should be snake_case
       if (!/^[a-z_][a-z0-9_]*$/.test(name)) {
         badNames.push(name);
       }
-    } else {
+    }
+  } else {
+    // JS/TS: check function, const, and let declarations
+    let jsMatches = [];
+    while ((match = jsFuncRegex.exec(content))) {
+      jsMatches.push(match[1]);
+    }
+    while ((match = jsConstRegex.exec(content))) {
+      jsMatches.push(match[1]);
+    }
+    while ((match = jsLetRegex.exec(content))) {
+      jsMatches.push(match[1]);
+    }
+    for (const name of jsMatches) {
+      if (!name) continue;
       // JS/TS should be camelCase
       if (!/^[a-z][a-zA-Z0-9]*$/.test(name) || /_/.test(name)) {
         badNames.push(name);
