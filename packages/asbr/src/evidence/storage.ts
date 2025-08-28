@@ -93,7 +93,9 @@ export class EvidenceStorage {
       this.evidenceCache.set(evidence.id, evidence);
       this.cacheExpiry.set(evidence.id, Date.now() + 60000); // 1 minute cache
     } catch (error) {
-      throw new ValidationError(`Failed to store evidence ${evidence.id}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ValidationError(
+        `Failed to store evidence ${evidence.id}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -135,7 +137,9 @@ export class EvidenceStorage {
 
       return null;
     } catch (error) {
-      throw new ValidationError(`Failed to retrieve evidence ${evidenceId}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ValidationError(
+        `Failed to retrieve evidence ${evidenceId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -199,7 +203,9 @@ export class EvidenceStorage {
         hasMore,
       };
     } catch (error) {
-      throw new ValidationError(`Failed to query evidence: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ValidationError(
+        `Failed to query evidence: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -220,7 +226,11 @@ export class EvidenceStorage {
       deletedBy: 'system', // In real implementation, would track user
     };
 
-    const receiptPath = getDataPath('evidence', 'receipts', `delete_${evidenceId}_${Date.now()}.json`);
+    const receiptPath = getDataPath(
+      'evidence',
+      'receipts',
+      `delete_${evidenceId}_${Date.now()}.json`,
+    );
     await writeFile(receiptPath, JSON.stringify(receipt, null, 2), 'utf-8');
 
     // Remove the actual evidence file
@@ -293,7 +303,9 @@ export class EvidenceStorage {
 
       return { deletedCount, freedBytes };
     } catch (error) {
-      throw new ValidationError(`Failed to cleanup old evidence: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ValidationError(
+        `Failed to cleanup old evidence: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -358,7 +370,9 @@ export class EvidenceStorage {
         sourceBreakdown,
       };
     } catch (error) {
-      throw new ValidationError(`Failed to get storage stats: ${error instanceof Error ? error.message : String(error)}`);
+      throw new ValidationError(
+        `Failed to get storage stats: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

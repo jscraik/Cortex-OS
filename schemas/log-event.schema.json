@@ -5,7 +5,10 @@
   "required": ["timestamp", "severityText", "body", "resource"],
   "properties": {
     "timestamp": { "type": "string", "format": "date-time" },
-    "severityText": { "type": "string", "enum": ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"] },
+    "severityText": {
+      "type": "string",
+      "enum": ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"]
+    },
     "severityNumber": { "type": "integer" },
     "body": { "type": ["string", "object", "array", "number", "boolean", "null"] },
     "attributes": { "type": "object" },

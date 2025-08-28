@@ -9,7 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
-import { AnalyticsConfig } from "./types.js";
+import { AnalyticsConfig } from './types.js';
 
 /**
  * Default analytics configuration
@@ -41,10 +41,10 @@ export const defaultAnalyticsConfig: AnalyticsConfig = {
       response_time: 2000,
       throughput_drop: 0.3,
     },
-    notificationChannels: ["console", "websocket"],
+    notificationChannels: ['console', 'websocket'],
   },
   storage: {
-    backend: "memory",
+    backend: 'memory',
     compressionEnabled: false,
     encryptionEnabled: false,
   },
@@ -53,9 +53,7 @@ export const defaultAnalyticsConfig: AnalyticsConfig = {
 /**
  * Create analytics configuration with overrides
  */
-export function createAnalyticsConfig(
-  overrides: Partial<AnalyticsConfig> = {},
-): AnalyticsConfig {
+export function createAnalyticsConfig(overrides: Partial<AnalyticsConfig> = {}): AnalyticsConfig {
   return {
     collection: {
       ...defaultAnalyticsConfig.collection,

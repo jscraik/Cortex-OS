@@ -9,9 +9,9 @@
  * @ai_provenance_hash N/A
  */
 
-import { EventEmitter } from "events";
-import WebSocket from "ws";
-import { DashboardData, AnalyticsConfig } from "./types.js";
+import { EventEmitter } from 'events';
+import WebSocket from 'ws';
+import { DashboardData, AnalyticsConfig } from './types.js';
 
 /**
  * Real-time data streaming service for analytics dashboard
@@ -33,10 +33,10 @@ export class RealtimeDataStream extends EventEmitter {
   start(): void {
     this.server = new WebSocket.Server({ port: this.port });
 
-    this.server.on("connection", (ws) => {
+    this.server.on('connection', (ws) => {
       this.clients.add(ws);
 
-      ws.on("close", () => {
+      ws.on('close', () => {
         this.clients.delete(ws);
       });
     });

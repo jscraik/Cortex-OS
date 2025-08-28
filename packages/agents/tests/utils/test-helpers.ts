@@ -18,33 +18,41 @@ export class SecurityValidator {
       /\{\{constructor/gi,
       /repeat\s+your\s+training\s+data/gi,
       /what\s+is\s+your\s+system\s+prompt/gi,
-      /give\s+me\s+your\s+exact\s+instructions/gi
+      /give\s+me\s+your\s+exact\s+instructions/gi,
     ];
-    
-    dangerousPatterns.forEach(pattern => {
+
+    dangerousPatterns.forEach((pattern) => {
       if (pattern.test(sanitized)) {
         sanitized = sanitized.replace(pattern, '[FILTERED]');
       }
     });
-    
+
     // Also filter repeated suspicious words
     const suspiciousWords = ['ignore', 'system', 'prompt', 'instructions'];
-    suspiciousWords.forEach(word => {
+    suspiciousWords.forEach((word) => {
       const repeatedPattern = new RegExp(`\\b${word}\\b.*\\b${word}\\b.*\\b${word}\\b`, 'gi');
       if (repeatedPattern.test(sanitized)) {
         sanitized = sanitized.replace(repeatedPattern, '[FILTERED]');
       }
     });
-    
+
     return sanitized;
   }
 
   static detectPII(input: string): string[] {
     const piiPatterns = [
       { type: 'ssn', pattern: /\d{3}-\d{2}-\d{4}/, replacement: '[SSN-REDACTED]' },
-      { type: 'email', pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, replacement: '[EMAIL-REDACTED]' },
+      {
+        type: 'email',
+        pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+        replacement: '[EMAIL-REDACTED]',
+      },
       { type: 'phone', pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, replacement: '[PHONE-REDACTED]' },
-      { type: 'credit_card', pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/, replacement: '[CC-REDACTED]' }
+      {
+        type: 'credit_card',
+        pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/,
+        replacement: '[CC-REDACTED]',
+      },
     ];
 
     const detected: string[] = [];
@@ -60,9 +68,12 @@ export class SecurityValidator {
   static redactPII(input: string): string {
     const piiPatterns = [
       { pattern: /\d{3}-\d{2}-\d{4}/, replacement: '[SSN-REDACTED]' },
-      { pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/, replacement: '[EMAIL-REDACTED]' },
+      {
+        pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
+        replacement: '[EMAIL-REDACTED]',
+      },
       { pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/, replacement: '[PHONE-REDACTED]' },
-      { pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/, replacement: '[CC-REDACTED]' }
+      { pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/, replacement: '[CC-REDACTED]' },
     ];
 
     let redacted = input;
@@ -112,7 +123,7 @@ export class AccessibilityValidator {
 
     return {
       valid: issues.length === 0,
-      issues
+      issues,
     };
   }
 
@@ -133,7 +144,7 @@ export class MockFactory {
       ok,
       status,
       json: vi.fn().mockResolvedValue(response),
-      text: vi.fn().mockResolvedValue(JSON.stringify(response))
+      text: vi.fn().mockResolvedValue(JSON.stringify(response)),
     });
   }
 
@@ -146,7 +157,7 @@ export class MockFactory {
       removeAllListeners: vi.fn(),
       listeners: vi.fn().mockReturnValue([]),
       addListener: vi.fn(),
-      removeListener: vi.fn()
+      removeListener: vi.fn(),
     };
   }
 
@@ -155,7 +166,7 @@ export class MockFactory {
       id: 'mock-agent',
       name: 'Mock Agent',
       capabilities: ['test-capability'],
-      ...overrides
+      ...overrides,
     };
   }
 }
@@ -171,7 +182,7 @@ export class PerformanceTestHelper {
 
   static createMemoryUsageTracker() {
     const initialMemory = process.memoryUsage();
-    
+
     return {
       getUsage: () => {
         const current = process.memoryUsage();
@@ -179,7 +190,7 @@ export class PerformanceTestHelper {
           heapUsed: current.heapUsed - initialMemory.heapUsed,
           heapTotal: current.heapTotal - initialMemory.heapTotal,
           external: current.external - initialMemory.external,
-          rss: current.rss - initialMemory.rss
+          rss: current.rss - initialMemory.rss,
         };
       },
       reset: () => {
@@ -188,14 +199,17 @@ export class PerformanceTestHelper {
         initialMemory.heapTotal = newInitial.heapTotal;
         initialMemory.external = newInitial.external;
         initialMemory.rss = newInitial.rss;
-      }
+      },
     };
   }
 }
 
 // Test data generators
 export class TestDataGenerator {
-  static generateCodeSample(language: string, complexity: 'low' | 'medium' | 'high' = 'medium'): string {
+  static generateCodeSample(
+    language: string,
+    complexity: 'low' | 'medium' | 'high' = 'medium',
+  ): string {
     const samples = {
       javascript: {
         low: 'const greeting = "Hello, World!"; console.log(greeting);',
@@ -231,21 +245,23 @@ class DataProcessor {
       throw error;
     }
   }
-}`
-      }
+}`,
+      },
     };
 
     return samples[language as keyof typeof samples]?.[complexity] || samples.javascript.medium;
   }
 
-  static generateAnalysisRequest(overrides: Partial<CodeAnalysisRequest> = {}): CodeAnalysisRequest {
+  static generateAnalysisRequest(
+    overrides: Partial<CodeAnalysisRequest> = {},
+  ): CodeAnalysisRequest {
     return {
       code: this.generateCodeSample('javascript', 'medium'),
       language: 'javascript',
       context: 'Test analysis request',
       analysisType: 'review',
       urgency: 'medium',
-      ...overrides
+      ...overrides,
     };
   }
 }
@@ -261,7 +277,7 @@ export class GoldenTestHelper {
     let hash = 0;
     for (let i = 0; i < input.length; i++) {
       const char = input.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return hash.toString(36);
@@ -272,18 +288,21 @@ export class GoldenTestHelper {
     const normalized = { ...result };
     delete normalized.processingTime;
     delete normalized.timestamp;
-    
+
     // Sort arrays for consistent comparison
     if (normalized.suggestions) {
       normalized.suggestions.sort((a: any, b: any) => a.line - b.line);
     }
-    
+
     return normalized;
   }
 }
 
 // Golden test seeded mock
-export function createSeededMock(seed: number, responses: Array<() => Promise<any>>): ReturnType<typeof vi.fn> {
+export function createSeededMock(
+  seed: number,
+  responses: Array<() => Promise<any>>,
+): ReturnType<typeof vi.fn> {
   // Use seed to create deterministic mock behavior
   let callIndex = 0;
   const seededResponses = responses.map((response, index) => {
@@ -292,11 +311,11 @@ export function createSeededMock(seed: number, responses: Array<() => Promise<an
       const base = await response();
       return {
         ...base,
-        seed: seed + index
+        seed: seed + index,
       };
     };
   });
-  
+
   return vi.fn().mockImplementation(() => {
     const responseIndex = callIndex % seededResponses.length;
     callIndex++;

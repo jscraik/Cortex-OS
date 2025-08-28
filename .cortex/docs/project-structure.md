@@ -47,6 +47,7 @@ cortex-os-clean/
 ### Applications Layer
 
 The `apps/` directory contains all user-facing applications and services:
+
 - **`cortex-os/`**: The main ASBR (Agent Service Bus Runtime) application that coordinates agents and services.
 - **`cortex-cli/`**: A command-line interface for interacting with Cortex-OS.
 - **`cortex-marketplace/` & `cortex-marketplace-api/`**: The frontend and API for the MCP Marketplace.
@@ -56,6 +57,7 @@ The `apps/` directory contains all user-facing applications and services:
 ### Shared Libraries and Services
 
 The `packages/` directory contains all shared libraries and services that provide cross-cutting concerns and infrastructure:
+
 - **`a2a/`**: Agent-to-Agent communication bus.
 - **`orchestration/`**: Workflow coordination with outbox/DLQ patterns.
 - **`memories/`**: Persistent state management for agents.
@@ -71,6 +73,7 @@ The `packages/` directory contains all shared libraries and services that provid
 ### Contracts
 
 Event and API contract definitions:
+
 - **Location**: `contracts/`
 - **Components**:
   - `cloudevents/`: CloudEvents envelope schemas.
@@ -80,12 +83,14 @@ Event and API contract definitions:
 ## 🔄 Communication Patterns
 
 ### Agent-to-Agent (A2A) Messaging
+
 - **Bus**: NATS JetStream for durable messaging.
 - **Contracts**: Defined in `contracts/cloudevents/`.
 - **Validation**: Schema registry at `packages/registry/`.
 - **Patterns**: Event sourcing, CQRS, outbox pattern.
 
 ### Service Integration
+
 - **Clean Architecture**: Restructured MCP package with functional patterns.
 - **Transport Bridges**: stdio ↔ HTTP/SSE for remote server support.
 - **AI-Enhanced Search**: MLX (Qwen3) primary, Ollama fallback.
@@ -96,18 +101,22 @@ Event and API contract definitions:
 ## 🛡️ Governance & Validation
 
 ### Single Source of Truth
+
 All governance lives in `.cortex/`:
+
 1. **Rules** (`.cortex/rules/`): Human-readable policies.
 2. **Policies** (`.cortex/policy/`): Machine-readable JSON.
 3. **Schemas** (`.cortex/schemas/`): Validation schemas.
 4. **Gates** (`.cortex/gates/`): Enforcement scripts.
 
 ### Validation Flow
+
 ```text
 Code Changes → Pre-commit Hooks → CI Gates → Runtime Enforcement
 ```
 
 ### Structure Guard
+
 - **Location**: `tools/structure-guard/`
 - **Purpose**: Enforce project structure compliance.
 - **Validation**: Runs in CI on all PRs.
@@ -115,6 +124,7 @@ Code Changes → Pre-commit Hooks → CI Gates → Runtime Enforcement
 ## 🚀 Development Workflow
 
 ### Local Development
+
 ```bash
 # Install dependencies
 pnpm install
@@ -134,6 +144,7 @@ cd contracts/tests && pnpm test
 ```
 
 ### Building
+
 ```bash
 # Build all packages
 pnpm build
@@ -143,6 +154,7 @@ cd packages/orchestration && pnpm build
 ```
 
 ### Schema Registry
+
 ```bash
 # Start registry service
 cd packages/registry && pnpm dev
@@ -153,12 +165,14 @@ cd packages/registry && pnpm dev
 ## 🤝 Contributing
 
 ### Code Organization
+
 1. **Applications**: New applications go in `apps/`.
 2. **Shared Services**: Cross-cutting concerns go in `packages/`.
 3. **Contracts**: Event schemas go in `contracts/cloudevents/`.
 4. **Examples**: Reference implementations go in `examples/`.
 
 ### Validation Requirements
+
 - All changes must pass structure guard.
 - Contract changes require AJV tests.
 - New packages must be added to `pnpm-workspace.yaml`.

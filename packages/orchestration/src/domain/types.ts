@@ -1,7 +1,7 @@
 export type UUID = string;
 
-export type StepKind = "agent" | "http" | "delay" | "branch" | "map";
-export type Status = "pending" | "running" | "succeeded" | "failed" | "canceled";
+export type StepKind = 'agent' | 'http' | 'delay' | 'branch' | 'map';
+export type Status = 'pending' | 'running' | 'succeeded' | 'failed' | 'canceled';
 
 export interface RetryPolicy {
   maxRetries: number;
@@ -48,4 +48,3 @@ export interface RunState {
   updatedAt: string;
   context: Record<string, unknown>;
 }
-

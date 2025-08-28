@@ -3,11 +3,13 @@
 ## 1. Update the structure:validate script in package.json
 
 The current script points to a non-existent file:
+
 ```json
 "structure:validate": "node scripts/validate-structure.mjs",
 ```
 
 This should be updated to use the enhanced structure guard:
+
 ```json
 "structure:validate": "tsx tools/structure-guard/guard-enhanced.ts",
 ```
@@ -17,6 +19,7 @@ This should be updated to use the enhanced structure guard:
 The structure-guard package has dependency conflicts with the root package. To resolve this:
 
 Option A: Update tools/structure-guard/package.json to use the root dependencies:
+
 ```json
 {
   "name": "@cortex-os/structure-guard",
@@ -32,6 +35,7 @@ Option A: Update tools/structure-guard/package.json to use the root dependencies
 ```
 
 Option B: Remove local dependencies and use root dependencies directly:
+
 ```json
 {
   "name": "@cortex-os/structure-guard",
@@ -72,6 +76,7 @@ jobs:
 ## 4. Pre-commit Hook
 
 Add to .husky/pre-commit:
+
 ```bash
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"

@@ -34,11 +34,13 @@ tests/
 ### 1. Unit Tests (`tests/unit/`)
 
 **Coverage**: Core interfaces and implementations
-**Files**: 
+**Files**:
+
 - `interfaces.test.ts` - Agent, Executor, BasicExecutor interface tests
 - `code-intelligence-agent.test.ts` - CodeIntelligenceAgent class tests
 
 **Key Test Cases**:
+
 - Interface compliance validation
 - Basic functionality testing
 - Error handling scenarios
@@ -51,10 +53,12 @@ tests/
 ### 2. Integration Tests (`tests/integration/`)
 
 **Coverage**: Cross-component interactions with mocked dependencies
-**Files**: 
+**Files**:
+
 - `agent-integration.test.ts` - A2A, MCP bridge integration
 
 **Key Test Cases**:
+
 - A2A event system integration
 - MCP bridge connectivity
 - Multi-agent coordination
@@ -66,10 +70,12 @@ tests/
 ### 3. Contract Tests (`tests/contract/`)
 
 **Coverage**: API contract compliance using Zod schemas
-**Files**: 
+**Files**:
+
 - `agent-contracts.test.ts` - Interface contract validation
 
 **Key Test Cases**:
+
 - Agent interface schema validation
 - Task parameter validation
 - Execution result contracts
@@ -81,10 +87,12 @@ tests/
 ### 4. Security Tests (`tests/security/`)
 
 **Coverage**: OWASP LLM Top-10 compliance
-**Files**: 
+**Files**:
+
 - `owasp-llm-compliance.test.ts` - Security vulnerability testing
 
 **Key Test Cases**:
+
 - LLM01: Prompt Injection protection
 - LLM02: Insecure Output Handling
 - LLM03: Training Data Poisoning prevention
@@ -99,10 +107,12 @@ tests/
 ### 5. Performance Tests (`tests/performance/`)
 
 **Coverage**: Performance benchmarks and resource usage
-**Files**: 
+**Files**:
+
 - `model-performance.bench.ts` - Performance benchmarking
 
 **Key Test Cases**:
+
 - Response time benchmarks
 - Throughput testing
 - Memory usage optimization
@@ -115,10 +125,12 @@ tests/
 ### 6. Accessibility Tests (`tests/accessibility/`)
 
 **Coverage**: WCAG 2.2 AA compliance
-**Files**: 
+**Files**:
+
 - `agent-a11y.test.ts` - Accessibility compliance testing
 
 **Key Test Cases**:
+
 - Text alternatives for all content
 - Keyboard accessibility
 - Screen reader compatibility
@@ -131,10 +143,12 @@ tests/
 ### 7. Golden Tests (`tests/golden/`)
 
 **Coverage**: Regression detection with reproducible seeds
-**Files**: 
+**Files**:
+
 - `agent-golden.test.ts` - Deterministic evaluation testing
 
 **Key Test Cases**:
+
 - Deterministic response validation
 - Regression detection
 - Cross-version compatibility
@@ -189,16 +203,19 @@ TEST_MLX_ENDPOINT=http://localhost:8765
 ## Test Data and Fixtures
 
 ### Mock Agents
+
 - `mockAgents.basic` - Basic agent with execute capability
 - `mockAgents.codeIntelligence` - Code analysis agent
 - `mockAgents.advanced` - Multi-capability agent
 
 ### Mock Tasks
+
 - `mockTasks.simple` - Basic execution task
 - `mockTasks.codeAnalysis` - Code analysis task
 - `mockTasks.securityScan` - Security scanning task
 
 ### Code Analysis Requests
+
 - `mockCodeAnalysisRequests.basic` - Simple code review
 - `mockCodeAnalysisRequests.security` - Security analysis
 - `mockCodeAnalysisRequests.performance` - Performance optimization
@@ -207,12 +224,14 @@ TEST_MLX_ENDPOINT=http://localhost:8765
 ## Coverage Requirements
 
 ### Minimum Coverage Thresholds
+
 - **Functions**: 90%
 - **Branches**: 90%
 - **Lines**: 90%
 - **Statements**: 90%
 
 ### Coverage Reporting
+
 - Text format for console output
 - JSON format for CI/CD integration
 - HTML format for detailed analysis
@@ -239,6 +258,7 @@ TEST_MLX_ENDPOINT=http://localhost:8765
 ```
 
 ### Quality Gates
+
 - All tests must pass
 - Coverage must meet 90% threshold
 - Security tests must pass OWASP compliance
@@ -248,6 +268,7 @@ TEST_MLX_ENDPOINT=http://localhost:8765
 ## Debugging and Development
 
 ### Debug Configuration
+
 ```bash
 # Debug specific test
 DEBUG=1 vitest run tests/unit/interfaces.test.ts
@@ -260,6 +281,7 @@ vitest --ui
 ```
 
 ### Mock Management
+
 - Global mocks configured in `tests/setup.ts`
 - Per-test mocks using Vitest `vi.mock()`
 - HTTP response mocks with deterministic behavior
@@ -268,6 +290,7 @@ vitest --ui
 ## Best Practices
 
 ### Test Writing Guidelines
+
 1. **Arrange-Act-Assert** pattern
 2. **Descriptive test names** that explain intent
 3. **Independent tests** that don't depend on each other
@@ -276,12 +299,14 @@ vitest --ui
 6. **Accessibility-first** output validation
 
 ### Mock Strategy
+
 1. **Mock external dependencies** (HTTP, file system, etc.)
 2. **Use real implementations** for internal logic
 3. **Deterministic responses** for golden tests
 4. **Realistic error simulation** for robustness testing
 
 ### Maintenance
+
 1. **Update snapshots** when behavior intentionally changes
 2. **Review coverage reports** regularly
 3. **Add tests for bug fixes** to prevent regression
@@ -290,6 +315,7 @@ vitest --ui
 ## Acceptance Criteria
 
 ### ✅ Unit Tests
+
 - [ ] Agent interface validation (100% coverage)
 - [ ] Executor implementation testing (100% coverage)
 - [ ] CodeIntelligenceAgent functionality (90%+ coverage)
@@ -299,6 +325,7 @@ vitest --ui
 - [ ] Event emission (100% coverage)
 
 ### ✅ Integration Tests
+
 - [ ] A2A event system integration
 - [ ] MCP bridge connectivity
 - [ ] Cross-agent coordination
@@ -307,6 +334,7 @@ vitest --ui
 - [ ] Performance under load
 
 ### ✅ Contract Tests
+
 - [ ] Agent interface compliance
 - [ ] Task parameter validation
 - [ ] Result structure validation
@@ -315,6 +343,7 @@ vitest --ui
 - [ ] Contract evolution support
 
 ### ✅ Security Tests
+
 - [ ] OWASP LLM Top-10 compliance (100%)
 - [ ] Prompt injection prevention
 - [ ] Output sanitization
@@ -323,6 +352,7 @@ vitest --ui
 - [ ] Supply chain security
 
 ### ✅ Performance Tests
+
 - [ ] Response time benchmarks (<2s p95)
 - [ ] Throughput testing (>10 req/s)
 - [ ] Memory efficiency (<100MB increase)
@@ -331,6 +361,7 @@ vitest --ui
 - [ ] Scalability verification
 
 ### ✅ Accessibility Tests
+
 - [ ] WCAG 2.2 AA compliance (100%)
 - [ ] Screen reader compatibility
 - [ ] Keyboard navigation
@@ -339,6 +370,7 @@ vitest --ui
 - [ ] Structured output validation
 
 ### ✅ Golden Tests
+
 - [ ] Reproducible evaluations
 - [ ] Regression detection
 - [ ] Snapshot management

@@ -89,7 +89,7 @@ export class EvaluationNode {
           passed: blockers.length === 0 && majors.length <= 3,
           blockers,
           majors,
-          evidence: evidence.map(e => e.id),
+          evidence: evidence.map((e) => e.id),
           timestamp: new Date().toISOString(),
         },
       },
@@ -98,14 +98,13 @@ export class EvaluationNode {
 
   private async validateTDDCycle(state: PRPState): Promise<{ passed: boolean; details: any }> {
     // Validate that proper TDD cycle was followed
-    const tddEvidence = state.evidence.filter(e => 
-      e.type === 'test' && e.phase === 'build'
-    );
+    const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
 
     const hasTests = tddEvidence.length > 0;
-    const hasCoverage = state.outputs?.testCoverage || 
-      state.validationResults?.build?.evidence?.some(id => 
-        state.evidence.find(e => e.id === id)?.content.includes('coverage')
+    const hasCoverage =
+      state.outputs?.testCoverage ||
+      state.validationResults?.build?.evidence?.some((id) =>
+        state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
       );
 
     return {
@@ -119,7 +118,9 @@ export class EvaluationNode {
     };
   }
 
-  private async validateCodeReview(state: PRPState): Promise<{ blockers: number; majors: number; details: any }> {
+  private async validateCodeReview(
+    state: PRPState,
+  ): Promise<{ blockers: number; majors: number; details: any }> {
     // Simulated code review - in real implementation would integrate with actual review tools
     const codeQualityIssues = [
       {
@@ -136,8 +137,8 @@ export class EvaluationNode {
       },
     ];
 
-    const blockers = codeQualityIssues.filter(issue => issue.severity === 'blocker').length;
-    const majors = codeQualityIssues.filter(issue => issue.severity === 'major').length;
+    const blockers = codeQualityIssues.filter((issue) => issue.severity === 'blocker').length;
+    const majors = codeQualityIssues.filter((issue) => issue.severity === 'major').length;
 
     return {
       blockers,
@@ -159,11 +160,11 @@ export class EvaluationNode {
     // Extract scores from build phase validation
     const buildValidation = state.validationResults?.build;
     const buildEvidence = buildValidation?.evidence || [];
-    
+
     // Mock quality scores - in real implementation would extract from actual tools
     const accessibilityScore = 95; // From Axe results
-    const performanceScore = 94;   // From Lighthouse results
-    const securityScore = 88;      // From security scan results
+    const performanceScore = 94; // From Lighthouse results
+    const securityScore = 88; // From security scan results
 
     return {
       accessibility: {
@@ -181,12 +182,14 @@ export class EvaluationNode {
     };
   }
 
-  private async preCerebrumValidation(state: PRPState): Promise<{ readyForCerebrum: boolean; details: any }> {
+  private async preCerebrumValidation(
+    state: PRPState,
+  ): Promise<{ readyForCerebrum: boolean; details: any }> {
     // Final validation before Cerebrum decision
     const strategyPassed = state.validationResults?.strategy?.passed ?? false;
     const buildPassed = state.validationResults?.build?.passed ?? false;
     const evaluationPassed = state.validationResults?.evaluation?.passed ?? false;
-    
+
     // Use && instead of || to require ALL phases to pass
     const allPhasesPassed = strategyPassed && buildPassed && evaluationPassed;
 

@@ -7,7 +7,13 @@ import Ajv, { JSONSchemaType, ValidateFunction, ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { DevOpsPlan, ValidationResult, ValidationConfig, ValidationError, ValidationWarning } from './devops-plan.types.js';
+import {
+  DevOpsPlan,
+  ValidationResult,
+  ValidationConfig,
+  ValidationError,
+  ValidationWarning,
+} from './devops-plan.types.js';
 
 /**
  * DevOps Plan Validator class with comprehensive validation capabilities
@@ -45,7 +51,9 @@ export class DevOpsPlanValidator {
       const schemaContent = readFileSync(schemaPath, 'utf-8');
       this.schema = JSON.parse(schemaContent) as JSONSchemaType<DevOpsPlan>;
     } catch (error) {
-      throw new Error(`Failed to load DevOps plan schema: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to load DevOps plan schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -56,7 +64,7 @@ export class DevOpsPlanValidator {
    */
   validate(plan: unknown): ValidationResult {
     const isValid = this.validateFunction(plan);
-    
+
     if (isValid) {
       const warnings = this.generateWarnings(plan as DevOpsPlan);
       return {
@@ -83,7 +91,8 @@ export class DevOpsPlanValidator {
   validateOrThrow(plan: unknown): asserts plan is DevOpsPlan {
     const result = this.validate(plan);
     if (!result.valid) {
-      const errorMessages = result.errors?.map(e => `${e.path}: ${e.message}`).join('; ') || 'Validation failed';
+      const errorMessages =
+        result.errors?.map((e) => `${e.path}: ${e.message}`).join('; ') || 'Validation failed';
       throw new Error(`DevOps plan validation failed: ${errorMessages}`);
     }
   }
@@ -92,7 +101,7 @@ export class DevOpsPlanValidator {
    * Format Ajv errors into structured validation errors
    */
   private formatErrors(ajvErrors: ErrorObject[]): ValidationError[] {
-    return ajvErrors.map(error => ({
+    return ajvErrors.map((error) => ({
       path: error.instancePath || error.schemaPath,
       message: this.getHumanReadableError(error),
       code: error.keyword,
@@ -200,7 +209,7 @@ export class DevOpsPlanValidator {
    * Check if plan has production environment
    */
   private hasProductionEnvironment(plan: DevOpsPlan): boolean {
-    return Object.values(plan.environments).some(env => env.type === 'production');
+    return Object.values(plan.environments).some((env) => env.type === 'production');
   }
 
   /**
@@ -251,7 +260,7 @@ export function validateDevOpsPlan(plan: unknown, config?: ValidationConfig): Va
 export function ValidateDevOpsPlan(config?: ValidationConfig) {
   return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
-    
+
     descriptor.value = function (...args: any[]) {
       if (args.length > 0) {
         const validator = createDevOpsPlanValidator(config);

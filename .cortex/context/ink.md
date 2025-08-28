@@ -1,7 +1,7 @@
 ========================
 
-CODE SNIPPETS
-========================
+# CODE SNIPPETS
+
 TITLE: Install Ink UI
 DESCRIPTION: Installs the Ink UI package using npm. This assumes you have already set up Ink.
 
@@ -9,11 +9,12 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_0
 
 LANGUAGE: sh
 CODE:
+
 ```
 npm install @inkjs/ui
 ```
 
-----------------------------------------
+---
 
 TITLE: Spinner Component
 DESCRIPTION: Example usage of the Spinner component, which indicates that a process is ongoing and the CLI is waiting for completion.
@@ -22,13 +23,14 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_7
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { Spinner } from '@inkjs/ui';
 
 <Spinner label="Loading" />;
 ```
 
-----------------------------------------
+---
 
 TITLE: Spinner Usage Example
 DESCRIPTION: Demonstrates how to use the Spinner component from @inkjs/ui in an Ink application. It shows the basic import and rendering with a label.
@@ -37,6 +39,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/spinner.md#_snippe
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react';
 import {render, Box} from 'ink';
@@ -49,7 +52,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Usage Example: ProgressBar
 DESCRIPTION: Demonstrates how to use the ProgressBar component from '@inkjs/ui'. It simulates progress from 0 to 100 using `useState` and `useEffect` hooks, rendering the progress bar within an Ink `Box`.
@@ -58,6 +61,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/progress-bar.md#_s
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useEffect, useState} from 'react';
 import {render, Box} from 'ink';
@@ -90,7 +94,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: ProgressBar Component
 DESCRIPTION: Example usage of the ProgressBar component, an extension of Spinner that allows displaying a calculated progress percentage.
@@ -99,6 +103,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_8
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { ProgressBar } from '@inkjs/ui';
 
@@ -106,7 +111,7 @@ import { ProgressBar } from '@inkjs/ui';
 <ProgressBar value={progress} />;
 ```
 
-----------------------------------------
+---
 
 TITLE: Select Component
 DESCRIPTION: Example usage of the Select component, which displays a scrollable list of options for the user to choose from.
@@ -115,6 +120,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_5
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { Select } from '@inkjs/ui';
 
@@ -141,7 +147,7 @@ import { Select } from '@inkjs/ui';
 />;
 ```
 
-----------------------------------------
+---
 
 TITLE: ConfirmInput Component
 DESCRIPTION: Example usage of the ConfirmInput component, which presents a common 'Y/n' prompt to confirm or cancel an operation.
@@ -150,6 +156,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_4
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { ConfirmInput } from '@inkjs/ui';
 
@@ -163,7 +170,7 @@ import { ConfirmInput } from '@inkjs/ui';
 />;
 ```
 
-----------------------------------------
+---
 
 TITLE: ConfirmInput Usage Example
 DESCRIPTION: Demonstrates how to integrate the ConfirmInput component into a React Ink application. It shows how to manage state based on user confirmation or cancellation, providing a clear interactive flow for CLI operations.
@@ -172,6 +179,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/confirm-input.md#_
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -205,7 +213,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: ConfirmInput Component API
 DESCRIPTION: API reference for the ConfirmInput component, detailing all available props, their types, default values, and descriptions. This guide helps developers customize the confirmation prompt's behavior and event handling.
@@ -214,6 +222,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/confirm-input.md#_
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 ConfirmInput Component API:
 
@@ -243,7 +252,7 @@ onCancel:
   Description: Callback to trigger on cancellation.
 ```
 
-----------------------------------------
+---
 
 TITLE: Badge Usage Example
 DESCRIPTION: Demonstrates the usage of the Badge component with various color props to display status indicators within an Ink application. It shows how to import and render badges with 'green', 'red', 'yellow', and 'blue' colors.
@@ -252,6 +261,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/badge.md#_snippet_
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react';
 import {render, Box} from 'ink';
@@ -271,7 +281,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput Component
 DESCRIPTION: Example usage of the TextInput component for entering any single-line input with an optional autocomplete feature.
@@ -280,6 +290,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_1
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { TextInput } from '@inkjs/ui';
 
@@ -291,7 +302,7 @@ import { TextInput } from '@inkjs/ui';
 />;
 ```
 
-----------------------------------------
+---
 
 TITLE: MultiSelect Component
 DESCRIPTION: Example usage of the MultiSelect component, similar to Select but allows the user to choose multiple options from a list.
@@ -300,6 +311,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_6
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { MultiSelect } from '@inkjs/ui';
 
@@ -326,7 +338,7 @@ import { MultiSelect } from '@inkjs/ui';
 />;
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Component
 DESCRIPTION: Example usage of the EmailInput component for entering an email address. It offers domain autocompletion after the '@' character is entered.
@@ -335,6 +347,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_2
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { EmailInput } from '@inkjs/ui';
 
@@ -342,11 +355,11 @@ import { EmailInput } from '@inkjs/ui';
 	placeholder="Enter email..."
 	submit={email => {
 		// `email` contains user input
-	}} 
+	}}
 />;
 ```
 
-----------------------------------------
+---
 
 TITLE: StatusMessage Usage Example
 DESCRIPTION: Demonstrates how to use the StatusMessage component from '@inkjs/ui' with different variants (success, error, warning, info) within an Ink.js application.
@@ -355,6 +368,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/status-message.md#
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react';
 import {render, Box} from 'ink';
@@ -374,7 +388,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: StatusMessage Component
 DESCRIPTION: Example usage of the StatusMessage component, used to indicate a status when a longer explanation is required, offering different variants like success, error, warning, and info.
@@ -383,6 +397,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_10
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { StatusMessage } from '@inkjs/ui';
 
@@ -403,7 +418,7 @@ import { StatusMessage } from '@inkjs/ui';
 </StatusMessage>;
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI UnorderedList Usage Example
 DESCRIPTION: Demonstrates how to use the UnorderedList component from @inkjs/ui to render a basic unordered list with nested items. It shows the import statements and the JSX structure required for creating hierarchical lists.
@@ -412,6 +427,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/unordered-list.md#
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react';
 import {render, Box, Text} from 'ink';
@@ -448,7 +464,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Badge Component
 DESCRIPTION: Example usage of the Badge component, used to indicate the status of an item, typically positioned near related elements.
@@ -457,6 +473,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_9
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { Badge } from '@inkjs/ui';
 
@@ -466,7 +483,7 @@ import { Badge } from '@inkjs/ui';
 <Badge color="blue">Todo</Badge>;
 ```
 
-----------------------------------------
+---
 
 TITLE: PasswordInput Component
 DESCRIPTION: Example usage of the PasswordInput component for entering sensitive data like passwords or API keys. Input values are masked with asterisks.
@@ -475,6 +492,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_3
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { PasswordInput } from '@inkjs/ui';
 
@@ -482,11 +500,11 @@ import { PasswordInput } from '@inkjs/ui';
 	placeholder="Enter password..."
 	submit={password => {
 		// `password` contains user input
-	}} 
+	}}
 />;
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Alert Component Usage Example
 DESCRIPTION: This snippet shows how to import and use the Alert component from '@inkjs/ui' within a React Ink application. It demonstrates displaying alerts with various predefined variants like 'success', 'error', 'warning', and 'info', showcasing their visual differences.
@@ -495,6 +513,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/alert.md#_snippet_
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react';
 import {render, Box} from 'ink';
@@ -519,7 +538,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Basic Usage
 DESCRIPTION: Demonstrates the basic usage of the EmailInput component, capturing changes via the `onChange` prop.
@@ -528,6 +547,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/email-input.md#_sn
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -547,7 +567,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Select Component API
 DESCRIPTION: Provides detailed documentation for the Ink UI `Select` component's available props, including their types, default values, and usage.
@@ -556,6 +576,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/select.md#_snippet
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Select Component Props:
 
@@ -590,7 +611,7 @@ onChange(value):
       Description: The value of the selected option.
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Component API
 DESCRIPTION: This documentation describes the properties and methods available for the Ink UI component. It covers configuration options for highlighting text, defining selectable options, setting default values, and handling user interactions like changes and submissions.
@@ -599,6 +620,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/multi-select.md#_s
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Ink UI Component API Reference:
 
@@ -629,7 +651,7 @@ Methods:
         * `value` (Type: `string[]`): An array containing the values of the selected options at the time of submission.
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Select Basic Usage
 DESCRIPTION: Demonstrates the fundamental usage of the Select component. It renders a list of options and captures the user's selection via the `onChange` prop, updating a state variable.
@@ -638,6 +660,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/select.md#_snippet
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -690,7 +713,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: PasswordInput Component Props
 DESCRIPTION: API documentation for the PasswordInput component, detailing its available props, their types, default values, and functionality.
@@ -699,6 +722,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/password-input.md#
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 PasswordInput:
   Props:
@@ -722,7 +746,7 @@ PasswordInput:
       Description: Callback when enter is pressed.
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Props
 DESCRIPTION: Documentation for the props available for the EmailInput component.
@@ -731,6 +755,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/email-input.md#_sn
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 EmailInput Props:
 
@@ -761,7 +786,7 @@ EmailInput Props:
   - Description: Callback when enter is pressed.
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Password Input with onChange
 DESCRIPTION: Demonstrates the fundamental usage of PasswordInput, where the input value is masked with asterisks and updated via the onChange prop as the user types.
@@ -770,6 +795,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/password-input.md#
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -790,7 +816,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Submit on Enter
 DESCRIPTION: Demonstrates using the `onSubmit` prop to capture the final input value when the user presses Enter.
@@ -799,6 +825,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/email-input.md#_sn
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -818,7 +845,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Autocomplete
 DESCRIPTION: Illustrates the domain autocompletion feature of EmailInput, including customization via the `domains` prop.
@@ -827,6 +854,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/email-input.md#_sn
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -851,7 +879,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Alert Component API Documentation
 DESCRIPTION: API reference for the Ink UI Alert component, detailing its available props, their types, and descriptions. This helps developers understand how to customize the appearance and content of alerts.
@@ -860,6 +888,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/alert.md#_snippet_
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Alert Component API:
 
@@ -875,7 +904,7 @@ Props:
     Description: An optional title that appears above the main message content, providing context.
 ```
 
-----------------------------------------
+---
 
 TITLE: UnorderedList Component API Documentation
 DESCRIPTION: Details the props available for the UnorderedList and UnorderedList.Item components. This documentation covers the expected children and their types for building list structures.
@@ -884,6 +913,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/unordered-list.md#
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 UnorderedList:
   Props:
@@ -896,7 +926,7 @@ UnorderedList.Item:
       Description: List item content. Can contain Text, Box, or other Ink components, including nested UnorderedList components.
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput: Component Props and API Reference
 DESCRIPTION: Provides a comprehensive reference for the props available for the TextInput component, detailing their types, default values, and functionality.
@@ -905,6 +935,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/text-input.md#_sni
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 TextInput Component Props:
 
@@ -932,7 +963,7 @@ TextInput Component Props:
     - value: string - Input value.
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink.js UI OrderedList Component API
 DESCRIPTION: API documentation for the `OrderedList` and `OrderedList.Item` components in Ink.js UI. It details the props available for customizing list rendering and content.
@@ -941,6 +972,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/ordered-list.md#_s
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 OrderedList:
   Props:
@@ -953,7 +985,7 @@ OrderedList.Item:
       Description: List item content. Can contain text or other Ink.js components, including nested `OrderedList`.
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Default Value
 DESCRIPTION: Shows how to set an initial value for the EmailInput component using the `defaultValue` prop.
@@ -962,6 +994,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/email-input.md#_sn
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -986,7 +1019,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput: Basic Usage with Ink.js
 DESCRIPTION: Demonstrates the fundamental usage of the TextInput component for capturing single-line user input. It utilizes the `onChange` prop to update the application state as the user types.
@@ -995,6 +1028,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/text-input.md#_sni
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1014,7 +1048,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: UnorderedList Marker Configuration
 DESCRIPTION: Illustrates how to include non-styling configuration within a component's theme. For `UnorderedList`, a `marker` configuration is provided as a function returning the character to be displayed before each list item.
@@ -1023,6 +1057,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_17
 
 LANGUAGE: ts
 CODE:
+
 ```
 const theme = {
 	config: () => ({
@@ -1031,7 +1066,7 @@ const theme = {
 };
 ```
 
-----------------------------------------
+---
 
 TITLE: Render Nested Ordered List with Ink.js
 DESCRIPTION: Demonstrates how to use the `OrderedList` component from `@inkjs/ui` to render a nested list of items. It requires `ink` and `@inkjs/ui` as dependencies. The component accepts `OrderedList.Item` children, which can themselves contain nested `OrderedList` components.
@@ -1040,6 +1075,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/ordered-list.md#_s
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react';
 import {render, Box, Text} from 'ink';
@@ -1076,7 +1112,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput: Setting Default Value with Ink.js
 DESCRIPTION: Shows how to initialize the TextInput component with a predefined value using the `defaultValue` prop. This is useful for pre-filling forms or resuming input.
@@ -1085,6 +1121,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/text-input.md#_sni
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1109,7 +1146,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink MultiSelect Basic Usage
 DESCRIPTION: Demonstrates the basic usage of the `MultiSelect` component. It's an uncontrolled component that allows users to select multiple options. The `onChange` prop is used to listen for value changes, and the selected values are displayed.
@@ -1118,6 +1155,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/multi-select.md#_s
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1170,7 +1208,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Select Default Value Configuration
 DESCRIPTION: Illustrates how to set an initial selected option for the Select component using the `defaultValue` prop. This pre-selects an item when the component first renders.
@@ -1179,6 +1217,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/select.md#_snippet
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1232,7 +1271,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Password Input with onSubmit
 DESCRIPTION: Shows how to use the onSubmit prop to capture the input value only when the user presses the Enter key, useful for form submissions.
@@ -1241,6 +1280,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/password-input.md#
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1260,7 +1300,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Use useComponentTheme for Custom Components
 DESCRIPTION: Demonstrates how to access and apply theme styles for a custom component within Ink UI. It uses the `useComponentTheme` hook to retrieve styles for 'CustomLabel' and applies them to a `Text` component.
@@ -1269,6 +1309,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_18
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {render, Text, type TextProps} from 'ink';
 import {
@@ -1312,7 +1353,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Spinner Component Props
 DESCRIPTION: Details the available props for the Spinner component, including their types and descriptions.
@@ -1321,6 +1362,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/spinner.md#_snippe
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Spinner:
   Props:
@@ -1328,7 +1370,7 @@ Spinner:
       - Label to show next to the spinner.
 ```
 
-----------------------------------------
+---
 
 TITLE: ProgressBar Component API: value Prop
 DESCRIPTION: Defines the `value` prop for the ProgressBar component. This prop accepts a number between 0 and 100, representing the current progress, with a default value of 0.
@@ -1337,6 +1379,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/progress-bar.md#_s
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 ProgressBar Component API: value Prop
 
@@ -1347,7 +1390,7 @@ value: number
   Description: Progress.
 ```
 
-----------------------------------------
+---
 
 TITLE: Customize Spinner Theme with extendTheme
 DESCRIPTION: Demonstrates how to customize the default Ink UI theme, specifically changing the Spinner's frame color. It uses `extendTheme` to merge custom styles with the `defaultTheme` and applies the custom theme via `ThemeProvider`.
@@ -1356,6 +1399,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_15
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import {render, type TextProps} from 'ink';
 import {Spinner, ThemeProvider, extendTheme, defaultTheme} from '@inkjs/ui';
@@ -1383,7 +1427,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Spinner Default Theme Structure
 DESCRIPTION: Defines the default styling structure for the Ink UI Spinner component. It specifies styles for the container, frame, and label, returning `BoxProps` and `TextProps` respectively. This serves as a blueprint for customization.
@@ -1392,6 +1436,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_14
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const theme = {
 	styles: {
@@ -1406,7 +1451,7 @@ const theme = {
 } satisfies ComponentTheme;
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink MultiSelect Default Value
 DESCRIPTION: Shows how to set an initial selection for the `MultiSelect` component using the `defaultValue` prop. This pre-populates the component with specified options.
@@ -1415,6 +1460,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/multi-select.md#_s
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1468,7 +1514,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Nested Ordered Lists with @inkjs/ui
 DESCRIPTION: The OrderedList component is used to display numbered lists of items. Similar to UnorderedList, it supports nesting to create hierarchical structures with sub-lists.
@@ -1477,6 +1523,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_13
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import {OrderedList} from '@inkjs/ui';
 import {Text} from '@inkjs/ui';
@@ -1506,7 +1553,7 @@ import {Text} from '@inkjs/ui';
 </OrderedList>
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink MultiSelect Submit on Enter
 DESCRIPTION: Demonstrates using the `onSubmit` prop instead of `onChange`. This prop is triggered only when the user presses the Enter key, capturing the final selected value at that moment.
@@ -1515,6 +1562,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/multi-select.md#_s
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1567,7 +1615,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput: Submit on Enter with Ink.js
 DESCRIPTION: Demonstrates using the `onSubmit` prop to capture the input value only when the user presses the Enter key. This is an alternative to `onChange` for scenarios where intermediate input changes are not needed.
@@ -1576,6 +1624,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/text-input.md#_sni
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1595,7 +1644,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput: Autocomplete Suggestions with Ink.js
 DESCRIPTION: Illustrates the autocomplete feature of TextInput, where it suggests values from a provided array based on user input. Matching is case-sensitive, and pressing Enter accepts the current suggestion.
@@ -1604,6 +1653,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/text-input.md#_sni
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1628,7 +1678,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: StatusMessage Icon Styling by Variant
 DESCRIPTION: Shows how to define conditional styling for a component's icon based on its `variant` prop. The `icon` style function dynamically selects a color ('green', 'red', 'yellow', 'blue') from a mapping.
@@ -1637,6 +1687,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_16
 
 LANGUAGE: ts
 CODE:
+
 ```
 const colorByVariant = {
 	success: 'green',
@@ -1654,7 +1705,7 @@ const theme = {
 };
 ```
 
-----------------------------------------
+---
 
 TITLE: Displaying Alerts with @inkjs/ui
 DESCRIPTION: The Alert component is used to draw the user's attention to important messages. It supports different variants like 'success', 'error', 'warning', and 'info' to convey specific types of information.
@@ -1663,6 +1714,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_11
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import {Alert} from '@inkjs/ui';
 
@@ -1683,7 +1735,7 @@ import {Alert} from '@inkjs/ui';
 </Alert>
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Nested Unordered Lists with @inkjs/ui
 DESCRIPTION: The UnorderedList component is used to display lists of items. It supports nesting to create hierarchical structures, allowing for sub-lists within list items.
@@ -1692,6 +1744,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/readme.md#_snippet_12
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import {UnorderedList} from '@inkjs/ui';
 import {Text} from '@inkjs/ui';
@@ -1721,7 +1774,7 @@ import {Text} from '@inkjs/ui';
 </UnorderedList>
 ```
 
-----------------------------------------
+---
 
 TITLE: Ink UI Select Disabled State Management
 DESCRIPTION: Demonstrates how to manage the disabled state of multiple Select components. The `isDisabled` prop prevents user interaction, allowing only one component to be active at a time.
@@ -1730,6 +1783,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/select.md#_snippet
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1805,7 +1859,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: Disabled Password Input
 DESCRIPTION: Illustrates managing multiple PasswordInput components, enabling only one to receive user input at a time using the isDisabled prop.
@@ -1814,6 +1868,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/password-input.md#
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1859,7 +1914,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: EmailInput Disabled State
 DESCRIPTION: Shows how to manage the disabled state of EmailInput components, useful when multiple inputs are present.
@@ -1868,6 +1923,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/email-input.md#_sn
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';
@@ -1911,7 +1967,7 @@ function Example() {
 render(<Example />);
 ```
 
-----------------------------------------
+---
 
 TITLE: TextInput: Disabling Inputs with Ink.js
 DESCRIPTION: Explains how to disable a TextInput component using the `isDisabled` prop. This is crucial when managing focus and input for multiple interactive elements in the UI.
@@ -1920,6 +1976,7 @@ SOURCE: https://github.com/vadimdemedes/ink-ui/blob/main/docs/text-input.md#_sni
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, {useState} from 'react';
 import {render, Box, Text} from 'ink';

@@ -9,11 +9,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { 
-  ASBRAIMcpIntegration, 
-  asbrAIMcpIntegration, 
+import {
+  ASBRAIMcpIntegration,
+  asbrAIMcpIntegration,
   ASBR_AI_MCP_TOOLS,
-  callASBRAITool 
+  callASBRAITool,
 } from '../asbr-ai-mcp-integration.js';
 import { ASBRAIMcpServer } from '../asbr-ai-mcp-server.js';
 
@@ -22,7 +22,7 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
   ASBRAIMcpServer: class {
     // Add minimal mock implementation if needed
     constructor() {}
-  }
+  },
 }));
 vi.mock('../ai-capabilities.js', () => ({
   createAICapabilities: vi.fn(() => ({
@@ -33,14 +33,14 @@ vi.mock('../ai-capabilities.js', () => ({
     getCapabilities: vi.fn(),
     getKnowledgeStats: vi.fn(),
     getEmbedding: vi.fn(),
-    calculateSimilarity: vi.fn()
+    calculateSimilarity: vi.fn(),
   })),
 }));
 
 vi.mock('../asbr-ai-integration.js', () => ({
   createASBRAIIntegration: vi.fn(() => ({
     collectEnhancedEvidence: vi.fn(),
-    factCheckEvidence: vi.fn()
+    factCheckEvidence: vi.fn(),
   })),
 }));
 
@@ -65,11 +65,11 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       const mockGetCapabilities = vi.fn().mockResolvedValue({
         llm: { provider: 'mlx', model: 'test', healthy: true },
         embedding: { provider: 'qwen', dimensions: 1024 },
-        features: ['text-generation', 'embeddings', 'rag']
+        features: ['text-generation', 'embeddings', 'rag'],
       });
 
       (mcpServer as any).aiCapabilities = {
-        getCapabilities: mockGetCapabilities
+        getCapabilities: mockGetCapabilities,
       };
 
       await mcpIntegration.autoRegister();
@@ -84,12 +84,12 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       const mockGetCapabilities = vi.fn().mockRejectedValue(new Error('AI service unavailable'));
 
       (mcpServer as any).aiCapabilities = {
-        getCapabilities: mockGetCapabilities
+        getCapabilities: mockGetCapabilities,
       };
 
       // Should not throw, but handle gracefully
       await expect(mcpIntegration.autoRegister()).resolves.not.toThrow();
-      
+
       const isHealthy = await mcpIntegration.isHealthy();
       expect(isHealthy).toBe(false);
     });
@@ -104,24 +104,24 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       expect(toolsList.tools.length).toBeGreaterThan(0);
 
       // Check for key tool categories
-      const toolNames = toolsList.tools.map(tool => tool.name);
-      
+      const toolNames = toolsList.tools.map((tool) => tool.name);
+
       // Text generation tools
       expect(toolNames).toContain('ai_generate_text');
       expect(toolNames).toContain('ai_rag_query');
-      
+
       // Knowledge management tools
       expect(toolNames).toContain('ai_search_knowledge');
       expect(toolNames).toContain('ai_add_knowledge');
-      
+
       // Embedding tools
       expect(toolNames).toContain('ai_get_embedding');
       expect(toolNames).toContain('ai_calculate_similarity');
-      
+
       // ASBR evidence tools
       expect(toolNames).toContain('asbr_collect_enhanced_evidence');
       expect(toolNames).toContain('asbr_fact_check_evidence');
-      
+
       // System tools
       expect(toolNames).toContain('ai_get_capabilities');
       expect(toolNames).toContain('ai_get_knowledge_stats');
@@ -130,12 +130,12 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
     it('should validate MCP tool schemas', async () => {
       const toolsList = await mcpServer.listTools();
 
-      toolsList.tools.forEach(tool => {
+      toolsList.tools.forEach((tool) => {
         // Each tool should have required properties
         expect(tool.name).toBeDefined();
         expect(tool.description).toBeDefined();
         expect(tool.inputSchema).toBeDefined();
-        
+
         // Input schema should be valid JSON Schema
         expect(tool.inputSchema.type).toBe('object');
         expect(tool.inputSchema.properties).toBeDefined();
@@ -145,10 +145,10 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
     it('should verify ASBR_AI_MCP_TOOLS constants match available tools', async () => {
       const toolsList = await mcpServer.listTools();
-      const availableToolNames = toolsList.tools.map(tool => tool.name);
-      
+      const availableToolNames = toolsList.tools.map((tool) => tool.name);
+
       // Check that constants match actual tool names
-      Object.values(ASBR_AI_MCP_TOOLS).forEach(toolName => {
+      Object.values(ASBR_AI_MCP_TOOLS).forEach((toolName) => {
         expect(availableToolNames).toContain(toolName);
       });
     });
@@ -162,23 +162,23 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
         getCapabilities: vi.fn().mockResolvedValue({
           llm: { provider: 'mlx', model: 'test', healthy: true },
           embedding: { provider: 'qwen', dimensions: 1024 },
-          features: ['text-generation', 'embeddings', 'rag']
+          features: ['text-generation', 'embeddings', 'rag'],
         }),
         getKnowledgeStats: vi.fn().mockResolvedValue({
           documentsStored: 5,
-          embeddingStats: { dimensions: 1024 }
+          embeddingStats: { dimensions: 1024 },
         }),
         addKnowledge: vi.fn().mockResolvedValue(['doc1', 'doc2']),
-        searchKnowledge: vi.fn().mockResolvedValue([
-          { text: 'Related document', similarity: 0.85, metadata: {} }
-        ]),
+        searchKnowledge: vi
+          .fn()
+          .mockResolvedValue([{ text: 'Related document', similarity: 0.85, metadata: {} }]),
         ragQuery: vi.fn().mockResolvedValue({
           answer: 'RAG response',
           sources: [{ text: 'Source text', similarity: 0.9 }],
-          confidence: 0.88
+          confidence: 0.88,
         }),
         calculateSimilarity: vi.fn().mockResolvedValue(0.75),
-        getEmbedding: vi.fn().mockResolvedValue(new Array(1024).fill(0.1))
+        getEmbedding: vi.fn().mockResolvedValue(new Array(1024).fill(0.1)),
       };
 
       const mockASBRIntegration = {
@@ -187,19 +187,19 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
           aiEnhancedEvidence: { id: 'enhanced-1' },
           additionalEvidence: [],
           insights: { relevanceScore: 0.8 },
-          aiMetadata: { processingTime: 100, enhancementMethods: ['mlx-generation'] }
+          aiMetadata: { processingTime: 100, enhancementMethods: ['mlx-generation'] },
         }),
         factCheckEvidence: vi.fn().mockResolvedValue({
           factualConsistency: 0.9,
           potentialIssues: [],
           supportingEvidence: [{ id: 'support-1' }],
-          contradictingEvidence: []
-        })
+          contradictingEvidence: [],
+        }),
       };
 
       (mcpServer as any).aiCapabilities = mockAICapabilities;
       (mcpServer as any).asbrIntegration = mockASBRIntegration;
-      
+
       await mcpServer.initialize();
     });
 
@@ -211,9 +211,9 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
           arguments: {
             prompt: 'Test prompt',
             temperature: 0.7,
-            maxTokens: 100
-          }
-        }
+            maxTokens: 100,
+          },
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -221,7 +221,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       expect(response.isError).toBeFalsy();
       expect(response.content).toBeDefined();
       expect(response.content[0].type).toBe('text');
-      
+
       const responseData = JSON.parse(response.content[0].text);
       expect(responseData.generated_text).toBe('Generated text response');
       expect(responseData.model).toBe('MLX');
@@ -232,8 +232,8 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
         method: 'tools/call' as const,
         params: {
           name: 'ai_get_capabilities',
-          arguments: {}
-        }
+          arguments: {},
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -252,9 +252,9 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
           name: 'ai_search_knowledge',
           arguments: {
             query: 'test search',
-            topK: 3
-          }
-        }
+            topK: 3,
+          },
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -273,9 +273,9 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
           name: 'ai_rag_query',
           arguments: {
             query: 'What is machine learning?',
-            systemPrompt: 'You are a helpful AI assistant.'
-          }
-        }
+            systemPrompt: 'You are a helpful AI assistant.',
+          },
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -299,11 +299,11 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
               {
                 type: 'file',
                 path: '/test/file.txt',
-                content: 'Test content'
-              }
-            ]
-          }
-        }
+                content: 'Test content',
+              },
+            ],
+          },
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -320,8 +320,8 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
         method: 'tools/call' as const,
         params: {
           name: 'unknown_tool',
-          arguments: {}
-        }
+          arguments: {},
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -339,9 +339,9 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
         params: {
           name: 'ai_generate_text',
           arguments: {
-            prompt: 'Test prompt'
-          }
-        }
+            prompt: 'Test prompt',
+          },
+        },
       };
 
       const response = await mcpServer.callTool(request);
@@ -356,18 +356,18 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       // This test would require setting up an actual HTTP server
       // For now, we'll test the method exists and can be called
       expect(typeof mcpIntegration.startHTTPServer).toBe('function');
-      
+
       // Test that the server can be configured
       const serverPromise = mcpIntegration.startHTTPServer(9999);
       expect(serverPromise).toBeDefined();
-      
+
       // Clean up
       await mcpIntegration.stop();
     });
 
     it('should provide health check endpoint', async () => {
       const health = await mcpServer.getHealth();
-      
+
       expect(health.status).toBeDefined();
       expect(health.tools).toBeGreaterThan(0);
       expect(Array.isArray(health.features)).toBe(true);
@@ -377,22 +377,23 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
   describe('🧪 Tool Testing Framework', () => {
     it('should provide tool testing functionality', async () => {
       // Mock successful tool responses
-      const mockCallTool = vi.fn()
+      const mockCallTool = vi
+        .fn()
         .mockResolvedValueOnce({
           isError: false,
-          content: [{ type: 'text', text: JSON.stringify({ status: 'ok' }) }]
+          content: [{ type: 'text', text: JSON.stringify({ status: 'ok' }) }],
         })
         .mockResolvedValueOnce({
           isError: false,
-          content: [{ type: 'text', text: JSON.stringify({ stats: 'ok' }) }]
+          content: [{ type: 'text', text: JSON.stringify({ stats: 'ok' }) }],
         })
         .mockResolvedValueOnce({
           isError: false,
-          content: [{ type: 'text', text: JSON.stringify({ generated: 'text' }) }]
+          content: [{ type: 'text', text: JSON.stringify({ generated: 'text' }) }],
         })
         .mockResolvedValueOnce({
           isError: false,
-          content: [{ type: 'text', text: JSON.stringify({ similarity: 0.8 }) }]
+          content: [{ type: 'text', text: JSON.stringify({ similarity: 0.8 }) }],
         });
 
       mcpServer.callTool = mockCallTool;
@@ -402,8 +403,8 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       expect(testResults.passed).toBe(4);
       expect(testResults.failed).toBe(0);
       expect(testResults.results).toHaveLength(4);
-      
-      testResults.results.forEach(result => {
+
+      testResults.results.forEach((result) => {
         expect(result.status).toBe('passed');
         expect(result.tool).toBeDefined();
       });
@@ -411,11 +412,10 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
     it('should handle test failures correctly', async () => {
       // Mock failed tool responses
-      const mockCallTool = vi.fn()
-        .mockResolvedValue({
-          isError: true,
-          content: [{ type: 'text', text: 'Tool error occurred' }]
-        });
+      const mockCallTool = vi.fn().mockResolvedValue({
+        isError: true,
+        content: [{ type: 'text', text: 'Tool error occurred' }],
+      });
 
       mcpServer.callTool = mockCallTool;
 
@@ -423,8 +423,8 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
       expect(testResults.failed).toBeGreaterThan(0);
       expect(testResults.passed).toBe(0);
-      
-      testResults.results.forEach(result => {
+
+      testResults.results.forEach((result) => {
         expect(result.status).toBe('failed');
         expect(result.error).toBeDefined();
       });
@@ -446,8 +446,9 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 
     it('should handle callASBRAITool errors', async () => {
       // Test with an invalid tool name that should trigger an error
-      await expect(callASBRAITool('invalid_tool_name', {}))
-        .rejects.toThrow('Unknown tool: invalid_tool_name');
+      await expect(callASBRAITool('invalid_tool_name', {})).rejects.toThrow(
+        'Unknown tool: invalid_tool_name',
+      );
     });
   });
 
@@ -457,7 +458,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       const mockGetHealth = vi.fn().mockResolvedValue({
         status: 'healthy',
         tools: 10,
-        features: ['ai', 'embeddings']
+        features: ['ai', 'embeddings'],
       });
 
       mcpServer.getHealth = mockGetHealth;
@@ -470,7 +471,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       mockGetHealth.mockResolvedValue({
         status: 'unhealthy',
         tools: 0,
-        features: []
+        features: [],
       });
 
       const isUnhealthy = await mcpIntegration.isHealthy();
@@ -498,12 +499,11 @@ describe('📋 MCP Integration TDD Checklist', () => {
       healthMonitoring: 'Health check and monitoring in place ✅',
       testingFramework: 'Tool testing framework implemented ✅',
       helperFunctions: 'Helper functions for tool calls ✅',
-      documentation: 'Tool documentation and examples ✅'
+      documentation: 'Tool documentation and examples ✅',
     };
 
     // All items should be checked
-    const uncheckedItems = Object.values(mcpChecklist)
-      .filter(status => !status.includes('✅'));
+    const uncheckedItems = Object.values(mcpChecklist).filter((status) => !status.includes('✅'));
 
     expect(uncheckedItems.length).toBe(0);
   });

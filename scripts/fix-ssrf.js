@@ -26,20 +26,20 @@ const createSecureFetch = () => {
     if (!isValidUrl(url)) {
       throw new Error('Invalid URL provided');
     }
-    
+
     // Set default options
     const fetchOptions = {
       timeout: 5000, // 5 second timeout
       redirect: 'error', // Don't follow redirects
-      ...options
+      ...options,
     };
-    
+
     // Add security headers
     fetchOptions.headers = {
       'User-Agent': 'Cortex-OS-Security-Scanner/1.0',
-      ...fetchOptions.headers
+      ...fetchOptions.headers,
     };
-    
+
     // Perform the fetch
     return await fetch(url, fetchOptions);
   };
@@ -52,7 +52,7 @@ let doctorContent = readFileSync(doctorPath, 'utf-8');
 // Replace insecure fetch calls with secure ones
 doctorContent = doctorContent.replace(
   /const res = await fetch\(health\)\.catch\(\(\) => fetch\(url\)\);/g,
-  'const secureFetch = async (url) => { if (!url.startsWith("http://") && !url.startsWith("https://")) throw new Error("Invalid protocol"); return await fetch(url, { timeout: 5000, redirect: "error" }); }; const res = await secureFetch(health).catch(() => secureFetch(url));'
+  'const secureFetch = async (url) => { if (!url.startsWith("http://") && !url.startsWith("https://")) throw new Error("Invalid protocol"); return await fetch(url, { timeout: 5000, redirect: "error" }); }; const res = await secureFetch(health).catch(() => secureFetch(url));',
 );
 
 writeFileSync(doctorPath, doctorContent);

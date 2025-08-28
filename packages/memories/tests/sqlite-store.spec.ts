@@ -21,7 +21,7 @@ try {
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'user' }
+      provenance: { source: 'user' },
     };
     await testStore.upsert(m);
     const fetched = await testStore.get('1');

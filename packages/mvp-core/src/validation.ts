@@ -1,10 +1,26 @@
 import { z } from 'zod';
 
 // Validation schemas for different types of input
-export const idSchema = z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/);
-export const namespaceSchema = z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/);
-export const statusSchema = z.string().min(1).max(50).regex(/^[a-zA-Z0-9_-]+$/);
-export const keySchema = z.string().min(1).max(200).regex(/^[a-zA-Z0-9_-]+$/);
+export const idSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .regex(/^[a-zA-Z0-9_-]+$/);
+export const namespaceSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .regex(/^[a-zA-Z0-9_-]+$/);
+export const statusSchema = z
+  .string()
+  .min(1)
+  .max(50)
+  .regex(/^[a-zA-Z0-9_-]+$/);
+export const keySchema = z
+  .string()
+  .min(1)
+  .max(200)
+  .regex(/^[a-zA-Z0-9_-]+$/);
 
 // Database input validation
 export const validateDatabaseInput = {
@@ -13,24 +29,31 @@ export const validateDatabaseInput = {
   status: (value: string) => statusSchema.safeParse(value),
   key: (value: string) => keySchema.safeParse(value),
   // Generic validator for any string input
-  string: (value: string, maxLength: number = 1000) => 
-    z.string().min(1).max(maxLength).safeParse(value)
+  string: (value: string, maxLength: number = 1000) =>
+    z.string().min(1).max(maxLength).safeParse(value),
 };
-
 
 // Neo4j validation
 export const validateNeo4jInput = {
   nodeId: (value: string) => idSchema.safeParse(value),
   label: (value: string) => {
     // Neo4j labels must follow specific rules
-    const labelSchema = z.string().min(1).max(100).regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
+    const labelSchema = z
+      .string()
+      .min(1)
+      .max(100)
+      .regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
     return labelSchema.safeParse(value);
   },
   type: (value: string) => {
     // Relationship types must follow specific rules
-    const typeSchema = z.string().min(1).max(100).regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
+    const typeSchema = z
+      .string()
+      .min(1)
+      .max(100)
+      .regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
     return typeSchema.safeParse(value);
-  }
+  },
 };
 
 // Command execution validation
@@ -54,7 +77,11 @@ export const validateCommandInput = {
       const param = command[i];
       if (param.startsWith('-')) continue;
 
-      const containerIdSchema = z.string().min(12).max(64).regex(/^[a-f0-9]+$/);
+      const containerIdSchema = z
+        .string()
+        .min(12)
+        .max(64)
+        .regex(/^[a-f0-9]+$/);
       const result = containerIdSchema.safeParse(param);
       if (!result.success) {
         return { success: false, error: `Invalid container ID: ${param}` };
@@ -80,5 +107,5 @@ export const validateCommandInput = {
     }
 
     return { success: true };
-  }
+  },
 };

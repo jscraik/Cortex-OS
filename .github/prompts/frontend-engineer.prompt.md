@@ -40,7 +40,6 @@ Default: high · balanced · code.
 
 ## Required Inputs
 
-
 - Architecture: routing, data flow, security constraints, build/deploy targets.
 - API Contracts: endpoints, schemas, auth, pagination, realtime, error model.
 - Design System: tokens, components, interaction patterns, motion rules.

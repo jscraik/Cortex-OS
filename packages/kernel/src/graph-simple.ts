@@ -28,7 +28,7 @@ interface RunOptions {
 
 /**
  * Simplified Cortex Kernel - Deterministic state machine for PRP workflows
- * 
+ *
  * Implements the PRP state machine:
  * Strategy → Build → Evaluation → Completed
  *     ↓       ↓         ↓
@@ -56,7 +56,7 @@ export class CortexKernel {
     const runId = options.runId || nanoid();
     const deterministic = options.deterministic || false;
     const state = createInitialPRPState(blueprint, { runId, deterministic });
-    
+
     // Initialize execution history
     this.executionHistory.set(runId, []);
     this.addToHistory(runId, state);
@@ -85,7 +85,6 @@ export class CortexKernel {
 
       // Final state
       return evaluationState;
-
     } catch (error) {
       const errorState: PRPState = {
         ...state,
@@ -136,7 +135,7 @@ export class CortexKernel {
   }
 
   /**
-   * Execute build phase  
+   * Execute build phase
    */
   private async executeBuildPhase(state: PRPState, deterministic = false): Promise<PRPState> {
     const newState: PRPState = {
@@ -238,7 +237,6 @@ export class CortexKernel {
     if (options?.deterministic) {
       return Promise.resolve(); // Skip timing in deterministic mode
     }
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
-
 }

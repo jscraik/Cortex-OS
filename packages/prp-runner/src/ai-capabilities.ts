@@ -7,7 +7,12 @@
  */
 
 import { LLMBridge, LLMConfig } from './llm-bridge.js';
-import { EmbeddingAdapter, RerankerAdapter, createEmbeddingAdapter, createRerankerAdapter } from './embedding-adapter.js';
+import {
+  EmbeddingAdapter,
+  RerankerAdapter,
+  createEmbeddingAdapter,
+  createRerankerAdapter,
+} from './embedding-adapter.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 export interface AICoreConfig {
@@ -20,20 +25,20 @@ export interface AICoreConfig {
     temperature?: number;
     maxTokens?: number;
   };
-  
+
   // Embedding Configuration
   embedding?: {
     provider: 'sentence-transformers' | 'local' | 'mock';
     model?: string;
     dimensions?: number;
   };
-  
+
   // Reranker Configuration
   reranker?: {
     provider: 'transformers' | 'local' | 'mock';
     model?: string;
   };
-  
+
   // RAG Configuration
   rag?: {
     topK?: number;
@@ -128,14 +133,14 @@ export class AICoreCapabilities {
   async addKnowledge(
     documents: string[],
     metadata?: Record<string, any>[],
-    ids?: string[]
+    ids?: string[],
   ): Promise<string[]> {
     if (!this.embeddingAdapter) {
       throw new Error('Embedding adapter not configured for knowledge storage');
     }
 
     const documentIds = await this.embeddingAdapter.addDocuments(documents, metadata, ids);
-    
+
     // Store additional metadata in local knowledge base
     documents.forEach((doc, index) => {
       const id = documentIds[index];
@@ -185,15 +190,15 @@ export class AICoreCapabilities {
     // Step 2: Rerank if reranker is available
     let finalSources = searchResults;
     if (this.rerankerAdapter && searchResults.length > 0) {
-      const documentsToRerank = searchResults.map(r => r.text);
+      const documentsToRerank = searchResults.map((r) => r.text);
       const rerankedResults = await this.rerankerAdapter.rerank(
         query,
         documentsToRerank,
-        ragConfig.rerankTopK || 3
+        ragConfig.rerankTopK || 3,
       );
 
       // Map reranked results back to search results
-      finalSources = rerankedResults.map(rr => {
+      finalSources = rerankedResults.map((rr) => {
         const original = searchResults[rr.originalIndex];
         return {
           ...original,
@@ -203,7 +208,7 @@ export class AICoreCapabilities {
     }
 
     // Step 3: Construct context prompt
-    const contextTexts = finalSources.map(source => source.text);
+    const contextTexts = finalSources.map((source) => source.text);
     const contextPrompt = this.buildRAGPrompt(query, contextTexts, systemPrompt);
 
     // Step 4: Generate answer using LLM
@@ -215,7 +220,7 @@ export class AICoreCapabilities {
     // Step 5: Return structured result
     return {
       answer,
-      sources: finalSources.map(source => ({
+      sources: finalSources.map((source) => ({
         text: source.text,
         similarity: source.similarity,
         metadata: source.metadata,
@@ -274,22 +279,26 @@ export class AICoreCapabilities {
   }> {
     // Check LLM health
     const llmHealth = await this.llmBridge.checkProviderHealth();
-    
+
     const capabilities = {
       llm: {
         provider: this.llmBridge.getProvider(),
         model: this.llmBridge.getModel(),
         healthy: llmHealth.healthy,
       },
-      embedding: this.embeddingAdapter ? {
-        provider: this.embeddingAdapter.getStats().provider,
-        dimensions: this.embeddingAdapter.getStats().dimensions,
-        documents: this.embeddingAdapter.getStats().totalDocuments,
-      } : undefined,
-      reranker: this.rerankerAdapter ? {
-        provider: 'available',
-        available: true,
-      } : undefined,
+      embedding: this.embeddingAdapter
+        ? {
+            provider: this.embeddingAdapter.getStats().provider,
+            dimensions: this.embeddingAdapter.getStats().dimensions,
+            documents: this.embeddingAdapter.getStats().totalDocuments,
+          }
+        : undefined,
+      reranker: this.rerankerAdapter
+        ? {
+            provider: 'available',
+            available: true,
+          }
+        : undefined,
       features: this.getAvailableFeatures(),
     };
 
@@ -301,7 +310,7 @@ export class AICoreCapabilities {
    */
   async clearKnowledge(): Promise<void> {
     this.knowledgeBase.clear();
-    
+
     // Clear embedding adapter's vector store if available
     if (this.embeddingAdapter && typeof this.embeddingAdapter.clearDocuments === 'function') {
       await this.embeddingAdapter.clearDocuments();
@@ -314,17 +323,17 @@ export class AICoreCapabilities {
   async shutdown(): Promise<void> {
     // Clear knowledge base
     await this.clearKnowledge();
-    
+
     // Cleanup embedding adapter resources
     if (this.embeddingAdapter && typeof this.embeddingAdapter.shutdown === 'function') {
       await this.embeddingAdapter.shutdown();
     }
-    
+
     // Cleanup reranker adapter resources
     if (this.rerankerAdapter && typeof this.rerankerAdapter.shutdown === 'function') {
       await this.rerankerAdapter.shutdown();
     }
-    
+
     // Cleanup LLM bridge resources
     if (this.llmBridge && typeof this.llmBridge.shutdown === 'function') {
       await this.llmBridge.shutdown();
@@ -348,13 +357,14 @@ export class AICoreCapabilities {
    * Build RAG prompt with context
    */
   private buildRAGPrompt(query: string, context: string[], systemPrompt?: string): string {
-    const contextSection = context.length > 0 
-      ? `Context information:\n${context.map((c, i) => `${i + 1}. ${c}`).join('\n\n')}\n\n`
-      : '';
-    
-    const system = systemPrompt 
+    const contextSection =
+      context.length > 0
+        ? `Context information:\n${context.map((c, i) => `${i + 1}. ${c}`).join('\n\n')}\n\n`
+        : '';
+
+    const system = systemPrompt
       ? `${systemPrompt}\n\n`
-      : 'You are a helpful AI assistant. Answer the question based on the provided context. If the context doesn\'t contain enough information, say so clearly.\n\n';
+      : "You are a helpful AI assistant. Answer the question based on the provided context. If the context doesn't contain enough information, say so clearly.\n\n";
 
     return `${system}${contextSection}Question: ${query}\n\nAnswer:`;
   }
@@ -364,10 +374,10 @@ export class AICoreCapabilities {
    */
   private calculateConfidence(sources: any[]): number {
     if (sources.length === 0) return 0;
-    
+
     const avgSimilarity = sources.reduce((sum, s) => sum + s.similarity, 0) / sources.length;
     const topSimilarity = sources[0]?.similarity || 0;
-    
+
     // Combine average and top similarity with some weighting
     return Math.min(0.8 * topSimilarity + 0.2 * avgSimilarity, 1.0);
   }
@@ -377,19 +387,19 @@ export class AICoreCapabilities {
    */
   private getAvailableFeatures(): string[] {
     const features = ['text-generation'];
-    
+
     if (this.embeddingAdapter) {
       features.push('embeddings', 'semantic-search', 'knowledge-base');
     }
-    
+
     if (this.rerankerAdapter) {
       features.push('reranking');
     }
-    
+
     if (this.embeddingAdapter && this.rerankerAdapter) {
       features.push('rag', 'question-answering');
     }
-    
+
     return features;
   }
 }
@@ -397,9 +407,11 @@ export class AICoreCapabilities {
 /**
  * Create AI capabilities with common configurations
  */
-export const createAICapabilities = (preset: 'full' | 'llm-only' | 'rag-focused' = 'full'): AICoreCapabilities => {
+export const createAICapabilities = (
+  preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
+): AICoreCapabilities => {
   const configs: Record<string, AICoreConfig> = {
-    'full': {
+    full: {
       llm: {
         provider: 'mlx',
         mlxModel: AVAILABLE_MLX_MODELS.QWEN_SMALL,

@@ -12,25 +12,25 @@
     "allowedPaths": {
       "type": "object",
       "properties": {
-        "apps": {"type": "array", "items": {"type": "string"}},
-        "packages": {"type": "array", "items": {"type": "string"}},
-        "services": {"type": "array", "items": {"type": "string"}},
-        "libs": {"type": "array", "items": {"type": "string"}},
-        "tools": {"type": "array", "items": {"type": "string"}}
+        "apps": { "type": "array", "items": { "type": "string" } },
+        "packages": { "type": "array", "items": { "type": "string" } },
+        "services": { "type": "array", "items": { "type": "string" } },
+        "libs": { "type": "array", "items": { "type": "string" } },
+        "tools": { "type": "array", "items": { "type": "string" } }
       }
     },
     "fileTypes": {
       "type": "object",
       "properties": {
-        "allowed": {"type": "array", "items": {"type": "string"}},
-        "blocked": {"type": "array", "items": {"type": "string"}}
+        "allowed": { "type": "array", "items": { "type": "string" } },
+        "blocked": { "type": "array", "items": { "type": "string" } }
       }
     },
     "sizeLimits": {
       "type": "object",
       "properties": {
-        "maxFileSize": {"type": "string"},
-        "maxTotalSize": {"type": "string"}
+        "maxFileSize": { "type": "string" },
+        "maxTotalSize": { "type": "string" }
       }
     }
   }

@@ -17,7 +17,7 @@ import {
   AgentExtension,
   AgentProvider,
   TransportProtocol,
-  A2AMessage
+  A2AMessage,
 } from '@cortex-os/a2a';
 
 /**
@@ -45,68 +45,70 @@ export class A2AAIAgent {
       {
         name: 'ai_generate_text',
         description: 'Generate text using MLX language models',
-        longDescription: 'Generate human-like text using locally-run MLX language models with configurable parameters',
+        longDescription:
+          'Generate human-like text using locally-run MLX language models with configurable parameters',
         parameters: {
           type: 'object',
           properties: {
             prompt: {
               type: 'string',
-              description: 'The text prompt to generate from'
+              description: 'The text prompt to generate from',
             },
             systemPrompt: {
               type: 'string',
-              description: 'Optional system prompt to guide generation'
+              description: 'Optional system prompt to guide generation',
             },
             temperature: {
               type: 'number',
               minimum: 0.0,
               maximum: 1.0,
-              description: 'Temperature for generation (0.0 to 1.0)'
+              description: 'Temperature for generation (0.0 to 1.0)',
             },
             maxTokens: {
               type: 'number',
               minimum: 1,
               maximum: 4096,
-              description: 'Maximum number of tokens to generate'
-            }
+              description: 'Maximum number of tokens to generate',
+            },
           },
-          required: ['prompt']
+          required: ['prompt'],
         },
         response: {
           type: 'object',
           properties: {
             generated_text: { type: 'string' },
             prompt_length: { type: 'number' },
-            model: { type: 'string' }
-          }
+            model: { type: 'string' },
+          },
         },
-        implementation: 'ai_capabilities.generate'
+        implementation: 'ai_capabilities.generate',
       },
       {
         name: 'ai_search_knowledge',
         description: 'Search knowledge base using semantic similarity',
-        longDescription: 'Perform semantic search through stored documents using embedding-based similarity matching',
+        longDescription:
+          'Perform semantic search through stored documents using embedding-based similarity matching',
         parameters: {
           type: 'object',
           properties: {
             query: {
               type: 'string',
-              description: 'Search query to find relevant documents'
+              description: 'Search query to find relevant documents',
             },
             topK: {
               type: 'number',
               minimum: 1,
               maximum: 20,
-              description: 'Number of top results to return'
+              description: 'Number of top results to return',
             },
             minSimilarity: {
               type: 'number',
               minimum: 0.0,
               maximum: 1.0,
-              description: 'Minimum similarity score threshold'
-            }
+              description: 'Minimum similarity score threshold',
+            },
           },
-          required: ['query']
+          required: ['query'],
         },
         response: {
           type: 'object',
@@ -118,33 +120,34 @@ export class A2AAIAgent {
                 properties: {
                   text: { type: 'string' },
                   similarity: { type: 'number' },
-                  metadata: { type: 'object' }
-                }
-              }
+                  metadata: { type: 'object' },
+                },
+              },
             },
             query: { type: 'string' },
-            results_count: { type: 'number' }
-          }
+            results_count: { type: 'number' },
+          },
         },
-        implementation: 'ai_capabilities.searchKnowledge'
+        implementation: 'ai_capabilities.searchKnowledge',
       },
       {
         name: 'ai_rag_query',
         description: 'Perform Retrieval-Augmented Generation query',
-        longDescription: 'Combine semantic search with text generation to answer questions using relevant context from the knowledge base',
+        longDescription:
+          'Combine semantic search with text generation to answer questions using relevant context from the knowledge base',
         parameters: {
           type: 'object',
           properties: {
             query: {
               type: 'string',
-              description: 'Query to answer using RAG'
+              description: 'Query to answer using RAG',
             },
             systemPrompt: {
               type: 'string',
-              description: 'Optional system prompt for generation'
-            }
+              description: 'Optional system prompt for generation',
+            },
           },
-          required: ['query']
+          required: ['query'],
         },
         response: {
           type: 'object',
@@ -156,14 +159,14 @@ export class A2AAIAgent {
                 type: 'object',
                 properties: {
                   text: { type: 'string' },
-                  similarity: { type: 'number' }
-                }
-              }
+                  similarity: { type: 'number' },
+                },
+              },
             },
-            confidence: { type: 'number' }
-          }
+            confidence: { type: 'number' },
+          },
         },
-        implementation: 'ai_capabilities.ragQuery'
+        implementation: 'ai_capabilities.ragQuery',
       },
       {
         name: 'ai_calculate_similarity',
@@ -174,38 +177,39 @@ export class A2AAIAgent {
           properties: {
             text1: {
               type: 'string',
-              description: 'First text for comparison'
+              description: 'First text for comparison',
             },
             text2: {
               type: 'string',
-              description: 'Second text for comparison'
-            }
+              description: 'Second text for comparison',
+            },
           },
-          required: ['text1', 'text2']
+          required: ['text1', 'text2'],
         },
         response: {
           type: 'object',
           properties: {
             similarity: { type: 'number' },
-            interpretation: { type: 'string' }
-          }
+            interpretation: { type: 'string' },
+          },
         },
-        implementation: 'ai_capabilities.calculateSimilarity'
+        implementation: 'ai_capabilities.calculateSimilarity',
       },
       {
         name: 'asbr_collect_enhanced_evidence',
         description: 'Collect and enhance evidence using AI analysis',
-        longDescription: 'Analyze and enhance evidence collection for ASBR workflows using AI-powered insights',
+        longDescription:
+          'Analyze and enhance evidence collection for ASBR workflows using AI-powered insights',
         parameters: {
           type: 'object',
           properties: {
             taskId: {
               type: 'string',
-              description: 'ASBR task identifier'
+              description: 'ASBR task identifier',
             },
             claim: {
               type: 'string',
-              description: 'Evidence claim to analyze'
+              description: 'Evidence claim to analyze',
             },
             sources: {
               type: 'array',
@@ -214,16 +218,16 @@ export class A2AAIAgent {
                 properties: {
                   type: {
                     type: 'string',
-                    enum: ['file', 'url', 'repo', 'note']
+                    enum: ['file', 'url', 'repo', 'note'],
                   },
                   path: { type: 'string' },
-                  content: { type: 'string' }
-                }
+                  content: { type: 'string' },
+                },
               },
-              description: 'Evidence sources to analyze'
-            }
+              description: 'Evidence sources to analyze',
+            },
           },
-          required: ['taskId', 'claim', 'sources']
+          required: ['taskId', 'claim', 'sources'],
         },
         response: {
           type: 'object',
@@ -231,11 +235,11 @@ export class A2AAIAgent {
             enhanced_evidence: { type: 'object' },
             additional_evidence: { type: 'array' },
             insights: { type: 'string' },
-            confidence: { type: 'number' }
-          }
+            confidence: { type: 'number' },
+          },
         },
-        implementation: 'asbr_integration.collectEnhancedEvidence'
-      }
+        implementation: 'asbr_integration.collectEnhancedEvidence',
+      },
     ];
 
     const capabilities: AgentCapabilities = {
@@ -246,29 +250,30 @@ export class A2AAIAgent {
         {
           uri: 'https://cortex-os.ai/extensions/mlx-integration',
           description: 'Apple Silicon optimized MLX model integration',
-          required: false
+          required: false,
         },
         {
           uri: 'https://cortex-os.ai/extensions/asbr-evidence',
           description: 'ASBR evidence collection and analysis',
-          required: false
-        }
-      ]
+          required: false,
+        },
+      ],
     };
 
     return {
       agent: {
         name: 'ASBR AI Agent',
         version: '1.0.0',
-        description: 'AI capabilities agent providing text generation, knowledge search, RAG, and evidence analysis',
+        description:
+          'AI capabilities agent providing text generation, knowledge search, RAG, and evidence analysis',
         provider: {
           organization: 'Cortex-OS',
-          url: 'https://cortex-os.ai'
+          url: 'https://cortex-os.ai',
         },
         capabilities,
         license: 'Apache-2.0 OR Commercial',
         documentation: 'https://docs.cortex-os.ai/agents/asbr-ai',
-        tags: ['ai', 'mlx', 'rag', 'embeddings', 'evidence', 'asbr']
+        tags: ['ai', 'mlx', 'rag', 'embeddings', 'evidence', 'asbr'],
       },
       interface: {
         transport: TransportProtocol.HTTP,
@@ -276,11 +281,11 @@ export class A2AAIAgent {
         fallback: [
           {
             transport: TransportProtocol.HTTP,
-            uri: 'http://127.0.0.1:8081/mcp'
-          }
-        ]
+            uri: 'http://127.0.0.1:8081/mcp',
+          },
+        ],
       },
-      skills
+      skills,
     };
   }
 
@@ -300,22 +305,22 @@ export class A2AAIAgent {
     switch (action) {
       case 'ai_generate_text':
         return this.handleGenerateText(params);
-      
+
       case 'ai_search_knowledge':
         return this.handleSearchKnowledge(params);
-      
+
       case 'ai_rag_query':
         return this.handleRAGQuery(params);
-      
+
       case 'ai_calculate_similarity':
         return this.handleCalculateSimilarity(params);
-      
+
       case 'asbr_collect_enhanced_evidence':
         return this.handleCollectEnhancedEvidence(params);
-      
+
       case 'get_capabilities':
         return this.getCapabilities();
-      
+
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -328,13 +333,13 @@ export class A2AAIAgent {
     const result = await this.aiCapabilities.generate(params.prompt, {
       systemPrompt: params.systemPrompt,
       temperature: params.temperature,
-      maxTokens: params.maxTokens
+      maxTokens: params.maxTokens,
     });
 
     return {
       generated_text: result,
       prompt_length: params.prompt.length,
-      model: 'MLX'
+      model: 'MLX',
     };
   }
 
@@ -342,41 +347,43 @@ export class A2AAIAgent {
     const results = await this.aiCapabilities.searchKnowledge(
       params.query,
       params.topK || 5,
-      params.minSimilarity || 0.3
+      params.minSimilarity || 0.3,
     );
 
     return {
       query: params.query,
       results_count: results.length,
-      results: results
+      results: results,
     };
   }
 
   private async handleRAGQuery(params: any): Promise<any> {
     const result = await this.aiCapabilities.ragQuery({
       query: params.query,
-      systemPrompt: params.systemPrompt
+      systemPrompt: params.systemPrompt,
     });
 
     return {
       query: params.query,
       answer: result.answer,
       sources: result.sources.slice(0, 3), // Limit sources for A2A transport
-      confidence: result.confidence
+      confidence: result.confidence,
     };
   }
 
   private async handleCalculateSimilarity(params: any): Promise<any> {
-    const similarity = await this.aiCapabilities.calculateSimilarity(
-      params.text1,
-      params.text2
-    );
+    const similarity = await this.aiCapabilities.calculateSimilarity(params.text1, params.text2);
 
     return {
       similarity: similarity || 0,
-      interpretation: (similarity || 0) > 0.8 ? 'very similar' : 
-                     (similarity || 0) > 0.6 ? 'moderately similar' :
-                     (similarity || 0) > 0.3 ? 'somewhat similar' : 'not similar'
+      interpretation:
+        (similarity || 0) > 0.8
+          ? 'very similar'
+          : (similarity || 0) > 0.6
+            ? 'moderately similar'
+            : (similarity || 0) > 0.3
+              ? 'somewhat similar'
+              : 'not similar',
     };
   }
 
@@ -384,7 +391,7 @@ export class A2AAIAgent {
     const context = {
       taskId: params.taskId,
       claim: params.claim,
-      sources: params.sources
+      sources: params.sources,
     };
 
     const result = await this.asbrIntegration.collectEnhancedEvidence(context, {});
@@ -393,7 +400,7 @@ export class A2AAIAgent {
       enhanced_evidence: result.aiEnhancedEvidence,
       additional_evidence: result.additionalEvidence,
       insights: result.insights,
-      confidence: result.aiMetadata.confidence || 0.8
+      confidence: result.aiMetadata.confidence || 0.8,
     };
   }
 
@@ -408,17 +415,17 @@ export class A2AAIAgent {
         llm: capabilities?.llm || { provider: 'unavailable', model: 'unknown', healthy: false },
         embedding: capabilities?.embedding,
         features: capabilities?.features || ['a2a-messaging'],
-        skills: this.agentCard.skills.map(skill => skill.name),
-        status: 'operational'
+        skills: this.agentCard.skills.map((skill) => skill.name),
+        status: 'operational',
       };
     } catch (error) {
       return {
         agent_id: this.agentId,
         llm: { provider: 'unavailable', model: 'unknown', healthy: false },
         features: ['a2a-messaging'],
-        skills: this.agentCard.skills.map(skill => skill.name),
+        skills: this.agentCard.skills.map((skill) => skill.name),
         status: 'degraded',
-        error: `AI capabilities unavailable: ${error}`
+        error: `AI capabilities unavailable: ${error}`,
       };
     }
   }
@@ -429,11 +436,11 @@ export class A2AAIAgent {
   canHandle(action: string): boolean {
     const supportedActions = [
       'ai_generate_text',
-      'ai_search_knowledge', 
+      'ai_search_knowledge',
       'ai_rag_query',
       'ai_calculate_similarity',
       'asbr_collect_enhanced_evidence',
-      'get_capabilities'
+      'get_capabilities',
     ];
     return supportedActions.includes(action);
   }
@@ -441,7 +448,7 @@ export class A2AAIAgent {
   /**
    * Get agent status for A2A coordination
    */
-  getStatus(): { 
+  getStatus(): {
     agent_id: string;
     status: 'idle' | 'busy' | 'offline' | 'error';
     capabilities_healthy: boolean;
@@ -451,7 +458,7 @@ export class A2AAIAgent {
       agent_id: this.agentId,
       status: 'idle', // Could be enhanced with actual status tracking
       capabilities_healthy: true, // Could check AI capabilities health
-      skills_available: this.agentCard.skills.length
+      skills_available: this.agentCard.skills.length,
     };
   }
 }
@@ -475,9 +482,11 @@ export function isA2ACompatible(): boolean {
   try {
     // Try dynamic import to check if A2A package is available
     // This is safer in ESM environments and won't break tests
-    return typeof globalThis !== 'undefined' && 
-           typeof process !== 'undefined' &&
-           process.versions?.node !== undefined;
+    return (
+      typeof globalThis !== 'undefined' &&
+      typeof process !== 'undefined' &&
+      process.versions?.node !== undefined
+    );
   } catch {
     return false;
   }

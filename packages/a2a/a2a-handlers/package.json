@@ -5,8 +5,26 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }, "./health.handler": { "import": "./dist/health.handler.js", "types": "./dist/health.handler.d.ts" } },
-  "scripts": { "build": "tsup src/**/*.ts --dts --format esm", "test": "vitest run", "typecheck": "tsc -p tsconfig.json --noEmit" },
-  "dependencies": { "@cortex-os/a2a-core": "workspace:*" },
-  "devDependencies": { "tsup": "^8.0.0", "typescript": "^5.5.4" }
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./health.handler": {
+      "import": "./dist/health.handler.js",
+      "types": "./dist/health.handler.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/**/*.ts --dts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@cortex-os/a2a-core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.4"
+  }
 }

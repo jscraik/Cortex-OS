@@ -11,7 +11,7 @@ const mockPrisma = {
     delete: vi.fn(),
     findMany: vi.fn(),
     deleteMany: vi.fn(),
-  }
+  },
 };
 
 describe('Vector Search Implementation Verification', () => {
@@ -23,7 +23,7 @@ describe('Vector Search Implementation Verification', () => {
   it('InMemoryStore performs accurate cosine similarity search', async () => {
     const store = new InMemoryStore();
     const now = new Date().toISOString();
-    
+
     // Insert records with known vectors
     const rec1: Memory = {
       id: 'vec-1',
@@ -35,7 +35,7 @@ describe('Vector Search Implementation Verification', () => {
       updatedAt: now,
       provenance: { source: 'system' },
     } as Memory;
-    
+
     const rec2: Memory = {
       id: 'vec-2',
       kind: 'embedding',
@@ -46,14 +46,14 @@ describe('Vector Search Implementation Verification', () => {
       updatedAt: now,
       provenance: { source: 'system' },
     } as Memory;
-    
+
     await store.upsert(rec1);
     await store.upsert(rec2);
-    
+
     // Search with a vector similar to rec1
     const queryVector = [0.9, 0.1, 0, 0];
     const res = await store.searchByVector({ vector: queryVector, topK: 5 });
-    
+
     // Should return rec1 first due to higher similarity
     expect(res[0]?.id).toBe('vec-1');
     expect(res).toHaveLength(2);
@@ -61,7 +61,7 @@ describe('Vector Search Implementation Verification', () => {
 
   it('PrismaStore performs accurate cosine similarity search', async () => {
     const store = new PrismaStore(mockPrisma as any);
-    
+
     // Mock the findMany response with candidate records
     mockPrisma.memory.findMany.mockResolvedValue([
       {
@@ -83,13 +83,13 @@ describe('Vector Search Implementation Verification', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         provenance: { source: 'system' },
-      }
+      },
     ]);
-    
+
     // Search with a vector similar to rec1
     const queryVector = [0.9, 0.1, 0, 0];
     const res = await store.searchByVector({ vector: queryVector, topK: 5 });
-    
+
     // Should return results with proper similarity ranking
     expect(res).toHaveLength(2);
     // First result should be more similar to the query vector
@@ -99,9 +99,9 @@ describe('Vector Search Implementation Verification', () => {
   it('all adapters handle vector search without vectors gracefully', async () => {
     const inMemoryStore = new InMemoryStore();
     const prismaStore = new PrismaStore(mockPrisma as any);
-    
+
     const now = new Date().toISOString();
-    
+
     // Insert record without vector
     const recWithoutVector: Memory = {
       id: 'no-vector',
@@ -112,24 +112,26 @@ describe('Vector Search Implementation Verification', () => {
       updatedAt: now,
       provenance: { source: 'user' },
     } as Memory;
-    
+
     await inMemoryStore.upsert(recWithoutVector);
-    mockPrisma.memory.findMany.mockResolvedValue([{
-      id: 'no-vector',
-      kind: 'note',
-      text: 'no vector here',
-      vector: null,
-      tags: ['text'],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      provenance: { source: 'user' },
-    }]);
-    
+    mockPrisma.memory.findMany.mockResolvedValue([
+      {
+        id: 'no-vector',
+        kind: 'note',
+        text: 'no vector here',
+        vector: null,
+        tags: ['text'],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        provenance: { source: 'user' },
+      },
+    ]);
+
     // Search with vector - should not return records without vectors
     const queryVector = [1, 0, 0, 0];
     const inMemoryResult = await inMemoryStore.searchByVector({ vector: queryVector, topK: 5 });
     const prismaResult = await prismaStore.searchByVector({ vector: queryVector, topK: 5 });
-    
+
     expect(inMemoryResult).toHaveLength(0);
     expect(prismaResult).toHaveLength(0);
   });

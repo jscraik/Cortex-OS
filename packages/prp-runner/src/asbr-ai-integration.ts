@@ -56,17 +56,17 @@ export interface AIEvidenceConfig {
   enableMLXGeneration?: boolean;
   enableEmbeddingSearch?: boolean;
   enableRAGEnhancement?: boolean;
-  
+
   // Evidence Enhancement Settings
   confidenceBoost?: number; // Boost confidence for AI-generated evidence
   aiSourcePriority?: number; // Priority for AI-generated content
   maxAIContentLength?: number;
-  
+
   // Quality Controls
   minAIConfidence?: number;
   requireHumanValidation?: boolean;
   enableFactChecking?: boolean;
-  
+
   // Model Selection
   preferredMLXModel?: keyof typeof AVAILABLE_MLX_MODELS;
   temperature?: number;
@@ -125,22 +125,22 @@ export class ASBRAIIntegration {
    */
   async collectEnhancedEvidence(
     context: EvidenceContext,
-    options: EvidenceCollectionOptions = {}
+    options: EvidenceCollectionOptions = {},
   ): Promise<AIEvidenceResult> {
     const startTime = Date.now();
-    
+
     // Step 1: Create base evidence from traditional sources
     const baseEvidence = await this.createBaseEvidence(context, options);
-    
+
     // Step 2: AI Enhancement Pipeline
     const aiEnhancedEvidence = await this.enhanceEvidenceWithAI(baseEvidence, context);
-    
+
     // Step 3: Generate additional evidence through AI analysis
     const additionalEvidence = await this.generateAdditionalEvidence(context, baseEvidence);
-    
+
     // Step 4: Calculate insights and metadata
     const insights = await this.calculateInsights(baseEvidence, aiEnhancedEvidence, context);
-    
+
     const processingTime = Math.max(1, Date.now() - startTime); // Ensure positive processing time
     const aiMetadata = {
       modelsUsed: [this.config.preferredMLXModel || 'QWEN_SMALL'],
@@ -173,7 +173,7 @@ export class ASBRAIIntegration {
       topK?: number;
       minSimilarity?: number;
       includeExternalSources?: boolean;
-    } = {}
+    } = {},
   ): Promise<{
     relatedClaims: Array<{
       claim: string;
@@ -201,10 +201,10 @@ export class ASBRAIIntegration {
       const searchResults = await this.aiCapabilities.searchKnowledge(
         claim,
         options.topK || 5,
-        options.minSimilarity || 0.3
+        options.minSimilarity || 0.3,
       );
 
-      const relatedClaims = searchResults.map(result => ({
+      const relatedClaims = searchResults.map((result) => ({
         claim: result.text,
         similarity: result.similarity,
         source: result.metadata?.source || 'unknown',
@@ -286,7 +286,7 @@ export class ASBRAIIntegration {
    */
   async generateEvidenceInsights(
     evidenceCollection: Evidence[],
-    taskContext: string
+    taskContext: string,
   ): Promise<{
     summary: string;
     keyFindings: string[];
@@ -307,9 +307,12 @@ export class ASBRAIIntegration {
   }> {
     try {
       // Prepare evidence summary for AI analysis
-      const evidenceSummary = evidenceCollection.map(e => 
-        `Claim: ${e.claim}\nConfidence: ${e.confidence}\nRisk: ${e.riskLevel}\nSource: ${e.source.type}`
-      ).join('\n\n');
+      const evidenceSummary = evidenceCollection
+        .map(
+          (e) =>
+            `Claim: ${e.claim}\nConfidence: ${e.confidence}\nRisk: ${e.riskLevel}\nSource: ${e.source.type}`,
+        )
+        .join('\n\n');
 
       // Generate comprehensive analysis
       const ragResult = await this.aiCapabilities.ragQuery({
@@ -333,7 +336,7 @@ export class ASBRAIIntegration {
       const summary = this.extractSectionFromResponse(ragResult.answer, 'summary');
       const keyFindings = this.extractListFromResponse(ragResult.answer, 'findings');
       const recommendations = this.extractListFromResponse(ragResult.answer, 'recommendations');
-      
+
       // If parsing failed to extract meaningful data, use fallback
       if (!summary || summary.length < 10) {
         return this.generateBasicInsights(evidenceCollection, taskContext);
@@ -352,7 +355,7 @@ export class ASBRAIIntegration {
       };
     } catch (error) {
       console.warn('Evidence insights generation failed:', error);
-      
+
       // Fallback to basic analysis
       return this.generateBasicInsights(evidenceCollection, taskContext);
     }
@@ -363,19 +366,19 @@ export class ASBRAIIntegration {
    */
   private async createBaseEvidence(
     context: EvidenceContext,
-    options: EvidenceCollectionOptions
+    options: EvidenceCollectionOptions,
   ): Promise<Evidence> {
     const evidenceId = `evidence-${randomUUID()}`;
-    
+
     // Extract content from sources
     const sourceContent = context.sources
-      .map(source => source.content || '')
-      .filter(content => content.length > 0)
+      .map((source) => source.content || '')
+      .filter((content) => content.length > 0)
       .join('\n\n');
 
     // Calculate initial confidence based on source types and content
     const baseConfidence = this.calculateSourceConfidence(context.sources);
-    
+
     return {
       id: evidenceId,
       taskId: context.taskId,
@@ -403,7 +406,7 @@ export class ASBRAIIntegration {
    */
   private async enhanceEvidenceWithAI(
     baseEvidence: Evidence,
-    context: EvidenceContext
+    context: EvidenceContext,
   ): Promise<Evidence> {
     const enhancements: string[] = [];
     let enhancedContent = baseEvidence.content || '';
@@ -417,12 +420,16 @@ export class ASBRAIIntegration {
           {
             temperature: this.config.temperature,
             maxTokens: this.config.maxTokens,
-            systemPrompt: 'You are an evidence analyst. Provide additional context, validation, and insights for the given claim.',
-          }
+            systemPrompt:
+              'You are an evidence analyst. Provide additional context, validation, and insights for the given claim.',
+          },
         );
 
         enhancedContent += `\n\n--- AI Analysis ---\n${aiAnalysis}`;
-        enhancedConfidence = Math.min(1.0, enhancedConfidence + (this.config.confidenceBoost || 0.1));
+        enhancedConfidence = Math.min(
+          1.0,
+          enhancedConfidence + (this.config.confidenceBoost || 0.1),
+        );
         enhancements.push('mlx-generation');
       } catch (error) {
         console.warn('MLX enhancement failed:', error);
@@ -433,15 +440,14 @@ export class ASBRAIIntegration {
     // Embedding-based Enhancement
     if (this.config.enableEmbeddingSearch) {
       try {
-        const relatedEvidence = await this.searchRelatedEvidence(
-          baseEvidence.claim,
-          [enhancedContent]
-        );
+        const relatedEvidence = await this.searchRelatedEvidence(baseEvidence.claim, [
+          enhancedContent,
+        ]);
 
         if (relatedEvidence.relatedClaims.length > 0) {
           const relatedContent = relatedEvidence.relatedClaims
             .slice(0, 3)
-            .map(claim => `Related: ${claim.claim} (similarity: ${claim.similarity.toFixed(2)})`)
+            .map((claim) => `Related: ${claim.claim} (similarity: ${claim.similarity.toFixed(2)})`)
             .join('\n');
 
           enhancedContent += `\n\n--- Related Evidence ---\n${relatedContent}`;
@@ -481,7 +487,7 @@ export class ASBRAIIntegration {
    */
   private async generateAdditionalEvidence(
     context: EvidenceContext,
-    baseEvidence: Evidence
+    baseEvidence: Evidence,
   ): Promise<Evidence[]> {
     const additionalEvidence: Evidence[] = [];
 
@@ -493,15 +499,17 @@ export class ASBRAIIntegration {
       // Generate evidence gaps analysis
       const gapsAnalysis = await this.aiCapabilities.ragQuery({
         query: `What additional evidence would strengthen this claim: "${context.claim}"?`,
-        systemPrompt: 'Identify evidence gaps and suggest specific additional evidence that would strengthen or validate the claim.',
+        systemPrompt:
+          'Identify evidence gaps and suggest specific additional evidence that would strengthen or validate the claim.',
       });
 
       // Parse suggestions and create evidence entries
       const suggestions = this.extractListFromResponse(gapsAnalysis?.answer || '', 'suggestions');
-      
-      for (const suggestion of suggestions.slice(0, 3)) { // Limit to 3 additional pieces
+
+      for (const suggestion of suggestions.slice(0, 3)) {
+        // Limit to 3 additional pieces
         const additionalEvidenceId = `${baseEvidence.id}-additional-${additionalEvidence.length}`;
-        
+
         additionalEvidence.push({
           id: additionalEvidenceId,
           taskId: context.taskId,
@@ -547,7 +555,7 @@ export class ASBRAIIntegration {
     for (const pattern of issuePatterns) {
       const matches = response.match(pattern);
       if (matches) {
-        issues.push(...matches.map(match => match.replace(/^[-*•\d.\s]+/, '').trim()));
+        issues.push(...matches.map((match) => match.replace(/^[-*•\d.\s]+/, '').trim()));
       }
     }
 
@@ -563,13 +571,13 @@ export class ASBRAIIntegration {
   private extractListFromResponse(response: string, listName: string): string[] {
     const listPattern = new RegExp(`${listName}[:\s]*\n((?:[-*•\d.]\s*[^\n]+\n?)+)`, 'gi');
     const match = response.match(listPattern);
-    
+
     if (!match) return [];
 
     return match[0]
       .split('\n')
-      .map(line => line.replace(/^[-*•\d.\s]+/, '').trim())
-      .filter(line => line.length > 0)
+      .map((line) => line.replace(/^[-*•\d.\s]+/, '').trim())
+      .filter((line) => line.length > 0)
       .slice(0, 10); // Limit to 10 items
   }
 
@@ -583,9 +591,10 @@ export class ASBRAIIntegration {
       note: 0.5,
     };
 
-    const avgWeight = sources.reduce((sum, source) => {
-      return sum + (sourceTypeWeights[source.type] || 0.5);
-    }, 0) / sources.length;
+    const avgWeight =
+      sources.reduce((sum, source) => {
+        return sum + (sourceTypeWeights[source.type] || 0.5);
+      }, 0) / sources.length;
 
     // Boost confidence for multiple sources
     const multiSourceBoost = Math.min(0.2, sources.length * 0.05);
@@ -596,8 +605,8 @@ export class ASBRAIIntegration {
   private assessInitialRisk(context: EvidenceContext): 'low' | 'medium' | 'high' | 'critical' {
     // Risk assessment based on claim sensitivity and source reliability
     const sensitiveKeywords = ['security', 'private', 'confidential', 'personal', 'financial'];
-    const hasSensitiveContent = sensitiveKeywords.some(keyword => 
-      context.claim.toLowerCase().includes(keyword)
+    const hasSensitiveContent = sensitiveKeywords.some((keyword) =>
+      context.claim.toLowerCase().includes(keyword),
     );
 
     if (hasSensitiveContent) return 'high';
@@ -607,13 +616,13 @@ export class ASBRAIIntegration {
   }
 
   private calculateConfidenceMetrics(evidenceCollection: Evidence[]) {
-    const confidences = evidenceCollection.map(e => e.confidence);
+    const confidences = evidenceCollection.map((e) => e.confidence);
     const averageConfidence = confidences.reduce((sum, c) => sum + c, 0) / confidences.length;
 
     const confidenceDistribution = {
-      high: confidences.filter(c => c >= 0.8).length,
-      medium: confidences.filter(c => c >= 0.5 && c < 0.8).length,
-      low: confidences.filter(c => c < 0.5).length,
+      high: confidences.filter((c) => c >= 0.8).length,
+      medium: confidences.filter((c) => c >= 0.5 && c < 0.8).length,
+      low: confidences.filter((c) => c < 0.5).length,
     };
 
     const reliabilityScore = averageConfidence * (evidenceCollection.length / 10); // Scale by evidence count
@@ -626,10 +635,13 @@ export class ASBRAIIntegration {
   }
 
   private analyzeRiskDistribution(evidenceCollection: Evidence[]) {
-    const riskCounts = evidenceCollection.reduce((acc, evidence) => {
-      acc[evidence.riskLevel] = (acc[evidence.riskLevel] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const riskCounts = evidenceCollection.reduce(
+      (acc, evidence) => {
+        acc[evidence.riskLevel] = (acc[evidence.riskLevel] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     // Determine overall risk
     let overallRisk: 'low' | 'medium' | 'high' | 'critical' = 'low';
@@ -657,15 +669,15 @@ export class ASBRAIIntegration {
       `${evidenceCollection.length} evidence items collected`,
       'Evidence quality assessment completed',
       'Risk distribution analysis performed',
-      'Confidence metrics calculated'
+      'Confidence metrics calculated',
     ];
     const recommendations = [
-      'Review evidence confidence levels', 
+      'Review evidence confidence levels',
       'Validate high-risk claims',
       'Consider additional evidence sources',
-      'Implement evidence validation workflow'
+      'Implement evidence validation workflow',
     ];
-    
+
     return {
       summary,
       keyFindings,
@@ -686,8 +698,8 @@ export class ASBRAIIntegration {
 
   private getActualUsedMethods(enhancedEvidence: Evidence): string[] {
     // Return actual methods used based on evidence tags
-    return enhancedEvidence.tags.filter(tag => 
-      ['mlx-generation', 'embedding-search', 'rag-enhancement', 'fact-checking'].includes(tag)
+    return enhancedEvidence.tags.filter((tag) =>
+      ['mlx-generation', 'embedding-search', 'rag-enhancement', 'fact-checking'].includes(tag),
     );
   }
 
@@ -730,7 +742,11 @@ export class ASBRAIIntegration {
     ];
   }
 
-  private async calculateInsights(baseEvidence: Evidence, enhancedEvidence: Evidence, context: EvidenceContext) {
+  private async calculateInsights(
+    baseEvidence: Evidence,
+    enhancedEvidence: Evidence,
+    context: EvidenceContext,
+  ) {
     return {
       relevanceScore: enhancedEvidence.confidence,
       sourceCredibility: this.assessSourceReliability(enhancedEvidence.source),
@@ -741,7 +757,9 @@ export class ASBRAIIntegration {
 /**
  * Create ASBR AI Integration with common configurations
  */
-export const createASBRAIIntegration = (preset: 'conservative' | 'balanced' | 'aggressive' = 'balanced'): ASBRAIIntegration => {
+export const createASBRAIIntegration = (
+  preset: 'conservative' | 'balanced' | 'aggressive' = 'balanced',
+): ASBRAIIntegration => {
   const configs: Record<string, AIEvidenceConfig> = {
     conservative: {
       enableMLXGeneration: true,

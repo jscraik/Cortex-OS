@@ -20,4 +20,3 @@ jobs:
       - run: pnpm tsx .cortex/tooling/check-structure.ts
       - run: pnpm tsx .cortex/tooling/check-agents.ts
       - run: pnpm tsx .cortex/tooling/check-index.ts
-

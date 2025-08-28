@@ -8,17 +8,8 @@
 
 // Core kernel exports
 export { CortexKernel } from './graph-simple.js';
-export type { 
-  PRPState, 
-  Evidence, 
-  ValidationGate, 
-  CerebrumDecision
-} from './state.js';
-export {
-  PRPStateSchema,
-  validateStateTransition,
-  createInitialPRPState 
-} from './state.js';
+export type { PRPState, Evidence, ValidationGate, CerebrumDecision } from './state.js';
+export { PRPStateSchema, validateStateTransition, createInitialPRPState } from './state.js';
 
 // Workflow nodes
 export { StrategyNode, BuildNode, EvaluationNode } from './nodes/index.js';
@@ -28,18 +19,11 @@ export { MCPAdapter, createDefaultMCPTools } from './mcp/adapter.js';
 export type { MCPTool, MCPContext } from './mcp/adapter.js';
 
 // Teaching layer
-export { 
-  ExampleCaptureSystem
-} from './teaching/example-capture.js';
-export type { 
-  CapturedExample, 
-  TeachingPattern 
-} from './teaching/example-capture.js';
-export { 
-  BehaviorExtensionManager
-} from './teaching/behavior-extension.js';
-export type { 
-  BehaviorExtension, 
-  ExtensionContext, 
-  ExtensionResult 
+export { ExampleCaptureSystem } from './teaching/example-capture.js';
+export type { CapturedExample, TeachingPattern } from './teaching/example-capture.js';
+export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
+export type {
+  BehaviorExtension,
+  ExtensionContext,
+  ExtensionResult,
 } from './teaching/behavior-extension.js';

@@ -27,10 +27,7 @@ export class InstallCommandGenerator {
   /**
    * Generate specific command for a client
    */
-  generateCommand(
-    server: ServerManifest,
-    client: ClientType
-  ): InstallCommand | null {
+  generateCommand(server: ServerManifest, client: ClientType): InstallCommand | null {
     switch (client) {
       case 'claude':
         return this.generateClaudeCommand(server);
@@ -108,8 +105,8 @@ export class InstallCommandGenerator {
         [server.id]: {
           serverUrl: server.transport.streamableHttp.url,
           headers: server.transport.streamableHttp.headers || {},
-        }
-      }
+        },
+      },
     };
 
     return {
@@ -141,7 +138,10 @@ export class InstallCommandGenerator {
     instructions += `\`\`\`bash\n${command.command}\n\`\`\`\n\n`;
 
     // Add setup instructions
-    if (server.transport.streamableHttp.auth?.type && server.transport.streamableHttp.auth.type !== 'none') {
+    if (
+      server.transport.streamableHttp.auth?.type &&
+      server.transport.streamableHttp.auth.type !== 'none'
+    ) {
       instructions += `### Authentication Setup\n\n`;
       instructions += `This server requires authentication. `;
 

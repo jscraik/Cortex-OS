@@ -33,11 +33,28 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
 
 - [x] Replace `/LICENSE` with Apache-2.0; add `/NOTICE` and `/COMMERCIAL-LICENSE.md` stubs.
 - [ ] Update repo docs to reflect dual-licensing and contribution policy.
-- [ ] Add license scanning to CI (pnpm and Python).
-- [ ] Add SBOM generation step (CycloneDX) for releases.
+- [x] Add license scanning to CI (pnpm and Python best-effort).
+- [x] Add SBOM generation step (CycloneDX) for releases.
 - [ ] Publish a public OSS vs Commercial feature matrix page.
 
 ## Notes on Open WebUI
 
 - Open WebUI uses a customized BSD-3 license with a branding restriction; do not copy code/assets.
 - Safe: treat as inspiration only; optionally support it as an external UI via OpenAI-compatible APIs.
+
+## Notes on Open WebUI
+
+- Open WebUI uses a customized BSD-3 license with a branding restriction; do not copy code/assets.
+- Safe: treat as inspiration only; optionally support it as an external UI via OpenAI-compatible APIs.
+
+## How to run compliance locally
+
+- License policy scan (Node + Python best-effort):
+  - pnpm: run `pnpm license:validate`
+- SBOM (CycloneDX JSON):
+  - If you have Anchore Syft installed, run `pnpm sbom:generate` to produce `sbom/sbom.cdx.json`.
+  - Without Syft, the script will generate a simple fallback manifest at the same path.
+- All at once:
+  - `pnpm compliance:all`
+
+CI recommendation: add these steps to governance workflow and attach `sbom/sbom.cdx.json` as an artifact in release builds.

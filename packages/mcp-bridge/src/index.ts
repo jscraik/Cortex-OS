@@ -44,10 +44,7 @@ export type {
 } from './gitmcp-client.js';
 export { PluginRegistry } from './plugin-registry.js';
 export { PluginValidator } from './plugin-validator.js';
-export {
-  McpConnectionManager,
-  createConnectionManager,
-} from './connection-manager.js';
+export { McpConnectionManager, createConnectionManager } from './connection-manager.js';
 export { McpDemoServer } from './mcp-demo-server.js';
 
 // Universal MCP System
@@ -61,6 +58,6 @@ export { MLXMcpIntegration, mlxMcpIntegration } from './mlx-mcp-integration.js';
 export { MLXMcpServer } from './mlx-mcp-server.js';
 
 // Server bridge (HTTP/WS) for GitMCP
-export { installGitMcpBridge } from "./gitmcp-bridge.js";
+export { installGitMcpBridge } from './gitmcp-bridge.js';
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

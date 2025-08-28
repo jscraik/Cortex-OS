@@ -105,7 +105,7 @@ const myAgent: Agent = {
   async execute(task) {
     // Agent implementation
     return { success: true, result: 'Task completed' };
-  }
+  },
 };
 
 // Register with orchestration system

@@ -9,15 +9,15 @@
  * @ai_provenance_hash N/A
  */
 
-import { trace, SpanKind } from "@opentelemetry/api";
-import { EventEmitter } from "events";
-import { AgentTrace, AnalyticsConfig } from "./types.js";
+import { trace, SpanKind } from '@opentelemetry/api';
+import { EventEmitter } from 'events';
+import { AgentTrace, AnalyticsConfig } from './types.js';
 
 /**
  * Collects OpenTelemetry traces from agent executions
  */
 export class AgentTraceCollector extends EventEmitter {
-  private tracer = trace.getTracer("orchestration-analytics-traces");
+  private tracer = trace.getTracer('orchestration-analytics-traces');
 
   constructor(private config: AnalyticsConfig) {
     super();
@@ -30,8 +30,8 @@ export class AgentTraceCollector extends EventEmitter {
     const span = this.tracer.startSpan(`agent_${operationName}`, {
       kind: SpanKind.INTERNAL,
       attributes: {
-        "agent.id": agentId,
-        "operation.name": operationName,
+        'agent.id': agentId,
+        'operation.name': operationName,
       },
     });
 
@@ -43,7 +43,7 @@ export class AgentTraceCollector extends EventEmitter {
    */
   endTrace(spanId: string, success: boolean = true): void {
     // Implementation would interact with actual OpenTelemetry spans
-    this.emit("traceCompleted", { spanId, success, timestamp: new Date() });
+    this.emit('traceCompleted', { spanId, success, timestamp: new Date() });
   }
 
   /**

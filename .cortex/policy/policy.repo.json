@@ -11,12 +11,23 @@
   },
   "fileTypes": {
     "allowed": [
-      "*.ts", "*.tsx", "*.js", "*.jsx", "*.json", "*.md", "*.yml", "*.yaml",
-      "*.py", "*.pyi", "*.toml", "*.txt", "*.css", "*.scss", "*.html"
+      "*.ts",
+      "*.tsx",
+      "*.js",
+      "*.jsx",
+      "*.json",
+      "*.md",
+      "*.yml",
+      "*.yaml",
+      "*.py",
+      "*.pyi",
+      "*.toml",
+      "*.txt",
+      "*.css",
+      "*.scss",
+      "*.html"
     ],
-    "blocked": [
-      "*.log", "*.cache", "*.tmp", "*.sqlite", "*.db", "*.sqlite3"
-    ]
+    "blocked": ["*.log", "*.cache", "*.tmp", "*.sqlite", "*.db", "*.sqlite3"]
   },
   "sizeLimits": {
     "maxFileSize": "10MB",

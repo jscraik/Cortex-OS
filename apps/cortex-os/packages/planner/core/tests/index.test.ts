@@ -24,7 +24,7 @@ describe('ConfigManager', () => {
 describe('Models', () => {
   it('manages current model', async () => {
     const adapters = await listAdapters();
-    expect(adapters.some(a => a.id === 'mlx')).toBe(true);
+    expect(adapters.some((a) => a.id === 'mlx')).toBe(true);
     await setCurrent('openai', 'gpt-4o-mini');
     const current = await getCurrent();
     expect(formatCurrent(current)).toBe('openai:gpt-4o-mini');
@@ -33,11 +33,10 @@ describe('Models', () => {
 
 describe('PermissionEngine', () => {
   it('skips execution in plan mode', async () => {
-    const { executed } = await PermissionEngine.guardShell(
-      'noop',
-      () => Promise.resolve('ok'),
-      { modeOverride: 'plan', logger: { info: () => {}, warn: () => {} } }
-    );
+    const { executed } = await PermissionEngine.guardShell('noop', () => Promise.resolve('ok'), {
+      modeOverride: 'plan',
+      logger: { info: () => {}, warn: () => {} },
+    });
     expect(executed).toBe(false);
   });
 
@@ -45,7 +44,7 @@ describe('PermissionEngine', () => {
     const { executed, result } = await PermissionEngine.guardShell(
       'noop',
       () => Promise.resolve('ok'),
-      { modeOverride: 'auto', logger: { info: () => {}, warn: () => {} } }
+      { modeOverride: 'auto', logger: { info: () => {}, warn: () => {} } },
     );
     expect(executed).toBe(true);
     expect(result).toBe('ok');

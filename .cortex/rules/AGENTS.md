@@ -112,7 +112,7 @@ interface Plan {
 interface Review {
   approved: boolean;
   explanation: string;
-  evidence: string[];  // file://path:line-range
+  evidence: string[]; // file://path:line-range
 }
 ```
 

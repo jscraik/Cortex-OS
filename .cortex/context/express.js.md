@@ -8,6 +8,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/hello-world
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -22,7 +23,7 @@ app.listen(port, () => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Initialize and Start a Basic Application
 DESCRIPTION: This snippet demonstrates the fundamental steps to create an Express.js application. It shows how to require the Express module, instantiate an `app` object, define a simple GET route for the root path that sends 'hello world' as a response, and start the server listening on port 3000.
@@ -31,6 +32,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -42,7 +44,7 @@ app.get('/', (req, res) => {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Create a Basic 'Hello World' Express.js Application
 DESCRIPTION: This snippet demonstrates the minimal code required to set up an Express.js server that listens on port 3000 and responds with 'Hello World!' to GET requests on the root path.
@@ -51,6 +53,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/writing-middlewar
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -62,7 +65,7 @@ app.get('/', (req, res) => {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.listen() Basic Server Setup
 DESCRIPTION: Demonstrates the basic usage of `app.listen()` to start an Express application. It shows how to require Express, initialize an app, and make it listen on a specific port, such as 3000.
@@ -71,6 +74,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -78,7 +82,7 @@ app.listen(3000)
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Run an Express.js Application from the Command Line
 DESCRIPTION: This shell command executes the `app.js` file using Node.js, which starts the Express.js server defined within the file. After running, the application will be accessible via `http://localhost:3000/` in a web browser.
@@ -87,11 +91,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/hello-world
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ node app.js
 ```
 
-----------------------------------------
+---
 
 TITLE: Handle GET Request on Homepage in Express.js
 DESCRIPTION: Demonstrates how to define a route that responds to a GET request on the root path ('/') by sending 'Hello World!' as the response. This is a basic example of setting up a homepage route.
@@ -100,13 +105,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/basic-routing
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Basic Application Creation and Routing
 DESCRIPTION: This code snippet demonstrates the fundamental steps to create an Express application instance and set up a basic HTTP GET route. It shows how to import the Express module, initialize the application object, define a route for the root path ('/') that sends 'hello world' as a response, and start the server listening on port 3000.
@@ -115,6 +121,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var express = require('express')
 var app = express()
@@ -126,7 +133,7 @@ app.get('/', function (req, res) {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Handle HTTP GET Request Example
 DESCRIPTION: Provides a practical example of using `app.get` to handle a GET request to the root path ('/'). The callback function sends a simple text response to the client.
@@ -135,13 +142,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.get('/', (req, res) => {
   res.send('GET request to homepage')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure Express.js Static File Serving with express.static
 DESCRIPTION: Examples of using the `express.static` middleware to serve static content, including basic setup, mounting at a specific path, ordering with other middleware, and serving from multiple directories.
@@ -150,6 +158,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 // GET /style.css etc
 app.use(express.static(path.join(__dirname, 'public')))
@@ -157,6 +166,7 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 LANGUAGE: javascript
 CODE:
+
 ```
 // GET /static/style.css etc.
 app.use('/static', express.static(path.join(__dirname, 'public')))
@@ -164,6 +174,7 @@ app.use('/static', express.static(path.join(__dirname, 'public')))
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(logger())
@@ -171,13 +182,14 @@ app.use(logger())
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.static(path.join(__dirname, 'files')))
 app.use(express.static(path.join(__dirname, 'uploads')))
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Application Initialization and Basic Routing
 DESCRIPTION: This snippet demonstrates the fundamental steps to create an Express.js application instance, define a simple GET route for the root path ('/'), and start the server listening on port 3000. It showcases the conventional way to set up a basic Express web server.
@@ -186,6 +198,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -197,7 +210,7 @@ app.get('/', (req, res) => {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Router: Middleware and GET Route Example
 DESCRIPTION: This example demonstrates how to define a router-level middleware that executes for any request passed to the router, and how to set up a specific `GET` route for a path like `/events` within that router.
@@ -206,6 +219,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 // invoked for any requests passed to this router
 router.use((req, res, next) => {
@@ -220,7 +234,7 @@ router.get('/events', (req, res, next) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Example: Handling HTTP GET Request with app.get() in Express.js
 DESCRIPTION: This example demonstrates a basic implementation of `app.get()` to handle an HTTP GET request to the root path (`/`). The provided callback function sends a simple text response back to the client, illustrating how to respond to incoming requests.
@@ -229,13 +243,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.get('/', (req, res) => {
   res.send('GET request to homepage')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Integrate `myLogger` Middleware into an Express.js Application
 DESCRIPTION: This example shows how to load the `myLogger` middleware using `app.use()` before defining the root path route. It demonstrates the importance of middleware order, as functions loaded first are executed first.
@@ -244,6 +259,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/writing-middlewar
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -262,7 +278,7 @@ app.get('/', (req, res) => {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express 3 Application Entry Point (app.js)
 DESCRIPTION: Example `app.js` file for an Express 3 application, demonstrating common middleware setup, view engine configuration, and server initialization using `http.createServer()`.
@@ -271,6 +287,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/migrating-4
 
 LANGUAGE: javascript
 CODE:
+
 ```
 var express = require('express')
 var routes = require('./routes')
@@ -305,7 +322,7 @@ http.createServer(app).listen(app.get('port'), () => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Install serve-index Node.js module
 DESCRIPTION: Instructions on how to install the `serve-index` module using npm, the Node.js package manager.
@@ -314,12 +331,13 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install serve-index
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Install serve-static Module via npm
 DESCRIPTION: This snippet demonstrates how to install the `serve-static` Node.js module using the npm package manager. The `npm install` command downloads and adds the module to your project's dependencies.
@@ -328,11 +346,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: Bash
 CODE:
+
 ```
 $ npm install serve-static
 ```
 
-----------------------------------------
+---
 
 TITLE: Full Systemd Unit File Example for Node.js Application
 DESCRIPTION: This comprehensive systemd unit file example demonstrates how to configure a service to directly manage a Node.js application. It includes essential settings such as Description, ExecStart path, WorkingDirectory, User and Group for security, Environment variables, resource limits (LimitNOFILE, LimitCORE), and Restart=always to ensure continuous operation.
@@ -341,6 +360,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/advanced/best-practice-
 
 LANGUAGE: systemd
 CODE:
+
 ```
 [Unit]
 Description=<Awesome Express App>
@@ -372,7 +392,7 @@ WantedBy=multi-user.target
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Apply a Configurable Express.js Middleware to an Application
 DESCRIPTION: This example shows how to use a configurable middleware module within an Express.js application. The `mw` module is required, then invoked with a configuration object (`{ option1: '1', option2: '2' }`) to create an instance of the middleware, which is then added to the Express application's middleware stack using `app.use()`.
@@ -381,13 +401,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/writing-middlewar
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const mw = require('./my-middleware.js')
 
 app.use(mw({ option1: '1', option2: '2' }))
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Express.js and save to package.json dependencies
 DESCRIPTION: Install the Express.js framework using npm. By default (npm 5.0+), this command automatically adds Express to the `dependencies` list in your `package.json` file, ensuring it's installed when others set up the project.
@@ -396,11 +417,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/installing
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ npm install express
 ```
 
-----------------------------------------
+---
 
 TITLE: Starting Express.js Server with app.listen
 DESCRIPTION: Binds and listens for connections on a specified host and port, or a UNIX socket path. This method is identical to Node's `http.Server.listen()`. It demonstrates how the Express app, being a JavaScript function, can be passed to Node's HTTP servers for flexible server setup, including HTTP and HTTPS.
@@ -409,6 +431,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var express = require('express')
 var app = express()
@@ -417,6 +440,7 @@ app.listen('/tmp/sock')
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var express = require('express')
 var app = express()
@@ -425,6 +449,7 @@ app.listen(3000)
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var express = require('express')
 var https = require('https')
@@ -437,6 +462,7 @@ https.createServer(options, app).listen(443)
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.listen = function () {
   var server = http.createServer(this)
@@ -444,7 +470,7 @@ app.listen = function () {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Project Collaborator's Guide
 DESCRIPTION: Comprehensive guide for contributors to the Express.js project, covering code standards, branching strategy, pull request procedures, and issue management best practices.
@@ -453,6 +479,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/contributing
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Collaborator's guide:
   Website Issues:
@@ -486,7 +513,7 @@ Collaborator's guide:
     - If not needing maintainer input, open as a discussion topic instead of an issue.
 ```
 
-----------------------------------------
+---
 
 TITLE: Example Express Debug Output on Startup
 DESCRIPTION: This snippet displays the extensive internal logs generated by Express.js when the `DEBUG` environment variable is set to `express:*` during application initialization, showing component loading and routing setup.
@@ -495,6 +522,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/debugging
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ DEBUG=express:* node ./bin/www
   express:router:route new / +0ms
@@ -539,7 +567,7 @@ $ DEBUG=express:* node ./bin/www
   express:router:layer new / +0ms
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js `res.sendFile` Example with Options and Callback
 DESCRIPTION: Provides a complete example of using `res.sendFile` with `root` directory, `dotfiles` option, custom `headers`, and an error-handling callback function.
@@ -548,6 +576,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.get('/file/:name', function (req, res, next) {
   var options = {
@@ -570,7 +599,7 @@ app.get('/file/:name', function (req, res, next) {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Middleware Path Matching (Exact Prefix)
 DESCRIPTION: Example of an Express.js middleware mounted to match paths starting with `/abcd`. This middleware will execute for `/abcd`, `/abcd/something`, etc.
@@ -579,13 +608,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.use('/abcd', function (req, res, next) {
   next()
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.enable() Example
 DESCRIPTION: Demonstrates how to use `app.enable()` to turn on a setting like 'trust proxy' and verify its state with `app.get()`.
@@ -594,13 +624,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.enable('trust proxy')
 app.get('trust proxy')
 // => true
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure Express.js `app.js` for Basic Server Setup
 DESCRIPTION: This snippet shows a complete `app.js` file for an Express.js application, demonstrating middleware loading (e.g., favicon, logger, body-parser, multer), view engine setup (Pug), static file serving, route definitions, and basic error handling for a development environment. It sets up an HTTP server and listens on a specified port.
@@ -609,6 +640,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/migrating-4
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var http = require('http')
 var express = require('express')
@@ -657,7 +689,7 @@ server.listen(app.get('port'), () => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Start Express App with npm
 DESCRIPTION: Starts the Express application using the `npm start` command. This command typically executes `node ./bin/www`, which is defined in the `package.json` file, to launch the server.
@@ -666,11 +698,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/migrating-4
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ npm start
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Get HTTP Request Header Field Examples
 DESCRIPTION: Examples demonstrating the usage of `req.get()` to retrieve HTTP header values, showing case-insensitivity and handling of non-existent headers.
@@ -679,6 +712,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 req.get('Content-Type')
 // => "text/plain"
@@ -690,7 +724,7 @@ req.get('Something')
 // => undefined
 ```
 
-----------------------------------------
+---
 
 TITLE: Initialize a new npm project for Express.js
 DESCRIPTION: Use the `npm init` command to create a `package.json` file, which manages your project's metadata and dependencies. You will be prompted for various details, accepting defaults is often sufficient.
@@ -699,11 +733,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/installing
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ npm init
 ```
 
-----------------------------------------
+---
 
 TITLE: Examples of res.download usage
 DESCRIPTION: Demonstrates various ways to use `res.download`, including basic file transfer, specifying a custom filename, and handling errors with a callback function.
@@ -712,6 +747,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 res.download('/report-12345.pdf')
 
@@ -727,7 +763,7 @@ res.download('/report-12345.pdf', 'report.pdf', (err) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Route Handler for GET Requests
 DESCRIPTION: This example shows a route and its handler function, which acts as a middleware system. The function specifically handles GET requests to the `/user/:id` path.
@@ -736,13 +772,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/using-middleware
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.get('/user/:id', (req, res, next) => {
   res.send('USER')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Express.js Server Initialization
 DESCRIPTION: Demonstrates the simplest way to start an Express.js application, binding it to a specific port for incoming connections.
@@ -751,6 +788,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -758,7 +796,7 @@ app.listen(3000)
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Session Store: Get session count
 DESCRIPTION: This optional method is used to get the count of all sessions in the store. The callback should be called as `callback(error, len)`.
@@ -767,6 +805,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 store.length(callback)
   Type: Optional
@@ -775,7 +814,7 @@ store.length(callback)
       Description: Callback function called as callback(error, len) with the session count.
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.all() API Path Restriction
 DESCRIPTION: Provides an example of using `app.all()` to restrict global functionality, like authentication, only to paths starting with “/api”.
@@ -784,11 +823,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.all('/api/{*splat}', requireAuthentication)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Router: router.all Usage Examples
 DESCRIPTION: These examples demonstrate various applications of `router.all()`. The first shows applying multiple middleware functions to all paths, while the subsequent examples illustrate how to apply middleware to all paths or restrict it to paths prefixed with `/api`.
@@ -797,12 +837,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 router.all('{*splat}', requireAuthentication, loadUser)
 ```
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 router.all('{*splat}', requireAuthentication)
 router.all('{*splat}', loadUser)
@@ -810,11 +852,12 @@ router.all('{*splat}', loadUser)
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 router.all('/api/{*splat}', requireAuthentication)
 ```
 
-----------------------------------------
+---
 
 TITLE: Install express-session Node.js module
 DESCRIPTION: This command installs the `express-session` package from the npm registry, making it available for use in Node.js applications. It should be run in the project's root directory.
@@ -823,11 +866,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install express-session
 ```
 
-----------------------------------------
+---
 
 TITLE: Install response-time Node.js module via npm
 DESCRIPTION: This command installs the `response-time` module from the npm registry, making it available for use in Node.js projects.
@@ -836,11 +880,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/re
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install response-time
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.listen() Internal Implementation Example
 DESCRIPTION: Provides an example of how `app.listen()` is internally implemented as a convenience method. It shows that it essentially creates an `http.Server` and then calls `server.listen()` on it, passing along the original arguments.
@@ -849,6 +894,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.listen = function () {
   const server = http.createServer(this)
@@ -857,7 +903,7 @@ app.listen = function () {
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Clone Express.js Website Repository
 DESCRIPTION: This command clones the official Express.js website repository from GitHub, providing the local code base for development and contributions. It's the first step to getting the application code.
@@ -866,11 +912,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/contributing
 
 LANGUAGE: bash
 CODE:
+
 ```
 git clone https://github.com/expressjs/expressjs.com.git
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.post() Usage Example
 DESCRIPTION: Provides a simple example of using `app.post()` to handle POST requests to the homepage and send a response.
@@ -879,13 +926,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.post('/', function (req, res) {
   res.send('POST request to homepage')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Example of Using express.static Middleware
 DESCRIPTION: Demonstrates how to configure and use the `express.static` middleware with various options, including `dotfiles`, `etag`, `extensions`, `index`, `maxAge`, `redirect`, and a custom `setHeaders` function to add an `x-timestamp` header.
@@ -894,6 +942,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const options = {
   dotfiles: 'ignore',
@@ -910,7 +959,7 @@ const options = {
 app.use(express.static('public', options))
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Chaining Multiple Middleware for GET Requests and Route Order
 DESCRIPTION: This example shows a middleware sub-stack that handles GET requests to the `/user/:id` path. It highlights how multiple route handlers for the same path are processed, noting that the first handler to end the request-response cycle will prevent subsequent handlers from being called.
@@ -919,6 +968,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/using-middleware
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.get('/user/:id', (req, res, next) => {
   console.log('ID:', req.params.id)
@@ -933,7 +983,7 @@ app.get('/user/:id', (req, res, next) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js GET Route with Regular Expression
 DESCRIPTION: This example shows how to use a regular expression to define a more specific GET route in Express.js. It matches paths like '/commits/71dbb9c' or '/commits/71dbb9c..4c084f9', extracting parameters from the matched groups and sending a commit range message.
@@ -942,6 +992,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 router.get(/^\/commits\/(\w+)(?:\.\.(\w+))?$/, function (req, res) {
   var from = req.params[0]
@@ -950,7 +1001,7 @@ router.get(/^\/commits\/(\w+)(?:\.\.(\w+))?$/, function (req, res) {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Example of express.static middleware configuration
 DESCRIPTION: Demonstrates how to configure and use the `express.static` middleware function with various options, including `dotfiles`, `extensions`, `maxAge`, and a custom `setHeaders` function.
@@ -959,6 +1010,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var options = {
   dotfiles: 'ignore',
@@ -975,7 +1027,7 @@ var options = {
 app.use(express.static('public', options))
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.enable() Method API Reference and Example
 DESCRIPTION: Documents the `app.enable()` method, which sets a Boolean application setting to `true`. It includes an example demonstrating how to enable the 'trust proxy' setting and verify its state.
@@ -984,6 +1036,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 app.enable(name)
   name: string - The name of the Boolean setting to set to 'true'.
@@ -994,7 +1047,7 @@ app.enable(name)
     // => true
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Path-Specific Middleware (app.use)
 DESCRIPTION: This example shows a middleware function mounted on the `/user/:id` path. The function is executed for any type of HTTP request (GET, PUT, POST, etc.) on the specified path.
@@ -1003,6 +1056,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/using-middleware
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.use('/user/:id', (req, res, next) => {
   console.log('Request Type:', req.method)
@@ -1010,7 +1064,7 @@ app.use('/user/:id', (req, res, next) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express/Connect Top-Level Generic Body Parser
 DESCRIPTION: This example demonstrates adding a generic JSON and URL-encoded parser as a top-level middleware, which will parse the bodies of all incoming requests. This is the simplest setup for `body-parser`.
@@ -1019,6 +1073,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/bo
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -1038,7 +1093,7 @@ app.use(function (req, res) {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure entry point during npm init
 DESCRIPTION: During the `npm init` process, you will be prompted to specify the main application file. Enter `app.js` or your desired main file name, or hit RETURN to accept the default `index.js`.
@@ -1047,11 +1102,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/installing
 
 LANGUAGE: shell
 CODE:
+
 ```
 entry point: (index.js)
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Express 5
 DESCRIPTION: Command to install Express 5, which requires Node.js version 18 or higher. This command should be executed in your application directory.
@@ -1060,11 +1116,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/migrating-5
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install "express@5"
 ```
 
-----------------------------------------
+---
 
 TITLE: Create a Configurable Express.js Middleware Module
 DESCRIPTION: This JavaScript module exports a function that acts as a factory for middleware. It accepts an `options` object, allowing the returned middleware function to be customized based on the provided configuration. This pattern promotes reusability and flexibility for middleware components.
@@ -1073,6 +1130,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/writing-middlewar
 
 LANGUAGE: javascript
 CODE:
+
 ```
 module.exports = function (options) {
   return function (req, res, next) {
@@ -1082,7 +1140,7 @@ module.exports = function (options) {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Implement User Login and Logout with Express.js Session
 DESCRIPTION: This example illustrates how to manage user login and logout sessions using `express-session`. It includes middleware for authentication, routes for displaying content to authenticated users, handling login form submissions, and securely logging out users by regenerating sessions. Requires `express` and `escape-html`.
@@ -1091,6 +1149,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var escapeHtml = require('escape-html')
 var express = require('express')
@@ -1166,7 +1225,7 @@ app.get('/logout', function (req, res, next) {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Reusable Middleware Array
 DESCRIPTION: This example shows how middleware functions can be declared in an array for reusability. It demonstrates a middleware sub-stack that handles GET requests to the `/user/:id` path by passing an array of middleware functions.
@@ -1175,6 +1234,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/using-middleware
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 function logOriginalUrl (req, res, next) {
   console.log('Request URL:', req.originalUrl)
@@ -1192,7 +1252,7 @@ app.get('/user/:id', logStuff, (req, res, next) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: express-session API: session(options) middleware
 DESCRIPTION: Detailed API documentation for the `session(options)` middleware, which creates and configures server-side sessions. It covers the purpose, important notes regarding `MemoryStore` and `cookie-parser`, and a comprehensive list of `cookie` options.
@@ -1201,6 +1261,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 session(options)
   Description: Create a session middleware with the given `options`.
@@ -1234,7 +1295,7 @@ session(options)
           Note: This is an attribute that has not yet been fully standardized.
 ```
 
-----------------------------------------
+---
 
 TITLE: Install connect-rid npm package
 DESCRIPTION: Instructions to install the `connect-rid` middleware using npm, the Node.js package manager. This command adds the package to your project's dependencies.
@@ -1243,11 +1304,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/co
 
 LANGUAGE: bash
 CODE:
+
 ```
 $ npm install connect-rid
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Middleware Usage Examples
 DESCRIPTION: Illustrates common ways to define, require, and apply middleware in an Express.js application, including examples for requiring a module, instantiating middleware, adding it to the global processing stack, and applying it to a specific route.
@@ -1256,29 +1318,33 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/glossary
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var foo = require('middleware')
 ```
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var mw = foo()
 ```
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.use(mw)
 ```
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.get('/foo', mw, function (req, res) { ... })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Router: Console output for router.param single call
 DESCRIPTION: Shows the expected console output when the `router.param` single call example is executed with `GET /user/42`, confirming that the param callback is called once, followed by the route callbacks.
@@ -1287,13 +1353,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: Text
 CODE:
+
 ```
 CALLED ONLY ONCE
 although this matches
 and this matches too
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.all() Method Usage Examples
 DESCRIPTION: Illustrates various uses of the `app.all()` method in Express.js for applying global logic to specific paths or patterns, such as logging access, enforcing authentication, or loading user data. Examples show how to apply middleware for all HTTP methods and how to use splat patterns.
@@ -1302,6 +1369,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.all('/secret', (req, res, next) => {
   console.log('Accessing the secret section ...')
@@ -1311,12 +1379,14 @@ app.all('/secret', (req, res, next) => {
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.all('{*splat}', requireAuthentication, loadUser)
 ```
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.all('{*splat}', requireAuthentication)
 app.all('{*splat}', loadUser)
@@ -1324,11 +1394,12 @@ app.all('{*splat}', loadUser)
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 app.all('/api/{*splat}', requireAuthentication)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Mounting a Series of Middleware
 DESCRIPTION: Example showing how to mount multiple middleware functions at the same path by listing them as arguments to `app.use()`.
@@ -1337,6 +1408,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const r1 = express.Router()
 r1.get('/', (req, res, next) => {
@@ -1351,7 +1423,7 @@ r2.get('/', (req, res, next) => {
 app.use(r1, r2)
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Basic res.json Usage Examples
 DESCRIPTION: Examples demonstrating how to use `res.json` to send different types of JSON responses, including handling HTTP status codes.
@@ -1360,13 +1432,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 res.json(null)
 res.json({ user: 'tobi' })
 res.status(500).json({ error: 'message' })
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Express.js Router Middleware with router.use()
 DESCRIPTION: This example demonstrates setting up an Express application and a router, then applying a simple logger middleware and a "Hello World" response middleware using router.use(). It shows how middleware functions are invoked sequentially for matching paths.
@@ -1375,6 +1448,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var express = require('express')
 var app = express()
@@ -1403,7 +1477,7 @@ app.use('/foo', router)
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Snyk CLI Globally for Security Scans
 DESCRIPTION: This snippet demonstrates how to install the Snyk command-line interface globally, which allows you to test your applications for vulnerabilities. After installation, navigate into your application's root directory to prepare for scanning.
@@ -1412,12 +1486,13 @@ SOURCE: https://expressjs.com/en/starter/installing.html/advanced/best-practice-
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ npm install -g snyk
 $ cd your-app
 ```
 
-----------------------------------------
+---
 
 TITLE: LevelDB: Install LevelUP Modules
 DESCRIPTION: Command to install the 'level', 'levelup', and 'leveldown' modules for interacting with LevelDB in Node.js using npm.
@@ -1426,11 +1501,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/database-integrat
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install level levelup leveldown
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Override HTTP method using query string parameter
 DESCRIPTION: This example illustrates how to configure an Express.js application to override HTTP methods using a query string parameter (e.g., `_method`). It provides a JavaScript snippet for middleware setup and an HTML form example, useful for supporting legacy browsers or plain HTML forms that need to use newer HTTP methods like DELETE.
@@ -1439,6 +1515,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/me
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const methodOverride = require('method-override')
@@ -1450,13 +1527,14 @@ app.use(methodOverride('_method'))
 
 LANGUAGE: HTML
 CODE:
+
 ```
 <form method="POST" action="/resource?_method=DELETE">
   <button type="submit">Delete resource</button>
 </form>
 ```
 
-----------------------------------------
+---
 
 TITLE: Initialize Express Application
 DESCRIPTION: Demonstrates how to import the Express module and create a new Express application instance using the `express()` top-level function.
@@ -1465,12 +1543,13 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.put() Usage Example
 DESCRIPTION: Provides a simple example of using `app.put()` to handle PUT requests to the homepage and send a response.
@@ -1479,13 +1558,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.put('/', function (req, res) {
   res.send('PUT request to homepage')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Create and navigate to Express.js project directory
 DESCRIPTION: This snippet shows how to create a new directory for your Express.js application and change your current working directory into it using standard shell commands.
@@ -1494,12 +1574,13 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/installing
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ mkdir myapp
 $ cd myapp
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Multer NPM Package
 DESCRIPTION: Instructions to install the Multer middleware using npm, making it available for use in your Node.js project.
@@ -1508,11 +1589,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/mu
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install multer
 ```
 
-----------------------------------------
+---
 
 TITLE: Install errorhandler npm package
 DESCRIPTION: Instructions to install the `errorhandler` middleware using npm, the Node.js package manager.
@@ -1521,12 +1603,13 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/er
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install errorhandler
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Handle POST Requests with app.post Example
 DESCRIPTION: This example demonstrates how to use the app.post method in Express.js to handle incoming HTTP POST requests. It sets up a route for the root path ('/') and sends a simple response indicating a POST request to the homepage.
@@ -1535,13 +1618,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.post('/', (req, res) => {
   res.send('POST request to homepage')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: PostgreSQL: Install PG-Promise Module
 DESCRIPTION: Command to install the 'pg-promise' module, a PostgreSQL client for Node.js with a promise-based API, using npm.
@@ -1550,11 +1634,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/database-integrat
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install pg-promise
 ```
 
-----------------------------------------
+---
 
 TITLE: Install connect-timeout Node.js Module
 DESCRIPTION: This snippet demonstrates how to install the `connect-timeout` module using the npm package manager. It is a Node.js module available through the npm registry.
@@ -1563,11 +1648,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/ti
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install connect-timeout
 ```
 
-----------------------------------------
+---
 
 TITLE: Implement Page View Counter with Express.js Session
 DESCRIPTION: This example demonstrates how to use `express-session` to track page views for individual users. It initializes a session, increments a view counter for specific paths, and displays the count to the user. Requires `express` and `parseurl`.
@@ -1576,6 +1662,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var express = require('express')
 var parseurl = require('parseurl')
@@ -1614,7 +1701,7 @@ app.get('/bar', function (req, res, next) {
 app.listen(3000)
 ```
 
-----------------------------------------
+---
 
 TITLE: Enable Debugging for Express.js Session Module
 DESCRIPTION: These commands show how to enable detailed logging for the `express-session` module using the `debug` package. By setting the `DEBUG` environment variable, developers can view internal session operation logs for troubleshooting. Examples are provided for both Unix-like and Windows environments.
@@ -1623,17 +1710,19 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: Bash
 CODE:
+
 ```
 DEBUG=express-session npm start
 ```
 
 LANGUAGE: CMD
 CODE:
+
 ```
 set DEBUG=express-session & npm start
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic GET Route in Express.js
 DESCRIPTION: This snippet demonstrates a basic GET route handler for the homepage ('/') in an Express.js application. It initializes an Express app and sends 'hello world' as a response to incoming GET requests.
@@ -1642,6 +1731,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/routing
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
@@ -1652,7 +1742,7 @@ app.get('/', (req, res) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Middleware Path Matching (Group Optional)
 DESCRIPTION: Example of an Express.js middleware path pattern using `()` for grouping and `?` for optionality. This middleware will match paths starting with `/ad` (where 'bc' group is absent) and `/abcd` (where 'bc' group is present).
@@ -1661,13 +1751,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.use('/a(bc)?d', function (req, res, next) {
   next()
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Express.js temporarily without saving to dependencies
 DESCRIPTION: Use the `--no-save` option with `npm install` to install Express.js for temporary use without adding it to the `dependencies` list in `package.json`. This is useful for testing or one-off tasks.
@@ -1676,11 +1767,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/installing
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ npm install express --no-save
 ```
 
-----------------------------------------
+---
 
 TITLE: Install serve-favicon Node.js module
 DESCRIPTION: This snippet provides the command to install the `serve-favicon` Node.js module. It uses `npm install` to add the package to your project dependencies, making the middleware available for use in your application.
@@ -1689,11 +1781,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/resources/middleware/se
 
 LANGUAGE: Shell
 CODE:
+
 ```
 npm install serve-favicon
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Start UNIX Socket Listener
 DESCRIPTION: Starts a UNIX socket and listens for incoming connections on the specified path. This method is analogous to Node.js's `http.Server.listen()` and is used for server initialization.
@@ -1702,13 +1795,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const express = require('express')
 const app = express()
 app.listen('/tmp/sock')
 ```
 
-----------------------------------------
+---
 
 TITLE: CouchDB: Install Nano Module
 DESCRIPTION: Command to install the 'nano' module, the official CouchDB client library for Node.js, using npm.
@@ -1717,11 +1811,12 @@ SOURCE: https://expressjs.com/en/starter/installing.html/guide/database-integrat
 
 LANGUAGE: Shell
 CODE:
+
 ```
 $ npm install nano
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Getting Subdomains with req.subdomains
 DESCRIPTION: The `req.subdomains` property provides an array of subdomains extracted from the domain name of the request. The application's `subdomain offset` setting, which defaults to 2, determines the starting point for identifying subdomain segments.
@@ -1730,13 +1825,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/5x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 // Host: "tobi.ferrets.example.com"
 console.dir(req.subdomains)
 // => ["ferrets", "tobi"]
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Dependencies for Generated Express App
 DESCRIPTION: Navigate into the newly created Express application directory and install its required Node.js dependencies using npm.
@@ -1745,12 +1841,13 @@ SOURCE: https://expressjs.com/en/starter/installing.html/starter/generator
 
 LANGUAGE: shell
 CODE:
+
 ```
 $ cd myapp
 $ npm install
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js Router Route with Multiple HTTP Method Handlers
 DESCRIPTION: This example demonstrates how to use `router.route()` to define handlers for `all`, `get`, `put`, `post`, and `delete` HTTP methods on a single path (`/users/:user_id`), leveraging `router.param()` for user ID extraction and showing route-specific middleware.
@@ -1759,6 +1856,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const router = express.Router()
 
@@ -1794,7 +1892,7 @@ router.route('/users/:user_id')
   })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js app.delete() Route Example
 DESCRIPTION: Shows a basic example of handling a DELETE request to the root path (`/`) using `app.delete()`.
@@ -1803,13 +1901,14 @@ SOURCE: https://expressjs.com/en/starter/installing.html/api
 
 LANGUAGE: javascript
 CODE:
+
 ```
 app.delete('/', (req, res) => {
   res.send('DELETE request to homepage')
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Express.js: Handling Multiple HTTP Methods with router.route()
 DESCRIPTION: This example demonstrates how to use `router.route()` in Express.js to define a single path (`/users/:user_id`) and attach handlers for various HTTP methods (GET, PUT, POST, DELETE) and an `all` middleware. It builds upon a `router.param()` example to fetch user data, showcasing route-specific middleware and how to manage different operations for the same resource. Middleware ordering is based on route creation time, not when method handlers are added.
@@ -1818,6 +1917,7 @@ SOURCE: https://expressjs.com/en/starter/installing.html/4x/api
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 var router = express.Router()
 

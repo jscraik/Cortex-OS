@@ -4,7 +4,7 @@ meta:
     }}</template>`.
 
     # SEO a
-  role: '''Home'', desc'
+  role: "'Home', desc"
   version: 1.1.0
   model_targets:
     - general

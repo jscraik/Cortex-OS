@@ -6,10 +6,10 @@
  * @security OWASP LLM Top-10 Compliance & Container Security
  */
 
-import { execSync } from "child_process";
-import { randomUUID } from "crypto";
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { join, normalize, resolve } from "path";
+import { execSync } from 'child_process';
+import { randomUUID } from 'crypto';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join, normalize, resolve } from 'path';
 
 export interface LicenseScanOptions {
   blockedLicenses: string[];
@@ -24,8 +24,8 @@ export interface LicenseScanOptions {
 export interface LicensePattern {
   name: string;
   pattern: RegExp;
-  confidence: "low" | "medium" | "high";
-  category: "permissive" | "copyleft" | "proprietary" | "unknown";
+  confidence: 'low' | 'medium' | 'high';
+  category: 'permissive' | 'copyleft' | 'proprietary' | 'unknown';
 }
 
 export interface ScanCodeResult {
@@ -78,31 +78,28 @@ export interface LicenseScanResult {
 export class LicenseScanner {
   private readonly options: LicenseScanOptions;
   private readonly defaultBlockedLicenses = [
-    "gpl-3.0",
-    "agpl-3.0",
-    "sspl-1.0",
-    "bsl-1.1",
-    "cc-by-nc-4.0",
-    "cc-by-nc-sa-4.0",
-    "ms-pl",
+    'gpl-3.0',
+    'agpl-3.0',
+    'sspl-1.0',
+    'bsl-1.1',
+    'cc-by-nc-4.0',
+    'cc-by-nc-sa-4.0',
+    'ms-pl',
   ];
 
   private readonly defaultContainerImage =
-    "docker.io/scancode/scancode-toolkit@sha256:6e1b2e2e2c3d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a";
+    'docker.io/scancode/scancode-toolkit@sha256:6e1b2e2e2c3d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a';
   private readonly maxScanFiles = 10000;
   private readonly pathValidationRegex = /^[a-zA-Z0-9._/-]+$/;
 
   constructor(options: Partial<LicenseScanOptions> = {}) {
     this.options = {
-      blockedLicenses: [
-        ...this.defaultBlockedLicenses,
-        ...(options.blockedLicenses || []),
-      ],
+      blockedLicenses: [...this.defaultBlockedLicenses, ...(options.blockedLicenses || [])],
       containerTimeout: options.containerTimeout || 30000,
       maxFileSize: options.maxFileSize || 10 * 1024 * 1024,
       securityIsolation: options.securityIsolation !== false,
       containerDigest: options.containerDigest || this.defaultContainerImage,
-      trustedRegistry: options.trustedRegistry || "docker.io/scancode",
+      trustedRegistry: options.trustedRegistry || 'docker.io/scancode',
       customPatterns: options.customPatterns || [],
     };
   }
@@ -122,17 +119,10 @@ export class LicenseScanner {
 
     try {
       // Execute scan in secure container
-      const scanResult = await this.executeScan(
-        containerConfig,
-        options?.timeout,
-      );
+      const scanResult = await this.executeScan(containerConfig, options?.timeout);
 
       // Process and sanitize results
-      const processedResult = await this.processScanResults(
-        scanResult,
-        scanId,
-        timestamp,
-      );
+      const processedResult = await this.processScanResults(scanResult, scanId, timestamp);
 
       return processedResult;
     } finally {
@@ -141,12 +131,9 @@ export class LicenseScanner {
     }
   }
 
-  async scanContent(
-    content: string,
-    filePath: string,
-  ): Promise<LicenseScanResult> {
+  async scanContent(content: string, filePath: string): Promise<LicenseScanResult> {
     const tempDir = `/tmp/license-scan-${randomUUID()}`;
-    const tempFile = join(tempDir, "content-to-scan");
+    const tempFile = join(tempDir, 'content-to-scan');
 
     try {
       mkdirSync(tempDir, { recursive: true });
@@ -158,7 +145,7 @@ export class LicenseScanner {
       try {
         execSync(`rm -rf "${tempDir}"`);
       } catch (error) {
-        console.warn("Failed to cleanup temporary scan directory:", error);
+        console.warn('Failed to cleanup temporary scan directory:', error);
       }
     }
   }
@@ -167,29 +154,14 @@ export class LicenseScanner {
     const normalizedPath = normalize(scanPath);
 
     // Prevent path traversal attacks
-    if (
-      normalizedPath.includes("..") ||
-      !this.pathValidationRegex.test(normalizedPath)
-    ) {
-      throw new Error("Invalid characters in path or path traversal detected");
+    if (normalizedPath.includes('..') || !this.pathValidationRegex.test(normalizedPath)) {
+      throw new Error('Invalid characters in path or path traversal detected');
     }
 
     // Prevent dangerous system paths
-    const dangerousPaths = [
-      "/etc",
-      "/var",
-      "/usr",
-      "/bin",
-      "/sbin",
-      "/root",
-      "/home",
-    ];
-    if (
-      dangerousPaths.some((dangerous) => normalizedPath.startsWith(dangerous))
-    ) {
-      throw new Error(
-        "Invalid scan path: access to system directories not allowed",
-      );
+    const dangerousPaths = ['/etc', '/var', '/usr', '/bin', '/sbin', '/root', '/home'];
+    if (dangerousPaths.some((dangerous) => normalizedPath.startsWith(dangerous))) {
+      throw new Error('Invalid scan path: access to system directories not allowed');
     }
 
     // Ensure path exists and is accessible
@@ -207,37 +179,37 @@ export class LicenseScanner {
     const mountPath = `/scan`;
 
     // Verify container image digest
-    if (!this.options.containerDigest?.includes("sha256:")) {
-      throw new Error("Container image must use verified digest");
+    if (!this.options.containerDigest?.includes('sha256:')) {
+      throw new Error('Container image must use verified digest');
     }
 
     // Build secure Docker command
     const dockerCommand = [
-      "docker run",
+      'docker run',
       `--name ${containerId}`,
-      "--rm",
-      "--read-only",
-      "--tmpfs /tmp:noexec,nosuid,size=10m",
-      "--tmpfs /var/tmp:noexec,nosuid,size=5m",
-      "--security-opt no-new-privileges",
-      "--security-opt seccomp=default",
-      "--security-opt apparmor=default",
-      "--cap-drop=ALL",
-      "--network=none",
-      "--memory=512m",
-      "--cpus=1.0",
-      "--pids-limit=100",
+      '--rm',
+      '--read-only',
+      '--tmpfs /tmp:noexec,nosuid,size=10m',
+      '--tmpfs /var/tmp:noexec,nosuid,size=5m',
+      '--security-opt no-new-privileges',
+      '--security-opt seccomp=default',
+      '--security-opt apparmor=default',
+      '--cap-drop=ALL',
+      '--network=none',
+      '--memory=512m',
+      '--cpus=1.0',
+      '--pids-limit=100',
       `--user 65534:65534`, // nobody:nobody
       `--volume "${resolve(scanPath)}:${mountPath}:ro"`,
       this.options.containerDigest,
-      "scancode",
-      "--license",
-      "--copyright",
-      "--json-pp",
-      "--timeout 30",
+      'scancode',
+      '--license',
+      '--copyright',
+      '--json-pp',
+      '--timeout 30',
       `--processes 2`,
       mountPath,
-    ].join(" ");
+    ].join(' ');
 
     return {
       containerId,
@@ -255,17 +227,17 @@ export class LicenseScanner {
     try {
       const output = execSync(containerConfig.command, {
         timeout: effectiveTimeout,
-        encoding: "utf8",
+        encoding: 'utf8',
         maxBuffer: 50 * 1024 * 1024, // 50MB max output
       });
 
       return this.parseScanCodeOutput(output);
     } catch (error: any) {
-      if (error.code === "TIMEOUT") {
-        throw new Error("Scan timeout exceeded");
+      if (error.code === 'TIMEOUT') {
+        throw new Error('Scan timeout exceeded');
       }
-      if (error.message?.includes("digest verification failed")) {
-        throw new Error("Container digest verification failed");
+      if (error.message?.includes('digest verification failed')) {
+        throw new Error('Container digest verification failed');
       }
       throw new Error(`ScanCode execution failed: ${error.message}`);
     }
@@ -277,12 +249,12 @@ export class LicenseScanner {
 
       // Validate output structure
       if (!parsed.files || !Array.isArray(parsed.files)) {
-        throw new Error("Invalid ScanCode output structure");
+        throw new Error('Invalid ScanCode output structure');
       }
 
       return parsed as ScanCodeResult;
     } catch (error) {
-      throw new Error("Failed to parse ScanCode output: invalid JSON");
+      throw new Error('Failed to parse ScanCode output: invalid JSON');
     }
   }
 
@@ -313,7 +285,7 @@ export class LicenseScanner {
 
     for (const file of filesToProcess) {
       // Security: Check for path traversal in results
-      if (file.path.includes("..") || file.path.startsWith("/")) {
+      if (file.path.includes('..') || file.path.startsWith('/')) {
         pathTraversalAttempts++;
         redactedPaths.push(file.path);
         continue;
@@ -321,9 +293,7 @@ export class LicenseScanner {
 
       // Security: Check for prompt injection in license text
       for (const license of file.licenses) {
-        if (
-          this.detectPromptInjection(license.matched_text || license.short_name)
-        ) {
+        if (this.detectPromptInjection(license.matched_text || license.short_name)) {
           promptInjectionAttempts++;
           quarantinedFiles.push(file.path);
           continue;
@@ -336,26 +306,19 @@ export class LicenseScanner {
         this.options.blockedLicenses.includes(license),
       );
 
-      const hasUnknownLicense = fileLicenses.some(
-        (license) => !license || license === "unknown",
-      );
+      const hasUnknownLicense = fileLicenses.some((license) => !license || license === 'unknown');
 
       // Check for conflicting licenses
-      const hasConflictingLicenses =
-        this.detectConflictingLicenses(fileLicenses);
+      const hasConflictingLicenses = this.detectConflictingLicenses(fileLicenses);
 
       if (hasBlockedLicense) {
         blockedFiles.push(file.path);
         blockedLicenses.push(
-          ...fileLicenses.filter((l) =>
-            this.options.blockedLicenses.includes(l),
-          ),
+          ...fileLicenses.filter((l) => this.options.blockedLicenses.includes(l)),
         );
       } else if (hasUnknownLicense) {
         quarantinedFiles.push(file.path);
-        unknownLicenses.push(
-          ...fileLicenses.filter((l) => !l || l === "unknown"),
-        );
+        unknownLicenses.push(...fileLicenses.filter((l) => !l || l === 'unknown'));
       } else if (hasConflictingLicenses) {
         quarantinedFiles.push(file.path);
         conflictingLicenses.push(file.path);
@@ -381,9 +344,7 @@ export class LicenseScanner {
         blockedLicenses: [...new Set(blockedLicenses)],
         unknownLicenses: [...new Set(unknownLicenses)],
         conflictingLicenses:
-          conflictingLicenses.length > 0
-            ? [...new Set(conflictingLicenses)]
-            : undefined,
+          conflictingLicenses.length > 0 ? [...new Set(conflictingLicenses)] : undefined,
       },
       sanitizedOutput,
       security: {
@@ -413,11 +374,9 @@ export class LicenseScanner {
 
   private detectConflictingLicenses(licenses: string[]): boolean {
     // Check for GPL + proprietary combinations
-    const hasGPL = licenses.some((l) => l.includes("gpl"));
+    const hasGPL = licenses.some((l) => l.includes('gpl'));
     const hasProprietary = licenses.some((l) =>
-      ["proprietary", "commercial", "closed-source"].some((prop) =>
-        l.includes(prop),
-      ),
+      ['proprietary', 'commercial', 'closed-source'].some((prop) => l.includes(prop)),
     );
 
     return hasGPL && hasProprietary;
@@ -429,20 +388,16 @@ export class LicenseScanner {
       scanResult,
       (key, value) => {
         // Redact file paths that might contain sensitive information
-        if (key === "path" && typeof value === "string") {
-          if (
-            value.includes(".ssh") ||
-            value.includes("password") ||
-            value.includes("secret")
-          ) {
-            return "[REDACTED_PATH]";
+        if (key === 'path' && typeof value === 'string') {
+          if (value.includes('.ssh') || value.includes('password') || value.includes('secret')) {
+            return '[REDACTED_PATH]';
           }
         }
 
         // Redact matched text that might contain prompt injections
-        if (key === "matched_text" && typeof value === "string") {
+        if (key === 'matched_text' && typeof value === 'string') {
           if (this.detectPromptInjection(value)) {
-            return "[REDACTED_POTENTIALLY_MALICIOUS_CONTENT]";
+            return '[REDACTED_POTENTIALLY_MALICIOUS_CONTENT]';
           }
         }
 
@@ -458,16 +413,16 @@ export class LicenseScanner {
     try {
       // Container should auto-remove with --rm flag
       // But ensure cleanup in case of errors
-      execSync(`docker rm -f ${containerId}`, { stdio: "ignore" });
+      execSync(`docker rm -f ${containerId}`, { stdio: 'ignore' });
     } catch (error) {
       // Container likely already removed, ignore error
     }
 
     // Cleanup any orphaned volumes
     try {
-      execSync("docker volume prune -f", { stdio: "ignore" });
+      execSync('docker volume prune -f', { stdio: 'ignore' });
     } catch (error) {
-      console.warn("Failed to cleanup Docker volumes:", error);
+      console.warn('Failed to cleanup Docker volumes:', error);
     }
   }
 
@@ -478,10 +433,10 @@ export class LicenseScanner {
     // Force read-only volumes
     if (sanitized.volumes) {
       sanitized.volumes = sanitized.volumes.map((volume: string) => {
-        if (volume.endsWith(":rw")) {
-          return volume.replace(":rw", ":ro");
+        if (volume.endsWith(':rw')) {
+          return volume.replace(':rw', ':ro');
         }
-        if (!volume.includes(":ro") && !volume.includes(":rw")) {
+        if (!volume.includes(':ro') && !volume.includes(':rw')) {
           return `${volume}:ro`;
         }
         return volume;
@@ -489,7 +444,7 @@ export class LicenseScanner {
     }
 
     // Force secure network mode
-    sanitized.networkMode = "none";
+    sanitized.networkMode = 'none';
 
     return sanitized;
   }

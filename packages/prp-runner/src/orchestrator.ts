@@ -126,11 +126,11 @@ export class PRPOrchestrator {
     }
 
     // Check if any neurons require LLM and configuration is missing
-    const llmNeurons = Array.from(this.neurons.values()).filter(n => n.requiresLLM);
+    const llmNeurons = Array.from(this.neurons.values()).filter((n) => n.requiresLLM);
     if (llmNeurons.length > 0 && !this.llmConfig) {
       throw new Error('LLM configuration required for LLM-powered neurons');
     }
-    
+
     // Create execution context with LLM bridge
     const context: any = {
       workingDirectory: process.cwd(),
@@ -143,20 +143,20 @@ export class PRPOrchestrator {
     };
 
     const outputs: any = {};
-    
+
     // Execute each neuron
     for (const neuron of this.neurons.values()) {
       const state = { id: `prp-${Date.now()}`, phase: 'strategy', blueprint, outputs };
       const result = await neuron.execute(state, context);
       outputs[neuron.id] = result.output;
     }
-    
+
     return {
       id: `prp-${Date.now()}`,
       phase: 'strategy',
       blueprint,
       outputs,
-      status: 'completed'
+      status: 'completed',
     };
   }
 }

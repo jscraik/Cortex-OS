@@ -3,7 +3,7 @@
 ## Structure Overview
 
 - **packs/**: Tech stack templates and research prompts
-- **rules/**: Core prompt specifications and behavioral rules  
+- **rules/**: Core prompt specifications and behavioral rules
 - **schemas/**: TypeScript/JSON schemas for validation
 - **personas/**: Role-based configurations (analyst, architect, product)
 - **blueprints/**: Architecture templates and patterns
@@ -13,6 +13,7 @@
 ## Integration with Governance
 
 This library system integrates with the governance structure:
+
 - Schemas validate against `../schemas/`
 - Rules enforce policies from `../policy/`
 - Gates use validation from `../gates/`

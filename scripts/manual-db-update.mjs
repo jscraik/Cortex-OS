@@ -7,15 +7,36 @@ import { join } from 'path';
 
 console.log('Manually updating DatabaseManager.ts to prepare for SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Add a comment to indicate where SecureDatabaseWrapper should be used
 const methodsToUpdate = [
-  'createSwarm', 'setActiveSwarm', 'createAgent', 'updateAgent', 'updateAgentStatus',
-  'createTask', 'updateTask', 'updateTaskStatus', 'storeMemory', 'updateMemoryAccess',
-  'deleteMemory', 'updateMemoryEntry', 'createCommunication', 'updateCommunicationStatus',
-  'createConsensus', 'updateConsensus', 'storeMetric'
+  'createSwarm',
+  'setActiveSwarm',
+  'createAgent',
+  'updateAgent',
+  'updateAgentStatus',
+  'createTask',
+  'updateTask',
+  'updateTaskStatus',
+  'storeMemory',
+  'updateMemoryAccess',
+  'deleteMemory',
+  'updateMemoryEntry',
+  'createCommunication',
+  'updateCommunicationStatus',
+  'createConsensus',
+  'updateConsensus',
+  'storeMetric',
 ];
 
 // Add a TODO comment at the top of the class
@@ -23,7 +44,7 @@ if (!content.includes('TODO: Implement SecureDatabaseWrapper')) {
   content = content.replace(
     'export class DatabaseManager extends EventEmitter {',
     `export class DatabaseManager extends EventEmitter {
-  // TODO: Implement SecureDatabaseWrapper for all database operations`
+  // TODO: Implement SecureDatabaseWrapper for all database operations`,
   );
 }
 
@@ -34,7 +55,7 @@ for (const method of methodsToUpdate) {
     content = content.replace(
       pattern,
       `async ${method}(...) {
-    // TODO: Use SecureDatabaseWrapper for this operation`
+    // TODO: Use SecureDatabaseWrapper for this operation`,
     );
   }
 }

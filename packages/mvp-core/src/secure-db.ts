@@ -50,4 +50,3 @@ export class SecureDatabaseWrapper {
     return stmt.all(...params);
   }
 }
-

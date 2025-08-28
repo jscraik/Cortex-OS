@@ -34,7 +34,7 @@ const AppConfigSchema = z.object({
   cacheDir: z.string().min(1),
   cacheTtl: z.number().positive(),
   port: z.number().optional().default(3000),
-  host: z.string().optional().default('0.0.0.0')
+  host: z.string().optional().default('0.0.0.0'),
 });
 
 export function build(config: AppConfig): FastifyInstance {
@@ -43,19 +43,21 @@ export function build(config: AppConfig): FastifyInstance {
 
   // Create Fastify instance
   const fastify = Fastify({
-    logger: validatedConfig.logger ? {
-      level: 'info',
-      transport: {
-        target: 'pino-pretty'
-      }
-    } : false
+    logger: validatedConfig.logger
+      ? {
+          level: 'info',
+          transport: {
+            target: 'pino-pretty',
+          },
+        }
+      : false,
   });
 
   // Initialize services
   const registryService = new RegistryService({
     registries: validatedConfig.registries,
     cacheDir: validatedConfig.cacheDir,
-    cacheTtl: validatedConfig.cacheTtl
+    cacheTtl: validatedConfig.cacheTtl,
   });
 
   const marketplaceService = new MarketplaceService(registryService);
@@ -73,7 +75,7 @@ export function build(config: AppConfig): FastifyInstance {
   // Error handler
   fastify.setErrorHandler(async (error, request, reply) => {
     const statusCode = error.statusCode || 500;
-    
+
     fastify.log.error(error, 'Request failed');
 
     return reply.status(statusCode).send({
@@ -81,8 +83,8 @@ export function build(config: AppConfig): FastifyInstance {
       error: {
         code: error.code || 'INTERNAL_ERROR',
         message: error.message || 'An unexpected error occurred',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      }
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      },
     });
   });
 
@@ -92,8 +94,8 @@ export function build(config: AppConfig): FastifyInstance {
       success: false,
       error: {
         code: 'NOT_FOUND',
-        message: `Route ${request.method} ${request.url} not found`
-      }
+        message: `Route ${request.method} ${request.url} not found`,
+      },
     });
   });
 
@@ -103,7 +105,7 @@ export function build(config: AppConfig): FastifyInstance {
 function registerPlugins(fastify: FastifyInstance): void {
   // Security
   fastify.register(helmet, {
-    contentSecurityPolicy: false // Disable for Swagger UI
+    contentSecurityPolicy: false, // Disable for Swagger UI
   });
 
   // CORS
@@ -114,10 +116,10 @@ function registerPlugins(fastify: FastifyInstance): void {
       'https://cline.bot',
       'https://devin.ai',
       /^https:\/\/.*\.anthropic\.com$/,
-      /^http:\/\/localhost:\d+$/
+      /^http:\/\/localhost:\d+$/,
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   });
 
   // Rate limiting
@@ -129,9 +131,9 @@ function registerPlugins(fastify: FastifyInstance): void {
       error: {
         code: 'RATE_LIMITED',
         message: `Too many requests. Try again in ${context.ttl} seconds.`,
-        retryAfter: context.ttl
-      }
-    })
+        retryAfter: context.ttl,
+      },
+    }),
   });
 
   // Swagger documentation
@@ -140,7 +142,7 @@ function registerPlugins(fastify: FastifyInstance): void {
       info: {
         title: 'Cortex MCP Marketplace API',
         description: 'API for discovering and managing MCP servers',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       host: 'api.cortex-os.dev',
       schemes: ['https'],
@@ -151,16 +153,16 @@ function registerPlugins(fastify: FastifyInstance): void {
         { name: 'registries', description: 'Registry management' },
         { name: 'categories', description: 'Server categories' },
         { name: 'stats', description: 'Marketplace statistics' },
-        { name: 'health', description: 'Health checks' }
-      ]
-    }
+        { name: 'health', description: 'Health checks' },
+      ],
+    },
   });
 
   fastify.register(swaggerUi, {
     routePrefix: '/documentation',
     uiConfig: {
       docExpansion: 'full',
-      deepLinking: false
+      deepLinking: false,
     },
     uiHooks: {
       onRequest: function (request, reply, next) {
@@ -168,10 +170,10 @@ function registerPlugins(fastify: FastifyInstance): void {
       },
       preHandler: function (request, reply, next) {
         next();
-      }
+      },
     },
     staticCSP: true,
-    transformStaticCSP: (header) => header
+    transformStaticCSP: (header) => header,
   });
 }
 

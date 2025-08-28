@@ -30,7 +30,7 @@ Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a go
 ### Communication Patterns
 
 1. **A2A Event Bus** - Async pub/sub messaging via JSON-RPC 2.0
-2. **Service Interfaces** - DI-based contracts via ASBR coordination  
+2. **Service Interfaces** - DI-based contracts via ASBR coordination
 3. **MCP Tools** - External integrations and side effects
 
 **Critical**: Direct imports between feature packages are **forbidden** by ESLint rules. Use A2A events or service interfaces.
@@ -134,7 +134,7 @@ pnpm mcp:test
 # Run smoke tests
 pnpm simlab:smoke
 
-# Critical system tests  
+# Critical system tests
 pnpm simlab:critical
 
 # Full test suite
@@ -156,7 +156,7 @@ pnpm simlab:report
 ```
 packages:
   - 'apps/*'           # Applications
-  - 'packages/*'       # Shared libraries  
+  - 'packages/*'       # Shared libraries
   - 'packages/a2a/a2a-*'     # A2A sub-packages
   - 'packages/mcp/mcp-*'     # MCP sub-packages
   - 'libs/*'           # Framework libraries
@@ -172,7 +172,7 @@ TypeScript path mapping is configured for clean imports:
 import { EventBus } from '@cortex-os/a2a-core/bus';
 import { Transport } from '@cortex-os/a2a-transport/fsq';
 
-// MCP packages  
+// MCP packages
 import { McpClient } from '@cortex-os/mcp-core/client';
 import { PluginRegistry } from '@cortex-os/mcp-registry/fs-store';
 
@@ -225,7 +225,7 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 ## Key Architecture Principles
 
 1. **Event-Driven**: All inter-package communication via A2A events
-2. **Loose Coupling**: No direct cross-package imports enforced by linting  
+2. **Loose Coupling**: No direct cross-package imports enforced by linting
 3. **Contract-Based**: Well-defined interfaces with Zod validation
 4. **Security-First**: OWASP compliance and capability boundaries
 5. **Test-Driven**: Comprehensive coverage with quality gates

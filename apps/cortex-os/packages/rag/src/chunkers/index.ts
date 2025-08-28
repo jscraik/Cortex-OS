@@ -1,2 +1,2 @@
 // Chunkers module exports
-export * from "./dispatch.js";
+export * from './dispatch.js';

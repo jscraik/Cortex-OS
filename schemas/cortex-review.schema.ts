@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Evidence schema with file path and hash validation
 export const Evidence = z.object({
@@ -7,35 +7,25 @@ export const Evidence = z.object({
   end: z.number().int().nonnegative(),
   claim: z.string().min(1),
   hash: z.string().min(8),
-  neuron: z.enum(["planner", "fixer", "runner", "reviewer"]).optional(),
+  neuron: z.enum(['planner', 'fixer', 'runner', 'reviewer']).optional(),
   timestamp: z.string().datetime().optional(),
 });
 
 // Finding with severity and category classification
 export const Finding = z.object({
   id: z.string(),
-  severity: z.enum(["blocker", "major", "minor", "nit"]),
-  category: z.enum([
-    "a11y",
-    "tests",
-    "security",
-    "perf",
-    "style",
-    "docs",
-    "tdd",
-  ]),
+  severity: z.enum(['blocker', 'major', 'minor', 'nit']),
+  category: z.enum(['a11y', 'tests', 'security', 'perf', 'style', 'docs', 'tdd']),
   message: z.string(),
   evidence: z.array(Evidence).min(1),
-  neuron_responsible: z
-    .enum(["planner", "fixer", "runner", "reviewer"])
-    .optional(),
+  neuron_responsible: z.enum(['planner', 'fixer', 'runner', 'reviewer']).optional(),
   remediation_steps: z.array(z.string()).optional(),
 });
 
 // Validation gate results
 export const ValidationGate = z.object({
   name: z.string(),
-  status: z.enum(["pass", "fail", "skip"]),
+  status: z.enum(['pass', 'fail', 'skip']),
   command: z.string(),
   output: z.string().optional(),
   duration_ms: z.number().optional(),
@@ -44,8 +34,8 @@ export const ValidationGate = z.object({
 
 // Neuron-specific evidence collection
 export const NeuronEvidence = z.object({
-  neuron: z.enum(["planner", "fixer", "runner", "reviewer"]),
-  symbol: z.enum(["◆", "●", "■", "#"]),
+  neuron: z.enum(['planner', 'fixer', 'runner', 'reviewer']),
+  symbol: z.enum(['◆', '●', '■', '#']),
   tasks_completed: z.array(z.string()),
   artifacts_produced: z.array(z.string()),
   validation_results: z.array(ValidationGate).optional(),
@@ -54,7 +44,7 @@ export const NeuronEvidence = z.object({
 
 // Main review report following Cortex-OS patterns
 export const CortexReviewReport = z.object({
-  mode: z.enum(["ship", "research"]),
+  mode: z.enum(['ship', 'research']),
   cerebrum_flow: z.object({
     plan_presented: z.boolean(),
     cost_estimated: z.boolean(),
@@ -84,10 +74,10 @@ export const CortexReviewReport = z.object({
 
 // Context query schema for external context
 export const ContextQuery = z.object({
-  type: z.enum(["mcp_server", "documentation", "codebase_pattern", "example"]),
+  type: z.enum(['mcp_server', 'documentation', 'codebase_pattern', 'example']),
   target: z.string(),
   purpose: z.string(),
-  priority: z.enum(["critical", "important", "optional"]),
+  priority: z.enum(['critical', 'important', 'optional']),
 });
 
 // INITIAL.md schema for structured requirements

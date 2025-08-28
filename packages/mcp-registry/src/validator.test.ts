@@ -33,6 +33,6 @@ test('detects duplicate server ids and mismatched count', () => {
     signing: { sigstoreBundleUrl: 'https://example.com/bundle', publicKey: 'key' },
   };
   const result = validateRegistry(registry);
-  expect(result.errors.some(e => e.code === 'duplicate_id')).toBe(true);
-  expect(result.warnings.some(w => w.path === 'metadata.serverCount')).toBe(true);
+  expect(result.errors.some((e) => e.code === 'duplicate_id')).toBe(true);
+  expect(result.warnings.some((w) => w.path === 'metadata.serverCount')).toBe(true);
 });

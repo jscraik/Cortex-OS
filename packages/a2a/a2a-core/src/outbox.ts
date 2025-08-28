@@ -31,7 +31,7 @@ import {
   OutboxProcessingResult,
   OutboxRepository,
   OutboxPublisher,
-  OutboxProcessor
+  OutboxProcessor,
 } from '../../a2a-contracts/src/outbox-types';
 import { createTraceParent } from '../../a2a-contracts/src/trace-context';
 
@@ -46,7 +46,7 @@ import { createTraceParent } from '../../a2a-contracts/src/trace-context';
 export class ReliableOutboxPublisher implements OutboxPublisher {
   constructor(
     private readonly transport: { publish: (envelope: Envelope) => Promise<void> },
-    private readonly config: OutboxConfig = {}
+    private readonly config: OutboxConfig = {},
   ) {}
   async publish(message: OutboxMessage): Promise<void> {
     // Inject current trace context if available
@@ -80,7 +80,7 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
     const chunks = this.chunkArray(messages, concurrency);
 
     for (const chunk of chunks) {
-      await Promise.allSettled(chunk.map(msg => this.publish(msg)));
+      await Promise.allSettled(chunk.map((msg) => this.publish(msg)));
     }
   }
 
@@ -103,7 +103,7 @@ export class ReliableOutboxProcessor implements OutboxProcessor {
   constructor(
     private readonly repository: OutboxRepository,
     private readonly publisher: OutboxPublisher,
-    private readonly config: Required<OutboxConfig>
+    private readonly config: Required<OutboxConfig>,
   ) {}
 
   async processPending(): Promise<OutboxProcessingResult> {
@@ -117,7 +117,7 @@ export class ReliableOutboxProcessor implements OutboxProcessor {
       // Get pending messages
       const messages = await this.repository.findByStatus(
         OutboxMessageStatus.PENDING,
-        this.config.batchSize
+        this.config.batchSize,
       );
 
       if (messages.length === 0) {
@@ -128,15 +128,11 @@ export class ReliableOutboxProcessor implements OutboxProcessor {
 
       // Mark messages as processing
       await Promise.all(
-        messages.map(msg =>
-          this.repository.updateStatus(msg.id, OutboxMessageStatus.PROCESSING)
-        )
+        messages.map((msg) => this.repository.updateStatus(msg.id, OutboxMessageStatus.PROCESSING)),
       );
 
       // Process messages
-      const results = await Promise.allSettled(
-        messages.map(msg => this.processMessage(msg))
-      );
+      const results = await Promise.allSettled(messages.map((msg) => this.processMessage(msg)));
 
       // Count results
       for (let i = 0; i < results.length; i++) {
@@ -161,7 +157,6 @@ export class ReliableOutboxProcessor implements OutboxProcessor {
           await this.repository.moveToDeadLetter(message.id, 'Max retries exceeded');
         }
       }
-
     } catch (error) {
       console.error('Outbox processing error:', error);
     }
@@ -185,9 +180,7 @@ export class ReliableOutboxProcessor implements OutboxProcessor {
 
       processed = messages.length;
 
-      const results = await Promise.allSettled(
-        messages.map(msg => this.processMessage(msg))
-      );
+      const results = await Promise.allSettled(messages.map((msg) => this.processMessage(msg)));
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
@@ -202,7 +195,6 @@ export class ReliableOutboxProcessor implements OutboxProcessor {
           await this.handleProcessingError(message, error);
         }
       }
-
     } catch (error) {
       console.error('Outbox retry processing error:', error);
     }
@@ -272,7 +264,7 @@ export class EnhancedOutbox {
   constructor(
     private readonly repository: OutboxRepository,
     private readonly publisher: OutboxPublisher,
-    private readonly processor: OutboxProcessor
+    private readonly processor: OutboxProcessor,
   ) {}
 
   /**
@@ -288,7 +280,7 @@ export class EnhancedOutbox {
       status: OutboxMessageStatus.PENDING,
       retryCount: 0,
       maxRetries: 3,
-      ...this.extractTraceContext()
+      ...this.extractTraceContext(),
     };
 
     return await this.repository.save(outboxMessage);
@@ -297,14 +289,16 @@ export class EnhancedOutbox {
   /**
    * Add multiple messages to outbox in a single transaction
    */
-  async addBatchToOutbox(messages: Array<Omit<OutboxMessage, 'id' | 'createdAt'>>): Promise<OutboxMessage[]> {
-    const outboxMessages = messages.map(message => ({
+  async addBatchToOutbox(
+    messages: Array<Omit<OutboxMessage, 'id' | 'createdAt'>>,
+  ): Promise<OutboxMessage[]> {
+    const outboxMessages = messages.map((message) => ({
       ...message,
       idempotencyKey: message.idempotencyKey || this.generateIdempotencyKey(message),
       status: OutboxMessageStatus.PENDING,
       retryCount: 0,
       maxRetries: 3,
-      ...this.extractTraceContext()
+      ...this.extractTraceContext(),
     }));
 
     return await this.repository.saveBatch(outboxMessages);
@@ -353,7 +347,7 @@ export class EnhancedOutbox {
       message.aggregateType,
       message.aggregateId,
       message.eventType,
-      message.correlationId || 'no-correlation'
+      message.correlationId || 'no-correlation',
     ];
     return components.join(':');
   }
@@ -371,8 +365,7 @@ export class EnhancedOutbox {
     return {
       traceparent: `00-${traceContext.traceId}-${traceContext.spanId}-${traceContext.traceFlags.toString(16).padStart(2, '0')}`,
       tracestate: traceContext.traceState,
-      baggage: traceContext.baggage
+      baggage: traceContext.baggage,
     };
   }
-
 }

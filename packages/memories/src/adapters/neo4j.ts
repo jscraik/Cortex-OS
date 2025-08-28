@@ -22,13 +22,13 @@ function assertLabelOrType(s: string) {
 export class Neo4j implements INeo4j {
   private driver: Driver;
   private secureNeo4j: SecureNeo4j;
-  
+
   constructor(uri: string, user: string, pass: string) {
     this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });
     // Initialize SecureNeo4j for secure operations
     this.secureNeo4j = new SecureNeo4j(uri, user, pass);
   }
-  
+
   async close() {
     await this.driver.close();
     await this.secureNeo4j.close();
@@ -40,7 +40,7 @@ export class Neo4j implements INeo4j {
       await this.secureNeo4j.upsertNode({
         id: node.id,
         label: node.label,
-        props: node.props
+        props: node.props,
       });
     } catch (error) {
       console.error('Error upserting node:', error);
@@ -55,7 +55,7 @@ export class Neo4j implements INeo4j {
         from: rel.from,
         to: rel.to,
         type: rel.type,
-        props: rel.props
+        props: rel.props,
       });
     } catch (error) {
       console.error('Error upserting relationship:', error);

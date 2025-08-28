@@ -16,15 +16,15 @@ describe('MCP Marketplace Integration', () => {
   beforeEach(() => {
     config = {
       registries: {
-        test: 'https://registry.cortex-os.dev/v1/registry.json'
+        test: 'https://registry.cortex-os.dev/v1/registry.json',
       },
       cacheDir: path.join(os.tmpdir(), 'cortex-test-cache'),
       cacheTtl: 300000,
       security: {
         requireSignatures: false,
         allowedRiskLevels: ['low', 'medium', 'high'],
-        trustedPublishers: []
-      }
+        trustedPublishers: [],
+      },
     };
 
     client = new MarketplaceClient(config);
@@ -40,7 +40,7 @@ describe('MCP Marketplace Integration', () => {
         registries: { invalid: 'not-a-url' },
         cacheDir: '',
         cacheTtl: -1,
-        security: {}
+        security: {},
       };
 
       expect(() => new MarketplaceClient(invalidConfig as any)).toThrow();
@@ -53,7 +53,7 @@ describe('MCP Marketplace Integration', () => {
       const validRequest = {
         q: 'test',
         limit: 10,
-        offset: 0
+        offset: 0,
       };
 
       // This should not throw during validation
@@ -65,7 +65,7 @@ describe('MCP Marketplace Integration', () => {
     it('should reject invalid search parameters', async () => {
       const invalidRequest = {
         limit: -1, // Invalid limit
-        offset: 'invalid' as any // Invalid offset type
+        offset: 'invalid' as any, // Invalid offset type
       };
 
       const result = await client.search(invalidRequest);
@@ -96,11 +96,11 @@ describe('MCP Marketplace Integration', () => {
         category: 'utility' as const,
         license: 'MIT' as const,
         transport: {
-          stdio: { command: 'test-command' }
+          stdio: { command: 'test-command' },
         },
         install: {
           claude: 'test-command',
-          json: {}
+          json: {},
         },
         permissions: ['system:exec'], // High risk permission
         security: { riskLevel: 'high' as const }, // High risk
@@ -121,12 +121,12 @@ describe('MCP Marketplace Integration', () => {
       const offlineConfig = {
         ...config,
         registries: {
-          offline: 'https://nonexistent-registry-12345.invalid/v1/registry.json'
-        }
+          offline: 'https://nonexistent-registry-12345.invalid/v1/registry.json',
+        },
       };
 
       const offlineClient = new MarketplaceClient(offlineConfig);
-      
+
       // This should not crash, but return an error response
       const result = await offlineClient.search({ q: 'test', limit: 10, offset: 0 });
       expect(result).toBeDefined();
@@ -142,19 +142,19 @@ describe('MCP Marketplace Integration', () => {
   describe('Type Safety', () => {
     it('should ensure type safety for API responses', async () => {
       const result = await client.search({ q: 'test', limit: 5, offset: 0 });
-      
+
       // Response structure validation
       expect(result).toHaveProperty('success');
       expect(typeof result.success).toBe('boolean');
-      
+
       if (result.success) {
         expect(result).toHaveProperty('data');
         expect(result).toHaveProperty('meta');
-        
+
         if (result.data) {
           expect(Array.isArray(result.data)).toBe(true);
         }
-        
+
         if (result.meta) {
           expect(result.meta).toHaveProperty('total');
           expect(result.meta).toHaveProperty('offset');
@@ -175,7 +175,7 @@ describe('MCP Marketplace Integration', () => {
     it('should implement proper cache invalidation', () => {
       // Cache TTL should be respected
       expect(config.cacheTtl).toBe(300000); // 5 minutes
-      
+
       // Cache directory should be valid
       expect(config.cacheDir).toBeTruthy();
       expect(path.isAbsolute(config.cacheDir) || config.cacheDir.includes('tmp')).toBe(true);

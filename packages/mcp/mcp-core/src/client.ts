@@ -28,7 +28,7 @@ export function redactSensitiveData(data: any): any {
   }
 
   if (Array.isArray(data)) {
-    return data.map(item => redactSensitiveData(item));
+    return data.map((item) => redactSensitiveData(item));
   }
 
   if (typeof data === 'object' && data !== null) {
@@ -100,13 +100,13 @@ export async function createEnhancedClient(si: ServerInfo) {
       const redactedMessage = redactSensitiveData(message);
       return baseClient.sendRequest(redactedMessage);
     },
-    
+
     // Keep the original close method from the base client
     close: async () => {
-        // No need to dispose the rate limiter as it's not a global singleton.
-        // It will be garbage collected when the client is.
-        await transport.close();
-        baseClient.close();
+      // No need to dispose the rate limiter as it's not a global singleton.
+      // It will be garbage collected when the client is.
+      await transport.close();
+      baseClient.close();
     },
 
     // Expose rate limit info for inspection

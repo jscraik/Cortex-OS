@@ -1,4 +1,4 @@
-import type { Memory } from "./types.js";
+import type { Memory } from './types.js';
 
 export function isExpired(m: Memory, nowISO = new Date().toISOString()): boolean {
   if (!m.ttl) return false;
@@ -21,4 +21,3 @@ export function isoDurationToMs(iso: string): number {
   const secs = Number(m[4] || 0);
   return (((days * 24 + hours) * 60 + mins) * 60 + secs) * 1000;
 }
-

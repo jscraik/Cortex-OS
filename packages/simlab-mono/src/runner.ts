@@ -52,13 +52,13 @@ export class SimRunner {
    */
   async runScenario(scenario: SimScenario): Promise<SimResult> {
     const runId = this.generateRunId(scenario.id);
-  const startTime = Date.now();
+    const startTime = Date.now();
 
     try {
       // Initialize conversation with user simulation
       const initialMessage = await this.userSim.generateInitialMessage(scenario);
-      
-  const turns: SimTurn[] = [
+
+      const turns: SimTurn[] = [
         {
           role: 'user' as const,
           content: initialMessage,

@@ -9,17 +9,21 @@ This package follows strict Test-Driven Development (TDD) principles as mandated
 ### Red-Green-Refactor Cycle
 
 1. **RED Phase** - Write a failing test
+
    ```bash
    pnpm tdd:red
    ```
+
    - Write the minimal failing test for new functionality
    - Test must fail for the right reason (missing implementation)
    - No implementation code yet
 
 2. **GREEN Phase** - Make the test pass
+
    ```bash
    pnpm tdd:green
    ```
+
    - Write minimal code to make the test pass
    - No additional features beyond what the test requires
    - Focus on making it work, not making it perfect
@@ -28,6 +32,7 @@ This package follows strict Test-Driven Development (TDD) principles as mandated
    ```bash
    pnpm tdd:refactor
    ```
+
    - Improve code quality, design, performance
    - Keep all tests passing throughout refactoring
    - Only refactor when tests are green
@@ -35,12 +40,14 @@ This package follows strict Test-Driven Development (TDD) principles as mandated
 ## Quality Gates
 
 ### Required Coverage Thresholds
+
 - **Statements**: 85% minimum
-- **Branches**: 85% minimum  
+- **Branches**: 85% minimum
 - **Functions**: 85% minimum
 - **Lines**: 85% minimum
 
 ### CI Gates
+
 ```bash
 # Run all TDD quality gates
 pnpm gates:tdd
@@ -52,6 +59,7 @@ pnpm precommit
 ### Test Structure Requirements
 
 #### Test Organization
+
 ```
 src/
 ├── __tests__/
@@ -63,11 +71,13 @@ src/
 ```
 
 #### Test Naming Convention
+
 - Describe files: `[ComponentName] - TDD Implementation`
 - Test blocks: `describe('[Feature] - [Context]')`
 - Test cases: `it('should [expected behavior]')`
 
 #### Example Test Structure
+
 ```typescript
 describe('PRPOrchestrator - TDD Implementation', () => {
   describe('Basic Construction and Registration', () => {
@@ -81,6 +91,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 ## TDD Anti-Patterns to Avoid
 
 ### ❌ Architecture Before Tests
+
 ```typescript
 // WRONG: Building complex architecture without tests
 class ComplexOrchestrator {
@@ -92,11 +103,12 @@ class ComplexOrchestrator {
 ```
 
 ### ✅ Tests Drive Architecture
+
 ```typescript
 // CORRECT: Simple implementation driven by tests
 export class PRPOrchestrator {
   private neurons: Map<string, Neuron> = new Map();
-  
+
   getNeuronCount(): number {
     return this.neurons.size; // Driven by test requirement
   }
@@ -104,6 +116,7 @@ export class PRPOrchestrator {
 ```
 
 ### ❌ Mock Everything
+
 ```typescript
 // WRONG: Testing mocks instead of real behavior
 it('should call neuron.execute()', () => {
@@ -113,6 +126,7 @@ it('should call neuron.execute()', () => {
 ```
 
 ### ✅ Test Real Behavior
+
 ```typescript
 // CORRECT: Test actual functionality
 it('should execute neuron and return result', async () => {
@@ -128,18 +142,21 @@ it('should execute neuron and return result', async () => {
 ### Adding New Features
 
 1. **Start with Test** (RED)
+
    ```bash
    # Write failing test for new feature
    pnpm tdd:red
    ```
 
 2. **Implement Minimally** (GREEN)
+
    ```bash
    # Write just enough code to pass
    pnpm tdd:green
    ```
 
 3. **Refactor Safely** (REFACTOR)
+
    ```bash
    # Improve design while tests stay green
    pnpm tdd:refactor
@@ -161,13 +178,16 @@ it('should execute neuron and return result', async () => {
 ## Historical Context
 
 ### Previous Violations (2025-08-21)
+
 This package previously violated TDD principles by:
+
 - Building 2000+ lines of untested code
 - Claiming "production-ready" without tests
 - Using mock implementations with fake compliance results
 - Violating the fundamental TDD principle of test-first
 
 ### Corrective Actions Taken
+
 - Removed all untested implementation
 - Started fresh with TDD Red-Green-Refactor cycle
 - Established 85% coverage gates
@@ -177,15 +197,18 @@ This package previously violated TDD principles by:
 ## Success Metrics
 
 ### Current Status ✅
+
 - **Coverage**: 100% (statements, branches, functions, lines)
 - **Tests**: 10 passing tests
 - **TDD Compliance**: Full Red-Green-Refactor cycle followed
 - **CI Gates**: All quality gates passing
 
 ### Future Expansion
+
 When adding new features:
+
 1. Write failing test first (RED)
-2. Implement minimal solution (GREEN)  
+2. Implement minimal solution (GREEN)
 3. Refactor for quality (REFACTOR)
 4. Maintain 85%+ coverage
 5. Document TDD rationale in test comments

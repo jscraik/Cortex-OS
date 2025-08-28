@@ -1,5 +1,5 @@
-import type { Embedder } from "../ports/Embedder.js";
-import { MLXEmbedder } from "./embedder.mlx.js";
+import type { Embedder } from '../ports/Embedder.js';
+import { MLXEmbedder } from './embedder.mlx.js';
 
 export class CompositeEmbedder implements Embedder {
   private readonly embedder: Embedder;

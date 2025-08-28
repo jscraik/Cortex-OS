@@ -8,6 +8,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/assets
 
 LANGUAGE: html
 CODE:
+
 ```
 <!-- Example usage of UI Blocks -->
 <div class="ui-block">
@@ -17,6 +18,7 @@ CODE:
 
 LANGUAGE: javascript
 CODE:
+
 ```
 // Example JavaScript for UI Blocks functionality
 function initializeUIBlocks() {
@@ -26,6 +28,7 @@ function initializeUIBlocks() {
 
 LANGUAGE: react
 CODE:
+
 ```
 import React from 'react';
 
@@ -40,6 +43,7 @@ function UIBlockComponent() {
 
 LANGUAGE: vue
 CODE:
+
 ```
 <template>
   <div class="ui-block">
@@ -54,7 +58,7 @@ export default {
 </script>
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Latest Tailwind CSS
 DESCRIPTION: Command to update Tailwind CSS to the latest version via npm.
@@ -63,11 +67,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install tailwindcss@latest
 ```
 
-----------------------------------------
+---
 
 TITLE: Initial React Stacked List Component Example
 DESCRIPTION: Demonstrates a basic React component for displaying a stacked list of items. It includes hardcoded data and a simple `ul` structure, serving as a starting point for adaptation.
@@ -76,6 +81,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: React
 CODE:
+
 ```
 const people = [
   {
@@ -115,7 +121,7 @@ export default function Example() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Dialog Examples
 DESCRIPTION: Provides examples of how to use the dialog component, including basic usage, opening, closing, adding a backdrop, and implementing transitions. Full details and code require a Tailwind Plus license.
@@ -124,6 +130,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/dialog
 
 LANGUAGE: html
 CODE:
+
 ```
 <!-- Basic example -->
 <!-- Requires Tailwind Plus license for full code -->
@@ -141,7 +148,7 @@ CODE:
 <!-- Requires Tailwind Plus license for full code -->
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Tailwind Plus Elements via npm
 DESCRIPTION: This snippet demonstrates how to install the Tailwind Plus Elements library using npm, which is suitable for projects with a build pipeline. After installation, import the library into your root layout.
@@ -150,17 +157,19 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/using-html
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install @tailwindplus/elements
 ```
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import '@tailwindplus/elements';
 ```
 
-----------------------------------------
+---
 
 TITLE: Marketing UI Blocks
 DESCRIPTION: This section details the various marketing-focused UI blocks available, including hero sections, feature sections, pricing tables, headers, newsletters, testimonials, team sections, content sections, logo clouds, FAQs, and footers. It also includes flyout menus and banners.
@@ -169,6 +178,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: html
 CODE:
+
 ```
 <a href="https://tailwindcss.com/plus/ui-blocks/marketing/sections/heroes">Hero Sections</a>
 <a href="https://tailwindcss.com/plus/ui-blocks/marketing/sections/feature-sections">Feature Sections</a>
@@ -187,7 +197,7 @@ CODE:
 <a href="https://tailwindcss.com/plus/ui-blocks/marketing">Browse all →</a>
 ```
 
-----------------------------------------
+---
 
 TITLE: E-commerce UI Blocks
 DESCRIPTION: This section lists UI blocks designed for e-commerce platforms, including product overviews, product lists, category previews, shopping carts, category filters, product quickviews, product features, store navigation, promo sections, checkout forms, reviews, order summaries, order history, and incentives.
@@ -196,6 +206,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: html
 CODE:
+
 ```
 <a href="https://tailwindcss.com/plus/ui-blocks/ecommerce/components/product-overviews">Product Overviews</a>
 <a href="https://tailwindcss.com/plus/ui-blocks/ecommerce/components/product-lists">Product Lists</a>
@@ -214,7 +225,7 @@ CODE:
 <a href="https://tailwindcss.com/plus/ui-blocks/ecommerce">Browse all →</a>
 ```
 
-----------------------------------------
+---
 
 TITLE: Marketing UI Blocks Overview
 DESCRIPTION: Provides links to various marketing-focused UI blocks, including Hero Sections, Feature Sections, Pricing Sections, Headers, Footers, and more. Each link directs to detailed documentation and examples for specific marketing components.
@@ -223,6 +234,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/autocomplete
 
 LANGUAGE: html
 CODE:
+
 ```
 <!-- Marketing UI Blocks -->
 <a href="https://tailwindcss.com/plus/ui-blocks/marketing/sections/heroes">Hero Sections</a>
@@ -241,7 +253,7 @@ CODE:
 <a href="https://tailwindcss.com/plus/ui-blocks/marketing">Browse all →</a>
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Dependencies for Tailwind Plus Vue Projects
 DESCRIPTION: Provides the npm command to install essential libraries for Tailwind Plus Vue projects. This includes Headless UI for interactive behavior and Heroicons for icons.
@@ -250,11 +262,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: npm
 CODE:
+
 ```
 npm install @headlessui/vue @heroicons/vue
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Tailwind Plus Elements via CDN
 DESCRIPTION: This snippet shows how to install the Tailwind Plus Elements library using a CDN link in the project's head tag. This is the easiest way to integrate the library.
@@ -263,11 +276,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/elements
 
 LANGUAGE: html
 CODE:
+
 ```
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 ```
 
-----------------------------------------
+---
 
 TITLE: Vue Stacked List Component Example
 DESCRIPTION: This Vue component demonstrates a simple stacked list of people, including their name, email, and image. Data is provided via a local JavaScript array within the script setup, serving as a starting point for integration into larger projects. It showcases basic Vue templating with `v-for` and Tailwind CSS for styling.
@@ -276,6 +290,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: Vue
 CODE:
+
 ```
 <template>
   <ul class="divide-y divide-gray-200">
@@ -322,7 +337,7 @@ CODE:
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Tailwind Plus Vue Dependencies
 DESCRIPTION: Installs the necessary dependencies for Tailwind Plus UI Blocks when using Vue. This includes Headless UI for interactive behavior and Heroicons for icons.
@@ -331,11 +346,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/using-vue
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install @headlessui/vue @heroicons/vue
 ```
 
-----------------------------------------
+---
 
 TITLE: Disclosure Examples
 DESCRIPTION: Illustrates various use cases for the Disclosure component, including basic usage, opening, closing, toggling, and adding transitions. Note: Full documentation requires a Tailwind Plus license.
@@ -344,6 +360,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/disclosure
 
 LANGUAGE: html
 CODE:
+
 ```
 <!-- Basic example -->
 <!-- To view the complete documentation, you must own a Tailwind Plus license and be signed in -->
@@ -361,7 +378,7 @@ CODE:
 <!-- To view the complete documentation, you must own a Tailwind Plus license and be signed in -->
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Tailwind Plus React Dependencies
 DESCRIPTION: Installs Headless UI and Heroicons, which are required for Tailwind Plus React components. Ensure you are using React version 18 or higher.
@@ -370,11 +387,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/using-react
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install @headlessui/react @heroicons/react
 ```
 
-----------------------------------------
+---
 
 TITLE: Install React Dependencies for Tailwind Plus and Headless UI
 DESCRIPTION: This command installs the necessary React dependencies, `@headlessui/react` and `@heroicons/react`, required for using Tailwind Plus in a React project. These libraries power interactive behaviors and provide icons. React version 16 or higher is required.
@@ -383,11 +401,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install @headlessui/react @heroicons/react
 ```
 
-----------------------------------------
+---
 
 TITLE: Application UI Blocks
 DESCRIPTION: This section covers UI blocks for application interfaces, including tables, feeds, form layouts, select menus, radio groups, checkboxes, comboboxes, navbars, pagination, sidebar navigation, command palettes, modals, dropdowns, and buttons.
@@ -396,6 +415,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: html
 CODE:
+
 ```
 <a href="https://tailwindcss.com/plus/ui-blocks/application-ui/lists/tables">Tables</a>
 <a href="https://tailwindcss.com/plus/ui-blocks/application-ui/lists/feeds">Feeds</a>
@@ -414,7 +434,7 @@ CODE:
 <a href="https://tailwindcss.com/plus/ui-blocks/application-ui">Browse all →</a>
 ```
 
-----------------------------------------
+---
 
 TITLE: Stacked List Component Example (React)
 DESCRIPTION: A basic React component demonstrating a stacked list of people with their names, emails, and images. It uses local data and Tailwind CSS classes for styling. This serves as a starting point for creating more complex UI elements.
@@ -423,6 +443,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/using-react
 
 LANGUAGE: jsx
 CODE:
+
 ```
 const people = [
   {
@@ -451,7 +472,7 @@ export default function Example() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Tailwind Plus Elements via npm
 DESCRIPTION: This snippet demonstrates how to install the Tailwind Plus Elements library using npm, a package manager for Node.js. It also shows how to import the library into your project's root layout.
@@ -460,17 +481,19 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/elements
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install @tailwindplus/elements
 ```
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import '@tailwindplus/elements';
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Tailwind Plus Elements via CDN
 DESCRIPTION: This snippet shows how to include the Tailwind Plus Elements library in your project's HTML `<head>` using a CDN link. This enables interactive behavior for UI components.
@@ -479,11 +502,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/using-html
 
 LANGUAGE: html
 CODE:
+
 ```
 <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
 ```
 
-----------------------------------------
+---
 
 TITLE: Enable Dark Mode Support
 DESCRIPTION: HTML element configuration for enabling dark mode with Tailwind Plus UI Blocks, including setting default background colors.
@@ -492,12 +516,13 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: html
 CODE:
+
 ```
 <html class="bg-white dark:bg-gray-950 scheme-light dark:scheme-dark">
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Add Inter Font Family via CDN
 DESCRIPTION: HTML link tag to include the Inter font from a CDN.
@@ -506,11 +531,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: html
 CODE:
+
 ```
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 ```
 
-----------------------------------------
+---
 
 TITLE: Component API Documentation
 DESCRIPTION: Provides API documentation for UI Block components, including details on elements like <el-popover> and <el-popover-group>. This section covers component usage, properties, and examples.
@@ -519,6 +545,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/popover
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Component API:
   - <el-popover>
@@ -542,7 +569,7 @@ Examples:
   - Grouping related popovers
 ```
 
-----------------------------------------
+---
 
 TITLE: Dropdown Menu Component API
 DESCRIPTION: Documentation for the Dropdown Menu component, including its API reference for <el-dropdown> and <el-menu> elements, and usage examples.
@@ -551,6 +578,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/dropdown-menu
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Component API:
   - <el-dropdown>
@@ -566,7 +594,7 @@ Usage Examples:
   - Adding transitions
 ```
 
-----------------------------------------
+---
 
 TITLE: Command Palette API Documentation
 DESCRIPTION: API documentation for the command palette component and its related elements. This includes details on usage, customization, and examples for various scenarios like handling no results, grouping commands, and customizing filter logic.
@@ -575,6 +603,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/command-palette
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Component API:
   Provides an interface for interacting with the command palette component.
@@ -620,7 +649,7 @@ Examples:
     Explains how to implement custom filtering mechanisms for commands.
 ```
 
-----------------------------------------
+---
 
 TITLE: Application UI Blocks Overview
 DESCRIPTION: Provides links to various application UI components, including Tables, Feeds, Form Layouts, Select Menus, Radio Groups, Checkboxes, Comboboxes, Navbars, Pagination, Sidebar Navigation, Command Palettes, Modals, Dropdowns, and Buttons. Each link leads to specific documentation and examples.
@@ -629,6 +658,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/autocomplete
 
 LANGUAGE: html
 CODE:
+
 ```
 <!-- Application UI Blocks -->
 <a href="https://tailwindcss.com/plus/ui-blocks/application-ui/lists/tables">Tables</a>
@@ -648,7 +678,7 @@ CODE:
 <a href="https://tailwindcss.com/plus/ui-blocks/application-ui">Browse all →</a>
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure Inter Font in Tailwind CSS v4.1+
 DESCRIPTION: CSS variables to set the Inter font as the default sans-serif font in Tailwind CSS v4.1+.
@@ -657,6 +687,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: css
 CODE:
+
 ```
 @theme {
   --font-sans: InterVariable, sans-serif;
@@ -664,7 +695,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Implement Alpine.js Transitions with x-transition Directive
 DESCRIPTION: This example demonstrates how to apply the defined Tailwind CSS transition classes using Alpine.js's `x-transition` directive. It shows how to control element visibility and apply specific classes for enter and leave transitions, ensuring smooth UI animations. Users should also consult WAI-ARIA practices for accessibility.
@@ -673,6 +704,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: html
 CODE:
+
 ```
 <div x-data="{ isOpen: false }" class="relative ...">
   <button type="button" @click="isOpen = !isOpen" class="...">Options</button>
@@ -694,7 +726,7 @@ CODE:
 </div>
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure Inter Font in Tailwind CSS v3.x
 DESCRIPTION: JavaScript configuration for tailwind.config.js to set the Inter font as the default sans-serif font in Tailwind CSS v3.x.
@@ -703,6 +735,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const defaultTheme = require('tailwindcss/defaultTheme')
 
@@ -718,7 +751,7 @@ module.exports = {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Latest Tailwind CSS via npm
 DESCRIPTION: This command updates or installs the latest version of Tailwind CSS using npm. It ensures compatibility with Tailwind Plus components, which are designed for Tailwind CSS v4.1.
@@ -727,11 +760,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: npm
 CODE:
+
 ```
 npm install tailwindcss@latest
 ```
 
-----------------------------------------
+---
 
 TITLE: Implementing Dynamic Classes with Alpine.js
 DESCRIPTION: This example shows how to adapt the dynamic class HTML for Alpine.js. It uses `x-data` to manage component state (`isOn`), `@click` for toggling, and `:class` directives to conditionally apply Tailwind CSS classes based on the `isOn` state. It also demonstrates updating ARIA attributes dynamically.
@@ -740,6 +774,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: Alpine.js
 CODE:
+
 ```
 <span
   x-data="{ isOn: false }"
@@ -758,7 +793,7 @@ CODE:
 </span>
 ```
 
-----------------------------------------
+---
 
 TITLE: Disabling the Input Example
 DESCRIPTION: Demonstrates how to disable the input functionality within a UI component, likely a select or form element.
@@ -767,6 +802,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/select
 
 LANGUAGE: html
 CODE:
+
 ```
 <template>
   <div>
@@ -782,7 +818,7 @@ export default {
 </script>
 ```
 
-----------------------------------------
+---
 
 TITLE: Refactored React List Component for Reusability
 DESCRIPTION: Illustrates how to break down the initial list example into smaller, reusable React components (`HockeyTeamItem`, `HockeyTeamList`). This version accepts data via props, promoting better modularity and integration with external data sources.
@@ -791,6 +827,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: React
 CODE:
+
 ```
 function HockeyTeamItem({ team }) {
   return (
@@ -815,7 +852,7 @@ export default function HockeyTeamList({ teams }) {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Reusable Hockey Team List Component (React)
 DESCRIPTION: An example of refactoring the stacked list component into a more reusable structure. It introduces a `HockeyTeamItem` component for individual team display and a `HockeyTeamList` component to manage the list of teams, accepting a `teams` prop.
@@ -824,6 +861,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/using-react
 
 LANGUAGE: jsx
 CODE:
+
 ```
 function HockeyTeamItem({ team }) {
   return (
@@ -840,7 +878,7 @@ export default function HockeyTeamList({ teams }) {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Add Inter Font Family using CDN Link
 DESCRIPTION: This HTML snippet adds the Inter font family to your project by linking to its CDN stylesheet. Using this font ensures consistent UI appearance across different browsers and operating systems, matching the Tailwind Plus examples.
@@ -849,11 +887,12 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: HTML
 CODE:
+
 ```
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure Inter Font in Tailwind CSS Theme
 DESCRIPTION: These code snippets demonstrate how to configure the Inter font family within your Tailwind CSS project. The first example is for Tailwind CSS v4.1 using the @theme directive, while the second shows the configuration for Tailwind CSS v3.x in the tailwind.config.js file.
@@ -862,6 +901,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: CSS
 CODE:
+
 ```
 @theme {
   --font-sans: InterVariable, sans-serif;
@@ -870,6 +910,7 @@ CODE:
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const defaultTheme = require('tailwindcss/defaultTheme')
 
@@ -885,7 +926,7 @@ module.exports = {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Vue Refactored Hockey Team List Components
 DESCRIPTION: This example illustrates how to refactor the initial stacked list component into two smaller, more reusable Vue components: `HockeyTeamList.vue` and `HockeyTeamListItem.vue`. The `HockeyTeamList` component manages a list of teams, passing individual team data as props to `HockeyTeamListItem` for rendering. This pattern promotes modularity and easier data binding from external sources.
@@ -894,6 +935,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/index
 
 LANGUAGE: Vue
 CODE:
+
 ```
 <!-- HockeyTeamList.vue -->
 <template>
@@ -931,7 +973,7 @@ CODE:
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Templates and UI Kits
 DESCRIPTION: Lists various website templates and UI kits built with Tailwind CSS. These include starter kits and templates for personal websites, landing pages, API references, and more.
@@ -940,6 +982,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/popover
 
 LANGUAGE: html
 CODE:
+
 ```
 <h3>Templates & UI Kits</h3>
   <ul>
@@ -958,7 +1001,7 @@ CODE:
   </ul>
 ```
 
-----------------------------------------
+---
 
 TITLE: Templates and UI Kits
 DESCRIPTION: Lists various website templates and UI kits built with Tailwind CSS. These include starter kits and templates for personal websites, landing pages, API references, and more.
@@ -967,6 +1010,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/select
 
 LANGUAGE: html
 CODE:
+
 ```
 <h3>Templates & UI Kits</h3>
   <ul>
@@ -985,7 +1029,7 @@ CODE:
   </ul>
 ```
 
-----------------------------------------
+---
 
 TITLE: Templates and UI Kits
 DESCRIPTION: Lists various website templates and UI kits built with Tailwind CSS. These include starter kits and templates for personal websites, landing pages, API references, and more.
@@ -994,6 +1038,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/dialog
 
 LANGUAGE: html
 CODE:
+
 ```
 <h3>Templates & UI Kits</h3>
   <ul>
@@ -1012,7 +1057,7 @@ CODE:
   </ul>
 ```
 
-----------------------------------------
+---
 
 TITLE: Templates and UI Kits
 DESCRIPTION: Lists various website templates and UI kits built with Tailwind CSS. These include starter kits and templates for personal websites, landing pages, API references, and more.
@@ -1021,6 +1066,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/autocomplete
 
 LANGUAGE: html
 CODE:
+
 ```
 <h3>Templates & UI Kits</h3>
   <ul>
@@ -1039,7 +1085,7 @@ CODE:
   </ul>
 ```
 
-----------------------------------------
+---
 
 TITLE: Templates and UI Kits
 DESCRIPTION: Lists various website templates and UI kits built with Tailwind CSS. These include starter kits and templates for personal websites, landing pages, API references, and more.
@@ -1048,6 +1094,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/dropdown-menu
 
 LANGUAGE: html
 CODE:
+
 ```
 <h3>Templates & UI Kits</h3>
   <ul>
@@ -1066,7 +1113,7 @@ CODE:
   </ul>
 ```
 
-----------------------------------------
+---
 
 TITLE: Marketing Sections Overview
 DESCRIPTION: Overview of available marketing sections, including Hero Sections, Feature Sections, Pricing Sections, Header Sections, Newsletter Sections, Testimonials, Team Sections, Content Sections, Logo Clouds, FAQs, and Footers.
@@ -1075,6 +1122,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/command-palette
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Marketing Sections:
   Hero Sections: Pre-designed hero components for landing pages.
@@ -1092,7 +1140,7 @@ Marketing Sections:
 Browse all →: Link to view all available marketing components.
 ```
 
-----------------------------------------
+---
 
 TITLE: Marketing Elements Overview
 DESCRIPTION: Overview of available marketing elements, including Flyout Menus and Banners.
@@ -1101,6 +1149,7 @@ SOURCE: https://tailwindcss.com/plus/ui-blocks/documentation/command-palette
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Marketing Elements:
   Flyout Menus: Interactive flyout menu components.

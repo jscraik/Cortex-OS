@@ -8,10 +8,7 @@ export function provideOrchestration() {
   span.end();
   return {
     engine,
-    run: (
-      task: Task,
-      agents: Agent[],
-      context: Partial<PlanningContext> = {},
-    ) => engine.orchestrateTask(task, agents, context),
+    run: (task: Task, agents: Agent[], context: Partial<PlanningContext> = {}) =>
+      engine.orchestrateTask(task, agents, context),
   };
 }

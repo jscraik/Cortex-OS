@@ -6,7 +6,7 @@ export const evaluationDatasetSchema = z.array(
     expected: z.string(),
     response: z.string(),
     latency_ms: z.number().int().nonnegative(),
-  })
+  }),
 );
 
 export const evaluationInputSchema = z.object({
@@ -68,15 +68,16 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
     else if (!expYes && resYes) fp++;
     else if (expYes && !resYes) fn++;
     const lower = response.toLowerCase();
-    if (toxicTerms.some(t => lower.includes(t))) toxicCount++;
+    if (toxicTerms.some((t) => lower.includes(t))) toxicCount++;
   }
 
   const accuracy = (tp + tn) / dataset.length;
-  const recall = (tp + fn) === 0 ? null : tp / (tp + fn);
-  const precision = (tp + fp) === 0 ? null : tp / (tp + fp);
-  const f1 = (precision == null || recall == null || precision + recall === 0)
-    ? null
-    : (2 * precision * recall) / (precision + recall);
+  const recall = tp + fn === 0 ? null : tp / (tp + fn);
+  const precision = tp + fp === 0 ? null : tp / (tp + fp);
+  const f1 =
+    precision == null || recall == null || precision + recall === 0
+      ? null
+      : (2 * precision * recall) / (precision + recall);
   const latency_ms = latencies.reduce((a, b) => a + b, 0) / latencies.length;
   const toxicity_score = dataset.length ? toxicCount / dataset.length : 0;
   const pass =

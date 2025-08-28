@@ -9,7 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // Plugin metadata schema
 export const PluginMetadataSchema = z.object({
@@ -19,19 +19,19 @@ export const PluginMetadataSchema = z.object({
   author: z.string(),
   homepage: z.string().url().optional(),
   repository: z.string().url().optional(),
-  license: z.string().default("MIT"),
+  license: z.string().default('MIT'),
   keywords: z.array(z.string()).default([]),
   category: z.enum([
-    "development-tools",
-    "ai-model-integrations",
-    "project-management",
-    "communication",
-    "security-tools",
-    "utilities",
+    'development-tools',
+    'ai-model-integrations',
+    'project-management',
+    'communication',
+    'security-tools',
+    'utilities',
   ]),
   dependencies: z.array(z.string()).default([]),
   cortexOsVersion: z.string(),
-  mcpVersion: z.string().default("1.0.0"),
+  mcpVersion: z.string().default('1.0.0'),
   capabilities: z.array(z.string()),
   permissions: z.array(z.string()).default([]),
   entrypoint: z.string(),
@@ -45,11 +45,13 @@ export const PluginMetadataSchema = z.object({
   maintainerVerified: z.boolean().default(false).optional(),
   rating: z.number().min(0).max(5).default(0).optional(),
   downloads: z.number().min(0).default(0).optional(),
-  documentation: z.object({
-    readme: z.string().url().optional(),
-    api: z.string().url().optional(),
-    examples: z.string().url().optional(),
-  }).optional(),
+  documentation: z
+    .object({
+      readme: z.string().url().optional(),
+      api: z.string().url().optional(),
+      examples: z.string().url().optional(),
+    })
+    .optional(),
 });
 
 export type PluginMetadata = z.infer<typeof PluginMetadataSchema>;
@@ -58,7 +60,7 @@ export type PluginMetadata = z.infer<typeof PluginMetadataSchema>;
 export const PluginStatusSchema = z.object({
   name: z.string(),
   version: z.string(),
-  status: z.enum(["installed", "installing", "failed", "updating"]),
+  status: z.enum(['installed', 'installing', 'failed', 'updating']),
   installedAt: z.string().datetime(),
   path: z.string(),
   enabled: z.boolean().default(true),
@@ -111,8 +113,6 @@ export const PluginValidationResultSchema = z.object({
   details: z.record(z.string(), z.any()).optional(),
 });
 
-export type PluginValidationResult = z.infer<
-  typeof PluginValidationResultSchema
->;
+export type PluginValidationResult = z.infer<typeof PluginValidationResultSchema>;
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

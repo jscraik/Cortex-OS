@@ -8,6 +8,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: Bash
 CODE:
+
 ```
 my-app/
 ├── src # all project code lies within here
@@ -21,7 +22,7 @@ my-app/
 └── langgraph.json # configuration file for LangGraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and LangChain dependencies
 DESCRIPTION: Instructions for installing the necessary Python and JavaScript packages for LangGraph and LangChain, including Anthropic integrations.
@@ -30,17 +31,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/agents/age
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install -U langgraph "langchain[anthropic]"
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install @langchain/langgraph @langchain/core @langchain/anthropic
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph Application Configuration File
 DESCRIPTION: This JSON snippet provides an example of the `langgraph.json` configuration file. It specifies the Node.js version, Dockerfile lines, project dependencies, and maps graph names (e.g., 'agent') to their respective TypeScript file paths and exported variable names.
@@ -49,6 +52,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: JSON
 CODE:
+
 ```
 {
   "node_version": "20",
@@ -61,7 +65,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Python LangGraph Control Plane API Orchestration Example Setup
 DESCRIPTION: Partial Python code demonstrating the initial setup for orchestrating LangGraph Control Plane APIs, including loading environment variables and importing necessary libraries. The full example would cover deployment creation, update, and deletion.
@@ -70,6 +74,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/refe
 
 LANGUAGE: python
 CODE:
+
 ```
 import os
 import time
@@ -81,7 +86,7 @@ from dotenv import load_dotenv
 load_dotenv()
 ```
 
-----------------------------------------
+---
 
 TITLE: Defining LangGraph.js Project Dependencies in package.json
 DESCRIPTION: An example `package.json` file demonstrating how to declare core LangChain and LangGraph dependencies for a LangGraph.js application. These dependencies are automatically installed during deployment.
@@ -90,6 +95,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: JSON
 CODE:
+
 ```
 {
   "name": "langgraphjs-studio-starter",
@@ -103,7 +109,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Serve Documentation Locally (make)
 DESCRIPTION: This `make` command starts a local web server to host the project's documentation. It makes the documentation accessible in a web browser, typically at `http://127.0.0.1:8000/langgraph/`.
@@ -112,11 +118,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/README.md#_snip
 
 LANGUAGE: bash
 CODE:
+
 ```
 make serve-docs
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph.js Application Project Structure
 DESCRIPTION: Illustrates the recommended directory and file organization for a LangGraph.js application, including source code, configuration files, and dependency manifests, essential for deployment.
@@ -125,6 +132,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: Bash
 CODE:
+
 ```
 my-app/
 ├── src # all project code lies within here
@@ -138,7 +146,7 @@ my-app/
 └── langgraph.json # configuration file for LangGraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and LangChain Prerequisites
 DESCRIPTION: Installs the necessary Python packages, including `langgraph`, `langchain-openai`, and `langchain`, required to run the examples in this guide. The `%%capture` magic command suppresses output.
@@ -147,12 +155,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/me
 
 LANGUAGE: python
 CODE:
+
 ```
 %%capture --no-stderr
 %pip install -U langgraph langchain-openai langchain
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph Agent Definition Example (agent.py)
 DESCRIPTION: An example Python file (`agent.py`) demonstrating the initial structure for defining a LangGraph agent. It shows essential imports for `StateGraph`, `END`, `START`, and custom utility modules containing node functions and state definitions, which are crucial for constructing the graph.
@@ -161,6 +170,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: python
 CODE:
+
 ```
 # my_agent/agent.py
 from typing import Literal
@@ -171,7 +181,7 @@ from my_agent.utils.nodes import call_model, should_continue, tool_node # import
 from my_agent.utils.state import AgentState # import state
 ```
 
-----------------------------------------
+---
 
 TITLE: Run LangGraph Development Server (JavaScript)
 DESCRIPTION: Installs Node.js dependencies for the LangGraph project using `npm install` and then starts the development server using the `npm run langgraph dev` command.
@@ -180,12 +190,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: shell
 CODE:
+
 ```
 npm install
 npm run langgraph dev
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph Server Local Launch Output Example
 DESCRIPTION: This snippet displays the typical console output when the LangGraph server successfully starts locally. It provides URLs for the API, documentation, and the LangGraph Studio Web UI for interaction and debugging.
@@ -194,6 +205,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: Shell
 CODE:
+
 ```
 >    Ready!
 >
@@ -204,7 +216,7 @@ CODE:
 >    - LangGraph Studio Web UI: https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Documentation Build Requirements (uv)
 DESCRIPTION: This command uses `uv` to synchronize and install the necessary dependencies for building the project's documentation. It specifically targets the 'test' group of dependencies.
@@ -213,11 +225,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/README.md#_snip
 
 LANGUAGE: bash
 CODE:
+
 ```
 uv sync --group test
 ```
 
-----------------------------------------
+---
 
 TITLE: Setup LangGraph Client and Create Thread
 DESCRIPTION: This snippet demonstrates how to initialize the LangGraph client and create a new thread for an agent. It provides examples for Python, Javascript, and cURL, showing how to connect to a specified deployment URL and create a new conversational thread.
@@ -226,6 +239,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: Python
 CODE:
+
 ```
 from langgraph_sdk import get_client
 
@@ -239,6 +253,7 @@ print(thread)
 
 LANGUAGE: Javascript
 CODE:
+
 ```
 import { Client } from "@langchain/langgraph-sdk";
 
@@ -252,6 +267,7 @@ console.log(thread);
 
 LANGUAGE: CURL
 CODE:
+
 ```
 curl --request POST \
   --url <DEPLOYMENT_URL>/threads \
@@ -259,7 +275,7 @@ curl --request POST \
   --data '{}'
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph Python API Server Dockerfile
 DESCRIPTION: An example Dockerfile generated for a Python-based LangGraph Platform API server. This Dockerfile sets up the base image, adds pip configuration, installs Python dependencies from constraints, copies graph definitions, and sets environment variables for the LangServe graphs.
@@ -268,6 +284,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/refe
 
 LANGUAGE: Dockerfile
 CODE:
+
 ```
 FROM langchain/langgraph-api:3.11
 
@@ -290,7 +307,7 @@ RUN PIP_CONFIG_FILE=/pipconfig.txt PYTHONDONTWRITEBYTECODE=1 pip install --no-ca
 ENV LANGSERVE_GRAPHS='{"agent": "/deps/__outer_graphs/src/agent.py:graph", "storm": "/deps/__outer_graphs/src/storm.py:graph"}'
 ```
 
-----------------------------------------
+---
 
 TITLE: Configuring Environment Variables in a .env File
 DESCRIPTION: An example `.env` file illustrating how to define environment variables, including sensitive API keys, for a LangGraph.js application. These variables are loaded at runtime for application configuration.
@@ -299,6 +316,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: Shell
 CODE:
+
 ```
 MY_ENV_VAR_1=foo
 MY_ENV_VAR_2=bar
@@ -306,7 +324,7 @@ OPENAI_API_KEY=key
 TAVILY_API_KEY=key_2
 ```
 
-----------------------------------------
+---
 
 TITLE: Run LangGraph Development Server (Python)
 DESCRIPTION: Installs local Python dependencies for the LangGraph project in editable mode and then starts the development server using the `langgraph dev` command.
@@ -315,12 +333,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: shell
 CODE:
+
 ```
 pip install -e .
 langgraph dev
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph Package Ecosystem and Installation
 DESCRIPTION: This section outlines the various packages within the LangGraph ecosystem, describing their specific focus and providing the necessary `pip install` commands for their installation. It serves as a guide for setting up the development environment with the required LangGraph components for agent development.
@@ -329,6 +348,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/agents/ove
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Package: langgraph-prebuilt (part of langgraph)
   Description: Prebuilt components to create agents
@@ -355,7 +375,7 @@ Package: agentevals
   Installation: pip install -U agentevals
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph JavaScript API Server Dockerfile
 DESCRIPTION: An example Dockerfile generated for a JavaScript-based LangGraph Platform API server. This Dockerfile sets up the base image, copies project files, installs JavaScript dependencies using yarn, sets environment variables for LangServe graphs, and runs a prebuild script if available.
@@ -364,6 +384,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/refe
 
 LANGUAGE: Dockerfile
 CODE:
+
 ```
 FROM langchain/langgraphjs-api:20
 
@@ -378,7 +399,7 @@ WORKDIR /deps/agent
 RUN (test ! -f /api/langgraph_api/js/build.mts && echo "Prebuild script not found, skipping") || tsx /api/langgraph_api/js/build.mts
 ```
 
-----------------------------------------
+---
 
 TITLE: Full Multi-Agent System Example for Travel Booking in Python
 DESCRIPTION: A comprehensive Python example demonstrating a multi-agent system for travel booking. It includes utility functions for pretty printing messages, a generic `create_handoff_tool` for transferring control between agents, and placeholder booking functions for hotels and flights, showcasing the full setup of a LangGraph application.
@@ -387,6 +408,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/mu
 
 LANGUAGE: python
 CODE:
+
 ```
 from typing import Annotated
 from langchain_core.messages import convert_to_messages
@@ -478,7 +500,7 @@ def book_flight(from_airport: str, to_airport: str):
     """Book a flight"""
 ```
 
-----------------------------------------
+---
 
 TITLE: Example of Initial LangGraph State
 DESCRIPTION: This snippet provides an example of an initial state for a LangGraph, illustrating the structure of the `foo` (integer) and `bar` (list of strings) channels as defined in the state schema. This state serves as a starting point before any updates are applied.
@@ -487,17 +509,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/concepts/p
 
 LANGUAGE: python
 CODE:
+
 ```
 {"foo": 1, "bar": ["a"]}
 ```
 
 LANGUAGE: typescript
 CODE:
+
 ```
 { foo: 1, bar: ["a"] }
 ```
 
-----------------------------------------
+---
 
 TITLE: Compatible LangChain and LangGraph Package Version Ranges
 DESCRIPTION: Specifies the compatible version ranges for essential `@langchain` and `@langgraph` packages required for successful deployment of a LangGraph.js application, ensuring compatibility with the platform.
@@ -506,13 +530,14 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: Shell
 CODE:
+
 ```
 "@langchain/core": "^0.3.42",
 "@langchain/langgraph": "^0.2.57",
 "@langchain/langgraph-checkpoint": "~0.0.16",
 ```
 
-----------------------------------------
+---
 
 TITLE: Define a LangGraph StateGraph
 DESCRIPTION: This example demonstrates how to define a simple `StateGraph` using `langgraph.graph.StateGraph`. It sets up a state with `topic` and `joke`, defines two nodes (`refine_topic`, `generate_joke`), and connects them in a sequence from `START` to `END` to process a topic and generate a joke.
@@ -521,6 +546,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: python
 CODE:
+
 ```
 from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
@@ -546,7 +572,7 @@ graph = (
 )
 ```
 
-----------------------------------------
+---
 
 TITLE: Execute Notebooks Without Pip Installs (Bash)
 DESCRIPTION: This sequence of commands executes notebooks while skipping `%pip install` cells. The `prepare_notebooks_for_ci.py` script is run with the `--comment-install-cells` flag to disable installation steps, followed by the `execute_notebooks.sh` script.
@@ -555,12 +581,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/README.md#_snip
 
 LANGUAGE: bash
 CODE:
+
 ```
 python _scripts/prepare_notebooks_for_ci.py --comment-install-cells
 ./_scripts/execute_notebooks.sh
 ```
 
-----------------------------------------
+---
 
 TITLE: Initialize LangGraph Agent in Python (agent.py)
 DESCRIPTION: This Python code snippet demonstrates the initial setup of an `agent.py` file, which is central to defining a LangGraph application. It shows essential imports for state management (`TypedDict`, `AgentState`) and graph components (`StateGraph`, `END`, `START`, `call_model`, `should_continue`, `tool_node`), indicating how different modules contribute to the agent's construction.
@@ -569,6 +596,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: python
 CODE:
+
 ```
 # my_agent/agent.py
 from typing import Literal
@@ -579,7 +607,7 @@ from my_agent.utils.nodes import call_model, should_continue, tool_node # import
 from my_agent.utils.state import AgentState # import state
 ```
 
-----------------------------------------
+---
 
 TITLE: Install langgraph-supervisor for Python
 DESCRIPTION: This command installs the `langgraph-supervisor` library, which is essential for building supervisor-based multi-agent systems in Python. It ensures all necessary dependencies are available for running the provided examples.
@@ -588,11 +616,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/agents/mul
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install langgraph-supervisor
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph Configuration File (langgraph.json)
 DESCRIPTION: This JSON snippet provides an example of the `langgraph.json` configuration file used by LangGraph. It specifies project dependencies, maps graph names to their Python file paths and variable names, and defines the location of the environment file. This configuration is crucial for deploying and running LangGraph applications.
@@ -601,6 +630,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: json
 CODE:
+
 ```
 {
   "dependencies": ["./my_agent"],
@@ -611,7 +641,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph CLI for Local Development
 DESCRIPTION: Installs the LangGraph command-line interface with in-memory dependencies, enabling local server management and interaction. This is a prerequisite for running a local LangGraph development server.
@@ -620,11 +650,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: Python
 CODE:
+
 ```
 pip install -U "langgraph-cli[inmem]"
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and AutoGen Dependencies
 DESCRIPTION: Provides the command to install the necessary Python packages, `autogen` and `langgraph`, required to run the integration examples.
@@ -633,11 +664,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/au
 
 LANGUAGE: Python
 CODE:
+
 ```
 %pip install autogen langgraph
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph TypeScript Application Setup with Postgres Checkpointer
 DESCRIPTION: An example demonstrating the initial setup for a LangGraph application in TypeScript, including importing necessary modules, initializing `ChatAnthropic` model, and configuring `PostgresSaver`.
@@ -646,6 +678,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/me
 
 LANGUAGE: typescript
 CODE:
+
 ```
 import { ChatAnthropic } from "@langchain/anthropic";
 import { StateGraph, MessagesZodState, START } from "@langchain/langgraph";
@@ -658,7 +691,7 @@ const checkpointer = PostgresSaver.fromConnString(DB_URI);
 // await checkpointer.setup();
 ```
 
-----------------------------------------
+---
 
 TITLE: Build and Serve LangGraph Documentation Locally
 DESCRIPTION: Compiles the documentation and starts a local web server to preview the changes. This allows developers to verify the appearance and functionality of their documentation contributions before making a pull request.
@@ -667,11 +700,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/CONTRIBUTING.md#_sni
 
 LANGUAGE: bash
 CODE:
+
 ```
 make serve-docs
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph Project Directory Structure
 DESCRIPTION: This `bash` snippet illustrates a recommended directory structure for a LangGraph application. It organizes source code, utilities (tools, nodes, state), the main agent graph, `package.json`, environment variables, and the `langgraph.json` configuration file.
@@ -680,6 +714,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: Bash
 CODE:
+
 ```
 my-app/
 ├── src # all project code lies within here
@@ -693,7 +728,7 @@ my-app/
 └── langgraph.json # configuration file for LangGraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph CLI
 DESCRIPTION: Instructions for installing the LangGraph command-line interface using pip. Includes the standard installation for general use and a development mode installation with in-memory dependencies for hot reloading.
@@ -702,17 +737,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/libs/cli/README.md#_
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install langgraph-cli
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install "langgraph-cli[inmem]"
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph Application Dependencies
 DESCRIPTION: These commands navigate into the newly created LangGraph application directory and install its required dependencies. Python projects use `pip install -e .` for editable mode, and JavaScript projects use `npm install`.
@@ -721,6 +758,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: Shell
 CODE:
+
 ```
 cd path/to/your/app
 pip install -e .
@@ -728,12 +766,13 @@ pip install -e .
 
 LANGUAGE: Shell
 CODE:
+
 ```
 cd path/to/your/app
 npm install
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph
 DESCRIPTION: This command installs the LangGraph library using pip, ensuring you get the latest stable version. It's the first step to setting up your development environment for building stateful agents.
@@ -742,11 +781,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/libs/langgraph/READM
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install -U langgraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Verify LangGraph CLI Installation
 DESCRIPTION: Verifies the successful installation of the LangGraph CLI by running the help command. This command displays available options and confirms that the CLI is correctly installed and accessible in your system's PATH.
@@ -755,17 +795,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/refe
 
 LANGUAGE: Bash
 CODE:
+
 ```
 langgraph --help
 ```
 
 LANGUAGE: Bash
 CODE:
+
 ```
 npx @langchain/langgraph-cli --help
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph
 DESCRIPTION: This command installs the LangGraph library using pip, ensuring you get the latest stable version. It's the first step to setting up your development environment for building stateful agents.
@@ -774,11 +816,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/README.md#_snippet_0
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install -U langgraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Set the graph's entry point using START edge
 DESCRIPTION: This code demonstrates how to define the starting point for graph execution using `add_edge`. The `START` constant indicates that the graph should begin processing at the 'chatbot' node whenever it is invoked.
@@ -787,12 +830,14 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: python
 CODE:
+
 ```
 graph_builder.add_edge(START, "chatbot")
 ```
 
 LANGUAGE: typescript
 CODE:
+
 ```
 import { StateGraph, MessagesZodState, START } from "@langchain/langgraph";
 import { z } from "zod";
@@ -807,7 +852,7 @@ const graph = new StateGraph(State)
   .compile();
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and Langchain-OpenAI packages
 DESCRIPTION: Installs the necessary Python packages for building a ReAct agent, including `langgraph` and `langchain-openai`, ensuring all dependencies are met for the project.
@@ -816,12 +861,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/re
 
 LANGUAGE: python
 CODE:
+
 ```
 %%capture --no-stderr
 %pip install -U langgraph langchain-openai
 ```
 
-----------------------------------------
+---
 
 TITLE: Start LangGraph Local Development Server
 DESCRIPTION: Initiates the LangGraph server locally in watch mode, automatically restarting on code changes. This command provides a local environment for testing applications with LangGraph Studio.
@@ -830,11 +876,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: Bash
 CODE:
+
 ```
 langgraph dev
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure LangGraph with Redis Checkpointer
 DESCRIPTION: Provides installation instructions and a partial synchronous example for integrating the Redis checkpointer with LangGraph. Note that `checkpointer.setup()` is required for initial Redis checkpointer usage.
@@ -843,18 +890,20 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/me
 
 LANGUAGE: python
 CODE:
+
 ```
 pip install -U langgraph langgraph-checkpoint-redis
 ```
 
 LANGUAGE: python
 CODE:
+
 ```
 from langchain.chat_models import init_chat_model
 from langgraph.graph import StateGraph, MessagesState, START
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and Langchain Anthropic Packages
 DESCRIPTION: Installs the necessary Python packages, `langgraph` and `langchain_anthropic`, using `pip`. This step is crucial for setting up the development environment to run the provided LangGraph examples.
@@ -863,12 +912,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/pe
 
 LANGUAGE: python
 CODE:
+
 ```
 %%capture --no-stderr
 %pip install --quiet -U langgraph langchain_anthropic
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph SDKs
 DESCRIPTION: Instructions for installing the necessary LangGraph SDKs for Python and JavaScript environments. These SDKs provide client libraries to interact with the deployed LangGraph API.
@@ -877,17 +927,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/quic
 
 LANGUAGE: Shell
 CODE:
+
 ```
 pip install langgraph-sdk
 ```
 
 LANGUAGE: Shell
 CODE:
+
 ```
 npm install @langchain/langgraph-sdk
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph Configuration File (langgraph.json)
 DESCRIPTION: This JSON snippet provides an example of the `langgraph.json` configuration file used by LangGraph. It specifies project dependencies, maps graph names to their Python file paths and variable names, and defines the environment file to be used, facilitating the deployment and management of LangGraph applications.
@@ -896,6 +948,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: json
 CODE:
+
 ```
 {
   "dependencies": ["."],
@@ -906,7 +959,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Example pyproject.toml for LangGraph Dependencies
 DESCRIPTION: An example `pyproject.toml` file demonstrating how to define project metadata and dependencies for a LangGraph application. It specifies build system requirements, project name, version, description, authors, license, Python compatibility, and crucial LangGraph-related dependencies.
@@ -915,6 +968,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: toml
 CODE:
+
 ```
 [build-system]
 requires = ["hatchling"]
@@ -939,7 +993,7 @@ dependencies = [
 packages = ["my_agent"]
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph CLI (JavaScript/Node.js)
 DESCRIPTION: Installs the LangGraph command-line interface for JavaScript/Node.js environments. The 'npx' command allows for one-time execution without global installation, while 'npm install -g' performs a global installation, making the 'langgraphjs' command available system-wide.
@@ -948,17 +1002,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/refe
 
 LANGUAGE: Bash
 CODE:
+
 ```
 npx @langchain/langgraph-cli
 ```
 
 LANGUAGE: Bash
 CODE:
+
 ```
 npm install -g @langchain/langgraph-cli
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph Application Recommended Project Structure
 DESCRIPTION: This snippet outlines the standard directory layout for a LangGraph application, detailing the placement of agent code, utility modules, dependency files, environment variables, and the crucial `langgraph.json` configuration file. It provides a clear visual guide for organizing project files for deployment.
@@ -967,6 +1023,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: bash
 CODE:
+
 ```
 my-app/
 ├── my_agent # all project code lies within here
@@ -982,7 +1039,7 @@ my-app/
 └── langgraph.json # configuration file for LangGraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Start LangGraph Local Server with Debugging Enabled
 DESCRIPTION: Runs the LangGraph development server locally, enabling debugging on a specified port. This allows for step-by-step debugging with breakpoints and variable inspection using a compatible debugger.
@@ -991,11 +1048,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: Bash
 CODE:
+
 ```
 langgraph dev --debug-port 5678
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph SDKs
 DESCRIPTION: Instructions to install the necessary LangGraph SDK packages for Python and JavaScript environments using pip and npm respectively. These commands prepare your development environment for interacting with the LangGraph API.
@@ -1004,17 +1062,19 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: Shell
 CODE:
+
 ```
 pip install langgraph-sdk
 ```
 
 LANGUAGE: Shell
 CODE:
+
 ```
 npm install @langchain/langgraph-sdk
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and Dependencies
 DESCRIPTION: This snippet installs the necessary Python packages for the tutorial, including `langgraph`, `langchain-community`, `langchain-anthropic`, `tavily-python`, `pandas`, and `openai`. It uses `%%capture --no-stderr` to suppress output and `%pip install -U` for upgrading packages.
@@ -1023,12 +1083,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: python
 CODE:
+
 ```
 %%capture --no-stderr
 %pip install -U langgraph langchain-community langchain-anthropic tavily-python pandas openai
 ```
 
-----------------------------------------
+---
 
 TITLE: Import Utilities for Example Conversation
 DESCRIPTION: This small snippet imports standard Python modules, `shutil` and `uuid`, which are typically used for file operations (e.g., copying, deleting) and generating unique identifiers, respectively. These imports likely precede an example conversation or testing setup.
@@ -1037,12 +1098,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: python
 CODE:
+
 ```
 import shutil
 import uuid
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Required Python Packages for LangGraph
 DESCRIPTION: This command installs the necessary Python libraries for running LangGraph examples, including `langchain_anthropic`, `langchain_openai`, and `langgraph` itself. The `%%capture` and `%pip` directives are common in Jupyter/IPython environments.
@@ -1051,12 +1113,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/cr
 
 LANGUAGE: python
 CODE:
+
 ```
 %%capture --no-stderr
 %pip install -U langchain_anthropic langchain_openai langgraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Python BM25 Retriever for Example Formatting and Initialization
 DESCRIPTION: Defines a `format_example` helper function to structure problem and solution pairs into a consistent string format. It then initializes a `BM25Retriever` from `langchain_community` using the formatted `train_ds`, which contains examples to be retrieved based on similarity, excluding test cases.
@@ -1065,6 +1128,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: python
 CODE:
+
 ```
 from langchain_community.retrievers import BM25Retriever
 
@@ -1085,7 +1149,7 @@ def format_example(row):
 retriever = BM25Retriever.from_texts([format_example(row) for row in train_ds])
 ```
 
-----------------------------------------
+---
 
 TITLE: Execute All Notebooks for CI (Bash)
 DESCRIPTION: This sequence of commands prepares and executes all notebooks for Continuous Integration (CI). The `prepare_notebooks_for_ci.py` script adds VCR cassette context managers, and `execute_notebooks.sh` then runs the notebooks.
@@ -1094,12 +1158,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/README.md#_snip
 
 LANGUAGE: bash
 CODE:
+
 ```
 python _scripts/prepare_notebooks_for_ci.py
 ./_scripts/execute_notebooks.sh
 ```
 
-----------------------------------------
+---
 
 TITLE: Python LangGraph Retrieve Examples Node Function
 DESCRIPTION: Implements the `retrieve_examples` function, a LangGraph node responsible for fetching relevant examples. It takes the current `State` and `RunnableConfig` (allowing configurable parameters like `top_k`), extracts the candidate code from the `AIMessage`, uses the pre-initialized `retriever` to find similar examples, and formats them into the `examples` field of the state for subsequent processing by the agent.
@@ -1108,6 +1173,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: python
 CODE:
+
 ```
 from langchain_core.runnables import RunnableConfig
 
@@ -1131,7 +1197,7 @@ Approach this new question with similar sophistication."""
     return {"examples": examples_str}
 ```
 
-----------------------------------------
+---
 
 TITLE: Python LangGraph Multi-Agent Travel Recommendation System Example
 DESCRIPTION: This comprehensive example illustrates how to build a multi-agent system for travel recommendations using LangGraph. It defines two specialized agents, `travel_advisor` and `hotel_advisor`, each with specific tools and prompts. The agents are configured to communicate and handoff tasks to each other, demonstrating a collaborative workflow within the LangGraph framework. It also shows the setup of `MessagesState` for managing conversation history and agent invocation.
@@ -1140,6 +1206,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/mu
 
 LANGUAGE: python
 CODE:
+
 ```
 from langchain_anthropic import ChatAnthropic
 from langgraph.graph import MessagesState, StateGraph, START
@@ -1202,7 +1269,7 @@ def call_hotel_advisor(
     response = hotel_advisor.invoke(state)
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Debugpy for LangGraph Server Debugging
 DESCRIPTION: Installs the `debugpy` package, which is required to enable step-by-step debugging capabilities for the local LangGraph development server.
@@ -1211,11 +1278,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: Python
 CODE:
+
 ```
 pip install debugpy
 ```
 
-----------------------------------------
+---
 
 TITLE: Illustrate LangGraph Project Directory Structure (with langgraph.json)
 DESCRIPTION: This snippet updates the LangGraph project directory structure to include the `langgraph.json` configuration file. It demonstrates the recommended placement of the configuration file at the root level, alongside the main application directory (`my_agent`) and the environment variables file (`.env`), ensuring proper project setup.
@@ -1224,6 +1292,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: bash
 CODE:
+
 ```
 my-app/
 ├── my_agent # all project code lies within here
@@ -1239,7 +1308,7 @@ my-app/
 └── langgraph.json # configuration file for LangGraph
 ```
 
-----------------------------------------
+---
 
 TITLE: Initialize LangGraph Project from Template
 DESCRIPTION: Use the LangGraph CLI to create a new project with a predefined template. This command sets up the initial directory structure and basic files, serving as a starting point for development.
@@ -1248,11 +1317,12 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/ht
 
 LANGUAGE: bash
 CODE:
+
 ```
 langgraph new --template=new-langgraph-project-python my_new_project
 ```
 
-----------------------------------------
+---
 
 TITLE: Initialize and Get SQL Database Tools (Python)
 DESCRIPTION: Demonstrates how to initialize the `SQLDatabaseToolkit` from `langchain-community` with a database connection (`db`) and a language model (`llm`). It then retrieves and iterates through the available SQL interaction tools, printing their names and descriptions. This setup is essential for enabling an agent to interact with a SQL database.
@@ -1261,6 +1331,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/tutorials/
 
 LANGUAGE: python
 CODE:
+
 ```
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 
@@ -1272,7 +1343,7 @@ for tool in tools:
     print(f"{tool.name}: {tool.description}\n")
 ```
 
-----------------------------------------
+---
 
 TITLE: Retrieve Thread State
 DESCRIPTION: Examples show how to get the state of a thread using client libraries in Python and Javascript, as well as a direct API call via CURL.
@@ -1281,6 +1352,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/how-
 
 LANGUAGE: Python
 CODE:
+
 ```
 final_result = await client.threads.get_state(thread["thread_id"])
 print(final_result)
@@ -1288,6 +1360,7 @@ print(final_result)
 
 LANGUAGE: Javascript
 CODE:
+
 ```
 let finalResult = await client.threads.getState(thread["thread_id"]);
 console.log(finalResult);
@@ -1295,12 +1368,13 @@ console.log(finalResult);
 
 LANGUAGE: CURL
 CODE:
+
 ```
 curl --request GET \\
     --url <DEPLOYMENT_URL>/threads/<THREAD_ID>/state
 ```
 
-----------------------------------------
+---
 
 TITLE: Example .env File for LangGraph Environment Variables
 DESCRIPTION: An example `.env` file demonstrating how to define environment variables for a LangGraph application. This file can include sensitive information like API keys, which are then loaded into the application's environment at runtime.
@@ -1309,13 +1383,14 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: text
 CODE:
+
 ```
 MY_ENV_VAR_1=foo
 MY_ENV_VAR_2=bar
 FIREWORKS_API_KEY=key
 ```
 
-----------------------------------------
+---
 
 TITLE: Define complete LangGraph with state and simple loop
 DESCRIPTION: Provides a comprehensive example of defining a LangGraph with a custom `TypedDict` state, two nodes (`a` and `b`), and initiating the graph builder. This setup forms the foundation for a simple loop structure, demonstrating state management and node definition.
@@ -1324,6 +1399,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/gr
 
 LANGUAGE: python
 CODE:
+
 ```
 import operator
 from typing import Annotated, Literal
@@ -1348,7 +1424,7 @@ builder.add_node(a)
 builder.add_node(b)
 ```
 
-----------------------------------------
+---
 
 TITLE: Example LangGraph Application Configuration File
 DESCRIPTION: This JSON snippet provides an example of the `langgraph.json` configuration file. It specifies the Node.js version, Dockerfile lines, project dependencies, and maps graph names (e.g., 'agent') to their respective TypeScript file paths and exported variable names.
@@ -1357,6 +1433,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/cloud/depl
 
 LANGUAGE: JSON
 CODE:
+
 ```
 {
   "node_version": "20",
@@ -1369,7 +1446,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Install LangGraph and Anthropic Libraries
 DESCRIPTION: Installs the necessary Python packages, `langgraph` and `langchain_anthropic`, quietly and updates them to their latest versions. This setup is crucial for building agentic systems with human-in-the-loop capabilities.
@@ -1378,12 +1455,13 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/how-tos/hu
 
 LANGUAGE: python
 CODE:
+
 ```
 %%capture --no-stderr
 %pip install --quiet -U langgraph langchain_anthropic
 ```
 
-----------------------------------------
+---
 
 TITLE: LangGraph CLI Configuration File Example
 DESCRIPTION: An example of the `langgraph.json` configuration file used by the LangGraph CLI. This file allows users to define project dependencies, specify graph entry points, set environment variables, define Python versions, configure pip, and add custom Dockerfile commands.
@@ -1392,6 +1470,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/libs/cli/README.md#_
 
 LANGUAGE: json
 CODE:
+
 ```
 {
   "dependencies": ["langchain_openai", "./your_package"],  // Required: Package dependencies
@@ -1405,7 +1484,7 @@ CODE:
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure static prompt for LangGraph React agent
 DESCRIPTION: This example demonstrates how to set a fixed, static prompt for a LangGraph `create_react_agent`. The prompt, provided as a string, acts as a system message that never changes, instructing the LLM's behavior. It's suitable for agents with consistent conversational guidelines.
@@ -1414,6 +1493,7 @@ SOURCE: https://github.com/langchain-ai/langgraph/blob/main/docs/docs/agents/age
 
 LANGUAGE: python
 CODE:
+
 ```
 from langgraph.prebuilt import create_react_agent
 
@@ -1430,6 +1510,7 @@ agent.invoke(
 
 LANGUAGE: typescript
 CODE:
+
 ```
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { ChatAnthropic } from "@langchain/anthropic";

@@ -1,13 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "tutor.review.schema.json",
-  "title": "Tutor Review",
+  "title": "Tutor Lab Review",
+  "description": "A minimal structure for graded tutor lab reviews.",
   "type": "object",
   "properties": {
-    "labId": { "type": "string" },
+    "lab_id": { "type": "string" },
     "score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "grade": { "type": "string", "enum": ["fail", "pass", "distinction"] },
     "feedback": { "type": "string" },
-    "citations": { "type": "array", "items": { "type": "string", "format": "uri" } }
+    "evidence": { "type": "array", "items": { "type": "string" } }
   },
-  "required": ["labId", "score"]
+  "required": ["lab_id", "score", "grade"]
 }

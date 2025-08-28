@@ -1,5 +1,5 @@
-import type { MemoryService } from "@cortex-os/memories";
-import { uuid } from "@cortex-os/utils";
+import type { MemoryService } from '@cortex-os/memories';
+import { uuid } from '@cortex-os/utils';
 
 export type MemoriesBridge = {
   checkpoint: (runId: string, data: unknown) => Promise<any>;
@@ -10,12 +10,12 @@ export const createMemoriesBridge = (mem: MemoryService): MemoriesBridge => ({
     const id = `wf:${runId}:${uuid()}`;
     return (mem as any).save({
       id,
-      kind: "artifact",
+      kind: 'artifact',
       text: JSON.stringify(data),
-      tags: ["orchestrator", "checkpoint"],
+      tags: ['orchestrator', 'checkpoint'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      provenance: { source: "system" },
+      provenance: { source: 'system' },
     });
-  }
+  },
 });

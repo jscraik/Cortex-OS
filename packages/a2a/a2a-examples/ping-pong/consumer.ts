@@ -6,4 +6,3 @@ export async function runConsumer() {
   const handler: Handler = { type: 'event.ping.v1', handle: async () => {} };
   await bus.bind([handler]);
 }
-

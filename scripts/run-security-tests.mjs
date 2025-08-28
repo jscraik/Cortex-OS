@@ -21,8 +21,8 @@ const colors = {
     yellow: '\x1b[33m',
     blue: '\x1b[34m',
     magenta: '\x1b[35m',
-    cyan: '\x1b[36m'
-  }
+    cyan: '\x1b[36m',
+  },
 };
 
 // Test categories
@@ -31,38 +31,38 @@ const testCategories = [
     name: 'Static Analysis',
     description: 'Semgrep security scanning',
     command: 'npx semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR .',
-    required: true
+    required: true,
   },
   {
     name: 'Unit Tests',
     description: 'Security unit tests',
     command: 'npm run test:security:unit',
-    required: true
+    required: true,
   },
   {
     name: 'Integration Tests',
     description: 'Security integration tests',
     command: 'npm run test:security:integration',
-    required: true
+    required: true,
   },
   {
     name: 'Regression Tests',
     description: 'Security regression tests',
     command: 'npm run test:security:regression',
-    required: true
+    required: true,
   },
   {
     name: 'Dependency Audit',
     description: 'NPM dependency security audit',
     command: 'npm audit --audit-level=high',
-    required: false
+    required: false,
   },
   {
     name: 'Type Checking',
     description: 'TypeScript type checking',
     command: 'npx tsc --noEmit --project tsconfig.json',
-    required: false
-  }
+    required: false,
+  },
 ];
 
 // Test results storage
@@ -93,11 +93,11 @@ function logHeader(message) {
 async function runTest(category) {
   logHeader(`\n🧪 Running ${category.name} Tests`);
   console.log(`📝 ${category.description}`);
-  
+
   const startTime = Date.now();
   let success = false;
   let errorMessage = '';
-  
+
   try {
     execSync(category.command, { stdio: 'inherit' });
     success = true;
@@ -110,36 +110,36 @@ async function runTest(category) {
       logWarning(`⚠️  ${category.name} tests have warnings: ${errorMessage}`);
     }
   }
-  
+
   const endTime = Date.now();
   const duration = endTime - startTime;
-  
+
   const result = {
     category: category.name,
     description: category.description,
     success: success,
     required: category.required,
     duration: duration,
-    errorMessage: errorMessage
+    errorMessage: errorMessage,
   };
-  
+
   testResults.push(result);
-  
+
   return result;
 }
 
 // Function to generate a security report
 async function generateSecurityReport() {
   logHeader('\n📊 Generating Security Report');
-  
+
   const totalTests = testResults.length;
-  const passedTests = testResults.filter(r => r.success).length;
-  const failedTests = testResults.filter(r => !r.success && r.required).length;
-  const warningTests = testResults.filter(r => !r.success && !r.required).length;
-  
+  const passedTests = testResults.filter((r) => r.success).length;
+  const failedTests = testResults.filter((r) => !r.success && r.required).length;
+  const warningTests = testResults.filter((r) => !r.success && !r.required).length;
+
   const overallStatus = failedTests > 0 ? 'FAIL' : 'PASS';
   const overallColor = overallStatus === 'PASS' ? colors.fg.green : colors.fg.red;
-  
+
   const reportContent = `
 # 🛡️ Security Test Report
 
@@ -153,23 +153,28 @@ async function generateSecurityReport() {
 
 | Test Category | Description | Status | Duration (ms) |
 |--------------|-------------|--------|---------------|
-${testResults.map(result => 
-  `| ${result.category} | ${result.description} | ${
-    result.success ? '✅ PASS' : 
-    result.required ? '❌ FAIL' : '⚠️  WARN'
-  } | ${result.duration} |`
-).join('\n')}
+${testResults
+  .map(
+    (result) =>
+      `| ${result.category} | ${result.description} | ${
+        result.success ? '✅ PASS' : result.required ? '❌ FAIL' : '⚠️  WARN'
+      } | ${result.duration} |`,
+  )
+  .join('\n')}
 
 ## Detailed Results
 
-${testResults.map(result => 
-  `### ${result.category}
+${testResults
+  .map(
+    (result) =>
+      `### ${result.category}
 - **Description:** ${result.description}
 - **Status:** ${result.success ? '✅ PASS' : result.required ? '❌ FAIL' : '⚠️  WARN'}
 - **Duration:** ${result.duration} ms
 ${!result.success && result.errorMessage ? `- **Error:** ${result.errorMessage}` : ''}
-`
-).join('\n')}
+`,
+  )
+  .join('\n')}
 
 ## Security Metrics
 
@@ -180,52 +185,56 @@ ${!result.success && result.errorMessage ? `- **Error:** ${result.errorMessage}`
 
 ## Recommendations
 
-${failedTests > 0 ? 
-  '❌ Critical security issues must be addressed before deployment' : 
-  '✅ No critical security issues found'}
+${
+  failedTests > 0
+    ? '❌ Critical security issues must be addressed before deployment'
+    : '✅ No critical security issues found'
+}
 
-${warningTests > 0 ? 
-  '⚠️  Address warning issues to improve security posture' : 
-  '✅ All security tests passed with no warnings'}
+${
+  warningTests > 0
+    ? '⚠️  Address warning issues to improve security posture'
+    : '✅ All security tests passed with no warnings'
+}
 `;
 
   // Write report to file
   const reportPath = join(process.cwd(), 'security-report.md');
   await writeFile(reportPath, reportContent);
-  
+
   logSuccess(`✅ Security report generated at ${reportPath}`);
-  
+
   return {
     overallStatus,
     passedTests,
     failedTests,
     warningTests,
-    totalTests
+    totalTests,
   };
 }
 
 // Function to display summary
 function displaySummary(results) {
   logHeader('\n📋 Security Test Summary');
-  
+
   console.log('');
-  testResults.forEach(result => {
-    const statusIcon = result.success ? 
-      `${colors.fg.green}✅${colors.reset}` : 
-      result.required ? 
-        `${colors.fg.red}❌${colors.reset}` : 
-        `${colors.fg.yellow}⚠️${colors.reset}`;
-    
+  testResults.forEach((result) => {
+    const statusIcon = result.success
+      ? `${colors.fg.green}✅${colors.reset}`
+      : result.required
+        ? `${colors.fg.red}❌${colors.reset}`
+        : `${colors.fg.yellow}⚠️${colors.reset}`;
+
     console.log(`${statusIcon} ${result.category} (${result.duration}ms)`);
   });
-  
+
   console.log('');
   const totalTests = testResults.length;
-  const passedTests = testResults.filter(r => r.success).length;
-  const failedTests = testResults.filter(r => !r.success && r.required).length;
-  
+  const passedTests = testResults.filter((r) => r.success).length;
+  const failedTests = testResults.filter((r) => !r.success && r.required).length;
+
   logHeader(`📈 Overall: ${passedTests}/${totalTests} tests passed`);
-  
+
   if (failedTests > 0) {
     logError(`❌ ${failedTests} critical security tests failed`);
     process.exit(1);
@@ -237,19 +246,19 @@ function displaySummary(results) {
 // Main function
 async function main() {
   logHeader('🚀 Starting Security Tests');
-  
+
   try {
     // Run all tests
     for (const category of testCategories) {
       await runTest(category);
     }
-    
+
     // Generate security report
     const results = await generateSecurityReport();
-    
+
     // Display summary
     displaySummary(results);
-    
+
     // Exit with appropriate code
     if (results.failedTests > 0) {
       process.exit(1);
@@ -264,7 +273,7 @@ async function main() {
 
 // Run the script if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
+  main().catch((error) => {
     logError(`Script failed: ${error.message}`);
     process.exit(1);
   });

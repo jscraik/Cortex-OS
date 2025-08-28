@@ -3,7 +3,7 @@ metadata:
   name: Security Danger Patterns
   description: Common security vulnerabilities and dangerous patterns
   author: Cortex OS
-  updated: "2025-08-03"
+  updated: '2025-08-03'
 rules:
   - id: HARDCODED_SECRET
     name: Hardcoded Secret
@@ -79,9 +79,9 @@ rules:
       - console\.debug\(
       - print\(
       - debugger;
-      - "TODO:"
-      - "FIXME:"
-      - "HACK:"
+      - 'TODO:'
+      - 'FIXME:'
+      - 'HACK:'
     fileTypes:
       - ts
       - js

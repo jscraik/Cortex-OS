@@ -11,7 +11,7 @@ function hexToRgb(hex) {
   return {
     r: (bigint >> 16) & 255,
     g: (bigint >> 8) & 255,
-    b: bigint & 255
+    b: bigint & 255,
   };
 }
 
@@ -19,26 +19,26 @@ function getRelativeLuminance(rgb) {
   const sRgb = {
     r: rgb.r / 255,
     g: rgb.g / 255,
-    b: rgb.b / 255
+    b: rgb.b / 255,
   };
-  
+
   const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : Math.pow((sRgb.r + 0.055) / 1.055, 2.4);
   const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : Math.pow((sRgb.g + 0.055) / 1.055, 2.4);
   const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : Math.pow((sRgb.b + 0.055) / 1.055, 2.4);
-  
+
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
 function getContrastRatio(foreground, background) {
   const fgRgb = hexToRgb(foreground);
   const bgRgb = hexToRgb(background);
-  
+
   const fgLuminance = getRelativeLuminance(fgRgb);
   const bgLuminance = getRelativeLuminance(bgRgb);
-  
+
   const lighter = Math.max(fgLuminance, bgLuminance);
   const darker = Math.min(fgLuminance, bgLuminance);
-  
+
   return (lighter + 0.05) / (darker + 0.05);
 }
 
@@ -59,14 +59,14 @@ const testCases = [
   { fg: '#000000', bg: '#FFFFFF', name: 'Black on White' },
   { fg: '#FFFFFF', bg: '#000000', name: 'White on Black' },
   { fg: '#767676', bg: '#FFFFFF', name: 'Medium Gray on White' },
-  { fg: '#0000FF', bg: '#FFFF00', name: 'Blue on Yellow' }
+  { fg: '#0000FF', bg: '#FFFF00', name: 'Blue on Yellow' },
 ];
 
 for (const testCase of testCases) {
   const ratio = getContrastRatio(testCase.fg, testCase.bg);
   const aa = meetsAaContrast(testCase.fg, testCase.bg);
   const aaa = meetsAaaContrast(testCase.fg, testCase.bg);
-  
+
   console.log(`  ${testCase.name}:`);
   console.log(`    Contrast ratio: ${ratio.toFixed(2)}:1`);
   console.log(`    Meets AA: ${aa ? '✅ PASS' : '❌ FAIL'}`);
@@ -82,7 +82,7 @@ function generateSrText(text, context) {
 const srTestCases = [
   { text: 'Close', context: 'Close dialog' },
   { text: 'Submit', context: 'Contact form' },
-  { text: 'Search', context: null }
+  { text: 'Search', context: null },
 ];
 
 for (const testCase of srTestCases) {

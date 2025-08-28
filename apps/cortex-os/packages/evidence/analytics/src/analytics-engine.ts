@@ -9,13 +9,13 @@
  * @ai_provenance_hash N/A
  */
 
-import { EventEmitter } from "events";
-import pino from "pino";
-import { MetricsCollector } from "./metrics-collector.js";
-import { PatternAnalyzer } from "./pattern-analyzer.js";
-import { OptimizationEngine } from "./optimization-engine.js";
-import { AnalyticsConfig } from "./types.js";
-import { createAnalyticsConfig } from "./config.js";
+import { EventEmitter } from 'events';
+import pino from 'pino';
+import { MetricsCollector } from './metrics-collector.js';
+import { PatternAnalyzer } from './pattern-analyzer.js';
+import { OptimizationEngine } from './optimization-engine.js';
+import { AnalyticsConfig } from './types.js';
+import { createAnalyticsConfig } from './config.js';
 
 /**
  * Main analytics engine that coordinates all analytics components
@@ -34,8 +34,8 @@ export class AnalyticsEngine extends EventEmitter {
     super();
     this.config = createAnalyticsConfig(config);
     this.logger = pino({
-      name: "orchestration-analytics-engine",
-      level: "info",
+      name: 'orchestration-analytics-engine',
+      level: 'info',
     });
 
     // Initialize components
@@ -51,14 +51,9 @@ export class AnalyticsEngine extends EventEmitter {
    */
   private setupEventHandlers(): void {
     // Metrics collector events
-    this.metricsCollector.on("metricsCollected", (data) => {
+    this.metricsCollector.on('metricsCollected', (data) => {
       // Forward to pattern analyzer
-      this.patternAnalyzer.addHistoricalData(
-        data.agentMetrics,
-        data.orchestrationMetrics,
-        [],
-        [],
-      );
+      this.patternAnalyzer.addHistoricalData(data.agentMetrics, data.orchestrationMetrics, [], []);
 
       // Forward to optimization engine
       this.optimizationEngine.addHistoricalData(
@@ -69,42 +64,37 @@ export class AnalyticsEngine extends EventEmitter {
       );
 
       // Emit consolidated event
-      this.emit("dataCollected", data);
+      this.emit('dataCollected', data);
     });
 
     // Pattern analyzer events
-    this.patternAnalyzer.on("patternsAnalyzed", (data) => {
+    this.patternAnalyzer.on('patternsAnalyzed', (data) => {
       // Forward patterns to optimization engine
-      this.optimizationEngine.addHistoricalData(
-        [],
-        [],
-        data.patterns,
-        data.bottlenecks,
-      );
+      this.optimizationEngine.addHistoricalData([], [], data.patterns, data.bottlenecks);
 
       // Emit analysis event
-      this.emit("patternsAnalyzed", data);
+      this.emit('patternsAnalyzed', data);
     });
 
     // Optimization engine events
-    this.optimizationEngine.on("recommendationsGenerated", (data) => {
-      this.emit("recommendationsGenerated", data);
+    this.optimizationEngine.on('recommendationsGenerated', (data) => {
+      this.emit('recommendationsGenerated', data);
     });
 
     // Error handling
-    this.metricsCollector.on("error", (error) => {
-      this.logger.error("Metrics collector error", { error: error.message });
-      this.emit("error", error);
+    this.metricsCollector.on('error', (error) => {
+      this.logger.error('Metrics collector error', { error: error.message });
+      this.emit('error', error);
     });
 
-    this.patternAnalyzer.on("error", (error) => {
-      this.logger.error("Pattern analyzer error", { error: error.message });
-      this.emit("error", error);
+    this.patternAnalyzer.on('error', (error) => {
+      this.logger.error('Pattern analyzer error', { error: error.message });
+      this.emit('error', error);
     });
 
-    this.optimizationEngine.on("error", (error) => {
-      this.logger.error("Optimization engine error", { error: error.message });
-      this.emit("error", error);
+    this.optimizationEngine.on('error', (error) => {
+      this.logger.error('Optimization engine error', { error: error.message });
+      this.emit('error', error);
     });
   }
 
@@ -113,12 +103,12 @@ export class AnalyticsEngine extends EventEmitter {
    */
   async start(): Promise<void> {
     if (this.isRunning) {
-      this.logger.warn("Analytics engine already running");
+      this.logger.warn('Analytics engine already running');
       return;
     }
 
     try {
-      this.logger.info("Starting orchestration analytics engine");
+      this.logger.info('Starting orchestration analytics engine');
 
       // Start all components
       this.metricsCollector.startCollection();
@@ -126,13 +116,13 @@ export class AnalyticsEngine extends EventEmitter {
       this.optimizationEngine.startOptimization();
 
       this.isRunning = true;
-      this.logger.info("Analytics engine started successfully");
-      this.emit("started");
+      this.logger.info('Analytics engine started successfully');
+      this.emit('started');
     } catch (error) {
-      this.logger.error("Failed to start analytics engine", {
+      this.logger.error('Failed to start analytics engine', {
         error: error.message,
       });
-      this.emit("error", error);
+      this.emit('error', error);
       throw error;
     }
   }
@@ -142,12 +132,12 @@ export class AnalyticsEngine extends EventEmitter {
    */
   async stop(): Promise<void> {
     if (!this.isRunning) {
-      this.logger.warn("Analytics engine not running");
+      this.logger.warn('Analytics engine not running');
       return;
     }
 
     try {
-      this.logger.info("Stopping orchestration analytics engine");
+      this.logger.info('Stopping orchestration analytics engine');
 
       // Stop all components
       this.metricsCollector.stopCollection();
@@ -155,13 +145,13 @@ export class AnalyticsEngine extends EventEmitter {
       this.optimizationEngine.stopOptimization();
 
       this.isRunning = false;
-      this.logger.info("Analytics engine stopped successfully");
-      this.emit("stopped");
+      this.logger.info('Analytics engine stopped successfully');
+      this.emit('stopped');
     } catch (error) {
-      this.logger.error("Failed to stop analytics engine", {
+      this.logger.error('Failed to stop analytics engine', {
         error: error.message,
       });
-      this.emit("error", error);
+      this.emit('error', error);
       throw error;
     }
   }
@@ -169,18 +159,8 @@ export class AnalyticsEngine extends EventEmitter {
   /**
    * Record agent interaction for pattern analysis
    */
-  recordInteraction(
-    sourceAgent: string,
-    targetAgent: string,
-    type: string,
-    latency: number,
-  ): void {
-    this.patternAnalyzer.recordInteraction(
-      sourceAgent,
-      targetAgent,
-      type,
-      latency,
-    );
+  recordInteraction(sourceAgent: string, targetAgent: string, type: string, latency: number): void {
+    this.patternAnalyzer.recordInteraction(sourceAgent, targetAgent, type, latency);
   }
 
   /**
@@ -202,9 +182,7 @@ export class AnalyticsEngine extends EventEmitter {
       performanceMetrics: this.metricsCollector.getCurrentPerformanceMetrics(),
       interactionGraph: [], // Would be generated from patterns
       alerts: [], // Would be generated based on thresholds
-      recommendations: this.optimizationEngine
-        .getRecommendations()
-        .slice(0, 10),
+      recommendations: this.optimizationEngine.getRecommendations().slice(0, 10),
     };
   }
 
@@ -228,7 +206,7 @@ export class AnalyticsEngine extends EventEmitter {
    */
   async cleanup(): Promise<void> {
     try {
-      this.logger.info("Cleaning up analytics engine");
+      this.logger.info('Cleaning up analytics engine');
 
       // Stop if running
       if (this.isRunning) {
@@ -243,9 +221,9 @@ export class AnalyticsEngine extends EventEmitter {
       // Remove event listeners
       this.removeAllListeners();
 
-      this.logger.info("Analytics engine cleanup completed");
+      this.logger.info('Analytics engine cleanup completed');
     } catch (error) {
-      this.logger.error("Error during analytics engine cleanup", {
+      this.logger.error('Error during analytics engine cleanup', {
         error: error.message,
       });
       throw error;
@@ -256,9 +234,7 @@ export class AnalyticsEngine extends EventEmitter {
 /**
  * Create a new analytics engine with configuration
  */
-export function createAnalyticsEngine(
-  config?: Partial<AnalyticsConfig>,
-): AnalyticsEngine {
+export function createAnalyticsEngine(config?: Partial<AnalyticsConfig>): AnalyticsEngine {
   return new AnalyticsEngine(config);
 }
 

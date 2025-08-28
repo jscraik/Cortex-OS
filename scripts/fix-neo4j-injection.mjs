@@ -97,11 +97,13 @@ content = content.replace(
   }
 }
 
-export { Neo4j };`
+export { Neo4j };`,
 );
 
 // Write the updated content back to the file
 writeFileSync(neo4jPath, content);
 
 console.log('✅ Neo4j injection vulnerabilities have been marked for fixing in neo4j.ts');
-console.log('⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j');
+console.log(
+  '⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j',
+);

@@ -1,5 +1,5 @@
 /**
- * @file basic-integration.ts  
+ * @file basic-integration.ts
  * @description Basic integration example showing Cortex Kernel usage
  * @author Cortex-OS Team
  * @version 1.0.0
@@ -34,7 +34,7 @@ async function basicIntegrationExample() {
     description: 'Build a REST API with authentication and user management',
     requirements: [
       'User registration and login',
-      'JWT token authentication', 
+      'JWT token authentication',
       'CRUD operations for user profiles',
       'Input validation and error handling',
       'Unit tests with 90% coverage',
@@ -49,7 +49,7 @@ async function basicIntegrationExample() {
   // 4. Run the PRP workflow
   const startTime = Date.now();
   console.log('🚀 Starting PRP workflow execution...\n');
-  
+
   const result = await kernel.runPRPWorkflow(blueprint, {
     runId: 'example-run-001',
     deterministic: true,
@@ -64,16 +64,18 @@ async function basicIntegrationExample() {
   console.log(`   Run ID: ${result.runId}`);
   console.log(`   Start Time: ${result.metadata.startTime}`);
   console.log(`   End Time: ${result.metadata.endTime || 'N/A'}`);
-  
+
   if (result.cerebrum) {
-    console.log(`   Cerebrum Decision: ${result.cerebrum.decision} (${Math.round(result.cerebrum.confidence * 100)}% confidence)`);
+    console.log(
+      `   Cerebrum Decision: ${result.cerebrum.decision} (${Math.round(result.cerebrum.confidence * 100)}% confidence)`,
+    );
     console.log(`   Reasoning: ${result.cerebrum.reasoning}`);
   }
 
   // 6. Show validation results
   console.log('\n🔍 Validation Results:');
   const phases = ['strategy', 'build', 'evaluation'] as const;
-  phases.forEach(phase => {
+  phases.forEach((phase) => {
     const validation = result.validationResults[phase];
     if (validation) {
       const status = validation.passed ? '✅ PASSED' : '❌ FAILED';
@@ -95,7 +97,7 @@ async function basicIntegrationExample() {
   });
 
   console.log('\n🎉 Integration example completed successfully!');
-  
+
   return result;
 }
 
@@ -111,7 +113,7 @@ async function determinismDemo() {
   };
 
   const kernel = new CortexKernel(mockOrchestrator);
-  
+
   const blueprint = {
     title: 'Determinism Test',
     description: 'Simple test project for determinism validation',
@@ -119,7 +121,7 @@ async function determinismDemo() {
   };
 
   console.log('Running identical workflows twice...');
-  
+
   const [run1, run2] = await Promise.all([
     kernel.runPRPWorkflow(blueprint, { runId: 'determinism-test-1' }),
     kernel.runPRPWorkflow(blueprint, { runId: 'determinism-test-2' }),
@@ -134,8 +136,8 @@ async function determinismDemo() {
     validationResults: Object.fromEntries(
       Object.entries(state.validationResults).map(([key, value]: [string, any]) => [
         key,
-        value ? { ...value, timestamp: 'NORM' } : value
-      ])
+        value ? { ...value, timestamp: 'NORM' } : value,
+      ]),
     ),
     cerebrum: state.cerebrum ? { ...state.cerebrum, timestamp: 'NORM' } : state.cerebrum,
   });
@@ -144,12 +146,12 @@ async function determinismDemo() {
   const normalized2 = normalize(run2);
 
   const isIdentical = JSON.stringify(normalized1) === JSON.stringify(normalized2);
-  
+
   console.log(`✅ Structural determinism: ${isIdentical ? 'VERIFIED' : 'FAILED'}`);
   console.log(`   Run 1 final phase: ${run1.phase}`);
   console.log(`   Run 2 final phase: ${run2.phase}`);
   console.log(`   Both completed: ${run1.phase === 'completed' && run2.phase === 'completed'}`);
-  
+
   return { run1, run2, isIdentical };
 }
 

@@ -2,7 +2,6 @@
  * @file MLX Integration for Marketplace
  * @description Production-ready MLX model integration for semantic search and safety
  */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, no-console */
 
 import { spawn, type ChildProcess } from 'child_process';
 import { writeFile } from 'fs/promises';
@@ -145,6 +144,7 @@ except Exception as e:
             return { server: validated, similarity, relevanceScore };
           }),
         );
+        );
 
         return results.sort((a, b) => b.relevanceScore - a.relevanceScore);
       } catch (error) {
@@ -160,7 +160,7 @@ except Exception as e:
     /**
      * Validate content safety
      */
-    async validateSafety(content: string): Promise<SafetyResult> {
+    validateSafety: async (content: string): Promise<SafetyResult> => {
       const script = `
 import re
 from typing import List, Tuple

@@ -9,12 +9,12 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { 
-  ASBRAIIntegration, 
-  createASBRAIIntegration, 
+import {
+  ASBRAIIntegration,
+  createASBRAIIntegration,
   AI_EVIDENCE_PRESETS,
   type AIEvidenceConfig,
-  type AIEvidenceResult 
+  type AIEvidenceResult,
 } from '../asbr-ai-integration.js';
 
 // Mock dependencies before importing
@@ -36,7 +36,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
-    
+
     // Create fresh instance for each test
     asbrAI = new ASBRAIIntegration({
       enableMLXGeneration: true,
@@ -115,10 +115,10 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
       };
 
       // Mock RAG to return empty results
-      mockAICapabilities.ragQuery.mockResolvedValue({ 
-        answer: '', 
-        sources: [], 
-        confidence: 0 
+      mockAICapabilities.ragQuery.mockResolvedValue({
+        answer: '',
+        sources: [],
+        confidence: 0,
       });
 
       const result = await asbrAI.factCheckEvidence(evidence);
@@ -157,13 +157,16 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
       ];
 
       // Mock AI analysis to return minimal results
-      mockAICapabilities.ragQuery.mockResolvedValue({ 
-        answer: 'Basic analysis', 
+      mockAICapabilities.ragQuery.mockResolvedValue({
+        answer: 'Basic analysis',
         sources: [],
-        confidence: 0.5 
+        confidence: 0.5,
       });
 
-      const result = await asbrAI.generateEvidenceInsights(evidenceCollection, 'Authentication System Review');
+      const result = await asbrAI.generateEvidenceInsights(
+        evidenceCollection,
+        'Authentication System Review',
+      );
 
       // This should fail because we expect comprehensive insights
       expect(result.summary.length).toBeGreaterThan(50);
@@ -215,14 +218,16 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
       };
 
       // Mock consistent AI responses
-      mockAICapabilities.generate.mockResolvedValue('Detailed performance analysis showing 95ms average latency');
+      mockAICapabilities.generate.mockResolvedValue(
+        'Detailed performance analysis showing 95ms average latency',
+      );
       mockAICapabilities.searchKnowledge.mockResolvedValue([
-        { text: 'Related performance metric', similarity: 0.85, metadata: { source: 'docs' } }
+        { text: 'Related performance metric', similarity: 0.85, metadata: { source: 'docs' } },
       ]);
       mockAICapabilities.ragQuery.mockResolvedValue({
         answer: 'Performance analysis suggests adequate latency levels',
         sources: [{ text: 'Performance data', similarity: 0.9 }],
-        confidence: 0.88
+        confidence: 0.88,
       });
 
       // Run collection twice with identical inputs
@@ -255,7 +260,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
       expect(result.aiEnhancedEvidence).toBeDefined();
       expect(result.aiMetadata.enhancementMethods).toEqual([]);
       expect(result.insights).toBeDefined();
-      
+
       // Should include error information in metadata
       expect(result.aiMetadata.qualityScores).toBeDefined();
     });
@@ -277,10 +282,10 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 
       // Track memory usage
       const memoryBefore = process.memoryUsage().heapUsed;
-      
+
       const result = await asbrAI.generateEvidenceInsights(
-        largeEvidenceCollection, 
-        'Large Scale Evidence Analysis'
+        largeEvidenceCollection,
+        'Large Scale Evidence Analysis',
       );
 
       const memoryAfter = process.memoryUsage().heapUsed;
@@ -308,12 +313,12 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 
       // Mock AI responses with delays to simulate real processing
       mockAICapabilities.generate.mockImplementation(async (prompt: string) => {
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+        await new Promise((resolve) => setTimeout(resolve, Math.random() * 100));
         return `AI analysis for: ${prompt.substring(0, 50)}...`;
       });
 
       // Process all contexts concurrently
-      const promises = contexts.map(context => asbrAI.collectEnhancedEvidence(context));
+      const promises = contexts.map((context) => asbrAI.collectEnhancedEvidence(context));
       const results = await Promise.all(promises);
 
       // All results should be valid and unique
@@ -353,10 +358,12 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
       const result = await asbrAI.collectEnhancedEvidence(context);
 
       // Evidence should be properly formatted for ASBR (now uses crypto.randomUUID())
-      expect(result.originalEvidence.id).toMatch(/^evidence-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/);
+      expect(result.originalEvidence.id).toMatch(
+        /^evidence-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/,
+      );
       expect(result.originalEvidence.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       expect(result.aiMetadata.processingTime).toBeGreaterThan(0);
-      
+
       // Should have ASBR-compatible structure
       expect(result.originalEvidence.source.type).toBeDefined();
       expect(result.originalEvidence.source.metadata).toBeDefined();
@@ -416,7 +423,7 @@ describe('📋 ASBR AI Integration TDD Checklist', () => {
     // This test serves as a checklist for TDD compliance
     const tddChecklist = {
       redPhaseTests: 'Tests written that fail initially ✅',
-      greenPhaseImplementation: 'Minimal code to make tests pass ✅', 
+      greenPhaseImplementation: 'Minimal code to make tests pass ✅',
       refactorPhase: 'Code refactored while keeping tests green ⏳',
       reviewPhase: 'Code reviewed against standards ⏳',
       accessibilityConsidered: 'N/A - Backend integration ✅',
@@ -426,6 +433,6 @@ describe('📋 ASBR AI Integration TDD Checklist', () => {
     };
 
     // Fail this test to remind us of TDD compliance
-    expect(Object.values(tddChecklist).filter(status => status.includes('❌')).length).toBe(0);
+    expect(Object.values(tddChecklist).filter((status) => status.includes('❌')).length).toBe(0);
   });
 });

@@ -6,4 +6,3 @@ export function wireRag(endpoint = 'http://127.0.0.1:8000') {
   const store = memoryStore();
   return { embedder, store };
 }
-

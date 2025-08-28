@@ -14,10 +14,10 @@ describe('Marketplace API Server', () => {
     app = build({
       logger: false,
       registries: {
-        official: 'https://registry.cortex-os.dev/v1/registry.json'
+        official: 'https://registry.cortex-os.dev/v1/registry.json',
       },
       cacheDir: '/tmp/test-cache',
-      cacheTtl: 300000
+      cacheTtl: 300000,
     });
   });
 
@@ -29,14 +29,14 @@ describe('Marketplace API Server', () => {
     it('should respond to health check', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/health'
+        url: '/health',
       });
 
       expect(response.statusCode).toBe(200);
       expect(JSON.parse(response.body)).toEqual({
         status: 'healthy',
         timestamp: expect.any(String),
-        uptime: expect.any(Number)
+        uptime: expect.any(Number),
       });
     });
   });
@@ -45,7 +45,7 @@ describe('Marketplace API Server', () => {
     it('should search servers with query', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?q=filesystem&limit=10&offset=0'
+        url: '/api/v1/servers/search?q=filesystem&limit=10&offset=0',
       });
 
       expect(response.statusCode).toBe(200);
@@ -59,7 +59,7 @@ describe('Marketplace API Server', () => {
     it('should validate search parameters', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?limit=-1'
+        url: '/api/v1/servers/search?limit=-1',
       });
 
       expect(response.statusCode).toBe(400);
@@ -71,7 +71,7 @@ describe('Marketplace API Server', () => {
     it('should support category filtering', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?category=development&limit=5'
+        url: '/api/v1/servers/search?category=development&limit=5',
       });
 
       expect(response.statusCode).toBe(200);
@@ -82,7 +82,7 @@ describe('Marketplace API Server', () => {
     it('should support risk level filtering', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?riskLevel=low&limit=5'
+        url: '/api/v1/servers/search?riskLevel=low&limit=5',
       });
 
       expect(response.statusCode).toBe(200);
@@ -93,7 +93,7 @@ describe('Marketplace API Server', () => {
     it('should handle empty search results', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?q=nonexistentserver12345'
+        url: '/api/v1/servers/search?q=nonexistentserver12345',
       });
 
       expect(response.statusCode).toBe(200);
@@ -108,12 +108,12 @@ describe('Marketplace API Server', () => {
     it('should get server by ID', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/filesystem'
+        url: '/api/v1/servers/filesystem',
       });
 
       // May be 200 or 404 depending on registry state
       expect([200, 404]).toContain(response.statusCode);
-      
+
       if (response.statusCode === 200) {
         const body = JSON.parse(response.body);
         expect(body.success).toBe(true);
@@ -124,7 +124,7 @@ describe('Marketplace API Server', () => {
     it('should return 404 for unknown server', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/nonexistent'
+        url: '/api/v1/servers/nonexistent',
       });
 
       expect(response.statusCode).toBe(404);
@@ -136,7 +136,7 @@ describe('Marketplace API Server', () => {
     it('should validate server ID format', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/invalid..id'
+        url: '/api/v1/servers/invalid..id',
       });
 
       expect(response.statusCode).toBe(400);
@@ -150,7 +150,7 @@ describe('Marketplace API Server', () => {
     it('should list available registries', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/registries'
+        url: '/api/v1/registries',
       });
 
       expect(response.statusCode).toBe(200);
@@ -164,7 +164,7 @@ describe('Marketplace API Server', () => {
     it('should get registry status', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/registries/official/status'
+        url: '/api/v1/registries/official/status',
       });
 
       expect(response.statusCode).toBe(200);
@@ -179,7 +179,7 @@ describe('Marketplace API Server', () => {
     it('should list server categories', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/categories'
+        url: '/api/v1/categories',
       });
 
       expect(response.statusCode).toBe(200);
@@ -194,7 +194,7 @@ describe('Marketplace API Server', () => {
     it('should provide marketplace stats', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/stats'
+        url: '/api/v1/stats',
       });
 
       expect(response.statusCode).toBe(200);
@@ -212,7 +212,7 @@ describe('Marketplace API Server', () => {
         method: 'POST',
         url: '/api/v1/servers/search',
         headers: { 'content-type': 'application/json' },
-        payload: 'invalid json{'
+        payload: 'invalid json{',
       });
 
       expect(response.statusCode).toBe(400);
@@ -223,7 +223,7 @@ describe('Marketplace API Server', () => {
     it('should handle method not allowed', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: '/api/v1/servers/filesystem'
+        url: '/api/v1/servers/filesystem',
       });
 
       expect(response.statusCode).toBe(405);
@@ -238,19 +238,21 @@ describe('Marketplace API Server', () => {
 
   describe('Rate Limiting', () => {
     it('should enforce rate limits', async () => {
-      const requests = Array(10).fill(null).map(() =>
-        app.inject({
-          method: 'GET',
-          url: '/api/v1/servers/search?q=test'
-        })
-      );
+      const requests = Array(10)
+        .fill(null)
+        .map(() =>
+          app.inject({
+            method: 'GET',
+            url: '/api/v1/servers/search?q=test',
+          }),
+        );
 
       const responses = await Promise.all(requests);
-      
+
       // Some requests should succeed, some may be rate limited
-      const successCount = responses.filter(r => r.statusCode === 200).length;
-      const rateLimitedCount = responses.filter(r => r.statusCode === 429).length;
-      
+      const successCount = responses.filter((r) => r.statusCode === 200).length;
+      const rateLimitedCount = responses.filter((r) => r.statusCode === 429).length;
+
       expect(successCount + rateLimitedCount).toBe(10);
     });
   });
@@ -261,9 +263,9 @@ describe('Marketplace API Server', () => {
         method: 'OPTIONS',
         url: '/api/v1/servers/search',
         headers: {
-          'Origin': 'https://cortex-os.dev',
-          'Access-Control-Request-Method': 'GET'
-        }
+          Origin: 'https://cortex-os.dev',
+          'Access-Control-Request-Method': 'GET',
+        },
       });
 
       expect(response.statusCode).toBe(204);
@@ -275,7 +277,7 @@ describe('Marketplace API Server', () => {
     it('should serve API documentation', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/documentation'
+        url: '/documentation',
       });
 
       expect(response.statusCode).toBe(200);
@@ -285,7 +287,7 @@ describe('Marketplace API Server', () => {
     it('should provide OpenAPI spec', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/documentation/json'
+        url: '/documentation/json',
       });
 
       expect(response.statusCode).toBe(200);

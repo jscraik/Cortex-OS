@@ -15,7 +15,7 @@ export class SimReporter {
    */
   createBatchResult(batchId: string, scenarios: SimResult[]): SimBatchResult {
     const summary = this.calculateBatchSummary(scenarios);
-    
+
     return {
       batchId,
       scenarios,
@@ -29,7 +29,7 @@ export class SimReporter {
    */
   createReport(batchResults: SimBatchResult[]): SimReport {
     const overall = this.calculateOverallMetrics(batchResults);
-    
+
     return {
       batchResults,
       overall,
@@ -139,7 +139,7 @@ export class SimReporter {
   generateTextSummary(report: SimReport): string {
     const { overall, batchResults } = report;
     const latestBatch = batchResults[batchResults.length - 1];
-    
+
     const lines = [
       '=== SimLab Report Summary ===',
       `Overall Pass Rate: ${(overall.passRate * 100).toFixed(1)}%`,

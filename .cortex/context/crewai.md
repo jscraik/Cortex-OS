@@ -8,18 +8,20 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/observability/neat
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install neatlogs
 ```
 
 LANGUAGE: python
 CODE:
+
 ```
 import neatlogs
 neatlogs.init("YOUR_API_KEY")
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI Enterprise API Quick Start Endpoints
 DESCRIPTION: Provides a quick guide to the essential API endpoints for getting started with CrewAI Enterprise, including discovering inputs, starting execution, and monitoring progress.
@@ -28,6 +30,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/api-reference/intr
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 Get Your API Credentials: Navigate to your crew's detail page in the CrewAI Enterprise dashboard and copy your Bearer Token from the Status tab.
 Discover Required Inputs: Use the `GET /inputs` endpoint to see what parameters your crew expects.
@@ -35,7 +38,7 @@ Start a Crew Execution: Call `POST /kickoff` with your inputs to start the crew 
 Monitor Progress: Use `GET /status/{kickoff_id}` to check execution status and retrieve results.
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI CLI Commands for Flow Management
 DESCRIPTION: Command-line interface (CLI) commands for interacting with CrewAI flows. `crewai install` is used to install project dependencies, `crewai flow kickoff` starts the guide creation process, and `crewai flow plot` generates a visual representation of the flow's structure.
@@ -44,23 +47,26 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/guides/flows/first
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai install
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai flow kickoff
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai flow plot
 ```
 
-----------------------------------------
+---
 
 TITLE: Run CrewAI Project - Shell
 DESCRIPTION: Executes your CrewAI project. This command starts the AI agents and tasks defined in your project's configuration files.
@@ -69,11 +75,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 crewai run
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI CLI
 DESCRIPTION: Installs the CrewAI library, which includes the command-line interface. This is the primary method to get started with the CrewAI CLI.
@@ -82,11 +89,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/cli.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 pip install crewai
 ```
 
-----------------------------------------
+---
 
 TITLE: Guide Creation Flow Setup and Models
 DESCRIPTION: Sets up the main flow for creating a guide, including defining Pydantic models (`Section`, `GuideOutline`) for structured data and importing the `ContentCrew`. This code snippet demonstrates how to structure data for a guide and prepare for orchestrating tasks.
@@ -95,6 +103,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/guides/flows/first
 
 LANGUAGE: python
 CODE:
+
 ```
 #!/usr/bin/env python
 import json
@@ -119,7 +128,7 @@ class GuideOutline(BaseModel):
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Install uv (Windows via PowerShell) - Shell
 DESCRIPTION: Installs the uv dependency manager and package handler on Windows systems using PowerShell. This command downloads and executes the installation script.
@@ -128,11 +137,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-----------------------------------------
+---
 
 TITLE: Full Agent Collaboration Example
 DESCRIPTION: A comprehensive example demonstrating the setup of multiple agents (Researcher, Writer, Editor) and a Crew to collaborate on a content creation task. It highlights how `allow_delegation=True` facilitates teamwork.
@@ -141,6 +151,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/collabora
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Crew, Task, Process
 
@@ -148,7 +159,7 @@ from crewai import Agent, Crew, Task, Process
 researcher = Agent(
     role="Research Specialist",
     goal="Find accurate, up-to-date information on any topic",
-    backstory="""You're a meticulous researcher with expertise in finding 
+    backstory="""You're a meticulous researcher with expertise in finding
     reliable sources and fact-checking information across various domains.""",
     allow_delegation=True,
     verbose=True
@@ -157,7 +168,7 @@ researcher = Agent(
 writer = Agent(
     role="Content Writer",
     goal="Create engaging, well-structured content",
-    backstory="""You're a skilled content writer who excels at transforming 
+    backstory="""You're a skilled content writer who excels at transforming
     research into compelling, readable content for different audiences.""",
     allow_delegation=True,
     verbose=True
@@ -166,7 +177,7 @@ writer = Agent(
 editor = Agent(
     role="Content Editor",
     goal="Ensure content quality and consistency",
-    backstory="""You're an experienced editor with an eye for detail, 
+    backstory="""You're an experienced editor with an eye for detail,
     ensuring content meets high standards for clarity and accuracy.""",
     allow_delegation=True,
     verbose=True
@@ -175,13 +186,13 @@ editor = Agent(
 # Create a task that encourages collaboration
 article_task = Task(
     description="""Write a comprehensive 1000-word article about 'The Future of AI in Healthcare'.
-    
+
     The article should include:
     - Current AI applications in healthcare
-    - Emerging trends and technologies  
+    - Emerging trends and technologies
     - Potential challenges and ethical considerations
     - Expert predictions for the next 5 years
-    
+
     Collaborate with your teammates to ensure accuracy and quality.""",
     expected_output="A well-researched, engaging 1000-word article with proper structure and citations",
     agent=writer  # Writer leads, but can delegate research to researcher
@@ -198,7 +209,7 @@ crew = Crew(
 result = crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Salesforce Agent Setup with CrewAI
 DESCRIPTION: Python code example demonstrating how to set up a CrewAI agent with Salesforce capabilities using CrewaiEnterpriseTools. It shows how to initialize tools, create an agent, define a task, and run the crew.
@@ -207,6 +218,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -240,7 +252,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Install uv (macOS/Linux via wget) - Shell
 DESCRIPTION: Installs the uv dependency manager and package handler on macOS or Linux systems using wget, as an alternative if curl is not available. This script handles the setup of uv.
@@ -249,11 +261,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 wget -qO- https://astral.sh/uv/install.sh | sh
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Project Dependencies
 DESCRIPTION: Installs all project dependencies, optionally locking them first. This command ensures your environment is set up correctly to run the CrewAI project.
@@ -262,11 +275,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/f
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai install
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI Project Dependencies
 DESCRIPTION: Navigates to your project directory and installs all necessary dependencies for your CrewAI project using the `crewai install` command.
@@ -275,11 +289,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/t
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai install
 ```
 
-----------------------------------------
+---
 
 TITLE: Verify CrewAI Installation - Shell
 DESCRIPTION: Lists installed tools managed by uv to confirm that CrewAI has been successfully installed. It shows the version of the installed crewai package.
@@ -288,11 +303,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 uv tool list
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI CLI - Shell
 DESCRIPTION: Installs the CrewAI command-line interface (CLI) using uv. This command makes the crewai tool available for project management and execution.
@@ -301,11 +317,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 uv tool install crewai
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic ClickUp Agent Setup
 DESCRIPTION: Example of setting up a basic agent using CrewAI and CrewaiEnterpriseTools for ClickUp integration.
@@ -314,6 +331,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -334,7 +352,7 @@ from crewai_tools import CrewaiEnterpriseTools
 # crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Create CrewAI Project Scaffolding - Shell
 DESCRIPTION: Generates a new CrewAI project structure with essential files and directories. Replace <your_project_name> with your desired project name.
@@ -343,11 +361,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 crewai create crew <your_project_name>
 ```
 
-----------------------------------------
+---
 
 TITLE: Start Simple and Iterate Model Configurations in CrewAI
 DESCRIPTION: Begin with straightforward model configurations for your CrewAI setup. Optimize specific agents or introduce complex model-switching logic only after testing and validating performance gains against your actual workflows and business goals.
@@ -356,6 +375,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/learn/llm-selec
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Crew, Agent, LLM
 
@@ -370,7 +390,7 @@ crew = Crew(
 # optimized_agent = Agent(role="Specialized Agent", llm=LLM(model="gpt-4-turbo"))
 ```
 
-----------------------------------------
+---
 
 TITLE: Run the CrewAI Project
 DESCRIPTION: Executes the CrewAI project, initiating the defined AI agents and tasks. This command starts the main workflow of your crew.
@@ -379,11 +399,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/f
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai run
 ```
 
-----------------------------------------
+---
 
 TITLE: Install UV
 DESCRIPTION: Installs the UV package manager, used for dependency management and package handling in the project.
@@ -392,11 +413,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/c
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install uv
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI
 DESCRIPTION: Installs the core CrewAI framework using pip. This is the primary command for setting up the library.
@@ -405,11 +427,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/README.md#_snippet_23
 
 LANGUAGE: shell
 CODE:
+
 ```
 pip install crewai
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI Project Dependencies - Shell
 DESCRIPTION: Installs all necessary Python packages for your CrewAI project, typically defined in pyproject.toml. This command should be run in the root of your project directory.
@@ -418,11 +441,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 crewai install
 ```
 
-----------------------------------------
+---
 
 TITLE: Install uv Package Manager
 DESCRIPTION: Installs the uv package manager, which is recommended for managing Python dependencies in the project. Ensure you have Python installed before running this command.
@@ -431,11 +455,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/f
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install uv
 ```
 
-----------------------------------------
+---
 
 TITLE: Crew Configuration Setup (Python)
 DESCRIPTION: Initiates the setup for a CrewAI crew, which orchestrates agents and tasks. This Python script is the starting point for defining the team's workflow and execution. The provided snippet is incomplete.
@@ -444,6 +469,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/guides/crews/first
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew, Process
 
@@ -478,7 +504,7 @@ from crewai import Agent, Task, Crew, Process
 # The provided snippet ends here, indicating the start of the crew configuration.
 ```
 
-----------------------------------------
+---
 
 TITLE: Manual StdioServer Integration with CrewAI
 DESCRIPTION: This snippet demonstrates manually starting and managing a StdioServer using `MCPServerAdapter` and integrating its tools with a CrewAI agent for task execution. It covers server parameter setup, starting/stopping the server, and using the server's tools within an agent's capabilities. Ensure `MCPServerAdapter` and CrewAI are installed and the Stdio server script path is correct.
@@ -487,6 +513,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/mcp/stdio.mdx#_sni
 
 LANGUAGE: python
 CODE:
+
 ```
 import os
 from crewai import Agent, Task, Crew, Process
@@ -494,7 +521,7 @@ from crewai_tools.tools.stdio import StdioServerParameters, MCPServerAdapter
 
 # Create a StdioServerParameters object
 stdio_params = StdioServerParameters(
-    command="python3", 
+    command="python3",
     args=["servers/your_stdio_server.py"], # Replace with your actual server script path
     env={"UV_PYTHON": "3.12", **os.environ},
 )
@@ -513,24 +540,24 @@ try:
         tools=tools,
         verbose=True
     )
-    
+
     manual_task = Task(
         description="Execute the 'perform_analysis' command via the Stdio tool.", # Replace with an actual command your tool supports
         expected_output="Results of the analysis.",
         agent=manual_agent
     )
-    
+
     manual_crew = Crew(
         agents=[manual_agent],
         tasks=[manual_task],
         verbose=True,
         process=Process.sequential
     )
-        
-       
+
+
     result = manual_crew.kickoff() # Actual inputs depend on your tool
     print("\nCrew Task Result (Stdio - Manual):\n", result)
-            
+
 except Exception as e:
     print(f"An error occurred during manual Stdio MCP integration: {e}")
 finally:
@@ -545,7 +572,7 @@ finally:
 # which can be useful for configuring its behavior or providing necessary paths (like PYTHONPATH).
 ```
 
-----------------------------------------
+---
 
 TITLE: Install uv (macOS/Linux via curl) - Shell
 DESCRIPTION: Installs the uv dependency manager and package handler on macOS or Linux systems using curl. This is the recommended first step for setting up your environment.
@@ -554,11 +581,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-----------------------------------------
+---
 
 TITLE: Get User Input for Guide Creation in Python
 DESCRIPTION: Captures the guide topic and audience level from user input. Includes validation to ensure the audience level is one of the accepted values (beginner, intermediate, advanced).
@@ -567,6 +595,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/guides/flows/first
 
 LANGUAGE: python
 CODE:
+
 ```
 class GuideCreatorState(BaseModel):
     topic: str = ""
@@ -597,7 +626,7 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
         return self.state
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI Basic
 DESCRIPTION: Installs the core CrewAI package. This is the primary command for setting up the framework for basic agent automation tasks.
@@ -606,11 +635,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/README.md#_snippet_0
 
 LANGUAGE: shell
 CODE:
+
 ```
 pip install crewai
 ```
 
-----------------------------------------
+---
 
 TITLE: Start Crew Execution (kickoff)
 DESCRIPTION: Demonstrates the basic method to start a crew's workflow using `kickoff()`. This initiates the execution of tasks according to the defined process, allowing the crew to begin its operations.
@@ -619,13 +649,14 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/concepts/crews.
 
 LANGUAGE: python
 CODE:
+
 ```
 # Iniciar execução das tasks da crew
 result = my_crew.kickoff()
 print(result)
 ```
 
-----------------------------------------
+---
 
 TITLE: Python CrewAI Flow Example
 DESCRIPTION: Demonstrates creating a simple CrewAI Flow with two tasks: generating a random city and then generating a fun fact about that city. It utilizes the @start() and @listen() decorators to define the workflow and manage task dependencies. Requires OpenAI API key setup in .env.
@@ -634,6 +665,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/flows.mdx
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai.flow.flow import Flow, listen, start
 from dotenv import load_dotenv
@@ -691,7 +723,7 @@ result = flow.kickoff()
 print(f"Generated fun fact: {result}")
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Weaviate Client (Shell)
 DESCRIPTION: Shows how to install the necessary `weaviate-client` package using `uv`. This is a prerequisite for using the WeaviateVectorSearchTool.
@@ -700,11 +732,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/tools/database-dat
 
 LANGUAGE: shell
 CODE:
+
 ```
 uv add weaviate-client
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI Dependencies
 DESCRIPTION: Locks and installs project dependencies using the crewAI CLI. This command ensures all required packages are set up for the project.
@@ -713,11 +746,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/c
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai install
 ```
 
-----------------------------------------
+---
 
 TITLE: Install CrewAI Tool
 DESCRIPTION: Installs a custom CrewAI tool that has been published, allowing it to be used within your crews.
@@ -726,11 +760,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/t
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai tool install {{tool_name}}
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Qdrant Client
 DESCRIPTION: Installs the required qdrant-client package using the uv package manager.
@@ -739,11 +774,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/tools/database-dat
 
 LANGUAGE: bash
 CODE:
+
 ```
 uv add qdrant-client
 ```
 
-----------------------------------------
+---
 
 TITLE: Kick off a crew with adapted agents (Langchain OpenAI)
 DESCRIPTION: Example demonstrating how to initialize CrewAI agents using specific adapters like OpenAI's agent adapter, integrating tools, and setting up agent roles and goals.
@@ -752,6 +788,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/learn/bring-your-o
 
 LANGUAGE: python
 CODE:
+
 ```
 import json
 import os
@@ -786,7 +823,7 @@ link_finder_agent = OpenAIAgentAdapter(
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Run CrewAI Project
 DESCRIPTION: Initializes and runs the AI crew. This command starts the agent execution based on the defined configurations.
@@ -795,11 +832,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/c
 
 LANGUAGE: bash
 CODE:
+
 ```
 $ crewai run
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI Zendesk Agent Setup
 DESCRIPTION: Demonstrates how to set up a CrewAI agent with Zendesk capabilities using CrewaiEnterpriseTools. This example shows task creation for managing support tickets.
@@ -808,6 +846,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -841,7 +880,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Install UV Package Manager
 DESCRIPTION: Installs the UV package manager, a fast Python package installer and resolver, used for dependency management in CrewAI projects.
@@ -850,11 +889,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/src/crewai/cli/templates/t
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install uv
 ```
 
-----------------------------------------
+---
 
 TITLE: Running the CrewAI Crew
 DESCRIPTION: Shows how to instantiate the custom crew class and initiate its execution using the kickoff method. This method starts the agent workflow and can accept initial inputs.
@@ -863,11 +903,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/crews.mdx
 
 LANGUAGE: python
 CODE:
+
 ```
 YourCrewName().crew().kickoff(inputs={"any": "input here"})
 ```
 
-----------------------------------------
+---
 
 TITLE: Install AgentOps Library
 DESCRIPTION: Instala a biblioteca AgentOps, seja como uma dependência do CrewAI ou como um pacote independente.
@@ -876,6 +917,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/observability/a
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install 'crewai[agentops]'
 
@@ -884,7 +926,7 @@ pip install 'crewai[agentops]'
 pip install agentops
 ```
 
-----------------------------------------
+---
 
 TITLE: Setup Hierarchical Crew with Manager Agent
 DESCRIPTION: Demonstrates setting up a CrewAI project with a manager agent that coordinates specialist agents in a hierarchical process. Includes agent definitions, task creation, and crew instantiation.
@@ -893,6 +935,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/collabora
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Crew, Task, Process
 
@@ -915,7 +958,7 @@ researcher = Agent(
 )
 
 writer = Agent(
-    role="Writer", 
+    role="Writer",
     goal="Create compelling content",
     backstory="Skilled writer who creates engaging content",
     allow_delegation=False,
@@ -939,7 +982,7 @@ crew = Crew(
 )
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI: Basic Asana Agent Setup
 DESCRIPTION: Demonstrates setting up a CrewAI agent with Asana capabilities using CrewaiEnterpriseTools. This example shows how to initialize the tools and assign them to an agent for project management tasks.
@@ -948,6 +991,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -981,7 +1025,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Kick Off Crew Execution
 DESCRIPTION: Initiate the crew's workflow by calling the `kickoff()` method. This starts the execution of defined tasks by the assigned agents.
@@ -990,12 +1034,13 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/__wiki__/Creating-a-Crew-a
 
 LANGUAGE: python
 CODE:
+
 ```
 # Begin the task execution
 tech_crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Interactive API Testing Workflow with cURL
 DESCRIPTION: A step-by-step guide on how to test CrewAI Enterprise API endpoints using cURL examples, by replacing placeholder values with actual credentials and URLs.
@@ -1004,6 +1049,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/api-reference/intr
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 1. Copy this cURL example from any endpoint page
 2. Replace `your-actual-crew-name.crewai.com` with your real crew URL
@@ -1011,7 +1057,7 @@ CODE:
 4. Run the request in your terminal or API client
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic CrewAI Agent Setup with All Stripe Tools
 DESCRIPTION: Demonstrates how to initialize `CrewaiEnterpriseTools` with a token to enable all available Stripe functionalities for a CrewAI agent. Includes an example task for creating a new customer.
@@ -1020,6 +1066,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -1053,7 +1100,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI Guide Creator Flow Execution and Visualization
 DESCRIPTION: Python functions to initiate the Guide Creator Flow and generate a visualization of its structure. The `kickoff` function runs the main flow, printing completion messages, while the `plot` function generates an HTML visualization. The script includes a standard `if __name__ == '__main__':` block to execute the `kickoff` function when run directly.
@@ -1062,6 +1109,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/guides/flows/first
 
 LANGUAGE: python
 CODE:
+
 ```
 def kickoff():
     """Run the guide creator flow"""
@@ -1080,7 +1128,7 @@ if __name__ == "__main__":
     kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Navigate and Install CrewAI
 DESCRIPTION: Commands to navigate to your project directory and optionally install the CrewAI package. Ensure you are in the root of your project before executing.
@@ -1089,12 +1137,13 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/README.md#_snippet_9
 
 LANGUAGE: shell
 CODE:
+
 ```
 cd my_project
 crewai install
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Linkup SDK
 DESCRIPTION: Installs the necessary Linkup SDK package using the `uv` package manager. This is a prerequisite for using the `LinkupSearchTool`.
@@ -1103,11 +1152,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/tools/search-resea
 
 LANGUAGE: shell
 CODE:
+
 ```
 uv add linkup-sdk
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI kickoff() Basic Usage
 DESCRIPTION: Demonstrates the basic usage of the kickoff() method to send a query to an agent and retrieve its raw response. It highlights how to initialize an agent with tools and interact with it directly.
@@ -1116,6 +1166,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/agents.md
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent
 from crewai_tools import SerperDevTool
@@ -1135,7 +1186,7 @@ result = researcher.kickoff("What are the latest developments in language models
 print(result.raw)
 ```
 
-----------------------------------------
+---
 
 TITLE: Python: Basic Salesforce Agent Setup with CrewAI
 DESCRIPTION: Demonstrates how to initialize `CrewaiEnterpriseTools` and create a Salesforce-capable agent. It includes an example task for creating a new lead, showcasing a fundamental integration pattern.
@@ -1144,6 +1195,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -1177,7 +1229,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Initialize and Use Research Tools
 DESCRIPTION: Demonstrates how to import and instantiate various CrewAI tools for web search, code search, and video research. It then shows how to add these tools to an agent's configuration.
@@ -1186,6 +1238,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/tools/search-resea
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai_tools import SerperDevTool, GitHubSearchTool, YoutubeVideoSearchTool, TavilySearchTool, TavilyExtractorTool
 
@@ -1204,7 +1257,7 @@ agent = Agent(
 )
 ```
 
-----------------------------------------
+---
 
 TITLE: Kickoff with Repository Agents and Structured Output
 DESCRIPTION: Demonstrates using the `kickoff()` method with an agent loaded from a repository, including how to specify a structured output format using Pydantic models. It shows accessing both raw and structured results.
@@ -1213,6 +1266,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/feature
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent
 from pydantic import BaseModel
@@ -1245,7 +1299,7 @@ print(f"Key Trends: {structured_result.pydantic.key_trends}")
 print(f"Recommendation: {structured_result.pydantic.recommendation}")
 ```
 
-----------------------------------------
+---
 
 TITLE: Check Python Version - Shell
 DESCRIPTION: Verifies the currently installed Python version. CrewAI requires Python version 3.10 or higher.
@@ -1254,11 +1308,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 python3 --version
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI CLI Commands for Flow Execution
 DESCRIPTION: These bash commands are used to manage and execute CrewAI flows. 'crewai install' installs project dependencies, 'source .venv/bin/activate' activates the virtual environment, and 'crewai flow kickoff' or 'uv run kickoff' starts the defined AI workflow.
@@ -1267,29 +1322,33 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/flows.mdx
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai install
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 source .venv/bin/activate
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 crewai flow kickoff
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 uv run kickoff
 ```
 
-----------------------------------------
+---
 
 TITLE: Install Locally
 DESCRIPTION: Command to install the project locally from a built distribution file.
@@ -1298,11 +1357,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/README.md#_snippet_22
 
 LANGUAGE: bash
 CODE:
+
 ```
 pip install dist/*.tar.gz
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Shopify Agent Setup with CrewAI
 DESCRIPTION: Sets up a basic CrewAI agent with Shopify capabilities using CrewaiEnterpriseTools. This example shows how to initialize the tools and assign them to an agent for managing e-commerce operations, including creating new customers.
@@ -1311,6 +1371,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -1344,7 +1405,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Update uv Shell Configuration - Shell
 DESCRIPTION: Updates the current shell environment to recognize the uv commands after installation. This is necessary if you encounter 'command not found' errors for uv.
@@ -1353,11 +1414,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/installation.mdx#_
 
 LANGUAGE: shell
 CODE:
+
 ```
 uv tool update-shell
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI Sequential Process Example
 DESCRIPTION: Demonstrates how to set up and execute a CrewAI with a sequential process. It includes defining agents, tasks, and configuring the crew for linear task execution. The example highlights the use of `Process.sequential` and accessing type-safe outputs.
@@ -1366,6 +1428,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/learn/sequentia
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Crew, Process, Agent, Task, TaskOutput, CrewOutput
 
@@ -1388,18 +1451,18 @@ writer = Agent(
 
 # Define your tasks
 research_task = Task(
-  description='Gather relevant data...', 
-  agent=researcher, 
+  description='Gather relevant data...',
+  agent=researcher,
   expected_output='Raw Data'
 )
 analysis_task = Task(
-  description='Analyze the data...', 
-  agent=analyst, 
+  description='Analyze the data...',
+  agent=analyst,
   expected_output='Data Insights'
 )
 writing_task = Task(
-  description='Compose the report...', 
-  agent=writer, 
+  description='Compose the report...',
+  agent=writer,
   expected_output='Final Report'
 )
 
@@ -1419,7 +1482,7 @@ crew_output: CrewOutput = result.output
 
 ```
 
-----------------------------------------
+---
 
 TITLE: LinkupSearchTool API Documentation
 DESCRIPTION: Details the parameters for initializing and running the `LinkupSearchTool`, including constructor arguments and runtime parameters, along with expected return formats for success and error scenarios.
@@ -1428,6 +1491,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/tools/search-resea
 
 LANGUAGE: APIDOC
 CODE:
+
 ```
 LinkupSearchTool:
   __init__(api_key: str)
@@ -1462,7 +1526,7 @@ Return Format (Error):
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI Execution Example
 DESCRIPTION: Demonstrates how to execute a CrewAI crew defined using the Python class structure. It shows the basic method call to start the crew's operation with optional inputs.
@@ -1471,11 +1535,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/concepts/crews.
 
 LANGUAGE: python
 CODE:
+
 ```
 YourCrewName().crew().kickoff(inputs={"any": "input here"})
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI Basic Notion Agent Setup
 DESCRIPTION: Example Python code demonstrating how to set up a CrewAI agent with Notion capabilities using CrewaiEnterpriseTools. It includes creating an agent, defining a task, and running a crew.
@@ -1484,6 +1549,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -1517,7 +1583,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Authentication Setup
 DESCRIPTION: Configure API keys for LLM providers by setting environment variables. This example shows the correct format for OpenAI and Anthropic API keys.
@@ -1526,6 +1592,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/llms.mdx#
 
 LANGUAGE: bash
 CODE:
+
 ```
 # OpenAI
 OPENAI_API_KEY=sk-...
@@ -1534,7 +1601,7 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-----------------------------------------
+---
 
 TITLE: Agent Integration Example with Data Analyst
 DESCRIPTION: A detailed example showing a Data Analyst agent using the CodeInterpreterTool to analyze data with Python. It covers agent setup, tool initialization, and task definition.
@@ -1543,6 +1610,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/tools/ai-ml/codein
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CodeInterpreterTool
@@ -1562,7 +1630,7 @@ data_analyst = Agent(
 )
 ```
 
-----------------------------------------
+---
 
 TITLE: Install OpenLIT SDK
 DESCRIPTION: Instala o SDK Python do OpenLIT usando pip. Este pacote fornece as ferramentas necessárias para integrar o OpenLIT com suas aplicações Python.
@@ -1571,11 +1639,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/observability/o
 
 LANGUAGE: shell
 CODE:
+
 ```
 pip install openlit
 ```
 
-----------------------------------------
+---
 
 TITLE: CrewAI: Basic Notion Agent Setup
 DESCRIPTION: Demonstrates how to initialize a CrewAI agent with Notion capabilities by integrating `CrewaiEnterpriseTools`. This example sets up an agent and a task to create meeting notes in Notion.
@@ -1584,6 +1653,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/enterprise/integra
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 from crewai_tools import CrewaiEnterpriseTools
@@ -1617,7 +1687,7 @@ crew = Crew(
 crew.kickoff()
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Task Execution with CrewAI
 DESCRIPTION: Demonstrates the fundamental setup of a CrewAI crew with an agent and a task. This snippet shows how to define a task with a description and an expected output, assign it to an agent, and then initiate the crew's execution using kickoff().
@@ -1626,6 +1696,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/enterprise/inte
 
 LANGUAGE: python
 CODE:
+
 ```
 from crewai import Agent, Task, Crew
 
@@ -1657,7 +1728,7 @@ crew.kickoff()
 
 ```
 
-----------------------------------------
+---
 
 TITLE: Start OpenLIT Docker Compose
 DESCRIPTION: Inicia os serviços do OpenLIT usando Docker Compose em modo detached. Requer que o Docker esteja instalado e em execução.
@@ -1666,11 +1737,12 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/pt-BR/observability/o
 
 LANGUAGE: shell
 CODE:
+
 ```
 docker compose up -d
 ```
 
-----------------------------------------
+---
 
 TITLE: Create Multimodal Agent (Python)
 DESCRIPTION: This example demonstrates the setup of a multimodal agent in CrewAI, designed to process and analyze both text and visual content. The `multimodal` parameter is set to `True` to enable these capabilities.
@@ -1679,6 +1751,7 @@ SOURCE: https://github.com/crewaiinc/crewai/blob/main/docs/en/concepts/agents.md
 
 LANGUAGE: python
 CODE:
+
 ```
 multimodal_agent = Agent(
     role="Visual Content Analyst",

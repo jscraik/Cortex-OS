@@ -5,7 +5,9 @@ export type SearchRequest = {
   tags?: string[];
 };
 
-export function normalizeSearch(req: SearchRequest): Required<Omit<SearchRequest, "vector" | "text">> & Pick<SearchRequest, "vector" | "text"> {
+export function normalizeSearch(
+  req: SearchRequest,
+): Required<Omit<SearchRequest, 'vector' | 'text'>> & Pick<SearchRequest, 'vector' | 'text'> {
   return {
     text: req.text,
     vector: req.vector,
@@ -13,4 +15,3 @@ export function normalizeSearch(req: SearchRequest): Required<Omit<SearchRequest
     tags: req.tags ?? [],
   };
 }
-

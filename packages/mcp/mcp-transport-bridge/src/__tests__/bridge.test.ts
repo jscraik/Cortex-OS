@@ -52,7 +52,9 @@ describe('mcp-transport-bridge', () => {
       source: { type: 'stdio', command: 'echo' },
       target: { type: 'stdio' },
     };
-    expect(() => new McpBridge(config)).toThrow('Source and target must be different transport types');
+    expect(() => new McpBridge(config)).toThrow(
+      'Source and target must be different transport types',
+    );
   });
 
   it('should start and stop the bridge', async () => {

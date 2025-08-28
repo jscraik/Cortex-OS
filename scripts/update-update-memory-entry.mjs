@@ -7,11 +7,20 @@ import { join } from 'path';
 
 console.log('Updating updateMemoryEntry method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Update the updateMemoryEntry method
-const updateMemoryEntryPattern = /async updateMemoryEntry\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.db\s*\.\s*prepare\([^}]*?UPDATE memory[^}]*?SET value = \?, access_count = \?, last_accessed_at = \?[^}]*?run\([^)]*\);\s*}/s;
+const updateMemoryEntryPattern =
+  /async updateMemoryEntry\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.db\s*\.\s*prepare\([^}]*?UPDATE memory[^}]*?SET value = \?, access_count = \?, last_accessed_at = \?[^}]*?run\([^)]*\);\s*}/s;
 const updateMemoryEntryReplacement = `async updateMemoryEntry(entry: any): Promise<void> {
     // Validate input data
     if (!entry || typeof entry !== 'object') {

@@ -6,7 +6,7 @@ console.log('Validating documentation authority chain...');
 const repoRoot = join(process.cwd(), '..', '..');
 const requiredDocs = [
   join('.cortex', 'rules', 'AGENTS.md'),
-  join('.cortex', 'rules', 'RULES_OF_AI.md')
+  join('.cortex', 'rules', 'RULES_OF_AI.md'),
 ];
 
 let valid = true;

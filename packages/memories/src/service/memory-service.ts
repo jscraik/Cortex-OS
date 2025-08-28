@@ -1,35 +1,44 @@
-import { memoryZ } from "../schemas/memory.zod.js";
-import type { MemoryStore } from "../ports/MemoryStore.js";
-import type { Embedder } from "../ports/Embedder.js";
-import { withSpan } from "../observability/otel.js";
-import type { Memory } from "../domain/types.js";
-import { CompositeEmbedder } from "../adapters/embedder.composite.js";
+import { memoryZ } from '../schemas/memory.zod.js';
+import type { MemoryStore } from '../ports/MemoryStore.js';
+import type { Embedder } from '../ports/Embedder.js';
+import { withSpan } from '../observability/otel.js';
+import type { Memory } from '../domain/types.js';
+import { CompositeEmbedder } from '../adapters/embedder.composite.js';
 
 export type MemoryService = {
   save: (raw: unknown) => Promise<Memory>;
   get: (id: string) => Promise<Memory | null>;
   del: (id: string) => Promise<void>;
-  search: (q: { text?: string; vector?: number[]; topK?: number; tags?: string[] }) => Promise<Memory[]>;
+  search: (q: {
+    text?: string;
+    vector?: number[];
+    topK?: number;
+    tags?: string[];
+  }) => Promise<Memory[]>;
   purge: (nowISO?: string) => Promise<number>;
   // New method to test embedders
-  testEmbedders?: () => Promise<Array<{name: string, available: boolean}>>;
+  testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
 };
 
 export const createMemoryService = (store: MemoryStore, embedder?: Embedder): MemoryService => {
   // If no embedder is provided, create a composite embedder
   const effectiveEmbedder = embedder || new CompositeEmbedder();
-  
+
   return {
     save: async (raw) => {
-      return withSpan("memories.save", async () => {
+      return withSpan('memories.save', async () => {
         const m = memoryZ.parse(raw);
         const needsVector = !m.vector && m.text;
         let withVec: Memory;
         if (needsVector) {
-          if (!effectiveEmbedder || typeof effectiveEmbedder.embed !== "function") {
-            throw new Error("Embedder is required to generate vector but is not available.");
+          if (!effectiveEmbedder || typeof effectiveEmbedder.embed !== 'function') {
+            throw new Error('Embedder is required to generate vector but is not available.');
           }
-          withVec = { ...m, vector: (await effectiveEmbedder.embed([m.text!]))[0], embeddingModel: effectiveEmbedder.name() };
+          withVec = {
+            ...m,
+            vector: (await effectiveEmbedder.embed([m.text!]))[0],
+            embeddingModel: effectiveEmbedder.name(),
+          };
         } else {
           withVec = m;
         }
@@ -39,7 +48,7 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
     get: (id) => store.get(id),
     del: (id) => store.delete(id),
     search: async (q) => {
-      return withSpan("memories.search", async () => {
+      return withSpan('memories.search', async () => {
         const topK = q.topK ?? 8;
         if (q.vector) {
           return store.searchByVector({ vector: q.vector, topK, filterTags: q.tags });
@@ -51,11 +60,15 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
         return [];
       });
     },
-    purge: (nowISO) => withSpan("memories.purge", async () => store.purgeExpired(nowISO ?? new Date().toISOString())),
+    purge: (nowISO) =>
+      withSpan('memories.purge', async () =>
+        store.purgeExpired(nowISO ?? new Date().toISOString()),
+      ),
     // Add embedder testing capability if using composite embedder
-    ...(effectiveEmbedder instanceof CompositeEmbedder ? {
-      testEmbedders: () => (effectiveEmbedder as CompositeEmbedder).testEmbedders()
-    } : {})
+    ...(effectiveEmbedder instanceof CompositeEmbedder
+      ? {
+          testEmbedders: () => (effectiveEmbedder as CompositeEmbedder).testEmbedders(),
+        }
+      : {}),
   };
 };
-
