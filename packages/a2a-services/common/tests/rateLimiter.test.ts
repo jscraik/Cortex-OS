@@ -2,25 +2,33 @@ import { describe, it, expect, vi } from 'vitest';
 import { createRateLimiter } from '../src/middleware/rateLimiter';
 import type { Request, Response } from 'express';
 
-function mockRequest(ip = '127.0.0.1'): Request {
-  return { ip } as Request;
+function mockRequest(ip = '127.0.0.1', headers: Record<string, string> = {}): Request {
+  return { ip, headers } as Request;
 }
 
 interface MockResponse extends Response {
   statusCode: number;
   sendCalled: boolean;
+  headers: Record<string, unknown>;
 }
 
 function mockResponse(): MockResponse {
   const res: Partial<MockResponse> = {
     statusCode: 200,
     sendCalled: false,
+    headers: {},
     status(code: number) {
       res.statusCode = code;
       return res as MockResponse;
     },
     send() {
       res.sendCalled = true;
+      return res as MockResponse;
+    },
+    setHeader(name: string, value: unknown) {
+      if (res.headers) {
+        res.headers[name] = value;
+      }
       return res as MockResponse;
     },
   };
@@ -68,5 +76,42 @@ describe('rateLimiter', () => {
     expect(next3).toHaveBeenCalledOnce();
     expect(res3.statusCode).toBe(200);
     vi.useRealTimers();
+  });
+
+  it('uses x-forwarded-for header when present', () => {
+    const limiter = createRateLimiter({ limit: 1 });
+    const next = vi.fn();
+
+    const req1 = mockRequest('127.0.0.1', { 'x-forwarded-for': '10.0.0.1' });
+    const res1 = mockResponse();
+    limiter(req1, res1, next);
+    expect(next).toHaveBeenCalledTimes(1);
+
+    const req2 = mockRequest('127.0.0.1', { 'x-forwarded-for': '10.0.0.1' });
+    const res2 = mockResponse();
+    limiter(req2, res2, next);
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res2.statusCode).toBe(429);
+
+    const req3 = mockRequest('127.0.0.1');
+    const res3 = mockResponse();
+    limiter(req3, res3, next);
+    expect(next).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends a Retry-After header when rate limited', () => {
+    const limiter = createRateLimiter({ limit: 1, windowMs: 1000 });
+    const req = mockRequest();
+    const next = vi.fn();
+
+    const res1 = mockResponse();
+    limiter(req, res1, next);
+
+    const res2 = mockResponse();
+    limiter(req, res2, next);
+
+    expect(res2.statusCode).toBe(429);
+    expect(res2.headers['Retry-After']).toBeDefined();
+    expect(res2.headers['Retry-After']).toBeGreaterThan(0);
   });
 });
