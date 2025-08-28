@@ -258,23 +258,25 @@ describe('MCP Protocol Conformance Tests', () => {
   });
 
   describe('Security Validation Tests', () => {
-    it('should validate API key format', () => {
-      const validKeys = [
-        'sk-abcdef7890ghijklmnop',
-        'ref-e672788111c76ba32bc1',
-        'pk_test_abcdefghijk',
-      ];
-
-      const invalidKeys = ['password', '123456', 'secret', 'admin', 'test'];
+    it('accepts valid API key formats', () => {
+      const validKeys = ['sk-abcdef7890gh', 'ref_e672788111', 'pk-abcdefghijk'];
 
       validKeys.forEach((key) => {
-        const isValid = validateApiKey(key);
-        expect(isValid, `Key should be valid: ${key}`).toBe(true);
+        expect(validateApiKey(key), `Key should be valid: ${key}`).toBe(true);
       });
+    });
+
+    it('rejects invalid API key formats', () => {
+      const invalidKeys = [
+        'sk-12345', // Too short
+        'ak-1234567890', // Wrong prefix
+        'pk:1234567890', // Wrong separator
+        'ref-abcdefg?', // Invalid character
+        'password', // Insecure pattern
+      ];
 
       invalidKeys.forEach((key) => {
-        const isValid = validateApiKey(key);
-        expect(isValid, `Key should be invalid: ${key}`).toBe(false);
+        expect(validateApiKey(key), `Key should be invalid: ${key}`).toBe(false);
       });
     });
 

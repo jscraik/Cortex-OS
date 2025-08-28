@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpRequest } from './types.js';
 import {
+
   validateServerOptions,
   validateRequest,
   initializeParamsSchema,
@@ -133,11 +134,13 @@ export function handlePrompts(
   return handleUnsupported(parsed);
 }
 
+
 export function handleUnsupported(parsed: ParsedRequest) {
   return {
     jsonrpc: '2.0' as const,
     id: parsed.id,
     error: { code: -32603, message: 'Method not supported' },
+
   };
 }
 
@@ -162,7 +165,9 @@ export function createMcpServer(options: { name: string; version: string }) {
       prompts.set(def.name, { def, handler });
     },
     async handleRequest(req: McpRequest) {
+
       const parsed = validateRequest(req);
+
       if (parsed.method === 'initialize') {
         return handleInitialize(parsed, options, tools, resources, prompts);
       }
@@ -175,7 +180,9 @@ export function createMcpServer(options: { name: string; version: string }) {
       if (parsed.method.startsWith('prompts/')) {
         return handlePrompts(parsed, prompts);
       }
+
       return handleUnsupported(parsed);
+
     },
   };
 }

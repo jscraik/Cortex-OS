@@ -375,15 +375,16 @@ export class FaissClient {
     // Create deterministic JSON string
     const canonicalJson = JSON.stringify(canonicalData, Object.keys(canonicalData).sort());
 
-    // Simple hash implementation (in production, use crypto.createHash)
-    let hash = 0;
+    // Use a more robust hash function (FNV-1a)
+    let hash = 2166136261; // FNV offset basis
     for (let i = 0; i < canonicalJson.length; i++) {
       const char = canonicalJson.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash ^= char;
+      hash *= 16777619; // FNV prime
+      hash = hash >>> 0; // Convert to unsigned 32-bit
     }
 
-    return `sha256:${Math.abs(hash).toString(16).padStart(16, '0')}`;
+    return `sha256:${hash.toString(16).padStart(8, '0')}`;
   }
 
   /**

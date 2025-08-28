@@ -30,8 +30,8 @@ describe('chat-gateway', () => {
   });
 
   it('parses OpenAI-compatible SSE chunks and yields tokens', async () => {
-  const prev = process.env.MODEL_API_PROVIDER;
-  process.env.MODEL_API_PROVIDER = 'openai';
+    const prev = process.env.MODEL_API_PROVIDER;
+    process.env.MODEL_API_PROVIDER = 'openai';
     const lines = [
       'data: ' + JSON.stringify({ choices: [{ delta: { content: 'He' } }] }),
       'data: ' + JSON.stringify({ choices: [{ delta: { content: 'llo' } }] }),
@@ -52,7 +52,7 @@ describe('chat-gateway', () => {
     expect(res.text).toBe('Hello');
 
     globalThis.fetch = originalFetch;
-  if (prev === undefined) delete process.env.MODEL_API_PROVIDER;
-  else process.env.MODEL_API_PROVIDER = prev;
+    if (prev === undefined) delete process.env.MODEL_API_PROVIDER;
+    else process.env.MODEL_API_PROVIDER = prev;
   });
 });
