@@ -4,17 +4,17 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
 
 ## Current state
 
-- Repo license: MIT (see `/LICENSE`). Target: Apache-2.0 for OSS edition.
-- Goal: dual-license model (Apache-2.0 OSS + Commercial EULA for value-adds/support).
+- Repo license: Apache-2.0 (see `/LICENSE`) with `/NOTICE` present.
+- Commercial: `/COMMERCIAL-LICENSE.md` stub committed for paid features/support.
 
 ## Plan
 
 1. Migrate to Apache-2.0
-   - Replace `/LICENSE` with Apache-2.0 text and year/holder.
-   - Add `/NOTICE` with copyright and third-party notices.
-   - Update READMEs to state Apache-2.0.
+   - Replace `/LICENSE` with Apache-2.0 text and year/holder. (DONE)
+   - Add `/NOTICE` with copyright and third-party notices. (DONE)
+   - Update READMEs to state Apache-2.0. (IN PROGRESS)
 2. Commercial license offering
-   - Add `/COMMERCIAL-LICENSE.md` with terms for paid features, SLAs, LTS, support.
+   - Add `/COMMERCIAL-LICENSE.md` with terms for paid features, SLAs, LTS, support. (DONE)
    - Keep commercial-only modules isolated (clear directory, build flags, or private repo).
 3. Dependency policy
    - Only allow permissive licenses (Apache-2.0, MIT, BSD). Avoid AGPL/SSPL unless isolated opt-in external services.
@@ -31,7 +31,7 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
 
 ## Implementation checklist
 
-- [ ] Replace `/LICENSE` with Apache-2.0; add `/NOTICE` and `/COMMERCIAL-LICENSE.md` stubs.
+- [x] Replace `/LICENSE` with Apache-2.0; add `/NOTICE` and `/COMMERCIAL-LICENSE.md` stubs.
 - [ ] Update repo docs to reflect dual-licensing and contribution policy.
 - [ ] Add license scanning to CI (pnpm and Python).
 - [ ] Add SBOM generation step (CycloneDX) for releases.

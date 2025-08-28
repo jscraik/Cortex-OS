@@ -81,3 +81,10 @@ pnpm format
 - **Accessibility**: WCAG 2.2 AA compliance throughout
 - **Clean Architecture**: Removed backward compatibility bloat (30+ files from MCP)
 - **AI-Enhanced**: MLX (Qwen3) for semantic search, Ollama fallback
+
+## Licensing
+
+- Open-source edition: Apache License, Version 2.0. See `LICENSE` and `NOTICE`.
+- Commercial option: See `COMMERCIAL-LICENSE.md` for terms that apply to paid features/support.
+- Contributions: Use permissive-licensed deps only (Apache/MIT/BSD). We avoid AGPL/SSPL unless isolated and optional.
+- Trademarks: "Cortex-OS" and related marks are subject to trademark policies.
