@@ -1542,13 +1542,7 @@
           }
         }
       },
-      "OutboxMessage": {
-        "name": "OutboxMessage",
-        "title": "Outbox Message",
-        "summary": "Message pending publication from transactional outbox",
-        "contentType": "application/json",
-        "payload": {
-          "$ref": "#/components/schemas/OutboxMessage"
+          "$ref": "#/components/schemas/OutboxMessageData"
         }
       },
       "OutboxMessagePublished": {
