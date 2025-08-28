@@ -6,8 +6,13 @@
  * @status TDD-DRIVEN
  */
 
-import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
 import { nanoid } from 'nanoid';
+import {
+  createInitialPRPState,
+  generateDeterministicHash,
+  PRPState,
+  validateStateTransition,
+} from './state.js';
 
 // Import real interfaces from prp-runner
 interface PRPOrchestrator {
@@ -28,15 +33,15 @@ interface RunOptions {
 
 /**
  * Simplified Cortex Kernel - Deterministic state machine for PRP workflows
- * 
+ *
  * Implements the PRP state machine:
  * Strategy → Build → Evaluation → Completed
  *     ↓       ↓         ↓
  *   Recycled ←--------←
  */
-export class CortexKernel {
-  protected orchestrator: PRPOrchestrator;
-  private executionHistory: Map<string, PRPState[]> = new Map();
+export class SimplePRPGraph {
+  private readonly orchestrator: PRPOrchestrator;
+  private readonly executionHistory: Map<string, PRPState[]> = new Map();
 
   constructor(orchestrator: PRPOrchestrator) {
     this.orchestrator = orchestrator;
@@ -46,13 +51,15 @@ export class CortexKernel {
    * Run a complete PRP workflow
    */
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
-    const runId = options.runId || (options.deterministic 
-      ? `prp-deterministic-${Math.abs(JSON.stringify(blueprint).split('').reduce((a,b) => ((a << 5) - a + b.charCodeAt(0))|0, 0))}`
-      : nanoid());
-    
+    const runId =
+      options.runId ||
+      (options.deterministic
+        ? `prp-deterministic-${generateDeterministicHash(blueprint)}`
+        : nanoid());
+
     const deterministic = options.deterministic || false;
     const state = createInitialPRPState(blueprint, { runId, deterministic });
-    
+
     // Initialize execution history
     this.executionHistory.set(runId, []);
     this.addToHistory(runId, state);
@@ -81,7 +88,6 @@ export class CortexKernel {
 
       // Final state
       return evaluationState;
-
     } catch (error) {
       const errorState: PRPState = {
         ...state,
@@ -132,7 +138,7 @@ export class CortexKernel {
   }
 
   /**
-   * Execute build phase  
+   * Execute build phase
    */
   private async executeBuildPhase(state: PRPState, deterministic = false): Promise<PRPState> {
     const newState: PRPState = {
@@ -234,7 +240,6 @@ export class CortexKernel {
     if (options?.deterministic) {
       return Promise.resolve(); // Skip timing in deterministic mode
     }
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
-
 }
