@@ -1,0 +1,11 @@
+Feature,StoryID,ACID,TestID,Metric,Owner
+FEAT-001,ST-001,AC-001,T-API-STREAM-001,p95_latency,Eng Lead
+FEAT-001,ST-001,AC-002,T-RESUME-001,stability_30s,Eng Lead
+FEAT-002,ST-002,AC-001,T-MODEL-ALLOW-001,selection_success,FE Lead
+FEAT-002,ST-002,AC-002,T-MODEL-FALLBACK-001,fallback_rate,FE Lead
+FEAT-003,ST-003,AC-001,T-RESTORE-001,restore_success,Eng Lead
+FEAT-003,ST-003,AC-002,T-NOTFOUND-001,error_rate,QE Lead
+FEAT-004,ST-004,AC-001,T-TOOL-VIS-001,tool_event_visibility,FE Lead
+FEAT-004,ST-004,AC-002,T-REDACT-001,redaction_incidents,QE Lead
+FEAT-005,ST-005,AC-001,T-A11Y-KEYBOARD-001,a11y_score,QE Lead
+FEAT-005,ST-005,AC-002,T-A11Y-LIVE-001,screenreader_announce,QE Lead

@@ -1,0 +1,183 @@
+# file: project-documentation/product-spec.yaml
+id: ps-open-webui-chat
+project: Cortex-OS Chat UI
+version: 1.0
+created: 2025-08-28
+summary:
+  elevator_pitch: 'Add an Open WebUI-style chat UI with streaming and tool visualization to Cortex-OS.'
+  problem: 'No cohesive, accessible chat front-end to converse with agents and view tool usage.'
+  audience: ['Internal teams', 'Early adopters', 'Enterprise evaluators']
+  usp: 'Familiar UX with Cortex-OS strengths: A2A, MCP, strict contracts.'
+  success_metrics:
+    - name: 'Round-trip latency (no tool)'
+      definition: 'p95 time from send to final token without tool invocation'
+      target: '< 2s'
+    - name: 'Streaming stability'
+      definition: 'Successful streamed sessions > 30s without disconnect'
+      target: '≥ 99%'
+    - name: 'Accessibility AA'
+      definition: 'Automated and manual checks passing with no critical issues'
+      target: '≥ 95% pass'
+scope:
+  mvp:
+    goals:
+      [
+        'Streamed chat',
+        'Model selection',
+        'History with shareable URL',
+        'Tool-call visualization',
+        'WCAG 2.2 AA',
+      ]
+    features: ['FEAT-001', 'FEAT-002', 'FEAT-003', 'FEAT-004', 'FEAT-005']
+  vNext:
+    features: ['Multi-agent handoff', 'Prompt templates', 'Attachments', 'Personas', 'Theming']
+personas:
+  - name: 'Evaluator Erin'
+    jobs: ['Preview and evaluate chat', 'Share demo sessions']
+  - name: 'Engineer Eva'
+    jobs: ['Test streaming and tools', 'Instrument and debug']
+  - name: 'Operator Omar'
+    jobs: ['Operate and support', 'Audit basic usage']
+features:
+  - id: FEAT-001
+    title: 'Chat Messaging'
+    priority: P0
+    story: 'As a user, I want to send a message and see a streamed response so I can iterate quickly.'
+    acceptance_criteria:
+      - 'GIVEN chat loaded WHEN I send a message THEN response streams until completion or error'
+      - 'Edge: GIVEN network loss WHEN reconnect THEN session restores safely'
+    dependencies: ['ASBR streaming', 'Memories persistence']
+    constraints: ['A2A contracts', 'Idempotent send', 'Graceful cancel']
+    ux:
+      interactions: ['Typing indicator', 'Cancel stream']
+      empty_error_states: ['Network error with retry']
+  - id: FEAT-002
+    title: 'Model Selection'
+    priority: P0
+    story: 'As a user, I want to pick a model for my session so I can optimize speed/cost.'
+    acceptance_criteria:
+      - 'GIVEN model dropdown WHEN I select a model THEN subsequent messages use that model'
+      - 'Edge: GIVEN unavailable model WHEN selected THEN fallback to default and notify'
+    dependencies: ['Model list API', 'ASBR routing']
+    constraints: ['Allowlist enforcement', 'Persist per session']
+    ux:
+      interactions: ['Dropdown, disabled states']
+      empty_error_states: ['Unavailable model notice']
+  - id: FEAT-003
+    title: 'Conversation History'
+    priority: P0
+    story: 'As a user, I want session persistence with a shareable URL.'
+    acceptance_criteria:
+      - 'GIVEN saved session WHEN I reload URL THEN messages and model are restored'
+      - 'Edge: GIVEN stale link WHEN opened THEN show not-found and option to start new'
+    dependencies: ['Memories service', 'Session store']
+    constraints: ['Soft delete', 'Pagination', 'Size caps']
+    ux:
+      interactions: ['Deep link, restore on load']
+      empty_error_states: ['No messages empty state']
+  - id: FEAT-004
+    title: 'Tool-Call Visualization'
+    priority: P1
+    story: 'As a user, I want to see tool calls invoked during a response so I can understand behavior.'
+    acceptance_criteria:
+      - 'GIVEN tool-capable agent WHEN tool invoked THEN UI shows tool name, args (redacted), and status'
+      - 'Edge: GIVEN sensitive args WHEN detected THEN redact per policy'
+    dependencies: ['MCP events', 'Schemas']
+    constraints: ['Redaction policy', 'No secrets in UI']
+    ux:
+      interactions: ['Collapsible panel']
+      empty_error_states: ['No tool calls yet']
+  - id: FEAT-005
+    title: 'Accessibility AA'
+    priority: P0
+    story: 'As an assistive-tech user, I need the chat to be WCAG 2.2 AA compliant.'
+    acceptance_criteria:
+      - 'GIVEN keyboard navigation WHEN traversing UI THEN logical focus order and visible focus ring'
+      - 'Edge: GIVEN screen reader WHEN reading streaming THEN live-region announces updates without overwhelm'
+    dependencies: ['a11y tests', 'Playwright']
+    constraints: ['No color-only signaling', 'Contrast ≥ 4.5:1']
+    ux:
+      interactions: ['Skip-to-content, reduced motion']
+      empty_error_states: []
+functional:
+  flows:
+    ['load session -> send -> stream -> finalize -> persist', 'switch model -> apply to next turn']
+  validation_rules:
+    ['message length caps', 'model allowlist', 'UUIDv4 sessionId', 'tool args schema']
+  integrations: ['A2A events', 'MCP tools', 'Memories service', 'ASBR HTTP/WS']
+non_functional:
+  performance: { screens_p95_ms: 2000, api_p95_ms: 500 }
+  scalability: { concurrent_users: 250 }
+  security: { authn: 'session-bound token', authz: 'per deployment' }
+  privacy: { retention: '30 days default', residency: 'per deployment' }
+  accessibility: { standard: 'WCAG-2.2-AA' }
+  observability: { logs: true, metrics: true, traces: true }
+  reliability: { availability_slo: '99.9%' }
+ux:
+  ia: ['Left sessions', 'Center chat', 'Right tools', 'Header controls']
+  disclosure: ['Collapsible tool details', 'Tooltips for model metadata']
+  error_prevention: ['Confirmation before delete', 'Input length indicator']
+  feedback_patterns: ['Loading states', 'Success toasts', 'Actionable errors']
+data_api:
+  entities:
+    - name: 'Session'
+      fields: ['id', 'title', 'modelId', 'createdAt', 'updatedAt', 'owner', 'isDeleted']
+    - name: 'Message'
+      fields: ['id', 'sessionId', 'role', 'content', 'tokens', 'createdAt']
+    - name: 'ToolEvent'
+      fields:
+        ['id', 'sessionId', 'turnId', 'name', 'args_redacted', 'status', 'startedAt', 'endedAt']
+  apis:
+    - name: 'Send Message'
+      method: 'POST'
+      path: '/api/chat/{sessionId}/messages'
+      idempotent: true
+      request_example: { content: 'Hello', modelId: 'default' }
+      response_example: { messageId: 'msg-123' }
+    - name: 'Stream Message'
+      method: 'WS|SSE'
+      path: '/api/chat/{sessionId}/stream'
+      idempotent: false
+      request_example: { messageId: 'msg-123' }
+      response_example: { event: 'token', data: 'Hi' }
+    - name: 'Get Session'
+      method: 'GET'
+      path: '/api/chat/{sessionId}'
+      idempotent: true
+      response_example: { session: {}, messages: [] }
+    - name: 'List Models'
+      method: 'GET'
+      path: '/api/models'
+      idempotent: true
+      response_example: { models: [{ id: 'default', label: 'Default' }] }
+    - name: 'Get Tool Events'
+      method: 'GET'
+      path: '/api/chat/{sessionId}/tools'
+      idempotent: true
+      response_example: { events: [] }
+  events:
+    - 'message_sent'
+    - 'message_stream_started'
+    - 'message_completed'
+    - 'message_failed'
+    - 'tool_call_started'
+    - 'tool_call_completed'
+    - 'tool_call_failed'
+    - 'session_created'
+    - 'session_restored'
+    - 'model_selected'
+risks:
+  - 'Streaming stability under variable networks'
+  - 'Payload redaction and leakage risk'
+  - 'A11y regressions over time'
+assumptions:
+  - 'Single-tenant deployments initially'
+  - 'SSO out of scope for MVP'
+open_questions:
+  - 'Default transport (SSE vs WS)?'
+  - 'Source of truth for model list?'
+release:
+  flags: ['chat-ui.enabled', 'tool-visualizer.enabled']
+  experiment: { enabled: true }
+  migration_notes: 'Create chat tables; backfill from memories if possible'
+traceability: []
