@@ -6,43 +6,44 @@ import { Transport } from './transport';
 
 export type Handler = { type: string; handle: (msg: Envelope) => Promise<void> };
 
-export class Bus {
-  constructor(
-    private readonly transport: Transport,
-    private readonly validate: (e: Envelope) => Envelope = Envelope.parse,
-    private readonly schemaRegistry?: SchemaRegistry,
-  ) {}
+export function createBus(
+  transport: Transport,
+  validate: (e: Envelope) => Envelope = Envelope.parse,
+  schemaRegistry?: SchemaRegistry,
+) {
+  const validateAgainstSchema = (msg: Envelope) => {
+    if (!schemaRegistry) return;
+    const result = schemaRegistry.validate(msg.type, msg.data);
+    if (!result.valid) {
+      throw new Error(`Schema validation failed: ${result.errors.join(', ')}`);
+    }
+  };
 
-  async publish(msg: Envelope) {
-    // Validate envelope structure
-    const validatedMsg = this.validate(msg);
+  const publish = async (msg: Envelope) => {
+    const validatedMsg = validate(msg);
 
-    // Validate against schema registry if available
-    if (this.schemaRegistry) {
-      this.validateAgainstSchema(validatedMsg);
+    if (schemaRegistry) {
+      validateAgainstSchema(validatedMsg);
     }
 
-    // Ensure trace context is present
     const currentContext = getCurrentTraceContext();
     if (currentContext) {
       injectTraceContext(validatedMsg, currentContext);
     } else {
-      // Create a new trace context if none exists
       const newContext = createTraceContext();
       injectTraceContext(validatedMsg, newContext);
     }
 
-    await this.transport.publish(validatedMsg);
-  }
+    await transport.publish(validatedMsg);
+  };
 
-  async bind(handlers: Handler[]) {
+  const bind = async (handlers: Handler[]) => {
     const map = new Map(handlers.map((h) => [h.type, h.handle] as const));
-    return this.transport.subscribe([...map.keys()], async (m) => {
+    return transport.subscribe([...map.keys()], async (m) => {
       try {
-        this.validate(m);
+        validate(m);
         const handler = map.get(m.type);
         if (handler) {
-          // Set up trace context for the handler execution
           const currentContext = getCurrentTraceContext();
           if (currentContext) {
             injectTraceContext(m, currentContext);
@@ -51,17 +52,9 @@ export class Bus {
         }
       } catch (error) {
         console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
-        // Depending on desired strategy, you might want to forward to a DLQ
       }
     });
-  }
+  };
 
-  private validateAgainstSchema(msg: Envelope) {
-    if (!this.schemaRegistry) return;
-
-    const result = this.schemaRegistry.validate(msg.type, msg.data);
-    if (!result.valid) {
-      throw new Error(`Schema validation failed: ${result.errors.join(', ')}`);
-    }
-  }
+  return { publish, bind };
 }

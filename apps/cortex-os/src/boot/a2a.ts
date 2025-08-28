@@ -1,11 +1,11 @@
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { healthHandler } from '@cortex-os/a2a-handlers/health.handler';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { configureAuditPublisherWithBus } from '@cortex-os/orchestration';
 
 export function wireA2A() {
-  const bus = new Bus(inproc());
+  const bus = createBus(inproc());
   bus.bind([healthHandler]);
   // Audit events -> A2A 'audit.event'
   configureAuditPublisherWithBus((evt) => {
