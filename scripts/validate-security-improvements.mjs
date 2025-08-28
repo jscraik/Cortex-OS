@@ -120,7 +120,7 @@ async function runValidation() {
     
     runTest('SecureNeo4j file exists', () => {
       try {
-        execSync('test -f apps/cortex-os/packages/mvp-core/src/secure-neo4j.ts', { stdio: 'ignore' });
+        execSync('test -f libs/typescript/utils/src/secure-neo4j.ts', { stdio: 'ignore' });
         return true;
       } catch (error) {
         return false;
@@ -338,7 +338,7 @@ async function runValidation() {
     runTest('Proper parameterization in security wrappers', () => {
       try {
         // Check for parameterized queries in security wrappers
-        const output = execSync('grep -r "\\?\\|\\$" apps/cortex-os/packages/mvp-core/src/secure-db.ts apps/cortex-os/packages/mvp-core/src/secure-neo4j.ts 2>/dev/null || true', { 
+        const output = execSync('grep -r "\\?\\|\\$" apps/cortex-os/packages/mvp-core/src/secure-db.ts libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null || true', {
           encoding: 'utf-8',
           stdio: 'pipe'
         });

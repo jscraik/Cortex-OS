@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
-import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';
+import { SecureNeo4j } from '@cortex-os/utils';
 import neo4j, { Driver, Session } from 'neo4j-driver';
 
 // Mock neo4j-driver

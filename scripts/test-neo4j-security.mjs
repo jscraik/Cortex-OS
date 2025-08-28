@@ -9,7 +9,7 @@ console.log('Running security tests on updated Neo4j implementation...');
 try {
   // Run Semgrep security scan
   console.log('1. Running Semgrep security scan...');
-  execSync('semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR packages/memories/src/adapters/neo4j.ts packages/mvp-core/src/secure-neo4j.ts', { 
+  execSync('semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR packages/memories/src/adapters/neo4j.ts libs/typescript/utils/src/secure-neo4j.ts', {
     stdio: 'inherit',
     cwd: process.cwd()
   });
@@ -18,7 +18,7 @@ try {
   // Check for security-related TODO comments
   console.log('2. Checking for security-related TODO comments...');
   try {
-    execSync('grep -r -i "TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure" packages/memories/src/adapters/neo4j.ts packages/mvp-core/src/secure-neo4j.ts', { 
+    execSync('grep -r -i "TODO.*security\\|TODO.*secure\\|FIXME.*security\\|FIXME.*secure" packages/memories/src/adapters/neo4j.ts libs/typescript/utils/src/secure-neo4j.ts', {
       stdio: 'pipe',
       cwd: process.cwd()
     });

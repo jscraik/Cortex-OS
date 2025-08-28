@@ -66,7 +66,7 @@ run_warning_test() {
 
 # Check that all security wrapper files exist
 run_test "SecureDatabaseWrapper file exists" "test -f packages/mvp-core/src/secure-db.ts"
-run_test "SecureNeo4j file exists" "test -f packages/mvp-core/src/secure-neo4j.ts"
+run_test "SecureNeo4j file exists" "test -f libs/typescript/utils/src/secure-neo4j.ts"
 run_test "SecureCommandExecutor file exists" "test -f packages/mvp-core/src/secure-executor.ts"
 run_test "Validation utilities file exists" "test -f packages/mvp-core/src/validation.ts"
 

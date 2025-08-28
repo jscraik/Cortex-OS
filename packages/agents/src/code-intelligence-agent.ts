@@ -17,13 +17,15 @@ export type MaintainabilityLevel = 'low' | 'medium' | 'high';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type Priority = 'low' | 'medium' | 'high' | 'critical';
 
-export interface CodeAnalysisRequest {
-  code: string;
-  language: string;
-  context?: string;
-  analysisType: AnalysisType;
-  urgency: UrgencyLevel;
-}
+export const codeAnalysisRequestSchema = z.object({
+  code: z.string().min(1),
+  language: z.string().min(1),
+  context: z.string().optional(),
+  analysisType: z.enum(['review', 'refactor', 'optimize', 'architecture', 'security']),
+  urgency: z.enum(['low', 'medium', 'high']),
+});
+
+export type CodeAnalysisRequest = z.infer<typeof codeAnalysisRequestSchema>;
 
 export interface CodeAnalysisResult {
   suggestions: CodeSuggestion[];
@@ -150,9 +152,10 @@ export class CodeIntelligenceAgent extends EventEmitter {
   }
 
   async analyzeCode(request: CodeAnalysisRequest): Promise<CodeAnalysisResult> {
+    const validatedRequest = codeAnalysisRequestSchema.parse(request);
     const startTime = Date.now();
 
-    const cacheKey = this.generateCacheKey(request);
+    const cacheKey = this.generateCacheKey(validatedRequest);
     const cached = this.analysisHistory.get(cacheKey);
     if (cached) {
       return cached;
@@ -160,9 +163,9 @@ export class CodeIntelligenceAgent extends EventEmitter {
 
     // Determine optimal model based on task characteristics
     const characteristics: TaskCharacteristics = {
-      complexity: this.assessComplexity(request.code),
-      latency: request.urgency === 'high' ? 'fast' : 'batch',
-      accuracy: request.analysisType === 'security' ? 'premium' : 'high',
+      complexity: this.assessComplexity(validatedRequest.code),
+      latency: validatedRequest.urgency === 'high' ? 'fast' : 'batch',
+      accuracy: validatedRequest.analysisType === 'security' ? 'premium' : 'high',
       resource_constraint: 'moderate',
       modality: 'code',
     };
@@ -174,9 +177,9 @@ export class CodeIntelligenceAgent extends EventEmitter {
       let result: CodeAnalysisResult;
 
       if (modelId.includes('qwen3-coder')) {
-        result = await this.analyzeWithQwen3Coder(request, modelId);
+        result = await this.analyzeWithQwen3Coder(validatedRequest, modelId);
       } else if (modelId.includes('deepseek-coder')) {
-        result = await this.analyzeWithDeepSeekCoder(request, modelId);
+        result = await this.analyzeWithDeepSeekCoder(validatedRequest, modelId);
       } else {
         throw new Error(`Unsupported model: ${modelId}`);
       }
@@ -187,10 +190,10 @@ export class CodeIntelligenceAgent extends EventEmitter {
       // Cache result
       this.analysisHistory.set(cacheKey, result);
 
-      this.emit('analysis_complete', { request, result });
+      this.emit('analysis_complete', { request: validatedRequest, result });
       return result;
     } catch (error) {
-      this.emit('analysis_error', { request, error });
+      this.emit('analysis_error', { request: validatedRequest, error });
       throw error;
     }
   }
