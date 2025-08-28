@@ -43,8 +43,18 @@ export const PromptMetaSchema = z.object({
   stack_tags: z.array(z.string()).optional(),
   risk_flags: z.array(z.string()).optional(),
   a11y_flags: z.array(z.string()).optional(),
-  inputs_schema: z.string().min(1),
-  outputs_schema: z.string().min(1),
+  inputs_schema: z
+    .string()
+    .min(1)
+    .regex(/\.schema\.json$/, {
+      message: "inputs_schema must reference a JSON schema file"
+    }),
+  outputs_schema: z
+    .string()
+    .min(1)
+    .regex(/\.schema\.json$/, {
+      message: "outputs_schema must reference a JSON schema file"
+    }),
 });
 
 export const PromptPackSchema = z.object({
