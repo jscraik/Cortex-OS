@@ -9,11 +9,7 @@ import {
 } from '@cortex-os/a2a-contracts/trace-context';
 import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manager';
 
-const createChildMessage = (parent: Envelope, options: Parameters<typeof createEnvelope>[0]) => {
-  const msg = createEnvelope(options);
-  injectTraceContext(msg, extractTraceContext(parent));
-  return msg;
-};
+import { createChildMessage } from '@cortex-os/a2a-core/message-utils';
 
 /**
  * Example demonstrating W3C Trace Context propagation in A2A messaging
