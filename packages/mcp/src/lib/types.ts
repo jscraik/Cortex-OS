@@ -23,22 +23,13 @@ export interface StdioTransportConfig {
   args?: string[];
   env?: Record<string, string>;
   cwd?: string;
-  maxRetries?: number;
-  retryDelay?: number;
-  timeout?: number;
-  allowNetwork?: boolean;
-  sandbox?: boolean;
   timeoutMs?: number;
-  maxMemoryMB?: number;
 }
 
 export interface HttpTransportConfig {
   type: 'http';
   url: string;
-  allowNetwork?: boolean;
-  sandbox?: boolean;
   timeoutMs?: number;
-  maxMemoryMB?: number;
 }
 
 export type TransportConfig = StdioTransportConfig | HttpTransportConfig;
