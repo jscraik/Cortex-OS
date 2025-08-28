@@ -27,12 +27,14 @@
     "zod": "^3.23.8",
     "@qdrant/js-client-rest": "^1.9.0",
     "neo4j-driver": "^5.28.1",
-    "undici": "^6.19.8"
+    "undici": "^6.19.8",
+    "better-sqlite3": "^11.4.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",
     "eslint": "^9.33.0",
     "prisma": "^5.18.0",
+    "@types/better-sqlite3": "^7.6.9",
     "tsup": "^8.1.0",
     "tsx": "^4.19.1",
     "typescript": "^5.7.2",

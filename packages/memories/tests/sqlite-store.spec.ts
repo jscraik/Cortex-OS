@@ -1,30 +1,30 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SQLiteStore } from '../src/adapters/store.sqlite.js';
-import { Memory } from '../src/domain/types.js';
+import type { Memory } from '../src/domain/types.js';
 
-describe('SQLiteStore', () => {
-  // Note: These tests will only work if better-sqlite3 is available
-  // In a real implementation, we'd mock the database or use an in-memory SQLite
-  
-  it('should create an instance', () => {
-    // This test will pass even if SQLite is not available
-    expect(() => new SQLiteStore(':memory:')).not.toThrow();
-  });
+let sqliteAvailable = true;
+let testStore: SQLiteStore;
+try {
+  testStore = new SQLiteStore(':memory:');
+} catch {
+  sqliteAvailable = false;
+}
 
-  // Skip these tests if better-sqlite3 is not available
-  it('should handle operations when SQLite is not available', async () => {
-    // Create a store without a valid database connection
-    const store = new SQLiteStore(':memory:');
-    
-    // All operations should throw errors when SQLite is not available
-    await expect(store.upsert({
+(sqliteAvailable ? describe : describe.skip)('SQLiteStore', () => {
+  const now = new Date().toISOString();
+
+  it('persists and retrieves memories', async () => {
+    const m: Memory = {
       id: '1',
       kind: 'note',
       text: 'test',
       tags: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       provenance: { source: 'user' }
-    } as Memory)).rejects.toThrow();
+    };
+    await testStore.upsert(m);
+    const fetched = await testStore.get('1');
+    expect(fetched?.text).toBe('test');
   });
 });

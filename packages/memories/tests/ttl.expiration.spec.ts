@@ -4,8 +4,8 @@ import { Memory } from '../src/domain/types.js';
 
 describe('Memory expiration and TTL handling', () => {
   it('correctly identifies expired memories', () => {
-    const now = new Date().toISOString();
     const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago
+    const now = new Date().toISOString();
     
     // Non-expired memory
     const freshMemory: Memory = {
