@@ -9,10 +9,10 @@ const mockCallTool = vi.fn();
 const mockSendRequest = vi.fn();
 const mockClose = vi.fn();
 
-var MockClient: any;
-var MockStdioClientTransport: any;
-var MockSSEClientTransport: any;
-var MockStreamableHTTPClientTransport: any;
+let MockClient: any;
+let MockStdioClientTransport: any;
+let MockSSEClientTransport: any;
+let MockStreamableHTTPClientTransport: any;
 
 vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
   MockClient = vi.fn(() => ({
