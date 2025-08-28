@@ -6,10 +6,7 @@ const dangerousCommand = /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s)
 
 export function createTransport(config: TransportConfig) {
   const baseSchema = {
-    allowNetwork: z.boolean().optional(),
-    sandbox: z.boolean().optional(),
     timeoutMs: z.number().int().nonnegative().optional(),
-    maxMemoryMB: z.number().int().nonnegative().optional(),
   };
 
   const stdioSchema = z
@@ -24,9 +21,6 @@ export function createTransport(config: TransportConfig) {
       args: z.array(z.string()).optional(),
       env: z.record(z.string()).optional(),
       cwd: z.string().optional(),
-      maxRetries: z.number().int().nonnegative().optional(),
-      retryDelay: z.number().int().nonnegative().optional(),
-      timeout: z.number().int().nonnegative().optional(),
       ...baseSchema,
     })
     .strict();
