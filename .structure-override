@@ -1,0 +1,7 @@
+# Structure Override
+# This file allows bypassing the file count limit in pre-commit hooks
+# for large documentation or refactoring commits
+#
+# Created: 2025-08-28
+# Reason: Large documentation commit with 74+ files
+# Commit: docs(mvp): add readiness plans, MVP server setup, and MCP/agents audit reports
