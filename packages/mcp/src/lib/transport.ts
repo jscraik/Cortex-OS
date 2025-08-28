@@ -1,89 +1,63 @@
-import { spawnSync } from 'child_process';
+import commandExists from 'command-exists';
 import { z } from 'zod';
-import type { McpRequest, TransportConfig } from './types.js';
+import type { McpRequest, TransportConfig, Transport } from './types.js';
+import { parseTransportConfig } from './transport-schema.js';
 
-const dangerousCommand = /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s)/i;
+function validateMessage(message: McpRequest): void {
+  const schema = z
+    .object({
+      jsonrpc: z.literal('2.0'),
+      id: z.union([z.string(), z.number()]),
+      method: z.string().optional(),
+      params: z.unknown().optional(),
+      result: z.unknown().optional(),
+      error: z.unknown().optional(),
+    })
+    .strict();
+  schema.parse(message);
+}
 
-export function createTransport(config: TransportConfig) {
-  const baseSchema = {
-    allowNetwork: z.boolean().optional(),
-    sandbox: z.boolean().optional(),
-    timeoutMs: z.number().int().nonnegative().optional(),
-    maxMemoryMB: z.number().int().nonnegative().optional(),
+function createConnect(cfg: TransportConfig, state: { connected: boolean }) {
+  return async () => {
+    if (cfg.type === 'stdio') {
+      try {
+        await commandExists(cfg.command);
+      } catch {
+        throw new Error('Command not found');
+      }
+    }
+    state.connected = true;
   };
+}
 
-  const stdioSchema = z
-    .object({
-      type: z.literal('stdio'),
-      command: z
-        .string()
-        .min(1)
-        .refine((cmd) => !dangerousCommand.test(cmd), {
-          message: 'Unsafe command',
-        }),
-      args: z.array(z.string()).optional(),
-      env: z.record(z.string()).optional(),
-      cwd: z.string().optional(),
-      maxRetries: z.number().int().nonnegative().optional(),
-      retryDelay: z.number().int().nonnegative().optional(),
-      timeout: z.number().int().nonnegative().optional(),
-      ...baseSchema,
-    })
-    .strict();
+function createDisconnect(state: { connected: boolean }) {
+  return async () => {
+    state.connected = false;
+  };
+}
 
-  const httpSchema = z
-    .object({
-      type: z.literal('http'),
-      url: z.string().url(),
-      ...baseSchema,
-    })
-    .strict();
+function createSend() {
+  return (message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) => {
+    try {
+      validateMessage(message);
+    } catch (err) {
+      if (onError) {
+        onError(err, message);
+      } else {
+        console.error('Malformed message in transport.send:', err, message);
+      }
+    }
+  };
+}
 
-  const schema = z.union([stdioSchema, httpSchema]);
-  const cfg = schema.parse(config);
-
-  let connected = false;
+export function createTransport(config: TransportConfig): Transport {
+  const cfg = parseTransportConfig(config);
+  const state = { connected: false };
 
   return {
-    async connect() {
-      if (cfg.type === 'stdio') {
-        const check = spawnSync('command', ['-v', cfg.command]);
-
-        if (check.status !== 0) {
-          throw new Error('Command not found');
-        }
-      }
-      connected = true;
-    },
-
-    async disconnect() {
-      connected = false;
-    },
-
-    isConnected() {
-      return connected;
-    },
-
-    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
-      const msgSchema = z
-        .object({
-          jsonrpc: z.literal('2.0'),
-          id: z.union([z.string(), z.number()]),
-          method: z.string().optional(),
-          params: z.unknown().optional(),
-          result: z.unknown().optional(),
-          error: z.unknown().optional(),
-        })
-        .strict();
-      try {
-        msgSchema.parse(message);
-      } catch (err) {
-        if (onError) {
-          onError(err, message);
-        } else {
-          console.error('Malformed message in transport.send:', err, message);
-        }
-      }
-    },
+    connect: createConnect(cfg, state),
+    disconnect: createDisconnect(state),
+    isConnected: () => state.connected,
+    send: createSend(),
   };
 }
