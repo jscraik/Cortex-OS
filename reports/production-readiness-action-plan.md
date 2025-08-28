@@ -15,12 +15,12 @@ This plan drives each package to 95-100% across Testing, Reliability, Security, 
 
 ## TDD workflow (applies to every change)
 
-1) Write failing unit tests (Vitest/Jest in TS; PyTest in Python) for the behavior
-2) Implement the minimal code to pass tests
-3) Refactor with characterization tests for legacy paths
-4) Add integration tests using contracts in `libs/typescript/contracts` and A2A events
-5) Ensure mocks/stubs follow DI boundaries (no cross-feature imports; use broker interfaces)
-6) Update package README and examples
+1. Write failing unit tests (Vitest/Jest in TS; PyTest in Python) for the behavior
+2. Implement the minimal code to pass tests
+3. Refactor with characterization tests for legacy paths
+4. Add integration tests using contracts in `libs/typescript/contracts` and A2A events
+5. Ensure mocks/stubs follow DI boundaries (no cross-feature imports; use broker interfaces)
+6. Update package README and examples
 
 ## Packages and priority focus
 
@@ -59,26 +59,26 @@ For each package, apply the checklist below and raise scores to 95%+.
 
 ## Concrete tasks by domain
 
-1) Testing and coverage
+1. Testing and coverage
    - Create per-package `vitest.config.ts` inheriting from workspace; add `test:pkg` targets
    - Add boundary tests for A2A broker publish/subscribe using fake broker
    - Contract enforcements with zod: schema.parse in tests on emitted events
    - Add Playwright tests in `apps/cortex-web` for a11y
 
-2) Reliability
+2. Reliability
    - Introduce `p-retry` wrappers and circuit breakers for external calls (MCP manager)
    - Add timeouts with `AbortController` and test cancellations
 
-3) Security
+3. Security
    - Add `semgrep` ruleset and CI step; fix findings
    - Validate env via `zod` schema per package; fail fast tests for missing vars
    - Generate SBOM with `pnpm sbom` or `cyclonedx-npm` and store in `sbom/`
 
-4) Architecture
+4. Architecture
    - Move contracts to `libs/typescript/contracts` when found local
    - Replace direct imports with A2A messages or DI service interfaces
 
-5) Docs
+5. Docs
    - Add `README.md` skeletons where missing
    - Wire `docs/LAUNCH.md` and package quickstarts
 
