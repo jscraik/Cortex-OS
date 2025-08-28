@@ -20,7 +20,14 @@ summary:
       target: '≥ 95% pass'
 scope:
   mvp:
-    goals: ['Streamed chat', 'Model selection', 'History with shareable URL', 'Tool-call visualization', 'WCAG 2.2 AA']
+    goals:
+      [
+        'Streamed chat',
+        'Model selection',
+        'History with shareable URL',
+        'Tool-call visualization',
+        'WCAG 2.2 AA',
+      ]
     features: ['FEAT-001', 'FEAT-002', 'FEAT-003', 'FEAT-004', 'FEAT-005']
   vNext:
     features: ['Multi-agent handoff', 'Prompt templates', 'Attachments', 'Personas', 'Theming']
@@ -93,8 +100,10 @@ features:
       interactions: ['Skip-to-content, reduced motion']
       empty_error_states: []
 functional:
-  flows: ['load session -> send -> stream -> finalize -> persist', 'switch model -> apply to next turn']
-  validation_rules: ['message length caps', 'model allowlist', 'UUIDv4 sessionId', 'tool args schema']
+  flows:
+    ['load session -> send -> stream -> finalize -> persist', 'switch model -> apply to next turn']
+  validation_rules:
+    ['message length caps', 'model allowlist', 'UUIDv4 sessionId', 'tool args schema']
   integrations: ['A2A events', 'MCP tools', 'Memories service', 'ASBR HTTP/WS']
 non_functional:
   performance: { screens_p95_ms: 2000, api_p95_ms: 500 }
@@ -116,7 +125,8 @@ data_api:
     - name: 'Message'
       fields: ['id', 'sessionId', 'role', 'content', 'tokens', 'createdAt']
     - name: 'ToolEvent'
-      fields: ['id', 'sessionId', 'turnId', 'name', 'args_redacted', 'status', 'startedAt', 'endedAt']
+      fields:
+        ['id', 'sessionId', 'turnId', 'name', 'args_redacted', 'status', 'startedAt', 'endedAt']
   apis:
     - name: 'Send Message'
       method: 'POST'

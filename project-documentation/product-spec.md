@@ -18,9 +18,9 @@ Operational Controls: REASONING_EFFORT=medium; VERBOSITY=balanced; SCOPE=MVP fir
 - Target Audience: Internal teams, early adopters, solution engineers, and enterprise evaluators needing a self-hostable, accessible chat.
 - Unique Selling Proposition: Open WebUI familiarity with Cortex-OS strengths—A2A messaging, MCP tools, and strict contracts.
 - Success Metrics:
-  1) p95 message round-trip < 2s (no tool call) and < 5s (with simple tool call)
-  2) a11y audit (WCAG 2.2 AA) ≥ 95% pass with zero critical issues
-  3) 99% successful message streaming sessions (>30s stability) under 250 concurrent users
+  1. p95 message round-trip < 2s (no tool call) and < 5s (with simple tool call)
+  2. a11y audit (WCAG 2.2 AA) ≥ 95% pass with zero critical issues
+  3. 99% successful message streaming sessions (>30s stability) under 250 concurrent users
 
 ## 2. Scope and Slices
 

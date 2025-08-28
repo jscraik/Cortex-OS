@@ -42,7 +42,15 @@ const schemaPath = z
   .string()
   .min(1)
   .refine((p) => {
-    const fullPath = path.resolve(p);
+    // Prevent path traversal attacks by ensuring the path stays within the project
+    const projectRoot = process.cwd();
+    const fullPath = path.resolve(projectRoot, p);
+    
+    // Validate that the resolved path is within the project directory
+    if (!fullPath.startsWith(projectRoot)) {
+      return false;
+    }
+    
     if (!fs.existsSync(fullPath)) {
       return false;
     }
@@ -57,7 +65,7 @@ const schemaPath = z
     return p.endsWith(".ts");
   }, {
     message:
-      "schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json",
+      "schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json, and must be within the project directory",
   });
 
 export const PromptMetaSchema = z.object({
