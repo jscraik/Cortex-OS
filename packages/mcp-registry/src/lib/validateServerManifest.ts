@@ -106,4 +106,3 @@ export function validateServerManifest(ajv: Ajv, manifest: unknown): ValidationR
   };
 }
 
-export default validateServerManifest;
