@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Express } from 'express';
 import type { Server } from 'http';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createService } from '../src/service';
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 
 let app: Express;
 let server: Server;

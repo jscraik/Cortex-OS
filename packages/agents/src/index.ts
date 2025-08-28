@@ -68,4 +68,3 @@ export type {
   SuggestionType,
   UrgencyLevel,
 } from './code-intelligence-agent.js';
-

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 
 vi.mock('../../../config/model-integration-strategy.js', () => ({
   selectOptimalModel: vi.fn(),
 }));
 
-import { CodeIntelligenceAgent, CodeAnalysisRequest } from './code-intelligence-agent';
 import { selectOptimalModel } from '../../../config/model-integration-strategy.js';
+import { CodeAnalysisRequest, CodeIntelligenceAgent } from './code-intelligence-agent';
 
 const baseResult = {
   suggestions: [],
@@ -49,9 +49,7 @@ describe('CodeIntelligenceAgent', () => {
   it('caches analysis results', async () => {
     (selectOptimalModel as Mock).mockReturnValue('qwen3-coder');
     const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
-    const spy = vi
-      .spyOn(agent as any, '_analyzeWithModel')
-      .mockResolvedValue({ ...baseResult });
+    const spy = vi.spyOn(agent as any, '_analyzeWithModel').mockResolvedValue({ ...baseResult });
     const request: CodeAnalysisRequest = {
       code: 'print(1)',
       language: 'python',

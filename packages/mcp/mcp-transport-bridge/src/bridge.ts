@@ -4,13 +4,12 @@
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { spawn, ChildProcess } from 'child_process';
-import { StreamableHTTPServerTransport } from './streamable-http-server-transport.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { StreamableHTTPServerTransport } from './streamable-http-server-transport.js';
 
 /**
  * Configuration for MCP bridge
@@ -131,7 +130,6 @@ export class McpBridge {
     }
 
     return { healthy: this.isRunning && details.clientConnected, details };
-  return { healthy: this.isRunning && details.clientConnected, details };
   }
 
   /**
@@ -186,8 +184,8 @@ export class McpBridge {
 
       await this.client.connect(transport);
       this.log(`🔧 Connected to stdio process: ${source.command}`);
-  await this.client.connect(transport);
-  this.log(`🔧 Connected to stdio process: ${source.command}`);
+      await this.client.connect(transport);
+      this.log(`🔧 Connected to stdio process: ${source.command}`);
     }
   }
 

@@ -13,13 +13,13 @@ Vendor-neutral. Local-first. Deterministic. Governed via ASBR. Accessibility-awa
 1. Task manager
 
 - What: PRP→tasks→milestones→OKRs with policy gates.
-- How: `packages/orchestration` plans; `packages/a2a` routes updates; memory stores state; CLI TUI is the board.
+- How: `packages/orchestration` plans; `packages/a2a` routes updates; memory stores state; CLI/TUI or API is the board.
 - Result: Single queue across tools with evidence and timestamps.
 
 1. Software development pipeline
 
 - What: Scaffold→codegen→tests→review→build→release with SBOM and audit trail.
-- How: Frontier tools via MCP (Claude Code, Gemini CLI, Qwen CLI, Codex CLI); CI runs review-neuron JSON gate; ASBR enforces steps.
+- How: Frontier tools via MCP (Claude Code, Gemini CLI, Qwen CLI, Codex CLI); CI runs review-neuron JSON gate; ASBR enforces steps; model operations via `packages/model-gateway`.
 - Result: Reproducible releases with blocking gates and provenance.
 
 1. Website development hub
@@ -31,15 +31,15 @@ Vendor-neutral. Local-first. Deterministic. Governed via ASBR. Accessibility-awa
 Minimal setup (ordered)
 
 1. Initialize repo
-   - `cortex init` scaffolds `apps/cortex-os` and `packages/{a2a,mcp,orchestration,memories,rag,simlab}`; ASBR expects fixed paths.
+   - Ensure `apps/cortex-os` exists and mount feature packages under `packages/` (a2a, mcp, orchestration, memories, rag, simlab, model-gateway).
 2. Register tools via MCP
-   - `cortex mcp add claude-code …`, `… gemini-cli …`, `… qwen-cli …`, `… codex-cli …` adapters run as servers.
+   - Use the CLI or API to `mcp add` servers (Claude Code, Gemini CLI, Qwen CLI, Codex CLI) so adapters run as MCP servers.
 3. Enable review gate
-   - Add GitHub Action with review-neuron output schema; fail on blockers.
+   - Add a CI gate with review-neuron output schema; fail on blockers.
 4. Wire memory + RAG
-   - Configure `memory-core.sqlite` + encryption; define RAG bundles; require citations.
-5. Spin up the hub
-   - `cortex web dev` for Glass UI; Alt+G toggles glass.
+   - Configure memories store (sqlite or service) + encryption; define RAG bundles; require citations.
+5. Model Gateway
+   - Run `packages/model-gateway` (HTTP on 127.0.0.1:8081) and point RAG/agents to its `/embeddings`, `/rerank`, `/chat` endpoints.
 
 Example flows
 
@@ -51,7 +51,7 @@ What / Why / Where / How / Result
 
 - What: A governed second brain that plans, builds, and teaches with proofs.
 - Why: Solo velocity with team-grade safety and auditability.
-- Where: Local first (MLX). External tools via MCP. Data in encrypted memory-core.
+- Where: Local first (MLX via model-gateway). External tools via MCP. Data in encrypted memories.
 - How: ASBR plans → typed contracts → gated steps → evidence logs.
 - Result: Faster learning, orderly tasks, clean pipeline, and a single web hub.
 

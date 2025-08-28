@@ -4,8 +4,11 @@
  */
 
 import { EventEmitter } from 'events';
-import { selectOptimalModel, TaskCharacteristics } from '../../../config/model-integration-strategy.js';
 import { z } from 'zod';
+import {
+  selectOptimalModel,
+  TaskCharacteristics,
+} from '../../../config/model-integration-strategy.js';
 
 export type UrgencyLevel = 'low' | 'medium' | 'high';
 export type AnalysisType = 'review' | 'refactor' | 'optimize' | 'architecture' | 'security';
@@ -154,8 +157,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
     } = {},
   ) {
     super();
-    this.ollamaEndpoint =
-      config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
+    this.ollamaEndpoint = config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
     if (!this.ollamaEndpoint) {
       throw new Error('Ollama endpoint must be provided');
     }
@@ -180,11 +182,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
       modality: 'code',
     };
 
-    const modelId = selectOptimalModel(
-      'agents',
-      'codeIntelligence',
-      characteristics,
-    );
+    const modelId = selectOptimalModel('agents', 'codeIntelligence', characteristics);
 
     try {
       const result = await this._analyzeWithModel(validatedRequest, modelId);
@@ -204,9 +202,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
-    const modelKey = Object.keys(MODEL_CONFIG).find(key =>
-      modelId.includes(key),
-    );
+    const modelKey = Object.keys(MODEL_CONFIG).find((key) => modelId.includes(key));
     if (!modelKey) {
       throw new Error(`Unsupported model: ${modelId}`);
     }
@@ -226,13 +222,11 @@ export class CodeIntelligenceAgent extends EventEmitter {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `${modelId} analysis failed: ${response.statusText}`,
-      );
+      throw new Error(`${modelId} analysis failed: ${response.statusText}`);
     }
 
-  const data = (await response.json()) as { response: string };
-  return this.parseCodeAnalysisResponse(data.response, modelId);
+    const data = (await response.json()) as { response: string };
+    return this.parseCodeAnalysisResponse(data.response, modelId);
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
@@ -259,17 +253,12 @@ Analysis Type: ${request.analysisType}
 Urgency: ${request.urgency}`;
   }
 
-  private parseCodeAnalysisResponse(
-    response: string,
-    modelId: string,
-  ): CodeAnalysisResult {
+  private parseCodeAnalysisResponse(response: string, modelId: string): CodeAnalysisResult {
     let raw: unknown;
     try {
       raw = JSON.parse(response);
     } catch (e) {
-      throw new Error(
-        `Model response from ${modelId} is not valid JSON: ${(e as Error).message}`,
-      );
+      throw new Error(`Model response from ${modelId} is not valid JSON: ${(e as Error).message}`);
     }
 
     const parsed = rawAnalysisResultSchema.parse(raw);
@@ -278,9 +267,8 @@ Urgency: ${request.urgency}`;
 
   private assessComplexity(code: string): 'low' | 'medium' | 'high' {
     const lines = code.split('\n').length;
-    const complexityIndicators = (
-      code.match(/if|for|while|switch|catch|function|class/g) || []
-    ).length;
+    const complexityIndicators = (code.match(/if|for|while|switch|catch|function|class/g) || [])
+      .length;
 
     if (
       lines > COMPLEXITY_THRESHOLDS.HIGH.lines ||

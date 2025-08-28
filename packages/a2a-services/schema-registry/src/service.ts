@@ -1,6 +1,6 @@
-import express from 'express';
 import { createRateLimiter } from '@cortex-os/a2a-common';
-import { schemaForSchema, Schema } from './schemas';
+import express from 'express';
+import { Schema, schemaForSchema } from './schemas';
 function isValidVersion(version: string): boolean {
   return /^\d+\.\d+\.\d+$/.test(version);
 }
@@ -61,8 +61,8 @@ export function createService() {
     if (candidates.length === 0) {
       return res.status(404).send('Schema not found');
     }
-  const sorted = candidates.slice().sort((a, b) => compareVersions(a.version, b.version));
-  const latest = sorted[0];
+    const sorted = candidates.slice().sort((a, b) => compareVersions(a.version, b.version));
+    const latest = sorted[0];
     res.json(latest);
   });
 

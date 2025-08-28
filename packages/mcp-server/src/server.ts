@@ -5,10 +5,10 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
 import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { z } from 'zod';
 // no additional node imports
 
 const ROOT = process.env.CORTEX_MCP_ROOT || process.cwd();
@@ -121,12 +121,8 @@ const tools = [
       const normalizedRoot = path.normalize(rootPath);
       const normalizedPath = path.normalize(requestedPath);
 
-
       if (!normalizedPath.startsWith(normalizedRoot)) {
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          'Path escapes repository root',
-        );
+        throw new McpError(ErrorCode.InvalidParams, 'Path escapes repository root');
       }
 
       // Check for existence before reading
@@ -135,7 +131,6 @@ const tools = [
       } catch {
         throw new McpError(ErrorCode.InvalidParams, 'File not found');
       }
-
 
       const data = await fs.readFile(normalizedPath, 'utf8');
       return {
@@ -206,9 +201,7 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return await tool.run(validatedArgs);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      const details = error.errors
-        .map((e) => `${e.path.join('.')}: ${e.message}`)
-        .join(', ');
+      const details = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
       const msg = `Invalid parameters for tool '${name}': ${details}`;
       throw new McpError(ErrorCode.InvalidParams, msg);
     }
@@ -247,12 +240,18 @@ if (import.meta.url === new URL(process.argv[1], 'file://').href) {
       // Proxy posted JSON-RPC messages to the SSE transport session
       const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
       // In a fuller implementation, you'd route by sessionId. For now, accept single session.
-      const transport = (mcpServer as unknown as { transport?: InstanceType<typeof SSEServerTransport> }).transport;
+      const transport = (
+        mcpServer as unknown as { transport?: InstanceType<typeof SSEServerTransport> }
+      ).transport;
       if (!transport) {
         res.status(400).json({ error: 'No active SSE session' });
         return;
       }
-      await transport.handlePostMessage(req as unknown as Parameters<typeof transport.handlePostMessage>[0], res as unknown as Parameters<typeof transport.handlePostMessage>[1], req.body);
+      await transport.handlePostMessage(
+        req as unknown as Parameters<typeof transport.handlePostMessage>[0],
+        res as unknown as Parameters<typeof transport.handlePostMessage>[1],
+        req.body,
+      );
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Failed to handle message:', toErrorMessage(e));
