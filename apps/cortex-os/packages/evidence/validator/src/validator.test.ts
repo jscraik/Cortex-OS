@@ -3,11 +3,11 @@
  * @description Tests for evidence validator
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import path from 'path';
-import { EvidenceValidator } from './validator';
-import { Finding, ValidatorConfig } from './types';
 import { createHash } from 'crypto';
+import path from 'path';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { Finding, ValidatorConfig } from './types';
+import { EvidenceValidator } from './validator';
 
 describe('Evidence Validator', () => {
   let validator: EvidenceValidator;

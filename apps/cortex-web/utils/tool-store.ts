@@ -13,12 +13,21 @@ export function getToolEvents(sessionId: string): ToolEvent[] {
   return toolStore.get(sessionId) || [];
 }
 
-export function addToolEvent(sessionId: string, event: Omit<ToolEvent, 'createdAt' | 'id'> & { id?: string }) {
+export function addToolEvent(
+  sessionId: string,
+  event: Omit<ToolEvent, 'createdAt' | 'id'> & { id?: string },
+) {
   const list = toolStore.get(sessionId) || [];
   const createdAt = new Date().toISOString();
-  const id = event.id || crypto.randomUUID();
+  const id = event.id || (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
   const redactedArgs = event.args ? redactArgs(event.args) : undefined;
-  const e: ToolEvent = { id, name: event.name, args: redactedArgs, status: event.status, createdAt };
+  const e: ToolEvent = {
+    id,
+    name: event.name,
+    args: redactedArgs,
+    status: event.status,
+    createdAt,
+  };
   list.push(e);
   toolStore.set(sessionId, list);
   return e;
@@ -37,21 +46,20 @@ export function redactArgs<T extends Record<string, unknown>>(args: T): T {
     if (BEARER_REGEX.test(out)) out = out.replace(BEARER_REGEX, 'Bearer [REDACTED]');
     return out;
   };
-  const sanitize = (val: unknown, visited: WeakSet<object>): unknown => {
+  const sanitize = (val: unknown, visited: WeakSet<Record<string, unknown>>): unknown => {
     if (typeof val === 'string') return sanitizeString(val);
-    if (Array.isArray(val)) return val.map(item => sanitize(item, visited));
+    if (Array.isArray(val)) return val.map((item) => sanitize(item, visited));
     if (val && typeof val === 'object') {
-      if (visited.has(val as object)) {
+      if (visited.has(val as Record<string, unknown>)) {
         return '[Circular]';
       }
-      visited.add(val as object);
+      visited.add(val as Record<string, unknown>);
       const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(val)) {
+      for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
         if (isSensitiveKey(k)) out[k] = '[REDACTED]';
-        else if (typeof v === 'string') out[k] = sanitizeString(v);
         else out[k] = sanitize(v, visited);
       }
-      return out as T;
+      return out as unknown as T;
     }
     return val;
   };

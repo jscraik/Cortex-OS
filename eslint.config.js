@@ -23,7 +23,6 @@ export default [
       'apps/**',
       'packages/**',
       // Vendored or external sources not governed by root lint
-      'mcp-official-sdk/**',
       'external/**',
       'tests/**',
       'scripts/**',

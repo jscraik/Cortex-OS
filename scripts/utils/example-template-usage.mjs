@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 // Read the template file
-const templatePath = join(process.cwd(), 'scripts', 'templates', 'neo4j-secure-class.template');
+const templatePath = join(process.cwd(), 'scripts', 'neo4j-secure-class.template');
 const template = readFileSync(templatePath, 'utf-8');
 
 console.log('✅ Successfully read Neo4j template');
@@ -33,7 +33,7 @@ function updateNeo4jImplementation(filePath) {
 }
 
 console.log('\n📋 Template usage example:');
-console.log('- Read template from scripts/templates/neo4j-secure-class.template');
+console.log('- Read template from scripts/neo4j-secure-class.template');
 console.log('- Use template content for string replacement in target files');
 console.log('- Template includes proper SecureNeo4j integration');
 

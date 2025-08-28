@@ -1,6 +1,6 @@
 # Neo4j Template Files
 
-This directory contains template files for Neo4j class implementations:
+This directory contains template files for Neo4j class implementations that follow Cortex-OS best practices.
 
 ## Files
 
@@ -47,3 +47,18 @@ The template expects the following to be available in the target file:
 ## Security
 
 The template uses `SecureNeo4j` for all database operations to ensure proper input validation and prevent injection attacks.
+
+## Implementation Notes
+
+When using these templates in your code, be sure to:
+
+- Replace placeholder names (e.g., `DatabaseName`, `ClassName`, `PRIMARY_KEY`)
+- Add any additional methods required by your implementation
+- Update imports to match your project structure
+- Document any custom behaviors or extensions
+
+## Additional Resources
+
+- Run `node scripts/utils/verify-template-setup.mjs` to verify the template setup is correct
+- See `scripts/utils/example-template-usage.mjs` for usage examples
+- Read `docs/typescript-template-config.md` for TypeScript configuration details

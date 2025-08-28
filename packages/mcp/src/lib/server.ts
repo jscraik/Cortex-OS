@@ -1,5 +1,22 @@
 import { z } from 'zod';
 import type { McpRequest } from './types.js';
+import {
+  handleInitialize,
+  handleToolsList,
+  handleToolCall,
+  handleResourcesList,
+  handleResourceRead,
+  handlePromptsList,
+} from './server/handlers.js';
+import type {
+  ServerContext,
+  ToolDef,
+  ToolHandler,
+  ResourceDef,
+  ResourceHandler,
+  PromptDef,
+  PromptHandler,
+} from './server/types.js';
 
 const serverOptionsSchema = z.object({
   name: z.string().min(1),
@@ -13,6 +30,7 @@ type JsonSchema = {
 
 export function createMcpServer(options: { name: string; version: string }) {
   serverOptionsSchema.parse(options);
+
 
   type ToolDef = {
     name: string;
@@ -56,6 +74,7 @@ export function createMcpServer(options: { name: string; version: string }) {
         params: z.unknown().optional(),
       });
       const parsed = reqSchema.parse(req);
+
 
       if (parsed.method === 'initialize') {
         const params = z
@@ -197,6 +216,7 @@ export function createMcpServer(options: { name: string; version: string }) {
         id: parsed.id,
         error: { code: -32603, message: `Unknown method: ${parsed.method}` },
       };
+
     },
   };
 }

@@ -1,4 +1,6 @@
+
 import { spawnSync } from 'child_process';
+
 import { z } from 'zod';
 import type { McpRequest, TransportConfig } from './types.js';
 
@@ -6,10 +8,7 @@ const dangerousCommand = /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s)
 
 export function createTransport(config: TransportConfig) {
   const baseSchema = {
-    allowNetwork: z.boolean().optional(),
-    sandbox: z.boolean().optional(),
     timeoutMs: z.number().int().nonnegative().optional(),
-    maxMemoryMB: z.number().int().nonnegative().optional(),
   };
 
   const stdioSchema = z
@@ -24,9 +23,6 @@ export function createTransport(config: TransportConfig) {
       args: z.array(z.string()).optional(),
       env: z.record(z.string()).optional(),
       cwd: z.string().optional(),
-      maxRetries: z.number().int().nonnegative().optional(),
-      retryDelay: z.number().int().nonnegative().optional(),
-      timeout: z.number().int().nonnegative().optional(),
       ...baseSchema,
     })
     .strict();
@@ -43,19 +39,26 @@ export function createTransport(config: TransportConfig) {
   const cfg = schema.parse(config);
 
   let connected = false;
+  let child: ChildProcessWithoutNullStreams | null = null;
 
   return {
     async connect() {
       if (cfg.type === 'stdio') {
+
         const check = spawnSync('sh', ['-c', `command -v ${cfg.command}`]);
         if (check.status !== 0) {
           throw new Error('Command not found');
         }
+
       }
       connected = true;
     },
 
     async disconnect() {
+      if (cfg.type === 'stdio' && child) {
+        child.kill();
+        child = null;
+      }
       connected = false;
     },
 
@@ -63,7 +66,9 @@ export function createTransport(config: TransportConfig) {
       return connected;
     },
 
+
     send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
+
       const msgSchema = z
         .object({
           jsonrpc: z.literal('2.0'),
@@ -82,6 +87,7 @@ export function createTransport(config: TransportConfig) {
         } else {
           console.error('Malformed message in transport.send:', err, message);
         }
+
       }
     },
   };
