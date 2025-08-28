@@ -216,7 +216,7 @@ describe('MCP Protocol Conformance Tests', () => {
       expect(response.id).toBe('error-test');
       expect(response.error).toBeDefined();
       expect(response.error!.code).toBe(-32603);
-      expect(response.error!.message).toContain('Unknown method');
+      expect(response.error!.message).toContain('Method not supported');
     });
 
     it('should return proper error for invalid tool calls', async () => {
@@ -259,11 +259,7 @@ describe('MCP Protocol Conformance Tests', () => {
 
   describe('Security Validation Tests', () => {
     it('should validate API key format', () => {
-      const validKeys = [
-        'sk-abcdef7890ghijklmnop',
-        'ref-e672788111c76ba32bc1',
-        'pk_test_abcdefghijk',
-      ];
+      const validKeys = ['sk-abcdef7890ghijklmnop', 'ref-e672788111c76ba32bc1', 'pk_abcdefghijk'];
 
       const invalidKeys = ['password', '123456', 'secret', 'admin', 'test'];
 

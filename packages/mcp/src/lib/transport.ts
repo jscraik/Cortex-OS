@@ -4,7 +4,7 @@ import type { McpRequest, TransportConfig } from './types.js';
 
 const dangerousCommand = /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s)/i;
 
-export function createTransport(config: TransportConfig) {
+export function validateTransportConfig(config: TransportConfig) {
   const baseSchema = {
     allowNetwork: z.boolean().optional(),
     sandbox: z.boolean().optional(),
@@ -39,19 +39,49 @@ export function createTransport(config: TransportConfig) {
     })
     .strict();
 
-  const schema = z.union([stdioSchema, httpSchema]);
-  const cfg = schema.parse(config);
+  return z.union([stdioSchema, httpSchema]).parse(config);
+}
 
+function ensureCommandExists(command: string) {
+  const check = spawnSync('command', ['-v', command]);
+  if (check.status !== 0) {
+    throw new Error('Command not found');
+  }
+}
+
+export function validateMessage(
+  message: McpRequest,
+  onError?: (err: unknown, msg: McpRequest) => void,
+) {
+  const msgSchema = z
+    .object({
+      jsonrpc: z.literal('2.0'),
+      id: z.union([z.string(), z.number()]),
+      method: z.string().optional(),
+      params: z.unknown().optional(),
+      result: z.unknown().optional(),
+      error: z.unknown().optional(),
+    })
+    .strict();
+  try {
+    msgSchema.parse(message);
+  } catch (err) {
+    if (onError) {
+      onError(err, message);
+    } else {
+      console.error('Malformed message in transport.send:', err, message);
+    }
+  }
+}
+
+export function createTransport(config: TransportConfig) {
+  const cfg = validateTransportConfig(config);
   let connected = false;
 
   return {
     async connect() {
       if (cfg.type === 'stdio') {
-        const check = spawnSync('command', ['-v', cfg.command]);
-
-        if (check.status !== 0) {
-          throw new Error('Command not found');
-        }
+        ensureCommandExists(cfg.command);
       }
       connected = true;
     },
@@ -65,25 +95,8 @@ export function createTransport(config: TransportConfig) {
     },
 
     send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
-      const msgSchema = z
-        .object({
-          jsonrpc: z.literal('2.0'),
-          id: z.union([z.string(), z.number()]),
-          method: z.string().optional(),
-          params: z.unknown().optional(),
-          result: z.unknown().optional(),
-          error: z.unknown().optional(),
-        })
-        .strict();
-      try {
-        msgSchema.parse(message);
-      } catch (err) {
-        if (onError) {
-          onError(err, message);
-        } else {
-          console.error('Malformed message in transport.send:', err, message);
-        }
-      }
+      validateMessage(message, onError);
     },
   };
 }
+
