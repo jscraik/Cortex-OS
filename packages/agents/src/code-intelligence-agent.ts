@@ -126,7 +126,24 @@ const rawAnalysisResultSchema = z.object({
   confidence: z.number(),
 });
 
-// thresholds/config not required; keep prompts inline for simplicity
+const COMPLEXITY_THRESHOLDS = {
+  HIGH: { lines: 200, indicators: 20 },
+  MEDIUM: { lines: 50, indicators: 10 },
+};
+
+const MODEL_CONFIG = {
+  'qwen3-coder': {
+    temperature: 0.1,
+    top_p: 0.9,
+    num_predict: 2048,
+  },
+  'deepseek-coder': {
+    temperature: 0.2,
+    top_p: 0.9,
+    num_predict: 1500,
+  },
+};
+
 export class CodeIntelligenceAgent extends EventEmitter {
   private readonly ollamaEndpoint: string;
   private readonly analysisHistory: Map<string, CodeAnalysisResult>;
@@ -137,7 +154,8 @@ export class CodeIntelligenceAgent extends EventEmitter {
     } = {},
   ) {
     super();
-    this.ollamaEndpoint = config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
+    this.ollamaEndpoint =
+      config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
     if (!this.ollamaEndpoint) {
       throw new Error('Ollama endpoint must be provided');
     }
@@ -154,7 +172,6 @@ export class CodeIntelligenceAgent extends EventEmitter {
       return cached;
     }
 
-    // Determine optimal model based on task characteristics
     const characteristics: TaskCharacteristics = {
       complexity: this.assessComplexity(validatedRequest.code),
       latency: validatedRequest.urgency === 'high' ? 'fast' : 'batch',
@@ -163,24 +180,18 @@ export class CodeIntelligenceAgent extends EventEmitter {
       modality: 'code',
     };
 
-    const modelId = selectOptimalModel('agents', 'codeIntelligence', characteristics);
+    const modelId = selectOptimalModel(
+      'agents',
+      'codeIntelligence',
+      characteristics,
+    );
 
     try {
-      // Route to appropriate model
-      let result: CodeAnalysisResult;
-
-      if (modelId.includes('qwen3-coder')) {
-        result = await this.analyzeWithQwen3Coder(validatedRequest, modelId);
-      } else if (modelId.includes('deepseek-coder')) {
-        result = await this.analyzeWithDeepSeekCoder(validatedRequest, modelId);
-      } else {
-        throw new Error(`Unsupported model: ${modelId}`);
-      }
-
-      result.processingTime = Math.max(1, Date.now() - startTime);
+  const result = await this._analyzeWithModel(validatedRequest, modelId);
+      result.processingTime = Date.now() - startTime;
       result.modelUsed = modelId;
 
-  this.analysisHistory.set(cacheKey, result);
+      this.analysisHistory.set(cacheKey, result);
   this.emit('analysis_complete', { request: validatedRequest, result });
       return result;
     } catch (error) {
@@ -189,11 +200,19 @@ export class CodeIntelligenceAgent extends EventEmitter {
     }
   }
 
-  private async analyzeWithQwen3Coder(
+  private async _analyzeWithModel(
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
+    const modelKey = Object.keys(MODEL_CONFIG).find(key =>
+      modelId.includes(key),
+    );
+    if (!modelKey) {
+      throw new Error(`Unsupported model: ${modelId}`);
+    }
+
     const prompt = this.buildCodeAnalysisPrompt(request);
+    const modelOptions = MODEL_CONFIG[modelKey as keyof typeof MODEL_CONFIG];
 
     const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
       method: 'POST',
@@ -202,49 +221,18 @@ export class CodeIntelligenceAgent extends EventEmitter {
         model: modelId,
         prompt,
         stream: false,
-        options: {
-          temperature: 0.1,
-          top_p: 0.9,
-          num_predict: 2048,
-        },
+        options: modelOptions,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`${modelId} analysis failed: ${response.statusText}`);
+      throw new Error(
+        `${modelId} analysis failed: ${response.statusText}`,
+      );
     }
 
-    const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, 'qwen3-coder');
-  }
-
-  private async analyzeWithDeepSeekCoder(
-    request: CodeAnalysisRequest,
-    modelId: string,
-  ): Promise<CodeAnalysisResult> {
-    const prompt = this.buildCodeAnalysisPrompt(request);
-
-    const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelId,
-        prompt,
-        stream: false,
-        options: {
-          temperature: 0.2,
-          top_p: 0.9,
-          num_predict: 1500,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`DeepSeek-Coder analysis failed: ${response.statusText}`);
-    }
-
-    const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, 'deepseek-coder');
+  const data = (await response.json()) as { response: string };
+  return this.parseCodeAnalysisResponse(data.response, modelId);
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
@@ -271,25 +259,39 @@ Analysis Type: ${request.analysisType}
 Urgency: ${request.urgency}`;
   }
 
-  private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
+  private parseCodeAnalysisResponse(
+    response: string,
+    modelId: string,
+  ): CodeAnalysisResult {
     let raw: unknown;
     try {
       raw = JSON.parse(response);
-    } catch {
-      throw new Error('Model response is not valid JSON');
+    } catch (e) {
+      throw new Error(
+        `Model response from ${modelId} is not valid JSON: ${(e as Error).message}`,
+      );
     }
 
     const parsed = rawAnalysisResultSchema.parse(raw);
-    return { ...parsed, modelUsed: modelType, processingTime: 0 };
+    return { ...parsed, modelUsed: modelId, processingTime: 0 };
   }
 
   private assessComplexity(code: string): 'low' | 'medium' | 'high' {
-    const lines = code.split('\n').filter((line) => line.trim().length > 0).length;
-    const complexityIndicators = (code.match(/if|for|while|switch|catch|function|class/g) || [])
-      .length;
+    const lines = code.split('\n').length;
+    const complexityIndicators = (
+      code.match(/if|for|while|switch|catch|function|class/g) || []
+    ).length;
 
-    if (lines > 100 || complexityIndicators > 15) return 'high';
-    if (lines > 10 || complexityIndicators > 3) return 'medium';
+    if (
+      lines > COMPLEXITY_THRESHOLDS.HIGH.lines ||
+      complexityIndicators > COMPLEXITY_THRESHOLDS.HIGH.indicators
+    )
+      return 'high';
+    if (
+      lines > COMPLEXITY_THRESHOLDS.MEDIUM.lines ||
+      complexityIndicators > COMPLEXITY_THRESHOLDS.MEDIUM.indicators
+    )
+      return 'medium';
     return 'low';
   }
 

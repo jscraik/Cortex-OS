@@ -28,7 +28,7 @@ describe('CodeIntelligenceAgent', () => {
   });
 
   it('parses valid model responses', () => {
-  const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
+    const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
     const response = JSON.stringify({
       suggestions: [{ type: 'improvement', description: 'test', rationale: 'r', priority: 'low' }],
       complexity: { cyclomatic: 1, cognitive: 1, maintainability: 'low', hotspots: [] },
@@ -42,14 +42,15 @@ describe('CodeIntelligenceAgent', () => {
   });
 
   it('throws on invalid model responses', () => {
-  const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
+    const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
     expect(() => (agent as any).parseCodeAnalysisResponse('not json', 'm')).toThrow();
   });
 
   it('caches analysis results', async () => {
     (selectOptimalModel as Mock).mockReturnValue('qwen3-coder');
-  const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
-  const spy = vi.spyOn(agent as any, 'analyzeWithQwen3Coder')
+    const agent = new CodeIntelligenceAgent({ ollamaEndpoint: 'http://o' });
+    const spy = vi
+      .spyOn(agent as any, '_analyzeWithModel')
       .mockResolvedValue({ ...baseResult });
     const request: CodeAnalysisRequest = {
       code: 'print(1)',
