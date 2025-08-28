@@ -1,18 +1,12 @@
-/**
- * Cortex MCP Server (Node 22-ready)
- * - STDIO transport for standard MCP client connections
- * - Tools: ping, http_get (safe), repo_file (read-only under ROOT)
- * - Compatible with @modelcontextprotocol/sdk@1.17.2
- * - Enhanced security with authentication and hostname allowlists
- */
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
-} from '@modelcontextprotocol/sdk/types.js';
+  createMcpServer,
+} from '@modelcontextprotocol/sdk';
+import { z } from 'zod';
+import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 // no additional node imports
@@ -31,231 +25,229 @@ if (!TOKEN) {
 // Allowlist of permitted hostnames for http_get tool
 const HTTP_GET_ALLOWLIST = ['example.com', 'api.example.com'];
 
-const server = new Server(
+const PingToolInputSchema = z.object({
+  text: z.string().default('Hello from Cortex MCP!'),
+});
+
+const HttpGetToolInputSchema = z.object({
+  url: z.string().url(),
+});
+
+const RepoFileToolInputSchema = z.object({
+  relpath: z.string(),
+});
+
+const tools = [
   {
-    name: 'cortex-mcp',
-    version: '0.1.1',
+    name: 'ping',
+    description: 'Test connectivity with a simple ping response',
+    inputSchema: PingToolInputSchema,
+    run: async (args: z.infer<typeof PingToolInputSchema>) => {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Pong! ${args.text}`,
+          },
+        ],
+      };
+    },
   },
   {
+    name: 'http_get',
+    description: 'Fetch JSON/text by GET (2MB limit, allowlisted hosts only)',
+    inputSchema: HttpGetToolInputSchema,
+    run: async (args: z.infer<typeof HttpGetToolInputSchema>) => {
+      const url = new URL(args.url);
+
+      if (!HTTP_GET_ALLOWLIST.includes(url.hostname)) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          `Hostname '${url.hostname}' not in allowlist. Permitted hosts: ${HTTP_GET_ALLOWLIST.join(', ')}`,
+        );
+      }
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Cortex-MCP/0.1.1',
+        },
+      });
+
+      if (!response.ok) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          `HTTP ${response.status}: ${response.statusText}`,
+        );
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      let content: string;
+
+      if (contentType.includes('application/json')) {
+        const data = await response.json();
+        content = JSON.stringify(data, null, 2);
+      } else {
+        content = await response.text();
+      }
+
+      const maxBytes = 2 * 1024 * 1024;
+      if (Buffer.byteLength(content, 'utf8') > maxBytes) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Response body exceeds ${maxBytes} bytes limit`,
+        );
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: content,
+          },
+        ],
+      };
+    },
+  },
+  {
+    name: 'repo_file',
+    description: 'Read a file from the repository (read-only, secure path validation)',
+    inputSchema: RepoFileToolInputSchema,
+    run: async (args: z.infer<typeof RepoFileToolInputSchema>) => {
+      const rootPath = path.resolve(ROOT);
+      const requestedPath = path.join(rootPath, args.relpath);
+
+      // Normalize paths to prevent traversal attacks
+      const normalizedRoot = path.normalize(rootPath);
+      const normalizedPath = path.normalize(requestedPath);
+
+
+      if (!normalizedPath.startsWith(normalizedRoot)) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          'Path escapes repository root',
+        );
+      }
+
+      // Check for existence before reading
+      try {
+        await fs.access(normalizedPath);
+      } catch {
+        throw new McpError(ErrorCode.InvalidParams, 'File not found');
+      }
+
+
+      const data = await fs.readFile(normalizedPath, 'utf8');
+      return {
+        content: [
+          {
+            type: 'text',
+            text: data,
+          },
+        ],
+      };
+    },
+  },
+];
+
+export const app = express();
+app.use(express.json());
+
+export const mcpServer = createMcpServer({
+  transport: 'sse',
+  app,
+  mcpOptions: {
+    serverInfo: {
+      name: 'cortex-mcp',
+      version: '0.1.1',
+    },
     capabilities: {
       tools: {},
     },
   },
-);
+});
 
-// Tools registration
-server.setRequestHandler(ListToolsRequestSchema, async () => {
+mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Provide JSON Schema directly instead of relying on zod.openapi
+  const schemas: Record<string, unknown> = {
+    ping: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', default: 'Hello from Cortex MCP!' },
+      },
+      additionalProperties: false,
+    },
+    http_get: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', format: 'uri' },
+      },
+      required: ['url'],
+      additionalProperties: false,
+    },
+    repo_file: {
+      type: 'object',
+      properties: {
+        relpath: { type: 'string' },
+      },
+      required: ['relpath'],
+      additionalProperties: false,
+    },
+  };
   return {
-    tools: [
-      {
-        name: 'ping',
-        description: 'Test connectivity with a simple ping response',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            text: {
-              type: 'string',
-              description: 'Text to echo back',
-              default: 'Hello from Cortex MCP!',
-            },
-          },
-        },
-      },
-      {
-        name: 'http_get',
-        description: 'Fetch JSON/text by GET (2MB limit, allowlisted hosts only)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            url: {
-              type: 'string',
-              description: 'URL to fetch (must be in allowlist)',
-            },
-          },
-          required: ['url'],
-        },
-      },
-      {
-        name: 'repo_file',
-        description: 'Read a file from the repository (read-only, secure path validation)',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            relpath: {
-              type: 'string',
-              description: 'Relative path from repository root',
-            },
-          },
-          required: ['relpath'],
-        },
-      },
-    ],
+    tools: tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: schemas[tool.name] ?? { type: 'object' },
+    })),
   };
 });
 
-// Tool execution
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
-  switch (name) {
-    case 'ping':
-      return handlePing(args);
-    case 'http_get':
-      return handleHttpGet(args);
-    case 'repo_file':
-      return handleRepoFile(args);
-    default:
-      throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
-  }
-});
-
-async function handlePing(args: unknown) {
-  const params = args as { text?: string };
-  const text = params?.text ?? 'Hello from Cortex MCP!';
-  return {
-    content: [
-      {
-        type: 'text',
-        text: `Pong! ${text}`,
-      },
-    ],
-  };
-}
-
-async function handleHttpGet(args: unknown) {
-  const params = args as { url?: string };
-  const url = params?.url;
-  if (!url) {
-    throw new McpError(ErrorCode.InvalidParams, 'URL is required');
-  }
-
-  if ('canParse' in URL && typeof (URL as { canParse?: unknown }).canParse === 'function') {
-    if (!(URL as { canParse?: (url: string) => boolean }).canParse!(url)) {
-      throw new McpError(ErrorCode.InvalidParams, 'Invalid URL format');
-    }
-  } else {
-    // Fallback for older Node versions
-    try {
-      // eslint-disable-next-line no-new
-      new URL(url);
-    } catch {
-      throw new McpError(ErrorCode.InvalidParams, 'Invalid URL format');
-    }
-  }
-
-  const hostname = new URL(url).hostname;
-  if (!HTTP_GET_ALLOWLIST.includes(hostname)) {
-    throw new McpError(
-      ErrorCode.InvalidParams,
-      `Hostname '${hostname}' not in allowlist. Permitted hosts: ${HTTP_GET_ALLOWLIST.join(', ')}`,
-    );
+  const tool = tools.find((t) => t.name === name);
+  if (!tool) {
+    throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
   }
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Cortex-MCP/0.1.1',
-      },
-    });
-
-    if (!response.ok) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `HTTP ${response.status}: ${response.statusText}`,
-      );
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-    let content: string;
-
-    if (contentType.includes('application/json')) {
-      const data = await response.json();
-      content = JSON.stringify(data, null, 2);
-    } else {
-      content = await response.text();
-    }
-
-    const maxBytes = 2 * 1024 * 1024;
-    const contentBytes = Buffer.byteLength(content, 'utf8');
-    if (contentBytes > maxBytes) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Response body exceeds ${maxBytes} bytes limit (${contentBytes} bytes)`,
-      );
-    }
-
-    return {
-      content: [
-        {
-          type: 'text',
-          text: content,
-        },
-      ],
-    };
+    const validatedArgs = tool.inputSchema.parse(args);
+    return await tool.run(validatedArgs);
   } catch (error: unknown) {
-    throw new McpError(ErrorCode.InternalError, `Fetch failed: ${toErrorMessage(error)}`);
-  }
-}
-
-async function handleRepoFile(args: unknown) {
-  const params = args as { relpath?: string };
-  const relpath = params?.relpath;
-  if (!relpath) {
-    throw new McpError(ErrorCode.InvalidParams, 'relpath is required');
-  }
-
-  try {
-    const rootPath = path.resolve(ROOT);
-    const requestedPath = path.resolve(rootPath, relpath);
-
-    const realRequestedPath = await fs.realpath(requestedPath).catch(() => null);
-    if (!realRequestedPath) {
-      throw new McpError(ErrorCode.InvalidParams, 'Path does not exist');
+    if (error instanceof z.ZodError) {
+      const details = error.errors
+        .map((e) => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
+      const msg = `Invalid parameters for tool '${name}': ${details}`;
+      throw new McpError(ErrorCode.InvalidParams, msg);
     }
-
-    const relative = path.relative(rootPath, realRequestedPath);
-    if (relative.startsWith('..') || path.isAbsolute(relative)) {
-      throw new McpError(ErrorCode.InvalidParams, 'Path escapes repository root');
-    }
-
-    const data = await fs.readFile(realRequestedPath, 'utf8');
-    return {
-      content: [
-        {
-          type: 'text',
-          text: data,
-        },
-      ],
-    };
-  } catch (error: unknown) {
     if (error instanceof McpError) {
       throw error;
     }
-    throw new McpError(ErrorCode.InternalError, `Failed to read file: ${toErrorMessage(error)}`);
+    const msg = `Failed to execute tool '${name}': ${toErrorMessage(error)}`;
+    throw new McpError(ErrorCode.InternalError, msg);
   }
+});
+
+app.get('/health', (_req, res) => {
+  res.status(200).send('OK');
+});
+
+const PORT = process.env.PORT || 3000;
+
+if (import.meta.url === new URL(process.argv[1], 'file://').href) {
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Cortex MCP Server running on http://localhost:${PORT}`);
+  });
 }
 
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
+function toErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
   try {
-    return JSON.stringify(error);
+    return JSON.stringify(err);
   } catch {
     return '[unknown error]';
   }
-}
-
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  // eslint-disable-next-line no-console
-  console.error('Cortex MCP Server running on stdio transport');
-}
-
-if (import.meta.url === new URL(process.argv[1], 'file://').href) {
-  main().catch((error) => {
-    // eslint-disable-next-line no-console
-    console.error('Server error:', error);
-    process.exit(1);
-  });
 }

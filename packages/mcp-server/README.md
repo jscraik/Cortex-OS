@@ -6,7 +6,12 @@ A minimal Model Context Protocol server implementation using the official SDK.
 
 - SSE transport for compatibility with Claude Desktop and Cursor
 - Health check endpoint (`/health`)
-- Simple ping tool for testing
+- Dynamic tool registration
+- Secure by default (requires `CORTEX_MCP_TOKEN`)
+- Tools:
+  - `ping`: Test connectivity with a simple ping response
+  - `http_get`: Fetch JSON/text by GET (2MB limit, allowlisted hosts only)
+  - `repo_file`: Read a file from the repository (read-only, secure path validation)
 
 ## Setup
 
