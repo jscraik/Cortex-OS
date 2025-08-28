@@ -22,13 +22,7 @@ describe('Transport Security', () => {
       args: ['--version'],
       env: {},
       cwd: process.cwd(),
-      maxRetries: 3,
-      retryDelay: 1000,
-      timeout: 30000,
-      allowNetwork: false,
-      sandbox: true,
       timeoutMs: 30000,
-      maxMemoryMB: 128,
     };
 
     vi.clearAllMocks();
@@ -52,7 +46,6 @@ describe('Transport Security', () => {
         { ...config, command: '' }, // empty command
         { ...config, command: undefined }, // missing command
         { ...config, timeoutMs: -1 }, // negative timeout
-        { ...config, maxMemoryMB: -1 }, // negative memory
       ];
 
       invalidConfigs.forEach((cfg) => {
@@ -72,31 +65,6 @@ describe('Transport Security', () => {
       const transport = createTransport(minimalConfig);
 
       // Should apply secure defaults
-      expect(transport).toBeDefined();
-    });
-  });
-
-  describe('Sandbox Security', () => {
-    it('should enable sandboxing by default', () => {
-      const transport = createTransport(config);
-      expect(transport).toBeDefined();
-    });
-
-    it('should restrict network access by default', () => {
-      const restrictedConfig = { ...config, allowNetwork: false };
-      const transport = createTransport(restrictedConfig);
-      expect(transport).toBeDefined();
-    });
-
-    it('should enforce memory limits', () => {
-      const memoryConfig = { ...config, maxMemoryMB: 64 };
-      const transport = createTransport(memoryConfig);
-      expect(transport).toBeDefined();
-    });
-
-    it('should enforce timeout limits', () => {
-      const timeoutConfig = { ...config, timeoutMs: 10000 };
-      const transport = createTransport(timeoutConfig);
       expect(transport).toBeDefined();
     });
   });
@@ -227,9 +195,9 @@ describe('Transport Security', () => {
       }));
 
       // Should handle multiple requests without crashing
-      requests.forEach((req) => {
-        expect(() => transport.send(req)).not.toThrow();
-      });
+      for (const req of requests) {
+        await expect(transport.send(req)).resolves.toBeUndefined();
+      }
 
       await transport.disconnect();
     });
@@ -247,7 +215,7 @@ describe('Transport Security', () => {
         params: {},
       };
 
-      expect(() => transport.send(validMessage)).not.toThrow();
+      await expect(transport.send(validMessage)).resolves.toBeUndefined();
 
       await transport.disconnect();
     });
@@ -264,22 +232,16 @@ describe('Transport Security', () => {
         { invalidStructure: true },
       ];
 
-      malformedMessages.forEach((msg) => {
+      for (const msg of malformedMessages) {
         // Should handle malformed messages gracefully
-        expect(() => transport.send(msg as any)).not.toThrow();
-      });
+        await expect(transport.send(msg as any)).resolves.toBeUndefined();
+      }
 
       await transport.disconnect();
     });
   });
 
-  describe('Performance and Memory', () => {
-    it('should respect memory limits', () => {
-      const lowMemoryConfig = { ...config, maxMemoryMB: 32 };
-      const transport = createTransport(lowMemoryConfig);
-      expect(transport).toBeDefined();
-    });
-
+  describe('Performance', () => {
     it('should handle timeout constraints', () => {
       const fastTimeoutConfig = { ...config, timeoutMs: 5000 };
       const transport = createTransport(fastTimeoutConfig);

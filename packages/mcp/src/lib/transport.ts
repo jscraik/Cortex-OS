@@ -1,7 +1,9 @@
+
 import commandExists from 'command-exists';
 import { z } from 'zod';
 import type { McpRequest, TransportConfig, Transport } from './types.js';
 import { parseTransportConfig } from './transport-schema.js';
+
 
 function validateMessage(message: McpRequest): void {
   const schema = z
@@ -16,6 +18,7 @@ function validateMessage(message: McpRequest): void {
     .strict();
   schema.parse(message);
 }
+
 
 function createConnect(cfg: TransportConfig, state: { connected: boolean }) {
   return async () => {
@@ -50,14 +53,17 @@ function createSend() {
   };
 }
 
+
 export function createTransport(config: TransportConfig): Transport {
   const cfg = parseTransportConfig(config);
   const state = { connected: false };
+
 
   return {
     connect: createConnect(cfg, state),
     disconnect: createDisconnect(state),
     isConnected: () => state.connected,
     send: createSend(),
+
   };
 }

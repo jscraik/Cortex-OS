@@ -8,7 +8,7 @@
 import { PRPState } from '../state.js';
 
 // Neuron interface definition - compatible with prp-runner
-interface Neuron {
+export interface Neuron {
   id: string;
   role: string;
   phase: 'strategy' | 'build' | 'evaluation';
@@ -18,7 +18,7 @@ interface Neuron {
   execute(state: any, context: any): Promise<NeuronResult>;
 }
 
-interface NeuronResult {
+export interface NeuronResult {
   output: any;
   evidence: any[];
   nextSteps: string[];
@@ -26,7 +26,7 @@ interface NeuronResult {
   metrics: ExecutionMetrics;
 }
 
-interface ExecutionMetrics {
+export interface ExecutionMetrics {
   startTime: string;
   endTime: string;
   duration: number;
@@ -58,6 +58,14 @@ export interface MCPContext {
     allowNetwork: boolean;
     allowExecution: boolean;
   };
+}
+
+/**
+ * PRP Orchestrator interface compatible with prp-runner
+ */
+export interface PRPOrchestrator {
+  getNeuronCount(): number;
+  executeNeuron?(neuronId: string, state: PRPState, context: any): Promise<any>;
 }
 
 /**
