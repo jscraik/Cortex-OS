@@ -5,6 +5,7 @@ function isValidVersion(version: string): boolean {
   return /^\d+\.\d+\.\d+$/.test(version);
 }
 
+// Sorts versions in descending order (e.g., 2.0.0, 1.1.0, 1.0.0)
 function compareVersions(a: string, b: string): number {
   const pa = a.split('.').map(Number);
   const pb = b.split('.').map(Number);
@@ -20,6 +21,9 @@ export function createService() {
   app.use(express.json());
   app.use(createRateLimiter());
 
+  // NOTE: This is a simplified schema registry for demonstration purposes.
+  // It uses in-memory storage and will lose all data on restart.
+  // For production use, a persistent database (e.g., PostgreSQL, MongoDB) should be used.
   const schemas: Schema[] = [];
 
   app.post('/schemas', (req, res) => {
@@ -39,6 +43,16 @@ export function createService() {
     const location = `/schemas/${schema.name}/${schema.version}`;
     res.setHeader('Location', location);
     res.status(201).json({ ...schema, location });
+  });
+
+  app.get('/schemas', (req, res) => {
+    res.json(schemas);
+  });
+
+  app.get('/schemas/:name', (req, res) => {
+    const { name } = req.params;
+    const namedSchemas = schemas.filter((s) => s.name === name);
+    res.json(namedSchemas);
   });
 
   app.get('/schemas/:name/latest', (req, res) => {
