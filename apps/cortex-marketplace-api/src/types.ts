@@ -7,17 +7,13 @@ import { z } from 'zod';
 
 // MCP Protocol version support
 export const MCP_VERSION = '2025-06-18';
-export const SUPPORTED_VERSIONS = ['2025-06-18'];
+
+export const SUPPORTED_VERSIONS = [MCP_VERSION];
 
 /**
- * Transport types (Streamable HTTP is now primary, stdio for local)
+ * Transport types (Streamable HTTP only)
  */
 export const TransportConfigSchema = z.object({
-  stdio: z.object({
-    command: z.string(),
-    args: z.array(z.string()).optional(),
-    env: z.record(z.string()).optional(),
-  }).optional(),
   streamableHttp: z.object({
     url: z.string().url().refine(url => url.startsWith('https://'), {
       message: 'Remote MCP servers must use HTTPS',
@@ -28,9 +24,7 @@ export const TransportConfigSchema = z.object({
       clientId: z.string().optional(),
       scopes: z.array(z.string()).optional(),
     }).optional(),
-  }).optional(),
-}).refine(config => config.stdio || config.streamableHttp, {
-  message: 'At least one transport must be configured',
+  }),
 });
 
 /**
@@ -84,9 +78,6 @@ export const ServerManifestSchema = z.object({
   install: z.object({
     claude: z.string(),        // claude mcp add ...
     json: z.record(z.any()),   // Direct JSON config
-    cline: z.string().optional(),
-    cursor: z.string().optional(),
-    continue: z.string().optional(),
   }),
   
   // Security
@@ -148,13 +139,12 @@ export type SearchRequest = z.infer<typeof SearchRequestSchema>;
 /**
  * Installation command generation
  */
-export type ClientType = 'claude' | 'cline' | 'cursor' | 'continue' | 'json';
+export type ClientType = 'claude' | 'json';
 
 export interface InstallCommand {
   client: ClientType;
   command: string;
   description: string;
-  transport: 'stdio' | 'streamableHttp';
 }
 
 /**

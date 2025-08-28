@@ -23,10 +23,16 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
     save: async (raw) => {
       return withSpan("memories.save", async () => {
         const m = memoryZ.parse(raw);
-        const needsVector = !m.vector && m.text && effectiveEmbedder;
-        const withVec = needsVector
-          ? { ...m, vector: (await effectiveEmbedder.embed([m.text!]))[0], embeddingModel: effectiveEmbedder.name() }
-          : m;
+        const needsVector = !m.vector && m.text;
+        let withVec: Memory;
+        if (needsVector) {
+          if (!effectiveEmbedder || typeof effectiveEmbedder.embed !== "function") {
+            throw new Error("Embedder is required to generate vector but is not available.");
+          }
+          withVec = { ...m, vector: (await effectiveEmbedder.embed([m.text!]))[0], embeddingModel: effectiveEmbedder.name() };
+        } else {
+          withVec = m;
+        }
         return store.upsert(withVec);
       });
     },
@@ -35,11 +41,12 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
     search: async (q) => {
       return withSpan("memories.search", async () => {
         const topK = q.topK ?? 8;
-        if (q.vector) return store.searchByVector({ vector: q.vector, topK, filterTags: q.tags });
+        if (q.vector) {
+          return store.searchByVector({ vector: q.vector, topK, filterTags: q.tags });
+        }
         if (q.text) {
-          const v = effectiveEmbedder ? (await effectiveEmbedder.embed([q.text]))[0] : undefined;
-          return v ? store.searchByVector({ vector: v, topK, filterTags: q.tags })
-                  : store.searchByText({ text: q.text, topK, filterTags: q.tags });
+          const v = (await effectiveEmbedder.embed([q.text]))[0];
+          return store.searchByVector({ vector: v, topK, filterTags: q.tags });
         }
         return [];
       });
