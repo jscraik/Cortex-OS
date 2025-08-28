@@ -2,6 +2,8 @@ import { vi, afterEach } from 'vitest';
 
 // Disable any accidental network egress during tests
 process.env.MCP_NETWORK_EGRESS = process.env.MCP_NETWORK_EGRESS || 'disabled';
+process.env.CORTEX_MCP_ROOT = process.env.CORTEX_MCP_ROOT || process.cwd();
+process.env.CORTEX_MCP_TOKEN = process.env.CORTEX_MCP_TOKEN || 'test-token';
 
 // Mock ws so no real sockets are opened
 vi.mock('ws', () => {
