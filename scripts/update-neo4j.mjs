@@ -1,27 +1,37 @@
 #!/usr/bin/env node
 
 // Idempotent updater: replace the entire Neo4j class with a
-// SecureNeo4j-backed implementation using a readable template file and
-// balanced brace matching instead of fragile regex.
+// SecureNeo4j-backed implementation using a readable template file.
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
-const secureClassPath = fileURLToPath(new URL('./templates/neo4j-secure-class.ts', import.meta.url));
+const templatePath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  'templates',
+  'neo4j-secure-class.ts',
+);
+
 
 function log(msg) {
   console.log(`[update-neo4j] ${msg}`);
 }
 
-function replaceNeo4jClass(content, replacement) {
-  const classToken = 'export class Neo4j implements INeo4j';
-  const start = content.indexOf(classToken);
-  if (start === -1) return null;
 
-  const braceStart = content.indexOf('{', start + classToken.length);
-  if (braceStart === -1) return null;
+function replaceClass(content, replacement) {
+  const marker = 'export class Neo4j implements INeo4j';
+  const start = content.indexOf(marker);
+  if (start === -1) {
+    return { content, replaced: false };
+  }
+
+  const braceStart = content.indexOf('{', start);
+  if (braceStart === -1) {
+    return { content, replaced: false };
+  }
+
 
   let depth = 1;
   let i = braceStart + 1;
@@ -32,10 +42,14 @@ function replaceNeo4jClass(content, replacement) {
     i++;
   }
 
-  if (depth !== 0) return null;
-  const end = i; // index after closing brace
+  if (depth !== 0) {
+    return { content, replaced: false };
+  }
 
-  return content.slice(0, start) + replacement + content.slice(end);
+  const end = i;
+  const updated = content.slice(0, start) + replacement + content.slice(end);
+  return { content: updated, replaced: true };
+
 }
 
 function tryUpdate() {
@@ -62,13 +76,15 @@ function tryUpdate() {
     );
   }
 
-  const secureClass = readFileSync(secureClassPath, 'utf-8');
-  const replaced = replaceNeo4jClass(content, `${secureClass}\n`);
-  if (replaced === null) {
-    throw new Error('Neo4j class definition not found');
-  }
 
-  writeFileSync(neo4jPath, replaced);
+  // Replace entire class body with a secure implementation
+  const secureClass = readFileSync(templatePath, 'utf-8');
+  const result = replaceClass(content, secureClass);
+  if (!result.replaced) {
+    throw new Error('Neo4j class declaration not found.');
+  }
+  writeFileSync(neo4jPath, result.content);
+
   log('neo4j.ts has been updated to delegate to SecureNeo4j.');
   return true;
 }
