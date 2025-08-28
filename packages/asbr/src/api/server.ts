@@ -22,7 +22,7 @@ import {
   ValidationError,
 } from '../types/index.js';
 import { initializeXDG } from '../xdg/index.js';
-import { getEventManager } from '../core/events.js';
+import { getEventManager, stopEventManager } from '../core/events.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
 
 export interface ASBRServerOptions {
@@ -606,11 +606,13 @@ export class ASBRServer {
         }
 
         this.server.close(() => {
+          stopEventManager();
           // eslint-disable-next-line no-console -- informational server stop log
           console.log('ASBR API server stopped');
           resolve();
         });
       } else {
+        stopEventManager();
         resolve();
       }
     });

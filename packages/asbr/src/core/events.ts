@@ -36,6 +36,7 @@ export class EventManager extends EventEmitter {
   private eventBuffer = new Map<string, Event[]>(); // taskId -> events
   private globalEvents: Event[] = [];
   private heartbeatIntervals = new Map<string, NodeJS.Timeout>();
+  private cleanupInterval?: NodeJS.Timeout;
   private eventCounter = 0;
   private io?: IOServer;
 
@@ -359,6 +360,17 @@ export class EventManager extends EventEmitter {
     }
   }
 
+  stop(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = undefined;
+    }
+    for (const interval of this.heartbeatIntervals.values()) {
+      clearInterval(interval);
+    }
+    this.heartbeatIntervals.clear();
+  }
+
   private async persistEvent(event: Event): Promise<void> {
     try {
       const ledgerPath = getStatePath('ledger.ndjson');
@@ -371,7 +383,7 @@ export class EventManager extends EventEmitter {
 
   private setupCleanupInterval(): void {
     // Clean up expired subscriptions every minute
-    setInterval(() => {
+    this.cleanupInterval = setInterval(() => {
       const now = Date.now();
       const idleTimeout = this.config.events.idle_timeout_ms;
 
@@ -395,6 +407,13 @@ export async function getEventManager(): Promise<EventManager> {
     eventManagerInstance = new EventManager(config);
   }
   return eventManagerInstance;
+}
+
+export function stopEventManager(): void {
+  if (eventManagerInstance) {
+    eventManagerInstance.stop();
+    eventManagerInstance = null;
+  }
 }
 
 /**
