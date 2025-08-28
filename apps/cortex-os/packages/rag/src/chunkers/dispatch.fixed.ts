@@ -359,21 +359,6 @@ export class ProcessingDispatcher {
         },
       };
     } catch (error) {
-      // Handle timeout errors
-      if (error instanceof Error && error.message.includes('timeout')) {
-        return {
-          success: false,
-          error: `Processing timed out after ${this.config.timeout}ms`,
-          strategy: strategy.strategy,
-          processingTimeMs: performance.now() - startTime,
-          metadata: {
-            errorDetails: error.message,
-            attemptedChunker: strategy.processing?.chunker || 'unknown',
-          },
-        };
-      }
-
-      // Handle chunker failures
       return {
         success: false,
         error: `Processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -410,30 +395,21 @@ export class ProcessingDispatcher {
     strategy: ProcessingStrategy,
     config: ProcessingConfig,
   ): Promise<DocumentChunk[]> {
-    try {
-      switch (strategy) {
-        case ProcessingStrategy.NATIVE_TEXT:
-          return await this.textChunker.chunk(file, config);
+    switch (strategy) {
+      case ProcessingStrategy.NATIVE_TEXT:
+        return this.textChunker.chunk(file, config);
 
-        case ProcessingStrategy.PDF_NATIVE:
-          return await this.pdfChunker.chunk(file, config);
+      case ProcessingStrategy.PDF_NATIVE:
+        return this.pdfChunker.chunk(file, config);
 
-        case ProcessingStrategy.OCR:
-          return await this.ocrChunker.chunk(file, config);
+      case ProcessingStrategy.OCR:
+        return this.ocrChunker.chunk(file, config);
 
-        case ProcessingStrategy.UNSTRUCTURED:
-          return await this.unstructuredChunker.chunk(file, config);
+      case ProcessingStrategy.UNSTRUCTURED:
+        return this.unstructuredChunker.chunk(file, config);
 
-        default:
-          throw new Error(`Unknown processing strategy: ${strategy}`);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        // This will be caught by the calling function
-        throw error;
-      } else {
-        throw new Error(`Unknown error during processing: ${String(error)}`);
-      }
+      default:
+        throw new Error(`Unknown processing strategy: ${strategy}`);
     }
   }
 

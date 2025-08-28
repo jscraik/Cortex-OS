@@ -242,6 +242,8 @@ export class CodeIntelligenceAgent extends EventEmitter {
     modelKey: keyof typeof MODEL_CONFIG,
   ): Promise<CodeAnalysisResult> {
     const prompt = this.buildCodeAnalysisPrompt(request);
+    const modelKey = this.getModelKey(modelId);
+    const options = MODEL_CONFIG[modelKey] ?? { temperature: 0.1, top_p: 0.9, num_predict: 2048 };
 
     const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
       method: 'POST',
@@ -250,7 +252,8 @@ export class CodeIntelligenceAgent extends EventEmitter {
         model: modelId,
         prompt,
         stream: false,
-        options: MODEL_CONFIG[modelKey],
+
+        options,
       }),
     });
 
@@ -259,22 +262,35 @@ export class CodeIntelligenceAgent extends EventEmitter {
     }
 
     const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, modelKey);
+
+    return this.parseCodeAnalysisResponse(
+      data.response,
+      modelKey === 'deepseek-coder' ? 'deepseek-coder' : 'qwen3-coder',
+    );
   }
+
+  private getModelKey(modelId: string): keyof typeof MODEL_CONFIG {
+    if (modelId.includes('deepseek-coder')) return 'deepseek-coder';
+    return 'qwen3-coder';
+  }
+
 
   private async analyzeWithQwen3Coder(
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
 
-    return this._analyzeWithModel(request, modelId, 'qwen3-coder');
+    return this._analyzeWithModel(request, modelId);
+
   }
 
   private async analyzeWithDeepSeekCoder(
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
-    return this._analyzeWithModel(request, modelId, 'deepseek-coder');
+
+    return this._analyzeWithModel(request, modelId);
+
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {

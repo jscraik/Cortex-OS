@@ -1,8 +1,7 @@
 
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { z } from "zod";
-
+import * as fs from 'fs';
+import * as path from 'path';
+import { z } from 'zod';
 
 export const BlockKeys = [
   'task_context',
@@ -58,7 +57,16 @@ const schemaPath = z
   .min(1)
   .refine(
     (p) => {
-      const fullPath = path.resolve(p);
+
+      // Prevent path traversal attacks by ensuring the path stays within the project
+      const projectRoot = process.cwd();
+      const fullPath = path.resolve(projectRoot, p);
+
+      // Validate that the resolved path is within the project directory
+      if (!fullPath.startsWith(projectRoot)) {
+        return false;
+      }
+
       if (!fs.existsSync(fullPath)) {
         return false;
       }
@@ -74,7 +82,9 @@ const schemaPath = z
     },
     {
       message:
-        'schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json',
+
+        'schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json, and must be within the project directory',
+
     },
   );
 
