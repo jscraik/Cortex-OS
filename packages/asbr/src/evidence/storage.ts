@@ -492,7 +492,12 @@ export class EvidenceStorage {
 
   // Encryption/compression helpers
   private getEncryptionKey(): Buffer {
-    const keyStr = process.env.ASBR_ENCRYPTION_KEY || 'cortex-os-default-key';
+    const keyStr = process.env.ASBR_ENCRYPTION_KEY;
+    if (!keyStr) {
+      throw new Error(
+        "ASBR_ENCRYPTION_KEY environment variable is not set. Please set it to a strong, secret value to enable encryption."
+      );
+    }
     return createHash('sha256').update(keyStr).digest();
   }
 
