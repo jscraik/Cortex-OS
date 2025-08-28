@@ -11,13 +11,13 @@ const eventSchema = z.object({
 
 export function sanitizeEvent(event) {
   const parsed = eventSchema.parse(event);
-  const sanitized = { ...parsed, data: { ...parsed.data }, metadata: parsed.metadata ? { ...parsed.metadata } : undefined };
-  delete sanitized.data.sessionId;
-  if (sanitized.metadata) {
-    delete sanitized.metadata.sessionId;
-    delete sanitized.metadata.eventManagerId;
+  const { sessionId, ...sanitizedData } = parsed.data;
+  let sanitizedMetadata;
+  if (parsed.metadata) {
+    const { sessionId: _sid, eventManagerId: _emid, ...restMetadata } = parsed.metadata;
+    sanitizedMetadata = restMetadata;
   }
-  return sanitized;
+  return { ...parsed, data: sanitizedData, metadata: parsed.metadata ? sanitizedMetadata : undefined };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
