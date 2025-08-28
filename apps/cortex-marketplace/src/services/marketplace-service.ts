@@ -6,6 +6,7 @@
 import type { ServerManifest } from '@cortex-os/mcp-registry';
 import { RegistryService } from './registry-service.js';
 import { z } from 'zod';
+import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 
 // Enhanced search with AI-powered capabilities
 export interface SearchRequest {
@@ -55,10 +56,10 @@ const SearchRequestSchema = z.object({
   minRating: z.number().min(0).max(5).optional(),
   tags: z.array(z.string()).optional(),
   capabilities: z.array(z.enum(['tools', 'resources', 'prompts'])).optional(),
-  limit: z.number().min(1).max(100).default(20),
+  limit: z.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
   offset: z.number().min(0).default(0),
   sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc')
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
 
 /**
@@ -79,7 +80,7 @@ export class MarketplaceService {
    */
   async search(rawRequest: SearchRequest): Promise<SearchResult> {
     const request = SearchRequestSchema.parse(rawRequest);
-    
+
     // Check cache first
     const cacheKey = JSON.stringify(request);
     const cached = this.searchCache.get(cacheKey);
@@ -89,34 +90,31 @@ export class MarketplaceService {
 
     // Get all servers from registries
     const allServers = await this.getAllServers();
-    
+
     // Apply filters
     let filteredServers = this.applyFilters(allServers, request);
-    
+
     // Sort results
     filteredServers = this.sortResults(filteredServers, request);
-    
+
     // Calculate facets
     const facets = this.calculateFacets(allServers, request);
-    
+
     // Apply pagination
     const total = filteredServers.length;
-    const paginatedServers = filteredServers.slice(
-      request.offset,
-      request.offset + request.limit
-    );
-    
+    const paginatedServers = filteredServers.slice(request.offset, request.offset + request.limit);
+
     const result: SearchResult = {
       servers: paginatedServers,
       total,
       offset: request.offset,
       limit: request.limit,
-      facets
+      facets,
     };
-    
+
     // Cache result
     this.searchCache.set(cacheKey, { result, timestamp: Date.now() });
-    
+
     return result;
   }
 
@@ -125,7 +123,7 @@ export class MarketplaceService {
    */
   async getServer(id: string): Promise<ServerManifest | null> {
     const allServers = await this.getAllServers();
-    return allServers.find(server => server.id === id) || null;
+    return allServers.find((server) => server.id === id) || null;
   }
 
   /**
@@ -133,42 +131,42 @@ export class MarketplaceService {
    */
   async getStats(): Promise<MarketplaceStats> {
     const allServers = await this.getAllServers();
-    
+
     const totalDownloads = allServers.reduce((sum, server) => sum + (server.downloads || 0), 0);
-    const publishers = new Set(allServers.map(s => s.publisher?.name)).size;
-    const featuredCount = allServers.filter(s => s.featured).length;
-    
+    const publishers = new Set(allServers.map((s) => s.publisher?.name)).size;
+    const featuredCount = allServers.filter((s) => s.featured).length;
+
     const categoryBreakdown: Record<string, number> = {};
     const riskLevelBreakdown: Record<string, number> = {};
     let totalRating = 0;
     let ratingCount = 0;
-    
+
     for (const server of allServers) {
       // Category breakdown
       if (server.category) {
         categoryBreakdown[server.category] = (categoryBreakdown[server.category] || 0) + 1;
       }
-      
+
       // Risk level breakdown
       if (server.security?.riskLevel) {
         const risk = server.security.riskLevel;
         riskLevelBreakdown[risk] = (riskLevelBreakdown[risk] || 0) + 1;
       }
-      
+
       // Average rating
       if (server.rating) {
         totalRating += server.rating;
         ratingCount++;
       }
     }
-    
-    const recentlyUpdated = allServers.filter(server => {
+
+    const recentlyUpdated = allServers.filter((server) => {
       if (!server.updatedAt) return false;
       const updated = new Date(server.updatedAt);
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       return updated > weekAgo;
     }).length;
-    
+
     return {
       totalServers: allServers.length,
       totalDownloads,
@@ -177,30 +175,32 @@ export class MarketplaceService {
       categoryBreakdown,
       riskLevelBreakdown,
       averageRating: ratingCount > 0 ? totalRating / ratingCount : 0,
-      recentlyUpdated
+      recentlyUpdated,
     };
   }
 
   /**
    * Get all categories with server counts
    */
-  async getCategories(): Promise<Record<string, { name: string; count: number; description?: string }>> {
+  async getCategories(): Promise<
+    Record<string, { name: string; count: number; description?: string }>
+  > {
     const allServers = await this.getAllServers();
     const categories: Record<string, { name: string; count: number; description?: string }> = {};
-    
+
     for (const server of allServers) {
       if (server.category) {
         if (!categories[server.category]) {
           categories[server.category] = {
             name: this.formatCategoryName(server.category),
             count: 0,
-            description: this.getCategoryDescription(server.category)
+            description: this.getCategoryDescription(server.category),
           };
         }
         categories[server.category].count++;
       }
     }
-    
+
     return categories;
   }
 
@@ -210,7 +210,7 @@ export class MarketplaceService {
   private async getAllServers(): Promise<ServerManifest[]> {
     const registries = await this.registryService.listRegistries();
     const allServers: ServerManifest[] = [];
-    
+
     for (const registry of registries) {
       try {
         const data = await this.registryService.getRegistry(registry.name);
@@ -221,10 +221,10 @@ export class MarketplaceService {
         console.warn(`Failed to load registry ${registry.name}:`, error);
       }
     }
-    
+
     // Remove duplicates by ID (prefer first occurrence)
     const seen = new Set<string>();
-    return allServers.filter(server => {
+    return allServers.filter((server) => {
       if (seen.has(server.id)) return false;
       seen.add(server.id);
       return true;
@@ -236,65 +236,66 @@ export class MarketplaceService {
    */
   private applyFilters(servers: ServerManifest[], request: SearchRequest): ServerManifest[] {
     let filtered = servers;
-    
+
     // Text search
     if (request.q) {
       const query = request.q.toLowerCase();
-      filtered = filtered.filter(server =>
-        server.name.toLowerCase().includes(query) ||
-        server.description.toLowerCase().includes(query) ||
-        server.id.toLowerCase().includes(query) ||
-        (server.tags && server.tags.some(tag => tag.toLowerCase().includes(query)))
+      filtered = filtered.filter(
+        (server) =>
+          server.name.toLowerCase().includes(query) ||
+          server.description.toLowerCase().includes(query) ||
+          server.id.toLowerCase().includes(query) ||
+          (server.tags && server.tags.some((tag) => tag.toLowerCase().includes(query))),
       );
     }
-    
+
     // Category filter
     if (request.category) {
-      filtered = filtered.filter(server => server.category === request.category);
+      filtered = filtered.filter((server) => server.category === request.category);
     }
-    
+
     // Risk level filter
     if (request.riskLevel) {
-      filtered = filtered.filter(server => server.security?.riskLevel === request.riskLevel);
+      filtered = filtered.filter((server) => server.security?.riskLevel === request.riskLevel);
     }
-    
+
     // Featured filter
     if (request.featured !== undefined) {
-      filtered = filtered.filter(server => Boolean(server.featured) === request.featured);
+      filtered = filtered.filter((server) => Boolean(server.featured) === request.featured);
     }
-    
+
     // Publisher filter
     if (request.publisher) {
-      filtered = filtered.filter(server => 
-        server.publisher?.name.toLowerCase().includes(request.publisher!.toLowerCase())
+      filtered = filtered.filter((server) =>
+        server.publisher?.name.toLowerCase().includes(request.publisher!.toLowerCase()),
       );
     }
-    
+
     // Minimum rating filter
     if (request.minRating !== undefined) {
-      filtered = filtered.filter(server => 
-        server.rating !== undefined && server.rating >= request.minRating!
+      filtered = filtered.filter(
+        (server) => server.rating !== undefined && server.rating >= request.minRating!,
       );
     }
-    
+
     // Tags filter
     if (request.tags && request.tags.length > 0) {
-      filtered = filtered.filter(server =>
-        server.tags && request.tags!.some(tag =>
-          server.tags!.some(serverTag => 
-            serverTag.toLowerCase().includes(tag.toLowerCase())
-          )
-        )
+      filtered = filtered.filter(
+        (server) =>
+          server.tags &&
+          request.tags!.some((tag) =>
+            server.tags!.some((serverTag) => serverTag.toLowerCase().includes(tag.toLowerCase())),
+          ),
       );
     }
-    
+
     // Capabilities filter
     if (request.capabilities && request.capabilities.length > 0) {
-      filtered = filtered.filter(server =>
-        request.capabilities!.every(cap => server.capabilities[cap] === true)
+      filtered = filtered.filter((server) =>
+        request.capabilities!.every((cap) => server.capabilities[cap] === true),
       );
     }
-    
+
     return filtered;
   }
 
@@ -303,10 +304,10 @@ export class MarketplaceService {
    */
   private sortResults(servers: ServerManifest[], request: SearchRequest): ServerManifest[] {
     const { sortBy, sortOrder } = request;
-    
+
     return servers.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
         case 'downloads':
           comparison = (a.downloads || 0) - (b.downloads || 0);
@@ -322,12 +323,14 @@ export class MarketplaceService {
         case 'relevance':
         default:
           // Relevance scoring: featured > downloads > rating
-          const aScore = (a.featured ? 1000 : 0) + (a.downloads || 0) * 0.001 + (a.rating || 0) * 100;
-          const bScore = (b.featured ? 1000 : 0) + (b.downloads || 0) * 0.001 + (b.rating || 0) * 100;
+          const aScore =
+            (a.featured ? 1000 : 0) + (a.downloads || 0) * 0.001 + (a.rating || 0) * 100;
+          const bScore =
+            (b.featured ? 1000 : 0) + (b.downloads || 0) * 0.001 + (b.rating || 0) * 100;
           comparison = aScore - bScore;
           break;
       }
-      
+
       return sortOrder === 'asc' ? comparison : -comparison;
     });
   }
@@ -335,41 +338,45 @@ export class MarketplaceService {
   /**
    * Calculate search facets
    */
-  private calculateFacets(allServers: ServerManifest[], request: SearchRequest): SearchResult['facets'] {
+  private calculateFacets(
+    allServers: ServerManifest[],
+    request: SearchRequest,
+  ): SearchResult['facets'] {
     const categories: Record<string, number> = {};
     const riskLevels: Record<string, number> = {};
     const publishers: Record<string, number> = {};
-    
+
     // Apply existing filters except the one we're calculating facets for
     let baseFiltered = allServers;
     if (request.q) {
       const query = request.q.toLowerCase();
-      baseFiltered = baseFiltered.filter(server =>
-        server.name.toLowerCase().includes(query) ||
-        server.description.toLowerCase().includes(query) ||
-        server.id.toLowerCase().includes(query)
+      baseFiltered = baseFiltered.filter(
+        (server) =>
+          server.name.toLowerCase().includes(query) ||
+          server.description.toLowerCase().includes(query) ||
+          server.id.toLowerCase().includes(query),
       );
     }
-    
+
     for (const server of baseFiltered) {
       // Category facets
       if (server.category) {
         categories[server.category] = (categories[server.category] || 0) + 1;
       }
-      
+
       // Risk level facets
       if (server.security?.riskLevel) {
         const risk = server.security.riskLevel;
         riskLevels[risk] = (riskLevels[risk] || 0) + 1;
       }
-      
+
       // Publisher facets
       if (server.publisher?.name) {
         const pub = server.publisher.name;
         publishers[pub] = (publishers[pub] || 0) + 1;
       }
     }
-    
+
     return { categories, riskLevels, publishers };
   }
 
@@ -379,7 +386,7 @@ export class MarketplaceService {
   private formatCategoryName(category: string): string {
     return category
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
 
@@ -388,18 +395,18 @@ export class MarketplaceService {
    */
   private getCategoryDescription(category: string): string {
     const descriptions: Record<string, string> = {
-      'development': 'Developer tools and integrations',
-      'productivity': 'Productivity and workflow tools',
-      'data': 'Data sources and databases',
-      'communication': 'Chat and communication platforms',
+      development: 'Developer tools and integrations',
+      productivity: 'Productivity and workflow tools',
+      data: 'Data sources and databases',
+      communication: 'Chat and communication platforms',
       'ai-ml': 'AI and machine learning tools',
-      'integration': 'Third-party service integrations',
-      'utility': 'General utility tools',
-      'security': 'Security and compliance tools',
-      'finance': 'Financial services and tools',
-      'media': 'Media processing and management'
+      integration: 'Third-party service integrations',
+      utility: 'General utility tools',
+      security: 'Security and compliance tools',
+      finance: 'Financial services and tools',
+      media: 'Media processing and management',
     };
-    
+
     return descriptions[category] || 'Miscellaneous tools';
   }
 }

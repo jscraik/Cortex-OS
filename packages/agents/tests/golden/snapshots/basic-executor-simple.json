@@ -3,11 +3,7 @@
     "agent": {
       "id": "test-agent-001",
       "name": "Test Agent",
-      "capabilities": [
-        "text-processing",
-        "data-analysis",
-        "code-review"
-      ]
+      "capabilities": ["text-processing", "data-analysis", "code-review"]
     },
     "task": {
       "id": "task-001",
@@ -40,7 +36,7 @@
     "goldenSeed": 12345,
     "testType": "basic-execution"
   },
-  "timestamp": 1756323507480,
+  "timestamp": 1756406226849,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+  "nodeVersion": "v20.19.4"
 }
