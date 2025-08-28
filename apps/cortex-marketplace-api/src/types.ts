@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { NAME_MAX_LENGTH } from './constants.js';
 
 // MCP Protocol version support
 export const MCP_VERSION = '2025-06-18';
@@ -52,7 +53,9 @@ export const ServerManifestSchema = z.object({
     .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/)
     .min(1)
     .max(63),
-  name: z.string().min(1).max(100),
+
+  name: z.string().min(1).max(NAME_MAX_LENGTH),
+
   version: z
     .string()
     .regex(/^\d+\.\d+\.\d+/)

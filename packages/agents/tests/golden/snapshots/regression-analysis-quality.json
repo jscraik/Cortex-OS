@@ -46,7 +46,9 @@
       "securityVulns": 0
     }
   },
-  "timestamp": 1756323507524,
+  "timestamp": 1756406226906,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+
+  "nodeVersion": "v20.19.4"
+
 }

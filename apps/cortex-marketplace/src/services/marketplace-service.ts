@@ -6,6 +6,7 @@
 import type { ServerManifest } from '@cortex-os/mcp-registry';
 import { RegistryService } from './registry-service.js';
 import { z } from 'zod';
+import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 
 // Enhanced search with AI-powered capabilities
 export interface SearchRequest {
@@ -55,7 +56,7 @@ const SearchRequestSchema = z.object({
   minRating: z.number().min(0).max(5).optional(),
   tags: z.array(z.string()).optional(),
   capabilities: z.array(z.enum(['tools', 'resources', 'prompts'])).optional(),
-  limit: z.number().min(1).max(100).default(20),
+  limit: z.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
   offset: z.number().min(0).default(0),
   sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
