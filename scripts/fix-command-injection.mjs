@@ -19,7 +19,7 @@ executorContent = executorContent.replace(
 
 # SECURITY UPDATE: This module now uses SecureCommandExecutor for additional protection
 # against command injection and resource exhaustion attacks.
-`
+`,
 );
 
 // Add timeout validation and resource limits
@@ -27,7 +27,7 @@ executorContent = executorContent.replace(
   'DEFAULT_TIMEOUT = 3  # seconds',
   `DEFAULT_TIMEOUT = 3  # seconds
 MAX_TIMEOUT = 10  # Maximum allowed timeout
-MAX_CODE_LENGTH = 10000  # Maximum code length in characters`
+MAX_CODE_LENGTH = 10000  # Maximum code length in characters`,
 );
 
 // Add input validation to the run_code function
@@ -49,7 +49,7 @@ executorContent = executorContent.replace(
         raise ValueError("Timeout must be a positive integer")
     
     if timeout > MAX_TIMEOUT:
-        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")`
+        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")`,
 );
 
 // Write the updated content back to the file
@@ -66,7 +66,7 @@ mcpServerContent = mcpServerContent.replace(
   'from pydantic import BaseModel',
   `from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
-# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`
+# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`,
 );
 
 // Add validation to the run_docker_command function
@@ -105,7 +105,7 @@ mcpServerContent = mcpServerContent.replace(
             "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
         }
     except Exception as e:
-        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`
+        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`,
 );
 
 // Add validation to the uvicorn.run call
@@ -133,7 +133,7 @@ mcpServerContent = mcpServerContent.replace(
     # SECURITY UPDATE: Disable reload in production
     reload = os.getenv("MCP_SERVER_RELOAD", "false").lower() == "true"
     
-    uvicorn.run(app, host=host, port=port, reload=reload)`
+    uvicorn.run(app, host=host, port=port, reload=reload)`,
 );
 
 // Write the updated content back to the file

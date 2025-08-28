@@ -3,4 +3,3 @@
   "egress": { "http": { "allow": ["https://api.example.com", "https://*.yourdomain.tld"] } },
   "fs": { "writeAllow": ["apps/cortex-os/**/tmp/**"], "denyHidden": true }
 }
-

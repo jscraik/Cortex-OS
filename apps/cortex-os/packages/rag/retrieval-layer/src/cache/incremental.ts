@@ -3,11 +3,11 @@
  * @description Incremental indexing with content hash cache implementation
  */
 
-import { createHash } from "crypto";
-import { promises as fs } from "fs";
-import { ensureDir, pathExists, readFile, writeFile } from "fs-extra";
-import * as path from "path";
-import { Document } from "../types";
+import { createHash } from 'crypto';
+import { promises as fs } from 'fs';
+import { ensureDir, pathExists, readFile, writeFile } from 'fs-extra';
+import * as path from 'path';
+import { Document } from '../types';
 
 // Manifest entry for tracking file changes
 export interface ManifestEntry {
@@ -35,8 +35,8 @@ export class IncrementalIndexCache {
 
   constructor(cacheDir: string) {
     this.cacheDir = cacheDir;
-    this.manifestPath = path.join(cacheDir, "manifest.json");
-    this.documentsPath = path.join(cacheDir, "documents.json");
+    this.manifestPath = path.join(cacheDir, 'manifest.json');
+    this.documentsPath = path.join(cacheDir, 'documents.json');
   }
 
   /**
@@ -46,14 +46,14 @@ export class IncrementalIndexCache {
     await ensureDir(this.cacheDir);
 
     if (await pathExists(this.manifestPath)) {
-      const manifestData = await readFile(this.manifestPath, "utf-8");
+      const manifestData = await readFile(this.manifestPath, 'utf-8');
       this.manifest = JSON.parse(manifestData);
       // Convert date strings back to Date objects
       this.manifest!.createdAt = new Date(this.manifest!.createdAt);
       this.manifest!.lastUpdated = new Date(this.manifest!.lastUpdated);
     } else {
       this.manifest = {
-        version: "1.0.0",
+        version: '1.0.0',
         createdAt: new Date(),
         lastUpdated: new Date(),
         entries: [],
@@ -67,8 +67,8 @@ export class IncrementalIndexCache {
    * Generate file hash for content comparison
    */
   private async generateFileHash(filePath: string): Promise<string> {
-    const content = await readFile(filePath, "utf-8");
-    return createHash("sha256").update(content).digest("hex");
+    const content = await readFile(filePath, 'utf-8');
+    return createHash('sha256').update(content).digest('hex');
   }
 
   /**
@@ -91,13 +91,11 @@ export class IncrementalIndexCache {
    */
   async hasFileChanged(filePath: string): Promise<boolean> {
     if (!this.manifest) {
-      throw new Error("Cache not initialized");
+      throw new Error('Cache not initialized');
     }
 
     const relativePath = path.relative(process.cwd(), filePath);
-    const existingEntry = this.manifest.entries.find(
-      (e) => e.path === relativePath,
-    );
+    const existingEntry = this.manifest.entries.find((e) => e.path === relativePath);
 
     if (!existingEntry) {
       return true; // New file
@@ -127,7 +125,7 @@ export class IncrementalIndexCache {
     deleted: string[];
   }> {
     if (!this.manifest) {
-      throw new Error("Cache not initialized");
+      throw new Error('Cache not initialized');
     }
 
     const changed: string[] = [];
@@ -160,7 +158,7 @@ export class IncrementalIndexCache {
    */
   async updateManifest(filePaths: string[]): Promise<void> {
     if (!this.manifest) {
-      throw new Error("Cache not initialized");
+      throw new Error('Cache not initialized');
     }
 
     const newEntries: ManifestEntry[] = [];
@@ -173,9 +171,7 @@ export class IncrementalIndexCache {
         totalSize += entry.size;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        process.emitWarning(
-          `Failed to generate manifest entry for ${filePath}: ${message}`,
-        );
+        process.emitWarning(`Failed to generate manifest entry for ${filePath}: ${message}`);
       }
     }
 
@@ -197,7 +193,7 @@ export class IncrementalIndexCache {
    */
   async saveManifest(): Promise<void> {
     if (!this.manifest) {
-      throw new Error("No manifest to save");
+      throw new Error('No manifest to save');
     }
 
     await writeFile(this.manifestPath, JSON.stringify(this.manifest, null, 2));
@@ -211,7 +207,7 @@ export class IncrementalIndexCache {
       return [];
     }
 
-    const documentsData = await readFile(this.documentsPath, "utf-8");
+    const documentsData = await readFile(this.documentsPath, 'utf-8');
     return JSON.parse(documentsData);
   }
 

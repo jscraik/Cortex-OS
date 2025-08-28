@@ -18,10 +18,10 @@ export { SimReporter } from './report';
 
 // Re-export types from schemas
 export type {
-	SimScenario,
-	SimResult,
-	SimBatchResult,
-	SimReport,
-	SimTurn,
-	SimScores,
+  SimScenario,
+  SimResult,
+  SimBatchResult,
+  SimReport,
+  SimTurn,
+  SimScores,
 } from './types';

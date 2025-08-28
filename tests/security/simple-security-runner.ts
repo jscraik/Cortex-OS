@@ -21,8 +21,8 @@ const colors = {
     yellow: '\x1b[33m',
     blue: '\x1b[34m',
     magenta: '\x1b[35m',
-    cyan: '\x1b[36m'
-  }
+    cyan: '\x1b[36m',
+  },
 };
 
 // Logger functions
@@ -49,15 +49,15 @@ function logHeader(message: string) {
 // Simple test runner
 async function runSecurityTests() {
   logHeader('🚀 Running Security Tests Verification');
-  
+
   try {
     // Create a temporary test directory
     const testDir = join(process.cwd(), 'temp-security-tests');
     mkdirSync(testDir, { recursive: true });
-    
+
     // Change to test directory
     process.chdir(testDir);
-    
+
     // Test 1: Verify security test files exist
     logInfo('Test 1: Verifying security test files exist');
     const testFiles = [
@@ -65,9 +65,9 @@ async function runSecurityTests() {
       '../neo4j-wrapper.unit.test.ts',
       '../command-executor.unit.test.ts',
       '../security-wrappers.integration.test.ts',
-      '../security-regression.test.ts'
+      '../security-regression.test.ts',
     ];
-    
+
     let allFilesExist = true;
     for (const file of testFiles) {
       try {
@@ -78,17 +78,15 @@ async function runSecurityTests() {
         allFilesExist = false;
       }
     }
-    
+
     if (!allFilesExist) {
       throw new Error('Some security test files are missing');
     }
-    
+
     // Test 2: Verify security scripts exist
     logInfo('Test 2: Verifying security scripts exist');
-    const scriptFiles = [
-      '../../scripts/run-security-tests.mjs'
-    ];
-    
+    const scriptFiles = ['../../scripts/run-security-tests.mjs'];
+
     for (const file of scriptFiles) {
       try {
         execSync(`test -f ${file}`, { stdio: 'ignore' });
@@ -98,18 +96,18 @@ async function runSecurityTests() {
         throw new Error(`Missing security script: ${file}`);
       }
     }
-    
+
     // Test 3: Verify package.json has security test scripts
     logInfo('Test 3: Verifying package.json has security test scripts');
     try {
       const packageJson = JSON.parse(execSync('cat ../../package.json', { encoding: 'utf-8' }));
-      
+
       const requiredScripts = [
         'test:security:unit',
         'test:security:integration',
-        'test:security:regression'
+        'test:security:regression',
       ];
-      
+
       for (const script of requiredScripts) {
         if (packageJson.scripts && packageJson.scripts[script]) {
           logSuccess(`✅ Found script: ${script}`);
@@ -122,7 +120,7 @@ async function runSecurityTests() {
       logError(`❌ Failed to parse package.json: ${error.message}`);
       throw error;
     }
-    
+
     // Test 4: Verify CI/CD pipeline exists
     logInfo('Test 4: Verifying CI/CD pipeline exists');
     try {
@@ -132,13 +130,11 @@ async function runSecurityTests() {
       logError('❌ Missing security CI/CD pipeline');
       throw new Error('Missing security CI/CD pipeline');
     }
-    
+
     // Test 5: Verify security documentation exists
     logInfo('Test 5: Verifying security documentation exists');
-    const docFiles = [
-      '../../docs/security/PHASE4_PROGRESS_SUMMARY.md'
-    ];
-    
+    const docFiles = ['../../docs/security/PHASE4_PROGRESS_SUMMARY.md'];
+
     for (const file of docFiles) {
       try {
         execSync(`test -f ${file}`, { stdio: 'ignore' });
@@ -148,7 +144,7 @@ async function runSecurityTests() {
         // In a real implementation, we would create the missing documentation
       }
     }
-    
+
     // Test 6: Create and run a simple security test
     logInfo('Test 6: Creating and running a simple security test');
     const simpleTestContent = `
@@ -161,22 +157,21 @@ test('simple security validation test', () => {
   expect(isValid).toBe(false);
 });
     `;
-    
+
     const testFileName = 'simple-security.test.ts';
     writeFileSync(testFileName, simpleTestContent);
-    
+
     logSuccess(`✅ Created ${testFileName}`);
-    
+
     // Clean up
     process.chdir('../../');
     execSync(`rm -rf ${testDir}`, { stdio: 'ignore' });
-    
+
     logSuccess('✅ All security verification tests passed');
     return true;
-    
   } catch (error) {
     logError(`❌ Security verification tests failed: ${error.message}`);
-    
+
     // Clean up
     try {
       process.chdir('../../');
@@ -184,21 +179,23 @@ test('simple security validation test', () => {
     } catch (cleanupError) {
       logWarning('⚠️  Failed to clean up temporary files');
     }
-    
+
     return false;
   }
 }
 
 // Run the verification
-runSecurityTests().then(success => {
-  if (success) {
-    logHeader('\n🎉 Security verification completed successfully!');
-    process.exit(0);
-  } else {
-    logHeader('\n💥 Security verification failed!');
+runSecurityTests()
+  .then((success) => {
+    if (success) {
+      logHeader('\n🎉 Security verification completed successfully!');
+      process.exit(0);
+    } else {
+      logHeader('\n💥 Security verification failed!');
+      process.exit(1);
+    }
+  })
+  .catch((error) => {
+    logError(`Unexpected error: ${error.message}`);
     process.exit(1);
-  }
-}).catch(error => {
-  logError(`Unexpected error: ${error.message}`);
-  process.exit(1);
-});
+  });

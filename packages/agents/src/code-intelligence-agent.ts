@@ -5,6 +5,7 @@
 
 import { EventEmitter } from 'events';
 import { z } from 'zod';
+import { COMPLEXITY_THRESHOLDS } from '@cortex-os/utils';
 
 // Types for model integration - these would be imported from config in production
 export interface TaskCharacteristics {
@@ -48,13 +49,15 @@ export type MaintainabilityLevel = 'low' | 'medium' | 'high';
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type Priority = 'low' | 'medium' | 'high' | 'critical';
 
-export interface CodeAnalysisRequest {
-  code: string;
-  language: string;
-  context?: string;
-  analysisType: AnalysisType;
-  urgency: UrgencyLevel;
-}
+export const codeAnalysisRequestSchema = z.object({
+  code: z.string().min(1),
+  language: z.string().min(1),
+  context: z.string().optional(),
+  analysisType: z.enum(['review', 'refactor', 'optimize', 'architecture', 'security']),
+  urgency: z.enum(['low', 'medium', 'high']),
+});
+
+export type CodeAnalysisRequest = z.infer<typeof codeAnalysisRequestSchema>;
 
 export interface CodeAnalysisResult {
   suggestions: CodeSuggestion[];
@@ -158,11 +161,6 @@ const rawAnalysisResultSchema = z.object({
   confidence: z.number(),
 });
 
-const COMPLEXITY_THRESHOLDS = {
-  HIGH: { lines: 200, indicators: 20 },
-  MEDIUM: { lines: 50, indicators: 10 },
-};
-
 const MODEL_CONFIG = {
   'qwen3-coder': {
     temperature: 0.1,
@@ -195,36 +193,33 @@ export class CodeIntelligenceAgent extends EventEmitter {
   }
 
   async analyzeCode(request: CodeAnalysisRequest): Promise<CodeAnalysisResult> {
+    const validatedRequest = codeAnalysisRequestSchema.parse(request);
     const startTime = Date.now();
 
-    const cacheKey = this.generateCacheKey(request);
+    const cacheKey = this.generateCacheKey(validatedRequest);
     const cached = this.analysisHistory.get(cacheKey);
     if (cached) {
       return cached;
     }
 
     const characteristics: TaskCharacteristics = {
-      complexity: this.assessComplexity(request.code),
-      latency: request.urgency === 'high' ? 'fast' : 'batch',
-      accuracy: request.analysisType === 'security' ? 'premium' : 'high',
+      complexity: this.assessComplexity(validatedRequest.code),
+      latency: validatedRequest.urgency === 'high' ? 'fast' : 'batch',
+      accuracy: validatedRequest.analysisType === 'security' ? 'premium' : 'high',
       resource_constraint: 'moderate',
       modality: 'code',
     };
 
-    const modelId = selectOptimalModel(
-      'agents',
-      'codeIntelligence',
-      characteristics,
-    );
+    const modelId = selectOptimalModel('agents', 'codeIntelligence', characteristics);
 
     try {
       // Route to appropriate model
       let result: CodeAnalysisResult;
 
       if (modelId.includes('qwen3-coder')) {
-        result = await this.analyzeWithQwen3Coder(request, modelId);
+        result = await this.analyzeWithQwen3Coder(validatedRequest, modelId);
       } else if (modelId.includes('deepseek-coder')) {
-        result = await this.analyzeWithDeepSeekCoder(request, modelId);
+        result = await this.analyzeWithDeepSeekCoder(validatedRequest, modelId);
       } else {
         throw new Error(`Unsupported model: ${modelId}`);
       }
@@ -233,10 +228,10 @@ export class CodeIntelligenceAgent extends EventEmitter {
       result.modelUsed = modelId;
 
       this.analysisHistory.set(cacheKey, result);
-      this.emit('analysis_complete', { request, result });
+      this.emit('analysis_complete', { request: validatedRequest, result });
       return result;
     } catch (error) {
-      this.emit('analysis_error', { request, error });
+      this.emit('analysis_error', { request: validatedRequest, error });
       throw error;
     }
   }
@@ -244,6 +239,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
   private async _analyzeWithModel(
     request: CodeAnalysisRequest,
     modelId: string,
+    modelKey: keyof typeof MODEL_CONFIG,
   ): Promise<CodeAnalysisResult> {
     const prompt = this.buildCodeAnalysisPrompt(request);
 
@@ -254,11 +250,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
         model: modelId,
         prompt,
         stream: false,
-        options: {
-          temperature: 0.1,
-          top_p: 0.9,
-          num_predict: 2048,
-        },
+        options: MODEL_CONFIG[modelKey],
       }),
     });
 
@@ -267,38 +259,22 @@ export class CodeIntelligenceAgent extends EventEmitter {
     }
 
     const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, 'qwen3-coder');
+    return this.parseCodeAnalysisResponse(data.response, modelKey);
+  }
+
+  private async analyzeWithQwen3Coder(
+    request: CodeAnalysisRequest,
+    modelId: string,
+  ): Promise<CodeAnalysisResult> {
+
+    return this._analyzeWithModel(request, modelId, 'qwen3-coder');
   }
 
   private async analyzeWithDeepSeekCoder(
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
-
-    const prompt = this.buildCodeAnalysisPrompt(request);
-    const modelOptions = MODEL_CONFIG[modelKey as keyof typeof MODEL_CONFIG];
-
-    const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: modelId,
-        prompt,
-        stream: false,
-        options: modelOptions,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `${modelId} analysis failed: ${response.statusText}`,
-      );
-    }
-
-
-    const data = (await response.json()) as { response: string };
-    return this.parseCodeAnalysisResponse(data.response, 'deepseek-coder');
-
+    return this._analyzeWithModel(request, modelId, 'deepseek-coder');
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
@@ -324,7 +300,6 @@ Focus on practical, implementable suggestions with clear rationale.
 Analysis Type: ${request.analysisType}
 Urgency: ${request.urgency}`;
   }
-
 
   private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
     // Check if this is a security analysis based on model type or content
@@ -388,9 +363,10 @@ Urgency: ${request.urgency}`;
     const lines = code.split('\n').filter((line) => line.trim().length > 0).length;
     const complexityIndicators = (code.match(/if|for|while|switch|catch|function|class/g) || [])
       .length;
+    const { lines: lineThresholds, indicators } = COMPLEXITY_THRESHOLDS;
 
-    if (lines > 100 || complexityIndicators > 15) return 'high';
-    if (lines > 10 || complexityIndicators > 3) return 'medium';
+    if (lines > lineThresholds.high || complexityIndicators > indicators.high) return 'high';
+    if (lines > lineThresholds.medium || complexityIndicators > indicators.medium) return 'medium';
 
     return 'low';
   }

@@ -32,12 +32,12 @@ const scenario: SimScenario = {
   persona: {
     locale: 'en-US',
     tone: 'friendly',
-    tech_fluency: 'low'
+    tech_fluency: 'low',
   },
   initial_context: {},
   sop_refs: ['customer-support-basics'],
   kb_refs: ['account-setup-guide'],
-  success_criteria: ['account created', 'user confirmed understanding']
+  success_criteria: ['account created', 'user confirmed understanding'],
 };
 
 // Run simulation

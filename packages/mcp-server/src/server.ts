@@ -15,7 +15,9 @@ const TOKEN = process.env.CORTEX_MCP_TOKEN;
 
 if (!TOKEN) {
   // eslint-disable-next-line no-console
-  console.error('[cortex-mcp] ERROR: CORTEX_MCP_TOKEN is not set. Refusing to start without authentication token.');
+  console.error(
+    '[cortex-mcp] ERROR: CORTEX_MCP_TOKEN is not set. Refusing to start without authentication token.',
+  );
   process.exit(1);
 }
 
@@ -118,12 +120,8 @@ const tools = [
       const normalizedRoot = path.normalize(rootPath);
       const normalizedPath = path.normalize(requestedPath);
 
-
       if (!normalizedPath.startsWith(normalizedRoot)) {
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          'Path escapes repository root',
-        );
+        throw new McpError(ErrorCode.InvalidParams, 'Path escapes repository root');
       }
 
       // Check for existence before reading
@@ -132,7 +130,6 @@ const tools = [
       } catch {
         throw new McpError(ErrorCode.InvalidParams, 'File not found');
       }
-
 
       const data = await fs.readFile(normalizedPath, 'utf8');
       return {

@@ -1,3 +1,3 @@
 // Policy module exports
-export * from "./load.js";
-export * from "./mime.js";
+export * from './load.js';
+export * from './mime.js';

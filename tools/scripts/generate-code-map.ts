@@ -7,7 +7,7 @@ import { z } from 'zod';
 const argSchema = z.object({
   targetDir: z.string().default('.'),
   gitignore: z.string().optional(),
-  out: z.string().default('codemap.json')
+  out: z.string().default('codemap.json'),
 });
 
 interface CodeInfo {
@@ -16,7 +16,6 @@ interface CodeInfo {
   classes: string[];
   docstrings: string[];
 }
-
 
 async function parseArgs() {
   const [targetDir, gitignore, out] = process.argv.slice(2);
@@ -33,7 +32,7 @@ function extractTS(content: string, fileName: string) {
   const imports: string[] = [];
   const functions: string[] = [];
   const classes: string[] = [];
-  source.forEachChild(node => {
+  source.forEachChild((node) => {
     if (ts.isImportDeclaration(node)) {
       imports.push((node.moduleSpecifier as ts.StringLiteral).text);
     } else if (ts.isFunctionDeclaration(node) && node.name) {
@@ -45,7 +44,10 @@ function extractTS(content: string, fileName: string) {
   const docstrings: string[] = [];
   const comments = ts.getLeadingCommentRanges(content, 0) || [];
   for (const range of comments) {
-    const text = content.slice(range.pos, range.end).replace(/^\/[/*]+/, '').trim();
+    const text = content
+      .slice(range.pos, range.end)
+      .replace(/^\/[/*]+/, '')
+      .trim();
     if (text) docstrings.push(text);
   }
   return { imports, functions, classes, docstrings };
@@ -62,8 +64,8 @@ function extractPy(content: string) {
   while ((match = fromImportRegex.exec(content))) {
     imports.push(match[1]);
   }
-  const functions = Array.from(content.matchAll(/^def\s+(\w+)/gm), m => m[1]);
-  const classes = Array.from(content.matchAll(/^class\s+(\w+)/gm), m => m[1]);
+  const functions = Array.from(content.matchAll(/^def\s+(\w+)/gm), (m) => m[1]);
+  const classes = Array.from(content.matchAll(/^class\s+(\w+)/gm), (m) => m[1]);
   const docstringMatch = content.match(/"""([\s\S]*?)"""/);
   const docstrings = docstringMatch ? [docstringMatch[1].trim()] : [];
   return { imports, functions, classes, docstrings };
@@ -83,7 +85,7 @@ async function main() {
   const files = await globby(['**/*.{ts,tsx,js,jsx,py}'], {
     cwd: targetDir,
     gitignore: true,
-    ignore: ignorePatterns
+    ignore: ignorePatterns,
   });
   const map: Record<string, CodeInfo> = {};
   for (const file of files) {
@@ -97,7 +99,7 @@ async function main() {
   console.log(`Code map written to ${out}`);
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

@@ -70,7 +70,7 @@
     "tests_to_add": "Test case verifying empty supportingEvidence when RAG query fails"
   },
   {
-    "file": "/Users/jamiecraik/.cortex-os/packages/prp-runner/src/asbr-ai-integration.ts", 
+    "file": "/Users/jamiecraik/.cortex-os/packages/prp-runner/src/asbr-ai-integration.ts",
     "lines": "665-686",
     "severity": "high",
     "category": "logic-error",
@@ -81,7 +81,7 @@
   },
   {
     "file": "/Users/jamiecraik/.cortex-os/packages/prp-runner/src/asbr-ai-integration.ts",
-    "lines": "458-464", 
+    "lines": "458-464",
     "severity": "high",
     "category": "logic-error",
     "description": "Embedding search failure handling doesn't properly clean up enhancement methods",
@@ -100,18 +100,18 @@
     "tests_to_add": "Test case with multiline stdout output"
   },
   {
-    "file": "src/tools/index.ts", 
+    "file": "src/tools/index.ts",
     "lines": "842",
     "severity": "high",
     "category": "runtime-failure",
-    "description": "String split using escaped newline will fail at runtime", 
+    "description": "String split using escaped newline will fail at runtime",
     "evidence": "Line 842: stderr.split('\\\\n') - escaped newline prevents proper string splitting",
     "fix": "Replace split('\\\\n') with split('\\n')",
     "tests_to_add": "Test case with multiline stderr output"
   },
   {
     "file": "src/tools/index.ts",
-    "lines": "958", 
+    "lines": "958",
     "severity": "high",
     "category": "runtime-failure",
     "description": "String split using escaped newline will fail at runtime",
@@ -122,18 +122,18 @@
   {
     "file": "src/neurons/backend-engineer-production.ts",
     "lines": "519",
-    "severity": "high", 
+    "severity": "high",
     "category": "runtime-failure",
     "description": "Using require() in ESM module without import",
     "evidence": "Line 519: require('crypto').randomUUID in template string - require not available in ESM",
-    "fix": "Import crypto at module level: import { randomUUID } from 'crypto'", 
+    "fix": "Import crypto at module level: import { randomUUID } from 'crypto'",
     "tests_to_add": "Test case for UUID generation in generated handlers"
   },
   {
     "file": "src/neurons/backend-engineer-production.ts",
     "lines": "960",
     "severity": "high",
-    "category": "runtime-failure", 
+    "category": "runtime-failure",
     "description": "Using require() in ESM module without import",
     "evidence": "Line 960: require('uuid').v4() - require not available in ESM context",
     "fix": "Import uuid at module level: import { v4 as uuidv4 } from 'uuid'",
@@ -150,11 +150,11 @@
     "tests_to_add": "Integration test with actual HTML accessibility violations"
   },
   {
-    "file": "src/tools/index.ts", 
+    "file": "src/tools/index.ts",
     "lines": "664-676",
     "severity": "high",
     "category": "mock-implementation",
-    "description": "Security scan returns hardcoded OWASP compliance - not real security analysis", 
+    "description": "Security scan returns hardcoded OWASP compliance - not real security analysis",
     "evidence": "Lines 664-676: All OWASP LLM compliance flags hardcoded to true, no actual security scanning",
     "fix": "Implement real security scanning using tools like Snyk, OWASP ZAP, or custom validators",
     "tests_to_add": "Test case with actual security vulnerabilities that should be detected"
@@ -162,7 +162,7 @@
   {
     "file": "src/neurons/evaluation-production.ts",
     "lines": "388",
-    "severity": "medium", 
+    "severity": "medium",
     "category": "architecture-violation",
     "description": "Hard-coded path to /tmp instead of using context.outputDirectory",
     "evidence": "Line 388: path.join('/tmp', 'tdd-report.md') ignores provided output directory",
@@ -173,7 +173,7 @@
     "file": "src/neurons/evaluation-production.ts",
     "lines": "641",
     "severity": "medium",
-    "category": "architecture-violation", 
+    "category": "architecture-violation",
     "description": "Hard-coded path to /tmp instead of using context.outputDirectory",
     "evidence": "Line 641: path.join('/tmp', 'code-review-report.md') ignores provided output directory",
     "fix": "Use path.join(context.outputDirectory, 'code-review-report.md')",
@@ -181,11 +181,11 @@
   },
   {
     "file": "src/neurons/evaluation-production.ts",
-    "lines": "855", 
+    "lines": "855",
     "severity": "medium",
     "category": "architecture-violation",
     "description": "Hard-coded path to /tmp instead of using context.outputDirectory",
-    "evidence": "Line 855: path.join('/tmp', 'validation-report.md') ignores provided output directory", 
+    "evidence": "Line 855: path.join('/tmp', 'validation-report.md') ignores provided output directory",
     "fix": "Use path.join(context.outputDirectory, 'validation-report.md')",
     "tests_to_add": "Test case verifying reports are written to correct output directory"
   },
@@ -202,7 +202,7 @@
   {
     "file": "src/index.ts",
     "lines": "18-29",
-    "severity": "medium", 
+    "severity": "medium",
     "category": "export-inconsistency",
     "description": "Exports reference neurons with inconsistent naming and locations",
     "evidence": "Lines 18-29: ProductionSecurityAnalystNeuron, ProductionUXDesignerNeuron etc. exported but actually defined in strategy-production.ts",
@@ -211,7 +211,7 @@
   },
   {
     "file": "src/neurons/backend-engineer-production.ts",
-    "lines": "627-660", 
+    "lines": "627-660",
     "severity": "medium",
     "category": "security-inadequate",
     "description": "Input sanitization uses basic regex patterns easily bypassed",
@@ -233,7 +233,7 @@
     "file": "src/**/*.ts",
     "lines": "all",
     "severity": "high",
-    "category": "tdd-violation", 
+    "category": "tdd-violation",
     "description": "Production system has zero tests despite claiming TDD compliance",
     "evidence": "No test files exist in codebase, violates fundamental TDD principle",
     "fix": "Create comprehensive test suite covering all neurons, orchestrator, and tools",
@@ -320,7 +320,7 @@
     "tests_to_add": "Test workflow initialization with various mock mode configurations"
   },
   {
-    "file": "src/neurons/", 
+    "file": "src/neurons/",
     "lines": "*.legacy files",
     "severity": "low",
     "category": "cruft-removal",

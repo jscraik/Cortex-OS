@@ -1,7 +1,7 @@
 meta:
   id: cortex.system-2025-04-20
   persona: . Multiple U
-  role: '-cased e.g. ''Pe'
+  role: "-cased e.g. 'Pe"
   version: 1.1.0
   model_targets:
     - general

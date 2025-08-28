@@ -35,9 +35,7 @@ export class AgentAdapter {
       const result = await this.executor.executePRP(request);
       return {
         content: result.content,
-        completed:
-          result.completed ??
-          this.isGoalAchieved(result.content, request.scenario),
+        completed: result.completed ?? this.isGoalAchieved(result.content, request.scenario),
         metadata: {
           ...result.metadata,
           prpVersion: '1.0.0',
@@ -67,10 +65,7 @@ export class AgentAdapter {
 }
 
 class BasicPRPExecutor implements PRPExecutor {
-  executePRP({
-    scenario,
-    userMessage,
-  }: AgentRequest): Promise<AgentResponse> {
+  executePRP({ scenario, userMessage }: AgentRequest): Promise<AgentResponse> {
     const goal = scenario.goal.toLowerCase();
     const message = userMessage.toLowerCase();
 
@@ -96,8 +91,7 @@ class BasicPRPExecutor implements PRPExecutor {
     }
 
     return Promise.resolve({
-      content:
-        "Thank you for your message. I'm here to assist you with your request.",
+      content: "Thank you for your message. I'm here to assist you with your request.",
     });
   }
 }

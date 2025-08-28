@@ -18,7 +18,10 @@ export interface ModelConfig {
 }
 
 const EmbeddingRequestSchema = z.object({ text: z.string(), model: z.string().optional() });
-const EmbeddingBatchRequestSchema = z.object({ texts: z.array(z.string()), model: z.string().optional() });
+const EmbeddingBatchRequestSchema = z.object({
+  texts: z.array(z.string()),
+  model: z.string().optional(),
+});
 const ChatRequestSchema = z.object({
   messages: z.array(
     z.object({ role: z.enum(['system', 'user', 'assistant']), content: z.string() }),
@@ -134,13 +137,18 @@ export class ModelRouter {
     return !!models && models.length > 0;
   }
 
-  async generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }> {
+  async generateEmbedding(
+    request: EmbeddingRequest,
+  ): Promise<{ embedding: number[]; model: string }> {
     const model = this.selectModel('embedding', request.model);
     if (!model) throw new Error('No embedding models available');
 
     const tryModel = async (m: ModelConfig): Promise<{ embedding: number[]; model: string }> => {
       if (m.provider === 'mlx') {
-        const response = await this.mlxAdapter.generateEmbedding({ text: request.text, model: m.name });
+        const response = await this.mlxAdapter.generateEmbedding({
+          text: request.text,
+          model: m.name,
+        });
         return { embedding: response.embedding, model: m.name };
       } else {
         const response = await this.ollamaAdapter.generateEmbedding(request.text, m.name);
@@ -153,7 +161,9 @@ export class ModelRouter {
     } catch (error) {
       console.warn(`Primary embedding model ${model.name} failed, attempting fallback:`, error);
       for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels.get('embedding')?.find((m) => m.name === fallbackName);
+        const fallbackModel = this.availableModels
+          .get('embedding')
+          ?.find((m) => m.name === fallbackName);
         if (!fallbackModel) continue;
         try {
           return await tryModel(fallbackModel);
@@ -167,7 +177,9 @@ export class ModelRouter {
     }
   }
 
-  async generateEmbeddings(request: EmbeddingBatchRequest): Promise<{ embeddings: number[][]; model: string }> {
+  async generateEmbeddings(
+    request: EmbeddingBatchRequest,
+  ): Promise<{ embeddings: number[][]; model: string }> {
     const model = this.selectModel('embedding', request.model);
     if (!model) throw new Error('No embedding models available');
 
@@ -184,14 +196,22 @@ export class ModelRouter {
     try {
       return await tryModel(model);
     } catch (error) {
-      console.warn(`Primary batch embedding model ${model.name} failed, attempting fallback:`, error);
+      console.warn(
+        `Primary batch embedding model ${model.name} failed, attempting fallback:`,
+        error,
+      );
       for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels.get('embedding')?.find((m) => m.name === fallbackName);
+        const fallbackModel = this.availableModels
+          .get('embedding')
+          ?.find((m) => m.name === fallbackName);
         if (!fallbackModel) continue;
         try {
           return await tryModel(fallbackModel);
         } catch (fallbackError) {
-          console.warn(`Fallback batch embedding model ${fallbackName} also failed:`, fallbackError);
+          console.warn(
+            `Fallback batch embedding model ${fallbackName} also failed:`,
+            fallbackError,
+          );
         }
       }
       throw new Error(
@@ -218,7 +238,9 @@ export class ModelRouter {
     } catch (error) {
       console.warn(`Primary chat model ${model.name} failed, attempting fallback:`, error);
       for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels.get('chat')?.find((m) => m.name === fallbackName);
+        const fallbackModel = this.availableModels
+          .get('chat')
+          ?.find((m) => m.name === fallbackName);
         if (!fallbackModel) continue;
         try {
           return await tryModel(fallbackModel);
@@ -226,15 +248,21 @@ export class ModelRouter {
           console.warn(`Fallback chat model ${fallbackName} also failed:`, fallbackError);
         }
       }
-      throw new Error(`All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
-  async rerank(request: RerankRequest): Promise<{ documents: string[]; scores: number[]; model: string }> {
+  async rerank(
+    request: RerankRequest,
+  ): Promise<{ documents: string[]; scores: number[]; model: string }> {
     const model = this.selectModel('reranking', request.model);
     if (!model) throw new Error('No reranking models available');
 
-    const tryModel = async (m: ModelConfig): Promise<{ documents: string[]; scores: number[]; model: string }> => {
+    const tryModel = async (
+      m: ModelConfig,
+    ): Promise<{ documents: string[]; scores: number[]; model: string }> => {
       const response = await this.ollamaAdapter.rerank(request.query, request.documents, m.name);
       return { documents: request.documents, scores: response.scores, model: m.name };
     };
@@ -244,7 +272,9 @@ export class ModelRouter {
     } catch (error) {
       console.warn(`Primary reranking model ${model.name} failed, attempting fallback:`, error);
       for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels.get('reranking')?.find((m) => m.name === fallbackName);
+        const fallbackModel = this.availableModels
+          .get('reranking')
+          ?.find((m) => m.name === fallbackName);
         if (!fallbackModel) continue;
         try {
           return await tryModel(fallbackModel);

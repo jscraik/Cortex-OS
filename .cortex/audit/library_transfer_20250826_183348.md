@@ -8,19 +8,22 @@
 ## Transfer Summary
 
 ### Library System
-- ✓ Packs:      263 files
-- ✓ Rules:       14 files  
-- ✓ Schemas:        3 files
-- ✓ Personas:        1 files
-- ✓ Blueprints:        1 files
-- ✓ Flows:        1 files
-- ✓ MCP:        1 files
+
+- ✓ Packs: 263 files
+- ✓ Rules: 14 files
+- ✓ Schemas: 3 files
+- ✓ Personas: 1 files
+- ✓ Blueprints: 1 files
+- ✓ Flows: 1 files
+- ✓ MCP: 1 files
 
 ### Commands & Tools
-- ✓ Commands:        1 files
-- ✓ Tools:        1 files
+
+- ✓ Commands: 1 files
+- ✓ Tools: 1 files
 
 ### Root Configuration
+
 - ✓ neurons.json
 - ✓ mcp.index.json
 - ✓ mcp.runtime.json
@@ -31,6 +34,7 @@
 ## Validation
 
 Run governance validation:
+
 ```bash
 cd ../.cortex-os-clean/.cortex/gates && npm test
 ```

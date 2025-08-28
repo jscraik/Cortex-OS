@@ -16,7 +16,7 @@
     "dev": "tsup src/index.ts --dts --format esm --watch",
     "test": "node test-runner.js",
     "test:unit": "node test-runner.js --mode unit",
-    "test:integration": "node test-runner.js --mode integration", 
+    "test:integration": "node test-runner.js --mode integration",
     "test:security": "node test-runner.js --mode security",
     "test:performance": "node test-runner.js --mode performance",
     "test:accessibility": "node test-runner.js --mode accessibility",

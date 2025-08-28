@@ -1,5 +1,5 @@
 // Minimal express types for local workspace build only
-declare module "express-serve-static-core" {
+declare module 'express-serve-static-core' {
   export interface Request {
     body?: any;
     url?: string;
@@ -10,8 +10,8 @@ declare module "express-serve-static-core" {
   }
 }
 
-declare module "express" {
-    function express(): any;
+declare module 'express' {
+  function express(): any;
   namespace express {
     export type Application = any;
   }

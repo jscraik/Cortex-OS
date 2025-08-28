@@ -1,4 +1,4 @@
-declare module "@grpc/grpc-js" {
+declare module '@grpc/grpc-js' {
   export type ClientOptions = any;
   export type ClientUnaryCall = { deadline?: number } & any;
   export type requestCallback<T> = (err: any, res: T) => void;
@@ -9,6 +9,6 @@ declare module "@grpc/grpc-js" {
   export function getClientChannel(client: any): { close(): void };
 }
 
-declare module "@grpc/proto-loader" {
+declare module '@grpc/proto-loader' {
   export function loadSync(path: string, options?: any): any;
 }

@@ -198,7 +198,6 @@ Question: ${query}
 
 Answer:`;
   }
-
 }
 
 // Example usage and factory functions

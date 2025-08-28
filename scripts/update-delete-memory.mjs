@@ -7,11 +7,20 @@ import { join } from 'path';
 
 console.log('Updating deleteMemory method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Update the deleteMemory method
-const deleteMemoryPattern = /async deleteMemory\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.db\s*\.\s*prepare\("DELETE FROM memory WHERE key = \? AND namespace = \?"\)\s*\.\s*run\(key, namespace\);\s*}/s;
+const deleteMemoryPattern =
+  /async deleteMemory\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.db\s*\.\s*prepare\("DELETE FROM memory WHERE key = \? AND namespace = \?"\)\s*\.\s*run\(key, namespace\);\s*}/s;
 const deleteMemoryReplacement = `async deleteMemory(key: string, namespace: string): Promise<void> {
     // Validate input data
     if (!key || typeof key !== 'string') {

@@ -111,9 +111,16 @@ describe('mcp-core client', () => {
       // This is a bit of a hack to test the rate limiter.
       // We'll set the points to 1 to easily test the limit.
       // @ts-ignore - private property
-      client.rateLimiter = { consume: vi.fn().mockResolvedValue(undefined).mockRejectedValueOnce(new Error('Rate limit exceeded')) };
+      client.rateLimiter = {
+        consume: vi
+          .fn()
+          .mockResolvedValue(undefined)
+          .mockRejectedValueOnce(new Error('Rate limit exceeded')),
+      };
 
-      await expect(client.callTool('test', {})).rejects.toThrow('Rate limit exceeded for tool test');
+      await expect(client.callTool('test', {})).rejects.toThrow(
+        'Rate limit exceeded for tool test',
+      );
     });
 
     it('should redact data on sendRequest', async () => {

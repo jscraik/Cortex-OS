@@ -11,8 +11,14 @@ export const mcpAdd = new Command('add')
   .option('--endpoint <url>', 'Endpoint URL (for sse/streamableHttp transport)')
   .option('--command <path>', 'Command path (for stdio transport)')
   .option('--args <args>', 'JSON array of command arguments', '[]')
-  .option('--client <type>', 'Client type for marketplace install (claude, cline, devin, cursor, continue, windsurf)')
-  .option('--transport-type <type>', 'Preferred transport from marketplace server (stdio, sse, streamableHttp)')
+  .option(
+    '--client <type>',
+    'Client type for marketplace install (claude, cline, devin, cursor, continue, windsurf)',
+  )
+  .option(
+    '--transport-type <type>',
+    'Preferred transport from marketplace server (stdio, sse, streamableHttp)',
+  )
   .option('--registry <url>', 'Custom registry URL')
   .option('--force', 'Force add even if server exists')
   .option('--json', 'JSON output')
@@ -51,7 +57,7 @@ async function addManualServer(name: string, opts: any) {
 
   const si = ServerInfoSchema.parse(candidate);
   await upsert(si);
-  
+
   if (opts.json) {
     process.stdout.write(JSON.stringify({ ok: true, added: si, source: 'manual' }, null, 2) + '\n');
   } else {
@@ -61,29 +67,35 @@ async function addManualServer(name: string, opts: any) {
 
 async function addFromMarketplace(serverId: string, opts: any) {
   const client = createMarketplaceClient(opts.registry ? { registryUrl: opts.registry } : {});
-  
+
   const server = await client.getServer(serverId);
   if (!server) {
-    throw new Error(`Server "${serverId}" not found in marketplace. Use "cortex mcp search" to find available servers.`);
+    throw new Error(
+      `Server "${serverId}" not found in marketplace. Use "cortex mcp search" to find available servers.`,
+    );
   }
 
   // Verify server signature if enabled
   const signatureValid = await client.verifySignature(server);
   if (!signatureValid) {
-    throw new Error(`Server "${serverId}" failed signature verification. Use --force to add anyway.`);
+    throw new Error(
+      `Server "${serverId}" failed signature verification. Use --force to add anyway.`,
+    );
   }
 
   // Determine transport to use
   const transportType = opts.transportType || getPreferredTransport(server.transports);
   const transportConfig = server.transports[transportType];
-  
+
   if (!transportConfig) {
-    throw new Error(`Transport "${transportType}" not available. Available: ${Object.keys(server.transports).join(', ')}`);
+    throw new Error(
+      `Transport "${transportType}" not available. Available: ${Object.keys(server.transports).join(', ')}`,
+    );
   }
 
   // Convert marketplace server to local server info
   let serverInfo;
-  
+
   if (transportType === 'stdio' && 'command' in transportConfig) {
     serverInfo = {
       name: server.id,
@@ -111,33 +123,39 @@ async function addFromMarketplace(serverId: string, opts: any) {
   await upsert(si);
 
   if (opts.json) {
-    process.stdout.write(JSON.stringify({ 
-      ok: true, 
-      added: si, 
-      source: 'marketplace',
-      marketplaceInfo: {
-        id: server.id,
-        name: server.name,
-        owner: server.owner,
-        version: server.version,
-        category: server.category,
-        riskLevel: server.security?.riskLevel || 'medium',
-        verified: server.security?.verifiedPublisher || false,
-      }
-    }, null, 2) + '\n');
+    process.stdout.write(
+      JSON.stringify(
+        {
+          ok: true,
+          added: si,
+          source: 'marketplace',
+          marketplaceInfo: {
+            id: server.id,
+            name: server.name,
+            owner: server.owner,
+            version: server.version,
+            category: server.category,
+            riskLevel: server.security?.riskLevel || 'medium',
+            verified: server.security?.verifiedPublisher || false,
+          },
+        },
+        null,
+        2,
+      ) + '\n',
+    );
   } else {
     const riskBadge = getRiskBadge(server.security?.riskLevel || 'medium');
     const verifiedBadge = server.security?.verifiedPublisher ? ' ✓' : '';
-    
+
     process.stdout.write(`Added MCP server: ${server.name}${verifiedBadge} ${riskBadge}\n`);
     process.stdout.write(`  ID: ${server.id}\n`);
     process.stdout.write(`  Transport: ${transportType}\n`);
     process.stdout.write(`  Owner: ${server.owner}\n`);
-    
+
     if (server.description) {
       process.stdout.write(`  Description: ${server.description}\n`);
     }
-    
+
     // Show client-specific install command if requested
     if (opts.client && isValidClient(opts.client)) {
       const installCmd = server.install[opts.client];
@@ -163,10 +181,14 @@ function getPreferredTransport(transports: any): string {
 
 function getRiskBadge(riskLevel: 'low' | 'medium' | 'high'): string {
   switch (riskLevel) {
-    case 'low': return '🟢';
-    case 'medium': return '🟡';
-    case 'high': return '🔴';
-    default: return '🟡';
+    case 'low':
+      return '🟢';
+    case 'medium':
+      return '🟡';
+    case 'high':
+      return '🔴';
+    default:
+      return '🟡';
   }
 }
 

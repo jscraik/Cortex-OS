@@ -6,11 +6,7 @@
 import { readFile, writeFile } from 'fs/promises';
 import { randomBytes, createHash } from 'crypto';
 import { getConfigPath, pathExists } from '../xdg/index.js';
-import {
-  AuthenticationError,
-  AuthorizationError,
-  ValidationError,
-} from '../types/index.js';
+import { AuthenticationError, AuthorizationError, ValidationError } from '../types/index.js';
 
 export interface TokenInfo {
   id: string;
@@ -231,9 +227,7 @@ async function loadTokens(): Promise<TokenInfo[]> {
     return config.tokens || [];
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.warn(
-      `Warning: failed to load tokens (${msg}). Using empty token set.`,
-    );
+    console.warn(`Warning: failed to load tokens (${msg}). Using empty token set.`);
     return [];
   }
 }

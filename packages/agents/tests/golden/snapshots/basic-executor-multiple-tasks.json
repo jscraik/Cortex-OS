@@ -3,12 +3,7 @@
     "agent": {
       "id": "code-intel-001",
       "name": "Code Intelligence Agent",
-      "capabilities": [
-        "analyze",
-        "review",
-        "optimize",
-        "security-scan"
-      ]
+      "capabilities": ["analyze", "review", "optimize", "security-scan"]
     },
     "tasks": [
       {
@@ -75,7 +70,9 @@
     "seed": 12345,
     "testType": "multi-task"
   },
-  "timestamp": 1756323507481,
+  "timestamp": 1756406226852,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+
+  "nodeVersion": "v20.19.4"
+
 }

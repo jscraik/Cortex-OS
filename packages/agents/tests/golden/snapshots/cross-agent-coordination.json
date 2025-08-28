@@ -3,17 +3,12 @@
     "basicAgent": {
       "id": "test-agent-001",
       "name": "Test Agent",
-      "capabilities": [
-        "text-processing",
-        "data-analysis",
-        "code-review"
-      ]
+      "capabilities": ["text-processing", "data-analysis", "code-review"]
     },
     "codeAgent": {
       "_events": {},
       "_eventsCount": 0,
       "ollamaEndpoint": "http://localhost:11434",
-      "mlxEndpoint": "http://localhost:8765",
       "analysisHistory": {}
     },
     "task": {
@@ -43,14 +38,16 @@
     "coordination": {
       "seed": 12345,
       "workflow": "execute-then-analyze",
-      "timestamp": 1756323507521
+      "timestamp": 1756406226897
     }
   },
   "metadata": {
     "seed": 12345,
     "testType": "coordination"
   },
-  "timestamp": 1756323507521,
+  "timestamp": 1756406226897,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+
+  "nodeVersion": "v20.19.4"
+
 }

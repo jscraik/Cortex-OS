@@ -50,10 +50,10 @@ export const PRPStateSchema = z.object({
   // Core identifiers
   id: z.string(),
   runId: z.string(),
-  
+
   // State machine phase
   phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
-  
+
   // Input blueprint
   blueprint: z.object({
     title: z.string(),
@@ -61,32 +61,34 @@ export const PRPStateSchema = z.object({
     requirements: z.array(z.string()),
     metadata: z.record(z.any()).optional(),
   }),
-  
+
   // Execution outputs by neuron ID
   outputs: z.record(z.any()),
-  
+
   // Validation results by phase
   validationResults: z.object({
     strategy: ValidationGateSchema.optional(),
     build: ValidationGateSchema.optional(),
     evaluation: ValidationGateSchema.optional(),
   }),
-  
+
   // Evidence collection
   evidence: z.array(EvidenceSchema),
-  
+
   // Cerebrum decision
   cerebrum: CerebrumDecisionSchema.optional(),
-  
+
   // Execution metadata
   metadata: z.object({
     startTime: z.string(),
     endTime: z.string().optional(),
     currentNeuron: z.string().optional(),
-    llmConfig: z.object({
-      provider: z.enum(['mlx', 'ollama']).optional(),
-      model: z.string().optional(),
-    }).optional(),
+    llmConfig: z
+      .object({
+        provider: z.enum(['mlx', 'ollama']).optional(),
+        model: z.string().optional(),
+      })
+      .optional(),
     executionContext: z.record(z.any()).optional(),
     deterministic: z.boolean().optional(),
     // Teaching layer extensions
@@ -96,14 +98,18 @@ export const PRPStateSchema = z.object({
     // Error tracking
     error: z.string().optional(),
   }),
-  
+
   // Checkpointing for determinism
-  checkpoints: z.array(z.object({
-    id: z.string(),
-    timestamp: z.string(),
-    phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
-    state: z.record(z.any()),
-  })).optional(),
+  checkpoints: z
+    .array(
+      z.object({
+        id: z.string(),
+        timestamp: z.string(),
+        phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
+        state: z.record(z.any()),
+      }),
+    )
+    .optional(),
 });
 
 export type PRPState = z.infer<typeof PRPStateSchema>;
@@ -114,10 +120,7 @@ export type CerebrumDecision = z.infer<typeof CerebrumDecisionSchema>;
 /**
  * State transition validation
  */
-export const validateStateTransition = (
-  fromState: PRPState,
-  toState: PRPState
-): boolean => {
+export const validateStateTransition = (fromState: PRPState, toState: PRPState): boolean => {
   const fromPhase = fromState.phase;
   const toPhase = toState.phase;
   const validTransitions: Record<PRPState['phase'], PRPState['phase'][]> = {
@@ -127,7 +130,7 @@ export const validateStateTransition = (
     completed: [], // Terminal state
     recycled: ['strategy'], // Can restart
   };
-  
+
   return validTransitions[fromPhase]?.includes(toPhase) ?? false;
 };
 
@@ -141,12 +144,12 @@ export const createInitialPRPState = (
     runId?: string;
     llmConfig?: PRPState['metadata']['llmConfig'];
     deterministic?: boolean;
-  } = {}
+  } = {},
 ): PRPState => {
   const now = options.deterministic ? '2025-08-21T00:00:00.000Z' : new Date().toISOString();
   const id = options.id ?? generateId('prp', options.deterministic);
   const runId = options.runId ?? generateId('run', options.deterministic);
-  
+
   return {
     id,
     runId,

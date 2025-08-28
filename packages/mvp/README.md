@@ -81,7 +81,7 @@ import { MemoryService } from '@cortex-os/memories';
 export class MVPService {
   constructor(
     private broker: A2ABroker,
-    private memoryService: MemoryService
+    private memoryService: MemoryService,
   ) {}
 
   async demonstrateFeature(input: string): Promise<string> {
@@ -92,7 +92,7 @@ export class MVPService {
     await this.broker.publish('mvp.feature.demonstrated', {
       input,
       context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     return `MVP feature demonstrated with: ${input}`;

@@ -67,7 +67,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
-    
+
     // Initialize mock AI capabilities
     aiCapabilities = new MockAICapabilities({ mockMode: true });
     asbrIntegration = new MockASBRAIIntegration({ mockMode: true });
@@ -120,7 +120,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
     it('should enforce AI operation authorization', async () => {
       const testOperations = [
         'ai_generate_text',
-        'ai_search_knowledge', 
+        'ai_search_knowledge',
         'ai_generate_embeddings',
         'ai_enhance_evidence',
         'ai_fact_check',
@@ -130,7 +130,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
         const authResult = await mockOwaspGuard.authorizeToolCall(
           operation,
           { prompt: 'test prompt' },
-          mockSecurityContext
+          mockSecurityContext,
         );
 
         expect(authResult.authorized).toBe(true);
@@ -185,11 +185,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
     });
 
     it('should validate against LLM07: Insecure Plugin Design', async () => {
-      const restrictedOperations = [
-        'system_execute_command',
-        'file_delete',
-        'database_modify',
-      ];
+      const restrictedOperations = ['system_execute_command', 'file_delete', 'database_modify'];
 
       // Test with insufficient permissions
       const limitedContext = {
@@ -197,17 +193,21 @@ describe('🔒 AI Policy Compliance Tests', () => {
         permissions: ['basic:read'],
       };
 
-      mockOwaspGuard.authorizeToolCall.mockImplementation(async (toolName: string, args: unknown, context: any) => {
-        if (restrictedOperations.some(op => toolName.includes(op)) && 
-            !context.permissions.includes('admin:full')) {
-          throw new Error(`Tool requires elevated permissions: ${toolName}`);
-        }
-        return { authorized: true };
-      });
+      mockOwaspGuard.authorizeToolCall.mockImplementation(
+        async (toolName: string, args: unknown, context: any) => {
+          if (
+            restrictedOperations.some((op) => toolName.includes(op)) &&
+            !context.permissions.includes('admin:full')
+          ) {
+            throw new Error(`Tool requires elevated permissions: ${toolName}`);
+          }
+          return { authorized: true };
+        },
+      );
 
       for (const operation of restrictedOperations) {
         await expect(
-          mockOwaspGuard.authorizeToolCall(operation, {}, limitedContext)
+          mockOwaspGuard.authorizeToolCall(operation, {}, limitedContext),
         ).rejects.toThrow('Tool requires elevated permissions');
       }
     });
@@ -233,7 +233,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 
       const result = await mockEnhancedSecurityGuard.validateMcpCommand(
         testCommand,
-        mockSecurityContext
+        mockSecurityContext,
       );
 
       expect(result.isValid).toBe(true);
@@ -252,7 +252,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
 
     it('should sanitize content with ML-enhanced PII detection', async () => {
       const testContent = 'User email: john@example.com, API key: sk-test123';
-      
+
       const sanitizationResult = {
         sanitized: 'User email: [REDACTED_EMAIL], API key: [REDACTED_API_KEY]',
         threats: [],
@@ -279,11 +279,11 @@ describe('🔒 AI Policy Compliance Tests', () => {
 
       for (const prompt of unsafePrompts) {
         mockOwaspGuard.validateMcpCommand.mockRejectedValueOnce(
-          new Error('Content policy violation detected')
+          new Error('Content policy violation detected'),
         );
 
         await expect(
-          mockOwaspGuard.validateMcpCommand(prompt, mockSecurityContext)
+          mockOwaspGuard.validateMcpCommand(prompt, mockSecurityContext),
         ).rejects.toThrow('Content policy violation detected');
       }
     });
@@ -306,7 +306,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
         const authResult = await mockOwaspGuard.authorizeToolCall(
           'ai_generate_embeddings',
           embeddingRequest,
-          mockSecurityContext
+          mockSecurityContext,
         );
 
         expect(authResult.authorized).toBe(true);
@@ -342,7 +342,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
       // Test evidence collection with security validation
       const validationResult = await mockOwaspGuard.validateMcpCommand(
         evidenceRequest.query,
-        mockSecurityContext
+        mockSecurityContext,
       );
 
       expect(validationResult.isValid).toBe(true);
@@ -362,25 +362,25 @@ describe('🔒 AI Policy Compliance Tests', () => {
       await mockOwaspGuard.validateMcpCommand(testPrompt, mockSecurityContext);
 
       const processingTime = performance.now() - startTime;
-      
+
       // Allow for some overhead in test environment
       expect(processingTime).toBeLessThan(10); // 10ms tolerance for test environment
     });
 
     it('should maintain policy compliance under load', async () => {
       const concurrentOperations = 10;
-      const testPrompts = Array(concurrentOperations).fill(null).map((_, i) => 
-        `Test prompt ${i} for concurrent validation`
-      );
+      const testPrompts = Array(concurrentOperations)
+        .fill(null)
+        .map((_, i) => `Test prompt ${i} for concurrent validation`);
 
-      const validationPromises = testPrompts.map(prompt =>
-        mockOwaspGuard.validateMcpCommand(prompt, mockSecurityContext)
+      const validationPromises = testPrompts.map((prompt) =>
+        mockOwaspGuard.validateMcpCommand(prompt, mockSecurityContext),
       );
 
       const results = await Promise.all(validationPromises);
 
       expect(results).toHaveLength(concurrentOperations);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.isValid).toBe(true);
         expect(result.threatLevel).toBe('low');
       });
@@ -392,7 +392,7 @@ describe('🔒 AI Policy Compliance Tests', () => {
       const complianceReport = {
         owaspLlmCompliance: {
           LLM01_PromptInjection: 'COMPLIANT',
-          LLM06_SensitiveInfoDisclosure: 'COMPLIANT', 
+          LLM06_SensitiveInfoDisclosure: 'COMPLIANT',
           LLM07_InsecurePluginDesign: 'COMPLIANT',
         },
         securityGuards: {

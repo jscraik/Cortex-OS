@@ -7,20 +7,15 @@ export default defineConfig({
     globals: true,
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'dist/',
-        '*.config.ts',
-        '**/*.d.ts'
-      ]
+      exclude: ['node_modules/', 'dist/', '*.config.ts', '**/*.d.ts'],
     },
     testTimeout: 30000,
-    hookTimeout: 30000
+    hookTimeout: 30000,
   },
   resolve: {
     alias: {
       '@cortex-os/mcp-registry': path.resolve(__dirname, '../../packages/mcp-registry/src'),
-      '@cortex-os/mcp': path.resolve(__dirname, '../../packages/mcp/src')
-    }
-  }
+      '@cortex-os/mcp': path.resolve(__dirname, '../../packages/mcp/src'),
+    },
+  },
 });

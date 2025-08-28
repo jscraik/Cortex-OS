@@ -7,7 +7,7 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
-import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';
+import { SecureNeo4j } from '@cortex-os/utils';
 import neo4j, { Driver, Session } from 'neo4j-driver';
 
 // Mock neo4j-driver
@@ -50,9 +50,11 @@ describe('SecureNeo4j - Unit Tests', () => {
   beforeEach(() => {
     mockSession = {
       run: vi.fn().mockResolvedValue({
-        records: [{
-          get: vi.fn().mockReturnValue([])
-        }]
+        records: [
+          {
+            get: vi.fn().mockReturnValue([]),
+          },
+        ],
       }),
       close: vi.fn(),
     } as unknown as Session;
@@ -148,7 +150,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       const maliciousNode = {
         id: "123'; DELETE n; CREATE (m {name:'compromised'});",
         label: 'User',
-        props: { name: 'John' }
+        props: { name: 'John' },
       };
 
       await expect(async () => {
@@ -160,7 +162,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       const validNode = {
         id: 'user_123',
         label: 'User',
-        props: { name: 'John', email: 'john@example.com' }
+        props: { name: 'John', email: 'john@example.com' },
       };
 
       await secureNeo4j.upsertNode(validNode);
@@ -174,7 +176,7 @@ describe('SecureNeo4j - Unit Tests', () => {
         from: "123'; DELETE n;",
         to: "456'; CREATE (m)",
         type: 'OWNS',
-        props: { since: '2023-01-01' }
+        props: { since: '2023-01-01' },
       };
 
       await expect(async () => {
@@ -187,7 +189,7 @@ describe('SecureNeo4j - Unit Tests', () => {
         from: 'user_123',
         to: 'product_456',
         type: 'OWNS',
-        props: { since: '2023-01-01' }
+        props: { since: '2023-01-01' },
       };
 
       await secureNeo4j.upsertRel(validRel);
@@ -213,7 +215,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       expect(mockDriver.session).toHaveBeenCalled();
       expect(mockSession.run).toHaveBeenCalledWith(
         expect.stringContaining('MATCH'),
-        expect.objectContaining({ id: validNodeId, depth })
+        expect.objectContaining({ id: validNodeId, depth }),
       );
     });
   });
@@ -246,7 +248,7 @@ describe('SecureNeo4j - Unit Tests', () => {
         'John Doe',
         'user@example.com',
         '2023-01-01T12:00:00Z',
-        'A valid string with spaces and punctuation.'
+        'A valid string with spaces and punctuation.',
       ];
 
       validValues.forEach((value) => {
@@ -260,7 +262,7 @@ describe('SecureNeo4j - Unit Tests', () => {
         "John'; DROP TABLE users;", // SQL injection
         'user@example.com<script>alert("XSS")</script>', // XSS attempt
         'value; DELETE n; CREATE (m)', // Cypher injection
-        'data\' OR \'1\'=\'1', // Boolean logic injection
+        "data' OR '1'='1", // Boolean logic injection
       ];
 
       dangerousValues.forEach((value) => {
@@ -274,12 +276,12 @@ describe('SecureNeo4j - Unit Tests', () => {
         name: 'John Doe',
         contact: {
           email: 'john@example.com',
-          phone: '+1-555-123-4567'
+          phone: '+1-555-123-4567',
         },
         preferences: {
           notifications: true,
-          theme: 'dark'
-        }
+          theme: 'dark',
+        },
       };
 
       const result = secureNeo4j.validateProperties(validNestedObject);
@@ -291,8 +293,8 @@ describe('SecureNeo4j - Unit Tests', () => {
         name: 'John Doe',
         contact: {
           email: 'john@example.com',
-          malicious: "'; DROP TABLE users;"
-        }
+          malicious: "'; DROP TABLE users;",
+        },
       };
 
       const result = secureNeo4j.validateProperties(dangerousNestedObject);
@@ -349,7 +351,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       const validNode = {
         id: 'user_123',
         label: 'User',
-        props: { name: 'John' }
+        props: { name: 'John' },
       };
 
       await secureNeo4j.upsertNode(validNode);
@@ -364,7 +366,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       const validNode = {
         id: 'user_123',
         label: 'User',
-        props: { name: 'John' }
+        props: { name: 'John' },
       };
 
       await expect(async () => {
@@ -395,7 +397,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       const nodeWithEmptyProps = {
         id: 'user_123',
         label: 'User',
-        props: {}
+        props: {},
       };
 
       await expect(secureNeo4j.upsertNode(nodeWithEmptyProps)).resolves.not.toThrow();
@@ -405,7 +407,7 @@ describe('SecureNeo4j - Unit Tests', () => {
       const nodeWithNullProps = {
         id: 'user_123',
         label: 'User',
-        props: { name: null, email: undefined }
+        props: { name: null, email: undefined },
       };
 
       await expect(secureNeo4j.upsertNode(nodeWithNullProps)).resolves.not.toThrow();
@@ -415,11 +417,11 @@ describe('SecureNeo4j - Unit Tests', () => {
       const nodeWithSpecialChars = {
         id: 'user_123',
         label: 'User',
-        props: { 
+        props: {
           name: 'John & Jane <Doe>',
           bio: 'Software engineer & "developer"',
-          tags: ['tag1', 'tag2']
-        }
+          tags: ['tag1', 'tag2'],
+        },
       };
 
       await expect(secureNeo4j.upsertNode(nodeWithSpecialChars)).resolves.not.toThrow();
@@ -436,12 +438,12 @@ describe('SecureNeo4j - Unit Tests', () => {
                 email: 'john@example.com',
                 addresses: [
                   { type: 'home', street: '123 Main St' },
-                  { type: 'work', street: '456 Business Ave' }
-                ]
-              }
-            }
-          }
-        }
+                  { type: 'work', street: '456 Business Ave' },
+                ],
+              },
+            },
+          },
+        },
       };
 
       const result = secureNeo4j.validateProperties(deeplyNestedObject.props);

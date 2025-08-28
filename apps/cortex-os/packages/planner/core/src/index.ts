@@ -9,8 +9,8 @@
  * @ai_provenance_hash N/A
  */
 
-export * from "./config.js";
-export * from "./models.js";
-export * from "./permission.js";
+export * from './config.js';
+export * from './models.js';
+export * from './permission.js';
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

@@ -3,13 +3,7 @@
  * @description FAISS-based retriever implementation
  */
 
-import {
-  Retriever,
-  Document,
-  RetrieverConfig,
-  QueryResult,
-  DocumentSchema,
-} from "../types";
+import { Retriever, Document, RetrieverConfig, QueryResult, DocumentSchema } from '../types';
 
 export class FaissRetriever implements Retriever {
   private config: RetrieverConfig;
@@ -50,10 +44,7 @@ export class FaissRetriever implements Retriever {
     };
   }
 
-  async query(
-    queryVector: number[],
-    topK: number = 10,
-  ): Promise<QueryResult[]> {
+  async query(queryVector: number[], topK: number = 10): Promise<QueryResult[]> {
     if (!this.faissIndex || this.documents.length === 0) {
       return [];
     }
@@ -68,19 +59,13 @@ export class FaissRetriever implements Retriever {
     const similarities: Array<{ index: number; score: number }> = [];
 
     for (let i = 0; i < this.vectors.length; i++) {
-      const score = this.calculateCosineSimilarity(
-        queryVector,
-        this.vectors[i],
-      );
+      const score = this.calculateCosineSimilarity(queryVector, this.vectors[i]);
       similarities.push({ index: i, score });
     }
 
     // Sort by score (descending) and take top-k
     similarities.sort((a, b) => b.score - a.score);
-    const topResults = similarities.slice(
-      0,
-      Math.min(topK, similarities.length),
-    );
+    const topResults = similarities.slice(0, Math.min(topK, similarities.length));
 
     // Convert to QueryResult format
     return topResults.map((result, rank) => ({
@@ -93,7 +78,7 @@ export class FaissRetriever implements Retriever {
 
   private calculateCosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) {
-      throw new Error("Vectors must have the same dimension");
+      throw new Error('Vectors must have the same dimension');
     }
 
     let dotProduct = 0;
@@ -117,10 +102,7 @@ export class FaissRetriever implements Retriever {
   }
 
   private generatePlaceholderEmbedding(): number[] {
-    return Array.from(
-      { length: this.config.dimension },
-      () => Math.random() - 0.5,
-    );
+    return Array.from({ length: this.config.dimension }, () => Math.random() - 0.5);
   }
 }
 

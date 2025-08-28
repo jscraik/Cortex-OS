@@ -3,23 +3,15 @@
  */
 
 export enum ProcessingStrategy {
-  NATIVE_TEXT = "NATIVE_TEXT",
-  PDF_NATIVE = "PDF_NATIVE",
-  OCR = "OCR",
-  UNSTRUCTURED = "UNSTRUCTURED",
-  REJECT = "REJECT",
+  NATIVE_TEXT = 'NATIVE_TEXT',
+  PDF_NATIVE = 'PDF_NATIVE',
+  OCR = 'OCR',
+  UNSTRUCTURED = 'UNSTRUCTURED',
+  REJECT = 'REJECT',
 }
 
 export interface ProcessingConfig {
-  chunker:
-    | "text"
-    | "markdown"
-    | "code"
-    | "structured"
-    | "pdf"
-    | "ocr"
-    | "unstructured"
-    | null;
+  chunker: 'text' | 'markdown' | 'code' | 'structured' | 'pdf' | 'ocr' | 'unstructured' | null;
   requiresOCR: boolean;
   requiresUnstructured: boolean;
   maxPages: number | null;
@@ -55,18 +47,15 @@ export class MimePolicyEngine {
   private strategyCache = new Map<string, StrategyDecision>();
 
   // MIME type mappings to processing strategies
-  private readonly mimeStrategies = new Map<
-    string,
-    Omit<StrategyDecision, "reason">
-  >([
+  private readonly mimeStrategies = new Map<string, Omit<StrategyDecision, 'reason'>>([
     // Native text processing
     [
-      "text/plain",
+      'text/plain',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 1.0,
         processing: {
-          chunker: "text",
+          chunker: 'text',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -74,12 +63,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "text/markdown",
+      'text/markdown',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 1.0,
         processing: {
-          chunker: "markdown",
+          chunker: 'markdown',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -87,12 +76,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "text/csv",
+      'text/csv',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 0.9,
         processing: {
-          chunker: "structured",
+          chunker: 'structured',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -100,12 +89,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "text/html",
+      'text/html',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 0.8,
         processing: {
-          chunker: "text",
+          chunker: 'text',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -113,12 +102,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/json",
+      'application/json',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 0.9,
         processing: {
-          chunker: "structured",
+          chunker: 'structured',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -126,12 +115,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/xml",
+      'application/xml',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 0.9,
         processing: {
-          chunker: "structured",
+          chunker: 'structured',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -141,12 +130,12 @@ export class MimePolicyEngine {
 
     // Code files
     [
-      "application/javascript",
+      'application/javascript',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 1.0,
         processing: {
-          chunker: "code",
+          chunker: 'code',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -154,12 +143,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "text/x-python",
+      'text/x-python',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 1.0,
         processing: {
-          chunker: "code",
+          chunker: 'code',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -167,12 +156,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "text/x-java-source",
+      'text/x-java-source',
       {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 1.0,
         processing: {
-          chunker: "code",
+          chunker: 'code',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -182,12 +171,12 @@ export class MimePolicyEngine {
 
     // PDF files (default to native extraction, may fallback to OCR)
     [
-      "application/pdf",
+      'application/pdf',
       {
         strategy: ProcessingStrategy.PDF_NATIVE,
         confidence: 0.8,
         processing: {
-          chunker: "pdf",
+          chunker: 'pdf',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: 100,
@@ -197,12 +186,12 @@ export class MimePolicyEngine {
 
     // Image files requiring OCR
     [
-      "image/png",
+      'image/png',
       {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.7,
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: 10,
@@ -210,12 +199,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "image/jpeg",
+      'image/jpeg',
       {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.7,
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: 10,
@@ -223,12 +212,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "image/tiff",
+      'image/tiff',
       {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.7,
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: 10,
@@ -236,12 +225,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "image/bmp",
+      'image/bmp',
       {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.6,
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: 10,
@@ -251,12 +240,12 @@ export class MimePolicyEngine {
 
     // Office documents - best handled by Unstructured API
     [
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       {
         strategy: ProcessingStrategy.UNSTRUCTURED,
         confidence: 0.9,
         processing: {
-          chunker: "unstructured",
+          chunker: 'unstructured',
           requiresOCR: false,
           requiresUnstructured: true,
           maxPages: 50,
@@ -264,12 +253,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/vnd.ms-word",
+      'application/vnd.ms-word',
       {
         strategy: ProcessingStrategy.UNSTRUCTURED,
         confidence: 0.9,
         processing: {
-          chunker: "unstructured",
+          chunker: 'unstructured',
           requiresOCR: false,
           requiresUnstructured: true,
           maxPages: 50,
@@ -277,12 +266,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       {
         strategy: ProcessingStrategy.UNSTRUCTURED,
         confidence: 0.9,
         processing: {
-          chunker: "unstructured",
+          chunker: 'unstructured',
           requiresOCR: false,
           requiresUnstructured: true,
           maxPages: 100,
@@ -290,12 +279,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/vnd.ms-powerpoint",
+      'application/vnd.ms-powerpoint',
       {
         strategy: ProcessingStrategy.UNSTRUCTURED,
         confidence: 0.9,
         processing: {
-          chunker: "unstructured",
+          chunker: 'unstructured',
           requiresOCR: false,
           requiresUnstructured: true,
           maxPages: 100,
@@ -303,12 +292,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       {
         strategy: ProcessingStrategy.UNSTRUCTURED,
         confidence: 0.8,
         processing: {
-          chunker: "unstructured",
+          chunker: 'unstructured',
           requiresOCR: false,
           requiresUnstructured: true,
           maxPages: 20,
@@ -316,12 +305,12 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/vnd.ms-excel",
+      'application/vnd.ms-excel',
       {
         strategy: ProcessingStrategy.UNSTRUCTURED,
         confidence: 0.8,
         processing: {
-          chunker: "unstructured",
+          chunker: 'unstructured',
           requiresOCR: false,
           requiresUnstructured: true,
           maxPages: 20,
@@ -331,7 +320,7 @@ export class MimePolicyEngine {
 
     // Rejected file types for security/practicality
     [
-      "application/x-executable",
+      'application/x-executable',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -339,7 +328,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/octet-stream",
+      'application/octet-stream',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 0.9,
@@ -347,7 +336,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/zip",
+      'application/zip',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -355,7 +344,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "application/x-rar-compressed",
+      'application/x-rar-compressed',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -363,7 +352,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "video/mp4",
+      'video/mp4',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -371,7 +360,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "video/avi",
+      'video/avi',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -379,7 +368,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "audio/mpeg",
+      'audio/mpeg',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -387,7 +376,7 @@ export class MimePolicyEngine {
       },
     ],
     [
-      "audio/wav",
+      'audio/wav',
       {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -411,19 +400,14 @@ export class MimePolicyEngine {
   /**
    * Determine processing strategy for a given MIME type and file characteristics
    */
-  parseStrategy(
-    mimeType: string,
-    heuristics?: FileHeuristics,
-  ): StrategyDecision {
+  parseStrategy(mimeType: string, heuristics?: FileHeuristics): StrategyDecision {
     // Input validation
-    if (!mimeType || typeof mimeType !== "string") {
-      return this.createRejectionDecision("Invalid MIME type format");
+    if (!mimeType || typeof mimeType !== 'string') {
+      return this.createRejectionDecision('Invalid MIME type format');
     }
 
     if (mimeType.length > 200) {
-      return this.createRejectionDecision(
-        "Invalid MIME type format (too long)",
-      );
+      return this.createRejectionDecision('Invalid MIME type format (too long)');
     }
 
     // Normalize MIME type (remove parameters)
@@ -438,11 +422,7 @@ export class MimePolicyEngine {
     let decision = this.computeStrategy(normalizedMime, heuristics);
 
     // Apply configuration overrides
-    decision = this.applyConfigurationRules(
-      decision,
-      normalizedMime,
-      heuristics,
-    );
+    decision = this.applyConfigurationRules(decision, normalizedMime, heuristics);
 
     // Cache the decision
     this.strategyCache.set(cacheKey, decision);
@@ -450,10 +430,7 @@ export class MimePolicyEngine {
     return decision;
   }
 
-  private computeStrategy(
-    mimeType: string,
-    heuristics?: FileHeuristics,
-  ): StrategyDecision {
+  private computeStrategy(mimeType: string, heuristics?: FileHeuristics): StrategyDecision {
     // Check for exact MIME type match
     const exactMatch = this.mimeStrategies.get(mimeType);
     if (exactMatch) {
@@ -463,7 +440,7 @@ export class MimePolicyEngine {
       };
 
       // Apply PDF-specific heuristics
-      if (mimeType === "application/pdf" && heuristics) {
+      if (mimeType === 'application/pdf' && heuristics) {
         decision = this.applyPdfHeuristics(decision, heuristics);
       }
 
@@ -490,21 +467,19 @@ export class MimePolicyEngine {
 
   private normalizeMimeType(mimeType: string): string {
     // Remove parameters (e.g., "text/plain; charset=utf-8" -> "text/plain")
-    return mimeType.split(";")[0].trim().toLowerCase();
+    return mimeType.split(';')[0].trim().toLowerCase();
   }
 
-  private findPatternMatch(
-    mimeType: string,
-  ): Omit<StrategyDecision, "reason"> | null {
-    const [type, subtype] = mimeType.split("/");
+  private findPatternMatch(mimeType: string): Omit<StrategyDecision, 'reason'> | null {
+    const [type, subtype] = mimeType.split('/');
 
     // Text files generally use native processing
-    if (type === "text") {
+    if (type === 'text') {
       return {
         strategy: ProcessingStrategy.NATIVE_TEXT,
         confidence: 0.8,
         processing: {
-          chunker: "text",
+          chunker: 'text',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -513,12 +488,12 @@ export class MimePolicyEngine {
     }
 
     // Images generally require OCR
-    if (type === "image") {
+    if (type === 'image') {
       return {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.6,
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: this.config.ocrMaxPages,
@@ -527,7 +502,7 @@ export class MimePolicyEngine {
     }
 
     // Videos and audio are rejected
-    if (type === "video" || type === "audio") {
+    if (type === 'video' || type === 'audio') {
       return {
         strategy: ProcessingStrategy.REJECT,
         confidence: 1.0,
@@ -549,9 +524,9 @@ export class MimePolicyEngine {
       return {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.6,
-        reason: "PDF appears to be scanned/image-based",
+        reason: 'PDF appears to be scanned/image-based',
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: this.config.ocrMaxPages,
@@ -564,7 +539,7 @@ export class MimePolicyEngine {
       return {
         ...decision,
         confidence: 0.9,
-        reason: "PDF with confirmed extractable text",
+        reason: 'PDF with confirmed extractable text',
       };
     }
 
@@ -573,9 +548,9 @@ export class MimePolicyEngine {
       return {
         strategy: ProcessingStrategy.OCR,
         confidence: 0.5,
-        reason: "PDF possibly scanned based on size/metadata heuristics",
+        reason: 'PDF possibly scanned based on size/metadata heuristics',
         processing: {
-          chunker: "ocr",
+          chunker: 'ocr',
           requiresOCR: true,
           requiresUnstructured: false,
           maxPages: this.config.ocrMaxPages,
@@ -589,10 +564,7 @@ export class MimePolicyEngine {
   /**
    * Heuristic to detect potentially scanned PDFs
    */
-  private maybeScanned(
-    fileSize?: number,
-    metadata?: Record<string, any>,
-  ): boolean {
+  private maybeScanned(fileSize?: number, metadata?: Record<string, any>): boolean {
     // Large files relative to content might be scanned
     if (fileSize && fileSize > 20 * 1024 * 1024) {
       // 20MB+
@@ -601,16 +573,10 @@ export class MimePolicyEngine {
 
     // Check metadata for scanning indicators
     if (metadata) {
-      const producer = (metadata.producer || "").toLowerCase();
-      const creator = (metadata.creator || "").toLowerCase();
+      const producer = (metadata.producer || '').toLowerCase();
+      const creator = (metadata.creator || '').toLowerCase();
 
-      const scanningKeywords = [
-        "scan",
-        "scanner",
-        "adobe scan",
-        "camscanner",
-        "genius scan",
-      ];
+      const scanningKeywords = ['scan', 'scanner', 'adobe scan', 'camscanner', 'genius scan'];
       const allText = `${producer} ${creator}`.toLowerCase();
 
       return scanningKeywords.some((keyword) => allText.includes(keyword));
@@ -626,17 +592,11 @@ export class MimePolicyEngine {
 
     // Apply configuration-based page limits
     if (processing.requiresOCR && processing.maxPages) {
-      processing.maxPages = Math.min(
-        processing.maxPages,
-        this.config.ocrMaxPages,
-      );
+      processing.maxPages = Math.min(processing.maxPages, this.config.ocrMaxPages);
     }
 
     if (processing.requiresUnstructured && processing.maxPages) {
-      processing.maxPages = Math.min(
-        processing.maxPages,
-        this.config.unstructuredMaxPages,
-      );
+      processing.maxPages = Math.min(processing.maxPages, this.config.unstructuredMaxPages);
     }
 
     return { ...decision, processing };
@@ -656,26 +616,20 @@ export class MimePolicyEngine {
 
     // Security policy overrides
     if (decision.strategy === ProcessingStrategy.REJECT) {
-      const [type] = mimeType.split("/");
+      const [type] = mimeType.split('/');
 
       if (
         !this.config.allowExecutables &&
-        (mimeType.includes("executable") || mimeType.includes("x-msdownload"))
+        (mimeType.includes('executable') || mimeType.includes('x-msdownload'))
       ) {
-        return this.createRejectionDecision(
-          "Executable files not supported for security reasons",
-        );
+        return this.createRejectionDecision('Executable files not supported for security reasons');
       }
 
       if (
         !this.config.allowArchives &&
-        (type === "archive" ||
-          mimeType.includes("zip") ||
-          mimeType.includes("rar"))
+        (type === 'archive' || mimeType.includes('zip') || mimeType.includes('rar'))
       ) {
-        return this.createRejectionDecision(
-          "Archive files not supported for security reasons",
-        );
+        return this.createRejectionDecision('Archive files not supported for security reasons');
       }
     }
 
@@ -690,7 +644,7 @@ export class MimePolicyEngine {
         confidence: 0.3,
         reason: `Unknown MIME type '${mimeType}', attempting text processing`,
         processing: {
-          chunker: "text",
+          chunker: 'text',
           requiresOCR: false,
           requiresUnstructured: false,
           maxPages: null,
@@ -710,33 +664,28 @@ export class MimePolicyEngine {
     };
   }
 
-  private getReasonForStrategy(
-    strategy: ProcessingStrategy,
-    mimeType: string,
-  ): string {
+  private getReasonForStrategy(strategy: ProcessingStrategy, mimeType: string): string {
     switch (strategy) {
       case ProcessingStrategy.NATIVE_TEXT:
-        return "Direct text processing";
+        return 'Direct text processing';
       case ProcessingStrategy.PDF_NATIVE:
-        return "PDF with extractable text (assumed)";
+        return 'PDF with extractable text (assumed)';
       case ProcessingStrategy.OCR:
-        return "Image file requires OCR processing";
+        return 'Image file requires OCR processing';
       case ProcessingStrategy.UNSTRUCTURED:
-        return "Complex document format best handled by Unstructured API";
+        return 'Complex document format best handled by Unstructured API';
       case ProcessingStrategy.REJECT:
-        if (mimeType.includes("executable"))
-          return "Executable files not supported for security reasons";
-        if (mimeType.includes("video"))
-          return "Video files not supported for text extraction";
-        if (mimeType.includes("audio"))
-          return "Audio files not supported for text extraction";
-        if (mimeType.includes("zip") || mimeType.includes("rar"))
-          return "Archive files not supported for security reasons";
-        if (mimeType === "application/octet-stream")
-          return "Binary data not supported for text extraction";
-        return "File type not supported";
+        if (mimeType.includes('executable'))
+          return 'Executable files not supported for security reasons';
+        if (mimeType.includes('video')) return 'Video files not supported for text extraction';
+        if (mimeType.includes('audio')) return 'Audio files not supported for text extraction';
+        if (mimeType.includes('zip') || mimeType.includes('rar'))
+          return 'Archive files not supported for security reasons';
+        if (mimeType === 'application/octet-stream')
+          return 'Binary data not supported for text extraction';
+        return 'File type not supported';
       default:
-        return "Processing strategy determined";
+        return 'Processing strategy determined';
     }
   }
 

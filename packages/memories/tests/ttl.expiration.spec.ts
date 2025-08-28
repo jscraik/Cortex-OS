@@ -4,9 +4,9 @@ import { Memory } from '../src/domain/types.js';
 
 describe('Memory expiration and TTL handling', () => {
   it('correctly identifies expired memories', () => {
-    const now = new Date().toISOString();
     const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago
-    
+    const now = new Date().toISOString();
+
     // Non-expired memory
     const freshMemory: Memory = {
       id: '1',
@@ -18,7 +18,7 @@ describe('Memory expiration and TTL handling', () => {
       updatedAt: now,
       provenance: { source: 'user' },
     };
-    
+
     // Expired memory
     const expiredMemory: Memory = {
       id: '2',
@@ -30,7 +30,7 @@ describe('Memory expiration and TTL handling', () => {
       updatedAt: past,
       provenance: { source: 'user' },
     };
-    
+
     expect(isExpired(freshMemory, now)).toBe(false);
     expect(isExpired(expiredMemory, now)).toBe(true);
   });
@@ -46,7 +46,7 @@ describe('Memory expiration and TTL handling', () => {
 
   it('correctly handles edge cases for expiration', () => {
     const now = new Date().toISOString();
-    
+
     // Memory with no TTL should not be expired
     const noTtlMemory: Memory = {
       id: '3',
@@ -57,9 +57,9 @@ describe('Memory expiration and TTL handling', () => {
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
       provenance: { source: 'user' },
     };
-    
+
     expect(isExpired(noTtlMemory, now)).toBe(false);
-    
+
     // Invalid TTL should not cause expiration
     const invalidTtlMemory: Memory = {
       id: '4',
@@ -71,7 +71,7 @@ describe('Memory expiration and TTL handling', () => {
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
       provenance: { source: 'user' },
     };
-    
+
     expect(isExpired(invalidTtlMemory, now)).toBe(false);
   });
 });

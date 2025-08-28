@@ -1,4 +1,4 @@
-import prisma from "../../db/src/prisma";
+import prisma from '../../db/src/prisma';
 
 // Enable text search with pg_trgm/tsvector in SQL; see db/textsearch.sql
 export async function bm25Search(q: string, k = 5) {

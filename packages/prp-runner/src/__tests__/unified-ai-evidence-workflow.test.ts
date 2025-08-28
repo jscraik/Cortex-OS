@@ -7,7 +7,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { UnifiedAIEvidenceWorkflow, UnifiedEvidenceConfig, EvidenceTaskContext } from '../unified-ai-evidence-workflow.js';
+import {
+  UnifiedAIEvidenceWorkflow,
+  UnifiedEvidenceConfig,
+  EvidenceTaskContext,
+} from '../unified-ai-evidence-workflow.js';
 
 // Mock the dependencies
 vi.mock('../asbr-ai-integration.js', () => ({
@@ -74,11 +78,7 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
     testContext = {
       taskId: 'test-task-001',
       description: 'Implement user authentication system',
-      requirements: [
-        'JWT token support',
-        'Password hashing',
-        'Rate limiting',
-      ],
+      requirements: ['JWT token support', 'Password hashing', 'Rate limiting'],
       constraints: {
         security: 'enterprise-grade',
         performance: 'sub-100ms',
@@ -90,7 +90,7 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
     };
 
     workflow = new UnifiedAIEvidenceWorkflow(testConfig);
-    
+
     vi.clearAllMocks();
   });
 
@@ -99,7 +99,7 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
       expect(workflow).toBeDefined();
 
       const status = await workflow.getWorkflowStatus();
-      
+
       expect(status.status).toBe('active');
       expect(status.components.asbrIntegration).toBe('connected');
       expect(status.components.embeddingAdapter).toBe('connected');
@@ -116,9 +116,9 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
 
     it('should handle default configuration gracefully', async () => {
       const defaultWorkflow = new UnifiedAIEvidenceWorkflow();
-      
+
       const status = await defaultWorkflow.getWorkflowStatus();
-      
+
       expect(status.configuration.modelsConfigured).toBe(true);
       expect(status.performance.concurrencyLimit).toBeGreaterThan(0);
       expect(status.performance.timeoutMs).toBeGreaterThan(0);
@@ -132,32 +132,32 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
       // Validate workflow result structure
       expect(result).toBeDefined();
       expect(result.taskId).toBe(testContext.taskId);
-      
+
       // Validate summary
       expect(result.summary.totalItems).toBeGreaterThan(0);
       expect(result.summary.processingTime).toBeGreaterThan(0);
       expect(result.summary.averageRelevance).toBeGreaterThan(0);
-      
+
       // Validate evidence collection
       expect(result.evidence).toBeInstanceOf(Array);
       expect(result.evidence.length).toBeGreaterThan(0);
-      
-      result.evidence.forEach(evidence => {
+
+      result.evidence.forEach((evidence) => {
         expect(evidence.id).toBeDefined();
         expect(evidence.content).toBeDefined();
         expect(evidence.source).toBeDefined();
         expect(evidence.relevanceScore).toBeGreaterThan(0);
         expect(evidence.metadata).toBeDefined();
       });
-      
+
       // Validate insights
       expect(result.insights.keyFindings).toBeInstanceOf(Array);
       expect(result.insights.confidence).toBeGreaterThan(0);
-      
+
       // Validate compliance
       expect(result.compliance.securityValidated).toBe(true);
       expect(result.compliance.policyCompliant).toBe(true);
-      
+
       // Validate performance metrics
       expect(result.performance.totalDuration).toBeGreaterThan(0);
       expect(result.performance.memoryOperations).toBeGreaterThan(0);
@@ -177,7 +177,7 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
           'Event-driven communication',
           'CQRS pattern implementation',
           'Distributed tracing',
-          'Service mesh integration', 
+          'Service mesh integration',
           'Kubernetes deployment',
         ],
         constraints: {
@@ -197,8 +197,8 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
 
       expect(result.taskId).toBe(complexContext.taskId);
       expect(result.summary.totalItems).toBeGreaterThan(3); // Should collect from multiple sources
-      expect(result.evidence.some(e => e.enhancement)).toBe(true); // Should enhance some evidence
-      expect(result.evidence.some(e => e.factCheckResult)).toBe(true); // Should fact-check some evidence
+      expect(result.evidence.some((e) => e.enhancement)).toBe(true); // Should enhance some evidence
+      expect(result.evidence.some((e) => e.factCheckResult)).toBe(true); // Should fact-check some evidence
     });
   });
 
@@ -207,16 +207,16 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
       const result = await workflow.collectEvidence(testContext);
 
       // Phase 1: Context Analysis (implicit in query generation)
-      expect(result.evidence.some(e => e.metadata.query)).toBe(true);
+      expect(result.evidence.some((e) => e.metadata.query)).toBe(true);
 
       // Phase 2: Multi-source Evidence Collection
-      expect(result.evidence.some(e => e.source)).toBe(true);
+      expect(result.evidence.some((e) => e.source)).toBe(true);
 
       // Phase 3: AI Enhancement (when enabled)
       expect(result.summary.enhancedItems).toBeGreaterThanOrEqual(0);
 
       // Phase 4: Semantic Search Enrichment
-      expect(result.evidence.some(e => e.metadata.searchMethod === 'semantic')).toBe(true);
+      expect(result.evidence.some((e) => e.metadata.searchMethod === 'semantic')).toBe(true);
 
       // Phase 5: Fact Checking & Validation
       expect(result.summary.factCheckedItems).toBeGreaterThanOrEqual(0);
@@ -231,14 +231,16 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
     it('should handle workflow phase failures gracefully', async () => {
       // Mock one component to fail
       const mockASBR = workflow['asbrIntegration'];
-      mockASBR.enhanceEvidence = vi.fn().mockRejectedValue(new Error('Enhancement service unavailable'));
+      mockASBR.enhanceEvidence = vi
+        .fn()
+        .mockRejectedValue(new Error('Enhancement service unavailable'));
 
       const result = await workflow.collectEvidence(testContext);
 
       // Workflow should still complete successfully
       expect(result).toBeDefined();
       expect(result.evidence.length).toBeGreaterThan(0);
-      
+
       // Should have fewer enhanced items due to failure
       expect(result.summary.enhancedItems).toBe(0);
     });
@@ -247,32 +249,34 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
   describe('⚡ Performance and Scalability', () => {
     it('should complete workflow within reasonable time limits', async () => {
       const startTime = Date.now();
-      
+
       const result = await workflow.collectEvidence(testContext);
-      
+
       const actualDuration = Date.now() - startTime;
-      
+
       expect(actualDuration).toBeLessThan(10000); // Should complete within 10 seconds in test env
       expect(result.performance.totalDuration).toBeGreaterThan(0);
       expect(result.performance.totalDuration).toBeLessThan(actualDuration + 1000); // Reasonable measurement accuracy
     });
 
     it('should handle concurrent evidence collection efficiently', async () => {
-      const concurrentTasks = Array(3).fill(null).map((_, i) => ({
-        ...testContext,
-        taskId: `concurrent-task-${i}`,
-        description: `Concurrent task ${i} for performance testing`,
-      }));
+      const concurrentTasks = Array(3)
+        .fill(null)
+        .map((_, i) => ({
+          ...testContext,
+          taskId: `concurrent-task-${i}`,
+          description: `Concurrent task ${i} for performance testing`,
+        }));
 
       const startTime = Date.now();
       const results = await Promise.all(
-        concurrentTasks.map(task => workflow.collectEvidence(task))
+        concurrentTasks.map((task) => workflow.collectEvidence(task)),
       );
       const totalTime = Date.now() - startTime;
 
       expect(results).toHaveLength(3);
       expect(totalTime).toBeLessThan(15000); // Should handle 3 concurrent tasks within 15s
-      
+
       results.forEach((result, i) => {
         expect(result.taskId).toBe(`concurrent-task-${i}`);
         expect(result.evidence.length).toBeGreaterThan(0);
@@ -290,15 +294,21 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
     });
 
     it('should handle tenant isolation correctly', async () => {
-      const tenant1Context = { ...testContext, metadata: { ...testContext.metadata, tenantId: 'tenant-001' } };
-      const tenant2Context = { ...testContext, metadata: { ...testContext.metadata, tenantId: 'tenant-002' } };
+      const tenant1Context = {
+        ...testContext,
+        metadata: { ...testContext.metadata, tenantId: 'tenant-001' },
+      };
+      const tenant2Context = {
+        ...testContext,
+        metadata: { ...testContext.metadata, tenantId: 'tenant-002' },
+      };
 
       const result1 = await workflow.collectEvidence(tenant1Context);
       const result2 = await workflow.collectEvidence(tenant2Context);
 
       expect(result1.taskId).toBe(tenant1Context.taskId);
       expect(result2.taskId).toBe(tenant2Context.taskId);
-      
+
       // Both should complete successfully with isolation
       expect(result1.compliance.securityValidated).toBe(true);
       expect(result2.compliance.securityValidated).toBe(true);
@@ -318,8 +328,8 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
 
       expect(result.summary.factCheckedItems).toBe(0);
       expect(result.summary.enhancedItems).toBe(0);
-      expect(result.evidence.every(e => !e.factCheckResult)).toBe(true);
-      expect(result.evidence.every(e => !e.enhancement)).toBe(true);
+      expect(result.evidence.every((e) => !e.factCheckResult)).toBe(true);
+      expect(result.evidence.every((e) => !e.enhancement)).toBe(true);
     });
 
     it('should adapt behavior based on configuration limits', async () => {
@@ -341,7 +351,7 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
       const result = await workflow.collectEvidence(testContext);
 
       const metrics = result.performance;
-      
+
       expect(metrics.totalDuration).toBeGreaterThan(0);
       expect(metrics.aiProcessingTime).toBeGreaterThan(0);
       expect(metrics.securityValidationTime).toBeGreaterThan(0);
@@ -368,9 +378,13 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
     it('should handle resource cleanup on errors', async () => {
       // Mock a service to throw an error
       const mockASBR = workflow['asbrIntegration'];
-      mockASBR.collectEnhancedEvidence = vi.fn().mockRejectedValue(new Error('Service unavailable'));
+      mockASBR.collectEnhancedEvidence = vi
+        .fn()
+        .mockRejectedValue(new Error('Service unavailable'));
 
-      await expect(workflow.collectEvidence(testContext)).rejects.toThrow('Unified evidence collection failed');
+      await expect(workflow.collectEvidence(testContext)).rejects.toThrow(
+        'Unified evidence collection failed',
+      );
     });
   });
 
@@ -380,9 +394,9 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
 
       const completenessReport = {
         evidenceCollection: {
-          asbrIntegration: result.evidence.some(e => e.source === 'asbr-integration'),
-          semanticSearch: result.evidence.some(e => e.metadata.searchMethod === 'semantic'),
-          multiSourceAggregation: new Set(result.evidence.map(e => e.source)).size > 1,
+          asbrIntegration: result.evidence.some((e) => e.source === 'asbr-integration'),
+          semanticSearch: result.evidence.some((e) => e.metadata.searchMethod === 'semantic'),
+          multiSourceAggregation: new Set(result.evidence.map((e) => e.source)).size > 1,
         },
         aiProcessing: {
           contentEnhancement: result.summary.enhancedItems > 0,

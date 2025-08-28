@@ -1,7 +1,7 @@
-import { context, trace, SpanStatusCode, metrics } from "@opentelemetry/api";
+import { context, trace, SpanStatusCode, metrics } from '@opentelemetry/api';
 
-export const tracer = trace.getTracer("@cortex-os/orchestration");
-export const meter = metrics.getMeter("@cortex-os/orchestration");
+export const tracer = trace.getTracer('@cortex-os/orchestration');
+export const meter = metrics.getMeter('@cortex-os/orchestration');
 
 // Create comprehensive metrics
 export const workflowMetrics = {
@@ -9,37 +9,37 @@ export const workflowMetrics = {
   stepDuration: meter.createHistogram('workflow_step_duration_ms', {
     description: 'Duration of workflow step execution in milliseconds',
   }),
-  
+
   coordinationDuration: meter.createHistogram('agent_coordination_duration_ms', {
     description: 'Duration of multi-agent coordination in milliseconds',
   }),
-  
+
   // Counters
   retryAttempts: meter.createCounter('workflow_retry_attempts_total', {
     description: 'Total number of retry attempts',
   }),
-  
+
   stepExecutions: meter.createCounter('workflow_step_executions_total', {
     description: 'Total number of workflow step executions',
   }),
-  
+
   coordinationFailures: meter.createCounter('coordination_failures_total', {
     description: 'Total number of coordination failures',
   }),
-  
+
   circuitBreakerTrips: meter.createCounter('circuit_breaker_trips_total', {
     description: 'Total number of circuit breaker trips',
   }),
-  
+
   // Gauges (UpDown counters)
   activeWorkflows: meter.createUpDownCounter('active_workflows', {
     description: 'Number of currently active workflows',
   }),
-  
+
   activeAgents: meter.createUpDownCounter('active_agents', {
     description: 'Number of currently active agents',
   }),
-  
+
   resourceUtilization: meter.createGauge('resource_utilization_ratio', {
     description: 'Resource utilization ratio (0-1)',
   }),
@@ -68,7 +68,7 @@ export interface EnhancedSpanContext {
 export async function withSpan<T>(
   name: string,
   fn: () => Promise<T>,
-  attrs?: Record<string, unknown>
+  attrs?: Record<string, unknown>,
 ): Promise<T> {
   const span = tracer.startSpan(name, undefined, context.active());
   if (attrs) span.setAttributes(attrs as any);
@@ -87,17 +87,17 @@ export async function withSpan<T>(
 export async function withEnhancedSpan<T>(
   name: string,
   fn: () => Promise<T>,
-  context: EnhancedSpanContext = {}
+  context: EnhancedSpanContext = {},
 ): Promise<T> {
   const span = tracer.startSpan(name);
   const startTime = Date.now();
-  
+
   // Set comprehensive span attributes
   const attributes: Record<string, any> = {
     'orchestration.version': '1.0.0',
     'span.kind': 'internal',
   };
-  
+
   if (context.workflowId) attributes['workflow.id'] = context.workflowId;
   if (context.workflowName) attributes['workflow.name'] = context.workflowName;
   if (context.workflowVersion) attributes['workflow.version'] = context.workflowVersion;
@@ -107,7 +107,7 @@ export async function withEnhancedSpan<T>(
   if (context.attempt !== undefined) attributes['execution.attempt'] = context.attempt;
   if (context.coordinationId) attributes['coordination.id'] = context.coordinationId;
   if (context.phase) attributes['coordination.phase'] = context.phase;
-  
+
   if (context.resourceUsage) {
     if (context.resourceUsage.memoryBytes) {
       attributes['resource.memory.bytes'] = context.resourceUsage.memoryBytes;
@@ -116,24 +116,24 @@ export async function withEnhancedSpan<T>(
       attributes['resource.cpu.utilization'] = context.resourceUsage.cpuUtilization;
     }
   }
-  
+
   if (context.retryPolicy) {
     attributes['retry.max_attempts'] = context.retryPolicy.maxRetries;
     attributes['retry.backoff_ms'] = context.retryPolicy.backoffMs;
   }
-  
+
   span.setAttributes(attributes);
-  
+
   // Add custom events for important milestones
   span.addEvent(`${name}.started`, {
-    'timestamp': startTime,
+    timestamp: startTime,
     'thread.id': process.pid,
   });
-  
+
   try {
     const result = await fn();
     const duration = Date.now() - startTime;
-    
+
     // Record success metrics
     if (name.includes('step')) {
       workflowMetrics.stepDuration.record(duration, {
@@ -145,26 +145,26 @@ export async function withEnhancedSpan<T>(
         result: 'success',
       });
     }
-    
+
     if (name.includes('coordination')) {
       workflowMetrics.coordinationDuration.record(duration, {
         phase: context.phase || 'unknown',
         success: 'true',
       });
     }
-    
+
     span.addEvent(`${name}.completed`, {
-      'timestamp': Date.now(),
-      'duration_ms': duration,
-      'success': true,
+      timestamp: Date.now(),
+      duration_ms: duration,
+      success: true,
     });
-    
+
     span.setStatus({ code: SpanStatusCode.OK });
     return result;
   } catch (err: any) {
     const duration = Date.now() - startTime;
     const errorMessage = String(err?.message ?? err);
-    
+
     // Record failure metrics
     if (name.includes('step')) {
       workflowMetrics.stepDuration.record(duration, {
@@ -176,7 +176,7 @@ export async function withEnhancedSpan<T>(
         result: 'failure',
       });
     }
-    
+
     if (name.includes('coordination')) {
       workflowMetrics.coordinationDuration.record(duration, {
         phase: context.phase || 'unknown',
@@ -187,21 +187,21 @@ export async function withEnhancedSpan<T>(
         error_type: err.code || 'unknown',
       });
     }
-    
+
     span.addEvent(`${name}.failed`, {
-      'timestamp': Date.now(),
-      'duration_ms': duration,
+      timestamp: Date.now(),
+      duration_ms: duration,
       'error.type': err.constructor.name,
       'error.code': err.code,
       'error.message': errorMessage,
     });
-    
+
     // Set error status with detailed information
     span.setStatus({
       code: SpanStatusCode.ERROR,
       message: errorMessage,
     });
-    
+
     // Add error attributes
     span.setAttributes({
       'error.type': err.constructor.name,
@@ -209,7 +209,7 @@ export async function withEnhancedSpan<T>(
       'error.message': errorMessage,
       'error.stack': err.stack,
     });
-    
+
     throw err;
   } finally {
     span.end();
@@ -223,7 +223,7 @@ export function recordRetryAttempt(
   stepKind: string,
   attempt: number,
   errorType: string,
-  delay: number
+  delay: number,
 ): void {
   workflowMetrics.retryAttempts.add(1, {
     step_kind: stepKind,
@@ -239,7 +239,7 @@ export function recordRetryAttempt(
 export function recordCircuitBreakerTrip(
   name: string,
   previousState: string,
-  reason: string
+  reason: string,
 ): void {
   workflowMetrics.circuitBreakerTrips.add(1, {
     circuit_breaker: name,
@@ -254,7 +254,7 @@ export function recordCircuitBreakerTrip(
 export function updateResourceUtilization(
   resourceType: string,
   utilization: number,
-  agentId?: string
+  agentId?: string,
 ): void {
   workflowMetrics.resourceUtilization.record(utilization, {
     resource_type: resourceType,
@@ -271,7 +271,11 @@ export function recordWorkflowStart(workflowId: string, workflowName: string): v
   });
 }
 
-export function recordWorkflowEnd(workflowId: string, workflowName: string, success: boolean): void {
+export function recordWorkflowEnd(
+  workflowId: string,
+  workflowName: string,
+  success: boolean,
+): void {
   workflowMetrics.activeWorkflows.add(-1, {
     workflow_name: workflowName,
   });
@@ -292,4 +296,3 @@ export function recordAgentDeactivation(agentId: string): void {
     agent_id: agentId,
   });
 }
-

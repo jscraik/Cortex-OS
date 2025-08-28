@@ -20,7 +20,7 @@ neo4jContent = neo4jContent.replace(
     await s.run(\`MERGE (n:\${safeLabel} {id:$id}) SET n += $props\`, {
       id: node.id,
       props: node.props,
-    });`
+    });`,
 );
 
 // Replace the insecure upsertRel method
@@ -33,7 +33,7 @@ neo4jContent = neo4jContent.replace(
        MERGE (a)-[r:\${safeType}]->(b)
        SET r += $props\`,
       { from: rel.from, to: rel.to, props: rel.props ?? {} },
-    );`
+    );`,
 );
 
 // Add validation methods
@@ -75,7 +75,7 @@ private validateRelationshipType(type: string): string {
   
   // Use existing validation
   return assertLabelOrType(type);
-}`
+}`,
   );
 }
 
@@ -116,7 +116,7 @@ if (!mcpServerContent.includes('def validate_docker_command')) {
         elif isinstance(param, str) and not re.match(r"^[a-f0-9]+$", param):
             raise ValueError(f"Invalid parameter: {param}")
 
-def run_docker_command(command):`
+def run_docker_command(command):`,
   );
 }
 
@@ -130,7 +130,7 @@ mcpServerContent = mcpServerContent.replace(
     except ValueError as e:
         return {"stdout": "", "stderr": f"Command validation failed: {str(e)}"}
     
-    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)`
+    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)`,
 );
 
 writeFileSync(mcpServerPath, mcpServerContent);
@@ -138,7 +138,15 @@ console.log('✅ Fixed command injection in mcp_server.py');
 
 // 3. Fix code injection in start-command.ts
 console.log('Fixing code injection in start-command.ts...');
-const startCommandPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'start-command.ts');
+const startCommandPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'start-command.ts',
+);
 let startCommandContent = readFileSync(startCommandPath, 'utf-8');
 
 // Replace the insecure exec call
@@ -149,7 +157,7 @@ startCommandContent = startCommandContent.replace(
     spawn(openCommand, [\`http://localhost:\${options.port}/console\`], {
       detached: true,
       stdio: 'ignore'
-    }).unref();`
+    }).unref();`,
 );
 
 writeFileSync(startCommandPath, startCommandContent);

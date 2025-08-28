@@ -3,7 +3,7 @@ metadata:
   name: AI/ML Security Patterns
   description: OWASP LLM Top 10 security patterns for AI applications
   author: Cortex OS
-  updated: "2025-08-03"
+  updated: '2025-08-03'
 rules:
   - id: PROMPT_INJECTION
     name: Prompt Injection Risk

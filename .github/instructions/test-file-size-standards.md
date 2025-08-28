@@ -16,6 +16,7 @@ status: "active"
 ### Current Crisis
 
 **CRITICAL VIOLATIONS**: Several test files exceed limits by 200-300%:
+
 - `tests/security/scanning.test.ts` (1,524 lines) - 205% over limit
 - `tests/phase2/unit/parallel-execution-engine.test.ts` (1,257 lines) - 151% over limit
 - `tests/phase2/unit/team-formation-system.test.ts` (1,231 lines) - 146% over limit
@@ -25,6 +26,7 @@ status: "active"
 ### Root Cause
 
 **Monolithic test files** that violate both:
+
 1. **File Size Standards**: 500-line hard cap (copilot-codeReview.instructions.md)
 2. **Test Quality Standards**: Maintainability, isolation, readability (copilot-testGeneration.instructions.md)
 
@@ -34,16 +36,17 @@ status: "active"
 
 ### Hard Limits (Aligned with Project Standards)
 
-| Test Type | Hard Cap | Recommended | Rationale |
-|-----------|----------|-------------|-----------|
-| **Unit Tests** | 500 lines | 200 lines | Single component/function focus |
-| **Integration Tests** | 500 lines | 300 lines | Multiple component interactions |
-| **E2E Tests** | 500 lines | 250 lines | User journey focused |
-| **Performance Tests** | 500 lines | 300 lines | Benchmark suites |
+| Test Type             | Hard Cap  | Recommended | Rationale                       |
+| --------------------- | --------- | ----------- | ------------------------------- |
+| **Unit Tests**        | 500 lines | 200 lines   | Single component/function focus |
+| **Integration Tests** | 500 lines | 300 lines   | Multiple component interactions |
+| **E2E Tests**         | 500 lines | 250 lines   | User journey focused            |
+| **Performance Tests** | 500 lines | 300 lines   | Benchmark suites                |
 
 ### Test-Specific Considerations
 
 **Unlike implementation files**, test files often grow large due to:
+
 - Multiple test scenarios
 - Extensive setup/teardown
 - Large fixture data
@@ -61,19 +64,20 @@ status: "active"
 // ❌ BAD: Monolithic test file (1,200 lines)
 describe('UserManagement', () => {
   // 300 lines of auth tests
-  // 400 lines of profile tests  
+  // 400 lines of profile tests
   // 300 lines of permissions tests
   // 200 lines of cleanup tests
 });
 
 // ✅ GOOD: Feature-based modules
 // tests/user/auth.test.ts (300 lines)
-// tests/user/profile.test.ts (200 lines) 
+// tests/user/profile.test.ts (200 lines)
 // tests/user/permissions.test.ts (180 lines)
 // tests/user/cleanup.test.ts (120 lines)
 ```
 
 **Implementation**:
+
 ```bash
 tests/user/
 ├── auth.test.ts              # Authentication tests
@@ -151,7 +155,7 @@ Original: user-service.test.ts (800 lines)
 Split into:
 ├── user-service/
 │   ├── creation.test.ts         (150 lines) - User creation tests
-│   ├── authentication.test.ts   (180 lines) - Auth-related tests  
+│   ├── authentication.test.ts   (180 lines) - Auth-related tests
 │   ├── profile-updates.test.ts  (120 lines) - Profile modification
 │   ├── permissions.test.ts      (100 lines) - Permission tests
 │   ├── error-handling.test.ts   (140 lines) - Error scenarios
@@ -205,7 +209,7 @@ Split into:
 **From copilot-testGeneration.instructions.md**, ensure each split test file maintains:
 
 1. **Accessibility-First**: `jest-axe` audits in UI tests
-2. **Behavior-Driven**: Focus on user intent and business logic  
+2. **Behavior-Driven**: Focus on user intent and business logic
 3. **Resilience & Security**: Test async states, edge cases, auth flows
 4. **Isolation & Repeatability**: Atomic, self-contained tests
 
@@ -247,10 +251,11 @@ import { createTestUser, mockUserService } from '../shared/user-test-utils';
 ### Phase 1: Immediate (Critical Files >1,000 lines)
 
 1. **Split worst offenders** using feature-based approach:
+
    ```bash
    tests/security/scanning.test.ts (1,524 lines)
    → tests/security/auth-scanning.test.ts (300 lines)
-   → tests/security/data-scanning.test.ts (250 lines)  
+   → tests/security/data-scanning.test.ts (250 lines)
    → tests/security/network-scanning.test.ts (200 lines)
    → tests/security/compliance-scanning.test.ts (180 lines)
    → tests/security/shared/ (utilities, mocks, fixtures)
@@ -290,7 +295,7 @@ The CI workflow (`.github/workflows/file-size-enforcement.yml`) scans test files
 
 ```yaml
 find . -type f \( -name "*.test.ts" -o -name "*.spec.ts" \) \
-  -exec wc -l {} + | sort -nr
+-exec wc -l {} + | sort -nr
 ```
 
 ### Test-Specific Monitoring
@@ -314,35 +319,38 @@ done
 
 ### Coverage Requirements (Per copilot-testGeneration.instructions.md)
 
-| Metric | Threshold | Test File Impact |
-|--------|-----------|------------------|
-| Line Coverage | ≥ 80% overall | Each split file must maintain coverage |
+| Metric         | Threshold       | Test File Impact                            |
+| -------------- | --------------- | ------------------------------------------- |
+| Line Coverage  | ≥ 80% overall   | Each split file must maintain coverage      |
 | Mutation Score | ≥ 60% (nightly) | Split files should improve mutation testing |
-| Flaky Tests | 0 tolerated | Splitting should reduce flakiness |
+| Flaky Tests    | 0 tolerated     | Splitting should reduce flakiness           |
 
 ### Additional Test File Metrics
 
-| Metric | Threshold | Enforcement |
-|--------|-----------|-------------|
-| Test File Size | ≤ 500 lines | Pre-commit + CI blocking |
-| Test Setup Size | ≤ 100 lines | Code review guidelines |
-| Shared Utilities | ≤ 200 lines | Modular utility design |
+| Metric           | Threshold   | Enforcement              |
+| ---------------- | ----------- | ------------------------ |
+| Test File Size   | ≤ 500 lines | Pre-commit + CI blocking |
+| Test Setup Size  | ≤ 100 lines | Code review guidelines   |
+| Shared Utilities | ≤ 200 lines | Modular utility design   |
 
 ---
 
 ## Success Metrics
 
 ### Immediate Targets (Week 1)
+
 - [ ] Split all test files >1,000 lines
 - [ ] Extract shared test utilities
 - [ ] Maintain 100% test coverage during splits
 
-### Short-term Goals (Month 1)  
+### Short-term Goals (Month 1)
+
 - [ ] All test files under 500 lines
 - [ ] Established test modularization patterns
 - [ ] Team training on test file organization
 
 ### Long-term Goals (Quarterly)
+
 - [ ] Average test file size <200 lines
 - [ ] Improved test maintainability scores
 - [ ] Zero new oversized test files

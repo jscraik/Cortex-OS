@@ -34,14 +34,16 @@ describe('MCP Marketplace Integration Tests', () => {
         transport: { stdio: { command: 'npx', args: ['-y', '@test/filesystem'] } },
         install: {
           claude: 'claude mcp add test-filesystem -- npx -y @test/filesystem',
-          json: { mcpServers: { 'test-filesystem': { command: 'npx', args: ['-y', '@test/filesystem'] } } }
+          json: {
+            mcpServers: { 'test-filesystem': { command: 'npx', args: ['-y', '@test/filesystem'] } },
+          },
         },
         permissions: ['files:read', 'files:write'],
         security: { riskLevel: 'medium' },
         featured: true,
         downloads: 1000,
         rating: 4.5,
-        updatedAt: '2025-01-15T10:00:00Z'
+        updatedAt: '2025-01-15T10:00:00Z',
       },
       {
         id: 'test-github',
@@ -55,16 +57,16 @@ describe('MCP Marketplace Integration Tests', () => {
         transport: { stdio: { command: 'npx', args: ['-y', '@test/github'] } },
         install: {
           claude: 'claude mcp add test-github -- npx -y @test/github',
-          json: { mcpServers: { 'test-github': { command: 'npx', args: ['-y', '@test/github'] } } }
+          json: { mcpServers: { 'test-github': { command: 'npx', args: ['-y', '@test/github'] } } },
         },
         permissions: ['network:https', 'data:read'],
         security: { riskLevel: 'low' },
         featured: false,
         downloads: 2500,
         rating: 4.8,
-        updatedAt: '2025-01-14T15:00:00Z'
-      }
-    ] as ServerManifest[]
+        updatedAt: '2025-01-14T15:00:00Z',
+      },
+    ] as ServerManifest[],
   };
 
   beforeAll(async () => {
@@ -83,10 +85,10 @@ describe('MCP Marketplace Integration Tests', () => {
     app = build({
       logger: false,
       registries: {
-        test: `file://${registryPath}`
+        test: `file://${registryPath}`,
       },
       cacheDir: testCacheDir,
-      cacheTtl: 1000 // Short TTL for testing
+      cacheTtl: 1000, // Short TTL for testing
     });
   });
 
@@ -94,7 +96,7 @@ describe('MCP Marketplace Integration Tests', () => {
     if (app) {
       await app.close();
     }
-    
+
     // Cleanup test cache
     if (existsSync(testCacheDir)) {
       await rm(testCacheDir, { recursive: true });
@@ -106,14 +108,14 @@ describe('MCP Marketplace Integration Tests', () => {
       // 1. Check health
       const healthResponse = await app.inject({
         method: 'GET',
-        url: '/health'
+        url: '/health',
       });
       expect(healthResponse.statusCode).toBe(200);
 
       // 2. List registries
       const registriesResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/registries'
+        url: '/api/v1/registries',
       });
       expect(registriesResponse.statusCode).toBe(200);
       const registries = JSON.parse(registriesResponse.body);
@@ -123,7 +125,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // 3. Search for servers
       const searchResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?q=test&limit=10'
+        url: '/api/v1/servers/search?q=test&limit=10',
       });
       expect(searchResponse.statusCode).toBe(200);
       const searchResult = JSON.parse(searchResponse.body);
@@ -134,7 +136,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // 4. Get specific server
       const serverResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/test-filesystem'
+        url: '/api/v1/servers/test-filesystem',
       });
       expect(serverResponse.statusCode).toBe(200);
       const server = JSON.parse(serverResponse.body);
@@ -144,7 +146,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // 5. Get installation instructions
       const installResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/test-filesystem/install?client=claude'
+        url: '/api/v1/servers/test-filesystem/install?client=claude',
       });
       expect(installResponse.statusCode).toBe(200);
       const install = JSON.parse(installResponse.body);
@@ -157,7 +159,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Search by category
       const categoryResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?category=development&limit=5'
+        url: '/api/v1/servers/search?category=development&limit=5',
       });
       expect(categoryResponse.statusCode).toBe(200);
       const categoryResult = JSON.parse(categoryResponse.body);
@@ -167,7 +169,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Search by risk level
       const riskResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?riskLevel=low'
+        url: '/api/v1/servers/search?riskLevel=low',
       });
       expect(riskResponse.statusCode).toBe(200);
       const riskResult = JSON.parse(riskResponse.body);
@@ -177,7 +179,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Search featured only
       const featuredResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?featured=true'
+        url: '/api/v1/servers/search?featured=true',
       });
       expect(featuredResponse.statusCode).toBe(200);
       const featuredResult = JSON.parse(featuredResponse.body);
@@ -187,15 +189,17 @@ describe('MCP Marketplace Integration Tests', () => {
       // Sort by downloads
       const downloadsResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?sortBy=downloads&sortOrder=desc'
+        url: '/api/v1/servers/search?sortBy=downloads&sortOrder=desc',
       });
       expect(downloadsResponse.statusCode).toBe(200);
       const downloadsResult = JSON.parse(downloadsResponse.body);
       expect(downloadsResult.success).toBe(true);
-      
+
       // Verify sorting (GitHub has 2500 downloads vs Filesystem 1000)
       if (downloadsResult.data.length >= 2) {
-        expect(downloadsResult.data[0].downloads).toBeGreaterThan(downloadsResult.data[1].downloads);
+        expect(downloadsResult.data[0].downloads).toBeGreaterThan(
+          downloadsResult.data[1].downloads,
+        );
       }
     });
 
@@ -203,7 +207,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Get overall stats
       const statsResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/stats'
+        url: '/api/v1/stats',
       });
       expect(statsResponse.statusCode).toBe(200);
       const stats = JSON.parse(statsResponse.body);
@@ -213,13 +217,13 @@ describe('MCP Marketplace Integration Tests', () => {
         totalDownloads: 3500, // 1000 + 2500
         featuredCount: 1,
         categoryBreakdown: { development: 2 },
-        riskLevelBreakdown: { medium: 1, low: 1 }
+        riskLevelBreakdown: { medium: 1, low: 1 },
       });
 
       // Get categories
       const categoriesResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/categories'
+        url: '/api/v1/categories',
       });
       expect(categoriesResponse.statusCode).toBe(200);
       const categories = JSON.parse(categoriesResponse.body);
@@ -230,7 +234,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Get popular servers
       const popularResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/stats/popular?limit=1'
+        url: '/api/v1/stats/popular?limit=1',
       });
       expect(popularResponse.statusCode).toBe(200);
       const popular = JSON.parse(popularResponse.body);
@@ -241,7 +245,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Get top rated
       const topRatedResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/stats/top-rated?minDownloads=500&limit=2'
+        url: '/api/v1/stats/top-rated?minDownloads=500&limit=2',
       });
       expect(topRatedResponse.statusCode).toBe(200);
       const topRated = JSON.parse(topRatedResponse.body);
@@ -253,7 +257,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Check registry status
       const statusResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/registries/test/status'
+        url: '/api/v1/registries/test/status',
       });
       expect(statusResponse.statusCode).toBe(200);
       const status = JSON.parse(statusResponse.body);
@@ -263,7 +267,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Refresh registry
       const refreshResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/registries/test/refresh'
+        url: '/api/v1/registries/test/refresh',
       });
       expect(refreshResponse.statusCode).toBe(200);
       const refresh = JSON.parse(refreshResponse.body);
@@ -272,7 +276,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Refresh all registries
       const refreshAllResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/registries/refresh'
+        url: '/api/v1/registries/refresh',
       });
       expect(refreshAllResponse.statusCode).toBe(200);
       const refreshAll = JSON.parse(refreshAllResponse.body);
@@ -282,11 +286,11 @@ describe('MCP Marketplace Integration Tests', () => {
 
     it('should handle client-specific installation instructions', async () => {
       const clients = ['claude', 'cline', 'cursor', 'continue'];
-      
+
       for (const client of clients) {
         const response = await app.inject({
           method: 'GET',
-          url: `/api/v1/servers/test-filesystem/install?client=${client}`
+          url: `/api/v1/servers/test-filesystem/install?client=${client}`,
         });
         expect(response.statusCode).toBe(200);
         const install = JSON.parse(response.body);
@@ -304,7 +308,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Test generic installation (no client specified)
       const genericResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/test-filesystem/install'
+        url: '/api/v1/servers/test-filesystem/install',
       });
       expect(genericResponse.statusCode).toBe(200);
       const generic = JSON.parse(genericResponse.body);
@@ -320,42 +324,42 @@ describe('MCP Marketplace Integration Tests', () => {
       // 404 for non-existent server
       const notFoundResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/nonexistent-server'
+        url: '/api/v1/servers/nonexistent-server',
       });
       expect(notFoundResponse.statusCode).toBe(404);
-      
+
       // Invalid server ID format
       const invalidIdResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/invalid..id'
+        url: '/api/v1/servers/invalid..id',
       });
       expect(invalidIdResponse.statusCode).toBe(400);
 
       // Invalid search parameters
       const invalidSearchResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?limit=-1'
+        url: '/api/v1/servers/search?limit=-1',
       });
       expect(invalidSearchResponse.statusCode).toBe(400);
 
       // Non-existent registry
       const nonExistentRegistryResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/registries/nonexistent/status'
+        url: '/api/v1/registries/nonexistent/status',
       });
       expect(nonExistentRegistryResponse.statusCode).toBe(404);
 
       // Method not allowed
       const methodNotAllowedResponse = await app.inject({
         method: 'DELETE',
-        url: '/api/v1/servers/test-filesystem'
+        url: '/api/v1/servers/test-filesystem',
       });
       expect(methodNotAllowedResponse.statusCode).toBe(405);
 
       // Non-existent route
       const notFoundRouteResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/nonexistent'
+        url: '/api/v1/nonexistent',
       });
       expect(notFoundRouteResponse.statusCode).toBe(404);
     });
@@ -363,7 +367,7 @@ describe('MCP Marketplace Integration Tests', () => {
     it('should provide consistent error response format', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/nonexistent'
+        url: '/api/v1/servers/nonexistent',
       });
 
       expect(response.statusCode).toBe(404);
@@ -372,36 +376,38 @@ describe('MCP Marketplace Integration Tests', () => {
         success: false,
         error: {
           code: expect.any(String),
-          message: expect.any(String)
-        }
+          message: expect.any(String),
+        },
       });
     });
   });
 
   describe('Security and Performance Integration', () => {
     it('should enforce rate limiting', async () => {
-      const requests = Array(10).fill(null).map((_, i) =>
-        app.inject({
-          method: 'GET',
-          url: `/api/v1/servers/search?q=test${i}`
-        })
-      );
+      const requests = Array(10)
+        .fill(null)
+        .map((_, i) =>
+          app.inject({
+            method: 'GET',
+            url: `/api/v1/servers/search?q=test${i}`,
+          }),
+        );
 
       const responses = await Promise.all(requests);
-      
+
       // Should have at least some successful requests
-      const successful = responses.filter(r => r.statusCode === 200).length;
+      const successful = responses.filter((r) => r.statusCode === 200).length;
       expect(successful).toBeGreaterThan(0);
-      
+
       // May have some rate limited (429) responses
-      const rateLimited = responses.filter(r => r.statusCode === 429).length;
+      const rateLimited = responses.filter((r) => r.statusCode === 429).length;
       expect(successful + rateLimited).toBe(10);
     });
 
     it('should include security headers', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search'
+        url: '/api/v1/servers/search',
       });
 
       // Check for security headers (added by Helmet)
@@ -414,9 +420,9 @@ describe('MCP Marketplace Integration Tests', () => {
         method: 'OPTIONS',
         url: '/api/v1/servers/search',
         headers: {
-          'Origin': 'https://claude.ai',
-          'Access-Control-Request-Method': 'GET'
-        }
+          Origin: 'https://claude.ai',
+          'Access-Control-Request-Method': 'GET',
+        },
       });
 
       expect(response.statusCode).toBe(204);
@@ -431,7 +437,7 @@ describe('MCP Marketplace Integration Tests', () => {
       const start1 = Date.now();
       const response1 = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?q=test'
+        url: '/api/v1/servers/search?q=test',
       });
       const duration1 = Date.now() - start1;
       expect(response1.statusCode).toBe(200);
@@ -440,14 +446,14 @@ describe('MCP Marketplace Integration Tests', () => {
       const start2 = Date.now();
       const response2 = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search?q=test'
+        url: '/api/v1/servers/search?q=test',
       });
       const duration2 = Date.now() - start2;
       expect(response2.statusCode).toBe(200);
 
       // Results should be identical
       expect(response1.body).toBe(response2.body);
-      
+
       // Second request should be faster (cached)
       // Note: This is a heuristic test and may be flaky
       console.log(`First request: ${duration1}ms, Second request: ${duration2}ms`);
@@ -457,20 +463,20 @@ describe('MCP Marketplace Integration Tests', () => {
       // Make initial request to populate cache
       await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search'
+        url: '/api/v1/servers/search',
       });
 
       // Refresh cache
       const refreshResponse = await app.inject({
         method: 'POST',
-        url: '/api/v1/registries/test/refresh'
+        url: '/api/v1/registries/test/refresh',
       });
       expect(refreshResponse.statusCode).toBe(200);
 
       // Subsequent request should still work
       const searchResponse = await app.inject({
         method: 'GET',
-        url: '/api/v1/servers/search'
+        url: '/api/v1/servers/search',
       });
       expect(searchResponse.statusCode).toBe(200);
     });
@@ -481,7 +487,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Swagger UI
       const docsResponse = await app.inject({
         method: 'GET',
-        url: '/documentation'
+        url: '/documentation',
       });
       expect(docsResponse.statusCode).toBe(200);
       expect(docsResponse.headers['content-type']).toContain('text/html');
@@ -489,7 +495,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // OpenAPI JSON spec
       const specResponse = await app.inject({
         method: 'GET',
-        url: '/documentation/json'
+        url: '/documentation/json',
       });
       expect(specResponse.statusCode).toBe(200);
       const spec = JSON.parse(specResponse.body);
@@ -501,7 +507,7 @@ describe('MCP Marketplace Integration Tests', () => {
       // Root redirect
       const rootResponse = await app.inject({
         method: 'GET',
-        url: '/'
+        url: '/',
       });
       expect(rootResponse.statusCode).toBe(302);
       expect(rootResponse.headers.location).toBe('/documentation');

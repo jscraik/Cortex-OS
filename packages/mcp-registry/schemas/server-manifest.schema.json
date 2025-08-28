@@ -216,12 +216,7 @@
       "items": {
         "type": "string",
         "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$",
-        "examples": [
-          "files:read",
-          "files:write",
-          "network:http",
-          "system:exec"
-        ]
+        "examples": ["files:read", "files:write", "network:http", "system:exec"]
       },
       "minItems": 1,
       "uniqueItems": true,

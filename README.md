@@ -4,31 +4,39 @@
 
 ## Architecture Overview
 
-Cortex-OS follows the **ASBR (Autonomous Software Behavior Reasoning)** architecture pattern with clear separation of concerns:
+Cortex-OS is a monorepo containing several applications and shared libraries. The architecture is designed to be modular, with clear separation between applications and the services they consume.
 
-### ASBR Runtime
+- **`apps/`**: Contains all user-facing applications, including the main `cortex-os` runtime, the `cortex-cli`, and the `cortex-marketplace` web interface.
+- **`packages/`**: Contains all shared libraries and services. These packages provide the core functionality of the system, such as agent-to-agent communication (`a2a`), memory (`memories`), and workflow `orchestration`.
+- **`libs/`**: Contains low-level framework libraries, utilities, and type definitions.
+- **`.cortex/`**: The governance hub of the project, containing all policies, schemas, and validation scripts.
+- **`contracts/`**: Defines the data contracts (e.g., CloudEvents) for communication between services.
 
-- **Location**: `apps/cortex-os/`
-- **Role**: Main application runtime that orchestrates feature packages
-- **Provides**: CLI, HTTP APIs, UI adapters, coordination logic
+## Project Structure
 
-### Feature Packages (mounted by ASBR)
+A high-level overview of the most important directories:
 
-- **Location**: `apps/cortex-os/packages/`
-- **Role**: Domain-specific features and capabilities
-- **Examples**: `agents/`, `asbr/`, `mvp/`, `mvp-core/`, `mvp-server/`
+```markdown
+.
+├── .cortex/ # Governance hub (single source of truth)
+├── apps/ # Applications and services
+│ ├── cortex-os/ # Main ASBR Runtime application
+│ ├── cortex-cli/ # Command-line interface
+│ └── cortex-web/ # Shared web UI components
+├── packages/ # Shared libraries and services
+│ ├── a2a/ # Agent-to-Agent communication bus
+│ ├── agents/ # Core agent implementations
+│ ├── memories/ # Long-term memory management
+│ ├── model-gateway/ # Gateway for accessing AI models
+│ ├── orchestration/ # Workflow orchestration
+│ ├── rag/ # Retrieval-Augmented Generation
+│ └── ... # and many other packages
+├── contracts/ # API and event contracts
+├── libs/ # Low-level framework libraries (TS, Python)
+└── ...
+```
 
-### Shared Library Packages
-
-- **Location**: `packages/`
-- **Role**: Cross-cutting services and shared infrastructure
-- **Examples**: `a2a/`, `mcp/` (restructured), `memories/`, `orchestration/`, `rag/`, `simlab/`
-
-### Applications
-
-- **Location**: `apps/`
-- **Role**: Production applications and services
-- **Examples**: `cortex-os/` (ASBR Runtime), `cortex-marketplace-api/` (MCP Marketplace)
+For a complete and authoritative reference of the project structure, please see [`.cortex/docs/project-structure.md`](./.cortex/docs/project-structure.md).
 
 ## Communication Patterns
 
@@ -62,46 +70,6 @@ pnpm lint
 pnpm format
 ```
 
-## Project Structure
-
-```markdown
-apps/ # Applications
-├── cortex-os/ # ASBR Runtime
-│ ├── src/ # Main application code
-│ ├── packages/ # Feature packages mounted by ASBR
-│ │ ├── agents/ # Feature-level agents/neurons
-│ │ ├── asbr/ # Core ASBR reasoning package
-│ │ ├── mvp/ # MVP foundations
-│ │ ├── mvp-core/ # MVP core components
-│ │ └── mvp-server/ # MVP HTTP server
-│ └── brain/ # Brain modules
-└── cortex-marketplace-api/ # MCP Marketplace API
-  ├── src/ai/ # AI services (MLX, Ollama)
-  └── src/registry/ # Server registry
-
-packages/ # Shared library packages
-├── a2a/ # Agent-to-Agent communication
-├── mcp/ # Model Context Protocol (RESTRUCTURED)
-│ └── src/lib/ # Clean implementation (7 core modules)
-│   ├── types.ts # Core type definitions
-│   ├── client.ts # MCP client
-│   ├── server.ts # MCP server
-│   ├── bridge.ts # Transport bridges
-│   ├── transport.ts # Transport layer
-│   ├── config.ts # Configuration
-│   └── index.test.ts # TDD test suite (16 tests)
-├── memories/ # Long-term state management
-├── orchestration/ # Multi-agent workflow coordination
-├── rag/ # Retrieval-Augmented Generation
-└── simlab/ # Simulation environment
-
-libs/ # Framework libraries
-├── typescript/ # TypeScript utilities and contracts
-└── python/ # Python utilities
-
-tests/ # Integration and E2E tests
-```
-
 ## Key Principles
 
 - **Modular Architecture**: Features are independent, replaceable packages
@@ -113,3 +81,10 @@ tests/ # Integration and E2E tests
 - **Accessibility**: WCAG 2.2 AA compliance throughout
 - **Clean Architecture**: Removed backward compatibility bloat (30+ files from MCP)
 - **AI-Enhanced**: MLX (Qwen3) for semantic search, Ollama fallback
+
+## Licensing
+
+- Open-source edition: Apache License, Version 2.0. See `LICENSE` and `NOTICE`.
+- Commercial option: See `COMMERCIAL-LICENSE.md` for terms that apply to paid features/support.
+- Contributions: Use permissive-licensed deps only (Apache/MIT/BSD). We avoid AGPL/SSPL unless isolated and optional.
+- Trademarks: "Cortex-OS" and related marks are subject to trademark policies.

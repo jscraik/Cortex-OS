@@ -7,7 +7,7 @@
  * @status active
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // Document metadata schema (allows known fields + extra analytics/chunk keys)
 export const DocumentMetadataSchema = z
@@ -52,8 +52,8 @@ export type QueryResult = z.infer<typeof QueryResultSchema>;
 // Retriever configuration schema
 export const RetrieverConfigSchema = z.object({
   dimension: z.number().positive(),
-  metric: z.enum(["cosine", "euclidean", "inner_product"]).default("cosine"),
-  indexType: z.enum(["faiss", "hnswlib", "sqlite_vss"]).default("faiss"),
+  metric: z.enum(['cosine', 'euclidean', 'inner_product']).default('cosine'),
+  indexType: z.enum(['faiss', 'hnswlib', 'sqlite_vss']).default('faiss'),
   cacheEnabled: z.boolean().default(true),
   maxCacheSize: z.number().positive().default(1000),
 });
@@ -62,9 +62,7 @@ export type RetrieverConfig = z.infer<typeof RetrieverConfigSchema>;
 
 // Reranker configuration schema
 export const RerankerConfigSchema = z.object({
-  model: z
-    .string()
-    .default("sentence-transformers/cross-encoder/ms-marco-MiniLM-L-6-v2"),
+  model: z.string().default('sentence-transformers/cross-encoder/ms-marco-MiniLM-L-6-v2'),
   maxCandidates: z.number().positive().default(20),
   topK: z.number().positive().default(10),
   useLocal: z.boolean().default(true),
@@ -80,11 +78,7 @@ export interface Retriever {
 }
 
 export interface Reranker {
-  rerank(
-    query: string,
-    candidates: QueryResult[],
-    topK?: number,
-  ): Promise<QueryResult[]>;
+  rerank(query: string, candidates: QueryResult[], topK?: number): Promise<QueryResult[]>;
   getConfig(): RerankerConfig;
 }
 
@@ -113,8 +107,8 @@ export const RetrievalSystemConfigSchema = z.object({
   retriever: RetrieverConfigSchema,
   reranker: RerankerConfigSchema,
   embeddings: z.object({
-    provider: z.enum(["ollama", "openai", "local"]).default("ollama"),
-    model: z.string().default("nomic-embed-text"),
+    provider: z.enum(['ollama', 'openai', 'local']).default('ollama'),
+    model: z.string().default('nomic-embed-text'),
     dimension: z.number().positive().default(768),
   }),
   cache: z.object({

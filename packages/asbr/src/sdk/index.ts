@@ -4,21 +4,21 @@
  */
 
 import type {
-    ArtifactRef,
-    CreateProfileRequest,
-    CreateProfileResponse,
-    CreateTaskRequest,
-    CreateTaskResponse,
-    Event,
-    EventType,
-    GetTaskResponse,
-    ListArtifactsQuery,
-    ListArtifactsResponse,
-    Profile,
-    Task,
-    TaskInput,
-    TaskRef,
-    UnsubscribeFunction,
+  ArtifactRef,
+  CreateProfileRequest,
+  CreateProfileResponse,
+  CreateTaskRequest,
+  CreateTaskResponse,
+  Event,
+  EventType,
+  GetTaskResponse,
+  ListArtifactsQuery,
+  ListArtifactsResponse,
+  Profile,
+  Task,
+  TaskInput,
+  TaskRef,
+  UnsubscribeFunction,
 } from '../types/index.js';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
@@ -375,6 +375,11 @@ export function createIdempotencyKey(input: TaskInput): string {
 
 // Export types for consumers
 export type {
-    ArtifactRef, Event, Profile, Task, TaskInput, TaskRef, UnsubscribeFunction
+  ArtifactRef,
+  Event,
+  Profile,
+  Task,
+  TaskInput,
+  TaskRef,
+  UnsubscribeFunction,
 } from '../types/index.js';
-

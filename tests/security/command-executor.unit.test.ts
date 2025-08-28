@@ -44,7 +44,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
   describe('Command Whitelisting Tests', () => {
     test('should allow whitelisted commands', async () => {
       const allowedCommands = ['docker', 'git', 'ls', 'pwd', 'echo', 'cat'];
-      
+
       for (const command of allowedCommands) {
         const result = await SecureCommandExecutor.validateCommand([command, '--version']);
         expect(result.success).toBe(true);
@@ -53,7 +53,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should reject non-whitelisted commands', async () => {
       const forbiddenCommands = ['rm', 'sudo', 'chmod', 'chown', 'wget', 'curl'];
-      
+
       for (const command of forbiddenCommands) {
         await expect(async () => {
           await SecureCommandExecutor.validateCommand([command, '--help']);
@@ -63,7 +63,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should allow whitelisted Docker subcommands', async () => {
       const allowedSubcommands = ['ps', 'images', 'inspect', 'logs', 'version', 'info'];
-      
+
       for (const subcommand of allowedSubcommands) {
         const result = await SecureCommandExecutor.executeDockerCommand(subcommand);
         expect(result).toHaveProperty('exitCode');
@@ -72,7 +72,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should reject non-whitelisted Docker subcommands', async () => {
       const forbiddenSubcommands = ['rm', 'rmi', 'exec', 'run', 'build'];
-      
+
       for (const subcommand of forbiddenSubcommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeDockerCommand(subcommand);
@@ -86,9 +86,9 @@ describe('SecureCommandExecutor - Unit Tests', () => {
       const maliciousCommands = [
         ['docker', 'ps;', 'rm', '-rf', '/'],
         ['echo', 'test;', 'whoami'],
-        ['ls', '-la;', 'cat', '/etc/passwd']
+        ['ls', '-la;', 'cat', '/etc/passwd'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -101,7 +101,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['docker', 'ps', '&&', 'rm', '-rf', '/'],
         ['echo', 'test', '&&', 'whoami'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -114,7 +114,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['docker', 'nonexistent', '||', 'echo', 'exploit'],
         ['false', '||', 'whoami'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -128,7 +128,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['ls', '-la', '|', 'sh'],
         ['docker', 'ps', '|', 'rm', '-rf', '/'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -141,7 +141,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['echo', '`whoami`'],
         ['ls', '-la', '`cat /etc/passwd`'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -155,7 +155,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['ls', '$(cat /etc/passwd)'],
         ['echo', '${USER}'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -168,7 +168,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['echo', 'test(test)test'],
         ['ls', '-la(test)'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -181,7 +181,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['echo', '[test]'],
         ['ls', '{test}'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -195,7 +195,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['ls', '-la', '>>', '/tmp/log'],
         ['cat', '/etc/passwd', '<', '/dev/null'],
       ];
-      
+
       for (const command of maliciousCommands) {
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(command);
@@ -211,9 +211,9 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         'container_name_123',
         'test-container-456',
         'a1b2c3d4e5f6',
-        'my_app_container'
+        'my_app_container',
       ];
-      
+
       for (const id of validContainerIds) {
         const result = await SecureCommandExecutor.validateParameter(id, 'containerId');
         expect(result.isValid).toBe(true);
@@ -230,7 +230,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         'container$(whoami)',
         'container`ls`',
       ];
-      
+
       for (const id of invalidContainerIds) {
         const result = await SecureCommandExecutor.validateParameter(id, 'containerId');
         expect(result.isValid).toBe(false);
@@ -244,9 +244,9 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         'myapp:1.0.0',
         'registry.example.com/myimage:tag',
         'alpine',
-        'python:3.9-slim'
+        'python:3.9-slim',
       ];
-      
+
       for (const imageName of validImageNames) {
         const result = await SecureCommandExecutor.validateParameter(imageName, 'imageName');
         expect(result.isValid).toBe(true);
@@ -262,7 +262,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         'image$(whoami)',
         'image`ls`',
       ];
-      
+
       for (const imageName of invalidImageNames) {
         const result = await SecureCommandExecutor.validateParameter(imageName, 'imageName');
         expect(result.isValid).toBe(false);
@@ -271,7 +271,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should validate numeric parameters', async () => {
       const validNumbers = ['123', '0', '999999', '1024'];
-      
+
       for (const num of validNumbers) {
         const result = await SecureCommandExecutor.validateParameter(num, 'numeric');
         expect(result.isValid).toBe(true);
@@ -286,7 +286,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         '123$(whoami)',
         '123`ls`',
       ];
-      
+
       for (const num of invalidNumbers) {
         const result = await SecureCommandExecutor.validateParameter(num, 'numeric');
         expect(result.isValid).toBe(false);
@@ -324,7 +324,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
       // Set a short timeout
       const shortTimeout = 50;
-      
+
       await expect(async () => {
         await SecureCommandExecutor.executeCommand(['sleep', '10'], shortTimeout);
       }).rejects.toThrow(/Command timed out/);
@@ -349,7 +349,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should prevent overly long arguments', async () => {
       const veryLongArgument = 'A'.repeat(1001); // Exceeds 1000 character limit
-      
+
       await expect(async () => {
         await SecureCommandExecutor.executeCommand(['echo', veryLongArgument]);
       }).rejects.toThrow(/Argument too long/);
@@ -357,7 +357,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should allow reasonably sized arguments', async () => {
       const reasonableArgument = 'A'.repeat(100); // Within limit
-      
+
       const result = await SecureCommandExecutor.executeCommand(['echo', reasonableArgument]);
       expect(result).toHaveProperty('exitCode');
     });
@@ -366,7 +366,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
   describe('Output Sanitization Tests', () => {
     test('should sanitize HTML/JavaScript from stdout', async () => {
       const maliciousOutput = '<script>alert("XSS")</script>';
-      
+
       const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(maliciousOutput);
       expect(sanitizedOutput).not.toContain('<script>');
       expect(sanitizedOutput).not.toContain('alert');
@@ -374,7 +374,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should sanitize HTML/JavaScript from stderr', async () => {
       const maliciousError = 'Error: <script>document.location="http://evil.com"</script>';
-      
+
       const sanitizedError = SecureCommandExecutor.sanitizeOutput(maliciousError);
       expect(sanitizedError).not.toContain('<script>');
       expect(sanitizedError).not.toContain('document.location');
@@ -382,7 +382,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should sanitize JavaScript protocol handlers', async () => {
       const maliciousOutput = 'Click here: <a href="javascript:alert(\'XSS\')">Link</a>';
-      
+
       const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(maliciousOutput);
       expect(sanitizedOutput).not.toContain('javascript:');
       expect(sanitizedOutput).not.toContain('alert');
@@ -390,15 +390,16 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should sanitize VBScript protocol handlers', async () => {
       const maliciousOutput = '<a href="vbscript:msgbox(\'XSS\')">Link</a>';
-      
+
       const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(maliciousOutput);
       expect(sanitizedOutput).not.toContain('vbscript:');
       expect(sanitizedOutput).not.toContain('msgbox');
     });
 
     test('should sanitize event handlers', async () => {
-      const maliciousOutput = '<img src="x" onerror="alert(\'XSS\')" onload="document.location=\'http://evil.com\'">';
-      
+      const maliciousOutput =
+        '<img src="x" onerror="alert(\'XSS\')" onload="document.location=\'http://evil.com\'">';
+
       const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(maliciousOutput);
       expect(sanitizedOutput).not.toContain('onerror');
       expect(sanitizedOutput).not.toContain('onload');
@@ -408,7 +409,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should allow safe HTML', async () => {
       const safeHtml = '<p>This is a <strong>safe</strong> paragraph with <em>emphasis</em>.</p>';
-      
+
       const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(safeHtml);
       expect(sanitizedOutput).toContain('<p>');
       expect(sanitizedOutput).toContain('</p>');
@@ -560,14 +561,14 @@ describe('SecureCommandExecutor - Unit Tests', () => {
 
     test('should handle very long but valid command arrays', async () => {
       const longValidCommand = ['echo', ...Array(100).fill('argument')];
-      
+
       const result = await SecureCommandExecutor.executeCommand(longValidCommand);
       expect(result).toHaveProperty('exitCode');
     });
 
     test('should handle commands with unicode characters', async () => {
       const unicodeCommand = ['echo', 'Hello 世界 🌍', 'Привет мир', 'مرحبا بالعالم'];
-      
+
       const result = await SecureCommandExecutor.executeCommand(unicodeCommand);
       expect(result).toHaveProperty('exitCode');
     });
@@ -579,7 +580,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
         ['echo', 'variable=value'],
         ['echo', 'path/to/file'],
       ];
-      
+
       for (const command of specialCharCommands) {
         const result = await SecureCommandExecutor.executeCommand(command);
         expect(result).toHaveProperty('exitCode');
@@ -589,7 +590,7 @@ describe('SecureCommandExecutor - Unit Tests', () => {
     test('should handle nested command structures', async () => {
       // This tests that we don't have recursion issues with complex nested objects
       const complexCommand = ['docker', 'run', '--name', 'test-container', 'nginx:latest'];
-      
+
       const result = await SecureCommandExecutor.executeCommand(complexCommand);
       expect(result).toHaveProperty('exitCode');
     });

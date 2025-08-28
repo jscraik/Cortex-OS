@@ -15,9 +15,7 @@ cortex-os-clean/
 │ Model Gateway (packages/model-gateway/_) │
 │ ├─ MLX Service → Qwen3-Embedding-{8B,4B,0.6B}, Qwen3-Reranker-4B, │
 │ │ Qwen3-Coder-30B-4bit, Phi-3-4bit, Qwen2.5-VL-3B-6bit │
-│ ├─ Ollama Fallback → qwen3-coder:30b, phi4-mini-reasoning, gemma3n, deepseek-coder│
-│ └─ Frontier API (optional) → OpenAI/Anthropic/etc via outbound MCP or direct HTTP │
-│ (disabled by policy unless HITL approved) │
+│ └─ Ollama Fallback → qwen3-coder:30b, phi4-mini-reasoning, gemma3n, deepseek-coder│
 │ │
 │ RAG (packages/rag/_): │
 │ embed(MLX→Ollama) → retrieve(FAISS/Qdrant) → rerank(MLX cross-encoder→fusion) │
@@ -33,14 +31,12 @@ External: Environment & Data (docs, repos, web) via MCP tools and RAG
 MCP registry (client→servers)
 • mlx-local (embeddings, reranker, chat.invoke).
 • ollama (embeddings, chat.invoke).
-• frontier-gateway (chat.embedding, chat.completions) off by default; enabled case-by-case via policy + HITL.
 
 packages/mcp/mcp-registry/servers/models.json
 
 [
 { "name": "mlx-local", "transport": "http", "url": "http://127.0.0.1:8081" },
-{ "name": "ollama", "transport": "http", "url": "http://127.0.0.1:11434" },
-{ "name": "frontier-gateway", "transport": "http", "url": "http://127.0.0.1:8082" }
+{ "name": "ollama", "transport": "http", "url": "http://127.0.0.1:11434" }
 ]
 
 A2A (AsyncAPI subjects)
@@ -50,11 +46,19 @@ A2A (AsyncAPI subjects)
 • agent.verify.result
 All messages are CloudEvents with runId, traceId, evidence[].
 
+## Agent Roles and Architecture
+
+Cortex-OS defines several agent roles, each with a specific focus. These roles are implemented using the common architectural pattern of `plan → gather → critic → synthesize → verify` described in the agent template.
+
+- **MCP Agents**: These agents primarily interact with external tools and services via the Model Context Protocol (MCP). Their `gather` step is focused on collecting information from these external sources.
+- **A2A Agents**: These agents are responsible for coordinating workflows between other agents. Their `plan` and `synthesize` steps often involve creating and sending tasks to other agents via the A2A event bus.
+- **RAG Agents**: These agents specialize in knowledge retrieval. Their `gather` step heavily utilizes the Retrieval-Augmented Generation (RAG) packages to find relevant information from documents and data sources.
+- **Simlab Agents**: These agents operate within the simulation environment (`simlab-mono`). Their actions are typically constrained to the simulated world, and they are used for testing and evaluating the behavior of other agents.
+
 Model Gateway APIs
 • POST /embeddings {model,texts[]} → vectors
 • POST /rerank {model,query,docs[]} → [idx,score]
 • POST /chat {model,msgs,tools?} → response (MLX first; fallback if policy allows)
-• POST /frontier/... proxied only when policy grants + HITL pass
 
 ## Config and routing
 
@@ -80,7 +84,7 @@ if (n==="verify") return {provider:"mlx", model:"llamas-community/LlamaGuard-7b"
 return {provider:"mlx", model:"mlx-community/Phi-3-mini-4k-instruct-4bit"};
 }
 
-Fallback: if MLX load fails → mapped Ollama model; if both fail and policy grants frontier, route via frontier-gateway.
+Fallback: if MLX load fails → mapped Ollama model.
 
 ## Policy and audits
 
@@ -90,27 +94,14 @@ Fallback: if MLX load fails → mapped Ollama model; if both fail and policy gra
 {
 "$schema": "../schemas/policy.schema.json",
 "tool": "model-gateway",
-"actions": ["embeddings","rerank","chat","frontier"],
+"actions": ["embeddings","rerank","chat"],
 "dataClass": "internal",
 "rate": { "perMinute": 60 },
 "fsScope": [],
 "rules": {
-"default_provider": "mlx",
-"allow_frontier": false,
-"require_hitl_for_frontier": true,
-"allowed_frontier_vendors": ["openai","anthropic"]
+"default_provider": "mlx"
 }
 }
-
-contracts/tests/policy.spec.ts (CI fail on unsafe grants)
-
-test("frontier is disabled unless HITL", () => {
-const g = load(".cortex/policy/tools/model-gateway.json");
-expect(g.rules.allow_frontier).toBe(false);
-expect(g.rules.require_hitl_for_frontier).toBe(true);
-});
-
-.github/PULL_REQUEST_TEMPLATE.md (policy diff block kept; include any change to allow_frontier)
 
 ## Code stubs
 
@@ -137,17 +128,11 @@ enforce(await loadGrant("model-gateway"), "chat", req.body);
 record(audit("model-gateway","chat",req.body));
 return mlxChatOrOllama(req.body);
 });
-app.post("/frontier", async (req:any) => {
-const g = await loadGrant("model-gateway");
-if (!g.rules?.allow_frontier) throw new Error("frontier disabled");
-// require HITL approval flag on ctx before proxying
-return proxyToFrontier(req.body); // MCP or direct HTTP
-});
 
 app.listen({ port: 8081 }); // MLX + gateway service
 
 packages/mcp/mcp-server-models/src/index.ts
-Expose the above as MCP tools embeddings.embed, reranker.score, chat.invoke, frontier.invoke.
+Expose the above as MCP tools embeddings.embed, reranker.score, chat.invoke.
 
 ## Ordered steps
 
@@ -156,17 +141,15 @@ Expose the above as MCP tools embeddings.embed, reranker.score, chat.invoke, fro
 3. Implement embed MLX→Ollama adapters and MLX reranker→fusion; point RAG pipeline to gateway.
 4. Wire model-router into orchestrator nodes; keep single-writer gate in synthesize().
 5. Enforce policies and audit every model call; store trace IDs.
-6. Add HITL UI approval before any frontier route; keyboard shortcuts: ? help, Enter approve, Esc reject, g/G next/prev. Screen-reader labels on all controls.
-7. Add policy tests in contracts/tests/ and PR template with policy diff.
-8. Add simlab scenarios: precision@k vs latency for 8B/4B/0.6B embeds and reranker variants.
-9. Ship infra compose for NATS, Qdrant, OTEL; start gateway on 8081.
+6. Add policy tests in contracts/tests/.
+7. Add simlab scenarios: precision@k vs latency for 8B/4B/0.6B embeds and reranker variants.
+8. Ship infra compose for NATS, Qdrant, OTEL; start gateway on 8081.
 
 ## Analysis Block
 
 Pros
 • Clear separation: agent logic, tools (MCP), models (gateway), transport (A2A).
 • MLX end-to-end with audited fallbacks.
-• Frontier access exists but is off and supervised.
 
 Cons / risks
 • MLX glue needs tokenizer/model wiring.
@@ -184,11 +167,10 @@ Missed opportunities
 Moving forward
 • Land gateway + policies first.
 • Swap RAG to gateway; run simlab KPIs.
-• Enable frontier only on specific flows with HITL.
 
 ## Standards Check
 
 • A11y: WCAG 2.2 AA; keyboard shortcuts (?, Enter, Esc, g/G); visible focus; SR labels; no color-only cues.
-• Security: OWASP LLM Top-10 mapped in policy (prompt injection limits, output validation, excessive agency). Frontier routes require HITL + audit.
+• Security: OWASP LLM Top-10 mapped in policy (prompt injection limits, output validation, excessive agency).
 • Eng: SemVer, Conventional Commits, EditorConfig, ESLint/Prettier, Vitest.
 • Data/APIs: CloudEvents + AsyncAPI; MCP for tools; OTEL traces; JSONL audit.

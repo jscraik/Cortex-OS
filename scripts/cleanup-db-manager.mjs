@@ -7,7 +7,11 @@ import { join } from 'path';
 
 console.log('Cleaning up duplicated content in DatabaseManager.ts...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages/agents/src/legacy-instructions/DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages/agents/src/legacy-instructions/DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Remove duplicated content after the updateAgent method

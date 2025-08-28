@@ -2,7 +2,7 @@
  * @file Memory Service Embedding Integration Tests
  * @description Comprehensive tests for memory service integration with AI embeddings
  * @maintainer @jamiescottcraik
- * @version 1.0.0 
+ * @version 1.0.0
  * @status active
  */
 
@@ -74,7 +74,7 @@ class MockMemoryService {
     metadata: Record<string, unknown> = {},
     ttlDays?: number,
     policy?: MockMemoryRecord['policy'],
-    sourceURI?: string
+    sourceURI?: string,
   ): Promise<string> {
     const embedding = await this.embedOne(text);
     const record: MockMemoryRecord = {
@@ -86,7 +86,9 @@ class MockMemoryService {
       embedding,
       createdAt: new Date().toISOString(),
       ttlDays,
-      expireAt: ttlDays ? new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000).toISOString() : undefined,
+      expireAt: ttlDays
+        ? new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000).toISOString()
+        : undefined,
       policy,
       sourceURI,
     };
@@ -95,10 +97,13 @@ class MockMemoryService {
     return record.id;
   }
 
-  async search(ctx: MockTenantCtx, query: Omit<MockVectorQuery, 'tenantId'>): Promise<MockVectorHit[]> {
+  async search(
+    ctx: MockTenantCtx,
+    query: Omit<MockVectorQuery, 'tenantId'>,
+  ): Promise<MockVectorHit[]> {
     return this.records
-      .filter(record => record.tenantId === ctx.tenantId)
-      .map(record => {
+      .filter((record) => record.tenantId === ctx.tenantId)
+      .map((record) => {
         // Calculate cosine similarity
         const similarity = this.cosineSimilarity(query.queryEmbedding, record.embedding);
         return {
@@ -131,12 +136,14 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
     mockEmbedder = {
       embed: vi.fn().mockImplementation(async (texts: string[]) => {
         // Generate consistent mock embeddings
-        return texts.map(text => {
+        return texts.map((text) => {
           const hash = text.split('').reduce((a, b) => {
-            a = ((a << 5) - a) + b.charCodeAt(0);
+            a = (a << 5) - a + b.charCodeAt(0);
             return a & a;
           }, 0);
-          return Array(1024).fill(0).map((_, i) => Math.sin(hash + i) * 0.1);
+          return Array(1024)
+            .fill(0)
+            .map((_, i) => Math.sin(hash + i) * 0.1);
         });
       }),
     };
@@ -185,13 +192,11 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       const recordIds: string[] = [];
 
       for (const text of testTexts) {
-        const recordId = await memoryService.putText(
-          testContext,
-          'doc',
-          text,
-          { source: 'integration-test', type: 'documentation' }
-        );
-        
+        const recordId = await memoryService.putText(testContext, 'doc', text, {
+          source: 'integration-test',
+          type: 'documentation',
+        });
+
         expect(recordId).toBeDefined();
         expect(typeof recordId).toBe('string');
         recordIds.push(recordId);
@@ -209,7 +214,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
 
       expect(embedding1).toHaveLength(1024);
       expect(embedding2).toHaveLength(1024);
-      
+
       // In mock mode, embeddings should be consistent
       expect(embedding1).toEqual(embedding2);
     });
@@ -220,7 +225,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       const embedding = await memoryService.embedOne(text);
 
       expect(embedding).toHaveLength(1024);
-      expect(embedding.every(val => typeof val === 'number')).toBe(true);
+      expect(embedding.every((val) => typeof val === 'number')).toBe(true);
     });
 
     it('should handle different memory record types', async () => {
@@ -233,12 +238,9 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       ];
 
       for (let i = 0; i < recordTypes.length; i++) {
-        const recordId = await memoryService.putText(
-          testContext,
-          recordTypes[i],
-          testTexts[i],
-          { recordType: recordTypes[i] }
-        );
+        const recordId = await memoryService.putText(testContext, recordTypes[i], testTexts[i], {
+          recordType: recordTypes[i],
+        });
 
         expect(recordId).toBeDefined();
       }
@@ -274,7 +276,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       });
 
       expect(results).toHaveLength(3);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.id).toBeDefined();
         expect(result.text).toBeDefined();
         expect(typeof result.score).toBe('number');
@@ -309,21 +311,21 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
         topK: 10,
       });
 
-      // Search from tenant 2 perspective  
+      // Search from tenant 2 perspective
       const tenant2Results = await memoryService.search(tenant2Context, {
         queryEmbedding,
         topK: 10,
       });
 
       // Each tenant should only see their own data
-      const tenant1Texts = tenant1Results.map(r => r.text);
-      const tenant2Texts = tenant2Results.map(r => r.text);
+      const tenant1Texts = tenant1Results.map((r) => r.text);
+      const tenant2Texts = tenant2Results.map((r) => r.text);
 
-      expect(tenant1Texts.some(text => text.includes('Tenant 1'))).toBe(true);
-      expect(tenant1Texts.some(text => text.includes('Tenant 2'))).toBe(false);
-      
-      expect(tenant2Texts.some(text => text.includes('Tenant 2'))).toBe(true);
-      expect(tenant2Texts.some(text => text.includes('Tenant 1'))).toBe(false);
+      expect(tenant1Texts.some((text) => text.includes('Tenant 1'))).toBe(true);
+      expect(tenant1Texts.some((text) => text.includes('Tenant 2'))).toBe(false);
+
+      expect(tenant2Texts.some((text) => text.includes('Tenant 2'))).toBe(true);
+      expect(tenant2Texts.some((text) => text.includes('Tenant 1'))).toBe(false);
     });
 
     it('should support filtered semantic search', async () => {
@@ -334,7 +336,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       });
 
       await memoryService.putText(testContext, 'doc', 'Development setup instructions', {
-        environment: 'development', 
+        environment: 'development',
         category: 'setup',
       });
 
@@ -355,21 +357,21 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
 
   describe('⚡ Memory Performance with Embeddings', () => {
     it('should handle batch embedding operations efficiently', async () => {
-      const batchTexts = Array(10).fill(null).map((_, i) => 
-        `Test document ${i} with unique content for batch processing`
-      );
+      const batchTexts = Array(10)
+        .fill(null)
+        .map((_, i) => `Test document ${i} with unique content for batch processing`);
 
       const startTime = performance.now();
 
       const batchPromises = batchTexts.map((text, i) =>
-        memoryService.putText(testContext, 'chunk', text, { batchIndex: i })
+        memoryService.putText(testContext, 'chunk', text, { batchIndex: i }),
       );
 
       const recordIds = await Promise.all(batchPromises);
       const endTime = performance.now();
 
       expect(recordIds).toHaveLength(10);
-      expect(recordIds.every(id => typeof id === 'string')).toBe(true);
+      expect(recordIds.every((id) => typeof id === 'string')).toBe(true);
 
       // Performance should be reasonable for batch operations
       const processingTime = endTime - startTime;
@@ -378,9 +380,12 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
 
     it('should maintain search performance with growing data set', async () => {
       // Add multiple documents to test search performance
-      const documents = Array(20).fill(null).map((_, i) =>
-        `Document ${i}: This contains information about topic ${i % 5} with various details and content.`
-      );
+      const documents = Array(20)
+        .fill(null)
+        .map(
+          (_, i) =>
+            `Document ${i}: This contains information about topic ${i % 5} with various details and content.`,
+        );
 
       for (const doc of documents) {
         await memoryService.putText(testContext, 'doc', doc);
@@ -420,7 +425,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
         'Restricted confidential information',
         { classification: 'restricted' },
         undefined,
-        restrictedPolicy
+        restrictedPolicy,
       );
 
       const publicId = await memoryService.putText(
@@ -429,7 +434,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
         'Public information accessible to all',
         { classification: 'public' },
         undefined,
-        publicPolicy
+        publicPolicy,
       );
 
       expect(restrictedId).toBeDefined();
@@ -445,7 +450,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
         'event',
         'Short-term event log entry',
         { temporary: true },
-        shortTTL
+        shortTTL,
       );
 
       const longTermId = await memoryService.putText(
@@ -453,7 +458,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
         'doc',
         'Long-term documentation',
         { permanent: false },
-        longTTL
+        longTTL,
       );
 
       expect(shortTermId).toBeDefined();
@@ -467,7 +472,7 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       const embedding = await memoryService.embedOne(sensitiveText);
 
       expect(embedding).toHaveLength(1024);
-      expect(embedding.every(val => typeof val === 'number')).toBe(true);
+      expect(embedding.every((val) => typeof val === 'number')).toBe(true);
       // The actual text should be sanitized in real implementation
     });
   });
@@ -510,10 +515,16 @@ describe('🧠 Memory Service Embedding Integration Tests', () => {
       expect(metricsReport.tenantIsolation.crossTenantLeakage).toBe(0);
 
       console.log('✅ Memory-Embedding Integration Metrics');
-      console.log(`   - Embedding Operations: ${metricsReport.embeddingOperations.totalEmbeddings} completed`);
+      console.log(
+        `   - Embedding Operations: ${metricsReport.embeddingOperations.totalEmbeddings} completed`,
+      );
       console.log(`   - Memory Records: ${metricsReport.memoryStorage.totalRecords} stored`);
-      console.log(`   - Search Performance: ${metricsReport.searchPerformance.averageSearchTime}ms average`);
-      console.log(`   - Tenant Security: ${metricsReport.tenantIsolation.crossTenantLeakage} violations`);
+      console.log(
+        `   - Search Performance: ${metricsReport.searchPerformance.averageSearchTime}ms average`,
+      );
+      console.log(
+        `   - Tenant Security: ${metricsReport.tenantIsolation.crossTenantLeakage} violations`,
+      );
     });
   });
 });

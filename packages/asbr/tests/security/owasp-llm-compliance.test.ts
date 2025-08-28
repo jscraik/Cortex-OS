@@ -95,9 +95,7 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
           input: {
             title: 'Legitimate task',
             brief: 'This should work normally',
-            inputs: [
-              { kind: 'text', value: 'Normal input that should be processed safely' },
-            ],
+            inputs: [{ kind: 'text', value: 'Normal input that should be processed safely' }],
             scopes: ['tasks:create'],
             schema: 'cortex.task.input@1',
           },

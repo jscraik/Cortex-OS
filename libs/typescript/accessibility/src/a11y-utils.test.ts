@@ -3,7 +3,7 @@
  * @description Comprehensive test suite for A11yUtils (WCAG 2.2 AA/AAA Compliance)
  * @author Cortex-OS Team
  * @version 1.0.0
- * 
+ *
  * Context: Frontend (Accessibility)
  * Framework: Vitest + jsdom
  * Coverage Target: 100%
@@ -19,7 +19,7 @@ import { JSDOM } from 'jsdom';
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
   url: 'http://localhost',
   pretendToBeVisual: true,
-  resources: 'usable'
+  resources: 'usable',
 });
 
 global.document = dom.window.document;
@@ -27,7 +27,6 @@ global.window = dom.window as any;
 global.HTMLElement = dom.window.HTMLElement;
 
 describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
-  
   describe('Color Contrast Calculations', () => {
     describe('getContrastRatio', () => {
       it('should calculate correct contrast ratio for black and white', () => {
@@ -50,9 +49,9 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         // Test cases from WebAIM contrast checker
         const testCases = [
           { fg: '#333333', bg: '#FFFFFF', expectedMin: 12.6, expectedMax: 12.7 }, // Dark gray on white
-          { fg: '#767676', bg: '#FFFFFF', expectedMin: 4.5, expectedMax: 4.6 },   // Medium gray on white (AA threshold)
-          { fg: '#0066CC', bg: '#FFFFFF', expectedMin: 7.2, expectedMax: 7.3 },   // Blue on white
-          { fg: '#FFFFFF', bg: '#0066CC', expectedMin: 7.2, expectedMax: 7.3 },   // White on blue (reverse)
+          { fg: '#767676', bg: '#FFFFFF', expectedMin: 4.5, expectedMax: 4.6 }, // Medium gray on white (AA threshold)
+          { fg: '#0066CC', bg: '#FFFFFF', expectedMin: 7.2, expectedMax: 7.3 }, // Blue on white
+          { fg: '#FFFFFF', bg: '#0066CC', expectedMin: 7.2, expectedMax: 7.3 }, // White on blue (reverse)
         ];
 
         testCases.forEach(({ fg, bg, expectedMin, expectedMax }) => {
@@ -67,7 +66,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         expect(() => {
           A11yUtils.getContrastRatio('#FFF', '#000');
         }).not.toThrow();
-        
+
         const ratio = A11yUtils.getContrastRatio('#FFF', '#000');
         expect(ratio).toBeCloseTo(21.0, 1);
       });
@@ -138,7 +137,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
       });
 
       it('should fail AAA compliance for medium contrast pairs', () => {
-        expect(A11yUtils.meetsAaaContrast('#0066CC', '#FFFFFF')).toBe(true);  // ~7.3:1 (passes)
+        expect(A11yUtils.meetsAaaContrast('#0066CC', '#FFFFFF')).toBe(true); // ~7.3:1 (passes)
         expect(A11yUtils.meetsAaaContrast('#767676', '#FFFFFF')).toBe(false); // ~4.5:1 (fails)
         expect(A11yUtils.meetsAaaContrast('#555555', '#FFFFFF')).toBe(false); // ~6.7:1 (fails)
       });
@@ -153,7 +152,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
       it('should be more restrictive than AA', () => {
         // Colors that pass AA but fail AAA
         const mediumContrastColor = '#767676'; // ~4.5:1 with white
-        
+
         expect(A11yUtils.meetsAaContrast(mediumContrastColor, '#FFFFFF')).toBe(true);
         expect(A11yUtils.meetsAaaContrast(mediumContrastColor, '#FFFFFF')).toBe(false);
       });
@@ -165,7 +164,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         // We can infer RGB conversion is working if contrast ratios are correct
         const whiteBlackRatio = A11yUtils.getContrastRatio('#FFFFFF', '#000000');
         const redGreenRatio = A11yUtils.getContrastRatio('#FF0000', '#00FF00');
-        
+
         expect(whiteBlackRatio).toBeCloseTo(21.0, 1);
         expect(redGreenRatio).toBeCloseTo(1.0, 0); // Red and green have similar luminance
       });
@@ -182,7 +181,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         // Pure white should have luminance ~1, pure black ~0
         const whiteRatio = A11yUtils.getContrastRatio('#FFFFFF', '#FFFFFF');
         const blackRatio = A11yUtils.getContrastRatio('#000000', '#000000');
-        
+
         expect(whiteRatio).toBeCloseTo(1.0, 5);
         expect(blackRatio).toBeCloseTo(1.0, 5);
       });
@@ -191,7 +190,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         // Colors with different gamma correction scenarios
         const lowGamma = A11yUtils.getContrastRatio('#101010', '#FFFFFF'); // Should use linear division
         const highGamma = A11yUtils.getContrastRatio('#808080', '#FFFFFF'); // Should use power function
-        
+
         expect(lowGamma).toBeGreaterThan(highGamma);
         expect(lowGamma).toBeGreaterThan(1);
         expect(highGamma).toBeGreaterThan(1);
@@ -249,10 +248,30 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
 
       it('should handle various element types', () => {
         const testCases = [
-          { element: 'button', action: 'Click', context: 'to open menu', expected: 'Click button to open menu' },
-          { element: 'link', action: 'Navigate', context: 'to homepage', expected: 'Navigate link to homepage' },
-          { element: 'checkbox', action: 'Toggle', context: 'newsletter subscription', expected: 'Toggle checkbox newsletter subscription' },
-          { element: 'textbox', action: 'Enter', context: 'your email address', expected: 'Enter textbox your email address' },
+          {
+            element: 'button',
+            action: 'Click',
+            context: 'to open menu',
+            expected: 'Click button to open menu',
+          },
+          {
+            element: 'link',
+            action: 'Navigate',
+            context: 'to homepage',
+            expected: 'Navigate link to homepage',
+          },
+          {
+            element: 'checkbox',
+            action: 'Toggle',
+            context: 'newsletter subscription',
+            expected: 'Toggle checkbox newsletter subscription',
+          },
+          {
+            element: 'textbox',
+            action: 'Enter',
+            context: 'your email address',
+            expected: 'Enter textbox your email address',
+          },
         ];
 
         testCases.forEach(({ element, action, context, expected }) => {
@@ -337,7 +356,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         activeElement.blur = vi.fn();
         Object.defineProperty(document, 'activeElement', {
           value: activeElement,
-          writable: true
+          writable: true,
         });
 
         const event = new KeyboardEvent('keydown', { key: 'Escape' });
@@ -371,7 +390,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
           new KeyboardEvent('keydown', { key: 'Enter' }),
         ];
 
-        events.forEach(event => keyboardHandler(event));
+        events.forEach((event) => keyboardHandler(event));
 
         expect(mockOnSelect).toHaveBeenCalledWith(mockItems[1], 1); // Should be on second item
       });
@@ -413,7 +432,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         // Move down twice
         keyboardHandler(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
         keyboardHandler(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
-        
+
         // Select current item
         keyboardHandler(new KeyboardEvent('keydown', { key: 'Enter' }));
 
@@ -439,9 +458,9 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
       });
 
       it('should handle modified key events', () => {
-        const ctrlDownEvent = new KeyboardEvent('keydown', { 
-          key: 'ArrowDown', 
-          ctrlKey: true 
+        const ctrlDownEvent = new KeyboardEvent('keydown', {
+          key: 'ArrowDown',
+          ctrlKey: true,
         });
         const preventDefaultSpy = vi.spyOn(ctrlDownEvent, 'preventDefault');
 
@@ -457,33 +476,33 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
   describe('Integration Tests', () => {
     it('should work together for complete accessibility workflow', () => {
       // Test a complete accessibility implementation scenario
-      
+
       // 1. Validate color scheme
       const primaryColor = '#1E40AF';
       const backgroundColor = '#FFFFFF';
       expect(A11yUtils.meetsAaContrast(primaryColor, backgroundColor)).toBe(true);
-      
+
       // 2. Generate ARIA labels
       const buttonLabel = A11yUtils.generateAriaLabel('button', 'Submit', 'contact form');
       expect(buttonLabel).toBe('Submit button contact form');
-      
+
       // 3. Create screen reader text
       const srText = A11yUtils.generateSrText('✓ Saved', 'Form successfully submitted');
       expect(srText).toBe('✓ Saved (Form successfully submitted)');
-      
+
       // 4. Set up keyboard navigation
       const items = [
         document.createElement('button'),
         document.createElement('input'),
-        document.createElement('a')
+        document.createElement('a'),
       ];
       const onSelect = vi.fn();
       const handler = A11yUtils.createKeyboardNavHandler(items, onSelect);
-      
+
       // Test navigation
       handler(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
       handler(new KeyboardEvent('keydown', { key: 'Enter' }));
-      
+
       expect(onSelect).toHaveBeenCalledWith(items[1], 1);
     });
 
@@ -493,7 +512,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         text: '#1F2937',
         background: '#FFFFFF',
         error: '#DC2626',
-        success: '#059669'
+        success: '#059669',
       };
 
       // Validate all color combinations meet AA standards
@@ -529,13 +548,13 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
       const colorSchemes = [
         { name: 'light', text: '#000000', bg: '#FFFFFF' },
         { name: 'dark', text: '#FFFFFF', bg: '#000000' },
-        { name: 'high-contrast', text: '#000000', bg: '#FFFF00' }
+        { name: 'high-contrast', text: '#000000', bg: '#FFFF00' },
       ];
 
-      colorSchemes.forEach(scheme => {
+      colorSchemes.forEach((scheme) => {
         const ratio = A11yUtils.getContrastRatio(scheme.text, scheme.bg);
         expect(ratio).toBeGreaterThanOrEqual(4.5); // All should meet AA
-        
+
         if (scheme.name === 'high-contrast') {
           expect(A11yUtils.meetsAaaContrast(scheme.text, scheme.bg)).toBe(true);
         }
@@ -546,16 +565,31 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
   describe('Performance Tests', () => {
     it('should handle large numbers of contrast calculations efficiently', () => {
       const colors = [
-        '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
-        '#800000', '#008000', '#000080', '#808000', '#800080', '#008080',
-        '#000000', '#FFFFFF', '#808080', '#C0C0C0', '#404040', '#202020'
+        '#FF0000',
+        '#00FF00',
+        '#0000FF',
+        '#FFFF00',
+        '#FF00FF',
+        '#00FFFF',
+        '#800000',
+        '#008000',
+        '#000080',
+        '#808000',
+        '#800080',
+        '#008080',
+        '#000000',
+        '#FFFFFF',
+        '#808080',
+        '#C0C0C0',
+        '#404040',
+        '#202020',
       ];
 
       const startTime = Date.now();
 
       // Calculate contrast ratios for all combinations (18 * 18 = 324 calculations)
-      colors.forEach(color1 => {
-        colors.forEach(color2 => {
+      colors.forEach((color1) => {
+        colors.forEach((color2) => {
           A11yUtils.getContrastRatio(color1, color2);
           A11yUtils.meetsAaContrast(color1, color2);
           A11yUtils.meetsAaaContrast(color1, color2);
@@ -621,7 +655,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
         '#GGGGGG', // Invalid hex characters
       ];
 
-      malformedColors.forEach(color => {
+      malformedColors.forEach((color) => {
         expect(() => {
           A11yUtils.getContrastRatio(color, '#FFFFFF');
         }).not.toThrow();
@@ -641,7 +675,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
     it('should handle null/undefined inputs for text functions', () => {
       expect(A11yUtils.generateSrText(null as any)).toBe(null as any);
       expect(A11yUtils.generateSrText(undefined as any)).toBe(undefined as any);
-      
+
       expect(() => {
         A11yUtils.generateAriaLabel(null as any, 'action');
       }).not.toThrow();
@@ -650,7 +684,7 @@ describe('A11yUtils - WCAG 2.2 AA/AAA Compliance Suite', () => {
     it('should handle keyboard events with null elements', () => {
       const nullItems = [null as any, undefined as any];
       const handler = A11yUtils.createKeyboardNavHandler(nullItems, vi.fn());
-      
+
       expect(() => {
         handler(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
       }).not.toThrow();

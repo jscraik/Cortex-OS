@@ -2,7 +2,7 @@
 # Presidio PII Analyzer with Enhanced Security Configuration
 # Security: GDPR/CCPA Compliance & Data Protection
 
-version: "3.8"
+version: '3.8'
 
 services:
   presidio-analyzer:
@@ -29,7 +29,7 @@ services:
       resources:
         limits:
           memory: 1G
-          cpus: "2.0"
+          cpus: '2.0'
           pids: 50
         reservations:
           memory: 512M
@@ -160,7 +160,7 @@ services:
       resources:
         limits:
           memory: 512M
-          cpus: "1.0"
+          cpus: '1.0'
           pids: 25
         reservations:
           memory: 256M
@@ -252,7 +252,7 @@ services:
       resources:
         limits:
           memory: 64M
-          cpus: "0.1"
+          cpus: '0.1'
         reservations:
           memory: 32M
           cpus: '0.05'
@@ -313,7 +313,7 @@ services:
       resources:
         limits:
           memory: 128M
-          cpus: "0.2"
+          cpus: '0.2'
         reservations:
           memory: 64M
           cpus: '0.1'

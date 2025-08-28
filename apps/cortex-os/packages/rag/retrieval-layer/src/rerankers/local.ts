@@ -3,7 +3,7 @@
  * @description Local reranker implementation using simple text matching
  */
 
-import { Reranker, QueryResult, RerankerConfig } from "../types";
+import { Reranker, QueryResult, RerankerConfig } from '../types';
 
 export class LocalReranker implements Reranker {
   private config: RerankerConfig;
@@ -16,11 +16,7 @@ export class LocalReranker implements Reranker {
     return { ...this.config };
   }
 
-  async rerank(
-    query: string,
-    candidates: QueryResult[],
-    topK?: number,
-  ): Promise<QueryResult[]> {
+  async rerank(query: string, candidates: QueryResult[], topK?: number): Promise<QueryResult[]> {
     if (candidates.length === 0) {
       return [];
     }
@@ -48,16 +44,13 @@ export class LocalReranker implements Reranker {
     return reranked;
   }
 
-  private calculateRelevanceScore(
-    query: string,
-    candidate: QueryResult,
-  ): number {
+  private calculateRelevanceScore(query: string, candidate: QueryResult): number {
     const queryTerms = this.tokenize(query.toLowerCase());
     const documentText = (
       candidate.document.content +
-      " " +
-      (candidate.document.metadata.title || "") +
-      " " +
+      ' ' +
+      (candidate.document.metadata.title || '') +
+      ' ' +
       candidate.document.path
     ).toLowerCase();
 
@@ -67,16 +60,13 @@ export class LocalReranker implements Reranker {
     const queryTermSet = new Set(queryTerms);
     const documentTermSet = new Set(documentTerms);
 
-    const intersection = new Set(
-      [...queryTermSet].filter((x) => documentTermSet.has(x)),
-    );
+    const intersection = new Set([...queryTermSet].filter((x) => documentTermSet.has(x)));
     const overlapScore = intersection.size / queryTermSet.size;
 
     // Calculate TF-IDF-like score for matched terms
     let tfidfScore = 0;
     for (const term of intersection) {
-      const termFreq =
-        documentTerms.filter((t) => t === term).length / documentTerms.length;
+      const termFreq = documentTerms.filter((t) => t === term).length / documentTerms.length;
       const inverseDocFreq = Math.log(1 / (termFreq + 0.001)); // Smoothing
       tfidfScore += termFreq * inverseDocFreq;
     }
@@ -90,7 +80,7 @@ export class LocalReranker implements Reranker {
 
   private tokenize(text: string): string[] {
     return text
-      .replace(/[^\w\s]/g, " ") // Replace punctuation with spaces
+      .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
       .split(/\s+/) // Split on whitespace
       .filter((token) => token.length > 2) // Filter short tokens
       .filter((token) => !this.isStopWord(token)); // Filter stop words
@@ -98,52 +88,52 @@ export class LocalReranker implements Reranker {
 
   private isStopWord(word: string): boolean {
     const stopWords = new Set([
-      "the",
-      "a",
-      "an",
-      "and",
-      "or",
-      "but",
-      "in",
-      "on",
-      "at",
-      "to",
-      "for",
-      "of",
-      "with",
-      "by",
-      "is",
-      "are",
-      "was",
-      "were",
-      "be",
-      "been",
-      "have",
-      "has",
-      "had",
-      "do",
-      "does",
-      "did",
-      "will",
-      "would",
-      "could",
-      "should",
-      "this",
-      "that",
-      "these",
-      "those",
-      "i",
-      "me",
-      "my",
-      "myself",
-      "we",
-      "our",
-      "ours",
-      "ourselves",
-      "you",
-      "your",
-      "yours",
-      "yourself",
+      'the',
+      'a',
+      'an',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'with',
+      'by',
+      'is',
+      'are',
+      'was',
+      'were',
+      'be',
+      'been',
+      'have',
+      'has',
+      'had',
+      'do',
+      'does',
+      'did',
+      'will',
+      'would',
+      'could',
+      'should',
+      'this',
+      'that',
+      'these',
+      'those',
+      'i',
+      'me',
+      'my',
+      'myself',
+      'we',
+      'our',
+      'ours',
+      'ourselves',
+      'you',
+      'your',
+      'yours',
+      'yourself',
     ]);
 
     return stopWords.has(word.toLowerCase());

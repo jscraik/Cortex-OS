@@ -21,24 +21,17 @@
       "cyclomatic": 5,
       "cognitive": 3,
       "maintainability": "high",
-      "hotspots": [
-        "function processData()"
-      ]
+      "hotspots": ["function processData()"]
     },
     "security": {
       "vulnerabilities": [],
       "riskLevel": "low",
-      "recommendations": [
-        "Add input sanitization",
-        "Implement proper error handling"
-      ]
+      "recommendations": ["Add input sanitization", "Implement proper error handling"]
     },
     "performance": {
       "bottlenecks": [],
       "memoryUsage": "efficient",
-      "optimizations": [
-        "Consider caching repeated calculations"
-      ]
+      "optimizations": ["Consider caching repeated calculations"]
     },
     "confidence": 0.85,
     "modelUsed": "qwen3-coder-14b",
@@ -48,7 +41,10 @@
     "seed": 12345,
     "analysisType": "basic"
   },
-  "timestamp": 1756323507483,
+  "timestamp": 1756406226855,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+
+  "nodeVersion": "v20.19.4"
+
+
 }

@@ -67,7 +67,9 @@ export class MLXAdapter {
       const output = await this.executeCommand(['list']);
       return this.parseModelList(output);
     } catch (error) {
-      throw new Error(`Failed to list MLX models: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to list MLX models: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -81,17 +83,19 @@ export class MLXAdapter {
       if (info && info.health === '[OK]') {
         return true;
       }
-      
+
       // Fallback to listing all models
       const models = await this.listModels();
       const normalizedTarget = this.normalizeModelName(modelName);
-      
-      return models.some(model => {
+
+      return models.some((model) => {
         const normalizedModelName = this.normalizeModelName(model.name);
-        return normalizedModelName === normalizedTarget ||
-               model.name.includes(normalizedTarget) ||
-               normalizedTarget.includes(model.name) ||
-               model.id === modelName;
+        return (
+          normalizedModelName === normalizedTarget ||
+          model.name.includes(normalizedTarget) ||
+          normalizedTarget.includes(model.name) ||
+          model.id === modelName
+        );
       });
     } catch (error) {
       return false;
@@ -115,8 +119,10 @@ export class MLXAdapter {
         'run',
         actualModelName,
         prompt,
-        '--max-tokens', maxTokens.toString(),
-        '--temperature', temperature.toString()
+        '--max-tokens',
+        maxTokens.toString(),
+        '--temperature',
+        temperature.toString(),
       ];
 
       if (options.stopTokens && options.stopTokens.length > 0) {
@@ -126,7 +132,9 @@ export class MLXAdapter {
       const output = await this.executeCommand(args);
       return this.cleanMLXOutput(output);
     } catch (error) {
-      throw new Error(`MLX generation failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `MLX generation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -135,7 +143,7 @@ export class MLXAdapter {
    */
   async getModelInfo(modelName?: string): Promise<MLXModelInfo | null> {
     const targetModel = modelName || this.config.modelName;
-    
+
     try {
       const output = await this.executeCommand(['show', targetModel]);
       return this.parseModelInfo(output);
@@ -160,9 +168,9 @@ export class MLXAdapter {
         return { healthy: false, message: `Model health: ${info.health}` };
       }
     } catch (error) {
-      return { 
-        healthy: false, 
-        message: `Health check failed: ${error instanceof Error ? error.message : String(error)}` 
+      return {
+        healthy: false,
+        message: `Health check failed: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
@@ -215,22 +223,26 @@ export class MLXAdapter {
    * Parse model list output from mlx-knife
    */
   private parseModelList(output: string): MLXModelInfo[] {
-    const lines = output.split('\n').filter(line => line.trim() && !line.includes('⚠️') && !line.includes('NAME'));
-    
-    return lines.map(line => {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length >= 4) {
-        return {
-          name: parts[0],
-          id: parts[1],
-          size: parts[2],
-          modified: parts.slice(3, -1).join(' '),
-          path: '', // Will be filled by show command if needed
-          health: '[OK]', // Assume OK if listed
-        };
-      }
-      return null;
-    }).filter(Boolean) as MLXModelInfo[];
+    const lines = output
+      .split('\n')
+      .filter((line) => line.trim() && !line.includes('⚠️') && !line.includes('NAME'));
+
+    return lines
+      .map((line) => {
+        const parts = line.trim().split(/\s+/);
+        if (parts.length >= 4) {
+          return {
+            name: parts[0],
+            id: parts[1],
+            size: parts[2],
+            modified: parts.slice(3, -1).join(' '),
+            path: '', // Will be filled by show command if needed
+            health: '[OK]', // Assume OK if listed
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) as MLXModelInfo[];
   }
 
   /**
@@ -269,15 +281,17 @@ export class MLXAdapter {
   private cleanMLXOutput(output: string): string {
     return output
       .split('\n')
-      .filter(line => {
+      .filter((line) => {
         const lowerLine = line.toLowerCase();
-        return !line.includes('⚠️') && 
-               !line.includes('Found') && 
-               !line.includes('Command:') &&
-               !lowerLine.includes('please move them to:') &&
-               !lowerLine.includes('this warning will appear') &&
-               !lowerLine.includes('mv /volumes/') &&
-               line.trim().length > 0;
+        return (
+          !line.includes('⚠️') &&
+          !line.includes('Found') &&
+          !line.includes('Command:') &&
+          !lowerLine.includes('please move them to:') &&
+          !lowerLine.includes('this warning will appear') &&
+          !lowerLine.includes('mv /volumes/') &&
+          line.trim().length > 0
+        );
       })
       .join('\n')
       .trim();
@@ -312,22 +326,21 @@ export class MLXAdapter {
     try {
       const models = await this.listModels();
       const normalizedTarget = this.normalizeModelName(configuredName);
-      
+
       // Find exact match first
-      const exactMatch = models.find(model => 
-        this.normalizeModelName(model.name) === normalizedTarget
+      const exactMatch = models.find(
+        (model) => this.normalizeModelName(model.name) === normalizedTarget,
       );
-      
+
       if (exactMatch) {
         return exactMatch.name;
       }
-      
+
       // Find partial match
-      const partialMatch = models.find(model => 
-        model.name.includes(normalizedTarget) || 
-        normalizedTarget.includes(model.name)
+      const partialMatch = models.find(
+        (model) => model.name.includes(normalizedTarget) || normalizedTarget.includes(model.name),
       );
-      
+
       return partialMatch?.name || null;
     } catch (error) {
       return null;
@@ -338,7 +351,10 @@ export class MLXAdapter {
 /**
  * Create MLX adapter with commonly used models
  */
-export const createMLXAdapter = (modelName: string, options: Partial<MLXConfig> = {}): MLXAdapter => {
+export const createMLXAdapter = (
+  modelName: string,
+  options: Partial<MLXConfig> = {},
+): MLXAdapter => {
   return new MLXAdapter({
     modelName,
     maxTokens: 512,
@@ -353,7 +369,7 @@ export const createMLXAdapter = (modelName: string, options: Partial<MLXConfig> 
  */
 export const AVAILABLE_MLX_MODELS = {
   QWEN_SMALL: 'Qwen2.5-0.5B-Instruct-4bit',
-  PHI_MINI: 'Phi-3-mini-4k-instruct-4bit', 
+  PHI_MINI: 'Phi-3-mini-4k-instruct-4bit',
   QWEN_VL: 'Qwen2.5-VL-3B-Instruct-6bit',
   GLM_4: 'GLM-4.5-4bit',
   MIXTRAL: 'Mixtral-8x7B-v0.1-hf-4bit-mlx',
@@ -365,7 +381,7 @@ export const AVAILABLE_MLX_MODELS = {
  */
 export const HUGGINGFACE_MODEL_REPOS = {
   QWEN_SMALL: 'mlx-community/Qwen2.5-0.5B-Instruct-4bit',
-  PHI_MINI: 'mlx-community/Phi-3-mini-4k-instruct-4bit', 
+  PHI_MINI: 'mlx-community/Phi-3-mini-4k-instruct-4bit',
   QWEN_VL: 'mlx-community/Qwen2.5-VL-3B-Instruct-6bit',
   GLM_4: 'mlx-community/GLM-4.5-4bit',
   MIXTRAL: 'mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx',

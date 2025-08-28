@@ -9,12 +9,12 @@ const mockPrisma = {
     findUnique: vi.fn(),
     delete: vi.fn(),
     findMany: vi.fn(),
-  }
+  },
 };
 
 describe('PrismaStore persistence', () => {
   let store: PrismaStore;
-  
+
   beforeEach(() => {
     store = new PrismaStore(mockPrisma as any);
     // Clear all mocks before each test
@@ -57,7 +57,7 @@ describe('PrismaStore persistence', () => {
 
     const saved = await store.upsert(record);
     const retrieved = await store.get('1');
-    
+
     expect(saved).toEqual(record);
     expect(retrieved).toEqual(record);
     expect(mockPrisma.memory.upsert).toHaveBeenCalledTimes(1);
@@ -103,7 +103,7 @@ describe('PrismaStore persistence', () => {
 
     const saved = await store.upsert(record);
     const retrieved = await store.get('2');
-    
+
     expect(saved).toEqual(record);
     expect(retrieved).toEqual(record);
   });

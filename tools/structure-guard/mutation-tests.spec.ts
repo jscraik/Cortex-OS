@@ -38,7 +38,7 @@ describe('glob matcher mutation tests', () => {
       // Later patterns override earlier ones
       const patterns1 = ['**/*.js', '!**/test.js', '**/test.js'];
       expect(micromatch.isMatch('test.js', patterns1)).toBe(true);
-      
+
       const patterns2 = ['**/*.js', '**/test.js', '!**/test.js'];
       expect(micromatch.isMatch('test.js', patterns2)).toBe(false);
     });
@@ -77,7 +77,9 @@ describe('glob matcher mutation tests', () => {
     });
 
     it('matches dot directories', () => {
-      expect(micromatch.isMatch('.github/workflows/ci.yml', '.github/**', { dot: true })).toBe(true);
+      expect(micromatch.isMatch('.github/workflows/ci.yml', '.github/**', { dot: true })).toBe(
+        true,
+      );
       expect(micromatch.isMatch('.git/config', '.git/**', { dot: true })).toBe(true);
     });
   });
@@ -127,7 +129,9 @@ describe('glob matcher mutation tests', () => {
 
   describe('performance edge cases', () => {
     it('handles many patterns efficiently', () => {
-      const patterns = Array(1000).fill('').map((_, i) => `file${i}.txt`);
+      const patterns = Array(1000)
+        .fill('')
+        .map((_, i) => `file${i}.txt`);
       const start = Date.now();
       expect(micromatch.isMatch('file500.txt', patterns)).toBe(true);
       const end = Date.now();
@@ -152,20 +156,20 @@ describe('glob matcher mutation tests', () => {
         '!**/node_modules/**',
         'packages/!(node_modules)/**',
         'src/**/*.(ts|tsx)',
-        '+(src|tests)/**'
+        '+(src|tests)/**',
       ];
-      
+
       // Test various file paths
       const testPaths = [
         'src/index.ts',
         'tests/index.spec.ts',
         'packages/memories/src/index.ts',
         'node_modules/pkg/index.js',
-        'dist/bundle.js'
+        'dist/bundle.js',
       ];
-      
+
       // None of these should crash
-      testPaths.forEach(path => {
+      testPaths.forEach((path) => {
         expect(() => micromatch.isMatch(path, randomPatterns)).not.toThrow();
       });
     });

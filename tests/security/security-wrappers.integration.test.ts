@@ -8,7 +8,7 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';
-import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';
+import { SecureNeo4j } from '@cortex-os/utils';
 import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
 
 // Mock external dependencies
@@ -91,9 +91,11 @@ describe('Security Wrappers - Integration Tests', () => {
     // Setup mock database
     mockSession = {
       run: vi.fn().mockResolvedValue({
-        records: [{
-          get: vi.fn().mockReturnValue([])
-        }]
+        records: [
+          {
+            get: vi.fn().mockReturnValue([]),
+          },
+        ],
       }),
       close: vi.fn(),
     };
@@ -128,12 +130,14 @@ describe('Security Wrappers - Integration Tests', () => {
       const userData = {
         id: 'user_123',
         name: 'John Doe',
-        email: 'john@example.com'
+        email: 'john@example.com',
       };
 
       secureDb.secureRun(
         'INSERT INTO users (id, name, email) VALUES (?, ?, ?)',
-        userData.id, userData.name, userData.email
+        userData.id,
+        userData.name,
+        userData.email,
       );
 
       // Then, create corresponding node in graph database
@@ -143,15 +147,15 @@ describe('Security Wrappers - Integration Tests', () => {
         props: {
           name: userData.name,
           email: userData.email,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       };
 
       await secureNeo4j.upsertNode(userNode);
 
       // Verify both operations succeeded
       expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        'INSERT INTO users (id, name, email) VALUES (?, ?, ?)'
+        'INSERT INTO users (id, name, email) VALUES (?, ?, ?)',
       );
       expect(mockDriver.session).toHaveBeenCalled();
     });
@@ -161,14 +165,16 @@ describe('Security Wrappers - Integration Tests', () => {
       const maliciousUserData = {
         id: "user_123'; DROP TABLE users; CREATE (m {name:'compromised'});",
         name: 'John Doe',
-        email: 'john@example.com'
+        email: 'john@example.com',
       };
 
       // This should fail at the database level due to parameterization
       expect(() => {
         secureDb.secureRun(
           'INSERT INTO users (id, name, email) VALUES (?, ?, ?)',
-          maliciousUserData.id, maliciousUserData.name, maliciousUserData.email
+          maliciousUserData.id,
+          maliciousUserData.name,
+          maliciousUserData.email,
         );
       }).not.toThrow(); // The parameterization prevents the injection
 
@@ -178,8 +184,8 @@ describe('Security Wrappers - Integration Tests', () => {
         label: 'User',
         props: {
           name: maliciousUserData.name,
-          email: maliciousUserData.email
-        }
+          email: maliciousUserData.email,
+        },
       };
 
       await expect(async () => {
@@ -192,24 +198,26 @@ describe('Security Wrappers - Integration Tests', () => {
       const commandData = {
         id: 'cmd_123',
         command: ['docker', 'ps'],
-        description: 'List Docker containers'
+        description: 'List Docker containers',
       };
 
       secureDb.secureRun(
         'INSERT INTO commands (id, command, description) VALUES (?, ?, ?)',
-        commandData.id, JSON.stringify(commandData.command), commandData.description
+        commandData.id,
+        JSON.stringify(commandData.command),
+        commandData.description,
       );
 
       // Retrieve and execute the command
       const retrievedCommand = secureDb.secureGet(
         'SELECT command FROM commands WHERE id = ?',
-        commandData.id
+        commandData.id,
       );
 
       if (retrievedCommand) {
         const parsedCommand = JSON.parse(retrievedCommand.command);
         const result = await SecureCommandExecutor.executeCommand(parsedCommand);
-        
+
         expect(result).toHaveProperty('exitCode');
       }
     });
@@ -219,23 +227,25 @@ describe('Security Wrappers - Integration Tests', () => {
       const maliciousCommandData = {
         id: 'cmd_malicious',
         command: JSON.stringify(['docker', 'ps;', 'rm', '-rf', '/']),
-        description: 'Malicious command'
+        description: 'Malicious command',
       };
 
       secureDb.secureRun(
         'INSERT INTO commands (id, command, description) VALUES (?, ?, ?)',
-        maliciousCommandData.id, maliciousCommandData.command, maliciousCommandData.description
+        maliciousCommandData.id,
+        maliciousCommandData.command,
+        maliciousCommandData.description,
       );
 
       // Retrieve and attempt to execute the command
       const retrievedCommand = secureDb.secureGet(
         'SELECT command FROM commands WHERE id = ?',
-        maliciousCommandData.id
+        maliciousCommandData.id,
       );
 
       if (retrievedCommand) {
         const parsedCommand = JSON.parse(retrievedCommand.command);
-        
+
         await expect(async () => {
           await SecureCommandExecutor.executeCommand(parsedCommand);
         }).rejects.toThrow(/Invalid characters in command/);
@@ -257,7 +267,7 @@ describe('Security Wrappers - Integration Tests', () => {
       const maliciousNode = {
         id: maliciousInput,
         label: 'User',
-        props: { name: 'John' }
+        props: { name: 'John' },
       };
 
       await expect(async () => {
@@ -312,9 +322,9 @@ describe('Security Wrappers - Integration Tests', () => {
       const largeDataSet = Array(1000).fill('test_data');
 
       // Database operation with large dataset
-      const largeInsertQuery = 'INSERT INTO test_table (data) VALUES ' + 
-        largeDataSet.map(() => '(?)').join(', ');
-      
+      const largeInsertQuery =
+        'INSERT INTO test_table (data) VALUES ' + largeDataSet.map(() => '(?)').join(', ');
+
       expect(() => {
         secureDb.secureRun(largeInsertQuery, ...largeDataSet);
       }).not.toThrow();
@@ -323,7 +333,7 @@ describe('Security Wrappers - Integration Tests', () => {
       const largeNodeBatch = largeDataSet.map((data, index) => ({
         id: `node_${index}`,
         label: 'TestData',
-        props: { value: data, index }
+        props: { value: data, index },
       }));
 
       // This would test batch operations if implemented
@@ -331,7 +341,7 @@ describe('Security Wrappers - Integration Tests', () => {
 
       // Command execution with large arguments (should be rejected)
       const veryLargeArgs = Array(100).fill('A'.repeat(100)); // 100 arguments of 100 chars each
-      
+
       await expect(async () => {
         await SecureCommandExecutor.executeCommand(['echo', ...veryLargeArgs]);
       }).rejects.toThrow(/Argument too long/);
@@ -354,7 +364,7 @@ describe('Security Wrappers - Integration Tests', () => {
       const userNode = {
         id: 'user_123',
         label: 'User',
-        props: { name: 'John' }
+        props: { name: 'John' },
       };
 
       await expect(secureNeo4j.upsertNode(userNode)).resolves.not.toThrow();
@@ -370,13 +380,13 @@ describe('Security Wrappers - Integration Tests', () => {
         await secureNeo4j.upsertNode({
           id: 'user_123',
           label: 'User',
-          props: { name: 'John' }
+          props: { name: 'John' },
         });
       }).rejects.toThrow('Neo4j connection failed');
 
       // Ensure database and command execution still enforce security
       const maliciousInput = "test'; DROP TABLE users; --";
-      
+
       // Database should still prevent SQL injection through parameterization
       expect(() => {
         secureDb.secureRun('SELECT * FROM users WHERE id = ?', maliciousInput);
@@ -418,18 +428,15 @@ describe('Security Wrappers - Integration Tests', () => {
     test('should maintain consistent audit trails across all wrappers', async () => {
       // Perform operations with all wrappers
       const startTime = new Date().toISOString();
-      
+
       // Database operation
-      secureDb.secureRun(
-        'INSERT INTO users (id, name) VALUES (?, ?)',
-        'user_123', 'John Doe'
-      );
+      secureDb.secureRun('INSERT INTO users (id, name) VALUES (?, ?)', 'user_123', 'John Doe');
 
       // Neo4j operation
       await secureNeo4j.upsertNode({
         id: 'user_123',
         label: 'User',
-        props: { name: 'John Doe' }
+        props: { name: 'John Doe' },
       });
 
       // Command execution
@@ -447,7 +454,7 @@ describe('Security Wrappers - Integration Tests', () => {
         id: "audit_123'; DELETE FROM audit_log; INSERT INTO audit_log (message) VALUES ('Tampered'); --",
         timestamp: new Date().toISOString(),
         action: 'test_action',
-        user: 'test_user'
+        user: 'test_user',
       };
 
       // Database should prevent SQL injection in audit logging
@@ -457,7 +464,7 @@ describe('Security Wrappers - Integration Tests', () => {
           maliciousAuditData.id,
           maliciousAuditData.timestamp,
           maliciousAuditData.action,
-          maliciousAuditData.user
+          maliciousAuditData.user,
         );
       }).not.toThrow(); // Parameterization prevents injection
 
@@ -468,8 +475,8 @@ describe('Security Wrappers - Integration Tests', () => {
         props: {
           timestamp: maliciousAuditData.timestamp,
           action: maliciousAuditData.action,
-          user: maliciousAuditData.user
-        }
+          user: maliciousAuditData.user,
+        },
       };
 
       await expect(async () => {
@@ -505,17 +512,11 @@ describe('Security Wrappers - Integration Tests', () => {
 
       // Perform many operations to stress test resource management
       const promises = [];
-      
+
       for (let i = 0; i < 10; i++) {
-        promises.push(
-          secureDb.secureRun('SELECT * FROM users WHERE id = ?', `user_${i}`)
-        );
-        promises.push(
-          secureNeo4j.neighborhood(`user_${i}`, 1)
-        );
-        promises.push(
-          SecureCommandExecutor.executeCommand(['echo', `test_${i}`])
-        );
+        promises.push(secureDb.secureRun('SELECT * FROM users WHERE id = ?', `user_${i}`));
+        promises.push(secureNeo4j.neighborhood(`user_${i}`, 1));
+        promises.push(SecureCommandExecutor.executeCommand(['echo', `test_${i}`]));
       }
 
       // All operations should complete successfully

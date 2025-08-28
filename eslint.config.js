@@ -22,6 +22,9 @@ export default [
       'vitest.config.ts',
       'apps/**',
       'packages/**',
+      // Vendored or external sources not governed by root lint
+      'mcp-official-sdk/**',
+      'external/**',
       'tests/**',
       'scripts/**',
       'libs/**',
@@ -31,6 +34,7 @@ export default [
       'ecosystem.config.cjs',
       'ecosystem.config.js',
       '.dependency-cruiser.js',
+      'eslint.scan.config.cjs',
       'config/**',
       'contracts/**',
     ],

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { createRateLimiter } from '../src/middleware/rateLimiter';
 import type { Request, Response } from 'express';
+import { describe, expect, it, vi } from 'vitest';
+import { createRateLimiter } from '../src/middleware/rateLimiter';
 
 function mockRequest(ip = '127.0.0.1', headers: Record<string, string> = {}): Request {
   return { ip, headers } as Request;

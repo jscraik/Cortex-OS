@@ -3,7 +3,7 @@
  * @description Type definitions for evidence validation system
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // Finding schema based on the specification
 export const FindingSchema = z.object({

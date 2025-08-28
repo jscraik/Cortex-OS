@@ -5,6 +5,7 @@
 ### 1. SSE Transport Implementation Issues
 
 #### Import Problem
+
 ```typescript
 // Issue: Wrong import path in packages/mcp/mcp-transport/src/sse.ts
 import { EventSource } from 'eventsource'; // This is incorrect
@@ -14,6 +15,7 @@ import EventSource from 'eventsource';
 ```
 
 #### Error Handling Flaws
+
 ```typescript
 // Issue: Error handling in connect method has undefined reference
 eventSource.onmessage = (event) => {
@@ -43,6 +45,7 @@ eventSource.onmessage = (event) => {
 ### 2. HTTPS Transport Implementation Issues
 
 #### Memory Leak in Rate Limiter
+
 ```typescript
 // Issue: Rate limiter doesn't clean up old entries
 class RateLimiter {
@@ -54,23 +57,23 @@ class RateLimiter {
 class RateLimiter {
   private requests: Map<string, number[]> = new Map();
   private cleanupInterval: NodeJS.Timeout;
-  
+
   constructor(windowMs: number = 60000, maxRequests: number = 60) {
     this.windowMs = windowMs;
     this.maxRequests = maxRequests;
-    
+
     // Add periodic cleanup every 5 minutes
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
     }, 300000);
   }
-  
+
   private cleanup() {
     const now = Date.now();
-    const cutoff = now - (2 * this.windowMs); // Keep 2 windows worth of data
-    
+    const cutoff = now - 2 * this.windowMs; // Keep 2 windows worth of data
+
     for (const [key, timestamps] of this.requests.entries()) {
-      const recent = timestamps.filter(ts => ts > cutoff);
+      const recent = timestamps.filter((ts) => ts > cutoff);
       if (recent.length === 0) {
         this.requests.delete(key);
       } else {
@@ -78,7 +81,7 @@ class RateLimiter {
       }
     }
   }
-  
+
   dispose() {
     clearInterval(this.cleanupInterval);
   }
@@ -86,6 +89,7 @@ class RateLimiter {
 ```
 
 #### Missing Error Handling
+
 ```typescript
 // Issue: No error handling for fetch failures
 const res = await fetch(new URL('/mcp', si.endpoint), {
@@ -101,17 +105,20 @@ try {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ id: Date.now(), tool: name, params: payload }),
   });
-  
+
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 } catch (error) {
-  throw new Error(`Failed to call tool ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  throw new Error(
+    `Failed to call tool ${name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+  );
 }
 ```
 
 ### 3. STDIO Transport Implementation Issues
 
 #### Resource Limits Not Applied
+
 ```typescript
 // Issue: Resource limits are defined but not applied
 const resourceLimits = {
@@ -131,6 +138,7 @@ const child: ChildProcess = spawn(si.command, si.args ?? ['stdio'], {
 ```
 
 #### Timeout Cleanup Issues
+
 ```typescript
 // Issue: Timeout might not be properly cleared in all cases
 const dispose = () => {
@@ -155,6 +163,7 @@ child.on('exit', () => {
 ### 4. Client Implementation Issues
 
 #### Type Safety Problems
+
 ```typescript
 // Issue: Using 'any' type casting reduces type safety
 export function getRateLimitInfo(client: ReturnType<typeof createClient>, toolName: string) {
@@ -239,11 +248,13 @@ Reason: The fallbackMode option is defined but never implemented or used anywher
 ### 1. Fixed SSE Transport Implementation
 
 #### Requirements
+
 - Must properly import EventSource
 - Must handle all error cases gracefully
 - Must provide complete connection lifecycle management
 
 #### Test Cases
+
 ```typescript
 // Test 1: Valid connection establishment
 test('should establish connection with valid endpoint', async () => {
@@ -263,10 +274,10 @@ test('should handle incoming messages correctly', async () => {
   const client = createSSE({ endpoint: 'https://example.com/sse' });
   const messageHandler = vi.fn();
   client.onMessage(messageHandler);
-  
+
   // Simulate message event
   // ... (mock EventSource behavior)
-  
+
   expect(messageHandler).toHaveBeenCalledWith(expect.any(Object));
 });
 ```
@@ -274,16 +285,18 @@ test('should handle incoming messages correctly', async () => {
 ### 2. Enhanced HTTPS Rate Limiter
 
 #### Requirements
+
 - Must clean up old entries to prevent memory leaks
 - Must provide accurate rate limit information
 - Must handle edge cases gracefully
 
 #### Test Cases
+
 ```typescript
 // Test 1: Rate limit enforcement
 test('should enforce rate limits correctly', () => {
   const limiter = new RateLimiter(1000, 2); // 2 requests per second
-  
+
   expect(limiter.isAllowed('test-key')).toBe(true);
   expect(limiter.isAllowed('test-key')).toBe(true);
   expect(limiter.isAllowed('test-key')).toBe(false); // Should be rate limited
@@ -292,13 +305,13 @@ test('should enforce rate limits correctly', () => {
 // Test 2: Memory cleanup
 test('should clean up old entries periodically', async () => {
   const limiter = new RateLimiter(100, 2); // Short window for testing
-  
+
   limiter.isAllowed('test-key');
   expect(limiter.getRemaining('test-key')).toBe(1);
-  
+
   // Wait for window to expire
-  await new Promise(resolve => setTimeout(resolve, 150));
-  
+  await new Promise((resolve) => setTimeout(resolve, 150));
+
   expect(limiter.getRemaining('test-key')).toBe(2); // Should be reset
 });
 
@@ -313,23 +326,25 @@ test('should clean up resources when disposed', () => {
 ### 3. Improved STDIO Resource Management
 
 #### Requirements
+
 - Must properly manage process lifecycle
 - Must handle timeouts correctly
 - Must clean up resources on disposal
 
 #### Test Cases
+
 ```typescript
 // Test 1: Process timeout handling
 test('should terminate process after timeout', async () => {
   const client = createStdIo({
     command: 'node',
     args: ['-e', 'setInterval(() => console.log("still running"), 1000)'],
-    timeout: 100 // Very short timeout for testing
+    timeout: 100, // Very short timeout for testing
   } as any);
-  
+
   // Wait for timeout
-  await new Promise(resolve => setTimeout(resolve, 200));
-  
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
   const processInfo = client.getProcessInfo();
   expect(processInfo.killed).toBe(true);
 });
@@ -340,12 +355,12 @@ test('should clean up resources on dispose', () => {
     command: 'node',
     args: ['-e', 'console.log("hello")'],
   } as any);
-  
+
   const processInfoBefore = client.getProcessInfo();
   expect(processInfoBefore.connected).toBe(true);
-  
+
   client.dispose();
-  
+
   const processInfoAfter = client.getProcessInfo();
   expect(processInfoAfter.connected).toBe(false);
   expect(processInfoAfter.killed).toBe(true);
@@ -355,21 +370,23 @@ test('should clean up resources on dispose', () => {
 ### 4. Enhanced Type Safety
 
 #### Requirements
+
 - Must eliminate 'any' type casts
 - Must provide proper type checking
 - Must maintain API compatibility
 
 #### Test Cases
+
 ```typescript
 // Test 1: Type guard functionality
 test('should provide type-safe access to rate limit info', () => {
   const httpsClient = createHTTPS({ endpoint: 'https://example.com' });
   const rateInfo = getRateLimitInfo(httpsClient, 'test-tool');
-  
+
   expect(rateInfo).toHaveProperty('remaining');
   expect(rateInfo).toHaveProperty('windowMs');
   expect(rateInfo).toHaveProperty('maxRequests');
-  
+
   // Test with non-rate-limiting client
   const stdioClient = createStdIo({ command: 'node' } as any);
   const noRateInfo = getRateLimitInfo(stdioClient, 'test-tool');
@@ -380,7 +397,7 @@ test('should provide type-safe access to rate limit info', () => {
 test('should provide type-safe access to process info', () => {
   const client = createStdIo({ command: 'node' } as any);
   const processInfo = getProcessInfo(client);
-  
+
   expect(processInfo).toHaveProperty('pid');
   expect(processInfo).toHaveProperty('connected');
   expect(processInfo).toHaveProperty('killed');

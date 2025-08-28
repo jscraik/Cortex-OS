@@ -7,4 +7,3 @@ export const healthHandler: Handler = {
     console.log('health.event.received', { id: msg.id, source: msg.source });
   },
 };
-
