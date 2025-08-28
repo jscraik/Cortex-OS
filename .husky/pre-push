@@ -2,7 +2,9 @@
 . "$(dirname -- "$0")/_/husky.sh"
 . "$(dirname -- "$0")/common.sh"
 
-# Skip typecheck for now due to command issues
-# pnpm typecheck || exit 1
+# Fast lint first
 pnpm lint || exit 1
-pnpm test -w || exit 1
+
+# Scope tests to changed packages; skip if only docs/config changed.
+node tools/readiness/run-changed-tests.mjs --dry || exit 1
+node tools/readiness/run-changed-tests.mjs || exit 1

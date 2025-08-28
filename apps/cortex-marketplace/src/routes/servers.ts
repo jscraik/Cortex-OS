@@ -5,6 +5,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
 
 const SearchQuerySchema = z.object({
   q: z.string().optional(),
@@ -21,7 +22,9 @@ const SearchQuerySchema = z.object({
     .string()
     .transform((str) => str.split(',') as Array<'tools' | 'resources' | 'prompts'>)
     .optional(),
-  limit: z.coerce.number().min(1).max(100).default(20),
+
+  limit: z.coerce.number().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
+
   offset: z.coerce.number().min(0).default(0),
   sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
@@ -58,7 +61,9 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
               type: 'string',
               description: 'Comma-separated capabilities (tools,resources,prompts)',
             },
-            limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+
+            limit: { type: 'integer', minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT },
+
             offset: { type: 'integer', minimum: 0, default: 0 },
             sortBy: {
               type: 'string',

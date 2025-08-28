@@ -1,113 +1,64 @@
-"#!/usr/bin/env node
+#!/usr/bin/env node
 
-// Script to update neo4j.ts to use SecureNeo4j
+// Idempotent updater: replace the entire Neo4j class with a
+// SecureNeo4j-backed implementation using safe template literals.
 
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-
-console.log('Updating neo4j.ts to use SecureNeo4j...');
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
-let content = readFileSync(neo4jPath, 'utf-8');
 
-// Add import for SecureNeo4j
-if (!content.includes('SecureNeo4j')) {
-  content = content.replace(
-    \"import neo4j, { Driver } from 'neo4j-driver';\",
-    \"import neo4j, { Driver } from 'neo4j-driver';\
-import { SecureNeo4j } from '@cortex-os/utils';\"
-  );
+function log(msg) {
+  console.log(`[update-neo4j] ${msg}`);
 }
 
-// Update the Neo4j class to extend or use SecureNeo4j
-content = content.replace(
-  /export class Neo4j implements INeo4j \\{[^}]*\\}/s,
-  `export class Neo4j implements INeo4j {
-  private driver: Driver;
-  private secureNeo4j: SecureNeo4j;
-  
-  constructor(uri: string, user: string, pass: string) {
-    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });
-    // TODO: Initialize SecureNeo4j
-    // this.secureNeo4j = new SecureNeo4j(uri, user, pass);
-  }
-  
-  async close() {
-    await this.driver.close();
+function tryUpdate() {
+  let content = readFileSync(neo4jPath, 'utf-8');
+
+  // If already using SecureNeo4j delegation, do nothing
+  const alreadySecure =
+    content.includes('new SecureNeo4j(') &&
+    content.includes('this.secureNeo4j') &&
+    content.includes('return await this.secureNeo4j.neighborhood') &&
+    content.includes('await this.secureNeo4j.upsertNode') &&
+    content.includes('await this.secureNeo4j.upsertRel');
+
+  if (alreadySecure) {
+    log('neo4j.ts already delegates to SecureNeo4j. No changes needed.');
+    return false;
   }
 
-  async upsertNode(node: KGNode) {
-    // TODO: Use SecureNeo4j for node upsert
-    const label = assertLabelOrType(node.label);
-    const s = this.driver.session();
-    try {
-      await s.run(\`MERGE (n:\${label} {id:\$id}) SET n += \$props\`, {
-        id: node.id,
-        props: node.props,
-      });
-    } finally {
-      await s.close();
-    }
+  // Ensure SecureNeo4j import exists
+  if (!content.includes("from '@cortex-os/utils'")) {
+    content = content.replace(
+      /(import [^\n]+\n)/,
+      (m) => `import { SecureNeo4j } from '@cortex-os/utils';\n${m}`,
+    );
   }
 
-  async upsertRel(rel: KGRel) {
-    // TODO: Use SecureNeo4j for relationship upsert
-    const type = assertLabelOrType(rel.type);
-    const s = this.driver.session();
-    try {
-      await s.run(
-        \`MATCH (a {id:\$from}), (b {id:\$to})
-         MERGE (a)-[r:\${type}]->(b)
-         SET r += \$props\`,
-        { from: rel.from, to: rel.to, props: rel.props ?? {} },
-      );
-    } finally {
-      await s.close();
-    }
-  }
+  // Replace entire class body with a secure implementation
+  const classRegex = /export class Neo4j implements INeo4j {[\s\S]*?}\n?$/;
+  const secureClass = `export class Neo4j implements INeo4j {\n  private driver: Driver;\n  private secureNeo4j: SecureNeo4j;\n\n  constructor(uri: string, user: string, pass: string) {\n    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });\n    this.secureNeo4j = new SecureNeo4j(uri, user, pass);\n  }\n\n  async close() {\n    await this.driver.close();\n    await this.secureNeo4j.close();\n  }\n\n  async upsertNode(node: KGNode) {\n    try {\n      await this.secureNeo4j.upsertNode({ id: node.id, label: node.label, props: node.props });\n    } catch (error) {\n      console.error('Error upserting node:', error);\n      throw error;\n    }\n  }\n\n  async upsertRel(rel: KGRel) {\n    try {\n      await this.secureNeo4j.upsertRel({ from: rel.from, to: rel.to, type: rel.type, props: rel.props });\n    } catch (error) {\n      console.error('Error upserting relationship:', error);\n      throw error;\n    }\n  }\n\n  async neighborhood(nodeId: string, depth = 2): Promise<Subgraph> {\n    try {\n      return await this.secureNeo4j.neighborhood(nodeId, depth);\n    } catch (error) {\n      console.error('Error querying neighborhood:', error);\n      throw error;\n    }\n  }\n}\n`;
 
-  async neighborhood(nodeId: string, depth = 2): Promise<Subgraph> {
-    // TODO: Use SecureNeo4j for neighborhood query
-    const s = this.driver.session();
-    try {
-      const res = await s.run(
-        \`
-        MATCH (n {id:\$id})-[r*1..\$d]-(m)
-        WITH collect(distinct n) + collect(distinct m) AS ns
-        UNWIND ns AS x
-        WITH collect(distinct x) AS nodes
-        MATCH (x)-[e]-(y) WHERE x IN nodes AND y IN nodes
-        RETURN
-          [n IN nodes | { id: n.id, label: head(labels(n)), props: properties(n) }] AS nodes,
-          collect({ from: startNode(e).id, to: endNode(e).id, type: type(e), props: properties(e) }) AS rels
-        \`,
-        { id: nodeId, d: depth },
-      );
-      const rec = res.records[0];
-      const nodes = (rec?.get('nodes') ?? []) as Array<{
-        id: string;
-        label: string;
-        props: Record<string, unknown>;
-      }>;
-      const rels = (rec?.get('rels') ?? []) as Array<{
-        from: string;
-        to: string;
-        type: string;
-        props?: Record<string, unknown>;
-      }>;
-      return {
-        nodes: nodes.map((n) => ({ id: n.id, label: n.label, props: n.props })),
-        rels: rels.map((r) => ({ from: r.from, to: r.to, type: r.type, props: r.props })),
-      };
-    } finally {
-      await s.close();
-    }
-  }
-}`
-);
+  content = content.replace(classRegex, secureClass);
+  writeFileSync(neo4jPath, content);
+  log('neo4j.ts has been updated to delegate to SecureNeo4j.');
+  return true;
+}
 
-// Write the updated content back to the file
-writeFileSync(neo4jPath, content);
+try {
+  const changed = tryUpdate();
+  if (changed) {
+    log('✅ Update complete.');
+  } else {
+    log('ℹ️  Nothing to update.');
+  }
+} catch (err) {
+  console.error('[update-neo4j] Failed to update neo4j.ts:', err);
+  process.exit(1);
+}
+
 
 console.log('✅ neo4j.ts has been updated to use SecureNeo4j');
 console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+
