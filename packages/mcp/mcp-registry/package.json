@@ -9,10 +9,6 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./fs-store": {
-      "import": "./dist/fs-store.js",
-      "types": "./dist/fs-store.d.ts"
     }
   },
   "scripts": {
