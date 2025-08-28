@@ -18,10 +18,12 @@ import {
   type Profile,
   ProfileSchema,
   type Task,
-  type TaskInput,
-  TaskInputSchema,
   ValidationError,
 } from '../types/index.js';
+import { validateTaskInput } from '../lib/validate-task-input.js';
+import { resolveIdempotency } from '../lib/resolve-idempotency.js';
+import { createTask as buildTask } from '../lib/create-task.js';
+import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { initializeXDG } from '../xdg/index.js';
 import { getEventManager } from '../core/events.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
@@ -182,65 +184,23 @@ export class ASBRServer {
   private async createTask(req: Request, res: Response): Promise<void> {
     try {
       const { input, idempotencyKey } = req.body;
-
-      const validationResult = TaskInputSchema.safeParse(input);
-      if (!validationResult.success) {
-        const issues = (validationResult.error as unknown as { issues?: unknown }).issues;
-        throw new ValidationError('Invalid task input', {
-          errors: issues,
-        });
+      const taskInput = validateTaskInput(input);
+      const { key, existingTask } = resolveIdempotency(
+        taskInput,
+        idempotencyKey,
+        this.idempotencyCache,
+        this.tasks,
+      );
+      if (existingTask) {
+        res.json({ task: existingTask });
+        return;
       }
 
-      const taskInput: TaskInput = validationResult.data;
-
-      if (taskInput.scopes.length === 0) {
-        throw new ValidationError('Scopes must not be empty', {
-          field: 'scopes',
-          rule: 'non_empty',
-        });
-      }
-
-      // Handle idempotency
-      let actualIdempotencyKey = idempotencyKey;
-      if (!actualIdempotencyKey) {
-        // Generate derived key from task input
-        actualIdempotencyKey = this.generateIdempotencyKey(taskInput);
-      }
-
-      // Check if we already processed this request
-      if (this.idempotencyCache.has(actualIdempotencyKey)) {
-        const existingTaskId = this.idempotencyCache.get(actualIdempotencyKey)!;
-        const existingTask = this.tasks.get(existingTaskId);
-        if (existingTask) {
-          res.json({ task: existingTask });
-          return;
-        }
-      }
-
-      // Create new task
-      const task: Task = {
-        id: uuidv4(),
-        status: 'queued',
-        artifacts: [],
-        evidenceIds: [],
-        approvals: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        schema: 'cortex.task@1',
-      };
-
-      // Store task and idempotency mapping
+      const task = buildTask();
       this.tasks.set(task.id, task);
-      this.idempotencyCache.set(actualIdempotencyKey, task.id);
+      this.idempotencyCache.set(key, task.id);
 
-      // Emit PlanStarted event
-      await this.emitEvent({
-        id: uuidv4(),
-        type: 'PlanStarted',
-        taskId: task.id,
-        ariaLiveHint: `Task "${taskInput.title}" has been queued`,
-        timestamp: new Date().toISOString(),
-      });
+      await emitPlanStarted(this.emitEvent.bind(this), task, taskInput);
 
       res.json({ task });
     } catch (error) {
@@ -462,17 +422,6 @@ export class ASBRServer {
 
   private async getServiceMap(_req: Request, res: Response): Promise<void> {
     res.json({});
-  }
-
-  private generateIdempotencyKey(input: TaskInput): string {
-    const key = JSON.stringify({
-      title: input.title,
-      brief: input.brief,
-      inputs: input.inputs,
-      scopes: input.scopes.sort(),
-    });
-
-    return createHash('sha256').update(key).digest('hex').substring(0, 16);
   }
 
   private async emitEvent(event: Event): Promise<void> {
