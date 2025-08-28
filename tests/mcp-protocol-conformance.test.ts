@@ -46,7 +46,11 @@ describe('Transport Integration', () => {
     });
 
     await new Promise<void>((resolve) => server.listen(0, resolve));
-    const port = (server.address() as any).port;
+    const address = server.address();
+    if (!address || typeof address === 'string' || typeof (address as any).port !== 'number') {
+      throw new Error('Server address is not AddressInfo with port');
+    }
+    const port = (address as import('net').AddressInfo).port;
     const transport = createTransport({
       type: 'http',
       url: `http://localhost:${port}`,
