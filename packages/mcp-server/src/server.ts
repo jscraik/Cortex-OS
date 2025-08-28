@@ -1,15 +1,14 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
-} from '@modelcontextprotocol/sdk/types.js';
+  createMcpServer,
+} from '@modelcontextprotocol/sdk';
+import { z } from 'zod';
 import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { z } from 'zod';
-// no additional node imports
 
 const ROOT = process.env.CORTEX_MCP_ROOT || process.cwd();
 const TOKEN = process.env.CORTEX_MCP_TOKEN;
@@ -148,42 +147,26 @@ const tools = [
 export const app = express();
 app.use(express.json());
 
-export const mcpServer = new Server({ name: 'cortex-mcp', version: '0.1.1' });
-// Register minimal capabilities (tools only)
-mcpServer.registerCapabilities({ tools: {} });
+export const mcpServer = createMcpServer({
+  transport: 'sse',
+  app,
+  mcpOptions: {
+    serverInfo: {
+      name: 'cortex-mcp',
+      version: '0.1.1',
+    },
+    capabilities: {
+      tools: {},
+    },
+  },
+});
 
 mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
-  // Provide JSON Schema directly instead of relying on zod.openapi
-  const schemas: Record<string, unknown> = {
-    ping: {
-      type: 'object',
-      properties: {
-        text: { type: 'string', default: 'Hello from Cortex MCP!' },
-      },
-      additionalProperties: false,
-    },
-    http_get: {
-      type: 'object',
-      properties: {
-        url: { type: 'string', format: 'uri' },
-      },
-      required: ['url'],
-      additionalProperties: false,
-    },
-    repo_file: {
-      type: 'object',
-      properties: {
-        relpath: { type: 'string' },
-      },
-      required: ['relpath'],
-      additionalProperties: false,
-    },
-  };
   return {
     tools: tools.map((tool) => ({
       name: tool.name,
       description: tool.description,
-      inputSchema: schemas[tool.name] ?? { type: 'object' },
+      inputSchema: tool.inputSchema.openapi(''),
     })),
   };
 });
@@ -201,15 +184,18 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return await tool.run(validatedArgs);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      const details = error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
-      const msg = `Invalid parameters for tool '${name}': ${details}`;
-      throw new McpError(ErrorCode.InvalidParams, msg);
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid parameters for tool '${name}': ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+      );
     }
     if (error instanceof McpError) {
       throw error;
     }
-    const msg = `Failed to execute tool '${name}': ${toErrorMessage(error)}`;
-    throw new McpError(ErrorCode.InternalError, msg);
+    throw new McpError(
+      ErrorCode.InternalError,
+      `Failed to execute tool '${name}': ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 });
 
@@ -220,56 +206,8 @@ app.get('/health', (_req, res) => {
 const PORT = process.env.PORT || 3000;
 
 if (import.meta.url === new URL(process.argv[1], 'file://').href) {
-  const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
-
-  // Establish SSE endpoint and POST receiver using SDK transport
-  app.get('/sse', async (_req, res) => {
-    try {
-      const transport = new SSEServerTransport('/message', res);
-      await mcpServer.connect(transport);
-      await transport.start();
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to start SSE:', toErrorMessage(e));
-      res.status(500).json({ error: 'Failed to start SSE' });
-    }
-  });
-
-  app.post('/message', express.json({ limit: '2mb' }), async (req, res) => {
-    try {
-      // Proxy posted JSON-RPC messages to the SSE transport session
-      const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
-      // In a fuller implementation, you'd route by sessionId. For now, accept single session.
-      const transport = (
-        mcpServer as unknown as { transport?: InstanceType<typeof SSEServerTransport> }
-      ).transport;
-      if (!transport) {
-        res.status(400).json({ error: 'No active SSE session' });
-        return;
-      }
-      await transport.handlePostMessage(
-        req as unknown as Parameters<typeof transport.handlePostMessage>[0],
-        res as unknown as Parameters<typeof transport.handlePostMessage>[1],
-        req.body,
-      );
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to handle message:', toErrorMessage(e));
-      res.status(500).json({ error: 'Failed to handle message' });
-    }
-  });
-
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Cortex MCP Server running on http://localhost:${PORT}`);
   });
-}
-
-function toErrorMessage(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  try {
-    return JSON.stringify(err);
-  } catch {
-    return '[unknown error]';
-  }
 }
