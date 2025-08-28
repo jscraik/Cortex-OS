@@ -118,7 +118,7 @@ except Exception as e:
       try {
         const queryEmbedding = await runGenerateEmbedding(query);
 
-        const results = await Promise.all(
+  const results = await Promise.all(
           servers.map(async (server) => {
             // Validate/normalize server shape defensively to avoid type drift
             let validated: MarketplaceServer;
@@ -143,7 +143,6 @@ except Exception as e:
 
             return { server: validated, similarity, relevanceScore };
           }),
-        );
         );
 
         return results.sort((a, b) => b.relevanceScore - a.relevanceScore);

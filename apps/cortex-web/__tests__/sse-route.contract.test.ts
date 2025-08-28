@@ -1,19 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // Mock chat-store and gateway
 vi.mock('../utils/chat-store', () => ({
   getSession: vi.fn().mockReturnValue({
     modelId: 'test-model',
-    messages: [
-      { id: 'm1', role: 'user', content: 'Hi' },
-    ],
+    messages: [{ id: 'm1', role: 'user', content: 'Hi' }],
   }),
   addMessage: vi.fn(),
 }));
 
 vi.mock('../utils/chat-gateway', () => ({
   streamChat: vi.fn(async (_params: any, onTok: (t: string) => void) => {
-    onTok('He'); onTok('llo');
+    onTok('He');
+    onTok('llo');
     return { text: 'Hello' };
   }),
 }));

@@ -2,11 +2,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProcessingStrategy } from '../../policy/mime';
 import { ProcessingDispatcher } from '../dispatch';
 
-// Spy on the TextChunker, PdfChunker, OcrChunker, and UnstructuredChunker methods in the ProcessingDispatcher
-const mockTextChunkerChunk = vi.fn();
-const mockPdfChunkerChunk = vi.fn();
-const mockOcrChunkerChunk = vi.fn();
-const mockUnstructuredChunkerChunk = vi.fn();
+// Mock chunkers
+const mockTextChunker = vi.hoisted(() => ({
+  chunk: vi.fn(),
+}));
+
+const mockPdfChunker = vi.hoisted(() => ({
+  chunk: vi.fn(),
+}));
+
+const mockOcrChunker = vi.hoisted(() => ({
+  chunk: vi.fn(),
+}));
+
+const mockUnstructuredChunker = vi.hoisted(() => ({
+  chunk: vi.fn(),
+}));
 
 // Override the private chunker.chunk methods for testing
 vi.mock('../dispatch', async () => {
@@ -18,19 +29,19 @@ vi.mock('../dispatch', async () => {
         super(config);
         // Override the private chunkers with mocks
         Object.defineProperty(this, 'textChunker', {
-          value: { chunk: mockTextChunkerChunk },
+          value: mockTextChunker,
           writable: true,
         });
         Object.defineProperty(this, 'pdfChunker', {
-          value: { chunk: mockPdfChunkerChunk },
+          value: mockPdfChunker,
           writable: true,
         });
         Object.defineProperty(this, 'ocrChunker', {
-          value: { chunk: mockOcrChunkerChunk },
+          value: mockOcrChunker,
           writable: true,
         });
         Object.defineProperty(this, 'unstructuredChunker', {
-          value: { chunk: mockUnstructuredChunkerChunk },
+          value: mockUnstructuredChunker,
           writable: true,
         });
       }
@@ -50,10 +61,10 @@ describe('ProcessingDispatcher', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockTextChunkerChunk.mockReset();
-    mockPdfChunkerChunk.mockReset();
-    mockOcrChunkerChunk.mockReset();
-    mockUnstructuredChunkerChunk.mockReset();
+    mockTextChunker.chunk.mockReset();
+    mockPdfChunker.chunk.mockReset();
+    mockOcrChunker.chunk.mockReset();
+    mockUnstructuredChunker.chunk.mockReset();
     dispatcher = new ProcessingDispatcher();
   });
 
@@ -81,14 +92,14 @@ describe('ProcessingDispatcher', () => {
         } 
       }];
 
-      mockTextChunkerChunk.mockResolvedValue(expectedChunks);
+      mockTextChunker.chunk.mockResolvedValue(expectedChunks);
 
       const result = await dispatcher.dispatch(mockFile, strategy);
 
       expect(result.success).toBe(true);
       expect(result.chunks).toEqual(expectedChunks);
       expect(result.strategy).toBe(ProcessingStrategy.NATIVE_TEXT);
-      expect(mockTextChunkerChunk).toHaveBeenCalledWith(mockFile, strategy.processing);
+      expect(mockTextChunker.chunk).toHaveBeenCalledWith(mockFile, strategy.processing);
     });
 
     it('should handle markdown processing', async () => {
@@ -109,13 +120,13 @@ describe('ProcessingDispatcher', () => {
         mimeType: 'text/markdown',
       };
 
-      mockTextChunkerChunk.mockResolvedValue([
+      mockTextChunker.chunk.mockResolvedValue([
         { id: 'md-1', content: 'Markdown content', metadata: { section: 1 } },
       ]);
 
       await dispatcher.dispatch(mockFile, markdownStrategy);
 
-      expect(mockTextChunkerChunk).toHaveBeenCalledWith(mockFile, markdownStrategy.processing);
+      expect(mockTextChunker.chunk).toHaveBeenCalledWith(mockFile, markdownStrategy.processing);
     });
   });
 
@@ -186,14 +197,14 @@ describe('ProcessingDispatcher', () => {
         },
       ];
 
-      mockPdfChunkerChunk.mockResolvedValue(expectedChunks);
+      mockPdfChunker.chunk.mockResolvedValue(expectedChunks);
 
       const result = await dispatcher.dispatch(pdfFile, strategy);
 
       expect(result.success).toBe(true);
       expect(result.chunks).toEqual(expectedChunks);
       expect(result.strategy).toBe(ProcessingStrategy.PDF_NATIVE);
-      expect(mockPdfChunkerChunk).toHaveBeenCalledWith(pdfFile, strategy.processing);
+      expect(mockPdfChunker.chunk).toHaveBeenCalledWith(pdfFile, strategy.processing);
     });
 
     it('should handle PDF processing failures', async () => {
@@ -214,11 +225,11 @@ describe('ProcessingDispatcher', () => {
         },
       };
 
-      mockPdfChunkerChunk.mockRejectedValue(new Error('PDF processing failed'));
+      mockPdfChunker.chunk.mockRejectedValue(new Error('PDF processing failed'));
 
       await dispatcher.dispatch(pdfFile, strategy);
 
-      expect(mockPdfChunkerChunk).toHaveBeenCalledWith(pdfFile, strategy.processing);
+      expect(mockPdfChunker.chunk).toHaveBeenCalledWith(pdfFile, strategy.processing);
       // Error handling is tested in other tests
     });
   });
@@ -254,7 +265,7 @@ describe('ProcessingDispatcher', () => {
         }
       }));
 
-      mockOcrChunkerChunk.mockResolvedValue(expectedChunks);
+      mockOcrChunker.chunk.mockResolvedValue(expectedChunks);
 
       const result = await dispatcher.dispatch(imageFile, strategy);
 
@@ -263,7 +274,7 @@ describe('ProcessingDispatcher', () => {
       expect(result.chunks.length).toBe(expectedChunks.length);
       expect(result.chunks[0].id).toContain('ocr-page-1');
       expect(result.strategy).toBe(ProcessingStrategy.OCR);
-      expect(mockOcrChunkerChunk).toHaveBeenCalledWith(imageFile, strategy.processing);
+      expect(mockOcrChunker.chunk).toHaveBeenCalledWith(imageFile, strategy.processing);
     });
 
     it('should handle OCR processing timeout', async () => {
@@ -283,13 +294,13 @@ describe('ProcessingDispatcher', () => {
       };
 
       // Mock a long-running OCR process that will timeout
-      mockOcrChunkerChunk.mockImplementation(
+      mockOcrChunker.chunk.mockImplementation(
         () => new Promise((resolve) => setTimeout(resolve, 1000, [])),
       );
 
       await timeoutDispatcher.dispatch(mockFile, strategy);
 
-      expect(mockOcrChunkerChunk).toHaveBeenCalledWith(mockFile, strategy.processing);
+      expect(mockOcrChunker.chunk).toHaveBeenCalledWith(mockFile, strategy.processing);
       // Error handling for timeout is tested in other tests
     });
   });
@@ -333,7 +344,7 @@ describe('ProcessingDispatcher', () => {
         }
       }
 
-      mockUnstructuredChunkerChunk.mockResolvedValue(expectedChunks);
+      mockUnstructuredChunker.chunk.mockResolvedValue(expectedChunks);
 
       const result = await dispatcher.dispatch(docxFile, strategy);
 
@@ -345,7 +356,7 @@ describe('ProcessingDispatcher', () => {
       expect(result.chunks[0]).toHaveProperty('metadata');
       expect(result.chunks[0].metadata).toHaveProperty('apiProvider', 'unstructured');
       expect(result.strategy).toBe(ProcessingStrategy.UNSTRUCTURED);
-      expect(mockUnstructuredChunkerChunk).toHaveBeenCalledWith(docxFile, strategy.processing);
+      expect(mockUnstructuredChunker.chunk).toHaveBeenCalledWith(docxFile, strategy.processing);
     });
 
     it('should handle conditional Unstructured API usage', async () => {
@@ -363,7 +374,7 @@ describe('ProcessingDispatcher', () => {
 
       await dispatcher.dispatch(mockFile, strategy);
 
-      expect(mockUnstructuredChunkerChunk).toHaveBeenCalledWith(mockFile, strategy.processing);
+      expect(mockUnstructuredChunker.chunk).toHaveBeenCalledWith(mockFile, strategy.processing);
     });
   });
 
@@ -410,7 +421,7 @@ describe('ProcessingDispatcher', () => {
         },
       };
 
-      mockTextChunkerChunk.mockRejectedValue(new Error('Test error'));
+      mockTextChunker.chunk.mockRejectedValue(new Error('Test error'));
 
       const result = await dispatcher.dispatch(mockFile, strategy);
 
@@ -443,7 +454,7 @@ describe('ProcessingDispatcher', () => {
         });
       }
       
-      mockTextChunkerChunk.mockImplementation(createDelayedPromise);
+      mockTextChunker.chunk.mockImplementation(createDelayedPromise);
 
       const result = await timeoutDispatcher.dispatch(mockFile, strategy);
 
