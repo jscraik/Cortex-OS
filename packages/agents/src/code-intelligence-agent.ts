@@ -187,12 +187,12 @@ export class CodeIntelligenceAgent extends EventEmitter {
     );
 
     try {
-  const result = await this._analyzeWithModel(validatedRequest, modelId);
+      const result = await this._analyzeWithModel(validatedRequest, modelId);
       result.processingTime = Date.now() - startTime;
       result.modelUsed = modelId;
 
       this.analysisHistory.set(cacheKey, result);
-  this.emit('analysis_complete', { request: validatedRequest, result });
+      this.emit('analysis_complete', { request: validatedRequest, result });
       return result;
     } catch (error) {
       this.emit('analysis_error', { request: validatedRequest, error });
