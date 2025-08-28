@@ -45,11 +45,11 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
 ## How to run compliance locally
 
 - License policy scan (Node + Python best-effort):
-   - pnpm: run `pnpm license:validate`
+  - pnpm: run `pnpm license:validate`
 - SBOM (CycloneDX JSON):
-   - If you have Anchore Syft installed, run `pnpm sbom:generate` to produce `sbom/sbom.cdx.json`.
-   - Without Syft, the script will generate a simple fallback manifest at the same path.
+  - If you have Anchore Syft installed, run `pnpm sbom:generate` to produce `sbom/sbom.cdx.json`.
+  - Without Syft, the script will generate a simple fallback manifest at the same path.
 - All at once:
-   - `pnpm compliance:all`
+  - `pnpm compliance:all`
 
 CI recommendation: add these steps to governance workflow and attach `sbom/sbom.cdx.json` as an artifact in release builds.

@@ -2,11 +2,11 @@
 // Lightweight license scanner for Node (pnpm) and best-effort Python (uv) without new deps.
 // Policy: allow permissive licenses only. Fails with non-zero exit if any disallowed detected.
 
+import { execa } from 'execa';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import execa from 'execa';
+import { fileURLToPath } from 'node:url';
 import parseSpdx from 'spdx-expression-parse';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,9 +30,7 @@ function normalizeLicenseField(license) {
   if (typeof license === 'string') return license.trim();
   if (Array.isArray(license)) {
     // e.g., [{ type: 'MIT' }, { type: 'BSD-3-Clause' }]
-    const parts = license
-      .map((l) => (typeof l === 'string' ? l : l?.type))
-      .filter(Boolean);
+    const parts = license.map((l) => (typeof l === 'string' ? l : l?.type)).filter(Boolean);
     return parts.length ? parts.join(' OR ') : null;
   }
   if (typeof license === 'object' && license.type) return String(license.type).trim();
@@ -85,7 +83,8 @@ function addPkg(results, pkgPath, pkg) {
   if (!pkg || !pkg.name || !pkg.version) return;
   const lic = normalizeLicenseField(pkg.license || pkg.licenses);
   const key = `${pkg.name}@${pkg.version}`;
-  if (!results.has(key)) results.set(key, { name: pkg.name, version: pkg.version, license: lic, path: pkgPath });
+  if (!results.has(key))
+    results.set(key, { name: pkg.name, version: pkg.version, license: lic, path: pkgPath });
 }
 
 async function scanPnpmModules(rootDir, results) {
@@ -135,7 +134,7 @@ async function scanTopLevelModules(rootDir, results) {
   for (const ent of top) {
     if (!ent.isDirectory()) continue;
     const name = ent.name;
-    if (name.startsWith('.') ) continue;
+    if (name.startsWith('.')) continue;
     if (name.startsWith('@')) {
       await scanScoped(path.join(nm, name), results);
       continue;
@@ -179,17 +178,23 @@ function summarizeFindings(kind, packages) {
 function printSummary(title, summary) {
   const { total, allowed, unknown, disallowed } = summary;
   console.log(`\n== ${title} ==`);
-  console.log(`Total: ${total}  Allowed: ${allowed}  Unknown: ${unknown.length}  Disallowed: ${disallowed.length}`);
+  console.log(
+    `Total: ${total}  Allowed: ${allowed}  Unknown: ${unknown.length}  Disallowed: ${disallowed.length}`,
+  );
   if (unknown.length) {
     console.log(`Unknown (first 10):`);
     for (const p of unknown.slice(0, 10)) {
-      console.log(` - ${p.name}@${p.version} license: <missing> (${p.path ? path.relative(repoRoot, p.path) : ''})`);
+      console.log(
+        ` - ${p.name}@${p.version} license: <missing> (${p.path ? path.relative(repoRoot, p.path) : ''})`,
+      );
     }
   }
   if (disallowed.length) {
     console.log(`Disallowed (first 10):`);
     for (const p of disallowed.slice(0, 10)) {
-      console.log(` - ${p.name}@${p.version} license: ${p.license} (${p.path ? path.relative(repoRoot, p.path) : ''})`);
+      console.log(
+        ` - ${p.name}@${p.version} license: ${p.license} (${p.path ? path.relative(repoRoot, p.path) : ''})`,
+      );
     }
   }
 }
@@ -211,13 +216,19 @@ async function main() {
     const pySummary = summarizeFindings('Python (uv)', pyPkgs);
     printSummary('Python (uv) license scan (best-effort)', pySummary);
     if (pySummary.unknown.length) {
-      console.log('\nNote: Python license detection uses PEP 621 metadata and may be missing for some wheels.');
+      console.log(
+        '\nNote: Python license detection uses PEP 621 metadata and may be missing for some wheels.',
+      );
     }
   } else {
-    console.log('\nPython (uv) not available or no packages detected; skipping Python license scan.');
+    console.log(
+      '\nPython (uv) not available or no packages detected; skipping Python license scan.',
+    );
   }
 
-  const failed = nodeSummary.disallowed.length > 0 || (pyPkgs.length && pyPkgs.filter((p) => p.license && !isLicenseAllowed(p.license)).length > 0);
+  const failed =
+    nodeSummary.disallowed.length > 0 ||
+    (pyPkgs.length && pyPkgs.filter((p) => p.license && !isLicenseAllowed(p.license)).length > 0);
   if (failed) {
     console.error('\nLicense policy violation detected. See details above.');
     process.exit(1);

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Generate a CycloneDX SBOM for Node workspace using Syft if present; fallback to minimal manifest export.
+import { execa } from 'execa';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import execa from 'execa';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -26,7 +26,10 @@ async function ensureDir(dir) {
 async function generateWithSyft() {
   await ensureDir(outDir);
   // Syft supports dir: and cyclonedx-json
-  await execa('syft', ['dir:.', '--output', `cyclonedx-json=${outFile}`], { cwd: repoRoot, stdio: 'inherit' });
+  await execa('syft', ['dir:.', '--output', `cyclonedx-json=${outFile}`], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
   return outFile;
 }
 
