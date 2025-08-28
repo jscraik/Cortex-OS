@@ -37,20 +37,24 @@ export function redactArgs<T extends Record<string, unknown>>(args: T): T {
     if (BEARER_REGEX.test(out)) out = out.replace(BEARER_REGEX, 'Bearer [REDACTED]');
     return out;
   };
-  const sanitize = (val: unknown): unknown => {
-  if (typeof val === 'string') return sanitizeString(val);
-  if (Array.isArray(val)) return val.map(sanitize);
-  if (val && typeof val === 'object') {
+  const sanitize = (val: unknown, visited: WeakSet<object>): unknown => {
+    if (typeof val === 'string') return sanitizeString(val);
+    if (Array.isArray(val)) return val.map(item => sanitize(item, visited));
+    if (val && typeof val === 'object') {
+      if (visited.has(val as object)) {
+        return '[Circular]';
+      }
+      visited.add(val as object);
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(val)) {
         if (isSensitiveKey(k)) out[k] = '[REDACTED]';
         else if (typeof v === 'string') out[k] = sanitizeString(v);
-        else out[k] = sanitize(v);
+        else out[k] = sanitize(v, visited);
       }
       return out as T;
     }
     return val;
   };
 
-  return sanitize(args) as T;
+  return sanitize(args, new WeakSet()) as T;
 }
