@@ -279,3 +279,6 @@ tools/**/node_modules/
 tools/**/package-lock.json
 scripts/node_modules/
 scripts/package-lock.json
+
+# Governance generated artifacts
+.cortex/out/
