@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2025-08-28T18:12:25.585Z",
+  "generatedAt": "2025-08-28T18:26:18.623Z",
   "policy": {
     "allowed": [
       "Apache-2.0",
@@ -12,13 +12,24 @@
       "MPL-2.0",
       "Unlicense",
       "Zlib"
-    ]
+    ],
+    "exceptions": {
+      "devOnly": [
+        "eslint-plugin-sonarjs",
+        "jackspeak",
+        "path-scurry",
+        "package-json-from-dist",
+        "parse-cache-control",
+        "spdx-exceptions",
+        "tslib"
+      ]
+    }
   },
   "node": {
-    "total": 1183,
-    "allowed": 1167,
+    "total": 1200,
+    "allowed": 1185,
     "unknownCount": 3,
-    "disallowedCount": 13,
+    "disallowedCount": 12,
     "unknown": [
       {
         "name": "ansi-color",
@@ -93,12 +104,6 @@
         "version": "2.0.0",
         "license": "BlueOak-1.0.0",
         "path": "node_modules/.pnpm/path-scurry@2.0.0/node_modules/path-scurry/package.json"
-      },
-      {
-        "name": "pause-stream",
-        "version": "0.0.11",
-        "license": "MIT OR Apache2",
-        "path": "node_modules/.pnpm/pause-stream@0.0.11/node_modules/pause-stream/package.json"
       },
       {
         "name": "spdx-exceptions",
