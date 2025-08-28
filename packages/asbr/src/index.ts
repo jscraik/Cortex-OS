@@ -8,6 +8,7 @@ import { initializeAuth } from './api/auth.js';
 import { ASBRServer } from './api/server.js';
 import { ASBRClient, createASBRClient } from './sdk/index.js';
 import { initializeXDG } from './xdg/index.js';
+import { ValidationError } from './types/index.js';
 
 // Core exports
 export { ASBRServer } from './api/server.js';
@@ -120,7 +121,13 @@ export async function initializeASBR(
   await initializeXDG();
 
   // Initialize authentication
-  const tokenInfo = await initializeAuth();
+  let tokenInfo;
+  try {
+    tokenInfo = await initializeAuth();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to initialize ASBR: ${msg}`);
+  }
 
   // Create server
   const server = new ASBRServer({
@@ -158,6 +165,4 @@ export const SCHEMA_VERSIONS = {
   TASK: 'cortex.task@1',
   TASK_INPUT: 'cortex.task.input@1',
   EVIDENCE: 'cortex.evidence@1',
-  ARTIFACT: 'cortex.artifact@1',
-  PROFILE: 'cortex.profile@1',
-} as const;
+};
