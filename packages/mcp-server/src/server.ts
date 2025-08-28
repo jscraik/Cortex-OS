@@ -129,8 +129,8 @@ async function handleHttpGet(args: unknown) {
     throw new McpError(ErrorCode.InvalidParams, 'URL is required');
   }
 
-  if (typeof (URL as any).canParse === 'function') {
-    if (!(URL as any).canParse(url)) {
+  if ('canParse' in URL && typeof (URL as { canParse?: unknown }).canParse === 'function') {
+    if (!(URL as { canParse?: (url: string) => boolean }).canParse!(url)) {
       throw new McpError(ErrorCode.InvalidParams, 'Invalid URL format');
     }
   } else {
