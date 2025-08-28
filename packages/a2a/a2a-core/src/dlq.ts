@@ -1,13 +1,5 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-
-// Temporary stub implementations for telemetry until the telemetry package is fixed
-const withSpan = async (name: string, fn: (span: any) => Promise<any>) => {
-  return fn({ name });
-};
-
-const logWithSpan = (level: string, message: string, attributes?: any, span?: any) => {
-  console.log(`[${level}] ${message}`, attributes);
-};
+import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 
 /**
  * @file Enhanced Dead Letter Queue Implementation
