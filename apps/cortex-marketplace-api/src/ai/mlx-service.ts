@@ -8,7 +8,9 @@ import { spawn, type ChildProcess } from 'child_process';
 import { writeFile } from 'fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { ServerManifest } from '../types.js';
+// Note: Marketplace uses an extended manifest vs. the base registry type.
+// Use the local manifest type explicitly to avoid cross-package type drift.
+import type { ServerManifest as MarketplaceServer } from '../types.js';
 import { ServerManifestSchema } from '../types.js';
 
 export interface MLXConfig {
@@ -31,7 +33,7 @@ export interface SafetyResult {
 }
 
 export interface SemanticSearchResult {
-  server: ServerManifest;
+  server: MarketplaceServer;
   similarity: number;
   relevanceScore: number;
 }
@@ -109,7 +111,7 @@ except Exception as e:
      */
     semanticSearch: async (
       query: string,
-      servers: ServerManifest[],
+      servers: MarketplaceServer[],
     ): Promise<SemanticSearchResult[]> => {
       try {
         const queryEmbedding = await runGenerateEmbedding(query);
@@ -117,7 +119,7 @@ except Exception as e:
         const results = await Promise.all(
           servers.map(async (server) => {
             // Validate/normalize server shape defensively to avoid type drift
-            let validated: ServerManifest;
+            let validated: MarketplaceServer;
             try {
               validated = ServerManifestSchema.parse(server);
             } catch {
@@ -144,7 +146,7 @@ except Exception as e:
         return results.sort((a, b) => b.relevanceScore - a.relevanceScore);
       } catch (error) {
         console.warn('MLX semantic search failed:', error);
-        return servers.map((server) => ({
+  return servers.map((server) => ({
           server,
           similarity: 0,
           relevanceScore: calculateBasicRelevance(query, server),
@@ -299,7 +301,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function calculateRelevanceScore(similarity: number, server: ServerManifest): number {
+function calculateRelevanceScore(similarity: number, server: MarketplaceServer): number {
   let score = similarity * 0.6; // Base semantic similarity
 
   // Quality boosters
@@ -310,7 +312,7 @@ function calculateRelevanceScore(similarity: number, server: ServerManifest): nu
   return Math.min(score, 1.0);
 }
 
-function calculateBasicRelevance(query: string, server: ServerManifest): number {
+function calculateBasicRelevance(query: string, server: MarketplaceServer): number {
   let score = 0;
   const queryLower = query.toLowerCase();
 
