@@ -132,7 +132,8 @@ export class BuildNode {
     }
 
     // Check if schema exists in outputs
-    const hasSchema = state.outputs?.['api-schema'] !== undefined;
+    const apiCheckOutput = state.outputs?.['api-check'];
+    const hasSchema = apiCheckOutput?.hasSchema === true;
 
     return {
       passed: hasSchema, // Properly fail when schema is missing

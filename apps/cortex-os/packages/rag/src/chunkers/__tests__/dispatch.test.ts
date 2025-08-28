@@ -82,15 +82,17 @@ describe('ProcessingDispatcher', () => {
         },
       };
 
-      const expectedChunks = [{ 
-        id: '/test/document.txt-text-1', 
-        content: 'Test content', 
-        metadata: { 
-          type: 'text',
-          position: 0,
-          length: 12
-        } 
-      }];
+      const expectedChunks = [
+        {
+          id: '/test/document.txt-text-1',
+          content: 'Test content',
+          metadata: {
+            type: 'text',
+            position: 0,
+            length: 12,
+          },
+        },
+      ];
 
       mockTextChunker.chunk.mockResolvedValue(expectedChunks);
 
@@ -150,50 +152,50 @@ describe('ProcessingDispatcher', () => {
       };
 
       const expectedChunks = [
-        { 
-          id: '/test/document.txt-pdf-page-1', 
-          content: 'Content from PDF page 1', 
-          metadata: { 
+        {
+          id: '/test/document.txt-pdf-page-1',
+          content: 'Content from PDF page 1',
+          metadata: {
             type: 'pdf_page',
             page: 1,
-            extractionMethod: 'native'
-          } 
+            extractionMethod: 'native',
+          },
         },
-        { 
-          id: '/test/document.txt-pdf-page-2', 
-          content: 'Content from PDF page 2', 
-          metadata: { 
+        {
+          id: '/test/document.txt-pdf-page-2',
+          content: 'Content from PDF page 2',
+          metadata: {
             type: 'pdf_page',
             page: 2,
-            extractionMethod: 'native'
-          } 
+            extractionMethod: 'native',
+          },
         },
-        { 
-          id: '/test/document.txt-pdf-page-3', 
-          content: 'Content from PDF page 3', 
-          metadata: { 
+        {
+          id: '/test/document.txt-pdf-page-3',
+          content: 'Content from PDF page 3',
+          metadata: {
             type: 'pdf_page',
             page: 3,
-            extractionMethod: 'native'
-          } 
+            extractionMethod: 'native',
+          },
         },
-        { 
-          id: '/test/document.txt-pdf-page-4', 
-          content: 'Content from PDF page 4', 
-          metadata: { 
+        {
+          id: '/test/document.txt-pdf-page-4',
+          content: 'Content from PDF page 4',
+          metadata: {
             type: 'pdf_page',
             page: 4,
-            extractionMethod: 'native'
-          } 
+            extractionMethod: 'native',
+          },
         },
-        { 
-          id: '/test/document.txt-pdf-page-5', 
-          content: 'Content from PDF page 5', 
-          metadata: { 
+        {
+          id: '/test/document.txt-pdf-page-5',
+          content: 'Content from PDF page 5',
+          metadata: {
             type: 'pdf_page',
             page: 5,
-            extractionMethod: 'native'
-          } 
+            extractionMethod: 'native',
+          },
         },
       ];
 
@@ -261,8 +263,8 @@ describe('ProcessingDispatcher', () => {
           type: 'ocr_page',
           page: i + 1,
           confidence: 0.85 + Math.random() * 0.1,
-          ocrEngine: 'tesseract'
-        }
+          ocrEngine: 'tesseract',
+        },
       }));
 
       mockOcrChunker.chunk.mockResolvedValue(expectedChunks);
@@ -326,7 +328,7 @@ describe('ProcessingDispatcher', () => {
       // Create a simplified version of the expected chunks structure
       const elementTypes = ['heading', 'paragraph', 'list', 'table'];
       const expectedChunks = [];
-      
+
       // Generate a structured set of test chunks that match the implementation
       for (let page = 1; page <= 3; page++) {
         for (let element = 1; element <= 3; element++) {
@@ -453,7 +455,7 @@ describe('ProcessingDispatcher', () => {
           setTimeout(resolve, 100, []);
         });
       }
-      
+
       mockTextChunker.chunk.mockImplementation(createDelayedPromise);
 
       const result = await timeoutDispatcher.dispatch(mockFile, strategy);

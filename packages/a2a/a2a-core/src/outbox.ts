@@ -1,37 +1,13 @@
-/**
- * CloudEvents 1.0 compliant envelope - local interface definition for outbox
- */
-export interface Envelope {
-  id: string;
-  type: string;
-  source: string;
-  specversion: '1.0';
-  datacontenttype?: string;
-  dataschema?: string;
-  subject?: string;
-  time?: string;
-  schemaVersion?: number;
-  causationId?: string;
-  correlationId?: string;
-  occurredAt?: string;
-  ttlMs?: number;
-  headers?: Record<string, string>;
-  traceparent?: string;
-  tracestate?: string;
-  baggage?: string;
-  data?: unknown;
-  payload?: unknown;
-}
-
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { getCurrentTraceContext } from './trace-context-manager';
 import {
   OutboxMessageStatus,
-  OutboxMessage,
-  OutboxConfig,
-  OutboxProcessingResult,
-  OutboxRepository,
-  OutboxPublisher,
-  OutboxProcessor,
+  type OutboxMessage,
+  type OutboxConfig,
+  type OutboxProcessingResult,
+  type OutboxRepository,
+  type OutboxPublisher,
+  type OutboxProcessor,
 } from '../../a2a-contracts/src/outbox-types';
 import { createTraceParent } from '../../a2a-contracts/src/trace-context';
 

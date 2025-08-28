@@ -1,51 +1,53 @@
 /**
- * @file_path apps/cortex-os/packages/mcp/src/mlx-mcp-integration.ts
- * @description Auto-register MLX neuron as MCP server in the universal system
+ * @file_path packages/mcp-bridge/src/mlx-mcp-integration.ts
+ * @description MLX neuron integration factory for MCP system
  * @maintainer @jamiescottcraik
- * @last_updated 2025-08-20
- * @version 1.0.0
+ * @last_updated 2025-08-28
+ * @version 1.1.0
  * @status active
  */
 
+import { z } from 'zod';
 import { MLXMcpServer } from './mlx-mcp-server.js';
 import { universalMcpManager } from './universal-mcp-manager.js';
 
-/**
- * MLX MCP Integration - Automatically embeds MLX neuron into MCP structure
- */
-export class MLXMcpIntegration {
-  private mlxServer: MLXMcpServer;
-  private isRegistered = false;
+const configPathSchema = z.string().min(1, 'MLX config path is required');
+const portSchema = z.number().int().positive().max(65535);
 
-  constructor(configPath?: string) {
-    // Use the absolute path to root MLX config
-    const defaultConfigPath = configPath || '/Users/jamiecraik/.cortex-os/mlx-server-config.json';
-    this.mlxServer = new MLXMcpServer(defaultConfigPath);
+function resolveConfigPath(configPath?: string): string {
+  const resolved = configPath ?? process.env.MLX_CONFIG_PATH;
+  if (!resolved || resolved.trim() === '') {
+    // Optionally, set a default fallback path here, e.g. './mlx-config.json'
+    // const fallbackPath = './mlx-config.json';
+    // return fallbackPath;
+    throw new Error(
+      'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.'
+    );
   }
+  return configPathSchema.parse(resolved);
+}
 
-  /**
-   * Auto-register MLX neuron as an MCP server
-   */
-  async autoRegister(): Promise<void> {
-    if (this.isRegistered) {
+export function createMlxIntegration(configPath?: string) {
+  const resolvedConfigPath = resolveConfigPath(configPath);
+  const mlxServer = new MLXMcpServer(resolvedConfigPath);
+  let isRegistered = false;
+
+  async function autoRegister(): Promise<void> {
+    if (isRegistered) {
       console.log('✅ MLX neuron already registered in MCP system');
       return;
     }
 
     try {
-      // Initialize MLX server
-      await this.mlxServer.initialize();
+      await mlxServer.initialize();
 
-      // Check if MLX is already registered
-      const isInstalled = await universalMcpManager.isServerInstalled('mlx-neuron');
-
-      if (isInstalled) {
+      const installed = await universalMcpManager.isServerInstalled('mlx-neuron');
+      if (installed) {
         console.log('✅ MLX neuron already registered as MCP server');
-        this.isRegistered = true;
+        isRegistered = true;
         return;
       }
 
-      // Auto-register MLX as MCP server
       const mlxServerCommand =
         'cortex mcp add mlx-neuron --transport http --url http://localhost:8080/v1/chat/completions';
 
@@ -53,11 +55,11 @@ export class MLXMcpIntegration {
 
       if (result.success) {
         console.log('✅ MLX neuron automatically registered as MCP server');
-        console.log(`   - Name: mlx-neuron`);
-        console.log(`   - Transport: HTTP`);
-        console.log(`   - Endpoint: http://localhost:8080/v1/chat/completions`);
-        console.log(`   - Models: ${this.mlxServer.getAvailableModels().length} available`);
-        this.isRegistered = true;
+        console.log('   - Name: mlx-neuron');
+        console.log('   - Transport: HTTP');
+        console.log('   - Endpoint: http://localhost:8080/v1/chat/completions');
+        console.log(`   - Models: ${mlxServer.getAvailableModels().length} available`);
+        isRegistered = true;
       } else {
         console.warn('⚠️ Failed to auto-register MLX neuron:', result.message);
       }
@@ -66,21 +68,17 @@ export class MLXMcpIntegration {
     }
   }
 
-  /**
-   * Start MLX HTTP server for MCP integration
-   */
-  async startMLXServer(port = 8080): Promise<void> {
+  async function startMLXServer(port = 8080): Promise<void> {
     try {
-      // Import express dynamically to avoid dependency issues
+      const p = portSchema.parse(port);
       const express = await import('express').then((m) => m.default);
       const app = express();
 
       app.use(express.json());
 
-      // OpenAI-compatible chat completions endpoint
       app.post('/v1/chat/completions', async (req, res) => {
         try {
-          const response = await this.mlxServer.chat(req.body);
+          const response = await mlxServer.chat(req.body);
           res.json(response);
         } catch (error) {
           res.status(500).json({
@@ -92,20 +90,18 @@ export class MLXMcpIntegration {
         }
       });
 
-      // Health check endpoint
       app.get('/health', async (req, res) => {
         try {
-          const health = await this.mlxServer.getHealth();
+          const health = await mlxServer.getHealth();
           res.json(health);
         } catch (error) {
           res.status(500).json({ error: `Health check failed: ${error}` });
         }
       });
 
-      // Models endpoint
       app.get('/v1/models', (req, res) => {
         try {
-          const models = this.mlxServer.getAvailableModels();
+          const models = mlxServer.getAvailableModels();
           res.json({
             object: 'list',
             data: models.map((model) => ({
@@ -123,30 +119,30 @@ export class MLXMcpIntegration {
         }
       });
 
-      app.listen(port, '127.0.0.1', () => {
-        console.log(`🚀 MLX MCP server running on http://127.0.0.1:${port}`);
-        console.log(`   - Chat: POST /v1/chat/completions`);
-        console.log(`   - Models: GET /v1/models`);
-        console.log(`   - Health: GET /health`);
+      await new Promise<void>((resolve) => {
+        app.listen(p, '127.0.0.1', () => {
+          console.log(`🚀 MLX MCP server running on http://127.0.0.1:${p}`);
+          console.log('   - Chat: POST /v1/chat/completions');
+          console.log('   - Models: GET /v1/models');
+          console.log('   - Health: GET /health');
+          resolve();
+        });
       });
-
-      // Auto-register after server starts
-      setTimeout(() => this.autoRegister(), 1000);
     } catch (error) {
       console.error('❌ Failed to start MLX HTTP server:', error);
     }
   }
 
-  /**
-   * Get MLX server instance
-   */
-  getMLXServer(): MLXMcpServer {
-    return this.mlxServer;
+  function getMLXServer(): MLXMcpServer {
+    return mlxServer;
   }
+
+  return { autoRegister, startMLXServer, getMLXServer };
 }
 
-// Export singleton instance
-export const mlxMcpIntegration = new MLXMcpIntegration();
-
-// Auto-start integration when imported
-mlxMcpIntegration.autoRegister().catch(console.error);
+export async function startIntegration(configPath?: string, port = 8080) {
+  const integration = createMlxIntegration(configPath);
+  await integration.startMLXServer(port);
+  await integration.autoRegister();
+  return integration;
+}

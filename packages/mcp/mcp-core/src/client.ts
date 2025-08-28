@@ -4,45 +4,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-
-// Data redaction patterns
-const SENSITIVE_PATTERNS = [
-  // API key patterns
-  /(["']?(?:apiKey|api_key|api-key)["']?\s*[:=]\s*["']?)([^"'}\s,)]+)(["']?)/gi,
-  // Token patterns
-  /(["']?(?:token|auth)["']?\s*[:=]\s*["']?)([^"'}\s,)]+)(["']?)/gi,
-  // Password/secrets patterns
-  /(["']?(?:password|secret|credential)["']?\s*[:=]\s*["']?)([^"'}\s,)]+)(["']?)/gi,
-  // Authorization patterns
-  /(["']?authorization["']?\s*[:=]\s*["']?bearer\s+)([^"'}\s,)]+)(["']?)/gi,
-];
-
-// Redact sensitive data from strings or objects by traversing them
-export function redactSensitiveData(data: any): any {
-  if (typeof data === 'string') {
-    let redacted = data;
-    for (const pattern of SENSITIVE_PATTERNS) {
-      redacted = redacted.replace(pattern, '$1[REDACTED]$3');
-    }
-    return redacted;
-  }
-
-  if (Array.isArray(data)) {
-    return data.map((item) => redactSensitiveData(item));
-  }
-
-  if (typeof data === 'object' && data !== null) {
-    const newObj: { [key: string]: any } = {};
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        newObj[key] = redactSensitiveData(data[key]);
-      }
-    }
-    return newObj;
-  }
-
-  return data;
-}
+import { redactSensitiveData } from '../../src/lib/security.js';
 
 // Create a new, enhanced client that wraps the official SDK client
 export async function createEnhancedClient(si: ServerInfo) {
@@ -81,14 +43,15 @@ export async function createEnhancedClient(si: ServerInfo) {
   });
 
   // The enhanced client wraps the base client, overriding methods to add functionality.
-  const enhancedClient = {
+  const enhancedClient: any = {
     ...baseClient,
+    rateLimiter,
 
     // Override callTool to add rate limiting
     callTool: async (name: string, payload: unknown) => {
       const rateKey = `tool-${si.name}-${name}`;
       try {
-        await rateLimiter.consume(rateKey);
+        await enhancedClient.rateLimiter.consume(rateKey);
       } catch (error) {
         throw new Error(`Rate limit exceeded for tool ${name}`);
       }
@@ -112,7 +75,7 @@ export async function createEnhancedClient(si: ServerInfo) {
     // Expose rate limit info for inspection
     getRateLimitInfo: async (toolName: string) => {
       const rateKey = `tool-${si.name}-${toolName}`;
-      const res = await rateLimiter.get(rateKey);
+      const res = await enhancedClient.rateLimiter.get(rateKey);
       return {
         remainingPoints: res?.remainingPoints || 0,
       };

@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('axios', () => ({
@@ -29,12 +30,14 @@ describe('send', () => {
     const envelope = await send(params);
 
     expect(axios.post).toHaveBeenCalledWith(params.outboxUrl, envelope);
+
     expect(envelope).toMatchObject({
       type: params.type,
       source: params.source,
       data: params.data,
     });
   });
+
 
   it('propagates errors from axios', async () => {
     const axios = (await import('axios')).default as { post: ReturnType<typeof vi.fn> };
@@ -51,4 +54,5 @@ describe('send', () => {
       }),
     ).rejects.toThrow('network error');
   });
+
 });
