@@ -1,3 +1,4 @@
+
 // Basic agent types for orchestration integration
 export interface Agent {
   id: string;

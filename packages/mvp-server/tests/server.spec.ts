@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildServer } from '../src/http-server.js';
 
+
 describe('mvp-server', () => {
   it('health ok', async () => {
     process.env.CORTEX_MCP_TOKEN = 'test-token';

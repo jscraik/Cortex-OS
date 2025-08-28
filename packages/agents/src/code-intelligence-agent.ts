@@ -186,6 +186,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
     } = {},
   ) {
     super();
+
     this.ollamaEndpoint = config.ollamaEndpoint ?? process.env.OLLAMA_ENDPOINT ?? '';
     if (!this.ollamaEndpoint) {
       throw new Error('Ollama endpoint must be provided');
@@ -210,7 +211,11 @@ export class CodeIntelligenceAgent extends EventEmitter {
       modality: 'code',
     };
 
-    const modelId = selectOptimalModel('agents', 'codeIntelligence', characteristics);
+    const modelId = selectOptimalModel(
+      'agents',
+      'codeIntelligence',
+      characteristics,
+    );
 
     try {
       // Route to appropriate model
@@ -236,7 +241,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
     }
   }
 
-  private async analyzeWithQwen3Coder(
+  private async _analyzeWithModel(
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
@@ -269,7 +274,9 @@ export class CodeIntelligenceAgent extends EventEmitter {
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
+
     const prompt = this.buildCodeAnalysisPrompt(request);
+    const modelOptions = MODEL_CONFIG[modelKey as keyof typeof MODEL_CONFIG];
 
     const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
       method: 'POST',
@@ -278,20 +285,20 @@ export class CodeIntelligenceAgent extends EventEmitter {
         model: modelId,
         prompt,
         stream: false,
-        options: {
-          temperature: 0.2,
-          top_p: 0.9,
-          num_predict: 1500,
-        },
+        options: modelOptions,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`DeepSeek-Coder analysis failed: ${response.statusText}`);
+      throw new Error(
+        `${modelId} analysis failed: ${response.statusText}`,
+      );
     }
+
 
     const data = (await response.json()) as { response: string };
     return this.parseCodeAnalysisResponse(data.response, 'deepseek-coder');
+
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
@@ -317,6 +324,7 @@ Focus on practical, implementable suggestions with clear rationale.
 Analysis Type: ${request.analysisType}
 Urgency: ${request.urgency}`;
   }
+
 
   private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
     // Check if this is a security analysis based on model type or content
@@ -383,6 +391,7 @@ Urgency: ${request.urgency}`;
 
     if (lines > 100 || complexityIndicators > 15) return 'high';
     if (lines > 10 || complexityIndicators > 3) return 'medium';
+
     return 'low';
   }
 
