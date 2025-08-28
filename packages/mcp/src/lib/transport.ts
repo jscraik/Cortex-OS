@@ -1,94 +1,69 @@
 
-import { spawnSync } from 'child_process';
-
+import commandExists from 'command-exists';
 import { z } from 'zod';
-import type { McpRequest, TransportConfig } from './types.js';
+import type { McpRequest, TransportConfig, Transport } from './types.js';
+import { parseTransportConfig } from './transport-schema.js';
 
-const dangerousCommand = /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s)/i;
 
-export function createTransport(config: TransportConfig) {
-  const baseSchema = {
-    timeoutMs: z.number().int().nonnegative().optional(),
+function validateMessage(message: McpRequest): void {
+  const schema = z
+    .object({
+      jsonrpc: z.literal('2.0'),
+      id: z.union([z.string(), z.number()]),
+      method: z.string().optional(),
+      params: z.unknown().optional(),
+      result: z.unknown().optional(),
+      error: z.unknown().optional(),
+    })
+    .strict();
+  schema.parse(message);
+}
+
+
+function createConnect(cfg: TransportConfig, state: { connected: boolean }) {
+  return async () => {
+    if (cfg.type === 'stdio') {
+      try {
+        await commandExists(cfg.command);
+      } catch {
+        throw new Error('Command not found');
+      }
+    }
+    state.connected = true;
   };
+}
 
-  const stdioSchema = z
-    .object({
-      type: z.literal('stdio'),
-      command: z
-        .string()
-        .min(1)
-        .refine((cmd) => !dangerousCommand.test(cmd), {
-          message: 'Unsafe command',
-        }),
-      args: z.array(z.string()).optional(),
-      env: z.record(z.string()).optional(),
-      cwd: z.string().optional(),
-      ...baseSchema,
-    })
-    .strict();
+function createDisconnect(state: { connected: boolean }) {
+  return async () => {
+    state.connected = false;
+  };
+}
 
-  const httpSchema = z
-    .object({
-      type: z.literal('http'),
-      url: z.string().url(),
-      ...baseSchema,
-    })
-    .strict();
+function createSend() {
+  return (message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) => {
+    try {
+      validateMessage(message);
+    } catch (err) {
+      if (onError) {
+        onError(err, message);
+      } else {
+        console.error('Malformed message in transport.send:', err, message);
+      }
+    }
+  };
+}
 
-  const schema = z.union([stdioSchema, httpSchema]);
-  const cfg = schema.parse(config);
 
-  let connected = false;
-  let child: ChildProcessWithoutNullStreams | null = null;
+export function createTransport(config: TransportConfig): Transport {
+  const cfg = parseTransportConfig(config);
+  const state = { connected: false };
+
 
   return {
-    async connect() {
-      if (cfg.type === 'stdio') {
+    connect: createConnect(cfg, state),
+    disconnect: createDisconnect(state),
+    isConnected: () => state.connected,
+    send: createSend(),
 
-        const check = spawnSync('sh', ['-c', `command -v ${cfg.command}`]);
-        if (check.status !== 0) {
-          throw new Error('Command not found');
-        }
-
-      }
-      connected = true;
-    },
-
-    async disconnect() {
-      if (cfg.type === 'stdio' && child) {
-        child.kill();
-        child = null;
-      }
-      connected = false;
-    },
-
-    isConnected() {
-      return connected;
-    },
-
-
-    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
-
-      const msgSchema = z
-        .object({
-          jsonrpc: z.literal('2.0'),
-          id: z.union([z.string(), z.number()]),
-          method: z.string().optional(),
-          params: z.unknown().optional(),
-          result: z.unknown().optional(),
-          error: z.unknown().optional(),
-        })
-        .strict();
-      try {
-        msgSchema.parse(message);
-      } catch (err) {
-        if (onError) {
-          onError(err, message);
-        } else {
-          console.error('Malformed message in transport.send:', err, message);
-        }
-
-      }
-    },
   };
 }
