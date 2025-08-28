@@ -54,7 +54,7 @@ export { universalMcpManager } from './universal-mcp-manager.js';
 export * from './web-mcp-interface.js';
 
 // MLX Integration
-export { MLXMcpIntegration, mlxMcpIntegration } from './mlx-mcp-integration.js';
+export { createMlxIntegration, startIntegration } from './mlx-mcp-integration.js';
 export { MLXMcpServer } from './mlx-mcp-server.js';
 
 // Server bridge (HTTP/WS) for GitMCP
