@@ -16,7 +16,9 @@ export const evaluationInputSchema = z.object({
   f1Threshold: z.number().min(0).max(1).default(0.8),
   latencyThreshold: z.number().nonnegative().default(150),
   toxicityThreshold: z.number().min(0).max(1).default(0.2),
+
   toxicTerms: z.array(z.string()).default(['badword']),
+
 });
 
 export type EvaluationInput = z.infer<typeof evaluationInputSchema>;
@@ -68,9 +70,11 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
     else if (!expYes && !resYes) tn++;
     else if (!expYes && resYes) fp++;
     else if (expYes && !resYes) fn++;
+
     if (toxicTerms.some(t => response.toLowerCase().includes(t.toLowerCase()))) {
       toxicCount++;
     }
+
   }
 
   const accuracy = (tp + tn) / dataset.length;
