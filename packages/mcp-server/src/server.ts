@@ -1,10 +1,10 @@
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
-  createMcpServer,
-} from '@modelcontextprotocol/sdk';
+} from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import express from 'express';
 import fs from 'node:fs/promises';
@@ -153,19 +153,9 @@ const tools = [
 export const app = express();
 app.use(express.json());
 
-export const mcpServer = createMcpServer({
-  transport: 'sse',
-  app,
-  mcpOptions: {
-    serverInfo: {
-      name: 'cortex-mcp',
-      version: '0.1.1',
-    },
-    capabilities: {
-      tools: {},
-    },
-  },
-});
+export const mcpServer = new Server({ name: 'cortex-mcp', version: '0.1.1' });
+// Register minimal capabilities (tools only)
+mcpServer.registerCapabilities({ tools: {} });
 
 mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
   // Provide JSON Schema directly instead of relying on zod.openapi
@@ -237,6 +227,39 @@ app.get('/health', (_req, res) => {
 const PORT = process.env.PORT || 3000;
 
 if (import.meta.url === new URL(process.argv[1], 'file://').href) {
+  const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
+
+  // Establish SSE endpoint and POST receiver using SDK transport
+  app.get('/sse', async (_req, res) => {
+    try {
+      const transport = new SSEServerTransport('/message', res);
+      await mcpServer.connect(transport);
+      await transport.start();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to start SSE:', toErrorMessage(e));
+      res.status(500).json({ error: 'Failed to start SSE' });
+    }
+  });
+
+  app.post('/message', express.json({ limit: '2mb' }), async (req, res) => {
+    try {
+      // Proxy posted JSON-RPC messages to the SSE transport session
+      const { SSEServerTransport } = await import('@modelcontextprotocol/sdk/server/sse.js');
+      // In a fuller implementation, you'd route by sessionId. For now, accept single session.
+      const transport = (mcpServer as unknown as { transport?: InstanceType<typeof SSEServerTransport> }).transport;
+      if (!transport) {
+        res.status(400).json({ error: 'No active SSE session' });
+        return;
+      }
+      await transport.handlePostMessage(req as unknown as Parameters<typeof transport.handlePostMessage>[0], res as unknown as Parameters<typeof transport.handlePostMessage>[1], req.body);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to handle message:', toErrorMessage(e));
+      res.status(500).json({ error: 'Failed to handle message' });
+    }
+  });
+
   app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Cortex MCP Server running on http://localhost:${PORT}`);

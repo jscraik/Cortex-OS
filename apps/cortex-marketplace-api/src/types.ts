@@ -14,15 +14,20 @@ export const SUPPORTED_VERSIONS = [MCP_VERSION];
  */
 export const TransportConfigSchema = z.object({
   streamableHttp: z.object({
-    url: z.string().url().refine(url => url.startsWith('https://'), {
-      message: 'Remote MCP servers must use HTTPS',
-    }),
+    url: z
+      .string()
+      .url()
+      .refine((url) => url.startsWith('https://'), {
+        message: 'Remote MCP servers must use HTTPS',
+      }),
     headers: z.record(z.string()).optional(),
-    auth: z.object({
-      type: z.enum(['none', 'bearer', 'oauth2']),
-      clientId: z.string().optional(),
-      scopes: z.array(z.string()).optional(),
-    }).optional(),
+    auth: z
+      .object({
+        type: z.enum(['none', 'bearer', 'oauth2']),
+        clientId: z.string().optional(),
+        scopes: z.array(z.string()).optional(),
+      })
+      .optional(),
   }),
 });
 
@@ -31,7 +36,7 @@ export const TransportConfigSchema = z.object({
  */
 export const CapabilitiesSchema = z.object({
   tools: z.boolean().default(false),
-  resources: z.boolean().default(false), 
+  resources: z.boolean().default(false),
   prompts: z.boolean().default(false),
   logging: z.boolean().default(false),
   roots: z.boolean().default(false),
@@ -42,43 +47,58 @@ export const CapabilitiesSchema = z.object({
  */
 export const ServerManifestSchema = z.object({
   // Basic metadata
-  id: z.string().regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/).min(1).max(63),
+  id: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/)
+    .min(1)
+    .max(63),
   name: z.string().min(1).max(100),
-  version: z.string().regex(/^\d+\.\d+\.\d+/).optional(),
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+/)
+    .optional(),
   description: z.string().min(10).max(500),
-  
+
   // MCP metadata
   mcpVersion: z.string().default(MCP_VERSION),
   capabilities: CapabilitiesSchema,
-  
+
   // Publisher info
   publisher: z.object({
     name: z.string(),
     email: z.string().email().optional(),
     verified: z.boolean().default(false),
   }),
-  
+
   // Repository and docs
   repository: z.string().url().optional(),
   homepage: z.string().url().optional(),
   license: z.enum(['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'ISC', 'Proprietary']),
-  
+
   // Categorization
   category: z.enum([
-    'development', 'productivity', 'data', 'communication', 
-    'finance', 'media', 'security', 'ai-ml', 'integration', 'utility'
+    'development',
+    'productivity',
+    'data',
+    'communication',
+    'finance',
+    'media',
+    'security',
+    'ai-ml',
+    'integration',
+    'utility',
   ]),
   tags: z.array(z.string()).max(10).optional(),
-  
+
   // Transport configuration
   transport: TransportConfigSchema,
-  
+
   // Client installation commands
   install: z.object({
-    claude: z.string(),        // claude mcp add ...
-    json: z.record(z.any()),   // Direct JSON config
+    claude: z.string(), // claude mcp add ...
+    json: z.record(z.any()), // Direct JSON config
   }),
-  
+
   // Security
   permissions: z.array(z.string()),
   security: z.object({
@@ -86,7 +106,7 @@ export const ServerManifestSchema = z.object({
     sigstore: z.string().url().optional(),
     sbom: z.string().url().optional(),
   }),
-  
+
   // Marketplace metadata
   featured: z.boolean().default(false),
   downloads: z.number().int().min(0).default(0),
@@ -107,11 +127,13 @@ export const RegistryIndexSchema = z.object({
   updatedAt: z.string().datetime(),
   serverCount: z.number().int().min(0),
   servers: z.array(ServerManifestSchema),
-  categories: z.record(z.object({
-    name: z.string(),
-    description: z.string(),
-    count: z.number().int().min(0),
-  })),
+  categories: z.record(
+    z.object({
+      name: z.string(),
+      description: z.string(),
+      count: z.number().int().min(0),
+    }),
+  ),
   featured: z.array(z.string()),
   signing: z.object({
     publicKey: z.string(),

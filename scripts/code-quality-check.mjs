@@ -129,18 +129,11 @@ function analyseFile(filePath) {
   }
   // Naming conventions
   const badNames = [];
-<<<<<<< HEAD
   // Extract regexes for each language for maintainability
   const pythonFuncRegex = /def\s+([A-Za-z][A-Za-z0-9_]+)/g;
   const jsFuncRegex = /function\s+([A-Za-z][A-Za-z0-9]*)/g;
   const jsConstRegex = /const\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
   const jsLetRegex = /let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
-=======
-  const nameRegex =
-    ext === '.py'
-      ? /def\s+([A-Za-z][A-Za-z0-9]+)/g
-      : /function\s+([A-Za-z][A-Za-z0-9]*)|const\s+([A-Za-z][A-Za-z0-9]*)\s*=|let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
->>>>>>> feeeb6a (chore: add sonarjs reports and minor gate/script tweaks)
   let match;
   if (ext === '.py') {
     while ((match = pythonFuncRegex.exec(content))) {

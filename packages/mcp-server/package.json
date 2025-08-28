@@ -10,7 +10,7 @@
     "dev": "node --watch --enable-source-maps --trace-warnings ./dist/server.js",
     "build": "tsc -p tsconfig.json",
     "start": "node --enable-source-maps ./dist/server.js",
-    "lint": "eslint ."
+  "lint": "eslint --ext .ts src"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.3",

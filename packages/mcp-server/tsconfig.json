@@ -3,9 +3,9 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "ESNext",
-    "target": "ES2022",
-    "moduleResolution": "Node",
+  "module": "NodeNext",
+  "target": "ES2022",
+  "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "types": ["node"]
