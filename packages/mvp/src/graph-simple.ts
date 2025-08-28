@@ -243,3 +243,6 @@ export class SimplePRPGraph {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
+
+// Maintain backward compatibility with former export name
+export { SimplePRPGraph as CortexKernel };
