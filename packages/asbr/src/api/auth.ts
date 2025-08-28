@@ -28,7 +28,7 @@ export interface TokensConfig {
 export function createAuthMiddleware() {
   return async (req: any, res: any, next: any) => {
     // Only allow loopback connections
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const clientIp = req.ip || req.socket?.remoteAddress;
     if (!isLoopbackAddress(clientIp)) {
       res.status(403).json({ error: 'Access denied: loopback only' });
       return;
@@ -96,7 +96,7 @@ export function requireScopes(...requiredScopes: string[]) {
 /**
  * Check if an IP address is a loopback address
  */
-function isLoopbackAddress(ip: string): boolean {
+export function isLoopbackAddress(ip: string): boolean {
   if (!ip) return false;
 
   // Remove IPv6 prefix if present
