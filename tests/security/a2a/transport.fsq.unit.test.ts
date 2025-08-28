@@ -15,6 +15,12 @@ afterEach(async () => {
   cleanups.length = 0;
 });
 
+/**
+ * Publishes an event to an `fsQueue` transport and verifies that it is
+ * delivered to subscribers and persisted to the queue file on disk.
+ *
+ * @param queueName - Name of the queue; may include nested path segments.
+ */
 async function sendAndVerify(queueName: string) {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), 'fsq-'));
   vi.spyOn(os, 'homedir').mockReturnValue(home);
