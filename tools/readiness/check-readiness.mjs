@@ -1,7 +1,7 @@
 #!/usr/bin/env node
+import yaml from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
-import yaml from 'js-yaml';
 
 function loadJsonSummary(pkgPath) {
   const covPath = path.join(pkgPath, 'coverage', 'coverage-summary.json');
@@ -13,7 +13,7 @@ function loadJsonSummary(pkgPath) {
       statements: total.statements?.pct ?? 0,
       branches: total.branches?.pct ?? 0,
       functions: total.functions?.pct ?? 0,
-      lines: total.lines?.pct ?? 0
+      lines: total.lines?.pct ?? 0,
     };
   } catch (e) {
     return null;
@@ -21,7 +21,9 @@ function loadJsonSummary(pkgPath) {
 }
 
 const pkgsDir = path.resolve(process.cwd(), 'packages');
-const packages = fs.readdirSync(pkgsDir).filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
+const packages = fs
+  .readdirSync(pkgsDir)
+  .filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
 let failed = false;
 
 for (const pkg of packages) {
@@ -33,13 +35,14 @@ for (const pkg of packages) {
   }
   const doc = yaml.load(fs.readFileSync(readinessPath, 'utf-8')) || {};
   const thresholds = doc.thresholds || { statements: 95, branches: 95, functions: 95, lines: 95 };
-  const coverage = loadJsonSummary(pkgPath) || doc.coverage || { statements: 0, branches: 0, functions: 0, lines: 0 };
+  const coverage = loadJsonSummary(pkgPath) ||
+    doc.coverage || { statements: 0, branches: 0, functions: 0, lines: 0 };
 
   const checks = [
     ['statements', coverage.statements, thresholds.statements],
     ['branches', coverage.branches, thresholds.branches],
     ['functions', coverage.functions, thresholds.functions],
-    ['lines', coverage.lines, thresholds.lines]
+    ['lines', coverage.lines, thresholds.lines],
   ];
 
   for (const [name, actual, min] of checks) {

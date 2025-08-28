@@ -1,6 +1,6 @@
-import { z } from "zod";
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from 'fs';
+import * as path from 'path';
+import { z } from 'zod';
 
 export const BlockKeys = [
   'task_context',
@@ -34,31 +34,34 @@ export const BlocksSchema = z.array(
     })
     .refine(
       (o) => Object.keys(o).length === 1,
-      "Each blocks[] entry must have exactly one known key",
+      'Each blocks[] entry must have exactly one known key',
     ),
 );
 
 const schemaPath = z
   .string()
   .min(1)
-  .refine((p) => {
-    const fullPath = path.resolve(p);
-    if (!fs.existsSync(fullPath)) {
-      return false;
-    }
-    if (p.endsWith(".schema.json")) {
-      try {
-        JSON.parse(fs.readFileSync(fullPath, "utf8"));
-      } catch {
+  .refine(
+    (p) => {
+      const fullPath = path.resolve(p);
+      if (!fs.existsSync(fullPath)) {
         return false;
       }
-      return true;
-    }
-    return p.endsWith(".ts");
-  }, {
-    message:
-      "schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json",
-  });
+      if (p.endsWith('.schema.json')) {
+        try {
+          JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        } catch {
+          return false;
+        }
+        return true;
+      }
+      return p.endsWith('.ts');
+    },
+    {
+      message:
+        'schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json',
+    },
+  );
 
 export const PromptMetaSchema = z.object({
   id: z.string().min(1),
