@@ -14,8 +14,8 @@ let content = readFileSync(databaseManagerPath, 'utf-8');
 if (!content.includes('SecureDatabaseWrapper')) {
   content = content.replace(
     "import { Database } from 'better-sqlite3';",
-    "import { Database } from 'better-sqlite3';
-import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';"
+    `import { Database } from 'better-sqlite3';
+import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';`
   );
 }
 
@@ -23,8 +23,8 @@ import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';"
 if (!content.includes('private secureDb: SecureDatabaseWrapper;')) {
   content = content.replace(
     'private db: Database;',
-    'private db: Database;
-  private secureDb: SecureDatabaseWrapper;'
+    `private db: Database;
+  private secureDb: SecureDatabaseWrapper;`
   );
 }
 
