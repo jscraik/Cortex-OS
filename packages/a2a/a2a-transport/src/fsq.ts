@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import os from 'node:os';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import type { Transport } from '@cortex-os/a2a-core/bus';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 
 export async function fsQueue(queueName = 'default'): Promise<Transport> {
   const dir = join(os.homedir(), '.cortex', 'a2a', queueName);
