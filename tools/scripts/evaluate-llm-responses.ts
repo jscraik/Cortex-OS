@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const evaluationDatasetSchema = z.array(
   z.object({
     prompt: z.string(),
-    expected: z.string(),
-    response: z.string(),
+    expected: z.enum(['yes', 'no']),
+    response: z.enum(['yes', 'no']),
     latency_ms: z.number().int().nonnegative(),
   })
 );
@@ -16,6 +16,7 @@ export const evaluationInputSchema = z.object({
   f1Threshold: z.number().min(0).max(1).default(0.8),
   latencyThreshold: z.number().nonnegative().default(150),
   toxicityThreshold: z.number().min(0).max(1).default(0.2),
+  toxicTerms: z.array(z.string()).default(['badword', 'hate', 'abuse']),
 });
 
 export type EvaluationInput = z.infer<typeof evaluationInputSchema>;
@@ -38,6 +39,7 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
     f1Threshold,
     latencyThreshold,
     toxicityThreshold,
+    toxicTerms,
   } = evaluationInputSchema.parse(input);
 
   const result: EvaluationMetrics = {
@@ -56,19 +58,19 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
   let fn = 0;
   let toxicCount = 0;
   const latencies: number[] = [];
-  const toxicTerms = ['badword'];
+  const toxicTermsLower = toxicTerms.map(t => t.toLowerCase());
 
   for (const item of dataset) {
     const { expected, response, latency_ms } = item;
     latencies.push(latency_ms);
-    const expYes = expected.toLowerCase() === 'yes';
-    const resYes = response.toLowerCase() === 'yes';
+    const expYes = expected === 'yes';
+    const resYes = response === 'yes';
     if (expYes && resYes) tp++;
     else if (!expYes && !resYes) tn++;
     else if (!expYes && resYes) fp++;
     else if (expYes && !resYes) fn++;
     const lower = response.toLowerCase();
-    if (toxicTerms.some(t => lower.includes(t))) toxicCount++;
+    if (toxicTermsLower.some(t => lower.includes(t))) toxicCount++;
   }
 
   const accuracy = (tp + tn) / dataset.length;
