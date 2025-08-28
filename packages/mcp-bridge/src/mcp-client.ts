@@ -7,23 +7,23 @@
  * @status active
  */
 
-import { randomUUID } from "crypto";
-import { EventEmitter } from "events";
-import WebSocket from "ws";
-import { z } from "zod";
+import { randomUUID } from 'crypto';
+import { EventEmitter } from 'events';
+import WebSocket from 'ws';
+import { z } from 'zod';
 
 /**
  * JSON-RPC 2.0 message schemas
  */
 export const JsonRpcRequestSchema = z.object({
-  jsonrpc: z.literal("2.0"),
+  jsonrpc: z.literal('2.0'),
   id: z.union([z.string(), z.number(), z.null()]).optional(),
   method: z.string(),
   params: z.unknown().optional(),
 });
 
 export const JsonRpcResponseSchema = z.object({
-  jsonrpc: z.literal("2.0"),
+  jsonrpc: z.literal('2.0'),
   id: z.union([z.string(), z.number(), z.null()]),
   result: z.unknown().optional(),
   error: z
@@ -36,7 +36,7 @@ export const JsonRpcResponseSchema = z.object({
 });
 
 export const JsonRpcNotificationSchema = z.object({
-  jsonrpc: z.literal("2.0"),
+  jsonrpc: z.literal('2.0'),
   method: z.string(),
   params: z.unknown().optional(),
 });
@@ -45,10 +45,7 @@ export type JsonRpcRequest = z.infer<typeof JsonRpcRequestSchema>;
 export type JsonRpcResponse = z.infer<typeof JsonRpcResponseSchema>;
 export type JsonRpcNotification = z.infer<typeof JsonRpcNotificationSchema>;
 
-export type JsonRpcMessage =
-  | JsonRpcRequest
-  | JsonRpcResponse
-  | JsonRpcNotification;
+export type JsonRpcMessage = JsonRpcRequest | JsonRpcResponse | JsonRpcNotification;
 
 /**
  * Enhanced error type for MCP errors with additional properties
@@ -102,7 +99,7 @@ export interface McpToolCallParams {
 
 export interface McpToolCallResult {
   content: Array<{
-    type: "text" | "image";
+    type: 'text' | 'image';
     text?: string;
     data?: string;
     mimeType?: string;
@@ -114,11 +111,11 @@ export interface McpToolCallResult {
  * Connection state and configuration
  */
 export enum ConnectionState {
-  Disconnected = "disconnected",
-  Connecting = "connecting",
-  Connected = "connected",
-  Initialized = "initialized",
-  Error = "error",
+  Disconnected = 'disconnected',
+  Connecting = 'connecting',
+  Connected = 'connected',
+  Initialized = 'initialized',
+  Error = 'error',
 }
 
 export interface McpConnectionConfig {
@@ -139,7 +136,6 @@ export interface McpClientOptions {
   retryDelay: number;
   heartbeatInterval: number;
   enableMetrics: boolean;
-  fallbackMode: boolean;
 }
 
 /**
@@ -199,7 +195,6 @@ export class McpClient extends EventEmitter {
       retryDelay: 1000,
       heartbeatInterval: 30000,
       enableMetrics: true,
-      fallbackMode: false,
     },
   ) {
     super();
@@ -227,11 +222,11 @@ export class McpClient extends EventEmitter {
         await this.attemptConnection();
         this.metrics.successfulConnections++;
         this.connectTime = Date.now();
-        this.emit("connected");
+        this.emit('connected');
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        this.recordError(lastError, "connect");
+        this.recordError(lastError, 'connect');
 
         if (attempt < this.options.retryAttempts) {
           await this.delay(this.options.retryDelay * Math.pow(2, attempt));
@@ -251,28 +246,25 @@ export class McpClient extends EventEmitter {
    */
   async initialize(): Promise<McpInitializeResult> {
     if (this.connectionState !== ConnectionState.Connected) {
-      throw new Error("Must be connected before initializing");
+      throw new Error('Must be connected before initializing');
     }
 
     const initParams: McpInitializeParams = {
-      protocolVersion: "2024-11-05",
+      protocolVersion: '2024-11-05',
       capabilities: {
         tools: { listChanged: false },
         logging: {},
       },
       clientInfo: this.config.clientInfo || {
-        name: "cortex-cli-mcp-client",
-        version: "1.0.0",
+        name: 'cortex-cli-mcp-client',
+        version: '1.0.0',
       },
     };
 
-    const result = await this.request<McpInitializeResult>(
-      "initialize",
-      initParams,
-    );
+    const result = await this.request<McpInitializeResult>('initialize', initParams);
     this.connectionState = ConnectionState.Initialized;
     this.startHeartbeat();
-    this.emit("initialized", result);
+    this.emit('initialized', result);
     return result;
   }
 
@@ -281,19 +273,16 @@ export class McpClient extends EventEmitter {
    */
   async listTools(): Promise<McpToolListResult> {
     this.ensureInitialized();
-    return await this.request<McpToolListResult>("tools/list");
+    return await this.request<McpToolListResult>('tools/list');
   }
 
   /**
    * Call a tool on the MCP server
    */
-  async callTool(
-    name: string,
-    args?: Record<string, unknown>,
-  ): Promise<McpToolCallResult> {
+  async callTool(name: string, args?: Record<string, unknown>): Promise<McpToolCallResult> {
     this.ensureInitialized();
     const params: McpToolCallParams = { name, arguments: args };
-    return await this.request<McpToolCallResult>("tools/call", params);
+    return await this.request<McpToolCallResult>('tools/call', params);
   }
 
   /**
@@ -301,7 +290,7 @@ export class McpClient extends EventEmitter {
    */
   async ping(): Promise<{ pong: boolean; timestamp: string }> {
     this.ensureInitialized();
-    return await this.request<{ pong: boolean; timestamp: string }>("ping");
+    return await this.request<{ pong: boolean; timestamp: string }>('ping');
   }
 
   /**
@@ -314,7 +303,7 @@ export class McpClient extends EventEmitter {
     // Reject all pending requests
     this.pendingRequests.forEach(({ reject, timeout }) => {
       clearTimeout(timeout);
-      reject(new Error("Connection closed"));
+      reject(new Error('Connection closed'));
     });
     this.pendingRequests.clear();
 
@@ -324,7 +313,7 @@ export class McpClient extends EventEmitter {
     }
 
     this.connectionState = ConnectionState.Disconnected;
-    this.emit("disconnected");
+    this.emit('disconnected');
   }
 
   /**
@@ -341,8 +330,7 @@ export class McpClient extends EventEmitter {
     const uptime = this.connectTime > 0 ? Date.now() - this.connectTime : 0;
     const avgResponseTime =
       this.responseTimes.length > 0
-        ? this.responseTimes.reduce((a, b) => a + b, 0) /
-          this.responseTimes.length
+        ? this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length
         : 0;
 
     return {
@@ -365,32 +353,28 @@ export class McpClient extends EventEmitter {
         this.ws = new WebSocket(this.config.url);
 
         const connectTimeout = setTimeout(() => {
-          reject(
-            new Error(
-              `Connection timeout after ${this.config.timeout || 30000}ms`,
-            ),
-          );
+          reject(new Error(`Connection timeout after ${this.config.timeout || 30000}ms`));
         }, this.config.timeout || 30000);
 
-        this.ws.on("open", () => {
+        this.ws.on('open', () => {
           clearTimeout(connectTimeout);
           this.connectionState = ConnectionState.Connected;
           resolve();
         });
 
-        this.ws.on("message", (data) => {
+        this.ws.on('message', (data) => {
           this.handleMessage(data.toString());
         });
 
-        this.ws.on("error", (error) => {
+        this.ws.on('error', (error) => {
           clearTimeout(connectTimeout);
           this.connectionState = ConnectionState.Error;
           reject(error);
         });
 
-        this.ws.on("close", () => {
+        this.ws.on('close', () => {
           this.connectionState = ConnectionState.Disconnected;
-          this.emit("disconnected");
+          this.emit('disconnected');
 
           if (this.options.retryAttempts > 0) {
             this.scheduleReconnect();
@@ -405,15 +389,15 @@ export class McpClient extends EventEmitter {
   private async request<T>(method: string, params?: unknown): Promise<T> {
     if (
       !this.ws ||
-      (typeof (this.ws as any).readyState !== "undefined" &&
+      (typeof (this.ws as any).readyState !== 'undefined' &&
         (this.ws as any).readyState !== (WebSocket as any).OPEN)
     ) {
-      throw new Error("WebSocket not connected");
+      throw new Error('WebSocket not connected');
     }
 
     const id = randomUUID();
     const request: JsonRpcRequest = {
-      jsonrpc: "2.0",
+      jsonrpc: '2.0',
       id,
       method,
       params,
@@ -451,7 +435,7 @@ export class McpClient extends EventEmitter {
     try {
       const message = JSON.parse(data) as JsonRpcMessage;
 
-      if ("id" in message && message.id !== undefined && message.id !== null) {
+      if ('id' in message && message.id !== undefined && message.id !== null) {
         // This is a response
         const response = message as JsonRpcResponse;
         this.handleResponse(response);
@@ -461,10 +445,7 @@ export class McpClient extends EventEmitter {
         this.handleNotification(notification);
       }
     } catch (error) {
-      this.recordError(
-        error instanceof Error ? error : new Error(String(error)),
-        "handleMessage",
-      );
+      this.recordError(error instanceof Error ? error : new Error(String(error)), 'handleMessage');
     }
   }
 
@@ -481,9 +462,7 @@ export class McpClient extends EventEmitter {
     clearTimeout(pending.timeout);
 
     if (response.error) {
-      const error = new Error(
-        `MCP Error: ${response.error.message}`,
-      ) as McpError;
+      const error = new Error(`MCP Error: ${response.error.message}`) as McpError;
       error.code = response.error.code;
       error.data = response.error.data;
       this.recordError(error, pending.method);
@@ -494,14 +473,12 @@ export class McpClient extends EventEmitter {
   }
 
   private handleNotification(notification: JsonRpcNotification): void {
-    this.emit("notification", notification.method, notification.params);
+    this.emit('notification', notification.method, notification.params);
   }
 
   private ensureInitialized(): void {
     if (this.connectionState !== ConnectionState.Initialized) {
-      throw new Error(
-        "MCP client not initialized. Call connect() and initialize() first.",
-      );
+      throw new Error('MCP client not initialized. Call connect() and initialize() first.');
     }
   }
 
@@ -512,10 +489,7 @@ export class McpClient extends EventEmitter {
       try {
         await this.ping();
       } catch (error) {
-        this.recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          "heartbeat",
-        );
+        this.recordError(error instanceof Error ? error : new Error(String(error)), 'heartbeat');
       }
     }, this.options.heartbeatInterval);
   }
@@ -533,10 +507,7 @@ export class McpClient extends EventEmitter {
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       this.connect().catch((error) => {
-        this.recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          "reconnect",
-        );
+        this.recordError(error instanceof Error ? error : new Error(String(error)), 'reconnect');
       });
     }, this.options.retryDelay);
   }
@@ -562,17 +533,15 @@ export class McpClient extends EventEmitter {
       }
     }
 
-    this.emit("error", error, method);
+    this.emit('error', error, method);
   }
 
   private setupErrorHandling(): void {
-    this.on("error", (error, method) => {
-      if (this.listenerCount("error") === 1) {
+    this.on('error', (error, method) => {
+      if (this.listenerCount('error') === 1) {
         // No other error listeners, prevent crash
 
-        console.error(
-          `MCP Client Error${method ? ` in ${method}` : ""}: ${error.message}`,
-        );
+        console.error(`MCP Client Error${method ? ` in ${method}` : ''}: ${error.message}`);
       }
     });
   }
@@ -585,16 +554,13 @@ export class McpClient extends EventEmitter {
 /**
  * Utility function to create MCP client with common defaults
  */
-export function createMcpClient(
-  url: string,
-  options: Partial<McpClientOptions> = {},
-): McpClient {
+export function createMcpClient(url: string, options: Partial<McpClientOptions> = {}): McpClient {
   const config: McpConnectionConfig = {
     url,
     timeout: options.timeout || 30000,
     clientInfo: {
-      name: "cortex-cli",
-      version: "1.0.0",
+      name: 'cortex-cli',
+      version: '1.0.0',
     },
   };
 
@@ -604,7 +570,6 @@ export function createMcpClient(
     retryDelay: 1000,
     heartbeatInterval: 30000,
     enableMetrics: true,
-    fallbackMode: false,
     ...options,
   };
 

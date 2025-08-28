@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 // MCP Protocol version support
 export const MCP_VERSION = '2025-06-18';
+
 export const SUPPORTED_VERSIONS = [MCP_VERSION];
 
 /**

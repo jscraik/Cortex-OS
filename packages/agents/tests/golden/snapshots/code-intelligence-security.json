@@ -1,0 +1,54 @@
+{
+  "input": {
+    "code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
+    "language": "javascript",
+    "context": "Test function for data processing",
+    "analysisType": "security",
+    "urgency": "high"
+  },
+  "output": {
+    "suggestions": [
+      {
+        "type": "improvement",
+        "line": 1,
+        "description": "Consider adding input validation",
+        "code": "// Add validation logic here",
+        "rationale": "Improves security and error handling",
+        "priority": "medium"
+      }
+    ],
+    "complexity": {
+      "cyclomatic": 5,
+      "cognitive": 3,
+      "maintainability": "high",
+      "hotspots": [
+        "function processData()"
+      ]
+    },
+    "security": {
+      "vulnerabilities": [],
+      "riskLevel": "low",
+      "recommendations": [
+        "Add input sanitization",
+        "Implement proper error handling"
+      ]
+    },
+    "performance": {
+      "bottlenecks": [],
+      "memoryUsage": "efficient",
+      "optimizations": [
+        "Consider caching repeated calculations"
+      ]
+    },
+    "confidence": 0.85,
+    "modelUsed": "deepseek-coder-33b",
+    "processingTime": 1
+  },
+  "metadata": {
+    "seed": 12345,
+    "analysisType": "security"
+  },
+  "timestamp": 1756323507484,
+  "seed": 12345,
+  "nodeVersion": "v24.6.0"
+}

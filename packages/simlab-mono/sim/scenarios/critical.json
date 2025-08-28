@@ -1,0 +1,72 @@
+[
+  {
+    "id": "crit-001",
+    "name": "Password Reset",
+    "description": "User forgot their account password",
+    "goal": "reset my password",
+    "persona": { "locale": "en-US", "tone": "frustrated", "tech_fluency": "med" },
+    "initial_context": {},
+    "sop_refs": ["SOP-SEC-001"],
+    "kb_refs": [],
+    "success_criteria": ["reset", "password"],
+    "difficulty": "basic",
+    "category": "support",
+    "tags": ["critical"]
+  },
+  {
+    "id": "crit-002",
+    "name": "Billing Question",
+    "description": "User needs clarification on a charge",
+    "goal": "explain this charge on my bill",
+    "persona": { "locale": "en-US", "tone": "neutral", "tech_fluency": "low" },
+    "initial_context": {},
+    "sop_refs": ["SOP-BIL-002"],
+    "kb_refs": [],
+    "success_criteria": ["bill", "charge"],
+    "difficulty": "basic",
+    "category": "billing",
+    "tags": ["critical"]
+  },
+  {
+    "id": "crit-003",
+    "name": "App Crash",
+    "description": "Mobile app crashes on launch",
+    "goal": "fix the app crash on startup",
+    "persona": { "locale": "en-US", "tone": "annoyed", "tech_fluency": "high" },
+    "initial_context": {},
+    "sop_refs": ["SOP-APP-003"],
+    "kb_refs": [],
+    "success_criteria": ["fix", "crash"],
+    "difficulty": "intermediate",
+    "category": "technical",
+    "tags": ["critical"]
+  },
+  {
+    "id": "crit-004",
+    "name": "Feature Request",
+    "description": "User requests a new feature",
+    "goal": "request dark mode feature",
+    "persona": { "locale": "en-US", "tone": "polite", "tech_fluency": "med" },
+    "initial_context": {},
+    "sop_refs": ["SOP-FEA-004"],
+    "kb_refs": [],
+    "success_criteria": ["request", "feature"],
+    "difficulty": "basic",
+    "category": "feedback",
+    "tags": ["critical"]
+  },
+  {
+    "id": "crit-005",
+    "name": "Cancel Subscription",
+    "description": "User wants to cancel their plan",
+    "goal": "cancel my subscription",
+    "persona": { "locale": "en-US", "tone": "determined", "tech_fluency": "med" },
+    "initial_context": {},
+    "sop_refs": ["SOP-SUB-005"],
+    "kb_refs": [],
+    "success_criteria": ["cancel", "subscription"],
+    "difficulty": "basic",
+    "category": "account",
+    "tags": ["critical"]
+  }
+]

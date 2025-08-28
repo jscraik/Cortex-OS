@@ -10,9 +10,7 @@
     "./runner": "./dist/runner.js",
     "./agent-adapter": "./dist/agent-adapter.js",
     "./judge": "./dist/judge.js",
-    "./report-generator": "./dist/report-generator.js",
     "./report": "./dist/report.js",
-    "./schemas": "./dist/schemas.js",
     "./types": "./dist/types.js",
     "./user-sim": "./dist/user-sim.js"
   },

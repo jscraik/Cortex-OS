@@ -2,15 +2,13 @@ import { spawn } from 'child_process';
 import type { ChatMessage, GenerationConfig, Generator } from './index';
 
 /**
- * Model specification with priority support
+ * Model specification for generation backends
  */
 export interface ModelSpec {
   /** Model identifier or path */
   model: string;
   /** Backend to use for this model */
   backend: 'mlx' | 'ollama';
-  /** Priority (higher = preferred, MLX models get +100 bonus) */
-  priority?: number;
   /** Display name for the model */
   name?: string;
   /** Model description */
@@ -20,11 +18,11 @@ export interface ModelSpec {
 }
 
 /**
- * Configuration for multi-model generator
+ * Configuration for model generator
  */
 export interface MultiModelGeneratorOptions {
-  /** Available models (will be auto-sorted by priority) */
-  models: ModelSpec[];
+  /** Model specification */
+  model: ModelSpec;
   /** Default generation options */
   defaultConfig?: Partial<GenerationConfig>;
   /** Timeout for model requests (ms) */
@@ -32,21 +30,15 @@ export interface MultiModelGeneratorOptions {
 }
 
 /**
- * Multi-model generator with MLX-first, Ollama-fallback strategy
+ * Single-model generator
  */
 export class MultiModelGenerator implements Generator {
-  private readonly models: ModelSpec[];
+  private readonly model: ModelSpec;
   private readonly defaultConfig: Partial<GenerationConfig>;
   private readonly timeout: number;
 
   constructor(options: MultiModelGeneratorOptions) {
-    // Sort models: MLX first (priority + 100), then by explicit priority, then by order
-    this.models = [...options.models].sort((a, b) => {
-      const aPriority = (a.priority || 0) + (a.backend === 'mlx' ? 100 : 0);
-      const bPriority = (b.priority || 0) + (b.backend === 'mlx' ? 100 : 0);
-      return bPriority - aPriority;
-    });
-
+    this.model = options.model;
     this.defaultConfig = {
       maxTokens: 2048,
       temperature: 0.7,
@@ -57,59 +49,41 @@ export class MultiModelGenerator implements Generator {
   }
 
   /**
-   * Generate text completion with MLX-first fallback support
+   * Generate text completion
    */
   async generate(prompt: string, config?: Partial<GenerationConfig>) {
     const finalConfig = { ...this.defaultConfig, ...config };
-
-    for (const model of this.models) {
-      try {
-        const result = await this.generateWithModel(model, prompt, finalConfig);
-        return {
-          content: result,
-          provider: model.backend,
-          usage: {
-            promptTokens: Math.floor(prompt.length / 4), // Rough estimate
-            completionTokens: Math.floor(result.length / 4),
-            totalTokens: Math.floor((prompt.length + result.length) / 4),
-          },
-        };
-      } catch (error) {
-        console.warn(`Model ${model.model} (${model.backend}) failed, trying next:`, error);
-        continue;
-      }
-    }
-
-    throw new Error('All models failed to generate response');
+    const result = await this.generateWithModel(this.model, prompt, finalConfig);
+    return {
+      content: result,
+      provider: this.model.backend,
+      usage: {
+        promptTokens: Math.floor(prompt.length / 4), // Rough estimate
+        completionTokens: Math.floor(result.length / 4),
+        totalTokens: Math.floor((prompt.length + result.length) / 4),
+      },
+    };
   }
 
   /**
-   * Generate chat response with MLX-first fallback support
+   * Generate chat response
    */
   async chat(messages: ChatMessage[], config?: Partial<GenerationConfig>) {
     const finalConfig = { ...this.defaultConfig, ...config };
-
-    for (const model of this.models) {
-      try {
-        const result = await this.chatWithModel(model, messages, finalConfig);
-        return {
-          content: result,
-          provider: model.backend,
-          usage: {
-            promptTokens: Math.floor(messages.reduce((sum, m) => sum + m.content.length, 0) / 4),
-            completionTokens: Math.floor(result.length / 4),
-            totalTokens: Math.floor(
-              (messages.reduce((sum, m) => sum + m.content.length, 0) + result.length) / 4,
-            ),
-          },
-        };
-      } catch (error) {
-        console.warn(`Model ${model.model} (${model.backend}) failed, trying next:`, error);
-        continue;
-      }
-    }
-
-    throw new Error('All models failed to generate chat response');
+    const result = await this.chatWithModel(this.model, messages, finalConfig);
+    return {
+      content: result,
+      provider: this.model.backend,
+      usage: {
+        promptTokens: Math.floor(
+          messages.reduce((sum, m) => sum + m.content.length, 0) / 4,
+        ),
+        completionTokens: Math.floor(result.length / 4),
+        totalTokens: Math.floor(
+          (messages.reduce((sum, m) => sum + m.content.length, 0) + result.length) / 4,
+        ),
+      },
+    };
   }
 
   /**

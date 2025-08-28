@@ -4,7 +4,6 @@
  */
 
 import { readFile } from 'fs/promises';
-import path from 'path';
 import { z } from 'zod';
 import type { ServerManifest } from '@cortex-os/mcp-registry';
 
@@ -154,13 +153,13 @@ export class McpSecurityValidator {
       const dangerousPerms = permissions.filter(perm =>
         dangerous.some(dangerousPerm => perm.includes(dangerousPerm))
       );
-      
+
       result.warnings.push(`Server requests dangerous permissions: ${dangerousPerms.join(', ')}`);
-      
-      // High risk servers should have dangerous permissions
-      if (server.security?.riskLevel === 'high' && !hasDangerous) {
-        result.warnings.push('High-risk server should declare dangerous permissions explicitly');
-      }
+    }
+
+    // High risk servers should have dangerous permissions
+    if (server.security?.riskLevel === 'high' && !hasDangerous) {
+      result.warnings.push('High-risk server should declare dangerous permissions explicitly');
     }
 
     // Check for confirmation-required permissions
@@ -228,15 +227,16 @@ export class McpSecurityValidator {
       result.warnings.push('Server missing Software Bill of Materials (SBOM)');
     }
 
-    // In a real implementation, you would:
-    // 1. Fetch the sigstore bundle
-    // 2. Verify the signature against the server package
-    // 3. Validate the certificate chain
-    // 4. Check the SBOM for known vulnerabilities
-    
     if (this.policy.security.signatures.sigstoreValidation && security?.sigstore) {
-      // Placeholder for actual signature validation
-      if (!security.sigstore.includes('sigstore.json')) {
+      try {
+        const url = new URL(security.sigstore);
+        if (url.protocol !== 'https:') {
+          result.errors.push('Sigstore attestation must use HTTPS');
+        }
+        if (!url.pathname.endsWith('.json')) {
+          result.warnings.push('Sigstore attestation should reference a JSON bundle');
+        }
+      } catch {
         result.warnings.push('Sigstore attestation URL may be invalid');
       }
     }
@@ -272,7 +272,7 @@ export class McpSecurityValidator {
 
     // Validate MCP version compatibility
     const mcpVersion = server.mcpVersion;
-    const supportedVersions = ['2025-06-18', '2025-03-26', '2024-11-05'];
+    const supportedVersions = ['2025-06-18', '2025-03-26'];
     
     if (mcpVersion && !supportedVersions.includes(mcpVersion)) {
       result.warnings.push(`MCP version '${mcpVersion}' may not be supported`);

@@ -1,21 +1,23 @@
+'use client';
+
 import { useEffect, useState } from 'react';
+import { apiFetch } from '../../utils/api-client';
 
 export default function Approvals() {
   const [items, setItems] = useState<any[]>([]);
+
   useEffect(() => {
-    (async () => {
-      const res = await fetch('/api/approvals');
-      if (res.ok) setItems(await res.json());
-    })();
+    apiFetch<any[]>('/api/approvals').then(setItems).catch(console.error);
   }, []);
+
   async function decide(id: string, approved: boolean) {
-    await fetch('/api/approvals', {
+    await apiFetch('/api/approvals', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id, approved }),
     });
     setItems((xs) => xs.filter((x) => x.id !== id));
   }
+
   return (
     <main className="p-4">
       <h1 className="text-xl">Approvals</h1>

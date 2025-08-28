@@ -40,13 +40,6 @@ import { createTraceParent } from '../../a2a-contracts/src/trace-context';
  * Ensures reliable event publishing with database transaction consistency
  * Implements ASBR best practices for reliability and observability
  */
-
-export interface OutboxStore {
-  enqueue(e: Envelope): Promise<void>;
-  dequeueBatch(n: number): Promise<Envelope[]>;
-  ack(ids: string[]): Promise<void>;
-}
-
 /**
  * Enhanced Outbox Publisher with reliability features
  */
@@ -55,12 +48,15 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
     private readonly transport: { publish: (envelope: Envelope) => Promise<void> },
     private readonly config: OutboxConfig = {}
   ) {}
-  publishBatch(messages: OutboxMessage[]): Promise<void> {
-    throw new Error('Method not implemented.');
-  }
-
   async publish(message: OutboxMessage): Promise<void> {
-    // Create envelope from outbox message
+    // Inject current trace context if available
+    const traceContext = getCurrentTraceContext();
+    if (traceContext) {
+      message.traceparent = createTraceParent(traceContext);
+      message.tracestate = traceContext.traceState;
+      message.baggage = traceContext.baggage;
+    }
+
     const envelope: Envelope = {
       id: message.id,
       type: message.eventType,
@@ -72,21 +68,10 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
       causationId: message.causationId,
       traceparent: message.traceparent,
       tracestate: message.tracestate,
-      baggage: message.baggage
+      baggage: message.baggage,
     };
 
-    try {
-      // Inject current trace context
-    const traceContext = getCurrentTraceContext();
-    if (traceContext) {
-      message.traceparent = createTraceParent(traceContext);
-      message.tracestate = traceContext.traceState;
-      message.baggage = traceContext.baggage;
-    }
-
-    // Save to repository
-
-      // Publish the message
+    await this.transport.publish(envelope);
   }
 
   async publishBatch(messages: OutboxMessage[]): Promise<void> {
@@ -389,17 +374,5 @@ export class EnhancedOutbox {
       baggage: traceContext.baggage
     };
   }
-}
 
-/**
- * Legacy Outbox class for backward compatibility
- */
-export class Outbox {
-  constructor(private readonly store: OutboxStore, private readonly send: (e: Envelope) => Promise<void>) {}
-  async flush(batch = 100) {
-    const items = await this.store.dequeueBatch(batch);
-    for (const e of items) await this.send(e);
-    await this.store.ack(items.map((i) => i.id));
-  }
 }
-

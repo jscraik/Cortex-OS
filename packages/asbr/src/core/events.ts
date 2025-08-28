@@ -5,6 +5,7 @@
 
 import { EventEmitter } from 'events';
 import { appendFile } from 'fs/promises';
+import type { Server as IOServer, Socket } from 'socket.io';
 import type { Config, Event, EventType } from '../types/index.js';
 import { getStatePath } from '../xdg/index.js';
 import { loadConfig } from './config.js';
@@ -14,7 +15,7 @@ export interface EventSubscription {
   taskId?: string;
   eventTypes: EventType[];
   callback: (event: Event) => void;
-  transport: 'sse' | 'poll';
+  transport: 'socket' | 'sse' | 'poll';
   lastEventId?: string;
   createdAt: number;
 }
@@ -22,7 +23,7 @@ export interface EventSubscription {
 export interface EventStreamOptions {
   taskId?: string;
   eventTypes?: EventType[];
-  transport?: 'sse' | 'poll';
+  transport?: 'socket' | 'sse' | 'poll';
   lastEventId?: string;
 }
 
@@ -36,11 +37,52 @@ export class EventManager extends EventEmitter {
   private globalEvents: Event[] = [];
   private heartbeatIntervals = new Map<string, NodeJS.Timeout>();
   private eventCounter = 0;
+  private io?: IOServer;
 
   constructor(config: Config) {
     super();
     this.config = config;
     this.setupCleanupInterval();
+  }
+
+  attachIO(io: IOServer): void {
+    this.io = io;
+    io.on('connection', (socket: Socket) => {
+      socket.on(
+        'subscribe',
+        (
+          { taskId, eventTypes }: { taskId?: string; eventTypes?: EventType[] },
+          ack?: (res: unknown) => void,
+        ) => {
+          const subId = this.subscribe({ taskId, eventTypes, transport: 'socket' }, (event) => {
+            socket.emit(event.type, event);
+          });
+          (socket.data as any).subscriptionId = subId;
+          if (taskId) socket.join(taskId);
+          ack?.({ ok: true });
+        },
+      );
+
+      socket.on(
+        'unsubscribe',
+        ({ taskId }: { taskId?: string } = {}, ack?: (res: unknown) => void) => {
+          const subId = (socket.data as any).subscriptionId;
+          if (subId) {
+            this.unsubscribe(subId);
+            (socket.data as any).subscriptionId = undefined;
+          }
+          if (taskId) socket.leave(taskId);
+          ack?.({ ok: true });
+        },
+      );
+
+      socket.on('disconnect', () => {
+        const subId = (socket.data as any).subscriptionId;
+        if (subId) {
+          this.unsubscribe(subId);
+        }
+      });
+    });
   }
 
   /**
@@ -71,6 +113,9 @@ export class EventManager extends EventEmitter {
     this.emit('event', event);
     this.emit(`event:${event.type}`, event);
     this.emit(`task:${event.taskId}`, event);
+    if (this.io) {
+      this.io.to(event.taskId).emit(event.type, event);
+    }
   }
 
   /**

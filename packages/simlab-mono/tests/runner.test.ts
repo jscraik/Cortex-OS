@@ -29,4 +29,13 @@ describe('SimRunner determinism', () => {
     const agentTurns = result.turns.filter((t) => t.role === 'agent');
     expect(agentTurns.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('generates deterministic batch IDs with same seed', async () => {
+    const scenarios = [baseScenario];
+    const runner1 = new SimRunner({ deterministic: true, seed: 7 });
+    const runner2 = new SimRunner({ deterministic: true, seed: 7 });
+    const batch1 = await runner1.runBatch(scenarios);
+    const batch2 = await runner2.runBatch(scenarios);
+    expect(batch1.batchId).toBe(batch2.batchId);
+  });
 });

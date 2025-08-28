@@ -122,6 +122,22 @@ describe('McpSecurityValidator', () => {
       expect(result.errors).toContain('Low-risk server cannot have dangerous permissions');
     });
 
+    it('should warn when high-risk server lacks dangerous permissions', async () => {
+      mockPolicy.security.riskLevels.allowed.push('high');
+      validator = new McpSecurityValidator({
+        policy: mockPolicy,
+        enforcementLevel: 'strict'
+      });
+
+      const server: ServerManifest = createMockServer({
+        security: { riskLevel: 'high' },
+        permissions: ['network:https']
+      });
+
+      const result = await validator.validateServer(server);
+      expect(result.warnings).toContain('High-risk server should declare dangerous permissions explicitly');
+    });
+
     it('should validate permission consistency', async () => {
       // High risk servers should have dangerous permissions
       mockPolicy.security.riskLevels.allowed.push('high');

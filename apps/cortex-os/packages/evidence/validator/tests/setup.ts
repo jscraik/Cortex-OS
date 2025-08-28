@@ -3,19 +3,19 @@
  * @description Test setup for evidence validator
  */
 
-import { beforeAll, afterAll } from "vitest";
-import fs from "fs-extra";
-import path from "path";
+import { beforeAll, afterAll } from 'vitest';
+import { mkdir, writeFile, rm } from 'fs/promises';
+import path from 'path';
 
-const TEST_DATA_DIR = path.join(__dirname, "test-data");
+const TEST_DATA_DIR = path.join(__dirname, 'test-data');
 
 beforeAll(async () => {
   // Ensure test directories exist
-  await fs.ensureDir(TEST_DATA_DIR);
+  await mkdir(TEST_DATA_DIR, { recursive: true });
 
   // Create test files
-  await fs.writeFile(
-    path.join(TEST_DATA_DIR, "sample.ts"),
+  await writeFile(
+    path.join(TEST_DATA_DIR, 'sample.ts'),
     `import { Component } from "react";
 
 export class SampleComponent extends Component {
@@ -25,8 +25,8 @@ export class SampleComponent extends Component {
 }`,
   );
 
-  await fs.writeFile(
-    path.join(TEST_DATA_DIR, "readme.md"),
+  await writeFile(
+    path.join(TEST_DATA_DIR, 'readme.md'),
     `# Sample Project
 
 This is a sample project for testing evidence validation.
@@ -39,5 +39,5 @@ This is a sample project for testing evidence validation.
 
 afterAll(async () => {
   // Cleanup test directories
-  await fs.remove(TEST_DATA_DIR);
+  await rm(TEST_DATA_DIR, { recursive: true, force: true });
 });

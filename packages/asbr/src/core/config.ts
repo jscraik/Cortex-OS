@@ -6,11 +6,11 @@
 import { readFile, writeFile } from 'fs/promises';
 import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import {
-    ConfigSchema,
-    ValidationError,
-    type Config,
-    type MCPAllowlistEntry,
-    type SecurityPolicy,
+  ConfigSchema,
+  ValidationError,
+  type Config,
+  type MCPAllowlistEntry,
+  type SecurityPolicy,
 } from '../types/index.js';
 import { getConfigPath, pathExists } from '../xdg/index.js';
 
@@ -19,7 +19,7 @@ import { getConfigPath, pathExists } from '../xdg/index.js';
  */
 export const DEFAULT_CONFIG: Config = {
   events: {
-    transport: 'sse',
+    transport: 'socket',
     poll_interval_ms: 1500,
     heartbeat_ms: 10000,
     idle_timeout_ms: 60000,
@@ -70,10 +70,13 @@ export async function loadConfig(): Promise<Config> {
     if (error instanceof ValidationError) {
       throw error;
     }
-    throw new ValidationError(`Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`, {
-      path: configPath,
-      originalError: error,
-    });
+    throw new ValidationError(
+      `Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        path: configPath,
+        originalError: error,
+      },
+    );
   }
 }
 
@@ -99,10 +102,13 @@ export async function saveConfig(config: Config): Promise<void> {
   try {
     await writeFile(configPath, yamlContent, 'utf-8');
   } catch (error) {
-    throw new ValidationError(`Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`, {
-      path: configPath,
-      originalError: error,
-    });
+    throw new ValidationError(
+      `Failed to save configuration: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        path: configPath,
+        originalError: error,
+      },
+    );
   }
 }
 
@@ -136,10 +142,13 @@ export async function loadMCPAllowlist(): Promise<MCPAllowlistEntry[]> {
     if (error instanceof ValidationError) {
       throw error;
     }
-    throw new ValidationError(`Failed to load MCP allowlist: ${error instanceof Error ? error.message : String(error)}`, {
-      path: allowlistPath,
-      originalError: error,
-    });
+    throw new ValidationError(
+      `Failed to load MCP allowlist: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        path: allowlistPath,
+        originalError: error,
+      },
+    );
   }
 }
 
@@ -156,10 +165,13 @@ export async function saveMCPAllowlist(allowlist: MCPAllowlistEntry[]): Promise<
   try {
     await writeFile(allowlistPath, yamlContent, 'utf-8');
   } catch (error) {
-    throw new ValidationError(`Failed to save MCP allowlist: ${error instanceof Error ? error.message : String(error)}`, {
-      path: allowlistPath,
-      originalError: error,
-    });
+    throw new ValidationError(
+      `Failed to save MCP allowlist: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        path: allowlistPath,
+        originalError: error,
+      },
+    );
   }
 }
 
@@ -186,10 +198,13 @@ export async function loadVersionPins(): Promise<Record<string, string>> {
     if (error instanceof ValidationError) {
       throw error;
     }
-    throw new ValidationError(`Failed to load version pins: ${error instanceof Error ? error.message : String(error)}`, {
-      path: pinsPath,
-      originalError: error,
-    });
+    throw new ValidationError(
+      `Failed to load version pins: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        path: pinsPath,
+        originalError: error,
+      },
+    );
   }
 }
 
@@ -227,9 +242,12 @@ export async function loadSecurityPolicies(): Promise<SecurityPolicy[]> {
     if (error instanceof ValidationError) {
       throw error;
     }
-    throw new ValidationError(`Failed to load security policies: ${error instanceof Error ? error.message : String(error)}`, {
-      originalError: error,
-    });
+    throw new ValidationError(
+      `Failed to load security policies: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        originalError: error,
+      },
+    );
   }
 }
 

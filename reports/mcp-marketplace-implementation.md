@@ -7,6 +7,7 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
 ## Key Deliverables
 
 ### 1. Core Infrastructure
+
 - **MCP Registry System** (`packages/mcp-registry/`)
   - JSON Schema validation for server manifests
   - TypeScript types and Zod schemas
@@ -17,12 +18,13 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
   - Server installation management
   - Security validation framework
 
-- **MCP Transport Bridge** (`packages/mcp/mcp-bridge/`)
+- **MCP Transport Bridge** (`packages/mcp/mcp-transport-bridge/`)
   - stdio ↔ Streamable HTTP interoperability
   - Protocol translation layer
   - Health monitoring and management
 
 ### 2. CLI Integration
+
 - **Cortex CLI Commands** (`apps/cortex-cli/src/commands/mcp/`)
   - `mcp search` - Search marketplace servers
   - `mcp show` - Display server details
@@ -31,6 +33,7 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
   - `mcp bridge` - Manage transport bridges
 
 ### 3. API Server
+
 - **Marketplace API** (`apps/cortex-marketplace/`)
   - RESTful API with OpenAPI documentation
   - Rate limiting and security headers
@@ -38,6 +41,7 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
   - Comprehensive search and filtering
 
 ### 4. AI Enhancement Layer
+
 - **MLX Integration** (`packages/mcp/mcp-ai-enhanced/`)
   - Production-ready embedding generation using Qwen3 models
   - Semantic search with cosine similarity
@@ -51,6 +55,7 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
   - Multi-model support (qwen3-coder:30b, phi4-mini-reasoning)
 
 ### 5. Governance & Security
+
 - **Policy Framework** (`.cortex/policy/`)
   - Configurable security policies
   - Risk level assessment
@@ -64,6 +69,7 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
   - Safety categorization
 
 ### 6. Seed Data & Testing
+
 - **Sample Servers** (`examples/mcp-servers/`)
   - Filesystem server configuration
   - GitHub integration server
@@ -78,6 +84,7 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
 ## Technical Architecture
 
 ### Registry Federation
+
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Official      │    │   Community     │    │   Enterprise    │
@@ -93,12 +100,14 @@ Successfully implemented a comprehensive MCP (Model Context Protocol) Marketplac
 ```
 
 ### AI Enhancement Pipeline
+
 ```
-Query Input → Query Enhancement (Ollama) → Semantic Search (MLX/Ollama) → 
+Query Input → Query Enhancement (Ollama) → Semantic Search (MLX/Ollama) →
 Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ```
 
 ### Transport Bridge Architecture
+
 ```
 ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
 │   stdio      │───▶│   Bridge    │───▶│  Streamable  │
@@ -114,17 +123,20 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## AI Model Integration
 
 ### MLX Models Utilized
+
 - **Qwen3-Embedding-0.6B/4B/8B**: Semantic embeddings for search
 - **Qwen3-Reranker-4B**: Advanced result reranking
 - **LlamaGuard-7b**: Content safety validation
 
 ### Ollama Models Supported
+
 - **qwen3-coder:30b**: Code-aware search enhancement
 - **phi4-mini-reasoning:3.8b**: Query understanding and reasoning
 - **gemma3n:e4b**: Alternative reasoning model
 - **deepseek-coder:6.7b**: Code-specific embeddings
 
 ### Production-Ready Features
+
 - Intelligent fallback between MLX and Ollama
 - Comprehensive error handling and graceful degradation
 - Caching for performance optimization
@@ -134,6 +146,7 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## Security Implementation
 
 ### Multi-Layer Security
+
 1. **Input Validation**: Zod schemas for all API inputs
 2. **Authentication**: Bearer token support for HTTP transport
 3. **Authorization**: Permission-based access control
@@ -141,11 +154,13 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 5. **Transport Security**: HTTPS enforcement and CORS policies
 
 ### Risk Assessment Framework
+
 - **Low Risk**: Network read, data read operations
 - **Medium Risk**: File system access, limited writes
 - **High Risk**: System execution, admin privileges
 
 ### Supply Chain Security
+
 - Sigstore bundle verification
 - SBOM (Software Bill of Materials) validation
 - Publisher verification system
@@ -154,12 +169,14 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## Performance Optimizations
 
 ### Caching Strategy
+
 - **Memory Cache**: Hot registry data (5-minute TTL)
 - **Disk Cache**: Persistent registry backups
 - **Search Cache**: Semantic search results caching
 - **Embedding Cache**: MLX embedding reuse
 
 ### Scalability Features
+
 - **Batch Processing**: Parallel server validation
 - **Rate Limiting**: Per-client request throttling
 - **Load Balancing**: Multi-registry distribution
@@ -168,6 +185,7 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## Testing Coverage
 
 ### Test-Driven Development
+
 - **100% Schema Coverage**: All manifests validated
 - **API Test Suite**: Comprehensive endpoint testing
 - **Integration Tests**: End-to-end workflow validation
@@ -176,6 +194,7 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 - **AI Model Testing**: Embedding and ranking validation
 
 ### Quality Gates
+
 - TypeScript strict mode compliance
 - ESLint and Prettier formatting
 - Vitest unit and integration tests
@@ -185,14 +204,16 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## Client Integration Support
 
 ### Multi-Client Install Commands
+
 - **Claude Desktop**: `claude mcp add <server>`
-- **Cline**: Direct MCP settings integration  
+- **Cline**: Direct MCP settings integration
 - **Cursor**: MCP configuration support
 - **Continue**: Settings-based installation
 - **Devin**: API-based server registration
 - **Windsurf**: Plugin marketplace integration
 
 ### Transport Flexibility
+
 - **stdio**: Local process communication
 - **Streamable HTTP**: Remote server access
 - **Bridge Mode**: Protocol translation
@@ -201,6 +222,7 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## Future Enhancements
 
 ### Planned Features
+
 1. **Advanced Analytics**: Usage metrics and popularity tracking
 2. **Community Features**: Ratings, reviews, and user feedback
 3. **Automated Testing**: CI/CD integration for server validation
@@ -208,6 +230,7 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 5. **Marketplace UI**: Web-based server discovery and management
 
 ### Scaling Considerations
+
 - **CDN Integration**: Global registry distribution
 - **Microservices**: Service decomposition for scale
 - **Event Streaming**: Real-time updates and notifications
@@ -216,26 +239,30 @@ Reranking (MLX BM25+) → Safety Validation (Pattern Matching) → Results
 ## Compliance & Standards
 
 ### MCP Protocol Compliance
+
 - **Version Support**: 2025-06-18 (latest), backward compatibility
 - **JSON-RPC 2.0**: Full protocol implementation
 - **Capability Discovery**: Dynamic feature detection
 - **Error Handling**: Standardized error responses
 
 ### Open Source Standards
+
 - **MIT License**: Permissive licensing for broad adoption
-- **Semantic Versioning**: Predictable release management  
+- **Semantic Versioning**: Predictable release management
 - **OpenAPI 3.0**: Comprehensive API documentation
 - **JSON Schema**: Formal data validation specifications
 
 ## Deployment Guide
 
 ### Prerequisites
+
 - Node.js 18+ with pnpm
 - Python 3.9+ with MLX framework
 - Ollama installation with required models
 - PostgreSQL/SQLite for persistence (optional)
 
 ### Environment Setup
+
 ```bash
 # Clone and install dependencies
 git clone <repository>
@@ -260,6 +287,7 @@ ollama pull phi4-mini-reasoning:latest
 ```
 
 ### Production Configuration
+
 ```json
 {
   "registries": {
@@ -282,6 +310,7 @@ ollama pull phi4-mini-reasoning:latest
 ## Success Metrics
 
 ### Implementation Goals Achieved
+
 - ✅ **TDD Compliance**: All features implemented test-first
 - ✅ **AI Integration**: MLX and Ollama production-ready
 - ✅ **Security Framework**: Comprehensive policy engine
@@ -292,6 +321,7 @@ ollama pull phi4-mini-reasoning:latest
 - ✅ **Error Resilience**: Graceful degradation and fallbacks
 
 ### Quality Indicators
+
 - **Type Safety**: 100% TypeScript coverage
 - **Test Coverage**: Comprehensive unit and integration tests
 - **Documentation**: Complete API and usage documentation

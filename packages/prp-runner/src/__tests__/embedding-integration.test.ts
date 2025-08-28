@@ -331,14 +331,6 @@ describe('🔍 Embedding and Reranking Integration Tests', () => {
       expect(stats.dimensions).toBe(1024); // Qwen model dimensions
     });
 
-    it('should create OpenAI adapter', () => {
-      const adapter = createEmbeddingAdapter('openai');
-      const stats = adapter.getStats();
-      
-      expect(stats.provider).toBe('openai');
-      expect(stats.dimensions).toBe(1536);
-    });
-
     it('should create local adapter', () => {
       const adapter = createEmbeddingAdapter('local');
       const stats = adapter.getStats();

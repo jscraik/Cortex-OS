@@ -2,6 +2,11 @@
  * MLX-First Model Integration Strategy for Cortex-OS
  * Prioritizes MLX models with Ollama fallbacks for optimal Apple Silicon performance
  */
+import path from 'node:path';
+
+const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/models';
+const modelPath = (...segments: string[]) => path.join(MLX_CACHE_DIR, ...segments);
+
 
 export interface ModelConfig {
   primary: {
@@ -32,7 +37,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'qwen2.5-0.5b-instruct',
-      path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen2.5-0.5B-Instruct-4bit',
+      path: modelPath('hub', 'models--mlx-community--Qwen2.5-0.5B-Instruct-4bit'),
       capabilities: ['reasoning', 'planning', 'fast_response'],
     },
     fallback: {
@@ -49,7 +54,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'qwen3-coder-30b',
-      path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit',
+      path: modelPath('hub', 'models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit'),
       capabilities: ['code_generation', 'analysis', 'refactoring'],
     },
     fallback: {
@@ -66,7 +71,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'qwen2.5-vl-3b',
-      path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit',
+      path: modelPath('hub', 'models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit'),
       capabilities: ['vision', 'text', 'ui_understanding'],
     },
     fallback: {
@@ -83,7 +88,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'mixtral-8x7b',
-      path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx',
+      path: modelPath('hub', 'models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx'),
       capabilities: ['expert_reasoning', 'task_decomposition', 'parallel_thinking'],
     },
     fallback: {
@@ -100,7 +105,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'phi3-mini',
-      path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Phi-3-mini-4k-instruct-4bit',
+      path: modelPath('hub', 'models--mlx-community--Phi-3-mini-4k-instruct-4bit'),
       capabilities: ['conversation', 'general_knowledge', 'efficient'],
     },
     fallback: {
@@ -117,7 +122,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'qwen3-embedding-4b',
-      path: '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-4B',
+      path: modelPath('models--Qwen--Qwen3-Embedding-4B'),
       capabilities: ['semantic_search', 'similarity', 'classification'],
     },
     fallback: {
@@ -134,7 +139,7 @@ export const MODEL_STRATEGY: Record<string, ModelConfig> = {
     primary: {
       provider: 'mlx',
       model: 'qwen3-reranker-4b',
-      path: '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Reranker-4B',
+      path: modelPath('models--Qwen--Qwen3-Reranker-4B'),
       capabilities: ['ranking', 'relevance', 'prioritization'],
     },
     fallback: {
