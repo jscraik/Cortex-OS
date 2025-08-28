@@ -20,18 +20,25 @@ afterEach(async () => {
 
 describe('fs-store', () => {
   it('persists and retrieves entries', async () => {
-    await upsert({ name: 's', transport: 'https', endpoint: 'https://example.com' });
+    await upsert({ name: 's', transport: 'streamableHttp', endpoint: 'https://example.com' });
     const all = await readAll();
     expect(all).toHaveLength(1);
     expect(all[0].name).toBe('s');
   });
 
   it('rejects unsupported transport', async () => {
-    await expect(upsert({ name: 'bad', transport: 'http' as any })).rejects.toThrow();
+    await expect(upsert({ name: 'bad', transport: 'https' as any })).rejects.toThrow();
+  });
+
+  it('rejects missing name', async () => {
+    await expect(
+      // @ts-expect-error testing validation
+      upsert({ transport: 'streamableHttp', endpoint: 'https://example.com' }),
+    ).rejects.toThrow();
   });
 
   it('removes entries', async () => {
-    await upsert({ name: 's', transport: 'https', endpoint: 'https://example.com' });
+    await upsert({ name: 's', transport: 'streamableHttp', endpoint: 'https://example.com' });
     await remove('s');
     const all = await readAll();
     expect(all).toHaveLength(0);

@@ -83,4 +83,5 @@ echo "PNPM version: $(pnpm --version 2>/dev/null || echo 'PNPM not found')"
 
 echo ""
 echo "=== Fix Complete ==="
-echo "Try running your commands again in a new terminal session"
+echo "Try running your commands again in a new terminal session"</content>
+<parameter name="filePath">/Users/jamiecraik/.Cortex-OS-clean/fix-terminal.sh

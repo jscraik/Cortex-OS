@@ -32,7 +32,8 @@ describe('McpClient', () => {
   const defaultOptions = {
     url: 'ws://localhost:8080',
     timeout: 5000,
-    maxRetries: 3,
+    retryAttempts: 0,
+    retryDelay: 1000,
   };
 
   beforeEach(() => {
@@ -117,12 +118,10 @@ describe('McpClient', () => {
     it('should handle connection errors with retry', async () => {
       const error = new Error('Connection failed');
 
-      // Create a failing WebSocket mock for this test
       const failingMockWs = {
         ...mockWs,
         on: vi.fn((event: string, handler: (...args: any[]) => void) => {
           if (event === 'error') {
-            // Immediately trigger error when error handler is attached
             setTimeout(() => handler(error), 0);
           }
         }),
@@ -130,11 +129,14 @@ describe('McpClient', () => {
 
       MockWebSocket.mockReturnValue(failingMockWs);
 
-      // Start connection attempt
-      const connectPromise = client.connect();
+      const retryClient = createMcpClient(defaultOptions.url, {
+        ...defaultOptions,
+        retryAttempts: 3,
+      });
+      const connectPromise = retryClient.connect();
 
       await expect(connectPromise).rejects.toThrow('Failed to connect after 4 attempts');
-      expect(client.getState()).toBe(ConnectionState.Error);
+      expect(retryClient.getState()).toBe(ConnectionState.Error);
     }, 15000);
 
     it('should disconnect cleanly', async () => {
@@ -231,22 +233,69 @@ describe('McpClient', () => {
     it('should handle request timeouts', async () => {
       vi.useFakeTimers();
 
-      // First connect
       const connectPromise = client.connect();
       const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
       if (openHandler) openHandler();
       await connectPromise;
 
-      // Now test timeout on initialize
       const initPromise = client.initialize();
 
-      // Fast-forward time to trigger timeout
       vi.advanceTimersByTime(6000);
 
-      await expect(initPromise).rejects.toThrow('Request timeout');
+      await expect(initPromise).rejects.toThrow('Request timeout for method: initialize');
+      expect((client as any).pendingRequests.size()).toBe(0);
 
       vi.useRealTimers();
     }, 10000);
+
+    it('retries requests before failing', async () => {
+      const clientWithRetry = createMcpClient(defaultOptions.url, {
+        timeout: 50,
+        retryAttempts: 2,
+        retryDelay: 10,
+      });
+
+      const connectPromise = clientWithRetry.connect();
+      const openHandler = mockWs.on.mock.calls
+        .filter((call: any[]) => call[0] === 'open')
+        .pop()?.[1];
+      if (openHandler) openHandler();
+      await connectPromise;
+
+      const initPromise = clientWithRetry.initialize();
+      await expect(initPromise).rejects.toThrow('Request timeout for method: initialize');
+      expect(mockWs.send).toHaveBeenCalledTimes(3);
+      expect(clientWithRetry.getMetrics().requestCount).toBe(1);
+      await clientWithRetry.disconnect();
+    }, 5000);
+
+    it('updates metrics on successful request', async () => {
+      vi.useFakeTimers();
+      const connectPromise = client.connect();
+      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
+      if (openHandler) openHandler();
+      await connectPromise;
+
+      const initPromise = client.initialize();
+      const sentMessage = JSON.parse(mockWs.send.mock.calls[0][0]);
+      vi.advanceTimersByTime(50);
+      const messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      if (messageHandler) {
+        const response = {
+          jsonrpc: '2.0',
+          id: sentMessage.id,
+          result: { ok: true },
+        };
+        messageHandler(Buffer.from(JSON.stringify(response)));
+      }
+      await initPromise;
+
+      const metrics = client.getMetrics();
+      expect(metrics.requestCount).toBe(1);
+      expect(metrics.responseCount).toBe(1);
+      expect(metrics.averageResponseTime).toBeGreaterThan(0);
+      vi.useRealTimers();
+    });
   });
 
   describe('Tool Operations', () => {

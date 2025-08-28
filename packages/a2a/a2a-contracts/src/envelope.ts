@@ -49,8 +49,7 @@ export const Envelope = z
         return src;
       } catch {
         // If source is not a valid URL, it's a violation of the spec.
-        // For now, we'll fall back to a default, but this should ideally throw.
-        return process.env.A2A_DEFAULT_SOURCE || 'urn:cortex-os:a2a:invalid-source';
+        throw new Error('Invalid source URI');
       }
     })(),
   }));

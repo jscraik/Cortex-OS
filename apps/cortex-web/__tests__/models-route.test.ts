@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('models route', () => {
   it('returns models list with default and minimal shape', async () => {

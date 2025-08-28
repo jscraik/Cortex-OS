@@ -11,6 +11,8 @@ import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 import { z } from 'zod';
+import { trackRequest } from './trackRequest';
+import { PendingRequests } from './pendingRequests';
 
 /**
  * JSON-RPC 2.0 message schemas
@@ -162,16 +164,7 @@ export interface McpMetrics {
 export class McpClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private connectionState: ConnectionState = ConnectionState.Disconnected;
-  private pendingRequests = new Map<
-    string | number,
-    {
-      resolve: (value: unknown) => void;
-      reject: (error: Error) => void;
-      timeout: NodeJS.Timeout;
-      method: string;
-      timestamp: number;
-    }
-  >();
+  private pendingRequests = new PendingRequests();
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private metrics: McpMetrics = {
@@ -387,48 +380,28 @@ export class McpClient extends EventEmitter {
   }
 
   private async request<T>(method: string, params?: unknown): Promise<T> {
-    if (
-      !this.ws ||
-      (typeof (this.ws as any).readyState !== 'undefined' &&
-        (this.ws as any).readyState !== (WebSocket as any).OPEN)
-    ) {
+    if (!this.ws || this.ws.readyState !== (WebSocket as any).OPEN) {
       throw new Error('WebSocket not connected');
     }
 
     const id = randomUUID();
-    const request: JsonRpcRequest = {
-      jsonrpc: '2.0',
-      id,
+    const request: JsonRpcRequest = { jsonrpc: '2.0', id, method, params };
+
+    return trackRequest<T>(
+      request,
       method,
-      params,
-    };
-
-    const startTime = Date.now();
-    this.metrics.requestCount++;
-
-    return new Promise<T>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(id);
-        reject(new Error(`Request timeout for method: ${method}`));
-      }, this.options.timeout);
-
-      this.pendingRequests.set(id, {
-        resolve: (value: unknown) => {
-          const responseTime = Date.now() - startTime;
-          this.responseTimes.push(responseTime);
-          if (this.responseTimes.length > 100) {
-            this.responseTimes = this.responseTimes.slice(-100);
-          }
-          resolve(value as T);
-        },
-        reject,
-        timeout,
-        method,
-        timestamp: startTime,
-      });
-
-      this.ws!.send(JSON.stringify(request));
-    });
+      {
+        timeout: this.options.timeout,
+        retryAttempts: this.options.retryAttempts,
+        retryDelay: this.options.retryDelay,
+      },
+      (data) => this.ws!.send(data),
+      this.pendingRequests,
+      this.metrics,
+      this.responseTimes,
+      this.delay.bind(this),
+      this.recordError.bind(this),
+    );
   }
 
   private handleMessage(data: string): void {

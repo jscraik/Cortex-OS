@@ -6,4 +6,6 @@ export interface Transport {
     types: string[],
     onMsg: (msg: Envelope) => Promise<void>,
   ) => Promise<() => Promise<void>>;
+  terminate?: () => Promise<void>;
+  pid?: number;
 }
