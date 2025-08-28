@@ -42,8 +42,10 @@ export default function ChatPage() {
     let sid = sessionId;
     if (!sid) {
       sid = crypto.randomUUID();
+      // Set session state and wait for it to be updated before proceeding
       setSessionId(sid);
     }
+    // Always use the local sid for API calls and return value
     try {
       const res = await apiFetch<{ events: ToolEvent[] }>(`/api/chat/${sid}/tools`);
       setToolEvents(res.events);
