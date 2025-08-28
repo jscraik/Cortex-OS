@@ -2,15 +2,18 @@ export interface McpRequest {
   jsonrpc: '2.0';
   id: string | number;
   method?: string;
-  params?: any;
-  result?: any;
-  error?: any;
+  params?: unknown;
+  result?: unknown;
+  error?: unknown;
 }
 
 export interface Transport {
   connect(): Promise<void>;
   disconnect(): Promise<void>;
-  send(message: McpRequest): void;
+  send(
+    message: McpRequest,
+    onError?: (err: unknown, msg: McpRequest) => void,
+  ): void;
   isConnected(): boolean;
 }
 
