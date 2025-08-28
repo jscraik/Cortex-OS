@@ -19,7 +19,8 @@
     "test": "vitest",
     "lint": "eslint src/",
     "format": "prettier --write src/",
-    "validate": "node dist/cli.js"
+    "validate": "node dist/cli.js",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "ajv": "^8.12.0",

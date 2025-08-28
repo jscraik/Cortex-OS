@@ -5,6 +5,9 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -26,7 +29,8 @@
     "demo:build": "tsc && node dist/mcp-demo-server.js",
     "mlx:embed": "tsx src/scripts/embed-mlx-neuron.mjs",
     "mlx:start": "tsx src/mlx-mcp-integration.ts",
-    "start:complete": "npm run mlx:embed"
+    "start:complete": "npm run mlx:embed",
+    "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
     "@types/express": "^4.17.23",
