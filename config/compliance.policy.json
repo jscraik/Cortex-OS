@@ -1,0 +1,7 @@
+{
+  "exceptions": {
+    "devOnly": [
+      "eslint-plugin-sonarjs"
+    ]
+  }
+}

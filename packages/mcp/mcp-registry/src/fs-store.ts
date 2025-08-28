@@ -1,7 +1,7 @@
-import { promises as fs } from 'node:fs';
-import { dirname, join } from 'node:path';
-import os from 'node:os';
 import { ServerInfoSchema, type ServerInfo } from '@cortex-os/mcp-core';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import { dirname, join } from 'node:path';
 
 const DB = join(os.homedir(), '.cortex', 'mcp', 'servers.json');
 
@@ -17,7 +17,8 @@ export async function upsert(si: ServerInfo) {
   ServerInfoSchema.parse(si);
   const all = await readAll();
   const idx = all.findIndex((s) => s.name === si.name);
-  if (idx >= 0) all[idx] = si; else all.push(si);
+  if (idx >= 0) all[idx] = si;
+  else all.push(si);
   await fs.mkdir(dirname(DB), { recursive: true });
   await fs.writeFile(DB, JSON.stringify(all, null, 2));
 }
