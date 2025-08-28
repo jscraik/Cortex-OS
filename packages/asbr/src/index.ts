@@ -165,4 +165,6 @@ export const SCHEMA_VERSIONS = {
   TASK: 'cortex.task@1',
   TASK_INPUT: 'cortex.task.input@1',
   EVIDENCE: 'cortex.evidence@1',
+  ARTIFACT: 'cortex.artifact@1',
+  PROFILE: 'cortex.profile@1',
 };
