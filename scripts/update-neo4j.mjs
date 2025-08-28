@@ -1,15 +1,41 @@
 #!/usr/bin/env node
 
 // Idempotent updater: replace the entire Neo4j class with a
-// SecureNeo4j-backed implementation using safe template literals.
+// SecureNeo4j-backed implementation using a readable template file and
+// balanced brace matching instead of fragile regex.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
+const secureClassPath = fileURLToPath(new URL('./templates/neo4j-secure-class.ts', import.meta.url));
 
 function log(msg) {
   console.log(`[update-neo4j] ${msg}`);
+}
+
+function replaceNeo4jClass(content, replacement) {
+  const classToken = 'export class Neo4j implements INeo4j';
+  const start = content.indexOf(classToken);
+  if (start === -1) return null;
+
+  const braceStart = content.indexOf('{', start + classToken.length);
+  if (braceStart === -1) return null;
+
+  let depth = 1;
+  let i = braceStart + 1;
+  while (i < content.length && depth > 0) {
+    const ch = content[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    i++;
+  }
+
+  if (depth !== 0) return null;
+  const end = i; // index after closing brace
+
+  return content.slice(0, start) + replacement + content.slice(end);
 }
 
 function tryUpdate() {
@@ -36,12 +62,13 @@ function tryUpdate() {
     );
   }
 
-  // Replace entire class body with a secure implementation
-  const classRegex = /export class Neo4j implements INeo4j {[\s\S]*?}\n?$/;
-  const secureClass = `export class Neo4j implements INeo4j {\n  private driver: Driver;\n  private secureNeo4j: SecureNeo4j;\n\n  constructor(uri: string, user: string, pass: string) {\n    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });\n    this.secureNeo4j = new SecureNeo4j(uri, user, pass);\n  }\n\n  async close() {\n    await this.driver.close();\n    await this.secureNeo4j.close();\n  }\n\n  async upsertNode(node: KGNode) {\n    try {\n      await this.secureNeo4j.upsertNode({ id: node.id, label: node.label, props: node.props });\n    } catch (error) {\n      console.error('Error upserting node:', error);\n      throw error;\n    }\n  }\n\n  async upsertRel(rel: KGRel) {\n    try {\n      await this.secureNeo4j.upsertRel({ from: rel.from, to: rel.to, type: rel.type, props: rel.props });\n    } catch (error) {\n      console.error('Error upserting relationship:', error);\n      throw error;\n    }\n  }\n\n  async neighborhood(nodeId: string, depth = 2): Promise<Subgraph> {\n    try {\n      return await this.secureNeo4j.neighborhood(nodeId, depth);\n    } catch (error) {\n      console.error('Error querying neighborhood:', error);\n      throw error;\n    }\n  }\n}\n`;
+  const secureClass = readFileSync(secureClassPath, 'utf-8');
+  const replaced = replaceNeo4jClass(content, `${secureClass}\n`);
+  if (replaced === null) {
+    throw new Error('Neo4j class definition not found');
+  }
 
-  content = content.replace(classRegex, secureClass);
-  writeFileSync(neo4jPath, content);
+  writeFileSync(neo4jPath, replaced);
   log('neo4j.ts has been updated to delegate to SecureNeo4j.');
   return true;
 }
@@ -59,6 +86,8 @@ try {
 }
 
 
+
 console.log('✅ neo4j.ts has been updated to use SecureNeo4j');
 console.log('⚠️  Please review the TODO comments and fully implement the secure operations');"
+
 
