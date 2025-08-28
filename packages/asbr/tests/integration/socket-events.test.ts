@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { io as Client } from 'socket.io-client';
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
-import { ASBRServer } from '../../src/api/server.js';
+import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 import { getEventManager } from '../../src/core/events.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,9 +14,9 @@ describe('Socket.io event transport', () => {
 
   beforeAll(async () => {
     await initializeXDG();
-    server = new ASBRServer({ port: 0, host: '127.0.0.1' });
+    server = createASBRServer({ port: 0, host: '127.0.0.1' });
     await server.start();
-    const address = (server as any).server.address();
+    const address = server.server!.address();
     port = typeof address === 'object' ? address.port : 0;
     client = Client(`http://127.0.0.1:${port}`, { transports: ['websocket'] });
   });

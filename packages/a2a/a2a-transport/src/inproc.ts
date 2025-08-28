@@ -1,5 +1,5 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import type { Transport } from '@cortex-os/a2a-core/bus';
+import type { Transport } from '@cortex-os/a2a-core/transport';
 
 export function inproc(): Transport {
   const subs = new Map<string, Set<(m: Envelope) => Promise<void>>>();

@@ -5,12 +5,13 @@
 
 // Direct imports for internal use
 import { initializeAuth } from './api/auth.js';
-import { ASBRServer } from './api/server.js';
+import { createASBRServer, type ASBRServer } from './api/server.js';
 import { ASBRClient, createASBRClient } from './sdk/index.js';
 import { initializeXDG } from './xdg/index.js';
 
 // Core exports
-export { ASBRServer } from './api/server.js';
+export { createASBRServer } from './api/server.js';
+export type { ASBRServer } from './api/server.js';
 export {
   ASBRClient,
   createASBRClient,
@@ -23,7 +24,15 @@ export { getFullConfig, loadConfig, saveConfig } from './core/config.js';
 export { getXDGPaths, initializeXDG } from './xdg/index.js';
 
 // Event system
-export { createA11yEvent, EventManager, getEventManager } from './core/events.js';
+
+export {
+  createA11yEvent,
+  createEventManager,
+  getEventManager,
+  EventManagerClass as DeprecatedEventManager,
+} from './core/events.js';
+export type { EventManager } from './core/events.js';
+
 
 // Diff and normalization
 export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
@@ -123,7 +132,7 @@ export async function initializeASBR(
   const tokenInfo = await initializeAuth();
 
   // Create server
-  const server = new ASBRServer({
+  const server = createASBRServer({
     port: options.port || 7439,
     host: options.host || '127.0.0.1',
   });

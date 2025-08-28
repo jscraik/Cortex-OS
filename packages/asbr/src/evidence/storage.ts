@@ -5,9 +5,15 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { promisify } from 'util';
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
+import { gzip, gunzip } from 'zlib';
 import type { Evidence } from '../types/index.js';
 import { ValidationError } from '../types/index.js';
 import { getDataPath, pathExists } from '../xdg/index.js';
+
+const gzipAsync = promisify(gzip);
+const gunzipAsync = promisify(gunzip);
 
 export interface StorageOptions {
   compression?: boolean;
@@ -484,24 +490,44 @@ export class EvidenceStorage {
     return csvContent;
   }
 
-  // Placeholder methods for encryption/compression
+  // Encryption/compression helpers
+  private getEncryptionKey(): Buffer {
+    const keyStr = process.env.ASBR_ENCRYPTION_KEY;
+    if (!keyStr) {
+      throw new Error(
+        "ASBR_ENCRYPTION_KEY environment variable is not set. Please set it to a strong, secret value to enable encryption."
+      );
+    }
+    return createHash('sha256').update(keyStr).digest();
+  }
+
   private async encrypt(content: string): Promise<string> {
-    // In a real implementation, use proper encryption
-    return Buffer.from(content).toString('base64');
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', this.getEncryptionKey(), iv);
+    const encrypted = Buffer.concat([cipher.update(content, 'utf8'), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return Buffer.concat([iv, tag, encrypted]).toString('base64');
   }
 
   private async decrypt(content: string): Promise<string> {
-    // In a real implementation, use proper decryption
-    return Buffer.from(content, 'base64').toString('utf-8');
+    const buf = Buffer.from(content, 'base64');
+    const iv = buf.subarray(0, 12);
+    const tag = buf.subarray(12, 28);
+    const data = buf.subarray(28);
+    const decipher = createDecipheriv('aes-256-gcm', this.getEncryptionKey(), iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+    return decrypted.toString('utf8');
   }
 
   private async compress(content: string): Promise<string> {
-    // In a real implementation, use proper compression
-    return content;
+    const gzipped = await gzipAsync(content);
+    return gzipped.toString('base64');
   }
 
   private async decompress(content: string): Promise<string> {
-    // In a real implementation, use proper decompression
-    return content;
+    const buffer = Buffer.from(content, 'base64');
+    const result = await gunzipAsync(buffer);
+    return result.toString('utf8');
   }
 }
