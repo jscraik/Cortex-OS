@@ -30,7 +30,8 @@ export const validateToolArgs = (schema: JsonSchema | undefined, args: Record<st
   const props = schema.properties || {};
   for (const [k, v] of Object.entries(args)) {
     const p = props[k];
-    if (p?.type === 'string' && typeof v !== 'string') throw new Error(`Invalid input: ${k} must be string`);
-    if (p?.maxLength && typeof v === 'string' && v.length > p.maxLength) throw new Error('Input too long');
+    if (p?.maxLength && typeof v === 'string' && v.length > p.maxLength) {
+      throw new Error('Input too long');
+    }
   }
 };
