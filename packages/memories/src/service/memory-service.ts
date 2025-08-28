@@ -24,9 +24,15 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
       return withSpan("memories.save", async () => {
         const m = memoryZ.parse(raw);
         const needsVector = !m.vector && m.text;
-        const withVec = needsVector
-          ? { ...m, vector: (await effectiveEmbedder.embed([m.text!]))[0], embeddingModel: effectiveEmbedder.name() }
-          : m;
+        let withVec: Memory;
+        if (needsVector) {
+          if (!effectiveEmbedder || typeof effectiveEmbedder.embed !== "function") {
+            throw new Error("Embedder is required to generate vector but is not available.");
+          }
+          withVec = { ...m, vector: (await effectiveEmbedder.embed([m.text!]))[0], embeddingModel: effectiveEmbedder.name() };
+        } else {
+          withVec = m;
+        }
         return store.upsert(withVec);
       });
     },
