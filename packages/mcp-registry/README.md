@@ -34,8 +34,9 @@ pnpm --filter @cortex-os/mcp-registry exec mcp-validate path/to/registry.json
 
 ```ts
 import { validateRegistry, validateServerManifest } from '@cortex-os/mcp-registry';
+import { readFile } from 'fs/promises';
 
-const manifest = JSON.parse(await fs.readFile('server-manifest.json', 'utf8'));
+const manifest = JSON.parse(await readFile('server-manifest.json', 'utf8'));
 const result = validateServerManifest(manifest);
 
 if (!result.valid) {
