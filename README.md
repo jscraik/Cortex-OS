@@ -6,11 +6,11 @@
 
 Cortex-OS is a monorepo containing several applications and shared libraries. The architecture is designed to be modular, with clear separation between applications and the services they consume.
 
--   **`apps/`**: Contains all user-facing applications, including the main `cortex-os` runtime, the `cortex-cli`, and the `cortex-marketplace` web interface.
--   **`packages/`**: Contains all shared libraries and services. These packages provide the core functionality of the system, such as agent-to-agent communication (`a2a`), memory (`memories`), and workflow `orchestration`.
--   **`libs/`**: Contains low-level framework libraries, utilities, and type definitions.
--   **`.cortex/`**: The governance hub of the project, containing all policies, schemas, and validation scripts.
--   **`contracts/`**: Defines the data contracts (e.g., CloudEvents) for communication between services.
+- **`apps/`**: Contains all user-facing applications, including the main `cortex-os` runtime, the `cortex-cli`, and the `cortex-marketplace` web interface.
+- **`packages/`**: Contains all shared libraries and services. These packages provide the core functionality of the system, such as agent-to-agent communication (`a2a`), memory (`memories`), and workflow `orchestration`.
+- **`libs/`**: Contains low-level framework libraries, utilities, and type definitions.
+- **`.cortex/`**: The governance hub of the project, containing all policies, schemas, and validation scripts.
+- **`contracts/`**: Defines the data contracts (e.g., CloudEvents) for communication between services.
 
 ## Project Structure
 
@@ -18,21 +18,21 @@ A high-level overview of the most important directories:
 
 ```markdown
 .
-├── .cortex/              # Governance hub (single source of truth)
-├── apps/                 # Applications and services
-│   ├── cortex-os/        # Main ASBR Runtime application
-│   ├── cortex-cli/       # Command-line interface
-│   └── cortex-web/       # Shared web UI components
-├── packages/             # Shared libraries and services
-│   ├── a2a/              # Agent-to-Agent communication bus
-│   ├── agents/           # Core agent implementations
-│   ├── memories/         # Long-term memory management
-│   ├── model-gateway/    # Gateway for accessing AI models
-│   ├── orchestration/    # Workflow orchestration
-│   ├── rag/              # Retrieval-Augmented Generation
-│   └── ...               # and many other packages
-├── contracts/            # API and event contracts
-├── libs/                 # Low-level framework libraries (TS, Python)
+├── .cortex/ # Governance hub (single source of truth)
+├── apps/ # Applications and services
+│ ├── cortex-os/ # Main ASBR Runtime application
+│ ├── cortex-cli/ # Command-line interface
+│ └── cortex-web/ # Shared web UI components
+├── packages/ # Shared libraries and services
+│ ├── a2a/ # Agent-to-Agent communication bus
+│ ├── agents/ # Core agent implementations
+│ ├── memories/ # Long-term memory management
+│ ├── model-gateway/ # Gateway for accessing AI models
+│ ├── orchestration/ # Workflow orchestration
+│ ├── rag/ # Retrieval-Augmented Generation
+│ └── ... # and many other packages
+├── contracts/ # API and event contracts
+├── libs/ # Low-level framework libraries (TS, Python)
 └── ...
 ```
 
