@@ -197,8 +197,12 @@ describe('LicenseScanner - TDD Security Tests', () => {
 
       const testScanner = new LicenseScanner(explicitOptions);
 
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Container digest verification failed');
+      // Only throw for the actual scan/run command so cleanup calls (rm/prune) don't also fail
+      mockExecSync.mockImplementation((command) => {
+        if (typeof command === 'string' && /docker run|scancode/.test(command)) {
+          throw new Error('Container digest verification failed');
+        }
+        return '';
       });
 
       await expect(testScanner.scanDirectory(testDir)).rejects.toThrow(
@@ -277,22 +281,31 @@ describe('LicenseScanner - TDD Security Tests', () => {
   describe('Container Security Isolation', () => {
     test('should run ScanCode in read-only container', async () => {
       mockExecSync.mockImplementation((command) => {
-        expect(command).toMatch(/--read-only/);
-        expect(command).toMatch(/--security-opt no-new-privileges/);
+        // Only assert on the docker run / scancode invocation; cleanup calls will be ignored
+        if (typeof command === 'string' && /docker run|scancode/.test(command)) {
+          expect(command).toMatch(/--read-only/);
+          expect(command).toMatch(/--security-opt no-new-privileges/);
+        }
         return JSON.stringify({ files: [], headers: [], summary: {} });
       });
 
       await scanner.scanDirectory(testDir);
 
-      expect(mockExecSync).toHaveBeenCalledWith(
-        expect.stringMatching(/docker.*--read-only.*--security-opt no-new-privileges/),
+      // Find the docker run call and assert its command string includes hardened flags
+      const runCall = mockExecSync.mock.calls.find(
+        (c) => typeof c[0] === 'string' && /docker run/.test(String(c[0])),
       );
+      expect(runCall).toBeDefined();
+      expect(runCall![0]).toMatch(/--read-only/);
+      expect(runCall![0]).toMatch(/--security-opt no-new-privileges/);
     });
 
     test('should enforce resource limits on container', async () => {
       mockExecSync.mockImplementation((command) => {
-        expect(command).toMatch(/--memory=512m/);
-        expect(command).toMatch(/--cpus=1/);
+        if (typeof command === 'string' && /docker run|scancode/.test(command)) {
+          expect(command).toMatch(/--memory=512m/);
+          expect(command).toMatch(/--cpus=1(\.0)?/);
+        }
         return JSON.stringify({ files: [], headers: [], summary: {} });
       });
 
@@ -300,9 +313,12 @@ describe('LicenseScanner - TDD Security Tests', () => {
     });
 
     test('should timeout long-running scans', async () => {
-      // Simulate long-running scan by throwing a timeout error from execSync
-      mockExecSync.mockImplementation(() => {
-        throw new Error('Scan timeout');
+      // Simulate long-running scan by throwing a timeout error only for the scan invocation
+      mockExecSync.mockImplementation((command) => {
+        if (typeof command === 'string' && /docker run|scancode/.test(command)) {
+          throw new Error('Scan timeout');
+        }
+        return '';
       });
 
       await expect(scanner.scanDirectory(testDir, { timeout: 30000 })).rejects.toThrow(
@@ -331,7 +347,9 @@ describe('LicenseScanner - TDD Security Tests', () => {
       const result1 = await scanner.scanDirectory(testDir);
       const result2 = await scanner.scanDirectory(testDir);
 
-      expect(result1).toEqual(result2);
+      // Compare stable output fields (ignore scanId / timestamp which are expected to differ)
+      expect(result1.sanitizedOutput).toEqual(result2.sanitizedOutput);
+      expect(result1.summary).toEqual(result2.summary);
       expect(result1.scanId).not.toEqual(result2.scanId); // Different scan IDs
     });
 
@@ -340,7 +358,10 @@ describe('LicenseScanner - TDD Security Tests', () => {
         'sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
 
       mockExecSync.mockImplementation((command) => {
-        expect(command).toMatch(new RegExp(`@${expectedDigest}`));
+        // Only assert on the docker run invocation; cleanup calls will not contain the digest
+        if (typeof command === 'string' && command.includes('docker run')) {
+          expect(command).toMatch(new RegExp(`@${expectedDigest}`));
+        }
         return JSON.stringify({ files: [], headers: [], summary: {} });
       });
 

@@ -66,3 +66,21 @@ Use `pnpm pw:test` with repo-level axe tests to audit accessibility.
 
 - If your provider is down, the gateway automatically falls back to the echo stream.
 - For local OpenAI-compatible servers, ensure CORS and streaming are enabled.
+
+## Testing
+
+Run the app-local Vitest configuration from the `apps/cortex-web` directory to avoid collecting tests from the entire monorepo. Example commands (zsh / macOS):
+
+```bash
+# install workspace deps (if you haven't already)
+pnpm install
+
+# run the app-local a11y tests (uses apps/cortex-web/vitest.config.ts)
+cd apps/cortex-web
+pnpm exec vitest --config=vitest.config.ts __tests__/mvp-chat.a11y.test.ts --run
+```
+
+Notes:
+
+- Do not run tests from the repository root with workspace-wide filters unless you intend to run all packages' suites; that can trigger integration tests that require external services and produce large logs.
+- The per-app `vitest.config.ts` ensures tests with `.a11y.test.ts` run in a `jsdom` environment so axe can examine DOM output.

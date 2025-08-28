@@ -99,4 +99,56 @@ describe('MVP Chat a11y (static smoke)', () => {
       ).toBeTruthy();
     }
   });
+
+  it('token-by-token streaming updates aria-live content and remains accessible', async () => {
+    // build host from static markup
+    const host = document.createElement('div');
+    host.innerHTML = staticMarkup;
+
+    const liveContainer = host.querySelector('[aria-live]');
+    expect(liveContainer).toBeTruthy();
+
+    // create a stream placeholder element similar to the app's { id: 'stream' }
+    const streamLi = document.createElement('li');
+    streamLi.setAttribute('id', 'stream');
+    streamLi.className = 'my-2';
+    const roleDiv = document.createElement('div');
+    roleDiv.className = 'text-xs text-gray-500';
+    roleDiv.textContent = 'assistant';
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'whitespace-pre-wrap';
+    contentDiv.textContent = '';
+    streamLi.appendChild(roleDiv);
+    streamLi.appendChild(contentDiv);
+
+    const ul = liveContainer.querySelector('ul') || document.createElement('ul');
+    ul.appendChild(streamLi);
+    if (!liveContainer.querySelector('ul')) liveContainer.appendChild(ul);
+
+    // simulate token-by-token arrival
+    const tokens = ['Hello', ', ', 'this', ' ', 'is', ' ', 'a', ' ', 'stream', '.'];
+    let assembled = '';
+
+    // toggle busy state
+    liveContainer.setAttribute('aria-busy', 'true');
+    for (const t of tokens) {
+      assembled += t;
+      // emulate appendToken behaviour
+      contentDiv.textContent = assembled;
+
+      // lightweight accessibility check after incremental update
+      const results = await axe(host);
+      expect(results.violations).toHaveLength(0);
+
+      // sanity check that DOM was updated
+      expect(contentDiv.textContent).toBe(assembled);
+    }
+
+    // finalize stream
+    liveContainer.setAttribute('aria-busy', 'false');
+    expect(liveContainer.getAttribute('aria-busy')).toBe('false');
+    // final axe check
+    const final = await axe(host);
+    expect(final.violations).toHaveLength(0);
+  });
 });

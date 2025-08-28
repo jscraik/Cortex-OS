@@ -7,14 +7,14 @@
  */
 
 import { nanoid } from 'nanoid';
+import { PRPOrchestrator } from './mcp/adapter.js';
+import { recordMetric, startSpan } from './observability/otel.js';
 import {
   createInitialPRPState,
   generateDeterministicHash,
   PRPState,
   validateStateTransition,
 } from './state.js';
-import { PRPOrchestrator } from './mcp/adapter.js';
-import { startSpan, recordMetric } from './observability/otel.js';
 
 interface Blueprint {
   title: string;

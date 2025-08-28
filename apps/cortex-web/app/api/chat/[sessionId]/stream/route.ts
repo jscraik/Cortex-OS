@@ -62,6 +62,10 @@ export async function GET(_req: Request, { params }: { params: { sessionId: stri
         controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: 'token', data: tok })}\n\n`));
       });
 
+      // NOTE: this hardcoded tool event is a placeholder for demo/testing.
+      // In production, invoke the actual tool/service or make this behavior
+      // configurable per environment. Leaving mock events may confuse
+      // observability and integration tests.
       if (DEMO_TOOL_EVENTS && toolId) {
         // Mark tool completion
         const endTool = addToolEvent(sessionId, {
