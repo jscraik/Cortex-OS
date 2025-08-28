@@ -72,9 +72,11 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
   }
 
   const accuracy = (tp + tn) / dataset.length;
-  const recall = tp / (tp + fn || 1);
-  const precision = tp / (tp + fp || 1);
-  const f1 = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
+  const recall = (tp + fn) === 0 ? null : tp / (tp + fn);
+  const precision = (tp + fp) === 0 ? null : tp / (tp + fp);
+  const f1 = (precision == null || recall == null || precision + recall === 0)
+    ? null
+    : (2 * precision * recall) / (precision + recall);
   const latency_ms = latencies.reduce((a, b) => a + b, 0) / latencies.length;
   const toxicity_score = dataset.length ? toxicCount / dataset.length : 0;
   const pass =
