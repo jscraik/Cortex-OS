@@ -19,8 +19,7 @@ export function addToolEvent(
 ) {
   const list = toolStore.get(sessionId) || [];
   const createdAt = new Date().toISOString();
-  const id =
-    event.id || (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+  const id = event.id || (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
   const redactedArgs = event.args ? redactArgs(event.args) : undefined;
   const e: ToolEvent = {
     id,
