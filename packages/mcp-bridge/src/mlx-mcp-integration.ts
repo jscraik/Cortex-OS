@@ -16,6 +16,14 @@ const portSchema = z.number().int().positive().max(65535);
 
 function resolveConfigPath(configPath?: string): string {
   const resolved = configPath ?? process.env.MLX_CONFIG_PATH;
+  if (!resolved || resolved.trim() === '') {
+    // Optionally, set a default fallback path here, e.g. './mlx-config.json'
+    // const fallbackPath = './mlx-config.json';
+    // return fallbackPath;
+    throw new Error(
+      'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.'
+    );
+  }
   return configPathSchema.parse(resolved);
 }
 
