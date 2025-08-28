@@ -92,169 +92,160 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
     return chunks;
   }
 }
-
 /**
  * Enhanced Outbox Processor with retry logic and DLQ support
  */
-export class ReliableOutboxProcessor implements OutboxProcessor {
-  private isRunning = false;
-  private processingTimer?: NodeJS.Timeout;
+async function processBatch(
+  messages: OutboxMessage[],
+  repo: OutboxRepository,
+  processMessage: (msg: OutboxMessage) => Promise<void>,
+  handleError: (msg: OutboxMessage, error: string) => Promise<void>,
+): Promise<{ successful: number; failed: number }> {
+  let successful = 0;
+  let failed = 0;
+  const results = await Promise.allSettled(messages.map(processMessage));
 
-  constructor(
-    private readonly repository: OutboxRepository,
-    private readonly publisher: OutboxPublisher,
-    private readonly config: Required<OutboxConfig>,
-  ) {}
-
-  async processPending(): Promise<OutboxProcessingResult> {
-    const startTime = Date.now();
-    let processed = 0;
-    let successful = 0;
-    let failed = 0;
-    let deadLettered = 0;
-
-    try {
-      // Get pending messages
-      const messages = await this.repository.findByStatus(
-        OutboxMessageStatus.PENDING,
-        this.config.batchSize,
-      );
-
-      if (messages.length === 0) {
-        return { processed: 0, successful: 0, failed: 0, deadLettered: 0, duration: 0 };
-      }
-
-      processed = messages.length;
-
-      // Mark messages as processing
-      await Promise.all(
-        messages.map((msg) => this.repository.updateStatus(msg.id, OutboxMessageStatus.PROCESSING)),
-      );
-
-      // Process messages
-      const results = await Promise.allSettled(messages.map((msg) => this.processMessage(msg)));
-
-      // Count results
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        const message = messages[i];
-
-        if (result.status === 'fulfilled') {
-          successful++;
-          await this.repository.markProcessed(message.id, new Date());
-        } else {
-          failed++;
-          const error = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-          await this.handleProcessingError(message, error);
-        }
-      }
-
-      // Check for dead letter candidates
-      const failedMessages = messages.filter((_, i) => results[i].status === 'rejected');
-      for (const message of failedMessages) {
-        if (message.retryCount >= this.config.dlqThreshold) {
-          deadLettered++;
-          await this.repository.moveToDeadLetter(message.id, 'Max retries exceeded');
-        }
-      }
-    } catch (error) {
-      console.error('Outbox processing error:', error);
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const message = messages[i];
+    if (result.status === 'fulfilled') {
+      successful++;
+      await repo.markProcessed(message.id, new Date());
+    } else {
+      failed++;
+      const error = result.reason instanceof Error ? result.reason.message : 'Unknown error';
+      await handleError(message, error);
     }
-
-    const duration = Date.now() - startTime;
-    return { processed, successful, failed, deadLettered, duration };
   }
 
-  async processRetries(): Promise<OutboxProcessingResult> {
-    const startTime = Date.now();
-    let processed = 0;
-    let successful = 0;
-    let failed = 0;
-    let deadLettered = 0;
+  return { successful, failed };
+}
 
-    try {
-      const messages = await this.repository.findReadyForRetry(this.config.batchSize);
-      if (messages.length === 0) {
-        return { processed: 0, successful: 0, failed: 0, deadLettered: 0, duration: 0 };
-      }
-
-      processed = messages.length;
-
-      const results = await Promise.allSettled(messages.map((msg) => this.processMessage(msg)));
-
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        const message = messages[i];
-
-        if (result.status === 'fulfilled') {
-          successful++;
-          await this.repository.markProcessed(message.id, new Date());
-        } else {
-          failed++;
-          const error = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-          await this.handleProcessingError(message, error);
-        }
-      }
-    } catch (error) {
-      console.error('Outbox retry processing error:', error);
-    }
-
-    const duration = Date.now() - startTime;
-    return { processed, successful, failed, deadLettered, duration };
+/** Process pending messages from repository. */
+export async function processPendingMessages(
+  repo: OutboxRepository,
+  config: Required<OutboxConfig>,
+  processMessage: (msg: OutboxMessage) => Promise<void>,
+  handleError: (msg: OutboxMessage, error: string) => Promise<void>,
+): Promise<OutboxProcessingResult> {
+  const start = Date.now();
+  const messages = await repo.findByStatus(OutboxMessageStatus.PENDING, config.batchSize);
+  if (messages.length === 0) {
+    return { processed: 0, successful: 0, failed: 0, deadLettered: 0, duration: 0 };
   }
 
-  async start(): Promise<void> {
-    if (this.isRunning) {
-      return;
+  await Promise.all(
+    messages.map((msg) => repo.updateStatus(msg.id, OutboxMessageStatus.PROCESSING)),
+  );
+
+  const { successful, failed } = await processBatch(messages, repo, processMessage, handleError);
+
+  let deadLettered = 0;
+  for (const message of messages) {
+    if (message.retryCount >= config.dlqThreshold) {
+      deadLettered++;
+      await repo.moveToDeadLetter(message.id, 'Max retries exceeded');
     }
-
-    this.isRunning = true;
-    console.log('Starting outbox processor...');
-
-    // Start background processing
-    this.processingTimer = setInterval(async () => {
-      try {
-        await this.processPending();
-        await this.processRetries();
-      } catch (error) {
-        console.error('Background processing error:', error);
-      }
-    }, this.config.processingIntervalMs);
   }
 
-  async stop(): Promise<void> {
-    if (!this.isRunning) {
-      return;
-    }
+  return {
+    processed: messages.length,
+    successful,
+    failed,
+    deadLettered,
+    duration: Date.now() - start,
+  };
+}
 
-    this.isRunning = false;
-    if (this.processingTimer) {
-      clearInterval(this.processingTimer);
-      this.processingTimer = undefined;
-    }
-    console.log('Stopped outbox processor');
+/** Process messages that are ready for retry. */
+export async function processRetryMessages(
+  repo: OutboxRepository,
+  config: Required<OutboxConfig>,
+  processMessage: (msg: OutboxMessage) => Promise<void>,
+  handleError: (msg: OutboxMessage, error: string) => Promise<void>,
+): Promise<OutboxProcessingResult> {
+  const start = Date.now();
+  const messages = await repo.findReadyForRetry(config.batchSize);
+  if (messages.length === 0) {
+    return { processed: 0, successful: 0, failed: 0, deadLettered: 0, duration: 0 };
   }
 
-  private async processMessage(message: OutboxMessage): Promise<void> {
-    // Check idempotency if enabled
-    if (this.config.enableIdempotency && message.idempotencyKey) {
-      const exists = await this.repository.existsByIdempotencyKey(message.idempotencyKey);
+  const { successful, failed } = await processBatch(messages, repo, processMessage, handleError);
+
+  return {
+    processed: messages.length,
+    successful,
+    failed,
+    deadLettered: 0,
+    duration: Date.now() - start,
+  };
+}
+
+/**
+ * Factory to create a reliable outbox processor with retry logic and DLQ support.
+ */
+export function createReliableOutboxProcessor(
+  repository: OutboxRepository,
+  publisher: OutboxPublisher,
+  config: Required<OutboxConfig>,
+): OutboxProcessor {
+  let isRunning = false;
+  let processingTimer: NodeJS.Timeout | undefined;
+
+  const processMessage = async (message: OutboxMessage): Promise<void> => {
+    if (config.enableIdempotency && message.idempotencyKey) {
+      const exists = await repository.existsByIdempotencyKey(message.idempotencyKey);
       if (exists) {
         console.log(`Skipping duplicate message with idempotency key: ${message.idempotencyKey}`);
         return;
       }
     }
 
-    await this.publisher.publish(message);
-  }
+    await publisher.publish(message);
+  };
 
-  private async handleProcessingError(message: OutboxMessage, error: string): Promise<void> {
-    if (message.retryCount >= this.config.maxRetries) {
-      await this.repository.moveToDeadLetter(message.id, error);
+  const handleProcessingError = async (message: OutboxMessage, error: string): Promise<void> => {
+    if (message.retryCount >= config.maxRetries) {
+      await repository.moveToDeadLetter(message.id, error);
     } else {
-      await this.repository.incrementRetry(message.id, error);
+      await repository.incrementRetry(message.id, error);
     }
-  }
+  };
+
+  const processPending = () =>
+    processPendingMessages(repository, config, processMessage, handleProcessingError);
+
+  const processRetries = () =>
+    processRetryMessages(repository, config, processMessage, handleProcessingError);
+
+  const start = async (): Promise<void> => {
+    if (isRunning) return;
+
+    isRunning = true;
+    console.log('Starting outbox processor...');
+
+    processingTimer = setInterval(async () => {
+      try {
+        await processPending();
+        await processRetries();
+      } catch (error) {
+        console.error('Background processing error:', error);
+      }
+    }, config.processingIntervalMs);
+  };
+
+  const stop = async (): Promise<void> => {
+    if (!isRunning) return;
+
+    isRunning = false;
+    if (processingTimer) {
+      clearInterval(processingTimer);
+      processingTimer = undefined;
+    }
+    console.log('Stopped outbox processor');
+  };
+
+  return { processPending, processRetries, start, stop };
 }
 
 /**
