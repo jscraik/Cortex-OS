@@ -6,3 +6,4 @@ export * from './saga.js';
 export * from './dlq.js';
 export * from './trace-context-manager.js';
 export * from './schema-registry.js';
+export * from './transport.js';

@@ -23,7 +23,7 @@ export { getFullConfig, loadConfig, saveConfig } from './core/config.js';
 export { getXDGPaths, initializeXDG } from './xdg/index.js';
 
 // Event system
-export { createA11yEvent, EventManager, getEventManager } from './core/events.js';
+export { createA11yEvent, EventManager, getEventManager, stopEventManager } from './core/events.js';
 
 // Diff and normalization
 export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
