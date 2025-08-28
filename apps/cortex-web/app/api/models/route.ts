@@ -1,12 +1,25 @@
-// Using standard Request type to avoid coupling to next/server types in tooling
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 
-const MODELS = [
-  { id: 'gpt-4o-mini', label: 'GPT-4o Mini', speed: 'fast', costTier: 'low' },
-  { id: 'llama3.1:8b', label: 'Llama 3.1 8B', speed: 'fast', costTier: 'low' },
-];
-
-export async function GET(_req: Request) {
-  return new Response(JSON.stringify({ models: MODELS }), {
-    headers: { 'content-type': 'application/json' },
-  });
+// Read MLX chat models as a starting point for the UI model picker.
+// Align shape with UI expectations: { id, label } minimal contract.
+export async function GET() {
+  try {
+    const cfgPath = path.join(process.cwd(), 'config', 'mlx-models.json');
+    const txt = await fs.readFile(cfgPath, 'utf8');
+    const cfg = JSON.parse(txt);
+    const models = Object.entries(cfg.chat_models || {}).map(([key, v]: any) => ({
+      id: key,
+      label: v.name || key,
+    }));
+    const def = cfg.default_models?.chat ?? null;
+    return new Response(JSON.stringify({ models, default: def }), {
+      headers: { 'content-type': 'application/json' },
+    });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ models: [], error: e.message }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
 }

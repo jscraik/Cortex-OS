@@ -409,6 +409,11 @@ export class MimePolicyEngine {
     if (mimeType.length > 200) {
       return this.createRejectionDecision('Invalid MIME type format (too long)');
     }
+    
+    // Validate MIME type format (should be type/subtype)
+    if (!mimeType.includes('/') || !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(mimeType.split(';')[0].trim())) {
+      return this.createRejectionDecision('Invalid MIME type format');
+    }
 
     // Normalize MIME type (remove parameters)
     const normalizedMime = this.normalizeMimeType(mimeType);

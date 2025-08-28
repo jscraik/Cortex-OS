@@ -1,30 +1,34 @@
-import { readdirSync, statSync } from 'fs';
-import { join } from 'path';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
 
-function walk(dir: string, base = '', files: string[] = []) {
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    const rel = base ? `${base}/${name}` : name;
-    const st = statSync(full);
-    if (st.isDirectory()) {
-      if (name.startsWith('.next') || name === 'node_modules' || name === '.git') continue;
-      walk(full, rel, files);
-    } else {
-      files.push(rel);
-    }
-  }
-  return files;
-}
+type MapFile = { path: string; kind: 'repo' | 'context' };
 
 export async function GET() {
-  // limit to a subset for MVP to avoid huge responses
-  const root = process.cwd();
-  const files = walk(root)
-    .filter((p) => p.startsWith('apps/cortex-web/') || p.endsWith('.md'))
-    .slice(0, 500)
-    .map((path) => ({ path }));
+  const repoRoot = process.cwd();
+  const allFilesTxt = path.join(repoRoot, 'all-files.txt');
+  const contextDir = path.join(repoRoot, '.cortex', 'context');
 
-  return new Response(JSON.stringify({ files }), {
+  const files: MapFile[] = [];
+  try {
+    const txt = await fs.readFile(allFilesTxt, 'utf8');
+    txt
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .forEach((p) => files.push({ path: p, kind: 'repo' }));
+  } catch {
+    // ignore
+  }
+
+  try {
+    const entries = await fs.readdir(contextDir);
+    entries.forEach((f) => files.push({ path: path.join('.cortex/context', f), kind: 'context' }));
+  } catch {
+    // ignore
+  }
+
+  const nodes = files.map((f) => ({ path: f.path, kind: f.kind }));
+  return new Response(JSON.stringify({ files: nodes }), {
     headers: { 'content-type': 'application/json' },
   });
 }

@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { apiFetch } from '../../utils/api-client';
-import { openSSE } from '../../utils/sse';
+import { apiFetch } from '../../../utils/api-client';
+import { openSSE } from '../../../utils/sse';
 
 type Model = { id: string; label: string; speed?: string; costTier?: string };
 type ChatMessage = { id: string; role: 'user' | 'assistant' | 'system'; content: string };
