@@ -1631,7 +1631,7 @@
               "const": "schema.validation.result"
             },
             "data": {
-              "$ref": "#/components/schemas/SchemaValidationResult"
+              "$ref": "#/components/schemas/SchemaValidationResultData"
             }
           }
         }
