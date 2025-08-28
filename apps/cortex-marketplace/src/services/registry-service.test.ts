@@ -1,0 +1,41 @@
+import { describe, it, expect } from 'vitest';
+import { existsSync, mkdtempSync, rmSync } from 'fs';
+import path from 'path';
+import os from 'os';
+import http from 'http';
+import type { AddressInfo } from 'net';
+import { RegistryService } from './registry-service.js';
+
+describe('RegistryService', () => {
+  it('creates cache directory synchronously', () => {
+    const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-test-'));
+    const cacheDir = path.join(baseDir, 'cache');
+
+    new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
+
+    expect(existsSync(cacheDir)).toBe(true);
+
+    rmSync(baseDir, { recursive: true, force: true });
+  });
+
+  it('aborts fetch when request exceeds timeout', async () => {
+    const server = http.createServer(() => {
+      // Intentionally never respond
+    });
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const port = (server.address() as AddressInfo).port;
+
+    const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-timeout-test-'));
+    const service = new RegistryService({
+      registries: { test: `http://127.0.0.1:${port}/` },
+      cacheDir: baseDir,
+      cacheTtl: 1000,
+      fetchTimeout: 100,
+    });
+
+    await expect(service.getRegistry('test')).rejects.toThrow();
+
+    server.close();
+    rmSync(baseDir, { recursive: true, force: true });
+  });
+});

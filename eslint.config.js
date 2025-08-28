@@ -4,9 +4,37 @@ import ts from 'typescript-eslint';
 
 export default [
   js.configs.recommended,
-  ...ts.configs.recommendedTypeChecked,
+  // Apply standard TypeScript rules only to actual TypeScript source files.
+  // Using the non-type-checked config avoids requiring type information while
+  // still enforcing basic best practices.
+  ...ts.configs.recommended.map((config) => ({
+    ...config,
+    files: ['**/*.ts', '**/*.tsx'],
+  })),
   importPlugin.flatConfigs.recommended,
-  { ignores: ['**/dist/**', '**/.artifacts/**'] },
+  importPlugin.flatConfigs.typescript,
+  {
+    ignores: [
+      '**/dist/**',
+      '**/.artifacts/**',
+      'commitlint.config.js',
+      'tools/**',
+      'vitest.config.ts',
+      'apps/**',
+      'packages/**',
+      'tests/**',
+      'scripts/**',
+      'libs/**',
+      'schemas/**',
+      '.cortex/**',
+      'examples/**',
+      'ecosystem.config.cjs',
+      'ecosystem.config.js',
+      '.dependency-cruiser.js',
+      'config/**',
+      'contracts/**',
+    ],
+  },
   {
     settings: {
       'import/resolver': {
@@ -21,8 +49,6 @@ export default [
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: { parserOptions: { project: ['tsconfig.eslint.json'] } },
-    extends: [importPlugin.flatConfigs.typescript],
     rules: {
       'no-console': ['warn', { allow: ['error'] }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',

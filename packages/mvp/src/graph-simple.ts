@@ -35,7 +35,7 @@ interface RunOptions {
  *   Recycled ←--------←
  */
 export class CortexKernel {
-  private orchestrator: PRPOrchestrator;
+  protected orchestrator: PRPOrchestrator;
   private executionHistory: Map<string, PRPState[]> = new Map();
 
   constructor(orchestrator: PRPOrchestrator) {
@@ -46,7 +46,10 @@ export class CortexKernel {
    * Run a complete PRP workflow
    */
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
-    const runId = options.runId || nanoid();
+    const runId = options.runId || (options.deterministic 
+      ? `prp-deterministic-${Math.abs(JSON.stringify(blueprint).split('').reduce((a,b) => ((a << 5) - a + b.charCodeAt(0))|0, 0))}`
+      : nanoid());
+    
     const deterministic = options.deterministic || false;
     const state = createInitialPRPState(blueprint, { runId, deterministic });
     

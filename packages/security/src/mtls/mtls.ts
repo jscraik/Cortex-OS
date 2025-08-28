@@ -5,17 +5,8 @@
 
 import * as fs from 'fs/promises';
 import * as tls from 'tls';
+import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import { MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
-
-// Temporary stub implementations for telemetry until the telemetry package is fixed
-const withSpan = async (name: string, fn: () => Promise<void>) => {
-  return fn();
-};
-
-const logWithSpan = (level: string, message: string, attributes?: Record<string, unknown>) => {
-  // eslint-disable-next-line no-console
-  console.log(`[${level}] ${message}`, attributes);
-};
 
 /**
  * mTLS Client for secure service-to-service communication
@@ -219,11 +210,13 @@ export class MTLSClient {
  */
 export class MTLSServer {
   private readonly config: MTLSConfig;
+  private readonly connectionHandler?: (socket: tls.TLSSocket) => void;
   private server?: tls.Server;
 
-  constructor(config: MTLSConfig) {
+  constructor(config: MTLSConfig, connectionHandler?: (socket: tls.TLSSocket) => void) {
     try {
       this.config = MTLSConfigSchema.parse(config);
+      this.connectionHandler = connectionHandler;
     } catch (error) {
       throw new MTLSError(
         `Invalid mTLS configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -268,7 +261,6 @@ export class MTLSServer {
               authorizationError: socket.authorizationError?.message,
             });
 
-            // Handle the secure connection
             this.handleSecureConnection(socket);
           });
 
@@ -316,14 +308,7 @@ export class MTLSServer {
    * Handle secure connection
    */
   private handleSecureConnection(socket: tls.TLSSocket): void {
-    // Implement connection handling logic here
-    socket.on('data', (data: Buffer) => {
-      logWithSpan('debug', 'Received data on secure connection', {
-        dataLength: data.length,
-        remoteAddress: socket.remoteAddress,
-      });
-      // Process the received data
-    });
+    this.connectionHandler?.(socket);
 
     socket.on('error', (error) => {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

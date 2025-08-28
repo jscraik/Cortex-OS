@@ -2,9 +2,9 @@
  * @file Ollama Integration for Marketplace
  * @description Ollama service integration as fallback for MLX
  */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, no-console */
 
-import fetch from 'node-fetch';
-import type { ServerManifest } from '@cortex-os/mcp-registry';
+import type { ServerManifest } from '../types.js';
 
 export interface OllamaConfig {
   baseUrl: string;
@@ -109,19 +109,13 @@ Response:`;
 
         // Parse JSON from response
         const jsonMatch = result.response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+        if (!jsonMatch) {
+          throw new Error('Invalid response format from Ollama');
         }
-
-        // Fallback parsing
-        return parseEnhancementFallback(query, result.response);
+        return JSON.parse(jsonMatch[0]);
       } catch (error) {
         console.warn('Query enhancement failed:', error);
-        return {
-          enhancedQuery: query,
-          intent: 'general_search' as const,
-          suggestedFilters: {}
-        };
+        throw error;
       }
     },
 
@@ -156,14 +150,13 @@ Response:`;
         });
 
         const jsonMatch = result.response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          return JSON.parse(jsonMatch[0]);
+        if (!jsonMatch) {
+          throw new Error('Invalid response format from Ollama');
         }
-
-        return parseValidationFallback(server);
+        return JSON.parse(jsonMatch[0]);
       } catch (error) {
         console.warn('Server validation failed:', error);
-        return parseValidationFallback(server);
+        throw error;
       }
     },
 
@@ -210,53 +203,6 @@ Response:`;
   };
 
   // Helper functions
-  function parseEnhancementFallback(query: string, response: string): QueryEnhancementResult {
-    const intent = response.toLowerCase().includes('find') ? 'find_tool' :
-                  response.toLowerCase().includes('help') ? 'solve_problem' :
-                  response.toLowerCase().includes('category') ? 'explore_category' : 'general_search';
-                  
-    return {
-      enhancedQuery: query,
-      intent: intent as any,
-      suggestedFilters: inferFilters(query)
-    };
-  }
-
-  function parseValidationFallback(server: ServerManifest) {
-    let qualityScore = 50;
-    
-    if (server.description.length > 50) qualityScore += 20;
-    if (server.tags && server.tags.length > 0) qualityScore += 15;
-    if (server.publisher?.verified) qualityScore += 15;
-    
-    const highRiskPerms = server.permissions?.some(p => 
-      ['system:exec', 'files:write', 'admin'].some(danger => p.includes(danger))
-    ) || false;
-    
-    return {
-      qualityScore: Math.min(qualityScore, 100),
-      safetyAssessment: {
-        safe: !highRiskPerms,
-        concerns: highRiskPerms ? ['high_risk_permissions'] : []
-      },
-      suggestions: [
-        'Add more detailed description',
-        'Include usage examples',
-        'Add installation troubleshooting'
-      ]
-    };
-  }
-
-  function inferFilters(query: string): Record<string, any> {
-    const filters: Record<string, any> = {};
-    const queryLower = query.toLowerCase();
-    
-    if (queryLower.includes('development')) filters.category = 'development';
-    if (queryLower.includes('safe')) filters.riskLevel = 'low';
-    if (queryLower.includes('popular')) filters.sortBy = 'downloads';
-    
-    return filters;
-  }
 
   function cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) return 0;

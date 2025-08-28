@@ -6,6 +6,9 @@
  */
 
 import { PRPState, Evidence } from '../state.js';
+import { generateId } from '../utils/id.js';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * Build Phase Gates:
@@ -28,7 +31,7 @@ export class BuildNode {
     }
 
     evidence.push({
-      id: `build-backend-${Date.now()}`,
+      id: generateId('build-backend', state.metadata.deterministic),
       type: 'test',
       source: 'backend_validation',
       content: JSON.stringify(backendValidation),
@@ -52,7 +55,7 @@ export class BuildNode {
     }
 
     evidence.push({
-      id: `build-security-${Date.now()}`,
+      id: generateId('build-security', state.metadata.deterministic),
       type: 'analysis',
       source: 'security_scanner',
       content: JSON.stringify(securityScan),
@@ -121,11 +124,22 @@ export class BuildNode {
       req.toLowerCase().includes('endpoint')
     );
 
+    if (!hasAPI) {
+      return {
+        passed: true,
+        details: { schemaFormat: 'N/A', validation: 'skipped' },
+      };
+    }
+
+    const schemaPathYaml = path.resolve('openapi.yaml');
+    const schemaPathJson = path.resolve('openapi.json');
+    const exists = fs.existsSync(schemaPathYaml) || fs.existsSync(schemaPathJson);
+
     return {
-      passed: hasAPI ? true : true, // Skip if no API
+      passed: exists,
       details: {
-        schemaFormat: hasAPI ? 'OpenAPI 3.0' : 'N/A',
-        validation: hasAPI ? 'passed' : 'skipped',
+        schemaFormat: fs.existsSync(schemaPathYaml) ? 'OpenAPI 3.0' : fs.existsSync(schemaPathJson) ? 'JSON' : 'missing',
+        validation: exists ? 'found' : 'missing',
       },
     };
   }
@@ -180,21 +194,22 @@ export class BuildNode {
   }
 
   private async validateDocumentation(state: PRPState): Promise<{ passed: boolean; details: any }> {
-    // Check if documentation requirements are met
     const hasDocsReq = state.blueprint.requirements?.some(req =>
       req.toLowerCase().includes('doc') ||
       req.toLowerCase().includes('guide') ||
       req.toLowerCase().includes('readme')
     );
 
+    if (!hasDocsReq) {
+      return { passed: true, details: { readme: 'skipped' } };
+    }
+
+    const readmePath = path.resolve('README.md');
+    const readmeExists = fs.existsSync(readmePath);
+
     return {
-      passed: true, // Assume docs are complete
-      details: {
-        apiDocs: true,
-        usageGuide: true,
-        installation: true,
-        examples: hasDocsReq,
-      },
+      passed: readmeExists,
+      details: { readme: readmeExists },
     };
   }
 }

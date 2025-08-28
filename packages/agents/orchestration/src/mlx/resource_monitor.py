@@ -30,18 +30,9 @@ from datetime import datetime, timedelta
 import json
 import os
 
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-
-try:
-    from opentelemetry import metrics
-    from opentelemetry.metrics import get_meter
-    OTEL_AVAILABLE = True
-except ImportError:
-    OTEL_AVAILABLE = False
+import psutil
+from opentelemetry import metrics
+from opentelemetry.metrics import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -256,10 +247,6 @@ class ActivityMonitorIntegration:
         
     async def get_system_processes(self) -> List[ProcessInfo]:
         """Get system processes similar to Activity Monitor."""
-        if not PSUTIL_AVAILABLE:
-            logger.warning("psutil not available - cannot get process information")
-            return []
-            
         processes = []
         
         try:
@@ -355,15 +342,14 @@ class ActivityMonitorIntegration:
     def _estimate_gpu_usage(self) -> Dict[str, float]:
         """Estimate GPU usage based on system load."""
         try:
-            if PSUTIL_AVAILABLE:
-                cpu_percent = psutil.cpu_percent()
-                # Rough estimation: GPU usage correlates with CPU on Apple Silicon
-                gpu_util = min(cpu_percent * 0.7, 100.0)
-                return {
-                    'utilization_percent': gpu_util,
-                    'memory_used_gb': gpu_util * 0.1,  # Rough estimate
-                    'memory_total_gb': 16.0  # Unified memory on Apple Silicon
-                }
+            cpu_percent = psutil.cpu_percent()
+            # Rough estimation: GPU usage correlates with CPU on Apple Silicon
+            gpu_util = min(cpu_percent * 0.7, 100.0)
+            return {
+                'utilization_percent': gpu_util,
+                'memory_used_gb': gpu_util * 0.1,  # Rough estimate
+                'memory_total_gb': 16.0  # Unified memory on Apple Silicon
+            }
         except Exception:
             pass
             
@@ -561,7 +547,7 @@ class ResourceMonitor:
     
     def _setup_metrics(self):
         """Setup OpenTelemetry metrics."""
-        if not OTEL_AVAILABLE or not self.config.opentelemetry_enabled:
+        if not self.config.opentelemetry_enabled:
             self._otel_meter = None
             return
             
@@ -680,43 +666,42 @@ class ResourceMonitor:
         
         try:
             resources = SystemResources()
-            
-            if PSUTIL_AVAILABLE:
-                # CPU metrics
-                resources.cpu_count = psutil.cpu_count()
-                resources.cpu_percent = psutil.cpu_percent(interval=0.1)
-                resources.load_average = list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else []
-                
-                # Memory metrics
-                memory = psutil.virtual_memory()
-                resources.memory_total_gb = memory.total / (1024**3)
-                resources.memory_available_gb = memory.available / (1024**3)
-                resources.memory_used_gb = memory.used / (1024**3)
-                resources.memory_percent = memory.percent
-                
-                # Swap memory
-                swap = psutil.swap_memory()
-                resources.swap_total_gb = swap.total / (1024**3)
-                resources.swap_used_gb = swap.used / (1024**3)
-                
-                # Disk I/O
-                disk_io = psutil.disk_io_counters()
-                if disk_io:
-                    # Calculate rates (approximate)
-                    resources.disk_read_mb_per_sec = disk_io.read_bytes / (1024**2) / 60  # Rough estimate
-                    resources.disk_write_mb_per_sec = disk_io.write_bytes / (1024**2) / 60
-                
-                # Network I/O
-                net_io = psutil.net_io_counters()
-                if net_io:
-                    resources.network_sent_mb_per_sec = net_io.bytes_sent / (1024**2) / 60
-                    resources.network_recv_mb_per_sec = net_io.bytes_recv / (1024**2) / 60
-                
-                # Process count
-                resources.active_processes = len(psutil.pids())
-                
-                # Get MLX processes
-                resources.mlx_processes = await self.activity_monitor.get_system_processes()
+
+            # CPU metrics
+            resources.cpu_count = psutil.cpu_count()
+            resources.cpu_percent = psutil.cpu_percent(interval=0.1)
+            resources.load_average = list(psutil.getloadavg()) if hasattr(psutil, 'getloadavg') else []
+
+            # Memory metrics
+            memory = psutil.virtual_memory()
+            resources.memory_total_gb = memory.total / (1024**3)
+            resources.memory_available_gb = memory.available / (1024**3)
+            resources.memory_used_gb = memory.used / (1024**3)
+            resources.memory_percent = memory.percent
+
+            # Swap memory
+            swap = psutil.swap_memory()
+            resources.swap_total_gb = swap.total / (1024**3)
+            resources.swap_used_gb = swap.used / (1024**3)
+
+            # Disk I/O
+            disk_io = psutil.disk_io_counters()
+            if disk_io:
+                # Calculate rates (approximate)
+                resources.disk_read_mb_per_sec = disk_io.read_bytes / (1024**2) / 60  # Rough estimate
+                resources.disk_write_mb_per_sec = disk_io.write_bytes / (1024**2) / 60
+
+            # Network I/O
+            net_io = psutil.net_io_counters()
+            if net_io:
+                resources.network_sent_mb_per_sec = net_io.bytes_sent / (1024**2) / 60
+                resources.network_recv_mb_per_sec = net_io.bytes_recv / (1024**2) / 60
+
+            # Process count
+            resources.active_processes = len(psutil.pids())
+
+            # Get MLX processes
+            resources.mlx_processes = await self.activity_monitor.get_system_processes()
                 
             # GPU metrics (Apple Silicon specific)
             gpu_metrics = await self.activity_monitor.get_gpu_utilization()

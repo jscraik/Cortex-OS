@@ -16,6 +16,7 @@
     "@cortex-os/telemetry": "workspace:*",
     "@cortex-os/memories": "workspace:*",
     "@cortex-os/orchestration": "workspace:*",
-    "@cortex-os/mcp": "workspace:*"
+    "@cortex-os/mcp": "workspace:*",
+    "zod": "^3.22.4"
   }
 }

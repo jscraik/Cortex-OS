@@ -1,34 +1,54 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
+// NOTE: This is a simplified rate limiter for demonstration purposes.
+// It is not suitable for production use due to the following limitations:
+// 1. In-memory storage: The request counts are stored in memory and will be lost on restart.
+//    A persistent store like Redis should be used for production.
+// 2. Inefficient cleanup: The cleanup of stale entries is inefficient and can cause performance issues.
+//    A store with TTL support would be a better choice.
+// 3. Global state: The default `rateLimiter` instance shares state across all routes.
+//    For more granular control, create a new instance using `createRateLimiter`.
 
 interface RequestRecord {
   count: number;
   startTime: number;
 }
 
-const requestMap = new Map<string, RequestRecord>();
-const LIMIT = 5; // Max 5 requests
-const WINDOW_SIZE = 60 * 1000; // 1 minute
+export interface RateLimiterOptions {
+  limit?: number;
+  windowMs?: number;
+}
 
-export function rateLimiter(req: Request, res: Response, next: NextFunction) {
-  const ip = req.ip; // In a real application, use a more robust identifier
-  const currentTime = Date.now();
+export function createRateLimiter({ limit = 5, windowMs = 60_000 }: RateLimiterOptions = {}) {
+  const requestMap = new Map<string, RequestRecord>();
 
-  let record = requestMap.get(ip);
+  return function rateLimiter(req: Request, res: Response, next: NextFunction) {
+    const ip = (req.headers['x-forwarded-for'] as string) || req.ip;
+    const currentTime = Date.now();
 
-  if (!record || currentTime - record.startTime > WINDOW_SIZE) {
-    // New window or window reset
-    record = { count: 1, startTime: currentTime };
-    requestMap.set(ip, record);
-    next();
-  } else {
-    // Within the current window
-    record.count++;
-    requestMap.set(ip, record);
+    // cleanup stale entries
+    for (const [key, record] of requestMap) {
+      if (currentTime - record.startTime >= windowMs) {
+        requestMap.delete(key);
+      }
+    }
 
-    if (record.count > LIMIT) {
+    const record = requestMap.get(ip);
+
+    if (!record || currentTime - record.startTime >= windowMs) {
+      requestMap.set(ip, { count: 1, startTime: currentTime });
+      return next();
+    }
+
+    record.count += 1;
+    if (record.count > limit) {
+      const retryAfter = Math.ceil((record.startTime + windowMs - currentTime) / 1000);
+      res.setHeader('Retry-After', retryAfter);
       res.status(429).send('Too Many Requests');
     } else {
       next();
     }
-  }
+  };
 }
+
+export const rateLimiter = createRateLimiter();

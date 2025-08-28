@@ -3,11 +3,13 @@ import express, { Application } from 'express';
 import * as fs from 'fs/promises';
 import helmet from 'helmet';
 import * as path from 'path';
+import Ajv from 'ajv/dist/2020';
+import addFormats from 'ajv-formats';
+import type { ValidateFunction } from 'ajv';
 
 interface SchemaRegistryOptions {
   port?: number;
   contractsPath?: string;
-  corsOrigin?: string | string[];
 }
 
 interface SchemaMeta {
@@ -47,8 +49,8 @@ async function loadSchemaFile(schemaPath: string): Promise<SchemaDocument | null
 }
 
 // Helper function to check if schema matches the target ID
-function schemaMatches(schema: SchemaDocument, schemaId: string, fileName: string): boolean {
-  return schema.$id === schemaId || fileName.replace('.json', '') === schemaId;
+function schemaMatches(schema: SchemaDocument, schemaId: string): boolean {
+  return schema.$id === schemaId;
 }
 
 // Helper function to get schema files from a directory
@@ -70,11 +72,15 @@ export class SchemaRegistry {
   private readonly port: number;
   private readonly contractsPath: string;
   private readonly schemaCache = new Map<string, SchemaDocument>();
+  private readonly ajv: Ajv;
+  private readonly validatorCache = new Map<string, ValidateFunction>();
 
   constructor(options: SchemaRegistryOptions = {}) {
     this.port = options.port || 3001;
     this.contractsPath = options.contractsPath || path.join(process.cwd(), 'contracts');
     this.app = express();
+    this.ajv = new Ajv({ strict: false });
+    addFormats(this.ajv);
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -84,7 +90,7 @@ export class SchemaRegistry {
     this.app.use(helmet());
     this.app.use(
       cors({
-        origin: process.env.CORS_ORIGIN || ['http://localhost:3000', 'http://localhost:5173'],
+        origin: ['http://localhost:3000', 'http://localhost:5173'],
         credentials: true,
       }),
     );
@@ -147,7 +153,11 @@ export class SchemaRegistry {
       const { schemaId } = req.params;
       const eventData: unknown = req.body;
 
-      if (!eventData) {
+      if (
+        eventData === undefined ||
+        eventData === null ||
+        (typeof eventData === 'object' && Object.keys(eventData as Record<string, unknown>).length === 0)
+      ) {
         return res.status(400).json({
           error: 'No event data provided',
         });
@@ -162,7 +172,6 @@ export class SchemaRegistry {
             });
           }
 
-          // Basic validation (in production, use AJV or similar)
           const isValid = this.validateEvent(eventData, schema);
 
           res.json({
@@ -236,12 +245,14 @@ export class SchemaRegistry {
                 continue;
               }
 
-              schemas.push({
-                id: parsed.$id ?? schemaFile.replace('.json', ''),
-                title: parsed.title ?? schemaFile,
-                description: parsed.description ?? '',
-                category,
-              });
+              if (parsed.$id && parsed.title && parsed.description) {
+                schemas.push({
+                  id: parsed.$id,
+                  title: parsed.title,
+                  description: parsed.description,
+                  category,
+                });
+              }
             } catch {
               // Skip invalid schema files
             }
@@ -298,7 +309,7 @@ export class SchemaRegistry {
       const schemaPath = path.join(categoryPath, schemaFile);
       const schema = await loadSchemaFile(schemaPath);
 
-      if (schema && schemaMatches(schema, schemaId, schemaFile)) {
+      if (schema && schemaMatches(schema, schemaId)) {
         return schema;
       }
     }
@@ -334,11 +345,13 @@ export class SchemaRegistry {
             continue;
           }
 
-          schemas.push({
-            id: parsed.$id ?? schemaFile.replace('.json', ''),
-            title: parsed.title ?? schemaFile,
-            description: parsed.description ?? '',
-          });
+          if (parsed.$id && parsed.title && parsed.description) {
+            schemas.push({
+              id: parsed.$id,
+              title: parsed.title,
+              description: parsed.description,
+            });
+          }
         } catch {
           // Skip invalid schema files
         }
@@ -351,14 +364,21 @@ export class SchemaRegistry {
   }
 
   private validateEvent(eventData: unknown, schema: SchemaDocument): boolean {
-    // Basic validation - this is a placeholder
-    if (!schema || typeof eventData !== 'object' || eventData === null) {
+    if (!schema.$id) {
       return false;
     }
 
-    // For proper validation, integrate AJV or similar JSON Schema validator
-    // This is just a basic implementation
-    return true;
+    let validate = this.validatorCache.get(schema.$id);
+    if (!validate) {
+      try {
+        validate = this.ajv.compile(schema);
+        this.validatorCache.set(schema.$id, validate);
+      } catch {
+        return false;
+      }
+    }
+
+    return validate(eventData) as boolean;
   }
 
   public start(): void {

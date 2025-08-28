@@ -604,15 +604,3 @@ export function createSaga<TCtx = any>(options?: {
 }): SagaBuilder<TCtx> {
   return new SagaBuilder(options);
 }
-
-/**
- * Legacy simple saga function for backward compatibility
- */
-export type Step<TCtx> = (ctx: TCtx) => Promise<TCtx>;
-export function saga<TCtx>(...steps: Step<TCtx>[]) {
-  return async (ctx: TCtx) => {
-    let cur = ctx;
-    for (const s of steps) cur = await s(cur);
-    return cur;
-  };
-}

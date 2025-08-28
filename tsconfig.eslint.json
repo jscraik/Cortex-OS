@@ -8,7 +8,6 @@
     "external/**",
     "vendor/**",
     "**/*.config.js",
-    "**/*.config.ts",
     "scripts/**/*.mjs",
     "scripts/**/*.js",
     "**/dist/**",

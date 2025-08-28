@@ -14,8 +14,19 @@
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm",
     "dev": "tsup src/index.ts --dts --format esm --watch",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
+    "test": "node test-runner.js",
+    "test:unit": "node test-runner.js --mode unit",
+    "test:integration": "node test-runner.js --mode integration", 
+    "test:security": "node test-runner.js --mode security",
+    "test:performance": "node test-runner.js --mode performance",
+    "test:accessibility": "node test-runner.js --mode accessibility",
+    "test:golden": "node test-runner.js --mode golden",
+    "test:contracts": "node test-runner.js --mode contract",
+    "test:coverage": "node test-runner.js --coverage",
+    "test:coverage:threshold": "node test-runner.js --coverage --mode all",
+    "test:watch": "node test-runner.js --watch",
+    "test:ui": "node test-runner.js --ui",
+    "benchmark": "vitest bench",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -25,8 +36,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "tsup": "^8.0.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.9"
   }
 }

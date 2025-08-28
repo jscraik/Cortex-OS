@@ -16,7 +16,6 @@ describe('Schema Registry', () => {
     registry = new SchemaRegistry({
       port: 3002, // Different port for testing
       contractsPath,
-      corsOrigin: '*',
     });
     app = registry.getApp(); // We'll need to add this method
   });
@@ -56,6 +55,12 @@ describe('Schema Registry', () => {
         category: expect.any(String),
       });
     });
+
+    it('should skip schemas missing required metadata', async () => {
+      const response = await request(app).get('/schemas').expect(200);
+      const ids = response.body.schemas.map((s: any) => s.id);
+      expect(ids).not.toContain('missing-metadata');
+    });
   });
 
   describe('Schema Retrieval', () => {
@@ -79,6 +84,10 @@ describe('Schema Registry', () => {
         schemaId: 'non-existent',
       });
     });
+
+    it('should not match schema by filename when $id is missing', async () => {
+      await request(app).get('/schemas/missing-id').expect(404);
+    });
   });
 
   describe('Category Filtering', () => {
@@ -101,6 +110,12 @@ describe('Schema Registry', () => {
         schemas: [],
         count: 0,
       });
+    });
+
+    it('should omit schemas missing metadata from category results', async () => {
+      const response = await request(app).get('/categories/events').expect(200);
+      const ids = response.body.schemas.map((s: any) => s.id);
+      expect(ids).not.toContain('missing-metadata');
     });
   });
 

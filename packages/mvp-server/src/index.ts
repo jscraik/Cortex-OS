@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { http } from "./config.js";
-import { buildServer } from "./server.js";
+import { buildServer } from "./http-server.js";
 
 async function main() {
   const app = buildServer();

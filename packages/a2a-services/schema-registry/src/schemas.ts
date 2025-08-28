@@ -1,14 +1,10 @@
-import { JSONSchema7 } from 'json-schema';
+import { z } from 'zod';
 
-export const schemaForSchema: JSONSchema7 = {
-  $schema: 'http://json-schema.org/draft-07/schema#',
-  title: 'Schema Registry Schema',
-  type: 'object',
-  properties: {
-    id: { type: 'string', description: 'The unique identifier for the schema.' },
-    name: { type: 'string', description: 'The name of the schema.' },
-    version: { type: 'string', description: 'The version of the schema.' },
-    schema: { type: 'object', description: 'The JSON schema itself.' },
-  },
-  required: ['id', 'name', 'version', 'schema'],
-};
+export const schemaForSchema = z.object({
+  id: z.string().describe('The unique identifier for the schema.'),
+  name: z.string().describe('The name of the schema.'),
+  version: z.string().describe('The version of the schema.'),
+  schema: z.record(z.any()).describe('The JSON schema itself.'),
+});
+
+export type Schema = z.infer<typeof schemaForSchema>;

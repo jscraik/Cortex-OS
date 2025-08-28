@@ -196,7 +196,8 @@ class UnstructuredChunker implements Chunker {
     const elementsPerPage = 3;
     for (let page = 1; page <= maxPages; page++) {
       for (let element = 1; element <= elementsPerPage; element++) {
-        const elementType = elementTypes[Math.floor(Math.random() * elementTypes.length)];
+        const idx = (page - 1) * elementsPerPage + (element - 1);
+        const elementType = elementTypes[idx % elementTypes.length];
         chunks.push({
           id: `${file.path}-unstructured-${page}-${element}`,
           content: `${elementType.toUpperCase()} content from page ${page}, element ${element}`,

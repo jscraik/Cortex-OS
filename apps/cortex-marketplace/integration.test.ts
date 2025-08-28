@@ -294,6 +294,11 @@ describe('MCP Marketplace Integration Tests', () => {
         expect(install.data.client).toBe(client);
         expect(install.data).toHaveProperty('command');
         expect(install.data).toHaveProperty('instructions');
+
+        if (client === 'cline') {
+          expect(install.data.command).toBe('');
+          expect(install.data.instructions).toBe('Install via Cline MCP settings');
+        }
       }
 
       // Test generic installation (no client specified)

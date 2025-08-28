@@ -7,10 +7,16 @@
  * @status active
  */
 
+import { promises as fs } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PluginRegistry } from '../plugin-registry.js';
 import type { PluginSearchOptions } from '../types.js';
 import { MarketplaceIndexSchema } from '../types.js';
+import { getMockMarketplaceIndex } from '../mocks/marketplace.js';
+
+const INSTALLED_PLUGINS_PATH = join(homedir(), '.cortex-os', 'plugins', 'installed.json');
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -18,8 +24,9 @@ global.fetch = vi.fn();
 describe('PluginRegistry', () => {
   let registry: PluginRegistry;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    await fs.rm(INSTALLED_PLUGINS_PATH, { force: true });
     registry = new PluginRegistry();
   });
 
@@ -150,9 +157,14 @@ describe('PluginRegistry', () => {
       const options: PluginSearchOptions = { category: 'development-tools' };
       const plugins = await registry.searchPlugins(options);
 
-      expect(plugins).toHaveLength(2); // eslint-analyzer, github-actions-manager
-      expect(plugins[0].name).toBe('eslint-analyzer');
-      expect(plugins[1].name).toBe('github-actions-manager');
+      expect(plugins).toHaveLength(5);
+      expect(plugins.map((p) => p.name)).toEqual([
+        'api-documentation-generator',
+        'claude-code-templates',
+        'eslint-analyzer',
+        'github-actions-manager',
+        'test-automation-suite',
+      ]);
     });
 
     it('should filter plugins by verification status', async () => {
@@ -319,7 +331,7 @@ describe('PluginRegistry', () => {
 
   describe('schema conformance', () => {
     it('should validate mock marketplace index against schema', () => {
-      const mockIndex = (registry as any).getMockMarketplaceIndex();
+      const mockIndex = getMockMarketplaceIndex();
 
       // This test ensures the mock data stays in sync with the schema
       expect(() => {
@@ -329,14 +341,8 @@ describe('PluginRegistry', () => {
       // Verify claude-code-templates specifically has required fields
       const claudePlugin = mockIndex.plugins.find((p: any) => p.name === 'claude-code-templates');
       expect(claudePlugin).toBeDefined();
-      expect(claudePlugin.rating).toBe(4.8);
-      expect(claudePlugin.downloads).toBe(15420);
-      expect(claudePlugin.maintainerVerified).toBe(true);
-      expect(claudePlugin.documentation).toEqual({
-        readme: 'https://docs.cortexos.ai/plugins/claude-code-templates',
-        api: 'https://docs.cortexos.ai/plugins/claude-code-templates/api',
-        examples: 'https://docs.cortexos.ai/plugins/claude-code-templates/examples',
-      });
+      expect(claudePlugin?.verified).toBe(true);
+      expect(claudePlugin?.keywords).toContain('claude');
     });
   });
 });

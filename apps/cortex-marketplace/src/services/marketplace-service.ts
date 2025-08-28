@@ -21,7 +21,6 @@ export interface SearchRequest {
   offset?: number;
   sortBy?: 'relevance' | 'downloads' | 'rating' | 'updated';
   sortOrder?: 'asc' | 'desc';
-  aiEnhanced?: boolean; // Use MLX models for enhanced search
 }
 
 export interface SearchResult {
@@ -59,8 +58,7 @@ const SearchRequestSchema = z.object({
   limit: z.number().min(1).max(100).default(20),
   offset: z.number().min(0).default(0),
   sortBy: z.enum(['relevance', 'downloads', 'rating', 'updated']).default('relevance'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
-  aiEnhanced: z.boolean().default(false)
+  sortOrder: z.enum(['asc', 'desc']).default('desc')
 });
 
 /**
@@ -94,11 +92,6 @@ export class MarketplaceService {
     
     // Apply filters
     let filteredServers = this.applyFilters(allServers, request);
-    
-    // Apply AI-enhanced search if requested
-    if (request.aiEnhanced && request.q) {
-      filteredServers = await this.enhanceSearchWithAI(filteredServers, request);
-    }
     
     // Sort results
     filteredServers = this.sortResults(filteredServers, request);
@@ -378,32 +371,6 @@ export class MarketplaceService {
     }
     
     return { categories, riskLevels, publishers };
-  }
-
-  /**
-   * Enhance search with AI models (MLX/Ollama integration point)
-   */
-  private async enhanceSearchWithAI(servers: ServerManifest[], request: SearchRequest): Promise<ServerManifest[]> {
-    // TODO: Integration with MLX embedding models
-    // This would use Qwen3-Embedding models to:
-    // 1. Generate embeddings for server descriptions
-    // 2. Generate embedding for search query
-    // 3. Use cosine similarity for semantic matching
-    // 4. Re-rank results using Qwen3-Reranker-4B
-    
-    // For now, return original results
-    // In a real implementation, this would call:
-    // - MLX embedding service for semantic search
-    // - Qwen3-Reranker for result reranking
-    // - Safety filtering using LlamaGuard-7b
-    
-    console.log(`AI-enhanced search requested for query: "${request.q}"`);
-    console.log('MLX models available for integration:');
-    console.log('- Qwen3-Embedding-0.6B/4B/8B for semantic search');
-    console.log('- Qwen3-Reranker-4B for result reranking');
-    console.log('- LlamaGuard-7b for safety filtering');
-    
-    return servers;
   }
 
   /**

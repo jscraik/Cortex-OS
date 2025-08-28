@@ -3,77 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-
-// Rate limiting implementation
-class RateLimiter {
-  private requests: Map<string, number[]> = new Map();
-  private readonly windowMs: number;
-  private readonly maxRequests: number;
-  private cleanupInterval: NodeJS.Timeout;
-  
-  constructor(windowMs: number = 60000, maxRequests: number = 60) {
-    this.windowMs = windowMs;
-    this.maxRequests = maxRequests;
-    
-    // Add periodic cleanup every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 300000);
-  }
-  
-  isAllowed(key: string): boolean {
-    const now = Date.now();
-    const windowStart = now - this.windowMs;
-    
-    let requests = this.requests.get(key) || [];
-    
-    // Filter out requests outside the window
-    requests = requests.filter(timestamp => timestamp > windowStart);
-    
-    // Check if we're under the limit
-    if (requests.length >= this.maxRequests) {
-      return false;
-    }
-    
-    // Add current request
-    requests.push(now);
-    this.requests.set(key, requests);
-    
-    return true;
-  }
-  
-  getRemaining(key: string): number {
-    const now = Date.now();
-    const windowStart = now - this.windowMs;
-    
-    const requests = this.requests.get(key) || [];
-    const recentRequests = requests.filter(timestamp => timestamp > windowStart);
-    
-    return Math.max(0, this.maxRequests - recentRequests.length);
-  }
-  
-  private cleanup() {
-    const now = Date.now();
-    const cutoff = now - (2 * this.windowMs); // Keep 2 windows worth of data
-    
-    for (const [key, timestamps] of this.requests.entries()) {
-      const recent = timestamps.filter(ts => ts > cutoff);
-      if (recent.length === 0) {
-        this.requests.delete(key);
-      } else {
-        this.requests.set(key, recent);
-      }
-    }
-  }
-  
-  dispose() {
-    clearInterval(this.cleanupInterval);
-    this.requests.clear();
-  }
-}
-
-// Global rate limiter instance
-const rateLimiter = new RateLimiter(60000, 60); // 60 requests per minute
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 // Data redaction patterns
 const SENSITIVE_PATTERNS = [
@@ -87,20 +17,36 @@ const SENSITIVE_PATTERNS = [
   /(["']?authorization["']?\s*[:=]\s*["']?bearer\s+)([^"'}\s,)]+)(["']?)/gi,
 ];
 
-// Redact sensitive data from strings
-export function redactSensitiveData(data: string): string {
-  let redacted = data;
-  for (const pattern of SENSITIVE_PATTERNS) {
-    redacted = redacted.replace(pattern, '$1[REDACTED]$3');
+// Redact sensitive data from strings or objects by traversing them
+export function redactSensitiveData(data: any): any {
+  if (typeof data === 'string') {
+    let redacted = data;
+    for (const pattern of SENSITIVE_PATTERNS) {
+      redacted = redacted.replace(pattern, '$1[REDACTED]$3');
+    }
+    return redacted;
   }
-  return redacted;
+
+  if (Array.isArray(data)) {
+    return data.map(item => redactSensitiveData(item));
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    const newObj: { [key: string]: any } = {};
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        newObj[key] = redactSensitiveData(data[key]);
+      }
+    }
+    return newObj;
+  }
+
+  return data;
 }
 
-// Create client using official SDK with security enhancements
-export async function createClient(si: ServerInfo) {
-  // Create the appropriate transport based on the server info
+// Create a new, enhanced client that wraps the official SDK client
+export async function createEnhancedClient(si: ServerInfo) {
   let transport;
-  
   switch (si.transport) {
     case 'stdio':
       if (!si.command) throw new Error('stdio requires command');
@@ -114,82 +60,64 @@ export async function createClient(si: ServerInfo) {
       if (!si.endpoint) throw new Error('sse requires endpoint');
       transport = new SSEClientTransport(new URL(si.endpoint));
       break;
-    case 'https':
-      if (!si.endpoint) throw new Error('https requires endpoint');
+    case 'streamableHttp':
+      if (!si.endpoint) throw new Error('streamableHttp requires endpoint');
       transport = new StreamableHTTPClientTransport(new URL(si.endpoint));
       break;
     default:
       throw new Error(`Unsupported transport: ${si.transport}`);
   }
-  
-  // Create the client with basic capabilities
-  const client = new Client(
-    {
-      name: 'cortex-os-mcp-client',
-      version: '1.0.0',
-    },
-    {
-      capabilities: {
-        // Add basic capabilities
-        experimental: {},
-      },
-    },
+
+  const baseClient = new Client(
+    { name: 'cortex-os-mcp-client', version: '1.0.0' },
+    { capabilities: { experimental: {} } },
   );
-  
-  // Connect the client to the transport
-  await client.connect(transport);
-  
-  // Add security enhancements to the client
+
+  await baseClient.connect(transport);
+
+  const rateLimiter = new RateLimiterMemory({
+    points: 60, // 60 requests
+    duration: 60, // per 60 seconds
+  });
+
+  // The enhanced client wraps the base client, overriding methods to add functionality.
   const enhancedClient = {
-    ...client,
-    transport,
-    
-    // Add rate limiting
-    async callToolWithRateLimit(name: string, payload: unknown) {
-      // Create a rate limiting key based on endpoint and tool name
+    ...baseClient,
+
+    // Override callTool to add rate limiting
+    callTool: async (name: string, payload: unknown) => {
       const rateKey = `tool-${si.name}-${name}`;
-      
-      // Check rate limit
-      if (!rateLimiter.isAllowed(rateKey)) {
+      try {
+        await rateLimiter.consume(rateKey);
+      } catch (error) {
         throw new Error(`Rate limit exceeded for tool ${name}`);
       }
-      
-      // Call the tool
-      return await client.callTool(name, payload);
+      return baseClient.callTool(name, payload);
+    },
+
+    // Override sendRequest to add data redaction
+    sendRequest: async (message: unknown) => {
+      const redactedMessage = redactSensitiveData(message);
+      return baseClient.sendRequest(redactedMessage);
     },
     
-    // Add data redaction
-    async sendWithRedaction(message: unknown) {
-      // Redact sensitive data before sending
-      const serialized = JSON.stringify(message);
-      const redacted = redactSensitiveData(serialized);
-      const parsed = JSON.parse(redacted);
-      
-      // Send the redacted message
-      return await client.sendRequest(parsed);
+    // Keep the original close method from the base client
+    close: async () => {
+        // No need to dispose the rate limiter as it's not a global singleton.
+        // It will be garbage collected when the client is.
+        await transport.close();
+        baseClient.close();
     },
-    
-    // Get rate limit info
-    getRateLimitInfo(toolName: string) {
+
+    // Expose rate limit info for inspection
+    getRateLimitInfo: async (toolName: string) => {
       const rateKey = `tool-${si.name}-${toolName}`;
+      const res = await rateLimiter.get(rateKey);
       return {
-        remaining: rateLimiter.getRemaining(rateKey),
-        windowMs: 60000,
-        maxRequests: 60,
+        remainingPoints: res?.remainingPoints || 0,
       };
     },
-    
-    // Enhanced close method that also disposes of resources
-    async close() {
-      await transport.close();
-      client.close();
-    },
   };
-  
-  return enhancedClient;
-}
 
-// Dispose of global resources
-export function disposeClientResources() {
-  rateLimiter.dispose();
+  return enhancedClient;
 }

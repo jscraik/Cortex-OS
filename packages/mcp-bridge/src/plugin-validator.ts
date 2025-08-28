@@ -9,6 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
+import { createPublicKey, verify } from 'crypto';
 import { PluginMetadata, PluginMetadataSchema, PluginValidationResult } from './types.js';
 
 export class PluginValidator {
@@ -19,6 +20,8 @@ export class PluginValidator {
     SUSPICIOUS_KEYWORDS: ['crypto', 'mining', 'bitcoin', 'wallet'],
     VERIFIED_AUTHORS: ['Cortex OS Team', 'Dev Tools Community', 'AI Integration Team'],
   };
+
+  constructor(private readonly trustedPublicKeys: Record<string, string> = {}) {}
 
   /**
    * Validate a plugin's metadata and security
@@ -251,25 +254,26 @@ export class PluginValidator {
   }
 
   /**
-   * Verify digital signature (mock implementation)
-   *
-   * TODO: Replace this mock implementation with real signature verification.
-   * A real implementation should:
-   *   1. Extract the digital signature and signed data from the plugin metadata.
-   *   2. Obtain the public key or certificate used to sign the plugin.
-   *   3. Validate the certificate chain to ensure it is issued by a trusted authority.
-   *   4. Check for certificate revocation (CRL/OCSP).
-   *   5. Use cryptographic methods (e.g., RSA/ECDSA) to verify the signature against the data.
-   *   6. Ensure the certificate is not expired and matches the expected author identity.
-   *   7. Return true only if all checks pass.
+   * Verify digital signature of plugin metadata
    */
   private async verifySignature(plugin: PluginMetadata): Promise<boolean> {
-    // Mock signature verification
-    // In real implementation, this would verify the signature against a trusted certificate
-    if (!plugin.signature) return false;
+    const publicKeyPem = this.trustedPublicKeys[plugin.author];
+    if (!publicKeyPem || !plugin.signature) {
+      return false;
+    }
 
-    // For demo purposes, consider verified plugins as having valid signatures
-    return plugin.verified;
+    try {
+      const data = JSON.stringify({
+        name: plugin.name,
+        version: plugin.version,
+        entrypoint: plugin.entrypoint,
+      });
+      const publicKey = createPublicKey(publicKeyPem);
+      const signature = Buffer.from(plugin.signature, 'base64');
+      return verify(null, Buffer.from(data), publicKey, signature);
+    } catch {
+      return false;
+    }
   }
 
   /**

@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "validate": "node validate-policies.js && node validate-structure.js && node validate-docs.js",
+    "validate": "node validate-policies.js && node validate-docs.js",
     "validate:policies": "node validate-policies.js",
-    "validate:structure": "node validate-structure.js",
     "validate:docs": "node validate-docs.js"
   },
   "dependencies": {

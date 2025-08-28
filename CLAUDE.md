@@ -9,11 +9,13 @@ Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a go
 ## Architecture
 
 ### ASBR Runtime Structure
+
 - **Location**: `apps/cortex-os/`
 - **Role**: Main application runtime that orchestrates feature packages
 - **Entry**: `apps/cortex-os/src/index.ts` → `runtime.ts`
 
 ### Feature Packages (Domain Logic)
+
 - **Location**: `packages/`
 - **Key Packages**:
   - `a2a/` - Agent-to-Agent JSON-RPC 2.0 communication
@@ -26,6 +28,7 @@ Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a go
   - `simlab-mono/` - Simulation environment for testing
 
 ### Communication Patterns
+
 1. **A2A Event Bus** - Async pub/sub messaging via JSON-RPC 2.0
 2. **Service Interfaces** - DI-based contracts via ASBR coordination  
 3. **MCP Tools** - External integrations and side effects
@@ -35,6 +38,7 @@ Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a go
 ## Development Commands
 
 ### Core Development
+
 ```bash
 # Install dependencies
 pnpm install
@@ -51,6 +55,7 @@ pnpm build:with-gates
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 pnpm test
@@ -80,6 +85,7 @@ pnpm test:a11y
 ```
 
 ### Testing Individual Packages
+
 ```bash
 # Test specific package
 turbo run test --filter=@cortex-os/a2a
@@ -90,6 +96,7 @@ vitest run packages/a2a/tests/specific-test.test.ts
 ```
 
 ### Code Quality
+
 ```bash
 # Lint and fix
 pnpm lint
@@ -106,6 +113,7 @@ pnpm structure:validate
 ```
 
 ### MCP (Model Context Protocol)
+
 ```bash
 # Start MCP server
 pnpm mcp:start
@@ -121,6 +129,7 @@ pnpm mcp:test
 ```
 
 ### Simulation Lab
+
 ```bash
 # Run smoke tests
 pnpm simlab:smoke
@@ -143,6 +152,7 @@ pnpm simlab:report
 - **Node Version**: `>=18.0.0`
 
 ### Workspace Structure
+
 ```
 packages:
   - 'apps/*'           # Applications
@@ -156,6 +166,7 @@ packages:
 ## Import Path Aliases
 
 TypeScript path mapping is configured for clean imports:
+
 ```typescript
 // A2A packages
 import { EventBus } from '@cortex-os/a2a-core/bus';
@@ -174,12 +185,14 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 ## Testing Architecture
 
 ### Test Organization
+
 - **Root Config**: `vitest.config.ts` (orchestrates all projects)
-- **Workspace Config**: `vitest.workspace.ts` 
+- **Workspace Config**: `vitest.workspace.ts`
 - **Package Configs**: Each package has its own `vitest.config.ts`
 - **Coverage**: 90% threshold enforced globally
 
 ### Test Types
+
 - **Unit**: Package-specific tests in `tests/` directories
 - **Integration**: `tests/integration/` - multi-package interactions
 - **E2E**: End-to-end scenarios via `test:integration:e2e`
@@ -187,6 +200,7 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 - **Accessibility**: WCAG 2.2 AA compliance testing
 
 ### Quality Gates
+
 - **Coverage**: 90% statements/branches/functions/lines required
 - **Security**: Semgrep scanning with OWASP rules
 - **Type Safety**: TypeScript strict mode (relaxed in base config)
@@ -195,12 +209,14 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 ## Security Considerations
 
 ### OWASP Compliance
+
 - LLM Top-10 validation in `packages/asbr/src/security/`
 - Prompt injection guards in A2A communication
 - Input sanitization and output validation
 - Security regression testing
 
 ### Capabilities & Boundaries
+
 - MCP tools run in sandboxed environments
 - Network egress controls for testing (`MCP_NETWORK_EGRESS=disabled`)
 - Workload identity and mTLS in production deployments
@@ -221,19 +237,21 @@ import { RAGPipeline } from '@cortex-os/rag/pipeline';
 2. **Communication**: Use A2A events for inter-package coordination
 3. **Testing**: Write tests first, maintain 90% coverage
 4. **Quality**: Run `pnpm lint` and `pnpm format` before commits
-5. **Integration**: Test with `pnpm test:integration` 
+5. **Integration**: Test with `pnpm test:integration`
 6. **Security**: Validate with `pnpm test:security`
 
 ## Debugging & Troubleshooting
 
 ### Common Issues
+
 - **Import Errors**: Check ESLint restricted paths rules in `eslint.config.js`
 - **Test Failures**: Review coverage thresholds and missing test configs
 - **Build Issues**: Verify Turbo cache with `turbo run build --force`
 - **MCP Problems**: Check `pnpm mcp:doctor` and connection configs
 
 ### Logs & Monitoring
-- Test results: `junit.xml` and `test-results.json` 
+
+- Test results: `junit.xml` and `test-results.json`
 - Coverage reports: Generated in `coverage/` directory
 - Security reports: `security-reports/` and `atlas-reports/`
 - Carbon tracking: `carbon-metrics/` (if enabled)

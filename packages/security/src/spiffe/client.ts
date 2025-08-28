@@ -5,6 +5,7 @@
 
 import axios from 'axios';
 import { z } from 'zod';
+import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import {
   CertificateBundle,
   SPIFFEError,
@@ -14,15 +15,7 @@ import {
   TrustDomainConfig,
   WorkloadIdentity,
 } from '../types.js';
-
-// Temporary stub implementations for telemetry until the telemetry package is fixed
-const withSpan = async (name: string, fn: (span: unknown) => Promise<any>) => {
-  return fn({ name });
-};
-
-const logWithSpan = (level: string, message: string, attributes?: any, span?: unknown) => {
-  console.log(`[${level}] ${message}`, attributes);
-};
+import { extractWorkloadPath } from '../utils/security-utils.ts';
 
 /**
  * SPIFFE Workload API Client
@@ -63,10 +56,15 @@ export class SpiffeClient {
 
         const workloadResponse = SpiffeWorkloadResponseSchema.parse(response.data);
 
+        const workloadPath = extractWorkloadPath(workloadResponse.spiffe_id);
+        if (!workloadPath) {
+          throw new SPIFFEError('Invalid SPIFFE ID format', workloadResponse.spiffe_id);
+        }
+
         const workloadIdentity: WorkloadIdentity = {
           spiffeId: workloadResponse.spiffe_id,
           trustDomain: workloadResponse.trust_domain,
-          workloadPath: this.extractWorkloadPath(workloadResponse.spiffe_id),
+          workloadPath,
           selectors: this.convertSelectors(workloadResponse.selectors || []),
           metadata: {
             fetchedAt: new Date(),
@@ -206,14 +204,6 @@ export class SpiffeClient {
    */
   validateSpiffeId(spiffeId: string): boolean {
     return SpiffeIdSchema.safeParse(spiffeId).success;
-  }
-
-  /**
-   * Extract workload path from SPIFFE ID
-   */
-  private extractWorkloadPath(spiffeId: SpiffeId): string {
-    const parts = spiffeId.split('/');
-    return parts.length > 2 ? '/' + parts.slice(2).join('/') : '/';
   }
 
   /**

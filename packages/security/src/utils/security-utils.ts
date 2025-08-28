@@ -3,19 +3,19 @@
  * @description Utility functions for security operations
  */
 
+import forge from 'node-forge';
+import { SecurityError } from '../types.ts';
+
 /**
  * Generate a random nonce for cryptographic operations
  */
 export function generateNonce(length = 32): string {
-  const array = new Uint8Array(length);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array);
-  } else {
-    // Fallback for environments without crypto API
-    for (let i = 0; i < length; i++) {
-      array[i] = Math.floor(Math.random() * 256);
-    }
+  if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+    throw new SecurityError('Secure random number generation unavailable', 'RNG_UNAVAILABLE');
   }
+
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
@@ -31,40 +31,25 @@ export function isValidSpiffeId(spiffeId: string): boolean {
  * Extract trust domain from SPIFFE ID
  */
 export function extractTrustDomain(spiffeId: string): string | null {
-  if (!isValidSpiffeId(spiffeId)) {
-    return null;
-  }
-
-  const parts = spiffeId.split('/');
-  return parts.length >= 3 ? parts[2] : null;
+  const match = spiffeId.match(/^spiffe:\/\/([^/]+)(?:\/.*)?$/);
+  return match ? match[1] : null;
 }
 
 /**
  * Extract workload path from SPIFFE ID
  */
 export function extractWorkloadPath(spiffeId: string): string | null {
-  if (!isValidSpiffeId(spiffeId)) {
-    return null;
-  }
-
-  const parts = spiffeId.split('/');
-  return parts.length >= 4 ? '/' + parts.slice(3).join('/') : null;
+  const match = spiffeId.match(/^spiffe:\/\/[^/]+(\/.*)$/);
+  return match ? match[1] : null;
 }
 
 /**
- * Check if a certificate is expired (simplified check)
+ * Check if a certificate is expired
  */
 export function isCertificateExpired(certPem: string): boolean {
   try {
-    // This is a simplified check - in production you'd parse the actual certificate
-    const certLines = certPem.split('\n');
-    const certBody = certLines.slice(1, -2).join('\n');
-
-    // For now, we'll just check if the certificate contains valid PEM structure
-    return (
-      !certBody.includes('-----BEGIN CERTIFICATE-----') ||
-      !certBody.includes('-----END CERTIFICATE-----')
-    );
+    const cert = forge.pki.certificateFromPem(certPem);
+    return cert.validity.notAfter.getTime() <= Date.now();
   } catch {
     return true;
   }

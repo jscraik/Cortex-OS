@@ -3,9 +3,10 @@
  * @description Evidence validation implementation following the specification
  */
 
-import { createHash } from "crypto";
-import { pathExists, readFile } from "fs-extra";
-import * as path from "path";
+import { createHash } from 'crypto';
+import { access, readFile } from 'fs/promises';
+import { constants } from 'fs';
+import * as path from 'path';
 import {
   EvidenceCollection,
   Finding,
@@ -13,7 +14,16 @@ import {
   ValidationResult,
   ValidationResultSchema,
   ValidatorConfig,
-} from "./types.js";
+} from './types.js';
+
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await access(p, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export class EvidenceValidator {
   private config: ValidatorConfig;
@@ -34,9 +44,7 @@ export class EvidenceValidator {
         isValid: false,
         finding,
         errors: [
-          `Invalid finding schema: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          `Invalid finding schema: ${error instanceof Error ? error.message : String(error)}`,
         ],
         warnings: [],
         metadata: {
@@ -57,9 +65,7 @@ export class EvidenceValidator {
 
     // Validate range
     if (finding.start > finding.end) {
-      errors.push(
-        "Invalid range: start position cannot be greater than end position",
-      );
+      errors.push('Invalid range: start position cannot be greater than end position');
     }
 
     // Check file existence
@@ -68,25 +74,23 @@ export class EvidenceValidator {
 
     if (!fileExists) {
       if (this.config.allowMissingFiles) {
-        warnings.push("File does not exist but is allowed by configuration");
+        warnings.push('File does not exist but is allowed by configuration');
       } else {
         errors.push(`File does not exist: ${finding.path}`);
       }
     } else {
       try {
         // Read file content
-        const content = await readFile(filePath, "utf-8");
+        const content = await readFile(filePath, 'utf-8');
         contentLength = content.length;
 
         // Validate range against content
         if (finding.end > content.length) {
           if (this.config.allowRangeExceeding) {
-            warnings.push(
-              "Range exceeds file content but is allowed by configuration",
-            );
+            warnings.push('Range exceeds file content but is allowed by configuration');
             rangeValid = true;
           } else {
-            errors.push("Range exceeds file content length");
+            errors.push('Range exceeds file content length');
             rangeValid = false;
           }
         } else {
@@ -95,14 +99,12 @@ export class EvidenceValidator {
           // Extract text and validate hash
           if (this.config.requireHashValidation && rangeValid) {
             const extractedText = content.slice(finding.start, finding.end);
-            actualHash = createHash("sha256")
-              .update(extractedText)
-              .digest("hex");
+            actualHash = createHash('sha256').update(extractedText).digest('hex');
 
             if (actualHash === finding.hash) {
               hashValid = true;
             } else {
-              errors.push("Hash mismatch");
+              errors.push('Hash mismatch');
               hashValid = false;
             }
           } else {
@@ -111,9 +113,7 @@ export class EvidenceValidator {
         }
       } catch (error) {
         errors.push(
-          `Failed to read file: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
@@ -180,14 +180,14 @@ export class EvidenceValidator {
     claim: string,
   ): Promise<Finding> {
     const fullPath = path.resolve(this.config.repositoryRoot, filePath);
-    const content = await readFile(fullPath, "utf-8");
+    const content = await readFile(fullPath, 'utf-8');
 
     if (start > end || end > content.length) {
-      throw new Error("Invalid text range for finding generation");
+      throw new Error('Invalid text range for finding generation');
     }
 
     const extractedText = content.slice(start, end);
-    const hash = createHash("sha256").update(extractedText).digest("hex");
+    const hash = createHash('sha256').update(extractedText).digest('hex');
 
     return {
       path: filePath,

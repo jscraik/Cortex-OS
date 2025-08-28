@@ -19,7 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prisma:gen": "prisma generate --schema=./prisma/schema.prisma",
     "db:migrate": "prisma migrate deploy --schema=./prisma/schema.prisma",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "jsonl:import": "tsx src/tools/jsonl-to-memory.ts"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",

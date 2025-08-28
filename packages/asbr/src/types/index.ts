@@ -225,7 +225,7 @@ export interface UnsubscribeFunction {
 // Configuration Types
 export const ConfigSchema = z.object({
   events: z.object({
-    transport: z.enum(['sse', 'poll']),
+    transport: z.enum(['socket', 'sse', 'poll']),
     poll_interval_ms: z.number().positive(),
     heartbeat_ms: z.number().positive(),
     idle_timeout_ms: z.number().positive(),

@@ -617,8 +617,6 @@ export interface PerformanceMetrics {
 export interface OrchestrationConfig {
   maxConcurrentOrchestrations: number;
   defaultStrategy: OrchestrationStrategy;
-  enableReActPlanning: boolean;
-  enableLangChainIntegration: boolean;
   enableMultiAgentCoordination: boolean;
   enableAdaptiveDecisions: boolean;
   planningTimeout: number;
