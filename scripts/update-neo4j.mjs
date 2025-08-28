@@ -1,12 +1,16 @@
 #!/usr/bin/env node
+/* eslint-env node */
+/* global console, process */
 
 // Idempotent updater: replace the entire Neo4j class with a
-// SecureNeo4j-backed implementation using safe template literals.
+// SecureNeo4j-backed implementation using a separate template file.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
+const templatePath = join('scripts', 'neo4j-secure-class.ts');
+const secureClass = readFileSync(templatePath, 'utf-8');
 
 function log(msg) {
   console.log(`[update-neo4j] ${msg}`);
@@ -38,8 +42,6 @@ function tryUpdate() {
 
   // Replace entire class body with a secure implementation
   const classRegex = /export class Neo4j implements INeo4j {[\s\S]*?}\n?$/;
-  const secureClass = `export class Neo4j implements INeo4j {\n  private driver: Driver;\n  private secureNeo4j: SecureNeo4j;\n\n  constructor(uri: string, user: string, pass: string) {\n    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });\n    this.secureNeo4j = new SecureNeo4j(uri, user, pass);\n  }\n\n  async close() {\n    await this.driver.close();\n    await this.secureNeo4j.close();\n  }\n\n  async upsertNode(node: KGNode) {\n    try {\n      await this.secureNeo4j.upsertNode({ id: node.id, label: node.label, props: node.props });\n    } catch (error) {\n      console.error('Error upserting node:', error);\n      throw error;\n    }\n  }\n\n  async upsertRel(rel: KGRel) {\n    try {\n      await this.secureNeo4j.upsertRel({ from: rel.from, to: rel.to, type: rel.type, props: rel.props });\n    } catch (error) {\n      console.error('Error upserting relationship:', error);\n      throw error;\n    }\n  }\n\n  async neighborhood(nodeId: string, depth = 2): Promise<Subgraph> {\n    try {\n      return await this.secureNeo4j.neighborhood(nodeId, depth);\n    } catch (error) {\n      console.error('Error querying neighborhood:', error);\n      throw error;\n    }\n  }\n}\n`;
-
   content = content.replace(classRegex, secureClass);
   writeFileSync(neo4jPath, content);
   log('neo4j.ts has been updated to delegate to SecureNeo4j.');
