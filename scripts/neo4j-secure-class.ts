@@ -1,24 +1,14 @@
-/*
- * Neo4j Secure Class Template
- * 
- * This is a template file used by various scripts to inject Neo4j class implementations.
- * It's designed to be used as a string replacement in existing files.
- * 
- * Dependencies expected in target file:
- * - INeo4j interface
- * - Driver type from neo4j-driver
- * - SecureNeo4j class
- * - KGNode, KGRel, Subgraph types
- * - neo4j module
- */
 export class Neo4j implements INeo4j {
+  private driver: Driver;
   private secureNeo4j: SecureNeo4j;
 
   constructor(uri: string, user: string, pass: string) {
+    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });
     this.secureNeo4j = new SecureNeo4j(uri, user, pass);
   }
 
   async close() {
+    await this.driver.close();
     await this.secureNeo4j.close();
   }
 
@@ -44,8 +34,9 @@ export class Neo4j implements INeo4j {
     try {
       return await this.secureNeo4j.neighborhood(nodeId, depth);
     } catch (error) {
-      console.error('Error getting neighborhood:', error);
+      console.error('Error querying neighborhood:', error);
       throw error;
     }
   }
 }
+

@@ -36,7 +36,9 @@
     "goldenSeed": 12345,
     "testType": "basic-execution"
   },
-  "timestamp": 1756323507480,
+  "timestamp": 1756406226849,
   "seed": 12345,
-  "nodeVersion": "v24.6.0"
+
+  "nodeVersion": "v20.19.4"
+
 }

@@ -44,15 +44,6 @@ describe('Evidence Validator', () => {
 
       const result = await validator.validateFinding(finding);
 
-      console.log('Test file content check:', {
-        expectedText: textRange,
-        expectedHash: hash,
-        actualHash: result.metadata.actualHash,
-        filePath: path.join(testDataDir, 'sample.ts'),
-        fileExists: result.metadata.fileExists,
-        errors: result.errors,
-      });
-
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.metadata.fileExists).toBe(true);

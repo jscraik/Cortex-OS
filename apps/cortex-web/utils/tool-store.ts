@@ -19,7 +19,8 @@ export function addToolEvent(
 ) {
   const list = toolStore.get(sessionId) || [];
   const createdAt = new Date().toISOString();
-  const id = event.id || crypto.randomUUID();
+  const id =
+    event.id || (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
   const redactedArgs = event.args ? redactArgs(event.args) : undefined;
   const e: ToolEvent = {
     id,
@@ -46,20 +47,23 @@ export function redactArgs<T extends Record<string, unknown>>(args: T): T {
     if (BEARER_REGEX.test(out)) out = out.replace(BEARER_REGEX, 'Bearer [REDACTED]');
     return out;
   };
-  const sanitize = (val: unknown): unknown => {
+  const sanitize = (val: unknown, visited: WeakSet<Record<string, unknown>>): unknown => {
     if (typeof val === 'string') return sanitizeString(val);
-    if (Array.isArray(val)) return val.map(sanitize);
+    if (Array.isArray(val)) return val.map((item) => sanitize(item, visited));
     if (val && typeof val === 'object') {
-      const out: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(val)) {
-        if (isSensitiveKey(k)) out[k] = '[REDACTED]';
-        else if (typeof v === 'string') out[k] = sanitizeString(v);
-        else out[k] = sanitize(v);
+      if (visited.has(val as Record<string, unknown>)) {
+        return '[Circular]';
       }
-      return out as T;
+      visited.add(val as Record<string, unknown>);
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
+        if (isSensitiveKey(k)) out[k] = '[REDACTED]';
+        else out[k] = sanitize(v, visited);
+      }
+      return out as unknown as T;
     }
     return val;
   };
 
-  return sanitize(args) as T;
+  return sanitize(args, new WeakSet()) as T;
 }

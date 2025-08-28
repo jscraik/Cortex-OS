@@ -61,6 +61,28 @@ This guide makes the whole project executable locally and in CI with consistent 
 
 - Run: VS Code task "code-quality-check" (node scripts/code-quality-check.mjs)
 
+## Packaging & release
+
+- For packaging instructions, see the Packaging and Release Guide: [docs/PACKAGING.md](docs/PACKAGING.md)
+
+## Readiness gates (coverage ≥ 95%)
+
+- Initialize per-package readiness files: pnpm readiness:init
+- Run tests with coverage and enforce thresholds:
+  - pnpm readiness:init
+  - node tools/readiness/run-package-tests.mjs
+  - pnpm readiness:check
+- CI enforces the same via `.github/workflows/readiness.yml`
+
+## Open a PR with test plan
+
+- Create a feature branch and push changes
+- Ensure CI passes: readiness, security-and-sbom, and governance
+- In the PR description, include:
+  - Summary of changes and impacted packages
+  - Test plan with coverage deltas (paste text-summary)
+  - Any a11y and security notes (semgrep highlights)
+
 ## Troubleshooting
 
 - Port collisions: free ports 3000/5173/8080 with lsof/kill or set env overrides
