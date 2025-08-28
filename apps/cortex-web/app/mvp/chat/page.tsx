@@ -39,14 +39,10 @@ export default function ChatPage() {
   }, [messages, streaming]);
 
   async function ensureSession() {
-    if (sessionId) return sessionId;
-    const sid = crypto.randomUUID();
-    setSessionId(sid);
-    // Load any existing tool events (if server stored from prior turns)
-    try {
-      const tools = await apiFetch<{ events: ToolEvent[] }>(`/api/chat/${sid}/tools`);
-      setToolEvents(tools.events || []);
-    } catch {}
+    } catch (e: any) {
+      console.error('Failed to load tool events:', e);
+      setError(e?.message || 'Failed to load tool events');
+    }
     return sid;
   }
 
