@@ -287,3 +287,6 @@ scripts/package-lock.json
 
 # Governance generated artifacts
 .cortex/out/
+!packages/mcp-registry/src/lib/
+!packages/mcp-registry/src/lib/**
+
