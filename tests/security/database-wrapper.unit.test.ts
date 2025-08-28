@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SecureDatabaseWrapper } from '../../packages/mvp-core/src/secure-db';
+import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/secure-db';
+
+const MAX_STRING_LENGTH = 1000;
 
 // Mock database and statement for testing
 let mockStatement: any;
@@ -26,7 +28,7 @@ describe('securePrepare', () => {
   });
 
   it('rejects invalid string parameter', () => {
-    const invalid = 'a'.repeat(1001);
+    const invalid = 'a'.repeat(MAX_STRING_LENGTH + 1);
     expect(() =>
       wrapper.securePrepare('SELECT ? as x', [invalid])
     ).toThrow('Invalid string parameter');
@@ -53,7 +55,7 @@ describe('secureRun', () => {
   });
 
   it('rejects invalid string parameter', () => {
-    const invalid = 'a'.repeat(1001);
+    const invalid = 'a'.repeat(MAX_STRING_LENGTH + 1);
     expect(() =>
       wrapper.secureRun('INSERT INTO t VALUES (?)', invalid)
     ).toThrow('Invalid string parameter');
@@ -74,7 +76,7 @@ describe('secureGet', () => {
   });
 
   it('rejects invalid string parameter', () => {
-    const invalid = 'a'.repeat(1001);
+    const invalid = 'a'.repeat(MAX_STRING_LENGTH + 1);
     expect(() =>
       wrapper.secureGet('SELECT ? as x', invalid)
     ).toThrow('Invalid string parameter');
@@ -95,7 +97,7 @@ describe('secureAll', () => {
   });
 
   it('rejects invalid string parameter', () => {
-    const invalid = 'a'.repeat(1001);
+    const invalid = 'a'.repeat(MAX_STRING_LENGTH + 1);
     expect(() =>
       wrapper.secureAll('SELECT ? as x', invalid)
     ).toThrow('Invalid string parameter');
