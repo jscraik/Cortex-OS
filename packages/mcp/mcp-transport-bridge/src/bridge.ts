@@ -130,6 +130,7 @@ export class McpBridge {
       }
     }
 
+    return { healthy: this.isRunning && details.clientConnected, details };
   return { healthy: this.isRunning && details.clientConnected, details };
   }
 
@@ -183,6 +184,8 @@ export class McpBridge {
         },
       );
 
+      await this.client.connect(transport);
+      this.log(`🔧 Connected to stdio process: ${source.command}`);
   await this.client.connect(transport);
   this.log(`🔧 Connected to stdio process: ${source.command}`);
     }
