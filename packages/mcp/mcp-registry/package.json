@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/fs-store.ts --dts --format esm",
+    "build": "tsup src/index.ts --dts --format esm",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src"
