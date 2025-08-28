@@ -71,4 +71,3 @@ export function validateSecurity(manifest: unknown): ValidationResult {
   };
 }
 
-export default validateSecurity;
