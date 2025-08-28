@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  neo4j:
+    env_file:
+      - ../.env.development
+  grafana:
+    env_file:
+      - ../.env.development
