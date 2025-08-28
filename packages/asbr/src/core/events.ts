@@ -378,25 +378,7 @@ export class EventManagerClass extends EventEmitter {
  * Create event manager singleton
  */
 export function createEventManager(config: Config): EventManager {
-  const instance = new EventManagerClass(config);
-  return {
-    attachIO: instance.attachIO.bind(instance),
-    emitEvent: instance.emitEvent.bind(instance),
-    subscribe: instance.subscribe.bind(instance),
-    unsubscribe: instance.unsubscribe.bind(instance),
-    getEvents: instance.getEvents.bind(instance),
-    createSSEStream: instance.createSSEStream.bind(instance),
-    pollEvents: instance.pollEvents.bind(instance),
-    getStats: instance.getStats.bind(instance),
-    on: instance.on.bind(instance),
-    off: instance.off.bind(instance),
-    once: instance.once.bind(instance),
-    emit: instance.emit.bind(instance),
-    addListener: instance.addListener.bind(instance),
-    removeListener: instance.removeListener.bind(instance),
-    removeAllListeners: instance.removeAllListeners.bind(instance),
-    listenerCount: instance.listenerCount.bind(instance),
-  } as EventManager;
+  return new EventManagerClass(config) as EventManager;
 }
 
 let eventManagerInstance: EventManager | null = null;
