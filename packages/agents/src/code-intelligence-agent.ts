@@ -236,8 +236,6 @@ export class CodeIntelligenceAgent extends EventEmitter {
       result.modelUsed = modelId;
 
       this.analysisHistory.set(cacheKey, result);
-
-
       this.emit('analysis_complete', { request: validatedRequest, result });
       return result;
     } catch (error) {
