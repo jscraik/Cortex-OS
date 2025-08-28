@@ -9,7 +9,7 @@ export async function fsQueue(queueName = 'default'): Promise<Transport> {
   try {
     await fs.mkdir(dir, { recursive: true });
   } catch (err) {
-    console.error(`Failed to create transport directory ${dir}`, err);
+    console.error(`Failed to create A2A transport directory ${dir}. Transport will not function properly.`, err);
     throw err;
   }
   let listeners: ((m: Envelope) => Promise<void>)[] = [];
