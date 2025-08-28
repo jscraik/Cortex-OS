@@ -31,17 +31,21 @@ const ignoreDirs = new Set([
   // Python site-packages in nested app folders
   'site-packages',
   // Generated artifacts
-  'out'
+  'out',
 ]);
 
 function walk(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
-  if (ignoreDirs.has(entry.name)) continue;
-  const fullPath = path.join(dir, entry.name);
-  // Skip any folder paths that clearly look like Python envs or caches
-  if (entry.isDirectory() && /(^|\/)(\.venv|venv|env|__pycache__|\.pytest_cache|site-packages)(\/|$)/.test(fullPath)) continue;
+    if (ignoreDirs.has(entry.name)) continue;
+    const fullPath = path.join(dir, entry.name);
+    // Skip any folder paths that clearly look like Python envs or caches
+    if (
+      entry.isDirectory() &&
+      /(^|\/)(\.venv|venv|env|__pycache__|\.pytest_cache|site-packages)(\/|$)/.test(fullPath)
+    )
+      continue;
     if (entry.isDirectory()) {
       files.push(...walk(fullPath));
     } else if (entry.isFile()) {
@@ -78,7 +82,9 @@ function analyseFile(filePath) {
           const length = i - funcStart;
           if (length > 40) {
             const name = funcMatch ? funcMatch[1] : '<anonymous>';
-            recommendations.push(`Function ${name} in ${filePath} has ${length} lines; consider splitting it.`);
+            recommendations.push(
+              `Function ${name} in ${filePath} has ${length} lines; consider splitting it.`,
+            );
           }
           inFunc = false;
         }
@@ -86,7 +92,8 @@ function analyseFile(filePath) {
     }
   } else {
     // JS/TS: naive curly brace counting
-    const functionRegex = /function\s+([a-zA-Z0-9_$]+)|const\s+([a-zA-Z0-9_$]+)\s*=\s*async\s*\(|const\s+([a-zA-Z0-9_$]+)\s*=\s*\(/;
+    const functionRegex =
+      /function\s+([a-zA-Z0-9_$]+)|const\s+([a-zA-Z0-9_$]+)\s*=\s*async\s*\(|const\s+([a-zA-Z0-9_$]+)\s*=\s*\(/;
     let inFunc = false;
     let braceCount = 0;
     let funcStart = 0;
@@ -110,7 +117,9 @@ function analyseFile(filePath) {
         if (braceCount === 0 && line.includes('}')) {
           const length = i - funcStart + 1;
           if (length > 40) {
-            recommendations.push(`Function ${funcName} in ${filePath} has ${length} lines; consider splitting it.`);
+            recommendations.push(
+              `Function ${funcName} in ${filePath} has ${length} lines; consider splitting it.`,
+            );
           }
           inFunc = false;
           funcName = null;
@@ -120,11 +129,18 @@ function analyseFile(filePath) {
   }
   // Naming conventions
   const badNames = [];
+<<<<<<< HEAD
   // Extract regexes for each language for maintainability
   const pythonFuncRegex = /def\s+([A-Za-z][A-Za-z0-9_]+)/g;
   const jsFuncRegex = /function\s+([A-Za-z][A-Za-z0-9]*)/g;
   const jsConstRegex = /const\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
   const jsLetRegex = /let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
+=======
+  const nameRegex =
+    ext === '.py'
+      ? /def\s+([A-Za-z][A-Za-z0-9]+)/g
+      : /function\s+([A-Za-z][A-Za-z0-9]*)|const\s+([A-Za-z][A-Za-z0-9]*)\s*=|let\s+([A-Za-z][A-Za-z0-9]*)\s*=/g;
+>>>>>>> feeeb6a (chore: add sonarjs reports and minor gate/script tweaks)
   let match;
   if (ext === '.py') {
     while ((match = pythonFuncRegex.exec(content))) {
@@ -171,12 +187,12 @@ function main() {
   // Compute score
   let score = 10;
   // Each category of issue counts as –2
-  if (allRecommendations.some(r => r.includes('has'))) score -= 2;
-  if (allRecommendations.some(r => r.includes('Inconsistent naming'))) score -= 2;
+  if (allRecommendations.some((r) => r.includes('has'))) score -= 2;
+  if (allRecommendations.some((r) => r.includes('Inconsistent naming'))) score -= 2;
   if (score < 0) score = 0;
   const output = {
     score,
-    recommendations: allRecommendations
+    recommendations: allRecommendations,
   };
   console.log(JSON.stringify(output, null, 2));
 }

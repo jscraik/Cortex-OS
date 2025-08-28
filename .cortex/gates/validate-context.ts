@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node
 import { globby } from 'globby';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, resolve, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,7 +69,9 @@ async function validateContextLibrary() {
   }
 
   const contextFiles = await globby([`${contextDir}/**/*.md`, `${contextDir}/**/*.txt`]);
-  const relativeContextFiles = contextFiles.map((f) => f.replace(contextDir, '').replace(/^\//, ''));
+  const relativeContextFiles = contextFiles.map((f) =>
+    f.replace(contextDir, '').replace(/^\//, ''),
+  );
 
   // Validate each registered context source
   for (const [filename, metadata] of Object.entries(contextLibrary.contextSources)) {
