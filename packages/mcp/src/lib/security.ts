@@ -40,7 +40,7 @@ export function redactSensitiveData<T extends Record<string, any>>(data: T): T {
  */
 export function validateApiKey(
   key: string,
-  regex: RegExp = /^(sk|pk|ref)[-_][A-Za-z0-9]{10,}/
+  regex: RegExp = /^(sk|pk|ref)[-_][A-Za-z0-9]{10,}$/
 ): boolean {
   const schema = z.string().regex(regex);
   return schema.safeParse(key).success;
