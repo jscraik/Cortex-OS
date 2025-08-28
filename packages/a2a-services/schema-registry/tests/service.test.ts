@@ -48,8 +48,7 @@ describe('Schema Registry Service', () => {
       type: 'test-event',
       source: 'http://example.com/test',
       data: { foo: 'bar' },
-      schemaName: 'test-schema',
-      schemaVersion: '1.0.0',
+      dataschema: 'http://example.com/schemas/test-schema/1.0.0',
     });
 
     expect(envelope.dataschema).toBe('http://example.com/schemas/test-schema/1.0.0');
@@ -90,7 +89,7 @@ describe('Schema Registry Service', () => {
     const v1 = { id: 'latest', name: 'latest', version: '1.9.0', schema: {} };
     const v2 = { id: 'latest', name: 'latest', version: '1.10.0', schema: {} };
     const v3 = { id: 'latest', name: 'latest', version: '2.0.0', schema: {} };
-  await fetch(`${baseUrl}/schemas`, {
+    await fetch(`${baseUrl}/schemas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(v1),
@@ -146,7 +145,7 @@ describe('Schema Registry Service', () => {
       body: JSON.stringify(v2),
     });
 
-  const res = await fetch(`${baseUrl}/schemas/versions`);
+    const res = await fetch(`${baseUrl}/schemas/versions`);
     expect(res.status).toBe(200);
     const schemas = (await res.json()) as any[];
     expect(schemas.length).toBe(2);

@@ -44,8 +44,8 @@ export function createRateLimiter({ limit = 5, windowMs = 60_000 }: RateLimiterO
 
     record.count += 1;
     if (record.count > limit) {
-      const retryAfter = Math.ceil((record.startTime + windowMs - currentTime) / 1000);
-      res.setHeader('Retry-After', retryAfter);
+  const retryAfter = Math.ceil((record.startTime + windowMs - currentTime) / 1000);
+  res.setHeader('Retry-After', retryAfter);
       res.status(429).send('Too Many Requests');
     } else {
       next();
