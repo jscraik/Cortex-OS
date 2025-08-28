@@ -12,8 +12,10 @@ import { initializeXDG } from './xdg/index.js';
 // Core exports
 export { ASBRServer } from './api/server.js';
 export {
-    ASBRClient,
-    createASBRClient, createIdempotencyKey, createTaskInput
+  ASBRClient,
+  createASBRClient,
+  createIdempotencyKey,
+  createTaskInput,
 } from './sdk/index.js';
 
 // Configuration and XDG
@@ -38,44 +40,63 @@ export { createDefaultSecurityPolicy, OWASPLLMGuard } from './security/owasp-llm
 
 // Accessibility
 export {
-    AriaAnnouncer, createAccessibilityProfileFromProfile, createDefaultAccessibilityProfile
+  AriaAnnouncer,
+  createAccessibilityProfileFromProfile,
+  createDefaultAccessibilityProfile,
 } from './accessibility/aria-announcer.js';
 export {
-    createFocusableElement, getKeyboardNavigationManager, KeyboardNavigationManager
+  createFocusableElement,
+  getKeyboardNavigationManager,
+  KeyboardNavigationManager,
 } from './accessibility/keyboard-nav.js';
 
 // Authentication
 export {
-    cleanupExpiredTokens, generateToken, initializeAuth, revokeToken, validateToken
+  cleanupExpiredTokens,
+  generateToken,
+  initializeAuth,
+  revokeToken,
+  validateToken,
 } from './api/auth.js';
 
 // Types
 export type {
-    AnnouncementType,
-    // Accessibility types
-    AriaLivePriority, ArtifactRef,
-    // Error types
-    ASBRError, AuthenticationError,
-    AuthorizationError, Config,
-    // API types
-    CreateTaskRequest,
-    CreateTaskResponse, Event,
-    // Event types
-    EventType, Evidence,
-    EvidencePointer,
-    // Evidence types
-    EvidenceRisk, GetTaskResponse,
-    ListArtifactsQuery,
-    ListArtifactsResponse, MCPAllowlistEntry, NotFoundError, Profile,
-    // Security types
-    SecurityPolicy,
-    SecurityRule,
-    // Core types
-    Task,
-    TaskInput,
-    TaskRef,
-    // SDK types
-    UnsubscribeFunction, ValidationError, XDGPaths
+  AnnouncementType,
+  // Accessibility types
+  AriaLivePriority,
+  ArtifactRef,
+  // Error types
+  ASBRError,
+  AuthenticationError,
+  AuthorizationError,
+  Config,
+  // API types
+  CreateTaskRequest,
+  CreateTaskResponse,
+  Event,
+  // Event types
+  EventType,
+  Evidence,
+  EvidencePointer,
+  // Evidence types
+  EvidenceRisk,
+  GetTaskResponse,
+  ListArtifactsQuery,
+  ListArtifactsResponse,
+  MCPAllowlistEntry,
+  NotFoundError,
+  Profile,
+  // Security types
+  SecurityPolicy,
+  SecurityRule,
+  // Core types
+  Task,
+  TaskInput,
+  TaskRef,
+  // SDK types
+  UnsubscribeFunction,
+  ValidationError,
+  XDGPaths,
 } from './types/index.js';
 
 // Default configuration

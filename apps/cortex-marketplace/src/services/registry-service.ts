@@ -42,14 +42,14 @@ export class RegistryService {
    */
   async listRegistries(): Promise<RegistryInfo[]> {
     const registries: RegistryInfo[] = [];
-    
+
     for (const [name, url] of Object.entries(this.config.registries)) {
       const info: RegistryInfo = {
         name,
         url,
-        healthy: false
+        healthy: false,
       };
-      
+
       try {
         // Try to get cached data first
         const data = await this.getRegistry(name);
@@ -61,10 +61,10 @@ export class RegistryService {
       } catch (error) {
         console.warn(`Registry ${name} health check failed:`, error);
       }
-      
+
       registries.push(info);
     }
-    
+
     return registries;
   }
 
@@ -76,29 +76,29 @@ export class RegistryService {
     if (!url) {
       throw new Error(`Registry '${name}' not found`);
     }
-    
+
     // Check memory cache first
     const cached = this.cache.get(name);
     if (cached && Date.now() - cached.timestamp < this.config.cacheTtl) {
       return cached.data;
     }
-    
+
     // Check disk cache
     const diskCached = await this.loadFromDisk(name);
     if (diskCached && Date.now() - diskCached.timestamp < this.config.cacheTtl) {
       this.cache.set(name, diskCached);
       return diskCached.data;
     }
-    
+
     // Fetch from remote
     try {
       const data = await this.fetchRegistry(url);
       const cacheEntry = { data, timestamp: Date.now() };
-      
+
       // Update caches
       this.cache.set(name, cacheEntry);
       await this.saveToDisk(name, cacheEntry);
-      
+
       return data;
     } catch (error) {
       // If fetch fails, return stale cache if available
@@ -113,17 +113,19 @@ export class RegistryService {
   /**
    * Get registry health status
    */
-  async getRegistryStatus(name: string): Promise<{ healthy: boolean; lastUpdated?: string; error?: string }> {
+  async getRegistryStatus(
+    name: string,
+  ): Promise<{ healthy: boolean; lastUpdated?: string; error?: string }> {
     try {
       const data = await this.getRegistry(name);
       return {
         healthy: true,
-        lastUpdated: data?.updatedAt
+        lastUpdated: data?.updatedAt,
       };
     } catch (error) {
       return {
         healthy: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
@@ -135,7 +137,7 @@ export class RegistryService {
     // Clear caches
     this.cache.delete(name);
     await this.removeFromDisk(name);
-    
+
     // Force refetch
     await this.getRegistry(name);
   }
@@ -145,7 +147,7 @@ export class RegistryService {
    */
   async refreshAll(): Promise<void> {
     const registries = Object.keys(this.config.registries);
-    await Promise.all(registries.map(name => this.refreshRegistry(name)));
+    await Promise.all(registries.map((name) => this.refreshRegistry(name)));
   }
 
   /**
@@ -159,9 +161,9 @@ export class RegistryService {
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'Cortex-OS-Marketplace/1.0',
-          'Accept': 'application/json'
+          Accept: 'application/json',
         },
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -188,22 +190,24 @@ export class RegistryService {
   /**
    * Load registry data from disk cache
    */
-  private async loadFromDisk(name: string): Promise<{ data: RegistryData; timestamp: number } | null> {
+  private async loadFromDisk(
+    name: string,
+  ): Promise<{ data: RegistryData; timestamp: number } | null> {
     const cachePath = this.getCachePath(name);
-    
+
     try {
       if (!existsSync(cachePath)) {
         return null;
       }
-      
+
       const content = await readFile(cachePath, 'utf-8');
       const cached = JSON.parse(content);
-      
+
       // Validate cache structure
       if (!cached.data || !cached.timestamp) {
         return null;
       }
-      
+
       return cached;
     } catch (error) {
       console.warn(`Failed to load disk cache for ${name}:`, error);
@@ -214,9 +218,12 @@ export class RegistryService {
   /**
    * Save registry data to disk cache
    */
-  private async saveToDisk(name: string, cacheEntry: { data: RegistryData; timestamp: number }): Promise<void> {
+  private async saveToDisk(
+    name: string,
+    cacheEntry: { data: RegistryData; timestamp: number },
+  ): Promise<void> {
     const cachePath = this.getCachePath(name);
-    
+
     try {
       await writeFile(cachePath, JSON.stringify(cacheEntry, null, 2));
     } catch (error) {
@@ -229,7 +236,7 @@ export class RegistryService {
    */
   private async removeFromDisk(name: string): Promise<void> {
     const cachePath = this.getCachePath(name);
-    
+
     try {
       const fs = await import('fs/promises');
       await fs.unlink(cachePath);

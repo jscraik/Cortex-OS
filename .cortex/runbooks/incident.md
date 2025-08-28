@@ -4,4 +4,3 @@
 - Capture timeline and evidence
 - Mitigate, then remediate
 - Record post-incident in .cortex/audit
-

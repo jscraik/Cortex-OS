@@ -84,7 +84,7 @@ export class EmbeddingAdapter {
    */
   async generateEmbeddings(texts: string | string[]): Promise<number[][]> {
     const textArray = Array.isArray(texts) ? texts : [texts];
-    
+
     switch (this.config.provider) {
       case 'sentence-transformers':
         return this.generateWithSentenceTransformers(textArray);
@@ -93,7 +93,9 @@ export class EmbeddingAdapter {
       case 'mock':
         return this.generateMockEmbeddings(textArray);
       default:
-        throw new Error(`Embedding generation not implemented for provider: ${this.config.provider}`);
+        throw new Error(
+          `Embedding generation not implemented for provider: ${this.config.provider}`,
+        );
     }
   }
 
@@ -103,7 +105,7 @@ export class EmbeddingAdapter {
   async addDocuments(
     texts: string[],
     metadata?: Record<string, any>[],
-    ids?: string[]
+    ids?: string[],
   ): Promise<string[]> {
     const embeddings = await this.generateEmbeddings(texts);
     const documentIds: string[] = [];
@@ -117,7 +119,7 @@ export class EmbeddingAdapter {
         metadata: metadata?.[i],
         timestamp: new Date().toISOString(),
       };
-      
+
       this.vectorStore.set(id, vector);
       documentIds.push(id);
     }
@@ -141,7 +143,7 @@ export class EmbeddingAdapter {
       }
 
       const similarity = this.cosineSimilarity(queryVector, doc.vector);
-      
+
       if (!query.threshold || similarity >= query.threshold) {
         results.push({
           id,
@@ -154,7 +156,7 @@ export class EmbeddingAdapter {
 
     // Sort by similarity (descending) and limit results
     results.sort((a, b) => b.similarity - a.similarity);
-    
+
     if (query.topK) {
       return results.slice(0, query.topK);
     }
@@ -187,7 +189,7 @@ export class EmbeddingAdapter {
   } {
     const totalVectors = this.vectorStore.size;
     const dimensions = this.config.dimensions || 0;
-    const memoryUsage = `${Math.round(totalVectors * dimensions * 4 / 1024 / 1024 * 100) / 100} MB`;
+    const memoryUsage = `${Math.round(((totalVectors * dimensions * 4) / 1024 / 1024) * 100) / 100} MB`;
 
     return {
       totalDocuments: totalVectors,
@@ -226,7 +228,9 @@ print(json.dumps(embeddings))
       const result = await this.executePythonScript(pythonScript, [JSON.stringify(texts)]);
       return JSON.parse(result);
     } catch (error) {
-      throw new Error(`SentenceTransformers embedding failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `SentenceTransformers embedding failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -278,7 +282,9 @@ except Exception as e:
       const result = await this.executePythonScript(pythonScript, [JSON.stringify(texts)]);
       return JSON.parse(result);
     } catch (error) {
-      throw new Error(`Local Qwen embeddings failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Local Qwen embeddings failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -288,22 +294,24 @@ except Exception as e:
    */
   private generateMockEmbeddings(texts: string[]): Promise<number[][]> {
     const dimensions = this.config.dimensions || 1024; // Match Qwen model
-    
-    return Promise.resolve(texts.map(text => {
-      // Create deterministic mock embeddings based on text content
-      const hash = crypto.createHash('md5').update(text).digest('hex');
-      const embedding: number[] = [];
-      
-      for (let i = 0; i < dimensions; i++) {
-        // Use hash to create pseudo-random but deterministic values
-        const byte = parseInt(hash.substring(i % hash.length, (i % hash.length) + 1), 16) || 0;
-        embedding.push((byte / 15) - 0.5); // Normalize to [-0.5, 0.5]
-      }
-      
-      // Normalize the vector
-      const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-      return embedding.map(val => val / magnitude);
-    }));
+
+    return Promise.resolve(
+      texts.map((text) => {
+        // Create deterministic mock embeddings based on text content
+        const hash = crypto.createHash('md5').update(text).digest('hex');
+        const embedding: number[] = [];
+
+        for (let i = 0; i < dimensions; i++) {
+          // Use hash to create pseudo-random but deterministic values
+          const byte = parseInt(hash.substring(i % hash.length, (i % hash.length) + 1), 16) || 0;
+          embedding.push(byte / 15 - 0.5); // Normalize to [-0.5, 0.5]
+        }
+
+        // Normalize the vector
+        const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+        return embedding.map((val) => val / magnitude);
+      }),
+    );
   }
 
   /**
@@ -334,7 +342,10 @@ except Exception as e:
   /**
    * Check if metadata matches filter criteria
    */
-  private matchesFilter(metadata: Record<string, any> | undefined, filter: Record<string, any>): boolean {
+  private matchesFilter(
+    metadata: Record<string, any> | undefined,
+    filter: Record<string, any>,
+  ): boolean {
     if (!metadata) return false;
 
     for (const [key, value] of Object.entries(filter)) {
@@ -410,11 +421,7 @@ export class RerankerAdapter {
   /**
    * Rerank search results based on query relevance
    */
-  async rerank(
-    query: string,
-    documents: string[],
-    topK?: number
-  ): Promise<RerankerResult[]> {
+  async rerank(query: string, documents: string[], topK?: number): Promise<RerankerResult[]> {
     switch (this.config.provider) {
       case 'transformers':
         return this.rerankWithTransformers(query, documents, topK);
@@ -433,26 +440,26 @@ export class RerankerAdapter {
   private async rerankWithMock(
     query: string,
     documents: string[],
-    topK?: number
+    topK?: number,
   ): Promise<RerankerResult[]> {
     const queryLower = query.toLowerCase();
     const results: RerankerResult[] = documents.map((doc, index) => {
       const docLower = doc.toLowerCase();
-      
+
       // Simple scoring based on word overlap and length similarity
       const queryWords = new Set(queryLower.split(/\s+/));
       const docWords = new Set(docLower.split(/\s+/));
-      const intersection = new Set([...queryWords].filter(word => docWords.has(word)));
-      
+      const intersection = new Set([...queryWords].filter((word) => docWords.has(word)));
+
       const overlap = intersection.size;
       const union = new Set([...queryWords, ...docWords]).size;
       const jaccardSimilarity = overlap / union;
-      
+
       // Boost score if query appears as substring
       const substringBoost = docLower.includes(queryLower) ? 0.2 : 0;
-      
+
       const score = jaccardSimilarity + substringBoost;
-      
+
       return {
         text: doc,
         score,
@@ -462,7 +469,7 @@ export class RerankerAdapter {
 
     // Sort by score (descending)
     results.sort((a, b) => b.score - a.score);
-    
+
     return topK ? results.slice(0, topK) : results;
   }
 
@@ -472,7 +479,7 @@ export class RerankerAdapter {
   private async rerankWithTransformers(
     query: string,
     documents: string[],
-    topK?: number
+    topK?: number,
   ): Promise<RerankerResult[]> {
     // Would implement actual reranking model here
     console.warn('Transformers reranking not implemented, falling back to mock');
@@ -485,7 +492,7 @@ export class RerankerAdapter {
   private async rerankWithLocal(
     query: string,
     documents: string[],
-    topK?: number
+    topK?: number,
   ): Promise<RerankerResult[]> {
     // Would implement local reranking here
     console.warn('Local reranking not implemented, falling back to mock');
@@ -496,19 +503,21 @@ export class RerankerAdapter {
 /**
  * Create embedding adapter with common configurations
  */
-export const createEmbeddingAdapter = (provider: EmbeddingConfig['provider'] = 'sentence-transformers'): EmbeddingAdapter => {
+export const createEmbeddingAdapter = (
+  provider: EmbeddingConfig['provider'] = 'sentence-transformers',
+): EmbeddingAdapter => {
   const configs: Record<EmbeddingConfig['provider'], EmbeddingConfig> = {
     'sentence-transformers': {
       provider: 'sentence-transformers',
       model: 'Qwen/Qwen3-Embedding-0.6B', // Use Qwen model by default
       dimensions: 1024,
     },
-    'local': {
+    local: {
       provider: 'local',
       model: 'Qwen/Qwen3-Embedding-0.6B', // Use Qwen model for local
       dimensions: 1024,
     },
-    'mock': {
+    mock: {
       provider: 'mock',
       dimensions: 1024, // Match Qwen dimensions for consistency
     },
@@ -529,17 +538,19 @@ export const AVAILABLE_EMBEDDING_MODELS = {
 /**
  * Create reranker adapter with common configurations
  */
-export const createRerankerAdapter = (provider: RerankerConfig['provider'] = 'mock'): RerankerAdapter => {
+export const createRerankerAdapter = (
+  provider: RerankerConfig['provider'] = 'mock',
+): RerankerAdapter => {
   const configs: Record<RerankerConfig['provider'], RerankerConfig> = {
-    'transformers': {
+    transformers: {
       provider: 'transformers',
       model: 'cross-encoder/ms-marco-MiniLM-L-6-v2',
     },
-    'local': {
+    local: {
       provider: 'local',
       model: 'local-reranker-model',
     },
-    'mock': {
+    mock: {
       provider: 'mock',
     },
   };

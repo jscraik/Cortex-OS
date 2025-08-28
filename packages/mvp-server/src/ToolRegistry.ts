@@ -3,9 +3,11 @@ import { z } from 'zod';
 const ToolSchema = z.object({
   name: z.string(),
   description: z.string(),
-  run: z.function().args(z.any()).returns(z.any()).or(
-    z.function().args(z.any()).returns(z.promise(z.any()))
-  ),
+  run: z
+    .function()
+    .args(z.any())
+    .returns(z.any())
+    .or(z.function().args(z.any()).returns(z.promise(z.any()))),
 });
 
 export type Tool = z.infer<typeof ToolSchema>;

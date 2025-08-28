@@ -14,7 +14,7 @@ console.log('Validating policies against schemas...');
 const schemaMapping = {
   'agents.mandates.json': 'mandates.schema.json',
   'policy.agents.json': 'policy.agents.schema.json',
-  'policy.repo.json': 'policy.repo.schema.json'
+  'policy.repo.json': 'policy.repo.schema.json',
 };
 
 // Validate all policy files
@@ -26,29 +26,29 @@ for (const policyFile of policyFiles) {
   if (policyFile.includes('.backup.')) {
     continue;
   }
-  
+
   try {
     const policy = JSON.parse(readFileSync(policyFile, 'utf8'));
     const filename = policyFile.split('/').pop();
-    
+
     // Get the schema filename, using mapping if needed
     const schemaFilename = schemaMapping[filename] || filename.replace('.json', '.schema.json');
     const schemaPath = join(__dirname, '..', 'schemas', schemaFilename);
-    
+
     // Check if schema exists
     try {
       const schemaData = readFileSync(schemaPath, 'utf8');
       const schema = JSON.parse(schemaData);
-      
+
       // Remove $schema reference to avoid resolution issues
       delete schema.$schema;
-      
+
       // Validate with AJV
       const ajv = new Ajv({ strict: false, validateSchema: false }); // Disable strict mode and schema validation
       addFormats(ajv); // Add format support
       const validate = ajv.compile(schema);
       const isValid = validate(policy);
-      
+
       if (!isValid) {
         console.error(`❌ ${policyFile} validation failed:`);
         console.error(validate.errors);

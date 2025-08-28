@@ -16,7 +16,8 @@ export async function readAll(): Promise<ServerInfo[]> {
 export async function upsert(si: ServerInfo) {
   const all = await readAll();
   const idx = all.findIndex((s) => s.name === si.name);
-  if (idx >= 0) all[idx] = si; else all.push(si);
+  if (idx >= 0) all[idx] = si;
+  else all.push(si);
   await fs.mkdir(dirname(DB), { recursive: true });
   await fs.writeFile(DB, JSON.stringify(all, null, 2));
 }

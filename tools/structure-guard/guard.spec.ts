@@ -9,7 +9,7 @@ describe('protected globs', () => {
     'pnpm-workspace.yaml',
     'tools/structure-guard/**/*',
     'docs/architecture/decisions/*.md',
-    '.github/CODEOWNERS'
+    '.github/CODEOWNERS',
   ];
 
   it('matches exact files', () => {
@@ -36,10 +36,10 @@ describe('protected globs', () => {
 const policySchema = z.object({
   protectedFiles: z.array(z.string()),
   allowedGlobs: z.array(z.string()),
-  deniedGlobs: z.array(z.string()).default([])
+  deniedGlobs: z.array(z.string()).default([]),
 });
 const policy = policySchema.parse(
-  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'))
+  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8')),
 );
 
 describe('path policy', () => {
@@ -58,7 +58,9 @@ describe('path policy', () => {
 
 describe('globby ignores', () => {
   it('skips node_modules and dist', async () => {
-    const files = await globby(['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'], { dot: true });
-    expect(files.some(f => f.includes('node_modules'))).toBe(false);
+    const files = await globby(['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'], {
+      dot: true,
+    });
+    expect(files.some((f) => f.includes('node_modules'))).toBe(false);
   });
 });

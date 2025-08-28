@@ -270,6 +270,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
+
     return this._analyzeWithModel(request, modelId, 'qwen3-coder');
   }
 

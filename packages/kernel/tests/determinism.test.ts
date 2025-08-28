@@ -48,9 +48,9 @@ describe('Cortex Kernel Determinism', () => {
 
       // Verify state transitions follow expected pattern
       expect(history.length).toBeGreaterThan(0);
-      
+
       // Check phase progression
-      const phases = history.map(state => state.phase);
+      const phases = history.map((state) => state.phase);
       expect(phases).toContain('strategy');
     });
   });
@@ -67,28 +67,36 @@ function normalizeForComparison(state: PRPState): any {
       startTime: 'NORMALIZED',
       endTime: 'NORMALIZED',
     },
-    evidence: state.evidence.map(e => ({
+    evidence: state.evidence.map((e) => ({
       ...e,
       id: 'NORMALIZED',
       timestamp: 'NORMALIZED',
     })),
     validationResults: {
-      strategy: state.validationResults.strategy ? {
-        ...state.validationResults.strategy,
-        timestamp: 'NORMALIZED',
-      } : undefined,
-      build: state.validationResults.build ? {
-        ...state.validationResults.build,
-        timestamp: 'NORMALIZED',
-      } : undefined,
-      evaluation: state.validationResults.evaluation ? {
-        ...state.validationResults.evaluation,
-        timestamp: 'NORMALIZED',
-      } : undefined,
+      strategy: state.validationResults.strategy
+        ? {
+            ...state.validationResults.strategy,
+            timestamp: 'NORMALIZED',
+          }
+        : undefined,
+      build: state.validationResults.build
+        ? {
+            ...state.validationResults.build,
+            timestamp: 'NORMALIZED',
+          }
+        : undefined,
+      evaluation: state.validationResults.evaluation
+        ? {
+            ...state.validationResults.evaluation,
+            timestamp: 'NORMALIZED',
+          }
+        : undefined,
     },
-    cerebrum: state.cerebrum ? {
-      ...state.cerebrum,
-      timestamp: 'NORMALIZED',
-    } : undefined,
+    cerebrum: state.cerebrum
+      ? {
+          ...state.cerebrum,
+          timestamp: 'NORMALIZED',
+        }
+      : undefined,
   };
 }

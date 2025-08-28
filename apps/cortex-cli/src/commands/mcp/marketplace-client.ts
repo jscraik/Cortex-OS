@@ -7,13 +7,17 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { z } from 'zod';
-import type { 
-  RegistryIndex, 
-  ServerManifest, 
+import type {
+  RegistryIndex,
+  ServerManifest,
   SearchRequest,
-  ApiResponse 
+  ApiResponse,
 } from '@cortex-os/mcp-marketplace';
-import { RegistryIndexSchema, ServerManifestSchema, SearchRequestSchema } from '@cortex-os/mcp-marketplace';
+import {
+  RegistryIndexSchema,
+  ServerManifestSchema,
+  SearchRequestSchema,
+} from '@cortex-os/mcp-marketplace';
 
 /**
  * Configuration for marketplace client
@@ -22,11 +26,13 @@ export const MarketplaceConfigSchema = z.object({
   registries: z.record(z.string().url()),
   cacheDir: z.string(),
   cacheTtl: z.number().int().min(60000).default(300000), // 5 minutes default
-  security: z.object({
-    requireSignatures: z.boolean().default(true),
-    allowedRiskLevels: z.array(z.enum(['low', 'medium', 'high'])).default(['low', 'medium']),
-    trustedPublishers: z.array(z.string()).default([]),
-  }).default({}),
+  security: z
+    .object({
+      requireSignatures: z.boolean().default(true),
+      allowedRiskLevels: z.array(z.enum(['low', 'medium', 'high'])).default(['low', 'medium']),
+      trustedPublishers: z.array(z.string()).default([]),
+    })
+    .default({}),
 });
 
 export type MarketplaceConfig = z.infer<typeof MarketplaceConfigSchema>;
@@ -95,7 +101,10 @@ export class MarketplaceClient {
         try {
           await this.fetchRegistry(url);
         } catch (error) {
-          console.warn(`Failed to update registry ${name}:`, error instanceof Error ? error.message : error);
+          console.warn(
+            `Failed to update registry ${name}:`,
+            error instanceof Error ? error.message : error,
+          );
         }
       }
     }
@@ -104,25 +113,28 @@ export class MarketplaceClient {
   /**
    * Search servers across all registries
    */
-  async search(request: SearchRequest, registryUrl?: string): Promise<ApiResponse<ServerManifest[]>> {
+  async search(
+    request: SearchRequest,
+    registryUrl?: string,
+  ): Promise<ApiResponse<ServerManifest[]>> {
     try {
       // Validate request
       const validatedRequest = SearchRequestSchema.parse(request);
-      
+
       // Determine which registries to search
-      const registriesToSearch = registryUrl 
+      const registriesToSearch = registryUrl
         ? [registryUrl]
         : Object.values(this.config.registries);
 
       if (registriesToSearch.length === 0) {
         return {
           success: false,
-          error: { code: 'REGISTRY_NOT_LOADED', message: 'No registries available' }
+          error: { code: 'REGISTRY_NOT_LOADED', message: 'No registries available' },
         };
       }
 
       let allServers: ServerManifest[] = [];
-      
+
       // Collect servers from all registries
       for (const url of registriesToSearch) {
         const registry = this.registryCache.get(url);
@@ -134,7 +146,7 @@ export class MarketplaceClient {
       if (allServers.length === 0) {
         return {
           success: false,
-          error: { code: 'REGISTRY_NOT_LOADED', message: 'Registry data not available' }
+          error: { code: 'REGISTRY_NOT_LOADED', message: 'Registry data not available' },
         };
       }
 
@@ -144,32 +156,33 @@ export class MarketplaceClient {
       // Text search
       if (validatedRequest.q) {
         const query = validatedRequest.q.toLowerCase();
-        filteredServers = filteredServers.filter(server =>
-          server.name.toLowerCase().includes(query) ||
-          server.description?.toLowerCase().includes(query) ||
-          server.tags?.some(tag => tag.toLowerCase().includes(query)) ||
-          server.publisher.name.toLowerCase().includes(query)
+        filteredServers = filteredServers.filter(
+          (server) =>
+            server.name.toLowerCase().includes(query) ||
+            server.description?.toLowerCase().includes(query) ||
+            server.tags?.some((tag) => tag.toLowerCase().includes(query)) ||
+            server.publisher.name.toLowerCase().includes(query),
         );
       }
 
       // Category filter
       if (validatedRequest.category) {
-        filteredServers = filteredServers.filter(server => 
-          server.category === validatedRequest.category
+        filteredServers = filteredServers.filter(
+          (server) => server.category === validatedRequest.category,
         );
       }
 
       // Capabilities filter
       if (validatedRequest.capabilities && validatedRequest.capabilities.length > 0) {
-        filteredServers = filteredServers.filter(server =>
-          validatedRequest.capabilities!.every(cap => server.capabilities[cap])
+        filteredServers = filteredServers.filter((server) =>
+          validatedRequest.capabilities!.every((cap) => server.capabilities[cap]),
         );
       }
 
       // Verified publisher filter
       if (validatedRequest.verified !== undefined) {
-        filteredServers = filteredServers.filter(server =>
-          server.publisher.verified === validatedRequest.verified
+        filteredServers = filteredServers.filter(
+          (server) => server.publisher.verified === validatedRequest.verified,
         );
       }
 
@@ -177,16 +190,16 @@ export class MarketplaceClient {
       filteredServers.sort((a, b) => {
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        
+
         // If both are featured or both are not, sort by downloads then rating
         if (b.downloads !== a.downloads) {
           return b.downloads - a.downloads;
         }
-        
+
         if (a.rating && b.rating) {
           return b.rating - a.rating;
         }
-        
+
         return 0;
       });
 
@@ -194,7 +207,7 @@ export class MarketplaceClient {
       const total = filteredServers.length;
       const paginatedServers = filteredServers.slice(
         validatedRequest.offset,
-        validatedRequest.offset + validatedRequest.limit
+        validatedRequest.offset + validatedRequest.limit,
       );
 
       return {
@@ -203,22 +216,21 @@ export class MarketplaceClient {
         meta: {
           total,
           offset: validatedRequest.offset,
-          limit: validatedRequest.limit
-        }
+          limit: validatedRequest.limit,
+        },
       };
-
     } catch (error) {
       if (error instanceof z.ZodError) {
         return {
           success: false,
-          error: { 
-            code: 'INVALID_REQUEST', 
+          error: {
+            code: 'INVALID_REQUEST',
             message: 'Invalid search parameters',
-            details: error.errors 
-          }
+            details: error.errors,
+          },
         };
       }
-      
+
       throw error;
     }
   }
@@ -228,7 +240,7 @@ export class MarketplaceClient {
    */
   async getServer(serverId: string): Promise<ServerManifest | null> {
     for (const registry of this.registryCache.values()) {
-      const server = registry.servers.find(s => s.id === serverId);
+      const server = registry.servers.find((s) => s.id === serverId);
       if (server) {
         return server;
       }
@@ -239,16 +251,19 @@ export class MarketplaceClient {
   /**
    * Add server to local configuration
    */
-  async addServer(serverId: string, options: {
-    transport?: 'stdio' | 'streamableHttp';
-  } = {}): Promise<ApiResponse<{ installed: boolean; serverId: string }>> {
+  async addServer(
+    serverId: string,
+    options: {
+      transport?: 'stdio' | 'streamableHttp';
+    } = {},
+  ): Promise<ApiResponse<{ installed: boolean; serverId: string }>> {
     try {
       // Find server in registry
       const server = await this.getServer(serverId);
       if (!server) {
         return {
           success: false,
-          error: { code: 'SERVER_NOT_FOUND', message: `Server not found in registry: ${serverId}` }
+          error: { code: 'SERVER_NOT_FOUND', message: `Server not found in registry: ${serverId}` },
         };
       }
 
@@ -257,11 +272,11 @@ export class MarketplaceClient {
       if (!securityCheck.allowed) {
         return {
           success: false,
-          error: { 
+          error: {
             code: securityCheck.reason === 'risk' ? 'SECURITY_VIOLATION' : 'SIGNATURE_REQUIRED',
             message: securityCheck.message,
-            details: { riskLevel: server.security.riskLevel, permissions: server.permissions }
-          }
+            details: { riskLevel: server.security.riskLevel, permissions: server.permissions },
+          },
         };
       }
 
@@ -269,18 +284,24 @@ export class MarketplaceClient {
       let selectedTransport: 'stdio' | 'streamableHttp';
       if (options.transport) {
         selectedTransport = options.transport;
-        
+
         // Validate transport is available
         if (selectedTransport === 'stdio' && !server.transport.stdio) {
           return {
             success: false,
-            error: { code: 'TRANSPORT_UNAVAILABLE', message: 'stdio transport not available for this server' }
+            error: {
+              code: 'TRANSPORT_UNAVAILABLE',
+              message: 'stdio transport not available for this server',
+            },
           };
         }
         if (selectedTransport === 'streamableHttp' && !server.transport.streamableHttp) {
           return {
             success: false,
-            error: { code: 'TRANSPORT_UNAVAILABLE', message: 'streamableHttp transport not available for this server' }
+            error: {
+              code: 'TRANSPORT_UNAVAILABLE',
+              message: 'streamableHttp transport not available for this server',
+            },
           };
         }
       } else {
@@ -291,7 +312,7 @@ export class MarketplaceClient {
       // Load existing configuration
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
       let config: any = { mcpServers: {} };
-      
+
       try {
         const configData = await readFile(configPath, 'utf-8');
         config = JSON.parse(configData);
@@ -305,12 +326,12 @@ export class MarketplaceClient {
         config.mcpServers[serverId] = {
           command: server.transport.stdio.command,
           args: server.transport.stdio.args || [],
-          env: server.transport.stdio.env || {}
+          env: server.transport.stdio.env || {},
         };
       } else if (selectedTransport === 'streamableHttp' && server.transport.streamableHttp) {
         config.mcpServers[serverId] = {
           serverUrl: server.transport.streamableHttp.url,
-          headers: server.transport.streamableHttp.headers || {}
+          headers: server.transport.streamableHttp.headers || {},
         };
       }
 
@@ -319,16 +340,15 @@ export class MarketplaceClient {
 
       return {
         success: true,
-        data: { installed: true, serverId }
+        data: { installed: true, serverId },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: { 
-          code: 'INSTALLATION_FAILED', 
-          message: error instanceof Error ? error.message : 'Unknown error' 
-        }
+        error: {
+          code: 'INSTALLATION_FAILED',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -339,7 +359,7 @@ export class MarketplaceClient {
   async removeServer(serverId: string): Promise<ApiResponse<{ removed: boolean }>> {
     try {
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
-      
+
       let config: any;
       try {
         const configData = await readFile(configPath, 'utf-8');
@@ -347,14 +367,14 @@ export class MarketplaceClient {
       } catch (error) {
         return {
           success: false,
-          error: { code: 'NOT_FOUND', message: `Server not installed: ${serverId}` }
+          error: { code: 'NOT_FOUND', message: `Server not installed: ${serverId}` },
         };
       }
 
       if (!config.mcpServers || !config.mcpServers[serverId]) {
         return {
           success: false,
-          error: { code: 'NOT_FOUND', message: `Server not installed: ${serverId}` }
+          error: { code: 'NOT_FOUND', message: `Server not installed: ${serverId}` },
         };
       }
 
@@ -366,16 +386,15 @@ export class MarketplaceClient {
 
       return {
         success: true,
-        data: { removed: true }
+        data: { removed: true },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: { 
-          code: 'REMOVAL_FAILED', 
-          message: error instanceof Error ? error.message : 'Unknown error' 
-        }
+        error: {
+          code: 'REMOVAL_FAILED',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -386,7 +405,7 @@ export class MarketplaceClient {
   async listServers(): Promise<ApiResponse<InstalledServer[]>> {
     try {
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
-      
+
       let config: any;
       try {
         const configData = await readFile(configPath, 'utf-8');
@@ -394,16 +413,16 @@ export class MarketplaceClient {
       } catch (error) {
         return {
           success: true,
-          data: []
+          data: [],
         };
       }
 
       const servers: InstalledServer[] = [];
-      
+
       if (config.mcpServers) {
         for (const [id, serverConfig] of Object.entries(config.mcpServers)) {
           const manifest = await this.getServer(id);
-          
+
           servers.push({
             id,
             name: manifest?.name || id,
@@ -417,16 +436,15 @@ export class MarketplaceClient {
 
       return {
         success: true,
-        data: servers
+        data: servers,
       };
-
     } catch (error) {
       return {
         success: false,
-        error: { 
-          code: 'LIST_FAILED', 
-          message: error instanceof Error ? error.message : 'Unknown error' 
-        }
+        error: {
+          code: 'LIST_FAILED',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -434,7 +452,10 @@ export class MarketplaceClient {
   /**
    * Add custom registry
    */
-  async addRegistry(url: string, options: { name?: string } = {}): Promise<ApiResponse<{ added: boolean; registryUrl: string }>> {
+  async addRegistry(
+    url: string,
+    options: { name?: string } = {},
+  ): Promise<ApiResponse<{ added: boolean; registryUrl: string }>> {
     try {
       // Validate URL
       try {
@@ -442,14 +463,14 @@ export class MarketplaceClient {
       } catch {
         return {
           success: false,
-          error: { code: 'INVALID_URL', message: 'Invalid registry URL' }
+          error: { code: 'INVALID_URL', message: 'Invalid registry URL' },
         };
       }
 
       if (!url.startsWith('https://')) {
         return {
           success: false,
-          error: { code: 'INSECURE_URL', message: 'Registry URL must use HTTPS' }
+          error: { code: 'INSECURE_URL', message: 'Registry URL must use HTTPS' },
         };
       }
 
@@ -459,10 +480,10 @@ export class MarketplaceClient {
       } catch (error) {
         return {
           success: false,
-          error: { 
-            code: 'REGISTRY_UNREACHABLE', 
-            message: `Cannot connect to registry: ${error instanceof Error ? error.message : 'Unknown error'}` 
-          }
+          error: {
+            code: 'REGISTRY_UNREACHABLE',
+            message: `Cannot connect to registry: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
         };
       }
 
@@ -472,16 +493,15 @@ export class MarketplaceClient {
 
       return {
         success: true,
-        data: { added: true, registryUrl: url }
+        data: { added: true, registryUrl: url },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: { 
-          code: 'ADD_REGISTRY_FAILED', 
-          message: error instanceof Error ? error.message : 'Unknown error' 
-        }
+        error: {
+          code: 'ADD_REGISTRY_FAILED',
+          message: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -490,14 +510,14 @@ export class MarketplaceClient {
    * Remove registry
    */
   async removeRegistry(nameOrUrl: string): Promise<ApiResponse<{ removed: boolean }>> {
-    const registryToRemove = Object.entries(this.config.registries).find(([name, url]) => 
-      name === nameOrUrl || url === nameOrUrl
+    const registryToRemove = Object.entries(this.config.registries).find(
+      ([name, url]) => name === nameOrUrl || url === nameOrUrl,
     );
 
     if (!registryToRemove) {
       return {
         success: false,
-        error: { code: 'NOT_FOUND', message: `Registry not found: ${nameOrUrl}` }
+        error: { code: 'NOT_FOUND', message: `Registry not found: ${nameOrUrl}` },
       };
     }
 
@@ -508,7 +528,7 @@ export class MarketplaceClient {
 
     return {
       success: true,
-      data: { removed: true }
+      data: { removed: true },
     };
   }
 
@@ -524,44 +544,47 @@ export class MarketplaceClient {
         url,
         trusted: name === 'default', // TODO: Implement proper trust system
         healthy: this.registryCache.has(url),
-        lastChecked: this.cacheTimes.has(url) ? new Date(this.cacheTimes.get(url)!).toISOString() : undefined
+        lastChecked: this.cacheTimes.has(url)
+          ? new Date(this.cacheTimes.get(url)!).toISOString()
+          : undefined,
       });
     }
 
     return {
       success: true,
-      data: registries
+      data: registries,
     };
   }
 
   /**
    * Check registry health
    */
-  async healthCheck(registryUrl: string): Promise<ApiResponse<{ 
-    healthy: boolean; 
-    serverCount?: number; 
-    lastUpdated?: string; 
-    error?: string; 
-  }>> {
+  async healthCheck(registryUrl: string): Promise<
+    ApiResponse<{
+      healthy: boolean;
+      serverCount?: number;
+      lastUpdated?: string;
+      error?: string;
+    }>
+  > {
     try {
       const registry = await this.fetchRegistry(registryUrl);
-      
+
       return {
         success: true,
         data: {
           healthy: true,
           serverCount: registry.serverCount,
-          lastUpdated: registry.updatedAt
-        }
+          lastUpdated: registry.updatedAt,
+        },
       };
-
     } catch (error) {
       return {
         success: true, // Health check itself succeeds, but registry is unhealthy
         data: {
           healthy: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -571,21 +594,21 @@ export class MarketplaceClient {
    */
   private async fetchRegistry(url: string): Promise<RegistryIndex> {
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
     const registry = RegistryIndexSchema.parse(data);
-    
+
     // Cache the registry
     this.registryCache.set(url, registry);
     this.cacheTimes.set(url, Date.now());
-    
+
     // Save to disk cache
     await this.saveCacheEntry(url, registry);
-    
+
     return registry;
   }
 
@@ -596,7 +619,7 @@ export class MarketplaceClient {
         if (existsSync(cacheFile)) {
           const cacheData = await readFile(cacheFile, 'utf-8');
           const cacheEntry = CacheEntrySchema.parse(JSON.parse(cacheData));
-          
+
           this.registryCache.set(url, cacheEntry.data);
           this.cacheTimes.set(url, cacheEntry.cachedAt);
         }
@@ -612,9 +635,9 @@ export class MarketplaceClient {
       const cacheEntry: CacheEntry = {
         data: registry,
         cachedAt: Date.now(),
-        registryUrl: url
+        registryUrl: url,
       };
-      
+
       const cacheFile = this.getCacheFilePath(url);
       await writeFile(cacheFile, JSON.stringify(cacheEntry, null, 2));
     } catch (error) {
@@ -631,21 +654,21 @@ export class MarketplaceClient {
   private isCacheStale(url: string): boolean {
     const cacheTime = this.cacheTimes.get(url);
     if (!cacheTime) return true;
-    
+
     return Date.now() - cacheTime > this.config.cacheTtl;
   }
 
-  private validateServerSecurity(server: ServerManifest): { 
-    allowed: boolean; 
-    reason?: 'risk' | 'signature' | 'publisher'; 
-    message: string; 
+  private validateServerSecurity(server: ServerManifest): {
+    allowed: boolean;
+    reason?: 'risk' | 'signature' | 'publisher';
+    message: string;
   } {
     // Check risk level
     if (!this.config.security.allowedRiskLevels.includes(server.security.riskLevel)) {
       return {
         allowed: false,
         reason: 'risk',
-        message: `Risk level not allowed: ${server.security.riskLevel}. Allowed levels: ${this.config.security.allowedRiskLevels.join(', ')}`
+        message: `Risk level not allowed: ${server.security.riskLevel}. Allowed levels: ${this.config.security.allowedRiskLevels.join(', ')}`,
       };
     }
 
@@ -654,17 +677,19 @@ export class MarketplaceClient {
       return {
         allowed: false,
         reason: 'signature',
-        message: 'Server signature required but not provided'
+        message: 'Server signature required but not provided',
       };
     }
 
     // Check trusted publishers (if configured)
-    if (this.config.security.trustedPublishers.length > 0 && 
-        !this.config.security.trustedPublishers.includes(server.publisher.name)) {
+    if (
+      this.config.security.trustedPublishers.length > 0 &&
+      !this.config.security.trustedPublishers.includes(server.publisher.name)
+    ) {
       return {
         allowed: false,
         reason: 'publisher',
-        message: `Publisher not in trusted list: ${server.publisher.name}`
+        message: `Publisher not in trusted list: ${server.publisher.name}`,
       };
     }
 

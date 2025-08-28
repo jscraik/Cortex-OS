@@ -52,15 +52,15 @@ export class McpMarketplaceCommand {
     // Initialize with default configuration
     const defaultConfig: MarketplaceConfig = {
       registries: {
-        default: 'https://registry.cortex-os.dev/v1/registry.json'
+        default: 'https://registry.cortex-os.dev/v1/registry.json',
       },
       cacheDir: path.join(os.homedir(), '.cortex', 'mcp', 'cache'),
       cacheTtl: 300000, // 5 minutes
       security: {
         requireSignatures: false, // Relaxed for development
         allowedRiskLevels: ['low', 'medium', 'high'],
-        trustedPublishers: []
-      }
+        trustedPublishers: [],
+      },
     };
 
     this.client = new MarketplaceClient(defaultConfig);
@@ -85,7 +85,7 @@ export class McpMarketplaceCommand {
       category: options.category,
       verified: options.verified,
       limit: options.limit || 20,
-      offset: options.offset || 0
+      offset: options.offset || 0,
     };
 
     const result = await this.client.search(searchRequest);
@@ -100,7 +100,7 @@ export class McpMarketplaceCommand {
     }
 
     const servers = result.data!;
-    
+
     if (servers.length === 0) {
       console.log(chalk.yellow('No servers found matching your criteria.'));
       console.log(chalk.gray('Try broadening your search or check different categories.'));
@@ -108,7 +108,9 @@ export class McpMarketplaceCommand {
     }
 
     // Display header
-    console.log(chalk.bold(`\n🔍 Found ${result.meta!.total} server${result.meta!.total === 1 ? '' : 's'}\n`));
+    console.log(
+      chalk.bold(`\n🔍 Found ${result.meta!.total} server${result.meta!.total === 1 ? '' : 's'}\n`),
+    );
 
     // Display servers
     for (const server of servers) {
@@ -117,11 +119,15 @@ export class McpMarketplaceCommand {
 
     // Display pagination info
     if (result.meta!.total > result.meta!.limit) {
-      const hasMore = (result.meta!.offset + result.meta!.limit) < result.meta!.total;
+      const hasMore = result.meta!.offset + result.meta!.limit < result.meta!.total;
       const showing = Math.min(result.meta!.offset + result.meta!.limit, result.meta!.total);
-      
-      console.log(chalk.gray(`\nShowing ${result.meta!.offset + 1}-${showing} of ${result.meta!.total} results`));
-      
+
+      console.log(
+        chalk.gray(
+          `\nShowing ${result.meta!.offset + 1}-${showing} of ${result.meta!.total} results`,
+        ),
+      );
+
       if (hasMore) {
         console.log(chalk.gray('Use --offset and --limit options to see more results.'));
       }
@@ -144,7 +150,7 @@ export class McpMarketplaceCommand {
     await this.ensureInitialized();
 
     const server = await this.client.getServer(serverId);
-    
+
     if (!server) {
       throw new Error(`Server not found: ${serverId}`);
     }
@@ -169,7 +175,7 @@ export class McpMarketplaceCommand {
     await this.ensureInitialized();
 
     const result = await this.client.addServer(serverId, {
-      transport: options.transport
+      transport: options.transport,
     });
 
     if (!result.success) {
@@ -177,7 +183,7 @@ export class McpMarketplaceCommand {
     }
 
     console.log(chalk.green(`✅ Successfully added server: ${serverId}`));
-    
+
     // Show next steps
     const server = await this.client.getServer(serverId);
     if (server && options.client) {
@@ -227,14 +233,16 @@ export class McpMarketplaceCommand {
     console.log(chalk.bold(`\n📦 Installed MCP Servers (${servers.length})\n`));
 
     for (const server of servers) {
-      const statusIcon = server.status === 'active' ? '🟢' : 
-                        server.status === 'inactive' ? '🟡' : '🔴';
+      const statusIcon =
+        server.status === 'active' ? '🟢' : server.status === 'inactive' ? '🟡' : '🔴';
       const sourceIcon = server.source === 'marketplace' ? '🏪' : '⚙️';
-      
+
       console.log(`${statusIcon} ${sourceIcon} ${chalk.bold(server.name || server.id)}`);
       console.log(`   ID: ${chalk.dim(server.id)}`);
       console.log(`   Transport: ${chalk.cyan(server.transport)}`);
-      console.log(`   Status: ${chalk[server.status === 'active' ? 'green' : 'yellow'](server.status)}`);
+      console.log(
+        `   Status: ${chalk[server.status === 'active' ? 'green' : 'yellow'](server.status)}`,
+      );
       console.log();
     }
   }
@@ -258,12 +266,14 @@ export class McpMarketplaceCommand {
       for (const registry of registries) {
         const trustIcon = registry.trusted ? '✓' : '!';
         const healthIcon = registry.healthy ? '🟢' : '🔴';
-        
+
         console.log(`${healthIcon} ${trustIcon} ${chalk.bold(registry.name)}`);
         console.log(`   URL: ${chalk.cyan(registry.url)}`);
         console.log(`   Trusted: ${registry.trusted ? chalk.green('Yes') : chalk.yellow('No')}`);
         if (registry.lastChecked) {
-          console.log(`   Last checked: ${chalk.dim(new Date(registry.lastChecked).toLocaleString())}`);
+          console.log(
+            `   Last checked: ${chalk.dim(new Date(registry.lastChecked).toLocaleString())}`,
+          );
         }
         console.log();
       }
@@ -307,7 +317,7 @@ export class McpMarketplaceCommand {
     // Add registry
     if (options.add) {
       const result = await this.client.addRegistry(registryUrl, {
-        name: options.name
+        name: options.name,
       });
 
       if (!result.success) {
@@ -321,7 +331,7 @@ export class McpMarketplaceCommand {
     // Remove registry
     if (options.remove) {
       const result = await this.client.removeRegistry(registryUrl);
-      
+
       if (!result.success) {
         throw new Error(result.error!.message);
       }
@@ -341,22 +351,31 @@ export class McpMarketplaceCommand {
 
   private displayServerSummary(server: ServerManifest): void {
     // Risk level indicator
-    const riskIcon = server.security.riskLevel === 'low' ? '🟢' : 
-                    server.security.riskLevel === 'medium' ? '🟡' : '🔴';
-    
+    const riskIcon =
+      server.security.riskLevel === 'low'
+        ? '🟢'
+        : server.security.riskLevel === 'medium'
+          ? '🟡'
+          : '🔴';
+
     // Featured indicator
     const featuredIcon = server.featured ? '⭐' : '';
-    
+
     // Verification indicator
     const verifiedIcon = server.publisher.verified ? '✓' : '';
 
-    console.log(`${riskIcon} ${featuredIcon} ${chalk.bold(server.name)} ${verifiedIcon && chalk.green(verifiedIcon)}`);
-    console.log(`   ${chalk.dim(server.id)} • ${chalk.cyan(server.category)} • ${server.publisher.name}`);
-    
+    console.log(
+      `${riskIcon} ${featuredIcon} ${chalk.bold(server.name)} ${verifiedIcon && chalk.green(verifiedIcon)}`,
+    );
+    console.log(
+      `   ${chalk.dim(server.id)} • ${chalk.cyan(server.category)} • ${server.publisher.name}`,
+    );
+
     if (server.description) {
-      const truncatedDesc = server.description.length > 80 
-        ? server.description.substring(0, 77) + '...'
-        : server.description;
+      const truncatedDesc =
+        server.description.length > 80
+          ? server.description.substring(0, 77) + '...'
+          : server.description;
       console.log(`   ${chalk.gray(truncatedDesc)}`);
     }
 
@@ -365,9 +384,9 @@ export class McpMarketplaceCommand {
     if (server.capabilities.tools) capabilities.push('Tools');
     if (server.capabilities.resources) capabilities.push('Resources');
     if (server.capabilities.prompts) capabilities.push('Prompts');
-    
+
     console.log(`   Capabilities: ${chalk.blue(capabilities.join(', ') || 'None')}`);
-    
+
     // Downloads and rating
     const stats = [];
     stats.push(`${server.downloads} downloads`);
@@ -380,22 +399,24 @@ export class McpMarketplaceCommand {
 
   private displayServerDetails(server: ServerManifest, preferredClient?: ClientType): void {
     console.log(chalk.bold(`\n📦 ${server.name}\n`));
-    
+
     // Basic info
     console.log(`${chalk.bold('ID:')} ${server.id}`);
     console.log(`${chalk.bold('Category:')} ${chalk.cyan(server.category)}`);
-    console.log(`${chalk.bold('Publisher:')} ${server.publisher.name} ${server.publisher.verified ? chalk.green('✓ Verified Publisher') : ''}`);
-    
+    console.log(
+      `${chalk.bold('Publisher:')} ${server.publisher.name} ${server.publisher.verified ? chalk.green('✓ Verified Publisher') : ''}`,
+    );
+
     if (server.version) {
       console.log(`${chalk.bold('Version:')} ${server.version}`);
     }
-    
+
     if (server.license) {
       console.log(`${chalk.bold('License:')} ${server.license}`);
     }
-    
+
     console.log();
-    
+
     // Description
     if (server.description) {
       console.log(`${chalk.bold('Description:')}`);
@@ -407,14 +428,20 @@ export class McpMarketplaceCommand {
     if (server.capabilities.tools) capabilities.push(chalk.green('Tools'));
     if (server.capabilities.resources) capabilities.push(chalk.blue('Resources'));
     if (server.capabilities.prompts) capabilities.push(chalk.magenta('Prompts'));
-    
+
     console.log(`${chalk.bold('Capabilities:')} ${capabilities.join(', ')}`);
-    
+
     // Risk and security
-    const riskColor = server.security.riskLevel === 'low' ? 'green' : 
-                     server.security.riskLevel === 'medium' ? 'yellow' : 'red';
-    console.log(`${chalk.bold('Risk Level:')} ${chalk[riskColor](server.security.riskLevel.toUpperCase())}`);
-    
+    const riskColor =
+      server.security.riskLevel === 'low'
+        ? 'green'
+        : server.security.riskLevel === 'medium'
+          ? 'yellow'
+          : 'red';
+    console.log(
+      `${chalk.bold('Risk Level:')} ${chalk[riskColor](server.security.riskLevel.toUpperCase())}`,
+    );
+
     // Stats
     if (server.rating) {
       console.log(`${chalk.bold('Rating:')} ${server.rating}/5 ⭐`);
@@ -426,9 +453,13 @@ export class McpMarketplaceCommand {
     if (server.permissions.length > 0) {
       console.log(`${chalk.bold('Permissions Required:')}`);
       for (const permission of server.permissions) {
-        const isHighRisk = ['system:exec', 'network:admin', 'files:write-system'].includes(permission);
+        const isHighRisk = ['system:exec', 'network:admin', 'files:write-system'].includes(
+          permission,
+        );
         const color = isHighRisk ? 'red' : 'gray';
-        console.log(`  • ${chalk[color](permission)} ${isHighRisk ? chalk.red('⚠️  High Risk') : ''}`);
+        console.log(
+          `  • ${chalk[color](permission)} ${isHighRisk ? chalk.red('⚠️  High Risk') : ''}`,
+        );
       }
       console.log();
     }
@@ -436,20 +467,21 @@ export class McpMarketplaceCommand {
     // Installation commands
     console.log(`${chalk.bold('📋 Installation Commands:')}`);
     const commands = this.installGenerator.generateCommands(server);
-    
+
     if (preferredClient) {
-      const preferredCommand = commands.find(cmd => cmd.client === preferredClient);
+      const preferredCommand = commands.find((cmd) => cmd.client === preferredClient);
       if (preferredCommand) {
         console.log(`\n${chalk.cyan(preferredCommand.description)}:`);
         console.log(`${chalk.blue(preferredCommand.command)}\n`);
       }
     } else {
       // Show all available commands
-      for (const command of commands.slice(0, 3)) { // Limit to top 3
+      for (const command of commands.slice(0, 3)) {
+        // Limit to top 3
         console.log(`\n${chalk.cyan(command.description)}:`);
         console.log(`${chalk.blue(command.command)}`);
       }
-      
+
       if (commands.length > 3) {
         console.log(chalk.gray(`\n... and ${commands.length - 3} more installation options`));
       }

@@ -4,6 +4,6 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   plugins: ['@typescript-eslint', 'import'],
   rules: {
-    'import/no-unresolved': 'off'
-  }
-}
+    'import/no-unresolved': 'off',
+  },
+};

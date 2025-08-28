@@ -4,7 +4,13 @@
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { ServerManifestSchema, RegistryIndexSchema, type ValidationResult, type ValidationError, type ValidationWarning } from './types.js';
+import {
+  ServerManifestSchema,
+  RegistryIndexSchema,
+  type ValidationResult,
+  type ValidationError,
+  type ValidationWarning,
+} from './types.js';
 import registrySchema from '../schemas/registry.schema.json' assert { type: 'json' };
 import serverManifestSchema from '../schemas/server-manifest.schema.json' assert { type: 'json' };
 
@@ -17,9 +23,9 @@ export class McpValidator {
       verbose: true,
       strict: false,
     });
-    
+
     addFormats(this.ajv);
-    
+
     // Add custom formats
     this.ajv.addFormat('uri', {
       type: 'string',
@@ -85,7 +91,7 @@ export class McpValidator {
     // Additional business logic validation
     if (typeof manifest === 'object' && manifest !== null) {
       const m = manifest as any;
-      
+
       // Check for common issues and provide warnings
       if (m.oauth?.authType === 'oauth2' && (!m.oauth.scopes || m.oauth.scopes.length === 0)) {
         warnings.push({
@@ -129,7 +135,10 @@ export class McpValidator {
           });
         }
 
-        if (m.transports.streamableHttp && !m.transports.streamableHttp.url.startsWith('https://')) {
+        if (
+          m.transports.streamableHttp &&
+          !m.transports.streamableHttp.url.startsWith('https://')
+        ) {
           errors.push({
             path: 'transports.streamableHttp.url',
             message: 'Streamable HTTP transport must use HTTPS',
@@ -193,7 +202,7 @@ export class McpValidator {
     // Additional registry validation
     if (typeof registry === 'object' && registry !== null) {
       const r = registry as any;
-      
+
       if (r.servers) {
         // Check for duplicate IDs
         const ids = new Set();
@@ -279,7 +288,7 @@ export class McpValidator {
 
     // Require HTTPS for all remote transports
     if (m.transports) {
-      ['sse', 'streamableHttp'].forEach(transport => {
+      ['sse', 'streamableHttp'].forEach((transport) => {
         if (m.transports[transport]?.url && !m.transports[transport].url.startsWith('https://')) {
           errors.push({
             path: `transports.${transport}.url`,
@@ -331,6 +340,7 @@ export const validator = new McpValidator();
 /**
  * Convenience functions
  */
-export const validateServerManifest = (manifest: unknown) => validator.validateServerManifest(manifest);
+export const validateServerManifest = (manifest: unknown) =>
+  validator.validateServerManifest(manifest);
 export const validateRegistry = (registry: unknown) => validator.validateRegistry(registry);
 export const validateSecurity = (manifest: unknown) => validator.validateSecurity(manifest);

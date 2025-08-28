@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Express } from 'express';
 import type { Server } from 'http';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createService } from '../src/service';
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 
 let app: Express;
 let server: Server;
@@ -48,8 +48,7 @@ describe('Schema Registry Service', () => {
       type: 'test-event',
       source: 'http://example.com/test',
       data: { foo: 'bar' },
-      schemaName: 'test-schema',
-      schemaVersion: '1.0.0',
+      dataschema: 'http://example.com/schemas/test-schema/1.0.0',
     });
 
     expect(envelope.dataschema).toBe('http://example.com/schemas/test-schema/1.0.0');

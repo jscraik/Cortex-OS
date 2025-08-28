@@ -8,7 +8,7 @@ import { mockAgent, mockTask, mockCodeAnalysisRequest } from '@tests/fixtures/ag
 const AgentSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  capabilities: z.array(z.string())
+  capabilities: z.array(z.string()),
 });
 
 const TaskSchema = z.object({
@@ -17,54 +17,60 @@ const TaskSchema = z.object({
   input: z.unknown(),
   budget: z.object({
     wallClockMs: z.number().positive(),
-    maxSteps: z.number().positive()
-  })
+    maxSteps: z.number().positive(),
+  }),
 });
 
 const ExecutorResultSchema = z.object({
   status: z.enum(['completed', 'failed', 'timeout']),
   result: z.unknown(),
-  agent: z.string()
+  agent: z.string(),
 });
 
 const CodeAnalysisResultSchema = z.object({
-  suggestions: z.array(z.object({
-    type: z.enum(['improvement', 'refactor', 'bug_fix', 'optimization']),
-    line: z.number().optional(),
-    description: z.string(),
-    code: z.string().optional(),
-    rationale: z.string(),
-    priority: z.enum(['low', 'medium', 'high', 'critical'])
-  })),
+  suggestions: z.array(
+    z.object({
+      type: z.enum(['improvement', 'refactor', 'bug_fix', 'optimization']),
+      line: z.number().optional(),
+      description: z.string(),
+      code: z.string().optional(),
+      rationale: z.string(),
+      priority: z.enum(['low', 'medium', 'high', 'critical']),
+    }),
+  ),
   complexity: z.object({
     cyclomatic: z.number(),
     cognitive: z.number(),
     maintainability: z.enum(['low', 'medium', 'high']),
-    hotspots: z.array(z.string())
+    hotspots: z.array(z.string()),
   }),
   security: z.object({
-    vulnerabilities: z.array(z.object({
-      type: z.string(),
-      severity: z.enum(['info', 'warning', 'error', 'critical']),
-      line: z.number().optional(),
-      description: z.string(),
-      mitigation: z.string()
-    })),
+    vulnerabilities: z.array(
+      z.object({
+        type: z.string(),
+        severity: z.enum(['info', 'warning', 'error', 'critical']),
+        line: z.number().optional(),
+        description: z.string(),
+        mitigation: z.string(),
+      }),
+    ),
     riskLevel: z.enum(['low', 'medium', 'high', 'critical']),
-    recommendations: z.array(z.string())
+    recommendations: z.array(z.string()),
   }),
   performance: z.object({
-    bottlenecks: z.array(z.object({
-      location: z.string(),
-      impact: z.enum(['low', 'medium', 'high']),
-      suggestion: z.string()
-    })),
+    bottlenecks: z.array(
+      z.object({
+        location: z.string(),
+        impact: z.enum(['low', 'medium', 'high']),
+        suggestion: z.string(),
+      }),
+    ),
     memoryUsage: z.enum(['efficient', 'moderate', 'high', 'excessive']),
-    optimizations: z.array(z.string())
+    optimizations: z.array(z.string()),
   }),
   confidence: z.number().min(0).max(1),
   modelUsed: z.string(),
-  processingTime: z.number().nonnegative()
+  processingTime: z.number().nonnegative(),
 });
 
 // Mock data for contract testing
@@ -73,8 +79,8 @@ const mockAgents = {
   codeIntelligence: {
     id: 'code-intel-001',
     name: 'Code Intelligence Agent',
-    capabilities: ['analyze', 'review', 'optimize', 'security-scan']
-  }
+    capabilities: ['analyze', 'review', 'optimize', 'security-scan'],
+  },
 };
 
 const mockTasks = {
@@ -83,14 +89,14 @@ const mockTasks = {
     id: 'analysis-task-001',
     kind: 'code-analysis',
     input: mockCodeAnalysisRequest,
-    budget: { wallClockMs: 10000, maxSteps: 5 }
-  }
+    budget: { wallClockMs: 10000, maxSteps: 5 },
+  },
 };
 
 describe('Agent Interface Contracts', () => {
   describe('Agent Contract', () => {
     it('should conform to Agent interface schema', () => {
-      Object.values(mockAgents).forEach(agent => {
+      Object.values(mockAgents).forEach((agent) => {
         const result = AgentSchema.safeParse(agent);
         expect(result.success).toBe(true);
         if (!result.success) {
@@ -107,12 +113,12 @@ describe('Agent Interface Contracts', () => {
 
     it('should support agent capability discovery', () => {
       const agent = mockAgents.codeIntelligence;
-      
+
       expect(agent.capabilities).toContain('analyze');
       expect(agent.capabilities).toContain('review');
       expect(agent.capabilities.length).toBeGreaterThan(0);
-      
-      agent.capabilities.forEach(capability => {
+
+      agent.capabilities.forEach((capability) => {
         expect(typeof capability).toBe('string');
         expect(capability.length).toBeGreaterThan(0);
       });
@@ -120,16 +126,16 @@ describe('Agent Interface Contracts', () => {
 
     it('should enforce agent ID uniqueness constraints', () => {
       const agents = Object.values(mockAgents);
-      const ids = agents.map(agent => agent.id);
+      const ids = agents.map((agent) => agent.id);
       const uniqueIds = new Set(ids);
-      
+
       expect(uniqueIds.size).toBe(ids.length);
     });
   });
 
   describe('Task Contract', () => {
     it('should conform to Task interface schema', () => {
-      Object.values(mockTasks).forEach(task => {
+      Object.values(mockTasks).forEach((task) => {
         const result = TaskSchema.safeParse(task);
         expect(result.success).toBe(true);
         if (!result.success) {
@@ -140,7 +146,7 @@ describe('Agent Interface Contracts', () => {
 
     it('should enforce budget constraints', () => {
       const task = mockTasks.simple;
-      
+
       expect(task.budget.wallClockMs).toBeGreaterThan(0);
       expect(task.budget.maxSteps).toBeGreaterThan(0);
       expect(typeof task.budget.wallClockMs).toBe('number');
@@ -155,17 +161,17 @@ describe('Agent Interface Contracts', () => {
         123,
         null,
         undefined,
-        true
+        true,
       ];
 
-      testInputs.forEach(input => {
+      testInputs.forEach((input) => {
         const task = {
           id: 'test-task',
           kind: 'test',
           input,
-          budget: { wallClockMs: 1000, maxSteps: 1 }
+          budget: { wallClockMs: 1000, maxSteps: 1 },
         };
-        
+
         const result = TaskSchema.safeParse(task);
         expect(result.success).toBe(true);
       });
@@ -182,16 +188,16 @@ describe('Agent Interface Contracts', () => {
     it('should accept valid agent and task parameters', async () => {
       const agent = mockAgents.basic;
       const task = mockTasks.simple;
-      
+
       const result = await executor.run(agent, task);
-      
+
       const validationResult = ExecutorResultSchema.safeParse(result);
       expect(validationResult.success).toBe(true);
     });
 
     it('should return structured result format', async () => {
       const result = await executor.run(mockAgents.basic, mockTasks.simple);
-      
+
       expect(result).toHaveProperty('status');
       expect(result).toHaveProperty('result');
       expect(result).toHaveProperty('agent');
@@ -200,8 +206,13 @@ describe('Agent Interface Contracts', () => {
 
     it('should handle contract violations gracefully', async () => {
       const invalidAgent = { id: '', name: '', capabilities: [] } as Agent;
-      const invalidTask = { id: '', kind: '', input: null, budget: { wallClockMs: 0, maxSteps: 0 } };
-      
+      const invalidTask = {
+        id: '',
+        kind: '',
+        input: null,
+        budget: { wallClockMs: 0, maxSteps: 0 },
+      };
+
       // Should not throw, but handle gracefully
       expect(async () => {
         await executor.run(invalidAgent, invalidTask);
@@ -217,23 +228,26 @@ describe('Agent Interface Contracts', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: vi.fn().mockResolvedValue({ response: 'Mock analysis response' })
+        json: vi.fn().mockResolvedValue({ response: 'Mock analysis response' }),
       });
     });
 
     it('should conform to CodeAnalysisResult schema', async () => {
       const result = await agent.analyzeCode(mockCodeAnalysisRequest);
-      
+
       const validationResult = CodeAnalysisResultSchema.safeParse(result);
       expect(validationResult.success).toBe(true);
       if (!validationResult.success) {
-        console.error('CodeAnalysisResult schema validation failed:', validationResult.error.issues);
+        console.error(
+          'CodeAnalysisResult schema validation failed:',
+          validationResult.error.issues,
+        );
       }
     });
 
     it('should maintain confidence score contract', async () => {
       const result = await agent.analyzeCode(mockCodeAnalysisRequest);
-      
+
       expect(result.confidence).toBeGreaterThanOrEqual(0);
       expect(result.confidence).toBeLessThanOrEqual(1);
       expect(typeof result.confidence).toBe('number');
@@ -241,7 +255,7 @@ describe('Agent Interface Contracts', () => {
 
     it('should provide required analysis sections', async () => {
       const result = await agent.analyzeCode(mockCodeAnalysisRequest);
-      
+
       expect(result).toHaveProperty('suggestions');
       expect(result).toHaveProperty('complexity');
       expect(result).toHaveProperty('security');
@@ -251,7 +265,7 @@ describe('Agent Interface Contracts', () => {
 
     it('should maintain processing metadata contract', async () => {
       const result = await agent.analyzeCode(mockCodeAnalysisRequest);
-      
+
       expect(result).toHaveProperty('modelUsed');
       expect(result).toHaveProperty('processingTime');
       expect(typeof result.modelUsed).toBe('string');
@@ -261,8 +275,8 @@ describe('Agent Interface Contracts', () => {
 
     it('should validate security vulnerability structure', async () => {
       const result = await agent.analyzeCode(mockCodeAnalysisRequest);
-      
-      result.security.vulnerabilities.forEach(vuln => {
+
+      result.security.vulnerabilities.forEach((vuln) => {
         expect(vuln).toHaveProperty('type');
         expect(vuln).toHaveProperty('severity');
         expect(vuln).toHaveProperty('description');
@@ -277,35 +291,35 @@ describe('Agent Interface Contracts', () => {
       const basicExecutor = new BasicExecutor();
       const agent = mockAgents.basic;
       const task = mockTasks.simple;
-      
+
       const result1 = await basicExecutor.run(agent, task);
       const result2 = await basicExecutor.run(agent, task);
-      
+
       // Results should have consistent structure
       expect(result1).toMatchObject({
         status: expect.any(String),
         result: expect.anything(),
-        agent: expect.any(String)
+        agent: expect.any(String),
       });
-      
+
       expect(result2).toMatchObject({
         status: expect.any(String),
-        result: expect.anything(),  
-        agent: expect.any(String)
+        result: expect.anything(),
+        agent: expect.any(String),
       });
     });
 
     it('should support contract evolution', async () => {
       const executor = new BasicExecutor();
       const agent = mockAgents.basic;
-      
+
       // Should handle both old and new task formats
       const oldTask = mockTasks.simple;
       const newTask = { ...mockTasks.simple, metadata: { version: '2.0' } };
-      
+
       const result1 = await executor.run(agent, oldTask);
       const result2 = await executor.run(agent, newTask as any);
-      
+
       expect(result1.status).toBeDefined();
       expect(result2.status).toBeDefined();
     });
@@ -314,9 +328,9 @@ describe('Agent Interface Contracts', () => {
       const executor = new BasicExecutor();
       const agent = mockAgents.basic;
       const task = mockTasks.simple;
-      
+
       const result = await executor.run(agent, task);
-      
+
       // Core contract properties must always be present
       expect(result.status).toBeDefined();
       expect(result.result).toBeDefined();
@@ -328,16 +342,16 @@ describe('Agent Interface Contracts', () => {
     it('should handle contract violations gracefully', async () => {
       const executor = new BasicExecutor();
       const malformedTask = mockTasks.simple;
-      
+
       // Should not throw on contract violations
       await expect(executor.run(mockAgents.basic, malformedTask)).resolves.toBeDefined();
     });
 
     it('should maintain contract under error conditions', async () => {
       const agent = new CodeIntelligenceAgent();
-      
+
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
-      
+
       await expect(agent.analyzeCode(mockCodeAnalysisRequest)).rejects.toThrow();
       // Error should be thrown, but in a predictable way that maintains contract
     });

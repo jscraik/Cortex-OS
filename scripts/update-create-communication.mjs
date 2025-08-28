@@ -7,11 +7,20 @@ import { join } from 'path';
 
 console.log('Updating createCommunication method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Update the createCommunication method
-const createCommunicationPattern = /async createCommunication\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("createCommunication"\)\!\.run\(data\);\s*}/s;
+const createCommunicationPattern =
+  /async createCommunication\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("createCommunication"\)\!\.run\(data\);\s*}/s;
 const createCommunicationReplacement = `async createCommunication(data: any): Promise<void> {
     // Validate input data
     if (!data || typeof data !== 'object') {

@@ -27,12 +27,12 @@ describe('MarketplaceClient', () => {
     serverCount: 2,
     categories: {
       development: { name: 'Development', description: 'Dev tools', count: 1 },
-      utility: { name: 'Utility', description: 'Utilities', count: 1 }
+      utility: { name: 'Utility', description: 'Utilities', count: 1 },
     },
     featured: ['test-server'],
     signing: {
       publicKey: 'mock-public-key',
-      algorithm: 'Ed25519'
+      algorithm: 'Ed25519',
     },
     servers: [
       {
@@ -45,11 +45,11 @@ describe('MarketplaceClient', () => {
         category: 'development',
         license: 'MIT',
         transport: {
-          stdio: { command: 'test-command', args: ['--test'] }
+          stdio: { command: 'test-command', args: ['--test'] },
         },
         install: {
           claude: 'claude mcp add test-server -- test-command --test',
-          json: { mcpServers: { 'test-server': { command: 'test-command', args: ['--test'] } } }
+          json: { mcpServers: { 'test-server': { command: 'test-command', args: ['--test'] } } },
         },
         permissions: ['files:read'],
         security: { riskLevel: 'low' },
@@ -69,41 +69,42 @@ describe('MarketplaceClient', () => {
         transport: {
           streamableHttp: {
             url: 'https://api.utility.com/mcp',
-            auth: { type: 'bearer' }
-          }
+            auth: { type: 'bearer' },
+          },
         },
         install: {
-          claude: 'claude mcp add --transport streamableHttp utility-server https://api.utility.com/mcp --header "Authorization: Bearer <TOKEN>"',
-          json: { mcpServers: { 'utility-server': { serverUrl: 'https://api.utility.com/mcp' } } }
+          claude:
+            'claude mcp add --transport streamableHttp utility-server https://api.utility.com/mcp --header "Authorization: Bearer <TOKEN>"',
+          json: { mcpServers: { 'utility-server': { serverUrl: 'https://api.utility.com/mcp' } } },
         },
         permissions: ['network:http', 'data:read'],
         security: { riskLevel: 'medium', sigstore: 'https://utility.com/sigstore.json' },
         featured: false,
         downloads: 75,
         updatedAt: '2025-01-14T15:30:00Z',
-      }
-    ]
+      },
+    ],
   };
 
   beforeEach(() => {
     mockConfig = {
       registries: {
-        default: 'https://registry.cortex-os.dev/v1/registry.json'
+        default: 'https://registry.cortex-os.dev/v1/registry.json',
       },
       cacheDir: '/tmp/cortex/mcp-cache',
       cacheTtl: 300000, // 5 minutes
       security: {
         requireSignatures: true,
         allowedRiskLevels: ['low', 'medium'],
-        trustedPublishers: ['Test Publisher', 'Utility Corp']
-      }
+        trustedPublishers: ['Test Publisher', 'Utility Corp'],
+      },
     };
 
     client = new MarketplaceClient(mockConfig);
 
     // Reset all mocks
     vi.clearAllMocks();
-    
+
     // Setup default filesystem mocks
     vi.mocked(existsSync).mockReturnValue(false);
     vi.mocked(mkdir).mockResolvedValue(undefined);
@@ -143,7 +144,7 @@ describe('MarketplaceClient', () => {
       const cacheData = JSON.stringify({
         data: mockRegistryIndex,
         cachedAt: Date.now() - 60000, // 1 minute ago
-        registryUrl: 'https://registry.cortex-os.dev/v1/registry.json'
+        registryUrl: 'https://registry.cortex-os.dev/v1/registry.json',
       });
 
       vi.mocked(existsSync).mockReturnValue(true);
@@ -153,7 +154,10 @@ describe('MarketplaceClient', () => {
       await client.initialize();
 
       // Assert
-      expect(readFile).toHaveBeenCalledWith(expect.stringContaining('registry-cache.json'), 'utf-8');
+      expect(readFile).toHaveBeenCalledWith(
+        expect.stringContaining('registry-cache.json'),
+        'utf-8',
+      );
     });
 
     it('should fetch fresh registry if cache is stale', async () => {
@@ -161,15 +165,15 @@ describe('MarketplaceClient', () => {
       const staleCacheData = JSON.stringify({
         data: mockRegistryIndex,
         cachedAt: Date.now() - 600000, // 10 minutes ago (stale)
-        registryUrl: 'https://registry.cortex-os.dev/v1/registry.json'
+        registryUrl: 'https://registry.cortex-os.dev/v1/registry.json',
       });
 
       vi.mocked(existsSync).mockReturnValue(true);
       vi.mocked(readFile).mockResolvedValue(staleCacheData);
-      
+
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockRegistryIndex)
+        json: () => Promise.resolve(mockRegistryIndex),
       } as Response);
 
       // Act
@@ -185,9 +189,9 @@ describe('MarketplaceClient', () => {
       // Setup client with mock registry
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockRegistryIndex)
+        json: () => Promise.resolve(mockRegistryIndex),
       } as Response);
-      
+
       await client.initialize();
     });
 
@@ -202,7 +206,7 @@ describe('MarketplaceClient', () => {
       expect(result.meta).toEqual({
         total: 1,
         offset: 0,
-        limit: 10
+        limit: 10,
       });
     });
 
@@ -247,7 +251,7 @@ describe('MarketplaceClient', () => {
       expect(result.meta).toEqual({
         total: 2,
         offset: 1,
-        limit: 1
+        limit: 1,
       });
     });
 
@@ -268,9 +272,9 @@ describe('MarketplaceClient', () => {
     beforeEach(async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockRegistryIndex)
+        json: () => Promise.resolve(mockRegistryIndex),
       } as Response);
-      
+
       await client.initialize();
     });
 
@@ -297,9 +301,9 @@ describe('MarketplaceClient', () => {
     beforeEach(async () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockRegistryIndex)
+        json: () => Promise.resolve(mockRegistryIndex),
       } as Response);
-      
+
       await client.initialize();
     });
 
@@ -315,11 +319,11 @@ describe('MarketplaceClient', () => {
       expect(result.success).toBe(true);
       expect(result.data?.installed).toBe(true);
       expect(result.data?.serverId).toBe('test-server');
-      
+
       // Verify config was written
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.stringContaining('test-server')
+        expect.stringContaining('test-server'),
       );
     });
 
@@ -335,7 +339,7 @@ describe('MarketplaceClient', () => {
       expect(result.success).toBe(true);
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.stringContaining('"serverUrl":"https://api.utility.com/mcp"')
+        expect.stringContaining('"serverUrl":"https://api.utility.com/mcp"'),
       );
     });
 
@@ -354,9 +358,9 @@ describe('MarketplaceClient', () => {
         ...mockRegistryIndex.servers[0],
         id: 'high-risk-server',
         security: { riskLevel: 'high' },
-        permissions: ['system:exec']
+        permissions: ['system:exec'],
       };
-      
+
       // Add high-risk server to registry
       mockRegistryIndex.servers.push(highRiskServer);
 
@@ -374,9 +378,9 @@ describe('MarketplaceClient', () => {
       const unsignedServer: ServerManifest = {
         ...mockRegistryIndex.servers[0],
         id: 'unsigned-server',
-        security: { riskLevel: 'low' } // No sigstore
+        security: { riskLevel: 'low' }, // No sigstore
       };
-      
+
       mockRegistryIndex.servers.push(unsignedServer);
 
       // Act
@@ -398,7 +402,7 @@ describe('MarketplaceClient', () => {
       expect(result.success).toBe(true);
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.stringContaining('"mcpServers"')
+        expect.stringContaining('"mcpServers"'),
       );
     });
   });
@@ -408,8 +412,8 @@ describe('MarketplaceClient', () => {
       // Arrange
       const mockConfig = JSON.stringify({
         mcpServers: {
-          'test-server': { command: 'test-command' }
-        }
+          'test-server': { command: 'test-command' },
+        },
       });
       vi.mocked(readFile).mockResolvedValue(mockConfig);
 
@@ -419,11 +423,11 @@ describe('MarketplaceClient', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.data?.removed).toBe(true);
-      
+
       // Verify server was removed from config
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.not.stringContaining('test-server')
+        expect.not.stringContaining('test-server'),
       );
     });
 
@@ -458,9 +462,9 @@ describe('MarketplaceClient', () => {
       // Arrange
       const mockConfig = JSON.stringify({
         mcpServers: {
-          'server1': { command: 'cmd1' },
-          'server2': { serverUrl: 'https://api.example.com' }
-        }
+          server1: { command: 'cmd1' },
+          server2: { serverUrl: 'https://api.example.com' },
+        },
       });
       vi.mocked(readFile).mockResolvedValue(mockConfig);
 
@@ -506,7 +510,7 @@ describe('MarketplaceClient', () => {
       const customRegistryUrl = 'https://custom.registry.com/v1/registry.json';
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockRegistryIndex)
+        json: () => Promise.resolve(mockRegistryIndex),
       } as Response);
 
       // Act
@@ -532,7 +536,9 @@ describe('MarketplaceClient', () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
 
       // Act
-      const result = await client.addRegistry('https://unreachable.com/registry.json', { name: 'unreachable' });
+      const result = await client.addRegistry('https://unreachable.com/registry.json', {
+        name: 'unreachable',
+      });
 
       // Assert
       expect(result.success).toBe(false);
@@ -556,7 +562,7 @@ describe('MarketplaceClient', () => {
       // Arrange
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockRegistryIndex)
+        json: () => Promise.resolve(mockRegistryIndex),
       } as Response);
 
       // Act
@@ -598,7 +604,7 @@ describe('MarketplaceClient', () => {
       // Arrange
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.reject(new Error('Invalid JSON'))
+        json: () => Promise.reject(new Error('Invalid JSON')),
       } as Response);
 
       // Act

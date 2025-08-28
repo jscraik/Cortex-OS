@@ -12,12 +12,17 @@ export class SecureCommandExecutor {
     'echo',
     'cat',
     'grep',
-    'find'
+    'find',
   ]);
 
   // Whitelisted Docker subcommands
   private static readonly ALLOWED_DOCKER_SUBCOMMANDS = new Set([
-    'ps', 'images', 'inspect', 'logs', 'version', 'info'
+    'ps',
+    'images',
+    'inspect',
+    'logs',
+    'version',
+    'info',
   ]);
 
   // Resource limits
@@ -29,7 +34,10 @@ export class SecureCommandExecutor {
   private static concurrentProcesses = 0;
 
   // Execute a command with strict validation
-  static async executeCommand(command: string[], timeout: number = this.DEFAULT_TIMEOUT): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  static async executeCommand(
+    command: string[],
+    timeout: number = this.DEFAULT_TIMEOUT,
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     // Check concurrent process limit
     if (this.concurrentProcesses >= this.MAX_CONCURRENT_PROCESSES) {
       throw new Error(`Maximum concurrent processes (${this.MAX_CONCURRENT_PROCESSES}) reached`);
@@ -67,7 +75,7 @@ export class SecureCommandExecutor {
           PATH: process.env.PATH,
           HOME: process.env.HOME,
           // Only include essential environment variables
-        }
+        },
       });
 
       let stdout = '';
@@ -100,7 +108,7 @@ export class SecureCommandExecutor {
           resolve({
             stdout: stdout,
             stderr: stderr,
-            exitCode: code || 0
+            exitCode: code || 0,
           });
         });
 
@@ -125,14 +133,18 @@ export class SecureCommandExecutor {
 
   // Sanitize command parameters to prevent injection
   private static sanitizeCommand(command: string[]): string[] {
-    return command.map(param => {
+    return command.map((param) => {
       // Remove dangerous characters
       return param.replace(/[;&|`$(){}[\]<>]/g, '');
     });
   }
 
   // Execute Docker command with additional security
-  static async executeDockerCommand(subcommand: string, args: string[] = [], timeout: number = this.DEFAULT_TIMEOUT): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  static async executeDockerCommand(
+    subcommand: string,
+    args: string[] = [],
+    timeout: number = this.DEFAULT_TIMEOUT,
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     // Validate subcommand
     if (!this.ALLOWED_DOCKER_SUBCOMMANDS.has(subcommand)) {
       throw new Error(`Docker subcommand ${subcommand} is not allowed`);
@@ -143,12 +155,12 @@ export class SecureCommandExecutor {
       if (typeof arg !== 'string') {
         throw new Error('All arguments must be strings');
       }
-      
+
       // Prevent very long arguments that could be used for DoS
       if (arg.length > 1000) {
         throw new Error('Argument too long');
       }
-      
+
       // Prevent dangerous patterns in arguments
       if (/[;&|`$(){}[\]<>]/.test(arg)) {
         throw new Error('Invalid characters in argument');
@@ -157,7 +169,7 @@ export class SecureCommandExecutor {
 
     // Build the full command
     const command = ['docker', subcommand, ...args];
-    
+
     // Execute with security wrapper
     return this.executeCommand(command, timeout);
   }
@@ -166,19 +178,22 @@ export class SecureCommandExecutor {
   static getProcessStats() {
     return {
       concurrentProcesses: this.concurrentProcesses,
-      maxConcurrentProcesses: this.MAX_CONCURRENT_PROCESSES
+      maxConcurrentProcesses: this.MAX_CONCURRENT_PROCESSES,
     };
   }
 
   // Execute a command with output sanitization
-  static async executeCommandWithSanitization(command: string[], timeout: number = this.DEFAULT_TIMEOUT): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  static async executeCommandWithSanitization(
+    command: string[],
+    timeout: number = this.DEFAULT_TIMEOUT,
+  ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     const result = await this.executeCommand(command, timeout);
-    
+
     // Sanitize output to prevent XSS or other injection
     return {
       stdout: this.sanitizeOutput(result.stdout),
       stderr: this.sanitizeOutput(result.stderr),
-      exitCode: result.exitCode
+      exitCode: result.exitCode,
     };
   }
 

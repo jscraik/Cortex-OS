@@ -10,7 +10,7 @@ rules:
           # Direct use of user input in SQL prepare statements
           - pattern: |
               $DB.prepare($QUERY + $USER_INPUT)
-    message: "Potential SQL Injection: Direct concatenation of user input in database queries"
+    message: 'Potential SQL Injection: Direct concatenation of user input in database queries'
     languages: [javascript, typescript, python]
     severity: ERROR
 
@@ -27,7 +27,7 @@ rules:
               subprocess.run($CMD.format($USER_INPUT), ...)
           - pattern: |
               subprocess.run(f"...{$USER_INPUT}...", ...)
-    message: "Potential Command Injection: Direct use of user input in system commands"
+    message: 'Potential Command Injection: Direct use of user input in system commands'
     languages: [python]
     severity: ERROR
 
@@ -41,7 +41,7 @@ rules:
               exec($USER_INPUT)
           - pattern: |
               new Function($USER_INPUT)
-    message: "Potential Code Injection: Direct execution of user input as code"
+    message: 'Potential Code Injection: Direct execution of user input as code'
     languages: [javascript, typescript, python]
     severity: ERROR
 
@@ -54,6 +54,6 @@ rules:
               fetch($USER_INPUT)
           - pattern: |
               axios.get($USER_INPUT)
-    message: "Potential Server-Side Request Forgery: Direct use of user input in HTTP requests"
+    message: 'Potential Server-Side Request Forgery: Direct use of user input in HTTP requests'
     languages: [python, javascript, typescript]
     severity: ERROR

@@ -15,23 +15,23 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.spec.ts',
         'tests/**',
-        'coverage/**'
+        'coverage/**',
       ],
       thresholds: {
         functions: 90,
         branches: 90,
         lines: 90,
-        statements: 90
+        statements: 90,
       },
-      reportOnFailure: true
+      reportOnFailure: true,
     },
     testTimeout: 10000,
-    hookTimeout: 5000
+    hookTimeout: 5000,
   },
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
-      '@tests': resolve(__dirname, './tests')
-    }
-  }
+      '@tests': resolve(__dirname, './tests'),
+    },
+  },
 });

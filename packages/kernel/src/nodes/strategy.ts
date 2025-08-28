@@ -71,20 +71,23 @@ export class StrategyNode {
           passed: blockers.length === 0 && majors.length <= 3,
           blockers,
           majors,
-          evidence: evidence.map(e => e.id),
+          evidence: evidence.map((e) => e.id),
           timestamp: new Date().toISOString(),
         },
       },
     };
   }
 
-  private async validateSecurityBaseline(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateSecurityBaseline(
+    state: PRPState,
+  ): Promise<{ passed: boolean; details: any }> {
     // OWASP ASVS L1 + MITRE ATLAS validation
     const requirements = state.blueprint.requirements || [];
-    const hasSecurityReq = requirements.some(req => 
-      req.toLowerCase().includes('security') || 
-      req.toLowerCase().includes('authentication') ||
-      req.toLowerCase().includes('authorization')
+    const hasSecurityReq = requirements.some(
+      (req) =>
+        req.toLowerCase().includes('security') ||
+        req.toLowerCase().includes('authentication') ||
+        req.toLowerCase().includes('authorization'),
     );
 
     return {
@@ -92,20 +95,21 @@ export class StrategyNode {
       details: {
         owaspLevel: hasSecurityReq ? 'L1' : 'none',
         mitreAtlas: hasSecurityReq,
-        securityRequirements: requirements.filter(req => 
-          req.toLowerCase().includes('security')
-        ),
+        securityRequirements: requirements.filter((req) => req.toLowerCase().includes('security')),
       },
     };
   }
 
-  private async validateUXAccessibility(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateUXAccessibility(
+    state: PRPState,
+  ): Promise<{ passed: boolean; details: any }> {
     // WCAG 2.2 AA compliance check
-    const hasUXReq = state.blueprint.requirements?.some(req =>
-      req.toLowerCase().includes('ux') ||
-      req.toLowerCase().includes('user') ||
-      req.toLowerCase().includes('interface') ||
-      req.toLowerCase().includes('accessibility')
+    const hasUXReq = state.blueprint.requirements?.some(
+      (req) =>
+        req.toLowerCase().includes('ux') ||
+        req.toLowerCase().includes('user') ||
+        req.toLowerCase().includes('interface') ||
+        req.toLowerCase().includes('accessibility'),
     );
 
     return {
@@ -121,14 +125,14 @@ export class StrategyNode {
     // Architecture diagram consistency check
     const title = state.blueprint.title?.toLowerCase() || '';
     const description = state.blueprint.description?.toLowerCase() || '';
-    
-    const hasArchitecture = 
+
+    const hasArchitecture =
       title.includes('architecture') ||
       description.includes('system') ||
       description.includes('component') ||
-      state.blueprint.requirements?.some(req => 
-        req.toLowerCase().includes('architecture') ||
-        req.toLowerCase().includes('system design')
+      state.blueprint.requirements?.some(
+        (req) =>
+          req.toLowerCase().includes('architecture') || req.toLowerCase().includes('system design'),
       );
 
     return {

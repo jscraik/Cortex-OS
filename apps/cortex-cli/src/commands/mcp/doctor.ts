@@ -23,7 +23,9 @@ export const mcpDoctor = new Command('doctor')
           } else if (s.transport === 'streamableHttp') {
             const url = new URL(s.endpoint ?? '');
             const health = new URL('/healthz', url);
-            const res = await fetch(health, { signal: AbortSignal.timeout(5000) }).catch(() => fetch(url, { signal: AbortSignal.timeout(5000) }));
+            const res = await fetch(health, { signal: AbortSignal.timeout(5000) }).catch(() =>
+              fetch(url, { signal: AbortSignal.timeout(5000) }),
+            );
             item.ok = !!res && res.ok;
           } else if (s.transport === 'sse') {
             const client = await createClient(s);
@@ -39,10 +41,12 @@ export const mcpDoctor = new Command('doctor')
       }
       if (opts.json) process.stdout.write(JSON.stringify({ results }, null, 2) + '\n');
       else {
-        for (const r of results) process.stdout.write(`${r.ok ? 'OK' : 'ERR'}\t${r.name}\t${r.transport}${r.error ? ' - ' + r.error : ''}\n`);
+        for (const r of results)
+          process.stdout.write(
+            `${r.ok ? 'OK' : 'ERR'}\t${r.name}\t${r.transport}${r.error ? ' - ' + r.error : ''}\n`,
+          );
       }
     } finally {
       span.end();
     }
   });
-

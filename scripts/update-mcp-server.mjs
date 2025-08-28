@@ -16,7 +16,7 @@ if (!content.includes('SecureCommandExecutor')) {
     'from pydantic import BaseModel',
     `from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor
-# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`
+# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`,
   );
 }
 
@@ -46,7 +46,7 @@ content = content.replace(
             "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
         }
     except Exception as e:
-        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`
+        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`,
 );
 
 // Write the updated content back to the file

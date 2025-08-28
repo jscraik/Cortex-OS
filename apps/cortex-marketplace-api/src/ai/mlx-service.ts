@@ -2,13 +2,18 @@
  * @file MLX Integration for Marketplace
  * @description Production-ready MLX model integration for semantic search and safety
  */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, no-console */
 
-import { spawn } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import { writeFile } from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import type { ServerManifest } from '../types.js';
+import * as os from 'node:os';
+import * as path from 'node:path';
+// Note: Marketplace uses an extended manifest vs. the base registry type.
+// Use the local manifest type explicitly to avoid cross-package type drift.
+// Use local Marketplace manifest. It is schema-compatible with the registry's
+// ServerManifest for the fields we consume. We also validate at runtime with
+// Zod to prevent drift.
+import type { ServerManifest as MarketplaceServer } from '../types.js';
+import { ServerManifestSchema } from '../types.js';
 
 export interface MLXConfig {
   modelsPath: string;
@@ -30,7 +35,7 @@ export interface SafetyResult {
 }
 
 export interface SemanticSearchResult {
-  server: ServerManifest;
+  server: MarketplaceServer;
   similarity: number;
   relevanceScore: number;
 }
@@ -40,17 +45,15 @@ export const createMLXService = (config: MLXConfig) => {
     return null;
   }
 
-  return {
-    /**
-     * Generate embeddings using Qwen3 models
-     */
-    async generateEmbedding(text: string): Promise<EmbeddingResult> {
-      const modelSize = config.embeddingModel.replace('qwen3-', '').toUpperCase();
-      
-      const script = `
+  // Local helper so other methods can reuse it safely
+  const runGenerateEmbedding = async (text: string): Promise<EmbeddingResult> => {
+    const modelSize = config.embeddingModel.replace('qwen3-', '').toUpperCase();
+
+    const script = `
 import sys
 import numpy as np
 from transformers import AutoTokenizer
+import os
 
 try:
     # Use pre-trained tokenizer for consistent embeddings
@@ -95,36 +98,61 @@ except Exception as e:
     sys.exit(1)
 `;
 
-      const result = await executeMLXScript(script, config.pythonPath);
-      return parseEmbeddingResult(result, config.embeddingModel);
-    },
+    const result = await executeMLXScript(script, config.pythonPath);
+    return parseEmbeddingResult(result, config.embeddingModel);
+  };
+
+  return {
+    /**
+     * Generate embeddings using Qwen3 models
+     */
+    generateEmbedding: runGenerateEmbedding,
 
     /**
      * Perform semantic search using embeddings
      */
-    async semanticSearch(query: string, servers: ServerManifest[]): Promise<SemanticSearchResult[]> {
+    semanticSearch: async (
+      query: string,
+      servers: MarketplaceServer[],
+    ): Promise<SemanticSearchResult[]> => {
       try {
-        const queryEmbedding = await this.generateEmbedding(query);
-        
+        const queryEmbedding = await runGenerateEmbedding(query);
+
         const results = await Promise.all(
           servers.map(async (server) => {
-            const serverText = `${server.name} ${server.description} ${server.tags?.join(' ') || ''}`;
-            const serverEmbedding = await this.generateEmbedding(serverText);
-            
-            const similarity = cosineSimilarity(queryEmbedding.embedding, serverEmbedding.embedding);
-            const relevanceScore = calculateRelevanceScore(similarity, server);
-            
-            return { server, similarity, relevanceScore };
-          })
+            // Validate/normalize server shape defensively to avoid type drift
+            let validated: MarketplaceServer;
+            try {
+              validated = ServerManifestSchema.parse(server);
+            } catch {
+              return {
+                server,
+                similarity: 0,
+                relevanceScore: 0,
+              } as SemanticSearchResult;
+            }
+
+            const serverText = `${validated.name} ${validated.description} ${validated.tags?.join(' ') || ''}`;
+            const serverEmbedding = await runGenerateEmbedding(serverText);
+
+            const similarity = cosineSimilarity(
+              queryEmbedding.embedding,
+              serverEmbedding.embedding,
+            );
+            const relevanceScore = calculateRelevanceScore(similarity, validated);
+
+            return { server: validated, similarity, relevanceScore };
+          }),
         );
-        
+        );
+
         return results.sort((a, b) => b.relevanceScore - a.relevanceScore);
       } catch (error) {
         console.warn('MLX semantic search failed:', error);
-        return servers.map(server => ({
+        return servers.map((server) => ({
           server,
           similarity: 0,
-          relevanceScore: calculateBasicRelevance(query, server)
+          relevanceScore: calculateBasicRelevance(query, server),
         }));
       }
     },
@@ -132,7 +160,7 @@ except Exception as e:
     /**
      * Validate content safety
      */
-    async validateSafety(content: string): Promise<SafetyResult> {
+    validateSafety: async (content: string): Promise<SafetyResult> => {
       const script = `
 import re
 from typing import List, Tuple
@@ -182,7 +210,7 @@ print(f"CONFIDENCE:{confidence:.3f}")
         console.warn('MLX safety validation failed:', error);
         return { safe: true, categories: [], confidence: 0.5 };
       }
-    }
+    },
   };
 };
 
@@ -190,25 +218,25 @@ print(f"CONFIDENCE:{confidence:.3f}")
 async function executeMLXScript(script: string, pythonPath: string): Promise<string> {
   const tmpDir = os.tmpdir();
   const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
-  
+
   await writeFile(scriptPath, script);
-  
+
   return new Promise((resolve, reject) => {
-    const child = spawn(pythonPath, [scriptPath], {
-      env: { ...process.env, PYTHONPATH: process.env.PYTHONPATH }
+    const child: ChildProcess = spawn(pythonPath, [scriptPath], {
+      env: { ...process.env, PYTHONPATH: process.env.PYTHONPATH },
     });
-    
+
     let output = '';
     let error = '';
-    
-    child.stdout.on('data', (data) => {
+
+    child.stdout?.on('data', (data) => {
       output += data.toString();
     });
-    
-    child.stderr.on('data', (data) => {
+
+    child.stderr?.on('data', (data) => {
       error += data.toString();
     });
-    
+
     child.on('close', (code) => {
       if (code === 0) {
         resolve(output);
@@ -216,75 +244,85 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
         reject(new Error(`Script failed: ${error}`));
       }
     });
-    
+
     setTimeout(() => {
-      child.kill();
+      // Kill the child process on timeout if it's still running
+      try {
+        child.kill();
+      } catch {}
       reject(new Error('Script timeout'));
     }, 10000);
   });
 }
 
 function parseEmbeddingResult(output: string, model: string): EmbeddingResult {
-  const embeddingMatch = output.match(/EMBEDDING_RESULT:\[(.*?)\]/s);
-  const dimensionsMatch = output.match(/DIMENSIONS:(\d+)/);
-  
+  const embeddingRe = /EMBEDDING_RESULT:\[([\s\S]*?)\]/;
+  const dimensionsRe = /DIMENSIONS:(\d+)/;
+
+  const embeddingMatch = embeddingRe.exec(output);
+  const dimensionsMatch = dimensionsRe.exec(output);
+
   if (!embeddingMatch || !dimensionsMatch) {
     throw new Error('Failed to parse embedding result');
   }
-  
-  const embedding = embeddingMatch[1].split(',').map(s => parseFloat(s.trim()));
+
+  const embedding = embeddingMatch[1].split(',').map((s) => parseFloat(s.trim()));
   const dimensions = parseInt(dimensionsMatch[1]);
-  
+
   return { embedding, model, dimensions };
 }
 
 function parseSafetyResult(output: string): SafetyResult {
-  const safeMatch = output.match(/SAFETY_RESULT:(true|false)/);
-  const categoriesMatch = output.match(/CATEGORIES:(.*)/);
-  const confidenceMatch = output.match(/CONFIDENCE:([\d.]+)/);
-  
+  const safeRe = /SAFETY_RESULT:(true|false)/;
+  const categoriesRe = /CATEGORIES:(.*)/;
+  const confidenceRe = /CONFIDENCE:([\d.]+)/;
+
+  const safeMatch = safeRe.exec(output);
+  const categoriesMatch = categoriesRe.exec(output);
+  const confidenceMatch = confidenceRe.exec(output);
+
   return {
     safe: safeMatch ? safeMatch[1] === 'true' : true,
     categories: categoriesMatch ? categoriesMatch[1].split(',').filter(Boolean) : [],
-    confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5
+    confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5,
   };
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0;
-  
+
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
-  
+
   for (let i = 0; i < a.length; i++) {
     dotProduct += a[i] * b[i];
     normA += a[i] * a[i];
     normB += b[i] * b[i];
   }
-  
+
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-function calculateRelevanceScore(similarity: number, server: ServerManifest): number {
+function calculateRelevanceScore(similarity: number, server: MarketplaceServer): number {
   let score = similarity * 0.6; // Base semantic similarity
-  
+
   // Quality boosters
   if (server.featured) score += 0.2;
   if (server.publisher?.verified) score += 0.1;
   if (server.rating && server.rating > 4) score += 0.1;
-  
+
   return Math.min(score, 1.0);
 }
 
-function calculateBasicRelevance(query: string, server: ServerManifest): number {
+function calculateBasicRelevance(query: string, server: MarketplaceServer): number {
   let score = 0;
   const queryLower = query.toLowerCase();
-  
+
   if (server.name.toLowerCase().includes(queryLower)) score += 0.4;
   if (server.description.toLowerCase().includes(queryLower)) score += 0.3;
-  if (server.tags?.some(tag => tag.toLowerCase().includes(queryLower))) score += 0.2;
+  if (server.tags?.some((tag) => tag.toLowerCase().includes(queryLower))) score += 0.2;
   if (server.featured) score += 0.1;
-  
+
   return Math.min(score, 1.0);
 }

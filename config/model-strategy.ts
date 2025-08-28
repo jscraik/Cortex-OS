@@ -7,7 +7,6 @@ import path from 'node:path';
 const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/models';
 const modelPath = (...segments: string[]) => path.join(MLX_CACHE_DIR, ...segments);
 
-
 export interface ModelConfig {
   primary: {
     provider: 'mlx';

@@ -1,7 +1,7 @@
 meta:
   id: prompt-compliance.check
   persona: auditor
-  role: "[Compliance Auditor]"
+  role: '[Compliance Auditor]'
   version: 1.0.0
   model_targets:
     - general
@@ -37,7 +37,7 @@ blocks:
   - conversation_history: |-
       <history>{{HISTORY}}</history>
       Previous compliance failures: {{PREVIOUS_FAILURES}}
-  - immediate_request: "Check this prompt for compliance and list any violations."
+  - immediate_request: 'Check this prompt for compliance and list any violations.'
   - deliberation: >-
       Parse the prompt, check block sequence and presence of inputs_schema and outputs_schema.
   - output_format: |-

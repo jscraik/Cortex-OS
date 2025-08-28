@@ -71,7 +71,9 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
         querystring: {
           type: 'object',
           properties: {
+
             limit: { type: 'integer', minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT },
+
             offset: { type: 'integer', minimum: 0, default: 0 },
             sortBy: {
               type: 'string',

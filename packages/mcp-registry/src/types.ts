@@ -12,26 +12,34 @@ export const StdioTransportSchema = z.object({
 });
 
 export const SseTransportSchema = z.object({
-  url: z.string().url().refine(url => url.startsWith('https://'), {
-    message: 'SSE URLs must use HTTPS',
-  }),
+  url: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith('https://'), {
+      message: 'SSE URLs must use HTTPS',
+    }),
   headers: z.record(z.string()).optional(),
 });
 
 export const StreamableHttpTransportSchema = z.object({
-  url: z.string().url().refine(url => url.startsWith('https://'), {
-    message: 'Streamable HTTP URLs must use HTTPS',
-  }),
+  url: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith('https://'), {
+      message: 'Streamable HTTP URLs must use HTTPS',
+    }),
   headers: z.record(z.string()).optional(),
 });
 
-export const TransportsSchema = z.object({
-  stdio: StdioTransportSchema.optional(),
-  sse: SseTransportSchema.optional(),
-  streamableHttp: StreamableHttpTransportSchema.optional(),
-}).refine(transports => Object.values(transports).some(Boolean), {
-  message: 'At least one transport must be defined',
-});
+export const TransportsSchema = z
+  .object({
+    stdio: StdioTransportSchema.optional(),
+    sse: SseTransportSchema.optional(),
+    streamableHttp: StreamableHttpTransportSchema.optional(),
+  })
+  .refine((transports) => Object.values(transports).some(Boolean), {
+    message: 'At least one transport must be defined',
+  });
 
 // Install commands
 export const InstallSchema = z.object({
@@ -45,20 +53,25 @@ export const InstallSchema = z.object({
 });
 
 // OAuth configuration
-export const OAuthSchema = z.object({
-  authType: z.enum(['none', 'apiKey', 'oauth2', 'bearer']),
-  authorizationEndpoint: z.string().url().optional(),
-  tokenEndpoint: z.string().url().optional(),
-  clientId: z.string().optional(),
-  scopes: z.array(z.string()).optional(),
-}).refine(oauth => {
-  if (oauth.authType === 'oauth2') {
-    return oauth.authorizationEndpoint && oauth.tokenEndpoint && oauth.clientId;
-  }
-  return true;
-}, {
-  message: 'OAuth2 requires authorizationEndpoint, tokenEndpoint, and clientId',
-});
+export const OAuthSchema = z
+  .object({
+    authType: z.enum(['none', 'apiKey', 'oauth2', 'bearer']),
+    authorizationEndpoint: z.string().url().optional(),
+    tokenEndpoint: z.string().url().optional(),
+    clientId: z.string().optional(),
+    scopes: z.array(z.string()).optional(),
+  })
+  .refine(
+    (oauth) => {
+      if (oauth.authType === 'oauth2') {
+        return oauth.authorizationEndpoint && oauth.tokenEndpoint && oauth.clientId;
+      }
+      return true;
+    },
+    {
+      message: 'OAuth2 requires authorizationEndpoint, tokenEndpoint, and clientId',
+    },
+  );
 
 // Security metadata
 export const SecuritySchema = z.object({
@@ -70,10 +83,17 @@ export const SecuritySchema = z.object({
 
 // Server manifest
 export const ServerManifestSchema = z.object({
-  id: z.string().regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/).min(1).max(63),
+  id: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/)
+    .min(1)
+    .max(63),
   name: z.string().min(1).max(100),
   owner: z.string().min(1).max(100),
-  version: z.string().regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/).optional(),
+  version: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/)
+    .optional(),
   repo: z.string().url().optional(),
   homepage: z.string().url().optional(),
   logo: z.string().url().optional(),
@@ -91,29 +111,39 @@ export const ServerManifestSchema = z.object({
     'utility',
     'other',
   ]),
-  tags: z.array(z.string().regex(/^[a-z0-9-]+$/)).max(10).optional(),
+  tags: z
+    .array(z.string().regex(/^[a-z0-9-]+$/))
+    .max(10)
+    .optional(),
   description: z.string().min(10).max(500).optional(),
-  license: z.enum([
-    'MIT',
-    'Apache-2.0',
-    'GPL-3.0',
-    'BSD-3-Clause',
-    'ISC',
-    'LGPL-2.1',
-    'MPL-2.0',
-    'Unlicense',
-    'Proprietary',
-  ]).optional(),
+  license: z
+    .enum([
+      'MIT',
+      'Apache-2.0',
+      'GPL-3.0',
+      'BSD-3-Clause',
+      'ISC',
+      'LGPL-2.1',
+      'MPL-2.0',
+      'Unlicense',
+      'Proprietary',
+    ])
+    .optional(),
   transports: TransportsSchema,
   install: InstallSchema,
   scopes: z.array(z.string().regex(/^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/)).min(1),
   oauth: OAuthSchema.optional(),
   security: SecuritySchema.optional(),
-  manifest: z.object({
-    createdAt: z.string().datetime().optional(),
-    updatedAt: z.string().datetime().optional(),
-    digest: z.string().regex(/^sha256:[a-f0-9]{64}$/).optional(),
-  }).optional(),
+  manifest: z
+    .object({
+      createdAt: z.string().datetime().optional(),
+      updatedAt: z.string().datetime().optional(),
+      digest: z
+        .string()
+        .regex(/^sha256:[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .optional(),
 });
 
 // Registry index
@@ -163,9 +193,9 @@ export interface ValidationWarning {
 }
 
 // Client types for install command generation
-export type SupportedClient = 
+export type SupportedClient =
   | 'claude'
-  | 'cline' 
+  | 'cline'
   | 'devin'
   | 'cursor'
   | 'continue'

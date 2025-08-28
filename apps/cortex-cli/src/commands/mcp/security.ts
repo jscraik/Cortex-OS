@@ -41,8 +41,10 @@ export class SecurityValidator {
     }
 
     // Check trusted publishers
-    if (this.config.trustedPublishers.length > 0 && 
-        !this.config.trustedPublishers.includes(server.owner)) {
+    if (
+      this.config.trustedPublishers.length > 0 &&
+      !this.config.trustedPublishers.includes(server.owner)
+    ) {
       warnings.push('Publisher is not in trusted list');
     }
 
@@ -55,7 +57,9 @@ export class SecurityValidator {
           valid = false;
         }
       } catch (error) {
-        warnings.push(`Signature validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        warnings.push(
+          `Signature validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
@@ -89,7 +93,9 @@ export class SecurityValidator {
           valid = false;
         }
       } catch (error) {
-        warnings.push(`Registry signature validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        warnings.push(
+          `Registry signature validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
       }
     }
 
@@ -118,7 +124,7 @@ export class SecurityValidator {
     // 1. Fetch the Sigstore bundle from server.security.sigstoreBundle
     // 2. Verify the bundle using the Sigstore client library
     // 3. Check that the signature covers the server manifest
-    
+
     if (!server.security?.sigstoreBundle) {
       return false;
     }
@@ -135,15 +141,14 @@ export class SecurityValidator {
   private async validateRegistrySignature(registry: RegistryIndex): Promise<boolean> {
     // Placeholder for registry signature validation
     // In a real implementation, this would verify the registry's signature
-    
+
     if (!registry.signing?.publicKey) {
       return false;
     }
 
     try {
       // Basic validation that the signing information is present
-      return registry.signing.publicKey.length > 0 && 
-             registry.signing.sigstoreBundleUrl.length > 0;
+      return registry.signing.publicKey.length > 0 && registry.signing.sigstoreBundleUrl.length > 0;
     } catch {
       return false;
     }
@@ -155,16 +160,19 @@ export class SecurityValidator {
       warnings.push('SSE transport does not use HTTPS');
     }
 
-    if (server.transports.streamableHttp?.url && !server.transports.streamableHttp.url.startsWith('https://')) {
+    if (
+      server.transports.streamableHttp?.url &&
+      !server.transports.streamableHttp.url.startsWith('https://')
+    ) {
       warnings.push('Streamable HTTP transport does not use HTTPS');
     }
 
     // Check for excessive permissions
     const highRiskScopes = ['system:exec', 'files:write', 'network:unrestricted'];
-    const serverHighRiskScopes = server.scopes.filter(scope => 
-      highRiskScopes.some(riskScope => scope.includes(riskScope))
+    const serverHighRiskScopes = server.scopes.filter((scope) =>
+      highRiskScopes.some((riskScope) => scope.includes(riskScope)),
     );
-    
+
     if (serverHighRiskScopes.length > 0) {
       warnings.push(`Server requests high-risk permissions: ${serverHighRiskScopes.join(', ')}`);
     }
@@ -174,7 +182,7 @@ export class SecurityValidator {
       const lastUpdate = new Date(server.manifest.updatedAt);
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      
+
       if (lastUpdate < sixMonthsAgo) {
         warnings.push('Server has not been updated in over 6 months');
       }
@@ -186,12 +194,16 @@ export class SecurityValidator {
     }
   }
 
-  private assessOverallRisk(server: ServerManifest, warnings: string[], errors: string[]): 'low' | 'medium' | 'high' {
+  private assessOverallRisk(
+    server: ServerManifest,
+    warnings: string[],
+    errors: string[],
+  ): 'low' | 'medium' | 'high' {
     if (errors.length > 0) return 'high';
-    
+
     const baseRisk = server.security?.riskLevel || 'medium';
     const warningCount = warnings.length;
-    
+
     if (baseRisk === 'high' || warningCount >= 3) return 'high';
     if (baseRisk === 'medium' || warningCount >= 1) return 'medium';
     return 'low';
@@ -199,21 +211,29 @@ export class SecurityValidator {
 
   private assessRegistryRisk(registry: RegistryIndex): 'low' | 'medium' | 'high' {
     const riskDistribution = this.analyzeServerRiskDistribution(registry.servers);
-    
+
     if (riskDistribution.high / riskDistribution.total > 0.3) return 'high';
-    if (riskDistribution.high / riskDistribution.total > 0.1 || 
-        riskDistribution.medium / riskDistribution.total > 0.7) return 'medium';
+    if (
+      riskDistribution.high / riskDistribution.total > 0.1 ||
+      riskDistribution.medium / riskDistribution.total > 0.7
+    )
+      return 'medium';
     return 'low';
   }
 
-  private analyzeServerRiskDistribution(servers: ServerManifest[]): { low: number; medium: number; high: number; total: number } {
+  private analyzeServerRiskDistribution(servers: ServerManifest[]): {
+    low: number;
+    medium: number;
+    high: number;
+    total: number;
+  } {
     const distribution = { low: 0, medium: 0, high: 0, total: servers.length };
-    
+
     for (const server of servers) {
       const risk = server.security?.riskLevel || 'medium';
       distribution[risk]++;
     }
-    
+
     return distribution;
   }
 }
@@ -222,13 +242,7 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   verifySignatures: true,
   allowUnverifiedPublishers: false,
   maxRiskLevel: 'medium',
-  trustedPublishers: [
-    'anthropic',
-    'openai',
-    'microsoft',
-    'google',
-    'cortex-os'
-  ],
+  trustedPublishers: ['anthropic', 'openai', 'microsoft', 'google', 'cortex-os'],
 };
 
 export function createSecurityValidator(config?: Partial<SecurityConfig>): SecurityValidator {
@@ -247,6 +261,6 @@ export function generateServerHash(server: ServerManifest): string {
     transports: server.transports,
     scopes: server.scopes,
   });
-  
+
   return createHash('sha256').update(content).digest('hex');
 }

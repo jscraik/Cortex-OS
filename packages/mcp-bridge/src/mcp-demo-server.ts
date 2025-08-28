@@ -6,7 +6,7 @@
  * @status active
  */
 
-import type { Request, Response, NextFunction } from "express-serve-static-core";
+import type { Request, Response, NextFunction } from 'express-serve-static-core';
 import express from 'express';
 import * as jwt from 'jsonwebtoken';
 // import { A2ASecurityManager } from '@cortex-os/a2a/dist/security.js';

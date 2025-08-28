@@ -25,7 +25,9 @@ describe('WorkloadIdentityAttestor', () => {
   it('errors when API client not configured', async () => {
     const manager = new WorkloadIdentityManager();
     const attestor = new WorkloadIdentityAttestor(manager);
-    await expect(attestor.attestWithWorkloadAPI(SAMPLE_ID)).rejects.toThrow('Workload API client not configured');
+    await expect(attestor.attestWithWorkloadAPI(SAMPLE_ID)).rejects.toThrow(
+      'Workload API client not configured',
+    );
   });
 
   it('uses provided API client', async () => {

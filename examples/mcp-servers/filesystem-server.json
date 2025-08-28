@@ -10,7 +10,7 @@
   },
   "publisher": {
     "name": "ModelContextProtocol",
-    "email": "mcp@anthropic.com", 
+    "email": "mcp@anthropic.com",
     "verified": true
   },
   "version": "1.0.0",
@@ -48,11 +48,7 @@
     "cursor": "Add to Cursor settings: @modelcontextprotocol/server-filesystem",
     "continue": "Configure in Continue with: npx -y @modelcontextprotocol/server-filesystem"
   },
-  "permissions": [
-    "files:read",
-    "files:write",
-    "files:list"
-  ],
+  "permissions": ["files:read", "files:write", "files:list"],
   "security": {
     "riskLevel": "medium",
     "sigstore": "https://registry.mcp.dev/attestations/filesystem.sigstore.json",

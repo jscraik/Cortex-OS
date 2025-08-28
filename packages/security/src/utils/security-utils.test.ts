@@ -38,7 +38,8 @@ describe('generateNonce', () => {
 });
 
 describe('isCertificateExpired', () => {
-  let validCert: string; let expiredCert: string;
+  let validCert: string;
+  let expiredCert: string;
   beforeAll(() => {
     const makeCert = (offsetMs: number) => {
       const keys = forge.pki.rsa.generateKeyPair(512);

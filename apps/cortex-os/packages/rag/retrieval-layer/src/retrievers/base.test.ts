@@ -3,45 +3,40 @@
  * @description Tests for base retriever functionality
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import {
-  Document,
-  RetrieverConfig,
-  QueryResult,
-  DocumentSchema,
-} from "../types";
-import { FaissRetriever } from "./faiss";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { Document, RetrieverConfig, QueryResult, DocumentSchema } from '../types';
+import { FaissRetriever } from './faiss';
 
-describe("Base Retriever Functionality", () => {
+describe('Base Retriever Functionality', () => {
   let retriever: FaissRetriever;
   const mockDocuments: Document[] = [
     {
-      id: "doc1",
-      path: "/test/file1.ts",
-      content: "This is a TypeScript file with classes and interfaces",
+      id: 'doc1',
+      path: '/test/file1.ts',
+      content: 'This is a TypeScript file with classes and interfaces',
       embedding: [0.1, 0.2, 0.3, 0.4],
-      metadata: { title: "File 1", fileType: "ts", size: 1000 },
+      metadata: { title: 'File 1', fileType: 'ts', size: 1000 },
     },
     {
-      id: "doc2",
-      path: "/test/file2.py",
-      content: "This is a Python file with functions and modules",
+      id: 'doc2',
+      path: '/test/file2.py',
+      content: 'This is a Python file with functions and modules',
       embedding: [0.5, 0.6, 0.7, 0.8],
-      metadata: { title: "File 2", fileType: "py", size: 2000 },
+      metadata: { title: 'File 2', fileType: 'py', size: 2000 },
     },
     {
-      id: "doc3",
-      path: "/test/README.md",
-      content: "This is a markdown documentation file with examples",
+      id: 'doc3',
+      path: '/test/README.md',
+      content: 'This is a markdown documentation file with examples',
       embedding: [0.2, 0.4, 0.1, 0.9],
-      metadata: { title: "README", fileType: "md", size: 500 },
+      metadata: { title: 'README', fileType: 'md', size: 500 },
     },
   ];
 
   const config: RetrieverConfig = {
     dimension: 4,
-    metric: "cosine",
-    indexType: "faiss",
+    metric: 'cosine',
+    indexType: 'faiss',
     cacheEnabled: true,
     maxCacheSize: 100,
   };
@@ -50,15 +45,15 @@ describe("Base Retriever Functionality", () => {
     retriever = new FaissRetriever(config);
   });
 
-  it("should initialize with correct configuration", () => {
+  it('should initialize with correct configuration', () => {
     expect(retriever.getConfig()).toEqual(config);
   });
 
-  it("should index documents successfully", async () => {
+  it('should index documents successfully', async () => {
     await expect(retriever.index(mockDocuments)).resolves.not.toThrow();
   });
 
-  it("should query documents and return ranked results", async () => {
+  it('should query documents and return ranked results', async () => {
     await retriever.index(mockDocuments);
 
     const queryVector = [0.1, 0.3, 0.2, 0.5];
@@ -79,7 +74,7 @@ describe("Base Retriever Functionality", () => {
     expect(results[0].score).toBeGreaterThanOrEqual(results[1].score);
   });
 
-  it("should handle empty query gracefully", async () => {
+  it('should handle empty query gracefully', async () => {
     await retriever.index(mockDocuments);
 
     const results = await retriever.query([0, 0, 0, 0], 5);
@@ -87,7 +82,7 @@ describe("Base Retriever Functionality", () => {
     expect(Array.isArray(results)).toBe(true);
   });
 
-  it("should limit results to topK parameter", async () => {
+  it('should limit results to topK parameter', async () => {
     await retriever.index(mockDocuments);
 
     const queryVector = [0.1, 0.2, 0.3, 0.4];
@@ -96,10 +91,10 @@ describe("Base Retriever Functionality", () => {
     expect(results).toHaveLength(1);
   });
 
-  it("should validate document schema", () => {
+  it('should validate document schema', () => {
     const invalidDoc = {
       // Missing required fields
-      invalidField: "test",
+      invalidField: 'test',
     };
 
     expect(() => {

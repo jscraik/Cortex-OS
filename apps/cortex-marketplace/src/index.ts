@@ -26,27 +26,27 @@ async function loadConfig(): Promise<ServerConfig> {
     host: process.env.HOST || '0.0.0.0',
     registries: {
       official: process.env.OFFICIAL_REGISTRY || 'https://registry.cortex-os.dev/v1/registry.json',
-      community: process.env.COMMUNITY_REGISTRY || 'https://community.mcp.dev/v1/registry.json'
+      community: process.env.COMMUNITY_REGISTRY || 'https://community.mcp.dev/v1/registry.json',
     },
     cacheDir: process.env.CACHE_DIR || path.join(os.tmpdir(), 'cortex-marketplace-cache'),
     cacheTtl: parseInt(process.env.CACHE_TTL || '300000', 10), // 5 minutes
-    logLevel: (process.env.LOG_LEVEL as any) || 'info'
+    logLevel: (process.env.LOG_LEVEL as any) || 'info',
   };
 
   // Try to load additional config from file
   try {
     const configPath = process.env.CONFIG_FILE || './config.json';
     const fileConfig = JSON.parse(await readFile(configPath, 'utf-8'));
-    
+
     // Merge file config with environment config (env takes precedence)
     if (fileConfig.registries && !process.env.OFFICIAL_REGISTRY) {
       config.registries = { ...fileConfig.registries, ...config.registries };
     }
-    
+
     if (fileConfig.cacheDir && !process.env.CACHE_DIR) {
       config.cacheDir = fileConfig.cacheDir;
     }
-    
+
     if (fileConfig.cacheTtl && !process.env.CACHE_TTL) {
       config.cacheTtl = fileConfig.cacheTtl;
     }
@@ -63,29 +63,29 @@ async function loadConfig(): Promise<ServerConfig> {
  */
 async function start(): Promise<void> {
   let server;
-  
+
   try {
     const config = await loadConfig();
-    
+
     console.log('Starting Cortex MCP Marketplace API...');
     console.log(`Port: ${config.port}`);
     console.log(`Host: ${config.host}`);
     console.log(`Cache Dir: ${config.cacheDir}`);
     console.log(`Cache TTL: ${config.cacheTtl}ms`);
     console.log(`Registries: ${Object.keys(config.registries).join(', ')}`);
-    
+
     server = build({
       logger: config.logLevel !== 'error',
       registries: config.registries,
       cacheDir: config.cacheDir,
       cacheTtl: config.cacheTtl,
       port: config.port,
-      host: config.host
+      host: config.host,
     });
 
     // Handle graceful shutdown
     const signals: NodeJS.Signals[] = ['SIGTERM', 'SIGINT'];
-    signals.forEach(signal => {
+    signals.forEach((signal) => {
       process.on(signal, async () => {
         console.log(`Received ${signal}, gracefully shutting down...`);
         try {
@@ -113,16 +113,15 @@ async function start(): Promise<void> {
     // Start listening
     await server.listen({
       port: config.port,
-      host: config.host
+      host: config.host,
     });
 
     console.log(`🚀 Marketplace API server started successfully!`);
     console.log(`📖 API Documentation: http://${config.host}:${config.port}/documentation`);
     console.log(`🏥 Health Check: http://${config.host}:${config.port}/health`);
-
   } catch (error) {
     console.error('Failed to start server:', error);
-    
+
     if (server) {
       try {
         await server.close();
@@ -130,7 +129,7 @@ async function start(): Promise<void> {
         console.error('Error closing server:', closeError);
       }
     }
-    
+
     process.exit(1);
   }
 }

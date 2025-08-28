@@ -3,7 +3,7 @@
  * @description TDD Tests for LLM Integration - MLX and Ollama
  * @author Cortex-OS Team
  * @version 1.0.0
- * 
+ *
  * TDD Philosophy:
  * - Each test drives LLM integration implementation
  * - Tests define LLM behavior before code exists
@@ -60,7 +60,9 @@ describe('LLM Integration - TDD Implementation', () => {
         endpoint: 'not-a-url',
       };
 
-      expect(() => orchestrator.configureLLM(invalidConfig)).toThrow('Unsupported LLM provider: invalid');
+      expect(() => orchestrator.configureLLM(invalidConfig)).toThrow(
+        'Unsupported LLM provider: invalid',
+      );
     });
 
     it('should require LLM configuration before execution', async () => {
@@ -68,8 +70,9 @@ describe('LLM Integration - TDD Implementation', () => {
       const neuron = createLLMNeuron('strategy-llm', 'strategy');
       orchestrator.registerNeuron(neuron);
 
-      await expect(orchestrator.executePRPCycle({}))
-        .rejects.toThrow('LLM configuration required for LLM-powered neurons');
+      await expect(orchestrator.executePRPCycle({})).rejects.toThrow(
+        'LLM configuration required for LLM-powered neurons',
+      );
     });
   });
 
@@ -136,7 +139,7 @@ describe('LLM Integration - TDD Implementation', () => {
       };
 
       orchestrator.configureLLM(ollamaConfig);
-      
+
       const llmNeuron = createLLMNeuron('strategy-llm', 'strategy');
       orchestrator.registerNeuron(llmNeuron);
 
@@ -162,7 +165,7 @@ describe('LLM Integration - TDD Implementation', () => {
       };
 
       orchestrator.configureLLM(mlxConfig);
-      
+
       const llmNeuron = createLLMNeuron('analysis-llm', 'build');
       orchestrator.registerNeuron(llmNeuron);
 
@@ -176,7 +179,7 @@ describe('LLM Integration - TDD Implementation', () => {
             provider: 'mlx',
             model: 'llama-3.2-3b',
           }),
-        ])
+        ]),
       );
     });
   });

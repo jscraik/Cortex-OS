@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Package Readiness",
+  "type": "object",
+  "properties": {
+    "package": { "type": "string" },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "statements": { "type": "number", "minimum": 0, "maximum": 100 },
+        "branches": { "type": "number", "minimum": 0, "maximum": 100 },
+        "functions": { "type": "number", "minimum": 0, "maximum": 100 },
+        "lines": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "required": ["statements", "branches", "functions", "lines"]
+    },
+    "checklist": {
+      "type": "object",
+      "properties": {
+        "tdd": { "type": "boolean" },
+        "contracts": { "type": "boolean" },
+        "a11y": { "type": "boolean" },
+        "security": { "type": "boolean" },
+        "docs": { "type": "boolean" },
+        "architecture": { "type": "boolean" },
+        "reliability": { "type": "boolean" }
+      },
+      "required": ["tdd", "contracts", "security", "docs", "architecture", "reliability"]
+    },
+    "thresholds": {
+      "type": "object",
+      "properties": {
+        "statements": { "type": "number", "minimum": 0, "maximum": 100, "default": 95 },
+        "branches": { "type": "number", "minimum": 0, "maximum": 100, "default": 95 },
+        "functions": { "type": "number", "minimum": 0, "maximum": 100, "default": 95 },
+        "lines": { "type": "number", "minimum": 0, "maximum": 100, "default": 95 }
+      }
+    }
+  },
+  "required": ["package", "coverage", "checklist"]
+}

@@ -10,12 +10,12 @@
  */
 
 // Core analytics components
-export { MetricsCollector } from "./metrics-collector.js";
-export { PatternAnalyzer } from "./pattern-analyzer.js";
-export { OptimizationEngine } from "./optimization-engine.js";
-export { AgentTraceCollector } from "./agent-trace-collector.js";
-export { RealtimeDataStream } from "./realtime-data-stream.js";
-export { PerformanceDashboard } from "./performance-dashboard.js";
+export { MetricsCollector } from './metrics-collector.js';
+export { PatternAnalyzer } from './pattern-analyzer.js';
+export { OptimizationEngine } from './optimization-engine.js';
+export { AgentTraceCollector } from './agent-trace-collector.js';
+export { RealtimeDataStream } from './realtime-data-stream.js';
+export { PerformanceDashboard } from './performance-dashboard.js';
 
 // Types and interfaces
 export type {
@@ -30,14 +30,14 @@ export type {
   TrendAnalysis,
   PredictiveModel,
   CrossAgentDependency,
-} from "./types.js";
+} from './types.js';
 
 // Analytics configuration
-export type { AnalyticsConfig } from "./types.js";
-export { createAnalyticsEngine } from "./analytics-engine.js";
+export type { AnalyticsConfig } from './types.js';
+export { createAnalyticsEngine } from './analytics-engine.js';
 
 // Version information
-export const version = "1.0.0";
-export const name = "@cortex-os/orchestration-analytics";
+export const version = '1.0.0';
+export const name = '@cortex-os/orchestration-analytics';
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

@@ -8,8 +8,8 @@ const baseWorkflow = {
   entry: 'start',
   steps: {
     start: { id: 'start', name: 'start', kind: 'agent', next: 'end' },
-    end: { id: 'end', name: 'end', kind: 'agent' }
-  }
+    end: { id: 'end', name: 'end', kind: 'agent' },
+  },
 };
 
 describe('validateWorkflow', () => {
@@ -22,8 +22,8 @@ describe('validateWorkflow', () => {
       ...baseWorkflow,
       steps: {
         start: { id: 'start', name: 'start', kind: 'agent', next: 'end' },
-        end: { id: 'end', name: 'end', kind: 'agent', next: 'start' }
-      }
+        end: { id: 'end', name: 'end', kind: 'agent', next: 'start' },
+      },
     };
     expect(() => validateWorkflow(cyclic)).toThrow(/Cycle detected/);
   });

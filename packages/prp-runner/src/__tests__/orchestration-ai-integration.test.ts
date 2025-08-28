@@ -56,31 +56,33 @@ vi.mock('../orchestrator.js', () => ({
       outputs: {
         'strategy-neuron': { content: 'Strategy output', evidence: ['req1', 'req2'] },
         'build-neuron': { content: 'Build output', evidence: ['impl1', 'impl2'] },
-        'evaluation-neuron': { content: 'Evaluation output', evidence: ['test1', 'test2'] }
+        'evaluation-neuron': { content: 'Evaluation output', evidence: ['test1', 'test2'] },
       },
       validationResults: {
         strategy: { passed: true, blockers: [], majors: [], evidence: ['validated'] },
         build: { passed: true, blockers: [], majors: [], evidence: ['tested'] },
-        evaluation: { passed: true, blockers: [], majors: [], evidence: ['approved'] }
+        evaluation: { passed: true, blockers: [], majors: [], evidence: ['approved'] },
       },
       metadata: {
         startTime: Date.now(),
         runId: 'run-123',
         cerebrum: {
           decision: 'approved',
-          reasoning: 'All validation gates passed'
-        }
-      }
-    })
-  }))
+          reasoning: 'All validation gates passed',
+        },
+      },
+    }),
+  })),
 }));
 
 vi.mock('../neurons/index.js', () => ({
-  createNeuronRegistry: vi.fn().mockReturnValue(new Map([
-    ['strategy-neuron', { id: 'strategy-neuron', phase: 'strategy', type: 'ai-enhanced' }],
-    ['build-neuron', { id: 'build-neuron', phase: 'build', type: 'ai-enhanced' }],
-    ['evaluation-neuron', { id: 'evaluation-neuron', phase: 'evaluation', type: 'ai-enhanced' }]
-  ]))
+  createNeuronRegistry: vi.fn().mockReturnValue(
+    new Map([
+      ['strategy-neuron', { id: 'strategy-neuron', phase: 'strategy', type: 'ai-enhanced' }],
+      ['build-neuron', { id: 'build-neuron', phase: 'build', type: 'ai-enhanced' }],
+      ['evaluation-neuron', { id: 'evaluation-neuron', phase: 'evaluation', type: 'ai-enhanced' }],
+    ]),
+  ),
 }));
 
 // Mock AI capabilities
@@ -89,20 +91,20 @@ vi.mock('../ai-capabilities.js', () => ({
     generate: vi.fn().mockResolvedValue('AI generated task analysis and strategy'),
     searchKnowledge: vi.fn().mockResolvedValue([
       { text: 'Relevant knowledge for task execution', similarity: 0.9 },
-      { text: 'Historical execution patterns', similarity: 0.8 }
+      { text: 'Historical execution patterns', similarity: 0.8 },
     ]),
     ragQuery: vi.fn().mockResolvedValue({
       answer: 'Based on knowledge base analysis, recommended approach is...',
       sources: [{ text: 'Best practice document', similarity: 0.85 }],
-      confidence: 0.88
+      confidence: 0.88,
     }),
     calculateSimilarity: vi.fn().mockResolvedValue(0.82),
     getCapabilities: vi.fn().mockResolvedValue({
       llm: { provider: 'mlx', model: 'qwen', healthy: true },
       embedding: { provider: 'sentence-transformers', dimensions: 1024 },
-      features: ['text-generation', 'embeddings', 'rag', 'knowledge-search']
-    })
-  }))
+      features: ['text-generation', 'embeddings', 'rag', 'knowledge-search'],
+    }),
+  })),
 }));
 
 /**
@@ -132,20 +134,24 @@ class AIEnhancedOrchestrationEngine {
    */
   async orchestrateTaskWithAI(
     task: OrchestrationTask,
-    availableAgents: OrchestrationAgent[]
+    availableAgents: OrchestrationAgent[],
   ): Promise<OrchestrationResult> {
     const startTime = Date.now();
 
     try {
       // Phase 1: AI-Enhanced Task Analysis
       const taskAnalysis = await this.performAITaskAnalysis(task);
-      
+
       // Phase 2: AI-Powered Agent Selection
-      const selectedAgents = await this.selectOptimalAgentsWithAI(availableAgents, task, taskAnalysis);
-      
+      const selectedAgents = await this.selectOptimalAgentsWithAI(
+        availableAgents,
+        task,
+        taskAnalysis,
+      );
+
       // Phase 3: AI-Generated Execution Plan
       const executionPlan = await this.generateAIExecutionPlan(task, selectedAgents, taskAnalysis);
-      
+
       // Phase 4: PRP Neural Orchestration
       const prpResult = await this.prpOrchestrator.executePRPCycle({
         title: task.title,
@@ -155,8 +161,8 @@ class AIEnhancedOrchestrationEngine {
           taskId: task.id,
           aiAnalysis: taskAnalysis,
           selectedAgents,
-          executionPlan
-        }
+          executionPlan,
+        },
       });
 
       // Phase 5: AI-Enhanced Result Analysis
@@ -175,18 +181,18 @@ class AIEnhancedOrchestrationEngine {
           aiEnhancements: {
             strategicInsights: taskAnalysis.insights,
             optimizedExecution: executionPlan.optimizations,
-            qualityAssessment: resultAnalysis.qualityMetrics
-          }
+            qualityAssessment: resultAnalysis.qualityMetrics,
+          },
         },
         performance: {
           totalDuration: Math.max(1, Date.now() - startTime),
           planningTime: 5000, // AI analysis + planning
           executionTime: 15000, // PRP execution
           efficiency: resultAnalysis.efficiency,
-          qualityScore: resultAnalysis.qualityScore
+          qualityScore: resultAnalysis.qualityScore,
         },
         errors: [],
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     } catch (error) {
       return {
@@ -200,10 +206,10 @@ class AIEnhancedOrchestrationEngine {
           planningTime: 0,
           executionTime: 0,
           efficiency: 0,
-          qualityScore: 0
+          qualityScore: 0,
         },
         errors: [error instanceof Error ? error.message : String(error)],
-        timestamp: new Date()
+        timestamp: new Date(),
       };
     }
   }
@@ -211,17 +217,18 @@ class AIEnhancedOrchestrationEngine {
   private async performAITaskAnalysis(task: OrchestrationTask) {
     // Use RAG to analyze task against historical knowledge
     const knowledgeContext = await this.aiCapabilities.ragQuery({
-      query: `Analyze task: ${task.title}. ${task.description}. Required capabilities: ${task.requiredCapabilities.join(', ')}`
+      query: `Analyze task: ${task.title}. ${task.description}. Required capabilities: ${task.requiredCapabilities.join(', ')}`,
     });
 
     // Generate strategic analysis
     const strategicAnalysis = await this.aiCapabilities.generate(
       `Provide strategic analysis for task: ${task.title}`,
       {
-        systemPrompt: 'You are an expert orchestration strategist. Analyze the task and provide execution recommendations.',
+        systemPrompt:
+          'You are an expert orchestration strategist. Analyze the task and provide execution recommendations.',
         temperature: 0.3,
-        maxTokens: 512
-      }
+        maxTokens: 512,
+      },
     );
 
     return {
@@ -231,26 +238,29 @@ class AIEnhancedOrchestrationEngine {
       relevantSources: knowledgeContext.sources,
       confidence: knowledgeContext.confidence,
       estimatedDuration: this.estimateTaskDuration(task),
-      riskFactors: this.identifyRiskFactors(task)
+      riskFactors: this.identifyRiskFactors(task),
     };
   }
 
   private async selectOptimalAgentsWithAI(
     availableAgents: OrchestrationAgent[],
     task: OrchestrationTask,
-    analysis: any
+    analysis: any,
   ): Promise<OrchestrationAgent[]> {
     // Calculate agent-task similarity using embeddings
     const selectedAgents: OrchestrationAgent[] = [];
-    
+
     for (const agent of availableAgents) {
       if (agent.status !== 'available') continue;
 
       const agentDescription = `Agent ${agent.name} with capabilities: ${agent.capabilities.join(', ')}`;
       const taskDescription = `Task: ${task.title} requiring: ${task.requiredCapabilities.join(', ')}`;
-      
-      const similarity = await this.aiCapabilities.calculateSimilarity(agentDescription, taskDescription);
-      
+
+      const similarity = await this.aiCapabilities.calculateSimilarity(
+        agentDescription,
+        taskDescription,
+      );
+
       if (similarity !== null && similarity > 0.6) {
         selectedAgents.push(agent);
       }
@@ -262,17 +272,18 @@ class AIEnhancedOrchestrationEngine {
   private async generateAIExecutionPlan(
     task: OrchestrationTask,
     agents: OrchestrationAgent[],
-    analysis: any
+    analysis: any,
   ) {
     const planPrompt = `Create execution plan for task: ${task.title}
-Available agents: ${agents.map(a => `${a.name} (${a.capabilities.join(', ')})`).join(', ')}
+Available agents: ${agents.map((a) => `${a.name} (${a.capabilities.join(', ')})`).join(', ')}
 Task complexity: ${analysis.complexity}
 Risk factors: ${analysis.riskFactors.join(', ')}`;
 
     const aiPlan = await this.aiCapabilities.generate(planPrompt, {
-      systemPrompt: 'Generate a structured execution plan with phases, dependencies, and checkpoints.',
+      systemPrompt:
+        'Generate a structured execution plan with phases, dependencies, and checkpoints.',
       temperature: 0.2,
-      maxTokens: 1024
+      maxTokens: 1024,
     });
 
     return {
@@ -281,13 +292,13 @@ Risk factors: ${analysis.riskFactors.join(', ')}`;
       agentAssignments: agents.map((agent, index) => ({
         agentId: agent.id,
         phase: ['strategy', 'build', 'evaluation'][index % 3],
-        capabilities: agent.capabilities
+        capabilities: agent.capabilities,
       })),
       optimizations: [
         'AI-optimized agent selection',
         'Knowledge-based strategy refinement',
-        'Risk-aware execution planning'
-      ]
+        'Risk-aware execution planning',
+      ],
     };
   }
 
@@ -302,8 +313,8 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
       {
         systemPrompt: 'Analyze task execution results and provide efficiency and quality metrics.',
         temperature: 0.1,
-        maxTokens: 512
-      }
+        maxTokens: 512,
+      },
     );
 
     return {
@@ -313,8 +324,8 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
       qualityMetrics: {
         completeness: prpResult.phase === 'completed' ? 1.0 : 0.5,
         accuracy: this.calculateAccuracyFromEvidence(prpResult),
-        reliability: this.calculateReliabilityFromCerebrum(prpResult.metadata.cerebrum)
-      }
+        reliability: this.calculateReliabilityFromCerebrum(prpResult.metadata.cerebrum),
+      },
     };
   }
 
@@ -343,13 +354,15 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
 
   private calculateQualityFromValidation(validationResults: any): number {
     const phases = Object.keys(validationResults);
-    const passedPhases = phases.filter(phase => validationResults[phase].passed).length;
+    const passedPhases = phases.filter((phase) => validationResults[phase].passed).length;
     return passedPhases / Math.max(phases.length, 1);
   }
 
   private calculateAccuracyFromEvidence(prpResult: any): number {
-    const totalEvidence = Object.values(prpResult.validationResults)
-      .reduce((sum: number, result: any) => sum + result.evidence.length, 0);
+    const totalEvidence = Object.values(prpResult.validationResults).reduce(
+      (sum: number, result: any) => sum + result.evidence.length,
+      0,
+    );
     return Math.min(totalEvidence / 10, 1.0); // Normalize to 0-1
   }
 
@@ -367,7 +380,7 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
       capabilities: capabilities?.features || [],
       llmStatus: capabilities?.llm || { provider: 'unavailable', healthy: false },
       embeddingStatus: capabilities?.embedding || null,
-      orchestrationMode: 'ai-enhanced'
+      orchestrationMode: 'ai-enhanced',
     };
   }
 }
@@ -379,13 +392,13 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 
   beforeEach(() => {
     orchestrationEngine = new AIEnhancedOrchestrationEngine();
-    
+
     testTask = {
       id: 'task-123',
       title: 'Implement user authentication system',
       description: 'Create secure login system with JWT tokens and password hashing',
       requiredCapabilities: ['code-generation', 'security-analysis', 'testing'],
-      priority: 'high'
+      priority: 'high',
     };
 
     testAgents = [
@@ -393,20 +406,20 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
         id: 'agent-1',
         name: 'Security Specialist',
         capabilities: ['security-analysis', 'encryption', 'authentication'],
-        status: 'available'
+        status: 'available',
       },
       {
-        id: 'agent-2', 
+        id: 'agent-2',
         name: 'Backend Developer',
         capabilities: ['code-generation', 'api-development', 'testing'],
-        status: 'available'
+        status: 'available',
       },
       {
         id: 'agent-3',
         name: 'QA Engineer',
         capabilities: ['testing', 'validation', 'performance-analysis'],
-        status: 'busy'
-      }
+        status: 'busy',
+      },
     ];
   });
 
@@ -454,10 +467,10 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
       // Should select available agents with relevant capabilities
       expect(Array.isArray(selectedAgents)).toBe(true);
       expect(selectedAgents.length).toBeGreaterThan(0);
-      expect(selectedAgents.every(agent => agent.status === 'available')).toBe(true);
-      
+      expect(selectedAgents.every((agent) => agent.status === 'available')).toBe(true);
+
       // Should not include busy agents
-      const busyAgentSelected = selectedAgents.some(agent => agent.id === 'agent-3');
+      const busyAgentSelected = selectedAgents.some((agent) => agent.id === 'agent-3');
       expect(busyAgentSelected).toBe(false);
     });
 
@@ -475,7 +488,9 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
 
     it('should handle AI capabilities failures gracefully', async () => {
       // Mock AI failure
-      vi.mocked(orchestrationEngine['aiCapabilities'].generate).mockRejectedValue(new Error('AI service unavailable'));
+      vi.mocked(orchestrationEngine['aiCapabilities'].generate).mockRejectedValue(
+        new Error('AI service unavailable'),
+      );
 
       const result = await orchestrationEngine.orchestrateTaskWithAI(testTask, testAgents);
 
@@ -526,7 +541,8 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
       const complexTask = {
         ...testTask,
         requiredCapabilities: ['cap1', 'cap2', 'cap3', 'cap4', 'cap5', 'cap6'],
-        description: 'Very complex task with multiple interdependent components requiring extensive coordination and specialized expertise across multiple domains'
+        description:
+          'Very complex task with multiple interdependent components requiring extensive coordination and specialized expertise across multiple domains',
       };
 
       const result = await orchestrationEngine.orchestrateTaskWithAI(complexTask, testAgents);
@@ -559,7 +575,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
       expect(result.performance.totalDuration).toBeGreaterThan(0);
       expect(result.performance.efficiency).toBeGreaterThan(0.7);
       expect(result.performance.qualityScore).toBeGreaterThan(0.7);
-      
+
       // Timing validation
       expect(result.performance.planningTime).toBeGreaterThan(0);
       expect(result.performance.executionTime).toBeGreaterThan(0);
@@ -577,7 +593,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
       expect(result).toHaveProperty('performance');
       expect(result).toHaveProperty('errors');
       expect(result).toHaveProperty('timestamp');
-      
+
       // Type validation
       expect(typeof result.success).toBe('boolean');
       expect(Array.isArray(result.errors)).toBe(true);
@@ -592,7 +608,7 @@ describe('🎭 Orchestration-AI Integration Tests', () => {
       expect(aiEnhancements).toHaveProperty('strategicInsights');
       expect(aiEnhancements).toHaveProperty('optimizedExecution');
       expect(aiEnhancements).toHaveProperty('qualityAssessment');
-      
+
       // Verify content quality
       expect(typeof aiEnhancements.strategicInsights).toBe('string');
       expect(aiEnhancements.strategicInsights.length).toBeGreaterThan(10);
@@ -610,7 +626,7 @@ describe('📋 Orchestration-AI Integration Compliance Checklist', () => {
     expect(orchestrationEngine['aiCapabilities']).toBeTruthy();
     expect(orchestrationEngine['asbrIntegration']).toBeTruthy();
 
-    // ✅ PRP Neural Orchestration Compliance  
+    // ✅ PRP Neural Orchestration Compliance
     expect(orchestrationEngine['prpOrchestrator']).toBeTruthy();
     expect(orchestrationEngine['neuronRegistry']).toBeTruthy();
 
@@ -620,7 +636,7 @@ describe('📋 Orchestration-AI Integration Compliance Checklist', () => {
 
     console.log('✅ Orchestration-AI Integration Compliance: PASSED');
     console.log('   - AI Capabilities: Integrated with full feature set');
-    console.log('   - ASBR Evidence: Integrated with balanced configuration');  
+    console.log('   - ASBR Evidence: Integrated with balanced configuration');
     console.log('   - PRP Orchestration: Neural framework integration complete');
     console.log('   - Enhancement Features: Strategic analysis, optimal selection, AI planning');
   });

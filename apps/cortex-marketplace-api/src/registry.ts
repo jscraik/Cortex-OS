@@ -4,18 +4,18 @@
  */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/require-await, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument, no-console */
 
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
 import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex } from '@noble/hashes/utils';
+import { existsSync } from 'fs';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import Fuse from 'fuse.js';
-import type { 
-  RegistryIndex, 
-  ServerManifest, 
-  SearchRequest, 
+import * as path from 'node:path';
+import type {
+  ApiResponse,
+  RegistryIndex,
+  SearchRequest,
   ServerHealth,
-  ApiResponse 
+  ServerManifest,
 } from './types.js';
 import { RegistryIndexSchema, ServerManifestSchema } from './types.js';
 
@@ -27,7 +27,7 @@ export class MarketplaceRegistry {
 
   constructor(
     private registryUrl: string = 'https://registry.cortex-os.dev/v1/registry.json',
-    private cacheDir: string = './.cortex/registry/cache'
+    private cacheDir: string = './.cortex/registry/cache',
   ) {}
 
   /**
@@ -35,10 +35,10 @@ export class MarketplaceRegistry {
    */
   async initialize(): Promise<void> {
     await this.ensureCacheDir();
-    
+
     try {
       await this.loadFromCache();
-      
+
       // Fetch updates if cache is stale
       if (this.isCacheStale()) {
         await this.fetchRegistry();
@@ -63,17 +63,17 @@ export class MarketplaceRegistry {
 
       const data = await response.json();
       const result = RegistryIndexSchema.safeParse(data);
-      
+
       if (!result.success) {
         throw new Error(`Invalid registry format: ${result.error.message}`);
       }
 
       this.registry = result.data;
       this.lastUpdate = new Date();
-      
+
       // Cache the registry
       await this.saveToCache();
-      
+
       console.log(`✅ Registry updated: ${this.registry.serverCount} servers available`);
     } catch (error) {
       console.error('Failed to fetch registry:', error);
@@ -93,8 +93,8 @@ export class MarketplaceRegistry {
    */
   getServer(id: string): ServerManifest | null {
     if (!this.registry) return null;
-    
-    return this.registry.servers.find(server => server.id === id) || null;
+
+    return this.registry.servers.find((server) => server.id === id) || null;
   }
 
   /**
@@ -113,24 +113,24 @@ export class MarketplaceRegistry {
     // Text search using Fuse.js
     if (request.q && this.searchIndex) {
       const searchResults = this.searchIndex.search(request.q);
-      results = searchResults.map(result => result.item);
+      results = searchResults.map((result) => result.item);
     }
 
     // Category filter
     if (request.category) {
-      results = results.filter(server => server.category === request.category);
+      results = results.filter((server) => server.category === request.category);
     }
 
     // Capabilities filter
     if (request.capabilities && request.capabilities.length > 0) {
-      results = results.filter(server => 
-        request.capabilities!.every(cap => server.capabilities[cap])
+      results = results.filter((server) =>
+        request.capabilities!.every((cap) => server.capabilities[cap]),
       );
     }
 
     // Verified filter
     if (request.verified !== undefined) {
-      results = results.filter(server => server.publisher.verified === request.verified);
+      results = results.filter((server) => server.publisher.verified === request.verified);
     }
 
     // Sort by featured first, then by downloads
@@ -160,8 +160,8 @@ export class MarketplaceRegistry {
    */
   getFeaturedServers(): ServerManifest[] {
     if (!this.registry) return [];
-    
-    return this.registry.servers.filter(server => server.featured);
+
+    return this.registry.servers.filter((server) => server.featured);
   }
 
   /**
@@ -169,8 +169,8 @@ export class MarketplaceRegistry {
    */
   getServersByCategory(category: string): ServerManifest[] {
     if (!this.registry) return [];
-    
-    return this.registry.servers.filter(server => server.category === category);
+
+    return this.registry.servers.filter((server) => server.category === category);
   }
 
   /**
@@ -192,14 +192,14 @@ export class MarketplaceRegistry {
    */
   validateServer(manifest: unknown): { valid: boolean; errors: string[] } {
     const result = ServerManifestSchema.safeParse(manifest);
-    
+
     if (result.success) {
       return { valid: true, errors: [] };
     }
-    
+
     return {
       valid: false,
-      errors: result.error.errors.map(err => `${err.path.join('.')}: ${err.message}`),
+      errors: result.error.errors.map((err) => `${err.path.join('.')}: ${err.message}`),
     };
   }
 
@@ -213,17 +213,17 @@ export class MarketplaceRegistry {
       totalServers: this.registry.serverCount,
       categories: Object.keys(this.registry.categories).length,
       featuredServers: this.registry.featured.length,
-      verifiedPublishers: this.registry.servers.filter(s => s.publisher.verified).length,
+      verifiedPublishers: this.registry.servers.filter((s) => s.publisher.verified).length,
       lastUpdated: this.lastUpdate?.toISOString(),
       capabilities: {
-        tools: this.registry.servers.filter(s => s.capabilities.tools).length,
-        resources: this.registry.servers.filter(s => s.capabilities.resources).length,
-        prompts: this.registry.servers.filter(s => s.capabilities.prompts).length,
+        tools: this.registry.servers.filter((s) => s.capabilities.tools).length,
+        resources: this.registry.servers.filter((s) => s.capabilities.resources).length,
+        prompts: this.registry.servers.filter((s) => s.capabilities.prompts).length,
       },
       riskLevels: {
-        low: this.registry.servers.filter(s => s.security.riskLevel === 'low').length,
-        medium: this.registry.servers.filter(s => s.security.riskLevel === 'medium').length,
-        high: this.registry.servers.filter(s => s.security.riskLevel === 'high').length,
+        low: this.registry.servers.filter((s) => s.security.riskLevel === 'low').length,
+        medium: this.registry.servers.filter((s) => s.security.riskLevel === 'medium').length,
+        high: this.registry.servers.filter((s) => s.security.riskLevel === 'high').length,
       },
     };
 
@@ -285,10 +285,10 @@ export class MarketplaceRegistry {
 
   private isCacheStale(): boolean {
     if (!this.lastUpdate) return true;
-    
+
     const cacheAge = Date.now() - this.lastUpdate.getTime();
     const maxAge = 5 * 60 * 1000; // 5 minutes
-    
+
     return cacheAge > maxAge;
   }
 
@@ -309,7 +309,7 @@ export class MarketplaceRegistry {
 
   private getRegistryChecksum(): string {
     if (!this.registry) return '';
-    
+
     const content = JSON.stringify(this.registry);
     const hash = sha256(content);
     return bytesToHex(hash);

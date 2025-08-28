@@ -5,7 +5,12 @@ import { memoryStore } from '@cortex-os/rag/store/memory';
 import { expect, it } from 'vitest';
 
 async function isUp(url: string) {
-  try { const r = await fetch(url, { method: 'HEAD' }); return r.ok || r.status === 405; } catch { return false; }
+  try {
+    const r = await fetch(url, { method: 'HEAD' });
+    return r.ok || r.status === 405;
+  } catch {
+    return false;
+  }
 }
 
 it('ingests and queries (skips if embedder down)', async () => {

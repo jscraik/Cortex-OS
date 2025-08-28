@@ -37,7 +37,7 @@ export class ASBRAIMcpIntegration {
 
       // Check server health
       const health = await this.mcpServer.getHealth();
-      
+
       if (health.status === 'healthy') {
         console.log('✅ ASBR AI MCP server initialized successfully');
         console.log(`   - Status: ${health.status}`);
@@ -62,7 +62,9 @@ export class ASBRAIMcpIntegration {
       try {
         express = await import('express').then((m) => m.default);
       } catch (importError) {
-        throw new Error(`Express dependency not available: ${importError instanceof Error ? importError.message : String(importError)}`);
+        throw new Error(
+          `Express dependency not available: ${importError instanceof Error ? importError.message : String(importError)}`,
+        );
       }
       const app = express();
 
@@ -119,8 +121,8 @@ export class ASBRAIMcpIntegration {
             method: 'tools/call',
             params: {
               name: 'ai_get_capabilities',
-              arguments: {}
-            }
+              arguments: {},
+            },
           });
           res.json(capabilities);
         } catch (error) {
@@ -135,8 +137,8 @@ export class ASBRAIMcpIntegration {
             method: 'tools/call',
             params: {
               name: 'ai_get_knowledge_stats',
-              arguments: {}
-            }
+              arguments: {},
+            },
           });
           res.json(stats);
         } catch (error) {
@@ -172,7 +174,7 @@ export class ASBRAIMcpIntegration {
    */
   async isHealthy(): Promise<boolean> {
     if (!this.isRegistered) return false;
-    
+
     try {
       const health = await this.mcpServer.getHealth();
       return health.status === 'healthy';
@@ -204,26 +206,26 @@ export class ASBRAIMcpIntegration {
     const testCases = [
       {
         name: 'ai_get_capabilities',
-        args: {}
+        args: {},
       },
       {
         name: 'ai_get_knowledge_stats',
-        args: {}
+        args: {},
       },
       {
         name: 'ai_generate_text',
         args: {
           prompt: 'Hello, this is a test of the MLX integration.',
-          maxTokens: 50
-        }
+          maxTokens: 50,
+        },
       },
       {
         name: 'ai_calculate_similarity',
         args: {
           text1: 'Machine learning is a subset of artificial intelligence',
-          text2: 'AI includes machine learning as one of its components'
-        }
-      }
+          text2: 'AI includes machine learning as one of its components',
+        },
+      },
     ];
 
     for (const testCase of testCases) {
@@ -232,31 +234,31 @@ export class ASBRAIMcpIntegration {
           method: 'tools/call',
           params: {
             name: testCase.name,
-            arguments: testCase.args
-          }
+            arguments: testCase.args,
+          },
         });
 
         if (response.isError) {
           failed++;
-          results.push({ 
-            tool: testCase.name, 
-            status: 'failed', 
-            error: response.content[0]?.text 
+          results.push({
+            tool: testCase.name,
+            status: 'failed',
+            error: response.content[0]?.text,
           });
         } else {
           passed++;
-          results.push({ 
-            tool: testCase.name, 
+          results.push({
+            tool: testCase.name,
             status: 'passed',
-            response: response.content[0]?.text?.substring(0, 100) + '...'
+            response: response.content[0]?.text?.substring(0, 100) + '...',
           });
         }
       } catch (error) {
         failed++;
-        results.push({ 
-          tool: testCase.name, 
-          status: 'error', 
-          error: String(error) 
+        results.push({
+          tool: testCase.name,
+          status: 'error',
+          error: String(error),
         });
       }
     }
@@ -277,20 +279,20 @@ export const ASBR_AI_MCP_TOOLS = {
   // Text generation tools
   AI_GENERATE_TEXT: 'ai_generate_text',
   AI_RAG_QUERY: 'ai_rag_query',
-  
+
   // Knowledge management tools
   AI_SEARCH_KNOWLEDGE: 'ai_search_knowledge',
   AI_ADD_KNOWLEDGE: 'ai_add_knowledge',
   AI_GET_KNOWLEDGE_STATS: 'ai_get_knowledge_stats',
-  
+
   // Embedding and similarity tools
   AI_GET_EMBEDDING: 'ai_get_embedding',
   AI_CALCULATE_SIMILARITY: 'ai_calculate_similarity',
-  
+
   // ASBR evidence tools
   ASBR_COLLECT_ENHANCED_EVIDENCE: 'asbr_collect_enhanced_evidence',
   ASBR_FACT_CHECK_EVIDENCE: 'asbr_fact_check_evidence',
-  
+
   // System tools
   AI_GET_CAPABILITIES: 'ai_get_capabilities',
 } as const;
@@ -298,17 +300,14 @@ export const ASBR_AI_MCP_TOOLS = {
 /**
  * Helper function to call ASBR AI MCP tools
  */
-export async function callASBRAITool(
-  toolName: string, 
-  args: Record<string, any>
-): Promise<any> {
+export async function callASBRAITool(toolName: string, args: Record<string, any>): Promise<any> {
   try {
     const response = await asbrAIMcpIntegration.getMcpServer().callTool({
       method: 'tools/call',
       params: {
         name: toolName,
-        arguments: args
-      }
+        arguments: args,
+      },
     });
 
     if (response.isError) {

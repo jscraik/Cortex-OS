@@ -1,4 +1,4 @@
-import type { RunState, Workflow, Token } from "../domain/types.js";
+import type { RunState, Workflow, Token } from '../domain/types.js';
 
 export interface Store {
   saveWorkflow(wf: Workflow): Promise<void>;
@@ -9,4 +9,3 @@ export interface Store {
   appendEvent(runId: string, event: Record<string, unknown>): Promise<void>;
   recordToken(t: Token): Promise<void>;
 }
-

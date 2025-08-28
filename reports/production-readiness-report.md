@@ -1,5 +1,6 @@
 # Production Readiness Report
 
+
 This report provides a heuristic production readiness score (0-100%) for each package and app across key quality areas.
 
 | Package/App            | Architecture | Reliability | Security | Testing | Documentation | Accessibility | Overall |
@@ -34,3 +35,4 @@ This report provides a heuristic production readiness score (0-100%) for each pa
 | vscode-extension       | 45           | 40          | 35       | 30      | 25            | 25            | 33      |
 
 _Generated on 2025-08-28T18:34Z_
+

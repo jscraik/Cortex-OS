@@ -156,7 +156,8 @@ export class SchemaRegistry {
       if (
         eventData === undefined ||
         eventData === null ||
-        (typeof eventData === 'object' && Object.keys(eventData as Record<string, unknown>).length === 0)
+        (typeof eventData === 'object' &&
+          Object.keys(eventData as Record<string, unknown>).length === 0)
       ) {
         return res.status(400).json({
           error: 'No event data provided',

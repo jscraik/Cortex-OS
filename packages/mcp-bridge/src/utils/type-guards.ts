@@ -30,7 +30,7 @@ export const isArray = (value: unknown): value is unknown[] => Array.isArray(val
 /**
  * Type guard for object values
  */
-export const isObject = (value: unknown): value is Record<string, unknown> => 
+export const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
@@ -46,7 +46,8 @@ export const getErrorMessage = (error: unknown): string => {
 /**
  * Check if value is defined (not null or undefined)
  */
-export const isDefined = <T>(value: T | null | undefined): value is T => value !== null && value !== undefined;
+export const isDefined = <T>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
 
 /**
  * Check if value is a function
@@ -56,5 +57,5 @@ export const isFunction = (value: unknown): value is Function => typeof value ==
 /**
  * Check if value is a promise
  */
-export const isPromise = <T>(value: unknown): value is Promise<T> => 
+export const isPromise = <T>(value: unknown): value is Promise<T> =>
   value instanceof Promise || (isObject(value) && isFunction((value as any).then));

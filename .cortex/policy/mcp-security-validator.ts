@@ -12,25 +12,25 @@ const GovernancePolicySchema = z.object({
   security: z.object({
     riskLevels: z.object({
       allowed: z.array(z.enum(['low', 'medium', 'high'])),
-      requireApproval: z.array(z.enum(['medium', 'high']))
+      requireApproval: z.array(z.enum(['medium', 'high'])),
     }),
     signatures: z.object({
       required: z.boolean(),
       trustedPublishers: z.array(z.string()),
-      sigstoreValidation: z.boolean()
+      sigstoreValidation: z.boolean(),
     }),
     permissions: z.object({
       dangerous: z.array(z.string()),
-      requireConfirmation: z.array(z.string())
-    })
+      requireConfirmation: z.array(z.string()),
+    }),
   }),
   marketplace: z.object({
     validation: z.object({
       strictMode: z.boolean(),
       allowPrerelease: z.boolean(),
-      minRating: z.number().min(0).max(5)
-    })
-  })
+      minRating: z.number().min(0).max(5),
+    }),
+  }),
 });
 
 type GovernancePolicy = z.infer<typeof GovernancePolicySchema>;
@@ -66,14 +66,14 @@ export class McpSecurityValidator {
    */
   static async fromPolicyFile(
     policyPath: string,
-    enforcementLevel: 'strict' | 'warn' | 'permissive' = 'strict'
+    enforcementLevel: 'strict' | 'warn' | 'permissive' = 'strict',
   ): Promise<McpSecurityValidator> {
     const content = await readFile(policyPath, 'utf-8');
     const policy = GovernancePolicySchema.parse(JSON.parse(content));
-    
+
     return new McpSecurityValidator({
       policy,
-      enforcementLevel
+      enforcementLevel,
     });
   }
 
@@ -86,29 +86,30 @@ export class McpSecurityValidator {
       warnings: [],
       errors: [],
       requiresApproval: false,
-      requiresConfirmation: false
+      requiresConfirmation: false,
     };
 
     // Validate risk level
     this.validateRiskLevel(server, result);
-    
+
     // Validate permissions
     this.validatePermissions(server, result);
-    
+
     // Validate publisher trust
     this.validatePublisher(server, result);
-    
+
     // Validate signatures if required
     await this.validateSignatures(server, result);
-    
+
     // Validate rating requirements
     this.validateRating(server, result);
-    
+
     // Validate version requirements
     this.validateVersion(server, result);
 
     // Final validation state
-    result.valid = result.errors.length === 0 && 
+    result.valid =
+      result.errors.length === 0 &&
       (this.enforcementLevel !== 'strict' || result.warnings.length === 0);
 
     return result;
@@ -119,7 +120,7 @@ export class McpSecurityValidator {
    */
   private validateRiskLevel(server: ServerManifest, result: ValidationResult): void {
     const riskLevel = server.security?.riskLevel;
-    
+
     if (!riskLevel) {
       result.errors.push('Server missing security risk level declaration');
       return;
@@ -145,13 +146,13 @@ export class McpSecurityValidator {
     const requireConfirmation = this.policy.security.permissions.requireConfirmation;
 
     // Check for dangerous permissions
-    const hasDangerous = permissions.some(perm => 
-      dangerous.some(dangerousPerm => perm.includes(dangerousPerm))
+    const hasDangerous = permissions.some((perm) =>
+      dangerous.some((dangerousPerm) => perm.includes(dangerousPerm)),
     );
 
     if (hasDangerous) {
-      const dangerousPerms = permissions.filter(perm =>
-        dangerous.some(dangerousPerm => perm.includes(dangerousPerm))
+      const dangerousPerms = permissions.filter((perm) =>
+        dangerous.some((dangerousPerm) => perm.includes(dangerousPerm)),
       );
 
       result.warnings.push(`Server requests dangerous permissions: ${dangerousPerms.join(', ')}`);
@@ -163,16 +164,18 @@ export class McpSecurityValidator {
     }
 
     // Check for confirmation-required permissions
-    const needsConfirmation = permissions.some(perm =>
-      requireConfirmation.some(confirmPerm => perm.includes(confirmPerm))
+    const needsConfirmation = permissions.some((perm) =>
+      requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm)),
     );
 
     if (needsConfirmation) {
       result.requiresConfirmation = true;
-      const confirmPerms = permissions.filter(perm =>
-        requireConfirmation.some(confirmPerm => perm.includes(confirmPerm))
+      const confirmPerms = permissions.filter((perm) =>
+        requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm)),
       );
-      result.warnings.push(`Server requires confirmation for permissions: ${confirmPerms.join(', ')}`);
+      result.warnings.push(
+        `Server requires confirmation for permissions: ${confirmPerms.join(', ')}`,
+      );
     }
 
     // Validate permission consistency with risk level
@@ -186,7 +189,7 @@ export class McpSecurityValidator {
    */
   private validatePublisher(server: ServerManifest, result: ValidationResult): void {
     const publisher = server.publisher;
-    
+
     if (!publisher) {
       result.errors.push('Server missing publisher information');
       return;
@@ -212,13 +215,16 @@ export class McpSecurityValidator {
   /**
    * Validate cryptographic signatures
    */
-  private async validateSignatures(server: ServerManifest, result: ValidationResult): Promise<void> {
+  private async validateSignatures(
+    server: ServerManifest,
+    result: ValidationResult,
+  ): Promise<void> {
     if (!this.policy.security.signatures.required) {
       return;
     }
 
     const security = server.security;
-    
+
     if (!security?.sigstore) {
       result.errors.push('Server missing required Sigstore attestation');
     }
@@ -247,7 +253,7 @@ export class McpSecurityValidator {
    */
   private validateRating(server: ServerManifest, result: ValidationResult): void {
     const minRating = this.policy.marketplace.validation.minRating;
-    
+
     if (server.rating && server.rating < minRating) {
       result.warnings.push(`Server rating ${server.rating} below minimum ${minRating}`);
     }
@@ -264,7 +270,7 @@ export class McpSecurityValidator {
   private validateVersion(server: ServerManifest, result: ValidationResult): void {
     if (!this.policy.marketplace.validation.allowPrerelease && server.version) {
       const isPrerelease = server.version.includes('-');
-      
+
       if (isPrerelease) {
         result.warnings.push('Prerelease versions not allowed by policy');
       }
@@ -273,7 +279,7 @@ export class McpSecurityValidator {
     // Validate MCP version compatibility
     const mcpVersion = server.mcpVersion;
     const supportedVersions = ['2025-06-18', '2025-03-26'];
-    
+
     if (mcpVersion && !supportedVersions.includes(mcpVersion)) {
       result.warnings.push(`MCP version '${mcpVersion}' may not be supported`);
     }
@@ -306,10 +312,10 @@ export class McpSecurityValidator {
    */
   requiresConfirmation(server: ServerManifest): boolean {
     const permissions = server.permissions || [];
-    return permissions.some(perm =>
-      this.policy.security.permissions.requireConfirmation.some(confirmPerm =>
-        perm.includes(confirmPerm)
-      )
+    return permissions.some((perm) =>
+      this.policy.security.permissions.requireConfirmation.some((confirmPerm) =>
+        perm.includes(confirmPerm),
+      ),
     );
   }
 }

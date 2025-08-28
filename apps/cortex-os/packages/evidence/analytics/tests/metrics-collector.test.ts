@@ -9,11 +9,11 @@
  * @ai_provenance_hash N/A
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { MetricsCollector } from "../src/metrics-collector.js";
-import { AnalyticsConfig, AgentMetrics } from "../src/types.js";
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { MetricsCollector } from '../src/metrics-collector.js';
+import { AnalyticsConfig, AgentMetrics } from '../src/types.js';
 
-describe("MetricsCollector", () => {
+describe('MetricsCollector', () => {
   let collector: MetricsCollector;
   let config: AnalyticsConfig;
 
@@ -39,10 +39,10 @@ describe("MetricsCollector", () => {
       alerts: {
         enabled: true,
         thresholds: {},
-        notificationChannels: ["console"],
+        notificationChannels: ['console'],
       },
       storage: {
-        backend: "memory",
+        backend: 'memory',
         compressionEnabled: false,
         encryptionEnabled: false,
       },
@@ -55,13 +55,13 @@ describe("MetricsCollector", () => {
     await collector.cleanup();
   });
 
-  describe("Initialization", () => {
-    it("should initialize with enabled collection", () => {
+  describe('Initialization', () => {
+    it('should initialize with enabled collection', () => {
       const stats = collector.getCollectionStatistics();
       expect(stats.isCollecting).toBe(true);
     });
 
-    it("should initialize with disabled collection", () => {
+    it('should initialize with disabled collection', () => {
       const disabledConfig = { ...config };
       disabledConfig.collection.enabled = false;
 
@@ -73,21 +73,21 @@ describe("MetricsCollector", () => {
     });
   });
 
-  describe("Collection Lifecycle", () => {
-    it("should start collection when enabled", () => {
+  describe('Collection Lifecycle', () => {
+    it('should start collection when enabled', () => {
       collector.startCollection();
       const stats = collector.getCollectionStatistics();
       expect(stats.isCollecting).toBe(true);
     });
 
-    it("should stop collection", () => {
+    it('should stop collection', () => {
       collector.startCollection();
       collector.stopCollection();
       const stats = collector.getCollectionStatistics();
       expect(stats.isCollecting).toBe(false);
     });
 
-    it("should emit collection events", async () => {
+    it('should emit collection events', async () => {
       const startedSpy = vi.fn();
       const stoppedSpy = vi.fn();
 
@@ -95,8 +95,8 @@ describe("MetricsCollector", () => {
       const testCollector = new MetricsCollector(config);
       testCollector.stopCollection(); // Ensure it's not running
 
-      testCollector.on("collectionStarted", startedSpy);
-      testCollector.on("collectionStopped", stoppedSpy);
+      testCollector.on('collectionStarted', startedSpy);
+      testCollector.on('collectionStopped', stoppedSpy);
 
       testCollector.startCollection();
       expect(startedSpy).toHaveBeenCalledOnce();
@@ -107,7 +107,7 @@ describe("MetricsCollector", () => {
       await testCollector.cleanup();
     });
 
-    it("should handle duplicate start/stop calls gracefully", () => {
+    it('should handle duplicate start/stop calls gracefully', () => {
       collector.startCollection();
       collector.startCollection(); // Should not throw
 
@@ -116,10 +116,10 @@ describe("MetricsCollector", () => {
     });
   });
 
-  describe("Metrics Collection", () => {
-    it("should collect metrics when called manually", async () => {
+  describe('Metrics Collection', () => {
+    it('should collect metrics when called manually', async () => {
       const metricsCollectedSpy = vi.fn();
-      collector.on("metricsCollected", metricsCollectedSpy);
+      collector.on('metricsCollected', metricsCollectedSpy);
 
       await collector.collectMetrics();
 
@@ -131,26 +131,24 @@ describe("MetricsCollector", () => {
       expect(callArgs.timestamp).toBeInstanceOf(Date);
     });
 
-    it("should collect agent metrics from different frameworks", async () => {
+    it('should collect agent metrics from different frameworks', async () => {
       const metricsCollectedSpy = vi.fn();
-      collector.on("metricsCollected", metricsCollectedSpy);
+      collector.on('metricsCollected', metricsCollectedSpy);
 
       await collector.collectMetrics();
 
       const { agentMetrics } = metricsCollectedSpy.mock.calls[0][0];
 
       // Should have metrics from LangGraph, CrewAI, and AutoGen
-      const frameworks = new Set(
-        agentMetrics.map((m: AgentMetrics) => m.framework),
-      );
-      expect(frameworks.has("LangGraph")).toBe(true);
-      expect(frameworks.has("CrewAI")).toBe(true);
-      expect(frameworks.has("AutoGen")).toBe(true);
+      const frameworks = new Set(agentMetrics.map((m: AgentMetrics) => m.framework));
+      expect(frameworks.has('LangGraph')).toBe(true);
+      expect(frameworks.has('CrewAI')).toBe(true);
+      expect(frameworks.has('AutoGen')).toBe(true);
     });
 
-    it("should include required agent metrics fields", async () => {
+    it('should include required agent metrics fields', async () => {
       const metricsCollectedSpy = vi.fn();
-      collector.on("metricsCollected", metricsCollectedSpy);
+      collector.on('metricsCollected', metricsCollectedSpy);
 
       await collector.collectMetrics();
 
@@ -158,21 +156,21 @@ describe("MetricsCollector", () => {
 
       if (agentMetrics.length > 0) {
         const metric = agentMetrics[0];
-        expect(metric.agentId).toBeTypeOf("string");
-        expect(metric.agentType).toBeTypeOf("string");
-        expect(metric.framework).toBeTypeOf("string");
+        expect(metric.agentId).toBeTypeOf('string');
+        expect(metric.agentType).toBeTypeOf('string');
+        expect(metric.framework).toBeTypeOf('string');
         expect(metric.timestamp).toBeInstanceOf(Date);
-        expect(metric.executionTime).toBeTypeOf("number");
-        expect(metric.successRate).toBeTypeOf("number");
+        expect(metric.executionTime).toBeTypeOf('number');
+        expect(metric.successRate).toBeTypeOf('number');
         expect(metric.resourceUsage).toBeDefined();
-        expect(metric.resourceUsage.memory).toBeTypeOf("number");
-        expect(metric.resourceUsage.cpu).toBeTypeOf("number");
+        expect(metric.resourceUsage.memory).toBeTypeOf('number');
+        expect(metric.resourceUsage.cpu).toBeTypeOf('number');
       }
     });
 
-    it("should collect resource utilization metrics", async () => {
+    it('should collect resource utilization metrics', async () => {
       const metricsCollectedSpy = vi.fn();
-      collector.on("metricsCollected", metricsCollectedSpy);
+      collector.on('metricsCollected', metricsCollectedSpy);
 
       await collector.collectMetrics();
 
@@ -183,14 +181,14 @@ describe("MetricsCollector", () => {
       expect(resourceMetrics.network).toBeDefined();
       expect(resourceMetrics.storage).toBeDefined();
 
-      expect(resourceMetrics.cpu.current).toBeTypeOf("number");
-      expect(resourceMetrics.cpu.average).toBeTypeOf("number");
-      expect(resourceMetrics.cpu.peak).toBeTypeOf("number");
+      expect(resourceMetrics.cpu.current).toBeTypeOf('number');
+      expect(resourceMetrics.cpu.average).toBeTypeOf('number');
+      expect(resourceMetrics.cpu.peak).toBeTypeOf('number');
     });
   });
 
-  describe("Performance Metrics", () => {
-    it("should provide current performance metrics", () => {
+  describe('Performance Metrics', () => {
+    it('should provide current performance metrics', () => {
       const performanceMetrics = collector.getCurrentPerformanceMetrics();
 
       expect(performanceMetrics.executionTimes).toBeInstanceOf(Array);
@@ -200,7 +198,7 @@ describe("MetricsCollector", () => {
       expect(performanceMetrics.agentDistribution).toBeInstanceOf(Array);
     });
 
-    it("should calculate agent distribution by framework", async () => {
+    it('should calculate agent distribution by framework', async () => {
       // Collect some metrics first
       await collector.collectMetrics();
 
@@ -209,26 +207,26 @@ describe("MetricsCollector", () => {
 
       // Should have distribution data
       agentDistribution.forEach((dist) => {
-        expect(dist.framework).toBeTypeOf("string");
-        expect(dist.count).toBeTypeOf("number");
-        expect(dist.percentage).toBeTypeOf("number");
+        expect(dist.framework).toBeTypeOf('string');
+        expect(dist.count).toBeTypeOf('number');
+        expect(dist.percentage).toBeTypeOf('number');
         expect(dist.percentage).toBeGreaterThanOrEqual(0);
         expect(dist.percentage).toBeLessThanOrEqual(100);
       });
     });
   });
 
-  describe("Statistics and Monitoring", () => {
-    it("should provide collection statistics", () => {
+  describe('Statistics and Monitoring', () => {
+    it('should provide collection statistics', () => {
       const stats = collector.getCollectionStatistics();
 
-      expect(stats.isCollecting).toBeTypeOf("boolean");
-      expect(stats.metricsCollected).toBeTypeOf("number");
-      expect(stats.collectionErrors).toBeTypeOf("number");
-      expect(stats.bufferedMetrics).toBeTypeOf("number");
+      expect(stats.isCollecting).toBeTypeOf('boolean');
+      expect(stats.metricsCollected).toBeTypeOf('number');
+      expect(stats.collectionErrors).toBeTypeOf('number');
+      expect(stats.bufferedMetrics).toBeTypeOf('number');
     });
 
-    it("should track collection errors", async () => {
+    it('should track collection errors', async () => {
       // Create a test instance with manual control
       const testConfig = { ...config };
       testConfig.collection.enabled = false; // Don't auto-start
@@ -239,8 +237,8 @@ describe("MetricsCollector", () => {
 
       // Mock collectMetrics to throw an error
       const collectMetricsSpy = vi
-        .spyOn(testCollector, "collectMetrics")
-        .mockRejectedValue(new Error("Test error"));
+        .spyOn(testCollector, 'collectMetrics')
+        .mockRejectedValue(new Error('Test error'));
 
       try {
         await testCollector.collectMetrics();
@@ -256,7 +254,7 @@ describe("MetricsCollector", () => {
       await testCollector.cleanup();
     });
 
-    it("should update metrics collected count", async () => {
+    it('should update metrics collected count', async () => {
       const initialStats = collector.getCollectionStatistics();
       const initialCount = initialStats.metricsCollected;
 
@@ -267,8 +265,8 @@ describe("MetricsCollector", () => {
     });
   });
 
-  describe("Data Management", () => {
-    it("should clear metrics data", async () => {
+  describe('Data Management', () => {
+    it('should clear metrics data', async () => {
       // Collect some metrics first
       await collector.collectMetrics();
 
@@ -282,16 +280,16 @@ describe("MetricsCollector", () => {
       expect(afterStats.bufferedMetrics).toBe(0);
     });
 
-    it("should emit metricsCleared event", () => {
+    it('should emit metricsCleared event', () => {
       const clearedSpy = vi.fn();
-      collector.on("metricsCleared", clearedSpy);
+      collector.on('metricsCleared', clearedSpy);
 
       collector.clearMetrics();
 
       expect(clearedSpy).toHaveBeenCalledOnce();
     });
 
-    it("should maintain buffer size limits", async () => {
+    it('should maintain buffer size limits', async () => {
       // Create test collector with specific config
       const testConfig = { ...config };
       testConfig.collection.batchSize = 2; // Small batch size for testing
@@ -312,20 +310,20 @@ describe("MetricsCollector", () => {
     });
   });
 
-  describe("OpenTelemetry Integration", () => {
-    it("should collect agent traces", async () => {
+  describe('OpenTelemetry Integration', () => {
+    it('should collect agent traces', async () => {
       const traces = await collector.collectAgentTraces();
       expect(traces).toBeInstanceOf(Array);
     });
 
-    it("should collect traces for specific agent", async () => {
-      const traces = await collector.collectAgentTraces("test-agent");
+    it('should collect traces for specific agent', async () => {
+      const traces = await collector.collectAgentTraces('test-agent');
       expect(traces).toBeInstanceOf(Array);
     });
   });
 
-  describe("Cleanup", () => {
-    it("should cleanup all resources", async () => {
+  describe('Cleanup', () => {
+    it('should cleanup all resources', async () => {
       collector.startCollection();
 
       await collector.cleanup();
@@ -335,20 +333,20 @@ describe("MetricsCollector", () => {
       expect(stats.bufferedMetrics).toBe(0);
     });
 
-    it("should remove all event listeners on cleanup", async () => {
+    it('should remove all event listeners on cleanup', async () => {
       const testSpy = vi.fn();
-      collector.on("metricsCollected", testSpy);
+      collector.on('metricsCollected', testSpy);
 
       await collector.cleanup();
 
       // Try to trigger event after cleanup
-      collector.emit("metricsCollected", {});
+      collector.emit('metricsCollected', {});
       expect(testSpy).not.toHaveBeenCalled();
     });
   });
 
-  describe("Accessibility Considerations", () => {
-    it("should provide accessible performance data structure", () => {
+  describe('Accessibility Considerations', () => {
+    it('should provide accessible performance data structure', () => {
       const performanceMetrics = collector.getCurrentPerformanceMetrics();
 
       // Verify data structure is suitable for screen readers and visualizations
@@ -357,20 +355,20 @@ describe("MetricsCollector", () => {
 
       // Verify agent distribution has required accessibility fields
       performanceMetrics.agentDistribution.forEach((dist) => {
-        expect(dist).toHaveProperty("framework");
-        expect(dist).toHaveProperty("count");
-        expect(dist).toHaveProperty("percentage");
+        expect(dist).toHaveProperty('framework');
+        expect(dist).toHaveProperty('count');
+        expect(dist).toHaveProperty('percentage');
       });
     });
 
-    it("should provide descriptive statistics for assistive technologies", () => {
+    it('should provide descriptive statistics for assistive technologies', () => {
       const stats = collector.getCollectionStatistics();
 
       // All statistics should be numbers or clearly typed for screen readers
-      expect(typeof stats.isCollecting).toBe("boolean");
-      expect(typeof stats.metricsCollected).toBe("number");
-      expect(typeof stats.collectionErrors).toBe("number");
-      expect(typeof stats.bufferedMetrics).toBe("number");
+      expect(typeof stats.isCollecting).toBe('boolean');
+      expect(typeof stats.metricsCollected).toBe('number');
+      expect(typeof stats.collectionErrors).toBe('number');
+      expect(typeof stats.bufferedMetrics).toBe('number');
     });
   });
 });

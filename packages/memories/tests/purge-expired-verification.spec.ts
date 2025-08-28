@@ -11,7 +11,7 @@ const mockPrisma = {
     delete: vi.fn(),
     findMany: vi.fn(),
     deleteMany: vi.fn(),
-  }
+  },
 };
 
 describe('Purge Expired Memories Implementation Verification', () => {
@@ -56,7 +56,7 @@ describe('Purge Expired Memories Implementation Verification', () => {
       updatedAt: past,
       provenance: { source: 'user' },
     };
-    
+
     await store.upsert(expiredMemory);
     await store.upsert(freshMemory);
     await store.upsert(noTtlMemory);
@@ -68,7 +68,7 @@ describe('Purge Expired Memories Implementation Verification', () => {
 
     // Purge expired memories
     const purgedCount = await store.purgeExpired(new Date().toISOString());
-    
+
     // Should purge only the expired memory
     expect(purgedCount).toBe(1);
     expect(await store.get('1')).toBeNull(); // Expired memory removed
@@ -79,7 +79,7 @@ describe('Purge Expired Memories Implementation Verification', () => {
   it('PrismaStore correctly purges expired memories', async () => {
     const store = new PrismaStore(mockPrisma as any);
     const now = new Date().toISOString();
-    
+
     // Mock the findMany response with memories that have TTL
     mockPrisma.memory.findMany.mockResolvedValue([
       {
@@ -101,31 +101,31 @@ describe('Purge Expired Memories Implementation Verification', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         provenance: { source: 'user' },
-      }
+      },
     ]);
-    
+
     // Mock the deleteMany response
     mockPrisma.memory.deleteMany.mockResolvedValue({ count: 1 });
-    
+
     // Purge expired memories
     const purgedCount = await store.purgeExpired(now);
-    
+
     // Should purge only the expired memory
     expect(purgedCount).toBe(1);
     expect(mockPrisma.memory.findMany).toHaveBeenCalledWith({
-      where: { ttl: { not: null } }
+      where: { ttl: { not: null } },
     });
     expect(mockPrisma.memory.deleteMany).toHaveBeenCalledWith({
       where: {
-        id: { in: ['1'] }
-      }
+        id: { in: ['1'] },
+      },
     });
   });
 
   it('handles invalid TTL formats gracefully', async () => {
     const store = new InMemoryStore();
     const now = new Date().toISOString();
-    
+
     // Insert memory with invalid TTL
     const invalidTtlMemory: Memory = {
       id: 'invalid-ttl',
@@ -137,9 +137,9 @@ describe('Purge Expired Memories Implementation Verification', () => {
       updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 60 * 30).toISOString(),
       provenance: { source: 'user' },
     };
-    
+
     await store.upsert(invalidTtlMemory);
-    
+
     // Purging with invalid TTL should not cause errors
     const purgedCount = await store.purgeExpired(now);
     expect(purgedCount).toBe(0); // No memories purged due to invalid TTL

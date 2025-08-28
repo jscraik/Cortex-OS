@@ -6,4 +6,3 @@ export const a2aList = new Command('list')
     // Minimal: show health handler
     process.stdout.write('event.health.v1\n');
   });
-

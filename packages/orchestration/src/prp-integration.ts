@@ -61,7 +61,7 @@ export class PRPOrchestrationEngine extends EventEmitter {
     // Initialize PRP orchestrator
     this.prpOrchestrator = new PRPOrchestrator();
     this.neuronRegistry = new Map();
-    
+
     // Register all neurons
     for (const [id, neuron] of this.neuronRegistry) {
       this.prpOrchestrator.registerNeuron(neuron);
@@ -99,7 +99,7 @@ export class PRPOrchestrationEngine extends EventEmitter {
     try {
       // Convert task to PRP blueprint
       const blueprint = this.taskToPRPBlueprint(task, availableAgents, context);
-      
+
       // Initialize orchestration state
       const state = this.initializeOrchestrationState(
         orchestrationId,
@@ -189,14 +189,14 @@ export class PRPOrchestrationEngine extends EventEmitter {
       },
       neurons: {
         registered: this.neuronRegistry.size,
-        strategy_phase: Array.from(this.neuronRegistry.keys()).filter(id => 
-          this.neuronRegistry.get(id)?.phase === 'strategy'
+        strategy_phase: Array.from(this.neuronRegistry.keys()).filter(
+          (id) => this.neuronRegistry.get(id)?.phase === 'strategy',
         ).length,
-        build_phase: Array.from(this.neuronRegistry.keys()).filter(id => 
-          this.neuronRegistry.get(id)?.phase === 'build'
+        build_phase: Array.from(this.neuronRegistry.keys()).filter(
+          (id) => this.neuronRegistry.get(id)?.phase === 'build',
         ).length,
-        evaluation_phase: Array.from(this.neuronRegistry.keys()).filter(id => 
-          this.neuronRegistry.get(id)?.phase === 'evaluation'
+        evaluation_phase: Array.from(this.neuronRegistry.keys()).filter(
+          (id) => this.neuronRegistry.get(id)?.phase === 'evaluation',
         ).length,
       },
       validation: {
@@ -218,7 +218,7 @@ export class PRPOrchestrationEngine extends EventEmitter {
       ],
       context: {
         taskId: task.id,
-        availableAgents: agents.map(a => ({ id: a.id, capabilities: a.capabilities })),
+        availableAgents: agents.map((a) => ({ id: a.id, capabilities: a.capabilities })),
         constraints: context.constraints,
         resources: context.resources,
       },
@@ -284,22 +284,22 @@ export class PRPOrchestrationEngine extends EventEmitter {
     try {
       // Execute PRP neural orchestration
       const prpResult: PRPState = await this.prpOrchestrator.executePRPCycle(blueprint);
-      
+
       // Update orchestration state based on PRP results
       state.currentPhase = this.mapPRPPhaseToOrchestrationPhase(prpResult.phase);
       state.status = this.mapPRPPhaseToStatus(prpResult.phase);
       state.progress = this.calculateProgressFromPRPPhase(prpResult.phase);
       state.endTime = new Date();
-      
+
       // Convert PRP results to OrchestrationResult format
       const plan = this.createExecutionPlanFromPRP(prpResult);
       const executionResults = this.extractExecutionResults(prpResult);
       const decisions = this.extractDecisions(prpResult);
-      
+
       const totalDuration = Date.now() - startTime;
       const efficiency = this.calculateEfficiencyFromPRP(prpResult, totalDuration);
       const qualityScore = this.calculateQualityFromPRP(prpResult);
-      
+
       return {
         orchestrationId: state.id,
         taskId: state.taskId,
@@ -334,33 +334,33 @@ export class PRPOrchestrationEngine extends EventEmitter {
   // Helper methods for PRP to OrchestrationResult conversion
   private mapPRPPhaseToOrchestrationPhase(prpPhase: string): string {
     const mapping: Record<string, string> = {
-      'strategy': 'planning',
-      'build': 'execution',
-      'evaluation': 'validation',
-      'completed': 'completed',
-      'recycled': 'failed',
+      strategy: 'planning',
+      build: 'execution',
+      evaluation: 'validation',
+      completed: 'completed',
+      recycled: 'failed',
     };
     return mapping[prpPhase] || 'unknown';
   }
 
   private mapPRPPhaseToStatus(prpPhase: string): string {
     const mapping: Record<string, string> = {
-      'strategy': 'planning',
-      'build': 'executing',
-      'evaluation': 'validating',
-      'completed': 'completed',
-      'recycled': 'failed',
+      strategy: 'planning',
+      build: 'executing',
+      evaluation: 'validating',
+      completed: 'completed',
+      recycled: 'failed',
     };
     return mapping[prpPhase] || 'unknown';
   }
 
   private calculateProgressFromPRPPhase(prpPhase: string): number {
     const progressMapping: Record<string, number> = {
-      'strategy': 30,
-      'build': 70,
-      'evaluation': 90,
-      'completed': 100,
-      'recycled': 0,
+      strategy: 30,
+      build: 70,
+      evaluation: 90,
+      completed: 100,
+      recycled: 0,
     };
     return progressMapping[prpPhase] || 0;
   }
@@ -388,7 +388,7 @@ export class PRPOrchestrationEngine extends EventEmitter {
           validation: 'Strategy phase validation passed',
         },
         {
-          phase: 'build', 
+          phase: 'build',
           criteria: ['Implementation complete', 'Tests passing'],
           validation: 'Build phase validation passed',
         },
@@ -427,43 +427,49 @@ export class PRPOrchestrationEngine extends EventEmitter {
 
   private extractAllEvidence(prpResult: PRPState): string[] {
     const evidence: string[] = [];
-    
+
     // Extract evidence from validation results
     for (const [phase, validation] of Object.entries(prpResult.validationResults)) {
       evidence.push(...validation.evidence);
     }
-    
+
     return evidence;
   }
 
   private calculateEfficiencyFromPRP(prpResult: PRPState, totalDuration: number): number {
     const successRate = prpResult.phase === 'completed' ? 1.0 : 0.0;
-    const validationRate = Object.values(prpResult.validationResults)
-      .reduce((sum, result) => sum + (result.passed ? 1 : 0), 0) / 
-      Math.max(Object.keys(prpResult.validationResults).length, 1);
-    
+    const validationRate =
+      Object.values(prpResult.validationResults).reduce(
+        (sum, result) => sum + (result.passed ? 1 : 0),
+        0,
+      ) / Math.max(Object.keys(prpResult.validationResults).length, 1);
+
     return successRate * 0.6 + validationRate * 0.4;
   }
 
   private calculateQualityFromPRP(prpResult: PRPState): number {
-    const totalBlockers = Object.values(prpResult.validationResults)
-      .reduce((sum, result) => sum + result.blockers.length, 0);
-    const totalMajors = Object.values(prpResult.validationResults)
-      .reduce((sum, result) => sum + result.majors.length, 0);
-    
+    const totalBlockers = Object.values(prpResult.validationResults).reduce(
+      (sum, result) => sum + result.blockers.length,
+      0,
+    );
+    const totalMajors = Object.values(prpResult.validationResults).reduce(
+      (sum, result) => sum + result.majors.length,
+      0,
+    );
+
     // Quality decreases with blockers and majors
     const blockerPenalty = totalBlockers * 0.2;
     const majorPenalty = totalMajors * 0.05;
-    
+
     return Math.max(0, 1.0 - blockerPenalty - majorPenalty);
   }
 
   private extractPhaseDuration(prpResult: PRPState, phase: string): number {
     // Placeholder - in real implementation, track phase durations
     const estimatedDurations: Record<string, number> = {
-      'strategy': 300000, // 5 minutes
-      'build': 900000,    // 15 minutes  
-      'evaluation': 300000, // 5 minutes
+      strategy: 300000, // 5 minutes
+      build: 900000, // 15 minutes
+      evaluation: 300000, // 5 minutes
     };
     return estimatedDurations[phase] || 0;
   }

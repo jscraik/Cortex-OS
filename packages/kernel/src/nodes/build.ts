@@ -87,7 +87,7 @@ export class BuildNode {
           passed: blockers.length === 0 && majors.length <= 3,
           blockers,
           majors,
-          evidence: evidence.map(e => e.id),
+          evidence: evidence.map((e) => e.id),
           timestamp: new Date().toISOString(),
         },
       },
@@ -96,10 +96,11 @@ export class BuildNode {
 
   private async validateBackend(state: PRPState): Promise<{ passed: boolean; details: any }> {
     // Simulated backend validation - in real implementation would run actual tests
-    const hasBackendReq = state.blueprint.requirements?.some(req =>
-      req.toLowerCase().includes('api') ||
-      req.toLowerCase().includes('backend') ||
-      req.toLowerCase().includes('server')
+    const hasBackendReq = state.blueprint.requirements?.some(
+      (req) =>
+        req.toLowerCase().includes('api') ||
+        req.toLowerCase().includes('backend') ||
+        req.toLowerCase().includes('server'),
     );
 
     if (!hasBackendReq) {
@@ -119,9 +120,8 @@ export class BuildNode {
   }
 
   private async validateAPISchema(state: PRPState): Promise<{ passed: boolean; details: any }> {
-    const hasAPI = state.blueprint.requirements?.some(req =>
-      req.toLowerCase().includes('api') ||
-      req.toLowerCase().includes('endpoint')
+    const hasAPI = state.blueprint.requirements?.some(
+      (req) => req.toLowerCase().includes('api') || req.toLowerCase().includes('endpoint'),
     );
 
     if (!hasAPI) {
@@ -138,13 +138,19 @@ export class BuildNode {
     return {
       passed: exists,
       details: {
-        schemaFormat: fs.existsSync(schemaPathYaml) ? 'OpenAPI 3.0' : fs.existsSync(schemaPathJson) ? 'JSON' : 'missing',
+        schemaFormat: fs.existsSync(schemaPathYaml)
+          ? 'OpenAPI 3.0'
+          : fs.existsSync(schemaPathJson)
+            ? 'JSON'
+            : 'missing',
         validation: exists ? 'found' : 'missing',
       },
     };
   }
 
-  private async runSecurityScan(state: PRPState): Promise<{ blockers: number; majors: number; details: any }> {
+  private async runSecurityScan(
+    state: PRPState,
+  ): Promise<{ blockers: number; majors: number; details: any }> {
     // Mock security scan - in real implementation would run CodeQL, Semgrep, etc.
     return {
       blockers: 0,
@@ -163,11 +169,14 @@ export class BuildNode {
     };
   }
 
-  private async validateFrontend(state: PRPState): Promise<{ lighthouse: number; axe: number; details: any }> {
-    const hasFrontend = state.blueprint.requirements?.some(req =>
-      req.toLowerCase().includes('ui') ||
-      req.toLowerCase().includes('frontend') ||
-      req.toLowerCase().includes('interface')
+  private async validateFrontend(
+    state: PRPState,
+  ): Promise<{ lighthouse: number; axe: number; details: any }> {
+    const hasFrontend = state.blueprint.requirements?.some(
+      (req) =>
+        req.toLowerCase().includes('ui') ||
+        req.toLowerCase().includes('frontend') ||
+        req.toLowerCase().includes('interface'),
     );
 
     if (!hasFrontend) {
@@ -177,7 +186,7 @@ export class BuildNode {
     // Mock Lighthouse and Axe scores
     return {
       lighthouse: 94, // Good score
-      axe: 96,        // Good accessibility score
+      axe: 96, // Good accessibility score
       details: {
         lighthouse: {
           performance: 94,
@@ -194,10 +203,11 @@ export class BuildNode {
   }
 
   private async validateDocumentation(state: PRPState): Promise<{ passed: boolean; details: any }> {
-    const hasDocsReq = state.blueprint.requirements?.some(req =>
-      req.toLowerCase().includes('doc') ||
-      req.toLowerCase().includes('guide') ||
-      req.toLowerCase().includes('readme')
+    const hasDocsReq = state.blueprint.requirements?.some(
+      (req) =>
+        req.toLowerCase().includes('doc') ||
+        req.toLowerCase().includes('guide') ||
+        req.toLowerCase().includes('readme'),
     );
 
     if (!hasDocsReq) {

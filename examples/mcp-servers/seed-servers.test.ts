@@ -17,10 +17,7 @@ describe('Seed Server Configurations', () => {
 
   beforeAll(async () => {
     // Load all seed server files
-    const serverFiles = [
-      'filesystem-server.json',
-      'github-server.json'
-    ];
+    const serverFiles = ['filesystem-server.json', 'github-server.json'];
 
     for (const file of serverFiles) {
       const filePath = path.join(SEED_SERVERS_DIR, file);
@@ -38,19 +35,19 @@ describe('Seed Server Configurations', () => {
 
       for (const server of seedServers) {
         const result = ServerManifestSchema.safeParse(server);
-        
+
         if (!result.success) {
           console.error(`Validation failed for ${server.id}:`, result.error.errors);
         }
-        
+
         expect(result.success).toBe(true);
       }
     });
 
     it('should have unique server IDs', () => {
-      const ids = seedServers.map(s => s.id);
+      const ids = seedServers.map((s) => s.id);
       const uniqueIds = new Set(ids);
-      
+
       expect(uniqueIds.size).toBe(ids.length);
     });
 
@@ -69,7 +66,7 @@ describe('Seed Server Configurations', () => {
     let filesystemServer: ServerManifest;
 
     beforeAll(() => {
-      filesystemServer = seedServers.find(s => s.id === 'filesystem')!;
+      filesystemServer = seedServers.find((s) => s.id === 'filesystem')!;
     });
 
     it('should have filesystem server configuration', () => {
@@ -88,9 +85,7 @@ describe('Seed Server Configurations', () => {
     });
 
     it('should include file-related permissions', () => {
-      const filePermissions = filesystemServer.permissions.filter(p => 
-        p.startsWith('files:')
-      );
+      const filePermissions = filesystemServer.permissions.filter((p) => p.startsWith('files:'));
       expect(filePermissions.length).toBeGreaterThan(0);
       expect(filesystemServer.permissions).toContain('files:read');
     });
@@ -99,7 +94,9 @@ describe('Seed Server Configurations', () => {
       expect(filesystemServer.transport.stdio).toBeDefined();
       expect(filesystemServer.transport.stdio!.command).toBe('npx');
       expect(filesystemServer.transport.stdio!.args).toContain('-y');
-      expect(filesystemServer.transport.stdio!.args).toContain('@modelcontextprotocol/server-filesystem');
+      expect(filesystemServer.transport.stdio!.args).toContain(
+        '@modelcontextprotocol/server-filesystem',
+      );
     });
 
     it('should have proper install commands', () => {
@@ -123,7 +120,7 @@ describe('Seed Server Configurations', () => {
     let githubServer: ServerManifest;
 
     beforeAll(() => {
-      githubServer = seedServers.find(s => s.id === 'github')!;
+      githubServer = seedServers.find((s) => s.id === 'github')!;
     });
 
     it('should have github server configuration', () => {
@@ -177,7 +174,7 @@ describe('Seed Server Configurations', () => {
       for (const server of seedServers) {
         expect(server.security).toBeDefined();
         expect(server.security.riskLevel).toMatch(/^(low|medium|high)$/);
-        
+
         // Featured servers should have attestations
         if (server.featured) {
           expect(server.security.sigstore).toBeTruthy();
@@ -190,17 +187,15 @@ describe('Seed Server Configurations', () => {
       for (const server of seedServers) {
         if (server.security.riskLevel === 'high') {
           // High risk servers should have explicit dangerous permissions
-          const dangerousPermissions = server.permissions.filter(p => 
-            p.includes('exec') || p.includes('admin') || p.includes('system')
+          const dangerousPermissions = server.permissions.filter(
+            (p) => p.includes('exec') || p.includes('admin') || p.includes('system'),
           );
           expect(dangerousPermissions.length).toBeGreaterThan(0);
         }
 
         if (server.security.riskLevel === 'low') {
           // Low risk servers should not have system execution permissions
-          const systemPermissions = server.permissions.filter(p => 
-            p.includes('system:exec')
-          );
+          const systemPermissions = server.permissions.filter((p) => p.includes('system:exec'));
           expect(systemPermissions.length).toBe(0);
         }
       }
@@ -212,7 +207,7 @@ describe('Seed Server Configurations', () => {
       for (const server of seedServers) {
         const hasStdio = !!server.transport.stdio;
         const hasHttp = !!server.transport.streamableHttp;
-        
+
         expect(hasStdio || hasHttp).toBe(true);
       }
     });
@@ -222,7 +217,7 @@ describe('Seed Server Configurations', () => {
         if (server.transport.stdio) {
           expect(server.transport.stdio.command).toBeTruthy();
           expect(server.transport.stdio.command.length).toBeGreaterThan(0);
-          
+
           // Should use npx for official servers
           if (server.publisher.verified) {
             expect(['npx', 'node', 'python', 'python3']).toContain(server.transport.stdio.command);
@@ -263,7 +258,7 @@ describe('Seed Server Configurations', () => {
         if (server.transport.stdio) {
           const jsonConfig = server.install.json.mcpServers[server.id];
           expect(jsonConfig.command || jsonConfig.serverUrl).toBeDefined();
-          
+
           if (jsonConfig.command) {
             expect(jsonConfig.command).toBe(server.transport.stdio.command);
           }
@@ -275,8 +270,16 @@ describe('Seed Server Configurations', () => {
   describe('Marketplace Metadata', () => {
     it('should have proper categories', () => {
       const validCategories = [
-        'development', 'productivity', 'data', 'communication',
-        'finance', 'media', 'security', 'ai-ml', 'integration', 'utility'
+        'development',
+        'productivity',
+        'data',
+        'communication',
+        'finance',
+        'media',
+        'security',
+        'ai-ml',
+        'integration',
+        'utility',
       ];
 
       for (const server of seedServers) {

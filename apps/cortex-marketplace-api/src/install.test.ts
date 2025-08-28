@@ -28,7 +28,7 @@ describe('InstallCommandGenerator', () => {
 
   test('generates Claude and JSON commands', () => {
     const commands = generator.generateCommands(server);
-    expect(commands.map(c => c.client)).toEqual(['claude', 'json']);
+    expect(commands.map((c) => c.client)).toEqual(['claude', 'json']);
   });
 
   test('includes command in instructions', () => {

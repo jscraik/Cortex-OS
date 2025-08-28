@@ -7,11 +7,16 @@ import { join } from 'path';
 
 console.log('Updating storeMemory method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages/agents/src/legacy-instructions/DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages/agents/src/legacy-instructions/DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Update the storeMemory method
-const storeMemoryPattern = /async storeMemory\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("storeMemory"\)\!\.run\(data\);\s*}/s;
+const storeMemoryPattern =
+  /async storeMemory\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("storeMemory"\)\!\.run\(data\);\s*}/s;
 const storeMemoryReplacement = `async storeMemory(data: any): Promise<void> {
     // Validate input data
     if (!data || typeof data !== 'object') {

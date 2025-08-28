@@ -7,7 +7,11 @@ import { join } from 'path';
 
 console.log('Updating createSwarm method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages/agents/src/legacy-instructions/DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages/agents/src/legacy-instructions/DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Update the createSwarm method
@@ -27,7 +31,7 @@ content = content.replace(
       console.error('Error creating swarm:', error);
       throw error;
     }
-  }`
+  }`,
 );
 
 // Write the updated content back to the file

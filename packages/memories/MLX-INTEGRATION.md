@@ -7,16 +7,19 @@ This document provides a comprehensive guide to integrating MLX-based embedding 
 ## Available MLX Models
 
 ### Embedding Models
+
 - **Qwen3-Embedding-0.6B** - Smallest and fastest embedding model
 - **Qwen3-Embedding-4B** - Balanced performance and accuracy (default)
 - **Qwen3-Embedding-8B** - Highest accuracy model
 
 ### Chat Models
+
 - **Qwen3-Coder-30B-A3B-Instruct-4bit** - Large coding model
 - **Qwen2.5-0.5B-Instruct-4bit** - Small chat model
 - **Mixtral-8x7B-v0.1-hf-4bit-mlx** - Mixtral MoE model
 
 ### Reranking Models
+
 - **Qwen3-Reranker-4B** - Dedicated reranking model
 
 ## Setup Instructions
@@ -77,6 +80,7 @@ const embeddings = await embedder.embed(['Hello world', 'How are you?']);
 ### Fallback Chain
 
 The system implements a smart fallback chain:
+
 1. **MLX Service** - If `MLX_SERVICE_URL` is set, use remote MLX service
 2. **Local MLX** - Direct execution using local MLX models
 3. **Ollama** - Fallback to Ollama if MLX is unavailable
