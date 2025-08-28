@@ -10,7 +10,7 @@
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
-import { ASBRServer } from '../../src/api/server.js';
+import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
 import type { Profile, TaskInput } from '../../src/types/index.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 
@@ -28,11 +28,11 @@ describe('ASBR API Integration Tests', () => {
     authToken = tokenInfo.token;
 
     // Start server
-    server = new ASBRServer({ port: 0, host: '127.0.0.1' });
+    server = createASBRServer({ port: 0, host: '127.0.0.1' });
     await server.start();
 
     // Get the Express app for testing
-    app = (server as any).app;
+    app = server.app;
   });
 
   afterAll(async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import supertest from 'supertest';
-import { ASBRServer } from '../../src/api/server.js';
+import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
 import { initializeAuth } from '../../src/api/auth.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 
@@ -15,7 +15,7 @@ describe('ASBR End-to-End Workflow Tests', () => {
     const tokenInfo = await initializeAuth();
     authToken = tokenInfo.token;
 
-    server = new ASBRServer({ port: 7442 });
+    server = createASBRServer({ port: 7442 });
     await server.start();
     request = supertest(`http://127.0.0.1:7442`);
   });

@@ -27,10 +27,29 @@ export interface EventStreamOptions {
   lastEventId?: string;
 }
 
+export interface EventManager extends EventEmitter {
+  attachIO(io: IOServer): void;
+  emitEvent(event: Event): Promise<void>;
+  subscribe(options: EventStreamOptions, callback: (event: Event) => void): string;
+  unsubscribe(subscriptionId: string): void;
+  getEvents(options: EventStreamOptions): Event[];
+  createSSEStream(res: any, options: EventStreamOptions): string;
+  pollEvents(
+    options: EventStreamOptions,
+    attempt?: number,
+  ): Promise<{ events: Event[]; backoffMs?: number }>;
+  getStats(): {
+    totalEvents: number;
+    activeSubscriptions: number;
+    bufferSizes: Record<string, number>;
+  };
+}
+
 /**
  * Event Manager with SSE and poll support
  */
-export class EventManager extends EventEmitter {
+/** @deprecated Use createEventManager instead */
+export class EventManagerClass extends EventEmitter {
   private config: Config;
   private subscriptions = new Map<string, EventSubscription>();
   private eventBuffer = new Map<string, Event[]>(); // taskId -> events
@@ -387,12 +406,34 @@ export class EventManager extends EventEmitter {
 /**
  * Create event manager singleton
  */
+export function createEventManager(config: Config): EventManager {
+  const instance = new EventManagerClass(config);
+  return {
+    attachIO: instance.attachIO.bind(instance),
+    emitEvent: instance.emitEvent.bind(instance),
+    subscribe: instance.subscribe.bind(instance),
+    unsubscribe: instance.unsubscribe.bind(instance),
+    getEvents: instance.getEvents.bind(instance),
+    createSSEStream: instance.createSSEStream.bind(instance),
+    pollEvents: instance.pollEvents.bind(instance),
+    getStats: instance.getStats.bind(instance),
+    on: instance.on.bind(instance),
+    off: instance.off.bind(instance),
+    once: instance.once.bind(instance),
+    emit: instance.emit.bind(instance),
+    addListener: instance.addListener.bind(instance),
+    removeListener: instance.removeListener.bind(instance),
+    removeAllListeners: instance.removeAllListeners.bind(instance),
+    listenerCount: instance.listenerCount.bind(instance),
+  } as EventManager;
+}
+
 let eventManagerInstance: EventManager | null = null;
 
 export async function getEventManager(): Promise<EventManager> {
   if (!eventManagerInstance) {
     const config = await loadConfig();
-    eventManagerInstance = new EventManager(config);
+    eventManagerInstance = createEventManager(config);
   }
   return eventManagerInstance;
 }

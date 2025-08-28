@@ -30,10 +30,32 @@ export interface ASBRServerOptions {
   host?: string;
 }
 
+export interface ASBRServer {
+  start(): Promise<void>;
+  stop(): Promise<void>;
+  readonly app: express.Application;
+  readonly server?: Server;
+}
+
+export function createASBRServer(options: ASBRServerOptions = {}): ASBRServer {
+  const instance = new ASBRServerClass(options);
+  return {
+    start: instance.start.bind(instance),
+    stop: instance.stop.bind(instance),
+    get app() {
+      return (instance as any).app as express.Application;
+    },
+    get server() {
+      return (instance as any).server as Server | undefined;
+    },
+  };
+}
+
 /**
  * ASBR API Server
  */
-export class ASBRServer {
+/** @deprecated Use createASBRServer instead */
+export class ASBRServerClass {
   private app: express.Application;
   private server?: Server;
   private io?: IOServer;
