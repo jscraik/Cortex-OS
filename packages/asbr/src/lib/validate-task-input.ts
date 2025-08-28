@@ -6,7 +6,7 @@ import { TaskInput, TaskInputSchema, ValidationError } from '../types/index.js';
 export function validateTaskInput(input: unknown): TaskInput {
   const result = TaskInputSchema.safeParse(input);
   if (!result.success) {
-    const issues = (result.error as unknown as { issues?: unknown }).issues;
+    const issues = result.error.issues;
     throw new ValidationError('Invalid task input', { errors: issues });
   }
   const taskInput = result.data;
