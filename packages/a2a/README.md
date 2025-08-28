@@ -86,6 +86,10 @@ The test suite includes:
 - Unit tests for core components.
 - Integration tests for cross-component functionality.
 
+## Migration Note
+
+The `Envelope` contract now requires a valid URI for the `source` field. Invalid sources will throw a validation error instead of using a fallback.
+
 ## Contributing
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for development guidelines.
