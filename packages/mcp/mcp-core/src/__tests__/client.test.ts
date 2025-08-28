@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { redactSensitiveData, createEnhancedClient } from '../client';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { redactSensitiveData } from '../../../src/lib/security.js';
+import { createEnhancedClient } from '../client';
 import type { ServerInfo } from '../contracts';
 
 // Mock the SDK
@@ -8,29 +9,32 @@ const mockCallTool = vi.fn();
 const mockSendRequest = vi.fn();
 const mockClose = vi.fn();
 
-const MockClient = vi.fn(() => ({
-  connect: mockConnect,
-  callTool: mockCallTool,
-  sendRequest: mockSendRequest,
-  close: mockClose,
-}));
+var MockClient: any;
+var MockStdioClientTransport: any;
+var MockSSEClientTransport: any;
+var MockStreamableHTTPClientTransport: any;
 
-const MockStdioClientTransport = vi.fn();
-const MockSSEClientTransport = vi.fn();
-const MockStreamableHTTPClientTransport = vi.fn();
-
-vi.mock('@modelcontextprotocol/sdk/client/index.js', () => ({
-  Client: MockClient,
-}));
-vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
-  StdioClientTransport: MockStdioClientTransport,
-}));
-vi.mock('@modelcontextprotocol/sdk/client/sse.js', () => ({
-  SSEClientTransport: MockSSEClientTransport,
-}));
-vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
-  StreamableHTTPClientTransport: MockStreamableHTTPClientTransport,
-}));
+vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
+  MockClient = vi.fn(() => ({
+    connect: mockConnect,
+    callTool: mockCallTool,
+    sendRequest: mockSendRequest,
+    close: mockClose,
+  }));
+  return { Client: MockClient };
+});
+vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
+  MockStdioClientTransport = vi.fn();
+  return { StdioClientTransport: MockStdioClientTransport };
+});
+vi.mock('@modelcontextprotocol/sdk/client/sse.js', () => {
+  MockSSEClientTransport = vi.fn();
+  return { SSEClientTransport: MockSSEClientTransport };
+});
+vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => {
+  MockStreamableHTTPClientTransport = vi.fn();
+  return { StreamableHTTPClientTransport: MockStreamableHTTPClientTransport };
+});
 
 describe('mcp-core client', () => {
   describe('redactSensitiveData', () => {
@@ -114,16 +118,17 @@ describe('mcp-core client', () => {
       client.rateLimiter = {
         consume: vi
           .fn()
-          .mockResolvedValue(undefined)
+          .mockResolvedValueOnce(undefined)
           .mockRejectedValueOnce(new Error('Rate limit exceeded')),
       };
 
+      await client.callTool('test', {});
       await expect(client.callTool('test', {})).rejects.toThrow(
         'Rate limit exceeded for tool test',
       );
     });
 
-    it('should redact data on sendRequest', async () => {
+    it('should redact object data on sendRequest', async () => {
       const serverInfo: ServerInfo = {
         name: 'test-redaction',
         transport: 'stdio',
@@ -133,6 +138,18 @@ describe('mcp-core client', () => {
       const message = { apiKey: '123' };
       await client.sendRequest(message);
       expect(mockSendRequest).toHaveBeenCalledWith({ apiKey: '[REDACTED]' });
+    });
+
+    it('should redact string data on sendRequest', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-redaction-string',
+        transport: 'stdio',
+        command: 'echo',
+      };
+      const client = await createEnhancedClient(serverInfo);
+      const message = '{"apiKey": "123"}';
+      await client.sendRequest(message);
+      expect(mockSendRequest).toHaveBeenCalledWith('{"apiKey": "[REDACTED]"}');
     });
   });
 });
