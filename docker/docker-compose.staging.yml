@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  neo4j:
+    environment:
+      - NEO4J_AUTH_FILE=/run/secrets/neo4j_auth
+    secrets:
+      - neo4j_auth
+  grafana:
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_admin_password
+    secrets:
+      - grafana_admin_password
+
+secrets:
+  neo4j_auth:
+    file: ../secrets/neo4j_auth.txt
+  grafana_admin_password:
+    file: ../secrets/grafana_admin_password.txt
