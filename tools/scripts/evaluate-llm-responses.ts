@@ -96,7 +96,7 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
   return result;
 }
 
-if (process.argv[1] && import.meta.url === new URL(process.argv[1], 'file://').href) {
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1])) {
   const arg = process.argv[2];
   const input = arg ? JSON.parse(arg) : { dataset: [] };
   try {
