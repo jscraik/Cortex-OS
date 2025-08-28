@@ -123,6 +123,21 @@ describe('ASBR API Performance Tests', () => {
     expect(duration).toBeLessThan(500);
   });
 
+
+  it('should serve SSE events efficiently', async () => {
+    const start = performance.now();
+
+    const response = await request
+      .get('/v1/events?stream=sse')
+      .set('Authorization', `Bearer ${authToken}`)
+      .set('Accept', 'text/event-stream');
+
+    const duration = performance.now() - start;
+
+    expect(response.status).toBe(200);
+    expect(duration).toBeLessThan(200);
+  });
+
   it('should handle SSE connections efficiently', async () => {
     const start = performance.now();
 

@@ -1,6 +1,8 @@
 /**
  * ASBR Event System
- * Implements SSE and WebSocket transport with heartbeat as per blueprint
+
+ * Implements SSE and WebSocket support with heartbeat as per blueprint
+
  */
 
 import { EventEmitter } from 'events';
@@ -147,7 +149,7 @@ export class EventManagerClass extends EventEmitter {
   }
 
   /**
-   * Subscribe to events with SSE or poll transport
+   * Subscribe to events with SSE or WebSocket transport
    */
   subscribe(options: EventStreamOptions, callback: (event: Event) => void): string {
     const subscriptionId = `sub_${Date.now()}_${Math.random().toString(36).substring(2)}`;
@@ -200,6 +202,38 @@ export class EventManagerClass extends EventEmitter {
   }
 
   /**
+
+   * Retrieve events
+   */
+  getEvents(options: EventStreamOptions): Event[] {
+    const { taskId, eventTypes, lastEventId } = options;
+
+    let events: Event[];
+
+    if (taskId) {
+      events = this.eventBuffer.get(taskId) || [];
+    } else {
+      events = this.globalEvents;
+    }
+
+    // Filter by event types if specified
+    if (eventTypes && eventTypes.length > 0) {
+      events = events.filter((e) => eventTypes.includes(e.type));
+    }
+
+    // Filter by lastEventId if specified
+    if (lastEventId) {
+      const lastIndex = events.findIndex((e) => e.id === lastEventId);
+      if (lastIndex >= 0) {
+        events = events.slice(lastIndex + 1);
+      }
+    }
+
+    return events;
+  }
+
+  /**
+
    * Create SSE stream for Express response
    */
   createSSEStream(res: Response, options: EventStreamOptions): string {

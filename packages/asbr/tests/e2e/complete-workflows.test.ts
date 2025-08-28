@@ -53,13 +53,17 @@ describe('Complete Workflows', () => {
       const taskId = createResponse.body.task.id;
       expect(taskId).toBeDefined();
 
-      // Step 2: Monitor task progress via SSE
-      const sseResponse = await request
+
+      // Step 2: Monitor task progress via events
+      const eventsResponse = await request
+
         .get(`/v1/events?stream=sse&taskId=${taskId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .set('Accept', 'text/event-stream');
 
-      expect(sseResponse.status).toBe(200);
+
+      expect(eventsResponse.status).toBe(200);
+
 
       // Step 3: Retrieve task status
       const statusResponse = await request

@@ -160,6 +160,24 @@ describe('ASBR API Integration Tests', () => {
       // This just verifies the endpoint exists and returns appropriate headers
       expect(response.status).toBe(200);
     });
+
+
+    it('should allow SSE event stream for specific task', async () => {
+      const response = await request(app)
+        .get('/v1/events?stream=sse&taskId=test-task-id')
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('Accept', 'text/event-stream');
+
+      expect(response.status).toBe(200);
+    });
+
+    it('should reject unsupported stream type', async () => {
+      await request(app)
+        .get('/v1/events?stream=poll')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(400);
+    });
+
   });
 
   describe('Profile Management', () => {

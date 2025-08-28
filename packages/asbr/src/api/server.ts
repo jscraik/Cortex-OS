@@ -289,14 +289,39 @@ export class ASBRServerClass {
   }
 
   private async getEvents(req: Request, res: Response): Promise<void> {
-    const { taskId, events } = req.query as { taskId?: string; events?: string };
 
-    const manager = await getEventManager();
-    manager.createSSEStream(res, {
-      taskId,
-      eventTypes: events ? (events.split(',') as EventType[]) : undefined,
-      transport: 'sse',
+    const { stream, taskId } = req.query as {
+      stream?: string;
+      taskId?: string;
+    };
+
+    if (stream !== 'sse') {
+      res.status(400).json({ error: 'Unsupported stream type' });
+      return;
+    }
+
+    // Set up Server-Sent Events
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
     });
+
+    // Send heartbeat every 10 seconds
+    const heartbeat = setInterval(() => {
+      res.write('event: heartbeat\ndata: {}\n\n');
+    }, 10000);
+
+    // Send existing events for the task
+    const events = taskId ? this.events.get(taskId) || [] : Array.from(this.events.values()).flat();
+    events.forEach((event) => {
+      res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+    });
+
+    // If running under test, close the stream quickly so test runners (supertest)
+    // which wait for the response to end don't hang. In normal operation keep the
+    // connection open and send heartbeats.
 
     const shouldAutoClose =
       process.env.NODE_ENV === 'test' ||
@@ -306,16 +331,24 @@ export class ASBRServerClass {
 
     let autoCloseTimer: NodeJS.Timeout | undefined;
     if (shouldAutoClose) {
+
+      // Give the client a short moment to receive initial data, then end.
       autoCloseTimer = setTimeout(() => {
+        clearInterval(heartbeat);
         try {
           res.end();
-        } catch {
+        } catch (_e) {
+
           /* swallow */
         }
       }, 50);
     }
 
+
+    // Clean up on client disconnect
     req.on('close', () => {
+      clearInterval(heartbeat);
+
       if (autoCloseTimer) clearTimeout(autoCloseTimer);
     });
   }

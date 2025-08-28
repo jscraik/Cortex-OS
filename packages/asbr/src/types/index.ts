@@ -226,14 +226,10 @@ export interface UnsubscribeFunction {
 export const ConfigSchema = z.object({
   events: z.object({
     transport: z.enum(['socket', 'sse']),
-    poll_interval_ms: z.number().positive(),
+
+
     heartbeat_ms: z.number().positive(),
     idle_timeout_ms: z.number().positive(),
-    backoff: z.object({
-      base_ms: z.number().positive(),
-      max_ms: z.number().positive(),
-      factor: z.number().positive(),
-    }),
   }),
   determinism: z.object({
     max_normalize_bytes: z.number().positive(),
