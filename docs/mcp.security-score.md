@@ -1,11 +1,13 @@
 # MCP Security Score Calculation
 
 ## Methodology
+
 This document provides a detailed breakdown of the security score calculation for the MCP implementation, based on the audit findings.
 
 ## Score Breakdown
 
 ### Transport Security: 9/10
+
 - **STDIO Transport**: 9/10
   - Command validation: ✅
   - Environment isolation: ✅
@@ -28,6 +30,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Transport Security Average**: 9/10
 
 ### Tool Safety: 9/10
+
 - **Policy Framework**: 10/10
   - Comprehensive classifications: ✅
   - Detailed tool registry: ✅
@@ -44,6 +47,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Tool Safety Average**: 9/10
 
 ### Authentication: 8/10
+
 - **API Key Management**: 8/10
   - Strong validation: ✅
   - Pattern checking: ✅
@@ -59,6 +63,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Authentication Average**: 8/10
 
 ### Sandboxing: 7/10
+
 - **Process Isolation**: 7/10
   - Command validation: ✅
   - Environment controls: ✅
@@ -74,6 +79,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Sandboxing Average**: 7/10
 
 ### Redaction: 6/10
+
 - **Data Protection**: 6/10
   - API key redaction: ✅
   - URL sanitization: ✅
@@ -83,6 +89,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Redaction Score**: 6/10
 
 ### Rate Limiting: 5/10
+
 - **Quotas**: 5/10
   - Connection limits: ✅
   - Minor: No built-in rate limiting
@@ -91,6 +98,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Rate Limiting Score**: 5/10
 
 ### Documentation: 6/10
+
 - **Code Documentation**: 6/10
   - Basic documentation: ✅
   - Inline comments: ⚠️ Limited
@@ -99,6 +107,7 @@ This document provides a detailed breakdown of the security score calculation fo
 **Documentation Score**: 6/10
 
 ### Testing Coverage: 8/10
+
 - **Test Coverage**: 8/10
   - Schema validation: ✅
   - Interface consistency: ✅
@@ -110,6 +119,7 @@ This document provides a detailed breakdown of the security score calculation fo
 ## Overall Security Score: 8.2/10
 
 ### Calculation
+
 ```
 Transport Security:     9/10 (15% weight) = 1.35
 Tool Safety:            9/10 (20% weight) = 1.80

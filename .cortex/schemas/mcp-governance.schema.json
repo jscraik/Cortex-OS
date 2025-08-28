@@ -41,11 +41,7 @@
               "items": {
                 "type": "string"
               },
-              "default": [
-                "ModelContextProtocol",
-                "Anthropic",
-                "GitHub"
-              ]
+              "default": ["ModelContextProtocol", "Anthropic", "GitHub"]
             },
             "sigstoreValidation": {
               "type": "boolean",
@@ -61,23 +57,14 @@
               "items": {
                 "type": "string"
               },
-              "default": [
-                "system:exec",
-                "system:admin",
-                "files:write:root",
-                "network:raw"
-              ]
+              "default": ["system:exec", "system:admin", "files:write:root", "network:raw"]
             },
             "requireConfirmation": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "default": [
-                "files:write",
-                "system:exec",
-                "network:external"
-              ]
+              "default": ["files:write", "system:exec", "network:external"]
             }
           }
         }

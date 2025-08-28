@@ -1,7 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "required": ["version", "requiredHeader", "requiredLine", "requiredSections", "forbiddenPhrases", "filesThatMustReferenceAgents"],
+  "required": [
+    "version",
+    "requiredHeader",
+    "requiredLine",
+    "requiredSections",
+    "forbiddenPhrases",
+    "filesThatMustReferenceAgents"
+  ],
   "properties": {
     "version": { "type": "integer" },
     "requiredHeader": { "type": "string" },
@@ -11,4 +18,3 @@
     "filesThatMustReferenceAgents": { "type": "array", "items": { "type": "string" } }
   }
 }
-

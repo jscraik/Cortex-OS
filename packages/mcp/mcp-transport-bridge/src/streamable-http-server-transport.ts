@@ -44,7 +44,9 @@ export class StreamableHTTPServerTransport extends EventEmitter implements McpSe
     if (this.responseStream && !this.responseStream.writableEnded) {
       this.responseStream.write(JSON.stringify(message) + '\n');
     } else {
-      console.error('[StreamableHTTPServerTransport] Cannot send message, no response stream available.');
+      console.error(
+        '[StreamableHTTPServerTransport] Cannot send message, no response stream available.',
+      );
     }
   }
 

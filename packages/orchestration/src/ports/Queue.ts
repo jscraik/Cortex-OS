@@ -11,4 +11,3 @@ export interface Queue<T = unknown> {
   ack(id: string): Promise<void>;
   nack(id: string, delayMs: number): Promise<void>;
 }
-

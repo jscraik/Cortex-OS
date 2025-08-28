@@ -205,9 +205,7 @@ export class UserSimulator {
   private selectRandomResponse(responses: string[], style: PersonaStyle): string {
     let options = responses;
     if (style.formality === 'casual') {
-      options = responses.map((r) =>
-        r.replace(/Thank you/gi, 'Thanks').replace(/Hello/gi, 'Hey'),
-      );
+      options = responses.map((r) => r.replace(/Thank you/gi, 'Thanks').replace(/Hello/gi, 'Hey'));
     } else if (style.formality === 'technical') {
       options = responses.map((r) => `Technical: ${r}`);
     }

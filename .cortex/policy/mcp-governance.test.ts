@@ -16,33 +16,33 @@ const GovernancePolicySchema = z.object({
   security: z.object({
     riskLevels: z.object({
       allowed: z.array(z.enum(['low', 'medium', 'high'])),
-      requireApproval: z.array(z.enum(['medium', 'high']))
+      requireApproval: z.array(z.enum(['medium', 'high'])),
     }),
     signatures: z.object({
       required: z.boolean(),
       trustedPublishers: z.array(z.string()),
-      sigstoreValidation: z.boolean()
+      sigstoreValidation: z.boolean(),
     }),
     permissions: z.object({
       dangerous: z.array(z.string()),
-      requireConfirmation: z.array(z.string())
-    })
+      requireConfirmation: z.array(z.string()),
+    }),
   }),
   marketplace: z.object({
     registries: z.object({
       official: z.string().url(),
       community: z.string().url(),
-      allowCustom: z.boolean()
+      allowCustom: z.boolean(),
     }),
     caching: z.object({
       ttl: z.number().positive(),
-      maxSize: z.number().positive()
+      maxSize: z.number().positive(),
     }),
     validation: z.object({
       strictMode: z.boolean(),
       allowPrerelease: z.boolean(),
-      minRating: z.number().min(0).max(5)
-    })
+      minRating: z.number().min(0).max(5),
+    }),
   }),
   installation: z.object({
     sandboxed: z.boolean(),
@@ -50,24 +50,24 @@ const GovernancePolicySchema = z.object({
     resourceLimits: z.object({
       memory: z.string(),
       cpu: z.string(),
-      diskSpace: z.string()
+      diskSpace: z.string(),
     }),
     networkAccess: z.object({
       allowed: z.array(z.string()),
-      blocked: z.array(z.string())
-    })
+      blocked: z.array(z.string()),
+    }),
   }),
   audit: z.object({
     logging: z.object({
       level: z.enum(['debug', 'info', 'warn', 'error']),
-      destinations: z.array(z.string())
+      destinations: z.array(z.string()),
     }),
     monitoring: z.object({
       healthChecks: z.boolean(),
       performanceMetrics: z.boolean(),
-      securityEvents: z.boolean()
-    })
-  })
+      securityEvents: z.boolean(),
+    }),
+  }),
 });
 
 type GovernancePolicy = z.infer<typeof GovernancePolicySchema>;
@@ -83,11 +83,11 @@ describe('MCP Governance Policy', () => {
   describe('Schema Validation', () => {
     it('should validate against governance policy schema', () => {
       const result = GovernancePolicySchema.safeParse(policy);
-      
+
       if (!result.success) {
         console.error('Governance policy validation failed:', result.error.errors);
       }
-      
+
       expect(result.success).toBe(true);
     });
 
@@ -102,9 +102,11 @@ describe('MCP Governance Policy', () => {
   describe('Security Policies', () => {
     it('should define valid risk levels', () => {
       expect(policy.security.riskLevels.allowed).toBeInstanceOf(Array);
-      expect(policy.security.riskLevels.allowed.every(level => 
-        ['low', 'medium', 'high'].includes(level)
-      )).toBe(true);
+      expect(
+        policy.security.riskLevels.allowed.every((level) =>
+          ['low', 'medium', 'high'].includes(level),
+        ),
+      ).toBe(true);
     });
 
     it('should require approval for high-risk servers', () => {
@@ -169,11 +171,11 @@ describe('MCP Governance Policy', () => {
     it('should control network access', () => {
       expect(policy.installation.networkAccess.allowed).toBeInstanceOf(Array);
       expect(policy.installation.networkAccess.blocked).toBeInstanceOf(Array);
-      
+
       // Should allow common development services
       expect(policy.installation.networkAccess.allowed).toContain('https://api.github.com');
       expect(policy.installation.networkAccess.allowed).toContain('https://registry.npmjs.org');
-      
+
       // Should block dangerous protocols
       expect(policy.installation.networkAccess.blocked).toContain('file://');
       expect(policy.installation.networkAccess.blocked).toContain('ftp://');
@@ -197,12 +199,12 @@ describe('MCP Governance Policy', () => {
     it('should validate server against risk level policy', () => {
       const testServerHighRisk: Partial<ServerManifest> = {
         security: { riskLevel: 'high' },
-        permissions: ['system:exec', 'files:write:root']
+        permissions: ['system:exec', 'files:write:root'],
       };
 
       const testServerLowRisk: Partial<ServerManifest> = {
         security: { riskLevel: 'low' },
-        permissions: ['network:https', 'data:read']
+        permissions: ['network:https', 'data:read'],
       };
 
       // High risk should require approval if configured
@@ -216,11 +218,11 @@ describe('MCP Governance Policy', () => {
 
     it('should validate dangerous permissions', () => {
       const dangerousServer = {
-        permissions: ['system:exec', 'system:admin']
+        permissions: ['system:exec', 'system:admin'],
       };
 
-      const safeDangerous = dangerousServer.permissions.filter(perm =>
-        policy.security.permissions.dangerous.includes(perm)
+      const safeDangerous = dangerousServer.permissions.filter((perm) =>
+        policy.security.permissions.dangerous.includes(perm),
       );
 
       expect(safeDangerous.length).toBeGreaterThan(0);
@@ -228,11 +230,11 @@ describe('MCP Governance Policy', () => {
 
     it('should validate trusted publishers', () => {
       const trustedServer = {
-        publisher: { name: 'ModelContextProtocol', verified: true }
+        publisher: { name: 'ModelContextProtocol', verified: true },
       };
 
       const untrustedServer = {
-        publisher: { name: 'Unknown Publisher', verified: false }
+        publisher: { name: 'Unknown Publisher', verified: false },
       };
 
       expect(policy.security.signatures.trustedPublishers).toContain('ModelContextProtocol');
@@ -255,7 +257,7 @@ describe('MCP Governance Policy', () => {
 
     it('should have reasonable resource limits', () => {
       const { memory, cpu, diskSpace } = policy.installation.resourceLimits;
-      
+
       // Should have numeric values with units
       expect(memory).toMatch(/^\d+[KMGT]?B$/);
       expect(cpu).toMatch(/^\d+(\.\d+)?$/);
@@ -264,16 +266,16 @@ describe('MCP Governance Policy', () => {
 
     it('should have proper network restrictions', () => {
       const { allowed, blocked } = policy.installation.networkAccess;
-      
+
       // Should not have conflicting entries
-      const intersection = allowed.filter(url => 
-        blocked.some(blocked => url.includes(blocked))
+      const intersection = allowed.filter((url) =>
+        blocked.some((blocked) => url.includes(blocked)),
       );
       expect(intersection.length).toBe(0);
 
       // HTTPS should be preferred over HTTP
-      const httpsAllowed = allowed.filter(url => url.startsWith('https://')).length;
-      const httpAllowed = allowed.filter(url => url.startsWith('http://')).length;
+      const httpsAllowed = allowed.filter((url) => url.startsWith('https://')).length;
+      const httpAllowed = allowed.filter((url) => url.startsWith('http://')).length;
       expect(httpsAllowed).toBeGreaterThanOrEqual(httpAllowed);
     });
   });

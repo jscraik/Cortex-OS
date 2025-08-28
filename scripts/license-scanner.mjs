@@ -73,18 +73,27 @@ function addPkg(results, pkgPath, pkg) {
   if (!pkg || !pkg.name || !pkg.version) return;
   const lic = normalizeLicenseField(pkg.license || pkg.licenses);
   const key = `${pkg.name}@${pkg.version}`;
-  if (!results.has(key)) results.set(key, { name: pkg.name, version: pkg.version, license: lic, path: pkgPath });
+  if (!results.has(key))
+    results.set(key, { name: pkg.name, version: pkg.version, license: lic, path: pkgPath });
 }
 
 async function scanPnpmModules(rootDir, results) {
   const pnpmDir = path.join(rootDir, 'node_modules', '.pnpm');
   let entries = [];
-  try { entries = await fs.readdir(pnpmDir, { withFileTypes: true }); } catch { return; }
+  try {
+    entries = await fs.readdir(pnpmDir, { withFileTypes: true });
+  } catch {
+    return;
+  }
   for (const ent of entries) {
     if (!ent.isDirectory()) continue;
     const pkgRoot = path.join(pnpmDir, ent.name, 'node_modules');
     let inner;
-    try { inner = await fs.readdir(pkgRoot, { withFileTypes: true }); } catch { continue; }
+    try {
+      inner = await fs.readdir(pkgRoot, { withFileTypes: true });
+    } catch {
+      continue;
+    }
     for (const sub of inner) {
       if (!sub.isDirectory()) continue;
       const pkgPath = path.join(pkgRoot, sub.name, 'package.json');
@@ -97,14 +106,22 @@ async function scanPnpmModules(rootDir, results) {
 async function scanTopLevelModules(rootDir, results) {
   const nm = path.join(rootDir, 'node_modules');
   let top;
-  try { top = await fs.readdir(nm, { withFileTypes: true }); } catch { return; }
+  try {
+    top = await fs.readdir(nm, { withFileTypes: true });
+  } catch {
+    return;
+  }
   for (const ent of top) {
     if (!ent.isDirectory()) continue;
     const name = ent.name;
     if (name.startsWith('.')) continue;
     if (name.startsWith('@')) {
       let scoped;
-      try { scoped = await fs.readdir(path.join(nm, name), { withFileTypes: true }); } catch { continue; }
+      try {
+        scoped = await fs.readdir(path.join(nm, name), { withFileTypes: true });
+      } catch {
+        continue;
+      }
       for (const sub of scoped) {
         if (!sub.isDirectory()) continue;
         const pkgPath = path.join(nm, name, sub.name, 'package.json');
@@ -137,7 +154,9 @@ function summarize(packages) {
 function printSummary(title, summary) {
   const { total, allowed, unknown, disallowed } = summary;
   console.log(`\n== ${title} ==`);
-  console.log(`Total: ${total}  Allowed: ${allowed}  Unknown: ${unknown.length}  Disallowed: ${disallowed.length}`);
+  console.log(
+    `Total: ${total}  Allowed: ${allowed}  Unknown: ${unknown.length}  Disallowed: ${disallowed.length}`,
+  );
   if (unknown.length) {
     console.log('Unknown (first 10):');
     for (const p of unknown.slice(0, 10)) {
@@ -164,7 +183,8 @@ async function listNames(args) {
       if (node.name) set.add(node.name);
       if (Array.isArray(node.dependencies)) for (const d of node.dependencies) walk(d);
     };
-    if (Array.isArray(data)) data.forEach(walk); else walk(data);
+    if (Array.isArray(data)) data.forEach(walk);
+    else walk(data);
     return set;
   } catch {
     return new Set();
@@ -188,8 +208,15 @@ async function main() {
   const raw = summarize(nodePkgs);
   // Apply exceptions
   const devExceptions = new Set(policy?.exceptions?.devOnly || []);
-  const filteredDisallowed = raw.disallowed.filter((p) => !(devOnlySet.has(p.name) && devExceptions.has(p.name)));
-  const nodeSummary = { total: raw.total, unknown: raw.unknown, disallowed: filteredDisallowed, allowed: raw.total - raw.unknown.length - filteredDisallowed.length };
+  const filteredDisallowed = raw.disallowed.filter(
+    (p) => !(devOnlySet.has(p.name) && devExceptions.has(p.name)),
+  );
+  const nodeSummary = {
+    total: raw.total,
+    unknown: raw.unknown,
+    disallowed: filteredDisallowed,
+    allowed: raw.total - raw.unknown.length - filteredDisallowed.length,
+  };
   printSummary('Node (pnpm) license scan', nodeSummary);
 
   // Reports
@@ -205,13 +232,30 @@ async function main() {
       allowed: nodeSummary.allowed,
       unknownCount: nodeSummary.unknown.length,
       disallowedCount: nodeSummary.disallowed.length,
-      unknown: nodeSummary.unknown.map((p) => ({ name: p.name, version: p.version, license: p.license || null, path: toRel(p) })),
-      disallowed: nodeSummary.disallowed.map((p) => ({ name: p.name, version: p.version, license: p.license, path: toRel(p) })),
+      unknown: nodeSummary.unknown.map((p) => ({
+        name: p.name,
+        version: p.version,
+        license: p.license || null,
+        path: toRel(p),
+      })),
+      disallowed: nodeSummary.disallowed.map((p) => ({
+        name: p.name,
+        version: p.version,
+        license: p.license,
+        path: toRel(p),
+      })),
     },
   };
   await fs.writeFile(jsonPath, JSON.stringify(report, null, 2));
   const lines = [];
-  lines.push('# License Scan Report', '', `Generated: ${report.generatedAt}`, '', '## Policy', 'Allowed SPDX IDs:');
+  lines.push(
+    '# License Scan Report',
+    '',
+    `Generated: ${report.generatedAt}`,
+    '',
+    '## Policy',
+    'Allowed SPDX IDs:',
+  );
   for (const id of report.policy.allowed) lines.push(`- ${id}`);
   if (report.policy.exceptions?.devOnly?.length) {
     lines.push('', 'Dev-only exceptions:');
@@ -224,16 +268,20 @@ async function main() {
   lines.push(`- Disallowed: ${report.node.disallowedCount}`, '');
   if (report.node.unknownCount) {
     lines.push('### Unknown');
-    for (const p of report.node.unknown) lines.push(`- ${p.name}@${p.version} license: <missing>${p.path ? ` (${p.path})` : ''}`);
+    for (const p of report.node.unknown)
+      lines.push(`- ${p.name}@${p.version} license: <missing>${p.path ? ` (${p.path})` : ''}`);
     lines.push('');
   }
   if (report.node.disallowedCount) {
     lines.push('### Disallowed');
-    for (const p of report.node.disallowed) lines.push(`- ${p.name}@${p.version} license: ${p.license}${p.path ? ` (${p.path})` : ''}`);
+    for (const p of report.node.disallowed)
+      lines.push(`- ${p.name}@${p.version} license: ${p.license}${p.path ? ` (${p.path})` : ''}`);
     lines.push('');
   }
   await fs.writeFile(mdPath, lines.join('\n'));
-  console.log(`\nReports written:\n - ${path.relative(repoRoot, jsonPath)}\n - ${path.relative(repoRoot, mdPath)}`);
+  console.log(
+    `\nReports written:\n - ${path.relative(repoRoot, jsonPath)}\n - ${path.relative(repoRoot, mdPath)}`,
+  );
 
   const failed = nodeSummary.disallowed.length > 0;
   if (failed) {

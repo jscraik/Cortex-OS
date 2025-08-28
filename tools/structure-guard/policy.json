@@ -3,30 +3,69 @@
   "allowedPaths": {
     "apps": ["cortex-os"],
     "apps/cortex-os/packages": ["agents", "mvp", "mvp-core", "mvp-server"],
-    "packages": ["a2a","mcp","memories","orchestration","simlab","rag"],
-    "services": ["ml-inference","data-pipeline"],
-    "libs/typescript": ["accessibility","contracts","errors","telemetry","testing","types","utils"],
-    "libs/python": ["cortex_core","cortex_ml"],
-    "tools": ["structure-guard","eslint-config","lockfile-sync","schemas","scripts","python"],
-    ".cortex": ["rules","prompts"],
+    "packages": ["a2a", "mcp", "memories", "orchestration", "simlab", "rag"],
+    "services": ["ml-inference", "data-pipeline"],
+    "libs/typescript": [
+      "accessibility",
+      "contracts",
+      "errors",
+      "telemetry",
+      "testing",
+      "types",
+      "utils"
+    ],
+    "libs/python": ["cortex_core", "cortex_ml"],
+    "tools": ["structure-guard", "eslint-config", "lockfile-sync", "schemas", "scripts", "python"],
+    ".cortex": ["rules", "prompts"],
     "docs": ["architecture"]
   },
   "allowedRootEntries": [
-    ".cortex","apps","packages","libs","services","tools","docs",".github",
-    "pnpm-workspace.yaml","turbo.json","package.json","tsconfig.json","pyproject.toml","uv.toml",
-    "nx.json","vitest.config.ts","vitest.workspace.ts","README.md","LICENSE","SECURITY.md","renovate.json",
-    "cliff.toml","commitlint.config.js","semantic-release.config.js","ecosystem.config.cjs","ecosystem.config.js"
+    ".cortex",
+    "apps",
+    "packages",
+    "libs",
+    "services",
+    "tools",
+    "docs",
+    ".github",
+    "pnpm-workspace.yaml",
+    "turbo.json",
+    "package.json",
+    "tsconfig.json",
+    "pyproject.toml",
+    "uv.toml",
+    "nx.json",
+    "vitest.config.ts",
+    "vitest.workspace.ts",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "renovate.json",
+    "cliff.toml",
+    "commitlint.config.js",
+    "semantic-release.config.js",
+    "ecosystem.config.cjs",
+    "ecosystem.config.js"
   ],
   "filePatterns": {
     "typescript": {
-      "required": ["package.json","tsconfig.json"],
-      "requireOneOf": ["src/index.ts","src/index.js","index.ts"],
-      "allowed": ["*.ts","*.tsx","*.js","*.json","*.md","tests/**/*","**/*.spec.ts","**/*.test.ts"]
+      "required": ["package.json", "tsconfig.json"],
+      "requireOneOf": ["src/index.ts", "src/index.js", "index.ts"],
+      "allowed": [
+        "*.ts",
+        "*.tsx",
+        "*.js",
+        "*.json",
+        "*.md",
+        "tests/**/*",
+        "**/*.spec.ts",
+        "**/*.test.ts"
+      ]
     },
     "python": {
       "required": ["pyproject.toml"],
-      "requireOneOf": ["src/__init__.py","__init__.py","src/main.py"],
-      "allowed": ["*.py","*.pyi","*.toml","*.md","tests/**/*","**/*_test.py","**/test_*.py"]
+      "requireOneOf": ["src/__init__.py", "__init__.py", "src/main.py"],
+      "allowed": ["*.py", "*.pyi", "*.toml", "*.md", "tests/**/*", "**/*_test.py", "**/test_*.py"]
     }
   },
   "maxFilesPerChange": 15,
@@ -56,15 +95,20 @@
     "pnpm-workspace.yaml",
     ".changeset/**"
   ],
-  "deniedGlobs": [
-    "**/*.secret"
-  ],
+  "deniedGlobs": ["**/*.secret"],
   "importRules": {
     "bannedPatterns": [
-      "^@cortex-os/.*/dist/.*$","^@cortex-os/.*/node_modules/.*$","\\.\\./\\.\\./\\.\\./.*","^packages/.*/packages/.*"
+      "^@cortex-os/.*/dist/.*$",
+      "^@cortex-os/.*/node_modules/.*$",
+      "\\.\\./\\.\\./\\.\\./.*",
+      "^packages/.*/packages/.*"
     ],
     "allowedCrossPkgImports": [
-      "@cortex-os/contracts","@cortex-os/types","@cortex-os/utils","@cortex-os/telemetry","@cortex-os/testing"
+      "@cortex-os/contracts",
+      "@cortex-os/types",
+      "@cortex-os/utils",
+      "@cortex-os/telemetry",
+      "@cortex-os/testing"
     ]
   },
   "enforcement": {
@@ -73,7 +117,7 @@
   },
   "testRequirements": {
     "minCoverage": 80,
-    "requiredTestDirs": ["tests","test","__tests__","src/**/*.spec.ts","src/**/*.test.ts"],
-    "excludeFromCoverage": ["*.config.*","*.setup.*","*.mock.*"]
+    "requiredTestDirs": ["tests", "test", "__tests__", "src/**/*.spec.ts", "src/**/*.test.ts"],
+    "excludeFromCoverage": ["*.config.*", "*.setup.*", "*.mock.*"]
   }
 }

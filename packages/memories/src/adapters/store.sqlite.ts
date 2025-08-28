@@ -1,5 +1,5 @@
-import type { MemoryStore, TextQuery, VectorQuery } from "../ports/MemoryStore.js";
-import type { Memory, MemoryId } from "../domain/types.js";
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import type { Memory, MemoryId } from '../domain/types.js';
 import Database from 'better-sqlite3';
 
 // Helper function to calculate cosine similarity
@@ -7,15 +7,15 @@ function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same length');
   }
-  
+
   const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
   const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
   const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-  
+
   if (magnitudeA === 0 || magnitudeB === 0) {
     return 0;
   }
-  
+
   return dotProduct / (magnitudeA * magnitudeB);
 }
 
@@ -53,7 +53,7 @@ export class SQLiteStore implements MemoryStore {
       (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     stmt.run(
       m.id,
       m.kind,
@@ -65,18 +65,18 @@ export class SQLiteStore implements MemoryStore {
       m.updatedAt,
       JSON.stringify(m.provenance),
       m.policy ? JSON.stringify(m.policy) : null,
-      m.embeddingModel || null
+      m.embeddingModel || null,
     );
-    
+
     return m;
   }
 
   async get(id: MemoryId): Promise<Memory | null> {
     const stmt = this.db.prepare('SELECT * FROM memories WHERE id = ?');
     const row = stmt.get(id);
-    
+
     if (!row) return null;
-    
+
     return this.rowToMemory(row);
   }
 
@@ -88,12 +88,12 @@ export class SQLiteStore implements MemoryStore {
   async searchByText(q: TextQuery): Promise<Memory[]> {
     let sql = 'SELECT * FROM memories WHERE text IS NOT NULL';
     const params: any[] = [];
-    
+
     if (q.text) {
       sql += ' AND LOWER(text) LIKE LOWER(?)';
       params.push(`%${q.text}%`);
     }
-    
+
     if (q.filterTags && q.filterTags.length > 0) {
       // For simplicity, we'll do a basic tag filter
       // A more sophisticated implementation would parse the JSON tags
@@ -105,13 +105,13 @@ export class SQLiteStore implements MemoryStore {
       });
       sql += ')';
     }
-    
+
     sql += ' ORDER BY updatedAt DESC LIMIT ?';
     params.push(q.topK);
-    
+
     const stmt = this.db.prepare(sql);
     const rows = stmt.all(...params);
-    
+
     return rows.map((row: any) => this.rowToMemory(row));
   }
 
@@ -120,7 +120,7 @@ export class SQLiteStore implements MemoryStore {
     // We'll fetch candidates and perform similarity matching in memory
     let sql = 'SELECT * FROM memories WHERE vector IS NOT NULL';
     const params: any[] = [];
-    
+
     if (q.filterTags && q.filterTags.length > 0) {
       sql += ' AND (';
       q.filterTags.forEach((tag, i) => {
@@ -130,39 +130,40 @@ export class SQLiteStore implements MemoryStore {
       });
       sql += ')';
     }
-    
+
     sql += ' ORDER BY updatedAt DESC LIMIT ?';
     params.push(q.topK * 10); // Fetch more candidates for similarity matching
-    
+
     const stmt = this.db.prepare(sql);
     const rows = stmt.all(...params);
-    
-    const candidates = rows.map((row: any) => this.rowToMemory(row))
-      .filter(memory => memory.vector) as Memory[];
-    
+
+    const candidates = rows
+      .map((row: any) => this.rowToMemory(row))
+      .filter((memory) => memory.vector) as Memory[];
+
     // Perform similarity matching
     const scoredCandidates = candidates
-      .map(memory => ({
+      .map((memory) => ({
         memory,
-        score: cosineSimilarity(q.vector, memory.vector!)
+        score: cosineSimilarity(q.vector, memory.vector!),
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, q.topK)
-      .map(item => item.memory);
-    
+      .map((item) => item.memory);
+
     return scoredCandidates;
   }
 
   async purgeExpired(nowISO: string): Promise<number> {
     const now = new Date(nowISO).getTime();
     let purgedCount = 0;
-    
+
     // Get all memories with TTL
     const stmt = this.db.prepare('SELECT * FROM memories WHERE ttl IS NOT NULL');
     const rows = stmt.all();
-    
+
     const expiredIds: string[] = [];
-    
+
     for (const row of rows) {
       try {
         const memory = this.rowToMemory(row);
@@ -176,7 +177,7 @@ export class SQLiteStore implements MemoryStore {
             const minutes = Number(match[3] || 0);
             const seconds = Number(match[4] || 0);
             const ttlMs = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
-            
+
             if (created + ttlMs <= now) {
               expiredIds.push(memory.id);
             }
@@ -187,7 +188,7 @@ export class SQLiteStore implements MemoryStore {
         console.warn(`Invalid TTL format for memory ${row.id}: ${row.ttl}`);
       }
     }
-    
+
     // Delete expired memories
     if (expiredIds.length > 0) {
       const placeholders = expiredIds.map(() => '?').join(',');
@@ -195,10 +196,10 @@ export class SQLiteStore implements MemoryStore {
       const result = deleteStmt.run(...expiredIds);
       purgedCount = result.changes;
     }
-    
+
     return purgedCount;
   }
-  
+
   private rowToMemory(row: any): Memory {
     return {
       id: row.id,
@@ -215,4 +216,3 @@ export class SQLiteStore implements MemoryStore {
     };
   }
 }
-

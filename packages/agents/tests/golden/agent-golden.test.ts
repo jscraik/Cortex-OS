@@ -16,8 +16,8 @@ const mockAgents = {
   codeIntelligence: {
     id: 'code-intel-001',
     name: 'Code Intelligence Agent',
-    capabilities: ['analyze', 'review', 'optimize', 'security-scan']
-  }
+    capabilities: ['analyze', 'review', 'optimize', 'security-scan'],
+  },
 };
 
 const mockTasks = {
@@ -26,8 +26,8 @@ const mockTasks = {
     id: 'analysis-task-001',
     kind: 'code-analysis',
     input: mockCodeAnalysisRequest,
-    budget: { wallClockMs: 10000, maxSteps: 5 }
-  }
+    budget: { wallClockMs: 10000, maxSteps: 5 },
+  },
 };
 
 const mockCodeAnalysisRequests = {
@@ -35,18 +35,18 @@ const mockCodeAnalysisRequests = {
   security: {
     ...mockCodeAnalysisRequest,
     analysisType: 'security' as const,
-    urgency: 'high' as const
+    urgency: 'high' as const,
   },
   performance: {
     ...mockCodeAnalysisRequest,
     analysisType: 'optimize' as const,
-    urgency: 'medium' as const
+    urgency: 'medium' as const,
   },
   complex: {
     ...mockCodeAnalysisRequest,
     code: 'function complex() { for(let i=0; i<10; i++) { if(a) { if(b) { return c; } } } }',
-    analysisType: 'review' as const
-  }
+    analysisType: 'review' as const,
+  },
 };
 
 // Golden test snapshots directory
@@ -62,11 +62,11 @@ describe('Golden Tests - Agent Evaluation', () => {
   beforeEach(async () => {
     // Ensure snapshots directory exists
     await fs.mkdir(GOLDEN_SNAPSHOTS_DIR, { recursive: true });
-    
+
     basicExecutor = new BasicExecutor();
     codeAgent = new CodeIntelligenceAgent({
       ollamaEndpoint: 'http://localhost:11434',
-      mlxEndpoint: 'http://localhost:8765'
+      mlxEndpoint: 'http://localhost:8765',
     });
 
     // Mock fetch with deterministic responses based on seed
@@ -93,11 +93,11 @@ describe('Golden Tests - Agent Evaluation', () => {
             - Analysis ID: golden-${GOLDEN_SEED}-001
             - Model Version: qwen3-coder-v1.0
             - Confidence: 0.92
-          `
-        })
+          `,
+        }),
       }),
-      
-      // Response 2: Security analysis  
+
+      // Response 2: Security analysis
       async () => ({
         ok: true,
         status: 200,
@@ -117,9 +117,9 @@ describe('Golden Tests - Agent Evaluation', () => {
             Use parameterized queries
             
             **Golden Signature:** security-${GOLDEN_SEED}-002
-          `
-        })
-      })
+          `,
+        }),
+      }),
     ]);
 
     vi.mocked(global.fetch).mockImplementation(mockFetch);
@@ -133,45 +133,45 @@ describe('Golden Tests - Agent Evaluation', () => {
     it('should produce consistent execution results', async () => {
       const agent = mockAgents.basic;
       const task = mockTasks.simple;
-      
+
       const result = await basicExecutor.run(agent, task);
-      
+
       const expectedGolden = {
         status: 'completed',
         result: task.input,
         agent: agent.id,
         // Golden metadata
         goldenSeed: GOLDEN_SEED,
-        testType: 'basic-execution'
+        testType: 'basic-execution',
       };
 
       expect(result).toMatchObject({
         status: 'completed',
         result: task.input,
-        agent: agent.id
+        agent: agent.id,
       });
 
       // Store golden snapshot
       await storeGoldenSnapshot('basic-executor-simple', {
         input: { agent, task },
         output: result,
-        metadata: expectedGolden
+        metadata: expectedGolden,
       });
     });
 
     it('should handle multiple task types consistently', async () => {
       const agent = mockAgents.codeIntelligence;
       const tasks = Object.values(mockTasks);
-      
+
       const results = [];
-      
+
       for (const task of tasks) {
         const result = await basicExecutor.run(agent, task);
         results.push({
           taskId: task.id,
           taskKind: task.kind,
           result: result,
-          executionOrder: results.length
+          executionOrder: results.length,
         });
       }
 
@@ -184,7 +184,7 @@ describe('Golden Tests - Agent Evaluation', () => {
       await storeGoldenSnapshot('basic-executor-multiple-tasks', {
         input: { agent, tasks },
         output: results,
-        metadata: { seed: GOLDEN_SEED, testType: 'multi-task' }
+        metadata: { seed: GOLDEN_SEED, testType: 'multi-task' },
       });
     });
   });
@@ -206,11 +206,11 @@ describe('Golden Tests - Agent Evaluation', () => {
       // Verify deterministic values (based on mock)
       expect(result.confidence).toBeCloseTo(0.85, 2);
       expect(result.modelUsed).toMatch(/qwen3-coder/);
-      
+
       await storeGoldenSnapshot('code-intelligence-basic', {
         input: request,
         output: result,
-        metadata: { seed: GOLDEN_SEED, analysisType: 'basic' }
+        metadata: { seed: GOLDEN_SEED, analysisType: 'basic' },
       });
     });
 
@@ -227,7 +227,7 @@ describe('Golden Tests - Agent Evaluation', () => {
       await storeGoldenSnapshot('code-intelligence-security', {
         input: request,
         output: result,
-        metadata: { seed: GOLDEN_SEED, analysisType: 'security' }
+        metadata: { seed: GOLDEN_SEED, analysisType: 'security' },
       });
     });
 
@@ -235,11 +235,11 @@ describe('Golden Tests - Agent Evaluation', () => {
       const requests = [
         mockCodeAnalysisRequests.basic,
         mockCodeAnalysisRequests.performance,
-        mockCodeAnalysisRequests.complex
+        mockCodeAnalysisRequests.complex,
       ];
 
       const results = [];
-      
+
       for (const request of requests) {
         const result = await codeAgent.analyzeCode(request);
         results.push({
@@ -247,24 +247,24 @@ describe('Golden Tests - Agent Evaluation', () => {
           urgency: request.urgency,
           confidence: result.confidence,
           modelUsed: result.modelUsed,
-          processingTime: result.processingTime
+          processingTime: result.processingTime,
         });
-        
+
         // Small delay to ensure different timestamps
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       // Verify consistent model selection for same analysis types
-      const basicResults = results.filter(r => r.requestType === 'review');
+      const basicResults = results.filter((r) => r.requestType === 'review');
       expect(basicResults.length).toBeGreaterThan(0);
-      
-      const performanceResults = results.filter(r => r.requestType === 'optimize');
+
+      const performanceResults = results.filter((r) => r.requestType === 'optimize');
       expect(performanceResults.length).toBeGreaterThan(0);
-      
+
       await storeGoldenSnapshot('code-intelligence-batch', {
         input: requests,
         output: results,
-        metadata: { seed: GOLDEN_SEED, testType: 'batch-analysis' }
+        metadata: { seed: GOLDEN_SEED, testType: 'batch-analysis' },
       });
     });
   });
@@ -274,42 +274,42 @@ describe('Golden Tests - Agent Evaluation', () => {
       const basicAgent = mockAgents.basic;
       // Use the actual CodeIntelligenceAgent instance, not the mock
       const codeAgentInstance = codeAgent;
-      
+
       // Execute basic task
       const executionResult = await basicExecutor.run(basicAgent, mockTasks.simple);
-      
+
       // Analyze execution result
       const analysisRequest = {
         ...mockCodeAnalysisRequests.basic,
         context: `Golden test coordination - execution: ${executionResult.agent}`,
-        code: JSON.stringify(executionResult)
+        code: JSON.stringify(executionResult),
       };
-      
+
       // Ensure codeAgent is properly instantiated
       const analysisResult = await codeAgentInstance.analyzeCode(analysisRequest);
-      
+
       const coordinationResult = {
         execution: {
           agent: executionResult.agent,
           status: executionResult.status,
-          resultType: typeof executionResult.result
+          resultType: typeof executionResult.result,
         },
         analysis: {
           confidence: analysisResult.confidence,
           modelUsed: analysisResult.modelUsed,
-          suggestionsCount: analysisResult.suggestions.length
+          suggestionsCount: analysisResult.suggestions.length,
         },
         coordination: {
           seed: GOLDEN_SEED,
           workflow: 'execute-then-analyze',
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       };
 
       await storeGoldenSnapshot('cross-agent-coordination', {
         input: { basicAgent, codeAgent, task: mockTasks.simple },
         output: coordinationResult,
-        metadata: { seed: GOLDEN_SEED, testType: 'coordination' }
+        metadata: { seed: GOLDEN_SEED, testType: 'coordination' },
       });
 
       // Verify coordination integrity
@@ -323,59 +323,59 @@ describe('Golden Tests - Agent Evaluation', () => {
       const snapshotName = 'regression-basic-execution';
       const agent = mockAgents.basic;
       const task = mockTasks.simple;
-      
+
       const currentResult = await basicExecutor.run(agent, task);
-      
+
       // Compare with previous golden snapshot if exists
       const previousSnapshot = await loadGoldenSnapshot(snapshotName);
-      
+
       if (previousSnapshot) {
         expect(currentResult.status).toBe(previousSnapshot.output.status);
         expect(currentResult.agent).toBe(previousSnapshot.output.agent);
         expect(typeof currentResult.result).toBe(typeof previousSnapshot.output.result);
       }
-      
+
       await storeGoldenSnapshot(snapshotName, {
         input: { agent, task },
         output: currentResult,
-        metadata: { 
-          seed: GOLDEN_SEED, 
+        metadata: {
+          seed: GOLDEN_SEED,
           testType: 'regression',
-          version: '1.0.0' 
-        }
+          version: '1.0.0',
+        },
       });
     });
 
     it('should detect changes in analysis quality', async () => {
       const snapshotName = 'regression-analysis-quality';
       const request = mockCodeAnalysisRequests.basic;
-      
+
       const currentResult = await codeAgent.analyzeCode(request);
-      
+
       const previousSnapshot = await loadGoldenSnapshot(snapshotName);
-      
+
       if (previousSnapshot) {
         // Verify key metrics haven't degraded
         expect(currentResult.confidence).toBeGreaterThanOrEqual(
-          previousSnapshot.output.confidence * 0.95 // Allow 5% degradation
+          previousSnapshot.output.confidence * 0.95, // Allow 5% degradation
         );
         expect(currentResult.suggestions.length).toBeGreaterThanOrEqual(
-          Math.max(1, previousSnapshot.output.suggestions.length - 1)
+          Math.max(1, previousSnapshot.output.suggestions.length - 1),
         );
       }
 
       await storeGoldenSnapshot(snapshotName, {
         input: request,
         output: currentResult,
-        metadata: { 
-          seed: GOLDEN_SEED, 
+        metadata: {
+          seed: GOLDEN_SEED,
           testType: 'quality-regression',
           qualityMetrics: {
             confidence: currentResult.confidence,
             suggestionsCount: currentResult.suggestions.length,
-            securityVulns: currentResult.security.vulnerabilities.length
-          }
-        }
+            securityVulns: currentResult.security.vulnerabilities.length,
+          },
+        },
       });
     });
   });
@@ -387,9 +387,9 @@ describe('Golden Tests - Agent Evaluation', () => {
       ...data,
       timestamp: Date.now(),
       seed: GOLDEN_SEED,
-      nodeVersion: process.version
+      nodeVersion: process.version,
     };
-    
+
     await fs.writeFile(filepath, JSON.stringify(snapshot, null, 2));
   }
 

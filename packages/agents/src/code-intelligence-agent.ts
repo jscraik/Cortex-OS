@@ -214,11 +214,7 @@ export class CodeIntelligenceAgent extends EventEmitter {
       modality: 'code',
     };
 
-    const modelId = selectOptimalModel(
-      'agents',
-      'codeIntelligence',
-      characteristics,
-    );
+    const modelId = selectOptimalModel('agents', 'codeIntelligence', characteristics);
 
     try {
       // Route to appropriate model
@@ -277,7 +273,6 @@ export class CodeIntelligenceAgent extends EventEmitter {
     request: CodeAnalysisRequest,
     modelId: string,
   ): Promise<CodeAnalysisResult> {
-
     const prompt = this.buildCodeAnalysisPrompt(request);
     const modelOptions = MODEL_CONFIG[modelKey as keyof typeof MODEL_CONFIG];
 
@@ -293,15 +288,11 @@ export class CodeIntelligenceAgent extends EventEmitter {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `${modelId} analysis failed: ${response.statusText}`,
-      );
+      throw new Error(`${modelId} analysis failed: ${response.statusText}`);
     }
-
 
     const data = (await response.json()) as { response: string };
     return this.parseCodeAnalysisResponse(data.response, 'deepseek-coder');
-
   }
 
   private buildCodeAnalysisPrompt(request: CodeAnalysisRequest): string {
@@ -327,7 +318,6 @@ Focus on practical, implementable suggestions with clear rationale.
 Analysis Type: ${request.analysisType}
 Urgency: ${request.urgency}`;
   }
-
 
   private parseCodeAnalysisResponse(response: string, modelType: string): CodeAnalysisResult {
     // Check if this is a security analysis based on model type or content

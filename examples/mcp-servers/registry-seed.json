@@ -10,13 +10,13 @@
       "count": 2
     },
     "productivity": {
-      "name": "Productivity", 
+      "name": "Productivity",
       "description": "Productivity and workflow tools",
       "count": 0
     },
     "data": {
       "name": "Data",
-      "description": "Data sources and databases", 
+      "description": "Data sources and databases",
       "count": 0
     },
     "communication": {
@@ -30,7 +30,7 @@
       "count": 0
     },
     "integration": {
-      "name": "Integration", 
+      "name": "Integration",
       "description": "Third-party service integrations",
       "count": 0
     }

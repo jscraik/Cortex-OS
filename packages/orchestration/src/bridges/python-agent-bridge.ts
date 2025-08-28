@@ -188,7 +188,6 @@ export class PythonAgentBridge extends EventEmitter {
     });
   }
 
-
   /**
    * Get agent status
    */
@@ -369,10 +368,7 @@ export class PythonAgentBridge extends EventEmitter {
     }
   }
 
-  private handleTaskResult(payload: {
-    coordinationId?: string;
-    result?: AgentTaskResult;
-  }): void {
+  private handleTaskResult(payload: { coordinationId?: string; result?: AgentTaskResult }): void {
     this.logger.info('Handling task result', { payload });
     const { coordinationId, result } = payload;
 

@@ -19,23 +19,23 @@ export interface UnifiedEvidenceConfig {
   embeddingModel?: string;
   maxTokens?: number;
   temperature?: number;
-  
+
   // Evidence Collection Settings
   maxEvidenceItems?: number;
   similarityThreshold?: number;
   factCheckingEnabled?: boolean;
   enhancementEnabled?: boolean;
-  
+
   // Security and Compliance
   enablePolicyCompliance?: boolean;
   enableContentSanitization?: boolean;
   tenantId?: string;
-  
+
   // Performance Settings
   concurrencyLimit?: number;
   timeoutMs?: number;
   cacheEnabled?: boolean;
-  
+
   // Environment Settings
   mockMode?: boolean; // Allow explicit mock mode configuration
 }
@@ -102,7 +102,7 @@ export interface UnifiedEvidenceResult {
 
 /**
  * Unified AI Evidence Collection Workflow
- * 
+ *
  * Orchestrates the complete evidence collection pipeline:
  * 1. Context Analysis & Planning
  * 2. Multi-source Evidence Collection
@@ -156,22 +156,22 @@ export class UnifiedAIEvidenceWorkflow {
     try {
       // Phase 1: Context Analysis & Planning
       const plan = await this.analyzeContext(context);
-      
+
       // Phase 2: Multi-source Evidence Collection
       const rawEvidence = await this.collectRawEvidence(context, plan);
-      
+
       // Phase 3: AI-Enhanced Processing
       const processedEvidence = await this.processEvidence(rawEvidence, context);
-      
+
       // Phase 4: Semantic Search & Retrieval
       const enrichedEvidence = await this.enrichWithSemanticSearch(processedEvidence, context);
-      
+
       // Phase 5: Fact Checking & Validation
       const validatedEvidence = await this.validateEvidence(enrichedEvidence, context);
-      
+
       // Phase 6: Security & Policy Compliance
       const complianceResult = await this.ensureCompliance(validatedEvidence);
-      
+
       // Phase 7: Insight Generation & Reporting
       const insights = await this.generateInsights(validatedEvidence, context);
 
@@ -181,9 +181,11 @@ export class UnifiedAIEvidenceWorkflow {
         taskId: context.taskId,
         summary: {
           totalItems: validatedEvidence.length,
-          enhancedItems: validatedEvidence.filter(e => e.enhancement).length,
-          factCheckedItems: validatedEvidence.filter(e => e.factCheckResult).length,
-          averageRelevance: validatedEvidence.reduce((sum, e) => sum + e.relevanceScore, 0) / validatedEvidence.length,
+          enhancedItems: validatedEvidence.filter((e) => e.enhancement).length,
+          factCheckedItems: validatedEvidence.filter((e) => e.factCheckResult).length,
+          averageRelevance:
+            validatedEvidence.reduce((sum, e) => sum + e.relevanceScore, 0) /
+            validatedEvidence.length,
           processingTime: totalDuration,
         },
         evidence: validatedEvidence,
@@ -198,7 +200,9 @@ export class UnifiedAIEvidenceWorkflow {
         },
       };
     } catch (error) {
-      throw new Error(`Unified evidence collection failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Unified evidence collection failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -225,20 +229,22 @@ export class UnifiedAIEvidenceWorkflow {
       try {
         const results = await this.asbrIntegration.collectEnhancedEvidence(
           { taskId: context.taskId, claim: query, sources: [] },
-          { maxResults: Math.floor(this.config.maxEvidenceItems / plan.searchQueries.length) }
+          { maxResults: Math.floor(this.config.maxEvidenceItems / plan.searchQueries.length) },
         );
 
-        evidence.push(...results.map((result: any, index: number) => ({
-          id: `evidence-${context.taskId}-${evidence.length + index}`,
-          content: result.content || result.text || String(result),
-          source: result.source || 'asbr-integration',
-          relevanceScore: result.score || 0.8,
-          metadata: {
-            query,
-            collectionMethod: 'asbr-enhanced',
-            ...result.metadata,
-          },
-        })));
+        evidence.push(
+          ...results.map((result: any, index: number) => ({
+            id: `evidence-${context.taskId}-${evidence.length + index}`,
+            content: result.content || result.text || String(result),
+            source: result.source || 'asbr-integration',
+            relevanceScore: result.score || 0.8,
+            metadata: {
+              query,
+              collectionMethod: 'asbr-enhanced',
+              ...result.metadata,
+            },
+          })),
+        );
       } catch (error) {
         // Log error but continue with other queries
         console.warn(`Failed to collect evidence for query "${query}":`, error);
@@ -274,7 +280,7 @@ export class UnifiedAIEvidenceWorkflow {
           // Return original item if enhancement fails
           return item;
         }
-      })
+      }),
     );
 
     return enhanced;
@@ -288,12 +294,12 @@ export class UnifiedAIEvidenceWorkflow {
       const relatedEvidence = await this.asbrIntegration.searchRelatedEvidence(
         context.description,
         [context.description],
-        { maxResults: Math.floor(this.config.maxEvidenceItems / 4) }
+        { maxResults: Math.floor(this.config.maxEvidenceItems / 4) },
       );
 
       // Merge and deduplicate evidence
       const allEvidence = [...evidence];
-      const existingContent = new Set(evidence.map(e => e.content));
+      const existingContent = new Set(evidence.map((e) => e.content));
 
       relatedEvidence.forEach((related: any, index: number) => {
         const content = related.content || related.text || String(related);
@@ -339,7 +345,7 @@ export class UnifiedAIEvidenceWorkflow {
             source: { type: 'workflow', id: 'unified' },
             timestamp: new Date().toISOString(),
             tags: [],
-            relatedEvidenceIds: []
+            relatedEvidenceIds: [],
           };
           const factCheckResult = await this.asbrIntegration.factCheckEvidence(evidence);
 
@@ -362,7 +368,7 @@ export class UnifiedAIEvidenceWorkflow {
             },
           };
         }
-      })
+      }),
     );
 
     return validated;
@@ -384,7 +390,7 @@ export class UnifiedAIEvidenceWorkflow {
    */
   private async generateInsights(evidence: any[], context: EvidenceTaskContext) {
     try {
-      const evidenceObjects = evidence.map(e => ({
+      const evidenceObjects = evidence.map((e) => ({
         id: e.id,
         taskId: context.taskId,
         claim: e.content,
@@ -393,11 +399,11 @@ export class UnifiedAIEvidenceWorkflow {
         source: { type: 'workflow', id: 'unified' },
         timestamp: new Date().toISOString(),
         tags: [],
-        relatedEvidenceIds: []
+        relatedEvidenceIds: [],
       }));
       const insightsResult = await this.asbrIntegration.generateEvidenceInsights(
         evidenceObjects,
-        context.description
+        context.description,
       );
 
       return {
@@ -456,7 +462,7 @@ export class UnifiedAIEvidenceWorkflow {
     ];
 
     const totalComplexity = indicators.reduce((sum, val) => sum + val, 0);
-    
+
     if (totalComplexity < 10) return 'low';
     if (totalComplexity < 25) return 'medium';
     return 'high';

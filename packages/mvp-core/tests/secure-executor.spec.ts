@@ -9,8 +9,6 @@ describe('SecureCommandExecutor', () => {
   });
 
   it('rejects disallowed command', async () => {
-    await expect(
-      SecureCommandExecutor.executeCommand(['rm', '-rf', '/'])
-    ).rejects.toThrow();
+    await expect(SecureCommandExecutor.executeCommand(['rm', '-rf', '/'])).rejects.toThrow();
   });
 });

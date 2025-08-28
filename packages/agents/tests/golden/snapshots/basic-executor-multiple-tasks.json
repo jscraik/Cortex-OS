@@ -3,12 +3,7 @@
     "agent": {
       "id": "code-intel-001",
       "name": "Code Intelligence Agent",
-      "capabilities": [
-        "analyze",
-        "review",
-        "optimize",
-        "security-scan"
-      ]
+      "capabilities": ["analyze", "review", "optimize", "security-scan"]
     },
     "tasks": [
       {

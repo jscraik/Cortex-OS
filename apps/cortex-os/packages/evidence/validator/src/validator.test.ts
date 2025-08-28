@@ -3,19 +3,19 @@
  * @description Tests for evidence validator
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import path from "path";
-import { EvidenceValidator } from "./validator";
-import { Finding, ValidatorConfig } from "./types";
-import { createHash } from "crypto";
+import { describe, it, expect, beforeEach } from 'vitest';
+import path from 'path';
+import { EvidenceValidator } from './validator';
+import { Finding, ValidatorConfig } from './types';
+import { createHash } from 'crypto';
 
-describe("Evidence Validator", () => {
+describe('Evidence Validator', () => {
   let validator: EvidenceValidator;
   let testDataDir: string;
   let config: ValidatorConfig;
 
   beforeEach(() => {
-    testDataDir = path.join(__dirname, "../tests/test-data");
+    testDataDir = path.join(__dirname, '../tests/test-data');
     config = {
       repositoryRoot: testDataDir,
       allowMissingFiles: false,
@@ -26,19 +26,19 @@ describe("Evidence Validator", () => {
     validator = new EvidenceValidator(config);
   });
 
-  describe("Finding Validation", () => {
-    it("should validate a correct finding", async () => {
+  describe('Finding Validation', () => {
+    it('should validate a correct finding', async () => {
       // Use the actual content that will be in the test file
       const textRange = 'import { Component } from "react";';
       const start = 0; // Start of file
       const end = textRange.length;
-      const hash = createHash("sha256").update(textRange).digest("hex");
+      const hash = createHash('sha256').update(textRange).digest('hex');
 
       const finding: Finding = {
-        path: "sample.ts",
+        path: 'sample.ts',
         start,
         end,
-        claim: "This file starts with an import statement",
+        claim: 'This file starts with an import statement',
         hash,
       };
 
@@ -51,93 +51,89 @@ describe("Evidence Validator", () => {
       expect(result.metadata.hashValid).toBe(true);
     });
 
-    it("should detect invalid file path", async () => {
+    it('should detect invalid file path', async () => {
       const finding: Finding = {
-        path: "non-existent-file.ts",
+        path: 'non-existent-file.ts',
         start: 0,
         end: 10,
-        claim: "This file does not exist",
-        hash: "abcdef123456789abcdef123456789abcdef12",
+        claim: 'This file does not exist',
+        hash: 'abcdef123456789abcdef123456789abcdef12',
       };
 
       const result = await validator.validateFinding(finding);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain(
-        "File does not exist: non-existent-file.ts",
-      );
+      expect(result.errors).toContain('File does not exist: non-existent-file.ts');
       expect(result.metadata.fileExists).toBe(false);
     });
 
-    it("should detect invalid range", async () => {
+    it('should detect invalid range', async () => {
       const finding: Finding = {
-        path: "sample.ts",
+        path: 'sample.ts',
         start: 1000,
         end: 2000,
-        claim: "This range exceeds file content",
-        hash: "abcdef123456789abcdef123456789abcdef12",
+        claim: 'This range exceeds file content',
+        hash: 'abcdef123456789abcdef123456789abcdef12',
       };
 
       const result = await validator.validateFinding(finding);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Range exceeds file content length");
+      expect(result.errors).toContain('Range exceeds file content length');
       expect(result.metadata.rangeValid).toBe(false);
     });
 
-    it("should detect invalid hash", async () => {
+    it('should detect invalid hash', async () => {
       const finding: Finding = {
-        path: "sample.ts",
+        path: 'sample.ts',
         start: 0,
         end: 6,
-        claim: "This has the wrong hash",
-        hash: "abcdef123456789abcdef123456789abcdef123456",
+        claim: 'This has the wrong hash',
+        hash: 'abcdef123456789abcdef123456789abcdef123456',
       };
 
       const result = await validator.validateFinding(finding);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Hash mismatch");
+      expect(result.errors).toContain('Hash mismatch');
       expect(result.metadata.hashValid).toBe(false);
     });
 
-    it("should handle range where start > end", async () => {
+    it('should handle range where start > end', async () => {
       const finding: Finding = {
-        path: "sample.ts",
+        path: 'sample.ts',
         start: 10,
         end: 5,
-        claim: "Invalid range",
-        hash: "abcdef123456789abcdef123456789abcdef12",
+        claim: 'Invalid range',
+        hash: 'abcdef123456789abcdef123456789abcdef12',
       };
 
       const result = await validator.validateFinding(finding);
 
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain(
-        "Invalid range: start position cannot be greater than end position",
+        'Invalid range: start position cannot be greater than end position',
       );
     });
   });
 
-  describe("Batch Validation", () => {
-    it("should validate multiple findings", async () => {
+  describe('Batch Validation', () => {
+    it('should validate multiple findings', async () => {
       // Use exact text from the test files
       const findings: Finding[] = [
         {
-          path: "sample.ts",
+          path: 'sample.ts',
           start: 0,
           end: 34, // Length of 'import { Component } from "react";'
-          claim: "Import statement",
-          hash: createHash("sha256")
-            .update('import { Component } from "react";')
-            .digest("hex"),
+          claim: 'Import statement',
+          hash: createHash('sha256').update('import { Component } from "react";').digest('hex'),
         },
         {
-          path: "readme.md",
+          path: 'readme.md',
           start: 0,
           end: 16, // Length of '# Sample Project'
-          claim: "Heading",
-          hash: createHash("sha256").update("# Sample Project").digest("hex"),
+          claim: 'Heading',
+          hash: createHash('sha256').update('# Sample Project').digest('hex'),
         },
       ];
 
@@ -149,21 +145,21 @@ describe("Evidence Validator", () => {
       });
     });
 
-    it("should provide collection summary", async () => {
+    it('should provide collection summary', async () => {
       const findings: Finding[] = [
         {
-          path: "sample.ts",
+          path: 'sample.ts',
           start: 0,
           end: 6,
-          claim: "Import statement",
-          hash: createHash("sha256").update("import").digest("hex"),
+          claim: 'Import statement',
+          hash: createHash('sha256').update('import').digest('hex'),
         },
         {
-          path: "non-existent.ts",
+          path: 'non-existent.ts',
           start: 0,
           end: 5,
-          claim: "Missing file",
-          hash: "invalidhash123456789abcdef123456789abcdef",
+          claim: 'Missing file',
+          hash: 'invalidhash123456789abcdef123456789abcdef',
         },
       ];
 
@@ -175,8 +171,8 @@ describe("Evidence Validator", () => {
     });
   });
 
-  describe("Configuration Options", () => {
-    it("should allow missing files when configured", async () => {
+  describe('Configuration Options', () => {
+    it('should allow missing files when configured', async () => {
       const permissiveConfig: ValidatorConfig = {
         ...config,
         allowMissingFiles: true,
@@ -185,18 +181,16 @@ describe("Evidence Validator", () => {
       const permissiveValidator = new EvidenceValidator(permissiveConfig);
 
       const finding: Finding = {
-        path: "missing-file.ts",
+        path: 'missing-file.ts',
         start: 0,
         end: 5,
-        claim: "Missing file test",
-        hash: "abcdef123456789abcdef123456789abcdef12",
+        claim: 'Missing file test',
+        hash: 'abcdef123456789abcdef123456789abcdef12',
       };
 
       const result = await permissiveValidator.validateFinding(finding);
 
-      expect(result.warnings).toContain(
-        "File does not exist but is allowed by configuration",
-      );
+      expect(result.warnings).toContain('File does not exist but is allowed by configuration');
     });
   });
 });

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildServer } from '../src/http-server.js';
 
-
 describe('mvp-server', () => {
   it('health ok', async () => {
     process.env.CORTEX_MCP_TOKEN = 'test-token';
@@ -13,5 +12,5 @@ describe('mvp-server', () => {
     } finally {
       await app.close();
     }
-  }, 10000); // 10 second timeout
+  }, 10000);
 });

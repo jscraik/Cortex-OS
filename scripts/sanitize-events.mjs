@@ -17,7 +17,11 @@ export function sanitizeEvent(event) {
     const { sessionId: _sid, eventManagerId: _emid, ...restMetadata } = parsed.metadata;
     sanitizedMetadata = restMetadata;
   }
-  return { ...parsed, data: sanitizedData, metadata: parsed.metadata ? sanitizedMetadata : undefined };
+  return {
+    ...parsed,
+    data: sanitizedData,
+    metadata: parsed.metadata ? sanitizedMetadata : undefined,
+  };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

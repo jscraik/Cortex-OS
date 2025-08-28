@@ -3,7 +3,9 @@
 Generated: 2025-08-28T18:26:18.623Z
 
 ## Policy
+
 Allowed SPDX IDs:
+
 - Apache-2.0
 - BSD-2-Clause
 - BSD-3-Clause
@@ -16,6 +18,7 @@ Allowed SPDX IDs:
 - Zlib
 
 Dev-only exceptions:
+
 - eslint-plugin-sonarjs
 - jackspeak
 - path-scurry
@@ -25,17 +28,20 @@ Dev-only exceptions:
 - tslib
 
 ## Node (pnpm) summary
+
 - Total: 1200
 - Allowed: 1185
 - Unknown: 3
 - Disallowed: 12
 
 ### Unknown
+
 - ansi-color@0.2.1 license: <missing> (node_modules/.pnpm/ansi-color@0.2.1/node_modules/ansi-color/package.json)
 - map-stream@0.1.0 license: <missing> (node_modules/.pnpm/map-stream@0.1.0/node_modules/map-stream/package.json)
 - process@0.10.1 license: <missing> (node_modules/.pnpm/process@0.10.1/node_modules/process/package.json)
 
 ### Disallowed
+
 - argparse@2.0.1 license: Python-2.0 (node_modules/.pnpm/argparse@2.0.1/node_modules/argparse/package.json)
 - envfile@7.1.0 license: Artistic-2.0 (node_modules/.pnpm/envfile@7.1.0/node_modules/envfile/package.json)
 - eslint-plugin-sonarjs@0.20.0 license: LGPL-3.0 (node_modules/.pnpm/eslint-plugin-sonarjs@0.20.0_eslint@8.57.1/node_modules/eslint-plugin-sonarjs/package.json)

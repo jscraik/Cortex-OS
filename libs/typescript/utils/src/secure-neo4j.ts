@@ -9,7 +9,7 @@ export class SecureNeo4j {
   private activeSessions: number = 0;
 
   constructor(uri: string, user: string, pass: string) {
-    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { 
+    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), {
       userAgent: 'cortex-os/0.1',
       // Add security configurations
       encrypted: true,
@@ -17,7 +17,7 @@ export class SecureNeo4j {
       // Add connection pooling configurations
       maxConnectionPoolSize: this.maxPoolSize,
       connectionAcquisitionTimeout: 60000,
-      connectionTimeout: 30000
+      connectionTimeout: 30000,
     });
   }
 
@@ -35,12 +35,12 @@ export class SecureNeo4j {
     if (this.sessionPool.length > 0) {
       return this.sessionPool.pop()!;
     }
-    
+
     if (this.activeSessions < this.maxPoolSize) {
       this.activeSessions++;
       return this.driver.session();
     }
-    
+
     throw new Error('Maximum session pool size reached');
   }
 
@@ -59,29 +59,26 @@ export class SecureNeo4j {
     // Validate inputs
     const idValidation = validateNeo4jInput.nodeId(node.id);
     const labelValidation = validateNeo4jInput.label(node.label);
-    
+
     if (!idValidation.success) {
       throw new Error(`Invalid node ID: ${idValidation.error}`);
     }
-    
+
     if (!labelValidation.success) {
       throw new Error(`Invalid label: ${labelValidation.error}`);
     }
-    
+
     // Validate properties
     this.validateProperties(node.props);
-    
+
     const session = this.getSession();
     try {
       // Use parameterized query to prevent injection
       // SECURITY FIX: Use validated label directly
-      await session.run(
-        `MERGE (n:${labelValidation.data} {id: $id}) SET n += $props`,
-        {
-          id: idValidation.data,
-          props: node.props
-        }
-      );
+      await session.run(`MERGE (n:${labelValidation.data} {id: $id}) SET n += $props`, {
+        id: idValidation.data,
+        props: node.props,
+      });
     } finally {
       this.returnSession(session);
     }
@@ -93,24 +90,24 @@ export class SecureNeo4j {
     const fromValidation = validateNeo4jInput.nodeId(rel.from);
     const toValidation = validateNeo4jInput.nodeId(rel.to);
     const typeValidation = validateNeo4jInput.type(rel.type);
-    
+
     if (!fromValidation.success) {
       throw new Error(`Invalid from node ID: ${fromValidation.error}`);
     }
-    
+
     if (!toValidation.success) {
       throw new Error(`Invalid to node ID: ${toValidation.error}`);
     }
-    
+
     if (!typeValidation.success) {
       throw new Error(`Invalid relationship type: ${typeValidation.error}`);
     }
-    
+
     // Validate properties
     if (rel.props) {
       this.validateProperties(rel.props);
     }
-    
+
     const session = this.getSession();
     try {
       // Use parameterized query to prevent injection
@@ -121,8 +118,8 @@ export class SecureNeo4j {
         {
           from: fromValidation.data,
           to: toValidation.data,
-          props: rel.props || {}
-        }
+          props: rel.props || {},
+        },
       );
     } finally {
       this.returnSession(session);
@@ -136,12 +133,12 @@ export class SecureNeo4j {
     if (!idValidation.success) {
       throw new Error(`Invalid node ID: ${idValidation.error}`);
     }
-    
+
     // Validate depth (prevent excessive resource usage)
     if (depth < 1 || depth > 5) {
       throw new Error('Depth must be between 1 and 5');
     }
-    
+
     const session = this.getSession();
     try {
       // Use parameterized query to prevent injection
@@ -157,10 +154,10 @@ export class SecureNeo4j {
           collect({ from: startNode(e).id, to: endNode(e).id, type: type(e), props: properties(e) }) AS rels`,
         {
           id: idValidation.data,
-          depth: depth
-        }
+          depth: depth,
+        },
       );
-      
+
       const record = result.records[0];
       const nodes = (record?.get('nodes') ?? []) as Array<{
         id: string;
@@ -173,7 +170,7 @@ export class SecureNeo4j {
         type: string;
         props?: Record<string, unknown>;
       }>;
-      
+
       return {
         nodes: nodes.map((n) => ({ id: n.id, label: n.label, props: n.props })),
         rels: rels.map((r) => ({ from: r.from, to: r.to, type: r.type, props: r.props })),
@@ -191,14 +188,14 @@ export class SecureNeo4j {
       if (!keySchema.success) {
         throw new Error(`Invalid property key: ${key}`);
       }
-      
+
       // Validate property values
       if (typeof value === 'string') {
         // Prevent very long strings that could be used for DoS
         if (value.length > 10000) {
           throw new Error(`Property value too long for key: ${key}`);
         }
-        
+
         // Prevent dangerous patterns in strings
         if (/[;'\"`<>(){}]/.test(value)) {
           throw new Error(`Invalid characters in property value for key: ${key}`);
@@ -215,7 +212,7 @@ export class SecureNeo4j {
     return {
       activeSessions: this.activeSessions,
       pooledSessions: this.sessionPool.length,
-      maxPoolSize: this.maxPoolSize
+      maxPoolSize: this.maxPoolSize,
     };
   }
 }

@@ -1,6 +1,6 @@
 meta:
   id: cortex.add-feature-angular
-  persona: '''desc'
+  persona: "'desc"
   role: st
   version: 1.1.0
   model_targets:

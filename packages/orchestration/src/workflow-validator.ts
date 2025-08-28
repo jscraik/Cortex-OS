@@ -35,11 +35,11 @@ function createWorkflowHash(workflow: any): string {
         {
           next: step.next,
           branches: step.branches?.map((b: any) => b.to).sort(),
-        }
-      ])
+        },
+      ]),
     ),
   });
-  
+
   return createHash('md5').update(structureData, 'utf8').digest('hex');
 }
 
@@ -48,12 +48,12 @@ function createWorkflowHash(workflow: any): string {
  */
 function initializeCacheCleanup(): void {
   if (cacheCleanupTimer) return;
-  
+
   cacheCleanupTimer = setInterval(() => {
     // Clear cache periodically to prevent memory leaks
     validationCache.clear();
   }, CACHE_CLEANUP_INTERVAL);
-  
+
   // Don't keep the process alive
   if (cacheCleanupTimer.unref) {
     cacheCleanupTimer.unref();
@@ -66,10 +66,10 @@ function initializeCacheCleanup(): void {
 export function validateWorkflow(input: unknown): ValidationResult {
   // Parse and validate schema first
   const wf = workflowZ.parse(input);
-  
+
   // Create cache key for performance optimization
   const cacheKey = createWorkflowHash(wf);
-  
+
   // Check cache first
   if (validationCache.has(cacheKey)) {
     const cached = validationCache.get(cacheKey)!;
@@ -85,10 +85,10 @@ export function validateWorkflow(input: unknown): ValidationResult {
 
   try {
     const result = validateWorkflowStructure(wf);
-    
+
     // Cache successful validation
     validationCache.set(cacheKey, { valid: true, result });
-    
+
     return result;
   } catch (error) {
     // Cache validation error
@@ -109,7 +109,7 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 
   // Pre-validate all step references
   const stepIds = new Set(Object.keys(wf.steps));
-  
+
   // Validate entry point exists
   if (!stepIds.has(wf.entry)) {
     throw new Error(`Entry step '${wf.entry}' does not exist`);
@@ -120,7 +120,7 @@ function validateWorkflowStructure(wf: any): ValidationResult {
     if (step.next && !stepIds.has(step.next)) {
       throw new Error(`Step '${stepId}' references non-existent next step: ${step.next}`);
     }
-    
+
     if (step.branches) {
       for (const branch of step.branches) {
         if (!stepIds.has(branch.to)) {
@@ -134,7 +134,9 @@ function validateWorkflowStructure(wf: any): ValidationResult {
   const visit = (stepId: string, depth: number = 0, path: string[] = []): void => {
     // Prevent infinite recursion
     if (depth > MAX_WORKFLOW_DEPTH) {
-      throw new Error(`Workflow depth exceeds maximum (${MAX_WORKFLOW_DEPTH}). Possible infinite loop involving: ${path.slice(-5).join(' -> ')}`);
+      throw new Error(
+        `Workflow depth exceeds maximum (${MAX_WORKFLOW_DEPTH}). Possible infinite loop involving: ${path.slice(-5).join(' -> ')}`,
+      );
     }
 
     // Track maximum depth
@@ -190,7 +192,9 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 
   // Warn about unreachable steps (don't fail, just warn)
   if (stats.unreachableSteps.length > 0) {
-    console.warn(`Workflow contains ${stats.unreachableSteps.length} unreachable steps: ${stats.unreachableSteps.join(', ')}`);
+    console.warn(
+      `Workflow contains ${stats.unreachableSteps.length} unreachable steps: ${stats.unreachableSteps.join(', ')}`,
+    );
   }
 
   return {
@@ -215,13 +219,13 @@ export function validateWorkflowWithMetrics(input: unknown): {
   const wf = workflowZ.parse(input);
   const cacheKey = createWorkflowHash(wf);
   const cacheHit = validationCache.has(cacheKey);
-  
+
   const result = validateWorkflow(input);
   const endTime = performance.now();
-  
+
   const stepCount = result.stats.totalSteps;
   let complexity: 'low' | 'medium' | 'high';
-  
+
   if (stepCount <= 10) {
     complexity = 'low';
   } else if (stepCount <= 50) {
@@ -258,7 +262,7 @@ export function getValidationCacheStats(): {
 } {
   // This is a simplified approximation
   const memoryUsage = JSON.stringify(Array.from(validationCache.entries())).length;
-  
+
   return {
     size: validationCache.size,
     hitRate: 0, // Would need separate tracking for actual hit rate
@@ -281,9 +285,9 @@ export function validateWorkflows(inputs: unknown[]): Array<{
       const wf = workflowZ.parse(input);
       const cacheKey = createWorkflowHash(wf);
       const fromCache = validationCache.has(cacheKey);
-      
+
       const result = validateWorkflow(input);
-      
+
       return {
         index,
         success: true,
@@ -313,7 +317,7 @@ export function estimateValidationCost(input: unknown): {
   try {
     const wf = workflowZ.parse(input);
     const stepCount = Object.keys(wf.steps).length;
-    
+
     let totalBranches = 0;
     for (const step of Object.values(wf.steps) as any[]) {
       if (step.branches) {
@@ -323,13 +327,13 @@ export function estimateValidationCost(input: unknown): {
         totalBranches += 1;
       }
     }
-    
+
     const branchingFactor = stepCount > 0 ? totalBranches / stepCount : 0;
-    
+
     // Rough estimation based on step count and branching
     let estimatedTimeMs: number;
     let estimatedCost: 'low' | 'medium' | 'high';
-    
+
     if (stepCount <= 10) {
       estimatedTimeMs = 1;
       estimatedCost = 'low';
@@ -340,7 +344,7 @@ export function estimateValidationCost(input: unknown): {
       estimatedTimeMs = stepCount * branchingFactor * 2;
       estimatedCost = 'high';
     }
-    
+
     return {
       estimatedCost,
       stepCount,

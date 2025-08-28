@@ -82,6 +82,7 @@ npm run test:coverage
 ```
 
 The test suite includes:
+
 - Unit tests for core components.
 - Integration tests for cross-component functionality.
 

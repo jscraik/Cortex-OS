@@ -10,13 +10,13 @@ This audit assesses the A2A messaging system against key criteria for building a
 
 **Overall Score**: 6/10
 
-| Category | Score | Notes |
-|---|---|---|
-| Delivery Guarantees | 5/10 | Relies on HTTP request/response, but lacks outbox pattern for true reliability. |
-| Backpressure | 4/10 | No explicit backpressure handling like rate limiting or circuit breakers. |
-| Message Schema Versioning | 4/10 | Lacks a formal schema registry and versioning strategy. |
-| Retries & Poison Queues | 2/10 | No retry or poison queue mechanisms are implemented. |
-| Tracing | 8/10 | Good support for trace context propagation. |
+| Category                  | Score | Notes                                                                           |
+| ------------------------- | ----- | ------------------------------------------------------------------------------- |
+| Delivery Guarantees       | 5/10  | Relies on HTTP request/response, but lacks outbox pattern for true reliability. |
+| Backpressure              | 4/10  | No explicit backpressure handling like rate limiting or circuit breakers.       |
+| Message Schema Versioning | 4/10  | Lacks a formal schema registry and versioning strategy.                         |
+| Retries & Poison Queues   | 2/10  | No retry or poison queue mechanisms are implemented.                            |
+| Tracing                   | 8/10  | Good support for trace context propagation.                                     |
 
 ## 2. Audit Findings
 

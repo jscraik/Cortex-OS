@@ -7,14 +7,22 @@ import { join } from 'path';
 
 console.log('Adding SecureDatabaseWrapper import to DatabaseManager.ts...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Add import for SecureDatabaseWrapper after the existing imports
 if (!content.includes('SecureDatabaseWrapper')) {
   content = content.replace(
     'import { fileURLToPath } from "url";',
-    'import { fileURLToPath } from "url";\nimport { SecureDatabaseWrapper } from "@cortex-os/mvp-core/src/secure-db";'
+    'import { fileURLToPath } from "url";\nimport { SecureDatabaseWrapper } from "@cortex-os/mvp-core/src/secure-db";',
   );
 }
 
@@ -22,7 +30,7 @@ if (!content.includes('SecureDatabaseWrapper')) {
 if (!content.includes('private secureDb: SecureDatabaseWrapper;')) {
   content = content.replace(
     'private db: any; // Database instance or in-memory fallback',
-    'private db: any; // Database instance or in-memory fallback\n  private secureDb: SecureDatabaseWrapper;'
+    'private db: any; // Database instance or in-memory fallback\n  private secureDb: SecureDatabaseWrapper;',
   );
 }
 
@@ -32,7 +40,7 @@ content = content.replace(
   `private constructor() {
     super();
     this.statements = new Map();
-  }`
+  }`,
 );
 
 // Update the initialize method to initialize SecureDatabaseWrapper
@@ -84,7 +92,7 @@ if (initializePattern.test(content)) {
       console.warn("Falling back to in-memory storage");
       this.initializeInMemoryFallback();
     }
-  }`
+  }`,
   );
 }
 

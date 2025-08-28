@@ -4,7 +4,7 @@
  * @author Cortex-OS Team
  * @version 1.0.0
  * @status TDD-DRIVEN
- * 
+ *
  * This implementation is driven by failing tests in llm-integration.test.ts
  * Each method exists to satisfy a specific test requirement
  */
@@ -14,7 +14,12 @@ import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from './mlx-adapte
 // Import will be fixed to use proper workspace path when SDK is properly configured
 // For now, using minimal type-only import
 type OllamaAdapter = {
-  generate(options: { prompt: string; temperature?: number; maxTokens?: number; model?: string }): Promise<{ text: string; }>;
+  generate(options: {
+    prompt: string;
+    temperature?: number;
+    maxTokens?: number;
+    model?: string;
+  }): Promise<{ text: string }>;
 };
 
 export interface LLMConfig {
@@ -97,7 +102,9 @@ export class LLMBridge {
             const data = await response.json();
             return { text: data.response || '' };
           } catch (error) {
-            throw new Error(`Ollama request failed: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error(
+              `Ollama request failed: ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
         },
       };
@@ -169,9 +176,15 @@ export class LLMBridge {
       // Simple Ollama health check
       try {
         const response = await fetch(`${this.config.endpoint}/api/tags`);
-        return { healthy: response.ok, message: response.ok ? 'Ollama healthy' : `Ollama error: ${response.status}` };
+        return {
+          healthy: response.ok,
+          message: response.ok ? 'Ollama healthy' : `Ollama error: ${response.status}`,
+        };
       } catch (error) {
-        return { healthy: false, message: `Ollama unreachable: ${error instanceof Error ? error.message : String(error)}` };
+        return {
+          healthy: false,
+          message: `Ollama unreachable: ${error instanceof Error ? error.message : String(error)}`,
+        };
       }
     }
     return { healthy: false, message: 'Unknown provider' };
@@ -236,7 +249,9 @@ export class LLMBridge {
       return result;
     } catch (error) {
       // If MLX fails, provide informative error
-      throw new Error(`MLX generation failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `MLX generation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

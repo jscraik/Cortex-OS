@@ -141,7 +141,6 @@ export class BuildNode {
         validation: hasSchema ? 'passed' : 'failed',
       },
     };
-
   }
 
   private async runSecurityScan(

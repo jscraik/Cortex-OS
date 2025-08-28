@@ -2,7 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { CompositeEmbedder } from '../src/adapters/embedder.composite.js';
 
 class MockEmbedder {
-  name() { return 'mock'; }
+  name() {
+    return 'mock';
+  }
   embed = vi.fn(async (texts: string[]) => texts.map(() => [0.1, 0.2]));
 }
 

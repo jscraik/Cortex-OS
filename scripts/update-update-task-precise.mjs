@@ -7,7 +7,15 @@ import { join } from 'path';
 
 console.log('Precisely updating updateTask method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages', 'agents', 'src', 'legacy-instructions', 'DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages',
+  'agents',
+  'src',
+  'legacy-instructions',
+  'DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Find the exact updateTask method and replace it
@@ -17,7 +25,7 @@ if (methodStart !== -1) {
   let methodEnd = content.indexOf('  }\n', methodStart);
   if (methodEnd !== -1) {
     methodEnd += 4; // Include the closing brace and newline
-    
+
     // Create the new method content
     const newMethodContent = `async updateTask(id: string, updates: any): Promise<void> {
     // Validate input data
@@ -59,13 +67,13 @@ if (methodStart !== -1) {
       throw error;
     }
   }`;
-    
+
     // Replace the old method with the new one
     content = content.substring(0, methodStart) + newMethodContent + content.substring(methodEnd);
-    
+
     // Write the updated content back to the file
     writeFileSync(databaseManagerPath, content);
-    
+
     console.log('✅ updateTask method precisely updated to use SecureDatabaseWrapper');
   } else {
     console.log('❌ Could not find end of updateTask method');

@@ -1,4 +1,4 @@
-import type { Memory, MemoryId } from "../domain/types.js";
+import type { Memory, MemoryId } from '../domain/types.js';
 
 export interface VectorQuery {
   vector: number[];
@@ -20,4 +20,3 @@ export interface MemoryStore {
   searchByVector(q: VectorQuery): Promise<Memory[]>;
   purgeExpired(nowISO: string): Promise<number>;
 }
-

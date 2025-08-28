@@ -12,7 +12,7 @@
   {
     "file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/package.json",
     "lines": "10-13",
-    "severity": "high", 
+    "severity": "high",
     "category": "export-path-mismatch",
     "description": "Package exports reference non-existent files in dist directory",
     "evidence": "Lines 10-13: exports reference './dist/graph.js' and other files that don't match src structure",
@@ -115,7 +115,7 @@
     "severity": "low",
     "category": "non-deterministic-ids",
     "description": "State ID generation uses Date.now() which breaks determinism",
-    "evidence": "Line 144-145: Date.now() creates time-dependent IDs that violate determinism guarantees", 
+    "evidence": "Line 144-145: Date.now() creates time-dependent IDs that violate determinism guarantees",
     "fix": "Accept ID parameter or use deterministic ID generation",
     "tests_to_add": "Test state creation with deterministic IDs"
   }

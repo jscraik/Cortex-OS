@@ -10,11 +10,11 @@ import {
   Retriever,
   Reranker,
   CacheManager,
-} from "./types";
-import { FaissRetriever } from "./retrievers/faiss";
-import { LocalReranker } from "./rerankers/local";
-import { MemoryCacheManager } from "./cache/memory";
-import { IncrementalIndexCache } from "./cache/incremental";
+} from './types';
+import { FaissRetriever } from './retrievers/faiss';
+import { LocalReranker } from './rerankers/local';
+import { MemoryCacheManager } from './cache/memory';
+import { IncrementalIndexCache } from './cache/incremental';
 
 export class RetrievalSystem {
   private retriever: Retriever;
@@ -29,15 +29,15 @@ export class RetrievalSystem {
     // Initialize retriever
     this.retriever = new FaissRetriever({
       dimension: config.embeddings.dimension,
-      metric: "cosine",
-      indexType: "faiss",
+      metric: 'cosine',
+      indexType: 'faiss',
       cacheEnabled: config.cache.enabled,
       maxCacheSize: config.cache.maxSize,
     });
 
     // Initialize reranker
     this.reranker = new LocalReranker({
-      model: "local-reranker",
+      model: 'local-reranker',
       maxCandidates: 20,
       topK: 10,
       useLocal: true,
@@ -50,7 +50,7 @@ export class RetrievalSystem {
     });
 
     // Initialize incremental cache
-    this.incrementalCache = new IncrementalIndexCache(".cortex-cache");
+    this.incrementalCache = new IncrementalIndexCache('.cortex-cache');
   }
 
   async indexDocuments(documents: Document[]): Promise<void> {
@@ -104,9 +104,7 @@ export class RetrievalSystem {
     if (changes.unchanged.length > 0) {
       const cachedDocuments = await this.incrementalCache.loadCachedDocuments();
       const unchangedCached = cachedDocuments.filter((doc) =>
-        changes.unchanged.some((unchangedPath) =>
-          doc.path.includes(unchangedPath),
-        ),
+        changes.unchanged.some((unchangedPath) => doc.path.includes(unchangedPath)),
       );
       allDocuments.push(...unchangedCached);
     }
@@ -132,11 +130,7 @@ export class RetrievalSystem {
     };
   }
 
-  async search(
-    query: string,
-    queryEmbedding: number[],
-    topK: number = 10,
-  ): Promise<QueryResult[]> {
+  async search(query: string, queryEmbedding: number[], topK: number = 10): Promise<QueryResult[]> {
     // Check cache first
     const cacheKey = `query:${this.hashQuery(query)}:${topK}`;
     if (this.config.cache.enabled) {
@@ -147,10 +141,7 @@ export class RetrievalSystem {
     }
 
     // Retrieve candidates from ANN index
-    const candidates = await this.retriever.query(
-      queryEmbedding,
-      Math.min(topK * 2, 50),
-    );
+    const candidates = await this.retriever.query(queryEmbedding, Math.min(topK * 2, 50));
 
     // Rerank candidates based on query
     const reranked = await this.reranker.rerank(query, candidates, topK);
@@ -193,10 +184,7 @@ export class RetrievalSystem {
 
   private async ensureEmbeddings(documents: Document[]): Promise<Document[]> {
     return documents.map((doc) => {
-      if (
-        !doc.embedding ||
-        doc.embedding.length !== this.config.embeddings.dimension
-      ) {
+      if (!doc.embedding || doc.embedding.length !== this.config.embeddings.dimension) {
         // Generate placeholder embedding for now
         // In production, this would call the embedding service
         doc.embedding = this.generatePlaceholderEmbedding();

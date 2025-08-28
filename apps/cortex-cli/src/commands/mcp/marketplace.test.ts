@@ -38,10 +38,10 @@ describe('McpMarketplaceCommand', () => {
       removeRegistry: vi.fn(),
       listRegistries: vi.fn(),
     };
-    
+
     mockClient = vi.mocked(MarketplaceClient);
     mockClient.mockImplementation(() => mockClientInstance as any);
-    
+
     command = new McpMarketplaceCommand();
   });
 
@@ -52,33 +52,35 @@ describe('McpMarketplaceCommand', () => {
   describe('search', () => {
     it('should search servers with query', async () => {
       // Arrange
-      const mockServers: ServerManifest[] = [{
-        id: 'test-server',
-        name: 'Test Server',
-        description: 'A test MCP server',
-        mcpVersion: '2025-06-18',
-        capabilities: { tools: true, resources: false, prompts: false },
-        publisher: { name: 'Test Publisher', verified: false },
-        category: 'development',
-        license: 'MIT',
-        transport: {
-          stdio: { command: 'test-command' }
+      const mockServers: ServerManifest[] = [
+        {
+          id: 'test-server',
+          name: 'Test Server',
+          description: 'A test MCP server',
+          mcpVersion: '2025-06-18',
+          capabilities: { tools: true, resources: false, prompts: false },
+          publisher: { name: 'Test Publisher', verified: false },
+          category: 'development',
+          license: 'MIT',
+          transport: {
+            stdio: { command: 'test-command' },
+          },
+          install: {
+            claude: 'claude mcp add test-server -- test-command',
+            json: { mcpServers: { 'test-server': { command: 'test-command' } } },
+          },
+          permissions: ['files:read'],
+          security: { riskLevel: 'low' },
+          featured: false,
+          downloads: 100,
+          updatedAt: '2025-01-01T00:00:00Z',
         },
-        install: {
-          claude: 'claude mcp add test-server -- test-command',
-          json: { mcpServers: { 'test-server': { command: 'test-command' } } }
-        },
-        permissions: ['files:read'],
-        security: { riskLevel: 'low' },
-        featured: false,
-        downloads: 100,
-        updatedAt: '2025-01-01T00:00:00Z',
-      }];
+      ];
 
       mockClientInstance.search.mockResolvedValue({
         success: true,
         data: mockServers,
-        meta: { total: 1, offset: 0, limit: 20 }
+        meta: { total: 1, offset: 0, limit: 20 },
       });
 
       // Act
@@ -88,7 +90,7 @@ describe('McpMarketplaceCommand', () => {
       expect(mockClientInstance.search).toHaveBeenCalledWith({
         q: 'database',
         limit: 20,
-        offset: 0
+        offset: 0,
       });
     });
 
@@ -97,14 +99,14 @@ describe('McpMarketplaceCommand', () => {
       mockClientInstance.search.mockResolvedValue({
         success: true,
         data: [],
-        meta: { total: 0, offset: 0, limit: 20 }
+        meta: { total: 0, offset: 0, limit: 20 },
       });
 
       // Act
       await command.search('ai', {
         category: 'ai-ml',
         verified: true,
-        limit: 10
+        limit: 10,
       });
 
       // Assert
@@ -113,7 +115,7 @@ describe('McpMarketplaceCommand', () => {
         category: 'ai-ml',
         verified: true,
         limit: 10,
-        offset: 0
+        offset: 0,
       });
     });
 
@@ -121,7 +123,7 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.search.mockResolvedValue({
         success: false,
-        error: { code: 'NETWORK_ERROR', message: 'Failed to connect to registry' }
+        error: { code: 'NETWORK_ERROR', message: 'Failed to connect to registry' },
       });
 
       // Act & Assert
@@ -133,7 +135,7 @@ describe('McpMarketplaceCommand', () => {
       mockClientInstance.search.mockResolvedValue({
         success: true,
         data: [],
-        meta: { total: 0, offset: 0, limit: 20 }
+        meta: { total: 0, offset: 0, limit: 20 },
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -164,15 +166,19 @@ describe('McpMarketplaceCommand', () => {
           streamableHttp: {
             url: 'https://api.github.com/mcp',
             headers: { 'User-Agent': 'Cortex-MCP/1.0' },
-            auth: { type: 'bearer' }
-          }
+            auth: { type: 'bearer' },
+          },
         },
         install: {
-          claude: 'claude mcp add --transport streamableHttp github-server https://api.github.com/mcp --header "Authorization: Bearer <TOKEN>"',
-          json: { mcpServers: { 'github-server': { serverUrl: 'https://api.github.com/mcp' } } }
+          claude:
+            'claude mcp add --transport streamableHttp github-server https://api.github.com/mcp --header "Authorization: Bearer <TOKEN>"',
+          json: { mcpServers: { 'github-server': { serverUrl: 'https://api.github.com/mcp' } } },
         },
         permissions: ['network:http', 'data:read'],
-        security: { riskLevel: 'medium', sigstore: 'https://github.com/attestations/github.sigstore' },
+        security: {
+          riskLevel: 'medium',
+          sigstore: 'https://github.com/attestations/github.sigstore',
+        },
         featured: true,
         downloads: 5000,
         rating: 4.8,
@@ -205,11 +211,11 @@ describe('McpMarketplaceCommand', () => {
         category: 'utility',
         license: 'MIT',
         transport: {
-          stdio: { command: 'test-command' }
+          stdio: { command: 'test-command' },
         },
         install: {
           claude: 'claude mcp add test-server -- test-command',
-          json: { mcpServers: { 'test-server': { command: 'test-command' } } }
+          json: { mcpServers: { 'test-server': { command: 'test-command' } } },
         },
         permissions: [],
         security: { riskLevel: 'low' },
@@ -234,7 +240,9 @@ describe('McpMarketplaceCommand', () => {
       mockClientInstance.getServer.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(command.show('nonexistent-server')).rejects.toThrow('Server not found: nonexistent-server');
+      await expect(command.show('nonexistent-server')).rejects.toThrow(
+        'Server not found: nonexistent-server',
+      );
     });
   });
 
@@ -243,7 +251,7 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.addServer.mockResolvedValue({
         success: true,
-        data: { installed: true, serverId: 'test-server' }
+        data: { installed: true, serverId: 'test-server' },
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -261,40 +269,46 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.addServer.mockResolvedValue({
         success: true,
-        data: { installed: true, serverId: 'test-server' }
+        data: { installed: true, serverId: 'test-server' },
       });
 
       // Act
       await command.add('test-server', { transport: 'stdio' });
 
       // Assert
-      expect(mockClientInstance.addServer).toHaveBeenCalledWith('test-server', { transport: 'stdio' });
+      expect(mockClientInstance.addServer).toHaveBeenCalledWith('test-server', {
+        transport: 'stdio',
+      });
     });
 
     it('should handle add server failure', async () => {
       // Arrange
       mockClientInstance.addServer.mockResolvedValue({
         success: false,
-        error: { code: 'SECURITY_VIOLATION', message: 'Server signature verification failed' }
+        error: { code: 'SECURITY_VIOLATION', message: 'Server signature verification failed' },
       });
 
       // Act & Assert
-      await expect(command.add('untrusted-server')).rejects.toThrow('Server signature verification failed');
+      await expect(command.add('untrusted-server')).rejects.toThrow(
+        'Server signature verification failed',
+      );
     });
 
     it('should prompt for security confirmation on high-risk servers', async () => {
       // Arrange
       mockClientInstance.addServer.mockResolvedValue({
         success: false,
-        error: { 
-          code: 'HIGH_RISK_SERVER', 
+        error: {
+          code: 'HIGH_RISK_SERVER',
           message: 'This server requires high-risk permissions',
-          details: { riskLevel: 'high', permissions: ['system:exec'] }
-        }
+          details: { riskLevel: 'high', permissions: ['system:exec'] },
+        },
       });
 
       // Act & Assert
-      await expect(command.add('high-risk-server')).rejects.toThrow('This server requires high-risk permissions');
+      await expect(command.add('high-risk-server')).rejects.toThrow(
+        'This server requires high-risk permissions',
+      );
     });
   });
 
@@ -303,7 +317,7 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.removeServer.mockResolvedValue({
         success: true,
-        data: { removed: true }
+        data: { removed: true },
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -321,11 +335,13 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.removeServer.mockResolvedValue({
         success: false,
-        error: { code: 'NOT_FOUND', message: 'Server not installed: test-server' }
+        error: { code: 'NOT_FOUND', message: 'Server not installed: test-server' },
       });
 
       // Act & Assert
-      await expect(command.remove('test-server')).rejects.toThrow('Server not installed: test-server');
+      await expect(command.remove('test-server')).rejects.toThrow(
+        'Server not installed: test-server',
+      );
     });
   });
 
@@ -334,12 +350,12 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       const mockServers = [
         { id: 'server1', name: 'Server 1', status: 'active', source: 'marketplace' },
-        { id: 'server2', name: 'Server 2', status: 'inactive', source: 'manual' }
+        { id: 'server2', name: 'Server 2', status: 'inactive', source: 'manual' },
       ];
 
       mockClientInstance.listServers.mockResolvedValue({
         success: true,
-        data: mockServers
+        data: mockServers,
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -358,7 +374,7 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.listServers.mockResolvedValue({
         success: true,
-        data: []
+        data: [],
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -377,21 +393,21 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.addRegistry.mockResolvedValue({
         success: true,
-        data: { added: true, registryUrl: 'https://custom.registry.com/v1/registry.json' }
+        data: { added: true, registryUrl: 'https://custom.registry.com/v1/registry.json' },
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       // Act
-      await command.bridge('https://custom.registry.com/v1/registry.json', { 
-        add: true, 
-        name: 'custom-registry' 
+      await command.bridge('https://custom.registry.com/v1/registry.json', {
+        add: true,
+        name: 'custom-registry',
       });
 
       // Assert
       expect(mockClientInstance.addRegistry).toHaveBeenCalledWith(
         'https://custom.registry.com/v1/registry.json',
-        { name: 'custom-registry' }
+        { name: 'custom-registry' },
       );
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('✅ Registry added'));
       consoleSpy.mockRestore();
@@ -401,12 +417,12 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       const mockRegistries = [
         { name: 'default', url: 'https://registry.cortex-os.dev/v1/registry.json', trusted: true },
-        { name: 'custom', url: 'https://custom.registry.com/v1/registry.json', trusted: false }
+        { name: 'custom', url: 'https://custom.registry.com/v1/registry.json', trusted: false },
       ];
 
       mockClientInstance.listRegistries.mockResolvedValue({
         success: true,
-        data: mockRegistries
+        data: mockRegistries,
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -425,7 +441,7 @@ describe('McpMarketplaceCommand', () => {
       // Arrange
       mockClientInstance.healthCheck.mockResolvedValue({
         success: true,
-        data: { healthy: true, serverCount: 42, lastUpdated: '2025-01-01T00:00:00Z' }
+        data: { healthy: true, serverCount: 42, lastUpdated: '2025-01-01T00:00:00Z' },
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -434,7 +450,9 @@ describe('McpMarketplaceCommand', () => {
       await command.bridge('https://test.registry.com/v1/registry.json', { test: true });
 
       // Assert
-      expect(mockClientInstance.healthCheck).toHaveBeenCalledWith('https://test.registry.com/v1/registry.json');
+      expect(mockClientInstance.healthCheck).toHaveBeenCalledWith(
+        'https://test.registry.com/v1/registry.json',
+      );
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('✅ Registry is healthy'));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('42 servers'));
       consoleSpy.mockRestore();
@@ -458,36 +476,42 @@ describe('McpMarketplaceCommand', () => {
 
     it('should validate registry URLs', async () => {
       // Act & Assert
-      await expect(command.bridge('not-a-url', { add: true })).rejects.toThrow('Invalid registry URL');
-      await expect(command.bridge('http://insecure.com', { add: true })).rejects.toThrow('Registry URLs must use HTTPS');
+      await expect(command.bridge('not-a-url', { add: true })).rejects.toThrow(
+        'Invalid registry URL',
+      );
+      await expect(command.bridge('http://insecure.com', { add: true })).rejects.toThrow(
+        'Registry URLs must use HTTPS',
+      );
     });
   });
 
   describe('output formatting', () => {
     it('should support JSON output', async () => {
       // Arrange
-      const mockServers: ServerManifest[] = [{
-        id: 'test-server',
-        name: 'Test Server',
-        description: 'A test server',
-        mcpVersion: '2025-06-18',
-        capabilities: { tools: true, resources: false, prompts: false },
-        publisher: { name: 'Test', verified: false },
-        category: 'utility',
-        license: 'MIT',
-        transport: { stdio: { command: 'test' } },
-        install: { claude: 'test', json: {} },
-        permissions: [],
-        security: { riskLevel: 'low' },
-        featured: false,
-        downloads: 0,
-        updatedAt: '2025-01-01T00:00:00Z',
-      }];
+      const mockServers: ServerManifest[] = [
+        {
+          id: 'test-server',
+          name: 'Test Server',
+          description: 'A test server',
+          mcpVersion: '2025-06-18',
+          capabilities: { tools: true, resources: false, prompts: false },
+          publisher: { name: 'Test', verified: false },
+          category: 'utility',
+          license: 'MIT',
+          transport: { stdio: { command: 'test' } },
+          install: { claude: 'test', json: {} },
+          permissions: [],
+          security: { riskLevel: 'low' },
+          featured: false,
+          downloads: 0,
+          updatedAt: '2025-01-01T00:00:00Z',
+        },
+      ];
 
       mockClientInstance.search.mockResolvedValue({
         success: true,
         data: mockServers,
-        meta: { total: 1, offset: 0, limit: 20 }
+        meta: { total: 1, offset: 0, limit: 20 },
       });
 
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -496,11 +520,17 @@ describe('McpMarketplaceCommand', () => {
       await command.search('test', { json: true });
 
       // Assert
-      expect(consoleSpy).toHaveBeenCalledWith(JSON.stringify({
-        success: true,
-        data: mockServers,
-        meta: { total: 1, offset: 0, limit: 20 }
-      }, null, 2));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        JSON.stringify(
+          {
+            success: true,
+            data: mockServers,
+            meta: { total: 1, offset: 0, limit: 20 },
+          },
+          null,
+          2,
+        ),
+      );
       consoleSpy.mockRestore();
     });
   });

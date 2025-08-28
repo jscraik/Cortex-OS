@@ -62,7 +62,7 @@ export interface MCPContext {
 
 /**
  * Cortex Kernel MCP Adapter
- * 
+ *
  * Converts MCP tools into Cortex kernel nodes and integrates
  * them into the PRP workflow state machine.
  */
@@ -80,11 +80,14 @@ export class MCPAdapter {
   /**
    * Create MCP context for PRP execution
    */
-  createContext(prpState: PRPState, options: {
-    workingDirectory?: string;
-    enabledTools?: string[];
-    securityPolicy?: Partial<MCPContext['securityPolicy']>;
-  } = {}): MCPContext {
+  createContext(
+    prpState: PRPState,
+    options: {
+      workingDirectory?: string;
+      enabledTools?: string[];
+      securityPolicy?: Partial<MCPContext['securityPolicy']>;
+    } = {},
+  ): MCPContext {
     const context: MCPContext = {
       prpState,
       workingDirectory: options.workingDirectory || process.cwd(),
@@ -107,7 +110,7 @@ export class MCPAdapter {
   async executeTool(
     toolName: string,
     params: any,
-    runId: string
+    runId: string,
   ): Promise<{
     result: any;
     evidence: {
@@ -133,7 +136,7 @@ export class MCPAdapter {
 
     try {
       const result = await tool.execute(params, context);
-      
+
       const evidence = {
         toolName,
         params,
@@ -143,7 +146,9 @@ export class MCPAdapter {
 
       return { result, evidence };
     } catch (error) {
-      throw new Error(`MCP tool execution failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `MCP tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -173,14 +178,16 @@ export class MCPAdapter {
             result: execution.result,
             mcpIntegration: true,
           },
-          evidence: [{
-            id: `mcp-${tool.name}-${Date.now()}`,
-            type: 'command',
-            source: `mcp-${tool.name}`,
-            content: JSON.stringify(execution.evidence),
-            timestamp: new Date().toISOString(),
-            phase,
-          }],
+          evidence: [
+            {
+              id: `mcp-${tool.name}-${Date.now()}`,
+              type: 'command',
+              source: `mcp-${tool.name}`,
+              content: JSON.stringify(execution.evidence),
+              timestamp: new Date().toISOString(),
+              phase,
+            },
+          ],
           nextSteps: [`Review ${tool.name} output`],
           artifacts: [],
           metrics: {

@@ -3,6 +3,7 @@
 Minimal Fastify server exposing health, readiness, liveness, version, and metrics endpoints. Depends on `@cortex-os/mvp-core` for configuration, logging, and error handling.
 
 ## Endpoints
+
 - `GET /health` – aggregate health checks
 - `GET /ready` – readiness probe
 - `GET /live` – liveness probe
@@ -10,6 +11,7 @@ Minimal Fastify server exposing health, readiness, liveness, version, and metric
 - `GET /metrics` – placeholder until metrics are enabled
 
 ## Development
+
 ```bash
 pnpm --filter @cortex-os/mvp-server build
 pnpm --filter @cortex-os/mvp-server test

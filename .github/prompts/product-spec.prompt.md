@@ -43,7 +43,6 @@ You transform a high-level request into a complete **Product Specification** for
 
 ## Required Inputs
 
-
 - Optional: stakeholder notes, research, UI mocks, architecture sketch
 
 If inputs are missing, state **[ASSUMPTIONS]** and proceed.
@@ -153,14 +152,14 @@ project: [PROJECT_NAME]
 version: 1.0
 created: [YYYY-MM-DD]
 summary:
-  elevator_pitch: ""
-  problem: ""
+  elevator_pitch: ''
+  problem: ''
   audience: []
-  usp: ""
+  usp: ''
   success_metrics:
-    - name: ""
-      definition: ""
-      target: ""
+    - name: ''
+      definition: ''
+      target: ''
 scope:
   mvp:
     goals: []
@@ -168,16 +167,16 @@ scope:
   vNext:
     features: []
 personas:
-  - name: ""
-    jobs: ["", ""]
+  - name: ''
+    jobs: ['', '']
 features:
   - id: FEAT-001
-    title: ""
+    title: ''
     priority: P0
-    story: "As a … I want … so that …"
+    story: 'As a … I want … so that …'
     acceptance_criteria:
-      - "GIVEN … WHEN … THEN …"
-      - "Edge: GIVEN … WHEN … THEN …"
+      - 'GIVEN … WHEN … THEN …'
+      - 'Edge: GIVEN … WHEN … THEN …'
     dependencies: []
     constraints: []
     ux:
@@ -190,11 +189,11 @@ functional:
 non_functional:
   performance: { screens_p95_ms: 2000, api_p95_ms: 500 }
   scalability: { concurrent_users: 1000 }
-  security: { authn: "", authz: "" }
-  privacy: { retention: "", residency: "" }
-  accessibility: { standard: "WCAG-2.2-AA" }
+  security: { authn: '', authz: '' }
+  privacy: { retention: '', residency: '' }
+  accessibility: { standard: 'WCAG-2.2-AA' }
   observability: { logs: true, metrics: true, traces: true }
-  reliability: { availability_slo: "99.9%" }
+  reliability: { availability_slo: '99.9%' }
 ux:
   ia: []
   disclosure: []
@@ -210,7 +209,7 @@ open_questions: []
 release:
   flags: []
   experiment: { enabled: false }
-  migration_notes: ""
+  migration_notes: ''
 traceability: []
 ```
 

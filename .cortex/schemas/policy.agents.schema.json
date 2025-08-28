@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["version", "agents"],
   "properties": {
-    "version": {"type": "string"},
+    "version": { "type": "string" },
     "agents": {
       "type": "object",
       "patternProperties": {
@@ -13,13 +13,13 @@
           "type": "object",
           "required": ["allowedTools", "quotas"],
           "properties": {
-            "allowedTools": {"type": "array", "items": {"type": "string"}},
+            "allowedTools": { "type": "array", "items": { "type": "string" } },
             "quotas": {
               "type": "object",
               "properties": {
-                "fileOps": {"type": "integer"},
-                "networkCalls": {"type": "integer"},
-                "computeMinutes": {"type": "integer"}
+                "fileOps": { "type": "integer" },
+                "networkCalls": { "type": "integer" },
+                "computeMinutes": { "type": "integer" }
               }
             }
           }

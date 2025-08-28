@@ -7,11 +7,16 @@ import { join } from 'path';
 
 console.log('Updating updateTask method to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages/agents/src/legacy-instructions/DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages/agents/src/legacy-instructions/DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Update the updateTask method
-const updateTaskPattern = /async updateTask\([^}]*?SecureDatabaseWrapper for this operation[^}]*?stmt\.run\(\.\.\.values\);\s*}/s;
+const updateTaskPattern =
+  /async updateTask\([^}]*?SecureDatabaseWrapper for this operation[^}]*?stmt\.run\(\.\.\.values\);\s*}/s;
 const updateTaskReplacement = `async updateTask(id: string, updates: any): Promise<void> {
     // Validate input data
     if (!id || typeof id !== 'string') {

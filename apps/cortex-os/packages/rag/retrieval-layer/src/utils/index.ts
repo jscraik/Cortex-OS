@@ -3,14 +3,14 @@
  * @description Utility functions for the retrieval layer
  */
 
-import { Document, Evidence } from "../types";
-import crypto from "crypto";
+import { Document, Evidence } from '../types';
+import crypto from 'crypto';
 
 /**
  * Generate content hash for document
  */
 export function generateContentHash(content: string): string {
-  return crypto.createHash("sha256").update(content).digest("hex");
+  return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 /**
@@ -28,10 +28,7 @@ export function generateDocumentHash(document: Document): string {
 /**
  * Validate evidence against document content
  */
-export function validateEvidence(
-  evidence: Evidence,
-  document: Document,
-): boolean {
+export function validateEvidence(evidence: Evidence, document: Document): boolean {
   if (evidence.start > evidence.end) {
     return false;
   }
@@ -56,7 +53,7 @@ export function extractEvidence(
   claim: string,
 ): Evidence {
   if (start > end || end > document.content.length) {
-    throw new Error("Invalid text range for evidence extraction");
+    throw new Error('Invalid text range for evidence extraction');
   }
 
   const extractedText = document.content.slice(start, end);
@@ -75,16 +72,13 @@ export function extractEvidence(
  * Normalize file path for consistent comparison
  */
 export function normalizePath(path: string): string {
-  return path.replace(/\\/g, "/").replace(/\/+/g, "/");
+  return path.replace(/\\/g, '/').replace(/\/+/g, '/');
 }
 
 /**
  * Check if document has changed based on hash
  */
-export function hasDocumentChanged(
-  oldHash: string,
-  document: Document,
-): boolean {
+export function hasDocumentChanged(oldHash: string, document: Document): boolean {
   const newHash = generateDocumentHash(document);
   return oldHash !== newHash;
 }
@@ -92,10 +86,7 @@ export function hasDocumentChanged(
 /**
  * Split large document into chunks for processing
  */
-export function chunkDocument(
-  document: Document,
-  maxChunkSize: number = 1000,
-): Document[] {
+export function chunkDocument(document: Document, maxChunkSize: number = 1000): Document[] {
   if (document.content.length <= maxChunkSize) {
     return [document];
   }
@@ -109,8 +100,8 @@ export function chunkDocument(
     // Try to break at sentence or word boundary
     let chunkEnd = end;
     if (end < document.content.length) {
-      const sentenceEnd = document.content.lastIndexOf(".", end);
-      const wordEnd = document.content.lastIndexOf(" ", end);
+      const sentenceEnd = document.content.lastIndexOf('.', end);
+      const wordEnd = document.content.lastIndexOf(' ', end);
 
       if (sentenceEnd > start + maxChunkSize * 0.8) {
         chunkEnd = sentenceEnd + 1;

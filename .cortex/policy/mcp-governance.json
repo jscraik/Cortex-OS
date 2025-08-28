@@ -20,7 +20,7 @@
               "default": ["low", "medium"]
             },
             "requireApproval": {
-              "type": "array", 
+              "type": "array",
               "items": {
                 "type": "string",
                 "enum": ["medium", "high"]
@@ -41,14 +41,10 @@
               "items": {
                 "type": "string"
               },
-              "default": [
-                "ModelContextProtocol",
-                "Anthropic",
-                "GitHub"
-              ]
+              "default": ["ModelContextProtocol", "Anthropic", "GitHub"]
             },
             "sigstoreValidation": {
-              "type": "boolean", 
+              "type": "boolean",
               "default": true
             }
           }
@@ -61,23 +57,14 @@
               "items": {
                 "type": "string"
               },
-              "default": [
-                "system:exec",
-                "system:admin", 
-                "files:write:root",
-                "network:raw"
-              ]
+              "default": ["system:exec", "system:admin", "files:write:root", "network:raw"]
             },
             "requireConfirmation": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "default": [
-                "files:write",
-                "system:exec",
-                "network:external"
-              ]
+              "default": ["files:write", "system:exec", "network:external"]
             }
           }
         }
@@ -96,7 +83,7 @@
               "default": "https://registry.cortex-os.dev/v1/registry.json"
             },
             "community": {
-              "type": "string", 
+              "type": "string",
               "format": "uri",
               "default": "https://community.mcp.dev/v1/registry.json"
             },
@@ -143,7 +130,7 @@
       }
     },
     "installation": {
-      "type": "object", 
+      "type": "object",
       "properties": {
         "sandboxed": {
           "type": "boolean",
@@ -161,7 +148,7 @@
               "default": "512MB"
             },
             "cpu": {
-              "type": "string", 
+              "type": "string",
               "default": "0.5"
             },
             "diskSpace": {
@@ -219,7 +206,7 @@
               "default": true
             },
             "performanceMetrics": {
-              "type": "boolean", 
+              "type": "boolean",
               "default": true
             },
             "securityEvents": {

@@ -7,7 +7,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { A2AAIAgent, a2aAIAgent, createA2AAIAgent, isA2ACompatible, A2A_AI_SKILLS } from '../a2a-ai-agent.js';
+import {
+  A2AAIAgent,
+  a2aAIAgent,
+  createA2AAIAgent,
+  isA2ACompatible,
+  A2A_AI_SKILLS,
+} from '../a2a-ai-agent.js';
 
 // Mock A2A types since package might not be available in test environment
 const mockA2AMessage = {
@@ -17,7 +23,7 @@ const mockA2AMessage = {
   params: { prompt: 'Hello, world!' },
   message_id: 'msg_123456',
   timestamp: '2025-08-22T01:00:00Z',
-  metadata: { protocol_version: '1.0.0' }
+  metadata: { protocol_version: '1.0.0' },
 };
 
 // Mock AI capabilities to avoid external dependencies in tests
@@ -26,23 +32,23 @@ vi.mock('../ai-capabilities.js', () => ({
     generate: vi.fn().mockResolvedValue('Generated text response'),
     searchKnowledge: vi.fn().mockResolvedValue([
       { text: 'Knowledge result 1', similarity: 0.9, metadata: {} },
-      { text: 'Knowledge result 2', similarity: 0.7, metadata: {} }
+      { text: 'Knowledge result 2', similarity: 0.7, metadata: {} },
     ]),
     ragQuery: vi.fn().mockResolvedValue({
       answer: 'RAG generated answer',
       sources: [
         { text: 'Source 1', similarity: 0.8 },
-        { text: 'Source 2', similarity: 0.6 }
+        { text: 'Source 2', similarity: 0.6 },
       ],
-      confidence: 0.85
+      confidence: 0.85,
     }),
     calculateSimilarity: vi.fn().mockResolvedValue(0.75),
     getCapabilities: vi.fn().mockResolvedValue({
       llm: { provider: 'mlx', model: 'qwen', healthy: true },
       embedding: { provider: 'sentence-transformers', dimensions: 1024, documents: 10 },
-      features: ['text-generation', 'embeddings', 'rag']
-    })
-  }))
+      features: ['text-generation', 'embeddings', 'rag'],
+    }),
+  })),
 }));
 
 vi.mock('../asbr-ai-integration.js', () => ({
@@ -51,9 +57,9 @@ vi.mock('../asbr-ai-integration.js', () => ({
       aiEnhancedEvidence: { id: 'evidence_123', enhanced: true },
       additionalEvidence: [{ id: 'additional_1', type: 'supporting' }],
       insights: 'AI-generated insights about the evidence',
-      aiMetadata: { confidence: 0.9, processingTime: 150 }
-    })
-  }))
+      aiMetadata: { confidence: 0.9, processingTime: 150 },
+    }),
+  })),
 }));
 
 describe('🤖 A2A AI Agent Integration Tests', () => {
@@ -97,9 +103,9 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       // Validate skills
       expect(agentCard.skills).toBeInstanceOf(Array);
       expect(agentCard.skills.length).toBeGreaterThan(0);
-      
+
       // Check each skill has required properties
-      agentCard.skills.forEach(skill => {
+      agentCard.skills.forEach((skill) => {
         expect(skill).toHaveProperty('name');
         expect(skill).toHaveProperty('description');
         expect(skill).toHaveProperty('parameters');
@@ -110,7 +116,7 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
 
     it('should include all expected AI skills in agent card', () => {
       const agentCard = agent.getAgentCard();
-      const skillNames = agentCard.skills.map(skill => skill.name);
+      const skillNames = agentCard.skills.map((skill) => skill.name);
 
       expect(skillNames).toContain('ai_generate_text');
       expect(skillNames).toContain('ai_search_knowledge');
@@ -137,8 +143,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
         params: {
           prompt: 'Generate a greeting',
           temperature: 0.7,
-          maxTokens: 100
-        }
+          maxTokens: 100,
+        },
       };
 
       const result = await agent.handleA2AMessage(message);
@@ -157,8 +163,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
         params: {
           query: 'machine learning',
           topK: 5,
-          minSimilarity: 0.3
-        }
+          minSimilarity: 0.3,
+        },
       };
 
       const result = await agent.handleA2AMessage(message);
@@ -177,8 +183,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
         action: 'ai_rag_query',
         params: {
           query: 'What is artificial intelligence?',
-          systemPrompt: 'You are a helpful AI assistant'
-        }
+          systemPrompt: 'You are a helpful AI assistant',
+        },
       };
 
       const result = await agent.handleA2AMessage(message);
@@ -197,8 +203,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
         action: 'ai_calculate_similarity',
         params: {
           text1: 'Machine learning is a subset of AI',
-          text2: 'AI includes machine learning'
-        }
+          text2: 'AI includes machine learning',
+        },
       };
 
       const result = await agent.handleA2AMessage(message);
@@ -216,10 +222,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
         params: {
           taskId: 'task_123',
           claim: 'Test evidence claim',
-          sources: [
-            { type: 'file', path: '/test/file.txt', content: 'Test content' }
-          ]
-        }
+          sources: [{ type: 'file', path: '/test/file.txt', content: 'Test content' }],
+        },
       };
 
       const result = await agent.handleA2AMessage(message);
@@ -235,7 +239,7 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       const message = {
         ...mockA2AMessage,
         action: 'get_capabilities',
-        params: {}
+        params: {},
       };
 
       const result = await agent.handleA2AMessage(message);
@@ -254,11 +258,12 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       const message = {
         ...mockA2AMessage,
         action: 'unknown_action',
-        params: {}
+        params: {},
       };
 
-      await expect(agent.handleA2AMessage(message))
-        .rejects.toThrow('Unknown action: unknown_action');
+      await expect(agent.handleA2AMessage(message)).rejects.toThrow(
+        'Unknown action: unknown_action',
+      );
     });
   });
 
@@ -280,7 +285,7 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       expect(status).toHaveProperty('status');
       expect(status).toHaveProperty('capabilities_healthy');
       expect(status).toHaveProperty('skills_available');
-      
+
       expect(['idle', 'busy', 'offline', 'error']).toContain(status.status);
       expect(typeof status.capabilities_healthy).toBe('boolean');
       expect(typeof status.skills_available).toBe('number');
@@ -298,13 +303,15 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
     it('should handle AI capabilities failure gracefully', async () => {
       // Mock AI capabilities to fail
       const failingAgent = createA2AAIAgent('failing-agent');
-      
+
       // Mock failed getCapabilities
-      vi.mocked(failingAgent['aiCapabilities'].getCapabilities).mockRejectedValue(new Error('AI service down'));
+      vi.mocked(failingAgent['aiCapabilities'].getCapabilities).mockRejectedValue(
+        new Error('AI service down'),
+      );
 
       const result = await failingAgent.handleA2AMessage({
         ...mockA2AMessage,
-        action: 'get_capabilities'
+        action: 'get_capabilities',
       });
 
       expect(result).toHaveProperty('status', 'degraded');
@@ -314,18 +321,18 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
 
     it('should validate all skill schemas have required properties', () => {
       const agentCard = agent.getAgentCard();
-      
-      agentCard.skills.forEach(skill => {
+
+      agentCard.skills.forEach((skill) => {
         // Validate skill structure
         expect(skill).toHaveProperty('name');
         expect(skill).toHaveProperty('description');
         expect(skill).toHaveProperty('parameters');
         expect(skill).toHaveProperty('response');
-        
+
         // Validate parameter schema structure
         expect(skill.parameters).toHaveProperty('type', 'object');
         expect(skill.parameters).toHaveProperty('properties');
-        
+
         // Validate response schema structure
         expect(skill.response).toHaveProperty('type', 'object');
         expect(skill.response).toHaveProperty('properties');
@@ -339,15 +346,15 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       expect(agentCard.agent.name).toBeTruthy();
       expect(agentCard.agent.version).toMatch(/^\d+\.\d+\.\d+$/);
       expect(agentCard.agent.description).toBeTruthy();
-      
+
       // Valid provider information
       expect(agentCard.agent.provider?.organization).toBeTruthy();
       expect(agentCard.agent.provider?.url).toMatch(/^https?:\/\/.+/);
-      
+
       // Valid interface configuration
       expect(['http', 'https', 'ws', 'wss']).toContain(agentCard.interface.transport);
       expect(agentCard.interface.uri).toMatch(/^https?:\/\/.+/);
-      
+
       // At least one skill defined
       expect(agentCard.skills.length).toBeGreaterThan(0);
     });
@@ -358,8 +365,11 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
         { action: 'ai_search_knowledge', params: { query: 'test' } },
         { action: 'ai_rag_query', params: { query: 'test' } },
         { action: 'ai_calculate_similarity', params: { text1: 'a', text2: 'b' } },
-        { action: 'asbr_collect_enhanced_evidence', params: { taskId: 'test', claim: 'test', sources: [] } },
-        { action: 'get_capabilities', params: {} }
+        {
+          action: 'asbr_collect_enhanced_evidence',
+          params: { taskId: 'test', claim: 'test', sources: [] },
+        },
+        { action: 'get_capabilities', params: {} },
       ];
 
       for (const test of skillTests) {
@@ -378,7 +388,7 @@ describe('📋 A2A Protocol Compatibility Checklist', () => {
 
     // ✅ A2A Agent Card Structure Compliance
     expect(agentCard).toHaveProperty('agent');
-    expect(agentCard).toHaveProperty('interface'); 
+    expect(agentCard).toHaveProperty('interface');
     expect(agentCard).toHaveProperty('skills');
 
     // ✅ Agent Metadata Compliance

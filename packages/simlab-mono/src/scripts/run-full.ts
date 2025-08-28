@@ -8,7 +8,7 @@ import { SimRunner } from '../runner.js';
  */
 async function runFullTests() {
   console.log('🌙 Running SimLab full test suite...');
-  
+
   const runner = new SimRunner({
     deterministic: true,
     seed: 98765,

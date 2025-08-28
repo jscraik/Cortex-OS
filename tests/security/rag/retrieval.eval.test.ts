@@ -13,7 +13,7 @@ class StaticEmbedder implements Embeddings {
 }
 
 function dcg(rel: number[]) {
-  return rel.reduce((s, r, i) => s + ((2 ** r - 1) / Math.log2(i + 2)), 0);
+  return rel.reduce((s, r, i) => s + (2 ** r - 1) / Math.log2(i + 2), 0);
 }
 function ndcg(rels: number[], ideal: number[]) {
   return dcg(rels) / dcg(ideal);

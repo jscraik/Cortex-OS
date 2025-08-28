@@ -1,6 +1,7 @@
 ---
 mode: agent
 ---
+
 <!--
 file_path: ".github/prompts/enforce-areas-of-improvement.md"
 description: "Strict CI enforcement prompt for Areas of Improvement and quality gates"

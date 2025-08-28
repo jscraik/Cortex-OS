@@ -59,4 +59,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const checkOnly = process.argv.includes('--check');
   syncLockfiles(checkOnly);
 }
-

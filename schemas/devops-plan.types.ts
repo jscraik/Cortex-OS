@@ -54,7 +54,15 @@ export interface Stage {
 
 export interface Step {
   name: string;
-  type: 'build' | 'test' | 'deploy' | 'validate' | 'security-scan' | 'approval' | 'notification' | 'script';
+  type:
+    | 'build'
+    | 'test'
+    | 'deploy'
+    | 'validate'
+    | 'security-scan'
+    | 'approval'
+    | 'notification'
+    | 'script';
   command?: string;
   script?: string;
   image?: string;
@@ -147,7 +155,14 @@ export interface InfrastructureDependency {
 
 export interface Notifications {
   channels?: NotificationChannel[];
-  events?: Array<'deployment-start' | 'deployment-success' | 'deployment-failure' | 'rollback-start' | 'rollback-complete' | 'health-check-failure'>;
+  events?: Array<
+    | 'deployment-start'
+    | 'deployment-success'
+    | 'deployment-failure'
+    | 'rollback-start'
+    | 'rollback-complete'
+    | 'health-check-failure'
+  >;
 }
 
 export interface NotificationChannel {

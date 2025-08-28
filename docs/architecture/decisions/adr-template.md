@@ -1,8 +1,8 @@
 ---
-title: "ADR Template"
+title: 'ADR Template'
 date: 2025-08-26
 status: proposed
-deciders: ["team"]
+deciders: ['team']
 ---
 
 ## Status
@@ -12,4 +12,3 @@ deciders: ["team"]
 ## Decision
 
 ## Consequences
-

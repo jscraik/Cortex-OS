@@ -3,11 +3,7 @@
     "basicAgent": {
       "id": "test-agent-001",
       "name": "Test Agent",
-      "capabilities": [
-        "text-processing",
-        "data-analysis",
-        "code-review"
-      ]
+      "capabilities": ["text-processing", "data-analysis", "code-review"]
     },
     "codeAgent": {
       "_events": {},

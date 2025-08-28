@@ -1,21 +1,21 @@
 // Prisma-backed MemoryStore with full vector search and TTL support
-import type { Memory } from "../../domain/types.js";
-import type { MemoryStore, TextQuery, VectorQuery } from "../../ports/MemoryStore.js";
+import type { Memory } from '../../domain/types.js';
+import type { MemoryStore, TextQuery, VectorQuery } from '../../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same length');
   }
-  
+
   const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
   const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
   const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-  
+
   if (magnitudeA === 0 || magnitudeB === 0) {
     return 0;
   }
-  
+
   return dotProduct / (magnitudeA * magnitudeB);
 }
 
@@ -54,12 +54,12 @@ export class PrismaStore implements MemoryStore {
     const rows = await this.prisma.memory.findMany({
       where: {
         AND: [
-          q.text ? { text: { contains: q.text, mode: "insensitive" } } : {},
+          q.text ? { text: { contains: q.text, mode: 'insensitive' } } : {},
           q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {},
         ],
       },
       take: q.topK,
-      orderBy: { updatedAt: "desc" },
+      orderBy: { updatedAt: 'desc' },
     });
     return rows.map(prismaToDomain);
   }
@@ -69,40 +69,40 @@ export class PrismaStore implements MemoryStore {
     const candidateRows = await this.prisma.memory.findMany({
       where: {
         vector: { not: undefined },
-        ...(q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {})
+        ...(q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {}),
       },
-      orderBy: { updatedAt: "desc" },
-      take: q.topK * 10 // Fetch more candidates for similarity matching
+      orderBy: { updatedAt: 'desc' },
+      take: q.topK * 10, // Fetch more candidates for similarity matching
     });
-    
+
     // Convert to domain objects and filter out those without vectors
     const candidates = candidateRows
       .map(prismaToDomain)
-      .filter(memory => memory.vector) as Memory[];
-    
+      .filter((memory) => memory.vector) as Memory[];
+
     // Perform similarity matching in memory
     const scoredCandidates = candidates
-      .map(memory => ({
+      .map((memory) => ({
         memory,
-        score: cosineSimilarity(q.vector, memory.vector!)
+        score: cosineSimilarity(q.vector, memory.vector!),
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, q.topK)
-      .map(item => item.memory);
-    
+      .map((item) => item.memory);
+
     return scoredCandidates;
   }
 
   async purgeExpired(nowISO: string): Promise<number> {
     const now = new Date(nowISO).getTime();
-    
+
     // Fetch all memories with TTL to check expiration in application code
     const allRows = await this.prisma.memory.findMany({
-      where: { ttl: { not: null } }
+      where: { ttl: { not: null } },
     });
-    
+
     const expiredIds: string[] = [];
-    
+
     for (const row of allRows) {
       try {
         const memory = prismaToDomain(row);
@@ -116,7 +116,7 @@ export class PrismaStore implements MemoryStore {
             const minutes = Number(match[3] || 0);
             const seconds = Number(match[4] || 0);
             const ttlMs = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
-            
+
             if (created + ttlMs <= now) {
               expiredIds.push(memory.id);
             }
@@ -127,17 +127,17 @@ export class PrismaStore implements MemoryStore {
         console.warn(`Invalid TTL format for memory ${row.id}: ${row.ttl}`);
       }
     }
-    
+
     // Delete expired memories
     if (expiredIds.length > 0) {
       const result = await this.prisma.memory.deleteMany({
         where: {
-          id: { in: expiredIds }
-        }
+          id: { in: expiredIds },
+        },
       });
       return result.count;
     }
-    
+
     return 0;
   }
 }
@@ -157,4 +157,3 @@ function prismaToDomain(row: any): Memory {
     embeddingModel: row.embeddingModel ?? undefined,
   };
 }
-

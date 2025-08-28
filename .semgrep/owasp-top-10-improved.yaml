@@ -2,8 +2,8 @@ rules:
   - id: owasp-top-10-2021-a01-broken-access-control
     patterns:
       - pattern-either:
-          - pattern: $X[$Y]  # Potential path traversal
-    message: "Potential OWASP Top 10 2021 A01: Broken Access Control"
+          - pattern: $X[$Y] # Potential path traversal
+    message: 'Potential OWASP Top 10 2021 A01: Broken Access Control'
     languages: [python, javascript, typescript]
     severity: WARNING
 
@@ -14,7 +14,7 @@ rules:
           - pattern: sha1(...)
           - pattern: |
               Crypto.Cipher.AES.new(..., Crypto.Cipher.AES.MODE_ECB, ...)
-    message: "Potential OWASP Top 10 2021 A02: Cryptographic Failures"
+    message: 'Potential OWASP Top 10 2021 A02: Cryptographic Failures'
     languages: [python, javascript, typescript]
     severity: WARNING
 
@@ -33,7 +33,7 @@ rules:
               subprocess.run($USER_INPUT, ...)
           - pattern: |
               os.system($USER_INPUT)
-    message: "Potential OWASP Top 10 2021 A03: Injection"
+    message: 'Potential OWASP Top 10 2021 A03: Injection'
     languages: [python, javascript, typescript]
     severity: ERROR
 
@@ -44,7 +44,7 @@ rules:
               // TODO: Implement proper validation
           - pattern: |
               // FIXME: Security check needed
-    message: "Potential OWASP Top 10 2021 A04: Insecure Design"
+    message: 'Potential OWASP Top 10 2021 A04: Insecure Design'
     languages: [python, javascript, typescript]
     severity: WARNING
 
@@ -55,7 +55,7 @@ rules:
               app.run(..., debug=True, ...)
           - pattern: |
               process.env.NODE_ENV === 'development'
-    message: "Potential OWASP Top 10 2021 A05: Security Misconfiguration"
+    message: 'Potential OWASP Top 10 2021 A05: Security Misconfiguration'
     languages: [python, javascript, typescript]
     severity: WARNING
 
@@ -68,7 +68,7 @@ rules:
               sessionStorage.setItem('password', ...)
           - pattern: |
               document.cookie = ... + 'password=' + ...
-    message: "Potential OWASP Top 10 2021 A07: Identification and Authentication Failures"
+    message: 'Potential OWASP Top 10 2021 A07: Identification and Authentication Failures'
     languages: [javascript, typescript]
     severity: ERROR
 
@@ -79,16 +79,16 @@ rules:
               eval(...)
           - pattern: |
               new Function(...)
-    message: "Potential OWASP Top 10 2021 A08: Software and Data Integrity Failures"
+    message: 'Potential OWASP Top 10 2021 A08: Software and Data Integrity Failures'
     languages: [javascript, typescript]
     severity: ERROR
 
   - id: owasp-top-10-2021-a09-security-logging-and-monitoring-failures
     patterns:
       - pattern-either:
-          - pattern: console.log($SECRET)  # Logging sensitive data
-          - pattern: print($SECRET)  # Logging sensitive data
-    message: "Potential OWASP Top 10 2021 A09: Security Logging and Monitoring Failures"
+          - pattern: console.log($SECRET) # Logging sensitive data
+          - pattern: print($SECRET) # Logging sensitive data
+    message: 'Potential OWASP Top 10 2021 A09: Security Logging and Monitoring Failures'
     languages: [python, javascript, typescript]
     severity: WARNING
 
@@ -101,6 +101,6 @@ rules:
               fetch($USER_INPUT)
           - pattern: |
               axios.get($USER_INPUT)
-    message: "Potential OWASP Top 10 2021 A10: Server-Side Request Forgery"
+    message: 'Potential OWASP Top 10 2021 A10: Server-Side Request Forgery'
     languages: [python, javascript, typescript]
     severity: ERROR

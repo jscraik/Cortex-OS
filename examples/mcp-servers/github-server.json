@@ -56,12 +56,7 @@
     "cursor": "Configure GitHub integration in Cursor MCP settings",
     "continue": "Add GitHub server to Continue configuration"
   },
-  "permissions": [
-    "network:http",
-    "network:https",
-    "data:read",
-    "data:write"
-  ],
+  "permissions": ["network:http", "network:https", "data:read", "data:write"],
   "security": {
     "riskLevel": "low",
     "sigstore": "https://registry.mcp.dev/attestations/github.sigstore.json",

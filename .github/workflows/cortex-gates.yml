@@ -2,7 +2,7 @@ name: cortex-gates
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   validate:
@@ -24,4 +24,3 @@ jobs:
           pnpm -s tsx .cortex/gates/validate-structure.ts
           pnpm -s tsx .cortex/gates/validate-policies.ts
           pnpm -s tsx .cortex/gates/validate-docs.ts
-

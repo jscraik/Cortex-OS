@@ -75,9 +75,7 @@ export class MultiModelGenerator implements Generator {
       content: result,
       provider: this.model.backend,
       usage: {
-        promptTokens: Math.floor(
-          messages.reduce((sum, m) => sum + m.content.length, 0) / 4,
-        ),
+        promptTokens: Math.floor(messages.reduce((sum, m) => sum + m.content.length, 0) / 4),
         completionTokens: Math.floor(result.length / 4),
         totalTokens: Math.floor(
           (messages.reduce((sum, m) => sum + m.content.length, 0) + result.length) / 4,

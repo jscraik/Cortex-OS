@@ -7,14 +7,19 @@ import { join } from 'path';
 
 console.log('Updating remaining database methods to use SecureDatabaseWrapper...');
 
-const databaseManagerPath = join('apps', 'cortex-os', 'packages/agents/src/legacy-instructions/DatabaseManager.ts');
+const databaseManagerPath = join(
+  'apps',
+  'cortex-os',
+  'packages/agents/src/legacy-instructions/DatabaseManager.ts',
+);
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
 // Define patterns for methods that need to be updated
 const methodPatterns = [
   {
     name: 'updateAgentStatus',
-    pattern: /async updateAgentStatus\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.db\s*\.\s*prepare\("UPDATE agents SET status = \? WHERE id = \?"\)\s*\.\s*run\(status, id\);\s*}/s,
+    pattern:
+      /async updateAgentStatus\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.db\s*\.\s*prepare\("UPDATE agents SET status = \? WHERE id = \?"\)\s*\.\s*run\(status, id\);\s*}/s,
     replacement: `async updateAgentStatus(id: string, status: string): Promise<void> {
     // Validate input data
     if (!id || typeof id !== 'string') {
@@ -41,11 +46,12 @@ const methodPatterns = [
       console.error('Error updating agent status:', error);
       throw error;
     }
-  }`
+  }`,
   },
   {
     name: 'createTask',
-    pattern: /async createTask\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("createTask"\)\!\.run\(\{[^}]*?\}\);\s*}/s,
+    pattern:
+      /async createTask\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("createTask"\)\!\.run\(\{[^}]*?\}\);\s*}/s,
     replacement: `async createTask(data: any): Promise<void> {
     // Validate input data
     if (!data || typeof data !== 'object') {
@@ -67,11 +73,12 @@ const methodPatterns = [
       console.error('Error creating task:', error);
       throw error;
     }
-  }`
+  }`,
   },
   {
     name: 'updateTaskStatus',
-    pattern: /async updateTaskStatus\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("updateTaskStatus"\)\!\.run\(status, id\);\s*}/s,
+    pattern:
+      /async updateTaskStatus\([^}]*?SecureDatabaseWrapper for this operation[^}]*?this\.statements\.get\("updateTaskStatus"\)\!\.run\(status, id\);\s*}/s,
     replacement: `async updateTaskStatus(id: string, status: string): Promise<void> {
     // Validate input data
     if (!id || typeof id !== 'string') {
@@ -98,8 +105,8 @@ const methodPatterns = [
       console.error('Error updating task status:', error);
       throw error;
     }
-  }`
-  }
+  }`,
+  },
 ];
 
 // Apply all the replacements

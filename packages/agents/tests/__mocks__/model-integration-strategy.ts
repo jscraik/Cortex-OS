@@ -15,15 +15,15 @@ export const INTEGRATION_POINTS = {
     codeIntelligence: {
       models: ['qwen3-coder-7b', 'qwen3-coder-14b', 'deepseek-coder-33b'],
       routing: 'dynamic' as const,
-      fallback: 'qwen3-coder-7b'
-    }
-  }
+      fallback: 'qwen3-coder-7b',
+    },
+  },
 };
 
 export function selectOptimalModel(
   domain: string,
-  capability: string, 
-  characteristics: TaskCharacteristics
+  capability: string,
+  characteristics: TaskCharacteristics,
 ): string {
   // Mock implementation - return model based on characteristics
   if (characteristics.accuracy === 'premium') {

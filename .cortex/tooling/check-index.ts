@@ -26,4 +26,3 @@ for (const p of paths) {
   }
 }
 console.log('indexes OK');
-
