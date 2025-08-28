@@ -10,7 +10,10 @@ function loadJSON(path: string) { return JSON.parse(readFileSync(path, "utf8"));
 const schemaMap: Record<string, string> = {
   "policy.repo.json": ".cortex/schemas/policy.repo.schema.json",
   "policy.tools.json": ".cortex/schemas/policy.tools.schema.json",
-  "policy.agents.json": ".cortex/schemas/policy.agents.schema.json"
+  "policy.agents.json": ".cortex/schemas/policy.agents.schema.json",
+  "agents.mandates.json": ".cortex/schemas/mandates.schema.json",
+  "mcp-governance.json": ".cortex/schemas/mcp-governance.schema.json",
+  "model-gateway.json": ".cortex/schemas/policy.tools.schema.json"
 };
 
 async function main() {

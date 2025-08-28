@@ -8,7 +8,7 @@
 
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';
-import { SecureNeo4j } from '@cortex-os/mvp-core/src/secure-neo4j';
+import { SecureNeo4j } from '@cortex-os/utils';
 import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
 
 // Mock external dependencies
