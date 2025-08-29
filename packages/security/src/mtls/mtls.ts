@@ -314,7 +314,9 @@ export class MTLSServer {
         });
 
         throw new MTLSError(
-          `Failed to start mTLS server: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `Failed to start mTLS server: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
           undefined,
           { host, port, originalError: error },
         );
