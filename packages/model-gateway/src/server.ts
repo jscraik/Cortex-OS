@@ -39,28 +39,14 @@ export function createServer(router?: ModelRouter): FastifyInstance {
         return reply.status(400).send({ error: 'texts must be a non-empty array' });
       }
 
-      let vectors: number[][] = [];
-      let modelUsed: string;
-
-      if (texts.length === 1) {
-        const result = await modelRouter.generateEmbedding({
-          text: texts[0],
-          model: body.model,
-        });
-        vectors = [result.embedding];
-        modelUsed = result.model;
-      } else {
-        const result = await modelRouter.generateEmbeddings({
-          texts,
-          model: body.model,
-        });
-        vectors = result.embeddings;
-        modelUsed = result.model;
-      }
+      const { embeddings, model: modelUsed } = await modelRouter.generateEmbeddings({
+        texts,
+        model: body.model,
+      });
 
       return reply.send({
-        vectors,
-        dimensions: vectors[0]?.length || 0,
+        embeddings,
+        dimensions: embeddings[0]?.length || 0,
         modelUsed,
       });
     } catch (error) {
