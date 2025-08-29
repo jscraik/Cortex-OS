@@ -96,19 +96,18 @@ export class BuildNode {
         req.toLowerCase().includes('server'),
     );
 
-    if (!hasBackendReq) {
-      return { passed: true, details: { type: 'frontend-only' } };
-    }
-
-    // Mock compilation and test results
+    // Mock compilation and test results; fail when backend requirements missing
+    const passed = hasBackendReq;
     return {
-      passed: true, // Would be actual test results
-      details: {
-        compilation: 'success',
-        testsPassed: 45,
-        testsFailed: 0,
-        coverage: 92,
-      },
+      passed,
+      details: passed
+        ? {
+            compilation: 'success',
+            testsPassed: 45,
+            testsFailed: 0,
+            coverage: 92,
+          }
+        : { reason: 'backend requirements missing' },
     };
   }
 
@@ -166,33 +165,30 @@ async function validateBackend(state: PRPState) {
     : { passed: true, details: { type: 'frontend-only' } };
 }
 
-async function validateAPISchema(state: PRPState) {
-  const hasAPI = state.blueprint.requirements?.some((r) =>
-    ['api', 'endpoint'].some((k) => r.toLowerCase().includes(k)),
-  );
-  if (!hasAPI) return { passed: true, details: { schemaFormat: 'N/A', validation: 'skipped' } };
-  const yaml = path.resolve('openapi.yaml');
-  const json = path.resolve('openapi.json');
-  const exists = fs.existsSync(yaml) || fs.existsSync(json);
-  return {
-    passed: exists,
-    details: {
-      schemaFormat: fs.existsSync(yaml) ? 'OpenAPI 3.0' : fs.existsSync(json) ? 'JSON' : 'missing',
-      validation: exists ? 'found' : 'missing',
-    },
-  };
-}
 
-async function runSecurityScan(state: PRPState) {
-  return {
-    blockers: 0,
-    majors: 1,
-    details: {
-      tools: ['CodeQL', 'Semgrep'],
-      vulnerabilities: [{ severity: 'major', type: 'potential-xss' }],
-    },
-  };
-}
+    // Mock Lighthouse and Axe scores; fail when frontend requirements missing
+    const lighthouse = hasFrontend ? 94 : 0;
+    const axe = hasFrontend ? 96 : 0;
+    return {
+      lighthouse,
+      axe,
+      details: hasFrontend
+        ? {
+            lighthouse: {
+              performance: 94,
+              accessibility: 96,
+              bestPractices: 92,
+              seo: 98,
+            },
+            axe: {
+              violations: 2,
+              severity: 'minor',
+            },
+          }
+        : { reason: 'frontend requirements missing' },
+    };
+  }
+
 
 async function validateFrontend(state: PRPState) {
   const hasFrontend = state.blueprint.requirements?.some((r) =>

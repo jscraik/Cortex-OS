@@ -28,16 +28,28 @@ describe('BuildNode documentation validation', () => {
 
   it('flags missing README.md', async () => {
     const state = createInitialPRPState(blueprint, { deterministic: true });
-    const result = await runBuildNode(state);
-    const majors = result.validationResults.build?.majors || [];
-    expect(majors).toContain('Documentation incomplete - missing API docs or usage notes');
+    const node = new BuildNode();
+    const result = await node.execute(state);
+    const buildResult = result.validationResults.build!;
+    expect(buildResult.passed).toBe(false);
+    expect(buildResult.blockers).toContain('Backend compilation or tests failed');
+    expect(buildResult.majors).toContain(
+      'Documentation incomplete - missing API docs or usage notes',
+    );
+
   });
 
   it('passes when README.md exists', async () => {
     fs.writeFileSync(path.join(tmpDir, 'README.md'), '# Test');
     const state = createInitialPRPState(blueprint, { deterministic: true });
-    const result = await runBuildNode(state);
-    const majors = result.validationResults.build?.majors || [];
-    expect(majors).not.toContain('Documentation incomplete - missing API docs or usage notes');
+    const node = new BuildNode();
+    const result = await node.execute(state);
+    const buildResult = result.validationResults.build!;
+    expect(buildResult.passed).toBe(false);
+    expect(buildResult.blockers).toContain('Backend compilation or tests failed');
+    expect(buildResult.majors).not.toContain(
+      'Documentation incomplete - missing API docs or usage notes',
+    );
+
   });
 });
