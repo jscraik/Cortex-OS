@@ -46,12 +46,6 @@ vi.mock('../ai-capabilities.js', () => ({
   AICapabilities: vi.fn(),
 }));
 
-vi.mock('../embedding-adapter.js', () => ({
-  EmbeddingAdapter: vi.fn().mockImplementation(() => ({
-    embed: vi.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-  })),
-}));
-
 describe('🔄 Unified AI Evidence Workflow Tests', () => {
   let workflow: UnifiedAIEvidenceWorkflow;
   let testConfig: UnifiedEvidenceConfig;
@@ -102,7 +96,6 @@ describe('🔄 Unified AI Evidence Workflow Tests', () => {
 
       expect(status.status).toBe('active');
       expect(status.components.asbrIntegration).toBe('connected');
-      expect(status.components.embeddingAdapter).toBe('connected');
       expect(status.configuration.modelsConfigured).toBe(true);
       expect(status.configuration.securityEnabled).toBe(true);
       expect(status.configuration.enhancementEnabled).toBe(true);

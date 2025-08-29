@@ -26,6 +26,11 @@ export class RAGPipeline {
   async ingest(chunks: Chunk[]): Promise<void> {
     const texts = chunks.map((c) => c.text);
     const embeddings = await this.opts.embedder.embed(texts);
+    if (embeddings.length !== chunks.length) {
+      throw new Error(
+        `Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`,
+      );
+    }
     const toStore = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
     await this.opts.store.upsert(toStore);
   }

@@ -11,7 +11,6 @@
 
 import { ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
-import fs from 'fs';
 import path from 'path';
 import winston from 'winston';
 
@@ -30,7 +29,7 @@ export interface AgentTaskPayload {
   requirements: string[];
   dependencies?: string[];
   metadata?: Record<string, unknown>;
-  agentType?: 'langgraph' | 'crewai' | 'autogen';
+  agentType?: 'langgraph' | 'crewai';
 }
 
 export interface AgentTaskResult {
@@ -242,6 +241,7 @@ export class PythonAgentBridge extends EventEmitter {
 
       const pythonArgs = ['-m', this.config.bridgeModule!];
 
+
       // Discover monorepo root (so tests run from package still resolve python paths)
       const findRepoRoot = (): string => {
         let dir = process.cwd();
@@ -261,20 +261,19 @@ export class PythonAgentBridge extends EventEmitter {
 
       const repoRoot = findRepoRoot();
       const pythonPathParts = [
-        // Add the parent so that `src` is recognized as a package (src.__init__.py)
+        // Parent directory so that `src` is recognized as a package for relative imports
         path.resolve(repoRoot, 'packages/python-agents'),
-        // Add src itself to support legacy absolute imports (e.g., 'base_agent')
-        path.resolve(repoRoot, 'packages/python-agents/src'),
       ];
       const existingPyPath = process.env.PYTHONPATH || '';
       if (existingPyPath) pythonPathParts.push(existingPyPath);
+
 
       this.pythonProcess = spawn(this.config.pythonPath!, pythonArgs, {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
           // Ensure local package imports work regardless of current working directory
-          PYTHONPATH: pythonPathParts.filter(Boolean).join(path.delimiter),
+          PYTHONPATH: modulePath,
         },
       });
 
