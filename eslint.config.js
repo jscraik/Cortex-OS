@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
-import { configs as ts } from 'typescript-eslint';
+// eslint-disable-next-line import/no-named-as-default-member
+import ts from 'typescript-eslint';
 
 export default [
   js.configs.recommended,
