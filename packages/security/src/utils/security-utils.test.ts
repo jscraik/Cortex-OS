@@ -28,13 +28,6 @@ describe('generateNonce', () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
-
-  it('throws when crypto unavailable', () => {
-    const original = global.crypto;
-    vi.stubGlobal('crypto', undefined as unknown);
-    expect(() => generateNonce(8)).toThrow('Secure random number generation unavailable');
-    vi.stubGlobal('crypto', original as unknown);
-  });
 });
 
 describe('isCertificateExpired', () => {

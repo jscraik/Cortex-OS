@@ -4,16 +4,12 @@
  */
 
 import forge from 'node-forge';
-import { SecurityError } from '../types.ts';
 
 /**
- * Generate a random nonce for cryptographic operations
+ * Generate a random nonce for cryptographic operations.
+ * Requires Node.js 18+ where global `crypto` is available.
  */
 export function generateNonce(length = 32): string {
-  if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
-    throw new SecurityError('Secure random number generation unavailable', 'RNG_UNAVAILABLE');
-  }
-
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
