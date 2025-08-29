@@ -19,14 +19,22 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   const modelRouter = router || new ModelRouter();
 
   app.post('/embeddings', async (req, reply) => {
-    const parsed = EmbeddingsBodySchema.safeParse(req.body);
-    if (!parsed.success) {
-      return reply
-        .status(400)
-        .send({ error: 'Invalid request body', details: parsed.error.flatten() });
-    }
-    const body = parsed.data;
-    console.log('[model-gateway] /embeddings request body:', JSON.stringify(body));
+
+    const body = req.body as EmbeddingsBody;
+    const grant = await loadGrant('model-gateway');
+    enforce(grant, 'embeddings', body as any);
+    await record(
+      auditEvent(
+        'model-gateway',
+        'embeddings',
+        {
+          runId: (req.headers['x-run-id'] as string) || 'unknown',
+          traceId: req.headers['x-trace-id'] as string,
+        },
+        body,
+      ),
+    );
+
     try {
 
       const texts = body.texts;
