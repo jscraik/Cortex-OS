@@ -537,9 +537,7 @@ export class EvidenceStorage {
   }
 
   private getEncryptionKey(): Buffer {
-    const keyHex = process.env.EVIDENCE_ENCRYPTION_KEY;
-    if (!keyHex) {
-      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY not set');
+      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY environment variable not set. Please provide a 64-character hex string (32 bytes) as EVIDENCE_ENCRYPTION_KEY in your environment.');
     }
     const key = Buffer.from(keyHex, 'hex');
     if (key.length !== 32) {
