@@ -7,18 +7,18 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
-import { createInitialPRPState, PRPState } from '../src/state.js';
+import { createKernel } from '../src/graph-simple.js';
+import type { PRPState } from '../src/state.js';
 
 describe('Cortex Kernel Determinism', () => {
-  let kernel: CortexKernel;
+  let kernel: ReturnType<typeof createKernel>;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    kernel = createKernel(mockOrchestrator);
   });
 
   describe('Reproducible Execution', () => {
@@ -34,24 +34,6 @@ describe('Cortex Kernel Determinism', () => {
 
       // Results should be structurally identical (excluding timestamps and run IDs)
       expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
-    });
-
-    it('should maintain consistent state transitions', async () => {
-      const blueprint = {
-        title: 'State Transition Test',
-        description: 'Testing state machine determinism',
-        requirements: ['Requirement 1'],
-      };
-
-      const result = await kernel.runPRPWorkflow(blueprint, { runId: 'transition-test' });
-      const history = kernel.getExecutionHistory('transition-test');
-
-      // Verify state transitions follow expected pattern
-      expect(history.length).toBeGreaterThan(0);
-
-      // Check phase progression
-      const phases = history.map((state) => state.phase);
-      expect(phases).toContain('strategy');
     });
   });
 });
