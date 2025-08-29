@@ -8,7 +8,12 @@
  * @maintainer @jamiescottcraik
  */
 
-import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
+import { ASBRAIMcpServer } from './asbr-ai-mcp-server.js';
+import express from 'express';
+import { createToolsRouter } from './lib/server/tools-router.js';
+import { createHealthRouter } from './lib/server/health-router.js';
+import { createCapabilitiesRouter } from './lib/server/capabilities-router.js';
+import { createKnowledgeRouter } from './lib/server/knowledge-router.js';
 
 /**
  * ASBR AI MCP Integration - Automatically exposes AI capabilities as MCP tools
@@ -57,94 +62,13 @@ export class ASBRAIMcpIntegration {
    */
   async startHTTPServer(port = 8081): Promise<void> {
     try {
-      // Import express dynamically to avoid dependency issues
-      let express;
-      try {
-        express = await import('express').then((m) => m.default);
-      } catch (importError) {
-        throw new Error(
-          `Express dependency not available: ${importError instanceof Error ? importError.message : String(importError)}`,
-        );
-      }
       const app = express();
-
       app.use(express.json());
 
-      // MCP tools/list endpoint
-      app.get('/mcp/tools/list', async (req, res) => {
-        try {
-          const tools = await this.mcpServer.listTools();
-          res.json(tools);
-        } catch (error) {
-          res.status(500).json({
-            error: {
-              message: `MCP tools list error: ${error}`,
-              type: 'mcp_tools_error',
-            },
-          });
-        }
-      });
-
-      // MCP tools/call endpoint
-      app.post('/mcp/tools/call', async (req, res) => {
-        try {
-          const response = await this.mcpServer.callTool(req.body);
-          if (response.isError) {
-            res.status(400).json(response);
-          } else {
-            res.json(response);
-          }
-        } catch (error) {
-          res.status(500).json({
-            error: {
-              message: `MCP tool call error: ${error}`,
-              type: 'mcp_call_error',
-            },
-          });
-        }
-      });
-
-      // Health check endpoint
-      app.get('/health', async (req, res) => {
-        try {
-          const health = await this.mcpServer.getHealth();
-          res.json(health);
-        } catch (error) {
-          res.status(500).json({ error: `Health check failed: ${error}` });
-        }
-      });
-
-      // MCP capabilities endpoint
-      app.get('/mcp/capabilities', async (req, res) => {
-        try {
-          const capabilities = await this.mcpServer.callTool({
-            method: 'tools/call',
-            params: {
-              name: 'ai_get_capabilities',
-              arguments: {},
-            },
-          });
-          res.json(capabilities);
-        } catch (error) {
-          res.status(500).json({ error: `Capabilities check failed: ${error}` });
-        }
-      });
-
-      // Knowledge base stats endpoint
-      app.get('/mcp/knowledge/stats', async (req, res) => {
-        try {
-          const stats = await this.mcpServer.callTool({
-            method: 'tools/call',
-            params: {
-              name: 'ai_get_knowledge_stats',
-              arguments: {},
-            },
-          });
-          res.json(stats);
-        } catch (error) {
-          res.status(500).json({ error: `Knowledge stats failed: ${error}` });
-        }
-      });
+      app.use('/mcp/tools', createToolsRouter(this.mcpServer));
+      app.use('/health', createHealthRouter(this.mcpServer));
+      app.use('/mcp/capabilities', createCapabilitiesRouter(this.mcpServer));
+      app.use('/mcp/knowledge', createKnowledgeRouter(this.mcpServer));
 
       this.httpServer = app.listen(port, '127.0.0.1', () => {
         console.log(`🚀 ASBR AI MCP server running on http://127.0.0.1:${port}`);
@@ -155,7 +79,6 @@ export class ASBRAIMcpIntegration {
         console.log(`   - Health: GET /health`);
       });
 
-      // Auto-register after server starts
       setTimeout(() => this.autoRegister(), 1000);
     } catch (error) {
       console.error('❌ Failed to start ASBR AI MCP HTTP server:', error);
