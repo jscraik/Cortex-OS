@@ -23,8 +23,6 @@ export interface MLXConfig {
   timeout: number;
   serverUrl: string;
   serverPort: number;
-  /** Enable mock mode to avoid network calls (used in tests) */
-  mockMode?: boolean;
 }
 
 interface MLXStats {
@@ -109,7 +107,6 @@ export class MLXAgent extends EventEmitter implements Agent {
       timeout: config.timeout || 30000,
       serverUrl: config.serverUrl || 'http://localhost',
       serverPort: config.serverPort || 8000,
-      mockMode: config.mockMode ?? false,
     };
   }
 
@@ -265,14 +262,6 @@ export class MLXAgent extends EventEmitter implements Agent {
     models?: string[];
     memory?: { used: number; total: number };
   }> {
-    if (this.config.mockMode) {
-      return {
-        available: true,
-        version: 'mock',
-        models: [this.config.model],
-        memory: { used: 0, total: 0 },
-      };
-    }
     const serverUrl = `${this.config.serverUrl}:${this.config.serverPort}`;
 
     try {
@@ -318,15 +307,6 @@ export class MLXAgent extends EventEmitter implements Agent {
    * Private method to load the MLX model via MLX server
    */
   private async loadModel(): Promise<void> {
-    if (this.config.mockMode) {
-      this.modelLoaded = true;
-      this.metadata.model = this.config.model;
-      this.metadata.device = this.config.device;
-      this.loadedModels.add(this.config.model);
-      this.metadata.modelSize = 1;
-      this.metadata.loadTime = 0;
-      return;
-    }
     const serverUrl = `${this.config.serverUrl}:${this.config.serverPort}`;
 
     try {
@@ -375,20 +355,6 @@ export class MLXAgent extends EventEmitter implements Agent {
    * Private method to execute inference via MLX server
    */
   private async executeInference(request: MLXInferenceRequest): Promise<MLXInferenceResponse> {
-    if (this.config.mockMode) {
-      const start = Date.now();
-      const text = `[mock:${this.config.model}] ${request.prompt?.slice(0, 80) || ''}`;
-      const duration = Date.now() - start;
-      return {
-        response: text,
-        text,
-        tokenCount: Math.min(128, (request.prompt?.length || 0) / 4),
-        tokens: Math.min(128, (request.prompt?.length || 0) / 4),
-        inferenceTime: duration,
-        duration,
-        finishReason: 'stop',
-      };
-    }
     const startTime = Date.now();
     const serverUrl = `${this.config.serverUrl}:${this.config.serverPort}`;
 
