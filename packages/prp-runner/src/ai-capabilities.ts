@@ -8,11 +8,18 @@
 
 import { LLMBridge, LLMConfig } from './llm-bridge.js';
 import {
-  EmbeddingAdapter,
-  RerankerAdapter,
-  createEmbeddingAdapter,
-  createRerankerAdapter,
-} from './embedding-adapter.js';
+  EmbeddingState,
+  createEmbeddingState,
+  addDocuments as embeddingAddDocuments,
+  similaritySearch as embeddingSimilaritySearch,
+  generateEmbeddings as embeddingGenerateEmbeddings,
+  getStats as embeddingGetStats,
+} from './lib/embedding/index.js';
+import {
+  RerankerState,
+  createRerankerState,
+  rerank as rerankerRerank,
+} from './lib/reranker/index.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 export interface AICoreConfig {
@@ -81,8 +88,8 @@ export interface GenerationOptions {
  */
 export class AICoreCapabilities {
   private llmBridge: LLMBridge;
-  private embeddingAdapter?: EmbeddingAdapter;
-  private rerankerAdapter?: RerankerAdapter;
+  private embeddingState?: EmbeddingState;
+  private rerankerState?: RerankerState;
   private config: AICoreConfig;
   private knowledgeBase: Map<string, any> = new Map();
 
@@ -105,12 +112,12 @@ export class AICoreCapabilities {
 
     // Initialize Embedding Adapter
     if (this.config.embedding) {
-      this.embeddingAdapter = createEmbeddingAdapter(this.config.embedding.provider);
+      this.embeddingState = createEmbeddingState(this.config.embedding.provider);
     }
 
     // Initialize Reranker Adapter
     if (this.config.reranker) {
-      this.rerankerAdapter = createRerankerAdapter(this.config.reranker.provider);
+      this.rerankerState = createRerankerState(this.config.reranker.provider);
     }
   }
 
@@ -135,11 +142,17 @@ export class AICoreCapabilities {
     metadata?: Record<string, any>[],
     ids?: string[],
   ): Promise<string[]> {
-    if (!this.embeddingAdapter) {
+    if (!this.embeddingState) {
       throw new Error('Embedding adapter not configured for knowledge storage');
     }
 
-    const documentIds = await this.embeddingAdapter.addDocuments(documents, metadata, ids);
+    const { state, ids: documentIds } = await embeddingAddDocuments(
+      this.embeddingState,
+      documents,
+      metadata,
+      ids,
+    );
+    this.embeddingState = state;
 
     // Store additional metadata in local knowledge base
     documents.forEach((doc, index) => {
@@ -158,11 +171,11 @@ export class AICoreCapabilities {
    * Perform semantic search in knowledge base
    */
   async searchKnowledge(query: string, topK: number = 5, threshold: number = 0.3) {
-    if (!this.embeddingAdapter) {
+    if (!this.embeddingState) {
       throw new Error('Embedding adapter not configured for knowledge search');
     }
 
-    return this.embeddingAdapter.similaritySearch({
+    return embeddingSimilaritySearch(this.embeddingState, {
       text: query,
       topK,
       threshold,
@@ -173,7 +186,7 @@ export class AICoreCapabilities {
    * Complete RAG workflow: Retrieve relevant context and generate answer
    */
   async ragQuery(ragQuery: RAGQuery): Promise<RAGResult> {
-    if (!this.embeddingAdapter) {
+    if (!this.embeddingState) {
       throw new Error('Embedding adapter not configured for RAG');
     }
 
@@ -181,7 +194,7 @@ export class AICoreCapabilities {
     const ragConfig = this.config.rag || {};
 
     // Step 1: Retrieve relevant documents
-    const searchResults = await this.embeddingAdapter.similaritySearch({
+    const searchResults = await embeddingSimilaritySearch(this.embeddingState, {
       text: query,
       topK: ragConfig.topK || 5,
       threshold: ragConfig.similarityThreshold || 0.3,
@@ -189,9 +202,10 @@ export class AICoreCapabilities {
 
     // Step 2: Rerank if reranker is available
     let finalSources = searchResults;
-    if (this.rerankerAdapter && searchResults.length > 0) {
+    if (this.rerankerState && searchResults.length > 0) {
       const documentsToRerank = searchResults.map((r) => r.text);
-      const rerankedResults = await this.rerankerAdapter.rerank(
+      const rerankedResults = await rerankerRerank(
+        this.rerankerState,
         query,
         documentsToRerank,
         ragConfig.rerankTopK || 3,
@@ -234,11 +248,11 @@ export class AICoreCapabilities {
    * Get embedding for text (if embedding adapter available)
    */
   async getEmbedding(text: string): Promise<number[] | null> {
-    if (!this.embeddingAdapter) {
+    if (!this.embeddingState) {
       return null;
     }
 
-    const embeddings = await this.embeddingAdapter.generateEmbeddings(text);
+    const embeddings = await embeddingGenerateEmbeddings(this.embeddingState, text);
     return embeddings[0];
   }
 
@@ -246,11 +260,11 @@ export class AICoreCapabilities {
    * Calculate semantic similarity between two texts
    */
   async calculateSimilarity(text1: string, text2: string): Promise<number | null> {
-    if (!this.embeddingAdapter) {
+    if (!this.embeddingState) {
       return null;
     }
 
-    const embeddings = await this.embeddingAdapter.generateEmbeddings([text1, text2]);
+    const embeddings = await embeddingGenerateEmbeddings(this.embeddingState, [text1, text2]);
     const [emb1, emb2] = embeddings;
 
     // Cosine similarity
@@ -286,20 +300,26 @@ export class AICoreCapabilities {
         model: this.llmBridge.getModel(),
         healthy: llmHealth.healthy,
       },
-      embedding: this.embeddingAdapter
+      embedding: this.embeddingState
         ? {
-            provider: this.embeddingAdapter.getStats().provider,
-            dimensions: this.embeddingAdapter.getStats().dimensions,
-            documents: this.embeddingAdapter.getStats().totalDocuments,
+            provider: embeddingGetStats(this.embeddingState).provider,
+            dimensions: embeddingGetStats(this.embeddingState).dimensions,
+            documents: embeddingGetStats(this.embeddingState).totalDocuments,
           }
         : undefined,
-      reranker: this.rerankerAdapter
+      reranker: this.rerankerState
         ? {
-            provider: 'available',
+            provider: this.rerankerState.config.provider,
             available: true,
           }
         : undefined,
       features: this.getAvailableFeatures(),
+    };
+
+    return capabilities;
+  }
+
+  /**
     };
 
     return capabilities;
@@ -312,8 +332,8 @@ export class AICoreCapabilities {
     this.knowledgeBase.clear();
 
     // Clear embedding adapter's vector store if available
-    if (this.embeddingAdapter && typeof this.embeddingAdapter.clearDocuments === 'function') {
-      await this.embeddingAdapter.clearDocuments();
+    if (this.embeddingState) {
+      this.embeddingState = { ...this.embeddingState, vectorStore: new Map() };
     }
   }
 
@@ -324,17 +344,7 @@ export class AICoreCapabilities {
     // Clear knowledge base
     await this.clearKnowledge();
 
-    // Cleanup embedding adapter resources
-    if (this.embeddingAdapter && typeof this.embeddingAdapter.shutdown === 'function') {
-      await this.embeddingAdapter.shutdown();
-    }
-
-    // Cleanup reranker adapter resources
-    if (this.rerankerAdapter && typeof this.rerankerAdapter.shutdown === 'function') {
-      await this.rerankerAdapter.shutdown();
-    }
-
-    // Cleanup LLM bridge resources
+    // No additional resources for embedding or reranker modules
     if (this.llmBridge && typeof this.llmBridge.shutdown === 'function') {
       await this.llmBridge.shutdown();
     }
@@ -349,9 +359,13 @@ export class AICoreCapabilities {
   } {
     return {
       documentsStored: this.knowledgeBase.size,
-      embeddingStats: this.embeddingAdapter?.getStats(),
+      embeddingStats: this.embeddingState ? embeddingGetStats(this.embeddingState) : undefined,
     };
   }
+
+  /**
+   * Build RAG prompt with context
+   */
 
   /**
    * Build RAG prompt with context
@@ -388,15 +402,15 @@ export class AICoreCapabilities {
   private getAvailableFeatures(): string[] {
     const features = ['text-generation'];
 
-    if (this.embeddingAdapter) {
+    if (this.embeddingState) {
       features.push('embeddings', 'semantic-search', 'knowledge-base');
     }
 
-    if (this.rerankerAdapter) {
+    if (this.rerankerState) {
       features.push('reranking');
     }
 
-    if (this.embeddingAdapter && this.rerankerAdapter) {
+    if (this.embeddingState && this.rerankerState) {
       features.push('rag', 'question-answering');
     }
 

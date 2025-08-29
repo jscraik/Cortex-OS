@@ -296,3 +296,5 @@ scripts/package-lock.json
 !src/lib/
 !src/lib/**
 
+!packages/prp-runner/src/lib/
+!packages/prp-runner/src/lib/**
