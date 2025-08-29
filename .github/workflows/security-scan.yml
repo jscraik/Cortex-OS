@@ -21,9 +21,9 @@ jobs:
         run: pnpm dlx auditjs ossi --project-name cortex-os
       - uses: sigstore/cosign-installer@v3.4.0
       - name: Sign lockfile
-        run: cosign sign-blob --yes pnpm-lock.yaml --output-signature pnpm-lock.yaml.sig --output-certificate pnpm-lock.yaml.pem
+        run: cosign sign-blob --yes pnpm-lock.yaml --output-signature pnpm-lock.yaml.sig --output-certificate pnpm-lock.yaml.pem --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/security-scan.yml@refs/heads/main" --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
       - name: Verify lockfile signature
-        run: cosign verify-blob pnpm-lock.yaml --signature pnpm-lock.yaml.sig --certificate pnpm-lock.yaml.pem
+        run: cosign verify-blob pnpm-lock.yaml --signature pnpm-lock.yaml.sig --certificate pnpm-lock.yaml.pem --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/security-scan.yml@refs/heads/main" --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
 
   dast:
     runs-on: ubuntu-latest
