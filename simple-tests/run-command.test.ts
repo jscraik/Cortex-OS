@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { runCommand } from '../src/lib/runCommand';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixture = join(__dirname, 'fixtures', 'long-running.js');
 
 describe('runCommand', () => {
