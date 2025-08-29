@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@cortex-os/orchestration": "workspace:*",
+
     "fastify": "^4.28.1",
     "zod": "^3.25.76"
   },

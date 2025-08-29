@@ -36,5 +36,6 @@ describe('request validation', () => {
     });
     expect(res.statusCode).toBe(400);
     await app.close();
+
   });
 });
