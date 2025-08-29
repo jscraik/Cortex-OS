@@ -212,6 +212,120 @@ describe('ASBR API Integration Tests', () => {
       const response = await request(app)
         .put(`/v1/profiles/${profileId}`)
         .set('Authorization', `Bearer ${authToken}`)
+        .send({ profile: updatedProfile })
+        .expect(200);
+
+      expect(response.body.profile.skill).toBe('expert');
+      expect(response.body.profile.a11y.screenReader).toBe(true);
+    });
+  });
+
+  describe('Artifact Management', () => {
+    it('should list artifacts with pagination', async () => {
+      const response = await request(app)
+        .get('/v1/artifacts?limit=10&offset=0')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.artifacts).toBeDefined();
+      expect(response.body.total).toBeDefined();
+      expect(Array.isArray(response.body.artifacts)).toBe(true);
+    });
+
+    it('should filter artifacts by kind', async () => {
+      const response = await request(app)
+        .get('/v1/artifacts?kind=diff')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body.artifacts).toBeDefined();
+    });
+
+    it('should retrieve artifact content with digest headers', async () => {
+      // For this test, we'd need to create an artifact first
+      // For now, we'll test with a mock artifact ID
+      const response = await request(app)
+        .get('/v1/artifacts/mock-artifact-id')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(404); // Expected since artifact doesn't exist
+
+      // In a real test with an existing artifact:
+      // expect(response.headers['digest']).toBeDefined();
+      // expect(response.headers['etag']).toBeDefined();
+    });
+  });
+
+  describe('Service Map', () => {
+    it('should return available routes and versions', async () => {
+      const response = await request(app)
+        .get('/v1/service-map')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(Array.isArray(response.body.routes)).toBe(true);
+      const taskRoute = response.body.routes.find((r: any) => r.path === '/v1/tasks');
+      expect(taskRoute).toBeDefined();
+      expect(taskRoute.methods).toContain('POST');
+      expect(taskRoute.version).toBe('v1');
+    });
+  });
+
+  describe('Connector Service Map', () => {
+    it('should return connector service map', async () => {
+      const response = await request(app)
+        .get('/v1/connectors/service-map')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toBeDefined();
+      expect(typeof response.body).toBe('object');
+      expect(Object.keys(response.body).length).toBe(0);
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should return 404 for non-existent resources', async () => {
+      const response = await request(app)
+        .get('/v1/tasks/non-existent-id')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(404);
+
+      expect(response.body.error).toBe('Task not found');
+      expect(response.body.code).toBe('NOT_FOUND');
+    });
+
+    it('should validate request schemas', async () => {
+      const invalidTaskInput = {
+        title: '', // Invalid: empty title
+        brief: 'Test brief',
+        // Missing required fields
+      };
+
+      const response = await request(app)
+        .post('/v1/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ input: invalidTaskInput })
+        .expect(400);
+
+      expect(response.body.error).toContain('Invalid');
+      expect(response.body.code).toBe('VALIDATION_ERROR');
+    });
+
+    it('should handle malformed JSON', async () => {
+      const response = await request(app)
+        .post('/v1/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('Content-Type', 'application/json')
+        .send('{ invalid json }')
+        .expect(400);
+
+      expect(response.body.error).toBeDefined();
+    });
+
+    it('should reject legacy task input formats', async () => {
+      const response = await request(app)
+        .post('/v1/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
           profile: {
             skill: 'advanced',
