@@ -28,7 +28,8 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
       expect(capabilities.embedding?.dimensions).toBe(1024);
       expect(capabilities.features).toContain('text-generation');
       expect(capabilities.features).toContain('embeddings');
-      expect(capabilities.features).toContain('rag');
+      expect(capabilities.features).not.toContain('rag');
+      expect(capabilities.reranker).toBeUndefined();
     });
 
     it('should create LLM-only configuration', () => {
@@ -319,6 +320,25 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
       expect(embedding).toBeDefined();
       expect(embedding!.length).toBe(1024);
     }, 45000);
+  });
+
+  describe('Reranking Configuration', () => {
+    it('should skip reranking when none is configured', async () => {
+      const ragOnly = createAICapabilities(AI_PRESETS.RAG_FOCUSED);
+      await ragOnly.addKnowledge(['Rerank test document']);
+      const result = await ragOnly.ragQuery({ query: 'Rerank test' });
+
+      expect(result.sources).toBeDefined();
+      const caps = await ragOnly.getCapabilities();
+      expect(caps.reranker).toBeUndefined();
+    }, 30000);
+
+    it('should fail fast when embedding adapter is missing', async () => {
+      const llmOnly = createAICapabilities(AI_PRESETS.LLM_ONLY);
+      await expect(llmOnly.ragQuery({ query: 'test without embeddings' })).rejects.toThrow(
+        'Embedding adapter not configured for RAG',
+      );
+    }, 15000);
   });
 
   describe('Different AI Presets', () => {

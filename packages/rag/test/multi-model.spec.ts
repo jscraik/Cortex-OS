@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MultiModelGenerator } from '../src/generation/multi-model';
+import * as proc from '../../../src/lib/run-process.js';
 
 describe('MultiModelGenerator', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('delegates generation to single backend', async () => {
     const gen = new MultiModelGenerator({
       model: { model: 'test-model', backend: 'mlx' },
@@ -21,6 +26,7 @@ describe('MultiModelGenerator', () => {
     expect(res.content).toBe('ok');
     expect(spy).toHaveBeenCalledTimes(1);
   });
+
 
   it('propagates generation options to Ollama API', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
@@ -58,5 +64,6 @@ describe('MultiModelGenerator', () => {
     );
     // @ts-ignore - restore original fetch
     global.fetch = originalFetch;
+
   });
 });
