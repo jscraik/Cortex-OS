@@ -237,8 +237,8 @@ Consider event priority, resource availability, and dependencies.
 Provide quick decision with reasoning.`;
 
     try {
-      // Use fast reasoning model
-      const response = await this.modelProvider.generate('fastReasoning', {
+      // Use quick reasoning model
+      const response = await this.modelProvider.generate('quickReasoning', {
         task: 'workflow_coordination',
         prompt,
         maxTokens: 150,
