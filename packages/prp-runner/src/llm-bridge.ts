@@ -56,9 +56,7 @@ export function configureLLM(config: LLMConfig): LLMState {
 
   }
 
-  const normalized = { ...config } as LLMConfig;
-  if (normalized.endpoint === '') {
-    delete (normalized as any).endpoint;
+    delete (normalized as Partial<LLMConfig>).endpoint;
   }
 
 
