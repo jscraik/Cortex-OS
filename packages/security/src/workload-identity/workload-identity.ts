@@ -82,7 +82,7 @@ export class WorkloadIdentityManager {
           workloadPath,
         });
 
-        return await Promise.resolve(validatedIdentity);
+        return validatedIdentity;
       } catch (error) {
         logWithSpan('error', 'Failed to attest workload identity', {
           spiffeId,

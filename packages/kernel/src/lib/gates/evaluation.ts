@@ -1,6 +1,8 @@
 import { PRPState } from '../../state.js';
 
-export async function validateTDDCycle(state: PRPState): Promise<{ passed: boolean; details: any }> {
+export async function validateTDDCycle(
+  state: PRPState,
+): Promise<{ passed: boolean; details: any }> {
   const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
   const hasTests = tddEvidence.length > 0;
   const hasCoverage =
@@ -83,7 +85,7 @@ export async function preCerebrumValidation(
     state.validationResults?.evaluation
   );
   const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {}).every(
-    (result) => result?.passed || result?.blockers.length === 0,
+    (result) => result?.passed || (result?.blockers.length === 0 && result?.majors.length === 0),
   );
   const sufficientEvidence = state.evidence.length >= 5;
   const readyForCerebrum = hasAllPhases && allPhasesPassedOrAcceptable && sufficientEvidence;

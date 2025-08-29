@@ -5,6 +5,7 @@
 import { z } from 'zod';
 import { MLXAdapter } from './adapters/mlx-adapter';
 import { OllamaAdapter } from './adapters/ollama-adapter';
+import { withFallback } from '../../../src/lib/with-fallback';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking';
 export type ModelProvider = 'mlx' | 'ollama';
@@ -53,12 +54,18 @@ export class ModelRouter {
   }
 
   async initialize(): Promise<void> {
-    const mlxAvailable = await this.mlxAdapter.isAvailable();
-    const ollamaAvailable = await this.ollamaAdapter.isAvailable();
+    this.availableModels.set('embedding', await this.initEmbeddingModels());
+    this.availableModels.set('chat', await this.initChatModels());
+    this.availableModels.set('reranking', await this.initRerankModels());
+  }
 
-    const embeddingModels: ModelConfig[] = [];
+  private async initEmbeddingModels(): Promise<ModelConfig[]> {
+    const models: ModelConfig[] = [];
+    const mlxAvailable = await this.mlxAdapter.isAvailable().catch(() => false);
+    const ollamaAvailable = await this.ollamaAdapter.isAvailable().catch(() => false);
+
     if (mlxAvailable) {
-      embeddingModels.push(
+      models.push(
         {
           name: 'qwen3-embedding-4b-mlx',
           provider: 'mlx',
@@ -77,7 +84,7 @@ export class ModelRouter {
     }
 
     if (ollamaAvailable) {
-      embeddingModels.push({
+      models.push({
         name: 'nomic-embed-text',
         provider: 'ollama',
         capabilities: ['embedding'],
@@ -86,32 +93,39 @@ export class ModelRouter {
       });
     }
 
-    this.availableModels.set('embedding', embeddingModels);
+    return models;
+  }
 
-    const chatModels: ModelConfig[] = [];
-    if (ollamaAvailable) {
-      const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
-      const desiredChat = [{ name: 'llama2', priority: 100, fallback: [] }];
+  private async initChatModels(): Promise<ModelConfig[]> {
+    const models: ModelConfig[] = [];
+    const ollamaAvailable = await this.ollamaAdapter.isAvailable().catch(() => false);
+    if (!ollamaAvailable) return models;
 
-      for (const m of desiredChat) {
-        if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
-          chatModels.push({
-            name: m.name,
-            provider: 'ollama',
-            capabilities: ['chat'],
-            priority: m.priority,
-            fallback: m.fallback,
-          });
-        } else {
-          console.log(`[model-router] Ollama model ${m.name} not installed; skipping`);
-        }
+    const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
+    const desiredChat = [{ name: 'llama2', priority: 100, fallback: [] }];
+
+    for (const m of desiredChat) {
+      if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
+        models.push({
+          name: m.name,
+          provider: 'ollama',
+          capabilities: ['chat'],
+          priority: m.priority,
+          fallback: m.fallback,
+        });
+      } else {
+        console.log(`[model-router] Ollama model ${m.name} not installed; skipping`);
       }
     }
-    this.availableModels.set('chat', chatModels);
 
-    const rerankingModels: ModelConfig[] = [];
+    return models;
+  }
+
+  private async initRerankModels(): Promise<ModelConfig[]> {
+    const models: ModelConfig[] = [];
+    const ollamaAvailable = await this.ollamaAdapter.isAvailable().catch(() => false);
     if (ollamaAvailable) {
-      rerankingModels.push({
+      models.push({
         name: 'nomic-embed-text',
         provider: 'ollama',
         capabilities: ['reranking'],
@@ -119,7 +133,7 @@ export class ModelRouter {
         fallback: [],
       });
     }
-    this.availableModels.set('reranking', rerankingModels);
+    return models;
   }
 
   private selectModel(capability: ModelCapability, requestedModel?: string): ModelConfig | null {
@@ -156,25 +170,21 @@ export class ModelRouter {
       }
     };
 
-    try {
-      return await tryModel(model);
-    } catch (error) {
-      console.warn(`Primary embedding model ${model.name} failed, attempting fallback:`, error);
-      for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels
-          .get('embedding')
-          ?.find((m) => m.name === fallbackName);
-        if (!fallbackModel) continue;
-        try {
-          return await tryModel(fallbackModel);
-        } catch (fallbackError) {
-          console.warn(`Fallback embedding model ${fallbackName} also failed:`, fallbackError);
-        }
+    const fallbackModels: ModelConfig[] = (model.fallback || [])
+      .map((name) => this.availableModels.get('embedding')?.find((m) => m.name === name))
+      .filter((m): m is ModelConfig => !!m);
+
+    return withFallback(model, fallbackModels, tryModel, (m, err) => {
+      if (m === model) {
+        console.warn(`Primary embedding model ${m.name} failed, attempting fallback:`, err);
+      } else {
+        console.warn(`Fallback embedding model ${m.name} also failed:`, err);
       }
+    }).catch((error) => {
       throw new Error(
         `All embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
-    }
+    });
   }
 
   async generateEmbeddings(
@@ -193,31 +203,21 @@ export class ModelRouter {
       }
     };
 
-    try {
-      return await tryModel(model);
-    } catch (error) {
-      console.warn(
-        `Primary batch embedding model ${model.name} failed, attempting fallback:`,
-        error,
-      );
-      for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels
-          .get('embedding')
-          ?.find((m) => m.name === fallbackName);
-        if (!fallbackModel) continue;
-        try {
-          return await tryModel(fallbackModel);
-        } catch (fallbackError) {
-          console.warn(
-            `Fallback batch embedding model ${fallbackName} also failed:`,
-            fallbackError,
-          );
-        }
+    const fallbackModels: ModelConfig[] = (model.fallback || [])
+      .map((name) => this.availableModels.get('embedding')?.find((m) => m.name === name))
+      .filter((m): m is ModelConfig => !!m);
+
+    return withFallback(model, fallbackModels, tryModel, (m, err) => {
+      if (m === model) {
+        console.warn(`Primary batch embedding model ${m.name} failed, attempting fallback:`, err);
+      } else {
+        console.warn(`Fallback batch embedding model ${m.name} also failed:`, err);
       }
+    }).catch((error) => {
       throw new Error(
         `All batch embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
-    }
+    });
   }
 
   async generateChat(request: ChatRequest): Promise<{ content: string; model: string }> {
@@ -233,25 +233,21 @@ export class ModelRouter {
       return { content: response.content, model: m.name };
     };
 
-    try {
-      return await tryModel(model);
-    } catch (error) {
-      console.warn(`Primary chat model ${model.name} failed, attempting fallback:`, error);
-      for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels
-          .get('chat')
-          ?.find((m) => m.name === fallbackName);
-        if (!fallbackModel) continue;
-        try {
-          return await tryModel(fallbackModel);
-        } catch (fallbackError) {
-          console.warn(`Fallback chat model ${fallbackName} also failed:`, fallbackError);
-        }
+    const fallbackModels: ModelConfig[] = (model.fallback || [])
+      .map((name) => this.availableModels.get('chat')?.find((m) => m.name === name))
+      .filter((m): m is ModelConfig => !!m);
+
+    return withFallback(model, fallbackModels, tryModel, (m, err) => {
+      if (m === model) {
+        console.warn(`Primary chat model ${m.name} failed, attempting fallback:`, err);
+      } else {
+        console.warn(`Fallback chat model ${m.name} also failed:`, err);
       }
+    }).catch((error) => {
       throw new Error(
         `All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
-    }
+    });
   }
 
   async rerank(
@@ -267,33 +263,20 @@ export class ModelRouter {
       return { documents: request.documents, scores: response.scores, model: m.name };
     };
 
-    try {
-      return await tryModel(model);
-    } catch (error) {
-      console.warn(`Primary reranking model ${model.name} failed, attempting fallback:`, error);
-      for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels
-          .get('reranking')
-          ?.find((m) => m.name === fallbackName);
-        if (!fallbackModel) continue;
-        try {
-          return await tryModel(fallbackModel);
-        } catch (fallbackError) {
-          console.warn(`Fallback reranking model ${fallbackName} also failed:`, fallbackError);
-        }
+    const fallbackModels: ModelConfig[] = (model.fallback || [])
+      .map((name) => this.availableModels.get('reranking')?.find((m) => m.name === name))
+      .filter((m): m is ModelConfig => !!m);
+
+    return withFallback(model, fallbackModels, tryModel, (m, err) => {
+      if (m === model) {
+        console.warn(`Primary reranking model ${m.name} failed, attempting fallback:`, err);
+      } else {
+        console.warn(`Fallback reranking model ${m.name} also failed:`, err);
       }
-      throw new Error(
-        `All reranking models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
+    });
   }
 
   getAvailableModels(capability: ModelCapability): ModelConfig[] {
     return this.availableModels.get(capability) || [];
-  }
-
-  hasAvailableModels(capability: ModelCapability): boolean {
-    const models = this.availableModels.get(capability);
-    return !!models && models.length > 0;
   }
 }

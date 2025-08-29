@@ -37,13 +37,6 @@ export enum AgentRole {
   WORKER = 'worker',
 }
 
-export enum ReActPhase {
-  THOUGHT = 'thought',
-  ACTION = 'action',
-  OBSERVATION = 'observation',
-  REFLECTION = 'reflection',
-}
-
 // ================================
 // Zod Schemas for Runtime Validation
 // ================================
@@ -63,18 +56,6 @@ export const TaskSchema = z.object({
   completedAt: z.date().optional(),
   estimatedDuration: z.number().optional(),
   actualDuration: z.number().optional(),
-});
-
-export const ReActStepSchema = z.object({
-  id: z.string().uuid(),
-  phase: z.nativeEnum(ReActPhase),
-  content: z.string(),
-  reasoning: z.string(),
-  action: z.string().optional(),
-  observation: z.string().optional(),
-  confidence: z.number().min(0).max(1),
-  timestamp: z.date(),
-  agentId: z.string().optional(),
 });
 
 export const ExecutionPlanSchema = z.object({
@@ -107,7 +88,6 @@ export const ExecutionPlanSchema = z.object({
 // ================================
 
 export type Task = z.infer<typeof TaskSchema>;
-export type ReActStep = z.infer<typeof ReActStepSchema>;
 export type ExecutionPlan = z.infer<typeof ExecutionPlanSchema>;
 
 // ================================
@@ -201,6 +181,7 @@ export interface ReActConfig {
 }
 
 // ================================
+
 // Orchestration Interfaces
 // ================================
 
@@ -718,6 +699,5 @@ export interface OrchestrationStatistics {
 
 export const Schemas = {
   Task: TaskSchema,
-  ReActStep: ReActStepSchema,
   ExecutionPlan: ExecutionPlanSchema,
 };
