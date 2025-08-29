@@ -30,13 +30,13 @@ export async function loadGrant(service: string): Promise<Grant> {
   return GrantSchema.parse(grant);
 }
 
-export function enforce(
-  grant: Grant,
-  operation: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _data: unknown,
-): void {
-  if (!(grant.rules as Record<string, boolean>)[`allow_${operation}`]) {
+  const ruleMap: Record<string, keyof typeof grant.rules> = {
+    embeddings: 'allow_embeddings',
+    rerank: 'allow_rerank',
+    chat: 'allow_chat',
+  };
+  const ruleKey = ruleMap[operation];
+  if (!ruleKey || !grant.rules[ruleKey]) {
     throw new Error(`Operation ${operation} not allowed by policy`);
   }
 }
