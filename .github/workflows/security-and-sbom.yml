@@ -19,6 +19,8 @@ jobs:
         run: pnpm security:scan
       - name: Semgrep extended
         run: pnpm security:scan:all
+      - name: Dependency audit
+        run: pnpm security:audit
   sbom:
     runs-on: ubuntu-latest
     steps:

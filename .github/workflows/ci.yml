@@ -60,6 +60,7 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
+
       - name: Sync Python dependencies
         run: |
           uv sync || {
@@ -82,3 +83,4 @@ jobs:
             exit 1
           }
         continue-on-error: true
+

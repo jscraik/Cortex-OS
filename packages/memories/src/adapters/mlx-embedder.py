@@ -16,7 +16,7 @@ def main():
         sys.exit(1)
     
     # Add the MLX models directory to the path
-    mlx_models_dir = os.environ.get('MLX_MODELS_DIR', '/Volumes/ExternalSSD/huggingface_cache')
+    mlx_models_dir = os.environ.get('MLX_MODELS_DIR', os.path.expanduser('~/.cache/huggingface'))
     sys.path.append(mlx_models_dir)
     
     try:
