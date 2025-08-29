@@ -9,17 +9,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Install pnpm
+        run: npm install -g pnpm
+      - name: Install dependencies
+        run: pnpm install --filter @cortex-os/security...
       - name: Install Semgrep
-        run: pipx install semgrep || pip install semgrep --break-system-packages || true
+        run: pipx install semgrep || pip install semgrep --break-system-packages
       - name: Run Semgrep
-        run: |
-          semgrep scan \
-            --config .semgrep/owasp-precise.yaml \
-            --config .semgrep/owasp-top-10-improved.yaml \
-            --no-error \
-            --sarif -o semgrep.sarif .
+        run: pnpm -F @cortex-os/security semgrep
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: semgrep.sarif
+          sarif_file: packages/security/semgrep.sarif

@@ -1,0 +1,26 @@
+rules:
+  - id: llm-prompt-injection
+    message: 'Unsanitized user input concatenated into LLM prompt'
+    metadata:
+      owasp-llm-top-10: LLM01-Prompt-Injection
+      mitre-atlas: ATLAS-Prompt-Injection
+    severity: WARNING
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: $LLM($PROMPT + $USER_INPUT)
+      - metavariable-regex:
+          metavariable: $USER_INPUT
+          regex: (?i)(input|prompt|user|query)
+
+  - id: llm-eval-on-output
+    message: 'Avoid eval on potential LLM output'
+    metadata:
+      owasp-llm-top-10: LLM02-Insecure-Output
+      mitre-atlas: ATLAS-Insecure-Output
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: eval($OUTPUT)
+      - metavariable-pattern:
+          metavariable: $OUTPUT
+          pattern: $LLM(...)
