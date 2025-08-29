@@ -641,6 +641,9 @@ importers:
 
   packages/kernel:
     dependencies:
+      '@cortex-os/prp-runner':
+        specifier: workspace:*
+        version: link:../prp-runner
       nanoid:
         specifier: ^5.0.4
         version: 5.1.5
