@@ -4,9 +4,8 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
-import { handleResilience } from '../utils/resilience.js';
 
-trationError } from '../errors.js';
+import { buildAgentPrompt, parseAgentSelection } from '../../../../src/lib/agent-selection.js';
 
 export interface TaskDecomposition {
   subtasks: Array<{
@@ -255,16 +254,37 @@ Provide quick decision with reasoning.`;
    * Safety validation using parallel reasoning
    */
 
-  async validateSafety(taskDescription: string, context?: string) {
-    const prompt = `Assess the safety of this task and its context:
-
-TASK: ${taskDescription}
-
-${context ? `CONTEXT:\n${context}` : ''}
-
-Check for potential safety issues, constraints, and policy violations.`;
+  async selectOptimalAgent(
+    taskDescription: string,
+    availableAgents: Array<{ id: string; capabilities: string[]; currentLoad: number }>,
+    urgency: 'low' | 'medium' | 'high' | 'critical' = 'medium',
+  ): Promise<{ agentId: string; reasoning: string; confidence: number }> {
+    const prompt = buildAgentPrompt(taskDescription, availableAgents, urgency);
 
     try {
+      const response = await this.modelProvider.generate('quickReasoning', {
+        task: 'agent_selection',
+        prompt,
+        maxTokens: 150,
+      });
+
+      return parseAgentSelection(response.content, availableAgents);
+    } catch (error) {
+      console.warn('Agent selection failed:', error);
+      // Fallback: least loaded agent
+      const leastLoaded = availableAgents.reduce(
+        (min, agent) => (agent.currentLoad < min.currentLoad ? agent : min),
+        availableAgents[0],
+      );
+
+      return {
+        agentId: leastLoaded.id,
+        reasoning: 'Fallback selection - chose least loaded agent',
+        confidence: 0.3,
+      };
+    }
+  }
+
 
       const response = await this.modelProvider.generate('generalChat', {
         task: 'safety_validation',
@@ -342,17 +362,6 @@ Check for potential safety issues, constraints, and policy violations.`;
       return handleResilience(error, 'parseCodeOrchestrationResponse');
 
     }
-  }
-
-  private parseAgentSelection(content: string, agents: any[]) {
-    // Simple parsing - in production, use more robust methods
-    const agentMention = agents.find((a) => content.includes(a.id));
-
-    return {
-      agentId: agentMention?.id || agents[0]?.id || 'default',
-      reasoning: content,
-      confidence: 0.7,
-    };
   }
 
   private parseSafetyAssessment(content: string) {
