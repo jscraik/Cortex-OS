@@ -19,6 +19,7 @@ export default defineWorkspace([
   'packages/mvp-server',
   'packages/orchestration',
   'packages/prp-runner',
+  'packages/model-gateway',
   'packages/rag',
   'packages/simlab-mono',
   'libs/typescript/contracts',
