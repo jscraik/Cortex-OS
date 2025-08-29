@@ -256,16 +256,16 @@ export const createDefaultMCPTools = (): MCPTool[] => [
           summary: `${errorCount} errors, ${warningCount} warnings`,
           report: textReport,
         };
-      } catch {
-        const code: string = (params.code as string) || '';
-        const lines = code ? code.split('\n') : [];
+      } catch (err: any) {
+        console.debug('ESLint not available or failed:', err?.message || err);
         return {
-          tool: 'heuristic',
+          tool: 'eslint',
+          not_available: true,
+          error: err?.message || String(err),
           errorCount: 0,
           warningCount: 0,
           issues: [],
-          summary: 'ESLint not available; returned heuristic metrics',
-          metrics: { linesOfCode: lines.length },
+          summary: 'ESLint not available',
         };
       }
     },

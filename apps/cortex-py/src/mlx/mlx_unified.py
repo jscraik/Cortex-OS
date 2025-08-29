@@ -6,6 +6,8 @@ Supports multiple model types and uses ExternalSSD cache
 
 import argparse
 import json
+import argparse
+import json
 import os
 import sys
 from typing import Any
@@ -19,12 +21,9 @@ DEFAULT_MLX_CACHE_DIR = '/Volumes/ExternalSSD/ai-cache'
 FALLBACK_TEST_TEXT = "test"
 
 try:
-    import mlx.core as mx
     import mlx_lm
     import mlx_vlm
-    import numpy as np
     import torch
-    from mlx_lm import generate, load
     from transformers import AutoModel, AutoTokenizer
 except ImportError as e:
     print(f"Error importing MLX dependencies: {e}", file=sys.stderr)
@@ -32,12 +31,10 @@ except ImportError as e:
     sys.exit(1)
 
 
-# Configure cache directories
+# Configure cache directories (defaults; runtime can override)
 os.environ.setdefault('HF_HOME', DEFAULT_CACHE_DIR)
 os.environ.setdefault('TRANSFORMERS_CACHE', DEFAULT_CACHE_DIR)
 os.environ.setdefault('MLX_CACHE_DIR', DEFAULT_MLX_CACHE_DIR)
-
-
 class MLXUnified:
     """Unified MLX interface for all model types"""
 

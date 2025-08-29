@@ -304,5 +304,5 @@ export class SimplePRPGraph {
   }
 }
 
-// Main export
-export { SimplePRPGraph };
+// Main export and alias for backward compatibility
+export { SimplePRPGraph as CortexKernel };
