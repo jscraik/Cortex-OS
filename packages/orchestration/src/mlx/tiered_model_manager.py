@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tiered Model Loading Architecture for MLX
 Smart model management with memory-aware loading and eviction
@@ -16,22 +15,16 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Any, Tuple
 
-try:
-    import mlx.core as mx
-    from mlx_lm import load
-    MLX_AVAILABLE = True
-except ImportError:
-    MLX_AVAILABLE = False
-    # Mock for environments without MLX
-    class mx:
-        @staticmethod
-        def metal_clear_cache():
-            pass
-    
-    def load(*args, **kwargs):
-        return None, None
+import importlib.util
+
+if importlib.util.find_spec("mlx") is None or importlib.util.find_spec("mlx_lm") is None:
+    raise ImportError("MLX and mlx_lm are required dependencies")
+
+import mlx.core as mx
+from mlx_lm import load
 
 logger = logging.getLogger(__name__)
+
 
 
 class ModelTier(Enum):
@@ -378,15 +371,9 @@ class TieredMLXModelManager:
         try:
             start_time = time.time()
             
-            if MLX_AVAILABLE:
-                model, tokenizer = load(config.id)
-                
-                if model is None or tokenizer is None:
-                    raise Exception("Failed to load model from MLX")
-            else:
-                # Mock for testing
-                model, tokenizer = None, None
-            
+            model, tokenizer = load(config.id)
+            if model is None or tokenizer is None:
+                raise Exception("Failed to load model from MLX")
             load_time = time.time() - start_time
             
             # Create loaded model entry
@@ -514,8 +501,7 @@ class TieredMLXModelManager:
         })
         
         # Clear MLX cache
-        if MLX_AVAILABLE:
-            mx.metal.clear_cache()
+        mx.metal.clear_cache()
         
         return True
     
