@@ -25,6 +25,8 @@ export interface Reranker {
   rerank(query: string, documents: RerankDocument[], topK?: number): Promise<RerankDocument[]>;
 }
 
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
 /**
  * Configuration for Qwen3 reranker
  */
@@ -185,6 +187,7 @@ export class Qwen3Reranker implements Reranker {
    * Get the Python script for Qwen3 reranking
    */
   private getPythonScript(): string {
+
     return `
 import json
 import sys
@@ -275,6 +278,7 @@ def rerank_documents():
 if __name__ == "__main__":
     rerank_documents()
 `;
+
   }
 
   /**

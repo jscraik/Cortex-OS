@@ -14,18 +14,27 @@ export interface Store {
   query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;
 }
 
+export interface Pipeline {
+  ingest(chunks: Chunk[]): Promise<void>;
+}
+
 export interface RAGOptions {
   embedder: Embedder;
   store: Store;
   maxContextTokens?: number;
 }
 
-export class RAGPipeline {
+export class RAGPipeline implements Pipeline {
   constructor(private readonly opts: RAGOptions) {}
 
   async ingest(chunks: Chunk[]): Promise<void> {
     const texts = chunks.map((c) => c.text);
     const embeddings = await this.opts.embedder.embed(texts);
+    if (embeddings.length !== chunks.length) {
+      throw new Error(
+        `Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`,
+      );
+    }
     const toStore = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
     await this.opts.store.upsert(toStore);
   }

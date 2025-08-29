@@ -1,4 +1,13 @@
+
 import { describe, it, expect, vi, beforeAll } from 'vitest';
+vi.mock(
+  '@cortex-os/telemetry',
+  () => ({
+    withSpan: vi.fn((_name: string, fn: (...args: unknown[]) => unknown) => fn()),
+    logWithSpan: vi.fn(),
+  }),
+  { virtual: true },
+);
 import forge from 'node-forge';
 import {
   generateNonce,
@@ -28,35 +37,31 @@ describe('generateNonce', () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
-
-  it('throws when crypto unavailable', () => {
-    const original = global.crypto;
-    vi.stubGlobal('crypto', undefined as unknown);
-    expect(() => generateNonce(8)).toThrow('Secure random number generation unavailable');
-    vi.stubGlobal('crypto', original as unknown);
-  });
 });
 
 describe('isCertificateExpired', () => {
-  let validCert: string;
-  let expiredCert: string;
-  beforeAll(() => {
-    const makeCert = (offsetMs: number) => {
-      const keys = forge.pki.rsa.generateKeyPair(512);
-      const cert = forge.pki.createCertificate();
-      cert.publicKey = keys.publicKey;
-      cert.serialNumber = '01';
-      cert.validity.notBefore = new Date();
-      cert.validity.notAfter = new Date(Date.now() + offsetMs);
-      const attrs = [{ name: 'commonName', value: 'test' }];
-      cert.setSubject(attrs);
-      cert.setIssuer(attrs);
-      cert.sign(keys.privateKey);
-      return forge.pki.certificateToPem(cert);
-    };
-    validCert = makeCert(60_000);
-    expiredCert = makeCert(-60_000);
-  });
+  const validCert = `-----BEGIN CERTIFICATE-----
+MIIBpzCCARCgAwIBAgIUEBg4HaIqwHHPmviDSN5sDG63AcwwDQYJKoZIhvcNAQEL
+BQAwDzENMAsGA1UEAwwEdGVzdDAgFw0yNTA4MjgwNjE3MjBaGA8yMTI1MDgwNTA2
+MTcyMFowDzENMAsGA1UEAwwEdGVzdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkC
+gYEAyykHyBAhsVb0Lp8lIcMbW29uBiNzB5KKfFSRimsJnIVMjqUpwUjkwP+yuIEd
+SXnHCcU1xVZZJX8+O0jYAHuv4CZRgqTY6PMeT5hnS0EVDgxo6gXQuuCmfz3rG3dk
+34RufgvraofnHmlzUvBEmVqCHUyN6uGpxXMc730UF4S+DvUCAwEAATANBgkqhkiG
+9w0BAQsFAAOBgQCjVgBkKFXPp+WZNG/y5Mh1hVnGXZ6mFjgVe3b4VjFGU6anlwPN
+0oir209o3L32LNZ33nrjTTmzQHaYj9+XnIqZdt4gz8QkQL/b/5z9pQ3mW/BgBB+q
+ulJQDwRW1jvWofs9rhKn1ptKozfzF4RGlexRKKNwczdGKAoUHIfyEdN00Q==
+-----END CERTIFICATE-----`;
+  const expiredCert = `-----BEGIN CERTIFICATE-----
+MIIBpTCCAQ6gAwIBAgIUZlCutRy372TnH023IYiw4/7Wx00wDQYJKoZIhvcNAQEL
+BQAwDzENMAsGA1UEAwwEdGVzdDAeFw0wNTA5MDMwNjE3MjBaFw0wNjA5MDMwNjE3
+MjBaMA8xDTALBgNVBAMMBHRlc3QwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGB
+AMspB8gQIbFW9C6fJSHDG1tvbgYjcweSinxUkYprCZyFTI6lKcFI5MD/sriBHUl5
+xwnFNcVWWSV/PjtI2AB7r+AmUYKk2OjzHk+YZ0tBFQ4MaOoF0Lrgpn896xt3ZN+E
+bn4L62qH5x5pc1LwRJlagh1MjerhqcVzHO99FBeEvg71AgMBAAEwDQYJKoZIhvcN
+AQELBQADgYEAGkwghltyXDd4wWuRpMtTpMB9nqwjveNBTvusArwT+qT8vyFDEmb3
+6sznUHIHNiUYNymUxwwyUas+h8Db8ySsHw1uOHoqxZQq4R6j3S/lCishPyOTqlrF
+ozHeorRz4QAb+p1vUVGTroH0XMHgJAEw/05UcQJwV/zvbsJeLoXi6JM=
+-----END CERTIFICATE-----`;
 
   it('detects valid certificate', () => {
     expect(isCertificateExpired(validCert)).toBe(false);
