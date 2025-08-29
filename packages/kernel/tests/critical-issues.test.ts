@@ -164,11 +164,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
         },
       };
 
-      const canPromote = (
-        evaluationNode as unknown as {
-          checkPreCerebrumConditions: (state: Partial<PRPState>) => boolean;
-        }
-      ).checkPreCerebrumConditions(mockState);
+      const canPromote = evaluationNode.checkPreCerebrumConditions(mockState);
 
       // This will FAIL due to "||" instead of "&&" logic
       expect(canPromote).toBe(false); // Should be false but returns true!
