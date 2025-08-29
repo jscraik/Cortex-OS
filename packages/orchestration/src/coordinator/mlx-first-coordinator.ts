@@ -4,6 +4,7 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
+import { handleResilience } from '../utils/resilience.js';
 
 trationError } from '../errors.js';
 
@@ -38,7 +39,7 @@ export class MLXFirstOrchestrator {
   }
 
   /**
-   * Decompose complex tasks using Mixtral-8x7B (MLX) or Qwen3-Coder (fallback)
+   * Decompose complex tasks using Mixtral-8x7B (MLX)
    */
   async decomposeTask(
     taskDescription: string,
@@ -83,12 +84,8 @@ Format as JSON with reasoning.`;
 
       return this.parseTaskDecomposition(response.content);
     } catch (error) {
-      console.warn('MLX task decomposition failed:', error);
 
-      throw new OrchestrationError(
-        'TASK_DECOMPOSITION_FAILED',
-        `Failed to decompose task: ${(error as Error).message}`,
-      );
+      return handleResilience(error, 'decomposeTask');
 
     }
   }
@@ -196,12 +193,8 @@ Focus on maintainable, testable code.`;
 
       return this.parseCodeOrchestrationResponse(response.content);
     } catch (error) {
-      console.warn('Code orchestration failed:', error);
 
-      throw new OrchestrationError(
-        'CODE_ORCHESTRATION_FAILED',
-        `Failed to orchestrate code task: ${(error as Error).message}`,
-      );
+      return handleResilience(error, 'orchestrateCodeTask');
 
     }
   }
@@ -303,10 +296,9 @@ Check for potential safety issues, constraints, and policy violations.`;
       }
       throw new Error('No JSON found in response');
     } catch (error) {
-      throw new OrchestrationError(
-        'TASK_DECOMPOSITION_PARSE_ERROR',
-        `Failed to parse task decomposition: ${(error as Error).message}`,
-      );
+
+      return handleResilience(error, 'parseTaskDecomposition');
+
     }
   }
 
@@ -338,19 +330,17 @@ Check for potential safety issues, constraints, and policy violations.`;
     return { action, reasoning: content, confidence, nextSteps, provider };
   }
 
-  private parseCodeOrchestrationResponse(content: string) {
+  private parseCodeOrchestrationResponse(content: string): {
+    plan: TaskDecomposition;
+    codeStrategy: string;
+    testStrategy: string;
+    riskAssessment: string;
+  } {
     try {
-      const jsonRegex = /\{[\s\S]*\}/;
-      const jsonMatch = jsonRegex.exec(content);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-      throw new Error('No JSON found in response');
+      return JSON.parse(content);
     } catch (error) {
-      throw new OrchestrationError(
-        'CODE_ORCHESTRATION_PARSE_ERROR',
-        `Failed to parse code orchestration response: ${(error as Error).message}`,
-      );
+      return handleResilience(error, 'parseCodeOrchestrationResponse');
+
     }
   }
 
