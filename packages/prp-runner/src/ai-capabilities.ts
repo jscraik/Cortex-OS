@@ -435,6 +435,12 @@ export class AICoreCapabilities {
 export const createAICapabilities = (
   preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
+  const rerankerProvider = process.env.RERANKER_PROVIDER as
+    | 'transformers'
+    | 'local'
+    | 'mock'
+    | undefined;
+
   const configs: Record<string, AICoreConfig> = {
     full: {
       llm: {
@@ -447,9 +453,6 @@ export const createAICapabilities = (
       embedding: {
         provider: 'sentence-transformers',
         dimensions: 1024,
-      },
-      reranker: {
-        provider: 'mock', // Use mock since Qwen reranker is incomplete
       },
       rag: {
         topK: 5,
@@ -475,9 +478,6 @@ export const createAICapabilities = (
         provider: 'sentence-transformers',
         dimensions: 1024,
       },
-      reranker: {
-        provider: 'mock',
-      },
       rag: {
         topK: 8,
         similarityThreshold: 0.25,
@@ -485,6 +485,12 @@ export const createAICapabilities = (
       },
     },
   };
+
+  if (rerankerProvider) {
+    const reranker = { provider: rerankerProvider } as AICoreConfig['reranker'];
+    if (configs.full.embedding) configs.full.reranker = reranker;
+    if (configs['rag-focused'].embedding) configs['rag-focused'].reranker = reranker;
+  }
 
   return new AICoreCapabilities(configs[preset]);
 };
