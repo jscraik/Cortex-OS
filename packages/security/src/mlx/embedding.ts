@@ -16,7 +16,7 @@ export async function generateEmbedding(text: string): Promise<Float32Array> {
   const res = await fetch(`${baseUrl}/embed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ texts: [validText] }),
+    body: JSON.stringify({ text: validText }),
   });
 
   if (!res.ok) {
