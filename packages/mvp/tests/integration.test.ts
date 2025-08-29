@@ -7,17 +7,17 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
+import { SimplePRPGraph } from '../src/graph-simple.js';
 
 describe('Cortex Kernel Integration', () => {
-  let kernel: CortexKernel;
+  let graph: SimplePRPGraph;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 5,
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    graph = new SimplePRPGraph(mockOrchestrator);
   });
 
   describe('Basic Integration', () => {
@@ -28,7 +28,7 @@ describe('Cortex Kernel Integration', () => {
         requirements: ['Feature A', 'Feature B', 'Testing'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint, {
+      const result = await graph.runPRPWorkflow(blueprint, {
         runId: 'integration-test-001',
       });
 
@@ -58,11 +58,11 @@ describe('Cortex Kernel Integration', () => {
         requirements: ['Track phases'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint, {
+      const result = await graph.runPRPWorkflow(blueprint, {
         runId: 'history-test-001',
       });
 
-      const history = kernel.getExecutionHistory('history-test-001');
+      const history = graph.getExecutionHistory('history-test-001');
 
       // Should have tracked all phase transitions
       expect(history.length).toBeGreaterThan(1);
@@ -80,7 +80,7 @@ describe('Cortex Kernel Integration', () => {
         requirements: ['Integration validation'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint);
+      const result = await graph.runPRPWorkflow(blueprint);
 
       // Workflow should complete successfully
       expect(result.phase).toBe('completed');
@@ -96,7 +96,7 @@ describe('Cortex Kernel Integration', () => {
         },
       };
 
-      const errorKernel = new CortexKernel(errorOrchestrator);
+      const errorGraph = new SimplePRPGraph(errorOrchestrator);
 
       const blueprint = {
         title: 'Error Test',
@@ -105,7 +105,7 @@ describe('Cortex Kernel Integration', () => {
       };
 
       // This should not throw but should handle the error gracefully
-      const result = await errorKernel.runPRPWorkflow(blueprint);
+      const result = await errorGraph.runPRPWorkflow(blueprint);
 
       // Should complete but may recycle due to error
       expect(['completed', 'recycled']).toContain(result.phase);
@@ -120,11 +120,11 @@ describe('Cortex Kernel Integration', () => {
         requirements: ['Phase validation'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint, {
+      const result = await graph.runPRPWorkflow(blueprint, {
         runId: 'phase-test-001',
       });
 
-      const history = kernel.getExecutionHistory('phase-test-001');
+      const history = graph.getExecutionHistory('phase-test-001');
       const phases = history.map((state) => state.phase);
 
       // Should include the main workflow phases
@@ -141,7 +141,7 @@ describe('Cortex Kernel Integration', () => {
         requirements: ['State machine validation'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint);
+      const result = await graph.runPRPWorkflow(blueprint);
 
       // Final state should be valid
       expect(['completed', 'recycled']).toContain(result.phase);
