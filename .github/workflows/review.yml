@@ -21,4 +21,10 @@ jobs:
         with: { name: review-report, path: .artifacts/*.json }
       - name: OSV summary
         if: always()
-        run: cat .artifacts/osv.json || true
+        run: |
+          if [ -f .artifacts/osv.json ]; then
+            cat .artifacts/osv.json
+          else
+            echo "No OSV summary found at .artifacts/osv.json"
+            exit 1
+          fi
