@@ -7,6 +7,8 @@ Demonstrates the complete working MLX system
 import asyncio
 import sys
 from pathlib import Path
+import pytest
+pytest.importorskip("mlx")
 
 # Add the bridge to the path
 sys.path.insert(0, str(Path(__file__).parent / "cli" / "bridge"))

@@ -86,6 +86,10 @@ pnpm format
 - **Clean Architecture**: Removed backward compatibility bloat (30+ files from MCP)
 - **AI-Enhanced**: MLX (Qwen3) for semantic search, Ollama fallback
 
+## MLX Models Directory
+
+The MLX embedder uses the Hugging Face cache at `~/.cache/huggingface` by default. Set the `MLX_MODELS_DIR` environment variable to load models from a different directory.
+
 ## Licensing
 
 - Open-source edition: Apache License, Version 2.0. See `LICENSE` and `NOTICE`.

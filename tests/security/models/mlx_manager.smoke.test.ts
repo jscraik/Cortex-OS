@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'node:child_process';
 
-describe('MLXModelManager (dev mode mock)', () => {
+const hasMLX = (() => {
+  try {
+    execSync('python -c "import mlx"', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+(hasMLX ? describe : describe.skip)('MLXModelManager (dev mode mock)', () => {
   it('loads, generates, and unloads', () => {
     const code = `
 import asyncio, os, json, sys
