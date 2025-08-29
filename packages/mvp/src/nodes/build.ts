@@ -5,8 +5,8 @@
  * @version 1.0.0
  */
 
-import { generateEvidenceId, getCurrentTimestamp } from '../lib/utils.js';
 import { Evidence, PRPState } from '../state.js';
+import { generateEvidenceId, getCurrentTimestamp } from '../lib/utils.js';
 import { ApiSchemaValidator } from '../validators/api-schema-validator.js';
 import { BackendValidator } from '../validators/backend-validator.js';
 import { DocumentationValidator } from '../validators/documentation-validator.js';
@@ -55,11 +55,15 @@ export class BuildNode {
     evidence.push(this.createEvidence('security', 'analysis', 'security_scanner', securityScan));
 
     const frontendValidation = await this.frontendValidator.validate(state);
-    if (frontendValidation.lighthouse < 90) {
-      majors.push(`Lighthouse score ${frontendValidation.lighthouse} below 90%`);
-    }
-    if (frontendValidation.axe < 90) {
-      majors.push(`Axe accessibility score ${frontendValidation.axe} below 90%`);
+    if (!frontendValidation.passed) {
+      const lighthouse = (frontendValidation.details.lighthouse as number) || 0;
+      const axe = (frontendValidation.details.axe as number) || 0;
+      if (lighthouse < 90) {
+        majors.push(`Lighthouse score ${lighthouse} below 90%`);
+      }
+      if (axe < 90) {
+        majors.push(`Axe accessibility score ${axe} below 90%`);
+      }
     }
     evidence.push(
       this.createEvidence('frontend', 'analysis', 'frontend_validation', frontendValidation),

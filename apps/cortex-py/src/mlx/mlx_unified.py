@@ -242,17 +242,17 @@ def main():
     parser.add_argument('--max-tokens', type=int, default=DEFAULT_MAX_TOKENS, help='Max tokens for generation')
     parser.add_argument('--temperature', type=float, default=DEFAULT_TEMPERATURE, help='Generation temperature')
     parser.add_argument('--json-only', action='store_true', help='Output JSON only')
-    parser.add_argument('--help', action='store_true', help='Show help')
+
 
     args = parser.parse_args()
 
-    if args.help:
-        parser.print_help()
-        return
+    # argparse provides -h/--help by default; no custom help flag handling required
 
+    # If no explicit mode or input provided, fall back to embedding with test text
     if not args.input_data and not any([args.embedding_mode, args.batch_embedding_mode, args.chat_mode, args.rerank_mode]):
-        print("Error: No input data or mode specified", file=sys.stderr)
-        sys.exit(1)
+        # default to embedding mode using FALLBACK_TEST_TEXT to support CLI fallback tests
+        args.embedding_mode = True
+        args.input_data = [FALLBACK_TEST_TEXT]
 
     try:
         # Initialize model

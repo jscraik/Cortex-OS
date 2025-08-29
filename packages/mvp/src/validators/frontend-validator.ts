@@ -11,11 +11,29 @@ import {
   getProjectRoot,
   readJsonFile,
 } from '../lib/utils.js';
-import { FrontendValidationResult } from '../lib/validation-types.js';
+import {
+  FrontendValidationResult,
+  GateValidator,
+  ValidationResult,
+} from '../lib/validation-types.js';
 import { PRPState } from '../state.js';
 
-export class FrontendValidator {
-  async validate(state: PRPState): Promise<FrontendValidationResult> {
+export class FrontendValidator implements GateValidator {
+  async validate(state: PRPState): Promise<ValidationResult> {
+    const frontendResult = await this.validateFrontend(state);
+
+    // Convert FrontendValidationResult to ValidationResult
+    return {
+      passed: frontendResult.lighthouse >= 90 && frontendResult.axe >= 90,
+      details: {
+        lighthouse: frontendResult.lighthouse,
+        axe: frontendResult.axe,
+        ...frontendResult.details,
+      },
+    };
+  }
+
+  async validateFrontend(state: PRPState): Promise<FrontendValidationResult> {
     const hasFrontend = state.blueprint.requirements?.some(
       (req) =>
         req.toLowerCase().includes('ui') ||
@@ -34,9 +52,16 @@ export class FrontendValidator {
         lighthouse: 100,
         axe: 100,
         details: {
-          lighthouse: { simulated: true, reason: 'backend-only' },
+          lighthouse: {
+            performance: 100,
+            accessibility: 100,
+            bestPractices: 100,
+            seo: 100,
+            simulated: true,
+            reason: 'backend-only',
+          },
           axe: { violations: 0, details: [], severity: 'none' },
-          tools: { lighthouse: 'not_applicable', axe: 'not_applicable' },
+          tools: { lighthouse: 'simulated', axe: 'simulated' },
           isWebApp: false,
           projectType: 'backend-only',
         },
@@ -103,7 +128,7 @@ export class FrontendValidator {
           },
           axe: {
             violations: 1,
-            details: [{ description: 'Validation error occurred' }],
+            details: [{ impact: 'moderate', description: 'Validation error occurred' }],
             severity: 'minor',
           },
         },

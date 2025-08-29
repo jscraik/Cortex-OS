@@ -34,4 +34,13 @@ export interface HttpTransportConfig {
   timeoutMs?: number;
 }
 
-export type TransportConfig = StdioTransportConfig | HttpTransportConfig;
+export interface SSETransportConfig {
+  type: 'sse';
+  url: string;
+  timeoutMs?: number;
+  retryDelayMs?: number;
+  maxRetries?: number;
+  heartbeatIntervalMs?: number;
+}
+
+export type TransportConfig = StdioTransportConfig | HttpTransportConfig | SSETransportConfig;

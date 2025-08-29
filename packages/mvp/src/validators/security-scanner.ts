@@ -15,18 +15,47 @@ import {
 } from '../lib/utils.js';
 
 export class SecurityScanner {
+  private readonly SCAN_TIMEOUT = 120000; // 2 minutes total timeout
+  private readonly TOOL_TIMEOUT = 45000; // 45 seconds per tool
+
   async runSecurityScan(state: PRPState): Promise<SecurityScanResult> {
+    const scanStartTime = Date.now();
+
     try {
       const projectRoot = getProjectRoot();
       let scanResults = { blockers: 0, majors: 0, vulnerabilities: [] as SecurityVulnerability[] };
 
-      const semgrepFindings = await this.runSemgrepScan(projectRoot);
-      const eslintFindings = await this.runESLintSecurityScan(projectRoot);
-      const banditFindings = await this.runBanditScan(projectRoot);
+      // Use Promise.allSettled to run scans in parallel with timeout
+      const scanPromises = [
+        this.runSemgrepScan(projectRoot),
+        this.runESLintSecurityScan(projectRoot),
+        this.runBanditScan(projectRoot),
+      ];
 
-      scanResults.vulnerabilities.push(...semgrepFindings);
-      scanResults.vulnerabilities.push(...eslintFindings);
-      scanResults.vulnerabilities.push(...banditFindings);
+      const timeoutPromise = new Promise<SecurityVulnerability[]>((_, reject) => {
+        setTimeout(() => reject(new Error('Security scan timeout')), this.SCAN_TIMEOUT);
+      });
+
+      const results = await Promise.allSettled(
+        scanPromises.map((p) => Promise.race([p, timeoutPromise])),
+      );
+
+      // Process results from parallel scans
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          scanResults.vulnerabilities.push(...result.value);
+        } else {
+          const toolNames = ['Semgrep', 'ESLint Security', 'Bandit'];
+          scanResults.vulnerabilities.push({
+            tool: toolNames[index].toLowerCase(),
+            severity: 'info',
+            type: 'scan_timeout',
+            message: `${toolNames[index]} scan timed out or failed: ${result.reason}`,
+            file: '',
+            line: 0,
+          });
+        }
+      });
 
       scanResults.blockers = scanResults.vulnerabilities.filter(
         (v) => v.severity === 'critical' || v.severity === 'high',
@@ -106,7 +135,7 @@ export class SecurityScanner {
       try {
         const { stdout } = await execAsync(semgrepCmd, {
           cwd: projectRoot,
-          timeout: 60000,
+          timeout: this.TOOL_TIMEOUT,
           maxBuffer: 2 * 1024 * 1024,
         });
 
@@ -171,7 +200,7 @@ export class SecurityScanner {
         if (hasSecurityPlugin) {
           const { stdout } = await execAsync('npx eslint --format json --ext .js,.ts,.jsx,.tsx .', {
             cwd: projectRoot,
-            timeout: 30000,
+            timeout: this.TOOL_TIMEOUT,
             maxBuffer: 1024 * 1024,
           }).catch(() => ({ stdout: '[]' }));
 
@@ -217,7 +246,7 @@ export class SecurityScanner {
 
         const { stdout } = await execAsync('bandit -r . -f json', {
           cwd: projectRoot,
-          timeout: 45000,
+          timeout: this.TOOL_TIMEOUT,
           maxBuffer: 1024 * 1024,
         }).catch(() => ({ stdout: '{"results": []}' }));
 

@@ -7,13 +7,6 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
-    // Aggressive memory optimization for large monorepo
-    poolOptions: {
-      threads: { maxThreads: 2, minThreads: 1 },
-      forks: { maxForks: 2, minForks: 1 },
-      vmThreads: { maxThreads: 2, minThreads: 1 },
-      vmForks: { maxForks: 2, minForks: 1 },
-    },
     // Strict worker limits to prevent memory exhaustion
     maxWorkers: 2,
     // Memory management settings
@@ -24,6 +17,9 @@ export default defineConfig({
     // Force garbage collection between test files
     testTimeout: 30000,
     hookTimeout: 30000,
+    // Memory leak prevention
+    teardownTimeout: 10000,
+    pool: 'threads',
     // Ensure built artifacts never get swept into discovery
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', 'tests/**'],
     // Quality gates: enforce coverage thresholds across all projects

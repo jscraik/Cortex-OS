@@ -7,6 +7,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
+import type { ChatResponse, Embedding, MLXAdapterInterface, Message } from './types';
 
 // Configuration paths - can be overridden via environment
 const HUGGINGFACE_CACHE =
@@ -171,7 +172,7 @@ export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
 /**
  * MLX Adapter for model gateway
  */
-export class MLXAdapter {
+export class MLXAdapter implements MLXAdapterInterface {
   private readonly pythonPath: string;
   private readonly scriptPath: string;
 
@@ -252,6 +253,21 @@ export class MLXAdapter {
     }
   }
 
+  // Positional helpers for compatibility with callers that use positional args
+  async generateChatPositional(
+    messages: Message[],
+    model?: string,
+    options?: { temperature?: number; max_tokens?: number },
+  ): Promise<ChatResponse> {
+    const resp = await this.generateChat({
+      messages,
+      model,
+      temperature: options?.temperature,
+      max_tokens: options?.max_tokens,
+    } as any);
+    return { content: resp.content, model: resp.model };
+  }
+
   /**
    * Generate embeddings using MLX
    */
@@ -306,6 +322,11 @@ export class MLXAdapter {
     }
   }
 
+  async generateEmbeddingPositional(text: string, model?: string): Promise<Embedding> {
+    const resp = await this.generateEmbedding({ text, model } as any);
+    return { embedding: resp.embedding, model: resp.model };
+  }
+
   /**
    * Generate multiple embeddings in batch
    */
@@ -355,6 +376,11 @@ export class MLXAdapter {
         `MLX batch embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
+  }
+
+  async generateEmbeddingsPositional(texts: string[], model?: string): Promise<Embedding[]> {
+    const resp = await this.generateEmbeddings(texts, model as any);
+    return resp.map((r) => ({ embedding: r.embedding, model: r.model }));
   }
 
   /**

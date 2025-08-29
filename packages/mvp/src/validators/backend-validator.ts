@@ -78,7 +78,9 @@ export class BackendValidator implements GateValidator {
       return {
         passed: false,
         details: {
-          reason: `Backend validation error: ${error instanceof Error ? error.message : 'unknown error'}`,
+          reason: `Backend validation error: ${
+            error instanceof Error ? error.message : 'unknown error'
+          }`,
           compilation: 'error',
           testsPassed: 0,
           testsFailed: 0,
@@ -92,21 +94,75 @@ export class BackendValidator implements GateValidator {
     const hasPackageJson = fileExists(createFilePath(projectRoot, 'package.json'));
     const hasPyprojectToml = fileExists(createFilePath(projectRoot, 'pyproject.toml'));
 
-    const hasNodeBackend =
-      fileExists(createFilePath(projectRoot, 'src')) ||
-      fileExists(createFilePath(projectRoot, 'server')) ||
-      fileExists(createFilePath(projectRoot, 'api'));
+    // More accurate backend detection
+    let hasNodeBackend = false;
+    let hasPythonBackend = false;
 
-    const hasPythonBackend =
-      fileExists(createFilePath(projectRoot, 'apps')) ||
-      fileExists(createFilePath(projectRoot, 'services')) ||
-      fileExists(createFilePath(projectRoot, 'packages'));
+    if (hasPackageJson) {
+      try {
+        const packageJson = readJsonFile(createFilePath(projectRoot, 'package.json'));
+        // Check for backend-specific dependencies and scripts
+        const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+        const scripts = packageJson.scripts || {};
+
+        hasNodeBackend = !!(
+          deps.express ||
+          deps.fastify ||
+          deps.koa ||
+          deps.hapi ||
+          deps['@nestjs/core'] ||
+          deps.next ||
+          deps.nuxt ||
+          deps.gatsby ||
+          deps.sveltekit ||
+          scripts.serve ||
+          scripts.start ||
+          fileExists(createFilePath(projectRoot, 'server')) ||
+          fileExists(createFilePath(projectRoot, 'api')) ||
+          (fileExists(createFilePath(projectRoot, 'src')) &&
+            (fileExists(createFilePath(projectRoot, 'src', 'server.ts')) ||
+              fileExists(createFilePath(projectRoot, 'src', 'server.js')) ||
+              fileExists(createFilePath(projectRoot, 'src', 'app.ts')) ||
+              fileExists(createFilePath(projectRoot, 'src', 'app.js'))))
+        );
+      } catch (error) {
+        // If package.json is invalid, fall back to directory structure
+        hasNodeBackend =
+          fileExists(createFilePath(projectRoot, 'server')) ||
+          fileExists(createFilePath(projectRoot, 'api'));
+      }
+    }
+
+    if (hasPyprojectToml) {
+      // Check for Python backend indicators
+      hasPythonBackend = !!(
+        fileExists(createFilePath(projectRoot, 'main.py')) ||
+        fileExists(createFilePath(projectRoot, 'app.py')) ||
+        fileExists(createFilePath(projectRoot, 'server.py')) ||
+        fileExists(createFilePath(projectRoot, 'wsgi.py')) ||
+        fileExists(createFilePath(projectRoot, 'asgi.py')) ||
+        fileExists(createFilePath(projectRoot, 'manage.py')) || // Django
+        fileExists(createFilePath(projectRoot, 'src', 'main.py')) ||
+        (fileExists(createFilePath(projectRoot, 'app')) &&
+          fileExists(createFilePath(projectRoot, 'app', '__init__.py')))
+      );
+    }
+
+    // Determine primary type - prioritize the one with backend indicators
+    let type: 'node' | 'python' = 'node';
+    if (hasPythonBackend && !hasNodeBackend) {
+      type = 'python';
+    } else if (hasPackageJson && !hasPyprojectToml) {
+      type = 'node';
+    } else if (hasPyprojectToml && !hasPackageJson) {
+      type = 'python';
+    }
 
     return {
       hasPackageManager: hasPackageJson || hasPyprojectToml,
       hasNodeBackend,
       hasPythonBackend,
-      type: hasPackageJson ? 'node' : 'python',
+      type,
     };
   }
 
