@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
+
 // Minimal type-only Ollama adapter interface
 interface OllamaAdapter {
   generate(options: {
@@ -15,6 +16,7 @@ interface OllamaAdapter {
     model?: string;
   }): Promise<{ text: string }>;
 }
+
 
 export interface LLMConfig {
   provider: 'mlx' | 'ollama';
@@ -47,15 +49,18 @@ const llmConfigSchema = z.object({
 /**
  * Configure an LLM provider and return state used by other bridge functions.
  */
+
 export function configureLLM(config: LLMConfig): LLMState {
   if (!['mlx', 'ollama'].includes(config.provider)) {
     throw new Error(`Unsupported LLM provider: ${config.provider}`);
+
   }
 
   const normalized = { ...config } as LLMConfig;
   if (normalized.endpoint === '') {
     delete (normalized as any).endpoint;
   }
+
 
   const parsed = llmConfigSchema.safeParse(normalized);
   if (!parsed.success) {
@@ -93,6 +98,7 @@ export function configureLLM(config: LLMConfig): LLMState {
           if (!response.ok) {
             throw new Error(`Ollama API error: ${response.status}`);
           }
+
 
           const data = await response.json();
           return { text: data.response || '' };
@@ -198,6 +204,7 @@ async function generateWithOllama(
     model: state.config.model,
   });
 
+
   return result.text;
 }
 
@@ -208,6 +215,7 @@ async function generateWithMLX(
 ): Promise<string> {
   if (!state.mlxAdapter) {
     throw new Error('MLX adapter not initialized');
+
   }
 
   try {
