@@ -7,7 +7,7 @@
  */
 
 // Core kernel exports
-export { CortexKernel } from './graph-simple.js';
+export { SimplePRPGraph } from './graph-simple.js';
 export type { PRPState, Evidence, ValidationGate, CerebrumDecision } from './state.js';
 export { PRPStateSchema, validateStateTransition, createInitialPRPState } from './state.js';
 
