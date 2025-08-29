@@ -50,9 +50,9 @@ export class ModelRouter {
   private readonly availableModels: Map<ModelCapability, ModelConfig[]>;
 
   constructor(
-    mlxAdapter?: MLXAdapter, 
+    mlxAdapter?: MLXAdapter,
     ollamaAdapter?: OllamaAdapter,
-    frontierConfig?: FrontierConfig
+    frontierConfig?: FrontierConfig,
   ) {
     this.mlxAdapter = mlxAdapter || new MLXAdapter();
     this.ollamaAdapter = ollamaAdapter || new OllamaAdapter();
@@ -63,10 +63,12 @@ export class ModelRouter {
   async initialize(): Promise<void> {
     const mlxAvailable = await this.mlxAdapter.isAvailable();
     const ollamaAvailable = await this.ollamaAdapter.isAvailable();
-    const frontierAvailable = this.frontierAdapter ? await this.frontierAdapter.isAvailable() : false;
+    const frontierAvailable = this.frontierAdapter
+      ? await this.frontierAdapter.isAvailable()
+      : false;
 
     const embeddingModels: ModelConfig[] = [];
-    
+
     // MLX models (highest priority)
     if (mlxAvailable) {
       embeddingModels.push(
@@ -115,14 +117,14 @@ export class ModelRouter {
     this.availableModels.set('embedding', embeddingModels);
 
     const chatModels: ModelConfig[] = [];
-    
+
     // Ollama chat models
     if (ollamaAvailable) {
       const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
       const desiredChat = [
         { name: 'llama2', priority: 100, fallback: frontierAvailable ? ['gpt-3.5-turbo'] : [] },
         { name: 'llama3', priority: 95, fallback: frontierAvailable ? ['gpt-3.5-turbo'] : [] },
-        { name: 'codellama', priority: 90, fallback: frontierAvailable ? ['gpt-4'] : [] }
+        { name: 'codellama', priority: 90, fallback: frontierAvailable ? ['gpt-4'] : [] },
       ];
 
       for (const m of desiredChat) {
@@ -272,7 +274,18 @@ export class ModelRouter {
     if (!model) throw new Error('No chat models available');
 
     const tryModel = async (m: ModelConfig): Promise<{ content: string; model: string }> => {
-      if (m.provider === 'ollama') {
+      if (m.provider === 'mlx') {
+        const response = await this.mlxAdapter.generateChat({
+          messages: request.messages as Array<{
+            role: 'system' | 'user' | 'assistant';
+            content: string;
+          }>,
+          model: m.name,
+          temperature: request.temperature,
+          max_tokens: request.max_tokens,
+        });
+        return { content: response.content, model: m.name };
+      } else if (m.provider === 'ollama') {
         const response = await this.ollamaAdapter.generateChat(
           request.messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
           m.name,

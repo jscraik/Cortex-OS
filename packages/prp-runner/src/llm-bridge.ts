@@ -9,7 +9,7 @@
  * Each method exists to satisfy a specific test requirement
  */
 
-import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
+import { AVAILABLE_MLX_MODELS, MLXAdapter, createMLXAdapter } from './mlx-adapter.js';
 
 // Import will be fixed to use proper workspace path when SDK is properly configured
 // For now, using minimal type-only import
@@ -32,7 +32,7 @@ export interface LLMConfig {
 }
 
 export interface LLMGenerateOptions {
-  prompt: string;
+  prompt?: string;
   temperature?: number;
   maxTokens?: number;
 }
@@ -99,7 +99,7 @@ export class LLMBridge {
               throw new Error(`Ollama API error: ${response.status}`);
             }
 
-            const data = await response.json();
+            const data = (await response.json()) as { response?: string };
             return { text: data.response || '' };
           } catch (error) {
             throw new Error(

@@ -195,7 +195,8 @@ export const createDefaultMCPTools = (): MCPTool[] => [
       params: { path: string; encoding?: BufferEncoding },
       context: MCPContext,
     ): Promise<{ content: string; bytes: number; fullPath: string }> => {
-      if (!context.securityPolicy.allowFileSystem) throw new Error('File system access not allowed');
+      if (!context.securityPolicy.allowFileSystem)
+        throw new Error('File system access not allowed');
       const fs = await import('fs');
       const pathMod = await import('path');
       const wd = context.workingDirectory || process.cwd();
@@ -230,7 +231,8 @@ export const createDefaultMCPTools = (): MCPTool[] => [
         const { ESLint } = (await import('eslint')) as any;
         const cwd = (params.cwd as string) || context.workingDirectory || process.cwd();
         const eslint = new ESLint({ cwd, overrideConfigFile: params.configPath });
-        const targets: string[] = Array.isArray(params.files) && params.files.length > 0 ? params.files : ['.'];
+        const targets: string[] =
+          Array.isArray(params.files) && params.files.length > 0 ? params.files : ['.'];
         const results = await eslint.lintFiles(targets);
         const formatter = await eslint.loadFormatter('stylish');
         const textReport = await formatter.format(results);
@@ -246,11 +248,25 @@ export const createDefaultMCPTools = (): MCPTool[] => [
             column: m.column,
           })),
         );
-        return { tool: 'eslint', errorCount, warningCount, issues, summary: `${errorCount} errors, ${warningCount} warnings`, report: textReport };
+        return {
+          tool: 'eslint',
+          errorCount,
+          warningCount,
+          issues,
+          summary: `${errorCount} errors, ${warningCount} warnings`,
+          report: textReport,
+        };
       } catch {
         const code: string = (params.code as string) || '';
         const lines = code ? code.split('\n') : [];
-        return { tool: 'heuristic', errorCount: 0, warningCount: 0, issues: [], summary: 'ESLint not available; returned heuristic metrics', metrics: { linesOfCode: lines.length } };
+        return {
+          tool: 'heuristic',
+          errorCount: 0,
+          warningCount: 0,
+          issues: [],
+          summary: 'ESLint not available; returned heuristic metrics',
+          metrics: { linesOfCode: lines.length },
+        };
       }
     },
   },
@@ -304,7 +320,9 @@ export const createDefaultMCPTools = (): MCPTool[] => [
         const { stdout, stderr } = await execAsync(cmd, { cwd, maxBuffer: 10 * 1024 * 1024 });
         const duration = Date.now() - started;
         let summary: any = undefined;
-        try { summary = JSON.parse(stdout); } catch {}
+        try {
+          summary = JSON.parse(stdout);
+        } catch {}
         let coveragePct: number | undefined = undefined;
         try {
           const fs = await import('fs');
@@ -315,25 +333,44 @@ export const createDefaultMCPTools = (): MCPTool[] => [
             const totals = cov.total || {};
             const keys = ['statements', 'branches', 'functions', 'lines'] as const;
             const vals = keys.map((k) => totals[k]?.pct).filter((v: any) => typeof v === 'number');
-            if (vals.length) coveragePct = Math.round(vals.reduce((a: number, b: number) => a + b, 0) / vals.length);
+            if (vals.length)
+              coveragePct = Math.round(
+                vals.reduce((a: number, b: number) => a + b, 0) / vals.length,
+              );
           }
         } catch {}
-        let passed = 0, failed = 0, total = 0;
+        let passed = 0,
+          failed = 0,
+          total = 0;
         if (summary && summary.numPassedTests !== undefined) {
           passed = summary.numPassedTests;
           failed = summary.numFailedTests || 0;
           total = summary.numTotalTests || passed + failed;
         }
-        return { command: cmd, durationMs: duration, stdout: summary ? undefined : stdout, stderr: stderr || undefined, totals: { passed, failed, total }, coverage: coveragePct };
+        return {
+          command: cmd,
+          durationMs: duration,
+          stdout: summary ? undefined : stdout,
+          stderr: stderr || undefined,
+          totals: { passed, failed, total },
+          coverage: coveragePct,
+        };
       } catch (err: any) {
-        return { command: cmd, error: err?.message || String(err), stdout: err?.stdout, stderr: err?.stderr };
+        return {
+          command: cmd,
+          error: err?.message || String(err),
+          stdout: err?.stdout,
+          stderr: err?.stderr,
+        };
       }
     },
   },
 ];
 
 // Discover MCP servers from .cortex context (optional)
-export async function discoverMCPServers(fromDir?: string): Promise<{ name: string; url: string; type: string }[]> {
+export async function discoverMCPServers(
+  fromDir?: string,
+): Promise<{ name: string; url: string; type: string }[]> {
   try {
     const fs = await import('fs');
     const pathMod = await import('path');
@@ -344,7 +381,11 @@ export async function discoverMCPServers(fromDir?: string): Promise<{ name: stri
     const json = JSON.parse(raw);
     const servers = json?.servers || {};
     return Object.keys(servers)
-      .map((k) => ({ name: servers[k].name || k, url: servers[k].url, type: servers[k].type || servers[k].transport || 'http' }))
+      .map((k) => ({
+        name: servers[k].name || k,
+        url: servers[k].url,
+        type: servers[k].type || servers[k].transport || 'http',
+      }))
       .filter((s) => !!s.url);
   } catch {
     return [];

@@ -110,9 +110,6 @@ importers:
       eslint-plugin-promise:
         specifier: ^6.1.1
         version: 6.6.0(eslint@8.57.1)
-      fast-check:
-        specifier: 4.2.0
-        version: 4.2.0
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -411,7 +408,21 @@ importers:
         specifier: ^5.28.1
         version: 5.28.1
 
-  packages/a2a: {}
+  packages/a2a:
+    dependencies:
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:a2a-core
+      '@cortex-os/a2a-transport':
+        specifier: workspace:*
+        version: link:a2a-transport
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(postcss@8.5.6)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
 
   packages/a2a-services/common:
     devDependencies:
@@ -859,22 +870,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(@vitest/ui@1.6.0)(jsdom@26.1.0)(tsx@4.20.5)(yaml@2.8.1)
 
-  packages/mcp/mcp-registry:
-    dependencies:
-      '@cortex-os/mcp-core':
-        specifier: workspace:*
-        version: link:../mcp-core
-    devDependencies:
-      tsup:
-        specifier: ^8.0.0
-        version: 8.5.0(postcss@8.5.6)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(@vitest/ui@1.6.0)(jsdom@26.1.0)(tsx@4.20.5)(yaml@2.8.1)
-
   packages/mcp/mcp-transport-bridge:
     dependencies:
       '@modelcontextprotocol/sdk':
@@ -926,9 +921,18 @@ importers:
       '@prisma/client':
         specifier: ^5.18.0
         version: 5.22.0(prisma@5.22.0)
+      '@qdrant/js-client-rest':
+        specifier: ^1.9.0
+        version: 1.15.1(typescript@5.9.2)
       better-sqlite3:
         specifier: ^11.4.0
         version: 11.10.0
+      neo4j-driver:
+        specifier: ^5.28.1
+        version: 5.28.1
+      undici:
+        specifier: ^6.19.8
+        version: 6.21.3
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -969,11 +973,14 @@ importers:
       '@cortex-os/utils':
         specifier: workspace:*
         version: link:../../libs/typescript/utils
+      axios:
+        specifier: ^1.7.2
+        version: 1.11.0(debug@4.4.1)
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
       zod:
-        specifier: ^3.25.76
+        specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
       tsx:
@@ -985,6 +992,12 @@ importers:
 
   packages/mvp:
     dependencies:
+      glob:
+        specifier: ^10.3.10
+        version: 10.4.5
+      nanoid:
+        specifier: ^5.0.4
+        version: 5.1.5
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -1190,6 +1203,9 @@ importers:
 
   packages/prp-runner:
     dependencies:
+      '@cortex-os/a2a':
+        specifier: workspace:*
+        version: link:../a2a
       axe-core:
         specifier: ^4.9.1
         version: 4.10.3
@@ -1346,6 +1362,9 @@ importers:
       '@cortex-os/utils':
         specifier: workspace:*
         version: link:../../libs/typescript/utils
+      axios:
+        specifier: ^1.6.2
+        version: 1.11.0(debug@4.4.1)
       node-forge:
         specifier: ^1.3.1
         version: 1.3.1
@@ -1353,15 +1372,12 @@ importers:
         specifier: ^3.22.4
         version: 3.25.76
     devDependencies:
-      '@opentelemetry/api':
-        specifier: ^1.9.0
-        version: 1.9.0
-      '@opentelemetry/sdk-trace-base':
-        specifier: ^1.30.1
-        version: 1.30.1(@opentelemetry/api@1.9.0)
       '@types/node':
         specifier: ^20.9.0
         version: 20.19.11
+      '@types/node-forge':
+        specifier: ^1.3.5
+        version: 1.3.14
       tsup:
         specifier: ^8.0.2
         version: 8.5.0(postcss@8.5.6)(tsx@4.20.5)(typescript@5.9.2)(yaml@2.8.1)
@@ -3122,6 +3138,9 @@ packages:
 
   '@types/node-fetch@2.6.13':
     resolution: {integrity: sha512-QGpRVpzSaUs30JBSGPjOg4Uveu384erbHBoT1zeONvyCfwQxIkUshLAOqN/k9EjGviPRmWTTe6aH2qySWKTVSw==}
+
+  '@types/node-forge@1.3.14':
+    resolution: {integrity: sha512-mhVF2BnD4BO+jtOp7z1CdzaK4mbuK0LLQYAvdOLqHTavxFNq4zA1EmYkpnFjP8HOUzedfQkRnp0E2ulSAYSzAw==}
 
   '@types/node@20.19.11':
     resolution: {integrity: sha512-uug3FEEGv0r+jrecvUUpbY8lLisvIjg6AAic6a2bSP5OEOLeJsDSnvhCDov7ipFFMXS3orMpzlmi0ZcuGkBbow==}
@@ -6362,6 +6381,10 @@ packages:
   node-fetch@3.3.2:
     resolution: {integrity: sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
+  node-forge@1.3.1:
+    resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
+    engines: {node: '>= 6.13.0'}
 
   node-gyp-build@4.8.4:
     resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
@@ -10122,6 +10145,10 @@ snapshots:
     dependencies:
       '@types/node': 20.19.11
       form-data: 4.0.4
+
+  '@types/node-forge@1.3.14':
+    dependencies:
+      '@types/node': 20.19.11
 
   '@types/node@20.19.11':
     dependencies:
@@ -14032,6 +14059,8 @@ snapshots:
       data-uri-to-buffer: 4.0.1
       fetch-blob: 3.2.0
       formdata-polyfill: 4.0.10
+
+  node-forge@1.3.1: {}
 
   node-gyp-build@4.8.4: {}
 

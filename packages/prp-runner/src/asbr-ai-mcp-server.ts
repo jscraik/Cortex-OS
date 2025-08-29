@@ -471,11 +471,11 @@ export class ASBRAIMcpServer {
               text2: args.text2.substring(0, 50) + '...',
               similarity: similarity,
               interpretation:
-                similarity > 0.8
+                (similarity || 0) > 0.8
                   ? 'very similar'
-                  : similarity > 0.6
+                  : (similarity || 0) > 0.6
                     ? 'moderately similar'
-                    : similarity > 0.3
+                    : (similarity || 0) > 0.3
                       ? 'somewhat similar'
                       : 'not similar',
             },
