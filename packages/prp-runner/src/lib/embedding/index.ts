@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import crypto from 'crypto';
 
 export interface EmbeddingConfig {
-  provider: 'sentence-transformers' | 'local' | 'mock';
+  provider: 'sentence-transformers' | 'local';
   model?: string;
   dimensions?: number;
   batchSize?: number;
@@ -51,10 +51,6 @@ export const createEmbeddingState = (
       model: 'Qwen/Qwen3-Embedding-0.6B',
       dimensions: 1024,
     },
-    mock: {
-      provider: 'mock',
-      dimensions: 1024,
-    },
   };
 
   const config = configs[provider];
@@ -73,8 +69,6 @@ export const generateEmbeddings = async (
       return generateWithSentenceTransformers(state.pythonPath, state.config, textArray);
     case 'local':
       return generateWithLocal(state.pythonPath, textArray);
-    case 'mock':
-      return generateMockEmbeddings(state.config, textArray);
     default:
       throw new Error(
         `Embedding generation not implemented for provider: ${state.config.provider}`,
@@ -160,7 +154,7 @@ export const getStats = (state: EmbeddingState) => {
 };
 
 const validateConfig = (config: EmbeddingConfig): void => {
-  if (!['sentence-transformers', 'local', 'mock'].includes(config.provider)) {
+  if (!['sentence-transformers', 'local'].includes(config.provider)) {
     throw new Error(`Unsupported embedding provider: ${config.provider}`);
   }
 };
@@ -233,22 +227,6 @@ except Exception as e:
 `;
   const result = await executePythonScript(pythonPath, pythonScript, [JSON.stringify(texts)]);
   return JSON.parse(result);
-};
-
-const generateMockEmbeddings = (config: EmbeddingConfig, texts: string[]): Promise<number[][]> => {
-  const dimensions = config.dimensions || 1024;
-  return Promise.resolve(
-    texts.map((text) => {
-      const hash = crypto.createHash('md5').update(text).digest('hex');
-      const embedding: number[] = [];
-      for (let i = 0; i < dimensions; i++) {
-        const byte = parseInt(hash.substring(i % hash.length, (i % hash.length) + 1), 16) || 0;
-        embedding.push(byte / 15 - 0.5);
-      }
-      const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-      return embedding.map((val) => val / magnitude);
-    }),
-  );
 };
 
 const cosineSimilarity = (a: number[], b: number[]): number => {
