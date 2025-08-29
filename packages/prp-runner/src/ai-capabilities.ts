@@ -28,14 +28,14 @@ export interface AICoreConfig {
 
   // Embedding Configuration
   embedding?: {
-    provider: 'sentence-transformers' | 'local' | 'mock';
+    provider: 'sentence-transformers' | 'local';
     model?: string;
     dimensions?: number;
   };
 
   // Reranker Configuration
   reranker?: {
-    provider: 'transformers' | 'local' | 'mock';
+    provider: 'transformers' | 'local';
     model?: string;
   };
 
@@ -424,7 +424,7 @@ export const createAICapabilities = (
         dimensions: 1024,
       },
       reranker: {
-        provider: 'mock', // Use mock since Qwen reranker is incomplete
+        provider: 'transformers',
       },
       rag: {
         topK: 5,
@@ -451,7 +451,7 @@ export const createAICapabilities = (
         dimensions: 1024,
       },
       reranker: {
-        provider: 'mock',
+        provider: 'transformers',
       },
       rag: {
         topK: 8,

@@ -10,7 +10,7 @@ import { spawn } from 'child_process';
 import crypto from 'crypto';
 
 export interface EmbeddingConfig {
-  provider: 'sentence-transformers' | 'local' | 'mock';
+  provider: 'sentence-transformers' | 'local';
   model?: string;
   dimensions?: number;
   batchSize?: number;
@@ -40,7 +40,7 @@ export interface EmbeddingResult {
 }
 
 export interface RerankerConfig {
-  provider: 'transformers' | 'local' | 'mock';
+  provider: 'transformers' | 'local';
   model?: string;
   batchSize?: number;
 }
@@ -74,7 +74,7 @@ export class EmbeddingAdapter {
    * Validate embedding configuration
    */
   private validateConfig(): void {
-    if (!['sentence-transformers', 'local', 'mock'].includes(this.config.provider)) {
+    if (!['sentence-transformers', 'local'].includes(this.config.provider)) {
       throw new Error(`Unsupported embedding provider: ${this.config.provider}`);
     }
   }
@@ -90,8 +90,6 @@ export class EmbeddingAdapter {
         return this.generateWithSentenceTransformers(textArray);
       case 'local':
         return this.generateWithLocal(textArray);
-      case 'mock':
-        return this.generateMockEmbeddings(textArray);
       default:
         throw new Error(
           `Embedding generation not implemented for provider: ${this.config.provider}`,
@@ -251,28 +249,28 @@ os.environ['TRANSFORMERS_CACHE'] = cache_path
 
 try:
     from transformers import AutoTokenizer, AutoModel
-    
+
     # Use Qwen embedding model
     model_name = "Qwen/Qwen3-Embedding-0.6B"
     cache_dir = os.environ.get('HF_CACHE_PATH', os.path.expanduser('~/.cache/huggingface'))
-    
+
     tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
     model = AutoModel.from_pretrained(model_name, cache_dir=cache_dir)
-    
+
     texts = json.loads(sys.argv[1])
     embeddings = []
-    
+
     for text in texts:
         inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
-        
+
         with torch.no_grad():
             outputs = model(**inputs)
             # Mean pooling
             embedding = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
             embeddings.append(embedding)
-    
+
     print(json.dumps(embeddings))
-    
+
 except Exception as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
@@ -286,32 +284,6 @@ except Exception as e:
         `Local Qwen embeddings failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-  }
-
-  /**
-   * Generate mock embeddings for testing and fallback
-   * Uses 1024 dimensions to match Qwen model
-   */
-  private generateMockEmbeddings(texts: string[]): Promise<number[][]> {
-    const dimensions = this.config.dimensions || 1024; // Match Qwen model
-
-    return Promise.resolve(
-      texts.map((text) => {
-        // Create deterministic mock embeddings based on text content
-        const hash = crypto.createHash('md5').update(text).digest('hex');
-        const embedding: number[] = [];
-
-        for (let i = 0; i < dimensions; i++) {
-          // Use hash to create pseudo-random but deterministic values
-          const byte = parseInt(hash.substring(i % hash.length, (i % hash.length) + 1), 16) || 0;
-          embedding.push(byte / 15 - 0.5); // Normalize to [-0.5, 0.5]
-        }
-
-        // Normalize the vector
-        const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-        return embedding.map((val) => val / magnitude);
-      }),
-    );
   }
 
   /**
@@ -421,82 +393,8 @@ export class RerankerAdapter {
   /**
    * Rerank search results based on query relevance
    */
-  async rerank(query: string, documents: string[], topK?: number): Promise<RerankerResult[]> {
-    switch (this.config.provider) {
-      case 'transformers':
-        return this.rerankWithTransformers(query, documents, topK);
-      case 'local':
-        return this.rerankWithLocal(query, documents, topK);
-      case 'mock':
-        return this.rerankWithMock(query, documents, topK);
-      default:
-        throw new Error(`Reranking not implemented for provider: ${this.config.provider}`);
-    }
-  }
-
-  /**
-   * Mock reranking based on simple text similarity
-   */
-  private async rerankWithMock(
-    query: string,
-    documents: string[],
-    topK?: number,
-  ): Promise<RerankerResult[]> {
-    const queryLower = query.toLowerCase();
-    const results: RerankerResult[] = documents.map((doc, index) => {
-      const docLower = doc.toLowerCase();
-
-      // Simple scoring based on word overlap and length similarity
-      const queryWords = new Set(queryLower.split(/\s+/));
-      const docWords = new Set(docLower.split(/\s+/));
-      const intersection = new Set([...queryWords].filter((word) => docWords.has(word)));
-
-      const overlap = intersection.size;
-      const union = new Set([...queryWords, ...docWords]).size;
-      const jaccardSimilarity = overlap / union;
-
-      // Boost score if query appears as substring
-      const substringBoost = docLower.includes(queryLower) ? 0.2 : 0;
-
-      const score = jaccardSimilarity + substringBoost;
-
-      return {
-        text: doc,
-        score,
-        originalIndex: index,
-      };
-    });
-
-    // Sort by score (descending)
-    results.sort((a, b) => b.score - a.score);
-
-    return topK ? results.slice(0, topK) : results;
-  }
-
-  /**
-   * Rerank using transformers-based model
-   */
-  private async rerankWithTransformers(
-    query: string,
-    documents: string[],
-    topK?: number,
-  ): Promise<RerankerResult[]> {
-    // Would implement actual reranking model here
-    console.warn('Transformers reranking not implemented, falling back to mock');
-    return this.rerankWithMock(query, documents, topK);
-  }
-
-  /**
-   * Rerank using local model
-   */
-  private async rerankWithLocal(
-    query: string,
-    documents: string[],
-    topK?: number,
-  ): Promise<RerankerResult[]> {
-    // Would implement local reranking here
-    console.warn('Local reranking not implemented, falling back to mock');
-    return this.rerankWithMock(query, documents, topK);
+  async rerank(_query: string, _documents: string[], _topK?: number): Promise<RerankerResult[]> {
+    throw new Error(`Reranking not implemented for provider: ${this.config.provider}`);
   }
 }
 
@@ -517,10 +415,6 @@ export const createEmbeddingAdapter = (
       model: 'Qwen/Qwen3-Embedding-0.6B', // Use Qwen model for local
       dimensions: 1024,
     },
-    mock: {
-      provider: 'mock',
-      dimensions: 1024, // Match Qwen dimensions for consistency
-    },
   };
 
   return new EmbeddingAdapter(configs[provider]);
@@ -539,7 +433,7 @@ export const AVAILABLE_EMBEDDING_MODELS = {
  * Create reranker adapter with common configurations
  */
 export const createRerankerAdapter = (
-  provider: RerankerConfig['provider'] = 'mock',
+  provider: RerankerConfig['provider'] = 'transformers',
 ): RerankerAdapter => {
   const configs: Record<RerankerConfig['provider'], RerankerConfig> = {
     transformers: {
@@ -549,9 +443,6 @@ export const createRerankerAdapter = (
     local: {
       provider: 'local',
       model: 'local-reranker-model',
-    },
-    mock: {
-      provider: 'mock',
     },
   };
 
