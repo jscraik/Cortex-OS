@@ -48,7 +48,7 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
-      - run: uv sync || true
+      - run: uv sync
       - run: pnpm test -- --coverage
-      - run: uv run pytest --cov=services --cov=libs/python || true
-      - run: pnpm nyc check-coverage --lines 80 --functions 80 --branches 70 || true
+      - run: uv run pytest --cov=services --cov=libs/python
+      - run: pnpm nyc check-coverage --lines 80 --functions 80 --branches 70
