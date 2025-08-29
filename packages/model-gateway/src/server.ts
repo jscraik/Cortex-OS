@@ -21,9 +21,8 @@ export type RerankBody = z.infer<typeof RerankBodySchema>;
 
 const ChatBodySchema = z.object({
   model: z.string().optional(),
-  msgs: z
-    .array(z.object({ role: z.enum(['system', 'user', 'assistant']), content: z.string() }))
-    .min(1),
+  msgs: z.array(
+  ).min(1),
   tools: z.unknown().optional(),
 });
 export type ChatBody = z.infer<typeof ChatBodySchema>;
@@ -35,11 +34,12 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   app.post('/embeddings', async (req, reply) => {
     const parsed = EmbeddingsBodySchema.safeParse(req.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: parsed.error.message });
+      return reply
+        .status(400)
+        .send({ error: 'Invalid request body', details: parsed.error.flatten() });
     }
     const body = parsed.data;
-    req.log.debug({ body }, 'Received embeddings request');
-
+    console.log('[model-gateway] /embeddings request body:', JSON.stringify(body));
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'embeddings', body as any);
     await record(
@@ -56,7 +56,6 @@ export function createServer(router?: ModelRouter): FastifyInstance {
 
     try {
       const texts = body.texts;
-
       let vectors: number[][] = [];
       let modelUsed: string;
 
@@ -92,10 +91,11 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   app.post('/rerank', async (req, reply) => {
     const parsed = RerankBodySchema.safeParse(req.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: parsed.error.message });
+      return reply
+        .status(400)
+        .send({ error: 'Invalid request body', details: parsed.error.flatten() });
     }
     const body = parsed.data;
-
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'rerank', body as any);
     await record(
@@ -140,10 +140,11 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   app.post('/chat', async (req, reply) => {
     const parsed = ChatBodySchema.safeParse(req.body);
     if (!parsed.success) {
-      return reply.status(400).send({ error: parsed.error.message });
+      return reply
+        .status(400)
+        .send({ error: 'Invalid request body', details: parsed.error.flatten() });
     }
     const body = parsed.data;
-
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'chat', body as any);
     await record(

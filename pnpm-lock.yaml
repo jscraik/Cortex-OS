@@ -966,7 +966,7 @@ importers:
         specifier: ^4.28.1
         version: 4.29.1
       zod:
-        specifier: ^3.22.4
+        specifier: ^3.25.76
         version: 3.25.76
     devDependencies:
       tsx:
