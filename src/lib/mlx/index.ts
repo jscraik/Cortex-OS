@@ -17,7 +17,7 @@ function getClip(): Clip {
   return clipInstance;
 }
 
-export async function embed(text: string[]): Promise<number[][]> {
+export function embed(text: string[]): number[][] {
   const parsed = textArraySchema.safeParse(text);
   if (!parsed.success) {
     throw new Error(`Invalid embed input: ${parsed.error.message}`);
