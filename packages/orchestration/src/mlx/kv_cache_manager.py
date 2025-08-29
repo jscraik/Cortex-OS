@@ -11,30 +11,15 @@ import os
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
+import importlib.util
 
-try:
-    import mlx.core as mx
-    from mlx_lm import load, generate, cache_prompt
-    MLX_AVAILABLE = True
-except ImportError:
-    MLX_AVAILABLE = False
-    # Mock classes for environments without MLX
-    class mx:
-        @staticmethod
-        def metal_clear_cache():
-            pass
-    
-    def load(*args, **kwargs):
-        return None, None
-    
-    def generate(*args, **kwargs):
-        return "Mock response for environments without MLX"
-    
-    def cache_prompt(*args, **kwargs):
-        pass
+if importlib.util.find_spec("mlx") is None or importlib.util.find_spec("mlx_lm") is None:
+    raise ImportError("MLX and mlx_lm are required dependencies")
+
+import mlx.core as mx
+from mlx_lm import load, generate, cache_prompt
 
 logger = logging.getLogger(__name__)
-
 
 class AdvancedKVCacheManager:
     """
@@ -89,8 +74,6 @@ class AdvancedKVCacheManager:
         Returns:
             Generated text response
         """
-        if not MLX_AVAILABLE:
-            return f"Mock response to: {prompt[:50]}..."
         
         # Check if we have a cached prompt
         if cache_key and cache_key in self.cached_prompts:
@@ -159,9 +142,6 @@ class AdvancedKVCacheManager:
         Returns:
             True if caching succeeded, False otherwise
         """
-        if not MLX_AVAILABLE:
-            logger.warning("MLX not available, skipping prompt caching")
-            return False
         
         cache_path = self.prompt_cache_dir / f"{cache_file}.safetensors"
         
@@ -233,16 +213,15 @@ class AdvancedKVCacheManager:
         """
         Periodically clear MLX metal cache to prevent memory leaks
         """
-        if MLX_AVAILABLE:
-            mx.metal.clear_cache()
-            logger.debug("Cleared MLX metal cache")
-        
+        mx.metal.clear_cache()
+        logger.debug("Cleared MLX metal cache")
+
         # Also clean up old memory cache entries
         current_time = time.time()
         if current_time - self.last_cleanup_time > self.cleanup_interval:
             self._cleanup_memory_cache()
             self.last_cleanup_time = current_time
-    
+
     def _cleanup_memory_cache(self) -> None:
         """
         Clean up old entries from memory cache

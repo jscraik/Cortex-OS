@@ -12,6 +12,7 @@ Tests cover:
 
 import asyncio
 import pytest
+pytest.importorskip("mlx")
 import time
 from unittest.mock import Mock, AsyncMock, patch
 from typing import Dict, Any
@@ -25,8 +26,7 @@ from tiered_model_manager import (
     TieredMLXModelManager, 
     ModelTier, 
     ModelConfig, 
-    LoadedModel,
-    MLX_AVAILABLE
+    LoadedModel
 )
 
 
@@ -362,8 +362,7 @@ class TestTieredMLXModelManager:
         """Test successful model loading"""
         model_name = "phi3-mini"
         
-        with patch('tiered_model_manager.load') as mock_load, \
-             patch('tiered_model_manager.MLX_AVAILABLE', True):
+        with patch('tiered_model_manager.load') as mock_load:
             
             mock_model = Mock()
             mock_tokenizer = Mock()
@@ -411,22 +410,12 @@ class TestTieredMLXModelManager:
         """Test model loading with MLX error"""
         model_name = "phi3-mini"
         
-        with patch('tiered_model_manager.load', side_effect=Exception("MLX error")), \
-             patch('tiered_model_manager.MLX_AVAILABLE', True):
+        with patch('tiered_model_manager.load', side_effect=Exception("MLX error")):
             
             success = await model_manager.load_model(model_name)
             
             assert success is False
             assert model_manager.load_failures == 1
-
-    @pytest.mark.asyncio
-    async def test_load_model_no_mlx(self, model_manager):
-        """Test model loading when MLX not available"""
-        model_name = "phi3-mini"
-        
-        with patch('tiered_model_manager.MLX_AVAILABLE', False):
-            success = await model_manager.load_model(model_name)
-            assert success is True  # Should succeed with mock
 
     def test_evict_for_space_sufficient_available(self, model_manager):
         """Test eviction when sufficient space already available"""
@@ -667,9 +656,7 @@ class TestTieredModelManagerIntegration:
     @pytest.mark.asyncio
     async def test_full_model_lifecycle(self, model_manager):
         """Test complete model loading and eviction lifecycle"""
-        with patch('tiered_model_manager.load') as mock_load, \
-             patch('tiered_model_manager.MLX_AVAILABLE', True):
-            
+        with patch('tiered_model_manager.load') as mock_load:
             mock_load.return_value = (Mock(), Mock())
             
             # Load a model
@@ -695,8 +682,8 @@ class TestTieredModelManagerIntegration:
     @pytest.mark.asyncio
     async def test_memory_pressure_cascade(self, model_manager):
         """Test memory pressure handling with model eviction cascade"""
-        with patch('tiered_model_manager.load') as mock_load, \
-             patch('tiered_model_manager.MLX_AVAILABLE', True):
+        with patch('tiered_model_manager.load') as mock_load:
+             
             
             mock_load.return_value = (Mock(), Mock())
             
