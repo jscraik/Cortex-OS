@@ -18,7 +18,6 @@ export function createServer(router?: ModelRouter): FastifyInstance {
 
   app.post('/embeddings', async (req, reply) => {
     const body = req.body as EmbeddingsBody;
-    console.log('[model-gateway] /embeddings request body:', JSON.stringify(body));
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'embeddings', body as any);
     await record(
