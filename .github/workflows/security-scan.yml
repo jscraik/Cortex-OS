@@ -27,6 +27,8 @@ jobs:
 
   dast:
     runs-on: ubuntu-latest
+    env:
+      TARGET_URL: ${{ secrets.DAST_TARGET_URL }}
     steps:
       - name: OWASP ZAP baseline
-        run: docker run --rm owasp/zap2docker-stable zap-baseline.py -t https://example.com -I -r zap-report.html
+        run: docker run --rm owasp/zap2docker-stable zap-baseline.py -t $TARGET_URL -I -r zap-report.html
