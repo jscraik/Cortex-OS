@@ -1,6 +1,9 @@
-import { Qwen3Embedder } from '../embed/qwen3';
+// Define a generic interface for embedders with an embed method
+export interface Embedder {
+  embed(queries: string[]): Promise<any[]>;
+}
 
-export async function embedQuery(embedder: Qwen3Embedder, query: string) {
+export async function embedQuery(embedder: Embedder, query: string) {
   const [embedding] = await embedder.embed([query]);
   return embedding;
 }
