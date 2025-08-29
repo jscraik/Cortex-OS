@@ -26,7 +26,7 @@ export function embed(text: string[]): number[][] {
   return clip.computeLabelEmbeddingsJs(parsed.data);
 }
 
-export async function rerank(query: string, docs: string[]): Promise<number[]> {
+export function rerank(query: string, docs: string[]): number[] {
   const parsed = rerankSchema.safeParse({ query, docs });
   if (!parsed.success) {
     throw new Error(`Invalid rerank input: ${parsed.error.message}`);
