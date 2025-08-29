@@ -291,5 +291,6 @@ scripts/package-lock.json
 !packages/mcp-registry/src/lib/**
 
 
-!packages/kernel/src/lib/
-!packages/kernel/src/lib/**
+!src/lib/
+!src/lib/**
+
