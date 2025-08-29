@@ -148,23 +148,16 @@ export class BuildNode {
     }
 
     const schemaPathYaml = path.resolve('openapi.yaml');
-    const schemaPathJson = path.resolve('openapi.json');
 
-    const yamlExists = await fs.promises
-      .access(schemaPathYaml)
-      .then(() => true)
-      .catch(() => false);
-    const jsonExists = await fs.promises
-      .access(schemaPathJson)
-      .then(() => true)
-      .catch(() => false);
+    const exists = fs.existsSync(schemaPathYaml);
 
-    const exists = yamlExists || jsonExists;
 
     return {
       passed: exists,
       details: {
-        schemaFormat: yamlExists ? 'OpenAPI 3.0' : jsonExists ? 'JSON' : 'missing',
+
+        schemaFormat: 'openapi.yaml',
+
         validation: exists ? 'found' : 'missing',
       },
     };
