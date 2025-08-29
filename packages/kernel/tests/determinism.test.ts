@@ -6,12 +6,11 @@
  * @status TDD-CRITICAL
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { CortexKernel } from '../src/graph-simple.js';
-import { createInitialPRPState, PRPState } from '../src/state.js';
+import { createKernel } from '../src/graph-simple.js';
 import { fixedTimestamp } from '../src/lib/determinism.js';
-
+import { PRPState } from '../src/state.js';
 
 describe('Cortex Kernel Determinism', () => {
   let kernel: ReturnType<typeof createKernel>;
@@ -42,7 +41,6 @@ describe('Cortex Kernel Determinism', () => {
       expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
     });
 
-
     it('should maintain consistent state transitions', async () => {
       const blueprint = {
         title: 'State Transition Test',
@@ -61,7 +59,6 @@ describe('Cortex Kernel Determinism', () => {
       expect(phases).toContain('strategy');
     });
 
-
     it('should generate identical IDs across deterministic runs', async () => {
       const blueprint = {
         title: 'Deterministic ID Test',
@@ -75,7 +72,6 @@ describe('Cortex Kernel Determinism', () => {
       expect(run1.runId).toBe(run2.runId);
       expect(run1.id).toBe(run2.id);
     });
-
   });
 });
 

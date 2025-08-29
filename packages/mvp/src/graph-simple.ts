@@ -6,7 +6,7 @@
  * @status TDD-DRIVEN
  */
 
-import { nanoid } from 'nanoid';
+import { randomUUID } from 'node:crypto';
 import { PRPOrchestrator } from './mcp/adapter.js';
 import { recordMetric, startSpan } from './observability/otel.js';
 import {
@@ -50,14 +50,17 @@ export class SimplePRPGraph {
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
     const workflowSpan = startSpan('prp.workflow');
     const startTime = Date.now();
+    let state: PRPState;
 
     try {
       const deterministic = options.deterministic || false;
       const runId =
         options.runId ||
-        (deterministic ? `prp-deterministic-${generateDeterministicHash(blueprint)}` : nanoid());
+        (deterministic
+          ? `prp-deterministic-${generateDeterministicHash(blueprint)}`
+          : randomUUID());
 
-      const state = createInitialPRPState(blueprint, {
+      state = createInitialPRPState(blueprint, {
         runId,
         deterministic,
         id: options.id,
@@ -67,50 +70,53 @@ export class SimplePRPGraph {
       this.executionHistory.set(runId, []);
       this.addToHistory(runId, state);
 
-      try {
-        // Execute strategy phase
-        const strategyState = await this.executeStrategyPhase(state, deterministic);
-        this.addToHistory(runId, strategyState);
+      // Execute strategy phase
+      const strategyState = await this.executeStrategyPhase(state, deterministic);
+      this.addToHistory(runId, strategyState);
 
-        // Check if we should proceed or recycle
-        if (strategyState.phase === 'recycled') {
-          return strategyState;
-        }
-
-        // Execute build phase
-        const buildState = await this.executeBuildPhase(strategyState, deterministic);
-        this.addToHistory(runId, buildState);
-
-        if (buildState.phase === 'recycled') {
-          return buildState;
-        }
-
-        // Execute evaluation phase
-        const evaluationState = await this.executeEvaluationPhase(buildState, deterministic);
-        this.addToHistory(runId, evaluationState);
-
-        // Record metrics
-        const duration = Date.now() - startTime;
-        recordMetric('prp.duration', duration, 'milliseconds');
-        recordMetric('prp.phases.completed', 3);
-
-        // Final state
-        workflowSpan.setStatus('OK');
-        return evaluationState;
-      } catch (error) {
-        workflowSpan.setStatus('ERROR');
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        workflowSpan.setAttribute('error.message', message);
-        const errorState: PRPState = {
-          ...state,
-          phase: 'recycled',
-          metadata: { ...state.metadata, error: message },
-        };
-        this.addToHistory(runId, errorState);
-        return errorState;
+      // Check if we should proceed or recycle
+      if (strategyState.phase === 'recycled') {
+        return strategyState;
       }
-    } finally {
+
+      // Execute build phase
+      const buildState = await this.executeBuildPhase(strategyState, deterministic);
+      this.addToHistory(runId, buildState);
+
+      if (buildState.phase === 'recycled') {
+        return buildState;
+      }
+
+      // Execute evaluation phase
+      const evaluationState = await this.executeEvaluationPhase(buildState, deterministic);
+      this.addToHistory(runId, evaluationState);
+
+      // Record metrics
+      const duration = Date.now() - startTime;
+      recordMetric('prp.duration', duration, 'milliseconds');
+      recordMetric('prp.phases.completed', 3);
+
+      // Final state
+      workflowSpan.setStatus('OK');
+      return evaluationState;
+    } catch (error) {
+      workflowSpan.setStatus('ERROR');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      workflowSpan.setAttribute('error.message', message);
+
+      // Create error state
+      const errorState: PRPState = {
+        ...state,
+        phase: 'recycled',
+        metadata: {
+          ...state.metadata,
+          error: message,
+          endTime: new Date().toISOString(),
+        },
+      };
+      this.addToHistory(state.runId, errorState);
       workflowSpan.end();
+      return errorState;
     }
   }
 
@@ -121,6 +127,9 @@ export class SimplePRPGraph {
     const strategySpan = startSpan('prp.strategy');
 
     try {
+      // Call getNeuronCount to trigger any errors
+      this.orchestrator.getNeuronCount();
+
       const newState: PRPState = {
         ...state,
         phase: 'strategy',
@@ -297,5 +306,4 @@ export class SimplePRPGraph {
   }
 }
 
-// Maintain backward compatibility with former export name
-export { SimplePRPGraph as CortexKernel };
+// Note: Legacy `CortexKernel` alias removed; consumers should use `SimplePRPGraph` directly.

@@ -6,7 +6,7 @@
  * @status TDD-DRIVEN
  */
 
-import { nanoid } from 'nanoid';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 /**
@@ -150,13 +150,9 @@ export const createInitialPRPState = (
   const now = options.deterministic ? '2025-01-01T00:00:00.000Z' : new Date().toISOString();
 
   const hash = options.deterministic ? generateDeterministicHash(blueprint) : '';
-  const id =
-    options.id ??
-    (options.deterministic ? `prp-${hash}` : `prp-${crypto.randomUUID?.() || nanoid()}`);
+  const id = options.id ?? (options.deterministic ? `prp-${hash}` : `prp-${randomUUID()}`);
 
-  const runId =
-    options.runId ??
-    (options.deterministic ? `run-${hash}` : `run-${crypto.randomUUID?.() || nanoid()}`);
+  const runId = options.runId ?? (options.deterministic ? `run-${hash}` : `run-${randomUUID()}`);
 
   return {
     id,

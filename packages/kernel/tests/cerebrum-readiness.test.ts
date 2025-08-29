@@ -5,8 +5,8 @@
  * @status active
  */
 
-import { describe, it, expect } from 'vitest';
-import { EvaluationNode } from '../src/nodes/evaluation.js';
+import { describe, expect, it } from 'vitest';
+import { preCerebrumValidation } from '../src/lib/gates/evaluation.js';
 
 // Define the minimal mock state type for the test
 interface MockState {
@@ -22,8 +22,6 @@ interface MockState {
 
 describe('Cerebrum readiness validation', () => {
   it('should be false when a phase has majors but no blockers', async () => {
-    const evaluationNode = new EvaluationNode();
-
     const mockState: MockState = {
       evidence: Array.from({ length: 5 }, (_, idx) => ({ id: `e${idx}` })),
       validationResults: {
@@ -33,7 +31,7 @@ describe('Cerebrum readiness validation', () => {
       },
     };
 
-    const result = await (evaluationNode as any).preCerebrumValidation(mockState);
+    const result = await preCerebrumValidation(mockState);
 
     expect(result.readyForCerebrum).toBe(false);
   });
