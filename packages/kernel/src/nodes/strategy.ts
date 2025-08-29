@@ -80,7 +80,7 @@ export class StrategyNode {
 
   private async validateSecurityBaseline(
     state: PRPState,
-  ): Promise<{ passed: boolean; details: any }> {
+  ): Promise<ValidationResult<SecurityDetails>> {
     // OWASP ASVS L1 + MITRE ATLAS validation
     const requirements = state.blueprint.requirements || [];
     const hasSecurityReq = requirements.some(
@@ -100,9 +100,7 @@ export class StrategyNode {
     };
   }
 
-  private async validateUXAccessibility(
-    state: PRPState,
-  ): Promise<{ passed: boolean; details: any }> {
+  private async validateUXAccessibility(state: PRPState): Promise<ValidationResult<UXDetails>> {
     // WCAG 2.2 AA compliance check
     const hasUXReq = state.blueprint.requirements?.some(
       (req) =>
@@ -121,7 +119,9 @@ export class StrategyNode {
     };
   }
 
-  private async validateArchitecture(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateArchitecture(
+    state: PRPState,
+  ): Promise<ValidationResult<ArchitectureDetails>> {
     // Architecture diagram consistency check
     const title = state.blueprint.title?.toLowerCase() || '';
     const description = state.blueprint.description?.toLowerCase() || '';
@@ -142,4 +142,24 @@ export class StrategyNode {
       },
     };
   }
+}
+
+interface ValidationResult<T> {
+  passed: boolean;
+  details: T;
+}
+
+interface SecurityDetails {
+  owaspLevel: string;
+  mitreAtlas: boolean;
+  securityRequirements: string[];
+}
+
+interface UXDetails {
+  wcagLevel: string;
+  accessibilityFeatures: string[];
+}
+
+interface ArchitectureDetails {
+  architectureElements: string[];
 }

@@ -22,7 +22,7 @@ export interface CapturedExample {
   userAction: {
     type: 'validation_override' | 'gate_adjustment' | 'neuron_guidance' | 'workflow_modification';
     description: string;
-    parameters: any;
+    parameters: Record<string, unknown>;
     timestamp: string;
   };
   outcome: {
@@ -45,15 +45,22 @@ export interface TeachingPattern {
   name: string;
   description: string;
   trigger: {
-    conditions: any; // Conditions that trigger this pattern
+    conditions: Record<string, unknown>; // Conditions that trigger this pattern
     confidence: number;
   };
   adaptation: {
     type: 'gate_modification' | 'workflow_adjustment' | 'validation_enhancement';
-    parameters: any;
+    parameters: Record<string, unknown>;
   };
   examples: string[]; // CapturedExample IDs that support this pattern
   effectiveness: number; // Success rate of this pattern
+}
+
+export interface SuggestedAction {
+  type: string;
+  description: string;
+  parameters: Record<string, unknown>;
+  confidence: number;
 }
 
 /**
@@ -104,7 +111,7 @@ export class ExampleCaptureSystem {
   captureValidationOverride(
     prpState: PRPState,
     originalValidation: { passed: boolean; blockers: string[]; majors: string[] },
-    userOverride: { passed: boolean; reasoning: string; adjustments: any },
+    userOverride: { passed: boolean; reasoning: string; adjustments: Record<string, unknown> },
     finalOutcome: { success: boolean; feedback: string },
   ): CapturedExample {
     return this.captureExample(
@@ -142,9 +149,9 @@ export class ExampleCaptureSystem {
     modification: {
       type: 'gate_adjustment' | 'neuron_reordering' | 'phase_skipping';
       description: string;
-      changes: any;
+      changes: Record<string, unknown>;
     },
-    outcome: { improved: boolean; metrics: any },
+    outcome: { improved: boolean; metrics: Record<string, unknown> },
   ): CapturedExample {
     return this.captureExample(
       'workflow',
@@ -178,7 +185,7 @@ export class ExampleCaptureSystem {
     currentState: PRPState,
   ): Promise<{
     applicable: boolean;
-    suggestedAction?: any;
+    suggestedAction?: SuggestedAction;
     confidence: number;
   }> {
     const example = this.examples.get(exampleId);
@@ -279,7 +286,10 @@ export class ExampleCaptureSystem {
   /**
    * Adapt example to current context
    */
-  private adaptExampleToCurrentContext(example: CapturedExample, currentState: PRPState): any {
+  private adaptExampleToCurrentContext(
+    example: CapturedExample,
+    currentState: PRPState,
+  ): SuggestedAction {
     // Simple adaptation - in real implementation would be more sophisticated
     return {
       type: example.userAction.type,

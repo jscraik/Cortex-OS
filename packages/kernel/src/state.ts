@@ -19,7 +19,7 @@ export const EvidenceSchema = z.object({
   content: z.string(),
   timestamp: z.string(),
   phase: z.enum(['strategy', 'build', 'evaluation']),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 /**
@@ -59,11 +59,11 @@ export const PRPStateSchema = z.object({
     title: z.string(),
     description: z.string(),
     requirements: z.array(z.string()),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.unknown()).optional(),
   }),
 
   // Execution outputs by neuron ID
-  outputs: z.record(z.any()),
+  outputs: z.record(z.unknown()),
 
   // Validation results by phase
   validationResults: z.object({
@@ -89,12 +89,12 @@ export const PRPStateSchema = z.object({
         model: z.string().optional(),
       })
       .optional(),
-    executionContext: z.record(z.any()).optional(),
+    executionContext: z.record(z.unknown()).optional(),
     deterministic: z.boolean().optional(),
     // Teaching layer extensions
-    validationAdjustments: z.record(z.any()).optional(),
-    gateModifications: z.record(z.any()).optional(),
-    workflowAlterations: z.record(z.any()).optional(),
+    validationAdjustments: z.record(z.unknown()).optional(),
+    gateModifications: z.record(z.unknown()).optional(),
+    workflowAlterations: z.record(z.unknown()).optional(),
     // Error tracking
     error: z.string().optional(),
   }),
@@ -106,7 +106,7 @@ export const PRPStateSchema = z.object({
         id: z.string(),
         timestamp: z.string(),
         phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
-        state: z.record(z.any()),
+        state: z.record(z.unknown()),
       }),
     )
     .optional(),

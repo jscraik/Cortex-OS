@@ -42,7 +42,7 @@ export interface ExtensionResult {
     type: 'validation_adjustment' | 'gate_modification' | 'workflow_alteration';
     description: string;
     impact: 'low' | 'medium' | 'high';
-    parameters: any;
+    parameters: Record<string, unknown>;
   }[];
   reasoning: string;
   suggestedFeedback?: string;
@@ -296,7 +296,7 @@ export class BehaviorExtensionManager {
       modified: true,
       changes: [
         {
-          type: modification.type as any,
+          type: this.mapAdaptationType(modification.type),
           description: `Applied pattern: ${pattern.name}`,
           impact: 'medium',
           parameters: modification.parameters,
@@ -304,6 +304,19 @@ export class BehaviorExtensionManager {
       ],
       reasoning: `Pattern-based modification: ${pattern.description}`,
     };
+  }
+
+  private mapAdaptationType(
+    type: TeachingPattern['adaptation']['type'],
+  ): ExtensionResult['changes'][number]['type'] {
+    switch (type) {
+      case 'gate_modification':
+        return 'gate_modification';
+      case 'workflow_adjustment':
+        return 'workflow_alteration';
+      case 'validation_enhancement':
+        return 'validation_adjustment';
+    }
   }
 
   /**
@@ -335,7 +348,7 @@ export class BehaviorExtensionManager {
   /**
    * Helper methods for state modification
    */
-  private adjustValidation(state: PRPState, parameters: any): PRPState {
+  private adjustValidation(state: PRPState, parameters: Record<string, unknown>): PRPState {
     // Implementation would adjust validation thresholds
     return {
       ...state,
@@ -346,7 +359,7 @@ export class BehaviorExtensionManager {
     };
   }
 
-  private modifyGates(state: PRPState, parameters: any): PRPState {
+  private modifyGates(state: PRPState, parameters: Record<string, unknown>): PRPState {
     return {
       ...state,
       metadata: {
@@ -356,7 +369,7 @@ export class BehaviorExtensionManager {
     };
   }
 
-  private alterWorkflow(state: PRPState, parameters: any): PRPState {
+  private alterWorkflow(state: PRPState, parameters: Record<string, unknown>): PRPState {
     return {
       ...state,
       metadata: {

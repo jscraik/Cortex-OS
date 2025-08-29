@@ -16,14 +16,14 @@ interface Neuron {
   dependencies: string[];
   tools: string[];
   requiresLLM?: boolean;
-  execute(state: any, context: any): Promise<NeuronResult>;
+  execute(state: PRPState, context: Record<string, unknown>): Promise<NeuronResult>;
 }
 
 interface NeuronResult {
-  output: any;
-  evidence: any[];
+  output: unknown;
+  evidence: Record<string, unknown>[];
   nextSteps: string[];
-  artifacts: any[];
+  artifacts: unknown[];
   metrics: ExecutionMetrics;
 }
 
@@ -40,11 +40,11 @@ interface ExecutionMetrics {
 /**
  * MCP Tool interface for kernel integration
  */
-export interface MCPTool {
+export interface MCPTool<Params = Record<string, unknown>, Result = unknown> {
   name: string;
   description: string;
-  inputSchema: any;
-  execute(params: any, context: MCPContext): Promise<any>;
+  inputSchema: Record<string, unknown>;
+  execute(params: Params, context: MCPContext): Promise<Result>;
 }
 
 /**
@@ -108,16 +108,16 @@ export class MCPAdapter {
   /**
    * Execute MCP tool within kernel context
    */
-  async executeTool(
+  async executeTool<Params extends Record<string, unknown>, Result = unknown>(
     toolName: string,
-    params: any,
+    params: Params,
     runId: string,
   ): Promise<{
-    result: any;
+    result: Result;
     evidence: {
       toolName: string;
-      params: any;
-      result: any;
+      params: Params;
+      result: Result;
       timestamp: string;
     };
   }> {
@@ -164,7 +164,7 @@ export class MCPAdapter {
       dependencies: [],
       tools: [tool.name],
       requiresLLM: false,
-      execute: async (state: PRPState, context: any) => {
+      execute: async (state: PRPState, context: Record<string, unknown>) => {
         const mcpContext = this.createContext(state, {
           workingDirectory: context.workingDirectory,
         });
@@ -208,7 +208,10 @@ export class MCPAdapter {
   /**
    * Extract tool parameters from blueprint
    */
-  private extractToolParams(blueprint: PRPState['blueprint'], tool: MCPTool): any {
+  private extractToolParams(
+    blueprint: PRPState['blueprint'],
+    tool: MCPTool,
+  ): Record<string, unknown> {
     // Simple parameter extraction - in real implementation would be more sophisticated
     return {
       title: blueprint.title,

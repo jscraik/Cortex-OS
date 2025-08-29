@@ -97,7 +97,7 @@ export class EvaluationNode {
     };
   }
 
-  private async validateTDDCycle(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateTDDCycle(state: PRPState): Promise<ValidationResult<TDDDetails>> {
     // Validate that proper TDD cycle was followed
     const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
 
@@ -119,9 +119,7 @@ export class EvaluationNode {
     };
   }
 
-  private async validateCodeReview(
-    state: PRPState,
-  ): Promise<{ blockers: number; majors: number; details: any }> {
+  private async validateCodeReview(state: PRPState): Promise<ReviewResult<ReviewDetails>> {
     // Simulated code review - in real implementation would integrate with actual review tools
     const codeQualityIssues = [
       {
@@ -182,7 +180,7 @@ export class EvaluationNode {
 
   private async preCerebrumValidation(
     state: PRPState,
-  ): Promise<{ readyForCerebrum: boolean; details: any }> {
+  ): Promise<ReadinessResult<PreCerebrumDetails>> {
     // Final validation before Cerebrum decision
     const hasAllPhases = !!(
       state.validationResults?.strategy &&
@@ -208,4 +206,41 @@ export class EvaluationNode {
       },
     };
   }
+}
+
+interface ValidationResult<T> {
+  passed: boolean;
+  details: T;
+}
+
+interface TDDDetails {
+  testCount: number;
+  coverage: number;
+  redGreenCycle: boolean;
+  refactoring: boolean;
+}
+
+interface ReviewResult<T> {
+  blockers: number;
+  majors: number;
+  details: T;
+}
+
+interface ReviewDetails {
+  totalIssues: number;
+  issues: { severity: string; type: string; message: string; file: string }[];
+  codeQualityScore: number;
+  maintainabilityIndex: number;
+}
+
+interface ReadinessResult<T> {
+  readyForCerebrum: boolean;
+  details: T;
+}
+
+interface PreCerebrumDetails {
+  phasesComplete: boolean;
+  phasesAcceptable: boolean;
+  evidenceCount: number;
+  evidenceThreshold: number;
 }

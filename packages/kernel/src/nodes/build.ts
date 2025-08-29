@@ -94,7 +94,7 @@ export class BuildNode {
     };
   }
 
-  private async validateBackend(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateBackend(state: PRPState): Promise<ValidationResult<BackendDetails>> {
     // Simulated backend validation - in real implementation would run actual tests
     const hasBackendReq = state.blueprint.requirements?.some(
       (req) =>
@@ -119,7 +119,7 @@ export class BuildNode {
     };
   }
 
-  private async validateAPISchema(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateAPISchema(state: PRPState): Promise<ValidationResult<APISchemaDetails>> {
     const hasAPI = state.blueprint.requirements?.some(
       (req) => req.toLowerCase().includes('api') || req.toLowerCase().includes('endpoint'),
     );
@@ -148,9 +148,7 @@ export class BuildNode {
     };
   }
 
-  private async runSecurityScan(
-    state: PRPState,
-  ): Promise<{ blockers: number; majors: number; details: any }> {
+  private async runSecurityScan(state: PRPState): Promise<ScanResult<SecurityScanDetails>> {
     // Mock security scan - in real implementation would run CodeQL, Semgrep, etc.
     return {
       blockers: 0,
@@ -169,9 +167,7 @@ export class BuildNode {
     };
   }
 
-  private async validateFrontend(
-    state: PRPState,
-  ): Promise<{ lighthouse: number; axe: number; details: any }> {
+  private async validateFrontend(state: PRPState): Promise<FrontendResult<FrontendDetails>> {
     const hasFrontend = state.blueprint.requirements?.some(
       (req) =>
         req.toLowerCase().includes('ui') ||
@@ -202,7 +198,7 @@ export class BuildNode {
     };
   }
 
-  private async validateDocumentation(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateDocumentation(state: PRPState): Promise<ValidationResult<DocsDetails>> {
     const hasDocsReq = state.blueprint.requirements?.some(
       (req) =>
         req.toLowerCase().includes('doc') ||
@@ -222,4 +218,58 @@ export class BuildNode {
       details: { readme: readmeExists },
     };
   }
+}
+
+interface ValidationResult<T> {
+  passed: boolean;
+  details: T;
+}
+
+interface BackendDetails {
+  compilation?: string;
+  testsPassed?: number;
+  testsFailed?: number;
+  coverage?: number;
+  type?: string;
+}
+
+interface APISchemaDetails {
+  schemaFormat: string;
+  validation: string;
+}
+
+interface ScanResult<T> {
+  blockers: number;
+  majors: number;
+  details: T;
+}
+
+interface SecurityScanDetails {
+  tools: string[];
+  vulnerabilities: { severity: string; type: string; file: string; line: number }[];
+}
+
+interface FrontendResult<T> {
+  lighthouse: number;
+  axe: number;
+  details: T;
+}
+
+interface FrontendDetails {
+  lighthouse: {
+    performance: number;
+    accessibility: number;
+    bestPractices: number;
+    seo: number;
+  };
+  axe: {
+    violations: number;
+    severity: string;
+  };
+}
+
+interface DocsDetails {
+  readme: boolean | string;
+  schemaFormat?: string;
+  validation?: string;
 }
