@@ -7,7 +7,7 @@
  */
 
 import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
-import { nanoid } from 'nanoid';
+import { generateId } from './utils/id.js';
 
 import { fixedTimestamp } from './lib/determinism.js';
 
@@ -51,8 +51,8 @@ export class CortexKernel {
    * Run a complete PRP workflow
    */
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
-    const runId = options.runId || nanoid();
     const deterministic = options.deterministic || false;
+    const runId = options.runId || generateId('run', deterministic);
     const state = createInitialPRPState(blueprint, { runId, deterministic });
 
     // Initialize execution history

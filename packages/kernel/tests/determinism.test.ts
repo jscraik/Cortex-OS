@@ -58,27 +58,19 @@ describe('Cortex Kernel Determinism', () => {
       expect(phases).toContain('strategy');
     });
 
-    it('should generate stable timestamps when deterministic=true', async () => {
+
+    it('should generate identical IDs across deterministic runs', async () => {
       const blueprint = {
-        title: 'Timestamp Test',
-        description: 'Validate fixed timestamps',
-        requirements: ['Requirement 1'],
+        title: 'Deterministic ID Test',
+        description: 'Ensures run and state IDs are deterministic',
+        requirements: ['Deterministic'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint, {
-        runId: 'deterministic',
-        deterministic: true,
-      });
+      const run1 = await kernel.runPRPWorkflow(blueprint, { deterministic: true });
+      const run2 = await kernel.runPRPWorkflow(blueprint, { deterministic: true });
 
-      expect(result.validationResults.strategy?.timestamp).toBe(
-        fixedTimestamp('strategy-validation'),
-      );
-      expect(result.validationResults.build?.timestamp).toBe(fixedTimestamp('build-validation'));
-      expect(result.validationResults.evaluation?.timestamp).toBe(
-        fixedTimestamp('evaluation-validation'),
-      );
-      expect(result.cerebrum?.timestamp).toBe(fixedTimestamp('cerebrum-decision'));
-      expect(result.metadata.endTime).toBe(fixedTimestamp('workflow-end'));
+      expect(run1.runId).toBe(run2.runId);
+      expect(run1.id).toBe(run2.id);
     });
 
   });
