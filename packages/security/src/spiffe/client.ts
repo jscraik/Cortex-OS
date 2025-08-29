@@ -132,8 +132,7 @@ export class SpiffeClient {
 
 
         const response = await this.fetchWithTimeout('/workload/identity', { method: 'GET' });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(`Failed to fetch workload identity: HTTP ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         const workloadResponse = SpiffeWorkloadResponseSchema.parse(data);
