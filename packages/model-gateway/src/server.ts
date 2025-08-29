@@ -29,10 +29,21 @@ export function createServer(router?: ModelRouter): FastifyInstance {
     console.log('[model-gateway] /embeddings request body:', JSON.stringify(body));
     try {
 
-      await applyAuditPolicy(req, 'embeddings', body);
-      const result = await embeddingsHandler(modelRouter, body);
-      return reply.send(result);
+      const texts = body.texts;
+      if (!Array.isArray(texts) || texts.length === 0) {
+        return reply.status(400).send({ error: 'texts must be a non-empty array' });
+      }
 
+      const { embeddings, model: modelUsed } = await modelRouter.generateEmbeddings({
+        texts,
+        model: body.model,
+      });
+
+      return reply.send({
+        embeddings,
+        dimensions: embeddings[0]?.length || 0,
+        modelUsed,
+      });
     } catch (error) {
       const status = (error as any).status || 500;
       console.error('Embedding error:', error);
