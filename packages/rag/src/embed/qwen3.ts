@@ -3,11 +3,8 @@
  * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
 
-import { spawn } from 'child_process';
-import { readFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { type Embedder } from '../index.js';
+import { runProcess } from '../../../../src/lib/run-process.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -55,41 +52,12 @@ export class Qwen3Embedder implements Embedder {
   private async embedWithModel(texts: string[], modelSize: Qwen3ModelSize): Promise<number[][]> {
     const modelPath = `${this.cacheDir}/models/Qwen3-Embedding-${modelSize}`;
 
-    return new Promise((resolve, reject) => {
-      const python = spawn('python3', ['-c', this.getPythonScript()], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir },
-      });
+    const script = this.getPythonScript(modelPath, texts);
+    const result = await runProcess<{ embeddings: number[][] }>('python3', ['-c', script], {
+      env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir },
 
-      let stdout = '';
-      let stderr = '';
-
-      python.stdout?.on('data', (data) => (stdout += data.toString()));
-      python.stderr?.on('data', (data) => (stderr += data.toString()));
-
-      python.on('close', (code) => {
-        if (code === 0) {
-          try {
-            const result = JSON.parse(stdout);
-            resolve(result.embeddings);
-          } catch (error) {
-            reject(new Error(`Failed to parse embedding result: ${error}`));
-          }
-        } else {
-          reject(new Error(`Python embedding process failed: ${stderr}`));
-        }
-      });
-
-      python.on('error', reject);
-
-      const input = {
-        model_path: modelPath,
-        texts,
-        max_tokens: this.maxTokens,
-      };
-      python.stdin?.write(JSON.stringify(input));
-      python.stdin?.end();
     });
+    return result.embeddings;
   }
 
   private getPythonScript(): string {
