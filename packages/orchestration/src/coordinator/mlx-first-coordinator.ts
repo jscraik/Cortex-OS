@@ -4,6 +4,7 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
+import { handleResilience } from '../utils/resilience.js';
 
 export interface TaskDecomposition {
   subtasks: Array<{
@@ -36,7 +37,7 @@ export class MLXFirstOrchestrator {
   }
 
   /**
-   * Decompose complex tasks using Mixtral-8x7B (MLX) or Qwen3-Coder (fallback)
+   * Decompose complex tasks using Mixtral-8x7B (MLX)
    */
   async decomposeTask(
     taskDescription: string,
@@ -72,8 +73,7 @@ Format as JSON with reasoning.`;
 
       return this.parseTaskDecomposition(response.content);
     } catch (error) {
-      console.warn('MLX task decomposition failed:', error);
-      return this.fallbackTaskDecomposition(taskDescription, availableAgents);
+      return handleResilience(error, 'decomposeTask');
     }
   }
 
@@ -162,8 +162,7 @@ Focus on maintainable, testable code.`;
 
       return this.parseCodeOrchestrationResponse(response.content);
     } catch (error) {
-      console.warn('Code orchestration failed:', error);
-      return this.fallbackCodeOrchestration(codeTask);
+      return handleResilience(error, 'orchestrateCodeTask');
     }
   }
 
@@ -314,12 +313,10 @@ Provide safety assessment with specific issues and recommendations.`;
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
+      throw new Error('No JSON found in response');
     } catch (error) {
-      console.warn('Failed to parse JSON response:', error);
+      return handleResilience(error, 'parseTaskDecomposition');
     }
-
-    // Fallback parsing
-    return this.fallbackTaskDecomposition('Complex task', []);
   }
 
   private parseCoordinationDecision(
@@ -350,13 +347,17 @@ Provide safety assessment with specific issues and recommendations.`;
     return { action, reasoning: content, confidence, nextSteps, provider };
   }
 
-  private parseCodeOrchestrationResponse(content: string) {
-    return {
-      plan: this.fallbackTaskDecomposition('Code task', []),
-      codeStrategy: 'Follow best practices and write maintainable code',
-      testStrategy: 'Write comprehensive unit and integration tests',
-      riskAssessment: 'Medium risk - requires careful review',
-    };
+  private parseCodeOrchestrationResponse(content: string): {
+    plan: TaskDecomposition;
+    codeStrategy: string;
+    testStrategy: string;
+    riskAssessment: string;
+  } {
+    try {
+      return JSON.parse(content);
+    } catch (error) {
+      return handleResilience(error, 'parseCodeOrchestrationResponse');
+    }
   }
 
   private parseAgentSelection(content: string, agents: any[]) {
@@ -380,33 +381,6 @@ Provide safety assessment with specific issues and recommendations.`;
       safe,
       issues: safe ? [] : ['Potential safety concerns identified'],
       recommendations: safe ? ['Task appears safe to proceed'] : ['Review task for safety issues'],
-    };
-  }
-
-  private fallbackTaskDecomposition(task: string, agents: string[]): TaskDecomposition {
-    return {
-      subtasks: [
-        {
-          id: '1',
-          description: task,
-          dependencies: [],
-          estimatedComplexity: 5,
-          recommendedAgent: agents[0] || 'default',
-          requiredCapabilities: ['general'],
-        },
-      ],
-      parallelizable: [['1']],
-      criticalPath: ['1'],
-      reasoning: 'Fallback decomposition - treat as single task',
-    };
-  }
-
-  private fallbackCodeOrchestration(task: string) {
-    return {
-      plan: this.fallbackTaskDecomposition(task, ['coder']),
-      codeStrategy: 'Implement incrementally with tests',
-      testStrategy: 'TDD approach with comprehensive coverage',
-      riskAssessment: 'Standard development risks apply',
     };
   }
 }
