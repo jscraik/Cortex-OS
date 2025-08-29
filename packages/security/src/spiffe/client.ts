@@ -308,8 +308,7 @@ export class SpiffeClient {
         );
 
         const response = await this.fetchWithTimeout('/workload/trust-bundle', { method: 'GET' });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(`Failed to fetch trust bundle: HTTP ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         const trustBundleResponse = z
