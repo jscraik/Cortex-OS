@@ -267,7 +267,7 @@ class TestThermalGuard:
         with patch('asyncio.create_subprocess_exec') as mock_subprocess:
             mock_process = Mock()
             mock_process.communicate = AsyncMock(return_value=(
-                b'Temperature: 78.3°C',  # Different format
+                b'Temperature: 78.3\xc2\xb0C',  # Different format
                 b''
             ))
             mock_process.returncode = 0
@@ -551,26 +551,38 @@ class TestThermalGuard:
         # Should keep the most recent entries
         assert thermal_guard.metrics_history[-1].timestamp > thermal_guard.metrics_history[0].timestamp
 
-    def test_add_remove_thermal_callback(self, thermal_guard):
+    @pytest.mark.asyncio
+    async def test_add_remove_thermal_callback(self, thermal_guard):
         """Test adding and removing thermal callbacks"""
+        state_calls = []
+
         def callback(state: ThermalState):
-            pass
-        
-        # Add callback
+            state_calls.append(state)
+
         thermal_guard.add_thermal_callback(callback)
         assert callback in thermal_guard.thermal_callbacks
-        
-        # Remove callback
+
+        await thermal_guard._handle_thermal_state_change(ThermalState.THROTTLED)
+        assert state_calls == [ThermalState.THROTTLED]
+
         thermal_guard.remove_thermal_callback(callback)
         assert callback not in thermal_guard.thermal_callbacks
 
-    def test_remove_nonexistent_callback(self, thermal_guard):
+        await thermal_guard._handle_thermal_state_change(ThermalState.CPU_ONLY)
+        assert state_calls == [ThermalState.THROTTLED]
+
+    @pytest.mark.asyncio
+    async def test_remove_nonexistent_callback(self, thermal_guard):
         """Test removing non-existent callback"""
+        state_calls = []
+
         def callback(state: ThermalState):
-            pass
-        
-        # Should not raise exception
+            state_calls.append(state)
+
         thermal_guard.remove_thermal_callback(callback)
+        await thermal_guard._handle_thermal_state_change(ThermalState.THROTTLED)
+
+        assert state_calls == []
 
     @pytest.mark.asyncio
     async def test_check_thermal_state_with_current_metrics(self, thermal_guard):

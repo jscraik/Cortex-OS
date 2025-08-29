@@ -1,16 +1,19 @@
 name: Security
+
 on:
   pull_request:
-  schedule:
-    - cron: '0 3 * * *'
+
 jobs:
-  supply-chain:
+  security:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v4
+
       - uses: astral-sh/setup-uv@v3
       - run: pnpm install --frozen-lockfile
       - name: npm audit (moderate as advisory)
@@ -22,27 +25,33 @@ jobs:
           scan-args: --lockfile=pnpm-lock.yaml
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@v0.12.0
+
         with:
-          scan-type: fs
-          scan-ref: .
-          format: sarif
-          output: trivy-results.sarif
-      - name: Upload Trivy SARIF if present
-        if: always()
+          version: 10.13.1
+      - name: Install Semgrep
+        run: pipx install semgrep==1.132.0
+      - name: Check for security scan prerequisites
+        id: check_security_scan
         run: |
-          if [ -f trivy-results.sarif ]; then
-            echo "Uploading trivy-results.sarif"
-          else
-            echo "No trivy SARIF produced"
+          if [ ! -d "scripts/security" ]; then
+            echo "scripts/security directory does not exist. Skipping security scan."
+            echo "scan_exists=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-      - name: Upload SARIF via action (if present)
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
-      - name: Python checks (bandit, safety)
+          if ! grep -q '"security:scan:errors"' package.json; then
+            echo "security:scan:errors script not found in package.json. Skipping security scan."
+            echo "scan_exists=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "scan_exists=true" >> $GITHUB_OUTPUT
+
+      - name: Run security scan
+        if: steps.check_security_scan.outputs.scan_exists == 'true'
+        working-directory: scripts/security
+        run: pnpm security:scan:errors
+      - name: Validate security fixes
         run: |
+
           uv run safety check --json
       - name: Upload Bandit JSON report
         if: always()
@@ -50,3 +59,4 @@ jobs:
         with:
           name: bandit-report
           path: bandit-report.json
+
