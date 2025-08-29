@@ -2,9 +2,4 @@
 . "$(dirname -- "$0")/_/husky.sh"
 . "$(dirname -- "$0")/common.sh"
 
-# Check if commitlint is available
-if command -v commitlint >/dev/null 2>&1; then
-  pnpm exec commitlint --edit "$1" || echo "Commitlint check completed with warnings"
-else
-  echo "Commitlint not available, skipping commit message validation"
-fi
+pnpm commitlint --edit "$1"
