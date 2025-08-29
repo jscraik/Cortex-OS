@@ -1,13 +1,6 @@
-
 import { describe, it, expect, vi } from 'vitest';
-vi.mock(
-  '@cortex-os/telemetry',
-  () => ({
-    withSpan: vi.fn((_name: string, fn: (...args: unknown[]) => unknown) => fn()),
-    logWithSpan: vi.fn(),
-  }),
-  { virtual: true },
-);
+vi.mock('@cortex-os/telemetry');
+import { spanExporter } from '../../test/setup.ts';
 import {
   WorkloadIdentityManager,
   WorkloadIdentityAttestor,

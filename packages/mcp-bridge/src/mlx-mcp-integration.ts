@@ -10,6 +10,7 @@
 import { z } from 'zod';
 import { MLXMcpServer } from './mlx-mcp-server.js';
 import { universalMcpManager } from './universal-mcp-manager.js';
+import express from 'express';
 
 const configPathSchema = z.string().min(1, 'MLX config path is required');
 const portSchema = z.number().int().positive().max(65535);
@@ -21,7 +22,7 @@ function resolveConfigPath(configPath?: string): string {
     // const fallbackPath = './mlx-config.json';
     // return fallbackPath;
     throw new Error(
-      'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.'
+      'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.',
     );
   }
   return configPathSchema.parse(resolved);
@@ -69,68 +70,63 @@ export function createMlxIntegration(configPath?: string) {
   }
 
   async function startMLXServer(port = 8080): Promise<void> {
-    try {
-      const p = portSchema.parse(port);
-      const express = await import('express').then((m) => m.default);
-      const app = express();
+    const p = portSchema.parse(port);
+    const app = express();
 
-      app.use(express.json());
+    app.use(express.json());
 
-      app.post('/v1/chat/completions', async (req, res) => {
-        try {
-          const response = await mlxServer.chat(req.body);
-          res.json(response);
-        } catch (error) {
-          res.status(500).json({
-            error: {
-              message: `MLX error: ${error}`,
-              type: 'mlx_error',
-            },
-          });
-        }
-      });
-
-      app.get('/health', async (req, res) => {
-        try {
-          const health = await mlxServer.getHealth();
-          res.json(health);
-        } catch (error) {
-          res.status(500).json({ error: `Health check failed: ${error}` });
-        }
-      });
-
-      app.get('/v1/models', (req, res) => {
-        try {
-          const models = mlxServer.getAvailableModels();
-          res.json({
-            object: 'list',
-            data: models.map((model) => ({
-              id: model.id,
-              object: 'model',
-              created: Date.now(),
-              owned_by: 'cortex-os-mlx',
-              permission: [],
-              root: model.id,
-              parent: null,
-            })),
-          });
-        } catch (error) {
-          res.status(500).json({ error: `Models list failed: ${error}` });
-        }
-      });
-
-      await new Promise<void>((resolve) => {
-        app.listen(p, '127.0.0.1', () => {
-          console.log(`🚀 MLX MCP server running on http://127.0.0.1:${p}`);
-          console.log('   - Chat: POST /v1/chat/completions');
-          console.log('   - Models: GET /v1/models');
-          console.log('   - Health: GET /health');
-          resolve();
+    app.post('/v1/chat/completions', async (req, res) => {
+      try {
+        const response = await mlxServer.chat(req.body);
+        res.json(response);
+      } catch (error) {
+        res.status(500).json({
+          error: {
+            message: `MLX error: ${error}`,
+            type: 'mlx_error',
+          },
         });
+      }
+    });
+
+    app.get('/health', async (req, res) => {
+      try {
+        const health = await mlxServer.getHealth();
+        res.json(health);
+      } catch (error) {
+        res.status(500).json({ error: `Health check failed: ${error}` });
+      }
+    });
+
+    app.get('/v1/models', (req, res) => {
+      try {
+        const models = mlxServer.getAvailableModels();
+        res.json({
+          object: 'list',
+          data: models.map((model) => ({
+            id: model.id,
+            object: 'model',
+            created: Date.now(),
+            owned_by: 'cortex-os-mlx',
+            permission: [],
+            root: model.id,
+            parent: null,
+          })),
+        });
+      } catch (error) {
+        res.status(500).json({ error: `Models list failed: ${error}` });
+      }
+    });
+
+    await new Promise<void>((resolve) => {
+      app.listen(p, '127.0.0.1', () => {
+        console.log(`🚀 MLX MCP server running on http://127.0.0.1:${p}`);
+        console.log('   - Chat: POST /v1/chat/completions');
+        console.log('   - Models: GET /v1/models');
+        console.log('   - Health: GET /health');
+        resolve();
       });
-    } catch (error) {
-      console.error('❌ Failed to start MLX HTTP server:', error);
-    }
+    });
   }
 
   function getMLXServer(): MLXMcpServer {

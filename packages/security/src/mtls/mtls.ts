@@ -3,10 +3,10 @@
  * @description Mutual TLS implementation for secure service-to-service communication
  */
 
-import * as fs from 'fs/promises';
 import * as tls from 'tls';
 import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import { MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
+import { loadCertificates, createClientSocket } from './helpers.ts';
 
 export async function loadCertificates(
   config: MTLSConfig,
@@ -111,8 +111,7 @@ export class MTLSClient {
         });
 
         const certs = await loadCertificates(this.config);
-        const options = createConnectionOptions(host, port, this.config, certs);
-        this.tlsSocket = await establishTlsConnection(options, host, port);
+        this.tlsSocket = await createClientSocket(host, port, this.config, certs);
       } catch (error) {
         logWithSpan('error', 'Failed to establish mTLS connection', {
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -259,16 +258,13 @@ export class MTLSServer {
           port,
         });
 
-        // Load certificates
-        const caCertificate = await fs.readFile(this.config.caCertificate, 'utf8');
-        const serverCertificate = await fs.readFile(this.config.clientCertificate, 'utf8');
-        const serverKey = await fs.readFile(this.config.clientKey, 'utf8');
+        const certs = await loadCertificates(this.config);
 
         return new Promise((resolve, reject) => {
           this.server = tls.createServer({
-            ca: caCertificate,
-            cert: serverCertificate,
-            key: serverKey,
+            ca: certs.ca,
+            cert: certs.cert,
+            key: certs.key,
             requestCert: true,
             rejectUnauthorized: this.config.rejectUnauthorized,
             minVersion: this.config.minVersion,

@@ -7,6 +7,15 @@
  */
 
 import {
+  configureLLM,
+  generate as llmGenerate,
+  checkProviderHealth,
+  getProvider,
+  getModel,
+  shutdown as shutdownLLM,
+  type LLMState,
+} from './llm-bridge.js';
+import {
   EmbeddingAdapter,
   RerankerAdapter,
   createEmbeddingAdapter,
@@ -80,7 +89,12 @@ export interface GenerationOptions {
  * Provides LLM generation, embeddings, semantic search, and RAG workflows
  */
 export class AICoreCapabilities {
+<<<<<<< HEAD
   private llmBridge!: LLMBridge;
+=======
+
+  private llmState: LLMState;
+>>>>>>> origin/codex/add-security-checks-to-ci-and-pre-push
   private embeddingAdapter?: EmbeddingAdapter;
   private rerankerAdapter?: RerankerAdapter;
   private config: AICoreConfig;
@@ -95,8 +109,8 @@ export class AICoreCapabilities {
    * Initialize AI components based on configuration
    */
   private initializeComponents(): void {
-    // Initialize LLM Bridge
-    this.llmBridge = new LLMBridge({
+    // Initialize LLM state
+    this.llmState = configureLLM({
       provider: this.config.llm.provider,
       endpoint: this.config.llm.endpoint || '',
       model: this.config.llm.model,
@@ -121,7 +135,7 @@ export class AICoreCapabilities {
     const systemPrompt = options.systemPrompt;
     const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
 
-    return this.llmBridge.generate(fullPrompt, {
+    return llmGenerate(this.llmState, fullPrompt, {
       temperature: options.temperature || this.config.llm.temperature || 0.7,
       maxTokens: options.maxTokens || this.config.llm.maxTokens || 512,
     });
@@ -278,12 +292,12 @@ export class AICoreCapabilities {
     features: string[];
   }> {
     // Check LLM health
-    const llmHealth = await this.llmBridge.checkProviderHealth();
+    const llmHealth = await checkProviderHealth(this.llmState);
 
     const capabilities = {
       llm: {
-        provider: this.llmBridge.getProvider(),
-        model: this.llmBridge.getModel(),
+        provider: getProvider(this.llmState),
+        model: getModel(this.llmState),
         healthy: llmHealth.healthy,
       },
       embedding: this.embeddingAdapter
@@ -324,6 +338,10 @@ export class AICoreCapabilities {
     // Clear knowledge base
     await this.clearKnowledge();
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/codex/add-security-checks-to-ci-and-pre-push
     // Cleanup embedding adapter resources
     if (this.embeddingAdapter && typeof this.embeddingAdapter.shutdown === 'function') {
       await this.embeddingAdapter.shutdown();
@@ -334,9 +352,16 @@ export class AICoreCapabilities {
       await this.rerankerAdapter.shutdown();
     }
 
+<<<<<<< HEAD
     // Cleanup LLM bridge resources
     if (this.llmBridge && typeof this.llmBridge.shutdown === 'function') {
       await this.llmBridge.shutdown();
+=======
+    // Cleanup LLM resources
+    if (this.llmState) {
+      await shutdownLLM(this.llmState);
+
+>>>>>>> origin/codex/add-security-checks-to-ci-and-pre-push
     }
   }
 
@@ -410,6 +435,12 @@ export class AICoreCapabilities {
 export const createAICapabilities = (
   preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
+  const rerankerProvider = process.env.RERANKER_PROVIDER as
+    | 'transformers'
+    | 'local'
+    | 'mock'
+    | undefined;
+
   const configs: Record<string, AICoreConfig> = {
     full: {
       llm: {
@@ -422,9 +453,6 @@ export const createAICapabilities = (
       embedding: {
         provider: 'sentence-transformers',
         dimensions: 1024,
-      },
-      reranker: {
-        provider: 'mock', // Use mock since Qwen reranker is incomplete
       },
       rag: {
         topK: 5,
@@ -450,9 +478,6 @@ export const createAICapabilities = (
         provider: 'sentence-transformers',
         dimensions: 1024,
       },
-      reranker: {
-        provider: 'mock',
-      },
       rag: {
         topK: 8,
         similarityThreshold: 0.25,
@@ -460,6 +485,12 @@ export const createAICapabilities = (
       },
     },
   };
+
+  if (rerankerProvider) {
+    const reranker = { provider: rerankerProvider } as AICoreConfig['reranker'];
+    if (configs.full.embedding) configs.full.reranker = reranker;
+    if (configs['rag-focused'].embedding) configs['rag-focused'].reranker = reranker;
+  }
 
   return new AICoreCapabilities(configs[preset]);
 };

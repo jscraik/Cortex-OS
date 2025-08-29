@@ -1,23 +1,17 @@
 /**
- * @file apps/cortex-os/packages/orchestration/src/prp-integration.ts
- * @description Integration bridge between legacy OrchestrationEngine and new PRP neural orchestration
- * @maintainer @jamiescottcraik
- * @version 1.0.0
- * @status active
+ * Factory functions for PRP-based task orchestration
  */
-
 import { EventEmitter } from 'events';
 import { v4 as uuid } from 'uuid';
 import winston from 'winston';
-import { PRPOrchestrator } from '@cortex-os/prp-runner';
+
+import { createPRPOrchestrator, type PRPOrchestrator } from '@cortex-os/prp-runner';
 import type { PRPState } from '@cortex-os/kernel';
+
 import type {
   Agent,
-  ExecutionPlan,
   OrchestrationConfig,
-  OrchestrationEvent,
   OrchestrationResult,
-  OrchestrationState,
   PlanningContext,
   Task,
 } from './types.js';
@@ -58,7 +52,7 @@ export class PRPOrchestrationEngine extends EventEmitter {
     });
 
     // Initialize PRP orchestrator
-    this.prpOrchestrator = new PRPOrchestrator();
+    this.prpOrchestrator = createPRPOrchestrator();
     this.neuronRegistry = new Map();
 
     // Register all neurons
@@ -99,35 +93,78 @@ export class PRPOrchestrationEngine extends EventEmitter {
       // Convert task to PRP blueprint
       const blueprint = this.taskToPRPBlueprint(task, availableAgents, context);
 
-      // Initialize orchestration state
-      const state = this.initializeOrchestrationState(
-        orchestrationId,
-        task,
-        availableAgents,
-        context,
-      );
+export interface PRPEngine {
+  config: OrchestrationConfig;
+  logger: winston.Logger;
+  prp: PRPOrchestrator;
+  active: Map<string, Promise<OrchestrationResult>>;
+  emitter: EventEmitter;
+}
 
-      // Execute PRP cycle
-      const orchestrationPromise = this.executePRPCycle(blueprint, state);
-      this.activeOrchestrations.set(orchestrationId, orchestrationPromise);
+export function createEngine(config: Partial<OrchestrationConfig> = {}): PRPEngine {
+  const defaults: OrchestrationConfig = {
+    maxConcurrentOrchestrations: 10,
+    defaultStrategy: 'neural_prp',
+    enableMultiAgentCoordination: true,
+    enableAdaptiveDecisions: true,
+    planningTimeout: 300000,
+    executionTimeout: 1800000,
+    fallbackStrategy: 'sequential',
+    qualityThreshold: 0.8,
+    performanceMonitoring: true,
+  } as OrchestrationConfig;
 
-      const result = await orchestrationPromise;
+  const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+    transports: [new winston.transports.Console()],
+  });
 
-      // Emit completion event
-      this.emit('orchestrationCompleted', {
+  return {
+    config: { ...defaults, ...config },
+    logger,
+    prp: new PRPOrchestrator(),
+    active: new Map(),
+    emitter: new EventEmitter(),
+  };
+}
+
+export async function orchestrateTask(
+  engine: PRPEngine,
+  task: Task,
+  agents: Agent[],
+  context: Partial<PlanningContext> = {},
+  neurons: any[] = [],
+): Promise<OrchestrationResult> {
+  if (engine.active.size >= engine.config.maxConcurrentOrchestrations)
+    throw new Error('Maximum concurrent orchestrations reached');
+
+  const id = uuid();
+  neurons.forEach((n) => engine.prp.registerNeuron?.(n));
+
+  const blueprint = {
+    id,
+    title: task.title,
+    requirements: task.requiredCapabilities,
+    context,
+    agents,
+  };
+
+  const start = Date.now();
+  const run = engine.prp
+    .executePRPCycle(blueprint)
+    .then((prp) => {
+      const result = toResult(id, task.id, prp, start);
+      engine.emitter.emit('orchestrationCompleted', {
         type: 'task_completed',
         taskId: task.id,
         data: result,
         timestamp: new Date(),
-        source: 'PRPOrchestrationEngine',
-      } as OrchestrationEvent);
-
-      return result;
-    } catch (error) {
-      this.logger.error(`PRP orchestration failed for task ${task.id}`, {
-        error: error instanceof Error ? error.message : String(error),
-        orchestrationId,
+        source: 'PRPEngine',
       });
+      return result;
+    })
+    .finally(() => engine.active.delete(id));
 
       return {
         orchestrationId,
@@ -459,25 +496,37 @@ export class PRPOrchestrationEngine extends EventEmitter {
     const blockerPenalty = totalBlockers * 0.2;
     const majorPenalty = totalMajors * 0.05;
 
-    return Math.max(0, 1.0 - blockerPenalty - majorPenalty);
-  }
 
-  private extractPhaseDuration(prpResult: PRPState, phase: string): number {
-    // Placeholder - in real implementation, track phase durations
-    const estimatedDurations: Record<string, number> = {
-      strategy: 300000, // 5 minutes
-      build: 900000, // 15 minutes
-      evaluation: 300000, // 5 minutes
-    };
-    return estimatedDurations[phase] || 0;
-  }
+  engine.active.set(id, run);
+  return run;
+}
 
-  /**
-   * Clean up all resources
-   */
-  async cleanup(): Promise<void> {
-    this.orchestrationStates.clear();
-    this.activeOrchestrations.clear();
-    this.logger.info('PRP orchestration engine cleanup completed');
-  }
+function toResult(id: string, taskId: string, prp: any, start: number): OrchestrationResult {
+  return {
+    orchestrationId: id,
+    taskId,
+    success: prp.phase === 'completed',
+    plan: null,
+    executionResults: prp.outputs || {},
+    coordinationResults: {
+      strategy: prp.metadata?.cerebrum?.decision,
+      reasoning: prp.metadata?.cerebrum?.reasoning,
+      neuronOutputs: prp.outputs,
+      validationResults: prp.validationResults,
+    },
+    decisions: [],
+    performance: {
+      totalDuration: Date.now() - start,
+      planningTime: 0,
+      executionTime: 0,
+      efficiency: 1,
+      qualityScore: 1,
+    },
+    errors: [],
+    timestamp: new Date(),
+  };
+}
+
+export async function cleanup(engine: PRPEngine): Promise<void> {
+  engine.active.clear();
 }

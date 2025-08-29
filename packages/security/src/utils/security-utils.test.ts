@@ -1,13 +1,5 @@
-
-import { describe, it, expect, vi, beforeAll } from 'vitest';
-vi.mock(
-  '@cortex-os/telemetry',
-  () => ({
-    withSpan: vi.fn((_name: string, fn: (...args: unknown[]) => unknown) => fn()),
-    logWithSpan: vi.fn(),
-  }),
-  { virtual: true },
-);
+import { describe, it, expect, vi } from 'vitest';
+vi.mock('@cortex-os/telemetry');
 import forge from 'node-forge';
 import {
   generateNonce,
@@ -40,6 +32,7 @@ describe('generateNonce', () => {
 });
 
 describe('isCertificateExpired', () => {
+  vi.useFakeTimers();
   const validCert = `-----BEGIN CERTIFICATE-----
 MIIBpzCCARCgAwIBAgIUEBg4HaIqwHHPmviDSN5sDG63AcwwDQYJKoZIhvcNAQEL
 BQAwDzENMAsGA1UEAwwEdGVzdDAgFw0yNTA4MjgwNjE3MjBaGA8yMTI1MDgwNTA2
@@ -64,10 +57,13 @@ ozHeorRz4QAb+p1vUVGTroH0XMHgJAEw/05UcQJwV/zvbsJeLoXi6JM=
 -----END CERTIFICATE-----`;
 
   it('detects valid certificate', () => {
+    vi.setSystemTime(new Date('2025-08-29T00:00:00Z'));
     expect(isCertificateExpired(validCert)).toBe(false);
   });
 
   it('detects expired certificate', () => {
+    vi.setSystemTime(new Date('2025-08-30T01:00:00Z'));
     expect(isCertificateExpired(expiredCert)).toBe(true);
   });
+  vi.useRealTimers();
 });

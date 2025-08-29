@@ -23,11 +23,12 @@ This package implements a **polyglot architecture**:
 
 ## Python Agents
 
-Located in `../python-agents/src/`:
+Located in `../python-agents/` (import modules via the `src` package):
 
-1. **LangGraphStateEngine** (`langgraph_engine.py`): State-based workflows with persistent checkpointing
-2. **CrewAICoordinator** (`crewai_coordinator.py`): Role-based swarm intelligence with specialized agents
-3. **AgentBridge** (`agent_bridge.py`): IPC bridge for Python-TypeScript communication
+1. **LangGraphStateEngine** (`src/langgraph_engine.py`): State-based workflows with persistent checkpointing
+2. **CrewAICoordinator** (`src/crewai_coordinator.py`): Role-based swarm intelligence with specialized agents
+3. **AutoGenConversationEngine** (`src/autogen_conversation.py`): Conversational AI for complex problem-solving
+4. **AgentBridge** (`src/agent_bridge.py`): IPC bridge for Python-TypeScript communication
 
 ## Key Features
 
@@ -66,3 +67,18 @@ await engine.cleanup(); // Shuts down Python bridge
 ```
 
 This package is now **production-ready** for real multi-agent orchestration workflows.
+
+## Configuration
+
+The `PRPOrchestrationEngine` supports the following options:
+
+- `maxConcurrentOrchestrations`
+- `defaultStrategy`
+- `enableMultiAgentCoordination`
+- `enableAdaptiveDecisions`
+- `planningTimeout`
+- `executionTimeout`
+- `qualityThreshold`
+- `performanceMonitoring`
+
+The deprecated `fallbackStrategy` and `fallbackStrategies` options have been removed.
