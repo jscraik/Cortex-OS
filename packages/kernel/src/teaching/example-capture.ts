@@ -114,6 +114,7 @@ export class ExampleCaptureSystem {
     originalValidation: { passed: boolean; blockers: string[]; majors: string[] },
     userOverride: { passed: boolean; reasoning: string; adjustments: Record<string, unknown> },
     finalOutcome: { success: boolean; feedback: string },
+    deterministic = false,
   ): CapturedExample {
     return this.captureExample(
       'validation',
@@ -139,6 +140,7 @@ export class ExampleCaptureSystem {
       {
         tags: ['validation', 'override', prpState.phase],
       },
+      deterministic,
     );
   }
 
@@ -152,7 +154,9 @@ export class ExampleCaptureSystem {
       description: string;
       changes: Record<string, unknown>;
     },
-    outcome: { improved: boolean; metrics: Record<string, unknown> },
+
+    outcome: { improved: boolean; metrics: any },
+    deterministic = false,
   ): CapturedExample {
     return this.captureExample(
       'workflow',
@@ -175,6 +179,7 @@ export class ExampleCaptureSystem {
       {
         tags: ['workflow', modification.type, prpState.phase],
       },
+      deterministic,
     );
   }
 
