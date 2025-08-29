@@ -1,3 +1,5 @@
+import { cosine, buildAverageEmb } from '../../../../src/lib/vector-math';
+
 export function fusionRerank(
   queryEmb: number[],
   docs: { id: string; text: string; emb: number[] }[],
@@ -8,6 +10,7 @@ export function fusionRerank(
   }
   if (!Array.isArray(docs)) throw new TypeError('docs must be an array');
   if (docs.length === 0) return [];
+
 
   const dim = queryEmb.length;
   for (const d of docs) {
@@ -38,4 +41,5 @@ export function fusionRerank(
   });
 
   return scored.sort((a, b) => b.score - a.score);
+
 }

@@ -12,13 +12,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PRPOrchestrator } from '../orchestrator.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 describe('LLM Integration - TDD Implementation', () => {
   let orchestrator: PRPOrchestrator;
 
   beforeEach(() => {
-    orchestrator = new PRPOrchestrator();
+    orchestrator = createPRPOrchestrator();
   });
 
   describe('LLM Configuration', () => {

@@ -1,5 +1,8 @@
-import { spawn } from 'child_process';
+
 import type { ChatMessage, GenerationConfig, Generator } from './index';
+import { runProcess } from '../../../../src/lib/run-process.js';
+
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Model specification for generation backends
@@ -126,41 +129,36 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const child = spawn('ollama', ['generate', model.model, prompt], {
-        stdio: ['pipe', 'pipe', 'pipe'],
+
+    try {
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model.model,
+          prompt,
+          stream: false,
+          options: {
+            temperature: config.temperature,
+            top_p: config.topP,
+            num_predict: config.maxTokens,
+          },
+        }),
+        signal: AbortSignal.timeout(this.timeout),
       });
 
-      let stdout = '';
-      let stderr = '';
+      if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      }
 
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
+      const result = await response.json();
+      return result.response || '';
+    } catch (error) {
+      throw new Error(`Ollama generation failed: ${error}`);
+    }
 
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      const timeoutId = setTimeout(() => {
-        child.kill();
-        reject(new Error(`Ollama generation timed out after ${this.timeout}ms`));
-      }, this.timeout);
-
-      child.on('close', (code) => {
-        clearTimeout(timeoutId);
-        if (code !== 0) {
-          reject(new Error(`Ollama failed with code ${code}: ${stderr}`));
-          return;
-        }
-        resolve(stdout.trim());
-      });
-
-      child.on('error', (err) => {
-        clearTimeout(timeoutId);
-        reject(new Error(`Failed to spawn Ollama: ${err}`));
-      });
-    });
   }
 
   /**
@@ -209,64 +207,21 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const pythonScript = this.getMLXPythonScript();
-      const child = spawn('python3', ['-c', pythonScript], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      const timeoutId = setTimeout(() => {
-        child.kill();
-        reject(new Error(`MLX generation timed out after ${this.timeout}ms`));
-      }, this.timeout);
-
-      child.on('close', (code) => {
-        clearTimeout(timeoutId);
-        if (code !== 0) {
-          reject(new Error(`MLX failed with code ${code}: ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.error) {
-            reject(new Error(`MLX error: ${result.error}`));
-          } else {
-            resolve(result.text || '');
-          }
-        } catch (err) {
-          reject(new Error(`Failed to parse MLX output: ${err}`));
-        }
-      });
-
-      child.on('error', (err) => {
-        clearTimeout(timeoutId);
-        reject(new Error(`Failed to spawn MLX process: ${err}`));
-      });
-
-      // Send input data
-      const input = {
-        model: model.model,
-        prompt,
-        max_tokens: config.maxTokens,
-        temperature: config.temperature,
-        top_p: config.topP,
-      };
-
-      child.stdin?.write(JSON.stringify(input));
-      child.stdin?.end();
+    const pythonScript = this.getMLXPythonScript();
+    const input = JSON.stringify({
+      model: model.model,
+      prompt,
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
+      top_p: config.topP,
     });
+    const result = await runProcess<{ text?: string; error?: string }>(
+      'python3',
+      ['-c', pythonScript],
+      { input, timeoutMs: this.timeout },
+    );
+    if (result.error) throw new Error(`MLX error: ${result.error}`);
+    return result.text || '';
   }
 
   /**
@@ -305,52 +260,8 @@ export class MultiModelGenerator implements Generator {
    * Get Python script for MLX generation
    */
   private getMLXPythonScript(): string {
-    return `
-import json
-import sys
-import os
-
-try:
-    # Try to import MLX
-    import mlx.core as mx
-    from mlx_lm import load, generate
-    
-    # Read input
-    input_data = json.loads(sys.stdin.read())
-    model_path = input_data['model']
-    prompt = input_data['prompt']
-    max_tokens = input_data.get('max_tokens', 2048)
-    temperature = input_data.get('temperature', 0.7)
-    top_p = input_data.get('top_p', 0.9)
-    
-    # Load model
-    model, tokenizer = load(model_path)
-    
-    # Generate response
-    response = generate(
-        model,
-        tokenizer,
-        prompt=prompt,
-        temp=temperature,
-        top_p=top_p,
-        max_tokens=max_tokens
-    )
-    
-    # Extract generated text (remove the prompt)
-    generated_text = response[len(prompt):].strip()
-    
-    result = {"text": generated_text}
-    print(json.dumps(result))
-    
-except ImportError:
-    result = {"error": "MLX not available - install with: pip install mlx-lm"}
-    print(json.dumps(result))
-    sys.exit(1)
-except Exception as e:
-    result = {"error": str(e)}
-    print(json.dumps(result))
-    sys.exit(1)
-`;
+    const scriptPath = path.join(packageRoot, 'python', 'mlx_generate.py');
+    return readFileSync(scriptPath, 'utf8');
   }
 
   /**

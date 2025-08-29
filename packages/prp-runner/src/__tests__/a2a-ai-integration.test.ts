@@ -7,13 +7,16 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  A2AAIAgent,
-  a2aAIAgent,
-  createA2AAIAgent,
-  isA2ACompatible,
-  A2A_AI_SKILLS,
-} from '../a2a-ai-agent.js';
+
+vi.mock(
+  '@cortex-os/a2a',
+  () => ({
+    TransportProtocol: { HTTP: 'HTTP' },
+  }),
+  { virtual: true },
+);
+
+import { A2AAIAgent, a2aAIAgent, createA2AAIAgent, A2A_AI_SKILLS } from '../a2a-ai-agent.js';
 
 // Mock A2A types since package might not be available in test environment
 const mockA2AMessage = {
@@ -85,6 +88,10 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       expect(a2aAIAgent.getStatus().agent_id).toBe('cortex-asbr-ai-agent');
     });
 
+    it('should initialize without compatibility checks', () => {
+      expect(() => createA2AAIAgent('nocheck-agent')).not.toThrow();
+    });
+
     it('should create agent card with valid A2A structure', () => {
       const agentCard = agent.getAgentCard();
 
@@ -98,7 +105,8 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       // Validate interface
       expect(agentCard.interface).toHaveProperty('transport');
       expect(agentCard.interface).toHaveProperty('uri');
-      expect(agentCard.interface.fallback).toBeInstanceOf(Array);
+      expect(agentCard.interface.uri).toBe('http://127.0.0.1:8081/a2a');
+      expect(agentCard.interface.fallback).toBeUndefined();
 
       // Validate skills
       expect(agentCard.skills).toBeInstanceOf(Array);
@@ -290,12 +298,6 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
       expect(typeof status.capabilities_healthy).toBe('boolean');
       expect(typeof status.skills_available).toBe('number');
       expect(status.skills_available).toBeGreaterThan(0);
-    });
-
-    it('should check A2A compatibility', () => {
-      // This test will vary based on whether A2A package is actually available
-      const isCompatible = isA2ACompatible();
-      expect(typeof isCompatible).toBe('boolean');
     });
   });
 
