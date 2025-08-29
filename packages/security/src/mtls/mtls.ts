@@ -3,10 +3,10 @@
  * @description Mutual TLS implementation for secure service-to-service communication
  */
 
-import * as fs from 'fs/promises';
 import * as tls from 'tls';
 import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import { MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
+import { loadCertificates, createClientSocket } from './helpers.ts';
 
 /**
  * mTLS Client for secure service-to-service communication
@@ -39,60 +39,8 @@ export class MTLSClient {
           serverName: this.config.serverName,
         });
 
-        // Load certificates
-        const caCertificate = await fs.readFile(this.config.caCertificate, 'utf8');
-        const clientCertificate = await fs.readFile(this.config.clientCertificate, 'utf8');
-        const clientKey = await fs.readFile(this.config.clientKey, 'utf8');
-
-        return new Promise((resolve, reject) => {
-          this.tlsSocket = tls.connect({
-            host,
-            port,
-            ca: caCertificate,
-            cert: clientCertificate,
-            key: clientKey,
-            servername: this.config.serverName,
-            rejectUnauthorized: this.config.rejectUnauthorized,
-            minVersion: this.config.minVersion,
-            maxVersion: this.config.maxVersion,
-            requestCert: true,
-            checkServerIdentity: (host, cert) => {
-              // Custom server identity check
-              if (this.config.serverName && cert.subject.CN !== this.config.serverName) {
-                return new Error(
-                  `Server certificate CN mismatch: expected ${this.config.serverName}, got ${cert.subject.CN}`,
-                );
-              }
-              return tls.checkServerIdentity(host, cert);
-            },
-          });
-
-          this.tlsSocket.on('secureConnect', () => {
-            logWithSpan('info', 'mTLS connection established successfully', {
-              host,
-              port,
-              authorized: this.tlsSocket?.authorized,
-              authorizationError: this.tlsSocket?.authorizationError?.message,
-            });
-            resolve(void 0);
-          });
-
-          this.tlsSocket.on('error', (error) => {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            logWithSpan('error', 'mTLS connection failed', {
-              error: errorMessage,
-              host,
-              port,
-            });
-            reject(
-              new MTLSError(`mTLS connection failed: ${errorMessage}`, undefined, {
-                host,
-                port,
-                originalError: error,
-              }),
-            );
-          });
-        });
+        const certs = await loadCertificates(this.config);
+        this.tlsSocket = await createClientSocket(host, port, this.config, certs);
       } catch (error) {
         logWithSpan('error', 'Failed to establish mTLS connection', {
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -237,16 +185,13 @@ export class MTLSServer {
           port,
         });
 
-        // Load certificates
-        const caCertificate = await fs.readFile(this.config.caCertificate, 'utf8');
-        const serverCertificate = await fs.readFile(this.config.clientCertificate, 'utf8');
-        const serverKey = await fs.readFile(this.config.clientKey, 'utf8');
+        const certs = await loadCertificates(this.config);
 
         return new Promise((resolve, reject) => {
           this.server = tls.createServer({
-            ca: caCertificate,
-            cert: serverCertificate,
-            key: serverKey,
+            ca: certs.ca,
+            cert: certs.cert,
+            key: certs.key,
             requestCert: true,
             rejectUnauthorized: this.config.rejectUnauthorized,
             minVersion: this.config.minVersion,
