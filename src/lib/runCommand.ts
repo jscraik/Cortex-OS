@@ -33,8 +33,17 @@ export async function runCommand(
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     const timer = setTimeout(() => {
-      child.kill('SIGTERM');
-      reject(new Error(`Process timed out after ${timeoutMs}ms`));
+      // Wait for a grace period before sending SIGKILL
+      const GRACE_PERIOD_MS = 5000;
+      const graceTimer = setTimeout(() => {
+        // If the process is still running, send SIGKILL
+        if (!child.killed) {
+          child.kill('SIGKILL');
+        }
+        reject(new Error(`Process timed out after ${timeoutMs}ms (SIGTERM), and was forcefully killed after ${GRACE_PERIOD_MS}ms`));
+      }, GRACE_PERIOD_MS);
+      // If the process exits during the grace period, clear the grace timer
+      child.once('exit', () => clearTimeout(graceTimer));
     }, timeoutMs);
     execPromise.finally(() => clearTimeout(timer));
   });
