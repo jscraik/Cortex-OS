@@ -126,41 +126,34 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const child = spawn('ollama', ['generate', model.model, prompt], {
-        stdio: ['pipe', 'pipe', 'pipe'],
+    try {
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model.model,
+          prompt,
+          stream: false,
+          options: {
+            temperature: config.temperature,
+            top_p: config.topP,
+            num_predict: config.maxTokens,
+          },
+        }),
+        signal: AbortSignal.timeout(this.timeout),
       });
 
-      let stdout = '';
-      let stderr = '';
+      if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      }
 
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      const timeoutId = setTimeout(() => {
-        child.kill();
-        reject(new Error(`Ollama generation timed out after ${this.timeout}ms`));
-      }, this.timeout);
-
-      child.on('close', (code) => {
-        clearTimeout(timeoutId);
-        if (code !== 0) {
-          reject(new Error(`Ollama failed with code ${code}: ${stderr}`));
-          return;
-        }
-        resolve(stdout.trim());
-      });
-
-      child.on('error', (err) => {
-        clearTimeout(timeoutId);
-        reject(new Error(`Failed to spawn Ollama: ${err}`));
-      });
-    });
+      const result = await response.json();
+      return result.response || '';
+    } catch (error) {
+      throw new Error(`Ollama generation failed: ${error}`);
+    }
   }
 
   /**
