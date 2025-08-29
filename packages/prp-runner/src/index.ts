@@ -6,7 +6,22 @@
  * @status TDD-COMPLIANT
  */
 
-export { PRPOrchestrator } from './orchestrator.js';
-export { LLMBridge } from './llm-bridge.js';
-export type { Neuron, NeuronResult, ExecutionMetrics } from './orchestrator.js';
-export type { LLMConfig } from './llm-bridge.js';
+export { createPRPOrchestrator, PRPOrchestrator } from './orchestrator.js';
+export type {
+  PRPOrchestrator as PRPOrchestratorType,
+  Neuron,
+  NeuronResult,
+  ExecutionMetrics,
+} from './orchestrator.js';
+
+export {
+  configureLLM,
+  generate,
+  getProvider,
+  getModel,
+  getMLXAdapter,
+  listMLXModels,
+  checkProviderHealth,
+  shutdown,
+} from './llm-bridge.js';
+export type { LLMConfig, LLMState, LLMGenerateOptions } from './llm-bridge.js';

@@ -1,19 +1,23 @@
 /**
  * @file packages/prp-runner/src/orchestrator.ts
- * @description TDD-driven PRP Orchestrator - Minimal implementation to pass tests
+ * @description Factory-based PRP orchestrator using closure state
  * @maintainer @jamiescottcraik
- * @version 1.0.0
- * @status TDD-GREEN-PHASE
- *
- * TDD Notes:
- * - This implementation follows strict Red-Green-Refactor cycle
- * - Every method exists to make a specific test pass
- * - No functionality without corresponding test
- * - LLM integration driven by failing tests in llm-integration.test.ts
- * - 85% coverage enforced
+ * @version 1.1.0
  */
 
-import { LLMBridge, LLMConfig } from './llm-bridge.js';
+import {
+  configureLLM as configureLLMBridge,
+  generate as llmGenerate,
+  getProvider,
+  getModel,
+  getMLXAdapter,
+  listMLXModels,
+  checkProviderHealth,
+  shutdown as shutdownLLM,
+  type LLMConfig,
+  type LLMState,
+  type LLMGenerateOptions,
+} from './llm-bridge.js';
 
 // Minimal interfaces driven by tests
 export interface Neuron {
@@ -45,118 +49,112 @@ export interface ExecutionMetrics {
 }
 
 /**
- * PRPOrchestrator - TDD Implementation
- *
- * This class is built test-first following strict TDD principles:
- * 1. Each method exists because a test demands it
- * 2. Implementation is minimal to make tests pass
- * 3. No speculative features without tests
+ * createPRPOrchestrator - returns orchestrator API with closure-based state
  */
-export class PRPOrchestrator {
-  private neurons: Map<string, Neuron> = new Map();
-  private llmConfig?: LLMConfig;
-  private llmBridge?: LLMBridge;
+export const createPRPOrchestrator = () => {
+  const neurons: Map<string, Neuron> = new Map();
+  let llmState: LLMState | undefined;
+  let llmBridge:
+    | {
+        getProvider: () => string;
+        getModel: () => string;
+        getMLXAdapter: () => any;
+        listMLXModels: () => Promise<any>;
+        checkProviderHealth: () => Promise<{ healthy: boolean; message: string }>;
+        generate: (prompt: string, options?: LLMGenerateOptions) => Promise<string>;
+        shutdown: () => Promise<void>;
+      }
+    | undefined;
 
-  constructor() {
-    // Minimal constructor - tests require instance creation
-  }
+  const buildLLMBridge = (state: LLMState) => ({
+    getProvider: () => getProvider(state),
+    getModel: () => getModel(state),
+    getMLXAdapter: () => getMLXAdapter(state),
+    listMLXModels: () => listMLXModels(state),
+    checkProviderHealth: () => checkProviderHealth(state),
+    generate: (prompt: string, options: LLMGenerateOptions = {}) =>
+      llmGenerate(state, prompt, options),
+    shutdown: () => shutdownLLM(state),
+  });
 
-  /**
-   * Get count of registered neurons
-   * Driven by test: "should start with zero neurons registered"
-   */
-  getNeuronCount(): number {
-    return this.neurons.size;
-  }
+  return {
+    /** Get count of registered neurons */
+    getNeuronCount(): number {
+      return neurons.size;
+    },
 
-  /**
-   * Register a neuron with duplicate checking
-   * Driven by tests: "should register a single neuron", "should prevent duplicate neuron IDs"
-   */
-  registerNeuron(neuron: Neuron): void {
-    if (this.neurons.has(neuron.id)) {
-      throw new Error(`Neuron with ID ${neuron.id} already registered`);
-    }
-    this.neurons.set(neuron.id, neuron);
-  }
+    /** Register a neuron with duplicate checking */
+    registerNeuron(neuron: Neuron): void {
+      if (neurons.has(neuron.id)) {
+        throw new Error(`Neuron with ID ${neuron.id} already registered`);
+      }
+      neurons.set(neuron.id, neuron);
+    },
 
-  /**
-   * Get neurons filtered by phase
-   * Driven by test: "should list registered neurons by phase"
-   */
-  getNeuronsByPhase(phase: 'strategy' | 'build' | 'evaluation'): Neuron[] {
-    return Array.from(this.neurons.values()).filter((neuron) => neuron.phase === phase);
-  }
+    /** Get neurons filtered by phase */
+    getNeuronsByPhase(phase: 'strategy' | 'build' | 'evaluation'): Neuron[] {
+      return Array.from(neurons.values()).filter((neuron) => neuron.phase === phase);
+    },
 
-  /**
-   * Configure LLM provider
-   * Driven by test: "should configure [MLX|Ollama] provider"
-   */
-  configureLLM(config: LLMConfig): void {
-    this.llmConfig = config;
-    this.llmBridge = new LLMBridge(config);
-  }
+    /** Configure LLM provider */
+    configureLLM(config: LLMConfig): void {
+      llmState = configureLLMBridge(config);
+      llmBridge = buildLLMBridge(llmState);
+    },
 
-  /**
-   * Get LLM configuration
-   * Driven by test: "should configure [MLX|Ollama] provider"
-   */
-  getLLMConfig(): LLMConfig | undefined {
-    return this.llmConfig;
-  }
+    /** Get LLM configuration */
+    getLLMConfig(): LLMConfig | undefined {
+      return llmState?.config;
+    },
 
-  /**
-   * Create LLM bridge
-   * Driven by test: "should create LLM bridge with [provider] configuration"
-   */
-  createLLMBridge(): LLMBridge {
-    if (!this.llmBridge) {
-      throw new Error('LLM must be configured before creating bridge');
-    }
-    return this.llmBridge;
-  }
+    /** Create LLM bridge */
+    createLLMBridge() {
+      if (!llmBridge) {
+        throw new Error('LLM must be configured before creating bridge');
+      }
+      return llmBridge;
+    },
 
-  /**
-   * Execute PRP cycle with LLM integration
-   * Enhanced to support LLM-powered neurons
-   */
-  async executePRPCycle(blueprint: any): Promise<any> {
-    if (this.neurons.size === 0) {
-      throw new Error('No neurons registered');
-    }
+    /** Execute PRP cycle with optional LLM integration */
+    async executePRPCycle(blueprint: any): Promise<any> {
+      if (neurons.size === 0) {
+        throw new Error('No neurons registered');
+      }
 
-    // Check if any neurons require LLM and configuration is missing
-    const llmNeurons = Array.from(this.neurons.values()).filter((n) => n.requiresLLM);
-    if (llmNeurons.length > 0 && !this.llmConfig) {
-      throw new Error('LLM configuration required for LLM-powered neurons');
-    }
+      const llmNeurons = Array.from(neurons.values()).filter((n) => n.requiresLLM);
+      if (llmNeurons.length > 0 && !llmState) {
+        throw new Error('LLM configuration required for LLM-powered neurons');
+      }
 
-    // Create execution context with LLM bridge
-    const context: any = {
-      workingDirectory: process.cwd(),
-      projectRoot: process.cwd(),
-      outputDirectory: './dist',
-      tempDirectory: './tmp',
-      environmentVariables: process.env,
-      timeout: 30000,
-      llmBridge: this.llmBridge,
-    };
+      const context: any = {
+        workingDirectory: process.cwd(),
+        projectRoot: process.cwd(),
+        outputDirectory: './dist',
+        tempDirectory: './tmp',
+        environmentVariables: process.env,
+        timeout: 30000,
+        llmBridge,
+      };
 
-    const outputs: any = {};
+      const outputs: any = {};
 
-    // Execute each neuron
-    for (const neuron of this.neurons.values()) {
-      const state = { id: `prp-${Date.now()}`, phase: 'strategy', blueprint, outputs };
-      const result = await neuron.execute(state, context);
-      outputs[neuron.id] = result.output;
-    }
+      for (const neuron of neurons.values()) {
+        const state = { id: `prp-${Date.now()}`, phase: 'strategy', blueprint, outputs };
+        const result = await neuron.execute(state, context);
+        outputs[neuron.id] = result.output;
+      }
 
-    return {
-      id: `prp-${Date.now()}`,
-      phase: 'strategy',
-      blueprint,
-      outputs,
-      status: 'completed',
-    };
-  }
-}
+      return {
+        id: `prp-${Date.now()}`,
+        phase: 'strategy',
+        blueprint,
+        outputs,
+        status: 'completed',
+      };
+    },
+  };
+};
+
+export type PRPOrchestrator = ReturnType<typeof createPRPOrchestrator>;
+// Backward compatibility export
+export { createPRPOrchestrator as PRPOrchestrator };
