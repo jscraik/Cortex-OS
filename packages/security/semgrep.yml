@@ -8,6 +8,9 @@ rules:
     languages: [javascript, typescript]
     patterns:
       - pattern: $LLM($PROMPT + $USER_INPUT)
+      - pattern: $LLM(`$PROMPT${$USER_INPUT}`)
+      - pattern: $LLM([$PROMPT, $USER_INPUT].join(''))
+      - pattern: $LLM($PROMPT.concat($USER_INPUT))
       - metavariable-regex:
           metavariable: $USER_INPUT
           regex: (?i)(input|prompt|user|query)
