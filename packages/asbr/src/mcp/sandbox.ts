@@ -3,7 +3,11 @@
  * Implements security policies and sandboxing for MCP tools
  */
 
-import { ChildProcess } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
+import pidusage from 'pidusage';
+import { existsSync } from 'fs';
+import { mkdir } from 'fs/promises';
+import { dirname } from 'path';
 import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';
 import type { MCPAllowlistEntry, SecurityPolicy, SecurityRule } from '../types/index.js';
 import { AuthorizationError, ValidationError } from '../types/index.js';
@@ -36,6 +40,7 @@ export class MCPSandbox {
   private allowlist: MCPAllowlistEntry[] = [];
   private policies: SecurityPolicy[] = [];
   private runningProcesses = new Map<string, ChildProcess>();
+  private idCounter = 0;
 
   async initialize(): Promise<void> {
     [this.allowlist, this.policies] = await Promise.all([
@@ -176,13 +181,15 @@ export class MCPSandbox {
     workingDir: string;
     environment: Record<string, string>;
   }> {
-    const processId = `sandbox_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+    const processId = `sandbox_${Date.now()}_${++this.idCounter}`;
     const sandboxDir = getTempPath(`sandbox_${processId}`);
+    await mkdir(sandboxDir, { recursive: true });
+    const nodeDir = dirname(process.execPath);
 
     // Create isolated environment
     const environment = {
       // Strip most environment variables for security
-      PATH: '/usr/bin:/bin',
+      PATH: `${nodeDir}:/root/.nvm/versions/node/${process.version}/bin:/usr/local/bin:/usr/bin:/bin`,
       HOME: sandboxDir,
       TMPDIR: sandboxDir,
       ...this.getSafeEnvironmentVariables(context.environment),
@@ -196,45 +203,79 @@ export class MCPSandbox {
   }
 
   private async runInSandbox(
-    _sandbox: {
+    sandbox: {
       processId: string;
       workingDir: string;
       environment: Record<string, string>;
     },
     context: SandboxContext,
   ): Promise<unknown> {
-    return new Promise((resolve, _reject) => {
-      // In a real implementation, this would:
-      // 1. Create a containerized environment (Docker, systemd-nspawn, etc.)
-      // 2. Set resource limits (memory, CPU, network)
-      // 3. Run the tool with restricted permissions
-      // 4. Monitor resource usage
-      // 5. Enforce timeout
+    return new Promise((resolve, reject) => {
+      const cgexecPath = '/usr/bin/cgexec';
+      const useCgroup = existsSync(cgexecPath);
+      const baseCmd = context.toolName === 'node' ? process.execPath : context.toolName;
+      const command = useCgroup ? cgexecPath : baseCmd;
+      const args = useCgroup
+        ? ['-g', 'cpu,memory:cortex-sandbox', baseCmd, ...(context.args as string[])]
+        : (context.args as string[]);
 
-      // For this blueprint implementation, we'll simulate the execution
-      const simulatedResult = {
-        toolName: context.toolName,
-        output: `Simulated output from ${context.toolName}`,
-        args: context.args,
-        success: true,
-      };
+      const child = spawn(command, args, {
+        cwd: sandbox.workingDir,
+        env: sandbox.environment,
+        uid: 65534,
+        gid: 65534,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
 
-      // Simulate execution time
-      setTimeout(
-        () => {
-          resolve(simulatedResult);
-        },
-        Math.random() * 1000 + 100,
-      );
+      if (!child.pid) {
+        reject(new Error('Failed to start process'));
+        return;
+      }
+
+      sandbox.processId = String(child.pid);
+      this.runningProcesses.set(sandbox.processId, child);
+
+      let stdout = '';
+      let stderr = '';
+      child.stdout?.on('data', (chunk) => {
+        stdout += chunk.toString();
+      });
+      child.stderr?.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
+
+      const timeout = setTimeout(() => {
+        child.kill('SIGTERM');
+      }, context.timeout);
+
+      child.on('error', (err) => {
+        clearTimeout(timeout);
+        this.runningProcesses.delete(sandbox.processId);
+        reject(err);
+      });
+
+      child.on('close', (code) => {
+        clearTimeout(timeout);
+        this.runningProcesses.delete(sandbox.processId);
+        if (code === 0) {
+          resolve(stdout.trim());
+        } else {
+          reject(new Error(stderr.trim() || `Process exited with code ${code}`));
+        }
+      });
     });
   }
 
-  private async getResourceUsage(_processId: string): Promise<{ memory: number; cpu: number }> {
-    // In a real implementation, this would query actual resource usage
-    return {
-      memory: Math.random() * 100, // MB
-      cpu: Math.random() * 50, // %
-    };
+  private async getResourceUsage(processId: string): Promise<{ memory: number; cpu: number }> {
+    try {
+      const stats = await pidusage(parseInt(processId, 10));
+      return {
+        memory: stats.memory / 1024 / 1024,
+        cpu: stats.cpu,
+      };
+    } catch {
+      return { memory: 0, cpu: 0 };
+    }
   }
 
   private getSafeEnvironmentVariables(env: Record<string, string>): Record<string, string> {
