@@ -227,7 +227,10 @@ export class ProcessingDispatcher {
   }
 
   async dispatch(file: ProcessingFile, strategy: StrategyDecision): Promise<DispatchResult> {
-    const now = () => performance.now();
+    const now = () =>
+      typeof performance !== "undefined" && typeof performance.now === "function"
+        ? performance.now()
+        : Date.now();
     const startTime = now();
     try {
       if (strategy.strategy === ProcessingStrategy.REJECT) {
