@@ -1,24 +1,45 @@
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
+import { z } from 'zod';
 import { ModelRouter } from './model-router';
 import { auditEvent, record } from './audit';
 import { loadGrant, enforce } from './policy';
 
-type EmbeddingsBody = { model?: string; texts: string[] };
-type RerankBody = { model?: string; query: string; docs: string[]; topK?: number };
-type ChatBody = {
-  model?: string;
-  msgs: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
-  tools?: unknown;
-};
+const EmbeddingsBodySchema = z.object({
+  model: z.string().optional(),
+  texts: z.array(z.string()).min(1),
+});
+export type EmbeddingsBody = z.infer<typeof EmbeddingsBodySchema>;
+
+const RerankBodySchema = z.object({
+  model: z.string().optional(),
+  query: z.string(),
+  docs: z.array(z.string()).min(1),
+  topK: z.number().int().positive().optional(),
+});
+export type RerankBody = z.infer<typeof RerankBodySchema>;
+
+const ChatBodySchema = z.object({
+  model: z.string().optional(),
+  msgs: z
+    .array(z.object({ role: z.enum(['system', 'user', 'assistant']), content: z.string() }))
+    .min(1),
+  tools: z.unknown().optional(),
+});
+export type ChatBody = z.infer<typeof ChatBodySchema>;
 
 export function createServer(router?: ModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
   const modelRouter = router || new ModelRouter();
 
   app.post('/embeddings', async (req, reply) => {
-    const body = req.body as EmbeddingsBody;
-    console.log('[model-gateway] /embeddings request body:', JSON.stringify(body));
+    const parsed = EmbeddingsBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: parsed.error.message });
+    }
+    const body = parsed.data;
+    req.log.debug({ body }, 'Received embeddings request');
+
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'embeddings', body as any);
     await record(
@@ -35,9 +56,6 @@ export function createServer(router?: ModelRouter): FastifyInstance {
 
     try {
       const texts = body.texts;
-      if (!Array.isArray(texts) || texts.length === 0) {
-        return reply.status(400).send({ error: 'texts must be a non-empty array' });
-      }
 
       let vectors: number[][] = [];
       let modelUsed: string;
@@ -72,7 +90,12 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/rerank', async (req, reply) => {
-    const body = req.body as RerankBody;
+    const parsed = RerankBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: parsed.error.message });
+    }
+    const body = parsed.data;
+
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'rerank', body as any);
     await record(
@@ -115,7 +138,12 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/chat', async (req, reply) => {
-    const body = req.body as ChatBody;
+    const parsed = ChatBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: parsed.error.message });
+    }
+    const body = parsed.data;
+
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'chat', body as any);
     await record(
