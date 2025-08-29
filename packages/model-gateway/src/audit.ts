@@ -39,12 +39,3 @@ export async function record(event: AuditEvent): Promise<void> {
     console.log('audit', line.trim());
   }
 }
-
-export function enableMemoryAuditBuffer(size: number) {
-  bufferSize = size;
-  memoryBuffer.length = 0;
-}
-
-export function getMemoryAuditBuffer(): AuditEvent[] {
-  return memoryBuffer;
-}
