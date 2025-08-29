@@ -129,11 +129,36 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-    const stdout = await runProcess<string>('ollama', ['generate', model.model, prompt], {
-      timeoutMs: this.timeout,
-      parseJson: false,
-    });
-    return stdout.trim();
+
+    try {
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model.model,
+          prompt,
+          stream: false,
+          options: {
+            temperature: config.temperature,
+            top_p: config.topP,
+            num_predict: config.maxTokens,
+          },
+        }),
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return result.response || '';
+    } catch (error) {
+      throw new Error(`Ollama generation failed: ${error}`);
+    }
+
   }
 
   /**
