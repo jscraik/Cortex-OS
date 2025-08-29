@@ -29,7 +29,8 @@
     "lint": "eslint src/**/*.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "semgrep": "semgrep scan --config=semgrep.yml --severity=WARNING --sarif -o semgrep.sarif ."
   },
   "keywords": [
     "security",
