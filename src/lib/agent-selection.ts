@@ -44,7 +44,14 @@ export function parseAgentSelection(
   content: string,
   agents: AgentInfo[],
 ): AgentSelectionResult {
-  const agentMention = agents.find((a) => content.includes(a.id));
+  // Helper to escape regex special characters in agent IDs
+  function escapeRegExp(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  const agentMention = agents.find((a) => {
+    const regex = new RegExp(`\\b${escapeRegExp(a.id)}\\b`);
+    return regex.test(content);
+  });
 
   return {
     agentId: agentMention?.id ?? agents[0]?.id ?? 'default',
