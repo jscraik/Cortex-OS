@@ -19,16 +19,8 @@ pkill -f "semgrep" && echo "✓ Killed semgrep processes"
 pkill -f "tsserver.js" && echo "✓ Killed TypeScript servers"
 pkill -f "typescript.*server" && echo "✓ Killed additional TypeScript processes"
 
-# Intelligently manage VS Code processes
-if [ -x "/Users/jamiecraik/.Cortex-OS-clean/scripts/vscode-memory-optimizer.sh" ]; then
-    echo "Running VS Code memory optimization..."
-    bash /Users/jamiecraik/.Cortex-OS-clean/scripts/vscode-memory-optimizer.sh gentle
-else
-    # Fallback to basic cleanup
-    pkill -f "Code Helper.*typescript" && echo "✓ Killed VS Code TypeScript helpers"
-    pkill -f "Code Helper.*pylance" && echo "✓ Killed Pylance processes"
-    pkill -f "eslintServer.js" && echo "✓ Killed ESLint servers"
-fi
+# VS Code optimization DISABLED to prevent instability
+echo "Skipping VS Code optimization to maintain editor stability"
 
 # Kill any rogue Node.js test processes
 pgrep -f "node.*test" | xargs kill -9 2>/dev/null && echo "✓ Killed Node test processes"

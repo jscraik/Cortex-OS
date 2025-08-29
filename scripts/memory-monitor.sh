@@ -46,13 +46,10 @@ monitor_memory() {
         pkill -f "tsserver.js"
     fi
     
-    # Check VS Code memory usage
+    # VS Code monitoring DISABLED to prevent instability
     vscode_memory=$(ps aux | grep "Code Helper\|Visual Studio Code" | grep -v grep | awk '{sum += $6} END {print int(sum/1024)}')
-    if [ "${vscode_memory:-0}" -gt 3000 ]; then
-        echo "⚠️  VS Code using ${vscode_memory}MB, optimizing..."
-        if [ -x "/Users/jamiecraik/.Cortex-OS-clean/scripts/vscode-memory-optimizer.sh" ]; then
-            bash /Users/jamiecraik/.Cortex-OS-clean/scripts/vscode-memory-optimizer.sh gentle
-        fi
+    if [ "${vscode_memory:-0}" -gt 0 ]; then
+        echo "VS Code using ${vscode_memory}MB (monitoring only, no optimization)"
     fi
     
     echo "=== Memory Monitor Complete ==="
