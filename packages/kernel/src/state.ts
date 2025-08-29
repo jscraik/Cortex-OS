@@ -98,18 +98,6 @@ export const PRPStateSchema = z.object({
     // Error tracking
     error: z.string().optional(),
   }),
-
-  // Checkpointing for determinism
-  checkpoints: z
-    .array(
-      z.object({
-        id: z.string(),
-        timestamp: z.string(),
-        phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
-        state: z.record(z.any()),
-      }),
-    )
-    .optional(),
 });
 
 export type PRPState = z.infer<typeof PRPStateSchema>;
