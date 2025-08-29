@@ -90,6 +90,7 @@ MANIFEST
 .env
 # Allow kernel source libraries
 !packages/kernel/src/lib/
+!packages/model-gateway/src/lib/
 .venv
 env/
 venv/
