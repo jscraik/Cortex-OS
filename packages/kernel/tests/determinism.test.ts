@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
 import { createInitialPRPState, PRPState } from '../src/state.js';
+import { fixedTimestamp } from '../src/lib/determinism.js';
 
 describe('Cortex Kernel Determinism', () => {
   let kernel: CortexKernel;
@@ -52,6 +53,29 @@ describe('Cortex Kernel Determinism', () => {
       // Check phase progression
       const phases = history.map((state) => state.phase);
       expect(phases).toContain('strategy');
+    });
+
+    it('should generate stable timestamps when deterministic=true', async () => {
+      const blueprint = {
+        title: 'Timestamp Test',
+        description: 'Validate fixed timestamps',
+        requirements: ['Requirement 1'],
+      };
+
+      const result = await kernel.runPRPWorkflow(blueprint, {
+        runId: 'deterministic',
+        deterministic: true,
+      });
+
+      expect(result.validationResults.strategy?.timestamp).toBe(
+        fixedTimestamp('strategy-validation'),
+      );
+      expect(result.validationResults.build?.timestamp).toBe(fixedTimestamp('build-validation'));
+      expect(result.validationResults.evaluation?.timestamp).toBe(
+        fixedTimestamp('evaluation-validation'),
+      );
+      expect(result.cerebrum?.timestamp).toBe(fixedTimestamp('cerebrum-decision'));
+      expect(result.metadata.endTime).toBe(fixedTimestamp('workflow-end'));
     });
   });
 });

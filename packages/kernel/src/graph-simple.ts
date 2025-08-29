@@ -8,6 +8,7 @@
 
 import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
 import { nanoid } from 'nanoid';
+import { fixedTimestamp } from './lib/determinism.js';
 
 // Import real interfaces from prp-runner
 interface PRPOrchestrator {
@@ -92,7 +93,7 @@ export class CortexKernel {
         metadata: {
           ...state.metadata,
           error: error instanceof Error ? error.message : 'Unknown error',
-          endTime: new Date().toISOString(),
+          endTime: deterministic ? fixedTimestamp('workflow-error') : new Date().toISOString(),
         },
       };
       this.addToHistory(runId, errorState);
@@ -122,7 +123,7 @@ export class CortexKernel {
       blockers: [],
       majors: [],
       evidence: [],
-      timestamp: deterministic ? '2025-08-21T00:00:01.000Z' : new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('strategy-validation') : new Date().toISOString(),
     };
 
     // Transition to build
@@ -156,7 +157,7 @@ export class CortexKernel {
       blockers: [],
       majors: [],
       evidence: [],
-      timestamp: deterministic ? '2025-08-21T00:00:02.000Z' : new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('build-validation') : new Date().toISOString(),
     };
 
     // Transition to evaluation
@@ -190,7 +191,7 @@ export class CortexKernel {
       blockers: [],
       majors: [],
       evidence: [],
-      timestamp: deterministic ? '2025-08-21T00:00:03.000Z' : new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('evaluation-validation') : new Date().toISOString(),
     };
 
     // Final cerebrum decision
@@ -198,7 +199,7 @@ export class CortexKernel {
       decision: 'promote',
       reasoning: 'All validation gates passed successfully',
       confidence: 0.95,
-      timestamp: deterministic ? '2025-08-21T00:00:04.000Z' : new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('cerebrum-decision') : new Date().toISOString(),
     };
 
     // Complete the workflow
@@ -207,7 +208,7 @@ export class CortexKernel {
       phase: 'completed',
       metadata: {
         ...newState.metadata,
-        endTime: deterministic ? '2025-08-21T00:00:05.000Z' : new Date().toISOString(),
+        endTime: deterministic ? fixedTimestamp('workflow-end') : new Date().toISOString(),
       },
     };
 
