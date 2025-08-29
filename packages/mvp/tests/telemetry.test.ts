@@ -36,9 +36,8 @@ vi.mock('../src/observability/otel.js', () => ({
 
 describe('Telemetry Implementation', () => {
   beforeEach(() => {
-    // Reset mocks before each test
-    otelSpans = [];
-    metrics = [];
+    // Reset telemetry before each test
+    resetTelemetry();
   });
 
   it('should create OTEL spans for each workflow phase', async () => {
@@ -54,7 +53,8 @@ describe('Telemetry Implementation', () => {
     const result = await graph.runPRPWorkflow(blueprint);
 
     // Should have created spans for each phase
-    const spanNames = otelSpans.map((span) => span.name);
+    const spans = getSpans();
+    const spanNames = spans.map((span) => span.name);
     expect(spanNames).toContain('prp.strategy');
     expect(spanNames).toContain('prp.build');
     expect(spanNames).toContain('prp.evaluation');
@@ -73,6 +73,7 @@ describe('Telemetry Implementation', () => {
     const result = await graph.runPRPWorkflow(blueprint);
 
     // Should track key metrics
+    const metrics = getMetrics();
     const metricNames = metrics.map((metric) => metric.name);
     expect(metricNames).toContain('prp.duration');
     expect(metricNames).toContain('prp.phases.completed');
@@ -94,10 +95,13 @@ describe('Telemetry Implementation', () => {
       requirements: ['Track errors'],
     };
 
+
     const result = await errorGraph.runPRPWorkflow(blueprint);
 
+
     // Find error spans
-    const errorSpans = otelSpans.filter((span) => span.status === 'ERROR');
+    const spans = getSpans();
+    const errorSpans = spans.filter((span) => span.status === 'ERROR');
 
     // Should include error information in spans
     expect(errorSpans.length).toBeGreaterThan(0);

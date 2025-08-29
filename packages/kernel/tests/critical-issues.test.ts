@@ -6,9 +6,18 @@
  * @version 1.0.0
  * @status active
  * @phase TDD-RED
+ *
+ * TDD RED PHASE APPROACH:
+ * This test file intentionally contains unsafe type assertions and expects failures.
+ * The purpose is to expose critical issues that must be fixed before production.
+ *
+ * TYPE SAFETY NOTES:
+ * - 'as any' assertions are used to bypass TypeScript for testing interface compatibility
+ * - TODO comments mark areas needing proper type-safe implementations
+ * - These assertions should be replaced with proper mocks and interfaces in GREEN phase
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
 import { createInitialPRPState, type PRPState } from '../src/state.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
@@ -62,7 +71,9 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
         };
 
         // Type check would fail here if we had proper typing
-        const kernel = new CortexKernel(mockOrchestrator);
+        // NOTE: Using 'as any' to bypass TypeScript for testing interface compatibility.
+        // TODO: Replace with proper interface mocking or type-safe test utilities
+        const kernel = new CortexKernel(mockOrchestrator as any);
         expect(kernel).toBeDefined();
 
         // This assertion will expose the interface mismatch
@@ -136,7 +147,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
         outputs: {
           'api-check': { hasAPI: true, hasSchema: false },
         },
-      };
+      } as any; // TODO: Replace with proper PRPState mock type
 
       const result = (
         buildNode as unknown as {
@@ -162,7 +173,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
           build: { passed: false, blockers: ['API schema missing'] }, // Failed!
           evaluation: { passed: true, blockers: [] },
         },
-      };
+      } as any; // TODO: Replace with proper PRPState mock type
 
       const canPromote = evaluationNode.checkPreCerebrumConditions(mockState);
 
@@ -245,7 +256,7 @@ describe('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
       global.setTimeout = ((callback: (...args: unknown[]) => void, delay?: number) => {
         timeoutCalled = true;
         return originalSetTimeout(callback, delay);
-      }) as unknown as typeof setTimeout;
+      }) as any; // TODO: Replace with proper setTimeout mock using vi.fn() or similar
 
       try {
         // This will trigger setTimeout - should be removable

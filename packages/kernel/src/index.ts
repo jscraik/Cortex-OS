@@ -7,26 +7,26 @@
  */
 
 // Core kernel exports
-export { createKernel, runPRPWorkflow } from './graph-simple.js';
-export type { PRPState, Evidence, ValidationGate, CerebrumDecision } from './state.js';
-export { PRPStateSchema, validateStateTransition, createInitialPRPState } from './state.js';
+export { CortexKernel, createKernel } from './graph-simple.js';
+export { createInitialPRPState, PRPStateSchema, validateStateTransition } from './state.js';
+export type { CerebrumDecision, Evidence, PRPState, ValidationGate } from './state.js';
 
 // History helper
-export { createHistory, addToHistory, getExecutionHistory } from './lib/history.js';
+export { addToHistory, createHistory, getExecutionHistory } from './lib/history.js';
 
 // Workflow nodes
 export { runStrategyNode, runBuildNode, runEvaluationNode } from './nodes/index.js';
 
 // MCP integration
-export { MCPAdapter, createDefaultMCPTools } from './mcp/adapter.js';
-export type { MCPTool, MCPContext } from './mcp/adapter.js';
+export { createDefaultMCPTools, MCPAdapter } from './mcp/adapter.js';
+export type { MCPContext, MCPTool } from './mcp/adapter.js';
 
 // Teaching layer
-export { ExampleCaptureSystem } from './teaching/example-capture.js';
-export type { CapturedExample, TeachingPattern } from './teaching/example-capture.js';
 export { BehaviorExtensionManager } from './teaching/behavior-extension.js';
 export type {
   BehaviorExtension,
   ExtensionContext,
   ExtensionResult,
 } from './teaching/behavior-extension.js';
+export { ExampleCaptureSystem } from './teaching/example-capture.js';
+export type { CapturedExample, TeachingPattern } from './teaching/example-capture.js';
