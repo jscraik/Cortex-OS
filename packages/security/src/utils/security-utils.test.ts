@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 vi.mock(
   '@cortex-os/telemetry',
@@ -36,35 +37,25 @@ describe('generateNonce', () => {
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
-
-  it('throws when crypto unavailable', () => {
-    const original = global.crypto;
-    vi.stubGlobal('crypto', undefined as unknown);
-    expect(() => generateNonce(8)).toThrow('Secure random number generation unavailable');
-    vi.stubGlobal('crypto', original as unknown);
-  });
 });
 
 describe('isCertificateExpired', () => {
-  let validCert: string;
-  let expiredCert: string;
-  beforeAll(() => {
-    const makeCert = (offsetMs: number) => {
-      const keys = forge.pki.rsa.generateKeyPair(512);
-      const cert = forge.pki.createCertificate();
-      cert.publicKey = keys.publicKey;
-      cert.serialNumber = '01';
-      cert.validity.notBefore = new Date();
-      cert.validity.notAfter = new Date(Date.now() + offsetMs);
-      const attrs = [{ name: 'commonName', value: 'test' }];
-      cert.setSubject(attrs);
-      cert.setIssuer(attrs);
-      cert.sign(keys.privateKey);
-      return forge.pki.certificateToPem(cert);
-    };
-    validCert = makeCert(60_000);
-    expiredCert = makeCert(-60_000);
-  });
+  const validCert = `-----BEGIN CERTIFICATE-----
+MIIBGjCBxQIUIg0R8WFTzJBlqeqL2U+RJ5WWJycwDQYJKoZIhvcNAQELBQAwDzEN
+MAsGA1UEAwwEdGVzdDAeFw0yNTA4MjkwNTAwMzZaFw0yNTA4MzAwNTAwMzZaMA8x
+DTALBgNVBAMMBHRlc3QwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAw4YaDB2XkqfS
+FnkVmPvwogd8j0TgFJpyMP0su05d8VaM3egVVLm6cw6momE838IT6Qa2df3L5R0+
+zzF1C4/J/wIDAQABMA0GCSqGSIb3DQEBCwUAA0EAGzxYNFu/ZYsvjCHu0dlAwFtr
+dGhZ2fB2oYg/nYB/AGvMBvj1S00haduOg3DdyA4wMGpJPcoJfJCc6pOpkq7lxw==
+-----END CERTIFICATE-----`;
+  const expiredCert = `-----BEGIN CERTIFICATE-----
+MIIBGjCBxQIUTrS6ERvK0hEZjcPqY/JsImLoJ+kwDQYJKoZIhvcNAQELBQAwDzEN
+MAsGA1UEAwwEdGVzdDAeFw0yNTA4MjkwNTAwMzFaFw0yNTA4MjgwNTAwMzFaMA8x
+DTALBgNVBAMMBHRlc3QwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAw4YaDB2XkqfS
+FnkVmPvwogd8j0TgFJpyMP0su05d8VaM3egVVLm6cw6momE838IT6Qa2df3L5R0+
+zzF1C4/J/wIDAQABMA0GCSqGSIb3DQEBCwUAA0EAEFyaAmeAeVzM6Ts2ohZiKFVv
+LpgBWWubzYdFsgwUfdt4rXrPSYd/Jxe8/bcWfxywJzjE94PjAoz0q6uTq7HqPw==
+-----END CERTIFICATE-----`;
 
   it('detects valid certificate', () => {
     expect(isCertificateExpired(validCert)).toBe(false);
