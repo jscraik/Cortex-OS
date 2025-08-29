@@ -6,11 +6,31 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./graph": "./dist/graph-simple.js",
-    "./state": "./dist/state.js",
-    "./nodes": "./dist/nodes/index.js",
-    "./mcp": "./dist/mcp/adapter.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./graph": {
+      "types": "./dist/graph-simple.d.ts",
+      "import": "./dist/graph-simple.js",
+      "require": "./dist/graph-simple.js"
+    },
+    "./state": {
+      "types": "./dist/state.d.ts",
+      "import": "./dist/state.js",
+      "require": "./dist/state.js"
+    },
+    "./nodes": {
+      "types": "./dist/nodes/index.d.ts",
+      "import": "./dist/nodes/index.js",
+      "require": "./dist/nodes/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/adapter.d.ts",
+      "import": "./dist/mcp/adapter.js",
+      "require": "./dist/mcp/adapter.js"
+    }
   },
   "files": [
     "dist",

@@ -7,18 +7,18 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
+import { SimplePRPGraph } from '../src/graph-simple.js';
 import { createInitialPRPState, PRPState } from '../src/state.js';
 
 describe('Cortex Kernel Determinism', () => {
-  let kernel: CortexKernel;
+  let graph: SimplePRPGraph;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    graph = new SimplePRPGraph(mockOrchestrator);
   });
 
   describe('Reproducible Execution', () => {
@@ -29,8 +29,8 @@ describe('Cortex Kernel Determinism', () => {
         requirements: ['Feature A', 'Feature B', 'Testing'],
       };
 
-      const run1 = await kernel.runPRPWorkflow(blueprint, { runId: 'test-run-1' });
-      const run2 = await kernel.runPRPWorkflow(blueprint, { runId: 'test-run-2' });
+      const run1 = await graph.runPRPWorkflow(blueprint, { runId: 'test-run-1' });
+      const run2 = await graph.runPRPWorkflow(blueprint, { runId: 'test-run-2' });
 
       // Results should be structurally identical (excluding timestamps and run IDs)
       expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
@@ -43,8 +43,8 @@ describe('Cortex Kernel Determinism', () => {
         requirements: ['Requirement 1'],
       };
 
-      const result = await kernel.runPRPWorkflow(blueprint, { runId: 'transition-test' });
-      const history = kernel.getExecutionHistory('transition-test');
+      const result = await graph.runPRPWorkflow(blueprint, { runId: 'transition-test' });
+      const history = graph.getExecutionHistory('transition-test');
 
       // Verify state transitions follow expected pattern
       expect(history.length).toBeGreaterThan(0);
