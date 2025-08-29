@@ -5,6 +5,9 @@
 
 
 import { X509Certificate } from 'node:crypto';
+import type { SecurityError } from '../types.js';
+
+export type { SecurityError };
 
 import { SecurityError } from '../types';
 
