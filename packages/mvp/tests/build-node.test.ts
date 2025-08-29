@@ -29,4 +29,18 @@ describe('BuildNode API schema validation', () => {
     const result = await node.execute(state);
     expect(result.validationResults.build?.blockers).not.toContain('API schema validation failed');
   });
+
+  it('fails when backend resources are absent', async () => {
+    const blueprint = {
+      title: 'Frontend Project',
+      description: 'No backend present',
+      requirements: ['UI'],
+    };
+    const state = createInitialPRPState(blueprint);
+    const node = new BuildNode();
+    const result = await node.execute(state);
+    expect(result.validationResults.build?.blockers).toContain(
+      'Backend compilation or tests failed',
+    );
+  });
 });

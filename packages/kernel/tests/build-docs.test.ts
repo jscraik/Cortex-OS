@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { BuildNode } from '../src/nodes/build.js';
+import { runBuildNode } from '../src/nodes/build.js';
 import { createInitialPRPState } from '../src/state.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -30,8 +30,13 @@ describe('BuildNode documentation validation', () => {
     const state = createInitialPRPState(blueprint, { deterministic: true });
     const node = new BuildNode();
     const result = await node.execute(state);
-    const majors = result.validationResults.build?.majors || [];
-    expect(majors).toContain('Documentation incomplete - missing API docs or usage notes');
+    const buildResult = result.validationResults.build!;
+    expect(buildResult.passed).toBe(false);
+    expect(buildResult.blockers).toContain('Backend compilation or tests failed');
+    expect(buildResult.majors).toContain(
+      'Documentation incomplete - missing API docs or usage notes',
+    );
+
   });
 
   it('passes when README.md exists', async () => {
@@ -39,7 +44,12 @@ describe('BuildNode documentation validation', () => {
     const state = createInitialPRPState(blueprint, { deterministic: true });
     const node = new BuildNode();
     const result = await node.execute(state);
-    const majors = result.validationResults.build?.majors || [];
-    expect(majors).not.toContain('Documentation incomplete - missing API docs or usage notes');
+    const buildResult = result.validationResults.build!;
+    expect(buildResult.passed).toBe(false);
+    expect(buildResult.blockers).toContain('Backend compilation or tests failed');
+    expect(buildResult.majors).not.toContain(
+      'Documentation incomplete - missing API docs or usage notes',
+    );
+
   });
 });

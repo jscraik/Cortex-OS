@@ -1,8 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
 import { createInitialPRPState } from '../src/state.js';
+import { ExampleCaptureSystem } from '../src/teaching/example-capture.js';
+import { resetIdCounter } from '../src/utils/id.js';
 
 describe('Enhanced Determinism', () => {
+  beforeEach(() => {
+    resetIdCounter();
+  });
   it('should produce identical results for identical inputs with deterministic mode', async () => {
     const mockOrchestrator = { getNeuronCount: () => 3 };
     const kernel = new CortexKernel(mockOrchestrator);
@@ -43,5 +48,54 @@ describe('Enhanced Determinism', () => {
     expect(state1.id).toBe(state2.id);
     expect(state1.runId).toBe(state2.runId);
     expect(state1.metadata.startTime).toBe(state2.metadata.startTime);
+  });
+
+  it('should capture deterministic example IDs when flag enabled', () => {
+    const blueprint = { title: 'Test', description: 'Test', requirements: [] };
+    const system1 = new ExampleCaptureSystem();
+    const ex1 = system1.captureExample(
+      'workflow',
+      { prpPhase: 'strategy', blueprint, inputState: {} },
+      {
+        type: 'workflow_modification',
+        description: 'test',
+        parameters: {},
+        timestamp: '2020-01-01T00:00:00.000Z',
+      },
+      { resultingState: {}, success: true, learningValue: 1 },
+      {},
+      true,
+    );
+    const ex2 = system1.captureExample(
+      'workflow',
+      { prpPhase: 'strategy', blueprint, inputState: {} },
+      {
+        type: 'workflow_modification',
+        description: 'test',
+        parameters: {},
+        timestamp: '2020-01-01T00:00:00.000Z',
+      },
+      { resultingState: {}, success: true, learningValue: 1 },
+      {},
+      true,
+    );
+    resetIdCounter();
+    const system2 = new ExampleCaptureSystem();
+    const repeat = system2.captureExample(
+      'workflow',
+      { prpPhase: 'strategy', blueprint, inputState: {} },
+      {
+        type: 'workflow_modification',
+        description: 'test',
+        parameters: {},
+        timestamp: '2020-01-01T00:00:00.000Z',
+      },
+      { resultingState: {}, success: true, learningValue: 1 },
+      {},
+      true,
+    );
+    expect(ex1?.id).toBe('example-000001');
+    expect(ex2?.id).toBe('example-000002');
+    expect(repeat?.id).toBe('example-000001');
   });
 });

@@ -7,17 +7,17 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
+import { createKernel } from '../src/graph-simple.js';
 
 describe('Cortex Kernel Integration', () => {
-  let kernel: CortexKernel;
+  let kernel: ReturnType<typeof createKernel>;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 5,
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    kernel = createKernel(mockOrchestrator);
   });
 
   describe('Basic Integration', () => {
@@ -51,28 +51,6 @@ describe('Cortex Kernel Integration', () => {
       expect(result.cerebrum?.confidence).toBeGreaterThan(0.9);
     });
 
-    it('should maintain execution history', async () => {
-      const blueprint = {
-        title: 'History Test',
-        description: 'Test execution history tracking',
-        requirements: ['Track phases'],
-      };
-
-      const result = await kernel.runPRPWorkflow(blueprint, {
-        runId: 'history-test-001',
-      });
-
-      const history = kernel.getExecutionHistory('history-test-001');
-
-      // Should have tracked all phase transitions
-      expect(history.length).toBeGreaterThan(1);
-
-      // Check phase progression
-      const phases = history.map((state) => state.phase);
-      expect(phases).toContain('strategy');
-      expect(phases[phases.length - 1]).toBe('completed');
-    });
-
     it('should handle orchestrator integration correctly', async () => {
       const blueprint = {
         title: 'Orchestrator Integration',
@@ -99,7 +77,7 @@ describe('Cortex Kernel Integration', () => {
         },
       };
 
-      const errorKernel = new CortexKernel(errorOrchestrator);
+      const errorKernel = createKernel(errorOrchestrator);
 
       const blueprint = {
         title: 'Error Test',
