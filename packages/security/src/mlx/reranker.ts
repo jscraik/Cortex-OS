@@ -19,7 +19,7 @@ const responseSchema = z.object({
   scores: z.array(z.number()),
 });
 
-const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8081';
+const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8765';
 
 export async function rerank(candidates: Candidate[], query: string): Promise<Candidate[]> {
   const { candidates: validCandidates, query: validQuery } = requestSchema.parse({
