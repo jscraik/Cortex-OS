@@ -23,11 +23,12 @@ This package implements a **polyglot architecture**:
 
 ## Python Agents
 
-Located in `../python-agents/src/`:
+Located in `../python-agents/` (import modules via the `src` package):
 
-1. **LangGraphStateEngine** (`langgraph_engine.py`): State-based workflows with persistent checkpointing
-2. **CrewAICoordinator** (`crewai_coordinator.py`): Role-based swarm intelligence with specialized agents
-3. **AgentBridge** (`agent_bridge.py`): IPC bridge for Python-TypeScript communication
+1. **LangGraphStateEngine** (`src/langgraph_engine.py`): State-based workflows with persistent checkpointing
+2. **CrewAICoordinator** (`src/crewai_coordinator.py`): Role-based swarm intelligence with specialized agents
+3. **AutoGenConversationEngine** (`src/autogen_conversation.py`): Conversational AI for complex problem-solving
+4. **AgentBridge** (`src/agent_bridge.py`): IPC bridge for Python-TypeScript communication
 
 ## Key Features
 
