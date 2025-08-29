@@ -10,17 +10,7 @@
  */
 
 import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
-
-// Import will be fixed to use proper workspace path when SDK is properly configured
-// For now, using minimal type-only import
-type OllamaAdapter = {
-  generate(options: {
-    prompt: string;
-    temperature?: number;
-    maxTokens?: number;
-    model?: string;
-  }): Promise<{ text: string }>;
-};
+import { Ollama } from 'ollama';
 
 export interface LLMConfig {
   provider: 'mlx' | 'ollama';
@@ -43,7 +33,7 @@ export interface LLMGenerateOptions {
  */
 export class LLMBridge {
   private config: LLMConfig;
-  private ollamaAdapter?: OllamaAdapter;
+  private ollamaAdapter?: Ollama;
   private mlxAdapter?: MLXAdapter;
 
   constructor(config: LLMConfig) {
@@ -77,37 +67,7 @@ export class LLMBridge {
    */
   private initializeAdapters(): void {
     if (this.config.provider === 'ollama') {
-      // Minimal Ollama adapter implementation
-      this.ollamaAdapter = {
-        generate: async (options) => {
-          try {
-            const response = await fetch(`${this.config.endpoint}/api/generate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                model: options.model || this.config.model || 'llama3',
-                prompt: options.prompt,
-                stream: false,
-                options: {
-                  temperature: options.temperature || 0.7,
-                  num_predict: options.maxTokens || 512,
-                },
-              }),
-            });
-
-            if (!response.ok) {
-              throw new Error(`Ollama API error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return { text: data.response || '' };
-          } catch (error) {
-            throw new Error(
-              `Ollama request failed: ${error instanceof Error ? error.message : String(error)}`,
-            );
-          }
-        },
-      };
+      this.ollamaAdapter = new Ollama({ host: this.config.endpoint });
     } else if (this.config.provider === 'mlx') {
       // Real MLX adapter using mlx-knife
       const modelName = this.config.mlxModel || AVAILABLE_MLX_MODELS.QWEN_SMALL;
@@ -213,14 +173,21 @@ export class LLMBridge {
       throw new Error('Ollama adapter not initialized');
     }
 
-    const result = await this.ollamaAdapter.generate({
-      prompt,
-      temperature: options.temperature,
-      maxTokens: options.maxTokens,
-      model: this.config.model,
-    });
-
-    return result.text;
+    try {
+      const result = await this.ollamaAdapter.generate({
+        model: this.config.model || 'llama3',
+        prompt,
+        options: {
+          temperature: options.temperature || 0.7,
+          num_predict: options.maxTokens || 512,
+        },
+      });
+      return result.response;
+    } catch (error) {
+      throw new Error(
+        `Ollama generation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   /**
