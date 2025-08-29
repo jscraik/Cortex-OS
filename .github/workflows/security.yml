@@ -16,13 +16,8 @@ jobs:
       - name: npm audit (moderate as advisory)
         run: |
           pnpm audit --audit-level=moderate || true
-      - name: OSV scan (fallback to CLI)
-        run: |
-          if command -v uv >/dev/null 2>&1; then
-            uv run osv-scanner --lockfile=pnpm-lock.yaml || true
-          else
-            echo "No OSV scanner available; skipping OSV step"
-          fi
+      - name: OSV scan
+        run: uv run osv-scanner --lockfile=pnpm-lock.yaml
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@v0.12.0
         with:
