@@ -88,6 +88,8 @@ MANIFEST
 
 # Python environments
 .env
+# Allow kernel source libraries
+!packages/kernel/src/lib/
 .venv
 env/
 venv/
@@ -289,4 +291,8 @@ scripts/package-lock.json
 .cortex/out/
 !packages/mcp-registry/src/lib/
 !packages/mcp-registry/src/lib/**
+
+
+!src/lib/
+!src/lib/**
 

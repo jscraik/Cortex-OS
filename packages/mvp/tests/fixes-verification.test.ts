@@ -33,24 +33,23 @@ describe('MVP Fixes Verification', () => {
   });
 
   describe('API Validation Logic', () => {
-    it('should fail API validation when schema is missing', async () => {
+    it('should fail API validation when schema is missing and record evidence', async () => {
       const buildNode = new BuildNode();
 
-      // Mock state with API but no schema
-      const mockState: any = {
-        blueprint: {
-          title: 'API Test',
-          description: 'Has API',
-          requirements: ['REST API'],
-        },
-        outputs: {},
+      const blueprint = {
+        title: 'API Test',
+        description: 'Has API',
+        requirements: ['REST API'],
       };
 
-      const result = await (buildNode as any).validateAPISchema(mockState);
+      const state = createInitialPRPState(blueprint as any, { deterministic: true });
+      const result = await buildNode.execute(state as any);
 
-      // Should properly fail when schema is missing
-      expect(result.passed).toBe(false);
-      expect(result.details.validation).toBe('failed');
+      const blockers = result.validationResults.build?.blockers || [];
+      expect(blockers).toContain('API schema validation failed');
+
+      const apiEvidence = result.evidence.find((e: any) => e.source === 'api_schema_validation');
+      expect(apiEvidence).toBeDefined();
     });
   });
 

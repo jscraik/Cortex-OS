@@ -1,11 +1,5 @@
-/**
- * @file nodes/strategy.ts
- * @description Strategy Phase Node - Security baseline, UX sketches, Architecture
- * @author Cortex-OS Team
- * @version 1.0.0
- */
-
 import { PRPState, Evidence } from '../state.js';
+
 import { generateId } from '../utils/id.js';
 import { currentTimestamp } from '../utils/time.js';
 
@@ -79,68 +73,33 @@ export class StrategyNode {
     };
   }
 
-  private async validateSecurityBaseline(
-    state: PRPState,
-  ): Promise<{ passed: boolean; details: any }> {
-    // OWASP ASVS L1 + MITRE ATLAS validation
-    const requirements = state.blueprint.requirements || [];
-    const hasSecurityReq = requirements.some(
-      (req) =>
-        req.toLowerCase().includes('security') ||
-        req.toLowerCase().includes('authentication') ||
-        req.toLowerCase().includes('authorization'),
+
+async function validateSecurityBaseline(state: PRPState) {
+  const reqs = state.blueprint.requirements || [];
+  const hasSecurity = reqs.some((r) =>
+    ['security', 'authentication', 'authorization'].some((k) => r.toLowerCase().includes(k)),
+  );
+  return {
+    passed: hasSecurity,
+    details: { owaspLevel: hasSecurity ? 'L1' : 'none', mitreAtlas: hasSecurity },
+  };
+}
+
+async function validateUXAccessibility(state: PRPState) {
+  const hasUX = state.blueprint.requirements?.some((r) =>
+    ['ux', 'user', 'interface', 'accessibility'].some((k) => r.toLowerCase().includes(k)),
+  );
+  return { passed: hasUX, details: { wcagLevel: hasUX ? 'AA' : 'none' } };
+}
+
+async function validateArchitecture(state: PRPState) {
+  const { title = '', description = '', requirements = [] } = state.blueprint;
+  const hasArch =
+    title.toLowerCase().includes('architecture') ||
+    description.toLowerCase().includes('system') ||
+    requirements.some((r) =>
+      ['architecture', 'system design'].some((k) => r.toLowerCase().includes(k)),
     );
+  return { passed: hasArch, details: { architecture: hasArch } };
 
-    return {
-      passed: hasSecurityReq,
-      details: {
-        owaspLevel: hasSecurityReq ? 'L1' : 'none',
-        mitreAtlas: hasSecurityReq,
-        securityRequirements: requirements.filter((req) => req.toLowerCase().includes('security')),
-      },
-    };
-  }
-
-  private async validateUXAccessibility(
-    state: PRPState,
-  ): Promise<{ passed: boolean; details: any }> {
-    // WCAG 2.2 AA compliance check
-    const hasUXReq = state.blueprint.requirements?.some(
-      (req) =>
-        req.toLowerCase().includes('ux') ||
-        req.toLowerCase().includes('user') ||
-        req.toLowerCase().includes('interface') ||
-        req.toLowerCase().includes('accessibility'),
-    );
-
-    return {
-      passed: hasUXReq,
-      details: {
-        wcagLevel: hasUXReq ? 'AA' : 'none',
-        accessibilityFeatures: hasUXReq ? ['keyboard-navigation', 'screen-reader'] : [],
-      },
-    };
-  }
-
-  private async validateArchitecture(state: PRPState): Promise<{ passed: boolean; details: any }> {
-    // Architecture diagram consistency check
-    const title = state.blueprint.title?.toLowerCase() || '';
-    const description = state.blueprint.description?.toLowerCase() || '';
-
-    const hasArchitecture =
-      title.includes('architecture') ||
-      description.includes('system') ||
-      description.includes('component') ||
-      state.blueprint.requirements?.some(
-        (req) =>
-          req.toLowerCase().includes('architecture') || req.toLowerCase().includes('system design'),
-      );
-
-    return {
-      passed: hasArchitecture,
-      details: {
-        architectureElements: hasArchitecture ? ['system-design', 'components'] : [],
-      },
-    };
-  }
 }

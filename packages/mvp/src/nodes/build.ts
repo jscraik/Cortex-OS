@@ -42,6 +42,15 @@ export class BuildNode {
       blockers.push('API schema validation failed');
     }
 
+    evidence.push({
+      id: `build-api-${Date.now()}`,
+      type: 'analysis',
+      source: 'api_schema_validation',
+      content: JSON.stringify(apiValidation),
+      timestamp: new Date().toISOString(),
+      phase: 'build',
+    });
+
     // Gate 3: Security scanning
     const securityScan = await this.runSecurityScan(state);
     if (securityScan.blockers > 0) {
@@ -100,19 +109,18 @@ export class BuildNode {
         req.toLowerCase().includes('server'),
     );
 
-    if (!hasBackendReq) {
-      return { passed: true, details: { type: 'frontend-only' } };
-    }
-
-    // Mock compilation and test results
+    // Mock compilation and test results; fail when backend requirements missing
+    const passed = hasBackendReq;
     return {
-      passed: true, // Would be actual test results
-      details: {
-        compilation: 'success',
-        testsPassed: 45,
-        testsFailed: 0,
-        coverage: 92,
-      },
+      passed,
+      details: passed
+        ? {
+            compilation: 'success',
+            testsPassed: 45,
+            testsFailed: 0,
+            coverage: 92,
+          }
+        : { reason: 'backend requirements missing' },
     };
   }
 
@@ -175,26 +183,26 @@ export class BuildNode {
         req.toLowerCase().includes('interface'),
     );
 
-    if (!hasFrontend) {
-      return { lighthouse: 100, axe: 100, details: { type: 'backend-only' } };
-    }
-
-    // Mock Lighthouse and Axe scores
+    // Mock Lighthouse and Axe scores; fail when frontend requirements missing
+    const lighthouse = hasFrontend ? 94 : 0;
+    const axe = hasFrontend ? 96 : 0;
     return {
-      lighthouse: 94, // Good score
-      axe: 96, // Good accessibility score
-      details: {
-        lighthouse: {
-          performance: 94,
-          accessibility: 96,
-          bestPractices: 92,
-          seo: 98,
-        },
-        axe: {
-          violations: 2,
-          severity: 'minor',
-        },
-      },
+      lighthouse,
+      axe,
+      details: hasFrontend
+        ? {
+            lighthouse: {
+              performance: 94,
+              accessibility: 96,
+              bestPractices: 92,
+              seo: 98,
+            },
+            axe: {
+              violations: 2,
+              severity: 'minor',
+            },
+          }
+        : { reason: 'frontend requirements missing' },
     };
   }
 
