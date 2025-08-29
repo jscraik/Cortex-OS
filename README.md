@@ -2,6 +2,10 @@
 
 **Autonomous Software Behavior Reasoning (ASBR) Runtime** - Clean, governed monorepo with strict import boundaries, SBOM, and CI gates.
 
+## Requirements
+
+- Node.js 18 or later (global `crypto` API is required).
+
 ## Architecture Overview
 
 Cortex-OS is a monorepo containing several applications and shared libraries. The architecture is designed to be modular, with clear separation between applications and the services they consume.

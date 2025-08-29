@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MCPAdapter } from '../src/mcp/adapter.js';
-import { CortexKernel } from '../src/graph-simple.js';
+import { SimplePRPGraph } from '../src/graph-simple.js';
 
 describe('Type Safety Fixes', () => {
   it('should create valid Neuron objects from MCP tools', () => {
@@ -30,7 +30,7 @@ describe('Type Safety Fixes', () => {
       executeNeuron: async () => ({}), // Add missing method
     };
 
-    const kernel = new CortexKernel(mockOrchestrator);
-    expect(kernel).toBeDefined();
+    const graph = new SimplePRPGraph(mockOrchestrator);
+    expect(graph).toBeDefined();
   });
 });

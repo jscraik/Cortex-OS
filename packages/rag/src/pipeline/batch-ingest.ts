@@ -2,14 +2,17 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import { byChars } from '../chunk';
-import type { Chunk } from '../index';
+import type { Chunk, Pipeline } from '../index';
 import { discoverFiles, filterPaths } from './file-discovery';
 
 const ingestFilesSchema = z
   .object({
-    pipeline: z.custom<{
-      ingest: (...args: unknown[]) => Promise<void>;
-    }>((p) => typeof p === 'object' && p !== null && typeof (p as any).ingest === 'function'),
+    pipeline: z.custom<Pipeline>(
+      (p): p is Pipeline =>
+        typeof p === 'object' &&
+        p !== null &&
+        typeof (p as Record<string, unknown>).ingest === 'function',
+    ),
     files: z.array(z.string()).default([]),
     root: z.string().optional(),
     include: z.array(z.string()).default(['**/*']),
@@ -71,7 +74,7 @@ export async function ingestFiles(params: IngestFilesParams): Promise<void> {
         text: t,
         source: file,
       }));
-      await (pipeline as any).ingest(chunks);
+      await pipeline.ingest(chunks);
     }
   }
 
