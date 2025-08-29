@@ -174,7 +174,19 @@ export function logWithSpan(
     logAttributes.spanId = spanContext.spanId;
   }
 
-  // eslint-disable-next-line no-console
-  console[level](message, logAttributes);
+  switch (level) {
+    case 'info':
+      console.info(message, logAttributes);
+      break;
+    case 'warn':
+      console.warn(message, logAttributes);
+      break;
+    case 'error':
+      console.error(message, logAttributes);
+      break;
+    default:
+      // Optionally, handle unexpected levels
+      console.log(message, logAttributes);
+  }
 }
 
