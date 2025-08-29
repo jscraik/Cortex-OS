@@ -66,3 +66,18 @@ await engine.cleanup(); // Shuts down Python bridge
 ```
 
 This package is now **production-ready** for real multi-agent orchestration workflows.
+
+## Configuration
+
+The `PRPOrchestrationEngine` supports the following options:
+
+- `maxConcurrentOrchestrations`
+- `defaultStrategy`
+- `enableMultiAgentCoordination`
+- `enableAdaptiveDecisions`
+- `planningTimeout`
+- `executionTimeout`
+- `qualityThreshold`
+- `performanceMonitoring`
+
+The deprecated `fallbackStrategy` and `fallbackStrategies` options have been removed.

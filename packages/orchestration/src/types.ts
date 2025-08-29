@@ -154,6 +154,34 @@ export interface PlanningResult {
 }
 
 // ================================
+// ReAct Loop Interfaces
+// ================================
+
+export interface ReActState {
+  taskId: string;
+  currentStep: number;
+  steps: ReActStep[];
+  context: Record<string, unknown>;
+  tools: string[];
+  observations: string[];
+  reflections: string[];
+  actionHistory: Array<{
+    action: string;
+    result: unknown;
+    timestamp: Date;
+  }>;
+}
+
+export interface ReActConfig {
+  maxSteps: number;
+  maxThinkingTime: number;
+  confidenceThreshold: number;
+  tools: string[];
+  selfReflectionInterval: number;
+}
+
+// ================================
+
 // Orchestration Interfaces
 // ================================
 
