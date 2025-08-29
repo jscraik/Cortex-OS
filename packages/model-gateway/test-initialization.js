@@ -10,7 +10,7 @@ async function main() {
     console.log('ModelRouter initialized successfully!');
 
     console.log('Testing embedding generation...');
-    const { embedding } = await router.generateEmbedding({ text: 'Hello from test' });
+    const { embedding } = await router.generateEmbedding({ text: 'Hello from test', model: 'auto' });
     console.log('Embedding length:', embedding.length);
   } catch (err) {
     console.error('Error during initialization or embedding:', err);
