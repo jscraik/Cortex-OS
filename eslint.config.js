@@ -1,6 +1,6 @@
 import js from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
-import ts from 'typescript-eslint';
+import { configs as ts } from 'typescript-eslint';
 
 export default [
   js.configs.recommended,
@@ -36,6 +36,7 @@ export default [
       'eslint.scan.config.cjs',
       'config/**',
       'contracts/**',
+      'htmlcov/**',
     ],
   },
   {
