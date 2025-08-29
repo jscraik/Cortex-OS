@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fusionRerank } from '../src/pipeline/rerank_fusion';
+import { fusionRerank } from '../src/pipeline';
 
 describe('fusionRerank', () => {
   it('ranks using query embedding when provided', () => {
