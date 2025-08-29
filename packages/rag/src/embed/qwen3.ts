@@ -31,7 +31,7 @@ export class Qwen3Embedder implements Embedder {
 
   constructor(options: Qwen3EmbedOptions = {}) {
     this.modelSize = options.modelSize || '4B';
-    const defaultBase = process.env.QWEN_EMBED_MODEL_DIR || path.resolve(process.cwd(), 'models');
+    const defaultBase = process.env.QWEN_EMBED_MODEL_PATH || path.resolve(process.cwd(), 'models');
     this.modelPath =
       options.modelPath || path.join(defaultBase, `Qwen3-Embedding-${this.modelSize}`);
     this.cacheDir = path.dirname(this.modelPath);
