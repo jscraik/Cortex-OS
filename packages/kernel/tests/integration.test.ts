@@ -144,7 +144,7 @@ describe('Cortex Kernel Integration', () => {
       const captureSystem = new ExampleCaptureSystem();
       const manager = new BehaviorExtensionManager(captureSystem);
       // Remove default extensions for a controlled test environment
-      (manager as any).extensions.clear();
+      manager.clearExtensions();
 
       manager.registerExtension({
         id: 'ext1',
