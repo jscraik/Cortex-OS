@@ -82,6 +82,7 @@ async function validateFrontend(state: PRPState) {
     : { lighthouse: 100, axe: 100, details: { type: 'backend-only' } };
 }
 
+
 async function validateDocumentation(state: PRPState) {
   const hasDocs = state.blueprint.requirements?.some((r) =>
     ['doc', 'guide', 'readme'].some((k) => r.toLowerCase().includes(k)),
@@ -89,4 +90,5 @@ async function validateDocumentation(state: PRPState) {
   if (!hasDocs) return { passed: true, details: { readme: 'skipped' } };
   const readme = path.resolve('README.md');
   return { passed: fs.existsSync(readme), details: { readme: fs.existsSync(readme) } };
+
 }

@@ -28,7 +28,7 @@ export interface TokensConfig {
 export function createAuthMiddleware() {
   return async (req: any, res: any, next: any) => {
     // Only allow loopback connections
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const clientIp = req.ip || req.socket?.remoteAddress;
     if (!isLoopbackAddress(clientIp)) {
       res.status(403).json({ error: 'Access denied: loopback only' });
       return;
@@ -96,7 +96,7 @@ export function requireScopes(...requiredScopes: string[]) {
 /**
  * Check if an IP address is a loopback address
  */
-function isLoopbackAddress(ip: string): boolean {
+export function isLoopbackAddress(ip: string): boolean {
   if (!ip) return false;
 
   // Remove IPv6 prefix if present
@@ -142,7 +142,13 @@ export async function generateToken(scopes: string[], ttlHours: number = 24): Pr
  * Validate a token and return its info
  */
 export async function validateToken(token: string): Promise<TokenInfo> {
-  const tokens = await loadTokens();
+  let tokens: TokenInfo[];
+  try {
+    tokens = await loadTokens();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new AuthenticationError(`Unable to load tokens: ${msg}`);
+  }
   const tokenInfo = tokens.find((t) => t.token === token);
 
   if (!tokenInfo) {
@@ -165,7 +171,13 @@ export async function validateToken(token: string): Promise<TokenInfo> {
  * Revoke a token by ID
  */
 export async function revokeToken(tokenId: string): Promise<void> {
-  const tokens = await loadTokens();
+  let tokens: TokenInfo[];
+  try {
+    tokens = await loadTokens();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to revoke token: ${msg}`);
+  }
   const filteredTokens = tokens.filter((t) => t.id !== tokenId);
   await saveTokens(filteredTokens);
 }
@@ -174,7 +186,13 @@ export async function revokeToken(tokenId: string): Promise<void> {
  * Clean up expired tokens
  */
 export async function cleanupExpiredTokens(): Promise<number> {
-  const tokens = await loadTokens();
+  let tokens: TokenInfo[];
+  try {
+    tokens = await loadTokens();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to cleanup tokens: ${msg}`);
+  }
   const now = new Date();
 
   const activeTokens = tokens.filter((t) => new Date(t.expiresAt) > now);
@@ -193,7 +211,13 @@ export async function cleanupExpiredTokens(): Promise<number> {
 async function updateTokenUsage(tokenId: string): Promise<void> {
   if (process.env.NODE_ENV === 'test') return;
 
-  const tokens = await loadTokens();
+  let tokens: TokenInfo[];
+  try {
+    tokens = await loadTokens();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to update token usage: ${msg}`);
+  }
   const token = tokens.find((t) => t.id === tokenId);
 
   if (token) {
@@ -206,7 +230,13 @@ async function updateTokenUsage(tokenId: string): Promise<void> {
  * Save a new token
  */
 async function saveToken(tokenInfo: TokenInfo): Promise<void> {
-  const tokens = await loadTokens();
+  let tokens: TokenInfo[];
+  try {
+    tokens = await loadTokens();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to save token: ${msg}`);
+  }
   tokens.push(tokenInfo);
   await saveTokens(tokens);
 }
@@ -227,8 +257,7 @@ async function loadTokens(): Promise<TokenInfo[]> {
     return config.tokens || [];
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.warn(`Warning: failed to load tokens (${msg}). Using empty token set.`);
-    return [];
+    throw new ValidationError(`Failed to load tokens: ${msg}`);
   }
 }
 
@@ -254,7 +283,13 @@ async function saveTokens(tokens: TokenInfo[]): Promise<void> {
  * Initialize authentication system with a default admin token
  */
 export async function initializeAuth(): Promise<TokenInfo> {
-  const tokens = await loadTokens();
+  let tokens: TokenInfo[];
+  try {
+    tokens = await loadTokens();
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new ValidationError(`Failed to initialize authentication: ${msg}`);
+  }
 
   // Check if we already have an admin token
   const adminToken = tokens.find(

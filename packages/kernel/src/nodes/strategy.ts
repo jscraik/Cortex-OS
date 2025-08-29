@@ -1,4 +1,5 @@
 import { PRPState, Evidence } from '../state.js';
+
 import { createEvidence, finalizePhase } from '../lib/phase-utils.js';
 
 export async function runStrategyNode(state: PRPState): Promise<PRPState> {
@@ -68,4 +69,5 @@ async function validateArchitecture(state: PRPState) {
       ['architecture', 'system design'].some((k) => r.toLowerCase().includes(k)),
     );
   return { passed: hasArch, details: { architecture: hasArch } };
+
 }

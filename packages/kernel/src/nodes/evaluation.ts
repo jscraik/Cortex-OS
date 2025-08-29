@@ -40,6 +40,7 @@ async function validateTDDCycle(state: PRPState) {
     state.outputs?.testCoverage ||
     state.validationResults.build?.evidence?.some((id) =>
       state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
+
     );
   return { passed: tests.length > 0 && !!hasCoverage, details: { testCount: tests.length } };
 }

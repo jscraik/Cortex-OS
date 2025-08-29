@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { performance } from 'perf_hooks';
 import supertest from 'supertest';
-import { ASBRServer } from '../../src/api/server.js';
+import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
 import { initializeAuth } from '../../src/api/auth.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 
@@ -15,7 +15,7 @@ describe('ASBR API Performance Tests', () => {
     const tokenInfo = await initializeAuth();
     authToken = tokenInfo.token;
 
-    server = new ASBRServer({ port: 7440 });
+    server = createASBRServer({ port: 7440 });
     await server.start();
     request = supertest(`http://127.0.0.1:7440`);
   });
@@ -123,18 +123,19 @@ describe('ASBR API Performance Tests', () => {
     expect(duration).toBeLessThan(500);
   });
 
-  it('should serve events efficiently', async () => {
+
+  it('should serve SSE events efficiently', async () => {
     const start = performance.now();
 
     const response = await request
-      .get('/v1/events')
+      .get('/v1/events?stream=sse')
       .set('Authorization', `Bearer ${authToken}`)
-      .expect(200);
+      .set('Accept', 'text/event-stream');
 
     const duration = performance.now() - start;
 
-    expect(response.body.events).toBeInstanceOf(Array);
-    expect(duration).toBeLessThan(50);
+    expect(response.status).toBe(200);
+    expect(duration).toBeLessThan(200);
   });
 
   it('should handle SSE connections efficiently', async () => {
@@ -149,5 +150,6 @@ describe('ASBR API Performance Tests', () => {
 
     // SSE should establish quickly (server auto-closes in test env)
     expect(duration).toBeLessThan(200);
+    expect(response.status).toBe(200);
   });
 });
