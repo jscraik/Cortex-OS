@@ -90,6 +90,7 @@ MANIFEST
 .env
 # Allow kernel source libraries
 !packages/kernel/src/lib/
+!packages/orchestration/src/lib/
 .venv
 env/
 venv/
