@@ -1,46 +1,78 @@
 import { PRPState, Evidence } from '../state.js';
 
-import { createEvidence, finalizePhase } from '../lib/phase-utils.js';
+import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
-export async function runStrategyNode(state: PRPState): Promise<PRPState> {
-  const evidence: Evidence[] = [];
-  const blockers: string[] = [];
-  const majors: string[] = [];
+/**
+ * Strategy Phase Gates:
+ * - ✅ Blueprint linked in PRP doc
+ * - ✅ Security baseline (OWASP ASVS L1 + MITRE ATLAS)
+ * - ✅ UX sketches accessible (WCAG 2.2 AA)
+ * - ✅ Architecture diagram consistent with repo structure
+ */
+export class StrategyNode {
+  async execute(state: PRPState): Promise<PRPState> {
+    const evidence: Evidence[] = [];
+    const blockers: string[] = [];
+    const majors: string[] = [];
 
-  if (!state.blueprint.title || !state.blueprint.description)
-    blockers.push('Blueprint missing title or description');
+    // Gate 1: Blueprint validation
+    if (!state.blueprint.title || !state.blueprint.description) {
+      blockers.push('Blueprint missing title or description');
+    }
 
-  evidence.push(
-    createEvidence(
-      state,
-      'strategy-blueprint',
-      'validation',
-      'strategy_node',
-      { title: state.blueprint.title },
-      'strategy',
-    ),
-  );
+    evidence.push({
+      id: generateId('strategy-blueprint', state.metadata.deterministic),
+      type: 'validation',
+      source: 'strategy_node',
+      content: `Blueprint validation: ${state.blueprint.title}`,
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 1),
+      phase: 'strategy',
+    });
 
-  const security = await validateSecurityBaseline(state);
-  if (!security.passed) blockers.push('Security baseline not established');
-  evidence.push(
-    createEvidence(
-      state,
-      'strategy-security',
-      'analysis',
-      'security_baseline',
-      security,
-      'strategy',
-    ),
-  );
+    // Gate 2: Security baseline check
+    const securityBaseline = await this.validateSecurityBaseline(state);
+    if (!securityBaseline.passed) {
+      blockers.push('Security baseline not established');
+    }
 
-  if (!(await validateUXAccessibility(state)).passed)
-    majors.push('UX design missing or not WCAG 2.2 AA compliant');
-  if (!(await validateArchitecture(state)).passed)
-    majors.push('Architecture diagram missing or inconsistent');
+    evidence.push({
+      id: generateId('strategy-security', state.metadata.deterministic),
+      type: 'analysis',
+      source: 'security_baseline',
+      content: JSON.stringify(securityBaseline),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 2),
+      phase: 'strategy',
+    });
 
-  return finalizePhase(state, 'strategy', evidence, blockers, majors);
-}
+    // Gate 3: UX accessibility check
+    const uxValidation = await this.validateUXAccessibility(state);
+    if (!uxValidation.passed) {
+      majors.push('UX design missing or not WCAG 2.2 AA compliant');
+    }
+
+    // Gate 4: Architecture consistency
+    const archValidation = await this.validateArchitecture(state);
+    if (!archValidation.passed) {
+      majors.push('Architecture diagram missing or inconsistent');
+    }
+
+    return {
+      ...state,
+      evidence: [...state.evidence, ...evidence],
+      validationResults: {
+        ...state.validationResults,
+        strategy: {
+          passed: blockers.length === 0 && majors.length <= 3,
+          blockers,
+          majors,
+          evidence: evidence.map((e) => e.id),
+          timestamp: currentTimestamp(state.metadata.deterministic ?? false, 3),
+        },
+      },
+    };
+  }
+
 
 async function validateSecurityBaseline(state: PRPState) {
   const reqs = state.blueprint.requirements || [];
