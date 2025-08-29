@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { generateId, resetIdCounter } from '../src/utils/id.js';
+import { ExampleCaptureSystem } from '../src/teaching/example-capture.js';
 
 describe('ID generator', () => {
   beforeEach(() => {
@@ -20,5 +21,54 @@ describe('ID generator', () => {
     const a = generateId('test');
     const b = generateId('test');
     expect(a).not.toBe(b);
+  });
+
+  it('captures deterministic example ids when flagged', () => {
+    const blueprint = { title: 'Test', description: 'Test', requirements: [] };
+    const system1 = new ExampleCaptureSystem();
+    const ex1 = system1.captureExample(
+      'workflow',
+      { prpPhase: 'strategy', blueprint, inputState: {} },
+      {
+        type: 'workflow_modification',
+        description: 'test',
+        parameters: {},
+        timestamp: '2020-01-01T00:00:00.000Z',
+      },
+      { resultingState: {}, success: true, learningValue: 1 },
+      {},
+      true,
+    );
+    const ex2 = system1.captureExample(
+      'workflow',
+      { prpPhase: 'strategy', blueprint, inputState: {} },
+      {
+        type: 'workflow_modification',
+        description: 'test',
+        parameters: {},
+        timestamp: '2020-01-01T00:00:00.000Z',
+      },
+      { resultingState: {}, success: true, learningValue: 1 },
+      {},
+      true,
+    );
+    resetIdCounter();
+    const system2 = new ExampleCaptureSystem();
+    const repeat = system2.captureExample(
+      'workflow',
+      { prpPhase: 'strategy', blueprint, inputState: {} },
+      {
+        type: 'workflow_modification',
+        description: 'test',
+        parameters: {},
+        timestamp: '2020-01-01T00:00:00.000Z',
+      },
+      { resultingState: {}, success: true, learningValue: 1 },
+      {},
+      true,
+    );
+    expect(ex1.id).toBe('example-000001');
+    expect(ex2.id).toBe('example-000002');
+    expect(repeat.id).toBe('example-000001');
   });
 });
