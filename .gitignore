@@ -90,6 +90,7 @@ MANIFEST
 .env
 # Allow kernel source libraries
 !packages/kernel/src/lib/
+!packages/orchestration/src/lib/
 .venv
 env/
 venv/
@@ -297,6 +298,8 @@ scripts/package-lock.json
 
 !src/lib/
 !src/lib/**
+!packages/prp-runner/src/lib/
+!packages/prp-runner/src/lib/**
 
 !packages/prp-runner/src/lib/
 !packages/prp-runner/src/lib/**

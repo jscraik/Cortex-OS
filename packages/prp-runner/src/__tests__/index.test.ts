@@ -4,16 +4,20 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { PRPOrchestrator } from '../index.js';
+import { createPRPOrchestrator, PRPOrchestrator } from '../index.js';
 
 describe('Package Exports', () => {
-  it('should export PRPOrchestrator class', () => {
-    expect(PRPOrchestrator).toBeDefined();
-    expect(typeof PRPOrchestrator).toBe('function');
+  it('should export createPRPOrchestrator factory', () => {
+    expect(createPRPOrchestrator).toBeDefined();
+    expect(typeof createPRPOrchestrator).toBe('function');
   });
 
-  it('should create PRPOrchestrator instance from main export', () => {
-    const orchestrator = new PRPOrchestrator();
-    expect(orchestrator).toBeInstanceOf(PRPOrchestrator);
+  it('should retain PRPOrchestrator alias for backward compatibility', () => {
+    expect(PRPOrchestrator).toBe(createPRPOrchestrator);
+  });
+
+  it('should create PRP orchestrator instance from factory', () => {
+    const orchestrator = createPRPOrchestrator();
+    expect(typeof orchestrator.getNeuronCount).toBe('function');
   });
 });

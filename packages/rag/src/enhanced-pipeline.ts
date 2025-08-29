@@ -17,6 +17,7 @@ export interface EnhancedRAGConfig {
   };
 }
 
+
 export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
   const finalConfig = {
     embeddingModelSize: '4B',
@@ -33,9 +34,11 @@ export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
       maxTokens: 2048,
       temperature: 0.7,
       topP: 0.9,
+
     },
     timeout: 30000,
   });
+
 
   return {
     embedQuery: (query: string) => embedQuery(embedder, query),
@@ -50,3 +53,4 @@ export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
     ) => generateAnswer(generator, query, docs, options),
   };
 }
+

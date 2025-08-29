@@ -7,20 +7,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-// Mock classes since we're testing policy compliance, not the actual implementations
-class MockAICapabilities {
-  constructor(config: any) {
-    this.config = config;
-  }
-  config: any;
-}
-
-class MockASBRAIIntegration {
-  constructor(config: any) {
-    this.config = config;
-  }
-  config: any;
-}
 
 // Mock security modules for testing
 const mockOwaspGuard = {
@@ -61,16 +47,9 @@ const mockPolicyConfig = {
 };
 
 describe('🔒 AI Policy Compliance Tests', () => {
-  let aiCapabilities: MockAICapabilities;
-  let asbrIntegration: MockASBRAIIntegration;
-
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks();
-
-    // Initialize mock AI capabilities
-    aiCapabilities = new MockAICapabilities({ mockMode: true });
-    asbrIntegration = new MockASBRAIIntegration({ mockMode: true });
 
     // Setup default mock responses
     mockOwaspGuard.validateMcpCommand.mockResolvedValue({

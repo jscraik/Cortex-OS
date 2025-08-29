@@ -278,12 +278,6 @@ export class A2AAIAgent {
       interface: {
         transport: TransportProtocol.HTTP,
         uri: 'http://127.0.0.1:8081/a2a',
-        fallback: [
-          {
-            transport: TransportProtocol.HTTP,
-            uri: 'http://127.0.0.1:8081/mcp',
-          },
-        ],
       },
       skills,
     };
@@ -473,23 +467,6 @@ export const a2aAIAgent = new A2AAIAgent('cortex-asbr-ai-agent');
  */
 export function createA2AAIAgent(agentId?: string): A2AAIAgent {
   return new A2AAIAgent(agentId);
-}
-
-/**
- * Helper function to check A2A compatibility
- */
-export function isA2ACompatible(): boolean {
-  try {
-    // Try dynamic import to check if A2A package is available
-    // This is safer in ESM environments and won't break tests
-    return (
-      typeof globalThis !== 'undefined' &&
-      typeof process !== 'undefined' &&
-      process.versions?.node !== undefined
-    );
-  } catch {
-    return false;
-  }
 }
 
 /**
