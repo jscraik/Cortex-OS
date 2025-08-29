@@ -1,108 +1,126 @@
-/**
- * @file Transport Layer Implementation
- * @description Clean transport implementation with SSE support
- */
-
 import { z } from 'zod';
+import { EventEmitter } from 'node:events';
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { redactSensitiveData } from './security.js';
-import type { McpRequest, TransportConfig, Transport } from './types.js';
+import type { McpRequest, TransportConfig, Transport, HttpTransportConfig, StdioTransportConfig } from './types.js';
+import { SSETransport } from './sse-transport.js';
 
-// Re-export for other modules
 export { redactSensitiveData } from './security.js';
 export type { Transport } from './types.js';
 
-// Message validation schema
+// Schema used to validate messages before sending
 const MessageSchema = z
-  .object({
-    jsonrpc: z.literal('2.0'),
-    id: z.union([z.string(), z.number()]),
-    method: z.string().optional(),
-    params: z.unknown().optional(),
-    result: z.unknown().optional(),
-    error: z.unknown().optional(),
-  })
-  .strict();
+  .object({ jsonrpc: z.literal('2.0'), id: z.union([z.string(), z.number()]) })
+  .passthrough();
 
-/**
- * Validate MCP message format
- */
-export function validateMessage(
-  message: McpRequest,
-  onError?: (err: unknown, msg: McpRequest) => void,
-): void {
+export function validateMessage(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void): void {
   try {
     MessageSchema.parse(message);
   } catch (err) {
-    if (onError) {
-      onError(err, message);
-    } else {
-      console.error('Malformed message in transport.send:', err, message);
-    }
+    if (onError) onError(err, message);
+    else console.error('Malformed message in transport.send:', err, message);
   }
 }
 
-/**
- * Create transport instance based on configuration
- */
-export async function createTransport(config: TransportConfig): Promise<Transport> {
-  // Import SSE transport dynamically to avoid circular dependencies
-  if (config.type === 'sse') {
-    const { SSETransport } = await import('./sse-transport.js');
-    return new SSETransport(config);
+export function createTransport(config: TransportConfig): Transport {
+  switch (config.type) {
+    case 'sse':
+      return new SSETransport(config);
+    case 'http':
+      return createHttpTransport(config);
+    case 'stdio':
+      return createStdioTransport(config);
   }
-
-  // For stdio and http transports, return a basic implementation
-  // In production, this would use the actual MCP SDK transport implementations
-  return new BasicTransport(config);
 }
 
-/**
- * Basic transport implementation for stdio and HTTP
- * In production, this would use the official MCP SDK transports
- */
-class BasicTransport implements Transport {
-  private config: TransportConfig;
-  private connected = false;
-
-  constructor(config: TransportConfig) {
-    this.config = config;
-  }
-
-  async connect(): Promise<void> {
-    // Basic connection logic
-    this.connected = true;
-    console.log(`Connected to ${this.config.type} transport`);
-  }
-
-  async disconnect(): Promise<void> {
-    this.connected = false;
-    console.log(`Disconnected from ${this.config.type} transport`);
-  }
-
-  send(
-    message: McpRequest,
-    onError?: (err: unknown, msg: McpRequest) => void,
-  ): void {
-    validateMessage(message, onError);
-    
-    if (!this.connected) {
-      const error = new Error('Transport not connected');
-      if (onError) {
-        onError(error, message);
-      } else {
-        throw error;
+// HTTP Transport
+function createHttpTransport(config: HttpTransportConfig): Transport & EventEmitter {
+  const state = { connected: false };
+  const emitter = new EventEmitter();
+  return Object.assign(emitter, {
+    async connect() {
+      state.connected = true;
+    },
+    async disconnect() {
+      state.connected = false;
+    },
+    async send(message, onError) {
+      validateMessage(message, onError);
+      if (!state.connected) throw new Error('Transport not connected');
+      const body = JSON.stringify(redactSensitiveData(message));
+      try {
+        const res = await fetch(config.url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', ...(config.headers || {}) },
+          body,
+          signal: config.timeoutMs ? AbortSignal.timeout(config.timeoutMs) : undefined,
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json().catch(() => undefined);
+        if (json) emitter.emit('message', json);
+      } catch (err) {
+        if (onError) onError(err, message);
+        else throw err;
       }
-      return;
+    },
+    isConnected() {
+      return state.connected;
+    },
+  });
+}
+
+// STDIO Transport
+function createStdioTransport(config: StdioTransportConfig): Transport & EventEmitter {
+  let child: ChildProcessWithoutNullStreams | null = null;
+  let connected = false;
+  const emitter = new EventEmitter();
+
+  const handleStdout = (data: Buffer) => {
+    const lines = data.toString('utf8').split('\n').filter(Boolean);
+    for (const line of lines) {
+      try {
+        const msg = JSON.parse(line);
+        emitter.emit('message', msg);
+      } catch {
+        emitter.emit('error', new Error('Invalid JSON from stdio server'));
+      }
     }
+  };
 
-    // Redact sensitive data before sending
-    const redactedMessage = redactSensitiveData(message);
-    
-    // In production, this would actually send the message via the appropriate transport
-    console.log(`Sending message via ${this.config.type}:`, redactedMessage);
-  }
-
-  isConnected(): boolean {
-    return this.connected;
-  }
+  return Object.assign(emitter, {
+    async connect() {
+      if (connected) return;
+      child = spawn(config.command, config.args ?? [], {
+        cwd: config.cwd,
+        env: { ...process.env, ...(config.env ?? {}) },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      child.stdout.on('data', handleStdout);
+      child.stderr.on('data', (d) => emitter.emit('stderr', d.toString()));
+      child.on('exit', (code, signal) => {
+        connected = false;
+        emitter.emit('exit', { code, signal });
+      });
+      connected = true;
+    },
+    async disconnect() {
+      if (child && child.pid) child.kill('SIGTERM');
+      child = null;
+      connected = false;
+    },
+    async send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
+      validateMessage(message, onError);
+      if (!connected || !child || !child.stdin.writable) throw new Error('Transport not connected');
+      try {
+        const payload = JSON.stringify(redactSensitiveData(message)) + '\n';
+        child.stdin.write(payload);
+      } catch (err) {
+        if (onError) onError(err, message);
+        else throw err;
+      }
+    },
+    isConnected() {
+      return connected;
+    },
+  });
 }

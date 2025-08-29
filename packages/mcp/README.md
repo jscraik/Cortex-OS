@@ -14,10 +14,12 @@ This package consolidates Model Context Protocol utilities for Cortex OS. It re-
 
 ## Features
 
-- Client utilities for interacting with MCP servers
-- Plugin management and marketplace support
-- Docker toolkit integration
-- Python sidecar support
+- Production transports: STDIO, HTTP, SSE (with optional writeUrl)
+- Typed client with request<TResult>() and response correlation
+- Policy gates: MCP_LOCAL_ONLY and MCP_EVIDENCE_REQUIRED
+- Echo-JS basic server with HTTP wrapper (POST /mcp)
+- Mixed-topology interop tests (STDIO + HTTP)
+- Optional OTEL tracing bootstrap (OTLP) via env
 
 ## Directory Structure
 
@@ -51,18 +53,53 @@ pnpm install
 pnpm build
 ```
 
-## Usage
+## Quick Start
 
-```javascript
-// Plugin Registry
-import { PluginRegistry, PluginValidator } from '@cortex-os/mcp';
+### Client (HTTP)
 
-const registry = new PluginRegistry();
-await registry.refreshMarketplace();
-const plugins = registry.searchPlugins({ query: 'linear' });
+```ts
+import { McpClient } from '@cortex-os/mcp';
 
-const validator = new PluginValidator();
-const result = validator.validatePlugin(pluginMetadata);
+const client = new McpClient({
+  transport: { type: 'http', url: 'http://localhost:8080/mcp', timeoutMs: 10000 },
+});
+await client.connect();
+
+// Initialize and discover
+const init = await client.request<{
+  protocolVersion?: string;
+  capabilities: Record<string, unknown>;
+}>('initialize', { protocolVersion: '2025-06-18' });
+const tools = await client.request<{ tools: Array<{ name: string }> }>('tools/list');
+
+// Call a tool
+const result = await client.callTool('echo', { message: 'hello' });
+console.log(result.result); // { ok: true, echo: 'hello' }
+```
+
+### Transports
+
+- STDIO: spawn a stdio MCP server and exchange JSON-RPC as newline-delimited JSON.
+- HTTP: POST JSON-RPC envelopes to `/mcp`; responses are emitted and correlate to pending requests.
+- SSE: events via EventSource; set `writeUrl` for POSTing JSON-RPC on `send()`.
+
+### Policy Gates
+
+- `MCP_LOCAL_ONLY=1`: blocks non-local resource schemes (enforced in resource handlers).
+- `MCP_EVIDENCE_REQUIRED=1`: blocks `tools/call` without `evidence` or `uri` in args.
+
+### Echo-JS HTTP Wrapper
+
+```bash
+node packages/mcp/mcp-servers/echo-js/src/http-server.ts
+# POST JSON-RPC to http://localhost:8080/mcp
+```
+
+### Registry CLI (mcp-bridge)
+
+```bash
+# List installed servers
+mcp registry list --json
 ```
 
 ## Environment Variables
@@ -88,20 +125,25 @@ pnpm mcp:start-with-tunnel  # Start with tunnel
 
 ## Testing
 
-The package includes unit tests for protocol conformance and SSE security.
+Includes protocol conformance, security, and interop tests:
 
 ```bash
+# Run all tests
 pnpm test
+
+# Mixed topology E2E (STDIO + HTTP)
+pnpm -C packages/mcp vitest run packages/mcp/src/test/mixed-topology.e2e.test.ts
+
+# Client correlation (HTTP)
+pnpm -C packages/mcp vitest run packages/mcp/src/lib/client.e2e.test.ts
 ```
 
-## Architecture Benefits
+## Architecture & Governance
 
-This consolidation ensures:
-
-1. **Single Source of Truth**: All MCP functionality is in one place
-2. **Clear Boundaries**: Architectural separation from other packages
-3. **Easier Maintenance**: Simpler imports and dependency management
-4. **Better Organization**: Logical grouping of related functionality
+- Clear boundaries: no cross-domain imports; MCP logic isolated under `src/lib`.
+- Functional-first: transports via factories; SSE uses class where EventEmitter ergonomics are valuable.
+- Named exports only and ≤40-line functions for new code.
+- Deterministic policy gates and reproducible behavior via environment.
 
 ## Accessibility
 

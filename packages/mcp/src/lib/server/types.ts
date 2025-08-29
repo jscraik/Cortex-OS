@@ -10,10 +10,8 @@ export type ToolDef = {
 };
 export type ToolHandler = (args: Record<string, unknown>) => Promise<unknown> | unknown;
 
-export type ResourceDef = { uri: string; name?: string };
-export type ResourceHandler = () =>
-  | Promise<Record<string, unknown>>
-  | Record<string, unknown>;
+export type ResourceDef = { uri: string; name?: string; description?: string; mimeType?: string };
+export type ResourceHandler = () => Promise<Record<string, unknown>> | Record<string, unknown>;
 
 export type PromptDef = { name: string; description?: string };
 export type PromptHandler = () => Promise<unknown> | unknown;
@@ -23,5 +21,6 @@ export interface ServerContext {
   tools: Map<string, { def: ToolDef; handler: ToolHandler }>;
   resources: Map<string, { def: ResourceDef; handler: ResourceHandler }>;
   prompts: Map<string, { def: PromptDef; handler: PromptHandler }>;
+  subscriptions?: Map<string, unknown>;
+  templates?: Map<string, unknown>;
 }
-

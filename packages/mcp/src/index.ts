@@ -16,3 +16,4 @@ export * from './lib/sse-transport.js';
 export * from './lib/transport.js';
 export * from './lib/mlx-model.js';
 export * from './lib/security-compliance.js';
+export * from './lib/server/index.js';

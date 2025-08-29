@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { McpRequest } from '../types.js';
+import type { McpRequest, McpResponse } from '../types.js';
 import {
   validateServerOptions,
   validateRequest,
@@ -24,6 +24,31 @@ import {
   handlePromptsList,
 } from './handlers.js';
 
+export class McpServer {
+  private context: ServerContext;
+  public isInitialized = false;
+
+  constructor(config: { name: string; version: string }) {
+    this.context = createServer(config);
+  }
+
+  addTool(def: ToolDef, handler: ToolHandler): void {
+    addTool(this.context, def, handler);
+  }
+
+  addResource(def: ResourceDef, handler: ResourceHandler): void {
+    addResource(this.context, def, handler);
+  }
+
+  addPrompt(def: PromptDef, handler: PromptHandler): void {
+    addPrompt(this.context, def, handler);
+  }
+
+  async handleRequest(req: McpRequest): Promise<McpResponse> {
+    return handleRequest(this.context, req);
+  }
+}
+
 export {
   handleInitialize,
   handleToolsList,
@@ -45,37 +70,22 @@ export function createServer(config: { name: string; version: string }): ServerC
   };
 }
 
-export function addTool(
-  ctx: ServerContext,
-  def: ToolDef,
-  handler: ToolHandler,
-): void {
+export function addTool(ctx: ServerContext, def: ToolDef, handler: ToolHandler): void {
   z.object({ name: z.string().min(1) }).parse(def);
   ctx.tools.set(def.name, { def, handler });
 }
 
-export function addResource(
-  ctx: ServerContext,
-  def: ResourceDef,
-  handler: ResourceHandler,
-): void {
+export function addResource(ctx: ServerContext, def: ResourceDef, handler: ResourceHandler): void {
   z.object({ uri: z.string().min(1) }).parse(def);
   ctx.resources.set(def.uri, { def, handler });
 }
 
-export function addPrompt(
-  ctx: ServerContext,
-  def: PromptDef,
-  handler: PromptHandler,
-): void {
+export function addPrompt(ctx: ServerContext, def: PromptDef, handler: PromptHandler): void {
   z.object({ name: z.string().min(1) }).parse(def);
   ctx.prompts.set(def.name, { def, handler });
 }
 
-export async function handleRequest(
-  ctx: ServerContext,
-  req: McpRequest,
-) {
+export async function handleRequest(ctx: ServerContext, req: McpRequest) {
   const parsed = validateRequest(req);
   switch (parsed.method) {
     case 'initialize':
