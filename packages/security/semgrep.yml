@@ -12,8 +12,7 @@ rules:
       - pattern: $LLM([$PROMPT, $USER_INPUT].join(''))
       - pattern: $LLM($PROMPT.concat($USER_INPUT))
       - metavariable-regex:
-          metavariable: $USER_INPUT
-          regex: (?i)(input|prompt|user|query)
+          regex: (?i)(input|prompt|user|query|data|content|message|text|param)
 
   - id: llm-eval-on-output
     message: 'Avoid eval on potential LLM output'
