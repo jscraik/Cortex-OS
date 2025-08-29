@@ -8,6 +8,7 @@
 
 import { z } from 'zod';
 import { generateId } from './utils/id.js';
+import { fixedTimestamp } from './lib/determinism.js';
 
 /**
  * Evidence captured during PRP execution
@@ -99,6 +100,7 @@ export const PRPStateSchema = z.object({
     error: z.string().optional(),
   }),
 
+
   // Checkpointing for determinism
   checkpoints: z
     .array(
@@ -110,6 +112,7 @@ export const PRPStateSchema = z.object({
       }),
     )
     .optional(),
+
 });
 
 export type PRPState = z.infer<typeof PRPStateSchema>;
@@ -146,7 +149,7 @@ export const createInitialPRPState = (
     deterministic?: boolean;
   } = {},
 ): PRPState => {
-  const now = options.deterministic ? '2025-08-21T00:00:00.000Z' : new Date().toISOString();
+  const now = options.deterministic ? fixedTimestamp('workflow-start') : new Date().toISOString();
   const id = options.id ?? generateId('prp', options.deterministic);
   const runId = options.runId ?? generateId('run', options.deterministic);
 

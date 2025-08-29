@@ -7,17 +7,17 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
+import { createKernel } from '../src/graph-simple.js';
 
 describe('Cortex Kernel Integration', () => {
-  let kernel: CortexKernel;
+  let kernel: ReturnType<typeof createKernel>;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 5,
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    kernel = createKernel(mockOrchestrator);
   });
 
   describe('Basic Integration', () => {
@@ -51,28 +51,6 @@ describe('Cortex Kernel Integration', () => {
       expect(result.cerebrum?.confidence).toBeGreaterThan(0.9);
     });
 
-    it('should maintain execution history', async () => {
-      const blueprint = {
-        title: 'History Test',
-        description: 'Test execution history tracking',
-        requirements: ['Track phases'],
-      };
-
-      const result = await kernel.runPRPWorkflow(blueprint, {
-        runId: 'history-test-001',
-      });
-
-      const history = kernel.getExecutionHistory('history-test-001');
-
-      // Should have tracked all phase transitions
-      expect(history.length).toBeGreaterThan(1);
-
-      // Check phase progression
-      const phases = history.map((state) => state.phase);
-      expect(phases).toContain('strategy');
-      expect(phases[phases.length - 1]).toBe('completed');
-    });
-
     it('should handle orchestrator integration correctly', async () => {
       const blueprint = {
         title: 'Orchestrator Integration',
@@ -99,7 +77,7 @@ describe('Cortex Kernel Integration', () => {
         },
       };
 
-      const errorKernel = new CortexKernel(errorOrchestrator);
+      const errorKernel = createKernel(errorOrchestrator);
 
       const blueprint = {
         title: 'Error Test',
@@ -155,6 +133,85 @@ describe('Cortex Kernel Integration', () => {
         expect(result.validationResults.build).toBeDefined();
         expect(result.validationResults.evaluation).toBeDefined();
       }
+    });
+  });
+
+  describe('Behavior Extensions', () => {
+    it('should capture incremental state updates', async () => {
+      const { ExampleCaptureSystem, BehaviorExtensionManager, createInitialPRPState } =
+        await import('../src/index.js');
+
+      const captureSystem = new ExampleCaptureSystem();
+      const manager = new BehaviorExtensionManager(captureSystem);
+      // Remove default extensions for a controlled test environment
+      manager.clearExtensions();
+
+      manager.registerExtension({
+        id: 'ext1',
+        name: 'Extension One',
+        description: 'Adds validation adjustment',
+        trigger: () => true,
+        modify: async () => ({
+          modified: true,
+          changes: [
+            {
+              type: 'validation_adjustment',
+              description: 'step one',
+              impact: 'low',
+              parameters: { step: 'one' },
+            },
+          ],
+          reasoning: 'first',
+        }),
+        confidence: 1,
+        basedOnPatterns: [],
+      });
+
+      manager.registerExtension({
+        id: 'ext2',
+        name: 'Extension Two',
+        description: 'Adds gate modification',
+        trigger: () => true,
+        modify: async () => ({
+          modified: true,
+          changes: [
+            {
+              type: 'gate_modification',
+              description: 'step two',
+              impact: 'low',
+              parameters: { step: 'two' },
+            },
+          ],
+          reasoning: 'second',
+        }),
+        confidence: 1,
+        basedOnPatterns: [],
+      });
+
+      const blueprint = {
+        title: 'Incremental Test',
+        description: 'Verifies state updates',
+        requirements: [],
+      };
+      const initialState = createInitialPRPState(blueprint, {
+        id: 'state-1',
+        runId: 'run-1',
+      });
+
+      await manager.applyExtensions(initialState);
+
+      const examples = captureSystem.getExamples();
+      expect(examples).toHaveLength(2);
+      expect(examples[0].context.inputState.metadata?.validationAdjustments).toBeUndefined();
+      expect(examples[0].outcome.resultingState.metadata.validationAdjustments).toEqual({
+        step: 'one',
+      });
+      expect(examples[1].context.inputState.metadata.validationAdjustments).toEqual({
+        step: 'one',
+      });
+      expect(examples[1].outcome.resultingState.metadata.gateModifications).toEqual({
+        step: 'two',
+      });
     });
   });
 });

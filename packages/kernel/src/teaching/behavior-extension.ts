@@ -90,15 +90,17 @@ export class BehaviorExtensionManager {
 
     for (const extension of sortedExtensions) {
       try {
-        const result = await extension.modify(modifiedState, extensionContext);
+        const currentState = modifiedState;
+        const result = await extension.modify(currentState, extensionContext);
 
         if (result.modified) {
-          // Apply modifications to state
-          modifiedState = this.applyModifications(modifiedState, result);
+          const updatedState = this.applyModifications(currentState, result);
           appliedExtensions.push({ extension, result });
 
-          // Capture this extension application as an example
-          this.captureExtensionApplication(extension, state, modifiedState, result);
+          // Capture this extension application with the state before modifications
+          this.captureExtensionApplication(extension, currentState, updatedState, result);
+
+          modifiedState = updatedState;
         }
       } catch (error) {
         console.error(`Extension ${extension.id} failed:`, error);

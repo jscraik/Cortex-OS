@@ -8,6 +8,7 @@
 import { PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 
+
 // Neuron interface definition - compatible with prp-runner
 interface Neuron {
   id: string;
@@ -164,6 +165,7 @@ export class MCPAdapter {
       dependencies: [],
       tools: [tool.name],
       requiresLLM: false,
+
       execute: async (state: PRPState, context: Record<string, unknown>) => {
         const mcpContext = this.createContext(state, {
           workingDirectory: context.workingDirectory,
@@ -173,7 +175,17 @@ export class MCPAdapter {
         const params = this.extractToolParams(state.blueprint, tool);
         const execution = await this.executeTool(tool.name, params, state.runId);
 
-        return {
+        const metrics: ExecutionMetrics = {
+          startTime: new Date().toISOString(),
+          endTime: new Date().toISOString(),
+          duration: 0,
+          toolsUsed: [tool.name],
+          filesCreated: 0,
+          filesModified: 0,
+          commandsExecuted: 1,
+        };
+
+        const result: NeuronResult = {
           output: {
             toolName: tool.name,
             result: execution.result,
@@ -191,16 +203,10 @@ export class MCPAdapter {
           ],
           nextSteps: [`Review ${tool.name} output`],
           artifacts: [],
-          metrics: {
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-            duration: 0,
-            toolsUsed: [tool.name],
-            filesCreated: 0,
-            filesModified: 0,
-            commandsExecuted: 1,
-          },
+          metrics,
         };
+
+        return result;
       },
     };
   }
