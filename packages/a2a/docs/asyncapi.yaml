@@ -570,8 +570,6 @@ components:
           description: Additional headers/metadata
         data:
           description: Event payload data
-        payload:
-          description: Legacy payload field for backward compatibility
 
     Command:
       type: object

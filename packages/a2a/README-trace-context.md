@@ -55,9 +55,9 @@ const envelope = createEnvelope({
 ### Publishing Messages
 
 ```typescript
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 
-const bus = new Bus(transport);
+const bus = createBus(transport);
 
 // Messages published without trace context will have one automatically created
 await bus.publish(envelope);

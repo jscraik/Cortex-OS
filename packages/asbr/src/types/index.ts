@@ -225,15 +225,11 @@ export interface UnsubscribeFunction {
 // Configuration Types
 export const ConfigSchema = z.object({
   events: z.object({
-    transport: z.enum(['socket', 'sse', 'poll']),
-    poll_interval_ms: z.number().positive(),
+    transport: z.enum(['socket', 'sse']),
+
+
     heartbeat_ms: z.number().positive(),
     idle_timeout_ms: z.number().positive(),
-    backoff: z.object({
-      base_ms: z.number().positive(),
-      max_ms: z.number().positive(),
-      factor: z.number().positive(),
-    }),
   }),
   determinism: z.object({
     max_normalize_bytes: z.number().positive(),
@@ -247,6 +243,13 @@ export const ConfigSchema = z.object({
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
+
+export const VersionPinsSchema = z.record(
+  z.string(),
+  z.string().regex(/^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/),
+);
+
+export type VersionPins = z.infer<typeof VersionPinsSchema>;
 
 // XDG Directory Structure
 export interface XDGPaths {

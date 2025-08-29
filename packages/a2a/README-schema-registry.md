@@ -104,12 +104,12 @@ if (compatibility.compatible) {
 The schema registry integrates seamlessly with the A2A bus:
 
 ```typescript
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 
 // Create bus with schema validation
 const registry = new SchemaRegistry();
-const bus = new Bus(transport, undefined, registry);
+const bus = createBus(transport, undefined, registry);
 
 // All published messages are automatically validated
 await bus.publish(envelope); // Throws error if invalid

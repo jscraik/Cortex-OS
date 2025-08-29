@@ -11,7 +11,6 @@ export type AnnouncementType = 'status' | 'progress' | 'error' | 'success' | 'in
 export interface AnnouncementOptions {
   priority?: AriaLivePriority;
   type?: AnnouncementType;
-  delay?: number;
   profileId?: string;
 }
 
