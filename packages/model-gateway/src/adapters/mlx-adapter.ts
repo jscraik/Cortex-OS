@@ -6,8 +6,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
-import { logger } from '../lib/logger';
-import type { ChatResponse, Embedding, MLXAdapterInterface, Message } from './types';
+import { estimateTokenCount } from '../../../../src/lib/math.js';
 
 // Configuration paths - can be overridden via environment
 const HUGGINGFACE_CACHE =
@@ -169,271 +168,25 @@ export type MLXEmbeddingResponse = z.infer<typeof MLXEmbeddingResponseSchema>;
 export type MLXChatRequest = z.infer<typeof MLXChatRequestSchema>;
 export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
 
+export interface MLXAdapter {
+  generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
+  generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]>;
+  isAvailable(): Promise<boolean>;
+}
+
 /**
- * MLX Adapter for model gateway
+ * Factory to create an MLX adapter
  */
-export class MLXAdapter implements MLXAdapterInterface {
-  private readonly pythonPath: string;
-  private readonly scriptPath: string;
+export function createMLXAdapter(): MLXAdapter {
+  const pythonPath = process.env.PYTHON_PATH || 'python3';
+  const scriptPath = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '../../../../apps/cortex-py/src/mlx/embedding_generator.py',
+  );
 
-  constructor() {
-    // Path to Python executable (can be configured via environment)
-    this.pythonPath = process.env.PYTHON_PATH || 'python3';
-
-    // Path to the MLX generator script (unified for chat and embeddings)
-    this.scriptPath = path.resolve(
-      path.dirname(new URL(import.meta.url).pathname),
-      '../../../../apps/cortex-py/src/mlx/mlx_unified.py',
-    );
-  }
-
-  /**
-   * Generate chat completion using MLX
-   */
-  async generateChat(request: MLXChatRequest): Promise<MLXChatResponse> {
-    const modelName = (request.model as MLXModelName) || 'qwen3-coder-30b-mlx';
-    const modelConfig = MLX_MODELS[modelName];
-
-    if (!modelConfig || modelConfig.type !== 'chat') {
-      throw new Error(`Unsupported MLX chat model: ${modelName}`);
-    }
-
-    // Validate model path exists
-    if (!(await this.validateModelPath(modelConfig.path))) {
-      logger.warn('Model path not found', {
-        path: modelConfig.path,
-        action: 'attempting_download',
-      });
-    }
-
-    try {
-      // Use mlx-lm or mlxknife if available, otherwise use our Python script
-      const useMLXTools = await this.checkMLXTools();
-      let result;
-
-      if (useMLXTools === 'mlx-lm') {
-        result = await this.executeMLXLM(modelConfig.hf_path, request.messages, {
-          max_tokens: request.max_tokens || 4096,
-          temperature: request.temperature || 0.7,
-        });
-      } else {
-        result = await this.executePythonScript([
-          JSON.stringify(request.messages),
-          '--model',
-          modelConfig.hf_path || modelName,
-          '--model-path',
-          modelConfig.path,
-          '--chat-mode',
-          '--max-tokens',
-          String(request.max_tokens || 4096),
-          '--temperature',
-          String(request.temperature || 0.7),
-          '--json-only',
-        ]);
-      }
-
-      const data = JSON.parse(result);
-
-      return MLXChatResponseSchema.parse({
-        content: data.content || data.response,
-        model: modelName,
-        usage: {
-          prompt_tokens:
-            data.usage?.prompt_tokens || this.estimateTokenCount(JSON.stringify(request.messages)),
-          completion_tokens:
-            data.usage?.completion_tokens || this.estimateTokenCount(data.content || ''),
-          total_tokens: data.usage?.total_tokens || 0,
-        },
-      });
-    } catch (error) {
-      logger.error('MLX chat generation failed', { error: error.message, model: modelName });
-      throw new Error(
-        `MLX chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
-  }
-
-  // Positional helpers for compatibility with callers that use positional args
-  async generateChatPositional(
-    messages: Message[],
-    model?: string,
-    options?: { temperature?: number; max_tokens?: number },
-  ): Promise<ChatResponse> {
-    const resp = await this.generateChat({
-      messages,
-      model,
-      temperature: options?.temperature,
-      max_tokens: options?.max_tokens,
-    } as any);
-    return { content: resp.content, model: resp.model };
-  }
-
-  /**
-   * Generate embeddings using MLX
-   */
-  async generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> {
-    const modelName = (request.model as MLXModelName) || 'qwen3-embedding-4b-mlx';
-    const modelConfig = MLX_MODELS[modelName];
-
-    if (!modelConfig || modelConfig.type !== 'embedding') {
-      throw new Error(`Unsupported MLX embedding model: ${modelName}`);
-    }
-
-    // Validate model path exists
-    if (!(await this.validateModelPath(modelConfig.path))) {
-      logger.warn('Model path not found', {
-        path: modelConfig.path,
-        action: 'attempting_download',
-      });
-    }
-
-    try {
-      const result = await this.executePythonScript([
-        request.text,
-        '--model',
-        modelConfig.hf_path || modelName,
-        '--model-path',
-        modelConfig.path,
-        '--embedding-mode',
-        '--json-only',
-      ]);
-
-      const data = JSON.parse(result);
-
-      // Validate response is a non-empty array
-      if (!Array.isArray(data) || data.length === 0) {
-        throw new Error('Invalid embedding response: expected non-empty array');
-      }
-
-      return MLXEmbeddingResponseSchema.parse({
-        embedding: data[0], // Python script returns array of arrays, take first
-        model: modelName,
-        dimensions: modelConfig.dimensions,
-        usage: {
-          tokens: this.estimateTokenCount(request.text),
-          cost: 0, // Local inference has no API cost
-        },
-      });
-    } catch (error) {
-      logger.error('MLX embedding generation failed', { error: error.message, model: modelName });
-      throw new Error(
-        `MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
-  }
-
-  async generateEmbeddingPositional(text: string, model?: string): Promise<Embedding> {
-    const resp = await this.generateEmbedding({ text, model } as any);
-    return { embedding: resp.embedding, model: resp.model };
-  }
-
-  /**
-   * Generate multiple embeddings in batch
-   */
-  async generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]> {
-    const modelName = (model as MLXModelName) || 'qwen3-embedding-4b-mlx';
-    const modelConfig = MLX_MODELS[modelName];
-
-    if (!modelConfig || modelConfig.type !== 'embedding') {
-      throw new Error(`Unsupported MLX embedding model: ${modelName}`);
-    }
-
-    try {
-      const result = await this.executePythonScript([
-        ...texts,
-        '--model',
-        modelConfig.hf_path || modelName,
-        '--model-path',
-        modelConfig.path,
-        '--batch-embedding-mode',
-        '--json-only',
-      ]);
-
-      const data = JSON.parse(result);
-
-      if (!Array.isArray(data)) {
-        throw new Error('Expected array of embeddings from MLX script');
-      }
-      const totalTokens = texts.reduce((sum, text) => sum + this.estimateTokenCount(text), 0);
-
-      return data.map((embedding: number[], index: number) =>
-        MLXEmbeddingResponseSchema.parse({
-          embedding,
-          model: modelName,
-          dimensions: modelConfig.dimensions,
-          usage: {
-            tokens: Math.floor(totalTokens / texts.length), // Approximate per-text tokens
-            cost: 0,
-          },
-        }),
-      );
-    } catch (error) {
-      logger.error('MLX batch embedding generation failed', {
-        error: error.message,
-        model: modelName,
-      });
-      throw new Error(
-        `MLX batch embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
-  }
-
-  async generateEmbeddingsPositional(texts: string[], model?: string): Promise<Embedding[]> {
-    const resp = await this.generateEmbeddings(texts, model as any);
-    return resp.map((r) => ({ embedding: r.embedding, model: r.model }));
-  }
-
-  /**
-   * Execute operation with timeout protection
-   */
-  private async executeWithTimeout<T>(
-    operation: () => Promise<T>,
-    timeoutMs: number = 30000,
-  ): Promise<T> {
-    return Promise.race([
-      operation(),
-      new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error('MLX operation timeout')), timeoutMs),
-      ),
-    ]);
-  }
-
-  /**
-   * Validate model path exists
-   */
-  private async validateModelPath(modelPath: string): Promise<boolean> {
-    try {
-      const fs = await import('fs');
-      return fs.existsSync(modelPath);
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * Execute the Python MLX script with retry logic
-   */
-  private async executePythonScript(args: string[], retries: number = 2): Promise<string> {
-    return this.executeWithTimeout(async () => {
-      for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-          return await this.executePythonScriptInternal(args);
-        } catch (error) {
-          if (attempt === retries) throw error;
-          logger.warn('MLX operation retry', { attempt: attempt + 1, error: error.message });
-          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
-        }
-      }
-      throw new Error('All retry attempts failed');
-    });
-  }
-
-  /**
-   * Internal Python script execution
-   */
-  private async executePythonScriptInternal(args: string[]): Promise<string> {
+  const executePythonScript = (args: string[]): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn(this.pythonPath, [this.scriptPath, ...args], {
+      const pythonProcess = spawn(pythonPath, [scriptPath, ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
@@ -467,151 +220,88 @@ export class MLXAdapter implements MLXAdapterInterface {
         reject(error);
       });
     });
-  }
+  };
 
-  /**
-   * Estimate token count for text (rough approximation)
-   */
-  private estimateTokenCount(text: string): number {
-    // Rough approximation: 1 token ≈ 4 characters for most models
-    return Math.ceil(text.length / 4);
-  }
-
-  /**
-   * Check which MLX tools are available
-   */
-  private async checkMLXTools(): Promise<'mlx-lm' | 'mlxknife' | 'python' | null> {
-    try {
-      await this.executeCommand('mlx_lm.generate', ['--help']);
-      return 'mlx-lm';
-    } catch {
-      try {
-        await this.executeCommand('mlxknife', ['--help']);
-        return 'mlxknife';
-      } catch {
-        try {
-          await this.executePythonScript(['--help']);
-          return 'python';
-        } catch {
-          return null;
-        }
-      }
-    }
-  }
-
-  /**
-   * Execute MLX-LM command for chat generation
-   */
-  private async executeMLXLM(
-    modelPath: string,
-    messages: Array<{ role: string; content: string }>,
-    options: { max_tokens: number; temperature: number },
-  ): Promise<string> {
-    const prompt = this.formatMessagesForMLX(messages);
-
-    return this.executeCommand('python', [
-      '-m',
-      'mlx_lm.generate',
-      '--model',
-      modelPath,
-      '--prompt',
-      prompt,
-      '--max-tokens',
-      String(options.max_tokens),
-      '--temp',
-      String(options.temperature),
-      '--colorize',
-    ]);
-  }
-
-  /**
-   * Format messages for MLX consumption
-   */
-  private formatMessagesForMLX(messages: Array<{ role: string; content: string }>): string {
-    return messages.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
-  }
-
-  /**
-   * Execute a system command
-   */
-  private async executeCommand(command: string, args: string[]): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const process = spawn(command, args, {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          HF_HOME: HUGGINGFACE_CACHE,
-          TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
-        },
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      process.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      process.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      process.on('close', (code) => {
-        if (code === 0) {
-          resolve(stdout.trim());
-        } else {
-          reject(new Error(`Command failed with code ${code}: ${stderr}`));
-        }
-      });
-
-      process.on('error', (error) => {
-        reject(error);
-      });
-    });
-  }
-
-  /**
-   * Check if MLX is available
-   */
-  async isAvailable(): Promise<boolean> {
-    const tools = await this.checkMLXTools();
-    return tools !== null;
-  }
-
-  /**
-   * Generate reranking scores using MLX
-   */
-  async generateReranking(
-    query: string,
-    documents: string[],
-    model?: string,
-  ): Promise<Array<{ index: number; score: number }>> {
-    const modelName = (model as MLXModelName) || 'qwen3-reranker-4b-mlx';
+  const generateEmbedding = async (request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> => {
+    const modelName = (request.model as MLXModelName) || 'qwen3-embedding-4b-mlx';
     const modelConfig = MLX_MODELS[modelName];
 
-    if (!modelConfig || modelConfig.type !== 'reranking') {
-      throw new Error(`Unsupported MLX reranking model: ${modelName}`);
+    if (!modelConfig) {
+      throw new Error(`Unsupported MLX model: ${modelName}`);
     }
 
     try {
-      const result = await this.executePythonScript([
-        query,
-        JSON.stringify(documents),
-        '--model',
-        modelConfig.hf_path || modelName,
-        '--model-path',
-        modelConfig.path,
-        '--rerank-mode',
-        '--json-only',
-      ]);
+      const result = await executePythonScript([request.text, '--model', modelName, '--json-only']);
 
       const data = JSON.parse(result);
-      return data.scores || [];
+
+      return MLXEmbeddingResponseSchema.parse({
+        embedding: data[0], // Python script returns array of arrays, take first
+        model: modelName,
+        dimensions: modelConfig.dimensions,
+        usage: {
+          tokens: estimateTokenCount(request.text),
+          cost: 0, // Local inference has no API cost
+        },
+      });
     } catch (error) {
-      logger.error('MLX reranking failed', { error: error.message, model: modelName });
+      console.error('MLX embedding generation failed:', error);
       throw new Error(
-        `MLX reranking failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-  }
+  };
+
+  const generateEmbeddings = async (
+    texts: string[],
+    model?: string,
+  ): Promise<MLXEmbeddingResponse[]> => {
+    const modelName = (model as MLXModelName) || 'qwen3-embedding-4b-mlx';
+
+    try {
+      const result = await executePythonScript([...texts, '--model', modelName, '--json-only']);
+
+      const data = JSON.parse(result);
+
+      if (!Array.isArray(data)) {
+        throw new Error('Expected array of embeddings from MLX script');
+      }
+
+      const modelConfig = MLX_MODELS[modelName];
+      const totalTokens = texts.reduce((sum, text) => sum + estimateTokenCount(text), 0);
+
+      return data.map((embedding: number[], index: number) =>
+        MLXEmbeddingResponseSchema.parse({
+          embedding,
+          model: modelName,
+          dimensions: modelConfig.dimensions,
+          usage: {
+            tokens: Math.floor(totalTokens / texts.length), // Approximate per-text tokens
+            cost: 0,
+          },
+        }),
+      );
+    } catch (error) {
+      console.error('MLX batch embedding generation failed:', error);
+      throw new Error(
+        `MLX batch embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
+  };
+
+  const isAvailable = async (): Promise<boolean> => {
+    try {
+      // Test with a simple text to check if MLX is available
+      await executePythonScript(['test', '--json-only']);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  return {
+    generateEmbedding,
+    generateEmbeddings,
+    isAvailable,
+  };
 }

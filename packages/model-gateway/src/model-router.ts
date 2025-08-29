@@ -3,7 +3,8 @@
  */
 
 import { z } from 'zod';
-import { MLXAdapter } from './adapters/mlx-adapter';
+import { createMLXAdapter, MLXAdapter } from './adapters/mlx-adapter.js';
+import { createOllamaAdapter, OllamaAdapter } from './adapters/ollama-adapter.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking';
 export type ModelProvider = 'mlx';
@@ -40,17 +41,31 @@ export type EmbeddingBatchRequest = z.infer<typeof EmbeddingBatchRequestSchema>;
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 export type RerankRequest = z.infer<typeof RerankRequestSchema>;
 
-export class ModelRouter {
-  private readonly mlxAdapter: MLXAdapter;
-  private readonly availableModels: Map<ModelCapability, ModelConfig[]>;
+export interface ModelRouter {
+  initialize(): Promise<void>;
+  hasCapability(capability: ModelCapability): boolean;
+  generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }>;
+  generateEmbeddings(
+    request: EmbeddingBatchRequest,
+  ): Promise<{ embeddings: number[][]; model: string }>;
+  generateChat(request: ChatRequest): Promise<{ content: string; model: string }>;
+  rerank(request: RerankRequest): Promise<{ documents: string[]; scores: number[]; model: string }>;
+  getAvailableModels(capability: ModelCapability): ModelConfig[];
+  hasAvailableModels(capability: ModelCapability): boolean;
+}
 
-  constructor(mlxAdapter?: MLXAdapter) {
-    this.mlxAdapter = mlxAdapter || new MLXAdapter();
-    this.availableModels = new Map();
-  }
+/**
+ * Factory to create a model router using MLX and Ollama adapters
+ */
+export function createModelRouter(
+  mlxAdapter: MLXAdapter = createMLXAdapter(),
+  ollamaAdapter: OllamaAdapter = createOllamaAdapter(),
+): ModelRouter {
+  const availableModels = new Map<ModelCapability, ModelConfig[]>();
 
-  async initialize(): Promise<void> {
-    const mlxAvailable = await this.mlxAdapter.isAvailable();
+  const initialize = async (): Promise<void> => {
+    const mlxAvailable = await mlxAdapter.isAvailable();
+    const ollamaAvailable = await ollamaAdapter.isAvailable();
 
     const embeddingModels: ModelConfig[] = [];
 
@@ -74,39 +89,87 @@ export class ModelRouter {
       );
     }
 
-    this.availableModels.set('embedding', embeddingModels);
-    this.availableModels.set('chat', []);
-    this.availableModels.set('reranking', []);
-  }
-
-  // Select the highest-priority available model for a capability
-  private selectModel(capability: ModelCapability, preferredModel?: string) {
-    const candidates = this.availableModels.get(capability) || [];
-    if (preferredModel) {
-      const preferred = candidates.find((m) => m.name === preferredModel);
-      if (preferred) return preferred;
+    if (ollamaAvailable) {
+      embeddingModels.push({
+        name: 'nomic-embed-text',
+        provider: 'ollama',
+        capabilities: ['embedding'],
+        priority: mlxAvailable ? 50 : 100,
+        fallback: [],
+      });
     }
-    return candidates.length > 0 ? candidates[0] : undefined;
-  }
 
-  // Public helper: does router have any model for capability
-  public hasCapability(capability: ModelCapability): boolean {
-    const list = this.availableModels.get(capability) || [];
-    return list.length > 0;
-  }
+    availableModels.set('embedding', embeddingModels);
 
-  async generateEmbedding(
+    const chatModels: ModelConfig[] = [];
+    if (ollamaAvailable) {
+      const ollamaModels = await ollamaAdapter.listModels().catch(() => []);
+      const desiredChat = [{ name: 'llama2', priority: 100, fallback: [] }];
+
+      for (const m of desiredChat) {
+        if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
+          chatModels.push({
+            name: m.name,
+            provider: 'ollama',
+            capabilities: ['chat'],
+            priority: m.priority,
+            fallback: m.fallback,
+          });
+        } else {
+          console.log(`[model-router] Ollama model ${m.name} not installed; skipping`);
+        }
+      }
+    }
+    availableModels.set('chat', chatModels);
+
+    const rerankingModels: ModelConfig[] = [];
+    if (ollamaAvailable) {
+      rerankingModels.push({
+        name: 'nomic-embed-text',
+        provider: 'ollama',
+        capabilities: ['reranking'],
+        priority: 100,
+        fallback: [],
+      });
+    }
+    availableModels.set('reranking', rerankingModels);
+  };
+
+  const selectModel = (
+    capability: ModelCapability,
+    requestedModel?: string,
+  ): ModelConfig | null => {
+    const models = availableModels.get(capability);
+    if (!models || models.length === 0) return null;
+    if (requestedModel) {
+      const requested = models.find((m) => m.name === requestedModel);
+      if (requested) return requested;
+    }
+    return [...models].sort((a, b) => b.priority - a.priority)[0];
+  };
+
+  const hasCapability = (capability: ModelCapability): boolean => {
+    const models = availableModels.get(capability);
+    return !!models && models.length > 0;
+  };
+
+  const generateEmbedding = async (
     request: EmbeddingRequest,
-  ): Promise<{ embedding: number[]; model: string }> {
-    const model = this.selectModel('embedding', request.model);
-    if (!model) throw new Error('No MLX embedding models available');
+  ): Promise<{ embedding: number[]; model: string }> => {
+    const model = selectModel('embedding', request.model);
+    if (!model) throw new Error('No embedding models available');
 
     const tryModel = async (m: ModelConfig): Promise<{ embedding: number[]; model: string }> => {
-      const response = await this.mlxAdapter.generateEmbedding({
-        text: request.text,
-        model: m.name,
-      });
-      return { embedding: response.embedding, model: m.name };
+      if (m.provider === 'mlx') {
+        const response = await mlxAdapter.generateEmbedding({
+          text: request.text,
+          model: m.name,
+        });
+        return { embedding: response.embedding, model: m.name };
+      } else {
+        const response = await ollamaAdapter.generateEmbedding(request.text, m.name);
+        return { embedding: response.embedding, model: m.name };
+      }
     };
 
     try {
@@ -114,7 +177,7 @@ export class ModelRouter {
     } catch (error) {
       console.warn(`Primary embedding model ${model.name} failed, attempting fallback:`, error);
       for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels
+        const fallbackModel = availableModels
           .get('embedding')
           ?.find((m) => m.name === fallbackName);
         if (!fallbackModel) continue;
@@ -130,17 +193,22 @@ export class ModelRouter {
         }`,
       );
     }
-  }
+  };
 
-  async generateEmbeddings(
+  const generateEmbeddings = async (
     request: EmbeddingBatchRequest,
-  ): Promise<{ embeddings: number[][]; model: string }> {
-    const model = this.selectModel('embedding', request.model);
-    if (!model) throw new Error('No MLX embedding models available');
+  ): Promise<{ embeddings: number[][]; model: string }> => {
+    const model = selectModel('embedding', request.model);
+    if (!model) throw new Error('No embedding models available');
 
     const tryModel = async (m: ModelConfig): Promise<{ embeddings: number[][]; model: string }> => {
-      const responses = await this.mlxAdapter.generateEmbeddings(request.texts, m.name);
-      return { embeddings: responses.map((r) => r.embedding), model: m.name };
+      if (m.provider === 'mlx') {
+        const responses = await mlxAdapter.generateEmbeddings(request.texts, m.name);
+        return { embeddings: responses.map((r) => r.embedding), model: m.name };
+      } else {
+        const responses = await ollamaAdapter.generateEmbeddings(request.texts, m.name);
+        return { embeddings: responses.map((r) => r.embedding), model: m.name };
+      }
     };
 
     try {
@@ -151,7 +219,7 @@ export class ModelRouter {
         error,
       );
       for (const fallbackName of model.fallback || []) {
-        const fallbackModel = this.availableModels
+        const fallbackModel = availableModels
           .get('embedding')
           ?.find((m) => m.name === fallbackName);
         if (!fallbackModel) continue;
@@ -170,19 +238,96 @@ export class ModelRouter {
         }`,
       );
     }
-  }
+  };
 
-  async generateChat(_request: ChatRequest): Promise<{ content: string; model: string }> {
-    throw new Error('Chat capability requires Ollama support, which is not available.');
-  }
+  const generateChat = async (
+    request: ChatRequest,
+  ): Promise<{ content: string; model: string }> => {
+    const model = selectModel('chat', request.model);
+    if (!model) throw new Error('No chat models available');
 
-  async rerank(
-    _request: RerankRequest,
-  ): Promise<{ documents: string[]; scores: number[]; model: string }> {
-    throw new Error('Reranking capability requires Ollama support, which is not available.');
-  }
+    const tryModel = async (m: ModelConfig): Promise<{ content: string; model: string }> => {
+      const response = await ollamaAdapter.generateChat({
+        ...request,
+        model: m.name,
+      });
+      return { content: response.content, model: m.name };
+    };
 
-  getAvailableModels(capability: ModelCapability): ModelConfig[] {
-    return this.availableModels.get(capability) || [];
-  }
+    try {
+      return await tryModel(model);
+    } catch (error) {
+      console.warn(`Primary chat model ${model.name} failed, attempting fallback:`, error);
+      for (const fallbackName of model.fallback || []) {
+        const fallbackModel = availableModels.get('chat')?.find((m) => m.name === fallbackName);
+        if (!fallbackModel) continue;
+        try {
+          return await tryModel(fallbackModel);
+        } catch (fallbackError) {
+          console.warn(`Fallback chat model ${fallbackName} also failed:`, fallbackError);
+        }
+      }
+      throw new Error(
+        `All chat models failed. Last error: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
+  };
+
+  const rerank = async (
+    request: RerankRequest,
+  ): Promise<{ documents: string[]; scores: number[]; model: string }> => {
+    const model = selectModel('reranking', request.model);
+    if (!model) throw new Error('No reranking models available');
+
+    const tryModel = async (
+      m: ModelConfig,
+    ): Promise<{ documents: string[]; scores: number[]; model: string }> => {
+      const response = await ollamaAdapter.rerank(request.query, request.documents, m.name);
+      return { documents: request.documents, scores: response.scores, model: m.name };
+    };
+
+    try {
+      return await tryModel(model);
+    } catch (error) {
+      console.warn(`Primary reranking model ${model.name} failed, attempting fallback:`, error);
+      for (const fallbackName of model.fallback || []) {
+        const fallbackModel = availableModels
+          .get('reranking')
+          ?.find((m) => m.name === fallbackName);
+        if (!fallbackModel) continue;
+        try {
+          return await tryModel(fallbackModel);
+        } catch (fallbackError) {
+          console.warn(`Fallback reranking model ${fallbackName} also failed:`, fallbackError);
+        }
+      }
+      throw new Error(
+        `All reranking models failed. Last error: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
+  };
+
+  const getAvailableModels = (capability: ModelCapability): ModelConfig[] => {
+    return availableModels.get(capability) || [];
+  };
+
+  const hasAvailableModels = (capability: ModelCapability): boolean => {
+    const models = availableModels.get(capability);
+    return !!models && models.length > 0;
+  };
+
+  return {
+    initialize,
+    hasCapability,
+    generateEmbedding,
+    generateEmbeddings,
+    generateChat,
+    rerank,
+    getAvailableModels,
+    hasAvailableModels,
+  };
 }
