@@ -10,5 +10,8 @@ export * from './workload-identity/index.ts';
 // Security Utilities
 export * from './utils/index.ts';
 
+// MLX integrations
+export * from './mlx/index.ts';
+
 // Types and Interfaces
 export * from './types.ts';
