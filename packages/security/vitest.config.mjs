@@ -8,7 +8,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@cortex-os/telemetry': path.resolve(__dirname, 'test-telemetry-mock.ts'),
+      '@cortex-os/telemetry': path.resolve(
+        __dirname,
+        '../../libs/typescript/telemetry/src/index.ts',
+      ),
     },
   },
 });
