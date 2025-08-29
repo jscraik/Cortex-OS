@@ -175,8 +175,9 @@ const generateWithSentenceTransformers = async (
 import json
 import sys
 import os
+import tempfile
 
-cache_path = os.environ.get('HF_CACHE_PATH', os.path.expanduser('~/.cache/huggingface'))
+cache_path = os.environ.get('HF_HOME', tempfile.gettempdir())
 os.environ['HF_HOME'] = cache_path
 os.environ['TRANSFORMERS_CACHE'] = cache_path
 
@@ -198,8 +199,9 @@ import json
 import sys
 import os
 import torch
+import tempfile
 
-cache_path = os.environ.get('HF_CACHE_PATH', os.path.expanduser('~/.cache/huggingface'))
+cache_path = os.environ.get('HF_HOME', tempfile.gettempdir())
 os.environ['HF_HOME'] = cache_path
 os.environ['TRANSFORMERS_CACHE'] = cache_path
 
@@ -207,7 +209,7 @@ try:
     from transformers import AutoTokenizer, AutoModel
 
     model_name = "Qwen/Qwen3-Embedding-0.6B"
-    cache_dir = os.environ.get('HF_CACHE_PATH', os.path.expanduser('~/.cache/huggingface'))
+    cache_dir = os.environ.get('HF_HOME', tempfile.gettempdir())
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=cache_dir)
     model = AutoModel.from_pretrained(model_name, cache_dir=cache_dir)

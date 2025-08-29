@@ -14,13 +14,17 @@ export interface Store {
   query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;
 }
 
+export interface Pipeline {
+  ingest(chunks: Chunk[]): Promise<void>;
+}
+
 export interface RAGOptions {
   embedder: Embedder;
   store: Store;
   maxContextTokens?: number;
 }
 
-export class RAGPipeline {
+export class RAGPipeline implements Pipeline {
   constructor(private readonly opts: RAGOptions) {}
 
   async ingest(chunks: Chunk[]): Promise<void> {
@@ -51,8 +55,9 @@ export * from './pipeline/qwen3-reranker';
 // Export generation interfaces and implementations
 export * from './generation/multi-model';
 
-// Export enhanced RAG pipeline
+// Export enhanced RAG pipeline factory and helpers
 export * from './enhanced-pipeline';
+export * from './lib';
 
 // Export embedding implementations
 export * from './embed/qwen3';

@@ -107,6 +107,25 @@ await ingestText('source', 'text content', embedder, store);
 const results = await query({ q: 'search query', topK: 5 }, embedder, store);
 ```
 
+### Configuring Qwen3 Reranker
+
+The `Qwen3Reranker` supports custom model and cache locations via options or environment variables.
+
+Environment variables:
+
+- `QWEN3_RERANKER_MODEL_PATH` – model identifier or filesystem path
+- `QWEN3_RERANKER_CACHE_DIR` – directory for cached model files
+- `QWEN3_RERANKER_PYTHON` – optional Python executable path
+
+```typescript
+import { Qwen3Reranker } from '@cortex-os/rag';
+
+const reranker = new Qwen3Reranker({
+  modelPath: process.env.QWEN3_RERANKER_MODEL_PATH,
+  cacheDir: process.env.QWEN3_RERANKER_CACHE_DIR,
+});
+```
+
 ## Package Exports
 
 The package provides multiple export paths for selective imports:

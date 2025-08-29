@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { RAGPipeline } from '../src/index';
+import { RAGPipeline, type Pipeline } from '../src/index';
 import { memoryStore } from '../src/store/memory';
 import { ingestFiles } from '../src/pipeline/batch-ingest';
-import type { Embedder } from '../src/index';
+import { resolveFileList, createWorker, runWorkers } from '../src/lib/batch-ingest';
+import type { Embedder, Chunk } from '../src/index';
 
 const embedder: Embedder = {
   async embed(texts) {
@@ -21,12 +22,46 @@ describe('ingestFiles', () => {
     await fs.writeFile(file1, 'hello');
     await fs.writeFile(file2, 'world!');
 
-    const pipeline = new RAGPipeline({ embedder, store: memoryStore() });
+    const pipeline: Pipeline = new RAGPipeline({ embedder, store: memoryStore() });
     await ingestFiles({ pipeline, files: [file1, file2], concurrency: 2 });
 
     const results = await pipeline.retrieve('query', 5);
     expect(results.length).toBe(2);
 
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+});
+
+describe('batch-ingest helpers', () => {
+  it('resolveFileList discovers files', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'rag-resolve-'));
+    const file = join(dir, 'a.txt');
+    await fs.writeFile(file, 'x');
+    const files = await resolveFileList({
+      files: [],
+      root: dir,
+      include: ['*.txt'],
+      exclude: [],
+      includePriority: false,
+    });
+    expect(files).toContain(file);
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it('createWorker and runWorkers process queue', async () => {
+    const dir = await fs.mkdtemp(join(tmpdir(), 'rag-worker-'));
+    const file = join(dir, 'a.txt');
+    await fs.writeFile(file, 'hello');
+    const queue = [file];
+    const results: Chunk[] = [];
+    const pipeline = {
+      ingest: async (chunks: Chunk[]) => {
+        results.push(...chunks);
+      },
+    };
+    const worker = createWorker({ pipeline, queue, chunkSize: 5, overlap: 0 });
+    await runWorkers(worker, 2, queue.length);
+    expect(results.length).toBe(1);
     await fs.rm(dir, { recursive: true, force: true });
   });
 });

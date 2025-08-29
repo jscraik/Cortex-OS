@@ -227,6 +227,7 @@ export class ProcessingDispatcher {
   }
 
   async dispatch(file: ProcessingFile, strategy: StrategyDecision): Promise<DispatchResult> {
+
     const startTime = performance.now();
     try {
       if (strategy.strategy === ProcessingStrategy.REJECT) {
@@ -282,10 +283,16 @@ export class ProcessingDispatcher {
       throw new Error('Missing processing configuration');
     }
     const processingPromise = this.routeToChunker(file, strategy.strategy, processing);
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined = undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Processing timeout')), this.config.timeout);
+      timeoutHandle = setTimeout(
+        () => reject(new Error('Processing timeout')),
+        this.config.timeout,
+      );
     });
-    return Promise.race([processingPromise, timeoutPromise]);
+    return Promise.race([processingPromise, timeoutPromise]).finally(() => {
+      clearTimeout(timeoutHandle);
+    });
   }
 
   private async routeToChunker(
