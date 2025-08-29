@@ -7,9 +7,12 @@
  */
 
 // Core kernel exports
-export { CortexKernel } from './graph-simple.js';
+export { createKernel, runPRPWorkflow } from './graph-simple.js';
 export type { PRPState, Evidence, ValidationGate, CerebrumDecision } from './state.js';
 export { PRPStateSchema, validateStateTransition, createInitialPRPState } from './state.js';
+
+// History helper
+export { createHistory, addToHistory, getExecutionHistory } from './lib/history.js';
 
 // Workflow nodes
 export { StrategyNode, BuildNode, EvaluationNode } from './nodes/index.js';

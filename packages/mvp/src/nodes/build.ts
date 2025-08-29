@@ -42,6 +42,15 @@ export class BuildNode {
       blockers.push('API schema validation failed');
     }
 
+    evidence.push({
+      id: `build-api-${Date.now()}`,
+      type: 'analysis',
+      source: 'api_schema_validation',
+      content: JSON.stringify(apiValidation),
+      timestamp: new Date().toISOString(),
+      phase: 'build',
+    });
+
     // Gate 3: Security scanning
     const securityScan = await this.runSecurityScan(state);
     if (securityScan.blockers > 0) {

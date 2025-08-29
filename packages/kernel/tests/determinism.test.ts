@@ -7,18 +7,21 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { CortexKernel } from '../src/graph-simple.js';
 import { createInitialPRPState, PRPState } from '../src/state.js';
+import { fixedTimestamp } from '../src/lib/determinism.js';
+
 
 describe('Cortex Kernel Determinism', () => {
-  let kernel: CortexKernel;
+  let kernel: ReturnType<typeof createKernel>;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    kernel = createKernel(mockOrchestrator);
   });
 
   describe('Reproducible Execution', () => {
@@ -35,6 +38,7 @@ describe('Cortex Kernel Determinism', () => {
       // Results should be structurally identical (excluding timestamps and run IDs)
       expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
     });
+
 
     it('should maintain consistent state transitions', async () => {
       const blueprint = {
@@ -54,6 +58,7 @@ describe('Cortex Kernel Determinism', () => {
       expect(phases).toContain('strategy');
     });
 
+
     it('should generate identical IDs across deterministic runs', async () => {
       const blueprint = {
         title: 'Deterministic ID Test',
@@ -67,6 +72,7 @@ describe('Cortex Kernel Determinism', () => {
       expect(run1.runId).toBe(run2.runId);
       expect(run1.id).toBe(run2.id);
     });
+
   });
 });
 

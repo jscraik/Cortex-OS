@@ -290,3 +290,7 @@ scripts/package-lock.json
 !packages/mcp-registry/src/lib/
 !packages/mcp-registry/src/lib/**
 
+
+!src/lib/
+!src/lib/**
+

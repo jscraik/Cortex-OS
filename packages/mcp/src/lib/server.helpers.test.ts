@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateToolArgs } from './server.js';
+import { validateToolArgs } from './server/index.js';
 
 describe('validateToolArgs', () => {
   it('throws when required field missing', () => {
