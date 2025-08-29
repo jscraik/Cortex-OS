@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { BuildNode } from '../src/nodes/build.js';
+import { runBuildNode } from '../src/nodes/build.js';
 import { createInitialPRPState } from '../src/state.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,6 +36,7 @@ describe('BuildNode documentation validation', () => {
     expect(buildResult.majors).toContain(
       'Documentation incomplete - missing API docs or usage notes',
     );
+
   });
 
   it('passes when README.md exists', async () => {
@@ -49,5 +50,6 @@ describe('BuildNode documentation validation', () => {
     expect(buildResult.majors).not.toContain(
       'Documentation incomplete - missing API docs or usage notes',
     );
+
   });
 });
