@@ -34,9 +34,6 @@ export interface UnifiedEvidenceConfig {
   concurrencyLimit?: number;
   timeoutMs?: number;
   cacheEnabled?: boolean;
-
-  // Environment Settings
-  mockMode?: boolean; // Allow explicit mock mode configuration
 }
 
 /**
@@ -132,7 +129,6 @@ export class UnifiedAIEvidenceWorkflow {
       concurrencyLimit: config.concurrencyLimit || 5,
       timeoutMs: config.timeoutMs || 300000, // 5 minutes
       cacheEnabled: config.cacheEnabled ?? true,
-      mockMode: config.mockMode ?? false,
     };
 
     // Initialize core components

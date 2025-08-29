@@ -139,7 +139,7 @@ async function demonstrateCustomConfiguration() {
     embeddingModelSize: '4B', // Balanced performance
     generationModels: [
       {
-        model: '/Volumes/SSD500/Models/MLX/qwen2.5-coder-32b-instruct-q4',
+        model: process.env.MLX_QWEN_CODER_PATH || 'mlx-community/qwen2.5-coder-32b-instruct-q4',
         backend: 'mlx',
         name: 'Qwen2.5 Coder 32B',
         priority: 10,

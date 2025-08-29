@@ -1,6 +1,8 @@
+
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+
 
 /**
  * Document with relevance score for reranking
@@ -24,6 +26,8 @@ export interface Reranker {
    */
   rerank(query: string, documents: RerankDocument[], topK?: number): Promise<RerankDocument[]>;
 }
+
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Configuration for Qwen3 reranker
@@ -58,6 +62,7 @@ export class Qwen3Reranker implements Reranker {
   private readonly pythonPath: string;
 
   constructor(options: Qwen3RerankOptions = {}) {
+
     const defaultPath =
       process.env.QWEN_RERANKER_MODEL_PATH ||
       path.resolve(process.cwd(), 'models/Qwen3-Reranker-4B');
@@ -70,6 +75,7 @@ export class Qwen3Reranker implements Reranker {
     if (!fs.existsSync(this.modelPath)) {
       throw new Error(`Reranker model path does not exist: ${this.modelPath}`);
     }
+
   }
 
   /**
@@ -109,61 +115,22 @@ export class Qwen3Reranker implements Reranker {
    * Score a batch of documents against the query
    */
   private async scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
-    return new Promise((resolve, reject) => {
-      const pythonScript = this.getPythonScript();
-      const child = spawn(this.pythonPath, ['-c', pythonScript], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          TRANSFORMERS_CACHE: this.cacheDir,
-          HF_HOME: this.cacheDir,
-        },
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      child.on('close', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.error) {
-            reject(new Error(`Qwen3 reranker error: ${result.error}`));
-          } else {
-            resolve(result.scores || []);
-          }
-        } catch (err) {
-          reject(new Error(`Failed to parse Qwen3 reranker output: ${err}`));
-        }
-      });
-
-      child.on('error', (err) => {
-        reject(new Error(`Failed to spawn Qwen3 reranker process: ${err}`));
-      });
-
-      // Send input data
-      const input = {
-        query,
-        documents: documents.map((doc) => doc.text),
-        model_path: this.modelPath,
-        max_length: this.maxLength,
-      };
-
-      child.stdin?.write(JSON.stringify(input));
-      child.stdin?.end();
+    const script = this.getPythonScript();
+    const input = JSON.stringify({
+      query,
+      documents: documents.map((d) => d.text),
+      model_path: this.modelPath,
+      max_length: this.maxLength,
     });
+    const result = await runProcess<{ scores: number[] }>(this.pythonPath, ['-c', script], {
+      input,
+      env: {
+        ...process.env,
+        TRANSFORMERS_CACHE: this.cacheDir,
+        HF_HOME: this.cacheDir,
+      },
+    });
+    return result.scores || [];
   }
 
   /**
@@ -181,12 +148,14 @@ export class Qwen3Reranker implements Reranker {
    * Get the Python script for Qwen3 reranking
    */
   private getPythonScript(): string {
+
     return `
 import json
 import sys
 import torch
 from transformers import AutoTokenizer, AutoModel
 import os
+import tempfile
 
 def rerank_documents():
     try:
@@ -198,7 +167,7 @@ def rerank_documents():
         max_length = input_data.get('max_length', 512)
         
         # Set up cache directory
-        cache_dir = os.getenv('TRANSFORMERS_CACHE', '/tmp/qwen3-reranker-cache')
+        cache_dir = os.getenv('TRANSFORMERS_CACHE', os.path.join(tempfile.gettempdir(), 'qwen3-reranker-cache'))
         os.makedirs(cache_dir, exist_ok=True)
         
         # Load model and tokenizer
@@ -270,6 +239,7 @@ def rerank_documents():
 if __name__ == "__main__":
     rerank_documents()
 `;
+
   }
 
   /**

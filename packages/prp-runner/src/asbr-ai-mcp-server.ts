@@ -68,21 +68,35 @@ export class ASBRAIMcpServer {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
+    const capabilities = await this.aiCapabilities.getCapabilities();
+    if (capabilities && capabilities.features) {
+      console.log(
+        `✅ ASBR AI MCP Server initialized with ${capabilities.features.length} features`,
+      );
+    } else {
+      console.log(`⚠️ ASBR AI MCP Server initialized with limited capabilities`);
+    }
+    this.isInitialized = true;
+  }
+
+  /**
+   * Initializes the MCP server in "degraded mode" for testing purposes.
+   * In degraded mode, the server will start even if AI capabilities fail to load,
+   * but some or all AI features may be unavailable or non-functional. This allows
+   * tests to run without requiring full AI initialization.
+   * 
+   * Usage: Only call this method in test environments where AI capabilities may be
+   * unavailable or intentionally disabled. Never use in production, as degraded mode
+   * may result in incomplete or unreliable server functionality.
+   * 
+   * @internal
+   */
+  async initializeForTesting(): Promise<void> {
     try {
-      // Verify AI capabilities are working with graceful fallback
-      const capabilities = await this.aiCapabilities.getCapabilities();
-      if (capabilities && capabilities.features) {
-        console.log(
-          `✅ ASBR AI MCP Server initialized with ${capabilities.features.length} features`,
-        );
-      } else {
-        console.log(`⚠️ ASBR AI MCP Server initialized with limited capabilities`);
-      }
-      this.isInitialized = true;
+      await this.initialize();
     } catch (error) {
-      // For testing scenarios, allow initialization with degraded capabilities
-      console.warn(`⚠️ ASBR AI MCP Server initialized with AI service unavailable: ${error}`);
-      this.isInitialized = true; // Still allow server to start for testing
+      console.warn(`⚠️ ASBR AI MCP Server initialized in degraded test mode: ${error}`);
+      this.isInitialized = true;
     }
   }
 

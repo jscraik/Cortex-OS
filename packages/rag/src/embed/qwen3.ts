@@ -3,10 +3,14 @@
  * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
 
+
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { type Embedder } from '../index.js';
+import { runProcess } from '../../../../src/lib/run-process.js';
+
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
@@ -57,6 +61,7 @@ export class Qwen3Embedder implements Embedder {
     return this.embedWithModel(texts);
   }
 
+
   private async embedWithModel(texts: string[]): Promise<number[][]> {
     return new Promise((resolve, reject) => {
       const python = spawn('python3', ['-c', this.getPythonScript(this.modelPath, texts)], {
@@ -84,8 +89,11 @@ export class Qwen3Embedder implements Embedder {
       });
 
       python.on('error', reject);
+
     });
+    return result.embeddings;
   }
+
 
   private getPythonScript(modelPath: string, texts: string[]): string {
     return `
@@ -132,6 +140,7 @@ except Exception as e:
     print(f"Error: {str(e)}", file=sys.stderr)
     sys.exit(1)
 `;
+
   }
 
   async close(): Promise<void> {
