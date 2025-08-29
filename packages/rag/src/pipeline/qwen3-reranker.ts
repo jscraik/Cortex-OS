@@ -60,22 +60,21 @@ export class Qwen3Reranker implements Reranker {
   private readonly pythonPath: string;
 
   constructor(options: Qwen3RerankOptions = {}) {
-    const defaults = {
-      modelPath: process.env.QWEN3_RERANKER_MODEL_PATH || 'mlx-community/Qwen3-Reranker-4B',
-      maxLength: 512,
-      topK: 10,
-      batchSize: 32,
-      cacheDir:
-        process.env.QWEN3_RERANKER_CACHE_DIR || path.join(os.tmpdir(), 'qwen3-reranker-cache'),
-      pythonPath: process.env.QWEN3_RERANKER_PYTHON || 'python3',
-    };
-    const config = { ...defaults, ...options };
-    this.modelPath = config.modelPath;
-    this.maxLength = config.maxLength;
-    this.topK = config.topK;
-    this.batchSize = config.batchSize;
-    this.cacheDir = config.cacheDir;
-    this.pythonPath = config.pythonPath;
+    this.modelPath =
+      options.modelPath ??
+      process.env.QWEN3_RERANKER_MODEL_PATH ??
+      'mlx-community/Qwen3-Reranker-4B';
+    this.maxLength = options.maxLength ?? 512;
+    this.topK = options.topK ?? 10;
+    this.batchSize = options.batchSize ?? 32;
+    this.cacheDir =
+      options.cacheDir ??
+      process.env.QWEN3_RERANKER_CACHE_DIR ??
+      path.join(os.tmpdir(), 'qwen3-reranker-cache');
+    this.pythonPath =
+      options.pythonPath ??
+      process.env.QWEN3_RERANKER_PYTHON ??
+      'python3';
   }
 
   /**
