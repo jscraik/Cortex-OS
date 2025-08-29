@@ -28,8 +28,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "zod": "^3.22.4",
-    "nanoid": "^5.0.4"
+    "@cortex-os/prp-runner": "workspace:*",
+    "nanoid": "^5.0.4",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.9.0",

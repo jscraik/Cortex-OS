@@ -7,35 +7,7 @@
 
 import { PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
-
-// Neuron interface definition - compatible with prp-runner
-interface Neuron {
-  id: string;
-  role: string;
-  phase: 'strategy' | 'build' | 'evaluation';
-  dependencies: string[];
-  tools: string[];
-  requiresLLM?: boolean;
-  execute(state: any, context: any): Promise<NeuronResult>;
-}
-
-interface NeuronResult {
-  output: any;
-  evidence: any[];
-  nextSteps: string[];
-  artifacts: any[];
-  metrics: ExecutionMetrics;
-}
-
-interface ExecutionMetrics {
-  startTime: string;
-  endTime: string;
-  duration: number;
-  toolsUsed: string[];
-  filesCreated: number;
-  filesModified: number;
-  commandsExecuted: number;
-}
+import type { Neuron, NeuronResult, ExecutionMetrics } from '@cortex-os/prp-runner';
 
 /**
  * MCP Tool interface for kernel integration
@@ -164,7 +136,7 @@ export class MCPAdapter {
       dependencies: [],
       tools: [tool.name],
       requiresLLM: false,
-      execute: async (state: PRPState, context: any) => {
+      execute: async (state: PRPState, context: any): Promise<NeuronResult> => {
         const mcpContext = this.createContext(state, {
           workingDirectory: context.workingDirectory,
         });
@@ -173,7 +145,17 @@ export class MCPAdapter {
         const params = this.extractToolParams(state.blueprint, tool);
         const execution = await this.executeTool(tool.name, params, state.runId);
 
-        return {
+        const metrics: ExecutionMetrics = {
+          startTime: new Date().toISOString(),
+          endTime: new Date().toISOString(),
+          duration: 0,
+          toolsUsed: [tool.name],
+          filesCreated: 0,
+          filesModified: 0,
+          commandsExecuted: 1,
+        };
+
+        const result: NeuronResult = {
           output: {
             toolName: tool.name,
             result: execution.result,
@@ -191,16 +173,10 @@ export class MCPAdapter {
           ],
           nextSteps: [`Review ${tool.name} output`],
           artifacts: [],
-          metrics: {
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-            duration: 0,
-            toolsUsed: [tool.name],
-            filesCreated: 0,
-            filesModified: 0,
-            commandsExecuted: 1,
-          },
+          metrics,
         };
+
+        return result;
       },
     };
   }
