@@ -5,6 +5,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { z } from 'zod';
+import { estimateTokenCount, cosineSimilarity } from '../../../../src/lib/math.js';
 
 // Ollama API schemas
 const OllamaEmbeddingRequestSchema = z.object({
@@ -107,105 +108,73 @@ export type GatewayEmbeddingResponse = z.infer<typeof GatewayEmbeddingResponseSc
 export type GatewayChatResponse = z.infer<typeof GatewayChatResponseSchema>;
 export type GatewayRerankResponse = z.infer<typeof GatewayRerankResponseSchema>;
 
+export interface OllamaAdapter {
+  generateEmbedding(text: string, model?: string): Promise<GatewayEmbeddingResponse>;
+  generateEmbeddings(texts: string[], model?: string): Promise<GatewayEmbeddingResponse[]>;
+  generateChat(request: OllamaChatRequest): Promise<GatewayChatResponse>;
+  rerank(query: string, documents: string[], model?: string): Promise<GatewayRerankResponse>;
+  isAvailable(model?: string): Promise<boolean>;
+  listModels(): Promise<string[]>;
+}
+
 /**
- * Ollama Adapter for model gateway
+ * Factory to create an Ollama adapter
  */
-export class OllamaAdapter {
-  private readonly client: AxiosInstance;
-  private readonly baseURL: string;
+export function createOllamaAdapter(baseURL: string = 'http://localhost:11434'): OllamaAdapter {
+  const client: AxiosInstance = axios.create({
+    baseURL,
+    timeout: 60000, // 60 seconds for potentially long-running requests
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-  constructor(baseURL: string = 'http://localhost:11434') {
-    this.baseURL = baseURL;
-    this.client = axios.create({
-      baseURL,
-      timeout: 60000, // 60 seconds for potentially long-running requests
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  }
-
-  /**
-   * Generate embeddings using Ollama
-   */
-  async generateEmbedding(
+  const generateEmbedding = async (
     text: string,
     model: string = 'nomic-embed-text',
-  ): Promise<GatewayEmbeddingResponse> {
+  ): Promise<GatewayEmbeddingResponse> => {
     try {
-      const request = OllamaEmbeddingRequestSchema.parse({
+      const response = await client.post('/api/embeddings', {
         model,
         prompt: text,
       });
-
-      const response = await this.client.post('/api/embeddings', request);
-      const embeddingData = OllamaEmbeddingResponseSchema.parse(response.data);
-
+      const data = OllamaEmbeddingResponseSchema.parse(response.data);
       return GatewayEmbeddingResponseSchema.parse({
-        embedding: embeddingData.embedding,
+        embedding: data.embedding,
         model,
         usage: {
-          tokens: this.estimateTokenCount(text),
-          cost: 0, // Local Ollama has no API cost
+          tokens: estimateTokenCount(text),
+          cost: 0,
         },
       });
     } catch (error) {
-      console.error('Ollama embedding generation failed:', error);
+      console.error('Ollama embedding failed:', error);
       throw new Error(
         `Ollama embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-  }
+  };
 
-  /**
-   * Generate multiple embeddings in batch
-   */
-  async generateEmbeddings(
+  const generateEmbeddings = async (
     texts: string[],
-    model: string = 'nomic-embed-text',
-  ): Promise<GatewayEmbeddingResponse[]> {
-    // Ollama doesn't have a native batch API, so we'll process sequentially
-    const results: GatewayEmbeddingResponse[] = [];
+    model?: string,
+  ): Promise<GatewayEmbeddingResponse[]> => {
+    return Promise.all(texts.map((t) => generateEmbedding(t, model)));
+  };
 
-    for (const text of texts) {
-      const result = await this.generateEmbedding(text, model);
-      results.push(result);
-    }
-
-    return results;
-  }
-
-  /**
-   * Generate chat completion using Ollama
-   */
-  async generateChat(
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    model: string = 'llama2',
-    options?: { temperature?: number; max_tokens?: number },
-  ): Promise<GatewayChatResponse> {
+  const generateChat = async (request: OllamaChatRequest): Promise<GatewayChatResponse> => {
     try {
-      const request = OllamaChatRequestSchema.parse({
-        model,
-        messages,
-        stream: false,
-        options: {
-          temperature: options?.temperature,
-          num_predict: options?.max_tokens,
-        },
+      const response = await client.post('/api/chat', {
+        ...request,
       });
-
-      const response = await this.client.post('/api/chat', request);
-      const chatData = OllamaChatResponseSchema.parse(response.data);
-
-      const promptTokens = messages.reduce(
-        (sum, msg) => sum + this.estimateTokenCount(msg.content),
-        0,
-      );
-      const completionTokens = this.estimateTokenCount(chatData.message.content);
-
+      const data = OllamaChatResponseSchema.parse(response.data);
+      const promptTokens = request.messages
+        .map((m) => estimateTokenCount(m.content))
+        .reduce((a, b) => a + b, 0);
+      const completionTokens = estimateTokenCount(data.message.content);
       return GatewayChatResponseSchema.parse({
-        content: chatData.message.content,
-        model,
+        content: data.message.content,
+        model: request.model,
         usage: {
           promptTokens,
           completionTokens,
@@ -214,39 +183,29 @@ export class OllamaAdapter {
         },
       });
     } catch (error) {
-      console.error('Ollama chat generation failed:', error);
+      console.error('Ollama chat failed:', error);
       throw new Error(
         `Ollama chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-  }
+  };
 
-  /**
-   * Rerank documents using Ollama
-   * Note: This uses a simple approach since Ollama doesn't have native reranking
-   * In production, you'd want to use a dedicated reranking model
-   */
-  async rerank(
+  const rerank = async (
     query: string,
     documents: string[],
     model: string = 'nomic-embed-text',
-  ): Promise<GatewayRerankResponse> {
+  ): Promise<GatewayRerankResponse> => {
     try {
-      // Generate embeddings for query and all documents
       const [queryEmbedding, ...documentEmbeddings] = await Promise.all([
-        this.generateEmbedding(query, model),
-        ...documents.map((doc) => this.generateEmbedding(doc, model)),
+        generateEmbedding(query, model),
+        ...documents.map((doc) => generateEmbedding(doc, model)),
       ]);
-
-      // Calculate cosine similarity scores
-      const scores = documentEmbeddings.map((docEmbedding) => {
-        return this.cosineSimilarity(queryEmbedding.embedding, docEmbedding.embedding);
-      });
-
+      const scores = documentEmbeddings.map((docEmbedding) =>
+        cosineSimilarity(queryEmbedding.embedding, docEmbedding.embedding),
+      );
       const totalTokens =
-        this.estimateTokenCount(query) +
-        documents.reduce((sum, doc) => sum + this.estimateTokenCount(doc), 0);
-
+        estimateTokenCount(query) +
+        documents.reduce((sum, doc) => sum + estimateTokenCount(doc), 0);
       return GatewayRerankResponseSchema.parse({
         scores,
         model,
@@ -261,29 +220,22 @@ export class OllamaAdapter {
         `Ollama reranking failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-  }
+  };
 
-  /**
-   * Check if Ollama is available and has the specified model
-   */
-  async isAvailable(model?: string): Promise<boolean> {
+  const isAvailable = async (model?: string): Promise<boolean> => {
     try {
-      const response = await this.client.get('/api/tags', {
-        timeout: 2000, // 2 second timeout to prevent long hangs
-        validateStatus: () => true, // Accept any status code
+      const response = await client.get('/api/tags', {
+        timeout: 2000,
+        validateStatus: () => true,
       });
-
       if (response.status !== 200) {
         console.log(`Ollama not available: Status ${response.status}`);
         return false;
       }
-
       const models = response.data?.models || [];
-
       if (model) {
         return models.some((m: any) => m.name === model || m.name.startsWith(model));
       }
-
       return models.length > 0;
     } catch (error) {
       console.log(
@@ -291,52 +243,25 @@ export class OllamaAdapter {
       );
       return false;
     }
-  }
+  };
 
-  /**
-   * List available models
-   */
-  async listModels(): Promise<string[]> {
+  const listModels = async (): Promise<string[]> => {
     try {
-      const response = await this.client.get('/api/tags');
+      const response = await client.get('/api/tags');
       const models = response.data.models || [];
       return models.map((m: any) => m.name);
     } catch (error) {
       console.error('Failed to list Ollama models:', error);
       return [];
     }
-  }
+  };
 
-  /**
-   * Calculate cosine similarity between two vectors
-   */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) {
-      throw new Error('Vectors must have the same length');
-    }
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
-    }
-
-    if (normA === 0 || normB === 0) {
-      return 0;
-    }
-
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-  }
-
-  /**
-   * Estimate token count for text (rough approximation)
-   */
-  private estimateTokenCount(text: string): number {
-    // Rough approximation: 1 token ≈ 4 characters for most models
-    return Math.ceil(text.length / 4);
-  }
+  return {
+    generateEmbedding,
+    generateEmbeddings,
+    generateChat,
+    rerank,
+    isAvailable,
+    listModels,
+  };
 }

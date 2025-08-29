@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
-import { ModelRouter } from './model-router';
+import { createModelRouter, type ModelRouter } from './model-router.js';
 import { auditEvent, record } from './audit';
 import { loadGrant, enforce } from './policy';
 
@@ -14,7 +14,7 @@ type ChatBody = {
 
 export function createServer(router?: ModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
-  const modelRouter = router || new ModelRouter();
+  const modelRouter = router || createModelRouter();
 
   app.post('/embeddings', async (req, reply) => {
     const body = req.body as EmbeddingsBody;
@@ -157,7 +157,7 @@ export function createServer(router?: ModelRouter): FastifyInstance {
 }
 
 export async function start(port = Number(process.env.MODEL_GATEWAY_PORT || 8081)) {
-  const modelRouter = new ModelRouter();
+  const modelRouter = createModelRouter();
   try {
     console.log('Initializing ModelRouter...');
     await modelRouter.initialize();

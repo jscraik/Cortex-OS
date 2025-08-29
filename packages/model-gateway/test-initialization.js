@@ -1,8 +1,8 @@
-import { ModelRouter } from './src/model-router.js';
+import { createModelRouter } from './src/model-router.js';
 
 async function main() {
   console.log('Creating ModelRouter...');
-  const router = new ModelRouter();
+  const router = createModelRouter();
 
   console.log('Initializing ModelRouter...');
   try {
@@ -11,7 +11,7 @@ async function main() {
 
     console.log('Testing embedding generation...');
     const emb = await router.generateEmbedding({ text: 'Hello from test', model: 'auto' });
-    console.log('Embedding length:', emb.length);
+    console.log('Embedding length:', emb.embedding.length);
   } catch (err) {
     console.error('Error during initialization or embedding:', err);
   }

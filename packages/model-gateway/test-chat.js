@@ -1,7 +1,7 @@
-import { ModelRouter } from './src/model-router.js';
+import { createModelRouter } from './src/model-router.js';
 
 async function main() {
-  const router = new ModelRouter();
+  const router = createModelRouter();
   console.log('Initializing ModelRouter...');
   try {
     await router.initialize();
