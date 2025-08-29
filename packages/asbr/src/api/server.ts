@@ -543,7 +543,10 @@ export class ASBRServer {
       .map((layer: any) => ({
         path: layer.route.path,
         methods: Object.keys(layer.route.methods).map((m) => m.toUpperCase()),
-        version: layer.route.path.split('/')[1] ?? '',
+        version: (() => {
+          const match = layer.route.path.match(/^\/(v\d+)\b/);
+          return match ? match[1] : '';
+        })(),
       }));
 
     const serviceMap: ServiceMap = ServiceMapSchema.parse({ routes });
