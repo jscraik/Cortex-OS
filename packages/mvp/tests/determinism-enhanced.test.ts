@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
+import { SimplePRPGraph } from '../src/graph-simple.js';
 import { createInitialPRPState } from '../src/state.js';
 import { ExampleCaptureSystem } from '../src/teaching/example-capture.js';
 import { resetIdCounter } from '../src/utils/id.js';
@@ -10,7 +10,7 @@ describe('Enhanced Determinism', () => {
   });
   it('should produce identical results for identical inputs with deterministic mode', async () => {
     const mockOrchestrator = { getNeuronCount: () => 3 };
-    const kernel = new CortexKernel(mockOrchestrator);
+    const graph = new SimplePRPGraph(mockOrchestrator);
 
     const blueprint = {
       title: 'Determinism Test',
@@ -19,12 +19,12 @@ describe('Enhanced Determinism', () => {
     };
 
     // Run workflows with identical inputs and deterministic mode
-    const result1 = await kernel.runPRPWorkflow(blueprint, {
+    const result1 = await graph.runPRPWorkflow(blueprint, {
       runId: 'deterministic-test',
       deterministic: true,
     });
 
-    const result2 = await kernel.runPRPWorkflow(blueprint, {
+    const result2 = await graph.runPRPWorkflow(blueprint, {
       runId: 'deterministic-test',
       deterministic: true,
     });

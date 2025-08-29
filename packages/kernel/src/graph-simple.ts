@@ -6,10 +6,33 @@
  * @status TDD-DRIVEN
  */
 
+import { z } from 'zod';
 import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
 import { generateId } from './utils/id.js';
-
 import { fixedTimestamp } from './lib/determinism.js';
+
+// Zod schema for validating generateId inputs and run options
+const RunOptionsSchema = z
+  .object({
+    runId: z.string().optional(),
+    deterministic: z.boolean().optional(),
+  })
+  .strict();
+
+// Utility function for simulating work
+async function simulateWork(ms: number, options?: { deterministic?: boolean }): Promise<void> {
+  if (options?.deterministic) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Factory function to create a new CortexKernel instance
+ */
+export function createKernel(orchestrator: PRPOrchestrator): CortexKernel {
+  return new CortexKernel(orchestrator);
+}
 
 // Import real interfaces from prp-runner
 interface PRPOrchestrator {
@@ -33,11 +56,50 @@ interface RunOptions {
  */
 
 export class CortexKernel {
-  private orchestrator: PRPOrchestrator;
-  private executionHistory: Map<string, PRPState[]> = new Map();
+  private readonly orchestrator: PRPOrchestrator;
+  private readonly executionHistory: Map<string, PRPState[]> = new Map();
 
   constructor(orchestrator: PRPOrchestrator) {
     this.orchestrator = orchestrator;
+  }
+
+  /**
+   * Add a state to execution history
+   */
+  private addToHistory(runId: string, state: PRPState): void {
+    if (!this.executionHistory.has(runId)) {
+      this.executionHistory.set(runId, []);
+    }
+    const history = this.executionHistory.get(runId);
+    if (history) {
+      history.push(state);
+    }
+  }
+
+  /**
+   * Execute build phase
+   */
+  private async executeBuildPhase(state: PRPState, deterministic = false): Promise<PRPState> {
+    const newState: PRPState = {
+      ...state,
+      phase: 'build',
+      metadata: {
+        ...state.metadata,
+        currentNeuron: 'build-neuron',
+      },
+    };
+
+    await simulateWork(150, { deterministic });
+
+    newState.validationResults.build = {
+      passed: true,
+      blockers: [],
+      majors: [],
+      evidence: [],
+      timestamp: deterministic ? fixedTimestamp('build-validation') : new Date().toISOString(),
+    };
+
+    return newState;
   }
 
   /**
@@ -51,8 +113,11 @@ export class CortexKernel {
    * Run a complete PRP workflow
    */
   async runPRPWorkflow(blueprint: Blueprint, options: RunOptions = {}): Promise<PRPState> {
-    const deterministic = options.deterministic || false;
-    const runId = options.runId || generateId('run', deterministic);
+    // Validate inputs with Zod schema as recommended in coding guidelines
+    const validatedOptions = RunOptionsSchema.parse(options);
+
+    const deterministic = validatedOptions.deterministic || false;
+    const runId = validatedOptions.runId || generateId('run', deterministic);
     const state = createInitialPRPState(blueprint, { runId, deterministic });
 
     // Initialize execution history
@@ -112,7 +177,7 @@ export class CortexKernel {
     };
 
     // Simulate strategy work
-    await this.simulateWork(100, { deterministic });
+    await simulateWork(100, { deterministic });
 
     // Add strategy validation results
     newState.validationResults.strategy = {
@@ -123,49 +188,15 @@ export class CortexKernel {
       timestamp: deterministic ? fixedTimestamp('strategy-validation') : new Date().toISOString(),
     };
 
-
-    const buildState = await executeBuildPhase(strategyState, deterministic);
-    if (buildState.phase === 'recycled') {
-      return buildState;
-    }
-
-    const evaluationState = await executeEvaluationPhase(buildState, deterministic);
-    return evaluationState;
-  } catch (error) {
-    return {
-      ...state,
-      phase: 'recycled',
-      metadata: {
-        ...state.metadata,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        endTime: new Date().toISOString(),
-      },
-    };
-
-
-    // Simulate build work
-    await this.simulateWork(150, { deterministic });
-
-    // Add build validation results
-    newState.validationResults.build = {
-      passed: true,
-      blockers: [],
-      majors: [],
-      evidence: [],
-      timestamp: deterministic ? fixedTimestamp('build-validation') : new Date().toISOString(),
-    };
-
-    // Transition to evaluation
-    const evaluationState: PRPState = {
-      ...newState,
-      phase: 'evaluation',
-    };
-
-    return validateStateTransition(newState, evaluationState) ? evaluationState : newState;
-
+    return newState;
   }
-}
 
+  /**
+   * Get execution history for a run
+   */
+  getExecutionHistory(runId: string): PRPState[] {
+    return this.executionHistory.get(runId) || [];
+  }
 
   /**
    * Execute evaluation phase
@@ -181,7 +212,7 @@ export class CortexKernel {
     };
 
     // Simulate evaluation work
-    await this.simulateWork(100, { deterministic });
+    await simulateWork(100, { deterministic });
 
     // Add evaluation validation results
     newState.validationResults.evaluation = {
@@ -210,106 +241,6 @@ export class CortexKernel {
       },
     };
 
-
-// Phase executors
-async function executeStrategyPhase(state: PRPState, deterministic = false): Promise<PRPState> {
-  const newState: PRPState = {
-    ...state,
-    phase: 'strategy',
-    metadata: {
-      ...state.metadata,
-      currentNeuron: 'strategy-neuron',
-    },
-  };
-
-  await simulateWork(100, { deterministic });
-
-  newState.validationResults.strategy = {
-    passed: true,
-    blockers: [],
-    majors: [],
-    evidence: [],
-    timestamp: deterministic ? '2025-08-21T00:00:01.000Z' : new Date().toISOString(),
-  };
-
-  const buildState: PRPState = {
-    ...newState,
-    phase: 'build',
-  };
-
-  return validateStateTransition(newState, buildState) ? buildState : newState;
-}
-
-async function executeBuildPhase(state: PRPState, deterministic = false): Promise<PRPState> {
-  const newState: PRPState = {
-    ...state,
-    phase: 'build',
-    metadata: {
-      ...state.metadata,
-      currentNeuron: 'build-neuron',
-    },
-  };
-
-  await simulateWork(150, { deterministic });
-
-  newState.validationResults.build = {
-    passed: true,
-    blockers: [],
-    majors: [],
-    evidence: [],
-    timestamp: deterministic ? '2025-08-21T00:00:02.000Z' : new Date().toISOString(),
-  };
-
-  const evaluationState: PRPState = {
-    ...newState,
-    phase: 'evaluation',
-  };
-
-  return validateStateTransition(newState, evaluationState) ? evaluationState : newState;
-}
-
-async function executeEvaluationPhase(state: PRPState, deterministic = false): Promise<PRPState> {
-  const newState: PRPState = {
-    ...state,
-    phase: 'evaluation',
-    metadata: {
-      ...state.metadata,
-      currentNeuron: 'evaluation-neuron',
-    },
-  };
-
-  await simulateWork(100, { deterministic });
-
-  newState.validationResults.evaluation = {
-    passed: true,
-    blockers: [],
-    majors: [],
-    evidence: [],
-    timestamp: deterministic ? '2025-08-21T00:00:03.000Z' : new Date().toISOString(),
-  };
-
-  newState.cerebrum = {
-    decision: 'promote',
-    reasoning: 'All validation gates passed successfully',
-    confidence: 0.95,
-    timestamp: deterministic ? '2025-08-21T00:00:04.000Z' : new Date().toISOString(),
-  };
-
-  const completedState: PRPState = {
-    ...newState,
-    phase: 'completed',
-    metadata: {
-      ...newState.metadata,
-      endTime: deterministic ? '2025-08-21T00:00:05.000Z' : new Date().toISOString(),
-    },
-  };
-
-  return validateStateTransition(newState, completedState) ? completedState : newState;
-}
-
-async function simulateWork(ms: number, options?: { deterministic?: boolean }): Promise<void> {
-  if (options?.deterministic) {
-    return Promise.resolve();
+    return validateStateTransition(newState, completedState) ? completedState : newState;
   }
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
