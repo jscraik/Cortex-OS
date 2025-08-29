@@ -8,9 +8,6 @@ export type AuditEvent = {
   timestamp: string;
 };
 
-let bufferSize = 0;
-const memoryBuffer: AuditEvent[] = [];
-
 export function auditEvent(
   service: string,
   operation: string,
@@ -27,10 +24,6 @@ export function auditEvent(
 }
 
 export async function record(event: AuditEvent): Promise<void> {
-  if (bufferSize > 0) {
-    memoryBuffer.push(event);
-    if (memoryBuffer.length > bufferSize) memoryBuffer.shift();
-  }
   const logPath = process.env.CORTEX_AUDIT_LOG;
   const line = JSON.stringify(event) + '\n';
   if (logPath) {
@@ -38,13 +31,4 @@ export async function record(event: AuditEvent): Promise<void> {
   } else {
     console.log('audit', line.trim());
   }
-}
-
-export function enableMemoryAuditBuffer(size: number) {
-  bufferSize = size;
-  memoryBuffer.length = 0;
-}
-
-export function getMemoryAuditBuffer(): AuditEvent[] {
-  return memoryBuffer;
 }

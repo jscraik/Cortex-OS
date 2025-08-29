@@ -44,7 +44,6 @@ export class PRPOrchestrationEngine extends EventEmitter {
       enableAdaptiveDecisions: true, // Handled by cerebrum
       planningTimeout: config.planningTimeout || 300000,
       executionTimeout: config.executionTimeout || 1800000,
-      fallbackStrategy: config.fallbackStrategy || 'sequential',
       qualityThreshold: config.qualityThreshold || 0.8,
       performanceMonitoring: config.performanceMonitoring !== false,
     } as OrchestrationConfig;
@@ -398,7 +397,6 @@ export class PRPOrchestrationEngine extends EventEmitter {
           validation: 'Evaluation phase validation passed',
         },
       ],
-      fallbackStrategies: ['sequential'],
       createdAt: new Date(prpResult.metadata.startTime),
     };
   }

@@ -90,6 +90,7 @@ MANIFEST
 .env
 # Allow kernel source libraries
 !packages/kernel/src/lib/
+!packages/model-gateway/src/lib/
 .venv
 env/
 venv/
@@ -291,8 +292,12 @@ scripts/package-lock.json
 .cortex/out/
 !packages/mcp-registry/src/lib/
 !packages/mcp-registry/src/lib/**
+!packages/model-gateway/src/lib/
+!packages/model-gateway/src/lib/**
 
 
 !src/lib/
 !src/lib/**
 
+!packages/prp-runner/src/lib/
+!packages/prp-runner/src/lib/**

@@ -79,7 +79,6 @@ export const ExecutionPlanSchema = z.object({
       validation: z.string(),
     }),
   ),
-  fallbackStrategies: z.array(z.string()).default([]),
   createdAt: z.date(),
   updatedAt: z.date().optional(),
 });
@@ -573,7 +572,6 @@ export interface OrchestrationConfig {
   enableAdaptiveDecisions: boolean;
   planningTimeout: number;
   executionTimeout: number;
-  fallbackStrategy: OrchestrationStrategy;
   qualityThreshold: number;
   performanceMonitoring: boolean;
 }
