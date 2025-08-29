@@ -132,17 +132,12 @@ export class BuildNode {
     }
 
     const schemaPathYaml = path.resolve('openapi.yaml');
-    const schemaPathJson = path.resolve('openapi.json');
-    const exists = fs.existsSync(schemaPathYaml) || fs.existsSync(schemaPathJson);
+    const exists = fs.existsSync(schemaPathYaml);
 
     return {
       passed: exists,
       details: {
-        schemaFormat: fs.existsSync(schemaPathYaml)
-          ? 'OpenAPI 3.0'
-          : fs.existsSync(schemaPathJson)
-            ? 'JSON'
-            : 'missing',
+        schemaFormat: exists ? 'OpenAPI 3.0' : 'missing',
         validation: exists ? 'found' : 'missing',
       },
     };
