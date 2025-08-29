@@ -7,12 +7,6 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
 import { logger } from '../lib/logger';
-import {
-  getValidatedModelConfig,
-  validateModelPath,
-  estimateTokenCount,
-  validateArrayResponse,
-} from '../lib/model-config-validator';
 
 // Configuration paths - can be overridden via environment
 const HUGGINGFACE_CACHE =
