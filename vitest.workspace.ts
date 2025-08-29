@@ -15,6 +15,7 @@ export default defineWorkspace([
   'packages/mcp-server',
   'packages/model-gateway',
   'packages/memories',
+  'packages/model-gateway',
   'packages/mvp',
   'packages/mvp-core',
   'packages/mvp-server',
