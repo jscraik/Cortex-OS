@@ -104,9 +104,7 @@ export function traverseWorkflow(wf: Workflow): TraversalResult {
     if (depth > MAX_WORKFLOW_DEPTH) {
       throw new Error(`Workflow depth exceeds limit of ${MAX_WORKFLOW_DEPTH}`);
     }
-    if (stack.has(id)) {
-      cycleDetected = true;
-      throw new Error('Cycle detected');
+      return;
     }
     if (visited.has(id)) return;
     visited.add(id);
