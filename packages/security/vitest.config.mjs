@@ -11,7 +11,7 @@ export default defineConfig({
     alias: {
       '@cortex-os/telemetry': path.resolve(
         __dirname,
-        '../../libs/typescript/telemetry/src/index.ts',
+        '../../tests/utils/telemetry-mock.ts',
       ),
     },
   },
