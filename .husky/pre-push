@@ -6,5 +6,5 @@
 pnpm lint || exit 1
 
 # Scope tests to changed packages; skip if only docs/config changed.
-node tools/readiness/run-changed-tests.mjs --dry || exit 1
 node tools/readiness/run-changed-tests.mjs || exit 1
+pnpm security:scan || exit 1
