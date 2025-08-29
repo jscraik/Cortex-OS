@@ -53,6 +53,20 @@ describe('Cortex Kernel Determinism', () => {
       const phases = history.map((state) => state.phase);
       expect(phases).toContain('strategy');
     });
+
+    it('should generate identical IDs across deterministic runs', async () => {
+      const blueprint = {
+        title: 'Deterministic ID Test',
+        description: 'Ensures run and state IDs are deterministic',
+        requirements: ['Deterministic'],
+      };
+
+      const run1 = await kernel.runPRPWorkflow(blueprint, { deterministic: true });
+      const run2 = await kernel.runPRPWorkflow(blueprint, { deterministic: true });
+
+      expect(run1.runId).toBe(run2.runId);
+      expect(run1.id).toBe(run2.id);
+    });
   });
 });
 
