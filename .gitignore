@@ -300,3 +300,5 @@ scripts/package-lock.json
 
 !packages/prp-runner/src/lib/
 !packages/prp-runner/src/lib/**
+!packages/rag/src/lib/
+!packages/rag/src/lib/**
