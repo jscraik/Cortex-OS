@@ -5,8 +5,11 @@
 # Fast lint first
 pnpm lint || exit 1
 
-# Security scan with Semgrep
-pnpm security:scan:all || exit 1
+if command -v semgrep >/dev/null 2>&1; then
+  pnpm security:scan:all || exit 1
+else
+  echo "Warning: semgrep not found, skipping security scan."
+fi
 
 # Scope tests to changed packages; skip if only docs/config changed.
 node tools/readiness/run-changed-tests.mjs --dry || exit 1
