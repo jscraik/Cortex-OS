@@ -110,7 +110,7 @@ export class BuildNode {
     );
 
     // Mock compilation and test results; fail when backend requirements missing
-    const passed = !!hasBackendReq;
+    const passed = hasBackendReq;
     return {
       passed,
       details: passed
