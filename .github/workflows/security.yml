@@ -1,51 +1,24 @@
 name: Security
+
 on:
   pull_request:
-  schedule:
-    - cron: '0 3 * * *'
+
 jobs:
-  supply-chain:
+  security:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - uses: pnpm/action-setup@v4
-      - uses: astral-sh/setup-uv@v3
-      - run: pnpm install --frozen-lockfile
-      - name: npm audit (moderate as advisory)
-        run: |
-          pnpm audit --audit-level=moderate || true
-      - name: OSV scan (fallback to CLI)
-        run: |
-          if command -v uv >/dev/null 2>&1; then
-            uv run osv-scanner --lockfile=pnpm-lock.yaml || true
-          else
-            echo "No OSV scanner available; skipping OSV step"
-          fi
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@v0.12.0
         with:
-          scan-type: fs
-          scan-ref: .
-          format: sarif
-          output: trivy-results.sarif
-      - name: Upload Trivy SARIF if present
-        if: always()
-        run: |
-          if [ -f trivy-results.sarif ]; then
-            echo "Uploading trivy-results.sarif"
-          else
-            echo "No trivy SARIF produced"
-            exit 0
-          fi
-      - name: Upload SARIF via action (if present)
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-results.sarif
-      - name: Python checks (bandit, safety)
-        run: |
-          uv pip install --upgrade bandit[toml] safety || true
-          uv run bandit -r services/ -f json -o bandit-report.json || true
-          uv run safety check --json || true
+          version: 10.13.1
+      - name: Install Semgrep
+        run: pipx install semgrep==1.132.0
+      - name: Run security scan
+        working-directory: scripts/security
+        run: pnpm security:scan:errors
+      - name: Validate security fixes
+        working-directory: scripts/security
+        run: pnpm security:validate
