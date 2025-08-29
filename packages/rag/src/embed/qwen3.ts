@@ -3,8 +3,8 @@
  * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
 
-import { spawn } from 'child_process';
 import { type Embedder } from '../index.js';
+import { runProcess } from '../../../../src/lib/run-process.js';
 
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
@@ -49,34 +49,11 @@ export class Qwen3Embedder implements Embedder {
 
   private async embedWithModel(texts: string[], modelSize: Qwen3ModelSize): Promise<number[][]> {
     const modelPath = `${this.cacheDir}/models/Qwen3-Embedding-${modelSize}`;
-
-    return new Promise((resolve, reject) => {
-      const python = spawn('python3', ['-c', this.getPythonScript(modelPath, texts)], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir },
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      python.stdout?.on('data', (data) => (stdout += data.toString()));
-      python.stderr?.on('data', (data) => (stderr += data.toString()));
-
-      python.on('close', (code) => {
-        if (code === 0) {
-          try {
-            const result = JSON.parse(stdout);
-            resolve(result.embeddings);
-          } catch (error) {
-            reject(new Error(`Failed to parse embedding result: ${error}`));
-          }
-        } else {
-          reject(new Error(`Python embedding process failed: ${stderr}`));
-        }
-      });
-
-      python.on('error', reject);
+    const script = this.getPythonScript(modelPath, texts);
+    const result = await runProcess<{ embeddings: number[][] }>('python3', ['-c', script], {
+      env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir },
     });
+    return result.embeddings;
   }
 
   private getPythonScript(modelPath: string, texts: string[]): string {

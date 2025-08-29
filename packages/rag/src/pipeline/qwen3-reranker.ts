@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { runProcess } from '../../../../src/lib/run-process.js';
 
 /**
  * Document with relevance score for reranking
@@ -101,61 +101,22 @@ export class Qwen3Reranker implements Reranker {
    * Score a batch of documents against the query
    */
   private async scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
-    return new Promise((resolve, reject) => {
-      const pythonScript = this.getPythonScript();
-      const child = spawn(this.pythonPath, ['-c', pythonScript], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          TRANSFORMERS_CACHE: this.cacheDir,
-          HF_HOME: this.cacheDir,
-        },
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      child.on('close', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.error) {
-            reject(new Error(`Qwen3 reranker error: ${result.error}`));
-          } else {
-            resolve(result.scores || []);
-          }
-        } catch (err) {
-          reject(new Error(`Failed to parse Qwen3 reranker output: ${err}`));
-        }
-      });
-
-      child.on('error', (err) => {
-        reject(new Error(`Failed to spawn Qwen3 reranker process: ${err}`));
-      });
-
-      // Send input data
-      const input = {
-        query,
-        documents: documents.map((doc) => doc.text),
-        model_path: this.modelPath,
-        max_length: this.maxLength,
-      };
-
-      child.stdin?.write(JSON.stringify(input));
-      child.stdin?.end();
+    const script = this.getPythonScript();
+    const input = JSON.stringify({
+      query,
+      documents: documents.map((d) => d.text),
+      model_path: this.modelPath,
+      max_length: this.maxLength,
     });
+    const result = await runProcess<{ scores: number[] }>(this.pythonPath, ['-c', script], {
+      input,
+      env: {
+        ...process.env,
+        TRANSFORMERS_CACHE: this.cacheDir,
+        HF_HOME: this.cacheDir,
+      },
+    });
+    return result.scores || [];
   }
 
   /**

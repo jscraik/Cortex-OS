@@ -1,5 +1,5 @@
-import { spawn } from 'child_process';
 import type { ChatMessage, GenerationConfig, Generator } from './index';
+import { runProcess } from '../../../../src/lib/run-process.js';
 
 /**
  * Model specification for generation backends
@@ -126,41 +126,11 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const child = spawn('ollama', ['generate', model.model, prompt], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      const timeoutId = setTimeout(() => {
-        child.kill();
-        reject(new Error(`Ollama generation timed out after ${this.timeout}ms`));
-      }, this.timeout);
-
-      child.on('close', (code) => {
-        clearTimeout(timeoutId);
-        if (code !== 0) {
-          reject(new Error(`Ollama failed with code ${code}: ${stderr}`));
-          return;
-        }
-        resolve(stdout.trim());
-      });
-
-      child.on('error', (err) => {
-        clearTimeout(timeoutId);
-        reject(new Error(`Failed to spawn Ollama: ${err}`));
-      });
+    const stdout = await runProcess<string>('ollama', ['generate', model.model, prompt], {
+      timeoutMs: this.timeout,
+      parseJson: false,
     });
+    return stdout.trim();
   }
 
   /**
@@ -209,64 +179,21 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const pythonScript = this.getMLXPythonScript();
-      const child = spawn('python3', ['-c', pythonScript], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      const timeoutId = setTimeout(() => {
-        child.kill();
-        reject(new Error(`MLX generation timed out after ${this.timeout}ms`));
-      }, this.timeout);
-
-      child.on('close', (code) => {
-        clearTimeout(timeoutId);
-        if (code !== 0) {
-          reject(new Error(`MLX failed with code ${code}: ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.error) {
-            reject(new Error(`MLX error: ${result.error}`));
-          } else {
-            resolve(result.text || '');
-          }
-        } catch (err) {
-          reject(new Error(`Failed to parse MLX output: ${err}`));
-        }
-      });
-
-      child.on('error', (err) => {
-        clearTimeout(timeoutId);
-        reject(new Error(`Failed to spawn MLX process: ${err}`));
-      });
-
-      // Send input data
-      const input = {
-        model: model.model,
-        prompt,
-        max_tokens: config.maxTokens,
-        temperature: config.temperature,
-        top_p: config.topP,
-      };
-
-      child.stdin?.write(JSON.stringify(input));
-      child.stdin?.end();
+    const pythonScript = this.getMLXPythonScript();
+    const input = JSON.stringify({
+      model: model.model,
+      prompt,
+      max_tokens: config.maxTokens,
+      temperature: config.temperature,
+      top_p: config.topP,
     });
+    const result = await runProcess<{ text?: string; error?: string }>(
+      'python3',
+      ['-c', pythonScript],
+      { input, timeoutMs: this.timeout },
+    );
+    if (result.error) throw new Error(`MLX error: ${result.error}`);
+    return result.text || '';
   }
 
   /**
