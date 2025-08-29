@@ -6,6 +6,8 @@
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
 import { handleResilience } from '../utils/resilience.js';
 
+trationError } from '../errors.js';
+
 export interface TaskDecomposition {
   subtasks: Array<{
     id: string;
@@ -44,19 +46,28 @@ export class MLXFirstOrchestrator {
     availableAgents: string[],
     constraints?: { maxParallelism?: number; timeLimit?: number },
   ): Promise<TaskDecomposition> {
+    const parsed = decomposeTaskSchema.safeParse({
+      taskDescription,
+      availableAgents,
+      constraints,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { taskDescription: td, availableAgents: aa, constraints: c } = parsed.data;
     const prompt = `Break down this complex task into manageable subtasks:
 
-TASK: ${taskDescription}
+TASK: ${td}
 
-AVAILABLE AGENTS: ${availableAgents.join(', ')}
+AVAILABLE AGENTS: ${aa.join(', ')}
 
 CONSTRAINTS:
-${constraints?.maxParallelism ? `- Max parallel tasks: ${constraints.maxParallelism}` : ''}
-${constraints?.timeLimit ? `- Time limit: ${constraints.timeLimit} minutes` : ''}
+${c?.maxParallelism ? `- Max parallel tasks: ${c.maxParallelism}` : ''}
+${c?.timeLimit ? `- Time limit: ${c.timeLimit} minutes` : ''}
 
 Provide a structured breakdown with:
 1. Subtasks with dependencies
-2. Parallel execution opportunities  
+2. Parallel execution opportunities
 3. Critical path identification
 4. Agent assignments based on capabilities
 
@@ -73,7 +84,9 @@ Format as JSON with reasoning.`;
 
       return this.parseTaskDecomposition(response.content);
     } catch (error) {
+
       return handleResilience(error, 'decomposeTask');
+
     }
   }
 
@@ -85,16 +98,25 @@ Format as JSON with reasoning.`;
     visualContext?: string, // Base64 image or UI description
     codeContext?: string,
   ): Promise<CoordinationDecision> {
+    const parsed = coordinateMultiModalTaskSchema.safeParse({
+      taskDescription,
+      visualContext,
+      codeContext,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { taskDescription: td, visualContext: vc, codeContext: cc } = parsed.data;
     let prompt = `Coordinate this multi-modal task:
 
-TASK: ${taskDescription}`;
+TASK: ${td}`;
 
-    if (visualContext) {
-      prompt += `\nVISUAL CONTEXT: ${visualContext}`;
+    if (vc) {
+      prompt += `\nVISUAL CONTEXT: ${vc}`;
     }
 
-    if (codeContext) {
-      prompt += `\nCODE CONTEXT: ${codeContext}`;
+    if (cc) {
+      prompt += `\nCODE CONTEXT: ${cc}`;
     }
 
     prompt += `\nDetermine the best coordination approach considering all modalities.
@@ -135,13 +157,22 @@ Provide decision, reasoning, confidence (0-1), and next steps.`;
     testStrategy: string;
     riskAssessment: string;
   }> {
+    const parsed = orchestrateCodeTaskSchema.safeParse({
+      codeTask,
+      codebase,
+      testRequirements,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { codeTask: ct, codebase: cb, testRequirements: tr } = parsed.data;
     const prompt = `Plan this code-related task:
 
-TASK: ${codeTask}
+TASK: ${ct}
 
-${codebase ? `EXISTING CODEBASE:\n${codebase.slice(0, 2000)}...` : ''}
+${cb ? `EXISTING CODEBASE:\n${cb.slice(0, 2000)}...` : ''}
 
-${testRequirements ? `TEST REQUIREMENTS:\n${testRequirements}` : ''}
+${tr ? `TEST REQUIREMENTS:\n${tr}` : ''}
 
 Provide:
 1. Development plan with subtasks
@@ -162,7 +193,9 @@ Focus on maintainable, testable code.`;
 
       return this.parseCodeOrchestrationResponse(response.content);
     } catch (error) {
+
       return handleResilience(error, 'orchestrateCodeTask');
+
     }
   }
 
@@ -174,13 +207,22 @@ Focus on maintainable, testable code.`;
     currentState: any,
     incomingEvents: any[],
   ): Promise<CoordinationDecision> {
+    const parsed = coordinateWorkflowSchema.safeParse({
+      workflowId,
+      currentState,
+      incomingEvents,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { workflowId: wfId, currentState: cs, incomingEvents: events } = parsed.data;
     const prompt = `Coordinate this real-time workflow:
 
-WORKFLOW ID: ${workflowId}
-CURRENT STATE: ${JSON.stringify(currentState, null, 2)}
+WORKFLOW ID: ${wfId}
+CURRENT STATE: ${JSON.stringify(cs, null, 2)}
 
 INCOMING EVENTS:
-${incomingEvents.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join('\n')}
+${events.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join('\n')}
 
 Decide immediate action: proceed, wait, escalate, or abort.
 Consider event priority, resource availability, and dependencies.
@@ -188,12 +230,12 @@ Consider event priority, resource availability, and dependencies.
 Provide quick decision with reasoning.`;
 
     try {
-      // Use fast reasoning for real-time decisions
+      // Use quick reasoning model
       const response = await this.modelProvider.generate('quickReasoning', {
         task: 'workflow_coordination',
         prompt,
-        maxTokens: 200,
-        temperature: 0.1,
+        maxTokens: 150,
+        temperature: 0.5,
       });
 
       return this.parseCoordinationDecision(response.content, response.provider);
@@ -201,90 +243,29 @@ Provide quick decision with reasoning.`;
       console.warn('Workflow coordination failed:', error);
       return {
         action: 'wait',
-        reasoning: 'Unable to analyze workflow state - defaulting to safe wait',
+        reasoning: 'Fallback coordination - waiting for additional signals',
         confidence: 0.2,
-        nextSteps: ['Retry analysis', 'Check system health'],
+        nextSteps: ['Monitor workflow state', 'Gather more context'],
         provider: 'ollama',
       };
     }
   }
 
   /**
-   * Intelligent agent selection based on task requirements
+   * Safety validation using parallel reasoning
    */
-  async selectOptimalAgent(
-    taskDescription: string,
-    availableAgents: Array<{ id: string; capabilities: string[]; currentLoad: number }>,
-    urgency: 'low' | 'medium' | 'high' | 'critical' = 'medium',
-  ): Promise<{ agentId: string; reasoning: string; confidence: number }> {
-    const agentInfo = availableAgents
-      .map((a) => `${a.id}: capabilities=[${a.capabilities.join(', ')}], load=${a.currentLoad}%`)
-      .join('\n');
 
-    const prompt = `Select the best agent for this task:
+  async validateSafety(taskDescription: string, context?: string) {
+    const prompt = `Assess the safety of this task and its context:
 
 TASK: ${taskDescription}
-URGENCY: ${urgency}
 
-AVAILABLE AGENTS:
-${agentInfo}
+${context ? `CONTEXT:\n${context}` : ''}
 
-Consider:
-- Agent capabilities vs task requirements
-- Current workload distribution
-- Task urgency
-- Specialization match
-
-Select agent ID and explain reasoning.`;
+Check for potential safety issues, constraints, and policy violations.`;
 
     try {
-      const response = await this.modelProvider.generate('quickReasoning', {
-        task: 'agent_selection',
-        prompt,
-        maxTokens: 150,
-      });
 
-      return this.parseAgentSelection(response.content, availableAgents);
-    } catch (error) {
-      console.warn('Agent selection failed:', error);
-      // Fallback: least loaded agent
-      const leastLoaded = availableAgents.reduce(
-        (min, agent) => (agent.currentLoad < min.currentLoad ? agent : min),
-        availableAgents[0],
-      );
-
-      return {
-        agentId: leastLoaded.id,
-        reasoning: 'Fallback selection - chose least loaded agent',
-        confidence: 0.3,
-      };
-    }
-  }
-
-  /**
-   * Safety and compliance checking using LlamaGuard
-   */
-  async validateTaskSafety(
-    taskDescription: string,
-    context?: string,
-  ): Promise<{ safe: boolean; issues: string[]; recommendations: string[] }> {
-    // This would integrate with your LlamaGuard model for safety validation
-    const prompt = `Evaluate the safety and compliance of this task:
-
-TASK: ${taskDescription}
-${context ? `CONTEXT: ${context}` : ''}
-
-Check for:
-- Security risks
-- Privacy concerns  
-- Regulatory compliance
-- Ethical considerations
-- Resource safety
-
-Provide safety assessment with specific issues and recommendations.`;
-
-    try {
-      // Use safety model or general reasoning as fallback
       const response = await this.modelProvider.generate('generalChat', {
         task: 'safety_validation',
         prompt,
@@ -315,7 +296,9 @@ Provide safety assessment with specific issues and recommendations.`;
       }
       throw new Error('No JSON found in response');
     } catch (error) {
+
       return handleResilience(error, 'parseTaskDecomposition');
+
     }
   }
 
@@ -357,6 +340,7 @@ Provide safety assessment with specific issues and recommendations.`;
       return JSON.parse(content);
     } catch (error) {
       return handleResilience(error, 'parseCodeOrchestrationResponse');
+
     }
   }
 
