@@ -13,6 +13,19 @@ jobs:
         with:
           node-version: 20
       - uses: pnpm/action-setup@v4
+
+      - uses: astral-sh/setup-uv@v3
+      - run: pnpm install --frozen-lockfile
+      - name: npm audit (moderate as advisory)
+        run: |
+          pnpm audit --audit-level=moderate
+      - name: OSV scan
+        uses: google/osv-scanner-action@v1
+        with:
+          scan-args: --lockfile=pnpm-lock.yaml
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@v0.12.0
+
         with:
           version: 10.13.1
       - name: Install Semgrep
@@ -38,8 +51,12 @@ jobs:
         run: pnpm security:scan:errors
       - name: Validate security fixes
         run: |
-          if jq -e '.scripts["security:validate"]' package.json > /dev/null; then
-            pnpm security:validate
-          else
-            echo "Warning: security:validate script not found in package.json. Skipping validation."
-          fi
+
+          uv run safety check --json
+      - name: Upload Bandit JSON report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
