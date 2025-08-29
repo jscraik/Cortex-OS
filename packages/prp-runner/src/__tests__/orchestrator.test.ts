@@ -12,21 +12,19 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PRPOrchestrator } from '../orchestrator.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 describe('PRPOrchestrator - TDD Implementation', () => {
   let orchestrator: PRPOrchestrator;
 
   beforeEach(() => {
-    // This should fail initially - no implementation exists
-    orchestrator = new PRPOrchestrator();
+    orchestrator = createPRPOrchestrator();
   });
 
   describe('Basic Construction and Registration', () => {
     it('should create an orchestrator instance', () => {
-      // RED: This test should fail - PRPOrchestrator doesn't exist
       expect(orchestrator).toBeDefined();
-      expect(orchestrator).toBeInstanceOf(PRPOrchestrator);
+      expect(typeof orchestrator.getNeuronCount).toBe('function');
     });
 
     it('should start with zero neurons registered', () => {
@@ -35,6 +33,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
     });
 
     it('should fail to execute without any neurons', async () => {
+
       // RED: This should fail - no executePRPCycle method
       await expect(orchestrator.executePRPCycle({} as any)).rejects.toThrow(
         'No neurons registered',

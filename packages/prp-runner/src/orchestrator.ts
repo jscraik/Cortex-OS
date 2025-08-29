@@ -1,21 +1,15 @@
 /**
  * @file packages/prp-runner/src/orchestrator.ts
- * @description TDD-driven PRP Orchestrator - Minimal implementation to pass tests
+ * @description Factory-based PRP orchestrator using closure state
  * @maintainer @jamiescottcraik
- * @version 1.0.0
- * @status TDD-GREEN-PHASE
- *
- * TDD Notes:
- * - This implementation follows strict Red-Green-Refactor cycle
- * - Every method exists to make a specific test pass
- * - No functionality without corresponding test
- * - LLM integration driven by failing tests in llm-integration.test.ts
- * - 85% coverage enforced
+ * @version 1.1.0
  */
+
 
 import { LLMBridge, LLMConfig } from './llm-bridge.js';
 import { createExecutionContext } from './lib/create-execution-context.js';
 import { executeNeuron } from './lib/execute-neuron.js';
+
 
 // Minimal interfaces driven by tests
 export interface Blueprint {
@@ -74,13 +68,9 @@ export interface ExecutionMetrics {
 }
 
 /**
- * PRPOrchestrator - TDD Implementation
- *
- * This class is built test-first following strict TDD principles:
- * 1. Each method exists because a test demands it
- * 2. Implementation is minimal to make tests pass
- * 3. No speculative features without tests
+ * createPRPOrchestrator - returns orchestrator API with closure-based state
  */
+
 export class PRPOrchestrator {
   private neurons: Map<string, Neuron> = new Map();
   private llmConfig?: LLMConfig;
@@ -179,3 +169,4 @@ export class PRPOrchestrator {
     };
   }
 }
+

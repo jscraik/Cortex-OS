@@ -6,6 +6,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
+import { estimateTokenCount } from '../lib/estimate-token-count';
 
 // MLX model configurations
 const MLX_MODELS = {
@@ -90,7 +91,7 @@ export class MLXAdapter {
         model: modelName,
         dimensions: modelConfig.dimensions,
         usage: {
-          tokens: this.estimateTokenCount(request.text),
+          tokens: estimateTokenCount(request.text),
           cost: 0, // Local inference has no API cost
         },
       });
@@ -123,7 +124,7 @@ export class MLXAdapter {
       }
 
       const modelConfig = MLX_MODELS[modelName];
-      const totalTokens = texts.reduce((sum, text) => sum + this.estimateTokenCount(text), 0);
+      const totalTokens = texts.reduce((sum, text) => sum + estimateTokenCount(text), 0);
 
       return data.map((embedding: number[], index: number) =>
         MLXEmbeddingResponseSchema.parse({
@@ -180,14 +181,6 @@ export class MLXAdapter {
         reject(error);
       });
     });
-  }
-
-  /**
-   * Estimate token count for text (rough approximation)
-   */
-  private estimateTokenCount(text: string): number {
-    // Rough approximation: 1 token ≈ 4 characters for most models
-    return Math.ceil(text.length / 4);
   }
 
   /**
