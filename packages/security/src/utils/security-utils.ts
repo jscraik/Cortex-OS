@@ -4,6 +4,9 @@
  */
 
 import { X509Certificate } from 'node:crypto';
+import type { SecurityError } from '../types.js';
+
+export type { SecurityError };
 
 /**
  * Generate a random nonce for cryptographic operations
