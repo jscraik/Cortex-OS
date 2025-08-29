@@ -291,9 +291,4 @@ export class ModelRouter {
   getAvailableModels(capability: ModelCapability): ModelConfig[] {
     return this.availableModels.get(capability) || [];
   }
-
-  hasAvailableModels(capability: ModelCapability): boolean {
-    const models = this.availableModels.get(capability);
-    return !!models && models.length > 0;
-  }
 }
