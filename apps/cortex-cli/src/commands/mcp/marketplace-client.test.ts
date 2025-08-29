@@ -8,6 +8,8 @@ import { MarketplaceClient, type MarketplaceConfig } from './marketplace-client.
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import type { RegistryIndex, ServerManifest } from '@cortex-os/mcp-marketplace';
+import os from 'os';
+import path from 'path';
 
 // Mock filesystem operations
 vi.mock('fs/promises');
@@ -19,6 +21,7 @@ global.fetch = vi.fn();
 describe('MarketplaceClient', () => {
   let client: MarketplaceClient;
   let mockConfig: MarketplaceConfig;
+  let cacheDir: string;
 
   const mockRegistryIndex: RegistryIndex = {
     version: '2025-01-15',
@@ -87,11 +90,12 @@ describe('MarketplaceClient', () => {
   };
 
   beforeEach(() => {
+    cacheDir = path.join(os.tmpdir(), 'cortex', 'mcp-cache-test');
     mockConfig = {
       registries: {
         default: 'https://registry.cortex-os.dev/v1/registry.json',
       },
-      cacheDir: '/tmp/cortex/mcp-cache',
+      cacheDir,
       cacheTtl: 300000, // 5 minutes
       security: {
         requireSignatures: true,
@@ -125,7 +129,7 @@ describe('MarketplaceClient', () => {
       await client.initialize();
 
       // Assert
-      expect(mkdir).toHaveBeenCalledWith('/tmp/cortex/mcp-cache', { recursive: true });
+      expect(mkdir).toHaveBeenCalledWith(cacheDir, { recursive: true });
     });
 
     it('should skip cache directory creation if it exists', async () => {
