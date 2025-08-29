@@ -1,4 +1,6 @@
 import { spawn } from 'child_process';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 /**
  * Document with relevance score for reranking
@@ -39,6 +41,8 @@ export interface Qwen3RerankOptions {
   cacheDir?: string;
   /** Custom Python executable path */
   pythonPath?: string;
+  /** Timeout in milliseconds for Python process */
+  timeoutMs?: number;
 }
 
 /**
@@ -54,14 +58,17 @@ export class Qwen3Reranker implements Reranker {
   private readonly batchSize: number;
   private readonly cacheDir: string;
   private readonly pythonPath: string;
+  private readonly timeoutMs: number;
 
   constructor(options: Qwen3RerankOptions = {}) {
     this.modelPath = options.modelPath || '/Volumes/External-SSD/Models/Qwen/Qwen3-Reranker-4B';
     this.maxLength = options.maxLength || 512;
     this.topK = options.topK || 10;
     this.batchSize = options.batchSize || 32;
-    this.cacheDir = options.cacheDir || '/tmp/qwen3-reranker-cache';
+    this.cacheDir =
+      options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-reranker-cache');
     this.pythonPath = options.pythonPath || 'python3';
+    this.timeoutMs = options.timeoutMs ?? 30000;
   }
 
   /**
@@ -123,7 +130,13 @@ export class Qwen3Reranker implements Reranker {
         stderr += data.toString();
       });
 
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error('Qwen3 reranker timed out'));
+      }, this.timeoutMs);
+
       child.on('close', (code) => {
+        clearTimeout(timer);
         if (code !== 0) {
           reject(new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`));
           return;
@@ -179,6 +192,8 @@ import sys
 import torch
 from transformers import AutoTokenizer, AutoModel
 import os
+import tempfile
+import os.path as osp
 
 def rerank_documents():
     try:
@@ -188,11 +203,11 @@ def rerank_documents():
         documents = input_data['documents']
         model_path = input_data['model_path']
         max_length = input_data.get('max_length', 512)
-        
+
         # Set up cache directory
-        cache_dir = os.getenv('TRANSFORMERS_CACHE', '/tmp/qwen3-reranker-cache')
+        cache_dir = os.getenv('TRANSFORMERS_CACHE') or osp.join(os.getenv('HF_HOME', tempfile.gettempdir()), 'qwen3-reranker-cache')
         os.makedirs(cache_dir, exist_ok=True)
-        
+
         # Load model and tokenizer
         tokenizer = AutoTokenizer.from_pretrained(
             model_path,
