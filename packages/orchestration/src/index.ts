@@ -29,9 +29,6 @@ export type {
   PlanningContext,
   PlanningResult,
   QdrantConfig,
-  ReActConfig,
-  ReActState,
-  ReActStep,
   StrategicDecision,
   SynchronizationPoint,
   Task,
@@ -43,7 +40,6 @@ export {
   CoordinationStrategy,
   DecisionStrategy,
   OrchestrationStrategy,
-  ReActPhase,
   Schemas,
 } from './types.js';
 
