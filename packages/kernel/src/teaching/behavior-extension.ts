@@ -451,6 +451,7 @@ export class BehaviorExtensionManager {
       {
         tags: ['extension', 'auto-adaptation', originalState.phase],
       },
+      originalState.metadata.deterministic,
     );
   }
 

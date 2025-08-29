@@ -218,7 +218,7 @@ describe('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
         const { ExampleCaptureSystem } = await import('../src/teaching/example-capture.js');
         const system = new ExampleCaptureSystem();
 
-        system.captureExample('pattern', {}, 'user-action', 'outcome', {});
+        system.captureExample('pattern', {}, 'user-action', 'outcome', {}, true);
 
         // This should FAIL - Math.random() should not be used
         expect(randomCalled).toBe(false);
