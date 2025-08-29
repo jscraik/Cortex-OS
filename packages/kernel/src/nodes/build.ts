@@ -45,6 +45,15 @@ export class BuildNode {
       blockers.push('API schema validation failed');
     }
 
+    evidence.push({
+      id: generateId('build-api', state.metadata.deterministic),
+      type: 'analysis',
+      source: 'api_schema_validation',
+      content: JSON.stringify(apiValidation),
+      timestamp: new Date().toISOString(),
+      phase: 'build',
+    });
+
     // Gate 3: Security scanning
     const securityScan = await this.runSecurityScan(state);
     if (securityScan.blockers > 0) {
@@ -133,16 +142,22 @@ export class BuildNode {
 
     const schemaPathYaml = path.resolve('openapi.yaml');
     const schemaPathJson = path.resolve('openapi.json');
-    const exists = fs.existsSync(schemaPathYaml) || fs.existsSync(schemaPathJson);
+
+    const yamlExists = await fs.promises
+      .access(schemaPathYaml)
+      .then(() => true)
+      .catch(() => false);
+    const jsonExists = await fs.promises
+      .access(schemaPathJson)
+      .then(() => true)
+      .catch(() => false);
+
+    const exists = yamlExists || jsonExists;
 
     return {
       passed: exists,
       details: {
-        schemaFormat: fs.existsSync(schemaPathYaml)
-          ? 'OpenAPI 3.0'
-          : fs.existsSync(schemaPathJson)
-            ? 'JSON'
-            : 'missing',
+        schemaFormat: yamlExists ? 'OpenAPI 3.0' : jsonExists ? 'JSON' : 'missing',
         validation: exists ? 'found' : 'missing',
       },
     };
