@@ -1,6 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { SpanStatusCode } from '@opentelemetry/api';
-import { spanExporter } from '../../test/setup.ts';
+
+import { describe, it, expect, vi } from 'vitest';
+vi.mock(
+  '@cortex-os/telemetry',
+  () => ({
+    withSpan: vi.fn((_name: string, fn: (...args: unknown[]) => unknown) => fn()),
+    logWithSpan: vi.fn(),
+  }),
+  { virtual: true },
+);
 import {
   WorkloadIdentityManager,
   WorkloadIdentityAttestor,
