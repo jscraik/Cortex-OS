@@ -16,12 +16,13 @@ export async function retrieveDocs(
 ): Promise<Document[]> {
   const scoredDocs = await Promise.all(
     documents.map(async (doc) => {
+      let docWithEmbedding = doc;
       if (!doc.embedding) {
         const [embedding] = await embedder.embed([doc.content]);
-        doc.embedding = embedding;
+        docWithEmbedding = { ...doc, embedding };
       }
-      const similarity = cosineSimilarity(queryEmbedding, doc.embedding!);
-      return { ...doc, similarity };
+      const similarity = cosineSimilarity(queryEmbedding, docWithEmbedding.embedding!);
+      return { ...docWithEmbedding, similarity };
     }),
   );
   scoredDocs.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
