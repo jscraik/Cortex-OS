@@ -6,7 +6,15 @@
  * @status TDD-DRIVEN
  */
 
-import { LLMBridge, LLMConfig } from './llm-bridge.js';
+import {
+  configureLLM,
+  generate as llmGenerate,
+  checkProviderHealth,
+  getProvider,
+  getModel,
+  shutdown as shutdownLLM,
+  type LLMState,
+} from './llm-bridge.js';
 import {
   EmbeddingAdapter,
   RerankerAdapter,
@@ -80,7 +88,7 @@ export interface GenerationOptions {
  * Provides LLM generation, embeddings, semantic search, and RAG workflows
  */
 export class AICoreCapabilities {
-  private llmBridge: LLMBridge;
+  private llmState: LLMState;
   private embeddingAdapter?: EmbeddingAdapter;
   private rerankerAdapter?: RerankerAdapter;
   private config: AICoreConfig;
@@ -95,8 +103,8 @@ export class AICoreCapabilities {
    * Initialize AI components based on configuration
    */
   private initializeComponents(): void {
-    // Initialize LLM Bridge
-    this.llmBridge = new LLMBridge({
+    // Initialize LLM state
+    this.llmState = configureLLM({
       provider: this.config.llm.provider,
       endpoint: this.config.llm.endpoint || '',
       model: this.config.llm.model,
@@ -121,7 +129,7 @@ export class AICoreCapabilities {
     const systemPrompt = options.systemPrompt;
     const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
 
-    return this.llmBridge.generate(fullPrompt, {
+    return llmGenerate(this.llmState, fullPrompt, {
       temperature: options.temperature || this.config.llm.temperature || 0.7,
       maxTokens: options.maxTokens || this.config.llm.maxTokens || 512,
     });
@@ -278,12 +286,12 @@ export class AICoreCapabilities {
     features: string[];
   }> {
     // Check LLM health
-    const llmHealth = await this.llmBridge.checkProviderHealth();
+    const llmHealth = await checkProviderHealth(this.llmState);
 
     const capabilities = {
       llm: {
-        provider: this.llmBridge.getProvider(),
-        model: this.llmBridge.getModel(),
+        provider: getProvider(this.llmState),
+        model: getModel(this.llmState),
         healthy: llmHealth.healthy,
       },
       embedding: this.embeddingAdapter
@@ -334,9 +342,9 @@ export class AICoreCapabilities {
       await this.rerankerAdapter.shutdown();
     }
 
-    // Cleanup LLM bridge resources
-    if (this.llmBridge && typeof this.llmBridge.shutdown === 'function') {
-      await this.llmBridge.shutdown();
+    // Cleanup LLM resources
+    if (this.llmState) {
+      await shutdownLLM(this.llmState);
     }
   }
 

@@ -9,7 +9,7 @@
 import { EventEmitter } from 'events';
 import { v4 as uuid } from 'uuid';
 import winston from 'winston';
-import { PRPOrchestrator } from '@cortex-os/prp-runner';
+import { createPRPOrchestrator, type PRPOrchestrator } from '@cortex-os/prp-runner';
 import type { PRPState } from '@cortex-os/kernel';
 import type {
   Agent,
@@ -59,7 +59,7 @@ export class PRPOrchestrationEngine extends EventEmitter {
     });
 
     // Initialize PRP orchestrator
-    this.prpOrchestrator = new PRPOrchestrator();
+    this.prpOrchestrator = createPRPOrchestrator();
     this.neuronRegistry = new Map();
 
     // Register all neurons

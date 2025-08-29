@@ -1,32 +1,25 @@
 /**
  * @file llm-bridge.ts
- * @description LLM Bridge for connecting orchestrator to MLX/Ollama services
- * @author Cortex-OS Team
- * @version 1.0.0
- * @status TDD-DRIVEN
- *
- * This implementation is driven by failing tests in llm-integration.test.ts
- * Each method exists to satisfy a specific test requirement
+ * @description Functional LLM bridge utilities connecting orchestrator to MLX/Ollama services
  */
 
+import { z } from 'zod';
 import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
-// Import will be fixed to use proper workspace path when SDK is properly configured
-// For now, using minimal type-only import
-type OllamaAdapter = {
+// Minimal type-only Ollama adapter interface
+interface OllamaAdapter {
   generate(options: {
     prompt: string;
     temperature?: number;
     maxTokens?: number;
     model?: string;
   }): Promise<{ text: string }>;
-};
+}
 
 export interface LLMConfig {
   provider: 'mlx' | 'ollama';
-  endpoint: string;
+  endpoint?: string;
   model?: string;
-  // MLX-specific configuration
   mlxModel?: keyof typeof AVAILABLE_MLX_MODELS | string;
   knifePath?: string;
 }
@@ -37,230 +30,208 @@ export interface LLMGenerateOptions {
   maxTokens?: number;
 }
 
+export interface LLMState {
+  config: LLMConfig;
+  ollamaAdapter?: OllamaAdapter;
+  mlxAdapter?: MLXAdapter;
+}
+
+const llmConfigSchema = z.object({
+  provider: z.enum(['mlx', 'ollama']),
+  endpoint: z.string().url().optional(),
+  model: z.string().optional(),
+  mlxModel: z.string().optional(),
+  knifePath: z.string().optional(),
+});
+
 /**
- * LLM Bridge - Connects orchestrator to LLM services
- * Built using TDD - every method satisfies a failing test
+ * Configure an LLM provider and return state used by other bridge functions.
  */
-export class LLMBridge {
-  private config: LLMConfig;
-  private ollamaAdapter?: OllamaAdapter;
-  private mlxAdapter?: MLXAdapter;
-
-  constructor(config: LLMConfig) {
-    this.validateConfig(config);
-    this.config = config;
-    this.initializeAdapters();
+export function configureLLM(config: LLMConfig): LLMState {
+  if (!['mlx', 'ollama'].includes(config.provider)) {
+    throw new Error(`Unsupported LLM provider: ${config.provider}`);
   }
 
-  /**
-   * Validate LLM configuration
-   * Driven by test: "should validate LLM configuration"
-   */
-  private validateConfig(config: LLMConfig): void {
-    if (!['mlx', 'ollama'].includes(config.provider)) {
-      throw new Error(`Unsupported LLM provider: ${config.provider}`);
-    }
-
-    // MLX provider doesn't require endpoint - uses local models
-    if (config.provider === 'ollama' && !config.endpoint) {
-      throw new Error('Ollama endpoint is required');
-    }
-
-    if (config.provider === 'mlx' && !config.mlxModel) {
-      throw new Error('MLX model is required for MLX provider');
-    }
+  const normalized = { ...config } as LLMConfig;
+  if (normalized.endpoint === '') {
+    delete (normalized as any).endpoint;
   }
 
-  /**
-   * Initialize LLM adapters based on provider
-   * Driven by bridge creation tests
-   */
-  private initializeAdapters(): void {
-    if (this.config.provider === 'ollama') {
-      // Minimal Ollama adapter implementation
-      this.ollamaAdapter = {
-        generate: async (options) => {
-          try {
-            const response = await fetch(`${this.config.endpoint}/api/generate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                model: options.model || this.config.model || 'llama3',
-                prompt: options.prompt,
-                stream: false,
-                options: {
-                  temperature: options.temperature || 0.7,
-                  num_predict: options.maxTokens || 512,
-                },
-              }),
-            });
+  const parsed = llmConfigSchema.safeParse(normalized);
+  if (!parsed.success) {
+    throw new Error(parsed.error.errors.map((e) => e.message).join(', '));
+  }
+  const cfg = parsed.data;
 
-            if (!response.ok) {
-              throw new Error(`Ollama API error: ${response.status}`);
-            }
+  if (cfg.provider === 'ollama' && !cfg.endpoint) {
+    throw new Error('Ollama endpoint is required');
+  }
+  if (cfg.provider === 'mlx' && !cfg.mlxModel) {
+    throw new Error('MLX model is required for MLX provider');
+  }
 
-            const data = await response.json();
-            return { text: data.response || '' };
-          } catch (error) {
-            throw new Error(
-              `Ollama request failed: ${error instanceof Error ? error.message : String(error)}`,
-            );
+  const state: LLMState = { config: cfg };
+
+  if (cfg.provider === 'ollama') {
+    state.ollamaAdapter = {
+      generate: async (options) => {
+        try {
+          const response = await fetch(`${cfg.endpoint}/api/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: options.model || cfg.model || 'llama3',
+              prompt: options.prompt,
+              stream: false,
+              options: {
+                temperature: options.temperature ?? 0.7,
+                num_predict: options.maxTokens ?? 512,
+              },
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Ollama API error: ${response.status}`);
           }
-        },
+
+          const data = await response.json();
+          return { text: data.response || '' };
+        } catch (error) {
+          throw new Error(
+            `Ollama request failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      },
+    };
+  } else if (cfg.provider === 'mlx') {
+    const modelName = cfg.mlxModel || AVAILABLE_MLX_MODELS.QWEN_SMALL;
+    state.mlxAdapter = createMLXAdapter(modelName, {
+      knifePath: cfg.knifePath,
+      maxTokens: 512,
+      temperature: 0.7,
+    });
+  }
+
+  return state;
+}
+
+export function getProvider(state: LLMState): string {
+  return state.config.provider;
+}
+
+export function getModel(state: LLMState): string {
+  return state.config.model || getDefaultModel(state);
+}
+
+function getDefaultModel(state: LLMState): string {
+  switch (state.config.provider) {
+    case 'ollama':
+      return 'llama3';
+    case 'mlx':
+      return state.config.mlxModel || AVAILABLE_MLX_MODELS.QWEN_SMALL;
+    default:
+      return 'unknown';
+  }
+}
+
+export function getMLXAdapter(state: LLMState): MLXAdapter | undefined {
+  return state.mlxAdapter;
+}
+
+export async function listMLXModels(state: LLMState) {
+  if (state.config.provider !== 'mlx' || !state.mlxAdapter) {
+    throw new Error('MLX adapter not available');
+  }
+  return state.mlxAdapter.listModels();
+}
+
+export async function checkProviderHealth(
+  state: LLMState,
+): Promise<{ healthy: boolean; message: string }> {
+  if (state.config.provider === 'mlx' && state.mlxAdapter) {
+    return state.mlxAdapter.checkHealth();
+  } else if (state.config.provider === 'ollama') {
+    try {
+      const response = await fetch(`${state.config.endpoint}/api/tags`);
+      return {
+        healthy: response.ok,
+        message: response.ok ? 'Ollama healthy' : `Ollama error: ${response.status}`,
       };
-    } else if (this.config.provider === 'mlx') {
-      // Real MLX adapter using mlx-knife
-      const modelName = this.config.mlxModel || AVAILABLE_MLX_MODELS.QWEN_SMALL;
-      this.mlxAdapter = createMLXAdapter(modelName, {
-        knifePath: this.config.knifePath,
-        maxTokens: 512,
-        temperature: 0.7,
-      });
+    } catch (error) {
+      return {
+        healthy: false,
+        message: `Ollama unreachable: ${error instanceof Error ? error.message : String(error)}`,
+      };
     }
   }
+  return { healthy: false, message: 'Unknown provider' };
+}
 
-  /**
-   * Get configured provider
-   * Driven by test: "should create LLM bridge with [provider] configuration"
-   */
-  getProvider(): string {
-    return this.config.provider;
+export async function generate(
+  state: LLMState,
+  prompt: string,
+  options: LLMGenerateOptions = {},
+): Promise<string> {
+  switch (state.config.provider) {
+    case 'ollama':
+      return generateWithOllama(state, prompt, options);
+    case 'mlx':
+      return generateWithMLX(state, prompt, options);
+    default:
+      throw new Error(`Generation not implemented for provider: ${state.config.provider}`);
+  }
+}
+
+async function generateWithOllama(
+  state: LLMState,
+  prompt: string,
+  options: LLMGenerateOptions,
+): Promise<string> {
+  if (!state.ollamaAdapter) {
+    throw new Error('Ollama adapter not initialized');
   }
 
-  /**
-   * Get configured model
-   * Driven by test: "should include LLM evidence in neuron results"
-   */
-  getModel(): string {
-    return this.config.model || this.getDefaultModel();
+  const result = await state.ollamaAdapter.generate({
+    prompt,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
+    model: state.config.model,
+  });
+
+  return result.text;
+}
+
+async function generateWithMLX(
+  state: LLMState,
+  prompt: string,
+  options: LLMGenerateOptions,
+): Promise<string> {
+  if (!state.mlxAdapter) {
+    throw new Error('MLX adapter not initialized');
   }
 
-  /**
-   * Get default model for provider
-   */
-  private getDefaultModel(): string {
-    switch (this.config.provider) {
-      case 'ollama':
-        return 'llama3';
-      case 'mlx':
-        return this.config.mlxModel || AVAILABLE_MLX_MODELS.QWEN_SMALL;
-      default:
-        return 'unknown';
-    }
-  }
-
-  /**
-   * Get MLX adapter instance for advanced operations
-   */
-  getMLXAdapter(): MLXAdapter | undefined {
-    return this.mlxAdapter;
-  }
-
-  /**
-   * List available MLX models
-   */
-  async listMLXModels() {
-    if (this.config.provider !== 'mlx' || !this.mlxAdapter) {
-      throw new Error('MLX adapter not available');
-    }
-    return this.mlxAdapter.listModels();
-  }
-
-  /**
-   * Check provider health
-   */
-  async checkProviderHealth(): Promise<{ healthy: boolean; message: string }> {
-    if (this.config.provider === 'mlx' && this.mlxAdapter) {
-      return this.mlxAdapter.checkHealth();
-    } else if (this.config.provider === 'ollama') {
-      // Simple Ollama health check
-      try {
-        const response = await fetch(`${this.config.endpoint}/api/tags`);
-        return {
-          healthy: response.ok,
-          message: response.ok ? 'Ollama healthy' : `Ollama error: ${response.status}`,
-        };
-      } catch (error) {
-        return {
-          healthy: false,
-          message: `Ollama unreachable: ${error instanceof Error ? error.message : String(error)}`,
-        };
-      }
-    }
-    return { healthy: false, message: 'Unknown provider' };
-  }
-
-  /**
-   * Generate text using configured LLM provider
-   * Driven by test: "should generate text using LLM bridge"
-   */
-  async generate(prompt: string, options: LLMGenerateOptions = {}): Promise<string> {
-    switch (this.config.provider) {
-      case 'ollama':
-        return this.generateWithOllama(prompt, options);
-      case 'mlx':
-        return this.generateWithMLX(prompt, options);
-      default:
-        throw new Error(`Generation not implemented for provider: ${this.config.provider}`);
-    }
-  }
-
-  /**
-   * Generate text using Ollama adapter
-   */
-  private async generateWithOllama(prompt: string, options: LLMGenerateOptions): Promise<string> {
-    if (!this.ollamaAdapter) {
-      throw new Error('Ollama adapter not initialized');
+  try {
+    const health = await state.mlxAdapter.checkHealth();
+    if (!health.healthy) {
+      throw new Error(`MLX model not healthy: ${health.message}`);
     }
 
-    const result = await this.ollamaAdapter.generate({
+    const result = await state.mlxAdapter.generate({
       prompt,
-      temperature: options.temperature,
-      maxTokens: options.maxTokens,
-      model: this.config.model,
+      maxTokens: options.maxTokens ?? 512,
+      temperature: options.temperature ?? 0.7,
     });
 
-    return result.text;
+    return result;
+  } catch (error) {
+    throw new Error(
+      `MLX generation failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
+}
 
-  /**
-   * Generate text using MLX via mlx-knife
-   * Real implementation using local MLX models
-   */
-  private async generateWithMLX(prompt: string, options: LLMGenerateOptions): Promise<string> {
-    if (!this.mlxAdapter) {
-      throw new Error('MLX adapter not initialized');
-    }
-
-    try {
-      // Check model health before generation
-      const health = await this.mlxAdapter.checkHealth();
-      if (!health.healthy) {
-        throw new Error(`MLX model not healthy: ${health.message}`);
-      }
-
-      // Generate using real MLX model
-      const result = await this.mlxAdapter.generate({
-        prompt,
-        maxTokens: options.maxTokens || 512,
-        temperature: options.temperature || 0.7,
-      });
-
-      return result;
-    } catch (error) {
-      // If MLX fails, provide informative error
-      throw new Error(
-        `MLX generation failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-
-  /**
-   * Properly shutdown underlying resources
-   */
-  async shutdown(): Promise<void> {
-    if (this.mlxAdapter && typeof (this.mlxAdapter as any).shutdown === 'function') {
-      await (this.mlxAdapter as any).shutdown();
-    }
+export async function shutdown(state: LLMState): Promise<void> {
+  if (state.mlxAdapter && typeof (state.mlxAdapter as any).shutdown === 'function') {
+    await (state.mlxAdapter as any).shutdown();
   }
 }
