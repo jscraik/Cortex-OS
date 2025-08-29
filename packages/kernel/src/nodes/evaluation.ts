@@ -191,7 +191,7 @@ export class EvaluationNode {
     );
 
     const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {}).every(
-      (result) => result?.passed || result?.blockers.length === 0,
+      (result) => result?.passed && result?.blockers.length === 0,
     );
 
     const sufficientEvidence = state.evidence.length >= 5; // Minimum evidence threshold
