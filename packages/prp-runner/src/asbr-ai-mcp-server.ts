@@ -80,9 +80,16 @@ export class ASBRAIMcpServer {
   }
 
   /**
-   * Initialize the MCP server in degraded mode for tests.
-   * Allows startup even when AI capabilities fail to load.
-   * Do not use in production.
+   * Initializes the MCP server in "degraded mode" for testing purposes.
+   * In degraded mode, the server will start even if AI capabilities fail to load,
+   * but some or all AI features may be unavailable or non-functional. This allows
+   * tests to run without requiring full AI initialization.
+   * 
+   * Usage: Only call this method in test environments where AI capabilities may be
+   * unavailable or intentionally disabled. Never use in production, as degraded mode
+   * may result in incomplete or unreliable server functionality.
+   * 
+   * @internal
    */
   async initializeForTesting(): Promise<void> {
     try {
