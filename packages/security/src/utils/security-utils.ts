@@ -3,11 +3,14 @@
  * @description Utility functions for security operations
  */
 
+
 import { X509Certificate } from 'node:crypto';
+
 import { SecurityError } from '../types.ts';
 
 /**
- * Generate a random nonce for cryptographic operations
+ * Generate a random nonce for cryptographic operations.
+ * Requires Node.js 18+ where global `crypto` is available.
  */
 export function generateNonce(length = 32): string {
   const array = new Uint8Array(length);

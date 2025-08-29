@@ -8,7 +8,7 @@ const responseSchema = z.object({
   embeddings: z.array(z.array(z.number())),
 });
 
-const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8081';
+const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8765';
 
 export async function generateEmbedding(text: string): Promise<Float32Array> {
   const { text: validText } = requestSchema.parse({ text });
