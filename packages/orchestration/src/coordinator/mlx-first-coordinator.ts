@@ -4,6 +4,7 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
+import { OrchestrationError } from '../errors.js';
 
 export interface TaskDecomposition {
   subtasks: Array<{
@@ -55,7 +56,7 @@ ${constraints?.timeLimit ? `- Time limit: ${constraints.timeLimit} minutes` : ''
 
 Provide a structured breakdown with:
 1. Subtasks with dependencies
-2. Parallel execution opportunities  
+2. Parallel execution opportunities
 3. Critical path identification
 4. Agent assignments based on capabilities
 
@@ -73,7 +74,10 @@ Format as JSON with reasoning.`;
       return this.parseTaskDecomposition(response.content);
     } catch (error) {
       console.warn('MLX task decomposition failed:', error);
-      return this.fallbackTaskDecomposition(taskDescription, availableAgents);
+      throw new OrchestrationError(
+        'TASK_DECOMPOSITION_FAILED',
+        `Failed to decompose task: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -163,7 +167,10 @@ Focus on maintainable, testable code.`;
       return this.parseCodeOrchestrationResponse(response.content);
     } catch (error) {
       console.warn('Code orchestration failed:', error);
-      return this.fallbackCodeOrchestration(codeTask);
+      throw new OrchestrationError(
+        'CODE_ORCHESTRATION_FAILED',
+        `Failed to orchestrate code task: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -189,12 +196,12 @@ Consider event priority, resource availability, and dependencies.
 Provide quick decision with reasoning.`;
 
     try {
-      // Use fast reasoning for real-time decisions
-      const response = await this.modelProvider.generate('quickReasoning', {
+      // Use fast reasoning model
+      const response = await this.modelProvider.generate('fastReasoning', {
         task: 'workflow_coordination',
         prompt,
-        maxTokens: 200,
-        temperature: 0.1,
+        maxTokens: 150,
+        temperature: 0.5,
       });
 
       return this.parseCoordinationDecision(response.content, response.provider);
@@ -202,90 +209,27 @@ Provide quick decision with reasoning.`;
       console.warn('Workflow coordination failed:', error);
       return {
         action: 'wait',
-        reasoning: 'Unable to analyze workflow state - defaulting to safe wait',
+        reasoning: 'Fallback coordination - waiting for additional signals',
         confidence: 0.2,
-        nextSteps: ['Retry analysis', 'Check system health'],
+        nextSteps: ['Monitor workflow state', 'Gather more context'],
         provider: 'ollama',
       };
     }
   }
 
   /**
-   * Intelligent agent selection based on task requirements
+   * Safety validation using parallel reasoning
    */
-  async selectOptimalAgent(
-    taskDescription: string,
-    availableAgents: Array<{ id: string; capabilities: string[]; currentLoad: number }>,
-    urgency: 'low' | 'medium' | 'high' | 'critical' = 'medium',
-  ): Promise<{ agentId: string; reasoning: string; confidence: number }> {
-    const agentInfo = availableAgents
-      .map((a) => `${a.id}: capabilities=[${a.capabilities.join(', ')}], load=${a.currentLoad}%`)
-      .join('\n');
-
-    const prompt = `Select the best agent for this task:
+  async validateSafety(taskDescription: string, context?: string) {
+    const prompt = `Assess the safety of this task and its context:
 
 TASK: ${taskDescription}
-URGENCY: ${urgency}
 
-AVAILABLE AGENTS:
-${agentInfo}
+${context ? `CONTEXT:\n${context}` : ''}
 
-Consider:
-- Agent capabilities vs task requirements
-- Current workload distribution
-- Task urgency
-- Specialization match
-
-Select agent ID and explain reasoning.`;
+Check for potential safety issues, constraints, and policy violations.`;
 
     try {
-      const response = await this.modelProvider.generate('quickReasoning', {
-        task: 'agent_selection',
-        prompt,
-        maxTokens: 150,
-      });
-
-      return this.parseAgentSelection(response.content, availableAgents);
-    } catch (error) {
-      console.warn('Agent selection failed:', error);
-      // Fallback: least loaded agent
-      const leastLoaded = availableAgents.reduce(
-        (min, agent) => (agent.currentLoad < min.currentLoad ? agent : min),
-        availableAgents[0],
-      );
-
-      return {
-        agentId: leastLoaded.id,
-        reasoning: 'Fallback selection - chose least loaded agent',
-        confidence: 0.3,
-      };
-    }
-  }
-
-  /**
-   * Safety and compliance checking using LlamaGuard
-   */
-  async validateTaskSafety(
-    taskDescription: string,
-    context?: string,
-  ): Promise<{ safe: boolean; issues: string[]; recommendations: string[] }> {
-    // This would integrate with your LlamaGuard model for safety validation
-    const prompt = `Evaluate the safety and compliance of this task:
-
-TASK: ${taskDescription}
-${context ? `CONTEXT: ${context}` : ''}
-
-Check for:
-- Security risks
-- Privacy concerns  
-- Regulatory compliance
-- Ethical considerations
-- Resource safety
-
-Provide safety assessment with specific issues and recommendations.`;
-
-    try {
-      // Use safety model or general reasoning as fallback
       const response = await this.modelProvider.generate('generalChat', {
         task: 'safety_validation',
         prompt,
@@ -314,12 +258,13 @@ Provide safety assessment with specific issues and recommendations.`;
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
+      throw new Error('No JSON found in response');
     } catch (error) {
-      console.warn('Failed to parse JSON response:', error);
+      throw new OrchestrationError(
+        'TASK_DECOMPOSITION_PARSE_ERROR',
+        `Failed to parse task decomposition: ${(error as Error).message}`,
+      );
     }
-
-    // Fallback parsing
-    return this.fallbackTaskDecomposition('Complex task', []);
   }
 
   private parseCoordinationDecision(
@@ -351,12 +296,19 @@ Provide safety assessment with specific issues and recommendations.`;
   }
 
   private parseCodeOrchestrationResponse(content: string) {
-    return {
-      plan: this.fallbackTaskDecomposition('Code task', []),
-      codeStrategy: 'Follow best practices and write maintainable code',
-      testStrategy: 'Write comprehensive unit and integration tests',
-      riskAssessment: 'Medium risk - requires careful review',
-    };
+    try {
+      const jsonRegex = /\{[\s\S]*\}/;
+      const jsonMatch = jsonRegex.exec(content);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      throw new Error('No JSON found in response');
+    } catch (error) {
+      throw new OrchestrationError(
+        'CODE_ORCHESTRATION_PARSE_ERROR',
+        `Failed to parse code orchestration response: ${(error as Error).message}`,
+      );
+    }
   }
 
   private parseAgentSelection(content: string, agents: any[]) {
@@ -380,33 +332,6 @@ Provide safety assessment with specific issues and recommendations.`;
       safe,
       issues: safe ? [] : ['Potential safety concerns identified'],
       recommendations: safe ? ['Task appears safe to proceed'] : ['Review task for safety issues'],
-    };
-  }
-
-  private fallbackTaskDecomposition(task: string, agents: string[]): TaskDecomposition {
-    return {
-      subtasks: [
-        {
-          id: '1',
-          description: task,
-          dependencies: [],
-          estimatedComplexity: 5,
-          recommendedAgent: agents[0] || 'default',
-          requiredCapabilities: ['general'],
-        },
-      ],
-      parallelizable: [['1']],
-      criticalPath: ['1'],
-      reasoning: 'Fallback decomposition - treat as single task',
-    };
-  }
-
-  private fallbackCodeOrchestration(task: string) {
-    return {
-      plan: this.fallbackTaskDecomposition(task, ['coder']),
-      codeStrategy: 'Implement incrementally with tests',
-      testStrategy: 'TDD approach with comprehensive coverage',
-      riskAssessment: 'Standard development risks apply',
     };
   }
 }
