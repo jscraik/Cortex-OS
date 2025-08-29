@@ -51,8 +51,9 @@ export * from './pipeline/qwen3-reranker';
 // Export generation interfaces and implementations
 export * from './generation/multi-model';
 
-// Export enhanced RAG pipeline
+// Export enhanced RAG pipeline factory and helpers
 export * from './enhanced-pipeline';
+export * from './lib';
 
 // Export embedding implementations
 export * from './embed/qwen3';
