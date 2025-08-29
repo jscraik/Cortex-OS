@@ -22,11 +22,7 @@ export type RerankBody = z.infer<typeof RerankBodySchema>;
 const ChatBodySchema = z.object({
   model: z.string().optional(),
   msgs: z.array(
-    z.object({
-      role: z.enum(['system', 'user', 'assistant']),
-      content: z.string(),
-    }),
-  ),
+  ).min(1),
   tools: z.unknown().optional(),
 });
 export type ChatBody = z.infer<typeof ChatBodySchema>;
