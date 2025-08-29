@@ -11,7 +11,6 @@
 
 import { ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
-import fs from 'fs';
 import path from 'path';
 import winston from 'winston';
 
@@ -242,39 +241,14 @@ export class PythonAgentBridge extends EventEmitter {
 
       const pythonArgs = ['-m', this.config.bridgeModule!];
 
-      // Discover monorepo root (so tests run from package still resolve python paths)
-      const findRepoRoot = (): string => {
-        let dir = process.cwd();
-        while (true) {
-          if (
-            fs.existsSync(path.join(dir, 'pnpm-workspace.yaml')) ||
-            fs.existsSync(path.join(dir, 'turbo.json')) ||
-            fs.existsSync(path.join(dir, '.git'))
-          ) {
-            return dir;
-          }
-          const parent = path.dirname(dir);
-          if (parent === dir) return process.cwd();
-          dir = parent;
-        }
-      };
-
-      const repoRoot = findRepoRoot();
-      const pythonPathParts = [
-        // Add the parent so that `src` is recognized as a package (src.__init__.py)
-        path.resolve(repoRoot, 'packages/python-agents'),
-        // Add src itself to support legacy absolute imports (e.g., 'base_agent')
-        path.resolve(repoRoot, 'packages/python-agents/src'),
-      ];
-      const existingPyPath = process.env.PYTHONPATH || '';
-      if (existingPyPath) pythonPathParts.push(existingPyPath);
+      const modulePath = path.resolve(path.dirname(this.config.bridgeScriptPath!), '..');
 
       this.pythonProcess = spawn(this.config.pythonPath!, pythonArgs, {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
           // Ensure local package imports work regardless of current working directory
-          PYTHONPATH: pythonPathParts.filter(Boolean).join(path.delimiter),
+          PYTHONPATH: modulePath,
         },
       });
 
