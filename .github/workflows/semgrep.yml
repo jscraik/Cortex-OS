@@ -15,6 +15,7 @@ jobs:
         env:
           SEMGREP_SEVERITY_LEVEL: ERROR
         with:
+
           config: |
             p/owasp-llm-top-ten
             p/mitre-atlas

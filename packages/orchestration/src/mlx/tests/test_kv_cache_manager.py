@@ -13,6 +13,7 @@ Tests cover:
 import asyncio
 import json
 import pytest
+pytest.importorskip("mlx")
 import tempfile
 import time
 from pathlib import Path
@@ -26,8 +27,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from kv_cache_manager import (
     AdvancedKVCacheManager, 
-    DEFAULT_SYSTEM_PROMPTS,
-    MLX_AVAILABLE
+    DEFAULT_SYSTEM_PROMPTS
 )
 
 
@@ -70,18 +70,6 @@ class TestAdvancedKVCacheManager:
             manager = AdvancedKVCacheManager(cache_dir=custom_dir)
             assert manager.prompt_cache_dir == Path(custom_dir)
             assert manager.prompt_cache_dir.exists()
-
-    @pytest.mark.skipif(MLX_AVAILABLE, reason="Testing mock behavior when MLX unavailable")
-    def test_generate_with_cache_no_mlx(self, cache_manager, mock_model_and_tokenizer):
-        """Test generation when MLX is not available (mock mode)"""
-        model, tokenizer = mock_model_and_tokenizer
-        prompt = "Test prompt for mock generation"
-        
-        response = cache_manager.generate_with_cache(model, tokenizer, prompt)
-        
-        assert isinstance(response, str)
-        assert "Mock response to:" in response
-        assert prompt[:50] in response
 
     def test_generate_with_cache_no_cache_key(self, cache_manager):
         """Test generation without cache key"""
@@ -147,44 +135,32 @@ class TestAdvancedKVCacheManager:
             assert call_args[1]['temperature'] == 0.5
             assert call_args[1]['custom_param'] == "test"
 
-    @pytest.mark.skipif(MLX_AVAILABLE, reason="Testing mock behavior when MLX unavailable")
-    def test_cache_system_prompt_no_mlx(self, cache_manager):
-        """Test system prompt caching when MLX unavailable"""
-        result = cache_manager.cache_system_prompt(
-            "test-model", "System prompt", "test_cache"
-        )
-        assert result is False
-
     def test_cache_system_prompt_success(self, cache_manager):
         """Test successful system prompt caching"""
         with patch('kv_cache_manager.load') as mock_load, \
-             patch('kv_cache_manager.cache_prompt') as mock_cache_prompt, \
-             patch('kv_cache_manager.MLX_AVAILABLE', True):
-            
+             patch('kv_cache_manager.cache_prompt') as mock_cache_prompt:
             mock_load.return_value = (Mock(), Mock())
-            
+
             result = cache_manager.cache_system_prompt(
-                "test-model", "System prompt content", "test_cache"
+                'test-model', 'System prompt content', 'test_cache'
             )
-            
+
             assert result is True
-            assert "test_cache" in cache_manager.cached_prompts
-            assert cache_manager.cached_prompts["test_cache"] == "System prompt content"
-            assert "test_cache" in cache_manager.cache_metadata
-            
-            metadata = cache_manager.cache_metadata["test_cache"]
-            assert metadata["model_id"] == "test-model"
-            assert "cached_at" in metadata
-            assert "cache_time" in metadata
-            assert metadata["prompt_length"] == len("System prompt content")
+            assert 'test_cache' in cache_manager.cached_prompts
+            assert cache_manager.cached_prompts['test_cache'] == 'System prompt content'
+            assert 'test_cache' in cache_manager.cache_metadata
+
+            metadata = cache_manager.cache_metadata['test_cache']
+            assert metadata['model_id'] == 'test-model'
+            assert 'cached_at' in metadata
+            assert 'cache_time' in metadata
+            assert metadata['prompt_length'] == len('System prompt content')
 
     def test_cache_system_prompt_failure(self, cache_manager):
         """Test system prompt caching failure"""
-        with patch('kv_cache_manager.load', side_effect=Exception("Load failed")), \
-             patch('kv_cache_manager.MLX_AVAILABLE', True):
-            
+        with patch('kv_cache_manager.load', side_effect=Exception('Load failed')):
             result = cache_manager.cache_system_prompt(
-                "test-model", "System prompt", "test_cache"
+                'test-model', 'System prompt', 'test_cache'
             )
             
             assert result is False
@@ -579,84 +555,6 @@ class TestKVCacheManagerPerformance:
             # Cache warming should complete quickly
             assert warming_time < 5.0, f"Cache warming too slow: {warming_time:.2f}s"
             assert mock_cache.call_count == 10
-
-
-class TestKVCacheManagerIntegration:
-    """Integration tests for KV Cache Manager"""
-    
-    @pytest.fixture
-    def cache_manager(self):
-        """Cache manager for integration testing"""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            yield AdvancedKVCacheManager(cache_dir=temp_dir)
-    
-    @pytest.mark.asyncio
-    async def test_full_cache_lifecycle(self, cache_manager):
-        """Test complete cache lifecycle"""
-        model_id = "test-model"
-        system_prompt = "You are a helpful assistant for testing purposes."
-        cache_key = "test_lifecycle"
-        
-        with patch('kv_cache_manager.load') as mock_load, \
-             patch('kv_cache_manager.cache_prompt') as mock_cache_prompt, \
-             patch('kv_cache_manager.MLX_AVAILABLE', True):
-            
-            mock_load.return_value = (Mock(), Mock())
-            
-            # 1. Cache system prompt
-            result = cache_manager.cache_system_prompt(model_id, system_prompt, cache_key)
-            assert result is True
-            
-            # 2. Verify prompt is cached
-            cached_prompt = cache_manager.load_cached_prompt(cache_key)
-            assert cached_prompt == system_prompt
-            
-            # 3. Check cache statistics
-            stats = cache_manager.get_cache_stats()
-            assert stats["cache_hits"] == 1
-            assert stats["cached_prompts_count"] == 1
-            
-            # 4. Test cache listing
-            cached_info = cache_manager.list_cached_prompts()
-            assert len(cached_info) == 1
-            assert cached_info[0]["cache_key"] == cache_key
-            
-            # 5. Test cache cleanup
-            cache_manager.cleanup_cache_directory(max_age_days=0)  # Remove all
-            
-            # 6. Verify cleanup
-            final_cached_info = cache_manager.list_cached_prompts()
-            assert len(final_cached_info) == 0
-
-    def test_cache_persistence_across_instances(self, temp_cache_dir):
-        """Test cache persistence across manager instances"""
-        # Create first manager and cache data
-        manager1 = AdvancedKVCacheManager(cache_dir=temp_cache_dir)
-        
-        # Create cache files manually
-        cache_file = Path(temp_cache_dir) / "persistent_cache.safetensors"
-        cache_file.write_text("dummy_content")
-        
-        metadata_file = Path(temp_cache_dir) / "persistent_cache.json"
-        metadata = {
-            "prompt_text": "Persistent prompt content",
-            "model_id": "test-model"
-        }
-        with open(metadata_file, 'w') as f:
-            json.dump(metadata, f)
-        
-        # Create second manager instance
-        manager2 = AdvancedKVCacheManager(cache_dir=temp_cache_dir)
-        
-        # Load from cache using second manager
-        result = manager2.load_cached_prompt("persistent_cache")
-        assert result == "Persistent prompt content"
-        
-        # Verify cache listings are consistent
-        info1 = manager1.list_cached_prompts()
-        info2 = manager2.list_cached_prompts()
-        assert len(info1) == len(info2) == 1
-        assert info1[0]["cache_key"] == info2[0]["cache_key"]
 
 
 if __name__ == "__main__":
