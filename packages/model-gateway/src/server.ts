@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
+import { z } from 'zod';
 import { ModelRouter } from './model-router';
+
 import {
   embeddingsHandler,
   rerankHandler,
@@ -11,17 +13,26 @@ import {
 } from './handlers';
 import { applyAuditPolicy } from './lib/applyAuditPolicy';
 
+
 export function createServer(router?: ModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
   const modelRouter = router || new ModelRouter();
 
   app.post('/embeddings', async (req, reply) => {
-    const body = req.body as EmbeddingsBody;
+    const parsed = EmbeddingsBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return reply
+        .status(400)
+        .send({ error: 'Invalid request body', details: parsed.error.flatten() });
+    }
+    const body = parsed.data;
     console.log('[model-gateway] /embeddings request body:', JSON.stringify(body));
     try {
+
       await applyAuditPolicy(req, 'embeddings', body);
       const result = await embeddingsHandler(modelRouter, body);
       return reply.send(result);
+
     } catch (error) {
       const status = (error as any).status || 500;
       console.error('Embedding error:', error);
@@ -32,7 +43,9 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/rerank', async (req, reply) => {
+
     const body = req.body as RerankBody;
+
     try {
       await applyAuditPolicy(req, 'rerank', body);
       const result = await rerankHandler(modelRouter, body);
@@ -47,7 +60,9 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/chat', async (req, reply) => {
+
     const body = req.body as ChatBody;
+
     try {
       await applyAuditPolicy(req, 'chat', body);
       const result = await chatHandler(modelRouter, body);

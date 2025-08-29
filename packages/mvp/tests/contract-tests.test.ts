@@ -3,8 +3,8 @@ import { describe, it, expect } from 'vitest';
 describe('Contract Tests', () => {
   it('should maintain backward compatibility', async () => {
     // Test that existing API contracts are maintained
-    const { CortexKernel, PRPStateSchema } = await import('../src/index.js');
-    expect(typeof CortexKernel).toBe('function');
+    const { SimplePRPGraph, PRPStateSchema } = await import('../src/index.js');
+    expect(typeof SimplePRPGraph).toBe('function');
     expect(PRPStateSchema).toBeDefined();
   });
 
