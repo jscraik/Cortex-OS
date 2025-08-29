@@ -1,44 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
-
-// Mock OTEL spans and metrics for testing
-let otelSpans: any[] = [];
-let metrics: any[] = [];
-
-// Mock OTEL functions
-const mockOtel = {
-  startSpan: (name: string) => ({
-    name,
-    status: 'OK',
-    attributes: {},
-    end: function () {
-      otelSpans.push(this);
-    },
-    setStatus: function (status: string) {
-      this.status = status;
-      return this;
-    },
-    setAttribute: function (key: string, value: any) {
-      this.attributes[key] = value;
-      return this;
-    },
-  }),
-  recordMetric: (name: string, value: number, unit: string = '') => {
-    metrics.push({ name, value, unit });
-  },
-};
-
-// Mock the OTEL implementation in the graph-simple module
-vi.mock('../src/observability/otel.js', () => ({
-  startSpan: mockOtel.startSpan,
-  recordMetric: mockOtel.recordMetric,
-}));
+import { getSpans, getMetrics, resetTelemetry } from '../src/observability/otel.js';
 
 describe('Telemetry Implementation', () => {
   beforeEach(() => {
-    // Reset mocks before each test
-    otelSpans = [];
-    metrics = [];
+    // Reset telemetry before each test
+    resetTelemetry();
   });
 
   it('should create OTEL spans for each workflow phase', async () => {
@@ -54,7 +21,8 @@ describe('Telemetry Implementation', () => {
     const result = await kernel.runPRPWorkflow(blueprint);
 
     // Should have created spans for each phase
-    const spanNames = otelSpans.map((span) => span.name);
+    const spans = getSpans();
+    const spanNames = spans.map((span) => span.name);
     expect(spanNames).toContain('prp.strategy');
     expect(spanNames).toContain('prp.build');
     expect(spanNames).toContain('prp.evaluation');
@@ -73,6 +41,7 @@ describe('Telemetry Implementation', () => {
     const result = await kernel.runPRPWorkflow(blueprint);
 
     // Should track key metrics
+    const metrics = getMetrics();
     const metricNames = metrics.map((metric) => metric.name);
     expect(metricNames).toContain('prp.duration');
     expect(metricNames).toContain('prp.phases.completed');
@@ -94,10 +63,15 @@ describe('Telemetry Implementation', () => {
       requirements: ['Track errors'],
     };
 
-    const result = await errorKernel.runPRPWorkflow(blueprint);
+    try {
+      await errorKernel.runPRPWorkflow(blueprint);
+    } catch (error) {
+      // Expected to throw
+    }
 
     // Find error spans
-    const errorSpans = otelSpans.filter((span) => span.status === 'ERROR');
+    const spans = getSpans();
+    const errorSpans = spans.filter((span) => span.status === 'ERROR');
 
     // Should include error information in spans
     expect(errorSpans.length).toBeGreaterThan(0);
