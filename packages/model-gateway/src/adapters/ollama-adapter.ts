@@ -5,6 +5,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { z } from 'zod';
+import { estimateTokenCount } from '../lib/estimate-token-count';
 
 // Ollama API schemas
 const OllamaEmbeddingRequestSchema = z.object({
@@ -145,7 +146,7 @@ export class OllamaAdapter {
         embedding: embeddingData.embedding,
         model,
         usage: {
-          tokens: this.estimateTokenCount(text),
+          tokens: estimateTokenCount(text),
           cost: 0, // Local Ollama has no API cost
         },
       });
@@ -197,11 +198,8 @@ export class OllamaAdapter {
       const response = await this.client.post('/api/chat', request);
       const chatData = OllamaChatResponseSchema.parse(response.data);
 
-      const promptTokens = messages.reduce(
-        (sum, msg) => sum + this.estimateTokenCount(msg.content),
-        0,
-      );
-      const completionTokens = this.estimateTokenCount(chatData.message.content);
+      const promptTokens = messages.reduce((sum, msg) => sum + estimateTokenCount(msg.content), 0);
+      const completionTokens = estimateTokenCount(chatData.message.content);
 
       return GatewayChatResponseSchema.parse({
         content: chatData.message.content,
@@ -244,8 +242,8 @@ export class OllamaAdapter {
       });
 
       const totalTokens =
-        this.estimateTokenCount(query) +
-        documents.reduce((sum, doc) => sum + this.estimateTokenCount(doc), 0);
+        estimateTokenCount(query) +
+        documents.reduce((sum, doc) => sum + estimateTokenCount(doc), 0);
 
       return GatewayRerankResponseSchema.parse({
         scores,
@@ -330,13 +328,5 @@ export class OllamaAdapter {
     }
 
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-  }
-
-  /**
-   * Estimate token count for text (rough approximation)
-   */
-  private estimateTokenCount(text: string): number {
-    // Rough approximation: 1 token ≈ 4 characters for most models
-    return Math.ceil(text.length / 4);
   }
 }

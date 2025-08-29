@@ -4,16 +4,20 @@
  */
 
 import { createHash } from 'crypto';
-import { readFile } from 'fs/promises';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
+import { readFile } from 'fs/promises';
 import { Server } from 'http';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
+import { getEventManager, stopEventManager } from '../core/events.js';
+import { createTask as buildTask } from '../lib/create-task.js';
+import { emitPlanStarted } from '../lib/emit-plan-started.js';
+import { resolveIdempotency } from '../lib/resolve-idempotency.js';
+import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
   type ArtifactRef,
   type Event,
-  type EventType,
   NotFoundError,
   type Profile,
   ProfileSchema,
@@ -22,12 +26,7 @@ import {
   type Task,
   ValidationError,
 } from '../types/index.js';
-import { validateTaskInput } from '../lib/validate-task-input.js';
-import { resolveIdempotency } from '../lib/resolve-idempotency.js';
-import { createTask as buildTask } from '../lib/create-task.js';
-import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { initializeXDG } from '../xdg/index.js';
-import { getEventManager, stopEventManager } from '../core/events.js';
 import { createAuthMiddleware, requireScopes } from './auth.js';
 
 export interface ASBRServerOptions {
@@ -184,7 +183,6 @@ export class ASBRServerClass {
     // Error handling must be registered after routes so thrown errors in handlers
     // are propagated here and converted to structured JSON responses.
     this.app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-      // eslint-disable-next-line no-console -- server-level error logging for diagnostics
       console.error('API Error:', error);
 
       if (error instanceof ValidationError) {
@@ -294,7 +292,6 @@ export class ASBRServerClass {
   }
 
   private async getEvents(req: Request, res: Response): Promise<void> {
-
     const { stream, taskId } = req.query as {
       stream?: string;
       taskId?: string;
@@ -336,19 +333,16 @@ export class ASBRServerClass {
 
     let autoCloseTimer: NodeJS.Timeout | undefined;
     if (shouldAutoClose) {
-
       // Give the client a short moment to receive initial data, then end.
       autoCloseTimer = setTimeout(() => {
         clearInterval(heartbeat);
         try {
           res.end();
         } catch (_e) {
-
           /* swallow */
         }
       }, 50);
     }
-
 
     // Clean up on client disconnect
     req.on('close', () => {
@@ -524,7 +518,6 @@ export class ASBRServerClass {
         const manager = await getEventManager();
         manager.attachIO(this.io);
 
-        // eslint-disable-next-line no-console -- informational server start log
         console.log(`ASBR API server listening on http://${this.host}:${this.port}`);
         resolve();
       });
@@ -543,7 +536,7 @@ export class ASBRServerClass {
 
         this.server.close(() => {
           stopEventManager();
-          // eslint-disable-next-line no-console -- informational server stop log
+
           console.log('ASBR API server stopped');
           resolve();
         });

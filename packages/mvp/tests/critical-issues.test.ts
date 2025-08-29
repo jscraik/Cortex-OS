@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
+import { SimplePRPGraph } from '../src/graph-simple.js';
 import { createInitialPRPState } from '../src/state.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 import { BuildNode } from '../src/nodes/build.js';
@@ -17,12 +17,12 @@ import { EvaluationNode } from '../src/nodes/evaluation.js';
 
 describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
   describe('[Critical] Package Exports Validation', () => {
-    it('should successfully import CortexKernel from package exports', async () => {
+    it('should successfully import SimplePRPGraph from package exports', async () => {
       // This will FAIL due to package.json export path mismatch
       try {
-        const { CortexKernel: ExportedKernel } = await import('@cortex-os/kernel');
-        expect(ExportedKernel).toBeDefined();
-        expect(typeof ExportedKernel).toBe('function');
+        const { SimplePRPGraph: ExportedGraph } = await import('@cortex-os/kernel');
+        expect(ExportedGraph).toBeDefined();
+        expect(typeof ExportedGraph).toBe('function');
       } catch (error) {
         // Expected failure: export paths don't match build structure
         expect(error).toBeDefined();
@@ -62,7 +62,7 @@ describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
         };
 
         // Type check would fail here if we had proper typing
-        const kernel = new CortexKernel(mockOrchestrator as any);
+        const kernel = new SimplePRPGraph(mockOrchestrator as any);
         expect(kernel).toBeDefined();
 
         // This assertion will expose the interface mismatch
@@ -76,7 +76,7 @@ describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
   describe('[Critical] Determinism Guarantee Violations', () => {
     it('should produce identical results for identical inputs (true determinism)', async () => {
       const mockOrchestrator = { getNeuronCount: () => 3 };
-      const kernel = new CortexKernel(mockOrchestrator);
+      const kernel = new SimplePRPGraph(mockOrchestrator);
 
       const blueprint = {
         title: 'Determinism Test',
@@ -192,7 +192,7 @@ describe.skip('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
   describe('Unnecessary Wrapper Methods', () => {
     it('should directly access orchestrator without wrapper methods', () => {
       const mockOrchestrator = { getNeuronCount: () => 5 };
-      const kernel = new CortexKernel(mockOrchestrator);
+      const kernel = new SimplePRPGraph(mockOrchestrator);
 
       // This wrapper method should be removed
       expect(kernel.getNeuronCount).toBeUndefined(); // Should not exist
@@ -229,7 +229,7 @@ describe.skip('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
 
     it('should not use setTimeout for deterministic execution', async () => {
       const mockOrchestrator = { getNeuronCount: () => 3 };
-      const kernel = new CortexKernel(mockOrchestrator);
+      const kernel = new SimplePRPGraph(mockOrchestrator);
 
       // Check if simulateWork uses setTimeout
       const originalSetTimeout = global.setTimeout;

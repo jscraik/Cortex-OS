@@ -4,7 +4,8 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
-import { OrchestrationError } from '../errors.js';
+
+trationError } from '../errors.js';
 
 export interface TaskDecomposition {
   subtasks: Array<{
@@ -44,15 +45,24 @@ export class MLXFirstOrchestrator {
     availableAgents: string[],
     constraints?: { maxParallelism?: number; timeLimit?: number },
   ): Promise<TaskDecomposition> {
+    const parsed = decomposeTaskSchema.safeParse({
+      taskDescription,
+      availableAgents,
+      constraints,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { taskDescription: td, availableAgents: aa, constraints: c } = parsed.data;
     const prompt = `Break down this complex task into manageable subtasks:
 
-TASK: ${taskDescription}
+TASK: ${td}
 
-AVAILABLE AGENTS: ${availableAgents.join(', ')}
+AVAILABLE AGENTS: ${aa.join(', ')}
 
 CONSTRAINTS:
-${constraints?.maxParallelism ? `- Max parallel tasks: ${constraints.maxParallelism}` : ''}
-${constraints?.timeLimit ? `- Time limit: ${constraints.timeLimit} minutes` : ''}
+${c?.maxParallelism ? `- Max parallel tasks: ${c.maxParallelism}` : ''}
+${c?.timeLimit ? `- Time limit: ${c.timeLimit} minutes` : ''}
 
 Provide a structured breakdown with:
 1. Subtasks with dependencies
@@ -74,10 +84,12 @@ Format as JSON with reasoning.`;
       return this.parseTaskDecomposition(response.content);
     } catch (error) {
       console.warn('MLX task decomposition failed:', error);
+
       throw new OrchestrationError(
         'TASK_DECOMPOSITION_FAILED',
         `Failed to decompose task: ${(error as Error).message}`,
       );
+
     }
   }
 
@@ -89,16 +101,25 @@ Format as JSON with reasoning.`;
     visualContext?: string, // Base64 image or UI description
     codeContext?: string,
   ): Promise<CoordinationDecision> {
+    const parsed = coordinateMultiModalTaskSchema.safeParse({
+      taskDescription,
+      visualContext,
+      codeContext,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { taskDescription: td, visualContext: vc, codeContext: cc } = parsed.data;
     let prompt = `Coordinate this multi-modal task:
 
-TASK: ${taskDescription}`;
+TASK: ${td}`;
 
-    if (visualContext) {
-      prompt += `\nVISUAL CONTEXT: ${visualContext}`;
+    if (vc) {
+      prompt += `\nVISUAL CONTEXT: ${vc}`;
     }
 
-    if (codeContext) {
-      prompt += `\nCODE CONTEXT: ${codeContext}`;
+    if (cc) {
+      prompt += `\nCODE CONTEXT: ${cc}`;
     }
 
     prompt += `\nDetermine the best coordination approach considering all modalities.
@@ -139,13 +160,22 @@ Provide decision, reasoning, confidence (0-1), and next steps.`;
     testStrategy: string;
     riskAssessment: string;
   }> {
+    const parsed = orchestrateCodeTaskSchema.safeParse({
+      codeTask,
+      codebase,
+      testRequirements,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { codeTask: ct, codebase: cb, testRequirements: tr } = parsed.data;
     const prompt = `Plan this code-related task:
 
-TASK: ${codeTask}
+TASK: ${ct}
 
-${codebase ? `EXISTING CODEBASE:\n${codebase.slice(0, 2000)}...` : ''}
+${cb ? `EXISTING CODEBASE:\n${cb.slice(0, 2000)}...` : ''}
 
-${testRequirements ? `TEST REQUIREMENTS:\n${testRequirements}` : ''}
+${tr ? `TEST REQUIREMENTS:\n${tr}` : ''}
 
 Provide:
 1. Development plan with subtasks
@@ -167,10 +197,12 @@ Focus on maintainable, testable code.`;
       return this.parseCodeOrchestrationResponse(response.content);
     } catch (error) {
       console.warn('Code orchestration failed:', error);
+
       throw new OrchestrationError(
         'CODE_ORCHESTRATION_FAILED',
         `Failed to orchestrate code task: ${(error as Error).message}`,
       );
+
     }
   }
 
@@ -182,13 +214,22 @@ Focus on maintainable, testable code.`;
     currentState: any,
     incomingEvents: any[],
   ): Promise<CoordinationDecision> {
+    const parsed = coordinateWorkflowSchema.safeParse({
+      workflowId,
+      currentState,
+      incomingEvents,
+    });
+    if (!parsed.success) {
+      throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
+    }
+    const { workflowId: wfId, currentState: cs, incomingEvents: events } = parsed.data;
     const prompt = `Coordinate this real-time workflow:
 
-WORKFLOW ID: ${workflowId}
-CURRENT STATE: ${JSON.stringify(currentState, null, 2)}
+WORKFLOW ID: ${wfId}
+CURRENT STATE: ${JSON.stringify(cs, null, 2)}
 
 INCOMING EVENTS:
-${incomingEvents.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join('\n')}
+${events.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join('\n')}
 
 Decide immediate action: proceed, wait, escalate, or abort.
 Consider event priority, resource availability, and dependencies.
@@ -220,6 +261,7 @@ Provide quick decision with reasoning.`;
   /**
    * Safety validation using parallel reasoning
    */
+
   async validateSafety(taskDescription: string, context?: string) {
     const prompt = `Assess the safety of this task and its context:
 
@@ -230,6 +272,7 @@ ${context ? `CONTEXT:\n${context}` : ''}
 Check for potential safety issues, constraints, and policy violations.`;
 
     try {
+
       const response = await this.modelProvider.generate('generalChat', {
         task: 'safety_validation',
         prompt,
