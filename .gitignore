@@ -291,6 +291,8 @@ scripts/package-lock.json
 .cortex/out/
 !packages/mcp-registry/src/lib/
 !packages/mcp-registry/src/lib/**
+!packages/model-gateway/src/lib/
+!packages/model-gateway/src/lib/**
 
 
 !src/lib/
