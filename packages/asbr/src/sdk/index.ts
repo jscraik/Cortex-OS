@@ -20,6 +20,7 @@ import type {
   TaskRef,
   UnsubscribeFunction,
 } from '../types/index.js';
+import { createHash } from 'crypto';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -361,16 +362,8 @@ export function createIdempotencyKey(input: TaskInput): string {
     inputs: input.inputs,
     scopes: input.scopes.sort(),
   });
-
-  // Simple hash function (in production, use crypto.createHash)
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    const char = key.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-
-  return Math.abs(hash).toString(36);
+  const hash = createHash('sha256').update(key).digest('hex');
+  return hash.slice(0, 32);
 }
 
 // Export types for consumers

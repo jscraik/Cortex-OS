@@ -7,8 +7,14 @@
 
 import { PRPState, Evidence } from '../state.js';
 import { generateId } from '../utils/id.js';
-import fs from 'node:fs';
-import path from 'node:path';
+import { fixedTimestamp } from '../lib/determinism.js';
+import {
+  validateBackend,
+  validateAPISchema,
+  runSecurityScan,
+  validateFrontend,
+  validateDocumentation,
+} from '../lib/gates/build.js';
 
 /**
  * Build Phase Gates:
@@ -24,47 +30,56 @@ export class BuildNode {
     const blockers: string[] = [];
     const majors: string[] = [];
 
+    const deterministic = !!state.metadata.deterministic;
+
     // Gate 1: Backend compilation and tests
-    const backendValidation = await this.validateBackend(state);
+    const backendValidation = await validateBackend(state);
     if (!backendValidation.passed) {
       blockers.push('Backend compilation or tests failed');
     }
-
     evidence.push({
-      id: generateId('build-backend', state.metadata.deterministic),
+      id: generateId('build-backend', deterministic),
       type: 'test',
       source: 'backend_validation',
       content: JSON.stringify(backendValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('build-backend') : new Date().toISOString(),
       phase: 'build',
     });
 
     // Gate 2: API schema validation
-    const apiValidation = await this.validateAPISchema(state);
+    const apiValidation = await validateAPISchema(state);
     if (!apiValidation.passed) {
       blockers.push('API schema validation failed');
     }
 
+    evidence.push({
+      id: generateId('build-api', state.metadata.deterministic),
+      type: 'analysis',
+      source: 'api_schema_validation',
+      content: JSON.stringify(apiValidation),
+      timestamp: new Date().toISOString(),
+      phase: 'build',
+    });
+
     // Gate 3: Security scanning
-    const securityScan = await this.runSecurityScan(state);
+    const securityScan = await runSecurityScan(state);
     if (securityScan.blockers > 0) {
       blockers.push(`Security scan found ${securityScan.blockers} critical issues`);
     }
     if (securityScan.majors > 3) {
       majors.push(`Security scan found ${securityScan.majors} major issues (limit: 3)`);
     }
-
     evidence.push({
-      id: generateId('build-security', state.metadata.deterministic),
+      id: generateId('build-security', deterministic),
       type: 'analysis',
       source: 'security_scanner',
       content: JSON.stringify(securityScan),
-      timestamp: new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('build-security') : new Date().toISOString(),
       phase: 'build',
     });
 
     // Gate 4: Frontend performance
-    const frontendValidation = await this.validateFrontend(state);
+    const frontendValidation = await validateFrontend(state);
     if (frontendValidation.lighthouse < 90) {
       majors.push(`Lighthouse score ${frontendValidation.lighthouse} below 90%`);
     }
@@ -73,7 +88,7 @@ export class BuildNode {
     }
 
     // Gate 5: Documentation completeness
-    const docsValidation = await this.validateDocumentation(state);
+    const docsValidation = await validateDocumentation(state);
     if (!docsValidation.passed) {
       majors.push('Documentation incomplete - missing API docs or usage notes');
     }
@@ -88,11 +103,12 @@ export class BuildNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: deterministic ? fixedTimestamp('build-validation') : new Date().toISOString(),
         },
       },
     };
   }
+
 
   private async validateBackend(state: PRPState): Promise<{ passed: boolean; details: any }> {
     // Simulated backend validation - in real implementation would run actual tests
@@ -132,12 +148,16 @@ export class BuildNode {
     }
 
     const schemaPathYaml = path.resolve('openapi.yaml');
+
     const exists = fs.existsSync(schemaPathYaml);
+
 
     return {
       passed: exists,
       details: {
+
         schemaFormat: 'openapi.yaml',
+
         validation: exists ? 'found' : 'missing',
       },
     };
@@ -217,4 +237,5 @@ export class BuildNode {
       details: { readme: readmeExists },
     };
   }
+
 }
