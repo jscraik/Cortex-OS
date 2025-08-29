@@ -9,7 +9,6 @@ import type { SecurityError } from '../types.js';
 
 export type { SecurityError };
 
-import { SecurityError } from '../types';
 
 /**
  * Generate a random nonce for cryptographic operations.
