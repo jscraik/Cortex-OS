@@ -16,6 +16,7 @@ export default [
   importPlugin.flatConfigs.typescript,
   {
     ignores: [
+  '**/.venv/**',
       '**/dist/**',
       '**/.artifacts/**',
       'commitlint.config.js',
