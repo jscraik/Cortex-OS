@@ -14,8 +14,37 @@
  */
 
 import { LLMBridge, LLMConfig } from './llm-bridge.js';
+import { createExecutionContext } from './lib/create-execution-context.js';
+import { executeNeuron } from './lib/execute-neuron.js';
 
 // Minimal interfaces driven by tests
+export interface Blueprint {
+  title: string;
+  description: string;
+  requirements: string[];
+}
+
+export interface ExecutionState {
+  id: string;
+  phase: 'strategy' | 'build' | 'evaluation';
+  blueprint: Blueprint;
+  outputs: Record<string, unknown>;
+}
+
+export interface ExecutionContext {
+  workingDirectory: string;
+  projectRoot: string;
+  outputDirectory: string;
+  tempDirectory: string;
+  environmentVariables: NodeJS.ProcessEnv;
+  timeout: number;
+  llmBridge?: LLMBridge;
+}
+
+export interface PRPExecutionResult extends ExecutionState {
+  status: 'completed' | 'failed';
+}
+
 export interface Neuron {
   id: string;
   role: string;
@@ -23,7 +52,7 @@ export interface Neuron {
   dependencies: string[];
   tools: string[];
   requiresLLM?: boolean; // Flag for LLM-powered neurons
-  execute(state: any, context: any): Promise<NeuronResult>;
+  execute(state: ExecutionState, context: ExecutionContext): Promise<NeuronResult>;
 }
 
 export interface NeuronResult {
@@ -120,7 +149,7 @@ export class PRPOrchestrator {
    * Execute PRP cycle with LLM integration
    * Enhanced to support LLM-powered neurons
    */
-  async executePRPCycle(blueprint: any): Promise<any> {
+  async executePRPCycle(blueprint: Blueprint): Promise<PRPExecutionResult> {
     if (this.neurons.size === 0) {
       throw new Error('No neurons registered');
     }
@@ -131,28 +160,18 @@ export class PRPOrchestrator {
       throw new Error('LLM configuration required for LLM-powered neurons');
     }
 
-    // Create execution context with LLM bridge
-    const context: any = {
-      workingDirectory: process.cwd(),
-      projectRoot: process.cwd(),
-      outputDirectory: './dist',
-      tempDirectory: './tmp',
-      environmentVariables: process.env,
-      timeout: 30000,
-      llmBridge: this.llmBridge,
-    };
+    const context = createExecutionContext(this.llmBridge);
+    const outputs: Record<string, unknown> = {};
+    const cycleId = `prp-${Date.now()}`;
 
-    const outputs: any = {};
-
-    // Execute each neuron
     for (const neuron of this.neurons.values()) {
-      const state = { id: `prp-${Date.now()}`, phase: 'strategy', blueprint, outputs };
-      const result = await neuron.execute(state, context);
+      const state: ExecutionState = { id: cycleId, phase: neuron.phase, blueprint, outputs };
+      const result = await executeNeuron(neuron, state, context);
       outputs[neuron.id] = result.output;
     }
 
     return {
-      id: `prp-${Date.now()}`,
+      id: cycleId,
       phase: 'strategy',
       blueprint,
       outputs,

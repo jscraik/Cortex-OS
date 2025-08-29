@@ -34,9 +34,11 @@ describe('PRPOrchestrator - TDD Implementation', () => {
       expect(orchestrator.getNeuronCount()).toBe(0);
     });
 
-    it('should fail to execute without any neurons', () => {
+    it('should fail to execute without any neurons', async () => {
       // RED: This should fail - no executePRPCycle method
-      expect(() => orchestrator.executePRPCycle({})).toThrow('No neurons registered');
+      await expect(orchestrator.executePRPCycle({} as any)).rejects.toThrow(
+        'No neurons registered',
+      );
     });
   });
 
@@ -74,7 +76,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
         phase: 'strategy' as const,
         dependencies: [],
         tools: [],
-        execute: async () => ({
+        execute: async (state, context) => ({
           output: {},
           evidence: [],
           nextSteps: [],
@@ -145,7 +147,7 @@ function createMockNeuron(id: string, phase: 'strategy' | 'build' | 'evaluation'
     phase,
     dependencies: [],
     tools: [],
-    execute: async () => ({
+    execute: async (state, context) => ({
       output: { [`${id}-result`]: true },
       evidence: [],
       nextSteps: [],

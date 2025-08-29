@@ -8,5 +8,15 @@
 
 export { PRPOrchestrator } from './orchestrator.js';
 export { LLMBridge } from './llm-bridge.js';
-export type { Neuron, NeuronResult, ExecutionMetrics } from './orchestrator.js';
+export { createExecutionContext } from './lib/create-execution-context.js';
+export { executeNeuron } from './lib/execute-neuron.js';
+export type {
+  Neuron,
+  NeuronResult,
+  ExecutionMetrics,
+  Blueprint,
+  ExecutionState,
+  ExecutionContext,
+  PRPExecutionResult,
+} from './orchestrator.js';
 export type { LLMConfig } from './llm-bridge.js';
