@@ -1,4 +1,6 @@
 import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Document with relevance score for reranking
@@ -56,12 +58,18 @@ export class Qwen3Reranker implements Reranker {
   private readonly pythonPath: string;
 
   constructor(options: Qwen3RerankOptions = {}) {
-    this.modelPath = options.modelPath || '/Volumes/External-SSD/Models/Qwen/Qwen3-Reranker-4B';
+    const defaultPath =
+      process.env.QWEN_RERANKER_MODEL_PATH ||
+      path.resolve(process.cwd(), 'models/Qwen3-Reranker-4B');
+    this.modelPath = options.modelPath || defaultPath;
     this.maxLength = options.maxLength || 512;
     this.topK = options.topK || 10;
     this.batchSize = options.batchSize || 32;
-    this.cacheDir = options.cacheDir || '/tmp/qwen3-reranker-cache';
+    this.cacheDir = options.cacheDir || path.dirname(this.modelPath);
     this.pythonPath = options.pythonPath || 'python3';
+    if (!fs.existsSync(this.modelPath)) {
+      throw new Error(`Reranker model path does not exist: ${this.modelPath}`);
+    }
   }
 
   /**

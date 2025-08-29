@@ -1,5 +1,7 @@
 #!/usr/bin/env tsx
 
+import fs from 'fs';
+import path from 'path';
 /**
  * Enhanced RAG Pipeline Example
  * Demonstrates MLX-first multi-model RAG integration
@@ -46,6 +48,14 @@ const sampleDocuments: Document[] = [
     metadata: { source: 'embeddings-guide', category: 'ai-concepts' },
   },
 ];
+const modelDir = path.resolve(process.cwd(), 'models');
+const embedPath = process.env.QWEN_EMBED_MODEL_PATH || path.join(modelDir, 'Qwen3-Embedding-4B');
+const rerankPath = process.env.QWEN_RERANKER_MODEL_PATH || path.join(modelDir, 'Qwen3-Reranker-4B');
+for (const p of [embedPath, rerankPath]) {
+  if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
+}
+process.env.QWEN_EMBED_MODEL_DIR = path.dirname(embedPath);
+process.env.QWEN_RERANKER_MODEL_PATH = rerankPath;
 
 async function demonstrateMLXFirstRAG() {
   console.log('🚀 Enhanced RAG Pipeline Demo - MLX-First Integration\n');

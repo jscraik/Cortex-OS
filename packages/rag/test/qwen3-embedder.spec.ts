@@ -1,3 +1,6 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'events';
 import type { ChildProcess } from 'child_process';
@@ -22,7 +25,10 @@ describe('Qwen3Embedder', () => {
     const cpMock: any = await import('child_process');
     const proc: MockProc = cpMock.__proc;
 
-    const embedder = new Qwen3Embedder({ modelSize: '0.6B' });
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'embed-'));
+    const modelDir = path.join(tempDir, 'Qwen3-Embedding-0.6B');
+    fs.mkdirSync(modelDir, { recursive: true });
+    const embedder = new Qwen3Embedder({ modelSize: '0.6B', modelPath: modelDir });
     const promise = embedder.embed(['hello']);
     proc.stdout.emit('data', JSON.stringify({ embeddings: [[1, 2, 3]] }));
     proc.emit('close', 0);
