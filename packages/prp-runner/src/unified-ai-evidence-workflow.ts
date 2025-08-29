@@ -8,7 +8,6 @@
 
 import { ASBRAIIntegration } from './asbr-ai-integration.js';
 import { AICoreCapabilities } from './ai-capabilities.js';
-import { EmbeddingAdapter } from './embedding-adapter.js';
 
 /**
  * Configuration for the unified evidence collection workflow
@@ -112,7 +111,6 @@ export interface UnifiedEvidenceResult {
 export class UnifiedAIEvidenceWorkflow {
   private asbrIntegration: ASBRAIIntegration;
   private aiCapabilities: AICoreCapabilities | null = null;
-  private embeddingAdapter: EmbeddingAdapter;
   private config: Required<UnifiedEvidenceConfig>;
 
   constructor(config: UnifiedEvidenceConfig = {}) {
@@ -135,12 +133,6 @@ export class UnifiedAIEvidenceWorkflow {
 
     // Initialize core components
     this.asbrIntegration = new ASBRAIIntegration();
-
-    this.embeddingAdapter = new EmbeddingAdapter({
-      provider: 'sentence-transformers',
-      model: this.config.embeddingModel,
-      dimensions: 1024,
-    });
   }
 
   /**
@@ -472,7 +464,6 @@ export class UnifiedAIEvidenceWorkflow {
       status: 'active',
       components: {
         asbrIntegration: 'connected',
-        embeddingAdapter: 'connected',
         aiCapabilities: this.aiCapabilities ? 'connected' : 'disconnected',
       },
       configuration: {

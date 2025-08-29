@@ -14,9 +14,11 @@ describe('🔄 Unified AI Evidence Workflow (real implementation)', () => {
     const workflow = new UnifiedAIEvidenceWorkflow();
     const status = await workflow.getWorkflowStatus();
 
+
     expect(status.status).toBe('active');
     expect(status.components.asbrIntegration).toBe('connected');
     expect(status.components.embeddingAdapter).toBe('connected');
+
   });
 
   test('supports graceful shutdown', async () => {

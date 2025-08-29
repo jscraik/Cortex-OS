@@ -1,6 +1,38 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { CortexKernel } from '../src/graph-simple.js';
-import { getSpans, getMetrics, resetTelemetry } from '../src/observability/otel.js';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { SimplePRPGraph } from '../src/graph-simple.js';
+
+// Mock OTEL spans and metrics for testing
+let otelSpans: any[] = [];
+let metrics: any[] = [];
+
+// Mock OTEL functions
+const mockOtel = {
+  startSpan: (name: string) => ({
+    name,
+    status: 'OK',
+    attributes: {},
+    end: function () {
+      otelSpans.push(this);
+    },
+    setStatus: function (status: string) {
+      this.status = status;
+      return this;
+    },
+    setAttribute: function (key: string, value: any) {
+      this.attributes[key] = value;
+      return this;
+    },
+  }),
+  recordMetric: (name: string, value: number, unit: string = '') => {
+    metrics.push({ name, value, unit });
+  },
+};
+
+// Mock the OTEL implementation in the graph-simple module
+vi.mock('../src/observability/otel.js', () => ({
+  startSpan: mockOtel.startSpan,
+  recordMetric: mockOtel.recordMetric,
+}));
 
 describe('Telemetry Implementation', () => {
   beforeEach(() => {
@@ -10,7 +42,7 @@ describe('Telemetry Implementation', () => {
 
   it('should create OTEL spans for each workflow phase', async () => {
     const mockOrchestrator = { getNeuronCount: () => 3 };
-    const kernel = new CortexKernel(mockOrchestrator);
+    const graph = new SimplePRPGraph(mockOrchestrator);
 
     const blueprint = {
       title: 'Telemetry Test',
@@ -18,7 +50,7 @@ describe('Telemetry Implementation', () => {
       requirements: ['Trace execution'],
     };
 
-    const result = await kernel.runPRPWorkflow(blueprint);
+    const result = await graph.runPRPWorkflow(blueprint);
 
     // Should have created spans for each phase
     const spans = getSpans();
@@ -30,7 +62,7 @@ describe('Telemetry Implementation', () => {
 
   it('should track execution metrics', async () => {
     const mockOrchestrator = { getNeuronCount: () => 3 };
-    const kernel = new CortexKernel(mockOrchestrator);
+    const graph = new SimplePRPGraph(mockOrchestrator);
 
     const blueprint = {
       title: 'Metrics Test',
@@ -38,7 +70,7 @@ describe('Telemetry Implementation', () => {
       requirements: ['Track performance'],
     };
 
-    const result = await kernel.runPRPWorkflow(blueprint);
+    const result = await graph.runPRPWorkflow(blueprint);
 
     // Should track key metrics
     const metrics = getMetrics();
@@ -55,7 +87,7 @@ describe('Telemetry Implementation', () => {
       },
     };
 
-    const errorKernel = new CortexKernel(errorOrchestrator);
+    const errorGraph = new SimplePRPGraph(errorOrchestrator);
 
     const blueprint = {
       title: 'Error Test',
@@ -63,11 +95,9 @@ describe('Telemetry Implementation', () => {
       requirements: ['Track errors'],
     };
 
-    try {
-      await errorKernel.runPRPWorkflow(blueprint);
-    } catch (error) {
-      // Expected to throw
-    }
+
+    const result = await errorGraph.runPRPWorkflow(blueprint);
+
 
     // Find error spans
     const spans = getSpans();
