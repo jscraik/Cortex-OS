@@ -6,10 +6,17 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
-import { logger } from '../lib/logger';\nimport { getValidatedModelConfig, validateModelPath, estimateTokenCount, validateArrayResponse } from '../lib/model-config-validator';
+import { logger } from '../lib/logger';
+import {
+  getValidatedModelConfig,
+  validateModelPath,
+  estimateTokenCount,
+  validateArrayResponse,
+} from '../lib/model-config-validator';
 
 // Configuration paths - can be overridden via environment
-const HUGGINGFACE_CACHE = process.env.HF_HOME || process.env.TRANSFORMERS_CACHE || '/Volumes/ExternalSSD/huggingface_cache';
+const HUGGINGFACE_CACHE =
+  process.env.HF_HOME || process.env.TRANSFORMERS_CACHE || '/Volumes/ExternalSSD/huggingface_cache';
 const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/Volumes/ExternalSSD/ai-cache';
 const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
 
@@ -198,7 +205,10 @@ export class MLXAdapter {
 
     // Validate model path exists
     if (!(await this.validateModelPath(modelConfig.path))) {
-      logger.warn('Model path not found', { path: modelConfig.path, action: 'attempting_download' });
+      logger.warn('Model path not found', {
+        path: modelConfig.path,
+        action: 'attempting_download',
+      });
     }
 
     try {
@@ -261,7 +271,10 @@ export class MLXAdapter {
 
     // Validate model path exists
     if (!(await this.validateModelPath(modelConfig.path))) {
-      logger.warn('Model path not found', { path: modelConfig.path, action: 'attempting_download' });
+      logger.warn('Model path not found', {
+        path: modelConfig.path,
+        action: 'attempting_download',
+      });
     }
 
     try {
@@ -305,7 +318,7 @@ export class MLXAdapter {
   async generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]> {
     const modelName = (model as MLXModelName) || 'qwen3-embedding-4b-mlx';
     const modelConfig = MLX_MODELS[modelName];
-    
+
     if (!modelConfig || modelConfig.type !== 'embedding') {
       throw new Error(`Unsupported MLX embedding model: ${modelName}`);
     }
@@ -340,7 +353,10 @@ export class MLXAdapter {
         }),
       );
     } catch (error) {
-      logger.error('MLX batch embedding generation failed', { error: error.message, model: modelName });
+      logger.error('MLX batch embedding generation failed', {
+        error: error.message,
+        model: modelName,
+      });
       throw new Error(
         `MLX batch embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
