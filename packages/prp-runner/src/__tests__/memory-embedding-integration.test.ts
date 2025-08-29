@@ -7,7 +7,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EmbeddingAdapter } from '../embedding-adapter.js';
 
 // Mock memory service types and interfaces
 interface MockTenantCtx {
