@@ -1,3 +1,4 @@
+
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -24,6 +25,8 @@ export interface Reranker {
    */
   rerank(query: string, documents: RerankDocument[], topK?: number): Promise<RerankDocument[]>;
 }
+
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Configuration for Qwen3 reranker
@@ -61,14 +64,20 @@ export class Qwen3Reranker implements Reranker {
   private readonly timeoutMs: number;
 
   constructor(options: Qwen3RerankOptions = {}) {
-    this.modelPath = options.modelPath || '/Volumes/External-SSD/Models/Qwen/Qwen3-Reranker-4B';
+
+    const defaultPath =
+      process.env.QWEN_RERANKER_MODEL_PATH ||
+      path.resolve(process.cwd(), 'models/Qwen3-Reranker-4B');
+    this.modelPath = options.modelPath || defaultPath;
     this.maxLength = options.maxLength || 512;
     this.topK = options.topK || 10;
     this.batchSize = options.batchSize || 32;
+
     this.cacheDir =
       options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-reranker-cache');
     this.pythonPath = options.pythonPath || 'python3';
     this.timeoutMs = options.timeoutMs ?? 30000;
+
   }
 
   /**
@@ -108,6 +117,7 @@ export class Qwen3Reranker implements Reranker {
    * Score a batch of documents against the query
    */
   private async scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
+
     return new Promise((resolve, reject) => {
       const pythonScript = this.getPythonScript();
       const child = spawn(this.pythonPath, ['-c', pythonScript], {
@@ -168,7 +178,9 @@ export class Qwen3Reranker implements Reranker {
 
       child.stdin?.write(JSON.stringify(input));
       child.stdin?.end();
+
     });
+    return result.scores || [];
   }
 
   /**
@@ -186,6 +198,7 @@ export class Qwen3Reranker implements Reranker {
    * Get the Python script for Qwen3 reranking
    */
   private getPythonScript(): string {
+
     return `
 import json
 import sys
@@ -193,7 +206,9 @@ import torch
 from transformers import AutoTokenizer, AutoModel
 import os
 import tempfile
+
 import os.path as osp
+
 
 def rerank_documents():
     try:
@@ -205,7 +220,9 @@ def rerank_documents():
         max_length = input_data.get('max_length', 512)
 
         # Set up cache directory
+
         cache_dir = os.getenv('TRANSFORMERS_CACHE') or osp.join(os.getenv('HF_HOME', tempfile.gettempdir()), 'qwen3-reranker-cache')
+
         os.makedirs(cache_dir, exist_ok=True)
 
         # Load model and tokenizer
@@ -277,6 +294,7 @@ def rerank_documents():
 if __name__ == "__main__":
     rerank_documents()
 `;
+
   }
 
   /**
