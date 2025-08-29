@@ -297,7 +297,6 @@ export interface AdaptiveDecision {
   executionTime: number;
   chosen?: string;
   expectedOutcome?: string;
-  fallbacks?: string[];
   learningPoints?: string[];
 }
 
