@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fusionRerank } from '../src/pipeline';
 
 describe('fusionRerank', () => {
-  it('ranks using query embedding when provided', () => {
+  it('ranks using query embedding', () => {
     const docs = [
       { id: 'a', text: 'doc a', emb: [1, 0] },
       { id: 'b', text: 'doc b', emb: [0, 1] },
@@ -12,30 +12,22 @@ describe('fusionRerank', () => {
       ['b', 0.2],
     ]);
     const queryEmb = [1, 0];
-    const out = fusionRerank('q', docs, bm25, queryEmb, 0.5);
+    const out = fusionRerank(queryEmb, docs, bm25, 0.5);
     expect(out[0].id).toBe('a');
   });
 
-  it('falls back to average embedding when query emb missing', () => {
-    const docs = [
-      { id: 'a', text: 'doc a', emb: [1, 0] },
-      { id: 'b', text: 'doc b', emb: [1, 0] },
-    ];
-    const bm25 = new Map([
-      ['a', 0],
-      ['b', 0],
-    ]);
-    const out = fusionRerank('q', docs, bm25);
-    expect(out.length).toBe(2);
-    expect(out[0].score).toBeCloseTo(out[1].score);
-  });
-
   it('returns empty array for empty docs', () => {
-    const out = fusionRerank('q', [], new Map());
+    const queryEmb = [1, 0];
+    const out = fusionRerank(queryEmb, [], new Map());
     expect(out).toEqual([]);
   });
 
-  it('handles mismatched embedding dims gracefully', () => {
+  it('throws for invalid query embedding', () => {
+    expect(() => fusionRerank([], [], new Map())).toThrow();
+  });
+
+  it('throws for mismatched embedding dims', () => {
+    const queryEmb = [1, 0];
     const docs = [
       { id: 'a', text: 'doc a', emb: [1, 0, 0] },
       { id: 'b', text: 'doc b', emb: [0, 1] },
@@ -44,9 +36,6 @@ describe('fusionRerank', () => {
       ['a', 0.4],
       ['b', 0.6],
     ]);
-    const out = fusionRerank('q', docs, bm25);
-    // should not throw and should return array
-    expect(Array.isArray(out)).toBe(true);
-    expect(out.length).toBe(2);
+    expect(() => fusionRerank(queryEmb, docs, bm25)).toThrow();
   });
 });
