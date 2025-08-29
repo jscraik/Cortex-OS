@@ -3,7 +3,9 @@
  * @description Utility functions for security operations
  */
 
+
 import forge from 'node-forge';
+
 
 /**
  * Generate a random nonce for cryptographic operations.
@@ -44,8 +46,8 @@ export function extractWorkloadPath(spiffeId: string): string | null {
  */
 export function isCertificateExpired(certPem: string): boolean {
   try {
-    const cert = forge.pki.certificateFromPem(certPem);
-    return cert.validity.notAfter.getTime() <= Date.now();
+    const cert = new X509Certificate(certPem);
+    return new Date(cert.validTo).getTime() <= Date.now();
   } catch {
     return true;
   }
