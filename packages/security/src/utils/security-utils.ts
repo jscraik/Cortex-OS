@@ -6,7 +6,7 @@
 
 import { X509Certificate } from 'node:crypto';
 
-import { SecurityError } from '../types.ts';
+import { SecurityError } from '../types';
 
 /**
  * Generate a random nonce for cryptographic operations.
