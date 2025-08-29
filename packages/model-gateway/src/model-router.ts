@@ -53,12 +53,18 @@ export class ModelRouter {
   }
 
   async initialize(): Promise<void> {
-    const mlxAvailable = await this.mlxAdapter.isAvailable();
-    const ollamaAvailable = await this.ollamaAdapter.isAvailable();
+    this.availableModels.set('embedding', await this.initEmbeddingModels());
+    this.availableModels.set('chat', await this.initChatModels());
+    this.availableModels.set('reranking', await this.initRerankModels());
+  }
 
-    const embeddingModels: ModelConfig[] = [];
+  private async initEmbeddingModels(): Promise<ModelConfig[]> {
+    const models: ModelConfig[] = [];
+    const mlxAvailable = await this.mlxAdapter.isAvailable().catch(() => false);
+    const ollamaAvailable = await this.ollamaAdapter.isAvailable().catch(() => false);
+
     if (mlxAvailable) {
-      embeddingModels.push(
+      models.push(
         {
           name: 'qwen3-embedding-4b-mlx',
           provider: 'mlx',
@@ -77,7 +83,7 @@ export class ModelRouter {
     }
 
     if (ollamaAvailable) {
-      embeddingModels.push({
+      models.push({
         name: 'nomic-embed-text',
         provider: 'ollama',
         capabilities: ['embedding'],
@@ -86,32 +92,39 @@ export class ModelRouter {
       });
     }
 
-    this.availableModels.set('embedding', embeddingModels);
+    return models;
+  }
 
-    const chatModels: ModelConfig[] = [];
-    if (ollamaAvailable) {
-      const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
-      const desiredChat = [{ name: 'llama2', priority: 100, fallback: [] }];
+  private async initChatModels(): Promise<ModelConfig[]> {
+    const models: ModelConfig[] = [];
+    const ollamaAvailable = await this.ollamaAdapter.isAvailable().catch(() => false);
+    if (!ollamaAvailable) return models;
 
-      for (const m of desiredChat) {
-        if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
-          chatModels.push({
-            name: m.name,
-            provider: 'ollama',
-            capabilities: ['chat'],
-            priority: m.priority,
-            fallback: m.fallback,
-          });
-        } else {
-          console.log(`[model-router] Ollama model ${m.name} not installed; skipping`);
-        }
+    const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
+    const desiredChat = [{ name: 'llama2', priority: 100, fallback: [] }];
+
+    for (const m of desiredChat) {
+      if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
+        models.push({
+          name: m.name,
+          provider: 'ollama',
+          capabilities: ['chat'],
+          priority: m.priority,
+          fallback: m.fallback,
+        });
+      } else {
+        console.log(`[model-router] Ollama model ${m.name} not installed; skipping`);
       }
     }
-    this.availableModels.set('chat', chatModels);
 
-    const rerankingModels: ModelConfig[] = [];
+    return models;
+  }
+
+  private async initRerankModels(): Promise<ModelConfig[]> {
+    const models: ModelConfig[] = [];
+    const ollamaAvailable = await this.ollamaAdapter.isAvailable().catch(() => false);
     if (ollamaAvailable) {
-      rerankingModels.push({
+      models.push({
         name: 'nomic-embed-text',
         provider: 'ollama',
         capabilities: ['reranking'],
@@ -119,7 +132,7 @@ export class ModelRouter {
         fallback: [],
       });
     }
-    this.availableModels.set('reranking', rerankingModels);
+    return models;
   }
 
   private selectModel(capability: ModelCapability, requestedModel?: string): ModelConfig | null {
