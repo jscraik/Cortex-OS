@@ -260,10 +260,6 @@ export class ModelRouter {
       } else {
         console.warn(`Fallback reranking model ${m.name} also failed:`, err);
       }
-    }).catch((error) => {
-      throw new Error(
-        `All reranking models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
     });
   }
 
