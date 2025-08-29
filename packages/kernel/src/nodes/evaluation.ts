@@ -7,6 +7,13 @@
 
 import { PRPState, Evidence } from '../state.js';
 import { generateId } from '../utils/id.js';
+import { fixedTimestamp } from '../lib/determinism.js';
+import {
+  validateTDDCycle,
+  validateCodeReview,
+  validateQualityBudgets,
+  preCerebrumValidation,
+} from '../lib/gates/evaluation.js';
 
 /**
  * Evaluation Phase Gates:
@@ -21,41 +28,41 @@ export class EvaluationNode {
     const blockers: string[] = [];
     const majors: string[] = [];
 
+    const deterministic = !!state.metadata.deterministic;
+
     // Gate 1: TDD validation (Red → Green cycle)
-    const tddValidation = await this.validateTDDCycle(state);
+    const tddValidation = await validateTDDCycle(state);
     if (!tddValidation.passed) {
       blockers.push('TDD cycle not completed - missing tests or failing tests');
     }
-
     evidence.push({
-      id: generateId('eval-tdd', state.metadata.deterministic),
+      id: generateId('eval-tdd', deterministic),
       type: 'test',
       source: 'tdd_validator',
       content: JSON.stringify(tddValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('evaluation-tdd') : new Date().toISOString(),
       phase: 'evaluation',
     });
 
     // Gate 2: Code review validation
-    const reviewValidation = await this.validateCodeReview(state);
+    const reviewValidation = await validateCodeReview(state);
     if (reviewValidation.blockers > 0) {
       blockers.push(`Code review found ${reviewValidation.blockers} blocking issues`);
     }
     if (reviewValidation.majors > 3) {
       majors.push(`Code review found ${reviewValidation.majors} major issues (limit: 3)`);
     }
-
     evidence.push({
-      id: generateId('eval-review', state.metadata.deterministic),
+      id: generateId('eval-review', deterministic),
       type: 'analysis',
       source: 'code_reviewer',
       content: JSON.stringify(reviewValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('evaluation-review') : new Date().toISOString(),
       phase: 'evaluation',
     });
 
     // Gate 3: Quality budget validation (A11y, Performance, Security)
-    const budgetValidation = await this.validateQualityBudgets(state);
+    const budgetValidation = await validateQualityBudgets(state);
     if (!budgetValidation.accessibility.passed) {
       majors.push(`Accessibility score ${budgetValidation.accessibility.score} below threshold`);
     }
@@ -65,18 +72,17 @@ export class EvaluationNode {
     if (!budgetValidation.security.passed) {
       blockers.push(`Security score ${budgetValidation.security.score} below threshold`);
     }
-
     evidence.push({
-      id: generateId('eval-budgets', state.metadata.deterministic),
+      id: generateId('eval-budgets', deterministic),
       type: 'validation',
       source: 'quality_budgets',
       content: JSON.stringify(budgetValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: deterministic ? fixedTimestamp('evaluation-budgets') : new Date().toISOString(),
       phase: 'evaluation',
     });
 
     // Gate 4: Pre-Cerebrum validation
-    const preCerebrumCheck = await this.preCerebrumValidation(state);
+    const preCerebrumCheck = await preCerebrumValidation(state);
     if (!preCerebrumCheck.readyForCerebrum) {
       blockers.push('System not ready for Cerebrum decision');
     }
@@ -91,7 +97,9 @@ export class EvaluationNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: deterministic
+            ? fixedTimestamp('evaluation-validation')
+            : new Date().toISOString(),
         },
       },
     };

@@ -3,6 +3,8 @@
  * Implements WCAG 2.2 AA keyboard accessibility requirements
  */
 
+import { handleTab, handleArrow, handleHomeEnd, handleEscape } from './lib/key-handlers.js';
+
 export interface KeyboardHandlerOptions {
   trapFocus?: boolean;
   escapeHandler?: () => void;
@@ -341,40 +343,11 @@ export class KeyboardNavigationManager {
         return;
       }
 
-      let handled = false;
-
-      switch (event.key) {
-        case 'Tab':
-          if (!event.ctrlKey && !event.altKey) {
-            handled = this.moveFocus(event.shiftKey ? 'previous' : 'next');
-          }
-          break;
-
-        case 'ArrowUp':
-        case 'ArrowDown':
-        case 'ArrowLeft':
-        case 'ArrowRight':
-          handled = this.handleArrowKey(event.key);
-          break;
-
-        case 'Home':
-          handled = this.moveFocus('first');
-          break;
-
-        case 'End':
-          handled = this.moveFocus('last');
-          break;
-
-        case 'Enter':
-        case ' ':
-          // Let the focused element handle activation
-          break;
-
-        case 'Escape':
-          this.deactivateContext();
-          handled = true;
-          break;
-      }
+      const handled =
+        handleTab(event, this) ||
+        handleArrow(event, this) ||
+        handleHomeEnd(event, this) ||
+        handleEscape(event, this);
 
       if (handled) {
         event.preventDefault();

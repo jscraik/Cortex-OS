@@ -6,7 +6,7 @@ import { fsQueue } from '../../../packages/a2a/a2a-transport/src/fsq';
 import { randomUUID } from 'node:crypto';
 
 it('fsq publishes and notifies subscribers', async () => {
-  const t = await fsQueue(`test-${Date.now()}`);
+  const t = fsQueue(`test-${Date.now()}`);
   let seen = false;
   await t.subscribe(['event.x'], async () => {
     seen = true;
@@ -24,7 +24,7 @@ it('fsq publishes and notifies subscribers', async () => {
 it('publishes immediately after creation', async () => {
   const name = `test-${Date.now()}`;
   const dir = join(os.homedir(), '.cortex', 'a2a', name);
-  const t = await fsQueue(name);
+  const t = fsQueue(name);
   await t.publish({
     id: randomUUID(),
     type: 'event.y',
