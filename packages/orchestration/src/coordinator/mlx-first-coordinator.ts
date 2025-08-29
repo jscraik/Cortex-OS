@@ -4,6 +4,7 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
+import { buildAgentPrompt, parseAgentSelection } from '../../../../src/lib/agent-selection.js';
 
 export interface TaskDecomposition {
   subtasks: Array<{
@@ -218,25 +219,7 @@ Provide quick decision with reasoning.`;
     availableAgents: Array<{ id: string; capabilities: string[]; currentLoad: number }>,
     urgency: 'low' | 'medium' | 'high' | 'critical' = 'medium',
   ): Promise<{ agentId: string; reasoning: string; confidence: number }> {
-    const agentInfo = availableAgents
-      .map((a) => `${a.id}: capabilities=[${a.capabilities.join(', ')}], load=${a.currentLoad}%`)
-      .join('\n');
-
-    const prompt = `Select the best agent for this task:
-
-TASK: ${taskDescription}
-URGENCY: ${urgency}
-
-AVAILABLE AGENTS:
-${agentInfo}
-
-Consider:
-- Agent capabilities vs task requirements
-- Current workload distribution
-- Task urgency
-- Specialization match
-
-Select agent ID and explain reasoning.`;
+    const prompt = buildAgentPrompt(taskDescription, availableAgents, urgency);
 
     try {
       const response = await this.modelProvider.generate('quickReasoning', {
@@ -245,7 +228,7 @@ Select agent ID and explain reasoning.`;
         maxTokens: 150,
       });
 
-      return this.parseAgentSelection(response.content, availableAgents);
+      return parseAgentSelection(response.content, availableAgents);
     } catch (error) {
       console.warn('Agent selection failed:', error);
       // Fallback: least loaded agent
@@ -356,17 +339,6 @@ Provide safety assessment with specific issues and recommendations.`;
       codeStrategy: 'Follow best practices and write maintainable code',
       testStrategy: 'Write comprehensive unit and integration tests',
       riskAssessment: 'Medium risk - requires careful review',
-    };
-  }
-
-  private parseAgentSelection(content: string, agents: any[]) {
-    // Simple parsing - in production, use more robust methods
-    const agentMention = agents.find((a) => content.includes(a.id));
-
-    return {
-      agentId: agentMention?.id || agents[0]?.id || 'default',
-      reasoning: content,
-      confidence: 0.7,
     };
   }
 
