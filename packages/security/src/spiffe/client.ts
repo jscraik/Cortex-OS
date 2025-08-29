@@ -3,7 +3,6 @@
  * @description SPIFFE Workload API client for certificate management and workload attestation
  */
 
-import axios from 'axios';
 import { z } from 'zod';
 import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import {
@@ -22,19 +21,35 @@ import { extractWorkloadPath } from '../utils/security-utils.ts';
  * Implements the SPIFFE Workload API for certificate retrieval and workload attestation
  */
 export class SpiffeClient {
-  private readonly httpClient: ReturnType<typeof axios.create>;
+  private readonly baseUrl: string;
+  private readonly timeout = 10000;
   private readonly config: TrustDomainConfig;
   private readonly certificateCache: Map<string, CertificateBundle> = new Map();
 
   constructor(config: TrustDomainConfig) {
     this.config = config;
-    this.httpClient = axios.create({
-      baseURL: `http://localhost:${config.spireServerPort}`,
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    this.baseUrl = `http://localhost:${config.spireServerPort}`;
+  }
+
+  /**
+   * Perform a fetch request with timeout support
+   */
+  private async fetchWithTimeout(path: string, init?: RequestInit): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+    try {
+      const response = await fetch(`${this.baseUrl}${path}`, {
+        ...init,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      });
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   /**
@@ -52,9 +67,12 @@ export class SpiffeClient {
           span,
         );
 
-        const response = await this.httpClient.get('/workload/identity');
-
-        const workloadResponse = SpiffeWorkloadResponseSchema.parse(response.data);
+        const response = await this.fetchWithTimeout('/workload/identity', { method: 'GET' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        const workloadResponse = SpiffeWorkloadResponseSchema.parse(data);
 
         const workloadPath = extractWorkloadPath(workloadResponse.spiffe_id);
         if (!workloadPath) {
@@ -109,7 +127,10 @@ export class SpiffeClient {
   async fetchSVID(spiffeId?: SpiffeId): Promise<CertificateBundle> {
     return withSpan('spiffe.fetchSVID', async (span) => {
       try {
-        const params = spiffeId ? { spiffe_id: spiffeId } : {};
+        const url = new URL('/workload/svid', this.baseUrl);
+        if (spiffeId) {
+          url.searchParams.set('spiffe_id', spiffeId);
+        }
 
         logWithSpan(
           'info',
@@ -121,8 +142,11 @@ export class SpiffeClient {
           span,
         );
 
-        const response = await this.httpClient.get('/workload/svid', { params });
-
+        const response = await this.fetchWithTimeout(url.pathname + url.search, { method: 'GET' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
         const svidResponse = z
           .object({
             svids: z.array(
@@ -134,13 +158,13 @@ export class SpiffeClient {
               }),
             ),
           })
-          .parse(response.data);
+          .parse(data);
 
         if (svidResponse.svids.length === 0) {
           throw new SPIFFEError('No SVIDs returned from SPIFFE Workload API');
         }
 
-        const svid = svidResponse.svids[0]; // Use first SVID
+        const svid = svidResponse.svids[0];
 
         const certificateBundle: CertificateBundle = {
           certificates: [svid.certificate],
@@ -148,7 +172,6 @@ export class SpiffeClient {
           trustBundle: [svid.bundle],
         };
 
-        // Cache the certificate bundle
         this.certificateCache.set(svid.spiffe_id, certificateBundle);
 
         logWithSpan(
@@ -236,15 +259,17 @@ export class SpiffeClient {
           span,
         );
 
-        const response = await this.httpClient.get('/workload/trust-bundle');
-
+        const response = await this.fetchWithTimeout('/workload/trust-bundle', { method: 'GET' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
         const trustBundleResponse = z
           .object({
             trust_bundle: z.string(),
           })
-          .parse(response.data);
+          .parse(data);
 
-        // Split trust bundle into individual certificates
         const certificates = this.splitPEMCertificates(trustBundleResponse.trust_bundle);
 
         logWithSpan(
