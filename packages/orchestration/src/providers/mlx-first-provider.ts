@@ -3,7 +3,7 @@
  * Handles automatic failover and performance optimization
  */
 
-import { MODEL_STRATEGY } from '../../../../config/model-strategy.js';
+import { MODEL_STRATEGY } from '../lib/model-strategy.js';
 
 export interface ModelRequest {
   task: string;
