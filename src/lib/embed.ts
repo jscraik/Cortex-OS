@@ -31,7 +31,7 @@ export function createEmbed(deps: EmbedDeps) {
       embeddings,
       provider: 'ollama',
       model: cfg.fallback.model,
-      dimensions: embeddings[0]?.length || 0,
+      dimensions: embeddings.length === 0 ? null : embeddings[0].length,
     };
   };
 }
