@@ -26,7 +26,6 @@ def main():
 
     # Set environment variables for external SSD cache
     os.environ['HF_HOME'] = '/Volumes/ExternalSSD/huggingface_cache'
-    os.environ['TRANSFORMERS_CACHE'] = '/Volumes/ExternalSSD/huggingface_cache'
     os.environ['MLX_CACHE_DIR'] = '/Volumes/ExternalSSD/ai-cache'
 
     # List of MLX tools to install

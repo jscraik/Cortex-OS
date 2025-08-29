@@ -101,6 +101,15 @@ const MLX_MODELS = {
     max_tokens: 4096,
     context_length: 4096,
   },
+  'gpt-oss-20b-mlx': {
+    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit',
+    hf_path: 'lmstudio-community/gpt-oss-20b-MLX-8bit',
+    type: 'chat',
+    memory_gb: 12.0,
+    max_tokens: 4096,
+    context_length: 8192,
+    capabilities: ['reasoning', 'storytelling'],
+  },
 } as const;
 
 export type MLXModelName = keyof typeof MLX_MODELS;

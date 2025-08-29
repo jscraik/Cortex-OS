@@ -10,13 +10,21 @@ import os
 import sys
 from typing import Any
 
+# Constants
+DEFAULT_MAX_LENGTH = 512
+DEFAULT_MAX_TOKENS = 4096
+DEFAULT_TEMPERATURE = 0.7
+DEFAULT_CACHE_DIR = '/Volumes/ExternalSSD/huggingface_cache'
+DEFAULT_MLX_CACHE_DIR = '/Volumes/ExternalSSD/ai-cache'
+FALLBACK_TEST_TEXT = "test"
+
 try:
-    import mlx.core as mx  # noqa: F401
+    import mlx.core as mx
     import mlx_lm
     import mlx_vlm
-    import numpy as np  # noqa: F401
+    import numpy as np
     import torch
-    from mlx_lm import generate, load  # noqa: F401
+    from mlx_lm import generate, load
     from transformers import AutoModel, AutoTokenizer
 except ImportError as e:
     print(f"Error importing MLX dependencies: {e}", file=sys.stderr)
@@ -25,9 +33,9 @@ except ImportError as e:
 
 
 # Configure cache directories
-os.environ.setdefault('HF_HOME', '/Volumes/ExternalSSD/huggingface_cache')
-os.environ.setdefault('TRANSFORMERS_CACHE', '/Volumes/ExternalSSD/huggingface_cache')
-os.environ.setdefault('MLX_CACHE_DIR', '/Volumes/ExternalSSD/ai-cache')
+os.environ.setdefault('HF_HOME', DEFAULT_CACHE_DIR)
+os.environ.setdefault('TRANSFORMERS_CACHE', DEFAULT_CACHE_DIR)
+os.environ.setdefault('MLX_CACHE_DIR', DEFAULT_MLX_CACHE_DIR)
 
 
 class MLXUnified:
@@ -35,6 +43,9 @@ class MLXUnified:
 
     def __init__(self, model_name: str, model_path: str | None = None):
         """Initialize with model name and optional local path"""
+        if not model_name or not isinstance(model_name, str):
+            raise ValueError("Model name must be a non-empty string")
+
         self.model_name = model_name
         self.model_path = model_path or model_name
         self.model = None
@@ -95,7 +106,7 @@ class MLXUnified:
         if not self.model or self.model_type != 'embedding':
             raise ValueError("Embedding model not loaded")
 
-        inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=512)
+        inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=DEFAULT_MAX_LENGTH)
 
         with torch.no_grad():
             outputs = self.model(**inputs)
@@ -116,9 +127,9 @@ class MLXUnified:
     def generate_chat(
         self,
         messages: list[dict[str, str]],
-        max_tokens: int = 4096,
-        temperature: float = 0.7
-    ) -> dict[str, Any]:
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE
+    ) -> dict[str, str | dict[str, int]]:
         """Generate chat completion"""
         if not self.model or self.model_type != 'chat':
             raise ValueError("Chat model not loaded")
@@ -155,7 +166,7 @@ class MLXUnified:
             }
         }
 
-    def generate_reranking(self, query: str, documents: list[str]) -> list[dict[str, Any]]:
+    def generate_reranking(self, query: str, documents: list[str]) -> list[dict[str, int | float]]:
         """Generate reranking scores"""
         if not self.model or self.model_type != 'reranking':
             raise ValueError("Reranking model not loaded")
@@ -167,7 +178,7 @@ class MLXUnified:
                 f"Query: {query} Document: {doc}",
                 return_tensors='pt',
                 truncation=True,
-                max_length=512
+                max_length=DEFAULT_MAX_LENGTH
             )
 
             with torch.no_grad():
@@ -176,10 +187,12 @@ class MLXUnified:
                 if hasattr(outputs, 'logits'):
                     score = torch.sigmoid(outputs.logits).item()
                 else:
-                    # Fallback: use similarity between embeddings
+                    # Fallback: use similarity between query and document embeddings
+                    query_embedding = outputs.last_hidden_state[:, 0, :]  # CLS token
+                    doc_embedding = outputs.last_hidden_state.mean(dim=1)  # Mean pooling
                     score = torch.cosine_similarity(
-                        outputs.last_hidden_state.mean(dim=1),
-                        outputs.last_hidden_state.mean(dim=1)
+                        query_embedding,
+                        doc_embedding
                     ).item()
 
             scores.append({'index': i, 'score': score})
@@ -219,8 +232,8 @@ def main():
     parser.add_argument('--batch-embedding-mode', action='store_true', help='Generate batch embeddings')
     parser.add_argument('--chat-mode', action='store_true', help='Generate chat completion')
     parser.add_argument('--rerank-mode', action='store_true', help='Generate reranking scores')
-    parser.add_argument('--max-tokens', type=int, default=4096, help='Max tokens for generation')
-    parser.add_argument('--temperature', type=float, default=0.7, help='Generation temperature')
+    parser.add_argument('--max-tokens', type=int, default=DEFAULT_MAX_TOKENS, help='Max tokens for generation')
+    parser.add_argument('--temperature', type=float, default=DEFAULT_TEMPERATURE, help='Generation temperature')
     parser.add_argument('--json-only', action='store_true', help='Output JSON only')
     parser.add_argument('--help', action='store_true', help='Show help')
 
@@ -241,7 +254,7 @@ def main():
 
         # Process based on mode
         if args.embedding_mode:
-            text = args.input_data[0] if args.input_data else "test"
+            text = args.input_data[0] if args.input_data else FALLBACK_TEST_TEXT
             embedding = mlx_model.generate_embedding(text)
             result = [embedding]  # Return as array for consistency
 
@@ -273,8 +286,8 @@ def main():
             result = {'scores': mlx_model.generate_reranking(query, documents)}
 
         else:
-            # Default: embedding mode
-            text = args.input_data[0] if args.input_data else "test"
+            # Default: single embedding mode
+            text = args.input_data[0] if args.input_data else FALLBACK_TEST_TEXT
             embedding = mlx_model.generate_embedding(text)
             result = [embedding]
 
