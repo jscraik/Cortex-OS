@@ -51,6 +51,7 @@
   },
   "dependencies": {
     "crypto": "^1.0.1",
+    "diff": "^8.0.2",
     "express": "^5.1.0",
     "fast-xml-parser": "^5.2.5",
     "js-yaml": "^4.1.0",
@@ -58,6 +59,7 @@
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
     "ws": "^8.18.0",
+    "zlib": "1.0.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

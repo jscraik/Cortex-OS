@@ -1,8 +1,15 @@
-import { Bus } from '@cortex-os/a2a-core/bus';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
-import { createTraceContext, addBaggage } from '@cortex-os/a2a-contracts/trace-context';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
+import {
+  createTraceContext,
+  addBaggage,
+  extractTraceContext,
+  injectTraceContext,
+} from '@cortex-os/a2a-contracts/trace-context';
 import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manager';
+
+import { createChildMessage } from '@cortex-os/a2a-core/message-utils';
 
 /**
  * Example demonstrating W3C Trace Context propagation in A2A messaging
@@ -11,7 +18,7 @@ import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manage
 export async function runTraceContextExample() {
   console.log('=== W3C Trace Context Example ===\n');
 
-  const bus = new Bus(inproc());
+  const bus = createBus(inproc());
 
   // Set up handlers that demonstrate trace context propagation
   const handlers = [
@@ -27,7 +34,7 @@ export async function runTraceContextExample() {
         await new Promise((resolve) => setTimeout(resolve, 10));
 
         // Create child message with propagated trace context
-        const paymentMsg = bus.createChildMessage(msg, {
+        const paymentMsg = createChildMessage(msg, {
           type: 'payment.processed.v1',
           source: '/order-service',
           data: { orderId: msg.data.orderId, amount: msg.data.amount },
@@ -52,7 +59,7 @@ export async function runTraceContextExample() {
         await new Promise((resolve) => setTimeout(resolve, 10));
 
         // Create child message with propagated trace context
-        const shippingMsg = bus.createChildMessage(msg, {
+        const shippingMsg = createChildMessage(msg, {
           type: 'shipping.scheduled.v1',
           source: '/payment-service',
           data: { orderId: msg.data.orderId, trackingNumber: 'TRK' + Date.now() },

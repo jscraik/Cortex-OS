@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { Bus, type Handler } from '@cortex-os/a2a-core/bus';
+import { createBus, type Handler } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { uuid } from '@cortex-os/utils';
 
-describe('Bus', () => {
+describe('createBus', () => {
   it('routes by type', async () => {
-    const bus = new Bus(inproc());
+    const { publish, bind } = createBus(inproc());
     let got = false;
     const handler: Handler = {
       type: 'event.ping.v1',
@@ -13,8 +13,8 @@ describe('Bus', () => {
         got = true;
       },
     };
-    await bus.bind([handler]);
-    await bus.publish({
+    await bind([handler]);
+    await publish({
       id: uuid(),
       type: 'event.ping.v1',
       occurredAt: new Date().toISOString(),
@@ -22,5 +22,11 @@ describe('Bus', () => {
       payload: {},
     } as any);
     expect(got).toBe(true);
+  });
+
+  it('returns publish and bind functions', () => {
+    const bus = createBus(inproc());
+    expect(typeof bus.publish).toBe('function');
+    expect(typeof bus.bind).toBe('function');
   });
 });

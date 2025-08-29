@@ -11,6 +11,9 @@ import type { Evidence } from '../types/index.js';
 import { ValidationError } from '../types/index.js';
 import { getDataPath, pathExists } from '../xdg/index.js';
 
+const gzipAsync = promisify(gzip);
+const gunzipAsync = promisify(gunzip);
+
 export interface StorageOptions {
   compression?: boolean;
   encryption?: boolean;
@@ -485,6 +488,7 @@ export class EvidenceStorage {
 
     return csvContent;
   }
+
 
   private async encrypt(content: string): Promise<string> {
     const key = this.getEncryptionKey();
