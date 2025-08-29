@@ -360,10 +360,6 @@ export class AICoreCapabilities {
   /**
    * Build RAG prompt with context
    */
-
-  /**
-   * Build RAG prompt with context
-   */
   private buildRAGPrompt(query: string, context: string[], systemPrompt?: string): string {
     const contextSection =
       context.length > 0
