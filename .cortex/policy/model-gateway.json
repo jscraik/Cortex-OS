@@ -1,14 +1,11 @@
 {
   "$schema": "../schemas/policy.tools.schema.json",
   "tool": "model-gateway",
-  "actions": ["embeddings", "rerank", "chat", "frontier"],
+  "actions": ["embeddings", "rerank", "chat"],
   "dataClass": "internal",
   "rate": { "perMinute": 60 },
   "fsScope": [],
   "rules": {
-    "default_provider": "mlx",
-    "allow_frontier": false,
-    "require_hitl_for_frontier": true,
-    "allowed_frontier_vendors": ["openai", "anthropic"]
+    "default_provider": "mlx"
   }
 }

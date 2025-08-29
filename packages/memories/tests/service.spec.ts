@@ -4,6 +4,13 @@ import { LocalEmbedder } from './util/local-embedder.js';
 import { createMemoryService } from '../src/service/memory-service.js';
 
 describe('MemoryService', () => {
+  it('throws when embedder is missing', () => {
+    // @ts-expect-error intentionally missing embedder
+    expect(() => createMemoryService(new InMemoryStore(), undefined as any)).toThrow(
+      'embedder:missing',
+    );
+  });
+
   it('embeds when vector missing and embedder provided', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
     const now = new Date().toISOString();
