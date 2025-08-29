@@ -657,8 +657,6 @@ class TestTieredModelManagerIntegration:
     async def test_full_model_lifecycle(self, model_manager):
         """Test complete model loading and eviction lifecycle"""
         with patch('tiered_model_manager.load') as mock_load:
-             
-            
             mock_load.return_value = (Mock(), Mock())
             
             # Load a model
