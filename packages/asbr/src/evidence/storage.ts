@@ -541,7 +541,7 @@ export class EvidenceStorage {
     }
     const key = Buffer.from(keyHex, 'hex');
     if (key.length !== 32) {
-      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY must be 64 hex characters');
+      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32');
     }
     return key;
   }
