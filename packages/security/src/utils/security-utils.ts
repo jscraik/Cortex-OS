@@ -4,6 +4,7 @@
  */
 
 import { X509Certificate } from 'node:crypto';
+import { SecurityError } from '../types.ts';
 
 /**
  * Generate a random nonce for cryptographic operations
@@ -110,3 +111,5 @@ export function validateSecurityContext(context: {
     errors,
   };
 }
+
+export { SecurityError };
