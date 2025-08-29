@@ -1,16 +1,19 @@
 """Database configuration and connection management."""
 
-from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from collections.abc import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
-
 from src.core.config import settings
 
 
 class Base(DeclarativeBase):
-    """Base class for all database models."""
-    pass
+    """Base class for all database models.
+
+    All database models should inherit from this base class to ensure
+    consistent configuration and behavior across the application.
+    """
 
 
 # Create async engine with connection pooling
@@ -25,9 +28,7 @@ engine = create_async_engine(
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    engine, class_=AsyncSession, expire_on_commit=False
 )
 
 
@@ -35,10 +36,7 @@ async def init_db() -> None:
     """Initialize database and create tables."""
     async with engine.begin() as conn:
         # Import all models to ensure they are registered
-        from src.models.user import User, UserPreference, UserBookmark, UserProgress
-        from src.models.content import Document, DocumentRelation, ContentIndex
-        from src.models.analytics import UserEvent, SearchEvent, AnalyticsMetric
-        
+
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)
 

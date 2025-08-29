@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import importlib.util
+from pathlib import Path
 
+import great_expectations as ge  # type: ignore[import-untyped]
 import pandas as pd  # type: ignore[import-untyped]
 import pytest
-import great_expectations as ge  # type: ignore[import-untyped]
 
 spec = importlib.util.spec_from_file_location(
     "pipeline", Path(__file__).resolve().parents[1] / "pipeline.py"
@@ -62,5 +62,4 @@ def test_pii_masking() -> None:
 
 def test_ingest_invalid_schema_failure() -> None:
     with pytest.raises(ValueError):
-        pipeline.ingest([{ "id": 1, "value": 10 }])
-
+        pipeline.ingest([{"id": 1, "value": 10}])

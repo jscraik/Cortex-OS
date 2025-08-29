@@ -1,4 +1,4 @@
-import { PRPState, Evidence } from '../state.js';
+import { Evidence, PRPState } from '../state.js';
 
 import { generateId } from '../utils/id.js';
 import { currentTimestamp } from '../utils/time.js';
@@ -73,7 +73,6 @@ export class StrategyNode {
     };
   }
 
-
   private async validateSecurityBaseline(
     state: PRPState,
   ): Promise<ValidationResult<SecurityDetails>> {
@@ -106,18 +105,17 @@ export class StrategyNode {
         req.toLowerCase().includes('accessibility'),
     );
 
-
-async function validateSecurityBaseline(state: PRPState) {
-  const reqs = state.blueprint.requirements || [];
-  const hasSecurity = reqs.some((r) =>
-    ['security', 'authentication', 'authorization'].some((k) => r.toLowerCase().includes(k)),
-  );
-  return {
-    passed: hasSecurity,
-    details: { owaspLevel: hasSecurity ? 'L1' : 'none', mitreAtlas: hasSecurity },
-  };
-}
-
+    return {
+      passed: hasUXReq || false,
+      details: {
+        wcagLevel: hasUXReq ? 'AA' : 'none',
+        accessibilityFeatures:
+          state.blueprint.requirements?.filter((req) =>
+            req.toLowerCase().includes('accessibility'),
+          ) || [],
+      },
+    };
+  }
 
   private async validateArchitecture(
     state: PRPState,
@@ -125,18 +123,24 @@ async function validateSecurityBaseline(state: PRPState) {
     // Architecture diagram consistency check
     const title = state.blueprint.title?.toLowerCase() || '';
     const description = state.blueprint.description?.toLowerCase() || '';
+    const requirements = state.blueprint.requirements || [];
 
+    const hasArch =
+      title.includes('architecture') ||
+      description.includes('system') ||
+      requirements.some((r) =>
+        ['architecture', 'system design'].some((k) => r.toLowerCase().includes(k)),
+      );
 
-async function validateArchitecture(state: PRPState) {
-  const { title = '', description = '', requirements = [] } = state.blueprint;
-  const hasArch =
-    title.toLowerCase().includes('architecture') ||
-    description.toLowerCase().includes('system') ||
-    requirements.some((r) =>
-      ['architecture', 'system design'].some((k) => r.toLowerCase().includes(k)),
-    );
-  return { passed: hasArch, details: { architecture: hasArch } };
-
+    return {
+      passed: hasArch,
+      details: {
+        architectureElements: requirements.filter((req) =>
+          ['architecture', 'system', 'design'].some((k) => req.toLowerCase().includes(k)),
+        ),
+      },
+    };
+  }
 }
 
 interface ValidationResult<T> {

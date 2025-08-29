@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
-
 import pandas as pd  # type: ignore[import-untyped]
-
 
 REQUIRED_COLUMNS = ["id", "value", "email"]
 
 
-def ingest(records: List[Dict[str, object]]) -> pd.DataFrame:
+def ingest(records: list[dict[str, object]]) -> pd.DataFrame:
     """Ingest raw records into a validated DataFrame.
 
     Missing required columns raise ``ValueError``. Duplicate ``id`` values are
@@ -50,10 +47,11 @@ def mask_pii(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def backfill(current: pd.DataFrame, historical: List[Dict[str, object]]) -> pd.DataFrame:
+def backfill(
+    current: pd.DataFrame, historical: list[dict[str, object]]
+) -> pd.DataFrame:
     """Merge historical records while avoiding duplicate ``id`` values."""
 
     hist_df = pd.DataFrame(historical)
     combined = pd.concat([current, hist_df])
     return combined.drop_duplicates(subset="id").reset_index(drop=True)
-

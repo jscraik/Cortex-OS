@@ -1,26 +1,24 @@
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
-import { z } from 'zod';
+import { auditEvent, record } from './audit';
 import { ModelRouter } from './model-router';
+import { enforce, loadGrant } from './policy';
 
-import {
-  embeddingsHandler,
-  rerankHandler,
-  chatHandler,
-  type EmbeddingsBody,
-  type RerankBody,
-  type ChatBody,
-} from './handlers';
-import { applyAuditPolicy } from './lib/applyAuditPolicy';
-
+type EmbeddingsBody = { model?: string; texts: string[] };
+type RerankBody = { model?: string; query: string; docs: string[]; topK?: number };
+type ChatBody = {
+  model?: string;
+  msgs: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  tools?: unknown;
+};
 
 export function createServer(router?: ModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
   const modelRouter = router || new ModelRouter();
 
   app.post('/embeddings', async (req, reply) => {
-
     const body = req.body as EmbeddingsBody;
+    req.log.debug({ body }, 'Received embeddings request');
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'embeddings', body as any);
     await record(
@@ -36,60 +34,122 @@ export function createServer(router?: ModelRouter): FastifyInstance {
     );
 
     try {
-
       const texts = body.texts;
       if (!Array.isArray(texts) || texts.length === 0) {
         return reply.status(400).send({ error: 'texts must be a non-empty array' });
       }
 
-      const { embeddings, model: modelUsed } = await modelRouter.generateEmbeddings({
-        texts,
-        model: body.model,
-      });
+      let vectors: number[][] = [];
+      let modelUsed: string;
+
+      if (texts.length === 1) {
+        const result = await modelRouter.generateEmbedding({
+          text: texts[0],
+          model: body.model,
+        });
+        vectors = [result.embedding];
+        modelUsed = result.model;
+      } else {
+        const result = await modelRouter.generateEmbeddings({
+          texts,
+          model: body.model,
+        });
+        vectors = result.embeddings;
+        modelUsed = result.model;
+      }
 
       return reply.send({
-        embeddings,
-        dimensions: embeddings[0]?.length || 0,
+        vectors,
+        dimensions: vectors[0]?.length || 0,
         modelUsed,
       });
     } catch (error) {
-      const status = (error as any).status || 500;
       console.error('Embedding error:', error);
-      return reply.status(status).send({
+      return reply.status(500).send({
         error: error instanceof Error ? error.message : 'Unknown embedding error',
       });
     }
   });
 
   app.post('/rerank', async (req, reply) => {
-
     const body = req.body as RerankBody;
+    req.log.debug({ body }, 'Received rerank request');
+    const grant = await loadGrant('model-gateway');
+    enforce(grant, 'rerank', body as any);
+    await record(
+      auditEvent(
+        'model-gateway',
+        'rerank',
+        {
+          runId: (req.headers['x-run-id'] as string) || 'unknown',
+          traceId: req.headers['x-trace-id'] as string,
+        },
+        body,
+      ),
+    );
 
     try {
-      await applyAuditPolicy(req, 'rerank', body);
-      const result = await rerankHandler(modelRouter, body);
-      return reply.send(result);
+      const result = await modelRouter.rerank({
+        query: body.query,
+        documents: body.docs,
+        model: body.model,
+      });
+
+      const ranked = result.documents
+        .map((content, index) => ({
+          index,
+          score: result.scores[index],
+          content,
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      return reply.send({
+        rankedItems: ranked.slice(0, body.topK ?? ranked.length),
+        modelUsed: result.model,
+      });
     } catch (error) {
-      const status = (error as any).status || 500;
       console.error('Reranking error:', error);
-      return reply.status(status).send({
+      return reply.status(500).send({
         error: error instanceof Error ? error.message : 'Unknown reranking error',
       });
     }
   });
 
   app.post('/chat', async (req, reply) => {
-
     const body = req.body as ChatBody;
+    req.log.debug({ body }, 'Received chat request');
+    const grant = await loadGrant('model-gateway');
+    enforce(grant, 'chat', body as any);
+    await record(
+      auditEvent(
+        'model-gateway',
+        'chat',
+        {
+          runId: (req.headers['x-run-id'] as string) || 'unknown',
+          traceId: req.headers['x-trace-id'] as string,
+        },
+        body,
+      ),
+    );
 
     try {
-      await applyAuditPolicy(req, 'chat', body);
-      const result = await chatHandler(modelRouter, body);
-      return reply.send(result);
+      if (!modelRouter.hasCapability('chat')) {
+        return reply.status(503).send({ error: 'No chat models available' });
+      }
+      const result = await modelRouter.generateChat({
+        messages: body.msgs,
+        model: body.model,
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
+
+      return reply.send({
+        content: result.content,
+        modelUsed: result.model,
+      });
     } catch (error) {
-      const status = (error as any).status || 500;
       console.error('Chat error:', error);
-      return reply.status(status).send({
+      return reply.status(500).send({
         error: error instanceof Error ? error.message : 'Unknown chat error',
       });
     }

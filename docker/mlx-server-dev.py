@@ -9,7 +9,7 @@ This is the development version that creates mock managers when dependencies are
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -56,7 +56,7 @@ class MockMLXModelManager:
         max_tokens: int = 1000,
         temperature: float = 0.7,
         stream: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if model not in self.loaded_models:
             raise ValueError(f"Model {model} not loaded")
 
@@ -66,7 +66,7 @@ class MockMLXModelManager:
             "inference_time": 0.5,
         }
 
-    def get_available_models(self) -> List[Dict[str, Any]]:
+    def get_available_models(self) -> list[dict[str, Any]]:
         models = []
         for name, config in self.model_configs.items():
             models.append(
@@ -79,7 +79,7 @@ class MockMLXModelManager:
             )
         return models
 
-    def get_loaded_models_info(self) -> List[Dict[str, Any]]:
+    def get_loaded_models_info(self) -> list[dict[str, Any]]:
         return [
             {
                 "name": name,
@@ -111,7 +111,7 @@ class MockMLXMemoryManager:
         if model_name in self.model_memory:
             del self.model_memory[model_name]
 
-    def get_memory_status_report(self) -> Dict[str, Any]:
+    def get_memory_status_report(self) -> dict[str, Any]:
         used_memory = sum(self.model_memory.values())
         return {
             "mlx_reserved_gb": self.mlx_reserved_gb,
@@ -141,8 +141,8 @@ except ImportError:
 try:
     import uvicorn
     from fastapi import FastAPI, HTTPException
-    from fastapi.responses import JSONResponse
     from pydantic import BaseModel, Field
+
     try:
         from pydantic import field_validator
     except ImportError:  # Pydantic v1
@@ -155,6 +155,7 @@ except ImportError:
     logger.warning("FastAPI not available - server will run in mock mode")
 
 if FASTAPI_AVAILABLE:
+
     class InferenceRequest(BaseModel):
         model: str
         prompt: str
@@ -168,6 +169,7 @@ if FASTAPI_AVAILABLE:
                 raise ValueError("Potential prompt injection detected")
             return re.sub(r"<[^>]+>", "", v)
 else:
+
     class InferenceRequest:
         def __init__(self, **kwargs):
             # Required fields
@@ -183,7 +185,7 @@ else:
 
             # Validate temperature
             temperature = kwargs.get("temperature", 0.7)
-            if not isinstance(temperature, (int, float)) or not (0 <= temperature <= 1):
+            if not isinstance(temperature, int | float) or not (0 <= temperature <= 1):
                 raise ValueError("temperature must be a float between 0 and 1")
 
             # Sanitize prompt
@@ -201,6 +203,7 @@ else:
             for k, v in kwargs.items():
                 if k not in ["model", "prompt", "max_tokens", "temperature"]:
                     setattr(self, k, v)
+
 
 # Initialize managers
 memory_manager = MLXMemoryManager()
@@ -269,8 +272,8 @@ class MLXServer:
                     raise HTTPException(
                         status_code=400, detail=f"Failed to load model {model_name}"
                     )
-            except Exception:
-                raise HTTPException(status_code=500, detail="Internal server error")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         @app.post("/models/{model_name}/unload")
         async def unload_model(model_name: str):
@@ -283,8 +286,8 @@ class MLXServer:
                     raise HTTPException(
                         status_code=400, detail=f"Model {model_name} not loaded"
                     )
-            except Exception:
-                raise HTTPException(status_code=500, detail="Internal server error")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
         @app.post("/inference")
         async def inference(req: InferenceRequest):
@@ -298,8 +301,9 @@ class MLXServer:
                 )
 
                 return result
-            except Exception:
-                raise HTTPException(status_code=500, detail="Internal server error")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail="Internal server error") from e
+
         return app
 
     # Mock server methods for when FastAPI is not available

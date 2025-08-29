@@ -1,34 +1,34 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
-from typing import List, Optional, Tuple, Literal
 
 
 class Evidence(BaseModel):
     uri: str
-    range: Optional[Tuple[int, int]] = None
+    range: tuple[int, int] | None = None
 
 
 class Provenance(BaseModel):
     source: Literal["user", "agent", "system"]
-    actor: Optional[str] = None
-    evidence: Optional[List[Evidence]] = None
-    hash: Optional[str] = None
+    actor: str | None = None
+    evidence: list[Evidence] | None = None
+    hash: str | None = None
 
 
 class Policy(BaseModel):
-    pii: Optional[bool] = None
-    scope: Optional[Literal["session", "user", "org"]] = None
+    pii: bool | None = None
+    scope: Literal["session", "user", "org"] | None = None
 
 
 class Memory(BaseModel):
     id: str
     kind: Literal["note", "event", "artifact", "embedding"]
-    text: Optional[str] = None
-    vector: Optional[List[float]] = None
-    tags: List[str] = Field(default_factory=list)
-    ttl: Optional[str] = None
-    createdAt: str
-    updatedAt: str
+    text: str | None = None
+    vector: list[float] | None = None
+    tags: list[str] = Field(default_factory=list)
+    ttl: str | None = None
+    created_at: str
+    updated_at: str
     provenance: Provenance
-    policy: Optional[Policy] = None
-    embeddingModel: Optional[str] = None
-
+    policy: Policy | None = None
+    embedding_model: str | None = None

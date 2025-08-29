@@ -405,7 +405,11 @@ importers:
 
   libs/typescript/types: {}
 
-  libs/typescript/utils: {}
+  libs/typescript/utils:
+    dependencies:
+      neo4j-driver:
+        specifier: ^5.28.1
+        version: 5.28.1
 
   packages/a2a: {}
 
@@ -962,6 +966,9 @@ importers:
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
+      '@cortex-os/utils':
+        specifier: workspace:*
+        version: link:../../libs/typescript/utils
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
