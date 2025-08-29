@@ -45,4 +45,25 @@ describe('Qwen3Embedder', () => {
     const embedder = new Qwen3Embedder({ modelSize: '0.6B' });
     await expect(embedder.embed(['x'])).rejects.toThrow('timed out');
   });
+
+  it('passes useGPU flag into python script', async () => {
+    vi.mock('child_process', () => {
+      const proc = new MockProc();
+      return {
+        spawn: vi.fn(() => proc as unknown as ChildProcess),
+        __proc: proc,
+      };
+    });
+    const { Qwen3Embedder } = await import('../src/embed/qwen3');
+    const cpMock: any = await import('child_process');
+    const proc: MockProc = cpMock.__proc;
+
+    const embedder = new Qwen3Embedder({ modelSize: '0.6B', useGPU: true });
+    const promise = embedder.embed(['hi']);
+    proc.stdout.emit('data', JSON.stringify({ embeddings: [[0, 0, 0]] }));
+    proc.emit('close', 0);
+    await promise;
+    const script = cpMock.spawn.mock.calls[0][1][1];
+    expect(script).toContain('use_gpu = True');
+  });
 });

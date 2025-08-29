@@ -5,8 +5,9 @@
 
 
 import { spawn } from 'child_process';
-import fs from 'fs';
-import path from 'path';
+
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { type Embedder } from '../index.js';
 import { runProcess } from '../../../../src/lib/run-process.js';
 
@@ -28,19 +29,17 @@ export class Qwen3Embedder implements Embedder {
   private readonly cacheDir: string;
   private readonly maxTokens: number;
   private readonly batchSize: number;
+  private readonly useGPU: boolean;
 
   constructor(options: Qwen3EmbedOptions = {}) {
     this.modelSize = options.modelSize || '4B';
-    const defaultBase = process.env.QWEN_EMBED_MODEL_PATH || path.resolve(process.cwd(), 'models');
-    this.modelPath =
-      options.modelPath || path.join(defaultBase, `Qwen3-Embedding-${this.modelSize}`);
-    this.cacheDir = path.dirname(this.modelPath);
+
+    this.cacheDir =
+      options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
     this.maxTokens = options.maxTokens || 512;
     this.batchSize = options.batchSize || 32;
+    this.useGPU = options.useGPU ?? false;
 
-    if (!fs.existsSync(this.modelPath)) {
-      throw new Error(`Embedding model path does not exist: ${this.modelPath}`);
-    }
   }
 
   async embed(texts: string[]): Promise<number[][]> {
@@ -64,9 +63,11 @@ export class Qwen3Embedder implements Embedder {
 
   private async embedWithModel(texts: string[]): Promise<number[][]> {
     return new Promise((resolve, reject) => {
-      const python = spawn('python3', ['-c', this.getPythonScript(this.modelPath, texts)], {
+
+      const python = spawn('python3', ['-c', this.getPythonScript(modelPath, texts, this.useGPU)], {
+
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir },
+        env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir, HF_HOME: this.cacheDir },
       });
 
       let stdout = '';
@@ -75,7 +76,13 @@ export class Qwen3Embedder implements Embedder {
       python.stdout?.on('data', (data) => (stdout += data.toString()));
       python.stderr?.on('data', (data) => (stderr += data.toString()));
 
+      const timer = setTimeout(() => {
+        python.kill();
+        reject(new Error('Qwen3 embedder timed out'));
+      }, 30000);
+
       python.on('close', (code) => {
+        clearTimeout(timer);
         if (code === 0) {
           try {
             const result = JSON.parse(stdout);
@@ -88,20 +95,28 @@ export class Qwen3Embedder implements Embedder {
         }
       });
 
-      python.on('error', reject);
+
+      python.on('error', (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
 
     });
     return result.embeddings;
   }
 
 
-  private getPythonScript(modelPath: string, texts: string[]): string {
+  private getPythonScript(modelPath: string, texts: string[], useGPU: boolean): string {
+
     return `
 import json
 import sys
 import torch
 from transformers import AutoTokenizer, AutoModel
 import numpy as np
+
+use_gpu = ${useGPU ? 'True' : 'False'}
+device = 'cuda' if use_gpu and torch.cuda.is_available() else 'cpu'
 
 def mean_pooling(model_output, attention_mask):
     token_embeddings = model_output[0]
@@ -113,10 +128,16 @@ try:
     tokenizer = AutoTokenizer.from_pretrained("${modelPath}")
     model = AutoModel.from_pretrained("${modelPath}")
 
+    model = model.to(device)
+
+
     texts = ${JSON.stringify(texts)}
 
     # Tokenize and encode
     encoded_input = tokenizer(texts, padding=True, truncation=True, max_length=${this.maxTokens}, return_tensors='pt')
+
+    encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
+
 
     # Generate embeddings
     with torch.no_grad():
