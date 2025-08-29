@@ -5,16 +5,25 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepare": "pnpm build",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/sdk-node": "^0.52.1",
-    "@opentelemetry/auto-instrumentations-node": "^0.52.1",
     "@opentelemetry/exporter-jaeger": "^1.28.0",
     "@opentelemetry/exporter-prometheus": "^0.52.1"
   },
