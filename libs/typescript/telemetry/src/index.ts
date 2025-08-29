@@ -46,7 +46,7 @@ export const meter = metrics.getMeter('cortex-os', '1.0.0');
 /**
  * Higher-order function to wrap operations with tracing
  */
-export async function withSpan<T>(
+export function withSpan<T>(
   name: string,
   fn: (span: Span) => Promise<T>,
   options?: {
