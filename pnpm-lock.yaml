@@ -110,6 +110,9 @@ importers:
       eslint-plugin-promise:
         specifier: ^6.1.1
         version: 6.6.0(eslint@8.57.1)
+      fast-check:
+        specifier: 4.2.0
+        version: 4.2.0
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
@@ -959,9 +962,6 @@ importers:
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      axios:
-        specifier: ^1.11.0
-        version: 1.11.0(debug@4.4.1)
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
@@ -13002,7 +13002,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.11.0(debug@4.4.1))
+      retry-axios: 2.6.0(axios@1.11.0)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -14768,7 +14768,7 @@ snapshots:
 
   ret@0.5.0: {}
 
-  retry-axios@2.6.0(axios@1.11.0(debug@4.4.1)):
+  retry-axios@2.6.0(axios@1.11.0):
     dependencies:
       axios: 1.11.0(debug@4.4.1)
 
