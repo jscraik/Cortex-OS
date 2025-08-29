@@ -1,12 +1,7 @@
-/**
- * @file nodes/evaluation.ts
- * @description Evaluation Phase Node - TDD validation, Code review, Final quality gates
- * @author Cortex-OS Team
- * @version 1.0.0
- */
-
 import { PRPState, Evidence } from '../state.js';
+
 import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Evaluation Phase Gates:
@@ -32,7 +27,7 @@ export class EvaluationNode {
       type: 'test',
       source: 'tdd_validator',
       content: JSON.stringify(tddValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 7),
       phase: 'evaluation',
     });
 
@@ -50,7 +45,7 @@ export class EvaluationNode {
       type: 'analysis',
       source: 'code_reviewer',
       content: JSON.stringify(reviewValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 8),
       phase: 'evaluation',
     });
 
@@ -71,7 +66,7 @@ export class EvaluationNode {
       type: 'validation',
       source: 'quality_budgets',
       content: JSON.stringify(budgetValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 9),
       phase: 'evaluation',
     });
 
@@ -91,13 +86,13 @@ export class EvaluationNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: currentTimestamp(state.metadata.deterministic ?? false, 10),
         },
       },
     };
   }
 
-  private async validateTDDCycle(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateTDDCycle(state: PRPState): Promise<ValidationResult<TDDDetails>> {
     // Validate that proper TDD cycle was followed
     const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
 
@@ -119,9 +114,7 @@ export class EvaluationNode {
     };
   }
 
-  private async validateCodeReview(
-    state: PRPState,
-  ): Promise<{ blockers: number; majors: number; details: any }> {
+  private async validateCodeReview(state: PRPState): Promise<ReviewResult<ReviewDetails>> {
     // Simulated code review - in real implementation would integrate with actual review tools
     const codeQualityIssues = [
       {
@@ -179,10 +172,17 @@ export class EvaluationNode {
       },
     };
   }
+async function validateTDDCycle(state: PRPState) {
+  const tests = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
+  const hasCoverage =
+    state.outputs?.testCoverage ||
+    state.validationResults.build?.evidence?.some((id) =>
+      state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
+
 
   private async preCerebrumValidation(
     state: PRPState,
-  ): Promise<{ readyForCerebrum: boolean; details: any }> {
+  ): Promise<ReadinessResult<PreCerebrumDetails>> {
     // Final validation before Cerebrum decision
     const hasAllPhases = !!(
       state.validationResults?.strategy &&
@@ -192,20 +192,68 @@ export class EvaluationNode {
 
     const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {}).every(
       (result) => result?.passed || result?.blockers.length === 0,
+
     );
+  return { passed: tests.length > 0 && !!hasCoverage, details: { testCount: tests.length } };
+}
 
-    const sufficientEvidence = state.evidence.length >= 5; // Minimum evidence threshold
+async function validateCodeReview(state: PRPState) {
+  return {
+    blockers: 0,
+    majors: 1,
+    details: { issues: [{ severity: 'major', type: 'code-complexity' }] },
+  };
+}
 
-    const readyForCerebrum = hasAllPhases && allPhasesPassedOrAcceptable && sufficientEvidence;
+async function validateQualityBudgets(state: PRPState) {
+  return {
+    accessibility: { passed: true, score: 95 },
+    performance: { passed: true, score: 94 },
+    security: { passed: true, score: 88 },
+  };
+}
 
-    return {
-      readyForCerebrum,
-      details: {
-        phasesComplete: hasAllPhases,
-        phasesAcceptable: allPhasesPassedOrAcceptable,
-        evidenceCount: state.evidence.length,
-        evidenceThreshold: 5,
-      },
-    };
-  }
+async function preCerebrumValidation(state: PRPState) {
+  const hasPhases = !!(state.validationResults.strategy && state.validationResults.build);
+  const allPass = Object.values(state.validationResults || {}).every(
+    (r: any) => r?.passed || r?.blockers.length === 0,
+  );
+  return { readyForCerebrum: hasPhases && allPass && state.evidence.length >= 5, details: {} };
+}
+
+interface ValidationResult<T> {
+  passed: boolean;
+  details: T;
+}
+
+interface TDDDetails {
+  testCount: number;
+  coverage: number;
+  redGreenCycle: boolean;
+  refactoring: boolean;
+}
+
+interface ReviewResult<T> {
+  blockers: number;
+  majors: number;
+  details: T;
+}
+
+interface ReviewDetails {
+  totalIssues: number;
+  issues: { severity: string; type: string; message: string; file: string }[];
+  codeQualityScore: number;
+  maintainabilityIndex: number;
+}
+
+interface ReadinessResult<T> {
+  readyForCerebrum: boolean;
+  details: T;
+}
+
+interface PreCerebrumDetails {
+  phasesComplete: boolean;
+  phasesAcceptable: boolean;
+  evidenceCount: number;
+  evidenceThreshold: number;
 }

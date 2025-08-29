@@ -1,12 +1,6 @@
-/**
- * @file nodes/build.ts
- * @description Build Phase Node - Compilation, API schema, Security scan, Performance
- * @author Cortex-OS Team
- * @version 1.0.0
- */
-
 import { PRPState, Evidence } from '../state.js';
 import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -35,7 +29,7 @@ export class BuildNode {
       type: 'test',
       source: 'backend_validation',
       content: JSON.stringify(backendValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 4),
       phase: 'build',
     });
 
@@ -59,7 +53,7 @@ export class BuildNode {
       type: 'analysis',
       source: 'security_scanner',
       content: JSON.stringify(securityScan),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 5),
       phase: 'build',
     });
 
@@ -88,13 +82,13 @@ export class BuildNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: currentTimestamp(state.metadata.deterministic ?? false, 6),
         },
       },
     };
   }
 
-  private async validateBackend(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateBackend(state: PRPState): Promise<ValidationResult<BackendDetails>> {
     // Simulated backend validation - in real implementation would run actual tests
     const hasBackendReq = state.blueprint.requirements?.some(
       (req) =>
@@ -103,23 +97,22 @@ export class BuildNode {
         req.toLowerCase().includes('server'),
     );
 
-    if (!hasBackendReq) {
-      return { passed: true, details: { type: 'frontend-only' } };
-    }
-
-    // Mock compilation and test results
+    // Mock compilation and test results; fail when backend requirements missing
+    const passed = hasBackendReq;
     return {
-      passed: true, // Would be actual test results
-      details: {
-        compilation: 'success',
-        testsPassed: 45,
-        testsFailed: 0,
-        coverage: 92,
-      },
+      passed,
+      details: passed
+        ? {
+            compilation: 'success',
+            testsPassed: 45,
+            testsFailed: 0,
+            coverage: 92,
+          }
+        : { reason: 'backend requirements missing' },
     };
   }
 
-  private async validateAPISchema(state: PRPState): Promise<{ passed: boolean; details: any }> {
+  private async validateAPISchema(state: PRPState): Promise<ValidationResult<APISchemaDetails>> {
     const hasAPI = state.blueprint.requirements?.some(
       (req) => req.toLowerCase().includes('api') || req.toLowerCase().includes('endpoint'),
     );
@@ -132,25 +125,18 @@ export class BuildNode {
     }
 
     const schemaPathYaml = path.resolve('openapi.yaml');
-    const schemaPathJson = path.resolve('openapi.json');
-    const exists = fs.existsSync(schemaPathYaml) || fs.existsSync(schemaPathJson);
+    const exists = fs.existsSync(schemaPathYaml);
 
     return {
       passed: exists,
       details: {
-        schemaFormat: fs.existsSync(schemaPathYaml)
-          ? 'OpenAPI 3.0'
-          : fs.existsSync(schemaPathJson)
-            ? 'JSON'
-            : 'missing',
+        schemaFormat: exists ? 'OpenAPI 3.0' : 'missing',
         validation: exists ? 'found' : 'missing',
       },
     };
   }
 
-  private async runSecurityScan(
-    state: PRPState,
-  ): Promise<{ blockers: number; majors: number; details: any }> {
+  private async runSecurityScan(state: PRPState): Promise<ScanResult<SecurityScanDetails>> {
     // Mock security scan - in real implementation would run CodeQL, Semgrep, etc.
     return {
       blockers: 0,
@@ -169,9 +155,8 @@ export class BuildNode {
     };
   }
 
-  private async validateFrontend(
-    state: PRPState,
-  ): Promise<{ lighthouse: number; axe: number; details: any }> {
+
+  private async validateFrontend(state: PRPState): Promise<FrontendResult<FrontendDetails>> {
     const hasFrontend = state.blueprint.requirements?.some(
       (req) =>
         req.toLowerCase().includes('ui') ||
@@ -179,30 +164,33 @@ export class BuildNode {
         req.toLowerCase().includes('interface'),
     );
 
-    if (!hasFrontend) {
-      return { lighthouse: 100, axe: 100, details: { type: 'backend-only' } };
-    }
 
-    // Mock Lighthouse and Axe scores
+
+    // Mock Lighthouse and Axe scores; fail when frontend requirements missing
+    const lighthouse = hasFrontend ? 94 : 0;
+    const axe = hasFrontend ? 96 : 0;
     return {
-      lighthouse: 94, // Good score
-      axe: 96, // Good accessibility score
-      details: {
-        lighthouse: {
-          performance: 94,
-          accessibility: 96,
-          bestPractices: 92,
-          seo: 98,
-        },
-        axe: {
-          violations: 2,
-          severity: 'minor',
-        },
-      },
+      lighthouse,
+      axe,
+      details: hasFrontend
+        ? {
+            lighthouse: {
+              performance: 94,
+              accessibility: 96,
+              bestPractices: 92,
+              seo: 98,
+            },
+            axe: {
+              violations: 2,
+              severity: 'minor',
+            },
+          }
+        : { reason: 'frontend requirements missing' },
     };
   }
 
-  private async validateDocumentation(state: PRPState): Promise<{ passed: boolean; details: any }> {
+
+  private async validateDocumentation(state: PRPState): Promise<ValidationResult<DocsDetails>> {
     const hasDocsReq = state.blueprint.requirements?.some(
       (req) =>
         req.toLowerCase().includes('doc') ||
@@ -210,16 +198,77 @@ export class BuildNode {
         req.toLowerCase().includes('readme'),
     );
 
-    if (!hasDocsReq) {
-      return { passed: true, details: { readme: 'skipped' } };
-    }
 
-    const readmePath = path.resolve('README.md');
-    const readmeExists = fs.existsSync(readmePath);
+async function validateFrontend(state: PRPState) {
+  const hasFrontend = state.blueprint.requirements?.some((r) =>
+    ['ui', 'frontend', 'interface'].some((k) => r.toLowerCase().includes(k)),
+  );
+  return hasFrontend
+    ? { lighthouse: 94, axe: 96, details: {} }
+    : { lighthouse: 100, axe: 100, details: { type: 'backend-only' } };
+}
 
-    return {
-      passed: readmeExists,
-      details: { readme: readmeExists },
-    };
-  }
+
+async function validateDocumentation(state: PRPState) {
+  const hasDocs = state.blueprint.requirements?.some((r) =>
+    ['doc', 'guide', 'readme'].some((k) => r.toLowerCase().includes(k)),
+  );
+  if (!hasDocs) return { passed: true, details: { readme: 'skipped' } };
+  const readme = path.resolve('README.md');
+  return { passed: fs.existsSync(readme), details: { readme: fs.existsSync(readme) } };
+
+}
+
+interface ValidationResult<T> {
+  passed: boolean;
+  details: T;
+}
+
+interface BackendDetails {
+  compilation?: string;
+  testsPassed?: number;
+  testsFailed?: number;
+  coverage?: number;
+  type?: string;
+}
+
+interface APISchemaDetails {
+  schemaFormat: string;
+  validation: string;
+}
+
+interface ScanResult<T> {
+  blockers: number;
+  majors: number;
+  details: T;
+}
+
+interface SecurityScanDetails {
+  tools: string[];
+  vulnerabilities: { severity: string; type: string; file: string; line: number }[];
+}
+
+interface FrontendResult<T> {
+  lighthouse: number;
+  axe: number;
+  details: T;
+}
+
+interface FrontendDetails {
+  lighthouse: {
+    performance: number;
+    accessibility: number;
+    bestPractices: number;
+    seo: number;
+  };
+  axe: {
+    violations: number;
+    severity: string;
+  };
+}
+
+interface DocsDetails {
+  readme: boolean | string;
+  schemaFormat?: string;
+  validation?: string;
 }

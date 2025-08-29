@@ -7,18 +7,21 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { CortexKernel } from '../src/graph-simple.js';
 import { createInitialPRPState, PRPState } from '../src/state.js';
+import { fixedTimestamp } from '../src/lib/determinism.js';
+
 
 describe('Cortex Kernel Determinism', () => {
-  let kernel: CortexKernel;
+  let kernel: ReturnType<typeof createKernel>;
   let mockOrchestrator: { getNeuronCount: () => number };
 
   beforeEach(() => {
     mockOrchestrator = {
       getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
     };
-    kernel = new CortexKernel(mockOrchestrator);
+    kernel = createKernel(mockOrchestrator);
   });
 
   describe('Reproducible Execution', () => {
@@ -32,9 +35,13 @@ describe('Cortex Kernel Determinism', () => {
       const run1 = await kernel.runPRPWorkflow(blueprint, { runId: 'test-run-1' });
       const run2 = await kernel.runPRPWorkflow(blueprint, { runId: 'test-run-2' });
 
+      // Evidence timestamps should be stable across runs
+      expect(run1.evidence.map((e) => e.timestamp)).toEqual(run2.evidence.map((e) => e.timestamp));
+
       // Results should be structurally identical (excluding timestamps and run IDs)
       expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
     });
+
 
     it('should maintain consistent state transitions', async () => {
       const blueprint = {
@@ -53,11 +60,27 @@ describe('Cortex Kernel Determinism', () => {
       const phases = history.map((state) => state.phase);
       expect(phases).toContain('strategy');
     });
+
+
+    it('should generate identical IDs across deterministic runs', async () => {
+      const blueprint = {
+        title: 'Deterministic ID Test',
+        description: 'Ensures run and state IDs are deterministic',
+        requirements: ['Deterministic'],
+      };
+
+      const run1 = await kernel.runPRPWorkflow(blueprint, { deterministic: true });
+      const run2 = await kernel.runPRPWorkflow(blueprint, { deterministic: true });
+
+      expect(run1.runId).toBe(run2.runId);
+      expect(run1.id).toBe(run2.id);
+    });
+
   });
 });
 
 // Helper functions
-function normalizeForComparison(state: PRPState): any {
+function normalizeForComparison(state: PRPState): PRPState {
   return {
     ...state,
     id: 'NORMALIZED',

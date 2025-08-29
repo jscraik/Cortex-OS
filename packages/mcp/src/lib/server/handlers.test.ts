@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createServer,
+  addTool,
+  addResource,
+  addPrompt,
+} from './index.js';
+import {
   handleInitialize,
   handleToolsList,
   handleToolCall,
@@ -7,28 +13,13 @@ import {
   handleResourceRead,
   handlePromptsList,
 } from './handlers.js';
-import type { ServerContext } from './types.js';
 
 describe('server handlers', () => {
-  const context: ServerContext = {
-    options: { name: 'test', version: '1.0.0' },
-    tools: new Map(),
-    resources: new Map(),
-    prompts: new Map(),
-  };
+  const context = createServer({ name: 'test', version: '1.0.0' });
 
-  context.tools.set('echo', {
-    def: { name: 'echo' },
-    handler: (args: Record<string, unknown>) => args,
-  });
-  context.resources.set('res', {
-    def: { uri: 'res' },
-    handler: () => ({ ok: true }),
-  });
-  context.prompts.set('p', {
-    def: { name: 'p' },
-    handler: () => 'prompt',
-  });
+  addTool(context, { name: 'echo' }, (args: Record<string, unknown>) => args);
+  addResource(context, { uri: 'res' }, () => ({ ok: true }));
+  addPrompt(context, { name: 'p' }, () => 'prompt');
 
   it('handleInitialize', () => {
     const res = handleInitialize('1', undefined, context);
