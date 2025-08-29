@@ -11,8 +11,7 @@ export function fusionRerank(
 
   const dim = queryEmb.length;
   for (const d of docs) {
-    if (!Array.isArray(d.emb) || d.emb.length !== dim) {
-      throw new TypeError('doc embedding must match query embedding dimension');
+      throw new TypeError(`Document embedding dimension ${d.emb?.length} does not match query embedding dimension ${dim}`);
     }
   }
 
