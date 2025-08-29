@@ -1,4 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
+
+import { describe, it, expect, vi, beforeAll } from 'vitest';
+vi.mock(
+  '@cortex-os/telemetry',
+  () => ({
+    withSpan: vi.fn((_name: string, fn: (...args: unknown[]) => unknown) => fn()),
+    logWithSpan: vi.fn(),
+  }),
+  { virtual: true },
+);
+import forge from 'node-forge';
 import {
   generateNonce,
   extractTrustDomain,

@@ -1,10 +1,17 @@
 import { context, trace, SpanStatusCode, metrics } from '@opentelemetry/api';
+import {
+  gatherSpanAttributes,
+  recordSuccessMetrics,
+  recordErrorMetrics,
+} from '../lib/telemetry.js';
+import type { EnhancedSpanContext, WorkflowMetrics } from '../lib/telemetry.js';
+export type { EnhancedSpanContext } from '../lib/telemetry.js';
 
 export const tracer = trace.getTracer('@cortex-os/orchestration');
 export const meter = metrics.getMeter('@cortex-os/orchestration');
 
 // Create comprehensive metrics
-export const workflowMetrics = {
+export const workflowMetrics: WorkflowMetrics & Record<string, any> = {
   // Duration histograms
   stepDuration: meter.createHistogram('workflow_step_duration_ms', {
     description: 'Duration of workflow step execution in milliseconds',
@@ -45,26 +52,6 @@ export const workflowMetrics = {
   }),
 };
 
-export interface EnhancedSpanContext {
-  workflowId?: string;
-  workflowName?: string;
-  workflowVersion?: string;
-  stepId?: string;
-  stepKind?: string;
-  agentId?: string;
-  attempt?: number;
-  resourceUsage?: {
-    memoryBytes?: number;
-    cpuUtilization?: number;
-  };
-  coordinationId?: string;
-  phase?: string;
-  retryPolicy?: {
-    maxRetries: number;
-    backoffMs: number;
-  };
-}
-
 export async function withSpan<T>(
   name: string,
   fn: () => Promise<T>,
@@ -91,38 +78,7 @@ export async function withEnhancedSpan<T>(
 ): Promise<T> {
   const span = tracer.startSpan(name);
   const startTime = Date.now();
-
-  // Set comprehensive span attributes
-  const attributes: Record<string, any> = {
-    'orchestration.version': '1.0.0',
-    'span.kind': 'internal',
-  };
-
-  if (context.workflowId) attributes['workflow.id'] = context.workflowId;
-  if (context.workflowName) attributes['workflow.name'] = context.workflowName;
-  if (context.workflowVersion) attributes['workflow.version'] = context.workflowVersion;
-  if (context.stepId) attributes['workflow.step.id'] = context.stepId;
-  if (context.stepKind) attributes['workflow.step.kind'] = context.stepKind;
-  if (context.agentId) attributes['agent.id'] = context.agentId;
-  if (context.attempt !== undefined) attributes['execution.attempt'] = context.attempt;
-  if (context.coordinationId) attributes['coordination.id'] = context.coordinationId;
-  if (context.phase) attributes['coordination.phase'] = context.phase;
-
-  if (context.resourceUsage) {
-    if (context.resourceUsage.memoryBytes) {
-      attributes['resource.memory.bytes'] = context.resourceUsage.memoryBytes;
-    }
-    if (context.resourceUsage.cpuUtilization) {
-      attributes['resource.cpu.utilization'] = context.resourceUsage.cpuUtilization;
-    }
-  }
-
-  if (context.retryPolicy) {
-    attributes['retry.max_attempts'] = context.retryPolicy.maxRetries;
-    attributes['retry.backoff_ms'] = context.retryPolicy.backoffMs;
-  }
-
-  span.setAttributes(attributes);
+  span.setAttributes(gatherSpanAttributes(context));
 
   // Add custom events for important milestones
   span.addEvent(`${name}.started`, {
@@ -133,83 +89,11 @@ export async function withEnhancedSpan<T>(
   try {
     const result = await fn();
     const duration = Date.now() - startTime;
-
-    // Record success metrics
-    if (name.includes('step')) {
-      workflowMetrics.stepDuration.record(duration, {
-        step_kind: context.stepKind || 'unknown',
-        success: 'true',
-      });
-      workflowMetrics.stepExecutions.add(1, {
-        step_kind: context.stepKind || 'unknown',
-        result: 'success',
-      });
-    }
-
-    if (name.includes('coordination')) {
-      workflowMetrics.coordinationDuration.record(duration, {
-        phase: context.phase || 'unknown',
-        success: 'true',
-      });
-    }
-
-    span.addEvent(`${name}.completed`, {
-      timestamp: Date.now(),
-      duration_ms: duration,
-      success: true,
-    });
-
-    span.setStatus({ code: SpanStatusCode.OK });
+    recordSuccessMetrics(name, duration, context, workflowMetrics, span);
     return result;
   } catch (err: any) {
     const duration = Date.now() - startTime;
-    const errorMessage = String(err?.message ?? err);
-
-    // Record failure metrics
-    if (name.includes('step')) {
-      workflowMetrics.stepDuration.record(duration, {
-        step_kind: context.stepKind || 'unknown',
-        success: 'false',
-      });
-      workflowMetrics.stepExecutions.add(1, {
-        step_kind: context.stepKind || 'unknown',
-        result: 'failure',
-      });
-    }
-
-    if (name.includes('coordination')) {
-      workflowMetrics.coordinationDuration.record(duration, {
-        phase: context.phase || 'unknown',
-        success: 'false',
-      });
-      workflowMetrics.coordinationFailures.add(1, {
-        phase: context.phase || 'unknown',
-        error_type: err.code || 'unknown',
-      });
-    }
-
-    span.addEvent(`${name}.failed`, {
-      timestamp: Date.now(),
-      duration_ms: duration,
-      'error.type': err.constructor.name,
-      'error.code': err.code,
-      'error.message': errorMessage,
-    });
-
-    // Set error status with detailed information
-    span.setStatus({
-      code: SpanStatusCode.ERROR,
-      message: errorMessage,
-    });
-
-    // Add error attributes
-    span.setAttributes({
-      'error.type': err.constructor.name,
-      'error.code': err.code || 'unknown',
-      'error.message': errorMessage,
-      'error.stack': err.stack,
-    });
-
+    recordErrorMetrics(name, err, duration, context, workflowMetrics, span);
     throw err;
   } finally {
     span.end();

@@ -79,7 +79,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
       expect(mockGetCapabilities).toHaveBeenCalled();
     });
 
-    it('should handle initialization failures gracefully', async () => {
+    it('should throw when capabilities fail to load', async () => {
       // Mock failed initialization
       const mockGetCapabilities = vi.fn().mockRejectedValue(new Error('AI service unavailable'));
 
@@ -87,11 +87,22 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
         getCapabilities: mockGetCapabilities,
       };
 
-      // Should not throw, but handle gracefully
-      await expect(mcpIntegration.autoRegister()).resolves.not.toThrow();
+      await expect(mcpIntegration.autoRegister()).rejects.toThrow('AI service unavailable');
 
       const isHealthy = await mcpIntegration.isHealthy();
       expect(isHealthy).toBe(false);
+    });
+
+    it('should allow degraded initialization via test helper', async () => {
+      const mockGetCapabilities = vi.fn().mockRejectedValue(new Error('AI service unavailable'));
+
+      (mcpServer as any).aiCapabilities = {
+        getCapabilities: mockGetCapabilities,
+      };
+
+      await mcpServer.initializeForTesting();
+
+      expect((mcpServer as any).isInitialized).toBe(true);
     });
   });
 
