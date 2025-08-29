@@ -19,7 +19,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --filter @cortex-os/security...
       - name: Install Semgrep
-        run: pipx install semgrep || pip install semgrep --break-system-packages
+        run: |
+          if ! pipx install semgrep; then
+            python -m pip install --user semgrep || { echo "Failed to install semgrep"; exit 1; }
+          fi
       - name: Run Semgrep
         run: pnpm -F @cortex-os/security semgrep
       - name: Upload SARIF
