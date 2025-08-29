@@ -18,6 +18,12 @@ const EmbeddingResponseSchema = z.object({
     .optional(),
 });
 
+const BatchEmbeddingResponseSchema = z.object({
+  embeddings: z.array(z.array(z.number())),
+  modelUsed: z.string(),
+  dimensions: z.number().optional(),
+});
+
 const RerankResponseSchema = z.object({
   scores: z.array(z.number()),
   model: z.string(),
@@ -76,17 +82,18 @@ export class ModelGatewayClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ texts: [text] }),
     });
 
-    return EmbeddingResponseSchema.parse(response);
+    const parsed = BatchEmbeddingResponseSchema.parse(response);
+    return { embedding: parsed.embeddings[0], model: parsed.modelUsed };
   }
 
   /**
    * Generate embeddings for multiple texts (batch)
    */
   async generateEmbeddings(texts: string[]): Promise<EmbeddingResponse[]> {
-    const response = await this.request('/embeddings/batch', {
+    const response = await this.request('/embeddings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,11 +101,8 @@ export class ModelGatewayClient {
       body: JSON.stringify({ texts }),
     });
 
-    if (!Array.isArray(response)) {
-      throw new Error('Expected array response for batch embeddings');
-    }
-
-    return response.map((item: unknown) => EmbeddingResponseSchema.parse(item));
+    const parsed = BatchEmbeddingResponseSchema.parse(response);
+    return parsed.embeddings.map((embedding) => ({ embedding, model: parsed.modelUsed }));
   }
 
   /**

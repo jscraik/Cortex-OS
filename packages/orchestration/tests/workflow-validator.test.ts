@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { validateWorkflow } from '../src/workflow-validator.js';
+import { ExecutionPlanSchema } from '../src/types.js';
 
 const baseWorkflow = {
   id: '00000000-0000-0000-0000-000000000000',
@@ -37,5 +38,26 @@ describe('deadline handling', () => {
     vi.advanceTimersByTime(1000);
     expect(fn).toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+describe('ExecutionPlanSchema', () => {
+  it('omits deprecated fallbackStrategies', () => {
+    const plan = {
+      id: '00000000-0000-0000-0000-000000000000',
+      taskId: '00000000-0000-0000-0000-000000000000',
+      strategy: 'sequential',
+      phases: ['strategy'],
+      dependencies: {},
+      estimatedDuration: 1000,
+      resourceRequirements: {
+        minAgents: 1,
+        maxAgents: 1,
+        requiredCapabilities: [],
+      },
+      checkpoints: [],
+      createdAt: new Date(),
+    } as any;
+    const parsed = ExecutionPlanSchema.parse(plan);
+    expect(parsed).not.toHaveProperty('fallbackStrategies');
   });
 });

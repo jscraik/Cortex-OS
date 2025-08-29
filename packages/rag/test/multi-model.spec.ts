@@ -1,7 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MultiModelGenerator } from '../src/generation/multi-model';
+import * as proc from '../../../src/lib/run-process.js';
 
 describe('MultiModelGenerator', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('delegates generation to single backend', async () => {
     const gen = new MultiModelGenerator({
       model: { model: 'test-model', backend: 'mlx' },
@@ -20,5 +25,45 @@ describe('MultiModelGenerator', () => {
     const res = await gen.chat([{ role: 'user', content: 'hi' }]);
     expect(res.content).toBe('ok');
     expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+
+  it('propagates generation options to Ollama API', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ response: 'ok' }),
+    }) as unknown as typeof fetch;
+    const originalFetch = global.fetch;
+    // @ts-ignore - mock fetch for test
+    global.fetch = fetchMock;
+
+    const gen = new MultiModelGenerator({
+      model: { model: 'test-model', backend: 'ollama' },
+    });
+
+    await gen.generate('prompt', {
+      temperature: 0.5,
+      topP: 0.8,
+      maxTokens: 123,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://localhost:11434/api/generate',
+      expect.objectContaining({
+        body: JSON.stringify({
+          model: 'test-model',
+          prompt: 'prompt',
+          stream: false,
+          options: {
+            temperature: 0.5,
+            top_p: 0.8,
+            num_predict: 123,
+          },
+        }),
+      }),
+    );
+    // @ts-ignore - restore original fetch
+    global.fetch = originalFetch;
+
   });
 });

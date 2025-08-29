@@ -41,3 +41,22 @@ describe('mlx-mcp-integration import', () => {
     expect(universalMcpManager.addMcpServer).not.toHaveBeenCalled();
   });
 });
+
+describe('mlx-mcp server startup', () => {
+  it('starts server using express without dynamic import', async () => {
+    const listen = vi.fn((_port, _host, cb) => {
+      cb();
+      return { close: vi.fn() };
+    });
+    vi.doMock('express', () => {
+      const app = { use: vi.fn(), post: vi.fn(), get: vi.fn(), listen } as any;
+      const express = () => app;
+      (express as any).json = vi.fn();
+      return { default: express };
+    });
+    const { createMlxIntegration } = await import('../mlx-mcp-integration.js');
+    const integration = createMlxIntegration('config.json');
+    await integration.startMLXServer(1234);
+    expect(listen).toHaveBeenCalled();
+  });
+});
