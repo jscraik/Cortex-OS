@@ -278,6 +278,20 @@ export interface SecurityRule {
   limit?: number;
 }
 
+// Service Map Types
+export const RouteInfoSchema = z.object({
+  path: z.string(),
+  methods: z.array(z.string()),
+  version: z.string(),
+});
+
+export const ServiceMapSchema = z.object({
+  routes: z.array(RouteInfoSchema),
+});
+
+export type RouteInfo = z.infer<typeof RouteInfoSchema>;
+export type ServiceMap = z.infer<typeof ServiceMapSchema>;
+
 // Error Types
 export class ASBRError extends Error {
   constructor(

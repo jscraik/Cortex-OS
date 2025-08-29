@@ -16,6 +16,8 @@ import {
   NotFoundError,
   type Profile,
   ProfileSchema,
+  type ServiceMap,
+  ServiceMapSchema,
   type Task,
   type TaskInput,
   TaskInputSchema,
@@ -148,11 +150,14 @@ export class ASBRServer {
     this.app.get('/v1/artifacts', requireScopes('artifacts:read'), this.listArtifacts.bind(this));
     this.app.get('/v1/artifacts/:id', requireScopes('artifacts:read'), this.getArtifact.bind(this));
 
+    // Service map
+    this.app.get('/v1/service-map', requireScopes('system:read'), this.getServiceMap.bind(this));
+
     // Connector endpoints
     this.app.get(
       '/v1/connectors/service-map',
       requireScopes('connectors:read'),
-      this.getServiceMap.bind(this),
+      this.getConnectorServiceMap.bind(this),
     );
 
     // Error handling must be registered after routes so thrown errors in handlers
@@ -531,6 +536,21 @@ export class ASBRServer {
   }
 
   private async getServiceMap(_req: Request, res: Response): Promise<void> {
+    const stack: any[] = ((this.app as unknown as any).router?.stack ?? []) as any[];
+    const routes = stack
+      .filter((layer: any) => layer.route && typeof layer.route.path === 'string')
+      .filter((layer: any) => layer.route.path.startsWith('/v1'))
+      .map((layer: any) => ({
+        path: layer.route.path,
+        methods: Object.keys(layer.route.methods).map((m) => m.toUpperCase()),
+        version: layer.route.path.split('/')[1] ?? '',
+      }));
+
+    const serviceMap: ServiceMap = ServiceMapSchema.parse({ routes });
+    res.json(serviceMap);
+  }
+
+  private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
     res.json({});
   }
 

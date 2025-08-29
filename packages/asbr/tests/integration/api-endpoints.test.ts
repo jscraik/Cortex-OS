@@ -280,6 +280,21 @@ describe('ASBR API Integration Tests', () => {
     });
   });
 
+  describe('Service Map', () => {
+    it('should return available routes and versions', async () => {
+      const response = await request(app)
+        .get('/v1/service-map')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(Array.isArray(response.body.routes)).toBe(true);
+      const taskRoute = response.body.routes.find((r: any) => r.path === '/v1/tasks');
+      expect(taskRoute).toBeDefined();
+      expect(taskRoute.methods).toContain('POST');
+      expect(taskRoute.version).toBe('v1');
+    });
+  });
+
   describe('Connector Service Map', () => {
     it('should return connector service map', async () => {
       const response = await request(app)
