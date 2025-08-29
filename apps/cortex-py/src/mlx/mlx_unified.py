@@ -106,6 +106,9 @@ class MLXUnified:
         if not self.model or self.model_type != 'embedding':
             raise ValueError("Embedding model not loaded")
 
+        if not text or not isinstance(text, str):
+            raise ValueError("Text must be a non-empty string")
+
         inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=DEFAULT_MAX_LENGTH)
 
         with torch.no_grad():
@@ -133,6 +136,13 @@ class MLXUnified:
         """Generate chat completion"""
         if not self.model or self.model_type != 'chat':
             raise ValueError("Chat model not loaded")
+
+        if not messages or not isinstance(messages, list):
+            raise ValueError("Messages must be a non-empty list")
+
+        for msg in messages:
+            if not isinstance(msg, dict) or 'role' not in msg or 'content' not in msg:
+                raise ValueError("Each message must be a dict with 'role' and 'content' keys")
 
         # Format messages into prompt
         if 'vl' in self.model_name.lower():
@@ -209,12 +219,12 @@ class MLXUnified:
             formatted.append(f"{role}: {content}")
 
         formatted.append("Assistant: ")  # Prompt for response
-        return "\\n".join(formatted)
+        return "\n".join(formatted)
 
     def _format_vl_messages(self, messages: list[dict[str, str]]) -> str:
         """Format messages for vision-language models"""
         # Simple formatting for VL models
-        return "\\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])
+        return "\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])
 
     def _estimate_tokens(self, text: str) -> int:
         """Rough token estimation"""

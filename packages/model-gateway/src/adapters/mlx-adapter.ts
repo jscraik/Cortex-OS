@@ -6,12 +6,18 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
+import { logger } from '../lib/logger';\nimport { getValidatedModelConfig, validateModelPath, estimateTokenCount, validateArrayResponse } from '../lib/model-config-validator';
 
-// MLX model configurations from ExternalSSD
+// Configuration paths - can be overridden via environment
+const HUGGINGFACE_CACHE = process.env.HF_HOME || process.env.TRANSFORMERS_CACHE || '/Volumes/ExternalSSD/huggingface_cache';
+const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/Volumes/ExternalSSD/ai-cache';
+const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
+
+// MLX model configurations with configurable paths
 const MLX_MODELS = {
   // Embedding models from HuggingFace cache
   'qwen3-embedding-0.6b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-0.6B',
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-0.6B`,
     hf_path: 'Qwen/Qwen3-Embedding-0.6B',
     type: 'embedding',
     memory_gb: 1.0,
@@ -19,7 +25,7 @@ const MLX_MODELS = {
     context_length: 8192,
   },
   'qwen3-embedding-4b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-4B',
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-4B`,
     hf_path: 'Qwen/Qwen3-Embedding-4B',
     type: 'embedding',
     memory_gb: 4.0,
@@ -27,7 +33,7 @@ const MLX_MODELS = {
     context_length: 8192,
   },
   'qwen3-embedding-8b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-8B',
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-8B`,
     hf_path: 'Qwen/Qwen3-Embedding-8B',
     type: 'embedding',
     memory_gb: 8.0,
@@ -36,7 +42,7 @@ const MLX_MODELS = {
   },
   // Reranker models
   'qwen3-reranker-4b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Reranker-4B',
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Reranker-4B`,
     hf_path: 'Qwen/Qwen3-Reranker-4B',
     type: 'reranking',
     memory_gb: 4.0,
@@ -44,7 +50,7 @@ const MLX_MODELS = {
   },
   // Chat/completion models from HuggingFace MLX cache
   'qwen3-coder-30b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit',
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit`,
     hf_path: 'mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit',
     type: 'chat',
     memory_gb: 16.0,
@@ -53,7 +59,7 @@ const MLX_MODELS = {
     capabilities: ['code'],
   },
   'qwen2.5-vl-3b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit',
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit`,
     hf_path: 'mlx-community/Qwen2.5-VL-3B-Instruct-6bit',
     type: 'chat',
     memory_gb: 3.0,
@@ -62,7 +68,7 @@ const MLX_MODELS = {
     capabilities: ['vision'],
   },
   'qwen2.5-0.5b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen2.5-0.5B-Instruct-4bit',
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Qwen2.5-0.5B-Instruct-4bit`,
     hf_path: 'mlx-community/Qwen2.5-0.5B-Instruct-4bit',
     type: 'chat',
     memory_gb: 0.5,
@@ -70,7 +76,7 @@ const MLX_MODELS = {
     context_length: 32768,
   },
   'mixtral-8x7b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx',
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx`,
     hf_path: 'mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx',
     type: 'chat',
     memory_gb: 24.0,
@@ -78,7 +84,7 @@ const MLX_MODELS = {
     context_length: 32768,
   },
   'gemma2-2b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/models--mlx-community--gemma-2-2b-it-4bit',
+    path: `${MODEL_BASE_PATH}/models--mlx-community--gemma-2-2b-it-4bit`,
     hf_path: 'mlx-community/gemma-2-2b-it-4bit',
     type: 'chat',
     memory_gb: 2.0,
@@ -86,7 +92,7 @@ const MLX_MODELS = {
     context_length: 8192,
   },
   'glm-4.5-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--GLM-4.5-4bit',
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--GLM-4.5-4bit`,
     hf_path: 'mlx-community/GLM-4.5-4bit',
     type: 'chat',
     memory_gb: 12.0,
@@ -94,7 +100,7 @@ const MLX_MODELS = {
     context_length: 32768,
   },
   'phi3-mini-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Phi-3-mini-4k-instruct-4bit',
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Phi-3-mini-4k-instruct-4bit`,
     hf_path: 'mlx-community/Phi-3-mini-4k-instruct-4bit',
     type: 'chat',
     memory_gb: 2.0,
@@ -102,7 +108,7 @@ const MLX_MODELS = {
     context_length: 4096,
   },
   'gpt-oss-20b-mlx': {
-    path: '/Volumes/ExternalSSD/huggingface_cache/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit',
+    path: `${MODEL_BASE_PATH}/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit`,
     hf_path: 'lmstudio-community/gpt-oss-20b-MLX-8bit',
     type: 'chat',
     memory_gb: 12.0,
@@ -192,7 +198,7 @@ export class MLXAdapter {
 
     // Validate model path exists
     if (!(await this.validateModelPath(modelConfig.path))) {
-      console.warn(`Model path not found: ${modelConfig.path}, attempting to download...`);
+      logger.warn('Model path not found', { path: modelConfig.path, action: 'attempting_download' });
     }
 
     try {
@@ -235,7 +241,7 @@ export class MLXAdapter {
         },
       });
     } catch (error) {
-      console.error('MLX chat generation failed:', error);
+      logger.error('MLX chat generation failed', { error: error.message, model: modelName });
       throw new Error(
         `MLX chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -255,7 +261,7 @@ export class MLXAdapter {
 
     // Validate model path exists
     if (!(await this.validateModelPath(modelConfig.path))) {
-      console.warn(`Model path not found: ${modelConfig.path}, attempting to download...`);
+      logger.warn('Model path not found', { path: modelConfig.path, action: 'attempting_download' });
     }
 
     try {
@@ -271,6 +277,11 @@ export class MLXAdapter {
 
       const data = JSON.parse(result);
 
+      // Validate response is a non-empty array
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('Invalid embedding response: expected non-empty array');
+      }
+
       return MLXEmbeddingResponseSchema.parse({
         embedding: data[0], // Python script returns array of arrays, take first
         model: modelName,
@@ -281,7 +292,7 @@ export class MLXAdapter {
         },
       });
     } catch (error) {
-      console.error('MLX embedding generation failed:', error);
+      logger.error('MLX embedding generation failed', { error: error.message, model: modelName });
       throw new Error(
         `MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -293,9 +304,13 @@ export class MLXAdapter {
    */
   async generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]> {
     const modelName = (model as MLXModelName) || 'qwen3-embedding-4b-mlx';
+    const modelConfig = MLX_MODELS[modelName];
+    
+    if (!modelConfig || modelConfig.type !== 'embedding') {
+      throw new Error(`Unsupported MLX embedding model: ${modelName}`);
+    }
 
     try {
-      const modelConfig = MLX_MODELS[modelName];
       const result = await this.executePythonScript([
         ...texts,
         '--model',
@@ -311,8 +326,6 @@ export class MLXAdapter {
       if (!Array.isArray(data)) {
         throw new Error('Expected array of embeddings from MLX script');
       }
-
-      const modelConfig = MLX_MODELS[modelName];
       const totalTokens = texts.reduce((sum, text) => sum + this.estimateTokenCount(text), 0);
 
       return data.map((embedding: number[], index: number) =>
@@ -327,7 +340,7 @@ export class MLXAdapter {
         }),
       );
     } catch (error) {
-      console.error('MLX batch embedding generation failed:', error);
+      logger.error('MLX batch embedding generation failed', { error: error.message, model: modelName });
       throw new Error(
         `MLX batch embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -371,7 +384,7 @@ export class MLXAdapter {
           return await this.executePythonScriptInternal(args);
         } catch (error) {
           if (attempt === retries) throw error;
-          console.warn(`MLX attempt ${attempt + 1} failed, retrying...`, error);
+          logger.warn('MLX operation retry', { attempt: attempt + 1, error: error.message });
           await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
         }
       }
@@ -389,9 +402,9 @@ export class MLXAdapter {
         env: {
           ...process.env,
           PYTHONPATH: path.resolve(process.cwd(), 'apps/cortex-py/src'),
-          HF_HOME: '/Volumes/ExternalSSD/huggingface_cache',
-          TRANSFORMERS_CACHE: '/Volumes/ExternalSSD/huggingface_cache',
-          MLX_CACHE_DIR: '/Volumes/ExternalSSD/ai-cache',
+          HF_HOME: HUGGINGFACE_CACHE,
+          TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
+          MLX_CACHE_DIR: MLX_CACHE_DIR,
         },
       });
 
@@ -491,8 +504,8 @@ export class MLXAdapter {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
-          HF_HOME: '/Volumes/ExternalSSD/huggingface_cache',
-          TRANSFORMERS_CACHE: '/Volumes/ExternalSSD/huggingface_cache',
+          HF_HOME: HUGGINGFACE_CACHE,
+          TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
         },
       });
 
@@ -559,7 +572,7 @@ export class MLXAdapter {
       const data = JSON.parse(result);
       return data.scores || [];
     } catch (error) {
-      console.error('MLX reranking failed:', error);
+      logger.error('MLX reranking failed', { error: error.message, model: modelName });
       throw new Error(
         `MLX reranking failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
