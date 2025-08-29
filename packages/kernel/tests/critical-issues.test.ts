@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
-import { createInitialPRPState } from '../src/state.js';
+import { createInitialPRPState, type PRPState } from '../src/state.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 import { BuildNode } from '../src/nodes/build.js';
 import { EvaluationNode } from '../src/nodes/evaluation.js';
@@ -62,7 +62,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
         };
 
         // Type check would fail here if we had proper typing
-        const kernel = new CortexKernel(mockOrchestrator as any);
+        const kernel = new CortexKernel(mockOrchestrator);
         expect(kernel).toBeDefined();
 
         // This assertion will expose the interface mismatch
@@ -127,7 +127,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
       const buildNode = new BuildNode();
 
       // Mock state with API but no schema
-      const mockState = {
+      const mockState: Partial<PRPState> = {
         blueprint: {
           title: 'API Test',
           description: 'Has API',
@@ -136,9 +136,16 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
         outputs: {
           'api-check': { hasAPI: true, hasSchema: false },
         },
-      } as any;
+      };
 
-      const result = buildNode.validateAPIDesign(mockState);
+      const result = (
+        buildNode as unknown as {
+          validateAPIDesign: (state: Partial<PRPState>) => {
+            passed: boolean;
+            details: { validation: string };
+          };
+        }
+      ).validateAPIDesign(mockState);
 
       // This will FAIL due to "hasAPI ? true : true" logic
       expect(result.passed).toBe(false); // Should fail but returns true!
@@ -149,13 +156,13 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
       const evaluationNode = new EvaluationNode();
 
       // Mock state with mixed validation results
-      const mockState = {
+      const mockState: Partial<PRPState> = {
         validationResults: {
           strategy: { passed: true, blockers: [] },
           build: { passed: false, blockers: ['API schema missing'] }, // Failed!
           evaluation: { passed: true, blockers: [] },
         },
-      } as any;
+      };
 
       const canPromote = evaluationNode.checkPreCerebrumConditions(mockState);
 
@@ -235,10 +242,10 @@ describe('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
       const originalSetTimeout = global.setTimeout;
       let timeoutCalled = false;
 
-      global.setTimeout = ((callback: any, delay: any) => {
+      global.setTimeout = ((callback: (...args: unknown[]) => void, delay?: number) => {
         timeoutCalled = true;
         return originalSetTimeout(callback, delay);
-      }) as any;
+      }) as unknown as typeof setTimeout;
 
       try {
         // This will trigger setTimeout - should be removable

@@ -80,7 +80,7 @@ describe('Cortex Kernel Determinism', () => {
 });
 
 // Helper functions
-function normalizeForComparison(state: PRPState): any {
+function normalizeForComparison(state: PRPState): PRPState {
   return {
     ...state,
     id: 'NORMALIZED',

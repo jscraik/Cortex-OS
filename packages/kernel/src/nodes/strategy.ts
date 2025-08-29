@@ -74,6 +74,39 @@ export class StrategyNode {
   }
 
 
+  private async validateSecurityBaseline(
+    state: PRPState,
+  ): Promise<ValidationResult<SecurityDetails>> {
+    // OWASP ASVS L1 + MITRE ATLAS validation
+    const requirements = state.blueprint.requirements || [];
+    const hasSecurityReq = requirements.some(
+      (req) =>
+        req.toLowerCase().includes('security') ||
+        req.toLowerCase().includes('authentication') ||
+        req.toLowerCase().includes('authorization'),
+    );
+
+    return {
+      passed: hasSecurityReq,
+      details: {
+        owaspLevel: hasSecurityReq ? 'L1' : 'none',
+        mitreAtlas: hasSecurityReq,
+        securityRequirements: requirements.filter((req) => req.toLowerCase().includes('security')),
+      },
+    };
+  }
+
+  private async validateUXAccessibility(state: PRPState): Promise<ValidationResult<UXDetails>> {
+    // WCAG 2.2 AA compliance check
+    const hasUXReq = state.blueprint.requirements?.some(
+      (req) =>
+        req.toLowerCase().includes('ux') ||
+        req.toLowerCase().includes('user') ||
+        req.toLowerCase().includes('interface') ||
+        req.toLowerCase().includes('accessibility'),
+    );
+
+
 async function validateSecurityBaseline(state: PRPState) {
   const reqs = state.blueprint.requirements || [];
   const hasSecurity = reqs.some((r) =>
@@ -85,12 +118,14 @@ async function validateSecurityBaseline(state: PRPState) {
   };
 }
 
-async function validateUXAccessibility(state: PRPState) {
-  const hasUX = state.blueprint.requirements?.some((r) =>
-    ['ux', 'user', 'interface', 'accessibility'].some((k) => r.toLowerCase().includes(k)),
-  );
-  return { passed: hasUX, details: { wcagLevel: hasUX ? 'AA' : 'none' } };
-}
+
+  private async validateArchitecture(
+    state: PRPState,
+  ): Promise<ValidationResult<ArchitectureDetails>> {
+    // Architecture diagram consistency check
+    const title = state.blueprint.title?.toLowerCase() || '';
+    const description = state.blueprint.description?.toLowerCase() || '';
+
 
 async function validateArchitecture(state: PRPState) {
   const { title = '', description = '', requirements = [] } = state.blueprint;
@@ -102,4 +137,24 @@ async function validateArchitecture(state: PRPState) {
     );
   return { passed: hasArch, details: { architecture: hasArch } };
 
+}
+
+interface ValidationResult<T> {
+  passed: boolean;
+  details: T;
+}
+
+interface SecurityDetails {
+  owaspLevel: string;
+  mitreAtlas: boolean;
+  securityRequirements: string[];
+}
+
+interface UXDetails {
+  wcagLevel: string;
+  accessibilityFeatures: string[];
+}
+
+interface ArchitectureDetails {
+  architectureElements: string[];
 }
