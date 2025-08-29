@@ -92,4 +92,126 @@ describe('Cortex Kernel Integration', () => {
       expect(['completed', 'recycled']).toContain(result.phase);
     });
   });
+
+  describe('Workflow Phases', () => {
+    it('should execute all three main phases', async () => {
+      const blueprint = {
+        title: 'Phase Test',
+        description: 'Test all workflow phases',
+        requirements: ['Phase validation'],
+      };
+
+      const result = await kernel.runPRPWorkflow(blueprint, {
+        runId: 'phase-test-001',
+      });
+
+      const history = kernel.getExecutionHistory('phase-test-001');
+      const phases = history.map((state) => state.phase);
+
+      // Should include the main workflow phases
+      expect(phases).toContain('strategy');
+      expect(phases.some((p) => p === 'build')).toBe(true);
+      expect(phases.some((p) => p === 'evaluation')).toBe(true);
+      expect(phases[phases.length - 1]).toBe('completed');
+    });
+
+    it('should validate state transitions correctly', async () => {
+      const blueprint = {
+        title: 'Transition Test',
+        description: 'Test state transition validation',
+        requirements: ['State machine validation'],
+      };
+
+      const result = await kernel.runPRPWorkflow(blueprint);
+
+      // Final state should be valid
+      expect(['completed', 'recycled']).toContain(result.phase);
+
+      // All validation results should be present for completed workflows
+      if (result.phase === 'completed') {
+        expect(result.validationResults.strategy).toBeDefined();
+        expect(result.validationResults.build).toBeDefined();
+        expect(result.validationResults.evaluation).toBeDefined();
+      }
+    });
+  });
+
+  describe('Behavior Extensions', () => {
+    it('should capture incremental state updates', async () => {
+      const { ExampleCaptureSystem, BehaviorExtensionManager, createInitialPRPState } =
+        await import('../src/index.js');
+
+      const captureSystem = new ExampleCaptureSystem();
+      const manager = new BehaviorExtensionManager(captureSystem);
+      // Remove default extensions for a controlled test environment
+      manager.clearExtensions();
+
+      manager.registerExtension({
+        id: 'ext1',
+        name: 'Extension One',
+        description: 'Adds validation adjustment',
+        trigger: () => true,
+        modify: async () => ({
+          modified: true,
+          changes: [
+            {
+              type: 'validation_adjustment',
+              description: 'step one',
+              impact: 'low',
+              parameters: { step: 'one' },
+            },
+          ],
+          reasoning: 'first',
+        }),
+        confidence: 1,
+        basedOnPatterns: [],
+      });
+
+      manager.registerExtension({
+        id: 'ext2',
+        name: 'Extension Two',
+        description: 'Adds gate modification',
+        trigger: () => true,
+        modify: async () => ({
+          modified: true,
+          changes: [
+            {
+              type: 'gate_modification',
+              description: 'step two',
+              impact: 'low',
+              parameters: { step: 'two' },
+            },
+          ],
+          reasoning: 'second',
+        }),
+        confidence: 1,
+        basedOnPatterns: [],
+      });
+
+      const blueprint = {
+        title: 'Incremental Test',
+        description: 'Verifies state updates',
+        requirements: [],
+      };
+      const initialState = createInitialPRPState(blueprint, {
+        id: 'state-1',
+        runId: 'run-1',
+      });
+
+      await manager.applyExtensions(initialState);
+
+      const examples = captureSystem.getExamples();
+      expect(examples).toHaveLength(2);
+      expect(examples[0].context.inputState.metadata?.validationAdjustments).toBeUndefined();
+      expect(examples[0].outcome.resultingState.metadata.validationAdjustments).toEqual({
+        step: 'one',
+      });
+      expect(examples[1].context.inputState.metadata.validationAdjustments).toEqual({
+        step: 'one',
+      });
+      expect(examples[1].outcome.resultingState.metadata.gateModifications).toEqual({
+        step: 'two',
+      });
+    });
+  });
 });
