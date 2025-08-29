@@ -7,6 +7,7 @@
 
 import { PRPState, Evidence } from '../state.js';
 import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Evaluation Phase Gates:
@@ -32,7 +33,7 @@ export class EvaluationNode {
       type: 'test',
       source: 'tdd_validator',
       content: JSON.stringify(tddValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 7),
       phase: 'evaluation',
     });
 
@@ -50,7 +51,7 @@ export class EvaluationNode {
       type: 'analysis',
       source: 'code_reviewer',
       content: JSON.stringify(reviewValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 8),
       phase: 'evaluation',
     });
 
@@ -71,7 +72,7 @@ export class EvaluationNode {
       type: 'validation',
       source: 'quality_budgets',
       content: JSON.stringify(budgetValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 9),
       phase: 'evaluation',
     });
 
@@ -91,7 +92,7 @@ export class EvaluationNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: currentTimestamp(state.metadata.deterministic ?? false, 10),
         },
       },
     };

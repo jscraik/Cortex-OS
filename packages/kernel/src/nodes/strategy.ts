@@ -7,6 +7,7 @@
 
 import { PRPState, Evidence } from '../state.js';
 import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Strategy Phase Gates:
@@ -31,7 +32,7 @@ export class StrategyNode {
       type: 'validation',
       source: 'strategy_node',
       content: `Blueprint validation: ${state.blueprint.title}`,
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 1),
       phase: 'strategy',
     });
 
@@ -46,7 +47,7 @@ export class StrategyNode {
       type: 'analysis',
       source: 'security_baseline',
       content: JSON.stringify(securityBaseline),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 2),
       phase: 'strategy',
     });
 
@@ -72,7 +73,7 @@ export class StrategyNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: currentTimestamp(state.metadata.deterministic ?? false, 3),
         },
       },
     };

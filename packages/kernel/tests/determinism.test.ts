@@ -32,6 +32,9 @@ describe('Cortex Kernel Determinism', () => {
       const run1 = await kernel.runPRPWorkflow(blueprint, { runId: 'test-run-1' });
       const run2 = await kernel.runPRPWorkflow(blueprint, { runId: 'test-run-2' });
 
+      // Evidence timestamps should be stable across runs
+      expect(run1.evidence.map((e) => e.timestamp)).toEqual(run2.evidence.map((e) => e.timestamp));
+
       // Results should be structurally identical (excluding timestamps and run IDs)
       expect(normalizeForComparison(run1)).toEqual(normalizeForComparison(run2));
     });

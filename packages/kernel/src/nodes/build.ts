@@ -7,6 +7,7 @@
 
 import { PRPState, Evidence } from '../state.js';
 import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -35,7 +36,7 @@ export class BuildNode {
       type: 'test',
       source: 'backend_validation',
       content: JSON.stringify(backendValidation),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 4),
       phase: 'build',
     });
 
@@ -59,7 +60,7 @@ export class BuildNode {
       type: 'analysis',
       source: 'security_scanner',
       content: JSON.stringify(securityScan),
-      timestamp: new Date().toISOString(),
+      timestamp: currentTimestamp(state.metadata.deterministic ?? false, 5),
       phase: 'build',
     });
 
@@ -88,7 +89,7 @@ export class BuildNode {
           blockers,
           majors,
           evidence: evidence.map((e) => e.id),
-          timestamp: new Date().toISOString(),
+          timestamp: currentTimestamp(state.metadata.deterministic ?? false, 6),
         },
       },
     };
