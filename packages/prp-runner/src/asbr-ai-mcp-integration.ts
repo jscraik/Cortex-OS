@@ -49,6 +49,7 @@ export class ASBRAIMcpIntegration {
       }
     } catch (error) {
       console.error('❌ Error during ASBR AI MCP auto-registration:', error);
+      throw error;
     }
   }
 

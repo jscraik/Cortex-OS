@@ -68,21 +68,28 @@ export class ASBRAIMcpServer {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
+    const capabilities = await this.aiCapabilities.getCapabilities();
+    if (capabilities && capabilities.features) {
+      console.log(
+        `✅ ASBR AI MCP Server initialized with ${capabilities.features.length} features`,
+      );
+    } else {
+      console.log(`⚠️ ASBR AI MCP Server initialized with limited capabilities`);
+    }
+    this.isInitialized = true;
+  }
+
+  /**
+   * Initialize the MCP server in degraded mode for tests.
+   * Allows startup even when AI capabilities fail to load.
+   * Do not use in production.
+   */
+  async initializeForTesting(): Promise<void> {
     try {
-      // Verify AI capabilities are working with graceful fallback
-      const capabilities = await this.aiCapabilities.getCapabilities();
-      if (capabilities && capabilities.features) {
-        console.log(
-          `✅ ASBR AI MCP Server initialized with ${capabilities.features.length} features`,
-        );
-      } else {
-        console.log(`⚠️ ASBR AI MCP Server initialized with limited capabilities`);
-      }
-      this.isInitialized = true;
+      await this.initialize();
     } catch (error) {
-      // For testing scenarios, allow initialization with degraded capabilities
-      console.warn(`⚠️ ASBR AI MCP Server initialized with AI service unavailable: ${error}`);
-      this.isInitialized = true; // Still allow server to start for testing
+      console.warn(`⚠️ ASBR AI MCP Server initialized in degraded test mode: ${error}`);
+      this.isInitialized = true;
     }
   }
 
