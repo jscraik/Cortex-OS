@@ -8,12 +8,7 @@
 
 import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
 import { nanoid } from 'nanoid';
-
-// Import real interfaces from prp-runner
-interface PRPOrchestrator {
-  getNeuronCount(): number;
-  // Real orchestrator interface - simplified for testing
-}
+import type { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 interface Blueprint {
   title: string;
