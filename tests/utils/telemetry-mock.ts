@@ -4,6 +4,8 @@ export const withSpan = vi.fn(async (_name: string, fn: (span: any) => Promise<a
   const span = {
     spanContext: () => ({ traceId: 'trace-id', spanId: 'span-id' }),
     setAttributes: vi.fn(),
+    setStatus: vi.fn(),
+    recordException: vi.fn(),
   };
   return fn(span);
 });

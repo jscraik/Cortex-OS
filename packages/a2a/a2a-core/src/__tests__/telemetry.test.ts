@@ -8,28 +8,7 @@ const spans: Array<{
   setAttributes: ReturnType<typeof vi.fn>;
 }> = [];
 
-vi.mock('@cortex-os/telemetry', () => {
-  return {
-    withSpan: vi.fn(async (_name: string, fn: (span: any) => Promise<any>) => {
-      const span = {
-        setStatus: vi.fn(),
-        recordException: vi.fn(),
-        setAttributes: vi.fn(),
-      };
-      spans.push(span);
-      try {
-        const result = await fn(span);
-        span.setStatus({ code: SpanStatusCode.OK });
-        return result;
-      } catch (err) {
-        span.recordException(err as Error);
-        span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
-        throw err;
-      }
-    }),
-    logWithSpan: vi.fn(),
-  };
-});
+vi.mock('@cortex-os/telemetry');
 
 import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import { DeadLetterQueue } from '../dlq';
@@ -38,6 +17,23 @@ import { SagaOrchestrator } from '../saga';
 
 beforeEach(() => {
   spans.length = 0;
+  (withSpan as any).mockImplementation(async (_name: string, fn: (span: any) => Promise<any>) => {
+    const span = {
+      setStatus: vi.fn(),
+      recordException: vi.fn(),
+      setAttributes: vi.fn(),
+    };
+    spans.push(span);
+    try {
+      const result = await fn(span);
+      span.setStatus({ code: SpanStatusCode.OK });
+      return result;
+    } catch (err) {
+      span.recordException(err as Error);
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
+      throw err;
+    }
+  });
   (withSpan as any).mockClear();
   (logWithSpan as any).mockClear();
 });
