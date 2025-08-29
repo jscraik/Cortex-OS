@@ -261,10 +261,8 @@ export class PythonAgentBridge extends EventEmitter {
 
       const repoRoot = findRepoRoot();
       const pythonPathParts = [
-        // Add the parent so that `src` is recognized as a package (src.__init__.py)
+        // Parent directory so that `src` is recognized as a package for relative imports
         path.resolve(repoRoot, 'packages/python-agents'),
-        // Add src itself to support legacy absolute imports (e.g., 'base_agent')
-        path.resolve(repoRoot, 'packages/python-agents/src'),
       ];
       const existingPyPath = process.env.PYTHONPATH || '';
       if (existingPyPath) pythonPathParts.push(existingPyPath);
