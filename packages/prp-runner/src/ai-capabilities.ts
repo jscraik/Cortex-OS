@@ -320,12 +320,6 @@ export class AICoreCapabilities {
   }
 
   /**
-    };
-
-    return capabilities;
-  }
-
-  /**
    * Clear knowledge base (with proper resource cleanup)
    */
   async clearKnowledge(): Promise<void> {
