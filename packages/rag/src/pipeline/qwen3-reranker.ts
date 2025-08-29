@@ -1,5 +1,7 @@
 
-import { runProcess } from '../../../../src/lib/run-process.js';
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 
 /**
@@ -60,21 +62,20 @@ export class Qwen3Reranker implements Reranker {
   private readonly pythonPath: string;
 
   constructor(options: Qwen3RerankOptions = {}) {
-    this.modelPath =
-      options.modelPath ??
-      process.env.QWEN3_RERANKER_MODEL_PATH ??
-      'mlx-community/Qwen3-Reranker-4B';
-    this.maxLength = options.maxLength ?? 512;
-    this.topK = options.topK ?? 10;
-    this.batchSize = options.batchSize ?? 32;
-    this.cacheDir =
-      options.cacheDir ??
-      process.env.QWEN3_RERANKER_CACHE_DIR ??
-      path.join(os.tmpdir(), 'qwen3-reranker-cache');
-    this.pythonPath =
-      options.pythonPath ??
-      process.env.QWEN3_RERANKER_PYTHON ??
-      'python3';
+
+    const defaultPath =
+      process.env.QWEN_RERANKER_MODEL_PATH ||
+      path.resolve(process.cwd(), 'models/Qwen3-Reranker-4B');
+    this.modelPath = options.modelPath || defaultPath;
+    this.maxLength = options.maxLength || 512;
+    this.topK = options.topK || 10;
+    this.batchSize = options.batchSize || 32;
+    this.cacheDir = options.cacheDir || path.dirname(this.modelPath);
+    this.pythonPath = options.pythonPath || 'python3';
+    if (!fs.existsSync(this.modelPath)) {
+      throw new Error(`Reranker model path does not exist: ${this.modelPath}`);
+    }
+
   }
 
   /**
