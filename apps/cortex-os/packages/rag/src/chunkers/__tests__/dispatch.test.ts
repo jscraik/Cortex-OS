@@ -478,10 +478,12 @@ describe('ProcessingDispatcher', () => {
         },
       };
 
+      const nowSpy = vi.spyOn(performance, 'now');
+      const values = [100, 150];
+      nowSpy.mockImplementation(() => values.shift() ?? 150);
       const result = await dispatcher.dispatch(mockFile, strategy);
-
-      expect(result.processingTimeMs).toBeGreaterThan(0);
-      expect(typeof result.processingTimeMs).toBe('number');
+      expect(result.processingTimeMs).toBe(50);
+      nowSpy.mockRestore();
     });
 
     it('should support custom chunker config', async () => {
