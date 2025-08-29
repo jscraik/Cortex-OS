@@ -959,9 +959,15 @@ importers:
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
+      axios:
+        specifier: ^1.11.0
+        version: 1.11.0(debug@4.4.1)
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
     devDependencies:
       tsx:
         specifier: ^4.16.2
