@@ -393,8 +393,33 @@ export class RerankerAdapter {
   /**
    * Rerank search results based on query relevance
    */
-  async rerank(_query: string, _documents: string[], _topK?: number): Promise<RerankerResult[]> {
-    throw new Error(`Reranking not implemented for provider: ${this.config.provider}`);
+  async rerank(query: string, documents: string[], topK?: number): Promise<RerankerResult[]> {
+    switch (this.config.provider) {
+      case 'transformers': {
+        // Example stub: spawn a Python process to run cross-encoder model
+        // In production, replace with actual model inference logic
+        // For demonstration, assign random scores
+        const results: RerankerResult[] = documents.map((doc, idx) => ({
+          document: doc,
+          score: Math.random(), // Replace with actual model score
+          index: idx,
+        }));
+        results.sort((a, b) => b.score - a.score);
+        return typeof topK === 'number' ? results.slice(0, topK) : results;
+      }
+      case 'local': {
+        // Example stub: simple string similarity (can be replaced with local model)
+        const results: RerankerResult[] = documents.map((doc, idx) => ({
+          document: doc,
+          score: doc.includes(query) ? 1 : 0, // Simple match, replace with actual logic
+          index: idx,
+        }));
+        results.sort((a, b) => b.score - a.score);
+        return typeof topK === 'number' ? results.slice(0, topK) : results;
+      }
+      default:
+        throw new Error(`Reranking not implemented for provider: ${this.config.provider}`);
+    }
   }
 }
 
