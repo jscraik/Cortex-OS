@@ -31,7 +31,7 @@ export async function rerank(candidates: Candidate[], query: string): Promise<Ca
   const res = await fetch(`${baseUrl}/rerank`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: validQuery, documents: validCandidates.map((c) => c.text) }),
+    body: JSON.stringify({ query: validQuery, candidates: validCandidates }),
   });
 
   if (!res.ok) {
