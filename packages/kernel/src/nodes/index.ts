@@ -5,6 +5,6 @@
  * @version 1.0.0
  */
 
-export { StrategyNode } from './strategy.js';
-export { BuildNode } from './build.js';
-export { EvaluationNode } from './evaluation.js';
+export { runStrategyNode } from './strategy.js';
+export { runBuildNode } from './build.js';
+export { runEvaluationNode } from './evaluation.js';

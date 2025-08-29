@@ -12,7 +12,7 @@ export type { PRPState, Evidence, ValidationGate, CerebrumDecision } from './sta
 export { PRPStateSchema, validateStateTransition, createInitialPRPState } from './state.js';
 
 // Workflow nodes
-export { StrategyNode, BuildNode, EvaluationNode } from './nodes/index.js';
+export { runStrategyNode, runBuildNode, runEvaluationNode } from './nodes/index.js';
 
 // MCP integration
 export { MCPAdapter, createDefaultMCPTools } from './mcp/adapter.js';
