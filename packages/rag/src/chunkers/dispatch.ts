@@ -283,7 +283,7 @@ export class ProcessingDispatcher {
       throw new Error('Missing processing configuration');
     }
     const processingPromise = this.routeToChunker(file, strategy.strategy, processing);
-    let timeoutHandle: ReturnType<typeof setTimeout>;
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined = undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutHandle = setTimeout(
         () => reject(new Error('Processing timeout')),
