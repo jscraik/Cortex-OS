@@ -207,8 +207,7 @@ export class SpiffeClient {
         );
 
         const response = await this.fetchWithTimeout(url.pathname + url.search, { method: 'GET' });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          throw new Error(`Failed to fetch SVID: HTTP ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         const svidResponse = z
