@@ -137,7 +137,7 @@ export class BuildNode {
     return {
       passed: exists,
       details: {
-        schemaFormat: 'OpenAPI 3.0',
+        schemaFormat: 'openapi.yaml',
         validation: exists ? 'found' : 'missing',
       },
     };
