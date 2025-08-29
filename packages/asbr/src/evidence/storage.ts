@@ -5,6 +5,8 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { gzip, gunzip } from 'zlib';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import type { Evidence } from '../types/index.js';
 import { ValidationError } from '../types/index.js';
 import { getDataPath, pathExists } from '../xdg/index.js';
@@ -484,24 +486,61 @@ export class EvidenceStorage {
     return csvContent;
   }
 
-  // Placeholder methods for encryption/compression
   private async encrypt(content: string): Promise<string> {
-    // In a real implementation, use proper encryption
-    return Buffer.from(content).toString('base64');
+    const key = this.getEncryptionKey();
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', key, iv);
+    const encrypted = Buffer.concat([cipher.update(content, 'utf8'), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return Buffer.concat([iv, tag, encrypted]).toString('base64');
   }
 
   private async decrypt(content: string): Promise<string> {
-    // In a real implementation, use proper decryption
-    return Buffer.from(content, 'base64').toString('utf-8');
+    const data = Buffer.from(content, 'base64');
+    const iv = data.subarray(0, 12);
+    const tag = data.subarray(12, 28);
+    const encrypted = data.subarray(28);
+    const key = this.getEncryptionKey();
+    const decipher = createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+    return decrypted.toString('utf8');
   }
 
   private async compress(content: string): Promise<string> {
-    // In a real implementation, use proper compression
-    return content;
+    return new Promise((resolve, reject) => {
+      gzip(content, (err, buffer) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(buffer.toString('base64'));
+        }
+      });
+    });
   }
 
   private async decompress(content: string): Promise<string> {
-    // In a real implementation, use proper decompression
-    return content;
+    return new Promise((resolve, reject) => {
+      const buffer = Buffer.from(content, 'base64');
+      gunzip(buffer, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result.toString('utf-8'));
+        }
+      });
+    });
+  }
+
+  private getEncryptionKey(): Buffer {
+    const keyHex = process.env.EVIDENCE_ENCRYPTION_KEY;
+    if (!keyHex) {
+      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY not set');
+    }
+    const key = Buffer.from(keyHex, 'hex');
+    if (key.length !== 32) {
+      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY must be 64 hex characters');
+    }
+    return key;
   }
 }
