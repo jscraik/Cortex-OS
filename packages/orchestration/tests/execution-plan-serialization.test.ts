@@ -23,7 +23,7 @@ describe('ExecutionPlanSchema serialization', () => {
   });
 
   it('rejects plan with fallbackStrategies', () => {
-    const withFallback = { ...basePlan, fallbackStrategies: ['sequential'] } as any;
+    const withFallback = { ...basePlan, fallbackStrategies: ['sequential'] } as unknown;
     expect(() => ExecutionPlanSchema.parse(withFallback)).toThrow();
   });
 });
