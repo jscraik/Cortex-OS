@@ -30,7 +30,7 @@ export interface AgentTaskPayload {
   requirements: string[];
   dependencies?: string[];
   metadata?: Record<string, unknown>;
-  agentType?: 'langgraph' | 'crewai' | 'autogen';
+  agentType?: 'langgraph' | 'crewai';
 }
 
 export interface AgentTaskResult {
