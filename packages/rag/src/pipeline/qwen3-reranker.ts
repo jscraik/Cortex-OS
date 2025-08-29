@@ -1,4 +1,6 @@
+
 import { runProcess } from '../../../../src/lib/run-process.js';
+
 
 /**
  * Document with relevance score for reranking
@@ -22,6 +24,8 @@ export interface Reranker {
    */
   rerank(query: string, documents: RerankDocument[], topK?: number): Promise<RerankDocument[]>;
 }
+
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Configuration for Qwen3 reranker
@@ -56,12 +60,21 @@ export class Qwen3Reranker implements Reranker {
   private readonly pythonPath: string;
 
   constructor(options: Qwen3RerankOptions = {}) {
-    this.modelPath = options.modelPath || '/Volumes/External-SSD/Models/Qwen/Qwen3-Reranker-4B';
-    this.maxLength = options.maxLength || 512;
-    this.topK = options.topK || 10;
-    this.batchSize = options.batchSize || 32;
-    this.cacheDir = options.cacheDir || '/tmp/qwen3-reranker-cache';
-    this.pythonPath = options.pythonPath || 'python3';
+    this.modelPath =
+      options.modelPath ??
+      process.env.QWEN3_RERANKER_MODEL_PATH ??
+      'mlx-community/Qwen3-Reranker-4B';
+    this.maxLength = options.maxLength ?? 512;
+    this.topK = options.topK ?? 10;
+    this.batchSize = options.batchSize ?? 32;
+    this.cacheDir =
+      options.cacheDir ??
+      process.env.QWEN3_RERANKER_CACHE_DIR ??
+      path.join(os.tmpdir(), 'qwen3-reranker-cache');
+    this.pythonPath =
+      options.pythonPath ??
+      process.env.QWEN3_RERANKER_PYTHON ??
+      'python3';
   }
 
   /**
@@ -134,12 +147,14 @@ export class Qwen3Reranker implements Reranker {
    * Get the Python script for Qwen3 reranking
    */
   private getPythonScript(): string {
+
     return `
 import json
 import sys
 import torch
 from transformers import AutoTokenizer, AutoModel
 import os
+import tempfile
 
 def rerank_documents():
     try:
@@ -151,7 +166,7 @@ def rerank_documents():
         max_length = input_data.get('max_length', 512)
         
         # Set up cache directory
-        cache_dir = os.getenv('TRANSFORMERS_CACHE', '/tmp/qwen3-reranker-cache')
+        cache_dir = os.getenv('TRANSFORMERS_CACHE', os.path.join(tempfile.gettempdir(), 'qwen3-reranker-cache'))
         os.makedirs(cache_dir, exist_ok=True)
         
         # Load model and tokenizer
@@ -223,6 +238,7 @@ def rerank_documents():
 if __name__ == "__main__":
     rerank_documents()
 `;
+
   }
 
   /**

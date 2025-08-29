@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
 import { ASBRAIIntegration, createASBRAIIntegration } from '../asbr-ai-integration.js';
-import { PRPOrchestrator } from '../orchestrator.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 import { createNeuronRegistry } from '../neurons/index.js';
 
 // Mock orchestration types to avoid external dependencies
@@ -47,7 +47,7 @@ interface OrchestrationResult {
 
 // Mock external orchestration engine components
 vi.mock('../orchestrator.js', () => ({
-  PRPOrchestrator: vi.fn().mockImplementation(() => ({
+  createPRPOrchestrator: vi.fn().mockImplementation(() => ({
     registerNeuron: vi.fn(),
     executePRPCycle: vi.fn().mockResolvedValue({
       id: 'prp-123',
@@ -120,7 +120,7 @@ class AIEnhancedOrchestrationEngine {
   constructor() {
     this.aiCapabilities = createAICapabilities('full');
     this.asbrIntegration = createASBRAIIntegration('balanced');
-    this.prpOrchestrator = new PRPOrchestrator();
+    this.prpOrchestrator = createPRPOrchestrator();
     this.neuronRegistry = createNeuronRegistry();
 
     // Register AI-enhanced neurons

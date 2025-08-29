@@ -6,6 +6,8 @@
 import { type Embedder } from '../index.js';
 import { runProcess } from '../../../../src/lib/run-process.js';
 
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
 export interface Qwen3EmbedOptions {
@@ -49,58 +51,18 @@ export class Qwen3Embedder implements Embedder {
 
   private async embedWithModel(texts: string[], modelSize: Qwen3ModelSize): Promise<number[][]> {
     const modelPath = `${this.cacheDir}/models/Qwen3-Embedding-${modelSize}`;
+
     const script = this.getPythonScript(modelPath, texts);
     const result = await runProcess<{ embeddings: number[][] }>('python3', ['-c', script], {
       env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir },
+
     });
     return result.embeddings;
   }
 
-  private getPythonScript(modelPath: string, texts: string[]): string {
-    return `
-import json
-import sys
-import torch
-from transformers import AutoTokenizer, AutoModel
-import numpy as np
-
-def mean_pooling(model_output, attention_mask):
-    token_embeddings = model_output[0]
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-
-try:
-    # Load model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("${modelPath}")
-    model = AutoModel.from_pretrained("${modelPath}")
-    
-    texts = ${JSON.stringify(texts)}
-    
-    # Tokenize and encode
-    encoded_input = tokenizer(texts, padding=True, truncation=True, max_length=${this.maxTokens}, return_tensors='pt')
-    
-    # Generate embeddings
-    with torch.no_grad():
-        model_output = model(**encoded_input)
-    
-    # Apply mean pooling
-    embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
-    
-    # Normalize embeddings
-    embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
-    
-    # Convert to list and output
-    result = {
-        "embeddings": embeddings.cpu().numpy().tolist(),
-        "model": "${modelPath}",
-        "dimension": embeddings.shape[1]
-    }
-    print(json.dumps(result))
-    
-except Exception as e:
-    print(f"Error: {str(e)}", file=sys.stderr)
-    sys.exit(1)
-`;
+  private getPythonScript(): string {
+    const scriptPath = path.join(packageRoot, 'python', 'qwen3_embed.py');
+    return readFileSync(scriptPath, 'utf8');
   }
 
   async close(): Promise<void> {
