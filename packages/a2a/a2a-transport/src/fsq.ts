@@ -1,15 +1,18 @@
-import { promises as fs } from 'node:fs';
+import { promises as fs, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import os from 'node:os';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Transport } from '@cortex-os/a2a-core/transport';
 
-export async function fsQueue(queueName = 'default'): Promise<Transport> {
+export function fsQueue(queueName = 'default'): Transport {
   const dir = join(os.homedir(), '.cortex', 'a2a', queueName);
   try {
-    await fs.mkdir(dir, { recursive: true });
+    mkdirSync(dir, { recursive: true });
   } catch (err) {
-    console.error(`Failed to create A2A transport directory ${dir}. Transport will not function properly.`, err);
+    console.error(
+      `Failed to create A2A transport directory ${dir}. Transport will not function properly.`,
+      err,
+    );
     throw err;
   }
   let listeners: ((m: Envelope) => Promise<void>)[] = [];

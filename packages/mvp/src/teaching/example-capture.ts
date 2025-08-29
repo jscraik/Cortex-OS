@@ -6,7 +6,7 @@
  */
 
 import { PRPState, Evidence } from '../state.js';
-import { nanoid } from 'nanoid';
+import { generateId } from '../utils/id.js';
 
 /**
  * Captured example for teaching and behavior extension
@@ -76,12 +76,13 @@ export class ExampleCaptureSystem {
     userAction: CapturedExample['userAction'],
     outcome: CapturedExample['outcome'],
     metadata: Partial<CapturedExample['metadata']> = {},
+    deterministic = false,
   ): CapturedExample | null {
     if (!this.activeCapture) {
       return null;
     }
     const example: CapturedExample = {
-      id: `example-${nanoid()}`,
+      id: generateId('example', deterministic),
       type,
       context,
       userAction,
