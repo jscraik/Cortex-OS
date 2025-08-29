@@ -59,7 +59,7 @@ function createWorkflowHash(workflow: Workflow): string {
       ]),
     ),
   });
-  return createHash('md5').update(structureData, 'utf8').digest('hex');
+  return createHash('sha256').update(structureData, 'utf8').digest('hex');
 }
 
 function initializeCacheCleanup(): void {
