@@ -22,8 +22,20 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm structure:validate
-      - run: pnpm madge --circular --extensions ts,tsx ./packages || true
-      - run: pnpm madge --circular --extensions ts,tsx ./apps || true
+      - name: Check packages for circular deps
+        run: |
+          pnpm madge --circular --extensions ts,tsx ./packages || {
+            echo "madge detected issues in packages"
+            exit 1
+          }
+        continue-on-error: true
+      - name: Check apps for circular deps
+        run: |
+          pnpm madge --circular --extensions ts,tsx ./apps || {
+            echo "madge detected issues in apps"
+            exit 1
+          }
+        continue-on-error: true
       - run: |
           pnpm eslint --ext .ts,.tsx --rule "import/no-restricted-paths: error"
 
@@ -48,7 +60,25 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
-      - run: uv sync || true
+      - name: Sync Python dependencies
+        run: |
+          uv sync || {
+            echo "uv sync failed"
+            exit 1
+          }
+        continue-on-error: true
       - run: pnpm test -- --coverage
-      - run: uv run pytest --cov=services --cov=libs/python || true
-      - run: pnpm nyc check-coverage --lines 80 --functions 80 --branches 70 || true
+      - name: Run Python tests
+        run: |
+          uv run pytest --cov=services --cov=libs/python || {
+            echo "pytest failed"
+            exit 1
+          }
+        continue-on-error: true
+      - name: Check coverage thresholds
+        run: |
+          pnpm nyc check-coverage --lines 80 --functions 80 --branches 70 || {
+            echo "coverage check failed"
+            exit 1
+          }
+        continue-on-error: true
