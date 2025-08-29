@@ -1,4 +1,4 @@
-import { ModelRouter } from './src/model-router.ts';
+import { ModelRouter } from './src/model-router';
 
 async function main() {
   console.log('Creating ModelRouter...');
