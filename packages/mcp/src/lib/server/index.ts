@@ -73,8 +73,8 @@ export function addPrompt(
 }
 
 export async function handleRequest(
-  req: McpRequest,
   ctx: ServerContext,
+  req: McpRequest,
 ) {
   const parsed = validateRequest(req);
   switch (parsed.method) {
