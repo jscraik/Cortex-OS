@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { RAGPipeline } from '../src/index';
+import { RAGPipeline, type Pipeline } from '../src/index';
 import { memoryStore } from '../src/store/memory';
 import { ingestFiles } from '../src/pipeline/batch-ingest';
 import { resolveFileList, createWorker, runWorkers } from '../src/lib/batch-ingest';
@@ -22,7 +22,7 @@ describe('ingestFiles', () => {
     await fs.writeFile(file1, 'hello');
     await fs.writeFile(file2, 'world!');
 
-    const pipeline = new RAGPipeline({ embedder, store: memoryStore() });
+    const pipeline: Pipeline = new RAGPipeline({ embedder, store: memoryStore() });
     await ingestFiles({ pipeline, files: [file1, file2], concurrency: 2 });
 
     const results = await pipeline.retrieve('query', 5);

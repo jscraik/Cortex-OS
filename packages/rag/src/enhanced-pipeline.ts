@@ -205,7 +205,7 @@ export const createProductionRAGPipeline = () => {
   return new EnhancedRAGPipeline({
     embeddingModelSize: '4B', // Good balance of performance and quality
     generationModel: {
-      model: '/Volumes/SSD500/Models/MLX/qwen2.5-coder-32b-instruct-q4',
+      model: process.env.MLX_CODER_32B_PATH || 'mlx-community/qwen2.5-coder-32b-instruct-q4',
       backend: 'mlx',
       name: 'Qwen2.5 Coder 32B',
     },
@@ -218,7 +218,7 @@ export const createFastRAGPipeline = () => {
   return new EnhancedRAGPipeline({
     embeddingModelSize: '0.6B', // Faster embedding
     generationModel: {
-      model: '/Volumes/SSD500/Models/MLX/phi-3.5-mini-instruct-q4',
+      model: process.env.MLX_PHI35_MODEL_PATH || 'mlx-community/phi-3.5-mini-instruct-q4',
       backend: 'mlx',
       name: 'Phi-3.5 Mini',
     },
@@ -231,7 +231,7 @@ export const createHighQualityRAGPipeline = () => {
   return new EnhancedRAGPipeline({
     embeddingModelSize: '8B', // Best embedding quality
     generationModel: {
-      model: '/Volumes/SSD500/Models/MLX/qwen2.5-72b-instruct-q4',
+      model: process.env.MLX_QWEN2_5_72B_PATH || 'mlx-community/qwen2.5-72b-instruct-q4',
       backend: 'mlx',
       name: 'Qwen2.5 72B',
     },

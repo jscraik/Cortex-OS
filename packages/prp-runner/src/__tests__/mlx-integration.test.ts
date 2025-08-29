@@ -6,19 +6,28 @@
  * @status TDD-DRIVEN
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from '../mlx-adapter.js';
-import { LLMBridge } from '../llm-bridge.js';
+import {
+  configureLLM,
+  getProvider,
+  getModel,
+  getMLXAdapter as getMLXAdapterFromState,
+  listMLXModels,
+  checkProviderHealth,
+  generate,
+  type LLMState,
+} from '../llm-bridge.js';
 
 describe('🔬 MLX Integration Tests', () => {
   let mlxAdapter: MLXAdapter;
-  let llmBridge: LLMBridge;
+  let llmState: LLMState;
 
   beforeAll(async () => {
     // Use the smallest, fastest model for testing
     mlxAdapter = createMLXAdapter(AVAILABLE_MLX_MODELS.QWEN_SMALL);
 
-    llmBridge = new LLMBridge({
+    llmState = configureLLM({
       provider: 'mlx',
       endpoint: '', // Not needed for MLX
       mlxModel: AVAILABLE_MLX_MODELS.QWEN_SMALL,
@@ -79,35 +88,35 @@ describe('🔬 MLX Integration Tests', () => {
   });
 
   describe('LLMBridge MLX Integration Tests', () => {
-    it('should create MLX bridge with correct configuration', () => {
-      expect(llmBridge.getProvider()).toBe('mlx');
-      expect(llmBridge.getModel()).toBe(AVAILABLE_MLX_MODELS.QWEN_SMALL);
+    it('should create MLX state with correct configuration', () => {
+      expect(getProvider(llmState)).toBe('mlx');
+      expect(getModel(llmState)).toBe(AVAILABLE_MLX_MODELS.QWEN_SMALL);
     });
 
-    it('should access MLX adapter from bridge', () => {
-      const adapter = llmBridge.getMLXAdapter();
+    it('should access MLX adapter from state', () => {
+      const adapter = getMLXAdapterFromState(llmState);
       expect(adapter).toBeDefined();
       expect(adapter).toBeInstanceOf(MLXAdapter);
     });
 
-    it('should list MLX models through bridge', async () => {
-      const models = await llmBridge.listMLXModels();
+    it('should list MLX models through helpers', async () => {
+      const models = await listMLXModels(llmState);
 
       expect(models).toBeDefined();
       expect(Array.isArray(models)).toBe(true);
       expect(models.length).toBeGreaterThan(0);
     }, 10000);
 
-    it('should check provider health through bridge', async () => {
-      const health = await llmBridge.checkProviderHealth();
+    it('should check provider health through helpers', async () => {
+      const health = await checkProviderHealth(llmState);
 
       expect(health).toBeDefined();
       expect(health.healthy).toBe(true);
       expect(health.message).toBe('Model is healthy');
     }, 5000);
 
-    it('should generate text through LLM bridge', async () => {
-      const result = await llmBridge.generate('Count from 1 to 5', {
+    it('should generate text through helpers', async () => {
+      const result = await generate(llmState, 'Count from 1 to 5', {
         maxTokens: 30,
         temperature: 0.1,
       });
@@ -122,14 +131,13 @@ describe('🔬 MLX Integration Tests', () => {
     }, 15000);
 
     it('should handle generation errors gracefully', async () => {
-      // Test with invalid configuration
-      const badBridge = new LLMBridge({
+      const badState = configureLLM({
         provider: 'mlx',
         endpoint: '',
         mlxModel: 'nonexistent-model',
       });
 
-      await expect(badBridge.generate('test prompt')).rejects.toThrow();
+      await expect(generate(badState, 'test prompt')).rejects.toThrow();
     }, 5000);
   });
 
@@ -161,11 +169,11 @@ describe('🔬 MLX Integration Tests', () => {
 
     it('should validate configuration properly', () => {
       expect(() => {
-        new LLMBridge({
+        configureLLM({
           provider: 'mlx',
           endpoint: '',
           // Missing mlxModel
-        });
+        } as any);
       }).toThrow('MLX model is required for MLX provider');
     });
   });

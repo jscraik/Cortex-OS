@@ -1,11 +1,15 @@
 import { z } from 'zod';
+
 import { resolveFileList, createWorker, runWorkers } from '../lib/batch-ingest';
 
 const ingestFilesSchema = z
   .object({
-    pipeline: z.custom<{
-      ingest: (...args: unknown[]) => Promise<void>;
-    }>((p) => typeof p === 'object' && p !== null && typeof (p as any).ingest === 'function'),
+    pipeline: z.custom<Pipeline>(
+      (p): p is Pipeline =>
+        typeof p === 'object' &&
+        p !== null &&
+        typeof (p as Record<string, unknown>).ingest === 'function',
+    ),
     files: z.array(z.string()).default([]),
     root: z.string().optional(),
     include: z.array(z.string()).default(['**/*']),
@@ -47,6 +51,8 @@ export async function ingestFiles(params: IngestFilesParams): Promise<void> {
     includePriority,
   });
   const queue = [...uniqueFiles];
+
   const worker = createWorker({ pipeline, queue, chunkSize, overlap });
   await runWorkers(worker, concurrency, uniqueFiles.length);
+
 }
