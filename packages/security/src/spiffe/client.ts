@@ -17,6 +17,69 @@ import {
 } from '../types.js';
 import { extractWorkloadPath } from '../utils/security-utils.ts';
 
+export function convertSelectors(
+  selectors: Array<{ type?: string; value?: string }>,
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  selectors.forEach((selector) => {
+    if (selector.type && selector.value) {
+      result[selector.type] = selector.value;
+    }
+  });
+  return result;
+}
+
+export async function requestWorkloadIdentity(
+  httpClient: ReturnType<typeof axios.create>,
+): Promise<unknown> {
+  const response = await httpClient.get('/workload/identity');
+  return response.data;
+}
+
+export function parseWorkloadResponse(data: unknown) {
+  return SpiffeWorkloadResponseSchema.parse(data);
+}
+
+export function buildWorkloadIdentity(
+  workloadResponse: z.infer<typeof SpiffeWorkloadResponseSchema>,
+): WorkloadIdentity {
+  const workloadPath = extractWorkloadPath(workloadResponse.spiffe_id);
+  if (!workloadPath) {
+    throw new SPIFFEError('Invalid SPIFFE ID format', workloadResponse.spiffe_id);
+  }
+
+  return {
+    spiffeId: workloadResponse.spiffe_id,
+    trustDomain: workloadResponse.trust_domain,
+    workloadPath,
+    selectors: convertSelectors(workloadResponse.selectors || []),
+    metadata: {
+      fetchedAt: new Date(),
+      trustDomain: workloadResponse.trust_domain,
+    },
+  };
+}
+
+export function splitPEMCertificates(pemChain: string): string[] {
+  const certificates: string[] = [];
+  const lines = pemChain.split('\n');
+  let currentCert: string[] = [];
+
+  for (const line of lines) {
+    if (line.includes('-----BEGIN CERTIFICATE-----')) {
+      currentCert = [line];
+    } else if (line.includes('-----END CERTIFICATE-----')) {
+      currentCert.push(line);
+      certificates.push(currentCert.join('\n'));
+      currentCert = [];
+    } else if (currentCert.length > 0) {
+      currentCert.push(line);
+    }
+  }
+
+  return certificates;
+}
+
 /**
  * SPIFFE Workload API Client
  * Implements the SPIFFE Workload API for certificate retrieval and workload attestation
@@ -52,25 +115,9 @@ export class SpiffeClient {
           span,
         );
 
-        const response = await this.httpClient.get('/workload/identity');
-
-        const workloadResponse = SpiffeWorkloadResponseSchema.parse(response.data);
-
-        const workloadPath = extractWorkloadPath(workloadResponse.spiffe_id);
-        if (!workloadPath) {
-          throw new SPIFFEError('Invalid SPIFFE ID format', workloadResponse.spiffe_id);
-        }
-
-        const workloadIdentity: WorkloadIdentity = {
-          spiffeId: workloadResponse.spiffe_id,
-          trustDomain: workloadResponse.trust_domain,
-          workloadPath,
-          selectors: this.convertSelectors(workloadResponse.selectors || []),
-          metadata: {
-            fetchedAt: new Date(),
-            trustDomain: workloadResponse.trust_domain,
-          },
-        };
+        const data = await requestWorkloadIdentity(this.httpClient);
+        const workloadResponse = parseWorkloadResponse(data);
+        const workloadIdentity = buildWorkloadIdentity(workloadResponse);
 
         logWithSpan(
           'info',
@@ -207,21 +254,6 @@ export class SpiffeClient {
   }
 
   /**
-   * Convert SPIFFE selectors to key-value pairs
-   */
-  private convertSelectors(
-    selectors: Array<{ type?: string; value?: string }>,
-  ): Record<string, string> {
-    const result: Record<string, string> = {};
-    selectors.forEach((selector) => {
-      if (selector.type && selector.value) {
-        result[selector.type] = selector.value;
-      }
-    });
-    return result;
-  }
-
-  /**
    * Get trust bundle from SPIFFE Workload API
    */
   async fetchTrustBundle(): Promise<string[]> {
@@ -245,7 +277,7 @@ export class SpiffeClient {
           .parse(response.data);
 
         // Split trust bundle into individual certificates
-        const certificates = this.splitPEMCertificates(trustBundleResponse.trust_bundle);
+        const certificates = splitPEMCertificates(trustBundleResponse.trust_bundle);
 
         logWithSpan(
           'info',
@@ -276,28 +308,5 @@ export class SpiffeClient {
         );
       }
     });
-  }
-
-  /**
-   * Split PEM certificate chain into individual certificates
-   */
-  private splitPEMCertificates(pemChain: string): string[] {
-    const certificates: string[] = [];
-    const lines = pemChain.split('\n');
-    let currentCert: string[] = [];
-
-    for (const line of lines) {
-      if (line.includes('-----BEGIN CERTIFICATE-----')) {
-        currentCert = [line];
-      } else if (line.includes('-----END CERTIFICATE-----')) {
-        currentCert.push(line);
-        certificates.push(currentCert.join('\n'));
-        currentCert = [];
-      } else if (currentCert.length > 0) {
-        currentCert.push(line);
-      }
-    }
-
-    return certificates;
   }
 }
