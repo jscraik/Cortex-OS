@@ -43,8 +43,8 @@ export const MTLSConfigSchema = z.object({
   clientKey: z.string(),
   serverName: z.string().optional(),
   rejectUnauthorized: z.boolean().default(true),
-  minVersion: z.enum(['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']).default('TLSv1.2'),
-  maxVersion: z.enum(['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']).optional(),
+  minVersion: z.enum(['TLSv1.2', 'TLSv1.3']).default('TLSv1.2'),
+  maxVersion: z.enum(['TLSv1.2', 'TLSv1.3']).optional(),
 });
 
 export type MTLSConfig = z.infer<typeof MTLSConfigSchema>;
