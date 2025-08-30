@@ -9,6 +9,14 @@
 import { randomUUID } from 'crypto';
 import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
+import {
+  summarizeEvidence,
+  invokeRagAnalysis,
+  parseInsightsResponse,
+  generateFallbackInsights,
+  isEmptyAnswer,
+  isInvalidSummary,
+} from '../../../src/lib/insights/index.js';
 
 // ASBR Types (extracted from ASBR package)
 interface EvidenceContext {
@@ -49,6 +57,7 @@ interface EvidenceCollectionOptions {
   maxContentLength?: number;
   allowedSources?: string[];
   confidenceThreshold?: number;
+  maxResults?: number;
 }
 
 export interface AIEvidenceConfig {
@@ -88,6 +97,7 @@ export interface AIEvidenceResult {
     processingTime: number;
     enhancementMethods: string[];
     qualityScores: Record<string, number>;
+    confidence: number;
   };
 }
 
@@ -147,6 +157,7 @@ export class ASBRAIIntegration {
       processingTime,
       enhancementMethods: this.getActualUsedMethods(aiEnhancedEvidence),
       qualityScores: await this.calculateQualityScores(aiEnhancedEvidence),
+      confidence: 0.8, // Default confidence score
     };
 
     const result: AIEvidenceResult = {
@@ -306,43 +317,29 @@ export class ASBRAIIntegration {
     };
   }> {
     try {
-      // Prepare evidence summary for AI analysis
-      const evidenceSummary = evidenceCollection
-        .map(
-          (e) =>
-            `Claim: ${e.claim}\nConfidence: ${e.confidence}\nRisk: ${e.riskLevel}\nSource: ${e.source.type}`,
-        )
-        .join('\n\n');
+      const evidenceSummary = summarizeEvidence(evidenceCollection);
+      const ragResult = await invokeRagAnalysis(this.aiCapabilities, evidenceSummary, taskContext);
 
-      // Generate comprehensive analysis
-      const ragResult = await this.aiCapabilities.ragQuery({
-        query: `Analyze this evidence collection for task: ${taskContext}`,
-        systemPrompt: `You are an evidence analyst. Analyze the provided evidence collection and provide:
-                       1. A concise summary of key findings
-                       2. Risk assessment with specific risks and mitigations
-                       3. Actionable recommendations
-                       4. Confidence and reliability metrics
-                       
-                       Evidence Collection:
-                       ${evidenceSummary}`,
-      });
-
-      // Check if RAG returned empty results, use fallback if needed
-      if (!ragResult.answer || ragResult.answer.trim() === '') {
-        return this.generateBasicInsights(evidenceCollection, taskContext);
+      if (isEmptyAnswer(ragResult.answer)) {
+        return generateFallbackInsights(
+          evidenceCollection,
+          taskContext,
+          this.calculateConfidenceMetrics.bind(this),
+          this.analyzeRiskDistribution.bind(this),
+        );
       }
 
-      // Parse AI response into structured insights
-      const summary = this.extractSectionFromResponse(ragResult.answer, 'summary');
-      const keyFindings = this.extractListFromResponse(ragResult.answer, 'findings');
-      const recommendations = this.extractListFromResponse(ragResult.answer, 'recommendations');
+      const { summary, keyFindings, recommendations } = parseInsightsResponse(ragResult.answer);
 
-      // If parsing failed to extract meaningful data, use fallback
-      if (!summary || summary.length < 10) {
-        return this.generateBasicInsights(evidenceCollection, taskContext);
+      if (isInvalidSummary(summary)) {
+        return generateFallbackInsights(
+          evidenceCollection,
+          taskContext,
+          this.calculateConfidenceMetrics.bind(this),
+          this.analyzeRiskDistribution.bind(this),
+        );
       }
 
-      // Calculate metrics
       const confidenceMetrics = this.calculateConfidenceMetrics(evidenceCollection);
       const riskAssessment = this.analyzeRiskDistribution(evidenceCollection);
 
@@ -355,9 +352,12 @@ export class ASBRAIIntegration {
       };
     } catch (error) {
       console.warn('Evidence insights generation failed:', error);
-
-      // Fallback to basic analysis
-      return this.generateBasicInsights(evidenceCollection, taskContext);
+      return generateFallbackInsights(
+        evidenceCollection,
+        taskContext,
+        this.calculateConfidenceMetrics.bind(this),
+        this.analyzeRiskDistribution.bind(this),
+      );
     }
   }
 
@@ -562,25 +562,6 @@ export class ASBRAIIntegration {
     return issues.slice(0, 5); // Limit to 5 issues
   }
 
-  private extractSectionFromResponse(response: string, sectionName: string): string {
-    const sectionPattern = new RegExp(`${sectionName}[:\s]*\n([^#]+)`, 'gi');
-    const match = response.match(sectionPattern);
-    return match ? match[0].replace(new RegExp(`${sectionName}[:\s]*\n`, 'gi'), '').trim() : '';
-  }
-
-  private extractListFromResponse(response: string, listName: string): string[] {
-    const listPattern = new RegExp(`${listName}[:\s]*\n((?:[-*•\d.]\s*[^\n]+\n?)+)`, 'gi');
-    const match = response.match(listPattern);
-
-    if (!match) return [];
-
-    return match[0]
-      .split('\n')
-      .map((line) => line.replace(/^[-*•\d.\s]+/, '').trim())
-      .filter((line) => line.length > 0)
-      .slice(0, 10); // Limit to 10 items
-  }
-
   private calculateSourceConfidence(sources: EvidenceContext['sources']): number {
     if (sources.length === 0) return 0.1;
 
@@ -660,30 +641,6 @@ export class ASBRAIIntegration {
     return {
       overallRisk,
       specificRisks,
-    };
-  }
-
-  private generateBasicInsights(evidenceCollection: Evidence[], taskContext: string) {
-    const summary = ''; // Return empty summary when AI insights generation fails, per test expectations
-    const keyFindings = [
-      `${evidenceCollection.length} evidence items collected`,
-      'Evidence quality assessment completed',
-      'Risk distribution analysis performed',
-      'Confidence metrics calculated',
-    ];
-    const recommendations = [
-      'Review evidence confidence levels',
-      'Validate high-risk claims',
-      'Consider additional evidence sources',
-      'Implement evidence validation workflow',
-    ];
-
-    return {
-      summary,
-      keyFindings,
-      riskAssessment: this.analyzeRiskDistribution(evidenceCollection),
-      recommendations,
-      confidenceMetrics: this.calculateConfidenceMetrics(evidenceCollection),
     };
   }
 

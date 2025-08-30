@@ -1,4 +1,4 @@
-import { PRPState, Evidence } from '../state.js';
+import { Evidence, PRPState } from '../state.js';
 
 import { generateId } from '../utils/id.js';
 import { currentTimestamp } from '../utils/time.js';
@@ -97,11 +97,12 @@ export class EvaluationNode {
     const tddEvidence = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
 
     const hasTests = tddEvidence.length > 0;
-    const hasCoverage =
+    const hasCoverage = Boolean(
       state.outputs?.testCoverage ||
-      state.validationResults?.build?.evidence?.some((id) =>
-        state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
-      );
+        state.validationResults?.build?.evidence?.some((id) =>
+          state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
+        ),
+    );
 
     return {
       passed: hasTests && hasCoverage,
@@ -172,13 +173,6 @@ export class EvaluationNode {
       },
     };
   }
-async function validateTDDCycle(state: PRPState) {
-  const tests = state.evidence.filter((e) => e.type === 'test' && e.phase === 'build');
-  const hasCoverage =
-    state.outputs?.testCoverage ||
-    state.validationResults.build?.evidence?.some((id) =>
-      state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
-
 
   private async preCerebrumValidation(
     state: PRPState,
@@ -192,34 +186,21 @@ async function validateTDDCycle(state: PRPState) {
 
     const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {}).every(
       (result) => result?.passed || result?.blockers.length === 0,
-
     );
-  return { passed: tests.length > 0 && !!hasCoverage, details: { testCount: tests.length } };
+
+    return {
+      readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,
+      details: {
+        phasesComplete: hasAllPhases,
+        phasesAcceptable: allPhasesPassedOrAcceptable,
+        evidenceCount: state.evidence.length,
+        evidenceThreshold: 10, // Minimum evidence required
+      },
+    };
+  }
 }
 
-async function validateCodeReview(state: PRPState) {
-  return {
-    blockers: 0,
-    majors: 1,
-    details: { issues: [{ severity: 'major', type: 'code-complexity' }] },
-  };
-}
-
-async function validateQualityBudgets(state: PRPState) {
-  return {
-    accessibility: { passed: true, score: 95 },
-    performance: { passed: true, score: 94 },
-    security: { passed: true, score: 88 },
-  };
-}
-
-async function preCerebrumValidation(state: PRPState) {
-  const hasPhases = !!(state.validationResults.strategy && state.validationResults.build);
-  const allPass = Object.values(state.validationResults || {}).every(
-    (r: any) => r?.passed || r?.blockers.length === 0,
-  );
-  return { readyForCerebrum: hasPhases && allPass && state.evidence.length >= 5, details: {} };
-}
+// Type definitions for validation methods
 
 interface ValidationResult<T> {
   passed: boolean;

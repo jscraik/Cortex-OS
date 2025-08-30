@@ -1,15 +1,16 @@
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
 import { z } from 'zod';
-import { byChars } from '../chunk';
-import type { Chunk } from '../index';
-import { discoverFiles, filterPaths } from './file-discovery';
+
+import { resolveFileList, createWorker, runWorkers } from '../lib/batch-ingest';
+import type { Pipeline } from '../index.js';
 
 const ingestFilesSchema = z
   .object({
-    pipeline: z.custom<{
-      ingest: (...args: unknown[]) => Promise<void>;
-    }>((p) => typeof p === 'object' && p !== null && typeof (p as any).ingest === 'function'),
+    pipeline: z.custom<Pipeline>(
+      (p): p is Pipeline =>
+        typeof p === 'object' &&
+        p !== null &&
+        typeof (p as Record<string, unknown>).ingest === 'function',
+    ),
     files: z.array(z.string()).default([]),
     root: z.string().optional(),
     include: z.array(z.string()).default(['**/*']),
@@ -43,39 +44,15 @@ export async function ingestFiles(params: IngestFilesParams): Promise<void> {
     concurrency,
   } = ingestFilesSchema.parse(params);
 
-  let fileList = files;
-  if (root) {
-    const discovered = await discoverFiles({ root, include, exclude, includePriority });
-    fileList = fileList.concat(discovered);
-  }
-
-  fileList = filterPaths({
-    paths: fileList.map((f) => path.resolve(f)),
+  const uniqueFiles = await resolveFileList({
+    files,
+    root,
     include,
     exclude,
     includePriority,
-    cwd: root ? path.resolve(root) : undefined,
   });
-
-  const uniqueFiles = Array.from(new Set(fileList));
   const queue = [...uniqueFiles];
-  const workers: Promise<void>[] = [];
 
-  async function worker() {
-    while (queue.length) {
-      const file = queue.shift();
-      if (!file) break;
-      const text = await fs.readFile(file, 'utf8');
-      const chunks: Chunk[] = byChars(text, chunkSize, overlap).map((t, i) => ({
-        id: `${path.basename(file)}#${i}`,
-        text: t,
-        source: file,
-      }));
-      await (pipeline as any).ingest(chunks);
-    }
-  }
-
-  const workerCount = Math.min(concurrency, uniqueFiles.length);
-  for (let i = 0; i < workerCount; i++) workers.push(worker());
-  await Promise.all(workers);
+  const worker = createWorker({ pipeline, queue, chunkSize, overlap });
+  await runWorkers(worker, concurrency, uniqueFiles.length);
 }

@@ -32,6 +32,7 @@
     "precommit": "pnpm gates:tdd && pnpm lint"
   },
   "dependencies": {
+    "@cortex-os/a2a": "workspace:*",
     "axe-core": "^4.9.1",
     "chalk": "^5.3.0",
     "chokidar": "^3.5.3",
@@ -41,16 +42,14 @@
     "glob": "^10.4.2",
     "inquirer": "^9.2.12",
     "lighthouse": "^11.4.0",
+    "ollama": "^0.5.17",
     "ora": "^7.0.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/fs-extra": "^11.0.4",
-    "@types/inquirer": "^9.0.7",
-    "@typescript-eslint/eslint-plugin": "^8.40.0",
-    "@typescript-eslint/parser": "^8.40.0",
-    "@vitest/coverage-v8": "^1.1.0",
+  "@cortex-os/a2a": "workspace:*",
+  "@xenova/transformers": "^2.17.2",
+    "@vitest/coverage-v8": "^3.2.4",
     "eslint": "^8.53.0",
     "typescript": "^5.2.2",
     "vitest": "^3.2.4"

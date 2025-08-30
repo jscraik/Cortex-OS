@@ -1,34 +1,44 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
-from typing import List, Optional, Tuple, Literal
 
 
 class Evidence(BaseModel):
     uri: str
-    range: Optional[Tuple[int, int]] = None
+    range: tuple[int, int] | None = None
 
 
 class Provenance(BaseModel):
     source: Literal["user", "agent", "system"]
-    actor: Optional[str] = None
-    evidence: Optional[List[Evidence]] = None
-    hash: Optional[str] = None
+    actor: str | None = None
+    evidence: list[Evidence] | None = None
+    hash: str | None = None
 
 
 class Policy(BaseModel):
-    pii: Optional[bool] = None
-    scope: Optional[Literal["session", "user", "org"]] = None
+    pii: bool | None = None
+    scope: Literal["session", "user", "org"] | None = None
 
 
 class Memory(BaseModel):
     id: str
     kind: Literal["note", "event", "artifact", "embedding"]
-    text: Optional[str] = None
-    vector: Optional[List[float]] = None
-    tags: List[str] = Field(default_factory=list)
-    ttl: Optional[str] = None
-    createdAt: str
-    updatedAt: str
+    text: str | None = None
+    vector: list[float] | None = None
+    tags: list[str] = Field(default_factory=list)
+    ttl: str | None = None
+    # Accept both snake_case and camelCase for compatibility with tests / callers
+    # accept both snake_case and camelCase for compatibility with callers/tests
+    # mark as required using Field(..., alias=...) so Pydantic treats them as
+    # required inputs when only the alias is provided.
+    created_at: str = Field(..., alias="createdAt")
+    updated_at: str = Field(..., alias="updatedAt")
     provenance: Provenance
-    policy: Optional[Policy] = None
-    embeddingModel: Optional[str] = None
+    policy: Policy | None = None
+    embedding_model: str | None = None
 
+    # Pydantic v2 configuration: allow population by field name (snake_case)
+    # and still accept alias names (camelCase) when parsing.
+    model_config = {
+        "populate_by_name": True,
+    }

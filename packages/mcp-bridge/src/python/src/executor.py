@@ -9,16 +9,16 @@ high-security use run untrusted code inside an OS-level sandbox or
 specialized runtime.
 """
 
+import contextlib
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Tuple
 
 DEFAULT_TIMEOUT = 3  # seconds
 
 
-def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
+def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> tuple[int, str, str]:
     """Run `code` in a subprocess, return (exit_code, stdout, stderr).
 
     Writes the code to a temporary file and invokes a fresh Python
@@ -69,7 +69,5 @@ def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
         stdout = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
         return 124, str(stdout), f"Timeout after {timeout} seconds"
     finally:
-        try:
+        with contextlib.suppress(Exception):
             Path(tmp_path).unlink()
-        except Exception:
-            pass

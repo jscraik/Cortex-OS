@@ -90,6 +90,7 @@ MANIFEST
 .env
 # Allow kernel source libraries
 !packages/kernel/src/lib/
+!packages/orchestration/src/lib/
 .venv
 env/
 venv/
@@ -239,6 +240,15 @@ dependency-analysis-report.json
 .mlx_cache/
 models/cache/
 
+# HuggingFace / MLX model directories (large artifacts and symlinks)
+# Ignore model dirs like models--<owner>--<repo> and hub/ snapshots
+models--*/
+**/models--*/
+**/hub/models--*/
+**/snapshots/**
+**/ai-cache/**
+models/**
+
 # Vector databases and AI data stores
 # Ignore user shell config
 .zshrc
@@ -291,8 +301,16 @@ scripts/package-lock.json
 .cortex/out/
 !packages/mcp-registry/src/lib/
 !packages/mcp-registry/src/lib/**
+!packages/model-gateway/src/lib/
+!packages/model-gateway/src/lib/**
 
 
 !src/lib/
 !src/lib/**
+!packages/prp-runner/src/lib/
+!packages/prp-runner/src/lib/**
 
+!packages/prp-runner/src/lib/
+!packages/prp-runner/src/lib/**
+!packages/rag/src/lib/
+!packages/rag/src/lib/**

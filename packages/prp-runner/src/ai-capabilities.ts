@@ -6,13 +6,22 @@
  * @status TDD-DRIVEN
  */
 
-import { LLMBridge, LLMConfig } from './llm-bridge.js';
+import {
+  configureLLM,
+  generate as llmGenerate,
+  checkProviderHealth,
+  getProvider,
+  getModel,
+  shutdown as shutdownLLM,
+  type LLMState,
+} from './llm-bridge.js';
 import {
   EmbeddingAdapter,
   RerankerAdapter,
   createEmbeddingAdapter,
   createRerankerAdapter,
 } from './embedding-adapter.js';
+import { LLMBridge } from './llm-bridge.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 export interface AICoreConfig {
@@ -80,7 +89,7 @@ export interface GenerationOptions {
  * Provides LLM generation, embeddings, semantic search, and RAG workflows
  */
 export class AICoreCapabilities {
-  private llmBridge: LLMBridge;
+  private llmState!: LLMState;
   private embeddingAdapter?: EmbeddingAdapter;
   private rerankerAdapter?: RerankerAdapter;
   private config: AICoreConfig;
@@ -95,8 +104,8 @@ export class AICoreCapabilities {
    * Initialize AI components based on configuration
    */
   private initializeComponents(): void {
-    // Initialize LLM Bridge
-    this.llmBridge = new LLMBridge({
+    // Initialize LLM state
+    this.llmState = configureLLM({
       provider: this.config.llm.provider,
       endpoint: this.config.llm.endpoint || '',
       model: this.config.llm.model,
@@ -121,7 +130,7 @@ export class AICoreCapabilities {
     const systemPrompt = options.systemPrompt;
     const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
 
-    return this.llmBridge.generate(fullPrompt, {
+    return llmGenerate(this.llmState, fullPrompt, {
       temperature: options.temperature || this.config.llm.temperature || 0.7,
       maxTokens: options.maxTokens || this.config.llm.maxTokens || 512,
     });
@@ -190,7 +199,7 @@ export class AICoreCapabilities {
     // Step 2: Rerank if reranker is available
     let finalSources = searchResults;
     if (this.rerankerAdapter && searchResults.length > 0) {
-      const documentsToRerank = searchResults.map((r) => r.text);
+  const documentsToRerank = searchResults.map((r: { text: string }) => r.text);
       const rerankedResults = await this.rerankerAdapter.rerank(
         query,
         documentsToRerank,
@@ -198,7 +207,7 @@ export class AICoreCapabilities {
       );
 
       // Map reranked results back to search results
-      finalSources = rerankedResults.map((rr) => {
+  finalSources = rerankedResults.map((rr: { originalIndex: number; score: number }) => {
         const original = searchResults[rr.originalIndex];
         return {
           ...original,
@@ -208,7 +217,7 @@ export class AICoreCapabilities {
     }
 
     // Step 3: Construct context prompt
-    const contextTexts = finalSources.map((source) => source.text);
+  const contextTexts = finalSources.map((source: { text: string }) => source.text);
     const contextPrompt = this.buildRAGPrompt(query, contextTexts, systemPrompt);
 
     // Step 4: Generate answer using LLM
@@ -220,7 +229,7 @@ export class AICoreCapabilities {
     // Step 5: Return structured result
     return {
       answer,
-      sources: finalSources.map((source) => ({
+  sources: finalSources.map((source: { text: string; similarity: number; metadata?: Record<string, any> }) => ({
         text: source.text,
         similarity: source.similarity,
         metadata: source.metadata,
@@ -278,12 +287,12 @@ export class AICoreCapabilities {
     features: string[];
   }> {
     // Check LLM health
-    const llmHealth = await this.llmBridge.checkProviderHealth();
+    const llmHealth = await checkProviderHealth(this.llmState);
 
     const capabilities = {
       llm: {
-        provider: this.llmBridge.getProvider(),
-        model: this.llmBridge.getModel(),
+        provider: getProvider(this.llmState),
+        model: getModel(this.llmState),
         healthy: llmHealth.healthy,
       },
       embedding: this.embeddingAdapter
@@ -323,7 +332,6 @@ export class AICoreCapabilities {
   async shutdown(): Promise<void> {
     // Clear knowledge base
     await this.clearKnowledge();
-
     // Cleanup embedding adapter resources
     if (this.embeddingAdapter && typeof this.embeddingAdapter.shutdown === 'function') {
       await this.embeddingAdapter.shutdown();
@@ -334,9 +342,9 @@ export class AICoreCapabilities {
       await this.rerankerAdapter.shutdown();
     }
 
-    // Cleanup LLM bridge resources
-    if (this.llmBridge && typeof this.llmBridge.shutdown === 'function') {
-      await this.llmBridge.shutdown();
+    // Cleanup LLM resources
+    if (this.llmState) {
+      await shutdownLLM(this.llmState);
     }
   }
 
@@ -410,6 +418,13 @@ export class AICoreCapabilities {
 export const createAICapabilities = (
   preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
+  const env: any = (globalThis as any).process?.env ?? {};
+  const rerankerProvider = env.RERANKER_PROVIDER as
+    | 'transformers'
+    | 'local'
+    | 'mock'
+    | undefined;
+
   const configs: Record<string, AICoreConfig> = {
     full: {
       llm: {
@@ -422,9 +437,6 @@ export const createAICapabilities = (
       embedding: {
         provider: 'sentence-transformers',
         dimensions: 1024,
-      },
-      reranker: {
-        provider: 'transformers',
       },
       rag: {
         topK: 5,
@@ -450,9 +462,6 @@ export const createAICapabilities = (
         provider: 'sentence-transformers',
         dimensions: 1024,
       },
-      reranker: {
-        provider: 'transformers',
-      },
       rag: {
         topK: 8,
         similarityThreshold: 0.25,
@@ -460,6 +469,12 @@ export const createAICapabilities = (
       },
     },
   };
+
+  if (rerankerProvider) {
+    const reranker = { provider: rerankerProvider } as AICoreConfig['reranker'];
+    if (configs.full.embedding) configs.full.reranker = reranker;
+    if (configs['rag-focused'].embedding) configs['rag-focused'].reranker = reranker;
+  }
 
   return new AICoreCapabilities(configs[preset]);
 };

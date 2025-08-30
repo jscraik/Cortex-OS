@@ -15,10 +15,12 @@ import gc
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 try:
-    from mlx_lm import load as mlx_load, generate as mlx_generate  # type: ignore
+    from mlx_lm import generate as mlx_generate
+    from mlx_lm import load as mlx_load  # type: ignore
+
     MLX_AVAILABLE = True
 except Exception:  # pragma: no cover - executed when MLX is missing
     MLX_AVAILABLE = False
@@ -31,6 +33,7 @@ try:
 
     _LOAD_LOCK = asyncio.Lock()
 except Exception:
+    # logger will be defined below
     pass
 
 logger = logging.getLogger(__name__)
@@ -41,9 +44,9 @@ class MLXModelManager:
 
     def __init__(self, memory_manager: Any) -> None:
         self.memory_manager = memory_manager
-        self.loaded_models: Dict[str, Any] = {}
+        self.loaded_models: dict[str, Any] = {}
         self.model_configs = self._load_model_configs()
-        self.performance_metrics: Dict[str, Dict[str, Any]] = {}
+        self.performance_metrics: dict[str, dict[str, Any]] = {}
         self.total_inferences = 0
         self.start_time = datetime.now()
         self.models_cache_dir = os.path.expanduser("~/.cache/mlx-models")
@@ -53,39 +56,45 @@ class MLXModelManager:
         # Best-effort global seeding (note: PYTHONHASHSEED must be set at process start to affect hashing)
         try:
             import random
+
             random.seed(self.seed)
         except Exception:
-            pass
+            logger.debug("Failed to set random seed, using system default")
         try:  # optional numpy
             import numpy as np  # type: ignore
+
             np.random.seed(self.seed)
         except Exception:
-            pass
+            logger.debug("Failed to set numpy random seed, numpy seeding disabled")
         os.environ.setdefault("PYTHONHASHSEED", str(self.seed))
         # Registry-driven defaults
         self.always_loaded = self._load_registry_always_loaded()
 
-    def snapshot_meta(self, model: str, prompt: str) -> Dict[str, Any]:
+    def snapshot_meta(self, model: str, prompt: str) -> dict[str, Any]:
         import hashlib
+
         phash = hashlib.sha256((model + "\n" + prompt).encode("utf-8")).hexdigest()
         return {
             "seed": self.seed,
             "model": model,
-            "model_id": self.model_configs[model]["id"] if model in self.model_configs else None,
+            "model_id": self.model_configs[model]["id"]
+            if model in self.model_configs
+            else None,
             "ts": datetime.now().isoformat(),
             "prompt_sha256": phash,
         }
 
-    def _load_model_configs(self) -> Dict[str, Dict[str, Any]]:
+    def _load_model_configs(self) -> dict[str, dict[str, Any]]:
         """Load model configurations from the registry (MLX-only entries)."""
         try:
             import yaml  # type: ignore
+
             registry_path = os.path.join("configs", "models", "registry.yaml")
             if not os.path.exists(registry_path):
                 raise FileNotFoundError(registry_path)
-            with open(registry_path, "r", encoding="utf-8") as f:
+            with open(registry_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
-            cfgs: Dict[str, Dict[str, Any]] = {}
+            cfgs: dict[str, dict[str, Any]] = {}
             for m in data.get("models", []) or []:
                 adapters = set(m.get("adapters", []) or [])
                 if "mlx" not in adapters:
@@ -113,10 +122,11 @@ class MLXModelManager:
         """Load always_loaded list from configs/models/registry.yaml if available."""
         try:
             import yaml  # type: ignore
+
             registry_path = os.path.join("configs", "models", "registry.yaml")
             if not os.path.exists(registry_path):
                 return set()
-            with open(registry_path, "r", encoding="utf-8") as f:
+            with open(registry_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
             defaults = data.get("defaults", {}) or {}
             al = defaults.get("always_loaded", []) or []
@@ -146,7 +156,9 @@ class MLXModelManager:
                 # serialize loads; mlx weights init is blocking
                 if _LOAD_LOCK:
                     async with _LOAD_LOCK:
-                        model, tokenizer = await asyncio.to_thread(mlx_load, config["id"])  # type: ignore
+                        model, tokenizer = await asyncio.to_thread(
+                            mlx_load, config["id"]
+                        )  # type: ignore
                 else:
                     model, tokenizer = mlx_load(config["id"])  # type: ignore
                 model_info = {
@@ -191,7 +203,9 @@ class MLXModelManager:
             return False
 
         if model_name in self.always_loaded:
-            logger.warning("Cannot unload %s: marked always_loaded in registry", model_name)
+            logger.warning(
+                "Cannot unload %s: marked always_loaded in registry", model_name
+            )
             return False
 
         try:
@@ -217,7 +231,7 @@ class MLXModelManager:
         max_tokens: int = 1000,
         temperature: float = 0.7,
         stream: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate text using the specified model."""
         if model not in self.loaded_models:
             raise ValueError(f"Model {model} not loaded")
@@ -229,7 +243,7 @@ class MLXModelManager:
             if model_info.get("mlx_real") and MLX_AVAILABLE:
                 # Wrap generate to support both streaming and non-stream modes
                 def _run_generate_stream() -> str:
-                    out_parts: List[str] = []
+                    out_parts: list[str] = []
                     for part in mlx_generate(  # type: ignore
                         model_info["model"],
                         model_info["tokenizer"],
@@ -297,7 +311,7 @@ class MLXModelManager:
             logger.error("Unexpected generation error for %s: %s", model, exc)
             raise
 
-    async def execute_model_swap(self, swap_strategy: Dict[str, Any]) -> None:
+    async def execute_model_swap(self, swap_strategy: dict[str, Any]) -> None:
         """Execute a model swap strategy."""
         for model_to_unload in swap_strategy.get("unload", []):
             await self.unload_model(model_to_unload)
@@ -316,7 +330,7 @@ class MLXModelManager:
             # Return the first loaded model deterministically (sorted)
             return sorted(self.loaded_models.keys())[0]
         if self.loaded_models:
-            return list(self.loaded_models.keys())[0]
+            return next(iter(self.loaded_models.keys()))
         # No models loaded; choose the highest priority MLX model from registry
         if self.model_configs:
             return sorted(
@@ -339,9 +353,9 @@ class MLXModelManager:
         """Check if a model is currently loaded."""
         return model_name in self.loaded_models
 
-    def get_available_models(self) -> List[Dict[str, Any]]:
+    def get_available_models(self) -> list[dict[str, Any]]:
         """Get list of all available models with their specs."""
-        models: List[Dict[str, Any]] = []
+        models: list[dict[str, Any]] = []
         for name, config in self.model_configs.items():
             models.append(
                 {
@@ -354,7 +368,7 @@ class MLXModelManager:
             )
         return models
 
-    def get_loaded_models_info(self) -> List[Dict[str, Any]]:
+    def get_loaded_models_info(self) -> list[dict[str, Any]]:
         """Get info about currently loaded models."""
         return [
             {
@@ -366,11 +380,11 @@ class MLXModelManager:
             for name, model in self.loaded_models.items()
         ]
 
-    def get_performance_metrics(self) -> Dict[str, Any]:
+    def get_performance_metrics(self) -> dict[str, Any]:
         """Get performance metrics for loaded models."""
         return self.performance_metrics
 
-    def get_model_recommendations(self) -> List[str]:
+    def get_model_recommendations(self) -> list[str]:
         """Recommend models based on priority and current load."""
         loaded = set(self.loaded_models.keys())
         return [

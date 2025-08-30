@@ -1,9 +1,4 @@
-/**
- * @file_path packages/retrieval-layer/src/cache/memory.ts
- * @description In-memory cache manager implementation
- */
-
-import { CacheManager } from '../types';
+import type { CacheManager } from '../domain/types.js';
 
 interface CacheEntry {
   value: unknown;

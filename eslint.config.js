@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import importPlugin from 'eslint-plugin-import';
+// eslint-disable-next-line import/no-named-as-default-member
 import ts from 'typescript-eslint';
 
 export default [
@@ -15,6 +16,7 @@ export default [
   importPlugin.flatConfigs.typescript,
   {
     ignores: [
+      '**/.venv/**',
       '**/dist/**',
       '**/.artifacts/**',
       'commitlint.config.js',
@@ -36,6 +38,7 @@ export default [
       'eslint.scan.config.cjs',
       'config/**',
       'contracts/**',
+      'htmlcov/**',
     ],
   },
   {

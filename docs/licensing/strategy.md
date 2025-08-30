@@ -17,8 +17,9 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
    - Add `/COMMERCIAL-LICENSE.md` with terms for paid features, SLAs, LTS, support. (DONE)
    - Keep commercial-only modules isolated (clear directory, build flags, or private repo).
 3. Dependency policy
-   - Only allow permissive licenses (Apache-2.0, MIT, BSD). Avoid AGPL/SSPL unless isolated opt-in external services.
+   - Allow permissive licenses (Apache-2.0, MIT, BSD) and weak copyleft tooling like MPL-2.0; avoid strong copyleft (AGPL/SSPL) unless isolated opt-in services.
    - Track licenses with tooling (e.g., license-checker, pip-licenses, uv/pnpm audits).
+   - Enforce rules via `license-policy.json` consumed by the license scanner.
 4. Contributor and governance
    - Adopt a CLA (or DCO) for inbound rights. Store CLA text and automations.
    - Code of Conduct, security policy, release policy.
@@ -34,6 +35,7 @@ This document outlines how we keep Cortex-OS friendly to Apache-2.0 open source 
 - [x] Replace `/LICENSE` with Apache-2.0; add `/NOTICE` and `/COMMERCIAL-LICENSE.md` stubs.
 - [ ] Update repo docs to reflect dual-licensing and contribution policy.
 - [x] Add license scanning to CI (pnpm and Python best-effort).
+- [x] Commit `license-policy.json` defining allowed and blocked licenses.
 - [x] Add SBOM generation step (CycloneDX) for releases.
 - [ ] Publish a public OSS vs Commercial feature matrix page.
 

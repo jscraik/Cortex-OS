@@ -3,7 +3,7 @@
  * Debug script to check MCP storage contents
  */
 
-import { mcpConfigStorage } from '/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/mcp/src/index.js';
+import { mcpConfigStorage } from '../mcp-config-storage.js';
 
 async function debugStorage() {
   console.log('🔍 Debugging MCP Storage Contents');

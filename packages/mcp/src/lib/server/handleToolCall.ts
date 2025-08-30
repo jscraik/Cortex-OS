@@ -6,13 +6,24 @@ export async function handleToolCall(
   params: unknown,
   context: ServerContext,
 ) {
-  const { name, args } = z
-    .object({
-      name: z.string(),
-      arguments: z.record(z.unknown()).optional(),
-    })
-    .transform((o) => ({ name: o.name, args: o.arguments ?? {} }))
-    .parse(params);
+  let name: string;
+  let args: Record<string, unknown> = {};
+  try {
+    const parsed = z
+      .object({
+        name: z.string(),
+        arguments: z.record(z.unknown()).optional(),
+      })
+      .parse(params);
+    name = parsed.name;
+    args = parsed.arguments ?? {};
+  } catch {
+    return {
+      jsonrpc: '2.0' as const,
+      id,
+      error: { code: -32602, message: 'Invalid parameters' },
+    } as const;
+  }
 
   const tool = context.tools.get(name);
   if (!tool) {

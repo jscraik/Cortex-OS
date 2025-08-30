@@ -1,6 +1,5 @@
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Optional
 
 from executor import run_code
 
@@ -23,15 +22,14 @@ class S(BaseHTTPRequestHandler):
 
         SESSION.append(cell)
 
-        sp: Optional[str] = None
+        sp: str | None = None
         if os.environ.get("PYREPL_EXPORT", "1") == "1" and ok:
             sp = "/srv/session.py"
             with open(sp, "w") as f:
                 f.write("\n\n".join(SESSION))
 
         body = (
-            '{"ok":%s,"stdout":%r,"stderr":%r,"script_path":%r}'
-            % (str(ok).lower(), stdout, stderr or "", sp)
+            '{{"ok":{},"stdout":{!r},"stderr":{!r},"script_path":{!r}}}'.format(str(ok).lower(), stdout, stderr or "", sp)
         ).encode()
 
         self.send_response(200)

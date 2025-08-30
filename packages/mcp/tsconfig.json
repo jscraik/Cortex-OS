@@ -4,8 +4,14 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./src",
-    "declaration": true
+    "declaration": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "src/**/dist/**"
+  ]
 }

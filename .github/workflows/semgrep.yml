@@ -7,17 +7,18 @@ on:
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
       - uses: actions/checkout@v4
-      - name: Install Semgrep
-        run: pipx install semgrep || pip install semgrep --break-system-packages || true
-      - name: Run Semgrep
-        run: |
-          semgrep scan \
-            --config .semgrep/owasp-precise.yaml \
-            --config .semgrep/owasp-top-10-improved.yaml \
-            --no-error \
-            --sarif -o semgrep.sarif .
+      - uses: semgrep/ci@v1
+        env:
+          SEMGREP_SEVERITY_LEVEL: ERROR
+        with:
+
+          config: |
+            p/owasp-llm-top-ten
+            p/mitre-atlas
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3

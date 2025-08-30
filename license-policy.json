@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "policy": {
+    "failOnBlockedLicense": true,
+    "allowUnknownLicenses": false,
+    "enforcement": "strict"
+  },
+  "allowedLicenses": {
+    "licenses": ["Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "MPL-2.0"]
+  },
+  "blockedLicenses": {
+    "licenses": [
+      "GPL-1.0-only",
+      "GPL-2.0-only",
+      "GPL-3.0-only",
+      "AGPL-1.0-only",
+      "AGPL-3.0-only",
+      "LGPL-2.0-only",
+      "LGPL-2.1-only",
+      "LGPL-3.0-only",
+      "SSPL-1.0",
+      "OSL-3.0",
+      "CPAL-1.0"
+    ]
+  },
+  "exemptions": {
+    "packages": [
+      "eslint-plugin-sonarjs",
+      "jackspeak",
+      "path-scurry",
+      "package-json-from-dist",
+      "parse-cache-control",
+      "spdx-exceptions",
+      "tslib"
+    ]
+  },
+  "reporting": {
+    "generateReport": true,
+    "reportPath": "./reports/license-report.json"
+  }
+}

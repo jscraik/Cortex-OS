@@ -14,4 +14,3 @@ def test_memory_model_roundtrip():
     d = m.model_dump()
     assert d["id"] == "1"
     assert d["kind"] == "note"
-

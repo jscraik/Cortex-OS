@@ -31,15 +31,13 @@
       "description": "Error handling and rollback mechanism tests",
       "path": "tests/error-handling/"
     },
-    "tests/e2e": {
-      "description": "End-to-end workflow tests",
-      "path": "tests/e2e/"
-    },
+    "tests/e2e": { "description": "End-to-end workflow tests", "path": "tests/e2e/" },
     "logs": {
       "description": "Directory for Claude Code conversation logs",
       "path": "logs/",
       "createEmpty": true
-    }
+    },
+    "models": { "description": "Model cards and run notes (no binaries)", "path": "models/" }
   },
   "files": [
     {
@@ -269,25 +267,49 @@
       "destination": "tests/e2e/workflows.test.js",
       "description": "End-to-end workflow tests",
       "category": "test"
+    },
+    {
+      "source": "models/README.md",
+      "destination": "models/README.md",
+      "description": "Model templates overview and cache hints",
+      "category": "documentation"
+    },
+    {
+      "source": "models/smollm-135m-mlx.md",
+      "destination": "models/smollm-135m-mlx.md",
+      "description": "SmolLM-135M (MLX) model card and safe-run notes",
+      "category": "documentation"
+    },
+    {
+      "source": "models/gpt-oss-20b-mlx.md",
+      "destination": "models/gpt-oss-20b-mlx.md",
+      "description": "GPT-OSS 20B (MLX 8-bit) model card and safe-run notes",
+      "category": "documentation"
+    }
+  ],
+  "templates": [
+    {
+      "id": "smollm-135m-mlx",
+      "name": "SmolLM-135M (MLX)",
+      "path": "models/smollm-135m-mlx.md",
+      "tags": ["mlx", "chat", "tiny"],
+      "capabilities": ["chat"],
+      "provider": "mlx"
+    },
+    {
+      "id": "gpt-oss-20b-mlx",
+      "name": "GPT-OSS 20B (MLX 8-bit)",
+      "path": "models/gpt-oss-20b-mlx.md",
+      "tags": ["mlx", "chat", "large"],
+      "capabilities": ["chat"],
+      "provider": "mlx"
     }
   ],
   "categories": {
-    "documentation": {
-      "description": "User guides and best practices documentation",
-      "count": 4
-    },
-    "command": {
-      "description": "Main Claude Code slash commands",
-      "count": 4
-    },
-    "sparc-mode": {
-      "description": "SPARC methodology mode-specific commands",
-      "count": 15
-    },
-    "test": {
-      "description": "Test suite files",
-      "count": 12
-    }
+    "documentation": { "description": "User guides and best practices documentation", "count": 7 },
+    "command": { "description": "Main Claude Code slash commands", "count": 4 },
+    "sparc-mode": { "description": "SPARC methodology mode-specific commands", "count": 15 },
+    "test": { "description": "Test suite files", "count": 12 }
   },
   "installation": {
     "steps": [

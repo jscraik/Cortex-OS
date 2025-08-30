@@ -1,0 +1,122 @@
+[
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "294-335",
+    "severity": "high",
+    "category": "code-duplication",
+    "description": "Duplicated modelConfig retrieval and validation logic in generateEmbeddings method",
+    "evidence": "Line 298: const modelConfig = MLX_MODELS[modelName]; duplicates line 315: const modelConfig = MLX_MODELS[modelName];",
+    "fix": "Extract modelConfig retrieval to top of method before the try block",
+    "tests_to_add": "Test case to verify modelConfig is accessed once per method call"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "195-196, 258-259",
+    "severity": "medium",
+    "category": "error-handling",
+    "description": "Model path validation warns but continues execution, potentially causing downstream failures",
+    "evidence": "Lines use console.warn and continue execution when model path validation fails",
+    "fix": "Consider throwing an error or implementing proper fallback download mechanism",
+    "tests_to_add": "Test cases for missing model paths and fallback behavior"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "222",
+    "severity": "low",
+    "category": "string-escaping",
+    "description": "Double backslash in string join - potential formatting issue",
+    "evidence": "Line 222: return \"\\n\".join(formatted); should be \"\\n\"",
+    "fix": "Change \"\\n\" to \"\\n\" for proper newline character",
+    "tests_to_add": "Test chat message formatting output"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "227",
+    "severity": "low",
+    "category": "string-escaping",
+    "description": "Double backslash in VL message formatting",
+    "evidence": "Line 227: return \"\\n\".join(...) should use single backslash",
+    "fix": "Change \"\\n\" to \"\\n\" for proper newline character",
+    "tests_to_add": "Test VL message formatting output"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "238, 284, 330, 374, 562",
+    "severity": "medium",
+    "category": "production-logging",
+    "description": "console.error statements in production code",
+    "evidence": "Multiple console.error calls throughout the adapter",
+    "fix": "Replace with proper logging framework or remove for production builds",
+    "tests_to_add": "Verify error logging behavior in test environment"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "568",
+    "severity": "high",
+    "category": "function-length",
+    "description": "MLXAdapter class is 568 lines, exceeding 40-line function guideline",
+    "evidence": "Multiple methods exceed recommended length: generateChat (59 lines), generateEmbedding (45 lines), executePythonScriptInternal (36 lines), validateBackend in build.ts (227 lines)",
+    "fix": "Break down large methods into smaller, focused functions. Extract common patterns like model validation, process execution, and response parsing",
+    "tests_to_add": "Unit tests for extracted helper methods"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/apps/cortex-py/src/mlx/mlx_unified.py",
+    "lines": "222, 227",
+    "severity": "medium",
+    "category": "string-escaping",
+    "description": "Double backslash in Python string formatting",
+    "evidence": "Lines 222 and 227 use \\n instead of \n for newlines",
+    "fix": "Change \\\\n to \\n for proper newline formatting",
+    "tests_to_add": "Test chat and VL message formatting output"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/model-router.ts",
+    "lines": "140",
+    "severity": "low",
+    "category": "production-logging",
+    "description": "console.log statement in production code",
+    "evidence": "Line 140: console.log for Ollama model skipping",
+    "fix": "Replace with proper logging or remove for production",
+    "tests_to_add": "Verify logging behavior in different environments"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "11-113",
+    "severity": "medium",
+    "category": "hardcoded-paths",
+    "description": "Hardcoded ExternalSSD paths may fail on different systems",
+    "evidence": "MLX_MODELS object contains hardcoded paths like '/Volumes/ExternalSSD/huggingface_cache'",
+    "fix": "Make paths configurable via environment variables or configuration files",
+    "tests_to_add": "Test with different path configurations and missing paths"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/src/adapters/mlx-adapter.ts",
+    "lines": "275",
+    "severity": "medium",
+    "category": "array-indexing",
+    "description": "Assumes Python script returns array format without validation",
+    "evidence": "Line 275: embedding: data[0] assumes data is array with at least one element",
+    "fix": "Add validation: if (Array.isArray(data) && data.length > 0) before accessing data[0]",
+    "tests_to_add": "Test cases with empty arrays and non-array responses"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/model-gateway/tests/integration/mlx-fallback.test.ts",
+    "lines": "324",
+    "severity": "low",
+    "category": "test-assertion",
+    "description": "Generic error message assertion may not catch specific errors",
+    "evidence": "Line 324: expect((error as Error).message).toContain('No providers available') is too generic",
+    "fix": "Add more specific error message validation or error type checking",
+    "tests_to_add": "More specific error scenarios with detailed assertions"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS-clean/packages/mvp/src/nodes/build.ts",
+    "lines": "1121",
+    "severity": "high",
+    "category": "function-length",
+    "description": "BuildNode class is 1121 lines, massively exceeding guidelines",
+    "evidence": "validateBackend method alone is 227 lines (lines 113-339), runSecurityScan is 240 lines (369-608)",
+    "fix": "Extract methods into separate utility classes: SecurityValidator, BackendValidator, FrontendValidator, DocumentationValidator",
+    "tests_to_add": "Unit tests for each extracted validator class"
+  }
+]

@@ -1,9 +1,9 @@
-import { memoryZ } from '../schemas/memory.zod.js';
-import type { MemoryStore } from '../ports/MemoryStore.js';
-import type { Embedder } from '../ports/Embedder.js';
-import { withSpan } from '../observability/otel.js';
-import type { Memory } from '../domain/types.js';
 import { CompositeEmbedder } from '../adapters/embedder.composite.js';
+import type { Memory } from '../domain/types.js';
+import { withSpan } from '../observability/otel.js';
+import type { Embedder } from '../ports/Embedder.js';
+import type { MemoryStore } from '../ports/MemoryStore.js';
+import { memoryZ } from '../schemas/memory.zod.js';
 
 export type MemoryService = {
   save: (raw: unknown) => Promise<Memory>;
@@ -20,24 +20,20 @@ export type MemoryService = {
   testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
 };
 
-export const createMemoryService = (store: MemoryStore, embedder?: Embedder): MemoryService => {
-  // If no embedder is provided, create a composite embedder
-  const effectiveEmbedder = embedder || new CompositeEmbedder();
+export const createMemoryService = (store: MemoryStore, embedder: Embedder): MemoryService => {
+  if (!embedder) throw new Error('embedder:missing');
 
   return {
     save: async (raw) => {
       return withSpan('memories.save', async () => {
-        const m = memoryZ.parse(raw);
+        const m = memoryZ.parse(raw) as Memory;
         const needsVector = !m.vector && m.text;
         let withVec: Memory;
         if (needsVector) {
-          if (!effectiveEmbedder || typeof effectiveEmbedder.embed !== 'function') {
-            throw new Error('Embedder is required to generate vector but is not available.');
-          }
           withVec = {
             ...m,
-            vector: (await effectiveEmbedder.embed([m.text!]))[0],
-            embeddingModel: effectiveEmbedder.name(),
+            vector: (await embedder.embed([m.text!]))[0],
+            embeddingModel: embedder.name(),
           };
         } else {
           withVec = m;
@@ -54,7 +50,7 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
           return store.searchByVector({ vector: q.vector, topK, filterTags: q.tags });
         }
         if (q.text) {
-          const v = (await effectiveEmbedder.embed([q.text]))[0];
+          const v = (await embedder.embed([q.text]))[0];
           return store.searchByVector({ vector: v, topK, filterTags: q.tags });
         }
         return [];
@@ -64,10 +60,9 @@ export const createMemoryService = (store: MemoryStore, embedder?: Embedder): Me
       withSpan('memories.purge', async () =>
         store.purgeExpired(nowISO ?? new Date().toISOString()),
       ),
-    // Add embedder testing capability if using composite embedder
-    ...(effectiveEmbedder instanceof CompositeEmbedder
+    ...(embedder instanceof CompositeEmbedder
       ? {
-          testEmbedders: () => (effectiveEmbedder as CompositeEmbedder).testEmbedders(),
+          testEmbedders: () => (embedder as CompositeEmbedder).testEmbedders(),
         }
       : {}),
   };

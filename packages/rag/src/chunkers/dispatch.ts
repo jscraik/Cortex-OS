@@ -227,15 +227,15 @@ export class ProcessingDispatcher {
   }
 
   async dispatch(file: ProcessingFile, strategy: StrategyDecision): Promise<DispatchResult> {
-    const now = () => (globalThis.performance?.now ? globalThis.performance.now() : Date.now());
-    const startTime = now();
+
+    const startTime = performance.now();
     try {
       if (strategy.strategy === ProcessingStrategy.REJECT) {
         return {
           success: false,
           error: `Processing rejected: ${strategy.reason}`,
           strategy: strategy.strategy,
-          processingTimeMs: now() - startTime,
+          processingTimeMs: performance.now() - startTime,
           metadata: { rejectionReason: strategy.reason },
         };
       }
@@ -244,7 +244,7 @@ export class ProcessingDispatcher {
           success: false,
           error: 'Invalid strategy: missing processing configuration',
           strategy: strategy.strategy,
-          processingTimeMs: now() - startTime,
+          processingTimeMs: performance.now() - startTime,
           metadata: { errorDetails: 'No processing configuration provided' },
         };
       }
@@ -253,7 +253,7 @@ export class ProcessingDispatcher {
         success: true,
         chunks,
         strategy: strategy.strategy,
-        processingTimeMs: now() - startTime,
+        processingTimeMs: performance.now() - startTime,
         metadata: {
           chunker: strategy.processing.chunker || 'unknown',
           totalChunks: chunks.length,
@@ -265,7 +265,7 @@ export class ProcessingDispatcher {
         success: false,
         error: `Processing failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
         strategy: strategy.strategy,
-        processingTimeMs: now() - startTime,
+        processingTimeMs: performance.now() - startTime,
         metadata: {
           errorDetails: _error instanceof Error ? _error.message : 'Unknown error',
           attemptedChunker: strategy.processing?.chunker || 'unknown',
@@ -283,10 +283,16 @@ export class ProcessingDispatcher {
       throw new Error('Missing processing configuration');
     }
     const processingPromise = this.routeToChunker(file, strategy.strategy, processing);
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined = undefined;
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Processing timeout')), this.config.timeout);
+      timeoutHandle = setTimeout(
+        () => reject(new Error('Processing timeout')),
+        this.config.timeout,
+      );
     });
-    return Promise.race([processingPromise, timeoutPromise]);
+    return Promise.race([processingPromise, timeoutPromise]).finally(() => {
+      clearTimeout(timeoutHandle);
+    });
   }
 
   private async routeToChunker(

@@ -2,6 +2,10 @@
 
 **Autonomous Software Behavior Reasoning (ASBR) Runtime** - Clean, governed monorepo with strict import boundaries, SBOM, and CI gates.
 
+## Requirements
+
+- Node.js 18 or later (global `crypto` API is required).
+
 ## Architecture Overview
 
 Cortex-OS is a monorepo containing several applications and shared libraries. The architecture is designed to be modular, with clear separation between applications and the services they consume.
@@ -81,6 +85,10 @@ pnpm format
 - **Accessibility**: WCAG 2.2 AA compliance throughout
 - **Clean Architecture**: Removed backward compatibility bloat (30+ files from MCP)
 - **AI-Enhanced**: MLX (Qwen3) for semantic search, Ollama fallback
+
+## MLX Models Directory
+
+The MLX embedder uses the Hugging Face cache at `~/.cache/huggingface` by default. Set the `MLX_MODELS_DIR` environment variable to load models from a different directory.
 
 ## Licensing
 

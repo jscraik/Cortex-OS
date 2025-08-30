@@ -3,17 +3,16 @@
  * @description Utility functions for security operations
  */
 
-import forge from 'node-forge';
-import { SecurityError } from '../types.ts';
+import { X509Certificate } from 'node:crypto';
+import type { SecurityError } from '../types.js';
+
+export type { SecurityError };
 
 /**
- * Generate a random nonce for cryptographic operations
+ * Generate a random nonce for cryptographic operations.
+ * Requires Node.js 18+ where global `crypto` is available.
  */
 export function generateNonce(length = 32): string {
-  if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
-    throw new SecurityError('Secure random number generation unavailable', 'RNG_UNAVAILABLE');
-  }
-
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -48,8 +47,8 @@ export function extractWorkloadPath(spiffeId: string): string | null {
  */
 export function isCertificateExpired(certPem: string): boolean {
   try {
-    const cert = forge.pki.certificateFromPem(certPem);
-    return cert.validity.notAfter.getTime() <= Date.now();
+    const cert = new X509Certificate(certPem);
+    return new Date(cert.validTo).getTime() <= Date.now();
   } catch {
     return true;
   }
@@ -115,3 +114,5 @@ export function validateSecurityContext(context: {
     errors,
   };
 }
+
+export { SecurityError };

@@ -7,18 +7,15 @@
  * @last_updated 2025-08-22
  */
 
-import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
-import { ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 import {
+  A2AMessage,
+  AgentCapabilities,
   AgentCard,
   AgentSkill,
-  AgentInterface,
-  AgentCapabilities,
-  AgentExtension,
-  AgentProvider,
   TransportProtocol,
-  A2AMessage,
 } from '@cortex-os/a2a';
+import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
+import { ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
 /**
  * A2A AI Agent - Exposes AI capabilities as agent skills for multi-agent coordination
@@ -243,6 +240,14 @@ export class A2AAIAgent {
     ];
 
     const capabilities: AgentCapabilities = {
+      skills: skills,
+      supportedProtocols: [TransportProtocol.HTTP, TransportProtocol.WEBSOCKET],
+      maxConcurrentTasks: 5,
+      resourceLimits: {
+        memoryMB: 1024,
+        cpuPercent: 50,
+        timeoutMs: 30000,
+      },
       streaming: false,
       pushNotifications: false,
       stateTransitionHistory: true,
@@ -278,12 +283,6 @@ export class A2AAIAgent {
       interface: {
         transport: TransportProtocol.HTTP,
         uri: 'http://127.0.0.1:8081/a2a',
-        fallback: [
-          {
-            transport: TransportProtocol.HTTP,
-            uri: 'http://127.0.0.1:8081/mcp',
-          },
-        ],
       },
       skills,
     };
@@ -473,23 +472,6 @@ export const a2aAIAgent = new A2AAIAgent('cortex-asbr-ai-agent');
  */
 export function createA2AAIAgent(agentId?: string): A2AAIAgent {
   return new A2AAIAgent(agentId);
-}
-
-/**
- * Helper function to check A2A compatibility
- */
-export function isA2ACompatible(): boolean {
-  try {
-    // Try dynamic import to check if A2A package is available
-    // This is safer in ESM environments and won't break tests
-    return (
-      typeof globalThis !== 'undefined' &&
-      typeof process !== 'undefined' &&
-      process.versions?.node !== undefined
-    );
-  } catch {
-    return false;
-  }
 }
 
 /**

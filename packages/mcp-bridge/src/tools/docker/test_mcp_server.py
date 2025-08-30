@@ -11,18 +11,19 @@ ai_provenance_hash: N/A
 
 import json
 import subprocess
+import sys
 
 
 def test_discover_tools():
     request = {"command": "discover"}
     proc = subprocess.Popen(
-        ["python", "mcp_server.py"],
+        [sys.executable, "mcp_server.py"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         cwd=".",
     )
-    out, err = proc.communicate((json.dumps(request) + "\n").encode(), timeout=5)
+    out, _ = proc.communicate((json.dumps(request) + "\n").encode(), timeout=5)
     lines = out.decode().splitlines()
     assert lines, "No output from MCP server"
     data = json.loads(lines[0])

@@ -1764,11 +1764,6 @@ service.ts
 types.ts
 workflow-validator.ts
 
-./packages/orchestration/src/adapters:
-lock.memory.ts
-queue.memory.ts
-store.memory.ts
-
 ./packages/orchestration/src/bridges:
 agent.bridge.ts
 memories.bridge.ts
@@ -1804,12 +1799,6 @@ test_tiered_model_manager.py
 
 ./packages/orchestration/src/observability:
 otel.ts
-
-./packages/orchestration/src/ports:
-Clock.ts
-Locker.ts
-Queue.ts
-Store.ts
 
 ./packages/orchestration/src/providers:
 mlx-first-provider.ts
@@ -1913,8 +1902,6 @@ ingest.ts
 query.ts
 qwen3-reranker.ts
 rerank_fusion.ts
-rerank_mlx.py
-
 ./packages/rag/src/policy:
 index.ts
 load.ts

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+vi.mock('@cortex-os/telemetry');
 import { z } from 'zod';
 import * as telemetry from '@cortex-os/telemetry';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
