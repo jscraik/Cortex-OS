@@ -1,4 +1,9 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm commitlint --edit "$1"
+# Check if commitlint is available - exit on failure per PR #307
+if command -v commitlint >/dev/null 2>&1; then
+  pnpm exec commitlint --edit "$1" || exit 1
+else
+  echo "Commitlint not available, skipping commit message validation"
+fi

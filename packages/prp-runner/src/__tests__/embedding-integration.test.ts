@@ -3,7 +3,8 @@
  * @description Test embedding and reranking capabilities with functional adapters
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import crypto from 'crypto';
 import {
   createEmbeddingState,
   addDocuments,

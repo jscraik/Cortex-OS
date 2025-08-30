@@ -4,13 +4,9 @@
  */
 
 import { spawn } from 'child_process';
-
 import { tmpdir } from 'os';
-import { join } from 'path';
+import path, { join } from 'path';
 import { type Embedder } from '../index.js';
-import { runProcess } from '../../../../src/lib/run-process.js';
-
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
@@ -20,6 +16,7 @@ export interface Qwen3EmbedOptions {
   maxTokens?: number;
   batchSize?: number;
   useGPU?: boolean;
+  cacheDir?: string;
 }
 
 export class Qwen3Embedder implements Embedder {
@@ -32,7 +29,8 @@ export class Qwen3Embedder implements Embedder {
 
   constructor(options: Qwen3EmbedOptions = {}) {
     this.modelSize = options.modelSize || '4B';
-
+    this.modelPath =
+      options.modelPath || path.resolve(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`);
     this.cacheDir =
       options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
     this.maxTokens = options.maxTokens || 512;
@@ -54,9 +52,10 @@ export class Qwen3Embedder implements Embedder {
     return results;
   }
 
-  private async embedBatch(texts: string[]): Promise<number[][]> {
+  private embedBatch(texts: string[]): Promise<number[][]> {
     return this.embedWithModel(texts);
   }
+
 
   private async embedWithModel(texts: string[]): Promise<number[][]> {
     return new Promise((resolve, reject) => {
@@ -95,7 +94,6 @@ export class Qwen3Embedder implements Embedder {
         reject(err);
       });
     });
-    return result.embeddings;
   }
 
   private getPythonScript(modelPath: string, texts: string[], useGPU: boolean): string {

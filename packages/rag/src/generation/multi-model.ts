@@ -1,5 +1,9 @@
+
+import path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 import type { ChatMessage, GenerationConfig, Generator } from './index';
-import { runProcess } from '../../../../src/lib/run-process.js';
+import { runProcess } from '../lib/run-process.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 

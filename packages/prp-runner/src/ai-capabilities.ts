@@ -37,14 +37,14 @@ export interface AICoreConfig {
 
   // Embedding Configuration
   embedding?: {
-    provider: 'sentence-transformers' | 'local' | 'mock';
+    provider: 'sentence-transformers' | 'local';
     model?: string;
     dimensions?: number;
   };
 
   // Reranker Configuration
   reranker?: {
-    provider: 'transformers' | 'local' | 'mock';
+    provider: 'transformers' | 'local';
     model?: string;
   };
 
