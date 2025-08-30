@@ -1902,8 +1902,6 @@ ingest.ts
 query.ts
 qwen3-reranker.ts
 rerank_fusion.ts
-rerank_mlx.py
-
 ./packages/rag/src/policy:
 index.ts
 load.ts

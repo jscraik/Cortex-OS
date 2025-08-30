@@ -7,22 +7,24 @@ import re
 
 print("Updating mcp_server.py to use Python SecureCommandExecutor...")
 
-mcp_server_path = os.path.join('packages', 'mcp', 'src', 'tools', 'docker', 'mcp_server.py')
+mcp_server_path = os.path.join(
+    "packages", "mcp", "src", "tools", "docker", "mcp_server.py"
+)
 
 # Read the file
-with open(mcp_server_path, 'r') as f:
+with open(mcp_server_path) as f:
     content = f.read()
 
 # Update the import statement
 content = content.replace(
-    '# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor',
-    'from cortex_os.mvp_core.src.python.secure_executor import SecureCommandExecutor'
+    "# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor",
+    "from cortex_os.mvp_core.src.python.secure_executor import SecureCommandExecutor",
 )
 
 # Update the run_docker_command function to use Python SecureCommandExecutor
 run_docker_pattern = re.compile(
-    r'def run_docker_command\(command\):(.*?)# SECURITY UPDATE: Execute command using SecureCommandExecutor(.*?)except Exception as e:(.*?)return \{.*?\}',
-    re.DOTALL
+    r"def run_docker_command\(command\):(.*?)# SECURITY UPDATE: Execute command using SecureCommandExecutor(.*?)except Exception as e:(.*?)return \{.*?\}",
+    re.DOTALL,
 )
 
 run_docker_replacement = '''def run_docker_command(command):
@@ -32,7 +34,7 @@ run_docker_replacement = '''def run_docker_command(command):
         validate_docker_command(command)
     except ValueError as e:
         return {"stdout": "", "stderr": f"Command validation failed: {str(e)}"}
-    
+
     # Use SecureCommandExecutor for safe command execution
     try:
         # SECURITY UPDATE: Execute command using Python SecureCommandExecutor
@@ -56,7 +58,7 @@ def docker_list_containers():
     except Exception as e:
         return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}''',
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
 # Update the docker_list_images function to use SecureCommandExecutor directly
@@ -72,7 +74,7 @@ def docker_list_images():
     except Exception as e:
         return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}''',
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
 # Update the docker_inspect_container function to use SecureCommandExecutor directly
@@ -88,7 +90,7 @@ def docker_inspect_container(req: DockerInspectRequest):
     except Exception as e:
         return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}''',
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
 # Update the docker_get_container_logs function to use SecureCommandExecutor directly
@@ -104,11 +106,11 @@ def docker_get_container_logs(req: DockerLogsRequest):
     except Exception as e:
         return {"stdout": "", "stderr": f"Secure command execution failed: {str(e)}"}''',
     content,
-    flags=re.DOTALL
+    flags=re.DOTALL,
 )
 
 # Write the updated content back to the file
-with open(mcp_server_path, 'w') as f:
+with open(mcp_server_path, "w") as f:
     f.write(content)
 
 print("✅ mcp_server.py updated to use Python SecureCommandExecutor")

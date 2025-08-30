@@ -1,0 +1,47 @@
+name: Security Testing
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  security-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install Semgrep
+        run: pnpm install -g semgrep
+
+      - name: Run security tests
+        run: ./scripts/security-test.sh
+
+      - name: Run Semgrep security scan
+        run: pnpm security:scan:all
+
+      - name: Run dependency audit
+        run: |
+          pnpm audit --audit-level=high || true
+
+      - name: Check for security TODOs
+        run: |
+          if grep -r -i -n "TODO.*security\|TODO.*secure\|FIXME.*security\|FIXME.*secure" --include="*.ts" --include="*.js" --include="*.py" . 2>/dev/null; then
+            echo "⚠️  Security-related TODO/FIXME comments found"
+            exit 1
+          else
+            echo "✅ No security-related TODO/FIXME comments found"
+          fi

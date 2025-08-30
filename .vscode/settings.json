@@ -1,5 +1,9 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.formatOnSave": true,
-  "files.eol": "\n"
+  "files.eol": "\n",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "jamiescottcraik",
+    "projectKey": "jamiescottcraik_cortex-os"
+  }
 }

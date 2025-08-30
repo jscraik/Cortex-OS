@@ -6,67 +6,43 @@
 /* eslint-disable no-console */
 
 import { Command } from 'commander';
+import { readAll as readRegistry } from '@cortex-os/mcp-registry/src/fs-store.js';
 
 const program = new Command();
 
 program.name('mcp').description('MCP (Model Context Protocol) CLI for Cortex-OS').version('1.0.0');
 
 // Simple placeholder commands for now
-program
-  .command('registry')
-  .description('MCP registry management')
-  .action(() => {
-    console.log('Registry command placeholder');
+const registry = program.command('registry').description('MCP registry management');
+
+registry
+  .command('list')
+  .option('--json', 'Output as JSON', false)
+  .description('List installed MCP servers')
+  .action(async (opts: { json?: boolean }) => {
+    const servers = await readRegistry();
+    if (opts.json) {
+      const out = {
+        kind: 'mcp.serverList',
+        at: new Date().toISOString(),
+        count: servers.length,
+        servers,
+      };
+      console.log(JSON.stringify(out, null, 2));
+      return;
+    }
+    if (!servers.length) {
+      console.log('No MCP servers installed.');
+      return;
+    }
+    console.log('Installed MCP Servers:\n');
+    for (const s of servers) {
+      const status = s.enabled ? '✅ Enabled' : '❌ Disabled';
+      console.log(`- ${s.name} (${s.transport?.type ?? 'unknown'}) ${status}`);
+    }
   });
 
-program
-  .command('call')
-  .description('Call an MCP tool')
-  .action(() => {
-    console.log('Call command placeholder');
-  });
-
-program
-  .command('hub')
-  .description('MCP hub management')
-  .action(() => {
-    console.log('Hub command placeholder');
-  });
-
-program
-  .command('sync')
-  .description('Sync MCP configurations')
-  .action(() => {
-    console.log('Sync command placeholder');
-  });
-
-program
-  .command('docs')
-  .description('MCP documentation')
-  .action(() => {
-    console.log('Docs command placeholder');
-  });
-
-program
-  .command('gitmcp')
-  .description('Git MCP integration')
-  .action(() => {
-    console.log('GitMCP command placeholder');
-  });
-
-program
-  .command('vscode')
-  .description('VS Code MCP integration')
-  .action(() => {
-    console.log('VS Code command placeholder');
-  });
-
-program
-  .command('consolidate')
-  .description('Consolidate MCP configurations')
-  .action(() => {
-    console.log('Consolidate command placeholder');
-  });
+// Placeholder commands removed to avoid confusion in production
 
 // Add quick test command
 program

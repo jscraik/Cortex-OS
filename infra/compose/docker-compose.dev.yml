@@ -1,0 +1,172 @@
+version: "3.9"
+
+services:
+  nats:
+    container_name: cortexos_nats
+    image: nats:2.10
+    command: ["-js", "-sd", "/data"]
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+    volumes:
+      - nats:/data
+    mem_limit: "256m"
+
+  model-gateway:
+    container_name: cortexos_model_gateway
+    build:
+      context: ../../
+      dockerfile: packages/model-gateway/Dockerfile
+    profiles: ["dev-min","dev-full"]
+    environment:
+      # MLX runs host-native (Metal) on macOS; OrbStack exposes host via host.docker.internal
+      MODEL_GATEWAY: "${MLX_BASE_URL:-http://host.docker.internal:8081}"
+      NODE_ENV: development
+      # Constrain Node heap to reduce memory usage
+      NODE_OPTIONS: "--max-old-space-size=384"
+    ports:
+      - "${MODEL_GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      - nats
+    mem_limit: "512m"
+
+  mcp-registry:
+    container_name: cortexos_mcp_registry
+    build:
+      context: ../../
+      dockerfile: packages/mcp-registry/Dockerfile
+    profiles: ["dev-full"]
+    environment:
+      NODE_ENV: development
+    ports:
+      - "${MCP_REGISTRY_PORT:-8090}:8090"
+    depends_on:
+      - nats
+    mem_limit: "256m"
+
+  cortex-os:
+    container_name: cortexos_cortex_os
+    build:
+      context: ../../
+      dockerfile: apps/cortex-os/Dockerfile
+    profiles: ["dev-min","dev-full"]
+    environment:
+      NODE_ENV: development
+      NATS_URL: "nats://nats:4222"
+      MODEL_GATEWAY_URL: "http://model-gateway:8080"
+      NODE_OPTIONS: "--max-old-space-size=384"
+    ports:
+      - "${CORTEX_OS_PORT:-3000}:3000"
+    depends_on:
+      nats:
+        condition: service_healthy
+      model-gateway:
+        condition: service_healthy
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  agents-workers:
+    container_name: cortexos_agents_workers
+    build:
+      context: ../../
+      dockerfile: packages/agents/Dockerfile
+    profiles: ["workers"]
+    environment:
+      NODE_ENV: development
+      NATS_URL: "nats://nats:4222"
+      NODE_OPTIONS: "--max-old-space-size=256"
+    depends_on:
+      nats:
+        condition: service_healthy
+    mem_limit: "384m"
+
+  otel-collector:
+    container_name: cortexos_otel_collector
+    image: otel/opentelemetry-collector:0.103.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ../../docs/mcp/observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    profiles: ["observability"]
+    ports:
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+    healthcheck:
+      test: ["CMD","curl","-fsS","http://localhost:4318"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+
+  loki:
+    container_name: cortexos_loki
+    image: grafana/loki:2.9.8
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    profiles: ["observability"]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    healthcheck:
+      test: ["CMD","curl","-fsS","http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+
+  tempo:
+    container_name: cortexos_tempo
+    image: grafana/tempo:2.5.0
+    command: ["-config.file=/etc/tempo.yaml"]
+    profiles: ["observability"]
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+    healthcheck:
+      test: ["CMD","curl","-fsS","http://localhost:3200/status"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+
+  grafana:
+    container_name: cortexos_grafana
+    image: grafana/grafana:10.4.3
+    profiles: ["observability"]
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    depends_on:
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+    volumes:
+      - ../../infra/compose/observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ../../infra/compose/observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../../docs/mcp/observability/dashboards:/var/lib/grafana/dashboards:ro
+    mem_limit: "512m"
+
+  cortex-web:
+    container_name: cortexos_cortex_web
+    build:
+      context: ../../
+      dockerfile: apps/cortex-web/Dockerfile
+    profiles: ["web"]
+    environment:
+      NODE_ENV: development
+      NODE_OPTIONS: "--max-old-space-size=384"
+    ports:
+      - "${CORTEX_WEB_PORT:-3000}:3000"
+    mem_limit: "512m"
+
+  api:
+    container_name: cortexos_api
+    build:
+      context: ../../
+      dockerfile: apps/api/Dockerfile
+    profiles: ["api"]
+    environment:
+      PYTHONUNBUFFERED: "1"
+      APP_MODULE: "src.api.endpoints:app"
+    ports:
+      - "${API_PORT:-8082}:8082"
+    mem_limit: "384m"
+
+volumes:
+  nats: {}

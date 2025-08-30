@@ -4,6 +4,8 @@ export interface VectorQuery {
   vector: number[];
   topK: number;
   filterTags?: string[];
+  // Optional original query text to enable second-stage reranking
+  queryText?: string;
 }
 
 export interface TextQuery {

@@ -17,7 +17,7 @@ export async function handleResourceRead(
   }
 
   try {
-    const readResult = await resource.handler();
+    const readResult = await resource.handler(uri);
     return { jsonrpc: '2.0' as const, id, result: readResult };
   } catch (error) {
     return {

@@ -6,30 +6,149 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
-import { estimateTokenCount } from '../lib/estimate-token-count';
+import { estimateTokenCount } from '../../../../src/lib/math.js';
 
-// MLX model configurations
+// Configuration paths - can be overridden via environment
+const HUGGINGFACE_CACHE =
+  process.env.HF_HOME || process.env.TRANSFORMERS_CACHE || '/Volumes/ExternalSSD/huggingface_cache';
+const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/Volumes/ExternalSSD/ai-cache';
+const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
+
+// MLX model configurations with configurable paths
 const MLX_MODELS = {
+  // Embedding models from HuggingFace cache
+  'qwen3-embedding-0.6b-mlx': {
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-0.6B`,
+    hf_path: 'Qwen/Qwen3-Embedding-0.6B',
+    type: 'embedding',
+    memory_gb: 1.0,
+    dimensions: 1536,
+    context_length: 8192,
+  },
   'qwen3-embedding-4b-mlx': {
-    path: 'Qwen/Qwen3-Embedding-4B',
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-4B`,
+    hf_path: 'Qwen/Qwen3-Embedding-4B',
+    type: 'embedding',
     memory_gb: 4.0,
     dimensions: 1536,
     context_length: 8192,
   },
   'qwen3-embedding-8b-mlx': {
-    path: 'Qwen/Qwen3-Embedding-8B',
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-8B`,
+    hf_path: 'Qwen/Qwen3-Embedding-8B',
+    type: 'embedding',
     memory_gb: 8.0,
     dimensions: 1536,
     context_length: 8192,
+  },
+  // Reranker models
+  'qwen3-reranker-4b-mlx': {
+    path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Reranker-4B`,
+    hf_path: 'Qwen/Qwen3-Reranker-4B',
+    type: 'reranking',
+    memory_gb: 4.0,
+    context_length: 8192,
+  },
+  // Chat/completion models from HuggingFace MLX cache
+  'qwen3-coder-30b-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit`,
+    hf_path: 'mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit',
+    type: 'chat',
+    memory_gb: 16.0,
+    max_tokens: 4096,
+    context_length: 32768,
+    capabilities: ['code'],
+  },
+  'qwen2.5-vl-3b-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit`,
+    hf_path: 'mlx-community/Qwen2.5-VL-3B-Instruct-6bit',
+    type: 'chat',
+    memory_gb: 3.0,
+    max_tokens: 4096,
+    context_length: 32768,
+    capabilities: ['vision'],
+  },
+  'qwen2.5-0.5b-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Qwen2.5-0.5B-Instruct-4bit`,
+    hf_path: 'mlx-community/Qwen2.5-0.5B-Instruct-4bit',
+    type: 'chat',
+    memory_gb: 0.5,
+    max_tokens: 4096,
+    context_length: 32768,
+  },
+  'mixtral-8x7b-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx`,
+    hf_path: 'mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx',
+    type: 'chat',
+    memory_gb: 24.0,
+    max_tokens: 4096,
+    context_length: 32768,
+  },
+  'gemma2-2b-mlx': {
+    path: `${MODEL_BASE_PATH}/models--mlx-community--gemma-2-2b-it-4bit`,
+    hf_path: 'mlx-community/gemma-2-2b-it-4bit',
+    type: 'chat',
+    memory_gb: 2.0,
+    max_tokens: 4096,
+    context_length: 8192,
+  },
+  'glm-4.5-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--GLM-4.5-4bit`,
+    hf_path: 'mlx-community/GLM-4.5-4bit',
+    type: 'chat',
+    memory_gb: 12.0,
+    max_tokens: 4096,
+    context_length: 32768,
+  },
+  'phi3-mini-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--mlx-community--Phi-3-mini-4k-instruct-4bit`,
+    hf_path: 'mlx-community/Phi-3-mini-4k-instruct-4bit',
+    type: 'chat',
+    memory_gb: 2.0,
+    max_tokens: 4096,
+    context_length: 4096,
+  },
+  'gpt-oss-20b-mlx': {
+    path: `${MODEL_BASE_PATH}/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit`,
+    hf_path: 'lmstudio-community/gpt-oss-20b-MLX-8bit',
+    type: 'chat',
+    memory_gb: 12.0,
+    max_tokens: 4096,
+    context_length: 8192,
+    capabilities: ['reasoning', 'storytelling'],
   },
 } as const;
 
 export type MLXModelName = keyof typeof MLX_MODELS;
 
-// Embedding request/response schemas
+// Request/response schemas
 const MLXEmbeddingRequestSchema = z.object({
   text: z.string(),
   model: z.string().optional(),
+});
+
+const MLXChatRequestSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(['system', 'user', 'assistant']),
+      content: z.string(),
+    }),
+  ),
+  model: z.string().optional(),
+  max_tokens: z.number().optional(),
+  temperature: z.number().optional(),
+});
+
+const MLXChatResponseSchema = z.object({
+  content: z.string(),
+  model: z.string(),
+  usage: z
+    .object({
+      prompt_tokens: z.number(),
+      completion_tokens: z.number(),
+      total_tokens: z.number(),
+    })
+    .optional(),
 });
 
 const MLXEmbeddingResponseSchema = z.object({
@@ -46,29 +165,70 @@ const MLXEmbeddingResponseSchema = z.object({
 
 export type MLXEmbeddingRequest = z.infer<typeof MLXEmbeddingRequestSchema>;
 export type MLXEmbeddingResponse = z.infer<typeof MLXEmbeddingResponseSchema>;
+export type MLXChatRequest = z.infer<typeof MLXChatRequestSchema>;
+export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
+
+export interface MLXAdapter {
+  generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
+  generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]>;
+  rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }>;
+  isAvailable(): Promise<boolean>;
+}
 
 /**
- * MLX Adapter for model gateway
+ * Factory to create an MLX adapter
  */
-export class MLXAdapter {
-  private readonly pythonPath: string;
-  private readonly scriptPath: string;
+export function createMLXAdapter(): MLXAdapter {
+  const pythonPath = process.env.PYTHON_PATH || 'python3';
+  const embeddingScriptPath = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '../../../../apps/cortex-py/src/mlx/embedding_generator.py',
+  );
+  const unifiedScriptPath = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '../../../../apps/cortex-py/src/mlx/mlx_unified.py',
+  );
 
-  constructor() {
-    // Path to Python executable (can be configured via environment)
-    this.pythonPath = process.env.PYTHON_PATH || 'python3';
+  const executePythonScript = (args: string[], useUnified = false): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const script = useUnified ? unifiedScriptPath : embeddingScriptPath;
+      const pythonProcess = spawn(pythonPath, [script, ...args], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: {
+          ...process.env,
+          PYTHONPATH: path.resolve(process.cwd(), 'apps/cortex-py/src'),
+          HF_HOME: HUGGINGFACE_CACHE,
+          TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
+          MLX_CACHE_DIR: MLX_CACHE_DIR,
+        },
+      });
 
-    // Path to the MLX embedding generator script
-    this.scriptPath = path.resolve(
-      path.dirname(new URL(import.meta.url).pathname),
-      '../../../../apps/cortex-py/src/mlx/embedding_generator.py',
-    );
-  }
+      let stdout = '';
+      let stderr = '';
 
-  /**
-   * Generate embeddings using MLX
-   */
-  async generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> {
+      pythonProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      pythonProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve(stdout.trim());
+        } else {
+          reject(new Error(`Python script failed with code ${code}: ${stderr}`));
+        }
+      });
+
+      pythonProcess.on('error', (error) => {
+        reject(error);
+      });
+    });
+  };
+
+  const generateEmbedding = async (request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> => {
     const modelName = (request.model as MLXModelName) || 'qwen3-embedding-4b-mlx';
     const modelConfig = MLX_MODELS[modelName];
 
@@ -77,12 +237,7 @@ export class MLXAdapter {
     }
 
     try {
-      const result = await this.executePythonScript([
-        request.text,
-        '--model',
-        modelName,
-        '--json-only',
-      ]);
+      const result = await executePythonScript([request.text, '--model', modelName, '--json-only']);
 
       const data = JSON.parse(result);
 
@@ -101,21 +256,16 @@ export class MLXAdapter {
         `MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-  }
+  };
 
-  /**
-   * Generate multiple embeddings in batch
-   */
-  async generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]> {
+  const generateEmbeddings = async (
+    texts: string[],
+    model?: string,
+  ): Promise<MLXEmbeddingResponse[]> => {
     const modelName = (model as MLXModelName) || 'qwen3-embedding-4b-mlx';
 
     try {
-      const result = await this.executePythonScript([
-        ...texts,
-        '--model',
-        modelName,
-        '--json-only',
-      ]);
+      const result = await executePythonScript([...texts, '--model', modelName, '--json-only']);
 
       const data = JSON.parse(result);
 
@@ -143,56 +293,59 @@ export class MLXAdapter {
         `MLX batch embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
-  }
+  };
 
-  /**
-   * Execute the Python MLX script
-   */
-  private async executePythonScript(args: string[]): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const pythonProcess = spawn(this.pythonPath, [this.scriptPath, ...args], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          PYTHONPATH: path.resolve(process.cwd(), 'apps/cortex-py/src'),
-        },
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      pythonProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      pythonProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      pythonProcess.on('close', (code) => {
-        if (code === 0) {
-          resolve(stdout.trim());
-        } else {
-          reject(new Error(`Python script failed with code ${code}: ${stderr}`));
+  const rerank = async (
+    query: string,
+    documents: string[],
+    model?: string,
+  ): Promise<{ scores: number[] }> => {
+    const modelName = (model as MLXModelName) || 'qwen3-reranker-4b-mlx';
+    const args = [
+      query,
+      JSON.stringify(documents),
+      '--model',
+      modelName,
+      '--rerank-mode',
+      '--json-only',
+    ];
+    try {
+      const result = await executePythonScript(args, true);
+      const data = JSON.parse(result);
+      // data.scores may be array of {index, score}. Map to ordered scores aligned with input docs
+      if (Array.isArray(data.scores) && data.scores.length > 0 && typeof data.scores[0] === 'object') {
+        const tmp: number[] = new Array(documents.length).fill(0);
+        for (const item of data.scores) {
+          if (typeof item.index === 'number' && typeof item.score === 'number') {
+            tmp[item.index] = item.score;
+          }
         }
-      });
+        return { scores: tmp };
+      }
+      if (Array.isArray(data.scores)) {
+        return { scores: data.scores as number[] };
+      }
+      throw new Error('Invalid rerank response');
+    } catch (error) {
+      console.error('MLX rerank failed:', error);
+      throw new Error(`MLX rerank failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
-      pythonProcess.on('error', (error) => {
-        reject(error);
-      });
-    });
-  }
-
-  /**
-   * Check if MLX is available
-   */
-  async isAvailable(): Promise<boolean> {
+  const isAvailable = async (): Promise<boolean> => {
     try {
       // Test with a simple text to check if MLX is available
-      await this.executePythonScript(['test', '--json-only']);
+      await executePythonScript(['test', '--json-only']);
       return true;
     } catch {
       return false;
     }
-  }
+  };
+
+  return {
+    generateEmbedding,
+    generateEmbeddings,
+    rerank,
+    isAvailable,
+  };
 }

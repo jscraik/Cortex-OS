@@ -1,100 +1,155 @@
-
-import commandExists from 'command-exists';
 import { z } from 'zod';
-import type { McpRequest, TransportConfig, Transport } from './types.js';
-import { parseTransportConfig } from './transport-schema.js';
+import { EventEmitter } from 'node:events';
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { redactSensitiveData } from './security.js';
+import type { McpRequest, TransportConfig, Transport, HttpTransportConfig, StdioTransportConfig } from './types.js';
+import { SSETransport } from './sse-transport.js';
 
+export { redactSensitiveData } from './security.js';
+export type { Transport } from './types.js';
 
-export function validateTransportConfig(config: TransportConfig) {
-  const baseSchema = {
-    allowNetwork: z.boolean().optional(),
-    sandbox: z.boolean().optional(),
-    timeoutMs: z.number().int().nonnegative().optional(),
-    maxMemoryMB: z.number().int().nonnegative().optional(),
-  };
+// Schema used to validate messages before sending
+const MessageSchema = z
+  .object({ jsonrpc: z.literal('2.0'), id: z.union([z.string(), z.number()]) })
+  .passthrough();
 
-
-function validateMessage(message: McpRequest): void {
-  const schema = z
-    .object({
-      jsonrpc: z.literal('2.0'),
-      id: z.union([z.string(), z.number()]),
-      method: z.string().optional(),
-      params: z.unknown().optional(),
-      result: z.unknown().optional(),
-      error: z.unknown().optional(),
-    })
-    .strict();
-  schema.parse(message);
-}
-
-
-  return z.union([stdioSchema, httpSchema]).parse(config);
-}
-
-function ensureCommandExists(command: string) {
-  const check = spawnSync('command', ['-v', command]);
-  if (check.status !== 0) {
-    throw new Error('Command not found');
-  }
-}
-
-export function validateMessage(
-  message: McpRequest,
-  onError?: (err: unknown, msg: McpRequest) => void,
-) {
-  const msgSchema = z
-    .object({
-      jsonrpc: z.literal('2.0'),
-      id: z.union([z.string(), z.number()]),
-      method: z.string().optional(),
-      params: z.unknown().optional(),
-      result: z.unknown().optional(),
-      error: z.unknown().optional(),
-    })
-    .strict();
+export function validateMessage(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void): void {
   try {
-    msgSchema.parse(message);
+    MessageSchema.parse(message);
   } catch (err) {
-    if (onError) {
-      onError(err, message);
-    } else {
-      console.error('Malformed message in transport.send:', err, message);
-    }
+    if (onError) onError(err, message);
+    else console.error('Malformed message in transport.send:', err, message);
   }
 }
 
-export function createTransport(config: TransportConfig) {
-  const cfg = validateTransportConfig(config);
-  let connected = false;
+export function createTransport(config: TransportConfig): Transport {
+  switch (config.type) {
+    case 'sse':
+      return new SSETransport(config);
+    case 'http':
+      return createHttpTransport(config);
+    case 'stdio':
+      return createStdioTransport(config);
+  }
+}
 
-  return {
+// HTTP Transport
+function createHttpTransport(config: HttpTransportConfig): Transport & EventEmitter {
+  const state = { connected: false };
+  const emitter = new EventEmitter();
+  // Optional keep-alive via undici Agent if available
+  let dispatcher: any | undefined;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Agent } = require('undici');
+    dispatcher = new Agent({ keepAlive: true, keepAliveTimeout: 30_000, pipelining: 1 });
+  } catch {}
+  return Object.assign(emitter, {
     async connect() {
-      if (cfg.type === 'stdio') {
-        ensureCommandExists(cfg.command);
+      state.connected = true;
+    },
+    async disconnect() {
+      state.connected = false;
+    },
+    async send(message, onError) {
+      validateMessage(message, onError);
+      if (!state.connected) throw new Error('Transport not connected');
+      const body = JSON.stringify(redactSensitiveData(message));
+      const maxRetries = 2;
+      let attempt = 0;
+      // Simple exponential backoff retry on network errors or 5xx
+      // 0ms, 100ms, 200ms
+      while (true) {
+        try {
+          const res = await fetch(config.url, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', ...(config.headers || {}) },
+            body,
+            signal: config.timeoutMs ? AbortSignal.timeout(config.timeoutMs) : undefined,
+            // @ts-expect-error Node 20 undici dispatcher support
+            dispatcher,
+          });
+          if (!res.ok) {
+            if (res.status >= 500 && attempt < maxRetries) {
+              await new Promise((r) => setTimeout(r, 100 * attempt));
+              attempt++;
+              continue;
+            }
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const json = await res.json().catch(() => undefined);
+          if (json) emitter.emit('message', json);
+          break;
+        } catch (err) {
+          if (attempt < maxRetries) {
+            await new Promise((r) => setTimeout(r, 100 * attempt));
+            attempt++;
+            continue;
+          }
+          if (onError) onError(err, message);
+          else throw err;
+          break;
+        }
+      }
+    },
+    isConnected() {
+      return state.connected;
+    },
+  });
+}
 
+// STDIO Transport
+function createStdioTransport(config: StdioTransportConfig): Transport & EventEmitter {
+  let child: ChildProcessWithoutNullStreams | null = null;
+  let connected = false;
+  const emitter = new EventEmitter();
+
+  const handleStdout = (data: Buffer) => {
+    const lines = data.toString('utf8').split('\n').filter(Boolean);
+    for (const line of lines) {
+      try {
+        const msg = JSON.parse(line);
+        emitter.emit('message', msg);
+      } catch {
+        emitter.emit('error', new Error('Invalid JSON from stdio server'));
       }
     }
   };
-}
 
-
-export function createTransport(config: TransportConfig): Transport {
-  const cfg = parseTransportConfig(config);
-  const state = { connected: false };
-
-
-  return {
-    connect: createConnect(cfg, state),
-    disconnect: createDisconnect(state),
-    isConnected: () => state.connected,
-    send: createSend(),
-
-
-    send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
-      validateMessage(message, onError);
+  return Object.assign(emitter, {
+    async connect() {
+      if (connected) return;
+      child = spawn(config.command, config.args ?? [], {
+        cwd: config.cwd,
+        env: { ...process.env, ...(config.env ?? {}) },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      child.stdout.on('data', handleStdout);
+      child.stderr.on('data', (d) => emitter.emit('stderr', d.toString()));
+      child.on('exit', (code, signal) => {
+        connected = false;
+        emitter.emit('exit', { code, signal });
+      });
+      connected = true;
     },
-
-  };
+    async disconnect() {
+      if (child && child.pid) child.kill('SIGTERM');
+      child = null;
+      connected = false;
+    },
+    async send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
+      validateMessage(message, onError);
+      if (!connected || !child || !child.stdin.writable) throw new Error('Transport not connected');
+      try {
+        const payload = JSON.stringify(redactSensitiveData(message)) + '\n';
+        child.stdin.write(payload);
+      } catch (err) {
+        if (onError) onError(err, message);
+        else throw err;
+      }
+    },
+    isConnected() {
+      return connected;
+    },
+  });
 }
-

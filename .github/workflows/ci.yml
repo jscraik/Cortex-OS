@@ -22,20 +22,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm structure:validate
-      - name: Check packages for circular deps
-        run: |
-          pnpm madge --circular --extensions ts,tsx ./packages || {
-            echo "madge detected issues in packages"
-            exit 1
-          }
-        continue-on-error: true
-      - name: Check apps for circular deps
-        run: |
-          pnpm madge --circular --extensions ts,tsx ./apps || {
-            echo "madge detected issues in apps"
-            exit 1
-          }
-        continue-on-error: true
+      - run: pnpm madge --circular --extensions ts,tsx ./packages || true
+      - run: pnpm madge --circular --extensions ts,tsx ./apps || true
       - run: |
           pnpm eslint --ext .ts,.tsx --rule "import/no-restricted-paths: error"
 
@@ -60,27 +48,40 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install --frozen-lockfile
-
-      - name: Sync Python dependencies
-        run: |
-          uv sync || {
-            echo "uv sync failed"
-            exit 1
-          }
-        continue-on-error: true
+      - run: uv sync || true
       - run: pnpm test -- --coverage
-      - name: Run Python tests
-        run: |
-          uv run pytest --cov=services --cov=libs/python || {
-            echo "pytest failed"
-            exit 1
-          }
-        continue-on-error: true
-      - name: Check coverage thresholds
-        run: |
-          pnpm nyc check-coverage --lines 80 --functions 80 --branches 70 || {
-            echo "coverage check failed"
-            exit 1
-          }
-        continue-on-error: true
+      - run: uv run pytest --cov=services --cov=libs/python || true
+      - run: pnpm nyc check-coverage --lines 80 --functions 80 --branches 70 || true
 
+  mcp_compliance:
+    runs-on: ubuntu-latest
+    name: MCP Compliance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint MCP package (errors enforced)
+        run: |
+          cd packages/mcp
+          pnpm lint
+      - name: Run MCP tests (core only)
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
+        run: |
+          cd packages/mcp
+          pnpm test -- --run --exclude "**/mixed-topology.e2e.test.ts" --exclude "**/client.e2e.test.ts"
+      - name: Run MCP mixed-topology (optional)
+        if: env.CI_MCP_FULL == '1'
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
+          CI_MCP_FULL: ${{ env.CI_MCP_FULL }}
+        run: |
+          cd packages/mcp
+          pnpm vitest run src/test/mixed-topology.e2e.test.ts
+          pnpm vitest run src/lib/client.e2e.test.ts

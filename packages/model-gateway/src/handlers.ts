@@ -37,8 +37,15 @@ export async function rerankHandler(router: ModelRouter, body: RerankBody) {
     documents: body.docs,
     model: body.model,
   });
-    .map((content, index) => ({ originalIndex: index, score: result.scores[index], content }))
+  // Build ranked results from the rerank response
+  const ranked = (result.documents || [])
+    .map((content, index) => ({
+      originalIndex: index,
+      score: result.scores?.[index] ?? 0,
+      content,
+    }))
     .sort((a, b) => b.score - a.score);
+
   return {
     rankedItems: ranked.slice(0, body.topK ?? ranked.length),
     modelUsed: result.model,
