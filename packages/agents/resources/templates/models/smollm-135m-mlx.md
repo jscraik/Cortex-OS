@@ -1,5 +1,24 @@
 # SmolLM-135M (MLX)
 
+- HF repo: `mlx-community/SmolLM-135M-Instruct-mlx`
+- Purpose: ultra-small chat model for local sanity checks; fast and minimal memory
+- Suggested use: quick smoke tests and demos; not for production quality
+- Notes: keep max-tokens low (<= 64) for speed; temperature ~0.7
+
+Sample safe run:
+
+```bash
+python3 scripts/run_mlx_lm_sample_safe.py \
+  --prompt "Summarize: MLX is working" \
+  --model mlx-community/SmolLM-135M-Instruct-mlx \
+  --max-tokens 48 --temperature 0.7 --seed 13 --json-only
+```
+
+Cache hints (ExternalSSD):
+
+- `HF_HOME` or `TRANSFORMERS_CACHE` -> `/Volumes/ExternalSSD/huggingface_cache`
+- `MLX_CACHE_DIR` -> `/Volumes/ExternalSSD/ai-cache`# SmolLM-135M (MLX)
+
 - HF repo: `mlx-community/SmolLM-135M-4bit` (alternatives: `mlx-community/SmolLM-135M-8bit`, `mlx-community/SmolLM-135M-fp16`)
 - Purpose: tiny chat model for quick local sanity checks on Apple Silicon
 - License: Apache-2.0 (see upstream model card)

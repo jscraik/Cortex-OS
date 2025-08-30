@@ -6,6 +6,9 @@ Minimal and safe MLX text generation runner.
 - Prints short output; supports --json-only for automation
 - Respects HF/MLX cache envs so weights live on ExternalSSD
 
+Docs:
+- MLX LM Python API: https://github.com/ml-explore/mlx-lm
+
 Examples:
   python3 scripts/run_mlx_lm_sample_safe.py \
     --model mlx-community/SmolLM-135M-4bit \
@@ -13,8 +16,7 @@ Examples:
     --max-tokens 64 --temperature 0.2 --json-only
 
 Notes:
-  - For Qwen or other models requiring remote code/tokenizer options,
-    pass --eos-token if needed. We set trust_remote_code=True by default.
+  - For Qwen or other models requiring special tokenizer options, pass --eos-token.
   - Ensure caches point to your ExternalSSD to avoid large downloads in repo.
 """
 
@@ -79,7 +81,6 @@ def main() -> int:
     args = parse_args()
 
     # Respect caches (user should set these to ExternalSSD paths)
-    # Defaults are harmless if not set; mlx/hf will use their own defaults.
     hf_home = os.environ.get("HF_HOME") or os.environ.get("TRANSFORMERS_CACHE")
     mlx_cache = os.environ.get("MLX_CACHE_DIR")
 
@@ -106,21 +107,19 @@ def main() -> int:
             verbose=False,
         )
 
+        payload = {
+            "ok": True,
+            "model": args.model,
+            "text": text,
+            "hf_home": hf_home,
+            "mlx_cache_dir": mlx_cache,
+        }
+
         if args.json_only:
-            print(
-                json.dumps(
-                    {
-                        "model": args.model,
-                        "text": text,
-                        "hf_home": hf_home,
-                        "mlx_cache_dir": mlx_cache,
-                    },
-                    ensure_ascii=False,
-                )
-            )
+            print(json.dumps(payload, ensure_ascii=False))
         else:
             print("=== MLX Safe Runner ===")
-            print(f"Model: {args.model}")
+            print(f"Model: {payload['model']}")
             if hf_home:
                 print(f"HF_HOME/TRANSFORMERS_CACHE: {hf_home}")
             if mlx_cache:
@@ -132,7 +131,8 @@ def main() -> int:
 
         return 0
     except Exception as e:  # noqa: BLE001
-        print(f"ERROR: generation failed: {e}", file=sys.stderr)
+        err = {"ok": False, "error": str(e), "model": args.model}
+        print(json.dumps(err), file=sys.stderr)
         return 1
 
 

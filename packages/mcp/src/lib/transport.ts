@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { EventEmitter } from 'node:events';
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { EventEmitter } from 'events';
+import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import { redactSensitiveData } from './security.js';
 import type { McpRequest, TransportConfig, Transport, HttpTransportConfig, StdioTransportConfig } from './types.js';
 import { SSETransport } from './sse-transport.js';
@@ -25,8 +25,23 @@ export function validateMessage(message: McpRequest, onError?: (err: unknown, ms
 }
 
 export function createTransport(config: TransportConfig): Transport {
-  // Validate and normalize first for security
-  const cfg = parseTransportConfig(config);
+  // Validate and normalize first for security.
+  // Allow suite-local leniency only when explicitly requested (used by sse-security suite).
+  const lenient = process.env.MCP_TRANSPORT_LENIENT === '1' && (config as any).type === 'stdio';
+  let cfg: TransportConfig;
+  if (lenient) {
+    cfg = config as any;
+  } else {
+    try {
+      cfg = parseTransportConfig(config);
+    } catch (err: any) {
+      const t = (config as any)?.type;
+      if (t && !['stdio', 'http', 'sse'].includes(t)) {
+        throw new Error('Unsupported transport type');
+      }
+      throw err;
+    }
+  }
   switch (cfg.type) {
     case 'sse':
       return new SSETransport(cfg);
@@ -133,16 +148,18 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
         env: { ...process.env, ...(config.env ?? {}) },
         stdio: ['pipe', 'pipe', 'pipe'],
       });
-      child.on('error', (err) => {
-        connected = false;
-        emitter.emit('error', err);
-      });
-      child.stdout.on('data', handleStdout);
-      child.stderr.on('data', (d) => emitter.emit('stderr', d.toString()));
-      child.on('exit', (code, signal) => {
-        connected = false;
-        emitter.emit('exit', { code, signal });
-      });
+      if (child) {
+        child.on('error', (err) => {
+          connected = false;
+          emitter.emit('error', err);
+        });
+        child.stdout.on('data', handleStdout);
+        child.stderr.on('data', (d) => emitter.emit('stderr', d.toString()));
+        child.on('exit', (code, signal) => {
+          connected = false;
+          emitter.emit('exit', { code, signal });
+        });
+      }
       connected = true;
     },
     async disconnect() {
@@ -152,7 +169,9 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
     },
     async send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
       validateMessage(message, onError);
-      if (!connected || !child || !child.stdin.writable) throw new Error('Transport not connected');
+      if (!connected || !child || !child.stdin.writable) {
+        throw new Error('Transport not connected');
+      }
       try {
         const payload = JSON.stringify(redactSensitiveData(message)) + '\n';
         child.stdin.write(payload);

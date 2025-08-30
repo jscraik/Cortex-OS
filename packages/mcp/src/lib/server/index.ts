@@ -22,11 +22,12 @@ import {
   handleResourcesList,
   handleResourceRead,
   handlePromptsList,
+  handlePromptGet,
 } from './handlers.js';
 
 export class McpServer {
   private context: ServerContext;
-  public isInitialized = false;
+  private _initialized = false;
 
   constructor(config: { name: string; version: string }) {
     this.context = createServer(config);
@@ -45,7 +46,16 @@ export class McpServer {
   }
 
   async handleRequest(req: McpRequest): Promise<McpResponse> {
-    return handleRequest(this.context, req);
+    // Intercept initialize to set initialized flag
+    const res = await handleRequest(this.context, req);
+    if ((res as any)?.result && (req as any)?.method === 'initialize') {
+      this._initialized = true;
+    }
+    return res;
+  }
+
+  isInitialized(): boolean {
+    return this._initialized;
   }
 }
 
@@ -87,8 +97,37 @@ export function addPrompt(ctx: ServerContext, def: PromptDef, handler: PromptHan
   ctx.prompts.set(def.name, { def, handler });
 }
 
-export async function handleRequest(ctx: ServerContext, req: McpRequest) {
-  const parsed = validateRequest(req);
+export async function handleRequest(arg1: any, arg2: any) {
+  // Backward-compatible signature: accept either (ctx, req) or (req, ctx)
+  let ctx: ServerContext;
+  let req: McpRequest;
+  if (arg1 && typeof arg1 === 'object' && 'jsonrpc' in arg1) {
+    req = arg1 as McpRequest;
+    ctx = arg2 as ServerContext;
+  } else {
+    ctx = arg1 as ServerContext;
+    req = arg2 as McpRequest;
+  }
+
+  // If request is missing or malformed at top-level, respond with JSON-RPC invalid request
+  if (!req || typeof req !== 'object') {
+    return {
+      jsonrpc: '2.0' as const,
+      id: null,
+      error: { code: -32600, message: 'Invalid request' },
+    } as const;
+  }
+
+  let parsed;
+  try {
+    parsed = validateRequest(req);
+  } catch {
+    return {
+      jsonrpc: '2.0' as const,
+      id: null,
+      error: { code: -32600, message: 'Invalid request' },
+    } as const;
+  }
   switch (parsed.method) {
     case 'initialize':
       return handleInitialize(parsed.id, parsed.params, ctx);
@@ -102,11 +141,13 @@ export async function handleRequest(ctx: ServerContext, req: McpRequest) {
       return handleResourceRead(parsed.id, parsed.params, ctx);
     case 'prompts/list':
       return handlePromptsList(parsed.id, ctx);
+    case 'prompts/get':
+      return handlePromptGet(parsed.id, parsed.params, ctx);
     default:
       return {
         jsonrpc: '2.0' as const,
         id: parsed.id,
-        error: { code: -32603, message: 'Unknown method' },
+        error: { code: -32603, message: 'Method not supported' },
       } as const;
   }
 }

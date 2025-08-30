@@ -168,7 +168,7 @@ export type MLXEmbeddingResponse = z.infer<typeof MLXEmbeddingResponseSchema>;
 export type MLXChatRequest = z.infer<typeof MLXChatRequestSchema>;
 export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
 
-export interface MLXAdapter {
+export interface MLXAdapterApi {
   generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
   generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]>;
   rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }>;
@@ -178,7 +178,7 @@ export interface MLXAdapter {
 /**
  * Factory to create an MLX adapter
  */
-export function createMLXAdapter(): MLXAdapter {
+export function createMLXAdapter(): MLXAdapterApi {
   const pythonPath = process.env.PYTHON_PATH || 'python3';
   const embeddingScriptPath = path.resolve(
     path.dirname(new URL(import.meta.url).pathname),
@@ -313,7 +313,11 @@ export function createMLXAdapter(): MLXAdapter {
       const result = await executePythonScript(args, true);
       const data = JSON.parse(result);
       // data.scores may be array of {index, score}. Map to ordered scores aligned with input docs
-      if (Array.isArray(data.scores) && data.scores.length > 0 && typeof data.scores[0] === 'object') {
+      if (
+        Array.isArray(data.scores) &&
+        data.scores.length > 0 &&
+        typeof data.scores[0] === 'object'
+      ) {
         const tmp: number[] = new Array(documents.length).fill(0);
         for (const item of data.scores) {
           if (typeof item.index === 'number' && typeof item.score === 'number') {
@@ -328,7 +332,9 @@ export function createMLXAdapter(): MLXAdapter {
       throw new Error('Invalid rerank response');
     } catch (error) {
       console.error('MLX rerank failed:', error);
-      throw new Error(`MLX rerank failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `MLX rerank failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   };
 
@@ -348,4 +354,22 @@ export function createMLXAdapter(): MLXAdapter {
     rerank,
     isAvailable,
   };
+}
+
+// Class wrapper so tests can instantiate `new MLXAdapter()` and use mocks
+export class MLXAdapter implements MLXAdapterApi {
+  private readonly impl = createMLXAdapter();
+
+  generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> {
+    return this.impl.generateEmbedding(request);
+  }
+  generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]> {
+    return this.impl.generateEmbeddings(texts, model);
+  }
+  rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }> {
+    return this.impl.rerank(query, documents, model);
+  }
+  isAvailable(): Promise<boolean> {
+    return this.impl.isAvailable();
+  }
 }
