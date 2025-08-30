@@ -1,22 +1,69 @@
 import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import client from 'prom-client';
+import { z } from 'zod';
 import { createModelRouter, type ModelRouter } from './model-router.js';
 import { auditEvent, record } from './audit';
 import { ModelRouter } from './model-router';
 import { enforce, loadGrant } from './policy';
 
-type EmbeddingsBody = { model?: string; texts: string[] };
-type RerankBody = { model?: string; query: string; docs: string[]; topK?: number };
-type ChatBody = {
-  model?: string;
-  msgs: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
-  tools?: unknown;
-};
+// Request validation schemas
+const EmbeddingsBodySchema = z.object({
+  model: z.string().optional(),
+  texts: z.array(z.string()).min(1, 'texts must be a non-empty array'),
+});
+
+const RerankBodySchema = z.object({
+  model: z.string().optional(),
+  query: z.string().min(1, 'query must be a non-empty string'),
+  docs: z.array(z.string()).min(1, 'docs must be a non-empty array'),
+  topK: z.number().int().positive().optional(),
+});
+
+const ChatBodySchema = z.object({
+  model: z.string().optional(),
+  msgs: z
+    .array(
+      z.object({
+        role: z.enum(['system', 'user', 'assistant']),
+        content: z.string().min(1, 'content must be a non-empty string'),
+      }),
+    )
+    .min(1, 'msgs must be a non-empty array'),
+  tools: z.unknown().optional(),
+});
+
+type EmbeddingsBody = z.infer<typeof EmbeddingsBodySchema>;
+type RerankBody = z.infer<typeof RerankBodySchema>;
+type ChatBody = z.infer<typeof ChatBodySchema>;
 
 export function createServer(router?: ModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
   const modelRouter = router || createModelRouter();
+
+  // Add error handler for validation errors
+  app.setErrorHandler((error, request, reply) => {
+    // Handle Zod validation errors
+    if (error.validation) {
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: error.validation,
+      });
+    }
+
+    // Handle custom validation errors with status
+    if (error.status && error.status >= 400 && error.status < 500) {
+      return reply.status(error.status).send({
+        error: error.message,
+      });
+    }
+
+    // Default to 500 for other errors
+    request.log.error(error);
+    return reply.status(500).send({
+      error: 'Internal server error',
+    });
+  });
 
   // Prometheus metrics
   const registry = new client.Registry();
@@ -50,7 +97,20 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/embeddings', async (req, reply) => {
-    const body = req.body as EmbeddingsBody;
+    const endTimer = latencyHist.startTimer({ route: 'embeddings' });
+
+    // Validate request body
+    const validation = EmbeddingsBodySchema.safeParse(req.body);
+    if (!validation.success) {
+      reqCounter.inc({ route: 'embeddings', status: '400' });
+      endTimer();
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: validation.error.errors.map((e) => ({ path: e.path, message: e.message })),
+      });
+    }
+
+    const body = validation.data;
     req.log.debug({ body }, 'Received embeddings request');
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'embeddings', body as any);
@@ -66,13 +126,7 @@ export function createServer(router?: ModelRouter): FastifyInstance {
       ),
     );
 
-    const endTimer = latencyHist.startTimer({ route: 'embeddings' });
     try {
-      const texts = body.texts;
-      if (!Array.isArray(texts) || texts.length === 0) {
-        return reply.status(400).send({ error: 'texts must be a non-empty array' });
-      }
-
       let vectors: number[][] = [];
       let modelUsed: string;
 
@@ -111,7 +165,20 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/rerank', async (req, reply) => {
-    const body = req.body as RerankBody;
+    const endTimer = latencyHist.startTimer({ route: 'rerank' });
+
+    // Validate request body
+    const validation = RerankBodySchema.safeParse(req.body);
+    if (!validation.success) {
+      reqCounter.inc({ route: 'rerank', status: '400' });
+      endTimer();
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: validation.error.errors.map((e) => ({ path: e.path, message: e.message })),
+      });
+    }
+
+    const body = validation.data;
     req.log.debug({ body }, 'Received rerank request');
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'rerank', body as any);
@@ -127,7 +194,6 @@ export function createServer(router?: ModelRouter): FastifyInstance {
       ),
     );
 
-    const endTimer = latencyHist.startTimer({ route: 'rerank' });
     try {
       const result = await modelRouter.rerank({
         query: body.query,
@@ -161,7 +227,20 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   });
 
   app.post('/chat', async (req, reply) => {
-    const body = req.body as ChatBody;
+    const endTimer = latencyHist.startTimer({ route: 'chat' });
+
+    // Validate request body
+    const validation = ChatBodySchema.safeParse(req.body);
+    if (!validation.success) {
+      reqCounter.inc({ route: 'chat', status: '400' });
+      endTimer();
+      return reply.status(400).send({
+        error: 'Validation failed',
+        details: validation.error.errors.map((e) => ({ path: e.path, message: e.message })),
+      });
+    }
+
+    const body = validation.data;
     req.log.debug({ body }, 'Received chat request');
     const grant = await loadGrant('model-gateway');
     enforce(grant, 'chat', body as any);
@@ -177,7 +256,6 @@ export function createServer(router?: ModelRouter): FastifyInstance {
       ),
     );
 
-    const endTimer = latencyHist.startTimer({ route: 'chat' });
     try {
       if (!modelRouter.hasCapability('chat')) {
         reqCounter.inc({ route: 'chat', status: '503' });

@@ -149,7 +149,7 @@
     "check:agents-hash": "tsx tools/validators/agents-hash-check.ts",
     "check:pr-prov": "tsx tools/validators/pr-provenance-check.ts",
     "check:a11y-docs": "tsx tools/validators/axe-docs-check.ts",
-    "fix:agents-heads": "tsx scripts/enforce-agents-line.ts",
+    "fix:agents-heads": "tsx .cortex/tooling/check-agents.ts",
     "verify:all": "pnpm check:layout && pnpm check:docs && pnpm check:a11y-docs",
     "simlab:smoke": "turbo run simlab:smoke --filter=@cortex-os/simlab-mono",
     "simlab:critical": "turbo run simlab:critical --filter=@cortex-os/simlab-mono",

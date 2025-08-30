@@ -40,7 +40,7 @@ export async function rerankHandler(router: ModelRouter, body: RerankBody) {
   // Build ranked results from the rerank response
   const ranked = (result.documents || [])
     .map((content, index) => ({
-      originalIndex: index,
+      index: index,
       score: result.scores?.[index] ?? 0,
       content,
     }))

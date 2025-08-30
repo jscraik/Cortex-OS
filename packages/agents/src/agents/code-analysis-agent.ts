@@ -14,7 +14,14 @@ import type {
   AgentDependencies,
   GenerateOptions,
 } from '../lib/types.js';
-import { generateAgentId, generateTraceId, estimateTokens, withTimeout, sanitizeText } from '../lib/utils.js';
+import type { MemoryPolicy } from '../lib/types.js';
+import {
+  generateAgentId,
+  generateTraceId,
+  estimateTokens,
+  withTimeout,
+  sanitizeText,
+} from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
@@ -92,6 +99,7 @@ export interface CodeAnalysisAgentConfig {
   mcpClient: MCPClient;
   timeout?: number;
   maxRetries?: number;
+  memoryPolicy?: MemoryPolicy; // per-capability limits (TTL/size/namespacing)
 }
 
 /**
@@ -346,7 +354,10 @@ const parseAnalysisResponse = (
   }
 
   // Back-compat: coerce suggestions array of strings to structured objects
-  if (Array.isArray(parsedResponse.suggestions) && parsedResponse.suggestions.every((s: any) => typeof s === 'string')) {
+  if (
+    Array.isArray(parsedResponse.suggestions) &&
+    parsedResponse.suggestions.every((s: any) => typeof s === 'string')
+  ) {
     parsedResponse.suggestions = parsedResponse.suggestions.map((msg: string) => ({
       type: 'improvement' as const,
       message: msg,
