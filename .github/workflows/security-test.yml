@@ -31,8 +31,7 @@ jobs:
         run: ./scripts/security-test.sh
 
       - name: Run Semgrep security scan
-        run: |
-          semgrep --config=.semgrep/owasp-precise.yaml --severity=ERROR . || true
+        run: pnpm security:scan:all
 
       - name: Run dependency audit
         run: |

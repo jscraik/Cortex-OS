@@ -1,11 +1,14 @@
 import type { Embedder } from '../ports/Embedder.js';
 import { spawn } from 'child_process';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const DEFAULT_MLX_MODELS_DIR = path.join(os.homedir(), '.cache', 'huggingface');
 
 // Available MLX embedding models - paths configurable via environment variables
 const MLX_MODELS = {
@@ -14,7 +17,7 @@ const MLX_MODELS = {
     dimensions: 768,
     path:
       process.env.MLX_MODEL_QWEN3_0_6B_PATH ||
-      '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-0.6B',
+      path.join(DEFAULT_MLX_MODELS_DIR, 'models--Qwen--Qwen3-Embedding-0.6B'),
     recommendedFor: ['quick_search', 'development'],
   },
   'qwen3-4b': {
@@ -22,7 +25,7 @@ const MLX_MODELS = {
     dimensions: 768,
     path:
       process.env.MLX_MODEL_QWEN3_4B_PATH ||
-      '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-4B',
+      path.join(DEFAULT_MLX_MODELS_DIR, 'models--Qwen--Qwen3-Embedding-4B'),
     recommendedFor: ['production', 'balanced_performance'],
   },
   'qwen3-8b': {
@@ -30,7 +33,7 @@ const MLX_MODELS = {
     dimensions: 768,
     path:
       process.env.MLX_MODEL_QWEN3_8B_PATH ||
-      '/Volumes/ExternalSSD/huggingface_cache/models--Qwen--Qwen3-Embedding-8B',
+      path.join(DEFAULT_MLX_MODELS_DIR, 'models--Qwen--Qwen3-Embedding-8B'),
     recommendedFor: ['high_accuracy', 'research'],
   },
 } as const;
@@ -108,7 +111,7 @@ export class MLXEmbedder implements Embedder {
           stdio: ['pipe', 'pipe', 'pipe'],
           env: {
             ...process.env,
-            MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || '/Volumes/ExternalSSD/huggingface_cache',
+            MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR,
           },
         },
       );

@@ -6,7 +6,7 @@
  * @status TDD-DRIVEN
  */
 
-import { randomUUID } from 'node:crypto';
+import { nanoid } from 'nanoid';
 import { PRPOrchestrator } from './mcp/adapter.js';
 import { recordMetric, startSpan } from './observability/otel.js';
 import {
@@ -56,9 +56,7 @@ export class SimplePRPGraph {
       const deterministic = options.deterministic || false;
       const runId =
         options.runId ||
-        (deterministic
-          ? `prp-deterministic-${generateDeterministicHash(blueprint)}`
-          : randomUUID());
+        (deterministic ? `prp-deterministic-${generateDeterministicHash(blueprint)}` : nanoid());
 
       state = createInitialPRPState(blueprint, {
         runId,
@@ -306,4 +304,5 @@ export class SimplePRPGraph {
   }
 }
 
-// Note: Legacy `CortexKernel` alias removed; consumers should use `SimplePRPGraph` directly.
+// Main export and alias for backward compatibility
+export { SimplePRPGraph as CortexKernel };

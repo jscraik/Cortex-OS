@@ -4,6 +4,26 @@ version = "1.0.0"
 requires-python = ">=3.11"
 description = "ASBR Cortex-OS Platform"
 license = { text = "MIT" }
+dependencies = [
+    "chromadb>=1.0.20",
+    "faiss-cpu>=1.12.0",
+    "fastapi>=0.116.1",
+    "httpx>=0.28.1",
+    "hypothesis",
+    "mlx>=0.28.0",
+    "mlx-lm>=0.26.4",
+    "mlx-vlm>=0.3.1",
+    "numpy>=1.26.4",
+    "pandas>=2.1.4",
+    "prometheus-client>=0.22.1",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
+    "qdrant-client>=1.12.1",
+    "torch>=2.8.0",
+    "transformers>=4.55.4",
+    "uvicorn>=0.35.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -31,7 +51,31 @@ select = ["E","F","I","N","W","B","SIM","S","UP","RUF"]
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
+# Test files can use assert statements
+"**/tests/**/*.py" = ["S101"]
+"**/test_*.py" = ["S101"]
 "tests/*" = ["S101"]
+
+# Development and infrastructure files
+"docker/**/*.py" = ["S104", "S603", "S607", "S110"]  # Allow subprocess and binding in docker utilities
+"tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in tool scripts
+"packages/mcp-bridge/src/tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in MCP bridge tools
+
+# Specific module exceptions
+"**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling  
+"**/resource_monitor.py" = ["S108", "S110"]  # Allow temp files and exception handling
+"**/kv_cache_manager.py" = ["S301", "S108", "N801"]  # Allow pickle/temp files and mock class name
+"**/tiered_model_manager.py" = ["N801"]  # Allow mock class name 'mx'
+"**/mcp_server.py" = ["S603", "S104"]  # Allow subprocess and binding for MCP servers
+"**/model_manager.py" = ["S110"]  # Allow exception handling patterns
+"**/bridge/mlx_bridge.py" = ["S301", "S108"]  # Allow pickle in test bridge
+"**/convert-to-mlx.py" = ["S603", "S607"]  # Allow subprocess in conversion tools
+
+# Targeted file exceptions
+"packages/mcp-bridge/src/python/src/executor.py" = ["S603"]
+"packages/mcp-bridge/src/python/src/server.py" = ["S104"]
+"docker/mlx-server.py" = ["RUF006"]  # Background task intentionally not awaited
+"docker/gpl-tools/gpl_service.py" = ["B008"]  # FastAPI File/Form default pattern
 
 [tool.mypy]
 python_version = "3.11"

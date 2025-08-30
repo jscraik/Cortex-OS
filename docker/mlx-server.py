@@ -6,97 +6,67 @@ FastAPI server providing MLX model inference endpoints for Apple Silicon
 
 import asyncio
 import logging
+import os
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import uvicorn
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from pydantic import BaseModel
 
-# Import our custom managers
+import memory_manager
+import model_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Try to import FastAPI with fallback
-try:
-    from fastapi import BackgroundTasks, FastAPI, HTTPException
-    from fastapi.responses import JSONResponse, StreamingResponse
-    from pydantic import BaseModel
+app = FastAPI()
 
-    FASTAPI_AVAILABLE = True
-except ImportError:
-    logger.warning("FastAPI not available - creating mock server for development")
-    FASTAPI_AVAILABLE = False
+    # Mock app and managers for development
+    class MockApp:
+        def get(self, _path, **_kwargs):
+            def decorator(func):
+                return func
+            return decorator
 
-# Pydantic models for API
-if FASTAPI_AVAILABLE:
+        def post(self, _path, **_kwargs):
+            def decorator(func):
+                return func
+            return decorator
 
-    class InferenceRequest(BaseModel):
-        model: str
-        prompt: str
-        max_tokens: int = 1000
-        temperature: float = 0.7
-        stream: bool = False
-
-    class ModelLoadRequest(BaseModel):
-        model_name: str
-
-    class ModelUnloadRequest(BaseModel):
-        model_name: str
-
-    class ModelSwitchRequest(BaseModel):
-        target_model: str
-        strategy: str = "intelligent"  # intelligent, force, optimize_memory
-else:
-    # Mock classes for development without FastAPI
-    class InferenceRequest:
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-
-    class ModelLoadRequest:
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-
-    class ModelUnloadRequest:
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-
-    class ModelSwitchRequest:
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
+    app = MockApp()
+    memory_manager = MemoryManager()
+    model_manager = ModelManager()
 
 
-# Endpoints
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "memory_available": memory_manager.get_available_memory(),
-        "loaded_models": len(model_manager.loaded_models),
-    }
+class InferenceRequest(BaseModel):
+    model: str
+    prompt: str
+    max_tokens: int = 1000
+    temperature: float = 0.7
+    stream: bool = False
 
 
-@app.get("/models", response_model=List[Dict[str, Any]])
-async def list_models():
-    """List all available MLX models"""
-    return model_manager.get_available_models()
+class ModelLoadRequest(BaseModel):
+    model_name: str
 
 
-@app.get("/status", response_model=ModelStatus)
-async def get_status():
-    """Get current model and memory status"""
-    return ModelStatus(
-        loaded_models=model_manager.get_loaded_models_info(),
-        available_memory=memory_manager.get_available_memory(),
-        total_memory=memory_manager.total_memory,
-        model_recommendations=model_manager.get_model_recommendations(),
-    )
+class ModelUnloadRequest(BaseModel):
+    model_name: str
+
+
+class ModelSwitchRequest(BaseModel):
+    target_model: str
+    strategy: str = "intelligent"  # intelligent, force, optimize_memory
+
+
+class InferenceResponse(BaseModel):
+    response: str
+    model: str
+    tokens_generated: int
+    inference_time: float
+    memory_usage: Dict[str, Any]
 
 
 @app.post("/infer", response_model=InferenceResponse)
@@ -130,8 +100,8 @@ async def generate_text(request: InferenceRequest):
         )
 
     except Exception as e:
-        logger.error(f"Inference failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
+        logger.error(f"Inference failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Inference failed: {e!s}") from e
 
 
 @app.post("/model/switch")
@@ -162,12 +132,12 @@ async def switch_model(request: ModelSwitchRequest, background_tasks: Background
         }
 
     except Exception as e:
-        logger.error(f"Model switch failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Model switch failed: {str(e)}")
+        logger.error(f"Model switch failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Model switch failed: {e!s}") from e
 
 
 @app.post("/model/preload")
-async def preload_models(models: List[str]):
+async def preload_models(models: list[str]):
     """Preload multiple models for faster switching"""
     try:
         results = []
@@ -181,8 +151,8 @@ async def preload_models(models: List[str]):
         return {"results": results}
 
     except Exception as e:
-        logger.error(f"Model preloading failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Preloading failed: {str(e)}")
+        logger.error(f"Model preloading failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Preloading failed: {e!s}") from e
 
 
 @app.delete("/model/{model_name}")
@@ -202,8 +172,8 @@ async def unload_model(model_name: str):
             )
 
     except Exception as e:
-        logger.error(f"Model unload failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Unload failed: {str(e)}")
+        logger.error(f"Model unload failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Unload failed: {e!s}") from e
 
 
 @app.get("/metrics")
@@ -234,7 +204,7 @@ if __name__ == "__main__":
             logger.warning(f"Could not load default model: {e}")
 
     # Run startup
-    asyncio.create_task(startup())
+    _startup_task = asyncio.create_task(startup())  # Store reference to avoid warning
 
     # Start server
     uvicorn.run(

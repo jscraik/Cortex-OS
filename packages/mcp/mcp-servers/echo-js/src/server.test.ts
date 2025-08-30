@@ -13,7 +13,10 @@ describe('echo-js server', () => {
     expect(res.result.result.echo).toBe('hi');
   });
 
-  it('throws on invalid payload', async () => {
-    await expect(handleRequest(JSON.stringify({ id: 1 }))).rejects.toThrow();
+  it('returns JSON-RPC error on invalid payload', async () => {
+    const res = await handleRequest(JSON.stringify({ id: 1 }));
+    const obj = JSON.parse(res);
+    expect(obj.error).toBeDefined();
+    expect(obj.error.code).toBe(-32600);
   });
 });

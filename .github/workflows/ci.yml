@@ -52,3 +52,36 @@ jobs:
       - run: pnpm test -- --coverage
       - run: uv run pytest --cov=services --cov=libs/python || true
       - run: pnpm nyc check-coverage --lines 80 --functions 80 --branches 70 || true
+
+  mcp_compliance:
+    runs-on: ubuntu-latest
+    name: MCP Compliance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint MCP package (errors enforced)
+        run: |
+          cd packages/mcp
+          pnpm lint
+      - name: Run MCP tests (core only)
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
+        run: |
+          cd packages/mcp
+          pnpm test -- --run --exclude "**/mixed-topology.e2e.test.ts" --exclude "**/client.e2e.test.ts"
+      - name: Run MCP mixed-topology (optional)
+        if: env.CI_MCP_FULL == '1'
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
+          CI_MCP_FULL: ${{ env.CI_MCP_FULL }}
+        run: |
+          cd packages/mcp
+          pnpm vitest run src/test/mixed-topology.e2e.test.ts
+          pnpm vitest run src/lib/client.e2e.test.ts

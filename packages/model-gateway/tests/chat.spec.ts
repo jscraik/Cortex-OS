@@ -1,28 +1,96 @@
-import { describe, it, expect, vi } from 'vitest';
-import { ModelRouter } from '../src/model-router';
-import type { MLXAdapter } from '../src/adapters/mlx-adapter';
-import type { OllamaAdapter } from '../src/adapters/ollama-adapter';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MLXAdapter } from '../src/adapters/mlx-adapter';
+import { OllamaAdapter } from '../src/adapters/ollama-adapter';
+import { ModelRouter, type ChatRequest } from '../src/model-router';
 
-describe('ModelRouter chat', () => {
-  it('routes chat requests through the Ollama adapter', async () => {
-    const mlxAdapter = {
-      isAvailable: vi.fn().mockResolvedValue(false),
-    } as unknown as MLXAdapter;
-    const ollamaAdapter = {
+describe('ModelRouter - Chat Generation', () => {
+  let router: ModelRouter;
+  let mockMLXAdapter: MLXAdapter;
+  let mockOllamaAdapter: OllamaAdapter;
+
+  beforeEach(() => {
+    mockMLXAdapter = {
+      generateChat: vi.fn(),
       isAvailable: vi.fn().mockResolvedValue(true),
-      listModels: vi.fn().mockResolvedValue(['llama2']),
-      generateChat: vi.fn().mockResolvedValue({ content: 'hi', model: 'llama2' }),
-      generateEmbeddings: vi.fn(),
-      rerank: vi.fn(),
-    } as unknown as OllamaAdapter;
+    } as any;
 
-    const router = new ModelRouter(mlxAdapter, ollamaAdapter);
-    await router.initialize();
-    const result = await router.generateChat({
+    mockOllamaAdapter = {
+      generateChat: vi.fn(),
+      isAvailable: vi.fn().mockResolvedValue(true),
+    } as any;
+
+    router = new ModelRouter(mockMLXAdapter, mockOllamaAdapter);
+  });
+
+  it('should generate chat response with proper type safety', async () => {
+    // Arrange: Create a properly typed ChatRequest
+    const chatRequest: ChatRequest = {
       messages: [{ role: 'user', content: 'hello' }],
-    } as any);
+      model: 'test-model',
+      max_tokens: 100,
+      temperature: 0.7,
+    };
 
-    expect(result).toEqual({ content: 'hi', model: 'llama2' });
-    expect(ollamaAdapter.generateChat).toHaveBeenCalled();
+    const expectedResponse = {
+      content: 'Hello! How can I help you?',
+      model: 'test-model',
+    };
+
+    (mockOllamaAdapter.generateChat as any).mockResolvedValue(expectedResponse);
+
+    // Act: Call generateChat with properly typed request
+    const result = await router.generateChat(chatRequest);
+
+    // Assert
+    expect(result).toEqual(expectedResponse);
+    expect(mockOllamaAdapter.generateChat).toHaveBeenCalledWith(chatRequest);
+  });
+
+  it('should handle minimal chat request', async () => {
+    // Arrange: Create minimal valid ChatRequest
+    const chatRequest: ChatRequest = {
+      messages: [{ role: 'user', content: 'hello' }],
+    };
+
+    const expectedResponse = {
+      content: 'Hello!',
+      model: 'default-model',
+    };
+
+    (mockOllamaAdapter.generateChat as any).mockResolvedValue(expectedResponse);
+
+    // Act
+    const result = await router.generateChat(chatRequest);
+
+    // Assert
+    expect(result).toEqual(expectedResponse);
+  });
+
+  it('should handle system and assistant messages', async () => {
+    // Arrange: Create ChatRequest with different message roles
+    const chatRequest: ChatRequest = {
+      messages: [
+        { role: 'system', content: 'You are a helpful assistant.' },
+        { role: 'user', content: 'What is the weather like?' },
+        { role: 'assistant', content: 'I need more location information.' },
+        { role: 'user', content: 'In New York' },
+      ],
+      model: 'gpt-4',
+      temperature: 0.5,
+    };
+
+    const expectedResponse = {
+      content: 'The weather in New York is sunny.',
+      model: 'gpt-4',
+    };
+
+    (mockOllamaAdapter.generateChat as any).mockResolvedValue(expectedResponse);
+
+    // Act
+    const result = await router.generateChat(chatRequest);
+
+    // Assert
+    expect(result).toEqual(expectedResponse);
+    expect(mockOllamaAdapter.generateChat).toHaveBeenCalledWith(chatRequest);
   });
 });

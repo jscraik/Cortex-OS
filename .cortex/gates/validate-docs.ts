@@ -12,17 +12,17 @@ const governanceRuleFiles = [
 
 const requiredContextFiles = [
   // Web stack essentials
-  '.cortex/context/next.js.md',
-  '.cortex/context/react.md',
-  '.cortex/context/shadcn-ui.md',
-  '.cortex/context/tailwind-css.md',
-  '.cortex/context/typescript.md',
-  '.cortex/context/node.js.md',
-  '.cortex/context/pnpm.md',
+  '.cortex/context/web-frameworks/next.js.md',
+  '.cortex/context/web-frameworks/react.md',
+  '.cortex/context/web-frameworks/shadcn-ui.md',
+  '.cortex/context/web-frameworks/tailwind-css.md',
+  '.cortex/context/dev-tools/typescript.md',
+  '.cortex/context/dev-tools/node.js.md',
+  '.cortex/context/dev-tools/pnpm.md',
   // OS and protocols
-  '.cortex/context/mcp.md',
-  '.cortex/context/model-context-protocol.md',
-  '.cortex/context/mlx.md',
+  '.cortex/context/process/cortex-os-implementation-plan.md',
+  '.cortex/context/protocols/model-context-protocol.md',
+  '.cortex/context/ai-ml/mlx.md',
 ];
 
 let failed = false;
