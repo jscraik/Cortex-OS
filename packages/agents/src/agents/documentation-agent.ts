@@ -15,7 +15,13 @@ import type {
   AgentDependencies,
   GenerateOptions,
 } from '../lib/types.js';
-import { generateAgentId, generateTraceId, estimateTokens, withTimeout, sanitizeText } from '../lib/utils.js';
+import {
+  generateAgentId,
+  generateTraceId,
+  estimateTokens,
+  withTimeout,
+  sanitizeText,
+} from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
@@ -92,6 +98,7 @@ export interface DocumentationAgentConfig {
   mcpClient: MCPClient;
   timeout?: number;
   maxRetries?: number;
+  memoryPolicy?: import('../lib/types.js').MemoryPolicy;
 }
 
 /**

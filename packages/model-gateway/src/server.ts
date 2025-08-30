@@ -41,30 +41,6 @@ export function createServer(router?: ModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
   const modelRouter = router || createModelRouter();
 
-  // Add error handler for validation errors
-  app.setErrorHandler((error, request, reply) => {
-    // Handle Zod validation errors
-    if (error.validation) {
-      return reply.status(400).send({
-        error: 'Validation failed',
-        details: error.validation,
-      });
-    }
-
-    // Handle custom validation errors with status
-    if (error.status && error.status >= 400 && error.status < 500) {
-      return reply.status(error.status).send({
-        error: error.message,
-      });
-    }
-
-    // Default to 500 for other errors
-    request.log.error(error);
-    return reply.status(500).send({
-      error: 'Internal server error',
-    });
-  });
-
   // Prometheus metrics
   const registry = new client.Registry();
   client.collectDefaultMetrics({ register: registry, prefix: 'model_gateway_' });
@@ -130,16 +106,16 @@ export function createServer(router?: ModelRouter): FastifyInstance {
       let vectors: number[][] = [];
       let modelUsed: string;
 
-      if (texts.length === 1) {
+      if (body.texts.length === 1) {
         const result = await modelRouter.generateEmbedding({
-          text: texts[0],
+          text: body.texts[0],
           model: body.model,
         });
         vectors = [result.embedding];
         modelUsed = result.model;
       } else {
         const result = await modelRouter.generateEmbeddings({
-          texts,
+          texts: body.texts,
           model: body.model,
         });
         vectors = result.embeddings;
