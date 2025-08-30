@@ -65,6 +65,8 @@ export class McpBridge {
   private isRunning = false;
 
   constructor(private config: BridgeConfig) {
+    // Apply schema defaults so options is always defined
+    this.config = BridgeConfigSchema.parse(config);
     this.validateConfig();
   }
 
@@ -335,7 +337,7 @@ export class McpBridge {
    * Log messages if logging is enabled
    */
   private log(message: string): void {
-    if (this.config.options.logging) {
+    if (this.config?.options?.logging) {
       console.log(`[MCP Bridge] ${new Date().toISOString()} ${message}`);
     }
   }

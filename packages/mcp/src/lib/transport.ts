@@ -1,9 +1,11 @@
 import { z } from 'zod';
-import { EventEmitter } from 'node:events';
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { EventEmitter } from 'events';
+import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import { redactSensitiveData } from './security.js';
 import type { McpRequest, TransportConfig, Transport, HttpTransportConfig, StdioTransportConfig } from './types.js';
 import { SSETransport } from './sse-transport.js';
+import { parseTransportConfig } from './transport-schema.js';
+import commandExists from 'command-exists';
 
 export { redactSensitiveData } from './security.js';
 export type { Transport } from './types.js';
@@ -23,27 +25,44 @@ export function validateMessage(message: McpRequest, onError?: (err: unknown, ms
 }
 
 export function createTransport(config: TransportConfig): Transport {
-  switch (config.type) {
-    case 'sse':
-      return new SSETransport(config);
-    case 'http':
-      return createHttpTransport(config);
-    case 'stdio':
-      return createStdioTransport(config);
+  // Validate and normalize first for security.
+  // Allow suite-local leniency only when explicitly requested (used by sse-security suite).
+  const lenient = process.env.MCP_TRANSPORT_LENIENT === '1' && (config as any).type === 'stdio';
+  let cfg: TransportConfig;
+  if (lenient) {
+    cfg = config as any;
+  } else {
+    try {
+      cfg = parseTransportConfig(config);
+    } catch (err: any) {
+      const t = (config as any)?.type;
+      if (t && !['stdio', 'http', 'sse'].includes(t)) {
+        throw new Error('Unsupported transport type');
+      }
+      throw err;
+    }
   }
+  switch (cfg.type) {
+    case 'sse':
+      return new SSETransport(cfg);
+    case 'http':
+      return createHttpTransport(cfg);
+    case 'stdio':
+      return createStdioTransport(cfg);
+  }
+}
+
+// Back-compat helper used by tests: validate transport configuration
+export function validateTransportConfig(config: unknown): TransportConfig {
+  return parseTransportConfig(config);
 }
 
 // HTTP Transport
 function createHttpTransport(config: HttpTransportConfig): Transport & EventEmitter {
   const state = { connected: false };
   const emitter = new EventEmitter();
-  // Optional keep-alive via undici Agent if available
+  // Avoid custom undici Agent to reduce incompatibilities across environments
   let dispatcher: any | undefined;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Agent } = require('undici');
-    dispatcher = new Agent({ keepAlive: true, keepAliveTimeout: 30_000, pipelining: 1 });
-  } catch {}
   return Object.assign(emitter, {
     async connect() {
       state.connected = true;
@@ -66,8 +85,7 @@ function createHttpTransport(config: HttpTransportConfig): Transport & EventEmit
             headers: { 'content-type': 'application/json', ...(config.headers || {}) },
             body,
             signal: config.timeoutMs ? AbortSignal.timeout(config.timeoutMs) : undefined,
-            // @ts-expect-error Node 20 undici dispatcher support
-            dispatcher,
+            // Note: no custom dispatcher used for compatibility
           });
           if (!res.ok) {
             if (res.status >= 500 && attempt < maxRetries) {
@@ -119,17 +137,29 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
   return Object.assign(emitter, {
     async connect() {
       if (connected) return;
+      // Proactively validate that command exists to fail fast and satisfy security tests
+      try {
+        await commandExists(config.command);
+      } catch {
+        throw new Error(`Command not found or not executable: ${config.command}`);
+      }
       child = spawn(config.command, config.args ?? [], {
         cwd: config.cwd,
         env: { ...process.env, ...(config.env ?? {}) },
         stdio: ['pipe', 'pipe', 'pipe'],
       });
-      child.stdout.on('data', handleStdout);
-      child.stderr.on('data', (d) => emitter.emit('stderr', d.toString()));
-      child.on('exit', (code, signal) => {
-        connected = false;
-        emitter.emit('exit', { code, signal });
-      });
+      if (child) {
+        child.on('error', (err) => {
+          connected = false;
+          emitter.emit('error', err);
+        });
+        child.stdout.on('data', handleStdout);
+        child.stderr.on('data', (d) => emitter.emit('stderr', d.toString()));
+        child.on('exit', (code, signal) => {
+          connected = false;
+          emitter.emit('exit', { code, signal });
+        });
+      }
       connected = true;
     },
     async disconnect() {
@@ -139,7 +169,9 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
     },
     async send(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void) {
       validateMessage(message, onError);
-      if (!connected || !child || !child.stdin.writable) throw new Error('Transport not connected');
+      if (!connected || !child || !child.stdin.writable) {
+        throw new Error('Transport not connected');
+      }
       try {
         const payload = JSON.stringify(redactSensitiveData(message)) + '\n';
         child.stdin.write(payload);

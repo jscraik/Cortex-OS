@@ -9,7 +9,14 @@
  */
 
 import { z } from 'zod';
-import type { Agent, ModelProvider, EventBus, MCPClient, GenerateOptions } from '../lib/types.js';
+import type {
+  Agent,
+  ModelProvider,
+  EventBus,
+  MCPClient,
+  GenerateOptions,
+  MemoryPolicy,
+} from '../lib/types.js';
 import { loadDependabotConfig, assessDependabotConfig } from '../integrations/dependabot.js';
 import { generateAgentId, generateTraceId, withTimeout, sanitizeText } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
@@ -65,9 +72,12 @@ export interface SecurityAgentConfig {
   mcpClient: MCPClient;
   timeout?: number;
   dependabotPath?: string; // optional override for config path
+  memoryPolicy?: MemoryPolicy; // per-capability limits (TTL/size/namespacing)
 }
 
-export const createSecurityAgent = (config: SecurityAgentConfig): Agent<SecurityInput, SecurityOutput> => {
+export const createSecurityAgent = (
+  config: SecurityAgentConfig,
+): Agent<SecurityInput, SecurityOutput> => {
   if (!config.provider) throw new Error('Provider is required');
   if (!config.eventBus) throw new Error('EventBus is required');
   if (!config.mcpClient) throw new Error('MCPClient is required');
@@ -108,7 +118,10 @@ ${sanitizeText(content)}
       const merged: Partial<SecurityOutput> = {
         decision: parsed.decision || 'flag',
         risk: parsed.risk || 'medium',
-        categories: Array.isArray(parsed.categories) && parsed.categories.length > 0 ? parsed.categories : ['unclassified'],
+        categories:
+          Array.isArray(parsed.categories) && parsed.categories.length > 0
+            ? parsed.categories
+            : ['unclassified'],
         findings: parsed.findings || [],
         mitigations: parsed.mitigations || [],
         labels: parsed.labels || {},
@@ -174,18 +187,26 @@ ${sanitizeText(content)}
             id: `DEPENDABOT-SCHEDULE-${p.directory}`,
             title: 'Weak Dependabot schedule',
             description: `Project ${p.packageEcosystem} at ${p.directory} uses '${p.scheduleInterval || 'unspecified'}' interval; prefer weekly or daily.`,
-            refs: ['https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#scheduleinterval'],
+            refs: [
+              'https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#scheduleinterval',
+            ],
             severity: 'medium',
           });
         }
       }
       // Category and labels
-      const newCategories = Array.from(new Set([...(out.categories || []), 'supply-chain', 'dependabot']));
-      out = validateSchema(securityOutputSchema, {
-        ...out,
-        categories: newCategories,
-        findings: newFindings,
-      } as any, 'security-output');
+      const newCategories = Array.from(
+        new Set([...(out.categories || []), 'supply-chain', 'dependabot']),
+      );
+      out = validateSchema(
+        securityOutputSchema,
+        {
+          ...out,
+          categories: newCategories,
+          findings: newFindings,
+        } as any,
+        'security-output',
+      );
     }
     return out;
   };
