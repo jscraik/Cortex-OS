@@ -201,6 +201,19 @@ export function createMLXAdapter(): MLXAdapterApi {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           try {
+            // Handle chat mode
+            if (args.includes('--chat-mode')) {
+              const prompt = args[0] || 'Hello';
+              const modelIndex = args.findIndex((arg) => arg === '--model');
+              const model = modelIndex !== -1 ? args[modelIndex + 1] : 'qwen3-coder-30b-mlx';
+              const mockChatResponse = {
+                content: `Mock response to: ${prompt.substring(0, 50)}...`,
+                model: model,
+              };
+              resolve(JSON.stringify(mockChatResponse));
+              return;
+            }
+
             // Handle rerank mode
             if (args.includes('--rerank-mode')) {
               const documentsIndex = args.findIndex(

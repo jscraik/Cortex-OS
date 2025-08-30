@@ -6,7 +6,9 @@
  */
 
 import { z } from 'zod';
-import type { Agent, ModelProvider, EventBus, MCPClient } from '../lib/types.js';
+import type { Agent, ModelProvider, EventBus, MCPClient, MemoryPolicy } from '../lib/types.js';
+import type { MemoryStore } from '@cortex-os/memories';
+import { wireOutbox } from '../integrations/outbox.js';
 // Avoid circular import by importing agents directly
 import { createCodeAnalysisAgent } from '../agents/code-analysis-agent.js';
 import { createTestGenerationAgent } from '../agents/test-generation-agent.js';
@@ -61,6 +63,11 @@ export interface OrchestratorConfig {
   mcpClient: MCPClient;
   maxConcurrentTasks?: number;
   enableMetrics?: boolean;
+  // Optional governed memory wiring for event outbox and policies per capability
+  memoryStore?: MemoryStore;
+  memoryPolicies?: Partial<
+    Record<'code-analysis' | 'test-generation' | 'documentation' | 'security', MemoryPolicy>
+  >;
 }
 
 interface OrchestratorState {
@@ -97,6 +104,19 @@ const createOrchestratorState = (config: OrchestratorConfig): OrchestratorState 
   };
 
   initializeAgents(state);
+  // Wire event outbox → MemoryStore with per-capability policies when provided
+  if (config.memoryStore) {
+    const resolver = (eventType: string, event: any) => {
+      const cap = event?.data?.capability as keyof NonNullable<typeof config.memoryPolicies>;
+      const policy = (config.memoryPolicies && cap && config.memoryPolicies[cap]) || undefined;
+      const ns = policy?.namespace || 'agents:outbox';
+      const ttl = policy?.ttl || 'PT1H';
+      const maxItemBytes = policy?.maxItemBytes ?? 256_000;
+      return { namespace: ns, ttl, maxItemBytes, tagPrefix: 'evt' };
+    };
+    // Fire and forget; wireOutbox sets up subscriptions
+    void wireOutbox(config.eventBus, config.memoryStore, resolver);
+  }
   return state;
 };
 
@@ -107,10 +127,34 @@ const initializeAgents = (state: OrchestratorState): void => {
     mcpClient: state.config.mcpClient,
   };
 
-  state.agents.set('code-analysis', createCodeAnalysisAgent(agentConfig));
-  state.agents.set('test-generation', createTestGenerationAgent(agentConfig));
-  state.agents.set('documentation', createDocumentationAgent(agentConfig));
-  state.agents.set('security', createSecurityAgent(agentConfig as any));
+  state.agents.set(
+    'code-analysis',
+    createCodeAnalysisAgent({
+      ...agentConfig,
+      memoryPolicy: state.config.memoryPolicies?.['code-analysis'],
+    } as any),
+  );
+  state.agents.set(
+    'test-generation',
+    createTestGenerationAgent({
+      ...agentConfig,
+      memoryPolicy: state.config.memoryPolicies?.['test-generation'],
+    } as any),
+  );
+  state.agents.set(
+    'documentation',
+    createDocumentationAgent({
+      ...agentConfig,
+      memoryPolicy: state.config.memoryPolicies?.['documentation'],
+    } as any),
+  );
+  state.agents.set(
+    'security',
+    createSecurityAgent({
+      ...agentConfig,
+      memoryPolicy: state.config.memoryPolicies?.['security'],
+    } as any),
+  );
 };
 
 const executeTask = async (task: WorkflowTask, state: OrchestratorState): Promise<any> => {

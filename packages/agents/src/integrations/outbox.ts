@@ -25,22 +25,28 @@ export type OutboxOptions = {
  * Subscribe to agent events and persist them via governed MemoryStore.
  * Adheres to AGENTS.md: no direct filesystem persistence from agents.
  */
+type OptionsResolver = (eventType: string, event: any) => OutboxOptions;
+
 export const wireOutbox = async (
   bus: EventBus,
   store: MemoryStore,
-  options: OutboxOptions = {},
+  optionsOrResolver: OutboxOptions | OptionsResolver = {},
   types: string[] = DEFAULT_TYPES,
 ) => {
-  const {
-    namespace = 'agents:outbox',
-    ttl = 'PT1H',
-    maxItemBytes = 256_000, // ~256KB default cap per item
-    tagPrefix = 'evt',
-  } = options;
+  const base: OutboxOptions =
+    typeof optionsOrResolver === 'function' ? {} : optionsOrResolver || {};
+  const resolver: OptionsResolver =
+    typeof optionsOrResolver === 'function' ? (optionsOrResolver as OptionsResolver) : () => base;
 
   for (const t of types) {
     bus.subscribe(t, async (evt: any) => {
       try {
+        const opts = resolver(t, evt) || {};
+        const namespace = opts.namespace || 'agents:outbox';
+        const ttl = opts.ttl || 'PT1H';
+        const maxItemBytes = opts.maxItemBytes ?? 256_000;
+        const tagPrefix = opts.tagPrefix || 'evt';
+
         const now = new Date();
         const payload = { type: t, ...evt };
         let text = JSON.stringify(payload);
@@ -75,7 +81,6 @@ export const wireOutbox = async (
 
         await store.upsert(mem);
       } catch (e) {
-        // Last-resort: swallow to avoid cascading failures in event handling
         if (process.env.NODE_ENV !== 'production') {
           console.warn('[outbox] failed to persist event', t, e);
         }
