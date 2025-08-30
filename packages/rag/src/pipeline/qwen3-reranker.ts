@@ -111,7 +111,7 @@ export class Qwen3Reranker implements Reranker {
   /**
    * Score a batch of documents against the query
    */
-  private async scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
+  private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
     return new Promise((resolve, reject) => {
       const pythonScript = this.getPythonScript();
       const child = spawn(this.pythonPath, ['-c', pythonScript], {

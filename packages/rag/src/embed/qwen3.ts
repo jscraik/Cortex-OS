@@ -51,11 +51,11 @@ export class Qwen3Embedder implements Embedder {
     return results;
   }
 
-  private async embedBatch(texts: string[]): Promise<number[][]> {
+  private embedBatch(texts: string[]): Promise<number[][]> {
     return this.embedWithModel(texts);
   }
 
-  private async embedWithModel(texts: string[]): Promise<number[][]> {
+  private embedWithModel(texts: string[]): Promise<number[][]> {
     return new Promise((resolve, reject) => {
       const python = spawn(
         'python3',
