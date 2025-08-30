@@ -1,20 +1,29 @@
-import { cosine, buildAverageEmb } from '../../../../src/lib/vector-math';
+export interface RerankDoc {
+  id: string;
+  text: string;
+  emb: number[];
+}
 
 export function fusionRerank(
   queryEmb: number[],
-  docs: { id: string; text: string; emb: number[] }[],
+  docs: RerankDoc[],
   bm25: Map<string, number>,
   alpha = 0.7,
 ) {
+  if (!Array.isArray(queryEmb) || queryEmb.length === 0) {
     throw new TypeError('queryEmb must be a non-empty number array');
   }
-  if (!Array.isArray(docs)) throw new TypeError('docs must be an array');
-  if (docs.length === 0) return [];
-
+  if (!Array.isArray(docs)) {
+    throw new TypeError('docs must be an array');
+  }
+  if (docs.length === 0) return [] as { id: string; score: number }[];
 
   const dim = queryEmb.length;
   for (const d of docs) {
-      throw new TypeError(`Document embedding dimension ${d.emb?.length} does not match query embedding dimension ${dim}`);
+    if (!Array.isArray(d.emb) || d.emb.length !== dim) {
+      throw new TypeError(
+        `Document embedding dimension ${d.emb?.length} does not match query embedding dimension ${dim}`,
+      );
     }
   }
 
@@ -36,10 +45,8 @@ export function fusionRerank(
   const scored = docs.map((d) => {
     const cos = cosine(queryEmb, d.emb);
     const bm = bm25.get(d.id) ?? 0;
-    const s = alpha * cos + (1 - alpha) * bm;
-    return { id: d.id, score: s };
+    return { id: d.id, score: alpha * cos + (1 - alpha) * bm };
   });
 
   return scored.sort((a, b) => b.score - a.score);
-
 }
