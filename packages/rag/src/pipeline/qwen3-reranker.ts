@@ -1,7 +1,6 @@
-
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import path, { join } from 'path';
 
 /**
  * Document with relevance score for reranking
@@ -25,8 +24,6 @@ export interface Reranker {
    */
   rerank(query: string, documents: RerankDocument[], topK?: number): Promise<RerankDocument[]>;
 }
-
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 /**
  * Configuration for Qwen3 reranker
@@ -64,7 +61,6 @@ export class Qwen3Reranker implements Reranker {
   private readonly timeoutMs: number;
 
   constructor(options: Qwen3RerankOptions = {}) {
-
     const defaultPath =
       process.env.QWEN_RERANKER_MODEL_PATH ||
       path.resolve(process.cwd(), 'models/Qwen3-Reranker-4B');
@@ -77,7 +73,6 @@ export class Qwen3Reranker implements Reranker {
       options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-reranker-cache');
     this.pythonPath = options.pythonPath || 'python3';
     this.timeoutMs = options.timeoutMs ?? 30000;
-
   }
 
   /**
@@ -116,8 +111,7 @@ export class Qwen3Reranker implements Reranker {
   /**
    * Score a batch of documents against the query
    */
-  private async scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
-
+  private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
     return new Promise((resolve, reject) => {
       const pythonScript = this.getPythonScript();
       const child = spawn(this.pythonPath, ['-c', pythonScript], {
@@ -178,9 +172,7 @@ export class Qwen3Reranker implements Reranker {
 
       child.stdin?.write(JSON.stringify(input));
       child.stdin?.end();
-
     });
-    return result.scores || [];
   }
 
   /**
@@ -198,7 +190,6 @@ export class Qwen3Reranker implements Reranker {
    * Get the Python script for Qwen3 reranking
    */
   private getPythonScript(): string {
-
     return `
 import json
 import sys
@@ -294,7 +285,6 @@ def rerank_documents():
 if __name__ == "__main__":
     rerank_documents()
 `;
-
   }
 
   /**

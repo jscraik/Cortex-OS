@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { resolveFileList, createWorker, runWorkers } from '../lib/batch-ingest';
+import type { Pipeline } from '../index.js';
 
 const ingestFilesSchema = z
   .object({
@@ -54,5 +55,4 @@ export async function ingestFiles(params: IngestFilesParams): Promise<void> {
 
   const worker = createWorker({ pipeline, queue, chunkSize, overlap });
   await runWorkers(worker, concurrency, uniqueFiles.length);
-
 }
