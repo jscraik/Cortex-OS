@@ -15,7 +15,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@tests/*": ["./tests/*"]
+      "@tests/*": ["./tests/*"],
+      "@cortex-os/memories": ["../memories/src/index.ts"]
     },
     "types": ["vitest/globals", "node"]
   },

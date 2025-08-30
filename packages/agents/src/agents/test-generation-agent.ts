@@ -44,6 +44,8 @@ export const testGenerationInputSchema = z.object({
   coverageTarget: z.number().min(0).max(100).optional().default(90),
   mockingStrategy: z.enum(['minimal', 'comprehensive', 'auto']).optional().default('auto'),
   assertionStyle: z.enum(['expect', 'assert', 'should']).optional().default('expect'),
+  seed: z.number().int().positive().optional(),
+  maxTokens: z.number().int().positive().max(4096).optional(),
 });
 
 export const testGenerationOutputSchema = z.object({
@@ -115,7 +117,7 @@ export const createTestGenerationAgent = (
       const startTime = Date.now();
 
       // Validate input
-      const validatedInput = validateSchema(testGenerationInputSchema, input);
+      const validatedInput = validateSchema<TestGenerationInput>(testGenerationInputSchema, input);
 
       // Emit agent started event
       config.eventBus.publish({
@@ -166,6 +168,8 @@ export const createTestGenerationAgent = (
             traceId,
             capability: 'test-generation',
             error: error instanceof Error ? error.message : 'Unknown error',
+            errorCode: (error as any)?.code || undefined,
+            status: typeof (error as any)?.status === 'number' ? (error as any)?.status : undefined,
             metrics: {
               latencyMs: executionTime,
             },
@@ -194,9 +198,10 @@ const generateTests = async (
   // Generate options based on input
   const generateOptions: GenerateOptions = {
     temperature: 0.1, // Low temperature for consistent test generation
-    maxTokens: calculateMaxTokens(sourceCode, testType),
+    maxTokens: Math.min(calculateMaxTokens(sourceCode, testType), input.maxTokens ?? 4096),
     stop: ['```\n\n', '---END---'],
     systemPrompt: sanitizeText(buildSystemPrompt(framework, language, testType)),
+    seed: input.seed,
   };
 
   // Call the model provider

@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createServer,
-  addTool,
-  addResource,
-  addPrompt,
-} from './index.js';
+import { createServer, addTool, addResource, addPrompt } from './index.js';
 import {
   handleInitialize,
   handleToolsList,

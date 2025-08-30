@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 import crypto from 'crypto';
 
 export interface EmbeddingConfig {
@@ -264,36 +263,13 @@ const generateId = (text: string): string => {
   return crypto.createHash('sha256').update(text).digest('hex').substring(0, 16);
 };
 
-const executePythonScript = (
+const executePythonScript = async (
   pythonPath: string,
   script: string,
   args: string[] = [],
 ): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const child = spawn(pythonPath, ['-c', script, ...args], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    let stderr = '';
-    child.stdout?.on('data', (data) => {
-      stdout += data.toString();
-    });
-    child.stderr?.on('data', (data) => {
-      stderr += data.toString();
-    });
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout.trim());
-      } else {
-        reject(new Error(`Python script failed with code ${code}: ${stderr}`));
-      }
-    });
-    child.on('error', (error) => {
-      reject(new Error(`Failed to spawn Python: ${error.message}`));
-    });
-    setTimeout(() => {
-      child.kill();
-      reject(new Error('Python script timed out'));
-    }, 30000);
-  });
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  const { runPython } = await import('../../../../libs/python/exec.js');
+  return runPython('-c', [script, ...args], { python: pythonPath } as any);
 };

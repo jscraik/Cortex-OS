@@ -8,7 +8,7 @@ describe('crypto hashing fuzz', () => {
       fc.property(fc.string(), (input) => {
         const digest = createHash('sha256').update(input).digest('hex');
         expect(digest).toMatch(/^[a-f0-9]{64}$/);
-      })
+      }),
     );
   });
 });

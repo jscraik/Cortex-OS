@@ -36,8 +36,16 @@ describe('Security Agent', () => {
       latencyMs: 120,
     });
 
-    const agent = createSecurityAgent({ provider: mockProvider, eventBus: mockEventBus, mcpClient: mockMCP });
-    const res = await agent.execute({ content: 'Hello world', phase: 'prompt', context: { toolsAllowed: [] } });
+    const agent = createSecurityAgent({
+      provider: mockProvider,
+      eventBus: mockEventBus,
+      mcpClient: mockMCP,
+    });
+    const res = await agent.execute({
+      content: 'Hello world',
+      phase: 'prompt',
+      context: { toolsAllowed: [] },
+    });
     expect(res.decision).toBe('allow');
     expect(res.risk).toBe('low');
     expect(mockEventBus.published.find((e) => e.type === 'agent.completed')).toBeTruthy();
@@ -53,7 +61,11 @@ describe('Security Agent', () => {
       usage: { promptTokens: 10, completionTokens: 5, totalTokens: 15 },
     });
 
-    const agent = createSecurityAgent({ provider: mockProvider, eventBus: mockEventBus, mcpClient: mockMCP });
+    const agent = createSecurityAgent({
+      provider: mockProvider,
+      eventBus: mockEventBus,
+      mcpClient: mockMCP,
+    });
     const res = await agent.execute({
       content: 'Run shell rm -rf /',
       phase: 'prompt',
@@ -63,4 +75,3 @@ describe('Security Agent', () => {
     expect(res.categories.length).toBeGreaterThan(0);
   });
 });
-

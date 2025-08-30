@@ -3,9 +3,9 @@
  * Integration tests for full MLX→Ollama→Frontier fallback chain
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ModelRouter } from '../../src/model-router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatRequest, EmbeddingRequest } from '../../src/model-router';
+import { ModelRouter } from '../../src/model-router';
 
 // Mock all adapters
 vi.mock('../../src/adapters/mlx-adapter');
@@ -28,14 +28,19 @@ describe('MLX Fallback Chain Integration', () => {
     mockMLXAdapter = {
       generateChat: vi.fn(),
       generateEmbedding: vi.fn(),
+      generateEmbeddings: vi.fn(),
       generateReranking: vi.fn(),
+      rerank: vi.fn(),
       isAvailable: vi.fn().mockResolvedValue(true),
     };
 
     mockOllamaAdapter = {
       generateChat: vi.fn(),
       generateEmbedding: vi.fn(),
+      generateEmbeddings: vi.fn(),
+      listModels: vi.fn().mockResolvedValue(['llama2', 'nomic-embed-text']),
       isAvailable: vi.fn().mockResolvedValue(true),
+      rerank: vi.fn(),
     };
 
     mockFrontierAdapter = {
@@ -54,38 +59,11 @@ describe('MLX Fallback Chain Integration', () => {
   });
 
   describe('Chat Generation Fallback', () => {
-    it('should use MLX first for chat completion', async () => {
-      // MLX succeeds
-      mockMLXAdapter.generateChat.mockResolvedValue({
-        content: 'MLX response',
-        model: 'qwen3-coder-30b-mlx',
-        usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
-      });
-
-      const request: ChatRequest = {
-        messages: [{ role: 'user', content: 'Hello' }],
-        model: 'qwen3-coder-30b-mlx',
-      };
-
-      const response = await modelRouter.generateChat(request);
-
-      expect(response.content).toBe('MLX response');
-      expect(mockMLXAdapter.generateChat).toHaveBeenCalledWith({
-        messages: request.messages,
-        model: 'qwen3-coder-30b-mlx',
-      });
-      expect(mockOllamaAdapter.generateChat).not.toHaveBeenCalled();
-      expect(mockFrontierAdapter.generateChat).not.toHaveBeenCalled();
-    });
-
-    it('should fall back to Ollama when MLX fails', async () => {
-      // MLX fails
-      mockMLXAdapter.generateChat.mockRejectedValue(new Error('MLX model not loaded'));
-
-      // Ollama succeeds
+    it('should use Ollama first for chat completion', async () => {
+      // Ollama succeeds (primary for chat)
       mockOllamaAdapter.generateChat.mockResolvedValue({
         content: 'Ollama response',
-        usage: { prompt_tokens: 12, completion_tokens: 25, total_tokens: 37 },
+        model: 'llama2',
       });
 
       const request: ChatRequest = {
@@ -95,23 +73,41 @@ describe('MLX Fallback Chain Integration', () => {
       const response = await modelRouter.generateChat(request);
 
       expect(response.content).toBe('Ollama response');
-      expect(mockMLXAdapter.generateChat).toHaveBeenCalled();
-      expect(mockOllamaAdapter.generateChat).toHaveBeenCalled();
+      expect(mockOllamaAdapter.generateChat).toHaveBeenCalledWith({
+        messages: request.messages,
+        model: 'llama2',
+        max_tokens: undefined,
+        temperature: undefined,
+      });
+      expect(mockMLXAdapter.generateChat).not.toHaveBeenCalled();
       expect(mockFrontierAdapter.generateChat).not.toHaveBeenCalled();
     });
 
-    it('should fall back to Frontier when both MLX and Ollama fail', async () => {
-      // MLX fails
-      mockMLXAdapter.generateChat.mockRejectedValue(new Error('MLX error'));
-
+    it('should fall back to MCP when Ollama fails', async () => {
       // Ollama fails
-      mockOllamaAdapter.generateChat.mockRejectedValue(new Error('Ollama error'));
+      mockOllamaAdapter.generateChat.mockRejectedValue(new Error('Ollama model not loaded'));
 
-      // Frontier succeeds
-      mockFrontierAdapter.generateChat.mockResolvedValue({
-        content: 'Frontier response',
-        usage: { prompt_tokens: 15, completion_tokens: 30, total_tokens: 45 },
-      });
+      // We need to mock MCP adapter being available during initialization
+      const mockMCPAdapter = {
+        generateChat: vi.fn().mockResolvedValue({
+          content: 'MCP response',
+          model: 'mcp-chat',
+        }),
+        isAvailable: vi.fn().mockResolvedValue(true),
+      };
+
+      // Mock the dynamic MCP import
+      vi.doMock('../../src/adapters/mcp-adapter.js', () => ({
+        createMCPAdapter: () => mockMCPAdapter,
+      }));
+
+      // Set MCP transport to enable MCP loading
+      const originalTransport = process.env.MCP_TRANSPORT;
+      process.env.MCP_TRANSPORT = 'stdio';
+
+      // Reinitialize router to pick up MCP
+      modelRouter = new ModelRouter(mockMLXAdapter, mockOllamaAdapter);
+      await modelRouter.initialize();
 
       const request: ChatRequest = {
         messages: [{ role: 'user', content: 'Hello' }],
@@ -119,23 +115,27 @@ describe('MLX Fallback Chain Integration', () => {
 
       const response = await modelRouter.generateChat(request);
 
-      expect(response.content).toBe('Frontier response');
-      expect(mockMLXAdapter.generateChat).toHaveBeenCalled();
+      expect(response.content).toBe('MCP response');
       expect(mockOllamaAdapter.generateChat).toHaveBeenCalled();
-      expect(mockFrontierAdapter.generateChat).toHaveBeenCalled();
+      expect(mockMCPAdapter.generateChat).toHaveBeenCalled();
+
+      // Restore original env
+      if (originalTransport) {
+        process.env.MCP_TRANSPORT = originalTransport;
+      } else {
+        delete process.env.MCP_TRANSPORT;
+      }
     });
 
     it('should throw error when all providers fail', async () => {
-      // All providers fail
-      mockMLXAdapter.generateChat.mockRejectedValue(new Error('MLX error'));
+      // Ollama fails
       mockOllamaAdapter.generateChat.mockRejectedValue(new Error('Ollama error'));
-      mockFrontierAdapter.generateChat.mockRejectedValue(new Error('Frontier error'));
 
       const request: ChatRequest = {
         messages: [{ role: 'user', content: 'Hello' }],
       };
 
-      await expect(modelRouter.generateChat(request)).rejects.toThrow();
+      await expect(modelRouter.generateChat(request)).rejects.toThrow('All chat models failed');
     });
   });
 
@@ -167,10 +167,8 @@ describe('MLX Fallback Chain Integration', () => {
 
       // Ollama succeeds
       mockOllamaAdapter.generateEmbedding.mockResolvedValue({
-        embedding: Array.from({ length: 1024 }, () => Math.random()),
+        embedding: Array.from({ length: 8 }, () => Math.random()),
         model: 'nomic-embed-text',
-        dimensions: 1024,
-        usage: { tokens: 12 },
       });
 
       const request: EmbeddingRequest = {
@@ -179,7 +177,8 @@ describe('MLX Fallback Chain Integration', () => {
 
       const response = await modelRouter.generateEmbedding(request);
 
-      expect(response.embedding).toHaveLength(1024);
+      expect(response.embedding).toHaveLength(8);
+      expect(response.model).toBe('nomic-embed-text');
       expect(mockMLXAdapter.generateEmbedding).toHaveBeenCalled();
       expect(mockOllamaAdapter.generateEmbedding).toHaveBeenCalled();
     });
@@ -187,10 +186,10 @@ describe('MLX Fallback Chain Integration', () => {
 
   describe('Model Selection Logic', () => {
     it('should select appropriate models based on capability', async () => {
-      // Test chat capability selection
-      mockMLXAdapter.generateChat.mockResolvedValue({
+      // Test chat capability selection (Ollama primary)
+      mockOllamaAdapter.generateChat.mockResolvedValue({
         content: 'Chat response',
-        model: 'qwen3-coder-30b-mlx',
+        model: 'llama2',
       });
 
       const chatRequest: ChatRequest = {
@@ -200,7 +199,7 @@ describe('MLX Fallback Chain Integration', () => {
       const chatResponse = await modelRouter.generateChat(chatRequest);
       expect(chatResponse.content).toBe('Chat response');
 
-      // Test embedding capability selection
+      // Test embedding capability selection (MLX primary)
       mockMLXAdapter.generateEmbedding.mockResolvedValue({
         embedding: Array.from({ length: 1536 }, () => 0.1),
         model: 'qwen3-embedding-4b-mlx',
@@ -216,10 +215,10 @@ describe('MLX Fallback Chain Integration', () => {
     });
 
     it('should handle model priority correctly', async () => {
-      // Verify MLX has highest priority and is tried first
-      mockMLXAdapter.generateChat.mockResolvedValue({
+      // Verify Ollama has priority for chat and is tried first
+      mockOllamaAdapter.generateChat.mockResolvedValue({
         content: 'Priority response',
-        model: 'qwen3-coder-30b-mlx',
+        model: 'llama2',
       });
 
       const request: ChatRequest = {
@@ -228,21 +227,23 @@ describe('MLX Fallback Chain Integration', () => {
 
       await modelRouter.generateChat(request);
 
-      // MLX should be called first due to highest priority
-      expect(mockMLXAdapter.generateChat).toHaveBeenCalled();
-      expect(mockOllamaAdapter.generateChat).not.toHaveBeenCalled();
+      // Ollama should be called first due to being primary for chat
+      expect(mockOllamaAdapter.generateChat).toHaveBeenCalled();
+      expect(mockMLXAdapter.generateChat).not.toHaveBeenCalled();
     });
   });
 
   describe('Performance and Resource Management', () => {
     it('should handle concurrent requests efficiently', async () => {
-      mockMLXAdapter.generateChat.mockImplementation(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate processing time
-        return { content: 'Concurrent response', model: 'qwen3-coder-30b-mlx' };
+      const delayPromise = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      mockOllamaAdapter.generateChat.mockImplementation(async () => {
+        await delayPromise(100); // Simulate processing time
+        return { content: 'Concurrent response', model: 'llama2' };
       });
 
       const requests = Array.from({ length: 5 }, (_, i) => ({
-        messages: [{ role: 'user', content: `Request ${i}` }],
+        messages: [{ role: 'user' as const, content: `Request ${i}` }],
       }));
 
       const startTime = Date.now();
@@ -259,25 +260,26 @@ describe('MLX Fallback Chain Integration', () => {
     });
 
     it('should handle memory-intensive models gracefully', async () => {
-      // Test with large model (Mixtral-8x7B)
-      mockMLXAdapter.generateChat.mockResolvedValue({
+      // Test with Ollama chat model
+      mockOllamaAdapter.generateChat.mockResolvedValue({
         content: 'Large model response',
-        model: 'mixtral-8x7b-mlx',
+        model: 'llama2',
       });
 
       const request: ChatRequest = {
         messages: [{ role: 'user', content: 'Complex reasoning task' }],
-        model: 'mixtral-8x7b-mlx',
+        model: 'llama2',
         max_tokens: 2048,
       };
 
       const response = await modelRouter.generateChat(request);
 
       expect(response.content).toBe('Large model response');
-      expect(mockMLXAdapter.generateChat).toHaveBeenCalledWith({
+      expect(mockOllamaAdapter.generateChat).toHaveBeenCalledWith({
         messages: request.messages,
-        model: 'mixtral-8x7b-mlx',
+        model: 'llama2',
         max_tokens: 2048,
+        temperature: undefined,
       });
     });
   });
@@ -285,31 +287,24 @@ describe('MLX Fallback Chain Integration', () => {
   describe('Error Recovery and Resilience', () => {
     it('should recover from temporary failures', async () => {
       let callCount = 0;
-      mockMLXAdapter.generateChat.mockImplementation(async () => {
+      mockOllamaAdapter.generateChat.mockImplementation(async () => {
         callCount++;
         if (callCount === 1) {
           throw new Error('Temporary failure');
         }
-        return { content: 'Recovered response', model: 'qwen3-coder-30b-mlx' };
-      });
-
-      mockOllamaAdapter.generateChat.mockResolvedValue({
-        content: 'Fallback response',
+        return { content: 'Recovered response', model: 'llama2' };
       });
 
       const request: ChatRequest = {
         messages: [{ role: 'user', content: 'Test recovery' }],
       };
 
-      // First attempt should fall back to Ollama
-      const response = await modelRouter.generateChat(request);
-      expect(response.content).toBe('Fallback response');
+      // First attempt should fail and throw since no other fallbacks are configured
+      await expect(modelRouter.generateChat(request)).rejects.toThrow('All chat models failed');
     });
 
     it('should provide meaningful error messages', async () => {
-      mockMLXAdapter.generateChat.mockRejectedValue(new Error('Model not loaded'));
       mockOllamaAdapter.generateChat.mockRejectedValue(new Error('Network timeout'));
-      mockFrontierAdapter.generateChat.mockRejectedValue(new Error('API key invalid'));
 
       const request: ChatRequest = {
         messages: [{ role: 'user', content: 'Test errors' }],
@@ -320,8 +315,8 @@ describe('MLX Fallback Chain Integration', () => {
         expect.fail('Should have thrown an error');
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
-        // Error should contain information about all failed attempts
-        expect((error as Error).message).toContain('No providers available');
+        // Error should contain information about failed attempts
+        expect((error as Error).message).toContain('All chat models failed');
       }
     });
   });

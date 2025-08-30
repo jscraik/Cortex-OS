@@ -36,7 +36,6 @@ describe('BuildNode documentation validation', () => {
     expect(buildResult.majors).toContain(
       'Documentation incomplete - missing API docs or usage notes',
     );
-
   });
 
   it('passes when README.md exists', async () => {
@@ -50,6 +49,5 @@ describe('BuildNode documentation validation', () => {
     expect(buildResult.majors).not.toContain(
       'Documentation incomplete - missing API docs or usage notes',
     );
-
   });
 });

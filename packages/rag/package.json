@@ -3,68 +3,20 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./chunk": {
-      "types": "./dist/chunk/index.d.ts",
-      "default": "./dist/chunk/index.js"
-    },
-    "./chunkers": {
-      "types": "./dist/chunkers/index.d.ts",
-      "default": "./dist/chunkers/index.js"
-    },
-    "./pipeline": {
-      "types": "./dist/pipeline/index.d.ts",
-      "default": "./dist/pipeline/index.js"
-    },
-    "./pipeline/ingest": {
-      "types": "./dist/pipeline/ingest.d.ts",
-      "default": "./dist/pipeline/ingest.js"
-    },
-    "./pipeline/query": {
-      "types": "./dist/pipeline/query.d.ts",
-      "default": "./dist/pipeline/query.js"
-    },
-    "./pipeline/batch-ingest": {
-      "types": "./dist/pipeline/batch-ingest.d.ts",
-      "default": "./dist/pipeline/batch-ingest.js"
-    },
-    "./pipeline/file-discovery": {
-      "types": "./dist/pipeline/file-discovery.d.ts",
-      "default": "./dist/pipeline/file-discovery.js"
-    },
-    "./store/memory": {
-      "types": "./dist/store/memory.d.ts",
-      "default": "./dist/store/memory.js"
-    },
-    "./policy": {
-      "types": "./dist/policy/index.d.ts",
-      "default": "./dist/policy/index.js"
-    }
-  },
+  "main": "src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "test": "vitest",
+    "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "dev": "tsc -p tsconfig.build.json --watch",
-    "clean": "rm -rf dist"
+    "lint": "eslint .",
+    "test": "vitest run",
+    "docs:verify": "./scripts/verify-docs.sh"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
-    "zod": "^4.1.4",
-    "fast-glob": "^3.3.3",
-    "micromatch": "^4.0.8"
+    "@cortex-os/contracts": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "@types/node": "^22.5.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
   }
 }

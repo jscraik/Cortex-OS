@@ -20,3 +20,9 @@ Notes:
 
 - Keep runs short (max-tokens <= 64) to minimize time/memory.
 - Models listed in cards align with the MLX adapter/router where applicable.
+
+Available model cards:
+
+- smollm-135m-mlx.md
+- gpt-oss-20b-mlx.md
+- llamaguard-mlx.md

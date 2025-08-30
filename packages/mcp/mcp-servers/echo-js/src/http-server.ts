@@ -42,7 +42,13 @@ export function startHttpServer(port = 0): Promise<{ server: Server; url: string
         const expected = process.env.AUTH_TOKEN || 'test-token';
         if (auth !== `Bearer ${expected}`) {
           res.statusCode = 401;
-          res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32603, message: 'Unauthorized' } }));
+          res.end(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: null,
+              error: { code: -32603, message: 'Unauthorized' },
+            }),
+          );
           return;
         }
       }

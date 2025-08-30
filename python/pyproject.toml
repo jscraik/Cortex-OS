@@ -1,0 +1,46 @@
+[project]
+name = "cortex-mlx"
+version = "0.0.1"
+description = "MLX integration for Cortex-OS"
+requires-python = ">=3.12"
+dependencies = [
+  "numpy>=1.26",
+  "pydantic>=2.8",
+  "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+mlx = [
+  "mlx-lm>=0.14.0",
+  "mlx-vlm>=0.1.0",
+]
+dev = [
+  "pytest>=8.3",
+  "ruff>=0.5.6",
+  "pyright>=1.1.379",
+  "deepeval>=1.2.0",
+  "jsonschema>=4.21",
+]
+
+[tool.uv]
+dev-dependencies = [
+  "pytest>=8.3",
+  "ruff>=0.5.6",
+  "pyright>=1.1.379",
+  "deepeval>=1.2.0",
+  "jsonschema>=4.21",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "F", "I", "N"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+venvPath = ".venv"
+typeCheckingMode = "basic"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["src"]

@@ -19,9 +19,7 @@ describe('rerankDocuments', () => {
       ['a x', 'b y'],
       ['b y', 'c z'],
     ];
-    const results = await Promise.all(
-      queries.map((q, i) => rerankDocuments(q, docs[i])),
-    );
+    const results = await Promise.all(queries.map((q, i) => rerankDocuments(q, docs[i])));
     expect(results).toHaveLength(2);
   });
 });

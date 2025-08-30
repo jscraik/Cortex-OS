@@ -58,7 +58,11 @@ export async function rerank(
     return results;
   }
 
-  const reranked = await reranker.rerank(query, results.map((r) => r.text), topK);
+  const reranked = await reranker.rerank(
+    query,
+    results.map((r) => r.text),
+    topK,
+  );
   return reranked.map((rr) => ({
     ...results[rr.originalIndex],
     similarity: rr.score,
@@ -71,13 +75,12 @@ export async function rerank(
 export function assemblePrompt(query: string, context: string[], systemPrompt?: string): string {
   const contextSection =
     context.length > 0
-      ? `Context information:\n${context.map((c, i) => `${i + 1}. ${c}`).join("\n\n")}\n\n`
+      ? `Context information:\n${context.map((c, i) => `${i + 1}. ${c}`).join('\n\n')}\n\n`
       : '';
 
-  const system =
-    systemPrompt
-      ? `${systemPrompt}\n\n`
-      : "You are a helpful AI assistant. Answer the question based on the provided context. If the context doesn't contain enough information, say so clearly.\n\n";
+  const system = systemPrompt
+    ? `${systemPrompt}\n\n`
+    : "You are a helpful AI assistant. Answer the question based on the provided context. If the context doesn't contain enough information, say so clearly.\n\n";
 
   return `${system}${contextSection}Question: ${query}\n\nAnswer:`;
 }
@@ -150,7 +153,10 @@ export async function ragQuery(
     args.systemPrompt,
   );
   const answer = await generateAnswer(prompt, { temperature: 0.3, maxTokens: 1024 }, deps.generate);
-  const sources = reranked.map(({ text, similarity, metadata }) => ({ text, similarity, metadata }));
+  const sources = reranked.map(({ text, similarity, metadata }) => ({
+    text,
+    similarity,
+    metadata,
+  }));
   return { answer, sources, prompt, confidence: calculateConfidence(sources) };
 }
-

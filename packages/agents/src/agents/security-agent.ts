@@ -34,6 +34,8 @@ export const securityInputSchema = z.object({
     })
     .default({}),
   riskThreshold: z.enum(['low', 'medium', 'high']).optional().default('medium'),
+  seed: z.number().int().positive().optional(),
+  maxTokens: z.number().int().positive().max(4096).optional(),
 });
 
 // Output schema
@@ -163,11 +165,12 @@ ${sanitizeText(content)}
     if (dep && input.context) (input.context as any).dependabot = { projects: dep.projects };
     const prompt = buildPrompt(input);
     const options: GenerateOptions = {
-      maxTokens: 512,
+      maxTokens: Math.min(512, input.maxTokens ?? 4096),
       temperature: 0.0,
       responseFormat: { type: 'json_object' },
       systemPrompt,
       stop: ['\n\n```', '---END---'],
+      seed: input.seed,
     };
     const res = await config.provider.generate(prompt, options);
     let out = parseResult(res);
@@ -219,7 +222,7 @@ ${sanitizeText(content)}
     execute: async (input: SecurityInput): Promise<SecurityOutput> => {
       const traceId = generateTraceId();
       const start = Date.now();
-      const validated = validateSchema(securityInputSchema, input, 'security-input');
+      const validated = validateSchema<SecurityInput>(securityInputSchema, input, 'security-input');
 
       await config.eventBus.publish({
         type: 'agent.started',
@@ -263,6 +266,8 @@ ${sanitizeText(content)}
             traceId,
             capability: 'security',
             error: err instanceof Error ? err.message : 'Unknown error',
+            errorCode: (err as any)?.code || undefined,
+            status: typeof (err as any)?.status === 'number' ? (err as any)?.status : undefined,
             metrics: { latencyMs: dur },
             timestamp: new Date().toISOString(),
           },
@@ -272,5 +277,3 @@ ${sanitizeText(content)}
     },
   };
 };
-
-export type SecurityAgentConfig = SecurityAgentConfig;

@@ -1,3 +1,3 @@
 # CLAUDE.md Location
 
-look in [`CLAUDE.md`](/.claude/CLAUDE.md)
+look in [`CLAUDE.md`](./CLAUDE.md)

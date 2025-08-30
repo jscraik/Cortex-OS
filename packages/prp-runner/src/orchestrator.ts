@@ -5,11 +5,9 @@
  * @version 1.1.0
  */
 
-
 import { LLMBridge, LLMConfig } from './llm-bridge.js';
 import { createExecutionContext } from './lib/create-execution-context.js';
 import { executeNeuron } from './lib/execute-neuron.js';
-
 
 // Minimal interfaces driven by tests
 export interface Blueprint {
@@ -169,4 +167,3 @@ export class PRPOrchestrator {
     };
   }
 }
-

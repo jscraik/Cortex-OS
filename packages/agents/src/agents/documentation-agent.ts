@@ -48,6 +48,8 @@ export const documentationInputSchema = z.object({
     .default('developer'),
   style: z.enum(['formal', 'casual', 'tutorial', 'reference']).optional().default('formal'),
   detailLevel: z.enum(['minimal', 'standard', 'comprehensive']).optional().default('standard'),
+  seed: z.number().int().positive().optional(),
+  maxTokens: z.number().int().positive().max(4096).optional(),
 });
 
 export const documentationOutputSchema = z.object({
@@ -133,7 +135,7 @@ export const createDocumentationAgent = (
       const startTime = Date.now();
 
       // Validate input
-      const validatedInput = validateSchema(documentationInputSchema, input);
+      const validatedInput = validateSchema<DocumentationInput>(documentationInputSchema, input);
 
       // Emit agent started event
       config.eventBus.publish({
@@ -184,6 +186,8 @@ export const createDocumentationAgent = (
             traceId,
             capability: 'documentation',
             error: error instanceof Error ? error.message : 'Unknown error',
+            errorCode: (error as any)?.code || undefined,
+            status: typeof (error as any)?.status === 'number' ? (error as any)?.status : undefined,
             metrics: {
               latencyMs: executionTime,
             },
@@ -222,9 +226,13 @@ const generateDocumentation = async (
   // Generate options based on input
   const generateOptions: GenerateOptions = {
     temperature: 0.2, // Low temperature for consistent documentation
-    maxTokens: calculateMaxTokens(sourceCode, documentationType, detailLevel),
+    maxTokens: Math.min(
+      calculateMaxTokens(sourceCode, documentationType, detailLevel),
+      input.maxTokens ?? 4096,
+    ),
     stop: ['```\n\n', '---END---', '</doc>'],
     systemPrompt: sanitizeText(buildSystemPrompt(documentationType, outputFormat, audience, style)),
+    seed: input.seed,
   };
 
   // Call the model provider
@@ -453,9 +461,19 @@ const parseDocumentationResponse = (
   }
 
   // Ensure all required fields are present
+  const sections = (
+    parsedResponse.sections || generateDefaultSections(format, language, documentationType)
+  ).map((s: any) => ({
+    title: s.title,
+    type: s.type,
+    content: s.content,
+    examples: s.examples ?? [],
+    parameters: s.parameters ?? [],
+    returnType: s.returnType ?? null,
+  }));
+
   return {
-    sections:
-      parsedResponse.sections || generateDefaultSections(format, language, documentationType),
+    sections,
     format,
     language,
     documentationType,

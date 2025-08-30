@@ -1,0 +1,8 @@
+version: 1
+validate:
+  agents: true
+  schemas: true
+  docsSync: true
+boundaries:
+  forbidCrossDomainImports: true
+  allowedShared: '@cortex-os/lib'

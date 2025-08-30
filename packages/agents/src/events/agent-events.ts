@@ -11,7 +11,7 @@ import { z } from 'zod';
 export const baseEventSchema = z.object({
   type: z.string(),
   data: z.record(z.any()),
-  timestamp: z.string().optional(),
+  timestamp: z.string().datetime().optional(),
   source: z.string().optional(),
   id: z.string().optional(),
 });
@@ -24,7 +24,7 @@ export const agentStartedEventSchema = z.object({
     traceId: z.string(),
     capability: z.string(),
     input: z.any(),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -40,7 +40,7 @@ export const agentCompletedEventSchema = z.object({
       testCount: z.number().optional(),
       suggestionsCount: z.number().optional(),
     }),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -51,10 +51,12 @@ export const agentFailedEventSchema = z.object({
     traceId: z.string(),
     capability: z.string(),
     error: z.string(),
+    errorCode: z.string().optional(),
+    status: z.number().optional(),
     metrics: z.object({
       latencyMs: z.number(),
     }),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -66,7 +68,7 @@ export const providerSuccessEventSchema = z.object({
     modelId: z.string(),
     latencyMs: z.number(),
     tokensUsed: z.number(),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -76,7 +78,7 @@ export const providerFallbackEventSchema = z.object({
     fromProvider: z.string(),
     toProvider: z.string(),
     reason: z.string(),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -86,7 +88,7 @@ export const thermalThrottleEventSchema = z.object({
   data: z.object({
     temperature: z.number(),
     throttleLevel: z.enum(['none', 'light', 'moderate', 'severe']),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -95,7 +97,7 @@ export const memoryPressureEventSchema = z.object({
   data: z.object({
     memoryUsage: z.number(),
     pressureLevel: z.enum(['normal', 'warning', 'critical']),
-    timestamp: z.string(),
+    timestamp: z.string().datetime(),
   }),
 });
 
@@ -163,7 +165,7 @@ export const agentEventCatalog = {
       workflowId: z.string(),
       name: z.string(),
       tasksCount: z.number(),
-      timestamp: z.string(),
+      timestamp: z.string().datetime(),
     }),
   }),
   'workflow.completed': z.object({
@@ -177,14 +179,14 @@ export const agentEventCatalog = {
         tasksTotal: z.number(),
         agentsUsed: z.array(z.string()),
       }),
-      timestamp: z.string(),
+      timestamp: z.string().datetime(),
     }),
   }),
   'workflow.cancelled': z.object({
     type: z.literal('workflow.cancelled'),
     data: z.object({
       workflowId: z.string(),
-      timestamp: z.string(),
+      timestamp: z.string().datetime(),
     }),
   }),
   'security.dependabot_config_loaded': z.object({
@@ -234,8 +236,8 @@ export type AgentEvent =
   | MemoryPressureEvent
   | MCPServerConnectedEvent
   | MCPServerDisconnectedEvent
-  | z.infer<typeof agentEventCatalog['security.dependabot_config_loaded']>
-  | z.infer<typeof agentEventCatalog['security.dependabot_assessed']>
-  | z.infer<typeof agentEventCatalog['workflow.started']>
-  | z.infer<typeof agentEventCatalog['workflow.completed']>
-  | z.infer<typeof agentEventCatalog['workflow.cancelled']>;
+  | z.infer<(typeof agentEventCatalog)['security.dependabot_config_loaded']>
+  | z.infer<(typeof agentEventCatalog)['security.dependabot_assessed']>
+  | z.infer<(typeof agentEventCatalog)['workflow.started']>
+  | z.infer<(typeof agentEventCatalog)['workflow.completed']>
+  | z.infer<(typeof agentEventCatalog)['workflow.cancelled']>;

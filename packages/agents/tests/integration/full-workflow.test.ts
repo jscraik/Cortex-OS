@@ -429,10 +429,10 @@ describe('Full Agent Workflow Integration', () => {
       expect(result.metrics.tasksCompleted).toBe(4);
 
       // Verify tasks executed in correct order
-      expect(result.results.arch - analysis).toBeDefined();
-      expect(result.results.security - scan).toBeDefined();
-      expect(result.results.unit - tests).toBeDefined();
-      expect(result.results.api - docs).toBeDefined();
+      expect(result.results['arch-analysis']).toBeDefined();
+      expect(result.results['security-scan']).toBeDefined();
+      expect(result.results['unit-tests']).toBeDefined();
+      expect(result.results['api-docs']).toBeDefined();
     });
   });
 

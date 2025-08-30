@@ -3,8 +3,8 @@
  */
 
 import { z } from 'zod';
-import { createMLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
-import { createOllamaAdapter, type OllamaAdapterApi } from './adapters/ollama-adapter.js';
+import { MLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
+import { OllamaAdapter, type OllamaAdapterApi } from './adapters/ollama-adapter.js';
 import type { Message } from './adapters/types.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking';
@@ -42,71 +42,140 @@ export type EmbeddingBatchRequest = z.infer<typeof EmbeddingBatchRequestSchema>;
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 export type RerankRequest = z.infer<typeof RerankRequestSchema>;
 
+/** Interface exported for other modules/tests that consume the router */
 export interface IModelRouter {
   initialize(): Promise<void>;
-  hasCapability(capability: ModelCapability): boolean;
   generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }>;
   generateEmbeddings(
-    request: EmbeddingBatchRequest,
+    request: z.infer<typeof EmbeddingBatchRequestSchema>,
   ): Promise<{ embeddings: number[][]; model: string }>;
-  generateChat(request: ChatRequest): Promise<{ content: string; model: string }>;
-  rerank(request: RerankRequest): Promise<{ documents: string[]; scores: number[]; model: string }>;
+  generateChat(
+    request: z.infer<typeof ChatRequestSchema>,
+  ): Promise<{ content: string; model: string }>;
+  rerank(
+    request: z.infer<typeof RerankRequestSchema>,
+  ): Promise<{ documents: string[]; scores: number[]; model: string }>;
   getAvailableModels(capability: ModelCapability): ModelConfig[];
   hasAvailableModels(capability: ModelCapability): boolean;
+  hasCapability(capability: ModelCapability): boolean;
 }
 
-/**
- * Class-based router (compatible with existing tests) with lazy MCP loading.
- */
 export class ModelRouter implements IModelRouter {
-  private readonly availableModels = new Map<ModelCapability, ModelConfig[]>();
-  private mcpAdapter: { isAvailable: () => Promise<boolean>; [k: string]: any } | null = null;
+  private readonly mlxAdapter: MLXAdapterApi;
+  private readonly ollamaAdapter: OllamaAdapterApi;
+  private mcpAdapter: any = null;
+  private mcpLoaded = false;
+  private readonly availableModels: Map<ModelCapability, ModelConfig[]> = new Map();
 
   constructor(
-    private readonly mlxAdapter: MLXAdapterApi = createMLXAdapter(),
-    private readonly ollamaAdapter: OllamaAdapterApi = createOllamaAdapter(),
-  ) {}
-
-  private async ensureMcpLoaded(): Promise<boolean> {
-    const transport = (process.env.MCP_TRANSPORT || '').trim();
-    if (!transport) return false; // Avoid importing if MCP not configured
-    if (this.mcpAdapter) return true;
-    try {
-      const mod = await import('./adapters/mcp-adapter.js');
-      this.mcpAdapter = mod.createMCPAdapter();
-      return await this.mcpAdapter.isAvailable();
-    } catch {
-      return false;
-    }
+    mlxAdapter: MLXAdapterApi = new MLXAdapter(),
+    ollamaAdapter: OllamaAdapterApi = new OllamaAdapter(),
+  ) {
+    this.mlxAdapter = mlxAdapter;
+    this.ollamaAdapter = ollamaAdapter;
   }
 
   async initialize(): Promise<void> {
+    const useLocal = (process.env.USE_LOCAL_MODELS || '').toLowerCase() === 'true';
+
+    // Load adapters availability up-front
     const mlxAvailable = await this.mlxAdapter.isAvailable();
     const ollamaAvailable = await this.ollamaAdapter.isAvailable();
     const mcpAvailable = await this.ensureMcpLoaded();
 
-    const embeddingModels: ModelConfig[] = [];
+    let localMapping: Partial<Record<ModelCapability, ModelConfig[]>> | null = null;
+    if (useLocal) {
+      localMapping = await this.loadLocalMapping();
+    }
 
-    // MLX models (highest priority)
+    // Embedding models
+    if (localMapping?.embedding) {
+      this.availableModels.set('embedding', localMapping.embedding);
+    } else {
+      this.availableModels.set(
+        'embedding',
+        this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable),
+      );
+    }
+
+    // Chat models
+    if (localMapping?.chat) {
+      this.availableModels.set('chat', localMapping.chat);
+    } else {
+      this.availableModels.set('chat', await this.buildChatModels(ollamaAvailable, mcpAvailable));
+    }
+
+    // Reranking models
+    if (localMapping?.reranking) {
+      this.availableModels.set('reranking', localMapping.reranking);
+    } else {
+      this.availableModels.set(
+        'reranking',
+        this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable),
+      );
+    }
+  }
+
+  // Try to lazy-load MCP adapter; return boolean available
+  private async ensureMcpLoaded(): Promise<boolean> {
+    if (this.mcpLoaded) return !!this.mcpAdapter;
+    try {
+      const mod = await import('./adapters/mcp-adapter.js');
+      // createMCPAdapter returns a synchronous adapter object
+      this.mcpAdapter = mod.createMCPAdapter();
+      this.mcpLoaded = true;
+      return true;
+    } catch {
+      this.mcpLoaded = false;
+      return false;
+    }
+  }
+
+  private async loadLocalMapping(): Promise<Partial<
+    Record<ModelCapability, ModelConfig[]>
+  > | null> {
+    try {
+      const path = new URL('../../../data/model-gateway-local-models.json', import.meta.url)
+        .pathname;
+      const importedModule = await import(`file://${path}`);
+      // support both `export default {...}` and module.exports = {...}
+      const maybeDefault = (importedModule as any).default;
+      const content = typeof maybeDefault !== 'undefined' ? maybeDefault : (importedModule as any);
+      if (typeof content === 'string') return JSON.parse(content || '{}');
+      if (content && typeof content === 'object')
+        return content as Partial<Record<ModelCapability, ModelConfig[]>>;
+      return null;
+    } catch (e) {
+      console.warn('[model-router] USE_LOCAL_MODELS is set but failed to load mapping:', e);
+      return null;
+    }
+  }
+
+  private buildEmbeddingModels(
+    mlxAvailable: boolean,
+    ollamaAvailable: boolean,
+    mcpAvailable: boolean,
+  ): ModelConfig[] {
+    const embeddingModels: ModelConfig[] = [];
     if (mlxAvailable) {
+      const ollamaFallback = ollamaAvailable ? ['nomic-embed-text'] : [];
       embeddingModels.push(
         {
           name: 'qwen3-embedding-4b-mlx',
           provider: 'mlx',
           capabilities: ['embedding'],
           priority: 100,
-          fallback: ['qwen3-embedding-8b-mlx'],
+          fallback: ['qwen3-embedding-8b-mlx', ...ollamaFallback],
         },
         {
           name: 'qwen3-embedding-8b-mlx',
           provider: 'mlx',
           capabilities: ['embedding'],
           priority: 90,
-          fallback: ['qwen3-embedding-4b-mlx'],
+          fallback: ['qwen3-embedding-4b-mlx', ...ollamaFallback],
         },
       );
     }
-
     if (ollamaAvailable) {
       embeddingModels.push({
         name: 'nomic-embed-text',
@@ -116,7 +185,6 @@ export class ModelRouter implements IModelRouter {
         fallback: [],
       });
     }
-
     if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
       embeddingModels.push({
         name: 'mcp-embeddings',
@@ -126,15 +194,38 @@ export class ModelRouter implements IModelRouter {
         fallback: [],
       });
     }
-    this.availableModels.set('embedding', embeddingModels);
+    return embeddingModels;
+  }
 
+  private async buildChatModels(
+    ollamaAvailable: boolean,
+    mcpAvailable: boolean,
+  ): Promise<ModelConfig[]> {
     const chatModels: ModelConfig[] = [];
     if (ollamaAvailable) {
       const ollamaModels = await this.ollamaAdapter.listModels().catch(() => []);
-      const desiredChat = [{ name: 'llama2', priority: 100, fallback: [] }];
+      const desiredChat = [
+        { name: 'gpt-oss:20b', priority: 100, fallback: [] as string[] },
+        { name: 'qwen3-coder:30b', priority: 95, fallback: [] as string[] },
+        { name: 'phi4-mini-reasoning', priority: 90, fallback: [] as string[] },
+        { name: 'gemma3n:e4b', priority: 85, fallback: [] as string[] },
+        { name: 'deepseek-coder:6.7b', priority: 80, fallback: [] as string[] },
+        { name: 'llama2', priority: 70, fallback: [] as string[] },
+      ];
+
+      if (mcpAvailable) {
+        chatModels.push({
+          name: 'mcp-chat',
+          provider: 'mcp',
+          capabilities: ['chat'],
+          priority: 60,
+          fallback: [],
+        });
+      }
 
       for (const m of desiredChat) {
         if (ollamaModels.some((name) => name === m.name || name.startsWith(m.name))) {
+          if (mcpAvailable) m.fallback = ['mcp-chat'];
           chatModels.push({
             name: m.name,
             provider: 'ollama',
@@ -156,8 +247,14 @@ export class ModelRouter implements IModelRouter {
         fallback: [],
       });
     }
-    this.availableModels.set('chat', chatModels);
+    return chatModels;
+  }
 
+  private buildRerankingModels(
+    mlxAvailable: boolean,
+    ollamaAvailable: boolean,
+    mcpAvailable: boolean,
+  ): ModelConfig[] {
     const rerankingModels: ModelConfig[] = [];
     if (mlxAvailable) {
       rerankingModels.push({
@@ -186,7 +283,7 @@ export class ModelRouter implements IModelRouter {
         fallback: [],
       });
     }
-    this.availableModels.set('reranking', rerankingModels);
+    return rerankingModels;
   }
 
   private selectModel(capability: ModelCapability, requestedModel?: string): ModelConfig | null {
@@ -357,7 +454,11 @@ export class ModelRouter implements IModelRouter {
         const response = await this.mlxAdapter.rerank(request.query, request.documents, m.name);
         return { documents: request.documents, scores: response.scores, model: m.name };
       } else {
-        const response = await this.ollamaAdapter.rerank!(request.query, request.documents, m.name);
+        const response = await (this.ollamaAdapter as any).rerank(
+          request.query,
+          request.documents,
+          m.name,
+        );
         return { documents: request.documents, scores: response.scores, model: m.name };
       }
     };
@@ -397,8 +498,8 @@ export class ModelRouter implements IModelRouter {
 
 /** Factory to create a model router using default adapters */
 export function createModelRouter(
-  mlxAdapter: MLXAdapterApi = createMLXAdapter(),
-  ollamaAdapter: OllamaAdapterApi = createOllamaAdapter(),
+  mlxAdapter: MLXAdapterApi = new MLXAdapter(),
+  ollamaAdapter: OllamaAdapterApi = new OllamaAdapter(),
 ): IModelRouter {
   return new ModelRouter(mlxAdapter, ollamaAdapter);
 }

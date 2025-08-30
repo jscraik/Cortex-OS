@@ -227,7 +227,6 @@ export class ProcessingDispatcher {
   }
 
   async dispatch(file: ProcessingFile, strategy: StrategyDecision): Promise<DispatchResult> {
-
     const startTime = performance.now();
     try {
       if (strategy.strategy === ProcessingStrategy.REJECT) {

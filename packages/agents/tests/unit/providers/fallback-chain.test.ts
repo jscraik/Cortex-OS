@@ -15,7 +15,11 @@ describe('Fallback Chain', () => {
       firstAttempts += 1;
       throw new Error('boom');
     });
-    const p2 = makeProvider('p2', async () => ({ text: 'ok', provider: 'p2', usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 } }));
+    const p2 = makeProvider('p2', async () => ({
+      text: 'ok',
+      provider: 'p2',
+      usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+    }));
 
     const chain = createFallbackChain({
       providers: [p1, p2],
@@ -32,8 +36,16 @@ describe('Fallback Chain', () => {
   });
 
   it('invokes shutdown on underlying providers', async () => {
-    const p1 = makeProvider('p1', async () => ({ text: 'a', provider: 'p1', usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 } }));
-    const p2 = makeProvider('p2', async () => ({ text: 'b', provider: 'p2', usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 } }));
+    const p1 = makeProvider('p1', async () => ({
+      text: 'a',
+      provider: 'p1',
+      usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+    }));
+    const p2 = makeProvider('p2', async () => ({
+      text: 'b',
+      provider: 'p2',
+      usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+    }));
 
     const chain = createFallbackChain({ providers: [p1, p2] });
     await chain.shutdown?.();
@@ -41,4 +53,3 @@ describe('Fallback Chain', () => {
     expect(p2.shutdown).toHaveBeenCalled();
   });
 });
-

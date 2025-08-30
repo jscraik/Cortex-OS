@@ -1,0 +1,19 @@
+{
+  "name": "@cortex-os/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "zod": "^3.23.8",
+    "@types/node": "^22.5.0",
+    "vitest": "^2.0.5"
+  }
+}

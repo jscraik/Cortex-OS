@@ -3,17 +3,13 @@ import { validateToolArgs } from './server/index.js';
 
 describe('validateToolArgs', () => {
   it('throws when required field missing', () => {
-    expect(() => validateToolArgs({ required: ['foo'] }, {})).toThrow(
-      /foo is required/,
-    );
+    expect(() => validateToolArgs({ required: ['foo'] }, {})).toThrow(/foo is required/);
   });
 
   it('throws on type and length violations', () => {
     const schema = { properties: { name: { type: 'string', maxLength: 3 } } };
     expect(() => validateToolArgs(schema, { name: 5 })).toThrow(/must be string/);
-    expect(() => validateToolArgs(schema, { name: 'long' })).toThrow(
-      /Input too long/,
-    );
+    expect(() => validateToolArgs(schema, { name: 'long' })).toThrow(/Input too long/);
   });
 
   it('passes with valid args', () => {

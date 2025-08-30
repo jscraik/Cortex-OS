@@ -18,9 +18,7 @@ export function buildAgentPrompt(
   urgency: Urgency = 'medium',
 ): string {
   const agentInfo = availableAgents
-    .map(
-      (a) => `${a.id}: capabilities=[${a.capabilities.join(', ')}], load=${a.currentLoad}%`,
-    )
+    .map((a) => `${a.id}: capabilities=[${a.capabilities.join(', ')}], load=${a.currentLoad}%`)
     .join('\n');
 
   return `Select the best agent for this task:
@@ -40,10 +38,7 @@ Consider:
 Select agent ID and explain reasoning.`;
 }
 
-export function parseAgentSelection(
-  content: string,
-  agents: AgentInfo[],
-): AgentSelectionResult {
+export function parseAgentSelection(content: string, agents: AgentInfo[]): AgentSelectionResult {
   // Helper to escape regex special characters in agent IDs
   function escapeRegExp(string: string): string {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -59,4 +54,3 @@ export function parseAgentSelection(
     confidence: 0.7,
   };
 }
-

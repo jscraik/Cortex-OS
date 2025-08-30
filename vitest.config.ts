@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     globals: true,
     // Strict worker limits to prevent memory exhaustion
-    maxWorkers: 2,
+    maxWorkers: 1,
     // Memory management settings
     isolate: true,
     sequence: {
@@ -19,7 +19,13 @@ export default defineConfig({
     hookTimeout: 30000,
     // Memory leak prevention
     teardownTimeout: 10000,
-    pool: 'threads',
+    // Use forks pool to avoid tinypool thread conflicts in CI/Node 22
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     // Ensure built artifacts never get swept into discovery
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', 'tests/**'],
     // Quality gates: enforce coverage thresholds across all projects

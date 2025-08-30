@@ -3,6 +3,7 @@
 ## High Priority Fixes
 
 ### Fix 1: Remove missing workspace dependencies
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/package.json`
 
 ```diff
@@ -12,7 +13,7 @@
    },
    "dependencies": {
 -    "@cortex-os/mcp-bridge": "workspace:*",
--    "@cortex-os/mcp-core": "workspace:*", 
+-    "@cortex-os/mcp-core": "workspace:*",
 -    "@cortex-os/mcp-registry": "workspace:*",
      "command-exists": "^1.2.9",
      "eventsource": "^4.0.0",
@@ -20,6 +21,7 @@
 ```
 
 ### Fix 2: Remove missing workspace exports
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/index.ts`
 
 ```diff
@@ -28,7 +30,7 @@
 @@ -3,9 +3,6 @@
   * @description Aggregated exports for Cortex-OS MCP utilities
   */
- 
+
 -export * from '@cortex-os/mcp-core';
 -export * from '@cortex-os/mcp-bridge';
 -export * from '@cortex-os/mcp-registry';
@@ -38,6 +40,7 @@
 ```
 
 ### Fix 3: Fix unsafe type assertion in memory integration
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/memory-integration.ts`
 
 ```diff
@@ -55,7 +58,7 @@
      // Simple pattern matching - in production this could be more sophisticated
      const regex = new RegExp(pattern.replace('*', '.*'));
      const keysToDelete: string[] = [];
- 
+
 -    for (const [keyString, entry] of (this.cache as any).cache.entries()) {
 +    this.cache.forEach((entry, keyString) => {
        if (entry.key.serviceId === serviceId && regex.test(entry.key.identifier)) {
@@ -64,11 +67,12 @@
        }
 -    }
 +    });
- 
+
      for (const key of keysToDelete) {
 ```
 
 ### Fix 4: Convert dynamic require to proper ES imports
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/transport.ts`
 
 ```diff
@@ -79,7 +83,7 @@
  import { redactSensitiveData } from './security.js';
  import type { McpRequest, TransportConfig, Transport } from './types.js';
 +import { SSETransport } from './sse-transport.js';
- 
+
  // Message validation schema
  const MessageSchema = z
 @@ -43,8 +44,7 @@
@@ -89,11 +93,12 @@
 -    const { SSETransport } = require('./sse-transport.js');
      return new SSETransport(config);
    }
- 
+
    // For stdio and http transports, return a basic implementation
 ```
 
 ### Fix 5: Fix EventSource import in SSE transport
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/sse-transport.ts`
 
 ```diff
@@ -104,7 +109,7 @@
  import type { McpRequest, Transport } from './types.js';
  import { validateMessage, redactSensitiveData } from './transport.js';
 +import EventSource from 'eventsource';
- 
+
  // SSE Transport Configuration Schema
  const SSETransportConfigSchema = z.object({
 @@ -42,9 +43,6 @@
@@ -112,15 +117,16 @@
        try {
 -        // Import EventSource dynamically (Node.js environment)
 -        const EventSource = require('eventsource');
--        
+-
          this.eventSource = new EventSource(this.config.url);
-         
+
          this.setupEventSourceHandlers();
 ```
 
 ## Medium Priority Fixes
 
 ### Fix 6: Improve client ID security
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/client.ts`
 
 ```diff
@@ -128,7 +134,7 @@
 +++ b/packages/mcp/src/lib/client.ts
 @@ -4,6 +4,7 @@
   */
- 
+
  import { EventEmitter } from 'events';
 +import { randomUUID } from 'crypto';
  import { EnhancedRateLimiter, type RateLimitConfig } from './rate-limiter.js';
@@ -146,6 +152,7 @@
 ```
 
 ### Fix 7: Improve transport type detection
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/client.ts`
 
 ```diff
@@ -155,7 +162,7 @@
    private a2aEnabled: boolean;
    private serverId?: string;
 +  private transportType: string;
- 
+
    constructor(options: ClientOptions) {
      super();
      this.transport = createTransport(options.transport);
@@ -164,7 +171,7 @@
      this.clientId =
 @@ -194,11 +195,7 @@
    }
- 
+
    private getTransportType(): string {
 -    // Extract transport type from transport config
 -    if ('command' in this.transport) return 'stdio';
@@ -172,11 +179,12 @@
 -    return 'unknown';
 +    return this.transportType;
    }
- 
+
    async disconnect(): Promise<void> {
 ```
 
 ### Fix 8: Add webhook URL validation
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/monitoring.ts`
 
 ```diff
@@ -186,25 +194,26 @@
  import path from 'path';
  import { performance } from 'perf_hooks';
 +import { validateUrlSecurity } from './security.js';
- 
+
  /**
   * Security threat levels
 @@ -602,6 +603,11 @@
      const alertMessage = this.formatAlertMessage(alerts, summary);
- 
+
      // Webhook notification
      if (alertConfig.webhookUrl) {
 +      if (!validateUrlSecurity(alertConfig.webhookUrl)) {
 +        console.error('Insecure webhook URL rejected:', alertConfig.webhookUrl);
 +        return;
 +      }
-+      
++
        try {
          const response = await fetch(alertConfig.webhookUrl, {
            method: 'POST',
 ```
 
 ### Fix 9: Optimize transport message redaction
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/transport.ts`
 
 ```diff
@@ -213,22 +222,23 @@
 @@ -92,11 +92,11 @@
        return;
      }
- 
+
 -    // Redact sensitive data before sending
 -    const redactedMessage = redactSensitiveData(message);
 +    // Send original message to transport
 +    // Only redact for logging purposes
 +    const redactedForLog = redactSensitiveData(message);
-     
+
      // In production, this would actually send the message via the appropriate transport
 -    console.log(`Sending message via ${this.config.type}:`, redactedMessage);
 +    console.log(`Sending message via ${this.config.type}:`, redactedForLog);
    }
- 
+
    isConnected(): boolean {
 ```
 
 ### Fix 10: Remove unnecessary schema validation
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/security.ts`
 
 ```diff
@@ -236,7 +246,7 @@
 +++ b/packages/mcp/src/lib/security.ts
 @@ -35,9 +35,6 @@
    }
- 
+
    if (data && typeof data === 'object') {
 -    const objSchema = z.record(z.any());
 -    objSchema.parse(data);
@@ -249,6 +259,7 @@
 ## Low Priority Fixes
 
 ### Fix 11: Fix interface formatting
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/types.ts`
 
 ```diff
@@ -266,6 +277,7 @@
 ```
 
 ### Fix 12: Improve error handling in A2A integration
+
 **File**: `/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/a2a-integration.ts`
 
 ```diff

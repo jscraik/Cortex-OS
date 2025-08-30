@@ -2,7 +2,12 @@
  * MCP adapter for Model Gateway
  * Supports embeddings, chat, and reranking by delegating to MCP tools
  */
-import type { EmbeddingRequest, EmbeddingBatchRequest, ChatRequest, RerankRequest } from '../model-router.js';
+import type {
+  EmbeddingRequest,
+  EmbeddingBatchRequest,
+  ChatRequest,
+  RerankRequest,
+} from '../model-router.js';
 // Respect AGENTS.md boundaries: import from public exports
 import { createEnhancedClient } from '@cortex-os/mcp-core/client';
 import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
@@ -10,7 +15,9 @@ import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
 export interface MCPAdapter {
   isAvailable(): Promise<boolean>;
   generateEmbedding(request: EmbeddingRequest): Promise<{ embedding: number[]; model: string }>;
-  generateEmbeddings(request: EmbeddingBatchRequest): Promise<{ embeddings: number[][]; model: string }>;
+  generateEmbeddings(
+    request: EmbeddingBatchRequest,
+  ): Promise<{ embeddings: number[][]; model: string }>;
   generateChat(request: ChatRequest): Promise<{ content: string; model: string }>;
   rerank(request: RerankRequest): Promise<{ scores: number[]; model: string }>;
 }
@@ -79,14 +86,20 @@ export function createMCPAdapter(): MCPAdapter {
     },
     async generateChat(request) {
       const result = await withClient(async (c) =>
-        c.callTool({ name: 'text-generation.generate', arguments: { ...request, model: request.model } }),
+        c.callTool({
+          name: 'text-generation.generate',
+          arguments: { ...request, model: request.model },
+        }),
       );
       const content = result?.content || result?.text || '';
       return { content, model: result?.model || 'mcp:chat' };
     },
     async rerank(request) {
       const result = await withClient(async (c) =>
-        c.callTool({ name: 'rerank.score', arguments: { query: request.query, documents: request.documents, model: request.model } }),
+        c.callTool({
+          name: 'rerank.score',
+          arguments: { query: request.query, documents: request.documents, model: request.model },
+        }),
       );
       const scores = (result?.scores as number[]) || [];
       return { scores, model: result?.model || 'mcp:rerank' };

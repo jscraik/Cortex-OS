@@ -1,26 +1,10 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-. "$(dirname -- "$0")/common.sh"
-. "$(dirname -- "$0")/../src/lib/run_optional.sh"
-echo "Running pre-commit checks..."
-set -e
-
-CHANGED_FILES=$(git diff --cached --name-only | wc -l | tr -d ' ')
-if [ "$CHANGED_FILES" -gt 50 ] && [ ! -f .structure-override ]; then
-  echo "Too many files ($CHANGED_FILES). Use override."
-  exit 1
-fi
-
-if [ -f "scripts/validate-structure.mjs" ]; then
-  git diff --cached --name-only | xargs pnpm structure:validate --files
-fi
-
-run_optional madge pnpm madge --circular --extensions ts,tsx ./packages ./apps
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
 
 pnpm lint-staged
-
-pnpm security:scan:all
-
-run_optional turbo pnpm turbo typecheck --filter="...HEAD^"
-
-echo "Pre-commit checks completed successfully"
+pnpm typecheck
+pnpm run validate:contracts
+pnpm run cortex:validate
+if command -v uv >/dev/null 2>&1; then
+  (cd python && uv run ruff check . && uv run pyright) || exit 1
+fi

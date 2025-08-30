@@ -1,6 +1,8 @@
-import { spawn } from 'child_process';
+
 import { tmpdir } from 'os';
 import path, { join } from 'path';
+import { fileURLToPath } from 'url';
+
 
 /**
  * Document with relevance score for reranking
@@ -110,7 +112,7 @@ export class Qwen3Reranker implements Reranker {
 
   /**
    * Score a batch of documents against the query
-   */
+
   private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
     return new Promise((resolve, reject) => {
       const pythonScript = this.getPythonScript();
@@ -173,6 +175,7 @@ export class Qwen3Reranker implements Reranker {
       child.stdin?.write(JSON.stringify(input));
       child.stdin?.end();
     });
+
   }
 
   /**

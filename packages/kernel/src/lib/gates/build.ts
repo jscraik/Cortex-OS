@@ -23,7 +23,9 @@ export async function validateBackend(state: PRPState): Promise<{ passed: boolea
   };
 }
 
-export async function validateAPISchema(state: PRPState): Promise<{ passed: boolean; details: any }> {
+export async function validateAPISchema(
+  state: PRPState,
+): Promise<{ passed: boolean; details: any }> {
   const hasAPI = state.blueprint.requirements?.some(
     (req) => req.toLowerCase().includes('api') || req.toLowerCase().includes('endpoint'),
   );
@@ -96,7 +98,9 @@ export async function validateFrontend(
   };
 }
 
-export async function validateDocumentation(state: PRPState): Promise<{ passed: boolean; details: any }> {
+export async function validateDocumentation(
+  state: PRPState,
+): Promise<{ passed: boolean; details: any }> {
   const hasDocsReq = state.blueprint.requirements?.some(
     (req) =>
       req.toLowerCase().includes('doc') ||

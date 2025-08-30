@@ -12,11 +12,6 @@
     "declaration": true,
     "declarationMap": true
   },
-  "include": [
-    "src/types.ts",
-    "src/mcp-config-storage.ts",
-    "src/cli/mcp.ts",
-    "src/types/*.d.ts"
-  ],
+  "include": ["src/types.ts", "src/mcp-config-storage.ts", "src/cli/mcp.ts", "src/types/*.d.ts"],
   "exclude": ["dist", "node_modules", "**/*.test.ts"]
 }

@@ -86,15 +86,7 @@ describe('Transport Security', () => {
   });
 
   describe('Command Validation', () => {
-    const origLenient = process.env.MCP_TRANSPORT_LENIENT;
-    beforeEach(() => {
-      // Allow lenient createTransport only for this suite (dangerous commands test expects no throw on creation)
-      process.env.MCP_TRANSPORT_LENIENT = '1';
-    });
-    afterEach(() => {
-      if (origLenient === undefined) delete process.env.MCP_TRANSPORT_LENIENT;
-      else process.env.MCP_TRANSPORT_LENIENT = origLenient;
-    });
+    // Removed lenient mode - tests now expect proper validation
     const testSafeCommands = () => {
       const safeCommands = ['node', 'python', 'echo', '/usr/bin/node', './script.sh'];
 

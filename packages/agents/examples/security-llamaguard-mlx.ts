@@ -29,7 +29,9 @@ const createBusWithChannels = () => {
 
 async function main() {
   // Adjust to your local LlamaGuard MLX model path
-  const modelPath = process.env.MLX_LLAMAGUARD_MODEL || '~/.cache/huggingface/hub/models--mlx-community--LlamaGuard-3-8B';
+  const modelPath =
+    process.env.MLX_LLAMAGUARD_MODEL ||
+    '~/.cache/huggingface/hub/models--mlx-community--LlamaGuard-3-8B';
 
   const provider = createMLXProvider({ modelPath, enableThermalMonitoring: true, timeout: 20000 });
   const { bus, outbox, dlq } = createBusWithChannels();
@@ -42,7 +44,12 @@ async function main() {
     isConnected: async () => true,
   } as any;
 
-  const securityAgent = createSecurityAgent({ provider, eventBus: bus, mcpClient, dependabotPath: process.env.DEPENDABOT_PATH });
+  const securityAgent = createSecurityAgent({
+    provider,
+    eventBus: bus,
+    mcpClient,
+    dependabotPath: process.env.DEPENDABOT_PATH,
+  });
 
   const input = {
     content: 'List files in my home directory using shell',
@@ -58,8 +65,14 @@ async function main() {
   // Persist outbox and DLQ to logs for downstream processing
   const logsDir = join(process.cwd(), 'logs');
   await mkdir(logsDir, { recursive: true });
-  await writeFile(join(logsDir, 'security-outbox.jsonl'), outbox.map(e => JSON.stringify(e)).join('\n') + '\n');
-  await writeFile(join(logsDir, 'security-dlq.jsonl'), dlq.map(e => JSON.stringify(e)).join('\n') + '\n');
+  await writeFile(
+    join(logsDir, 'security-outbox.jsonl'),
+    outbox.map((e) => JSON.stringify(e)).join('\n') + '\n',
+  );
+  await writeFile(
+    join(logsDir, 'security-dlq.jsonl'),
+    dlq.map((e) => JSON.stringify(e)).join('\n') + '\n',
+  );
   console.log('Wrote logs/security-outbox.jsonl and logs/security-dlq.jsonl');
 }
 

@@ -34,7 +34,6 @@ export {
 } from './core/events.js';
 export type { EventManager } from './core/events.js';
 
-
 // Diff and normalization
 export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
 export { ContentNormalizer, createNormalizer } from './diff/normalizer.js';

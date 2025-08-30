@@ -47,13 +47,16 @@ export function logWithContext(
   message: string,
   runId: ULID,
   traceContext?: TraceContext,
-  extra?: Record<string, unknown>
+  extra?: Record<string, unknown>,
 ): void {
-  logger[level]({
-    runId,
-    traceContext,
-    ...extra,
-  }, message);
+  logger[level](
+    {
+      runId,
+      traceContext,
+      ...extra,
+    },
+    message,
+  );
 }
 
 /**
@@ -65,7 +68,7 @@ export function createLogEntry(
   message: string,
   runId: ULID,
   traceContext?: TraceContext,
-  extra?: Record<string, unknown>
+  extra?: Record<string, unknown>,
 ): LogEntry {
   return {
     runId,
@@ -83,16 +86,16 @@ export function createLogEntry(
  */
 function redactSensitiveData(obj: Record<string, unknown>): Record<string, unknown> {
   const result = { ...obj };
-  
+
   for (const key of Object.keys(result)) {
     const lowerKey = key.toLowerCase();
-    if (REDACTED_FIELDS.some(field => lowerKey.includes(field))) {
+    if (REDACTED_FIELDS.some((field) => lowerKey.includes(field))) {
       result[key] = '[REDACTED]';
     } else if (typeof result[key] === 'object' && result[key] !== null) {
       result[key] = redactSensitiveData(result[key] as Record<string, unknown>);
     }
   }
-  
+
   return result;
 }
 
@@ -108,11 +111,14 @@ export function logEvidence(
     line?: number;
     file?: string;
     hash?: string;
-  }
+  },
 ): void {
-  logger.info({
-    runId,
-    evidenceType,
-    evidence: evidencePointer,
-  }, `Evidence attached: ${evidenceType}`);
+  logger.info(
+    {
+      runId,
+      evidenceType,
+      evidence: evidencePointer,
+    },
+    `Evidence attached: ${evidenceType}`,
+  );
 }

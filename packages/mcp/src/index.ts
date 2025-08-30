@@ -1,19 +1,36 @@
-/**
- * @file MCP Core Package
- * @description Aggregated exports for Cortex-OS MCP utilities
- */
+import { z } from 'zod';
+import { AgentConfigSchema, MCPRequestSchema } from '@cortex-os/contracts';
+import { createInMemoryStore } from '@cortex-os/lib';
+import { createJsonOutput, createStdOutput, withTimestamp } from '@cortex-os/lib';
+import { StructuredError } from '@cortex-os/lib';
 
-// Export local integrations and components
-export * from './lib/a2a-integration.js';
-export * from './lib/client.js';
-export * from './lib/security.js';
-export * from './lib/rate-limiter.js';
-export * from './lib/types.js';
-export * from './lib/orchestration-integration.js';
-export * from './lib/memory-integration.js';
-export * from './lib/monitoring.js';
-export * from './lib/sse-transport.js';
-export * from './lib/transport.js';
-export * from './lib/mlx-model.js';
-export * from './lib/security-compliance.js';
-export * from './lib/server/index.js';
+const InputSchema = z.object({
+  config: AgentConfigSchema,
+  request: MCPRequestSchema,
+  json: z.boolean().optional(),
+});
+export type MCPInput = z.infer<typeof InputSchema>;
+
+export async function handleMCP(input: unknown): Promise<string> {
+  const parsed = InputSchema.safeParse(input);
+  if (!parsed.success) {
+    const err = new StructuredError('INVALID_INPUT', 'Invalid MCP input', { issues: parsed.error.issues });
+    return createJsonOutput({ error: err.toJSON() });
+  }
+
+  const { config, request, json } = parsed.data;
+  const memory = createInMemoryStore({ maxItems: config.memory.maxItems, maxBytes: config.memory.maxBytes });
+
+  // Example: deterministic seed usage
+  const seed = config.seed;
+  const response = {
+    tool: request.tool,
+    args: request.args ?? {},
+    seed,
+  };
+
+  if (json) return createJsonOutput(response);
+  return createStdOutput(`MCP handled tool=${request.tool}`);
+}
+
+export default { handleMCP };

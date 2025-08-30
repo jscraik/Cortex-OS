@@ -2,6 +2,7 @@
  * Enhanced Qwen3 Embedding Integration for Cortex RAG
  * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
+
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 import path, { join } from 'path';
@@ -55,20 +56,13 @@ export class Qwen3Embedder implements Embedder {
     return this.embedWithModel(texts);
   }
 
-  private embedWithModel(texts: string[]): Promise<number[][]> {
+
+  private async embedWithModel(texts: string[]): Promise<number[][]> {
     return new Promise((resolve, reject) => {
-      const python = spawn(
-        'python3',
-        ['-c', this.getPythonScript(this.modelPath, texts, this.useGPU)],
-        {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: {
-            ...process.env,
-            TRANSFORMERS_CACHE: this.cacheDir,
-            HF_HOME: this.cacheDir,
-          },
-        },
-      );
+      const python = spawn('python3', ['-c', this.getPythonScript(modelPath, texts, this.useGPU)], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir, HF_HOME: this.cacheDir },
+      });
 
       let stdout = '';
       let stderr = '';
