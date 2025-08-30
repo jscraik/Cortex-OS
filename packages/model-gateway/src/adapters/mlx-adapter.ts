@@ -171,6 +171,7 @@ export type MLXChatResponse = z.infer<typeof MLXChatResponseSchema>;
 export interface MLXAdapter {
   generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
   generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]>;
+  rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }>;
   isAvailable(): Promise<boolean>;
 }
 
@@ -179,14 +180,19 @@ export interface MLXAdapter {
  */
 export function createMLXAdapter(): MLXAdapter {
   const pythonPath = process.env.PYTHON_PATH || 'python3';
-  const scriptPath = path.resolve(
+  const embeddingScriptPath = path.resolve(
     path.dirname(new URL(import.meta.url).pathname),
     '../../../../apps/cortex-py/src/mlx/embedding_generator.py',
   );
+  const unifiedScriptPath = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '../../../../apps/cortex-py/src/mlx/mlx_unified.py',
+  );
 
-  const executePythonScript = (args: string[]): Promise<string> => {
+  const executePythonScript = (args: string[], useUnified = false): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn(pythonPath, [scriptPath, ...args], {
+      const script = useUnified ? unifiedScriptPath : embeddingScriptPath;
+      const pythonProcess = spawn(pythonPath, [script, ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
           ...process.env,
@@ -289,6 +295,43 @@ export function createMLXAdapter(): MLXAdapter {
     }
   };
 
+  const rerank = async (
+    query: string,
+    documents: string[],
+    model?: string,
+  ): Promise<{ scores: number[] }> => {
+    const modelName = (model as MLXModelName) || 'qwen3-reranker-4b-mlx';
+    const args = [
+      query,
+      JSON.stringify(documents),
+      '--model',
+      modelName,
+      '--rerank-mode',
+      '--json-only',
+    ];
+    try {
+      const result = await executePythonScript(args, true);
+      const data = JSON.parse(result);
+      // data.scores may be array of {index, score}. Map to ordered scores aligned with input docs
+      if (Array.isArray(data.scores) && data.scores.length > 0 && typeof data.scores[0] === 'object') {
+        const tmp: number[] = new Array(documents.length).fill(0);
+        for (const item of data.scores) {
+          if (typeof item.index === 'number' && typeof item.score === 'number') {
+            tmp[item.index] = item.score;
+          }
+        }
+        return { scores: tmp };
+      }
+      if (Array.isArray(data.scores)) {
+        return { scores: data.scores as number[] };
+      }
+      throw new Error('Invalid rerank response');
+    } catch (error) {
+      console.error('MLX rerank failed:', error);
+      throw new Error(`MLX rerank failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const isAvailable = async (): Promise<boolean> => {
     try {
       // Test with a simple text to check if MLX is available
@@ -302,6 +345,7 @@ export function createMLXAdapter(): MLXAdapter {
   return {
     generateEmbedding,
     generateEmbeddings,
+    rerank,
     isAvailable,
   };
 }

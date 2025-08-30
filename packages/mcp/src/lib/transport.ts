@@ -37,6 +37,13 @@ export function createTransport(config: TransportConfig): Transport {
 function createHttpTransport(config: HttpTransportConfig): Transport & EventEmitter {
   const state = { connected: false };
   const emitter = new EventEmitter();
+  // Optional keep-alive via undici Agent if available
+  let dispatcher: any | undefined;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Agent } = require('undici');
+    dispatcher = new Agent({ keepAlive: true, keepAliveTimeout: 30_000, pipelining: 1 });
+  } catch {}
   return Object.assign(emitter, {
     async connect() {
       state.connected = true;
@@ -48,19 +55,41 @@ function createHttpTransport(config: HttpTransportConfig): Transport & EventEmit
       validateMessage(message, onError);
       if (!state.connected) throw new Error('Transport not connected');
       const body = JSON.stringify(redactSensitiveData(message));
-      try {
-        const res = await fetch(config.url, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', ...(config.headers || {}) },
-          body,
-          signal: config.timeoutMs ? AbortSignal.timeout(config.timeoutMs) : undefined,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json().catch(() => undefined);
-        if (json) emitter.emit('message', json);
-      } catch (err) {
-        if (onError) onError(err, message);
-        else throw err;
+      const maxRetries = 2;
+      let attempt = 0;
+      // Simple exponential backoff retry on network errors or 5xx
+      // 0ms, 100ms, 200ms
+      while (true) {
+        try {
+          const res = await fetch(config.url, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', ...(config.headers || {}) },
+            body,
+            signal: config.timeoutMs ? AbortSignal.timeout(config.timeoutMs) : undefined,
+            // @ts-expect-error Node 20 undici dispatcher support
+            dispatcher,
+          });
+          if (!res.ok) {
+            if (res.status >= 500 && attempt < maxRetries) {
+              await new Promise((r) => setTimeout(r, 100 * attempt));
+              attempt++;
+              continue;
+            }
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const json = await res.json().catch(() => undefined);
+          if (json) emitter.emit('message', json);
+          break;
+        } catch (err) {
+          if (attempt < maxRetries) {
+            await new Promise((r) => setTimeout(r, 100 * attempt));
+            attempt++;
+            continue;
+          }
+          if (onError) onError(err, message);
+          else throw err;
+          break;
+        }
       }
     },
     isConnected() {

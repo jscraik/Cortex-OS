@@ -5,7 +5,8 @@
  */
 
 import type { ModelProvider, GenerateOptions, GenerateResult, MCPClient } from '../lib/types.js';
-import { withTimeout, estimateTokens } from '../lib/utils.js';
+import { withTimeout, estimateTokens, retry } from '../lib/utils.js';
+import { redactSecrets } from '../lib/secret-store.js';
 
 export interface MCPProviderConfig {
   mcpClient: MCPClient;
@@ -20,6 +21,8 @@ const DEFAULT_OPTIONS: GenerateOptions = {
   maxTokens: 2048,
 };
 
+type MCPTextGenResult = { text: string; usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } };
+
 const generateViaMCP = async (
   prompt: string,
   options: GenerateOptions,
@@ -29,15 +32,17 @@ const generateViaMCP = async (
   const mergedOptions = { ...DEFAULT_OPTIONS, ...config.defaultOptions, ...options };
 
   try {
-    const result = await config.mcpClient.callTool('text-generation', 'generate', {
-      model: config.modelName,
-      prompt,
-      ...mergedOptions,
-    });
+    const call = async () =>
+      (await config.mcpClient.callTool('text-generation', 'generate', {
+        model: config.modelName,
+        prompt,
+        ...mergedOptions,
+      })) as MCPTextGenResult;
+    const result = await retry(call, config.retries ?? 2, 300, 2000);
 
     const endTime = Date.now();
 
-    if (!result || typeof result.text !== 'string') {
+    if (!result || typeof (result as any).text !== 'string') {
       throw new Error('Invalid response from MCP server');
     }
 
@@ -52,9 +57,8 @@ const generateViaMCP = async (
       provider: `mcp:${config.modelName}`,
     };
   } catch (error) {
-    throw new Error(
-      `MCP generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`MCP generation failed: ${redactSecrets(msg)}`);
   }
 };
 
@@ -71,16 +75,16 @@ export const createMCPProvider = (config: MCPProviderConfig): ModelProvider => (
 
 export const createMCPProviders = async (mcpClient: MCPClient): Promise<ModelProvider[]> => {
   try {
-    const tools = await mcpClient.listTools();
+    const tools = (await mcpClient.listTools?.()) || [];
     const textGenTools = tools.filter(
-      (tool) => tool.name === 'text-generation' && tool.schema?.properties?.model,
+      (tool) => tool.name === 'text-generation' && (tool as any).schema?.properties?.model,
     );
 
     if (textGenTools.length === 0) {
       return [];
     }
 
-    const modelOptions = textGenTools[0].schema?.properties?.model?.enum || ['default'];
+    const modelOptions = (textGenTools[0] as any).schema?.properties?.model?.enum || ['default'];
 
     return modelOptions.map((model) =>
       createMCPProvider({

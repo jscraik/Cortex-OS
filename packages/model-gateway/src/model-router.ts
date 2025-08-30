@@ -5,9 +5,10 @@
 import { z } from 'zod';
 import { createMLXAdapter, MLXAdapter } from './adapters/mlx-adapter.js';
 import { createOllamaAdapter, OllamaAdapter } from './adapters/ollama-adapter.js';
+import { createMCPAdapter } from './adapters/mcp-adapter.js';
 
 export type ModelCapability = 'embedding' | 'chat' | 'reranking';
-export type ModelProvider = 'mlx';
+export type ModelProvider = 'mlx' | 'ollama' | 'mcp';
 
 export interface ModelConfig {
   name: string;
@@ -62,10 +63,12 @@ export function createModelRouter(
   ollamaAdapter: OllamaAdapter = createOllamaAdapter(),
 ): ModelRouter {
   const availableModels = new Map<ModelCapability, ModelConfig[]>();
+  const mcpAdapter = createMCPAdapter();
 
   const initialize = async (): Promise<void> => {
     const mlxAvailable = await mlxAdapter.isAvailable();
     const ollamaAvailable = await ollamaAdapter.isAvailable();
+    const mcpAvailable = await mcpAdapter.isAvailable();
 
     const embeddingModels: ModelConfig[] = [];
 
@@ -99,6 +102,15 @@ export function createModelRouter(
       });
     }
 
+    if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
+      embeddingModels.push({
+        name: 'mcp-embeddings',
+        provider: 'mcp',
+        capabilities: ['embedding'],
+        priority: 80,
+        fallback: [],
+      });
+    }
     availableModels.set('embedding', embeddingModels);
 
     const chatModels: ModelConfig[] = [];
@@ -120,15 +132,42 @@ export function createModelRouter(
         }
       }
     }
+    if (!ollamaAvailable && mcpAvailable) {
+      chatModels.push({
+        name: 'mcp-chat',
+        provider: 'mcp',
+        capabilities: ['chat'],
+        priority: 70,
+        fallback: [],
+      });
+    }
     availableModels.set('chat', chatModels);
 
     const rerankingModels: ModelConfig[] = [];
+    if (mlxAvailable) {
+      rerankingModels.push({
+        name: 'qwen3-reranker-4b-mlx',
+        provider: 'mlx',
+        capabilities: ['reranking'],
+        priority: 100,
+        fallback: ollamaAvailable ? ['nomic-embed-text'] : [],
+      });
+    }
     if (ollamaAvailable) {
       rerankingModels.push({
         name: 'nomic-embed-text',
         provider: 'ollama',
         capabilities: ['reranking'],
-        priority: 100,
+        priority: mlxAvailable ? 80 : 100,
+        fallback: [],
+      });
+    }
+    if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
+      rerankingModels.push({
+        name: 'mcp-rerank',
+        provider: 'mcp',
+        capabilities: ['reranking'],
+        priority: 60,
         fallback: [],
       });
     }
@@ -166,9 +205,12 @@ export function createModelRouter(
           model: m.name,
         });
         return { embedding: response.embedding, model: m.name };
-      } else {
+      } else if (m.provider === 'ollama') {
         const response = await ollamaAdapter.generateEmbedding(request.text, m.name);
         return { embedding: response.embedding, model: m.name };
+      } else {
+        const response = await mcpAdapter.generateEmbedding(request);
+        return { embedding: response.embedding, model: response.model };
       }
     };
 
@@ -205,9 +247,12 @@ export function createModelRouter(
       if (m.provider === 'mlx') {
         const responses = await mlxAdapter.generateEmbeddings(request.texts, m.name);
         return { embeddings: responses.map((r) => r.embedding), model: m.name };
-      } else {
+      } else if (m.provider === 'ollama') {
         const responses = await ollamaAdapter.generateEmbeddings(request.texts, m.name);
         return { embeddings: responses.map((r) => r.embedding), model: m.name };
+      } else {
+        const res = await mcpAdapter.generateEmbeddings(request);
+        return { embeddings: res.embeddings, model: res.model };
       }
     };
 
@@ -247,11 +292,15 @@ export function createModelRouter(
     if (!model) throw new Error('No chat models available');
 
     const tryModel = async (m: ModelConfig): Promise<{ content: string; model: string }> => {
-      const response = await ollamaAdapter.generateChat({
-        ...request,
-        model: m.name,
-      });
-      return { content: response.content, model: m.name };
+      if (m.provider === 'ollama') {
+        const response = await ollamaAdapter.generateChat({ ...request, model: m.name });
+        return { content: response.content, model: m.name };
+      } else if (m.provider === 'mcp') {
+        const response = await (await import('./adapters/mcp-adapter.js')).createMCPAdapter().generateChat(request);
+        return { content: response.content, model: response.model };
+      } else {
+        throw new Error('MLX chat not routed via gateway');
+      }
     };
 
     try {
@@ -284,8 +333,13 @@ export function createModelRouter(
     const tryModel = async (
       m: ModelConfig,
     ): Promise<{ documents: string[]; scores: number[]; model: string }> => {
-      const response = await ollamaAdapter.rerank(request.query, request.documents, m.name);
-      return { documents: request.documents, scores: response.scores, model: m.name };
+      if (m.provider === 'mlx') {
+        const response = await mlxAdapter.rerank(request.query, request.documents, m.name);
+        return { documents: request.documents, scores: response.scores, model: m.name };
+      } else {
+        const response = await ollamaAdapter.rerank(request.query, request.documents, m.name);
+        return { documents: request.documents, scores: response.scores, model: m.name };
+      }
     };
 
     try {

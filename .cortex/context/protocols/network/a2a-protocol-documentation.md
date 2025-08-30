@@ -15,11 +15,13 @@ Version: 2025-08-29
 ## 2) Server Requirements
 
 - Endpoints
+
   - `GET /.well-known/agent-card.json`: JSON schema-valid agent card
   - `POST /rpc` (JSON-RPC 2.0): methods below
   - `GET /stream/:id[?from=n]`: per-task SSE stream (ordered events)
 
 - JSON-RPC Methods (baseline)
+
   - `message/send(params: object) -> { id, traceparent, ... }`
   - `tasks/get({ id }) -> TaskState`
   - `tasks/cancel({ id }) -> { canceled: true }`
@@ -28,6 +30,7 @@ Version: 2025-08-29
   - `agent/getAuthenticatedExtendedCard` (auth required; returns extended card)
 
 - Optional/Extended (scored as headroom)
+
   - MLX Ops via DI: `ai/embeddings`, `ai/rerank`, `ai/chat`
 
 - Error Mapping
@@ -91,17 +94,20 @@ Version: 2025-08-29
 ## 8) Current Implementation – Scoring
 
 - Core RPC & Discovery (30/30)
+
   - Agent Card `.well-known`: Implemented & validated (5/5)
   - `message/send`: Implemented (10/10)
   - `tasks/get` & `tasks/cancel`: Implemented (5/5)
   - JSON-RPC guards & errors: Implemented (10/10)
 
 - Streaming & Tasks (35/35)
+
   - SSE sequence with final close: Implemented (15/15)
   - `tasks/resubscribe` + SSE `?from`: Implemented (10/10)
   - State machine & cancel checkpoints: Implemented (10/10)
 
 - Extended Features (20/20)
+
   - Push Notification Config: Implemented (5/5)
   - Extended Agent Card (auth): Implemented (5/5)
   - MLX DI (`ai/embeddings|rerank|chat`): Implemented (10/10)
@@ -132,4 +138,3 @@ Notes: Remaining 0–5 pts margin reserved for broader negative-path matrices, r
 - OTEL adapter: `packages/a2a/a2a-protocol/src/telemetry/otel-adapter.ts`
 - Readiness report: `packages/a2a/docs/report/a2a-readiness-report.md`
 - Bench script: `scripts/a2a-mlx-bench.mjs`
-

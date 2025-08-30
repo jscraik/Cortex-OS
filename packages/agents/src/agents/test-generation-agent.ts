@@ -15,7 +15,7 @@ import type {
   AgentDependencies,
   GenerateOptions,
 } from '../lib/types.js';
-import { generateAgentId, generateTraceId, estimateTokens, withTimeout } from '../lib/utils.js';
+import { generateAgentId, generateTraceId, estimateTokens, withTimeout, sanitizeText } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
@@ -182,14 +182,14 @@ const generateTests = async (
   const { sourceCode, language, testType, framework, includeEdgeCases, coverageTarget } = input;
 
   // Build context-aware prompt
-  const prompt = buildTestGenerationPrompt(input);
+  const prompt = sanitizeText(buildTestGenerationPrompt(input));
 
   // Generate options based on input
   const generateOptions: GenerateOptions = {
     temperature: 0.1, // Low temperature for consistent test generation
     maxTokens: calculateMaxTokens(sourceCode, testType),
     stop: ['```\n\n', '---END---'],
-    systemPrompt: buildSystemPrompt(framework, language, testType),
+    systemPrompt: sanitizeText(buildSystemPrompt(framework, language, testType)),
   };
 
   // Call the model provider

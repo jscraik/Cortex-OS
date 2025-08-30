@@ -67,6 +67,8 @@ export function createServer(config: { name: string; version: string }): ServerC
     tools: new Map(),
     resources: new Map(),
     prompts: new Map(),
+    subscriptions: new Map(),
+    templates: new Map(),
   };
 }
 

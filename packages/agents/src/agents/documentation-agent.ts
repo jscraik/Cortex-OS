@@ -15,7 +15,7 @@ import type {
   AgentDependencies,
   GenerateOptions,
 } from '../lib/types.js';
-import { generateAgentId, generateTraceId, estimateTokens, withTimeout } from '../lib/utils.js';
+import { generateAgentId, generateTraceId, estimateTokens, withTimeout, sanitizeText } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
@@ -210,14 +210,14 @@ const generateDocumentation = async (
   } = input;
 
   // Build context-aware prompt
-  const prompt = buildDocumentationPrompt(input);
+  const prompt = sanitizeText(buildDocumentationPrompt(input));
 
   // Generate options based on input
   const generateOptions: GenerateOptions = {
     temperature: 0.2, // Low temperature for consistent documentation
     maxTokens: calculateMaxTokens(sourceCode, documentationType, detailLevel),
     stop: ['```\n\n', '---END---', '</doc>'],
-    systemPrompt: buildSystemPrompt(documentationType, outputFormat, audience, style),
+    systemPrompt: sanitizeText(buildSystemPrompt(documentationType, outputFormat, audience, style)),
   };
 
   // Call the model provider

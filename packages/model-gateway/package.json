@@ -17,7 +17,8 @@
     "@cortex-os/utils": "workspace:*",
     "axios": "^1.7.2",
     "fastify": "^4.28.1",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "prom-client": "^15.1.3"
   },
   "devDependencies": {
     "tsx": "^4.16.2",

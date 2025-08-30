@@ -55,16 +55,22 @@ describe('AgentOrchestrator', () => {
 
   describe('Orchestrator Creation', () => {
     it('should create orchestrator with required config', () => {
-      expect(orchestrator).toBeInstanceOf(AgentOrchestrator);
+      // AgentOrchestrator is a type alias; verify expected shape instead
+      expect(typeof (orchestrator as any).executeWorkflow).toBe('function');
+      expect(typeof (orchestrator as any).getWorkflowStatus).toBe('function');
+      expect(typeof (orchestrator as any).cancelWorkflow).toBe('function');
+      expect(typeof (orchestrator as any).getMetrics).toBe('function');
     });
 
     it('should initialize available agents', () => {
       const agents = orchestrator.getAvailableAgents();
 
-      expect(agents).toHaveLength(3);
-      expect(agents.map((a) => a.capability)).toContain('code-analysis');
-      expect(agents.map((a) => a.capability)).toContain('test-generation');
-      expect(agents.map((a) => a.capability)).toContain('documentation');
+      expect(agents).toHaveLength(4);
+      const caps = agents.map((a) => a.capability);
+      expect(caps).toContain('code-analysis');
+      expect(caps).toContain('test-generation');
+      expect(caps).toContain('documentation');
+      expect(caps).toContain('security');
     });
 
     it('should initialize with empty metrics', () => {
@@ -218,6 +224,24 @@ describe('AgentOrchestrator', () => {
       // Parallel execution should be faster than sequential
       // (accounting for some overhead, should be less than 1.5x sequential time)
       expect(executionTime).toBeLessThan(3000);
+    });
+
+    it('should execute a security task', async () => {
+      // Mock provider to return security agent JSON
+      vi.mocked(mockProvider.generate).mockResolvedValueOnce({
+        text: JSON.stringify({ decision: 'allow', risk: 'low', categories: [], findings: [], labels: {}, confidence: 0.9 }),
+        provider: 'test-provider',
+        usage: { promptTokens: 20, completionTokens: 10, totalTokens: 30 },
+        latencyMs: 50,
+      });
+
+      const workflow = WorkflowBuilder.create('security-workflow', 'Security Workflow')
+        .addSecurity({ content: 'Hello', phase: 'prompt', context: { toolsAllowed: [] } }, { id: 'sec' })
+        .build();
+
+      const result = await orchestrator.executeWorkflow(workflow);
+      expect(result.status).toBe('completed');
+      expect(result.results).toHaveProperty('sec');
     });
   });
 

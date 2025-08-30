@@ -102,6 +102,27 @@ node packages/mcp/mcp-servers/echo-js/src/http-server.ts
 mcp registry list --json
 ```
 
+## Containerization & Runtime
+
+- This package (`packages/mcp`) is a library used inside services; do not containerize it standalone.
+- Containerize services that expose APIs or run workers (e.g., `apps/cortex-os`, `packages/model-gateway`, `packages/mcp-registry`).
+- MLX (Metal) remains host-native on macOS; containers talk to it via `http://host.docker.internal:8081` when using OrbStack or Docker Desktop.
+- For macOS development, OrbStack provides the Docker-compatible VM; a separate VM is only needed for strict Linux parity or kernel isolation tests.
+
+### OrbStack Quickstart (Dev)
+
+- Start lean stack:
+  - `docker compose -f infra/compose/docker-compose.dev.yml --profile dev-min up --build -d`
+- Add services as needed:
+  - `--profile dev-full` (adds mcp-registry), `--profile web`, `--profile api`, `--profile workers`, `--profile observability`
+- Container names (defaults):
+  - `cortexos_nats`, `cortexos_model_gateway`, `cortexos_mcp_registry`, `cortexos_cortex_os`, `cortexos_cortex_web`, `cortexos_api`, `cortexos_agents_workers`, `cortexos_otel_collector`, `cortexos_loki`, `cortexos_tempo`, `cortexos_grafana`
+
+### Image Tagging Guidance
+
+- Use GHCR (or your registry): `ghcr.io/<org>/<service>:edge` for main, `:stable` for release, plus semver tags.
+- Services: `model-gateway`, `mcp-registry`, `cortex-os`, `cortex-web`, `api`, `agents-workers`.
+
 ## Environment Variables
 
 | Variable                  | Description                                                                                                |

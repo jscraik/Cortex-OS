@@ -54,6 +54,7 @@ export {
   estimateTokens,
   truncateToTokens,
 } from './lib/utils.js';
+export { getSecret, redactSecrets } from './lib/secret-store.js';
 
 // Event schemas and types
 export {
@@ -62,11 +63,13 @@ export {
   agentCompletedEventSchema,
   agentFailedEventSchema,
   providerSuccessEventSchema,
-  providerFailbackEventSchema,
+  providerFallbackEventSchema,
   thermalThrottleEventSchema,
   memoryPressureEventSchema,
   mcpServerConnectedEventSchema,
   mcpServerDisconnectedEventSchema,
+  // workflow event schemas
+  // (available via agentEventCatalog indexing)
 } from './events/agent-events.js';
 
 export type {
@@ -143,6 +146,14 @@ export type {
   DocumentationAgentConfig,
 } from './agents/documentation-agent.js';
 
+// Security Agent (LlamaGuard-backed via MLX or provider chain)
+export { createSecurityAgent } from './agents/security-agent.js';
+export type {
+  SecurityInput,
+  SecurityOutput,
+  SecurityAgentConfig,
+} from './agents/security-agent.js';
+
 // Orchestration Layer
 export { createOrchestrator, WorkflowBuilder } from './orchestration/agent-orchestrator.js';
 export type {
@@ -175,6 +186,4 @@ export const packageInfo = {
   ] as const,
 };
 
-// Note: Actual agent and provider implementations will be exported
-// as they are implemented following the TDD approach outlined in
-// ARCHITECTURE_PLAN.md
+// Implementations are provided and exported above per TDD plan

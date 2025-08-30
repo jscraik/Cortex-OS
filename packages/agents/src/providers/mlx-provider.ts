@@ -6,11 +6,12 @@
  * No stubs or placeholders - full implementation.
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import { readFile, access } from 'fs/promises';
-import { join } from 'path';
+import { spawn } from 'child_process';
+import { access } from 'fs/promises';
+import path from 'path';
 import type { ModelProvider, GenerateOptions, GenerateResult } from '../lib/types.js';
-import { withTimeout, estimateTokens } from '../lib/utils.js';
+import { withTimeout, estimateTokens, sleep } from '../lib/utils.js';
+import { redactSecrets } from '../lib/secret-store.js';
 
 export interface ThermalStatus {
   temperature: number;
@@ -34,18 +35,23 @@ export interface MLXProviderConfig {
   memoryThreshold?: number;
   enableThermalMonitoring?: boolean;
   pythonPath?: string;
-  mlxPath?: string;
   timeout?: number;
+  maxConcurrency?: number;
+  circuitBreakerThreshold?: number;
+  circuitBreakerResetMs?: number;
 }
 
 interface MLXState {
   config: Required<MLXProviderConfig>;
-  process?: ChildProcess;
   isInitialized: boolean;
   lastThermalCheck: number;
   thermalStatus: ThermalStatus;
   memoryStatus: MemoryStatus;
   requestCount: number;
+  active: number;
+  queue: Array<() => void>;
+  failures: number;
+  cbOpenUntil?: number;
 }
 
 const DEFAULT_CONFIG: Required<MLXProviderConfig> = {
@@ -56,8 +62,10 @@ const DEFAULT_CONFIG: Required<MLXProviderConfig> = {
   memoryThreshold: 0.8,
   enableThermalMonitoring: true,
   pythonPath: 'python3',
-  mlxPath: '/opt/homebrew/lib/python3.11/site-packages/mlx',
   timeout: 30000,
+  maxConcurrency: 2,
+  circuitBreakerThreshold: 5,
+  circuitBreakerResetMs: 30000,
 };
 
 const createMLXState = (config: MLXProviderConfig): MLXState => ({
@@ -77,6 +85,10 @@ const createMLXState = (config: MLXProviderConfig): MLXState => ({
     swapUsed: 0,
   },
   requestCount: 0,
+  active: 0,
+  queue: [],
+  failures: 0,
+  cbOpenUntil: undefined,
 });
 
 const checkThermalStatus = async (): Promise<ThermalStatus> => {
@@ -247,108 +259,49 @@ const executeMLXGeneration = async (
 ): Promise<GenerateResult> => {
   const startTime = Date.now();
   const adjustedOptions = adjustGenerationParams(options, state);
-
-  const mlxScript = `
-import sys
-import json
-import time
-from pathlib import Path
-
-try:
-    import mlx.core as mx
-    import mlx_lm
-    from mlx_lm import load, generate
-except ImportError:
-    print(json.dumps({"error": "MLX not installed"}))
-    sys.exit(1)
-
-def main():
-    try:
-        model_path = "${state.config.modelPath}"
-        
-        if not Path(model_path).exists():
-            raise FileNotFoundError(f"Model not found at {model_path}")
-        
-        model, tokenizer = load(model_path)
-        
-        prompt = """${prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"""
-        
-        start_time = time.time()
-        response = generate(
-            model,
-            tokenizer,
-            prompt,
-            max_tokens=${adjustedOptions.maxTokens || 2048},
-            temp=${adjustedOptions.temperature || 0.7},
-            verbose=False
-        )
-        end_time = time.time()
-        
-        result = {
-            "text": response,
-            "usage": {
-                "promptTokens": len(tokenizer.encode(prompt)),
-                "completionTokens": len(tokenizer.encode(response)) - len(tokenizer.encode(prompt)),
-                "totalTokens": len(tokenizer.encode(response))
-            },
-            "latencyMs": int((end_time - start_time) * 1000),
-            "provider": "mlx"
-        }
-        
-        print(json.dumps(result))
-        
-    except Exception as e:
-        error_result = {
-            "error": str(e),
-            "provider": "mlx"
-        }
-        print(json.dumps(error_result))
-
-if __name__ == "__main__":
-    main()
-`;
+  const python = state.config.pythonPath;
+  const unifiedScript = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '../../../../apps/cortex-py/src/mlx/mlx_unified.py',
+  );
+  const messages = JSON.stringify([{ role: 'user', content: prompt }]);
 
   return new Promise((resolve, reject) => {
-    const process = spawn(state.config.pythonPath, ['-c', mlxScript]);
-    let output = '';
-    let errorOutput = '';
-
-    process.stdout?.on('data', (data) => {
-      output += data.toString();
+    const args = [
+      messages,
+      '--model',
+      state.config.modelPath,
+      '--chat-mode',
+      '--max-tokens', String(adjustedOptions.maxTokens || 2048),
+      '--temperature', String(adjustedOptions.temperature ?? 0.7),
+      '--json-only',
+    ];
+    const ps = spawn(python, [unifiedScript, ...args], {
+      env: {
+        ...process.env,
+      },
     });
-
-    process.stderr?.on('data', (data) => {
-      errorOutput += data.toString();
-    });
-
-    process.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`MLX process failed: ${errorOutput}`));
-        return;
-      }
-
+    let out = '';
+    let err = '';
+    ps.stdout?.on('data', (d) => (out += d.toString()));
+    ps.stderr?.on('data', (d) => (err += d.toString()));
+    ps.on('close', (code) => {
+      if (code !== 0) return reject(new Error(`MLX process failed: ${redactSecrets(err)}`));
       try {
-        const result = JSON.parse(output.trim());
-
-        if (result.error) {
-          reject(new Error(`MLX error: ${result.error}`));
-          return;
-        }
-
-        resolve({
-          text: result.text,
-          usage: result.usage,
-          latencyMs: result.latencyMs,
-          provider: 'mlx',
-        });
-      } catch (error) {
-        reject(new Error(`Failed to parse MLX response: ${error}`));
+        const data = JSON.parse(out.trim());
+        const text: string = data.content || data.text || '';
+        const latencyMs = Date.now() - startTime;
+        const usage = {
+          promptTokens: estimateTokens(prompt, 'mlx'),
+          completionTokens: estimateTokens(text, 'mlx'),
+          totalTokens: estimateTokens(prompt + text, 'mlx'),
+        };
+        resolve({ text, usage, latencyMs, provider: 'mlx' });
+      } catch (e) {
+        reject(new Error(`Failed to parse MLX response: ${redactSecrets(String(e))}`));
       }
     });
-
-    process.on('error', (error) => {
-      reject(new Error(`Failed to spawn MLX process: ${error.message}`));
-    });
+    ps.on('error', (e) => reject(new Error(`Failed to spawn MLX process: ${e.message}`)));
   });
 };
 
@@ -407,6 +360,11 @@ const generate = async (
   await initializeMLX(state);
   await updateSystemStatus(state);
 
+  const now = Date.now();
+  if (state.cbOpenUntil && now < state.cbOpenUntil) {
+    throw new Error('MLX circuit breaker open');
+  }
+
   if (shouldThrottleRequest(state)) {
     if (state.thermalStatus.level === 'critical') {
       throw new Error('MLX throttled due to critical thermal state');
@@ -415,6 +373,22 @@ const generate = async (
     await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
+  // Concurrency semaphore
+  const acquire = async () => {
+    if (state.active < state.config.maxConcurrency) {
+      state.active++;
+      return;
+    }
+    await new Promise<void>((resolve) => state.queue.push(resolve));
+    state.active++;
+  };
+  const release = () => {
+    state.active = Math.max(0, state.active - 1);
+    const next = state.queue.shift();
+    if (next) next();
+  };
+
+  await acquire();
   state.requestCount++;
 
   try {
@@ -423,17 +397,22 @@ const generate = async (
       state.config.timeout,
       'MLX generation timed out',
     );
-
+    // success → reset failures
+    state.failures = 0;
     return result;
   } catch (error) {
+    state.failures++;
+    if (state.failures >= state.config.circuitBreakerThreshold) {
+      state.cbOpenUntil = Date.now() + state.config.circuitBreakerResetMs;
+      state.failures = 0;
+    }
     throw error;
+  } finally {
+    release();
   }
 };
 
 const shutdown = async (state: MLXState): Promise<void> => {
-  if (state.process && !state.process.killed) {
-    state.process.kill();
-  }
   state.isInitialized = false;
 };
 

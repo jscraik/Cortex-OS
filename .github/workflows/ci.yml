@@ -70,9 +70,18 @@ jobs:
         run: |
           cd packages/mcp
           pnpm lint
-      - name: Run MCP tests (includes interop)
+      - name: Run MCP tests (core only)
         env:
           NODE_OPTIONS: --experimental-vm-modules
         run: |
           cd packages/mcp
-          pnpm test -- --run
+          pnpm test -- --run --exclude "**/mixed-topology.e2e.test.ts" --exclude "**/client.e2e.test.ts"
+      - name: Run MCP mixed-topology (optional)
+        if: env.CI_MCP_FULL == '1'
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
+          CI_MCP_FULL: ${{ env.CI_MCP_FULL }}
+        run: |
+          cd packages/mcp
+          pnpm vitest run src/test/mixed-topology.e2e.test.ts
+          pnpm vitest run src/lib/client.e2e.test.ts

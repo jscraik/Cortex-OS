@@ -1,8 +1,7 @@
-import type Ajv from 'ajv';
 import {
   RegistryIndexSchema,
-  type ValidationResult,
   type ValidationError,
+  type ValidationResult,
   type ValidationWarning,
 } from '../types.js';
 
@@ -94,4 +93,3 @@ export function validateRegistry(
     warnings,
   };
 }
-

@@ -14,7 +14,7 @@ import type {
   AgentDependencies,
   GenerateOptions,
 } from '../lib/types.js';
-import { generateAgentId, generateTraceId, estimateTokens, withTimeout } from '../lib/utils.js';
+import { generateAgentId, generateTraceId, estimateTokens, withTimeout, sanitizeText } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
@@ -208,14 +208,14 @@ const analyzeCode = async (
   } = input;
 
   // Build context-aware prompt
-  const prompt = buildAnalysisPrompt(input);
+  const prompt = sanitizeText(buildAnalysisPrompt(input));
 
   // Generate options based on input
   const generateOptions: GenerateOptions = {
     temperature: 0.1, // Low temperature for consistent analysis
     maxTokens: calculateMaxTokens(sourceCode, analysisType),
     stop: ['```\n\n', '---END---'],
-    systemPrompt: buildSystemPrompt(language, analysisType, focus),
+    systemPrompt: sanitizeText(buildSystemPrompt(language, analysisType, focus)),
   };
 
   // Call the model provider
@@ -345,24 +345,42 @@ const parseAnalysisResponse = (
     parsedResponse = createFallbackAnalysisResponse(response.text, language, analysisType);
   }
 
-  // Ensure all required fields are present
+  // Back-compat: coerce suggestions array of strings to structured objects
+  if (Array.isArray(parsedResponse.suggestions) && parsedResponse.suggestions.every((s: any) => typeof s === 'string')) {
+    parsedResponse.suggestions = parsedResponse.suggestions.map((msg: string) => ({
+      type: 'improvement' as const,
+      message: msg,
+      severity: 'low' as const,
+      category: 'maintainability' as const,
+    }));
+  }
+
+  // Ensure all required fields are present (merge defaults with partials)
+  const complexity = parsedResponse.complexity || {};
+  const security = parsedResponse.security || {};
+  const performance = parsedResponse.performance || {};
+
   return {
     suggestions: parsedResponse.suggestions || [],
-    complexity: parsedResponse.complexity || {
-      cyclomatic: 5,
-      cognitive: 3,
-      maintainability: 'good' as const,
+    complexity: {
+      cyclomatic: typeof complexity.cyclomatic === 'number' ? complexity.cyclomatic : 5,
+      cognitive: typeof complexity.cognitive === 'number' ? complexity.cognitive : 3,
+      maintainability: (complexity.maintainability as any) || ('good' as const),
     },
-    security: parsedResponse.security || {
-      vulnerabilities: [],
-      riskLevel: 'low' as const,
+    security: {
+      vulnerabilities: Array.isArray(security.vulnerabilities) ? security.vulnerabilities : [],
+      riskLevel: (security.riskLevel as any) || ('low' as const),
     },
-    performance: parsedResponse.performance || {
-      bottlenecks: [],
-      memoryUsage: 'low' as const,
+    performance: {
+      bottlenecks: Array.isArray(performance.bottlenecks) ? performance.bottlenecks : [],
+      memoryUsage: (performance.memoryUsage as any) || ('low' as const),
+      algorithmicComplexity: performance.algorithmicComplexity,
     },
-    confidence: parsedResponse.confidence || 0.85,
-    analysisTime: parsedResponse.analysisTime || response.latencyMs || 1500,
+    confidence: typeof parsedResponse.confidence === 'number' ? parsedResponse.confidence : 0.85,
+    analysisTime:
+      typeof parsedResponse.analysisTime === 'number'
+        ? parsedResponse.analysisTime
+        : response.latencyMs || 1500,
   };
 };
 

@@ -210,7 +210,9 @@ export const createFallbackChain = (config: FallbackChainConfig): ModelProvider 
     },
 
     shutdown: async () => {
-      await Promise.all(config.providers.map((provider) => provider.shutdown()));
+      await Promise.all(
+        config.providers.map((provider) => provider.shutdown ? provider.shutdown() : Promise.resolve())
+      );
     },
   };
 };

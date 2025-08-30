@@ -7,17 +7,17 @@
 
 import { z } from 'zod';
 import type { Agent, ModelProvider, EventBus, MCPClient } from '../lib/types.js';
-import {
-  createCodeAnalysisAgent,
-  createTestGenerationAgent,
-  createDocumentationAgent,
-} from '../index.js';
+// Avoid circular import by importing agents directly
+import { createCodeAnalysisAgent } from '../agents/code-analysis-agent.js';
+import { createTestGenerationAgent } from '../agents/test-generation-agent.js';
+import { createDocumentationAgent } from '../agents/documentation-agent.js';
+import { createSecurityAgent } from '../agents/security-agent.js';
 import { generateAgentId, generateTraceId, withTimeout } from '../lib/utils.js';
 
 // Orchestration schemas
 export const workflowTaskSchema = z.object({
   id: z.string(),
-  agentType: z.enum(['code-analysis', 'test-generation', 'documentation']),
+  agentType: z.enum(['code-analysis', 'test-generation', 'documentation', 'security']),
   input: z.any(),
   dependsOn: z.array(z.string()).optional().default([]),
   timeout: z.number().optional().default(30000),
@@ -110,6 +110,7 @@ const initializeAgents = (state: OrchestratorState): void => {
   state.agents.set('code-analysis', createCodeAnalysisAgent(agentConfig));
   state.agents.set('test-generation', createTestGenerationAgent(agentConfig));
   state.agents.set('documentation', createDocumentationAgent(agentConfig));
+  state.agents.set('security', createSecurityAgent(agentConfig as any));
 };
 
 const executeTask = async (task: WorkflowTask, state: OrchestratorState): Promise<any> => {
@@ -226,7 +227,7 @@ const executeWorkflowInternal = async (
     errors['workflow'] = error instanceof Error ? error.message : 'Unknown error';
   }
 
-  const totalTime = Date.now() - startTime;
+  const totalTime = Math.max(1, Date.now() - startTime);
 
   const result: OrchestrationResult = {
     workflowId: workflow.id,
@@ -376,50 +377,52 @@ export type AgentOrchestrator = ReturnType<typeof createOrchestrator>;
 
 // Workflow Builder - Functional Implementation
 export const createWorkflowBuilder = (id: string, name: string) => {
-  let workflow: Partial<Workflow> = {
+  const workflow: Partial<Workflow> = {
     id,
     name,
     tasks: [],
     parallel: false,
   };
 
-  return {
-    description: (desc: string) => {
+  const api = {
+    description(desc: string) {
       workflow.description = desc;
-      return createWorkflowBuilder(id, name);
+      return api;
     },
-    parallel: (enabled: boolean = true) => {
+    parallel(enabled: boolean = true) {
       workflow.parallel = enabled;
-      return createWorkflowBuilder(id, name);
+      return api;
     },
-    timeout: (ms: number) => {
+    timeout(ms: number) {
       workflow.timeout = ms;
-      return createWorkflowBuilder(id, name);
+      return api;
     },
-    addTask: (task: Omit<WorkflowTask, 'id'> & { id?: string }) => {
+    addTask(task: Omit<WorkflowTask, 'id'> & { id?: string }) {
       const taskId = task.id || generateAgentId();
-      workflow.tasks!.push({ ...task, id: taskId } as WorkflowTask);
-      return createWorkflowBuilder(id, name);
+      (workflow.tasks as WorkflowTask[]).push({ ...task, id: taskId } as WorkflowTask);
+      return api;
     },
-    addCodeAnalysis: (input: any, options?: Partial<WorkflowTask>) => {
-      const taskBuilder = createWorkflowBuilder(id, name);
-      return taskBuilder.addTask({ agentType: 'code-analysis', input, ...options });
+    addCodeAnalysis(input: any, options?: Partial<WorkflowTask>) {
+      return api.addTask({ agentType: 'code-analysis', input, ...options } as any);
     },
-    addTestGeneration: (input: any, options?: Partial<WorkflowTask>) => {
-      const taskBuilder = createWorkflowBuilder(id, name);
-      return taskBuilder.addTask({ agentType: 'test-generation', input, ...options });
+    addTestGeneration(input: any, options?: Partial<WorkflowTask>) {
+      return api.addTask({ agentType: 'test-generation', input, ...options } as any);
     },
-    addDocumentation: (input: any, options?: Partial<WorkflowTask>) => {
-      const taskBuilder = createWorkflowBuilder(id, name);
-      return taskBuilder.addTask({ agentType: 'documentation', input, ...options });
+    addDocumentation(input: any, options?: Partial<WorkflowTask>) {
+      return api.addTask({ agentType: 'documentation', input, ...options } as any);
     },
-    build: (): Workflow => {
+    addSecurity(input: any, options?: Partial<WorkflowTask>) {
+      return api.addTask({ agentType: 'security', input, ...options } as any);
+    },
+    build(): Workflow {
       if (!workflow.id || !workflow.name) {
         throw new Error('Workflow ID and name are required');
       }
       return workflowSchema.parse(workflow);
     },
   };
+
+  return api;
 };
 
 export const WorkflowBuilder = {

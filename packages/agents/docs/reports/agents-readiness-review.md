@@ -95,6 +95,17 @@ Total: 67 / 100
 - Add traceId to provider generate calls and CloudEvents.
 - Update root test configuration to include `packages/agents` in `vitest.workspace.ts` to ensure tests run in CI.
 
+## OrbStack & A2A Workers (Dev Runbook)
+
+- Use the new `agents-workers` service (Compose profile: `workers`) to run long-lived A2A consumers:
+  - `docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml --profile workers up --build -d`
+- Requirements:
+  - NATS JetStream (Compose profile brings up `nats` automatically when `workers` is selected)
+  - Configure `NATS_URL` for workers; default is `nats://nats:4222` in Compose
+- Notes:
+  - Keep worker `mem_limit` conservative (default 384m) and adjust `NODE_OPTIONS=--max-old-space-size=256` as needed
+  - For MLX-backed actions, workers communicate with host-native MLX via services that call the model-gateway; do not run MLX in a container on macOS
+
 ## Quality gates & verification
 
 - Build: `pnpm -w -C packages/agents build` (ensure tsup build success)

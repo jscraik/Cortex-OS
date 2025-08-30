@@ -24,11 +24,14 @@
     "test:ui": "vitest --ui",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint src tests",
-    "format": "prettier --write src tests"
+    "format": "prettier --write src tests",
+    "security:run": "tsx ./examples/security-llamaguard-mlx.ts",
+    "security:audit": "tsx ./examples/audit-security-workflow.ts"
   },
   "dependencies": {
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/mcp": "workspace:*",
+    "yaml": "^2.8.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
