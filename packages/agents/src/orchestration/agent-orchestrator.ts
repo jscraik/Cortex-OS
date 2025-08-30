@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 import type { Agent, ModelProvider, EventBus, MCPClient, MemoryPolicy } from '../lib/types.js';
-import type { MemoryStore } from '@cortex-os/memories';
+import type { MemoryStore } from '../lib/types.js';
 import { wireOutbox } from '../integrations/outbox.js';
 // Avoid circular import by importing agents directly
 import { createCodeAnalysisAgent } from '../agents/code-analysis-agent.js';
@@ -68,11 +68,12 @@ export interface OrchestratorConfig {
   memoryPolicies?: Partial<
     Record<'code-analysis' | 'test-generation' | 'documentation' | 'security', MemoryPolicy>
   >;
+  redactPII?: boolean;
 }
 
 interface OrchestratorState {
   agents: Map<string, Agent<any, any>>;
-  config: Required<OrchestratorConfig>;
+  config: any;
   activeWorkflows: Map<string, Promise<OrchestrationResult>>;
   runningTasks: Set<string>;
   metrics: {
@@ -112,7 +113,8 @@ const createOrchestratorState = (config: OrchestratorConfig): OrchestratorState 
       const ns = policy?.namespace || 'agents:outbox';
       const ttl = policy?.ttl || 'PT1H';
       const maxItemBytes = policy?.maxItemBytes ?? 256_000;
-      return { namespace: ns, ttl, maxItemBytes, tagPrefix: 'evt' };
+      const redactPII = policy?.redactPII ?? config.redactPII ?? true;
+      return { namespace: ns, ttl, maxItemBytes, tagPrefix: 'evt', redactPII };
     };
     // Fire and forget; wireOutbox sets up subscriptions
     void wireOutbox(config.eventBus, config.memoryStore, resolver);

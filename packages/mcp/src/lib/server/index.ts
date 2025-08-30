@@ -23,7 +23,7 @@ import {
   handleResourceRead,
   handlePromptsList,
   handlePromptGet,
-} from './handlers.js';
+} from './mcp-handlers.js';
 
 export class McpServer {
   private context: ServerContext;
@@ -47,7 +47,7 @@ export class McpServer {
 
   async handleRequest(req: McpRequest): Promise<McpResponse> {
     // Intercept initialize to set initialized flag
-    const res = await handleRequest(this.context, req);
+    const res = (await handleRequest(this.context, req)) as McpResponse;
     if ((res as any)?.result && (req as any)?.method === 'initialize') {
       this._initialized = true;
     }
@@ -73,7 +73,7 @@ export {
 export function createServer(config: { name: string; version: string }): ServerContext {
   const options = validateServerOptions(config);
   return {
-    options,
+    options: { name: options.name, version: options.version },
     tools: new Map(),
     resources: new Map(),
     prompts: new Map(),
@@ -132,15 +132,15 @@ export async function handleRequest(arg1: any, arg2: any) {
     case 'initialize':
       return handleInitialize(parsed.id, parsed.params, ctx);
     case 'tools/list':
-      return handleToolsList(parsed.id, ctx);
+      return handleToolsList(parsed.id, {}, ctx);
     case 'tools/call':
       return handleToolCall(parsed.id, parsed.params, ctx);
     case 'resources/list':
-      return handleResourcesList(parsed.id, ctx);
+      return handleResourcesList(parsed.id, {}, ctx);
     case 'resources/read':
       return handleResourceRead(parsed.id, parsed.params, ctx);
     case 'prompts/list':
-      return handlePromptsList(parsed.id, ctx);
+      return handlePromptsList(parsed.id, {}, ctx);
     case 'prompts/get':
       return handlePromptGet(parsed.id, parsed.params, ctx);
     default:

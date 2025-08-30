@@ -1,0 +1,42 @@
+# Python Requirements for Enhanced RAG Package
+
+# Core ML dependencies
+torch>=2.0.0
+transformers>=4.30.0
+numpy>=1.21.0
+
+# MLX dependencies (Apple Silicon only)
+mlx>=0.0.10
+mlx-lm>=0.1.0
+
+# Document processing dependencies
+pdfplumber>=0.9.0
+python-docx>=0.8.11
+python-pptx>=0.6.21
+openpyxl>=3.1.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# OCR dependencies
+pytesseract>=0.3.10
+Pillow>=9.0.0
+
+# Audio processing dependencies
+openai-whisper>=20231106
+pydub>=0.25.1
+
+# Web crawling dependencies
+requests>=2.31.0
+selenium>=4.15.0
+playwright>=1.40.0
+
+# Code analysis dependencies
+tree-sitter>=0.20.0
+tree-sitter-languages>=1.8.0
+
+# Graph database dependencies
+neo4j>=5.14.0
+
+# Utility dependencies
+jsonschema>=4.19.0
+pyyaml>=6.0.0

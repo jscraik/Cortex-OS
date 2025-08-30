@@ -1,0 +1,16 @@
+[
+  {
+    "name": "exact-match-doc2",
+    "corpus": "corpus/v1/tiny.jsonl",
+    "query": "RAG retrieval uses embeddings to find relevant documents",
+    "topK": 1,
+    "expectedTopId": "doc2"
+  },
+  {
+    "name": "contains-cortex",
+    "corpus": "corpus/v1/tiny.jsonl",
+    "query": "Cortex OS is a modular agent platform",
+    "topK": 1,
+    "expectedTopId": "doc1"
+  }
+]

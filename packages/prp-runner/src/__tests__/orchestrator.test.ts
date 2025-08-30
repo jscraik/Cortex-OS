@@ -33,7 +33,6 @@ describe('PRPOrchestrator - TDD Implementation', () => {
     });
 
     it('should fail to execute without any neurons', async () => {
-
       // RED: This should fail - no executePRPCycle method
       await expect(orchestrator.executePRPCycle({} as any)).rejects.toThrow(
         'No neurons registered',

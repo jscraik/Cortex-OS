@@ -1,3 +1,5 @@
+<user_instructions>
+
 # AGENTS
 
 AGENTS.md is authoritative for structure and behavior. Deviations are blocked by CI.
@@ -65,3 +67,6 @@ Enforcement through automated checks:
 - Pre-commit hooks for agent contract compliance
 - Schema validation for agent configurations
 - Documentation synchronization checks
+
+
+</user_instructions>

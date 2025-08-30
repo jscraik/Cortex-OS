@@ -12,7 +12,10 @@ export interface DependabotConfig {
   projects: DependabotProject[];
 }
 
-export const loadDependabotConfig = async (cwd: string = process.cwd(), path?: string): Promise<DependabotConfig | null> => {
+export const loadDependabotConfig = async (
+  cwd: string = process.cwd(),
+  path?: string,
+): Promise<DependabotConfig | null> => {
   const filePath = path ? resolve(cwd, path) : resolve(cwd, '.github/dependabot.yml');
   try {
     const raw = await readFile(filePath, 'utf8');
@@ -25,11 +28,13 @@ export const loadDependabotConfig = async (cwd: string = process.cwd(), path?: s
       return null;
     }
     const updates = Array.isArray(parsed.updates) ? parsed.updates : [];
-    const projects: DependabotProject[] = updates.map((u: any) => ({
-      packageEcosystem: String(u.package_ecosystem || u.packageEcosystem || ''),
-      directory: String(u.directory || ''),
-      scheduleInterval: u.schedule?.interval,
-    })).filter(p => p.packageEcosystem && p.directory);
+    const projects: DependabotProject[] = updates
+      .map((u: any) => ({
+        packageEcosystem: String(u.package_ecosystem || u.packageEcosystem || ''),
+        directory: String(u.directory || ''),
+        scheduleInterval: u.schedule?.interval,
+      }))
+      .filter((p: DependabotProject) => p.packageEcosystem && p.directory);
     return { path: filePath, projects };
   } catch {
     return null;

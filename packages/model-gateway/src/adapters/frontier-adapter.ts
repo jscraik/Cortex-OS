@@ -13,10 +13,12 @@ const FrontierEmbeddingRequestSchema = z.object({
 });
 
 const FrontierEmbeddingResponseSchema = z.object({
-  data: z.array(z.object({
-    embedding: z.array(z.number()),
-    index: z.number(),
-  })),
+  data: z.array(
+    z.object({
+      embedding: z.array(z.number()),
+      index: z.number(),
+    }),
+  ),
   model: z.string(),
   usage: z.object({
     prompt_tokens: z.number(),
@@ -38,13 +40,15 @@ const FrontierChatRequestSchema = z.object({
 });
 
 const FrontierChatResponseSchema = z.object({
-  choices: z.array(z.object({
-    message: z.object({
-      role: z.string(),
-      content: z.string(),
+  choices: z.array(
+    z.object({
+      message: z.object({
+        role: z.string(),
+        content: z.string(),
+      }),
+      finish_reason: z.string(),
     }),
-    finish_reason: z.string(),
-  })),
+  ),
   usage: z.object({
     prompt_tokens: z.number(),
     completion_tokens: z.number(),
@@ -57,21 +61,25 @@ const FrontierChatResponseSchema = z.object({
 const GatewayEmbeddingResponseSchema = z.object({
   embedding: z.array(z.number()),
   model: z.string(),
-  usage: z.object({
-    tokens: z.number(),
-    cost: z.number(),
-  }).optional(),
+  usage: z
+    .object({
+      tokens: z.number(),
+      cost: z.number(),
+    })
+    .optional(),
 });
 
 const GatewayChatResponseSchema = z.object({
   content: z.string(),
   model: z.string(),
-  usage: z.object({
-    promptTokens: z.number(),
-    completionTokens: z.number(),
-    totalTokens: z.number(),
-    cost: z.number(),
-  }).optional(),
+  usage: z
+    .object({
+      promptTokens: z.number(),
+      completionTokens: z.number(),
+      totalTokens: z.number(),
+      cost: z.number(),
+    })
+    .optional(),
 });
 
 export type FrontierEmbeddingRequest = z.infer<typeof FrontierEmbeddingRequestSchema>;
@@ -99,9 +107,9 @@ export class FrontierAdapter {
 
   constructor(config: FrontierConfig) {
     this.config = config;
-    
+
     const baseURL = config.baseURL || this.getDefaultBaseURL(config.provider);
-    
+
     this.client = axios.create({
       baseURL,
       timeout: 120000, // 2 minutes for potentially slow API calls
@@ -128,7 +136,7 @@ export class FrontierAdapter {
     switch (config.provider) {
       case 'openai':
         return {
-          'Authorization': `Bearer ${config.apiKey}`,
+          Authorization: `Bearer ${config.apiKey}`,
           ...(config.organization && { 'OpenAI-Organization': config.organization }),
         };
       case 'anthropic':
@@ -206,7 +214,7 @@ export class FrontierAdapter {
             tokens: Math.floor(embeddingData.usage.total_tokens / texts.length),
             cost: costPerEmbedding,
           },
-        })
+        }),
       );
     } catch (error) {
       console.error('Frontier batch embedding generation failed:', error);
@@ -230,9 +238,9 @@ export class FrontierAdapter {
 
       if (this.config.provider === 'anthropic') {
         // Convert to Anthropic format
-        const systemMessage = messages.find(m => m.role === 'system');
-        const userMessages = messages.filter(m => m.role !== 'system');
-        
+        const systemMessage = messages.find((m) => m.role === 'system');
+        const userMessages = messages.filter((m) => m.role !== 'system');
+
         request = {
           model,
           max_tokens: options?.max_tokens || 1000,
@@ -254,7 +262,7 @@ export class FrontierAdapter {
       }
 
       const response = await this.client.post(endpoint, request);
-      
+
       let content: string;
       let usage: any;
 
@@ -263,7 +271,8 @@ export class FrontierAdapter {
         usage = {
           prompt_tokens: response.data.usage?.input_tokens || 0,
           completion_tokens: response.data.usage?.output_tokens || 0,
-          total_tokens: (response.data.usage?.input_tokens || 0) + (response.data.usage?.output_tokens || 0),
+          total_tokens:
+            (response.data.usage?.input_tokens || 0) + (response.data.usage?.output_tokens || 0),
         };
       } else {
         const chatData = FrontierChatResponseSchema.parse(response.data);
@@ -322,7 +331,7 @@ export class FrontierAdapter {
     const costs: Record<string, number> = {
       'text-embedding-3-small': 0.00002, // $0.00002 per 1K tokens
       'text-embedding-3-large': 0.00013, // $0.00013 per 1K tokens
-      'text-embedding-ada-002': 0.0001,  // $0.0001 per 1K tokens
+      'text-embedding-ada-002': 0.0001, // $0.0001 per 1K tokens
     };
 
     const costPer1K = costs[model] || 0.0001;
@@ -335,17 +344,18 @@ export class FrontierAdapter {
   private calculateChatCost(promptTokens: number, completionTokens: number, model: string): number {
     const costs: Record<string, { prompt: number; completion: number }> = {
       'gpt-3.5-turbo': { prompt: 0.001, completion: 0.002 }, // $0.001/$0.002 per 1K tokens
-      'gpt-4': { prompt: 0.03, completion: 0.06 },           // $0.03/$0.06 per 1K tokens
-      'gpt-4-turbo': { prompt: 0.01, completion: 0.03 },     // $0.01/$0.03 per 1K tokens
+      'gpt-4': { prompt: 0.03, completion: 0.06 }, // $0.03/$0.06 per 1K tokens
+      'gpt-4-turbo': { prompt: 0.01, completion: 0.03 }, // $0.01/$0.03 per 1K tokens
       'claude-3-haiku': { prompt: 0.00025, completion: 0.00125 }, // $0.25/$1.25 per 1M tokens
-      'claude-3-sonnet': { prompt: 0.003, completion: 0.015 },    // $3/$15 per 1M tokens
-      'claude-3-opus': { prompt: 0.015, completion: 0.075 },      // $15/$75 per 1M tokens
+      'claude-3-sonnet': { prompt: 0.003, completion: 0.015 }, // $3/$15 per 1M tokens
+      'claude-3-opus': { prompt: 0.015, completion: 0.075 }, // $15/$75 per 1M tokens
     };
 
     const modelCosts = costs[model] || { prompt: 0.001, completion: 0.002 };
-    
-    return (promptTokens / 1000) * modelCosts.prompt + 
-           (completionTokens / 1000) * modelCosts.completion;
+
+    return (
+      (promptTokens / 1000) * modelCosts.prompt + (completionTokens / 1000) * modelCosts.completion
+    );
   }
 
   /**

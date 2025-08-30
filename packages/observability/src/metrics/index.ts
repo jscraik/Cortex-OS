@@ -31,11 +31,7 @@ const vramGauge = meter.createGauge('cortex_vram_usage_ratio', {
 /**
  * Record operation latency
  */
-export function recordLatency(
-  operation: string,
-  latencyMs: number,
-  labels?: MetricLabels
-): void {
+export function recordLatency(operation: string, latencyMs: number, labels?: MetricLabels): void {
   latencyHistogram.record(latencyMs, {
     operation,
     ...labels,
@@ -49,7 +45,7 @@ export function recordOperation(
   operation: string,
   success: boolean,
   runId: ULID,
-  labels?: MetricLabels
+  labels?: MetricLabels,
 ): void {
   operationCounter.add(1, {
     operation,
@@ -64,7 +60,7 @@ export function recordOperation(
  */
 export function updateProviderHealth(
   provider: string,
-  health: number // 0-1
+  health: number, // 0-1
 ): void {
   providerHealthGauge.record(Math.max(0, Math.min(1, health)), {
     provider,
@@ -76,7 +72,7 @@ export function updateProviderHealth(
  */
 export function updateVRAMUsage(
   provider: string,
-  usageRatio: number // 0-1
+  usageRatio: number, // 0-1
 ): void {
   vramGauge.record(Math.max(0, Math.min(1, usageRatio)), {
     provider,
@@ -89,7 +85,7 @@ export function updateVRAMUsage(
 export function calculateErrorBudget(
   successCount: number,
   totalCount: number,
-  slo: number = 0.99
+  slo: number = 0.99,
 ): ErrorBudget {
   if (totalCount === 0) {
     return {

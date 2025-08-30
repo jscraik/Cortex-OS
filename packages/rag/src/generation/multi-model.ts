@@ -1,4 +1,3 @@
-
 import type { ChatMessage, GenerationConfig, Generator } from './index';
 import { runProcess } from '../../../../src/lib/run-process.js';
 
@@ -129,7 +128,6 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-
     try {
       const response = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',
@@ -158,7 +156,6 @@ export class MultiModelGenerator implements Generator {
     } catch (error) {
       throw new Error(`Ollama generation failed: ${error}`);
     }
-
   }
 
   /**

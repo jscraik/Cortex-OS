@@ -8,19 +8,34 @@ describe('Event Contract: agentEventCatalog', () => {
     const samples: Record<string, any> = {
       'agent.started': {
         type: 'agent.started',
-        data: { agentId: 'a', traceId: 't', capability: 'documentation', input: {}, timestamp: iso() },
+        data: {
+          agentId: 'a',
+          traceId: 't',
+          capability: 'documentation',
+          input: {},
+          timestamp: iso(),
+        },
       },
       'agent.completed': {
         type: 'agent.completed',
         data: {
-          agentId: 'a', traceId: 't', capability: 'documentation',
+          agentId: 'a',
+          traceId: 't',
+          capability: 'documentation',
           metrics: { latencyMs: 10, tokensUsed: 1, suggestionsCount: 0 },
           timestamp: iso(),
         },
       },
       'agent.failed': {
         type: 'agent.failed',
-        data: { agentId: 'a', traceId: 't', capability: 'documentation', error: 'x', metrics: { latencyMs: 1 }, timestamp: iso() },
+        data: {
+          agentId: 'a',
+          traceId: 't',
+          capability: 'documentation',
+          error: 'x',
+          metrics: { latencyMs: 1 },
+          timestamp: iso(),
+        },
       },
       'provider.success': {
         type: 'provider.success',
@@ -40,7 +55,12 @@ describe('Event Contract: agentEventCatalog', () => {
       },
       'mcp.server_connected': {
         type: 'mcp.server_connected',
-        data: { serverId: 's1', serverName: 'svc', capabilities: ['text-generation'], timestamp: iso() },
+        data: {
+          serverId: 's1',
+          serverName: 'svc',
+          capabilities: ['text-generation'],
+          timestamp: iso(),
+        },
       },
       'mcp.server_disconnected': {
         type: 'mcp.server_disconnected',
@@ -52,7 +72,17 @@ describe('Event Contract: agentEventCatalog', () => {
       },
       'workflow.completed': {
         type: 'workflow.completed',
-        data: { workflowId: 'w1', status: 'completed', metrics: { totalTime: 1, tasksCompleted: 1, tasksTotal: 1, agentsUsed: ['documentation'] }, timestamp: iso() },
+        data: {
+          workflowId: 'w1',
+          status: 'completed',
+          metrics: {
+            totalTime: 1,
+            tasksCompleted: 1,
+            tasksTotal: 1,
+            agentsUsed: ['documentation'],
+          },
+          timestamp: iso(),
+        },
       },
       'workflow.cancelled': {
         type: 'workflow.cancelled',

@@ -2,7 +2,13 @@ import { z } from 'zod';
 import { EventEmitter } from 'events';
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
 import { redactSensitiveData } from './security.js';
-import type { McpRequest, TransportConfig, Transport, HttpTransportConfig, StdioTransportConfig } from './types.js';
+import type {
+  McpRequest,
+  TransportConfig,
+  Transport,
+  HttpTransportConfig,
+  StdioTransportConfig,
+} from './types.js';
 import { SSETransport } from './sse-transport.js';
 import { parseTransportConfig } from './transport-schema.js';
 import commandExists from 'command-exists';
@@ -15,7 +21,10 @@ const MessageSchema = z
   .object({ jsonrpc: z.literal('2.0'), id: z.union([z.string(), z.number()]) })
   .passthrough();
 
-export function validateMessage(message: McpRequest, onError?: (err: unknown, msg: McpRequest) => void): void {
+export function validateMessage(
+  message: McpRequest,
+  onError?: (err: unknown, msg: McpRequest) => void,
+): void {
   try {
     MessageSchema.parse(message);
   } catch (err) {
@@ -25,22 +34,16 @@ export function validateMessage(message: McpRequest, onError?: (err: unknown, ms
 }
 
 export function createTransport(config: TransportConfig): Transport {
-  // Validate and normalize first for security.
-  // Allow suite-local leniency only when explicitly requested (used by sse-security suite).
-  const lenient = process.env.MCP_TRANSPORT_LENIENT === '1' && (config as any).type === 'stdio';
+  // Always validate configuration for security
   let cfg: TransportConfig;
-  if (lenient) {
-    cfg = config as any;
-  } else {
-    try {
-      cfg = parseTransportConfig(config);
-    } catch (err: any) {
-      const t = (config as any)?.type;
-      if (t && !['stdio', 'http', 'sse'].includes(t)) {
-        throw new Error('Unsupported transport type');
-      }
-      throw err;
+  try {
+    cfg = parseTransportConfig(config);
+  } catch (err: any) {
+    const t = (config as any)?.type;
+    if (t && !['stdio', 'http', 'sse'].includes(t)) {
+      throw new Error('Unsupported transport type');
     }
+    throw err;
   }
   switch (cfg.type) {
     case 'sse':
@@ -52,10 +55,7 @@ export function createTransport(config: TransportConfig): Transport {
   }
 }
 
-// Back-compat helper used by tests: validate transport configuration
-export function validateTransportConfig(config: unknown): TransportConfig {
-  return parseTransportConfig(config);
-}
+// Removed validateTransportConfig - tests should use parseTransportConfig directly
 
 // HTTP Transport
 function createHttpTransport(config: HttpTransportConfig): Transport & EventEmitter {
@@ -163,7 +163,22 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
       connected = true;
     },
     async disconnect() {
-      if (child && child.pid) child.kill('SIGTERM');
+      if (child && child.pid && !child.killed) {
+        child.kill('SIGTERM');
+        
+        // Wait for graceful shutdown, then force kill if needed
+        const forceKillTimeout = setTimeout(() => {
+          if (child && child.pid && !child.killed) {
+            console.warn(`Force killing unresponsive process ${child.pid}`);
+            child.kill('SIGKILL');
+          }
+        }, 5000);
+        
+        // Clear timeout when process exits
+        child.once('exit', () => {
+          clearTimeout(forceKillTimeout);
+        });
+      }
       child = null;
       connected = false;
     },

@@ -1,0 +1,39 @@
+name: k6-annotate
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile=false
+      - name: Build gateway
+        run: pnpm -F @cortex-os/gateway build
+      - name: Start gateway
+        run: node packages/gateway/dist/server.js &
+      - name: Wait for gateway
+        run: npx wait-on http://localhost:3333/openapi.json || true
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+      - name: Run k6 quick
+        run: k6 run --summary-export k6-summary.json k6/quick.js
+      - name: Upload k6 summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: k6-summary.json
+      - name: Annotate Grafana (optional)
+        if: ${{ secrets.GRAFANA_URL != '' && secrets.GRAFANA_API_KEY != '' }}
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+        run: node ops/observability/grafana/annotate.mjs k6-summary.json

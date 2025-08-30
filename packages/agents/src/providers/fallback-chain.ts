@@ -5,7 +5,7 @@
  * for provider failover and load balancing
  */
 
-import type { ModelProvider, GenerateOptions, GenerateResult } from '../lib/types.js';
+import type { EventBus, GenerateOptions, GenerateResult, ModelProvider } from '../lib/types.js';
 import { withTimeout } from '../lib/utils.js';
 
 export interface FallbackChainConfig {
@@ -15,6 +15,8 @@ export interface FallbackChainConfig {
   circuitBreakerTimeout?: number;
   retryAttempts?: number;
   retryDelay?: number;
+  // Optional event bus to publish provider.fallback events when failover occurs
+  eventBus?: EventBus;
 }
 
 interface ProviderHealth {
@@ -29,6 +31,7 @@ interface ProviderHealth {
 }
 
 interface FallbackState {
+  // store a fully-populated config (defaults merged) to simplify runtime checks
   config: Required<FallbackChainConfig>;
   providerHealth: Map<string, ProviderHealth>;
   lastHealthCheck: number;
@@ -43,7 +46,14 @@ const DEFAULT_CONFIG = {
 };
 
 const createFallbackState = (config: FallbackChainConfig): FallbackState => {
-  const fullConfig = { ...DEFAULT_CONFIG, ...config };
+  const fullConfig: Required<FallbackChainConfig> = {
+    ...DEFAULT_CONFIG,
+    ...config,
+  } as Required<FallbackChainConfig>;
+  // preserve eventBus reference if provided
+  if (config.eventBus) {
+    fullConfig.eventBus = config.eventBus;
+  }
   const providerHealth = new Map<string, ProviderHealth>();
 
   fullConfig.providers.forEach((provider) => {
@@ -159,6 +169,9 @@ const generateWithFallback = async (
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Provider failed');
 
+        // Emit fallback event (best-effort)
+        emitProviderFallback(state, provider, error, attempt);
+
         if (attempt < state.config.retryAttempts - 1) {
           await sleep(state.config.retryDelay * (attempt + 1));
         }
@@ -177,7 +190,7 @@ const performHealthCheck = async (state: FallbackState): Promise<void> => {
 
   const healthChecks = state.config.providers.map(async (provider) => {
     const health = state.providerHealth.get(provider.name);
-    if (!health || !health.circuitBreakerOpen) return;
+    if (!health?.circuitBreakerOpen) return;
 
     try {
       const startTime = Date.now();
@@ -198,6 +211,39 @@ const performHealthCheck = async (state: FallbackState): Promise<void> => {
   state.lastHealthCheck = now;
 };
 
+const emitProviderFallback = (
+  state: FallbackState,
+  provider: ModelProvider,
+  error: unknown,
+  attempt: number,
+): void => {
+  try {
+    const bus = state.config.eventBus;
+    if (!bus) return;
+
+    // best-effort publish; swallow errors via catch on the returned promise
+    void bus
+      .publish({
+        type: 'provider.fallback',
+        data: {
+          failedProvider: provider.name,
+          reason: error instanceof Error ? error.message : String(error ?? 'unknown'),
+          attempt,
+          timestamp: new Date().toISOString(),
+        },
+      })
+      .catch(() => {
+        /* no-op */
+      });
+  } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      // best-effort debug logging
+      // eslint-disable-next-line no-console
+      console.debug('[fallback-chain] emitProviderFallback failed', e);
+    }
+  }
+};
+
 export const createFallbackChain = (config: FallbackChainConfig): ModelProvider => {
   const state = createFallbackState(config);
 
@@ -211,7 +257,9 @@ export const createFallbackChain = (config: FallbackChainConfig): ModelProvider 
 
     shutdown: async () => {
       await Promise.all(
-        config.providers.map((provider) => provider.shutdown ? provider.shutdown() : Promise.resolve())
+        config.providers.map((provider) =>
+          provider.shutdown ? provider.shutdown() : Promise.resolve(),
+        ),
       );
     },
   };

@@ -208,7 +208,11 @@ export class SQLiteStore implements MemoryStore {
       throw new Error(`Rerank request failed: ${res.status}`);
     }
     const body = (await res.json()) as { scores: number[]; model: string };
-    const scored = docs.map((m, i) => ({ mem: m, score: body.scores?.[i] ?? 0, model: body.model }));
+    const scored = docs.map((m, i) => ({
+      mem: m,
+      score: body.scores?.[i] ?? 0,
+      model: body.model,
+    }));
     scored.sort((a, b) => b.score - a.score);
     // Emit outbox event with model id
     await this.writeOutboxEvent({

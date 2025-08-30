@@ -6,12 +6,9 @@
  * No stubs or placeholders - full implementation.
  */
 
-import { spawn } from 'child_process';
-import { access } from 'fs/promises';
-import path from 'path';
-import type { ModelProvider, GenerateOptions, GenerateResult } from '../lib/types.js';
-import { withTimeout, estimateTokens, sleep } from '../lib/utils.js';
 import { redactSecrets } from '../lib/secret-store.js';
+import type { GenerateOptions, GenerateResult, ModelProvider } from '../lib/types.js';
+import { estimateTokens, sleep, withTimeout } from '../lib/utils.js';
 
 export interface ThermalStatus {
   temperature: number;
@@ -34,11 +31,13 @@ export interface MLXProviderConfig {
   thermalThreshold?: number;
   memoryThreshold?: number;
   enableThermalMonitoring?: boolean;
-  pythonPath?: string;
+  gatewayUrl?: string; // Model Gateway base URL
   timeout?: number;
   maxConcurrency?: number;
   circuitBreakerThreshold?: number;
   circuitBreakerResetMs?: number;
+  httpRetries?: number;
+  httpBackoffMs?: number;
 }
 
 interface MLXState {
@@ -54,19 +53,21 @@ interface MLXState {
   cbOpenUntil?: number;
 }
 
-const DEFAULT_CONFIG: Required<MLXProviderConfig> = {
+const DEFAULT_CONFIG = {
   modelPath: '',
   maxTokens: 2048,
   temperature: 0.7,
   thermalThreshold: 85,
   memoryThreshold: 0.8,
   enableThermalMonitoring: true,
-  pythonPath: 'python3',
+  gatewayUrl: process.env.MODEL_GATEWAY_URL || 'http://localhost:8081',
   timeout: 30000,
   maxConcurrency: 2,
   circuitBreakerThreshold: 5,
   circuitBreakerResetMs: 30000,
-};
+  httpRetries: 2,
+  httpBackoffMs: 300,
+} as const;
 
 const createMLXState = (config: MLXProviderConfig): MLXState => ({
   config: { ...DEFAULT_CONFIG, ...config },
@@ -259,94 +260,51 @@ const executeMLXGeneration = async (
 ): Promise<GenerateResult> => {
   const startTime = Date.now();
   const adjustedOptions = adjustGenerationParams(options, state);
-  const python = state.config.pythonPath;
-  const unifiedScript = path.resolve(
-    path.dirname(new URL(import.meta.url).pathname),
-    '../../../../apps/cortex-py/src/mlx/mlx_unified.py',
-  );
-  const messages = JSON.stringify([{ role: 'user', content: prompt }]);
-
-  return new Promise((resolve, reject) => {
-    const args = [
-      messages,
-      '--model',
-      state.config.modelPath,
-      '--chat-mode',
-      '--max-tokens', String(adjustedOptions.maxTokens || 2048),
-      '--temperature', String(adjustedOptions.temperature ?? 0.7),
-      '--json-only',
-    ];
-    const ps = spawn(python, [unifiedScript, ...args], {
-      env: {
-        ...process.env,
-      },
-    });
-    let out = '';
-    let err = '';
-    ps.stdout?.on('data', (d) => (out += d.toString()));
-    ps.stderr?.on('data', (d) => (err += d.toString()));
-    ps.on('close', (code) => {
-      if (code !== 0) return reject(new Error(`MLX process failed: ${redactSecrets(err)}`));
-      try {
-        const data = JSON.parse(out.trim());
-        const text: string = data.content || data.text || '';
-        const latencyMs = Date.now() - startTime;
-        const usage = {
-          promptTokens: estimateTokens(prompt, 'mlx'),
-          completionTokens: estimateTokens(text, 'mlx'),
-          totalTokens: estimateTokens(prompt + text, 'mlx'),
-        };
-        resolve({ text, usage, latencyMs, provider: 'mlx' });
-      } catch (e) {
-        reject(new Error(`Failed to parse MLX response: ${redactSecrets(String(e))}`));
-      }
-    });
-    ps.on('error', (e) => reject(new Error(`Failed to spawn MLX process: ${e.message}`)));
+  const url = `${state.config.gatewayUrl!.replace(/\/$/, '')}/chat`;
+  const body = {
+    model: state.config.modelPath,
+    msgs: [{ role: 'user', content: prompt }],
+    max_tokens: Math.min(adjustedOptions.maxTokens || 2048, 4096),
+    temperature: adjustedOptions.temperature ?? 0.7,
+    // seed not yet supported by server schema; include only if your server accepts it
+  } as any;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
   });
-};
-
-const validateMLXInstallation = async (state: MLXState): Promise<void> => {
-  const testScript = `
-try:
-    import mlx.core as mx
-    import mlx_lm
-    print("MLX_AVAILABLE")
-except ImportError as e:
-    print(f"MLX_MISSING: {e}")
-`;
-
-  return new Promise((resolve, reject) => {
-    const process = spawn(state.config.pythonPath, ['-c', testScript]);
-    let output = '';
-
-    process.stdout?.on('data', (data) => {
-      output += data.toString();
-    });
-
-    process.on('close', (code) => {
-      if (output.includes('MLX_AVAILABLE')) {
-        resolve();
-      } else {
-        reject(new Error(`MLX not properly installed: ${output}`));
-      }
-    });
-
-    process.on('error', (error) => {
-      reject(new Error(`Failed to check MLX installation: ${error.message}`));
-    });
+  if (!res.ok) {
+    let problem: any = null;
+    try {
+      const text = await res.text();
+      problem = JSON.parse(text);
+    } catch {
+      // ignore parse error
+    }
+    const status = res.status;
+    const title = problem?.title || 'mlx_gateway_error';
+    const detail = problem?.detail || (problem ? JSON.stringify(problem) : '');
+    const msg = `MLX gateway error: ${status} ${title} ${detail}`.trim();
+    const error: any = new Error(redactSecrets(msg));
+    error.code = problem?.type || String(status);
+    error.status = status;
+    throw error;
+  }
+  const data = await res.json().catch((e) => {
+    throw new Error(`Failed to parse MLX gateway response: ${redactSecrets(String(e))}`);
   });
+  const text: string = data?.content || '';
+  const latencyMs = Date.now() - startTime;
+  const usage = {
+    promptTokens: estimateTokens(prompt, 'mlx'),
+    completionTokens: estimateTokens(text, 'mlx'),
+    totalTokens: estimateTokens(prompt + text, 'mlx'),
+  };
+  return { text, usage, latencyMs, provider: 'mlx' };
 };
 
 const initializeMLX = async (state: MLXState): Promise<void> => {
   if (state.isInitialized) return;
-
-  await validateMLXInstallation(state);
-
-  try {
-    await access(state.config.modelPath);
-  } catch {
-    throw new Error(`Model not found at path: ${state.config.modelPath}`);
-  }
 
   await updateSystemStatus(state);
   state.isInitialized = true;
@@ -392,14 +350,28 @@ const generate = async (
   state.requestCount++;
 
   try {
-    const result = await withTimeout(
-      executeMLXGeneration(prompt, options, state),
-      state.config.timeout,
-      'MLX generation timed out',
-    );
-    // success → reset failures
-    state.failures = 0;
-    return result;
+    let lastErr: any;
+    for (let attempt = 0; attempt <= state.config.httpRetries; attempt++) {
+      try {
+        const result = await withTimeout(
+          executeMLXGeneration(prompt, options, state),
+          state.config.timeout,
+          'MLX generation timed out',
+        );
+        state.failures = 0;
+        return result;
+      } catch (e: any) {
+        lastErr = e;
+        const status = typeof e?.status === 'number' ? e.status : undefined;
+        const retryable = !status || status >= 500;
+        if (attempt < state.config.httpRetries && retryable) {
+          await sleep(state.config.httpBackoffMs * (attempt + 1));
+          continue;
+        }
+        throw e;
+      }
+    }
+    throw lastErr;
   } catch (error) {
     state.failures++;
     if (state.failures >= state.config.circuitBreakerThreshold) {
@@ -434,20 +406,8 @@ export const createAutoMLXProvider = async (): Promise<ModelProvider> => {
     './models',
   ];
 
-  for (const path of commonPaths) {
-    try {
-      const expandedPath = path.replace('~', process.env.HOME || '');
-      await access(expandedPath);
-      return createMLXProvider({
-        modelPath: expandedPath,
-        enableThermalMonitoring: true,
-      });
-    } catch {
-      continue;
-    }
-  }
-
-  throw new Error('No MLX models found in common locations');
+  const expandedPath = commonPaths[0]!.replace('~', process.env.HOME || '');
+  return createMLXProvider({ modelPath: expandedPath, enableThermalMonitoring: true });
 };
 
 export const getMLXThermalStatus = async (): Promise<ThermalStatus> => checkThermalStatus();

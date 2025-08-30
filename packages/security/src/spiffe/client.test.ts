@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { SpiffeClient } from './client';
 import type { TrustDomainConfig } from '../types.js';
@@ -45,6 +44,5 @@ describe('SpiffeClient', () => {
     );
     expect(identity.spiffeId).toBe(mockResponse.spiffe_id);
     expect(identity.trustDomain).toBe(mockResponse.trust_domain);
-
   });
 });

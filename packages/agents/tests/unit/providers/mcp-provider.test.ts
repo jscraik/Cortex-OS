@@ -9,7 +9,9 @@ describe('MCP Provider', () => {
       callToolWithFallback: vi.fn(async () => ({ text: 'hello' })),
       discoverServers: vi.fn(async () => []),
       isConnected: vi.fn(async () => true),
-      listTools: vi.fn(async () => [{ name: 'text-generation', schema: { properties: { model: { enum: ['foo'] } } } }]),
+      listTools: vi.fn(async () => [
+        { name: 'text-generation', schema: { properties: { model: { enum: ['foo'] } } } },
+      ]),
     };
 
     const provider = createMCPProvider({ mcpClient: mcp, modelName: 'foo' });
@@ -25,7 +27,9 @@ describe('MCP Provider', () => {
       callToolWithFallback: vi.fn(),
       discoverServers: vi.fn(async () => []),
       isConnected: vi.fn(async () => true),
-      listTools: vi.fn(async () => [{ name: 'text-generation', schema: { properties: { model: { enum: ['a','b','c'] } } } }]),
+      listTools: vi.fn(async () => [
+        { name: 'text-generation', schema: { properties: { model: { enum: ['a', 'b', 'c'] } } } },
+      ]),
     };
 
     const providers = await createMCPProviders(mcp);
@@ -58,4 +62,3 @@ describe('MCP Provider', () => {
     await expect(provider.generate('x', {})).rejects.toThrow('Invalid response from MCP server');
   });
 });
-

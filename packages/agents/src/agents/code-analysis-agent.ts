@@ -8,19 +8,18 @@
 import { z } from 'zod';
 import type {
   Agent,
-  ModelProvider,
   EventBus,
-  MCPClient,
-  AgentDependencies,
   GenerateOptions,
+  MCPClient,
+  MemoryPolicy,
+  ModelProvider,
 } from '../lib/types.js';
-import type { MemoryPolicy } from '../lib/types.js';
 import {
+  estimateTokens,
   generateAgentId,
   generateTraceId,
-  estimateTokens,
-  withTimeout,
   sanitizeText,
+  withTimeout,
 } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
@@ -46,6 +45,8 @@ export const codeAnalysisInputSchema = z.object({
   severity: z.enum(['low', 'medium', 'high']).optional().default('medium'),
   includeMetrics: z.boolean().optional().default(true),
   includeSuggestions: z.boolean().optional().default(true),
+  seed: z.number().int().positive().optional(),
+  maxTokens: z.number().int().positive().max(4096).optional(),
 });
 
 export const codeAnalysisOutputSchema = z.object({
@@ -134,7 +135,7 @@ export const createCodeAnalysisAgent = (
       const startTime = Date.now();
 
       // Validate input
-      const validatedInput = validateSchema(codeAnalysisInputSchema, input);
+      const validatedInput = validateSchema<CodeAnalysisInput>(codeAnalysisInputSchema, input);
 
       // Emit agent started event
       config.eventBus.publish({
@@ -185,6 +186,8 @@ export const createCodeAnalysisAgent = (
             traceId,
             capability: 'code-analysis',
             error: error instanceof Error ? error.message : 'Unknown error',
+            errorCode: (error as any)?.code || undefined,
+            status: typeof (error as any)?.status === 'number' ? (error as any)?.status : undefined,
             metrics: {
               latencyMs: executionTime,
             },
@@ -221,9 +224,10 @@ const analyzeCode = async (
   // Generate options based on input
   const generateOptions: GenerateOptions = {
     temperature: 0.1, // Low temperature for consistent analysis
-    maxTokens: calculateMaxTokens(sourceCode, analysisType),
+    maxTokens: Math.min(calculateMaxTokens(sourceCode, analysisType), input.maxTokens ?? 4096),
     stop: ['```\n\n', '---END---'],
     systemPrompt: sanitizeText(buildSystemPrompt(language, analysisType, focus)),
+    seed: input.seed,
   };
 
   // Call the model provider
@@ -353,18 +357,7 @@ const parseAnalysisResponse = (
     parsedResponse = createFallbackAnalysisResponse(response.text, language, analysisType);
   }
 
-  // Back-compat: coerce suggestions array of strings to structured objects
-  if (
-    Array.isArray(parsedResponse.suggestions) &&
-    parsedResponse.suggestions.every((s: any) => typeof s === 'string')
-  ) {
-    parsedResponse.suggestions = parsedResponse.suggestions.map((msg: string) => ({
-      type: 'improvement' as const,
-      message: msg,
-      severity: 'low' as const,
-      category: 'maintainability' as const,
-    }));
-  }
+  // Legacy coercion removed: parsedResponse.suggestions must be structured objects
 
   // Ensure all required fields are present (merge defaults with partials)
   const complexity = parsedResponse.complexity || {};
@@ -376,15 +369,19 @@ const parseAnalysisResponse = (
     complexity: {
       cyclomatic: typeof complexity.cyclomatic === 'number' ? complexity.cyclomatic : 5,
       cognitive: typeof complexity.cognitive === 'number' ? complexity.cognitive : 3,
-      maintainability: (complexity.maintainability as any) || ('good' as const),
+      maintainability:
+        typeof complexity.maintainability === 'string'
+          ? complexity.maintainability
+          : ('good' as const),
     },
     security: {
       vulnerabilities: Array.isArray(security.vulnerabilities) ? security.vulnerabilities : [],
-      riskLevel: (security.riskLevel as any) || ('low' as const),
+      riskLevel: typeof security.riskLevel === 'string' ? security.riskLevel : ('low' as const),
     },
     performance: {
       bottlenecks: Array.isArray(performance.bottlenecks) ? performance.bottlenecks : [],
-      memoryUsage: (performance.memoryUsage as any) || ('low' as const),
+      memoryUsage:
+        typeof performance.memoryUsage === 'string' ? performance.memoryUsage : ('low' as const),
       algorithmicComplexity: performance.algorithmicComplexity,
     },
     confidence: typeof parsedResponse.confidence === 'number' ? parsedResponse.confidence : 0.85,

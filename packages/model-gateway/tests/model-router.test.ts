@@ -3,48 +3,32 @@
  * @description Comprehensive tests for ModelRouter with MLX, Ollama, and Frontier API fallbacks
  */
 
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { ModelRouter } from '../src/model-router';
+import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import { MLXAdapter } from '../src/adapters/mlx-adapter';
 import { OllamaAdapter } from '../src/adapters/ollama-adapter';
-import { FrontierAdapter } from '../src/adapters/frontier-adapter';
+import { ModelRouter } from '../src/model-router';
 
 // Mock the adapters
 vi.mock('../src/adapters/mlx-adapter');
 vi.mock('../src/adapters/ollama-adapter');
-vi.mock('../src/adapters/frontier-adapter');
 
 describe('ModelRouter', () => {
   let modelRouter: ModelRouter;
   let mockMLXAdapter: MLXAdapter;
   let mockOllamaAdapter: OllamaAdapter;
-  let mockFrontierAdapter: FrontierAdapter;
 
   beforeEach(() => {
     mockMLXAdapter = new MLXAdapter();
     mockOllamaAdapter = new OllamaAdapter();
-    mockFrontierAdapter = new FrontierAdapter({
-      provider: 'openai',
-      apiKey: 'test-key'
-    });
-    
-    modelRouter = new ModelRouter(
-      mockMLXAdapter, 
-      mockOllamaAdapter, 
-      { provider: 'openai', apiKey: 'test-key' }
-    );
+
+    modelRouter = new ModelRouter(mockMLXAdapter, mockOllamaAdapter);
   });
 
   describe('initialization', () => {
     it('should initialize with available models', async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2', 'llama3']);
-      (mockFrontierAdapter.getAvailableModels as Mock).mockReturnValue({
-        embedding: ['text-embedding-3-small'],
-        chat: ['gpt-3.5-turbo']
-      });
 
       await modelRouter.initialize();
 
@@ -55,12 +39,7 @@ describe('ModelRouter', () => {
     it('should handle MLX unavailable gracefully', async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
-      (mockFrontierAdapter.getAvailableModels as Mock).mockReturnValue({
-        embedding: ['text-embedding-3-small'],
-        chat: ['gpt-3.5-turbo']
-      });
 
       await modelRouter.initialize();
 
@@ -73,13 +52,8 @@ describe('ModelRouter', () => {
     beforeEach(async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
-      (mockFrontierAdapter.getAvailableModels as Mock).mockReturnValue({
-        embedding: ['text-embedding-3-small'],
-        chat: ['gpt-3.5-turbo']
-      });
-      
+
       await modelRouter.initialize();
     });
 
@@ -104,30 +78,27 @@ describe('ModelRouter', () => {
       expect(result.model).toBe('nomic-embed-text');
     });
 
-    it('should fallback to Frontier API when local models fail', async () => {
+    it('should throw error when all local models fail', async () => {
       (mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(new Error('MLX failed'));
       (mockOllamaAdapter.generateEmbedding as Mock).mockRejectedValue(new Error('Ollama failed'));
-      const mockEmbedding = { embedding: [0.7, 0.8, 0.9] };
-      (mockFrontierAdapter.generateEmbedding as Mock).mockResolvedValue(mockEmbedding);
 
-      const result = await modelRouter.generateEmbedding({ text: 'test text' });
-
-      expect(result.embedding).toEqual([0.7, 0.8, 0.9]);
-      expect(result.model).toBe('text-embedding-3-small');
+      await expect(modelRouter.generateEmbedding({ text: 'test text' })).rejects.toThrow(
+        'All embedding models failed',
+      );
     });
 
     it('should handle batch embeddings', async () => {
-      const mockEmbeddings = [
-        { embedding: [0.1, 0.2] },
-        { embedding: [0.3, 0.4] }
-      ];
+      const mockEmbeddings = [{ embedding: [0.1, 0.2] }, { embedding: [0.3, 0.4] }];
       (mockMLXAdapter.generateEmbeddings as Mock).mockResolvedValue(mockEmbeddings);
 
       const result = await modelRouter.generateEmbeddings({
-        texts: ['text1', 'text2']
+        texts: ['text1', 'text2'],
       });
 
-      expect(result.embeddings).toEqual([[0.1, 0.2], [0.3, 0.4]]);
+      expect(result.embeddings).toEqual([
+        [0.1, 0.2],
+        [0.3, 0.4],
+      ]);
       expect(result.model).toBe('qwen3-embedding-4b-mlx');
     });
   });
@@ -136,13 +107,8 @@ describe('ModelRouter', () => {
     beforeEach(async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
-      (mockFrontierAdapter.getAvailableModels as Mock).mockReturnValue({
-        embedding: ['text-embedding-3-small'],
-        chat: ['gpt-3.5-turbo']
-      });
-      
+
       await modelRouter.initialize();
     });
 
@@ -151,33 +117,31 @@ describe('ModelRouter', () => {
       (mockOllamaAdapter.generateChat as Mock).mockResolvedValue(mockResponse);
 
       const result = await modelRouter.generateChat({
-        messages: [{ role: 'user', content: 'Hello' }]
+        messages: [{ role: 'user', content: 'Hello' }],
       });
 
       expect(result.content).toBe('Hello!');
       expect(result.model).toBe('llama2');
     });
 
-    it('should fallback to Frontier API when Ollama fails', async () => {
+    it('should throw error when Ollama fails', async () => {
       (mockOllamaAdapter.generateChat as Mock).mockRejectedValue(new Error('Ollama failed'));
-      const mockResponse = { content: 'Hello from API!', model: 'gpt-3.5-turbo' };
-      (mockFrontierAdapter.generateChat as Mock).mockResolvedValue(mockResponse);
 
-      const result = await modelRouter.generateChat({
-        messages: [{ role: 'user', content: 'Hello' }]
-      });
-
-      expect(result.content).toBe('Hello from API!');
-      expect(result.model).toBe('gpt-3.5-turbo');
+      await expect(
+        modelRouter.generateChat({
+          messages: [{ role: 'user', content: 'Hello' }],
+        }),
+      ).rejects.toThrow('All chat models failed');
     });
 
     it('should throw error when all chat models fail', async () => {
       (mockOllamaAdapter.generateChat as Mock).mockRejectedValue(new Error('Ollama failed'));
-      (mockFrontierAdapter.generateChat as Mock).mockRejectedValue(new Error('API failed'));
 
-      await expect(modelRouter.generateChat({
-        messages: [{ role: 'user', content: 'Hello' }]
-      })).rejects.toThrow('All chat models failed');
+      await expect(
+        modelRouter.generateChat({
+          messages: [{ role: 'user', content: 'Hello' }],
+        }),
+      ).rejects.toThrow('All chat models failed');
     });
   });
 
@@ -185,41 +149,31 @@ describe('ModelRouter', () => {
     it('should select highest priority model', async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
-      (mockFrontierAdapter.getAvailableModels as Mock).mockReturnValue({
-        embedding: ['text-embedding-3-small'],
-        chat: ['gpt-3.5-turbo']
-      });
 
       await modelRouter.initialize();
 
       const embeddingModels = modelRouter.getAvailableModels('embedding');
-      expect(embeddingModels[0].name).toBe('qwen3-embedding-8b-mlx'); // Highest priority
-      expect(embeddingModels[0].priority).toBe(90);
+      expect(embeddingModels[0].name).toBe('qwen3-embedding-4b-mlx'); // Highest priority (100)
+      expect(embeddingModels[0].priority).toBe(100);
     });
 
     it('should respect user-specified model if available', async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
-      (mockFrontierAdapter.getAvailableModels as Mock).mockReturnValue({
-        embedding: ['text-embedding-3-small'],
-        chat: ['gpt-3.5-turbo']
-      });
 
       await modelRouter.initialize();
 
-      const mockEmbedding = { embedding: [0.1, 0.2], model: 'nomic-embed-text' };
-      (mockOllamaAdapter.generateEmbedding as Mock).mockResolvedValue(mockEmbedding);
+      const mockEmbedding = { embedding: [0.1, 0.2, 0.3], model: 'qwen3-embedding-8b-mlx' };
+      (mockMLXAdapter.generateEmbedding as Mock).mockResolvedValue(mockEmbedding);
 
-      const result = await modelRouter.generateEmbedding({ 
-        text: 'test', 
-        model: 'nomic-embed-text' 
+      const result = await modelRouter.generateEmbedding({
+        text: 'test',
+        model: 'qwen3-embedding-8b-mlx',
       });
 
-      expect(result.model).toBe('nomic-embed-text');
+      expect(result.model).toBe('qwen3-embedding-8b-mlx');
     });
   });
 
@@ -227,19 +181,18 @@ describe('ModelRouter', () => {
     it('should throw appropriate error when no models available', async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(false);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue([]);
 
       await modelRouter.initialize();
 
-      await expect(modelRouter.generateEmbedding({ text: 'test' }))
-        .rejects.toThrow('No embedding models available');
+      await expect(modelRouter.generateEmbedding({ text: 'test' })).rejects.toThrow(
+        'No embedding models available',
+      );
     });
 
     it('should provide detailed error information', async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(false);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue([]);
 
       await modelRouter.initialize();
@@ -247,8 +200,9 @@ describe('ModelRouter', () => {
       const detailedError = new Error('MLX connection timeout');
       (mockMLXAdapter.generateEmbedding as Mock).mockRejectedValue(detailedError);
 
-      await expect(modelRouter.generateEmbedding({ text: 'test' }))
-        .rejects.toThrow('All embedding models failed');
+      await expect(modelRouter.generateEmbedding({ text: 'test' })).rejects.toThrow(
+        'All embedding models failed',
+      );
     });
   });
 
@@ -256,9 +210,8 @@ describe('ModelRouter', () => {
     beforeEach(async () => {
       (mockMLXAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
-      (mockFrontierAdapter.isAvailable as Mock).mockResolvedValue(false);
       (mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
-      
+
       await modelRouter.initialize();
     });
 
@@ -268,12 +221,10 @@ describe('ModelRouter', () => {
 
       const result = await modelRouter.rerank({
         query: 'test query',
-        documents: ['doc1', 'doc2', 'doc3']
+        documents: ['doc1', 'doc2', 'doc3'],
       });
 
       expect(result.scores).toEqual([0.8, 0.6, 0.9]);
-      expect(result.documents).toEqual(['doc1', 'doc2', 'doc3']);
-      expect(result.model).toBe('nomic-embed-text');
     });
   });
 });

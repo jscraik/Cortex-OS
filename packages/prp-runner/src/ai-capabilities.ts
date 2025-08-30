@@ -199,7 +199,7 @@ export class AICoreCapabilities {
     // Step 2: Rerank if reranker is available
     let finalSources = searchResults;
     if (this.rerankerAdapter && searchResults.length > 0) {
-  const documentsToRerank = searchResults.map((r: { text: string }) => r.text);
+      const documentsToRerank = searchResults.map((r: { text: string }) => r.text);
       const rerankedResults = await this.rerankerAdapter.rerank(
         query,
         documentsToRerank,
@@ -207,7 +207,7 @@ export class AICoreCapabilities {
       );
 
       // Map reranked results back to search results
-  finalSources = rerankedResults.map((rr: { originalIndex: number; score: number }) => {
+      finalSources = rerankedResults.map((rr: { originalIndex: number; score: number }) => {
         const original = searchResults[rr.originalIndex];
         return {
           ...original,
@@ -217,7 +217,7 @@ export class AICoreCapabilities {
     }
 
     // Step 3: Construct context prompt
-  const contextTexts = finalSources.map((source: { text: string }) => source.text);
+    const contextTexts = finalSources.map((source: { text: string }) => source.text);
     const contextPrompt = this.buildRAGPrompt(query, contextTexts, systemPrompt);
 
     // Step 4: Generate answer using LLM
@@ -229,11 +229,13 @@ export class AICoreCapabilities {
     // Step 5: Return structured result
     return {
       answer,
-  sources: finalSources.map((source: { text: string; similarity: number; metadata?: Record<string, any> }) => ({
-        text: source.text,
-        similarity: source.similarity,
-        metadata: source.metadata,
-      })),
+      sources: finalSources.map(
+        (source: { text: string; similarity: number; metadata?: Record<string, any> }) => ({
+          text: source.text,
+          similarity: source.similarity,
+          metadata: source.metadata,
+        }),
+      ),
       prompt: contextPrompt,
       confidence: this.calculateConfidence(finalSources),
     };
@@ -419,11 +421,7 @@ export const createAICapabilities = (
   preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
   const env: any = (globalThis as any).process?.env ?? {};
-  const rerankerProvider = env.RERANKER_PROVIDER as
-    | 'transformers'
-    | 'local'
-    | 'mock'
-    | undefined;
+  const rerankerProvider = env.RERANKER_PROVIDER as 'transformers' | 'local' | 'mock' | undefined;
 
   const configs: Record<string, AICoreConfig> = {
     full: {

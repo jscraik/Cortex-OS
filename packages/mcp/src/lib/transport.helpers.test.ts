@@ -1,15 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { validateTransportConfig, validateMessage } from './transport.js';
+import { validateMessage } from './transport.js';
+import { parseTransportConfig } from './transport-schema.js';
 
-describe('validateTransportConfig', () => {
+describe('parseTransportConfig', () => {
   it('rejects dangerous stdio commands', () => {
-    expect(() =>
-      validateTransportConfig({ type: 'stdio', command: 'rm -rf /' } as any),
-    ).toThrow(/Unsafe command/);
+    expect(() => parseTransportConfig({ type: 'stdio', command: 'rm -rf /' } as any)).toThrow(
+      /Unsafe command/,
+    );
   });
 
   it('accepts http transport', () => {
-    const cfg = validateTransportConfig({ type: 'http', url: 'http://localhost' });
+    const cfg = parseTransportConfig({ type: 'http', url: 'http://localhost' });
     expect(cfg.type).toBe('http');
   });
 });
@@ -22,8 +23,6 @@ describe('validateMessage', () => {
   });
 
   it('passes valid messages', () => {
-    expect(() =>
-      validateMessage({ jsonrpc: '2.0', id: 1, method: 'test' }),
-    ).not.toThrow();
+    expect(() => validateMessage({ jsonrpc: '2.0', id: 1, method: 'test' })).not.toThrow();
   });
 });

@@ -25,18 +25,20 @@ export interface ModelConfig {
 export function getValidatedModelConfig(
   models: Record<string, ModelConfig>,
   modelName: string,
-  expectedType: string
+  expectedType: string,
 ): ModelConfig {
   const modelConfig = models[modelName];
-  
+
   if (!modelConfig) {
     throw new Error(`Model '${modelName}' not found in available models`);
   }
-  
+
   if (modelConfig.type !== expectedType) {
-    throw new Error(`Model '${modelName}' is type '${modelConfig.type}', expected '${expectedType}'`);
+    throw new Error(
+      `Model '${modelName}' is type '${modelConfig.type}', expected '${expectedType}'`,
+    );
   }
-  
+
   return modelConfig;
 }
 

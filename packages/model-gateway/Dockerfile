@@ -28,5 +28,5 @@ USER nodeusr
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
 ENTRYPOINT ["/usr/bin/tini","--"]
-CMD ["node","dist/server.js"]
+CMD ["node","src/server.js"]
 

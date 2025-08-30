@@ -3,10 +3,64 @@
  * MLX adapter for model gateway - interfaces with Python MLX embedding generator
  */
 
-import { spawn } from 'child_process';
 import path from 'path';
 import { z } from 'zod';
+import { runPython } from '../../../../libs/python/exec.js';
 import { estimateTokenCount } from '../lib/estimate-token-count.js';
+
+// Types for MLX model configurations (discriminated union)
+type MLXModelType = 'embedding' | 'reranking' | 'chat';
+interface MLXModelConfigBase {
+  path: string;
+  hf_path: string;
+  type: MLXModelType;
+  memory_gb: number;
+  context_length?: number;
+  max_tokens?: number;
+  capabilities?: string[];
+}
+interface EmbeddingModelConfig extends MLXModelConfigBase {
+  type: 'embedding';
+  dimensions: number;
+}
+interface RerankModelConfig extends MLXModelConfigBase {
+  type: 'reranking';
+}
+interface ChatModelConfig extends MLXModelConfigBase {
+  type: 'chat';
+}
+type MLXModelConfig = EmbeddingModelConfig | RerankModelConfig | ChatModelConfig;
+
+// Chat message types (avoid inline union types in signatures)
+type ChatRole = 'system' | 'user' | 'assistant';
+type ChatMessage = { role: ChatRole; content: string };
+
+// Deterministic helpers for test-mode mocks (avoid RNG for Sonar)
+function stableHash(input: string): number {
+  let h = 0;
+  for (let i = 0; i < input.length; i++) {
+    h = (h * 31 + input.charCodeAt(i)) | 0;
+  }
+  return h | 0;
+}
+function deterministicScore(query: string, idx: number): number {
+  const h = stableHash(query + ':' + String(idx));
+  const s = Math.sin(h * 12.9898 + idx * 78.233) * 43758.5453;
+  const frac = s - Math.floor(s);
+  return 0.1 + frac * 0.9; // [0.1, 1.0)
+}
+function buildMockEmbeddings(count: number, dims: number): number[][] {
+  const out: number[][] = new Array(count);
+  for (let t = 0; t < count; t++) {
+    const vec: number[] = new Array(dims);
+    for (let d = 0; d < dims; d++) {
+      const seed = t * 1000 + d;
+      vec[d] = (Math.sin(seed * 0.01) + Math.cos(seed * 0.007)) * 0.3;
+    }
+    out[t] = vec;
+  }
+  return out;
+}
 
 // Configuration paths - can be overridden via environment
 const HUGGINGFACE_CACHE =
@@ -15,7 +69,7 @@ const MLX_CACHE_DIR = process.env.MLX_CACHE_DIR || '/Volumes/ExternalSSD/ai-cach
 const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
 
 // MLX model configurations with configurable paths
-const MLX_MODELS = {
+const MLX_MODELS: Record<string, MLXModelConfig> = {
   // Embedding models from HuggingFace cache
   'qwen3-embedding-0.6b-mlx': {
     path: `${MODEL_BASE_PATH}/models--Qwen--Qwen3-Embedding-0.6B`,
@@ -172,7 +226,7 @@ export interface MLXAdapterApi {
   generateEmbedding(request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse>;
   generateEmbeddings(texts: string[], model?: string): Promise<MLXEmbeddingResponse[]>;
   generateChat(request: {
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+    messages: ChatMessage[];
     model?: string;
     max_tokens?: number;
     temperature?: number;
@@ -185,7 +239,7 @@ export interface MLXAdapterApi {
  * Factory to create an MLX adapter
  */
 export function createMLXAdapter(): MLXAdapterApi {
-  const pythonPath = process.env.PYTHON_PATH || 'python3';
+  const pythonPath = process.env.PYTHON_PATH || process.env.PYTHON_EXEC || 'python3';
   const embeddingScriptPath = path.resolve(
     path.dirname(new URL(import.meta.url).pathname),
     '../../../../apps/cortex-py/src/mlx/embedding_generator.py',
@@ -198,122 +252,179 @@ export function createMLXAdapter(): MLXAdapterApi {
   const executePythonScript = (args: string[], useUnified = false): Promise<string> => {
     // Mock Python execution in test environment
     if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+      // Small helpers to keep complexity low
+      const findModelArg = (argv: string[]): string | null => {
+        for (let i = 0; i < argv.length - 1; i++) {
+          if (argv[i] === '--model') return argv[i + 1] || null;
+        }
+        return null;
+      };
+      const findDocumentsIndex = (argv: string[]): number => {
+        for (let i = 1; i < argv.length; i++) {
+          const a = argv[i];
+          if (a && !a.startsWith('-')) return i;
+        }
+        return -1;
+      };
+      const extractTextArgs = (argv: string[], modelToken: string | null): string[] => {
+        const texts: string[] = [];
+        for (const a of argv) {
+          if (a && !a.startsWith('-') && a !== '--json-only') {
+            if (!modelToken || a !== modelToken) texts.push(a);
+          }
+        }
+        return texts;
+      };
+
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           try {
-            // Handle chat mode
-            if (args.includes('--chat-mode')) {
+            const isChat = args.includes('--chat-mode');
+            const isRerank = args.includes('--rerank-mode');
+            const model = findModelArg(args);
+
+            if (isChat) {
               const prompt = args[0] || 'Hello';
-              const modelIndex = args.findIndex((arg) => arg === '--model');
-              const model = modelIndex !== -1 ? args[modelIndex + 1] : 'qwen3-coder-30b-mlx';
               const mockChatResponse = {
                 content: `Mock response to: ${prompt.substring(0, 50)}...`,
-                model: model,
+                model: model || 'qwen3-coder-30b-mlx',
               };
               resolve(JSON.stringify(mockChatResponse));
               return;
             }
 
-            // Handle rerank mode
-            if (args.includes('--rerank-mode')) {
-              const documentsIndex = args.findIndex(
-                (arg) => !arg.startsWith('--') && arg !== args[0],
-              );
+            if (isRerank) {
+              const documentsIndex = findDocumentsIndex(args);
               if (documentsIndex === -1) {
-                return reject(new Error('No documents provided for reranking'));
+                reject(new Error('No documents provided for reranking'));
+                return;
               }
-
+              const query = args[0] || '';
               const documents = JSON.parse(args[documentsIndex]);
-              const mockRerank = {
-                scores: documents.map((_: unknown, i: number) => ({
-                  index: i,
-                  score: Math.max(0.1, Math.random()), // Ensure positive scores
-                })),
-              };
+              const scores: Array<{ index: number; score: number }> = [];
+              for (let i = 0; i < documents.length; i++) {
+                scores.push({ index: i, score: deterministicScore(query, i) });
+              }
+              const mockRerank = { scores };
               resolve(JSON.stringify(mockRerank));
               return;
             }
 
-            // Handle embedding mode
-            const textArgs = args.filter((arg) => !arg.startsWith('--') && arg !== '--json-only');
-            const modelIndex = args.findIndex((arg) => arg === '--model');
-            const model = modelIndex !== -1 ? args[modelIndex + 1] : null;
-
-            // Remove model name from text arguments if present
-            const actualTexts = model ? textArgs.filter((text) => text !== model) : textArgs;
+            // Embedding mode
+            const actualTexts = extractTextArgs(args, model);
             const numTexts = actualTexts.length;
-
             if (numTexts === 0) {
-              return reject(new Error('No text provided for embedding'));
+              reject(new Error('No text provided for embedding'));
+              return;
             }
-
-            // Generate consistent embeddings based on model
-            const dimensions = model?.includes('8b') ? 1536 : model?.includes('4b') ? 1536 : 1536;
-
-            const mockEmbeddings = Array(numTexts)
-              .fill(0)
-              .map((_, textIndex) =>
-                Array(dimensions)
-                  .fill(0)
-                  .map((_, dimIndex) => {
-                    // Generate deterministic but realistic embeddings
-                    const seed = textIndex * 1000 + dimIndex;
-                    return (Math.sin(seed * 0.01) + Math.cos(seed * 0.007)) * 0.3;
-                  }),
-              );
-
-            resolve(JSON.stringify(numTexts === 1 ? mockEmbeddings : mockEmbeddings));
+            // Fixed dimensions for deterministic mock
+            const dimensions = 1536;
+            const mockEmbeddings = buildMockEmbeddings(numTexts, dimensions);
+            resolve(JSON.stringify(mockEmbeddings));
           } catch (error) {
-            reject(error);
+            reject(error instanceof Error ? error : new Error(String(error)));
           }
         }, 5); // Minimal delay for test performance
       });
     }
 
-    return new Promise((resolve, reject) => {
-      const script = useUnified ? unifiedScriptPath : embeddingScriptPath;
-      const pythonProcess = spawn(pythonPath, [script, ...args], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          PYTHONPATH: path.resolve(process.cwd(), 'apps/cortex-py/src'),
-          HF_HOME: HUGGINGFACE_CACHE,
-          TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
-          MLX_CACHE_DIR: MLX_CACHE_DIR,
-        },
-      });
+    const script = useUnified ? unifiedScriptPath : embeddingScriptPath;
 
-      let stdout = '';
-      let stderr = '';
+    // Keep fast test-mode mocks
+    if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+      // reuse existing mock branch to avoid changing test behavior
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          try {
+            const isChat = args.includes('--chat-mode');
+            const isRerank = args.includes('--rerank-mode');
+            const findModelArg = (argv: string[]): string | null => {
+              for (let i = 0; i < argv.length - 1; i++) {
+                if (argv[i] === '--model') return argv[i + 1] || null;
+              }
+              return null;
+            };
+            const findDocumentsIndex = (argv: string[]): number => {
+              for (let i = 1; i < argv.length; i++) {
+                const a = argv[i];
+                if (a && !a.startsWith('-')) return i;
+              }
+              return -1;
+            };
+            const extractTextArgs = (argv: string[], modelToken: string | null): string[] => {
+              const texts: string[] = [];
+              for (const a of argv) {
+                if (a && !a.startsWith('-') && a !== '--json-only') {
+                  if (!modelToken || a !== modelToken) texts.push(a);
+                }
+              }
+              return texts;
+            };
 
-      pythonProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
+            if (isChat) {
+              const prompt = args[0] || 'Hello';
+              const mockChatResponse = {
+                content: `Mock response to: ${prompt.substring(0, 50)}...`,
+                model: findModelArg(args) || 'qwen3-coder-30b-mlx',
+              };
+              resolve(JSON.stringify(mockChatResponse));
+              return;
+            }
 
-      pythonProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
+            if (isRerank) {
+              const documentsIndex = findDocumentsIndex(args);
+              if (documentsIndex === -1) {
+                reject(new Error('No documents provided for reranking'));
+                return;
+              }
+              const query = args[0] || '';
+              const documents = JSON.parse(args[documentsIndex]);
+              const scores: Array<{ index: number; score: number }> = [];
+              for (let i = 0; i < documents.length; i++) {
+                scores.push({ index: i, score: deterministicScore(query, i) });
+              }
+              const mockRerank = { scores };
+              resolve(JSON.stringify(mockRerank));
+              return;
+            }
 
-      pythonProcess.on('close', (code) => {
-        if (code === 0) {
-          resolve(stdout.trim());
-        } else {
-          reject(new Error(`Python script failed with code ${code}: ${stderr}`));
-        }
+            const model = findModelArg(args);
+            const actualTexts = extractTextArgs(args, model);
+            const numTexts = actualTexts.length;
+            if (numTexts === 0) {
+              reject(new Error('No text provided for embedding'));
+              return;
+            }
+            const dimensions = 1536;
+            const mockEmbeddings = buildMockEmbeddings(numTexts, dimensions);
+            resolve(JSON.stringify(mockEmbeddings));
+          } catch (error) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        }, 5);
       });
+    }
 
-      pythonProcess.on('error', (error) => {
-        reject(error);
-      });
+    // Delegate to shared wrapper which centralizes python executable resolution and env handling
+    return runPython(script, args, {
+      python: pythonPath,
+      setModulePath: path.resolve(process.cwd(), 'apps/cortex-py/src'),
+      envOverrides: {
+        HF_HOME: HUGGINGFACE_CACHE,
+        TRANSFORMERS_CACHE: HUGGINGFACE_CACHE,
+        MLX_CACHE_DIR: MLX_CACHE_DIR,
+      },
     });
   };
 
   const generateEmbedding = async (request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> => {
-    const modelName = (request.model as MLXModelName) || 'qwen3-embedding-4b-mlx';
+    const modelName = request.model || 'qwen3-embedding-4b-mlx';
     const modelConfig = MLX_MODELS[modelName];
-
     if (!modelConfig) {
       throw new Error(`Unsupported MLX model: ${modelName}`);
+    }
+    if (modelConfig.type !== 'embedding') {
+      throw new Error(`Model ${modelName} is not an embedding model`);
     }
 
     try {
@@ -342,7 +453,7 @@ export function createMLXAdapter(): MLXAdapterApi {
     texts: string[],
     model?: string,
   ): Promise<MLXEmbeddingResponse[]> => {
-    const modelName = (model as MLXModelName) || 'qwen3-embedding-4b-mlx';
+    const modelName = model || 'qwen3-embedding-4b-mlx';
 
     try {
       const result = await executePythonScript([...texts, '--model', modelName, '--json-only']);
@@ -354,6 +465,9 @@ export function createMLXAdapter(): MLXAdapterApi {
       }
 
       const modelConfig = MLX_MODELS[modelName];
+      if (!modelConfig || modelConfig.type !== 'embedding') {
+        throw new Error(`Model ${modelName} is not an embedding model`);
+      }
       const totalTokens = texts.reduce((sum, text) => sum + estimateTokenCount(text), 0);
 
       return data.map((embedding: number[], index: number) =>
@@ -380,7 +494,7 @@ export function createMLXAdapter(): MLXAdapterApi {
     documents: string[],
     model?: string,
   ): Promise<{ scores: number[] }> => {
-    const modelName = (model as MLXModelName) || 'qwen3-reranker-4b-mlx';
+    const modelName = model || 'qwen3-reranker-4b-mlx';
     const args = [
       query,
       JSON.stringify(documents),
@@ -419,12 +533,12 @@ export function createMLXAdapter(): MLXAdapterApi {
   };
 
   const generateChat = async (request: {
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+    messages: ChatMessage[];
     model?: string;
     max_tokens?: number;
     temperature?: number;
   }): Promise<{ content: string; model: string }> => {
-    const modelName = (request.model as MLXModelName) || 'qwen3-coder-30b-mlx';
+    const modelName = request.model || 'qwen3-coder-30b-mlx';
     const modelConfig = MLX_MODELS[modelName];
 
     if (!modelConfig || modelConfig.type !== 'chat') {
@@ -491,7 +605,7 @@ export class MLXAdapter implements MLXAdapterApi {
     return this.impl.generateEmbeddings(texts, model);
   }
   generateChat(request: {
-    messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+    messages: ChatMessage[];
     model?: string;
     max_tokens?: number;
     temperature?: number;

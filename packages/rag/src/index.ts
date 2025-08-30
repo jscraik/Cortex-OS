@@ -1,63 +1,24 @@
-export type Chunk = {
-  id: string;
-  text: string;
-  source?: string;
-  meta?: Record<string, unknown>;
-};
+import { z } from 'zod';
+import { AgentConfigSchema, RAGQuerySchema } from '@cortex-os/contracts';
+import { createInMemoryStore, createStdOutput, createJsonOutput } from '@cortex-os/lib';
+import { StructuredError } from '@cortex-os/lib';
 
-export interface Embedder {
-  embed(texts: string[]): Promise<number[][]>;
-}
+const InputSchema = z.object({ config: AgentConfigSchema, query: RAGQuerySchema, json: z.boolean().optional() });
+export type RAGInput = z.infer<typeof InputSchema>;
 
-export interface Store {
-  upsert(chunks: (Chunk & { embedding?: number[] })[]): Promise<void>;
-  query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;
-}
-
-export interface Pipeline {
-  ingest(chunks: Chunk[]): Promise<void>;
-}
-
-export interface RAGOptions {
-  embedder: Embedder;
-  store: Store;
-  maxContextTokens?: number;
-}
-
-export class RAGPipeline implements Pipeline {
-  constructor(private readonly opts: RAGOptions) {}
-
-  async ingest(chunks: Chunk[]): Promise<void> {
-    const texts = chunks.map((c) => c.text);
-    const embeddings = await this.opts.embedder.embed(texts);
-    if (embeddings.length !== chunks.length) {
-      throw new Error(
-        `Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`,
-      );
-    }
-    const toStore = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
-    await this.opts.store.upsert(toStore);
+export async function handleRAG(input: unknown): Promise<string> {
+  const parsed = InputSchema.safeParse(input);
+  if (!parsed.success) {
+    const err = new StructuredError('INVALID_INPUT', 'Invalid RAG input', { issues: parsed.error.issues });
+    return createJsonOutput({ error: err.toJSON() });
   }
-
-  async retrieve(query: string, k = 5): Promise<Array<Chunk & { score?: number }>> {
-    const [embedding] = await this.opts.embedder.embed([query]);
-    return this.opts.store.query(embedding, k);
-  }
+  const { config, query, json } = parsed.data;
+  const memory = createInMemoryStore({ maxItems: config.memory.maxItems, maxBytes: config.memory.maxBytes });
+  // Placeholder retrieval result (actual MLX integration in Python package)
+  const results = Array.from({ length: query.topK }).map((_, i) => ({ id: i + 1, score: 1 - i * 0.1 }));
+  memory.set('lastQuery', query);
+  if (json) return createJsonOutput({ results });
+  return createStdOutput(`RAG results count=${results.length}`);
 }
 
-// Re-export policy and dispatcher for consumers needing planning/dispatch layer
-export * from './chunkers';
-export * as Policy from './policy';
-
-// Export reranking interfaces and implementations
-export * from './pipeline/qwen3-reranker';
-
-// Export generation interfaces and implementations
-export * from './generation/multi-model';
-
-// Export enhanced RAG pipeline factory and helpers
-export * from './enhanced-pipeline';
-export * from './lib';
-
-// Export embedding implementations
-export * from './embed/qwen3';
+export default { handleRAG };

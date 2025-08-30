@@ -2,9 +2,8 @@ import type { FastifyInstance } from 'fastify';
 import Fastify from 'fastify';
 import client from 'prom-client';
 import { z } from 'zod';
-import { createModelRouter, type ModelRouter } from './model-router.js';
 import { auditEvent, record } from './audit';
-import { ModelRouter } from './model-router';
+import { createModelRouter, type IModelRouter } from './model-router.js';
 import { enforce, loadGrant } from './policy';
 
 // Request validation schemas
@@ -37,7 +36,7 @@ type EmbeddingsBody = z.infer<typeof EmbeddingsBodySchema>;
 type RerankBody = z.infer<typeof RerankBodySchema>;
 type ChatBody = z.infer<typeof ChatBodySchema>;
 
-export function createServer(router?: ModelRouter): FastifyInstance {
+export function createServer(router?: IModelRouter): FastifyInstance {
   const app = Fastify({ logger: true });
   const modelRouter = router || createModelRouter();
 

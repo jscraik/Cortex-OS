@@ -1,0 +1,58 @@
+# Multi-stage production Dockerfile for MCP Server
+# Built for industrial standards and optimized performance
+
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@latest
+
+# Dependencies stage
+FROM base AS deps
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile --production
+
+# Build stage
+FROM base AS builder
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm build
+RUN pnpm prune --production
+
+# Production stage
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 mcpgroup
+RUN adduser --system --uid 1001 mcpuser
+
+# Copy built application
+COPY --from=builder --chown=mcpuser:mcpgroup /app/dist ./dist
+COPY --from=builder --chown=mcpuser:mcpgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=mcpuser:mcpgroup /app/package.json ./package.json
+
+# Security: Remove package managers
+RUN rm -rf /usr/local/lib/node_modules/npm
+RUN rm -rf /usr/local/bin/npm
+RUN rm -rf /usr/local/bin/npx
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "console.log('MCP Server Health OK')" || exit 1
+
+# Switch to non-root user
+USER mcpuser
+
+# Expose port (configurable via environment)
+EXPOSE ${PORT:-3000}
+
+# Resource limits for production
+ENV NODE_OPTIONS="--max-old-space-size=512"
+ENV NODE_ENV="production"
+
+# Start the server
+CMD ["node", "dist/index.js"]

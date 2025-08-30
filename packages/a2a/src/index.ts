@@ -1,16 +1,58 @@
 /**
- * A2A (Agent-to-Agent) Communication Framework
- * Main entry point for A2A functionality
+ * A2A (Agent-to-Agent) Protocol Implementation
+ * 
+ * This package implements the official A2A protocol specification with:
+ * - JSON-RPC 2.0 compliant message handling
+ * - Standard A2A methods (tasks/send, tasks/get, tasks/cancel)
+ * - Proper error codes and responses
+ * - Task lifecycle management
+ * 
+ * Usage:
+ *   import { handleA2A } from '@cortex-os/a2a';
+ *   const response = await handleA2A(jsonRpcRequest);
  */
 
-// Re-export contracts (including Envelope)
-export * from '@cortex-os/a2a-contracts';
+// Main handler
+export { handleA2A } from './rpc-handler.js';
 
-// Re-export core functionality (excluding conflicting Envelope)
-export * from '@cortex-os/a2a-core';
+// Re-export core types and schemas
+export type {
+  TaskId,
+  TaskStatus,
+  TaskSendParams,
+  TaskGetParams,
+  TaskCancelParams,
+  TaskResult,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  A2AErrorCode,
+} from './protocol.js';
 
-// Explicitly re-export Envelope from contracts to resolve ambiguity
-export { Envelope } from '@cortex-os/a2a-contracts';
+export {
+  TaskIdSchema,
+  TaskStatusSchema,
+  TaskSendParamsSchema,
+  TaskGetParamsSchema,
+  TaskCancelParamsSchema,
+  TaskResultSchema,
+  JsonRpcRequestSchema,
+  JsonRpcResponseSchema,
+  A2A_ERROR_CODES,
+} from './protocol.js';
 
-// Re-export transport functionality
-export * from '@cortex-os/a2a-transport';
+// Re-export task management
+export type { Task, TaskStore, TaskProcessor } from './task-manager.js';
+export { 
+  TaskManager,
+  InMemoryTaskStore,
+  EchoTaskProcessor,
+  createTaskManager,
+} from './task-manager.js';
+
+// Re-export RPC handling
+export type { RpcHandler } from './rpc-handler.js';
+export { A2ARpcHandler, createA2ARpcHandler } from './rpc-handler.js';
+
+// Default export for convenience  
+import { handleA2A } from './rpc-handler.js';
+export default { handleA2A };

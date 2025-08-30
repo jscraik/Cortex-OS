@@ -1,4 +1,4 @@
-import { ModelRouter } from './model-router';
+import type { IModelRouter as ModelRouter } from './model-router';
 
 export function embeddingsHandler(router: ModelRouter, body: { model?: string; texts: string[] }) {
   const { texts, model } = body;

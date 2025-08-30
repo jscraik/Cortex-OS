@@ -15,6 +15,7 @@ import { ragEval } from './commands/rag/eval.js';
 import { ragIngest } from './commands/rag/ingest.js';
 import { ragQuery } from './commands/rag/query.js';
 import { simlabBench } from './commands/simlab/bench.js';
+import { evalGate } from './commands/eval/gate.js';
 import { simlabList } from './commands/simlab/list.js';
 import { simlabReport } from './commands/simlab/report.js';
 import { simlabRun } from './commands/simlab/run.js';
@@ -53,4 +54,8 @@ program.addCommand(simlab);
 const ctl = new Command('ctl');
 ctl.addCommand(ctlCheck);
 program.addCommand(ctl);
+
+const evalCmd = new Command('eval');
+evalCmd.addCommand(evalGate);
+program.addCommand(evalCmd);
 program.parseAsync(process.argv);

@@ -56,18 +56,18 @@ export function redactSensitiveData(data: any): any {
 
 /**
  * Validate API key format.
- * 
+ *
  * By default, validates keys starting with "sk", "pk", or "ref", followed by a dash or underscore,
  * and at least 10 alphanumeric characters. This matches some common providers (e.g. Stripe, Plaid),
  * but may not cover all valid API key formats. You can provide a custom regex to support other providers.
- * 
+ *
  * @param key - The API key to validate.
  * @param regex - Optional. A custom regex to validate the API key format.
  * @returns true if the key matches the regex, false otherwise.
  */
 export function validateApiKey(
   key: string,
-  regex: RegExp = /^(sk|pk|ref)[-_][A-Za-z0-9]{10,}$/
+  regex: RegExp = /^(sk|pk|ref)[-_][A-Za-z0-9]{10,}$/,
 ): boolean {
   const schema = z.string().regex(regex);
   return schema.safeParse(key).success;
@@ -86,11 +86,24 @@ export function validateUrlSecurity(url: string): boolean {
   try {
     const u = new URL(url);
     const isHttps = u.protocol === 'https:';
-    const isLocalhost =
-      u.hostname === 'localhost' || u.hostname.startsWith('127.');
+    
+    // Comprehensive localhost and private network detection
+    const hostname = u.hostname.toLowerCase();
+    const isLocalhost = [
+      'localhost', '127.0.0.1', '::1', '0.0.0.0'
+    ].includes(hostname) || 
+    /^127\./.test(hostname) || 
+    /^192\.168\./.test(hostname) ||
+    /^10\./.test(hostname) ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname) ||
+    hostname.includes('.local') ||
+    hostname.includes('.internal');
+    
     const allowedProtocol = isHttps || (u.protocol === 'http:' && isLocalhost);
     const hasAdminPath = u.pathname.toLowerCase().includes('/admin');
-    return allowedProtocol && !hasAdminPath;
+    const hasMetadataPath = u.pathname.toLowerCase().includes('/metadata');
+    
+    return allowedProtocol && !hasAdminPath && !hasMetadataPath;
   } catch {
     return false;
   }

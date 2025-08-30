@@ -21,7 +21,10 @@ const DEFAULT_OPTIONS: GenerateOptions = {
   maxTokens: 2048,
 };
 
-type MCPTextGenResult = { text: string; usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } };
+type MCPTextGenResult = {
+  text: string;
+  usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
+};
 
 const generateViaMCP = async (
   prompt: string,
@@ -46,19 +49,26 @@ const generateViaMCP = async (
       throw new Error('Invalid response from MCP server');
     }
 
+    const usage = {
+      promptTokens: result.usage?.promptTokens ?? estimateTokens(prompt),
+      completionTokens: result.usage?.completionTokens ?? estimateTokens(result.text),
+      totalTokens: result.usage?.totalTokens ?? estimateTokens(prompt + result.text),
+    };
     return {
       text: result.text,
-      usage: result.usage || {
-        promptTokens: estimateTokens(prompt),
-        completionTokens: estimateTokens(result.text),
-        totalTokens: estimateTokens(prompt + result.text),
-      },
+      usage,
       latencyMs: endTime - startTime,
       provider: `mcp:${config.modelName}`,
     };
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Unknown error';
-    throw new Error(`MCP generation failed: ${redactSecrets(msg)}`);
+    const anyErr: any = error;
+    const status = anyErr?.status || anyErr?.response?.status;
+    const title = anyErr?.title || anyErr?.response?.statusText || 'mcp_error';
+    const detail = anyErr?.detail || anyErr?.message || '';
+    const err = new Error(`MCP generation failed: ${redactSecrets(`${title} ${detail}`)}`);
+    (err as any).code = anyErr?.type || (status ? String(status) : 'mcp_error');
+    (err as any).status = status;
+    throw err;
   }
 };
 
@@ -86,7 +96,7 @@ export const createMCPProviders = async (mcpClient: MCPClient): Promise<ModelPro
 
     const modelOptions = (textGenTools[0] as any).schema?.properties?.model?.enum || ['default'];
 
-    return modelOptions.map((model) =>
+    return modelOptions.map((model: string) =>
       createMCPProvider({
         mcpClient,
         modelName: model,

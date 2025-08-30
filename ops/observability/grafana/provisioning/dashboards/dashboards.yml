@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: cortex-os-dashboards
+    orgId: 1
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/cortex
+      foldersFromFilesStructure: true

@@ -54,5 +54,4 @@ export async function ingestFiles(params: IngestFilesParams): Promise<void> {
 
   const worker = createWorker({ pipeline, queue, chunkSize, overlap });
   await runWorkers(worker, concurrency, uniqueFiles.length);
-
 }

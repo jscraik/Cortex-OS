@@ -26,11 +26,11 @@ describe('BuildNode', () => {
         description: 'Test project for validation',
         requirements: ['Build API endpoints', 'Add frontend UI', 'Ensure security'],
         constraints: [],
-        successCriteria: []
+        successCriteria: [],
       },
       evidence: [],
       validationResults: {},
-      outputs: {}
+      outputs: {},
     };
 
     // Reset all mocks
@@ -46,9 +46,11 @@ describe('BuildNode', () => {
         return false;
       });
 
-      (fs.readFileSync as Mock).mockReturnValue(JSON.stringify({
-        scripts: { build: 'tsc', test: 'vitest' }
-      }));
+      (fs.readFileSync as Mock).mockReturnValue(
+        JSON.stringify({
+          scripts: { build: 'tsc', test: 'vitest' },
+        }),
+      );
 
       // Mock successful build and test
       const mockExec = vi.fn();
@@ -76,9 +78,11 @@ describe('BuildNode', () => {
         return false;
       });
 
-      (fs.readFileSync as Mock).mockReturnValue(JSON.stringify({
-        scripts: { build: 'tsc', test: 'vitest' }
-      }));
+      (fs.readFileSync as Mock).mockReturnValue(
+        JSON.stringify({
+          scripts: { build: 'tsc', test: 'vitest' },
+        }),
+      );
 
       // Mock failed build
       const mockExec = vi.fn();
@@ -93,7 +97,9 @@ describe('BuildNode', () => {
       const result = await buildNode.execute(mockState);
 
       expect(result.validationResults.build?.passed).toBe(false);
-      expect(result.validationResults.build?.blockers).toContain('Backend compilation or tests failed');
+      expect(result.validationResults.build?.blockers).toContain(
+        'Backend compilation or tests failed',
+      );
     });
 
     it('should handle Python projects with pytest', async () => {
@@ -122,7 +128,7 @@ describe('BuildNode', () => {
       const result = await buildNode.execute(mockState);
 
       expect(result.validationResults.build?.passed).toBe(true);
-      expect(result.evidence.some(e => e.source === 'backend_validation')).toBe(true);
+      expect(result.evidence.some((e) => e.source === 'backend_validation')).toBe(true);
     });
 
     it('should skip backend validation when no backend requirements', async () => {
@@ -130,15 +136,15 @@ describe('BuildNode', () => {
         ...mockState,
         blueprint: {
           ...mockState.blueprint,
-          requirements: ['Add responsive design', 'Improve accessibility']
-        }
+          requirements: ['Add responsive design', 'Improve accessibility'],
+        },
       };
 
       const result = await buildNode.execute(frontendOnlyState);
 
-      const backendEvidence = result.evidence.find(e => e.source === 'backend_validation');
+      const backendEvidence = result.evidence.find((e) => e.source === 'backend_validation');
       const backendDetails = JSON.parse(backendEvidence?.content || '{}');
-      
+
       expect(backendDetails.details.type).toBe('frontend-only');
     });
   });
@@ -151,29 +157,33 @@ describe('BuildNode', () => {
           if (cmd.includes('which semgrep')) {
             callback(null, '/usr/bin/semgrep', '');
           } else if (cmd.includes('semgrep --config=auto')) {
-            callback(null, JSON.stringify({
-              results: [
-                {
-                  check_id: 'security.hardcoded-secret',
-                  path: 'src/config.js',
-                  start: { line: 15, col: 10 },
-                  extra: {
-                    severity: 'ERROR',
-                    message: 'Hardcoded API key detected',
-                    metadata: { confidence: 'HIGH' }
-                  }
-                }
-              ]
-            }), '');
+            callback(
+              null,
+              JSON.stringify({
+                results: [
+                  {
+                    check_id: 'security.hardcoded-secret',
+                    path: 'src/config.js',
+                    start: { line: 15, col: 10 },
+                    extra: {
+                      severity: 'ERROR',
+                      message: 'Hardcoded API key detected',
+                      metadata: { confidence: 'HIGH' },
+                    },
+                  },
+                ],
+              }),
+              '',
+            );
           }
         }
       });
 
       const result = await buildNode.execute(mockState);
 
-      const securityEvidence = result.evidence.find(e => e.source === 'security_scanner');
+      const securityEvidence = result.evidence.find((e) => e.source === 'security_scanner');
       const securityDetails = JSON.parse(securityEvidence?.content || '{}');
-      
+
       expect(securityDetails.details.tools).toContain('Semgrep');
       expect(securityDetails.details.vulnerabilities).toHaveLength(1);
       expect(securityDetails.details.vulnerabilities[0].severity).toBe('critical');
@@ -181,9 +191,11 @@ describe('BuildNode', () => {
 
     it('should use ESLint security plugin when available', async () => {
       (fs.existsSync as Mock).mockReturnValue(true);
-      (fs.readFileSync as Mock).mockReturnValue(JSON.stringify({
-        devDependencies: { 'eslint-plugin-security': '^1.0.0' }
-      }));
+      (fs.readFileSync as Mock).mockReturnValue(
+        JSON.stringify({
+          devDependencies: { 'eslint-plugin-security': '^1.0.0' },
+        }),
+      );
 
       const mockExec = vi.fn();
       (exec as any).mockImplementation((cmd: string, options: any, callback?: Function) => {
@@ -191,29 +203,33 @@ describe('BuildNode', () => {
           if (cmd.includes('which semgrep')) {
             callback(new Error('not found'), '', '');
           } else if (cmd.includes('npx eslint')) {
-            callback(null, JSON.stringify([
-              {
-                filePath: '/project/src/app.js',
-                messages: [
-                  {
-                    ruleId: 'security/detect-object-injection',
-                    severity: 2,
-                    message: 'Potential object injection',
-                    line: 25,
-                    column: 10
-                  }
-                ]
-              }
-            ]), '');
+            callback(
+              null,
+              JSON.stringify([
+                {
+                  filePath: '/project/src/app.js',
+                  messages: [
+                    {
+                      ruleId: 'security/detect-object-injection',
+                      severity: 2,
+                      message: 'Potential object injection',
+                      line: 25,
+                      column: 10,
+                    },
+                  ],
+                },
+              ]),
+              '',
+            );
           }
         }
       });
 
       const result = await buildNode.execute(mockState);
 
-      const securityEvidence = result.evidence.find(e => e.source === 'security_scanner');
+      const securityEvidence = result.evidence.find((e) => e.source === 'security_scanner');
       const securityDetails = JSON.parse(securityEvidence?.content || '{}');
-      
+
       expect(securityDetails.details.tools).toContain('ESLint Security');
       expect(securityDetails.majors).toBeGreaterThanOrEqual(0);
     });
@@ -231,9 +247,9 @@ describe('BuildNode', () => {
 
       const result = await buildNode.execute(mockState);
 
-      const securityEvidence = result.evidence.find(e => e.source === 'security_scanner');
+      const securityEvidence = result.evidence.find((e) => e.source === 'security_scanner');
       const securityDetails = JSON.parse(securityEvidence?.content || '{}');
-      
+
       expect(securityDetails.details.tools).toContain('Basic Checks');
     });
   });
@@ -245,17 +261,19 @@ describe('BuildNode', () => {
 
     it('should run Lighthouse when available', async () => {
       (fs.existsSync as Mock).mockReturnValue(true);
-      (fs.readFileSync as Mock).mockReturnValue(JSON.stringify({
-        scripts: { dev: 'vite' },
-        dependencies: { react: '^18.0.0' }
-      }));
+      (fs.readFileSync as Mock).mockReturnValue(
+        JSON.stringify({
+          scripts: { dev: 'vite' },
+          dependencies: { react: '^18.0.0' },
+        }),
+      );
 
       const mockExec = vi.fn();
       const mockSpawn = vi.fn().mockReturnValue({
         kill: vi.fn(),
         stdout: { on: vi.fn() },
         stderr: { on: vi.fn() },
-        on: vi.fn()
+        on: vi.fn(),
       });
 
       (exec as any).mockImplementation((cmd: string, options: any, callback?: Function) => {
@@ -263,16 +281,20 @@ describe('BuildNode', () => {
           if (cmd.includes('which lighthouse')) {
             callback(null, '/usr/bin/lighthouse', '');
           } else if (cmd.includes('lighthouse http://localhost:3000')) {
-            callback(null, JSON.stringify({
-              lhr: {
-                categories: {
-                  performance: { score: 0.94 },
-                  accessibility: { score: 0.96 },
-                  'best-practices': { score: 0.92 },
-                  seo: { score: 0.98 }
-                }
-              }
-            }), '');
+            callback(
+              null,
+              JSON.stringify({
+                lhr: {
+                  categories: {
+                    performance: { score: 0.94 },
+                    accessibility: { score: 0.96 },
+                    'best-practices': { score: 0.92 },
+                    seo: { score: 0.98 },
+                  },
+                },
+              }),
+              '',
+            );
           }
         }
       });
@@ -280,12 +302,12 @@ describe('BuildNode', () => {
       // Mock import for spawn
       vi.doMock('child_process', () => ({
         exec: exec,
-        spawn: mockSpawn
+        spawn: mockSpawn,
       }));
 
       const result = await buildNode.execute(mockState);
 
-      const frontendEvidence = result.evidence.find(e => e.source === 'frontend_validation');
+      const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
       if (frontendEvidence) {
         const frontendDetails = JSON.parse(frontendEvidence.content);
         expect(frontendDetails.lighthouse).toBeGreaterThanOrEqual(85);
@@ -294,13 +316,15 @@ describe('BuildNode', () => {
 
     it('should detect frontend framework correctly', async () => {
       (fs.existsSync as Mock).mockReturnValue(true);
-      (fs.readFileSync as Mock).mockReturnValue(JSON.stringify({
-        dependencies: { react: '^18.0.0', next: '^13.0.0' }
-      }));
+      (fs.readFileSync as Mock).mockReturnValue(
+        JSON.stringify({
+          dependencies: { react: '^18.0.0', next: '^13.0.0' },
+        }),
+      );
 
       const result = await buildNode.execute(mockState);
 
-      const frontendEvidence = result.evidence.find(e => e.source === 'frontend_validation');
+      const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
       if (frontendEvidence) {
         const frontendDetails = JSON.parse(frontendEvidence.content);
         expect(frontendDetails.details.projectType).toBe('react');
@@ -324,7 +348,7 @@ describe('BuildNode', () => {
 
       const result = await buildNode.execute(mockState);
 
-      const frontendEvidence = result.evidence.find(e => e.source === 'frontend_validation');
+      const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
       if (frontendEvidence) {
         const frontendDetails = JSON.parse(frontendEvidence.content);
         expect(frontendDetails.details.axe.violations).toBeGreaterThan(0);
@@ -336,13 +360,13 @@ describe('BuildNode', () => {
         ...mockState,
         blueprint: {
           ...mockState.blueprint,
-          requirements: ['Build REST API', 'Add database layer']
-        }
+          requirements: ['Build REST API', 'Add database layer'],
+        },
       };
 
       const result = await buildNode.execute(backendOnlyState);
 
-      const frontendEvidence = result.evidence.find(e => e.source === 'frontend_validation');
+      const frontendEvidence = result.evidence.find((e) => e.source === 'frontend_validation');
       if (frontendEvidence) {
         const frontendDetails = JSON.parse(frontendEvidence.content);
         expect(frontendDetails.details.type).toBe('backend-only');
@@ -355,15 +379,15 @@ describe('BuildNode', () => {
       const apiState = {
         ...mockState,
         outputs: {
-          'api-check': { hasSchema: true }
-        }
+          'api-check': { hasSchema: true },
+        },
       };
 
       const result = await buildNode.execute(apiState);
 
-      const apiEvidence = result.evidence.find(e => e.source === 'api_schema_validation');
+      const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
       const apiDetails = JSON.parse(apiEvidence?.content || '{}');
-      
+
       expect(apiDetails.passed).toBe(true);
       expect(apiDetails.details.schemaFormat).toBe('OpenAPI 3.0');
     });
@@ -373,18 +397,18 @@ describe('BuildNode', () => {
         ...mockState,
         blueprint: {
           ...mockState.blueprint,
-          requirements: ['Build API endpoints', 'Create REST API']
+          requirements: ['Build API endpoints', 'Create REST API'],
         },
         outputs: {
-          'api-check': { hasSchema: false }
-        }
+          'api-check': { hasSchema: false },
+        },
       };
 
       const result = await buildNode.execute(apiState);
 
-      const apiEvidence = result.evidence.find(e => e.source === 'api_schema_validation');
+      const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
       const apiDetails = JSON.parse(apiEvidence?.content || '{}');
-      
+
       expect(apiDetails.passed).toBe(false);
       expect(apiDetails.details.schemaFormat).toBe('missing');
     });
@@ -394,15 +418,15 @@ describe('BuildNode', () => {
         ...mockState,
         blueprint: {
           ...mockState.blueprint,
-          requirements: ['Add static website', 'Improve documentation']
-        }
+          requirements: ['Add static website', 'Improve documentation'],
+        },
       };
 
       const result = await buildNode.execute(nonApiState);
 
-      const apiEvidence = result.evidence.find(e => e.source === 'api_schema_validation');
+      const apiEvidence = result.evidence.find((e) => e.source === 'api_schema_validation');
       const apiDetails = JSON.parse(apiEvidence?.content || '{}');
-      
+
       expect(apiDetails.passed).toBe(true);
       expect(apiDetails.details.validation).toBe('skipped');
     });
@@ -412,7 +436,7 @@ describe('BuildNode', () => {
     it('should validate documentation completeness', async () => {
       const result = await buildNode.execute(mockState);
 
-      const docsEvidence = result.evidence.find(e => e.source === 'documentation_validation');
+      const docsEvidence = result.evidence.find((e) => e.source === 'documentation_validation');
       expect(docsEvidence).toBeDefined();
 
       const docsDetails = JSON.parse(docsEvidence?.content || '{}');
@@ -426,15 +450,15 @@ describe('BuildNode', () => {
         ...mockState,
         blueprint: {
           ...mockState.blueprint,
-          requirements: ['Add comprehensive documentation', 'Include usage examples']
-        }
+          requirements: ['Add comprehensive documentation', 'Include usage examples'],
+        },
       };
 
       const result = await buildNode.execute(docsRequiredState);
 
-      const docsEvidence = result.evidence.find(e => e.source === 'documentation_validation');
+      const docsEvidence = result.evidence.find((e) => e.source === 'documentation_validation');
       const docsDetails = JSON.parse(docsEvidence?.content || '{}');
-      
+
       expect(docsDetails.details.examples).toBe(true);
     });
   });
@@ -443,9 +467,11 @@ describe('BuildNode', () => {
     it('should pass when all gates are satisfied', async () => {
       // Mock successful validations
       (fs.existsSync as Mock).mockReturnValue(true);
-      (fs.readFileSync as Mock).mockReturnValue(JSON.stringify({
-        scripts: { build: 'tsc', test: 'vitest' }
-      }));
+      (fs.readFileSync as Mock).mockReturnValue(
+        JSON.stringify({
+          scripts: { build: 'tsc', test: 'vitest' },
+        }),
+      );
 
       const mockExec = vi.fn();
       (exec as any).mockImplementation((cmd: string, options: any, callback?: Function) => {
@@ -467,14 +493,18 @@ describe('BuildNode', () => {
       (exec as any).mockImplementation((cmd: string, options: any, callback?: Function) => {
         if (callback) {
           if (cmd.includes('semgrep')) {
-            callback(null, JSON.stringify({
-              results: [
-                {
-                  check_id: 'security.sql-injection',
-                  extra: { severity: 'ERROR', message: 'SQL injection found' }
-                }
-              ]
-            }), '');
+            callback(
+              null,
+              JSON.stringify({
+                results: [
+                  {
+                    check_id: 'security.sql-injection',
+                    extra: { severity: 'ERROR', message: 'SQL injection found' },
+                  },
+                ],
+              }),
+              '',
+            );
           } else {
             callback(null, 'success', '');
           }

@@ -3,7 +3,6 @@
  * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
 
-
 import { spawn } from 'child_process';
 
 import { tmpdir } from 'os';
@@ -39,7 +38,6 @@ export class Qwen3Embedder implements Embedder {
     this.maxTokens = options.maxTokens || 512;
     this.batchSize = options.batchSize || 32;
     this.useGPU = options.useGPU ?? false;
-
   }
 
   async embed(texts: string[]): Promise<number[][]> {
@@ -60,12 +58,9 @@ export class Qwen3Embedder implements Embedder {
     return this.embedWithModel(texts);
   }
 
-
   private async embedWithModel(texts: string[]): Promise<number[][]> {
     return new Promise((resolve, reject) => {
-
       const python = spawn('python3', ['-c', this.getPythonScript(modelPath, texts, this.useGPU)], {
-
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir, HF_HOME: this.cacheDir },
       });
@@ -95,19 +90,15 @@ export class Qwen3Embedder implements Embedder {
         }
       });
 
-
       python.on('error', (err) => {
         clearTimeout(timer);
         reject(err);
       });
-
     });
     return result.embeddings;
   }
 
-
   private getPythonScript(modelPath: string, texts: string[], useGPU: boolean): string {
-
     return `
 import json
 import sys
@@ -161,7 +152,6 @@ except Exception as e:
     print(f"Error: {str(e)}", file=sys.stderr)
     sys.exit(1)
 `;
-
   }
 
   async close(): Promise<void> {

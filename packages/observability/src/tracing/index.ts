@@ -37,10 +37,10 @@ export async function withSpan<T>(
     runId?: ULID;
     kind?: SpanKind;
     attributes?: Record<string, string | number | boolean>;
-  }
+  },
 ): Promise<T> {
   const runId = options?.runId || generateRunId();
-  
+
   return tracer.startActiveSpan(
     name,
     {
@@ -71,7 +71,7 @@ export async function withSpan<T>(
       } finally {
         span.end();
       }
-    }
+    },
   );
 }
 

@@ -10,7 +10,7 @@ import path from 'path';
 import { FaissClient, FaissClientError, createFaissClient, checkFaissService } from './client';
 
 // Mock gRPC for testing
-vi.mock("@grpc/grpc-js", () => ({
+vi.mock('@grpc/grpc-js', () => ({
   credentials: {
     createInsecure: vi.fn(() => ({})),
   },
@@ -36,7 +36,7 @@ vi.mock("@grpc/grpc-js", () => ({
   })),
 }));
 
-vi.mock("@grpc/proto-loader", () => ({
+vi.mock('@grpc/proto-loader', () => ({
   loadSync: vi.fn(() => ({})),
 }));
 
@@ -114,15 +114,10 @@ interface SearchFilters {
   source_excludes?: string[];
 }
 
-describe("FAISS gRPC Protocol Buffer Tests", () => {
-  const protoPath = path.join(__dirname, "faissd.proto");
-  const generatedDir = path.join(__dirname, "generated");
-  const nodeModulesProtobuf = path.join(
-    process.cwd(),
-    "node_modules",
-    "@grpc",
-    "proto-loader",
-  );
+describe('FAISS gRPC Protocol Buffer Tests', () => {
+  const protoPath = path.join(__dirname, 'faissd.proto');
+  const generatedDir = path.join(__dirname, 'generated');
+  const nodeModulesProtobuf = path.join(process.cwd(), 'node_modules', '@grpc', 'proto-loader');
 
   beforeAll(() => {
     // Ensure generated directory exists
@@ -138,8 +133,8 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
     }
   });
 
-  describe("Protocol Buffer File Validation", () => {
-    it("should have valid .proto file syntax", () => {
+  describe('Protocol Buffer File Validation', () => {
+    it('should have valid .proto file syntax', () => {
       expect(existsSync(protoPath)).toBe(true);
 
       const fs = require('fs');
@@ -147,11 +142,11 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
 
       // Basic syntax validation
       expect(protoContent).toContain('syntax = "proto3";');
-      expect(protoContent).toContain("package faissd;");
-      expect(protoContent).not.toContain("syntax error");
+      expect(protoContent).toContain('package faissd;');
+      expect(protoContent).not.toContain('syntax error');
     });
 
-    it("should contain required service definition", () => {
+    it('should contain required service definition', () => {
       // Read and validate proto file content
       const fs = require('fs');
       const protoContent = fs.readFileSync(protoPath, 'utf8');
@@ -176,14 +171,14 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
     });
   });
 
-  describe("Message Structure Validation", () => {
-    it("should validate BuildRequest structure", () => {
+  describe('Message Structure Validation', () => {
+    it('should validate BuildRequest structure', () => {
       const validBuildRequest: BuildRequest = {
-        corpus_hash: "sha256:abc123def456",
-        embed_model: "text-embedding-3-small",
+        corpus_hash: 'sha256:abc123def456',
+        embed_model: 'text-embedding-3-small',
         documents: [
           {
-            doc_id: "doc1",
+            doc_id: 'doc1',
             embedding: new Array(1536).fill(0.1),
             content: 'Test document content',
             metadata: { type: 'test' },
@@ -206,9 +201,9 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       expect(validBuildRequest.config.dimension).toBe(1536);
     });
 
-    it("should validate SearchRequest structure", () => {
+    it('should validate SearchRequest structure', () => {
       const validSearchRequest: SearchRequest = {
-        snapshot_id: "sha256:snapshot123",
+        snapshot_id: 'sha256:snapshot123',
         query_vector: new Array(1536).fill(0.1),
         top_k: 10,
         filters: {
@@ -223,9 +218,9 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       expect(validSearchRequest.top_k).toBe(10);
     });
 
-    it("should validate DocumentEmbedding vector dimensions", () => {
+    it('should validate DocumentEmbedding vector dimensions', () => {
       const invalidDoc: DocumentEmbedding = {
-        doc_id: "doc1",
+        doc_id: 'doc1',
         embedding: [0.1, 0.2], // Too short for typical embeddings
         content: 'Test content',
       };
@@ -234,7 +229,7 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       expect(invalidDoc.embedding.length).toBeLessThan(1536);
 
       const validDoc: DocumentEmbedding = {
-        doc_id: "doc1",
+        doc_id: 'doc1',
         embedding: new Array(1536).fill(0.1),
         content: 'Test content',
       };
@@ -243,8 +238,8 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
     });
   });
 
-  describe("Content-Addressed Storage Validation", () => {
-    it("should generate deterministic corpus hash", () => {
+  describe('Content-Addressed Storage Validation', () => {
+    it('should generate deterministic corpus hash', () => {
       const documents1: DocumentEmbedding[] = [
         { doc_id: 'doc1', embedding: [0.1, 0.2, 0.3] },
         { doc_id: 'doc2', embedding: [0.4, 0.5, 0.6] },
@@ -257,11 +252,9 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
 
       // Mock hash function (actual implementation will use crypto)
       const mockHash = (docs: DocumentEmbedding[]) => {
-        const content = JSON.stringify(
-          docs.sort((a, b) => a.doc_id.localeCompare(b.doc_id)),
-        );
+        const content = JSON.stringify(docs.sort((a, b) => a.doc_id.localeCompare(b.doc_id)));
         // This will fail until actual hash implementation
-        return "mock-hash-" + content.length;
+        return 'mock-hash-' + content.length;
       };
 
       const hash1 = mockHash(documents1);
@@ -270,9 +263,9 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       expect(hash1).toBe(hash2);
     });
 
-    it("should validate snapshot ID format", () => {
-      const validSnapshotId = "sha256:1234567890abcdef1234567890abcdef12345678";
-      const invalidSnapshotId = "invalid-format";
+    it('should validate snapshot ID format', () => {
+      const validSnapshotId = 'sha256:1234567890abcdef1234567890abcdef12345678';
+      const invalidSnapshotId = 'invalid-format';
 
       const sha256Pattern = /^sha256:[a-f0-9]{40,64}$/;
 
@@ -281,10 +274,10 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
     });
   });
 
-  describe("Error Handling Validation", () => {
-    it("should handle missing required fields", () => {
+  describe('Error Handling Validation', () => {
+    it('should handle missing required fields', () => {
       const incompleteBuildRequest = {
-        corpus_hash: "sha256:abc123",
+        corpus_hash: 'sha256:abc123',
         // Missing embed_model, documents, config
       } as Partial<BuildRequest>;
 
@@ -293,7 +286,7 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       expect(incompleteBuildRequest.config).toBeUndefined();
     });
 
-    it("should handle dimension mismatch", () => {
+    it('should handle dimension mismatch', () => {
       const config: IndexConfig = {
         dimension: 1536,
         index_type: 'IndexFlatIP',
@@ -306,21 +299,21 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       expect(isValid).toBe(false);
     });
 
-    it("should handle invalid search parameters", () => {
+    it('should handle invalid search parameters', () => {
       const invalidSearchRequest: Partial<SearchRequest> = {
-        snapshot_id: "",
+        snapshot_id: '',
         query_vector: [],
         top_k: 0,
       };
 
-      expect(invalidSearchRequest.snapshot_id).toBe("");
+      expect(invalidSearchRequest.snapshot_id).toBe('');
       expect(invalidSearchRequest.query_vector).toHaveLength(0);
       expect(invalidSearchRequest.top_k).toBe(0);
     });
   });
 
-  describe("Performance Constraints", () => {
-    it("should validate reasonable vector dimensions", () => {
+  describe('Performance Constraints', () => {
+    it('should validate reasonable vector dimensions', () => {
       const configs = [
         { dimension: 384, model: 'sentence-transformers' },
         { dimension: 768, model: 'bert-base' },
@@ -334,7 +327,7 @@ describe("FAISS gRPC Protocol Buffer Tests", () => {
       });
     });
 
-    it("should validate reasonable top_k values", () => {
+    it('should validate reasonable top_k values', () => {
       const validTopK = [1, 5, 10, 50, 100];
       const invalidTopK = [0, -1, 10000];
 

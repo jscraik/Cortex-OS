@@ -1,6 +1,7 @@
 import type { EventBus } from '../lib/types.js';
-import type { MemoryStore, Memory } from '@cortex-os/memories';
+import type { MemoryStore } from '../lib/types.js';
 import { randomUUID } from 'crypto';
+import { redactPII } from '../lib/utils.js';
 
 const DEFAULT_TYPES = [
   'agent.started',
@@ -19,6 +20,7 @@ export type OutboxOptions = {
   ttl?: string; // ISO-8601 duration (e.g., 'PT1H')
   maxItemBytes?: number; // guardrail for payload size
   tagPrefix?: string; // optional tag prefix
+  redactPII?: boolean; // redact PII before persisting
 };
 
 /**
@@ -63,10 +65,10 @@ export const wireOutbox = async (
           });
         }
 
-        const mem: Memory = {
+        const mem = {
           id: randomUUID(),
           kind: 'event',
-          text,
+          text: opts.redactPII === false ? text : redactPII(text),
           vector: undefined,
           tags: [namespace, `${tagPrefix}:${t}`],
           ttl,
@@ -94,14 +96,14 @@ export const wireOutbox = async (
  * Not intended for production use; prefer @cortex-os/memories adapters.
  */
 export class LocalInMemoryStore implements MemoryStore {
-  private data = new Map<string, Memory>();
+  private data = new Map<string, any>();
 
-  async upsert(m: Memory): Promise<Memory> {
+  async upsert(m: any): Promise<any> {
     this.data.set(m.id, m);
     return m;
   }
 
-  async get(id: string): Promise<Memory | null> {
+  async get(id: string): Promise<any | null> {
     return this.data.get(id) ?? null;
   }
 
@@ -109,12 +111,12 @@ export class LocalInMemoryStore implements MemoryStore {
     this.data.delete(id);
   }
 
-  async searchByText(): Promise<Memory[]> {
+  async searchByText(): Promise<any[]> {
     // naive return-all for demo/testing
     return Array.from(this.data.values());
   }
 
-  async searchByVector(): Promise<Memory[]> {
+  async searchByVector(): Promise<any[]> {
     return [];
   }
 

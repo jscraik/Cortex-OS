@@ -8,7 +8,6 @@
  * @maintainer @jamiescottcraik
  */
 
-
 import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
 import express from 'express';
 
@@ -59,7 +58,6 @@ export class ASBRAIMcpIntegration {
    * Start HTTP server for MCP tool access
    */
   async startHTTPServer(port = 8081): Promise<void> {
-
     const app = express();
 
     app.use(express.json());
@@ -140,7 +138,6 @@ export class ASBRAIMcpIntegration {
       }
     });
 
-
     await new Promise<void>((resolve) => {
       this.httpServer = app.listen(port, '127.0.0.1', () => {
         console.log(`🚀 ASBR AI MCP server running on http://127.0.0.1:${port}`);
@@ -153,10 +150,8 @@ export class ASBRAIMcpIntegration {
       });
     });
 
-
     // Auto-register after server starts
     setTimeout(() => this.autoRegister(), 1000);
-
   }
 
   /**

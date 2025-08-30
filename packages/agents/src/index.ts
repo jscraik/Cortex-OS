@@ -98,8 +98,8 @@ export {
   createAutoMLXProvider,
   getMLXThermalStatus,
   getMLXMemoryStatus,
-} from './providers/mlx-provider.js';
-export type { MLXProviderConfig, ThermalStatus, MemoryStatus } from './providers/mlx-provider.js';
+} from './providers/mlx-provider/index.js';
+export type { MLXProviderConfig, ThermalStatus, MemoryStatus } from './providers/mlx-provider/index.js';
 
 export {
   createFallbackChain,
@@ -117,12 +117,8 @@ export {
   createEventPublisher,
   createEventSubscriber,
 } from './lib/event-bus.js';
-export type {
-  CloudEvent,
-  EventBusConfig,
-  EventSubscriber,
-  EventSubscription,
-} from './lib/event-bus.js';
+export type { CloudEvent, EventBusConfig, EventSubscriber } from './lib/event-bus.js';
+export type { EventSubscription } from './lib/types.js';
 
 // Agents - Single-focused implementations
 export { createCodeAnalysisAgent } from './agents/code-analysis-agent.js';

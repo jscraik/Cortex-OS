@@ -105,4 +105,3 @@ Repeat for `mcp-registry`. Ensure DNS for your hosts points to your ingress cont
 - For staging/testing, use the Let’s Encrypt staging server (`acme-staging-v02`) and separate ClusterIssuer.
 - Some ingress controllers support automatic TLS via annotations; consult your controller docs if you prefer that flow.
 - cert-manager requires HTTP-01 ACME challenge reachability. Confirm firewall/DNS rules.
-

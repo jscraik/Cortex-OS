@@ -229,14 +229,24 @@ describe('AgentOrchestrator', () => {
     it('should execute a security task', async () => {
       // Mock provider to return security agent JSON
       vi.mocked(mockProvider.generate).mockResolvedValueOnce({
-        text: JSON.stringify({ decision: 'allow', risk: 'low', categories: [], findings: [], labels: {}, confidence: 0.9 }),
+        text: JSON.stringify({
+          decision: 'allow',
+          risk: 'low',
+          categories: [],
+          findings: [],
+          labels: {},
+          confidence: 0.9,
+        }),
         provider: 'test-provider',
         usage: { promptTokens: 20, completionTokens: 10, totalTokens: 30 },
         latencyMs: 50,
       });
 
       const workflow = WorkflowBuilder.create('security-workflow', 'Security Workflow')
-        .addSecurity({ content: 'Hello', phase: 'prompt', context: { toolsAllowed: [] } }, { id: 'sec' })
+        .addSecurity(
+          { content: 'Hello', phase: 'prompt', context: { toolsAllowed: [] } },
+          { id: 'sec' },
+        )
         .build();
 
       const result = await orchestrator.executeWorkflow(workflow);
