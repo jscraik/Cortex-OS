@@ -39,6 +39,10 @@
       "description": "Directory for Claude Code conversation logs",
       "path": "logs/",
       "createEmpty": true
+    },
+    "models": {
+      "description": "Model cards and run notes (no binaries)",
+      "path": "models/"
     }
   },
   "files": [
@@ -269,12 +273,24 @@
       "destination": "tests/e2e/workflows.test.js",
       "description": "End-to-end workflow tests",
       "category": "test"
+    },
+    {
+      "source": "models/README.md",
+      "destination": "models/README.md",
+      "description": "Model templates overview and cache hints",
+      "category": "documentation"
+    },
+    {
+      "source": "models/smollm-135m-mlx.md",
+      "destination": "models/smollm-135m-mlx.md",
+      "description": "SmolLM-135M (MLX) model card and safe-run notes",
+      "category": "documentation"
     }
   ],
   "categories": {
     "documentation": {
       "description": "User guides and best practices documentation",
-      "count": 4
+      "count": 6
     },
     "command": {
       "description": "Main Claude Code slash commands",

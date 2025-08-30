@@ -240,6 +240,15 @@ dependency-analysis-report.json
 .mlx_cache/
 models/cache/
 
+# HuggingFace / MLX model directories (large artifacts and symlinks)
+# Ignore model dirs like models--<owner>--<repo> and hub/ snapshots
+models--*/
+**/models--*/
+**/hub/models--*/
+**/snapshots/**
+**/ai-cache/**
+models/**
+
 # Vector databases and AI data stores
 # Ignore user shell config
 .zshrc

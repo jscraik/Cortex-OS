@@ -3,7 +3,8 @@
  * Add Ref MCP server using the universal CLI handler
  */
 
-import { universalCliHandler } from '/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/mcp/src/index.js';
+// Use local handler to respect domain boundaries
+import { universalCliHandler } from '../universal-cli-handler.js';
 
 async function addRefServer() {
   console.log('🔗 Adding Ref MCP Server');

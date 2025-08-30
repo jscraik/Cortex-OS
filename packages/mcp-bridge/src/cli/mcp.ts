@@ -6,7 +6,8 @@
 /* eslint-disable no-console */
 
 import { Command } from 'commander';
-import { readAll as readRegistry } from '@cortex-os/mcp-registry/src/fs-store.js';
+// Respect AGENTS.md boundaries: use package export, not internal src path
+import { readAll as readRegistry } from '@cortex-os/mcp-registry/fs-store';
 
 const program = new Command();
 

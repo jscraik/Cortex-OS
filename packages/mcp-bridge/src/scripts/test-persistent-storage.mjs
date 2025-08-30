@@ -3,7 +3,7 @@
  * Test script for persistent MCP storage
  */
 
-import { universalCliHandler } from '/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/mcp/src/index.js';
+import { universalCliHandler } from '../universal-cli-handler.js';
 
 async function testPersistentStorage() {
   console.log('🧪 Testing Persistent MCP Storage Implementation');

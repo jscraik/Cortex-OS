@@ -1,14 +1,10 @@
-import {
-  CallToolRequestSchema,
-  ErrorCode,
-  ListToolsRequestSchema,
-  McpError,
-  createMcpServer,
-} from '@modelcontextprotocol/sdk';
+import { Server as McpServer } from '@modelcontextprotocol/sdk/server';
+import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types';
 import { z } from 'zod';
 import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const ROOT = process.env.CORTEX_MCP_ROOT;
 const TOKEN = process.env.CORTEX_MCP_TOKEN;
@@ -148,29 +144,21 @@ const tools = [
   },
 ];
 
-export const app = express();
+export const app: import('express').Express = express();
 app.use(express.json());
 
-export const mcpServer = createMcpServer({
-  transport: 'sse',
-  app,
-  mcpOptions: {
-    serverInfo: {
-      name: 'cortex-mcp',
-      version: '0.1.1',
-    },
-    capabilities: {
-      tools: {},
-    },
-  },
-});
+export const mcpServer = new McpServer(
+  { name: 'cortex-mcp', version: '0.1.1' },
+  { capabilities: { tools: {} } },
+);
 
 mcpServer.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: tools.map((tool) => ({
       name: tool.name,
       description: tool.description,
-      inputSchema: tool.inputSchema.openapi(''),
+      // Provide JSON Schema for input as required by MCP SDK
+      inputSchema: zodToJsonSchema(tool.inputSchema, tool.name),
     })),
   };
 });

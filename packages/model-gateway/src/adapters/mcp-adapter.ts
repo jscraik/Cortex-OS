@@ -3,8 +3,9 @@
  * Supports embeddings, chat, and reranking by delegating to MCP tools
  */
 import type { EmbeddingRequest, EmbeddingBatchRequest, ChatRequest, RerankRequest } from '../model-router.js';
-import { createEnhancedClient } from '@cortex-os/mcp-core/src/client.js';
-import type { ServerInfo } from '@cortex-os/mcp-core/src/contracts.js';
+// Respect AGENTS.md boundaries: import from public exports
+import { createEnhancedClient } from '@cortex-os/mcp-core/client';
+import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
 
 export interface MCPAdapter {
   isAvailable(): Promise<boolean>;
@@ -92,4 +93,3 @@ export function createMCPAdapter(): MCPAdapter {
     },
   };
 }
-

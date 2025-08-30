@@ -106,7 +106,12 @@ export async function handleRequest(ctx: ServerContext, req: McpRequest) {
       return {
         jsonrpc: '2.0' as const,
         id: parsed.id,
-        error: { code: -32603, message: 'Method not supported' },
+        error: { code: -32603, message: 'Unknown method' },
       } as const;
   }
+}
+
+// Compatibility wrapper expected by legacy tests
+export function createMcpServer(config: { name: string; version: string }) {
+  return new McpServer(config);
 }
