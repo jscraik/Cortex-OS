@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CompositeEmbedder } from '../src/adapters/embedder.composite.js';
+import { NoopEmbedder } from '../src/adapters/embedder.noop.js';
 
 class MockEmbedder {
   name() {
@@ -23,5 +24,14 @@ describe('CompositeEmbedder', () => {
     const comp = new CompositeEmbedder(mock);
     const status = await comp.testEmbedders();
     expect(status).toEqual([{ name: 'mock', available: true }]);
+  });
+});
+
+describe('NoopEmbedder', () => {
+  it('returns empty vectors', async () => {
+    const noop = new NoopEmbedder();
+    const result = await noop.embed(['a', 'b']);
+    expect(noop.name()).toBe('noop');
+    expect(result).toEqual([[], []]);
   });
 });

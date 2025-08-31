@@ -87,21 +87,17 @@ async function getChangedFiles(repoRoot) {
   const upstream = await getUpstreamRef();
   if (upstream) {
     try {
-      const mergeBase = await git(['merge-base', 'HEAD', upstream]);
-      baseRef = mergeBase;
+      baseRef = await git(['merge-base', 'HEAD', upstream]);
     } catch {
-      // fallthrough
+      // ignore
     }
   }
   if (!baseRef) {
-    // Fallback to origin/main if available
     try {
       await execa('git', ['rev-parse', '--verify', 'origin/main'], { stdio: 'ignore' });
-      const mergeBase = await git(['merge-base', 'HEAD', 'origin/main']);
-      baseRef = mergeBase;
+      baseRef = await git(['merge-base', 'HEAD', 'origin/main']);
     } catch {
-      // Last resort: previous commit
-      baseRef = 'HEAD~1';
+      throw new Error('Unable to determine base reference; ensure origin/main exists');
     }
   }
 

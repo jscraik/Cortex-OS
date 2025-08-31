@@ -12,6 +12,7 @@ sbom.json
 *.d.ts.map
 *.js.map
 lib/
+!packages/*/src/lib/
 build/
 
 # TypeScript build outputs (but keep config files)
@@ -46,3 +47,8 @@ logs/
 # Runtime files
 .DS_Store
 Thumbs.db
+
+!packages/*/src/lib/
+!packages/*/src/lib/**
+!apps/*/src/lib/
+!apps/*/src/lib/**

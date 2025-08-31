@@ -114,5 +114,3 @@ export function validateSecurityContext(context: {
     errors,
   };
 }
-
-export { SecurityError };
