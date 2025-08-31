@@ -6,12 +6,15 @@
 import { LLMBridge, type LLMConfig } from './llm-bridge.js';
 import { createExecutionContext } from './lib/create-execution-context.js';
 import { executeNeuron } from './lib/execute-neuron.js';
+import { z } from 'zod';
+
 
 export interface Blueprint {
   title: string;
   description: string;
   requirements: string[];
 }
+
 
 export interface ExecutionState {
   id: string;
@@ -108,6 +111,7 @@ async function executeCycle(
   return { id: cycleId, phase: 'strategy', blueprint, outputs, status: 'completed' };
 }
 
+
 export function createPRPOrchestrator(): PRPOrchestrator {
   const neurons = new Map<string, Neuron>();
   let llmConfig: LLMConfig | undefined;
@@ -128,5 +132,6 @@ export function createPRPOrchestrator(): PRPOrchestrator {
     },
     executePRPCycle: (blueprint) => executeCycle(neurons, llmConfig, llmBridge, blueprint),
   };
+
 }
 

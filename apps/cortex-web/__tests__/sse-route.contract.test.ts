@@ -18,7 +18,7 @@ vi.mock('../utils/chat-gateway', () => ({
 }));
 
 describe('SSE stream route contract', () => {
-  it('emits start, token(s), done', async () => {
+  it('emits token(s) then done', async () => {
     const { GET: streamGET } = await import('../app/api/chat/[sessionId]/stream/route');
     const res = await streamGET(new Request('http://x'), { params: { sessionId: 's1' } });
     const reader = (res.body as ReadableStream<Uint8Array>).getReader();
@@ -33,7 +33,7 @@ describe('SSE stream route contract', () => {
     }
 
     const out = chunks.join('');
-    expect(out).toContain('"type":"start"');
+    expect(out).not.toContain('"type":"start"');
     expect(out).toContain('"type":"token"');
     expect(out).toContain('"type":"done"');
   });

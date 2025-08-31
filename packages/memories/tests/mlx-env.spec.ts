@@ -21,6 +21,9 @@ describe('MLXEmbedder environment override', () => {
 
     const embedPromise = new MLXEmbedder('qwen3-0.6b').embed(['hi']);
 
+    // Wait until spawn is invoked so runPython listeners are registered
+    await vi.waitUntil(() => spawnSpy.mock.calls.length > 0);
+
     mockProc.stdout.emit('data', JSON.stringify({ embeddings: [[0.1, 0.2]] }));
     mockProc.emit('close', 0);
 
