@@ -7,6 +7,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { gunzip, gzip } from 'zlib';
+import { promisify } from 'util';
 import type { Evidence } from '../types/index.js';
 import { ValidationError } from '../types/index.js';
 import { getDataPath, pathExists } from '../xdg/index.js';

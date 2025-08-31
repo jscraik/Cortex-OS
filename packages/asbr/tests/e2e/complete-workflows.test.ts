@@ -10,6 +10,7 @@ import { initializeXDG } from '../../src/xdg/index.js';
 describe('Complete Workflows', () => {
   let server: ASBRServer;
   let app: ReturnType<ASBRServer['start']>;
+  let request: supertest.SuperTest<supertest.Test>;
   let authToken = 'test-token';
 
   beforeAll(async () => {
@@ -23,6 +24,7 @@ describe('Complete Workflows', () => {
 
     await server.start();
     app = server['app'];
+    request = supertest(app);
   });
 
   afterAll(async () => {
