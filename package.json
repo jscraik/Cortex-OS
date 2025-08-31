@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "packageManager": "pnpm@9.0.0",
-  "engines": { "node": ">=22.0.0" },
+  "engines": { "node": ">=20.0.0" },
   "type": "module",
   "scripts": {
     "readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
