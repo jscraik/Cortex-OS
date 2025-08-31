@@ -191,6 +191,9 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:  # pragma: no cover - CLI error path
+    except (RuntimeError, ValueError, ImportError) as e:  # pragma: no cover - CLI error path
         print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
