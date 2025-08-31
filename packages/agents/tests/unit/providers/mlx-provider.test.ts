@@ -5,24 +5,6 @@ global.fetch = vi.fn().mockImplementation(() =>
   Promise.reject(new Error('fetch failed'))
 );
 
-// Mock child_process for thermal monitoring
-vi.mock('child_process', () => ({
-  spawn: vi.fn(() => {
-    const { EventEmitter } = require('events');
-    const emitter = new EventEmitter();
-    const stdoutEmitter = new EventEmitter();
-    const stderrEmitter = new EventEmitter();
-    // @ts-ignore
-    emitter.stdout = stdoutEmitter;
-    // @ts-ignore
-    emitter.stderr = stderrEmitter;
-    setTimeout(() => {
-      stdoutEmitter.emit('data', '2');
-      emitter.emit('close', 0);
-    }, 5);
-    return emitter;
-  }),
-}));
 
 // Import after mocks are set
 import { createMLXProvider, createAutoMLXProvider } from '@/providers/mlx-provider/index.js';
