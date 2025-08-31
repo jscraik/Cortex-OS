@@ -1,6 +1,5 @@
 import js from '@eslint/js';
 import sonarjs from 'eslint-plugin-sonarjs';
-// eslint-disable-next-line import/no-named-as-default-member
 import ts from 'typescript-eslint';
 
 export default [
@@ -20,6 +19,8 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/.artifacts/**',
+      // Generated static assets (bundled/minified JS/CSS)
+      'static/**',
       'commitlint.config.js',
       'tools/**',
       'vitest.config.ts',
