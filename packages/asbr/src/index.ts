@@ -30,7 +30,6 @@ export {
   createA11yEvent,
   createEventManager,
   getEventManager,
-  EventManagerClass as DeprecatedEventManager,
 } from './core/events.js';
 export type { EventManager } from './core/events.js';
 

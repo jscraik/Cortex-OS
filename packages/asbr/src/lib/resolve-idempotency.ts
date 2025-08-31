@@ -7,7 +7,7 @@ import { Task, TaskInput } from '../types/index.js';
 export function resolveIdempotency(
   input: TaskInput,
   providedKey: string | undefined,
-  cache: Map<string, string>,
+  cache: Map<string, { taskId: string; expiry: number }>,
   tasks: Map<string, Task>,
 ): { key: string; existingTask?: Task } {
   let key = providedKey;
@@ -21,9 +21,9 @@ export function resolveIdempotency(
     key = createHash('sha256').update(base).digest('hex').substring(0, 16);
   }
 
-  const existingId = cache.get(key);
-  if (existingId) {
-    const existingTask = tasks.get(existingId);
+  const cacheEntry = cache.get(key);
+  if (cacheEntry && cacheEntry.expiry > Date.now()) {
+    const existingTask = tasks.get(cacheEntry.taskId);
     if (existingTask) {
       return { key, existingTask };
     }

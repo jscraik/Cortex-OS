@@ -7,6 +7,7 @@ import { constants } from 'fs';
 import { access, mkdir, stat } from 'fs/promises';
 import { homedir } from 'os';
 import { join } from 'path';
+import { logWarn } from '../lib/logger.js';
 import type { XDGPaths } from '../types/index.js';
 
 /**
@@ -160,12 +161,7 @@ export async function cleanupTempFiles(maxAgeMs: number = 24 * 60 * 60 * 1000): 
       }
     }
   } catch (error) {
-    // Console logging is appropriate here for cleanup operations:
-    // - This is a background cleanup task that runs during shutdown
-    // - Cleanup failures are non-critical and should not interrupt the main process
-    // - No structured logger is available at this low-level utility layer
-    // - Users may want to see cleanup warnings in development/debugging
-    console.warn('Failed to cleanup temp files:', error);
+    logWarn('Failed to cleanup temp files', { error });
   }
 }
 
