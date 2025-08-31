@@ -6,7 +6,7 @@ import { StructuredError } from '@cortex-os/lib';
 const InputSchema = z.object({ config: AgentConfigSchema, command: SimlabCommandSchema, json: z.boolean().optional() });
 export type SimlabInput = z.infer<typeof InputSchema>;
 
-export async function handleSimlab(input: unknown): Promise<string> {
+export function handleSimlab(input: unknown): string {
   const parsed = InputSchema.safeParse(input);
   if (!parsed.success) {
     const err = new StructuredError('INVALID_INPUT', 'Invalid Simlab input', { issues: parsed.error.issues });
@@ -18,5 +18,3 @@ export async function handleSimlab(input: unknown): Promise<string> {
   if (json) return createJsonOutput({ executed: true, scenario: command.scenario, step: command.step });
   return createStdOutput(`Simlab executed scenario=${command.scenario} step=${command.step}`);
 }
-
-export default { handleSimlab };

@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "packageManager": "pnpm@9.0.0",
-  "engines": { "node": ">=20.0.0" },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "type": "module",
   "scripts": {
     "readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
@@ -183,6 +185,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
-    "yaml": "^2.5.0"
+    "yaml": "^2.5.0",
+    "@eslint/js": "^9.34.0"
   }
 }
