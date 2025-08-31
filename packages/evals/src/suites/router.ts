@@ -1,35 +1,20 @@
 import type { SuiteOutcome } from '../types';
-import { createModelRouter } from '@cortex-os/model-gateway/src/model-router';
+import { createModelRouter } from '@cortex-os/model-gateway';
 
-// Lightweight stubs to avoid external deps and ensure deterministic behavior
-const ok = async () => true;
-const fail = async () => false;
+interface Router {
+  initialize(): Promise<void>;
+  generateEmbedding(request: { text: string }): Promise<{ embedding: number[] }>;
+  generateChat(request: { messages: { role: string; content: string }[] }): Promise<{ content: string }>;
+  rerank(request: { query: string; documents: string[] }): Promise<{ scores: number[] }>;
+  hasAvailableModels(capability: 'embedding' | 'chat' | 'reranking'): boolean;
+}
 
-const makeStubs = (opts?: { mlx?: boolean; ollama?: boolean; mcp?: boolean }) => {
-  const mlx = {
-    isAvailable: opts?.mlx ? ok : fail,
-    generateEmbedding: async ({ text }: any) => ({ embedding: [text.length], model: 'qwen3-embedding-4b-mlx' }),
-    generateEmbeddings: async (texts: string[]) => texts.map((t) => ({ embedding: [t.length] })),
-    rerank: async (_q: string, _docs: string[], _model: string) => ({ scores: _docs.map((_, i) => 1 / (i + 1)) }),
-  } as any;
-  const ollama = {
-    isAvailable: opts?.ollama ? ok : fail,
-    listModels: async () => ['gpt-oss:20b', 'llama2'],
-    generateEmbedding: async (text: string) => ({ embedding: [text.length] }),
-    generateEmbeddings: async (texts: string[]) => texts.map((t) => ({ embedding: [t.length] })),
-    generateChat: async ({ messages }: any) => ({ content: messages[messages.length - 1]?.content ?? '' }),
-    rerank: async (_q: string, docs: string[], _m: string) => ({ scores: docs.map((_, i) => 1 / (i + 1)) }),
-  } as any;
-  return { mlx, ollama };
-};
-
-export async function runRouterSuite(name: string): Promise<SuiteOutcome> {
-  const { mlx, ollama } = makeStubs({ mlx: true, ollama: true });
-  const r = createModelRouter(mlx, ollama);
+export async function runRouterSuite(name: string, router?: Router): Promise<SuiteOutcome> {
+  const r = router ?? createModelRouter();
   await r.initialize();
 
   const emb = await r.generateEmbedding({ text: 'hi' });
-  const chat = await r.generateChat({ messages: [{ role: 'user', content: 'ping' } as any] });
+  const chat = await r.generateChat({ messages: [{ role: 'user', content: 'ping' }] });
   const rerank = await r.rerank({ query: 'q', documents: ['a', 'b', 'c'] });
 
   const metrics = {
@@ -43,6 +28,5 @@ export async function runRouterSuite(name: string): Promise<SuiteOutcome> {
 
   const pass = metrics.hasEmbedding && metrics.hasChat && metrics.hasRerank && metrics.chatNonEmpty ? true : false;
 
-  return { name, pass, metrics, notes: ['Deterministic stubs; verifies routing and fallbacks compile'] };
+  return { name, pass, metrics, notes: ['router operational'] };
 }
-

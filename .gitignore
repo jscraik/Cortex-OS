@@ -46,3 +46,6 @@ logs/
 # Runtime files
 .DS_Store
 Thumbs.db
+
+!packages/*/src/lib/
+!packages/*/src/lib/**
