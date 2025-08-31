@@ -1,6 +1,5 @@
 import js from '@eslint/js';
 import sonarjs from 'eslint-plugin-sonarjs';
-// eslint-disable-next-line import/no-named-as-default-member
 import ts from 'typescript-eslint';
 
 export default [
@@ -127,10 +126,7 @@ export default [
       },
     },
     rules: {
-      // Disable problematic import rules
-      'import/no-named-as-default-member': 'off',
-      'import/no-unresolved': 'off',
-      'import/no-named-as-default': 'off',
+      // Import plugin rules disabled due to resolver issues
       'no-console': ['warn', { allow: ['error', 'warn'] }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn', // Change from error to warning
