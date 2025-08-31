@@ -4,7 +4,14 @@
  */
 
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
-
+import {
+  decomposeTaskSchema,
+  coordinateMultiModalTaskSchema,
+  orchestrateCodeTaskSchema,
+  coordinateWorkflowSchema,
+} from '../schemas/orchestrator.zod.js';
+import { OrchestrationError } from '../errors.js';
+import { handleResilience } from '../utils/resilience.js';
 import { buildAgentPrompt, parseAgentSelection } from '../../../../src/lib/agent-selection.js';
 
 export interface TaskDecomposition {
@@ -132,14 +139,7 @@ Provide decision, reasoning, confidence (0-1), and next steps.`;
 
       return this.parseCoordinationDecision(response.content, response.provider);
     } catch (error) {
-      console.warn('Multi-modal coordination failed:', error);
-      return {
-        action: 'proceed',
-        reasoning: 'Fallback coordination - proceeding with text-only analysis',
-        confidence: 0.3,
-        nextSteps: ['Analyze task requirements', 'Assign to appropriate agent'],
-        provider: 'ollama',
-      };
+      return handleResilience(error, 'coordinateMultiModalTask');
     }
   }
 
