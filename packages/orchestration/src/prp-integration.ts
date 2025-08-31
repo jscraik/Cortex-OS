@@ -105,7 +105,12 @@ export async function orchestrateTask(
   return run;
 }
 
-function toResult(id: string, taskId: string, prp: PRPState, start: number): OrchestrationResult {
+function toResult(
+  id: string,
+  taskId: string,
+  prp: Awaited<ReturnType<PRPOrchestrator['executePRPCycle']>>,
+  start: number
+): OrchestrationResult {
   return {
     orchestrationId: id,
     taskId,
