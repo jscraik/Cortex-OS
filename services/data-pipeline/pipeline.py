@@ -42,8 +42,7 @@ def mask_pii(df: pd.DataFrame) -> pd.DataFrame:
     """Mask PII such as email addresses."""
 
     out = df.copy()
-    if "email" in out.columns:
-        out["email"] = "***redacted***"
+    out["email"] = "***redacted***"
     return out
 
 
