@@ -63,6 +63,30 @@ describe('PRPOrchestrator - TDD Implementation', () => {
       expect(result.outputs).toBeDefined();
       expect(result.status).toBe('completed');
     });
+
+    it('should generate a product requirements prompt', async () => {
+      const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
+      orchestrator.registerNeuron(mockNeuron);
+
+      const blueprint = {
+        title: 'Prompt Blueprint',
+        description: 'Generate product requirements prompt',
+        requirements: ['collect SME feedback'],
+      };
+
+      const prompt = await orchestrator.generateProductRequirementsPrompt(blueprint);
+      expect(prompt).toContain('Product Requirements for');
+      expect(prompt).toContain('strategy-neuron');
+    });
+
+    it('should validate blueprint structure', async () => {
+      const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
+      orchestrator.registerNeuron(mockNeuron);
+
+      await expect(
+        orchestrator.generateProductRequirementsPrompt({} as any),
+      ).rejects.toThrow();
+    });
   });
 
   describe('Neuron Registration - Core Functionality', () => {
