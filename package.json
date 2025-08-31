@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "packageManager": "pnpm@9.0.0",
-  "engines": { "node": ">=22.0.0" },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "type": "module",
   "scripts": {
     "readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
@@ -84,7 +86,7 @@
     "deps:analyze": "node scripts/analyze-dependencies.mjs",
     "license:scan": "node scripts/license/license-scanner.mjs",
     "license:validate": "node scripts/license/license-scanner.mjs",
-    "sbom:generate": "node scripts/generate-sbom.mjs",
+    "sbom:generate": "node scripts/compliance/generate-sbom.mjs",
     "compliance:all": "pnpm license:validate && pnpm sbom:generate",
     "compliance:dashboard": "node scripts/compliance-dashboard.mjs",
     "compliance:monitor": "node scripts/legal-notifications.mjs monitor",
@@ -171,9 +173,11 @@
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
+    "@eslint/js": "^9.8.0",
     "@types/node": "^22.5.0",
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",
+    "typescript-eslint": "^8.1.0",
     "eslint": "^9.8.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-boundaries": "^4.2.1",
@@ -183,6 +187,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
-    "yaml": "^2.5.0"
+    "yaml": "^2.5.0",
+    "cross-env": "^10.0.0",
+    "@cyclonedx/bom": "^4.1.0"
   }
 }

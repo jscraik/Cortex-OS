@@ -53,12 +53,12 @@ const llmConfigSchema = z.object({
 export function configureLLM(config: LLMConfig): LLMState {
   if (!['mlx', 'ollama'].includes(config.provider)) {
     throw new Error(`Unsupported LLM provider: ${config.provider}`);
-
   }
 
+  const normalized: LLMConfig = { ...config };
+  if (normalized.provider === 'mlx') {
     delete (normalized as Partial<LLMConfig>).endpoint;
   }
-
 
   const parsed = llmConfigSchema.safeParse(normalized);
   if (!parsed.success) {
