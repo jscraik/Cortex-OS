@@ -314,6 +314,19 @@ export const createDefaultMCPTools = (): MCPTool[] => [
         throw new Error('Code execution not allowed');
       }
       const { command } = z.object({ command: z.string() }).parse(params);
+      // Whitelist of allowed test commands
+      const allowedCommands = [
+        'npm test',
+        'yarn test',
+        'pnpm test',
+        'npx jest',
+        'npx mocha',
+        'npx vitest',
+      ];
+      // Only allow exact matches to the whitelist
+      if (!allowedCommands.includes(command.trim())) {
+        throw new Error(`Command "${command}" is not allowed. Allowed commands: ${allowedCommands.join(', ')}`);
+      }
       const { stdout, stderr } = await runCommand(command, {
         cwd: context.workingDirectory,
       });
