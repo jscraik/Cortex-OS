@@ -55,10 +55,14 @@ export function configureLLM(config: LLMConfig): LLMState {
     throw new Error(`Unsupported LLM provider: ${config.provider}`);
   }
 
-  const normalized: LLMConfig = { ...config };
-  if (normalized.provider === 'mlx') {
-    delete (normalized as Partial<LLMConfig>).endpoint;
-  }
+  const normalized: LLMConfig =
+    config.provider === 'mlx'
+      ? (() => {
+          // Omit endpoint for 'mlx' provider
+          const { endpoint, ...rest } = config;
+          return rest as LLMConfig;
+        })()
+      : { ...config };
 
   const parsed = llmConfigSchema.safeParse(normalized);
   if (!parsed.success) {
