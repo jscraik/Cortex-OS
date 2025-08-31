@@ -4,7 +4,9 @@ import path from 'node:path';
 import { loadMlxModelsConfig, MlxModelsConfig } from '../src/index.js';
 
 function resolveModelPath(p: string): string {
-  return p.replace('${MLX_CACHE_DIR}', process.env.MLX_CACHE_DIR || '');
+  const cacheDir = process.env.MLX_CACHE_DIR || path.resolve(process.cwd(), 'models');
+  return p.replace('${MLX_CACHE_DIR}', cacheDir);
+
 }
 
 export async function checkModelReadiness(

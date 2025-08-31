@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AgentConfigSchema, MCPRequestSchema } from '@cortex-os/contracts';
+import { AgentConfigSchema, MCPRequestSchema } from '@cortex-os/contracts-v2';
 import { createInMemoryStore } from '@cortex-os/lib';
 import { createJsonOutput, createStdOutput, withTimestamp } from '@cortex-os/lib';
 import { StructuredError } from '@cortex-os/lib';
