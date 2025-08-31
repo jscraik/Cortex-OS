@@ -185,7 +185,7 @@
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
     "@cyclonedx/bom": "^4.1.0",
-    "@eslint/js": "^9.8.0",
+    "@eslint/js": "^9.34.0",
     "@types/node": "^22.5.0",
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",
@@ -194,7 +194,6 @@
     "typescript-eslint": "^8.1.0",
     "eslint": "^9.8.0",
     "eslint-plugin-boundaries": "^4.2.1",
-    "@eslint/js": "^9.34.0",
     "eslint-plugin-import": "^2.29.1",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.8",
@@ -203,6 +202,15 @@
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
     "cyclonedx-bom": "^0.0.9",
-    "yaml": "^2.5.0"
+    "yaml": "^2.5.0",
+    "nx": "^21.4.1",
+    "@nx/devkit": "^21.4.1",
+    "@nx/eslint": "^21.4.1",
+    "@nx/jest": "^21.4.1",
+    "@nx/js": "^21.4.1",
+    "@nx/next": "^21.4.1",
+    "@nx/react": "^21.4.1",
+    "@nx/rollup": "^21.4.1",
+    "@nx/vite": "^21.4.1"
   }
 }
