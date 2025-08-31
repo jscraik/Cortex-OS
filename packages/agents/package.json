@@ -29,7 +29,7 @@
     "security:audit": "tsx ./examples/audit-security-workflow.ts"
   },
   "dependencies": {
-    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/a2a": "workspace:*",
     "@cortex-os/mcp": "workspace:*",
     "@cortex-os/memories": "workspace:*",
     "yaml": "^2.8.0",

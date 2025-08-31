@@ -188,41 +188,6 @@ export class EvaluationNode {
         }
       }
 
-      // Try Python tests if it's a Python project
-      if (
-        fs.existsSync(path.join(projectRoot, 'pyproject.toml')) ||
-        fs.existsSync(path.join(projectRoot, 'requirements.txt'))
-      ) {
-        try {
-          await execAsync('which pytest', { timeout: 2000 });
-
-          const { stdout, stderr } = await execAsync('pytest --cov=. --cov-report=term-missing', {
-            cwd: projectRoot,
-            timeout: 120000,
-            maxBuffer: 2 * 1024 * 1024,
-          });
-
-          const testOutput = stdout + stderr;
-
-          // Parse Python test results
-          const passedMatch = testOutput.match(/(\d+)\s+passed/i);
-          const failedMatch = testOutput.match(/(\d+)\s+failed/i);
-          const coverageMatch = testOutput.match(/TOTAL\s+\d+\s+\d+\s+(\d+)%/);
-
-          if (passedMatch || failedMatch || coverageMatch) {
-            testResults.passed = passedMatch ? parseInt(passedMatch[1]) > 0 : false;
-            testResults.failed = failedMatch ? parseInt(failedMatch[1]) > 0 : false;
-            testResults.coverage = Math.max(
-              testResults.coverage,
-              coverageMatch ? parseInt(coverageMatch[1]) : 0,
-            );
-            testResults.hasRedGreenEvidence = true;
-          }
-        } catch (pytestError) {
-          // pytest failed or not available
-        }
-      }
-
       // Check for coverage reports
       const coverageFiles = [
         path.join(projectRoot, 'coverage', 'lcov.info'),
@@ -396,45 +361,7 @@ export class EvaluationNode {
               tools.push('Pylint');
             }
           } catch (pylintError) {
-            // Try flake8 as fallback
-            try {
-              await execAsync('which flake8', { timeout: 2000 });
-              const { stdout } = await execAsync(
-                'flake8 . --format="%(path)s:%(row)d:%(col)d: %(code)s %(text)s" || true',
-                {
-                  cwd: projectRoot,
-                  timeout: 60000,
-                  maxBuffer: 1024 * 1024,
-                },
-              );
-
-              if (stdout.trim()) {
-                const lines = stdout.trim().split('\n');
-                const issues = lines
-                  .map((line: string) => {
-                    const match = line.match(/^(.+):(\d+):(\d+): (\w+) (.+)$/);
-                    if (match) {
-                      return {
-                        tool: 'flake8',
-                        severity: this.mapFlake8Severity(match[4]),
-                        type: match[4],
-                        message: match[5],
-                        file: path.relative(projectRoot, match[1]),
-                        line: parseInt(match[2]),
-                        column: parseInt(match[3]),
-                        category: this.categorizeFlake8Code(match[4]),
-                      };
-                    }
-                    return null;
-                  })
-                  .filter(Boolean);
-
-                allIssues.push(...issues);
-                tools.push('Flake8');
-              }
-            } catch (flake8Error) {
-              // Flake8 also failed
-            }
+            // Pylint failed
           }
         }
       } catch (pythonError) {

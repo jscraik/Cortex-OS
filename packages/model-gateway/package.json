@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@cortex-os/orchestration": "workspace:*",
-    "@cortex-os/utils": "workspace:*",
     "axios": "^1.7.2",
     "fastify": "^4.28.1",
     "zod": "^3.25.76",

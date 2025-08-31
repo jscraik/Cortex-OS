@@ -12,6 +12,9 @@ sbom.json
 *.d.ts.map
 *.js.map
 lib/
+# Allow library folders inside packages
+!packages/**/src/lib/
+!packages/**/src/lib/*
 build/
 
 # TypeScript build outputs (but keep config files)
