@@ -3,10 +3,9 @@
  * @description Handles registry management and caching
  */
 
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile, unlink } from 'fs/promises';
 import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
-import fetch from 'node-fetch';
 import type { RegistryData } from '@cortex-os/mcp-registry';
 
 export interface RegistryConfig {
@@ -238,9 +237,8 @@ export class RegistryService {
     const cachePath = this.getCachePath(name);
 
     try {
-      const fs = await import('fs/promises');
-      await fs.unlink(cachePath);
-    } catch (error) {
+      await unlink(cachePath);
+    } catch {
       // Ignore errors (file might not exist)
     }
   }
