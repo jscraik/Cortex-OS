@@ -1,5 +1,6 @@
 import type { Embedder, Store } from '../index';
 import { query as doQuery } from '../pipeline/query';
+import { ingestText } from '../pipeline/ingest';
 import { ndcgAtK, precisionAtK, recallAtK, type EvalSummary, type QueryEval } from './metrics';
 
 export interface GoldenItem {
@@ -23,9 +24,6 @@ export interface RunEvalOptions {
 }
 
 export async function prepareStore(dataset: GoldenDataset, E: Embedder, S: Store) {
-  // Reuse ingestText lightly to avoid bringing extra deps here. We inline minimal ingestion.
-  // But since packages/rag/src/pipeline/ingest exports ingestText, prefer it if available.
-  const { ingestText } = await import('../pipeline/ingest');
   for (const d of dataset.docs) {
     // Use stable mem:// URI so doc.id is traceable for matching.
     await ingestText(`mem://${d.id}`, d.text, E as any, S as any);
