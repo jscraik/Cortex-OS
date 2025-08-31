@@ -16,7 +16,7 @@ import {
   generateFallbackInsights,
   isEmptyAnswer,
   isInvalidSummary,
-} from '../../../src/lib/insights/index.js';
+} from './lib/insights.js';
 
 // ASBR Types (extracted from ASBR package)
 interface EvidenceContext {

@@ -1,0 +1,19 @@
+import { mkdtempSync, rmSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { spawnSync } from 'child_process';
+import { describe, it, expect } from 'vitest';
+
+describe('graphiti requirements', () => {
+  it('are installable', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'graphiti-'));
+    const venv = spawnSync('python', ['-m', 'venv', dir]);
+    expect(venv.status).toBe(0);
+
+    const pip = join(dir, 'bin', 'pip');
+    const reqFile = join(process.cwd(), 'config', 'requirements', 'requirements-graphiti.txt');
+    const res = spawnSync(pip, ['install', '--quiet', '--dry-run', '-r', reqFile]);
+    rmSync(dir, { recursive: true, force: true });
+    expect(res.status).toBe(0);
+  });
+});

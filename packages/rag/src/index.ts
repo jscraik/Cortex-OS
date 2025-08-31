@@ -1,9 +1,15 @@
 import { z } from 'zod';
 import { AgentConfigSchema, RAGQuerySchema } from '@cortex-os/contracts';
-import { createInMemoryStore, createStdOutput, createJsonOutput } from '@cortex-os/lib';
-import { StructuredError } from '@cortex-os/lib';
+import { createStdOutput, createJsonOutput, StructuredError } from '@cortex-os/lib';
+import { Qwen3Presets } from './embed/qwen3';
+import { memoryStore } from './store/memory';
+import { createMultiModelGenerator, ModelPresets } from './generation/multi-model';
 
-const InputSchema = z.object({ config: AgentConfigSchema, query: RAGQuerySchema, json: z.boolean().optional() });
+const InputSchema = z.object({
+  config: AgentConfigSchema,
+  query: RAGQuerySchema,
+  json: z.boolean().optional(),
+});
 export type RAGInput = z.infer<typeof InputSchema>;
 
 export async function handleRAG(input: unknown): Promise<string> {
@@ -13,12 +19,21 @@ export async function handleRAG(input: unknown): Promise<string> {
     return createJsonOutput({ error: err.toJSON() });
   }
   const { config, query, json } = parsed.data;
-  const memory = createInMemoryStore({ maxItems: config.memory.maxItems, maxBytes: config.memory.maxBytes });
-  // Placeholder retrieval result (actual MLX integration in Python package)
-  const results = Array.from({ length: query.topK }).map((_, i) => ({ id: i + 1, score: 1 - i * 0.1 }));
-  memory.set('lastQuery', query);
-  if (json) return createJsonOutput({ results });
-  return createStdOutput(`RAG results count=${results.length}`);
-}
 
-export default { handleRAG };
+  const store = memoryStore();
+  const embedder = Qwen3Presets.development();
+  const generator = createMultiModelGenerator({
+    model: ModelPresets.chat,
+    defaultConfig: { maxTokens: config.maxTokens },
+    timeout: config.timeoutMs,
+  });
+
+  const [embedding] = await embedder.embed([query.query]);
+  const results = await store.query(embedding, query.topK);
+  const context = results.map((r) => r.text).join('\n');
+  const prompt = context ? `${context}\n\n${query.query}` : query.query;
+  const answer = await generator.generate(prompt, { maxTokens: config.maxTokens });
+
+  const payload = { answer: answer.content, sources: results, provider: answer.provider };
+  return json ? createJsonOutput(payload) : createStdOutput(answer.content);
+}

@@ -12,11 +12,11 @@ git checkout -b "$BRANCH"
 
 # Example: for pnpm/node projects try npm-check-updates or pinned upgrades
 if [ -f package.json ]; then
-  if command -v pnpm >/dev/null 2>&1; then
-    pnpm up -L || true
-  elif command -v npm >/dev/null 2>&1; then
-    npm update --save || true
+  if ! command -v pnpm >/dev/null 2>&1; then
+    echo "pnpm required for remediation"
+    exit 1
   fi
+  pnpm up -L || true
 fi
 
 git add -A || true
@@ -26,7 +26,9 @@ if git diff --staged --quiet; then
 fi
 
 git commit -m "chore: automated dependency fixes from security scan" || true
-git push -u origin "$BRANCH"
+if git remote | grep -q origin; then
+  git push -u origin "$BRANCH" || true
+fi
 
 gh pr create --title "Automated dependency remediation" --body "This PR contains automated dependency updates from security remediation tooling." || true
 

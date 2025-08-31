@@ -13,20 +13,37 @@ function streamFromLines(lines: string[]): ReadableStream<Uint8Array> {
 }
 
 describe('chat-gateway', () => {
-  it('falls back to echo when backend unavailable', async () => {
-    const originalFetch = globalThis.fetch as any;
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
-
+  it('throws when provider not configured', async () => {
+    const prev = process.env.MODEL_API_PROVIDER;
+    delete process.env.MODEL_API_PROVIDER;
     const onTok = vi.fn();
-    const res = await gateway['streamChat'](
-      { model: 'test', messages: [{ role: 'user', content: 'Hi' }] as any },
-      onTok,
-    );
+    await expect(
+      gateway['streamChat'](
+        { model: 'test', messages: [{ role: 'user', content: 'Hi' }] as any },
+        onTok,
+      ),
+    ).rejects.toThrow(/MODEL_API_PROVIDER/);
+    expect(onTok).not.toHaveBeenCalled();
+    if (prev === undefined) delete process.env.MODEL_API_PROVIDER;
+    else process.env.MODEL_API_PROVIDER = prev;
+  });
 
-    expect(onTok).toHaveBeenCalled();
-    expect(res.text).toContain('Echo:');
-
+  it('propagates upstream errors', async () => {
+    const prev = process.env.MODEL_API_PROVIDER;
+    process.env.MODEL_API_PROVIDER = 'openai';
+    const originalFetch = globalThis.fetch as any;
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    const onTok = vi.fn();
+    await expect(
+      gateway['streamChat'](
+        { model: 'test', messages: [{ role: 'user', content: 'Hi' }] as any },
+        onTok,
+      ),
+    ).rejects.toThrow(/Upstream chat request failed/);
+    expect(onTok).not.toHaveBeenCalled();
     globalThis.fetch = originalFetch;
+    if (prev === undefined) delete process.env.MODEL_API_PROVIDER;
+    else process.env.MODEL_API_PROVIDER = prev;
   });
 
   it('parses OpenAI-compatible SSE chunks and yields tokens', async () => {

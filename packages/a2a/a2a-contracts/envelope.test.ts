@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { ZodError } from 'zod';
 import { Envelope } from './src/envelope';
 
 describe('Envelope source URI validation', () => {
@@ -13,13 +14,18 @@ describe('Envelope source URI validation', () => {
   });
 
   it('throws on invalid source URI', () => {
-    expect(() =>
+    try {
       Envelope.parse({
         id: '1',
         type: 'test',
         source: 'not a url',
         specversion: '1.0',
-      }),
-    ).toThrowError('Invalid source URI');
+      });
+      throw new Error('Expected validation to fail');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ZodError);
+      const zerr = err as ZodError;
+      expect(zerr.errors[0].message).toBe('Source must be a valid URI');
+    }
   });
 });

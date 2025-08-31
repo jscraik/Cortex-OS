@@ -1,9 +1,7 @@
 import { query as doQuery } from '../pipeline/query';
+import { ingestText } from '../pipeline/ingest';
 import { ndcgAtK, precisionAtK, recallAtK } from './metrics';
 export async function prepareStore(dataset, E, S) {
-    // Reuse ingestText lightly to avoid bringing extra deps here. We inline minimal ingestion.
-    // But since packages/rag/src/pipeline/ingest exports ingestText, prefer it if available.
-    const { ingestText } = await import('../pipeline/ingest');
     for (const d of dataset.docs) {
         // Use stable mem:// URI so doc.id is traceable for matching.
         await ingestText(`mem://${d.id}`, d.text, E, S);
@@ -39,4 +37,3 @@ export async function runRetrievalEval(dataset, E, S, { k }) {
         perQuery,
     };
 }
-//# sourceMappingURL=harness.js.map

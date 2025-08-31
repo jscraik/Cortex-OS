@@ -1,12 +1,11 @@
 import type { SuiteOutcome } from '../types';
 import { z } from 'zod';
-
-// Local import from the RAG library (pure, dependency-free eval utilities)
 import { prepareStore, runRetrievalEval } from '@cortex-os/rag/eval/harness';
 import { memoryStore } from '@cortex-os/rag/store/memory';
+import { createRouterEmbedder, type Embedder } from '../lib/router-embedder';
 
 const RagOptions = z.object({
-  dataset: z.any(), // JSON parsed dataset; validated by harness at usage time
+  dataset: z.any(),
   k: z.number().int().positive().default(2),
   thresholds: z
     .object({ ndcg: z.number().min(0).max(1), recall: z.number().min(0).max(1), precision: z.number().min(0).max(1) })
@@ -14,13 +13,13 @@ const RagOptions = z.object({
     .default({}),
 });
 
-export async function runRagSuite(name: string, opts: unknown): Promise<SuiteOutcome> {
+export async function runRagSuite(name: string, opts: unknown, embedder?: Embedder): Promise<SuiteOutcome> {
   const parsed = RagOptions.parse(opts ?? {});
-  const E = { embed: async (texts: string[]) => texts.map((t) => [t.length, 0, 0]) } as any;
+  const E = embedder ?? (await createRouterEmbedder());
   const S = memoryStore();
 
-  await prepareStore(parsed.dataset, E, S as any);
-  const summary = await runRetrievalEval(parsed.dataset, E, S as any, { k: parsed.k });
+  await prepareStore(parsed.dataset, E as any, S as any);
+  const summary = await runRetrievalEval(parsed.dataset, E as any, S as any, { k: parsed.k });
 
   const thresholds = {
     ndcg: parsed.thresholds.ndcg ?? 0.8,
@@ -43,4 +42,3 @@ export async function runRagSuite(name: string, opts: unknown): Promise<SuiteOut
     ],
   };
 }
-
