@@ -3,11 +3,8 @@ declare const InputSchema: z.ZodObject<{
     config: any;
     query: any;
     json: z.ZodOptional<z.ZodBoolean>;
-}, z.core.$strip>;
+}, "strip">;
 export type RAGInput = z.infer<typeof InputSchema>;
 export declare function handleRAG(input: unknown): Promise<string>;
-declare const _default: {
-    handleRAG: typeof handleRAG;
-};
-export default _default;
+export {};
 //# sourceMappingURL=index.d.ts.map

@@ -45,7 +45,6 @@ export interface ModelIntegrationConfig {
     };
     communication: {
       primary: 'qwen2.5-0.5b'; // MLX - Fast chat
-      fallback: 'gemma-2-2b'; // Backup chat
     };
   };
 }
@@ -87,7 +86,6 @@ export const DEFAULT_MODEL_INTEGRATION: ModelIntegrationConfig = {
     },
     communication: {
       primary: 'qwen2.5-0.5b',
-      fallback: 'gemma-2-2b',
     },
   },
 };
@@ -222,5 +220,4 @@ export const MODEL_PERFORMANCE_PROFILES = {
   'qwen3-0.6b': { latency: 'realtime', accuracy: 'sufficient', resource: 'low' },
   'qwen3-8b': { latency: 'batch', accuracy: 'premium', resource: 'high' },
   'qwen3-reranker': { latency: 'fast', accuracy: 'high', resource: 'moderate' },
-  'gemma-2-2b': { latency: 'fast', accuracy: 'sufficient', resource: 'moderate' },
 } as const;

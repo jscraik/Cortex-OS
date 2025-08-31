@@ -18,8 +18,13 @@ from prometheus_client import (
 )
 from pydantic import BaseModel
 
-MODEL_NAME = os.getenv("MODEL_NAME", "dummy-model")
-GIT = shutil.which("git") or "git"
+MODEL_NAME = os.getenv("MODEL_NAME")
+if MODEL_NAME is None:
+    raise RuntimeError("MODEL_NAME environment variable is required")
+
+GIT = shutil.which("git")
+if GIT is None:
+    raise RuntimeError("git executable not found")
 COMMIT_HASH = subprocess.check_output([GIT, "rev-parse", "HEAD"], text=True).strip()  # noqa: S603
 
 REQUEST_COUNT = Counter(

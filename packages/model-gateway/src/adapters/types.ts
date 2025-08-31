@@ -50,16 +50,4 @@ export interface OllamaAdapterInterface {
   listModels?(): Promise<string[]>;
 }
 
-export interface FrontierAdapterInterface {
-  isAvailable(): Promise<boolean>;
-  getAvailableModels(): { embedding: string[]; chat: string[] };
-  generateEmbedding(text: string, model: string): Promise<Embedding>;
-  generateEmbeddings(texts: string[], model: string): Promise<Embedding[]>;
-  generateChat(
-    messages: Message[],
-    model: string,
-    options?: { temperature?: number; max_tokens?: number },
-  ): Promise<ChatResponse>;
-}
-
 export type AdapterEmbeddingResponse = Embedding | Embedding[];

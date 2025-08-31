@@ -28,17 +28,6 @@ export function convertSelectors(
   return result;
 }
 
-export async function requestWorkloadIdentity(
-  httpClient: ReturnType<typeof axios.create>,
-): Promise<unknown> {
-  const response = await httpClient.get('/workload/identity');
-  return response.data;
-}
-
-export function parseWorkloadResponse(data: unknown) {
-  return SpiffeWorkloadResponseSchema.parse(data);
-}
-
 export function buildWorkloadIdentity(
   workloadResponse: z.infer<typeof SpiffeWorkloadResponseSchema>,
 ): WorkloadIdentity {
@@ -132,26 +121,15 @@ export class SpiffeClient {
 
 
         const response = await this.fetchWithTimeout('/workload/identity', { method: 'GET' });
-          throw new Error(`Failed to fetch workload identity: HTTP ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch workload identity: HTTP ${response.status} ${response.statusText}`,
+          );
         }
         const data = await response.json();
         const workloadResponse = SpiffeWorkloadResponseSchema.parse(data);
 
-        const workloadPath = extractWorkloadPath(workloadResponse.spiffe_id);
-        if (!workloadPath) {
-          throw new SPIFFEError('Invalid SPIFFE ID format', workloadResponse.spiffe_id);
-        }
-
-        const workloadIdentity: WorkloadIdentity = {
-          spiffeId: workloadResponse.spiffe_id,
-          trustDomain: workloadResponse.trust_domain,
-          workloadPath,
-          selectors: this.convertSelectors(workloadResponse.selectors || []),
-          metadata: {
-            fetchedAt: new Date(),
-            trustDomain: workloadResponse.trust_domain,
-          },
-        };
+        const workloadIdentity = buildWorkloadIdentity(workloadResponse);
 
 
         logWithSpan(
@@ -207,6 +185,7 @@ export class SpiffeClient {
         );
 
         const response = await this.fetchWithTimeout(url.pathname + url.search, { method: 'GET' });
+        if (!response.ok) {
           throw new Error(`Failed to fetch SVID: HTTP ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
@@ -318,7 +297,7 @@ export class SpiffeClient {
           .parse(data);
 
 
-        const certificates = this.splitPEMCertificates(trustBundleResponse.trust_bundle);
+        const certificates = splitPEMCertificates(trustBundleResponse.trust_bundle);
 
 
         logWithSpan(

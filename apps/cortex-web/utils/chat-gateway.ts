@@ -18,18 +18,10 @@ export async function streamChat(
   onToken: (token: string) => void,
 ): Promise<{ text: string; usage?: Usage }> {
   const provider = (env.MODEL_API_PROVIDER || '').toLowerCase();
-  if (provider === 'openai' || provider === 'compatible') {
-    return await streamOpenAI(params, onToken);
+  if (provider !== 'openai' && provider !== 'compatible') {
+    throw new Error('MODEL_API_PROVIDER must be set to "openai" or "compatible"');
   }
-  // default: local echo fallback
-  return await streamEcho(params, onToken);
-}
-
-async function streamEcho(params: StreamParams, onToken: (t: string) => void) {
-  const last = [...params.messages].reverse().find((m) => m.role === 'user');
-  const text = `Echo: ${last?.content ?? ''}`;
-  for (const ch of text) onToken(ch);
-  return { text };
+  return await streamOpenAI(params, onToken);
 }
 
 async function streamOpenAI(params: StreamParams, onToken: (t: string) => void) {
@@ -53,8 +45,7 @@ async function streamOpenAI(params: StreamParams, onToken: (t: string) => void) 
     signal: params.signal,
   });
   if (!res.ok || !res.body) {
-    // fall back to echo if backend unavailable
-    return await streamEcho(params, onToken);
+    throw new Error(`Upstream chat request failed with status ${res.status}`);
   }
 
   return await readSSEStream(res, onToken);

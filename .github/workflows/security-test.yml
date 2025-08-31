@@ -10,16 +10,18 @@ jobs:
   security-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      - name: Set up pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+        with:
+          version: 9
 
       - name: Install dependencies
         run: pnpm install
