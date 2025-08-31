@@ -297,7 +297,7 @@ export class SpiffeClient {
           .parse(data);
 
 
-        const certificates = this.splitPEMCertificates(trustBundleResponse.trust_bundle);
+        const certificates = splitPEMCertificates(trustBundleResponse.trust_bundle);
 
 
         logWithSpan(

@@ -1313,9 +1313,6 @@ importers:
       '@cortex-os/telemetry':
         specifier: workspace:*
         version: link:../../libs/typescript/telemetry
-      node-forge:
-        specifier: ^1.3.1
-        version: 1.3.1
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -7106,10 +7103,6 @@ packages:
     peerDependenciesMeta:
       encoding:
         optional: true
-
-  node-forge@1.3.1:
-    resolution: {integrity: sha512-dPEtOeMvF9VMcYV/1Wb8CPoVAXtp6MKMlcbAt4ddqmGqUJ6fQZFXkNZNkNlfevtNkGtaSoXf/vNNNSvgrdXwtA==}
-    engines: {node: '>= 6.13.0'}
 
   node-gyp@11.4.2:
     resolution: {integrity: sha512-3gD+6zsrLQH7DyYOUIutaauuXrcyxeTPyQuZQCQoNPZMHMMS5m4y0xclNpvYzoK3VNzuyxT6eF4mkIL4WSZ1eQ==}
@@ -15760,8 +15753,6 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
-
-  node-forge@1.3.1: {}
 
   node-gyp@11.4.2:
     dependencies:
