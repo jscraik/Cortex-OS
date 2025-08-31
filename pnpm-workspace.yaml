@@ -1,3 +1,11 @@
 packages:
-  - packages/*
+  - packages/orchestration
+  - packages/agents
+  - packages/memories
+  - packages/a2a/a2a-core
+  - packages/a2a/a2a-contracts
+  - packages/a2a/a2a-handlers
+  - packages/a2a/a2a-transport
+  - packages/mcp
+  - packages/contracts
   - src

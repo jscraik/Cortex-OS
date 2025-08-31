@@ -61,14 +61,11 @@ export const version = '1.0.0';
 export const name = '@cortex-os/orchestration';
 
 // PRP Neural Orchestration Engine
-export { PRPOrchestrationEngine } from './prp-integration.js';
-import type { OrchestrationConfig } from './types.js';
-
-export function createPRPOrchestrationEngine(
-  config?: Partial<OrchestrationConfig>,
-): PRPOrchestrationEngine {
-  return new PRPOrchestrationEngine(config);
-}
+export {
+  createEngine,
+  orchestrateTask,
+  cleanup,
+} from './prp-integration.js';
 
 // MLX agent integration
 export { MLXAgent } from './integrations/mlx-agent.js';
