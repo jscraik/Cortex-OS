@@ -10,6 +10,7 @@ export interface Qwen3EmbedOptions {
     maxTokens?: number;
     batchSize?: number;
     useGPU?: boolean;
+    cacheDir?: string;
 }
 export declare class Qwen3Embedder implements Embedder {
     private readonly modelSize;
@@ -22,7 +23,6 @@ export declare class Qwen3Embedder implements Embedder {
     embed(texts: string[]): Promise<number[][]>;
     private embedBatch;
     private embedWithModel;
-    private getPythonScript;
     close(): Promise<void>;
 }
 /**

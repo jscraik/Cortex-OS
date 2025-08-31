@@ -60,4 +60,15 @@ describe('Qwen3Embedder', () => {
     const script = (cp.spawn as any).mock.calls[0][1][1];
     expect(script).toContain('use_gpu = True');
   });
+
+  it('injects model path into python script', async () => {
+    const { Qwen3Embedder } = await import('../src/embed/qwen3');
+    const embedder = new Qwen3Embedder({ modelSize: '0.6B', modelPath: '/tmp/model' });
+    const promise = embedder.embed(['hi']);
+    proc.stdout.emit('data', JSON.stringify({ embeddings: [[0]] }));
+    proc.emit('close', 0);
+    await promise;
+    const script = (cp.spawn as any).mock.calls[0][1][1];
+    expect(script).toContain('/tmp/model');
+  });
 });
