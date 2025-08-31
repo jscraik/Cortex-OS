@@ -1,0 +1,215 @@
+{
+  "artifact": "cortex-tui-readiness",
+  "version": "1.0",
+  "apps_path": "apps/cortex-tui",
+  "commit": "8525026edf3a6717c82ca2994df82c7ddb430ad6",
+  "overall": {
+    "score": 51,
+    "rag": "red"
+  },
+  "areas": [
+    {
+      "name": "Architecture",
+      "score": 60,
+      "rag": "amber",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/src/config.rs",
+          "lines": "73-80",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "Code Quality",
+      "score": 55,
+      "rag": "red",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/src/mcp/client.rs",
+          "lines": "6-8",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "API & Contracts",
+      "score": 65,
+      "rag": "amber",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/src/server/handlers.rs",
+          "lines": "17-66",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "Security & Compliance",
+      "score": 40,
+      "rag": "red",
+      "evidence": [
+        {
+          "path": "SECURITY.md",
+          "lines": "",
+          "sha": ""
+        }
+      ]
+    },
+    {
+      "name": "Testing",
+      "score": 30,
+      "rag": "red",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/src/providers/mod.rs",
+          "lines": "89-104",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "CI/CD & Release",
+      "score": 50,
+      "rag": "red",
+      "evidence": [
+        {
+          "path": ".github/workflows/cortex-tui-ci.yml",
+          "lines": "1-60",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "Runtime & Observability",
+      "score": 60,
+      "rag": "amber",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/src/main.rs",
+          "lines": "76-83",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "Performance & SLOs",
+      "score": 50,
+      "rag": "red",
+      "evidence": []
+    },
+    {
+      "name": "Accessibility & DX",
+      "score": 45,
+      "rag": "red",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/README.md",
+          "lines": "1-48",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    },
+    {
+      "name": "ML Integration",
+      "score": 55,
+      "rag": "amber",
+      "evidence": [
+        {
+          "path": "apps/cortex-tui/src/providers/local.rs",
+          "lines": "23-66",
+          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+        }
+      ]
+    }
+  ],
+  "back_compat": [
+    {
+      "path": "apps/cortex-tui/src/app.rs",
+      "lines": "122-132",
+      "reason": "MCP server management placeholders",
+      "removal_safe": true,
+      "replacement": "Implement full server CRUD"
+    }
+  ],
+  "tests": {
+    "coverage_total": 0,
+    "gaps": [
+      {
+        "path": "apps/cortex-tui/src/providers/mod.rs",
+        "lines": "89-104",
+        "why": "failing unit tests"
+      }
+    ]
+  },
+  "ml": {
+    "mlx": {
+      "enabled": true,
+      "embeddings": [],
+      "rerankers": []
+    },
+    "fallback": {
+      "ollama": [],
+      "frontier": []
+    }
+  },
+  "ci_cd": {
+    "workflows": [
+      "accessibility.yml",
+      "agentops.yml",
+      "agents-ci.yml",
+      "ci.yml",
+      "cortex-tui-ci.yml"
+    ],
+    "problems": [
+      "provider tests fail"
+    ]
+  },
+  "a11y": {
+    "issues": [
+      {
+        "area": "screen-reader",
+        "path": "apps/cortex-tui/README.md"
+      }
+    ]
+  },
+  "risks": [
+    {
+      "id": "R1",
+      "severity": "high",
+      "mitigation": "Fix failing provider tests"
+    },
+    {
+      "id": "R2",
+      "severity": "high",
+      "mitigation": "Add SECURITY.md with disclosure policy"
+    },
+    {
+      "id": "R3",
+      "severity": "medium",
+      "mitigation": "Implement MCP server management"
+    }
+  ],
+  "actions": [
+    {
+      "id": "A1",
+      "owner": "runtime-team",
+      "ETA": "2025-01-31"
+    },
+    {
+      "id": "A2",
+      "owner": "security-team",
+      "ETA": "2024-12-15"
+    },
+    {
+      "id": "A3",
+      "owner": "runtime-team",
+      "ETA": "2024-11-30"
+    },
+    {
+      "id": "A4",
+      "owner": "dx-team",
+      "ETA": "2025-02-15"
+    }
+  ]
+}
