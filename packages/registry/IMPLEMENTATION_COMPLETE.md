@@ -134,11 +134,10 @@ packages/registry/
 
 ## ✨ Next Steps (Future Enhancements)
 
-1. **AJV Integration**: Replace placeholder validation with full JSON Schema validation
-2. **Structured Logging**: Add winston/pino for production logging
-3. **Metrics**: Add prometheus metrics for cache hits, request counts
-4. **Security**: Rate limiting, input sanitization, JWT auth
-5. **Documentation**: OpenAPI/Swagger spec generation
-6. **Deployment**: Docker container and kubernetes manifests
+1. **Structured Logging**: Add winston/pino for production logging
+2. **Metrics**: Add prometheus metrics for cache hits, request counts
+3. **Security**: Rate limiting, input sanitization, JWT auth
+4. **Documentation**: OpenAPI/Swagger spec generation
+5. **Deployment**: Docker container and kubernetes manifests
 
 The Schema Registry is now a robust, type-safe, high-performance service ready for production use! 🎉
