@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AgentConfigSchema, MCPRequestSchema } from '@cortex-os/contracts';
+import { AgentConfigSchema, MCPRequestSchema } from '@cortex-os/contracts-v2';
 import { createInMemoryStore } from '@cortex-os/lib';
 import { createJsonOutput, createStdOutput, withTimestamp } from '@cortex-os/lib';
 import { StructuredError } from '@cortex-os/lib';
@@ -32,5 +32,8 @@ export async function handleMCP(input: unknown): Promise<string> {
   if (json) return createJsonOutput(response);
   return createStdOutput(`MCP handled tool=${request.tool}`);
 }
+
+export type { MLXConfig, MlxModelsConfig, MlxModelInfo } from './lib/mlx-config';
+export { loadMlxConfig, loadMlxModelsConfig } from './lib/mlx-config';
 
 export default { handleMCP };

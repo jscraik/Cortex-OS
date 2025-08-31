@@ -11,16 +11,18 @@ import { z } from 'zod';
 import { MLXMcpServer } from './mlx-mcp-server.js';
 import { universalMcpManager } from './universal-mcp-manager.js';
 import express from 'express';
+import path from 'node:path';
 
 const configPathSchema = z.string().min(1, 'MLX config path is required');
 const portSchema = z.number().int().positive().max(65535);
 
 function resolveConfigPath(configPath?: string): string {
-  const resolved = configPath ?? process.env.MLX_CONFIG_PATH;
+  const defaultProfile = path.resolve(
+    process.cwd(),
+    'packages/mcp-bridge/config/mlx-recommended.json',
+  );
+  const resolved = configPath ?? process.env.MLX_CONFIG_PATH ?? defaultProfile;
   if (!resolved || resolved.trim() === '') {
-    // Optionally, set a default fallback path here, e.g. './mlx-config.json'
-    // const fallbackPath = './mlx-config.json';
-    // return fallbackPath;
     throw new Error(
       'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.',
     );
@@ -77,6 +79,17 @@ export function createMlxIntegration(configPath?: string) {
 
     app.post('/v1/chat/completions', async (req, res) => {
       try {
+        if (req.body?.stream) {
+          res.setHeader('Content-Type', 'text/event-stream');
+          res.setHeader('Cache-Control', 'no-cache');
+          res.setHeader('Connection', 'keep-alive');
+          for await (const chunk of mlxServer.streamChat(req.body)) {
+            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+          }
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return;
+        }
         const response = await mlxServer.chat(req.body);
         res.json(response);
       } catch (error) {

@@ -1,0 +1,24 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "workers": 1,
+    "timeout": 30,
+    "max_requests": 100
+  },
+  "models": {
+    "default": {
+      "name": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+      "description": "default development model"
+    }
+  },
+  "cache": {
+    "hf_home": "${MLX_CACHE_DIR}"
+  },
+  "performance": {
+    "batch_size": 1,
+    "max_tokens": 512,
+    "temperature": 0.7,
+    "top_p": 0.9
+  }
+}

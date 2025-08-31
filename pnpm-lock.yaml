@@ -600,22 +600,34 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@cortex-os/contracts':
+      '@cortex-os/contracts-v2':
         specifier: workspace:*
-        version: link:../../libs/typescript/contracts
+        version: link:../contracts
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^22.5.0
         version: 22.18.0
+      tsx:
+        specifier: ^4.0.0
+        version: 4.20.5
       typescript:
         specifier: ^5.5.4
         version: 5.9.2
+      vite-tsconfig-paths:
+        specifier: ^5.1.4
+        version: 5.1.4(typescript@5.9.2)(vite@5.4.19(@types/node@22.18.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1))
       vitest:
         specifier: ^2.0.5
         version: 2.1.9(@types/node@22.18.0)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
 
   packages/mcp-bridge:
     dependencies:
+      '@cortex-os/mcp':
+        specifier: workspace:*
+        version: link:../mcp
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.4
         version: 1.17.4
