@@ -171,6 +171,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
+    "@cyclonedx/bom": "^4.1.0",
     "@types/node": "^22.5.0",
     "@typescript-eslint/eslint-plugin": "^8.1.0",
     "@typescript-eslint/parser": "^8.1.0",
@@ -183,7 +184,6 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5",
-    "cyclonedx-bom": "^4.4.0",
     "yaml": "^2.5.0"
   }
 }

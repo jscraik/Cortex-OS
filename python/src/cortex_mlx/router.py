@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol
@@ -108,28 +107,10 @@ class OllamaAdapter:
         return [i for i, _ in scored]
 
 
-class FrontierAdapter:
-    name = "frontier"
-
-    def available(self) -> bool:
-        # Assume always available via cloud; in tests we do not call it.
-        return True
-
-    def chat(self, prompt: str, timeout: float) -> str:
-        # Stubbed to simple echo for safety in tests
-        return f"[frontier] {prompt[:200]}"
-
-    def embed(self, text: str, timeout: float) -> list[float]:
-        return [0.0] * 16
-
-    def rerank(self, query: str, docs: list[str], timeout: float) -> list[int]:
-        return list(range(len(docs)))
-
-
 class ModelRouter:
     def __init__(self, config: Optional[RouterConfig] = None) -> None:
         self.config = config or RouterConfig()
-        self.chain: list[ModelAdapter] = [MLXAdapter(), OllamaAdapter(), FrontierAdapter()]
+        self.chain: list[ModelAdapter] = [MLXAdapter(), OllamaAdapter()]
 
     def _first_available(self) -> Optional[ModelAdapter]:
         for a in self.chain:
@@ -177,5 +158,4 @@ __all__ = [
     "RouterConfig",
     "MLXAdapter",
     "OllamaAdapter",
-    "FrontierAdapter",
 ]

@@ -76,44 +76,19 @@ export class ModelRouter implements IModelRouter {
   }
 
   async initialize(): Promise<void> {
-    const useLocal = (process.env.USE_LOCAL_MODELS || '').toLowerCase() === 'true';
-
-    // Load adapters availability up-front
     const mlxAvailable = await this.mlxAdapter.isAvailable();
     const ollamaAvailable = await this.ollamaAdapter.isAvailable();
     const mcpAvailable = await this.ensureMcpLoaded();
 
-    let localMapping: Partial<Record<ModelCapability, ModelConfig[]>> | null = null;
-    if (useLocal) {
-      localMapping = await this.loadLocalMapping();
-    }
-
-    // Embedding models
-    if (localMapping?.embedding) {
-      this.availableModels.set('embedding', localMapping.embedding);
-    } else {
-      this.availableModels.set(
-        'embedding',
-        this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable),
-      );
-    }
-
-    // Chat models
-    if (localMapping?.chat) {
-      this.availableModels.set('chat', localMapping.chat);
-    } else {
-      this.availableModels.set('chat', await this.buildChatModels(ollamaAvailable, mcpAvailable));
-    }
-
-    // Reranking models
-    if (localMapping?.reranking) {
-      this.availableModels.set('reranking', localMapping.reranking);
-    } else {
-      this.availableModels.set(
-        'reranking',
-        this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable),
-      );
-    }
+    this.availableModels.set(
+      'embedding',
+      this.buildEmbeddingModels(mlxAvailable, ollamaAvailable, mcpAvailable),
+    );
+    this.availableModels.set('chat', await this.buildChatModels(ollamaAvailable, mcpAvailable));
+    this.availableModels.set(
+      'reranking',
+      this.buildRerankingModels(mlxAvailable, ollamaAvailable, mcpAvailable),
+    );
   }
 
   // Try to lazy-load MCP adapter; return boolean available
@@ -131,25 +106,6 @@ export class ModelRouter implements IModelRouter {
     }
   }
 
-  private async loadLocalMapping(): Promise<Partial<
-    Record<ModelCapability, ModelConfig[]>
-  > | null> {
-    try {
-      const path = new URL('../../../data/model-gateway-local-models.json', import.meta.url)
-        .pathname;
-      const importedModule = await import(`file://${path}`);
-      // support both `export default {...}` and module.exports = {...}
-      const maybeDefault = (importedModule as any).default;
-      const content = typeof maybeDefault !== 'undefined' ? maybeDefault : (importedModule as any);
-      if (typeof content === 'string') return JSON.parse(content || '{}');
-      if (content && typeof content === 'object')
-        return content as Partial<Record<ModelCapability, ModelConfig[]>>;
-      return null;
-    } catch (e) {
-      console.warn('[model-router] USE_LOCAL_MODELS is set but failed to load mapping:', e);
-      return null;
-    }
-  }
 
   private buildEmbeddingModels(
     mlxAvailable: boolean,
