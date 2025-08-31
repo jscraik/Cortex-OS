@@ -19,20 +19,17 @@ def check_tool_availability():
     """Check if GPL tools are installed and working"""
     tools = ["viu", "chafa", "timg"]
     available_tools = []
-    
+
     for tool in tools:
         try:
             result = subprocess.run(
-                [tool, "--version"], 
-                capture_output=True, 
-                text=True, 
-                timeout=5
+                [tool, "--version"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
                 available_tools.append(tool)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             continue
-    
+
     return available_tools
 
 
@@ -43,33 +40,35 @@ def check_service_requirements():
         "python_executable": True,
         "service_script": Path("/app/gpl_service.py").exists(),
     }
-    
+
     return all(checks.values()), checks
 
 
 def main():
     """Main health check function"""
     print("🔍 Running GPL Tools Service Health Check...")
-    
+
     # Check tool availability
     available_tools = check_tool_availability()
-    print(f"📋 Available tools: {', '.join(available_tools) if available_tools else 'None'}")
-    
+    print(
+        f"📋 Available tools: {', '.join(available_tools) if available_tools else 'None'}"
+    )
+
     if not available_tools:
         print("❌ No GPL tools available!")
         sys.exit(1)
-    
+
     # Check service requirements
     requirements_ok, checks = check_service_requirements()
     print(f"🔧 Service requirements: {'✅ OK' if requirements_ok else '❌ Failed'}")
-    
+
     if not requirements_ok:
         print("Failed checks:")
         for check, status in checks.items():
             if not status:
                 print(f"  - {check}: ❌")
         sys.exit(1)
-    
+
     print("✅ Health check passed - GPL tools service ready")
     sys.exit(0)
 

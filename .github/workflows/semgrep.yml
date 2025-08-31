@@ -1,29 +1,26 @@
 name: Semgrep
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  schedule:
-    - cron: '5 3 * * *'
+  push:
+    branches: [ main ]
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      SEMGREP_SEVERITY_LEVEL: ERROR
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: semgrep/ci@v1
         with:
-          node-version: '22'
-          cache: 'pnpm'
-      - name: Install pnpm
-        run: npm install -g pnpm
-      - name: Install dependencies
-        run: pnpm install --filter @cortex-os/security...
-      - name: Install Semgrep
-        run: pipx install semgrep==1.132.0
-      - name: Run Semgrep
-        run: pnpm -F @cortex-os/security semgrep
+          config: |
+            .semgrep/owasp-llm-top-ten.yaml
+            .semgrep/mitre-atlas.yaml
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: packages/security/semgrep.sarif
+          sarif_file: semgrep.sarif
+

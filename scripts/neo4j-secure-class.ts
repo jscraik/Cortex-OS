@@ -23,7 +23,12 @@ export class Neo4j implements INeo4j {
 
   async upsertRel(rel: KGRel) {
     try {
-      await this.secureNeo4j.upsertRel({ from: rel.from, to: rel.to, type: rel.type, props: rel.props });
+      await this.secureNeo4j.upsertRel({
+        from: rel.from,
+        to: rel.to,
+        type: rel.type,
+        props: rel.props,
+      });
     } catch (error) {
       console.error('Error upserting relationship:', error);
       throw error;
@@ -39,4 +44,3 @@ export class Neo4j implements INeo4j {
     }
   }
 }
-

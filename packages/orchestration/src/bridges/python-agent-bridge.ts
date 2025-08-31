@@ -9,10 +9,12 @@
  * @ai_provenance_hash implementation_phase_1
  */
 
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
+import fs from 'fs';
 import path from 'path';
 import winston from 'winston';
+import { spawnPythonProcess } from '../../../../libs/python/exec.js';
 
 export interface PythonAgentConfig {
   pythonPath?: string;
@@ -241,7 +243,6 @@ export class PythonAgentBridge extends EventEmitter {
 
       const pythonArgs = ['-m', this.config.bridgeModule!];
 
-
       // Discover monorepo root (so tests run from package still resolve python paths)
       const findRepoRoot = (): string => {
         let dir = process.cwd();
@@ -260,21 +261,15 @@ export class PythonAgentBridge extends EventEmitter {
       };
 
       const repoRoot = findRepoRoot();
-      const pythonPathParts = [
-        // Parent directory so that `src` is recognized as a package for relative imports
-        path.resolve(repoRoot, 'packages/python-agents'),
-      ];
+      const pythonPathParts = [path.resolve(repoRoot, 'packages/python-agents')];
       const existingPyPath = process.env.PYTHONPATH || '';
       if (existingPyPath) pythonPathParts.push(existingPyPath);
+      const modulePath = pythonPathParts.join(path.delimiter);
 
-
-      this.pythonProcess = spawn(this.config.pythonPath!, pythonArgs, {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          // Ensure local package imports work regardless of current working directory
-          PYTHONPATH: modulePath,
-        },
+      this.pythonProcess = spawnPythonProcess(pythonArgs, {
+        python: this.config.pythonPath,
+        setModulePath: modulePath,
+        envOverrides: {},
       });
 
       // Handle process startup

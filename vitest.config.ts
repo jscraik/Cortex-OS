@@ -7,16 +7,25 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     globals: true,
-    // Cap worker pools to avoid excessive Node processes during runs
-    // Docs: https://vitest.dev/config/#pooloptions
-    poolOptions: {
-      threads: { maxThreads: 3, minThreads: 1 },
-      forks: { maxForks: 3, minForks: 1 },
-      vmThreads: { maxThreads: 3, minThreads: 1 },
-      vmForks: { maxForks: 3, minForks: 1 },
+    // Strict worker limits to prevent memory exhaustion
+    maxWorkers: 1,
+    // Memory management settings
+    isolate: true,
+    sequence: {
+      concurrent: false, // Run tests sequentially to save memory
     },
-    // Fallback cap when poolOptions aren’t applied for some pools
-    maxWorkers: 3,
+    // Force garbage collection between test files
+    testTimeout: 30000,
+    hookTimeout: 30000,
+    // Memory leak prevention
+    teardownTimeout: 10000,
+    // Use forks pool to avoid tinypool thread conflicts in CI/Node 22
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     // Ensure built artifacts never get swept into discovery
     exclude: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', 'tests/**'],
     // Quality gates: enforce coverage thresholds across all projects

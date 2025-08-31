@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import type { TransportConfig } from './types.js';
 
-const dangerousCommand = /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s)/i;
+const dangerousCommand =
+  /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s|shutdown\s|reboot\s|format\s)/i;
+const unsafeMetacharacters = /[|&;`$(){}\[\]<>\n]/;
+const pathTraversal = /\.\./;
+const safeCommandPattern = /^[a-zA-Z0-9_./\-\s]+$/;
 
 const baseSchema = {
   allowNetwork: z.boolean().optional(),
@@ -16,16 +20,17 @@ export const stdioSchema = z
     command: z
       .string()
       .min(1)
-      .refine((cmd) => !dangerousCommand.test(cmd), {
-        message: 'Unsafe command',
-      }),
+      .max(256)
+      .refine((cmd) => safeCommandPattern.test(cmd), { message: 'Unsafe command' })
+      .refine((cmd) => !unsafeMetacharacters.test(cmd), {
+        message: 'Command contains shell metacharacters',
+      })
+      .refine((cmd) => !pathTraversal.test(cmd), { message: 'Path traversal not allowed' })
+      .refine((cmd) => !dangerousCommand.test(cmd), { message: 'Unsafe command detected' }),
     args: z.array(z.string()).optional(),
     env: z.record(z.string()).optional(),
     cwd: z.string().optional(),
-    maxRetries: z.number().int().nonnegative().optional(),
-    retryDelay: z.number().int().nonnegative().optional(),
-    timeout: z.number().int().nonnegative().optional(),
-    ...baseSchema,
+    timeoutMs: z.number().int().nonnegative().optional(),
   })
   .strict();
 
@@ -33,12 +38,13 @@ export const httpSchema = z
   .object({
     type: z.literal('http'),
     url: z.string().url(),
-    ...baseSchema,
+    timeoutMs: z.number().int().nonnegative().optional(),
+    headers: z.record(z.string()).optional(),
   })
   .strict();
 
 export const transportConfigSchema = z.union([stdioSchema, httpSchema]);
 
 export function parseTransportConfig(config: unknown): TransportConfig {
-  return transportConfigSchema.parse(config);
+  return transportConfigSchema.parse(config) as TransportConfig;
 }

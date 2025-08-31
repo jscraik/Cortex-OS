@@ -30,7 +30,13 @@ export async function loadGrant(service: string): Promise<Grant> {
   return GrantSchema.parse(grant);
 }
 
-  const ruleMap: Record<string, keyof typeof grant.rules> = {
+// Helper to enforce a grant for an operation. Throws on disallowed operations.
+export async function enforce(
+  grant: Grant,
+  operation: 'embeddings' | 'rerank' | 'chat',
+  _body?: unknown,
+) {
+  const ruleMap: Record<string, keyof Grant['rules']> = {
     embeddings: 'allow_embeddings',
     rerank: 'allow_rerank',
     chat: 'allow_chat',
@@ -39,4 +45,5 @@ export async function loadGrant(service: string): Promise<Grant> {
   if (!ruleKey || !grant.rules[ruleKey]) {
     throw new Error(`Operation ${operation} not allowed by policy`);
   }
+  return true;
 }

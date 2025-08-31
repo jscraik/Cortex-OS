@@ -29,6 +29,7 @@ This package follows strict Test-Driven Development (TDD) principles as mandated
    - Focus on making it work, not making it perfect
 
 3. **REFACTOR Phase** - Improve while keeping tests green
+
    ```bash
    pnpm tdd:refactor
    ```

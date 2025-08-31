@@ -5,8 +5,6 @@
 
 export {
   SpiffeClient,
-  requestWorkloadIdentity,
-  parseWorkloadResponse,
   buildWorkloadIdentity,
   convertSelectors,
   splitPEMCertificates,

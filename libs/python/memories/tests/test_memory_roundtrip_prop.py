@@ -9,7 +9,9 @@ from hypothesis import strategies as st
     text=st.one_of(st.none(), st.text(max_size=20)),
     tags=st.lists(st.text(max_size=5), max_size=5),
 )
-def test_memory_roundtrip_prop(id: str, kind: str, text: str | None, tags: list[str]) -> None:
+def test_memory_roundtrip_prop(
+    id: str, kind: str, text: str | None, tags: list[str]
+) -> None:
     m = Memory(
         id=id,
         kind=kind,
@@ -19,4 +21,4 @@ def test_memory_roundtrip_prop(id: str, kind: str, text: str | None, tags: list[
         updatedAt="2024-01-01T00:00:00Z",
         provenance=Provenance(source="system"),
     )
-    assert Memory(**m.model_dump()) == m  # noqa: S101
+    assert Memory(**m.model_dump()) == m

@@ -1,5 +1,5 @@
-
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as clientModule from './client';
 import { SpiffeClient } from './client';
 import type { TrustDomainConfig } from '../types.js';
 
@@ -25,7 +25,7 @@ describe('SpiffeClient', () => {
     const mockResponse = {
       spiffe_id: 'spiffe://example.org/my/service',
       trust_domain: 'example.org',
-      selectors: [],
+      selectors: [{ type: 'env', value: 'prod' }],
     };
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -45,6 +45,19 @@ describe('SpiffeClient', () => {
     );
     expect(identity.spiffeId).toBe(mockResponse.spiffe_id);
     expect(identity.trustDomain).toBe(mockResponse.trust_domain);
+    expect(identity.selectors).toEqual({ env: 'prod' });
+  });
 
+  it('fetches trust bundle and splits certificates', async () => {
+    const pem = `-----BEGIN CERTIFICATE-----\nCERT1\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\nCERT2\n-----END CERTIFICATE-----`;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ trust_bundle: pem }),
+    }) as any;
+    const spy = vi.spyOn(clientModule, 'splitPEMCertificates');
+    const client = new SpiffeClient(config);
+    const certs = await client.fetchTrustBundle();
+    expect(spy).toHaveBeenCalledWith(pem);
+    expect(certs).toHaveLength(2);
   });
 });

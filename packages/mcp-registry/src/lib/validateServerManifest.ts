@@ -1,4 +1,4 @@
-import type Ajv from 'ajv';
+// Use 'any' to avoid ESM/TS default export type issues in Ajv
 import {
   ServerManifestSchema,
   type ValidationResult,
@@ -6,7 +6,7 @@ import {
   type ValidationWarning,
 } from '../types.js';
 
-export function validateServerManifest(ajv: Ajv, manifest: unknown): ValidationResult {
+export function validateServerManifest(ajv: any, manifest: unknown): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationWarning[] = [];
 
@@ -105,4 +105,3 @@ export function validateServerManifest(ajv: Ajv, manifest: unknown): ValidationR
     warnings,
   };
 }
-

@@ -7,9 +7,12 @@
 
 import { PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { z } from 'zod';
+import { runCommand } from '../lib/run-command.js';
 
-
-// Neuron interface definition - compatible with prp-runner
+// Neuron interface definition
 interface Neuron {
   id: string;
   role: string;
@@ -258,61 +261,76 @@ export const createDefaultMCPTools = (): MCPTool[] => [
     description: 'Read file contents for analysis',
     inputSchema: {
       type: 'object',
-      properties: {
-        path: { type: 'string' },
-      },
+      properties: { path: { type: 'string' } },
       required: ['path'],
     },
     execute: async (params, context) => {
       if (!context.securityPolicy.allowFileSystem) {
         throw new Error('File system access not allowed');
       }
-      // Implementation would read actual file
-      return { content: `Mock file content for ${params.path}` };
+      const { path: targetPath } = z.object({ path: z.string() }).parse(params);
+      const abs = path.isAbsolute(targetPath)
+        ? targetPath
+        : path.join(context.workingDirectory, targetPath);
+      const content = await fs.readFile(abs, 'utf-8');
+      return { path: abs, content };
     },
   },
   {
     name: 'code_analysis',
-    description: 'Analyze code quality and structure',
+    description: 'Analyze code quality using ESLint',
     inputSchema: {
       type: 'object',
-      properties: {
-        code: { type: 'string' },
-        language: { type: 'string' },
-      },
-      required: ['code'],
-    },
-    execute: async (params, context) => {
-      // Mock code analysis
-      return {
-        complexity: 'medium',
-        issues: [],
-        score: 85,
-        suggestions: ['Add more comments', 'Consider refactoring'],
-      };
-    },
-  },
-  {
-    name: 'test_runner',
-    description: 'Execute tests and report results',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        testPath: { type: 'string' },
-        framework: { type: 'string' },
-      },
+      properties: { file: { type: 'string' } },
+      required: ['file'],
     },
     execute: async (params, context) => {
       if (!context.securityPolicy.allowExecution) {
         throw new Error('Code execution not allowed');
       }
-      // Mock test execution
-      return {
-        passed: 42,
-        failed: 0,
-        coverage: 87,
-        duration: 1200,
-      };
+      const { file } = z.object({ file: z.string() }).parse(params);
+      const abs = path.isAbsolute(file) ? file : path.join(context.workingDirectory, file);
+      const { stdout } = await runCommand(['npx', 'eslint', abs, '-f', 'json'], {
+        cwd: context.workingDirectory,
+      });
+      const parsed = JSON.parse(stdout);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('ESLint did not return a valid report for the file.');
+      }
+      const [report] = parsed;
+      return { file: abs, report };
+    },
+  },
+  {
+    name: 'test_runner',
+    description: 'Execute tests using a shell command',
+    inputSchema: {
+      type: 'object',
+      properties: { command: { type: 'string' } },
+      required: ['command'],
+    },
+    execute: async (params, context) => {
+      if (!context.securityPolicy.allowExecution) {
+        throw new Error('Code execution not allowed');
+      }
+      const { command } = z.object({ command: z.string() }).parse(params);
+      // Whitelist of allowed test commands
+      const allowedCommands = [
+        'npm test',
+        'yarn test',
+        'pnpm test',
+        'npx jest',
+        'npx mocha',
+        'npx vitest',
+      ];
+      // Only allow exact matches to the whitelist
+      if (!allowedCommands.includes(command.trim())) {
+        throw new Error(`Command "${command}" is not allowed. Allowed commands: ${allowedCommands.join(', ')}`);
+      }
+      const { stdout, stderr } = await runCommand(command, {
+        cwd: context.workingDirectory,
+      });
+      return { stdout, stderr };
     },
   },
 ];

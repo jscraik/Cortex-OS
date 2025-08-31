@@ -68,4 +68,10 @@ describe('orchestrateTask', () => {
     });
     await first;
   });
+
+  it('rejects removed fallbackStrategy option', () => {
+    expect(() => createEngine({ fallbackStrategy: 'seq' } as any)).toThrow(
+      'fallbackStrategy option was removed',
+    );
+  });
 });

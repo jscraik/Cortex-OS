@@ -8,7 +8,23 @@ import { createTransport } from '../lib/transport.js';
 import type { TransportConfig } from '../lib/types.js';
 
 // Mock external dependencies
-vi.mock('child_process');
+vi.mock('child_process', () => {
+  const { EventEmitter } = require('events');
+  return {
+    spawn: (_cmd: string, _args?: string[], _opts?: any) => {
+      const child: any = new EventEmitter();
+      child.pid = 12345;
+      child.stdin = { writable: true, write: (_chunk: any) => true };
+      child.stdout = new EventEmitter();
+      child.stderr = new EventEmitter();
+      child.kill = (_sig?: string) => {
+        child.emit('exit', 0, null);
+        return true;
+      };
+      return child;
+    },
+  };
+});
 vi.mock('eventsource');
 vi.mock('node-fetch');
 
@@ -70,6 +86,7 @@ describe('Transport Security', () => {
   });
 
   describe('Command Validation', () => {
+    // Removed lenient mode - tests now expect proper validation
     const testSafeCommands = () => {
       const safeCommands = ['node', 'python', 'echo', '/usr/bin/node', './script.sh'];
 

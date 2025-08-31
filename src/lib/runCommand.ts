@@ -11,25 +11,27 @@ export async function runCommand(
 ): Promise<{ stdout: string; stderr: string; code: number }> {
   const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
-  const execPromise = new Promise<{ stdout: string; stderr: string; code: number }>((resolve, reject) => {
-    let stdout = '';
-    let stderr = '';
+  const execPromise = new Promise<{ stdout: string; stderr: string; code: number }>(
+    (resolve, reject) => {
+      let stdout = '';
+      let stderr = '';
 
-    child.stdout?.on('data', (d) => {
-      stdout += d.toString();
-    });
-    child.stderr?.on('data', (d) => {
-      stderr += d.toString();
-    });
+      child.stdout?.on('data', (d) => {
+        stdout += d.toString();
+      });
+      child.stderr?.on('data', (d) => {
+        stderr += d.toString();
+      });
 
-    child.on('error', (err) => {
-      reject(err);
-    });
+      child.on('error', (err) => {
+        reject(err);
+      });
 
-    child.on('close', (code) => {
-      resolve({ stdout, stderr, code: code ?? 0 });
-    });
-  });
+      child.on('close', (code) => {
+        resolve({ stdout, stderr, code: code ?? 0 });
+      });
+    },
+  );
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     const timer = setTimeout(() => {
@@ -40,7 +42,11 @@ export async function runCommand(
         if (!child.killed) {
           child.kill('SIGKILL');
         }
-        reject(new Error(`Process timed out after ${timeoutMs}ms (SIGTERM), and was forcefully killed after ${GRACE_PERIOD_MS}ms`));
+        reject(
+          new Error(
+            `Process timed out after ${timeoutMs}ms (SIGTERM), and was forcefully killed after ${GRACE_PERIOD_MS}ms`,
+          ),
+        );
       }, GRACE_PERIOD_MS);
       // If the process exits during the grace period, clear the grace timer
       child.once('exit', () => clearTimeout(graceTimer));

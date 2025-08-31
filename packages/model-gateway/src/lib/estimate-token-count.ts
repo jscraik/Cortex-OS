@@ -3,10 +3,6 @@
  * Estimate token count for text (rough approximation).
  */
 
-
-
-
-
 /**
  * Estimate token count for text (rough approximation).
  * Roughly assumes one token per four characters.

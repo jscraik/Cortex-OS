@@ -1,0 +1,41 @@
+export declare class SecureNeo4j {
+    private driver;
+    private sessionPool;
+    private maxPoolSize;
+    private activeSessions;
+    constructor(uri: string, user: string, pass: string);
+    close(): Promise<void>;
+    private getSession;
+    private returnSession;
+    upsertNode(node: {
+        id: string;
+        label: string;
+        props: Record<string, any>;
+    }): Promise<void>;
+    upsertRel(rel: {
+        from: string;
+        to: string;
+        type: string;
+        props?: Record<string, any>;
+    }): Promise<void>;
+    neighborhood(nodeId: string, depth?: number): Promise<{
+        nodes: {
+            id: string;
+            label: string;
+            props: Record<string, unknown>;
+        }[];
+        rels: {
+            from: string;
+            to: string;
+            type: string;
+            props: Record<string, unknown>;
+        }[];
+    }>;
+    private validateProperties;
+    getPoolStats(): {
+        activeSessions: number;
+        pooledSessions: number;
+        maxPoolSize: number;
+    };
+}
+//# sourceMappingURL=secure-neo4j.d.ts.map

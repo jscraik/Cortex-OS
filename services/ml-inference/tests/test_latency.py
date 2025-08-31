@@ -1,11 +1,7 @@
-import sys
 import time
-from pathlib import Path
 
 import httpx
 import pytest
-
-sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 from app import app
 
 SLO_SECONDS = 0.1

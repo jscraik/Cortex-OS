@@ -1,6 +1,6 @@
-import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import DatabaseImpl from 'better-sqlite3';
 import type { Memory, MemoryId } from '../domain/types.js';
-import Database from 'better-sqlite3';
+import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -20,10 +20,10 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export class SQLiteStore implements MemoryStore {
-  private db: Database;
+  private db: InstanceType<typeof DatabaseImpl>;
 
   constructor(path: string) {
-    this.db = new Database(path);
+    this.db = new DatabaseImpl(path);
 
     // Create table if it doesn't exist
     this.db.exec(`
@@ -106,13 +106,30 @@ export class SQLiteStore implements MemoryStore {
       sql += ')';
     }
 
+    // Fetch more candidates to allow reranking in a second stage
+    const initialLimit = Math.max(q.topK * 10, q.topK);
     sql += ' ORDER BY updatedAt DESC LIMIT ?';
-    params.push(q.topK);
+    params.push(initialLimit);
 
     const stmt = this.db.prepare(sql);
     const rows = stmt.all(...params);
+    const candidates = rows.map((row: any) => this.rowToMemory(row));
 
-    return rows.map((row: any) => this.rowToMemory(row));
+    // Optional rerank stage using Model Gateway if query text is present
+    const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
+    const queryText = q.text?.trim();
+
+    if (rerankEnabled && queryText && candidates.length > 1) {
+      try {
+        const top = await this.rerankWithModelGateway(queryText, candidates);
+        return top.slice(0, q.topK);
+      } catch {
+        // Fall back to original ordering on any error
+        return candidates.slice(0, q.topK);
+      }
+    }
+
+    return candidates.slice(0, q.topK);
   }
 
   async searchByVector(q: VectorQuery): Promise<Memory[]> {
@@ -142,7 +159,7 @@ export class SQLiteStore implements MemoryStore {
       .filter((memory) => memory.vector) as Memory[];
 
     // Perform similarity matching
-    const scoredCandidates = candidates
+    let scoredCandidates = candidates
       .map((memory) => ({
         memory,
         score: cosineSimilarity(q.vector, memory.vector!),
@@ -151,7 +168,74 @@ export class SQLiteStore implements MemoryStore {
       .slice(0, q.topK)
       .map((item) => item.memory);
 
+    // Optional second-stage reranking if original query text is provided
+    const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
+    if (rerankEnabled && q.queryText && candidates.length > 1) {
+      try {
+        const start = Date.now();
+        const reranked = await this.rerankWithModelGateway(q.queryText, candidates);
+        const latency = Date.now() - start;
+        await this.writeOutboxEvent({
+          type: 'rerank.completed',
+          data: {
+            strategy: 'cosine+mlxr',
+            totalCandidates: candidates.length,
+            returned: q.topK,
+            latencyMs: latency,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        scoredCandidates = reranked.slice(0, q.topK);
+      } catch {
+        // keep cosine results on failure
+      }
+    }
+
     return scoredCandidates;
+  }
+
+  // Second-stage reranking via Model Gateway (/rerank) with Qwen3 MLX primary
+  private async rerankWithModelGateway(query: string, docs: Memory[]): Promise<Memory[]> {
+    const gatewayUrl = process.env.MODEL_GATEWAY_URL || 'http://localhost:8081';
+    const endpoint = `${gatewayUrl.replace(/\/$/, '')}/rerank`;
+    const documents = docs.map((d) => d.text || '');
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query, documents }),
+    });
+    if (!res.ok) {
+      throw new Error(`Rerank request failed: ${res.status}`);
+    }
+    const body = (await res.json()) as { scores: number[]; model: string };
+    const scored = docs.map((m, i) => ({
+      mem: m,
+      score: body.scores?.[i] ?? 0,
+      model: body.model,
+    }));
+    scored.sort((a, b) => b.score - a.score);
+    // Emit outbox event with model id
+    await this.writeOutboxEvent({
+      type: 'rerank.completed',
+      data: {
+        model: scored[0]?.model || 'unknown',
+        candidates: docs.length,
+        timestamp: new Date().toISOString(),
+      },
+    });
+    return scored.map((s) => s.mem);
+  }
+
+  private async writeOutboxEvent(event: Record<string, unknown>): Promise<void> {
+    try {
+      const file = process.env.MEMORIES_OUTBOX_FILE || 'logs/memories-outbox.jsonl';
+      // Lazy import to avoid ESM top-level overhead
+      const fs = await import('fs/promises');
+      await fs.mkdir(file.split('/').slice(0, -1).join('/'), { recursive: true });
+      await fs.appendFile(file, JSON.stringify(event) + '\n', { encoding: 'utf8' });
+    } catch {
+      // best-effort only
+    }
   }
 
   async purgeExpired(nowISO: string): Promise<number> {
@@ -165,28 +249,18 @@ export class SQLiteStore implements MemoryStore {
     const expiredIds: string[] = [];
 
     for (const row of rows) {
-      try {
-        const memory = this.rowToMemory(row);
-        if (memory.ttl) {
-          const created = new Date(memory.createdAt).getTime();
-          // Parse ISO duration (simplified version)
-          const match = memory.ttl.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/);
-          if (match) {
-            const days = Number(match[1] || 0);
-            const hours = Number(match[2] || 0);
-            const minutes = Number(match[3] || 0);
-            const seconds = Number(match[4] || 0);
-            const ttlMs = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
-
-            if (created + ttlMs <= now) {
-              expiredIds.push(memory.id);
-            }
-          }
-        }
-      } catch (error) {
-        // Ignore invalid TTL formats
-        console.warn(`Invalid TTL format for memory ${row.id}: ${row.ttl}`);
-      }
+      const memory = this.rowToMemory(row);
+      if (!memory.ttl) continue;
+      const created = new Date(memory.createdAt).getTime();
+      const ttlRegex = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/;
+      const match = ttlRegex.exec(memory.ttl);
+      if (!match) continue;
+      const days = Number(match[1] || 0);
+      const hours = Number(match[2] || 0);
+      const minutes = Number(match[3] || 0);
+      const seconds = Number(match[4] || 0);
+      const ttlMs = (((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
+      if (created + ttlMs <= now) expiredIds.push(memory.id);
     }
 
     // Delete expired memories

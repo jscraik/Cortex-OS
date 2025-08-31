@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generate a CycloneDX SBOM for Node workspace using Syft if present; fallback to minimal manifest export.
+// Generate a CycloneDX SBOM for Node workspace using Syft.
 import { execa } from 'execa';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -32,27 +32,11 @@ async function generateWithSyft() {
   });
   return outFile;
 }
-
-async function fallbackManifest() {
-  await ensureDir(outDir);
-  // Very simple manifest of package.json dependencies at root; not a real SBOM
-  const pkgPath = path.join(repoRoot, 'package.json');
-  const raw = await fs.readFile(pkgPath, 'utf8');
-  const pkg = JSON.parse(raw);
-  const payload = {
-    metadata: { tool: 'fallback-manifest', timestamp: new Date().toISOString() },
-    name: pkg.name,
-    version: pkg.version,
-    dependencies: pkg.dependencies || {},
-    devDependencies: pkg.devDependencies || {},
-  };
-  await fs.writeFile(outFile, JSON.stringify(payload, null, 2));
-  return outFile;
-}
-
 async function main() {
-  const syftOk = await hasBinary('syft');
-  const file = syftOk ? await generateWithSyft() : await fallbackManifest();
+  if (!(await hasBinary('syft'))) {
+    throw new Error('Syft binary not found. Install from https://github.com/anchore/syft');
+  }
+  const file = await generateWithSyft();
   console.log(`SBOM written: ${path.relative(repoRoot, file)}`);
 }
 

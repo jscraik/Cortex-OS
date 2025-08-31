@@ -2,19 +2,14 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
-import importlib.util
 
 import pandas as pd  # type: ignore[import-untyped]
 import pytest
-import great_expectations as ge  # type: ignore[import-untyped]
 
-spec = importlib.util.spec_from_file_location(
-    "pipeline", Path(__file__).resolve().parents[1] / "pipeline.py"
-)
-assert spec and spec.loader
-pipeline = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(pipeline)
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+import pipeline
 
 
 def _sample_records() -> list[dict[str, object]]:
@@ -26,10 +21,10 @@ def _sample_records() -> list[dict[str, object]]:
 
 def test_schema_validation() -> None:
     df = pipeline.ingest(_sample_records())
-    gdf = ge.dataset.PandasDataset(df)
-    gdf.expect_table_columns_to_match_ordered_list(["id", "value", "email"])
-    gdf.expect_column_values_to_not_be_null("id")
-    gdf.expect_column_values_to_be_unique("id")
+    # Basic schema validation
+    assert list(df.columns) == ["id", "value", "email"]
+    assert df["id"].notna().all()
+    assert df["id"].is_unique
 
 
 def test_ingest_idempotent() -> None:
@@ -54,6 +49,12 @@ def test_lineage_metadata() -> None:
     assert (df["lineage_source"] == "unit-test").all()
 
 
+def test_transform() -> None:
+    df = pipeline.ingest(_sample_records())
+    transformed = pipeline.transform(df)
+    assert transformed["value"].tolist() == [20, 40]
+
+
 def test_pii_masking() -> None:
     df = pipeline.ingest(_sample_records())
     df = pipeline.mask_pii(df)
@@ -62,5 +63,4 @@ def test_pii_masking() -> None:
 
 def test_ingest_invalid_schema_failure() -> None:
     with pytest.raises(ValueError):
-        pipeline.ingest([{ "id": 1, "value": 10 }])
-
+        pipeline.ingest([{"id": 1, "value": 10}])

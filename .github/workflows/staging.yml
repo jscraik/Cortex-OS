@@ -1,0 +1,32 @@
+name: staging
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Staging base URL (e.g., https://staging.example.com)'
+        required: false
+        default: 'http://localhost:3333'
+jobs:
+  canary_shadow_rollback:
+    runs-on: ubuntu-latest
+    env:
+      STAGING_BASE_URL: ${{ inputs.base_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile=false
+      - name: Canary check
+        run: node ops/staging/canary.mjs
+      - name: Shadow traffic
+        run: node ops/staging/shadow.mjs
+      - name: Chaos drill
+        run: node ops/staging/chaos.mjs
+      - name: Rollback drill
+        if: failure()
+        run: node ops/staging/rollback.mjs

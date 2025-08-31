@@ -1,18 +1,18 @@
+from typing import Any
+
 from pydantic import BaseModel
-from typing import Any, Optional, Dict
 
 
 class Problem(BaseModel):
     type: str
     title: str
     status: int
-    detail: Optional[str] = None
-    instance: Optional[str] = None
-    meta: Optional[Dict[str, Any]] = None
+    detail: str | None = None
+    instance: str | None = None
+    meta: dict[str, Any] | None = None
 
 
 class Result(BaseModel):
     ok: bool
-    value: Optional[Any] = None
-    error: Optional[Dict[str, Any]] = None
-
+    value: Any | None = None
+    error: dict[str, Any] | None = None

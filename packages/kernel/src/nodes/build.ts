@@ -1,8 +1,8 @@
-import { PRPState, Evidence } from '../state.js';
-import { generateId } from '../utils/id.js';
-import { currentTimestamp } from '../utils/time.js';
 import fs from 'node:fs';
 import path from 'node:path';
+import { Evidence, PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Build Phase Gates:
@@ -155,7 +155,6 @@ export class BuildNode {
     };
   }
 
-
   private async validateFrontend(state: PRPState): Promise<FrontendResult<FrontendDetails>> {
     const hasFrontend = state.blueprint.requirements?.some(
       (req) =>
@@ -163,8 +162,6 @@ export class BuildNode {
         req.toLowerCase().includes('frontend') ||
         req.toLowerCase().includes('interface'),
     );
-
-
 
     // Mock Lighthouse and Axe scores; fail when frontend requirements missing
     const lighthouse = hasFrontend ? 94 : 0;
@@ -189,7 +186,6 @@ export class BuildNode {
     };
   }
 
-
   private async validateDocumentation(state: PRPState): Promise<ValidationResult<DocsDetails>> {
     const hasDocsReq = state.blueprint.requirements?.some(
       (req) =>
@@ -198,25 +194,22 @@ export class BuildNode {
         req.toLowerCase().includes('readme'),
     );
 
+    if (!hasDocsReq) {
+      return { passed: true, details: { readme: 'skipped' } };
+    }
 
-async function validateFrontend(state: PRPState) {
-  const hasFrontend = state.blueprint.requirements?.some((r) =>
-    ['ui', 'frontend', 'interface'].some((k) => r.toLowerCase().includes(k)),
-  );
-  return hasFrontend
-    ? { lighthouse: 94, axe: 96, details: {} }
-    : { lighthouse: 100, axe: 100, details: { type: 'backend-only' } };
-}
+    const readme = path.resolve('README.md');
+    const readmeExists = fs.existsSync(readme);
 
-
-async function validateDocumentation(state: PRPState) {
-  const hasDocs = state.blueprint.requirements?.some((r) =>
-    ['doc', 'guide', 'readme'].some((k) => r.toLowerCase().includes(k)),
-  );
-  if (!hasDocs) return { passed: true, details: { readme: 'skipped' } };
-  const readme = path.resolve('README.md');
-  return { passed: fs.existsSync(readme), details: { readme: fs.existsSync(readme) } };
-
+    return {
+      passed: readmeExists,
+      details: {
+        readme: readmeExists,
+        schemaFormat: readmeExists ? 'markdown' : 'missing',
+        validation: readmeExists ? 'found' : 'missing',
+      },
+    };
+  }
 }
 
 interface ValidationResult<T> {
@@ -230,6 +223,7 @@ interface BackendDetails {
   testsFailed?: number;
   coverage?: number;
   type?: string;
+  reason?: string;
 }
 
 interface APISchemaDetails {
@@ -255,16 +249,17 @@ interface FrontendResult<T> {
 }
 
 interface FrontendDetails {
-  lighthouse: {
+  lighthouse?: {
     performance: number;
     accessibility: number;
     bestPractices: number;
     seo: number;
   };
-  axe: {
+  axe?: {
     violations: number;
     severity: string;
   };
+  reason?: string;
 }
 
 interface DocsDetails {
