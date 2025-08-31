@@ -3,9 +3,9 @@
  * Functional LLM bridge utilities connecting orchestrator to MLX/Ollama services.
  */
 
-import { z } from 'zod';
 import { Ollama } from 'ollama';
-import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
+import { z } from 'zod';
+import { AVAILABLE_MLX_MODELS, MLXAdapter, createMLXAdapter } from './mlx-adapter.js';
 
 interface OllamaAdapter {
   generate(options: {
@@ -202,4 +202,3 @@ export class LLMBridge {
     await shutdown(this.state);
   }
 }
-
