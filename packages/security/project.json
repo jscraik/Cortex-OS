@@ -6,28 +6,41 @@
   "targets": {
     "build": {
       "executor": "@nx/rollup:rollup",
-      "outputs": ["{projectRoot}/dist"],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
       "options": {
         "main": "packages/security/src/index.ts",
         "tsConfig": "packages/security/tsconfig.json",
         "assets": [],
-        "external": ["@cortex-os/a2a-contracts", "@cortex-os/utils", "@cortex-os/telemetry"]
+        "external": [
+          "@cortex-os/a2a-contracts",
+          "@cortex-os/utils",
+          "@cortex-os/telemetry"
+        ]
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "options": {
-        "lintFilePatterns": ["packages/security/**/*.ts"]
+        "lintFilePatterns": [
+          "packages/security/**/*.ts"
+        ]
       }
     },
     "test": {
-      "executor": "@nx/vitest:vitest",
-      "outputs": ["{projectRoot}/coverage"],
+      "executor": "@nx/vite:vitest",
+      "outputs": [
+        "{projectRoot}/coverage"
+      ],
       "options": {
         "config": "packages/security/vitest.config.ts"
       }
     }
   },
-  "tags": ["scope:security", "type:shared"],
+  "tags": [
+    "scope:security",
+    "type:shared"
+  ],
   "implicitDependencies": []
 }

@@ -52,3 +52,6 @@ Thumbs.db
 !packages/*/src/lib/**
 !apps/*/src/lib/
 !apps/*/src/lib/**
+
+# Nx cache
+.nx/
