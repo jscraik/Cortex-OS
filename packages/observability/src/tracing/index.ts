@@ -2,7 +2,7 @@
  * @fileoverview OTEL tracing with ULID propagation
  */
 
-import { trace, context, SpanStatusCode, SpanKind } from '@opentelemetry/api';
+import { trace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { Resource } from '@opentelemetry/resources';
@@ -24,6 +24,16 @@ export function initializeTracing(serviceName: string, version: string = '1.0.0'
   });
 
   sdk.start();
+  const shutdown = async () => {
+    try {
+      await sdk.shutdown();
+    } catch (err) {
+      console.error('[observability] Tracing shutdown error', err);
+    }
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
+  process.once('beforeExit', shutdown);
   return sdk;
 }
 

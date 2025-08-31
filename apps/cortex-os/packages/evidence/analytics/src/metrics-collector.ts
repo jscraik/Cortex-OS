@@ -238,13 +238,7 @@ export class MetricsCollector extends EventEmitter {
       this.logger.error('Error discovering LangGraph agents', {
         error: error.message,
       });
-
-      // Fallback to demonstration data when no real LangGraph instances are available
-      // This would be removed in production once real integration is implemented
-      const fallbackMetrics = await this.getLangGraphFallbackMetrics(timestamp);
-      metrics.push(...fallbackMetrics);
     }
-
     return metrics;
   }
 
@@ -303,8 +297,6 @@ export class MetricsCollector extends EventEmitter {
     // 2. Docker containers with LangGraph labels
     // 3. Kubernetes pods with LangGraph annotations
     // 4. Service mesh discovery endpoints
-
-    // For demonstration, return empty array to trigger fallback
     return [];
   }
 
@@ -376,46 +368,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   /**
-   * Fallback metrics for demonstration when no real LangGraph instances are available
    */
-  private async getLangGraphFallbackMetrics(timestamp: Date): Promise<AgentMetrics[]> {
-    // This provides realistic demonstration data and would be removed in production
-    const demonstrationAgents = [
-      {
-        id: 'langgraph-planner',
-        executionTime: 120 + Math.random() * 60,
-        tasks: 10 + Math.floor(Math.random() * 5),
-        errors: Math.random() > 0.9 ? 1 : 0,
-      },
-      {
-        id: 'langgraph-executor',
-        executionTime: 600 + Math.random() * 400,
-        tasks: 6 + Math.floor(Math.random() * 4),
-        errors: Math.random() > 0.8 ? 1 : 0,
-      },
-    ];
-
-    this.logger.debug('Using LangGraph fallback metrics for demonstration', {
-      agentCount: demonstrationAgents.length,
-    });
-
-    const metrics: AgentMetrics[] = [];
-    for (const agent of demonstrationAgents) {
-      metrics.push({
-        agentId: agent.id,
-        agentType: 'langgraph',
-        framework: 'LangGraph',
-        timestamp,
-        executionTime: agent.executionTime,
-        successRate: (agent.tasks - agent.errors) / agent.tasks,
-        resourceUsage: await this.getAgentResourceUsage(agent.id),
-        taskCount: agent.tasks,
-        errorCount: agent.errors,
-        responseTime: agent.executionTime / agent.tasks,
-        throughput: agent.tasks / (agent.executionTime / 1000), // tasks per second
-        availability: agent.errors === 0 ? 1.0 : 0.85,
-      });
-    }
 
     return metrics;
   }
@@ -453,10 +406,6 @@ export class MetricsCollector extends EventEmitter {
       this.logger.error('Error discovering CrewAI agents', {
         error: error.message,
       });
-
-      // Fallback to demonstration data when no real CrewAI instances are available
-      const fallbackMetrics = await this.getCrewAIFallbackMetrics(timestamp);
-      metrics.push(...fallbackMetrics);
     }
 
     return metrics;
@@ -510,8 +459,6 @@ export class MetricsCollector extends EventEmitter {
     // 2. Scan process list for CrewAI instances
     // 3. Query CrewAI monitoring dashboard
     // 4. Check environment variables for CrewAI configuration
-
-    // For demonstration, return empty array to trigger fallback
     return [];
   }
 
@@ -585,55 +532,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   /**
-   * Fallback metrics for demonstration when no real CrewAI instances are available
    */
-  private async getCrewAIFallbackMetrics(timestamp: Date): Promise<AgentMetrics[]> {
-    // This provides realistic demonstration data and would be removed in production
-    const demonstrationAgents = [
-      {
-        id: 'crew-architect',
-        role: 'architect',
-        executionTime: 250 + Math.random() * 100,
-        tasks: 4 + Math.floor(Math.random() * 3),
-        errors: Math.random() > 0.95 ? 1 : 0,
-      },
-      {
-        id: 'crew-coder',
-        role: 'developer',
-        executionTime: 1000 + Math.random() * 500,
-        tasks: 12 + Math.floor(Math.random() * 6),
-        errors: Math.random() > 0.85 ? 1 : 0,
-      },
-      {
-        id: 'crew-tester',
-        role: 'tester',
-        executionTime: 500 + Math.random() * 200,
-        tasks: 18 + Math.floor(Math.random() * 5),
-        errors: Math.random() > 0.9 ? 1 : 0,
-      },
-    ];
-
-    this.logger.debug('Using CrewAI fallback metrics for demonstration', {
-      agentCount: demonstrationAgents.length,
-    });
-
-    const metrics: AgentMetrics[] = [];
-    for (const agent of demonstrationAgents) {
-      metrics.push({
-        agentId: agent.id,
-        agentType: 'crewai',
-        framework: 'CrewAI',
-        timestamp,
-        executionTime: agent.executionTime,
-        successRate: (agent.tasks - agent.errors) / agent.tasks,
-        resourceUsage: await this.getAgentResourceUsage(agent.id),
-        taskCount: agent.tasks,
-        errorCount: agent.errors,
-        responseTime: agent.executionTime / agent.tasks,
-        throughput: agent.tasks / (agent.executionTime / 1000),
-        availability: agent.errors === 0 ? 1.0 : 0.9,
-      });
-    }
 
     return metrics;
   }
@@ -671,12 +570,7 @@ export class MetricsCollector extends EventEmitter {
       this.logger.error('Error discovering AutoGen agents', {
         error: error.message,
       });
-
-      // Fallback to demonstration data when no real AutoGen instances are available
-      const fallbackMetrics = await this.getAutoGenFallbackMetrics(timestamp);
-      metrics.push(...fallbackMetrics);
     }
-
     return metrics;
   }
 
@@ -728,8 +622,6 @@ export class MetricsCollector extends EventEmitter {
     // 2. Query GroupChat.get_participants()
     // 3. Scan for AutoGen process signatures
     // 4. Check conversation state endpoints
-
-    // For demonstration, return empty array to trigger fallback
     return [];
   }
 
@@ -803,48 +695,7 @@ export class MetricsCollector extends EventEmitter {
   }
 
   /**
-   * Fallback metrics for demonstration when no real AutoGen instances are available
    */
-  private async getAutoGenFallbackMetrics(timestamp: Date): Promise<AgentMetrics[]> {
-    // This provides realistic demonstration data and would be removed in production
-    const demonstrationAgents = [
-      {
-        id: 'autogen-discussant',
-        role: 'participant',
-        executionTime: 400 + Math.random() * 100,
-        tasks: 7 + Math.floor(Math.random() * 3),
-        errors: Math.random() > 0.95 ? 1 : 0,
-      },
-      {
-        id: 'autogen-reviewer',
-        role: 'reviewer',
-        executionTime: 180 + Math.random() * 60,
-        tasks: 10 + Math.floor(Math.random() * 4),
-        errors: Math.random() > 0.98 ? 1 : 0,
-      },
-    ];
-
-    this.logger.debug('Using AutoGen fallback metrics for demonstration', {
-      agentCount: demonstrationAgents.length,
-    });
-
-    const metrics: AgentMetrics[] = [];
-    for (const agent of demonstrationAgents) {
-      metrics.push({
-        agentId: agent.id,
-        agentType: 'autogen',
-        framework: 'AutoGen',
-        timestamp,
-        executionTime: agent.executionTime,
-        successRate: (agent.tasks - agent.errors) / agent.tasks,
-        resourceUsage: await this.getAgentResourceUsage(agent.id),
-        taskCount: agent.tasks,
-        errorCount: agent.errors,
-        responseTime: agent.executionTime / agent.tasks,
-        throughput: agent.tasks / (agent.executionTime / 1000),
-        availability: 1.0,
-      });
-    }
 
     return metrics;
   }

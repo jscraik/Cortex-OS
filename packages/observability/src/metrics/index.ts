@@ -32,7 +32,7 @@ const vramGauge = meter.createGauge('cortex_vram_usage_ratio', {
  * Record operation latency
  */
 export function recordLatency(operation: string, latencyMs: number, labels?: MetricLabels): void {
-  latencyHistogram.record(latencyMs, {
+  latencyHistogram.record(Math.max(0, latencyMs), {
     operation,
     ...labels,
   });
