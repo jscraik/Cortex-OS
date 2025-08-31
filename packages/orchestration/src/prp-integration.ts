@@ -32,7 +32,6 @@ export function createEngine(
     enableAdaptiveDecisions: true,
     planningTimeout: 300000,
     executionTimeout: 1800000,
-    fallbackStrategy: 'sequential',
     qualityThreshold: 0.8,
     performanceMonitoring: true,
   } as OrchestrationConfig;
@@ -45,6 +44,10 @@ export function createEngine(
     ),
     transports: [new winston.transports.Console()],
   });
+
+  if ('fallbackStrategy' in config) {
+    throw new Error('fallbackStrategy option was removed');
+  }
 
   return {
     config: { ...defaults, ...config },

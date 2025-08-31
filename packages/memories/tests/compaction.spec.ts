@@ -11,7 +11,7 @@ describe('InMemoryStore compaction and purging', () => {
 
   it('purges expired memories correctly', async () => {
     const now = new Date().toISOString();
-    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago
+    const past = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(); // 48 hours ago
     const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
 
     // Insert expired memory
@@ -73,13 +73,14 @@ describe('InMemoryStore compaction and purging', () => {
     expect(await store.get('3')).not.toBeNull();
     expect(await store.get('4')).not.toBeNull();
 
-    // For now, purgeExpired is a stub that returns 0
-    // In a real implementation, this would remove expired entries
+    // Purge expired memories and verify only the expired one is removed
     const purgedCount = await store.purgeExpired(now);
-    expect(purgedCount).toBe(0);
+    expect(purgedCount).toBe(1);
 
-    // Note: The current implementation doesn't actually purge expired memories
-    // This test documents the expected behavior for when it's implemented
+    expect(await store.get('1')).toBeNull();
+    expect(await store.get('2')).not.toBeNull();
+    expect(await store.get('3')).not.toBeNull();
+    expect(await store.get('4')).not.toBeNull();
   });
 
   it('handles purging with malformed TTL values', async () => {

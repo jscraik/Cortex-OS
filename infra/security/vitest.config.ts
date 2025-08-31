@@ -9,6 +9,9 @@ export default defineConfig({
     isolate: true,
     sequence: { concurrent: false },
     testTimeout: 10000,
+    coverage: {
+      include: ['rasp/**'],
+    },
   },
   resolve: {
     alias: {

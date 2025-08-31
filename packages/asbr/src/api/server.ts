@@ -14,6 +14,7 @@ import { getEventManager, stopEventManager } from '../core/events.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { resolveIdempotency } from '../lib/resolve-idempotency.js';
+import { logError, logInfo } from '../lib/logger.js';
 import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
   type ArtifactRef,
@@ -58,8 +59,7 @@ export function createASBRServer(options: ASBRServerOptions = {}): ASBRServer {
 /**
  * ASBR API Server
  */
-/** @deprecated Use createASBRServer instead */
-export class ASBRServerClass {
+class ASBRServerClass {
   private app: express.Application;
   private server?: Server;
   private io?: IOServer;
@@ -68,10 +68,12 @@ export class ASBRServerClass {
   private tasks = new Map<string, Task>();
   private profiles = new Map<string, Profile>();
   private artifacts = new Map<string, ArtifactRef>();
-  private idempotencyCache = new Map<string, string>(); // idempotency key -> task ID
+  private idempotencyCache = new Map<string, { taskId: string; expiry: number }>();
 
   private responseCache = new Map<string, { data: unknown; expiry: number }>();
+  private cacheCleanupInterval?: NodeJS.Timeout;
   private readonly CACHE_TTL = 30000; // 30 seconds
+  private readonly IDEMPOTENCY_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor(options: ASBRServerOptions = {}) {
     this.app = express();
@@ -80,6 +82,7 @@ export class ASBRServerClass {
 
     this.setupMiddleware();
     this.setupRoutes();
+    this.setupCacheCleanup();
   }
 
   private setupMiddleware(): void {
@@ -89,7 +92,6 @@ export class ASBRServerClass {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('X-Frame-Options', 'DENY');
       res.setHeader('X-XSS-Protection', '1; mode=block');
-      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
       // Performance headers
       res.setHeader('Cache-Control', 'private, max-age=30');
@@ -183,7 +185,7 @@ export class ASBRServerClass {
     // Error handling must be registered after routes so thrown errors in handlers
     // are propagated here and converted to structured JSON responses.
     this.app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-      console.error('API Error:', error);
+          logError('API Error', { error });
 
       if (error instanceof ValidationError) {
         res.status(error.statusCode).json({
@@ -205,6 +207,18 @@ export class ASBRServerClass {
     });
   }
 
+  private setupCacheCleanup(): void {
+    this.cacheCleanupInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, value] of this.idempotencyCache) {
+        if (value.expiry <= now) this.idempotencyCache.delete(key);
+      }
+      for (const [key, value] of this.responseCache) {
+        if (value.expiry <= now) this.responseCache.delete(key);
+      }
+    }, this.CACHE_TTL);
+  }
+
   private async createTask(req: Request, res: Response): Promise<void> {
     try {
       const { input, idempotencyKey } = req.body;
@@ -222,7 +236,7 @@ export class ASBRServerClass {
 
       const task = buildTask();
       this.tasks.set(task.id, task);
-      this.idempotencyCache.set(key, task.id);
+      this.idempotencyCache.set(key, { taskId: task.id, expiry: Date.now() + this.IDEMPOTENCY_TTL });
 
       await emitPlanStarted(this.emitEvent.bind(this), task, taskInput);
 
@@ -518,7 +532,7 @@ export class ASBRServerClass {
         const manager = await getEventManager();
         manager.attachIO(this.io);
 
-        console.log(`ASBR API server listening on http://${this.host}:${this.port}`);
+        logInfo(`ASBR API server listening on http://${this.host}:${this.port}`);
         resolve();
       });
     });
@@ -529,6 +543,11 @@ export class ASBRServerClass {
       if (this.server) {
         // Clean up caches and intervals
         this.idempotencyCache.clear();
+        this.responseCache.clear();
+        if (this.cacheCleanupInterval) {
+          clearInterval(this.cacheCleanupInterval);
+          this.cacheCleanupInterval = undefined;
+        }
         if (this.io) {
           this.io.close();
           this.io = undefined;
@@ -537,7 +556,7 @@ export class ASBRServerClass {
         this.server.close(() => {
           stopEventManager();
 
-          console.log('ASBR API server stopped');
+          logInfo('ASBR API server stopped');
           resolve();
         });
       } else {

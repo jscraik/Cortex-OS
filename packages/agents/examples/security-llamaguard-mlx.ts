@@ -1,7 +1,7 @@
 // Minimal example: run Security Agent with MLX LlamaGuard and DLQ/outbox channels
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { createMLXProvider } from '../src/providers/mlx-provider.js';
+import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
 import { createSecurityAgent } from '../src/agents/security-agent.js';
 import { createEventBus } from '../src/lib/event-bus.js';
 

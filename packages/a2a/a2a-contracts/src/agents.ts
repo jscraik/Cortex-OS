@@ -77,10 +77,6 @@ export interface AgentCard {
   interface: {
     transport: TransportProtocol;
     uri: string;
-    fallback?: Array<{
-      transport: TransportProtocol;
-      uri: string;
-    }>;
   };
   skills: AgentSkill[];
 }

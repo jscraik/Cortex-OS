@@ -12,7 +12,8 @@
     "docs:verify": "./scripts/verify-docs.sh"
   },
   "dependencies": {
-    "@cortex-os/contracts": "workspace:*"
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/model-gateway": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
