@@ -264,7 +264,7 @@ class McpDemoServer {
     // Error handler
     this.app.use(
       (err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-        // eslint-disable-next-line no-console
+         
         console.error('Server error:', err);
         res.status(500).json({
           success: false,
@@ -306,7 +306,7 @@ if (require.main === module) {
   const server = new McpDemoServer(port);
 
   server.start().catch((error) => {
-    // eslint-disable-next-line no-console
+     
     console.error('Failed to start server:', error);
     process.exit(1);
   });

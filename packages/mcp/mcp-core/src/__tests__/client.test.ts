@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { redactSensitiveData } from '../../../src/lib/security.js';
 import { createEnhancedClient } from '../client';
 import type { ServerInfo } from '../contracts';
@@ -9,32 +9,40 @@ const mockCallTool = vi.fn();
 const mockSendRequest = vi.fn();
 const mockClose = vi.fn();
 
-let MockClient: any;
-let MockStdioClientTransport: any;
-let MockSSEClientTransport: any;
-let MockStreamableHTTPClientTransport: any;
-
 vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
-  MockClient = vi.fn(() => ({
-    connect: mockConnect,
-    callTool: mockCallTool,
-    sendRequest: mockSendRequest,
-    close: mockClose,
-  }));
-  return { Client: MockClient };
+  return {
+    Client: vi.fn(() => ({
+      connect: mockConnect,
+      callTool: mockCallTool,
+      sendRequest: mockSendRequest,
+      close: mockClose,
+    })),
+  };
 });
+
 vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
-  MockStdioClientTransport = vi.fn();
-  return { StdioClientTransport: MockStdioClientTransport };
+  return { StdioClientTransport: vi.fn() };
 });
+
 vi.mock('@modelcontextprotocol/sdk/client/sse.js', () => {
-  MockSSEClientTransport = vi.fn();
-  return { SSEClientTransport: MockSSEClientTransport };
+  return { SSEClientTransport: vi.fn() };
 });
+
 vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => {
-  MockStreamableHTTPClientTransport = vi.fn();
-  return { StreamableHTTPClientTransport: MockStreamableHTTPClientTransport };
+  return { StreamableHTTPClientTransport: vi.fn() };
 });
+
+// Import the mocked modules
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
+// Get the mocked constructors
+const MockClient = vi.mocked(Client);
+const MockStdioClientTransport = vi.mocked(StdioClientTransport);
+const MockSSEClientTransport = vi.mocked(SSEClientTransport);
+const MockStreamableHTTPClientTransport = vi.mocked(StreamableHTTPClientTransport);
 
 describe('mcp-core client', () => {
   describe('redactSensitiveData', () => {

@@ -1,23 +1,30 @@
-* @cortex-os/platform-team
-/docs/architecture/ @cortex-os/architects
-/tools/structure-guard/ @cortex-os/architects
-/infra/ @cortex-os/devops
-/.github/workflows/ @cortex-os/devops @cortex-os/security
-/packages/a2a/ @cortex-os/events-team
-/packages/mcp/ @cortex-os/integrations-team
-/packages/memories/ @cortex-os/state-team
-/packages/orchestration/ @cortex-os/workflow-team
-/packages/rag/ @cortex-os/ai-team
-/packages/simlab/ @cortex-os/simulation-team
-/apps/cortex-os/ @cortex-os/runtime-team
-/apps/cortex-os/packages/agents/ @cortex-os/agents-team
-/apps/cortex-os/packages/mvp/ @cortex-os/core-team
-/apps/cortex-os/packages/mvp-server/ @cortex-os/api-team
-/services/ml-inference/ @cortex-os/ml-team
-/services/data-pipeline/ @cortex-os/data-team
-/libs/typescript/ @cortex-os/frontend-team
-/libs/python/ @cortex-os/ml-team
-/pnpm-workspace.yaml @cortex-os/architects @cortex-os/devops
+- @cortex-os/platform-team
+  /docs/architecture/ @cortex-os/architects
+  /tools/structure-guard/ @cortex-os/architects
+  /infra/ @cortex-os/devops
+  /.github/workflows/ @cortex-os/devops @cortex-os/security
+  /packages/a2a/ @cortex-os/events-team
+  /packages/mcp/ @cortex-os/integrations-team
+  /packages/memories/ @cortex-os/state-team
+  /packages/orchestration/ @cortex-os/workflow-team
+  /packages/rag/ @cortex-os/ai-team
+  /packages/simlab/ @cortex-os/simulation-team
+  /apps/cortex-os/ @cortex-os/runtime-team
+  /apps/cortex-os/packages/agents/ @cortex-os/agents-team
+  /apps/cortex-os/packages/mvp/ @cortex-os/core-team
+  /apps/cortex-os/packages/mvp-server/ @cortex-os/api-team
+  /services/ml-inference/ @cortex-os/ml-team
+  /services/data-pipeline/ @cortex-os/data-team
+  /libs/typescript/ @cortex-os/frontend-team
+  /libs/python/ @cortex-os/ml-team
+  /pnpm-workspace.yaml @cortex-os/architects @cortex-os/devops
+
+# Security-sensitive files require security team review
+
+/.semgrep/ @cortex-os/security
+/config/compliance.policy.json @cortex-os/security \*_/security_._ @cortex-os/security
+_.py @cortex-os/security
+/docker/gpl-tools/ @cortex-os/security @cortex-os/devops
 /turbo.json @cortex-os/architects @cortex-os/devops
 /uv.toml @cortex-os/ml-team @cortex-os/devops
 /.github/CODEOWNERS @cortex-os/architects @cortex-os/security

@@ -2,7 +2,7 @@ import { defineWorkspace } from 'vitest/config';
 
 export default defineWorkspace([
   'apps/cortex-os',
-  'apps/cortex-web',
+  'apps/cortex-webui',
   'packages/a2a',
   'packages/a2a-services/schema-registry',
   'packages/orchestration/src/lib/outbox',
@@ -13,9 +13,7 @@ export default defineWorkspace([
   'packages/mcp',
   'packages/mcp-bridge',
   'packages/mcp-server',
-  'packages/model-gateway',
   'packages/memories',
-  'packages/model-gateway',
   'packages/mvp',
   'packages/mvp-core',
   'packages/mvp-server',

@@ -19,6 +19,37 @@ import type {
 } from './types.js';
 import { RegistryIndexSchema, ServerManifestSchema } from './types.js';
 
+// Security: Allowlisted domains for marketplace registries
+const ALLOWED_REGISTRY_DOMAINS = [
+  'registry.cortex-os.dev',
+  'marketplace.cortex-os.com',
+  'api.cortex-os.com',
+  'localhost',
+  '127.0.0.1',
+  '::1',
+  // Add trusted registry domains here
+];
+
+/**
+ * Security: Validate registry URL to prevent SSRF attacks
+ */
+function validateRegistryUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+
+    // Only allow HTTP/HTTPS protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    // Check against allowlist
+    const hostname = parsedUrl.hostname.toLowerCase();
+    return ALLOWED_REGISTRY_DOMAINS.includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
 export class MarketplaceRegistry {
   private registry: RegistryIndex | null = null;
   private searchIndex: Fuse<ServerManifest> | null = null;
@@ -56,6 +87,11 @@ export class MarketplaceRegistry {
    */
   async fetchRegistry(): Promise<void> {
     try {
+      // Security: Validate URL to prevent SSRF attacks
+      if (!validateRegistryUrl(this.registryUrl)) {
+        throw new Error(`Invalid registry URL rejected for security: ${this.registryUrl}`);
+      }
+
       const response = await fetch(this.registryUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch registry: ${response.status} ${response.statusText}`);

@@ -19,7 +19,7 @@ if (!ROOT) {
 }
 
 if (!TOKEN) {
-  // eslint-disable-next-line no-console
+   
   console.error(
     '[cortex-mcp] ERROR: CORTEX_MCP_TOKEN is not set. Refusing to start without authentication token.',
   );

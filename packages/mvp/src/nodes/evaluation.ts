@@ -107,7 +107,7 @@ export class EvaluationNode {
       const projectRoot = process.cwd();
 
       // Check for test files and coverage reports
-      let testResults = {
+      const testResults = {
         testFiles: [] as string[],
         testCount: 0,
         coverage: 0,
@@ -324,8 +324,8 @@ export class EvaluationNode {
       const path = await import('path');
 
       const projectRoot = process.cwd();
-      let allIssues: any[] = [];
-      let tools: string[] = [];
+      const allIssues: any[] = [];
+      const tools: string[] = [];
 
       // Try ESLint for JavaScript/TypeScript code quality
       try {

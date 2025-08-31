@@ -303,7 +303,7 @@ export class FrontendValidator implements GateValidator {
     try {
       const glob = await import('glob');
       const patterns = ['**/*.html', 'src/**/*.tsx', 'src/**/*.jsx'];
-      let files: string[] = [];
+      const files: string[] = [];
 
       for (const pattern of patterns) {
         const matches = await glob.glob(pattern, {

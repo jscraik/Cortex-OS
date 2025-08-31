@@ -9,18 +9,46 @@
  * @ai_provenance_hash N/A
  */
 
-import { trace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { EventEmitter } from 'events';
 import pino from 'pino';
 import {
   AgentMetrics,
+  AgentTrace,
+  AnalyticsConfig,
   OrchestrationMetrics,
   PerformanceMetrics,
   ResourceUtilization,
   TimeSeriesData,
-  AnalyticsConfig,
-  AgentTrace,
 } from './types.js';
+
+// Security: Allowlisted domains for telemetry endpoints
+const ALLOWED_TELEMETRY_DOMAINS = [
+  'localhost',
+  '127.0.0.1',
+  '::1',
+  // Add your trusted telemetry domains here
+];
+
+/**
+ * Security: Validate telemetry endpoint URL to prevent SSRF attacks
+ */
+function validateTelemetryEndpoint(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+
+    // Only allow HTTP/HTTPS protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    // Check against allowlist
+    const hostname = parsedUrl.hostname.toLowerCase();
+    return ALLOWED_TELEMETRY_DOMAINS.includes(hostname);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Advanced metrics collector for orchestration analytics
@@ -334,7 +362,16 @@ export class MetricsCollector extends EventEmitter {
         errorCount = state?.error_count || 0;
         successRate = taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
       } else if (agentInfo.telemetryEndpoint) {
-        // HTTP endpoint integration
+        // Security: Validate telemetry endpoint to prevent SSRF
+        if (!validateTelemetryEndpoint(agentInfo.telemetryEndpoint)) {
+          this.logger.warn('Invalid telemetry endpoint rejected', {
+            endpoint: agentInfo.telemetryEndpoint,
+            agentId: agentInfo.id,
+          });
+          return null;
+        }
+
+        // HTTP endpoint integration - now secure
         const response = await fetch(`${agentInfo.telemetryEndpoint}/metrics`);
         const telemetryData: any = await response.json();
 
@@ -368,7 +405,25 @@ export class MetricsCollector extends EventEmitter {
   }
 
   /**
+   * Collect LangGraph-specific agent metrics for all discovered agents
    */
+  private async collectLangGraphMetrics(timestamp: Date): Promise<AgentMetrics[]> {
+    const metrics: AgentMetrics[] = [];
+
+    try {
+      const langGraphAgents = await this.discoverLangGraphAgents();
+
+      for (const agentInfo of langGraphAgents) {
+        const agentMetrics = await this.collectLangGraphAgentMetrics(agentInfo, timestamp);
+        if (agentMetrics) {
+          metrics.push(agentMetrics);
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error collecting LangGraph metrics', {
+        error: error.message,
+      });
+    }
 
     return metrics;
   }
@@ -496,7 +551,16 @@ export class MetricsCollector extends EventEmitter {
         errorCount = agentData?.failed_tasks || 0;
         successRate = taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
       } else if (agentInfo.monitoringEndpoint) {
-        // HTTP endpoint integration
+        // Security: Validate monitoring endpoint to prevent SSRF
+        if (!validateTelemetryEndpoint(agentInfo.monitoringEndpoint)) {
+          this.logger.warn('Invalid monitoring endpoint rejected', {
+            endpoint: agentInfo.monitoringEndpoint,
+            agentId: agentInfo.id,
+          });
+          return null;
+        }
+
+        // HTTP endpoint integration - now secure
         const response = await fetch(
           `${agentInfo.monitoringEndpoint}/agent/${agentInfo.id}/metrics`,
         );
@@ -532,7 +596,25 @@ export class MetricsCollector extends EventEmitter {
   }
 
   /**
+   * Collect CrewAI-specific agent metrics for all discovered agents
    */
+  private async collectCrewAIMetrics(timestamp: Date): Promise<AgentMetrics[]> {
+    const metrics: AgentMetrics[] = [];
+
+    try {
+      const crewAIAgents = await this.discoverCrewAIAgents();
+
+      for (const agentInfo of crewAIAgents) {
+        const agentMetrics = await this.collectCrewAIAgentMetrics(agentInfo, timestamp);
+        if (agentMetrics) {
+          metrics.push(agentMetrics);
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error collecting CrewAI metrics', {
+        error: error.message,
+      });
+    }
 
     return metrics;
   }
@@ -659,7 +741,16 @@ export class MetricsCollector extends EventEmitter {
         errorCount = agentStats?.failed_responses || 0;
         successRate = taskCount > 0 ? (taskCount - errorCount) / taskCount : 1.0;
       } else if (agentInfo.conversationEndpoint) {
-        // HTTP endpoint integration
+        // Security: Validate conversation endpoint to prevent SSRF
+        if (!validateTelemetryEndpoint(agentInfo.conversationEndpoint)) {
+          this.logger.warn('Invalid conversation endpoint rejected', {
+            endpoint: agentInfo.conversationEndpoint,
+            agentId: agentInfo.id,
+          });
+          return null;
+        }
+
+        // HTTP endpoint integration - now secure
         const response = await fetch(
           `${agentInfo.conversationEndpoint}/agent/${agentInfo.id}/stats`,
         );
@@ -692,12 +783,6 @@ export class MetricsCollector extends EventEmitter {
       });
       return null;
     }
-  }
-
-  /**
-   */
-
-    return metrics;
   }
 
   /**

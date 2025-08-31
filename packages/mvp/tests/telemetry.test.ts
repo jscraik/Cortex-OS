@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
 
 // Mock OTEL spans and metrics for testing
-let otelSpans: any[] = [];
-let metrics: any[] = [];
+const otelSpans: any[] = [];
+const metrics: any[] = [];
 
 // Mock OTEL functions
 const mockOtel = {

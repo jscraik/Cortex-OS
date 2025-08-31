@@ -90,9 +90,7 @@ Format as JSON with reasoning.`;
 
       return this.parseTaskDecomposition(response.content);
     } catch (error) {
-
       return handleResilience(error, 'decomposeTask');
-
     }
   }
 
@@ -192,9 +190,7 @@ Focus on maintainable, testable code.`;
 
       return this.parseCodeOrchestrationResponse(response.content);
     } catch (error) {
-
       return handleResilience(error, 'orchestrateCodeTask');
-
     }
   }
 
@@ -285,7 +281,15 @@ Provide quick decision with reasoning.`;
     }
   }
 
-
+  /**
+   * Safety validation using parallel reasoning
+   */
+  async validateSafety(prompt: string): Promise<{
+    safe: boolean;
+    issues: string[];
+    recommendations: string[];
+  }> {
+    try {
       const response = await this.modelProvider.generate('generalChat', {
         task: 'safety_validation',
         prompt,
@@ -316,9 +320,7 @@ Provide quick decision with reasoning.`;
       }
       throw new Error('No JSON found in response');
     } catch (error) {
-
       return handleResilience(error, 'parseTaskDecomposition');
-
     }
   }
 
@@ -360,7 +362,6 @@ Provide quick decision with reasoning.`;
       return JSON.parse(content);
     } catch (error) {
       return handleResilience(error, 'parseCodeOrchestrationResponse');
-
     }
   }
 

@@ -19,6 +19,7 @@ import { evalGate } from './commands/eval/gate.js';
 import { simlabList } from './commands/simlab/list.js';
 import { simlabReport } from './commands/simlab/report.js';
 import { simlabRun } from './commands/simlab/run.js';
+import { tuiCommand } from './commands/tui.js';
 
 const program = new Command('cortex');
 const mcp = new Command('mcp');
@@ -58,4 +59,6 @@ program.addCommand(ctl);
 const evalCmd = new Command('eval');
 evalCmd.addCommand(evalGate);
 program.addCommand(evalCmd);
+
+program.addCommand(tuiCommand);
 program.parseAsync(process.argv);

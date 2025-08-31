@@ -1,15 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
-vi.mock('@cortex-os/telemetry');
-import { z } from 'zod';
-import * as telemetry from '@cortex-os/telemetry';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
   DeadLetterQueue,
-  QuarantineLevel,
   ErrorCategory,
+  QuarantineLevel,
   type DeadLetterStore,
 } from '@cortex-os/a2a-core/dlq';
 import { SagaOrchestrator } from '@cortex-os/a2a-core/saga';
+import * as telemetry from '@cortex-os/telemetry';
+import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 describe('Telemetry integration', () => {
   it('creates span and logs in DeadLetterQueue', async () => {

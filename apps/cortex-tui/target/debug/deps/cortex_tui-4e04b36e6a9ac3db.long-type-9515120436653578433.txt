@@ -1,0 +1,1 @@
+futures::stream::Map<impl Stream<Item = std::result::Result<bytes::Bytes, reqwest::Error>>, {closure@src/providers/anthropic.rs:111:18: 111:63}>

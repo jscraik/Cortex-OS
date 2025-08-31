@@ -1,12 +1,7 @@
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
-import {
-  createTraceContext,
-  addBaggage,
-  extractTraceContext,
-  injectTraceContext,
-} from '@cortex-os/a2a-contracts/trace-context';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+import { createTraceContext, addBaggage } from '@cortex-os/a2a-contracts/trace-context';
 import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manager';
 
 import { createChildMessage } from '@cortex-os/a2a-core/message-utils';

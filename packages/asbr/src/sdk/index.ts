@@ -241,13 +241,13 @@ export class ASBRClient {
         this.dispatchEvent(data);
       } catch (error) {
         // Prefer structured logger when available
-        // eslint-disable-next-line no-console
+         
         console.error('Failed to parse event:', error);
       }
     };
 
     eventSource.onerror = (error) => {
-      // eslint-disable-next-line no-console
+       
       console.error('Event stream error:', error);
       // Implement reconnection logic here
     };

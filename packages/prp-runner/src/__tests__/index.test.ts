@@ -3,7 +3,7 @@
  * @description TDD Tests for package exports
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createPRPOrchestrator } from '../index.js';
 
 describe('Package Exports', () => {

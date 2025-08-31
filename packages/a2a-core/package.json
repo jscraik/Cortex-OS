@@ -1,5 +1,5 @@
 {
-  "name": "@cortex-os/a2a-core",
+  "name": "@cortex-os/a2a-core-standalone",
   "version": "0.0.1",
   "private": true,
   "type": "module",

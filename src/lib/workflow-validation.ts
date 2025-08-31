@@ -42,7 +42,10 @@ export interface ValidationResult {
 export const MAX_WORKFLOW_DEPTH = 1000;
 const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000;
 
-const validationCache = new Map<string, { valid: boolean; result?: ValidationResult; error?: Error }>();
+const validationCache = new Map<
+  string,
+  { valid: boolean; result?: ValidationResult; error?: Error }
+>();
 let cacheCleanupTimer: NodeJS.Timeout | null = null;
 
 function createWorkflowHash(workflow: Workflow): string {
@@ -104,6 +107,8 @@ export function traverseWorkflow(wf: Workflow): TraversalResult {
     if (depth > MAX_WORKFLOW_DEPTH) {
       throw new Error(`Workflow depth exceeds limit of ${MAX_WORKFLOW_DEPTH}`);
     }
+    if (stack.has(id)) {
+      cycleDetected = true;
       return;
     }
     if (visited.has(id)) return;
@@ -174,4 +179,3 @@ export function clearValidationCache(): void {
 export function getValidationCacheStats(): { size: number } {
   return { size: validationCache.size };
 }
-

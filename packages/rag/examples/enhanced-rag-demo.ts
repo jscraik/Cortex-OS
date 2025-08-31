@@ -51,7 +51,7 @@ const sampleDocuments: Document[] = [
 const modelDir = path.resolve(process.cwd(), 'models');
 const embedPath = process.env.QWEN_EMBED_MODEL_PATH || path.join(modelDir, 'Qwen3-Embedding-4B');
 const rerankPath = process.env.QWEN_RERANKER_MODEL_PATH || path.join(modelDir, 'Qwen3-Reranker-4B');
-}
+
 // Validate that model files exist in the directories, or warn if missing.
 for (const p of [embedPath, rerankPath]) {
   // If p is a directory, check for files inside. If p is a file path, check if it exists.
@@ -65,12 +65,16 @@ for (const p of [embedPath, rerankPath]) {
   if (stat.isDirectory()) {
     const files = fs.readdirSync(p);
     if (files.length === 0) {
-      console.warn(`[WARN] Model directory "${p}" is empty. This may lead to runtime errors if model files are missing.`);
+      console.warn(
+        `[WARN] Model directory "${p}" is empty. This may lead to runtime errors if model files are missing.`,
+      );
     }
   } else if (stat.isFile()) {
     // File exists, OK.
   } else {
-    console.warn(`[WARN] Path "${p}" is neither a file nor a directory. Please check your model path configuration.`);
+    console.warn(
+      `[WARN] Path "${p}" is neither a file nor a directory. Please check your model path configuration.`,
+    );
   }
 }
 process.env.QWEN_EMBED_MODEL_DIR = path.dirname(embedPath);

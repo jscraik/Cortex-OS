@@ -3,21 +3,17 @@
  * @description Client for interacting with MCP marketplace registries
  */
 
-import { readFile, writeFile, mkdir } from 'fs/promises';
+import type {
+  ApiResponse,
+  RegistryIndex,
+  SearchRequest,
+  ServerManifest,
+} from '@cortex-os/mcp-marketplace';
+import { RegistryIndexSchema, SearchRequestSchema } from '@cortex-os/mcp-marketplace';
 import { existsSync } from 'fs';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { z } from 'zod';
-import type {
-  RegistryIndex,
-  ServerManifest,
-  SearchRequest,
-  ApiResponse,
-} from '@cortex-os/mcp-marketplace';
-import {
-  RegistryIndexSchema,
-  ServerManifestSchema,
-  SearchRequestSchema,
-} from '@cortex-os/mcp-marketplace';
 
 /**
  * Configuration for marketplace client
@@ -36,6 +32,37 @@ export const MarketplaceConfigSchema = z.object({
 });
 
 export type MarketplaceConfig = z.infer<typeof MarketplaceConfigSchema>;
+
+// Security: Allowlisted domains for marketplace registries
+const ALLOWED_MARKETPLACE_DOMAINS = [
+  'marketplace.cortex-os.com',
+  'registry.cortex-os.com',
+  'api.cortex-os.com',
+  'localhost',
+  '127.0.0.1',
+  '::1',
+  // Add trusted marketplace domains here
+];
+
+/**
+ * Security: Validate marketplace URL to prevent SSRF attacks
+ */
+function validateMarketplaceUrl(url: string): boolean {
+  try {
+    const parsedUrl = new URL(url);
+
+    // Only allow HTTP/HTTPS protocols
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    // Check against allowlist
+    const hostname = parsedUrl.hostname.toLowerCase();
+    return ALLOWED_MARKETPLACE_DOMAINS.includes(hostname);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Cache entry structure
@@ -593,6 +620,11 @@ export class MarketplaceClient {
    * Private methods
    */
   private async fetchRegistry(url: string): Promise<RegistryIndex> {
+    // Security: Validate URL to prevent SSRF attacks
+    if (!validateMarketplaceUrl(url)) {
+      throw new Error(`Invalid marketplace URL rejected for security: ${url}`);
+    }
+
     const response = await fetch(url);
 
     if (!response.ok) {

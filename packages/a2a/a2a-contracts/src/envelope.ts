@@ -16,7 +16,7 @@ export const Envelope = z
       .refine(
         (src) => {
           try {
-            // eslint-disable-next-line no-new
+             
             new URL(src);
             return true;
           } catch {

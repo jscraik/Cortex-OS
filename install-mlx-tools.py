@@ -9,10 +9,20 @@ import subprocess
 
 
 def run_command(cmd, description):
-    """Run a command and handle errors"""
+    """Run a command and handle errors - Security: Use shell=False and split commands"""
     print(f"Installing {description}...")
     try:
-        subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)  # noqa: S602
+        # Security: Split command to avoid shell injection
+        if isinstance(cmd, str):
+            import shlex
+
+            cmd_list = shlex.split(cmd)
+        else:
+            cmd_list = cmd
+
+        subprocess.run(
+            cmd_list, shell=False, check=True, capture_output=True, text=True
+        )
         print(f"✅ {description} installed successfully")
         return True
     except subprocess.CalledProcessError as e:
@@ -25,8 +35,8 @@ def main():
     print("🚀 Installing MLX tools for model inference...")
 
     # Set environment variables for external SSD cache
-    os.environ['HF_HOME'] = '/Volumes/ExternalSSD/huggingface_cache'
-    os.environ['MLX_CACHE_DIR'] = '/Volumes/ExternalSSD/ai-cache'
+    os.environ["HF_HOME"] = "/Volumes/ExternalSSD/huggingface_cache"
+    os.environ["MLX_CACHE_DIR"] = "/Volumes/ExternalSSD/ai-cache"
 
     # List of MLX tools to install
     tools = [
@@ -45,7 +55,7 @@ def main():
     print("Installing MLX-knife from correct GitHub repository...")
     if run_command(
         "pip install git+https://github.com/mzau/mlx-knife.git",
-        "MLX-knife from mzau/mlx-knife"
+        "MLX-knife from mzau/mlx-knife",
     ):
         mlxknife_installed = True
     else:
@@ -68,15 +78,23 @@ def main():
     print("\n🧪 Testing installations...")
 
     test_commands = [
-        ("python -c 'import mlx.core; print(\"MLX Core:\", mlx.core.__version__)'", "MLX Core"),
+        (
+            "python -c 'import mlx.core; print(\"MLX Core:\", mlx.core.__version__)'",
+            "MLX Core",
+        ),
         ("python -c 'import mlx_lm; print(\"MLX-LM: Available\")'", "MLX-LM"),
         ("python -c 'import mlx_vlm; print(\"MLX-VLM: Available\")'", "MLX-VLM"),
-        ("python -c 'import transformers; print(\"Transformers:\", transformers.__version__)'", "Transformers"),
+        (
+            "python -c 'import transformers; print(\"Transformers:\", transformers.__version__)'",
+            "Transformers",
+        ),
     ]
 
     for cmd, name in test_commands:
         try:
-            result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True)  # noqa: S602
+            result = subprocess.run(
+                cmd, shell=True, check=True, capture_output=True, text=True
+            )  # noqa: S602
             print(f"✅ {name}: {result.stdout.strip()}")
         except subprocess.CalledProcessError:
             print(f"❌ {name}: Not working")

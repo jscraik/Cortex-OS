@@ -7,14 +7,7 @@
  */
 
 import { z } from 'zod';
-import type {
-  Agent,
-  ModelProvider,
-  EventBus,
-  MCPClient,
-  AgentDependencies,
-  GenerateOptions,
-} from '../lib/types.js';
+import type { Agent, ModelProvider, EventBus, MCPClient, GenerateOptions } from '../lib/types.js';
 import {
   generateAgentId,
   generateTraceId,

@@ -1,0 +1,61 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#ff6b6b",
+    "primaryTextColor": "#2c3e50",
+    "primaryBorderColor": "#34495e",
+    "lineColor": "#34495e",
+    "sectionBkgColor": "#ecf0f1",
+    "altSectionBkgColor": "#bdc3c7",
+    "gridColor": "#95a5a6",
+    "secondaryColor": "#3498db",
+    "tertiaryColor": "#e74c3c",
+    "background": "#ffffff",
+    "mainBkg": "#ffffff",
+    "secondBkg": "#f8f9fa",
+    "tertiaryBkg": "#e9ecef"
+  },
+  "flowchart": {
+    "useMaxWidth": true,
+    "htmlLabels": true,
+    "curve": "basis"
+  },
+  "gitGraph": {
+    "theme": "base",
+    "git0": "#ff6b6b",
+    "git1": "#3498db",
+    "git2": "#2ecc71",
+    "git3": "#f39c12",
+    "git4": "#9b59b6",
+    "git5": "#e74c3c",
+    "git6": "#1abc9c",
+    "git7": "#34495e"
+  },
+  "sequence": {
+    "diagramMarginX": 50,
+    "diagramMarginY": 10,
+    "actorMargin": 50,
+    "width": 150,
+    "height": 65,
+    "boxMargin": 10,
+    "boxTextMargin": 5,
+    "noteMargin": 10,
+    "messageMargin": 35,
+    "mirrorActors": true,
+    "bottomMarginAdj": 1,
+    "useMaxWidth": true,
+    "rightAngles": false,
+    "showSequenceNumbers": false
+  },
+  "er": {
+    "diagramPadding": 20,
+    "layoutDirection": "TB",
+    "minEntityWidth": 100,
+    "minEntityHeight": 75,
+    "entityPadding": 15,
+    "stroke": "#34495e",
+    "fill": "#ecf0f1",
+    "fontSize": 12,
+    "useMaxWidth": true
+  }
+}

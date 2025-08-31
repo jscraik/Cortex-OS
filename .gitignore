@@ -11,7 +11,8 @@ sbom.json
 *.d.ts
 *.d.ts.map
 *.js.map
-lib/
+// Only ignore top-level lib directory, not nested src/**/lib
+/lib/
 !packages/*/src/lib/
 build/
 

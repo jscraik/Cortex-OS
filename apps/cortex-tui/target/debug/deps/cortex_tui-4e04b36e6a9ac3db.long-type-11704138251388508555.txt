@@ -1,0 +1,1 @@
+futures::stream::Map<impl Stream<Item = std::result::Result<bytes::Bytes, reqwest::Error>>, {closure@src/providers/openai.rs:117:18: 117:63}>

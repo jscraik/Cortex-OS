@@ -3,8 +3,8 @@
  * @description SPIFFE Workload API client for certificate management and workload attestation
  */
 
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import { z } from 'zod';
-import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 import {
   CertificateBundle,
   SPIFFEError,
@@ -119,7 +119,6 @@ export class SpiffeClient {
           span,
         );
 
-
         const response = await this.fetchWithTimeout('/workload/identity', { method: 'GET' });
         if (!response.ok) {
           throw new Error(
@@ -130,7 +129,6 @@ export class SpiffeClient {
         const workloadResponse = SpiffeWorkloadResponseSchema.parse(data);
 
         const workloadIdentity = buildWorkloadIdentity(workloadResponse);
-
 
         logWithSpan(
           'info',
@@ -287,7 +285,10 @@ export class SpiffeClient {
         );
 
         const response = await this.fetchWithTimeout('/workload/trust-bundle', { method: 'GET' });
-          throw new Error(`Failed to fetch trust bundle: HTTP ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch trust bundle: HTTP ${response.status} ${response.statusText}`,
+          );
         }
         const data = await response.json();
         const trustBundleResponse = z
@@ -296,9 +297,7 @@ export class SpiffeClient {
           })
           .parse(data);
 
-
         const certificates = splitPEMCertificates(trustBundleResponse.trust_bundle);
-
 
         logWithSpan(
           'info',

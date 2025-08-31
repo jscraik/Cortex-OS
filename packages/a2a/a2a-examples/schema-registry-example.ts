@@ -1,7 +1,6 @@
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
-import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { extractTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 import {
   PredefinedSchemas,

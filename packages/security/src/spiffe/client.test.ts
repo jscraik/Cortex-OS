@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { TrustDomainConfig } from '../types.js';
 import * as clientModule from './client';
 import { SpiffeClient } from './client';
-import type { TrustDomainConfig } from '../types.js';
 
 describe('SpiffeClient', () => {
   const config: TrustDomainConfig = {
@@ -31,7 +31,7 @@ describe('SpiffeClient', () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockResponse),
-    }) as any;
+    }) as unknown as typeof fetch;
 
     const client = new SpiffeClient(config);
     const identity = await client.fetchWorkloadIdentity();
@@ -53,7 +53,7 @@ describe('SpiffeClient', () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ trust_bundle: pem }),
-    }) as any;
+    }) as unknown as typeof fetch;
     const spy = vi.spyOn(clientModule, 'splitPEMCertificates');
     const client = new SpiffeClient(config);
     const certs = await client.fetchTrustBundle();

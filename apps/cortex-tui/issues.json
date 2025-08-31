@@ -1,0 +1,242 @@
+[
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "lines": "39",
+    "severity": "medium",
+    "category": "placeholder-code",
+    "description": "Hardcoded uptime value of 0 instead of calculating actual uptime",
+    "evidence": "Line 39: uptime: 0, // Would be calculated from daemon start time",
+    "fix": "Pass daemon reference to handlers and calculate actual uptime using daemon.uptime()",
+    "tests_to_add": "Test uptime calculation returns correct elapsed time"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs", 
+    "lines": "62",
+    "severity": "medium",
+    "category": "placeholder-code",
+    "description": "Hardcoded uptime value of 0 in server status endpoint",
+    "evidence": "Line 62: \"uptime\": 0 // Would be calculated",
+    "fix": "Calculate actual uptime from daemon start time",
+    "tests_to_add": "Test server status returns correct uptime"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "lines": "96",
+    "severity": "medium", 
+    "category": "placeholder-code",
+    "description": "Hardcoded token_count as None instead of calculating actual tokens",
+    "evidence": "Line 96: token_count: None, // Would be calculated",
+    "fix": "Implement token counting based on message content and model",
+    "tests_to_add": "Test token counting for different message lengths"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "lines": "144",
+    "severity": "low",
+    "category": "placeholder-code", 
+    "description": "Empty sessions array instead of listing actual sessions",
+    "evidence": "Line 144: \"sessions\": [], // Would list actual sessions",
+    "fix": "Retrieve actual session list from memory storage",
+    "tests_to_add": "Test sessions endpoint returns active sessions"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "lines": "291-292",
+    "severity": "medium",
+    "category": "placeholder-code",
+    "description": "MCP tool and resource counts hardcoded to 0",
+    "evidence": "Lines 291-292: tools_count: 0, resources_count: 0, // Would get actual counts",
+    "fix": "Query actual MCP server for tool and resource counts",
+    "tests_to_add": "Test MCP server info returns correct counts"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs", 
+    "lines": "308",
+    "severity": "medium",
+    "category": "placeholder-code",
+    "description": "MCP tools endpoint returns empty array",
+    "evidence": "Line 308: \"tools\": [] // Would list actual tools",
+    "fix": "Query MCP server for actual available tools",
+    "tests_to_add": "Test MCP tools endpoint returns server tools"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "lines": "332",
+    "severity": "high",
+    "category": "placeholder-code",
+    "description": "MCP tool execution not implemented - returns placeholder message",
+    "evidence": "Line 332: \"result\": \"Tool execution not implemented yet\"",
+    "fix": "Implement actual MCP tool execution via client",
+    "tests_to_add": "Test MCP tool execution with various tools and arguments"
+  },
+  {
+    "file": "apps/cortex-tui/src/view/chat.rs",
+    "lines": "176-180",
+    "severity": "low",
+    "category": "code-quality",
+    "description": "Hard-coded scroll page size of 10 messages",
+    "evidence": "Lines 176-180: if self.messages.len() > 10 { self.scroll_offset = self.messages.len().saturating_sub(10); }",
+    "fix": "Make scroll page size configurable based on terminal height or user preference",
+    "tests_to_add": "Test scrolling with different terminal heights"
+  },
+  {
+    "file": "apps/cortex-tui/src/view/chat.rs",
+    "lines": "278-280",
+    "severity": "low",
+    "category": "code-quality",
+    "description": "Hard-coded scroll increment of 10 lines",
+    "evidence": "Lines 278-280: if self.scroll_offset + 10 < self.messages.len() { self.scroll_offset += 10; }",
+    "fix": "Make scroll increment configurable or dynamic based on page size",
+    "tests_to_add": "Test scroll behavior with different page sizes"
+  },
+  {
+    "file": "apps/cortex-tui/src/view/chat.rs",
+    "lines": "449-453",
+    "severity": "medium",
+    "category": "implementation-gap",
+    "description": "Simplified timestamp formatting comment indicates incomplete implementation",
+    "evidence": "Line 449: // Simple timestamp formatting - in real implementation would use chrono",
+    "fix": "Use chrono crate for proper timezone-aware timestamp formatting",
+    "tests_to_add": "Test timestamp formatting across timezones and date boundaries"
+  },
+  {
+    "file": "apps/cortex-tui/src/app.rs",
+    "lines": "75-78",
+    "severity": "medium",
+    "category": "dead-code",
+    "description": "run_tui method with placeholder implementation that should not be called",
+    "evidence": "Lines 75-78: println!(\"TUI mode - this should not be called directly\"); // Dead code",
+    "fix": "Remove this method since TUI is handled in main.rs",
+    "tests_to_add": "Ensure TUI functionality works through main.rs only"
+  },
+  {
+    "file": "apps/cortex-tui/src/app.rs",
+    "lines": "122-124",
+    "severity": "high",
+    "category": "placeholder-code",
+    "description": "MCP server listing not implemented",
+    "evidence": "Lines 122-124: // TODO: Implement MCP server listing, Ok(vec![])",
+    "fix": "Implement actual MCP server listing by querying active MCP clients",
+    "tests_to_add": "Test MCP server listing returns connected servers"
+  },
+  {
+    "file": "apps/cortex-tui/src/app.rs",
+    "lines": "126-129",
+    "severity": "high", 
+    "category": "placeholder-code",
+    "description": "MCP server addition not implemented",
+    "evidence": "Lines 126-129: // TODO: Implement MCP server addition",
+    "fix": "Implement MCP server addition with configuration validation and connection establishment",
+    "tests_to_add": "Test MCP server addition with valid and invalid configurations"
+  },
+  {
+    "file": "apps/cortex-tui/src/app.rs",
+    "lines": "131-134",
+    "severity": "high",
+    "category": "placeholder-code", 
+    "description": "MCP server removal not implemented",
+    "evidence": "Lines 131-134: // TODO: Implement MCP server removal",
+    "fix": "Implement MCP server removal with cleanup and connection termination",
+    "tests_to_add": "Test MCP server removal cleans up resources properly"
+  },
+  {
+    "file": "apps/cortex-tui/src/app.rs",
+    "lines": "144-156",
+    "severity": "medium",
+    "category": "code-quality",
+    "description": "Hardcoded provider and model lists instead of querying actual providers",
+    "evidence": "Lines 144-156: Hardcoded strings for providers and models",
+    "fix": "Query actual providers for available models dynamically",
+    "tests_to_add": "Test provider/model queries return current available options"
+  },
+  {
+    "file": "apps/cortex-tui/src/providers/local.rs",
+    "lines": "35-36",
+    "severity": "high",
+    "category": "security",
+    "description": "Command injection vulnerability in MLX prompt handling",
+    "evidence": "Lines 35-36: prompt.replace(\"'\", \"\\\\\'\").replace(\"\\n\", \"\\\\n\") - insufficient escaping",
+    "fix": "Use proper command argument passing or JSON escaping to prevent injection",
+    "tests_to_add": "Test with malicious prompts containing shell metacharacters"
+  },
+  {
+    "file": "apps/cortex-tui/src/providers/local.rs",
+    "lines": "72-73",
+    "severity": "high",
+    "category": "security",
+    "description": "Same command injection vulnerability in streaming MLX calls", 
+    "evidence": "Lines 72-73: Same inadequate escaping in streaming context",
+    "fix": "Use proper command argument passing or JSON escaping to prevent injection",
+    "tests_to_add": "Test streaming with injection attempts"
+  },
+  {
+    "file": "apps/cortex-tui/src/providers/local.rs",
+    "lines": "100-103",
+    "severity": "low",
+    "category": "code-quality",
+    "description": "Hardcoded model list instead of dynamic discovery",
+    "evidence": "Lines 100-103: Static list of MLX community models",
+    "fix": "Implement dynamic model discovery from MLX installation",
+    "tests_to_add": "Test model discovery finds installed models"
+  },
+  {
+    "file": "apps/cortex-tui/src/memory/storage.rs",
+    "lines": "132",
+    "severity": "medium",
+    "category": "logic-error",
+    "description": "Incorrect Duration extension implementation",
+    "evidence": "Line 132: std::time::Duration::from_days - this method doesn't exist in std",
+    "fix": "Fix the DurationExt trait implementation - the extension is defined but incorrectly used",
+    "tests_to_add": "Test retention cleanup with various day values"
+  },
+  {
+    "file": "apps/cortex-tui/src/memory/context.rs",
+    "lines": "276-281",
+    "severity": "low",
+    "category": "code-quality",
+    "description": "Simplified token estimation using character count",
+    "evidence": "Lines 276-281: Simple estimation: ~4 characters per token",
+    "fix": "Use proper tokenization library like tiktoken for accurate token counting",
+    "tests_to_add": "Test token counting accuracy against known token counts"
+  },
+  {
+    "file": "apps/cortex-tui/src/memory/agents_md.rs",
+    "lines": "180",
+    "severity": "medium",
+    "category": "logic-error",
+    "description": "Timestamp parsing not implemented - uses current time instead",
+    "evidence": "Line 180: timestamp: std::time::SystemTime::now(), // Would parse from markdown",
+    "fix": "Parse actual timestamps from markdown format",
+    "tests_to_add": "Test timestamp parsing from various markdown date formats"
+  },
+  {
+    "file": "apps/cortex-tui/src/memory/agents_md.rs",
+    "lines": "156-215",
+    "severity": "high",
+    "category": "code-quality",
+    "description": "Simplified markdown parser is fragile and incomplete",
+    "evidence": "Lines 156-215: Hand-rolled parser with basic string matching",
+    "fix": "Use proper markdown parsing library like pulldown-cmark",
+    "tests_to_add": "Test parsing with various markdown edge cases and malformed input"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/daemon.rs",
+    "lines": "83",
+    "severity": "medium",
+    "category": "security",
+    "description": "Server binds to all interfaces (0.0.0.0) without configuration",
+    "evidence": "Line 83: bind to 0.0.0.0 - exposes daemon to network",
+    "fix": "Make bind address configurable, default to localhost for security",
+    "tests_to_add": "Test daemon only accepts local connections by default"
+  },
+  {
+    "file": "apps/cortex-tui/src/server/daemon.rs",
+    "lines": "125",
+    "severity": "low",
+    "category": "security",
+    "description": "Permissive CORS policy allows all origins",
+    "evidence": "Line 125: CorsLayer::permissive() - allows any origin",
+    "fix": "Configure restrictive CORS policy with specific allowed origins",
+    "tests_to_add": "Test CORS policy blocks unauthorized origins"
+  }
+]

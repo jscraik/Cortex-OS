@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { EventEmitter } from 'node:events';
 import { readFile } from 'fs/promises';
+import { EventEmitter } from 'node:events';
 import * as tls from 'tls';
-import { loadCertificates, createClientSocket } from './helpers.ts';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MTLSConfig, MTLSError } from '../types.ts';
+import { createClientSocket, loadCertificates } from './helpers.ts';
 
 vi.mock('@cortex-os/telemetry', () => ({ logWithSpan: vi.fn() }));
 vi.mock('fs/promises', () => ({ readFile: vi.fn() }));
@@ -45,7 +45,7 @@ describe('createClientSocket', () => {
 
   it('resolves on secure connection', async () => {
     const socket = new EventEmitter() as unknown as tls.TLSSocket;
-    (socket as any).authorized = true;
+    (socket as unknown as tls.TLSSocket & { authorized: boolean }).authorized = true;
     const connect = tls.connect as unknown as ReturnType<typeof vi.fn>;
     connect.mockReturnValue(socket);
     const promise = createClientSocket('host', 443, config, certs);

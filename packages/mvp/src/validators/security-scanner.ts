@@ -23,7 +23,7 @@ export class SecurityScanner {
 
     try {
       const projectRoot = getProjectRoot();
-      let scanResults = { blockers: 0, majors: 0, vulnerabilities: [] as SecurityVulnerability[] };
+      const scanResults = { blockers: 0, majors: 0, vulnerabilities: [] as SecurityVulnerability[] };
 
       // Use Promise.allSettled to run scans in parallel with timeout
       const scanPromises = [

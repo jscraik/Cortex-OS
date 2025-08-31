@@ -1,3 +1,20 @@
-extends:
-  - p/owasp-llm-top-ten
-rules: []
+rules:
+  - id: hardcoded-secrets
+    pattern: |
+      "(?i)(password|passwd|pwd|secret|key|token|api_key|apikey|access_key|auth).*[:=]\s*['\"][^'\"]{8,}['\"]"
+    message: 'Potential hardcoded secret found'
+    languages: [python, javascript, typescript, json, yaml]
+    severity: ERROR
+
+  - id: llm-prompt-injection
+    pattern: |
+      $INPUT + "..."
+    message: 'Potential LLM prompt injection - validate user input'
+    languages: [python, javascript, typescript]
+    severity: WARNING
+
+  - id: unsafe-eval
+    pattern: eval(...)
+    message: 'Avoid using eval() as it can execute arbitrary code'
+    languages: [javascript, typescript]
+    severity: ERROR

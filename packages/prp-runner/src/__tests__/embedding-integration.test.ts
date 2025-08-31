@@ -63,7 +63,7 @@ describe('🔍 Embedding and Reranking Integration Tests', () => {
         'JavaScript powers the web',
         'Machine learning models predict outcomes',
       ];
-      let res = await addDocuments(embeddingState, docs);
+      const res = await addDocuments(embeddingState, docs);
       embeddingState = res.state;
       const results = await similaritySearch(embeddingState, {
         text: 'programming',
