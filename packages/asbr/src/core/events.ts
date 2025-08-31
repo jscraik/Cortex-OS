@@ -10,6 +10,7 @@ import { appendFile } from 'fs/promises';
 import type { Response } from 'express';
 import type { Server as IOServer, Socket, DefaultEventsMap } from 'socket.io';
 import type { Config, Event, EventType } from '../types/index.js';
+import { logError } from '../lib/logger.js';
 import { getStatePath } from '../xdg/index.js';
 import { loadConfig } from './config.js';
 
@@ -55,8 +56,7 @@ export interface EventManager extends EventEmitter {
 /**
  * Event Manager with SSE and WebSocket support
  */
-/** @deprecated Use createEventManager instead */
-export class EventManagerClass extends EventEmitter {
+class EventManagerClass extends EventEmitter {
   private config: Config;
   private subscriptions = new Map<string, EventSubscription>();
   private eventBuffer = new Map<string, Event[]>(); // taskId -> events
@@ -291,7 +291,7 @@ export class EventManagerClass extends EventEmitter {
         try {
           subscription.callback(event);
         } catch (error) {
-          console.error('Error in event callback:', error);
+          logError('Error in event callback', { error });
         }
       }
     }
@@ -389,7 +389,7 @@ export class EventManagerClass extends EventEmitter {
       const eventLine = JSON.stringify(event) + '\n';
       await appendFile(ledgerPath, eventLine, 'utf-8');
     } catch (error) {
-      console.error('Failed to persist event:', error);
+      logError('Failed to persist event', { error });
     }
   }
 

@@ -21,17 +21,26 @@ describe('task helper utilities', () => {
 
   it('handles idempotency resolution', () => {
     const tasks = new Map<string, Task>();
-    const cache = new Map<string, string>();
+    const cache = new Map<string, { taskId: string; expiry: number }>();
     const { key, existingTask } = resolveIdempotency(baseInput, undefined, cache, tasks);
     expect(existingTask).toBeUndefined();
     expect(key).toBeTypeOf('string');
 
     const task = buildTask();
     tasks.set(task.id, task);
-    cache.set(key, task.id);
+    cache.set(key, { taskId: task.id, expiry: Date.now() + 1000 });
 
     const second = resolveIdempotency(baseInput, key, cache, tasks);
     expect(second.existingTask).toEqual(task);
+  });
+
+  it('ignores expired idempotency entries', () => {
+    const tasks = new Map<string, Task>();
+    const cache = new Map<string, { taskId: string; expiry: number }>();
+    cache.set('k1', { taskId: 't1', expiry: Date.now() - 1000 });
+    tasks.set('t1', buildTask());
+    const result = resolveIdempotency(baseInput, 'k1', cache, tasks);
+    expect(result.existingTask).toBeUndefined();
   });
 
   it('creates task entities', () => {
