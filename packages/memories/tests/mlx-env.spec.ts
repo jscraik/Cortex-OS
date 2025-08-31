@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EventEmitter } from 'events';
+import path from 'node:path';
 
 const spawnSpy = vi.hoisted(() => vi.fn());
 
@@ -9,7 +10,7 @@ import { MLXEmbedder } from '../src/adapters/embedder.mlx.js';
 
 describe('MLXEmbedder environment override', () => {
   it('passes MLX_MODELS_DIR to the Python process', async () => {
-    const customDir = '/tmp/models';
+    const customDir = path.join(process.cwd(), 'tmp-models');
     process.env.MLX_MODELS_DIR = customDir;
 
     const mockProc: any = new EventEmitter();

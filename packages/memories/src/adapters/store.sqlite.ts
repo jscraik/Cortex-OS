@@ -1,5 +1,5 @@
 import DatabaseImpl from 'better-sqlite3';
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
@@ -71,7 +71,7 @@ export class SQLiteStore implements MemoryStore {
     return m;
   }
 
-  async get(id: MemoryId): Promise<Memory | null> {
+  async get(id: string): Promise<Memory | null> {
     const stmt = this.db.prepare('SELECT * FROM memories WHERE id = ?');
     const row = stmt.get(id);
 
@@ -80,7 +80,7 @@ export class SQLiteStore implements MemoryStore {
     return this.rowToMemory(row);
   }
 
-  async delete(id: MemoryId): Promise<void> {
+  async delete(id: string): Promise<void> {
     const stmt = this.db.prepare('DELETE FROM memories WHERE id = ?');
     stmt.run(id);
   }

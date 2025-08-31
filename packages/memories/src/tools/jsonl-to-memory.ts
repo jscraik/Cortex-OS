@@ -17,15 +17,24 @@ const cliSchema = z.object({
 function parseArgs() {
   const args = process.argv.slice(2);
   const opts: Record<string, unknown> = {};
-  for (let i = 0; i < args.length; i++) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
-    if (arg === '--input' || arg === '-i') opts.input = args[++i];
-    else if (arg === '--output' || arg === '-o') opts.output = args[++i];
-    else if (arg === '--tags' || arg === '-t')
-      opts.tags = args[++i]
+    if (arg === '--input' || arg === '-i') {
+      opts.input = args[i + 1];
+      i += 2;
+    } else if (arg === '--output' || arg === '-o') {
+      opts.output = args[i + 1];
+      i += 2;
+    } else if (arg === '--tags' || arg === '-t') {
+      opts.tags = args[i + 1]
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean);
+      i += 2;
+    } else {
+      i += 1;
+    }
   }
   return cliSchema.parse(opts);
 }

@@ -15,7 +15,7 @@ export function redactPII(text: string): string {
 
   // Replace basic address patterns (number + street name)
   result = result.replace(
-    /\b\d+\s+[a-zA-Z]+\s+(?:st(?:reet)?|ave(?:nue)?|rd|road|blvd|boulevard|ln|lane|dr(?:ive)?|way)\b/gi,
+    /\b\d+\s+[a-z]+\s+(?:st(?:reet)?|ave(?:nue)?|rd|road|blvd|boulevard|ln|lane|dr(?:ive)?|way)\b/gi,
     '[REDACTED]',
   );
 

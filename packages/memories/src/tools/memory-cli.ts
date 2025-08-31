@@ -297,7 +297,8 @@ function parseArgs(): CLIOptions {
   const args = process.argv.slice(2);
   const options: CLIOptions = { command: 'demo' };
 
-  for (let i = 0; i < args.length; i++) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
 
     switch (arg) {
@@ -307,27 +308,36 @@ function parseArgs(): CLIOptions {
       case 'stats':
       case 'demo':
         options.command = arg;
+        i += 1;
         break;
       case '--path':
-        options.path = args[++i];
+        options.path = args[i + 1];
+        i += 2;
         break;
       case '--query':
-        options.query = args[++i];
+        options.query = args[i + 1];
+        i += 2;
         break;
       case '--type':
-        options.type = args[++i];
+        options.type = args[i + 1];
+        i += 2;
         break;
       case '--source':
-        options.source = args[++i];
+        options.source = args[i + 1];
+        i += 2;
         break;
       case '--limit':
-        options.limit = parseInt(args[++i]);
+        options.limit = parseInt(args[i + 1]);
+        i += 2;
         break;
       case '--embedding': {
-        const val = args[++i] as string | undefined;
+        const val = args[i + 1] as string | undefined;
         if (val === 'mock') options.embedding = 'mock';
+        i += 2;
         break;
       }
+      default:
+        i += 1;
     }
   }
 
@@ -359,7 +369,7 @@ Environment Variables:
   (Gemini API keys and support removed from the CLI)
   NEO4J_URI          Neo4j connection URI (default: bolt://localhost:7687)
   NEO4J_USER         Neo4j username (default: neo4j)
-  NEO4J_PASSWORD     Neo4j password (default: cortexpassword)
+  NEO4J_PASSWORD     Neo4j password (required)
   QDRANT_URL         Qdrant URL (default: http://localhost:6333)
 
 Examples:
@@ -378,6 +388,10 @@ async function main(): Promise<void> {
   if (process.argv.includes('--help') || process.argv.includes('-h')) {
     printUsage();
     return;
+  }
+
+  if (!process.env.NEO4J_PASSWORD) {
+    console.warn('⚠️  NEO4J_PASSWORD is not set; Neo4j features may fail.');
   }
 
   // CLI no longer supports Gemini; always use mock embeddings from the CLI

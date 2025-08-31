@@ -1,7 +1,5 @@
-export type MemoryId = string;
-
 export interface Memory {
-  id: MemoryId;
+  id: string;
   kind: 'note' | 'event' | 'artifact' | 'embedding';
   text?: string;
   vector?: number[];

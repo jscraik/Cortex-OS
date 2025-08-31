@@ -1,4 +1,4 @@
-import type { Memory, MemoryId } from '../domain/types.js';
+import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
@@ -19,16 +19,16 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export class InMemoryStore implements MemoryStore {
-  private data = new Map<MemoryId, Memory>();
+  private data = new Map<string, Memory>();
 
   async upsert(m: Memory) {
     this.data.set(m.id, m);
     return m;
   }
-  async get(id: MemoryId) {
+  async get(id: string) {
     return this.data.get(id) ?? null;
   }
-  async delete(id: MemoryId) {
+  async delete(id: string) {
     this.data.delete(id);
   }
 
