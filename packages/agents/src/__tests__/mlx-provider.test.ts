@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { createMLXProvider } from '../providers/mlx-provider.js';
+import { createMLXProvider } from '../providers/mlx-provider/index.js';
 
 let originalFetch: any;
 

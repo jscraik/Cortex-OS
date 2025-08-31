@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { createEventBusForEnvironment } from '../src/lib/event-bus.js';
 import { createFallbackChain } from '../src/providers/fallback-chain.js';
-import { createMLXProvider } from '../src/providers/mlx-provider.js';
+import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
 
 const results = [];
 
