@@ -25,8 +25,10 @@ export function hashString(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
 
-export function mergeMcpConfigs(configs: McpConfig[]): McpConfig {
-  const base: McpConfig = configs[0] ?? { version: '1', tools: [] };
+  if (configs.length === 0) {
+    throw new Error('No MCP configs provided to mergeMcpConfigs');
+  }
+  const base: McpConfig = configs[0];
   const tools: Tool[] = [];
   const seen = new Set<string>();
 
