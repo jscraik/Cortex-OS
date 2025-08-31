@@ -28,3 +28,7 @@ This document outlines product specifications and technical summaries for every 
 | security      | 0.1.0   | SPIFFE/SPIRE security with mTLS and workload identity management.                  | Node/TypeScript, SPIFFE/SPIRE  |
 | simlab        | 0.0.1   | Modular simulation laboratory utilities.                                           | Node/TypeScript                |
 | simlab-mono   | 0.1.0   | Monolithic simulation laboratory environment.                                      | Node/TypeScript                |
+| config        | 0.1.0   | Typed environment configuration loader.                                            | Node/TypeScript |
+| functions     | 0.1.0   | In-process extension function registry.                                            | Node/TypeScript |
+| gh-models     | 0.1.0   | GitHub Models REST API client.                                                     | Node/TypeScript |
+| pipelines     | 0.1.0   | Sandboxed worker-based pipeline runner.                                           | Node/TypeScript |

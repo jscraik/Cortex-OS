@@ -95,6 +95,14 @@
       "@cortex-os/mvp-core": ["packages/mvp-core/src/index.ts"],
       "@cortex-os/mvp-core/*": ["packages/mvp-core/src/*"],
       "@cortex-os/model-gateway/*": ["packages/model-gateway/src/*"],
+      "@cortex-os/functions": ["packages/functions/src/index.ts"],
+      "@cortex-os/functions/*": ["packages/functions/src/*"],
+      "@cortex-os/pipelines": ["packages/pipelines/src/index.ts"],
+      "@cortex-os/pipelines/*": ["packages/pipelines/src/*"],
+      "@cortex-os/gh-models": ["packages/gh-models/src/index.ts"],
+      "@cortex-os/gh-models/*": ["packages/gh-models/src/*"],
+      "@cortex-os/config": ["packages/config/src/index.ts"],
+      "@cortex-os/config/*": ["packages/config/src/*"],
 
       // Shared Library Packages
       "@cortex-os/orchestration": ["packages/orchestration/src/index.ts"],

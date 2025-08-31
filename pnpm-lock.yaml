@@ -487,6 +487,22 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(@vitest/browser@3.2.4)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.1)
 
+  packages/config:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.16.2
+        version: 4.20.5
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+      vitest:
+        specifier: ^2.0.5
+        version: 2.1.9(@types/node@20.19.11)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
+
   packages/contracts:
     devDependencies:
       '@types/node':
@@ -517,6 +533,22 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(@vitest/browser@3.2.4)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.1)
+
+  packages/functions:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.16.2
+        version: 4.20.5
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+      vitest:
+        specifier: ^2.0.5
+        version: 2.1.9(@types/node@20.19.11)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
 
   packages/gateway:
     dependencies:
@@ -563,6 +595,22 @@ importers:
       vitest:
         specifier: ^2.0.5
         version: 2.1.9(@types/node@22.18.0)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
+
+  packages/gh-models:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.16.2
+        version: 4.20.5
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+      vitest:
+        specifier: ^2.0.5
+        version: 2.1.9(@types/node@20.19.11)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
 
   packages/kernel:
     dependencies:
@@ -1159,6 +1207,22 @@ importers:
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@22.18.0)(@vitest/browser@3.2.4)(jiti@2.5.1)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)(tsx@4.20.5)(yaml@2.8.1)
+
+  packages/pipelines:
+    dependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.16.2
+        version: 4.20.5
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.2
+      vitest:
+        specifier: ^2.0.5
+        version: 2.1.9(@types/node@20.19.11)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
 
   packages/prp-runner:
     dependencies:
