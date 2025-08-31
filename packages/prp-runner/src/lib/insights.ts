@@ -47,7 +47,7 @@ function extractList(response: string, listName: string): string[] {
   const match = response.match(listPattern);
   if (!match) return [];
   return match[0]
-    .split('\\n')
+    .split('\n')
     .map((line) => line.replace(/^[-*•\\d.\\s]+/, '').trim())
     .filter((line) => line.length > 0)
     .slice(0, 10);
