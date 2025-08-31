@@ -33,4 +33,7 @@ export async function handleMCP(input: unknown): Promise<string> {
   return createStdOutput(`MCP handled tool=${request.tool}`);
 }
 
+export type { MLXConfig, MlxModelsConfig, MlxModelInfo } from './lib/mlx-config';
+export { loadMlxConfig, loadMlxModelsConfig } from './lib/mlx-config';
+
 export default { handleMCP };

@@ -10,6 +10,13 @@
  */
 
 import { startIntegration } from '../mlx-mcp-integration.js';
+import path from 'node:path';
+
+const defaultProfile = path.resolve(
+  process.cwd(),
+  'packages/mcp-bridge/config/mlx-recommended.json',
+);
+process.env.MLX_CONFIG_PATH = process.env.MLX_CONFIG_PATH || defaultProfile;
 
 console.log('🧠 Embedding MLX neuron into MCP system...');
 

@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "readiness:models": "tsx scripts/check-model-readiness.ts"
   },
   "dependencies": {
     "@cortex-os/contracts": "workspace:*"
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@types/node": "^22.5.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "tsx": "^4.0.0"
   }
 }
