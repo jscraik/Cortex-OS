@@ -2,8 +2,15 @@ import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import fs from 'node:fs';
 import path from 'node:path';
-import { generateId } from '../utils/id.js';
+// Removed incorrect import of generateId
 
+// Simple implementation of generateId
+function generateId(prefix: string, randomize: boolean): string {
+  const randomPart = randomize
+    ? Math.random().toString(36).substring(2, 10)
+    : '';
+  return `${prefix}${randomPart}`;
+}
 export const execAsync = promisify(exec);
 
 export function createFilePath(...segments: string[]): string {
