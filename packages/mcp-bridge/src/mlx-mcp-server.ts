@@ -8,34 +8,9 @@
  */
 
 import { spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { loadMlxConfig, type MLXConfig } from '@cortex-os/mcp';
 
-interface MLXConfig {
-  server: {
-    host: string;
-    port: number;
-    workers: number;
-    timeout: number;
-    max_requests: number;
-  };
-  models: Record<
-    string,
-    {
-      name: string;
-      description: string;
-    }
-  >;
-  cache: {
-    hf_home: string;
-  };
-  performance: {
-    batch_size: number;
-    max_tokens: number;
-    temperature: number;
-    top_p: number;
-  };
-}
 
 interface MLXRequest {
   model?: string;
@@ -89,8 +64,7 @@ export class MLXMcpServer {
    */
   async initialize(): Promise<void> {
     try {
-      const configData = await readFile(this.configPath, 'utf-8');
-      this.config = JSON.parse(configData);
+      this.config = await loadMlxConfig(this.configPath);
     } catch (error) {
       throw new Error(`Failed to load MLX config from ${this.configPath}: ${error}`);
     }
@@ -238,69 +212,60 @@ export class MLXMcpServer {
     process.stdin.write(JSON.stringify(requestData) + '\n');
     process.stdin.end();
 
-    let tokenIndex = 0;
     const id = `mlx-${Date.now()}`;
+    let buffer = '';
 
-    yield new Promise<MLXResponse>((resolve, reject) => {
-      process.stdout.on('data', (data) => {
-        const lines = data.toString().split('\n');
-
-        for (const line of lines) {
-          if (!line) continue;
-
-          try {
-            const parsed = JSON.parse(line);
-            if (parsed.token) {
-              const response: MLXResponse = {
-                id,
-                object: 'chat.completion.chunk',
-                created: Math.floor(Date.now() / 1000),
-                model: model.name,
-                choices: [
-                  {
-                    index: 0,
-                    delta: {
-                      content: parsed.token,
-                    },
-                    finish_reason: null,
-                  },
-                ],
-              };
-              resolve(response);
-              tokenIndex++;
-            }
-          } catch {
-            // Skip invalid JSON lines
+    for await (const chunk of process.stdout) {
+      buffer += chunk.toString();
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line) continue;
+        try {
+          const parsed = JSON.parse(line);
+          if (parsed.token) {
+            yield {
+              id,
+              object: 'chat.completion.chunk',
+              created: Math.floor(Date.now() / 1000),
+              model: model.name,
+              choices: [
+                {
+                  index: 0,
+                  delta: { content: parsed.token },
+                  finish_reason: null,
+                },
+              ],
+            };
           }
+        } catch {
+          // ignore malformed lines
         }
-      });
+      }
+    }
 
-      process.on('close', (code) => {
-        if (code !== 0) {
-          reject(new Error(`MLX process failed with code ${code}`));
-        } else {
-          // Send final chunk
-          const finalResponse: MLXResponse = {
-            id,
-            object: 'chat.completion.chunk',
-            created: Math.floor(Date.now() / 1000),
-            model: model.name,
-            choices: [
-              {
-                index: 0,
-                delta: {},
-                finish_reason: 'stop',
-              },
-            ],
-          };
-          resolve(finalResponse);
-        }
-      });
-
-      process.on('error', (error) => {
-        reject(new Error(`Failed to spawn MLX process: ${error}`));
-      });
+    const exitCode: number = await new Promise((resolve, reject) => {
+      process.on('close', resolve);
+      process.on('error', reject);
     });
+
+    if (exitCode !== 0) {
+      throw new Error(`MLX process failed with code ${exitCode}`);
+    }
+
+    yield {
+      id,
+      object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: model.name,
+      choices: [
+        {
+          index: 0,
+          delta: {},
+          finish_reason: 'stop',
+        },
+      ],
+    };
   }
 
   /**
