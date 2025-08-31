@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, mkdtempSync, rmSync } from 'fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import http from 'http';
@@ -36,6 +36,19 @@ describe('RegistryService', () => {
     await expect(service.getRegistry('test')).rejects.toThrow();
 
     server.close();
+    rmSync(baseDir, { recursive: true, force: true });
+  });
+
+  it('removes cache file from disk', async () => {
+    const baseDir = mkdtempSync(path.join(os.tmpdir(), 'registry-remove-test-'));
+    const service = new RegistryService({ registries: {}, cacheDir: baseDir, cacheTtl: 1000 });
+
+    const cachePath = path.join(baseDir, 'registry-test.json');
+    writeFileSync(cachePath, JSON.stringify({ data: {}, timestamp: Date.now() }));
+
+    await (service as any).removeFromDisk('test');
+    expect(existsSync(cachePath)).toBe(false);
+
     rmSync(baseDir, { recursive: true, force: true });
   });
 });

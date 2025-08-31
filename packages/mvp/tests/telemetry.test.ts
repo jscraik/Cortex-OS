@@ -95,9 +95,7 @@ describe('Telemetry Implementation', () => {
       requirements: ['Track errors'],
     };
 
-
     const result = await errorGraph.runPRPWorkflow(blueprint);
-
 
     // Find error spans
     const spans = getSpans();

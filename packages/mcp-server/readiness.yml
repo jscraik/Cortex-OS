@@ -1,0 +1,19 @@
+package: mcp-server
+coverage:
+  statements: 95
+  branches: 95
+  functions: 95
+  lines: 95
+thresholds:
+  statements: 95
+  branches: 95
+  functions: 95
+  lines: 95
+checklist:
+  tdd: true
+  contracts: true
+  a11y: false
+  security: true
+  docs: true
+  architecture: true
+  reliability: true

@@ -10,8 +10,40 @@
  */
 
 import { EventEmitter } from 'events';
+import * as net from 'net';
 import WebSocket from 'ws';
-import { DashboardData, AnalyticsConfig } from './types.js';
+import { AnalyticsConfig, DashboardData } from './types.js';
+
+/**
+ * Find an available port starting from a base port
+ */
+async function findAvailablePort(startPort: number = 9000): Promise<number> {
+  for (let port = startPort; port < startPort + 100; port++) {
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+  }
+  throw new Error(`No available port found starting from ${startPort}`);
+}
+
+/**
+ * Check if a port is available
+ */
+async function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.listen(port, 'localhost', () => {
+      server.close(() => {
+        resolve(true);
+      });
+    });
+
+    server.on('error', () => {
+      resolve(false);
+    });
+  });
+}
 
 /**
  * Real-time data streaming service for analytics dashboard

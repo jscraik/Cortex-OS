@@ -15,7 +15,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -46,13 +46,13 @@ app = FastAPI(
 
 class VisualizationRequest(BaseModel):
     tool: str = Field(..., description="Tool name (viu, chafa, timg)")
-    imagePath: str = Field(..., description="Path to image file")
-    options: Dict[str, Any] = Field(
+    image_path: str = Field(..., description="Path to image file")
+    options: dict[str, Any] = Field(
         default_factory=dict, description="Tool-specific options"
     )
 
     @validator("tool")
-    def validate_tool(cls, v):
+    def validate_tool(self, v):
         allowed_tools = ["viu", "chafa", "timg"]
         if v not in allowed_tools:
             raise ValueError(f"Tool must be one of: {allowed_tools}")
@@ -80,11 +80,11 @@ def validate_image_path(image_path: str) -> Path:
         return resolved_image_path
 
     except (OSError, RuntimeError, ValueError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image path: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid image path: {e}") from e
 
 
 def execute_tool(
-    tool: str, image_path: Path, options: Dict[str, Any]
+    tool: str, image_path: Path, options: dict[str, Any]
 ) -> subprocess.CompletedProcess:
     """Execute GPL tool with proper security and error handling"""
 
@@ -126,26 +126,27 @@ def execute_tool(
             text=True,
             timeout=30,
             cwd=SAFE_IMAGE_DIR,  # Run in safe directory
+            shell=False,  # Security: prevent shell injection
         )
 
         return result
 
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="Tool execution timeout")
-    except FileNotFoundError:
-        raise HTTPException(status_code=500, detail="Requested tool not available")
+    except subprocess.TimeoutExpired as e:
+        raise HTTPException(status_code=408, detail="Tool execution timeout") from e
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail="Requested tool not available") from e
     except Exception as e:
         logger.error(f"Tool execution error: {e}")
-        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Processing error: {e!s}") from e
 
 
 @app.post("/visualize")
 async def visualize_image(request: VisualizationRequest):
     """Process image with specified GPL tool"""
-    logger.info(f"Visualization request: {request.tool} for {request.imagePath}")
+    logger.info(f"Visualization request: {request.tool} for {request.image_path}")
 
     # Validate and resolve image path
-    resolved_image_path = validate_image_path(request.imagePath)
+    resolved_image_path = validate_image_path(request.image_path)
 
     # Execute tool
     result = execute_tool(request.tool, resolved_image_path, request.options)
@@ -220,7 +221,7 @@ async def upload_and_visualize(
         if "temp_path" in locals() and temp_path.exists():
             temp_path.unlink()
         logger.error(f"Upload processing error: {e}")
-        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Processing error: {e!s}") from e
 
 
 @app.get("/health")

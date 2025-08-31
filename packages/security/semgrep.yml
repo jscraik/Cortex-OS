@@ -4,6 +4,9 @@ rules:
     metadata:
       owasp-llm-top-10: LLM01-Prompt-Injection
       mitre-atlas: ATLAS-Prompt-Injection
+      agentic-security: prompt-injection
+      personal-security-checklist: secure-coding
+      aliasrobotics-cai: LLM-Prompt-Injection
     severity: WARNING
     languages: [javascript, typescript]
     patterns:
@@ -19,6 +22,9 @@ rules:
     metadata:
       owasp-llm-top-10: LLM02-Insecure-Output
       mitre-atlas: ATLAS-Insecure-Output
+      agentic-security: insecure-output
+      personal-security-checklist: secure-coding
+      aliasrobotics-cai: LLM-Insecure-Output
     severity: ERROR
     languages: [javascript, typescript]
     patterns:

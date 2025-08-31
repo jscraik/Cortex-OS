@@ -1,0 +1,32 @@
+name: Agents CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/agents/**'
+      - '.github/workflows/agents-ci.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/agents/**'
+      - '.github/workflows/agents-ci.yml'
+
+jobs:
+  agents-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install pnpm
+        run: npm i -g pnpm@9
+      - name: Install deps
+        run: pnpm i --frozen-lockfile
+      - name: Typecheck (agents)
+        run: pnpm -w --filter @cortex-os/agents typecheck
+      - name: Build (agents)
+        run: pnpm -w --filter @cortex-os/agents build
+      - name: Tests (agents)
+        run: pnpm -w --filter @cortex-os/agents test -- --reporter=verbose
+

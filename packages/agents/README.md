@@ -156,3 +156,43 @@ pnpm test:integration
 # Run with coverage
 pnpm test:coverage
 ```
+
+# @cortex-os/agents
+
+## Inputs Compliance
+
+- seed: all agents accept an optional `seed: number` to enable deterministic behavior.
+- maxTokens: agents enforce `maxTokens <= 4096` and pass this cap to providers.
+
+## Governed Memory and Outbox
+
+- Agents never write to the filesystem directly. Persistence flows through a governed `MemoryStore`.
+- Wire via orchestrator:
+
+```ts
+const orch = createOrchestrator({
+  providers: { primary },
+  eventBus,
+  mcpClient,
+  memoryStore, // e.g., SQLite/Prisma adapter from @cortex-os/memories
+  memoryPolicies: {
+    'code-analysis': {
+      namespace: 'agents:code-analysis',
+      ttl: 'PT30M',
+      maxItemBytes: 256000,
+      redactPII: true,
+    },
+    security: { namespace: 'agents:security', ttl: 'PT1H', maxItemBytes: 256000, redactPII: true },
+  },
+  redactPII: true, // default for all capabilities (can be overridden per capability)
+});
+```
+
+## Event Timestamps and Errors
+
+- All event timestamps are ISO-8601 validated.
+- `agent.failed` now includes optional `errorCode` and `status` when available.
+
+## Model Gateway
+
+- MLX provider routes through the Model Gateway HTTP `/chat` endpoint when available (`MODEL_GATEWAY_URL`).

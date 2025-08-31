@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 export interface EmbedDeps {
   modelStrategy: { embeddings: { primary: { model: string }; fallback: { model: string } } };
-  mlxEmbed: (opts: { model: string; texts: string[] }) => Promise<{ embeddings: number[][]; model: string; dimensions: number }>;
+  mlxEmbed: (opts: {
+    model: string;
+    texts: string[];
+  }) => Promise<{ embeddings: number[][]; model: string; dimensions: number }>;
   ollamaSemantic: (texts: string[]) => Promise<number[][]>;
   isHealthy: (provider: string, model: string) => boolean;
   markUnhealthy: (provider: string, model: string) => void;

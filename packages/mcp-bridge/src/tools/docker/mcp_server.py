@@ -12,7 +12,6 @@ ai_provenance_hash: N/A
 import os
 import re
 import subprocess
-from typing import Dict, List
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -30,15 +29,15 @@ class DockerLogsRequest(BaseModel):
 
 # Documentation analysis request/response
 class DocumentationAnalysisRequest(BaseModel):
-    files: List[str] = []  # Optional: list of files to analyze
+    files: list[str] = []  # Optional: list of files to analyze
 
 
 class DocumentationAnalysisResult(BaseModel):
     file: str
     present: bool
-    accessibility: Dict[str, str]
-    compliance: Dict[str, str]
-    missing_sections: List[str]
+    accessibility: dict[str, str]
+    compliance: dict[str, str]
+    missing_sections: list[str]
 
 
 def run_docker_command(command):
@@ -104,7 +103,7 @@ def analyze_documentation(req: DocumentationAnalysisRequest):
         if os.path.exists(file):
             result["present"] = True
             try:
-                with open(file, "r", encoding="utf-8") as f:
+                with open(file, encoding="utf-8") as f:
                     content = f.read()
                 result["accessibility"] = {
                     "wcag_2_1_aa": "yes"

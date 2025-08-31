@@ -1,8 +1,7 @@
-import { spawn } from 'child_process';
 import crypto from 'crypto';
 
 export interface EmbeddingConfig {
-  provider: 'sentence-transformers' | 'local' | 'mock';
+  provider: 'sentence-transformers' | 'local';
   model?: string;
   dimensions?: number;
   batchSize?: number;
@@ -51,10 +50,6 @@ export const createEmbeddingState = (
       model: 'Qwen/Qwen3-Embedding-0.6B',
       dimensions: 1024,
     },
-    mock: {
-      provider: 'mock',
-      dimensions: 1024,
-    },
   };
 
   const config = configs[provider];
@@ -73,8 +68,6 @@ export const generateEmbeddings = async (
       return generateWithSentenceTransformers(state.pythonPath, state.config, textArray);
     case 'local':
       return generateWithLocal(state.pythonPath, textArray);
-    case 'mock':
-      return generateMockEmbeddings(state.config, textArray);
     default:
       throw new Error(
         `Embedding generation not implemented for provider: ${state.config.provider}`,
@@ -160,7 +153,7 @@ export const getStats = (state: EmbeddingState) => {
 };
 
 const validateConfig = (config: EmbeddingConfig): void => {
-  if (!['sentence-transformers', 'local', 'mock'].includes(config.provider)) {
+  if (!['sentence-transformers', 'local'].includes(config.provider)) {
     throw new Error(`Unsupported embedding provider: ${config.provider}`);
   }
 };
@@ -235,22 +228,6 @@ except Exception as e:
   return JSON.parse(result);
 };
 
-const generateMockEmbeddings = (config: EmbeddingConfig, texts: string[]): Promise<number[][]> => {
-  const dimensions = config.dimensions || 1024;
-  return Promise.resolve(
-    texts.map((text) => {
-      const hash = crypto.createHash('md5').update(text).digest('hex');
-      const embedding: number[] = [];
-      for (let i = 0; i < dimensions; i++) {
-        const byte = parseInt(hash.substring(i % hash.length, (i % hash.length) + 1), 16) || 0;
-        embedding.push(byte / 15 - 0.5);
-      }
-      const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-      return embedding.map((val) => val / magnitude);
-    }),
-  );
-};
-
 const cosineSimilarity = (a: number[], b: number[]): number => {
   if (a.length !== b.length) {
     throw new Error('Vectors must have the same length');
@@ -286,36 +263,13 @@ const generateId = (text: string): string => {
   return crypto.createHash('sha256').update(text).digest('hex').substring(0, 16);
 };
 
-const executePythonScript = (
+const executePythonScript = async (
   pythonPath: string,
   script: string,
   args: string[] = [],
 ): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const child = spawn(pythonPath, ['-c', script, ...args], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    let stderr = '';
-    child.stdout?.on('data', (data) => {
-      stdout += data.toString();
-    });
-    child.stderr?.on('data', (data) => {
-      stderr += data.toString();
-    });
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve(stdout.trim());
-      } else {
-        reject(new Error(`Python script failed with code ${code}: ${stderr}`));
-      }
-    });
-    child.on('error', (error) => {
-      reject(new Error(`Failed to spawn Python: ${error.message}`));
-    });
-    setTimeout(() => {
-      child.kill();
-      reject(new Error('Python script timed out'));
-    }, 30000);
-  });
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  const { runPython } = await import('../../../../libs/python/exec.js');
+  return runPython('-c', [script, ...args], { python: pythonPath } as any);
 };

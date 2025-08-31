@@ -1,24 +1,5 @@
 packages:
-  # Apps (ASBR structure)
-  - 'apps/*'
-
-  # Packages (shared libraries)
-  - 'packages/*'
-  - 'packages/model-gateway'
-
-  # Nested packages within major packages
-  - 'packages/a2a/a2a-*'
-  - 'packages/a2a-services/*'
-  - 'packages/mcp/mcp-*'
-
-  # Services (backend services)
-  - 'packages/orchestration/src/lib/outbox'
-  - 'services/*'
-
-  # Libraries (framework libraries)
-  - 'libs/*'
-  - 'libs/typescript/*'
-  - 'libs/python/*'
-
-  # External integrations
-  - 'external/*'
+  - packages/security
+  - packages/a2a/**
+  - libs/**
+  - src

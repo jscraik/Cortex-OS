@@ -123,7 +123,6 @@ describe('ASBR API Performance Tests', () => {
     expect(duration).toBeLessThan(500);
   });
 
-
   it('should serve SSE events efficiently', async () => {
     const start = performance.now();
 

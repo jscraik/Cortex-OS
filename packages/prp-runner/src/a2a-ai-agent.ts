@@ -7,18 +7,15 @@
  * @last_updated 2025-08-22
  */
 
-import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
-import { ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 import {
+  A2AMessage,
+  AgentCapabilities,
   AgentCard,
   AgentSkill,
-  AgentInterface,
-  AgentCapabilities,
-  AgentExtension,
-  AgentProvider,
   TransportProtocol,
-  A2AMessage,
 } from '@cortex-os/a2a';
+import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
+import { ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
 /**
  * A2A AI Agent - Exposes AI capabilities as agent skills for multi-agent coordination
@@ -243,6 +240,14 @@ export class A2AAIAgent {
     ];
 
     const capabilities: AgentCapabilities = {
+      skills: skills,
+      supportedProtocols: [TransportProtocol.HTTP, TransportProtocol.WEBSOCKET],
+      maxConcurrentTasks: 5,
+      resourceLimits: {
+        memoryMB: 1024,
+        cpuPercent: 50,
+        timeoutMs: 30000,
+      },
       streaming: false,
       pushNotifications: false,
       stateTransitionHistory: true,

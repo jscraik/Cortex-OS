@@ -2,24 +2,26 @@
  * @file Schema validator for MCP Registry
  */
 
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import registrySchema from '../schemas/registry.schema.json' assert { type: 'json' };
-import serverManifestSchema from '../schemas/server-manifest.schema.json' assert { type: 'json' };
-import { validateServerManifest as validateServerManifestLib } from './lib/validateServerManifest.js';
+import AjvImport from 'ajv';
+import addFormatsImport from 'ajv-formats';
+import registrySchema from '../schemas/registry.schema.json' with { type: 'json' };
+import serverManifestSchema from '../schemas/server-manifest.schema.json' with { type: 'json' };
 import { validateRegistry as validateRegistryLib } from './lib/validateRegistry.js';
 import { validateSecurity as validateSecurityLib } from './lib/validateSecurity.js';
+import { validateServerManifest as validateServerManifestLib } from './lib/validateServerManifest.js';
 
 export class McpValidator {
-  private ajv: Ajv;
+  private ajv: any;
 
   constructor() {
+    const Ajv: any = (AjvImport as any).default ?? AjvImport;
     this.ajv = new Ajv({
       allErrors: true,
       verbose: true,
       strict: false,
     });
 
+    const addFormats: any = (addFormatsImport as any).default ?? addFormatsImport;
     addFormats(this.ajv);
 
     this.ajv.addFormat('uri', {

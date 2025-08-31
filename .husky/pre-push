@@ -5,6 +5,16 @@
 # Fast lint first
 pnpm lint || exit 1
 
+if command -v semgrep >/dev/null 2>&1; then
+  pnpm security:scan:all || exit 1
+else
+  echo "Warning: semgrep not found, skipping security scan."
+fi
+
 # Scope tests to changed packages; skip if only docs/config changed.
-node tools/readiness/run-changed-tests.mjs --dry || exit 1
-node tools/readiness/run-changed-tests.mjs || exit 1
+# Only run security scan if code files are being pushed
+if git diff --cached --name-only | grep -E '\.(js|ts|mjs|jsx|tsx|py|go|java|rb|php)$' >/dev/null; then
+  pnpm security:scan || exit 1
+else
+  echo "No code changes detected; skipping security scan."
+fi

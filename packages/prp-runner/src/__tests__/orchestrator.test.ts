@@ -33,7 +33,6 @@ describe('PRPOrchestrator - TDD Implementation', () => {
     });
 
     it('should fail to execute without any neurons', async () => {
-
       // RED: This should fail - no executePRPCycle method
       await expect(orchestrator.executePRPCycle({} as any)).rejects.toThrow(
         'No neurons registered',
@@ -63,6 +62,30 @@ describe('PRPOrchestrator - TDD Implementation', () => {
       expect(result.blueprint).toEqual(blueprint);
       expect(result.outputs).toBeDefined();
       expect(result.status).toBe('completed');
+    });
+
+    it('should generate a product requirements prompt', async () => {
+      const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
+      orchestrator.registerNeuron(mockNeuron);
+
+      const blueprint = {
+        title: 'Prompt Blueprint',
+        description: 'Generate product requirements prompt',
+        requirements: ['collect SME feedback'],
+      };
+
+      const prompt = await orchestrator.generateProductRequirementsPrompt(blueprint);
+      expect(prompt).toContain('Product Requirements for');
+      expect(prompt).toContain('strategy-neuron');
+    });
+
+    it('should validate blueprint structure', async () => {
+      const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
+      orchestrator.registerNeuron(mockNeuron);
+
+      await expect(
+        orchestrator.generateProductRequirementsPrompt({} as any),
+      ).rejects.toThrow();
     });
   });
 

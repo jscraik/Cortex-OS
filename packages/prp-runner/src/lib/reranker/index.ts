@@ -1,3 +1,5 @@
+import { pipeline } from '@xenova/transformers';
+
 export interface RerankerConfig {
   provider: 'transformers' | 'local' | 'mock';
   model?: string;
@@ -15,12 +17,12 @@ export interface RerankerState {
 }
 
 export const createRerankerState = (
-  provider: RerankerConfig['provider'] = 'mock',
+  provider: RerankerConfig['provider'] = 'transformers',
 ): RerankerState => {
   const configs: Record<RerankerConfig['provider'], RerankerConfig> = {
     transformers: {
       provider: 'transformers',
-      model: 'cross-encoder/ms-marco-MiniLM-L-6-v2',
+      model: 'Qwen/Qwen2.5-coder-cross-encoder',
     },
     local: {
       provider: 'local',
@@ -45,7 +47,7 @@ export const rerank = async (
 ): Promise<RerankerResult[]> => {
   switch (state.config.provider) {
     case 'transformers':
-      return rerankWithTransformers(query, documents, topK);
+      return rerankWithTransformers(query, documents, topK, state.config.model);
     case 'local':
       return rerankWithLocal(query, documents, topK);
     case 'mock':
@@ -77,13 +79,26 @@ const rerankWithMock = async (
   return topK ? results.slice(0, topK) : results;
 };
 
+let crossEncoder: any | null = null;
+
 const rerankWithTransformers = async (
   query: string,
   documents: string[],
   topK?: number,
+  model = 'Qwen/Qwen2.5-coder-cross-encoder',
 ): Promise<RerankerResult[]> => {
-  console.warn('Transformers reranking not implemented, falling back to mock');
-  return rerankWithMock(query, documents, topK);
+  if (!crossEncoder) {
+    crossEncoder = await pipeline('text-classification', model, { quantized: true });
+  }
+  const inputs = documents.map((doc) => ({ text: query, text_pair: doc }));
+  const outputs = await crossEncoder(inputs);
+  const results: RerankerResult[] = outputs.map((out: any, index: number) => ({
+    text: documents[index],
+    score: out[0].score,
+    originalIndex: index,
+  }));
+  results.sort((a, b) => b.score - a.score);
+  return topK ? results.slice(0, topK) : results;
 };
 
 const rerankWithLocal = async (

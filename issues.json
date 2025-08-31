@@ -1,0 +1,192 @@
+[
+  {
+    "file": "packages/mcp/src/lib/mlx-model.ts",
+    "lines": "441-676",
+    "severity": "high",
+    "category": "code-quality",
+    "description": "Function createMLXModel violates 40-line guideline with 235 lines",
+    "evidence": "Single function from line 441 to 676 contains multiple responsibilities including embedding, reranking, semantic search, health checks, and A2A integration",
+    "fix": "Split into separate functions: createEmbeddingModel, createRerankerModel, setupEventHandlers, setupA2AIntegration",
+    "tests_to_add": "Unit tests for each extracted function"
+  },
+  {
+    "file": "packages/mcp/src/lib/mlx-model.ts",
+    "lines": "584-591",
+    "severity": "medium", 
+    "category": "memory-leak",
+    "description": "process.nextTick callback creates potential memory leak with event emission",
+    "evidence": "Line 585: process.nextTick(() => { events.emit('modelReady', {...}); }) - event is emitted without checking for listeners",
+    "fix": "Check if there are listeners before emitting: if (events.listenerCount('modelReady') > 0) { ... }",
+    "tests_to_add": "Test case for model creation without event listeners"
+  },
+  {
+    "file": "packages/mcp/src/lib/mlx-model.ts",
+    "lines": "102-278",
+    "severity": "medium",
+    "category": "code-quality", 
+    "description": "Function createEmbeddingModel violates 40-line guideline with 176 lines",
+    "evidence": "Single function contains cache management, tokenization, inference simulation, normalization, and statistics tracking",
+    "fix": "Extract helper functions: tokenizeTextForEmbedding, runInference, manageEmbeddingCache, calculateEmbeddingStats",
+    "tests_to_add": "Individual tests for extracted helper functions"
+  },
+  {
+    "file": "packages/mcp/src/lib/mlx-model.ts",
+    "lines": "103",
+    "severity": "high",
+    "category": "memory-leak",
+    "description": "Map-based cache without size limits or TTL cleanup mechanism",
+    "evidence": "Line 103: const embeddingCache = new Map<string, { embedding: number[]; timestamp: number }>(); - No cleanup mechanism for expired entries",
+    "fix": "Implement cache cleanup timer: setInterval(() => cleanupExpiredEntries(), 60000) and add maxCacheSize limit",
+    "tests_to_add": "Test cache eviction under memory pressure and TTL expiration"
+  },
+  {
+    "file": "packages/mcp/src/lib/transport.ts",
+    "lines": "90-120",
+    "severity": "medium",
+    "category": "race-condition",
+    "description": "HTTP retry logic with race condition potential",
+    "evidence": "Lines 90-120: while(true) loop with async operations and attempt counter could lead to concurrent retries",
+    "fix": "Use a lock or flag to prevent concurrent retry attempts: let retrying = false; if (retrying) throw error;",
+    "tests_to_add": "Test concurrent send() calls during retry scenarios"
+  },
+  {
+    "file": "packages/mcp/src/lib/transport.ts",
+    "lines": "175-178",
+    "severity": "high",
+    "category": "resource-cleanup",
+    "description": "Child process not guaranteed to be killed on disconnect",
+    "evidence": "Lines 175-176: if (child && child.pid) child.kill('SIGTERM'); - no verification that process actually terminated",
+    "fix": "Add timeout for graceful termination, then force kill: setTimeout(() => { if (child && !child.killed) child.kill('SIGKILL'); }, 5000)",
+    "tests_to_add": "Test hanging child processes that don't respond to SIGTERM"
+  },
+  {
+    "file": "packages/mcp/src/lib/client.ts",
+    "lines": "113-151",
+    "severity": "medium",
+    "category": "code-quality",
+    "description": "Function startMemoryProtection + cleanupStaleRequests violates 40-line guideline",
+    "evidence": "Combined memory protection logic spans 38 lines with complex cleanup and metric tracking",
+    "fix": "Extract cleanupStaleRequests to separate function and simplify memory protection logic",
+    "tests_to_add": "Separate tests for memory protection and stale request cleanup"
+  },
+  {
+    "file": "packages/mcp/src/lib/client.ts",
+    "lines": "256-261",
+    "severity": "high",
+    "category": "resource-cleanup", 
+    "description": "Pending requests cleared without proper error handling",
+    "evidence": "Lines 256-261: All pending requests rejected with generic 'Connection closed' but timeouts not cleared first",
+    "fix": "Clear timeouts before rejecting: for (const [id, pending] of this.pendingRequests) { clearTimeout(pending.timeout); pending.reject(...); }",
+    "tests_to_add": "Test disconnect with many pending requests and verify no timeout leaks"
+  },
+  {
+    "file": "packages/mcp/src/lib/client.ts",
+    "lines": "183-200",
+    "severity": "medium",
+    "category": "race-condition",
+    "description": "Request timeout and response handling could race",
+    "evidence": "Lines 184-199: setTimeout and pendingRequests.set() operations could race with handleMessage",
+    "fix": "Check if request still pending before timeout: const pending = this.pendingRequests.get(id); if (!pending) return;",
+    "tests_to_add": "Test race condition between timeout and response arrival"
+  },
+  {
+    "file": "packages/mcp/src/lib/security.ts",
+    "lines": "37-52", 
+    "severity": "medium",
+    "category": "input-validation",
+    "description": "Object redaction uses z.record(z.any()) allowing any structure", 
+    "evidence": "Lines 38-39: objSchema.parse(data) with z.any() doesn't validate object structure",
+    "fix": "Use proper schema validation or add depth limit: if (depth > MAX_DEPTH) throw new Error('Object too deep')",
+    "tests_to_add": "Test with deeply nested malicious objects and circular references"
+  },
+  {
+    "file": "packages/mcp/src/lib/security.ts",
+    "lines": "78-96",
+    "severity": "high",
+    "category": "security",
+    "description": "URL validation allows localhost in production with weak checks",
+    "evidence": "Lines 89-90: isLocalhost check only looks at hostname, not IP ranges or edge cases",
+    "fix": "Add comprehensive localhost detection: const isLocal = ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(hostname) || /^127\\./.test(hostname) || /^192\\.168\\./.test(hostname)",
+    "tests_to_add": "Test various localhost representations and private IP ranges"
+  },
+  {
+    "file": "packages/mcp/src/lib/rate-limiter.ts", 
+    "lines": "67-109",
+    "severity": "medium",
+    "category": "code-quality",
+    "description": "Function checkLocalLimit violates 40-line guideline with 42 lines",
+    "evidence": "Complex rate limiting logic with timestamp filtering, limit checking, and reset calculation in single function",
+    "fix": "Extract helper functions: filterExpiredRequests, calculateResetTime, updateClientWindow", 
+    "tests_to_add": "Unit tests for each extracted helper functions"
+  },
+  {
+    "file": "packages/mcp/src/lib/rate-limiter.ts",
+    "lines": "125-137",
+    "severity": "medium",
+    "category": "performance", 
+    "description": "Inefficient memory usage calculation iterating all windows",
+    "evidence": "Lines 125-128: for (const requests of this.windows.values()) totalEntries += requests.length - O(n) operation called frequently",
+    "fix": "Track total entries as instance variable: increment/decrement on add/remove operations",
+    "tests_to_add": "Performance test with large number of clients and memory calculations"
+  },
+  {
+    "file": "packages/mcp/src/lib/rate-limiter.ts",
+    "lines": "142-146",
+    "severity": "medium",
+    "category": "memory-leak",
+    "description": "Cleanup timer continues running even after rate limiter errors",
+    "evidence": "Line 143: setInterval without error handling or cleanup mechanism",
+    "fix": "Add error handling: setInterval(() => { try { this.cleanup(); } catch(e) { console.error('Cleanup failed:', e); } }, ...)",
+    "tests_to_add": "Test cleanup timer behavior during rate limiter errors"
+  },
+  {
+    "file": "packages/mcp/src/lib/security-middleware.ts",
+    "lines": "44-79",
+    "severity": "medium", 
+    "category": "code-quality",
+    "description": "Constructor violates 40-line guideline with 35 lines of complex initialization",
+    "evidence": "Constructor initializes rate limiter, metrics, monitoring, and event handlers in single function",
+    "fix": "Extract initialization methods: initializeRateLimiter(), initializeMetrics(), startMonitoring()",
+    "tests_to_add": "Test each initialization phase separately"
+  },
+  {
+    "file": "packages/mcp/src/lib/security-middleware.ts",
+    "lines": "367-375",
+    "severity": "high",
+    "category": "security",
+    "description": "Client blocking uses setTimeout without storing timer reference",
+    "evidence": "Lines 371-374: setTimeout for auto-unblock but no way to cancel if client reconnects",
+    "fix": "Store timer reference: this.blockTimers.set(clientId, setTimeout(...)); and clear on manual unblock",
+    "tests_to_add": "Test client unblocking with reconnection scenarios"
+  },
+  {
+    "file": "packages/mcp/src/lib/input-validation.ts",
+    "lines": "316-341", 
+    "severity": "high",
+    "category": "security",
+    "description": "Production environment checks can be bypassed via NODE_ENV manipulation",
+    "evidence": "Lines 317, 331: process.env.NODE_ENV === 'production' checks can be manipulated at runtime",
+    "fix": "Use immutable environment check at module load: const IS_PRODUCTION = process.env.NODE_ENV === 'production'; Object.freeze(IS_PRODUCTION)",
+    "tests_to_add": "Test NODE_ENV manipulation attempts and security bypass scenarios"
+  },
+  {
+    "file": "packages/mcp/src/lib/input-validation.ts", 
+    "lines": "173-194",
+    "severity": "medium",
+    "category": "security",
+    "description": "Command whitelist too permissive allowing dangerous operations",
+    "evidence": "Lines 173-187: allowedCommands includes 'git', 'npm', 'yarn' which can execute arbitrary code via hooks",
+    "fix": "Remove dangerous commands and add argument validation: allowedCommands = ['echo', 'cat', 'ls', 'pwd']; validate command arguments separately",
+    "tests_to_add": "Test command injection via npm scripts and git hooks"
+  },
+  {
+    "file": "packages/mcp/src/lib/input-validation.ts",
+    "lines": "348-389",
+    "severity": "medium", 
+    "category": "memory-leak",
+    "description": "ValidationRateLimiter lacks cleanup mechanism for expired entries",
+    "evidence": "Lines 350-351: Map growth without automatic cleanup of expired validation attempts",
+    "fix": "Add cleanup interval: setInterval(() => this.cleanup(), 60000) in constructor and implement LRU eviction",
+    "tests_to_add": "Test validation rate limiter memory usage under sustained load"
+  }
+]

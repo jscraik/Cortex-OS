@@ -10,10 +10,151 @@ from pathlib import Path
 import pytest
 pytest.importorskip("mlx")
 
+import pytest
+import pytest_asyncio
+
 # Add the bridge to the path
 sys.path.insert(0, str(Path(__file__).parent / "cli" / "bridge"))
 
 from mlx_bridge import MLXBridge
+
+
+class TestMLXIntegration:
+    """Test cases for MLX Bridge integration"""
+
+    @pytest_asyncio.fixture
+    async def bridge(self):
+        """Create MLX bridge instance for testing"""
+        return MLXBridge()
+
+    @pytest.mark.asyncio
+    async def test_bridge_initialization(self, bridge):
+        """Test MLX bridge initializes properly"""
+        assert bridge is not None
+        assert bridge.server_url == "http://localhost:8000"
+        assert len(bridge.models_config) > 0
+
+    @pytest.mark.asyncio
+    async def test_get_model_status(self, bridge):
+        """Test getting model status"""
+        status = await bridge.get_model_status()
+
+        assert "memory" in status
+        assert "models" in status
+        assert "current_model" in status
+        assert "server_status" in status
+
+        # Check memory status structure
+        memory = status["memory"]
+        assert "total_gb" in memory
+        assert "available_gb" in memory
+        assert "used_gb" in memory
+        assert "usage_percentage" in memory
+
+        # Check models list
+        assert len(status["models"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_switch_model_success(self, bridge):
+        """Test successfully switching to a valid model"""
+        result = await bridge.switch_model("phi3-mini")
+
+        assert result["success"] is True
+        assert result["model"] == "phi3-mini"
+        assert "memory_mb" in result
+        assert "context_length" in result
+        assert bridge.current_model == "phi3-mini"
+
+    @pytest.mark.asyncio
+    async def test_switch_model_invalid(self, bridge):
+        """Test switching to an invalid model fails gracefully"""
+        result = await bridge.switch_model("nonexistent-model")
+
+        assert result["success"] is False
+        assert "error" in result
+        assert "available_models" in result
+        assert bridge.current_model is None
+
+    @pytest.mark.asyncio
+    async def test_run_inference_no_model(self, bridge):
+        """Test inference fails when no model is loaded"""
+        result = await bridge.run_inference("test prompt")
+
+        assert result["success"] is False
+        assert "error" in result
+        assert "No model loaded" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_run_inference_with_model(self, bridge):
+        """Test inference works when model is loaded"""
+        # First load a model
+        await bridge.switch_model("phi3-mini")
+
+        # Then run inference
+        result = await bridge.run_inference("What is 2 + 2?")
+
+        assert result["success"] is True
+        assert "response" in result
+        assert "stats" in result
+        assert len(result["response"]) > 0
+
+        # Check stats structure
+        stats = result["stats"]
+        assert "inference_time_ms" in stats
+        assert "tokens_generated" in stats
+        assert "tokens_per_second" in stats
+        assert "model_used" in stats
+        assert stats["model_used"] == "phi3-mini"
+
+    @pytest.mark.asyncio
+    async def test_get_available_models(self, bridge):
+        """Test getting list of available models"""
+        models = await bridge.get_available_models()
+
+        assert isinstance(models, list)
+        assert len(models) > 0
+        assert "phi3-mini" in models
+        assert "gemma-3-270m" in models
+        assert "qwen3-coder" in models
+
+    @pytest.mark.asyncio
+    async def test_unload_model(self, bridge):
+        """Test unloading a model"""
+        # First load a model
+        await bridge.switch_model("phi3-mini")
+        assert bridge.current_model == "phi3-mini"
+
+        # Then unload it
+        result = await bridge.unload_model()
+
+        assert result["success"] is True
+        assert result["unloaded_model"] == "phi3-mini"
+        assert "memory_freed_mb" in result
+        assert bridge.current_model is None
+
+    @pytest.mark.asyncio
+    async def test_unload_model_none_loaded(self, bridge):
+        """Test unloading when no model is loaded"""
+        result = await bridge.unload_model()
+
+        assert result["success"] is False
+        assert "error" in result
+        assert "No model loaded" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_health_check(self, bridge):
+        """Test bridge health check"""
+        health = await bridge.health_check()
+
+        assert "bridge_status" in health
+        assert "server_reachable" in health
+        assert "models_available" in health
+        assert "current_model" in health
+        assert "timestamp" in health
+
+        assert health["bridge_status"] == "healthy"
+        assert health["server_reachable"] is True
+        assert health["models_available"] > 0
 
 
 async def demonstrate_mlx_system():

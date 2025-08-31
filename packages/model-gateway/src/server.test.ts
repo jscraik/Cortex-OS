@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { IModelRouter } from './model-router.js';
 import { createServer } from './server.js';
-import type { ModelRouter } from './model-router.js';
 
 vi.mock('./audit', () => ({
   auditEvent: vi.fn(() => ({})),
@@ -13,6 +13,14 @@ vi.mock('./policy', () => ({
 }));
 
 class MockModelRouter {
+  // Single-text path used by server when texts.length === 1
+  async generateEmbedding({ text, model }: { text: string; model?: string }) {
+    return {
+      embedding: [0.1, 0.2],
+      model: model || 'mock-model',
+    };
+  }
+  // Batch path when multiple texts are provided
   async generateEmbeddings({ texts, model }: { texts: string[]; model?: string }) {
     return {
       embeddings: texts.map(() => [0.1, 0.2]),
@@ -23,7 +31,7 @@ class MockModelRouter {
 
 describe('embeddings endpoint', () => {
   it('returns embeddings array', async () => {
-    const server = createServer(new MockModelRouter() as unknown as ModelRouter);
+    const server = createServer(new MockModelRouter() as unknown as IModelRouter);
     const res = await server.inject({
       method: 'POST',
       url: '/embeddings',
@@ -31,7 +39,9 @@ describe('embeddings endpoint', () => {
     });
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.embeddings).toHaveLength(1);
+    // Server returns { vectors, dimensions, modelUsed }
+    expect(body.vectors).toHaveLength(1);
+    expect(body.dimensions).toBe(2);
     expect(body.modelUsed).toBe('mock-model');
     await server.close();
   });

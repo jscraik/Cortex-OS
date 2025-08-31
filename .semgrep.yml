@@ -1,0 +1,7 @@
+rules:
+  - id: no-eval
+    patterns:
+      - pattern: eval($X)
+    message: Avoid eval
+    severity: ERROR
+    languages: [javascript, typescript]

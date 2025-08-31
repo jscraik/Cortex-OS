@@ -1,0 +1,112 @@
+[
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/mcp-protocol-compliance.ts",
+    "lines": "212-223",
+    "severity": "high",
+    "category": "logic-error",
+    "description": "validateToolImplementation returns true without proper validation, creating security vulnerability",
+    "evidence": "Lines 214-222: Function only checks basic structure but returns true regardless, bypassing actual JSON Schema validation",
+    "fix": "Implement proper JSON Schema validation using Zod or JSON Schema validator library",
+    "tests_to_add": "Test cases with malformed tool schemas to ensure validation catches invalid inputs"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/mcp-protocol-compliance.ts",
+    "lines": "413-415",
+    "severity": "medium",
+    "category": "logic-error",
+    "description": "Version compatibility check uses incorrect comparison logic",
+    "evidence": "Line 414: String comparison 'clientVersion <= supportedVersion' doesn't work properly for date-based versions like '2024-12-31' vs '2025-06-18'",
+    "fix": "Use proper date comparison: new Date(clientVersion) <= new Date(supportedVersion)",
+    "tests_to_add": "Test version compatibility with various date strings to ensure correct ordering"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/server/mcp-handlers.ts",
+    "lines": "451-484",
+    "severity": "high",
+    "category": "security",
+    "description": "validateToolArguments function has insufficient type validation and security gaps",
+    "evidence": "Lines 470-482: Basic type checking doesn't handle complex objects, arrays, or nested validation. No protection against prototype pollution or injection attacks",
+    "fix": "Use Zod schema validation for complete type safety and security",
+    "tests_to_add": "Security tests with malicious payloads, prototype pollution attempts, and complex nested objects"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/server/mcp-handlers.ts",
+    "lines": "349-365",
+    "severity": "medium",
+    "category": "type-safety",
+    "description": "Unsafe type assertion and array handling in handlePromptGet",
+    "evidence": "Line 350-356: Uses 'any' type and unsafe property access without validation. Could crash with malformed handler results",
+    "fix": "Add proper type guards and validate handler response structure before processing",
+    "tests_to_add": "Test with various malformed prompt handler responses to ensure robustness"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/performance-monitor.ts",
+    "lines": "96-98",
+    "severity": "medium",
+    "category": "performance",
+    "description": "Inefficient percentile calculation causes O(n log n) performance impact",
+    "evidence": "Line 92: Sorts entire durations array for every getSummary call, unnecessary for cached metrics",
+    "fix": "Implement efficient percentile calculation or cache sorted results",
+    "tests_to_add": "Performance test with large metrics datasets (10k+ entries) to measure impact"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/server/handleToolsList.ts",
+    "lines": "3-8",
+    "severity": "medium",
+    "category": "code-duplication",
+    "description": "Duplicate functionality with comprehensive handler in mcp-handlers.ts",
+    "evidence": "Entire file duplicates handleToolsList logic from mcp-handlers.ts but without validation and error handling",
+    "fix": "Remove duplicate file and use the comprehensive implementation in mcp-handlers.ts",
+    "tests_to_add": "Ensure all imports are updated to use the main handler implementation"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/server/handleResourcesList.ts",
+    "lines": "3-8",
+    "severity": "medium",
+    "category": "code-duplication",
+    "description": "Duplicate functionality with comprehensive handler in mcp-handlers.ts",
+    "evidence": "Entire file duplicates handleResourcesList logic from mcp-handlers.ts but without validation and error handling",
+    "fix": "Remove duplicate file and use the comprehensive implementation in mcp-handlers.ts",
+    "tests_to_add": "Ensure all imports are updated to use the main handler implementation"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/server/handlePromptsList.ts",
+    "lines": "3-8",
+    "severity": "medium",
+    "category": "code-duplication",
+    "description": "Duplicate functionality with comprehensive handler in mcp-handlers.ts",
+    "evidence": "Entire file duplicates handlePromptsList logic from mcp-handlers.ts but without validation and error handling",
+    "fix": "Remove duplicate file and use the comprehensive implementation in mcp-handlers.ts",
+    "tests_to_add": "Ensure all imports are updated to use the main handler implementation"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/scripts/validate-quality-metrics.ts",
+    "lines": "58",
+    "severity": "low",
+    "category": "maintainability",
+    "description": "Hardcoded test command path makes script fragile to directory structure changes",
+    "evidence": "Line 58: execSync with hardcoded test file paths will break if files are moved or renamed",
+    "fix": "Use dynamic file discovery or configurable test paths",
+    "tests_to_add": "Test script execution from different working directories"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/src/lib/server/types.ts",
+    "lines": "1-6",
+    "severity": "low",
+    "category": "type-safety",
+    "description": "JsonSchema type definition is too loose and doesn't match JSON Schema specification",
+    "evidence": "Lines 1-6: Missing required JSON Schema properties like '$schema', '$id', allows any property types without proper constraints",
+    "fix": "Use a proper JSON Schema type library like @types/json-schema or define comprehensive JsonSchema interface",
+    "tests_to_add": "Validate that JsonSchema type correctly represents valid JSON Schema documents"
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp/tests/mcp-handlers.test.ts",
+    "lines": "500-504",
+    "severity": "low",
+    "category": "testing-gaps",
+    "description": "Test doesn't properly validate error handling for malformed parameters",
+    "evidence": "Lines 500-504: Test expects tool execution error instead of proper parameter validation error, masking actual validation issues",
+    "fix": "Add specific tests for parameter validation errors with proper error code expectations",
+    "tests_to_add": "Comprehensive parameter validation test suite covering all error scenarios"
+  }
+]

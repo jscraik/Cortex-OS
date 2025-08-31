@@ -1,0 +1,7 @@
+budgets:
+  quick:
+    max_total_req: 2000
+    max_total_duration_ms: 120000
+  load:
+    max_total_req: 20000
+    max_total_duration_ms: 1_200_000

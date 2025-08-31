@@ -1,9 +1,8 @@
 name: Semgrep
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  schedule:
-    - cron: '5 3 * * *'
+  push:
+    branches: [ main ]
 jobs:
   semgrep:
     runs-on: ubuntu-latest
@@ -17,10 +16,11 @@ jobs:
       - uses: semgrep/ci@v1
         with:
           config: |
-            p/owasp-llm-top-ten
-            p/mitre-atlas
+            .semgrep/owasp-llm-top-ten.yaml
+            .semgrep/mitre-atlas.yaml
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
+

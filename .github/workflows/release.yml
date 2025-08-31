@@ -15,11 +15,13 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with: { fetch-depth: 0 }
-      - uses: pnpm/action-setup@v4
-      - uses: astral-sh/setup-uv@v3
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+        with:
+          version: 9
+      - uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 20
           cache: pnpm
@@ -34,13 +36,13 @@ jobs:
             exit 1
           fi
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sbom-${{ github.sha }}
           path: sbom-*.json
       - name: Generate provenance
         id: provenance
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@92c65d2898f1f53cfdc910b962cecff86e7f8fcc
         with:
           subject-path: sbom-*.json
       - name: Verify provenance
@@ -51,7 +53,7 @@ jobs:
           fi
       - name: Create Release Pull Request or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@04d574e831923498156e0b2b93152878063203a3
         with:
           publish: pnpm release
           version: pnpm changeset version

@@ -1,307 +1,54 @@
-# Ignore environment files (allow examples)
-.env
-.env.*
-*.env
-*.env.*
-!.env.example
-!*.env.example
-!**/.env.example
-!**/*.env.example
-!.env.*.example
-!**/.env.*.example
-# Docker secrets
-secrets/
-docker/secrets/
-# Local design/generated artifacts (prevent CI bloat)
-.superdesign/
-.cursor/
-.windsurfrules
-
-# Auto-commit logs
-logs/
-
-# Local chatmode configs (large, not needed in CI)
-.github/chatmodes/
-
-# Dependencies
-node_modules/
-jspm_packages/
-.pnpm-store/
-node_modules/.cache/
-
-# Build outputs
-dist/
-build/
-.build/
-/apps/*/.build/
-.turbo/
-out/
-coverage/
-.coverage
-*.tsbuildinfo
-.vite/
-.rollup.cache/
-.swc/
-storybook-static/
-
-# Environment files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.envrc
+.env.*.local
+node_modules
+dist
+coverage
+python/.venv
+sbom.json
 
-# IDE and OS files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-.vscode/
-.idea/
-
-# Python cache files
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
+# Build artifacts
+*.d.ts
+*.d.ts.map
+*.js.map
 lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+!packages/*/src/lib/
+build/
 
-# Python environments
-.env
-# Allow kernel source libraries
-!packages/kernel/src/lib/
-!packages/orchestration/src/lib/
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# TypeScript build outputs (but keep config files)
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts.map
+libs/*/src/**/*.js
+libs/*/src/**/*.d.ts
+libs/*/src/**/*.js.map
+libs/*/src/**/*.d.ts.map
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Specific build outputs
+libs/python/exec.d.ts
+libs/python/exec.d.ts.map
+libs/python/exec.js
+libs/python/exec.js.map
+libs/typescript/contracts/src/index.d.ts
+libs/typescript/contracts/src/index.d.ts.map
+libs/typescript/contracts/src/index.js
+libs/typescript/contracts/src/index.js.map
 
-# pytest
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.coverage.*
-coverage.xml
-*.cover
-.hypothesis/
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Xcode build files
-apps/cortex-ios/.build/
-*.xcworkspace
-*.xcuserdata
+# Test outputs
+coverage/
+.nyc_output/
+test-results/
 
 # Logs
-logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-.pnpm-debug.log*
+logs/
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Runtime files
+.DS_Store
+Thumbs.db
 
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-.env.production
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-storybook-static/
-
-# Temporary folders
-tmp/
-temp/
-.tmp/
-
-# Embedded repos and temp worktrees (ignore to avoid accidental staging)
-aider-temp/
-claude-code-router/
-codex-temp/
-gemini-cli-temp/
-gpt-engineer-temp/
-groq-code-cli-temp/
-od-swe-bench-temp/
-open-interpreter-temp/
-services/claude-code/
-shellgpt-temp/
-term-code-temp/
-
-# Local database files
-*.db
-*.sqlite
-*.sqlite3
-ai.sqlite
-default.sqlite
-
-# Docker volumes and data
-.neo4j_data/
-.qdrant_data/
-docker-data/
-
-# Archive and inbox directories
-__archive__/
-_inbox/
-
-# Jules automation workspace
-.jules/
-
-# Platform specific
-.cortex-os/local/
-.gemini/.env
-.vercel/
-.netlify/
-.firebase/
-
-# Package manager lock files (keep pnpm-lock.yaml)
-package-lock.json
-yarn.lock
-
-# Security and compliance reports
-security-scan-report.json
-license-compliance-report.json
-dependency-analysis-report.json
-
-# MLX and AI model caches
-.mlx_cache/
-models/cache/
-
-# Vector databases and AI data stores
-# Ignore user shell config
-.zshrc
-
-# E2E testing outputs
-playwright-report/
-test-results/
-cypress/videos/
-cypress/screenshots/
-cypress/downloads/
-
-# Misc
-.docusaurus/
-.eslintcache
-.npmrc.local
-
-
-# Generated documentation site outputs
-docs-built/
-docs-generated/
-site/
-deploy/
-
-
-# Compiled artifacts from modern CLI packages (keep TS sources only)
-apps/cortex-cli/packages/**/src/**/*.js
-apps/cortex-cli/packages/**/src/**/*.js.map
-apps/cortex-cli/packages/**/src/**/*.d.ts
-apps/cortex-cli/packages/**/src/**/*.d.ts.map
-
-# Additional performance optimizations - catch nested caches
-**/node_modules/**
-**/__pycache__/**
-**/.pytest_cache/**
-**/.turbo/**
-**/.venv/**
-**/.mypy_cache/**
-**/.ruff_cache/**
-**/coverage/**
-**/dist/**
-**/build/**
-
-# Lock and cache files in tools directories
-tools/**/node_modules/
-tools/**/package-lock.json
-scripts/node_modules/
-scripts/package-lock.json
-
-# Governance generated artifacts
-.cortex/out/
-!packages/mcp-registry/src/lib/
-!packages/mcp-registry/src/lib/**
-!packages/model-gateway/src/lib/
-!packages/model-gateway/src/lib/**
-
-
-!src/lib/
-!src/lib/**
-!packages/prp-runner/src/lib/
-!packages/prp-runner/src/lib/**
-
-!packages/prp-runner/src/lib/
-!packages/prp-runner/src/lib/**
-!packages/rag/src/lib/
-!packages/rag/src/lib/**
+!packages/*/src/lib/
+!packages/*/src/lib/**
+!apps/*/src/lib/
+!apps/*/src/lib/**

@@ -1,63 +1,39 @@
-export type Chunk = {
-  id: string;
-  text: string;
-  source?: string;
-  meta?: Record<string, unknown>;
-};
+import { z } from 'zod';
+import { AgentConfigSchema, RAGQuerySchema } from '@cortex-os/contracts';
+import { createStdOutput, createJsonOutput, StructuredError } from '@cortex-os/lib';
+import { Qwen3Presets } from './embed/qwen3';
+import { memoryStore } from './store/memory';
+import { createMultiModelGenerator, ModelPresets } from './generation/multi-model';
 
-export interface Embedder {
-  embed(texts: string[]): Promise<number[][]>;
-}
+const InputSchema = z.object({
+  config: AgentConfigSchema,
+  query: RAGQuerySchema,
+  json: z.boolean().optional(),
+});
+export type RAGInput = z.infer<typeof InputSchema>;
 
-export interface Store {
-  upsert(chunks: (Chunk & { embedding?: number[] })[]): Promise<void>;
-  query(embedding: number[], k?: number): Promise<Array<Chunk & { score?: number }>>;
-}
-
-export interface Pipeline {
-  ingest(chunks: Chunk[]): Promise<void>;
-}
-
-export interface RAGOptions {
-  embedder: Embedder;
-  store: Store;
-  maxContextTokens?: number;
-}
-
-export class RAGPipeline implements Pipeline {
-  constructor(private readonly opts: RAGOptions) {}
-
-  async ingest(chunks: Chunk[]): Promise<void> {
-    const texts = chunks.map((c) => c.text);
-    const embeddings = await this.opts.embedder.embed(texts);
-    if (embeddings.length !== chunks.length) {
-      throw new Error(
-        `Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`,
-      );
-    }
-    const toStore = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
-    await this.opts.store.upsert(toStore);
+export async function handleRAG(input: unknown): Promise<string> {
+  const parsed = InputSchema.safeParse(input);
+  if (!parsed.success) {
+    const err = new StructuredError('INVALID_INPUT', 'Invalid RAG input', { issues: parsed.error.issues });
+    return createJsonOutput({ error: err.toJSON() });
   }
+  const { config, query, json } = parsed.data;
 
-  async retrieve(query: string, k = 5): Promise<Array<Chunk & { score?: number }>> {
-    const [embedding] = await this.opts.embedder.embed([query]);
-    return this.opts.store.query(embedding, k);
-  }
+  const store = memoryStore();
+  const embedder = Qwen3Presets.development();
+  const generator = createMultiModelGenerator({
+    model: ModelPresets.chat,
+    defaultConfig: { maxTokens: config.maxTokens },
+    timeout: config.timeoutMs,
+  });
+
+  const [embedding] = await embedder.embed([query.query]);
+  const results = await store.query(embedding, query.topK);
+  const context = results.map((r) => r.text).join('\n');
+  const prompt = context ? `${context}\n\n${query.query}` : query.query;
+  const answer = await generator.generate(prompt, { maxTokens: config.maxTokens });
+
+  const payload = { answer: answer.content, sources: results, provider: answer.provider };
+  return json ? createJsonOutput(payload) : createStdOutput(answer.content);
 }
-
-// Re-export policy and dispatcher for consumers needing planning/dispatch layer
-export * from './chunkers';
-export * as Policy from './policy';
-
-// Export reranking interfaces and implementations
-export * from './pipeline/qwen3-reranker';
-
-// Export generation interfaces and implementations
-export * from './generation/multi-model';
-
-// Export enhanced RAG pipeline factory and helpers
-export * from './enhanced-pipeline';
-export * from './lib';
-
-// Export embedding implementations
-export * from './embed/qwen3';

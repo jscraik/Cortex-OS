@@ -100,7 +100,6 @@ export const PRPStateSchema = z.object({
     error: z.string().optional(),
   }),
 
-
   // Checkpointing for determinism
   checkpoints: z
     .array(
@@ -112,7 +111,6 @@ export const PRPStateSchema = z.object({
       }),
     )
     .optional(),
-
 });
 
 export type PRPState = z.infer<typeof PRPStateSchema>;

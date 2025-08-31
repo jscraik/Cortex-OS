@@ -6,8 +6,9 @@
  * @status active
  */
 
-import { ASBRAIIntegration } from './asbr-ai-integration.js';
 import { AICoreCapabilities } from './ai-capabilities.js';
+import { ASBRAIIntegration } from './asbr-ai-integration.js';
+import { EmbeddingAdapter } from './embedding-adapter.js';
 
 /**
  * Configuration for the unified evidence collection workflow
@@ -111,6 +112,7 @@ export interface UnifiedEvidenceResult {
 export class UnifiedAIEvidenceWorkflow {
   private asbrIntegration: ASBRAIIntegration;
   private aiCapabilities: AICoreCapabilities | null = null;
+  private embeddingAdapter: EmbeddingAdapter;
   private config: Required<UnifiedEvidenceConfig>;
 
   constructor(config: UnifiedEvidenceConfig = {}) {
@@ -133,6 +135,12 @@ export class UnifiedAIEvidenceWorkflow {
 
     // Initialize core components
     this.asbrIntegration = new ASBRAIIntegration();
+
+    this.embeddingAdapter = new EmbeddingAdapter({
+      provider: 'sentence-transformers',
+      model: this.config.embeddingModel,
+      dimensions: 1024,
+    });
   }
 
   /**
@@ -215,24 +223,43 @@ export class UnifiedAIEvidenceWorkflow {
     // Use ASBR integration for enhanced evidence collection
     for (const query of plan.searchQueries) {
       try {
-        const results = await this.asbrIntegration.collectEnhancedEvidence(
+        const result = await this.asbrIntegration.collectEnhancedEvidence(
           { taskId: context.taskId, claim: query, sources: [] },
           { maxResults: Math.floor(this.config.maxEvidenceItems / plan.searchQueries.length) },
         );
 
-        evidence.push(
-          ...results.map((result: any, index: number) => ({
-            id: `evidence-${context.taskId}-${evidence.length + index}`,
-            content: result.content || result.text || String(result),
-            source: result.source || 'asbr-integration',
-            relevanceScore: result.score || 0.8,
+        // Extract evidence from the single result object
+        const evidenceItems = [
+          {
+            id: `evidence-${context.taskId}-${evidence.length}`,
+            content: result.aiEnhancedEvidence.content || result.originalEvidence.content,
+            source:
+              result.aiEnhancedEvidence.source ||
+              result.originalEvidence.source ||
+              'asbr-integration',
+            relevanceScore: 0.8, // Default relevance score
             metadata: {
               query,
               collectionMethod: 'asbr-enhanced',
-              ...result.metadata,
+              aiEnhanced: true,
+              processingTime: result.aiMetadata.processingTime,
+            },
+          },
+          // Include additional evidence if available
+          ...result.additionalEvidence.map((additional: any, index: number) => ({
+            id: `evidence-${context.taskId}-${evidence.length + index + 1}`,
+            content: additional.content,
+            source: additional.source || 'asbr-integration',
+            relevanceScore: 0.7, // Slightly lower score for additional evidence
+            metadata: {
+              query,
+              collectionMethod: 'asbr-additional',
+              aiEnhanced: false,
             },
           })),
-        );
+        ];
+
+        evidence.push(...evidenceItems);
       } catch (error) {
         // Log error but continue with other queries
         console.warn(`Failed to collect evidence for query "${query}":`, error);
@@ -282,24 +309,26 @@ export class UnifiedAIEvidenceWorkflow {
       const relatedEvidence = await this.asbrIntegration.searchRelatedEvidence(
         context.description,
         [context.description],
-        { maxResults: Math.floor(this.config.maxEvidenceItems / 4) },
+        { topK: Math.floor(this.config.maxEvidenceItems / 4) }, // Use topK instead of maxResults
       );
 
       // Merge and deduplicate evidence
       const allEvidence = [...evidence];
       const existingContent = new Set(evidence.map((e) => e.content));
 
-      relatedEvidence.forEach((related: any, index: number) => {
-        const content = related.content || related.text || String(related);
+      // Process related claims from the result
+      relatedEvidence.relatedClaims.forEach((related: any, index: number) => {
+        const content = related.claim || related.text || String(related);
         if (!existingContent.has(content)) {
           allEvidence.push({
             id: `semantic-${context.taskId}-${index}`,
             content,
-            source: 'semantic-search',
-            relevanceScore: related.score || 0.6,
+            source: related.source || 'semantic-search',
+            relevanceScore: related.similarity || 0.6,
             metadata: {
+              similarity: related.similarity,
+              confidence: related.confidence,
               searchMethod: 'semantic',
-              ...related.metadata,
             },
           });
           existingContent.add(content);
@@ -340,9 +369,9 @@ export class UnifiedAIEvidenceWorkflow {
           return {
             ...item,
             factCheckResult: {
-              verified: factCheckResult.verified || false,
-              confidence: factCheckResult.confidence || 0.5,
-              supportingEvidence: factCheckResult.evidence || [],
+              verified: factCheckResult.factualConsistency > 0.7, // Consider verified if consistency > 0.7
+              confidence: factCheckResult.factualConsistency,
+              supportingEvidence: factCheckResult.supportingEvidence,
             },
           };
         } catch (error) {
@@ -395,10 +424,10 @@ export class UnifiedAIEvidenceWorkflow {
       );
 
       return {
-        keyFindings: insightsResult.insights || [],
-        gaps: insightsResult.gaps || [],
-        recommendations: insightsResult.recommendations || [],
-        confidence: insightsResult.confidence || 0.7,
+        keyFindings: insightsResult.keyFindings,
+        gaps: insightsResult.riskAssessment.specificRisks.map((risk) => risk.description),
+        recommendations: insightsResult.recommendations,
+        confidence: insightsResult.confidenceMetrics.averageConfidence,
       };
     } catch (error) {
       return {
@@ -464,6 +493,7 @@ export class UnifiedAIEvidenceWorkflow {
       status: 'active',
       components: {
         asbrIntegration: 'connected',
+        embeddingAdapter: 'connected',
         aiCapabilities: this.aiCapabilities ? 'connected' : 'disconnected',
       },
       configuration: {

@@ -1,9 +1,7 @@
-import type { Embedder } from '../ports/Embedder.js';
-import { spawn } from 'child_process';
-import path from 'path';
 import os from 'os';
+import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import type { Embedder } from '../ports/Embedder.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -100,68 +98,31 @@ export class MLXEmbedder implements Embedder {
   }
 
   private async embedViaPython(texts: string[]): Promise<number[][]> {
-    return new Promise((resolve, reject) => {
-      // Use a dedicated Python script instead of generating code
-      const pythonScriptPath = path.join(__dirname, 'mlx-embedder.py');
+    // Use centralized Python runner to handle PYTHONPATH and env merging
+    const pythonScriptPath = path.join(__dirname, 'mlx-embedder.py');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+    const { runPython } = await import('../../../../libs/python/exec.js');
 
-      const python = spawn(
-        'python3',
-        [pythonScriptPath, this.modelConfig.path, JSON.stringify(texts)],
-        {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: {
-            ...process.env,
-            MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR,
-          },
-        },
-      );
+    const run = () =>
+      runPython(pythonScriptPath, [this.modelConfig.path, JSON.stringify(texts)], {
+        envOverrides: { MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR },
+        python: process.env.PYTHON_EXEC || 'python3',
+        setModulePath: process.env.PYTHONPATH || undefined,
+      } as unknown as Record<string, unknown>);
 
-      let stdout = '';
-      let stderr = '';
+    const timer = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('MLX embedding timeout after 30000ms')), 30000),
+    );
 
-      python.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      python.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      const timeout = setTimeout(() => {
-        python.kill();
-        reject(new Error(`MLX embedding timeout after 30000ms`));
-      }, 30000);
-
-      python.on('close', (code) => {
-        clearTimeout(timeout);
-
-        if (code !== 0) {
-          reject(new Error(`Python MLX embedder failed: ${stderr}`));
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.error) {
-            reject(new Error(`MLX embedding error: ${result.error}`));
-            return;
-          }
-
-          if (!Array.isArray(result.embeddings)) {
-            reject(new Error('Invalid embeddings format from MLX'));
-            return;
-          }
-
-          resolve(result.embeddings);
-        } catch (parseError) {
-          reject(new Error(`Failed to parse MLX response: ${parseError}`));
-        }
-      });
-
-      python.on('error', (error) => {
-        clearTimeout(timeout);
-        reject(new Error(`Failed to spawn Python process: ${error.message}`));
-      });
-    });
+    const out = await Promise.race([run(), timer]);
+    try {
+      const result = JSON.parse(String(out || '{}'));
+      if (result.error) throw new Error(String(result.error));
+      if (!Array.isArray(result.embeddings)) throw new Error('Invalid embeddings format from MLX');
+      return result.embeddings as number[][];
+    } catch (err) {
+      throw new Error(`Failed to parse MLX response: ${err}`);
+    }
   }
 }

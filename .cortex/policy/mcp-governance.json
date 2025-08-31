@@ -1,222 +1,57 @@
 {
-  "$schema": "https://json-schema.org/draft/2019-09/schema",
-  "title": "MCP Governance Policy",
-  "description": "Security and governance policies for MCP server marketplace",
-  "version": "1.0.0",
-  "type": "object",
-  "properties": {
-    "security": {
-      "type": "object",
-      "properties": {
-        "riskLevels": {
-          "type": "object",
-          "properties": {
-            "allowed": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": ["low", "medium", "high"]
-              },
-              "default": ["low", "medium"]
-            },
-            "requireApproval": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": ["medium", "high"]
-              },
-              "default": ["high"]
-            }
-          }
-        },
-        "signatures": {
-          "type": "object",
-          "properties": {
-            "required": {
-              "type": "boolean",
-              "default": true
-            },
-            "trustedPublishers": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": ["ModelContextProtocol", "Anthropic", "GitHub"]
-            },
-            "sigstoreValidation": {
-              "type": "boolean",
-              "default": true
-            }
-          }
-        },
-        "permissions": {
-          "type": "object",
-          "properties": {
-            "dangerous": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": ["system:exec", "system:admin", "files:write:root", "network:raw"]
-            },
-            "requireConfirmation": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": ["files:write", "system:exec", "network:external"]
-            }
-          }
-        }
-      },
-      "required": ["riskLevels", "signatures", "permissions"]
+  "security": {
+    "riskLevels": {
+      "allowed": ["low", "medium"],
+      "requireApproval": ["high"]
     },
-    "marketplace": {
-      "type": "object",
-      "properties": {
-        "registries": {
-          "type": "object",
-          "properties": {
-            "official": {
-              "type": "string",
-              "format": "uri",
-              "default": "https://registry.cortex-os.dev/v1/registry.json"
-            },
-            "community": {
-              "type": "string",
-              "format": "uri",
-              "default": "https://community.mcp.dev/v1/registry.json"
-            },
-            "allowCustom": {
-              "type": "boolean",
-              "default": false
-            }
-          }
-        },
-        "caching": {
-          "type": "object",
-          "properties": {
-            "ttl": {
-              "type": "number",
-              "default": 300000,
-              "description": "Cache TTL in milliseconds (5 minutes)"
-            },
-            "maxSize": {
-              "type": "number",
-              "default": 104857600,
-              "description": "Max cache size in bytes (100MB)"
-            }
-          }
-        },
-        "validation": {
-          "type": "object",
-          "properties": {
-            "strictMode": {
-              "type": "boolean",
-              "default": true
-            },
-            "allowPrerelease": {
-              "type": "boolean",
-              "default": false
-            },
-            "minRating": {
-              "type": "number",
-              "minimum": 0,
-              "maximum": 5,
-              "default": 3.0
-            }
-          }
-        }
-      }
+    "signatures": {
+      "required": true,
+      "trustedPublishers": ["ModelContextProtocol", "Anthropic", "GitHub"],
+      "sigstoreValidation": true
     },
-    "installation": {
-      "type": "object",
-      "properties": {
-        "sandboxed": {
-          "type": "boolean",
-          "default": true
-        },
-        "isolatedEnvironments": {
-          "type": "boolean",
-          "default": true
-        },
-        "resourceLimits": {
-          "type": "object",
-          "properties": {
-            "memory": {
-              "type": "string",
-              "default": "512MB"
-            },
-            "cpu": {
-              "type": "string",
-              "default": "0.5"
-            },
-            "diskSpace": {
-              "type": "string",
-              "default": "1GB"
-            }
-          }
-        },
-        "networkAccess": {
-          "type": "object",
-          "properties": {
-            "allowed": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": ["https://api.github.com", "https://registry.npmjs.org"]
-            },
-            "blocked": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": ["file://", "ftp://"]
-            }
-          }
-        }
-      }
-    },
-    "audit": {
-      "type": "object",
-      "properties": {
-        "logging": {
-          "type": "object",
-          "properties": {
-            "level": {
-              "type": "string",
-              "enum": ["debug", "info", "warn", "error"],
-              "default": "info"
-            },
-            "destinations": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": ["file", "syslog"]
-            }
-          }
-        },
-        "monitoring": {
-          "type": "object",
-          "properties": {
-            "healthChecks": {
-              "type": "boolean",
-              "default": true
-            },
-            "performanceMetrics": {
-              "type": "boolean",
-              "default": true
-            },
-            "securityEvents": {
-              "type": "boolean",
-              "default": true
-            }
-          }
-        }
-      }
+    "permissions": {
+      "dangerous": ["system:exec", "system:admin", "files:write:root", "network:raw"],
+      "requireConfirmation": ["files:write", "system:exec", "network:external"]
     }
   },
-  "required": ["security", "marketplace", "installation", "audit"]
+  "marketplace": {
+    "registries": {
+      "official": "https://registry.cortex-os.dev/v1/registry.json",
+      "community": "https://community.mcp.dev/v1/registry.json",
+      "allowCustom": false
+    },
+    "caching": {
+      "ttl": 300000,
+      "maxSize": 104857600
+    },
+    "validation": {
+      "strictMode": true,
+      "allowPrerelease": false,
+      "minRating": 3.0
+    }
+  },
+  "installation": {
+    "sandboxed": true,
+    "isolatedEnvironments": true,
+    "resourceLimits": {
+      "memory": "512MB",
+      "cpu": "0.5",
+      "diskSpace": "1GB"
+    },
+    "networkAccess": {
+      "allowed": ["https://api.github.com", "https://registry.npmjs.org"],
+      "blocked": ["file://", "ftp://"]
+    }
+  },
+  "audit": {
+    "logging": {
+      "level": "info",
+      "destinations": ["file", "syslog"]
+    },
+    "monitoring": {
+      "healthChecks": true,
+      "performanceMetrics": true,
+      "securityEvents": true
+    }
+  }
 }

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import supertest from 'supertest';
 import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
@@ -53,7 +52,6 @@ describe('Complete Workflows', () => {
       const taskId = createResponse.body.task.id;
       expect(taskId).toBeDefined();
 
-
       // Step 2: Monitor task progress via events
       const eventsResponse = await request
 
@@ -61,9 +59,7 @@ describe('Complete Workflows', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .set('Accept', 'text/event-stream');
 
-
       expect(eventsResponse.status).toBe(200);
-
 
       // Step 3: Retrieve task status
       const statusResponse = await request

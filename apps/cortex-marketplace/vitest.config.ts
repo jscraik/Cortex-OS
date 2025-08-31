@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config';
 import path from 'path';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
@@ -14,7 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@cortex-os/mcp-registry': path.resolve(__dirname, '../../packages/mcp/mcp-registry/src'),
+      '@cortex-os/mcp-registry': path.resolve(__dirname, '../../packages/mcp-registry/src'),
       '@cortex-os/mcp': path.resolve(__dirname, '../../packages/mcp/src'),
     },
   },

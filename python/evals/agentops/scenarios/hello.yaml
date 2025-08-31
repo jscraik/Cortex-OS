@@ -1,0 +1,4 @@
+name: hello-world
+steps:
+  - type: chat
+    input: "Hello from AgentOps"
