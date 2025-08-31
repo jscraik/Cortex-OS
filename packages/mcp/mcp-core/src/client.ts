@@ -4,46 +4,11 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import type { ServerInfo } from './contracts.js';
+import { redactSensitiveData } from '../../src/lib/security.js';
 
-// Lightweight local redaction for args before sending over the wire.
+// Use shared redaction to ensure consistent behavior across packages
 function redactArgs<T extends Record<string, unknown>>(args: T): T {
-  const SENSITIVE_KEYS = [
-    'token',
-    'access_token',
-    'auth',
-    'authorization',
-    'password',
-    'secret',
-    'api_key',
-    'apikey',
-    'client_secret',
-  ];
-  const BEARER_REGEX = /Bearer\s+([^\s]+)/i;
-  const clone = (v: unknown): unknown => {
-    if (Array.isArray(v)) return v.map(clone);
-    if (v && typeof v === 'object') {
-      const o: Record<string, unknown> = {};
-      for (const k of Object.keys(v as Record<string, unknown>)) {
-        o[k] = clone((v as Record<string, unknown>)[k]);
-      }
-      return o;
-    }
-    if (typeof v === 'string') return v.replace(BEARER_REGEX, 'Bearer [REDACTED]');
-    return v;
-  };
-  const out: any = clone(args);
-  const mask = (obj: any) => {
-    if (!obj || typeof obj !== 'object') return;
-    for (const k of Object.keys(obj)) {
-      const val = obj[k];
-      if (SENSITIVE_KEYS.includes(k.toLowerCase())) {
-        obj[k] = '[REDACTED]';
-      } else if (val && typeof val === 'object') mask(val);
-      else if (typeof val === 'string') obj[k] = val.replace(BEARER_REGEX, 'Bearer [REDACTED]');
-    }
-  };
-  mask(out);
-  return out as T;
+  return redactSensitiveData(args) as T;
 }
 
 // Create a new, enhanced client that wraps the official SDK client
@@ -80,13 +45,28 @@ export async function createEnhancedClient(si: ServerInfo) {
   });
 
   // The enhanced client wraps the base client, overriding methods to add functionality.
-  const enhancedClient: any = {
+  type EnhancedClient = Client & {
+    rateLimiter: RateLimiterMemory;
+    callTool: (
+      nameOrParams: string | { name: string; arguments?: Record<string, unknown> },
+      maybeArgs?: Record<string, unknown>,
+    ) => Promise<unknown>;
+    sendRequest: (message: unknown) => Promise<unknown>;
+    getRateLimitInfo: (toolName: string) => Promise<{ remainingPoints: number }>;
+    close: () => Promise<void>;
+  };
+
+  const enhancedClient: EnhancedClient = {
     ...baseClient,
     rateLimiter,
 
     // Override callTool to add rate limiting
-    callTool: async (params: { name: string; arguments?: Record<string, unknown> }) => {
-      const { name, arguments: toolArgs } = params;
+    callTool: async (
+      nameOrParams: string | { name: string; arguments?: Record<string, unknown> },
+      maybeArgs?: Record<string, unknown>,
+    ) => {
+      const name = typeof nameOrParams === 'string' ? nameOrParams : nameOrParams.name;
+      const toolArgs = typeof nameOrParams === 'string' ? maybeArgs : nameOrParams.arguments;
       const rateKey = `tool-${si.name}-${name}`;
       const ok = await enhancedClient.rateLimiter.consume(rateKey).then(
         () => true,
@@ -103,6 +83,25 @@ export async function createEnhancedClient(si: ServerInfo) {
       // It will be garbage collected when the client is.
       await transport.close();
       baseClient.close();
+    },
+
+    // Redact data on sendRequest path as well for consistency
+    sendRequest: async (message: unknown) => {
+      let redacted: unknown = message;
+      try {
+        if (typeof message === 'string') {
+          // Preserve original whitespace by redacting the string directly
+          redacted = redactSensitiveData(message);
+        } else if (message && typeof message === 'object') {
+          redacted = redactArgs(message as Record<string, unknown>);
+        }
+      } catch {
+        // If parsing fails, fall back to original message
+        redacted = message;
+      }
+      // forward to base client
+      // @ts-expect-error sendRequest exists on the SDK client at runtime but may not be in its TypeScript types
+      return baseClient.sendRequest(redacted);
     },
 
     // Expose rate limit info for inspection

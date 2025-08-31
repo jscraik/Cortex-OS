@@ -19,10 +19,33 @@ The MCP Bridge connects external Model Context Protocol (MCP) servers to Cortex 
 
 ```bash
 pnpm --filter @cortex-os/mcp-bridge build
-# WARNING: The following test command is known to fail with module resolution errors.
-# See [Troubleshooting](./docs/getting-started.md#troubleshooting) for more information.
 pnpm --filter @cortex-os/mcp-bridge test
 ```
+
+### Python runner packaging
+
+- The MLX chat runner lives under `src/python/src/mlx_chat.py` and is included in the published package via the `files` field.
+- On build, a `postbuild` step copies `src/python/**` into `dist/python/**` to simplify runtime resolution from compiled JavaScript.
+- Runtime path resolution prefers `dist/python/src/mlx_chat.py` and falls back to the source path when running from TS.
+
+### MLX configuration
+
+- MLX configuration is validated with Zod before initialization.
+- Provide a JSON file (path via `MLX_CONFIG_PATH`) with structure:
+
+```json
+{
+  "server": { "host": "127.0.0.1", "port": 8080, "workers": 1, "timeout": 30, "max_requests": 128 },
+  "models": { "default": { "name": "echo", "description": "Echo for tests" } },
+  "cache": { "hf_home": "/tmp/.mlx-cache" },
+  "performance": { "batch_size": 1, "max_tokens": 128, "temperature": 0.0, "top_p": 1.0 }
+}
+```
+
+### Streaming endpoint
+
+- The integration exposes `GET /v1/completions` with Server-Sent Events (SSE) that streams OpenAI-style chunk objects.
+- Query parameters: `message` (required), `model` (optional, defaults to `default`).
 
 ## Example Usage
 

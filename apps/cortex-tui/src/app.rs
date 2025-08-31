@@ -1,6 +1,8 @@
 use crate::config::Config;
 use crate::memory::{MemoryStorage, storage::MemoryConfig};
-use crate::mcp::McpClient;
+use crate::mcp::{McpService, McpClient};
+use crate::mcp::service::McpServerConfig;
+use serde::{Serialize, Deserialize};
 use crate::providers::ModelProvider;
 use crate::server::DaemonServer;
 use crate::Result;
@@ -13,7 +15,7 @@ pub struct CortexApp {
     config: Config,
     provider: Arc<Mutex<Box<dyn ModelProvider>>>,
     memory: Option<MemoryStorage>,
-    mcp_clients: Arc<Mutex<HashMap<String, McpClient>>>,
+    mcp_service: Arc<McpService>,
     state: AppState,
 }
 
@@ -30,7 +32,7 @@ pub struct Message {
     pub timestamp: std::time::SystemTime,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MessageRole {
     User,
     Assistant,
@@ -59,11 +61,14 @@ impl CortexApp {
             None
         };
         
+        // Initialize MCP service
+        let mcp_service = Arc::new(McpService::new().await?);
+        
         Ok(Self {
             config,
             provider: Arc::new(Mutex::new(provider)),
             memory,
-            mcp_clients: Arc::new(Mutex::new(HashMap::new())),
+            mcp_service,
             state: AppState {
                 current_conversation: Vec::new(),
                 is_running: true,
@@ -119,17 +124,32 @@ impl CortexApp {
     }
     
     pub async fn list_mcp_servers(&self) -> Result<Vec<McpServerInfo>> {
-        // TODO: Implement MCP server listing
-        Ok(vec![])
+        let servers = self.mcp_service.list_servers().await?
+            .into_iter()
+            .map(|server| McpServerInfo {
+                name: server.name,
+                status: server.status,
+            })
+            .collect();
+        Ok(servers)
     }
     
-    pub async fn add_mcp_server(&mut self, _name: &str, _config: &str) -> Result<()> {
-        // TODO: Implement MCP server addition
+    pub async fn add_mcp_server(&mut self, name: &str, config_str: &str) -> Result<()> {
+        // Parse the config string as JSON
+        let config: McpServerConfig = serde_json::from_str(config_str)
+            .map_err(|e| crate::error::Error::Config(
+                crate::error::ConfigError::InvalidValue {
+                    field: "mcp_server_config".to_string(),
+                    value: format!("Invalid MCP server config: {}", e)
+                }
+            ))?;
+        
+        self.mcp_service.add_server(name, config).await?;
         Ok(())
     }
     
-    pub async fn remove_mcp_server(&mut self, _name: &str) -> Result<()> {
-        // TODO: Implement MCP server removal
+    pub async fn remove_mcp_server(&mut self, name: &str) -> Result<()> {
+        self.mcp_service.remove_server(name).await?;
         Ok(())
     }
     

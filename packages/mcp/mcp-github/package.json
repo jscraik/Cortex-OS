@@ -1,0 +1,60 @@
+{
+  "name": "@cortex-os/mcp-github",
+  "version": "1.0.0",
+  "description": "GitHub MCP Server for Cortex-OS - Exposes GitHub operations as MCP tools",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "cortex-mcp-github": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src/ --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "github",
+    "cortex-os",
+    "ai-agent",
+    "model-context-protocol"
+  ],
+  "author": "Cortex-OS",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@octokit/rest": "^20.0.0",
+    "@octokit/auth-app": "^6.0.0",
+    "@octokit/webhooks": "^12.0.0",
+    "zod": "^3.22.0",
+    "winston": "^3.11.0",
+    "dotenv": "^16.3.0",
+    "yaml": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  },
+  "peerDependencies": {
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/mcp-core": "workspace:*"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

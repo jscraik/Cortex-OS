@@ -1,0 +1,15 @@
+{
+  "name": "@cortex-os/a2a-handlers",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/a2a/a2a-handlers/src",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "configFile": "packages/a2a/a2a-handlers/vitest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}

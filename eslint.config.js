@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import sonarjs from 'eslint-plugin-sonarjs';
+// eslint-disable-next-line import/no-named-as-default-member
 import ts from 'typescript-eslint';
 
 export default [
@@ -19,8 +20,8 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/.artifacts/**',
-      // Generated static assets (bundled/minified JS/CSS)
-      'static/**',
+  // Generated static assets (bundled/minified JS/CSS)
+  'static/**',
       'commitlint.config.js',
       'tools/**',
       'vitest.config.ts',
@@ -150,6 +151,19 @@ export default [
       // 'sonarjs/no-unused-vars': 'warn', // Rule doesn't exist in this version
       // 'sonarjs/no-dead-store': 'warn', // Rule doesn't exist in this version
       // Import plugin rules temporarily disabled due to TypeScript resolver issues
+    },
+  },
+  {
+    // Enforce named exports only in source (no default exports)
+    files: ['packages/**/src/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExportDefaultDeclaration',
+          message: 'Use named exports only (default exports are disallowed in source).',
+        },
+      ],
     },
   },
   {

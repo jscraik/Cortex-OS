@@ -1,0 +1,32 @@
+{
+  "name": "github",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/github/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/github",
+        "main": "packages/github/src/index.ts",
+        "tsConfig": "packages/github/tsconfig.lib.json"
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "lintFilePatterns": ["packages/github/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/github/jest.config.ts"
+      }
+    }
+  },
+  "tags": ["scope:github", "type:lib"]
+}

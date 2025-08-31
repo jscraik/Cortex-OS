@@ -5,6 +5,7 @@
 
 export * from './types.js';
 export * from './validator.js';
+export * from './fs-store.js';
 
 // Re-export schemas for external use
 export { default as registrySchema } from '../schemas/registry.schema.json' with { type: 'json' };

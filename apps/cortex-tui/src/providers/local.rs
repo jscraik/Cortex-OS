@@ -28,15 +28,38 @@ impl ModelProvider for LocalMLXProvider {
             ).into());
         }
         
-        // Use mlx_lm to generate completion
-        let cmd = TokioCommand::new("python")
+        // Create secure Python script
+        let script = r#"
+import sys
+from mlx_lm import load, generate
+
+# Read prompt from stdin
+prompt = sys.stdin.read()
+model, tokenizer = load('mlx-community/Llama-3.1-8B-Instruct')
+response = generate(model, tokenizer, prompt, verbose=False, max_tokens=2000)
+print(response)
+"#;
+        
+        let mut child = TokioCommand::new("python")
             .arg("-c")
-            .arg(format!(
-                "from mlx_lm import load, generate; model, tokenizer = load('mlx-community/Llama-3.1-8B-Instruct'); response = generate(model, tokenizer, '{}', verbose=False, max_tokens=2000); print(response)",
-                prompt.replace("'", "\\'").replace("\n", "\\n")
-            ))
-            .output()
-            .await
+            .arg(script)
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .map_err(|e| ProviderError::Api(format!("Failed to spawn MLX process: {}", e)))?;
+        
+        // Write prompt to stdin
+        if let Some(stdin) = child.stdin.take() {
+            use tokio::io::AsyncWriteExt;
+            let mut stdin = tokio::io::BufWriter::new(stdin);
+            stdin.write_all(prompt.as_bytes()).await
+                .map_err(|e| ProviderError::Api(format!("Failed to write prompt: {}", e)))?;
+            stdin.flush().await
+                .map_err(|e| ProviderError::Api(format!("Failed to flush stdin: {}", e)))?;
+        }
+        
+        let cmd = child.wait_with_output().await
             .map_err(|e| ProviderError::Api(format!("Failed to run MLX: {}", e)))?;
         
         if !cmd.status.success() {
@@ -47,12 +70,7 @@ impl ModelProvider for LocalMLXProvider {
         }
         
         let output = String::from_utf8_lossy(&cmd.stdout);
-        // Remove the original prompt from the output if it's included
-        let response = if let Some(pos) = output.find(prompt) {
-            output[pos + prompt.len()..].trim_start()
-        } else {
-            output.trim()
-        };
+        let response = output.trim();
         
         Ok(response.to_string())
     }
@@ -65,17 +83,37 @@ impl ModelProvider for LocalMLXProvider {
             ).into());
         }
         
-        // Use mlx_lm with streaming output
+        // Create secure Python script for streaming
+        let script = r#"
+import sys
+from mlx_lm import load, generate
+
+# Read prompt from stdin
+prompt = sys.stdin.read()
+model, tokenizer = load('mlx-community/Llama-3.1-8B-Instruct')
+for token in generate(model, tokenizer, prompt, verbose=False, max_tokens=2000):
+    sys.stdout.write(token)
+    sys.stdout.flush()
+"#;
+        
         let mut child = TokioCommand::new("python")
             .arg("-c")
-            .arg(format!(
-                "from mlx_lm import load, generate; import sys; model, tokenizer = load('mlx-community/Llama-3.1-8B-Instruct'); for token in generate(model, tokenizer, '{}', verbose=False, max_tokens=2000): sys.stdout.write(token); sys.stdout.flush()",
-                prompt.replace("'", "\\'").replace("\n", "\\n")
-            ))
+            .arg(script)
+            .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()
-            .map_err(|e| ProviderError::Api(format!("Failed to spawn MLX process: {}", e)))?;
+            .map_err(|e| ProviderError::Api(format!("Failed to spawn MLX streaming process: {}", e)))?;
+        
+        // Write prompt to stdin
+        if let Some(stdin) = child.stdin.take() {
+            use tokio::io::AsyncWriteExt;
+            let mut stdin = tokio::io::BufWriter::new(stdin);
+            stdin.write_all(prompt.as_bytes()).await
+                .map_err(|e| ProviderError::Api(format!("Failed to write prompt: {}", e)))?;
+            stdin.flush().await
+                .map_err(|e| ProviderError::Api(format!("Failed to flush stdin: {}", e)))?;
+        }
         
         let stdout = child.stdout.take()
             .ok_or_else(|| ProviderError::Api("Failed to get MLX stdout".to_string()))?;

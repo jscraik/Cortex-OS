@@ -6,7 +6,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src/python/**"
   ],
   "exports": {
     ".": {
@@ -24,11 +25,13 @@
   },
   "scripts": {
     "build": "tsc",
+    "postbuild": "node -e \"require('fs').cpSync('src/python','dist/python',{recursive:true})\"",
     "test": "vitest",
     "demo": "tsx src/mcp-demo-server.ts",
     "demo:build": "tsc && node dist/mcp-demo-server.js",
     "mlx:embed": "tsx src/scripts/embed-mlx-neuron.mjs",
     "mlx:start": "tsx src/scripts/embed-mlx-neuron.mjs",
+    "mlx:config": "node src/scripts/setup-mlx-config.mjs --profile recommended --out ./mlx.json",
     "start:complete": "npm run mlx:embed",
     "prepublishOnly": "pnpm run build"
   },

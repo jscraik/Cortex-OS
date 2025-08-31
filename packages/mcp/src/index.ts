@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AgentConfigSchema, MCPRequestSchema } from '@cortex-os/contracts';
 import { createInMemoryStore } from '@cortex-os/lib';
-import { createJsonOutput, createStdOutput, withTimestamp } from '@cortex-os/lib';
+import { createJsonOutput, createStdOutput } from '@cortex-os/lib';
 import { StructuredError } from '@cortex-os/lib';
 
 const InputSchema = z.object({
@@ -33,4 +33,23 @@ export async function handleMCP(input: unknown): Promise<string> {
   return createStdOutput(`MCP handled tool=${request.tool}`);
 }
 
-export default { handleMCP };
+// No default export — follow named exports only convention
+
+//
+// Consolidated canonical exports
+//
+// To reduce duplication across MCP packages and provide a single
+// operational entrypoint, we re-export the stable, working modules
+// below. Consumers can import from `@cortex-os/mcp` exclusively.
+
+// Client (canonical): thin facade of the enhanced MCP client
+export * from './client.js';
+
+// Transport bridge (canonical): stdio <-> streamable HTTP bridge and CLI
+export * from './bridge.js';
+
+// Registry (canonical): schemas + validation utilities for MCP servers/registry
+export * from './registry.js';
+
+// Note: Management utilities live in `@cortex-os/mcp-bridge`.
+// To avoid circular dependencies, import those directly from that package.

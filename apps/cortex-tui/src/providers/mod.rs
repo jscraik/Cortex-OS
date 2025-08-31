@@ -46,37 +46,86 @@ pub trait ModelProvider: Send + Sync {
 
 /// Factory function to create providers based on config
 pub fn create_provider(config: &Config) -> Result<Box<dyn ModelProvider>> {
+    let default_provider = config.get_default_provider();
+    
     // Try primary provider first
-    if let Ok(provider) = create_specific_provider(config, &config.provider.default) {
+    if let Ok(provider) = create_specific_provider(config, default_provider) {
         return Ok(provider);
     }
     
     // Try fallback providers
-    for fallback in &config.provider.fallback {
+    for fallback in config.get_fallback_providers() {
         if let Ok(provider) = create_specific_provider(config, fallback) {
             tracing::warn!("Primary provider '{}' failed, using fallback '{}'", 
-                          config.provider.default, fallback);
+                          default_provider, fallback);
             return Ok(provider);
         }
     }
     
-    Err(ProviderError::UnknownProvider(config.provider.default.clone()).into())
+    Err(ProviderError::UnknownProvider(default_provider.to_string()).into())
 }
 
 fn create_specific_provider(config: &Config, provider_name: &str) -> Result<Box<dyn ModelProvider>> {
     match provider_name {
-        "github-models" => Ok(Box::new(GitHubModelsProvider::new(&config.github_models)?)),
+        // New provider names from cortex.json
+        "github" => {
+            // Use provider config from cortex.json or fallback to legacy
+            if let Some(legacy) = &config.github_models {
+                Ok(Box::new(GitHubModelsProvider::new(legacy)?))
+            } else {
+                // Create from cortex.json config
+                let provider_config = config.get_provider_config("github")
+                    .ok_or_else(|| ProviderError::NotConfigured("github".to_string()))?;
+                    
+                let github_config = crate::config::GitHubModelsConfig {
+                    model: "gpt-4o-mini".to_string(), // Default from cortex.json
+                    endpoint: provider_config.base_url.clone()
+                        .unwrap_or_else(|| "https://models.inference.ai.azure.com".to_string()),
+                    token: std::env::var("GITHUB_TOKEN").ok(),
+                };
+                Ok(Box::new(GitHubModelsProvider::new(&github_config)?))
+            }
+        }
         "openai" => {
-            let openai_config = config.openai.as_ref()
-                .ok_or_else(|| ProviderError::NotConfigured("openai".to_string()))?;
-            Ok(Box::new(OpenAIProvider::new(openai_config)?))
+            if let Some(legacy) = &config.openai {
+                Ok(Box::new(OpenAIProvider::new(legacy)?))
+            } else {
+                let api_key = std::env::var("OPENAI_API_KEY")
+                    .map_err(|_| ProviderError::NotConfigured("OPENAI_API_KEY not set".to_string()))?;
+                    
+                let provider_config = config.get_provider_config("openai");
+                let openai_config = crate::config::OpenAIConfig {
+                    api_key,
+                    model: "gpt-4o-mini".to_string(),
+                    endpoint: provider_config.and_then(|c| c.base_url.clone()),
+                };
+                Ok(Box::new(OpenAIProvider::new(&openai_config)?))
+            }
         }
         "anthropic" => {
-            let anthropic_config = config.anthropic.as_ref()
-                .ok_or_else(|| ProviderError::NotConfigured("anthropic".to_string()))?;
-            Ok(Box::new(AnthropicProvider::new(anthropic_config)?))
+            if let Some(legacy) = &config.anthropic {
+                Ok(Box::new(AnthropicProvider::new(legacy)?))
+            } else {
+                let api_key = std::env::var("ANTHROPIC_API_KEY")
+                    .map_err(|_| ProviderError::NotConfigured("ANTHROPIC_API_KEY not set".to_string()))?;
+                    
+                let anthropic_config = crate::config::AnthropicConfig {
+                    api_key,
+                    model: "claude-3-haiku-20240307".to_string(),
+                };
+                Ok(Box::new(AnthropicProvider::new(&anthropic_config)?))
+            }
+        }
+        "mlx" => Ok(Box::new(LocalMLXProvider::new()?)),
+        
+        // Legacy provider names for backward compatibility
+        "github-models" => {
+            let github_config = config.github_models.as_ref()
+                .ok_or_else(|| ProviderError::NotConfigured("github-models".to_string()))?;
+            Ok(Box::new(GitHubModelsProvider::new(github_config)?))
         }
         "local-mlx" => Ok(Box::new(LocalMLXProvider::new()?)),
+        
         _ => Err(ProviderError::UnknownProvider(provider_name.to_string()).into()),
     }
 }

@@ -6,11 +6,54 @@ This README.md file follows WCAG 2.1 AA accessibility guidelines:
 - High contrast content organization
 -->
 
-# Cortex OS MCP Package
+# Cortex OS MCP Package (Canonical)
 
 ## Overview
 
-This package consolidates Model Context Protocol utilities for Cortex OS. It re-exports the core libraries and transport bridge so downstream tooling can consume them from a single entry point.
+This package is the canonical entrypoint for all MCP functionality in this repo. It re-exports the working, operational modules so downstream tooling can import from a single place without worrying about internal package boundaries.
+
+Canonical mapping:
+- Client: `@cortex-os/mcp/client` → `@cortex-os/mcp-core`
+- Transport Bridge: `@cortex-os/mcp/bridge` → `@cortex-os/mcp-transport-bridge`
+- Registry: `@cortex-os/mcp/registry` → `@cortex-os/mcp-registry`
+- Marketplace/Management: `@cortex-os/mcp` (select exports) → `@cortex-os/mcp-bridge`
+
+Reference spec: `.cortex/context/protocols/model-context-protocol.md`
+
+## Unified Exports
+
+This package now provides a single import surface for MCP functionality:
+
+```ts
+// Client (from mcp-core)
+import { createEnhancedClient } from '@cortex-os/mcp/client';
+
+// Server (in-repo server implementation)
+import { McpServer } from '@cortex-os/mcp/server';
+
+// Bridge (from mcp-transport-bridge)
+import { createBridge } from '@cortex-os/mcp/bridge';
+
+// Registry (types + validators + fs store)
+import { registrySchema, serverManifestSchema, readAll, upsert, remove } from '@cortex-os/mcp/registry';
+```
+
+### MLX Integration (Chat/Completions)
+
+The MLX-backed MCP endpoints are implemented in `@cortex-os/mcp-bridge` and expose:
+
+- JSON: `POST /v1/chat/completions`
+- Streaming (SSE): `GET /v1/completions?message=...&model=...`
+
+Configure models via an MLX config JSON. Generate one and start the server:
+
+```bash
+pnpm --filter @cortex-os/mcp-bridge build
+pnpm --filter @cortex-os/mcp-bridge run mlx:config  # writes ./mlx.json
+MLX_CONFIG_PATH=./packages/mcp-bridge/mlx.json pnpm --filter @cortex-os/mcp-bridge run mlx:start
+```
+
+Recommended default: `mlx-community/Phi-3-mini-4k-instruct-4bit` (fast general chat). Use `config/mlx.recommended.json` for a richer set.
 
 ## Features
 

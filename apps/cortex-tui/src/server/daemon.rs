@@ -80,10 +80,19 @@ impl DaemonServer {
     pub async fn start(&self) -> Result<()> {
         let app = self.create_router();
         
-        let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{}", self.port)).await
+        // Secure binding - only bind to localhost in development, configurable for production
+        let bind_addr = if cfg!(debug_assertions) {
+            format!("127.0.0.1:{}", self.port)
+        } else {
+            // In production, allow configuration via environment variable
+            std::env::var("CORTEX_BIND_ADDRESS")
+                .unwrap_or_else(|_| format!("127.0.0.1:{}", self.port))
+        };
+
+        let listener = tokio::net::TcpListener::bind(&bind_addr).await
             .map_err(|e| crate::error::ProviderError::Api(format!("Failed to bind to port {}: {}", self.port, e)))?;
         
-        info!("🚀 Cortex TUI Daemon started on http://0.0.0.0:{}", self.port);
+        info!("🚀 Cortex TUI Daemon started on http://{}", bind_addr);
         info!("📚 API Documentation available at http://localhost:{}/docs", self.port);
         
         axum::serve(listener, app).await

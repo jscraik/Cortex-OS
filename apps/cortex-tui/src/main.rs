@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use cortex_tui::{app::CortexApp, config::Config, view::ChatWidget};
+use cortex_tui::{app::CortexApp, config::Config, view::ChatWidget, error_panic_handler};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event as CrosstermEvent, KeyCode},
     execute,
@@ -73,6 +73,10 @@ enum McpAction {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     
+    // Install panic handler and signal handlers for graceful shutdown
+    error_panic_handler::install_panic_handler();
+    error_panic_handler::install_signal_handlers();
+    
     // Initialize logging
     let level = if cli.debug { Level::DEBUG } else { Level::INFO };
     tracing_subscriber::fmt()
@@ -80,7 +84,7 @@ async fn main() -> Result<()> {
         .with_target(false)
         .init();
     
-    info!("Starting Cortex TUI v{}", env!("CARGO_PKG_VERSION"));
+    info!("Starting Cortex TUI v{} with enhanced error handling", env!("CARGO_PKG_VERSION"));
     
     // Load configuration
     let config = match cli.config {

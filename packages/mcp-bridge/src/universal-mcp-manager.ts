@@ -110,15 +110,13 @@ export class UniversalMcpManager {
 
     const parts = command.trim().split(/\s+/);
 
-    // Remove the CLI prefix (cortex, claude, gemini, etc.)
-    let startIndex = 0;
-    if (parts[0] && !parts[0].startsWith('-')) {
-      startIndex = 1; // Skip CLI name
+    // Find the canonical "mcp add" sequence; bail if not present
+    const mcpIdx = parts.indexOf('mcp');
+    if (mcpIdx === -1 || parts[mcpIdx + 1] !== 'add') {
+      return null;
     }
-    if (parts[startIndex] === 'mcp') startIndex++;
-    if (parts[startIndex] === 'add') startIndex++;
 
-    const args = parts.slice(startIndex);
+    const args = parts.slice(mcpIdx + 2);
     const parsed: Partial<McpServerRequest> = {
       scopes: ['read'],
       autoApprove: false,

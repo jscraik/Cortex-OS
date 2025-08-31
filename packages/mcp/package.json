@@ -1,17 +1,47 @@
 {
   "name": "@cortex-os/mcp",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server.js",
+      "types": "./dist/server.d.ts"
+    },
+    "./bridge": {
+      "import": "./dist/bridge.js",
+      "types": "./dist/bridge.d.ts"
+    },
+    "./registry": {
+      "import": "./dist/registry.js",
+      "types": "./dist/registry.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
-    "@cortex-os/contracts": "workspace:*"
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/mcp-core": "workspace:*",
+    "@cortex-os/mcp-transport-bridge": "workspace:*",
+    "@cortex-os/mcp-registry": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",

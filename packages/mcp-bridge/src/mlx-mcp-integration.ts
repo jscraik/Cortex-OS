@@ -89,6 +89,53 @@ export function createMlxIntegration(configPath?: string) {
       }
     });
 
+    // OpenAI-style SSE endpoint for streaming completions (echo model supported)
+    app.get('/v1/completions', async (req, res) => {
+      try {
+        // Very simple query contract: /v1/completions?message=...&model=...
+        const message = (req.query.message as string) || '';
+        const model = (req.query.model as string) || 'default';
+
+        if (!message) {
+          res.status(400).json({ error: 'message is required' });
+          return;
+        }
+
+        // SSE headers
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache, no-transform');
+        res.setHeader('Connection', 'keep-alive');
+
+        const encoder = new TextEncoder();
+
+        const stream = mlxServer.streamChat({
+          model,
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: message },
+          ],
+          stream: true,
+        });
+
+        for await (const chunk of stream) {
+          const line = `data: ${JSON.stringify(chunk)}\n\n`;
+          res.write(encoder.encode ? encoder.encode(line) : line);
+        }
+
+        res.write('data: [DONE]\n\n');
+        res.end();
+      } catch (error) {
+        // If headers already sent, try to send SSE error; else JSON
+        if (res.headersSent) {
+          res.write(`data: ${JSON.stringify({ error: String(error) })}\n\n`);
+          res.write('data: [DONE]\n\n');
+          res.end();
+        } else {
+          res.status(500).json({ error: `Streaming error: ${error}` });
+        }
+      }
+    });
+
     app.get('/health', async (req, res) => {
       try {
         const health = await mlxServer.getHealth();

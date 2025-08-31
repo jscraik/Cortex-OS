@@ -1,0 +1,14 @@
+{
+  "name": "@cortex-os/a2a-core-standalone",
+  "projectType": "library",
+  "sourceRoot": "packages/a2a-core/src",
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "options": {
+        "cwd": "packages/a2a-core",
+        "reportsDirectory": "../../.vitest/a2a-core"
+      }
+    }
+  }
+}

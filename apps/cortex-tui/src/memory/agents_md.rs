@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentsMd {
@@ -129,7 +130,7 @@ impl AgentsMd {
             return Ok(());
         }
         
-        let retention_duration = std::time::Duration::from_days(self.metadata.retention_days.into());
+        let retention_duration = Duration::from_secs((self.metadata.retention_days as u64) * 24 * 60 * 60);
         let cutoff_time = std::time::SystemTime::now()
             .checked_sub(retention_duration)
             .unwrap_or(std::time::SystemTime::UNIX_EPOCH);

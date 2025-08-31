@@ -9,33 +9,11 @@
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 
-interface MLXConfig {
-  server: {
-    host: string;
-    port: number;
-    workers: number;
-    timeout: number;
-    max_requests: number;
-  };
-  models: Record<
-    string,
-    {
-      name: string;
-      description: string;
-    }
-  >;
-  cache: {
-    hf_home: string;
-  };
-  performance: {
-    batch_size: number;
-    max_tokens: number;
-    temperature: number;
-    top_p: number;
-  };
-}
+import { MLXConfig, MLXConfigSchema } from './schemas/mlx-config.js';
 
 interface MLXRequest {
   model?: string;
@@ -90,7 +68,13 @@ export class MLXMcpServer {
   async initialize(): Promise<void> {
     try {
       const configData = await readFile(this.configPath, 'utf-8');
-      this.config = JSON.parse(configData);
+      const parsed = MLXConfigSchema.safeParse(JSON.parse(configData));
+      if (!parsed.success) {
+        throw new Error(
+          `Invalid MLX config: ${parsed.error.issues.map((i) => i.path.join('.') + ' ' + i.message).join('; ')}`,
+        );
+      }
+      this.config = parsed.data;
     } catch (error) {
       throw new Error(`Failed to load MLX config from ${this.configPath}: ${error}`);
     }
@@ -127,7 +111,15 @@ export class MLXMcpServer {
     }
 
     return new Promise((resolve, reject) => {
-      const process = spawn('python3', ['./scripts/mlx_chat.py', model.name], {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      let scriptPath = join(__dirname, 'python', 'src', 'mlx_chat.py');
+      if (!existsSync(scriptPath)) {
+        // When running from built dist/, the python sources live under ../src/python
+        const alt = join(__dirname, '..', 'src', 'python', 'src', 'mlx_chat.py');
+        if (existsSync(alt)) scriptPath = alt;
+      }
+      const process = spawn('python3', [scriptPath, model.name], {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 
@@ -225,7 +217,14 @@ export class MLXMcpServer {
       throw new Error(`Model ${modelKey} not found in configuration`);
     }
 
-    const process = spawn('python3', ['./scripts/mlx_chat.py', model.name], {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    let scriptPath = join(__dirname, 'python', 'src', 'mlx_chat.py');
+    if (!existsSync(scriptPath)) {
+      const alt = join(__dirname, '..', 'src', 'python', 'src', 'mlx_chat.py');
+      if (existsSync(alt)) scriptPath = alt;
+    }
+    const process = spawn('python3', [scriptPath, model.name], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
@@ -325,4 +324,4 @@ export class MLXMcpServer {
 }
 
 // Export for MCP integration
-export default MLXMcpServer;
+// No default export — use named export MLXMcpServer
