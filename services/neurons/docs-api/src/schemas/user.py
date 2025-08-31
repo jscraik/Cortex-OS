@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -15,16 +15,16 @@ class UserCreate(BaseModel):
     )
     role: str | None = Field("reader", description="User role")
 
-    @validator("username")
-    def validate_username(self, v):
+    @field_validator("username")
+    def validate_username(cls, v):  # noqa: N805
         if v and not v.replace("_", "").replace("-", "").isalnum():
             raise ValueError(
                 "Username must contain only alphanumeric characters, hyphens, and underscores"
             )
         return v
 
-    @validator("role")
-    def validate_role(self, v):
+    @field_validator("role")
+    def validate_role(cls, v):  # noqa: N805
         allowed_roles = {"reader", "contributor", "editor", "admin"}
         if v not in allowed_roles:
             raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
@@ -41,16 +41,16 @@ class UserUpdate(BaseModel):
     role: str | None = Field(None, description="User role")
     is_active: bool | None = Field(None, description="User active status")
 
-    @validator("username")
-    def validate_username(self, v):
+    @field_validator("username")
+    def validate_username(cls, v):  # noqa: N805
         if v and not v.replace("_", "").replace("-", "").isalnum():
             raise ValueError(
                 "Username must contain only alphanumeric characters, hyphens, and underscores"
             )
         return v
 
-    @validator("role")
-    def validate_role(self, v):
+    @field_validator("role")
+    def validate_role(cls, v):  # noqa: N805
         if v:
             allowed_roles = {"reader", "contributor", "editor", "admin"}
             if v not in allowed_roles:
@@ -84,8 +84,8 @@ class UserPreferenceCreate(BaseModel):
         ..., description="Preference value as JSON"
     )
 
-    @validator("preference_key")
-    def validate_preference_key(self, v):
+    @field_validator("preference_key")
+    def validate_preference_key(cls, v):  # noqa: N805
         allowed_keys = {
             "theme",
             "display",
@@ -132,8 +132,8 @@ class BookmarkCreate(BaseModel):
     notes: str | None = Field(None, description="User notes", max_length=1000)
     tags: list[str] | None = Field(None, description="User-defined tags")
 
-    @validator("tags")
-    def validate_tags(self, v):
+    @field_validator("tags")
+    def validate_tags(cls, v):  # noqa: N805
         if v:
             # Limit number of tags and tag length
             if len(v) > 10:
@@ -279,8 +279,8 @@ class BulkUserOperation(BaseModel):
     user_ids: list[str] = Field(..., description="List of user IDs")
     data: dict[str, Any] | None = Field(None, description="Operation data")
 
-    @validator("operation")
-    def validate_operation(self, v):
+    @field_validator("operation")
+    def validate_operation(cls, v):  # noqa: N805
         allowed_operations = {"create", "update", "delete", "activate", "deactivate"}
         if v not in allowed_operations:
             raise ValueError(
@@ -288,8 +288,8 @@ class BulkUserOperation(BaseModel):
             )
         return v
 
-    @validator("user_ids")
-    def validate_user_ids(self, v):
+    @field_validator("user_ids")
+    def validate_user_ids(cls, v):  # noqa: N805
         if len(v) > 100:
             raise ValueError("Maximum 100 users per bulk operation")
         return v
