@@ -6,11 +6,15 @@ on:
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      SEMGREP_SEVERITY_LEVEL: ERROR
     steps:
       - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
+      - uses: semgrep/ci@v1
         with:
-
           config: |
             .semgrep/owasp-llm-top-ten.yaml
             .semgrep/mitre-atlas.yaml
