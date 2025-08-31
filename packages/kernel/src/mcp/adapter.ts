@@ -290,7 +290,7 @@ export const createDefaultMCPTools = (): MCPTool[] => [
       }
       const { file } = z.object({ file: z.string() }).parse(params);
       const abs = path.isAbsolute(file) ? file : path.join(context.workingDirectory, file);
-      const { stdout } = await runCommand(`npx eslint "${abs}" -f json`, {
+      const { stdout } = await runCommand(['npx', 'eslint', abs, '-f', 'json'], {
         cwd: context.workingDirectory,
       });
       const parsed = JSON.parse(stdout);
