@@ -50,3 +50,5 @@ Thumbs.db
 
 !packages/*/src/lib/
 !packages/*/src/lib/**
+!apps/*/src/lib/
+!apps/*/src/lib/**
