@@ -18,7 +18,7 @@ try:
     import mlx.core as mx  # type: ignore
     from mlx_lm import load  # type: ignore
     MLX_AVAILABLE = True
-except Exception as e:  # pragma: no cover - diagnostics for missing deps
+except ImportError as e:  # pragma: no cover - diagnostics for missing deps
     print(f"MLX core not available: {e}", file=sys.stderr)
     MLX_AVAILABLE = False
 
