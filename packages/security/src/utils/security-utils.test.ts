@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 vi.mock('@cortex-os/telemetry');
-import forge from 'node-forge';
 import {
   generateNonce,
   extractTrustDomain,

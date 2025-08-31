@@ -49,6 +49,12 @@ def test_lineage_metadata() -> None:
     assert (df["lineage_source"] == "unit-test").all()
 
 
+def test_transform() -> None:
+    df = pipeline.ingest(_sample_records())
+    transformed = pipeline.transform(df)
+    assert transformed["value"].tolist() == [20, 40]
+
+
 def test_pii_masking() -> None:
     df = pipeline.ingest(_sample_records())
     df = pipeline.mask_pii(df)

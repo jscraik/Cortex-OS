@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "echo \"No build step required for this package\"",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src --ext .ts --no-ignore",
     "test": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:coverage": "vitest --coverage",

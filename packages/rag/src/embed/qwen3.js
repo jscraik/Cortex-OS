@@ -4,19 +4,13 @@
  */
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
-import { join } from 'path';
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+import path, { join } from 'path';
+import { buildQwen3EmbedScript } from './qwen3-script.js';
 export class Qwen3Embedder {
-    modelSize;
-    modelPath;
-    cacheDir;
-    maxTokens;
-    batchSize;
-    useGPU;
     constructor(options = {}) {
         this.modelSize = options.modelSize || '4B';
-        this.cacheDir =
-            options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
+        this.modelPath = path.resolve(options.modelPath || path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`));
+        this.cacheDir = options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
         this.maxTokens = options.maxTokens || 512;
         this.batchSize = options.batchSize || 32;
         this.useGPU = options.useGPU ?? false;
@@ -24,7 +18,6 @@ export class Qwen3Embedder {
     async embed(texts) {
         if (texts.length === 0)
             return [];
-        // Process in batches for memory efficiency
         const results = [];
         for (let i = 0; i < texts.length; i += this.batchSize) {
             const batch = texts.slice(i, i + this.batchSize);
@@ -33,12 +26,13 @@ export class Qwen3Embedder {
         }
         return results;
     }
-    async embedBatch(texts) {
+    embedBatch(texts) {
         return this.embedWithModel(texts);
     }
     async embedWithModel(texts) {
         return new Promise((resolve, reject) => {
-            const python = spawn('python3', ['-c', this.getPythonScript(modelPath, texts, this.useGPU)], {
+            const script = buildQwen3EmbedScript(this.modelPath, texts, this.maxTokens, this.useGPU);
+            const python = spawn('python3', ['-c', script], {
                 stdio: ['pipe', 'pipe', 'pipe'],
                 env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir, HF_HOME: this.cacheDir },
             });
@@ -70,91 +64,16 @@ export class Qwen3Embedder {
                 reject(err);
             });
         });
-        return result.embeddings;
-    }
-    getPythonScript(modelPath, texts, useGPU) {
-        return `
-import json
-import sys
-import torch
-from transformers import AutoTokenizer, AutoModel
-import numpy as np
-
-use_gpu = ${useGPU ? 'True' : 'False'}
-device = 'cuda' if use_gpu and torch.cuda.is_available() else 'cpu'
-
-def mean_pooling(model_output, attention_mask):
-    token_embeddings = model_output[0]
-    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-
-try:
-    # Load model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("${modelPath}")
-    model = AutoModel.from_pretrained("${modelPath}")
-
-    model = model.to(device)
-
-
-    texts = ${JSON.stringify(texts)}
-
-    # Tokenize and encode
-    encoded_input = tokenizer(texts, padding=True, truncation=True, max_length=${this.maxTokens}, return_tensors='pt')
-
-    encoded_input = {k: v.to(device) for k, v in encoded_input.items()}
-
-
-    # Generate embeddings
-    with torch.no_grad():
-        model_output = model(**encoded_input)
-
-    # Apply mean pooling
-    embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
-
-    # Normalize embeddings
-    embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1)
-
-    # Convert to list and output
-    result = {
-        "embeddings": embeddings.cpu().numpy().tolist(),
-        "model": "${modelPath}",
-        "dimension": embeddings.shape[1]
-    }
-    print(json.dumps(result))
-
-except Exception as e:
-    print(f"Error: {str(e)}", file=sys.stderr)
-    sys.exit(1)
-`;
     }
     async close() {
         // No persistent process to cleanup - using spawn for each batch
     }
 }
-/**
- * Factory function for easy Qwen3 embedder creation
- */
 export function createQwen3Embedder(options) {
     return new Qwen3Embedder(options);
 }
-/**
- * Optimized embedder configurations for different use cases
- */
 export const Qwen3Presets = {
-    // Fast development/testing
-    development: () => createQwen3Embedder({
-        modelSize: '0.6B',
-        batchSize: 64,
-    }),
-    // Balanced production
-    production: () => createQwen3Embedder({
-        modelSize: '4B',
-        batchSize: 32,
-    }),
-    // High-quality research
-    research: () => createQwen3Embedder({
-        modelSize: '8B',
-        batchSize: 16,
-    }),
+    development: () => createQwen3Embedder({ modelSize: '0.6B', batchSize: 64 }),
+    production: () => createQwen3Embedder({ modelSize: '4B', batchSize: 32 }),
+    research: () => createQwen3Embedder({ modelSize: '8B', batchSize: 16 }),
 };
-//# sourceMappingURL=qwen3.js.map

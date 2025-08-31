@@ -1,9 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { InstallCommandGenerator } from './install.js';
+import { generateCommands, generateInstructions } from './install.js';
 import { MCP_VERSION, type ServerManifest } from './types.js';
 
-describe('InstallCommandGenerator', () => {
-  const generator = new InstallCommandGenerator();
+describe('install command utilities', () => {
   const server: ServerManifest = {
     id: 'test-server',
     name: 'Test Server',
@@ -27,12 +26,12 @@ describe('InstallCommandGenerator', () => {
   };
 
   test('generates Claude and JSON commands', () => {
-    const commands = generator.generateCommands(server);
+    const commands = generateCommands(server);
     expect(commands.map((c) => c.client)).toEqual(['claude', 'json']);
   });
 
   test('includes command in instructions', () => {
-    const instructions = generator.generateInstructions(server, 'claude');
+    const instructions = generateInstructions(server, 'claude');
     expect(instructions).toContain('claude mcp add');
   });
 });

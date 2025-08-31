@@ -17,9 +17,11 @@ const staticMarkup = `
     <section class="grid md:grid-cols-[2fr_1fr] gap-3" aria-label="Conversation and tools">
       <div class="border rounded p-2 min-h-64" aria-live="polite" aria-relevant="additions text" aria-busy="false">
         <ul>
-          <li class="my-2">
-            <div class="text-xs text-gray-500">assistant</div>
-            <div class="whitespace-pre-wrap">Hello</div>
+          <li class="my-2 flex justify-start">
+            <div class="max-w-[80%]">
+              <div class="text-xs text-gray-500">assistant</div>
+              <div class="rounded px-2 py-1 whitespace-pre-wrap bg-gray-100">Hello</div>
+            </div>
           </li>
         </ul>
         <output class="text-sm text-gray-500" aria-live="polite">Streaming…</output>

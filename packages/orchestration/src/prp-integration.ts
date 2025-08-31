@@ -1,12 +1,10 @@
 /**
- * PRP task orchestration helpers.
+ * PRP orchestration engine using functional API
  */
 import { EventEmitter } from 'events';
 import { v4 as uuid } from 'uuid';
 import winston from 'winston';
-
-import { createPRPOrchestrator, type PRPOrchestrator } from '@cortex-os/prp-runner';
-import type { PRPState } from '@cortex-os/kernel';
+import { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 import type {
   Agent,
@@ -24,7 +22,9 @@ export interface PRPEngine {
   emitter: EventEmitter;
 }
 
-export function createEngine(config: Partial<OrchestrationConfig> = {}): PRPEngine {
+export function createEngine(
+  config: Partial<OrchestrationConfig> = {},
+): PRPEngine {
   const defaults: OrchestrationConfig = {
     maxConcurrentOrchestrations: 10,
     defaultStrategy: 'neural_prp',
@@ -40,7 +40,7 @@ export function createEngine(config: Partial<OrchestrationConfig> = {}): PRPEngi
     level: 'info',
     format: winston.format.combine(
       winston.format.timestamp(),
-      winston.format.json()
+      winston.format.json(),
     ),
     transports: [new winston.transports.Console()],
   });
@@ -52,24 +52,9 @@ export function createEngine(config: Partial<OrchestrationConfig> = {}): PRPEngi
   return {
     config: { ...defaults, ...config },
     logger,
-    prp: createPRPOrchestrator(),
+    prp: new PRPOrchestrator(),
     active: new Map(),
     emitter: new EventEmitter(),
-  };
-}
-
-function taskToPRPBlueprint(
-  id: string,
-  task: Task,
-  agents: Agent[],
-  context: Partial<PlanningContext>
-) {
-  return {
-    id,
-    title: task.title,
-    requirements: task.requiredCapabilities,
-    context,
-    agents,
   };
 }
 
@@ -85,21 +70,31 @@ export async function orchestrateTask(
   }
 
   const id = uuid();
-  const blueprint = taskToPRPBlueprint(id, task, agents, context);
   neurons.forEach((n) => engine.prp.registerNeuron?.(n));
 
+  const blueprint = {
+    id,
+    title: task.title,
+    requirements: task.requiredCapabilities,
+    context,
+    agents,
+  };
+
   const start = Date.now();
-  const run = engine.prp.executePRPCycle(blueprint).then((prp) => {
-    const result = toResult(id, task.id, prp, start);
-    engine.emitter.emit('orchestrationCompleted', {
-      type: 'task_completed',
-      taskId: task.id,
-      data: result,
-      timestamp: new Date(),
-      source: 'PRPEngine',
-    });
-    return result;
-  }).finally(() => engine.active.delete(id));
+  const run = engine.prp
+    .executePRPCycle(blueprint)
+    .then((prp) => {
+      const result = toResult(id, task.id, prp, start);
+      engine.emitter.emit('orchestrationCompleted', {
+        type: 'task_completed',
+        taskId: task.id,
+        data: result,
+        timestamp: new Date(),
+        source: 'PRPEngine',
+      });
+      return result;
+    })
+    .finally(() => engine.active.delete(id));
 
   engine.active.set(id, run);
   return run;
@@ -108,8 +103,8 @@ export async function orchestrateTask(
 function toResult(
   id: string,
   taskId: string,
-  prp: Awaited<ReturnType<PRPOrchestrator['executePRPCycle']>>,
-  start: number
+  prp: any,
+  start: number,
 ): OrchestrationResult {
   return {
     orchestrationId: id,
@@ -139,3 +134,4 @@ function toResult(
 export async function cleanup(engine: PRPEngine): Promise<void> {
   engine.active.clear();
 }
+
