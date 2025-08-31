@@ -185,6 +185,8 @@ describe('ASBR API Integration Tests', () => {
       const profile: Omit<Profile, 'id'> = {
         skill: 'intermediate',
         tools: ['filesystem', 'web_search'],
+        a11y: {},
+        schema: 'cortex.profile@1',
       };
 
       const response = await request(app)
@@ -207,6 +209,14 @@ describe('ASBR API Integration Tests', () => {
     });
 
     it('should update a profile', async () => {
+      const updatedProfile: Profile = {
+        id: profileId,
+        skill: 'expert',
+        tools: ['filesystem'],
+        a11y: { screenReader: true },
+        schema: 'cortex.profile@1',
+      };
+
       const response = await request(app)
         .put(`/v1/profiles/${profileId}`)
         .set('Authorization', `Bearer ${authToken}`)
