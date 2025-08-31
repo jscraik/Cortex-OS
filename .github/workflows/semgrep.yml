@@ -8,14 +8,14 @@ jobs:
   semgrep:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
+    env:
+      SEMGREP_SEVERITY_LEVEL: ERROR
     steps:
       - uses: actions/checkout@v4
       - uses: semgrep/ci@v1
-        env:
-          SEMGREP_SEVERITY_LEVEL: ERROR
         with:
-
           config: |
             p/owasp-llm-top-ten
             p/mitre-atlas
