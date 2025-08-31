@@ -24,7 +24,7 @@ describe('SpiffeClient', () => {
     const mockResponse = {
       spiffe_id: 'spiffe://example.org/my/service',
       trust_domain: 'example.org',
-      selectors: [],
+      selectors: [{ type: 'env', value: 'prod' }],
     };
 
     global.fetch = vi.fn().mockResolvedValue({
@@ -44,5 +44,6 @@ describe('SpiffeClient', () => {
     );
     expect(identity.spiffeId).toBe(mockResponse.spiffe_id);
     expect(identity.trustDomain).toBe(mockResponse.trust_domain);
+    expect(identity.selectors).toEqual({ env: 'prod' });
   });
 });

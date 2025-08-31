@@ -28,22 +28,42 @@ export async function rerank(candidates: Candidate[], query: string): Promise<Ca
   });
 
   const baseUrl = process.env.MLX_SERVICE_URL || DEFAULT_SERVICE_URL;
-  const res = await fetch(`${baseUrl}/rerank`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: validQuery, candidates: validCandidates }),
-  });
+  try {
+    const res = await fetch(`${baseUrl}/rerank`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: validQuery, candidates: validCandidates }),
+    });
 
-  if (!res.ok) {
-    throw new Error(`MLX rerank failed: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      throw new Error(`MLX rerank failed: ${res.status} ${res.statusText}`);
+    }
+    const json = await res.json();
+    const data = responseSchema.parse(json);
+    if (data.scores.length !== validCandidates.length) {
+      throw new Error('MLX service returned mismatched scores');
+    }
+    const scored = validCandidates.map((c, i) => ({ ...c, score: data.scores[i] }));
+    return scored.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  } catch (primaryError) {
+    const frontierUrl = process.env.FRONTIER_API_URL;
+    if (!frontierUrl) {
+      throw primaryError;
+    }
+    const res = await fetch(`${frontierUrl}/rerank`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: validQuery, candidates: validCandidates }),
+    });
+    if (!res.ok) {
+      throw new Error(`Frontier rerank failed: ${res.status} ${res.statusText}`);
+    }
+    const json = await res.json();
+    const data = responseSchema.parse(json);
+    if (data.scores.length !== validCandidates.length) {
+      throw new Error('Frontier service returned mismatched scores');
+    }
+    const scored = validCandidates.map((c, i) => ({ ...c, score: data.scores[i] }));
+    return scored.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }
-
-  const json = await res.json();
-  const data = responseSchema.parse(json);
-  if (data.scores.length !== validCandidates.length) {
-    throw new Error('MLX service returned mismatched scores');
-  }
-
-  const scored = validCandidates.map((c, i) => ({ ...c, score: data.scores[i] }));
-  return scored.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 }
