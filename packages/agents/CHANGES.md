@@ -11,6 +11,10 @@
 
 - Fallback chain now emits `provider.fallback` events to the configured `EventBus` on provider failures (best-effort, non-blocking publish).
 
+- Removed legacy `src/providers/mlx-provider.ts` wrapper in favor of modular `providers/mlx-provider/index.js` implementation.
+  - Rationale: consolidate MLX provider code; drop redundant backward-compatibility file.
+  - Migration: update imports from `../providers/mlx-provider.js` to `../providers/mlx-provider/index.js`.
+
 ### Notes & next steps
 
 - Unit tests updated in `packages/agents/tests` to reflect the removed fields.

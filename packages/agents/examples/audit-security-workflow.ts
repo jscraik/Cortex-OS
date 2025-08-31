@@ -1,7 +1,7 @@
 // Auditor-friendly CLI: run code-analysis + security with MLX provider and emit summary
 import { createEventBus } from '../src/lib/event-bus.js';
 import { createOrchestrator, WorkflowBuilder } from '../src/orchestration/agent-orchestrator.js';
-import { createMLXProvider } from '../src/providers/mlx-provider.js';
+import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
 import { wireOutbox } from '../src/integrations/outbox.js';
 import { SQLiteStore } from '@cortex-os/memories';
 
