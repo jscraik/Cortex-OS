@@ -24,7 +24,7 @@ export function isValidULID(value: string): value is ULID {
  */
 export function getULIDTimestamp(runId: ULID): Date {
   // ULID first 10 characters are timestamp in Crockford base32
-  const timestamp = parseInt(runId.slice(0, 10), 36);
+  const timestamp = parseInt(runId.slice(0, 10), 32);
   return new Date(timestamp);
 }
 
