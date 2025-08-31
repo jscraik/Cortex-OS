@@ -293,7 +293,11 @@ export const createDefaultMCPTools = (): MCPTool[] => [
       const { stdout } = await runCommand(`npx eslint "${abs}" -f json`, {
         cwd: context.workingDirectory,
       });
-      const [report] = JSON.parse(stdout) as unknown[];
+      const parsed = JSON.parse(stdout);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('ESLint did not return a valid report for the file.');
+      }
+      const [report] = parsed;
       return { file: abs, report };
     },
   },
