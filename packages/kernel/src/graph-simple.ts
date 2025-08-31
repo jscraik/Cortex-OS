@@ -19,13 +19,6 @@ const RunOptionsSchema = z
   })
   .strict();
 
-// Utility function for simulating work
-async function simulateWork(ms: number, options?: { deterministic?: boolean }): Promise<void> {
-  if (options?.deterministic) {
-    return Promise.resolve();
-  }
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Factory function to create a new CortexKernel instance
@@ -89,7 +82,6 @@ export class CortexKernel {
       },
     };
 
-    await simulateWork(150, { deterministic });
 
     newState.validationResults.build = {
       passed: true,
@@ -176,8 +168,6 @@ export class CortexKernel {
       },
     };
 
-    // Simulate strategy work
-    await simulateWork(100, { deterministic });
 
     // Add strategy validation results
     newState.validationResults.strategy = {
@@ -211,8 +201,6 @@ export class CortexKernel {
       },
     };
 
-    // Simulate evaluation work
-    await simulateWork(100, { deterministic });
 
     // Add evaluation validation results
     newState.validationResults.evaluation = {
