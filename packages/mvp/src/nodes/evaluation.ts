@@ -396,45 +396,7 @@ export class EvaluationNode {
               tools.push('Pylint');
             }
           } catch (pylintError) {
-            // Try flake8 as fallback
-            try {
-              await execAsync('which flake8', { timeout: 2000 });
-              const { stdout } = await execAsync(
-                'flake8 . --format="%(path)s:%(row)d:%(col)d: %(code)s %(text)s" || true',
-                {
-                  cwd: projectRoot,
-                  timeout: 60000,
-                  maxBuffer: 1024 * 1024,
-                },
-              );
-
-              if (stdout.trim()) {
-                const lines = stdout.trim().split('\n');
-                const issues = lines
-                  .map((line: string) => {
-                    const match = line.match(/^(.+):(\d+):(\d+): (\w+) (.+)$/);
-                    if (match) {
-                      return {
-                        tool: 'flake8',
-                        severity: this.mapFlake8Severity(match[4]),
-                        type: match[4],
-                        message: match[5],
-                        file: path.relative(projectRoot, match[1]),
-                        line: parseInt(match[2]),
-                        column: parseInt(match[3]),
-                        category: this.categorizeFlake8Code(match[4]),
-                      };
-                    }
-                    return null;
-                  })
-                  .filter(Boolean);
-
-                allIssues.push(...issues);
-                tools.push('Flake8');
-              }
-            } catch (flake8Error) {
-              // Flake8 also failed
-            }
+            throw new Error(`Pylint execution failed: ${pylintError}`);
           }
         }
       } catch (pythonError) {

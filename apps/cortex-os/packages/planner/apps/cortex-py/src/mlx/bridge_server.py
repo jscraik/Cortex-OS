@@ -14,7 +14,6 @@ import traceback
 from datetime import datetime
 from typing import Any
 
-from .fallback_manager import FallbackManager
 from .memory_monitor import MemoryMonitor
 from .model_registry import ModelRegistry
 
@@ -41,9 +40,6 @@ class MLOptimizationBridgeServer:
         self.memory_monitor = MemoryMonitor()
         self.security_validator = SecurityValidator()
         self.performance_tracker = PerformanceTracker()
-        self.fallback_manager = FallbackManager(
-            self.model_registry, self.memory_monitor
-        )
         self.optimization_engine = OptimizationEngine(
             self.model_registry,
             self.memory_monitor,
@@ -61,8 +57,6 @@ class MLOptimizationBridgeServer:
             "validate_output": self.validate_output,
             "get_performance_metrics": self.get_performance_metrics,
             "get_memory_state": self.get_memory_state,
-            "get_fallback_status": self.get_fallback_status,
-            "force_model_switch": self.force_model_switch,
             "get_optimization_stats": self.get_optimization_stats,
             "record_inference": self.record_inference,
         }
@@ -86,7 +80,6 @@ class MLOptimizationBridgeServer:
                         "memory_monitor",
                         "security_validator",
                         "performance_tracker",
-                        "fallback_manager",
                     ],
                 },
             )
@@ -235,7 +228,6 @@ class MLOptimizationBridgeServer:
                     "memory_monitor": "healthy",
                     "security_validator": "healthy",
                     "performance_tracker": "healthy",
-                    "fallback_manager": "healthy",
                 },
                 "system": {
                     "memory_usage_percent": memory_state.usage_percent,
@@ -291,14 +283,6 @@ class MLOptimizationBridgeServer:
                 },
                 "confidence": selection.confidence,
                 "reasoning": selection.reasoning,
-                "fallback_chain": [
-                    {
-                        "name": model.name,
-                        "backend": model.backend.value,
-                        "memory_gb": model.memory_gb,
-                    }
-                    for model in selection.fallback_chain
-                ],
                 "estimated_memory_gb": selection.estimated_memory_gb,
                 "estimated_latency_ms": selection.estimated_latency_ms,
                 "switch_reason": selection.switch_reason.name
@@ -479,38 +463,6 @@ class MLOptimizationBridgeServer:
             logger.error(f"Failed to get memory state: {e}")
             raise
 
-    async def get_fallback_status(self) -> dict[str, Any]:
-        """Get fallback chain status."""
-
-        try:
-            stats = await self.fallback_manager.get_fallback_statistics()
-            return stats
-
-        except Exception as e:
-            logger.error(f"Failed to get fallback status: {e}")
-            raise
-
-    async def force_model_switch(
-        self, model_name: str, reason: str = "user_request"
-    ) -> dict[str, Any]:
-        """Force model switch."""
-
-        try:
-            success = await self.optimization_engine.force_model_switch(
-                model_name, reason
-            )
-
-            if success:
-                await self.send_event(
-                    "model_switched", {"model_name": model_name, "reason": reason}
-                )
-
-            return {"success": success}
-
-        except Exception as e:
-            logger.error(f"Failed to force model switch: {e}")
-            raise
-
     async def get_optimization_stats(self) -> dict[str, Any]:
         """Get optimization engine statistics."""
 
@@ -554,7 +506,6 @@ class MLOptimizationBridgeServer:
             await self.memory_monitor.cleanup()
             await self.security_validator.cleanup()
             await self.performance_tracker.cleanup()
-            await self.fallback_manager.cleanup()
 
             await self.send_event(
                 "bridge_shutdown", {"timestamp": datetime.now().isoformat()}
