@@ -66,3 +66,17 @@ Notes:
 
 - Do not run tests from the repository root with workspace-wide filters unless you intend to run all packages' suites; that can trigger integration tests that require external services and produce large logs.
 - The per-app `vitest.config.ts` ensures tests with `.a11y.test.ts` run in a `jsdom` environment so axe can examine DOM output.
+
+## Roadmap API stubs
+
+The `backend` directory now exposes minimal functions inspired by the [AI Engineering Roadmap](https://github.com/jamiescottcraik/ai-engineering-roadmap):
+
+- `health()` → service status with ISO timestamp
+- `fixSequence({ weeks })` → reorder week numbers
+- `syncOllama({ models })` → placeholder for model pulls
+
+Inputs are validated with Zod and outputs use consistent JSON shapes. These stubs are not wired to an HTTP server yet.
+
+## Open-WebUI Scaffold
+
+The `src` directory remains empty; `backend` holds the roadmap handlers for future integration.
