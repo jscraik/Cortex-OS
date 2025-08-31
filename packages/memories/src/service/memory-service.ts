@@ -1,9 +1,9 @@
-import { memoryZ } from '../schemas/memory.zod.js';
-import type { MemoryStore } from '../ports/MemoryStore.js';
-import type { Embedder } from '../ports/Embedder.js';
-import { withSpan } from '../observability/otel.js';
-import type { Memory } from '../domain/types.js';
 import { CompositeEmbedder } from '../adapters/embedder.composite.js';
+import type { Memory } from '../domain/types.js';
+import { withSpan } from '../observability/otel.js';
+import type { Embedder } from '../ports/Embedder.js';
+import type { MemoryStore } from '../ports/MemoryStore.js';
+import { memoryZ } from '../schemas/memory.zod.js';
 
 export type MemoryService = {
   save: (raw: unknown) => Promise<Memory>;
@@ -26,7 +26,7 @@ export const createMemoryService = (store: MemoryStore, embedder: Embedder): Mem
   return {
     save: async (raw) => {
       return withSpan('memories.save', async () => {
-        const m = memoryZ.parse(raw);
+        const m = memoryZ.parse(raw) as Memory;
         const needsVector = !m.vector && m.text;
         let withVec: Memory;
         if (needsVector) {

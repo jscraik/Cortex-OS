@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createServer,
-  addTool,
-  addResource,
-  addPrompt,
-} from './index.js';
+import { createServer, addTool, addResource, addPrompt } from './index.js';
 import {
   handleInitialize,
   handleToolsList,
@@ -44,7 +39,7 @@ describe('server handlers', () => {
 
   it('handleResourceRead', async () => {
     const res = await handleResourceRead('1', { uri: 'res' }, context);
-    expect(res.result).toEqual({ ok: true });
+    expect(res.result).toEqual({ contents: [{ ok: true }] });
   });
 
   it('handlePromptsList', () => {

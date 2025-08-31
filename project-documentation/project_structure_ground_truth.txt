@@ -911,7 +911,6 @@ adapter.ts
 anthropic-adapter.ts
 cohere-adapter.ts
 config.ts
-frontier-adapter.ts
 google-adapter.ts
 load-balancer.ts
 manager.ts
@@ -952,8 +951,6 @@ a2a-contract.test.ts
 a2a-durability.test.ts
 ai-adapter.test.ts
 ai-config.test.ts
-ai-frontier-adapter.test.ts
-ai-frontier-adapters.test.ts
 ai-local-adapters.test.ts
 ai-manager.test.ts
 envelope.contract.test.ts
@@ -1902,8 +1899,6 @@ ingest.ts
 query.ts
 qwen3-reranker.ts
 rerank_fusion.ts
-rerank_mlx.py
-
 ./packages/rag/src/policy:
 index.ts
 load.ts

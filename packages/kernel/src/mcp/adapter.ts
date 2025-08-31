@@ -8,8 +8,7 @@
 import { PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 
-
-// Neuron interface definition - compatible with prp-runner
+// Neuron interface definition
 interface Neuron {
   id: string;
   role: string;

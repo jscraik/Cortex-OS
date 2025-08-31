@@ -6,8 +6,7 @@
  * @status TDD-COMPLIANT
  */
 
-
-export { PRPOrchestrator } from './orchestrator.js';
+export { PRPOrchestrator, createPRPOrchestrator, blueprintSchema } from './orchestrator.js';
 export { LLMBridge } from './llm-bridge.js';
 export { createExecutionContext } from './lib/create-execution-context.js';
 export { executeNeuron } from './lib/execute-neuron.js';
@@ -21,4 +20,3 @@ export type {
   PRPExecutionResult,
 } from './orchestrator.js';
 export type { LLMConfig } from './llm-bridge.js';
-

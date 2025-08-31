@@ -5,7 +5,10 @@ const logger = createLogger('model-provider');
 
 const promptSchema = z.string();
 
-export async function requestMLX(prompt: string, url = 'http://localhost:8001/inference'): Promise<unknown> {
+export async function requestMLX(
+  prompt: string,
+  url = 'http://localhost:8001/inference',
+): Promise<unknown> {
   const validPrompt = promptSchema.parse(prompt);
   const response = await fetch(url, {
     method: 'POST',
@@ -18,7 +21,10 @@ export async function requestMLX(prompt: string, url = 'http://localhost:8001/in
   return response.json();
 }
 
-export async function requestOllama(prompt: string, url = 'http://localhost:11434/api/generate'): Promise<unknown> {
+export async function requestOllama(
+  prompt: string,
+  url = 'http://localhost:11434/api/generate',
+): Promise<unknown> {
   const validPrompt = promptSchema.parse(prompt);
   const response = await fetch(url, {
     method: 'POST',
@@ -33,7 +39,7 @@ export async function requestOllama(prompt: string, url = 'http://localhost:1143
 
 export async function requestModel(
   prompt: string,
-  options?: { mlxUrl?: string; ollamaUrl?: string }
+  options?: { mlxUrl?: string; ollamaUrl?: string },
 ): Promise<unknown> {
   try {
     return await requestMLX(prompt, options?.mlxUrl);

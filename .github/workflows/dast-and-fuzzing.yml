@@ -1,0 +1,96 @@
+name: Security - DAST & Fuzzing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  start-target:
+    name: Start dev target
+    runs-on: ubuntu-latest
+    outputs:
+      target-url: ${{ steps.set.outputs['target-url'] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Start dev server (example)
+        run: |
+          # Replace with your project's startup commands. Keep server backgrounded for the job.
+          pnpm install --frozen-lockfile
+          pnpm start &
+          echo "Waiting for server..."
+          sleep 5
+          echo "server started"
+      - name: Set target URL
+        id: set
+        run: echo "::set-output name=target-url::http://localhost:3000"
+
+  dast-zap:
+    name: OWASP ZAP scan
+    runs-on: ubuntu-latest
+    needs: start-target
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Download ZAP
+        run: |
+          sudo apt-get update && sudo apt-get install -y wget default-jre
+          wget -q https://github.com/zaproxy/zaproxy/releases/download/v2.13.0/ZAP_2_13_0_unix.sh -O /tmp/zap.sh
+          sudo sh /tmp/zap.sh -q -dir /opt/zap
+      - name: Run ZAP baseline scan
+        env:
+          TARGET_URL: ${{ needs.start-target.outputs['target-url'] }}
+          ZAP_FAIL_RISK: ${{ env.ZAP_FAIL_RISK || '2' }}
+        run: |
+          /opt/zap/zap.sh -daemon -port 8090 &
+          sleep 5
+          /opt/zap/zap.sh -cmd -quickurl "$TARGET_URL" -quickout report.xml || true
+          cat report.xml || true
+          # Simple fail on High risk if found
+          if grep -q "Risk: High" report.xml; then
+            echo "High risk findings found"
+            exit 1
+          fi
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: zap-report
+          path: report.xml
+
+  fuzzing:
+    name: Fast-check fuzzing
+    runs-on: ubuntu-latest
+    needs: start-target
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '18'
+      - name: Set up pnpm
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+        with:
+          version: 9
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+      - name: Run fast-check fuzz harness
+        env:
+          TARGET_URL: ${{ needs.start-target.outputs['target-url'] }}
+        run: |
+          node infra/security/fuzz/run-fuzz.js --target "$TARGET_URL" --iterations 200 --out fuzz-results.txt || true
+      - name: Upload fuzz results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuzz-results
+          path: fuzz-results.txt
+      - name: Fail on fuzz findings
+        if: always()
+        run: |
+          echo "Inspecting fuzz results"
+          if [ ! -f fuzz-results.txt ]; then
+            echo "No fuzz results produced"; exit 1
+          fi
+          # Fail if any entry has an error field or a 5xx status
+          node -e "const r=require('fs').readFileSync('fuzz-results.txt','utf8'); const a=JSON.parse(r||'[]'); if (!Array.isArray(a)){console.error('invalid results'); process.exit(1);} const bad=a.find(x=>x.error|| (x.status&&x.status>=500)); if(bad){ console.error('fuzz found issues', bad); process.exit(2);} console.log('no critical fuzz findings');"

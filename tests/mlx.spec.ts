@@ -44,4 +44,3 @@ describe('mlx helpers', () => {
     await expect(rerank('query', ['doc', '' as any])).rejects.toThrow(/Invalid rerank input/);
   });
 });
-

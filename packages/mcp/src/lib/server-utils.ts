@@ -12,14 +12,20 @@ export const validateServerOptions = (o: unknown) => serverOptionsSchema.parse(o
 export const validateRequest = (r: McpRequest) => requestSchema.parse(r);
 
 export const initializeParamsSchema = z
-  .object({ protocolVersion: z.string().optional(), capabilities: z.record(z.unknown()).optional() })
+  .object({
+    protocolVersion: z.string().optional(),
+    capabilities: z.record(z.unknown()).optional(),
+  })
   .optional();
 export const toolCallParamsSchema = z
   .object({ name: z.string(), arguments: z.record(z.unknown()).optional() })
   .transform((o) => ({ name: o.name, args: o.arguments ?? {} }));
 export const resourceReadParamsSchema = z.object({ uri: z.string() });
 
-export type JsonSchema = { required?: string[]; properties?: Record<string, { type?: string; maxLength?: number }> };
+export type JsonSchema = {
+  required?: string[];
+  properties?: Record<string, { type?: string; maxLength?: number }>;
+};
 export const validateToolArgs = (schema: JsonSchema | undefined, args: Record<string, unknown>) => {
   if (!schema) return;
   for (const f of schema.required || []) {

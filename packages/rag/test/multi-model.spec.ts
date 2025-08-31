@@ -27,7 +27,6 @@ describe('MultiModelGenerator', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-
   it('propagates generation options to Ollama API', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -64,6 +63,5 @@ describe('MultiModelGenerator', () => {
     );
     // @ts-ignore - restore original fetch
     global.fetch = originalFetch;
-
   });
 });

@@ -27,7 +27,7 @@ export interface LLMConfig {
 }
 
 export interface LLMGenerateOptions {
-  prompt: string;
+  prompt?: string;
   temperature?: number;
   maxTokens?: number;
 }
@@ -96,7 +96,6 @@ export function configureLLM(config: LLMConfig): LLMState {
           if (!response.ok) {
             throw new Error(`Ollama API error: ${response.status}`);
           }
-
 
           const data = await response.json();
           return { text: data.response || '' };

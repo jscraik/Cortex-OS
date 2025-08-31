@@ -4,6 +4,36 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../../utils/api-client';
 import { openSSE } from '../../../utils/sse';
+import { z } from 'zod';
+
+const modelsSchema = z.object({
+  models: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      speed: z.string().optional(),
+      costTier: z.string().optional(),
+    }),
+  ),
+  default: z.string().optional(),
+});
+
+const toolEventsSchema = z.object({
+  events: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      args: z.record(z.unknown()).optional(),
+      status: z.string().optional(),
+    }),
+  ),
+});
+
+const messageSchema = z.object({
+  content: z.string().min(1),
+  modelId: z.string(),
+  messageId: z.string(),
+});
 
 type Model = { id: string; label: string; speed?: string; costTier?: string };
 type ChatMessage = { id: string; role: 'user' | 'assistant' | 'system'; content: string };
@@ -24,9 +54,10 @@ export default function ChatPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiFetch<{ models: Model[]; default?: string }>('/api/models');
-        setModels(res.models);
-        const def = res.default || res.models[0]?.id || '';
+        const res = await apiFetch('/api/models');
+        const parsed = modelsSchema.parse(res);
+        setModels(parsed.models);
+        const def = parsed.default || parsed.models[0]?.id || '';
         if (!activeModel && def) setActiveModel(def);
       } catch (e: any) {
         setError(e.message);
@@ -47,8 +78,9 @@ export default function ChatPage() {
     }
     // Always use the local sid for API calls and return value
     try {
-      const res = await apiFetch<{ events: ToolEvent[] }>(`/api/chat/${sid}/tools`);
-      setToolEvents(res.events);
+      const res = await apiFetch(`/api/chat/${sid}/tools`);
+      const parsed = toolEventsSchema.parse(res);
+      setToolEvents(parsed.events);
     } catch (e: any) {
       console.error('Failed to load tool events:', e);
       setError(e?.message || 'Failed to load tool events');
@@ -83,13 +115,14 @@ export default function ChatPage() {
 
     try {
       // fire-and-forget send
+      const payload = messageSchema.parse({
+        content: userMsg.content,
+        modelId: activeModel,
+        messageId: userMsg.id,
+      });
       await apiFetch(`/api/chat/${sid}/messages`, {
         method: 'POST',
-        body: JSON.stringify({
-          content: userMsg.content,
-          modelId: activeModel,
-          messageId: userMsg.id,
-        }),
+        body: JSON.stringify(payload),
       });
 
       // attach stream
@@ -166,9 +199,20 @@ export default function ChatPage() {
         >
           <ul>
             {messages.map((m) => (
-              <li key={m.id} className="my-2">
-                <div className="text-xs text-gray-500">{m.role}</div>
-                <div className="whitespace-pre-wrap">{m.content}</div>
+              <li
+                key={m.id}
+                className={`my-2 flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className="max-w-[80%]">
+                  <div className="text-xs text-gray-500">{m.role}</div>
+                  <div
+                    className={`rounded px-2 py-1 whitespace-pre-wrap ${
+                      m.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

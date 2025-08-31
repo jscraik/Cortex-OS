@@ -16,18 +16,12 @@ import {
   type LLMState,
 } from './llm-bridge.js';
 import {
-  EmbeddingState,
-  createEmbeddingState,
-  addDocuments as embeddingAddDocuments,
-  similaritySearch as embeddingSimilaritySearch,
-  generateEmbeddings as embeddingGenerateEmbeddings,
-  getStats as embeddingGetStats,
-} from './lib/embedding/index.js';
-import {
-  RerankerState,
-  createRerankerState,
-  rerank as rerankerRerank,
-} from './lib/reranker/index.js';
+  EmbeddingAdapter,
+  RerankerAdapter,
+  createEmbeddingAdapter,
+  createRerankerAdapter,
+} from './embedding-adapter.js';
+import { LLMBridge } from './llm-bridge.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 export interface AICoreConfig {
@@ -43,14 +37,14 @@ export interface AICoreConfig {
 
   // Embedding Configuration
   embedding?: {
-    provider: 'sentence-transformers' | 'local' | 'mock';
+    provider: 'sentence-transformers' | 'local';
     model?: string;
     dimensions?: number;
   };
 
   // Reranker Configuration
   reranker?: {
-    provider: 'transformers' | 'local' | 'mock';
+    provider: 'transformers' | 'local';
     model?: string;
   };
 
@@ -95,8 +89,7 @@ export interface GenerationOptions {
  * Provides LLM generation, embeddings, semantic search, and RAG workflows
  */
 export class AICoreCapabilities {
-
-  private llmState: LLMState;
+  private llmState!: LLMState;
   private embeddingAdapter?: EmbeddingAdapter;
   private rerankerAdapter?: RerankerAdapter;
   private config: AICoreConfig;
@@ -121,12 +114,12 @@ export class AICoreCapabilities {
 
     // Initialize Embedding Adapter
     if (this.config.embedding) {
-      this.embeddingState = createEmbeddingState(this.config.embedding.provider);
+      this.embeddingAdapter = createEmbeddingAdapter(this.config.embedding.provider);
     }
 
     // Initialize Reranker Adapter
     if (this.config.reranker) {
-      this.rerankerState = createRerankerState(this.config.reranker.provider);
+      this.rerankerAdapter = createRerankerAdapter(this.config.reranker.provider);
     }
   }
 
@@ -151,17 +144,11 @@ export class AICoreCapabilities {
     metadata?: Record<string, any>[],
     ids?: string[],
   ): Promise<string[]> {
-    if (!this.embeddingState) {
+    if (!this.embeddingAdapter) {
       throw new Error('Embedding adapter not configured for knowledge storage');
     }
 
-    const { state, ids: documentIds } = await embeddingAddDocuments(
-      this.embeddingState,
-      documents,
-      metadata,
-      ids,
-    );
-    this.embeddingState = state;
+    const documentIds = await this.embeddingAdapter.addDocuments(documents, metadata, ids);
 
     // Store additional metadata in local knowledge base
     documents.forEach((doc, index) => {
@@ -180,11 +167,11 @@ export class AICoreCapabilities {
    * Perform semantic search in knowledge base
    */
   async searchKnowledge(query: string, topK: number = 5, threshold: number = 0.3) {
-    if (!this.embeddingState) {
+    if (!this.embeddingAdapter) {
       throw new Error('Embedding adapter not configured for knowledge search');
     }
 
-    return embeddingSimilaritySearch(this.embeddingState, {
+    return this.embeddingAdapter.similaritySearch({
       text: query,
       topK,
       threshold,
@@ -195,7 +182,7 @@ export class AICoreCapabilities {
    * Complete RAG workflow: Retrieve relevant context and generate answer
    */
   async ragQuery(ragQuery: RAGQuery): Promise<RAGResult> {
-    if (!this.embeddingState) {
+    if (!this.embeddingAdapter) {
       throw new Error('Embedding adapter not configured for RAG');
     }
 
@@ -203,7 +190,7 @@ export class AICoreCapabilities {
     const ragConfig = this.config.rag || {};
 
     // Step 1: Retrieve relevant documents
-    const searchResults = await embeddingSimilaritySearch(this.embeddingState, {
+    const searchResults = await this.embeddingAdapter.similaritySearch({
       text: query,
       topK: ragConfig.topK || 5,
       threshold: ragConfig.similarityThreshold || 0.3,
@@ -211,17 +198,16 @@ export class AICoreCapabilities {
 
     // Step 2: Rerank if reranker is available
     let finalSources = searchResults;
-    if (this.rerankerState && searchResults.length > 0) {
-      const documentsToRerank = searchResults.map((r) => r.text);
-      const rerankedResults = await rerankerRerank(
-        this.rerankerState,
+    if (this.rerankerAdapter && searchResults.length > 0) {
+      const documentsToRerank = searchResults.map((r: { text: string }) => r.text);
+      const rerankedResults = await this.rerankerAdapter.rerank(
         query,
         documentsToRerank,
         ragConfig.rerankTopK || 3,
       );
 
       // Map reranked results back to search results
-      finalSources = rerankedResults.map((rr) => {
+      finalSources = rerankedResults.map((rr: { originalIndex: number; score: number }) => {
         const original = searchResults[rr.originalIndex];
         return {
           ...original,
@@ -231,7 +217,7 @@ export class AICoreCapabilities {
     }
 
     // Step 3: Construct context prompt
-    const contextTexts = finalSources.map((source) => source.text);
+    const contextTexts = finalSources.map((source: { text: string }) => source.text);
     const contextPrompt = this.buildRAGPrompt(query, contextTexts, systemPrompt);
 
     // Step 4: Generate answer using LLM
@@ -243,11 +229,13 @@ export class AICoreCapabilities {
     // Step 5: Return structured result
     return {
       answer,
-      sources: finalSources.map((source) => ({
-        text: source.text,
-        similarity: source.similarity,
-        metadata: source.metadata,
-      })),
+      sources: finalSources.map(
+        (source: { text: string; similarity: number; metadata?: Record<string, any> }) => ({
+          text: source.text,
+          similarity: source.similarity,
+          metadata: source.metadata,
+        }),
+      ),
       prompt: contextPrompt,
       confidence: this.calculateConfidence(finalSources),
     };
@@ -257,11 +245,11 @@ export class AICoreCapabilities {
    * Get embedding for text (if embedding adapter available)
    */
   async getEmbedding(text: string): Promise<number[] | null> {
-    if (!this.embeddingState) {
+    if (!this.embeddingAdapter) {
       return null;
     }
 
-    const embeddings = await embeddingGenerateEmbeddings(this.embeddingState, text);
+    const embeddings = await this.embeddingAdapter.generateEmbeddings(text);
     return embeddings[0];
   }
 
@@ -269,11 +257,11 @@ export class AICoreCapabilities {
    * Calculate semantic similarity between two texts
    */
   async calculateSimilarity(text1: string, text2: string): Promise<number | null> {
-    if (!this.embeddingState) {
+    if (!this.embeddingAdapter) {
       return null;
     }
 
-    const embeddings = await embeddingGenerateEmbeddings(this.embeddingState, [text1, text2]);
+    const embeddings = await this.embeddingAdapter.generateEmbeddings([text1, text2]);
     const [emb1, emb2] = embeddings;
 
     // Cosine similarity
@@ -309,16 +297,16 @@ export class AICoreCapabilities {
         model: getModel(this.llmState),
         healthy: llmHealth.healthy,
       },
-      embedding: this.embeddingState
+      embedding: this.embeddingAdapter
         ? {
-            provider: embeddingGetStats(this.embeddingState).provider,
-            dimensions: embeddingGetStats(this.embeddingState).dimensions,
-            documents: embeddingGetStats(this.embeddingState).totalDocuments,
+            provider: this.embeddingAdapter.getStats().provider,
+            dimensions: this.embeddingAdapter.getStats().dimensions,
+            documents: this.embeddingAdapter.getStats().totalDocuments,
           }
         : undefined,
-      reranker: this.rerankerState
+      reranker: this.rerankerAdapter
         ? {
-            provider: this.rerankerState.config.provider,
+            provider: 'available',
             available: true,
           }
         : undefined,
@@ -335,8 +323,8 @@ export class AICoreCapabilities {
     this.knowledgeBase.clear();
 
     // Clear embedding adapter's vector store if available
-    if (this.embeddingState) {
-      this.embeddingState = { ...this.embeddingState, vectorStore: new Map() };
+    if (this.embeddingAdapter && typeof this.embeddingAdapter.clearDocuments === 'function') {
+      await this.embeddingAdapter.clearDocuments();
     }
   }
 
@@ -346,8 +334,6 @@ export class AICoreCapabilities {
   async shutdown(): Promise<void> {
     // Clear knowledge base
     await this.clearKnowledge();
-
-
     // Cleanup embedding adapter resources
     if (this.embeddingAdapter && typeof this.embeddingAdapter.shutdown === 'function') {
       await this.embeddingAdapter.shutdown();
@@ -361,7 +347,6 @@ export class AICoreCapabilities {
     // Cleanup LLM resources
     if (this.llmState) {
       await shutdownLLM(this.llmState);
-
     }
   }
 
@@ -374,7 +359,7 @@ export class AICoreCapabilities {
   } {
     return {
       documentsStored: this.knowledgeBase.size,
-      embeddingStats: this.embeddingState ? embeddingGetStats(this.embeddingState) : undefined,
+      embeddingStats: this.embeddingAdapter?.getStats(),
     };
   }
 
@@ -413,15 +398,15 @@ export class AICoreCapabilities {
   private getAvailableFeatures(): string[] {
     const features = ['text-generation'];
 
-    if (this.embeddingState) {
+    if (this.embeddingAdapter) {
       features.push('embeddings', 'semantic-search', 'knowledge-base');
     }
 
-    if (this.rerankerState) {
+    if (this.rerankerAdapter) {
       features.push('reranking');
     }
 
-    if (this.embeddingState && this.rerankerState) {
+    if (this.embeddingAdapter && this.rerankerAdapter) {
       features.push('rag', 'question-answering');
     }
 
@@ -435,11 +420,8 @@ export class AICoreCapabilities {
 export const createAICapabilities = (
   preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
-  const rerankerProvider = process.env.RERANKER_PROVIDER as
-    | 'transformers'
-    | 'local'
-    | 'mock'
-    | undefined;
+  const env: any = (globalThis as any).process?.env ?? {};
+  const rerankerProvider = env.RERANKER_PROVIDER as 'transformers' | 'local' | 'mock' | undefined;
 
   const configs: Record<string, AICoreConfig> = {
     full: {

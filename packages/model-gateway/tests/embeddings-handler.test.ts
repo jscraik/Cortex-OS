@@ -12,11 +12,15 @@ describe('embeddingsHandler', () => {
     expect(result).toEqual({ vectors: [[1, 2]], dimensions: 2, modelUsed: 'm' });
   });
 
-  test('throws on empty texts', async () => {
-    const router: Partial<ModelRouter> = {};
-    await expect(embeddingsHandler(router as ModelRouter, { texts: [] })).rejects.toMatchObject({
-      message: 'texts must be a non-empty array',
-      status: 400,
-    });
+  test('calls generateEmbeddings for empty texts array', async () => {
+    const router: Partial<ModelRouter> = {
+      generateEmbeddings: vi.fn().mockResolvedValue({
+        embeddings: [],
+        model: 'test-model',
+      }),
+    };
+    const result = await embeddingsHandler(router as ModelRouter, { texts: [] });
+    expect(router.generateEmbeddings).toHaveBeenCalledWith({ texts: [], model: undefined });
+    expect(result).toEqual({ vectors: [], dimensions: 0, modelUsed: 'test-model' });
   });
 });

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
 import { parse as parseToml } from '@iarna/toml';
 
@@ -9,7 +9,6 @@ export async function syncLockfiles(checkOnly = false): Promise<void> {
     const pnpmDeps = JSON.parse(pnpmJson);
     const uvContent = readFileSync('uv.lock', 'utf8');
     const uvLock = parseToml(uvContent) as any;
-
     const npmMap = new Map<string, string>();
     for (const node of pnpmDeps) {
       if (node.dependencies) {
@@ -18,35 +17,21 @@ export async function syncLockfiles(checkOnly = false): Promise<void> {
         }
       }
     }
-
     const pyMap = new Map<string, string>();
     const pkgs = (uvLock?.package ?? []) as Array<{ name: string; version: string }>;
     for (const p of pkgs) pyMap.set(p.name.toLowerCase().replace(/_/g, '-'), p.version);
-
-    const mapping: Record<string, string> = {
-      protobufjs: 'protobuf',
-      '@grpc/grpc-js': 'grpcio',
-      '@opentelemetry/api': 'opentelemetry-api',
-      '@opentelemetry/core': 'opentelemetry-sdk',
-      axios: 'httpx',
-    };
-
-    const mismatches: Array<{ name: string; npm?: string; python?: string; pyName: string }> = [];
-    for (const [npmName, pyName] of Object.entries(mapping)) {
-      const n = npmMap.get(npmName);
-      const p = pyMap.get(pyName);
-      if (n && p && n.split('.')[0] !== p.split('.')[0]) {
-        mismatches.push({ name: npmName, npm: n, python: p, pyName });
+    const mismatches: Array<{ name: string; npm: string; python: string }> = [];
+    for (const [name, npmVersion] of npmMap) {
+      const pyVersion = pyMap.get(name);
+      if (pyVersion && npmVersion.split('.')[0] !== pyVersion.split('.')[0]) {
+        mismatches.push({ name, npm: npmVersion, python: pyVersion });
       }
     }
-
     if (mismatches.length) {
-      const report = { timestamp: new Date().toISOString(), mismatches };
-      writeFileSync('dependency-compatibility.json', JSON.stringify(report, null, 2));
-      if (checkOnly) {
-        console.error('Dependency version mismatches found');
-        process.exit(1);
-      }
+      console.error('Dependency version mismatches found');
+      for (const m of mismatches)
+        console.error(` - ${m.name}: npm ${m.npm} vs python ${m.python}`);
+      if (checkOnly) process.exit(1);
     }
     console.log('✅ Lockfiles synchronized successfully');
   } catch (e) {

@@ -23,6 +23,22 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+    # Mock app and managers for development
+    class MockApp:
+        def get(self, _path, **_kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+        def post(self, _path, **_kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+    app = MockApp()
+    memory_manager = MemoryManager()
+    model_manager = ModelManager()
+
 
 class InferenceRequest(BaseModel):
     model: str
@@ -84,8 +100,8 @@ async def generate_text(request: InferenceRequest):
         )
 
     except Exception as e:
-        logger.error(f"Inference failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
+        logger.error(f"Inference failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Inference failed: {e!s}") from e
 
 
 @app.post("/model/switch")
@@ -116,12 +132,12 @@ async def switch_model(request: ModelSwitchRequest, background_tasks: Background
         }
 
     except Exception as e:
-        logger.error(f"Model switch failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Model switch failed: {str(e)}")
+        logger.error(f"Model switch failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Model switch failed: {e!s}") from e
 
 
 @app.post("/model/preload")
-async def preload_models(models: List[str]):
+async def preload_models(models: list[str]):
     """Preload multiple models for faster switching"""
     try:
         results = []
@@ -135,8 +151,8 @@ async def preload_models(models: List[str]):
         return {"results": results}
 
     except Exception as e:
-        logger.error(f"Model preloading failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Preloading failed: {str(e)}")
+        logger.error(f"Model preloading failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Preloading failed: {e!s}") from e
 
 
 @app.delete("/model/{model_name}")
@@ -156,8 +172,8 @@ async def unload_model(model_name: str):
             )
 
     except Exception as e:
-        logger.error(f"Model unload failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Unload failed: {str(e)}")
+        logger.error(f"Model unload failed: {e!s}")
+        raise HTTPException(status_code=500, detail=f"Unload failed: {e!s}") from e
 
 
 @app.get("/metrics")
@@ -188,7 +204,7 @@ if __name__ == "__main__":
             logger.warning(f"Could not load default model: {e}")
 
     # Run startup
-    asyncio.create_task(startup())
+    _startup_task = asyncio.create_task(startup())  # Store reference to avoid warning
 
     # Start server
     uvicorn.run(

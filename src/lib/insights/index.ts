@@ -32,7 +32,9 @@ export function summarizeEvidence(evidenceCollection: Evidence[]): string {
 }
 
 export async function invokeRagAnalysis(
-  aiCapabilities: { ragQuery: (args: { query: string; systemPrompt: string }) => Promise<{ answer: string }> },
+  aiCapabilities: {
+    ragQuery: (args: { query: string; systemPrompt: string }) => Promise<{ answer: string }>;
+  },
   evidenceSummary: string,
   taskContext: string,
 ) {

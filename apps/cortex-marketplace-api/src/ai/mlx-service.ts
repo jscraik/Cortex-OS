@@ -3,7 +3,7 @@
  * @description Production-ready MLX model integration for semantic search and safety
  */
 
-import { spawn, type ChildProcess } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { writeFile } from 'fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -180,10 +180,12 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
   const tmpDir = os.tmpdir();
   const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
   await writeFile(scriptPath, script);
+  // Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
   return new Promise((resolve, reject) => {
-    const child: ChildProcess = spawn(pythonPath, [scriptPath], {
-      env: { ...process.env, PYTHONPATH: process.env.PYTHONPATH },
-    });
+    const child: ChildProcess = spawnPythonProcess([scriptPath], { python: pythonPath });
     let output = '';
     let error = '';
     child.stdout?.on('data', (d) => (output += d.toString()));
@@ -191,12 +193,14 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
     child.on('close', (code) =>
       code === 0 ? resolve(output) : reject(new Error(`Script failed: ${error}`)),
     );
-    setTimeout(() => {
+    const to = setTimeout(() => {
       try {
         child.kill();
       } catch {}
       reject(new Error('Script timeout'));
     }, 10000);
+    // clear timeout if process exits
+    child.on('exit', () => clearTimeout(to));
   });
 }
 
@@ -208,11 +212,11 @@ async function executeMLXScriptWithInput(
   const tmpDir = os.tmpdir();
   const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
   await writeFile(scriptPath, script);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
   return new Promise((resolve, reject) => {
-    const child: ChildProcess = spawn(pythonPath, [scriptPath], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env, PYTHONPATH: process.env.PYTHONPATH },
-    });
+    const child: ChildProcess = spawnPythonProcess([scriptPath], { python: pythonPath });
     let output = '';
     let error = '';
     child.stdout?.on('data', (d) => (output += d.toString()));
@@ -220,14 +224,17 @@ async function executeMLXScriptWithInput(
     child.on('close', (code) =>
       code === 0 ? resolve(output) : reject(new Error(`Script failed: ${error}`)),
     );
-    child.stdin?.write(input);
-    child.stdin?.end();
-    setTimeout(() => {
+    if (child.stdin) {
+      child.stdin.write(input);
+      child.stdin.end();
+    }
+    const to = setTimeout(() => {
       try {
         child.kill();
       } catch {}
       reject(new Error('Script timeout'));
     }, 10000);
+    child.on('exit', () => clearTimeout(to));
   });
 }
 

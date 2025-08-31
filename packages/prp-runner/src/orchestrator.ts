@@ -5,18 +5,19 @@
  * @version 1.1.0
  */
 
-
 import { LLMBridge, LLMConfig } from './llm-bridge.js';
 import { createExecutionContext } from './lib/create-execution-context.js';
 import { executeNeuron } from './lib/execute-neuron.js';
-
+import { z } from 'zod';
 
 // Minimal interfaces driven by tests
-export interface Blueprint {
-  title: string;
-  description: string;
-  requirements: string[];
-}
+export const blueprintSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  requirements: z.array(z.string()),
+});
+
+export type Blueprint = z.infer<typeof blueprintSchema>;
 
 export interface ExecutionState {
   id: string;
@@ -139,7 +140,7 @@ export class PRPOrchestrator {
    * Execute PRP cycle with LLM integration
    * Enhanced to support LLM-powered neurons
    */
-  async executePRPCycle(blueprint: Blueprint): Promise<PRPExecutionResult> {
+  async executePRPCycle(rawBlueprint: Blueprint): Promise<PRPExecutionResult> {
     if (this.neurons.size === 0) {
       throw new Error('No neurons registered');
     }
@@ -150,6 +151,7 @@ export class PRPOrchestrator {
       throw new Error('LLM configuration required for LLM-powered neurons');
     }
 
+    const blueprint = blueprintSchema.parse(rawBlueprint);
     const context = createExecutionContext(this.llmBridge);
     const outputs: Record<string, unknown> = {};
     const cycleId = `prp-${Date.now()}`;
@@ -168,5 +170,27 @@ export class PRPOrchestrator {
       status: 'completed',
     };
   }
+
+  /**
+   * Generate a final product requirements prompt by executing the PRP cycle
+   * and compiling neuron outputs into a single prompt string.
+   */
+  async generateProductRequirementsPrompt(blueprint: Blueprint): Promise<string> {
+    const result = await this.executePRPCycle(blueprint);
+    const sections = Object.entries(result.outputs).map(
+      ([id, output]) => `## ${id}\n${typeof output === 'string' ? output : JSON.stringify(output, null, 2)}`,
+    );
+    return [
+      `# Product Requirements for ${result.blueprint.title}`,
+      `## Description`,
+      result.blueprint.description,
+      `## Requirements`,
+      ...result.blueprint.requirements.map((r) => `- ${r}`),
+      ...sections,
+    ].join('\n');
+  }
 }
 
+export function createPRPOrchestrator(): PRPOrchestrator {
+  return new PRPOrchestrator();
+}

@@ -6,6 +6,8 @@
 
 This package provides comprehensive RAG capabilities as a shared library that can be used by feature packages mounted by the ASBR Runtime (`apps/cortex-os/`). It includes all RAG-related functionality including chunking, embedding, storage, and pipeline operations.
 
+The package is currently undergoing significant enhancements to expand its capabilities. See our [enhancement plans](docs/plan/summary.md) for details.
+
 ## Features
 
 ### Core RAG Pipeline
@@ -231,3 +233,9 @@ This package consolidates all RAG functionality that was previously split across
 ## Migration Note
 
 This package consolidates functionality that was previously split between `@cortex-os/rag` and `@cortex-os/rag-ingest`. All functionality is now available through this single package with the same API.
+
+## Enhancement Roadmap
+
+This package is currently being enhanced with new capabilities as outlined in our [enhancement roadmap](docs/plan/roadmap.md). Please refer to the [setup guide](docs/setup-guide.md) for information on configuring your development environment for these enhancements.
+
+For a complete overview of planned enhancements, see our [enhancement summary](docs/plan/enhancement-summary.md).

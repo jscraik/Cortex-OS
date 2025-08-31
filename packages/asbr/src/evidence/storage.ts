@@ -3,10 +3,10 @@
  * XDG-compliant persistence for evidence with governance features
  */
 
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { mkdir, readdir, readFile, rm, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { gzip, gunzip } from 'zlib';
-import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { gunzip, gzip } from 'zlib';
 import type { Evidence } from '../types/index.js';
 import { ValidationError } from '../types/index.js';
 import { getDataPath, pathExists } from '../xdg/index.js';
@@ -489,7 +489,6 @@ export class EvidenceStorage {
     return csvContent;
   }
 
-
   private async encrypt(content: string): Promise<string> {
     const key = this.getEncryptionKey();
     const iv = randomBytes(12);
@@ -537,11 +536,17 @@ export class EvidenceStorage {
   }
 
   private getEncryptionKey(): Buffer {
-      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY environment variable not set. Please provide a 64-character hex string (32 bytes) as EVIDENCE_ENCRYPTION_KEY in your environment.');
+    const keyHex = process.env.EVIDENCE_ENCRYPTION_KEY;
+    if (!keyHex) {
+      throw new ValidationError(
+        'EVIDENCE_ENCRYPTION_KEY environment variable not set. Please provide a 64-character hex string (32 bytes) as EVIDENCE_ENCRYPTION_KEY in your environment.',
+      );
     }
     const key = Buffer.from(keyHex, 'hex');
     if (key.length !== 32) {
-      throw new ValidationError('EVIDENCE_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32');
+      throw new ValidationError(
+        'EVIDENCE_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32',
+      );
     }
     return key;
   }

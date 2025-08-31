@@ -12,33 +12,34 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup src/index.ts --dts --format esm --clean",
     "dev": "tsup src/index.ts --dts --format esm --watch",
-    "test": "node test-runner.js",
-    "test:unit": "node test-runner.js --mode unit",
-    "test:integration": "node test-runner.js --mode integration",
-    "test:security": "node test-runner.js --mode security",
-    "test:performance": "node test-runner.js --mode performance",
-    "test:accessibility": "node test-runner.js --mode accessibility",
-    "test:golden": "node test-runner.js --mode golden",
-    "test:contracts": "node test-runner.js --mode contract",
-    "test:coverage": "node test-runner.js --coverage",
-    "test:coverage:threshold": "node test-runner.js --coverage --mode all",
-    "test:watch": "node test-runner.js --watch",
-    "test:ui": "node test-runner.js --ui",
-    "benchmark": "vitest bench",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "vitest run tests/e2e",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:threshold": "vitest run --coverage --reporter=verbose",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src tests",
+    "format": "prettier --write src tests",
+    "security:run": "tsx ./examples/security-llamaguard-mlx.ts",
+    "security:audit": "tsx ./examples/audit-security-workflow.ts"
   },
   "dependencies": {
-    "@cortex-os/a2a": "workspace:*",
-    "@cortex-os/mcp-bridge": "workspace:*",
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/mcp": "workspace:*",
+    "@cortex-os/memories": "workspace:*",
+    "yaml": "^2.8.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
-    "@vitest/coverage-v8": "^2.1.9",
+    "@vitest/coverage-v8": "^3.2.4",
     "tsup": "^8.0.0",
     "typescript": "^5.5.4",
-    "vitest": "^2.1.9"
+    "vitest": "^3.2.4"
   }
 }

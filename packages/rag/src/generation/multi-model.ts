@@ -1,6 +1,9 @@
 
+import path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 import type { ChatMessage, GenerationConfig, Generator } from './index';
-import { runProcess } from '../../../../src/lib/run-process.js';
+import { runProcess } from '../lib/run-process.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -129,7 +132,6 @@ export class MultiModelGenerator implements Generator {
     prompt: string,
     config: Partial<GenerationConfig>,
   ): Promise<string> {
-
     try {
       const response = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',
@@ -158,7 +160,6 @@ export class MultiModelGenerator implements Generator {
     } catch (error) {
       throw new Error(`Ollama generation failed: ${error}`);
     }
-
   }
 
   /**

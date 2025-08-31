@@ -1,0 +1,37 @@
+name: k6-load
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install
+        run: pnpm install --frozen-lockfile=false
+      - name: Build gateway
+        run: pnpm -F @cortex-os/gateway build
+      - name: Start gateway
+        run: node packages/gateway/dist/server.js &
+      - name: Wait for gateway
+        run: npx wait-on http://localhost:3333/openapi.json || true
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+      - name: k6 smoke
+        run: k6 run k6/smoke.js
+      - name: k6 load (tight thresholds)
+        env:
+          P95_MS: 300
+          ERROR_RATE_MAX: 0.005
+          STAGE1: 2m:30
+          STAGE2: 5m:80
+          STAGE3: 2m:0
+        run: k6 run k6/load.js

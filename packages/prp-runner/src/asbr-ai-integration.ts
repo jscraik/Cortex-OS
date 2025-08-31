@@ -57,6 +57,7 @@ interface EvidenceCollectionOptions {
   maxContentLength?: number;
   allowedSources?: string[];
   confidenceThreshold?: number;
+  maxResults?: number;
 }
 
 export interface AIEvidenceConfig {
@@ -96,6 +97,7 @@ export interface AIEvidenceResult {
     processingTime: number;
     enhancementMethods: string[];
     qualityScores: Record<string, number>;
+    confidence: number;
   };
 }
 
@@ -155,6 +157,7 @@ export class ASBRAIIntegration {
       processingTime,
       enhancementMethods: this.getActualUsedMethods(aiEnhancedEvidence),
       qualityScores: await this.calculateQualityScores(aiEnhancedEvidence),
+      confidence: 0.8, // Default confidence score
     };
 
     const result: AIEvidenceResult = {

@@ -44,7 +44,14 @@
       "@cortex-os/a2a-core/*": ["packages/a2a/a2a-core/src/*"],
       "@cortex-os/a2a-transport/*": ["packages/a2a/a2a-transport/src/*"],
       "@cortex-os/a2a-contracts/*": ["packages/a2a/a2a-contracts/src/*"],
-      "@cortex-os/utils": ["libs/typescript/utils/src"],
+
+      // TypeScript Shared Libraries
+      "@cortex-os/utils": ["libs/typescript/utils/dist/index.d.ts"],
+      "@cortex-os/utils/*": ["libs/typescript/utils/dist/*"],
+      "@cortex-os/types": ["libs/typescript/types/src/index.ts"],
+      "@cortex-os/types/*": ["libs/typescript/types/src/*"],
+      "@cortex-os/contracts": ["libs/typescript/contracts/src/index.ts"],
+      "@cortex-os/contracts/*": ["libs/typescript/contracts/src/*"],
       "@cortex-os/telemetry": ["libs/typescript/telemetry/src"],
 
       // MCP Packages
@@ -53,9 +60,14 @@
       "@cortex-os/mcp-registry/*": ["packages/mcp/mcp-registry/src/*"],
 
       // RAG Packages
+      "@cortex-os/rag/*": ["packages/rag/src/*"],
       "@cortex-os/rag-pipeline/*": ["packages/rag/src/pipeline/*"],
       "@cortex-os/rag-embed/*": ["packages/rag/src/embed/*"],
       "@cortex-os/rag-store/*": ["packages/rag/src/store/*"],
+
+      // Evals
+      "@cortex-os/evals": ["packages/evals/src/index.ts"],
+      "@cortex-os/evals/*": ["packages/evals/src/*"],
 
       // Simlab Packages
       "@cortex-os/simlab-mono": ["packages/simlab-mono/src/index.ts"],
@@ -82,6 +94,7 @@
       "@cortex-os/prp-runner/*": ["packages/prp-runner/src/*"],
       "@cortex-os/mvp-core": ["packages/mvp-core/src/index.ts"],
       "@cortex-os/mvp-core/*": ["packages/mvp-core/src/*"],
+      "@cortex-os/model-gateway/*": ["packages/model-gateway/src/*"],
 
       // Shared Library Packages
       "@cortex-os/orchestration": ["packages/orchestration/src/index.ts"],

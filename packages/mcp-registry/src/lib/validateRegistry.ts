@@ -1,13 +1,13 @@
-import type Ajv from 'ajv';
+import type { default as Ajv } from 'ajv';
 import {
   RegistryIndexSchema,
-  type ValidationResult,
   type ValidationError,
+  type ValidationResult,
   type ValidationWarning,
 } from '../types.js';
 
 export function validateRegistry(
-  ajv: Ajv,
+  ajv: any,
   registry: unknown,
   validateServer: (manifest: unknown) => ValidationResult,
 ): ValidationResult {
@@ -94,4 +94,3 @@ export function validateRegistry(
     warnings,
   };
 }
-

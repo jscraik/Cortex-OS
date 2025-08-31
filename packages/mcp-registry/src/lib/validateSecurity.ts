@@ -70,4 +70,3 @@ export function validateSecurity(manifest: unknown): ValidationResult {
     warnings,
   };
 }
-

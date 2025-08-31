@@ -149,4 +149,3 @@ export function recordErrorMetrics(
     'error.stack': err.stack,
   });
 }
-

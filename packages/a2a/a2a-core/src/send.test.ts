@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('axios', () => ({
@@ -38,7 +37,6 @@ describe('send', () => {
     });
   });
 
-
   it('propagates errors from axios', async () => {
     const axios = (await import('axios')).default as { post: ReturnType<typeof vi.fn> };
     axios.post.mockRejectedValue(new Error('network error'));
@@ -54,5 +52,4 @@ describe('send', () => {
       }),
     ).rejects.toThrow('network error');
   });
-
 });

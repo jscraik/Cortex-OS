@@ -1,4 +1,3 @@
-import { spawn } from 'child_process';
 import path from 'path';
 
 /**
@@ -7,29 +6,33 @@ import path from 'path';
 export async function generateEmbedding(
   texts: string | string[],
   pythonPath = 'python3',
+  timeoutMs = 30000,
 ): Promise<number[][]> {
   const arr = Array.isArray(texts) ? texts : [texts];
   if (arr.length === 0) return [];
 
   const scriptPath = path.resolve(__dirname, 'embed_mlx.py');
+  // Use centralized Python runner for consistent PYTHONPATH/env handling
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  const { runPython } = await import('../../../libs/python/exec.js');
 
-  return new Promise((resolve, reject) => {
-    const child = spawn(pythonPath, [scriptPath, JSON.stringify(arr)]);
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (d) => (stdout += d.toString()));
-    child.stderr.on('data', (d) => (stderr += d.toString()));
-    child.on('close', (code) => {
-      if (code === 0) {
-        try {
-          const parsed = JSON.parse(stdout || '[]');
-          resolve(parsed);
-        } catch (err) {
-          reject(err);
-        }
-      } else {
-        reject(new Error(stderr || `Embedding process failed with code ${code}`));
-      }
-    });
-  });
+  const run = runPython.bind(null, scriptPath, [JSON.stringify(arr)], {
+    python: pythonPath,
+  } as unknown as Record<string, unknown>);
+
+  const timer = new Promise<string>((_, reject) =>
+    setTimeout(
+      () => reject(new Error(`Embedding process timed out after ${timeoutMs}ms`)),
+      timeoutMs,
+    ),
+  );
+
+  const out = await Promise.race([run(), timer]);
+  try {
+    const parsed = JSON.parse(String(out || '[]')) as number[][];
+    return parsed;
+  } catch (err) {
+    throw new Error(`Failed to parse embedding output: ${err}`);
+  }
 }

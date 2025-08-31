@@ -161,7 +161,6 @@ describe('ASBR API Integration Tests', () => {
       expect(response.status).toBe(200);
     });
 
-
     it('should allow SSE event stream for specific task', async () => {
       const response = await request(app)
         .get('/v1/events?stream=sse&taskId=test-task-id')
@@ -177,7 +176,6 @@ describe('ASBR API Integration Tests', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(400);
     });
-
   });
 
   describe('Profile Management', () => {
