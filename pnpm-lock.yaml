@@ -340,9 +340,9 @@ importers:
 
   packages/agents:
     dependencies:
-      '@cortex-os/a2a-core':
+      '@cortex-os/a2a':
         specifier: workspace:*
-        version: link:../a2a/a2a-core
+        version: link:../a2a
       '@cortex-os/mcp':
         specifier: workspace:*
         version: link:../mcp
@@ -623,9 +623,9 @@ importers:
 
   packages/mcp-registry:
     dependencies:
-      '@cortex-os/mcp-core':
+      '@cortex-os/mcp':
         specifier: workspace:*
-        version: link:../mcp/mcp-core
+        version: link:../mcp
       '@noble/ed25519':
         specifier: ^2.1.0
         version: 2.3.0
@@ -864,6 +864,9 @@ importers:
         specifier: ^3.22.4
         version: 3.25.76
     devDependencies:
+      '@eslint/js':
+        specifier: ^8.53.0
+        version: 8.57.1
       '@types/node':
         specifier: ^20.9.0
         version: 20.19.11
@@ -882,6 +885,9 @@ importers:
       typescript:
         specifier: ^5.2.2
         version: 5.9.2
+      typescript-eslint:
+        specifier: ^8.40.0
+        version: 8.41.0(eslint@8.57.1)(typescript@5.9.2)
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@20.19.11)(jiti@2.5.1)(jsdom@26.1.0)(tsx@4.20.5)(yaml@2.8.1)
@@ -17826,6 +17832,17 @@ snapshots:
   typedarray-to-buffer@3.1.5:
     dependencies:
       is-typedarray: 1.0.0
+
+  typescript-eslint@8.41.0(eslint@8.57.1)(typescript@5.9.2):
+    dependencies:
+      '@typescript-eslint/eslint-plugin': 8.41.0(@typescript-eslint/parser@8.41.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2)
+      '@typescript-eslint/parser': 8.41.0(eslint@8.57.1)(typescript@5.9.2)
+      '@typescript-eslint/typescript-estree': 8.41.0(typescript@5.9.2)
+      '@typescript-eslint/utils': 8.41.0(eslint@8.57.1)(typescript@5.9.2)
+      eslint: 8.57.1
+      typescript: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
 
   typescript-eslint@8.41.0(eslint@9.34.0(jiti@2.5.1))(typescript@5.9.2):
     dependencies:
