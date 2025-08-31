@@ -121,10 +121,12 @@ export class MLXFirstModelProvider {
       this.markUnhealthy('mlx', config.primary.model);
     }
 
-    // Fallback to Ollama (using text generation for semantic understanding)
+    // Fallback to Frontier API using an Ollama model
     try {
-      // Ollama doesn't have embeddings API, so we use semantic comparison
-      const embeddings = await this.ollamaService.generateSemanticVectors(request.texts);
+      const embeddings = await this.ollamaService.embed({
+        model: config.fallback.model,
+        texts: request.texts,
+      });
 
       return {
         embeddings,
@@ -329,24 +331,19 @@ class OllamaService {
     return { content: result.response };
   }
 
-  async generateSemanticVectors(texts: string[]): Promise<number[][]> {
-    // Simplified semantic vector generation using Ollama
-    // In practice, you might use sentence transformers or similar
-    const vectors: number[][] = [];
+  async embed(request: { model: string; texts: string[] }): Promise<number[][]> {
+    const response = await fetch(`${this.baseUrl}/api/embed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: request.model, input: request.texts }),
+    });
 
-    for (const text of texts) {
-      const response = await this.generate({
-        model: 'phi4-mini-reasoning:latest',
-        prompt: `Generate a semantic summary of: "${text}". Output only numbers separated by commas representing the semantic features.`,
-        maxTokens: 100,
-      });
-
-      // Parse response into a vector (simplified)
-      const vector = this.parseSemanticResponse(response.content);
-      vectors.push(vector);
+    if (!response.ok) {
+      throw new Error(`Ollama embedding error: ${response.statusText}`);
     }
 
-    return vectors;
+    const result = await response.json();
+    return result.embeddings;
   }
 
   async compareRelevance(query: string, documents: string[]): Promise<number[]> {
@@ -381,31 +378,7 @@ Output only a decimal number between 0 and 1:`,
     }
   }
 
-  private parseSemanticResponse(content: string): number[] {
-    // Simplified parsing - in practice, use more robust methods
-    try {
-      const numbers = content.match(/[\d.-]+/g);
-      if (numbers && numbers.length > 0) {
-        return numbers.slice(0, 768).map((n) => parseFloat(n) || 0);
-      }
-    } catch {
-      // Return default vector
-    }
-
-    // Fallback: generate a simple hash-based vector
-    const hash = this.simpleHash(content);
-    return Array.from({ length: 768 }, (_, i) => Math.sin(hash + i) * 0.1);
-  }
-
-  private simpleHash(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return hash;
-  }
+  
 }
 
 // Internal service classes intentionally not exported

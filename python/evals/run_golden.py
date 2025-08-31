@@ -1,16 +1,8 @@
-#!/usr/bin/env python3
-from __future__ import annotations
-
 import argparse
 import json
 import re
 from pathlib import Path
-
-try:
-    import jsonschema  # type: ignore
-except Exception:  # pragma: no cover
-    jsonschema = None
-
+import jsonschema  # type: ignore
 from cortex_mlx.router import ModelRouter
 
 
@@ -20,10 +12,9 @@ def load_suite(name: str):
     with path.open() as f:
         suite = json.load(f)
     schema_path = root / 'schema.json'
-    if jsonschema:
-        with schema_path.open() as f:
-            schema = json.load(f)
-        jsonschema.validate(instance=suite, schema=schema)
+    with schema_path.open() as f:
+        schema = json.load(f)
+    jsonschema.validate(instance=suite, schema=schema)
     return suite
 
 

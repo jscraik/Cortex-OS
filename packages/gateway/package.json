@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "node ./scripts/build-openapi.cjs && vitest run",
+    "test:coverage": "node ./scripts/build-openapi.cjs && vitest run --coverage",
     "start": "node dist/server.js"
   },
   "dependencies": {

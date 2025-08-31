@@ -188,6 +188,41 @@ export class EvaluationNode {
         }
       }
 
+      // Try Python tests if it's a Python project
+      if (
+        fs.existsSync(path.join(projectRoot, 'pyproject.toml')) ||
+        fs.existsSync(path.join(projectRoot, 'requirements.txt'))
+      ) {
+        try {
+          await execAsync('which pytest', { timeout: 2000 });
+
+          const { stdout, stderr } = await execAsync('pytest --cov=. --cov-report=term-missing', {
+            cwd: projectRoot,
+            timeout: 120000,
+            maxBuffer: 2 * 1024 * 1024,
+          });
+
+          const testOutput = stdout + stderr;
+
+          // Parse Python test results
+          const passedMatch = testOutput.match(/(\d+)\s+passed/i);
+          const failedMatch = testOutput.match(/(\d+)\s+failed/i);
+          const coverageMatch = testOutput.match(/TOTAL\s+\d+\s+\d+\s+(\d+)%/);
+
+          if (passedMatch || failedMatch || coverageMatch) {
+            testResults.passed = passedMatch ? parseInt(passedMatch[1]) > 0 : false;
+            testResults.failed = failedMatch ? parseInt(failedMatch[1]) > 0 : false;
+            testResults.coverage = Math.max(
+              testResults.coverage,
+              coverageMatch ? parseInt(coverageMatch[1]) : 0,
+            );
+            testResults.hasRedGreenEvidence = true;
+          }
+        } catch (pytestError) {
+          // pytest failed or not available
+        }
+      }
+
       // Check for coverage reports
       const coverageFiles = [
         path.join(projectRoot, 'coverage', 'lcov.info'),
@@ -361,7 +396,7 @@ export class EvaluationNode {
               tools.push('Pylint');
             }
           } catch (pylintError) {
-            // Pylint failed
+            throw new Error(`Pylint execution failed: ${pylintError}`);
           }
         }
       } catch (pythonError) {
