@@ -29,7 +29,7 @@
       }
     },
     "test": {
-      "executor": "@nx/vite:vitest",
+      "executor": "@nx/vitest:vitest",
       "outputs": [
         "{projectRoot}/coverage"
       ],
