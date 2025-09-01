@@ -49,24 +49,11 @@
       "inputs": ["default", "{workspaceRoot}/eslint.config.js", "{workspaceRoot}/biome.json"],
       "cache": true
     },
-    "typecheck": {
-      "dependsOn": ["^build"],
-      "inputs": ["default", "^production"],
-      "cache": true
-    },
-    "e2e": {
-      "inputs": ["default", "^production"],
-      "cache": true,
-      "dependsOn": ["build"]
-    }
+    "typecheck": { "dependsOn": ["^build"], "inputs": ["default", "^production"], "cache": true },
+    "e2e": { "inputs": ["default", "^production"], "cache": true, "dependsOn": ["build"] }
   },
   "plugins": [
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
     {
       "plugin": "@nx/vite/plugin",
       "options": {
@@ -75,25 +62,11 @@
         "serveTargetName": "serve"
       }
     },
-    {
-      "plugin": "@nx/js",
-      "options": {
-        "analyzeSourceFiles": true
-      }
-    }
+    { "plugin": "@nx/js", "options": { "analyzeSourceFiles": true } }
   ],
   "generators": {
-    "@nx/next": {
-      "application": {
-        "style": "css",
-        "linter": "eslint"
-      }
-    },
-    "@nx/react": {
-      "library": {
-        "linter": "eslint"
-      }
-    }
+    "@nx/next": { "application": { "style": "css", "linter": "eslint" } },
+    "@nx/react": { "library": { "linter": "eslint" } }
   },
   "tasksRunnerOptions": {
     "default": {
@@ -126,17 +99,9 @@
         "type:shared"
       ]
     },
-    {
-      "sourceTag": "type:feature",
-      "onlyDependOnLibsWithTags": ["type:shared", "type:core"]
-    },
-    {
-      "sourceTag": "type:shared",
-      "onlyDependOnLibsWithTags": ["type:shared"]
-    },
-    {
-      "sourceTag": "type:core",
-      "onlyDependOnLibsWithTags": ["type:shared", "type:core"]
-    }
-  ]
+    { "sourceTag": "type:feature", "onlyDependOnLibsWithTags": ["type:shared", "type:core"] },
+    { "sourceTag": "type:shared", "onlyDependOnLibsWithTags": ["type:shared"] },
+    { "sourceTag": "type:core", "onlyDependOnLibsWithTags": ["type:shared", "type:core"] }
+  ],
+  "nxCloudId": "68b56409c98235f690fdfefd"
 }
