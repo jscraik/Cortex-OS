@@ -52,8 +52,9 @@ function displayServerInfo(server: ServerManifest, showClient?: string) {
   const verifiedBadge = server.security?.verifiedPublisher ? ' ✓ Verified' : '';
   const riskLabel = getRiskLabel(server.security?.riskLevel || 'medium');
 
-  process.stdout.write(`${server.name}${verifiedBadge} ${riskLabel}\n`);
-  process.stdout.write('='.repeat(server.name.length + verifiedBadge.length + 2) + '\n\n');
+  const headerLine = `${server.name}${verifiedBadge} ${riskLabel}`;
+  process.stdout.write(headerLine + '\n');
+  process.stdout.write('='.repeat(headerLine.length) + '\n\n');
 
   // Basic info
   process.stdout.write(`ID: ${server.id}\n`);
