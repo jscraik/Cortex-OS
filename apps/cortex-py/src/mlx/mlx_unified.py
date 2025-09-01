@@ -6,35 +6,36 @@ Supports multiple model types and uses ExternalSSD cache
 
 import argparse
 import json
-import argparse
-import json
 import os
 import sys
-from typing import Any
+
+import torch
 
 # Constants
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_MAX_TOKENS = 4096
 DEFAULT_TEMPERATURE = 0.7
-DEFAULT_CACHE_DIR = '/Volumes/ExternalSSD/huggingface_cache'
-DEFAULT_MLX_CACHE_DIR = '/Volumes/ExternalSSD/ai-cache'
+DEFAULT_CACHE_DIR = "/Volumes/ExternalSSD/huggingface_cache"
+DEFAULT_MLX_CACHE_DIR = "/Volumes/ExternalSSD/ai-cache"
 FALLBACK_TEST_TEXT = "test"
 
-try:
+try:  # pragma: no cover - exercised in tests via monkeypatch
     import mlx_lm
     import mlx_vlm
-    import torch
     from transformers import AutoModel, AutoTokenizer
-except ImportError as e:
-    print(f"Error importing MLX dependencies: {e}", file=sys.stderr)
-    print("Please install with: pip install mlx mlx-lm mlx-vlm transformers torch numpy", file=sys.stderr)
-    sys.exit(1)
+
+    MLX_AVAILABLE = True
+except ImportError as e:  # pragma: no cover - missing optional deps
+    print(f"MLX dependencies not available: {e}", file=sys.stderr)
+    MLX_AVAILABLE = False
 
 
 # Configure cache directories (defaults; runtime can override)
-os.environ.setdefault('HF_HOME', DEFAULT_CACHE_DIR)
-os.environ.setdefault('TRANSFORMERS_CACHE', DEFAULT_CACHE_DIR)
-os.environ.setdefault('MLX_CACHE_DIR', DEFAULT_MLX_CACHE_DIR)
+os.environ.setdefault("HF_HOME", DEFAULT_CACHE_DIR)
+os.environ.setdefault("TRANSFORMERS_CACHE", DEFAULT_CACHE_DIR)
+os.environ.setdefault("MLX_CACHE_DIR", DEFAULT_MLX_CACHE_DIR)
+
+
 class MLXUnified:
     """Unified MLX interface for all model types"""
 
@@ -49,47 +50,48 @@ class MLXUnified:
         self.tokenizer = None
 
         # Detect model type from name
-        if 'embedding' in model_name.lower():
-            self.model_type = 'embedding'
-        elif 'rerank' in model_name.lower():
-            self.model_type = 'reranking'
-        elif any(x in model_name.lower() for x in ['chat', 'instruct', 'coder', 'vl']):
-            self.model_type = 'chat'
+        if "embedding" in model_name.lower():
+            self.model_type = "embedding"
+        elif "rerank" in model_name.lower():
+            self.model_type = "reranking"
+        elif any(x in model_name.lower() for x in ["chat", "instruct", "coder", "vl"]):
+            self.model_type = "chat"
         else:
-            self.model_type = 'chat'  # Default to chat
+            self.model_type = "chat"  # Default to chat
 
         print(f"Detected model type: {self.model_type} for {model_name}")
 
     def load_model(self) -> None:
         """Load the appropriate model based on type"""
+        if not MLX_AVAILABLE:
+            raise RuntimeError("MLX dependencies are not installed")
+
         try:
-            if self.model_type == 'embedding':
+            if self.model_type == "embedding":
                 self.model = AutoModel.from_pretrained(
                     self.model_path,
                     trust_remote_code=True,
-                    cache_dir=os.environ.get('TRANSFORMERS_CACHE')
+                    cache_dir=os.environ.get("TRANSFORMERS_CACHE"),
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path,
-                    cache_dir=os.environ.get('TRANSFORMERS_CACHE')
+                    self.model_path, cache_dir=os.environ.get("TRANSFORMERS_CACHE")
                 )
-            elif self.model_type == 'chat':
+            elif self.model_type == "chat":
                 # Use MLX-LM for chat models
-                if 'vl' in self.model_name.lower():
+                if "vl" in self.model_name.lower():
                     # Vision-language model
                     self.model = mlx_vlm.load(self.model_path)
                 else:
                     # Regular chat model
                     self.model, self.tokenizer = mlx_lm.load(self.model_path)
-            elif self.model_type == 'reranking':
+            elif self.model_type == "reranking":
                 self.model = AutoModel.from_pretrained(
                     self.model_path,
                     trust_remote_code=True,
-                    cache_dir=os.environ.get('TRANSFORMERS_CACHE')
+                    cache_dir=os.environ.get("TRANSFORMERS_CACHE"),
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path,
-                    cache_dir=os.environ.get('TRANSFORMERS_CACHE')
+                    self.model_path, cache_dir=os.environ.get("TRANSFORMERS_CACHE")
                 )
 
             print(f"✅ Loaded {self.model_type} model: {self.model_name}")
@@ -100,20 +102,22 @@ class MLXUnified:
 
     def generate_embedding(self, text: str) -> list[float]:
         """Generate embedding for single text"""
-        if not self.model or self.model_type != 'embedding':
+        if not self.model or self.model_type != "embedding":
             raise ValueError("Embedding model not loaded")
 
         if not text or not isinstance(text, str):
             raise ValueError("Text must be a non-empty string")
 
-        inputs = self.tokenizer(text, return_tensors='pt', truncation=True, max_length=DEFAULT_MAX_LENGTH)
+        inputs = self.tokenizer(
+            text, return_tensors="pt", truncation=True, max_length=DEFAULT_MAX_LENGTH
+        )
 
         with torch.no_grad():
             outputs = self.model(**inputs)
             # Use CLS token or mean pooling
-            if hasattr(outputs, 'last_hidden_state'):
+            if hasattr(outputs, "last_hidden_state"):
                 embedding = outputs.last_hidden_state.mean(dim=1).squeeze()
-            elif hasattr(outputs, 'pooler_output'):
+            elif hasattr(outputs, "pooler_output"):
                 embedding = outputs.pooler_output.squeeze()
             else:
                 embedding = outputs[0].mean(dim=1).squeeze()
@@ -128,21 +132,23 @@ class MLXUnified:
         self,
         messages: list[dict[str, str]],
         max_tokens: int = DEFAULT_MAX_TOKENS,
-        temperature: float = DEFAULT_TEMPERATURE
+        temperature: float = DEFAULT_TEMPERATURE,
     ) -> dict[str, str | dict[str, int]]:
         """Generate chat completion"""
-        if not self.model or self.model_type != 'chat':
+        if not self.model or self.model_type != "chat":
             raise ValueError("Chat model not loaded")
 
         if not messages or not isinstance(messages, list):
             raise ValueError("Messages must be a non-empty list")
 
         for msg in messages:
-            if not isinstance(msg, dict) or 'role' not in msg or 'content' not in msg:
-                raise ValueError("Each message must be a dict with 'role' and 'content' keys")
+            if not isinstance(msg, dict) or "role" not in msg or "content" not in msg:
+                raise ValueError(
+                    "Each message must be a dict with 'role' and 'content' keys"
+                )
 
         # Format messages into prompt
-        if 'vl' in self.model_name.lower():
+        if "vl" in self.model_name.lower():
             # Vision-language model - handle specially
             prompt = self._format_vl_messages(messages)
             response = mlx_vlm.generate(
@@ -150,7 +156,7 @@ class MLXUnified:
                 self.tokenizer,
                 prompt,
                 max_tokens=max_tokens,
-                temp=temperature
+                temp=temperature,
             )
         else:
             # Regular chat model
@@ -161,21 +167,23 @@ class MLXUnified:
                 prompt=prompt,
                 max_tokens=max_tokens,
                 temp=temperature,
-                verbose=False
+                verbose=False,
             )
 
         return {
-            'content': response,
-            'usage': {
-                'prompt_tokens': self._estimate_tokens(prompt),
-                'completion_tokens': self._estimate_tokens(response),
-                'total_tokens': self._estimate_tokens(prompt + response),
-            }
+            "content": response,
+            "usage": {
+                "prompt_tokens": self._estimate_tokens(prompt),
+                "completion_tokens": self._estimate_tokens(response),
+                "total_tokens": self._estimate_tokens(prompt + response),
+            },
         }
 
-    def generate_reranking(self, query: str, documents: list[str]) -> list[dict[str, int | float]]:
+    def generate_reranking(
+        self, query: str, documents: list[str]
+    ) -> list[dict[str, int | float]]:
         """Generate reranking scores"""
-        if not self.model or self.model_type != 'reranking':
+        if not self.model or self.model_type != "reranking":
             raise ValueError("Reranking model not loaded")
 
         scores = []
@@ -183,36 +191,37 @@ class MLXUnified:
             # Create query-document pairs
             inputs = self.tokenizer(
                 f"Query: {query} Document: {doc}",
-                return_tensors='pt',
+                return_tensors="pt",
                 truncation=True,
-                max_length=DEFAULT_MAX_LENGTH
+                max_length=DEFAULT_MAX_LENGTH,
             )
 
             with torch.no_grad():
                 outputs = self.model(**inputs)
                 # Extract relevance score (model-specific logic)
-                if hasattr(outputs, 'logits'):
+                if hasattr(outputs, "logits"):
                     score = torch.sigmoid(outputs.logits).item()
                 else:
                     # Fallback: use similarity between query and document embeddings
                     query_embedding = outputs.last_hidden_state[:, 0, :]  # CLS token
-                    doc_embedding = outputs.last_hidden_state.mean(dim=1)  # Mean pooling
+                    doc_embedding = outputs.last_hidden_state.mean(
+                        dim=1
+                    )  # Mean pooling
                     score = torch.cosine_similarity(
-                        query_embedding,
-                        doc_embedding
+                        query_embedding, doc_embedding
                     ).item()
 
-            scores.append({'index': i, 'score': score})
+            scores.append({"index": i, "score": score})
 
         # Sort by score descending
-        return sorted(scores, key=lambda x: x['score'], reverse=True)
+        return sorted(scores, key=lambda x: x["score"], reverse=True)
 
     def _format_chat_messages(self, messages: list[dict[str, str]]) -> str:
         """Format messages for chat models"""
         formatted = []
         for msg in messages:
-            role = msg['role'].title()
-            content = msg['content']
+            role = msg["role"].title()
+            content = msg["content"]
             formatted.append(f"{role}: {content}")
 
         formatted.append("Assistant: ")  # Prompt for response
@@ -232,24 +241,48 @@ class MLXUnified:
 
 def main():
     parser = argparse.ArgumentParser(description="Unified MLX model interface")
-    parser.add_argument('input_data', nargs='*', help='Input text(s) or JSON messages')
-    parser.add_argument('--model', required=True, help='Model name/path')
-    parser.add_argument('--model-path', help='Local model path')
-    parser.add_argument('--embedding-mode', action='store_true', help='Generate embeddings')
-    parser.add_argument('--batch-embedding-mode', action='store_true', help='Generate batch embeddings')
-    parser.add_argument('--chat-mode', action='store_true', help='Generate chat completion')
-    parser.add_argument('--rerank-mode', action='store_true', help='Generate reranking scores')
-    parser.add_argument('--max-tokens', type=int, default=DEFAULT_MAX_TOKENS, help='Max tokens for generation')
-    parser.add_argument('--temperature', type=float, default=DEFAULT_TEMPERATURE, help='Generation temperature')
-    parser.add_argument('--json-only', action='store_true', help='Output JSON only')
-
+    parser.add_argument("input_data", nargs="*", help="Input text(s) or JSON messages")
+    parser.add_argument("--model", required=True, help="Model name/path")
+    parser.add_argument("--model-path", help="Local model path")
+    parser.add_argument(
+        "--embedding-mode", action="store_true", help="Generate embeddings"
+    )
+    parser.add_argument(
+        "--batch-embedding-mode", action="store_true", help="Generate batch embeddings"
+    )
+    parser.add_argument(
+        "--chat-mode", action="store_true", help="Generate chat completion"
+    )
+    parser.add_argument(
+        "--rerank-mode", action="store_true", help="Generate reranking scores"
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=DEFAULT_MAX_TOKENS,
+        help="Max tokens for generation",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=DEFAULT_TEMPERATURE,
+        help="Generation temperature",
+    )
+    parser.add_argument("--json-only", action="store_true", help="Output JSON only")
 
     args = parser.parse_args()
 
     # argparse provides -h/--help by default; no custom help flag handling required
 
     # If no explicit mode or input provided, fall back to embedding with test text
-    if not args.input_data and not any([args.embedding_mode, args.batch_embedding_mode, args.chat_mode, args.rerank_mode]):
+    if not args.input_data and not any(
+        [
+            args.embedding_mode,
+            args.batch_embedding_mode,
+            args.chat_mode,
+            args.rerank_mode,
+        ]
+    ):
         # default to embedding mode using FALLBACK_TEST_TEXT to support CLI fallback tests
         args.embedding_mode = True
         args.input_data = [FALLBACK_TEST_TEXT]
@@ -278,9 +311,7 @@ def main():
                 messages = [{"role": "user", "content": " ".join(args.input_data)}]
 
             result = mlx_model.generate_chat(
-                messages,
-                max_tokens=args.max_tokens,
-                temperature=args.temperature
+                messages, max_tokens=args.max_tokens, temperature=args.temperature
             )
 
         elif args.rerank_mode:
@@ -290,7 +321,7 @@ def main():
             except (json.JSONDecodeError, IndexError):
                 documents = args.input_data[1:]
 
-            result = {'scores': mlx_model.generate_reranking(query, documents)}
+            result = {"scores": mlx_model.generate_reranking(query, documents)}
 
         else:
             # Default: single embedding mode

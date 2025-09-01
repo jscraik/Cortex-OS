@@ -17,6 +17,7 @@ import numpy as np
 try:
     import mlx.core as mx  # type: ignore
     from mlx_lm import load  # type: ignore
+
     MLX_AVAILABLE = True
 except ImportError as e:  # pragma: no cover - diagnostics for missing deps
     print(f"MLX core not available: {e}", file=sys.stderr)
@@ -67,7 +68,7 @@ class MLXEmbeddingGenerator:
         logger.info(f"Loading model: {model_path}")
         try:
             self.model, self.tokenizer = load(model_path)
-        except Exception as load_error:
+        except Exception:
             try:
                 from huggingface_hub import snapshot_download
 
@@ -122,7 +123,9 @@ class MLXEmbeddingGenerator:
         embedding = self._generate_raw_embedding(text)
         return self._normalize_embedding(embedding) if normalize else embedding
 
-    def generate_embeddings(self, texts: list[str], normalize: bool = True) -> list[list[float]]:
+    def generate_embeddings(
+        self, texts: list[str], normalize: bool = True
+    ) -> list[list[float]]:
         return [self.generate_embedding(t, normalize) for t in texts]
 
     def get_model_info(self) -> dict[str, Any]:
@@ -178,8 +181,12 @@ def main():
     else:
         info = generator.get_model_info()
         print(f"Model Info: {json.dumps(info, indent=2)}")
-        print(f"\nGenerated {len(embeddings)} embeddings in {end_time - start_time:.2f}s")
-        for i, (text, embedding) in enumerate(zip(args.texts, embeddings, strict=False)):
+        print(
+            f"\nGenerated {len(embeddings)} embeddings in {end_time - start_time:.2f}s"
+        )
+        for i, (text, embedding) in enumerate(
+            zip(args.texts, embeddings, strict=False)
+        ):
             print(f"\nText {i + 1}: {text[:50]}{'...' if len(text) > 50 else ''}")
             print(
                 f"Embedding: [{embedding[0]:.4f}, {embedding[1]:.4f}, ..., {embedding[-1]:.4f}]"
@@ -191,7 +198,11 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (RuntimeError, ValueError, ImportError) as e:  # pragma: no cover - CLI error path
+    except (
+        RuntimeError,
+        ValueError,
+        ImportError,
+    ) as e:  # pragma: no cover - CLI error path
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
