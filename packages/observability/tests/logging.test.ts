@@ -14,8 +14,8 @@ describe('logging', () => {
     createLogger('cmp');
     const entry = createLogEntry('cmp', 'info', 'hello', runId, undefined, { password: 'secret', nest: { token: 't' } });
     expect(entry.extra?.password).toBe('[REDACTED]');
-    // @ts-expect-error nested
-    expect(entry.extra?.nest.token).toBe('[REDACTED]');
+    // Type assertion to inform TypeScript of the nested structure
+    expect((entry.extra as { nest: { token: string } })?.nest.token).toBe('[REDACTED]');
   });
 
   it('logs with context and evidence', () => {
