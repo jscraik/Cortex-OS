@@ -1,0 +1,38 @@
+{
+  "artifact": "cortex-os-ops-readiness",
+  "version": "1.0",
+  "commit": "605171f03a860309e579f5bf033f4937b6816823",
+  "overall": {"score": 95, "rag": "green"},
+  "areas": [
+    {"name": "Deployment", "score": 95, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"11-15"}]},
+    {"name": "Rollback", "score": 95, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"21-23"}]},
+    {"name": "Failover", "score": 90, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"25-28"}]},
+    {"name": "Monitoring & Alerting", "score": 90, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"30-33"}]},
+    {"name": "Incident Response", "score": 90, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"35-38"}]},
+    {"name": "Disaster Recovery", "score": 90, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"40-43"}]},
+    {"name": "Documentation Quality", "score": 95, "rag": "green", "evidence":[{"path":"docs/runbooks/cortex-cli.md","lines":"1-47"}]}
+  ],
+  "coverage_matrix": {
+    "cortex-cli": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "cortex-tui": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "cortex-webui": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "cortex-marketplace": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "cortex-py": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "cortex-os": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "mcp": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "mcp-bridge": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "mcp-registry": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "mcp-server": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "a2a": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "rag": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "memories": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "orchestration": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true},
+    "simlab": {"deploy":true,"rollback":true,"failover":true,"monitor":true,"incident":true,"dr":true}
+  },
+  "risks":[
+    {"id":"R1","severity":"medium","area":"Failover","mitigation":"Schedule quarterly failover drills"}
+  ],
+  "actions":[
+    {"id":"A1","owner":"ops-team","description":"Run quarterly disaster recovery tests","ETA":"2025-12-31"}
+  ]
+}
