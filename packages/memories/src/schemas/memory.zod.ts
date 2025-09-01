@@ -27,6 +27,11 @@ export const memoryZ = z.object({
     tenant: z.string(),
     purposes: z.array(z.string()).default([]),
   }),
+  consent: z.object({
+    granted: z.boolean(),
+    scope: z.enum(['session', 'user', 'org']).optional(),
+    timestamp: z.string(),
+  }),
   policy: z
     .object({
       pii: z.boolean().optional(),

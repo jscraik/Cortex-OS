@@ -16,6 +16,11 @@ export interface Memory {
     hash?: string;
   };
   acl: { agent: string; tenant: string; purposes: string[] };
+  consent: {
+    granted: boolean;
+    scope?: 'session' | 'user' | 'org';
+    timestamp: string;
+  };
   policy?: { pii?: boolean; scope?: 'session' | 'user' | 'org' };
   embeddingModel?: string;
 }

@@ -41,6 +41,9 @@ export const createMemoryService = (store: MemoryStore, embedder: Embedder): Mem
       return withSpan('memories.save', async () => {
         const parsed = memoryZ.parse(raw) as Memory;
         const redacted = parsed.text ? redactPII(parsed.text) : undefined;
+        if (!parsed.consent?.granted) {
+          throw new Error('consent:missing');
+        }
         // Validate or merge ACL
         let acl;
         if (parsed.acl) {
@@ -60,6 +63,7 @@ export const createMemoryService = (store: MemoryStore, embedder: Embedder): Mem
           ...parsed,
           text: redacted,
           acl,
+          consent: parsed.consent,
         };
         const needsVector = !m.vector && m.text;
         let withVec: Memory;

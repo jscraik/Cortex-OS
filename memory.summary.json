@@ -1,0 +1,23 @@
+{
+  "artifact": "cortex-os-memory-readiness",
+  "version": "1.0",
+  "commit": "916c49eed3e34c468f64958081070106d617e3d9",
+  "overall": {"score": 85, "rag": "green"},
+  "areas": [
+    {"name":"Schema","score":85,"rag":"green","evidence":[{"path":"packages/memories/src/schemas/memory.zod.ts","lines":"3-45"}]},
+    {"name":"Encryption","score":90,"rag":"green","evidence":[{"path":"packages/memories/src/lib/crypto.ts","lines":"1-30"},{"path":"packages/memories/src/adapters/store.sqlite.ts","lines":"36-112"}]},
+    {"name":"Consent","score":90,"rag":"green","evidence":[{"path":"packages/memories/src/service/memory-service.ts","lines":"18-52"}]},
+    {"name":"Retention","score":80,"rag":"amber","evidence":[{"path":"packages/memories/src/adapters/store.sqlite.ts","lines":"262-293"},{"path":"retention-policy.md","lines":"1-8"}]},
+    {"name":"Provenance","score":70,"rag":"amber","evidence":[{"path":"packages/memories/src/schemas/memory.zod.ts","lines":"12-24"},{"path":"packages/orchestration/src/lib/audit.ts","lines":"41-60"}]},
+    {"name":"Access Control","score":80,"rag":"amber","evidence":[{"path":"packages/memories/src/adapters/store.prisma/prisma.schema","lines":"7-24"}]},
+    {"name":"Compliance","score":80,"rag":"amber","evidence":[{"path":"data-classification.md","lines":"1-9"},{"path":"packages/memories/src/service/memory-service.ts","lines":"31-85"}]}
+  ],
+  "schema_check":[
+    {"field":"text","sensitivity":"confidential","encrypted":true,"ttl":"record","consent_bound":true},
+    {"field":"vector","sensitivity":"internal","encrypted":true,"ttl":"record","consent_bound":true},
+    {"field":"tags","sensitivity":"internal","encrypted":true,"ttl":"record","consent_bound":true},
+    {"field":"consent","sensitivity":"internal","encrypted":true,"ttl":"record","consent_bound":false}
+  ],
+  "risks":[{"id":"R1","severity":"medium","area":"Provenance","mitigation":"Implement hashing and immutable audit log"}],
+  "actions":[{"id":"A1","owner":"security-team","ETA":"2025-09-10"}]
+}

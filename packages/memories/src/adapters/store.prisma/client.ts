@@ -1,6 +1,7 @@
 // Prisma-backed MemoryStore with full vector search and TTL support
 import type { Memory } from '../../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../../ports/MemoryStore.js';
+import { encrypt, decrypt } from '../../lib/crypto.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -33,10 +34,27 @@ export class PrismaStore implements MemoryStore {
   constructor(private prisma: PrismaLike) {}
 
   async upsert(m: Memory): Promise<Memory> {
+    const row = {
+      id: m.id,
+      kind: m.kind,
+      text: m.text ? encrypt(m.text) : null,
+      vector: m.vector ? encrypt(JSON.stringify(m.vector)) : null,
+      tags: encrypt(JSON.stringify(m.tags)),
+      ttl: m.ttl ?? null,
+      createdAt: new Date(m.createdAt),
+      updatedAt: new Date(m.updatedAt),
+      provenance: m.provenance,
+      policy: m.policy ?? null,
+      embeddingModel: m.embeddingModel ?? null,
+      consent: encrypt(JSON.stringify(m.consent)),
+      aclAgent: m.acl.agent,
+      aclTenant: m.acl.tenant,
+      aclPurposes: m.acl.purposes,
+    };
     const saved = await this.prisma.memory.upsert({
       where: { id: m.id },
-      create: m,
-      update: m,
+      create: row,
+      update: row,
     });
     return prismaToDomain(saved);
   }
@@ -52,45 +70,47 @@ export class PrismaStore implements MemoryStore {
 
   async searchByText(q: TextQuery): Promise<Memory[]> {
     const rows = await this.prisma.memory.findMany({
-      where: {
-        AND: [
-          q.text ? { text: { contains: q.text, mode: 'insensitive' } } : {},
-          q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {},
-        ],
-      },
-      take: q.topK,
+      take: q.topK * 5,
       orderBy: { updatedAt: 'desc' },
     });
-    return rows.map(prismaToDomain);
+    return rows
+      .map(prismaToDomain)
+      .filter((m) => {
+        if (!m.text) return false;
+        const matchesText = m.text.toLowerCase().includes(q.text.toLowerCase());
+        const matchesTags = !q.filterTags || q.filterTags.every((t) => m.tags.includes(t));
+        return matchesText && matchesTags;
+      })
+      .slice(0, q.topK);
   }
 
   async searchByVector(q: VectorQuery): Promise<Memory[]> {
     // Fetch candidates with vectors and matching tags
     const candidateRows = await this.prisma.memory.findMany({
-      where: {
-        vector: { not: undefined },
-        ...(q.filterTags && q.filterTags.length > 0 ? { tags: { hasEvery: q.filterTags } } : {}),
-      },
+      where: { vector: { not: null } },
       orderBy: { updatedAt: 'desc' },
-      take: q.topK * 10, // Fetch more candidates for similarity matching
+      take: q.topK * 10,
     });
 
-    // Convert to domain objects and filter out those without vectors
     const candidates = candidateRows
       .map(prismaToDomain)
       .filter((memory) => memory.vector) as Memory[];
 
     // Perform similarity matching in memory
-    const scoredCandidates = candidates
+    let scoredCandidates = candidates
       .map((memory) => ({
         memory,
         score: cosineSimilarity(q.vector, memory.vector!),
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, q.topK)
+      .slice(0, q.topK * 2)
       .map((item) => item.memory);
 
-    return scoredCandidates;
+    if (q.filterTags && q.filterTags.length > 0) {
+      scoredCandidates = scoredCandidates.filter((m) => q.filterTags!.every((t) => m.tags.includes(t)));
+    }
+
+    return scoredCandidates.slice(0, q.topK);
   }
 
   async purgeExpired(nowISO: string): Promise<number> {
@@ -146,14 +166,20 @@ function prismaToDomain(row: any): Memory {
   return {
     id: row.id,
     kind: row.kind,
-    text: row.text ?? undefined,
-    vector: row.vector ?? undefined,
-    tags: row.tags ?? [],
+    text: row.text ? decrypt(row.text) : undefined,
+    vector: row.vector ? JSON.parse(decrypt(row.vector)) : undefined,
+    tags: row.tags ? JSON.parse(decrypt(row.tags)) : [],
     ttl: row.ttl ?? undefined,
     createdAt: new Date(row.createdAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
     provenance: row.provenance,
     policy: row.policy ?? undefined,
     embeddingModel: row.embeddingModel ?? undefined,
+    consent: row.consent ? JSON.parse(decrypt(row.consent)) : { granted: false, timestamp: '' },
+    acl: {
+      agent: row.aclAgent,
+      tenant: row.aclTenant,
+      purposes: row.aclPurposes || [],
+    },
   };
 }
