@@ -22,7 +22,6 @@
     {"id":"R4","severity":"medium","area":"Observability","mitigation":"Add SLO dashboards and alerts"}
   ],
   "actions":[
-    {"id":"A1","owner":"ops-team","ETA":"2025-09-20"},
-    {"id":"A2","owner":"dev-team","ETA":"2025-07-01"}
+    {"id":"A2","owner":"dev-team","ETA":"2025-12-01"}
   ]
 }
