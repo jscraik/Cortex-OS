@@ -1,7 +1,7 @@
 {
   "artifact": "cortex-os-master-readiness",
   "version": "1.0",
-  "commit": "7b00880fda67ff9a49867d5408a59b76ccd52e9e",
+  "commit": "{{COMMIT_HASH}}",
   "overall": { "score": 64, "rag": "amber" },
   "areas": [
     { "name": "Production", "score": 65, "rag": "amber", "evidence": [{ "path": "README.md" }] },
