@@ -1,6 +1,7 @@
 import DatabaseImpl from 'better-sqlite3';
 import type { Memory, MemoryId } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import { encrypt, decrypt } from '../lib/crypto.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -57,8 +58,8 @@ export class SQLiteStore implements MemoryStore {
     stmt.run(
       m.id,
       m.kind,
-      m.text || null,
-      m.vector ? JSON.stringify(m.vector) : null,
+      m.text ? encrypt(m.text) : null,
+      m.vector ? encrypt(JSON.stringify(m.vector)) : null,
       JSON.stringify(m.tags),
       m.ttl || null,
       m.createdAt,
@@ -74,9 +75,7 @@ export class SQLiteStore implements MemoryStore {
   async get(id: MemoryId): Promise<Memory | null> {
     const stmt = this.db.prepare('SELECT * FROM memories WHERE id = ?');
     const row = stmt.get(id);
-
     if (!row) return null;
-
     return this.rowToMemory(row);
   }
 
@@ -89,31 +88,24 @@ export class SQLiteStore implements MemoryStore {
     let sql = 'SELECT * FROM memories WHERE text IS NOT NULL';
     const params: any[] = [];
 
-    if (q.text) {
-      sql += ' AND LOWER(text) LIKE LOWER(?)';
-      params.push(`%${q.text}%`);
-    }
-
     if (q.filterTags && q.filterTags.length > 0) {
-      // For simplicity, we'll do a basic tag filter
-      // A more sophisticated implementation would parse the JSON tags
-      sql += ' AND (';
-      q.filterTags.forEach((tag, i) => {
-        if (i > 0) sql += ' OR ';
-        sql += 'tags LIKE ?';
-        params.push(`%"${tag}"%`);
+      q.filterTags.forEach((tag) => {
+        sql += ' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)';
+        params.push(tag);
       });
-      sql += ')';
     }
 
-    // Fetch more candidates to allow reranking in a second stage
     const initialLimit = Math.max(q.topK * 10, q.topK);
     sql += ' ORDER BY updatedAt DESC LIMIT ?';
     params.push(initialLimit);
 
     const stmt = this.db.prepare(sql);
     const rows = stmt.all(...params);
-    const candidates = rows.map((row: any) => this.rowToMemory(row));
+    let candidates = rows.map((row: any) => this.rowToMemory(row));
+    if (q.text) {
+      const needle = q.text.toLowerCase();
+      candidates = candidates.filter((m) => m.text?.toLowerCase().includes(needle));
+    }
 
     // Optional rerank stage using Model Gateway if query text is present
     const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
@@ -139,13 +131,10 @@ export class SQLiteStore implements MemoryStore {
     const params: any[] = [];
 
     if (q.filterTags && q.filterTags.length > 0) {
-      sql += ' AND (';
-      q.filterTags.forEach((tag, i) => {
-        if (i > 0) sql += ' OR ';
-        sql += 'tags LIKE ?';
-        params.push(`%"${tag}"%`);
+      q.filterTags.forEach((tag) => {
+        sql += ' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)';
+        params.push(tag);
       });
-      sql += ')';
     }
 
     sql += ' ORDER BY updatedAt DESC LIMIT ?';
@@ -274,19 +263,19 @@ export class SQLiteStore implements MemoryStore {
     return purgedCount;
   }
 
-  private rowToMemory(row: any): Memory {
-    return {
-      id: row.id,
-      kind: row.kind,
-      text: row.text ?? undefined,
-      vector: row.vector ? JSON.parse(row.vector) : undefined,
-      tags: row.tags ? JSON.parse(row.tags) : [],
-      ttl: row.ttl ?? undefined,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      provenance: row.provenance ? JSON.parse(row.provenance) : { source: 'unknown' },
-      policy: row.policy ? JSON.parse(row.policy) : undefined,
-      embeddingModel: row.embeddingModel ?? undefined,
-    };
-  }
+    private rowToMemory(row: any): Memory {
+      return {
+        id: row.id,
+        kind: row.kind,
+        text: row.text ? decrypt(row.text) : undefined,
+        vector: row.vector ? (JSON.parse(decrypt(row.vector)) as number[]) : undefined,
+        tags: row.tags ? JSON.parse(row.tags) : [],
+        ttl: row.ttl ?? undefined,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        provenance: row.provenance ? JSON.parse(row.provenance) : { source: 'unknown' },
+        policy: row.policy ? JSON.parse(row.policy) : undefined,
+        embeddingModel: row.embeddingModel ?? undefined,
+      };
+    }
 }

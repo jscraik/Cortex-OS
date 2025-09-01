@@ -28,6 +28,16 @@ jobs:
         run: pnpm run cortex:validate
       - name: Test
         run: pnpm test
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --no-git
+      - name: Semgrep
+        run: semgrep scan --config=auto packages/memories
+      - name: SBOM
+        run: npx @cyclonedx/bom@4.1.0 -o sbom.xml
+      - name: Migration smoke
+        run: pnpm -F @cortex-os/memories prisma migrate diff --from-empty --to-schema packages/memories/prisma/schema.prisma --exit-code
       - name: Publish Pacts (push branches)
         if: ${{ (github.event_name == 'push') && (secrets.PACT_BROKER_URL != '') }}
         env:

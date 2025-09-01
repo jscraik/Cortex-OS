@@ -54,6 +54,31 @@ let sqliteAvailable = true;
     expect(byText[0]?.id).toBe('a');
   });
 
+  it('filters by tags securely', async () => {
+    const m1: Memory = {
+      id: 't1',
+      kind: 'note',
+      text: 'a',
+      tags: ['x', 'y'],
+      createdAt: now,
+      updatedAt: now,
+      provenance: { source: 'user' },
+    };
+    const m2: Memory = {
+      id: 't2',
+      kind: 'note',
+      text: 'b',
+      tags: ['y'],
+      createdAt: now,
+      updatedAt: now,
+      provenance: { source: 'user' },
+    };
+    await store.upsert(m1);
+    await store.upsert(m2);
+    const res = await store.searchByText({ topK: 5, filterTags: ['x', 'y'] });
+    expect(res.map((r) => r.id)).toEqual(['t1']);
+  });
+
   it('purges expired memories and deletes by id', async () => {
     const m: Memory = {
       id: 'exp',

@@ -2,6 +2,10 @@ import os from 'os';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { Embedder } from '../ports/Embedder.js';
+import type { PythonRunner } from '../ports/PythonRunner.js';
+import type { Metrics } from '../ports/Metrics.js';
+import { NodePythonRunner } from './python-runner.js';
+import { ConsoleMetrics } from './console-metrics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -43,10 +47,18 @@ const DEFAULT_MLX_MODEL: MLXModelName = 'qwen3-4b';
 export class MLXEmbedder implements Embedder {
   private readonly modelName: MLXModelName;
   private readonly modelConfig: (typeof MLX_MODELS)[keyof typeof MLX_MODELS];
+  private readonly python: PythonRunner;
+  private readonly metrics: Metrics;
 
-  constructor(modelName?: MLXModelName) {
+  constructor(
+    modelName?: MLXModelName,
+    pythonRunner: PythonRunner = new NodePythonRunner(),
+    metrics: Metrics = new ConsoleMetrics(),
+  ) {
     this.modelName = modelName || DEFAULT_MLX_MODEL;
     this.modelConfig = MLX_MODELS[this.modelName];
+    this.python = pythonRunner;
+    this.metrics = metrics;
 
     if (!this.modelConfig) {
       throw new Error(`Unsupported MLX model: ${this.modelName}`);
@@ -73,6 +85,7 @@ export class MLXEmbedder implements Embedder {
   }
 
   private async embedViaService(texts: string[]): Promise<number[][]> {
+    const start = Date.now();
     const response = await fetch(`${process.env.MLX_SERVICE_URL}/embed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,32 +107,36 @@ export class MLXEmbedder implements Embedder {
       throw new Error('Invalid response format from MLX service');
     }
 
+    const latency = Date.now() - start;
+    await this.metrics.record('mlx.service', { model: this.modelName, latency });
     return data.embeddings as number[][];
   }
 
   private async embedViaPython(texts: string[]): Promise<number[][]> {
     // Use centralized Python runner to handle PYTHONPATH and env merging
     const pythonScriptPath = path.join(__dirname, 'mlx-embedder.py');
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
-    const { runPython } = await import('../../../../libs/python/exec.js');
-
     const run = () =>
-      runPython(pythonScriptPath, [this.modelConfig.path, JSON.stringify(texts)], {
-        envOverrides: { MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR },
-        python: process.env.PYTHON_EXEC || 'python3',
-        setModulePath: process.env.PYTHONPATH || undefined,
-      } as unknown as Record<string, unknown>);
+      this.python.run(
+        pythonScriptPath,
+        [this.modelConfig.path, JSON.stringify(texts)],
+        {
+          envOverrides: { MLX_MODELS_DIR: process.env.MLX_MODELS_DIR || DEFAULT_MLX_MODELS_DIR },
+          python: process.env.PYTHON_EXEC || 'python3',
+        },
+      );
 
     const timer = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('MLX embedding timeout after 30000ms')), 30000),
     );
 
+    const start = Date.now();
     const out = await Promise.race([run(), timer]);
     try {
       const result = JSON.parse(String(out || '{}'));
       if (result.error) throw new Error(String(result.error));
       if (!Array.isArray(result.embeddings)) throw new Error('Invalid embeddings format from MLX');
+      const latency = Date.now() - start;
+      await this.metrics.record('mlx.python', { model: this.modelName, latency });
       return result.embeddings as number[][];
     } catch (err) {
       throw new Error(`Failed to parse MLX response: ${err}`);
