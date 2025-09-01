@@ -21,8 +21,8 @@
     {"id": "R4", "severity": "medium", "area": "Resilience", "mitigation": "Chaos suite to track MTTR"}
   ],
   "actions": [
-    {"id": "A1", "owner": "founder", "ETA": "2025-09-30"},
-    {"id": "A2", "owner": "ops", "ETA": "2025-06-30"},
-    {"id": "A3", "owner": "design", "ETA": "2025-04-30"}
+    {"id": "A1", "owner": "founder", "ETA": "2025-09-30", "description": "Finalize investor pitch deck and vision statement"},
+    {"id": "A2", "owner": "ops", "ETA": "2025-06-30", "description": "Implement supply chain SBOM scanning and compliance gating"},
+    {"id": "A3", "owner": "design", "ETA": "2025-04-30", "description": "Improve accessibility features in web UI"}
   ]
 }
