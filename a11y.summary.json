@@ -19,5 +19,5 @@
     {"app":"cortex-cli","criterion":"color_contrast","compliant":false}
   ],
   "risks":[{"id":"R1","severity":"high","area":"Keyboard Navigation","mitigation":"Add skip links and tab order tests"}],
-  "actions":[{"id":"A1","owner":"ux-team","ETA":"2025-09-12"}]
+  "actions":[{"id":"A1","owner":"ux-team","ETA":"2025-09-12","description":"Define and implement accessibility improvements for keyboard navigation, color contrast, and screen reader support."}]
 }
