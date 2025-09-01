@@ -3,7 +3,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { redactSensitiveData } from '../../src/lib/security.js';
+import { redactSensitiveData } from '../../../src/lib/security.js';
 import type { ServerInfo } from './contracts.js';
 
 export interface RateLimitInfo {
