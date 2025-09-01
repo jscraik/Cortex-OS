@@ -26,6 +26,7 @@ export class SimRunner {
   private readonly reporter: SimReporter;
   private readonly config: SimRunnerConfig;
   private readonly rng: () => number;
+  private runCounter: number;
 
   constructor(config: SimRunnerConfig = {}) {
     this.config = {
@@ -45,6 +46,7 @@ export class SimRunner {
     this.agentAdapter = new AgentAdapter(this.config.executor);
     this.judge = new Judge();
     this.reporter = new SimReporter();
+    this.runCounter = 0;
   }
 
   /**
@@ -170,9 +172,9 @@ export class SimRunner {
   }
 
   private generateRunId(scenarioId: string): string {
-    const timestamp = Date.now();
+    const idPart = this.config.deterministic ? this.runCounter++ : Date.now();
     const suffix = this.config.deterministic ? 'det' : 'rnd';
-    return `${scenarioId}-${timestamp}-${suffix}`;
+    return `${scenarioId}-${idPart}-${suffix}`;
   }
 
   private generateBatchId(): string {
