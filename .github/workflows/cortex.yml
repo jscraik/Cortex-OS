@@ -1,0 +1,31 @@
+name: cortex comment bot
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  models: read
+jobs:
+  dispatch:
+    if: contains(github.event.comment.body, '/cortex')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ask GitHub Models
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          jq -n --arg prompt "${{ github.event.comment.body }}" '{
+            model:"openai/gpt-4o-mini",
+            messages:[{"role":"system","content":"You are cortex-ci."},
+                      {"role":"user","content":$prompt}],
+            stream:false
+          }' > req.json
+          curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+               -H "Accept: application/json" \
+               https://models.github.ai/inference/chat/completions \
+               -d @req.json > resp.json
+      - name: Reply
+        run: gh issue comment ${{ github.event.issue.number }} --body "$(jq -r '.choices[0].message.content' resp.json)"
