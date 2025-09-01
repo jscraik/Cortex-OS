@@ -46,7 +46,7 @@ export class SimRunner {
     this.agentAdapter = new AgentAdapter(this.config.executor);
     this.judge = new Judge();
     this.reporter = new SimReporter();
-    this.runCounter = this.config.seed ?? 0;
+    this.runCounter = 0;
   }
 
   /**
