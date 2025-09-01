@@ -1,7 +1,13 @@
 import fs from "node:fs";
 
 export function parse(path = ".tmp/semgrep.json") {
-  const raw = JSON.parse(fs.readFileSync(path, "utf8"));
+  let raw;
+  try {
+    raw = JSON.parse(fs.readFileSync(path, "utf8"));
+  } catch (err) {
+    console.error(`Failed to read or parse JSON file at ${path}:`, err.message);
+    return [];
+  }
   const out = [];
   for (const r of raw.results ?? []) {
     out.push({
