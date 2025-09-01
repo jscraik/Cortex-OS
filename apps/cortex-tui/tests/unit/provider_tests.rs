@@ -2,6 +2,7 @@ use cortex_tui::config::Config;
 use cortex_tui::providers::{create_provider, ModelProvider};
 use cortex_tui::Error;
 use mockito::{mock, Matcher, Mock};
+use futures::StreamExt;
 use tokio_test;
 
 // RED - These tests will fail initially
@@ -10,10 +11,11 @@ async fn test_provider_factory_creates_github_models() {
     // Given
     let mut config = Config::default();
     config.provider.default = "github-models".to_string();
-    
+    config.github_models.token = Some("test-token".to_string());
+
     // When
     let provider = create_provider(&config).unwrap();
-    
+
     // Then
     assert_eq!(provider.provider_name(), "github-models");
 }
@@ -28,10 +30,10 @@ async fn test_provider_factory_creates_openai() {
         model: "gpt-4".to_string(),
         endpoint: None,
     });
-    
+
     // When
     let provider = create_provider(&config).unwrap();
-    
+
     // Then
     assert_eq!(provider.provider_name(), "openai");
 }
@@ -41,10 +43,11 @@ async fn test_provider_factory_fails_unknown_provider() {
     // Given
     let mut config = Config::default();
     config.provider.default = "unknown-provider".to_string();
-    
+    config.provider.fallback.clear();
+
     // When
     let result = create_provider(&config);
-    
+
     // Then
     assert!(result.is_err());
     match result.unwrap_err() {
@@ -63,16 +66,17 @@ async fn test_github_models_provider_complete() {
         .with_header("content-type", "application/json")
         .with_body(r#"{"choices":[{"message":{"content":"Hello, world!"}}]}"#)
         .create();
-    
+
     let mut config = Config::default();
     config.github_models.endpoint = mockito::server_url();
+    config.github_models.token = Some("test-token".to_string());
     config.provider.default = "github-models".to_string();
-    
+
     let provider = create_provider(&config).unwrap();
-    
+
     // When
     let response = provider.complete("Hello").await.unwrap();
-    
+
     // Then
     assert_eq!(response, "Hello, world!");
 }
@@ -83,22 +87,23 @@ async fn test_github_models_provider_stream() {
     let _m = mock("POST", "/inference/chat/completions")
         .with_status(200)
         .with_header("content-type", "text/event-stream")
-        .with_body("data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\" world!\"}}]}\n\ndata: [DONE]\n\n")
+        .with_body("data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"world!\"}}]}\n\ndata: [DONE]\n\n")
         .create();
-    
+
     let mut config = Config::default();
     config.github_models.endpoint = mockito::server_url();
+    config.github_models.token = Some("test-token".to_string());
     config.provider.default = "github-models".to_string();
-    
+
     let provider = create_provider(&config).unwrap();
-    
+
     // When
     let mut stream = provider.stream("Hello").await.unwrap();
     let mut result = String::new();
     while let Some(chunk) = stream.next().await {
         result.push_str(&chunk.unwrap());
     }
-    
+
     // Then
     assert_eq!(result, "Hello world!");
 }
@@ -111,10 +116,11 @@ async fn test_provider_fallback_mechanism() {
     config.provider.fallback = vec!["github-models".to_string()];
     // Intentionally not providing OpenAI config to trigger fallback
     config.openai = None;
-    
+    config.github_models.token = Some("test-token".to_string());
+
     // When
     let provider = create_provider(&config).unwrap();
-    
+
     // Then
     assert_eq!(provider.provider_name(), "github-models");
 }
@@ -127,16 +133,17 @@ async fn test_provider_handles_rate_limiting() {
         .with_header("content-type", "application/json")
         .with_body(r#"{"error":{"message":"Rate limit exceeded"}}"#)
         .create();
-    
+
     let mut config = Config::default();
     config.github_models.endpoint = mockito::server_url();
+    config.github_models.token = Some("test-token".to_string());
     config.provider.default = "github-models".to_string();
-    
+
     let provider = create_provider(&config).unwrap();
-    
+
     // When
     let result = provider.complete("Hello").await;
-    
+
     // Then
     assert!(result.is_err());
     match result.unwrap_err() {
