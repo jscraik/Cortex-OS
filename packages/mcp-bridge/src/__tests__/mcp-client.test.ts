@@ -112,7 +112,9 @@ describe('McpClient', () => {
       await connectPromise;
 
       expect(client.getState()).toBe(ConnectionState.Connected);
-      expect(MockWebSocket).toHaveBeenCalledWith(defaultOptions.url);
+      expect(MockWebSocket).toHaveBeenCalledWith(defaultOptions.url, {
+        headers: {},
+      });
     });
 
     it('should handle connection errors with retry', async () => {

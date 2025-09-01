@@ -109,6 +109,9 @@ export class UniversalMcpManager {
     // gemini mcp add ref-server --url https://api.ref.tools/mcp --key ref-e672788111c76ba32bc1
 
     const parts = command.trim().split(/\s+/);
+    if (!parts.includes('mcp')) {
+      return null;
+    }
 
     // Remove the CLI prefix (cortex, claude, gemini, etc.)
     let startIndex = 0;
