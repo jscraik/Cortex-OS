@@ -1,0 +1,116 @@
+name: Cortex-OS Master Review
+
+on:
+  pull_request:
+    branches: ['main', 'develop']
+  workflow_dispatch: {}
+  schedule:
+    # Run Mon & Thu at 06:30 UTC (cron uses UTC)
+    - cron: '30 6 * * 1,4'
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write # if you export to code scanning
+  id-token: write # for OIDC to external scanners if used
+
+concurrency:
+  group: master-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  master-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      READINESS_THRESHOLD: '85'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci || pnpm install || yarn install
+
+      - name: Test with coverage
+        run: npm run test:coverage || pnpm test:coverage || yarn test:coverage
+
+      - name: Accessibility scans
+        run: |
+          npx axe --dir ./apps/cortex-webui || true
+          # Add real URL if you spin up a preview env
+          # npx pa11y http://localhost:3000 || true
+
+      - name: Chaos experiments (optional)
+        run: |
+          if [ -f ./scripts/chaos-tests.sh ]; then
+            bash ./scripts/chaos-tests.sh || echo "chaos tests failed" >> chaos.log
+          fi
+
+      - name: SBOM / security scans
+        run: |
+          npx osv-scanner --recursive . || true
+          npx semgrep --config auto || true
+
+      - name: Generate Master Review (JSON)
+        run: |
+          mkdir -p reports
+          npx cortex-cli review --prompt .cortex/prompts/master-review.md \
+            --output ./reports/cortex-os.master.json
+
+      - name: Gate on readiness score
+        id: gate
+        run: |
+          score=$(jq '.overall.score' reports/cortex-os.master.json)
+          echo "score=$score" >> "$GITHUB_OUTPUT"
+          if [ -z "$score" ] || [ "$score" = "null" ]; then
+            echo "No score found in report"; exit 1
+          fi
+          if [ "$score" -lt "$READINESS_THRESHOLD" ]; then
+            echo "Readiness score $score < $READINESS_THRESHOLD"; exit 2
+          fi
+
+      - name: Upload report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cortex-os-master-review-${{ github.run_id }}
+          path: reports/cortex-os.master.json
+          retention-days: 30
+
+      - name: Post job summary
+        if: always()
+        run: |
+          echo "## Cortex-OS Master Review" >> $GITHUB_STEP_SUMMARY
+          echo "Score: ${{ steps.gate.outputs.score }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          jq '.overall, .areas, .risks[0:5]' reports/cortex-os.master.json >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create issue if threshold failed (scheduled or manual only)
+        if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const score = "${{ steps.gate.outputs.score }}";
+            const title = `Master Review: score ${score} below ${process.env.READINESS_THRESHOLD}`;
+            const body = [
+              "Automated Master Review failed readiness gate.",
+              `Score: **${score}** (threshold ${process.env.READINESS_THRESHOLD})`,
+              "See artifact: Actions run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            ].join("\n\n");
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ["readiness", "automated", "triage"]
+            });
