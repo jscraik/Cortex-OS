@@ -36,7 +36,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install (minimal)
-        run: npm ci || pnpm install || yarn install
+        run: pnpm install
 
       - name: Generate SBOM
         run: |
