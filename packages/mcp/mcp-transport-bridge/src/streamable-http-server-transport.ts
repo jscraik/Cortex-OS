@@ -1,31 +1,44 @@
-import { Server as HttpServer, createServer, IncomingMessage, ServerResponse } from 'http';
+import { Server as HttpsServer, createServer, IncomingMessage, ServerResponse } from 'https';
 import { EventEmitter } from 'events';
 
-// This is a guessed interface based on how server transports are typically used.
-// The real interface is in the @modelcontextprotocol/sdk package.
+// Guessed interface for server transport
 export interface McpServerTransport extends EventEmitter {
   connect(): Promise<void>;
   close(): Promise<void>;
-  send(message: any): void;
+  send(message: unknown): void;
 }
 
-export class StreamableHTTPServerTransport extends EventEmitter implements McpServerTransport {
-  private server: HttpServer;
+export interface TlsConfig {
+  key: string | Buffer;
+  cert: string | Buffer;
+  ca?: string | Buffer;
+}
+
+export class StreamableHTTPServerTransport
+  extends EventEmitter
+  implements McpServerTransport
+{
+  private server: HttpsServer;
   private host: string;
   private port: number;
   private responseStream: ServerResponse | null = null;
 
-  constructor(port: number, host: string = 'localhost') {
+  constructor(port: number, host = 'localhost', tls: TlsConfig) {
     super();
     this.port = port;
     this.host = host;
-    this.server = createServer(this.handleRequest.bind(this));
+    this.server = createServer(
+      { ...tls, minVersion: 'TLSv1.3' },
+      this.handleRequest.bind(this),
+    );
   }
 
   async connect(): Promise<void> {
     return new Promise((resolve) => {
       this.server.listen(this.port, this.host, () => {
-        console.log(`[StreamableHTTPServerTransport] Listening on ${this.host}:${this.port}`);
+        console.log(
+          `[StreamableHTTPServerTransport] Listening on https://${this.host}:${this.port}`,
+        );
         resolve();
       });
     });
@@ -40,7 +53,7 @@ export class StreamableHTTPServerTransport extends EventEmitter implements McpSe
     });
   }
 
-  send(message: any): void {
+  send(message: unknown): void {
     if (this.responseStream && !this.responseStream.writableEnded) {
       this.responseStream.write(JSON.stringify(message) + '\n');
     } else {
@@ -57,9 +70,8 @@ export class StreamableHTTPServerTransport extends EventEmitter implements McpSe
       return;
     }
 
-    console.log(`[StreamableHTTPServerTransport] Received request`);
+    console.log('[StreamableHTTPServerTransport] Received request');
 
-    // Set up the response for streaming
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Transfer-Encoding', 'chunked');
     this.responseStream = res;
@@ -74,14 +86,17 @@ export class StreamableHTTPServerTransport extends EventEmitter implements McpSe
         const message = JSON.parse(body);
         this.emit('message', message);
       } catch (error) {
-        console.error('[StreamableHTTPServerTransport] Error parsing request body:', error);
+        console.error(
+          '[StreamableHTTPServerTransport] Error parsing request body:',
+          error,
+        );
         res.statusCode = 400;
         res.end('Bad Request');
       }
     });
 
     req.on('close', () => {
-      console.log(`[StreamableHTTPServerTransport] Request connection closed`);
+      console.log('[StreamableHTTPServerTransport] Request connection closed');
       this.responseStream = null;
     });
   }

@@ -41,7 +41,7 @@ describe('mcp-transport-bridge', () => {
   it('should create a bridge with valid config', () => {
     const config: BridgeConfig = {
       source: { type: 'stdio', command: 'echo' },
-      target: { type: 'streamableHttp', port: 8080, host: 'localhost' },
+      target: { type: 'streamableHttp', port: 8080, host: 'localhost', tls: { key: 'k', cert: 'c' } },
     };
     const bridge = new McpBridge(config);
     expect(bridge).toBeInstanceOf(McpBridge);
@@ -60,7 +60,7 @@ describe('mcp-transport-bridge', () => {
   it('should start and stop the bridge', async () => {
     const config: BridgeConfig = {
       source: { type: 'stdio', command: 'echo' },
-      target: { type: 'streamableHttp', port: 8081, host: 'localhost' },
+      target: { type: 'streamableHttp', port: 8081, host: 'localhost', tls: { key: 'k', cert: 'c' } },
     };
     const bridge = new McpBridge(config);
     await bridge.start();
@@ -75,7 +75,7 @@ describe('mcp-transport-bridge', () => {
   it('should return a healthy status when running', async () => {
     const config: BridgeConfig = {
       source: { type: 'stdio', command: 'echo' },
-      target: { type: 'streamableHttp', port: 8082, host: 'localhost' },
+      target: { type: 'streamableHttp', port: 8082, host: 'localhost', tls: { key: 'k', cert: 'c' } },
     };
     const bridge = new McpBridge(config);
     await bridge.start();
