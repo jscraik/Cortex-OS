@@ -34,8 +34,7 @@ const AppConfigSchema = z.object({
   registries: z.record(z.string().url()),
   cacheDir: z.string().min(1),
   cacheTtl: z.number().positive(),
-  allowedOrigins: z
-    .array(z.union([z.string(), z.instanceof(RegExp)])).min(1),
+    .array(z.union([z.string().url(), z.instanceof(RegExp)])).min(1),
   port: z.number().optional().default(3000),
   host: z.string().optional().default('0.0.0.0'),
 });
