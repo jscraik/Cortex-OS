@@ -1,11 +1,30 @@
-name: k6-load
+name: k6
+
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Test type"
+        type: choice
+        options:
+          - quick
+          - load
+        default: quick
+      annotate:
+        description: "Annotate Grafana"
+        type: boolean
+        default: false
   schedule:
     - cron: '0 2 * * *'
+  workflow_call:
+  repository_dispatch:
+
 jobs:
-  k6:
+  run:
     runs-on: ubuntu-latest
+    env:
+      TEST_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'load' }}
+      ANNOTATE: ${{ github.event_name == 'workflow_dispatch' && inputs.annotate || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -15,8 +34,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - name: Install
-        run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile=false
       - name: Build gateway
         run: pnpm -F @cortex-os/gateway build
       - name: Start gateway
@@ -25,9 +43,14 @@ jobs:
         run: npx wait-on http://localhost:3333/openapi.json || true
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
+      - name: k6 quick
+        if: env.TEST_MODE == 'quick'
+        run: k6 run --summary-export k6-summary.json k6/quick.js
       - name: k6 smoke
+        if: env.TEST_MODE == 'load'
         run: k6 run k6/smoke.js
-      - name: k6 load (tight thresholds)
+      - name: k6 load
+        if: env.TEST_MODE == 'load'
         env:
           P95_MS: 300
           ERROR_RATE_MAX: 0.005
@@ -35,3 +58,15 @@ jobs:
           STAGE2: 5m:80
           STAGE3: 2m:0
         run: k6 run k6/load.js
+      - name: Upload k6 summary
+        if: env.TEST_MODE == 'quick'
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-summary
+          path: k6-summary.json
+      - name: Annotate Grafana
+        if: env.TEST_MODE == 'quick' && env.ANNOTATE == 'true' && secrets.GRAFANA_URL != '' && secrets.GRAFANA_API_KEY != ''
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+        run: node ops/observability/grafana/annotate.mjs k6-summary.json
