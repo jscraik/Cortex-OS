@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { type ProcessingConfig, ProcessingStrategy, type StrategyDecision } from '../policy/mime';
 
 export interface ProcessingFile {
@@ -40,18 +41,40 @@ export interface Chunker {
 }
 
 class TextChunker implements Chunker {
-  chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]> {
-    const content = file.content.toString('utf-8');
+  private readonly fileSchema = z.object({
+    path: z.string(),
+    content: z.instanceof(Buffer),
+    mimeType: z.string(),
+    size: z.number().int().nonnegative(),
+  });
 
-    switch (config.chunker) {
+  private readonly configSchema = z.object({
+    chunker: z.enum(['text','markdown','code','structured','pdf','ocr','unstructured','semantic','sliding']).nullable(),
+    requiresOCR: z.boolean(),
+    requiresUnstructured: z.boolean(),
+    maxPages: z.number().int().positive().nullable(),
+    sliding: z.object({ size: z.number().int().positive(), overlap: z.number().int().nonnegative() }).optional(),
+    semantic: z.object({ sentences: z.number().int().positive().max(10) }).optional(),
+  });
+
+  chunk(file: ProcessingFile, config: ProcessingConfig): Promise<DocumentChunk[]> {
+    const f = this.fileSchema.parse(file);
+    const cfg = this.configSchema.parse(config);
+    const content = f.content.toString('utf-8');
+
+    switch (cfg.chunker) {
       case 'markdown':
-        return Promise.resolve(this.chunkMarkdown(content, file));
+        return Promise.resolve(this.chunkMarkdown(content, f));
       case 'code':
-        return Promise.resolve(this.chunkCode(content, file));
+        return Promise.resolve(this.chunkCode(content, f));
       case 'structured':
-        return Promise.resolve(this.chunkStructured(content, file));
+        return Promise.resolve(this.chunkStructured(content, f));
+      case 'semantic':
+        return Promise.resolve(this.chunkSemantic(content, f, cfg));
+      case 'sliding':
+        return Promise.resolve(this.chunkSliding(content, f, cfg));
       default:
-        return Promise.resolve(this.chunkPlainText(content, file));
+        return Promise.resolve(this.chunkPlainText(content, f));
     }
   }
 
@@ -153,6 +176,47 @@ class TextChunker implements Chunker {
       return chunks;
     }
     return this.chunkPlainText(content, file);
+  }
+  private chunkSemantic(
+    content: string,
+    file: ProcessingFile,
+    config: z.infer<typeof this.configSchema>,
+  ): DocumentChunk[] {
+    const sentences = content.match(/[^.!?]+[.!?]/g) ?? [];
+    const perChunk = config.semantic?.sentences ?? 3;
+    const chunks: DocumentChunk[] = [];
+    for (let i = 0; i < sentences.length; i += perChunk) {
+      const chunk = sentences.slice(i, i + perChunk).join('').trim();
+      if (chunk) {
+        chunks.push({
+          id: `${file.path}-sem-${chunks.length + 1}`,
+          content: chunk,
+          metadata: { type: 'semantic', sentenceStart: i },
+        });
+      }
+    }
+    return chunks;
+  }
+
+  private chunkSliding(
+    content: string,
+    file: ProcessingFile,
+    config: z.infer<typeof this.configSchema>,
+  ): DocumentChunk[] {
+    const size = config.sliding?.size ?? 200;
+    const overlap = config.sliding?.overlap ?? 20;
+    const step = Math.max(1, size - overlap);
+    const chunks: DocumentChunk[] = [];
+    for (let i = 0; i < content.length; i += step) {
+      const chunk = content.slice(i, i + size);
+      if (!chunk) continue;
+      chunks.push({
+        id: `${file.path}-sl-${chunks.length + 1}`,
+        content: chunk,
+        metadata: { type: 'sliding', position: i, overlap },
+      });
+    }
+    return chunks;
   }
 }
 
