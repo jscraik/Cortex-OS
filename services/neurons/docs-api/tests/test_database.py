@@ -10,8 +10,7 @@ async def test_init_and_get_db(monkeypatch, tmp_path):
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_path}")
     monkeypatch.setenv("DEBUG", "0")
 
-    importlib.reload(importlib.import_module("core.config"))
-    database = importlib.reload(importlib.import_module("core.database"))
+    import core.database as database
 
     await database.init_db()
 
