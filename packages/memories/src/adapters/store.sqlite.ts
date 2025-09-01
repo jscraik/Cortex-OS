@@ -49,13 +49,19 @@ export class SQLiteStore implements MemoryStore {
     // Ensure ACL columns exist
     try {
       this.db.exec('ALTER TABLE memories ADD COLUMN aclAgent TEXT');
-    } catch {}
+    } catch (err) {
+      console.error('Error adding aclAgent column:', err);
+    }
     try {
       this.db.exec('ALTER TABLE memories ADD COLUMN aclTenant TEXT');
-    } catch {}
+    } catch (err) {
+      console.error('Error adding aclTenant column:', err);
+    }
     try {
       this.db.exec('ALTER TABLE memories ADD COLUMN aclPurposes TEXT');
-    } catch {}
+    } catch (err) {
+      console.error('Error adding aclPurposes column:', err);
+    }
 
     // Create indexes
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
