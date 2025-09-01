@@ -10,7 +10,7 @@ The @ commands provide a convenient way to interact with different GitHub Apps t
 
 | App | @ Command | Purpose | Webhook URL |
 |-----|-----------|---------|-------------|
-| **Semgrep** | `@semgrep` | Static security analysis and code quality | `https://insula-semgrep.brainwav.io/webhook` |
+| **Semgrep** | `@semgrep` | Static security analysis and code quality | `https://semgrep-github.brainwav.io/webhook` |
 | **Insula** | `@insula` | Advanced repository management and automation | `https://insula-insula.brainwav.io/webhook` |
 | **Structure Guard** | `@structure` | Repository structure validation and organization | `https://insula-github.brainwav.io/webhook` |
 | **AI Assistant** | `@cortex-ai` | AI-powered code analysis and suggestions | `https://insula-ai.brainwav.io/webhook` |
@@ -87,7 +87,7 @@ Shows current Semgrep configuration.
 
 Updates Semgrep rules to the latest version.
 
-### Example Usage
+### Example Usage (Insula)
 
 ```markdown
 Hey @semgrep, can you scan this PR for security issues?
@@ -359,7 +359,7 @@ For programmatic access, each app also provides REST API endpoints:
 
 ```bash
 # Semgrep API
-curl -X POST https://insula-semgrep.brainwav.io/api/scan \
+curl -X POST https://semgrep-github.brainwav.io/api/scan \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"repository": "owner/repo", "ref": "main"}'
 

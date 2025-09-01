@@ -7,8 +7,9 @@
  * @status active
  */
 
-import { promises as dns } from 'dns';
-import { EventEmitter } from 'events';
+import { createHash } from 'node:crypto';
+import { promises as dns } from 'node:dns';
+import { EventEmitter } from 'node:events';
 import {
   ConnectionState,
   createMcpClient,
@@ -95,7 +96,7 @@ class ManagedConnection {
 
   constructor(
     public client: McpClient,
-    public serverId: string,
+    public serverId: string
   ) {}
 
   async acquire(): Promise<void> {
@@ -143,10 +144,10 @@ class ManagedConnection {
  */
 export class McpConnectionManager extends EventEmitter {
   private servers = new Map<string, ServerHealth>();
-  private connections = new Map<string, ManagedConnection[]>();
+  private readonly connections = new Map<string, ManagedConnection[]>();
   private discoveryTimer: NodeJS.Timeout | null = null;
   private cleanupTimer: NodeJS.Timeout | null = null;
-  private stats: PoolStats = {
+  private readonly stats: PoolStats = {
     totalConnections: 0,
     activeConnections: 0,
     idleConnections: 0,
@@ -157,9 +158,9 @@ export class McpConnectionManager extends EventEmitter {
   };
 
   constructor(
-    private discoveryConfig: ServerDiscoveryConfig,
-    private poolConfig: ConnectionPoolConfig,
-    private clientOptions: Partial<McpClientOptions> = {},
+    private readonly discoveryConfig: ServerDiscoveryConfig,
+    private readonly poolConfig: ConnectionPoolConfig,
+    private readonly clientOptions: Partial<McpClientOptions> = {}
   ) {
     super();
     this.setupCleanupTimer();
@@ -256,12 +257,12 @@ export class McpConnectionManager extends EventEmitter {
     // Update live stats
     this.stats.totalConnections = Array.from(this.connections.values()).reduce(
       (sum, conns) => sum + conns.length,
-      0,
+      0
     );
 
     this.stats.idleConnections = Array.from(this.connections.values()).reduce(
       (sum, conns) => sum + conns.filter((c) => !c.isAcquired).length,
-      0,
+      0
     );
 
     return { ...this.stats };
@@ -304,7 +305,7 @@ export class McpConnectionManager extends EventEmitter {
 
   private async probeServer(
     url: string,
-    discoveredServers: Map<string, ServerHealth>,
+    discoveredServers: Map<string, ServerHealth>
   ): Promise<void> {
     const serverId = this.getServerId(url);
     const startTime = Date.now();
@@ -369,6 +370,58 @@ export class McpConnectionManager extends EventEmitter {
       .sort(([_, a], [__, b]) => (a.responseTime || 0) - (b.responseTime || 0));
 
     return healthyServers.length > 0 ? healthyServers[0][0] : null;
+  }
+
+  /**
+   * List tools from all healthy servers with fully qualified names.
+   * Tool names are qualified as "<serverId>__<tool>" and truncated to 64 chars with a SHA1 suffix if needed.
+   */
+  async listQualifiedTools(): Promise<
+    Record<string, { name: string; description: string; inputSchema?: Record<string, unknown> }>
+  > {
+    const result: Record<
+      string,
+      { name: string; description: string; inputSchema?: Record<string, unknown> }
+    > = {};
+    const healthy = Array.from(this.servers.entries()).filter(([_, s]) => s.status === 'healthy');
+
+    // Query each server sequentially to avoid thundering herd; pool ensures reuse
+    for (const [serverId] of healthy) {
+      try {
+        const { connection, release } = await this.acquireConnection(serverId);
+        try {
+          const list = await connection.listTools();
+          for (const tool of list.tools) {
+            const fq = this.qualifyToolName(serverId, tool.name);
+            if (!(fq in result)) {
+              result[fq] = {
+                name: tool.name,
+                description: tool.description,
+                inputSchema: tool.inputSchema,
+              };
+            }
+          }
+        } finally {
+          release();
+        }
+      } catch {
+        // Skip servers that fail listing
+      }
+    }
+
+    return result;
+  }
+
+  private qualifyToolName(serverId: string, toolName: string): string {
+    const DELIM = '__';
+    const MAX = 64;
+    const qualified = `${serverId}${DELIM}${toolName}`;
+    if (qualified.length <= MAX) return qualified;
+
+    // Truncate and append SHA1 hash to ensure uniqueness and determinism
+    const sha1 = createHash('sha1').update(qualified).digest('hex');
+    const prefixLen = Math.max(0, MAX - sha1.length);
+    return `${qualified.slice(0, prefixLen)}${sha1}`;
   }
 
   private async getConnection(serverId: string): Promise<ManagedConnection> {
@@ -501,7 +554,7 @@ export class McpConnectionManager extends EventEmitter {
 export function createConnectionManager(
   config: Partial<ServerDiscoveryConfig> = {},
   poolConfig: Partial<ConnectionPoolConfig> = {},
-  clientOptions: Partial<McpClientOptions> = {},
+  clientOptions: Partial<McpClientOptions> = {}
 ): McpConnectionManager {
   const defaultDiscoveryConfig: ServerDiscoveryConfig = {
     localServers: ['ws://localhost:3001'],

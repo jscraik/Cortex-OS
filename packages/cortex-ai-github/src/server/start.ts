@@ -3,9 +3,9 @@
  * Reads env vars, initializes the AI app, and starts the webhook server.
  */
 
-import { CortexAiGitHubApp } from '../core/ai-github-app';
-import type { GitHubModel } from '../types/github-models';
-import { CortexWebhookServer } from './webhook-server';
+import { CortexAiGitHubApp } from '../core/ai-github-app.js';
+import type { GitHubModel } from '../types/github-models.js';
+import { CortexWebhookServer } from './webhook-server.js';
 
 const required = (name: string, value: string | undefined) => {
   if (!value || value.trim() === '') {
@@ -33,7 +33,7 @@ async function main() {
     temperature,
   });
 
-  const server = new CortexWebhookServer(aiApp, webhookSecret, port);
+  const server = new CortexWebhookServer(aiApp, webhookSecret);
 
   await server.start(port);
   console.log(

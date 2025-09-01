@@ -6,6 +6,67 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { redactSensitiveData } from '../../mcp/src/lib/security.js';
 import type { ServerInfo } from './contracts.js';
 
+type Transport = StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport;
+
+type TransportFactory = () => Transport;
+
+function buildTransportCandidates(si: ServerInfo): TransportFactory[] {
+  const candidates: TransportFactory[] = [];
+
+  if (si.transport === 'streamableHttp') {
+    const endpoint = si.endpoint;
+    if (!endpoint) throw new Error('streamableHttp requires endpoint');
+    candidates.push(() => new StreamableHTTPClientTransport(new URL(endpoint)));
+    candidates.push(() => new SSEClientTransport(new URL(endpoint)));
+  } else if (si.transport === 'sse') {
+    const endpoint = si.endpoint;
+    if (!endpoint) throw new Error('sse requires endpoint');
+    candidates.push(() => new SSEClientTransport(new URL(endpoint)));
+    candidates.push(() => new StreamableHTTPClientTransport(new URL(endpoint)));
+  } else if (si.transport === 'stdio') {
+    const command = si.command;
+    if (!command) throw new Error('stdio requires command');
+    candidates.push(() => new StdioClientTransport({ command, args: si.args, env: si.env }));
+  } else {
+    throw new Error(`Unsupported transport: ${si.transport}`);
+  }
+
+  // If both endpoint and command are provided, consider local stdio as a final fallback
+  if (si.command && si.transport !== 'stdio') {
+    const command = si.command;
+    candidates.push(() => new StdioClientTransport({ command, args: si.args, env: si.env }));
+  }
+
+  return candidates;
+}
+
+async function connectWithFallback(candidates: TransportFactory[]): Promise<{
+  client: Client;
+  transport: Transport;
+}> {
+  let lastError: unknown;
+  for (const mk of candidates) {
+    const transport = mk();
+    const client = new Client({ name: 'cortex-os-mcp-client', version: '1.0.0' });
+    try {
+      await client.connect(transport);
+      return { client, transport };
+    } catch (err) {
+      lastError = err;
+      try {
+        await transport.close();
+      } catch {
+        // ignore
+      }
+    }
+  }
+  throw new Error(
+    `Failed to connect to MCP server via all candidate transports: ${
+      (lastError as Error)?.message || String(lastError)
+    }`
+  );
+}
+
 // Use shared redaction to ensure consistent behavior across packages
 function redactArgs<T extends Record<string, unknown>>(args: T): T {
   return redactSensitiveData(args) as T;
@@ -13,31 +74,9 @@ function redactArgs<T extends Record<string, unknown>>(args: T): T {
 
 // Create a new, enhanced client that wraps the official SDK client
 export async function createEnhancedClient(si: ServerInfo) {
-  let transport;
-  switch (si.transport) {
-    case 'stdio':
-      if (!si.command) throw new Error('stdio requires command');
-      transport = new StdioClientTransport({
-        command: si.command,
-        args: si.args,
-        env: si.env,
-      });
-      break;
-    case 'sse':
-      if (!si.endpoint) throw new Error('sse requires endpoint');
-      transport = new SSEClientTransport(new URL(si.endpoint));
-      break;
-    case 'streamableHttp':
-      if (!si.endpoint) throw new Error('streamableHttp requires endpoint');
-      transport = new StreamableHTTPClientTransport(new URL(si.endpoint));
-      break;
-    default:
-      throw new Error(`Unsupported transport: ${si.transport}`);
-  }
-
-  const baseClient = new Client({ name: 'cortex-os-mcp-client', version: '1.0.0' });
-
-  await baseClient.connect(transport);
+  const candidates = buildTransportCandidates(si);
+  const { client: baseClient, transport: connectedTransport } =
+    await connectWithFallback(candidates);
 
   const rateLimiter = new RateLimiterMemory({
     points: 60, // 60 requests
@@ -82,7 +121,7 @@ export async function createEnhancedClient(si: ServerInfo) {
     close: async () => {
       // No need to dispose the rate limiter as it's not a global singleton.
       // It will be garbage collected when the client is.
-      await transport.close();
+      await connectedTransport.close();
       baseClient.close();
     },
 

@@ -34,10 +34,10 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
   constructor(config: GitHubModelsConfig) {
     super();
     this.config = {
-      baseUrl: 'https://models.inference.ai.azure.com',
-      maxTokens: 4096,
-      temperature: 0.3,
       ...config,
+      baseUrl: config.baseUrl || 'https://models.inference.ai.azure.com',
+      maxTokens: config.maxTokens || 4096,
+      temperature: config.temperature || 0.3,
     };
   }
 
@@ -142,7 +142,7 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 
     this.updateRateLimitInfo(response.headers);
 
-    const completion: ModelCompletionResponse = await response.json();
+    const completion = await response.json() as ModelCompletionResponse;
 
     return {
       content: completion.choices[0]?.message?.content ?? '',
@@ -282,7 +282,7 @@ Only suggest fixes you're confident are safe and correct.`,
     };
   }
 
-  private parseTaskResult(taskType: AITaskType, content: string): AITaskResult['result'] {
+  private parseTaskResult(_taskType: AITaskType, content: string): AITaskResult['result'] {
     // Basic parsing - in production this would be more sophisticated
     const lines = content.split('\n').filter((line) => line.trim());
 

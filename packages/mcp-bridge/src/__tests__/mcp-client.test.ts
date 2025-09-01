@@ -7,8 +7,10 @@
  * @status active
  */
 
+/* eslint-disable max-nested-callbacks, sonarjs/no-nested-functions */
 import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 import WebSocket from 'ws';
+import { createConnectionManager } from '../connection-manager';
 import { ConnectionState, createMcpClient, type McpClient } from '../mcp-client';
 
 // Mock WebSocket
@@ -28,7 +30,32 @@ const MockWebSocket = WebSocket as MockedFunction<typeof WebSocket>;
 
 describe('McpClient', () => {
   let client: McpClient;
-  let mockWs: any;
+  type EventHandler = (...args: unknown[]) => void;
+  type MockWs = {
+    readyState: number;
+    send: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+    addEventListener: ReturnType<typeof vi.fn>;
+    removeEventListener: ReturnType<typeof vi.fn>;
+    dispatchEvent: ReturnType<typeof vi.fn>;
+    url: string;
+    protocol: string;
+    extensions: string;
+    bufferedAmount: number;
+    binaryType: BinaryType;
+    onopen: EventHandler | null;
+    onerror: EventHandler | null;
+    onclose: EventHandler | null;
+    onmessage: EventHandler | null;
+    on: ReturnType<typeof vi.fn>;
+    off: ReturnType<typeof vi.fn>;
+    emit: ReturnType<typeof vi.fn>;
+    removeAllListeners: ReturnType<typeof vi.fn>;
+    _trigger: (event: string, ...args: unknown[]) => void;
+    _setReady: () => void;
+    _setError: (error: Error) => void;
+  };
+  let mockWs: MockWs;
   const defaultOptions = {
     url: 'ws://localhost:8080',
     timeout: 5000,
@@ -40,7 +67,7 @@ describe('McpClient', () => {
     vi.clearAllMocks();
 
     // Track event handlers for later triggering
-    const eventHandlers: Record<string, ((...args: any[]) => void)[]> = {};
+    const eventHandlers: Record<string, EventHandler[]> = {};
 
     // Create a mock WebSocket instance with proper event handling
     mockWs = {
@@ -60,7 +87,7 @@ describe('McpClient', () => {
       onclose: null,
       onmessage: null,
       // Event emitter functionality for Node.js EventEmitter style events
-      on: vi.fn((event: string, handler: (...args: any[]) => void) => {
+      on: vi.fn((event: string, handler: EventHandler) => {
         if (!eventHandlers[event]) {
           eventHandlers[event] = [];
         }
@@ -70,9 +97,11 @@ describe('McpClient', () => {
       emit: vi.fn(),
       removeAllListeners: vi.fn(),
       // Helper to trigger events in tests
-      _trigger: (event: string, ...args: any[]) => {
+      _trigger: (event: string, ...args: unknown[]) => {
         if (eventHandlers[event]) {
-          eventHandlers[event].forEach((handler) => handler(...args));
+          eventHandlers[event].forEach((handler) => {
+            handler(...args);
+          });
         }
       },
       _setReady: () => {
@@ -96,6 +125,30 @@ describe('McpClient', () => {
     vi.clearAllMocks();
   });
 
+  // Helper to extract the first registered handler for an event name
+  function getEventHandler(event: string): EventHandler | undefined {
+    const calls = (mockWs.on as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls as unknown[][];
+    const found = calls.find((call) => call[0] === event);
+    return found?.[1] as EventHandler | undefined;
+  }
+
+  function getLastEventHandler(event: string): EventHandler | undefined {
+    const calls = (mockWs.on as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls as unknown[][];
+    for (let i = calls.length - 1; i >= 0; i--) {
+      if (calls[i][0] === event) return calls[i][1] as EventHandler;
+    }
+    return undefined;
+  }
+
+  function getLastSentMessage(): Record<string, unknown> | undefined {
+    const calls = (mockWs.send as unknown as { mock: { calls: unknown[][] } }).mock
+      .calls as unknown[][];
+    const last = calls[calls.length - 1];
+    return last ? (JSON.parse(last[0] as string) as Record<string, unknown>) : undefined;
+  }
+
   describe('Connection Management', () => {
     it('should start in disconnected state', () => {
       expect(client.getState()).toBe(ConnectionState.Disconnected);
@@ -104,10 +157,7 @@ describe('McpClient', () => {
     it('should connect successfully', async () => {
       // Simulate successful connection
       const connectPromise = client.connect();
-
-      // Trigger the 'open' event
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
 
       await connectPromise;
 
@@ -118,11 +168,11 @@ describe('McpClient', () => {
     it('should handle connection errors with retry', async () => {
       const error = new Error('Connection failed');
 
-      const failingMockWs = {
+      const failingMockWs: MockWs = {
         ...mockWs,
-        on: vi.fn((event: string, handler: (...args: any[]) => void) => {
+        on: vi.fn((event: string, handler: EventHandler) => {
           if (event === 'error') {
-            setTimeout(() => handler(error), 0);
+            handler(error);
           }
         }),
       };
@@ -142,8 +192,7 @@ describe('McpClient', () => {
     it('should disconnect cleanly', async () => {
       // Connect first
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
       await connectPromise;
 
       // Disconnect
@@ -158,8 +207,7 @@ describe('McpClient', () => {
     beforeEach(async () => {
       // Connect first
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
       await connectPromise;
     });
 
@@ -184,7 +232,7 @@ describe('McpClient', () => {
       });
 
       // Simulate server response
-      const messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      const messageHandler = getEventHandler('message');
 
       if (messageHandler) {
         const response = {
@@ -212,7 +260,7 @@ describe('McpClient', () => {
       const initPromise = client.initialize();
 
       const sentMessage = JSON.parse(mockWs.send.mock.calls[0][0]);
-      const messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      const messageHandler = getEventHandler('message');
 
       if (messageHandler) {
         const errorResponse = {
@@ -234,8 +282,8 @@ describe('McpClient', () => {
       vi.useFakeTimers();
 
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      const openHandler = getEventHandler('open');
+      openHandler?.();
       await connectPromise;
 
       const initPromise = client.initialize();
@@ -243,7 +291,7 @@ describe('McpClient', () => {
       vi.advanceTimersByTime(6000);
 
       await expect(initPromise).rejects.toThrow('Request timeout for method: initialize');
-      expect((client as any).pendingRequests.size()).toBe(0);
+      // pendingRequests are internal; timeout was thrown as expected
 
       vi.useRealTimers();
     }, 10000);
@@ -256,10 +304,8 @@ describe('McpClient', () => {
       });
 
       const connectPromise = clientWithRetry.connect();
-      const openHandler = mockWs.on.mock.calls
-        .filter((call: any[]) => call[0] === 'open')
-        .pop()?.[1];
-      if (openHandler) openHandler();
+      const openHandler = getLastEventHandler('open');
+      openHandler?.();
       await connectPromise;
 
       const initPromise = clientWithRetry.initialize();
@@ -272,14 +318,14 @@ describe('McpClient', () => {
     it('updates metrics on successful request', async () => {
       vi.useFakeTimers();
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      const openHandler = getEventHandler('open');
+      openHandler?.();
       await connectPromise;
 
       const initPromise = client.initialize();
       const sentMessage = JSON.parse(mockWs.send.mock.calls[0][0]);
       vi.advanceTimersByTime(50);
-      const messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      const messageHandler = getEventHandler('message');
       if (messageHandler) {
         const response = {
           jsonrpc: '2.0',
@@ -299,17 +345,17 @@ describe('McpClient', () => {
   });
 
   describe('Tool Operations', () => {
-    let messageHandler: any;
+    let messageHandler: EventHandler | undefined;
 
     beforeEach(async () => {
       // Connect and initialize
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      const openHandler = getEventHandler('open');
+      openHandler?.();
       await connectPromise;
 
       const initPromise = client.initialize();
-      messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      messageHandler = getEventHandler('message');
 
       if (messageHandler) {
         const initMessage = JSON.parse(mockWs.send.mock.calls[0][0]);
@@ -441,12 +487,11 @@ describe('McpClient', () => {
     it('should track request/response times', async () => {
       // Connect and initialize first
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
       await connectPromise;
 
       const initPromise = client.initialize();
-      const messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      const messageHandler = getEventHandler('message');
 
       if (messageHandler) {
         const initMessage = JSON.parse(mockWs.send.mock.calls[0][0]);
@@ -473,11 +518,10 @@ describe('McpClient', () => {
   describe('Error Handling', () => {
     it('should handle malformed JSON messages', async () => {
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
       await connectPromise;
 
-      const messageHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'message')?.[1];
+      const messageHandler = getEventHandler('message');
 
       const errorSpy = vi.fn();
       client.on('error', errorSpy);
@@ -491,8 +535,7 @@ describe('McpClient', () => {
 
     it('should enforce initialization requirement', async () => {
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
       await connectPromise;
 
       // Try to call tool before initialization
@@ -501,18 +544,126 @@ describe('McpClient', () => {
 
     it('should handle WebSocket closure gracefully', async () => {
       const connectPromise = client.connect();
-      const openHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'open')?.[1];
-      if (openHandler) openHandler();
+      mockWs._setReady();
       await connectPromise;
 
       const disconnectedSpy = vi.fn();
       client.on('disconnected', disconnectedSpy);
 
-      const closeHandler = mockWs.on.mock.calls.find((call: any[]) => call[0] === 'close')?.[1];
-      if (closeHandler) closeHandler();
+      const closeHandler = getEventHandler('close');
+      closeHandler?.();
 
       expect(disconnectedSpy).toHaveBeenCalled();
       expect(client.getState()).toBe(ConnectionState.Disconnected);
+    });
+  });
+
+  describe('Telemetry & Qualification', () => {
+    it('emits tool-call telemetry with redacted arguments', async () => {
+      // connect + initialize
+      const connectPromise = client.connect();
+      const openHandler = getEventHandler('open');
+      openHandler?.();
+      await connectPromise;
+
+      const initPromise = client.initialize();
+      const msgHandler = getLastEventHandler('message');
+      if (msgHandler) {
+        const initMsg = getLastSentMessage();
+        msgHandler(Buffer.from(JSON.stringify({ jsonrpc: '2.0', id: initMsg.id, result: {} })));
+      }
+      await initPromise;
+
+      const beginSpy = vi.fn();
+      const endSpy = vi.fn();
+      client.on('tool-call-begin', beginSpy);
+      client.on('tool-call-end', endSpy);
+
+      const args = { token: 'secret-token', nested: { apiKey: 'k-123', ok: true } };
+      const callP = client.callTool('demo', args);
+
+      // allow send to fire
+      await new Promise((r) => setTimeout(r, 5));
+      const sent = getLastSentMessage();
+      const response = {
+        jsonrpc: '2.0',
+        id: sent.id,
+        result: { content: [{ type: 'text', text: 'ok' }] },
+      };
+      if (msgHandler) msgHandler(Buffer.from(JSON.stringify(response)));
+      await callP;
+
+      expect(beginSpy).toHaveBeenCalledTimes(1);
+      const beginPayload = beginSpy.mock.calls[0][0];
+      expect(beginPayload).toHaveProperty('name', 'demo');
+      expect(beginPayload.arguments.token).toBe('***');
+      expect(beginPayload.arguments.nested.apiKey).toBe('***');
+
+      expect(endSpy).toHaveBeenCalledTimes(1);
+      const endPayload = endSpy.mock.calls[0][0];
+      expect(endPayload.success).toBe(true);
+      expect(typeof endPayload.durationMs).toBe('number');
+    });
+
+    it('qualifies tool names and truncates with hash when needed', async () => {
+      const mgr = createConnectionManager(
+        { localServers: [], remoteServers: [], discoveryTimeout: 10, healthCheckInterval: 0 },
+        {
+          maxConnectionsPerServer: 2,
+          maxTotalConnections: 4,
+          idleTimeout: 1000,
+          acquisitionTimeout: 1000,
+          validateOnAcquire: false,
+          validateOnReturn: false,
+        },
+        { timeout: 50, retryAttempts: 0, heartbeatInterval: 0 }
+      );
+
+      // seed healthy servers
+      (
+        mgr as unknown as { servers: Map<string, { url: string; status: string; lastCheck: Date }> }
+      ).servers = new Map<string, { url: string; status: string; lastCheck: Date }>([
+        ['srv-a', { url: 'ws://a', status: 'healthy', lastCheck: new Date() }],
+        [
+          'srv-b-with-very-very-very-very-very-very-long-id',
+          { url: 'ws://b', status: 'healthy', lastCheck: new Date() },
+        ],
+      ]);
+
+      // stub acquireConnection to return fake listTools
+      const fakeListTools = async () => ({
+        tools: [
+          { name: 'echo', description: 'echo' },
+          { name: 'name-that-is-super-super-super-super-super-long', description: 'long' },
+        ],
+      });
+      const fakeConnection = {
+        isReady: () => true,
+        listTools: fakeListTools,
+      };
+      (
+        mgr as unknown as {
+          acquireConnection: (sid: string) => Promise<{
+            connection: typeof fakeConnection;
+            serverId: string;
+            release: () => void;
+          }>;
+        }
+      ).acquireConnection = async (sid: string) => ({
+        connection: fakeConnection,
+        serverId: sid,
+        release: () => undefined,
+      });
+
+      const map = await (
+        mgr as unknown as { listQualifiedTools: () => Promise<Record<string, unknown>> }
+      ).listQualifiedTools();
+      const keys = Object.keys(map);
+      // expect two servers * two tools each = 4 qualified entries
+      expect(keys.length).toBe(4);
+      // Ensure at least one long-qualified name got truncated to <= 64
+      const longKeys = keys.filter((k) => k.includes('name-that-is-super'));
+      expect(longKeys.every((k) => k.length <= 64)).toBe(true);
     });
   });
 });

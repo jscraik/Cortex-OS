@@ -6,9 +6,10 @@
  * @status active
  */
 
+import { pathToFileURL } from 'node:url';
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express-serve-static-core';
-import * as jwt from 'jsonwebtoken';
+import { startCloudflareTunnel } from './lib/cloudflare-tunnel.js';
 import { webMcpInterface } from './web-mcp-interface.js';
 
 /**
@@ -16,8 +17,11 @@ import { webMcpInterface } from './web-mcp-interface.js';
  * Provides REST API and web interface for testing
  */
 class McpDemoServer {
-  private app: express.Express;
-  private port: number;
+  private readonly app: express.Express;
+  private readonly port: number;
+  // eslint-disable-next-line @typescript-eslint/prefer-readonly
+  private tunnelProc?: import('node:child_process').ChildProcess;
+  private publicUrl: string | null = null;
 
   constructor(port = 3000) {
     this.app = express() as express.Express;
@@ -36,7 +40,7 @@ class McpDemoServer {
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
       res.header(
         'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
       );
 
       if (req.method === 'OPTIONS') {
@@ -49,7 +53,7 @@ class McpDemoServer {
 
   private setupRoutes(): void {
     // Serve the test interface
-    this.app.get('/', (req, res) => {
+    this.app.get('/', (_req, res) => {
       res.send(webMcpInterface.generateTestInterface());
     });
 
@@ -92,7 +96,7 @@ class McpDemoServer {
       res.status(result.status).json(result.body);
     });
 
-    this.app.get('/api/mcp/list', async (req, res) => {
+    this.app.get('/api/mcp/list', async (_req, res) => {
       const result = await webMcpInterface.handleListServers();
       res.status(result.status).json(result.body);
     });
@@ -132,7 +136,7 @@ class McpDemoServer {
     });
 
     // Health check
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_req, res) => {
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -141,7 +145,7 @@ class McpDemoServer {
     });
 
     // API documentation
-    this.app.get('/api/docs', (req, res) => {
+    this.app.get('/api/docs', (_req, res) => {
       res.json({
         title: 'Universal MCP Manager API',
         version: '1.0.0',
@@ -238,7 +242,7 @@ class McpDemoServer {
     });
 
     // 404 handler
-    this.app.use('*', (req, res) => {
+    this.app.use('*', (_req, res) => {
       res.status(404).json({
         success: false,
         message: 'Endpoint not found',
@@ -257,14 +261,14 @@ class McpDemoServer {
 
     // Error handler
     this.app.use(
-      (err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
         console.error('Server error:', err);
         res.status(500).json({
           success: false,
           message: 'Internal server error',
           error: process.env.NODE_ENV === 'development' ? err.message : undefined,
         });
-      },
+      }
     );
   }
 
@@ -273,16 +277,68 @@ class McpDemoServer {
    */
   async start(): Promise<void> {
     return new Promise((resolve) => {
-      this.app.listen(this.port, () => {
+      this.app.listen(this.port, async () => {
         // eslint-disable-next-line no-console
         console.log(`🔒 Universal MCP Manager running on http://localhost:${this.port}`);
         // eslint-disable-next-line no-console
         console.log(`📚 API Documentation: http://localhost:${this.port}/api/docs`);
         // eslint-disable-next-line no-console
         console.log(`🏥 Health Check: http://localhost:${this.port}/health`);
+
+        // Always start Cloudflare Tunnel for public access (built-in server interface)
+        try {
+          const { url, child } = await startCloudflareTunnel(this.port);
+          this.tunnelProc = child;
+          this.publicUrl = url;
+          // Propagate for downstream consumers if they prefer env
+          process.env.CORTEX_MCP_PUBLIC_URL = url;
+          // eslint-disable-next-line no-console
+          console.log(`🌐 Cloudflare Tunnel (public): ${url}`);
+          // eslint-disable-next-line no-console
+          console.log(`🔗 Public API Documentation: ${url}/api/docs`);
+          // eslint-disable-next-line no-console
+          console.log(`🩺 Public Health Check: ${url}/health`);
+        } catch (err) {
+          const strict = process.env.CORTEX_MCP_TUNNEL_STRICT === '1';
+          const message = 'Failed to start Cloudflare Tunnel. Falling back to local-only mode.';
+          console.error(`❌ ${message}`);
+          console.error(String(err instanceof Error ? err.message : err));
+          const localUrl = `http://localhost:${this.port}`;
+          this.publicUrl = localUrl;
+          process.env.CORTEX_MCP_PUBLIC_URL = localUrl;
+          // Optionally emit an A2A event via env-based side channel (runtime may publish separately)
+          // eslint-disable-next-line no-console
+          console.warn(`🛟 Tunnel fallback active. Local URL: ${localUrl}`);
+          try {
+            globalThis.__CORTEX_A2A_PUBLISH__?.(
+              'mcp.tunnel.failed',
+              { port: this.port, reason: err instanceof Error ? err.message : String(err) },
+              'urn:cortex-os:mcp-manager'
+            );
+          } catch {
+            // ignore optional publish errors
+          }
+          if (strict) {
+            // In strict mode, exit after starting server logs so operators see why it failed
+            // eslint-disable-next-line no-console
+            console.error('CORTEX_MCP_TUNNEL_STRICT=1 set. Exiting due to tunnel failure.');
+            process.exit(1);
+          }
+        }
+
         resolve();
       });
     });
+  }
+
+  /** Stop server resources (tunnel, etc.) */
+  stop(): void {
+    try {
+      this.tunnelProc?.kill('SIGINT');
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('Failed to stop tunnel process cleanly:', e);
+    }
   }
 
   /**
@@ -291,11 +347,19 @@ class McpDemoServer {
   getApp(): express.Application {
     return this.app;
   }
+
+  /**
+   * Get the public URL provided by Cloudflare Tunnel, if available
+   */
+  getPublicUrl(): string | null {
+    return this.publicUrl;
+  }
 }
 
-// CLI runner
-if (require.main === module) {
-  const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+// CLI runner (ESM-safe)
+const invokedPath = process.argv[1] ? pathToFileURL(process.argv[1]).href : '';
+if (invokedPath && import.meta.url === invokedPath) {
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
   const server = new McpDemoServer(port);
 
   server.start().catch((error) => {
@@ -307,6 +371,7 @@ if (require.main === module) {
   process.on('SIGINT', () => {
     // eslint-disable-next-line no-console
     console.log('\n🛑 Shutting down server...');
+    server.stop();
     process.exit(0);
   });
 }

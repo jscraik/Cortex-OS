@@ -18,24 +18,26 @@ module.exports = {
       // Environment variables
       env: {
         NODE_ENV: 'development',
-        PORT: 3003,
+        // Respect external PORT, default 3003
+        PORT: process.env.PORT || 3003,
         GITHUB_TOKEN: process.env.STRUCTURE_GITHUB_TOKEN || 'your_github_token_here',
         WEBHOOK_SECRET: process.env.STRUCTURE_WEBHOOK_SECRET || 'your_webhook_secret_here',
         STRUCTURE_APP_ID: process.env.STRUCTURE_APP_ID || '',
         STRUCTURE_PRIVATE_KEY: process.env.STRUCTURE_PRIVATE_KEY || '',
         AUTO_FIX_ENABLED: 'false',
-        DRY_RUN: 'true'
+        DRY_RUN: 'true',
       },
 
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3003,
+        // Respect external PORT, default 3003
+        PORT: process.env.PORT || 3003,
         GITHUB_TOKEN: process.env.STRUCTURE_GITHUB_TOKEN,
         WEBHOOK_SECRET: process.env.STRUCTURE_WEBHOOK_SECRET,
         STRUCTURE_APP_ID: process.env.STRUCTURE_APP_ID,
         STRUCTURE_PRIVATE_KEY: process.env.STRUCTURE_PRIVATE_KEY,
         AUTO_FIX_ENABLED: 'true',
-        DRY_RUN: 'false'
+        DRY_RUN: 'false',
       },
 
       // Process management
@@ -67,8 +69,8 @@ module.exports = {
       merge_logs: true,
 
       // Time zone
-      time: true
-    }
+      time: true,
+    },
   ],
 
   deploy: {
@@ -78,10 +80,11 @@ module.exports = {
       ref: 'origin/main',
       repo: 'git@github.com:jamiescottcraik/Cortex-OS.git',
       path: '/Users/jamiecraik/.Cortex-OS',
-      'post-deploy': 'cd packages/cortex-structure-github && pnpm install && pm2 reload ecosystem.config.js --env production',
+      'post-deploy':
+        'cd packages/cortex-structure-github && pnpm install && pm2 reload ecosystem.config.js --env production',
       env: {
-        NODE_ENV: 'production'
-      }
-    }
-  }
+        NODE_ENV: 'production',
+      },
+    },
+  },
 };

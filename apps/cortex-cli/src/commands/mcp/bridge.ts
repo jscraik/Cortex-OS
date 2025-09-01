@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { promises as fs } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
+import { promises as fs } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { createMarketplaceClient } from './marketplace-client.js';
 
 interface BridgeConfig {
@@ -25,53 +25,44 @@ export const mcpBridge = new Command('bridge')
   .option('--description <desc>', 'Description for the registry')
   .option('--trusted', 'Mark registry as trusted (enables signature verification bypass)')
   .option('--json', 'Output in JSON format')
-  .action(async (url?: string, options: any = {}) => {
+  .action(async (url?: string, options: BridgeOptions = {}) => {
     try {
-      if (options.list) {
-        await listRegistries(options.json);
-      } else if (options.remove) {
-        await removeRegistry(options.remove, options.json);
-      } else if (options.add && url) {
-        if (!options.name) {
-          throw new Error('--name is required when adding a registry');
-        }
-        await addRegistry(
-          url,
-          options.name,
-          options.description,
-          options.trusted || false,
-          options.json,
-        );
-      } else if (options.test && url) {
-        await testRegistry(url, options.json);
-      } else if (url && !options.add) {
-        // Default action: test the registry
-        await testRegistry(url, options.json);
-      } else {
-        // Show usage
-        process.stdout.write('Usage:\n');
-        process.stdout.write(
-          '  cortex mcp bridge <url>                     Test registry connectivity\n',
-        );
-        process.stdout.write(
-          '  cortex mcp bridge <url> --add --name <name> Add registry to bridge list\n',
-        );
-        process.stdout.write(
-          '  cortex mcp bridge --list                    List configured registries\n',
-        );
-        process.stdout.write('  cortex mcp bridge --remove <name>           Remove registry\n');
-        process.stdout.write('  cortex mcp bridge <url> --test              Test registry\n');
+      const { list, remove, add, test, name, description, trusted = false, json } = options;
+
+      if (list) return await listRegistries(!!json);
+      if (remove) return await removeRegistry(remove, !!json);
+      if (add) {
+        if (!url) throw new Error('URL is required with --add');
+        if (!name) throw new Error('--name is required when adding a registry');
+        return await addRegistry(url, name, description, !!trusted, !!json);
       }
+
+      // Default test action if a URL is provided or --test is set
+      if (test || url) return await testRegistry(String(url), !!json);
+
+      // Show usage
+      printUsage();
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred';
       if (options.json) {
-        process.stderr.write(JSON.stringify({ error: message }, null, 2) + '\n');
+        process.stderr.write(`${JSON.stringify({ error: message }, null, 2)}\n`);
       } else {
         process.stderr.write(`Error: ${message}\n`);
       }
       process.exit(1);
     }
   });
+
+interface BridgeOptions {
+  add?: boolean;
+  remove?: string;
+  list?: boolean;
+  test?: boolean;
+  name?: string;
+  description?: string;
+  trusted?: boolean;
+  json?: boolean;
+}
 
 async function getBridgeConfigPath(): Promise<string> {
   const configDir = join(homedir(), '.cortex', 'mcp');
@@ -85,7 +76,7 @@ async function loadBridgeConfig(): Promise<BridgeConfig> {
   try {
     const data = await fs.readFile(configPath, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch {
     // Return default config if file doesn't exist
     return { registries: [] };
   }
@@ -100,7 +91,7 @@ async function listRegistries(json: boolean): Promise<void> {
   const config = await loadBridgeConfig();
 
   if (json) {
-    process.stdout.write(JSON.stringify({ registries: config.registries }, null, 2) + '\n');
+    process.stdout.write(`${JSON.stringify({ registries: config.registries }, null, 2)}\n`);
   } else {
     if (config.registries.length === 0) {
       process.stdout.write('No custom registries configured.\n');
@@ -133,39 +124,22 @@ async function addRegistry(
   name: string,
   description: string | undefined,
   trusted: boolean,
-  json: boolean,
+  json: boolean
 ): Promise<void> {
-  // Validate URL format
-  try {
-    new URL(url);
-  } catch {
-    throw new Error('Invalid URL format');
-  }
+  validateUrlOrThrow(url);
 
   // Test registry connectivity first
-  const client = createMarketplaceClient({ registryUrl: url, verifySignatures: !trusted });
+  const client = createMarketplaceClient({
+    registryUrl: url,
+    security: { requireSignatures: !trusted },
+  });
 
   try {
-    const registry = await client.fetchRegistry();
-
-    if (json) {
-      process.stdout.write(
-        JSON.stringify(
-          {
-            test: 'passed',
-            url,
-            serverCount: registry.metadata.serverCount,
-          },
-          null,
-          2,
-        ) + '\n',
-      );
-    } else {
-      process.stdout.write(`✓ Registry accessible (${registry.metadata.serverCount} servers)\n`);
-    }
+    const health = await client.healthCheck(url);
+    printHealthResult(health, { json, url });
   } catch (error) {
     throw new Error(
-      `Registry test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      `Registry test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
   }
 
@@ -196,14 +170,14 @@ async function addRegistry(
 
   if (json) {
     process.stdout.write(
-      JSON.stringify(
+      `${JSON.stringify(
         {
           ok: true,
           added: { name, url, description, trusted },
         },
         null,
-        2,
-      ) + '\n',
+        2
+      )}\n`
     );
   } else {
     const trustedBadge = trusted ? ' 🔒 Trusted' : '';
@@ -231,14 +205,14 @@ async function removeRegistry(name: string, json: boolean): Promise<void> {
 
   if (json) {
     process.stdout.write(
-      JSON.stringify(
+      `${JSON.stringify(
         {
           ok: true,
           removed: { name: removed.name, url: removed.url },
         },
         null,
-        2,
-      ) + '\n',
+        2
+      )}\n`
     );
   } else {
     process.stdout.write(`Removed registry: ${removed.name}\n`);
@@ -247,16 +221,11 @@ async function removeRegistry(name: string, json: boolean): Promise<void> {
 }
 
 async function testRegistry(url: string, json: boolean): Promise<void> {
-  // Validate URL format
-  try {
-    new URL(url);
-  } catch {
-    throw new Error('Invalid URL format');
-  }
+  validateUrlOrThrow(url);
 
   const client = createMarketplaceClient({
     registryUrl: url,
-    verifySignatures: false, // Don't verify signatures for testing
+    security: { requireSignatures: false },
   });
 
   if (!json) {
@@ -265,64 +234,114 @@ async function testRegistry(url: string, json: boolean): Promise<void> {
 
   try {
     const start = Date.now();
-    const registry = await client.fetchRegistry();
+    const health = await client.healthCheck(url);
     const elapsed = Date.now() - start;
 
-    if (json) {
-      process.stdout.write(
-        JSON.stringify(
-          {
-            test: 'passed',
-            url,
-            responseTime: elapsed,
-            registry: {
-              version: registry.version,
-              serverCount: registry.metadata.serverCount,
-              updatedAt: registry.metadata.updatedAt,
-              categories: registry.metadata.categories || [],
-              hasSigning: !!registry.signing,
-            },
-          },
-          null,
-          2,
-        ) + '\n',
-      );
-    } else {
-      process.stdout.write(`✓ Registry accessible (${elapsed}ms)\n`);
-      process.stdout.write(`  Version: ${registry.version}\n`);
-      process.stdout.write(`  Servers: ${registry.metadata.serverCount}\n`);
-      process.stdout.write(
-        `  Updated: ${new Date(registry.metadata.updatedAt).toLocaleDateString()}\n`,
-      );
-
-      if (registry.metadata.categories) {
-        process.stdout.write(`  Categories: ${registry.metadata.categories.join(', ')}\n`);
-      }
-
-      if (registry.signing) {
-        process.stdout.write(`  Signing: ✓ Enabled\n`);
-      }
-
+    printHealthResult(
+      {
+        success: !!health.success,
+        data: {
+          healthy: !!health.data.healthy,
+          serverCount: health.data.serverCount,
+          lastUpdated: health.data.lastUpdated,
+          error: health.data.error,
+        },
+      },
+      { json, url, elapsed }
+    );
+    if (!json && health.success && health.data.healthy) {
       process.stdout.write('\nTo add this registry:\n');
       process.stdout.write(`  cortex mcp bridge "${url}" --add --name <name>\n`);
     }
   } catch (error) {
     if (json) {
       process.stdout.write(
-        JSON.stringify(
+        `${JSON.stringify(
           {
             test: 'failed',
             url,
             error: error instanceof Error ? error.message : 'Unknown error',
           },
           null,
-          2,
-        ) + '\n',
+          2
+        )}\n`
       );
     } else {
       throw new Error(
-        `Registry test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Registry test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+}
+
+function printUsage(): void {
+  process.stdout.write('Usage:\n');
+  process.stdout.write(
+    '  cortex mcp bridge <url>                     Test registry connectivity\n'
+  );
+  process.stdout.write(
+    '  cortex mcp bridge <url> --add --name <name> Add registry to bridge list\n'
+  );
+  process.stdout.write(
+    '  cortex mcp bridge --list                    List configured registries\n'
+  );
+  process.stdout.write('  cortex mcp bridge --remove <name>           Remove registry\n');
+  process.stdout.write('  cortex mcp bridge <url> --test              Test registry\n');
+}
+
+// Helpers
+function validateUrlOrThrow(url: string): void {
+  try {
+    // eslint-disable-next-line no-new
+    new URL(url);
+  } catch {
+    throw new Error('Invalid URL format');
+  }
+}
+
+type HealthResult = {
+  success: boolean;
+  data: { healthy: boolean; serverCount?: number; lastUpdated?: string; error?: string };
+};
+
+function printHealthResult(
+  health: HealthResult,
+  opts: { json: boolean; url: string; elapsed?: number }
+): void {
+  const { json, url, elapsed } = opts;
+  if (json) {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          test: health.success && health.data.healthy ? 'passed' : 'failed',
+          url,
+          ...(typeof elapsed === 'number' ? { responseTime: elapsed } : {}),
+          registry: {
+            serverCount: health.data.serverCount ?? 0,
+            updatedAt: health.data.lastUpdated,
+          },
+          error: health.data.error,
+        },
+        null,
+        2
+      )}\n`
+    );
+    return;
+  }
+
+  if (health.success && health.data.healthy) {
+    const prefix =
+      typeof elapsed === 'number'
+        ? `✓ Registry accessible (${elapsed}ms)`
+        : '✓ Registry accessible';
+    process.stdout.write(`${prefix}\n`);
+    process.stdout.write(`  Servers: ${health.data.serverCount ?? 0}\n`);
+    if (health.data.lastUpdated) {
+      process.stdout.write(
+        `  Updated: ${new Date(health.data.lastUpdated).toLocaleDateString()}\n`
+      );
+    }
+  } else {
+    throw new Error(health.data.error || 'Registry reported unhealthy');
   }
 }

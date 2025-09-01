@@ -3,7 +3,7 @@
 # Cortex Structure Guard GitHub App with Cloudflare Tunnel Startup Script
 # This script starts both the GitHub App and the Cloudflare tunnel
 
-set -e
+set -euo pipefail
 
 echo "🏗️  Setting up Cortex Structure Guard GitHub App..."
 
@@ -13,7 +13,7 @@ cd "$(dirname "$0")"
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-# Check if Cloudflare tunnel is configured
+CF_HOSTNAME="${CF_HOSTNAME:-insula-github.brainwav.io}"
 TUNNEL_CONFIG="infrastructure/cloudflare/tunnel.config.yml"
 if [[ -f "$TUNNEL_CONFIG" ]]; then
     echo "📡 Cloudflare tunnel configuration found"
@@ -38,16 +38,17 @@ pm2 save
 
 # Start Cloudflare tunnel (if not already running)
 if [[ -f "$TUNNEL_CONFIG" ]]; then
-    echo "🌐 Starting Cloudflare tunnel..."
+    echo "🌐 Ensuring Cloudflare tunnel is running..."
 
-    # Check if tunnel is already running
-    if pgrep -f "cloudflared tunnel run" > /dev/null; then
-        echo "ℹ️  Cloudflare tunnel is already running"
+    # Check if a tunnel using this config is already running
+    if pgrep -af "cloudflared" | grep -q "--config $TUNNEL_CONFIG"; then
+        echo "ℹ️  Cloudflare tunnel (config: $TUNNEL_CONFIG) is already running"
     else
-        echo "🚀 Starting new Cloudflare tunnel..."
-        # Start tunnel in background
-        nohup cloudflared tunnel --config "$TUNNEL_CONFIG" run insula-github-app > logs/tunnel.log 2>&1 &
+        echo "🚀 Starting new Cloudflare tunnel using config: $TUNNEL_CONFIG..."
+        # Start tunnel in background; tunnel name is defined in the config file
+        nohup cloudflared tunnel --config "$TUNNEL_CONFIG" run > logs/tunnel.log 2>&1 &
         echo "📡 Cloudflare tunnel started in background"
+        sleep 2
     fi
 fi
 
@@ -58,14 +59,14 @@ pm2 status cortex-structure-github
 
 echo ""
 echo "✅ Cortex Structure Guard GitHub App is running!"
-echo "🌐 Server running on port 3003"
-echo "📡 Tunnel URL: https://insula-github.brainwav.io"
+echo "🌐 Server running on port ${PORT:-3003}"
+echo "📡 Expected public URL: https://${CF_HOSTNAME}"
 echo "📋 View app logs: pm2 logs cortex-structure-github"
 echo "📋 View tunnel logs: tail -f logs/tunnel.log"
 echo "🔄 Restart app: pm2 restart cortex-structure-github"
 echo "⏹️  Stop app: pm2 stop cortex-structure-github"
 echo ""
 echo "🔧 Test endpoints:"
-echo "   Health: https://insula-github.brainwav.io/health"
-echo "   Webhook: https://insula-github.brainwav.io/webhook"
-echo "   API: https://insula-github.brainwav.io/api/validate"
+echo "   Health:  https://${CF_HOSTNAME}/health"
+echo "   Webhook: https://${CF_HOSTNAME}/webhook"
+echo "   API:     https://${CF_HOSTNAME}/api/validate"

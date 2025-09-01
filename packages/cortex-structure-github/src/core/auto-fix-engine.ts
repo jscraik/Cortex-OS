@@ -224,7 +224,7 @@ export class AutoFixEngine {
         success: true,
         oldPath: '',
         newPath: filePath,
-        action: 'create_directory',
+        action: 'create_file',
       };
     } catch (error) {
       return {

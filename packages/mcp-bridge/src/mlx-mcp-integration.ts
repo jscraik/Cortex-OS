@@ -9,6 +9,7 @@
 
 import express from 'express';
 import { z } from 'zod';
+import { startCloudflareTunnel } from './lib/cloudflare-tunnel.js';
 import { MLXMcpServer } from './mlx-mcp-server.js';
 import { universalMcpManager } from './universal-mcp-manager.js';
 
@@ -182,6 +183,36 @@ export function createMlxIntegration(configPath?: string) {
         resolve();
       });
     });
+
+    // Built-in Cloudflare Tunnel: public interface (fallback to local-only if not strict)
+    try {
+      const { url: publicUrl } = await startCloudflareTunnel(p);
+      process.env.CORTEX_MCP_PUBLIC_URL = publicUrl;
+      console.log(`🌐 Cloudflare Tunnel (public): ${publicUrl}`);
+      console.log(`🔗 Public Health: ${publicUrl}/health`);
+    } catch (err) {
+      const strict = process.env.CORTEX_MCP_TUNNEL_STRICT === '1';
+      console.error(
+        '❌ Failed to start Cloudflare Tunnel for MLX MCP server. Falling back to local-only mode.'
+      );
+      console.error(String(err instanceof Error ? err.message : err));
+      const localUrl = `http://127.0.0.1:${p}`;
+      process.env.CORTEX_MCP_PUBLIC_URL = localUrl;
+      console.warn(`🛟 Tunnel fallback active. Local URL: ${localUrl}`);
+      try {
+        globalThis.__CORTEX_A2A_PUBLISH__?.(
+          'mcp.tunnel.failed',
+          { port: p, reason: err instanceof Error ? err.message : String(err) },
+          'urn:cortex-os:mlx-mcp'
+        );
+      } catch {
+        // ignore optional publish errors
+      }
+      if (strict) {
+        console.error('CORTEX_MCP_TUNNEL_STRICT=1 set. Exiting due to tunnel failure.');
+        process.exit(1);
+      }
+    }
   }
 
   function getMLXServer(): MLXMcpServer {

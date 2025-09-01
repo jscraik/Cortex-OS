@@ -159,5 +159,53 @@ describe('mcp-core client', () => {
       await client.sendRequest(message);
       expect(mockSendRequest).toHaveBeenCalledWith('{"apiKey": "[REDACTED]"}');
     });
+
+    it('falls back to next transport when the first fails', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-fallback',
+        transport: 'sse',
+        endpoint: 'http://localhost:8080',
+        // provide stdio fallback as the last candidate
+        command: 'echo',
+      };
+
+      // First connect attempt fails (SSE), second succeeds (StreamableHTTP)
+      mockConnect.mockRejectedValueOnce(new Error('SSE failed')).mockResolvedValueOnce(undefined);
+
+      await createEnhancedClient(serverInfo);
+
+      // Two attempts: SSE then StreamableHTTP
+      expect(mockConnect).toHaveBeenCalledTimes(2);
+      expect(MockSSEClientTransport).toHaveBeenCalledWith(new URL('http://localhost:8080'));
+      expect(_MockStreamableHTTPClientTransport).toHaveBeenCalledWith(
+        new URL('http://localhost:8080')
+      );
+    });
+
+    it('throws after exhausting all candidate transports', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-fallback-exhaust',
+        transport: 'sse',
+        endpoint: 'http://localhost:8080',
+        command: 'echo',
+      };
+
+      // Fail all candidates (SSE, StreamableHTTP, and Stdio fallback)
+      mockConnect
+        .mockRejectedValueOnce(new Error('SSE failed'))
+        .mockRejectedValueOnce(new Error('HTTP failed'))
+        .mockRejectedValueOnce(new Error('STDIO failed'));
+
+      await expect(createEnhancedClient(serverInfo)).rejects.toThrow(
+        'Failed to connect to MCP server via all candidate transports'
+      );
+
+      expect(mockConnect.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(MockSSEClientTransport).toHaveBeenCalledWith(new URL('http://localhost:8080'));
+      expect(_MockStreamableHTTPClientTransport).toHaveBeenCalledWith(
+        new URL('http://localhost:8080')
+      );
+      expect(MockStdioClientTransport).toHaveBeenCalled();
+    });
   });
 });

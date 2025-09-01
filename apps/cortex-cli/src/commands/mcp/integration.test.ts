@@ -3,8 +3,9 @@
  * @description Integration tests for TDD implementation verification
  */
 
-import os from 'os';
-import path from 'path';
+import os from 'node:os';
+import path from 'node:path';
+import { ServerInfoSchema } from '@cortex-os/mcp-core/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { MarketplaceConfig } from './marketplace-client.js';
 import { MarketplaceClient } from './marketplace-client.js';
@@ -43,7 +44,7 @@ describe('MCP Marketplace Integration', () => {
         security: {},
       };
 
-      expect(() => new MarketplaceClient(invalidConfig as any)).toThrow();
+      expect(() => new MarketplaceClient(invalidConfig as unknown as MarketplaceConfig)).toThrow();
     });
   });
 
@@ -65,7 +66,7 @@ describe('MCP Marketplace Integration', () => {
     it('should reject invalid search parameters', async () => {
       const invalidRequest = {
         limit: -1, // Invalid limit
-        offset: 'invalid' as any, // Invalid offset type
+        offset: 'invalid' as unknown as number, // Invalid offset type
       };
 
       const result = await client.search(invalidRequest);
@@ -180,5 +181,17 @@ describe('MCP Marketplace Integration', () => {
       expect(config.cacheDir).toBeTruthy();
       expect(path.isAbsolute(config.cacheDir) || config.cacheDir.includes('tmp')).toBe(true);
     });
+  });
+});
+
+// Lightweight parsing checks for CLI add helpers
+describe('cortex mcp add parsing helpers', () => {
+  it('should accept http alias mapping to streamableHttp in schema', () => {
+    const si = ServerInfoSchema.safeParse({
+      name: 'notion',
+      transport: 'streamableHttp',
+      endpoint: 'https://example.com/mcp',
+    });
+    expect(si.success).toBe(true);
   });
 });

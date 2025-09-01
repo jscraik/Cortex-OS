@@ -3,16 +3,11 @@
  * @description Client for interacting with MCP marketplace registries
  */
 
-import type {
-  ApiResponse,
-  RegistryIndex,
-  SearchRequest,
-  ServerManifest,
-} from '@cortex-os/mcp-marketplace';
-import { RegistryIndexSchema, SearchRequestSchema } from '@cortex-os/mcp-marketplace';
-import { existsSync } from 'fs';
-import { mkdir, readFile, writeFile } from 'fs/promises';
-import path from 'path';
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import type { RegistryIndex, ServerManifest } from '@cortex-os/mcp-registry';
+import { RegistryIndexSchema } from '@cortex-os/mcp-registry';
 import { z } from 'zod';
 
 /**
@@ -33,10 +28,41 @@ export const MarketplaceConfigSchema = z.object({
 
 export type MarketplaceConfig = z.infer<typeof MarketplaceConfigSchema>;
 
+// Generic API response used by this client
+export type ApiResponse<T> =
+  | { success: true; data: T; meta?: { total?: number; offset?: number; limit?: number } }
+  | { success: false; error: { code: string; message: string; details?: unknown } };
+
+// Simple search request accepted by this client
+export const SearchRequestSchema = z.object({
+  q: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  capabilities: z.array(z.string()).optional(),
+  verified: z.boolean().optional(),
+  riskLevel: z.enum(['low', 'medium', 'high']).optional(),
+  limit: z.number().int().min(1).max(50).default(10),
+  offset: z.number().int().min(0).default(0),
+});
+export type SearchRequest = z.infer<typeof SearchRequestSchema>;
+
+// Simple search options used by CLI
+export interface SearchOptions {
+  category?: string;
+  tags?: string[];
+  riskLevel?: 'low' | 'medium' | 'high';
+  verifiedOnly?: boolean;
+  limit?: number;
+  offset?: number;
+  registryUrl?: string;
+}
+
 // Security: Allowlisted domains for marketplace registries
 const ALLOWED_MARKETPLACE_DOMAINS = [
   'marketplace.cortex-os.com',
+  'marketplace.cortex-os.dev',
   'registry.cortex-os.com',
+  'registry.cortex-os.dev',
   'api.cortex-os.com',
   'localhost',
   '127.0.0.1',
@@ -112,17 +138,17 @@ interface ServerConfigType {
  * MCP configuration file structure
  */
 interface McpConfigType {
-  mcpServers?: Record<string, unknown>;
+  mcpServers: Record<string, unknown>;
 }
 
 /**
  * MCP Marketplace Client
  */
 export class MarketplaceClient {
-  private registryCache = new Map<string, RegistryIndex>();
-  private cacheTimes = new Map<string, number>();
+  private readonly registryCache = new Map<string, RegistryIndex>();
+  private readonly cacheTimes = new Map<string, number>();
 
-  constructor(private config: MarketplaceConfig) {
+  constructor(private readonly config: MarketplaceConfig) {
     // Validate config
     MarketplaceConfigSchema.parse(config);
   }
@@ -155,9 +181,38 @@ export class MarketplaceClient {
   }
 
   /**
-   * Search servers across all registries
+   * Search servers across registries
+   * Overload A: simple query form returning an array (used by CLI)
+   * Overload B: structured request returning ApiResponse wrapper
    */
+  async search(query: string, options?: SearchOptions): Promise<ServerManifest[]>;
   async search(
+    request: SearchRequest,
+    registryUrl?: string
+  ): Promise<ApiResponse<ServerManifest[]>>;
+  async search(
+    requestOrQuery: SearchRequest | string,
+    optionsOrRegistryUrl?: SearchOptions | string
+  ): Promise<ApiResponse<ServerManifest[]> | ServerManifest[]> {
+    if (typeof requestOrQuery === 'string') {
+      const opts = (optionsOrRegistryUrl as SearchOptions) || {};
+      const req: SearchRequest = {
+        q: requestOrQuery,
+        category: opts.category,
+        tags: opts.tags,
+        verified: opts.verifiedOnly,
+        riskLevel: opts.riskLevel,
+        limit: opts.limit ?? 10,
+        offset: opts.offset ?? 0,
+      };
+      const res = await this.searchInternal(req, opts.registryUrl);
+      if (!res.success) throw new Error(res.error.message);
+      return res.data;
+    }
+    return this.searchInternal(requestOrQuery, optionsOrRegistryUrl as string);
+  }
+
+  private async searchInternal(
     request: SearchRequest,
     registryUrl?: string
   ): Promise<ApiResponse<ServerManifest[]>> {
@@ -194,59 +249,12 @@ export class MarketplaceClient {
         };
       }
 
-      // Apply filters
-      let filteredServers = allServers;
+      const predicates = this.buildSearchPredicates(validatedRequest);
+      const filteredServers = predicates.length
+        ? allServers.filter((s) => predicates.every((p) => p(s)))
+        : allServers;
 
-      // Text search
-      if (validatedRequest.q) {
-        const query = validatedRequest.q.toLowerCase();
-        filteredServers = filteredServers.filter(
-          (server) =>
-            server.name.toLowerCase().includes(query) ||
-            server.description?.toLowerCase().includes(query) ||
-            server.tags?.some((tag) => tag.toLowerCase().includes(query)) ||
-            server.publisher.name.toLowerCase().includes(query)
-        );
-      }
-
-      // Category filter
-      if (validatedRequest.category) {
-        filteredServers = filteredServers.filter(
-          (server) => server.category === validatedRequest.category
-        );
-      }
-
-      // Capabilities filter
-      if (validatedRequest.capabilities && validatedRequest.capabilities.length > 0) {
-        filteredServers = filteredServers.filter(
-          (server) =>
-            validatedRequest.capabilities?.every((cap) => server.capabilities[cap]) ?? false
-        );
-      }
-
-      // Verified publisher filter
-      if (validatedRequest.verified !== undefined) {
-        filteredServers = filteredServers.filter(
-          (server) => server.publisher.verified === validatedRequest.verified
-        );
-      }
-
-      // Sort by featured first, then by downloads/rating
-      filteredServers.sort((a, b) => {
-        if (a.featured && !b.featured) return -1;
-        if (!a.featured && b.featured) return 1;
-
-        // If both are featured or both are not, sort by downloads then rating
-        if (b.downloads !== a.downloads) {
-          return b.downloads - a.downloads;
-        }
-
-        if (a.rating && b.rating) {
-          return b.rating - a.rating;
-        }
-
-        return 0;
-      });
+      this.sortServers(filteredServers);
 
       // Apply pagination
       const total = filteredServers.length;
@@ -278,6 +286,47 @@ export class MarketplaceClient {
 
       throw error;
     }
+  }
+
+  private buildSearchPredicates(
+    validatedRequest: SearchRequest
+  ): Array<(s: ServerManifest) => boolean> {
+    const preds: Array<(s: ServerManifest) => boolean> = [];
+    if (validatedRequest.q) {
+      const query = validatedRequest.q.toLowerCase();
+      preds.push((server) => {
+        const inTags = (server.tags || []).some((tag) => tag.toLowerCase().includes(query));
+        return (
+          server.name.toLowerCase().includes(query) ||
+          (server.description || '').toLowerCase().includes(query) ||
+          inTags ||
+          server.owner.toLowerCase().includes(query)
+        );
+      });
+    }
+    if (validatedRequest.category) {
+      preds.push((server) => server.category === validatedRequest.category);
+    }
+    if (validatedRequest.tags && validatedRequest.tags.length > 0) {
+      const reqTags = validatedRequest.tags;
+      preds.push((server) => {
+        const serverTags = server.tags || [];
+        return reqTags.every((t) => serverTags.includes(t));
+      });
+    }
+    if (validatedRequest.riskLevel) {
+      const rl = validatedRequest.riskLevel;
+      preds.push((server) => (server.security?.riskLevel ?? 'medium') === rl);
+    }
+    if (validatedRequest.verified !== undefined) {
+      const ver = validatedRequest.verified;
+      preds.push((server) => (server.security?.verifiedPublisher ?? false) === ver);
+    }
+    return preds;
+  }
+
+  private sortServers(servers: ServerManifest[]): void {
+    servers.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**
@@ -320,68 +369,38 @@ export class MarketplaceClient {
           error: {
             code: securityCheck.reason === 'risk' ? 'SECURITY_VIOLATION' : 'SIGNATURE_REQUIRED',
             message: securityCheck.message,
-            details: { riskLevel: server.security.riskLevel, permissions: server.permissions },
+            details: { riskLevel: server.security?.riskLevel },
           },
         };
       }
 
       // Determine transport to use
-      let selectedTransport: 'stdio' | 'streamableHttp';
-      if (options.transport) {
-        selectedTransport = options.transport;
-
-        // Validate transport is available
-        if (selectedTransport === 'stdio' && !server.transport.stdio) {
-          return {
-            success: false,
-            error: {
-              code: 'TRANSPORT_UNAVAILABLE',
-              message: 'stdio transport not available for this server',
-            },
-          };
-        }
-        if (selectedTransport === 'streamableHttp' && !server.transport.streamableHttp) {
-          return {
-            success: false,
-            error: {
-              code: 'TRANSPORT_UNAVAILABLE',
-              message: 'streamableHttp transport not available for this server',
-            },
-          };
-        }
-      } else {
-        // Auto-select transport (prefer stdio for local, streamableHttp for remote)
-        selectedTransport = server.transport.stdio ? 'stdio' : 'streamableHttp';
-      }
+      const selection = this.selectTransport(server, options.transport);
+      if (!selection.success) return selection.response;
 
       // Load existing configuration
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
-      let config: McpConfigType = { mcpServers: {} };
-
-      try {
-        const configData = await readFile(configPath, 'utf-8');
-        config = JSON.parse(configData) as McpConfigType;
-      } catch {
-        // File doesn't exist, will create new one
-        config = { mcpServers: {} };
-      }
+      const config = await this.loadConfig(configPath);
 
       // Add server configuration
-      if (selectedTransport === 'stdio' && server.transport.stdio) {
+      // Ensure container exists
+      if (!config.mcpServers) config.mcpServers = {} as Record<string, unknown>;
+
+      if (selection.transport === 'stdio' && server.transports.stdio) {
         config.mcpServers[serverId] = {
-          command: server.transport.stdio.command,
-          args: server.transport.stdio.args || [],
-          env: server.transport.stdio.env || {},
+          command: server.transports.stdio.command,
+          args: server.transports.stdio.args || [],
+          env: server.transports.stdio.env || {},
         };
-      } else if (selectedTransport === 'streamableHttp' && server.transport.streamableHttp) {
+      } else if (selection.transport === 'streamableHttp' && server.transports.streamableHttp) {
         config.mcpServers[serverId] = {
-          serverUrl: server.transport.streamableHttp.url,
-          headers: server.transport.streamableHttp.headers || {},
+          serverUrl: server.transports.streamableHttp.url,
+          headers: server.transports.streamableHttp.headers || {},
         };
       }
 
       // Save configuration
-      await writeFile(configPath, JSON.stringify(config, null, 2));
+      await this.saveConfig(configPath, config);
 
       return {
         success: true,
@@ -396,6 +415,55 @@ export class MarketplaceClient {
         },
       };
     }
+  }
+
+  private async loadConfig(configPath: string): Promise<McpConfigType> {
+    try {
+      const configData = await readFile(configPath, 'utf-8');
+      return JSON.parse(configData) as McpConfigType;
+    } catch {
+      return { mcpServers: {} };
+    }
+  }
+
+  private async saveConfig(configPath: string, config: McpConfigType): Promise<void> {
+    await writeFile(configPath, JSON.stringify(config, null, 2));
+  }
+
+  private selectTransport(
+    server: ServerManifest,
+    requested?: 'stdio' | 'streamableHttp'
+  ):
+    | { success: true; transport: 'stdio' | 'streamableHttp' }
+    | { success: false; response: ApiResponse<{ installed: boolean; serverId: string }> } {
+    if (requested) {
+      if (requested === 'stdio' && !server.transports.stdio) {
+        return {
+          success: false,
+          response: {
+            success: false,
+            error: {
+              code: 'TRANSPORT_UNAVAILABLE',
+              message: 'stdio transport not available for this server',
+            },
+          },
+        };
+      }
+      if (requested === 'streamableHttp' && !server.transports.streamableHttp) {
+        return {
+          success: false,
+          response: {
+            success: false,
+            error: {
+              code: 'TRANSPORT_UNAVAILABLE',
+              message: 'streamableHttp transport not available for this server',
+            },
+          },
+        };
+      }
+      return { success: true, transport: requested };
+    }
+    return { success: true, transport: server.transports.stdio ? 'stdio' : 'streamableHttp' };
   }
 
   /**
@@ -416,7 +484,7 @@ export class MarketplaceClient {
         };
       }
 
-      if (!config.mcpServers || !config.mcpServers[serverId]) {
+      if (!config.mcpServers?.[serverId]) {
         return {
           success: false,
           error: { code: 'NOT_FOUND', message: `Server not installed: ${serverId}` },
@@ -665,8 +733,8 @@ export class MarketplaceClient {
         success: true,
         data: {
           healthy: true,
-          serverCount: registry.serverCount,
-          lastUpdated: registry.updatedAt,
+          serverCount: registry.metadata.serverCount,
+          lastUpdated: registry.metadata.updatedAt,
         },
       };
     } catch (error) {
@@ -763,7 +831,10 @@ export class MarketplaceClient {
     message: string;
   } {
     // Check risk level
-    if (!this.config.security.allowedRiskLevels.includes(server.security.riskLevel)) {
+    if (
+      server.security &&
+      !this.config.security.allowedRiskLevels.includes(server.security.riskLevel)
+    ) {
       return {
         allowed: false,
         reason: 'risk',
@@ -772,7 +843,7 @@ export class MarketplaceClient {
     }
 
     // Check signature requirement
-    if (this.config.security.requireSignatures && !server.security.sigstore) {
+    if (this.config.security.requireSignatures && !server.security?.sigstoreBundle) {
       return {
         allowed: false,
         reason: 'signature',
@@ -783,15 +854,33 @@ export class MarketplaceClient {
     // Check trusted publishers (if configured)
     if (
       this.config.security.trustedPublishers.length > 0 &&
-      !this.config.security.trustedPublishers.includes(server.publisher.name)
+      !this.config.security.trustedPublishers.includes(server.owner)
     ) {
       return {
         allowed: false,
         reason: 'publisher',
-        message: `Publisher not in trusted list: ${server.publisher.name}`,
+        message: `Publisher not in trusted list: ${server.owner}`,
       };
     }
 
     return { allowed: true, message: 'Security validation passed' };
   }
+}
+
+// Factory to construct a MarketplaceClient with sensible defaults
+export function createMarketplaceClient(
+  options: {
+    registryUrl?: string;
+    cacheDir?: string;
+    security?: Partial<MarketplaceConfig['security']>;
+  } = {}
+) {
+  const defaultRegistry = options.registryUrl || 'https://registry.cortex-os.dev/v1/registry.json';
+  const cfg: MarketplaceConfig = MarketplaceConfigSchema.parse({
+    registries: { default: defaultRegistry },
+    cacheDir: options.cacheDir || path.join(process.cwd(), '.cortex-cache', 'marketplace'),
+    cacheTtl: 300000,
+    security: { ...(options.security || {}) },
+  });
+  return new MarketplaceClient(cfg);
 }

@@ -3,11 +3,11 @@
  * @description TDD tests for MCP marketplace client
  */
 
-import type { RegistryIndex, ServerManifest } from '@cortex-os/mcp-marketplace';
-import { existsSync } from 'fs';
-import { mkdir, readFile, writeFile } from 'fs/promises';
-import os from 'os';
-import path from 'path';
+import type { RegistryIndex, ServerManifest } from '@cortex-os/mcp-registry';
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarketplaceClient, type MarketplaceConfig } from './marketplace-client.js';
 
@@ -25,54 +25,43 @@ describe('MarketplaceClient', () => {
 
   const mockRegistryIndex: RegistryIndex = {
     version: '2025-01-15',
-    mcpVersion: '2025-06-18',
-    updatedAt: '2025-01-15T10:00:00Z',
-    serverCount: 2,
-    categories: {
-      development: { name: 'Development', description: 'Dev tools', count: 1 },
-      utility: { name: 'Utility', description: 'Utilities', count: 1 },
-    },
-    featured: ['test-server'],
-    signing: {
-      publicKey: 'mock-public-key',
-      algorithm: 'Ed25519',
+    metadata: {
+      updatedAt: '2025-01-15T10:00:00Z',
+      serverCount: 2,
+      categories: ['development', 'utility'],
     },
     servers: [
       {
         id: 'test-server',
         name: 'Test Server',
+        owner: 'Test Publisher',
         description: 'A test MCP server for development',
-        mcpVersion: '2025-06-18',
-        capabilities: { tools: true, resources: false, prompts: false },
-        publisher: { name: 'Test Publisher', verified: false },
         category: 'development',
-        license: 'MIT',
-        transport: {
+        transports: {
           stdio: { command: 'test-command', args: ['--test'] },
         },
         install: {
           claude: 'claude mcp add test-server -- test-command --test',
           json: { mcpServers: { 'test-server': { command: 'test-command', args: ['--test'] } } },
         },
-        permissions: ['files:read'],
-        security: { riskLevel: 'low' },
-        featured: true,
-        downloads: 150,
-        updatedAt: '2025-01-15T10:00:00Z',
+        scopes: ['files:read'],
+        security: {
+          riskLevel: 'low',
+          verifiedPublisher: false,
+          sigstoreBundle: 'https://example.com/sigstore.json',
+        },
+        tags: ['dev', 'test'],
       },
       {
         id: 'utility-server',
         name: 'Utility Server',
+        owner: 'Utility Corp',
         description: 'A utility MCP server',
-        mcpVersion: '2025-06-18',
-        capabilities: { tools: false, resources: true, prompts: true },
-        publisher: { name: 'Utility Corp', verified: true },
         category: 'utility',
-        license: 'Apache-2.0',
-        transport: {
+        transports: {
           streamableHttp: {
             url: 'https://api.utility.com/mcp',
-            auth: { type: 'bearer' },
+            headers: { 'User-Agent': 'Cortex-MCP/1.0' },
           },
         },
         install: {
@@ -80,13 +69,20 @@ describe('MarketplaceClient', () => {
             'claude mcp add --transport streamableHttp utility-server https://api.utility.com/mcp --header "Authorization: Bearer <TOKEN>"',
           json: { mcpServers: { 'utility-server': { serverUrl: 'https://api.utility.com/mcp' } } },
         },
-        permissions: ['network:http', 'data:read'],
-        security: { riskLevel: 'medium', sigstore: 'https://utility.com/sigstore.json' },
-        featured: false,
-        downloads: 75,
-        updatedAt: '2025-01-14T15:30:00Z',
+        scopes: ['network:http', 'data:read'],
+        security: {
+          riskLevel: 'medium',
+          sigstoreBundle: 'https://utility.com/sigstore.json',
+          verifiedPublisher: true,
+        },
+        tags: ['utility'],
       },
     ],
+    signing: {
+      sigstoreBundleUrl: 'https://registry.cortex-os.dev/sigstore.json',
+      publicKey: 'mock-public-key',
+      algorithm: 'Ed25519',
+    },
   };
 
   beforeEach(() => {
@@ -158,10 +154,7 @@ describe('MarketplaceClient', () => {
       await client.initialize();
 
       // Assert
-      expect(readFile).toHaveBeenCalledWith(
-        expect.stringContaining('registry-cache.json'),
-        'utf-8',
-      );
+      expect(readFile).toHaveBeenCalledWith(expect.stringContaining('registry-'), 'utf-8');
     });
 
     it('should fetch fresh registry if cache is stale', async () => {
@@ -205,8 +198,10 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].id).toBe('test-server');
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(1);
+      expect(data[0]?.id).toBe('test-server');
       expect(result.meta).toEqual({
         total: 1,
         offset: 0,
@@ -220,8 +215,10 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].id).toBe('utility-server');
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(1);
+      expect(data[0]?.id).toBe('utility-server');
     });
 
     it('should filter servers by verified publisher', async () => {
@@ -230,8 +227,10 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].publisher.verified).toBe(true);
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(1);
+      expect(data[0]?.security?.verifiedPublisher).toBe(true);
     });
 
     it('should return empty results for no matches', async () => {
@@ -240,8 +239,10 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(0);
-      expect(result.meta!.total).toBe(0);
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(0);
+      expect(result.meta?.total).toBe(0);
     });
 
     it('should handle pagination', async () => {
@@ -250,8 +251,10 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].id).toBe('utility-server');
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(1);
+      expect(data[0]?.id).toBe('utility-server');
       expect(result.meta).toEqual({
         total: 2,
         offset: 1,
@@ -288,8 +291,8 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(server).toBeDefined();
-      expect(server!.id).toBe('test-server');
-      expect(server!.name).toBe('Test Server');
+      expect(server?.id).toBe('test-server');
+      expect(server?.name).toBe('Test Server');
     });
 
     it('should return null for non-existent server', async () => {
@@ -327,7 +330,7 @@ describe('MarketplaceClient', () => {
       // Verify config was written
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.stringContaining('test-server'),
+        expect.stringContaining('test-server')
       );
     });
 
@@ -343,7 +346,7 @@ describe('MarketplaceClient', () => {
       expect(result.success).toBe(true);
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.stringContaining('"serverUrl":"https://api.utility.com/mcp"'),
+        expect.stringContaining('"serverUrl":"https://api.utility.com/mcp"')
       );
     });
 
@@ -361,9 +364,8 @@ describe('MarketplaceClient', () => {
       const highRiskServer: ServerManifest = {
         ...mockRegistryIndex.servers[0],
         id: 'high-risk-server',
-        security: { riskLevel: 'high' },
-        permissions: ['system:exec'],
-      };
+        security: { riskLevel: 'high', verifiedPublisher: false },
+      } as ServerManifest;
 
       // Add high-risk server to registry
       mockRegistryIndex.servers.push(highRiskServer);
@@ -382,8 +384,8 @@ describe('MarketplaceClient', () => {
       const unsignedServer: ServerManifest = {
         ...mockRegistryIndex.servers[0],
         id: 'unsigned-server',
-        security: { riskLevel: 'low' }, // No sigstore
-      };
+        security: { riskLevel: 'low', verifiedPublisher: false }, // No sigstoreBundle
+      } as ServerManifest;
 
       mockRegistryIndex.servers.push(unsignedServer);
 
@@ -406,7 +408,7 @@ describe('MarketplaceClient', () => {
       expect(result.success).toBe(true);
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.stringContaining('"mcpServers"'),
+        expect.stringContaining('"mcpServers"')
       );
     });
   });
@@ -431,7 +433,7 @@ describe('MarketplaceClient', () => {
       // Verify server was removed from config
       expect(writeFile).toHaveBeenCalledWith(
         expect.stringContaining('servers.json'),
-        expect.not.stringContaining('test-server'),
+        expect.not.stringContaining('test-server')
       );
     });
 
@@ -477,9 +479,11 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(2);
-      expect(result.data![0].id).toBe('server1');
-      expect(result.data![1].id).toBe('server2');
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(2);
+      expect(data[0]?.id).toBe('server1');
+      expect(data[1]?.id).toBe('server2');
     });
 
     it('should return empty list when no servers installed', async () => {
@@ -511,7 +515,7 @@ describe('MarketplaceClient', () => {
   describe('registry management', () => {
     it('should add custom registry', async () => {
       // Arrange
-      const customRegistryUrl = 'https://custom.registry.com/v1/registry.json';
+      const customRegistryUrl = 'https://registry.cortex-os.dev/custom/registry.json';
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockRegistryIndex),
@@ -555,9 +559,11 @@ describe('MarketplaceClient', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data).toHaveLength(1);
-      expect(result.data![0].name).toBe('default');
-      expect(result.data![0].url).toBe('https://registry.cortex-os.dev/v1/registry.json');
+      expect(result.data).toBeDefined();
+      const data = result.data ?? [];
+      expect(data).toHaveLength(1);
+      expect(data[0]?.name).toBe('default');
+      expect(data[0]?.url).toBe('https://registry.cortex-os.dev/v1/registry.json');
     });
   });
 

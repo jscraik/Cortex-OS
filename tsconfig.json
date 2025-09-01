@@ -136,8 +136,7 @@
     "**/tools/**",
     "security_backups/**",
     "**/__*/**",
-    "apps/cortex-os/brain/**",
-    "apps/cortex-cli/**"
+    "apps/cortex-os/brain/**"
   ],
   "references": []
 }

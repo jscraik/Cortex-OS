@@ -7,8 +7,8 @@
  * @status active
  */
 
-import { createHash } from 'crypto';
-import { URL } from 'url';
+import { createHash } from 'node:crypto';
+import { URL } from 'node:url';
 import { z } from 'zod';
 import { mcpConfigStorage } from './mcp-config-storage.js';
 
@@ -52,7 +52,7 @@ const McpServerRequestSchema = z.object({
     .max(64)
     .regex(
       /^[a-zA-Z0-9_-]+$/,
-      'Name must contain only alphanumeric characters, hyphens, and underscores',
+      'Name must contain only alphanumeric characters, hyphens, and underscores'
     ),
   transport: z.enum(['http', 'sse', 'stdio']),
   url: SecureUrlSchema.optional(),
@@ -236,7 +236,7 @@ export class UniversalMcpManager {
 
         // Check if domain is in allowed list
         const isAllowedDomain = this.defaultSecurityPolicy.allowedDomains.some(
-          (domain) => url.hostname === domain || url.hostname.endsWith('.' + domain),
+          (domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`)
         );
 
         if (!isAllowedDomain) {
@@ -283,7 +283,7 @@ export class UniversalMcpManager {
 
       // Check for common insecure patterns
       const insecurePatterns = ['password', '123456', 'secret', 'admin', 'test', 'demo'];
-      if (insecurePatterns.some((pattern) => request.apiKey!.toLowerCase().includes(pattern))) {
+      if (insecurePatterns.some((pattern) => request.apiKey?.toLowerCase().includes(pattern))) {
         errors.push('API key appears to contain insecure patterns');
       }
     } else if (this.defaultSecurityPolicy.requireApiKey && request.transport !== 'stdio') {
@@ -307,7 +307,7 @@ export class UniversalMcpManager {
     if (request.transport === 'stdio' && request.command) {
       // Check for dangerous commands
       const dangerousCommands = ['rm', 'del', 'format', 'sudo', 'chmod', 'chown'];
-      if (dangerousCommands.some((cmd) => request.command!.toLowerCase().includes(cmd))) {
+      if (dangerousCommands.some((cmd) => request.command?.toLowerCase().includes(cmd))) {
         errors.push('Command contains potentially dangerous operations');
       }
     }
@@ -343,7 +343,7 @@ export class UniversalMcpManager {
       sandbox: this.defaultSecurityPolicy.sandbox,
       allowedCapabilities: (() => {
         const filtered = request.capabilities?.filter((cap) =>
-          this.defaultSecurityPolicy.allowedCapabilities.includes(cap),
+          this.defaultSecurityPolicy.allowedCapabilities.includes(cap)
         );
         return filtered && filtered.length > 0 ? filtered : ['read'];
       })(),
@@ -356,7 +356,7 @@ export class UniversalMcpManager {
 
     // Remove API key from config and store separately if provided
     if (request.apiKey) {
-      config.headers['Authorization'] = `Bearer ${request.apiKey}`;
+      config.headers.Authorization = `Bearer ${request.apiKey}`;
     }
 
     return config;
@@ -393,7 +393,7 @@ export class UniversalMcpManager {
    */
   async addMcpServer(
     command: string,
-    autoApprove: boolean = false,
+    autoApprove: boolean = false
   ): Promise<{
     success: boolean;
     message: string;
@@ -445,7 +445,7 @@ export class UniversalMcpManager {
       // Generate secure configuration
       const config = this.generateSecureConfig(
         request,
-        autoApprove || !validation.requiresApproval,
+        autoApprove || !validation.requiresApproval
       );
 
       // Save configuration to persistent storage

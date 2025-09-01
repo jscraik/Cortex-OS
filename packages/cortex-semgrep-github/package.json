@@ -1,7 +1,8 @@
 {
   "name": "@cortex-os/cortex-semgrep-github",
-  "version": "1.0.0",
-  "description": "Semgrep-powered security automation for GitHub repositories",
+  "version": "1.1.0",
+  "description": "Production-ready Semgrep security scanning GitHub App with comprehensive vulnerability detection and automated reporting",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -13,10 +14,9 @@
     "format": "prettier --write src"
   },
   "dependencies": {
-    "@octokit/rest": "^20.0.2",
-    "@octokit/webhooks": "^12.0.10",
+    "@octokit/rest": "^20.1.0",
+    "@octokit/webhooks": "^14.1.3",
     "express": "^4.18.2",
-    "crypto": "^1.0.1",
     "zod": "^3.22.4",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/contracts": "workspace:*",

@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 // Risk level type alias
 type RiskLevel = 'low' | 'medium' | 'high';
@@ -48,7 +48,7 @@ interface ServerManifest {
 }
 
 export interface SecurityConfig {
-  verifySignatures: boolean;
+  requireSignatures: boolean;
   allowUnverifiedPublishers: boolean;
   maxRiskLevel: RiskLevel;
   trustedPublishers: string[];
@@ -62,7 +62,7 @@ export interface SecurityValidationResult {
 }
 
 export class SecurityValidator {
-  private config: SecurityConfig;
+  private readonly config: SecurityConfig;
 
   constructor(config: SecurityConfig) {
     this.config = config;
@@ -95,7 +95,7 @@ export class SecurityValidator {
     }
 
     // Validate signature if configured
-    if (this.config.verifySignatures && server.security?.sigstoreBundle) {
+    if (this.config.requireSignatures && server.security?.sigstoreBundle) {
       try {
         const signatureValid = await this.validateSignature(server);
         if (!signatureValid) {
@@ -131,7 +131,7 @@ export class SecurityValidator {
     }
 
     // Validate registry signature if present
-    if (this.config.verifySignatures && registry.signing) {
+    if (this.config.requireSignatures && registry.signing) {
       try {
         const signatureValid = await this.validateRegistrySignature(registry);
         if (!signatureValid) {
@@ -347,10 +347,10 @@ export class SecurityValidator {
 }
 
 export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
-  verifySignatures: true,
+  requireSignatures: true,
   allowUnverifiedPublishers: false,
   maxRiskLevel: 'medium',
-  trustedPublishers: ['anthropic', 'openai', 'microsoft', 'google', 'cortex-os'],
+  trustedPublishers: ['brainwav', 'openai', 'microsoft', 'google', 'cortex-os'],
 };
 
 export function createSecurityValidator(config?: Partial<SecurityConfig>): SecurityValidator {

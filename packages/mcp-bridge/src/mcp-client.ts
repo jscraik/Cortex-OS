@@ -7,8 +7,9 @@
  * @status active
  */
 
-import { randomUUID } from 'crypto';
-import { EventEmitter } from 'events';
+import { randomUUID } from 'node:crypto';
+import { EventEmitter } from 'node:events';
+import { McpEventTypes, type McpToolCallBegin, type McpToolCallEnd } from '@cortex-os/contracts';
 import WebSocket from 'ws';
 import { z } from 'zod';
 import { PendingRequests } from './pendingRequests';
@@ -138,6 +139,8 @@ export interface McpClientOptions {
   retryDelay: number;
   heartbeatInterval: number;
   enableMetrics: boolean;
+  // When provided, tool call telemetry will be published via this hook as A2A-friendly events
+  publishEvent?: (evt: { type: string; payload: unknown }) => void;
 }
 
 /**
@@ -164,10 +167,10 @@ export interface McpMetrics {
 export class McpClient extends EventEmitter {
   private ws: WebSocket | null = null;
   private connectionState: ConnectionState = ConnectionState.Disconnected;
-  private pendingRequests = new PendingRequests();
+  private readonly pendingRequests = new PendingRequests();
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
-  private metrics: McpMetrics = {
+  private readonly metrics: McpMetrics = {
     connectionAttempts: 0,
     successfulConnections: 0,
     failedConnections: 0,
@@ -178,17 +181,17 @@ export class McpClient extends EventEmitter {
     uptime: 0,
   };
   private connectTime: number = 0;
-  private responseTimes: number[] = [];
+  private readonly responseTimes: number[] = [];
 
   constructor(
-    private config: McpConnectionConfig,
-    private options: McpClientOptions = {
+    private readonly config: McpConnectionConfig,
+    private readonly options: McpClientOptions = {
       timeout: 30000,
       retryAttempts: 3,
       retryDelay: 1000,
       heartbeatInterval: 30000,
       enableMetrics: true,
-    },
+    }
   ) {
     super();
     this.setupErrorHandling();
@@ -230,7 +233,7 @@ export class McpClient extends EventEmitter {
     this.connectionState = ConnectionState.Error;
     this.metrics.failedConnections++;
     throw new Error(
-      `Failed to connect after ${this.options.retryAttempts + 1} attempts: ${lastError?.message}`,
+      `Failed to connect after ${this.options.retryAttempts + 1} attempts: ${lastError?.message}`
     );
   }
 
@@ -275,7 +278,41 @@ export class McpClient extends EventEmitter {
   async callTool(name: string, args?: Record<string, unknown>): Promise<McpToolCallResult> {
     this.ensureInitialized();
     const params: McpToolCallParams = { name, arguments: args };
-    return await this.request<McpToolCallResult>('tools/call', params);
+    const callId = randomUUID();
+    const start = Date.now();
+    const redactedArgs = args ? redactForEvent(args) : undefined;
+    const beginEvt: McpToolCallBegin = { callId, name, arguments: redactedArgs, timestamp: start };
+    this.emit('tool-call-begin', beginEvt);
+    if (this.options.publishEvent && process.env.CORTEX_MCP_A2A_TELEMETRY === '1') {
+      this.options.publishEvent({ type: McpEventTypes.ToolCallBegin, payload: beginEvt });
+    }
+    try {
+      const result = await this.request<McpToolCallResult>('tools/call', params);
+      const endEvt: McpToolCallEnd = {
+        callId,
+        name,
+        durationMs: Date.now() - start,
+        success: !result.isError,
+      };
+      this.emit('tool-call-end', endEvt);
+      if (this.options.publishEvent && process.env.CORTEX_MCP_A2A_TELEMETRY === '1') {
+        this.options.publishEvent({ type: McpEventTypes.ToolCallEnd, payload: endEvt });
+      }
+      return result;
+    } catch (error) {
+      const endEvt: McpToolCallEnd = {
+        callId,
+        name,
+        durationMs: Date.now() - start,
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+      this.emit('tool-call-end', endEvt);
+      if (this.options.publishEvent && process.env.CORTEX_MCP_A2A_TELEMETRY === '1') {
+        this.options.publishEvent({ type: McpEventTypes.ToolCallEnd, payload: endEvt });
+      }
+      throw error;
+    }
   }
 
   /**
@@ -362,7 +399,7 @@ export class McpClient extends EventEmitter {
         this.ws.on('error', (error) => {
           clearTimeout(connectTimeout);
           this.connectionState = ConnectionState.Error;
-          reject(error);
+          reject(error instanceof Error ? error : new Error(String(error)));
         });
 
         this.ws.on('close', () => {
@@ -374,13 +411,13 @@ export class McpClient extends EventEmitter {
           }
         });
       } catch (error) {
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
 
   private async request<T>(method: string, params?: unknown): Promise<T> {
-    if (!this.ws || this.ws.readyState !== (WebSocket as any).OPEN) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket not connected');
     }
 
@@ -395,12 +432,18 @@ export class McpClient extends EventEmitter {
         retryAttempts: this.options.retryAttempts,
         retryDelay: this.options.retryDelay,
       },
-      (data) => this.ws!.send(data),
+      (data) => {
+        const ws = this.ws;
+        if (!ws) {
+          throw new Error('WebSocket not connected');
+        }
+        ws.send(data);
+      },
       this.pendingRequests,
       this.metrics,
       this.responseTimes,
       this.delay.bind(this),
-      this.recordError.bind(this),
+      this.recordError.bind(this)
     );
   }
 
@@ -424,7 +467,7 @@ export class McpClient extends EventEmitter {
 
   private handleResponse(response: JsonRpcResponse): void {
     this.metrics.responseCount++;
-    const respId = response.id as string | number | null;
+    const respId = response.id;
 
     if (respId == null) return; // orphaned or notification-like
 
@@ -514,7 +557,8 @@ export class McpClient extends EventEmitter {
       if (this.listenerCount('error') === 1) {
         // No other error listeners, prevent crash
 
-        console.error(`MCP Client Error${method ? ` in ${method}` : ''}: ${error.message}`);
+        const inMethod = method ? ` in ${method}` : '';
+        console.error(`MCP Client Error${inMethod}: ${error.message}`);
       }
     });
   }
@@ -522,6 +566,39 @@ export class McpClient extends EventEmitter {
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+}
+
+// Local redaction for event payloads to avoid leaking secrets via telemetry
+function redactForEvent(input: unknown, depth = 0): unknown {
+  if (depth > 6 || input == null) return input;
+  if (Array.isArray(input)) return input.map((v) => redactForEvent(v, depth + 1));
+  if (typeof input !== 'object') return input;
+
+  const SENSITIVE_KEYS = new Set([
+    'password',
+    'pass',
+    'secret',
+    'token',
+    'apiKey',
+    'apikey',
+    'access_token',
+    'authorization',
+    'cookie',
+    'session',
+    'privateKey',
+    'clientSecret',
+    'signingKey',
+  ]);
+
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(input as Record<string, unknown>)) {
+    if (SENSITIVE_KEYS.has(k) || /key|secret|token|pass(word)?/i.test(k)) {
+      out[k] = '***';
+    } else {
+      out[k] = redactForEvent(v, depth + 1);
+    }
+  }
+  return out;
 }
 
 /**
@@ -543,6 +620,11 @@ export function createMcpClient(url: string, options: Partial<McpClientOptions> 
     retryDelay: 1000,
     heartbeatInterval: 30000,
     enableMetrics: true,
+    publishEvent:
+      options.publishEvent ||
+      // Soft-couple via global hook set by ASBR boot wiring to avoid cross-package imports
+      (globalThis as unknown as { __CORTEX_MCP_PUBLISH__?: (evt: unknown) => void })
+        .__CORTEX_MCP_PUBLISH__,
     ...options,
   };
 

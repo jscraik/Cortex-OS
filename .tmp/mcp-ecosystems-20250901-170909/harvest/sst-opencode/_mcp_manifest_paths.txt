@@ -1,0 +1,16 @@
+./bun.lock
+./opencode.json
+./packages/opencode/package.json
+./packages/opencode/src/cli/cmd/mcp.ts
+./packages/opencode/src/cli/error.ts
+./packages/opencode/src/config/config.ts
+./packages/opencode/src/index.ts
+./packages/opencode/src/mcp/index.ts
+./packages/opencode/src/session/index.ts
+./packages/opencode/src/tool/webfetch.txt
+./packages/sdk/go/config.go
+./packages/sdk/js/src/gen/types.gen.ts
+./packages/web/astro.config.mjs
+./packages/web/src/content/docs/docs/agents.mdx
+./packages/web/src/content/docs/docs/config.mdx
+./packages/web/src/content/docs/docs/mcp-servers.mdx

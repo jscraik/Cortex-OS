@@ -25,7 +25,9 @@ export class PendingRequests {
   }
 
   forEach(cb: (pending: PendingRequest, id: string | number) => void): void {
-    this.requests.forEach((value, key) => cb(value, key));
+    this.requests.forEach((value, key) => {
+      cb(value, key);
+    });
   }
 
   clear(): void {

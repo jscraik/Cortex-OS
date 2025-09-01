@@ -1,7 +1,7 @@
 {
   "name": "@cortex-os/cortex-structure-github",
-  "version": "1.0.0",
-  "description": "GitHub App for maintaining repository structure and organization",
+  "version": "1.1.0",
+  "description": "Production-ready repository structure analysis and enforcement GitHub App with automated violation detection and smart recommendations",
   "type": "module",
   "main": "dist/server/start.js",
   "scripts": {
