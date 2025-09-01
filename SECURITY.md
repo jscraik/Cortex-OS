@@ -23,7 +23,7 @@ Thank you for helping keep Cortex-OS secure.
 
 2. **Notify stakeholders**
    - Security contacts and maintainers are pinged automatically through Slack and issue assignment.
-   - Escalate high‑severity findings via on-call channels when required.
+   - Escalate high-severity findings via on-call channels when required.
 
 3. **Open tracking issue or PR**
    - Use the automatically created tracking issue as the source of truth.
