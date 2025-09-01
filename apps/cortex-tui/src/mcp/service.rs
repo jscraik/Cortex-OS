@@ -42,73 +42,74 @@ impl McpService {
     pub async fn new() -> Result<Self> {
         // Find the Node.js MCP core package
         let node_mcp_path = Self::find_mcp_core_path()?;
-        
+
         let registry = McpRegistry::new();
-        
+
         let service = Self {
             registry: Arc::new(RwLock::new(registry)),
             node_mcp_path,
         };
-        
+
         // Initialize with default servers
         service.initialize_default_servers().await?;
-        
+
         Ok(service)
     }
-    
+
     fn find_mcp_core_path() -> Result<String> {
         // Look for the MCP core package in the Cortex-OS workspace
         let possible_paths = vec![
-            "/Users/jamiecraik/.Cortex-OS/packages/mcp/mcp-core",
             "/Users/jamiecraik/.Cortex-OS/packages/mcp-core",
-            "./packages/mcp/mcp-core",
             "./packages/mcp-core",
+            // Backward compatibility: check old nested path if running against older tree
+            "/Users/jamiecraik/.Cortex-OS/packages/mcp/mcp-core",
+            "./packages/mcp/mcp-core",
         ];
-        
+
         for path in possible_paths {
             let package_json = format!("{}/package.json", path);
             if std::path::Path::new(&package_json).exists() {
                 return Ok(path.to_string());
             }
         }
-        
+
         Err(ProviderError::Api("MCP core package not found".to_string()).into())
     }
-    
+
     async fn initialize_default_servers(&self) -> Result<()> {
         let mut registry = self.registry.write().await;
         registry.initialize_default_servers().await?;
-        
+
         info!("Initialized {} default MCP servers", registry.list_servers().await.len());
         Ok(())
     }
-    
+
     pub async fn add_server(&self, name: &str, config: McpServerConfig) -> Result<()> {
         let server_info = McpServerInfo::new(name, &config.command)
             .with_description(config.description.unwrap_or_default())
             .with_args(config.args.unwrap_or_default())
             .with_env(config.env.unwrap_or_default());
-        
+
         let mut registry = self.registry.write().await;
         registry.register_server(server_info).await?;
-        
+
         info!("Added MCP server: {}", name);
         Ok(())
     }
-    
+
     pub async fn remove_server(&self, name: &str) -> Result<()> {
         let mut registry = self.registry.write().await;
         registry.unregister_server(name).await?;
-        
+
         info!("Removed MCP server: {}", name);
         Ok(())
     }
-    
+
     pub async fn list_servers(&self) -> Result<Vec<McpServerStats>> {
         let registry = self.registry.read().await;
         let servers = registry.list_servers().await;
         let stats = registry.get_server_stats().await;
-        
+
         let mut result = Vec::new();
         for server in servers {
             if let Some(server_stats) = stats.get(&server.id) {
@@ -117,26 +118,26 @@ impl McpService {
                     status: server_stats.status.to_string(),
                     tools_count: server_stats.tools_count,
                     resources_count: 0, // Will be populated when resource tracking is implemented
-                    uptime_seconds: 0,  // Will be populated when uptime tracking is implemented  
+                    uptime_seconds: 0,  // Will be populated when uptime tracking is implemented
                     total_executions: 0, // Will be populated when execution tracking is implemented
                     failed_executions: 0, // Will be populated when error tracking is implemented
                 });
             }
         }
-        
+
         Ok(result)
     }
-    
+
     pub async fn get_server_tools(&self, server_name: &str) -> Result<Vec<McpTool>> {
         let registry = self.registry.read().await;
-        
+
         if let Some(client) = registry.get_client(server_name).await {
             Ok(client.tools().to_vec())
         } else {
             // Try to start the server and get tools
             drop(registry);
             self.start_server(server_name).await?;
-            
+
             let registry = self.registry.read().await;
             if let Some(client) = registry.get_client(server_name).await {
                 Ok(client.tools().to_vec())
@@ -145,10 +146,10 @@ impl McpService {
             }
         }
     }
-    
+
     pub async fn execute_tool(&self, server_name: &str, tool_name: &str, arguments: Value) -> Result<McpToolExecution> {
         let start_time = std::time::Instant::now();
-        
+
         // Get or start the server
         let registry = self.registry.read().await;
         let client = if let Some(client) = registry.get_client(server_name).await {
@@ -160,12 +161,12 @@ impl McpService {
             registry.get_client(server_name).await
                 .ok_or_else(|| ProviderError::Api(format!("Failed to start server {}", server_name)))?
         };
-        
+
         // Execute the tool via Node.js MCP core
         let result = self.execute_tool_via_node(server_name, tool_name, &arguments).await;
-        
+
         let execution_time_ms = start_time.elapsed().as_millis() as u64;
-        
+
         let execution = match result {
             Ok(result) => McpToolExecution {
                 server_name: server_name.to_string(),
@@ -184,11 +185,11 @@ impl McpService {
                 execution_time_ms,
             },
         };
-        
+
         debug!("MCP tool execution: {:?}", execution);
         Ok(execution)
     }
-    
+
     async fn execute_tool_via_node(&self, server_name: &str, tool_name: &str, arguments: &Value) -> Result<Value> {
         // Create a bridge script to execute MCP tools via the TypeScript implementation
         let script = format!(r#"
@@ -204,13 +205,13 @@ async function executeTool() {{
             command: 'cortex-mcp-fs', // This should come from server config
             args: []
         }};
-        
+
         const client = await createEnhancedClient(serverInfo);
         const result = await client.callTool({{
             name: '{}',
             arguments: {}
         }});
-        
+
         console.log(JSON.stringify(result));
         await client.close();
     }} catch (error) {{
@@ -221,7 +222,7 @@ async function executeTool() {{
 
 executeTool();
 "#, self.node_mcp_path, self.node_mcp_path, server_name, tool_name, arguments);
-        
+
         // Execute the Node.js script
         let output = Command::new("node")
             .arg("-e")
@@ -229,38 +230,38 @@ executeTool();
             .output()
             .await
             .map_err(|e| ProviderError::Api(format!("Failed to execute Node.js MCP bridge: {}", e)))?;
-        
+
         if !output.status.success() {
             let error_msg = String::from_utf8_lossy(&output.stderr);
             return Err(ProviderError::Api(format!("MCP tool execution failed: {}", error_msg)).into());
         }
-        
+
         let stdout = String::from_utf8_lossy(&output.stdout);
         serde_json::from_str(&stdout)
             .map_err(|e| ProviderError::Api(format!("Failed to parse MCP response: {}", e)).into())
     }
-    
+
     pub async fn start_server(&self, server_name: &str) -> Result<()> {
         let registry = self.registry.read().await;
         registry.start_server(server_name).await?;
-        
+
         info!("Started MCP server: {}", server_name);
         Ok(())
     }
-    
+
     pub async fn stop_server(&self, server_name: &str) -> Result<()> {
         let registry = self.registry.read().await;
         registry.stop_server(server_name).await?;
-        
+
         info!("Stopped MCP server: {}", server_name);
         Ok(())
     }
-    
+
     pub async fn health_check(&self) -> Result<HashMap<String, bool>> {
         let registry = self.registry.read().await;
         Ok(registry.health_check().await)
     }
-    
+
     pub async fn get_server_info(&self, server_name: &str) -> Result<Option<McpServerInfo>> {
         let registry = self.registry.read().await;
         Ok(registry.get_server(server_name).await)

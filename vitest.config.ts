@@ -1,5 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 // Root Vitest config: only orchestrates projects. Avoid sweeping up non-Vitest
@@ -59,24 +60,27 @@ export default defineConfig({
     // include configs that actually exist on disk to avoid startup errors
     // when packages are missing or in migration.
     projects: (() => {
+      // Resolve candidates relative to this config file (repo root),
+      // not the process cwd (which may be a package folder when invoked via Nx).
+      const configDir = path.dirname(fileURLToPath(import.meta.url));
       const candidates = [
         // Minimal test suite to ensure vitest runs without external dependencies
-        'vitest.basic.config.ts',
+        path.join(configDir, 'vitest.basic.config.ts'),
       ];
 
-      const resolved = candidates.map((p) => path.resolve(p));
-      const existing = resolved.filter((abs) => fs.existsSync(abs));
-      const missing = resolved.filter((abs) => !fs.existsSync(abs));
+      const existing = candidates.filter((abs) => fs.existsSync(abs));
+      const missing = candidates.filter((abs) => !fs.existsSync(abs));
       if (missing.length > 0) {
         // Use console.warn so it's visible during CI/test runs
         // but do not fail the test startup because of missing per-package configs.
         // eslint-disable-next-line no-console
         console.warn(
           '[vitest.config] Missing project configs:',
-          missing.map((m) => path.relative(process.cwd(), m))
+          missing.map((m) => path.relative(configDir, m))
         );
       }
-      return existing.map((abs) => path.relative(process.cwd(), abs));
+      // Return absolute paths so Vitest can locate them regardless of CWD
+      return existing;
     })(),
     setupFiles: ['tests/setup/vitest.setup.ts'],
     // Quality gates enforcement

@@ -1,0 +1,47 @@
+{
+  "name": "@cortex-os/cortex-semgrep-github",
+  "version": "1.0.0",
+  "description": "Semgrep-powered security automation for GitHub repositories",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server/start.ts",
+    "start": "node dist/server/start.js",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2",
+    "@octokit/webhooks": "^12.0.10",
+    "express": "^4.18.2",
+    "crypto": "^1.0.1",
+    "zod": "^3.22.4",
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/types": "workspace:*",
+    "@cortex-os/cortex-sec": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "keywords": [
+    "semgrep",
+    "security",
+    "github",
+    "automation",
+    "cortex",
+    "static-analysis"
+  ],
+  "author": "Cortex-OS Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "directory": "packages/cortex-semgrep-github"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@cortex-os/cortex-structure-github",
+  "version": "1.0.0",
+  "description": "GitHub App for maintaining repository structure and organization",
+  "type": "module",
+  "main": "dist/server/start.js",
+  "scripts": {
+    "dev": "tsx src/server/start.ts",
+    "build": "tsc",
+    "start": "node dist/server/start.js",
+    "test": "vitest",
+    "lint": "eslint src",
+    "format": "prettier --write src"
+  },
+  "dependencies": {
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/types": "workspace:*",
+    "@octokit/rest": "^20.1.2",
+    "@octokit/webhooks": "^12.3.2",
+    "express": "^4.21.2",
+    "zod": "^3.25.76",
+    "minimatch": "^9.0.3",
+    "fs-extra": "^11.2.0",
+    "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.23",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.19.11",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^1.6.1"
+  },
+  "keywords": [
+    "github-app",
+    "repository-structure",
+    "code-organization",
+    "file-management",
+    "architecture-enforcement"
+  ]
+}

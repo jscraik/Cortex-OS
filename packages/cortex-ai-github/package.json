@@ -6,8 +6,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/server/webhook-server.ts",
-    "start": "node dist/server/webhook-server.js",
+    "dev": "tsx watch src/server/start.ts",
+    "start": "node dist/server/start.js",
     "test": "vitest",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src"

@@ -14,7 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@cortex-os/mcp-registry': path.resolve(__dirname, '../../packages/mcp-registry/src'),
+  '@cortex-os/mcp-registry': path.resolve(__dirname, '../../packages/mcp-registry/src'),
       '@cortex-os/mcp': path.resolve(__dirname, '../../packages/mcp/src'),
     },
   },

@@ -42,6 +42,15 @@ As a **feature package** in the ASBR architecture:
 - **Communication**: Via A2A events, service interfaces through DI
 - **Dependencies**: Shared libraries from `packages/` (orchestration, a2a, memories, etc.)
 
+## Agent Standards
+
+All agents implemented in this package must comply with the standards defined in the [`.cortex/context/agents/`](https://github.com/jamiescottcraik/Cortex-OS/tree/main/.cortex/context/agents) directory, including:
+
+- **[Anthropic Agents](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/agents/anthropic-agents.md)** - Standards for Anthropic Claude-based agents
+- **[CrewAI](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/agents/crewai.md)** - Multi-agent collaboration frameworks
+- **[LangGraph Agents](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/agents/langgraph-agents.md)** - Graph-based agent workflows
+- **[OpenAI Agents Framework](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/agents/openai-agents-framework.md)** - OpenAI agent implementation standards
+
 ## Core Interfaces
 
 ### Agent Interface
@@ -184,7 +193,7 @@ pnpm test:integration
 pnpm test:coverage
 ```
 
-# @cortex-os/agents
+## @cortex-os/agents
 
 ## Inputs Compliance
 

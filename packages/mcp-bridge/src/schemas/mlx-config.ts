@@ -8,7 +8,8 @@ export const MLXModelEntrySchema = z.object({
 export const MLXConfigSchema = z.object({
   server: z.object({
     host: z.string().min(1),
-    port: z.number().int().positive().max(65535),
+    // Allow 0 for ephemeral port assignment in tests and dynamic environments
+    port: z.number().int().nonnegative().max(65535),
     workers: z.number().int().positive(),
     timeout: z.number().int().positive(),
     max_requests: z.number().int().positive(),

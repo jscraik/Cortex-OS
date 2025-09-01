@@ -1,5 +1,5 @@
 {
-  "name": "@cortex-os/a2a-outbox",
+  "name": "@cortex-os/a2a-outbox-legacy",
   "version": "0.1.0",
   "private": true,
   "main": "src/index.ts",

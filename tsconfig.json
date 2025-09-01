@@ -55,9 +55,15 @@
       "@cortex-os/telemetry": ["libs/typescript/telemetry/src"],
 
       // MCP Packages
-      "@cortex-os/mcp-core/*": ["packages/mcp/mcp-core/src/*"],
-      "@cortex-os/mcp-transport/*": ["packages/mcp/mcp-transport/src/*"],
-      "@cortex-os/mcp-registry/*": ["packages/mcp/mcp-registry/src/*"],
+      "@cortex-os/mcp": ["packages/mcp/src/index.ts"],
+      "@cortex-os/mcp/*": ["packages/mcp/src/*"],
+      "@cortex-os/mcp-core/*": ["packages/mcp-core/src/*"],
+      "@cortex-os/mcp-transport-bridge": ["packages/mcp-transport-bridge/src/index.ts"],
+      "@cortex-os/mcp-transport-bridge/*": ["packages/mcp-transport-bridge/src/*"],
+      // Legacy alias: resolve @cortex-os/mcp-transport to the bridge package
+      "@cortex-os/mcp-transport": ["packages/mcp-transport-bridge/src/index.ts"],
+      "@cortex-os/mcp-transport/*": ["packages/mcp-transport-bridge/src/*"],
+      "@cortex-os/mcp-registry/*": ["packages/mcp-registry/src/*"],
 
       // RAG Packages
       "@cortex-os/rag/*": ["packages/rag/src/*"],

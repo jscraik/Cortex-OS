@@ -71,7 +71,7 @@ export class MLXMcpServer {
       const parsed = MLXConfigSchema.safeParse(JSON.parse(configData));
       if (!parsed.success) {
         throw new Error(
-          `Invalid MLX config: ${parsed.error.issues.map((i) => i.path.join('.') + ' ' + i.message).join('; ')}`,
+          `Invalid MLX config: ${parsed.error.issues.map((i) => `${i.path.join('.')} ${i.message}`).join('; ')}`
         );
       }
       this.config = parsed.data;
@@ -110,6 +110,32 @@ export class MLXMcpServer {
       throw new Error(`Model ${modelKey} not found in configuration`);
     }
 
+    // If the configured model name is 'echo', shortcut without spawning Python.
+    if (model.name.toLowerCase() === 'echo') {
+      const lastUser = [...request.messages].reverse().find((m) => m.role === 'user');
+      const content = (lastUser?.content || '').toString();
+      const response: MLXResponse = {
+        id: `mlx-${Date.now()}`,
+        object: 'chat.completion',
+        created: Math.floor(Date.now() / 1000),
+        model: model.name,
+        choices: [
+          {
+            index: 0,
+            message: { role: 'assistant', content },
+            finish_reason: 'stop',
+          },
+        ],
+        usage: {
+          prompt_tokens: this.estimateTokens(request.messages.map((m) => m.content).join('')),
+          completion_tokens: this.estimateTokens(content),
+          total_tokens: 0,
+        },
+      };
+      response.usage.total_tokens = response.usage.prompt_tokens + response.usage.completion_tokens;
+      return Promise.resolve(response);
+    }
+
     return new Promise((resolve, reject) => {
       const __filename = fileURLToPath(import.meta.url);
       const __dirname = dirname(__filename);
@@ -129,7 +155,7 @@ export class MLXMcpServer {
         max_tokens: request.max_tokens || this.config.performance.max_tokens,
       };
 
-      process.stdin.write(JSON.stringify(requestData) + '\n');
+      process.stdin.write(`${JSON.stringify(requestData)}\n`);
       process.stdin.end();
 
       let output = '';
@@ -188,8 +214,8 @@ export class MLXMcpServer {
             },
           };
 
-          response.usage!.total_tokens =
-            response.usage!.prompt_tokens + response.usage!.completion_tokens;
+          response.usage.total_tokens =
+            response.usage.prompt_tokens + response.usage.completion_tokens;
           resolve(response);
         } catch (error) {
           reject(new Error(`Failed to parse MLX response: ${error}`));
@@ -217,6 +243,30 @@ export class MLXMcpServer {
       throw new Error(`Model ${modelKey} not found in configuration`);
     }
 
+    // Shortcut for echo model: stream each character of the last user message
+    if (model.name.toLowerCase() === 'echo') {
+      const lastUser = [...request.messages].reverse().find((m) => m.role === 'user');
+      const content = (lastUser?.content || '').toString();
+      const id = `mlx-${Date.now()}`;
+      for (const ch of content) {
+        yield {
+          id,
+          object: 'chat.completion.chunk',
+          created: Math.floor(Date.now() / 1000),
+          model: model.name,
+          choices: [{ index: 0, delta: { content: ch }, finish_reason: null }],
+        } as MLXResponse;
+      }
+      yield {
+        id,
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: model.name,
+        choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+      } as MLXResponse;
+      return;
+    }
+
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     let scriptPath = join(__dirname, 'python', 'src', 'mlx_chat.py');
@@ -234,10 +284,10 @@ export class MLXMcpServer {
       max_tokens: request.max_tokens || this.config.performance.max_tokens,
     };
 
-    process.stdin.write(JSON.stringify(requestData) + '\n');
+    process.stdin.write(`${JSON.stringify(requestData)}\n`);
     process.stdin.end();
 
-    let tokenIndex = 0;
+    // tokenIndex kept for potential metrics in the future
     const id = `mlx-${Date.now()}`;
 
     yield new Promise<MLXResponse>((resolve, reject) => {
@@ -266,7 +316,6 @@ export class MLXMcpServer {
                 ],
               };
               resolve(response);
-              tokenIndex++;
             }
           } catch {
             // Skip invalid JSON lines

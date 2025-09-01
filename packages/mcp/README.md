@@ -23,6 +23,8 @@ _Standardized tool integration, plugin system, and AI agent communication_
 
 Cortex MCP provides comprehensive Model Context Protocol integration for the Cortex-OS ASBR runtime. It enables AI agents to access external tools, services, and data sources through standardized JSON-RPC 2.0 communication, creating a robust ecosystem for AI agent capabilities.
 
+For detailed protocol specifications and implementation standards, see the [Model Context Protocol Documentation](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/protocols/model-context-protocol.md).
+
 ## ✨ Key Features
 
 ### 🔌 MCP Core Integration

@@ -33,6 +33,9 @@ jobs:
       - name: Run Semgrep with OWASP rules
         run: |
           semgrep scan \
+            --config=packages/cortex-sec/rulesets/semgrep/cortex-aggregate.yml \
+            --config=packages/cortex-sec/rulesets/semgrep/cortex-js-ts.yml \
+            --config=packages/cortex-sec/rulesets/semgrep/cortex-py.yml \
             --config=.semgrep/owasp-precise.yaml \
             --config=.semgrep/owasp-top-10.yaml \
             --config=.semgrep/llm-security.yaml \
@@ -90,9 +93,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
 
       - name: Python security audit
         run: |

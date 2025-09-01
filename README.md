@@ -144,7 +144,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 
 ### 📚 Core Documentation
 
-- **[Architecture Guide](./.cortex/docs/architecture.md)** - System design and patterns
+- **[Architecture Guide](https://github.com/jamiescottcraik/Cortex-OS/blob/main/docs/architecture.md)** - System design and patterns
 - **[API Reference](./docs/api/)** - Complete API documentation
 - **[Deployment Guide](./docs/deployment.md)** - Production deployment
 - **[Security Guide](./docs/security.md)** - Security practices and compliance
@@ -311,7 +311,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## Support
 
-- **📧 Email**: support@cortex-os.dev
+- **📧 Email**: <support@cortex-os.dev>
 - **💬 Discussions**: [GitHub Discussions](https://github.com/cortex-os/cortex-os/discussions)
 - **🐛 Issues**: [GitHub Issues](https://github.com/cortex-os/cortex-os/issues)
 - **📖 Documentation**: [docs.cortex-os.dev](https://docs.cortex-os.dev)

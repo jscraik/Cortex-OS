@@ -22,7 +22,7 @@ function resolveConfigPath(configPath?: string): string {
     // const fallbackPath = './mlx-config.json';
     // return fallbackPath;
     throw new Error(
-      'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.',
+      'MLX config path must be provided either as a function argument or via the MLX_CONFIG_PATH environment variable.'
     );
   }
   return configPathSchema.parse(resolved);
@@ -73,6 +73,10 @@ export function createMlxIntegration(configPath?: string) {
     const p = portSchema.parse(port);
     const app = express();
 
+    // Ensure MLX server is initialized before handling any requests
+    // This loads the provided configuration (including the echo model used in tests)
+    await mlxServer.initialize();
+
     app.use(express.json());
 
     app.post('/v1/chat/completions', async (req, res) => {
@@ -102,11 +106,15 @@ export function createMlxIntegration(configPath?: string) {
         }
 
         // SSE headers
-        res.setHeader('Content-Type', 'text/event-stream');
+        res.status(200);
+        res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache, no-transform');
         res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+        // Send a ping/comment to establish the stream promptly
+        res.write(':ok\n\n');
 
-        const encoder = new TextEncoder();
+        // Stream plain text lines; avoid Uint8Array writes which can cause type errors in some environments
 
         const stream = mlxServer.streamChat({
           model,
@@ -119,7 +127,7 @@ export function createMlxIntegration(configPath?: string) {
 
         for await (const chunk of stream) {
           const line = `data: ${JSON.stringify(chunk)}\n\n`;
-          res.write(encoder.encode ? encoder.encode(line) : line);
+          res.write(line);
         }
 
         res.write('data: [DONE]\n\n');
@@ -136,7 +144,7 @@ export function createMlxIntegration(configPath?: string) {
       }
     });
 
-    app.get('/health', async (req, res) => {
+    app.get('/health', async (_req, res) => {
       try {
         const health = await mlxServer.getHealth();
         res.json(health);
@@ -145,7 +153,7 @@ export function createMlxIntegration(configPath?: string) {
       }
     });
 
-    app.get('/v1/models', (req, res) => {
+    app.get('/v1/models', (_req, res) => {
       try {
         const models = mlxServer.getAvailableModels();
         res.json({

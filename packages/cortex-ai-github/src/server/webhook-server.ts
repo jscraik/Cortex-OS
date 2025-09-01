@@ -4,11 +4,11 @@
  */
 
 import crypto from 'crypto';
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'node:events';
 import express from 'express';
 import { z } from 'zod';
-import type { CortexAiGitHubApp } from '../core/ai-github-app.js';
-import { AITaskType, type CommentTrigger, type GitHubContext } from '../types/github-models.js';
+import type { CortexAiGitHubApp } from '../core/ai-github-app';
+import { type CommentTrigger, type GitHubContext } from '../types/github-models';
 
 interface WebhookEvents {
   'comment:trigger': [trigger: CommentTrigger, context: GitHubContext, user: string];
@@ -23,7 +23,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
   private triggers: CommentTrigger[];
   private server?: import('http').Server;
 
-  constructor(aiApp: CortexAiGitHubApp, webhookSecret: string, port: number = 3000) {
+  constructor(aiApp: CortexAiGitHubApp, webhookSecret: string, _port: number = 3000) {
     super();
 
     this.aiApp = aiApp;
@@ -96,7 +96,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
     this.app.use(express.json());
 
     // Security headers
-    this.app.use((req, res, next) => {
+    this.app.use((_req, res, next) => {
       res.set({
         'X-Content-Type-Options': 'nosniff',
         'X-Frame-Options': 'DENY',
@@ -109,7 +109,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 
   private setupRoutes(): void {
     // Health check endpoint
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_req, res) => {
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -130,7 +130,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
           this.emit(
             'webhook:invalid',
             'Missing required headers',
-            req.headers as Record<string, string>,
+            req.headers as Record<string, string>
           );
           return res.status(400).json({ error: 'Missing required webhook headers' });
         }
@@ -156,7 +156,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
     });
 
     // Trigger management endpoints
-    this.app.get('/triggers', (req, res) => {
+    this.app.get('/triggers', (_req, res) => {
       res.json({
         triggers: this.triggers.map((t) => ({
           pattern: t.pattern.source,
@@ -353,7 +353,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 
   private extractInstructions(comment: string, pattern: RegExp): string | undefined {
     const match = comment.match(pattern);
-    if (match && match[1]) {
+    if (match?.[1]) {
       return match[1].trim();
     }
     return undefined;

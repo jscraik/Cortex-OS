@@ -18,8 +18,8 @@ jobs:
       matrix:
         language: [ 'javascript-typescript' ]
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: github/codeql-action/init@4dd16135b69a43b6c8efb853346f8437d92d3c93
         with:
           languages: ${{ matrix.language }}
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@4dd16135b69a43b6c8efb853346f8437d92d3c93

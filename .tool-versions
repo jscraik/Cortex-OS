@@ -1,4 +1,4 @@
-nodejs 20.11.1
+nodejs 22
 pnpm 9
 python 3.11
 rust stable

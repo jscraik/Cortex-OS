@@ -2,6 +2,7 @@
   "name": "@cortex-os/github",
   "version": "1.0.0",
   "description": "GitHub API client and operations for Cortex-OS",
+  "private": true,
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
@@ -19,33 +20,6 @@
   ],
   "author": "Cortex-OS",
   "license": "MIT",
-  "dependencies": {
-    "@cortex-os/a2a-core": "workspace:*",
-    "reqwest": "^0.12",
-    "serde": "^1.0",
-    "serde_json": "^1.0",
-    "tokio": "^1.0",
-    "tracing": "^0.1",
-    "anyhow": "^1.0",
-    "thiserror": "^1.0",
-    "chrono": {
-      "version": "^0.4",
-      "features": [
-        "serde"
-      ]
-    },
-    "base64": "^0.21",
-    "url": "^2.5",
-    "bytes": "^1.0",
-    "futures": "^0.3",
-    "hmac": "^0.12",
-    "sha2": "^0.10",
-    "hex": "^0.4"
-  },
-  "devDependencies": {
-    "mockito": "^1.2",
-    "tempfile": "^3",
-    "tokio-test": "^0.4",
-    "insta": "^1.34"
-  }
+  "dependencies": {},
+  "devDependencies": {}
 }
