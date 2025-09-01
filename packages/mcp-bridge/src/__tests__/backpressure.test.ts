@@ -31,5 +31,6 @@ describe('backpressure handling', () => {
     const elapsed = Date.now() - start;
     expect(elapsed).toBeGreaterThanOrEqual(QUEUE_CHECK_INTERVAL * 2);
     pending.forEach((p) => clearTimeout(p.timeout));
+    pending.clear();
   });
 });
