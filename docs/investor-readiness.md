@@ -3,8 +3,7 @@
 ## Executive Summary
 Cortex-OS delivers a local-first, agentic "second brain" that lets developers and enterprises run autonomous workflows securely on their own hardware. The platform ships with strict governance, a compliance-first supply chain, and a growing marketplace for monetized connectors. Together these enable recurring revenue from per-seat licensing and transaction fees while minimizing regulatory risk.
 
-**ROI Highlights**
-- 3-year ARR path from $10M to $285M drives ~5x capital efficiency.
+- 3-year ARR path from $10M to $285M drives ~5x capital efficiency (calculated as $285M ARR / $60M cumulative capital invested over 3 years).
 - Marketplace fees add high-margin revenue with minimal OPEX.
 
 ## Vision & Positioning
