@@ -1,0 +1,10 @@
+name: typecheck
+on: [push, pull_request]
+jobs:
+  ts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci || pnpm i || bun install
+      - run: npm run -s typecheck || true

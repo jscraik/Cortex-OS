@@ -57,6 +57,7 @@ Thumbs.db
 
 # Rust build artifacts (scoped to TUI app)
 /apps/cortex-tui/target/
+/apps/cortex-rs/target/
 
 # Python caches
 **/__pycache__/
