@@ -1,9 +1,8 @@
 use cortex_tui::config::Config;
-use cortex_tui::providers::{create_provider, ModelProvider};
+use cortex_tui::providers::create_provider;
 use cortex_tui::Error;
-use mockito::{mock, Matcher, Mock};
 use futures::StreamExt;
-use tokio_test;
+use mockito::{Matcher, Server};
 
 // RED - These tests will fail initially
 #[tokio::test]
@@ -50,8 +49,8 @@ async fn test_provider_factory_fails_unknown_provider() {
 
     // Then
     assert!(result.is_err());
-    match result.unwrap_err() {
-        Error::Provider(cortex_tui::error::ProviderError::UnknownProvider(name)) => {
+    match result {
+        Err(Error::Provider(cortex_tui::error::ProviderError::UnknownProvider(name))) => {
             assert_eq!(name, "unknown-provider");
         }
         _ => panic!("Expected ProviderError::UnknownProvider"),
@@ -61,14 +60,16 @@ async fn test_provider_factory_fails_unknown_provider() {
 #[tokio::test]
 async fn test_github_models_provider_complete() {
     // Given
-    let _m = mock("POST", "/inference/chat/completions")
+    let mut server = Server::new();
+    let _m = server
+        .mock("POST", "/inference/chat/completions")
         .with_status(200)
         .with_header("content-type", "application/json")
         .with_body(r#"{"choices":[{"message":{"content":"Hello, world!"}}]}"#)
         .create();
 
     let mut config = Config::default();
-    config.github_models.endpoint = mockito::server_url();
+    config.github_models.endpoint = server.url();
     config.github_models.token = Some("test-token".to_string());
     config.provider.default = "github-models".to_string();
 
@@ -84,14 +85,20 @@ async fn test_github_models_provider_complete() {
 #[tokio::test]
 async fn test_github_models_provider_stream() {
     // Given
-    let _m = mock("POST", "/inference/chat/completions")
+    let mut server = Server::new();
+    let _m = server
+        .mock("POST", "/inference/chat/completions")
         .with_status(200)
         .with_header("content-type", "text/event-stream")
-        .with_body("data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"world!\"}}]}\n\ndata: [DONE]\n\n")
+        .with_body(
+            "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n\
+                  data: {\"choices\":[{\"delta\":{\"content\":\" world!\"}}]}\n\n\
+                  data: [DONE]\n\n",
+        )
         .create();
 
     let mut config = Config::default();
-    config.github_models.endpoint = mockito::server_url();
+    config.github_models.endpoint = server.url();
     config.github_models.token = Some("test-token".to_string());
     config.provider.default = "github-models".to_string();
 
@@ -128,14 +135,16 @@ async fn test_provider_fallback_mechanism() {
 #[tokio::test]
 async fn test_provider_handles_rate_limiting() {
     // Given
-    let _m = mock("POST", "/inference/chat/completions")
+    let mut server = Server::new();
+    let _m = server
+        .mock("POST", "/inference/chat/completions")
         .with_status(429)
         .with_header("content-type", "application/json")
         .with_body(r#"{"error":{"message":"Rate limit exceeded"}}"#)
         .create();
 
     let mut config = Config::default();
-    config.github_models.endpoint = mockito::server_url();
+    config.github_models.endpoint = server.url();
     config.github_models.token = Some("test-token".to_string());
     config.provider.default = "github-models".to_string();
 
@@ -146,10 +155,8 @@ async fn test_provider_handles_rate_limiting() {
 
     // Then
     assert!(result.is_err());
-    match result.unwrap_err() {
-        Error::Provider(cortex_tui::error::ProviderError::RateLimited) => {
-            // Expected
-        }
+    match result {
+        Err(Error::Provider(cortex_tui::error::ProviderError::RateLimited)) => {}
         _ => panic!("Expected ProviderError::RateLimited"),
     }
 }
