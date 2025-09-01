@@ -1,0 +1,9 @@
+{
+  "chat_models": {
+    "cortex-mlx-small": { "name": "Cortex MLX Small" },
+    "cortex-mlx-medium": { "name": "Cortex MLX Medium" }
+  },
+  "default_models": {
+    "chat": "cortex-mlx-small"
+  }
+}
