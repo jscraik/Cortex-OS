@@ -56,7 +56,8 @@ describe('utilities', () => {
     const store = createInMemoryStore({ maxItems: 1, maxBytes: 10 });
     store.set('a', 1);
     store.set('b', 2);
-    expect(store.get('b')).toBeUndefined();
+    expect(store.get('a')).toBeUndefined();
+    expect(store.get('b')).toBe(2);
   });
   it('metrics summary handles empty', () => {
     const m = createMetrics();
