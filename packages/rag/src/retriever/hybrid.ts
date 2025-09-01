@@ -8,9 +8,15 @@ export function hybridCombine(
   const map = new Map<string, RetrieverResult>();
   function add(arr: RetrieverResult[], weight: number) {
     arr.forEach((r) => {
-      const existing = map.get(r.id) || { id: r.id, text: r.text, score: 0 };
-      existing.score += r.score * weight;
-      existing.text = r.text;
+      if (existing.text !== r.text) {
+        if (existing.text && r.text) {
+          console.warn(
+            `hybridCombine: text mismatch for id '${r.id}'. Keeping first encountered text.`
+          );
+        } else if (!existing.text) {
+          existing.text = r.text;
+        }
+      }
       map.set(r.id, existing);
     });
   }
