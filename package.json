@@ -165,7 +165,7 @@
     "dev:orbstack:ps": "docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml ps",
     "dev:orbstack:logs": "docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml logs -f",
     "nx:test:core": "pnpm -s nx run-many -t test --projects=@cortex-os/utils,@cortex-os/types,@cortex-os/contracts,@cortex-os/contracts-v2 --parallel=2",
-    "nx:test:a2a": "pnpm -s nx run-many -t test --projects=@cortex-os/a2a-core,@cortex-os/a2a-common,@cortex-os/a2a-contracts,@cortex-os/a2a-transport,@cortex-os/a2a-handlers,@cortex-os/a2a-core-standalone,@cortex-os/a2a-schema-registry,@cortex-os/a2a-observability,a2a --parallel=2",
+    "nx:test:a2a": "pnpm -s nx run-many -t test --projects=@cortex-os/a2a-core,@cortex-os/a2a-common,@cortex-os/a2a-contracts,@cortex-os/a2a-transport,@cortex-os/a2a-handlers,@cortex-os/a2a-schema-registry,@cortex-os/a2a-observability,a2a --parallel=2",
     "nx:test:mcp": "pnpm -s nx run-many -t test --projects=@cortex-os/mcp-core,@cortex-os/mcp-bridge,@cortex-os/mcp-registry,@cortex-os/mcp-transport-bridge,mcp --parallel=2",
     "nx:test:services": "pnpm -s nx run-many -t test --projects=@cortex-os/telemetry,@cortex-os/model-gateway,@cortex-os/observability,@cortex-os/orchestration,@cortex-os/gateway,@cortex-os/registry,@cortex-os/memories --parallel=2",
     "nx:test:features": "pnpm -s nx run-many -t test --projects=@cortex-os/mvp-core,@cortex-os/mvp-server,@cortex-os/prp-runner,@cortex-os/agents,@cortex-os/kernel,@cortex-os/simlab,@cortex-os/evals,@cortex-os/rag,asbr,mvp --parallel=2",
