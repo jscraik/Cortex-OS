@@ -232,18 +232,6 @@ importers:
         specifier: ^2.0.5
         version: 2.1.9(@types/node@22.18.0)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
 
-  packages/a2a-core:
-    devDependencies:
-      '@types/node':
-        specifier: ^22.5.0
-        version: 22.18.0
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.2
-      vitest:
-        specifier: ^2.0.5
-        version: 2.1.9(@types/node@22.18.0)(@vitest/browser@3.2.4)(jsdom@26.1.0)(less@4.4.1)(sass-embedded@1.91.0)(sass@1.91.0)(terser@5.43.1)
-
   packages/a2a-services/common:
     devDependencies:
       '@types/express':
