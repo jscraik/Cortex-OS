@@ -89,4 +89,3 @@ rules:
       - metavariable-pattern:
           metavariable: $INPUT
           pattern-regex: (?i)(req\.body|req\.query|process\.env|user|input|data)
-    message: "Unvalidated input without Zod schema"
