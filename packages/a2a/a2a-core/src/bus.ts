@@ -4,6 +4,9 @@ import { SchemaRegistry } from './schema-registry';
 import { getCurrentTraceContext } from './trace-context-manager';
 import type { Transport } from './transport';
 export type { Transport } from './transport';
+import { encrypt, decrypt } from './lib/encryption.js';
+import { IdempotencyStore, once } from './idempotency.js';
+import { createMemoryIdempotencyStore } from './lib/memory-id-store.js';
 
 export type Handler = { type: string; handle: (msg: Envelope) => Promise<void> };
 
@@ -11,50 +14,58 @@ export function createBus(
   transport: Transport,
   validate: (e: Envelope) => Envelope = Envelope.parse,
   schemaRegistry?: SchemaRegistry,
+  options: { key?: Buffer; store?: IdempotencyStore } = {},
 ) {
+  const { key, store = createMemoryIdempotencyStore() } = options;
+
   const validateAgainstSchema = (msg: Envelope) => {
     if (!schemaRegistry) return;
     const result = schemaRegistry.validate(msg.type, msg.data);
-    if (!result.valid) {
-      throw new Error(`Schema validation failed: ${result.errors.join(', ')}`);
-    }
+    if (!result.valid) throw new Error(`Schema validation failed: ${result.errors.join(', ')}`);
   };
 
   const publish = async (msg: Envelope) => {
-    const validatedMsg = validate(msg);
-
-    if (schemaRegistry) {
-      validateAgainstSchema(validatedMsg);
+    const validated = validate(msg);
+    if (schemaRegistry) validateAgainstSchema(validated);
+    if (key && validated.data !== undefined) {
+      const payload = encrypt(validated.data, key);
+      validated.data = payload.ciphertext;
+      validated.headers = { ...validated.headers, nonce: payload.nonce, tag: payload.tag };
     }
-
-    const currentContext = getCurrentTraceContext();
-    if (currentContext) {
-      injectTraceContext(validatedMsg, currentContext);
-    } else {
-      const newContext = createTraceContext();
-      injectTraceContext(validatedMsg, newContext);
-    }
-
-    await transport.publish(validatedMsg);
+    const ctx = getCurrentTraceContext() || createTraceContext();
+    injectTraceContext(validated, ctx);
+    await transport.publish(validated);
   };
 
   const bind = async (handlers: Handler[]) => {
     const map = new Map(handlers.map((h) => [h.type, h.handle] as const));
-    return transport.subscribe([...map.keys()], async (m) => {
+    const process = async (m: Envelope) => {
       try {
         validate(m);
         const handler = map.get(m.type);
-        if (handler) {
-          const currentContext = getCurrentTraceContext();
-          if (currentContext) {
-            injectTraceContext(m, currentContext);
+        if (!handler) return;
+        const run = async () => {
+            const nonce = m.headers?.nonce;
+            const tag = m.headers?.tag;
+            if (typeof nonce !== 'string' || typeof tag !== 'string') {
+              throw new Error('Missing or invalid nonce/tag in message headers for decryption');
+            }
+            m.data = decrypt({ ciphertext: m.data as string, nonce, tag }, key);
           }
+          const ctx = getCurrentTraceContext();
+          if (ctx) injectTraceContext(m, ctx);
           await handler(m);
+        };
+        if (store) {
+          const ttlMs = (typeof m.ttlMs === 'number' && m.ttlMs > 0) ? m.ttlMs : 1000;
+          await once(store, m.id, Math.ceil(ttlMs / 1000), run);
         }
+        else await run();
       } catch (error) {
         console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
       }
-    });
+    };
+    return transport.subscribe([...map.keys()], process);
   };
 
   return { publish, bind };
