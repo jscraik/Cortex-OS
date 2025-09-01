@@ -1,0 +1,88 @@
+{
+  "artifact": "cortex-os-delta-readiness",
+  "version": "1.0",
+  "commit": "ccfecb4be80cae3a435cc4cec80e14ac5e96bf6e",
+  "baseline_commit": "412def9ffd3e7fa6da0ba09ae71ebeee90cc945a",
+  "overall": {
+    "previous_score": 69,
+    "current_score": 71,
+    "delta": 2,
+    "rag": "amber",
+    "gate": { "passed": false, "reasons": ["tests and security scans did not run; coverage <95%"] }
+  },
+  "areas": [
+    {
+      "name": "Production",
+      "previous": { "score": 65, "rag": "amber" },
+      "current":  { "score": 70, "rag": "amber" },
+      "delta": 5,
+      "evidence": [ { "path": "cortex-py/Dockerfile", "lines": "23-27", "sha": "b713529cb15667af719a31d7400a2a973c688a37" } ],
+      "regressions": []
+    },
+    {
+      "name": "Security & Governance",
+      "previous": { "score": 90, "rag": "green" },
+      "current":  { "score": 91, "rag": "green" },
+      "delta": 1,
+      "evidence": [ { "path": "packages/mvp/src/validators/security-scanner.ts", "lines": "17-75", "sha": "54da46a48d21bdeddb32c69fa12ddda3264316d0" } ],
+      "regressions": []
+    },
+    {
+      "name": "Accessibility",
+      "previous": { "score": 70, "rag": "amber" },
+      "current":  { "score": 70, "rag": "amber" },
+      "delta": 0,
+      "evidence": [ { "path": "apps/cortex-tui/src/view/palette.rs", "lines": "151-179", "sha": "1118d09bcdcd3f538ef225fcc792e2a502457790" } ],
+      "regressions": []
+    },
+    {
+      "name": "Resilience",
+      "previous": { "score": 61, "rag": "amber" },
+      "current":  { "score": 61, "rag": "amber" },
+      "delta": 0,
+      "evidence": [ { "path": "packages/orchestration/src/lib/circuit-breaker.ts", "lines": "30-74", "sha": "958d41d53bea6c6824867bbbc249d097a75dfce9" } ],
+      "regressions": []
+    },
+    {
+      "name": "Operations",
+      "previous": { "score": 90, "rag": "green" },
+      "current":  { "score": 95, "rag": "green" },
+      "delta": 5,
+      "evidence": [ { "path": "docs/runbooks/cortex-py.md", "lines": "1-33", "sha": "9dc16cbfe992be67c379b9b2b374720040182b48" } ],
+      "regressions": []
+    },
+    {
+      "name": "Investor",
+      "previous": { "score": 40, "rag": "red" },
+      "current":  { "score": 45, "rag": "amber" },
+      "delta": 5,
+      "evidence": [ { "path": "packages/rag/docs/plan/summary.md", "lines": "1-60", "sha": "0157d24de1c9becc82839889c13ca0199680cc5c" } ],
+      "regressions": []
+    }
+  ],
+  "coverage": { "total": 0, "threshold": 95, "met": false, "reports": [] },
+  "security": {
+    "critical_vulns": null,
+    "sbom": "sbom/sbom.cdx.json",
+    "findings": [ { "tool": "semgrep", "id": "", "status": "not-run", "evidence": "" } ]
+  },
+  "a11y": {
+    "wcag_2_2_aa_pass": false,
+    "issues_closed": 0,
+    "issues_new": 0,
+    "evidence": []
+  },
+  "resilience": {
+    "experiments_covered": ["network_partition","service_crash","dependency_failure","resource_exhaustion"],
+    "recovery_within_budget": false,
+    "evidence": ["resilience.summary.json"]
+  },
+  "governance": {
+    "recommendation": "no-go",
+    "licenses_ok": true,
+    "provenance": true
+  },
+  "closed_risks": [],
+  "new_risks": [],
+  "actions": []
+}
