@@ -7,8 +7,7 @@ describe('runSandboxed', () => {
     expect(result).toBe(2);
   });
 
-  it('prevents access to process', async () => {
-    expect(() => runSandboxed({ code: 'process.exit()' })).toThrow();
+    await expect(runSandboxed({ code: 'process.exit()' })).rejects.toThrow();
   });
 
   it('enforces timeout', async () => {
