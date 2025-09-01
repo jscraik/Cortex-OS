@@ -64,7 +64,7 @@
   "security": {
     "critical_vulns": { "count": 0, "scanned": false },
     "sbom": "sbom/sbom.cdx.json",
-    "findings": [ { "tool": "semgrep", "id": "", "status": "not-run", "evidence": "" } ]
+    "findings": [ { "tool": "semgrep", "id": null, "status": "not-run", "evidence": null } ]
   },
   "a11y": {
     "wcag_2_2_aa_pass": false,
