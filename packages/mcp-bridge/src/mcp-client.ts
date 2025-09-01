@@ -13,6 +13,7 @@ import WebSocket from 'ws';
 import { z } from 'zod';
 import { trackRequest } from './trackRequest';
 import { PendingRequests } from './pendingRequests';
+import { createLogger, Logger } from './lib/logger';
 
 /**
  * JSON-RPC 2.0 message schemas
@@ -126,6 +127,9 @@ export interface McpConnectionConfig {
   retryAttempts?: number;
   retryDelay?: number;
   heartbeatInterval?: number;
+  headers?: Record<string, string>;
+  authToken?: string;
+  correlationId?: string;
   clientInfo?: {
     name: string;
     version: string;
@@ -179,6 +183,7 @@ export class McpClient extends EventEmitter {
   };
   private connectTime: number = 0;
   private responseTimes: number[] = [];
+  private logger: Logger;
 
   constructor(
     private config: McpConnectionConfig,
@@ -191,6 +196,14 @@ export class McpClient extends EventEmitter {
     },
   ) {
     super();
+    this.options = {
+      ...this.options,
+      timeout: config.timeout ?? this.options.timeout,
+      retryAttempts: config.retryAttempts ?? this.options.retryAttempts,
+      retryDelay: config.retryDelay ?? this.options.retryDelay,
+      heartbeatInterval: config.heartbeatInterval ?? this.options.heartbeatInterval,
+    };
+    this.logger = createLogger({ correlationId: config.correlationId });
     this.setupErrorHandling();
   }
 
@@ -343,7 +356,11 @@ export class McpClient extends EventEmitter {
   private async attemptConnection(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.config.url);
+        const headers = { ...(this.config.headers || {}) };
+        if (this.config.authToken) {
+          headers['Authorization'] = `Bearer ${this.config.authToken}`;
+        }
+        this.ws = new WebSocket(this.config.url, { headers });
 
         const connectTimeout = setTimeout(() => {
           reject(new Error(`Connection timeout after ${this.config.timeout || 30000}ms`));
@@ -514,7 +531,7 @@ export class McpClient extends EventEmitter {
       if (this.listenerCount('error') === 1) {
         // No other error listeners, prevent crash
 
-        console.error(`MCP Client Error${method ? ` in ${method}` : ''}: ${error.message}`);
+        this.logger.error(`MCP Client Error${method ? ` in ${method}` : ''}: ${error.message}`);
       }
     });
   }
