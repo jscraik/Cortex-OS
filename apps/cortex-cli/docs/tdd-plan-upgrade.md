@@ -167,7 +167,7 @@ fn test_ci_mode_with_approval_gates() {
 
 ```bash
 # Create Rust TUI project
-apps/cortex-tui/
+apps/cortex-code/
 ├── Cargo.toml
 ├── src/
 │   ├── main.rs
@@ -202,7 +202,7 @@ apps/cortex-tui/
 
 ```toml
 [package]
-name = "cortex-tui"
+name = "cortex-code"
 version = "0.1.0"
 edition = "2021"
 
@@ -662,7 +662,7 @@ The phased approach ensures rapid delivery while maintaining quality through str
 
 ## Next Steps
 
-1. **Week 1**: Create `apps/cortex-tui/` with Cargo.toml and basic structure
+1. **Week 1**: Create `apps/cortex-code/` with Cargo.toml and basic structure
 2. **Week 1**: Write failing tests for config system and provider factory
 3. **Week 1**: Implement config loading and provider abstraction
 4. **Week 2**: Write TUI component tests and implement basic widgets
@@ -676,7 +676,7 @@ The phased approach ensures rapid delivery while maintaining quality through str
 
 ### Phase 1: Foundation
 
-- [ ] Create Rust project structure in `apps/cortex-tui/`
+- [ ] Create Rust project structure in `apps/cortex-code/`
 - [ ] Add Ratatui 0.29.0 with exact Codex dependencies
 - [ ] Write config system tests (RED)
 - [ ] Implement TOML config loading (GREEN)

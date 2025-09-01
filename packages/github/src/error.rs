@@ -112,7 +112,7 @@ pub struct A2AEventError {
 /// Result type for GitHub operations
 pub type GitHubResult<T> = Result<T, GitHubError>;
 
-/// Convert from cortex-tui error types for backward compatibility
+/// Convert from cortex-code error types for backward compatibility
 impl From<crate::error::Error> for GitHubError {
     fn from(err: crate::error::Error) -> Self {
         match err {

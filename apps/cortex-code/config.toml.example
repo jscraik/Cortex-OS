@@ -1,0 +1,41 @@
+# Cortex Code Configuration Example
+# Copy this file to ~/.cortex/config.toml and customize
+
+[provider]
+default = "github-models"
+fallback = ["openai", "local-mlx"]
+
+[github-models]
+model = "openai/gpt-4o-mini"
+endpoint = "https://models.github.ai"
+# Optional: token = "your_github_token_here"
+# If not provided, will use GITHUB_TOKEN environment variable
+
+[openai]
+# Uncomment and configure if using OpenAI
+# api_key = "your_openai_api_key"
+# model = "gpt-4o-mini"
+# endpoint = "https://api.openai.com/v1"  # Optional
+
+[anthropic]
+# Uncomment and configure if using Anthropic
+# api_key = "your_anthropic_api_key"
+# model = "claude-3-5-sonnet"
+
+[mcp]
+servers = ["cortex.fs", "cortex.git", "cortex.search"]
+
+[memory]
+path = "~/.cortex/agents.md"
+retention_days = 30
+audit = true
+
+[privacy]
+zdr = true              # Zero-data-retention mode
+telemetry = false       # Disable telemetry
+redact_secrets = true   # Redact secrets in logs
+
+[tui]
+theme = "dark"          # or "light"
+scrollback = 1000       # Number of lines to keep in history
+highlight_syntax = true # Enable syntax highlighting

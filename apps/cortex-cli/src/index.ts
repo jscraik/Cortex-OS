@@ -19,7 +19,7 @@ import { simlabBench } from './commands/simlab/bench.js';
 import { simlabList } from './commands/simlab/list.js';
 import { simlabReport } from './commands/simlab/report.js';
 import { simlabRun } from './commands/simlab/run.js';
-import { tuiCommand } from './commands/tui.js';
+import { codeCommand } from './commands/code.js';
 
 const program = new Command('cortex');
 const mcp = new Command('mcp');
@@ -60,5 +60,5 @@ const evalCmd = new Command('eval');
 evalCmd.addCommand(evalGate);
 program.addCommand(evalCmd);
 
-program.addCommand(tuiCommand);
+program.addCommand(codeCommand);
 program.parseAsync(process.argv);

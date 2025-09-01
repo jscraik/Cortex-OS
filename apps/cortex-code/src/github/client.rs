@@ -1,6 +1,7 @@
-use crate::{GitHubRateLimiter, TokenManager, GitHubError, GitHubResult};
+use crate::github::{GitHubRateLimiter, TokenManager};
+use crate::Result;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
-use reqwest::{Client, Method, Response};
+use reqwest::{Client, Method, Request, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::sync::Arc;
@@ -18,7 +19,7 @@ pub struct GitHubClient {
 
 impl GitHubClient {
     /// Create a new GitHub client
-    pub fn new(token_manager: TokenManager) -> GitHubResult<Self> {
+    pub fn new(token_manager: TokenManager) -> Result<Self> {
         let http_client = Client::builder()
             .user_agent("cortex-code/2.0.0")
             .timeout(std::time::Duration::from_secs(30))
@@ -36,7 +37,7 @@ impl GitHubClient {
     }
 
     /// Make a GET request
-    pub async fn get<T>(&self, endpoint: &str) -> GitHubResult<T>
+    pub async fn get<T>(&self, endpoint: &str) -> Result<T>
     where
         T: DeserializeOwned,
     {
@@ -45,7 +46,7 @@ impl GitHubClient {
     }
 
     /// Make a POST request
-    pub async fn post<B, T>(&self, endpoint: &str, body: Option<B>) -> GitHubResult<T>
+    pub async fn post<B, T>(&self, endpoint: &str, body: Option<B>) -> Result<T>
     where
         B: Serialize,
         T: DeserializeOwned,
@@ -55,7 +56,7 @@ impl GitHubClient {
     }
 
     /// Make a PUT request
-    pub async fn put<B, T>(&self, endpoint: &str, body: Option<B>) -> GitHubResult<T>
+    pub async fn put<B, T>(&self, endpoint: &str, body: Option<B>) -> Result<T>
     where
         B: Serialize,
         T: DeserializeOwned,
@@ -65,7 +66,7 @@ impl GitHubClient {
     }
 
     /// Make a PATCH request
-    pub async fn patch<B, T>(&self, endpoint: &str, body: Option<B>) -> GitHubResult<T>
+    pub async fn patch<B, T>(&self, endpoint: &str, body: Option<B>) -> Result<T>
     where
         B: Serialize,
         T: DeserializeOwned,
@@ -75,7 +76,7 @@ impl GitHubClient {
     }
 
     /// Make a DELETE request
-    pub async fn delete(&self, endpoint: &str) -> GitHubResult<()> {
+    pub async fn delete(&self, endpoint: &str) -> Result<()> {
         let response = self.request(Method::DELETE, endpoint, None::<()>).await?;
         if response.status().is_success() {
             Ok(())
@@ -85,7 +86,7 @@ impl GitHubClient {
     }
 
     /// Make a raw request and return the response
-    pub async fn request_raw<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> GitHubResult<Response>
+    pub async fn request_raw<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> Result<Response>
     where
         B: Serialize,
     {
@@ -93,7 +94,7 @@ impl GitHubClient {
     }
 
     /// Internal request method
-    async fn request<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> GitHubResult<Response>
+    async fn request<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> Result<Response>
     where
         B: Serialize,
     {
@@ -101,18 +102,17 @@ impl GitHubClient {
         
         self.rate_limiter
             .make_request(|| async {
-                let headers = self.build_headers().await?;
+                let mut headers = self.build_headers().await?;
                 
                 let mut request_builder = self.http_client.request(method.clone(), url.clone());
                 
                 if let Some(body) = &body {
                     let json_body = serde_json::to_string(body)?;
-                    let mut headers = headers;
                     headers.insert("content-type", HeaderValue::from_static("application/json"));
-                    request_builder = request_builder.headers(headers).body(json_body);
-                } else {
-                    request_builder = request_builder.headers(headers);
+                    request_builder = request_builder.body(json_body);
                 }
+                
+                request_builder = request_builder.headers(headers);
                 
                 let request = request_builder.build()?;
                 debug!("Making GitHub API request: {} {}", method, url);
@@ -129,13 +129,13 @@ impl GitHubClient {
     }
 
     /// Build the complete URL for an endpoint
-    fn build_url(&self, endpoint: &str) -> GitHubResult<Url> {
+    fn build_url(&self, endpoint: &str) -> Result<Url> {
         let endpoint = endpoint.strip_prefix('/').unwrap_or(endpoint);
         Ok(self.base_url.join(endpoint)?)
     }
 
     /// Build request headers with authentication
-    async fn build_headers(&self) -> GitHubResult<HeaderMap> {
+    async fn build_headers(&self) -> Result<HeaderMap> {
         let mut headers = HeaderMap::new();
         
         // Get authentication token
@@ -153,10 +153,11 @@ impl GitHubClient {
     }
 
     /// Parse a successful response
-    async fn parse_response<T>(&self, response: Response) -> GitHubResult<T>
+    async fn parse_response<T>(&self, response: Response) -> Result<T>
     where
         T: DeserializeOwned,
     {
+        let status = response.status();
         let text = response.text().await?;
         
         if text.is_empty() {
@@ -165,53 +166,59 @@ impl GitHubClient {
                 // Unit type
                 unsafe { Ok(std::mem::zeroed()) }
             } else {
-                Err(GitHubError::Serialization(serde_json::Error::io(std::io::Error::new(
-                    std::io::ErrorKind::UnexpectedEof,
-                    "Empty response body",
-                ))))
+                Err(crate::error::Error::Serialization(
+                    serde_json::Error::io(std::io::Error::new(
+                        std::io::ErrorKind::UnexpectedEof,
+                        "Empty response body",
+                    ))
+                ))
             }
         } else {
             serde_json::from_str(&text).map_err(|e| {
                 warn!("Failed to parse GitHub API response: {}", text);
-                GitHubError::Serialization(e)
+                crate::error::Error::Serialization(e)
             })
         }
     }
 
     /// Create an error from a failed response
-    async fn create_error_from_response(&self, response: Response) -> GitHubError {
+    async fn create_error_from_response(&self, response: Response) -> crate::error::Error {
         let status = response.status();
         let status_code = status.as_u16();
         
         match response.text().await {
             Ok(text) => {
                 // Try to parse GitHub error response
-                if let Ok(github_error) = serde_json::from_str::<serde_json::Value>(&text) {
-                    let message = github_error
-                        .get("message")
-                        .and_then(|m| m.as_str())
-                        .unwrap_or("Unknown error")
-                        .to_string();
-
+                if let Ok(github_error) = serde_json::from_str::<crate::github::types::GitHubError>(&text) {
                     match status_code {
-                        401 => GitHubError::Authentication("Token authentication failed".to_string()),
-                        403 | 429 => GitHubError::RateLimit("API rate limit exceeded".to_string()),
-                        404 => GitHubError::NotFound(format!("Resource not found: {}", message)),
-                        422 => GitHubError::Validation(format!("Validation failed: {}", message)),
-                        _ => GitHubError::Api(message),
+                        401 => crate::error::Error::Provider(crate::error::ProviderError::AuthFailed),
+                        403 | 429 => crate::error::Error::Provider(crate::error::ProviderError::RateLimited),
+                        404 => crate::error::Error::Provider(crate::error::ProviderError::Api(
+                            format!("Resource not found: {}", github_error.message)
+                        )),
+                        422 => crate::error::Error::Provider(crate::error::ProviderError::Api(
+                            format!("Validation failed: {}", github_error.message)
+                        )),
+                        _ => crate::error::Error::Provider(crate::error::ProviderError::Api(
+                            github_error.message
+                        )),
                     }
                 } else {
-                    GitHubError::Api(format!("HTTP {} - {}", status_code, text))
+                    crate::error::Error::Provider(crate::error::ProviderError::Api(
+                        format!("HTTP {} - {}", status_code, text)
+                    ))
                 }
             }
             Err(_) => {
-                GitHubError::Api(format!("HTTP {}", status_code))
+                crate::error::Error::Provider(crate::error::ProviderError::Api(
+                    format!("HTTP {}", status_code)
+                ))
             }
         }
     }
 
     /// Get paginated results
-    pub async fn get_paginated<T>(&self, endpoint: &str) -> GitHubResult<Vec<T>>
+    pub async fn get_paginated<T>(&self, endpoint: &str) -> Result<Vec<T>>
     where
         T: DeserializeOwned,
     {
@@ -258,7 +265,7 @@ impl GitHubClient {
     }
 
     /// Download binary content (for artifacts, etc.)
-    pub async fn download(&self, url: &str) -> GitHubResult<bytes::Bytes> {
+    pub async fn download(&self, url: &str) -> Result<bytes::Bytes> {
         let response = self.rate_limiter
             .make_request(|| async {
                 let headers = self.build_headers().await?;
@@ -290,12 +297,12 @@ impl GitHubClient {
     }
 
     /// Get rate limit status
-    pub async fn get_rate_limit_status(&self) -> crate::rate_limiter::RateLimitStatus {
+    pub async fn get_rate_limit_status(&self) -> crate::github::rate_limiter::RateLimitStatus {
         self.rate_limiter.get_rate_limit_status().await
     }
 
     /// Validate API token and scopes
-    pub async fn validate_token(&self) -> GitHubResult<TokenValidation> {
+    pub async fn validate_token(&self) -> Result<TokenValidation> {
         let response = self.request_raw(Method::GET, "/user", None::<()>).await?;
         
         let scopes = response
@@ -321,17 +328,6 @@ impl GitHubClient {
             user_login: user.get("login").and_then(|v| v.as_str()).map(|s| s.to_string()),
             user_type: user.get("type").and_then(|v| v.as_str()).map(|s| s.to_string()),
         })
-    }
-}
-
-impl Clone for GitHubClient {
-    fn clone(&self) -> Self {
-        Self {
-            http_client: self.http_client.clone(),
-            token_manager: self.token_manager.clone(),
-            rate_limiter: GitHubRateLimiter::new(), // Create new rate limiter for clone
-            base_url: self.base_url.clone(),
-        }
     }
 }
 
@@ -382,9 +378,11 @@ impl GitHubClientBuilder {
         self
     }
 
-    pub fn build(self) -> GitHubResult<GitHubClient> {
+    pub fn build(self) -> Result<GitHubClient> {
         let token_manager = self.token_manager
-            .ok_or_else(|| GitHubError::Configuration("Token manager is required".to_string()))?;
+            .ok_or_else(|| crate::error::Error::Config(
+                crate::error::ConfigError::MissingField("token_manager".to_string())
+            ))?;
 
         let mut client = GitHubClient::new(token_manager)?;
 
@@ -422,7 +420,7 @@ impl Default for GitHubClientBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::auth::{GitHubAuth, TokenManager};
+    use crate::github::auth::GitHubAuth;
 
     #[test]
     fn test_url_building() {
