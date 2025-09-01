@@ -1,0 +1,42 @@
+{
+  "artifact": "cortex-os-master-readiness",
+  "version": "1.0",
+  "commit": "{{COMMIT_HASH}}",
+  "overall": { "score": 64, "rag": "amber" },
+  "areas": [
+    { "name": "Production", "score": 65, "rag": "amber", "evidence": [{ "path": "README.md" }] },
+    {
+      "name": "Governance",
+      "score": 90,
+      "rag": "green",
+      "evidence": [{ "path": ".cortex/structure-guard.yaml" }]
+    },
+    {
+      "name": "Resilience",
+      "score": 55,
+      "rag": "red",
+      "evidence": [{ "path": "ops/staging/chaos.mjs" }]
+    },
+    {
+      "name": "Accessibility",
+      "score": 70,
+      "rag": "amber",
+      "evidence": [{ "path": "packages/asbr/tests/accessibility/wcag-compliance.test.ts" }]
+    },
+    {
+      "name": "Investor",
+      "score": 40,
+      "rag": "red",
+      "evidence": [{ "path": "project-documentation/product-spec.md" }]
+    }
+  ],
+  "risks": [
+    {
+      "id": "R1",
+      "severity": "high",
+      "area": "Resilience",
+      "mitigation": "Add chaos experiments for CPU exhaustion"
+    }
+  ],
+  "actions": [{ "id": "A1", "owner": "devops-team", "ETA": "2025-09-30" }]
+}
