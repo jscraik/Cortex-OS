@@ -7,3 +7,6 @@ packages:
   - libs/typescript/*
   - src
   - apps/cortex-cli
+
+public-hoist-pattern:
+  - '@cortex-os/*'
