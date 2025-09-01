@@ -10,6 +10,7 @@ import express from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { fetchAllowedUrlContent } from './lib/http.js';
 
 const ROOT = process.env.CORTEX_MCP_ROOT;
 const TOKEN = process.env.CORTEX_MCP_TOKEN;
@@ -62,47 +63,7 @@ const tools = [
     description: 'Fetch JSON/text by GET (2MB limit, allowlisted hosts only)',
     inputSchema: HttpGetToolInputSchema,
     run: async (args: z.infer<typeof HttpGetToolInputSchema>) => {
-      const url = new URL(args.url);
-
-      if (!HTTP_GET_ALLOWLIST.includes(url.hostname)) {
-        throw new McpError(
-          ErrorCode.InvalidParams,
-          `Hostname '${url.hostname}' not in allowlist. Permitted hosts: ${HTTP_GET_ALLOWLIST.join(', ')}`,
-        );
-      }
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Cortex-MCP/0.1.1',
-        },
-      });
-
-      if (!response.ok) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          `HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      const contentType = response.headers.get('content-type') || '';
-      let content: string;
-
-      if (contentType.includes('application/json')) {
-        const data = await response.json();
-        content = JSON.stringify(data, null, 2);
-      } else {
-        content = await response.text();
-      }
-
-      const maxBytes = 2 * 1024 * 1024;
-      if (Buffer.byteLength(content, 'utf8') > maxBytes) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Response body exceeds ${maxBytes} bytes limit`,
-        );
-      }
-
+      const content = await fetchAllowedUrlContent(args.url, HTTP_GET_ALLOWLIST);
       return {
         content: [
           {
@@ -151,6 +112,7 @@ const tools = [
 
 export const app: import('express').Express = express();
 app.use(express.json());
+app.disable('x-powered-by');
 
 export const mcpServer = new McpServer(
   { name: 'cortex-mcp', version: '0.1.1' },
@@ -181,9 +143,12 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
     return await tool.run(validatedArgs);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
+      const details = error.errors
+        .map((e) => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
       throw new McpError(
         ErrorCode.InvalidParams,
-        `Invalid parameters for tool '${name}': ${error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+        `Invalid parameters for tool '${name}': ${details}`,
       );
     }
     if (error instanceof McpError) {
@@ -198,6 +163,30 @@ mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 app.get('/health', (_req, res) => {
   res.status(200).send('OK');
+});
+
+app.post('/sse', async (req, res) => {
+  const auth = req.header('authorization');
+  if (auth !== `Bearer ${TOKEN}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const response = await mcpServer.handleRequest(req.body);
+    return res.json(response);
+  } catch (error: unknown) {
+    if (error instanceof McpError) {
+      return res.json({
+        jsonrpc: '2.0',
+        id: req.body?.id ?? null,
+        error: { code: error.code, message: error.message },
+      });
+    }
+    return res.json({
+      jsonrpc: '2.0',
+      id: req.body?.id ?? null,
+      error: { code: ErrorCode.InternalError, message: String(error) },
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;

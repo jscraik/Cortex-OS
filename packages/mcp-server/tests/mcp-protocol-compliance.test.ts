@@ -12,6 +12,7 @@ describe('MCP Protocol Compliance Tests', () => {
     it('should implement proper JSON-RPC 2.0 request/response format', async () => {
       const response = await request(app)
         .post('/sse')
+        .set('Authorization', 'Bearer test-token')
         .send({
           jsonrpc: '2.0',
           id: 'test-001',
@@ -31,6 +32,7 @@ describe('MCP Protocol Compliance Tests', () => {
     it('should register all required tools', async () => {
       const response = await request(app)
         .post('/sse')
+        .set('Authorization', 'Bearer test-token')
         .send({
           jsonrpc: '2.0',
           id: 'tools-list',
@@ -50,6 +52,7 @@ describe('MCP Protocol Compliance Tests', () => {
     it('should handle unknown tool calls with MethodNotFound error', async () => {
       const response = await request(app)
         .post('/sse')
+        .set('Authorization', 'Bearer test-token')
         .send({
           jsonrpc: '2.0',
           id: 'unknown-tool',
@@ -75,6 +78,7 @@ describe('MCP Protocol Compliance Tests', () => {
       for (const url of disallowedUrls) {
         const response = await request(app)
           .post('/sse')
+          .set('Authorization', 'Bearer test-token')
           .send({
             jsonrpc: '2.0',
             id: 'security-test',
@@ -101,6 +105,7 @@ describe('MCP Protocol Compliance Tests', () => {
       for (const maliciousPath of maliciousPaths) {
         const response = await request(app)
           .post('/sse')
+          .set('Authorization', 'Bearer test-token')
           .send({
             jsonrpc: '2.0',
             id: 'path-traversal-test',
