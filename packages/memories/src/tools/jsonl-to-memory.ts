@@ -27,10 +27,14 @@ function parseArgs() {
       opts.output = args[i + 1];
       i += 2;
     } else if (arg === '--tags' || arg === '-t') {
-      opts.tags = args[i + 1]
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
+      if (i + 1 < args.length && typeof args[i + 1] === 'string' && args[i + 1].trim() !== '') {
+        opts.tags = args[i + 1]
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean);
+      } else {
+        opts.tags = [];
+      }
       i += 2;
     } else {
       i += 1;
