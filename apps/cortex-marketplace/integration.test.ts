@@ -89,6 +89,14 @@ describe('MCP Marketplace Integration Tests', () => {
       },
       cacheDir: testCacheDir,
       cacheTtl: 1000, // Short TTL for testing
+      allowedOrigins: [
+        'https://cortex-os.dev',
+        'https://claude.ai',
+        'https://cline.bot',
+        'https://devin.ai',
+        /^https:\/\/.*\.anthropic\.com$/,
+        /^http:\/\/localhost:\d+$/,
+      ],
     });
   });
 

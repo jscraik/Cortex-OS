@@ -24,6 +24,7 @@ export interface AppConfig {
   registries: Record<string, string>;
   cacheDir: string;
   cacheTtl: number;
+  allowedOrigins: (string | RegExp)[];
   port?: number;
   host?: string;
 }
@@ -33,6 +34,7 @@ const AppConfigSchema = z.object({
   registries: z.record(z.string().url()),
   cacheDir: z.string().min(1),
   cacheTtl: z.number().positive(),
+    .array(z.union([z.string().url(), z.instanceof(RegExp)])).min(1),
   port: z.number().optional().default(3000),
   host: z.string().optional().default('0.0.0.0'),
 });
@@ -67,7 +69,7 @@ export function build(config: AppConfig): FastifyInstance {
   fastify.decorate('marketplaceService', marketplaceService);
 
   // Register plugins
-  registerPlugins(fastify);
+  registerPlugins(fastify, validatedConfig.allowedOrigins);
 
   // Register routes
   registerRoutes(fastify);
@@ -102,27 +104,35 @@ export function build(config: AppConfig): FastifyInstance {
   return fastify;
 }
 
-function registerPlugins(fastify: FastifyInstance): void {
-  // Security
-  fastify.register(helmet, {
-    contentSecurityPolicy: false, // Disable for Swagger UI
-  });
+function registerPlugins(
+  fastify: FastifyInstance,
+  allowedOrigins: (string | RegExp)[],
+): void {
+  registerSecurity(fastify);
+  registerCors(fastify, allowedOrigins);
+  registerRateLimiter(fastify);
+  registerSwagger(fastify);
+  registerSwaggerUi(fastify);
+}
 
-  // CORS
+function registerSecurity(fastify: FastifyInstance): void {
+  fastify.register(helmet, {
+    contentSecurityPolicy: false,
+  });
+}
+
+function registerCors(
+  fastify: FastifyInstance,
+  allowedOrigins: (string | RegExp)[],
+): void {
   fastify.register(cors, {
-    origin: [
-      'https://cortex-os.dev',
-      'https://claude.ai',
-      'https://cline.bot',
-      'https://devin.ai',
-      /^https:\/\/.*\.anthropic\.com$/,
-      /^http:\/\/localhost:\d+$/,
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
   });
+}
 
-  // Rate limiting
+function registerRateLimiter(fastify: FastifyInstance): void {
   fastify.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
@@ -135,8 +145,9 @@ function registerPlugins(fastify: FastifyInstance): void {
       },
     }),
   });
+}
 
-  // Swagger documentation
+function registerSwagger(fastify: FastifyInstance): void {
   fastify.register(swagger, {
     swagger: {
       info: {
@@ -157,7 +168,9 @@ function registerPlugins(fastify: FastifyInstance): void {
       ],
     },
   });
+}
 
+function registerSwaggerUi(fastify: FastifyInstance): void {
   fastify.register(swaggerUi, {
     routePrefix: '/documentation',
     uiConfig: {
@@ -165,10 +178,10 @@ function registerPlugins(fastify: FastifyInstance): void {
       deepLinking: false,
     },
     uiHooks: {
-      onRequest: function (request, reply, next) {
+      onRequest: function (_request, _reply, next) {
         next();
       },
-      preHandler: function (request, reply, next) {
+      preHandler: function (_request, _reply, next) {
         next();
       },
     },
