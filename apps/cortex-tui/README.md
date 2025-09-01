@@ -2,11 +2,14 @@
 
 <div align="center">
 
+[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70+-blue)](https://www.rust-lang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
 [![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](#testing)
 [![Security Scan](https://img.shields.io/badge/security-clean-green)](#security)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ratatui](https://img.shields.io/badge/ratatui-0.29.0-orange)](https://ratatui.rs/)
 
 **Terminal User Interface for Cortex-OS AI Coding Agent**  
@@ -437,3 +440,4 @@ RUST_LOG=debug cargo run -- --debug 2> debug.log
 [![Ratatui](https://img.shields.io/badge/powered%20by-Ratatui-blue)](https://ratatui.rs/)
 
 </div>
+
