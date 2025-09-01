@@ -58,16 +58,31 @@ PR:${pr} URL:${url}
 TEXT:
 ${text}
 `;
-  const res = await request('https://api.github.com/inference/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-      'X-GitHub-Api-Version': '2023-10-01',
-    },
-    body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] }),
-  });
-  const data = await res.body.json();
+  let data;
+  try {
+    const res = await request('https://api.github.com/inference/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'X-GitHub-Api-Version': '2023-10-01',
+      },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] }),
+    });
+    if (!res || res.status < 200 || res.status >= 300) {
+      core.error(`GitHub Models API request failed with status ${res?.status}`);
+      return null;
+    }
+    try {
+      data = await res.body.json();
+    } catch (err) {
+      core.error(`Failed to parse JSON from GitHub Models API response: ${err}`);
+      return null;
+    }
+  } catch (err) {
+    core.error(`Error during GitHub Models API request: ${err}`);
+    return null;
+  }
   const content =
     data?.choices?.[0]?.message?.content?.[0]?.text ?? data?.choices?.[0]?.message?.content;
   try {
