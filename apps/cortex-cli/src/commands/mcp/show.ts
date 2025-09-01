@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { createMarketplaceClient } from './marketplace-client.js';
 import { ServerManifest, SupportedClient } from '@cortex-os/mcp-registry/types';
+import { getRiskLabel } from '../../lib/risk-label.js';
 
 export const mcpShow = new Command('show')
   .description('Show detailed information about an MCP server')
@@ -49,10 +50,11 @@ export const mcpShow = new Command('show')
 
 function displayServerInfo(server: ServerManifest, showClient?: string) {
   const verifiedBadge = server.security?.verifiedPublisher ? ' ✓ Verified' : '';
-  const riskBadge = getRiskBadge(server.security?.riskLevel || 'medium');
+  const riskLabel = getRiskLabel(server.security?.riskLevel || 'medium');
 
-  process.stdout.write(`${server.name}${verifiedBadge} ${riskBadge}\n`);
-  process.stdout.write('='.repeat(server.name.length + verifiedBadge.length + 2) + '\n\n');
+  const headerLine = `${server.name}${verifiedBadge} ${riskLabel}`;
+  process.stdout.write(headerLine + '\n');
+  process.stdout.write('='.repeat(headerLine.length) + '\n\n');
 
   // Basic info
   process.stdout.write(`ID: ${server.id}\n`);
@@ -195,19 +197,6 @@ function displayServerInfo(server: ServerManifest, showClient?: string) {
     process.stdout.write(
       `  cortex mcp show ${server.id} --client ${clients[0]}    Show install command for ${clients[0]}\n`,
     );
-  }
-}
-
-function getRiskBadge(riskLevel: 'low' | 'medium' | 'high'): string {
-  switch (riskLevel) {
-    case 'low':
-      return '🟢 Low Risk';
-    case 'medium':
-      return '🟡 Medium Risk';
-    case 'high':
-      return '🔴 High Risk';
-    default:
-      return '🟡 Medium Risk';
   }
 }
 

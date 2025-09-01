@@ -3,6 +3,7 @@ import { upsert } from '@cortex-os/mcp-registry/fs-store';
 import { ServerInfoSchema } from '@cortex-os/mcp-core/contracts';
 import { createMarketplaceClient } from './marketplace-client.js';
 import { SupportedClient } from '@cortex-os/mcp-registry/types';
+import { getRiskLabel } from '../../lib/risk-label.js';
 
 export const mcpAdd = new Command('add')
   .description('Add an MCP server (from marketplace or manual configuration)')
@@ -144,10 +145,10 @@ async function addFromMarketplace(serverId: string, opts: any) {
       ) + '\n',
     );
   } else {
-    const riskBadge = getRiskBadge(server.security?.riskLevel || 'medium');
+    const riskLabel = getRiskLabel(server.security?.riskLevel || 'medium');
     const verifiedBadge = server.security?.verifiedPublisher ? ' ✓' : '';
 
-    process.stdout.write(`Added MCP server: ${server.name}${verifiedBadge} ${riskBadge}\n`);
+    process.stdout.write(`Added MCP server: ${server.name}${verifiedBadge} ${riskLabel}\n`);
     process.stdout.write(`  ID: ${server.id}\n`);
     process.stdout.write(`  Transport: ${transportType}\n`);
     process.stdout.write(`  Owner: ${server.owner}\n`);
@@ -177,19 +178,6 @@ function getPreferredTransport(transports: any): string {
   if (transports.sse) return 'sse';
   if (transports.streamableHttp) return 'streamableHttp';
   throw new Error('No supported transport found');
-}
-
-function getRiskBadge(riskLevel: 'low' | 'medium' | 'high'): string {
-  switch (riskLevel) {
-    case 'low':
-      return '🟢';
-    case 'medium':
-      return '🟡';
-    case 'high':
-      return '🔴';
-    default:
-      return '🟡';
-  }
 }
 
 function isValidClient(client: string): client is SupportedClient {
