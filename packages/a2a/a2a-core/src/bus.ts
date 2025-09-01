@@ -56,7 +56,10 @@ export function createBus(
           if (ctx) injectTraceContext(m, ctx);
           await handler(m);
         };
-        if (store) await once(store, m.id, Math.ceil(m.ttlMs / 1000), run);
+        if (store) {
+          const ttlMs = (typeof m.ttlMs === 'number' && m.ttlMs > 0) ? m.ttlMs : 1000;
+          await once(store, m.id, Math.ceil(ttlMs / 1000), run);
+        }
         else await run();
       } catch (error) {
         console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
