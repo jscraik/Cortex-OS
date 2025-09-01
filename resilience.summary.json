@@ -1,0 +1,27 @@
+{
+  "artifact": "cortex-os-resilience-readiness",
+  "version": "1.0",
+  "commit": "f96089307d7520226d3ab30a98d873ee7e9ff208",
+  "overall": {"score": 61, "rag": "amber"},
+  "areas": [
+    {"name":"Redundancy","score":60,"rag":"amber","evidence":[{"path":"packages/orchestration/src/providers/mlx-first-provider.ts","lines":"60-96"}]},
+    {"name":"Chaos Testing","score":50,"rag":"amber","evidence":[{"path":".github/workflows/chaos.yml","lines":"1-29"},{"path":"ops/staging/chaos.mjs","lines":"4-24"}]},
+    {"name":"Graceful Degradation","score":70,"rag":"amber","evidence":[{"path":"packages/a2a/a2a-core/src/dlq.ts","lines":"9-43"},{"path":"apps/cortex-webui/utils/sse.ts","lines":"20-61"}]},
+    {"name":"Observability","score":75,"rag":"amber","evidence":[{"path":"packages/observability/src/metrics/index.ts","lines":"1-28"}]},
+    {"name":"Recovery","score":50,"rag":"red","evidence":[{"path":"packages/orchestration/src/lib/circuit-breaker.ts","lines":"30-74"}]},
+    {"name":"Runbooks","score":60,"rag":"amber","evidence":[{"path":"docs/runbooks/failover.md","lines":"1-30"},{"path":"docs/runbooks/incident.md","lines":"1-22"}]}
+  ],
+  "chaos_matrix":[
+    {"fault":"network_partition","covered":false},
+    {"fault":"service_crash","covered":true,"evidence":"packages/orchestration/src/lib/circuit-breaker.ts"},
+    {"fault":"dependency_failure","covered":true,"evidence":"packages/orchestration/src/providers/mlx-first-provider.ts"},
+    {"fault":"resource_exhaustion","covered":true,"evidence":"apps/cortex-os/packages/planner/orchestration/src/mlx/thermal_guard.py"}
+  ],
+  "risks":[
+    {"id":"R3","severity":"medium","area":"Redundancy","mitigation":"Implement leader election and replicas in orchestration/a2a layers"},
+    {"id":"R4","severity":"medium","area":"Observability","mitigation":"Add SLO dashboards and alerts"}
+  ],
+  "actions":[
+    {"id":"A2","owner":"dev-team","ETA":"2025-12-01"}
+  ]
+}
