@@ -22,7 +22,7 @@ Created a complete set of planning documents to guide the enhancement process:
 Created comprehensive setup documentation:
 
 1. **Setup Guide** (`docs/setup-guide.md`) - Complete environment setup instructions
-2. **Requirements File** (`requirements.txt`) - Python dependencies list
+2. **Project Metadata** (`pyproject.toml`) - Python dependencies managed via uv
 
 ### 3. Infrastructure
 

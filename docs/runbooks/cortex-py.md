@@ -10,7 +10,7 @@ Operational procedures for Cortex Py: deployment, rollback, failover, monitoring
 
 ## Deployment
 1. Build image (installs Python dependencies with uv): `docker build -t cortex/cortex-py:${VERSION} apps/cortex-py`
-   - Ensure your Dockerfile in `apps/cortex-py` includes a step like: `RUN uv pip install -r requirements.txt`
+   - Ensure your Dockerfile in `apps/cortex-py` includes a step like: `RUN uv sync --frozen --system`
 2. Push image: `docker push cortex/cortex-py:${VERSION}`
 3. Rollout: `kubectl apply -f infra/k8s/cortex-py/`
 4. Verify: `kubectl rollout status deploy/cortex-py`

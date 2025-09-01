@@ -190,8 +190,7 @@ export class EvaluationNode {
 
       // Try Python tests if it's a Python project
       if (
-        fs.existsSync(path.join(projectRoot, 'pyproject.toml')) ||
-        fs.existsSync(path.join(projectRoot, 'requirements.txt'))
+        fs.existsSync(path.join(projectRoot, 'pyproject.toml'))
       ) {
         try {
           await execAsync('which pytest', { timeout: 2000 });
@@ -364,8 +363,7 @@ export class EvaluationNode {
       // Try Pylint/Flake8 for Python code quality
       try {
         if (
-          fs.existsSync(path.join(projectRoot, 'pyproject.toml')) ||
-          fs.existsSync(path.join(projectRoot, 'requirements.txt'))
+          fs.existsSync(path.join(projectRoot, 'pyproject.toml'))
         ) {
           // Try pylint first
           try {

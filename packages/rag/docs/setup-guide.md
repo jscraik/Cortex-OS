@@ -55,7 +55,7 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install core Python dependencies
-pip install torch transformers numpy
+uv pip install torch transformers numpy
 ```
 
 ### Core Python Dependencies
@@ -101,23 +101,23 @@ neo4j>=5.14.0
 ### Installing Optional Dependencies
 ```bash
 # Install MLX dependencies (Apple Silicon only)
-pip install mlx mlx-lm
+uv pip install mlx mlx-lm
 
 # Install OCR dependencies
-pip install pytesseract Pillow
+uv pip install pytesseract Pillow
 
 # Install audio processing dependencies
-pip install openai-whisper pydub
+uv pip install openai-whisper pydub
 
 # Install web crawling dependencies
-pip install requests selenium playwright
+uv pip install requests selenium playwright
 playwright install-deps
 
 # Install code analysis dependencies
-pip install tree-sitter tree-sitter-languages
+uv pip install tree-sitter tree-sitter-languages
 
 # Install graph database dependencies
-pip install neo4j
+uv pip install neo4j
 ```
 
 ## External Services Configuration
@@ -331,7 +331,7 @@ pnpm docs:check
    source .venv/bin/activate
    
    # Reinstall dependencies
-   pip install -r requirements.txt
+   uv sync
    ```
 
 2. **MLX Not Available**

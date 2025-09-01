@@ -31,8 +31,8 @@ COPY packages/*/package.json ./packages/
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Install Python dependencies for MkDocs
-COPY requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY pyproject.toml ./
+RUN pip3 install uv && uv sync --frozen --system
 
 # Copy source code
 COPY . .
@@ -67,7 +67,7 @@ RUN pip install uv
 COPY apps/docs-api/ ./
 
 # Install Python dependencies with uv
-RUN uv pip install --system --no-cache -r requirements.txt
+RUN uv sync --frozen --system
 
 # Stage 3: Production Runtime
 FROM nginx:1.25-alpine AS production
