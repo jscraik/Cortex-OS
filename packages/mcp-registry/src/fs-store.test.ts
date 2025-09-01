@@ -1,9 +1,14 @@
-import { beforeEach, afterEach, expect, test } from 'vitest';
+import { beforeEach, afterEach, expect, test, vi } from 'vitest';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readAll, upsert, remove } from './fs-store.js';
 import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
+
+vi.mock('@cortex-os/observability/logging', () => ({
+  createLogger: () => ({ info: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
+}));
+
+const { readAll, upsert, remove } = await import('./fs-store.js');
 
 const originalHome = process.env.HOME;
 
@@ -16,6 +21,11 @@ afterEach(() => {
   if (originalHome) {
     process.env.HOME = originalHome;
   }
+});
+
+test('readAll returns empty array when no registry exists', async () => {
+  const all = await readAll();
+  expect(all).toEqual([]);
 });
 
 test('upsert, readAll, and remove round trip', async () => {

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { validateServerManifest, validateRegistry } from './validator.js';
+import { validateServerManifest, validateRegistry, validateSecurity } from './validator.js';
 
 const baseManifest = {
   id: 'test',
@@ -25,6 +25,12 @@ test('rejects non-https transport', () => {
   expect(result.valid).toBe(false);
 });
 
+test('rejects invalid repo URL', () => {
+  const manifest = { ...baseManifest, repo: 'not a url' };
+  const result = validateServerManifest(manifest);
+  expect(result.valid).toBe(false);
+});
+
 test('detects duplicate server ids and mismatched count', () => {
   const registry = {
     version: '2025-01-01',
@@ -35,4 +41,12 @@ test('detects duplicate server ids and mismatched count', () => {
   const result = validateRegistry(registry);
   expect(result.errors.some((e) => e.code === 'duplicate_id')).toBe(true);
   expect(result.warnings.some((w) => w.path === 'metadata.serverCount')).toBe(true);
+});
+
+test('validateSecurity warns on license and missing sbom', () => {
+  const manifest = { ...baseManifest, license: 'Proprietary', security: {} };
+  const result = validateSecurity(manifest);
+  expect(result.valid).toBe(true);
+  expect(result.warnings.some((w) => w.path === 'license')).toBe(true);
+  expect(result.warnings.some((w) => w.path === 'security.sbom')).toBe(true);
 });

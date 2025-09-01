@@ -21,3 +21,17 @@ test('warns on dangerous scopes and missing security info', () => {
   expect(result.warnings.some((w) => w.path === 'scopes')).toBe(true);
   expect(result.warnings.some((w) => w.path === 'security.sigstoreBundle')).toBe(true);
 });
+
+test('returns error when manifest is not an object', () => {
+  const result = validateSecurity(null);
+  expect(result.valid).toBe(false);
+  expect(result.errors[0].code).toBe('invalid_type');
+});
+
+test('warns on non-standard license and missing sbom', () => {
+  const manifest = { ...baseManifest, license: 'Proprietary', security: {} };
+  const result = validateSecurity(manifest);
+  expect(result.valid).toBe(true);
+  expect(result.warnings.some((w) => w.path === 'license')).toBe(true);
+  expect(result.warnings.some((w) => w.path === 'security.sbom')).toBe(true);
+});
