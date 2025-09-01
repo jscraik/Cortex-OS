@@ -9,7 +9,7 @@
  * @ai_provenance_hash implementation_phase_1
  */
 
-import { ChildProcess } from 'child_process';
+import type { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import path from 'path';

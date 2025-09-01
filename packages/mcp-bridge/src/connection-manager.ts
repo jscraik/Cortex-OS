@@ -7,9 +7,14 @@
  * @status active
  */
 
-import { EventEmitter } from 'events';
 import { promises as dns } from 'dns';
-import { McpClient, createMcpClient, ConnectionState, McpClientOptions } from './mcp-client.js';
+import { EventEmitter } from 'events';
+import {
+  ConnectionState,
+  createMcpClient,
+  type McpClient,
+  type McpClientOptions,
+} from './mcp-client.js';
 
 /**
  * Server discovery configuration

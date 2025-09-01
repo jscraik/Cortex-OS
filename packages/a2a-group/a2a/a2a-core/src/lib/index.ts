@@ -3,14 +3,11 @@
  * Central export point for all shared logic following DRY principles
  */
 
-// JSON-RPC utilities
-export * from './json-rpc-utils';
-
-// Task management utilities
-export * from './task-utils';
-
 // Error handling utilities
 export * from './error-utils';
-
+// JSON-RPC utilities
+export * from './json-rpc-utils';
 // MLX integration utilities
 export * from './mlx-integration';
+// Task management utilities
+export * from './task-utils';

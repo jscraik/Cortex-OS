@@ -1,9 +1,10 @@
 // Ingest dispatcher (Archon-inspired) with MIME routing and budgets
+
+import dns from 'node:dns/promises';
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import yaml from 'js-yaml';
-import net from 'node:net';
-import dns from 'node:dns/promises';
 
 type Job = { url?: string; filePath?: string; file?: Buffer; mime: string };
 

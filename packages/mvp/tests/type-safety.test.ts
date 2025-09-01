@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { MCPAdapter } from '../src/mcp/adapter.js';
+import { describe, expect, it } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
+import { MCPAdapter } from '../src/mcp/adapter.js';
 
 describe('Type Safety Fixes', () => {
   it('should create valid Neuron objects from MCP tools', () => {

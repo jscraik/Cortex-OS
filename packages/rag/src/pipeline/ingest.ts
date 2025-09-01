@@ -1,4 +1,4 @@
-import { type Chunk, type Embedder, type Store } from '../index';
+import type { Chunk, Embedder, Store } from '../index';
 
 export async function ingestText(
   source: string,

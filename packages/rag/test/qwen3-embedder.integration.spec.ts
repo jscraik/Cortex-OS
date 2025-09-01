@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Qwen3Embedder } from '../src/embed/qwen3';
 
 describe('Qwen3Embedder external script', () => {

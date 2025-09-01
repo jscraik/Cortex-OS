@@ -128,4 +128,3 @@ Total: 67 / 100
 3. `ci(tests): include packages/agents in root vitest.projects` — one-line CI change.
 
 If you want, I can implement the first quick PRs now (stdin-based MLX invocation, redact helper, add trace propagation, and enable package tests in root CI) and run the unit tests — tell me which PR to start with and I'll proceed.
-

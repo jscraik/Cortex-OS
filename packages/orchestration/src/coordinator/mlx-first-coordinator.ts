@@ -3,16 +3,16 @@
  * Uses your available models with intelligent fallback strategies
  */
 
+import { buildAgentPrompt, parseAgentSelection } from '../../../../src/lib/agent-selection.js';
+import { OrchestrationError } from '../errors.js';
 import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
 import {
-  decomposeTaskSchema,
   coordinateMultiModalTaskSchema,
-  orchestrateCodeTaskSchema,
   coordinateWorkflowSchema,
+  decomposeTaskSchema,
+  orchestrateCodeTaskSchema,
 } from '../schemas/orchestrator.zod.js';
-import { OrchestrationError } from '../errors.js';
 import { handleResilience } from '../utils/resilience.js';
-import { buildAgentPrompt, parseAgentSelection } from '../../../../src/lib/agent-selection.js';
 
 export interface TaskDecomposition {
   subtasks: Array<{

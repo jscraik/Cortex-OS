@@ -3,14 +3,14 @@
  * @description End-to-end integration tests for MCP marketplace
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { build } from './src/app.js';
-import { writeFile, mkdir, rm } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-import os from 'os';
-import type { FastifyInstance } from 'fastify';
 import type { ServerManifest } from '@cortex-os/mcp-registry';
+import type { FastifyInstance } from 'fastify';
+import { existsSync } from 'fs';
+import { mkdir, rm, writeFile } from 'fs/promises';
+import os from 'os';
+import path from 'path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { build } from './src/app.js';
 
 describe('MCP Marketplace Integration Tests', () => {
   let app: FastifyInstance;

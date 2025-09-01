@@ -6,17 +6,17 @@
  */
 
 import { nanoid } from 'nanoid';
+import type { PRPOrchestrator } from '../mcp/adapter.js';
+import { recordMetric, startSpan } from '../observability/otel.js';
 import {
   createInitialPRPState,
   generateDeterministicHash,
-  PRPState,
+  type PRPState,
   validateStateTransition,
 } from '../state.js';
-import { PRPOrchestrator } from '../mcp/adapter.js';
-import { startSpan, recordMetric } from '../observability/otel.js';
-import { executeStrategyNode } from './strategy-node.js';
 import { executeBuildNode } from './build-node.js';
 import { executeEvaluationNode } from './evaluation-node.js';
+import { executeStrategyNode } from './strategy-node.js';
 
 interface Blueprint {
   title: string;

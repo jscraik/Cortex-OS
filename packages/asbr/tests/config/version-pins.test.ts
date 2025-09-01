@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile } from 'fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { loadVersionPins } from '../../src/core/config.js';

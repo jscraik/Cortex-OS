@@ -10,11 +10,10 @@
  * Specification: WCAG 2.2 AA/AAA compliance, color contrast, keyboard navigation, ARIA
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { A11yUtils } from './index';
-
 // Setup DOM environment
 import { JSDOM } from 'jsdom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { A11yUtils } from './index';
 
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
   url: 'http://localhost',

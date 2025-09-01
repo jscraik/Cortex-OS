@@ -1,4 +1,4 @@
-import neo4j, { Driver, Session } from 'neo4j-driver';
+import neo4j, { type Driver, type Session } from 'neo4j-driver';
 import { validateNeo4jInput } from './validation.js';
 
 // Secure Neo4j wrapper that prevents injection vulnerabilities
@@ -119,7 +119,7 @@ export class SecureNeo4j {
           from: fromValidation.data,
           to: toValidation.data,
           props: rel.props || {},
-        },
+        }
       );
     } finally {
       this.returnSession(session);
@@ -155,7 +155,7 @@ export class SecureNeo4j {
         {
           id: idValidation.data,
           depth: depth,
-        },
+        }
       );
 
       const record = result.records[0];
@@ -197,7 +197,7 @@ export class SecureNeo4j {
         }
 
         // Prevent dangerous patterns in strings
-        if (/[;'\"`<>(){}]/.test(value)) {
+        if (/[;'"`<>(){}]/.test(value)) {
           throw new Error(`Invalid characters in property value for key: ${key}`);
         }
       } else if (typeof value === 'object' && value !== null) {

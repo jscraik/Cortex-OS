@@ -1,4 +1,5 @@
 # TDD Implementation Plan: Agentic RAG System
+
 ## Industrial Software Engineering Standards (August 2025)
 
 Transform the existing RAG package into a sophisticated agentic system following strict TDD principles, functional programming paradigms, and industrial software engineering standards. This plan integrates patterns from 8 analyzed repositories into a production-ready MLX-first architecture.
@@ -6,6 +7,7 @@ Transform the existing RAG package into a sophisticated agentic system following
 ## Code Style & Structure Requirements
 
 ### Functional Programming Standards
+
 - **Pure Functions**: All core logic as pure functions with no side effects
 - **Function Size**: Maximum 40 lines per function
 - **Named Exports**: Only named exports, no default exports
@@ -13,12 +15,14 @@ Transform the existing RAG package into a sophisticated agentic system following
 - **Composition**: Function composition over inheritance
 
 ### File Organization
+
 - **Naming**: kebab-case for files, camelCase for functions
 - **Structure**: One main concern per file
 - **Exports**: Barrel exports in index.ts files
 - **Tests**: Co-located test files with .test.ts suffix
 
 ### Type Safety
+
 - **Strict Mode**: Full TypeScript strict configuration
 - **Zod Validation**: Runtime validation for all external data
 - **Brand Types**: Type-safe IDs and domain objects
@@ -27,6 +31,7 @@ Transform the existing RAG package into a sophisticated agentic system following
 ## Architecture Overview
 
 ### Core Packages Structure
+
 ```
 packages/rag/src/
 ├── agentic/                    # Agentic coordination layer
@@ -64,25 +69,27 @@ packages/rag/src/
 
 ## Implementation Timeline
 
-| Week | Phase | Deliverables |
-|------|-------|-------------|
-| 1-2  | Foundation | Test config, types, base infrastructure |
-| 3-4  | Agentic Core | Query router, coordinator, tool registry |
-| 5-6  | MLX Integration | Embedder, generator, fallback system |
-| 7-8  | Streaming | Real-time pipeline, event system |
-| 9-10 | Tool Ecosystem | Search tools, codebase analyzer |
-| 11-12| Repository | Git integration, knowledge extraction |
-| 13-14| Integration | E2E tests, performance validation |
-| 15   | Production | Deployment, monitoring, documentation |
+| Week  | Phase           | Deliverables                             |
+| ----- | --------------- | ---------------------------------------- |
+| 1-2   | Foundation      | Test config, types, base infrastructure  |
+| 3-4   | Agentic Core    | Query router, coordinator, tool registry |
+| 5-6   | MLX Integration | Embedder, generator, fallback system     |
+| 7-8   | Streaming       | Real-time pipeline, event system         |
+| 9-10  | Tool Ecosystem  | Search tools, codebase analyzer          |
+| 11-12 | Repository      | Git integration, knowledge extraction    |
+| 13-14 | Integration     | E2E tests, performance validation        |
+| 15    | Production      | Deployment, monitoring, documentation    |
 
 ## Quality Gates & Success Metrics
 
 ### Coverage Requirements
+
 - **Unit Tests**: 90% statement, branch, function, line coverage
 - **Integration Tests**: All major workflows covered
 - **End-to-End**: Complete user journeys tested
 
 ### Performance Benchmarks
+
 - **Query Response**: <2s for simple queries, <10s for complex
 - **Streaming Latency**: First token <500ms
 - **Concurrent Load**: 100 queries/minute sustained

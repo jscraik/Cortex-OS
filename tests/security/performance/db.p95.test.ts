@@ -7,7 +7,7 @@
  * status: active
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 function p95(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);

@@ -11,12 +11,14 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Implement document conversion capabilities to handle diverse file formats.
 
 **Features to Implement**:
+
 - PDF, Word, PowerPoint, Excel conversion to Markdown
 - Image OCR processing
 - Audio transcription capabilities
 - HTML/XML/JSON processing
 
 **Test Cases**:
+
 - [ ] Convert sample PDF to structured Markdown
 - [ ] Extract text from scanned PDF with OCR
 - [ ] Transcribe audio file to text
@@ -24,6 +26,7 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 - [ ] Handle various document encodings
 
 **External Sources**:
+
 - Microsoft MarkItDown (core conversion logic)
 - semtools parse functionality
 
@@ -32,17 +35,20 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Improve parsing accuracy for technical documents.
 
 **Features to Implement**:
+
 - Advanced PDF understanding (tables, formulas, layout)
 - Document structure preservation
 - Multilingual document support
 
 **Test Cases**:
+
 - [ ] Parse technical paper with mathematical formulas
 - [ ] Extract tables from PDF maintaining structure
 - [ ] Process multilingual document correctly
 - [ ] Handle document with complex layout
 
 **External Sources**:
+
 - Docling (advanced PDF processing)
 - semtools parsing enhancements
 
@@ -53,18 +59,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Extend RAG beyond text to handle images, tables, and equations.
 
 **Features to Implement**:
+
 - Image processor with VLM integration
 - Table structure recognition
 - Mathematical expression parser
 - Concurrent processing pipelines
 
 **Test Cases**:
+
 - [ ] Process document with embedded images
 - [ ] Extract and structure table data
 - [ ] Parse LaTeX mathematical expressions
 - [ ] Handle mixed-content document
 
 **External Sources**:
+
 - RAG-Anything (multimodal processors)
 - ScreenCoder (visual content understanding)
 
@@ -73,18 +82,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Build knowledge graphs that connect different content types.
 
 **Features to Implement**:
+
 - Entity extraction from multimodal content
 - Cross-modal relationship discovery
 - Graph storage and querying
 - Semantic connections between content types
 
 **Test Cases**:
+
 - [ ] Extract entities from mixed-content document
 - [ ] Discover relationships between text and images
 - [ ] Query knowledge graph for related content
 - [ ] Visualize knowledge graph structure
 
 **External Sources**:
+
 - RAG-Anything (knowledge graph implementation)
 
 ## Phase 3: Web Content Acquisition
@@ -94,18 +106,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Automate knowledge base construction from web sources.
 
 **Features to Implement**:
+
 - Recursive website crawling
 - Sitemap processing
 - Parallel processing capabilities
 - Content filtering and deduplication
 
 **Test Cases**:
+
 - [ ] Crawl documentation website recursively
 - [ ] Process sitemap and extract linked pages
 - [ ] Handle rate limiting and robots.txt
 - [ ] Filter out duplicate content
 
 **External Sources**:
+
 - mcp-crawl4ai-rag (crawling implementation)
 - Scraperr (targeted scraping)
 
@@ -114,18 +129,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Enable ingestion of video content into the RAG knowledge base.
 
 **Features to Implement**:
+
 - YouTube video transcript extraction
 - Metadata collection
 - Comment integration
 - Structured output generation
 
 **Test Cases**:
+
 - [ ] Extract transcript from YouTube video
 - [ ] Collect video metadata and description
 - [ ] Process video comments for context
 - [ ] Generate structured documentation from video
 
 **External Sources**:
+
 - Youtube-to-Doc (video processing)
 
 ## Phase 4: Code-Specific Enhancements
@@ -135,18 +153,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Improve understanding of code repositories through visualization.
 
 **Features to Implement**:
+
 - Static code analysis
 - Interactive diagram generation
 - Code structure extraction
 - Language-agnostic processing
 
 **Test Cases**:
+
 - [ ] Analyze sample codebase structure
 - [ ] Generate interactive diagrams
 - [ ] Extract module relationships
 - [ ] Handle multiple programming languages
 
 **External Sources**:
+
 - CodeBoarding (code visualization)
 - codemapper (unified codebase representation)
 
@@ -155,18 +176,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Build precise representations of codebases for better understanding.
 
 **Features to Implement**:
+
 - AST-based parsing with Tree-sitter
 - Graph database storage
 - Natural language querying
 - Code relationship mapping
 
 **Test Cases**:
+
 - [ ] Parse code files into AST representations
 - [ ] Store code relationships in graph database
 - [ ] Query code structure with natural language
 - [ ] Identify function call relationships
 
 **External Sources**:
+
 - code-graph-rag (knowledge graph approach)
 - repoprompt (structured repository representation)
 
@@ -175,18 +199,21 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 **Objective**: Provide comprehensive context for AI-assisted development.
 
 **Features to Implement**:
+
 - XML repository representation
 - Selective file inclusion
 - Custom prompt templates
 - Context optimization for LLMs
 
 **Test Cases**:
+
 - [ ] Generate XML representation of repository
 - [ ] Selectively include/exclude files
 - [ ] Apply custom prompt templates
 - [ ] Optimize context for code-related queries
 
 **External Sources**:
+
 - repoprompt (repository analysis)
 
 ## Implementation Architecture
@@ -237,22 +264,26 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 ## Testing Strategy
 
 ### Unit Tests
+
 - Individual component functionality
 - Format-specific processing
 - Error handling and edge cases
 
 ### Integration Tests
+
 - End-to-end document processing workflows
 - Multimodal content handling
 - Web crawling and processing
 - Code analysis pipelines
 
 ### Performance Tests
+
 - Processing time for different document types
 - Memory usage during large document processing
 - Scalability with increasing content volume
 
 ### Compatibility Tests
+
 - Cross-platform functionality
 - Different Python environment support
 - Integration with existing RAG components
@@ -268,18 +299,22 @@ This document outlines a Test-Driven Development (TDD) plan for enhancing the Co
 ## Timeline
 
 ### Phase 1: Core Document Processing (Weeks 1-3)
+
 - Document conversion pipeline
 - Enhanced parsing capabilities
 
 ### Phase 2: Multimodal RAG (Weeks 4-6)
+
 - Multimodal content processors
 - Knowledge graph implementation
 
 ### Phase 3: Web Content Acquisition (Weeks 7-9)
+
 - Web crawling capabilities
 - Video content processing
 
 ### Phase 4: Code Enhancements (Weeks 10-12)
+
 - Code visualization
 - Knowledge graph and context generation
 

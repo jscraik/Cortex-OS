@@ -18,7 +18,7 @@ content = content.replace(
   `export class Neo4j implements INeo4j {
   private driver: Driver;
   constructor(uri: string, user: string, pass: string) {
-    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { 
+    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), {
       userAgent: 'cortex-os/0.1',
       encrypted: true,
       trust: 'TRUST_SYSTEM_CA_SIGNED_CERTIFICATES'
@@ -33,7 +33,7 @@ content = content.replace(
     const label = assertLabelOrType(node.label);
     const s = this.driver.session();
     try {
-      await s.run(\`MERGE (n:\${label} {id:\$id}) SET n += \$props\`, {
+      await s.run(\`MERGE (n:\${label} {id:$id}) SET n += $props\`, {
         id: node.id,
         props: node.props,
       });
@@ -48,9 +48,9 @@ content = content.replace(
     const s = this.driver.session();
     try {
       await s.run(
-        \`MATCH (a {id:\$from}), (b {id:\$to})
+        \`MATCH (a {id:$from}), (b {id:$to})
          MERGE (a)-[r:\${type}]->(b)
-         SET r += \$props\`,
+         SET r += $props\`,
         { from: rel.from, to: rel.to, props: rel.props ?? {} },
       );
     } finally {
@@ -64,7 +64,7 @@ content = content.replace(
     try {
       const res = await s.run(
         \`
-        MATCH (n {id:\$id})-[r*1..\$d]-(m)
+        MATCH (n {id:$id})-[r*1..$d]-(m)
         WITH collect(distinct n) + collect(distinct m) AS ns
         UNWIND ns AS x
         WITH collect(distinct x) AS nodes
@@ -97,7 +97,7 @@ content = content.replace(
   }
 }
 
-export { Neo4j };`,
+export { Neo4j };`
 );
 
 // Write the updated content back to the file
@@ -105,5 +105,5 @@ writeFileSync(neo4jPath, content);
 
 console.log('✅ Neo4j injection vulnerabilities have been marked for fixing in neo4j.ts');
 console.log(
-  '⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j',
+  '⚠️  Please review the TODO comments and implement proper input validation using SecureNeo4j'
 );

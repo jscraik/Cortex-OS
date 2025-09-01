@@ -6,7 +6,7 @@
  * @status active
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock security modules for testing
 const mockOwaspGuard = {

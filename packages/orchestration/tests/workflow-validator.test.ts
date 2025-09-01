@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { validateWorkflow } from '../src/workflow-validator.js';
 import { ExecutionPlanSchema } from '../src/types.js';
+import { validateWorkflow } from '../src/workflow-validator.js';
 
 const baseWorkflow = {
   id: '00000000-0000-0000-0000-000000000000',

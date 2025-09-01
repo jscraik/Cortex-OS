@@ -1,6 +1,6 @@
-import { readFileSync } from 'fs';
-import { execSync } from 'child_process';
 import { parse as parseToml } from '@iarna/toml';
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
 
 export async function syncLockfiles(checkOnly = false): Promise<void> {
   // Best-effort sync check between npm and uv
@@ -29,8 +29,7 @@ export async function syncLockfiles(checkOnly = false): Promise<void> {
     }
     if (mismatches.length) {
       console.error('Dependency version mismatches found');
-      for (const m of mismatches)
-        console.error(` - ${m.name}: npm ${m.npm} vs python ${m.python}`);
+      for (const m of mismatches) console.error(` - ${m.name}: npm ${m.npm} vs python ${m.python}`);
       if (checkOnly) process.exit(1);
     }
     console.log('✅ Lockfiles synchronized successfully');

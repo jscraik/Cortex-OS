@@ -3,16 +3,16 @@
  * Comprehensive test suite following TDD principles
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { 
-  handleA2A,
-  TaskManager,
-  InMemoryTaskStore,
-  EchoTaskProcessor,
-  A2ARpcHandler,
-  A2A_ERROR_CODES,
-} from './index';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { JsonRpcRequest, JsonRpcResponse } from './index';
+import {
+  A2A_ERROR_CODES,
+  A2ARpcHandler,
+  EchoTaskProcessor,
+  handleA2A,
+  InMemoryTaskStore,
+  TaskManager,
+} from './index';
 
 describe('A2A Protocol Implementation', () => {
   let taskManager: TaskManager;
@@ -27,7 +27,7 @@ describe('A2A Protocol Implementation', () => {
     it('should reject invalid JSON-RPC requests', async () => {
       const response = await handleA2A({ invalid: 'request' });
       const parsed = JSON.parse(response) as JsonRpcResponse;
-      
+
       expect(parsed.error?.code).toBe(A2A_ERROR_CODES.INVALID_REQUEST);
       expect(parsed.error?.message).toContain('Invalid JSON-RPC request');
     });
@@ -47,7 +47,7 @@ describe('A2A Protocol Implementation', () => {
 
       const response = await handleA2A(request);
       const parsed = JSON.parse(response) as JsonRpcResponse;
-      
+
       expect(parsed.jsonrpc).toBe('2.0');
       expect(parsed.id).toBe('1');
       expect(parsed.result).toBeDefined();
@@ -71,10 +71,10 @@ describe('A2A Protocol Implementation', () => {
         };
 
         const response = await rpcHandler.handle(request);
-        
+
         expect(response.error).toBeUndefined();
         expect(response.result).toBeDefined();
-        
+
         const result = response.result as any;
         expect(result.id).toBeDefined();
         expect(result.status).toBe('completed');
@@ -99,7 +99,7 @@ describe('A2A Protocol Implementation', () => {
 
         const response = await rpcHandler.handle(request);
         const result = response.result as any;
-        
+
         expect(result.id).toBe(customId);
       });
 
@@ -114,7 +114,7 @@ describe('A2A Protocol Implementation', () => {
         };
 
         const response = await rpcHandler.handle(request);
-        
+
         expect(response.error?.code).toBe(A2A_ERROR_CODES.INVALID_PARAMS);
         expect(response.error?.message).toBe('Invalid parameters');
       });
@@ -150,7 +150,7 @@ describe('A2A Protocol Implementation', () => {
 
         const response = await rpcHandler.handle(getRequest);
         const result = response.result as any;
-        
+
         expect(result.id).toBe('test-task-123');
         expect(result.status).toBe('completed');
       });
@@ -166,7 +166,7 @@ describe('A2A Protocol Implementation', () => {
         };
 
         const response = await rpcHandler.handle(request);
-        
+
         expect(response.error?.code).toBe(A2A_ERROR_CODES.TASK_NOT_FOUND);
         expect(response.error?.message).toContain('not found');
       });
@@ -201,7 +201,7 @@ describe('A2A Protocol Implementation', () => {
         };
 
         const response = await rpcHandler.handle(cancelRequest);
-        
+
         // Should fail because task is already completed
         expect(response.error?.message).toContain('already completed');
       });
@@ -217,7 +217,7 @@ describe('A2A Protocol Implementation', () => {
         };
 
         const response = await rpcHandler.handle(request);
-        
+
         expect(response.error?.code).toBe(A2A_ERROR_CODES.TASK_NOT_FOUND);
       });
     });
@@ -232,7 +232,7 @@ describe('A2A Protocol Implementation', () => {
         };
 
         const response = await rpcHandler.handle(request);
-        
+
         expect(response.error?.code).toBe(A2A_ERROR_CODES.METHOD_NOT_FOUND);
         expect(response.error?.message).toContain('not found');
       });
@@ -272,7 +272,7 @@ describe('A2A Protocol Implementation', () => {
       const processor = {
         async process() {
           throw new Error('Processor error');
-        }
+        },
       };
       const manager = new TaskManager(store, processor);
 
@@ -291,20 +291,20 @@ describe('A2A Protocol Implementation', () => {
     it('should handle malformed input gracefully', async () => {
       const response = await handleA2A('not-json');
       const parsed = JSON.parse(response) as JsonRpcResponse;
-      
+
       expect(parsed.error?.code).toBe(A2A_ERROR_CODES.INVALID_REQUEST);
     });
 
     it('should handle null input', async () => {
       const response = await handleA2A(null);
       const parsed = JSON.parse(response) as JsonRpcResponse;
-      
+
       expect(parsed.error?.code).toBe(A2A_ERROR_CODES.INVALID_REQUEST);
     });
 
     it('should handle unexpected errors', async () => {
       const handler = new A2ARpcHandler(taskManager);
-      
+
       // Mock the task manager to throw an unexpected error
       vi.spyOn(taskManager, 'sendTask').mockRejectedValue(new Error('Unexpected error'));
 
@@ -321,7 +321,7 @@ describe('A2A Protocol Implementation', () => {
       };
 
       const response = await handler.handle(request);
-      
+
       expect(response.error?.code).toBe(A2A_ERROR_CODES.INTERNAL_ERROR);
       expect(response.error?.message).toMatch(/Task .* failed|Unexpected error/);
     });

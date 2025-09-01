@@ -28,7 +28,7 @@ services:
       - a2a-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.a2a.rule=Host(\`a2a.local\`)"
+      - "traefik.http.routers.a2a.rule=Host(`a2a.local`)"
       - "traefik.http.services.a2a.loadbalancer.server.port=3000"
 
   # Development server with hot reload

@@ -1,11 +1,11 @@
 import { Qwen3Embedder } from './embed/qwen3';
-import { MultiModelGenerator, type ModelSpec } from './generation/multi-model';
-import { Qwen3Reranker } from './pipeline/qwen3-reranker';
+import { type ModelSpec, MultiModelGenerator } from './generation/multi-model';
 import { embedQuery } from './lib/embed-query';
-import { retrieveDocs } from './lib/retrieve-docs';
-import { rerankDocs } from './lib/rerank-docs';
 import { generateAnswer } from './lib/generate-answer';
+import { rerankDocs } from './lib/rerank-docs';
+import { retrieveDocs } from './lib/retrieve-docs';
 import type { Document } from './lib/types';
+import { Qwen3Reranker } from './pipeline/qwen3-reranker';
 
 export interface EnhancedRAGConfig {
   embeddingModelSize?: '0.6B' | '4B' | '8B';

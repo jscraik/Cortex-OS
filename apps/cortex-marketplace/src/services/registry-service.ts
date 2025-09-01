@@ -3,10 +3,10 @@
  * @description Handles registry management and caching
  */
 
-import { readFile, writeFile, unlink } from 'fs/promises';
-import { existsSync, mkdirSync } from 'fs';
-import path from 'path';
 import type { RegistryData } from '@cortex-os/mcp-registry';
+import { existsSync, mkdirSync } from 'fs';
+import { readFile, unlink, writeFile } from 'fs/promises';
+import path from 'path';
 
 export interface RegistryConfig {
   registries: Record<string, string>;

@@ -4,18 +4,23 @@
  */
 
 import { randomUUID } from 'crypto';
-import { 
-  TaskId, 
-  TaskStatus, 
-  TaskSendParams, 
-  TaskGetParams, 
-  TaskCancelParams, 
-  TaskResult,
-  A2A_ERROR_CODES 
+import {
+  A2A_ERROR_CODES,
+  type TaskCancelParams,
+  type TaskGetParams,
+  type TaskId,
+  type TaskResult,
+  type TaskSendParams,
+  type TaskStatus,
 } from './protocol.js';
+
 // Simple implementation for StructuredError
 class StructuredError extends Error {
-  constructor(public code: string, message: string, public details?: unknown) {
+  constructor(
+    public code: string,
+    message: string,
+    public details?: unknown,
+  ) {
     super(message);
     this.name = 'StructuredError';
   }
@@ -75,7 +80,7 @@ export class InMemoryTaskStore implements TaskStore {
 
   async list(status?: TaskStatus): Promise<Task[]> {
     const tasks = Array.from(this.tasks.values());
-    return status ? tasks.filter(task => task.status === status) : tasks;
+    return status ? tasks.filter((task) => task.status === status) : tasks;
   }
 
   // Cleanup method for testing
@@ -92,18 +97,20 @@ export interface TaskProcessor {
 export class EchoTaskProcessor implements TaskProcessor {
   async process(params: TaskSendParams): Promise<TaskResult> {
     const id = params.id || randomUUID();
-    
+
     // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     return {
       id,
       status: 'completed',
       message: {
         role: 'assistant',
-        parts: [{
-          text: `Echo: ${params.message.parts.map(p => p.text).join(' ')}`,
-        }],
+        parts: [
+          {
+            text: `Echo: ${params.message.parts.map((p) => p.text).join(' ')}`,
+          },
+        ],
       },
     };
   }
@@ -116,7 +123,7 @@ export class TaskManager {
     private readonly config = {
       taskTimeoutMs: 30000,
       maxConcurrentTasks: 10,
-    }
+    },
   ) {}
 
   /**
@@ -147,7 +154,7 @@ export class TaskManager {
       ]);
 
       // Update with result
-      await this.store.update(taskId, { 
+      await this.store.update(taskId, {
         status: 'completed',
         result,
       });
@@ -155,12 +162,15 @@ export class TaskManager {
       return result;
     } catch (error) {
       const taskError = {
-        code: error instanceof TaskTimeoutError ? A2A_ERROR_CODES.TASK_TIMEOUT : A2A_ERROR_CODES.INTERNAL_ERROR,
+        code:
+          error instanceof TaskTimeoutError
+            ? A2A_ERROR_CODES.TASK_TIMEOUT
+            : A2A_ERROR_CODES.INTERNAL_ERROR,
         message: error instanceof Error ? error.message : 'Unknown error',
         data: error instanceof Error ? { stack: error.stack } : error,
       };
 
-      await this.store.update(taskId, { 
+      await this.store.update(taskId, {
         status: 'failed',
         error: taskError,
       });
@@ -168,7 +178,7 @@ export class TaskManager {
       throw new StructuredError(
         'TASK_EXECUTION_FAILED',
         `Task ${taskId} failed: ${taskError.message}`,
-        { taskId, error: taskError }
+        { taskId, error: taskError },
       );
     }
   }
@@ -179,11 +189,10 @@ export class TaskManager {
   async getTask(params: TaskGetParams): Promise<TaskResult> {
     const task = await this.store.get(params.id);
     if (!task) {
-      throw new StructuredError(
-        'TASK_NOT_FOUND',
-        `Task ${params.id} not found`,
-        { taskId: params.id, code: A2A_ERROR_CODES.TASK_NOT_FOUND }
-      );
+      throw new StructuredError('TASK_NOT_FOUND', `Task ${params.id} not found`, {
+        taskId: params.id,
+        code: A2A_ERROR_CODES.TASK_NOT_FOUND,
+      });
     }
 
     return {
@@ -201,22 +210,21 @@ export class TaskManager {
   async cancelTask(params: TaskCancelParams): Promise<void> {
     const task = await this.store.get(params.id);
     if (!task) {
-      throw new StructuredError(
-        'TASK_NOT_FOUND',
-        `Task ${params.id} not found`,
-        { taskId: params.id, code: A2A_ERROR_CODES.TASK_NOT_FOUND }
-      );
+      throw new StructuredError('TASK_NOT_FOUND', `Task ${params.id} not found`, {
+        taskId: params.id,
+        code: A2A_ERROR_CODES.TASK_NOT_FOUND,
+      });
     }
 
     if (task.status === 'completed' || task.status === 'failed') {
       throw new StructuredError(
         'TASK_ALREADY_COMPLETED',
         `Task ${params.id} is already completed`,
-        { taskId: params.id, status: task.status }
+        { taskId: params.id, status: task.status },
       );
     }
 
-    await this.store.update(params.id, { 
+    await this.store.update(params.id, {
       status: 'cancelled',
       error: {
         code: A2A_ERROR_CODES.TASK_CANCELLED,
@@ -235,7 +243,9 @@ export class TaskManager {
   private async createTimeoutPromise(taskId: TaskId): Promise<never> {
     return new Promise((_, reject) => {
       setTimeout(() => {
-        reject(new TaskTimeoutError(`Task ${taskId} timed out after ${this.config.taskTimeoutMs}ms`));
+        reject(
+          new TaskTimeoutError(`Task ${taskId} timed out after ${this.config.taskTimeoutMs}ms`),
+        );
       }, this.config.taskTimeoutMs);
     });
   }
@@ -261,12 +271,8 @@ export const createTaskManager = (options?: {
     taskTimeoutMs: 30000,
     maxConcurrentTasks: 10,
   };
-  
+
   const config = options?.config ? { ...defaultConfig, ...options.config } : defaultConfig;
-  
-  return new TaskManager(
-    options?.store,
-    options?.processor,
-    config
-  );
+
+  return new TaskManager(options?.store, options?.processor, config);
 };

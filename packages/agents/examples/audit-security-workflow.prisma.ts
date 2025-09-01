@@ -1,12 +1,13 @@
 // Auditor-friendly CLI with Prisma-backed memory store
-import { createEventBus } from '../src/lib/event-bus.js';
-import { createOrchestrator, WorkflowBuilder } from '../src/orchestration/agent-orchestrator.js';
-import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
-import { wireOutbox } from '../src/integrations/outbox.js';
+
 import { PrismaStore } from '@cortex-os/memories';
 // Example requires @prisma/client to be installed in workspace
 import { PrismaClient } from '@prisma/client';
 import { loadMemoryPoliciesFromEnv } from '../src/integrations/memory-policies-config.js';
+import { wireOutbox } from '../src/integrations/outbox.js';
+import { createEventBus } from '../src/lib/event-bus.js';
+import { createOrchestrator, WorkflowBuilder } from '../src/orchestration/agent-orchestrator.js';
+import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
 
 async function main() {
   const modelPath =

@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
 import * as lib from '@cortex-os/lib';
+import { describe, expect, it, vi } from 'vitest';
 import { handleSimlab } from '../src/index';
 
 const baseConfig = { memory: { maxItems: 2, maxBytes: 1024 } };

@@ -21,4 +21,3 @@ describe('eval gate CLI smoke', async () => {
     expect(typeof parsed.pass).toBe('boolean');
   });
 });
-

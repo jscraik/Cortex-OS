@@ -83,7 +83,7 @@ function analyseFile(filePath) {
           if (length > 40) {
             const name = funcMatch ? funcMatch[1] : '<anonymous>';
             recommendations.push(
-              `Function ${name} in ${filePath} has ${length} lines; consider splitting it.`,
+              `Function ${name} in ${filePath} has ${length} lines; consider splitting it.`
             );
           }
           inFunc = false;
@@ -118,7 +118,7 @@ function analyseFile(filePath) {
           const length = i - funcStart + 1;
           if (length > 40) {
             recommendations.push(
-              `Function ${funcName} in ${filePath} has ${length} lines; consider splitting it.`,
+              `Function ${funcName} in ${filePath} has ${length} lines; consider splitting it.`
             );
           }
           inFunc = false;
@@ -146,7 +146,7 @@ function analyseFile(filePath) {
     }
   } else {
     // JS/TS: check function, const, and let declarations
-    let jsMatches = [];
+    const jsMatches = [];
     while ((match = jsFuncRegex.exec(content))) {
       jsMatches.push(match[1]);
     }

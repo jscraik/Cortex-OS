@@ -146,7 +146,7 @@ export class MultiModelGenerator {
   async generateWithMLX(model, prompt, config) {
     // Use centralized Python runner for consistent PYTHONPATH/env handling
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+    // @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
     const { runPython } = await import('../../../../libs/python/exec.js');
 
     const pythonScript = this.getMLXPythonScript();

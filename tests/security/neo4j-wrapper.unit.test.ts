@@ -6,9 +6,9 @@
  * @security OWASP Top 10 & MITRE ATLAS compliance
  */
 
-import { describe, test, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
 import { SecureNeo4j } from '@cortex-os/utils';
-import neo4j, { Driver, Session } from 'neo4j-driver';
+import neo4j, { type Driver, type Session } from 'neo4j-driver';
+import { afterEach, beforeEach, describe, expect, type MockedFunction, test, vi } from 'vitest';
 
 // Mock neo4j-driver
 vi.mock('neo4j-driver', () => {

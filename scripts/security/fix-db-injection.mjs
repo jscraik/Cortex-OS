@@ -16,7 +16,7 @@ const databaseManagerPath = join(
   'agents',
   'src',
   'legacy-instructions',
-  'DatabaseManager.ts',
+  'DatabaseManager.ts'
 );
 let content = readFileSync(databaseManagerPath, 'utf-8');
 
@@ -25,24 +25,24 @@ if (!content.includes('SecureDatabaseWrapper')) {
   content = content.replace(
     "import { KGDoc } from '@cortex-os/rag/rag-contracts/src';",
     `import { KGDoc } from '@cortex-os/rag/rag-contracts/src';
-import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';`,
+import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';`
   );
 }
 
 // Replace insecure database operations with secure ones
 const insecurePatterns = [
   {
-    pattern: /this\.statements\.get\("createSwarm"\)\!\.run\(([^)]+)\);/g,
+    pattern: /this\.statements\.get\("createSwarm"\)!\.run\(([^)]+)\);/g,
     replacement: `// TODO: Implement proper input validation for createSwarm
     this.statements.get("createSwarm")!.run($1);`,
   },
   {
-    pattern: /this\.statements\.get\("setActiveSwarm"\)\!\.run\(([^)]+)\);/g,
+    pattern: /this\.statements\.get\("setActiveSwarm"\)!\.run\(([^)]+)\);/g,
     replacement: `// TODO: Implement proper input validation for setActiveSwarm
     this.statements.get("setActiveSwarm")!.run($1);`,
   },
   {
-    pattern: /this\.statements\.get\("createAgent"\)\!\.run\(([^)]+)\);/g,
+    pattern: /this\.statements\.get\("createAgent"\)!\.run\(([^)]+)\);/g,
     replacement: `// TODO: Implement proper input validation for createAgent
     this.statements.get("createAgent")!.run($1);`,
   },
@@ -59,7 +59,7 @@ const insecurePatterns = [
   },
   {
     pattern:
-      /this\.statements\.get\("createTask"\)\!\.run\(\{[\s\S]*?requireConsensus:\s*[^}]*?\s*\}\);/g,
+      /this\.statements\.get\("createTask"\)!\.run\(\{[\s\S]*?requireConsensus:\s*[^}]*?\s*\}\);/g,
     replacement: `// TODO: Implement proper input validation for createTask
     this.statements.get("createTask")!.run({
       ...data,
@@ -72,12 +72,12 @@ const insecurePatterns = [
     stmt.run(...values);`,
   },
   {
-    pattern: /this\.statements\.get\("updateTaskStatus"\)\!\.run\(([^,]+),\s*([^)]+)\);/g,
+    pattern: /this\.statements\.get\("updateTaskStatus"\)!\.run\(([^,]+),\s*([^)]+)\);/g,
     replacement: `// TODO: Implement proper input validation for updateTaskStatus
     this.statements.get("updateTaskStatus")!.run($1, $2);`,
   },
   {
-    pattern: /this\.statements\.get\("storeMemory"\)\!\.run\(([^)]+)\);/g,
+    pattern: /this\.statements\.get\("storeMemory"\)!\.run\(([^)]+)\);/g,
     replacement: `// TODO: Implement proper input validation for storeMemory
     this.statements.get("storeMemory")!.run($1);`,
   },
@@ -119,7 +119,7 @@ const insecurePatterns = [
     );`,
   },
   {
-    pattern: /this\.statements\.get\("storeMetric"\)\!\.run\(\{[\s\S]*?\}\);/g,
+    pattern: /this\.statements\.get\("storeMetric"\)!\.run\(\{[\s\S]*?\}\);/g,
     replacement: `// TODO: Implement proper input validation for storeMetric
     this.statements.get("storeMetric")!.run({
       ...data,
@@ -143,6 +143,6 @@ for (const { pattern, replacement } of insecurePatterns) {
 writeFileSync(databaseManagerPath, content);
 
 console.log(
-  '✅ Database injection vulnerabilities have been marked for fixing in DatabaseManager.ts',
+  '✅ Database injection vulnerabilities have been marked for fixing in DatabaseManager.ts'
 );
 console.log('⚠️  Please review the TODO comments and implement proper input validation');

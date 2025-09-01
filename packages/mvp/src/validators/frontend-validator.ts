@@ -11,12 +11,12 @@ import {
   getProjectRoot,
   readJsonFile,
 } from '../lib/utils.js';
-import {
+import type {
   FrontendValidationResult,
   GateValidator,
   ValidationResult,
 } from '../lib/validation-types.js';
-import { PRPState } from '../state.js';
+import type { PRPState } from '../state.js';
 
 export class FrontendValidator implements GateValidator {
   async validate(state: PRPState): Promise<ValidationResult> {

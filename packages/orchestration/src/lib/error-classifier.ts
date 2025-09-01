@@ -303,11 +303,11 @@ export function calculateRetryDelay(
       break;
 
     case RetryStrategy.EXPONENTIAL:
-      delay = classification.baseDelayMs * Math.pow(classification.backoffMultiplier, attempt - 1);
+      delay = classification.baseDelayMs * classification.backoffMultiplier ** (attempt - 1);
       break;
 
     case RetryStrategy.EXPONENTIAL_WITH_JITTER:
-      delay = classification.baseDelayMs * Math.pow(classification.backoffMultiplier, attempt - 1);
+      delay = classification.baseDelayMs * classification.backoffMultiplier ** (attempt - 1);
       if (classification.jitter) {
         const jitterAmount = delay * 0.1; // 10% jitter
         delay += Math.random() * jitterAmount * 2 - jitterAmount;

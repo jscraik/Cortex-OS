@@ -14,7 +14,7 @@ let content = readFileSync(neo4jPath, 'utf-8');
 if (!content.includes('SecureNeo4j')) {
   content = content.replace(
     "import neo4j, { Driver } from 'neo4j-driver';",
-    "import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/utils';",
+    "import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/utils';"
   );
 }
 
@@ -24,13 +24,13 @@ content = content.replace(
   `export class Neo4j implements INeo4j {
   private driver: Driver;
   private secureNeo4j: SecureNeo4j;
-  
+
   constructor(uri: string, user: string, pass: string) {
     this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), { userAgent: 'cortex-os/0.1' });
     // Initialize SecureNeo4j for secure operations
     this.secureNeo4j = new SecureNeo4j(uri, user, pass);
   }
-  
+
   async close() {
     await this.driver.close();
   }
@@ -73,7 +73,7 @@ content = content.replace(
       throw error;
     }
   }
-}`,
+}`
 );
 
 // Write the updated content back to the file

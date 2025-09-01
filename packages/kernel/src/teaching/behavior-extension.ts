@@ -5,8 +5,12 @@
  * @version 1.0.0
  */
 
-import { PRPState } from '../state.js';
-import { CapturedExample, TeachingPattern, ExampleCaptureSystem } from './example-capture.js';
+import type { PRPState } from '../state.js';
+import {
+  CapturedExample,
+  type ExampleCaptureSystem,
+  type TeachingPattern,
+} from './example-capture.js';
 
 /**
  * Behavior extension that can modify kernel behavior

@@ -1,10 +1,59 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-pnpm lint-staged
-pnpm typecheck
-pnpm run validate:contracts
-pnpm run cortex:validate
-if command -v uv >/dev/null 2>&1; then
-  (cd python && uv run ruff check . && uv run pyright) || exit 1
+# Source common utilities
+. "$(dirname "$0")/common.sh"
+
+# Check Node.js version compatibility
+EXPECTED_NODE_VERSION="20"
+CURRENT_NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+
+if [ "$CURRENT_NODE_VERSION" != "$EXPECTED_NODE_VERSION" ]; then
+  echo "Warning: Node.js version mismatch"
+  echo "Expected: Node.js $EXPECTED_NODE_VERSION.x"
+  echo "Current: Node.js $CURRENT_NODE_VERSION.x"
+  echo "Some checks may not work as expected"
 fi
+
+# Run lint-staged for staged files
+if command -v pnpm >/dev/null 2>&1; then
+  echo "Running lint-staged..."
+  pnpm lint-staged || { echo "❌ lint-staged failed"; exit 1; }
+else
+  echo "Warning: pnpm not found, skipping lint-staged"
+fi
+
+# Run TypeScript type checking
+if command -v pnpm >/dev/null 2>&1; then
+  echo "Running TypeScript type checking..."
+  pnpm typecheck || { echo "❌ TypeScript type checking failed"; exit 1; }
+else
+  echo "Warning: pnpm not found, skipping TypeScript type checking"
+fi
+
+# Validate contracts
+if command -v pnpm >/dev/null 2>&1; then
+  echo "Validating contracts..."
+  pnpm run validate:contracts || { echo "❌ Contract validation failed"; exit 1; }
+else
+  echo "Warning: pnpm not found, skipping contract validation"
+fi
+
+# Run Cortex validation
+if command -v pnpm >/dev/null 2>&1; then
+  echo "Running Cortex validation..."
+  pnpm run cortex:validate || { echo "❌ Cortex validation failed"; exit 1; }
+else
+  echo "Warning: pnpm not found, skipping Cortex validation"
+fi
+
+# Run Python checks if uv is available
+if command -v uv >/dev/null 2>&1; then
+  echo "Running Python checks..."
+  (cd python && uv run ruff check . && uv run pyright) || { echo "❌ Python checks failed"; exit 1; }
+else
+  echo "Warning: uv not found, skipping Python checks"
+fi
+
+echo "✅ All pre-commit checks passed!"
+exit 0

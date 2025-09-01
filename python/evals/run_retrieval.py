@@ -43,30 +43,39 @@ def retrieve(router: ModelRouter, query: str, docs: List[Tuple[str, str]], top_k
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--suite', default='rag', help='suite name under traces/v1 (default: rag)')
-    ap.add_argument('--out', default=None, help='write JSON results to this file')
+    ap.add_argument("--suite", default="rag", help="suite name under traces/v1 (default: rag)")
+    ap.add_argument("--out", default=None, help="write JSON results to this file")
     args = ap.parse_args()
 
     router = ModelRouter()
-    suite_path = Path(__file__).with_name('traces').joinpath('v1', f'{args.suite}.json')
+    suite_path = Path(__file__).with_name("traces").joinpath("v1", f"{args.suite}.json")
     suite = json.loads(Path(suite_path).read_text())
     results = []
     failures = 0
     for case in suite:
-        corpus_path = Path(__file__).with_name(case['corpus'])
+        corpus_path = Path(__file__).with_name(case["corpus"])
         corpus = load_corpus(corpus_path)
-        top_k = int(case.get('topK', 1))
-        predicted = retrieve(router, case['query'], corpus, top_k)
-        ok = predicted and predicted[0] == case['expectedTopId']
+        top_k = int(case.get("topK", 1))
+        predicted = retrieve(router, case["query"], corpus, top_k)
+        ok = predicted and predicted[0] == case["expectedTopId"]
         if not ok:
             failures += 1
-        results.append({ 'name': case['name'], 'ok': ok, 'predicted': predicted, 'expectedTopId': case['expectedTopId'] })
+        results.append(
+            {
+                "name": case["name"],
+                "ok": ok,
+                "predicted": predicted,
+                "expectedTopId": case["expectedTopId"],
+            }
+        )
 
     if args.out:
-        Path(args.out).write_text(json.dumps({ 'suite': 'rag', 'failures': failures, 'results': results }, indent=2))
-    print(f'[retrieval] completed with {failures} failures')
+        Path(args.out).write_text(
+            json.dumps({"suite": "rag", "failures": failures, "results": results}, indent=2)
+        )
+    print(f"[retrieval] completed with {failures} failures")
     return 1 if failures else 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     raise SystemExit(main())

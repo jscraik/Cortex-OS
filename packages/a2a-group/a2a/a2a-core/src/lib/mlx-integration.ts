@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { logWithContext, withErrorBoundary, guardValid } from './error-utils';
+import { guardValid, logWithContext, withErrorBoundary } from './error-utils';
 
 /**
  * MLX Model Configuration Schema

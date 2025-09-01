@@ -7,12 +7,14 @@ This document provides setup instructions and dependency information for the enh
 ## System Requirements
 
 ### Core Requirements
+
 - Node.js 18+ (22+ recommended)
 - Python 3.8+ (3.11+ recommended)
 - Git
 - Sufficient storage for model caching (minimum 10GB free space)
 
 ### Optional Requirements
+
 - Docker (for containerized services)
 - Graph database (Memgraph or Neo4j) for knowledge graphs
 - OCR service (Tesseract or Google Vision)
@@ -21,6 +23,7 @@ This document provides setup instructions and dependency information for the enh
 ## Node.js Dependencies
 
 ### Installation
+
 ```bash
 # Navigate to the RAG package directory
 cd packages/rag
@@ -30,6 +33,7 @@ pnpm install
 ```
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -46,6 +50,7 @@ pnpm install
 ## Python Dependencies
 
 ### Installation
+
 ```bash
 # Navigate to the RAG package directory
 cd packages/rag
@@ -59,6 +64,7 @@ pip install torch transformers numpy
 ```
 
 ### Core Python Dependencies
+
 ```txt
 # Core ML dependencies
 torch>=2.0.0
@@ -99,6 +105,7 @@ neo4j>=5.14.0
 ```
 
 ### Installing Optional Dependencies
+
 ```bash
 # Install MLX dependencies (Apple Silicon only)
 pip install mlx mlx-lm
@@ -123,24 +130,30 @@ pip install neo4j
 ## External Services Configuration
 
 ### Hugging Face
+
 1. Create an account at https://huggingface.co
 2. Generate an access token at https://huggingface.co/settings/tokens
 3. Set environment variable:
+
 ```bash
 export HUGGINGFACE_TOKEN=your_token_here
 ```
 
 ### YouTube API (for video processing)
+
 1. Create a Google Cloud Project
 2. Enable YouTube Data API v3
 3. Create API credentials
 4. Set environment variable:
+
 ```bash
 export YOUTUBE_API_KEY=your_api_key_here
 ```
 
 ### OCR Services
+
 #### Tesseract (Local OCR)
+
 ```bash
 # macOS
 brew install tesseract
@@ -153,26 +166,32 @@ sudo apt-get install tesseract-ocr
 ```
 
 #### Google Vision (Cloud OCR)
+
 1. Create Google Cloud Project
 2. Enable Vision API
 3. Create service account and download credentials
 4. Set environment variables:
+
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
 export OCR_PROVIDER=google_vision
 ```
 
 ### Speech-to-Text Services
+
 #### Whisper (Local Transcription)
+
 ```bash
 # Installed with audio processing dependencies
 # Models will be downloaded automatically on first use
 ```
 
 #### Google Speech (Cloud Transcription)
+
 1. Enable Google Speech-to-Text API
 2. Create service account and download credentials
 3. Set environment variables:
+
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
 export TRANSCRIPTION_PROVIDER=google_speech
@@ -181,6 +200,7 @@ export TRANSCRIPTION_PROVIDER=google_speech
 ## Graph Database Setup
 
 ### Memgraph (Recommended for development)
+
 ```bash
 # Using Docker
 docker run -p 7687:7687 -p 7444:7444 -p 3000:3000 memgraph/memgraph-platform:latest
@@ -190,6 +210,7 @@ docker run -p 7687:7687 -p 7444:7444 -p 3000:3000 memgraph/memgraph-platform:lat
 ```
 
 ### Neo4j (For production)
+
 ```bash
 # Using Docker
 docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password neo4j:latest
@@ -233,6 +254,7 @@ MLX_MODEL_PATH=/path/to/mlx/model
 ## Development Setup
 
 ### 1. Clone External Repositories
+
 ```bash
 # Create a directory for external dependencies
 mkdir -p ../external-deps
@@ -245,6 +267,7 @@ git clone https://github.com/run-llama/semtools.git
 ```
 
 ### 2. Install Rust (for semtools)
+
 ```bash
 # Install Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -254,6 +277,7 @@ cargo install semtools
 ```
 
 ### 3. Build External Tools
+
 ```bash
 # Build any external tools that require compilation
 # Check individual repository documentation for build instructions
@@ -262,6 +286,7 @@ cargo install semtools
 ## Testing Setup
 
 ### Unit Tests
+
 ```bash
 # Run unit tests
 pnpm test
@@ -272,6 +297,7 @@ pnpm test multimodal
 ```
 
 ### Integration Tests
+
 ```bash
 # Run integration tests
 pnpm test:integration
@@ -281,6 +307,7 @@ pnpm test:integration web-acquisition
 ```
 
 ### Performance Tests
+
 ```bash
 # Run performance tests
 pnpm test:performance
@@ -289,6 +316,7 @@ pnpm test:performance
 ## Development Workflow
 
 ### 1. Branching Strategy
+
 ```bash
 # Create feature branch
 git checkout -b feature/document-processing
@@ -301,6 +329,7 @@ git push origin feature/document-processing
 ```
 
 ### 2. Code Quality
+
 ```bash
 # Run linter
 pnpm lint
@@ -313,6 +342,7 @@ pnpm format
 ```
 
 ### 3. Documentation
+
 ```bash
 # Generate documentation
 pnpm docs:generate
@@ -326,15 +356,17 @@ pnpm docs:check
 ### Common Issues
 
 1. **Python Dependencies Not Found**
+
    ```bash
    # Ensure virtual environment is activated
    source .venv/bin/activate
-   
+
    # Reinstall dependencies
    pip install -r requirements.txt
    ```
 
 2. **MLX Not Available**
+
    ```bash
    # MLX is only available on Apple Silicon Macs
    # Use Ollama fallback for other platforms
@@ -342,19 +374,21 @@ pnpm docs:check
    ```
 
 3. **Graph Database Connection Issues**
+
    ```bash
    # Check if database is running
    docker ps | grep memgraph
-   
+
    # Start database if not running
    docker start memgraph-container
    ```
 
 4. **Insufficient Storage for Models**
+
    ```bash
    # Check available storage
    df -h
-   
+
    # Clear model cache if needed
    rm -rf ~/.cache/huggingface/
    ```

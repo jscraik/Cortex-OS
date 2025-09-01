@@ -2,17 +2,17 @@
  * Tests for validation utilities
  */
 
+import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import {
   createValidator,
   parseAndValidateJSON,
+  ValidationError,
   validateExecutionContext,
   validateInput,
   validateOutput,
   validateSchema,
-  ValidationError,
 } from '@/lib/validate.js';
-import { describe, expect, it } from 'vitest';
-import { z } from 'zod';
 
 describe('Validation Utilities', () => {
   const testSchema = z.object({

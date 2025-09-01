@@ -1,5 +1,5 @@
-import { Octokit } from '@octokit/rest';
 import { createAppAuth } from '@octokit/auth-app';
+import { Octokit } from '@octokit/rest';
 import type { AuthConfig } from '../config/schema.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -28,7 +28,7 @@ export class GitHubAuthError extends Error {
   constructor(
     message: string,
     public code: string,
-    public statusCode?: number
+    public statusCode?: number,
   ) {
     super(message);
     this.name = 'GitHubAuthError';
@@ -63,13 +63,13 @@ export class GitHubAuth {
         default:
           throw new GitHubAuthError(
             `Unsupported authentication method: ${this.config.method}`,
-            'UNSUPPORTED_AUTH_METHOD'
+            'UNSUPPORTED_AUTH_METHOD',
           );
       }
 
       // Verify authentication by getting user info
       await this.verifyAuthentication();
-      
+
       // Set up token refresh if needed
       this.setupTokenRefresh();
 
@@ -78,7 +78,6 @@ export class GitHubAuth {
         user: this.authContext?.user?.login,
         rateLimit: this.authContext?.rateLimit,
       });
-
     } catch (error) {
       logger.error('Failed to initialize GitHub authentication:', error);
       throw error;
@@ -89,7 +88,7 @@ export class GitHubAuth {
     if (!this.config.token) {
       throw new GitHubAuthError(
         'GitHub token is required for token authentication',
-        'MISSING_TOKEN'
+        'MISSING_TOKEN',
       );
     }
 
@@ -107,11 +106,11 @@ export class GitHubAuth {
 
   private async initializeAppAuth(): Promise<void> {
     const { appId, privateKey, installationId } = this.config;
-    
+
     if (!appId || !privateKey || !installationId) {
       throw new GitHubAuthError(
         'App ID, private key, and installation ID are required for app authentication',
-        'MISSING_APP_CREDENTIALS'
+        'MISSING_APP_CREDENTIALS',
       );
     }
 
@@ -136,30 +135,31 @@ export class GitHubAuth {
       // Get installation token info
       const { data: installation } = await octokit.rest.apps.getAuthenticated();
       const installationAuth = await auth({ type: 'installation' });
-      
-      this.tokenExpiresAt = installationAuth.expiresAt ? new Date(installationAuth.expiresAt) : null;
+
+      this.tokenExpiresAt = installationAuth.expiresAt
+        ? new Date(installationAuth.expiresAt)
+        : null;
 
       this.authContext = {
         octokit,
         authType: 'app',
       };
-
     } catch (error: any) {
       throw new GitHubAuthError(
         `Failed to initialize GitHub App authentication: ${error.message}`,
         'APP_AUTH_FAILED',
-        error.status
+        error.status,
       );
     }
   }
 
   private async initializeOAuthAuth(): Promise<void> {
     const { clientId, clientSecret, token } = this.config;
-    
+
     if (!clientId || !clientSecret) {
       throw new GitHubAuthError(
         'Client ID and client secret are required for OAuth authentication',
-        'MISSING_OAUTH_CREDENTIALS'
+        'MISSING_OAUTH_CREDENTIALS',
       );
     }
 
@@ -168,7 +168,7 @@ export class GitHubAuth {
     if (!token) {
       throw new GitHubAuthError(
         'Access token is required for OAuth authentication',
-        'MISSING_OAUTH_TOKEN'
+        'MISSING_OAUTH_TOKEN',
       );
     }
 
@@ -192,7 +192,7 @@ export class GitHubAuth {
     try {
       // Get authenticated user info
       const { data: user } = await this.authContext.octokit.rest.users.getAuthenticated();
-      
+
       // Get rate limit info
       const { data: rateLimit } = await this.authContext.octokit.rest.rateLimit.get();
 
@@ -209,12 +209,11 @@ export class GitHubAuth {
         reset: new Date(rateLimit.rate.reset * 1000),
         used: rateLimit.rate.used,
       };
-
     } catch (error: any) {
       throw new GitHubAuthError(
         `Authentication verification failed: ${error.message}`,
         'VERIFICATION_FAILED',
-        error.status
+        error.status,
       );
     }
   }
@@ -222,11 +221,11 @@ export class GitHubAuth {
   private setupTokenRefresh(): void {
     // Only set up refresh for App authentication with expiring tokens
     if (this.config.method === 'app' && this.tokenExpiresAt) {
-      const refreshTime = this.tokenExpiresAt.getTime() - Date.now() - (5 * 60 * 1000); // Refresh 5 min before expiry
-      
+      const refreshTime = this.tokenExpiresAt.getTime() - Date.now() - 5 * 60 * 1000; // Refresh 5 min before expiry
+
       if (refreshTime > 0) {
         this.refreshTimer = setTimeout(() => {
-          this.refreshAppToken().catch(error => {
+          this.refreshAppToken().catch((error) => {
             logger.error('Failed to refresh GitHub App token:', error);
           });
         }, refreshTime);
@@ -236,12 +235,12 @@ export class GitHubAuth {
 
   private async refreshAppToken(): Promise<void> {
     logger.info('Refreshing GitHub App token');
-    
+
     try {
       await this.initializeAppAuth();
       await this.verifyAuthentication();
       this.setupTokenRefresh(); // Schedule next refresh
-      
+
       logger.info('GitHub App token refreshed successfully');
     } catch (error) {
       logger.error('Failed to refresh GitHub App token:', error);
@@ -271,7 +270,7 @@ export class GitHubAuth {
 
     try {
       const { data: rateLimit } = await this.authContext.octokit.rest.rateLimit.get();
-      
+
       const rateLimitInfo = {
         limit: rateLimit.rate.limit,
         remaining: rateLimit.rate.remaining,
@@ -281,20 +280,19 @@ export class GitHubAuth {
 
       this.authContext.rateLimit = rateLimitInfo;
       return rateLimitInfo;
-      
     } catch (error: any) {
       logger.error('Failed to get rate limit info:', error);
       throw new GitHubAuthError(
         `Failed to get rate limit: ${error.message}`,
         'RATE_LIMIT_ERROR',
-        error.status
+        error.status,
       );
     }
   }
 
   async refreshAuthentication(): Promise<void> {
     logger.info('Refreshing GitHub authentication');
-    
+
     try {
       await this.initialize();
     } catch (error) {
@@ -307,12 +305,16 @@ export class GitHubAuth {
     if (!this.tokenExpiresAt) {
       return false;
     }
-    
-    const thresholdTime = Date.now() + (minutesThreshold * 60 * 1000);
+
+    const thresholdTime = Date.now() + minutesThreshold * 60 * 1000;
     return this.tokenExpiresAt.getTime() <= thresholdTime;
   }
 
-  getTokenExpirationInfo(): { expiresAt: Date | null; isExpiring: boolean; minutesUntilExpiry: number | null } {
+  getTokenExpirationInfo(): {
+    expiresAt: Date | null;
+    isExpiring: boolean;
+    minutesUntilExpiry: number | null;
+  } {
     if (!this.tokenExpiresAt) {
       return {
         expiresAt: null,
@@ -321,8 +323,10 @@ export class GitHubAuth {
       };
     }
 
-    const minutesUntilExpiry = Math.floor((this.tokenExpiresAt.getTime() - Date.now()) / (1000 * 60));
-    
+    const minutesUntilExpiry = Math.floor(
+      (this.tokenExpiresAt.getTime() - Date.now()) / (1000 * 60),
+    );
+
     return {
       expiresAt: this.tokenExpiresAt,
       isExpiring: minutesUntilExpiry <= 10,
@@ -343,7 +347,7 @@ export class GitHubAuth {
       /^[a-f0-9]{40}$/, // Legacy personal access token
     ];
 
-    return tokenPatterns.some(pattern => pattern.test(token));
+    return tokenPatterns.some((pattern) => pattern.test(token));
   }
 
   static validateAppId(appId: string): boolean {
@@ -357,19 +361,19 @@ export class GitHubAuth {
   static validatePrivateKey(privateKey: string): boolean {
     const keyHeader = '-----BEGIN';
     const keyFooter = '-----END';
-    
+
     return privateKey.includes(keyHeader) && privateKey.includes(keyFooter);
   }
 
   // Cleanup
   async cleanup(): Promise<void> {
     logger.info('Cleaning up GitHub authentication');
-    
+
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
     }
-    
+
     this.authContext = null;
     this.tokenExpiresAt = null;
   }
@@ -386,7 +390,11 @@ export class GitHubAuth {
 
       // Check token expiration
       const tokenInfo = this.getTokenExpirationInfo();
-      if (tokenInfo.expiresAt && tokenInfo.minutesUntilExpiry !== null && tokenInfo.minutesUntilExpiry <= 0) {
+      if (
+        tokenInfo.expiresAt &&
+        tokenInfo.minutesUntilExpiry !== null &&
+        tokenInfo.minutesUntilExpiry <= 0
+      ) {
         return {
           status: 'unhealthy',
           details: { error: 'Token expired', expirationInfo: tokenInfo },
@@ -395,7 +403,7 @@ export class GitHubAuth {
 
       // Test API call
       const rateLimit = await this.getRateLimit();
-      
+
       return {
         status: 'healthy',
         details: {
@@ -405,7 +413,6 @@ export class GitHubAuth {
           tokenExpiration: tokenInfo,
         },
       };
-      
     } catch (error) {
       return {
         status: 'unhealthy',

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { redactPII } from '../src/privacy/redact.js';
 
 describe('Enhanced privacy redaction', () => {

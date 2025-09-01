@@ -1,13 +1,14 @@
 #!/usr/bin/env node
+
 /** @file_path packages/mcp/src/cli/mcp.ts
  * @description Main MCP CLI entry point (consolidated from apps/cortex-cli/commands/mcp*.ts)
  */
 
 /* eslint-disable no-console */
 
-import { Command } from 'commander';
 // Respect AGENTS.md boundaries: use package export, not internal src path
 import { readAll as readRegistry } from '@cortex-os/mcp-registry/fs-store';
+import { Command } from 'commander';
 
 const program = new Command();
 

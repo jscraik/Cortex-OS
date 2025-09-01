@@ -28,7 +28,7 @@ export interface FallbackOptions {
  */
 export async function withFallback<T>(
   providers: FallbackProvider<T>[],
-  options: FallbackOptions = {},
+  options: FallbackOptions = {}
 ): Promise<T> {
   const { logWarnings = true, errorMessage } = options;
 

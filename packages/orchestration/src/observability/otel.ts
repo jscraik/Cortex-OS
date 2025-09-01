@@ -1,10 +1,11 @@
-import { context, trace, SpanStatusCode, metrics } from '@opentelemetry/api';
+import { context, metrics, SpanStatusCode, trace } from '@opentelemetry/api';
+import type { EnhancedSpanContext, WorkflowMetrics } from '../lib/telemetry.js';
 import {
   gatherSpanAttributes,
-  recordSuccessMetrics,
   recordErrorMetrics,
+  recordSuccessMetrics,
 } from '../lib/telemetry.js';
-import type { EnhancedSpanContext, WorkflowMetrics } from '../lib/telemetry.js';
+
 export type { EnhancedSpanContext } from '../lib/telemetry.js';
 
 export const tracer = trace.getTracer('@cortex-os/orchestration');

@@ -55,14 +55,11 @@ class WinstonLogger implements ILogger {
   private createFormat(format: 'json' | 'text'): winston.Logform.Format {
     const baseFormat = winston.format.combine(
       winston.format.timestamp(),
-      winston.format.errors({ stack: true })
+      winston.format.errors({ stack: true }),
     );
 
     if (format === 'json') {
-      return winston.format.combine(
-        baseFormat,
-        winston.format.json()
-      );
+      return winston.format.combine(baseFormat, winston.format.json());
     }
 
     // Text format
@@ -73,7 +70,7 @@ class WinstonLogger implements ILogger {
         const componentStr = component ? `[${component}] ` : '';
         const metaStr = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
         return `${timestamp} ${level}: ${componentStr}${message}${metaStr}`;
-      })
+      }),
     );
   }
 
@@ -86,7 +83,7 @@ class WinstonLogger implements ILogger {
         new winston.transports.Console({
           handleExceptions: true,
           handleRejections: true,
-        })
+        }),
       );
     }
 
@@ -99,7 +96,7 @@ class WinstonLogger implements ILogger {
           maxFiles: config.maxFiles,
           handleExceptions: true,
           handleRejections: true,
-        })
+        }),
       );
     }
 
@@ -159,7 +156,7 @@ class WinstonLogger implements ILogger {
         maxFiles: 5,
       },
       this.serviceName,
-      component
+      component,
     );
   }
 }
@@ -241,30 +238,30 @@ export const Logger = createLogger();
 // Correlation ID management
 class CorrelationManager {
   private static correlationKey = Symbol.for('github-mcp-correlation-id');
-  
+
   static setCorrelationId(id: string): void {
-    (globalThis as any)[this.correlationKey] = id;
+    (globalThis as any)[CorrelationManager.correlationKey] = id;
   }
-  
+
   static getCorrelationId(): string | undefined {
-    return (globalThis as any)[this.correlationKey];
+    return (globalThis as any)[CorrelationManager.correlationKey];
   }
-  
+
   static generateCorrelationId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
-  
+
   static withCorrelationId<T>(id: string, fn: () => T): T {
-    const previousId = this.getCorrelationId();
-    this.setCorrelationId(id);
-    
+    const previousId = CorrelationManager.getCorrelationId();
+    CorrelationManager.setCorrelationId(id);
+
     try {
       return fn();
     } finally {
       if (previousId) {
-        this.setCorrelationId(previousId);
+        CorrelationManager.setCorrelationId(previousId);
       } else {
-        delete (globalThis as any)[this.correlationKey];
+        delete (globalThis as any)[CorrelationManager.correlationKey];
       }
     }
   }
@@ -322,14 +319,17 @@ export class StructuredLogger {
   }
 
   error(message: string, error?: Error, data?: StructuredLogData): void {
-    this.baseLogger.error(message, error ? { ...this.mergeData(data), error } : this.mergeData(data));
+    this.baseLogger.error(
+      message,
+      error ? { ...this.mergeData(data), error } : this.mergeData(data),
+    );
   }
 
   child(component: string, additionalData?: StructuredLogData): StructuredLogger {
-    return new StructuredLogger(
-      this.baseLogger.child(component),
-      { ...this.defaultData, ...additionalData }
-    );
+    return new StructuredLogger(this.baseLogger.child(component), {
+      ...this.defaultData,
+      ...additionalData,
+    });
   }
 
   // Operation timing
@@ -342,10 +342,16 @@ export class StructuredLogger {
   }
 
   // API request logging
-  logRequest(method: string, url: string, statusCode: number, duration: number, data?: StructuredLogData): void {
+  logRequest(
+    method: string,
+    url: string,
+    statusCode: number,
+    duration: number,
+    data?: StructuredLogData,
+  ): void {
     const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
     const message = `${method} ${url} ${statusCode} ${duration}ms`;
-    
+
     this[level](message, {
       ...data,
       method,
@@ -357,9 +363,14 @@ export class StructuredLogger {
   }
 
   // GitHub-specific logging
-  logGitHubOperation(operation: string, repository: string, result: 'success' | 'failure', data?: StructuredLogData): void {
+  logGitHubOperation(
+    operation: string,
+    repository: string,
+    result: 'success' | 'failure',
+    data?: StructuredLogData,
+  ): void {
     const message = `GitHub ${operation} ${result} for ${repository}`;
-    
+
     if (result === 'success') {
       this.info(message, { ...data, operation, repository, result });
     } else {
@@ -371,7 +382,7 @@ export class StructuredLogger {
   logRateLimit(remaining: number, limit: number, resetTime: Date, data?: StructuredLogData): void {
     const percentage = (remaining / limit) * 100;
     const message = `GitHub rate limit: ${remaining}/${limit} (${percentage.toFixed(1)}%)`;
-    
+
     const level = percentage < 10 ? 'warn' : 'debug';
     this[level](message, {
       ...data,
@@ -384,7 +395,10 @@ export class StructuredLogger {
 }
 
 // Create structured logger
-export function createStructuredLogger(component?: string, defaultData?: StructuredLogData): StructuredLogger {
+export function createStructuredLogger(
+  component?: string,
+  defaultData?: StructuredLogData,
+): StructuredLogger {
   const baseLogger = createLogger(component);
   return new StructuredLogger(baseLogger, defaultData);
 }
@@ -398,9 +412,13 @@ export class PerformanceLogger {
     this.logger = logger;
   }
 
-  measureAsync<T>(operation: string, fn: () => Promise<T>, context?: StructuredLogData): Promise<T> {
+  measureAsync<T>(
+    operation: string,
+    fn: () => Promise<T>,
+    context?: StructuredLogData,
+  ): Promise<T> {
     const startTime = Date.now();
-    
+
     return fn()
       .then((result) => {
         this.recordMetric(operation, Date.now() - startTime, 'success', context);
@@ -414,7 +432,7 @@ export class PerformanceLogger {
 
   measure<T>(operation: string, fn: () => T, context?: StructuredLogData): T {
     const startTime = Date.now();
-    
+
     try {
       const result = fn();
       this.recordMetric(operation, Date.now() - startTime, 'success', context);
@@ -425,7 +443,12 @@ export class PerformanceLogger {
     }
   }
 
-  private recordMetric(operation: string, duration: number, result: 'success' | 'error', context?: StructuredLogData): void {
+  private recordMetric(
+    operation: string,
+    duration: number,
+    result: 'success' | 'error',
+    context?: StructuredLogData,
+  ): void {
     // Update rolling metrics
     const metric = this.metrics.get(operation) || { count: 0, totalTime: 0, avgTime: 0 };
     metric.count++;
@@ -458,11 +481,11 @@ export function logHealthCheck(
   component: string,
   status: 'healthy' | 'unhealthy',
   details: Record<string, any>,
-  logger?: ILogger
+  logger?: ILogger,
 ): void {
   const log = logger || Logger;
   const message = `Health check ${status}: ${component}`;
-  
+
   if (status === 'healthy') {
     log.info(message, { component, status, ...details });
   } else {

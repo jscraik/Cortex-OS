@@ -6,11 +6,9 @@
  * @status active
  */
 
-import type { Request, Response, NextFunction } from 'express-serve-static-core';
 import express from 'express';
+import type { NextFunction, Request, Response } from 'express-serve-static-core';
 import * as jwt from 'jsonwebtoken';
-// import { A2ASecurityManager } from '@cortex-os/a2a/dist/security.js';
-// import { A2AClient } from '@cortex-os/a2a/dist/client.js';
 import { webMcpInterface } from './web-mcp-interface.js';
 
 /**
@@ -20,14 +18,10 @@ import { webMcpInterface } from './web-mcp-interface.js';
 class McpDemoServer {
   private app: express.Express;
   private port: number;
-  // private security: A2ASecurityManager;
-  // private a2aClient: A2AClient;
 
   constructor(port = 3000) {
     this.app = express() as express.Express;
     this.port = port;
-    // this.security = new A2ASecurityManager({ agentId: 'mcp-demo-server' });
-    // this.a2aClient = new A2AClient({ agentId: 'mcp-demo-server' });
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -264,7 +258,6 @@ class McpDemoServer {
     // Error handler
     this.app.use(
       (err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-         
         console.error('Server error:', err);
         res.status(500).json({
           success: false,
@@ -306,7 +299,6 @@ if (require.main === module) {
   const server = new McpDemoServer(port);
 
   server.start().catch((error) => {
-     
     console.error('Failed to start server:', error);
     process.exit(1);
   });

@@ -17,18 +17,12 @@ class SearchRequest(BaseModel):
     authors: list[str] | None = Field(None, description="Filter by authors")
     status: list[str] | None = Field(None, description="Filter by status")
     word_count_min: int | None = Field(None, description="Minimum word count", ge=0)
-    word_count_max: int | None = Field(
-        None, description="Maximum word count", le=50000
-    )
+    word_count_max: int | None = Field(None, description="Maximum word count", le=50000)
     quality_score_min: float | None = Field(
         None, description="Minimum quality score", ge=0.0, le=1.0
     )
-    featured_only: bool | None = Field(
-        False, description="Show only featured content"
-    )
-    facets: list[str] | None = Field(
-        None, description="Facets to include in response"
-    )
+    featured_only: bool | None = Field(False, description="Show only featured content")
+    facets: list[str] | None = Field(None, description="Facets to include in response")
     sort_by: str | None = Field("relevance", description="Sort criteria")
     page: int = Field(1, description="Page number", ge=1)
     page_size: int = Field(20, description="Items per page", ge=1, le=100)
@@ -45,13 +39,9 @@ class SearchDocument(BaseModel):
     tags: list[str] | None = Field(None, description="Document tags")
     authors: list[str] | None = Field(None, description="Document authors")
     word_count: int | None = Field(None, description="Word count")
-    reading_time_minutes: int | None = Field(
-        None, description="Estimated reading time"
-    )
+    reading_time_minutes: int | None = Field(None, description="Estimated reading time")
     quality_score: float | None = Field(None, description="Quality score")
-    accessibility_score: float | None = Field(
-        None, description="Accessibility score"
-    )
+    accessibility_score: float | None = Field(None, description="Accessibility score")
     updated_at: datetime | None = Field(None, description="Last updated timestamp")
     featured: bool | None = Field(None, description="Featured content flag")
     score: float | None = Field(None, description="Search relevance score")
@@ -96,9 +86,7 @@ class SearchAnalyticsQuery(BaseModel):
     query: str = Field(..., description="Search query")
     count: int = Field(..., description="Number of times searched")
     avg_ctr: float | None = Field(None, description="Average click-through rate")
-    avg_response_time_ms: int | None = Field(
-        None, description="Average response time"
-    )
+    avg_response_time_ms: int | None = Field(None, description="Average response time")
 
 
 class SearchAnalyticsResponse(BaseModel):
@@ -136,9 +124,7 @@ class IndexStats(BaseModel):
 class ReindexRequest(BaseModel):
     """Reindex request schema."""
 
-    force: bool | None = Field(
-        False, description="Force reindexing even if up to date"
-    )
+    force: bool | None = Field(False, description="Force reindexing even if up to date")
     batch_size: int | None = Field(
         50, description="Batch size for processing", ge=1, le=1000
     )
@@ -159,8 +145,6 @@ class ReindexResponse(BaseModel):
     indexed_files: int | None = Field(None, description="Successfully indexed files")
     failed_files: int | None = Field(None, description="Failed files")
     errors: list[str] | None = Field(None, description="Error messages")
-    indexing_time_seconds: float | None = Field(
-        None, description="Total indexing time"
-    )
+    indexing_time_seconds: float | None = Field(None, description="Total indexing time")
     documents_per_second: float | None = Field(None, description="Indexing rate")
     completed_at: datetime | None = Field(None, description="Completion timestamp")

@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import { Verifier } from '@pact-foundation/pact';
 import { resolve } from 'path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { start } from '../src/server';
 
 let close: any;

@@ -586,9 +586,7 @@ class ThermalGuard:
             "critical_temp": self.critical_temp,
         }
 
-    def export_metrics_history(
-        self, last_n: int | None = None
-    ) -> list[dict[str, Any]]:
+    def export_metrics_history(self, last_n: int | None = None) -> list[dict[str, Any]]:
         """Export metrics history for analysis"""
         history = self.metrics_history
 

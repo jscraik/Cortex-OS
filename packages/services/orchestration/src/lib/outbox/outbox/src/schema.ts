@@ -1,4 +1,4 @@
-import { z, ZodObject } from 'zod';
+import { ZodObject, z } from 'zod';
 
 // Simplified Envelope schema for testing purposes
 const SimplifiedEnvelope = z.object({

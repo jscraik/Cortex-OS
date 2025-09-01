@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { runBuildNode } from '../src/nodes/build.js';
 import { createInitialPRPState } from '../src/state.js';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
 
 describe('BuildNode documentation validation', () => {
   let tmpDir: string;

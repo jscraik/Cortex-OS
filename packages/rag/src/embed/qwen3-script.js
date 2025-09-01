@@ -1,5 +1,5 @@
 export function buildQwen3EmbedScript(modelPath, texts, maxTokens, useGPU) {
-    return `
+  return `
 import json
 import sys
 import torch

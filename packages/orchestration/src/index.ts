@@ -4,6 +4,7 @@
  */
 
 // Core types and interfaces
+// Enum types
 export type {
   AdaptiveConfig,
   AdaptiveDecision,
@@ -16,6 +17,7 @@ export type {
   LangChainConfig,
   LangChainResult,
   LangChainTool,
+  LearningPattern,
   MessageProtocol,
   MultiAgentConfig,
   MultiAgentState,
@@ -33,7 +35,6 @@ export type {
   SynchronizationPoint,
   Task,
 } from './types.js';
-
 // Enums
 export {
   AgentRole,
@@ -42,9 +43,6 @@ export {
   OrchestrationStrategy,
   Schemas,
 } from './types.js';
-
-// Enum types
-export type { LearningPattern } from './types.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {
@@ -60,13 +58,9 @@ export const OrchestrationDefaults = {
 export const version = '1.0.0';
 export const name = '@cortex-os/orchestration';
 
-// PRP Neural Orchestration Engine
-export {
-  createEngine,
-  orchestrateTask,
-  cleanup,
-} from './prp-integration.js';
+export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
 
 // MLX agent integration
 export { MLXAgent } from './integrations/mlx-agent.js';
-export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
+// PRP Neural Orchestration Engine
+export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';

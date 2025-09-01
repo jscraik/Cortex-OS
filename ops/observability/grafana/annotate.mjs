@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from 'fs';
-import path from 'path';
 import fetch from 'node-fetch';
+import path from 'path';
 
 function env(name) {
   const v = process.env[name];

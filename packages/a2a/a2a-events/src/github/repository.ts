@@ -48,35 +48,47 @@ export type GitHubRepository = z.infer<typeof GitHubRepositorySchema>;
 // Repository Action Types
 export const RepositoryActionSchema = z.enum([
   'created',
-  'updated', 
+  'updated',
   'deleted',
   'archived',
   'unarchived',
   'publicized',
   'privatized',
-  'transferred'
+  'transferred',
 ]);
 
 export type RepositoryAction = z.infer<typeof RepositoryActionSchema>;
 
 // Repository Changes Schema
-export const RepositoryChangesSchema = z.object({
-  name: z.object({
-    from: z.string()
-  }).optional(),
-  description: z.object({
-    from: z.string().nullable()
-  }).optional(),
-  homepage: z.object({
-    from: z.string().nullable()
-  }).optional(),
-  default_branch: z.object({
-    from: z.string()
-  }).optional(),
-  visibility: z.object({
-    from: z.string()
-  }).optional(),
-}).optional();
+export const RepositoryChangesSchema = z
+  .object({
+    name: z
+      .object({
+        from: z.string(),
+      })
+      .optional(),
+    description: z
+      .object({
+        from: z.string().nullable(),
+      })
+      .optional(),
+    homepage: z
+      .object({
+        from: z.string().nullable(),
+      })
+      .optional(),
+    default_branch: z
+      .object({
+        from: z.string(),
+      })
+      .optional(),
+    visibility: z
+      .object({
+        from: z.string(),
+      })
+      .optional(),
+  })
+  .optional();
 
 export type RepositoryChanges = z.infer<typeof RepositoryChangesSchema>;
 
@@ -86,13 +98,13 @@ export const RepositoryEventSchema = z.object({
   event_type: z.literal('github.repository'),
   source: z.literal('github-client'),
   timestamp: z.string().datetime(),
-  
+
   // Event-specific data
   action: RepositoryActionSchema,
   repository: GitHubRepositorySchema,
   actor: GitHubUserSchema,
   changes: RepositoryChangesSchema,
-  
+
   // Metadata
   metadata: z.record(z.string()).optional(),
 });
@@ -101,14 +113,14 @@ export type RepositoryEvent = z.infer<typeof RepositoryEventSchema>;
 
 // Repository Event Topics Mapping
 export const REPOSITORY_EVENT_TOPICS = {
-  'created': 'github.repository.created',
-  'updated': 'github.repository.updated',
-  'deleted': 'github.repository.deleted',
-  'archived': 'github.repository.archived',
-  'unarchived': 'github.repository.unarchived',
-  'publicized': 'github.repository.publicized',
-  'privatized': 'github.repository.privatized',
-  'transferred': 'github.repository.transferred',
+  created: 'github.repository.created',
+  updated: 'github.repository.updated',
+  deleted: 'github.repository.deleted',
+  archived: 'github.repository.archived',
+  unarchived: 'github.repository.unarchived',
+  publicized: 'github.repository.publicized',
+  privatized: 'github.repository.privatized',
+  transferred: 'github.repository.transferred',
 } as const;
 
 // Validation Functions
@@ -125,7 +137,7 @@ export function createRepositoryEvent(
   action: RepositoryAction,
   repository: GitHubRepository,
   actor: GitHubUser,
-  changes?: RepositoryChanges
+  changes?: RepositoryChanges,
 ): Omit<RepositoryEvent, 'event_id' | 'timestamp'> {
   return {
     event_type: 'github.repository',

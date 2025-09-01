@@ -1,4 +1,4 @@
-import { MultiModelGenerator } from '../generation/multi-model';
+import type { MultiModelGenerator } from '../generation/multi-model';
 import type { Document } from './types';
 
 function buildContext(documents: Document[], maxLength?: number): string {

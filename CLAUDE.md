@@ -287,7 +287,6 @@ The project uses Semgrep with multiple custom rulesets in `.semgrep/`:
   - SQL/Command/Code injection detection
   - Server-Side Request Forgery (SSRF) prevention
   - Direct execution vulnerabilities
-  
 - **`owasp-top-10-improved.yaml`**: Comprehensive OWASP Top-10 coverage
   - Broken Access Control (A01)
   - Cryptographic Failures (A02) - weak hashing, ECB mode
@@ -328,22 +327,26 @@ The project uses Semgrep with multiple custom rulesets in `.semgrep/`:
 The `.cortex/` directory serves as the governance hub with these key components:
 
 #### Rules & Policies
+
 - **`RULES_OF_AI.md`**: Fundamental AI ethics and behavior principles
-- **`AGENTS.md`**: Agent workflow specifications and role definitions  
+- **`AGENTS.md`**: Agent workflow specifications and role definitions
 - **Policy schemas**: Machine-readable governance (agents, tools, repository policies)
 
 #### Validation Gates
+
 - **`validate-structure.ts`**: Project structure compliance
 - **`validate-policies.ts`**: Policy adherence checking
 - **`validate-docs.ts`**: Documentation consistency
 - **`validate-context.ts`**: Context and schema validation
 
 #### Library & Patterns
+
 - **`library/packs/`**: Reusable patterns (auth, database, frontend, security, testing)
 - **`library/blueprints/`**: Architectural templates
 - **`library/personas/`**: Agent behavior definitions
 
 ### Validation Flow
+
 ```text
 Code Changes → .cortex gates → CI validation → Runtime enforcement
 ```

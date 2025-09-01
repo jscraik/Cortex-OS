@@ -7,9 +7,9 @@
  * @status active
  */
 
-import { MockedFunction, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 import WebSocket from 'ws';
-import { ConnectionState, McpClient, createMcpClient } from '../mcp-client';
+import { ConnectionState, createMcpClient, type McpClient } from '../mcp-client';
 
 // Mock WebSocket
 vi.mock('ws', () => {

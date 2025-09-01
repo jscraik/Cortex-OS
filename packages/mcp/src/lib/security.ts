@@ -86,23 +86,22 @@ export function validateUrlSecurity(url: string): boolean {
   try {
     const u = new URL(url);
     const isHttps = u.protocol === 'https:';
-    
+
     // Comprehensive localhost and private network detection
     const hostname = u.hostname.toLowerCase();
-    const isLocalhost = [
-      'localhost', '127.0.0.1', '::1', '0.0.0.0'
-    ].includes(hostname) || 
-    /^127\./.test(hostname) || 
-    /^192\.168\./.test(hostname) ||
-    /^10\./.test(hostname) ||
-    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname) ||
-    hostname.includes('.local') ||
-    hostname.includes('.internal');
-    
+    const isLocalhost =
+      ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(hostname) ||
+      /^127\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname) ||
+      hostname.includes('.local') ||
+      hostname.includes('.internal');
+
     const allowedProtocol = isHttps || (u.protocol === 'http:' && isLocalhost);
     const hasAdminPath = u.pathname.toLowerCase().includes('/admin');
     const hasMetadataPath = u.pathname.toLowerCase().includes('/metadata');
-    
+
     return allowedProtocol && !hasAdminPath && !hasMetadataPath;
   } catch {
     return false;

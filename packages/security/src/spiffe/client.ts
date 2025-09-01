@@ -6,13 +6,13 @@
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import { z } from 'zod';
 import {
-  CertificateBundle,
+  type CertificateBundle,
   SPIFFEError,
-  SpiffeId,
+  type SpiffeId,
   SpiffeIdSchema,
   SpiffeWorkloadResponseSchema,
-  TrustDomainConfig,
-  WorkloadIdentity,
+  type TrustDomainConfig,
+  type WorkloadIdentity,
 } from '../types.js';
 import { extractWorkloadPath } from '../utils/security-utils.ts';
 

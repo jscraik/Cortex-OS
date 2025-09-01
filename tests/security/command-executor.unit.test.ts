@@ -6,9 +6,9 @@
  * @security OWASP Top 10 & MITRE ATLAS compliance
  */
 
-import { describe, test, expect, beforeEach, afterEach, vi, MockedFunction } from 'vitest';
 import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
 import { ChildProcess, SpawnOptions } from 'child_process';
+import { afterEach, beforeEach, describe, expect, MockedFunction, test, vi } from 'vitest';
 
 // Mock child_process
 vi.mock('child_process', () => {

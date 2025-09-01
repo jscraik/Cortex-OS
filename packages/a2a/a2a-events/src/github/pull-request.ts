@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GitHubUserSchema, GitHubRepositorySchema } from './repository';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Pull Request Branch Schema
 export const PullRequestBranchSchema = z.object({
@@ -60,28 +60,36 @@ export const PullRequestActionSchema = z.enum([
   'labeled',
   'unlabeled',
   'review_requested',
-  'review_request_removed'
+  'review_request_removed',
 ]);
 
 export type PullRequestAction = z.infer<typeof PullRequestActionSchema>;
 
 // Pull Request Changes Schema
-export const PullRequestChangesSchema = z.object({
-  title: z.object({
-    from: z.string()
-  }).optional(),
-  body: z.object({
-    from: z.string().nullable()
-  }).optional(),
-  base: z.object({
-    ref: z.object({
-      from: z.string()
-    }),
-    sha: z.object({
-      from: z.string()
-    })
-  }).optional(),
-}).optional();
+export const PullRequestChangesSchema = z
+  .object({
+    title: z
+      .object({
+        from: z.string(),
+      })
+      .optional(),
+    body: z
+      .object({
+        from: z.string().nullable(),
+      })
+      .optional(),
+    base: z
+      .object({
+        ref: z.object({
+          from: z.string(),
+        }),
+        sha: z.object({
+          from: z.string(),
+        }),
+      })
+      .optional(),
+  })
+  .optional();
 
 export type PullRequestChanges = z.infer<typeof PullRequestChangesSchema>;
 
@@ -91,24 +99,26 @@ export const PullRequestEventSchema = z.object({
   event_type: z.literal('github.pull_request'),
   source: z.literal('github-client'),
   timestamp: z.string().datetime(),
-  
+
   // Event-specific data
   action: PullRequestActionSchema,
   pull_request: PullRequestSchema,
   repository: GitHubRepositorySchema,
   actor: GitHubUserSchema,
   changes: PullRequestChangesSchema,
-  
+
   // Additional context
   assignee: GitHubUserSchema.optional(),
   requested_reviewer: GitHubUserSchema.optional(),
-  label: z.object({
-    id: z.number(),
-    name: z.string(),
-    color: z.string(),
-    description: z.string().nullable(),
-  }).optional(),
-  
+  label: z
+    .object({
+      id: z.number(),
+      name: z.string(),
+      color: z.string(),
+      description: z.string().nullable(),
+    })
+    .optional(),
+
   // Metadata
   metadata: z.record(z.string()).optional(),
 });
@@ -117,19 +127,19 @@ export type PullRequestEvent = z.infer<typeof PullRequestEventSchema>;
 
 // Pull Request Event Topics Mapping
 export const PULL_REQUEST_EVENT_TOPICS = {
-  'opened': 'github.pullrequest.opened',
-  'closed': 'github.pullrequest.closed',
-  'merged': 'github.pullrequest.merged',
-  'reopened': 'github.pullrequest.reopened',
-  'synchronized': 'github.pullrequest.synchronized',
-  'ready_for_review': 'github.pullrequest.ready_for_review',
-  'converted_to_draft': 'github.pullrequest.converted_to_draft',
-  'assigned': 'github.pullrequest.assigned',
-  'unassigned': 'github.pullrequest.unassigned',
-  'labeled': 'github.pullrequest.labeled',
-  'unlabeled': 'github.pullrequest.unlabeled',
-  'review_requested': 'github.pullrequest.review_requested',
-  'review_request_removed': 'github.pullrequest.review_request_removed',
+  opened: 'github.pullrequest.opened',
+  closed: 'github.pullrequest.closed',
+  merged: 'github.pullrequest.merged',
+  reopened: 'github.pullrequest.reopened',
+  synchronized: 'github.pullrequest.synchronized',
+  ready_for_review: 'github.pullrequest.ready_for_review',
+  converted_to_draft: 'github.pullrequest.converted_to_draft',
+  assigned: 'github.pullrequest.assigned',
+  unassigned: 'github.pullrequest.unassigned',
+  labeled: 'github.pullrequest.labeled',
+  unlabeled: 'github.pullrequest.unlabeled',
+  review_requested: 'github.pullrequest.review_requested',
+  review_request_removed: 'github.pullrequest.review_request_removed',
 } as const;
 
 // Validation Functions
@@ -152,7 +162,7 @@ export function createPullRequestEvent(
     assignee?: GitHubUserSchema;
     requestedReviewer?: GitHubUserSchema;
     label?: { id: number; name: string; color: string; description: string | null };
-  }
+  },
 ): Omit<PullRequestEvent, 'event_id' | 'timestamp'> {
   return {
     event_type: 'github.pull_request',
@@ -196,10 +206,14 @@ export function getPullRequestMergeStatus(pr: PullRequest): string {
   } else if (pr.mergeable !== null) {
     if (pr.mergeable) {
       switch (pr.mergeable_state) {
-        case 'clean': return 'ready';
-        case 'unstable': return 'conflicts';
-        case 'dirty': return 'failing_checks';
-        default: return pr.mergeable_state;
+        case 'clean':
+          return 'ready';
+        case 'unstable':
+          return 'conflicts';
+        case 'dirty':
+          return 'failing_checks';
+        default:
+          return pr.mergeable_state;
       }
     } else {
       return 'blocked';

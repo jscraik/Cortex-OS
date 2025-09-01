@@ -6,8 +6,8 @@
  * @status TDD-DRIVEN
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { AICoreCapabilities, createAICapabilities, AI_PRESETS } from '../ai-capabilities.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { AI_PRESETS, type AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
 
 describe('🧠 AI Core Capabilities Integration Tests', () => {
   let aiCore: AICoreCapabilities;

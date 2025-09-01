@@ -1,4 +1,4 @@
-import { LLMBridge } from '../llm-bridge.js';
+import type { LLMBridge } from '../llm-bridge.js';
 import type { ExecutionContext } from '../orchestrator.js';
 
 export function createExecutionContext(llmBridge?: LLMBridge): ExecutionContext {

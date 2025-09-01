@@ -1,4 +1,4 @@
-import { trace, context, SpanStatusCode } from '@opentelemetry/api';
+import { context, SpanStatusCode, trace } from '@opentelemetry/api';
 
 export function withSpan<T>(name: string, f: () => Promise<T>) {
   const tracer = trace.getTracer('cortex-os');

@@ -6,8 +6,8 @@
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 import path, { join } from 'path';
+import type { Embedder } from '../index.js';
 import { buildQwen3EmbedScript } from './qwen3-script';
-import { type Embedder } from '../index.js';
 
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
@@ -33,7 +33,8 @@ export class Qwen3Embedder implements Embedder {
     this.modelPath = path.resolve(
       options.modelPath || path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`),
     );
-    this.cacheDir = options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
+    this.cacheDir =
+      options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
     this.maxTokens = options.maxTokens || 512;
     this.batchSize = options.batchSize || 32;
     this.useGPU = options.useGPU ?? false;

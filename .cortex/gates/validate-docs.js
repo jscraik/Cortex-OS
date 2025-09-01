@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 console.log('Validating documentation authority chain...');
@@ -13,11 +13,11 @@ let valid = true;
 
 for (const doc of requiredDocs) {
   const fullPath = join(repoRoot, doc);
-  if (!existsSync(fullPath)) {
+  if (existsSync(fullPath)) {
+    console.log(`✅ Found: ${doc}`);
+  } else {
     console.error(`❌ Required document missing: ${doc}`);
     valid = false;
-  } else {
-    console.log(`✅ Found: ${doc}`);
   }
 }
 

@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { createASBRServer, type ASBRServer } from '@/api/server.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { type ASBRServer, createASBRServer } from '@/api/server.js';
 
 describe('security headers', () => {
   let server: ASBRServer;
@@ -19,4 +19,3 @@ describe('security headers', () => {
     expect(res.headers['strict-transport-security']).toBeUndefined();
   });
 });
-

@@ -3,12 +3,12 @@
  * @description Command implementations for MCP marketplace integration (TDD)
  */
 
-import chalk from 'chalk';
-import { MarketplaceClient, type MarketplaceConfig } from './marketplace-client.js';
+import type { ClientType, ServerManifest } from '@cortex-os/mcp-marketplace';
 import { InstallCommandGenerator } from '@cortex-os/mcp-marketplace/install';
-import type { ServerManifest, ClientType } from '@cortex-os/mcp-marketplace';
+import chalk from 'chalk';
 import os from 'os';
 import path from 'path';
+import { MarketplaceClient, type MarketplaceConfig } from './marketplace-client.js';
 
 /**
  * Marketplace command options

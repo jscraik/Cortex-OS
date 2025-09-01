@@ -7,13 +7,13 @@
  */
 
 import { z } from 'zod';
-import type { Agent, ModelProvider, EventBus, MCPClient, GenerateOptions } from '../lib/types.js';
+import type { Agent, EventBus, GenerateOptions, MCPClient, ModelProvider } from '../lib/types.js';
 import {
+  estimateTokens,
   generateAgentId,
   generateTraceId,
-  estimateTokens,
-  withTimeout,
   sanitizeText,
+  withTimeout,
 } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
@@ -264,7 +264,7 @@ Format the response as JSON with the following structure:
  * Build system prompt based on framework and language
  */
 const buildSystemPrompt = (framework: string, language: string, testType: string): string => {
-  return `You are an expert test engineer specializing in ${framework} testing for ${language}. 
+  return `You are an expert test engineer specializing in ${framework} testing for ${language}.
 Your task is to generate high-quality ${testType} tests that follow best practices:
 
 1. Test Structure: Use proper ${framework} syntax and conventions

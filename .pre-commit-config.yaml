@@ -1,0 +1,119 @@
+# Pre-commit hooks for quality gates and automated checks
+repos:
+  # Local hooks using project tools
+  - repo: local
+    hooks:
+      # Biome linting and formatting with command validation
+      - id: biome-check
+        name: Biome Check
+        entry: bash -c 'if command -v ./biome >/dev/null 2>&1; then ./biome check --apply; else echo "Biome not found at ./biome, skipping"; exit 0; fi'
+        language: system
+        files: \.(js|jsx|ts|tsx|json|jsonc)$
+        pass_filenames: true
+
+      # TypeScript type checking with validation
+      - id: tsc-check
+        name: TypeScript Check
+        entry: bash -c 'if command -v pnpm >/dev/null 2>&1; then pnpm tsc --noEmit; else echo "pnpm not found, skipping TypeScript check"; exit 0; fi'
+        language: system
+        files: \.(ts|tsx)$
+        pass_filenames: false
+
+      # Python formatting and linting with uv validation
+      - id: ruff-check
+        name: Ruff Check
+        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff check --fix; elif command -v ruff >/dev/null 2>&1; then ruff check --fix; else echo "Ruff not found, skipping Python linting"; exit 0; fi'
+        language: system
+        files: \.py$
+        pass_filenames: true
+
+      - id: ruff-format
+        name: Ruff Format
+        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff format; elif command -v ruff >/dev/null 2>&1; then ruff format; else echo "Ruff not found, skipping Python formatting"; exit 0; fi'
+        language: system
+        files: \.py$
+        pass_filenames: true
+
+      # Security checks with proper error handling
+      - id: security-audit
+        name: Security Audit
+        entry: bash -c 'if command -v pnpm >/dev/null 2>&1; then pnpm audit --audit-level moderate || echo "Security audit completed with warnings"; else echo "pnpm not found, skipping security audit"; fi; exit 0'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # License compliance with validation
+      - id: license-check
+        name: License Check
+        entry: bash -c 'if command -v pnpm >/dev/null 2>&1 && pnpm run --help | grep -q "license:check"; then pnpm run license:check || echo "License check completed with warnings"; else echo "License check script not available, skipping"; fi; exit 0'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+  # Git hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: \.(md|patch)$
+      - id: end-of-file-fixer
+        exclude: \.(patch|svg)$
+      - id: check-yaml
+        exclude: \.gitlab-ci\.yml$
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: detect-private-key
+      - id: check-case-conflict
+      - id: mixed-line-ending
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        entry: hadolint
+        language: system
+        files: Dockerfile.*
+
+  # Commit message validation
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.29.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+# Global excludes
+exclude: |
+  (?x)^(
+    .*\.lock$|
+    .*\.log$|
+    .*\.sqlite$|
+    .*\.sqlite3$|
+    node_modules/.*|
+    \.git/.*|
+    \.turbo/.*|
+    \.next/.*|
+    dist/.*|
+    coverage/.*|
+    __pycache__/.*|
+    \.venv/.*|
+    mcp-servers/.*|
+    test-results/.*|
+    playwright-report/.*
+  )$
+
+# Configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

@@ -36,14 +36,18 @@ export class SecureCommandExecutor {
   // Execute a command with strict validation
   static async executeCommand(
     command: string[],
-    timeout: number = this.DEFAULT_TIMEOUT,
+    timeout: number = SecureCommandExecutor.DEFAULT_TIMEOUT,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     // Check concurrent process limit
-    if (this.concurrentProcesses >= this.MAX_CONCURRENT_PROCESSES) {
-      throw new Error(`Maximum concurrent processes (${this.MAX_CONCURRENT_PROCESSES}) reached`);
+    if (
+      SecureCommandExecutor.concurrentProcesses >= SecureCommandExecutor.MAX_CONCURRENT_PROCESSES
+    ) {
+      throw new Error(
+        `Maximum concurrent processes (${SecureCommandExecutor.MAX_CONCURRENT_PROCESSES}) reached`,
+      );
     }
 
-    this.concurrentProcesses++;
+    SecureCommandExecutor.concurrentProcesses++;
 
     try {
       // Validate the command
@@ -56,12 +60,12 @@ export class SecureCommandExecutor {
       }
 
       // Check if command is whitelisted
-      if (!this.ALLOWED_COMMANDS.has(command[0])) {
+      if (!SecureCommandExecutor.ALLOWED_COMMANDS.has(command[0])) {
         throw new Error(`Command ${command[0]} is not allowed`);
       }
 
       // Sanitize command parameters
-      const sanitizedCommand = this.sanitizeCommand(command);
+      const sanitizedCommand = SecureCommandExecutor.sanitizeCommand(command);
 
       // Spawn the process with strict security settings
       const child = spawn(sanitizedCommand[0], sanitizedCommand.slice(1), {
@@ -83,7 +87,7 @@ export class SecureCommandExecutor {
 
       child.stdout?.on('data', (data) => {
         // Limit stdout size
-        if (stdout.length + data.length > this.DEFAULT_MEMORY_LIMIT) {
+        if (stdout.length + data.length > SecureCommandExecutor.DEFAULT_MEMORY_LIMIT) {
           child.kill('SIGTERM');
           throw new Error('Output exceeded memory limit');
         }
@@ -92,7 +96,7 @@ export class SecureCommandExecutor {
 
       child.stderr?.on('data', (data) => {
         // Limit stderr size
-        if (stderr.length + data.length > this.DEFAULT_MEMORY_LIMIT) {
+        if (stderr.length + data.length > SecureCommandExecutor.DEFAULT_MEMORY_LIMIT) {
           child.kill('SIGTERM');
           throw new Error('Error output exceeded memory limit');
         }
@@ -104,7 +108,7 @@ export class SecureCommandExecutor {
 
         child.on('close', (code) => {
           clearTimeout(timeoutId);
-          this.concurrentProcesses--;
+          SecureCommandExecutor.concurrentProcesses--;
           resolve({
             stdout: stdout,
             stderr: stderr,
@@ -114,19 +118,19 @@ export class SecureCommandExecutor {
 
         child.on('error', (error) => {
           clearTimeout(timeoutId);
-          this.concurrentProcesses--;
+          SecureCommandExecutor.concurrentProcesses--;
           reject(new Error(`Command execution failed: ${error.message}`));
         });
 
         // Handle timeout
         timeoutId = setTimeout(() => {
           child.kill('SIGTERM');
-          this.concurrentProcesses--;
+          SecureCommandExecutor.concurrentProcesses--;
           reject(new Error(`Command timed out after ${timeout}ms`));
         }, timeout);
       });
     } catch (error) {
-      this.concurrentProcesses--;
+      SecureCommandExecutor.concurrentProcesses--;
       throw error;
     }
   }
@@ -143,10 +147,10 @@ export class SecureCommandExecutor {
   static async executeDockerCommand(
     subcommand: string,
     args: string[] = [],
-    timeout: number = this.DEFAULT_TIMEOUT,
+    timeout: number = SecureCommandExecutor.DEFAULT_TIMEOUT,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     // Validate subcommand
-    if (!this.ALLOWED_DOCKER_SUBCOMMANDS.has(subcommand)) {
+    if (!SecureCommandExecutor.ALLOWED_DOCKER_SUBCOMMANDS.has(subcommand)) {
       throw new Error(`Docker subcommand ${subcommand} is not allowed`);
     }
 
@@ -171,28 +175,28 @@ export class SecureCommandExecutor {
     const command = ['docker', subcommand, ...args];
 
     // Execute with security wrapper
-    return this.executeCommand(command, timeout);
+    return SecureCommandExecutor.executeCommand(command, timeout);
   }
 
   // Get current process statistics
   static getProcessStats() {
     return {
-      concurrentProcesses: this.concurrentProcesses,
-      maxConcurrentProcesses: this.MAX_CONCURRENT_PROCESSES,
+      concurrentProcesses: SecureCommandExecutor.concurrentProcesses,
+      maxConcurrentProcesses: SecureCommandExecutor.MAX_CONCURRENT_PROCESSES,
     };
   }
 
   // Execute a command with output sanitization
   static async executeCommandWithSanitization(
     command: string[],
-    timeout: number = this.DEFAULT_TIMEOUT,
+    timeout: number = SecureCommandExecutor.DEFAULT_TIMEOUT,
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-    const result = await this.executeCommand(command, timeout);
+    const result = await SecureCommandExecutor.executeCommand(command, timeout);
 
     // Sanitize output to prevent XSS or other injection
     return {
-      stdout: this.sanitizeOutput(result.stdout),
-      stderr: this.sanitizeOutput(result.stderr),
+      stdout: SecureCommandExecutor.sanitizeOutput(result.stdout),
+      stderr: SecureCommandExecutor.sanitizeOutput(result.stderr),
       exitCode: result.exitCode,
     };
   }

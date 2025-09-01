@@ -73,7 +73,7 @@ export default defineConfig({
         // eslint-disable-next-line no-console
         console.warn(
           '[vitest.config] Missing project configs:',
-          missing.map((m) => path.relative(process.cwd(), m)),
+          missing.map((m) => path.relative(process.cwd(), m))
         );
       }
       return existing.map((abs) => path.relative(process.cwd(), abs));

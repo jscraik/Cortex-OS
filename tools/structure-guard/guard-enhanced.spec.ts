@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import micromatch from 'micromatch';
 import { readFileSync } from 'node:fs';
 import { globby } from 'globby';
+import micromatch from 'micromatch';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
 // Mock file system
@@ -223,7 +223,7 @@ describe('enhanced structure guard', () => {
     });
 
     const policy = policySchema.parse(
-      JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8')),
+      JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'))
     );
 
     it('allows and denies paths', () => {
@@ -281,17 +281,17 @@ describe('enhanced structure guard', () => {
 
       expect(micromatch.isMatch('packages/memories/src/index.ts', complexPatterns)).toBe(true);
       expect(
-        micromatch.isMatch('packages/memories/node_modules/pkg/index.js', complexPatterns),
+        micromatch.isMatch('packages/memories/node_modules/pkg/index.js', complexPatterns)
       ).toBe(false);
       expect(
-        micromatch.isMatch('apps/cortex-os/packages/agents/src/index.ts', complexPatterns),
+        micromatch.isMatch('apps/cortex-os/packages/agents/src/index.ts', complexPatterns)
       ).toBe(true);
     });
 
     it('handles deeply nested structures', () => {
       const deepPattern = 'packages/memories/src/**/deeply/nested/**/*.ts';
       expect(
-        micromatch.isMatch('packages/memories/src/utils/deeply/nested/file.ts', deepPattern),
+        micromatch.isMatch('packages/memories/src/utils/deeply/nested/file.ts', deepPattern)
       ).toBe(true);
       expect(micromatch.isMatch('packages/memories/src/shallow.ts', deepPattern)).toBe(false);
     });

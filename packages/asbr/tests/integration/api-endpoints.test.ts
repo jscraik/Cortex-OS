@@ -10,7 +10,7 @@
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
-import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
+import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
 import type { Profile, TaskInput } from '../../src/types/index.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 

@@ -1,15 +1,15 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { getCurrentTraceContext } from './trace-context-manager';
 import {
-  OutboxMessageStatus,
-  type OutboxMessage,
   type OutboxConfig,
+  type OutboxMessage,
+  OutboxMessageStatus,
   type OutboxProcessingResult,
-  type OutboxRepository,
-  type OutboxPublisher,
   type OutboxProcessor,
+  type OutboxPublisher,
+  type OutboxRepository,
 } from '../../a2a-contracts/src/outbox-types';
 import { createTraceParent } from '../../a2a-contracts/src/trace-context';
+import { getCurrentTraceContext } from './trace-context-manager';
 
 /**
  * Enhanced Transactional Outbox Pattern Implementation

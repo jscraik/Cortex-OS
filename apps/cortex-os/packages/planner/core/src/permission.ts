@@ -1,5 +1,5 @@
-import chalk from 'chalk';
 import { hasTty } from '@cortex-os/utils';
+import chalk from 'chalk';
 import { configManager } from './config.js';
 
 /**
@@ -74,7 +74,7 @@ export class PermissionEngine {
     ctx?: GuardContext,
   ): Promise<{ executed: boolean; result?: T }> {
     const logger = ctx?.logger || { info: console.log, warn: console.warn };
-    const mode = await this.getMode(ctx);
+    const mode = await PermissionEngine.getMode(ctx);
     if (mode === 'plan') {
       logger.warn(chalk.yellow(`PLAN MODE – would execute: ${description}`));
       return { executed: false };
@@ -97,7 +97,7 @@ export class PermissionEngine {
     ctx?: GuardContext,
   ): Promise<{ executed: boolean; result?: T }> {
     const logger = ctx?.logger || { info: console.log, warn: console.warn };
-    const mode = await this.getMode(ctx);
+    const mode = await PermissionEngine.getMode(ctx);
     if (mode === 'plan') {
       logger.warn(chalk.yellow('PLAN MODE – would write changes:'));
       logger.info(preview);

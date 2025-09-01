@@ -134,7 +134,9 @@ def execute_tool(
     except subprocess.TimeoutExpired as e:
         raise HTTPException(status_code=408, detail="Tool execution timeout") from e
     except FileNotFoundError as e:
-        raise HTTPException(status_code=500, detail="Requested tool not available") from e
+        raise HTTPException(
+            status_code=500, detail="Requested tool not available"
+        ) from e
     except Exception as e:
         logger.error(f"Tool execution error: {e}")
         raise HTTPException(status_code=500, detail=f"Processing error: {e!s}") from e

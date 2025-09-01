@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { createPRPOrchestrationEngine } from '../../src/lib/create-prp-orchestration-engine.js';
+import { describe, expect, it } from 'vitest';
 import { PRPOrchestrationEngine } from '../../packages/orchestration/src/prp-integration.js';
+import { createPRPOrchestrationEngine } from '../../src/lib/create-prp-orchestration-engine.js';
 
 describe('createPRPOrchestrationEngine', () => {
   it('returns a PRPOrchestrationEngine instance', () => {

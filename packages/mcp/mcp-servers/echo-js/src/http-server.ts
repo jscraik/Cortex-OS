@@ -1,6 +1,6 @@
 import http, { type Server } from 'node:http';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { handleRequest as handleStringRequest } from './server.ts';
 
 /**

@@ -3,8 +3,11 @@ import addFormats from 'ajv-formats';
 
 // Import schemas
 import agentCoordinationRequestedSchema from '../cloudevents/agent-coordination-requested.json' assert { type: 'json' };
+
 import agentTaskCompletedSchema from '../cloudevents/agent-task-completed.json' assert { type: 'json' };
+
 import agentTaskFailedSchema from '../cloudevents/agent-task-failed.json' assert { type: 'json' };
+
 import agentTaskRequestedSchema from '../cloudevents/agent-task-requested.json' assert { type: 'json' };
 
 // Test data

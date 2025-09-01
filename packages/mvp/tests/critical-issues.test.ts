@@ -8,12 +8,12 @@
  * @phase TDD-RED
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
-import { createInitialPRPState } from '../src/state.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 import { BuildNode } from '../src/nodes/build.js';
 import { EvaluationNode } from '../src/nodes/evaluation.js';
+import { createInitialPRPState } from '../src/state.js';
 
 describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
   describe('[Critical] Package Exports Validation', () => {

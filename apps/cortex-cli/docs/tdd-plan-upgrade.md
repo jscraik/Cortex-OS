@@ -7,6 +7,7 @@ Transform cortex-cli from a basic command-line tool into a comprehensive termina
 ## Repository Analysis & Golden Nuggets
 
 ### sst/opencode - Key Innovations to Adopt
+
 - **Comment-as-API pattern**: `/cortex` triggers in GitHub issues/PRs
 - **Client/Server architecture**: Enables multiple clients (terminal, mobile, web)
 - **Provider-agnostic design**: Support for OpenAI, Anthropic, Google, local models
@@ -14,6 +15,7 @@ Transform cortex-cli from a basic command-line tool into a comprehensive termina
 - **Stainless SDK generation**: Automated client SDK generation
 
 ### openai/codex - Current TUI Technology
+
 - **Ratatui 0.29.0**: Most current TUI framework with advanced features
 - **MCP Protocol support**: First-class Model Context Protocol integration
 - **AGENTS.md memory**: Persistent agent memory system
@@ -22,6 +24,7 @@ Transform cortex-cli from a basic command-line tool into a comprehensive termina
 - **Rust performance**: 97% Rust for maximum speed
 
 ### GitHub Models REST API - Opportunities
+
 - **Free tier**: No API key required for basic usage
 - **OpenAI-compatible**: Drop-in replacement
 - **Actions integration**: `models: read` permission enables workflows
@@ -92,27 +95,27 @@ trait ConfigWriter {
 mod chat_widget_tests {
     use super::*;
     use insta::assert_snapshot;
-    
+
     #[test]
     fn test_chat_renders_messages() {
         // Given
         let mut chat = ChatWidget::new();
         chat.add_message(Message::user("Hello"));
         chat.add_message(Message::assistant("Hi there!"));
-        
+
         // When
         let mut terminal = TestTerminal::new(80, 24);
         terminal.draw(|f| chat.render(f, f.area())).unwrap();
-        
+
         // Then
         assert_snapshot!(terminal.backend().buffer());
     }
-    
+
     #[test]
     fn test_wcag_keyboard_navigation() {
         // Given
         let mut chat = ChatWidget::new();
-        
+
         // When/Then - Tab cycles through focusable elements
         assert_eq!(chat.focused_element(), FocusElement::Input);
         chat.handle_event(Event::Key(KeyCode::Tab)).unwrap();
@@ -131,12 +134,12 @@ async fn test_github_models_streaming() {
             w.write_all(b"data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n")
         })
         .create();
-    
+
     let provider = GitHubModelsProvider::new();
-    
+
     // When
     let response = provider.stream("Hi").await.unwrap();
-    
+
     // Then
     assert_eq!(response.collect().await, "Hello");
 }
@@ -146,10 +149,10 @@ async fn test_github_models_streaming() {
 fn test_ci_mode_with_approval_gates() {
     // Given
     let app = CortexApp::new();
-    
+
     // When
     let result = app.run_ci("--prompt 'explain code' --require-approval");
-    
+
     // Then
     assert_eq!(result.exit_code, 0);
     assert!(result.output.contains("Waiting for approval"));
@@ -161,6 +164,7 @@ fn test_ci_mode_with_approval_gates() {
 ### Phase 1: Foundation & TUI Core (Week 1-2)
 
 #### 1.1 Project Setup
+
 ```bash
 # Create Rust TUI project
 apps/cortex-tui/
@@ -195,6 +199,7 @@ apps/cortex-tui/
 ```
 
 #### 1.2 Dependencies (Matching Codex)
+
 ```toml
 [package]
 name = "cortex-tui"
@@ -235,6 +240,7 @@ tempfile = "3"
 ```
 
 #### 1.3 Configuration System
+
 ```toml
 # ~/.cortex/config.toml
 [provider]
@@ -267,6 +273,7 @@ highlight_syntax = true
 ### Phase 2: Provider Integration (Week 3)
 
 #### 2.1 GitHub Models Client
+
 ```rust
 // src/providers/github.rs
 pub struct GitHubModelsProvider {
@@ -283,7 +290,7 @@ impl GitHubModelsProvider {
             })
             .build()
             .unwrap();
-        
+
         Self { client, config: GitHubConfig::from_env() }
     }
 }
@@ -304,7 +311,7 @@ impl ModelProvider for GitHubModelsProvider {
             }))
             .send()
             .await?;
-        
+
         // Parse response
         Ok(response.json::<CompletionResponse>().await?.content)
     }
@@ -312,6 +319,7 @@ impl ModelProvider for GitHubModelsProvider {
 ```
 
 #### 2.2 Provider Factory
+
 ```rust
 // src/providers/mod.rs
 pub fn create_provider(config: &Config) -> Box<dyn ModelProvider> {
@@ -328,6 +336,7 @@ pub fn create_provider(config: &Config) -> Box<dyn ModelProvider> {
 ### Phase 3: GitHub Actions Integration (Week 4)
 
 #### 3.1 Comment Dispatcher Workflow
+
 ```yaml
 # .github/workflows/cortex-agent.yml
 name: Cortex Agent
@@ -339,7 +348,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
-  models: read  # Required for GitHub Models
+  models: read # Required for GitHub Models
 
 jobs:
   dispatch:
@@ -347,18 +356,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Cortex
         run: |
           curl -L https://github.com/${{ github.repository }}/releases/latest/download/cortex-linux-x64 -o cortex
           chmod +x cortex
-          
+
       - name: Parse Command
         id: parse
         run: |
           COMMAND=$(echo "${{ github.event.comment.body }}" | sed 's|/cortex ||')
           echo "command=$COMMAND" >> $GITHUB_OUTPUT
-          
+
       - name: Run Cortex Agent
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -367,14 +376,14 @@ jobs:
           ./cortex run --ci \
             --prompt "${{ steps.parse.outputs.command }}" \
             --output response.json
-            
+
       - name: Post Response
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const response = JSON.parse(fs.readFileSync('response.json'));
-            
+
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: context.issue.number,
@@ -383,6 +392,7 @@ jobs:
 ```
 
 #### 3.2 PR Review Automation
+
 ```yaml
 # .github/workflows/cortex-review.yml
 name: Cortex PR Review
@@ -401,11 +411,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Get PR Diff
         run: |
           git diff origin/${{ github.base_ref }}..HEAD > pr.diff
-          
+
       - name: Run Cortex Review
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -413,7 +423,7 @@ jobs:
           ./cortex review \
             --diff pr.diff \
             --output review.md
-            
+
       - name: Post Review
         uses: actions/github-script@v7
         with:
@@ -430,6 +440,7 @@ jobs:
 ### Phase 4: MCP & Memory Enhancement (Week 5)
 
 #### 4.1 MCP Server Management
+
 ```rust
 // src/mcp/manager.rs
 pub struct McpManager {
@@ -443,7 +454,7 @@ impl McpManager {
         self.servers.insert(name.to_string(), server);
         Ok(())
     }
-    
+
     pub async fn list_tools(&self) -> Vec<Tool> {
         self.servers.values()
             .flat_map(|s| s.tools())
@@ -453,6 +464,7 @@ impl McpManager {
 ```
 
 #### 4.2 Agent Memory System
+
 ```rust
 // src/memory/mod.rs
 pub struct AgentMemory {
@@ -465,11 +477,11 @@ impl AgentMemory {
     pub fn add_entry(&mut self, entry: MemoryEntry) -> Result<()> {
         // Validate with Zod-like schema
         self.schema.validate(&entry)?;
-        
+
         // Add audit trail
         let audited = entry.with_audit(Audit::new());
         self.entries.push(audited);
-        
+
         // Persist to AGENTS.md
         self.save()?;
         Ok(())
@@ -480,6 +492,7 @@ impl AgentMemory {
 ### Phase 5: Client/Server Architecture (Week 6)
 
 #### 5.1 Daemon Service
+
 ```rust
 // src/server/daemon.rs
 pub struct CortexDaemon {
@@ -493,18 +506,19 @@ impl CortexDaemon {
             .route("/complete", post(handle_completion))
             .route("/ws", get(websocket_handler))
             .with_state(self.state.clone());
-            
+
         let addr = SocketAddr::from(([127, 0, 0, 1], port));
         axum::Server::bind(&addr)
             .serve(app.into_make_service())
             .await?;
-        
+
         Ok(())
     }
 }
 ```
 
 #### 5.2 REST API
+
 ```rust
 // src/server/api.rs
 async fn handle_completion(
@@ -520,6 +534,7 @@ async fn handle_completion(
 ## Testing Strategy
 
 ### 1. Test Pyramid
+
 ```
          /\
         /  \  E2E Tests (10%)
@@ -531,6 +546,7 @@ async fn handle_completion(
 ```
 
 ### 2. Test Commands
+
 ```bash
 # Unit tests
 cargo test --lib
@@ -555,6 +571,7 @@ cargo clippy -- -D warnings
 ```
 
 ### 3. CI Pipeline
+
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -566,10 +583,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      
+
       - name: Run tests
         run: cargo test --all-features
-        
+
       - name: Check coverage
         run: |
           cargo tarpaulin --out Xml
@@ -577,10 +594,10 @@ jobs:
             echo "Coverage below 90%"
             exit 1
           fi
-          
+
       - name: Security audit
         run: cargo audit
-        
+
       - name: Clippy
         run: cargo clippy -- -D warnings
 ```
@@ -588,12 +605,14 @@ jobs:
 ## Migration Strategy
 
 ### Option A: Gradual Migration (Recommended)
+
 1. **Phase 1**: Keep TypeScript CLI, add Rust TUI as separate binary
 2. **Phase 2**: Share configuration via TOML
 3. **Phase 3**: Migrate commands one by one to Rust
 4. **Phase 4**: Deprecate TypeScript, single Rust binary
 
 ### Option B: Parallel Development
+
 1. Maintain TypeScript for existing users
 2. Develop Rust version as `cortex-v2`
 3. Feature parity, then switch
@@ -609,30 +628,31 @@ jobs:
 
 ## Key Differentiators
 
-| Feature | OpenCode | Codex | Cortex-CLI v2 |
-|---------|----------|-------|---------------|
-| TUI Technology | Go+TS | Ratatui 0.29 | Ratatui 0.29 |
-| ASBR Integration | ❌ | ❌ | ✅ |
-| A2A Protocol | ❌ | ❌ | ✅ |
-| Governance Layer | ❌ | ❌ | ✅ |
-| GitHub Models | ❌ | ❌ | ✅ |
-| MCP Marketplace | ❌ | Partial | ✅ |
-| TDD from Start | ❌ | ❌ | ✅ |
-| SOLID Architecture | Partial | Partial | ✅ |
+| Feature            | OpenCode | Codex        | Cortex-CLI v2 |
+| ------------------ | -------- | ------------ | ------------- |
+| TUI Technology     | Go+TS    | Ratatui 0.29 | Ratatui 0.29  |
+| ASBR Integration   | ❌       | ❌           | ✅            |
+| A2A Protocol       | ❌       | ❌           | ✅            |
+| Governance Layer   | ❌       | ❌           | ✅            |
+| GitHub Models      | ❌       | ❌           | ✅            |
+| MCP Marketplace    | ❌       | Partial      | ✅            |
+| TDD from Start     | ❌       | ❌           | ✅            |
+| SOLID Architecture | Partial  | Partial      | ✅            |
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| Rust learning curve | Start with TypeScript bridge, gradual migration |
-| Provider API changes | Abstraction layer with versioned adapters |
-| TUI complexity | Use Codex's proven Ratatui patterns |
-| Performance issues | Benchmark from day 1, profile regularly |
+| Risk                     | Mitigation                                      |
+| ------------------------ | ----------------------------------------------- |
+| Rust learning curve      | Start with TypeScript bridge, gradual migration |
+| Provider API changes     | Abstraction layer with versioned adapters       |
+| TUI complexity           | Use Codex's proven Ratatui patterns             |
+| Performance issues       | Benchmark from day 1, profile regularly         |
 | Security vulnerabilities | Automated auditing, sandboxing, least privilege |
 
 ## Conclusion
 
 This comprehensive plan combines:
+
 - **Best of OpenCode**: Provider-agnostic, GitHub integration, client/server
 - **Best of Codex**: Ratatui 0.29 TUI, MCP support, Rust performance
 - **Cortex-OS Unique**: ASBR runtime, A2A protocol, governance layer
@@ -655,6 +675,7 @@ The phased approach ensures rapid delivery while maintaining quality through str
 ## Implementation Checklist
 
 ### Phase 1: Foundation
+
 - [ ] Create Rust project structure in `apps/cortex-tui/`
 - [ ] Add Ratatui 0.29.0 with exact Codex dependencies
 - [ ] Write config system tests (RED)
@@ -665,6 +686,7 @@ The phased approach ensures rapid delivery while maintaining quality through str
 - [ ] Implement basic TUI setup (GREEN)
 
 ### Phase 2: TUI Components
+
 - [ ] Write ChatWidget tests with snapshots (RED)
 - [ ] Implement ChatWidget with scrolling (GREEN)
 - [ ] Write keyboard navigation tests (RED)
@@ -673,6 +695,7 @@ The phased approach ensures rapid delivery while maintaining quality through str
 - [ ] Implement DiffViewer with syntax highlighting (GREEN)
 
 ### Phase 3: Provider Integration
+
 - [ ] Write GitHub Models API tests with mocks (RED)
 - [ ] Implement GitHub Models REST client (GREEN)
 - [ ] Write streaming tests (RED)
@@ -681,14 +704,16 @@ The phased approach ensures rapid delivery while maintaining quality through str
 - [ ] Implement fallback mechanism (GREEN)
 
 ### Phase 4: GitHub Integration
+
 - [ ] Create cortex-agent.yml workflow
-- [ ] Create cortex-review.yml workflow  
+- [ ] Create cortex-review.yml workflow
 - [ ] Write CI mode tests (RED)
 - [ ] Implement `cortex run --ci` (GREEN)
 - [ ] Write approval gate tests (RED)
 - [ ] Implement approval via PR comments (GREEN)
 
 ### Phase 5: MCP & Memory
+
 - [ ] Write MCP manager tests (RED)
 - [ ] Implement MCP server management (GREEN)
 - [ ] Write agent memory tests (RED)
@@ -697,6 +722,7 @@ The phased approach ensures rapid delivery while maintaining quality through str
 - [ ] Implement memory audit system (GREEN)
 
 ### Phase 6: Client/Server
+
 - [ ] Write daemon service tests (RED)
 - [ ] Implement REST API server (GREEN)
 - [ ] Write WebSocket tests (RED)

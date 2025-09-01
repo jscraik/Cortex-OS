@@ -12,7 +12,16 @@ async function main() {
   const tags = (process.env.PACT_TAGS || 'main').split(',');
   const consumerVersion = process.env.GIT_SHA || process.env.GITHUB_SHA || `dev-${Date.now()}`;
   const pactDir = path.resolve(__dirname, '..', 'pacts');
-  console.log('[pact] Publishing from', pactDir, 'to', broker, 'version', consumerVersion, 'tags', tags);
+  console.log(
+    '[pact] Publishing from',
+    pactDir,
+    'to',
+    broker,
+    'version',
+    consumerVersion,
+    'tags',
+    tags
+  );
   await publishPacts({
     pactFilesOrDirs: [pactDir],
     pactBroker: broker,

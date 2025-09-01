@@ -12,7 +12,7 @@
 import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { EventEmitter } from 'events';
 import pino from 'pino';
-import {
+import type {
   AgentMetrics,
   AgentTrace,
   AnalyticsConfig,

@@ -4,20 +4,20 @@
  */
 
 import {
-  GateValidator,
-  ValidationResult,
-  CompilationResult,
-  TestResult,
-} from '../lib/validation-types.js';
-import { PRPState } from '../state.js';
-import {
+  createFilePath,
   execAsync,
   fileExists,
-  readJsonFile,
   getProjectRoot,
-  createFilePath,
+  readJsonFile,
   truncateString,
 } from '../lib/utils.js';
+import type {
+  CompilationResult,
+  GateValidator,
+  TestResult,
+  ValidationResult,
+} from '../lib/validation-types.js';
+import type { PRPState } from '../state.js';
 
 export class BackendValidator implements GateValidator {
   async validate(state: PRPState): Promise<ValidationResult> {

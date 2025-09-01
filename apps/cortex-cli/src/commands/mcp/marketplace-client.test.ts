@@ -3,13 +3,13 @@
  * @description TDD tests for MCP marketplace client
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MarketplaceClient, type MarketplaceConfig } from './marketplace-client.js';
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
 import type { RegistryIndex, ServerManifest } from '@cortex-os/mcp-marketplace';
+import { existsSync } from 'fs';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import os from 'os';
 import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarketplaceClient, type MarketplaceConfig } from './marketplace-client.js';
 
 // Mock filesystem operations
 vi.mock('fs/promises');

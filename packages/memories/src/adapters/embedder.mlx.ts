@@ -101,7 +101,7 @@ export class MLXEmbedder implements Embedder {
     // Use centralized Python runner to handle PYTHONPATH and env merging
     const pythonScriptPath = path.join(__dirname, 'mlx-embedder.py');
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+    // @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
     const { runPython } = await import('../../../../libs/python/exec.js');
 
     const run = () =>

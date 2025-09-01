@@ -158,7 +158,7 @@ ${testResults
     (result) =>
       `| ${result.category} | ${result.description} | ${
         result.success ? '✅ PASS' : result.required ? '❌ FAIL' : '⚠️  WARN'
-      } | ${result.duration} |`,
+      } | ${result.duration} |`
   )
   .join('\n')}
 
@@ -172,7 +172,7 @@ ${testResults
 - **Status:** ${result.success ? '✅ PASS' : result.required ? '❌ FAIL' : '⚠️  WARN'}
 - **Duration:** ${result.duration} ms
 ${!result.success && result.errorMessage ? `- **Error:** ${result.errorMessage}` : ''}
-`,
+`
   )
   .join('\n')}
 

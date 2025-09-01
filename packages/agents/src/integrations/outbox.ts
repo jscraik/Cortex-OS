@@ -1,6 +1,5 @@
-import type { EventBus } from '../lib/types.js';
-import type { MemoryStore } from '../lib/types.js';
 import { randomUUID } from 'crypto';
+import type { EventBus, MemoryStore } from '../lib/types.js';
 import { redactPII } from '../lib/utils.js';
 
 const DEFAULT_TYPES = [

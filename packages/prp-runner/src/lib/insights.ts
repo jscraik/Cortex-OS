@@ -82,4 +82,3 @@ export function generateFallbackInsights(
 
 export const isEmptyAnswer = (answer: string) => !answer || answer.trim() === '';
 export const isInvalidSummary = (summary: string) => summary.length < 10;
-

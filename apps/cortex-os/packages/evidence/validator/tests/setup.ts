@@ -3,9 +3,9 @@
  * @description Test setup for evidence validator
  */
 
-import { beforeAll, afterAll } from 'vitest';
-import { mkdir, writeFile, rm } from 'fs/promises';
+import { mkdir, rm, writeFile } from 'fs/promises';
 import path from 'path';
+import { afterAll, beforeAll } from 'vitest';
 
 const TEST_DATA_DIR = path.join(__dirname, 'test-data');
 

@@ -14,7 +14,7 @@ export async function generateEmbedding(
   const scriptPath = path.resolve(__dirname, 'embed_mlx.py');
   // Use centralized Python runner for consistent PYTHONPATH/env handling
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  // @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
   const { runPython } = await import('../../../libs/python/exec.js');
 
   const run = runPython.bind(null, scriptPath, [JSON.stringify(arr)], {

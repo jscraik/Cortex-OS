@@ -9,7 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
-import { SpanContext } from '@opentelemetry/api';
+import type { SpanContext } from '@opentelemetry/api';
 
 /**
  * Core agent metrics interface

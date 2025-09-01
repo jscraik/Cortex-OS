@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('MVP-Core Boundary Contract', () => {
   it('should successfully import env loader from mvp-core public API', async () => {

@@ -1,6 +1,7 @@
 import { createRateLimiter } from '@cortex-os/a2a-common';
 import express from 'express';
-import { Schema, schemaForSchema } from './schemas';
+import { type Schema, schemaForSchema } from './schemas';
+
 function isValidVersion(version: string): boolean {
   return /^\d+\.\d+\.\d+$/.test(version);
 }

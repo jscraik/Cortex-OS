@@ -7,7 +7,7 @@ async function addGeminiCli() {
       {
         frontend: 'cortex',
         autoApprove: true,
-      },
+      }
     );
     console.log('Gemini CLI Installation Result:', JSON.stringify(result, null, 2));
   } catch (error) {

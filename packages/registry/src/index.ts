@@ -1,11 +1,11 @@
+import type { ValidateFunction } from 'ajv';
+import Ajv from 'ajv/dist/2020';
+import addFormats from 'ajv-formats';
 import cors from 'cors';
-import express, { Application } from 'express';
+import express, { type Application } from 'express';
 import * as fs from 'fs/promises';
 import helmet from 'helmet';
 import * as path from 'path';
-import Ajv from 'ajv/dist/2020';
-import addFormats from 'ajv-formats';
-import type { ValidateFunction } from 'ajv';
 
 interface SchemaRegistryOptions {
   port?: number;

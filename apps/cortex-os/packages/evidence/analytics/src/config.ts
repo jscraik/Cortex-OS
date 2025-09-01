@@ -9,7 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
-import { AnalyticsConfig } from './types.js';
+import type { AnalyticsConfig } from './types.js';
 
 /**
  * Default analytics configuration

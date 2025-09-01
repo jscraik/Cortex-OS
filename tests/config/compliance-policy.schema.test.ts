@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { compliancePolicySchema } from '../../schemas/compliance-policy.schema';
 
 describe('compliance.policy.json', () => {

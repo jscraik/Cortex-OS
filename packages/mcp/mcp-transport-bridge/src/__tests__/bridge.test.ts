@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { McpBridge } from '../bridge';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { BridgeConfig } from '../bridge';
+import { McpBridge } from '../bridge';
 
 // Mock the SDK and transports
 const mockClient = {

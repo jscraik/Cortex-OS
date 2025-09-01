@@ -19,10 +19,10 @@
 
 import { describe, expect, it } from 'vitest';
 import { CortexKernel } from '../src/graph-simple.js';
-import { createInitialPRPState, type PRPState } from '../src/state.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 import { BuildNode } from '../src/nodes/build.js';
 import { EvaluationNode } from '../src/nodes/evaluation.js';
+import { createInitialPRPState, type PRPState } from '../src/state.js';
 
 describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
   describe('[Critical] Package Exports Validation', () => {

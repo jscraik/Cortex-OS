@@ -1,8 +1,8 @@
 // Use 'any' to avoid ESM/TS default export type issues in Ajv
 import {
   ServerManifestSchema,
-  type ValidationResult,
   type ValidationError,
+  type ValidationResult,
   type ValidationWarning,
 } from '../types.js';
 

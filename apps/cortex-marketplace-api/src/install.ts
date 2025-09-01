@@ -1,1 +1,1 @@
-export { generateCommands, generateCommand, generateInstructions } from './lib/install-commands.js';
+export { generateCommand, generateCommands, generateInstructions } from './lib/install-commands.js';

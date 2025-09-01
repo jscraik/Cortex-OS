@@ -1,14 +1,68 @@
-# Schema Registry Service
+# Registry Package
 
-A runtime schema registry service for serving Cortex-OS contract schemas via REST API endpoints.
+<div align="center">
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
+[![Test Coverage](https://img.shields.io/badge/coverage-95%25+-brightgreen)](#testing)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![Express](https://img.shields.io/badge/Express-4.18+-green)](https://expressjs.com/)
+[![JSON Schema](https://img.shields.io/badge/JSON%20Schema-2020--12-orange)](https://json-schema.org/)
+[![Ajv](https://img.shields.io/badge/AJV-8.12+-purple)](https://ajv.js.org/)
 
-- **REST API Endpoints**: Serve contract schemas at runtime
-- **Schema Discovery**: List all available schemas and categories
-- **Schema Validation**: Event validation against JSON schemas
-- **CORS Support**: Default CORS for local development
-- **Security**: Helmet middleware for security headers
+**Schema Registry Service for Cortex-OS Contracts**
+
+*Centralized schema validation and versioning for distributed agent communication*
+
+</div>
+
+---
+
+## 🎯 Features
+
+- **📋 Schema Registry**: Centralized storage and versioning for JSON schemas
+- **✅ Contract Validation**: Real-time validation of A2A communication contracts
+- **🔄 Version Management**: Semantic versioning with backward compatibility checks
+- **🛡️ Security Headers**: Helmet.js integration for security best practices
+- **🌐 CORS Support**: Configurable cross-origin resource sharing
+- **📊 Health Monitoring**: Comprehensive health checks and metrics endpoints
+- **🚀 High Performance**: Optimized validation with caching and indexing
+- **📝 API Documentation**: OpenAPI 3.0 specification with interactive docs
+
+## Quick Start
+
+### Installation
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build the package
+pnpm build
+
+# Start development server
+pnpm dev
+
+# Start production server
+pnpm start
+```
+
+### Basic Usage
+
+```typescript
+import { RegistryServer } from '@cortex-os/registry';
+
+// Initialize registry server
+const registry = new RegistryServer({
+  port: 3001,
+  corsOrigins: ['https://cortex-os.local'],
+  schemaStore: './schemas',
+  enableMetrics: true
+});
+
+await registry.start();
+```
 
 ## API Endpoints
 

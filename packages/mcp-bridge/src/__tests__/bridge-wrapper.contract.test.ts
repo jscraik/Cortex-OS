@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // Minimal wrapper smoke test: ensure the wrapper module is loadable
 // and exposes some exports (delegated to @cortex-os/mcp/bridge).
@@ -9,4 +9,3 @@ describe('@cortex-os/mcp-bridge wrapper', () => {
     expect(Object.keys(bridge).length).toBeGreaterThan(0);
   });
 });
-

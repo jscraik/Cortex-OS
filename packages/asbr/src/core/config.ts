@@ -6,13 +6,13 @@
 import { readFile, writeFile } from 'fs/promises';
 import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import {
-  ConfigSchema,
-  ValidationError,
-  VersionPinsSchema,
   type Config,
+  ConfigSchema,
   type MCPAllowlistEntry,
   type SecurityPolicy,
+  ValidationError,
   type VersionPins,
+  VersionPinsSchema,
 } from '../types/index.js';
 import { getConfigPath, pathExists } from '../xdg/index.js';
 

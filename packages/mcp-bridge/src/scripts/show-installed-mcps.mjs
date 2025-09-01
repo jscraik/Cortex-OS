@@ -100,5 +100,5 @@ console.log('   - Gemini CLI');
 console.log('   - Any MCP-enabled frontend');
 
 console.log(
-  '\n📝 Note: Persistent storage integration is pending for full list/status functionality.',
+  '\n📝 Note: Persistent storage integration is pending for full list/status functionality.'
 );

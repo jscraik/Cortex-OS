@@ -3,11 +3,11 @@
  * @description TDD tests for governance policy validation
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import type { ServerManifest } from '@cortex-os/mcp-registry';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { ServerManifest } from '@cortex-os/mcp-registry';
 
 const GOVERNANCE_POLICY_PATH = path.join(__dirname, 'mcp-governance.json');
 
@@ -104,8 +104,8 @@ describe('MCP Governance Policy', () => {
       expect(policy.security.riskLevels.allowed).toBeInstanceOf(Array);
       expect(
         policy.security.riskLevels.allowed.every((level) =>
-          ['low', 'medium', 'high'].includes(level),
-        ),
+          ['low', 'medium', 'high'].includes(level)
+        )
       ).toBe(true);
     });
 
@@ -222,7 +222,7 @@ describe('MCP Governance Policy', () => {
       };
 
       const safeDangerous = dangerousServer.permissions.filter((perm) =>
-        policy.security.permissions.dangerous.includes(perm),
+        policy.security.permissions.dangerous.includes(perm)
       );
 
       expect(safeDangerous.length).toBeGreaterThan(0);
@@ -269,7 +269,7 @@ describe('MCP Governance Policy', () => {
 
       // Should not have conflicting entries
       const intersection = allowed.filter((url) =>
-        blocked.some((blocked) => url.includes(blocked)),
+        blocked.some((blocked) => url.includes(blocked))
       );
       expect(intersection.length).toBe(0);
 

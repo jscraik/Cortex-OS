@@ -1,6 +1,6 @@
-import { describe, it } from 'vitest';
 import fc from 'fast-check';
-import { ok, err, wrap } from '../src/result.js';
+import { describe, it } from 'vitest';
+import { err, ok, wrap } from '../src/result.js';
 
 describe('result property tests', () => {
   it('ok returns value', () => {

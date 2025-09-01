@@ -1,5 +1,5 @@
-import type { Embedder } from '../ports/Embedder.js';
 import axios from 'axios';
+import type { Embedder } from '../ports/Embedder.js';
 
 const DEFAULT_OLLAMA_MODEL = 'nomic-embed-text';
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';

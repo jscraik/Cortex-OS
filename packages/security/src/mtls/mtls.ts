@@ -3,10 +3,10 @@
  * @description Mutual TLS implementation for secure service-to-service communication
  */
 
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import * as tls from 'tls';
-import { withSpan, logWithSpan } from '@cortex-os/telemetry';
-import { MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
-import { loadCertificates, createClientSocket } from './helpers.ts';
+import { type MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
+import { createClientSocket, loadCertificates } from './helpers.ts';
 
 /**
  * mTLS Client for secure service-to-service communication

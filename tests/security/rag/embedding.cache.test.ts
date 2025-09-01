@@ -1,4 +1,4 @@
-import { type Embeddings } from '@cortex-os/rag-embed/provider';
+import type { Embeddings } from '@cortex-os/rag-embed/provider';
 import { expect, it } from 'vitest';
 
 class CountingEmbedder implements Embeddings {

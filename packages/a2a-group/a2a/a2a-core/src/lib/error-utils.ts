@@ -3,7 +3,7 @@
  * Provides consistent error handling patterns and guard clauses
  */
 
-import { z } from 'zod';
+import type { z } from 'zod';
 import { createJsonRpcError, JSON_RPC_ERROR_CODES } from './json-rpc-utils';
 
 /**

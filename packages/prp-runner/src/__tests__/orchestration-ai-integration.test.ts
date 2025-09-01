@@ -6,11 +6,11 @@
  * @status TDD-DRIVEN
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
-import { ASBRAIIntegration, createASBRAIIntegration } from '../asbr-ai-integration.js';
-import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
+import { type ASBRAIIntegration, createASBRAIIntegration } from '../asbr-ai-integration.js';
 import { createNeuronRegistry } from '../neurons/index.js';
+import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 // Mock orchestration types to avoid external dependencies
 interface OrchestrationTask {

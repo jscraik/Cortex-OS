@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { PRPState, Evidence } from '../state.js';
+import type { Evidence, PRPState } from '../state.js';
 
 /**
  * Evaluation Phase Gates:

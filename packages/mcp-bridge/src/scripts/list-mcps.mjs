@@ -35,7 +35,7 @@ async function listAllMcpServers() {
       }
     } else {
       console.log(
-        '⚠️  Unable to retrieve server list. The storage system may not be fully implemented yet.',
+        '⚠️  Unable to retrieve server list. The storage system may not be fully implemented yet.'
       );
       console.log('\nBased on our recent installations, you should have:');
       console.log('1. semgrep - Code security scanning');

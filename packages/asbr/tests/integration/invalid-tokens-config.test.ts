@@ -3,13 +3,13 @@
  */
 // @vitest-environment node
 
-import { mkdtemp, writeFile, rm } from 'fs/promises';
+import { mkdtemp, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initializeASBR } from '../../src/index.js';
-import { getConfigPath, initializeXDG } from '../../src/xdg/index.js';
 import { ValidationError } from '../../src/types/index.js';
+import { getConfigPath, initializeXDG } from '../../src/xdg/index.js';
 
 describe('server initialization', () => {
   let tokensPath: string;

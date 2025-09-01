@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createKernel } from '../src/graph-simple.js';
 import { fixedTimestamp } from '../src/lib/determinism.js';
-import { PRPState } from '../src/state.js';
+import type { PRPState } from '../src/state.js';
 
 describe('Cortex Kernel Determinism', () => {
   let kernel: ReturnType<typeof createKernel>;

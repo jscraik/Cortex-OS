@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Qwen3Reranker } from '../src/pipeline/qwen3-reranker';
 
 describe('Qwen3Reranker external script', () => {

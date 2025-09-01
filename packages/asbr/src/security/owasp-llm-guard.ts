@@ -286,7 +286,7 @@ export class OWASPLLMGuard {
 
       // File paths that might contain sensitive data
       {
-        pattern: new RegExp('^/(?:home|users)/[^/\\s]+/\\.(?:ssh|aws|config)', 'i'),
+        pattern: /^\/(?:home|users)\/[^/\s]+\/\.(?:ssh|aws|config)/i,
         type: 'config_path',
       },
       { pattern: /[A-Z]:\\Users\\[^\\]+\\AppData/i, type: 'user_data_path' },

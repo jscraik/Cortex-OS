@@ -1,5 +1,5 @@
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import { randomUUID } from 'crypto';
-import { withSpan, logWithSpan } from '@cortex-os/telemetry';
 
 /**
  * Saga Pattern Implementation for ASBR
@@ -244,7 +244,7 @@ export class SagaOrchestrator<TCtx = any> {
         lastError = error instanceof Error ? error : new Error(String(error));
 
         if (attempt < retryPolicy.maxRetries) {
-          const delay = retryPolicy.backoffMs * Math.pow(2, attempt);
+          const delay = retryPolicy.backoffMs * 2 ** attempt;
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }

@@ -4,10 +4,10 @@
  * TDD approach: Tests written first to define expected behavior
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { z } from 'zod';
-import type { ModelProvider, ExecutionContext } from '@/lib/types.js';
 import { createMockEventBus, createMockMCPClient } from '@tests/setup.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
+import type { ExecutionContext, ModelProvider } from '@/lib/types.js';
 
 // Test will drive the interface design
 describe('Test Generation Agent', () => {

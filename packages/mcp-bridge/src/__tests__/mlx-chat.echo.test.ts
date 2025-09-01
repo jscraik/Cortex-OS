@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { writeFile, mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { MLXMcpServer } from '../mlx-mcp-server.js';
 
 async function createTempEchoConfig(): Promise<string> {
@@ -39,4 +39,3 @@ describe('MLX MCP chat via echo model', () => {
     expect(res.choices[0].message?.content.trim()).toBe('Hello MLX world');
   });
 });
-

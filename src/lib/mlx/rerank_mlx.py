@@ -1,4 +1,5 @@
 """Simple reranker used for MLX tests"""
+
 import json
 import sys
 

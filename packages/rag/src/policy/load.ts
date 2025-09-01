@@ -1,14 +1,14 @@
-import Ajv2020 from 'ajv/dist/2020';
 import { readFile } from 'node:fs/promises';
 import { resolve as resolvePath } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020';
 import {
-  ProcessingDispatcher,
   type DispatchResult,
+  ProcessingDispatcher,
   type ProcessingFile,
 } from '../chunkers/dispatch';
 import {
-  MimePolicyEngine,
   type MimePolicyConfig,
+  MimePolicyEngine,
   type ProcessingConfig,
   type StrategyDecision,
 } from './mime';

@@ -1,7 +1,7 @@
 // Auth-specific exports
 export {
-  PluginMetadataSchema,
   PluginMetadata,
-  PluginValidationResultSchema,
+  PluginMetadataSchema,
   PluginValidationResult,
+  PluginValidationResultSchema,
 } from '../src/types.js';

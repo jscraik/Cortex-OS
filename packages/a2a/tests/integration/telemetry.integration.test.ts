@@ -1,9 +1,9 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
   DeadLetterQueue,
+  type DeadLetterStore,
   ErrorCategory,
   QuarantineLevel,
-  type DeadLetterStore,
 } from '@cortex-os/a2a-core/dlq';
 import { SagaOrchestrator } from '@cortex-os/a2a-core/saga';
 import * as telemetry from '@cortex-os/telemetry';

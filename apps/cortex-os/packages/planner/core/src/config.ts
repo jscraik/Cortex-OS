@@ -56,8 +56,8 @@ export class ConfigManager {
   }
 
   static getInstance(): ConfigManager {
-    if (!this.instance) this.instance = new ConfigManager();
-    return this.instance;
+    if (!ConfigManager.instance) ConfigManager.instance = new ConfigManager();
+    return ConfigManager.instance;
   }
 
   async loadFile(): Promise<JsonObject> {

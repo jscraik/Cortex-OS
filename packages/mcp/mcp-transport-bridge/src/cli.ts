@@ -1,15 +1,16 @@
 #!/usr/bin/env node
+
 /**
  * @file MCP Bridge CLI
  * @description Command-line interface for MCP transport bridging
  */
 
-import { Command } from 'commander';
 import chalk from 'chalk';
-import ora from 'ora';
-import { McpBridge, bridgeStdioToHttp, bridgeHttpToStdio, type BridgeConfig } from './bridge.js';
-import { readFile, writeFile } from 'fs/promises';
+import { Command } from 'commander';
 import { existsSync } from 'fs';
+import { readFile, writeFile } from 'fs/promises';
+import ora from 'ora';
+import { type BridgeConfig, bridgeHttpToStdio, bridgeStdioToHttp, McpBridge } from './bridge.js';
 
 const program = new Command();
 

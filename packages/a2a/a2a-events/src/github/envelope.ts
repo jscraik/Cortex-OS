@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { RepositoryEvent, RepositoryEventSchema } from './repository';
-import { PullRequestEvent, PullRequestEventSchema } from './pull-request';
-import { IssueEvent, IssueEventSchema } from './issue';
-import { WorkflowEvent, WorkflowEventSchema } from './workflow';
 import { ErrorEvent, ErrorEventSchema } from './error';
+import { IssueEvent, IssueEventSchema } from './issue';
+import { PullRequestEvent, PullRequestEventSchema } from './pull-request';
+import { RepositoryEvent, RepositoryEventSchema } from './repository';
+import { WorkflowEvent, WorkflowEventSchema } from './workflow';
 
 // GitHub Event Union Type
 export const GitHubEventDataSchema = z.discriminatedUnion('event_type', [
@@ -80,41 +80,45 @@ export const A2AEventEnvelopeSchema = z.object({
   envelope_version: z.string().default('1.0'),
   created_at: z.string().datetime(),
   expires_at: z.string().datetime().optional(),
-  
+
   // Event data
   event: GitHubEventDataSchema,
-  
+
   // Routing and delivery
   routing: RoutingInfoSchema,
   priority: EventPrioritySchema.default('normal'),
   delivery_mode: DeliveryModeSchema.default('at_least_once'),
   retry_policy: RetryPolicySchema.default({}),
-  
+
   // Correlation and tracing
   correlation: CorrelationInfoSchema,
-  
+
   // Metadata
   metadata: EnvelopeMetadataSchema.default({}),
-  
+
   // Processing state (set by A2A infrastructure)
-  processing_state: z.object({
-    attempt_count: z.number().min(0).default(0),
-    first_attempt_at: z.string().datetime().optional(),
-    last_attempt_at: z.string().datetime().optional(),
-    next_retry_at: z.string().datetime().optional(),
-    error_count: z.number().min(0).default(0),
-    last_error: z.string().optional(),
-  }).optional(),
-  
+  processing_state: z
+    .object({
+      attempt_count: z.number().min(0).default(0),
+      first_attempt_at: z.string().datetime().optional(),
+      last_attempt_at: z.string().datetime().optional(),
+      next_retry_at: z.string().datetime().optional(),
+      error_count: z.number().min(0).default(0),
+      last_error: z.string().optional(),
+    })
+    .optional(),
+
   // Source information
-  source_info: z.object({
-    service_name: z.string().default('github-client'),
-    service_version: z.string().optional(),
-    host_name: z.string().optional(),
-    process_id: z.string().optional(),
-    thread_id: z.string().optional(),
-    user_id: z.string().optional(),
-  }).default({ service_name: 'github-client' }),
+  source_info: z
+    .object({
+      service_name: z.string().default('github-client'),
+      service_version: z.string().optional(),
+      host_name: z.string().optional(),
+      process_id: z.string().optional(),
+      thread_id: z.string().optional(),
+      user_id: z.string().optional(),
+    })
+    .default({ service_name: 'github-client' }),
 });
 
 export type A2AEventEnvelope = z.infer<typeof A2AEventEnvelopeSchema>;
@@ -140,17 +144,17 @@ export function createA2AEventEnvelope(
     metadata?: Partial<EnvelopeMetadata>;
     expiresIn?: number; // milliseconds
     sourceInfo?: Partial<A2AEventEnvelope['source_info']>;
-  }
+  },
 ): A2AEventEnvelope {
   const now = new Date();
   const envelopeId = crypto.randomUUID();
   const correlationId = options?.correlation?.correlation_id ?? crypto.randomUUID();
-  
+
   // Determine topic from event type and action
   const topic = getEventTopic(event);
-  
+
   // Set expiration (default 24 hours)
-  const expiresAt = options?.expiresIn 
+  const expiresAt = options?.expiresIn
     ? new Date(now.getTime() + options.expiresIn).toISOString()
     : new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
@@ -159,9 +163,9 @@ export function createA2AEventEnvelope(
     envelope_version: '1.0',
     created_at: now.toISOString(),
     expires_at: expiresAt,
-    
+
     event,
-    
+
     routing: {
       topic,
       partition_key: getPartitionKey(event),
@@ -169,7 +173,7 @@ export function createA2AEventEnvelope(
       broadcast: false,
       ...options?.routing,
     },
-    
+
     priority: options?.priority ?? 'normal',
     delivery_mode: options?.deliveryMode ?? 'at_least_once',
     retry_policy: {
@@ -180,7 +184,7 @@ export function createA2AEventEnvelope(
       jitter: true,
       ...options?.retryPolicy,
     },
-    
+
     correlation: {
       correlation_id: correlationId,
       causation_id: options?.correlation?.causation_id,
@@ -189,7 +193,7 @@ export function createA2AEventEnvelope(
       trace_id: options?.correlation?.trace_id,
       span_id: options?.correlation?.span_id,
     },
-    
+
     metadata: {
       version: '1.0',
       schema_version: '1.0',
@@ -200,7 +204,7 @@ export function createA2AEventEnvelope(
       labels: {},
       ...options?.metadata,
     },
-    
+
     source_info: {
       service_name: 'github-client',
       service_version: process.env.npm_package_version,
@@ -271,7 +275,7 @@ export function getEnvelopeTimeToExpiry(envelope: A2AEventEnvelope): number | nu
 export function shouldRetryEnvelope(envelope: A2AEventEnvelope): boolean {
   const state = envelope.processing_state;
   if (!state) return true;
-  
+
   return (
     state.attempt_count < envelope.retry_policy.max_attempts &&
     !isExpiredEnvelope(envelope) &&
@@ -282,19 +286,19 @@ export function shouldRetryEnvelope(envelope: A2AEventEnvelope): boolean {
 export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
   const state = envelope.processing_state;
   if (!state) return envelope.retry_policy.initial_delay_ms;
-  
+
   const { initial_delay_ms, max_delay_ms, backoff_multiplier, jitter } = envelope.retry_policy;
-  
+
   // Calculate exponential backoff
-  let delay = initial_delay_ms * Math.pow(backoff_multiplier, state.attempt_count);
+  let delay = initial_delay_ms * backoff_multiplier ** state.attempt_count;
   delay = Math.min(delay, max_delay_ms);
-  
+
   // Add jitter if enabled
   if (jitter) {
     const jitterAmount = delay * 0.1 * Math.random();
     delay += jitterAmount;
   }
-  
+
   return Math.floor(delay);
 }
 
@@ -305,7 +309,7 @@ export function cloneEnvelope(envelope: A2AEventEnvelope): A2AEventEnvelope {
 
 export function updateProcessingState(
   envelope: A2AEventEnvelope,
-  update: Partial<NonNullable<A2AEventEnvelope['processing_state']>>
+  update: Partial<NonNullable<A2AEventEnvelope['processing_state']>>,
 ): A2AEventEnvelope {
   const clone = cloneEnvelope(envelope);
   clone.processing_state = {
@@ -320,17 +324,14 @@ export function updateProcessingState(
 export function addEnvelopeMetadata(
   envelope: A2AEventEnvelope,
   key: string,
-  value: string
+  value: string,
 ): A2AEventEnvelope {
   const clone = cloneEnvelope(envelope);
   clone.metadata.labels[key] = value;
   return clone;
 }
 
-export function addEnvelopeTag(
-  envelope: A2AEventEnvelope,
-  tag: string
-): A2AEventEnvelope {
+export function addEnvelopeTag(envelope: A2AEventEnvelope, tag: string): A2AEventEnvelope {
   const clone = cloneEnvelope(envelope);
   if (!clone.metadata.tags.includes(tag)) {
     clone.metadata.tags.push(tag);
@@ -355,15 +356,15 @@ export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter
   if (filter.eventType && !filter.eventType.includes(envelope.event.event_type)) {
     return false;
   }
-  
+
   if (filter.priority && !filter.priority.includes(envelope.priority)) {
     return false;
   }
-  
+
   if (filter.topics && !filter.topics.includes(envelope.routing.topic)) {
     return false;
   }
-  
+
   if (filter.repositoryIds) {
     const event = envelope.event;
     if ('repository' in event && event.repository) {
@@ -374,7 +375,7 @@ export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter
       return false;
     }
   }
-  
+
   if (filter.actorIds) {
     const event = envelope.event;
     if ('actor' in event && event.actor) {
@@ -385,14 +386,14 @@ export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter
       return false;
     }
   }
-  
+
   if (filter.tags && filter.tags.length > 0) {
-    const hasAllTags = filter.tags.every(tag => envelope.metadata.tags.includes(tag));
+    const hasAllTags = filter.tags.every((tag) => envelope.metadata.tags.includes(tag));
     if (!hasAllTags) {
       return false;
     }
   }
-  
+
   if (filter.labels) {
     for (const [key, value] of Object.entries(filter.labels)) {
       if (envelope.metadata.labels[key] !== value) {
@@ -400,7 +401,7 @@ export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter
       }
     }
   }
-  
+
   if (filter.minAge !== undefined || filter.maxAge !== undefined) {
     const age = getEnvelopeAge(envelope);
     if (filter.minAge !== undefined && age < filter.minAge) {
@@ -410,23 +411,23 @@ export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter
       return false;
     }
   }
-  
+
   return true;
 }
 
 // Batch Operations
 export function createBatchEnvelope(
   events: GitHubEventData[],
-  options?: Parameters<typeof createA2AEventEnvelope>[1]
+  options?: Parameters<typeof createA2AEventEnvelope>[1],
 ): A2AEventEnvelope[] {
-  return events.map(event => createA2AEventEnvelope(event, options));
+  return events.map((event) => createA2AEventEnvelope(event, options));
 }
 
 export function filterEnvelopes(
   envelopes: A2AEventEnvelope[],
-  filter: EnvelopeFilter
+  filter: EnvelopeFilter,
 ): A2AEventEnvelope[] {
-  return envelopes.filter(envelope => matchesFilter(envelope, filter));
+  return envelopes.filter((envelope) => matchesFilter(envelope, filter));
 }
 
 export function sortEnvelopesByPriority(envelopes: A2AEventEnvelope[]): A2AEventEnvelope[] {
@@ -436,7 +437,7 @@ export function sortEnvelopesByPriority(envelopes: A2AEventEnvelope[]): A2AEvent
     normal: 2,
     low: 1,
   };
-  
+
   return [...envelopes].sort((a, b) => {
     const aPriority = priorityOrder[a.priority];
     const bPriority = priorityOrder[b.priority];

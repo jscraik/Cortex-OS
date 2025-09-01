@@ -4,11 +4,11 @@ import {
   ContextRetrievalService,
   // GeminiEmbeddingProvider removed from CLI to avoid depending on Gemini keys
   IndexingService,
+  type MemoryEntry,
   MemoryService,
   MockEmbeddingProvider,
   Neo4jProvider,
   QdrantProvider,
-  type MemoryEntry,
 } from '../packages/memory/index';
 
 interface CLIOptions {

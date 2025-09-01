@@ -38,23 +38,27 @@ Updated the main README to reference the new documentation and enhancement plans
 The enhancements are organized into four main phases:
 
 ### Phase 1: Core Document Processing
+
 - Integration of Microsoft MarkItDown for document conversion
 - Enhanced parsing with Docling for technical documents
 - Local semantic search with semtools
 
 ### Phase 2: Multimodal RAG
+
 - Image processing with VLM integration
 - Table structure recognition
 - Mathematical expression parsing
 - Multimodal knowledge graph construction
 
 ### Phase 3: Web Content Acquisition
+
 - Intelligent web crawling
 - Targeted scraping capabilities
 - YouTube video processing
 - Content filtering and deduplication
 
 ### Phase 4: Code-Specific Enhancements
+
 - Codebase visualization and analysis
 - Code knowledge graph with relationship mapping
 - Repository context generation for AI assistance
@@ -62,6 +66,7 @@ The enhancements are organized into four main phases:
 ## Technical Approach
 
 ### Architecture
+
 The enhancements follow a modular architecture that extends the existing RAG pipeline without breaking compatibility:
 
 ```
@@ -78,15 +83,17 @@ The enhancements follow a modular architecture that extends the existing RAG pip
 ```
 
 ### Integration Strategy
+
 Each enhancement is designed as a separate module that can be enabled/disabled, following a plugin architecture for maximum flexibility.
 
 ## Success Metrics
 
 The enhancements target the following success metrics:
+
 - Support for 15+ document formats
-- >90% accuracy in document structure preservation
+- > 90% accuracy in document structure preservation
 - Processing time <5s for average documents
-- >85% test coverage
+- > 85% test coverage
 - Compatibility with both MLX and Ollama backends
 
 ## Next Steps

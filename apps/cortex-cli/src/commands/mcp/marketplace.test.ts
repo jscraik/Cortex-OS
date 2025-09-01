@@ -3,10 +3,10 @@
  * @description TDD tests for cortex-cli MCP marketplace integration
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, type MockedFunction } from 'vitest';
-import { MarketplaceClient } from './marketplace-client.js';
+import type { SearchRequest, ServerManifest } from '@cortex-os/mcp-marketplace';
+import { afterEach, beforeEach, describe, expect, it, type MockedFunction, vi } from 'vitest';
 import { McpMarketplaceCommand } from './marketplace.js';
-import type { ServerManifest, SearchRequest } from '@cortex-os/mcp-marketplace';
+import { MarketplaceClient } from './marketplace-client.js';
 
 // Mock the marketplace client
 vi.mock('./marketplace-client.js');

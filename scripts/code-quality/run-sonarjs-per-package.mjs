@@ -143,8 +143,8 @@ async function main() {
     JSON.stringify(
       results.map((r) => ({ name: r.name, out: r.outPath })),
       null,
-      2,
-    ),
+      2
+    )
   );
   console.log(`Wrote index to ${indexPath}`);
 }

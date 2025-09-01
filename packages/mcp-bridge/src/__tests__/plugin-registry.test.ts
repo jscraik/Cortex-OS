@@ -11,10 +11,10 @@ import { promises as fs } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getMockMarketplaceIndex } from '../mocks/marketplace.js';
 import { PluginRegistry } from '../plugin-registry.js';
 import type { PluginSearchOptions } from '../types.js';
 import { MarketplaceIndexSchema } from '../types.js';
-import { getMockMarketplaceIndex } from '../mocks/marketplace.js';
 
 const INSTALLED_PLUGINS_PATH = join(homedir(), '.cortex-os', 'plugins', 'installed.json');
 

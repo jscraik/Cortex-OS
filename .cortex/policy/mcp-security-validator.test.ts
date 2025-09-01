@@ -3,10 +3,10 @@
  * @description TDD tests for security validator implementation
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { McpSecurityValidator } from './mcp-security-validator.js';
 import type { ServerManifest } from '@cortex-os/mcp-registry';
-import type { ValidationResult, SecurityContext } from './mcp-security-validator.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { SecurityContext, ValidationResult } from './mcp-security-validator.js';
+import { McpSecurityValidator } from './mcp-security-validator.js';
 
 describe('McpSecurityValidator', () => {
   let validator: McpSecurityValidator;
@@ -136,7 +136,7 @@ describe('McpSecurityValidator', () => {
 
       const result = await validator.validateServer(server);
       expect(result.warnings).toContain(
-        'High-risk server should declare dangerous permissions explicitly',
+        'High-risk server should declare dangerous permissions explicitly'
       );
     });
 
@@ -156,8 +156,8 @@ describe('McpSecurityValidator', () => {
       const result = await validator.validateServer(server);
       expect(
         result.warnings.some((w) =>
-          w.includes('High-risk server should declare dangerous permissions'),
-        ),
+          w.includes('High-risk server should declare dangerous permissions')
+        )
       ).toBe(true);
     });
   });
@@ -199,8 +199,8 @@ describe('McpSecurityValidator', () => {
       const result = await validator.validateServer(server);
       expect(
         result.warnings.some((w) =>
-          w.includes('Featured servers should be from trusted publishers'),
-        ),
+          w.includes('Featured servers should be from trusted publishers')
+        )
       ).toBe(true);
     });
 
@@ -283,7 +283,7 @@ describe('McpSecurityValidator', () => {
 
       const result = await validator.validateServer(server);
       expect(
-        result.warnings.some((w) => w.includes('Featured servers should have ratings >= 4.0')),
+        result.warnings.some((w) => w.includes('Featured servers should have ratings >= 4.0'))
       ).toBe(true);
     });
 

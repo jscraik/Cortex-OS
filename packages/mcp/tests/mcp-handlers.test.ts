@@ -4,16 +4,16 @@
  * Tests tools/list, tools/call, resources/*, prompts/* methods
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  handleToolsList,
-  handleToolCall,
-  handleResourcesList,
+  handleInitialize,
+  handlePromptGet,
+  handlePromptsList,
   handleResourceRead,
   handleResourceSubscribe,
-  handlePromptsList,
-  handlePromptGet,
-  handleInitialize,
+  handleResourcesList,
+  handleToolCall,
+  handleToolsList,
 } from '../src/lib/server/mcp-handlers.js';
 import type { ServerContext } from '../src/lib/server/types.js';
 

@@ -73,3 +73,5 @@ static/*.css
 static/*.map
 static/*.ico
 static/*.png
+/biome
+/biome.json

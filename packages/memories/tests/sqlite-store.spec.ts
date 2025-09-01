@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SQLiteStore } from '../src/adapters/store.sqlite.js';
 import type { Memory } from '../src/domain/types.js';
 

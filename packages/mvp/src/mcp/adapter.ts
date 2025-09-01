@@ -3,7 +3,7 @@
  * @description MCP Adapter for Cortex Kernel Integration
  */
 
-import { PRPState } from '../state.js';
+import type { PRPState } from '../state.js';
 
 export interface Neuron {
   id: string;
@@ -319,11 +319,11 @@ export const createDefaultMCPTools = (): MCPTool[] => [
         const started = Date.now();
         const { stdout, stderr } = await execAsync(cmd, { cwd, maxBuffer: 10 * 1024 * 1024 });
         const duration = Date.now() - started;
-        let summary: any = undefined;
+        let summary: any;
         try {
           summary = JSON.parse(stdout);
         } catch {}
-        let coveragePct: number | undefined = undefined;
+        let coveragePct: number | undefined;
         try {
           const fs = await import('fs');
           const pathMod = await import('path');

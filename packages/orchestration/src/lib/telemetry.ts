@@ -1,4 +1,4 @@
-import { Span, SpanStatusCode } from '@opentelemetry/api';
+import { type Span, SpanStatusCode } from '@opentelemetry/api';
 
 export interface EnhancedSpanContext {
   workflowId?: string;

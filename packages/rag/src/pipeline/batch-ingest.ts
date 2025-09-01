@@ -1,7 +1,6 @@
 import { z } from 'zod';
-
-import { resolveFileList, createWorker, runWorkers } from '../lib/batch-ingest';
 import type { Pipeline } from '../index.js';
+import { createWorker, resolveFileList, runWorkers } from '../lib/batch-ingest';
 
 const ingestFilesSchema = z
   .object({

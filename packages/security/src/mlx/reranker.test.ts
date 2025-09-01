@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { rerank, type Candidate } from './reranker.ts';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { type Candidate, rerank } from './reranker.ts';
 
 let mlxServer: http.Server;
 let frontierServer: http.Server;
@@ -11,12 +11,14 @@ let mlxHandler: http.RequestListener;
 let frontierHandler: http.RequestListener;
 let ollamaHandler: http.RequestListener;
 
-const success = (scores: number[]): http.RequestListener => (req, res) => {
-  if (req.method === 'POST' && req.url === '/rerank') {
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ scores }));
-  }
-};
+const success =
+  (scores: number[]): http.RequestListener =>
+  (req, res) => {
+    if (req.method === 'POST' && req.url === '/rerank') {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ scores }));
+    }
+  };
 
 const error: http.RequestListener = (req, res) => {
   if (req.method === 'POST' && req.url === '/rerank') {

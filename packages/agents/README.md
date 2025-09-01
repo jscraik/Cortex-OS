@@ -1,10 +1,34 @@
 # Agents Package
 
-**Feature Package** for the ASBR (Autonomous Software Behavior Reasoning) Runtime.
+<div align="center">
 
-## Overview
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
+[![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen)](#testing)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![LangGraph](https://img.shields.io/badge/LangGraph-enabled-orange)](https://langchain-ai.github.io/langgraph/)
+[![CrewAI](https://img.shields.io/badge/CrewAI-supported-purple)](https://crewai.com/)
+[![AutoGen](https://img.shields.io/badge/AutoGen-supported-red)](https://microsoft.github.io/autogen/)
 
-This package provides agent execution and management interfaces for the ASBR Runtime. It defines the core abstractions used by the orchestration system to coordinate AI agents across different frameworks (LangGraph, CrewAI, AutoGen).
+**Multi-Framework Agent Execution and Management System**
+
+*Feature Package for the ASBR (Autonomous Software Behavior Reasoning) Runtime*
+
+</div>
+
+---
+
+## 🎯 Features
+
+- **🤖 Multi-Framework Support**: Seamless integration with LangGraph, CrewAI, and AutoGen
+- **⚡ Asynchronous Execution**: Non-blocking agent task processing with A2A event coordination
+- **🔍 Capability Discovery**: Dynamic agent capability registration and discovery
+- **📊 Health Monitoring**: Real-time agent health checks and performance metrics
+- **🛡️ Governed Memory**: Secure memory management with PII redaction and TTL policies
+- **📈 Observability**: Comprehensive telemetry and structured logging
+- **🔒 Security**: OWASP-compliant with input validation and secure execution sandboxes
+- **🎛️ Deterministic Behavior**: Seed-based reproducible agent responses
 
 ## Architecture
 

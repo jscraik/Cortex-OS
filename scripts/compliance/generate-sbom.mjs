@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Generate a CycloneDX SBOM for Node workspace using Syft.
-import { execa } from 'execa';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Generate a CycloneDX SBOM for Node workspace using Syft.
+import { execa } from 'execa';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');

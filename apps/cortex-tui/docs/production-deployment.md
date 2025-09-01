@@ -27,7 +27,7 @@ export CORTEX_BIND_ADDRESS="10.0.1.100:8080"  # Specific internal IP
 
 The MLX provider has been hardened against command injection:
 
-- ✅ Uses secure process spawning with `Command::new()` 
+- ✅ Uses secure process spawning with `Command::new()`
 - ✅ Passes prompts via stdin (not command line arguments)
 - ✅ Implements proper timeout handling (30 seconds)
 - ✅ Validates and sanitizes all inputs
@@ -49,7 +49,7 @@ export MCP_NETWORK_EGRESS=enabled   # For production with external tools
 
 # Provider configurations
 export OPENAI_API_KEY="your_key_here"
-export ANTHROPIC_API_KEY="your_key_here" 
+export ANTHROPIC_API_KEY="your_key_here"
 export GITHUB_TOKEN="your_github_token"
 
 # Memory/Storage
@@ -84,6 +84,7 @@ curl http://localhost:8080/metrics
 ```
 
 Health check response:
+
 ```json
 {
   "status": "healthy",
@@ -91,7 +92,7 @@ Health check response:
   "uptime": 3600,
   "components": {
     "mcp": "healthy",
-    "memory": "healthy", 
+    "memory": "healthy",
     "providers": "healthy"
   }
 }
@@ -102,12 +103,14 @@ Health check response:
 ### Resource Requirements
 
 **Minimum Requirements:**
+
 - CPU: 2 cores
 - RAM: 4GB
 - Storage: 10GB
 - Network: 100Mbps
 
 **Recommended Production:**
+
 - CPU: 4+ cores
 - RAM: 8GB+
 - Storage: 50GB+ SSD
@@ -123,7 +126,7 @@ Key metrics to monitor:
    - Request rate (requests/minute)
    - Error rate percentage
 
-2. **Performance Metrics**  
+2. **Performance Metrics**
    - Memory usage
    - CPU utilization
    - Response time percentiles (P50, P95, P99)
@@ -162,7 +165,7 @@ export CORTEX_BIND_ADDRESS="127.0.0.1:8080"
 export CORTEX_INSTANCE_ID="cortex-01"
 ./cortex-tui daemon --port 8080
 
-# Instance 2  
+# Instance 2
 export CORTEX_BIND_ADDRESS="127.0.0.1:8081"
 export CORTEX_INSTANCE_ID="cortex-02"
 ./cortex-tui daemon --port 8081
@@ -180,7 +183,7 @@ upstream cortex_backend {
 server {
     listen 80;
     server_name cortex.yourcompany.com;
-    
+
     location / {
         proxy_pass http://cortex_backend;
         proxy_http_version 1.1;
@@ -191,13 +194,13 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Streaming support
         proxy_buffering off;
         proxy_read_timeout 600s;
         proxy_send_timeout 600s;
     }
-    
+
     # Health check endpoint
     location /health {
         proxy_pass http://cortex_backend/health;
@@ -265,6 +268,7 @@ WantedBy=multi-user.target
 ```
 
 Enable and start the service:
+
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable cortex-tui.service
@@ -347,18 +351,20 @@ echo "Restore completed from $BACKUP_FILE"
 ### Common Issues
 
 1. **Port binding errors**
+
    ```bash
    # Check if port is in use
    sudo netstat -tulpn | grep 8080
-   
+
    # Check service status
    sudo systemctl status cortex-tui.service
-   
+
    # View logs
    sudo journalctl -u cortex-tui.service -f
    ```
 
 2. **Permission issues**
+
    ```bash
    # Fix file permissions
    sudo chown -R cortex-tui:cortex-tui /var/lib/cortex
@@ -366,19 +372,21 @@ echo "Restore completed from $BACKUP_FILE"
    ```
 
 3. **Memory/Storage issues**
+
    ```bash
    # Check disk usage
    df -h /var/lib/cortex
-   
+
    # Check memory usage
    sudo ps aux | grep cortex-tui
    ```
 
 4. **MCP connectivity issues**
+
    ```bash
    # Test MCP servers
    curl -X GET http://localhost:8080/mcp/servers
-   
+
    # Check MCP logs
    grep "MCP" /var/log/cortex/cortex-tui.log
    ```
@@ -417,23 +425,23 @@ scrape_configs:
 ```yaml
 # cortex-alerts.yml
 groups:
-- name: cortex-tui
-  rules:
-  - alert: CortexTUIDown
-    expr: up{job="cortex-tui"} == 0
-    for: 1m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Cortex TUI is down"
-      
-  - alert: CortexTUIHighErrorRate
-    expr: rate(cortex_requests_failed_total[5m]) / rate(cortex_requests_total[5m]) > 0.1
-    for: 2m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High error rate in Cortex TUI"
+  - name: cortex-tui
+    rules:
+      - alert: CortexTUIDown
+        expr: up{job="cortex-tui"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Cortex TUI is down'
+
+      - alert: CortexTUIHighErrorRate
+        expr: rate(cortex_requests_failed_total[5m]) / rate(cortex_requests_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High error rate in Cortex TUI'
 ```
 
 ## Version Updates
@@ -441,6 +449,7 @@ groups:
 ### Rolling Update Process
 
 1. **Prepare new version:**
+
    ```bash
    # Build new version
    cargo build --release
@@ -448,15 +457,16 @@ groups:
    ```
 
 2. **Update with zero downtime:**
+
    ```bash
    # Start new instance on different port
    sudo -u cortex-tui CORTEX_BIND_ADDRESS="127.0.0.1:8081" \
      /opt/cortex-tui/cortex-tui.new daemon --port 8081 &
-   
+
    # Update load balancer to point to new instance
    # Then stop old instance
    sudo systemctl stop cortex-tui.service
-   
+
    # Replace binary and restart
    sudo mv /opt/cortex-tui/cortex-tui.new /opt/cortex-tui/cortex-tui
    sudo systemctl start cortex-tui.service

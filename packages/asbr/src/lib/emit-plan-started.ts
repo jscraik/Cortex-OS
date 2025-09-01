@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Event, Task, TaskInput } from '../types/index.js';
+import type { Event, Task, TaskInput } from '../types/index.js';
 
 /**
  * Emit PlanStarted event for a newly queued task

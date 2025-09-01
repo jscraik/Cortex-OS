@@ -1,8 +1,8 @@
-import { mkdtempSync, rmSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
 import { spawnSync } from 'child_process';
-import { describe, it, expect } from 'vitest';
+import { mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
+import { describe, expect, it } from 'vitest';
 
 describe('graphiti requirements', () => {
   it('are installable', () => {

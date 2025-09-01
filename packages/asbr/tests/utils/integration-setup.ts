@@ -3,7 +3,7 @@
  * Ensures proper test environment for integration and performance tests
  */
 
-import { beforeAll, afterAll, vi } from 'vitest';
+import { afterAll, beforeAll, vi } from 'vitest';
 
 // Set up test environment
 beforeAll(async () => {

@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { Task, TaskInput } from '../types/index.js';
+import type { Task, TaskInput } from '../types/index.js';
 
 /**
  * Determine idempotency key and check for existing tasks

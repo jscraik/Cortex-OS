@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GitHubUserSchema, GitHubRepositorySchema } from './repository';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Issue Label Schema
 export const IssueLabelSchema = z.object({
@@ -53,11 +53,11 @@ export const IssueSchema = z.object({
   author_association: z.enum([
     'OWNER',
     'MEMBER',
-    'COLLABORATOR', 
+    'COLLABORATOR',
     'CONTRIBUTOR',
     'FIRST_TIME_CONTRIBUTOR',
     'FIRST_TIMER',
-    'NONE'
+    'NONE',
   ]),
   active_lock_reason: z.enum(['resolved', 'off-topic', 'too heated', 'spam']).nullable(),
   closed_by: GitHubUserSchema.nullable(),
@@ -83,20 +83,26 @@ export const IssueActionSchema = z.enum([
   'unlocked',
   'pinned',
   'unpinned',
-  'transferred'
+  'transferred',
 ]);
 
 export type IssueAction = z.infer<typeof IssueActionSchema>;
 
 // Issue Changes Schema
-export const IssueChangesSchema = z.object({
-  title: z.object({
-    from: z.string()
-  }).optional(),
-  body: z.object({
-    from: z.string().nullable()
-  }).optional(),
-}).optional();
+export const IssueChangesSchema = z
+  .object({
+    title: z
+      .object({
+        from: z.string(),
+      })
+      .optional(),
+    body: z
+      .object({
+        from: z.string().nullable(),
+      })
+      .optional(),
+  })
+  .optional();
 
 export type IssueChanges = z.infer<typeof IssueChangesSchema>;
 
@@ -106,19 +112,19 @@ export const IssueEventSchema = z.object({
   event_type: z.literal('github.issue'),
   source: z.literal('github-client'),
   timestamp: z.string().datetime(),
-  
+
   // Event-specific data
   action: IssueActionSchema,
   issue: IssueSchema,
   repository: GitHubRepositorySchema,
   actor: GitHubUserSchema,
   changes: IssueChangesSchema,
-  
+
   // Additional context
   assignee: GitHubUserSchema.optional(),
   label: IssueLabelSchema.optional(),
   milestone: IssueMilestoneSchema.optional(),
-  
+
   // Metadata
   metadata: z.record(z.string()).optional(),
 });
@@ -127,21 +133,21 @@ export type IssueEvent = z.infer<typeof IssueEventSchema>;
 
 // Issue Event Topics Mapping
 export const ISSUE_EVENT_TOPICS = {
-  'opened': 'github.issue.opened',
-  'closed': 'github.issue.closed',
-  'reopened': 'github.issue.reopened',
-  'assigned': 'github.issue.assigned',
-  'unassigned': 'github.issue.unassigned',
-  'labeled': 'github.issue.labeled',
-  'unlabeled': 'github.issue.unlabeled',
-  'milestoned': 'github.issue.milestoned',
-  'demilestoned': 'github.issue.demilestoned',
-  'edited': 'github.issue.edited',
-  'locked': 'github.issue.locked',
-  'unlocked': 'github.issue.unlocked',
-  'pinned': 'github.issue.pinned',
-  'unpinned': 'github.issue.unpinned',
-  'transferred': 'github.issue.transferred',
+  opened: 'github.issue.opened',
+  closed: 'github.issue.closed',
+  reopened: 'github.issue.reopened',
+  assigned: 'github.issue.assigned',
+  unassigned: 'github.issue.unassigned',
+  labeled: 'github.issue.labeled',
+  unlabeled: 'github.issue.unlabeled',
+  milestoned: 'github.issue.milestoned',
+  demilestoned: 'github.issue.demilestoned',
+  edited: 'github.issue.edited',
+  locked: 'github.issue.locked',
+  unlocked: 'github.issue.unlocked',
+  pinned: 'github.issue.pinned',
+  unpinned: 'github.issue.unpinned',
+  transferred: 'github.issue.transferred',
 } as const;
 
 // Validation Functions
@@ -164,7 +170,7 @@ export function createIssueEvent(
     assignee?: GitHubUserSchema;
     label?: IssueLabel;
     milestone?: IssueMilestone;
-  }
+  },
 ): Omit<IssueEvent, 'event_id' | 'timestamp'> {
   return {
     event_type: 'github.issue',
@@ -203,49 +209,51 @@ export function isIssueOpen(issue: Issue): boolean {
 }
 
 export function getIssuePriority(issue: Issue): 'low' | 'medium' | 'high' | 'critical' | 'unknown' {
-  const labels = issue.labels.map(l => l.name.toLowerCase());
-  
-  if (labels.some(l => l.includes('critical') || l.includes('p0'))) {
+  const labels = issue.labels.map((l) => l.name.toLowerCase());
+
+  if (labels.some((l) => l.includes('critical') || l.includes('p0'))) {
     return 'critical';
-  } else if (labels.some(l => l.includes('high') || l.includes('p1'))) {
+  } else if (labels.some((l) => l.includes('high') || l.includes('p1'))) {
     return 'high';
-  } else if (labels.some(l => l.includes('medium') || l.includes('p2'))) {
+  } else if (labels.some((l) => l.includes('medium') || l.includes('p2'))) {
     return 'medium';
-  } else if (labels.some(l => l.includes('low') || l.includes('p3'))) {
+  } else if (labels.some((l) => l.includes('low') || l.includes('p3'))) {
     return 'low';
   }
-  
+
   return 'unknown';
 }
 
-export function getIssueType(issue: Issue): 'bug' | 'feature' | 'enhancement' | 'question' | 'documentation' | 'other' {
-  const labels = issue.labels.map(l => l.name.toLowerCase());
-  
-  if (labels.some(l => l.includes('bug') || l.includes('error') || l.includes('fix'))) {
+export function getIssueType(
+  issue: Issue,
+): 'bug' | 'feature' | 'enhancement' | 'question' | 'documentation' | 'other' {
+  const labels = issue.labels.map((l) => l.name.toLowerCase());
+
+  if (labels.some((l) => l.includes('bug') || l.includes('error') || l.includes('fix'))) {
     return 'bug';
-  } else if (labels.some(l => l.includes('feature') || l.includes('new'))) {
+  } else if (labels.some((l) => l.includes('feature') || l.includes('new'))) {
     return 'feature';
-  } else if (labels.some(l => l.includes('enhancement') || l.includes('improve'))) {
+  } else if (labels.some((l) => l.includes('enhancement') || l.includes('improve'))) {
     return 'enhancement';
-  } else if (labels.some(l => l.includes('question') || l.includes('help'))) {
+  } else if (labels.some((l) => l.includes('question') || l.includes('help'))) {
     return 'question';
-  } else if (labels.some(l => l.includes('doc') || l.includes('readme'))) {
+  } else if (labels.some((l) => l.includes('doc') || l.includes('readme'))) {
     return 'documentation';
   }
-  
+
   return 'other';
 }
 
 export function hasIssueLabel(issue: Issue, labelName: string): boolean {
-  return issue.labels.some(label => label.name.toLowerCase() === labelName.toLowerCase());
+  return issue.labels.some((label) => label.name.toLowerCase() === labelName.toLowerCase());
 }
 
 export function getIssueAssigneeLogins(issue: Issue): string[] {
-  return issue.assignees.map(user => user.login);
+  return issue.assignees.map((user) => user.login);
 }
 
 export function getIssueLabelNames(issue: Issue): string[] {
-  return issue.labels.map(label => label.name);
+  return issue.labels.map((label) => label.name);
 }
 
 // Issue Age Calculation

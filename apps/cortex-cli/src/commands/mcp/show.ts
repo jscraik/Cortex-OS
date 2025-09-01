@@ -1,6 +1,6 @@
+import type { ServerManifest, SupportedClient } from '@cortex-os/mcp-registry/types';
 import { Command } from 'commander';
 import { createMarketplaceClient } from './marketplace-client.js';
-import { ServerManifest, SupportedClient } from '@cortex-os/mcp-registry/types';
 
 export const mcpShow = new Command('show')
   .description('Show detailed information about an MCP server')

@@ -7,21 +7,21 @@
  */
 
 import {
-  configureLLM,
-  generate as llmGenerate,
-  checkProviderHealth,
-  getProvider,
-  getModel,
-  shutdown as shutdownLLM,
-  type LLMState,
-} from './llm-bridge.js';
-import {
-  EmbeddingAdapter,
-  RerankerAdapter,
   createEmbeddingAdapter,
   createRerankerAdapter,
+  type EmbeddingAdapter,
+  type RerankerAdapter,
 } from './embedding-adapter.js';
-import { LLMBridge } from './llm-bridge.js';
+import {
+  checkProviderHealth,
+  configureLLM,
+  getModel,
+  getProvider,
+  LLMBridge,
+  type LLMState,
+  generate as llmGenerate,
+  shutdown as shutdownLLM,
+} from './llm-bridge.js';
 import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 export interface AICoreConfig {

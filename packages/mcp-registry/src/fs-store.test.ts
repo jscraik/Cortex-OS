@@ -1,9 +1,9 @@
-import { beforeEach, afterEach, expect, test } from 'vitest';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readAll, upsert, remove } from './fs-store.js';
 import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
+import { afterEach, beforeEach, expect, test } from 'vitest';
+import { readAll, remove, upsert } from './fs-store.js';
 
 const originalHome = process.env.HOME;
 

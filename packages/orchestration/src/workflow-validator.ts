@@ -1,5 +1,5 @@
-import { workflowZ } from './schemas/workflow.zod.js';
 import { createHash } from 'crypto';
+import { workflowZ } from './schemas/workflow.zod.js';
 
 // Validation cache to avoid re-validating identical workflows
 const validationCache = new Map<string, { valid: boolean; result?: any; error?: Error }>();

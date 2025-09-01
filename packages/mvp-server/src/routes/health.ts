@@ -1,5 +1,5 @@
-import type { FastifyInstance } from 'fastify';
 import { health } from '@cortex-os/mvp-core';
+import type { FastifyInstance } from 'fastify';
 
 export async function healthRoutes(app: FastifyInstance) {
   app.get('/health', async (_req, reply) => {

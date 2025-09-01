@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { EventEmitter } from 'events';
 import type { ChildProcess } from 'child_process';
+import { EventEmitter } from 'events';
+import { describe, expect, it, vi } from 'vitest';
 
 class MockProc extends EventEmitter {
   stdout = new EventEmitter();

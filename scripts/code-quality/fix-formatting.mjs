@@ -10,7 +10,7 @@ console.log('Fixing formatting issues in DatabaseManager.ts...');
 const databaseManagerPath = join(
   'apps',
   'cortex-os',
-  'packages/agents/src/legacy-instructions/DatabaseManager.ts',
+  'packages/agents/src/legacy-instructions/DatabaseManager.ts'
 );
 let content = readFileSync(databaseManagerPath, 'utf-8');
 

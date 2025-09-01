@@ -19,9 +19,10 @@ const out = getArg('out', './mlx.json');
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..', '..');
 
-const src = profile === 'recommended' ?
-  path.join(root, 'config', 'mlx.recommended.json') :
-  path.join(root, 'config', 'mlx.echo.json');
+const src =
+  profile === 'recommended'
+    ? path.join(root, 'config', 'mlx.recommended.json')
+    : path.join(root, 'config', 'mlx.echo.json');
 
 if (!fs.existsSync(src)) {
   console.error(`Config template not found: ${src}`);
@@ -31,4 +32,3 @@ if (!fs.existsSync(src)) {
 const content = fs.readFileSync(src, 'utf-8');
 fs.writeFileSync(path.resolve(out), content);
 console.log(`✅ Wrote MLX config (${profile}) to: ${path.resolve(out)}`);
-

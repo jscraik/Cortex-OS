@@ -1,63 +1,55 @@
 // A2A Events - Main Export
 export const A2A_EVENTS_VERSION = '1.0.0';
 
+// Re-export key types for convenience
+export type {
+  // A2A Infrastructure
+  A2AEventEnvelope,
+  CorrelationInfo,
+  DeliveryMode,
+  EnvelopeMetadata,
+  ErrorEvent,
+  EventPriority,
+  GitHubEvent,
+  GitHubEventData,
+  GitHubEventFilter,
+  // Analytics
+  GitHubEventStats,
+  IssueEvent,
+  PullRequestEvent,
+  // GitHub specific
+  RepositoryEvent,
+  RetryPolicy,
+  RouteMatch,
+  RoutingConfiguration,
+  RoutingInfo,
+  // Routing
+  RoutingRule,
+  WorkflowEvent,
+} from './github';
 // GitHub Events
 export * from './github';
 
-// Re-export key types for convenience
-export type {
-  // GitHub specific
-  RepositoryEvent,
-  PullRequestEvent,
-  IssueEvent,
-  WorkflowEvent,
-  ErrorEvent,
-  GitHubEvent,
-  
-  // A2A Infrastructure
-  A2AEventEnvelope,
-  GitHubEventData,
-  EventPriority,
-  DeliveryMode,
-  RetryPolicy,
-  CorrelationInfo,
-  RoutingInfo,
-  EnvelopeMetadata,
-  
-  // Routing
-  RoutingRule,
-  RoutingConfiguration,
-  RouteMatch,
-  
-  // Analytics
-  GitHubEventStats,
-  GitHubEventFilter,
-} from './github';
-
 // Re-export key functions
 export {
-  // Event validation
-  isGitHubEvent,
-  validateGitHubEvent,
-  getGitHubEventType,
-  
-  // Envelope operations  
-  isA2AEventEnvelope,
-  validateA2AEventEnvelope,
-  createA2AEventEnvelope,
-  
   // Analytics
   analyzeGitHubEvents,
-  filterGitHubEvents,
-  
+  createA2AEventEnvelope,
   // Batch processing
   createGitHubEventBatch,
-  processEventStream,
-  
+  createRoutingRule,
+  DEFAULT_GITHUB_ROUTING_CONFIG,
+  filterGitHubEvents,
   // Routing
   GitHubEventRouter,
-  createRoutingRule,
-  validateRoutingConfiguration,
+  getGitHubEventType,
+  // Envelope operations
+  isA2AEventEnvelope,
+  // Event validation
+  isGitHubEvent,
   isValidRoutingConfiguration,
-  DEFAULT_GITHUB_ROUTING_CONFIG,
+  processEventStream,
+  validateA2AEventEnvelope,
+  validateGitHubEvent,
+  validateRoutingConfiguration,
 } from './github';

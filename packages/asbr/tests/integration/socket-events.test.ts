@@ -1,11 +1,11 @@
 // @vitest-environment node
 import { io as Client } from 'socket.io-client';
-import { beforeAll, afterAll, describe, expect, it } from 'vitest';
-import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
-import { initializeXDG } from '../../src/xdg/index.js';
-import { getEventManager } from '../../src/core/events.js';
 import { v4 as uuidv4 } from 'uuid';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
+import { getEventManager } from '../../src/core/events.js';
 import type { Event } from '../../src/types/index.js';
+import { initializeXDG } from '../../src/xdg/index.js';
 
 describe('Socket.io event transport', () => {
   let server: ASBRServer;

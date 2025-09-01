@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createCodeAnalysisAgent } from '../../src/agents/code-analysis-agent.js';
-import { createTestGenerationAgent } from '../../src/agents/test-generation-agent.js';
 import { createDocumentationAgent } from '../../src/agents/documentation-agent.js';
 import { createSecurityAgent } from '../../src/agents/security-agent.js';
+import { createTestGenerationAgent } from '../../src/agents/test-generation-agent.js';
 
 const makeProvider = (captures: any[]) => ({
   name: 'mock',

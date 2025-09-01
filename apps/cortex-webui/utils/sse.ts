@@ -57,7 +57,7 @@ export function openSSE(
       onError?.(e);
       // backoff and reconnect
       attempt += 1;
-      const delay = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, attempt - 1));
+      const delay = Math.min(maxDelayMs, baseDelayMs * 2 ** (attempt - 1));
       setTimeout(connect, delay);
     };
   }

@@ -14,13 +14,9 @@ class UserEventCreate(BaseModel):
     )
     session_id: str = Field(..., description="Session ID", min_length=1, max_length=100)
     event_type: str = Field(..., description="Event type", min_length=1, max_length=50)
-    event_data: dict[str, Any] | None = Field(
-        None, description="Additional event data"
-    )
+    event_data: dict[str, Any] | None = Field(None, description="Additional event data")
     document_id: str | None = Field(None, description="Document ID if applicable")
-    document_path: str | None = Field(
-        None, description="Document path if applicable"
-    )
+    document_path: str | None = Field(None, description="Document path if applicable")
     page_url: str | None = Field(None, description="Current page URL")
     referrer: str | None = Field(None, description="Referrer URL")
     user_agent: str | None = Field(None, description="User agent string")
@@ -70,15 +66,11 @@ class SearchEventCreate(BaseModel):
         ..., description="Response time in milliseconds", ge=0
     )
     search_type: str = Field("full_text", description="Type of search")
-    filters_applied: dict[str, Any] | None = Field(
-        None, description="Applied filters"
-    )
+    filters_applied: dict[str, Any] | None = Field(None, description="Applied filters")
     clicked_position: int | None = Field(
         None, description="Position of clicked result", ge=1
     )
-    clicked_document_id: str | None = Field(
-        None, description="ID of clicked document"
-    )
+    clicked_document_id: str | None = Field(None, description="ID of clicked document")
 
     @validator("search_type")
     def validate_search_type(self, v):
@@ -114,9 +106,7 @@ class SearchAnalyticsQuery(BaseModel):
     query: str = Field(..., description="Search query")
     count: int = Field(..., description="Number of searches")
     avg_ctr: float | None = Field(None, description="Average click-through rate")
-    avg_response_time_ms: int | None = Field(
-        None, description="Average response time"
-    )
+    avg_response_time_ms: int | None = Field(None, description="Average response time")
     avg_position: float | None = Field(None, description="Average click position")
 
 
@@ -144,15 +134,9 @@ class PerformanceEndpoint(BaseModel):
     avg_time_ms: float = Field(..., description="Average response time")
     error_rate: float = Field(..., description="Error rate (0-1)")
     request_count: int = Field(..., description="Total requests")
-    p50_time_ms: float | None = Field(
-        None, description="50th percentile response time"
-    )
-    p95_time_ms: float | None = Field(
-        None, description="95th percentile response time"
-    )
-    p99_time_ms: float | None = Field(
-        None, description="99th percentile response time"
-    )
+    p50_time_ms: float | None = Field(None, description="50th percentile response time")
+    p95_time_ms: float | None = Field(None, description="95th percentile response time")
+    p99_time_ms: float | None = Field(None, description="99th percentile response time")
 
 
 class PerformanceMetricsResponse(BaseModel):
@@ -181,9 +165,7 @@ class ContentPopularityItem(BaseModel):
     unique_visitors: int = Field(..., description="Unique visitors")
     avg_time_on_page: int = Field(..., description="Average time on page in seconds")
     bounce_rate: float = Field(..., description="Bounce rate for this content")
-    engagement_score: float | None = Field(
-        None, description="Overall engagement score"
-    )
+    engagement_score: float | None = Field(None, description="Overall engagement score")
 
 
 class UserEngagementMetrics(BaseModel):
@@ -286,9 +268,7 @@ class AnalyticsQuery(BaseModel):
 
     metrics: list[str] = Field(..., description="Metrics to calculate")
     dimensions: list[str] | None = Field(None, description="Dimensions to group by")
-    filters: list[AnalyticsFilter] | None = Field(
-        None, description="Filters to apply"
-    )
+    filters: list[AnalyticsFilter] | None = Field(None, description="Filters to apply")
     date_range: dict[str, datetime] = Field(
         ..., description="Date range with 'start' and 'end' keys"
     )
@@ -356,15 +336,11 @@ class AnalyticsExportResponse(BaseModel):
     period: str = Field(..., description="Time period")
     date_from: datetime = Field(..., description="Start date")
     date_to: datetime = Field(..., description="End date")
-    data: dict[str, Any] | str = Field(
-        ..., description="Exported data or download URL"
-    )
+    data: dict[str, Any] | str = Field(..., description="Exported data or download URL")
     row_count: int = Field(..., description="Number of rows exported")
     file_size_bytes: int | None = Field(None, description="File size in bytes")
     generated_at: datetime = Field(..., description="Generation timestamp")
-    expires_at: datetime | None = Field(
-        None, description="Export expiration timestamp"
-    )
+    expires_at: datetime | None = Field(None, description="Export expiration timestamp")
 
 
 class RealTimeMetrics(BaseModel):

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { configManager } from '../src/config.js';
-import { listAdapters, setCurrent, getCurrent, formatCurrent } from '../src/models.js';
+import { formatCurrent, getCurrent, listAdapters, setCurrent } from '../src/models.js';
 import { PermissionEngine } from '../src/permission.js';
 
 let originalConfig: any;

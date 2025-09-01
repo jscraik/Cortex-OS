@@ -6,7 +6,7 @@
  */
 
 import { SecureNeo4j } from '@cortex-os/utils/secure-neo4j';
-import neo4j, { Driver } from 'neo4j-driver';
+import neo4j, { type Driver } from 'neo4j-driver';
 
 interface KGNode {
   id: string;

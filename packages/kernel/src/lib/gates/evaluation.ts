@@ -1,4 +1,4 @@
-import { PRPState } from '../../state.js';
+import type { PRPState } from '../../state.js';
 
 export async function validateTDDCycle(
   state: PRPState,

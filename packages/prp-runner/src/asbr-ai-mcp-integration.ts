@@ -8,8 +8,8 @@
  * @maintainer @jamiescottcraik
  */
 
-import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
 import express from 'express';
+import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
 
 /**
  * ASBR AI MCP Integration - Automatically exposes AI capabilities as MCP tools

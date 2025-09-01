@@ -105,7 +105,7 @@ export function selectOptimalModel(
   category: keyof ModelIntegrationConfig,
   subcategory: string,
   characteristics: TaskCharacteristics,
-  config: ModelIntegrationConfig = DEFAULT_MODEL_INTEGRATION,
+  config: ModelIntegrationConfig = DEFAULT_MODEL_INTEGRATION
 ): string {
   const models = config[category] as any;
   const modelGroup = models[subcategory];

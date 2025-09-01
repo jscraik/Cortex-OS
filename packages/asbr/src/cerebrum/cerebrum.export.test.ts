@@ -2,9 +2,9 @@
  * Simple test to verify Cerebrum exports
  */
 
-import { describe, it, expect } from 'vitest';
-import { Cerebrum, Plan, SimulationResult, Critique, TeachingSession } from './index.js';
+import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG } from '../core/config.js';
+import { Cerebrum, Critique, Plan, SimulationResult, TeachingSession } from './index.js';
 
 describe('Cerebrum Exports', () => {
   it('should export Cerebrum class', () => {

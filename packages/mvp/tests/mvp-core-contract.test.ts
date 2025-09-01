@@ -2,7 +2,7 @@
  * @file tests/mvp-core-contract.test.ts
  * @description Contract tests ensuring kernel uses mvp-core only through public interface.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe.skip('MVP-Core Contract', () => {
   it('exposes env loader via public API', async () => {

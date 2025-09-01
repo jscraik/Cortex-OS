@@ -3,12 +3,12 @@
  * @description Test real Qwen embedding functionality (skipped by default)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  AVAILABLE_EMBEDDING_MODELS,
   createEmbeddingState,
   generateEmbeddings,
   getStats,
-  AVAILABLE_EMBEDDING_MODELS,
 } from '../lib/embedding/index.js';
 
 describe.skip('🔥 Real Qwen Embedding Tests', () => {

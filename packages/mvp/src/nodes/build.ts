@@ -5,8 +5,8 @@
  * @version 1.0.0
  */
 
-import { Evidence, PRPState } from '../state.js';
 import { generateEvidenceId, getCurrentTimestamp } from '../lib/utils.js';
+import type { Evidence, PRPState } from '../state.js';
 import { ApiSchemaValidator } from '../validators/api-schema-validator.js';
 import { BackendValidator } from '../validators/backend-validator.js';
 import { DocumentationValidator } from '../validators/documentation-validator.js';

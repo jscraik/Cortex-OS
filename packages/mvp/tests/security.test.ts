@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 
 describe('Security Enhancements', () => {

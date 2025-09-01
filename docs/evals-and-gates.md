@@ -29,4 +29,3 @@ Extending:
 
 - Add new suite in `packages/evals/src/suites/`, expose it via `src/index.ts` switch, and register in config.
 - Each suite validates its input with Zod and must return a single-pass boolean and numeric metrics.
-

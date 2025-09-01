@@ -8,11 +8,11 @@ import path from 'path';
  */
 
 import {
-  EnhancedRAGPipeline,
   createFastRAGPipeline,
   createHighQualityRAGPipeline,
   createProductionRAGPipeline,
   type Document,
+  EnhancedRAGPipeline,
 } from '../src/enhanced-pipeline';
 
 // Sample documents for testing

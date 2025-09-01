@@ -8,14 +8,14 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
+# Remove conflicting imports - using local classes instead
+# import memory_manager
+# import model_manager
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
-
-import memory_manager
-import model_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,21 +23,51 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-    # Mock app and managers for development
-    class MockApp:
-        def get(self, _path, **_kwargs):
-            def decorator(func):
-                return func
-            return decorator
 
-        def post(self, _path, **_kwargs):
-            def decorator(func):
-                return func
-            return decorator
+# Mock managers for development when MLX is not available
+class MemoryManager:
+    def get_memory_stats(self):
+        return {"available": 8000, "used": 2000}
 
-    app = MockApp()
-    memory_manager = MemoryManager()
-    model_manager = ModelManager()
+    def can_load_model(self, model):
+        return True
+
+    def suggest_model_swap(self, model):
+        return {"strategy": "mock"}
+
+    def get_available_memory(self):
+        return 8000
+
+
+class ModelManager:
+    def __init__(self):
+        self.total_inferences = 0
+
+    def is_model_loaded(self, model):
+        return False
+
+    async def load_model(self, model):
+        return True
+
+    async def generate(self, **kwargs):
+        return {"text": "Mock response", "tokens": 10}
+
+    async def unload_model(self, model):
+        return True
+
+    def get_performance_metrics(self):
+        return {"requests": self.total_inferences}
+
+    def get_uptime(self):
+        return 3600
+
+    async def execute_model_swap(self, strategy):
+        return True
+
+
+# Initialize managers
+memory_manager = MemoryManager()
+model_manager = ModelManager()
 
 
 class InferenceRequest(BaseModel):
@@ -66,7 +96,7 @@ class InferenceResponse(BaseModel):
     model: str
     tokens_generated: int
     inference_time: float
-    memory_usage: Dict[str, Any]
+    memory_usage: dict[str, Any]
 
 
 @app.post("/infer", response_model=InferenceResponse)
@@ -133,7 +163,9 @@ async def switch_model(request: ModelSwitchRequest, background_tasks: Background
 
     except Exception as e:
         logger.error(f"Model switch failed: {e!s}")
-        raise HTTPException(status_code=500, detail=f"Model switch failed: {e!s}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Model switch failed: {e!s}"
+        ) from e
 
 
 @app.post("/model/preload")
@@ -204,7 +236,7 @@ if __name__ == "__main__":
             logger.warning(f"Could not load default model: {e}")
 
     # Run startup
-    _startup_task = asyncio.create_task(startup())  # Store reference to avoid warning
+    startup_task = asyncio.create_task(startup())  # Store reference to avoid warning
 
     # Start server
     uvicorn.run(

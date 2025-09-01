@@ -3,11 +3,11 @@
  * @description Tests for EvaluationNode with real TDD validation, code review, and quality budgets
  */
 
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { EvaluationNode } from '../../src/nodes/evaluation';
-import { PRPState } from '../../src/state';
-import fs from 'fs';
 import { exec } from 'child_process';
+import fs from 'fs';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { EvaluationNode } from '../../src/nodes/evaluation';
+import type { PRPState } from '../../src/state';
 
 // Mock dependencies
 vi.mock('fs');

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { ModelRouter } from '../src/model-router';
+import { describe, expect, it, vi } from 'vitest';
 import type { MLXAdapter } from '../src/adapters/mlx-adapter';
 import type { OllamaAdapter } from '../src/adapters/ollama-adapter';
+import { ModelRouter } from '../src/model-router';
 
 describe('ModelRouter initialization', () => {
   it('registers models based on adapter availability', async () => {

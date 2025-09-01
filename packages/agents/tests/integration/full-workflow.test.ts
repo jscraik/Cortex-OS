@@ -8,17 +8,17 @@
  * - End-to-end workflows
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  type AgentOrchestrator,
   createCodeAnalysisAgent,
-  createTestGenerationAgent,
   createDocumentationAgent,
   createEventBus,
-  AgentOrchestrator,
   createOrchestrator,
+  createTestGenerationAgent,
   WorkflowBuilder,
 } from '@/index.js';
-import type { ModelProvider, EventBus, MCPClient } from '@/lib/types.js';
+import type { EventBus, MCPClient, ModelProvider } from '@/lib/types.js';
 
 describe('Full Agent Workflow Integration', () => {
   let mockProvider: ModelProvider;
@@ -449,25 +449,25 @@ describe('Full Agent Workflow Integration', () => {
           if (!userData || typeof userData !== 'object') {
             throw new Error('Invalid user data provided');
           }
-          
+
           const { email, password, name, age } = userData;
-          
+
           // Email validation
           const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
           if (!email || !emailRegex.test(email)) {
             throw new Error('Invalid email address');
           }
-          
+
           // Password strength check
           if (!password || password.length < 8) {
             throw new Error('Password must be at least 8 characters long');
           }
-          
+
           // Age validation
           if (age && (typeof age !== 'number' || age < 13 || age > 120)) {
             throw new Error('Invalid age provided');
           }
-          
+
           // Return processed data
           return {
             email: email.toLowerCase().trim(),

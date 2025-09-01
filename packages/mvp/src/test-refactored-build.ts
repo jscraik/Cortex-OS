@@ -3,7 +3,7 @@
  */
 
 import { BuildNode } from './nodes/build.js';
-import { PRPState } from './state.js';
+import type { PRPState } from './state.js';
 
 async function testRefactoredBuild() {
   console.log('🧪 Testing refactored BuildNode...');

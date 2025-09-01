@@ -22,7 +22,7 @@ neo4jContent = neo4jContent.replace(
        MERGE (a)-[r:\${safeType}]->(b)
        SET r += $props\`,
       { from: rel.from, to: rel.to, props: rel.props ?? {} },
-    );`,
+    );`
 );
 
 writeFileSync(neo4jPath, neo4jContent);
@@ -36,12 +36,12 @@ secureNeo4jContent = secureNeo4jContent.replace(
   /await session\.run\(\n\s+`MERGE \(n:\${labelValidation\.data} {id: \$id}\) SET n \+= \$props`,\n\s+{\n\s+id: idValidation\.data,\n\s+props: node\.props\n\s+}\n\s+\);/,
   `// SECURITY FIX: Use validated label directly
     await session.run(
-      \`MERGE (n:\${labelValidation.data} {id: \$id}) SET n += \$props\`,
+      \`MERGE (n:\${labelValidation.data} {id: $id}) SET n += $props\`,
       {
         id: idValidation.data,
         props: node.props
       }
-    );`,
+    );`
 );
 
 // Fix the upsertRel method in secure-neo4j.ts
@@ -49,15 +49,15 @@ secureNeo4jContent = secureNeo4jContent.replace(
   /await session\.run\(\n\s+`MATCH \(a {id: \$from}\), \(b {id: \$to}\)\\n\s+MERGE \(a\)-\[r:\${typeValidation\.data}\]->\(b\)\\n\s+SET r \+= \$props`,\n\s+{\n\s+from: fromValidation\.data,\n\s+to: toValidation\.data,\n\s+props: rel\.props \|\| {}\n\s+}\n\s+\);/,
   `// SECURITY FIX: Use validated type directly
     await session.run(
-      \`MATCH (a {id: \$from}), (b {id: \$to})
+      \`MATCH (a {id: $from}), (b {id: $to})
        MERGE (a)-[r:\${typeValidation.data}]->(b)
-       SET r += \$props\`,
+       SET r += $props\`,
       {
         from: fromValidation.data,
         to: toValidation.data,
         props: rel.props || {}
       }
-    );`,
+    );`
 );
 
 writeFileSync(secureNeo4jPath, secureNeo4jContent);
@@ -72,7 +72,7 @@ let executorContent = readFileSync(executorPath, 'utf-8');
 
 executorContent = executorContent.replace(
   'proc = subprocess.run(',
-  '// SECURITY NOTE: This subprocess call is safe because:\n    // 1. The code is written to a temporary file that is controlled by the application\n    // 2. The Python interpreter is run with -I flag to isolate from environment\n    // 3. Builtins are restricted to prevent dangerous operations\n    // 4. A timeout is enforced to prevent resource exhaustion\n    proc = subprocess.run(',
+  '// SECURITY NOTE: This subprocess call is safe because:\n    // 1. The code is written to a temporary file that is controlled by the application\n    // 2. The Python interpreter is run with -I flag to isolate from environment\n    // 3. Builtins are restricted to prevent dangerous operations\n    // 4. A timeout is enforced to prevent resource exhaustion\n    proc = subprocess.run('
 );
 
 writeFileSync(executorPath, executorContent);
@@ -83,7 +83,7 @@ let thermalGuardContent = readFileSync(thermalGuardPath, 'utf-8');
 
 thermalGuardContent = thermalGuardContent.replace(
   'result = subprocess.run(',
-  '# SECURITY NOTE: This subprocess call is safe because:\n        # 1. The command is hardcoded and not user-controlled\n        # 2. Only system information is retrieved\n        # 3. A timeout is enforced\n        result = subprocess.run(',
+  '# SECURITY NOTE: This subprocess call is safe because:\n        # 1. The command is hardcoded and not user-controlled\n        # 2. Only system information is retrieved\n        # 3. A timeout is enforced\n        result = subprocess.run('
 );
 
 writeFileSync(thermalGuardPath, thermalGuardContent);

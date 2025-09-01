@@ -19,7 +19,7 @@ executorContent = executorContent.replace(
 
 # SECURITY UPDATE: This module now uses SecureCommandExecutor for additional protection
 # against command injection and resource exhaustion attacks.
-`,
+`
 );
 
 // Add timeout validation and resource limits
@@ -27,7 +27,7 @@ executorContent = executorContent.replace(
   'DEFAULT_TIMEOUT = 3  # seconds',
   `DEFAULT_TIMEOUT = 3  # seconds
 MAX_TIMEOUT = 10  # Maximum allowed timeout
-MAX_CODE_LENGTH = 10000  # Maximum code length in characters`,
+MAX_CODE_LENGTH = 10000  # Maximum code length in characters`
 );
 
 // Add input validation to the run_code function
@@ -35,21 +35,21 @@ executorContent = executorContent.replace(
   'def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:',
   `def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
     """Run \`code\` in a subprocess, return (exit_code, stdout, stderr).
-    
+
     NOTE: Input validation and resource limits have been added for security.
     """
     # Validate inputs
     if not isinstance(code, str):
         raise TypeError("Code must be a string")
-    
+
     if len(code) > MAX_CODE_LENGTH:
         raise ValueError(f"Code exceeds maximum length of {MAX_CODE_LENGTH} characters")
-    
+
     if not isinstance(timeout, int) or timeout <= 0:
         raise ValueError("Timeout must be a positive integer")
-    
+
     if timeout > MAX_TIMEOUT:
-        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")`,
+        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")`
 );
 
 // Write the updated content back to the file
@@ -66,7 +66,7 @@ mcpServerContent = mcpServerContent.replace(
   'from pydantic import BaseModel',
   `from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
-# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`,
+# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`
 );
 
 // Add validation to the run_docker_command function
@@ -87,11 +87,11 @@ mcpServerContent = mcpServerContent.replace(
     # SECURITY UPDATE: Validate command before execution
     # if not isinstance(command, list):
     #     return {"stdout": "", "stderr": "Error: Command must be a list"}
-    
+
     # for item in command:
     #     if not isinstance(item, str):
     #         return {"stdout": "", "stderr": "Error: All command elements must be strings"}
-    
+
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)
         return {"stdout": result.stdout, "stderr": ""}
@@ -105,7 +105,7 @@ mcpServerContent = mcpServerContent.replace(
             "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
         }
     except Exception as e:
-        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`,
+        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`
 );
 
 // Add validation to the uvicorn.run call
@@ -124,16 +124,16 @@ mcpServerContent = mcpServerContent.replace(
     # TODO: Add host validation to prevent SSRF
     # if not is_valid_host(host):
     #     host = "0.0.0.0"  # Default to localhost if invalid
-    
+
     port = int(os.getenv("MCP_SERVER_PORT", "8765"))
     # Validate port range
     if port < 1024 or port > 65535:
         port = 8765  # Default to standard port if invalid
-    
+
     # SECURITY UPDATE: Disable reload in production
     reload = os.getenv("MCP_SERVER_RELOAD", "false").lower() == "true"
-    
-    uvicorn.run(app, host=host, port=port, reload=reload)`,
+
+    uvicorn.run(app, host=host, port=port, reload=reload)`
 );
 
 // Write the updated content back to the file

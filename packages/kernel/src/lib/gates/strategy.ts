@@ -1,4 +1,4 @@
-import { PRPState } from '../../state.js';
+import type { PRPState } from '../../state.js';
 
 export function validateBlueprint(state: PRPState): { passed: boolean; details: any } {
   const hasTitle = !!state.blueprint.title;

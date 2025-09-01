@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { buildAgentPrompt, parseAgentSelection, type AgentInfo } from '../src/lib/agent-selection';
+import { describe, expect, it } from 'vitest';
+import { type AgentInfo, buildAgentPrompt, parseAgentSelection } from '../src/lib/agent-selection';
 
 describe('agent selection helpers', () => {
   const agents: AgentInfo[] = [
@@ -29,4 +29,3 @@ describe('agent selection helpers', () => {
     expect(result.agentId).toBe('agent1');
   });
 });
-

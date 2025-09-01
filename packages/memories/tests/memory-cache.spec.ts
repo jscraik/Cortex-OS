@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryCacheManager } from '../src/core/in-memory-cache';
 
 // Helper to advance time for TTL tests

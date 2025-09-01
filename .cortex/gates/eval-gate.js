@@ -10,4 +10,3 @@ const child = spawn(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['eval:g
 child.on('exit', (code) => {
   process.exit(code ?? 1);
 });
-

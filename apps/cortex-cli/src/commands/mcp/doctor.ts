@@ -1,7 +1,7 @@
-import { Command } from 'commander';
-import { readAll } from '@cortex-os/mcp-registry/fs-store';
 import { createClient } from '@cortex-os/mcp-core/client';
+import { readAll } from '@cortex-os/mcp-registry/fs-store';
 import { tracer } from '@cortex-os/telemetry';
+import { Command } from 'commander';
 
 export const mcpDoctor = new Command('doctor')
   .description('Probe configured MCP servers for basic connectivity')

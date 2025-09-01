@@ -38,7 +38,7 @@ const createValidPlugin = (overrides: Partial<PluginMetadata> = {}): PluginMetad
     version: plugin.version,
     entrypoint: plugin.entrypoint,
   });
-  plugin.signature = Object.prototype.hasOwnProperty.call(overrides, 'signature')
+  plugin.signature = Object.hasOwn(overrides, 'signature')
     ? (overrides as any).signature
     : sign(null, Buffer.from(data), privateKey).toString('base64');
   return plugin;

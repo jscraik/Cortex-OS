@@ -2,7 +2,7 @@
  * Helper to send a JSON-RPC request with timeout, retry and metrics tracking
  */
 import type { JsonRpcRequest, McpMetrics } from './mcp-client';
-import { PendingRequests } from './pendingRequests';
+import type { PendingRequests } from './pendingRequests';
 
 interface TrackOptions {
   timeout: number;
@@ -66,7 +66,7 @@ export async function trackRequest<T>(
         recordError(err, method);
         throw err;
       }
-      await delay(options.retryDelay * Math.pow(2, attempt - 1));
+      await delay(options.retryDelay * 2 ** (attempt - 1));
     }
   }
 }

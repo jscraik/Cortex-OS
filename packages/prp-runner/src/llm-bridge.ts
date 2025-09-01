@@ -5,7 +5,7 @@
 
 import { Ollama } from 'ollama';
 import { z } from 'zod';
-import { AVAILABLE_MLX_MODELS, MLXAdapter, createMLXAdapter } from './mlx-adapter.js';
+import { AVAILABLE_MLX_MODELS, createMLXAdapter, type MLXAdapter } from './mlx-adapter.js';
 
 interface OllamaAdapter {
   generate(options: {

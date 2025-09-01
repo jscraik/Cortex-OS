@@ -1,4 +1,4 @@
-import { PlaywrightCrawler, Dataset } from 'crawlee';
+import { Dataset, PlaywrightCrawler } from 'crawlee';
 import { z } from 'zod';
 
 const bodySchema = z.object({

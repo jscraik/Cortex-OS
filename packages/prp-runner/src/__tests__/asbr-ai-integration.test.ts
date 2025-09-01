@@ -8,13 +8,13 @@
  * @maintainer @jamiescottcraik
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  ASBRAIIntegration,
-  createASBRAIIntegration,
   AI_EVIDENCE_PRESETS,
   type AIEvidenceConfig,
   type AIEvidenceResult,
+  ASBRAIIntegration,
+  createASBRAIIntegration,
 } from '../asbr-ai-integration.js';
 
 // Mock dependencies before importing

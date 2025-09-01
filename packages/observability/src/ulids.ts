@@ -3,7 +3,7 @@
  */
 
 import { ulid } from 'ulid';
-import { ULIDSchema, type ULID } from './types.js';
+import { type ULID, ULIDSchema } from './types.js';
 
 /**
  * Generate a new ULID for run identification

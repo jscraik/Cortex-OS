@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { writeFile, mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createMlxIntegration } from '../mlx-mcp-integration.js';
 
 async function createTempConfig(): Promise<string> {
@@ -19,7 +19,7 @@ async function createTempConfig(): Promise<string> {
 
 describe('SSE /v1/completions echo', () => {
   let port = 0;
-  let stop: (() => Promise<void>) | null = null;
+  const stop: (() => Promise<void>) | null = null;
 
   beforeAll(async () => {
     const cfg = await createTempConfig();
@@ -62,7 +62,8 @@ describe('SSE /v1/completions echo', () => {
         }
         try {
           const json = JSON.parse(payload);
-          const delta = json?.choices?.[0]?.delta?.content || json?.choices?.[0]?.message?.content || '';
+          const delta =
+            json?.choices?.[0]?.delta?.content || json?.choices?.[0]?.message?.content || '';
           if (delta) content += delta;
         } catch {
           // ignore parse errors
@@ -75,4 +76,3 @@ describe('SSE /v1/completions echo', () => {
     expect(content.trim()).toBe('Hello MLX world');
   });
 });
-

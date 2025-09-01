@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { Evidence } from '../state.js';
+import type { Evidence } from '../state.js';
 
 /**
  * Create a standardized validation result

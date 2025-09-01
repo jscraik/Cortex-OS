@@ -6,7 +6,7 @@
  * @status active
  */
 
-import { describe, test, expect } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { UnifiedAIEvidenceWorkflow } from '../unified-ai-evidence-workflow.js';
 
 describe('🔄 Unified AI Evidence Workflow (real implementation)', () => {

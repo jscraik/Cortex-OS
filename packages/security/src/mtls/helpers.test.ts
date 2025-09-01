@@ -1,8 +1,8 @@
-import { readFile } from 'fs/promises';
 import { EventEmitter } from 'node:events';
+import { readFile } from 'fs/promises';
 import * as tls from 'tls';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MTLSConfig, MTLSError } from '../types.ts';
+import { type MTLSConfig, MTLSError } from '../types.ts';
 import { createClientSocket, loadCertificates } from './helpers.ts';
 
 vi.mock('@cortex-os/telemetry', () => ({ logWithSpan: vi.fn() }));

@@ -3,7 +3,7 @@
  * @description Tests for GenerateGuide MCP tool
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { GenerateGuide, type GenerateGuideArgs } from '../src/tools/GenerateGuide.js';
 
 describe('GenerateGuide Tool', () => {

@@ -53,7 +53,7 @@ async function testFallbackChainEvent() {
     // Allow some microtask time for event publish (best-effort)
     await new Promise((r) => setTimeout(r, 50));
     const found = events.find(
-      (e) => e.type === 'provider.fallback' || e.type === 'agents.provider.fallback',
+      (e) => e.type === 'provider.fallback' || e.type === 'agents.provider.fallback'
     );
     assert.ok(found, 'provider.fallback event should be published');
     const data = found.data;

@@ -28,7 +28,7 @@ class MLXAdapter:
 
     def __init__(self) -> None:
         try:
-            import mlx_lm  # type: ignore
+            pass  # type: ignore
         except Exception:  # pragma: no cover - gated by availability
             self._ok = False
         else:
@@ -94,11 +94,13 @@ class OllamaAdapter:
         import math
 
         q = self.embed(query, timeout)
+
         def cos(a: list[float], b: list[float]) -> float:
-            dot = sum(x*y for x, y in zip(a, b))
-            na = math.sqrt(sum(x*x for x in a))
-            nb = math.sqrt(sum(x*x for x in b))
+            dot = sum(x * y for x, y in zip(a, b))
+            na = math.sqrt(sum(x * x for x in a))
+            nb = math.sqrt(sum(x * x for x in b))
             return dot / (na * nb + 1e-9)
+
         scored = []
         for i, d in enumerate(docs):
             e = self.embed(d, timeout)

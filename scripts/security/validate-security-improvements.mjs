@@ -93,7 +93,7 @@ function runCommand(description, command, expectedExitCode = 0) {
   } catch (error) {
     if (error.status === expectedExitCode) {
       logSuccess(
-        `✅ Command succeeded with expected exit code ${expectedExitCode}: ${description}`,
+        `✅ Command succeeded with expected exit code ${expectedExitCode}: ${description}`
       );
       return error.stdout || '';
     } else {
@@ -194,7 +194,7 @@ async function runValidation() {
           {
             encoding: 'utf-8',
             stdio: 'pipe',
-          },
+          }
         );
 
         // Check if there are any findings
@@ -233,7 +233,7 @@ async function runValidation() {
           {
             encoding: 'utf-8',
             stdio: 'pipe',
-          },
+          }
         );
 
         if (output.trim() !== '') {
@@ -266,7 +266,7 @@ async function runValidation() {
               `grep -r "${pattern}" apps/cortex-os/packages/mvp-core/src/secure-*.ts 2>/dev/null`,
               {
                 stdio: 'pipe',
-              },
+              }
             );
             // If we find a match, check if it's properly secured
             const output = execSync(
@@ -274,7 +274,7 @@ async function runValidation() {
               {
                 encoding: 'utf-8',
                 stdio: 'pipe',
-              },
+              }
             );
 
             // Check if the pattern is properly secured
@@ -285,10 +285,7 @@ async function runValidation() {
             ) {
               return `Direct injection pattern found without proper security validation: ${pattern}`;
             }
-          } catch (innerError) {
-            // No matches found is good
-            continue;
-          }
+          } catch (innerError) {}
         }
 
         return true;
@@ -306,7 +303,7 @@ async function runValidation() {
           {
             encoding: 'utf-8',
             stdio: 'pipe',
-          },
+          }
         );
 
         if (output.trim() === '') {
@@ -328,7 +325,7 @@ async function runValidation() {
           {
             encoding: 'utf-8',
             stdio: 'pipe',
-          },
+          }
         );
 
         if (output.trim() === '') {
@@ -350,7 +347,7 @@ async function runValidation() {
           {
             encoding: 'utf-8',
             stdio: 'pipe',
-          },
+          }
         );
 
         if (output.trim() === '') {
@@ -372,7 +369,7 @@ async function runValidation() {
           {
             encoding: 'utf-8',
             stdio: 'pipe',
-          },
+          }
         );
 
         if (output.trim() === '') {

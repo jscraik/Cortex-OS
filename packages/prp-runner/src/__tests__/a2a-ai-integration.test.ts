@@ -6,7 +6,7 @@
  * @status TDD-DRIVEN
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock(
   '@cortex-os/a2a',
@@ -16,7 +16,7 @@ vi.mock(
   { virtual: true },
 );
 
-import { A2AAIAgent, a2aAIAgent, createA2AAIAgent, A2A_AI_SKILLS } from '../a2a-ai-agent.js';
+import { A2A_AI_SKILLS, A2AAIAgent, a2aAIAgent, createA2AAIAgent } from '../a2a-ai-agent.js';
 
 // Mock A2A types since package might not be available in test environment
 const mockA2AMessage = {

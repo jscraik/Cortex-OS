@@ -1,4 +1,3 @@
-
 import * as fs from 'fs';
 import * as path from 'path';
 import { z } from 'zod';
@@ -21,9 +20,9 @@ const BlockKeyEnum = z.enum(BlockKeys);
 const validateSchemaPath = (p: string): boolean => {
   const full = resolve(process.cwd(), p);
   if (!existsSync(full)) return false;
-  if (p.endsWith(".schema.json")) {
+  if (p.endsWith('.schema.json')) {
     try {
-      JSON.parse(readFileSync(full, "utf-8"));
+      JSON.parse(readFileSync(full, 'utf-8'));
     } catch {
       return false;
     }
@@ -48,8 +47,8 @@ export const BlocksSchema = z.array(
     })
     .refine(
       (o) => Object.keys(o).length === 1,
-      'Each blocks[] entry must have exactly one known key',
-    ),
+      'Each blocks[] entry must have exactly one known key'
+    )
 );
 
 const schemaPath = z
@@ -57,7 +56,6 @@ const schemaPath = z
   .min(1)
   .refine(
     (p) => {
-
       // Prevent path traversal attacks by ensuring the path stays within the project
       const projectRoot = process.cwd();
       const fullPath = path.resolve(projectRoot, p);
@@ -82,10 +80,8 @@ const schemaPath = z
     },
     {
       message:
-
         'schema paths must reference existing .ts or .schema.json files with valid JSON for .schema.json, and must be within the project directory',
-
-    },
+    }
   );
 
 export const PromptMetaSchema = z.object({
@@ -102,21 +98,20 @@ export const PromptMetaSchema = z.object({
     .string()
     .min(1)
     .regex(/\.(schema\.json|ts)$/, {
-      message: "inputs_schema must reference a .schema.json or .ts file"
+      message: 'inputs_schema must reference a .schema.json or .ts file',
     })
     .refine((p) => validateSchemaPath(p), {
-      message: "inputs_schema file must exist and be valid"
+      message: 'inputs_schema file must exist and be valid',
     }),
   outputs_schema: z
     .string()
     .min(1)
     .regex(/\.(schema\.json|ts)$/, {
-      message: "outputs_schema must reference a .schema.json or .ts file"
+      message: 'outputs_schema must reference a .schema.json or .ts file',
     })
     .refine((p) => validateSchemaPath(p), {
-      message: "outputs_schema file must exist and be valid"
+      message: 'outputs_schema file must exist and be valid',
     }),
-
 });
 
 export const PromptPackSchema = z.object({

@@ -4,19 +4,24 @@
  */
 
 import { z } from 'zod';
-import { 
-  JsonRpcRequest, 
-  JsonRpcResponse, 
-  JsonRpcRequestSchema,
-  TaskSendParamsSchema,
-  TaskGetParamsSchema,
-  TaskCancelParamsSchema,
+import {
   A2A_ERROR_CODES,
+  type JsonRpcRequest,
+  JsonRpcRequestSchema,
+  type JsonRpcResponse,
+  TaskCancelParamsSchema,
+  TaskGetParamsSchema,
+  TaskSendParamsSchema,
 } from './protocol.js';
 import { TaskManager } from './task-manager.js';
+
 // Simple implementations for dependencies that don't exist yet
 class StructuredError extends Error {
-  constructor(public code: string, message: string, public details?: unknown) {
+  constructor(
+    public code: string,
+    message: string,
+    public details?: unknown,
+  ) {
     super(message);
     this.name = 'StructuredError';
   }
@@ -64,18 +69,18 @@ export class A2ARpcHandler implements RpcHandler {
 
       case 'tasks/list': {
         // Utility method for debugging
-        const status = request.params && typeof request.params === 'object' && 'status' in request.params 
-          ? request.params.status as any 
-          : undefined;
+        const status =
+          request.params && typeof request.params === 'object' && 'status' in request.params
+            ? (request.params.status as any)
+            : undefined;
         return this.taskManager.listTasks(status);
       }
 
       default:
-        throw new StructuredError(
-          'METHOD_NOT_FOUND',
-          `Method '${request.method}' not found`,
-          { method: request.method, code: A2A_ERROR_CODES.METHOD_NOT_FOUND }
-        );
+        throw new StructuredError('METHOD_NOT_FOUND', `Method '${request.method}' not found`, {
+          method: request.method,
+          code: A2A_ERROR_CODES.METHOD_NOT_FOUND,
+        });
     }
   }
 
@@ -95,7 +100,7 @@ export class A2ARpcHandler implements RpcHandler {
     // Handle StructuredError - check by name to avoid instanceof issues
     if (error instanceof Error && error.name === 'StructuredError') {
       const structuredError = error as any; // Cast to access custom properties
-      
+
       // Map StructuredError codes to A2A error codes
       let errorCode: number = A2A_ERROR_CODES.INTERNAL_ERROR;
       if (structuredError.code === 'TASK_NOT_FOUND') {
@@ -103,7 +108,7 @@ export class A2ARpcHandler implements RpcHandler {
       } else if (structuredError.code === 'METHOD_NOT_FOUND') {
         errorCode = A2A_ERROR_CODES.METHOD_NOT_FOUND;
       }
-      
+
       return {
         jsonrpc: '2.0',
         id,
@@ -149,16 +154,16 @@ export async function handleA2A(input: unknown): Promise<string> {
     }
 
     const request = parseResult.data;
-    
+
     // Use global task manager to maintain state across requests
     if (!globalTaskManager) {
       globalTaskManager = new TaskManager();
     }
     const rpcHandler = new A2ARpcHandler(globalTaskManager);
-    
+
     // Handle the request
     const response = await rpcHandler.handle(request);
-    
+
     return createJsonOutput(response);
   } catch (error) {
     // Fallback error response
@@ -171,7 +176,7 @@ export async function handleA2A(input: unknown): Promise<string> {
         data: error instanceof Error ? { stack: error.stack } : error,
       },
     };
-    
+
     return createJsonOutput(errorResponse);
   }
 }

@@ -14,9 +14,10 @@ Usage:
 Special model: "echo" — emits the user message back token-by-token for tests,
 without requiring MLX packages. For real models, requires `mlx_lm`.
 """
+
 import json
 import sys
-from typing import Iterator
+from collections.abc import Iterator
 
 
 def iter_echo_tokens(text: str) -> Iterator[str]:
@@ -25,13 +26,15 @@ def iter_echo_tokens(text: str) -> Iterator[str]:
         yield part + " "
 
 
-def chat_with_mlx(model: str, prompt: str, temperature: float, max_tokens: int) -> Iterator[str]:
+def chat_with_mlx(
+    model: str, prompt: str, temperature: float, max_tokens: int
+) -> Iterator[str]:
     if model == "echo":
         yield from iter_echo_tokens(prompt)
         return
 
     try:
-        from mlx_lm import load, generate  # type: ignore
+        from mlx_lm import generate, load  # type: ignore
     except Exception as e:
         raise SystemExit(
             "MLX is not available. Install with `pip install mlx-lm` or use the 'echo' model for testing.\n"
@@ -106,4 +109,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

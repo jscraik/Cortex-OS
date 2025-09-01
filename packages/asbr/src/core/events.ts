@@ -6,11 +6,11 @@
  */
 
 import { EventEmitter } from 'events';
-import { appendFile } from 'fs/promises';
 import type { Response } from 'express';
-import type { Server as IOServer, Socket, DefaultEventsMap } from 'socket.io';
-import type { Config, Event, EventType } from '../types/index.js';
+import { appendFile } from 'fs/promises';
+import type { DefaultEventsMap, Server as IOServer, Socket } from 'socket.io';
 import { logError } from '../lib/logger.js';
+import type { Config, Event, EventType } from '../types/index.js';
 import { getStatePath } from '../xdg/index.js';
 import { loadConfig } from './config.js';
 

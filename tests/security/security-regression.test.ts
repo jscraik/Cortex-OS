@@ -6,10 +6,10 @@
  * @security OWASP Top 10 & MITRE ATLAS compliance
  */
 
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';
-import { SecureNeo4j } from '@cortex-os/utils';
 import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
+import { SecureNeo4j } from '@cortex-os/utils';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock external dependencies
 vi.mock('better-sqlite3', () => {

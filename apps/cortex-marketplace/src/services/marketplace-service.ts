@@ -4,9 +4,9 @@
  */
 
 import type { ServerManifest } from '@cortex-os/mcp-registry';
-import { RegistryService } from './registry-service.js';
 import { z } from 'zod';
 import { DEFAULT_LIMIT, MAX_LIMIT } from '../constants.js';
+import type { RegistryService } from './registry-service.js';
 
 // Enhanced search with AI-powered capabilities
 export interface SearchRequest {
@@ -315,13 +315,14 @@ export class MarketplaceService {
         case 'rating':
           comparison = (a.rating || 0) - (b.rating || 0);
           break;
-        case 'updated':
+        case 'updated': {
           const aDate = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
           const bDate = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
           comparison = aDate - bDate;
           break;
+        }
         case 'relevance':
-        default:
+        default: {
           // Relevance scoring: featured > downloads > rating
           const aScore =
             (a.featured ? 1000 : 0) + (a.downloads || 0) * 0.001 + (a.rating || 0) * 100;
@@ -329,6 +330,7 @@ export class MarketplaceService {
             (b.featured ? 1000 : 0) + (b.downloads || 0) * 0.001 + (b.rating || 0) * 100;
           comparison = aScore - bScore;
           break;
+        }
       }
 
       return sortOrder === 'asc' ? comparison : -comparison;

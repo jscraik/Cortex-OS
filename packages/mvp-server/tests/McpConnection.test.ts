@@ -3,7 +3,7 @@
  * @description Tests for McpConnection WebSocket handler
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket } from 'ws';
 import { McpConnection } from '../src/McpConnection';
 import { ToolRegistry } from '../src/ToolRegistry.js';

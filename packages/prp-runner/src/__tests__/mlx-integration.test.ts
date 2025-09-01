@@ -6,18 +6,18 @@
  * @status TDD-DRIVEN
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { MLXAdapter, createMLXAdapter, AVAILABLE_MLX_MODELS } from '../mlx-adapter.js';
+import { beforeAll, describe, expect, it } from 'vitest';
 import {
-  configureLLM,
-  getProvider,
-  getModel,
-  getMLXAdapter as getMLXAdapterFromState,
-  listMLXModels,
   checkProviderHealth,
+  configureLLM,
   generate,
+  getMLXAdapter as getMLXAdapterFromState,
+  getModel,
+  getProvider,
   type LLMState,
+  listMLXModels,
 } from '../llm-bridge.js';
+import { AVAILABLE_MLX_MODELS, createMLXAdapter, MLXAdapter } from '../mlx-adapter.js';
 
 describe('🔬 MLX Integration Tests', () => {
   let mlxAdapter: MLXAdapter;

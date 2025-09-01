@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import type { JsonRpcResponse, JsonRpcErrorCode } from '../rpc/types';
+import type { JsonRpcErrorCode, JsonRpcResponse } from '../rpc/types';
 
 /**
  * JSON-RPC 2.0 Request Schema

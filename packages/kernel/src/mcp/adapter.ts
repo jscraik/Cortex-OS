@@ -5,12 +5,12 @@
  * @version 1.0.0
  */
 
-import { PRPState } from '../state.js';
-import { generateId } from '../utils/id.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 import { runCommand } from '../lib/run-command.js';
+import type { PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
 
 // Neuron interface definition
 interface Neuron {
@@ -325,7 +325,9 @@ export const createDefaultMCPTools = (): MCPTool[] => [
       ];
       // Only allow exact matches to the whitelist
       if (!allowedCommands.includes(command.trim())) {
-        throw new Error(`Command "${command}" is not allowed. Allowed commands: ${allowedCommands.join(', ')}`);
+        throw new Error(
+          `Command "${command}" is not allowed. Allowed commands: ${allowedCommands.join(', ')}`,
+        );
       }
       const { stdout, stderr } = await runCommand(command, {
         cwd: context.workingDirectory,

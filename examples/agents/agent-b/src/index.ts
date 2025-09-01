@@ -268,7 +268,7 @@ export class AgentB extends EventEmitter {
     for (const step of execution.definition.steps) {
       // Check if all dependencies are completed
       const dependenciesMet = step.dependencies.every((depId) =>
-        execution.completedSteps.has(depId),
+        execution.completedSteps.has(depId)
       );
 
       if (dependenciesMet && !execution.completedSteps.has(step.id)) {
@@ -306,7 +306,7 @@ export class AgentB extends EventEmitter {
 
       // Process the result
       const handler = this.handlers.get(
-        execution.definition.name.toLowerCase().replace(/\s+/g, '.'),
+        execution.definition.name.toLowerCase().replace(/\s+/g, '.')
       );
       const processedResult = handler ? handler.processResult(step.id, result) : result;
 
@@ -343,7 +343,7 @@ export class AgentB extends EventEmitter {
     workflowType: string,
     payload: Record<string, unknown>,
     participants: string[] = ['agent-a', 'agent-b'],
-    priority: AgentCoordinationRequested['data']['priority'] = 'medium',
+    priority: AgentCoordinationRequested['data']['priority'] = 'medium'
   ): AgentCoordinationRequested {
     return {
       id: crypto.randomUUID(),

@@ -1,5 +1,5 @@
-import { AsyncLocalStorage } from 'async_hooks';
 import { createTraceContext, type TraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import { AsyncLocalStorage } from 'async_hooks';
 
 /**
  * AsyncLocalStorage-based trace context manager for Node.js

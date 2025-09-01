@@ -3,7 +3,7 @@
  * @description Comprehensive tests for ModelRouter with MLX, Ollama, and Frontier API fallbacks
  */
 
-import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { MLXAdapter } from '../src/adapters/mlx-adapter';
 import { OllamaAdapter } from '../src/adapters/ollama-adapter';
 import { ModelRouter } from '../src/model-router';

@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'fs';
-import path from 'path';
-import os from 'os';
 import http from 'http';
 import type { AddressInfo } from 'net';
+import os from 'os';
+import path from 'path';
+import { describe, expect, it } from 'vitest';
 import { RegistryService } from './registry-service.js';
 
 describe('RegistryService', () => {

@@ -9,32 +9,30 @@
  * @ai_provenance_hash N/A
  */
 
+export { AgentTraceCollector } from './agent-trace-collector.js';
+export { createAnalyticsEngine } from './analytics-engine.js';
 // Core analytics components
 export { MetricsCollector } from './metrics-collector.js';
-export { PatternAnalyzer } from './pattern-analyzer.js';
 export { OptimizationEngine } from './optimization-engine.js';
-export { AgentTraceCollector } from './agent-trace-collector.js';
-export { RealtimeDataStream } from './realtime-data-stream.js';
+export { PatternAnalyzer } from './pattern-analyzer.js';
 export { PerformanceDashboard } from './performance-dashboard.js';
-
+export { RealtimeDataStream } from './realtime-data-stream.js';
 // Types and interfaces
+// Analytics configuration
 export type {
   AgentMetrics,
-  OrchestrationMetrics,
+  AnalyticsConfig,
+  CrossAgentDependency,
+  DashboardData,
   InteractionPattern,
   OptimizationRecommendation,
-  DashboardData,
+  OrchestrationMetrics,
   PerformanceAnalysis,
-  WorkflowBottleneck,
+  PredictiveModel,
   ResourceUtilization,
   TrendAnalysis,
-  PredictiveModel,
-  CrossAgentDependency,
+  WorkflowBottleneck,
 } from './types.js';
-
-// Analytics configuration
-export type { AnalyticsConfig } from './types.js';
-export { createAnalyticsEngine } from './analytics-engine.js';
 
 // Version information
 export const version = '1.0.0';

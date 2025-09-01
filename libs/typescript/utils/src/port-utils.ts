@@ -34,7 +34,7 @@ export async function isPortAvailable(port: number, host = 'localhost'): Promise
 export async function findAvailablePort(
   startPort: number = 3000,
   maxAttempts: number = 100,
-  host = 'localhost',
+  host = 'localhost'
 ): Promise<number> {
   for (let port = startPort; port < startPort + maxAttempts; port++) {
     if (await isPortAvailable(port, host)) {
@@ -72,7 +72,7 @@ export const PORT_RANGES = {
  */
 export async function getPortInRange(
   range: { start: number; end: number },
-  host = 'localhost',
+  host = 'localhost'
 ): Promise<number> {
   return findAvailablePort(range.start, range.end - range.start + 1, host);
 }
@@ -89,12 +89,12 @@ export class TestPortAllocator {
   static async allocate(preferredPort?: number): Promise<number> {
     const port = await getPortInRange(PORT_RANGES.TEST_SERVERS);
 
-    if (this.allocatedPorts.has(port)) {
+    if (TestPortAllocator.allocatedPorts.has(port)) {
       // If already allocated, find another one
-      return this.allocate();
+      return TestPortAllocator.allocate();
     }
 
-    this.allocatedPorts.add(port);
+    TestPortAllocator.allocatedPorts.add(port);
     return port;
   }
 
@@ -102,14 +102,14 @@ export class TestPortAllocator {
    * Release a port when test is done
    */
   static release(port: number): void {
-    this.allocatedPorts.delete(port);
+    TestPortAllocator.allocatedPorts.delete(port);
   }
 
   /**
    * Clear all allocated ports (for cleanup)
    */
   static clearAll(): void {
-    this.allocatedPorts.clear();
+    TestPortAllocator.allocatedPorts.clear();
   }
 }
 

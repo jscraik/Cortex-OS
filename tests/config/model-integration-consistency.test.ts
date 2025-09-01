@@ -1,7 +1,10 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { describe, it, expect } from 'vitest';
-import { DEFAULT_MODEL_INTEGRATION, MODEL_PERFORMANCE_PROFILES } from '../../config/model-integration-strategy';
+import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_MODEL_INTEGRATION,
+  MODEL_PERFORMANCE_PROFILES,
+} from '../../config/model-integration-strategy';
 
 const mlxModels = JSON.parse(
   readFileSync(join(process.cwd(), 'config', 'mlx-models.json'), 'utf8'),

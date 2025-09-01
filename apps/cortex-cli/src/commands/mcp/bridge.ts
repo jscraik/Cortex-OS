@@ -1,8 +1,8 @@
 import { Command } from 'commander';
-import { createMarketplaceClient } from './marketplace-client.js';
 import { promises as fs } from 'fs';
-import { join } from 'path';
 import { homedir } from 'os';
+import { join } from 'path';
+import { createMarketplaceClient } from './marketplace-client.js';
 
 interface BridgeConfig {
   registries: Array<{

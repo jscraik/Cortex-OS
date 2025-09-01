@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import yaml from 'js-yaml';
 import fs from 'node:fs';
 import path from 'node:path';
+import yaml from 'js-yaml';
 
 const pkgsDir = path.resolve(process.cwd(), 'packages');
 const packages = fs

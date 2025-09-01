@@ -1,4 +1,4 @@
-import { type ValidationResult, type ValidationError, type ValidationWarning } from '../types.js';
+import type { ValidationError, ValidationResult, ValidationWarning } from '../types.js';
 
 export function validateSecurity(manifest: unknown): ValidationResult {
   const errors: ValidationError[] = [];

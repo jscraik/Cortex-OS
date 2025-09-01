@@ -14,7 +14,7 @@ vi.mock('@opentelemetry/api', () => ({
   },
 }));
 
-import { recordLatency, calculateErrorBudget } from '../src/metrics/index.js';
+import { calculateErrorBudget, recordLatency } from '../src/metrics/index.js';
 
 describe('metrics', () => {
   it('clamps negative latency', () => {

@@ -12,9 +12,7 @@ class DocumentCreate(BaseModel):
     path: str = Field(..., description="Document path", min_length=1, max_length=500)
     title: str = Field(..., description="Document title", min_length=1, max_length=500)
     content: str = Field(..., description="Document content")
-    category: str | None = Field(
-        None, description="Document category", max_length=100
-    )
+    category: str | None = Field(None, description="Document category", max_length=100)
     tags: list[str] | None = Field(None, description="Document tags")
     authors: list[str] | None = Field(None, description="Document authors")
     description: str | None = Field(
@@ -52,9 +50,7 @@ class DocumentUpdate(BaseModel):
         None, description="Document title", min_length=1, max_length=500
     )
     content: str | None = Field(None, description="Document content")
-    category: str | None = Field(
-        None, description="Document category", max_length=100
-    )
+    category: str | None = Field(None, description="Document category", max_length=100)
     tags: list[str] | None = Field(None, description="Document tags")
     authors: list[str] | None = Field(None, description="Document authors")
     description: str | None = Field(
@@ -119,9 +115,7 @@ class DocumentResponse(BaseModel):
     search_count: int = Field(..., description="Search result count")
     bookmark_count: int = Field(..., description="Bookmark count")
     slug: str | None = Field(None, description="URL slug")
-    meta_description: str | None = Field(
-        None, description="Meta description for SEO"
-    )
+    meta_description: str | None = Field(None, description="Meta description for SEO")
     featured: bool = Field(..., description="Featured content flag")
 
     class Config:
@@ -155,9 +149,7 @@ class DocumentListResponse(BaseModel):
     page: int = Field(..., description="Current page number")
     page_size: int = Field(..., description="Items per page")
     total_pages: int = Field(..., description="Total number of pages")
-    filters_applied: dict[str, Any] | None = Field(
-        None, description="Applied filters"
-    )
+    filters_applied: dict[str, Any] | None = Field(None, description="Applied filters")
 
 
 class DocumentRelationCreate(BaseModel):
@@ -167,9 +159,7 @@ class DocumentRelationCreate(BaseModel):
     target_document_id: str = Field(..., description="Target document ID")
     relation_type: str = Field(..., description="Relation type")
     weight: float | None = Field(1.0, description="Relation weight", ge=0.0, le=1.0)
-    context: str | None = Field(
-        None, description="Relation context", max_length=1000
-    )
+    context: str | None = Field(None, description="Relation context", max_length=1000)
 
     @validator("relation_type")
     def validate_relation_type(self, v):
@@ -212,9 +202,7 @@ class ContentIndexCreate(BaseModel):
     document_id: str = Field(..., description="Document ID")
     index_type: str = Field(..., description="Index type")
     index_data: dict[str, Any] = Field(..., description="Index data")
-    vector_embedding: list[float] | None = Field(
-        None, description="Vector embedding"
-    )
+    vector_embedding: list[float] | None = Field(None, description="Vector embedding")
 
     @validator("index_type")
     def validate_index_type(self, v):
@@ -237,9 +225,7 @@ class ContentIndexResponse(BaseModel):
     document_id: str = Field(..., description="Document ID")
     index_type: str = Field(..., description="Index type")
     index_data: dict[str, Any] = Field(..., description="Index data")
-    vector_embedding: list[float] | None = Field(
-        None, description="Vector embedding"
-    )
+    vector_embedding: list[float] | None = Field(None, description="Vector embedding")
     indexed_at: datetime = Field(..., description="Indexing timestamp")
     status: str = Field(..., description="Index status")
     error_message: str | None = Field(None, description="Error message if failed")
@@ -272,9 +258,7 @@ class ValidationIssue(BaseModel):
     type: str = Field(..., description="Issue type")
     severity: str = Field(..., description="Issue severity")
     message: str = Field(..., description="Issue description")
-    line_number: int | None = Field(
-        None, description="Line number where issue occurs"
-    )
+    line_number: int | None = Field(None, description="Line number where issue occurs")
     column: int | None = Field(None, description="Column where issue occurs")
     suggestion: str | None = Field(None, description="Suggested fix")
 
@@ -307,9 +291,7 @@ class ContentTransformRequest(BaseModel):
     content: str = Field(..., description="Content to transform")
     source_format: str = Field(..., description="Source format")
     target_format: str = Field(..., description="Target format")
-    options: dict[str, Any] | None = Field(
-        None, description="Transformation options"
-    )
+    options: dict[str, Any] | None = Field(None, description="Transformation options")
 
     @validator("source_format", "target_format")
     def validate_formats(self, v):

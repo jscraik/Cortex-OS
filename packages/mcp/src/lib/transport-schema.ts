@@ -3,7 +3,7 @@ import type { TransportConfig } from './types.js';
 
 const dangerousCommand =
   /^(rm\s|sudo\s|curl\s.+\|\s*sh|wget\s.+\|\s*bash|del\s|shutdown\s|reboot\s|format\s)/i;
-const unsafeMetacharacters = /[|&;`$(){}\[\]<>\n]/;
+const unsafeMetacharacters = /[|&;`$(){}[\]<>\n]/;
 const pathTraversal = /\.\./;
 const safeCommandPattern = /^[a-zA-Z0-9_./\-\s]+$/;
 

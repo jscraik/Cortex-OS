@@ -1,10 +1,10 @@
-import { describe, it, expect, expectTypeOf } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import { A11yUtils } from '../../libs/typescript/accessibility/src';
-import { TOKENS, Token } from '../../libs/typescript/contracts/src';
-import { tracer, meter, logger } from '../../libs/typescript/telemetry/src';
-import { Json } from '../../libs/typescript/types/src';
-import { uuid, withTimeout, dot, norm, cosine, noop } from '../../libs/typescript/utils/src';
+import { TOKENS, type Token } from '../../libs/typescript/contracts/src';
+import { logger, meter, tracer } from '../../libs/typescript/telemetry/src';
+import type { Json } from '../../libs/typescript/types/src';
+import { cosine, dot, noop, norm, uuid, withTimeout } from '../../libs/typescript/utils/src';
 
 describe('TypeScript libs barrel exports', () => {
   it('accessibility exports A11yUtils with contrast helpers', () => {

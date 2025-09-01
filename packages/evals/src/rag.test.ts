@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@cortex-os/model-gateway', () => ({ createModelRouter: vi.fn() }));
 vi.mock('@cortex-os/rag/eval/harness', () => ({
@@ -19,7 +19,11 @@ const embedder = { embed: async (texts: string[]) => texts.map((t) => [t.length]
 
 describe('runRagSuite', () => {
   it('passes when metrics meet thresholds', async () => {
-    const res = await runRagSuite('rag', { dataset: {}, k: 1, thresholds: { ndcg: 0, recall: 0, precision: 0 } }, embedder);
+    const res = await runRagSuite(
+      'rag',
+      { dataset: {}, k: 1, thresholds: { ndcg: 0, recall: 0, precision: 0 } },
+      embedder,
+    );
     expect(res.pass).toBe(true);
   });
 
@@ -32,7 +36,11 @@ describe('runRagSuite', () => {
       precision: 0,
       totalQueries: 1,
     } as any);
-    const res = await runRagSuite('rag', { dataset: {}, k: 1, thresholds: { ndcg: 0.5, recall: 0.5, precision: 0.5 } }, embedder);
+    const res = await runRagSuite(
+      'rag',
+      { dataset: {}, k: 1, thresholds: { ndcg: 0.5, recall: 0.5, precision: 0.5 } },
+      embedder,
+    );
     expect(res.pass).toBe(false);
   });
 
@@ -40,7 +48,9 @@ describe('runRagSuite', () => {
     const mgw = await import('@cortex-os/model-gateway');
     vi.mocked(mgw.createModelRouter).mockReturnValue({
       initialize: async () => {},
-      generateEmbeddings: async ({ texts }: any) => ({ embeddings: texts.map((t: string) => [t.length]) }),
+      generateEmbeddings: async ({ texts }: any) => ({
+        embeddings: texts.map((t: string) => [t.length]),
+      }),
     } as any);
     const res = await runRagSuite('rag', { dataset: {}, k: 1 });
     expect(mgw.createModelRouter).toHaveBeenCalled();

@@ -3,8 +3,8 @@
  * @description Documentation completeness validation
  */
 
-import { GateValidator, ValidationResult } from '../lib/validation-types.js';
-import { PRPState } from '../state.js';
+import type { GateValidator, ValidationResult } from '../lib/validation-types.js';
+import type { PRPState } from '../state.js';
 
 export class DocumentationValidator implements GateValidator {
   async validate(state: PRPState): Promise<ValidationResult> {

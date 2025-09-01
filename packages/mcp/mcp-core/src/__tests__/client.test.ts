@@ -122,7 +122,7 @@ describe('mcp-core client', () => {
 
       // This is a bit of a hack to test the rate limiter.
       // We'll set the points to 1 to easily test the limit.
-      // @ts-ignore - private property
+      // @ts-expect-error - private property
       client.rateLimiter = {
         consume: vi
           .fn()

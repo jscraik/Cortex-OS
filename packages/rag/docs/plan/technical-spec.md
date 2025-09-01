@@ -24,14 +24,15 @@ This document provides technical specifications for enhancing the Cortex-OS RAG 
 ### 1.1 Components
 
 #### DocumentConverter
+
 ```
 interface DocumentConverter {
   convert(input: Buffer | string, format: DocumentFormat): Promise<ConversionResult>;
   supportsFormat(format: DocumentFormat): boolean;
 }
 
-type DocumentFormat = 
-  'pdf' | 'docx' | 'pptx' | 'xlsx' | 'html' | 'xml' | 'json' | 
+type DocumentFormat =
+  'pdf' | 'docx' | 'pptx' | 'xlsx' | 'html' | 'xml' | 'json' |
   'png' | 'jpg' | 'gif' | 'mp3' | 'wav' | 'txt' | 'md' | 'epub';
 
 interface ConversionResult {
@@ -43,6 +44,7 @@ interface ConversionResult {
 ```
 
 #### EnhancedParser
+
 ```
 interface EnhancedParser {
   parse(content: string, options: ParseOptions): Promise<ParsedDocument>;
@@ -85,6 +87,7 @@ interface ParsedDocument {
 ### 2.1 Components
 
 #### MultimodalProcessor
+
 ```
 interface MultimodalProcessor {
   process(content: MultimodalContent): Promise<ProcessedContent>;
@@ -107,6 +110,7 @@ interface ProcessedContent {
 ```
 
 #### KnowledgeGraph
+
 ```
 interface KnowledgeGraph {
   addEntity(entity: Entity): Promise<void>;
@@ -145,6 +149,7 @@ interface Relationship {
 ### 3.1 Components
 
 #### WebCrawler
+
 ```
 interface WebCrawler {
   crawl(url: string, options: CrawlOptions): Promise<CrawlResult>;
@@ -167,6 +172,7 @@ interface CrawlResult {
 ```
 
 #### VideoProcessor
+
 ```
 interface VideoProcessor {
   processVideo(url: string): Promise<VideoDocument>;
@@ -204,6 +210,7 @@ interface VideoDocument {
 ### 4.1 Components
 
 #### CodeVisualizer
+
 ```
 interface CodeVisualizer {
   analyze(repository: string): Promise<CodeAnalysis>;
@@ -224,6 +231,7 @@ interface Diagram {
 ```
 
 #### CodeKnowledgeGraph
+
 ```
 interface CodeKnowledgeGraph {
   buildFromSource(source: string): Promise<void>;
@@ -263,12 +271,13 @@ interface CodeQuery {
 ## Integration Points
 
 ### Core RAG Pipeline
+
 ```
 class RAGPipeline {
   // Existing methods
   ingest(documents: Document[]): Promise<void>;
   retrieve(query: string, topK?: number): Promise<Document[]>;
-  
+
   // New methods
   ingestMultimodal(content: MultimodalContent[]): Promise<void>;
   retrieveMultimodal(query: string, options: MultimodalOptions): Promise<RetrievalResult>;
@@ -278,12 +287,13 @@ class RAGPipeline {
 ```
 
 ### Python Integration
+
 ```
 // MLX-first, Ollama-fallback architecture
 class ModelManager {
   private mlxModels: MLXModel[];
   private ollamaModels: OllamaModel[];
-  
+
   selectModel(task: TaskType): Model;
   fallbackToOllama(model: MLXModel): OllamaModel;
 }
@@ -292,6 +302,7 @@ class ModelManager {
 ## Configuration
 
 ### Environment Variables
+
 ```
 # Document Processing
 DOCUMENT_PROCESSOR_BACKEND=markitdown|docling
@@ -313,6 +324,7 @@ CODE_GRAPH_DATABASE=neo4j://localhost:7687
 ```
 
 ### Configuration File (rag.config.ts)
+
 ```typescript
 interface RAGConfig {
   documentProcessing: {
@@ -320,7 +332,7 @@ interface RAGConfig {
     ocrEnabled: boolean;
     transcriptionEnabled: boolean;
   };
-  
+
   multimodal: {
     processors: ContentType[];
     knowledgeGraph: {
@@ -328,7 +340,7 @@ interface RAGConfig {
       storage: 'memory' | 'memgraph' | 'neo4j';
     };
   };
-  
+
   webAcquisition: {
     crawler: {
       maxDepth: number;
@@ -340,7 +352,7 @@ interface RAGConfig {
       includeComments: boolean;
     };
   };
-  
+
   codeAnalysis: {
     visualizer: {
       diagramTypes: DiagramType[];
@@ -357,22 +369,26 @@ interface RAGConfig {
 ## Testing Strategy
 
 ### Unit Tests
+
 - Individual component functionality
 - Format-specific processing
 - Error handling and edge cases
 
 ### Integration Tests
+
 - End-to-end document processing workflows
 - Multimodal content handling
 - Web crawling and processing
 - Code analysis pipelines
 
 ### Performance Tests
+
 - Processing time for different document types
 - Memory usage during large document processing
 - Scalability with increasing content volume
 
 ### Compatibility Tests
+
 - Cross-platform functionality
 - Different Python environment support
 - Integration with existing RAG components

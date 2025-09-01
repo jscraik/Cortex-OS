@@ -1,4 +1,4 @@
-import { createEnvelope, Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import axios from 'axios';
 import CircuitBreaker from 'opossum';
 

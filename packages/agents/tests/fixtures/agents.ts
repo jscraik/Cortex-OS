@@ -2,9 +2,9 @@ import type {
   Agent,
   CodeAnalysisRequest,
   CodeAnalysisResult,
-  SecurityAnalysis,
   ComplexityAnalysis,
   PerformanceAnalysis,
+  SecurityAnalysis,
 } from '@/index.js';
 
 export const mockAgent: Agent = {

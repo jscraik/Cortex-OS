@@ -3,6 +3,7 @@
  * Implements the SDK surface as specified in the blueprint
  */
 
+import { createHash } from 'crypto';
 import type {
   ArtifactRef,
   CreateProfileRequest,
@@ -20,7 +21,6 @@ import type {
   TaskRef,
   UnsubscribeFunction,
 } from '../types/index.js';
-import { createHash } from 'crypto';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -241,13 +241,12 @@ export class ASBRClient {
         this.dispatchEvent(data);
       } catch (error) {
         // Prefer structured logger when available
-         
+
         console.error('Failed to parse event:', error);
       }
     };
 
     eventSource.onerror = (error) => {
-       
       console.error('Event stream error:', error);
       // Implement reconnection logic here
     };

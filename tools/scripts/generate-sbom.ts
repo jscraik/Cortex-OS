@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { writeFileSync, readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
 async function main() {
   console.log('Generating SBOM(s)...');
@@ -17,7 +17,7 @@ async function main() {
         '  npm install -g @cyclonedx/cyclonedx-npm\n' +
         'Or, if you prefer a local install:\n' +
         '  npm install --save-dev @cyclonedx/cyclonedx-npm\n' +
-        'Then re-run this script.',
+        'Then re-run this script.'
     );
   }
 

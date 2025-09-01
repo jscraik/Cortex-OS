@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest';
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { RAGPipeline, type Pipeline } from '../src/index';
-import { memoryStore } from '../src/store/memory';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import type { Chunk, Embedder } from '../src/index';
+import { type Pipeline, RAGPipeline } from '../src/index';
+import { createWorker, resolveFileList, runWorkers } from '../src/lib/batch-ingest';
 import { ingestFiles } from '../src/pipeline/batch-ingest';
-import { resolveFileList, createWorker, runWorkers } from '../src/lib/batch-ingest';
-import type { Embedder, Chunk } from '../src/index';
+import { memoryStore } from '../src/store/memory';
 
 const embedder: Embedder = {
   async embed(texts) {

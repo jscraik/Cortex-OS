@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 async function startEchoHttp() {
   const mod = await import('../../../mcp-servers/echo-js/src/http-server.ts');

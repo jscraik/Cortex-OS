@@ -1,5 +1,5 @@
-import { createFallbackChain } from '../src/providers/fallback-chain.js';
 import { createEventBusForEnvironment } from '../src/lib/event-bus.js';
+import { createFallbackChain } from '../src/providers/fallback-chain.js';
 
 const bus = createEventBusForEnvironment('test');
 bus.subscribe('provider.fallback', (e) => console.log('EVENT:', e));

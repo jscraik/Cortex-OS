@@ -6,7 +6,7 @@ import {
 import { randomBytes } from 'crypto';
 import { Redis } from 'ioredis';
 import { z } from 'zod';
-import { type CleanupConfig } from './cleanup';
+import type { CleanupConfig } from './cleanup';
 import { createStreamStore, type SerializedState, type StreamStore } from './store';
 
 type ValidationResult<T> =

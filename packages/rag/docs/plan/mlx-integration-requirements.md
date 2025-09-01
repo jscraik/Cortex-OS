@@ -54,43 +54,43 @@ class MLXServer:
         self.tokenizer = None
         self.embedding_model_instance = None
         self.is_ready = False
-        
+
         # Configure logging
         logging.basicConfig(
             level=logging.INFO,
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
         self.logger = logging.getLogger(__name__)
-        
+
     async def initialize(self):
         """Complete model initialization with error handling"""
         try:
             self.logger.info(f"Loading MLX model: {self.model_path}")
             self.model, self.tokenizer = load(self.model_path)
-            
+
             if self.embedding_model:
                 self.logger.info(f"Loading embedding model: {self.embedding_model}")
                 self.embedding_model_instance = SentenceTransformer(self.embedding_model)
-            
+
             self.is_ready = True
             self.logger.info("MLX server initialized successfully")
-            
+
         except Exception as e:
             self.logger.error(f"Failed to initialize MLX server: {str(e)}")
             raise
-    
+
     async def generate_text(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Complete text generation with full parameter support"""
         if not self.is_ready:
             raise RuntimeError("MLX server not initialized")
-        
+
         try:
             # Default generation parameters
             max_tokens = kwargs.get('max_tokens', 512)
             temperature = kwargs.get('temperature', 0.7)
             top_p = kwargs.get('top_p', 0.9)
             repetition_penalty = kwargs.get('repetition_penalty', 1.1)
-            
+
             # Generate with MLX
             response = generate(
                 self.model,
@@ -102,11 +102,11 @@ class MLXServer:
                 repetition_penalty=repetition_penalty,
                 verbose=False
             )
-            
+
             # Calculate token count
             input_tokens = len(self.tokenizer.encode(prompt))
             output_tokens = len(self.tokenizer.encode(response))
-            
+
             return {
                 "text": response,
                 "input_tokens": input_tokens,
@@ -115,7 +115,7 @@ class MLXServer:
                 "model": self.model_path,
                 "finish_reason": "stop"
             }
-            
+
         except Exception as e:
             self.logger.error(f"Generation failed: {str(e)}")
             return {
@@ -124,12 +124,12 @@ class MLXServer:
                 "input_tokens": 0,
                 "output_tokens": 0
             }
-    
+
     async def embed_text(self, texts: List[str]) -> Dict[str, Any]:
         """Complete embedding generation with batching"""
         if not self.embedding_model_instance:
             raise RuntimeError("Embedding model not loaded")
-        
+
         try:
             embeddings = self.embedding_model_instance.encode(
                 texts,
@@ -137,17 +137,17 @@ class MLXServer:
                 batch_size=32,
                 show_progress_bar=False
             )
-            
+
             # Convert to list for JSON serialization
             embeddings_list = embeddings.cpu().numpy().tolist()
-            
+
             return {
                 "embeddings": embeddings_list,
                 "model": self.embedding_model,
                 "dimensions": len(embeddings_list[0]) if embeddings_list else 0,
                 "count": len(embeddings_list)
             }
-            
+
         except Exception as e:
             self.logger.error(f"Embedding failed: {str(e)}")
             return {
@@ -156,38 +156,38 @@ class MLXServer:
                 "dimensions": 0,
                 "count": 0
             }
-    
+
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Complete request handler with full API support"""
         try:
             action = request.get('action')
-            
+
             if action == 'generate':
                 return await self.generate_text(
                     request['prompt'],
                     **request.get('options', {})
                 )
-            
+
             elif action == 'embed':
                 texts = request['texts']
                 if isinstance(texts, str):
                     texts = [texts]
                 return await self.embed_text(texts)
-            
+
             elif action == 'health':
                 return {
                     "status": "ready" if self.is_ready else "not_ready",
                     "model": self.model_path,
                     "embedding_model": self.embedding_model
                 }
-            
+
             else:
                 return {"error": f"Unknown action: {action}"}
-                
+
         except Exception as e:
             self.logger.error(f"Request handling failed: {str(e)}")
             return {"error": str(e)}
-    
+
     async def run_server(self):
         """Complete async server loop"""
         while True:
@@ -196,16 +196,16 @@ class MLXServer:
                 line = await asyncio.get_event_loop().run_in_executor(
                     None, sys.stdin.readline
                 )
-                
+
                 if not line:
                     break
-                
+
                 request = json.loads(line.strip())
                 response = await self.handle_request(request)
-                
+
                 # Write response to stdout
                 print(json.dumps(response), flush=True)
-                
+
             except json.JSONDecodeError:
                 print(json.dumps({"error": "Invalid JSON request"}), flush=True)
             except Exception as e:
@@ -215,22 +215,22 @@ async def main():
     parser = argparse.ArgumentParser(description='MLX Server')
     parser.add_argument('--model', required=True, help='Path to MLX model')
     parser.add_argument('--embedding-model', help='Path to embedding model')
-    
+
     args = parser.parse_args()
-    
+
     # Use uvloop for better performance
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    
+
     server = MLXServer(args.model, args.embedding_model)
-    
+
     # Handle shutdown gracefully
     def signal_handler(signum, frame):
         server.logger.info("Received shutdown signal")
         sys.exit(0)
-    
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     # Initialize and run server
     await server.initialize()
     await server.run_server()
@@ -322,7 +322,7 @@ export interface MLXClient extends EventEmitter {
 
 export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => {
   const validatedConfig = MLXConfigSchema.parse(config);
-  
+
   class MLXClientImpl extends EventEmitter implements MLXClient {
     private process: ChildProcess | null = null;
     private ready = false;
@@ -332,7 +332,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
       reject: (error: Error) => void;
       timeout: NodeJS.Timeout;
     }>();
-    
+
     public isReady = false;
     public modelInfo: any = null;
 
@@ -351,7 +351,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
         this.process = spawn(validatedConfig.pythonPath, [
           serverScriptPath,
           '--model', validatedConfig.modelPath,
-          ...(validatedConfig.embeddingModel ? 
+          ...(validatedConfig.embeddingModel ?
             ['--embedding-model', validatedConfig.embeddingModel] : [])
         ], {
           stdio: ['pipe', 'pipe', 'pipe']
@@ -372,11 +372,11 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
         let buffer = '';
         this.process.stdout?.on('data', (data) => {
           buffer += data.toString();
-          
+
           // Process complete JSON lines
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
-          
+
           for (const line of lines) {
             if (line.trim()) {
               try {
@@ -415,10 +415,10 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
         } catch (error) {
           // Continue trying
         }
-        
+
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
-      
+
       throw new Error('MLX server failed to become ready');
     }
 
@@ -428,7 +428,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
         if (pending) {
           clearTimeout(pending.timeout);
           this.pendingRequests.delete(response.requestId);
-          
+
           if (response.error) {
             pending.reject(new Error(response.error));
           } else {
@@ -472,7 +472,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
       };
 
       let lastError: Error | null = null;
-      
+
       for (let attempt = 0; attempt <= validatedConfig.retries; attempt++) {
         try {
           const response = await this.sendRequest({
@@ -482,13 +482,13 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
           });
 
           return MLXResponseSchema.parse(response);
-          
+
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
-          
+
           if (attempt < validatedConfig.retries) {
             // Wait before retry with exponential backoff
-            await new Promise(resolve => 
+            await new Promise(resolve =>
               setTimeout(resolve, Math.pow(2, attempt) * 1000)
             );
           }
@@ -504,7 +504,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
       }
 
       const textArray = Array.isArray(texts) ? texts : [texts];
-      
+
       if (textArray.length === 0) {
         return {
           embeddings: [],
@@ -514,7 +514,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
       }
 
       let lastError: Error | null = null;
-      
+
       for (let attempt = 0; attempt <= validatedConfig.retries; attempt++) {
         try {
           const response = await this.sendRequest({
@@ -523,12 +523,12 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
           });
 
           return MLXEmbeddingResponseSchema.parse(response);
-          
+
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
-          
+
           if (attempt < validatedConfig.retries) {
-            await new Promise(resolve => 
+            await new Promise(resolve =>
               setTimeout(resolve, Math.pow(2, attempt) * 1000)
             );
           }
@@ -546,7 +546,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
     async cleanup(): Promise<void> {
       this.ready = false;
       this.isReady = false;
-      
+
       // Clear pending requests
       for (const [id, pending] of this.pendingRequests) {
         clearTimeout(pending.timeout);
@@ -557,7 +557,7 @@ export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => 
       // Terminate process
       if (this.process) {
         this.process.kill('SIGTERM');
-        
+
         // Wait for graceful shutdown
         await new Promise<void>((resolve) => {
           if (!this.process) {
@@ -609,7 +609,7 @@ const ModelConfigSchema = z.object({
   contextLength: z.number(),
   downloadUrl: z.string().url().optional(),
   checksum: z.string().optional(),
-  metadata: z.record(z.any()).default({})
+  metadata: z.record(z.any()).default({}),
 });
 
 export interface ModelConfig {
@@ -648,10 +648,8 @@ export const createModelRegistry = (): ModelRegistry => {
     try {
       const data = await fs.readFile(configPath, 'utf8');
       const modelArray = JSON.parse(data);
-      
-      models = new Map(
-        modelArray.map((model: ModelConfig) => [model.name, model])
-      );
+
+      models = new Map(modelArray.map((model: ModelConfig) => [model.name, model]));
     } catch (error) {
       // Registry doesn't exist yet - start empty
       models = new Map();
@@ -671,7 +669,7 @@ export const createModelRegistry = (): ModelRegistry => {
 
   const register = async (config: ModelConfig): Promise<void> => {
     const validatedConfig = ModelConfigSchema.parse(config);
-    
+
     // Verify model file exists
     try {
       await fs.access(validatedConfig.path);
@@ -692,7 +690,7 @@ export const createModelRegistry = (): ModelRegistry => {
     if (models.size === 0) {
       await loadRegistry();
     }
-    
+
     return models.get(name) || null;
   };
 
@@ -702,10 +700,8 @@ export const createModelRegistry = (): ModelRegistry => {
     }
 
     const allModels = Array.from(models.values());
-    
-    return type 
-      ? allModels.filter(model => model.type === type)
-      : allModels;
+
+    return type ? allModels.filter((model) => model.type === type) : allModels;
   };
 
   const remove = async (name: string): Promise<boolean> => {
@@ -723,13 +719,13 @@ export const createModelRegistry = (): ModelRegistry => {
     try {
       // Check file exists
       await fs.access(model.path);
-      
+
       // Verify checksum if available
       if (model.checksum) {
         const currentChecksum = await calculateChecksum(model.path);
         return currentChecksum === model.checksum;
       }
-      
+
       return true;
     } catch (error) {
       return false;
@@ -751,7 +747,7 @@ export const createModelRegistry = (): ModelRegistry => {
     remove,
     verify,
     getStoragePath,
-    cleanup
+    cleanup,
   };
 };
 
@@ -769,8 +765,8 @@ export const RECOMMENDED_MODELS: ModelConfig[] = [
     metadata: {
       description: 'Compact Llama model optimized for MLX',
       recommended: true,
-      minMemory: '2GB'
-    }
+      minMemory: '2GB',
+    },
   },
   {
     name: 'bge-small-en-v1.5-mlx',
@@ -784,9 +780,9 @@ export const RECOMMENDED_MODELS: ModelConfig[] = [
     metadata: {
       description: 'High-quality embedding model for semantic search',
       dimensions: 384,
-      recommended: true
-    }
-  }
+      recommended: true,
+    },
+  },
 ];
 ```
 
@@ -825,7 +821,7 @@ export const createMemoryManager = (): MemoryManager => {
   class MemoryManagerImpl extends EventEmitter implements MemoryManager {
     private monitoringInterval: NodeJS.Timeout | null = null;
     private warningThreshold = 1024; // 1GB
-    private criticalThreshold = 512;  // 512MB
+    private criticalThreshold = 512; // 512MB
     private lastWarning = 0;
     private lastCritical = 0;
 
@@ -838,7 +834,7 @@ export const createMemoryManager = (): MemoryManager => {
       // Estimate MLX memory usage (rough calculation)
       const mlxMemoryEstimate = Math.max(
         processMemory.external,
-        processMemory.rss - processMemory.heapTotal
+        processMemory.rss - processMemory.heapTotal,
       );
 
       return {
@@ -846,14 +842,14 @@ export const createMemoryManager = (): MemoryManager => {
         freeMemory,
         usedMemory,
         processMemory,
-        mlxMemoryEstimate
+        mlxMemoryEstimate,
       };
     }
 
     async checkAvailable(requiredMB: number): Promise<boolean> {
       const stats = await this.getStats();
       const availableMB = stats.freeMemory / (1024 * 1024);
-      
+
       return availableMB >= requiredMB;
     }
 
@@ -866,9 +862,9 @@ export const createMemoryManager = (): MemoryManager => {
         try {
           const stats = await this.getStats();
           const freeMB = stats.freeMemory / (1024 * 1024);
-          
+
           const now = Date.now();
-          
+
           if (freeMB < this.criticalThreshold && now - this.lastCritical > 30000) {
             this.lastCritical = now;
             this.emit('critical', { freeMB, stats });
@@ -878,7 +874,6 @@ export const createMemoryManager = (): MemoryManager => {
           }
 
           this.emit('stats', stats);
-          
         } catch (error) {
           this.emit('error', error);
         }
@@ -916,7 +911,7 @@ export const optimizeForMLX = (): void => {
   // Set memory limits based on available memory
   const totalMB = os.totalmem() / (1024 * 1024);
   const maxOldSpaceMB = Math.min(Math.floor(totalMB * 0.25), 4096);
-  
+
   process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ''} --max-old-space-size=${maxOldSpaceMB}`;
 };
 
@@ -970,7 +965,7 @@ export const checkMLXSystemRequirements = async (): Promise<{
   return {
     compatible: issues.length === 0,
     issues,
-    recommendations
+    recommendations,
   };
 };
 ```
@@ -991,7 +986,7 @@ export enum MLXErrorCode {
   SERVER_CRASHED = 'SERVER_CRASHED',
   INVALID_REQUEST = 'INVALID_REQUEST',
   QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-  HARDWARE_INCOMPATIBLE = 'HARDWARE_INCOMPATIBLE'
+  HARDWARE_INCOMPATIBLE = 'HARDWARE_INCOMPATIBLE',
 }
 
 export class MLXError extends Error {
@@ -1003,7 +998,7 @@ export class MLXError extends Error {
     code: MLXErrorCode,
     message: string,
     retryable = false,
-    metadata: Record<string, any> = {}
+    metadata: Record<string, any> = {},
   ) {
     super(message);
     this.name = 'MLXError';
@@ -1029,13 +1024,11 @@ export const DEFAULT_RECOVERY_STRATEGY: ErrorRecoveryStrategy = {
   retryableErrors: [
     MLXErrorCode.GENERATION_TIMEOUT,
     MLXErrorCode.SERVER_CRASHED,
-    MLXErrorCode.INSUFFICIENT_MEMORY
-  ]
+    MLXErrorCode.INSUFFICIENT_MEMORY,
+  ],
 };
 
-export const createErrorHandler = (
-  strategy: Partial<ErrorRecoveryStrategy> = {}
-) => {
+export const createErrorHandler = (strategy: Partial<ErrorRecoveryStrategy> = {}) => {
   const config = { ...DEFAULT_RECOVERY_STRATEGY, ...strategy };
 
   const isRetryable = (error: MLXError): boolean => {
@@ -1049,7 +1042,7 @@ export const createErrorHandler = (
 
   const withRetry = async <T>(
     operation: () => Promise<T>,
-    context: string = 'operation'
+    context: string = 'operation',
   ): Promise<T> => {
     let lastError: MLXError | null = null;
 
@@ -1057,17 +1050,14 @@ export const createErrorHandler = (
       try {
         return await operation();
       } catch (error) {
-        lastError = error instanceof MLXError 
-          ? error 
-          : new MLXError(
-              MLXErrorCode.INVALID_REQUEST,
-              `${context} failed: ${error}`,
-              true
-            );
+        lastError =
+          error instanceof MLXError
+            ? error
+            : new MLXError(MLXErrorCode.INVALID_REQUEST, `${context} failed: ${error}`, true);
 
         if (attempt < config.maxRetries && isRetryable(lastError)) {
           const delay = calculateDelay(attempt);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
 
@@ -1102,23 +1092,22 @@ export const createErrorHandler = (
       return new MLXError(MLXErrorCode.EMBEDDING_FAILED, message, true);
     }
 
-    if (message.includes('process') && (message.includes('crashed') || message.includes('killed'))) {
+    if (
+      message.includes('process') &&
+      (message.includes('crashed') || message.includes('killed'))
+    ) {
       return new MLXError(MLXErrorCode.SERVER_CRASHED, message, true);
     }
 
     // Default to generic retryable error
-    return new MLXError(
-      MLXErrorCode.INVALID_REQUEST,
-      `${context}: ${message}`,
-      true
-    );
+    return new MLXError(MLXErrorCode.INVALID_REQUEST, `${context}: ${message}`, true);
   };
 
   return {
     withRetry,
     handleError,
     isRetryable,
-    calculateDelay
+    calculateDelay,
   };
 };
 
@@ -1133,13 +1122,13 @@ export interface CircuitBreakerState {
 export const createCircuitBreaker = (
   failureThreshold = 5,
   recoveryTimeout = 30000,
-  successThreshold = 3
+  successThreshold = 3,
 ) => {
   let state: CircuitBreakerState = {
     state: 'closed',
     failureCount: 0,
     lastFailureTime: 0,
-    successCount: 0
+    successCount: 0,
   };
 
   const canExecute = (): boolean => {
@@ -1148,7 +1137,7 @@ export const createCircuitBreaker = (
     switch (state.state) {
       case 'closed':
         return true;
-      
+
       case 'open':
         if (now - state.lastFailureTime >= recoveryTimeout) {
           state.state = 'half-open';
@@ -1156,10 +1145,10 @@ export const createCircuitBreaker = (
           return true;
         }
         return false;
-      
+
       case 'half-open':
         return true;
-      
+
       default:
         return false;
     }
@@ -1192,7 +1181,7 @@ export const createCircuitBreaker = (
         MLXErrorCode.QUOTA_EXCEEDED,
         'Circuit breaker is open - too many failures',
         false,
-        { state: state.state, failureCount: state.failureCount }
+        { state: state.state, failureCount: state.failureCount },
       );
     }
 
@@ -1213,7 +1202,7 @@ export const createCircuitBreaker = (
       state: 'closed',
       failureCount: 0,
       lastFailureTime: 0,
-      successCount: 0
+      successCount: 0,
     };
   };
 
@@ -1221,7 +1210,7 @@ export const createCircuitBreaker = (
     execute,
     getState,
     reset,
-    canExecute
+    canExecute,
   };
 };
 ```

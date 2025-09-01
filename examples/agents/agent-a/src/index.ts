@@ -246,7 +246,7 @@ export class AgentA extends EventEmitter {
     taskType: string,
     payload: Record<string, unknown>,
     priority: AgentTaskRequested['data']['priority'] = 'medium',
-    timeout?: number,
+    timeout?: number
   ): AgentTaskRequested {
     return {
       id: crypto.randomUUID(),

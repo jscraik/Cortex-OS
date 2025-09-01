@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ExampleCaptureSystem } from '../src/teaching/example-capture.js';
 import { resetIdCounter } from '../src/utils/id.js';
 

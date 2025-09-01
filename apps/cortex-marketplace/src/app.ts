@@ -3,21 +3,21 @@
  * @description Fastify app setup for MCP marketplace API
  */
 
-import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import { z } from 'zod';
 import type { FastifyInstance } from 'fastify';
+import Fastify from 'fastify';
+import { z } from 'zod';
+import { categoryRoutes } from './routes/categories.js';
+import { healthRoutes } from './routes/health.js';
+import { registryRoutes } from './routes/registries.js';
+import { serverRoutes } from './routes/servers.js';
+import { statsRoutes } from './routes/stats.js';
 import { MarketplaceService } from './services/marketplace-service.js';
 import { RegistryService } from './services/registry-service.js';
-import { healthRoutes } from './routes/health.js';
-import { serverRoutes } from './routes/servers.js';
-import { registryRoutes } from './routes/registries.js';
-import { categoryRoutes } from './routes/categories.js';
-import { statsRoutes } from './routes/stats.js';
 
 export interface AppConfig {
   logger?: boolean;
@@ -165,10 +165,10 @@ function registerPlugins(fastify: FastifyInstance): void {
       deepLinking: false,
     },
     uiHooks: {
-      onRequest: function (request, reply, next) {
+      onRequest: (request, reply, next) => {
         next();
       },
-      preHandler: function (request, reply, next) {
+      preHandler: (request, reply, next) => {
         next();
       },
     },

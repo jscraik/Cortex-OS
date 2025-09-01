@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 import { execSync } from 'node:child_process';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 type Score = { name: string; weight: number; score: number; notes: string[] };
 type Report = {
@@ -68,9 +68,5 @@ const overall = Number(scores.reduce((s, x) => s + x.score * x.weight, 0).toFixe
 const report: Report = { timestamp: new Date().toISOString(), overall, scores, findings };
 writeFileSync('.artifacts/review.report.json', JSON.stringify(report, null, 2));
 console.log(
-  JSON.stringify(
-    { overall, by: Object.fromEntries(scores.map((s) => [s.name, s.score])) },
-    null,
-    2,
-  ),
+  JSON.stringify({ overall, by: Object.fromEntries(scores.map((s) => [s.name, s.score])) }, null, 2)
 );

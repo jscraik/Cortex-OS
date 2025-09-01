@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import Fastify from 'fastify';
 import rateLimit from '@fastify/rate-limit';
+import Fastify from 'fastify';
+import { describe, expect, it } from 'vitest';
 
 describe('rate limiting', () => {
   it('caps requests per client', async () => {

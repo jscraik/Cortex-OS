@@ -1,6 +1,6 @@
-import { beforeAll, describe, expect, it } from 'vitest';
 import { writeFile } from 'fs/promises';
 import { dump as yamlDump } from 'js-yaml';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { MCPSandbox } from '../../src/mcp/sandbox.js';
 import { getConfigPath, initializeXDG } from '../../src/xdg/index.js';
 

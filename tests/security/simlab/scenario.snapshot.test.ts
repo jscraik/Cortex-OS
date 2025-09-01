@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
 import { runScenario } from '@cortex-os/simlab-core/runner';
 import { counterEnv } from '@cortex-os/simlab-env/local-counter';
-import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
+import { describe, expect, it } from 'vitest';
 
 describe('scenario snapshots', () => {
   it('matches snapshot for deterministic run', async () => {

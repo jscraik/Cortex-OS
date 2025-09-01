@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withSpan, getCurrentTraceContext } from '../src/tracing/index.js';
+import { getCurrentTraceContext, withSpan } from '../src/tracing/index.js';
 import { isValidULID } from '../src/ulids.js';
 
 describe('tracing', () => {

@@ -258,7 +258,7 @@ export class EvidenceCollector {
     let path: string;
 
     switch (source.type) {
-      case 'file':
+      case 'file': {
         if (!source.path) {
           throw new ValidationError('File source requires path');
         }
@@ -271,6 +271,7 @@ export class EvidenceCollector {
         hash = createHash('sha256').update(content).digest('hex');
         path = source.path;
         break;
+      }
 
       case 'url':
         if (!source.url) {
@@ -283,7 +284,7 @@ export class EvidenceCollector {
         path = source.url;
         break;
 
-      case 'repo':
+      case 'repo': {
         if (!source.path) {
           throw new ValidationError('Repo source requires path');
         }
@@ -293,6 +294,7 @@ export class EvidenceCollector {
         hash = createHash('sha256').update(repoContent).digest('hex');
         path = source.path;
         break;
+      }
 
       case 'note':
         if (!source.content) {

@@ -1,6 +1,6 @@
-import express from 'express';
-import { OutboxMessage, OutboxMessageStatus } from './schema';
 import { rateLimiter } from '@cortex-os/a2a-common';
+import express from 'express';
+import { type OutboxMessage, OutboxMessageStatus } from './schema';
 
 const outbox: OutboxMessage[] = [];
 const poisonQueue: OutboxMessage[] = [];

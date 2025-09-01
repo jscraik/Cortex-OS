@@ -1,8 +1,10 @@
-import { expect, test } from 'vitest';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { expect, test } from 'vitest';
 import registrySchema from '../../schemas/registry.schema.json' assert { type: 'json' };
+
 import serverManifestSchema from '../../schemas/server-manifest.schema.json' assert { type: 'json' };
+
 import { validateServerManifest } from './validateServerManifest.js';
 
 function createAjv() {

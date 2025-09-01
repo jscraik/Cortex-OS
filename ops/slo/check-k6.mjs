@@ -3,8 +3,12 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import YAML from 'yaml';
 
-function loadJson(p) { return JSON.parse(readFileSync(resolve(p), 'utf8')); }
-function loadYaml(p) { return YAML.parse(readFileSync(resolve(p), 'utf8')); }
+function loadJson(p) {
+  return JSON.parse(readFileSync(resolve(p), 'utf8'));
+}
+function loadYaml(p) {
+  return YAML.parse(readFileSync(resolve(p), 'utf8'));
+}
 
 function getMetric(summary, name) {
   const m = summary.metrics?.[name];
@@ -22,14 +26,17 @@ function checkSLO(summary, sloCfg) {
   return { ok, p95, failRate, limitP95, limitFail };
 }
 
-function checkBudget(summary, budgetCfg, profile='quick') {
+function checkBudget(summary, budgetCfg, profile = 'quick') {
   const iters = getMetric(summary, 'iterations');
   const req = getMetric(summary, 'http_reqs');
   const dur = getMetric(summary, 'http_req_duration');
   const totalReq = req.values.count;
   const avg = dur.values.avg;
   const totalMs = avg * totalReq;
-  const limits = budgetCfg?.[profile] || { max_total_req: Infinity, max_total_duration_ms: Infinity };
+  const limits = budgetCfg?.[profile] || {
+    max_total_req: Infinity,
+    max_total_duration_ms: Infinity,
+  };
   const ok = totalReq <= limits.max_total_req && totalMs <= limits.max_total_duration_ms;
   return { ok, totalReq, totalMs, limits };
 }

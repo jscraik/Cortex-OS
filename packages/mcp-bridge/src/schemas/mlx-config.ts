@@ -26,4 +26,3 @@ export const MLXConfigSchema = z.object({
 });
 
 export type MLXConfig = z.infer<typeof MLXConfigSchema>;
-

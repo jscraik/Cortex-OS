@@ -6,7 +6,7 @@
  * @status TDD-CRITICAL
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createKernel } from '../src/graph-simple.js';
 
 describe('Cortex Kernel Integration', () => {

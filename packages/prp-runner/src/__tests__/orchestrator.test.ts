@@ -11,7 +11,7 @@
  * - 85% coverage minimum enforced
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 describe('PRPOrchestrator - TDD Implementation', () => {
@@ -83,9 +83,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
       const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
       orchestrator.registerNeuron(mockNeuron);
 
-      await expect(
-        orchestrator.generateProductRequirementsPrompt({} as any),
-      ).rejects.toThrow();
+      await expect(orchestrator.generateProductRequirementsPrompt({} as any)).rejects.toThrow();
     });
   });
 

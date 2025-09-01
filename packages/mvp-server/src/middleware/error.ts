@@ -1,5 +1,5 @@
-import type { FastifyInstance, FastifyError, FastifyPluginCallback } from 'fastify';
 import { AppError, problems } from '@cortex-os/mvp-core';
+import type { FastifyError, FastifyInstance, FastifyPluginCallback } from 'fastify';
 
 export const registerErrorHandler: FastifyPluginCallback = (app, _opts, done) => {
   app.setErrorHandler((err: FastifyError, _req, reply) => {

@@ -7,7 +7,7 @@
  * @status active
  */
 
-import { MarketplaceIndex } from '../types';
+import type { MarketplaceIndex } from '../types';
 
 export function getMockMarketplaceIndex(): MarketplaceIndex {
   return {

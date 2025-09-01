@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { BuildNode } from '../src/nodes/build.js';
 import { EvaluationNode } from '../src/nodes/evaluation.js';
 

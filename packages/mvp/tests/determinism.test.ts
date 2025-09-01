@@ -6,9 +6,9 @@
  * @status TDD-CRITICAL
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
-import { createInitialPRPState, PRPState } from '../src/state.js';
+import { createInitialPRPState, type PRPState } from '../src/state.js';
 
 describe('Cortex Kernel Determinism', () => {
   let graph: SimplePRPGraph;

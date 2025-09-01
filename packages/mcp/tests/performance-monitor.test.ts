@@ -3,7 +3,7 @@
  * @description TDD tests for MCP performance monitoring
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { MCPPerformanceMonitor } from '../src/lib/performance-monitor.js';
 
 describe('MCP Performance Monitor', () => {

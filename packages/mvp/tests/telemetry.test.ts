@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
 
 // Mock OTEL spans and metrics for testing

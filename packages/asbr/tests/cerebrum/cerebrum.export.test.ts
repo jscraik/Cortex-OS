@@ -2,8 +2,14 @@
  * Simple test to verify Cerebrum exports
  */
 
-import { describe, it, expect } from 'vitest';
-import { Cerebrum, Plan, SimulationResult, Critique, TeachingSession } from '../../src/cerebrum/index.js';
+import { describe, expect, it } from 'vitest';
+import {
+  Cerebrum,
+  Critique,
+  Plan,
+  SimulationResult,
+  TeachingSession,
+} from '../../src/cerebrum/index.js';
 import { DEFAULT_CONFIG } from '../../src/core/config.js';
 
 describe('Cerebrum Exports', () => {

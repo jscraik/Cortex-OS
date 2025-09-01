@@ -20,7 +20,7 @@ neo4jContent = neo4jContent.replace(
     await s.run(\`MERGE (n:\${safeLabel} {id:$id}) SET n += $props\`, {
       id: node.id,
       props: node.props,
-    });`,
+    });`
 );
 
 // Replace the insecure upsertRel method
@@ -33,13 +33,13 @@ neo4jContent = neo4jContent.replace(
        MERGE (a)-[r:\${safeType}]->(b)
        SET r += $props\`,
       { from: rel.from, to: rel.to, props: rel.props ?? {} },
-    );`,
+    );`
 );
 
 // Add validation methods
 if (!neo4jContent.includes('validateLabel')) {
   neo4jContent = neo4jContent.replace(
-    /function assertLabelOrType\(s: string\) \{\n\s+\/\/ Safe subset of Cypher identifiers\n\s+if \(!isValidNeo4jIdentifier\(s\)\) throw new Error\(\`neo4j:invalid_identifier:\${s}\`\);\n\s+return s;\n\}/,
+    /function assertLabelOrType\(s: string\) \{\n\s+\/\/ Safe subset of Cypher identifiers\n\s+if \(!isValidNeo4jIdentifier\(s\)\) throw new Error\(`neo4j:invalid_identifier:\${s}`\);\n\s+return s;\n\}/,
     `function assertLabelOrType(s: string) {
   // Safe subset of Cypher identifiers
   if (!isValidNeo4jIdentifier(s)) throw new Error(\`neo4j:invalid_identifier:\${s}\`);
@@ -52,12 +52,12 @@ private validateLabel(label: string): string {
   if (!label || typeof label !== 'string') {
     throw new Error('Invalid label: must be a non-empty string');
   }
-  
+
   // Limit length to prevent resource exhaustion
   if (label.length > 100) {
     throw new Error('Invalid label: too long');
   }
-  
+
   // Use existing validation
   return assertLabelOrType(label);
 }
@@ -67,15 +67,15 @@ private validateRelationshipType(type: string): string {
   if (!type || typeof type !== 'string') {
     throw new Error('Invalid relationship type: must be a non-empty string');
   }
-  
+
   // Limit length to prevent resource exhaustion
   if (type.length > 100) {
     throw new Error('Invalid relationship type: too long');
   }
-  
+
   // Use existing validation
   return assertLabelOrType(type);
-}`,
+}`
   );
 }
 
@@ -92,21 +92,21 @@ if (!mcpServerContent.includes('def validate_docker_command')) {
   mcpServerContent = mcpServerContent.replace(
     'def run_docker_command(command):',
     `def validate_docker_command(command):
-    \"\"\"Validate docker command to prevent injection.\"\"\"
+    """Validate docker command to prevent injection."""
     if not isinstance(command, list):
         raise ValueError("Command must be a list")
-    
+
     if len(command) < 2:
         raise ValueError("Command must have at least 2 elements")
-    
+
     if command[0] != "docker":
         raise ValueError("Command must start with 'docker'")
-    
+
     # Validate subcommands
     allowed_subcommands = ["ps", "images", "inspect", "logs"]
     if command[1] not in allowed_subcommands:
         raise ValueError(f"Subcommand {command[1]} not allowed")
-    
+
     # Validate parameters
     for i in range(2, len(command)):
         param = command[i]
@@ -116,7 +116,7 @@ if (!mcpServerContent.includes('def validate_docker_command')) {
         elif isinstance(param, str) and not re.match(r"^[a-f0-9]+$", param):
             raise ValueError(f"Invalid parameter: {param}")
 
-def run_docker_command(command):`,
+def run_docker_command(command):`
   );
 }
 
@@ -129,8 +129,8 @@ mcpServerContent = mcpServerContent.replace(
         validate_docker_command(command)
     except ValueError as e:
         return {"stdout": "", "stderr": f"Command validation failed: {str(e)}"}
-    
-    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)`,
+
+    result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=30)`
 );
 
 writeFileSync(mcpServerPath, mcpServerContent);
@@ -145,7 +145,7 @@ const startCommandPath = join(
   'agents',
   'src',
   'legacy-instructions',
-  'start-command.ts',
+  'start-command.ts'
 );
 let startCommandContent = readFileSync(startCommandPath, 'utf-8');
 
@@ -157,7 +157,7 @@ startCommandContent = startCommandContent.replace(
     spawn(openCommand, [\`http://localhost:\${options.port}/console\`], {
       detached: true,
       stdio: 'ignore'
-    }).unref();`,
+    }).unref();`
 );
 
 writeFileSync(startCommandPath, startCommandContent);

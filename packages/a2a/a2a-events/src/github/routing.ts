@@ -1,6 +1,5 @@
 import { z } from 'zod';
-import { A2AEventEnvelope } from './envelope';
-import { GitHubEventData } from './envelope';
+import { type A2AEventEnvelope, GitHubEventData } from './envelope';
 
 // Routing Rule Schema
 export const RoutingRuleSchema = z.object({
@@ -9,7 +8,7 @@ export const RoutingRuleSchema = z.object({
   description: z.string().optional(),
   enabled: z.boolean().default(true),
   priority: z.number().int().min(0).max(1000).default(100),
-  
+
   // Matching conditions
   conditions: z.object({
     event_types: z.array(z.string()).optional(),
@@ -19,47 +18,76 @@ export const RoutingRuleSchema = z.object({
     labels: z.record(z.string()).optional(),
     tags: z.array(z.string()).optional(),
     priority_levels: z.array(z.enum(['low', 'normal', 'high', 'critical'])).optional(),
-    time_window: z.object({
-      start_hour: z.number().int().min(0).max(23),
-      end_hour: z.number().int().min(0).max(23),
-      days_of_week: z.array(z.number().int().min(0).max(6)), // 0 = Sunday
-      timezone: z.string().default('UTC'),
-    }).optional(),
+    time_window: z
+      .object({
+        start_hour: z.number().int().min(0).max(23),
+        end_hour: z.number().int().min(0).max(23),
+        days_of_week: z.array(z.number().int().min(0).max(6)), // 0 = Sunday
+        timezone: z.string().default('UTC'),
+      })
+      .optional(),
   }),
-  
+
   // Routing actions
   actions: z.object({
-    destinations: z.array(z.object({
-      service: z.string(),
-      endpoint: z.string().optional(),
-      topic: z.string().optional(),
-      transform: z.string().optional(), // transformation function name
-      headers: z.record(z.string()).optional(),
-      retry_policy: z.object({
-        max_attempts: z.number().int().min(1).max(10).default(3),
-        initial_delay_ms: z.number().int().positive().default(1000),
-        max_delay_ms: z.number().int().positive().default(30000),
-        backoff_multiplier: z.number().positive().default(2),
-      }).optional(),
-    })),
-    
-    transformations: z.array(z.object({
-      type: z.enum(['filter', 'enrich', 'aggregate', 'split', 'route']),
-      function: z.string(),
-      parameters: z.record(z.unknown()).optional(),
-    })).optional(),
-    
-    filters: z.array(z.object({
-      field: z.string(),
-      operator: z.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'not_in', 'contains', 'matches']),
-      value: z.unknown(),
-    })).optional(),
-    
-    rate_limits: z.array(z.object({
-      service: z.string(),
-      requests_per_second: z.number().positive(),
-      burst_size: z.number().int().positive(),
-    })).optional(),
+    destinations: z.array(
+      z.object({
+        service: z.string(),
+        endpoint: z.string().optional(),
+        topic: z.string().optional(),
+        transform: z.string().optional(), // transformation function name
+        headers: z.record(z.string()).optional(),
+        retry_policy: z
+          .object({
+            max_attempts: z.number().int().min(1).max(10).default(3),
+            initial_delay_ms: z.number().int().positive().default(1000),
+            max_delay_ms: z.number().int().positive().default(30000),
+            backoff_multiplier: z.number().positive().default(2),
+          })
+          .optional(),
+      }),
+    ),
+
+    transformations: z
+      .array(
+        z.object({
+          type: z.enum(['filter', 'enrich', 'aggregate', 'split', 'route']),
+          function: z.string(),
+          parameters: z.record(z.unknown()).optional(),
+        }),
+      )
+      .optional(),
+
+    filters: z
+      .array(
+        z.object({
+          field: z.string(),
+          operator: z.enum([
+            'eq',
+            'ne',
+            'gt',
+            'gte',
+            'lt',
+            'lte',
+            'in',
+            'not_in',
+            'contains',
+            'matches',
+          ]),
+          value: z.unknown(),
+        }),
+      )
+      .optional(),
+
+    rate_limits: z
+      .array(
+        z.object({
+          service: z.string(),
+          requests_per_second: z.number().positive(),
+          burst_size: z.number().int().positive(),
+        }),
+      )
+      .optional(),
   }),
 });
 
@@ -70,10 +98,12 @@ export const RoutingConfigurationSchema = z.object({
   version: z.string().default('1.0'),
   updated_at: z.string().datetime(),
   rules: z.array(RoutingRuleSchema),
-  
+
   global_settings: z.object({
     default_priority: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
-    default_delivery_mode: z.enum(['fire_and_forget', 'at_least_once', 'exactly_once']).default('at_least_once'),
+    default_delivery_mode: z
+      .enum(['fire_and_forget', 'at_least_once', 'exactly_once'])
+      .default('at_least_once'),
     default_retry_policy: z.object({
       max_attempts: z.number().int().min(1).max(10).default(3),
       initial_delay_ms: z.number().int().positive().default(1000),
@@ -81,29 +111,33 @@ export const RoutingConfigurationSchema = z.object({
       backoff_multiplier: z.number().positive().default(2),
       jitter: z.boolean().default(true),
     }),
-    
+
     dead_letter_queue: z.object({
       enabled: z.boolean().default(true),
       topic: z.string().default('github.dlq'),
       max_retention_hours: z.number().int().positive().default(168), // 7 days
     }),
-    
+
     metrics: z.object({
       enabled: z.boolean().default(true),
       export_interval_ms: z.number().int().positive().default(60000),
       labels: z.record(z.string()).optional(),
     }),
   }),
-  
-  service_registry: z.record(z.object({
-    type: z.enum(['http', 'grpc', 'websocket', 'message_queue', 'database', 'file']),
-    connection: z.record(z.string()),
-    health_check: z.object({
-      endpoint: z.string(),
-      interval_ms: z.number().int().positive().default(30000),
-      timeout_ms: z.number().int().positive().default(5000),
-    }).optional(),
-  })),
+
+  service_registry: z.record(
+    z.object({
+      type: z.enum(['http', 'grpc', 'websocket', 'message_queue', 'database', 'file']),
+      connection: z.record(z.string()),
+      health_check: z
+        .object({
+          endpoint: z.string(),
+          interval_ms: z.number().int().positive().default(30000),
+          timeout_ms: z.number().int().positive().default(5000),
+        })
+        .optional(),
+    }),
+  ),
 });
 
 export type RoutingConfiguration = z.infer<typeof RoutingConfigurationSchema>;
@@ -113,12 +147,14 @@ export const RouteMatchSchema = z.object({
   rule_id: z.string().uuid(),
   rule_name: z.string(),
   priority: z.number(),
-  destinations: z.array(z.object({
-    service: z.string(),
-    endpoint: z.string().optional(),
-    topic: z.string().optional(),
-    headers: z.record(z.string()).optional(),
-  })),
+  destinations: z.array(
+    z.object({
+      service: z.string(),
+      endpoint: z.string().optional(),
+      topic: z.string().optional(),
+      headers: z.record(z.string()).optional(),
+    }),
+  ),
   transformations: z.array(z.string()).optional(),
   matched_conditions: z.array(z.string()),
 });
@@ -138,10 +174,10 @@ export class GitHubEventRouter {
   // Find matching routes for an envelope
   public findRoutes(envelope: A2AEventEnvelope): RouteMatch[] {
     const matches: RouteMatch[] = [];
-    
+
     for (const rule of this.compiledRules) {
       if (!rule.enabled) continue;
-      
+
       const matchedConditions = this.evaluateRule(envelope, rule);
       if (matchedConditions.length > 0) {
         matches.push({
@@ -149,12 +185,12 @@ export class GitHubEventRouter {
           rule_name: rule.name,
           priority: rule.priority,
           destinations: rule.actions.destinations,
-          transformations: rule.actions.transformations?.map(t => t.function),
+          transformations: rule.actions.transformations?.map((t) => t.function),
           matched_conditions: matchedConditions,
         });
       }
     }
-    
+
     // Sort by priority (higher first)
     return matches.sort((a, b) => b.priority - a.priority);
   }
@@ -178,13 +214,13 @@ export class GitHubEventRouter {
   } {
     const errors: string[] = [];
     const warnings: string[] = [];
-    
+
     const routes = this.findRoutes(envelope);
-    
+
     if (routes.length === 0) {
       warnings.push('No routing rules matched this envelope');
     }
-    
+
     // Validate destinations exist in service registry
     for (const route of routes) {
       for (const destination of route.destinations) {
@@ -193,7 +229,7 @@ export class GitHubEventRouter {
         }
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
@@ -202,7 +238,7 @@ export class GitHubEventRouter {
   }
 
   private compileRules(rules: RoutingRule[]): CompiledRule[] {
-    return rules.map(rule => ({
+    return rules.map((rule) => ({
       ...rule,
       compiledConditions: this.compileConditions(rule.conditions),
     }));
@@ -212,8 +248,12 @@ export class GitHubEventRouter {
     return {
       eventTypeRegex: conditions.event_types ? new RegExp(conditions.event_types.join('|')) : null,
       actionRegex: conditions.actions ? new RegExp(conditions.actions.join('|')) : null,
-      repositoryPatterns: conditions.repository_patterns?.map(pattern => new RegExp(this.globToRegex(pattern))),
-      actorPatterns: conditions.actor_patterns?.map(pattern => new RegExp(this.globToRegex(pattern))),
+      repositoryPatterns: conditions.repository_patterns?.map(
+        (pattern) => new RegExp(this.globToRegex(pattern)),
+      ),
+      actorPatterns: conditions.actor_patterns?.map(
+        (pattern) => new RegExp(this.globToRegex(pattern)),
+      ),
       labels: conditions.labels,
       tags: conditions.tags,
       priorityLevels: conditions.priority_levels,
@@ -224,21 +264,21 @@ export class GitHubEventRouter {
   private evaluateRule(envelope: A2AEventEnvelope, rule: CompiledRule): string[] {
     const matched: string[] = [];
     const { conditions } = rule.compiledConditions;
-    
+
     // Check event type
     if (rule.compiledConditions.eventTypeRegex) {
       if (rule.compiledConditions.eventTypeRegex.test(envelope.event.event_type)) {
         matched.push('event_type');
       }
     }
-    
+
     // Check action
     if (rule.compiledConditions.actionRegex && 'action' in envelope.event) {
       if (rule.compiledConditions.actionRegex.test((envelope.event as any).action)) {
         matched.push('action');
       }
     }
-    
+
     // Check repository patterns
     if (rule.compiledConditions.repositoryPatterns) {
       const event = envelope.event;
@@ -252,7 +292,7 @@ export class GitHubEventRouter {
         }
       }
     }
-    
+
     // Check actor patterns
     if (rule.compiledConditions.actorPatterns) {
       const event = envelope.event;
@@ -266,7 +306,7 @@ export class GitHubEventRouter {
         }
       }
     }
-    
+
     // Check labels
     if (rule.compiledConditions.labels) {
       let allLabelsMatch = true;
@@ -280,52 +320,57 @@ export class GitHubEventRouter {
         matched.push('labels');
       }
     }
-    
+
     // Check tags
     if (rule.compiledConditions.tags) {
-      const hasAllTags = rule.compiledConditions.tags.every(tag => 
-        envelope.metadata.tags.includes(tag)
+      const hasAllTags = rule.compiledConditions.tags.every((tag) =>
+        envelope.metadata.tags.includes(tag),
       );
       if (hasAllTags) {
         matched.push('tags');
       }
     }
-    
+
     // Check priority levels
     if (rule.compiledConditions.priorityLevels) {
       if (rule.compiledConditions.priorityLevels.includes(envelope.priority)) {
         matched.push('priority');
       }
     }
-    
+
     // Check time window
     if (rule.compiledConditions.timeWindow) {
       if (this.isInTimeWindow(envelope.created_at, rule.compiledConditions.timeWindow)) {
         matched.push('time_window');
       }
     }
-    
+
     // Rule matches if it has no conditions OR if any conditions matched
-    const hasConditions = Object.values(rule.conditions).some(condition => 
-      condition !== undefined && (Array.isArray(condition) ? condition.length > 0 : true)
+    const hasConditions = Object.values(rule.conditions).some(
+      (condition) =>
+        condition !== undefined && (Array.isArray(condition) ? condition.length > 0 : true),
     );
-    
+
     return !hasConditions || matched.length > 0 ? matched : [];
   }
 
-  private isInTimeWindow(timestamp: string, timeWindow: NonNullable<RoutingRule['conditions']['time_window']>): boolean {
+  private isInTimeWindow(
+    timestamp: string,
+    timeWindow: NonNullable<RoutingRule['conditions']['time_window']>,
+  ): boolean {
     const date = new Date(timestamp);
     const hour = date.getHours();
     const dayOfWeek = date.getDay();
-    
+
     // Check hour range
-    const inHourRange = timeWindow.start_hour <= timeWindow.end_hour
-      ? hour >= timeWindow.start_hour && hour <= timeWindow.end_hour
-      : hour >= timeWindow.start_hour || hour <= timeWindow.end_hour;
-    
+    const inHourRange =
+      timeWindow.start_hour <= timeWindow.end_hour
+        ? hour >= timeWindow.start_hour && hour <= timeWindow.end_hour
+        : hour >= timeWindow.start_hour || hour <= timeWindow.end_hour;
+
     // Check day of week
     const inDayRange = timeWindow.days_of_week.includes(dayOfWeek);
-    
+
     return inHourRange && inDayRange;
   }
 
@@ -357,7 +402,7 @@ interface CompiledConditions {
 export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
   version: '1.0',
   updated_at: new Date().toISOString(),
-  
+
   rules: [
     // Critical errors route to monitoring
     {
@@ -384,7 +429,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
         ],
       },
     },
-    
+
     // Workflow failures to CI/CD service
     {
       id: crypto.randomUUID(),
@@ -405,7 +450,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
         ],
       },
     },
-    
+
     // Pull request events to code review service
     {
       id: crypto.randomUUID(),
@@ -426,7 +471,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
         ],
       },
     },
-    
+
     // Issue events to project management
     {
       id: crypto.randomUUID(),
@@ -447,7 +492,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
         ],
       },
     },
-    
+
     // All events to audit log
     {
       id: crypto.randomUUID(),
@@ -467,7 +512,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
       },
     },
   ],
-  
+
   global_settings: {
     default_priority: 'normal',
     default_delivery_mode: 'at_least_once',
@@ -492,9 +537,9 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
       },
     },
   },
-  
+
   service_registry: {
-    'monitoring': {
+    monitoring: {
       type: 'http',
       connection: {
         base_url: 'http://monitoring-service:8080',
@@ -506,14 +551,14 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
         timeout_ms: 5000,
       },
     },
-    'pagerduty': {
+    pagerduty: {
       type: 'http',
       connection: {
         base_url: 'https://events.pagerduty.com/v2',
         integration_key: '${PAGERDUTY_INTEGRATION_KEY}',
       },
     },
-    'cicd': {
+    cicd: {
       type: 'message_queue',
       connection: {
         broker_url: 'redis://cicd-redis:6379',
@@ -534,7 +579,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
         auth_token: '${PROJECT_MGMT_TOKEN}',
       },
     },
-    'audit': {
+    audit: {
       type: 'database',
       connection: {
         connection_string: '${AUDIT_DB_URL}',
@@ -553,7 +598,7 @@ export function createRoutingRule(
     description?: string;
     priority?: number;
     enabled?: boolean;
-  }
+  },
 ): RoutingRule {
   return {
     id: crypto.randomUUID(),
@@ -563,7 +608,7 @@ export function createRoutingRule(
     priority: options?.priority ?? 500,
     conditions,
     actions: {
-      destinations: destinations.map(dest => ({
+      destinations: destinations.map((dest) => ({
         service: dest.service,
         topic: dest.topic,
         endpoint: dest.endpoint,

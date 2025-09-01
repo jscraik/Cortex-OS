@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { z, ZodType } from 'zod';
+import { type ZodType, z } from 'zod';
 
 const CommonQuery = z.object({ json: z.coerce.boolean().optional() });
 

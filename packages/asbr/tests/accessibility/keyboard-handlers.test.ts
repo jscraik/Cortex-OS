@@ -4,13 +4,13 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi } from 'vitest';
-import {
-  handleTab,
-  handleArrow,
-  handleHomeEnd,
-  handleEscape,
-} from '../../src/accessibility/lib/key-handlers.js';
 import type { KeyboardNavigationManager } from '../../src/accessibility/keyboard-nav.js';
+import {
+  handleArrow,
+  handleEscape,
+  handleHomeEnd,
+  handleTab,
+} from '../../src/accessibility/lib/key-handlers.js';
 
 describe('keyboard navigation handlers', () => {
   it('handleTab moves focus forward', () => {

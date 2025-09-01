@@ -10,7 +10,7 @@
  */
 
 import { createPublicKey, verify } from 'crypto';
-import { PluginMetadata, PluginMetadataSchema, PluginValidationResult } from './types.js';
+import { type PluginMetadata, PluginMetadataSchema, type PluginValidationResult } from './types.js';
 
 export class PluginValidator {
   private readonly SECURITY_RULES = {
@@ -66,15 +66,15 @@ export class PluginValidator {
     securityScore -= this.checkDependencies(plugin.dependencies, warnings, errors);
 
     // Signature verification
-    if (!plugin.signature) {
-      warnings.push('Plugin is not digitally signed');
-      securityScore -= 15;
-    } else {
+    if (plugin.signature) {
       const signatureValid = await this.verifySignature(plugin);
       if (!signatureValid) {
         errors.push('Invalid digital signature');
         securityScore -= 30;
       }
+    } else {
+      warnings.push('Plugin is not digitally signed');
+      securityScore -= 15;
     }
 
     // URL validation

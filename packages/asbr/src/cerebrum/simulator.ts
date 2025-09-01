@@ -97,7 +97,7 @@ export class Simulator {
    * Remove a simulation gate
    */
   removeGate(gateId: string): void {
-    this.gates = this.gates.filter(gate => gate.id !== gateId);
+    this.gates = this.gates.filter((gate) => gate.id !== gateId);
   }
 
   private setupDefaultGates(): void {
@@ -109,7 +109,7 @@ export class Simulator {
       check: async (plan: Plan) => {
         const dangerousKeywords = ['delete', 'rm -rf', 'format', 'wipe'];
         const planText = JSON.stringify(plan).toLowerCase();
-        
+
         for (const keyword of dangerousKeywords) {
           if (planText.includes(keyword)) {
             return {
@@ -118,7 +118,7 @@ export class Simulator {
             };
           }
         }
-        
+
         return { passed: true };
       },
     });
@@ -147,7 +147,7 @@ export class Simulator {
             reason: 'Plan has too many steps (over 50)',
           };
         }
-        
+
         return { passed: true };
       },
     });
@@ -155,12 +155,12 @@ export class Simulator {
 
   private generateWarnings(plan: Plan): string[] {
     const warnings: string[] = [];
-    
+
     // Check for long-running plans
     if (plan.steps.length > 10) {
       warnings.push('Plan has many steps which may increase execution time');
     }
-    
+
     return warnings;
   }
 }

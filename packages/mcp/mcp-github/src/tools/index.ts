@@ -1,16 +1,15 @@
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { GitHubAuth } from '../auth/github-auth.js';
 import type { GitHubMCPConfig } from '../config/schema.js';
-import { GitHubAuth } from '../auth/github-auth.js';
-import { A2AEventBridge } from '../events/a2a-bridge.js';
+import type { A2AEventBridge } from '../events/a2a-bridge.js';
 import { createStructuredLogger } from '../utils/logger.js';
-
+import { IssueTools } from './issue.js';
+import { PullRequestTools } from './pull-request.js';
 // Import individual tool implementations
 import { RepositoryTools } from './repository.js';
-import { PullRequestTools } from './pull-request.js';
-import { IssueTools } from './issue.js';
-import { WorkflowTools } from './workflow.js';
 import { SearchTools } from './search.js';
 import { UserTools } from './user.js';
+import { WorkflowTools } from './workflow.js';
 
 const logger = createStructuredLogger('github-tools');
 
@@ -45,21 +44,17 @@ export class GitHubMCPTools {
   private tools: Map<string, GitHubTool> = new Map();
   private toolCategories: Map<string, GitHubTool[]> = new Map();
 
-  constructor(
-    config: GitHubMCPConfig,
-    auth: GitHubAuth,
-    eventBridge?: A2AEventBridge
-  ) {
+  constructor(config: GitHubMCPConfig, auth: GitHubAuth, eventBridge?: A2AEventBridge) {
     this.config = config;
     this.auth = auth;
     this.eventBridge = eventBridge;
-    
+
     this.initializeTools();
   }
 
   private initializeTools(): void {
     logger.info('Initializing GitHub MCP tools');
-    
+
     const context: ToolContext = {
       config: this.config,
       auth: this.auth,
@@ -90,22 +85,24 @@ export class GitHubMCPTools {
     const userTools = new UserTools(context);
     this.registerToolCategory('user', userTools.getTools());
 
-    logger.info(`Initialized ${this.tools.size} GitHub MCP tools across ${this.toolCategories.size} categories`);
+    logger.info(
+      `Initialized ${this.tools.size} GitHub MCP tools across ${this.toolCategories.size} categories`,
+    );
   }
 
   private registerToolCategory(category: string, tools: GitHubTool[]): void {
     this.toolCategories.set(category, tools);
-    
+
     for (const tool of tools) {
       this.tools.set(tool.name, tool);
     }
-    
+
     logger.debug(`Registered ${tools.length} tools in category: ${category}`);
   }
 
   // Get MCP tool definitions
   getToolDefinitions(): Tool[] {
-    return Array.from(this.tools.values()).map(tool => ({
+    return Array.from(this.tools.values()).map((tool) => ({
       name: tool.name,
       description: tool.description,
       inputSchema: {
@@ -120,29 +117,37 @@ export class GitHubMCPTools {
     // Define input schemas for each tool
     const schemas: Record<string, Record<string, any>> = {
       // Repository tools
-      'github_get_repository': {
+      github_get_repository: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
       },
-      'github_list_repositories': {
-        type: { type: 'string', enum: ['all', 'owner', 'public', 'private', 'member'], default: 'all' },
-        sort: { type: 'string', enum: ['created', 'updated', 'pushed', 'full_name'], default: 'created' },
+      github_list_repositories: {
+        type: {
+          type: 'string',
+          enum: ['all', 'owner', 'public', 'private', 'member'],
+          default: 'all',
+        },
+        sort: {
+          type: 'string',
+          enum: ['created', 'updated', 'pushed', 'full_name'],
+          default: 'created',
+        },
         direction: { type: 'string', enum: ['asc', 'desc'], default: 'desc' },
         per_page: { type: 'number', minimum: 1, maximum: 100, default: 30 },
       },
-      'github_create_repository': {
+      github_create_repository: {
         name: { type: 'string', description: 'Repository name' },
         description: { type: 'string', description: 'Repository description' },
         private: { type: 'boolean', default: false },
         auto_init: { type: 'boolean', default: true },
       },
-      'github_get_file_content': {
+      github_get_file_content: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         path: { type: 'string', description: 'File path' },
         ref: { type: 'string', description: 'Branch, tag, or commit SHA' },
       },
-      'github_create_or_update_file': {
+      github_create_or_update_file: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         path: { type: 'string', description: 'File path' },
@@ -153,19 +158,19 @@ export class GitHubMCPTools {
       },
 
       // Pull request tools
-      'github_list_pull_requests': {
+      github_list_pull_requests: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         state: { type: 'string', enum: ['open', 'closed', 'all'], default: 'open' },
         sort: { type: 'string', enum: ['created', 'updated', 'popularity'], default: 'created' },
         direction: { type: 'string', enum: ['asc', 'desc'], default: 'desc' },
       },
-      'github_get_pull_request': {
+      github_get_pull_request: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         pull_number: { type: 'number', description: 'Pull request number' },
       },
-      'github_create_pull_request': {
+      github_create_pull_request: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         title: { type: 'string', description: 'Pull request title' },
@@ -174,7 +179,7 @@ export class GitHubMCPTools {
         base: { type: 'string', description: 'Target branch' },
         draft: { type: 'boolean', default: false },
       },
-      'github_merge_pull_request': {
+      github_merge_pull_request: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         pull_number: { type: 'number', description: 'Pull request number' },
@@ -184,19 +189,19 @@ export class GitHubMCPTools {
       },
 
       // Issue tools
-      'github_list_issues': {
+      github_list_issues: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         state: { type: 'string', enum: ['open', 'closed', 'all'], default: 'open' },
         labels: { type: 'string', description: 'Comma-separated list of labels' },
         assignee: { type: 'string', description: 'Username of assignee' },
       },
-      'github_get_issue': {
+      github_get_issue: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         issue_number: { type: 'number', description: 'Issue number' },
       },
-      'github_create_issue': {
+      github_create_issue: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         title: { type: 'string', description: 'Issue title' },
@@ -204,7 +209,7 @@ export class GitHubMCPTools {
         labels: { type: 'array', items: { type: 'string' }, description: 'Issue labels' },
         assignees: { type: 'array', items: { type: 'string' }, description: 'Assignees' },
       },
-      'github_update_issue': {
+      github_update_issue: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         issue_number: { type: 'number', description: 'Issue number' },
@@ -215,18 +220,33 @@ export class GitHubMCPTools {
       },
 
       // Workflow tools
-      'github_list_workflows': {
+      github_list_workflows: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
       },
-      'github_get_workflow_runs': {
+      github_get_workflow_runs: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         workflow_id: { type: 'string', description: 'Workflow ID or filename' },
-        status: { type: 'string', enum: ['completed', 'action_required', 'cancelled', 'failure', 'neutral', 'skipped', 'stale', 'success', 'timed_out', 'in_progress', 'queued'] },
+        status: {
+          type: 'string',
+          enum: [
+            'completed',
+            'action_required',
+            'cancelled',
+            'failure',
+            'neutral',
+            'skipped',
+            'stale',
+            'success',
+            'timed_out',
+            'in_progress',
+            'queued',
+          ],
+        },
         branch: { type: 'string', description: 'Branch name' },
       },
-      'github_trigger_workflow': {
+      github_trigger_workflow: {
         owner: { type: 'string', description: 'Repository owner' },
         repo: { type: 'string', description: 'Repository name' },
         workflow_id: { type: 'string', description: 'Workflow ID or filename' },
@@ -235,19 +255,39 @@ export class GitHubMCPTools {
       },
 
       // Search tools
-      'github_search_repositories': {
+      github_search_repositories: {
         q: { type: 'string', description: 'Search query' },
-        sort: { type: 'string', enum: ['stars', 'forks', 'help-wanted-issues', 'updated'], default: 'best-match' },
+        sort: {
+          type: 'string',
+          enum: ['stars', 'forks', 'help-wanted-issues', 'updated'],
+          default: 'best-match',
+        },
         order: { type: 'string', enum: ['desc', 'asc'], default: 'desc' },
         per_page: { type: 'number', minimum: 1, maximum: 100, default: 30 },
       },
-      'github_search_issues': {
+      github_search_issues: {
         q: { type: 'string', description: 'Search query' },
-        sort: { type: 'string', enum: ['comments', 'reactions', 'reactions-+1', 'reactions--1', 'reactions-smile', 'reactions-thinking_face', 'reactions-heart', 'reactions-tada', 'interactions', 'created', 'updated'], default: 'best-match' },
+        sort: {
+          type: 'string',
+          enum: [
+            'comments',
+            'reactions',
+            'reactions-+1',
+            'reactions--1',
+            'reactions-smile',
+            'reactions-thinking_face',
+            'reactions-heart',
+            'reactions-tada',
+            'interactions',
+            'created',
+            'updated',
+          ],
+          default: 'best-match',
+        },
         order: { type: 'string', enum: ['desc', 'asc'], default: 'desc' },
         per_page: { type: 'number', minimum: 1, maximum: 100, default: 30 },
       },
-      'github_search_code': {
+      github_search_code: {
         q: { type: 'string', description: 'Search query' },
         sort: { type: 'string', enum: ['indexed'], default: 'best-match' },
         order: { type: 'string', enum: ['desc', 'asc'], default: 'desc' },
@@ -255,14 +295,18 @@ export class GitHubMCPTools {
       },
 
       // User tools
-      'github_get_user': {
+      github_get_user: {
         username: { type: 'string', description: 'GitHub username' },
       },
-      'github_get_authenticated_user': {},
-      'github_list_user_repositories': {
+      github_get_authenticated_user: {},
+      github_list_user_repositories: {
         username: { type: 'string', description: 'GitHub username' },
         type: { type: 'string', enum: ['all', 'owner', 'member'], default: 'owner' },
-        sort: { type: 'string', enum: ['created', 'updated', 'pushed', 'full_name'], default: 'created' },
+        sort: {
+          type: 'string',
+          enum: ['created', 'updated', 'pushed', 'full_name'],
+          default: 'created',
+        },
         direction: { type: 'string', enum: ['asc', 'desc'], default: 'desc' },
       },
     };
@@ -272,25 +316,25 @@ export class GitHubMCPTools {
 
   private getRequiredParameters(toolName: string): string[] {
     const requiredParams: Record<string, string[]> = {
-      'github_get_repository': ['owner', 'repo'],
-      'github_create_repository': ['name'],
-      'github_get_file_content': ['owner', 'repo', 'path'],
-      'github_create_or_update_file': ['owner', 'repo', 'path', 'content', 'message'],
-      'github_list_pull_requests': ['owner', 'repo'],
-      'github_get_pull_request': ['owner', 'repo', 'pull_number'],
-      'github_create_pull_request': ['owner', 'repo', 'title', 'head', 'base'],
-      'github_merge_pull_request': ['owner', 'repo', 'pull_number'],
-      'github_list_issues': ['owner', 'repo'],
-      'github_get_issue': ['owner', 'repo', 'issue_number'],
-      'github_create_issue': ['owner', 'repo', 'title'],
-      'github_update_issue': ['owner', 'repo', 'issue_number'],
-      'github_list_workflows': ['owner', 'repo'],
-      'github_get_workflow_runs': ['owner', 'repo', 'workflow_id'],
-      'github_trigger_workflow': ['owner', 'repo', 'workflow_id', 'ref'],
-      'github_search_repositories': ['q'],
-      'github_search_issues': ['q'],
-      'github_search_code': ['q'],
-      'github_get_user': ['username'],
+      github_get_repository: ['owner', 'repo'],
+      github_create_repository: ['name'],
+      github_get_file_content: ['owner', 'repo', 'path'],
+      github_create_or_update_file: ['owner', 'repo', 'path', 'content', 'message'],
+      github_list_pull_requests: ['owner', 'repo'],
+      github_get_pull_request: ['owner', 'repo', 'pull_number'],
+      github_create_pull_request: ['owner', 'repo', 'title', 'head', 'base'],
+      github_merge_pull_request: ['owner', 'repo', 'pull_number'],
+      github_list_issues: ['owner', 'repo'],
+      github_get_issue: ['owner', 'repo', 'issue_number'],
+      github_create_issue: ['owner', 'repo', 'title'],
+      github_update_issue: ['owner', 'repo', 'issue_number'],
+      github_list_workflows: ['owner', 'repo'],
+      github_get_workflow_runs: ['owner', 'repo', 'workflow_id'],
+      github_trigger_workflow: ['owner', 'repo', 'workflow_id', 'ref'],
+      github_search_repositories: ['q'],
+      github_search_issues: ['q'],
+      github_search_code: ['q'],
+      github_get_user: ['username'],
     };
 
     return requiredParams[toolName] || [];
@@ -300,7 +344,7 @@ export class GitHubMCPTools {
   async executeTool(
     toolName: string,
     args: Record<string, any>,
-    correlationId?: string
+    correlationId?: string,
   ): Promise<any> {
     const tool = this.tools.get(toolName);
     if (!tool) {
@@ -333,14 +377,13 @@ export class GitHubMCPTools {
       });
 
       return result;
-
     } catch (error) {
       logger.error(`GitHub tool execution failed: ${toolName}`, error as Error, {
         tool: toolName,
         correlationId,
         args,
       });
-      
+
       throw error;
     }
   }
@@ -371,11 +414,10 @@ export class GitHubMCPTools {
     };
   }> {
     const authHealth = await this.auth.healthCheck();
-    const eventBridgeHealth = this.eventBridge 
-      ? await this.eventBridge.healthCheck()
-      : undefined;
+    const eventBridgeHealth = this.eventBridge ? await this.eventBridge.healthCheck() : undefined;
 
-    const isHealthy = authHealth.status === 'healthy' && 
+    const isHealthy =
+      authHealth.status === 'healthy' &&
       (!this.eventBridge || eventBridgeHealth?.status === 'healthy');
 
     return {
@@ -392,16 +434,16 @@ export class GitHubMCPTools {
   // Cleanup
   async cleanup(): Promise<void> {
     logger.info('Cleaning up GitHub MCP tools');
-    
+
     if (this.eventBridge) {
       await this.eventBridge.disconnect();
     }
-    
+
     await this.auth.cleanup();
-    
+
     this.tools.clear();
     this.toolCategories.clear();
-    
+
     logger.info('GitHub MCP tools cleanup complete');
   }
 }

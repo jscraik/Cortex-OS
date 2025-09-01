@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { Server as McpServer } from '@modelcontextprotocol/sdk/server';
 import {
   CallToolRequestSchema,
@@ -5,10 +7,8 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types';
-import { z } from 'zod';
 import express from 'express';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const ROOT = process.env.CORTEX_MCP_ROOT;
@@ -19,7 +19,6 @@ if (!ROOT) {
 }
 
 if (!TOKEN) {
-   
   console.error(
     '[cortex-mcp] ERROR: CORTEX_MCP_TOKEN is not set. Refusing to start without authentication token.',
   );

@@ -1,6 +1,6 @@
 /** Minimal McpConnection implementation to satisfy tests. */
-import { WebSocket } from 'ws';
-import { ToolRegistry } from './ToolRegistry.js';
+import type { WebSocket } from 'ws';
+import type { ToolRegistry } from './ToolRegistry.js';
 
 type JsonRecord = Record<string, unknown>;
 

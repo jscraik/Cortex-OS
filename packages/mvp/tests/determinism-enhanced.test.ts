@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
 import { createInitialPRPState } from '../src/state.js';
 import { ExampleCaptureSystem } from '../src/teaching/example-capture.js';

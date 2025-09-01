@@ -2,15 +2,16 @@
  * MCP adapter for Model Gateway
  * Supports embeddings, chat, and reranking by delegating to MCP tools
  */
-import type {
-  EmbeddingRequest,
-  EmbeddingBatchRequest,
-  ChatRequest,
-  RerankRequest,
-} from '../model-router.js';
+
 // Respect AGENTS.md boundaries: import from public exports
 import { createEnhancedClient } from '@cortex-os/mcp-core/client';
 import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
+import type {
+  ChatRequest,
+  EmbeddingBatchRequest,
+  EmbeddingRequest,
+  RerankRequest,
+} from '../model-router.js';
 
 export interface MCPAdapter {
   isAvailable(): Promise<boolean>;

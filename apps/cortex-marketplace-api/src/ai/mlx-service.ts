@@ -3,10 +3,10 @@
  * @description Production-ready MLX model integration for semantic search and safety
  */
 
-import type { ChildProcess } from 'child_process';
-import { writeFile } from 'fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import type { ChildProcess } from 'child_process';
+import { writeFile } from 'fs/promises';
 import type { ServerManifest as MarketplaceServer } from '../types.js';
 import { ServerManifestSchema } from '../types.js';
 
@@ -182,7 +182,7 @@ async function executeMLXScript(script: string, pythonPath: string): Promise<str
   await writeFile(scriptPath, script);
   // Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  // @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
   const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
   return new Promise((resolve, reject) => {
     const child: ChildProcess = spawnPythonProcess([scriptPath], { python: pythonPath });
@@ -213,7 +213,7 @@ async function executeMLXScriptWithInput(
   const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
   await writeFile(scriptPath, script);
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - dynamic import crosses package boundaries; resolved at runtime
+  // @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
   const { spawnPythonProcess } = await import('../../../../libs/python/exec.js');
   return new Promise((resolve, reject) => {
     const child: ChildProcess = spawnPythonProcess([scriptPath], { python: pythonPath });

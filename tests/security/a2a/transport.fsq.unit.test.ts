@@ -1,9 +1,9 @@
-import { it, expect } from 'vitest';
-import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
-import os from 'node:os';
-import { fsQueue } from '../../../packages/a2a/a2a-transport/src/fsq';
 import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import { join } from 'node:path';
+import { expect, it } from 'vitest';
+import { fsQueue } from '../../../packages/a2a/a2a-transport/src/fsq';
 
 it('fsq publishes and notifies subscribers', async () => {
   const t = fsQueue(`test-${Date.now()}`);

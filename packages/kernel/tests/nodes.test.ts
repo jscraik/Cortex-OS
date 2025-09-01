@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { createInitialPRPState } from '../src/state.js';
-import { runStrategyNode, runBuildNode, runEvaluationNode } from '../src/nodes/index.js';
+import { describe, expect, it } from 'vitest';
 import { createEvidence } from '../src/lib/phase-utils.js';
+import { runBuildNode, runEvaluationNode, runStrategyNode } from '../src/nodes/index.js';
+import { createInitialPRPState } from '../src/state.js';
 
 describe('PRP nodes', () => {
   it('runs strategy, build and evaluation phases', async () => {

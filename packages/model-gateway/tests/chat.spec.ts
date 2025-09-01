@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MLXAdapter } from '../src/adapters/mlx-adapter';
-import { OllamaAdapter } from '../src/adapters/ollama-adapter';
-import { ModelRouter, type ChatRequest } from '../src/model-router';
+import type { MLXAdapter } from '../src/adapters/mlx-adapter';
+import type { OllamaAdapter } from '../src/adapters/ollama-adapter';
+import { type ChatRequest, ModelRouter } from '../src/model-router';
 
 describe('ModelRouter - Chat Generation', () => {
   let router: ModelRouter;

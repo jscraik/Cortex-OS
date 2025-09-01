@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import commandExists from 'command-exists';
-import { createTransport } from './transport.js';
 import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTransport } from './transport.js';
 
 vi.mock('command-exists', () => ({ default: vi.fn() }));
 

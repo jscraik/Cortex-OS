@@ -1,9 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock fetch for gateway HTTP calls  
-global.fetch = vi.fn().mockImplementation(() => 
-  Promise.reject(new Error('fetch failed'))
-);
+// Mock fetch for gateway HTTP calls
+global.fetch = vi.fn().mockImplementation(() => Promise.reject(new Error('fetch failed')));
 
 // Mock child_process for thermal monitoring
 vi.mock('child_process', () => ({
@@ -12,9 +10,9 @@ vi.mock('child_process', () => ({
     const emitter = new EventEmitter();
     const stdoutEmitter = new EventEmitter();
     const stderrEmitter = new EventEmitter();
-    // @ts-ignore
+    // @ts-expect-error
     emitter.stdout = stdoutEmitter;
-    // @ts-ignore
+    // @ts-expect-error
     emitter.stderr = stderrEmitter;
     setTimeout(() => {
       stdoutEmitter.emit('data', '2');
@@ -25,7 +23,7 @@ vi.mock('child_process', () => ({
 }));
 
 // Import after mocks are set
-import { createMLXProvider, createAutoMLXProvider } from '@/providers/mlx-provider/index.js';
+import { createAutoMLXProvider, createMLXProvider } from '@/providers/mlx-provider/index.js';
 
 describe('MLX Provider', () => {
   beforeEach(() => {
@@ -69,7 +67,7 @@ describe('MLX Provider', () => {
         temperature: 0.1,
         timeout: 5000,
       };
-      
+
       await expect(provider.generate('test prompt', options)).rejects.toThrow();
       // Test would pass with working gateway
     });
@@ -101,7 +99,7 @@ describe('MLX Provider', () => {
         circuitBreakerThreshold: 2,
         circuitBreakerResetMs: 1000,
       });
-      
+
       expect(provider.name).toBe('mlx');
       // Circuit breaker behavior would be tested with integration tests
     });

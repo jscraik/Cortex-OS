@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { isExpired, isoDurationToMs } from '../src/domain/policies.js';
-import { Memory } from '../src/domain/types.js';
+import type { Memory } from '../src/domain/types.js';
 
 describe('Memory expiration and TTL handling', () => {
   it('correctly identifies expired memories', () => {

@@ -7,16 +7,16 @@
  */
 
 import { randomUUID } from 'crypto';
-import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
-import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
+import { type AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
 import {
-  summarizeEvidence,
-  invokeRagAnalysis,
-  parseInsightsResponse,
   generateFallbackInsights,
+  invokeRagAnalysis,
   isEmptyAnswer,
   isInvalidSummary,
+  parseInsightsResponse,
+  summarizeEvidence,
 } from './lib/insights.js';
+import type { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 // ASBR Types (extracted from ASBR package)
 interface EvidenceContext {
@@ -254,7 +254,7 @@ export class ASBRAIIntegration {
       // Use RAG to find supporting/contradicting information
       const ragResult = await this.aiCapabilities.ragQuery({
         query: `Fact-check this claim: ${evidence.claim}`,
-        systemPrompt: `You are a fact-checker. Analyze the claim for factual accuracy and consistency. 
+        systemPrompt: `You are a fact-checker. Analyze the claim for factual accuracy and consistency.
                        Identify any potential issues, contradictions, or areas that need verification.
                        Provide a confidence score from 0.0 to 1.0 for factual consistency.`,
       });

@@ -4,9 +4,9 @@
  */
 
 import { readFile } from 'fs/promises';
-import { fileURLToPath } from 'url';
 import * as path from 'path';
-import { Finding, FindingSchema } from './types';
+import { fileURLToPath } from 'url';
+import { type Finding, FindingSchema } from './types';
 import { EvidenceValidator } from './validator';
 
 /**

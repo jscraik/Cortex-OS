@@ -1,4 +1,4 @@
-import { Qwen3Reranker } from '../pipeline/qwen3-reranker';
+import type { Qwen3Reranker } from '../pipeline/qwen3-reranker';
 import type { Document } from './types';
 
 export async function rerankDocs(

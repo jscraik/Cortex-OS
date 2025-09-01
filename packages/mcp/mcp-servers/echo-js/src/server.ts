@@ -2,8 +2,8 @@
 import readline from 'node:readline/promises';
 import { pathToFileURL } from 'node:url';
 import {
-  createServer,
   addTool,
+  createServer,
   handleRequest as dispatchRequest,
 } from '../../../src/lib/server/index.js';
 

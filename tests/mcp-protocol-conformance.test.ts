@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createTransport } from '../packages/mcp/src/lib/transport.js';
+import { mkdtempSync, readFileSync } from 'fs';
 import { createServer } from 'http';
-import { readFileSync, mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { describe, expect, it, vi } from 'vitest';
+import { createTransport } from '../packages/mcp/src/lib/transport.js';
 
 describe('Transport Integration', () => {
   it('writes messages to child stdin for stdio transport', async () => {

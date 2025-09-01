@@ -4,16 +4,16 @@
  * Tests all core primitives: tools, resources, prompts following MCP spec 2025-06-18
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  validateMCPTool,
-  validateMCPResource,
-  validateMCPPrompt,
-  MCPProtocolCompliance,
   MCP_PROTOCOL_VERSION,
-  type MCPTool,
-  type MCPResource,
   type MCPPrompt,
+  MCPProtocolCompliance,
+  type MCPResource,
+  type MCPTool,
+  validateMCPPrompt,
+  validateMCPResource,
+  validateMCPTool,
 } from '../src/lib/mcp-protocol-compliance.js';
 
 describe('MCP Protocol Compliance', () => {

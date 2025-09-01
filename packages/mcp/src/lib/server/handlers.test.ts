@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createServer, addTool, addResource, addPrompt } from './index.js';
 import {
   handleInitialize,
-  handleToolsList,
-  handleToolCall,
-  handleResourcesList,
-  handleResourceRead,
   handlePromptsList,
+  handleResourceRead,
+  handleResourcesList,
+  handleToolCall,
+  handleToolsList,
 } from './handlers.js';
+import { addPrompt, addResource, addTool, createServer } from './index.js';
 
 describe('server handlers', () => {
   const context = createServer({ name: 'test', version: '1.0.0' });

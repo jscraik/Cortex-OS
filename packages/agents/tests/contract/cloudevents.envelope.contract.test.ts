@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { cloudEventSchema } from '../../src/lib/event-bus.js';
 
 describe('CloudEvents envelope', () => {

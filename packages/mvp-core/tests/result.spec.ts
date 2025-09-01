@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { ok, err, wrap } from '../src/result.js';
+import { describe, expect, it } from 'vitest';
+import { err, ok, wrap } from '../src/result.js';
 
 describe('result', () => {
   it('ok/err', () => {

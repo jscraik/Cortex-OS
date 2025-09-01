@@ -3,8 +3,8 @@
  * @description Tests for execution history helper
  */
 
-import { describe, it, expect } from 'vitest';
-import { createHistory, addToHistory, getExecutionHistory } from '../src/lib/history.js';
+import { describe, expect, it } from 'vitest';
+import { addToHistory, createHistory, getExecutionHistory } from '../src/lib/history.js';
 import { createInitialPRPState } from '../src/state.js';
 
 describe('Execution History Helper', () => {

@@ -35,24 +35,23 @@ export const A2A_SCHEMA = z.object({
   enabled: z.boolean().default(true),
   eventBusUrl: z.string().url().optional(),
   publisherId: z.string().default('github-mcp-server'),
-  subscriberTopics: z.array(z.string()).default([
-    'github.repository',
-    'github.pullrequest',
-    'github.issue',
-    'github.workflow',
-  ]),
-  publisherTopics: z.array(z.string()).default([
-    'github.repository.created',
-    'github.repository.updated',
-    'github.pullrequest.opened',
-    'github.pullrequest.closed',
-    'github.pullrequest.merged',
-    'github.issue.opened',
-    'github.issue.closed',
-    'github.workflow.started',
-    'github.workflow.completed',
-    'github.workflow.failed',
-  ]),
+  subscriberTopics: z
+    .array(z.string())
+    .default(['github.repository', 'github.pullrequest', 'github.issue', 'github.workflow']),
+  publisherTopics: z
+    .array(z.string())
+    .default([
+      'github.repository.created',
+      'github.repository.updated',
+      'github.pullrequest.opened',
+      'github.pullrequest.closed',
+      'github.pullrequest.merged',
+      'github.issue.opened',
+      'github.issue.closed',
+      'github.workflow.started',
+      'github.workflow.completed',
+      'github.workflow.failed',
+    ]),
 });
 
 // Feature configuration schema
@@ -80,16 +79,18 @@ export const SECURITY_SCHEMA = z.object({
   webhookSecret: z.string().optional(),
   allowedRepositories: z.array(z.string()).default([]),
   blockedRepositories: z.array(z.string()).default([]),
-  allowedOperations: z.array(z.string()).default([
-    'repository.read',
-    'repository.write',
-    'issue.read',
-    'issue.write',
-    'pullrequest.read',
-    'pullrequest.write',
-    'workflow.read',
-    'workflow.trigger',
-  ]),
+  allowedOperations: z
+    .array(z.string())
+    .default([
+      'repository.read',
+      'repository.write',
+      'issue.read',
+      'issue.write',
+      'pullrequest.read',
+      'pullrequest.write',
+      'workflow.read',
+      'workflow.trigger',
+    ]),
   sensitiveDataRedaction: z.boolean().default(true),
 });
 
@@ -137,48 +138,48 @@ export function validatePartialConfig(config: unknown): Partial<GitHubMCPConfig>
 // Environment variable mappings
 export const ENV_MAPPINGS = {
   // Authentication
-  'GITHUB_TOKEN': 'auth.token',
-  'CORTEX_GITHUB_TOKEN': 'auth.token',
-  'GITHUB_APP_ID': 'auth.appId',
-  'GITHUB_APP_PRIVATE_KEY': 'auth.privateKey',
-  'GITHUB_APP_INSTALLATION_ID': 'auth.installationId',
-  'CORTEX_GITHUB_AUTH_METHOD': 'auth.method',
-  
+  GITHUB_TOKEN: 'auth.token',
+  CORTEX_GITHUB_TOKEN: 'auth.token',
+  GITHUB_APP_ID: 'auth.appId',
+  GITHUB_APP_PRIVATE_KEY: 'auth.privateKey',
+  GITHUB_APP_INSTALLATION_ID: 'auth.installationId',
+  CORTEX_GITHUB_AUTH_METHOD: 'auth.method',
+
   // Server
-  'CORTEX_GITHUB_MCP_NAME': 'server.name',
-  'CORTEX_GITHUB_MCP_VERSION': 'server.version',
-  'CORTEX_GITHUB_MCP_PORT': 'server.port',
-  'CORTEX_GITHUB_MCP_HOST': 'server.host',
-  
+  CORTEX_GITHUB_MCP_NAME: 'server.name',
+  CORTEX_GITHUB_MCP_VERSION: 'server.version',
+  CORTEX_GITHUB_MCP_PORT: 'server.port',
+  CORTEX_GITHUB_MCP_HOST: 'server.host',
+
   // Repository
-  'CORTEX_GITHUB_REPO': 'defaultRepository',
-  'CORTEX_GITHUB_DEFAULT_REPO': 'defaultRepository',
-  
+  CORTEX_GITHUB_REPO: 'defaultRepository',
+  CORTEX_GITHUB_DEFAULT_REPO: 'defaultRepository',
+
   // Features
-  'CORTEX_GITHUB_REAL_TIME': 'features.realTimeEvents',
-  'CORTEX_GITHUB_WEBHOOKS': 'features.webhookSupport',
-  'CORTEX_GITHUB_RATE_LIMIT': 'features.rateLimitingEnabled',
-  'CORTEX_GITHUB_CACHE': 'features.caching',
-  
+  CORTEX_GITHUB_REAL_TIME: 'features.realTimeEvents',
+  CORTEX_GITHUB_WEBHOOKS: 'features.webhookSupport',
+  CORTEX_GITHUB_RATE_LIMIT: 'features.rateLimitingEnabled',
+  CORTEX_GITHUB_CACHE: 'features.caching',
+
   // A2A
-  'CORTEX_A2A_ENABLED': 'a2a.enabled',
-  'CORTEX_A2A_EVENT_BUS_URL': 'a2a.eventBusUrl',
-  'CORTEX_A2A_PUBLISHER_ID': 'a2a.publisherId',
-  
+  CORTEX_A2A_ENABLED: 'a2a.enabled',
+  CORTEX_A2A_EVENT_BUS_URL: 'a2a.eventBusUrl',
+  CORTEX_A2A_PUBLISHER_ID: 'a2a.publisherId',
+
   // Rate Limits
-  'CORTEX_GITHUB_RATE_LIMIT_HOUR': 'rateLimits.requestsPerHour',
-  'CORTEX_GITHUB_RATE_LIMIT_MIN': 'rateLimits.requestsPerMinute',
-  'CORTEX_GITHUB_RATE_BURST': 'rateLimits.burstLimit',
-  
+  CORTEX_GITHUB_RATE_LIMIT_HOUR: 'rateLimits.requestsPerHour',
+  CORTEX_GITHUB_RATE_LIMIT_MIN: 'rateLimits.requestsPerMinute',
+  CORTEX_GITHUB_RATE_BURST: 'rateLimits.burstLimit',
+
   // Security
-  'CORTEX_GITHUB_WEBHOOK_SECRET': 'security.webhookSecret',
-  'CORTEX_GITHUB_ALLOWED_REPOS': 'security.allowedRepositories',
-  'CORTEX_GITHUB_BLOCKED_REPOS': 'security.blockedRepositories',
-  
+  CORTEX_GITHUB_WEBHOOK_SECRET: 'security.webhookSecret',
+  CORTEX_GITHUB_ALLOWED_REPOS: 'security.allowedRepositories',
+  CORTEX_GITHUB_BLOCKED_REPOS: 'security.blockedRepositories',
+
   // Logging
-  'CORTEX_LOG_LEVEL': 'logging.level',
-  'CORTEX_LOG_FORMAT': 'logging.format',
-  'CORTEX_LOG_FILE': 'logging.filePath',
+  CORTEX_LOG_LEVEL: 'logging.level',
+  CORTEX_LOG_FORMAT: 'logging.format',
+  CORTEX_LOG_FILE: 'logging.filePath',
 } as const;
 
 // Default configurations for different environments
@@ -201,7 +202,7 @@ export const DEFAULT_CONFIGS = {
       burstLimit: 5,
     },
   },
-  
+
   production: {
     logging: {
       level: 'info' as const,
@@ -221,7 +222,7 @@ export const DEFAULT_CONFIGS = {
       allowForceOperations: false,
     },
   },
-  
+
   testing: {
     logging: {
       level: 'error' as const,
@@ -293,7 +294,7 @@ export function isValidGitHubToken(token: string): boolean {
 
 export function sanitizeConfigForLogging(config: GitHubMCPConfig): any {
   const sanitized = JSON.parse(JSON.stringify(config));
-  
+
   // Redact sensitive information
   if (sanitized.auth?.token) {
     sanitized.auth.token = '***REDACTED***';
@@ -307,6 +308,6 @@ export function sanitizeConfigForLogging(config: GitHubMCPConfig): any {
   if (sanitized.security?.webhookSecret) {
     sanitized.security.webhookSecret = '***REDACTED***';
   }
-  
+
   return sanitized;
 }

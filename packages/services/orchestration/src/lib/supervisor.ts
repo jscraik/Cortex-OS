@@ -1,6 +1,6 @@
 import { withSpan } from '../observability/otel';
 import { auditEvent, record } from './audit';
-import { Checkpoint, loadLatestCheckpoint, saveCheckpoint } from './checkpoints';
+import { type Checkpoint, loadLatestCheckpoint, saveCheckpoint } from './checkpoints';
 import { requiresApproval, waitForApproval } from './hitl';
 import { enforce, loadGrant } from './policy-engine';
 

@@ -1,4 +1,4 @@
-import { type TraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import type { TraceContext } from '@cortex-os/a2a-contracts/trace-context';
 
 type ProtocolErrorType = 'method-not-found' | 'invalid-params' | 'parse-error';
 

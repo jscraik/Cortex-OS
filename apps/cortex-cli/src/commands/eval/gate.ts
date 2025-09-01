@@ -36,7 +36,7 @@ export const evalGate = new Command('gate')
       process.stdout.write(head + '\n');
       for (const o of result.outcomes) {
         const m = Object.entries(o.metrics)
-          .map(([k, v]) => `${k}=${typeof v === 'number' ? v.toFixed?.(3) ?? v : v}`)
+          .map(([k, v]) => `${k}=${typeof v === 'number' ? (v.toFixed?.(3) ?? v) : v}`)
           .join(' ');
         process.stdout.write(` - ${o.name}: ${o.pass ? 'PASS' : 'FAIL'} ${m}\n`);
       }
@@ -45,4 +45,3 @@ export const evalGate = new Command('gate')
   });
 
 // no default export
-

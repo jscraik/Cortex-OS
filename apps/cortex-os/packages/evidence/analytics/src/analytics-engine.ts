@@ -11,11 +11,11 @@
 
 import { EventEmitter } from 'events';
 import pino from 'pino';
-import { MetricsCollector } from './metrics-collector.js';
-import { PatternAnalyzer } from './pattern-analyzer.js';
-import { OptimizationEngine } from './optimization-engine.js';
-import { AnalyticsConfig } from './types.js';
 import { createAnalyticsConfig } from './config.js';
+import { MetricsCollector } from './metrics-collector.js';
+import { OptimizationEngine } from './optimization-engine.js';
+import { PatternAnalyzer } from './pattern-analyzer.js';
+import type { AnalyticsConfig } from './types.js';
 
 /**
  * Main analytics engine that coordinates all analytics components

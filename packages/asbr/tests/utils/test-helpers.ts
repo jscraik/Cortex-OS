@@ -3,7 +3,7 @@
  */
 
 import { performance } from 'perf_hooks';
-import type { TaskInput, Profile } from '../../src/types/index.js';
+import type { Profile, TaskInput } from '../../src/types/index.js';
 
 /**
  * Performance measurement utility
@@ -83,7 +83,7 @@ export async function retry<T>(
         throw lastError;
       }
 
-      const delay = baseDelay * Math.pow(2, attempt - 1);
+      const delay = baseDelay * 2 ** (attempt - 1);
       await sleep(delay);
     }
   }

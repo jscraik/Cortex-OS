@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeMcpConfigs, type McpConfig } from '../src/config-loader.js';
+import { type McpConfig, mergeMcpConfigs } from '../src/config-loader.js';
 
 describe('mergeMcpConfigs', () => {
   it('rejects duplicate IDs without override', () => {

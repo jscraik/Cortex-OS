@@ -1,9 +1,9 @@
-import { z } from 'zod';
 import { AgentConfigSchema, RAGQuerySchema } from '@cortex-os/contracts';
-import { createStdOutput, createJsonOutput, StructuredError } from '@cortex-os/lib';
+import { createJsonOutput, createStdOutput, StructuredError } from '@cortex-os/lib';
+import { z } from 'zod';
 import { Qwen3Presets } from './embed/qwen3';
-import { memoryStore } from './store/memory';
 import { createMultiModelGenerator, ModelPresets } from './generation/multi-model';
+import { memoryStore } from './store/memory';
 
 const InputSchema = z.object({
   config: AgentConfigSchema,
@@ -15,7 +15,9 @@ export type RAGInput = z.infer<typeof InputSchema>;
 export async function handleRAG(input: unknown): Promise<string> {
   const parsed = InputSchema.safeParse(input);
   if (!parsed.success) {
-    const err = new StructuredError('INVALID_INPUT', 'Invalid RAG input', { issues: parsed.error.issues });
+    const err = new StructuredError('INVALID_INPUT', 'Invalid RAG input', {
+      issues: parsed.error.issues,
+    });
     return createJsonOutput({ error: err.toJSON() });
   }
   const { config, query, json } = parsed.data;

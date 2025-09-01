@@ -94,7 +94,7 @@ def main():
         try:
             result = subprocess.run(
                 cmd, shell=True, check=True, capture_output=True, text=True
-            )  # noqa: S602
+            )
             print(f"✅ {name}: {result.stdout.strip()}")
         except subprocess.CalledProcessError:
             print(f"❌ {name}: Not working")

@@ -1,12 +1,15 @@
+import importlib.util
 import json
 import sys
-import importlib.util
 
-if importlib.util.find_spec("mlx") is None or importlib.util.find_spec("mlx_lm") is None:
+if (
+    importlib.util.find_spec("mlx") is None
+    or importlib.util.find_spec("mlx_lm") is None
+):
     raise ImportError("MLX and mlx_lm are required dependencies")
 
 import mlx.core as mx  # noqa: F401
-from mlx_lm import load, generate
+from mlx_lm import generate, load
 
 
 def main():
@@ -27,7 +30,7 @@ def main():
             top_p=top_p,
             max_tokens=max_tokens,
         )
-        generated_text = response[len(prompt):].strip()
+        generated_text = response[len(prompt) :].strip()
         result = {"text": generated_text}
         print(json.dumps(result))
     except Exception as e:

@@ -3,17 +3,17 @@
  * @description TDD tests for seed server configurations
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { readFile } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-import { ServerManifestSchema } from '@cortex-os/mcp-registry';
 import type { ServerManifest } from '@cortex-os/mcp-registry';
+import { ServerManifestSchema } from '@cortex-os/mcp-registry';
+import { existsSync } from 'fs';
+import { readFile } from 'fs/promises';
+import path from 'path';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 const SEED_SERVERS_DIR = path.join(__dirname, '.');
 
 describe('Seed Server Configurations', () => {
-  let seedServers: ServerManifest[] = [];
+  const seedServers: ServerManifest[] = [];
 
   beforeAll(async () => {
     // Load all seed server files
@@ -95,7 +95,7 @@ describe('Seed Server Configurations', () => {
       expect(filesystemServer.transport.stdio!.command).toBe('npx');
       expect(filesystemServer.transport.stdio!.args).toContain('-y');
       expect(filesystemServer.transport.stdio!.args).toContain(
-        '@modelcontextprotocol/server-filesystem',
+        '@modelcontextprotocol/server-filesystem'
       );
     });
 
@@ -188,7 +188,7 @@ describe('Seed Server Configurations', () => {
         if (server.security.riskLevel === 'high') {
           // High risk servers should have explicit dangerous permissions
           const dangerousPermissions = server.permissions.filter(
-            (p) => p.includes('exec') || p.includes('admin') || p.includes('system'),
+            (p) => p.includes('exec') || p.includes('admin') || p.includes('system')
           );
           expect(dangerousPermissions.length).toBeGreaterThan(0);
         }

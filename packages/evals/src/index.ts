@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { GateConfigSchema, type GateConfig, type GateResult, type SuiteOutcome } from './types';
 import { runRagSuite } from './suites/rag';
 import { runRouterSuite } from './suites/router';
+import { type GateConfig, GateConfigSchema, type GateResult, type SuiteOutcome } from './types';
 
 const SuiteName = z.enum(['rag', 'router']);
 
@@ -30,5 +30,4 @@ export async function runGate(config: unknown): Promise<GateResult> {
   return { pass, outcomes, startedAt, finishedAt } satisfies GateResult;
 }
 
-export type { GateResult, GateConfig } from './types';
-
+export type { GateConfig, GateResult } from './types';

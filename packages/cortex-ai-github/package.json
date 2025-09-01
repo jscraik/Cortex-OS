@@ -29,7 +29,13 @@
     "typescript": "^5.3.3",
     "vitest": "^1.0.0"
   },
-  "keywords": ["ai", "github", "automation", "cortex", "code-review"],
+  "keywords": [
+    "ai",
+    "github",
+    "automation",
+    "cortex",
+    "code-review"
+  ],
   "author": "Cortex-OS Team",
   "license": "MIT",
   "repository": {

@@ -1,4 +1,4 @@
-import { type Embedder, type Store } from '../index';
+import type { Embedder, Store } from '../index';
 
 export async function query(args: { q: string; topK?: number }, E: Embedder, S: Store) {
   const [emb] = await E.embed([args.q]);

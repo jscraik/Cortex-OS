@@ -10,7 +10,7 @@
     "tests_to_add": "Test uptime calculation returns correct elapsed time"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs", 
+    "file": "apps/cortex-tui/src/server/handlers.rs",
     "lines": "62",
     "severity": "medium",
     "category": "placeholder-code",
@@ -22,7 +22,7 @@
   {
     "file": "apps/cortex-tui/src/server/handlers.rs",
     "lines": "96",
-    "severity": "medium", 
+    "severity": "medium",
     "category": "placeholder-code",
     "description": "Hardcoded token_count as None instead of calculating actual tokens",
     "evidence": "Line 96: token_count: None, // Would be calculated",
@@ -33,7 +33,7 @@
     "file": "apps/cortex-tui/src/server/handlers.rs",
     "lines": "144",
     "severity": "low",
-    "category": "placeholder-code", 
+    "category": "placeholder-code",
     "description": "Empty sessions array instead of listing actual sessions",
     "evidence": "Line 144: \"sessions\": [], // Would list actual sessions",
     "fix": "Retrieve actual session list from memory storage",
@@ -50,7 +50,7 @@
     "tests_to_add": "Test MCP server info returns correct counts"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs", 
+    "file": "apps/cortex-tui/src/server/handlers.rs",
     "lines": "308",
     "severity": "medium",
     "category": "placeholder-code",
@@ -122,7 +122,7 @@
   {
     "file": "apps/cortex-tui/src/app.rs",
     "lines": "126-129",
-    "severity": "high", 
+    "severity": "high",
     "category": "placeholder-code",
     "description": "MCP server addition not implemented",
     "evidence": "Lines 126-129: // TODO: Implement MCP server addition",
@@ -133,7 +133,7 @@
     "file": "apps/cortex-tui/src/app.rs",
     "lines": "131-134",
     "severity": "high",
-    "category": "placeholder-code", 
+    "category": "placeholder-code",
     "description": "MCP server removal not implemented",
     "evidence": "Lines 131-134: // TODO: Implement MCP server removal",
     "fix": "Implement MCP server removal with cleanup and connection termination",
@@ -164,7 +164,7 @@
     "lines": "72-73",
     "severity": "high",
     "category": "security",
-    "description": "Same command injection vulnerability in streaming MLX calls", 
+    "description": "Same command injection vulnerability in streaming MLX calls",
     "evidence": "Lines 72-73: Same inadequate escaping in streaming context",
     "fix": "Use proper command argument passing or JSON escaping to prevent injection",
     "tests_to_add": "Test streaming with injection attempts"

@@ -1,4 +1,4 @@
-import { Qwen3Embedder } from '../embed/qwen3';
+import type { Qwen3Embedder } from '../embed/qwen3';
 import type { Document } from './types';
 
 function cosineSimilarity(a: number[], b: number[]): number {

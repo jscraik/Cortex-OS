@@ -11,7 +11,7 @@
  * - 85% coverage minimum enforced
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
 
 describe('LLM Integration - TDD Implementation', () => {

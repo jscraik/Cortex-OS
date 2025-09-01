@@ -1,7 +1,7 @@
-import { Command } from 'commander';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { uuid } from '@cortex-os/utils';
+import { Command } from 'commander';
 
 export const a2aSend = new Command('send')
   .description('Send an A2A message')

@@ -1,8 +1,8 @@
 import type {
   ChatResponse,
   Embedding,
-  MLXAdapterInterface,
   Message,
+  MLXAdapterInterface,
   OllamaAdapterInterface,
 } from '../../packages/model-gateway/src/adapters/types';
 
@@ -27,7 +27,7 @@ export class MockMLXAdapter implements MLXAdapterInterface {
         ({
           embedding: new Array(1536).fill(0).map((_, i) => Math.sin((i + index) * 0.1)),
           model: request.model || 'qwen3-embedding-4b-mlx',
-        }) as Embedding,
+        }) as Embedding
     );
   }
 
@@ -62,14 +62,14 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
         ({
           embedding: new Array(1536).fill(0).map((_, i) => Math.cos((i + index) * 0.1)),
           model: model || 'nomic-embed-text',
-        }) as Embedding,
+        }) as Embedding
     );
   }
 
   async generateChat(
     messages: Message[],
     model?: string,
-    options?: { temperature?: number; max_tokens?: number },
+    options?: { temperature?: number; max_tokens?: number }
   ): Promise<ChatResponse> {
     return {
       content: `Mock Ollama response to: ${messages[messages.length - 1]?.content}`,
@@ -80,7 +80,7 @@ export class MockOllamaAdapter implements OllamaAdapterInterface {
   async rerank(
     query: string,
     documents: string[],
-    model?: string,
+    model?: string
   ): Promise<{ scores: number[]; model: string }> {
     const scores = documents.map(() => Math.random() * 0.5 + 0.5);
     return {

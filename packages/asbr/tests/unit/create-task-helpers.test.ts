@@ -1,9 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { validateTaskInput } from '@/lib/validate-task-input.js';
-import { resolveIdempotency } from '@/lib/resolve-idempotency.js';
+import { describe, expect, it, vi } from 'vitest';
 import { createTask as buildTask } from '@/lib/create-task.js';
 import { emitPlanStarted } from '@/lib/emit-plan-started.js';
-import { ValidationError, type TaskInput, type Task } from '@/types/index.js';
+import { resolveIdempotency } from '@/lib/resolve-idempotency.js';
+import { validateTaskInput } from '@/lib/validate-task-input.js';
+import { type Task, type TaskInput, ValidationError } from '@/types/index.js';
 
 describe('task helper utilities', () => {
   const baseInput: TaskInput = {

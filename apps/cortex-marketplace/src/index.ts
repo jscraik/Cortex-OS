@@ -3,10 +3,10 @@
  * @description Entry point for MCP marketplace API server
  */
 
-import { build } from './app.js';
 import { readFile } from 'fs/promises';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { build } from './app.js';
 
 interface ServerConfig {
   port: number;

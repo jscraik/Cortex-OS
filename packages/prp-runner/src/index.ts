@@ -6,19 +6,18 @@
  * @status TDD-COMPLIANT
  */
 
-
-export { createPRPOrchestrator } from './orchestrator.js';
-export { LLMBridge } from './llm-bridge.js';
 export { createExecutionContext } from './lib/create-execution-context.js';
 export { executeNeuron } from './lib/execute-neuron.js';
+export type { LLMConfig } from './llm-bridge.js';
+export { LLMBridge } from './llm-bridge.js';
 export type {
+  Blueprint,
+  ExecutionContext,
+  ExecutionMetrics,
+  ExecutionState,
   Neuron,
   NeuronResult,
-  ExecutionMetrics,
-  Blueprint,
-  ExecutionState,
-  ExecutionContext,
   PRPExecutionResult,
   PRPOrchestrator,
 } from './orchestrator.js';
-export type { LLMConfig } from './llm-bridge.js';
+export { createPRPOrchestrator } from './orchestrator.js';

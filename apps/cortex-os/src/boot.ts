@@ -1,9 +1,9 @@
-import { Container } from 'inversify';
 import { TOKENS } from '@cortex-os/contracts';
+import { provideMCP } from '@cortex-os/mcp/service';
 import { provideMemories } from '@cortex-os/memories/service';
 import { provideOrchestration } from '@cortex-os/orchestration/service';
-import { provideMCP } from '@cortex-os/mcp/service';
 import { tracer } from '@cortex-os/telemetry';
+import { Container } from 'inversify';
 
 export function createContainer(): Container {
   const container = new Container({

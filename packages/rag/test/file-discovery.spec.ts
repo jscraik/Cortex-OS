@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 import { discoverFiles } from '../src/pipeline/file-discovery';
 
 describe('discoverFiles', () => {

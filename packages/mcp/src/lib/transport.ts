@@ -1,17 +1,17 @@
-import { z } from 'zod';
+import { type ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import commandExists from 'command-exists';
 import { EventEmitter } from 'events';
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { z } from 'zod';
 import { redactSensitiveData } from './security.js';
-import type {
-  McpRequest,
-  TransportConfig,
-  Transport,
-  HttpTransportConfig,
-  StdioTransportConfig,
-} from './types.js';
 import { SSETransport } from './sse-transport.js';
 import { parseTransportConfig } from './transport-schema.js';
-import commandExists from 'command-exists';
+import type {
+  HttpTransportConfig,
+  McpRequest,
+  StdioTransportConfig,
+  Transport,
+  TransportConfig,
+} from './types.js';
 
 export { redactSensitiveData } from './security.js';
 export type { Transport } from './types.js';
@@ -165,7 +165,7 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
     async disconnect() {
       if (child && child.pid && !child.killed) {
         child.kill('SIGTERM');
-        
+
         // Wait for graceful shutdown, then force kill if needed
         const forceKillTimeout = setTimeout(() => {
           if (child && child.pid && !child.killed) {
@@ -173,7 +173,7 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
             child.kill('SIGKILL');
           }
         }, 5000);
-        
+
         // Clear timeout when process exits
         child.once('exit', () => {
           clearTimeout(forceKillTimeout);

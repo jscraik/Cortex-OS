@@ -1,8 +1,9 @@
 import { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { createTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts/trace-context';
-import { SchemaRegistry } from './schema-registry';
+import type { SchemaRegistry } from './schema-registry';
 import { getCurrentTraceContext } from './trace-context-manager';
 import type { Transport } from './transport';
+
 export type { Transport } from './transport';
 
 export type Handler = { type: string; handle: (msg: Envelope) => Promise<void> };

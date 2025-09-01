@@ -1,7 +1,7 @@
+import { logWithSpan } from '@cortex-os/telemetry';
 import * as fs from 'fs/promises';
 import * as tls from 'tls';
-import { logWithSpan } from '@cortex-os/telemetry';
-import { MTLSConfig, MTLSError } from '../types.ts';
+import { type MTLSConfig, MTLSError } from '../types.ts';
 
 export interface CertificateSet {
   ca: string;

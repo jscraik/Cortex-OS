@@ -1,4 +1,4 @@
-import { type TraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import type { TraceContext } from '@cortex-os/a2a-contracts/trace-context';
 
 type ValidationError = {
   type: 'validation';

@@ -67,9 +67,13 @@ def test_transformers_reranker() -> None:
     model = transformers.AutoModelForSequenceClassification.from_pretrained(
         "Qwen/Qwen3-Reranker-4B", cache_dir=str(HF_CACHE), local_files_only=True
     )
-    inputs = tokenizer("What is machine learning?", "Machine learning is a subset of AI.", return_tensors="pt", padding=True)
+    inputs = tokenizer(
+        "What is machine learning?",
+        "Machine learning is a subset of AI.",
+        return_tensors="pt",
+        padding=True,
+    )
     with torch.no_grad():
         outputs = model(**inputs)
         score = torch.sigmoid(outputs.logits).item()
     assert 0.0 <= score <= 1.0
-

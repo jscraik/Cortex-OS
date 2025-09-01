@@ -107,9 +107,7 @@ export class AccessibilityValidator {
       issues.push('Missing summary for accessibility');
     }
 
-    if (!output.accessibility) {
-      issues.push('Missing accessibility metadata');
-    } else {
+    if (output.accessibility) {
       if (!output.accessibility.screenReaderText) {
         issues.push('Missing screen reader text');
       }
@@ -119,6 +117,8 @@ export class AccessibilityValidator {
       if (!output.accessibility.colorIndependentIndicators) {
         issues.push('Missing color-independent indicators');
       }
+    } else {
+      issues.push('Missing accessibility metadata');
     }
 
     return {
@@ -256,7 +256,7 @@ class DataProcessor {
     overrides: Partial<CodeAnalysisRequest> = {},
   ): CodeAnalysisRequest {
     return {
-      code: this.generateCodeSample('javascript', 'medium'),
+      code: TestDataGenerator.generateCodeSample('javascript', 'medium'),
       language: 'javascript',
       context: 'Test analysis request',
       analysisType: 'review',

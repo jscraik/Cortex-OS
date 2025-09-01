@@ -1,14 +1,13 @@
 import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import fs from 'node:fs';
 import path from 'node:path';
+import { promisify } from 'node:util';
+
 // Removed incorrect import of generateId
 
 // Simple implementation of generateId
 function generateId(prefix: string, randomize: boolean): string {
-  const randomPart = randomize
-    ? Math.random().toString(36).substring(2, 10)
-    : '';
+  const randomPart = randomize ? Math.random().toString(36).substring(2, 10) : '';
   return `${prefix}${randomPart}`;
 }
 export const execAsync = promisify(exec);

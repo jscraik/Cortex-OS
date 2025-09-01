@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Evidence, PRPState } from '../state.js';
+import type { Evidence, PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 import { currentTimestamp } from '../utils/time.js';
 

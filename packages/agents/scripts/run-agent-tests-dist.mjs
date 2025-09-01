@@ -56,7 +56,7 @@ async function testFallbackChainEvent() {
     assert.strictEqual(res.text, 'ok', 'Fallback chain should return result from working provider');
     await new Promise((r) => setTimeout(r, 50));
     const found = events.find(
-      (e) => e.type === 'provider.fallback' || e.type === 'agents.provider.fallback',
+      (e) => e.type === 'provider.fallback' || e.type === 'agents.provider.fallback'
     );
     assert.ok(found, 'provider.fallback event should be published');
     const data = found.data;

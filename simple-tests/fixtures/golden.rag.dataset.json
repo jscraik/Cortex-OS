@@ -4,7 +4,5 @@
     { "id": "doc1", "text": "Paris is the capital of France." },
     { "id": "doc2", "text": "Berlin is the capital of Germany." }
   ],
-  "queries": [
-    { "q": "capital of France", "relevantDocIds": ["doc1"] }
-  ]
+  "queries": [{ "q": "capital of France", "relevantDocIds": ["doc1"] }]
 }

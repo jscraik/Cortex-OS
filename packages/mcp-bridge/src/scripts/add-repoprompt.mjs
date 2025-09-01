@@ -7,7 +7,7 @@ async function addRepoPromptServer() {
       {
         frontend: 'cortex',
         autoApprove: true,
-      },
+      }
     );
 
     console.log('RepoPrompt Server Installation Result:');

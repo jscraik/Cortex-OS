@@ -15,7 +15,7 @@ export function raspMiddleware(opts = {}) {
   function emitEvent(event) {
     const filename = path.join(
       eventsDirectory,
-      `event-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`,
+      `event-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`
     );
     // use synchronous write to make tests deterministic
     fs.writeFileSync(filename, JSON.stringify(event, null, 2));

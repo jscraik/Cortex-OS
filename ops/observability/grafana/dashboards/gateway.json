@@ -15,7 +15,10 @@
           "legendFormat": "p95"
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" }, "orientation": "horizontal" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "orientation": "horizontal"
+      },
       "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0 }, "overrides": [] }
     },
     {
@@ -28,7 +31,10 @@
           "legendFormat": "error rate"
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" }, "orientation": "horizontal" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "" },
+        "orientation": "horizontal"
+      },
       "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2 }, "overrides": [] }
     },
     {
@@ -36,9 +42,18 @@
       "title": "Latency (p50/p95/p99)",
       "gridPos": { "x": 0, "y": 6, "w": 16, "h": 8 },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_ms_bucket{job=\"cortex/gateway\"}[5m])) by (le))", "legendFormat": "p50" },
-        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{job=\"cortex/gateway\"}[5m])) by (le))", "legendFormat": "p95" },
-        { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_ms_bucket{job=\"cortex/gateway\"}[5m])) by (le))", "legendFormat": "p99" }
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_ms_bucket{job=\"cortex/gateway\"}[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{job=\"cortex/gateway\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_ms_bucket{job=\"cortex/gateway\"}[5m])) by (le))",
+          "legendFormat": "p99"
+        }
       ],
       "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] }
     },
@@ -47,7 +62,10 @@
       "title": "Requests per second",
       "gridPos": { "x": 0, "y": 14, "w": 16, "h": 8 },
       "targets": [
-        { "expr": "sum(rate(http_request_duration_ms_count{job=\"cortex/gateway\"}[1m]))", "legendFormat": "rps" }
+        {
+          "expr": "sum(rate(http_request_duration_ms_count{job=\"cortex/gateway\"}[1m]))",
+          "legendFormat": "rps"
+        }
       ]
     }
   ],

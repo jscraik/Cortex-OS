@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { createMCPProvider, createMCPProviders } from '@/providers/mcp-provider.js';
+import { describe, expect, it, vi } from 'vitest';
 import type { MCPClient } from '@/lib/types.js';
+import { createMCPProvider, createMCPProviders } from '@/providers/mcp-provider.js';
 
 describe('MCP Provider', () => {
   it('generates via MCP callTool with sane defaults', async () => {

@@ -22,7 +22,7 @@ function updateNeo4jImplementation(filePath) {
     // Replace the existing Neo4j class with the secure template
     content = content.replace(
       /export class Neo4j implements INeo4j \{[\s\S]*?(?=export|$)/,
-      template + '\n\n',
+      template + '\n\n'
     );
 
     writeFileSync(filePath, content);

@@ -51,7 +51,7 @@ describe('spawnPythonProcess env merging and PYTHONPATH behavior', () => {
     const envPassed = callArgs[2].env as Record<string, string>;
 
     expect(envPassed.PYTHONPATH).toBe(
-      `/repo/packages/python-agents${require('path').delimiter}/existing/path`,
+      `/repo/packages/python-agents${require('path').delimiter}/existing/path`
     );
   });
 

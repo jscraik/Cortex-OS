@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, rm, readFile } from 'fs/promises';
+import { mkdtemp, readFile, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { EvidenceStorage } from '../../src/evidence/storage.js';
-import { getDataPath } from '../../src/xdg/index.js';
 import type { Evidence } from '../../src/types/index.js';
+import { getDataPath } from '../../src/xdg/index.js';
 
 // Node environment for filesystem operations
 // @vitest-environment node

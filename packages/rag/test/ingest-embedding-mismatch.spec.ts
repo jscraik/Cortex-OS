@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { RAGPipeline, type Embedder } from '../src/index';
+import { describe, expect, it } from 'vitest';
+import { type Embedder, RAGPipeline } from '../src/index';
 import { memoryStore } from '../src/store/memory';
 
 describe('RAGPipeline.ingest', () => {

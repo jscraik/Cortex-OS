@@ -9,9 +9,9 @@
  * @ai_provenance_hash N/A
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { AnalyticsEngine, createAnalyticsEngine } from '../src/analytics-engine.js';
-import { AnalyticsConfig } from '../src/types.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type AnalyticsEngine, createAnalyticsEngine } from '../src/analytics-engine.js';
+import type { AnalyticsConfig } from '../src/types.js';
 
 describe('AnalyticsEngine', () => {
   let engine: AnalyticsEngine;

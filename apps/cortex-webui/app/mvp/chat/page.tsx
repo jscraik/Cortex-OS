@@ -1,10 +1,11 @@
 /* @ts-nocheck */
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { z } from 'zod';
 import { apiFetch } from '../../../utils/api-client';
 import { openSSE } from '../../../utils/sse';
-import { z } from 'zod';
 
 const modelsSchema = z.object({
   models: z.array(

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { embedQuery, retrieveDocs, rerankDocs, generateAnswer, type Document } from '../src/lib';
+import { describe, expect, it, vi } from 'vitest';
+import { type Document, embedQuery, generateAnswer, rerankDocs, retrieveDocs } from '../src/lib';
 
 describe('enhanced pipeline helpers', () => {
   it('embeds query', async () => {

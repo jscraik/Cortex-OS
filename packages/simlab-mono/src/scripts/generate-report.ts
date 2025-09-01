@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import { basename, join } from 'path';
 import { SimReporter } from '../report.js';
 import type { SimBatchResult, SimReport } from '../types.js';

@@ -28,14 +28,14 @@ import Page from '../app/mvp/chat/page';
 describe('MVP Chat page accessibility', () => {
   beforeEach(() => {
     // jsdom lacks crypto.randomUUID in older versions; provide a stub if missing
-    // @ts-ignore
+    // @ts-expect-error
     if (!global.crypto) {
-      // @ts-ignore
+      // @ts-expect-error
       global.crypto = {};
     }
-    // @ts-ignore
+    // @ts-expect-error
     if (!global.crypto.randomUUID) {
-      // @ts-ignore
+      // @ts-expect-error
       global.crypto.randomUUID = () => '00000000-0000-4000-8000-000000000000';
     }
   });

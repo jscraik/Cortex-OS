@@ -55,7 +55,7 @@ describe('withFallback', () => {
     });
 
     await expect(withFallback([provider1, provider2])).rejects.toThrow(
-      'All providers failed. Last error: Fallback failed',
+      'All providers failed. Last error: Fallback failed'
     );
   });
 
@@ -69,7 +69,7 @@ describe('withFallback', () => {
     });
 
     await expect(
-      withFallback([provider], { errorMessage: 'Custom error message' }),
+      withFallback([provider], { errorMessage: 'Custom error message' })
     ).rejects.toThrow('Custom error message');
   });
 

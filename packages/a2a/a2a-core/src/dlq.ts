@@ -1,5 +1,5 @@
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { withSpan, logWithSpan } from '@cortex-os/telemetry';
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 
 /**
  * @file Enhanced Dead Letter Queue Implementation
@@ -611,7 +611,7 @@ export function calculateRetryDelay(
   retryCount: number,
   policy: RetryPolicy = defaultRetryPolicy,
 ): number {
-  const delay = policy.initialDelayMs * Math.pow(policy.backoffMultiplier, retryCount);
+  const delay = policy.initialDelayMs * policy.backoffMultiplier ** retryCount;
   return Math.min(delay, policy.maxDelayMs);
 }
 

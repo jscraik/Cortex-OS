@@ -285,9 +285,7 @@ class TieredMLXModelManager:
 
         return min(complexity, 1.0)
 
-    def smart_load(
-        self, task_description: str, context_length: int = 0
-    ) -> str | None:
+    def smart_load(self, task_description: str, context_length: int = 0) -> str | None:
         """
         Smart model selection and loading based on task complexity
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { MultiModelGenerator } from '../src/generation/multi-model';
 
 describe('MultiModelGenerator external script', () => {

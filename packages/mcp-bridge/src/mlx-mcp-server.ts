@@ -8,12 +8,12 @@
  */
 
 import { spawn } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { MLXConfig, MLXConfigSchema } from './schemas/mlx-config.js';
+import { type MLXConfig, MLXConfigSchema } from './schemas/mlx-config.js';
 
 interface MLXRequest {
   model?: string;

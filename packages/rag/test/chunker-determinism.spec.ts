@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ProcessingDispatcher, type ProcessingFile } from '../src/chunkers/dispatch';
 import { ProcessingStrategy } from '../src/policy/mime';
 

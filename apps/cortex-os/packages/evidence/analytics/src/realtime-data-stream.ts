@@ -12,7 +12,7 @@
 import { EventEmitter } from 'events';
 import * as net from 'net';
 import WebSocket from 'ws';
-import { AnalyticsConfig, DashboardData } from './types.js';
+import type { AnalyticsConfig, DashboardData } from './types.js';
 
 /**
  * Find an available port starting from a base port

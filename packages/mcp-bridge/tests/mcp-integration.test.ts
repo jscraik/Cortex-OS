@@ -9,15 +9,19 @@
  * @ai_provenance_hash 8fc7d2a1
  */
 
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import {
-  MCPOrchestrationIntegration,
-  MCPConnectionConfig,
-  createMCPIntegration,
-} from '../mcp-integration';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { MCPConnectionManager } from '../mcp-connection-manager';
-import { MCPProtocolHandlers, MCP_OBSERVABILITY_TOOLS } from '../mcp-protocol-handlers';
-import { OrchestrationObservability, createObservability, AgentHealth } from '../observability';
+import {
+  createMCPIntegration,
+  type MCPConnectionConfig,
+  type MCPOrchestrationIntegration,
+} from '../mcp-integration';
+import { MCP_OBSERVABILITY_TOOLS, MCPProtocolHandlers } from '../mcp-protocol-handlers';
+import {
+  AgentHealth,
+  createObservability,
+  type OrchestrationObservability,
+} from '../observability';
 
 describe('MCP Integration', () => {
   let observability: OrchestrationObservability;

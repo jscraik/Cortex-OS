@@ -3,7 +3,7 @@
  * Implements WCAG 2.2 AA keyboard accessibility requirements
  */
 
-import { handleTab, handleArrow, handleHomeEnd, handleEscape } from './lib/key-handlers.js';
+import { handleArrow, handleEscape, handleHomeEnd, handleTab } from './lib/key-handlers.js';
 
 export interface KeyboardHandlerOptions {
   trapFocus?: boolean;

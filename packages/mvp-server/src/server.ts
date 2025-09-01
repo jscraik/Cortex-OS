@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
 import { z } from 'zod';
+import { registerErrorHandler } from './middleware/error.js';
 import { loggingPlugin } from './plugins/logging.js';
 import { securityPlugin } from './plugins/security.js';
-import { registerErrorHandler } from './middleware/error.js';
 import { healthRoutes } from './routes/health.js';
 import { metricsRoutes } from './routes/metrics.js';
 import { versionRoutes } from './routes/version.js';

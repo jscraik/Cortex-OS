@@ -1,5 +1,5 @@
-import { container } from './boot';
 import { TOKENS } from '@cortex-os/contracts';
+import { container } from './boot';
 
 export async function startRuntime() {
   const memories = container.get(TOKENS.Memories) as any;

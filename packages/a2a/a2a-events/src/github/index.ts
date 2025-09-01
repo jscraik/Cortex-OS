@@ -1,57 +1,36 @@
 // GitHub A2A Events - Main Export
 export const GITHUB_A2A_EVENTS_VERSION = '1.0.0';
 
-// Core Event Types
-export * from './repository';
-export * from './pull-request';
-export * from './issue';
-export * from './workflow';
-export * from './error';
-
 // Event Envelope and Routing
 export * from './envelope';
+export * from './error';
+export * from './issue';
+export * from './pull-request';
+// Core Event Types
+export * from './repository';
 export * from './routing';
-
-// Type Guards and Validators
-import {
-  isRepositoryEvent,
-  validateRepositoryEvent,
-  RepositoryEvent,
-} from './repository';
+export * from './workflow';
 
 import {
-  isPullRequestEvent,
-  validatePullRequestEvent,
-  PullRequestEvent,
-} from './pull-request';
-
-import {
-  isIssueEvent,
-  validateIssueEvent,
-  IssueEvent,
-} from './issue';
-
-import {
-  isWorkflowEvent,
-  validateWorkflowEvent,
-  WorkflowEvent,
-} from './workflow';
-
-import {
-  isErrorEvent,
-  validateErrorEvent,
-  ErrorEvent,
-} from './error';
-
-import {
+  type A2AEventEnvelope,
+  type GitHubEventData,
   isA2AEventEnvelope,
   validateA2AEventEnvelope,
-  A2AEventEnvelope,
-  GitHubEventData,
 } from './envelope';
+import { type ErrorEvent, isErrorEvent, validateErrorEvent } from './error';
+
+import { type IssueEvent, isIssueEvent, validateIssueEvent } from './issue';
+import {
+  isPullRequestEvent,
+  type PullRequestEvent,
+  validatePullRequestEvent,
+} from './pull-request';
+// Type Guards and Validators
+import { isRepositoryEvent, type RepositoryEvent, validateRepositoryEvent } from './repository';
+import { isWorkflowEvent, validateWorkflowEvent, type WorkflowEvent } from './workflow';
 
 // Union type for all GitHub events
-export type GitHubEvent = 
+export type GitHubEvent =
   | RepositoryEvent
   | PullRequestEvent
   | IssueEvent
@@ -86,7 +65,7 @@ export function validateGitHubEvent(data: unknown): GitHubEvent {
   if (isErrorEvent(data)) {
     return validateErrorEvent(data);
   }
-  
+
   throw new Error('Invalid GitHub event data: does not match any known event schema');
 }
 
@@ -95,12 +74,12 @@ export function getGitHubEventType(data: unknown): string | null {
   if (!data || typeof data !== 'object' || !('event_type' in data)) {
     return null;
   }
-  
+
   const eventType = (data as { event_type: unknown }).event_type;
   if (typeof eventType !== 'string') {
     return null;
   }
-  
+
   const validTypes = [
     'github.repository',
     'github.pull_request',
@@ -108,7 +87,7 @@ export function getGitHubEventType(data: unknown): string | null {
     'github.workflow',
     'github.error',
   ];
-  
+
   return validTypes.includes(eventType) ? eventType : null;
 }
 
@@ -169,34 +148,34 @@ export function analyzeGitHubEvents(events: GitHubEvent[]): GitHubEventStats {
   const actors = new Set<string>();
   const repoCount = new Map<string, number>();
   const actorCount = new Map<string, number>();
-  
+
   let earliestTime = new Date(events[0].timestamp);
   let latestTime = new Date(events[0].timestamp);
 
   for (const event of events) {
     // Count by type
     stats.eventsByType[event.event_type] = (stats.eventsByType[event.event_type] || 0) + 1;
-    
+
     // Count by action (if present)
     if ('action' in event) {
       const action = (event as any).action;
       stats.eventsByAction[action] = (stats.eventsByAction[action] || 0) + 1;
     }
-    
+
     // Track repositories
     if ('repository' in event && event.repository) {
       const repoName = event.repository.full_name;
       repositories.add(repoName);
       repoCount.set(repoName, (repoCount.get(repoName) || 0) + 1);
     }
-    
+
     // Track actors
     if ('actor' in event && event.actor) {
       const actorLogin = event.actor.login;
       actors.add(actorLogin);
       actorCount.set(actorLogin, (actorCount.get(actorLogin) || 0) + 1);
     }
-    
+
     // Track time span
     const eventTime = new Date(event.timestamp);
     if (eventTime < earliestTime) {
@@ -213,7 +192,8 @@ export function analyzeGitHubEvents(events: GitHubEvent[]): GitHubEventStats {
   stats.uniqueRepositories = repositories.size;
   stats.uniqueActors = actors.size;
   stats.timeSpan.durationHours = (latestTime.getTime() - earliestTime.getTime()) / (1000 * 60 * 60);
-  stats.averageEventsPerHour = stats.timeSpan.durationHours > 0 ? stats.totalEvents / stats.timeSpan.durationHours : 0;
+  stats.averageEventsPerHour =
+    stats.timeSpan.durationHours > 0 ? stats.totalEvents / stats.timeSpan.durationHours : 0;
 
   // Top repositories
   stats.topRepositories = Array.from(repoCount.entries())
@@ -245,14 +225,14 @@ export interface GitHubEventFilter {
 
 export function filterGitHubEvents(
   events: GitHubEvent[],
-  filter: GitHubEventFilter
+  filter: GitHubEventFilter,
 ): GitHubEvent[] {
-  return events.filter(event => {
+  return events.filter((event) => {
     // Filter by event type
     if (filter.eventTypes && !filter.eventTypes.includes(event.event_type)) {
       return false;
     }
-    
+
     // Filter by action
     if (filter.actions && 'action' in event) {
       const action = (event as any).action;
@@ -260,32 +240,32 @@ export function filterGitHubEvents(
         return false;
       }
     }
-    
+
     // Filter by repository
     if (filter.repositoryNames && 'repository' in event && event.repository) {
       if (!filter.repositoryNames.includes(event.repository.full_name)) {
         return false;
       }
     }
-    
+
     // Filter by actor
     if (filter.actorLogins && 'actor' in event && event.actor) {
       if (!filter.actorLogins.includes(event.actor.login)) {
         return false;
       }
     }
-    
+
     // Filter by date range
     if (filter.dateRange) {
       const eventTime = new Date(event.timestamp);
       const startTime = new Date(filter.dateRange.start);
       const endTime = new Date(filter.dateRange.end);
-      
+
       if (eventTime < startTime || eventTime > endTime) {
         return false;
       }
     }
-    
+
     return true;
   });
 }
@@ -297,11 +277,11 @@ export function createGitHubEventBatch(
     batchSize?: number;
     groupBy?: 'type' | 'repository' | 'actor';
     priority?: 'low' | 'normal' | 'high' | 'critical';
-  }
+  },
 ): A2AEventEnvelope[] {
   const batchSize = options?.batchSize ?? 100;
   const batches: GitHubEvent[][] = [];
-  
+
   // Group events if requested
   if (options?.groupBy) {
     const groups = groupEvents(events, options.groupBy);
@@ -317,10 +297,10 @@ export function createGitHubEventBatch(
       batches.push(events.slice(i, i + batchSize));
     }
   }
-  
+
   // Create envelopes for each batch
   const { createA2AEventEnvelope } = require('./envelope');
-  return batches.map(batch => 
+  return batches.map((batch) =>
     createA2AEventEnvelope(batch[0] as GitHubEventData, {
       priority: options?.priority,
       metadata: {
@@ -329,41 +309,37 @@ export function createGitHubEventBatch(
           batch_type: options?.groupBy || 'sequence',
         },
       },
-    })
+    }),
   );
 }
 
 function groupEvents(
   events: GitHubEvent[],
-  groupBy: 'type' | 'repository' | 'actor'
+  groupBy: 'type' | 'repository' | 'actor',
 ): Map<string, GitHubEvent[]> {
   const groups = new Map<string, GitHubEvent[]>();
-  
+
   for (const event of events) {
     let key: string;
-    
+
     switch (groupBy) {
       case 'type':
         key = event.event_type;
         break;
       case 'repository':
-        key = 'repository' in event && event.repository 
-          ? event.repository.full_name 
-          : 'unknown';
+        key = 'repository' in event && event.repository ? event.repository.full_name : 'unknown';
         break;
       case 'actor':
-        key = 'actor' in event && event.actor 
-          ? event.actor.login 
-          : 'unknown';
+        key = 'actor' in event && event.actor ? event.actor.login : 'unknown';
         break;
     }
-    
+
     if (!groups.has(key)) {
       groups.set(key, []);
     }
     groups.get(key)!.push(event);
   }
-  
+
   return groups;
 }
 
@@ -379,11 +355,11 @@ export interface EventStreamProcessor {
 
 export async function processEventStream(
   events: unknown[],
-  processor: EventStreamProcessor
+  processor: EventStreamProcessor,
 ): Promise<{ processed: number; errors: number }> {
   let processed = 0;
   let errors = 0;
-  
+
   for (const eventData of events) {
     try {
       if (isRepositoryEvent(eventData) && processor.onRepositoryEvent) {
@@ -399,14 +375,14 @@ export async function processEventStream(
       } else if (processor.onUnknownEvent) {
         await processor.onUnknownEvent(eventData);
       }
-      
+
       processed++;
     } catch (error) {
       errors++;
       console.error('Error processing GitHub event:', error, { eventData });
     }
   }
-  
+
   return { processed, errors };
 }
 
@@ -414,15 +390,13 @@ export async function processEventStream(
 export type {
   // Core events
   RepositoryEvent,
-  PullRequestEvent, 
+  PullRequestEvent,
   IssueEvent,
   WorkflowEvent,
   ErrorEvent,
-  
   // Envelope and routing
   A2AEventEnvelope,
   GitHubEventData,
-  
   // Utilities
   GitHubEvent,
 };

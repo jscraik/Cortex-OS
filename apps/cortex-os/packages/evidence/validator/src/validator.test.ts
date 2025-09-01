@@ -6,7 +6,7 @@
 import { createHash } from 'crypto';
 import path from 'path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Finding, ValidatorConfig } from './types';
+import type { Finding, ValidatorConfig } from './types';
 import { EvidenceValidator } from './validator';
 
 describe('Evidence Validator', () => {

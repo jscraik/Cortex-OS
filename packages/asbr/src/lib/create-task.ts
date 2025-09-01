@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Task } from '../types/index.js';
+import type { Task } from '../types/index.js';
 
 /**
  * Create a new task entity

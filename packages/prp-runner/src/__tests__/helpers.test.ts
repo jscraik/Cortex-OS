@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createExecutionContext } from '../lib/create-execution-context.js';
 import { executeNeuron } from '../lib/execute-neuron.js';
-import type { Neuron, ExecutionState } from '../orchestrator.js';
+import type { ExecutionState, Neuron } from '../orchestrator.js';
 
 describe('helper functions', () => {
   it('creates an execution context', () => {

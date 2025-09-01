@@ -3,4 +3,3 @@ declare module '@cortex-os/mcp-registry/fs-store' {
   export function upsert(si: any): Promise<void>;
   export function remove(name: string): Promise<void>;
 }
-

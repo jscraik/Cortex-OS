@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../src/adapters/store.memory.js';
-import type { MemoryStore } from '../src/ports/MemoryStore.js';
 import type { Memory } from '../src/domain/types.js';
+import type { MemoryStore } from '../src/ports/MemoryStore.js';
 
 function sample(id: string, text: string, vector?: number[]): Memory {
   const now = new Date().toISOString();

@@ -7,13 +7,13 @@
  */
 
 import { z } from 'zod';
-import type { Agent, ModelProvider, EventBus, MCPClient, GenerateOptions } from '../lib/types.js';
+import type { Agent, EventBus, GenerateOptions, MCPClient, ModelProvider } from '../lib/types.js';
 import {
+  estimateTokens,
   generateAgentId,
   generateTraceId,
-  estimateTokens,
-  withTimeout,
   sanitizeText,
+  withTimeout,
 } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
@@ -334,7 +334,7 @@ const buildSystemPrompt = (
   audience: string,
   style: string,
 ): string => {
-  return `You are an expert technical writer specializing in ${documentationType} documentation. 
+  return `You are an expert technical writer specializing in ${documentationType} documentation.
 
 Your expertise includes:
 1. Clear, ${style} writing style appropriate for ${audience}

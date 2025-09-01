@@ -6,11 +6,11 @@
  * error handling, and performance monitoring.
  */
 
-import { ChildProcess, spawn } from 'child_process';
+import { type ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
+import * as fsSync from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import * as fsSync from 'fs';
 import { z } from 'zod';
 
 // ES module __dirname equivalent

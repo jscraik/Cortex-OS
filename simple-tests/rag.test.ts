@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { embedQuery } from '@cortex-os/rag/lib/embed-query';
 import { retrieveDocs } from '@cortex-os/rag/lib/retrieve-docs';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('rag helpers', () => {
   it('embedQuery delegates to embedder', async () => {

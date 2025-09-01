@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import {
-  withTraceContext,
-  getCurrentTraceContext,
-  ensureTraceContext,
-} from '../src/trace-context-manager';
 import { createTraceContext, type TraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import { describe, expect, it } from 'vitest';
+import {
+  ensureTraceContext,
+  getCurrentTraceContext,
+  withTraceContext,
+} from '../src/trace-context-manager';
 
 describe('trace-context-manager', () => {
   it('propagates context across async boundaries', async () => {

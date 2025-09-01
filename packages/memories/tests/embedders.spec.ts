@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CompositeEmbedder } from '../src/adapters/embedder.composite.js';
 import { NoopEmbedder } from '../src/adapters/embedder.noop.js';
 

@@ -8,12 +8,22 @@ async function main() {
     request: { tool: 'echo', args: { x: 1 } },
     json: true,
   };
-  const res = await fetch(target, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+  const res = await fetch(target, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
   const ok = res.ok;
   let msg = '';
-  try { const j = await res.json(); msg = j?.meta?.timestamp || ''; } catch {}
+  try {
+    const j = await res.json();
+    msg = j?.meta?.timestamp || '';
+  } catch {}
   console.log(`[canary] ${ok ? 'OK' : 'FAIL'} ${res.status} ${msg}`);
   process.exit(ok ? 0 : 1);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

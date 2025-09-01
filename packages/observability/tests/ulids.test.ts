@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateRunId, isValidULID, getULIDTimestamp, createULIDWithTime } from '../src/ulids.js';
+import { createULIDWithTime, generateRunId, getULIDTimestamp, isValidULID } from '../src/ulids.js';
 
 describe('ulids', () => {
   it('generates valid ULIDs', () => {

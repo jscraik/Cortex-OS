@@ -29,4 +29,3 @@ export interface GateResult {
   startedAt: string; // ISO-8601
   finishedAt: string; // ISO-8601
 }
-

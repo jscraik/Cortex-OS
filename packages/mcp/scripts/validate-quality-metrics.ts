@@ -5,7 +5,7 @@
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 interface QualityMetric {
   name: string;

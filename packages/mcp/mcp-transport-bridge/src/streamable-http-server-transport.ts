@@ -1,5 +1,10 @@
-import { Server as HttpServer, createServer, IncomingMessage, ServerResponse } from 'http';
 import { EventEmitter } from 'events';
+import {
+  createServer,
+  type Server as HttpServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from 'http';
 
 // This is a guessed interface based on how server transports are typically used.
 // The real interface is in the @modelcontextprotocol/sdk package.

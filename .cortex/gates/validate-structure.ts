@@ -31,8 +31,9 @@ async function main() {
     fail('AGENTS.md missing authority declaration');
   }
 
-  const files = (await fg(SCOPE, { cwd: ROOT, dot: false }))
-    .filter((f) => !f.includes('/node_modules/'));
+  const files = (await fg(SCOPE, { cwd: ROOT, dot: false })).filter(
+    (f) => !f.includes('/node_modules/')
+  );
   const violations: string[] = [];
 
   for (const f of files) {

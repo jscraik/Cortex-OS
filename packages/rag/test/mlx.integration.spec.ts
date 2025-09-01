@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateEmbedding, rerankDocuments } from '../../../src/lib/mlx/index.ts';
 
 describe('MLX end-to-end flow', () => {

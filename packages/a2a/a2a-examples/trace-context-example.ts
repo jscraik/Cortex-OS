@@ -1,10 +1,9 @@
-import { createBus } from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
-import { createTraceContext, addBaggage } from '@cortex-os/a2a-contracts/trace-context';
-import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manager';
-
+import { addBaggage, createTraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import { createBus } from '@cortex-os/a2a-core/bus';
 import { createChildMessage } from '@cortex-os/a2a-core/message-utils';
+import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manager';
+import { inproc } from '@cortex-os/a2a-transport/inproc';
 
 /**
  * Example demonstrating W3C Trace Context propagation in A2A messaging

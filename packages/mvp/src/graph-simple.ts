@@ -7,12 +7,12 @@
  */
 
 import { nanoid } from 'nanoid';
-import { PRPOrchestrator } from './mcp/adapter.js';
+import type { PRPOrchestrator } from './mcp/adapter.js';
 import { recordMetric, startSpan } from './observability/otel.js';
 import {
   createInitialPRPState,
   generateDeterministicHash,
-  PRPState,
+  type PRPState,
   validateStateTransition,
 } from './state.js';
 
@@ -303,4 +303,3 @@ export class SimplePRPGraph {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
-

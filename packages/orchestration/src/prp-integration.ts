@@ -1,10 +1,11 @@
 /**
  * PRP orchestration engine using functional API
  */
+
+import { PRPOrchestrator } from '@cortex-os/prp-runner';
 import { EventEmitter } from 'events';
 import { v4 as uuid } from 'uuid';
 import winston from 'winston';
-import { PRPOrchestrator } from '@cortex-os/prp-runner';
 
 import type {
   Agent,
@@ -22,9 +23,7 @@ export interface PRPEngine {
   emitter: EventEmitter;
 }
 
-export function createEngine(
-  config: Partial<OrchestrationConfig> = {},
-): PRPEngine {
+export function createEngine(config: Partial<OrchestrationConfig> = {}): PRPEngine {
   const defaults: OrchestrationConfig = {
     maxConcurrentOrchestrations: 10,
     defaultStrategy: 'neural_prp',
@@ -38,10 +37,7 @@ export function createEngine(
 
   const logger = winston.createLogger({
     level: 'info',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json(),
-    ),
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
     transports: [new winston.transports.Console()],
   });
 
@@ -100,12 +96,7 @@ export async function orchestrateTask(
   return run;
 }
 
-function toResult(
-  id: string,
-  taskId: string,
-  prp: any,
-  start: number,
-): OrchestrationResult {
+function toResult(id: string, taskId: string, prp: any, start: number): OrchestrationResult {
   return {
     orchestrationId: id,
     taskId,
@@ -134,4 +125,3 @@ function toResult(
 export async function cleanup(engine: PRPEngine): Promise<void> {
   engine.active.clear();
 }
-

@@ -1,12 +1,11 @@
-import fs from 'fs';
-import readline from 'node:readline';
 import { randomUUID } from 'node:crypto';
+import readline from 'node:readline';
+import fs from 'fs';
 import { z } from 'zod';
-
-import { createMemoryService } from '../service/memory-service.js';
-import { InMemoryStore } from '../adapters/store.memory.js';
 import { NoopEmbedder } from '../adapters/embedder.noop.js';
+import { InMemoryStore } from '../adapters/store.memory.js';
 import type { Memory } from '../domain/types.js';
+import { createMemoryService } from '../service/memory-service.js';
 
 const cliSchema = z.object({
   input: z.string(),

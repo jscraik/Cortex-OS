@@ -8,157 +8,147 @@
  * - Type-safe contracts and validation
  */
 
+export type {
+  CodeAnalysisAgentConfig,
+  CodeAnalysisInput,
+  CodeAnalysisOutput,
+} from './agents/code-analysis-agent.js';
+// Agents - Single-focused implementations
+export { createCodeAnalysisAgent } from './agents/code-analysis-agent.js';
+export type {
+  DocumentationAgentConfig,
+  DocumentationInput,
+  DocumentationOutput,
+} from './agents/documentation-agent.js';
+export { createDocumentationAgent } from './agents/documentation-agent.js';
+export type {
+  SecurityAgentConfig,
+  SecurityInput,
+  SecurityOutput,
+} from './agents/security-agent.js';
+// Security Agent (LlamaGuard-backed via MLX or provider chain)
+export { createSecurityAgent } from './agents/security-agent.js';
+export type {
+  TestGenerationAgentConfig,
+  TestGenerationInput,
+  TestGenerationOutput,
+} from './agents/test-generation-agent.js';
+export { createTestGenerationAgent } from './agents/test-generation-agent.js';
+export type {
+  AgentCompletedEvent,
+  AgentFailedEvent,
+  AgentStartedEvent,
+  EventType,
+  MCPServerConnectedEvent,
+  MCPServerDisconnectedEvent,
+  MemoryPressureEvent,
+  ProviderFallbackEvent,
+  ProviderSuccessEvent,
+  ThermalThrottleEvent,
+} from './events/agent-events.js';
+// Event schemas and types
+export {
+  agentCompletedEventSchema,
+  agentEventCatalog,
+  agentFailedEventSchema,
+  agentStartedEventSchema,
+  mcpServerConnectedEventSchema,
+  mcpServerDisconnectedEventSchema,
+  memoryPressureEventSchema,
+  providerFallbackEventSchema,
+  providerSuccessEventSchema,
+  thermalThrottleEventSchema,
+  // workflow event schemas
+  // (available via agentEventCatalog indexing)
+} from './events/agent-events.js';
+export type { CloudEvent, EventBusConfig, EventSubscriber } from './lib/event-bus.js';
+// Event Bus Integration
+export {
+  createAgentEventBus,
+  createEventBus,
+  createEventBusForEnvironment,
+  createEventPublisher,
+  createEventSubscriber,
+  validateAgentEvent,
+} from './lib/event-bus.js';
+export { getSecret, redactSecrets } from './lib/secret-store.js';
 // Core types and interfaces
 export type {
   Agent,
   AgentCapability,
-  ModelProvider,
-  GenerateOptions,
-  GenerateResult,
-  ExecutionContext,
   AgentDependencies,
   EventBus,
+  EventSubscription,
+  ExecutionContext,
+  GenerateOptions,
+  GenerateResult,
   MCPClient,
   MCPServerInfo,
+  ModelProvider,
   ProviderChainConfig,
 } from './lib/types.js';
-
 // Error types
 export { AgentError, ProviderError, ValidationError } from './lib/types.js';
-
-// Validation utilities
-export {
-  validateSchema,
-  validateInput,
-  validateOutput,
-  parseAndValidateJSON,
-  createValidator,
-  validateExecutionContext,
-  executionContextSchema,
-} from './lib/validate.js';
-
 // Utility functions
 export {
+  debounce,
+  deepClone,
+  estimateTokens,
+  filterDefined,
   generateAgentId,
   generateTraceId,
-  sleep,
-  timeout,
-  withTimeout,
-  retry,
-  debounce,
-  throttle,
-  deepClone,
   isDefined,
-  filterDefined,
+  retry,
   safeGet,
-  estimateTokens,
+  sleep,
+  throttle,
+  timeout,
   truncateToTokens,
+  withTimeout,
 } from './lib/utils.js';
-export { getSecret, redactSecrets } from './lib/secret-store.js';
-
-// Event schemas and types
+// Validation utilities
 export {
-  agentEventCatalog,
-  agentStartedEventSchema,
-  agentCompletedEventSchema,
-  agentFailedEventSchema,
-  providerSuccessEventSchema,
-  providerFallbackEventSchema,
-  thermalThrottleEventSchema,
-  memoryPressureEventSchema,
-  mcpServerConnectedEventSchema,
-  mcpServerDisconnectedEventSchema,
-  // workflow event schemas
-  // (available via agentEventCatalog indexing)
-} from './events/agent-events.js';
-
+  createValidator,
+  executionContextSchema,
+  parseAndValidateJSON,
+  validateExecutionContext,
+  validateInput,
+  validateOutput,
+  validateSchema,
+} from './lib/validate.js';
 export type {
-  AgentStartedEvent,
-  AgentCompletedEvent,
-  AgentFailedEvent,
-  ProviderSuccessEvent,
-  ProviderFallbackEvent,
-  ThermalThrottleEvent,
-  MemoryPressureEvent,
-  MCPServerConnectedEvent,
-  MCPServerDisconnectedEvent,
-  EventType,
-} from './events/agent-events.js';
-
+  AgentOrchestrator,
+  OrchestrationResult,
+  OrchestratorConfig,
+  Workflow,
+  WorkflowTask,
+} from './orchestration/agent-orchestrator.js';
+// Orchestration Layer
+export { createOrchestrator, WorkflowBuilder } from './orchestration/agent-orchestrator.js';
+export type { FallbackChainConfig } from './providers/fallback-chain.js';
+export {
+  createFallbackChain,
+  createLocalFallbackChain,
+  createStandardFallbackChain,
+} from './providers/fallback-chain.js';
+export type { MCPProviderConfig } from './providers/mcp-provider.js';
 // Providers - Full implementation with MLX integration
 export {
   createMCPProvider,
   createMCPProviders,
   discoverMCPProviders,
 } from './providers/mcp-provider.js';
-export type { MCPProviderConfig } from './providers/mcp-provider.js';
-
-export {
-  createMLXProvider,
-  createAutoMLXProvider,
-  getMLXThermalStatus,
-  getMLXMemoryStatus,
+export type {
+  MemoryStatus,
+  MLXProviderConfig,
+  ThermalStatus,
 } from './providers/mlx-provider/index.js';
-export type { MLXProviderConfig, ThermalStatus, MemoryStatus } from './providers/mlx-provider/index.js';
-
 export {
-  createFallbackChain,
-  createStandardFallbackChain,
-  createLocalFallbackChain,
-} from './providers/fallback-chain.js';
-export type { FallbackChainConfig } from './providers/fallback-chain.js';
-
-// Event Bus Integration
-export {
-  createEventBus,
-  createAgentEventBus,
-  createEventBusForEnvironment,
-  validateAgentEvent,
-  createEventPublisher,
-  createEventSubscriber,
-} from './lib/event-bus.js';
-export type { CloudEvent, EventBusConfig, EventSubscriber } from './lib/event-bus.js';
-export type { EventSubscription } from './lib/types.js';
-
-// Agents - Single-focused implementations
-export { createCodeAnalysisAgent } from './agents/code-analysis-agent.js';
-export type {
-  CodeAnalysisInput,
-  CodeAnalysisOutput,
-  CodeAnalysisAgentConfig,
-} from './agents/code-analysis-agent.js';
-
-export { createTestGenerationAgent } from './agents/test-generation-agent.js';
-export type {
-  TestGenerationInput,
-  TestGenerationOutput,
-  TestGenerationAgentConfig,
-} from './agents/test-generation-agent.js';
-
-export { createDocumentationAgent } from './agents/documentation-agent.js';
-export type {
-  DocumentationInput,
-  DocumentationOutput,
-  DocumentationAgentConfig,
-} from './agents/documentation-agent.js';
-
-// Security Agent (LlamaGuard-backed via MLX or provider chain)
-export { createSecurityAgent } from './agents/security-agent.js';
-export type {
-  SecurityInput,
-  SecurityOutput,
-  SecurityAgentConfig,
-} from './agents/security-agent.js';
-
-// Orchestration Layer
-export { createOrchestrator, WorkflowBuilder } from './orchestration/agent-orchestrator.js';
-export type {
-  AgentOrchestrator,
-  WorkflowTask,
-  Workflow,
-  OrchestrationResult,
-  OrchestratorConfig,
-} from './orchestration/agent-orchestrator.js';
+  createAutoMLXProvider,
+  createMLXProvider,
+  getMLXMemoryStatus,
+  getMLXThermalStatus,
+} from './providers/mlx-provider/index.js';
 
 // Package information
 export const AGENTS_PACKAGE_VERSION = '0.1.0';

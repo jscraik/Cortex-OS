@@ -1,4 +1,4 @@
-import pino, { Logger as Pino } from 'pino';
+import pino, { type Logger as Pino } from 'pino';
 
 export type Logger = Pino;
 

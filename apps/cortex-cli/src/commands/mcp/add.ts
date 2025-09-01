@@ -1,8 +1,8 @@
-import { Command } from 'commander';
-import { upsert } from '@cortex-os/mcp-registry/fs-store';
 import { ServerInfoSchema } from '@cortex-os/mcp-core/contracts';
+import { upsert } from '@cortex-os/mcp-registry/fs-store';
+import type { SupportedClient } from '@cortex-os/mcp-registry/types';
+import { Command } from 'commander';
 import { createMarketplaceClient } from './marketplace-client.js';
-import { SupportedClient } from '@cortex-os/mcp-registry/types';
 
 export const mcpAdd = new Command('add')
   .description('Add an MCP server (from marketplace or manual configuration)')

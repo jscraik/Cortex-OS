@@ -14,12 +14,12 @@ import { homedir } from 'os';
 import { dirname, join } from 'path';
 import { getMockMarketplaceIndex } from './mocks/marketplace.js';
 import {
-  MarketplaceIndex,
+  type MarketplaceIndex,
   MarketplaceIndexSchema,
-  PluginInstallOptions,
-  PluginMetadata,
-  PluginSearchOptions,
-  PluginStatus,
+  type PluginInstallOptions,
+  type PluginMetadata,
+  type PluginSearchOptions,
+  type PluginStatus,
   PluginStatusSchema,
 } from './types.js';
 
@@ -39,7 +39,6 @@ export class PluginRegistry {
   constructor() {
     this.installDelayMs = process.env.NODE_ENV === 'test' ? 10 : 1000;
     this.loadInstalledPlugins().catch((error) => {
-       
       console.warn('Failed to load installed plugins:', error);
     });
   }
@@ -69,7 +68,7 @@ export class PluginRegistry {
         const isDev = env === 'development' || env === 'test';
         if (isDev) {
           this.marketplaceIndex = getMockMarketplaceIndex();
-           
+
           console.warn(
             'Using mock marketplace data:',
             error instanceof Error ? error.message : String(error),
@@ -323,7 +322,6 @@ export class PluginRegistry {
       this.installedPlugins = new Map();
       const code = (error as NodeJS.ErrnoException).code;
       if (code !== 'ENOENT') {
-         
         console.warn('Failed to load installed plugins:', error);
       }
     }
@@ -338,7 +336,6 @@ export class PluginRegistry {
       const data = JSON.stringify(Array.from(this.installedPlugins.values()), null, 2);
       await fs.writeFile(this.INSTALLED_PLUGINS_PATH, data, 'utf-8');
     } catch (error) {
-       
       console.error('Failed to save installed plugins:', error);
     }
   }

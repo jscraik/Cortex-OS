@@ -99,6 +99,23 @@ export interface RegistryInfo {
 }
 
 /**
+ * Server configuration type for type safety
+ */
+interface ServerConfigType {
+  command?: string;
+  metadata?: {
+    installedAt?: string;
+  };
+}
+
+/**
+ * MCP configuration file structure
+ */
+interface McpConfigType {
+  mcpServers?: Record<string, unknown>;
+}
+
+/**
  * MCP Marketplace Client
  */
 export class MarketplaceClient {
@@ -130,7 +147,7 @@ export class MarketplaceClient {
         } catch (error) {
           console.warn(
             `Failed to update registry ${name}:`,
-            error instanceof Error ? error.message : error,
+            error instanceof Error ? error.message : error
           );
         }
       }
@@ -142,7 +159,7 @@ export class MarketplaceClient {
    */
   async search(
     request: SearchRequest,
-    registryUrl?: string,
+    registryUrl?: string
   ): Promise<ApiResponse<ServerManifest[]>> {
     try {
       // Validate request
@@ -160,7 +177,7 @@ export class MarketplaceClient {
         };
       }
 
-      let allServers: ServerManifest[] = [];
+      const allServers: ServerManifest[] = [];
 
       // Collect servers from all registries
       for (const url of registriesToSearch) {
@@ -188,28 +205,29 @@ export class MarketplaceClient {
             server.name.toLowerCase().includes(query) ||
             server.description?.toLowerCase().includes(query) ||
             server.tags?.some((tag) => tag.toLowerCase().includes(query)) ||
-            server.publisher.name.toLowerCase().includes(query),
+            server.publisher.name.toLowerCase().includes(query)
         );
       }
 
       // Category filter
       if (validatedRequest.category) {
         filteredServers = filteredServers.filter(
-          (server) => server.category === validatedRequest.category,
+          (server) => server.category === validatedRequest.category
         );
       }
 
       // Capabilities filter
       if (validatedRequest.capabilities && validatedRequest.capabilities.length > 0) {
-        filteredServers = filteredServers.filter((server) =>
-          validatedRequest.capabilities!.every((cap) => server.capabilities[cap]),
+        filteredServers = filteredServers.filter(
+          (server) =>
+            validatedRequest.capabilities?.every((cap) => server.capabilities[cap]) ?? false
         );
       }
 
       // Verified publisher filter
       if (validatedRequest.verified !== undefined) {
         filteredServers = filteredServers.filter(
-          (server) => server.publisher.verified === validatedRequest.verified,
+          (server) => server.publisher.verified === validatedRequest.verified
         );
       }
 
@@ -234,7 +252,7 @@ export class MarketplaceClient {
       const total = filteredServers.length;
       const paginatedServers = filteredServers.slice(
         validatedRequest.offset,
-        validatedRequest.offset + validatedRequest.limit,
+        validatedRequest.offset + validatedRequest.limit
       );
 
       return {
@@ -282,7 +300,7 @@ export class MarketplaceClient {
     serverId: string,
     options: {
       transport?: 'stdio' | 'streamableHttp';
-    } = {},
+    } = {}
   ): Promise<ApiResponse<{ installed: boolean; serverId: string }>> {
     try {
       // Find server in registry
@@ -338,12 +356,12 @@ export class MarketplaceClient {
 
       // Load existing configuration
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
-      let config: any = { mcpServers: {} };
+      let config: McpConfigType = { mcpServers: {} };
 
       try {
         const configData = await readFile(configPath, 'utf-8');
-        config = JSON.parse(configData);
-      } catch (error) {
+        config = JSON.parse(configData) as McpConfigType;
+      } catch {
         // File doesn't exist, will create new one
         config = { mcpServers: {} };
       }
@@ -387,11 +405,11 @@ export class MarketplaceClient {
     try {
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
 
-      let config: any;
+      let config: McpConfigType;
       try {
         const configData = await readFile(configPath, 'utf-8');
-        config = JSON.parse(configData);
-      } catch (error) {
+        config = JSON.parse(configData) as McpConfigType;
+      } catch {
         return {
           success: false,
           error: { code: 'NOT_FOUND', message: `Server not installed: ${serverId}` },
@@ -427,17 +445,62 @@ export class MarketplaceClient {
   }
 
   /**
+   * Determine server status based on configuration
+   */
+  private determineServerStatus(serverConfig: unknown): 'active' | 'inactive' | 'error' {
+    try {
+      const typedConfig = serverConfig as ServerConfigType;
+
+      // Basic configuration check
+      if (typedConfig?.command) {
+        return 'active'; // Assume active if properly configured
+      }
+      return 'inactive';
+    } catch {
+      return 'error';
+    }
+  }
+
+  /**
+   * Get installation time from server configuration
+   */
+  private getInstallationTime(serverConfig: unknown): string {
+    const typedConfig = serverConfig as ServerConfigType;
+    return typedConfig?.metadata?.installedAt || new Date().toISOString();
+  }
+
+  /**
+   * Create installed server object from configuration
+   */
+  private async createInstalledServer(id: string, serverConfig: unknown): Promise<InstalledServer> {
+    const manifest = await this.getServer(id);
+    const status = this.determineServerStatus(serverConfig);
+    const installedAt = this.getInstallationTime(serverConfig);
+    const typedConfig = serverConfig as ServerConfigType;
+
+    return {
+      id,
+      name: manifest?.name || id,
+      status,
+      transport: typedConfig?.command ? 'stdio' : 'streamableHttp',
+      source: manifest ? 'marketplace' : 'manual',
+      installedAt,
+    };
+  }
+
+  /**
    * List installed servers
    */
   async listServers(): Promise<ApiResponse<InstalledServer[]>> {
     try {
       const configPath = path.join(this.config.cacheDir, '..', 'servers.json');
 
-      let config: any;
+      let config: McpConfigType;
       try {
         const configData = await readFile(configPath, 'utf-8');
-        config = JSON.parse(configData);
-      } catch (error) {
+        config = JSON.parse(configData) as McpConfigType;
+      } catch {
+        // File doesn't exist or is invalid, return empty list
         return {
           success: true,
           data: [],
@@ -448,16 +511,8 @@ export class MarketplaceClient {
 
       if (config.mcpServers) {
         for (const [id, serverConfig] of Object.entries(config.mcpServers)) {
-          const manifest = await this.getServer(id);
-
-          servers.push({
-            id,
-            name: manifest?.name || id,
-            status: 'active', // TODO: Implement actual status checking
-            transport: (serverConfig as any).command ? 'stdio' : 'streamableHttp',
-            source: manifest ? 'marketplace' : 'manual',
-            installedAt: new Date().toISOString(), // TODO: Track actual install time
-          });
+          const server = await this.createInstalledServer(id, serverConfig);
+          servers.push(server);
         }
       }
 
@@ -481,7 +536,7 @@ export class MarketplaceClient {
    */
   async addRegistry(
     url: string,
-    options: { name?: string } = {},
+    options: { name?: string } = {}
   ): Promise<ApiResponse<{ added: boolean; registryUrl: string }>> {
     try {
       // Validate URL
@@ -538,7 +593,7 @@ export class MarketplaceClient {
    */
   async removeRegistry(nameOrUrl: string): Promise<ApiResponse<{ removed: boolean }>> {
     const registryToRemove = Object.entries(this.config.registries).find(
-      ([name, url]) => name === nameOrUrl || url === nameOrUrl,
+      ([name, url]) => name === nameOrUrl || url === nameOrUrl
     );
 
     if (!registryToRemove) {
@@ -565,15 +620,24 @@ export class MarketplaceClient {
   async listRegistries(): Promise<ApiResponse<RegistryInfo[]>> {
     const registries: RegistryInfo[] = [];
 
+    // Define trusted registry criteria
+    const trustedRegistries = new Set(['default', 'official', 'cortex-os']);
+
     for (const [name, url] of Object.entries(this.config.registries)) {
+      // Determine trust based on registry name and URL patterns
+      const isTrusted =
+        trustedRegistries.has(name) ||
+        url.includes('cortex-os.org') ||
+        url.includes('github.com/cortex-os');
+
+      const lastCheckedTime = this.cacheTimes.get(url);
+
       registries.push({
         name,
         url,
-        trusted: name === 'default', // TODO: Implement proper trust system
+        trusted: isTrusted,
         healthy: this.registryCache.has(url),
-        lastChecked: this.cacheTimes.has(url)
-          ? new Date(this.cacheTimes.get(url)!).toISOString()
-          : undefined,
+        lastChecked: lastCheckedTime ? new Date(lastCheckedTime).toISOString() : undefined,
       });
     }
 
@@ -653,7 +717,10 @@ export class MarketplaceClient {
           const cacheEntry = CacheEntrySchema.parse(JSON.parse(cacheData));
 
           this.registryCache.set(url, cacheEntry.data);
-          this.cacheTimes.set(url, cacheEntry.cachedAt);
+          // Ensure cachedAt is a number (timestamp)
+          const cachedAtTime =
+            typeof cacheEntry.cachedAt === 'number' ? cacheEntry.cachedAt : Date.now();
+          this.cacheTimes.set(url, cachedAtTime);
         }
       } catch (error) {
         // Ignore cache errors, will fetch fresh data

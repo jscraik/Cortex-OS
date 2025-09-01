@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GitHubUserSchema, GitHubRepositorySchema } from './repository';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Error Severity Levels
 export const ErrorSeveritySchema = z.enum(['low', 'medium', 'high', 'critical']);
@@ -8,7 +8,7 @@ export type ErrorSeverity = z.infer<typeof ErrorSeveritySchema>;
 // Error Categories
 export const ErrorCategorySchema = z.enum([
   'authentication',
-  'authorization', 
+  'authorization',
   'rate_limit',
   'network',
   'api',
@@ -46,7 +46,7 @@ export const GitHubErrorSchema = z.object({
   timestamp: z.string().datetime(),
   stack_trace: z.string().optional(),
   correlation_id: z.string().optional(),
-  
+
   // GitHub-specific error details
   documentation_url: z.string().url().optional(),
   github_error_code: z.string().optional(),
@@ -61,17 +61,17 @@ export const ErrorEventSchema = z.object({
   event_type: z.literal('github.error'),
   source: z.literal('github-client'),
   timestamp: z.string().datetime(),
-  
+
   // Event-specific data
   error: GitHubErrorSchema,
   repository: GitHubRepositorySchema.optional(),
   actor: GitHubUserSchema.optional(),
-  
+
   // Recovery information
   recovery_suggestion: z.string().optional(),
   auto_retry_scheduled: z.boolean().default(false),
   next_retry_at: z.string().datetime().optional(),
-  
+
   // Metadata
   metadata: z.record(z.string()).optional(),
 });
@@ -99,7 +99,7 @@ export function createErrorEvent(
     recoverySuggestion?: string;
     autoRetryScheduled?: boolean;
     nextRetryAt?: string;
-  }
+  },
 ): Omit<ErrorEvent, 'event_id' | 'timestamp'> {
   return {
     event_type: 'github.error',
@@ -157,7 +157,7 @@ export function createAuthenticationError(
   additionalData?: {
     documentationUrl?: string;
     githubErrorCode?: string;
-  }
+  },
 ): GitHubError {
   return {
     id: crypto.randomUUID(),
@@ -178,7 +178,7 @@ export function createAuthenticationError(
 export function createRateLimitError(
   message: string,
   context: Partial<ErrorContext>,
-  rateLimitReset?: string
+  rateLimitReset?: string,
 ): GitHubError {
   return {
     id: crypto.randomUUID(),
@@ -195,10 +195,7 @@ export function createRateLimitError(
   };
 }
 
-export function createNetworkError(
-  message: string,
-  context: Partial<ErrorContext>
-): GitHubError {
+export function createNetworkError(message: string, context: Partial<ErrorContext>): GitHubError {
   return {
     id: crypto.randomUUID(),
     message,
@@ -215,7 +212,7 @@ export function createNetworkError(
 
 export function createValidationError(
   message: string,
-  context: Partial<ErrorContext>
+  context: Partial<ErrorContext>,
 ): GitHubError {
   return {
     id: crypto.randomUUID(),
@@ -285,27 +282,38 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
   let latestTime = new Date(errors[0].timestamp);
 
   // Initialize counters
-  const categories: ErrorCategory[] = ['authentication', 'authorization', 'rate_limit', 'network', 'api', 'validation', 'timeout', 'internal', 'configuration', 'webhook'];
+  const categories: ErrorCategory[] = [
+    'authentication',
+    'authorization',
+    'rate_limit',
+    'network',
+    'api',
+    'validation',
+    'timeout',
+    'internal',
+    'configuration',
+    'webhook',
+  ];
   const severities: ErrorSeverity[] = ['low', 'medium', 'high', 'critical'];
-  
-  categories.forEach(cat => analysis.errorsByCategory[cat] = 0);
-  severities.forEach(sev => analysis.errorsBySeverity[sev] = 0);
+
+  categories.forEach((cat) => (analysis.errorsByCategory[cat] = 0));
+  severities.forEach((sev) => (analysis.errorsBySeverity[sev] = 0));
 
   // Analyze each error
   for (const error of errors) {
     analysis.errorsByCategory[error.category]++;
     analysis.errorsBySeverity[error.severity]++;
-    
+
     if (error.is_retryable) {
       analysis.retryableErrors++;
     }
-    
+
     if (error.severity === 'critical') {
       analysis.criticalErrors++;
     }
-    
+
     totalRetryCount += error.context.retry_count;
-    
+
     const errorTime = new Date(error.timestamp);
     if (errorTime < earliestTime) {
       earliestTime = errorTime;
@@ -319,8 +327,10 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
 
   // Calculate derived metrics
   analysis.averageRetryCount = totalRetryCount / errors.length;
-  analysis.timespan.durationMinutes = Math.floor((latestTime.getTime() - earliestTime.getTime()) / (1000 * 60));
-  
+  analysis.timespan.durationMinutes = Math.floor(
+    (latestTime.getTime() - earliestTime.getTime()) / (1000 * 60),
+  );
+
   // Find most common category
   let maxCount = 0;
   for (const [category, count] of Object.entries(analysis.errorsByCategory)) {
@@ -346,7 +356,7 @@ export function calculateRetryDelay(error: GitHubError, baseDelayMs: number = 10
   }
 
   // Exponential backoff with jitter
-  const exponentialDelay = baseDelayMs * Math.pow(2, error.context.retry_count);
+  const exponentialDelay = baseDelayMs * 2 ** error.context.retry_count;
   const jitter = Math.random() * 0.1 * exponentialDelay;
   return exponentialDelay + jitter;
 }

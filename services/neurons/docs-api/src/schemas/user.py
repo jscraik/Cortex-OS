@@ -190,9 +190,7 @@ class PersonalizedContentItem(BaseModel):
     description: str | None = Field(None, description="Document description")
     category: str | None = Field(None, description="Document category")
     quality_score: float | None = Field(None, description="Quality score")
-    reading_time_minutes: int | None = Field(
-        None, description="Estimated reading time"
-    )
+    reading_time_minutes: int | None = Field(None, description="Estimated reading time")
     recommendation_score: float | None = Field(
         None, description="Recommendation relevance score"
     )
@@ -255,9 +253,7 @@ class UserDashboardResponse(BaseModel):
 class UserSessionCreate(BaseModel):
     """User session creation schema."""
 
-    user_id: str | None = Field(
-        None, description="User ID for authenticated sessions"
-    )
+    user_id: str | None = Field(None, description="User ID for authenticated sessions")
     session_data: dict[str, Any] = Field(..., description="Session data")
     ttl: int | None = Field(None, description="Session TTL in seconds")
 

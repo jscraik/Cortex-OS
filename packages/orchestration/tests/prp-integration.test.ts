@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEngine, orchestrateTask } from '../src/prp-integration.js';
-import { TaskStatus } from '../src/types.js';
 import type { Task } from '../src/types.js';
+import { TaskStatus } from '../src/types.js';
 
 const executePRPCycle = vi.fn();
 const registerNeuron = vi.fn();

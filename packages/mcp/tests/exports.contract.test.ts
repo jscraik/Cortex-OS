@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('@cortex-os/mcp contract exports', () => {
   it('exposes handleMCP from index', async () => {
@@ -26,4 +26,3 @@ describe('@cortex-os/mcp contract exports', () => {
     expect(registry).toBeTruthy();
   });
 });
-

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { PRPState } from '../../state.js';
+import type { PRPState } from '../../state.js';
 
 export async function validateBackend(state: PRPState): Promise<{ passed: boolean; details: any }> {
   const hasBackendReq = state.blueprint.requirements?.some(

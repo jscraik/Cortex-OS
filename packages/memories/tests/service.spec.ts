@@ -1,9 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { InMemoryStore } from '../src/adapters/store.memory.js';
-import { LocalEmbedder } from './util/local-embedder.js';
-import { createMemoryService } from '../src/service/memory-service.js';
+import { describe, expect, it, vi } from 'vitest';
 import { CompositeEmbedder } from '../src/adapters/embedder.composite.js';
-import { vi } from 'vitest';
+import { InMemoryStore } from '../src/adapters/store.memory.js';
+import { createMemoryService } from '../src/service/memory-service.js';
+import { LocalEmbedder } from './util/local-embedder.js';
 
 describe('MemoryService', () => {
   it('throws when embedder is missing', () => {

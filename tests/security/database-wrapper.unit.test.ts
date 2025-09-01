@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SecureDatabaseWrapper } from '../../packages/mvp-core/src/secure-db';
 
 // Mock database and statement for testing

@@ -2,18 +2,35 @@
   "security.workspace.trust.enabled": false,
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.formatOnSave": true,
-  "files.eol": "\n",
-  "sonarlint.connectedMode.project": {
-    "connectionId": "jamiescottcraik",
-    "projectKey": "jamiescottcraik_cortex-os"
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
   },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "files.eol": "\n",
   "nxConsole.generateAiAgentRules": true,
-
   // Dependi Configuration - Add your API key here
   "dependi.apiKey": "bf6e1e6b-564b-4f6a-af14-bd2f9195c5b9",
   "dependi.vulnerability.enabled": true,
   "dependi.vulnerability.ghsa.enabled": true,
-
   // Language-specific Dependi settings
   "dependi.rust.enabled": true,
   "dependi.rust.lockFileEnabled": true,
@@ -25,5 +42,9 @@
   "dependi.php.enabled": true,
   "dependi.php.lockFileEnabled": true,
   "dependi.dart.enabled": true,
-  "dependi.dart.lockFileEnabled": true
+  "dependi.dart.lockFileEnabled": true,
+  "python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.11.13/bin/python",
+  "debug.javascript.defaultRuntimeExecutable": {
+    "pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
+  }
 }

@@ -3,11 +3,11 @@
  * @description Tests for BuildNode with real implementation validations
  */
 
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
-import { BuildNode } from '../../src/nodes/build';
-import { PRPState } from '../../src/state';
-import fs from 'fs';
 import { exec } from 'child_process';
+import fs from 'fs';
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { BuildNode } from '../../src/nodes/build';
+import type { PRPState } from '../../src/state';
 
 // Mock fs and child_process
 vi.mock('fs');

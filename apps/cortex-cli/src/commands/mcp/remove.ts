@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import { remove } from '@cortex-os/mcp-registry/fs-store';
+import { Command } from 'commander';
 
 export const mcpRemove = new Command('remove')
   .description('Remove an MCP server by name')

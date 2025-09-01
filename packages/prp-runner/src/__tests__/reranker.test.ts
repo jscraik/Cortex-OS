@@ -3,9 +3,9 @@
  * @description Unit tests for reranker utilities
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { createRerankerState, rerank } from '../lib/reranker/index.js';
 import { pipeline } from '@xenova/transformers';
+import { describe, expect, it, vi } from 'vitest';
+import { createRerankerState, rerank } from '../lib/reranker/index.js';
 
 vi.mock('@xenova/transformers', () => ({
   pipeline: vi.fn(),

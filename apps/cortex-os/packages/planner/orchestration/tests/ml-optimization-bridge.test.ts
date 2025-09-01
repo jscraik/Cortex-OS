@@ -5,14 +5,14 @@
  * security validation, performance monitoring, and error handling.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { type ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
-import { spawn, ChildProcess } from 'child_process';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   MLOptimizationBridge,
-  TaskType,
-  SecurityLevel,
   ModelBackend,
+  SecurityLevel,
+  TaskType,
 } from '../src/bridges/ml-optimization-bridge.js';
 
 // Mock child_process

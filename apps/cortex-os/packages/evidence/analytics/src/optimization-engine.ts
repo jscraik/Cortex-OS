@@ -12,7 +12,7 @@
 import { EventEmitter } from 'events';
 import { Matrix } from 'ml-matrix';
 import pino from 'pino';
-import {
+import type {
   AgentMetrics,
   AnalyticsConfig,
   InteractionPattern,
@@ -1157,8 +1157,7 @@ export class OptimizationEngine extends EventEmitter {
 
     const loads = metrics.map((m) => (m.resourceUsage.cpu + m.resourceUsage.memory) / 2);
     const avgLoad = loads.reduce((sum, load) => sum + load, 0) / loads.length;
-    const loadVariance =
-      loads.reduce((sum, load) => sum + Math.pow(load - avgLoad, 2), 0) / loads.length;
+    const loadVariance = loads.reduce((sum, load) => sum + (load - avgLoad) ** 2, 0) / loads.length;
 
     // High variance indicates poor load distribution
     const severity = Math.min(1, loadVariance / (avgLoad * avgLoad));

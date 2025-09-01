@@ -1,4 +1,4 @@
-import { vi, afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 // Disable any accidental network egress during tests
 process.env.MCP_NETWORK_EGRESS = process.env.MCP_NETWORK_EGRESS || 'disabled';

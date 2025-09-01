@@ -1,9 +1,9 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
-  validateWorkflow,
   clearValidationCache,
   MAX_WORKFLOW_DEPTH,
-  WorkflowStep,
+  validateWorkflow,
+  type WorkflowStep,
 } from '../src/lib/workflow-validation';
 
 const baseWorkflow = {
@@ -83,4 +83,3 @@ describe('workflow validation', () => {
     expect(() => validateWorkflow(wf)).toThrow(/branch to non-existent step/);
   });
 });
-

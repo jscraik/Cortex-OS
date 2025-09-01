@@ -1,6 +1,6 @@
+import type { Embeddings } from '@cortex-os/rag-embed/provider';
 import { ingestText } from '@cortex-os/rag-pipeline/ingest';
 import { query } from '@cortex-os/rag-pipeline/query';
-import { type Embeddings } from '@cortex-os/rag-embed/provider';
 import { memoryStore } from '@cortex-os/rag-store/memory';
 import { expect, it } from 'vitest';
 

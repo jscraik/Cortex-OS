@@ -38,4 +38,3 @@ No code was deleted in this pass. Instead, `@cortex-os/mcp` now centralizes expo
 - Mark legacy direct imports as deprecated in docs and IDE hints, encouraging `@cortex-os/mcp` imports
 - If desired, enforce via lint rule: disallow cross-package MCP imports outside `@cortex-os/mcp`
 - Consider renaming `@cortex-os/mcp-bridge` → `@cortex-os/mcp-marketplace` in a future major to further clarify roles
-

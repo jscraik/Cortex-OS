@@ -15,7 +15,7 @@
 - **App Integration**: Updated `CortexApp` to use new `McpService`
 - **TDD Testing**: Comprehensive test suite for MCP functionality
 
-### 3. MLX Provider Security Hardening - COMPLETED  
+### 3. MLX Provider Security Hardening - COMPLETED
 
 - **Secure Process Spawning**: No more command injection vulnerabilities
 - **Timeout Handling**: 30-second timeout for all operations
@@ -26,7 +26,7 @@
 
 - **Security Test Suite**: Created `tests/security/security_tests.rs` with OWASP compliance tests
 - **Command Injection Tests**: Validates that malicious prompts don't execute system commands
-- **Path Traversal Tests**: Ensures memory storage doesn't access unauthorized files  
+- **Path Traversal Tests**: Ensures memory storage doesn't access unauthorized files
 - **Input Sanitization Tests**: Comprehensive validation of user input handling
 
 ### 5. Production Monitoring & Metrics - COMPLETED
@@ -68,7 +68,7 @@ The system is now ready for production deployment with:
 The new metrics system tracks:
 
 - Request/response performance (P50, P95, P99 latencies)
-- Provider usage and error rates  
+- Provider usage and error rates
 - Active sessions and resource utilization
 - Component health status
 - Security event monitoring

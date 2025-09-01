@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pre-commit hooks for Cortex-OS
+# Ensures code quality and standards before commits
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Check for secrets and sensitive data
+echo "🔐 Checking for secrets..."
+if command -v gitleaks >/dev/null 2>&1; then
+    gitleaks detect --source . --config .gitleaks.toml --no-git || {
+        echo "❌ Secrets detected! Please remove them before committing."
+        exit 1
+    }
+fi
+
+# 2. Run linting
+echo "🧹 Running linter..."
+if ! mise run lint; then
+    echo "❌ Linting failed! Please fix the issues before committing."
+    exit 1
+fi
+
+# 3. Run formatting check
+echo "📝 Checking code formatting..."
+if ! pnpm format:check; then
+    echo "❌ Code formatting issues detected! Run 'pnpm format' to fix."
+    exit 1
+fi
+
+# 4. Run type checking
+echo "🔧 Running type checking..."
+if ! mise run typecheck; then
+    echo "❌ Type checking failed! Please fix the issues before committing."
+    exit 1
+fi
+
+# 5. Run quick tests
+echo "🧪 Running quick tests..."
+if ! pnpm test:security:unit; then
+    echo "❌ Security unit tests failed! Please fix the issues before committing."
+    exit 1
+fi
+
+# 6. Check for large files
+echo "📊 Checking for large files..."
+large_files=$(git diff --cached --name-only | xargs -I {} sh -c 'test -f "{}" && stat -c%s "{}" | test $(cat) -gt 1048576 && echo "{}"' || true)
+if [ -n "$large_files" ]; then
+    echo "❌ Large files detected (>1MB):"
+    echo "$large_files"
+    echo "Please use Git LFS for large files or exclude them."
+    exit 1
+fi
+
+# 7. Check commit message format
+echo "📋 Checking commit message..."
+if [ -f .git/COMMIT_EDITMSG ]; then
+    if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .{1,50}" .git/COMMIT_EDITMSG; then
+        echo "❌ Invalid commit message format!"
+        echo "Please use: type(scope): description"
+        echo "Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build"
+        exit 1
+    fi
+fi
+
+echo "✅ All pre-commit checks passed!"

@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DeadLetterStore } from '../dlq';
 import { DeadLetterQueue } from '../dlq';
 import { SagaOrchestrator } from '../saga';

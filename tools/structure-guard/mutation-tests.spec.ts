@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import micromatch from 'micromatch';
+import { describe, expect, it } from 'vitest';
 
 describe('glob matcher mutation tests', () => {
   describe('basic pattern matching', () => {
@@ -78,7 +78,7 @@ describe('glob matcher mutation tests', () => {
 
     it('matches dot directories', () => {
       expect(micromatch.isMatch('.github/workflows/ci.yml', '.github/**', { dot: true })).toBe(
-        true,
+        true
       );
       expect(micromatch.isMatch('.git/config', '.git/**', { dot: true })).toBe(true);
     });

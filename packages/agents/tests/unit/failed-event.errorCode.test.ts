@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { createCodeAnalysisAgent } from '../../src/agents/code-analysis-agent.js';
 
 describe('agent.failed includes errorCode/status', () => {

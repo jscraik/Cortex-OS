@@ -26,7 +26,7 @@ describe('ModelRouter initialization', () => {
     // Type-safe casting to the expected adapter types
     const router = new ModelRouter(
       mockMLXAdapter as unknown as MLXAdapter,
-      mockOllamaAdapter as unknown as OllamaAdapter,
+      mockOllamaAdapter as unknown as OllamaAdapter
     );
 
     await expect(router.initialize()).resolves.not.toThrow();
@@ -36,7 +36,7 @@ describe('ModelRouter initialization', () => {
     // Type-safe casting with unavailable adapter
     const router = new ModelRouter(
       unavailableMLXAdapter as unknown as MLXAdapter,
-      mockOllamaAdapter as unknown as OllamaAdapter,
+      mockOllamaAdapter as unknown as OllamaAdapter
     );
 
     await expect(router.initialize()).resolves.not.toThrow();
@@ -49,7 +49,7 @@ describe('ModelRouter initialization', () => {
   it('handles embedding generation with type safety', async () => {
     const router = new ModelRouter(
       mockMLXAdapter as unknown as MLXAdapter,
-      mockOllamaAdapter as unknown as OllamaAdapter,
+      mockOllamaAdapter as unknown as OllamaAdapter
     );
 
     await router.initialize();
@@ -64,7 +64,7 @@ describe('ModelRouter initialization', () => {
   it('handles batch embedding generation', async () => {
     const router = new ModelRouter(
       mockMLXAdapter as unknown as MLXAdapter,
-      mockOllamaAdapter as unknown as OllamaAdapter,
+      mockOllamaAdapter as unknown as OllamaAdapter
     );
 
     await router.initialize();
@@ -82,7 +82,7 @@ describe('ModelRouter initialization', () => {
   it('handles chat generation with proper interface', async () => {
     const router = new ModelRouter(
       mockMLXAdapter as unknown as MLXAdapter,
-      mockOllamaAdapter as unknown as OllamaAdapter,
+      mockOllamaAdapter as unknown as OllamaAdapter
     );
 
     await router.initialize();
@@ -112,7 +112,7 @@ describe('ModelRouter fallback behavior', () => {
 
     const router = new ModelRouter(
       unavailableMLX as unknown as MLXAdapter,
-      availableOllama as unknown as OllamaAdapter,
+      availableOllama as unknown as OllamaAdapter
     );
 
     await router.initialize();

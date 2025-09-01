@@ -19,8 +19,8 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/.artifacts/**',
-  // Generated static assets (bundled/minified JS/CSS)
-  'static/**',
+      // Generated static assets (bundled/minified JS/CSS)
+      'static/**',
       'commitlint.config.js',
       'tools/**',
       'vitest.config.ts',

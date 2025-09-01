@@ -4,18 +4,17 @@
  */
 
 export * from './core/ai-github-app.js';
-export * from './server/webhook-server.js';
-export * from './types/github-models.js';
-
 // Re-export main classes for convenience
 export { CortexAiGitHubApp } from './core/ai-github-app.js';
+export * from './server/webhook-server.js';
 export { CortexWebhookServer } from './server/webhook-server.js';
 export type {
-  GitHubModelsConfig,
-  GitHubModel,
   AITaskParams,
   AITaskResult,
   AITaskType,
+  CommentTrigger,
   GitHubContext,
-  CommentTrigger
+  GitHubModel,
+  GitHubModelsConfig,
 } from './types/github-models.js';
+export * from './types/github-models.js';

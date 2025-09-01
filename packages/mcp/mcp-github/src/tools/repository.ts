@@ -1,7 +1,7 @@
-import { createRepositoryEvent, createErrorEvent } from '@cortex-os/a2a-events';
-import type { GitHubTool, ToolContext, ToolResult } from './index.js';
-import { createStructuredLogger, CorrelationManager } from '../utils/logger.js';
+import { createErrorEvent, createRepositoryEvent } from '@cortex-os/a2a-events';
 import { z } from 'zod';
+import { CorrelationManager, createStructuredLogger } from '../utils/logger.js';
+import type { GitHubTool, ToolContext, ToolResult } from './index.js';
 
 const logger = createStructuredLogger('repository-tools');
 
@@ -50,14 +50,18 @@ const CreateOrUpdateFileSchema = z.object({
   message: z.string().min(1),
   branch: z.string().optional(),
   sha: z.string().optional(), // Required for updates
-  author: z.object({
-    name: z.string(),
-    email: z.string().email(),
-  }).optional(),
-  committer: z.object({
-    name: z.string(),
-    email: z.string().email(),
-  }).optional(),
+  author: z
+    .object({
+      name: z.string(),
+      email: z.string().email(),
+    })
+    .optional(),
+  committer: z
+    .object({
+      name: z.string(),
+      email: z.string().email(),
+    })
+    .optional(),
 });
 
 // Repository Tools implementation
@@ -96,7 +100,7 @@ class GetRepositoryTool implements GitHubTool {
 
   async execute(args: Record<string, any>): Promise<ToolResult> {
     const correlationId = this.context.correlationId || CorrelationManager.generateCorrelationId();
-    
+
     try {
       const { owner, repo } = GetRepositorySchema.parse(args);
       const octokit = this.context.auth.getOctokit();
@@ -117,7 +121,7 @@ class GetRepositoryTool implements GitHubTool {
         const repositoryEvent = createRepositoryEvent(
           'updated', // Using 'updated' as we're accessing repo info
           repository as any,
-          repository.owner as any
+          repository.owner as any,
         );
 
         await this.context.eventBridge.publishEvent(repositoryEvent, {
@@ -180,7 +184,6 @@ class GetRepositoryTool implements GitHubTool {
           repository: `${owner}/${repo}`,
         },
       };
-
     } catch (error: any) {
       logger.error('Failed to get repository information', error, {
         owner: args.owner,
@@ -205,7 +208,7 @@ class GetRepositoryTool implements GitHubTool {
             timestamp: new Date().toISOString(),
           },
           undefined, // No repository data available on error
-          undefined  // No actor data available
+          undefined, // No actor data available
         );
 
         await this.context.eventBridge.publishEvent(errorEvent, {
@@ -238,7 +241,7 @@ class ListRepositoriesTool implements GitHubTool {
 
   async execute(args: Record<string, any>): Promise<ToolResult> {
     const correlationId = this.context.correlationId || CorrelationManager.generateCorrelationId();
-    
+
     try {
       const params = ListRepositoriesSchema.parse(args);
       const octokit = this.context.auth.getOctokit();
@@ -258,7 +261,7 @@ class ListRepositoriesTool implements GitHubTool {
       return {
         success: true,
         data: {
-          repositories: repositories.map(repo => ({
+          repositories: repositories.map((repo) => ({
             id: repo.id,
             name: repo.name,
             full_name: repo.full_name,
@@ -296,7 +299,6 @@ class ListRepositoriesTool implements GitHubTool {
           count: repositories.length,
         },
       };
-
     } catch (error: any) {
       logger.error('Failed to list repositories', error, {
         correlationId,
@@ -326,7 +328,7 @@ class CreateRepositoryTool implements GitHubTool {
 
   async execute(args: Record<string, any>): Promise<ToolResult> {
     const correlationId = this.context.correlationId || CorrelationManager.generateCorrelationId();
-    
+
     try {
       const params = CreateRepositorySchema.parse(args);
       const octokit = this.context.auth.getOctokit();
@@ -345,7 +347,7 @@ class CreateRepositoryTool implements GitHubTool {
         const repositoryEvent = createRepositoryEvent(
           'created',
           repository as any,
-          authContext.user as any
+          authContext.user as any,
         );
 
         await this.context.eventBridge.publishEvent(repositoryEvent, {
@@ -390,7 +392,6 @@ class CreateRepositoryTool implements GitHubTool {
           repository: repository.full_name,
         },
       };
-
     } catch (error: any) {
       logger.error('Failed to create repository', error, {
         name: args.name,
@@ -421,7 +422,7 @@ class GetFileContentTool implements GitHubTool {
 
   async execute(args: Record<string, any>): Promise<ToolResult> {
     const correlationId = this.context.correlationId || CorrelationManager.generateCorrelationId();
-    
+
     try {
       const { owner, repo, path, ref } = GetFileContentSchema.parse(args);
       const octokit = this.context.auth.getOctokit();
@@ -448,7 +449,7 @@ class GetFileContentTool implements GitHubTool {
           success: true,
           data: {
             type: 'directory',
-            contents: fileData.map(item => ({
+            contents: fileData.map((item) => ({
               name: item.name,
               path: item.path,
               type: item.type,
@@ -468,9 +469,10 @@ class GetFileContentTool implements GitHubTool {
         };
       } else if (fileData.type === 'file') {
         // File content
-        const content = fileData.encoding === 'base64' 
-          ? Buffer.from(fileData.content, 'base64').toString('utf-8')
-          : fileData.content;
+        const content =
+          fileData.encoding === 'base64'
+            ? Buffer.from(fileData.content, 'base64').toString('utf-8')
+            : fileData.content;
 
         logger.info('Successfully retrieved file content', {
           owner,
@@ -506,7 +508,6 @@ class GetFileContentTool implements GitHubTool {
       } else {
         throw new Error(`Unsupported content type: ${fileData.type}`);
       }
-
     } catch (error: any) {
       logger.error('Failed to get file content', error, {
         owner: args.owner,
@@ -539,7 +540,7 @@ class CreateOrUpdateFileTool implements GitHubTool {
 
   async execute(args: Record<string, any>): Promise<ToolResult> {
     const correlationId = this.context.correlationId || CorrelationManager.generateCorrelationId();
-    
+
     try {
       const params = CreateOrUpdateFileSchema.parse(args);
       const octokit = this.context.auth.getOctokit();
@@ -604,7 +605,6 @@ class CreateOrUpdateFileTool implements GitHubTool {
           path: params.path,
         },
       };
-
     } catch (error: any) {
       logger.error('Failed to create/update file', error, {
         owner: args.owner,

@@ -13,9 +13,7 @@ def pytest_configure(config):
         sys.path.insert(0, str(src_path))
 
     # Import pipeline module for tests
-    spec = importlib.util.spec_from_file_location(
-        "pipeline", src_path / "pipeline.py"
-    )
+    spec = importlib.util.spec_from_file_location("pipeline", src_path / "pipeline.py")
     if spec and spec.loader:
         pipeline = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(pipeline)

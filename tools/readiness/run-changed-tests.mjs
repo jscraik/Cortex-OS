@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Runs tests only for packages affected by the current branch's changes.
 // - Detects changed files vs upstream (or origin/main fallback)
 // - Maps to nearest package.json (excluding repo root)
@@ -6,9 +7,9 @@
 // - Otherwise, runs vitest in each changed package (reporter=dot by default)
 //   Set PREPUSH_COVERAGE=1 to include coverage reporters.
 
-import { execa } from 'execa';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execa } from 'execa';
 
 function log(msg) {
   // eslint-disable-next-line no-console
@@ -151,11 +152,11 @@ async function main() {
 
   const docOnly = files.every((f) => isDocsOrConfigFile(f));
   const pkgDirs = Array.from(
-    new Set(files.map((f) => findNearestPackageDir(repoRoot, f)).filter(Boolean)),
+    new Set(files.map((f) => findNearestPackageDir(repoRoot, f)).filter(Boolean))
   );
 
   log(
-    `Changed files: ${files.length}, mapped packages: ${pkgDirs.length}, doc/config-only: ${docOnly}`,
+    `Changed files: ${files.length}, mapped packages: ${pkgDirs.length}, doc/config-only: ${docOnly}`
   );
   if (argv.has('--dry')) {
     const list = pkgDirs.map((d) => ' - ' + path.relative(repoRoot, d)).join('\n') || ' (none)';

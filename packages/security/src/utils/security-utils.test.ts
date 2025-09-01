@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
 vi.mock('@cortex-os/telemetry');
+
 import {
-  generateNonce,
   extractTrustDomain,
   extractWorkloadPath,
+  generateNonce,
   isCertificateExpired,
 } from './security-utils.ts';
 

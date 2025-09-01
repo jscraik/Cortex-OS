@@ -9,9 +9,9 @@
  * @ai_provenance_hash N/A
  */
 
-import { trace, SpanKind } from '@opentelemetry/api';
+import { SpanKind, trace } from '@opentelemetry/api';
 import { EventEmitter } from 'events';
-import { AgentTrace, AnalyticsConfig } from './types.js';
+import type { AgentTrace, AnalyticsConfig } from './types.js';
 
 /**
  * Collects OpenTelemetry traces from agent executions

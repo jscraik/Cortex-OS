@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { describe, expect, it } from 'vitest';
 
 const POLICY_PATH = path.join(__dirname, 'policy.tools.json');
 

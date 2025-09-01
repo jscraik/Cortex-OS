@@ -6,7 +6,7 @@ import type {
   SchemaSearchOptions,
   ValidationResult,
 } from '@cortex-os/a2a-contracts/schema-registry-types';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 /**
  * In-memory schema registry implementation

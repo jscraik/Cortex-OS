@@ -1,5 +1,5 @@
-import { it, expect } from 'vitest';
-import { once, type IdempotencyStore } from '@cortex-os/a2a-core/idempotency';
+import { type IdempotencyStore, once } from '@cortex-os/a2a-core/idempotency';
+import { expect, it } from 'vitest';
 
 class MemStore implements IdempotencyStore {
   private s = new Set<string>();

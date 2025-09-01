@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { createGenerate, ModelStrategy } from '../../src/lib/generate.js';
+import { describe, expect, it, vi } from 'vitest';
+import { createGenerate, type ModelStrategy } from '../../src/lib/generate.js';
 
 describe('createGenerate', () => {
   const strategy: ModelStrategy = { test: { primary: { model: 'm1' }, fallback: { model: 'm2' } } };

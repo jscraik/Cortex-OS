@@ -6,14 +6,20 @@
  */
 
 import { z } from 'zod';
-import type { Agent, ModelProvider, EventBus, MCPClient, MemoryPolicy } from '../lib/types.js';
-import type { MemoryStore } from '../lib/types.js';
-import { wireOutbox } from '../integrations/outbox.js';
 // Avoid circular import by importing agents directly
 import { createCodeAnalysisAgent } from '../agents/code-analysis-agent.js';
-import { createTestGenerationAgent } from '../agents/test-generation-agent.js';
 import { createDocumentationAgent } from '../agents/documentation-agent.js';
 import { createSecurityAgent } from '../agents/security-agent.js';
+import { createTestGenerationAgent } from '../agents/test-generation-agent.js';
+import { wireOutbox } from '../integrations/outbox.js';
+import type {
+  Agent,
+  EventBus,
+  MCPClient,
+  MemoryPolicy,
+  MemoryStore,
+  ModelProvider,
+} from '../lib/types.js';
 import { generateAgentId, generateTraceId, withTimeout } from '../lib/utils.js';
 
 // Orchestration schemas

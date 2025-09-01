@@ -19,7 +19,7 @@ async function testPersistentStorage() {
     console.log('\n➕ Test 2: Add a test server');
     const addResult = await universalCliHandler.processMcpCommand(
       'cortex mcp add test-server npx @test/server --env API_KEY=test123',
-      { autoApprove: true },
+      { autoApprove: true }
     );
     console.log('Add Result:', addResult.success ? '✅' : '❌', addResult.message);
 

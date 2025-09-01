@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { agentStartedEventSchema, agentEventCatalog } from '../../src/events/agent-events.js';
+import { describe, expect, it } from 'vitest';
+import { agentEventCatalog, agentStartedEventSchema } from '../../src/events/agent-events.js';
 
 describe('Event timestamp contracts', () => {
   it('accepts ISO-8601 timestamps', () => {

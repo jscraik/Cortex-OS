@@ -1,10 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
 vi.mock('@cortex-os/telemetry');
+
 import { spanExporter } from '../../test/setup.ts';
 import {
-  WorkloadIdentityManager,
+  type WorkloadAPIClient,
   WorkloadIdentityAttestor,
-  WorkloadAPIClient,
+  WorkloadIdentityManager,
 } from './workload-identity.ts';
 
 const SAMPLE_ID = 'spiffe://example.org/my/service';

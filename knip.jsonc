@@ -2,5 +2,5 @@
   "$schema": "https://unpkg.com/knip/schema.json",
   "entry": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
   "project": ["packages/*/tsconfig.json"],
-  "ignore": ["**/dist/**", "**/.artifacts/**"],
+  "ignore": ["**/dist/**", "**/.artifacts/**"]
 }

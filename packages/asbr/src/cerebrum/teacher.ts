@@ -28,12 +28,12 @@ export class Teacher {
   async instruct(content: string, options?: TeachingOptions): Promise<TeachingSession> {
     // In a real implementation, this would use an LLM to generate teaching materials
     // For now, we'll create a basic structured output
-    
+
     const format = options?.format || 'summary';
     const audience = options?.audience || 'intermediate';
-    
+
     let teachingContent = '';
-    
+
     switch (format) {
       case 'summary':
         teachingContent = this.generateSummary(content);
@@ -47,7 +47,7 @@ export class Teacher {
       default:
         teachingContent = this.generateSummary(content);
     }
-    
+
     return {
       id: this.generateId(),
       title: `Learning session on: ${content.substring(0, 30)}${content.length > 30 ? '...' : ''}`,
@@ -63,9 +63,9 @@ export class Teacher {
    */
   async createCurriculum(sessions: TeachingSession[]): Promise<TeachingSession> {
     const combinedContent = sessions
-      .map(session => `## ${session.title}\n\n${session.content}`)
+      .map((session) => `## ${session.title}\n\n${session.content}`)
       .join('\n\n');
-    
+
     return {
       id: this.generateId(),
       title: 'Generated Curriculum',
@@ -90,12 +90,12 @@ export class Teacher {
 
   private extractTags(content: string, audience: string): string[] {
     const tags = [audience];
-    
+
     // Extract potential tags from content
     const keywordMatches = content.match(/\b([a-zA-Z]{4,})\b/g) || [];
-    const uniqueKeywords = Array.from(new Set(keywordMatches.map(k => k.toLowerCase())));
+    const uniqueKeywords = Array.from(new Set(keywordMatches.map((k) => k.toLowerCase())));
     tags.push(...uniqueKeywords.slice(0, 5));
-    
+
     return tags;
   }
 

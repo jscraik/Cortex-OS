@@ -5,8 +5,8 @@
   "items": {
     "type": "object",
     "oneOf": [
-      {"required": ["name", "input", "expected"]},
-      {"required": ["name", "query", "docs", "expected"]}
+      { "required": ["name", "input", "expected"] },
+      { "required": ["name", "query", "docs", "expected"] }
     ],
     "properties": {
       "name": { "type": "string" },
@@ -18,7 +18,10 @@
         "oneOf": [
           { "required": ["contains"], "properties": { "contains": { "type": "string" } } },
           { "required": ["regex"], "properties": { "regex": { "type": "string" } } },
-          { "required": ["isPermutation"], "properties": { "isPermutation": { "type": "boolean" } } }
+          {
+            "required": ["isPermutation"],
+            "properties": { "isPermutation": { "type": "boolean" } }
+          }
         ]
       }
     }

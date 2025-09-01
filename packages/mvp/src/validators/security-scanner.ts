@@ -3,16 +3,16 @@
  * @description Security scanning with multiple tools (Semgrep, ESLint, Bandit)
  */
 
-import { SecurityScanResult, SecurityVulnerability } from '../lib/validation-types.js';
-import { PRPState } from '../state.js';
 import {
+  createFilePath,
   execAsync,
   fileExists,
-  readJsonFile,
   getProjectRoot,
-  createFilePath,
   getRelativePath,
+  readJsonFile,
 } from '../lib/utils.js';
+import type { SecurityScanResult, SecurityVulnerability } from '../lib/validation-types.js';
+import type { PRPState } from '../state.js';
 
 export class SecurityScanner {
   private readonly SCAN_TIMEOUT = 120000; // 2 minutes total timeout
@@ -23,7 +23,11 @@ export class SecurityScanner {
 
     try {
       const projectRoot = getProjectRoot();
-      const scanResults = { blockers: 0, majors: 0, vulnerabilities: [] as SecurityVulnerability[] };
+      const scanResults = {
+        blockers: 0,
+        majors: 0,
+        vulnerabilities: [] as SecurityVulnerability[],
+      };
 
       // Use Promise.allSettled to run scans in parallel with timeout
       const scanPromises = [

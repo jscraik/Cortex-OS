@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
+import { readFileSync } from 'node:fs';
 import { globby } from 'globby';
 import micromatch from 'micromatch';
-import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 
 type Policy = {
@@ -15,7 +15,7 @@ const policySchema = z.object({
   deniedGlobs: z.array(z.string()).default([]),
 });
 const policy: Policy = policySchema.parse(
-  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8')),
+  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'))
 );
 
 const files = await globby(['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'], {
@@ -37,7 +37,7 @@ if (bad.length) {
 }
 
 const missing = policy.protectedFiles.filter(
-  (p) => !files.some((f) => micromatch.isMatch(f, p, { dot: true })),
+  (p) => !files.some((f) => micromatch.isMatch(f, p, { dot: true }))
 );
 if (missing.length) {
   console.error('Missing protected paths:\n' + missing.join('\n'));

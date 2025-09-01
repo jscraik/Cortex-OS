@@ -14,18 +14,26 @@ export const TaskSendParamsSchema = z.object({
   id: TaskIdSchema.optional(),
   message: z.object({
     role: z.enum(['user', 'assistant', 'system']),
-    parts: z.array(z.object({
-      text: z.string().optional(),
-      data: z.unknown().optional(),
-    })),
+    parts: z.array(
+      z.object({
+        text: z.string().optional(),
+        data: z.unknown().optional(),
+      }),
+    ),
   }),
-  context: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
-    parts: z.array(z.object({
-      text: z.string().optional(),
-      data: z.unknown().optional(),
-    })),
-  })).optional(),
+  context: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant', 'system']),
+        parts: z.array(
+          z.object({
+            text: z.string().optional(),
+            data: z.unknown().optional(),
+          }),
+        ),
+      }),
+    )
+    .optional(),
 });
 
 export const TaskGetParamsSchema = z.object({
@@ -39,26 +47,38 @@ export const TaskCancelParamsSchema = z.object({
 export const TaskResultSchema = z.object({
   id: TaskIdSchema,
   status: TaskStatusSchema,
-  message: z.object({
-    role: z.enum(['assistant']),
-    parts: z.array(z.object({
-      text: z.string().optional(),
+  message: z
+    .object({
+      role: z.enum(['assistant']),
+      parts: z.array(
+        z.object({
+          text: z.string().optional(),
+          data: z.unknown().optional(),
+        }),
+      ),
+    })
+    .optional(),
+  artifacts: z
+    .array(
+      z.object({
+        name: z.string(),
+        mimeType: z.string(),
+        parts: z.array(
+          z.object({
+            text: z.string().optional(),
+            data: z.unknown().optional(),
+          }),
+        ),
+      }),
+    )
+    .optional(),
+  error: z
+    .object({
+      code: z.number(),
+      message: z.string(),
       data: z.unknown().optional(),
-    })),
-  }).optional(),
-  artifacts: z.array(z.object({
-    name: z.string(),
-    mimeType: z.string(),
-    parts: z.array(z.object({
-      text: z.string().optional(),
-      data: z.unknown().optional(),
-    })),
-  })).optional(),
-  error: z.object({
-    code: z.number(),
-    message: z.string(),
-    data: z.unknown().optional(),
-  }).optional(),
+    })
+    .optional(),
 });
 
 export const JsonRpcRequestSchema = z.object({
@@ -72,11 +92,13 @@ export const JsonRpcResponseSchema = z.object({
   jsonrpc: z.literal('2.0'),
   id: z.union([z.string(), z.number(), z.null()]),
   result: z.unknown().optional(),
-  error: z.object({
-    code: z.number(),
-    message: z.string(),
-    data: z.unknown().optional(),
-  }).optional(),
+  error: z
+    .object({
+      code: z.number(),
+      message: z.string(),
+      data: z.unknown().optional(),
+    })
+    .optional(),
 });
 
 // Type exports
@@ -101,4 +123,4 @@ export const A2A_ERROR_CODES = {
   TASK_CANCELLED: -32002,
 } as const;
 
-export type A2AErrorCode = typeof A2A_ERROR_CODES[keyof typeof A2A_ERROR_CODES];
+export type A2AErrorCode = (typeof A2A_ERROR_CODES)[keyof typeof A2A_ERROR_CODES];

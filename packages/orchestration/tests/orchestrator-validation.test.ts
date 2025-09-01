@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MLXFirstOrchestrator } from '../src/coordinator/mlx-first-coordinator.js';
 import { OrchestrationError } from '../src/errors.js';
 

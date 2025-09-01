@@ -3,10 +3,12 @@
 ## Repository Integration Analysis
 
 ### 1. HuggingFace smolagents
+
 **URL**: https://huggingface.co/docs/smolagents/en/examples/rag  
 **Integration Priority**: HIGH - Core agentic coordination
 
 #### Key Patterns Extracted
+
 ```typescript
 // Multi-step reasoning with planning intervals
 interface AgentPlan {
@@ -23,6 +25,7 @@ const executeWithPlanning = async (query: string): Promise<AgentResult> => {
 ```
 
 #### Dependencies Required
+
 ```json
 {
   "@huggingface/inference": "^2.6.4",
@@ -31,6 +34,7 @@ const executeWithPlanning = async (query: string): Promise<AgentResult> => {
 ```
 
 #### Integration Points
+
 - **Core**: Agent coordination in `src/agents/coordinator.ts`
 - **Tools**: Multi-tool orchestration in `src/agents/tools.ts`
 - **Planning**: Step decomposition in `src/agents/planning.ts`
@@ -38,10 +42,12 @@ const executeWithPlanning = async (query: string): Promise<AgentResult> => {
 ---
 
 ### 2. code2prompt
+
 **URL**: https://github.com/mufeedvh/code2prompt.git  
 **Integration Priority**: MEDIUM - Session-based processing
 
 #### Key Patterns Extracted
+
 ```typescript
 // Session-based incremental processing
 interface CodebaseSession {
@@ -53,14 +59,15 @@ interface CodebaseSession {
 
 // Template-driven knowledge extraction
 const processWithTemplate = async (
-  files: string[], 
-  template: ExtractionTemplate
+  files: string[],
+  template: ExtractionTemplate,
 ): Promise<ExtractedKnowledge> => {
   return template.process(files);
 };
 ```
 
 #### Dependencies Required
+
 ```json
 {
   "ignore": "^5.2.4",
@@ -70,6 +77,7 @@ const processWithTemplate = async (
 ```
 
 #### Integration Points
+
 - **Session**: Session management in `src/session/manager.ts`
 - **Templates**: Knowledge extraction in `src/session/templates.ts`
 - **Processing**: Incremental analysis in `src/session/extraction.ts`
@@ -77,10 +85,12 @@ const processWithTemplate = async (
 ---
 
 ### 3. codemapper
+
 **URL**: https://github.com/MikeyBeez/codemapper.git  
 **Integration Priority**: MEDIUM - AST analysis capabilities
 
 #### Key Patterns Extracted
+
 ```typescript
 // AST-based structural analysis
 interface RepositoryMap {
@@ -94,12 +104,13 @@ const calculateCouplingMetrics = (graph: DependencyGraph): CouplingMetrics => {
   return {
     afferentCoupling: calculateAfferent(graph),
     efferentCoupling: calculateEfferent(graph),
-    instability: calculateInstability(graph)
+    instability: calculateInstability(graph),
   };
 };
 ```
 
 #### Dependencies Required
+
 ```json
 {
   "typescript": "^5.5.4",
@@ -110,6 +121,7 @@ const calculateCouplingMetrics = (graph: DependencyGraph): CouplingMetrics => {
 ```
 
 #### Integration Points
+
 - **Analysis**: AST parsing in `src/analysis/ast-parser.ts`
 - **Dependencies**: Dependency analysis in `src/analysis/dependency.ts`
 - **Metrics**: Code metrics in `src/analysis/metrics.ts`
@@ -117,10 +129,12 @@ const calculateCouplingMetrics = (graph: DependencyGraph): CouplingMetrics => {
 ---
 
 ### 4. git-mcp / PRP-runner (User's System)
+
 **URL**: https://github.com/idosal/git-mcp.git  
 **Integration Priority**: HIGH - Repository transformation
 
 #### Key Patterns Extracted
+
 ```typescript
 // Repository-to-knowledge-base transformation
 interface RepositoryKnowledge {
@@ -137,6 +151,7 @@ const extractCommitContext = async (repo: GitRepository): Promise<CommitContext[
 ```
 
 #### Dependencies Required
+
 ```json
 {
   "simple-git": "^3.19.1",
@@ -147,6 +162,7 @@ const extractCommitContext = async (repo: GitRepository): Promise<CommitContext[
 ```
 
 #### Integration Points
+
 - **Git**: Repository processing in `src/git/processor.ts`
 - **Knowledge**: Knowledge extraction in `src/git/extractor.ts`
 - **History**: Commit analysis in `src/git/history.ts`
@@ -154,10 +170,12 @@ const extractCommitContext = async (repo: GitRepository): Promise<CommitContext[
 ---
 
 ### 5. Archon (Advanced Retrieval)
+
 **URL**: Archon repository analysis  
 **Integration Priority**: MEDIUM - Multi-strategy retrieval
 
 #### Key Patterns Extracted
+
 ```typescript
 // Multi-strategy retrieval coordination
 interface RetrievalStrategy {
@@ -174,6 +192,7 @@ const routeQuery = async (query: string, strategies: RetrievalStrategy[]): Promi
 ```
 
 #### Dependencies Required
+
 ```json
 {
   "faiss-node": "^0.5.1",
@@ -183,6 +202,7 @@ const routeQuery = async (query: string, strategies: RetrievalStrategy[]): Promi
 ```
 
 #### Integration Points
+
 - **Retrieval**: Multi-strategy retrieval in `src/retrieval/strategies.ts`
 - **Routing**: Query routing in `src/retrieval/router.ts`
 - **Hybrid**: Hybrid search in `src/retrieval/hybrid.ts`
@@ -247,17 +267,17 @@ const routeQuery = async (query: string, strategies: RetrievalStrategy[]): Promi
 // System compatibility check
 export const SYSTEM_REQUIREMENTS = {
   platform: 'darwin', // macOS only for MLX
-  arch: ['arm64'],     // Apple Silicon only
+  arch: ['arm64'], // Apple Silicon only
   node: '>=18.0.0',
   python: '>=3.8',
   memory: {
-    minimum: 8 * 1024 * 1024 * 1024,  // 8GB
-    recommended: 16 * 1024 * 1024 * 1024 // 16GB
+    minimum: 8 * 1024 * 1024 * 1024, // 8GB
+    recommended: 16 * 1024 * 1024 * 1024, // 16GB
   },
   storage: {
-    models: 5 * 1024 * 1024 * 1024,   // 5GB for models
-    cache: 2 * 1024 * 1024 * 1024     // 2GB for cache
-  }
+    models: 5 * 1024 * 1024 * 1024, // 5GB for models
+    cache: 2 * 1024 * 1024 * 1024, // 2GB for cache
+  },
 } as const;
 ```
 
@@ -277,33 +297,26 @@ interface RAGDependencies {
   planningAgent: PlanningAgent;
 }
 
-export const createDependencyContainer = async (
-  config: RAGConfig
-): Promise<RAGDependencies> => {
+export const createDependencyContainer = async (config: RAGConfig): Promise<RAGDependencies> => {
   // Initialize core dependencies
   const mlxClient = await createMLXClient(config.mlx);
   const embeddings = await createMLXEmbeddings(config.embeddings);
   const vectorStore = await createVectorStore(config.vectorStore);
-  
+
   // Initialize coordination layer
   const sessionManager = createSessionManager(config.session);
   const eventStream = createRAGEventStream();
   const toolRegistry = createToolRegistry();
   const planningAgent = await createPlanningAgent({ llm: mlxClient });
-  
+
   // Register core tools
-  toolRegistry.register('semantic_search', 
-    createSemanticSearchTool({ vectorStore, embeddings })
+  toolRegistry.register('semantic_search', createSemanticSearchTool({ vectorStore, embeddings }));
+  toolRegistry.register(
+    'keyword_search',
+    createKeywordSearchTool({ textSearch: config.textSearch }),
   );
-  toolRegistry.register('keyword_search', 
-    createKeywordSearchTool({ textSearch: config.textSearch })
-  );
-  toolRegistry.register('code_analysis', 
-    createCodeStructureAnalyzer()
-  );
-  toolRegistry.register('codebase_knowledge', 
-    createCodebaseKnowledgeTool()
-  );
+  toolRegistry.register('code_analysis', createCodeStructureAnalyzer());
+  toolRegistry.register('codebase_knowledge', createCodebaseKnowledgeTool());
 
   return {
     mlxClient,
@@ -312,7 +325,7 @@ export const createDependencyContainer = async (
     sessionManager,
     eventStream,
     toolRegistry,
-    planningAgent
+    planningAgent,
   };
 };
 ```
@@ -371,30 +384,30 @@ export const DEFAULT_RAG_CONFIG: Partial<RAGConfig> = {
     temperature: 0.7,
     timeout: 30000,
     retries: 3,
-    pythonPath: 'python3'
+    pythonPath: 'python3',
   },
   embeddings: {
     maxLength: 256,
-    batchSize: 8
+    batchSize: 8,
   },
   vectorStore: {
     dimensions: 384,
-    metric: 'cosine'
+    metric: 'cosine',
   },
   session: {
     timeout: 30 * 60 * 1000, // 30 minutes
     maxSessions: 100,
-    cleanupInterval: 60 * 1000 // 1 minute
+    cleanupInterval: 60 * 1000, // 1 minute
   },
   performance: {
     maxConcurrentQueries: 10,
     queryTimeout: 60000,
-    memoryThreshold: 2 * 1024 * 1024 * 1024 // 2GB
+    memoryThreshold: 2 * 1024 * 1024 * 1024, // 2GB
   },
   security: {
     enableInputSanitization: true,
-    maxQueryLength: 1000
-  }
+    maxQueryLength: 1000,
+  },
 };
 ```
 
@@ -524,13 +537,13 @@ const setupDevelopmentEnvironment = async (): Promise<void> => {
   const requirements = await checkMLXSystemRequirements();
   if (!requirements.compatible) {
     console.error('System requirements not met:');
-    requirements.issues.forEach(issue => console.error(`  - ${issue}`));
+    requirements.issues.forEach((issue) => console.error(`  - ${issue}`));
     process.exit(1);
   }
 
   if (requirements.recommendations.length > 0) {
     console.warn('Recommendations:');
-    requirements.recommendations.forEach(rec => console.warn(`  - ${rec}`));
+    requirements.recommendations.forEach((rec) => console.warn(`  - ${rec}`));
   }
 
   // Create necessary directories
@@ -540,10 +553,10 @@ const setupDevelopmentEnvironment = async (): Promise<void> => {
     '.cortex-os/sessions',
     '.cortex-os/vector-store',
     'test-data/fixtures',
-    'test-data/mock-repos'
+    'test-data/mock-repos',
   ];
 
-  dirs.forEach(dir => {
+  dirs.forEach((dir) => {
     const fullPath = join(process.cwd(), dir);
     if (!existsSync(fullPath)) {
       mkdirSync(fullPath, { recursive: true });
@@ -586,7 +599,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     "setup": "tsx scripts/dev-setup.ts",
     "setup:mlx": "./scripts/setup-mlx.sh",
     "install:deps": "./scripts/install-deps.sh",
-    
+
     "dev": "vitest --watch",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
@@ -595,18 +608,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     "test:performance": "vitest run tests/performance",
     "test:coverage": "vitest run --coverage",
     "test:coverage:threshold": "vitest run --coverage --coverage.thresholds.statements=90 --coverage.thresholds.branches=90 --coverage.thresholds.functions=90 --coverage.thresholds.lines=90",
-    
+
     "build": "tsc --build",
     "build:watch": "tsc --build --watch",
-    
+
     "lint": "eslint src tests --ext .ts --fix",
     "format": "prettier --write 'src/**/*.ts' 'tests/**/*.ts'",
     "typecheck": "tsc --noEmit",
-    
+
     "mlx:health": "python3 -c 'import mlx.core; print(\"MLX OK\")'",
     "mlx:models": "ls -la ~/.cortex-os/mlx/models/",
     "mlx:benchmark": "tsx scripts/mlx-benchmark.ts",
-    
+
     "clean": "rm -rf dist coverage .vitest-cache",
     "clean:all": "pnpm clean && rm -rf node_modules ~/.cortex-os/mlx/cache"
   }

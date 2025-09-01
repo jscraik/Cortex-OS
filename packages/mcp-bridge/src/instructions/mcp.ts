@@ -3,11 +3,11 @@
  */
 
 import { Command } from '@cliffy/command';
-import chalk from 'chalk';
-import { logger } from '../../core/logger.js';
 import { configManager } from '@cortex-os/core';
-import { MCPServer } from '../../mcp/server.js';
+import chalk from 'chalk';
 import { eventBus } from '../../core/event-bus.js';
+import { logger } from '../../core/logger.js';
+import { MCPServer } from '../../mcp/server.js';
 
 let mcpServer: MCPServer | null = null;
 

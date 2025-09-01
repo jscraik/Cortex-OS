@@ -26,11 +26,11 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Dict
+from typing import Any
 
 try:
-    from mlx_lm import load, generate
-except Exception as e:  # noqa: BLE001 - show friendly hint
+    from mlx_lm import generate, load
+except Exception as e:
     print(
         "ERROR: mlx-lm is not installed or not importable.\n"
         "Install with: pip install mlx-lm\n"
@@ -85,7 +85,7 @@ def main() -> int:
     mlx_cache = os.environ.get("MLX_CACHE_DIR")
 
     # Construct tokenizer_config safely; many models work without extra config
-    tokenizer_config: Dict[str, Any] = {"trust_remote_code": True}
+    tokenizer_config: dict[str, Any] = {"trust_remote_code": True}
     if args.eos_token:
         tokenizer_config["eos_token"] = args.eos_token
 
@@ -130,7 +130,7 @@ def main() -> int:
             print(text)
 
         return 0
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         err = {"ok": False, "error": str(e), "model": args.model}
         print(json.dumps(err), file=sys.stderr)
         return 1

@@ -1,15 +1,15 @@
 import {
-  GitHubEvent,
-  A2AEventEnvelope,
+  type A2AEventEnvelope,
   createA2AEventEnvelope,
-  GitHubEventRouter,
   DEFAULT_GITHUB_ROUTING_CONFIG,
-  type RoutingConfiguration,
+  type GitHubEvent,
+  GitHubEventRouter,
   type RouteMatch,
+  type RoutingConfiguration,
 } from '@cortex-os/a2a-events';
-import type { A2AConfig } from '../config/schema.js';
-import { createStructuredLogger, CorrelationManager } from '../utils/logger.js';
 import { EventEmitter } from 'events';
+import type { A2AConfig } from '../config/schema.js';
+import { CorrelationManager, createStructuredLogger } from '../utils/logger.js';
 
 const logger = createStructuredLogger('a2a-bridge');
 
@@ -18,7 +18,7 @@ export class A2AEventBridgeError extends Error {
   constructor(
     message: string,
     public code: string,
-    public cause?: Error
+    public cause?: Error,
   ) {
     super(message);
     this.name = 'A2AEventBridgeError';
@@ -51,7 +51,8 @@ export class A2AEventBridge extends EventEmitter {
   private router: GitHubEventRouter;
   private isConnected = false;
   private stats: PublishingStats;
-  private eventQueue: Array<{ envelope: A2AEventEnvelope; resolve: Function; reject: Function }> = [];
+  private eventQueue: Array<{ envelope: A2AEventEnvelope; resolve: Function; reject: Function }> =
+    [];
   private processingQueue = false;
   private connectionRetries = 0;
   private maxRetries = 5;
@@ -62,7 +63,7 @@ export class A2AEventBridge extends EventEmitter {
     this.config = config;
     this.router = new GitHubEventRouter(routingConfig || DEFAULT_GITHUB_ROUTING_CONFIG);
     this.stats = this.initializeStats();
-    
+
     this.setupEventListeners();
   }
 
@@ -82,7 +83,7 @@ export class A2AEventBridge extends EventEmitter {
     // Handle process termination
     process.on('SIGINT', () => this.disconnect());
     process.on('SIGTERM', () => this.disconnect());
-    
+
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason, promise) => {
       logger.error('Unhandled promise rejection in A2A bridge', reason as Error, {
@@ -112,29 +113,28 @@ export class A2AEventBridge extends EventEmitter {
       // In a real implementation, this would establish connection to the event bus
       // For now, we'll simulate the connection
       await this.establishConnection();
-      
+
       this.isConnected = true;
       this.connectionRetries = 0;
-      
+
       logger.info('Successfully connected to A2A event bus');
       this.emit('connected');
-      
+
       // Start processing queued events
       this.processEventQueue();
-      
     } catch (error) {
       this.connectionRetries++;
       logger.error('Failed to connect to A2A event bus', error as Error, {
         attempt: this.connectionRetries,
         maxRetries: this.maxRetries,
       });
-      
+
       if (this.connectionRetries < this.maxRetries) {
-        const delay = this.retryDelay * Math.pow(2, this.connectionRetries - 1);
+        const delay = this.retryDelay * 2 ** (this.connectionRetries - 1);
         logger.info(`Retrying connection in ${delay}ms`);
-        
+
         setTimeout(() => {
-          this.connect().catch(retryError => {
+          this.connect().catch((retryError) => {
             logger.error('Connection retry failed', retryError as Error);
           });
         }, delay);
@@ -142,7 +142,7 @@ export class A2AEventBridge extends EventEmitter {
         throw new A2AEventBridgeError(
           'Failed to connect to A2A event bus after maximum retries',
           'CONNECTION_FAILED',
-          error as Error
+          error as Error,
         );
       }
     }
@@ -155,7 +155,7 @@ export class A2AEventBridge extends EventEmitter {
     // 2. Authenticate with the event bus
     // 3. Set up subscriptions if needed
     // 4. Verify the connection is working
-    
+
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         if (this.config.eventBusUrl) {
@@ -174,21 +174,20 @@ export class A2AEventBridge extends EventEmitter {
     }
 
     logger.info('Disconnecting from A2A event bus');
-    
+
     try {
       // Process remaining events in queue
       if (this.eventQueue.length > 0) {
         logger.info(`Processing ${this.eventQueue.length} remaining events before disconnect`);
         await this.processEventQueue();
       }
-      
+
       // Close connection
       await this.closeConnection();
-      
+
       this.isConnected = false;
       logger.info('Disconnected from A2A event bus');
       this.emit('disconnected');
-      
     } catch (error) {
       logger.error('Error during A2A event bus disconnect', error as Error);
       throw error;
@@ -197,7 +196,7 @@ export class A2AEventBridge extends EventEmitter {
 
   private async closeConnection(): Promise<void> {
     // Simulate connection cleanup
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   // Publish a GitHub event to the A2A event bus
@@ -207,11 +206,11 @@ export class A2AEventBridge extends EventEmitter {
       priority?: 'low' | 'normal' | 'high' | 'critical';
       correlationId?: string;
       metadata?: Record<string, string>;
-    }
+    },
   ): Promise<EventProcessingResult> {
     const startTime = Date.now();
     const correlationId = options?.correlationId || CorrelationManager.generateCorrelationId();
-    
+
     logger.debug('Publishing GitHub event', {
       eventType: event.event_type,
       correlationId,
@@ -236,7 +235,7 @@ export class A2AEventBridge extends EventEmitter {
 
       // Find matching routes
       const routes = this.router.findRoutes(envelope);
-      
+
       if (routes.length === 0) {
         logger.warn('No routes found for GitHub event', {
           eventType: event.event_type,
@@ -246,10 +245,10 @@ export class A2AEventBridge extends EventEmitter {
 
       // Publish the event
       const result = await this.publishEnvelope(envelope, routes);
-      
+
       // Update statistics
       this.updateStats(event, startTime, true);
-      
+
       logger.info('Successfully published GitHub event', {
         eventId: envelope.envelope_id,
         eventType: event.event_type,
@@ -264,10 +263,9 @@ export class A2AEventBridge extends EventEmitter {
         routes,
         processingTime: Date.now() - startTime,
       };
-      
     } catch (error) {
       this.updateStats(event, startTime, false);
-      
+
       logger.error('Failed to publish GitHub event', error as Error, {
         eventType: event.event_type,
         correlationId,
@@ -284,10 +282,7 @@ export class A2AEventBridge extends EventEmitter {
     }
   }
 
-  private async publishEnvelope(
-    envelope: A2AEventEnvelope,
-    routes: RouteMatch[]
-  ): Promise<void> {
+  private async publishEnvelope(envelope: A2AEventEnvelope, routes: RouteMatch[]): Promise<void> {
     if (!this.isConnected) {
       // Queue the event for later processing
       return new Promise((resolve, reject) => {
@@ -304,30 +299,27 @@ export class A2AEventBridge extends EventEmitter {
     // 2. Send to each destination based on routes
     // 3. Handle delivery confirmation
     // 4. Manage retries for failed deliveries
-    
+
     // Simulate event publishing
     await this.simulateEventPublishing(envelope, routes);
   }
 
   private async simulateEventPublishing(
     envelope: A2AEventEnvelope,
-    routes: RouteMatch[]
+    routes: RouteMatch[],
   ): Promise<void> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 50));
-    
+    await new Promise((resolve) => setTimeout(resolve, Math.random() * 50));
+
     // Simulate occasional failures (5% failure rate)
     if (Math.random() < 0.05) {
-      throw new A2AEventBridgeError(
-        'Simulated event publishing failure',
-        'PUBLISH_FAILED'
-      );
+      throw new A2AEventBridgeError('Simulated event publishing failure', 'PUBLISH_FAILED');
     }
-    
+
     logger.debug('Event published successfully', {
       eventId: envelope.envelope_id,
       routes: routes.length,
-      destinations: routes.flatMap(r => r.destinations.map(d => d.service)),
+      destinations: routes.flatMap((r) => r.destinations.map((d) => d.service)),
     });
   }
 
@@ -338,14 +330,14 @@ export class A2AEventBridge extends EventEmitter {
 
     this.processingQueue = true;
     logger.info(`Processing ${this.eventQueue.length} queued events`);
-    
+
     try {
       while (this.eventQueue.length > 0) {
         const queueItem = this.eventQueue.shift();
         if (!queueItem) break;
-        
+
         const { envelope, resolve, reject } = queueItem;
-        
+
         try {
           const routes = this.router.findRoutes(envelope);
           await this.publishEnvelope(envelope, routes);
@@ -359,30 +351,26 @@ export class A2AEventBridge extends EventEmitter {
     }
   }
 
-  private updateStats(
-    event: GitHubEvent,
-    startTime: number,
-    success: boolean
-  ): void {
+  private updateStats(event: GitHubEvent, startTime: number, success: boolean): void {
     const processingTime = Date.now() - startTime;
-    
+
     this.stats.totalEvents++;
     this.stats.lastEventTime = new Date();
-    
+
     if (success) {
       this.stats.successfulEvents++;
     } else {
       this.stats.failedEvents++;
     }
-    
+
     // Update event type stats
     const eventType = event.event_type;
     this.stats.eventsByType[eventType] = (this.stats.eventsByType[eventType] || 0) + 1;
-    
+
     // Update average processing time
-    this.stats.averageProcessingTime = (
-      (this.stats.averageProcessingTime * (this.stats.totalEvents - 1)) + processingTime
-    ) / this.stats.totalEvents;
+    this.stats.averageProcessingTime =
+      (this.stats.averageProcessingTime * (this.stats.totalEvents - 1) + processingTime) /
+      this.stats.totalEvents;
   }
 
   // Batch publish multiple events
@@ -392,19 +380,19 @@ export class A2AEventBridge extends EventEmitter {
       batchSize?: number;
       priority?: 'low' | 'normal' | 'high' | 'critical';
       metadata?: Record<string, string>;
-    }
+    },
   ): Promise<EventProcessingResult[]> {
     const batchSize = options?.batchSize || this.config.batchSize;
     const results: EventProcessingResult[] = [];
-    
+
     logger.info(`Publishing ${events.length} events in batches of ${batchSize}`);
-    
+
     for (let i = 0; i < events.length; i += batchSize) {
       const batch = events.slice(i, i + batchSize);
       const batchResults = await Promise.allSettled(
-        batch.map(event => this.publishEvent(event, options))
+        batch.map((event) => this.publishEvent(event, options)),
       );
-      
+
       for (const result of batchResults) {
         if (result.status === 'fulfilled') {
           results.push(result.value);
@@ -418,13 +406,13 @@ export class A2AEventBridge extends EventEmitter {
           });
         }
       }
-      
+
       // Small delay between batches to avoid overwhelming the system
       if (i + batchSize < events.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
-    
+
     return results;
   }
 
@@ -458,12 +446,12 @@ export class A2AEventBridge extends EventEmitter {
       lastEventAge?: number;
     };
   }> {
-    const lastEventAge = this.stats.lastEventTime 
+    const lastEventAge = this.stats.lastEventTime
       ? Date.now() - this.stats.lastEventTime.getTime()
       : undefined;
-    
+
     const isHealthy = this.isConnected && this.eventQueue.length < 1000;
-    
+
     return {
       status: isHealthy ? 'healthy' : 'unhealthy',
       details: {
@@ -485,7 +473,7 @@ export class A2AEventBridge extends EventEmitter {
         source: 'github-client' as const,
         timestamp: new Date().toISOString(),
       };
-      
+
       const envelope = createA2AEventEnvelope(testEvent as any, {
         priority: 'low',
         metadata: {
@@ -494,10 +482,9 @@ export class A2AEventBridge extends EventEmitter {
           },
         },
       });
-      
+
       await this.publishEnvelope(envelope, []);
       return true;
-      
     } catch (error) {
       logger.error('A2A connection test failed', error as Error);
       return false;

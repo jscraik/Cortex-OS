@@ -3,14 +3,14 @@
  * @description Test embedding and reranking capabilities with functional adapters
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
 import crypto from 'crypto';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  createEmbeddingState,
   addDocuments,
+  createEmbeddingState,
   generateEmbeddings,
-  getStats,
   getDocument,
+  getStats,
   removeDocument,
   similaritySearch,
 } from '../lib/embedding/index.js';

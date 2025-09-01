@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MultiModelGenerator } from '../src/generation/multi-model';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as proc from '../../../src/lib/run-process.js';
+import { MultiModelGenerator } from '../src/generation/multi-model';
 
 describe('MultiModelGenerator', () => {
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('MultiModelGenerator', () => {
       json: async () => ({ response: 'ok' }),
     }) as unknown as typeof fetch;
     const originalFetch = global.fetch;
-    // @ts-ignore - mock fetch for test
+    // @ts-expect-error - mock fetch for test
     global.fetch = fetchMock;
 
     const gen = new MultiModelGenerator({
@@ -61,7 +61,7 @@ describe('MultiModelGenerator', () => {
         }),
       }),
     );
-    // @ts-ignore - restore original fetch
+    // @ts-expect-error - restore original fetch
     global.fetch = originalFetch;
   });
 });

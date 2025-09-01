@@ -5,46 +5,25 @@
 
 // Direct imports for internal use
 import { initializeAuth } from './api/auth.js';
-import { createASBRServer, type ASBRServer } from './api/server.js';
-import { ASBRClient, createASBRClient } from './sdk/index.js';
-import { initializeXDG } from './xdg/index.js';
+import { type ASBRServer, createASBRServer } from './api/server.js';
+import { type ASBRClient, createASBRClient } from './sdk/index.js';
 import { ValidationError } from './types/index.js';
+import { initializeXDG } from './xdg/index.js';
 
+export type { ASBRServer } from './api/server.js';
 // Core exports
 export { createASBRServer } from './api/server.js';
-export type { ASBRServer } from './api/server.js';
+// Configuration and XDG
+export { getFullConfig, loadConfig, saveConfig } from './core/config.js';
 export {
   ASBRClient,
   createASBRClient,
   createIdempotencyKey,
   createTaskInput,
 } from './sdk/index.js';
-
-// Configuration and XDG
-export { getFullConfig, loadConfig, saveConfig } from './core/config.js';
 export { getXDGPaths, initializeXDG } from './xdg/index.js';
 
 // Event system
-
-export {
-  createA11yEvent,
-  createEventManager,
-  getEventManager,
-} from './core/events.js';
-export type { EventManager } from './core/events.js';
-
-// Diff and normalization
-export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
-export { ContentNormalizer, createNormalizer } from './diff/normalizer.js';
-export { createDiffValidator, DiffValidator } from './diff/validator.js';
-
-// Evidence system
-export { EvidenceCollector } from './evidence/collector.js';
-export { EvidenceStorage } from './evidence/storage.js';
-
-// MCP and security
-export { MCPSandbox, MCPToolRegistry } from './mcp/sandbox.js';
-export { createDefaultSecurityPolicy, OWASPLLMGuard } from './security/owasp-llm-guard.js';
 
 // Accessibility
 export {
@@ -57,7 +36,6 @@ export {
   getKeyboardNavigationManager,
   KeyboardNavigationManager,
 } from './accessibility/keyboard-nav.js';
-
 // Authentication
 export {
   cleanupExpiredTokens,
@@ -66,7 +44,20 @@ export {
   revokeToken,
   validateToken,
 } from './api/auth.js';
-
+// Default configuration
+export { DEFAULT_CONFIG } from './core/config.js';
+export type { EventManager } from './core/events.js';
+export { createA11yEvent, createEventManager, getEventManager } from './core/events.js';
+// Diff and normalization
+export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
+export { ContentNormalizer, createNormalizer } from './diff/normalizer.js';
+export { createDiffValidator, DiffValidator } from './diff/validator.js';
+// Evidence system
+export { EvidenceCollector } from './evidence/collector.js';
+export { EvidenceStorage } from './evidence/storage.js';
+// MCP and security
+export { MCPSandbox, MCPToolRegistry } from './mcp/sandbox.js';
+export { createDefaultSecurityPolicy, OWASPLLMGuard } from './security/owasp-llm-guard.js';
 // Types
 export type {
   AnnouncementType,
@@ -107,18 +98,11 @@ export type {
   XDGPaths,
 } from './types/index.js';
 
-// Default configuration
-export { DEFAULT_CONFIG } from './core/config.js';
-
 /**
  * Initialize ASBR with default configuration
  */
 export async function initializeASBR(
-  options: {
-    port?: number;
-    host?: string;
-    autoStart?: boolean;
-  } = {},
+  options: { port?: number; host?: string; autoStart?: boolean } = {},
 ): Promise<{
   server: ASBRServer;
   client: ASBRClient;

@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { PRPState, Evidence } from '../state.js';
+import { Evidence, type PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 
 /**
@@ -228,7 +228,17 @@ export class ExampleCaptureSystem {
     const patternKey = `${example.type}-${example.context.prpPhase}-${example.userAction.type}`;
 
     let pattern = this.patterns.get(patternKey);
-    if (!pattern) {
+    if (pattern) {
+      // Update existing pattern
+      pattern.examples.push(example.id);
+      const totalExamples = pattern.examples.length;
+      const successfulExamples = pattern.examples
+        .map((id) => this.examples.get(id))
+        .filter((ex) => ex?.outcome.success).length;
+
+      pattern.effectiveness = successfulExamples / totalExamples;
+      pattern.trigger.confidence = Math.min(0.9, pattern.trigger.confidence + 0.1);
+    } else {
       pattern = {
         id: patternKey,
         name: `${example.type} pattern for ${example.context.prpPhase}`,
@@ -247,16 +257,6 @@ export class ExampleCaptureSystem {
         examples: [example.id],
         effectiveness: example.outcome.success ? 1.0 : 0.0,
       };
-    } else {
-      // Update existing pattern
-      pattern.examples.push(example.id);
-      const totalExamples = pattern.examples.length;
-      const successfulExamples = pattern.examples
-        .map((id) => this.examples.get(id))
-        .filter((ex) => ex?.outcome.success).length;
-
-      pattern.effectiveness = successfulExamples / totalExamples;
-      pattern.trigger.confidence = Math.min(0.9, pattern.trigger.confidence + 0.1);
     }
 
     this.patterns.set(patternKey, pattern);

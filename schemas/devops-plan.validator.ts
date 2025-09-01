@@ -3,15 +3,15 @@
  * @fileoverview Comprehensive validation system for DevOps planning configurations
  */
 
-import Ajv, { JSONSchemaType, ValidateFunction, ErrorObject } from 'ajv';
+import Ajv, { type ErrorObject, type JSONSchemaType, type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import {
+import type {
   DevOpsPlan,
-  ValidationResult,
   ValidationConfig,
   ValidationError,
+  ValidationResult,
   ValidationWarning,
 } from './devops-plan.types.js';
 
@@ -52,7 +52,7 @@ export class DevOpsPlanValidator {
       this.schema = JSON.parse(schemaContent) as JSONSchemaType<DevOpsPlan>;
     } catch (error) {
       throw new Error(
-        `Failed to load DevOps plan schema: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to load DevOps plan schema: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
   }
@@ -258,7 +258,7 @@ export function validateDevOpsPlan(plan: unknown, config?: ValidationConfig): Va
  * Validation decorator for methods
  */
 export function ValidateDevOpsPlan(config?: ValidationConfig) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return (target: any, propertyName: string, descriptor: PropertyDescriptor) => {
     const method = descriptor.value;
 
     descriptor.value = function (...args: any[]) {

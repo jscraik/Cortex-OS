@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { describe, expect, it } from 'vitest';
 import {
   createEmbeddingState,
   generateEmbeddings,

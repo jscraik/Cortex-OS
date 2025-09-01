@@ -7,14 +7,14 @@ import { createHash } from 'crypto';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import express from 'express';
 import { readFile } from 'fs/promises';
-import { Server } from 'http';
+import type { Server } from 'http';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
-import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { logError, logInfo } from '../lib/logger.js';
+import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
   type ArtifactRef,
@@ -185,7 +185,7 @@ class ASBRServerClass {
     // Error handling must be registered after routes so thrown errors in handlers
     // are propagated here and converted to structured JSON responses.
     this.app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-          logError('API Error', { error });
+      logError('API Error', { error });
 
       if (error instanceof ValidationError) {
         res.status(error.statusCode).json({
@@ -236,7 +236,10 @@ class ASBRServerClass {
 
       const task = buildTask();
       this.tasks.set(task.id, task);
-      this.idempotencyCache.set(key, { taskId: task.id, expiry: Date.now() + this.IDEMPOTENCY_TTL });
+      this.idempotencyCache.set(key, {
+        taskId: task.id,
+        expiry: Date.now() + this.IDEMPOTENCY_TTL,
+      });
 
       await emitPlanStarted(this.emitEvent.bind(this), task, taskInput);
 

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { writeFile, mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { MLXMcpServer } from '../mlx-mcp-server.js';
 
 async function createTempMlxConfig(): Promise<string> {
@@ -10,7 +10,10 @@ async function createTempMlxConfig(): Promise<string> {
   const config = {
     server: { host: '127.0.0.1', port: 8080, workers: 1, timeout: 30, max_requests: 128 },
     models: {
-      default: { name: 'mlx-community/tiny-model', description: 'Tiny local model for smoke tests' },
+      default: {
+        name: 'mlx-community/tiny-model',
+        description: 'Tiny local model for smoke tests',
+      },
     },
     cache: { hf_home: join(dir, '.cache') },
     performance: { batch_size: 1, max_tokens: 64, temperature: 0.0, top_p: 1.0 },
@@ -41,4 +44,3 @@ describe('MLX MCP integration (health & models)', () => {
     expect(health.models).toBeGreaterThan(0);
   });
 });
-

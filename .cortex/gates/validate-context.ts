@@ -1,8 +1,8 @@
 #!/usr/bin/env -S node
-import { globby } from 'globby';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { globby } from 'globby';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -70,7 +70,7 @@ async function validateContextLibrary() {
 
   const contextFiles = await globby([`${contextDir}/**/*.md`, `${contextDir}/**/*.txt`]);
   const relativeContextFiles = contextFiles.map((f) =>
-    f.replace(contextDir, '').replace(/^\//, ''),
+    f.replace(contextDir, '').replace(/^\//, '')
   );
 
   // Validate each registered context source
@@ -108,7 +108,7 @@ async function validateContextLibrary() {
   // Validate agent requirements
   const agentTypes = ['assistant', 'developer', 'reviewer', 'planner', 'architect', 'security'];
   for (const [agentType, requiredFiles] of Object.entries(
-    contextLibrary.integrationRules.requiredForAgents,
+    contextLibrary.integrationRules.requiredForAgents
   )) {
     if (!agentTypes.includes(agentType)) {
       console.error(`❌ Unknown agent type in requirements: ${agentType}`);
@@ -130,7 +130,7 @@ async function validateContextLibrary() {
       // Validate repository URL format
       if (!config.repository.startsWith('https://github.com/')) {
         console.error(
-          `❌ Invalid repository URL for MCP server ${serverName}: ${config.repository}`,
+          `❌ Invalid repository URL for MCP server ${serverName}: ${config.repository}`
         );
         failed = true;
       }
@@ -139,7 +139,7 @@ async function validateContextLibrary() {
       const validSecurityLevels = ['low', 'medium', 'high'];
       if (!validSecurityLevels.includes(config.security.riskLevel)) {
         console.error(
-          `❌ Invalid security risk level for MCP server ${serverName}: ${config.security.riskLevel}`,
+          `❌ Invalid security risk level for MCP server ${serverName}: ${config.security.riskLevel}`
         );
         failed = true;
       }
@@ -161,7 +161,7 @@ async function validateContextLibrary() {
       }
 
       console.log(
-        `✅ MCP Server: ${serverName} - ${config.security.riskLevel} risk, ${config.agentRelevance.length} agent types`,
+        `✅ MCP Server: ${serverName} - ${config.security.riskLevel} risk, ${config.agentRelevance.length} agent types`
       );
     }
   }
@@ -233,7 +233,7 @@ async function validateContextLibrary() {
     ? Object.keys(contextLibrary.mcpServers).length
     : 0;
   console.log(
-    `📊 Summary: ${Object.keys(contextLibrary.contextSources).length} policy-defined, ${relativeContextFiles.length} on disk, ${discoveredOnly.length} auto-discovered, ${mcpServerCount} MCP servers`,
+    `📊 Summary: ${Object.keys(contextLibrary.contextSources).length} policy-defined, ${relativeContextFiles.length} on disk, ${discoveredOnly.length} auto-discovered, ${mcpServerCount} MCP servers`
   );
 
   return true;

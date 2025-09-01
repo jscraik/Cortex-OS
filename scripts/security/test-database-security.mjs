@@ -14,7 +14,7 @@ try {
     {
       stdio: 'inherit',
       cwd: process.cwd(),
-    },
+    }
   );
   console.log('✅ Semgrep scan completed with no errors');
 
@@ -26,7 +26,7 @@ try {
       {
         stdio: 'pipe',
         cwd: process.cwd(),
-      },
+      }
     );
     console.log('⚠️  Security-related TODO/FIXME comments found');
   } catch (error) {
@@ -41,7 +41,7 @@ try {
       {
         stdio: 'inherit',
         cwd: process.cwd(),
-      },
+      }
     );
     console.log('✅ Unit tests passed');
   } catch (error) {

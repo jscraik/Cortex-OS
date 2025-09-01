@@ -1,13 +1,13 @@
 /**
  * MLX Gateway HTTP Client
- * 
+ *
  * HTTP client for MLX Model Gateway communication
  */
 
-import type { GenerateOptions, GenerateResult } from '../../lib/types.js';
-import type { MLXState } from './types.js';
-import { estimateTokens } from '../../lib/utils.js';
 import { redactSecrets } from '../../lib/secret-store.js';
+import type { GenerateOptions, GenerateResult } from '../../lib/types.js';
+import { estimateTokens } from '../../lib/utils.js';
+import type { MLXState } from './types.js';
 
 export const executeMLXGeneration = async (
   prompt: string,
@@ -17,7 +17,7 @@ export const executeMLXGeneration = async (
   const startTime = Date.now();
   const adjustedOptions = adjustGenerationParams(options, state);
   const url = `${state.config.gatewayUrl!.replace(/\/$/, '')}/chat`;
-  
+
   const body = {
     model: state.config.modelPath,
     msgs: [{ role: 'user', content: prompt }],

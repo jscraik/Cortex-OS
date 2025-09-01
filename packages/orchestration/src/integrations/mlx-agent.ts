@@ -10,7 +10,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { Agent, AgentCapability, AgentRole } from '../types.js';
+import { type Agent, AgentCapability, AgentRole } from '../types.js';
 
 export interface MLXConfig {
   model: string;

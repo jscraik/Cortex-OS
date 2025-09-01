@@ -3,11 +3,11 @@
  * @description Integration tests for TDD implementation verification
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { MarketplaceClient } from './marketplace-client.js';
-import type { MarketplaceConfig } from './marketplace-client.js';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { beforeEach, describe, expect, it } from 'vitest';
+import type { MarketplaceConfig } from './marketplace-client.js';
+import { MarketplaceClient } from './marketplace-client.js';
 
 describe('MCP Marketplace Integration', () => {
   let client: MarketplaceClient;

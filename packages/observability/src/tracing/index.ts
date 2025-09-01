@@ -2,12 +2,12 @@
  * @fileoverview OTEL tracing with ULID propagation
  */
 
-import { trace, SpanStatusCode, SpanKind } from '@opentelemetry/api';
-import { NodeSDK } from '@opentelemetry/sdk-node';
+import { SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { Resource } from '@opentelemetry/resources';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
-import { generateRunId, type ULID, type TraceContext } from '../index.js';
+import { generateRunId, type TraceContext, type ULID } from '../index.js';
 
 const tracer = trace.getTracer('@cortex-os/observability');
 

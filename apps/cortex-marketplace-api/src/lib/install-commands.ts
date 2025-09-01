@@ -1,4 +1,4 @@
-import type { ServerManifest, InstallCommand, ClientType } from '../types.js';
+import type { ClientType, InstallCommand, ServerManifest } from '../types.js';
 
 export function generateCommands(server: ServerManifest): InstallCommand[] {
   const commands: InstallCommand[] = [];
@@ -93,7 +93,10 @@ export function generateInstructions(server: ServerManifest, client: ClientType)
   instructions += `**Publisher:** ${server.publisher.name}${server.publisher.verified ? ' ✓' : ''}\n\n`;
   instructions += `### Installation Command\n\n`;
   instructions += `\`\`\`bash\n${command.command}\n\`\`\`\n\n`;
-  if (server.transport.streamableHttp.auth?.type && server.transport.streamableHttp.auth.type !== 'none') {
+  if (
+    server.transport.streamableHttp.auth?.type &&
+    server.transport.streamableHttp.auth.type !== 'none'
+  ) {
     instructions += `### Authentication Setup\n\n`;
     instructions += `This server requires authentication. `;
     if (server.transport.streamableHttp.auth.type === 'bearer') {

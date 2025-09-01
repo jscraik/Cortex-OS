@@ -4,11 +4,11 @@
  * @author Cortex-OS Team
  */
 
-import type { SimScenario, SimResult, SimBatchResult, SimTurn } from './types';
-import { UserSimulator } from './user-sim';
-import { AgentAdapter, PRPExecutor, AgentResponse } from './agent-adapter';
+import { AgentAdapter, type AgentResponse, type PRPExecutor } from './agent-adapter';
 import { Judge } from './judge';
 import { SimReporter } from './report';
+import type { SimBatchResult, SimResult, SimScenario, SimTurn } from './types';
+import { UserSimulator } from './user-sim';
 
 export interface SimRunnerConfig {
   deterministic?: boolean;

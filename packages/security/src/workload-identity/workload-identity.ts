@@ -3,10 +3,10 @@
  * @description Workload identity attestation and management for SPIFFE/SPIRE
  */
 
-import { withSpan, logWithSpan } from '@cortex-os/telemetry';
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import {
-  SpiffeId,
-  WorkloadIdentity,
+  type SpiffeId,
+  type WorkloadIdentity,
   WorkloadIdentityError,
   WorkloadIdentitySchema,
 } from '../types.ts';

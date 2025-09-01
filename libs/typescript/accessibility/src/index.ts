@@ -4,12 +4,12 @@ export class A11yUtils {
   // Generate accessible color contrast
   static getContrastRatio(foreground: string, background: string): number {
     // Convert hex to RGB
-    const fgRgb = this.hexToRgb(foreground);
-    const bgRgb = this.hexToRgb(background);
+    const fgRgb = A11yUtils.hexToRgb(foreground);
+    const bgRgb = A11yUtils.hexToRgb(background);
 
     // Calculate relative luminance
-    const fgLuminance = this.getRelativeLuminance(fgRgb);
-    const bgLuminance = this.getRelativeLuminance(bgRgb);
+    const fgLuminance = A11yUtils.getRelativeLuminance(fgRgb);
+    const bgLuminance = A11yUtils.getRelativeLuminance(bgRgb);
 
     // Calculate contrast ratio
     const lighter = Math.max(fgLuminance, bgLuminance);
@@ -20,13 +20,13 @@ export class A11yUtils {
 
   // Check if color contrast meets WCAG 2.2 AA requirements
   static meetsAaContrast(foreground: string, background: string): boolean {
-    const ratio = this.getContrastRatio(foreground, background);
+    const ratio = A11yUtils.getContrastRatio(foreground, background);
     return ratio >= 4.5; // AA requirement for normal text
   }
 
   // Check if color contrast meets WCAG 2.2 AAA requirements
   static meetsAaaContrast(foreground: string, background: string): boolean {
-    const ratio = this.getContrastRatio(foreground, background);
+    const ratio = A11yUtils.getContrastRatio(foreground, background);
     return ratio >= 7.0; // AAA requirement for normal text
   }
 
@@ -54,9 +54,9 @@ export class A11yUtils {
     };
 
     // Apply gamma correction
-    const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : Math.pow((sRgb.r + 0.055) / 1.055, 2.4);
-    const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : Math.pow((sRgb.g + 0.055) / 1.055, 2.4);
-    const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : Math.pow((sRgb.b + 0.055) / 1.055, 2.4);
+    const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : ((sRgb.r + 0.055) / 1.055) ** 2.4;
+    const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : ((sRgb.g + 0.055) / 1.055) ** 2.4;
+    const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : ((sRgb.b + 0.055) / 1.055) ** 2.4;
 
     // Calculate luminance
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -72,7 +72,7 @@ export class A11yUtils {
   // Create accessible keyboard navigation
   static createKeyboardNavHandler(
     items: HTMLElement[],
-    onSelect: (item: HTMLElement, index: number) => void,
+    onSelect: (item: HTMLElement, index: number) => void
   ): (event: KeyboardEvent) => void {
     let currentIndex = 0;
 

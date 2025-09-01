@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { performance } from 'perf_hooks';
 import supertest from 'supertest';
-import { createASBRServer, type ASBRServer } from '../../src/api/server.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
+import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 
 describe('ASBR API Performance Tests', () => {

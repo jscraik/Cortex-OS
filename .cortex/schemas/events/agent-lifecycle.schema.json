@@ -10,12 +10,7 @@
     },
     "type": {
       "type": "string",
-      "enum": [
-        "agent.started",
-        "agent.completed",
-        "agent.failed",
-        "agent.cancelled"
-      ]
+      "enum": ["agent.started", "agent.completed", "agent.failed", "agent.cancelled"]
     },
     "id": {
       "type": "string",
@@ -116,13 +111,5 @@
       "required": ["runId", "agentName"]
     }
   },
-  "required": [
-    "specversion",
-    "type", 
-    "id",
-    "source",
-    "time",
-    "datacontenttype",
-    "data"
-  ]
+  "required": ["specversion", "type", "id", "source", "time", "datacontenttype", "data"]
 }

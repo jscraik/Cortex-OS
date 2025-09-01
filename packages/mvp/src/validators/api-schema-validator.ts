@@ -3,8 +3,8 @@
  * @description API schema validation using OpenAPI standards
  */
 
-import { GateValidator, ValidationResult } from '../lib/validation-types.js';
-import { PRPState } from '../state.js';
+import type { GateValidator, ValidationResult } from '../lib/validation-types.js';
+import type { PRPState } from '../state.js';
 
 export class ApiSchemaValidator implements GateValidator {
   async validate(state: PRPState): Promise<ValidationResult> {

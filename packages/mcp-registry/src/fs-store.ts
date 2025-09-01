@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
-import { dirname, join } from 'node:path';
 import os from 'node:os';
+import { dirname, join } from 'node:path';
 import type { ServerInfo } from '@cortex-os/mcp-core/contracts';
 
 function getDbPath() {

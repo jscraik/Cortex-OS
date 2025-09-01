@@ -218,9 +218,7 @@ export interface TaskRef {
   resume(): Promise<void>;
 }
 
-export interface UnsubscribeFunction {
-  (): void;
-}
+export type UnsubscribeFunction = () => void;
 
 // Configuration Types
 export const ConfigSchema = z.object({

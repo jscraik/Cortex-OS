@@ -3,9 +3,9 @@
  * @description Runtime security validation for MCP servers against governance policies
  */
 
+import type { ServerManifest } from '@cortex-os/mcp-registry';
 import { readFile } from 'fs/promises';
 import { z } from 'zod';
-import type { ServerManifest } from '@cortex-os/mcp-registry';
 
 // Policy schema from governance
 const GovernancePolicySchema = z.object({
@@ -66,7 +66,7 @@ export class McpSecurityValidator {
    */
   static async fromPolicyFile(
     policyPath: string,
-    enforcementLevel: 'strict' | 'warn' | 'permissive' = 'strict',
+    enforcementLevel: 'strict' | 'warn' | 'permissive' = 'strict'
   ): Promise<McpSecurityValidator> {
     const content = await readFile(policyPath, 'utf-8');
     const policy = GovernancePolicySchema.parse(JSON.parse(content));
@@ -147,12 +147,12 @@ export class McpSecurityValidator {
 
     // Check for dangerous permissions
     const hasDangerous = permissions.some((perm) =>
-      dangerous.some((dangerousPerm) => perm.includes(dangerousPerm)),
+      dangerous.some((dangerousPerm) => perm.includes(dangerousPerm))
     );
 
     if (hasDangerous) {
       const dangerousPerms = permissions.filter((perm) =>
-        dangerous.some((dangerousPerm) => perm.includes(dangerousPerm)),
+        dangerous.some((dangerousPerm) => perm.includes(dangerousPerm))
       );
 
       result.warnings.push(`Server requests dangerous permissions: ${dangerousPerms.join(', ')}`);
@@ -165,16 +165,16 @@ export class McpSecurityValidator {
 
     // Check for confirmation-required permissions
     const needsConfirmation = permissions.some((perm) =>
-      requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm)),
+      requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm))
     );
 
     if (needsConfirmation) {
       result.requiresConfirmation = true;
       const confirmPerms = permissions.filter((perm) =>
-        requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm)),
+        requireConfirmation.some((confirmPerm) => perm.includes(confirmPerm))
       );
       result.warnings.push(
-        `Server requires confirmation for permissions: ${confirmPerms.join(', ')}`,
+        `Server requires confirmation for permissions: ${confirmPerms.join(', ')}`
       );
     }
 
@@ -217,7 +217,7 @@ export class McpSecurityValidator {
    */
   private async validateSignatures(
     server: ServerManifest,
-    result: ValidationResult,
+    result: ValidationResult
   ): Promise<void> {
     if (!this.policy.security.signatures.required) {
       return;
@@ -314,8 +314,8 @@ export class McpSecurityValidator {
     const permissions = server.permissions || [];
     return permissions.some((perm) =>
       this.policy.security.permissions.requireConfirmation.some((confirmPerm) =>
-        perm.includes(confirmPerm),
-      ),
+        perm.includes(confirmPerm)
+      )
     );
   }
 }

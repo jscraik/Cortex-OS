@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import micromatch from 'micromatch';
 import { readFileSync } from 'node:fs';
 import { globby } from 'globby';
+import micromatch from 'micromatch';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 describe('protected globs', () => {
@@ -39,7 +39,7 @@ const policySchema = z.object({
   deniedGlobs: z.array(z.string()).default([]),
 });
 const policy = policySchema.parse(
-  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8')),
+  JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8'))
 );
 
 describe('path policy', () => {

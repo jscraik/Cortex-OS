@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * GitHub MCP Server for Cortex-OS
- * 
+ *
  * Exposes GitHub operations as MCP (Model Context Protocol) tools
  * Integrates with A2A event bus for real-time updates
- * 
+ *
  * Usage:
  *   cortex-mcp-github
  *   cortex-mcp-github --config /path/to/config.json
@@ -14,28 +14,24 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { GitHubMCPServer } from './github-mcp-server.js';
-import { GitHubAuth } from './auth/github-auth.js';
-import { A2AEventBridge } from './events/a2a-bridge.js';
-import { CONFIG_SCHEMA, type GitHubMCPConfig } from './config/schema.js';
-import { Logger } from './utils/logger.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
+import { GitHubAuth } from './auth/github-auth.js';
+import { CONFIG_SCHEMA, type GitHubMCPConfig } from './config/schema.js';
+import { A2AEventBridge } from './events/a2a-bridge.js';
+import { GitHubMCPServer } from './github-mcp-server.js';
+import { Logger } from './utils/logger.js';
 
 // Command line argument parsing
 const args = process.argv.slice(2);
-const configPath = args.includes('--config') 
-  ? args[args.indexOf('--config') + 1] 
+const configPath = args.includes('--config')
+  ? args[args.indexOf('--config') + 1]
   : process.env.CORTEX_GITHUB_MCP_CONFIG;
 
-const repoArg = args.includes('--repo') 
-  ? args[args.indexOf('--repo') + 1]
-  : undefined;
+const repoArg = args.includes('--repo') ? args[args.indexOf('--repo') + 1] : undefined;
 
-const tokenArg = args.includes('--token')
-  ? args[args.indexOf('--token') + 1]
-  : undefined;
+const tokenArg = args.includes('--token') ? args[args.indexOf('--token') + 1] : undefined;
 
 // Configuration loading
 function loadConfig(): GitHubMCPConfig {
@@ -86,7 +82,7 @@ function loadConfig(): GitHubMCPConfig {
 
   // Merge configurations
   const mergedConfig = { ...config, ...envConfig };
-  
+
   // Override with command line arguments
   if (tokenArg) {
     mergedConfig.auth = { method: 'token', token: tokenArg };
@@ -98,7 +94,7 @@ function loadConfig(): GitHubMCPConfig {
   } catch (error) {
     if (error instanceof z.ZodError) {
       Logger.error('Configuration validation failed:');
-      error.errors.forEach(err => {
+      error.errors.forEach((err) => {
         Logger.error(`  ${err.path.join('.')}: ${err.message}`);
       });
     }
@@ -110,10 +106,10 @@ async function main() {
   try {
     // Load and validate configuration
     const config = loadConfig();
-    Logger.info('GitHub MCP Server starting...', { 
+    Logger.info('GitHub MCP Server starting...', {
       version: config.server.version,
       repository: config.defaultRepository,
-      authMethod: config.auth.method 
+      authMethod: config.auth.method,
     });
 
     // Initialize authentication
@@ -144,7 +140,7 @@ async function main() {
           resources: {},
           prompts: {},
         },
-      }
+      },
     );
 
     // Register tool handlers
@@ -162,11 +158,11 @@ async function main() {
     // Handle graceful shutdown
     const cleanup = async () => {
       Logger.info('Shutting down GitHub MCP Server...');
-      
+
       if (eventBridge) {
         await eventBridge.disconnect();
       }
-      
+
       await githubServer.shutdown();
       process.exit(0);
     };
@@ -177,13 +173,12 @@ async function main() {
     // Start the server
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    
+
     Logger.info('GitHub MCP Server running', {
       tools: (await githubServer.listTools()).length,
       repository: config.defaultRepository,
       a2aEnabled: config.a2a.enabled,
     });
-
   } catch (error) {
     Logger.error('Failed to start GitHub MCP Server:', error);
     process.exit(1);

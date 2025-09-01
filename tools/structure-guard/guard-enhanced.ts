@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+
 /**
  * Structure Guard - Monorepo Policy Enforcement
  *
@@ -9,12 +10,12 @@
  * 4. Enforcing import rules
  */
 
-import { globby } from 'globby';
-import micromatch from 'micromatch';
-import { readFileSync, existsSync } from 'node:fs';
-import { z } from 'zod';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { globby } from 'globby';
+import micromatch from 'micromatch';
+import { z } from 'zod';
 
 // Resolve the directory of this script
 const __filename = fileURLToPath(import.meta.url);
@@ -30,7 +31,7 @@ const policySchema = z.object({
       required: z.array(z.string()),
       requireOneOf: z.array(z.string()),
       allowed: z.array(z.string()),
-    }),
+    })
   ),
   maxFilesPerChange: z.number(),
   overrideRules: z.object({
@@ -63,7 +64,7 @@ const policy = policySchema.parse(JSON.parse(readFileSync(policyPath, 'utf8')));
 // Get all files in the repository, excluding ignored directories
 const files = await globby(
   ['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**', '!**/.turbo/**'],
-  { dot: true },
+  { dot: true }
 );
 
 // Validation functions
@@ -94,7 +95,7 @@ function validatePackageStructure(files: string[]): { packageName: string; error
     ...new Set(
       files
         .filter((f) => f.startsWith('packages/') && f.split('/').length >= 3)
-        .map((f) => `packages/${f.split('/')[1]}/`),
+        .map((f) => `packages/${f.split('/')[1]}/`)
     ),
   ];
 
@@ -217,7 +218,7 @@ if (disallowedFiles.length > 0) {
   console.error('❌ Disallowed file placements:');
   disallowedFiles.forEach((f) => console.error(`  - ${f}`));
   console.error(
-    "\nAuto-fix: Move files to allowed locations or extend 'allowedGlobs' in policy.json",
+    "\nAuto-fix: Move files to allowed locations or extend 'allowedGlobs' in policy.json"
   );
   exitCode = Math.max(exitCode, 2);
 }
@@ -242,7 +243,7 @@ if (disallowedRootEntries.length > 0) {
   console.error('❌ Disallowed root entries:');
   disallowedRootEntries.forEach((f) => console.error(`  - ${f}`));
   console.error(
-    "\nAuto-fix: Move files to allowed locations or add to 'allowedRootEntries' in policy.json",
+    "\nAuto-fix: Move files to allowed locations or add to 'allowedRootEntries' in policy.json"
   );
   exitCode = Math.max(exitCode, 6);
 }

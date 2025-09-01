@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { validateServerManifest, validateRegistry } from './validator.js';
+import { validateRegistry, validateServerManifest } from './validator.js';
 
 const baseManifest = {
   id: 'test',

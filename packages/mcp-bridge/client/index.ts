@@ -1,2 +1,2 @@
 // Delegated client: use unified MCP client
-export { McpClient, createMcpClient, ConnectionState } from '@cortex-os/mcp/client';
+export { ConnectionState, createMcpClient, McpClient } from '@cortex-os/mcp/client';

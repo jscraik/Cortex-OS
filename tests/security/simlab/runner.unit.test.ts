@@ -1,7 +1,7 @@
-import { expect, it } from 'vitest';
+import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
 import { runScenario } from '@cortex-os/simlab-core/runner';
 import { counterEnv } from '@cortex-os/simlab-env/local-counter';
-import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
+import { expect, it } from 'vitest';
 
 it('reaches target deterministically', async () => {
   const scenario = {

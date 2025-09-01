@@ -22,7 +22,7 @@
                 "description": "Source package pattern"
               },
               "to": {
-                "type": "string", 
+                "type": "string",
                 "description": "Target package pattern"
               },
               "message": {
@@ -88,7 +88,7 @@
         },
         {
           "from": "packages/rag/**",
-          "to": "packages/model-gateway/**", 
+          "to": "packages/model-gateway/**",
           "message": "RAG must use model-gateway HTTP API, not direct imports"
         }
       ],
@@ -112,7 +112,7 @@
         },
         {
           "pattern": "process\\.cwd\\(\\)",
-          "severity": "warning", 
+          "severity": "warning",
           "message": "Avoid process.cwd() - use __dirname or import.meta.url"
         }
       ]

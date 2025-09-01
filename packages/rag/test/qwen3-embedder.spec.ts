@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EventEmitter } from 'events';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 class MockProc extends EventEmitter {
   stdout = new EventEmitter();

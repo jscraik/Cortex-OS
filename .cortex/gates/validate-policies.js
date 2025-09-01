@@ -2,7 +2,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { readFileSync } from 'fs';
 import { glob } from 'glob';
-import { join, dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -49,12 +49,12 @@ for (const policyFile of policyFiles) {
       const validate = ajv.compile(schema);
       const isValid = validate(policy);
 
-      if (!isValid) {
+      if (isValid) {
+        console.log(`✅ ${policyFile} is valid`);
+      } else {
         console.error(`❌ ${policyFile} validation failed:`);
         console.error(validate.errors);
         valid = false;
-      } else {
-        console.log(`✅ ${policyFile} is valid`);
       }
     } catch (schemaErr) {
       console.log(`⚠️  No schema found for ${policyFile}, skipping validation`);

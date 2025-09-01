@@ -1,4 +1,4 @@
-import { TaskInput, TaskInputSchema, ValidationError } from '../types/index.js';
+import { type TaskInput, TaskInputSchema, ValidationError } from '../types/index.js';
 
 /**
  * Validate raw task input and ensure required fields

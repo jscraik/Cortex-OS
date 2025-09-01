@@ -1,10 +1,10 @@
 /**
  * MLX Thermal and Memory Monitoring
- * 
+ *
  * System resource monitoring for thermal management
  */
 
-import type { ThermalStatus, MemoryStatus } from './types.js';
+import type { MemoryStatus, ThermalStatus } from './types.js';
 
 export const checkThermalStatus = async (): Promise<ThermalStatus> => {
   try {

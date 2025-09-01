@@ -3,7 +3,7 @@
  */
 
 import { metrics } from '@opentelemetry/api';
-import type { MetricLabels, ErrorBudget, ULID } from '../types.js';
+import type { ErrorBudget, MetricLabels, ULID } from '../types.js';
 
 const meter = metrics.getMeter('@cortex-os/observability');
 

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PrismaStore } from '../src/adapters/store.prisma/client.js';
-import { Memory } from '../src/domain/types.js';
+import type { Memory } from '../src/domain/types.js';
 
 // Mock Prisma client for testing
 const mockPrisma = {

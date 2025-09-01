@@ -10,7 +10,7 @@ services:
       dockerfile: Dockerfile
     container_name: a2a-protocol
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -19,12 +19,12 @@ services:
       - default
     labels:
       # OrbStack specific labels
-      - "orbstack.http.port=3000"
-      - "orbstack.http.domain=a2a.local"
-      - "orbstack.description=A2A Protocol Server - JSON-RPC 2.0"
-      - "orbstack.icon=🤖"
+      - 'orbstack.http.port=3000'
+      - 'orbstack.http.domain=a2a.local'
+      - 'orbstack.description=A2A Protocol Server - JSON-RPC 2.0'
+      - 'orbstack.icon=🤖'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      test: ['CMD-SHELL', 'curl -f http://localhost:3000/health || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3

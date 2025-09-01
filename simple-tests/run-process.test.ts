@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { join, dirname } from 'path';
+import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { describe, expect, it } from 'vitest';
 import { runProcess } from '../src/lib/run-process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -14,14 +14,16 @@ describe('runProcess', () => {
 
   it('rejects on non-zero exit', async () => {
     await expect(
-      runProcess('node', ['-e', 'process.stderr.write("fail"); process.exit(1)'], { parseJson: false }),
+      runProcess('node', ['-e', 'process.stderr.write("fail"); process.exit(1)'], {
+        parseJson: false,
+      })
     ).rejects.toThrow(/fail/);
   });
 
   it('terminates after timeout', async () => {
     const start = Date.now();
     await expect(
-      runProcess('node', [fixture], { timeoutMs: 100, parseJson: false }),
+      runProcess('node', [fixture], { timeoutMs: 100, parseJson: false })
     ).rejects.toThrow(/timed out/i);
     expect(Date.now() - start).toBeLessThan(2000);
   });

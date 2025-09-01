@@ -42,7 +42,7 @@ export async function record(evt: ReturnType<typeof auditEvent>) {
   // append-only log, and attach to OTEL span if present
   try {
     // Lazy import to avoid hard dependency during tests
-     
+
     const { context, trace } = require('@opentelemetry/api');
     const span = trace.getSpan(context.active());
     span?.addEvent('audit', { type: evt.type, subject: JSON.stringify(evt.subject) });

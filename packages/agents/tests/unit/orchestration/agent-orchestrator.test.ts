@@ -2,14 +2,14 @@
  * Tests for Agent Orchestration Layer
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createMockEventBus, createMockMCPClient } from '@tests/setup.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ModelProvider } from '@/lib/types.js';
 import {
-  AgentOrchestrator,
+  type AgentOrchestrator,
   createOrchestrator,
   WorkflowBuilder,
 } from '@/orchestration/agent-orchestrator.js';
-import { createMockEventBus, createMockMCPClient } from '@tests/setup.js';
-import type { ModelProvider } from '@/lib/types.js';
 
 describe('AgentOrchestrator', () => {
   let orchestrator: AgentOrchestrator;

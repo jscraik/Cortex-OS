@@ -58,7 +58,7 @@ describe('observability helpers', () => {
     expect(errorSpy).not.toHaveBeenCalled();
 
     // invalid: missing required field
-    // @ts-ignore intentionally wrong shape for negative test
+    // @ts-expect-error intentionally wrong shape for negative test
     const bad = { evt: 'chat.stream.start', ts: new Date().toISOString(), model: 'm' } as unknown;
     // Should not throw; should print an error
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,22 +2,22 @@
  * Tests for utility functions
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+  debounce,
+  deepClone,
+  estimateTokens,
+  filterDefined,
   generateAgentId,
   generateTraceId,
-  sleep,
-  timeout,
-  withTimeout,
-  retry,
-  debounce,
-  throttle,
-  deepClone,
   isDefined,
-  filterDefined,
+  retry,
   safeGet,
-  estimateTokens,
+  sleep,
+  throttle,
+  timeout,
   truncateToTokens,
+  withTimeout,
 } from '@/lib/utils.js';
 
 describe('Utility Functions', () => {

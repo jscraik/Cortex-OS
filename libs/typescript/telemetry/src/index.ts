@@ -4,18 +4,18 @@
  */
 
 import {
-  trace,
-  metrics,
-  Span,
-  SpanStatusCode,
-  Context,
-  SpanContext,
-  TraceFlags,
+  type Context,
   createTraceState,
+  metrics,
+  type Span,
+  type SpanContext,
+  SpanStatusCode,
+  TraceFlags,
+  trace,
 } from '@opentelemetry/api';
-import { NodeSDK } from '@opentelemetry/sdk-node';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 
 // Type aliases for better code reuse
 export type SpanAttributes = Record<string, string | number | boolean>;
@@ -53,34 +53,29 @@ export function withSpan<T>(
     attributes?: SpanAttributes;
     links?: Array<{ context: SpanContext; attributes?: SpanAttributes }>;
     parentContext?: Context;
-  },
+  }
 ): Promise<T> {
   const spanOptions = {
     attributes: options?.attributes ?? {},
     links: options?.links ?? [],
   };
 
-  return tracer.startActiveSpan(
-    name,
-    spanOptions,
-    options?.parentContext,
-    async (span) => {
-      try {
-        const result = await fn(span);
-        span.setStatus({ code: SpanStatusCode.OK });
-        return result;
-      } catch (error) {
-        span.recordException(error as Error);
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
-        throw error;
-      } finally {
-        span.end();
-      }
-    },
-  );
+  return tracer.startActiveSpan(name, spanOptions, options?.parentContext, async (span) => {
+    try {
+      const result = await fn(span);
+      span.setStatus({ code: SpanStatusCode.OK });
+      return result;
+    } catch (error) {
+      span.recordException(error as Error);
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+      throw error;
+    } finally {
+      span.end();
+    }
+  });
 }
 
 /**
@@ -89,7 +84,7 @@ export function withSpan<T>(
 export function createChildSpan(
   name: string,
   parentContext?: Context,
-  attributes?: SpanAttributes,
+  attributes?: SpanAttributes
 ): Span {
   return tracer.startSpan(name, { attributes: attributes ?? {} }, parentContext);
 }
@@ -161,7 +156,7 @@ export function logWithSpan(
   level: 'info' | 'warn' | 'error',
   message: string,
   attributes?: LogAttributes,
-  span?: Span,
+  span?: Span
 ): void {
   const logAttributes: Record<string, unknown> = {
     ...attributes,
@@ -189,4 +184,3 @@ export function logWithSpan(
       console.log(message, logAttributes);
   }
 }
-

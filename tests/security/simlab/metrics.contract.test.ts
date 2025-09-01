@@ -1,9 +1,9 @@
-import { expect, it } from 'vitest';
+import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
+import { Scenario } from '@cortex-os/simlab-contracts/scenario';
 import { runScenario } from '@cortex-os/simlab-core/runner';
 import { counterEnv } from '@cortex-os/simlab-env/local-counter';
-import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
 import { summarize } from '@cortex-os/simlab-metrics/basic';
-import { Scenario } from '@cortex-os/simlab-contracts/scenario';
+import { expect, it } from 'vitest';
 
 it('summarize returns contract fields', async () => {
   const scenario = {

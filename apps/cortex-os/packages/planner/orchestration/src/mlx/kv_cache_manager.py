@@ -356,13 +356,18 @@ class KVCacheManager:
                 continue
 
             # Check for suffix match (common in autoregressive generation)
-            if len(entry.tokens) >= len(tokens) and entry.tokens[-len(tokens) :] == tokens:
+            if (
+                len(entry.tokens) >= len(tokens)
+                and entry.tokens[-len(tokens) :] == tokens
+            ):
                 return key
 
             # Check for prefix match
             common_length = min(len(entry.tokens), len(tokens))
-            if (common_length > self.max_token_window // 2 and
-                entry.tokens[:common_length] == tokens[:common_length]):
+            if (
+                common_length > self.max_token_window // 2
+                and entry.tokens[:common_length] == tokens[:common_length]
+            ):
                 return key
 
         return None

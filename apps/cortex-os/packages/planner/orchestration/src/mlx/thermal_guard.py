@@ -181,15 +181,16 @@ class AppleSiliconThermalMonitor:
         current_time = time.time() * 1000  # milliseconds
 
         # Use cached data if within TTL for <1ms overhead
-        if ((current_time - self._cache_timestamp) < self._cache_ttl_ms and
-            "gpu_temp" in self._last_temp_cache):
+        if (
+            current_time - self._cache_timestamp
+        ) < self._cache_ttl_ms and "gpu_temp" in self._last_temp_cache:
             return ThermalMetrics(
                 gpu_temp_celsius=self._last_temp_cache["gpu_temp"],
                 cpu_temp_celsius=self._last_temp_cache["cpu_temp"],
                 power_draw_watts=self._last_temp_cache.get("power", 0.0),
                 fan_speed_rpm=self._last_temp_cache.get("fan_speed", 0),
-                    thermal_pressure=self._last_temp_cache.get("thermal_pressure", 0.0),
-                )
+                thermal_pressure=self._last_temp_cache.get("thermal_pressure", 0.0),
+            )
 
         # Fetch new thermal data
         metrics = await self._fetch_thermal_data()

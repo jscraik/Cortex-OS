@@ -32,13 +32,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": [
-              "read",
-              "write", 
-              "execute",
-              "network",
-              "filesystem"
-            ]
+            "enum": ["read", "write", "execute", "network", "filesystem"]
           }
         },
         "sandbox": {
@@ -62,10 +56,5 @@
       }
     }
   },
-  "required": [
-    "name",
-    "description", 
-    "inputSchema",
-    "security"
-  ]
+  "required": ["name", "description", "inputSchema", "security"]
 }

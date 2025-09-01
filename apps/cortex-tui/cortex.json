@@ -5,13 +5,13 @@
   "homepage": "https://cortex-os.ai",
   "repository": "https://github.com/cortex-os/cortex-tui",
   "license": "MIT",
-  
+
   "runtime": {
     "engine": "cortex-tui",
     "platform": "terminal",
     "version": "2.0.0"
   },
-  
+
   "providers": {
     "default": "github",
     "fallback": ["openai", "anthropic", "mlx"],
@@ -42,7 +42,7 @@
       }
     }
   },
-  
+
   "features": {
     "tui": {
       "enabled": true,
@@ -64,13 +64,13 @@
           "description": "File system operations"
         },
         {
-          "name": "cortex-git", 
+          "name": "cortex-git",
           "command": "cortex-mcp-git",
           "description": "Git operations"
         },
         {
           "name": "cortex-web",
-          "command": "cortex-mcp-web", 
+          "command": "cortex-mcp-web",
           "description": "Web scraping and HTTP"
         }
       ]
@@ -92,7 +92,7 @@
       "timeout_ms": 30000
     }
   },
-  
+
   "security": {
     "network": {
       "bind_localhost_only": true,
@@ -111,7 +111,7 @@
       "audit_logging": true
     }
   },
-  
+
   "github_integration": {
     "enabled": false,
     "trigger_commands": ["/cortex"],
@@ -122,7 +122,7 @@
       "stats": ".github/workflows/cortex-stats.yml"
     }
   },
-  
+
   "ui": {
     "theme": "dark",
     "keybindings": "default",
@@ -156,14 +156,14 @@
       }
     }
   },
-  
+
   "installation": {
     "auto_install_deps": true,
     "create_config": true,
     "setup_github_actions": false,
     "install_mcp_servers": true
   },
-  
+
   "telemetry": {
     "enabled": false,
     "anonymous_usage": false,

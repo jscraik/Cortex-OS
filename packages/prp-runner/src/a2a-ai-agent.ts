@@ -8,14 +8,14 @@
  */
 
 import {
-  A2AMessage,
-  AgentCapabilities,
-  AgentCard,
-  AgentSkill,
+  type A2AMessage,
+  type AgentCapabilities,
+  type AgentCard,
+  type AgentSkill,
   TransportProtocol,
 } from '@cortex-os/a2a';
-import { AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
-import { ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
+import { type AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
+import { type ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
 /**
  * A2A AI Agent - Exposes AI capabilities as agent skills for multi-agent coordination

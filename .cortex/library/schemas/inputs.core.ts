@@ -9,7 +9,7 @@ export const CoreInputSchema = z.object({
       z.object({
         role: z.enum(['user', 'assistant']),
         content: z.string(),
-      }),
+      })
     )
     .optional(),
   metadata: z.record(z.unknown()).optional(),

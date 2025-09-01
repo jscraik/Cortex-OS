@@ -4,10 +4,7 @@
   "defaultBase": "main",
   "useInferencePlugins": true,
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
       "!{projectRoot}/.eslintrc.json",
@@ -32,14 +29,10 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ],
-      "cache": true
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "cache": true,
+      "outputs": ["{projectRoot}/dist", "{projectRoot}/build"]
     },
     "test": {
       "inputs": [
@@ -49,21 +42,22 @@
         "{workspaceRoot}/vitest.config.ts",
         "{workspaceRoot}/vitest.workspace.ts"
       ],
-      "cache": true
+      "cache": true,
+      "outputs": ["{projectRoot}/coverage"]
     },
     "lint": {
-      "inputs": [
-        "default",
-        "{workspaceRoot}/eslint.config.js"
-      ],
+      "inputs": ["default", "{workspaceRoot}/eslint.config.js", "{workspaceRoot}/biome.json"],
+      "cache": true
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^production"],
       "cache": true
     },
     "e2e": {
-      "inputs": [
-        "default",
-        "^production"
-      ],
-      "cache": true
+      "inputs": ["default", "^production"],
+      "cache": true,
+      "dependsOn": ["build"]
     }
   },
   "plugins": [
@@ -71,6 +65,20 @@
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "testTargetName": "test",
+        "serveTargetName": "serve"
+      }
+    },
+    {
+      "plugin": "@nx/js",
+      "options": {
+        "analyzeSourceFiles": true
       }
     }
   ],
@@ -91,13 +99,9 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "test",
-          "lint",
-          "typecheck",
-          "biome"
-        ]
+        "cacheableOperations": ["build", "test", "lint", "typecheck", "biome", "e2e"],
+        "parallel": 3,
+        "cacheDirectory": ".nx/cache"
       }
     }
   },
@@ -105,20 +109,11 @@
   "depConstraints": [
     {
       "sourceTag": "scope:asbr",
-      "onlyDependOnLibsWithTags": [
-        "scope:a2a",
-        "scope:mcp",
-        "type:shared"
-      ]
+      "onlyDependOnLibsWithTags": ["scope:a2a", "scope:mcp", "type:shared"]
     },
     {
       "sourceTag": "scope:mvp",
-      "onlyDependOnLibsWithTags": [
-        "scope:mvp-core",
-        "scope:a2a",
-        "scope:mcp",
-        "type:shared"
-      ]
+      "onlyDependOnLibsWithTags": ["scope:mvp-core", "scope:a2a", "scope:mcp", "type:shared"]
     },
     {
       "sourceTag": "scope:app",
@@ -133,23 +128,15 @@
     },
     {
       "sourceTag": "type:feature",
-      "onlyDependOnLibsWithTags": [
-        "type:shared",
-        "type:core"
-      ]
+      "onlyDependOnLibsWithTags": ["type:shared", "type:core"]
     },
     {
       "sourceTag": "type:shared",
-      "onlyDependOnLibsWithTags": [
-        "type:shared"
-      ]
+      "onlyDependOnLibsWithTags": ["type:shared"]
     },
     {
       "sourceTag": "type:core",
-      "onlyDependOnLibsWithTags": [
-        "type:shared",
-        "type:core"
-      ]
+      "onlyDependOnLibsWithTags": ["type:shared", "type:core"]
     }
   ]
 }

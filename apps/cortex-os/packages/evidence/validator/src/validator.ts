@@ -4,16 +4,16 @@
  */
 
 import { createHash } from 'crypto';
-import { access, readFile } from 'fs/promises';
 import { constants } from 'fs';
+import { access, readFile } from 'fs/promises';
 import * as path from 'path';
 import {
-  EvidenceCollection,
-  Finding,
+  type EvidenceCollection,
+  type Finding,
   FindingSchema,
-  ValidationResult,
+  type ValidationResult,
   ValidationResultSchema,
-  ValidatorConfig,
+  type ValidatorConfig,
 } from './types.js';
 
 async function pathExists(p: string): Promise<boolean> {
@@ -72,13 +72,7 @@ export class EvidenceValidator {
     const filePath = path.resolve(this.config.repositoryRoot, finding.path);
     fileExists = await pathExists(filePath);
 
-    if (!fileExists) {
-      if (this.config.allowMissingFiles) {
-        warnings.push('File does not exist but is allowed by configuration');
-      } else {
-        errors.push(`File does not exist: ${finding.path}`);
-      }
-    } else {
+    if (fileExists) {
       try {
         // Read file content
         const content = await readFile(filePath, 'utf-8');
@@ -116,6 +110,10 @@ export class EvidenceValidator {
           `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
+    } else if (this.config.allowMissingFiles) {
+      warnings.push('File does not exist but is allowed by configuration');
+    } else {
+      errors.push(`File does not exist: ${finding.path}`);
     }
 
     const result: ValidationResult = {

@@ -7,10 +7,10 @@
  * @status active
  */
 
+import express from 'express';
 import { z } from 'zod';
 import { MLXMcpServer } from './mlx-mcp-server.js';
 import { universalMcpManager } from './universal-mcp-manager.js';
-import express from 'express';
 
 const configPathSchema = z.string().min(1, 'MLX config path is required');
 const portSchema = z.number().int().positive().max(65535);

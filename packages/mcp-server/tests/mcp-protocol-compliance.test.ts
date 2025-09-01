@@ -1,6 +1,6 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
-import request from 'supertest';
 import { ErrorCode } from '@modelcontextprotocol/sdk';
+import request from 'supertest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { app } from '../src/server.js';
 
 describe('MCP Protocol Compliance Tests', () => {

@@ -9,9 +9,9 @@
  * @ai_provenance_hash N/A
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ThermalGuardPlugin } from '../thermal-guard.plugin';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GPUMonitorPlugin } from '../gpu-monitor.plugin';
+import { ThermalGuardPlugin } from '../thermal-guard.plugin';
 
 // Mock systeminformation module
 vi.mock('systeminformation', () => ({

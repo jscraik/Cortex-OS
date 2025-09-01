@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import { readAll } from '@cortex-os/mcp-registry/fs-store';
+import { Command } from 'commander';
 
 export const mcpList = new Command('list')
   .description('List installed MCP servers')

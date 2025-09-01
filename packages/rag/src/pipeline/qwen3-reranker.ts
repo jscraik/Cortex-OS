@@ -1,8 +1,6 @@
-
 import { tmpdir } from 'os';
 import path, { join } from 'path';
 import { fileURLToPath } from 'url';
-
 
 /**
  * Document with relevance score for reranking
@@ -231,16 +229,16 @@ def rerank_documents():
             trust_remote_code=True,
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
         )
-        
+
         if torch.cuda.is_available():
             model = model.cuda()
         elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
             model = model.to('mps')
-        
+
         model.eval()
-        
+
         scores = []
-        
+
         with torch.no_grad():
             for doc_text in documents:
                 # Create query-document pairs for reranking
@@ -252,16 +250,16 @@ def rerank_documents():
                     truncation=True,
                     padding=True
                 )
-                
+
                 # Move to appropriate device
                 if torch.cuda.is_available():
                     inputs = {k: v.cuda() for k, v in inputs.items()}
                 elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
                     inputs = {k: v.to('mps') for k, v in inputs.items()}
-                
+
                 # Get relevance score
                 outputs = model(**inputs)
-                
+
                 # Extract relevance score (model-specific)
                 # For Qwen3-Reranker, the score is typically in the last hidden state
                 if hasattr(outputs, 'logits'):
@@ -273,13 +271,13 @@ def rerank_documents():
                 else:
                     # Fallback: use mean of hidden states
                     score = torch.sigmoid(outputs.last_hidden_state.mean()).item()
-                
+
                 scores.append(float(score))
-        
+
         # Return scores as JSON
         result = {"scores": scores}
         print(json.dumps(result))
-        
+
     except Exception as e:
         error_result = {"error": str(e)}
         print(json.dumps(error_result))

@@ -1,14 +1,99 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":prHourlyLimit10", ":rebaseStalePrs", "group:allNonMajor"],
+  "extends": [
+    "config:recommended",
+    ":prHourlyLimit10",
+    ":rebaseStalePrs",
+    "group:allNonMajor",
+    ":semanticCommits",
+    ":automergePatch",
+    ":automergeMinor"
+  ],
+  "schedule": ["after 10pm every weekday", "before 5am every weekday", "every weekend"],
+  "timezone": "America/Los_Angeles",
+  "labels": ["dependencies"],
+  "assignees": ["jamiescottcraik"],
+  "reviewers": ["jamiescottcraik"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "stabilityDays": 3,
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "🔄 Dependency Dashboard",
   "packageRules": [
     {
       "matchManagers": ["npm"],
-      "enabled": true
+      "enabled": true,
+      "rangeStrategy": "bump",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
     },
     {
       "matchManagers": ["pip-compile", "uv"],
-      "enabled": true
+      "enabled": true,
+      "rangeStrategy": "bump",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "python-deps"
+    },
+    {
+      "matchPackagePatterns": ["^@types/"],
+      "groupName": "TypeScript definitions",
+      "automerge": true
+    },
+    {
+      "matchPackagePatterns": ["^eslint", "^@typescript-eslint/"],
+      "groupName": "ESLint packages",
+      "schedule": ["before 5am on monday"]
+    },
+    {
+      "matchPackagePatterns": ["^@biomejs/"],
+      "groupName": "Biome packages",
+      "automerge": true
+    },
+    {
+      "matchPackagePatterns": ["^@nx/", "^nx"],
+      "groupName": "Nx packages",
+      "schedule": ["before 5am on monday"]
+    },
+    {
+      "matchPackagePatterns": ["^vitest", "^@vitest/"],
+      "groupName": "Vitest packages"
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "automerge": true,
+      "automergeType": "pr",
+      "stabilityDays": 1
+    },
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "stabilityDays": 1
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "stabilityDays": 7
+    },
+    {
+      "matchPackageNames": ["node", "@types/node"],
+      "allowedVersions": ">=20 <21"
     }
-  ]
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on sunday"],
+    "automerge": true
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "assignees": ["jamiescottcraik"],
+    "labels": ["security", "vulnerability"],
+    "prPriority": 10
+  },
+  "osvVulnerabilityAlerts": true,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "separateMinorPatch": false,
+  "ignoreTests": false,
+  "ignoreDeps": ["turbo"]
 }

@@ -1,11 +1,11 @@
-import { createBus } from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
-import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 import {
   PredefinedSchemas,
   SchemaValidationUtils,
 } from '@cortex-os/a2a-contracts/schema-validation-utils';
+import { createBus } from '@cortex-os/a2a-core/bus';
+import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
+import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { z } from 'zod';
 
 import { createChildMessage } from './utils/childMessage';

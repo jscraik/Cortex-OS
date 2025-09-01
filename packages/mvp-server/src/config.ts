@@ -1,4 +1,4 @@
-import { loadEnv, buildConfig } from '@cortex-os/mvp-core';
+import { buildConfig, loadEnv } from '@cortex-os/mvp-core';
 
 export const env = loadEnv();
 export const cfg = buildConfig({

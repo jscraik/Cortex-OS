@@ -9,9 +9,9 @@
  * @ai_provenance_hash N/A
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MetricsCollector } from '../src/metrics-collector.js';
-import { AnalyticsConfig, AgentMetrics } from '../src/types.js';
+import type { AgentMetrics, AnalyticsConfig } from '../src/types.js';
 
 describe('MetricsCollector', () => {
   let collector: MetricsCollector;

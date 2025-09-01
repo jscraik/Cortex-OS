@@ -7,6 +7,7 @@ This document outlines a Test-Driven Development plan for transforming Cortex-OS
 ## Code Style & Structure Compliance
 
 ### Functional Programming Requirements
+
 - **Functions ≤ 40 lines**: All implementation functions strictly under 40 lines
 - **Named exports only**: No default exports, explicit named exports for tree-shaking
 - **No custom classes**: Unless absolutely required by external APIs (HuggingFace, MLX)
@@ -15,11 +16,12 @@ This document outlines a Test-Driven Development plan for transforming Cortex-OS
 - **DRY principles**: Shared utilities in dedicated modules
 
 ### File Organization
+
 ```
 packages/rag/src/
 ├── core/                    # Core functional modules
 │   ├── pipeline.ts         # Main RAG pipeline functions
-│   ├── retrieval.ts        # Retrieval strategy functions  
+│   ├── retrieval.ts        # Retrieval strategy functions
 │   └── generation.ts       # Generation functions
 ├── agents/                 # Agentic coordination
 │   ├── coordinator.ts      # Agent coordination functions
@@ -56,6 +58,7 @@ packages/rag/src/
 ### TDD Cycle 1.1: Core Pipeline Functions
 
 **RED**: Write failing tests
+
 ```typescript
 // tests/core/pipeline.test.ts
 describe('createRAGPipeline', () => {
@@ -63,9 +66,9 @@ describe('createRAGPipeline', () => {
     const pipeline = await createRAGPipeline({
       vectorStore: mockVectorStore,
       embeddings: mockEmbeddings,
-      llm: mockLLM
+      llm: mockLLM,
     });
-    
+
     expect(pipeline).toBeDefined();
     expect(pipeline.retrieve).toBeInstanceOf(Function);
     expect(pipeline.generate).toBeInstanceOf(Function);
@@ -74,13 +77,14 @@ describe('createRAGPipeline', () => {
   it('should handle empty queries gracefully', async () => {
     const pipeline = await createRAGPipeline(mockConfig);
     const result = await pipeline.retrieve('');
-    
+
     expect(result).toEqual([]);
   });
 });
 ```
 
 **GREEN**: Implement minimal functions
+
 ```typescript
 // src/core/pipeline.ts
 import { z } from 'zod';
@@ -91,31 +95,26 @@ const ConfigSchema = z.object({
   embeddings: z.any(),
   llm: z.any(),
   topK: z.number().min(1).max(100).default(5),
-  similarityThreshold: z.number().min(0).max(1).default(0.7)
+  similarityThreshold: z.number().min(0).max(1).default(0.7),
 });
 
-export const createRAGPipeline = async (
-  config: RAGPipelineConfig
-): Promise<RAGPipeline> => {
+export const createRAGPipeline = async (config: RAGPipelineConfig): Promise<RAGPipeline> => {
   const validatedConfig = ConfigSchema.parse(config);
-  
+
   const retrieve = async (query: string): Promise<Document[]> => {
     if (!query.trim()) return [];
-    
+
     const embedding = await validatedConfig.embeddings.embed(query);
-    return validatedConfig.vectorStore.similaritySearch(
-      embedding, 
-      validatedConfig.topK
-    );
+    return validatedConfig.vectorStore.similaritySearch(embedding, validatedConfig.topK);
   };
 
   const generate = async (query: string, docs: Document[]): Promise<string> => {
     if (!query.trim() || docs.length === 0) return '';
-    
-    const context = docs.map(doc => doc.content).join('\n\n');
+
+    const context = docs.map((doc) => doc.content).join('\n\n');
     return validatedConfig.llm.generate({
       prompt: `Context: ${context}\n\nQuestion: ${query}`,
-      maxTokens: 512
+      maxTokens: 512,
     });
   };
 
@@ -128,6 +127,7 @@ export const createRAGPipeline = async (
 ### TDD Cycle 1.2: MLX Integration (Complete Implementation)
 
 **RED**: MLX client tests
+
 ```typescript
 // tests/mlx/client.test.ts
 describe('createMLXClient', () => {
@@ -135,22 +135,25 @@ describe('createMLXClient', () => {
     const client = await createMLXClient({
       modelPath: 'mlx-community/Llama-3.2-1B-Instruct-4bit',
       device: 'gpu',
-      dtype: 'float16'
+      dtype: 'float16',
     });
-    
+
     expect(client.isReady).toBe(true);
     expect(client.modelInfo).toBeDefined();
   });
 
   it('should handle model loading failures gracefully', async () => {
-    await expect(createMLXClient({
-      modelPath: 'nonexistent/model'
-    })).rejects.toThrow('Model loading failed');
+    await expect(
+      createMLXClient({
+        modelPath: 'nonexistent/model',
+      }),
+    ).rejects.toThrow('Model loading failed');
   });
 });
 ```
 
 **GREEN**: Complete MLX implementation
+
 ```typescript
 // src/mlx/client.ts
 import { spawn } from 'child_process';
@@ -163,15 +166,15 @@ const MLXConfigSchema = z.object({
   dtype: z.enum(['float16', 'float32', 'int8']).default('float16'),
   maxTokens: z.number().min(1).max(4096).default(512),
   temperature: z.number().min(0).max(2).default(0.7),
-  pythonPath: z.string().default('python3')
+  pythonPath: z.string().default('python3'),
 });
 
 export const createMLXClient = async (config: MLXConfig): Promise<MLXClient> => {
   const validatedConfig = MLXConfigSchema.parse(config);
-  
+
   let isReady = false;
   let modelInfo: any = null;
-  
+
   const initializeModel = async (): Promise<void> => {
     return new Promise((resolve, reject) => {
       const process = spawn(validatedConfig.pythonPath, [
@@ -193,7 +196,7 @@ try:
 except Exception as e:
     print(f"ERROR: {str(e)}")
     exit(1)
-        `
+        `,
       ]);
 
       let output = '';
@@ -219,7 +222,7 @@ except Exception as e:
 
   const generate = async (prompt: string): Promise<MLXResponse> => {
     if (!isReady) throw new Error('MLX client not ready');
-    
+
     return new Promise((resolve, reject) => {
       const process = spawn(validatedConfig.pythonPath, [
         '-c',
@@ -242,7 +245,7 @@ result = {
     "tokens_generated": len(tokenizer.encode(response))
 }
 print(json.dumps(result))
-        `
+        `,
       ]);
 
       let output = '';
@@ -265,12 +268,12 @@ print(json.dumps(result))
   };
 
   await initializeModel();
-  
+
   return {
     generate,
     isReady,
     modelInfo,
-    config: validatedConfig
+    config: validatedConfig,
   };
 };
 ```
@@ -278,16 +281,17 @@ print(json.dumps(result))
 ### TDD Cycle 1.3: Embedding Functions
 
 **RED**: Embedding tests
+
 ```typescript
 // tests/mlx/embeddings.test.ts
 describe('createMLXEmbeddings', () => {
   it('should generate embeddings for text', async () => {
     const embeddings = await createMLXEmbeddings({
-      modelPath: 'mlx-community/bge-small-en-v1.5-mlx'
+      modelPath: 'mlx-community/bge-small-en-v1.5-mlx',
     });
-    
+
     const result = await embeddings.embed('test document');
-    
+
     expect(result).toBeInstanceOf(Array);
     expect(result.length).toBeGreaterThan(0);
     expect(result[0]).toBeTypeOf('number');
@@ -295,14 +299,11 @@ describe('createMLXEmbeddings', () => {
 
   it('should batch embed multiple documents', async () => {
     const embeddings = await createMLXEmbeddings({
-      modelPath: 'mlx-community/bge-small-en-v1.5-mlx'
+      modelPath: 'mlx-community/bge-small-en-v1.5-mlx',
     });
-    
-    const results = await embeddings.batchEmbed([
-      'document 1',
-      'document 2'
-    ]);
-    
+
+    const results = await embeddings.batchEmbed(['document 1', 'document 2']);
+
     expect(results).toHaveLength(2);
     expect(results[0]).toBeInstanceOf(Array);
   });
@@ -310,6 +311,7 @@ describe('createMLXEmbeddings', () => {
 ```
 
 **GREEN**: Complete MLX embeddings
+
 ```typescript
 // src/mlx/embeddings.ts
 import { spawn } from 'child_process';
@@ -320,12 +322,10 @@ const EmbeddingConfigSchema = z.object({
   modelPath: z.string().min(1),
   maxLength: z.number().min(1).max(512).default(256),
   pythonPath: z.string().default('python3'),
-  batchSize: z.number().min(1).max(32).default(8)
+  batchSize: z.number().min(1).max(32).default(8),
 });
 
-export const createMLXEmbeddings = async (
-  config: MLXEmbeddingConfig
-): Promise<MLXEmbeddings> => {
+export const createMLXEmbeddings = async (config: MLXEmbeddingConfig): Promise<MLXEmbeddings> => {
   const validatedConfig = EmbeddingConfigSchema.parse(config);
 
   const embed = async (text: string): Promise<number[]> => {
@@ -350,7 +350,7 @@ embeddings = model.encode(texts, convert_to_tensor=True)
 embeddings_list = embeddings.tolist()
 
 print(json.dumps(embeddings_list))
-        `
+        `,
       ]);
 
       let output = '';
@@ -381,16 +381,17 @@ print(json.dumps(embeddings_list))
 ### TDD Cycle 2.1: Planning Functions
 
 **RED**: Planning tests
+
 ```typescript
 // tests/agents/planning.test.ts
 describe('createPlanningAgent', () => {
   it('should decompose complex queries into steps', async () => {
     const planner = await createPlanningAgent({ llm: mockMLXClient });
-    
+
     const plan = await planner.createPlan(
-      'Analyze the authentication system and find security vulnerabilities'
+      'Analyze the authentication system and find security vulnerabilities',
     );
-    
+
     expect(plan.steps).toHaveLength.greaterThan(1);
     expect(plan.steps[0]).toHaveProperty('action');
     expect(plan.steps[0]).toHaveProperty('reasoning');
@@ -398,9 +399,9 @@ describe('createPlanningAgent', () => {
 
   it('should handle simple queries without decomposition', async () => {
     const planner = await createPlanningAgent({ llm: mockMLXClient });
-    
+
     const plan = await planner.createPlan('What is user authentication?');
-    
+
     expect(plan.steps).toHaveLength(1);
     expect(plan.steps[0].action).toContain('search');
   });
@@ -408,6 +409,7 @@ describe('createPlanningAgent', () => {
 ```
 
 **GREEN**: Functional planning implementation
+
 ```typescript
 // src/agents/planning.ts
 import { z } from 'zod';
@@ -417,18 +419,16 @@ const PlanStepSchema = z.object({
   action: z.string().min(1),
   tool: z.string().min(1),
   reasoning: z.string().min(1),
-  dependencies: z.array(z.number()).default([])
+  dependencies: z.array(z.number()).default([]),
 });
 
 const PlanSchema = z.object({
   query: z.string().min(1),
   steps: z.array(PlanStepSchema).min(1),
-  estimatedTime: z.number().min(0)
+  estimatedTime: z.number().min(0),
 });
 
-export const createPlanningAgent = async (
-  config: PlanningConfig
-) => {
+export const createPlanningAgent = async (config: PlanningConfig) => {
   const planningPrompt = `
 You are a query planning agent. Break down complex queries into actionable steps.
 Available tools: semantic_search, keyword_search, code_analysis, document_summary
@@ -450,49 +450,47 @@ Respond with JSON:
       throw new Error('Query cannot be empty');
     }
 
-    const response = await config.llm.generate(
-      `${planningPrompt}\n\nQuery: ${query}`
-    );
+    const response = await config.llm.generate(`${planningPrompt}\n\nQuery: ${query}`);
 
     try {
       const parsed = JSON.parse(response.text);
       const steps = parsed.steps.map((step: any, index: number) => ({
         ...step,
         id: index,
-        status: 'pending' as const
+        status: 'pending' as const,
       }));
 
       return PlanSchema.parse({
         query,
         steps,
-        estimatedTime: steps.length * 30 // 30 seconds per step estimate
+        estimatedTime: steps.length * 30, // 30 seconds per step estimate
       });
     } catch (error) {
       // Fallback for simple queries
       return {
         query,
-        steps: [{
-          id: 0,
-          action: `Search for information about: ${query}`,
-          tool: 'semantic_search',
-          reasoning: 'Simple query requires semantic search',
-          dependencies: [],
-          status: 'pending' as const
-        }],
-        estimatedTime: 30
+        steps: [
+          {
+            id: 0,
+            action: `Search for information about: ${query}`,
+            tool: 'semantic_search',
+            reasoning: 'Simple query requires semantic search',
+            dependencies: [],
+            status: 'pending' as const,
+          },
+        ],
+        estimatedTime: 30,
       };
     }
   };
 
   const executePlan = async (plan: Plan): Promise<any[]> => {
     const results: any[] = [];
-    
+
     for (const step of plan.steps) {
       // Check dependencies are completed
-      const depsMet = step.dependencies.every(dep => 
-        results[dep] !== undefined
-      );
-      
+      const depsMet = step.dependencies.every((dep) => results[dep] !== undefined);
+
       if (!depsMet) {
         throw new Error(`Dependencies not met for step ${step.id}`);
       }
@@ -511,7 +509,7 @@ Respond with JSON:
 const executeStep = async (
   step: PlanStep,
   previousResults: any[],
-  config: PlanningConfig
+  config: PlanningConfig,
 ): Promise<any> => {
   // Implementation would call appropriate tool based on step.tool
   // This is a simplified version
@@ -529,38 +527,41 @@ const executeStep = async (
 ### TDD Cycle 2.2: Tool Coordination Functions
 
 **RED**: Tool coordination tests
+
 ```typescript
 // tests/agents/tools.test.ts
 describe('createToolRegistry', () => {
   it('should register and execute semantic search tool', async () => {
     const registry = createToolRegistry();
-    
+
     const semanticTool = createSemanticSearchTool({
       vectorStore: mockVectorStore,
-      embeddings: mockEmbeddings
+      embeddings: mockEmbeddings,
     });
-    
+
     registry.register('semantic_search', semanticTool);
-    
+
     const result = await registry.execute('semantic_search', {
       query: 'authentication patterns',
-      limit: 3
+      limit: 3,
     });
-    
+
     expect(result).toBeDefined();
     expect(Array.isArray(result)).toBe(true);
   });
 
   it('should handle tool execution errors gracefully', async () => {
     const registry = createToolRegistry();
-    
-    await expect(registry.execute('nonexistent_tool', {}))
-      .rejects.toThrow('Tool not found: nonexistent_tool');
+
+    await expect(registry.execute('nonexistent_tool', {})).rejects.toThrow(
+      'Tool not found: nonexistent_tool',
+    );
   });
 });
 ```
 
 **GREEN**: Functional tool registry
+
 ```typescript
 // src/agents/tools.ts
 import { z } from 'zod';
@@ -574,10 +575,7 @@ export const createToolRegistry = (): ToolRegistry => {
     tools.set(name, tool);
   };
 
-  const execute = async (
-    name: string, 
-    params: Record<string, any>
-  ): Promise<ToolResult> => {
+  const execute = async (name: string, params: Record<string, any>): Promise<ToolResult> => {
     const tool = tools.get(name);
     if (!tool) {
       throw new Error(`Tool not found: ${name}`);
@@ -589,7 +587,7 @@ export const createToolRegistry = (): ToolRegistry => {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-        data: null
+        data: null,
       };
     }
   };
@@ -606,17 +604,14 @@ export const createSemanticSearchTool = (config: {
   return async (params: { query: string; limit?: number }) => {
     const ParamsSchema = z.object({
       query: z.string().min(1),
-      limit: z.number().min(1).max(50).default(5)
+      limit: z.number().min(1).max(50).default(5),
     });
 
     const validated = ParamsSchema.parse(params);
-    
+
     try {
       const embedding = await config.embeddings.embed(validated.query);
-      const results = await config.vectorStore.similaritySearch(
-        embedding,
-        validated.limit
-      );
+      const results = await config.vectorStore.similaritySearch(embedding, validated.limit);
 
       return {
         success: true,
@@ -624,35 +619,30 @@ export const createSemanticSearchTool = (config: {
         metadata: {
           tool: 'semantic_search',
           queryLength: validated.query.length,
-          resultsCount: results.length
-        }
+          resultsCount: results.length,
+        },
       };
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Search failed',
-        data: []
+        data: [],
       };
     }
   };
 };
 
-export const createKeywordSearchTool = (config: {
-  textSearch: any;
-}): ToolFunction => {
+export const createKeywordSearchTool = (config: { textSearch: any }): ToolFunction => {
   return async (params: { query: string; limit?: number }) => {
     const ParamsSchema = z.object({
       query: z.string().min(1),
-      limit: z.number().min(1).max(50).default(5)
+      limit: z.number().min(1).max(50).default(5),
     });
 
     const validated = ParamsSchema.parse(params);
 
     try {
-      const results = await config.textSearch.search(
-        validated.query,
-        validated.limit
-      );
+      const results = await config.textSearch.search(validated.query, validated.limit);
 
       return {
         success: true,
@@ -660,14 +650,14 @@ export const createKeywordSearchTool = (config: {
         metadata: {
           tool: 'keyword_search',
           queryLength: validated.query.length,
-          resultsCount: results.length
-        }
+          resultsCount: results.length,
+        },
       };
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Search failed',
-        data: []
+        data: [],
       };
     }
   };
@@ -679,6 +669,7 @@ export const createKeywordSearchTool = (config: {
 ### TDD Cycle 3.1: AST Parser Functions
 
 **RED**: AST parsing tests
+
 ```typescript
 // tests/analysis/ast-parser.test.ts
 describe('parseTypeScriptAST', () => {
@@ -688,9 +679,9 @@ describe('parseTypeScriptAST', () => {
         return param.length;
       };
     `;
-    
+
     const ast = await parseTypeScriptAST(code, 'test.ts');
-    
+
     expect(ast.functions).toHaveLength(1);
     expect(ast.functions[0].name).toBe('testFunction');
     expect(ast.functions[0].params).toHaveLength(1);
@@ -701,9 +692,9 @@ describe('parseTypeScriptAST', () => {
       import { something } from './utils';
       import defaultExport from 'external-lib';
     `;
-    
+
     const ast = await parseTypeScriptAST(code, 'test.ts');
-    
+
     expect(ast.imports).toHaveLength(2);
     expect(ast.imports[0].source).toBe('./utils');
     expect(ast.imports[1].source).toBe('external-lib');
@@ -712,15 +703,12 @@ describe('parseTypeScriptAST', () => {
 ```
 
 **GREEN**: Functional AST parser
+
 ```typescript
 // src/analysis/ast-parser.ts
 import * as ts from 'typescript';
 import { z } from 'zod';
-import type { 
-  ASTParseResult, 
-  FunctionInfo, 
-  ImportInfo 
-} from '../types/core.js';
+import type { ASTParseResult, FunctionInfo, ImportInfo } from '../types/core.js';
 
 const FunctionInfoSchema = z.object({
   name: z.string(),
@@ -728,30 +716,25 @@ const FunctionInfoSchema = z.object({
   returnType: z.string().optional(),
   isExported: z.boolean(),
   lineStart: z.number(),
-  lineEnd: z.number()
+  lineEnd: z.number(),
 });
 
 const ImportInfoSchema = z.object({
   source: z.string(),
   imports: z.array(z.string()),
   isDefault: z.boolean(),
-  line: z.number()
+  line: z.number(),
 });
 
 export const parseTypeScriptAST = async (
   code: string,
-  filename: string
+  filename: string,
 ): Promise<ASTParseResult> => {
   if (!code.trim()) {
     return { functions: [], imports: [], exports: [], classes: [] };
   }
 
-  const sourceFile = ts.createSourceFile(
-    filename,
-    code,
-    ts.ScriptTarget.Latest,
-    true
-  );
+  const sourceFile = ts.createSourceFile(filename, code, ts.ScriptTarget.Latest, true);
 
   const functions: FunctionInfo[] = [];
   const imports: ImportInfo[] = [];
@@ -797,53 +780,45 @@ export const parseTypeScriptAST = async (
 
 const extractFunctionInfo = (
   node: ts.FunctionDeclaration,
-  sourceFile: ts.SourceFile
+  sourceFile: ts.SourceFile,
 ): FunctionInfo => {
   const start = sourceFile.getLineAndCharacterOfPosition(node.getStart());
   const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
 
   return FunctionInfoSchema.parse({
     name: node.name?.text || 'anonymous',
-    params: node.parameters.map(p => 
-      p.name.kind === ts.SyntaxKind.Identifier 
-        ? (p.name as ts.Identifier).text 
-        : 'destructured'
+    params: node.parameters.map((p) =>
+      p.name.kind === ts.SyntaxKind.Identifier ? (p.name as ts.Identifier).text : 'destructured',
     ),
     returnType: node.type ? node.type.getText(sourceFile) : undefined,
     isExported: hasExportModifier(node),
     lineStart: start.line + 1,
-    lineEnd: end.line + 1
+    lineEnd: end.line + 1,
   });
 };
 
 const extractArrowFunctionInfo = (
   node: ts.VariableDeclaration,
-  sourceFile: ts.SourceFile
+  sourceFile: ts.SourceFile,
 ): FunctionInfo => {
   const arrowFunc = node.initializer as ts.ArrowFunction;
   const start = sourceFile.getLineAndCharacterOfPosition(node.getStart());
   const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
 
   return FunctionInfoSchema.parse({
-    name: node.name.kind === ts.SyntaxKind.Identifier 
-      ? (node.name as ts.Identifier).text 
-      : 'anonymous',
-    params: arrowFunc.parameters.map(p => 
-      p.name.kind === ts.SyntaxKind.Identifier 
-        ? (p.name as ts.Identifier).text 
-        : 'destructured'
+    name:
+      node.name.kind === ts.SyntaxKind.Identifier ? (node.name as ts.Identifier).text : 'anonymous',
+    params: arrowFunc.parameters.map((p) =>
+      p.name.kind === ts.SyntaxKind.Identifier ? (p.name as ts.Identifier).text : 'destructured',
     ),
     returnType: arrowFunc.type ? arrowFunc.type.getText(sourceFile) : undefined,
     isExported: isExportedVariable(node),
     lineStart: start.line + 1,
-    lineEnd: end.line + 1
+    lineEnd: end.line + 1,
   });
 };
 
-const extractImportInfo = (
-  node: ts.ImportDeclaration,
-  sourceFile: ts.SourceFile
-): ImportInfo => {
+const extractImportInfo = (node: ts.ImportDeclaration, sourceFile: ts.SourceFile): ImportInfo => {
   const position = sourceFile.getLineAndCharacterOfPosition(node.getStart());
   const source = (node.moduleSpecifier as ts.StringLiteral).text;
 
@@ -858,11 +833,7 @@ const extractImportInfo = (
 
     if (node.importClause.namedBindings) {
       if (ts.isNamedImports(node.importClause.namedBindings)) {
-        imports.push(
-          ...node.importClause.namedBindings.elements.map(
-            e => e.name.text
-          )
-        );
+        imports.push(...node.importClause.namedBindings.elements.map((e) => e.name.text));
       }
     }
   }
@@ -871,7 +842,7 @@ const extractImportInfo = (
     source,
     imports,
     isDefault,
-    line: position.line + 1
+    line: position.line + 1,
   });
 };
 
@@ -880,9 +851,7 @@ const isArrowFunction = (node: ts.Node | undefined): boolean => {
 };
 
 const hasExportModifier = (node: ts.Node): boolean => {
-  return node.modifiers?.some(
-    mod => mod.kind === ts.SyntaxKind.ExportKeyword
-  ) || false;
+  return node.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.ExportKeyword) || false;
 };
 
 const isExportedVariable = (node: ts.VariableDeclaration): boolean => {
@@ -896,17 +865,18 @@ const isExportedVariable = (node: ts.VariableDeclaration): boolean => {
 ### TDD Cycle 4.1: Session Manager Functions
 
 **RED**: Session management tests
+
 ```typescript
 // tests/session/manager.test.ts
 describe('createSessionManager', () => {
   it('should create new session with unique ID', async () => {
     const manager = createSessionManager();
-    
+
     const session = await manager.createSession({
       type: 'codebase_analysis',
-      config: { rootPath: '/test/project' }
+      config: { rootPath: '/test/project' },
     });
-    
+
     expect(session.id).toMatch(/^session_/);
     expect(session.type).toBe('codebase_analysis');
     expect(session.status).toBe('active');
@@ -914,28 +884,28 @@ describe('createSessionManager', () => {
 
   it('should retrieve existing session by ID', async () => {
     const manager = createSessionManager();
-    
+
     const created = await manager.createSession({
       type: 'codebase_analysis',
-      config: {}
+      config: {},
     });
-    
+
     const retrieved = await manager.getSession(created.id);
-    
+
     expect(retrieved).toEqual(created);
   });
 
   it('should handle session cleanup after timeout', async () => {
     const manager = createSessionManager({ sessionTimeout: 100 });
-    
+
     const session = await manager.createSession({
       type: 'codebase_analysis',
-      config: {}
+      config: {},
     });
-    
+
     // Wait for timeout
-    await new Promise(resolve => setTimeout(resolve, 150));
-    
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
     const retrieved = await manager.getSession(session.id);
     expect(retrieved).toBeNull();
   });
@@ -943,20 +913,22 @@ describe('createSessionManager', () => {
 ```
 
 **GREEN**: Functional session manager
+
 ```typescript
 // src/session/manager.ts
 import { z } from 'zod';
-import type { 
-  SessionManager, 
-  SessionConfig, 
-  Session, 
-  SessionState 
-} from '../types/core.js';
+import type { SessionManager, SessionConfig, Session, SessionState } from '../types/core.js';
 
 const SessionConfigSchema = z.object({
-  sessionTimeout: z.number().min(1000).default(30 * 60 * 1000), // 30 minutes
+  sessionTimeout: z
+    .number()
+    .min(1000)
+    .default(30 * 60 * 1000), // 30 minutes
   maxSessions: z.number().min(1).max(1000).default(100),
-  cleanupInterval: z.number().min(1000).default(60 * 1000) // 1 minute
+  cleanupInterval: z
+    .number()
+    .min(1000)
+    .default(60 * 1000), // 1 minute
 });
 
 const SessionSchema = z.object({
@@ -966,15 +938,13 @@ const SessionSchema = z.object({
   createdAt: z.number(),
   lastActivity: z.number(),
   config: z.record(z.any()),
-  state: z.record(z.any()).default({})
+  state: z.record(z.any()).default({}),
 });
 
-export const createSessionManager = (
-  config: Partial<SessionConfig> = {}
-): SessionManager => {
+export const createSessionManager = (config: Partial<SessionConfig> = {}): SessionManager => {
   const validatedConfig = SessionConfigSchema.parse(config);
   const sessions = new Map<string, Session>();
-  
+
   // Setup cleanup interval
   const cleanupTimer = setInterval(() => {
     cleanupExpiredSessions();
@@ -1004,7 +974,7 @@ export const createSessionManager = (
       createdAt: now,
       lastActivity: now,
       config: sessionConfig.config,
-      state: {}
+      state: {},
     });
 
     sessions.set(session.id, session);
@@ -1029,7 +999,7 @@ export const createSessionManager = (
 
   const updateSession = async (
     sessionId: string,
-    updates: Partial<SessionState>
+    updates: Partial<SessionState>,
   ): Promise<Session | null> => {
     const session = await getSession(sessionId);
     if (!session) return null;
@@ -1074,7 +1044,7 @@ export const createSessionManager = (
     deleteSession,
     listSessions,
     cleanupExpiredSessions,
-    destroy
+    destroy,
   };
 };
 ```
@@ -1084,69 +1054,73 @@ export const createSessionManager = (
 ### TDD Cycle 5.1: Event Streaming Functions
 
 **RED**: Event streaming tests
+
 ```typescript
 // tests/streaming/events.test.ts
 describe('createEventStream', () => {
   it('should emit and receive events', async () => {
     const stream = createEventStream();
     const events: any[] = [];
-    
+
     const unsubscribe = stream.subscribe('test_event', (data) => {
       events.push(data);
     });
 
     await stream.emit('test_event', { message: 'test' });
-    
+
     expect(events).toHaveLength(1);
     expect(events[0].message).toBe('test');
-    
+
     unsubscribe();
   });
 
   it('should handle async event processing', async () => {
     const stream = createEventStream();
     let processed = false;
-    
+
     stream.subscribe('async_event', async (data) => {
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       processed = true;
     });
 
     await stream.emit('async_event', {});
-    
+
     expect(processed).toBe(true);
   });
 
   it('should cleanup subscriptions on destroy', async () => {
     const stream = createEventStream();
     let called = false;
-    
-    stream.subscribe('test_event', () => { called = true; });
+
+    stream.subscribe('test_event', () => {
+      called = true;
+    });
     stream.destroy();
-    
+
     await stream.emit('test_event', {});
-    
+
     expect(called).toBe(false);
   });
 });
 ```
 
 **GREEN**: Functional event streaming
+
 ```typescript
 // src/streaming/events.ts
 import { z } from 'zod';
-import type { 
-  EventStream, 
-  EventHandler, 
-  StreamEvent, 
-  UnsubscribeFunction 
+import type {
+  EventStream,
+  EventHandler,
+  StreamEvent,
+  UnsubscribeFunction,
 } from '../types/events.js';
 
 const EventSchema = z.object({
   type: z.string().min(1),
   data: z.any(),
   timestamp: z.number(),
-  id: z.string()
+  id: z.string(),
 });
 
 export const createEventStream = (): EventStream => {
@@ -1157,10 +1131,7 @@ export const createEventStream = (): EventStream => {
     return `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  const subscribe = (
-    eventType: string,
-    handler: EventHandler
-  ): UnsubscribeFunction => {
+  const subscribe = (eventType: string, handler: EventHandler): UnsubscribeFunction => {
     if (isDestroyed) {
       throw new Error('EventStream has been destroyed');
     }
@@ -1191,7 +1162,7 @@ export const createEventStream = (): EventStream => {
       type: eventType,
       data,
       timestamp: Date.now(),
-      id: generateEventId()
+      id: generateEventId(),
     });
 
     const handlers = subscribers.get(eventType);
@@ -1228,7 +1199,7 @@ export const createEventStream = (): EventStream => {
     emit,
     listEventTypes,
     getSubscriberCount,
-    destroy
+    destroy,
   };
 };
 
@@ -1238,12 +1209,12 @@ export const createRAGEventStream = (): EventStream => {
   // Add RAG-specific event types and validation
   const ragEmit = async (
     eventType: 'thinking' | 'searching' | 'analyzing' | 'generating' | 'complete',
-    data: any
+    data: any,
   ): Promise<void> => {
     const RAGEventSchema = z.object({
       stage: z.string(),
       progress: z.number().min(0).max(100).optional(),
-      metadata: z.record(z.any()).optional()
+      metadata: z.record(z.any()).optional(),
     });
 
     const validatedData = RAGEventSchema.parse(data);
@@ -1252,7 +1223,7 @@ export const createRAGEventStream = (): EventStream => {
 
   return {
     ...baseStream,
-    emit: ragEmit as any // Type assertion for specialized emit
+    emit: ragEmit as any, // Type assertion for specialized emit
   };
 };
 ```
@@ -1262,34 +1233,36 @@ export const createRAGEventStream = (): EventStream => {
 ### TDD Cycle 6.1: Integration Functions
 
 **RED**: Integration tests
+
 ```typescript
 // tests/integration/full-pipeline.test.ts
 describe('Full RAG Pipeline Integration', () => {
   it('should process query through complete agentic pipeline', async () => {
     const mlxClient = await createMLXClient({
-      modelPath: 'mlx-community/Llama-3.2-1B-Instruct-4bit'
+      modelPath: 'mlx-community/Llama-3.2-1B-Instruct-4bit',
     });
 
     const embeddings = await createMLXEmbeddings({
-      modelPath: 'mlx-community/bge-small-en-v1.5-mlx'
+      modelPath: 'mlx-community/bge-small-en-v1.5-mlx',
     });
 
     const pipeline = await createRAGPipeline({
       llm: mlxClient,
       embeddings,
-      vectorStore: mockVectorStore
+      vectorStore: mockVectorStore,
     });
 
     const planner = await createPlanningAgent({ llm: mlxClient });
     const toolRegistry = createToolRegistry();
-    
-    toolRegistry.register('semantic_search', 
-      createSemanticSearchTool({ vectorStore: mockVectorStore, embeddings })
+
+    toolRegistry.register(
+      'semantic_search',
+      createSemanticSearchTool({ vectorStore: mockVectorStore, embeddings }),
     );
 
     const result = await executeAgenticQuery(
       'Find authentication vulnerabilities in the codebase',
-      { pipeline, planner, toolRegistry }
+      { pipeline, planner, toolRegistry },
     );
 
     expect(result).toBeDefined();
@@ -1302,26 +1275,26 @@ describe('Full RAG Pipeline Integration', () => {
     const pipeline = await createRAGPipeline({
       llm: mockFailingMLXClient,
       embeddings: mockEmbeddings,
-      vectorStore: mockVectorStore
+      vectorStore: mockVectorStore,
     });
 
-    await expect(executeAgenticQuery(
-      'test query',
-      { pipeline, planner: null, toolRegistry: null }
-    )).rejects.toThrow();
+    await expect(
+      executeAgenticQuery('test query', { pipeline, planner: null, toolRegistry: null }),
+    ).rejects.toThrow();
   });
 });
 ```
 
 **GREEN**: Integration functions
+
 ```typescript
 // src/core/integration.ts
 import { z } from 'zod';
-import type { 
-  RAGPipeline, 
-  PlanningAgent, 
+import type {
+  RAGPipeline,
+  PlanningAgent,
   ToolRegistry,
-  AgenticQueryResult 
+  AgenticQueryResult,
 } from '../types/core.js';
 
 const AgenticQueryConfigSchema = z.object({
@@ -1329,7 +1302,7 @@ const AgenticQueryConfigSchema = z.object({
   planner: z.any(),
   toolRegistry: z.any(),
   sessionManager: z.any().optional(),
-  eventStream: z.any().optional()
+  eventStream: z.any().optional(),
 });
 
 export const executeAgenticQuery = async (
@@ -1340,7 +1313,7 @@ export const executeAgenticQuery = async (
     toolRegistry: ToolRegistry;
     sessionManager?: any;
     eventStream?: any;
-  }
+  },
 ): Promise<AgenticQueryResult> => {
   const validatedConfig = AgenticQueryConfigSchema.parse(config);
 
@@ -1357,7 +1330,7 @@ export const executeAgenticQuery = async (
     await validatedConfig.eventStream?.emit('thinking', {
       stage: 'planning',
       progress: 10,
-      query
+      query,
     });
 
     // Create execution plan
@@ -1372,16 +1345,16 @@ export const executeAgenticQuery = async (
       await validatedConfig.eventStream?.emit('searching', {
         stage: step.tool,
         progress: Math.round(progress),
-        step: step.action
+        step: step.action,
       });
 
-      const result = await validatedConfig.toolRegistry.execute(
-        step.tool,
-        { query: step.action, limit: 5 }
-      );
+      const result = await validatedConfig.toolRegistry.execute(step.tool, {
+        query: step.action,
+        limit: 5,
+      });
 
       steps.push({ type: 'execution', step, result });
-      
+
       if (result.success && result.data) {
         sources.push(...result.data);
       }
@@ -1393,7 +1366,7 @@ export const executeAgenticQuery = async (
     await validatedConfig.eventStream?.emit('generating', {
       stage: 'synthesis',
       progress: 85,
-      sourcesCount: sources.length
+      sourcesCount: sources.length,
     });
 
     const answer = await validatedConfig.pipeline.generate(query, sources);
@@ -1401,7 +1374,7 @@ export const executeAgenticQuery = async (
     await validatedConfig.eventStream?.emit('complete', {
       stage: 'complete',
       progress: 100,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     });
 
     return {
@@ -1412,14 +1385,13 @@ export const executeAgenticQuery = async (
       metadata: {
         duration: Date.now() - startTime,
         stepsExecuted: steps.length,
-        sourcesFound: sources.length
-      }
+        sourcesFound: sources.length,
+      },
     };
-
   } catch (error) {
     await validatedConfig.eventStream?.emit('error', {
       stage: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
 
     throw error;
@@ -1439,17 +1411,17 @@ export const createFullRAGSystem = async (config: {
 }> => {
   // Initialize all components
   const mlxClient = await createMLXClient({
-    modelPath: config.mlxModelPath
+    modelPath: config.mlxModelPath,
   });
 
   const embeddings = await createMLXEmbeddings({
-    modelPath: config.embeddingModelPath
+    modelPath: config.embeddingModelPath,
   });
 
   const pipeline = await createRAGPipeline({
     llm: mlxClient,
     embeddings,
-    vectorStore: { path: config.vectorStorePath }
+    vectorStore: { path: config.vectorStorePath },
   });
 
   const planner = await createPlanningAgent({ llm: mlxClient });
@@ -1458,19 +1430,18 @@ export const createFullRAGSystem = async (config: {
   const eventStream = createRAGEventStream();
 
   // Register tools
-  toolRegistry.register('semantic_search', 
-    createSemanticSearchTool({ vectorStore: pipeline.config.vectorStore, embeddings })
+  toolRegistry.register(
+    'semantic_search',
+    createSemanticSearchTool({ vectorStore: pipeline.config.vectorStore, embeddings }),
   );
-  toolRegistry.register('keyword_search', 
-    createKeywordSearchTool({ textSearch: {} })
-  );
+  toolRegistry.register('keyword_search', createKeywordSearchTool({ textSearch: {} }));
 
   return {
     pipeline,
     planner,
     toolRegistry,
     sessionManager,
-    eventStream
+    eventStream,
   };
 };
 ```
@@ -1478,6 +1449,7 @@ export const createFullRAGSystem = async (config: {
 ## Dependencies & Repository Analysis
 
 ### Core Dependencies
+
 ```json
 {
   "dependencies": {
@@ -1500,7 +1472,7 @@ export const createFullRAGSystem = async (config: {
 ### Repository Integration Patterns
 
 1. **smolagents**: Multi-step reasoning, tool coordination
-2. **code2prompt**: Session-based codebase processing  
+2. **code2prompt**: Session-based codebase processing
 3. **codemapper**: AST analysis, dependency visualization
 4. **git-mcp**: Repository-to-knowledge transformation
 5. **Archon**: Multi-strategy retrieval, hybrid search
@@ -1515,24 +1487,28 @@ export const createFullRAGSystem = async (config: {
 ## Quality Gates & Success Metrics
 
 ### Test Coverage Requirements
+
 - **Unit Tests**: 90%+ coverage for all functions
 - **Integration Tests**: Full pipeline scenarios
 - **Performance Tests**: <2s response time for simple queries
 - **Error Handling**: All failure modes tested
 
 ### Code Quality Standards
+
 - **ESLint**: Zero warnings with strict TypeScript rules
 - **Zod Validation**: All inputs/outputs validated
 - **Function Length**: ≤40 lines per function enforced
 - **Cyclomatic Complexity**: ≤10 per function
 
 ### Performance Benchmarks
+
 - **Query Processing**: <2s for simple, <10s for complex
-- **Memory Usage**: <500MB baseline, <2GB during processing  
+- **Memory Usage**: <500MB baseline, <2GB during processing
 - **Concurrent Sessions**: Support 50+ simultaneous sessions
 - **MLX Model Loading**: <30s initialization time
 
 ### Security & Safety
+
 - **Input Sanitization**: All user inputs validated
 - **Resource Limits**: Memory and CPU bounds enforced
 - **Error Boundaries**: Graceful degradation on failures

@@ -4,8 +4,8 @@
  */
 
 export {
-  SpiffeClient,
   buildWorkloadIdentity,
   convertSelectors,
+  SpiffeClient,
   splitPEMCertificates,
 } from './client';

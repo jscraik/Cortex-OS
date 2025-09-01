@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
 export const uuid = () => {
-    return randomUUID();
+  return randomUUID();
 };
 //# sourceMappingURL=ids.js.map

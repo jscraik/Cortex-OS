@@ -1,16 +1,116 @@
 [tools]
-node = "20.11.1"
+node = "20"
 pnpm = "9"
 python = "3.11"
 rust = "stable"
+bun = "latest"
+go = "latest"
+# Development tools
+fd = "latest"
+ripgrep = "latest"
+jq = "latest"
+yq = "latest"
 
 [env]
 NODE_ENV = "development"
+# Performance optimizations - moved to package.json scripts
+VITEST_MAX_THREADS = "2"
+VITEST_MIN_THREADS = "1"
+VITEST_MAX_FORKS = "2"
+VITEST_MIN_FORKS = "1"
+# Nx optimizations
+NX_CACHE_DIRECTORY = ".nx/cache"
+NX_DAEMON = "true"
+# pnpm optimizations
+PNPM_STORE_PATH = ".pnpm-store"
 
 [tasks]
-bootstrap = "corepack enable && pnpm --version && pnpm install --frozen-lockfile"
-typecheck = "pnpm nx run-many -t typecheck"
-lint = "pnpm nx run-many -t lint"
-biome = "pnpm biome check --write ."
-build = "pnpm nx run-many -t build"
-test = "pnpm nx run-many -t test"
+# Core development tasks
+bootstrap = "corepack enable && mise install && pnpm install --frozen-lockfile"
+install = "pnpm install --frozen-lockfile"
+upgrade = "pnpm update && mise upgrade"
+
+# Code quality
+typecheck = "pnpm nx run-many -t typecheck --parallel=2"
+lint = "pnpm nx run-many -t lint --parallel=2"
+lint-fix = "pnpm nx run-many -t lint --fix --parallel=2"
+biome = "./biome check --write ."
+biome-check = "./biome check ."
+format = "./biome format --write ."
+
+# Testing
+test = "pnpm nx run-many -t test --parallel=2"
+test-watch = "pnpm test:watch"
+test-coverage = "pnpm test:coverage"
+test-integration = "pnpm test:integration"
+test-e2e = "pnpm test:e2e"
+
+# Build and deployment
+build = "pnpm nx run-many -t build --parallel=2"
+build-affected = "pnpm nx affected -t build"
+clean = "pnpm nx reset && rm -rf node_modules/.cache && rm -rf .nx/cache"
+prebuild = "pnpm clean && pnpm install"
+
+# Development workflows
+dev = "pnpm nx run-many -t dev --parallel=2"
+preview = "pnpm nx run-many -t preview --parallel=2"
+
+# Nx specific tasks
+nx-graph = "pnpm nx graph"
+nx-reset = "pnpm nx reset"
+nx-affected = "pnpm nx affected"
+nx-dep-graph = "pnpm nx dep-graph"
+
+# Security and compliance
+security-scan = "pnpm security:scan"
+audit = "pnpm audit"
+license-check = "pnpm license-checker"
+
+# Git and versioning
+pre-commit = "mise run lint && mise run test"
+pre-push = "mise run build && mise run test:integration"
+
+# Maintenance
+doctor = "mise doctor && pnpm doctor"
+outdated = "pnpm outdated && mise outdated"
+cleanup = "pnpm store prune && mise cache clear"
+
+# Advanced development workflows
+quick-check = "mise run biome-check && mise run typecheck"
+full-check = "mise run quick-check && mise run test && mise run security-scan"
+release-prep = "mise run full-check && mise run build && mise run license-check"
+
+# Performance monitoring
+perf-test = "pnpm run test:performance"
+bundle-analyze = "pnpm run analyze:bundle"
+lighthouse = "pnpm run test:lighthouse"
+
+# Database and data management
+db-reset = "pnpm run db:reset"
+db-migrate = "pnpm run db:migrate"
+db-seed = "pnpm run db:seed"
+
+# Container and deployment
+docker-build = "docker build -t cortex-os:latest ."
+docker-dev = "docker-compose -f docker-compose.dev.yml up"
+docker-prod = "docker-compose -f docker-compose.prod.yml up"
+
+# AI and ML workflows
+ml-setup = "uv sync && uv run python -c 'import mlx.core; print(\"MLX ready\")'"
+ml-test = "uv run python -m pytest python/tests/"
+model-download = "uv run python scripts/download-models.py"
+
+# Code generation and documentation
+docs-generate = "pnpm run docs:generate"
+api-docs = "pnpm run docs:api"
+changelog = "pnpm run changelog:generate"
+
+# Advanced git workflows
+commit-check = "mise run biome-check && mise run typecheck"
+push-check = "mise run full-check"
+branch-check = "git status --porcelain | wc -l | xargs test 0 -eq"
+
+# Monitoring and debugging
+health-check = "mise run doctor && curl -f http://localhost:3000/health || echo 'Service health check failed'"
+debug-info = "mise run doctor && node --version && python --version && uv --version"
+env-check = "printenv | grep -E '(NODE|PYTHON|RUST|PNPM)' | sort"

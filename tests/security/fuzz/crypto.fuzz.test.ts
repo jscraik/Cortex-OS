@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
-import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
+import { describe, expect, it } from 'vitest';
 
 describe('crypto hashing fuzz', () => {
   it('sha256 digest is 64 hex chars', () => {

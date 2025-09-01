@@ -29,11 +29,11 @@ export class CritiqueEngine {
   async analyze(input: string, options?: CritiqueOptions): Promise<CritiqueResult> {
     // In a real implementation, this would use an LLM to analyze the input
     // For now, we'll provide a basic heuristic analysis
-    
+
     const strengths: string[] = [];
     const weaknesses: string[] = [];
     const suggestions: string[] = [];
-    
+
     // Basic analysis
     if (input.length < 50) {
       weaknesses.push('Input is very short and may lack detail');
@@ -41,27 +41,27 @@ export class CritiqueEngine {
     } else {
       strengths.push('Input has sufficient detail');
     }
-    
+
     if (input.includes('TODO') || input.includes('FIXME')) {
       weaknesses.push('Input contains unresolved items');
       suggestions.push('Complete all TODO and FIXME items before proceeding');
     }
-    
+
     if (this.countSentences(input) < 3) {
       weaknesses.push('Input lacks sufficient explanation');
       suggestions.push('Add more explanation and context');
     } else {
       strengths.push('Input is well structured');
     }
-    
+
     // Generate a score based on analysis
     let score = 50; // Base score
     score += strengths.length * 10;
     score -= weaknesses.length * 15;
-    
+
     // Ensure score is within bounds
     score = Math.max(0, Math.min(100, score));
-    
+
     return {
       score,
       strengths,

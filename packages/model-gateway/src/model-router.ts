@@ -106,7 +106,6 @@ export class ModelRouter implements IModelRouter {
     }
   }
 
-
   private buildEmbeddingModels(
     mlxAvailable: boolean,
     ollamaAvailable: boolean,

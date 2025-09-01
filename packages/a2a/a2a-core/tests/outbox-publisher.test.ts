@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { type OutboxMessage, OutboxMessageStatus } from '../../a2a-contracts/src/outbox-types';
 import { ReliableOutboxPublisher } from '../src/outbox';
-import { OutboxMessage, OutboxMessageStatus } from '../../a2a-contracts/src/outbox-types';
 
 describe('ReliableOutboxPublisher', () => {
   it('publishes envelope with data only', async () => {

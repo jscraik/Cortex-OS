@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { InMemoryStore } from '../src/adapters/store.memory.js';
-import { Memory } from '../src/domain/types.js';
+import type { Memory } from '../src/domain/types.js';
 
 describe('InMemoryStore compaction and purging', () => {
   let store: InMemoryStore;

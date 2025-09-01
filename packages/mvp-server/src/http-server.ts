@@ -1,11 +1,11 @@
 import fastify from 'fastify';
+import { cfg } from './config.js';
 import { registerErrorHandler } from './middleware/error.js';
 import { loggingPlugin } from './plugins/logging.js';
 import { securityPlugin } from './plugins/security.js';
 import { healthRoutes } from './routes/health.js';
 import { metricsRoutes } from './routes/metrics.js';
 import { versionRoutes } from './routes/version.js';
-import { cfg } from './config.js';
 
 export function buildServer() {
   const app = fastify({

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { selectOptimalModel } from '../../config/model-integration-strategy';
 
 describe('selectOptimalModel', () => {
@@ -52,8 +52,8 @@ describe('selectOptimalModel', () => {
   });
 
   it('throws on unknown category', () => {
-    expect(() =>
-      selectOptimalModel('agents', 'unknown', base as any),
-    ).toThrow(/Unknown model category/);
+    expect(() => selectOptimalModel('agents', 'unknown', base as any)).toThrow(
+      /Unknown model category/,
+    );
   });
 });

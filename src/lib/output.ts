@@ -1,4 +1,4 @@
-import { errorCodes, StructuredError } from './structured-error';
+import { type errorCodes, StructuredError } from './structured-error';
 
 export type OutputMeta = {
   timestamp: string; // ISO-8601

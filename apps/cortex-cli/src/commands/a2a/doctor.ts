@@ -1,8 +1,8 @@
-import { Command } from 'commander';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { createBus } from '@cortex-os/a2a-core/bus';
+import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { tracer } from '@cortex-os/telemetry';
 import { uuid } from '@cortex-os/utils';
+import { Command } from 'commander';
 
 export const a2aDoctor = new Command('doctor')
   .description('Run A2A health checks')

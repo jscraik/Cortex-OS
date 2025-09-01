@@ -7,6 +7,7 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 ## What Was Built
 
 ### 1. Rust TUI Application (`apps/cortex-tui/`)
+
 - **Framework**: Ratatui 0.29.0 (exact same version as OpenAI Codex CLI)
 - **Architecture**: SOLID principles with MVC pattern
 - **Language**: 97% Rust for performance (matching Codex)
@@ -14,27 +15,31 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 - **Dependencies**: Minimal, focused on performance and reliability
 
 ### 2. Provider Abstraction Layer
+
 - **GitHub Models**: Free tier support with streaming
 - **OpenAI**: API integration (stub implementation)
-- **Anthropic**: Claude integration (stub implementation)  
+- **Anthropic**: Claude integration (stub implementation)
 - **Local MLX**: On-device inference (stub implementation)
 - **Fallback System**: Automatic provider switching
 
 ### 3. Configuration System
+
 - **Format**: TOML (matching Codex CLI)
 - **Location**: `~/.cortex/config.toml`
 - **Features**: Provider switching, privacy controls, TUI themes
 - **Validation**: Strict schema validation with helpful error messages
 
 ### 4. GitHub Actions Integration
+
 - **Comment Triggers**: `/cortex` commands in issues/PRs
-- **Workflows**: 
+- **Workflows**:
   - `cortex-agent.yml`: Issue/PR automation
   - `cortex-review.yml`: Automated PR reviews
   - `cortex-tui-ci.yml`: CI/CD for TUI
 - **Permissions**: Minimal `models: read` for GitHub Models
 
 ### 5. CLI Integration
+
 - **Bridge Command**: `cortex tui` launches Rust TUI from TypeScript CLI
 - **Fallback**: Maintains all existing cortex-cli functionality
 - **CI Mode**: `cortex tui --ci "prompt"` for automation
@@ -42,10 +47,11 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 ## TDD Implementation Evidence
 
 ### RED Phase (Failing Tests)
+
 ```bash
 # Config system tests
 ✗ test_config_loads_from_toml
-✗ test_config_handles_missing_file  
+✗ test_config_handles_missing_file
 ✗ test_config_validates_required_fields
 
 # Provider factory tests
@@ -55,6 +61,7 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 ```
 
 ### GREEN Phase (Passing Implementation)
+
 ```bash
 # All core functionality implemented
 ✓ Config loading with TOML parsing
@@ -65,6 +72,7 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 ```
 
 ### REFACTOR Phase (Code Quality)
+
 - SOLID principles enforced through traits
 - Clean separation of concerns (Model-View-Controller)
 - Comprehensive error handling with `thiserror`
@@ -73,12 +81,13 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 ## Architecture Highlights
 
 ### SOLID Principles Applied
+
 ```rust
 // Single Responsibility
 trait Renderable { fn render(&self, frame: &mut Frame, area: Rect); }
 trait EventHandler { fn handle_event(&mut self, event: Event) -> Result<EventResponse>; }
 
-// Open/Closed + Dependency Inversion  
+// Open/Closed + Dependency Inversion
 trait ModelProvider {
     async fn complete(&self, prompt: &str) -> Result<String>;
     async fn stream(&self, prompt: &str) -> Result<ResponseStream>;
@@ -93,12 +102,14 @@ impl ModelProvider for LocalMLXProvider {}
 ### Key Innovations Adopted
 
 #### From OpenCode (sst/opencode)
+
 - ✅ **Comment-as-API**: `/cortex` triggers in GitHub
 - ✅ **Client/Server Architecture**: Extensible for multiple clients
 - ✅ **Provider-Agnostic**: Support for multiple AI providers
 - ✅ **GitHub Actions**: Automated workflows
 
 #### From Codex (openai/codex)
+
 - ✅ **Ratatui 0.29.0**: Most current TUI framework
 - ✅ **Rust Performance**: 97% Rust codebase
 - ✅ **CI Mode**: Non-interactive automation
@@ -106,6 +117,7 @@ impl ModelProvider for LocalMLXProvider {}
 - ✅ **Zero-Data-Retention**: Privacy-first design
 
 #### Unique to Cortex-OS
+
 - ✅ **ASBR Integration**: Deep integration with Cortex-OS runtime
 - ✅ **A2A Protocol**: Agent-to-agent communication
 - ✅ **Governance Layer**: `.cortex/` policy enforcement
@@ -145,6 +157,7 @@ apps/cortex-cli/src/commands/
 ## Usage Examples
 
 ### Interactive TUI
+
 ```bash
 # Launch TUI directly
 apps/cortex-tui/target/release/cortex-tui
@@ -154,15 +167,17 @@ cortex tui
 ```
 
 ### CI/Automation Mode
+
 ```bash
 # Text output
 cortex tui --ci "explain this code"
 
-# JSON output for automation  
+# JSON output for automation
 cortex tui run "review this PR" --output json
 ```
 
 ### GitHub Actions
+
 ```yaml
 # In any repository with Cortex workflows
 # Comment on issue/PR:
@@ -172,6 +187,7 @@ cortex tui run "review this PR" --output json
 ```
 
 ### Configuration
+
 ```toml
 # ~/.cortex/config.toml
 [provider]
@@ -198,24 +214,28 @@ telemetry = false
 ## Next Phase: Implementation Roadmap
 
 ### Phase 2: TUI Components (Week 2)
+
 - ChatWidget with scrolling
-- DiffViewer with syntax highlighting  
+- DiffViewer with syntax highlighting
 - CommandPalette with fuzzy search
 - WCAG 2.2 AA keyboard navigation
 
 ### Phase 3: Provider Completion (Week 3)
+
 - Complete OpenAI integration
 - Complete Anthropic integration
 - Local MLX implementation with streaming
 - Comprehensive error handling and retries
 
 ### Phase 4: Advanced Features (Week 4-5)
+
 - MCP server management
 - AGENTS.md memory system
 - Client/server daemon mode
 - WebSocket real-time updates
 
 ### Phase 5: Production Ready (Week 6)
+
 - Performance optimization
 - Security audit
 - Binary releases (Linux, macOS, Windows)
@@ -223,13 +243,13 @@ telemetry = false
 
 ## Risk Mitigation Accomplished
 
-| Risk | Mitigation Applied |
-|------|-------------------|
-| Rust learning curve | TDD approach validates implementation step-by-step |
-| Provider API changes | Abstraction layer isolates changes |
-| TUI complexity | Using proven Ratatui patterns from Codex |
-| Performance issues | Rust + async from start |
-| Integration complexity | Bridge pattern preserves existing CLI |
+| Risk                   | Mitigation Applied                                 |
+| ---------------------- | -------------------------------------------------- |
+| Rust learning curve    | TDD approach validates implementation step-by-step |
+| Provider API changes   | Abstraction layer isolates changes                 |
+| TUI complexity         | Using proven Ratatui patterns from Codex           |
+| Performance issues     | Rust + async from start                            |
+| Integration complexity | Bridge pattern preserves existing CLI              |
 
 ## Success Metrics
 

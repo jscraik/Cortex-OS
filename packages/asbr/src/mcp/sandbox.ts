@@ -3,11 +3,11 @@
  * Implements security policies and sandboxing for MCP tools
  */
 
-import { ChildProcess, spawn } from 'child_process';
-import pidusage from 'pidusage';
+import { type ChildProcess, spawn } from 'child_process';
 import { existsSync } from 'fs';
 import { mkdir } from 'fs/promises';
 import { dirname } from 'path';
+import pidusage from 'pidusage';
 import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';
 import type { MCPAllowlistEntry, SecurityPolicy, SecurityRule } from '../types/index.js';
 import { AuthorizationError, ValidationError } from '../types/index.js';

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { globby } from 'globby';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock file system
 const mockFiles = [

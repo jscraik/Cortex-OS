@@ -1,4 +1,4 @@
-import { PRPState, Evidence } from '../state.js';
+import type { Evidence, PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 
 /** Create standardized evidence entry */

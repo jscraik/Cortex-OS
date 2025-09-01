@@ -3,12 +3,12 @@
  * Implements planning, critiquing, simulation, and teaching capabilities
  */
 
-import type { Config } from '../types/index.js';
-import { Plan, PlanningContext, PlanOptions } from './types.js';
-import { Simulator, SimulationResult } from './simulator.js';
-import { CritiqueEngine } from './critique.js';
-import { Teacher } from './teacher.js';
 import { EvidenceCollector } from '../evidence/collector.js';
+import type { Config } from '../types/index.js';
+import { CritiqueEngine } from './critique.js';
+import { type SimulationResult, Simulator } from './simulator.js';
+import { Teacher } from './teacher.js';
+import type { Plan, PlanningContext, PlanOptions } from './types.js';
 
 export interface CerebrumOptions {
   config: Config;
@@ -41,7 +41,7 @@ export class Cerebrum {
     // 2. Break down the problem into steps
     // 3. Determine required tools and resources
     // 4. Create a structured plan with checkpoints
-    
+
     const plan: Plan = {
       id: this.generateId(),
       title: context.intent.substring(0, 50) + (context.intent.length > 50 ? '...' : ''),
@@ -82,7 +82,7 @@ export class Cerebrum {
         description: 'Check that the output meets the intent',
         status: 'pending',
         order: 4,
-      }
+      },
     ];
 
     return plan;
@@ -118,7 +118,7 @@ export class Cerebrum {
     // 2. Apply modifications
     // 3. Re-execute the plan
     // 4. Return the updated plan
-    
+
     // For now, we'll just return a placeholder
     const plan: Plan = {
       id: planId,
@@ -129,7 +129,7 @@ export class Cerebrum {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     return plan;
   }
 

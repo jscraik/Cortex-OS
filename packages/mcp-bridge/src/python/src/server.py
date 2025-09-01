@@ -29,7 +29,9 @@ class S(BaseHTTPRequestHandler):
                 f.write("\n\n".join(SESSION))
 
         body = (
-            '{{"ok":{},"stdout":{!r},"stderr":{!r},"script_path":{!r}}}'.format(str(ok).lower(), stdout, stderr or "", sp)
+            '{{"ok":{},"stdout":{!r},"stderr":{!r},"script_path":{!r}}}'.format(
+                str(ok).lower(), stdout, stderr or "", sp
+            )
         ).encode()
 
         self.send_response(200)

@@ -4,7 +4,7 @@
  * @author Cortex-OS Team
  */
 
-import type { SimResult, SimBatchResult, SimReport, SimScores } from './types';
+import type { SimBatchResult, SimReport, SimResult, SimScores } from './types';
 
 /**
  * Generates reports and summaries from simulation results

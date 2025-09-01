@@ -377,8 +377,6 @@ Output only a decimal number between 0 and 1:`,
       return { healthy: false };
     }
   }
-
-  
 }
 
 // Internal service classes intentionally not exported

@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { SimplePRPGraph } from '../src/graph-simple.js';
-import { createInitialPRPState } from '../src/state.js';
 import { BuildNode } from '../src/nodes/build.js';
 import { EvaluationNode } from '../src/nodes/evaluation.js';
+import { createInitialPRPState } from '../src/state.js';
 
 describe('MVP Fixes Verification', () => {
   describe('Deterministic Execution', () => {

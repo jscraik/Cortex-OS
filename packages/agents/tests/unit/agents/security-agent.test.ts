@@ -1,9 +1,10 @@
 /**
  * Tests for Security Agent (LlamaGuard policy evaluator)
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ModelProvider } from '@/lib/types.js';
+
 import { createMockEventBus, createMockMCPClient } from '@tests/setup.js';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ModelProvider } from '@/lib/types.js';
 
 describe('Security Agent', () => {
   let mockProvider: ModelProvider;

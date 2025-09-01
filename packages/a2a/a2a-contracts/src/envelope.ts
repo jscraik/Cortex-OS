@@ -16,7 +16,6 @@ export const Envelope = z
       .refine(
         (src) => {
           try {
-             
             new URL(src);
             return true;
           } catch {

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { createBus, type Handler } from '@cortex-os/a2a-core/bus';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { uuid } from '@cortex-os/utils';
+import { describe, expect, it } from 'vitest';
 
 describe.skip('A2A ping-pong e2e', () => {
   it('producer to consumer', async () => {

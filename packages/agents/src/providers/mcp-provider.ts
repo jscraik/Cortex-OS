@@ -4,9 +4,9 @@
  * Provides model access through MCP servers with automatic discovery
  */
 
-import type { ModelProvider, GenerateOptions, GenerateResult, MCPClient } from '../lib/types.js';
-import { withTimeout, estimateTokens, retry } from '../lib/utils.js';
 import { redactSecrets } from '../lib/secret-store.js';
+import type { GenerateOptions, GenerateResult, MCPClient, ModelProvider } from '../lib/types.js';
+import { estimateTokens, retry, withTimeout } from '../lib/utils.js';
 
 export interface MCPProviderConfig {
   mcpClient: MCPClient;

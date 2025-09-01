@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import { createFallbackChain } from '@/providers/fallback-chain.js';
+import { describe, expect, it, vi } from 'vitest';
 import type { ModelProvider } from '@/lib/types.js';
+import { createFallbackChain } from '@/providers/fallback-chain.js';
 
 const makeProvider = (name: string, behavior: (prompt: string) => Promise<any>): ModelProvider => ({
   name,

@@ -8,7 +8,7 @@ async function addMcpGatewayWrapper() {
       {
         frontend: 'cortex',
         autoApprove: true,
-      },
+      }
     );
 
     console.log('MCP Gateway Wrapper Installation Result:');

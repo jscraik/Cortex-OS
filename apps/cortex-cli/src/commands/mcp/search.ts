@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createMarketplaceClient, SearchOptions } from './marketplace-client.js';
+import { createMarketplaceClient, type SearchOptions } from './marketplace-client.js';
 
 export const mcpSearch = new Command('search')
   .description('Search MCP servers in the marketplace')

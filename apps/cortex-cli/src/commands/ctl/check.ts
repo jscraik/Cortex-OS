@@ -1,5 +1,5 @@
-import { Command } from 'commander';
 import { spawnSync } from 'node:child_process';
+import { Command } from 'commander';
 
 export const ctlCheck = new Command('check')
   .description('Run .cortex control-centre checks')

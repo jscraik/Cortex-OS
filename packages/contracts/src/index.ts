@@ -15,13 +15,20 @@ export const AgentConfigSchema = z.object({
   seed: z.number().int().positive().default(1),
   maxTokens: z.number().int().positive().max(4096).default(1024),
   timeoutMs: z.number().int().positive().max(120_000).default(30_000),
-  memory: z.object({ maxItems: z.number().int().positive(), maxBytes: z.number().int().positive() }),
+  memory: z.object({
+    maxItems: z.number().int().positive(),
+    maxBytes: z.number().int().positive(),
+  }),
 });
 export type AgentConfig = z.infer<typeof AgentConfigSchema>;
 
 // Structured error response contract
 export const ErrorResponseSchema = z.object({
-  error: z.object({ code: z.string(), message: z.string(), details: z.record(z.unknown()).optional() }),
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    details: z.record(z.unknown()).optional(),
+  }),
   timestamp: z.string().datetime({ offset: true }),
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

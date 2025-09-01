@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { createService, createTestService } from '../src/service';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { send } from '@cortex-os/a2a-core/send';
-import type { Server } from 'http';
 import axios from 'axios';
-import { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Server } from 'http';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { createService, createTestService } from '../src/service';
 
 const MAX_RETRIES = 3;
 

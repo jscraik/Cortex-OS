@@ -1,5 +1,5 @@
-import type { FastifyInstance } from 'fastify';
 import { createLogger } from '@cortex-os/mvp-core';
+import type { FastifyInstance } from 'fastify';
 
 export async function loggingPlugin(app: FastifyInstance) {
   // Check if decorator already exists to avoid conflicts

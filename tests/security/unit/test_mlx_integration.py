@@ -7,7 +7,9 @@ Demonstrates the complete working MLX system
 import asyncio
 import sys
 from pathlib import Path
+
 import pytest
+
 pytest.importorskip("mlx")
 
 import pytest

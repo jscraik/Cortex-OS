@@ -8,14 +8,14 @@
  * @maintainer @jamiescottcraik
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  ASBR_AI_MCP_TOOLS,
   ASBRAIMcpIntegration,
   asbrAIMcpIntegration,
-  ASBR_AI_MCP_TOOLS,
   callASBRAITool,
 } from '../asbr-ai-mcp-integration.js';
-import { ASBRAIMcpServer } from '../asbr-ai-mcp-server.js';
+import type { ASBRAIMcpServer } from '../asbr-ai-mcp-server.js';
 
 // Mock dependencies
 vi.mock('../asbr-ai-mcp-server.js', () => ({

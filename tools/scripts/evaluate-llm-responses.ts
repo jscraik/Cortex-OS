@@ -6,7 +6,7 @@ export const evaluationDatasetSchema = z.array(
     expected: z.string(),
     response: z.string(),
     latency_ms: z.number().int().nonnegative(),
-  }),
+  })
 );
 
 export const evaluationInputSchema = z.object({

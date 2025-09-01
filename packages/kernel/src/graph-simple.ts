@@ -7,9 +7,9 @@
  */
 
 import { z } from 'zod';
-import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
-import { generateId } from './utils/id.js';
 import { fixedTimestamp } from './lib/determinism.js';
+import { createInitialPRPState, type PRPState, validateStateTransition } from './state.js';
+import { generateId } from './utils/id.js';
 
 // Zod schema for validating generateId inputs and run options
 const RunOptionsSchema = z
@@ -18,7 +18,6 @@ const RunOptionsSchema = z
     deterministic: z.boolean().optional(),
   })
   .strict();
-
 
 /**
  * Factory function to create a new CortexKernel instance
@@ -81,7 +80,6 @@ export class CortexKernel {
         currentNeuron: 'build-neuron',
       },
     };
-
 
     newState.validationResults.build = {
       passed: true,
@@ -168,7 +166,6 @@ export class CortexKernel {
       },
     };
 
-
     // Add strategy validation results
     newState.validationResults.strategy = {
       passed: true,
@@ -200,7 +197,6 @@ export class CortexKernel {
         currentNeuron: 'evaluation-neuron',
       },
     };
-
 
     // Add evaluation validation results
     newState.validationResults.evaluation = {

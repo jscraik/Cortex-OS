@@ -1,4 +1,4 @@
-import { test, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { ASBRAIIntegration } from '../asbr-ai-integration.js';
 
 vi.mock('../ai-capabilities.js', () => ({

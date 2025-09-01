@@ -4,7 +4,7 @@
  * Global setup and configuration for all tests
  */
 
-import { beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 
 // Global test setup
 beforeEach(() => {
@@ -134,5 +134,3 @@ export const createMockMCPClient = () => {
     errors,
   };
 };
-
-export {};

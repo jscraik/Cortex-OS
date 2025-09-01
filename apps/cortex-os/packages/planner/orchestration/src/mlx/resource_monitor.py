@@ -385,7 +385,9 @@ class ActivityMonitorIntegration:
                         (freq_mhz / max_freq) * 100, 100
                     )
                 except ValueError:
-                    logger.debug("Failed to parse GPU frequency from powermetrics output")
+                    logger.debug(
+                        "Failed to parse GPU frequency from powermetrics output"
+                    )
 
             elif "GPU in use by" in line:
                 # GPU is actively being used

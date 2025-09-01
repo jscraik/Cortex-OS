@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { callRerankService, type Candidate } from '../lib/rerank-service.ts';
+import { type Candidate, callRerankService } from '../lib/rerank-service.ts';
 
 const candidateSchema = z.object({
   text: z.string(),

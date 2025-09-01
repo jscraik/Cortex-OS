@@ -22,9 +22,9 @@ function getRelativeLuminance(rgb) {
     b: rgb.b / 255,
   };
 
-  const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : Math.pow((sRgb.r + 0.055) / 1.055, 2.4);
-  const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : Math.pow((sRgb.g + 0.055) / 1.055, 2.4);
-  const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : Math.pow((sRgb.b + 0.055) / 1.055, 2.4);
+  const r = sRgb.r <= 0.03928 ? sRgb.r / 12.92 : ((sRgb.r + 0.055) / 1.055) ** 2.4;
+  const g = sRgb.g <= 0.03928 ? sRgb.g / 12.92 : ((sRgb.g + 0.055) / 1.055) ** 2.4;
+  const b = sRgb.b <= 0.03928 ? sRgb.b / 12.92 : ((sRgb.b + 0.055) / 1.055) ** 2.4;
 
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }

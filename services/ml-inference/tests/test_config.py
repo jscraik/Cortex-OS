@@ -25,4 +25,3 @@ def test_requires_git_binary(monkeypatch) -> None:
     monkeypatch.setattr(shutil, "which", lambda _: None)
     with pytest.raises(RuntimeError):
         _load_app_module()
-

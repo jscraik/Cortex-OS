@@ -9,16 +9,16 @@
  */
 
 import { z } from 'zod';
+import { assessDependabotConfig, loadDependabotConfig } from '../integrations/dependabot.js';
 import type {
   Agent,
-  ModelProvider,
   EventBus,
-  MCPClient,
   GenerateOptions,
+  MCPClient,
   MemoryPolicy,
+  ModelProvider,
 } from '../lib/types.js';
-import { loadDependabotConfig, assessDependabotConfig } from '../integrations/dependabot.js';
-import { generateAgentId, generateTraceId, withTimeout, sanitizeText } from '../lib/utils.js';
+import { generateAgentId, generateTraceId, sanitizeText, withTimeout } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input schema

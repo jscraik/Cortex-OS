@@ -1,5 +1,5 @@
-import http from 'k6/http';
 import { check } from 'k6';
+import http from 'k6/http';
 
 function envNum(name, fallback) {
   const v = __ENV[name];
@@ -28,7 +28,12 @@ export const options = {
 export default function () {
   const url = `${__ENV.BASE_URL || 'http://localhost:3333'}/rag`;
   const payload = JSON.stringify({
-    config: { seed: 1, maxTokens: 128, timeoutMs: 1000, memory: { maxItems: 100, maxBytes: 16384 } },
+    config: {
+      seed: 1,
+      maxTokens: 128,
+      timeoutMs: 1000,
+      memory: { maxItems: 100, maxBytes: 16384 },
+    },
     query: { query: 'test', topK: 3 },
     json: true,
   });

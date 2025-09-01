@@ -11,8 +11,8 @@ export interface GitHubModelsConfig {
   temperature: number;
 }
 
-export type GitHubModel = 
-  | 'gpt-4o' 
+export type GitHubModel =
+  | 'gpt-4o'
   | 'gpt-4o-mini'
   | 'claude-3-5-sonnet'
   | 'claude-3-haiku'
@@ -62,7 +62,7 @@ export interface AITaskParams {
   model?: GitHubModel;
 }
 
-export type AITaskType = 
+export type AITaskType =
   | 'code_review'
   | 'pr_analysis'
   | 'security_scan'

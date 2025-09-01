@@ -7,8 +7,8 @@
  */
 
 import { z } from 'zod';
-import { generateId } from './utils/id.js';
 import { fixedTimestamp } from './lib/determinism.js';
+import { generateId } from './utils/id.js';
 
 /**
  * Evidence captured during PRP execution

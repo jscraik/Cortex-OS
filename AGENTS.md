@@ -68,5 +68,4 @@ Enforcement through automated checks:
 - Schema validation for agent configurations
 - Documentation synchronization checks
 
-
 </user_instructions>

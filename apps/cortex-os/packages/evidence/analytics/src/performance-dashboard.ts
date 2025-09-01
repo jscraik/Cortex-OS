@@ -9,7 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
-import { DashboardData, AgentStatus, InteractionNode, Alert } from './types.js';
+import type { AgentStatus, Alert, DashboardData, InteractionNode } from './types.js';
 
 /**
  * Performance dashboard utilities and data aggregation

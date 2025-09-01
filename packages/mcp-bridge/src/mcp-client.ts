@@ -11,8 +11,8 @@ import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 import { z } from 'zod';
-import { trackRequest } from './trackRequest';
 import { PendingRequests } from './pendingRequests';
+import { trackRequest } from './trackRequest';
 
 /**
  * JSON-RPC 2.0 message schemas
@@ -222,7 +222,7 @@ export class McpClient extends EventEmitter {
         this.recordError(lastError, 'connect');
 
         if (attempt < this.options.retryAttempts) {
-          await this.delay(this.options.retryDelay * Math.pow(2, attempt));
+          await this.delay(this.options.retryDelay * 2 ** attempt);
         }
       }
     }

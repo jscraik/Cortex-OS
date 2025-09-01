@@ -3,6 +3,7 @@
 Provisions MLX tools (mlx-lm, mlx-vlm) and verifies basic import.
 Run with: uv run python install-mlx-tools.py
 """
+
 import subprocess
 import sys
 

@@ -3,9 +3,9 @@
  * @description TDD tests for marketplace API server
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { build } from './app.js';
 import type { FastifyInstance } from 'fastify';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { build } from './app.js';
 
 describe('Marketplace API Server', () => {
   let app: FastifyInstance;

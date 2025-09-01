@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node
 import { readFileSync } from 'node:fs';
-import { globby } from 'globby';
 import Ajv from 'ajv';
+import { globby } from 'globby';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 

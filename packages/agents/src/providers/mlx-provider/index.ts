@@ -6,16 +6,16 @@
  * No stubs or placeholders - full implementation.
  */
 
-import type { ModelProvider, GenerateOptions, GenerateResult } from '../../lib/types.js';
-import { withTimeout, sleep } from '../../lib/utils.js';
-import { checkThermalStatus, checkMemoryStatus } from './thermal-monitor.js';
+import type { GenerateOptions, GenerateResult, ModelProvider } from '../../lib/types.js';
+import { sleep, withTimeout } from '../../lib/utils.js';
 import { executeMLXGeneration } from './gateway-client.js';
-import { 
-  type ThermalStatus, 
-  type MemoryStatus, 
+import { checkMemoryStatus, checkThermalStatus } from './thermal-monitor.js';
+import {
+  DEFAULT_CONFIG,
+  type MemoryStatus,
   type MLXProviderConfig,
   type MLXState,
-  DEFAULT_CONFIG 
+  type ThermalStatus,
 } from './types.js';
 
 // Re-export types
@@ -105,7 +105,7 @@ const generate = async (
     await new Promise<void>((resolve) => state.queue.push(resolve));
     state.active++;
   };
-  
+
   const release = () => {
     state.active = Math.max(0, state.active - 1);
     const next = state.queue.shift();

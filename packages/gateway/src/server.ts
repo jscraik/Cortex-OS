@@ -1,18 +1,18 @@
-import Fastify from 'fastify';
-import client from 'prom-client';
-import { z } from 'zod';
+import { handleA2A } from '@cortex-os/a2a';
 import {
+  A2AMessageSchema,
   AgentConfigSchema,
   MCPRequestSchema,
-  A2AMessageSchema,
   RAGQuerySchema,
   SimlabCommandSchema,
 } from '@cortex-os/contracts';
+import { createJsonOutput } from '@cortex-os/lib';
 import { handleMCP } from '@cortex-os/mcp';
-import { handleA2A } from '@cortex-os/a2a';
 import { handleRAG } from '@cortex-os/rag';
 import { handleSimlab } from '@cortex-os/simlab';
-import { createJsonOutput } from '@cortex-os/lib';
+import Fastify from 'fastify';
+import client from 'prom-client';
+import { z } from 'zod';
 import { createAgentRoute } from './lib/create-agent-route.js';
 
 const app = Fastify({ logger: true });
@@ -43,7 +43,11 @@ createAgentRoute(
 createAgentRoute(
   app,
   '/simlab',
-  z.object({ config: AgentConfigSchema, command: SimlabCommandSchema, json: z.boolean().optional() }),
+  z.object({
+    config: AgentConfigSchema,
+    command: SimlabCommandSchema,
+    json: z.boolean().optional(),
+  }),
   handleSimlab,
 );
 

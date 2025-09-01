@@ -7,4 +7,3 @@ describe('estimateTokenCount', () => {
     expect(estimateTokenCount('')).toBe(0);
   });
 });
-

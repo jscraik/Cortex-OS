@@ -2,6 +2,7 @@
 export type Event<T = unknown> = { type: string; payload: T };
 
 export type PublishFn = (evt: Event) => void;
+
 import { setAuditPublisher } from './audit';
 
 export function makeA2APublisher(publish: PublishFn) {

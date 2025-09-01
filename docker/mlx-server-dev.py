@@ -273,7 +273,9 @@ class MLXServer:
                         status_code=400, detail=f"Failed to load model {model_name}"
                     )
             except Exception as e:
-                raise HTTPException(status_code=500, detail="Internal server error") from e
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                ) from e
 
         @app.post("/models/{model_name}/unload")
         async def unload_model(model_name: str):
@@ -287,7 +289,9 @@ class MLXServer:
                         status_code=400, detail=f"Model {model_name} not loaded"
                     )
             except Exception as e:
-                raise HTTPException(status_code=500, detail="Internal server error") from e
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                ) from e
 
         @app.post("/inference")
         async def inference(req: InferenceRequest):
@@ -302,7 +306,9 @@ class MLXServer:
 
                 return result
             except Exception as e:
-                raise HTTPException(status_code=500, detail="Internal server error") from e
+                raise HTTPException(
+                    status_code=500, detail="Internal server error"
+                ) from e
 
         return app
 

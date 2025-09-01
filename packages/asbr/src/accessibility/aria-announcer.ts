@@ -276,10 +276,11 @@ export class AriaAnnouncer {
           .replace(/successfully /g, '')
           .replace(/please /gi, '');
 
-      case 'verbose':
+      case 'verbose': {
         // Add helpful context
         const taskInfo = event.taskId ? ` for task ${event.taskId.substring(0, 8)}` : '';
         return `${message}${taskInfo}. ${this.getVerboseContext(event)}`;
+      }
 
       default:
         return message;
