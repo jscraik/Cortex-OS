@@ -40,6 +40,7 @@ export class SQLiteStore implements MemoryStore {
           provenance TEXT,
           policy TEXT,
           embeddingModel TEXT,
+          consent TEXT,
           aclAgent TEXT,
           aclTenant TEXT,
           aclPurposes TEXT
@@ -62,6 +63,11 @@ export class SQLiteStore implements MemoryStore {
     } catch (err) {
       console.error('Error adding aclPurposes column:', err);
     }
+    try {
+      this.db.exec('ALTER TABLE memories ADD COLUMN consent TEXT');
+    } catch (err) {
+      console.error('Error adding consent column:', err);
+    }
 
     // Create indexes
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
@@ -72,22 +78,23 @@ export class SQLiteStore implements MemoryStore {
   async upsert(m: Memory): Promise<Memory> {
     const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO memories
-      (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel, aclAgent, aclTenant, aclPurposes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel, consent, aclAgent, aclTenant, aclPurposes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
       m.id,
       m.kind,
       m.text ? encrypt(m.text) : null,
-      m.vector ? JSON.stringify(m.vector) : null,
-      JSON.stringify(m.tags),
+      m.vector ? encrypt(JSON.stringify(m.vector)) : null,
+      encrypt(JSON.stringify(m.tags)),
       m.ttl || null,
       m.createdAt,
       m.updatedAt,
       JSON.stringify(m.provenance),
       m.policy ? JSON.stringify(m.policy) : null,
       m.embeddingModel || null,
+      encrypt(JSON.stringify(m.consent)),
       m.acl.agent,
       m.acl.tenant,
       JSON.stringify(m.acl.purposes),
@@ -110,29 +117,18 @@ export class SQLiteStore implements MemoryStore {
     stmt.run(id);
   }
 
-  async searchByText(q: TextQuery): Promise<Memory[]> {
-    // Build SQL query to filter by tags if provided
-    let sql = 'SELECT * FROM memories';
-    let params: any[] = [];
-    if (q.filterTags && q.filterTags.length > 0) {
-      // Assuming tags are stored as a JSON array in the 'tags' column
-      // Use LIKE to match all tags (simple approach, can be improved for large tag sets)
-      // This will match rows where all filterTags are present in the tags column
-      const tagConditions = q.filterTags.map(() => `tags LIKE ?`).join(' AND ');
-      sql += ` WHERE ${tagConditions}`;
-      params = q.filterTags.map(tag => `%${tag}%`);
-    }
-    const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params);
-    const candidates = rows
-      .map((row: any) => this.rowToMemory(row))
-      .filter((m: Memory) => {
-        if (!m.text) return false;
-        // Only filter by text client-side, since text is encrypted
-        const matchesText = m.text.toLowerCase().includes(q.text.toLowerCase());
-        return matchesText;
-      })
-      .slice(0, q.topK);
+    async searchByText(q: TextQuery): Promise<Memory[]> {
+      const stmt = this.db.prepare('SELECT * FROM memories');
+      const rows = stmt.all();
+      const candidates = rows
+        .map((row: any) => this.rowToMemory(row))
+        .filter((m: Memory) => {
+          if (!m.text) return false;
+          const matchesText = m.text.toLowerCase().includes(q.text.toLowerCase());
+          const matchesTags = !q.filterTags || q.filterTags.every((tag) => m.tags.includes(tag));
+          return matchesText && matchesTags;
+        })
+        .slice(0, q.topK);
 
     // Optional rerank stage using Model Gateway if query text is present
     const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
@@ -154,24 +150,8 @@ export class SQLiteStore implements MemoryStore {
   async searchByVector(q: VectorQuery): Promise<Memory[]> {
     // SQLite doesn't have native vector search capabilities
     // We'll fetch candidates and perform similarity matching in memory
-    let sql = 'SELECT * FROM memories WHERE vector IS NOT NULL';
-    const params: any[] = [];
-
-    if (q.filterTags && q.filterTags.length > 0) {
-      sql += ' AND (';
-      q.filterTags.forEach((tag, i) => {
-        if (i > 0) sql += ' OR ';
-        sql += 'tags LIKE ?';
-        params.push(`%"${tag}"%`);
-      });
-      sql += ')';
-    }
-
-    sql += ' ORDER BY updatedAt DESC LIMIT ?';
-    params.push(q.topK * 10); // Fetch more candidates for similarity matching
-
-    const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params);
+    const stmt = this.db.prepare('SELECT * FROM memories WHERE vector IS NOT NULL ORDER BY updatedAt DESC');
+    const rows = stmt.all();
 
     const candidates = rows
       .map((row: any) => this.rowToMemory(row))
@@ -184,8 +164,12 @@ export class SQLiteStore implements MemoryStore {
         score: cosineSimilarity(q.vector, memory.vector!),
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, q.topK)
+      .slice(0, q.topK * 2)
       .map((item) => item.memory);
+
+    if (q.filterTags && q.filterTags.length > 0) {
+      scoredCandidates = scoredCandidates.filter((m) => q.filterTags!.every((t) => m.tags.includes(t)));
+    }
 
     // Optional second-stage reranking if original query text is provided
     const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
@@ -306,8 +290,8 @@ export class SQLiteStore implements MemoryStore {
       id: row.id,
       kind: row.kind,
       text: row.text ? decrypt(row.text) : undefined,
-      vector: row.vector ? JSON.parse(row.vector) : undefined,
-      tags: row.tags ? JSON.parse(row.tags) : [],
+      vector: row.vector ? JSON.parse(decrypt(row.vector)) : undefined,
+      tags: row.tags ? JSON.parse(decrypt(row.tags)) : [],
       ttl: row.ttl ?? undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
@@ -317,6 +301,7 @@ export class SQLiteStore implements MemoryStore {
         tenant: row.aclTenant || '',
         purposes: row.aclPurposes ? JSON.parse(row.aclPurposes) : [],
       },
+      consent: row.consent ? JSON.parse(decrypt(row.consent)) : { granted: false, timestamp: '' },
       policy: row.policy ? JSON.parse(row.policy) : undefined,
       embeddingModel: row.embeddingModel ?? undefined,
     };

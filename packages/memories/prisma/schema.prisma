@@ -5,15 +5,20 @@ model Memory {
   id             String   @id
   kind           String
   text           String?
-  vector         Float[]?
-  tags           String[]
+  vector         String?
+  tags           String?
   ttl            String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   provenance     Json
   policy         Json?
   embeddingModel String?
+  consent        String?
+  aclAgent       String
+  aclTenant      String
+  aclPurposes    String[]
   @@index([kind])
   @@index([embeddingModel])
+  @@index([aclTenant])
 }
 
