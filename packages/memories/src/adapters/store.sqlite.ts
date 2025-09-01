@@ -111,15 +111,26 @@ export class SQLiteStore implements MemoryStore {
   }
 
   async searchByText(q: TextQuery): Promise<Memory[]> {
-    const stmt = this.db.prepare('SELECT * FROM memories');
-    const rows = stmt.all();
+    // Build SQL query to filter by tags if provided
+    let sql = 'SELECT * FROM memories';
+    let params: any[] = [];
+    if (q.filterTags && q.filterTags.length > 0) {
+      // Assuming tags are stored as a JSON array in the 'tags' column
+      // Use LIKE to match all tags (simple approach, can be improved for large tag sets)
+      // This will match rows where all filterTags are present in the tags column
+      const tagConditions = q.filterTags.map(() => `tags LIKE ?`).join(' AND ');
+      sql += ` WHERE ${tagConditions}`;
+      params = q.filterTags.map(tag => `%${tag}%`);
+    }
+    const stmt = this.db.prepare(sql);
+    const rows = stmt.all(...params);
     const candidates = rows
       .map((row: any) => this.rowToMemory(row))
       .filter((m: Memory) => {
         if (!m.text) return false;
+        // Only filter by text client-side, since text is encrypted
         const matchesText = m.text.toLowerCase().includes(q.text.toLowerCase());
-        const matchesTags = !q.filterTags || q.filterTags.every((t) => m.tags.includes(t));
-        return matchesText && matchesTags;
+        return matchesText;
       })
       .slice(0, q.topK);
 
