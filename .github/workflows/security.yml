@@ -50,7 +50,7 @@ jobs:
 
       - name: Run npm audit
         if: matrix.scan == 'npm-audit'
-        run: pnpm audit --audit-level=high || true
+        run: pnpm audit --audit-level=high
 
       - name: Setup Python
         if: matrix.scan == 'pip-audit'
