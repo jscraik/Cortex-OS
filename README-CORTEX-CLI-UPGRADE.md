@@ -6,7 +6,7 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 
 ## What Was Built
 
-### 1. Rust TUI Application (`apps/cortex-tui/`)
+### 1. Rust TUI Application (`apps/cortex-code/`)
 
 - **Framework**: Ratatui 0.29.0 (exact same version as OpenAI Codex CLI)
 - **Architecture**: SOLID principles with MVC pattern
@@ -35,14 +35,14 @@ Successfully implemented Phase 1 of the Cortex-CLI v2.0 upgrade following strict
 - **Workflows**:
   - `cortex-agent.yml`: Issue/PR automation
   - `cortex-review.yml`: Automated PR reviews
-  - `cortex-tui-ci.yml`: CI/CD for TUI
+  - `cortex-code-ci.yml`: CI/CD for TUI
 - **Permissions**: Minimal `models: read` for GitHub Models
 
 ### 5. CLI Integration
 
-- **Bridge Command**: `cortex tui` launches Rust TUI from TypeScript CLI
+- **Bridge Command**: `cortex code` launches Rust TUI from TypeScript CLI
 - **Fallback**: Maintains all existing cortex-cli functionality
-- **CI Mode**: `cortex tui --ci "prompt"` for automation
+- **CI Mode**: `cortex code --ci "prompt"` for automation
 
 ## TDD Implementation Evidence
 
@@ -126,7 +126,7 @@ impl ModelProvider for LocalMLXProvider {}
 ## File Structure
 
 ```
-apps/cortex-tui/                    # New Rust TUI
+apps/cortex-code/                    # New Rust TUI
 ├── Cargo.toml                      # Ratatui 0.29.0 + dependencies
 ├── src/
 │   ├── main.rs                     # CLI entry point
@@ -151,7 +151,7 @@ apps/cortex-cli/src/commands/
 .github/workflows/
 ├── cortex-agent.yml                # Issue/PR automation
 ├── cortex-review.yml               # Automated PR reviews
-└── cortex-tui-ci.yml              # TUI CI/CD pipeline
+└── cortex-code-ci.yml              # TUI CI/CD pipeline
 ```
 
 ## Usage Examples
@@ -160,20 +160,20 @@ apps/cortex-cli/src/commands/
 
 ```bash
 # Launch TUI directly
-apps/cortex-tui/target/release/cortex-tui
+apps/cortex-code/target/release/cortex-code
 
 # Or via existing CLI
-cortex tui
+cortex code
 ```
 
 ### CI/Automation Mode
 
 ```bash
 # Text output
-cortex tui --ci "explain this code"
+cortex code --ci "explain this code"
 
 # JSON output for automation
-cortex tui run "review this PR" --output json
+cortex code run "review this PR" --output json
 ```
 
 ### GitHub Actions

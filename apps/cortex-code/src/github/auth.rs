@@ -1,4 +1,4 @@
-use crate::error::{GitHubError, GitHubResult};
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
 use tracing::{debug, warn};
@@ -68,7 +68,7 @@ impl TokenManager {
     }
 
     /// Get a valid access token, refreshing if necessary
-    pub async fn get_token(&mut self) -> GitHubResult<String> {
+    pub async fn get_token(&mut self) -> Result<String> {
         // Check if current token is still valid
         if let Some(ref token) = self.current_token {
             if !self.is_token_expired(&token) {
@@ -95,13 +95,15 @@ impl TokenManager {
     }
 
     /// Refresh or obtain new token based on auth method
-    async fn refresh_token(&mut self) -> GitHubResult<String> {
+    async fn refresh_token(&mut self) -> Result<String> {
         match &self.auth {
             GitHubAuth::PersonalAccessToken(token) => {
                 // Validate the token
                 let is_valid = self.validate_token(token).await?;
                 if !is_valid {
-                    return Err(GitHubError::Authentication("Token invalid".to_string()));
+                    return Err(crate::error::Error::Provider(
+                        crate::error::ProviderError::AuthFailed,
+                    ));
                 }
 
                 let auth_token = AuthToken {
@@ -149,7 +151,7 @@ impl TokenManager {
     }
 
     /// Validate a personal access token
-    async fn validate_token(&self, token: &str) -> GitHubResult<bool> {
+    async fn validate_token(&self, token: &str) -> Result<bool> {
         let response = self
             .client
             .get("https://api.github.com/user")
@@ -175,7 +177,9 @@ impl TokenManager {
 
             if rate_limit_remaining == 0 {
                 warn!("GitHub API rate limit exceeded during token validation");
-                return Err(GitHubError::RateLimit("API rate limit exceeded".to_string()));
+                return Err(crate::error::Error::Provider(
+                    crate::error::ProviderError::RateLimited,
+                ));
             }
 
             warn!("GitHub token validation failed: forbidden");
@@ -200,7 +204,7 @@ impl TokenManager {
         app_id: &str,
         private_key: &str,
         installation_id: &str,
-    ) -> GitHubResult<AuthToken> {
+    ) -> Result<AuthToken> {
         // Create JWT for GitHub App authentication
         let jwt = self.create_github_app_jwt(app_id, private_key)?;
 
@@ -220,7 +224,9 @@ impl TokenManager {
             .await?;
 
         if !response.status().is_success() {
-            return Err(GitHubError::Authentication("GitHub App authentication failed".to_string()));
+            return Err(crate::error::Error::Provider(
+                crate::error::ProviderError::AuthFailed,
+            ));
         }
 
         let token_response: InstallationTokenResponse = response.json().await?;
@@ -228,7 +234,9 @@ impl TokenManager {
         // Parse expiration time
         let expires_at = chrono::DateTime::parse_from_rfc3339(&token_response.expires_at)
             .map_err(|_| {
-                GitHubError::Configuration("Invalid token expiration format".to_string())
+                crate::error::Error::Provider(crate::error::ProviderError::Api(
+                    "Invalid token expiration format".to_string(),
+                ))
             })?
             .timestamp();
 
@@ -244,7 +252,7 @@ impl TokenManager {
     }
 
     /// Create JWT for GitHub App authentication
-    fn create_github_app_jwt(&self, app_id: &str, _private_key: &str) -> GitHubResult<String> {
+    fn create_github_app_jwt(&self, app_id: &str, _private_key: &str) -> Result<String> {
         // For now, return a placeholder
         // In a full implementation, we'd use the `jsonwebtoken` crate to create a proper JWT
         // signed with the GitHub App's private key
@@ -286,7 +294,7 @@ impl TokenManager {
 }
 
 /// Create GitHub authentication from environment variables
-pub fn create_auth_from_env() -> GitHubResult<Option<GitHubAuth>> {
+pub fn create_auth_from_env() -> Result<Option<GitHubAuth>> {
     // Check for Personal Access Token
     if let Ok(token) = std::env::var("GITHUB_TOKEN") {
         return Ok(Some(GitHubAuth::PersonalAccessToken(token)));

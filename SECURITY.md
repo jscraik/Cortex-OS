@@ -334,7 +334,7 @@ We offer rewards for security vulnerabilities in our supported systems:
 - **MCP Implementation** (`packages/mcp/`)
 - **A2A Communication** (`packages/a2a/`)
 - **AI GitHub App** (`packages/cortex-ai-github/`)
-- **TUI Application** (`apps/cortex-tui/`)
+- **TUI Application** (`apps/cortex-code/`)
 - **Web Interface** (`apps/cortex-webui/`)
 
 #### Reward Structure
