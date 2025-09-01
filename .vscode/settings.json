@@ -7,5 +7,23 @@
     "connectionId": "jamiescottcraik",
     "projectKey": "jamiescottcraik_cortex-os"
   },
-  "nxConsole.generateAiAgentRules": true
+  "nxConsole.generateAiAgentRules": true,
+
+  // Dependi Configuration - Add your API key here
+  "dependi.apiKey": "bf6e1e6b-564b-4f6a-af14-bd2f9195c5b9",
+  "dependi.vulnerability.enabled": true,
+  "dependi.vulnerability.ghsa.enabled": true,
+
+  // Language-specific Dependi settings
+  "dependi.rust.enabled": true,
+  "dependi.rust.lockFileEnabled": true,
+  "dependi.npm.enabled": true,
+  "dependi.npm.lockFileEnabled": true,
+  "dependi.go.enabled": true,
+  "dependi.python.enabled": true,
+  "dependi.python.lockFileEnabled": true,
+  "dependi.php.enabled": true,
+  "dependi.php.lockFileEnabled": true,
+  "dependi.dart.enabled": true,
+  "dependi.dart.lockFileEnabled": true
 }
