@@ -4,14 +4,14 @@
  */
 
 import { randomUUID } from 'crypto';
-import { 
-  TaskId, 
-  TaskStatus, 
-  TaskSendParams, 
-  TaskGetParams, 
-  TaskCancelParams, 
+import {
+  TaskId,
+  TaskStatus,
+  TaskSendParams,
+  TaskGetParams,
+  TaskCancelParams,
   TaskResult,
-  A2A_ERROR_CODES 
+  A2A_ERROR_CODES
 } from './protocol.js';
 // Simple implementation for StructuredError
 class StructuredError extends Error {
@@ -92,7 +92,7 @@ export interface TaskProcessor {
 export class EchoTaskProcessor implements TaskProcessor {
   async process(params: TaskSendParams): Promise<TaskResult> {
     const id = params.id || randomUUID();
-    
+
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -102,7 +102,7 @@ export class EchoTaskProcessor implements TaskProcessor {
       message: {
         role: 'assistant',
         parts: [{
-          text: `Echo: ${params.message.parts.map(p => p.text).join(' ')}`,
+          text: `Echo: ${params.message.parts.map(p => p.text).join(' ')}`
         }],
       },
     };
@@ -125,52 +125,33 @@ export class TaskManager {
   async sendTask(params: TaskSendParams): Promise<TaskResult> {
     const taskId = params.id || randomUUID();
     const now = new Date();
-
-    const task: Task = {
-      id: taskId,
-      status: 'pending',
-      createdAt: now,
-      updatedAt: now,
-      params,
-    };
-
-    await this.store.save(task);
-
+    await this.store.save({ id: taskId, status: 'pending', createdAt: now, updatedAt: now, params });
     try {
-      // Update status to running
       await this.store.update(taskId, { status: 'running' });
-
-      // Process the task
-      const result = await Promise.race([
-        this.processor.process(params),
-        this.createTimeoutPromise(taskId),
-      ]);
-
-      // Update with result
-      await this.store.update(taskId, { 
-        status: 'completed',
-        result,
-      });
-
+      const result = await this.runTask(params, taskId);
+      await this.store.update(taskId, { status: 'completed', result });
       return result;
     } catch (error) {
-      const taskError = {
-        code: error instanceof TaskTimeoutError ? A2A_ERROR_CODES.TASK_TIMEOUT : A2A_ERROR_CODES.INTERNAL_ERROR,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        data: error instanceof Error ? { stack: error.stack } : error,
-      };
-
-      await this.store.update(taskId, { 
-        status: 'failed',
-        error: taskError,
-      });
-
-      throw new StructuredError(
-        'TASK_EXECUTION_FAILED',
-        `Task ${taskId} failed: ${taskError.message}`,
-        { taskId, error: taskError }
-      );
+      throw await this.handleSendError(taskId, error);
     }
+  }
+
+  private async runTask(params: TaskSendParams, taskId: string): Promise<TaskResult> {
+    return Promise.race([this.processor.process(params), this.createTimeoutPromise(taskId)]);
+  }
+
+  private async handleSendError(taskId: string, error: unknown): Promise<StructuredError> {
+    const taskError = {
+      code: error instanceof TaskTimeoutError ? A2A_ERROR_CODES.TASK_TIMEOUT : A2A_ERROR_CODES.INTERNAL_ERROR,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      data: error instanceof Error ? { stack: error.stack } : error,
+    };
+    await this.store.update(taskId, { status: 'failed', error: taskError });
+    return new StructuredError(
+      'TASK_EXECUTION_FAILED',
+      `Task ${taskId} failed: ${taskError.message}`,
+      { taskId, error: taskError }
+    );
   }
 
   /**
@@ -216,7 +197,7 @@ export class TaskManager {
       );
     }
 
-    await this.store.update(params.id, { 
+    await this.store.update(params.id, {
       status: 'cancelled',
       error: {
         code: A2A_ERROR_CODES.TASK_CANCELLED,
@@ -261,9 +242,9 @@ export const createTaskManager = (options?: {
     taskTimeoutMs: 30000,
     maxConcurrentTasks: 10,
   };
-  
+
   const config = options?.config ? { ...defaultConfig, ...options.config } : defaultConfig;
-  
+
   return new TaskManager(
     options?.store,
     options?.processor,

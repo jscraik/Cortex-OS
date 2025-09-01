@@ -329,6 +329,7 @@ describe('A2A Protocol Implementation', () => {
 
   describe('Integration Tests', () => {
     it('should handle complete A2A workflow', async () => {
+      const tm = new TaskManager();
       // 1. Send a task
       const sendResponse = await handleA2A({
         jsonrpc: '2.0',
@@ -341,7 +342,7 @@ describe('A2A Protocol Implementation', () => {
             parts: [{ text: 'Complete workflow test' }],
           },
         },
-      });
+      }, tm);
 
       const sendResult = JSON.parse(sendResponse) as JsonRpcResponse;
       expect(sendResult.error).toBeUndefined();
@@ -355,11 +356,29 @@ describe('A2A Protocol Implementation', () => {
         params: {
           id: 'workflow-task',
         },
-      });
+      }, tm);
 
       const getResult = JSON.parse(getResponse) as JsonRpcResponse;
       expect(getResult.error).toBeUndefined();
       expect((getResult.result as any).id).toBe('workflow-task');
     });
+  });
+  it('should isolate TaskManager state between calls', async () => {
+    const tm1 = new TaskManager();
+    const tm2 = new TaskManager();
+    await handleA2A({
+      jsonrpc: '2.0',
+      id: '1',
+      method: 'tasks/send',
+      params: { id: 'state-task', message: { role: 'user', parts: [{ text: 'hi' }] } },
+    }, tm1);
+    const res = await handleA2A({
+      jsonrpc: '2.0',
+      id: '2',
+      method: 'tasks/get',
+      params: { id: 'state-task' },
+    }, tm2);
+    const parsed = JSON.parse(res) as JsonRpcResponse;
+    expect(parsed.error?.code).toBe(A2A_ERROR_CODES.TASK_NOT_FOUND);
   });
 });
