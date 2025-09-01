@@ -1,8 +1,0 @@
-{
-  "base": "/Users/jamiecraik/.Cortex-OS/.tmp/mcp-ecosystems-20250901-172623",
-  "archive": "/Users/jamiecraik/.Cortex-OS/.tmp/mcp-ecosystems-20250901-172623/mcp-harvest-20250901-172623.tgz",
-  "repos": {
-    "sst/opencode": { "files": 17 },
-    "openai/codex": { "files": 86 }
-  }
-}
