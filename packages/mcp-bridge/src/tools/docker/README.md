@@ -16,7 +16,7 @@ It is designed for agent orchestration and compliance with Cortex OS standards.
 ## Files
 
 - `Dockerfile`: Builds a Python 3.11 container running the MCP server.
-- `requirements.txt`: Minimal dependencies (none required for current code).
+- `pyproject.toml`/`uv.lock`: Managed Python dependencies.
 - `mcp_server.py`: Implements tool registry and API endpoints for Docker management.
 
 ## Usage

@@ -532,7 +532,7 @@ supervisor
 ./docker/gpl-tools:
 gpl_service.py
 health_check.py
-requirements.txt
+pyproject.toml
 
 ./docker/nginx:
 default.conf
@@ -1383,7 +1383,7 @@ gitmcp.ts
 ./packages/mcp-bridge/src/python:
 README.md
 pyproject.toml
-requirements.txt
+pyproject.toml
 src
 
 ./packages/mcp-bridge/src/python/src:

@@ -239,8 +239,7 @@ export class SecurityScanner {
   private async runBanditScan(projectRoot: string): Promise<SecurityVulnerability[]> {
     try {
       if (
-        fileExists(createFilePath(projectRoot, 'pyproject.toml')) ||
-        fileExists(createFilePath(projectRoot, 'requirements.txt'))
+        fileExists(createFilePath(projectRoot, 'pyproject.toml'))
       ) {
         await execAsync('which bandit', { timeout: 2000 });
 

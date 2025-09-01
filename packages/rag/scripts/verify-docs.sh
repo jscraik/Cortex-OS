@@ -20,7 +20,7 @@ echo "3. Roadmap: docs/plan/roadmap.md"
 echo "4. Technical Specification: docs/plan/technical-spec.md"
 echo "5. Implementation Tracker: docs/plan/implementation-tracker.md"
 echo "6. Setup Guide: docs/setup-guide.md"
-echo "7. Requirements File: requirements.txt"
+echo "7. Project Metadata: pyproject.toml"
 echo "8. Plan Summary: docs/plan/summary.md"
 
 # Verify each document exists
@@ -35,7 +35,7 @@ documents=(
   "docs/plan/technical-spec.md"
   "docs/plan/implementation-tracker.md"
   "docs/setup-guide.md"
-  "requirements.txt"
+  "pyproject.toml"
   "docs/plan/summary.md"
 )
 

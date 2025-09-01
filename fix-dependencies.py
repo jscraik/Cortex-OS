@@ -35,12 +35,12 @@ def main():
 
     # Upgrade conflicting dependencies to compatible versions
     upgrades = [
-        ("pip install 'anyio>=4.5.0'", "Upgrading anyio to >=4.5.0"),
-        ("pip install 'httpx>=0.27.0'", "Upgrading httpx to >=0.27.0"),
-        ("pip install 'click>=8.2.1'", "Upgrading click to >=8.2.1"),
-        ("pip install 'Pillow>=10.4.0'", "Upgrading Pillow to >=10.4.0"),
-        ("pip install --upgrade fastapi", "Upgrading FastAPI to latest"),
-        ("pip install --upgrade uvicorn", "Upgrading Uvicorn to latest"),
+        ("uv pip install --system 'anyio>=4.5.0'", "Upgrading anyio to >=4.5.0"),
+        ("uv pip install --system 'httpx>=0.27.0'", "Upgrading httpx to >=0.27.0"),
+        ("uv pip install --system 'click>=8.2.1'", "Upgrading click to >=8.2.1"),
+        ("uv pip install --system 'Pillow>=10.4.0'", "Upgrading Pillow to >=10.4.0"),
+        ("uv pip install --system --upgrade fastapi", "Upgrading FastAPI to latest"),
+        ("uv pip install --system --upgrade uvicorn", "Upgrading Uvicorn to latest"),
     ]
 
     success_count = 0
@@ -84,7 +84,7 @@ def main():
         print("⚠️  Some compatibility issues remain. Manual intervention may be needed.")
         print("\nRecommendations:")
         print("1. Consider using virtual environments to isolate conflicting packages")
-        print("2. Pin specific versions in requirements.txt")
+        print("2. Pin specific versions in pyproject.toml")
         print("3. Use conda instead of pip for complex ML environments")
 
 

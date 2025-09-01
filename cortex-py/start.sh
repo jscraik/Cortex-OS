@@ -33,19 +33,19 @@ reset_pipelines_dir() {
   fi
 }
 
-# Function to install requirements if requirements.txt is provided
+# Function to install requirements if dependency file is provided
 install_requirements() {
   if [[ -f "$1" ]]; then
-    echo "requirements.txt found at $1. Installing requirements..."
-    pip install -r "$1"
+    echo "dependency file found at $1. Installing requirements..."
+    uv pip install --system -r "$1"
   else
-    echo "requirements.txt not found at $1. Skipping installation of requirements."
+    echo "dependency file not found at $1. Skipping installation of requirements."
   fi
 }
 
 # Check if the PIPELINES_REQUIREMENTS_PATH environment variable is set and non-empty
 if [[ -n "$PIPELINES_REQUIREMENTS_PATH" ]]; then
-  # Install requirements from the specified requirements.txt
+  # Install requirements from the specified dependency file
   install_requirements "$PIPELINES_REQUIREMENTS_PATH"
 else
   echo "PIPELINES_REQUIREMENTS_PATH not specified. Skipping installation of requirements."
@@ -99,10 +99,10 @@ install_frontmatter_requirements() {
     # Extract the requirements list
     requirements=$(echo "$requirements" | awk -F': ' '{print $2}' | tr ',' ' ' | tr -d '\r')
 
-    # Construct and echo the pip install command
-    local pip_command="pip install $requirements"
+    # Construct and echo the uv pip install command
+    local pip_command="uv pip install --system $requirements"
     echo "$pip_command"
-    pip install $requirements
+    uv pip install --system $requirements
   else
     echo "No requirements found in frontmatter of $file."
   fi

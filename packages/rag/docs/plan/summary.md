@@ -38,8 +38,8 @@ This document summarizes all the planning and setup documentation created for en
    - Dependency installation
    - Configuration guidance
 
-2. **Requirements File** - `requirements.txt`
-   - Python dependencies list
+2. **Project Metadata** - `pyproject.toml`
+   - Python dependencies managed via uv
    - Version specifications
 
 ## Document Structure
@@ -54,7 +54,9 @@ packages/rag/
 │   │   ├── technical-spec.md
 │   │   └── implementation-tracker.md
 │   └── setup-guide.md
-├── requirements.txt
+├── pyproject.toml
+├── uv.lock
+├── uv.toml
 ├── README.md
 ├── MLX-INTEGRATION.md
 └── package.json
