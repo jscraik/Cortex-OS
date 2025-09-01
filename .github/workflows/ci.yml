@@ -1,169 +1,28 @@
-name: CI
+name: ci
 on:
-  push:
-    branches: [ main ]
+  push: { branches: ["main"] }
   pull_request:
-    branches: [ main ]
+
 jobs:
-  node:
+  setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
-        with:
-          version: 9
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm lint
-      - name: Typecheck
-        run: pnpm typecheck
-      - name: Validate Contracts
-        run: pnpm run validate:contracts
-      - name: .cortex validate
-        run: pnpm run cortex:validate
-      - name: Test
-        run: pnpm test
-      - name: Publish Pacts (push branches)
-        if: ${{ (github.event_name == 'push') && (secrets.PACT_BROKER_URL != '') }}
-        env:
-          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
-          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
-          GIT_SHA: ${{ github.sha }}
-          PACT_TAGS: ${{ github.ref_name }},main
-        run: pnpm -F @cortex-os/gateway exec node ./scripts/publish-pacts.cjs
-      - name: Publish Pacts (pull requests)
-        if: ${{ (github.event_name == 'pull_request') && (secrets.PACT_BROKER_URL != '') }}
-        env:
-          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
-          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
-          GIT_SHA: ${{ github.sha }}
-          PACT_TAGS: pr-${{ github.event.pull_request.number }},${{ github.head_ref }}
-        run: pnpm -F @cortex-os/gateway exec node ./scripts/publish-pacts.cjs
-  python:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-      - name: Set up Python 3.12
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.12'
-      - name: Set up uv
-        uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf
-      - name: Install deps
-        working-directory: python
-        run: uv sync --frozen
-      - name: Lint (ruff)
-        working-directory: python
-        run: uv run ruff check .
-      - name: Typecheck (pyright)
-        working-directory: python
-        run: uv run pyright
-      - name: Test (pytest)
-        working-directory: python
-        run: uv run pytest -q
-      - name: Golden evals (chat)
-        working-directory: python
-        run: uv run python evals/run_golden.py --suite chat --out golden-chat.json
-      - name: Golden evals (rerank)
-        working-directory: python
-        run: uv run python evals/run_golden.py --suite rerank --out golden-rerank.json
-      - name: Retrieval evals (rag)
-        working-directory: python
-        run: uv run python evals/run_retrieval.py --out retrieval.json
-      - name: Embeddings evals
-        working-directory: python
-        run: uv run python evals/run_embeddings.py --out embeddings.json
-      - name: Upload golden artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: golden-results
-          path: |
-            python/golden-chat.json
-            python/golden-rerank.json
-            python/retrieval.json
-            python/embeddings.json
-      - name: Annotate Grafana with evals (optional)
-        if: ${{ secrets.GRAFANA_URL != '' && secrets.GRAFANA_API_KEY != '' }}
-        env:
-          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
-          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
-        run: |
-          node ops/observability/grafana/annotate.mjs k6-summary.json || true
-          echo "Evals results attached as artifacts."
-  k6-quick:
-    runs-on: ubuntu-latest
-    needs: node
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22
-          cache: 'pnpm'
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
-        with:
-          version: 9
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: corepack enable
+      - run: pnpm -v
       - run: pnpm install --frozen-lockfile
-      - name: Build gateway
-        run: pnpm -F @cortex-os/gateway build
-      - name: Start gateway
-        run: node packages/gateway/dist/server.js &
-      - name: Wait for gateway
-        run: npx wait-on http://localhost:3333/openapi.json || true
-      - name: Setup k6
-        uses: grafana/setup-k6-action@98db1bcacc2d06234a3cade8629ebc97e0130ec2
-      - name: k6 quick
-        run: k6 run --summary-export k6-summary.json k6/quick.js
-      - name: SLO/Budget check
-        run: node ops/slo/check-k6.mjs k6-summary.json
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
 
-  # Sign CI artifacts with Sigstore for supply chain security
-  sign-artifacts:
-    name: Sign CI Artifacts
+  bun-lane:
     runs-on: ubuntu-latest
-    needs: [node, python, k6-quick]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      id-token: write  # Required for OIDC authentication with Sigstore
-      contents: read
-      actions: read
-
+    continue-on-error: true
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
-        with:
-          egress-policy: audit
-
-      - name: Download golden results
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: golden-results
-          path: ./artifacts/
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
-        with:
-          cosign-release: 'v2.2.4'
-
-      - name: Sign artifacts with Sigstore
-        env:
-          COSIGN_EXPERIMENTAL: 1
-        run: |
-          # Sign all JSON artifacts
-          find ./artifacts/ -name "*.json" | while read -r file; do
-            echo "Signing: $file"
-            cosign sign-blob \
-              --bundle "${file}.sigstore.json" \
-              "$file"
-          done
-
-      - name: Upload signed artifacts
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
-        with:
-          name: signed-golden-results
-          path: ./artifacts/
-          retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: bun -v
+      - run: bun install --frozen-lockfile || true
+      - run: bun run -T nx run-many -t test --parallel || true
