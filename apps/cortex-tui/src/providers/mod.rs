@@ -22,13 +22,13 @@ pub type ResponseStream = Pin<Box<dyn Stream<Item = Result<String>> + Send>>;
 pub trait ModelProvider: Send + Sync {
     /// Get the provider name
     fn provider_name(&self) -> &str;
-    
+
     /// Complete a single prompt (non-streaming)
     async fn complete(&self, prompt: &str) -> Result<String>;
-    
+
     /// Stream completion chunks
     async fn stream(&self, prompt: &str) -> Result<ResponseStream>;
-    
+
     /// Check if the provider is healthy/available
     async fn health_check(&self) -> Result<bool> {
         // Default implementation - try a simple completion
@@ -37,7 +37,7 @@ pub trait ModelProvider: Send + Sync {
             Err(_) => Ok(false),
         }
     }
-    
+
     /// Get supported models
     fn supported_models(&self) -> Vec<String> {
         vec![] // Default implementation
@@ -50,16 +50,16 @@ pub fn create_provider(config: &Config) -> Result<Box<dyn ModelProvider>> {
     if let Ok(provider) = create_specific_provider(config, &config.provider.default) {
         return Ok(provider);
     }
-    
+
     // Try fallback providers
     for fallback in &config.provider.fallback {
         if let Ok(provider) = create_specific_provider(config, fallback) {
-            tracing::warn!("Primary provider '{}' failed, using fallback '{}'", 
+            tracing::warn!("Primary provider '{}' failed, using fallback '{}'",
                           config.provider.default, fallback);
             return Ok(provider);
         }
     }
-    
+
     Err(ProviderError::UnknownProvider(config.provider.default.clone()).into())
 }
 
@@ -84,20 +84,22 @@ fn create_specific_provider(config: &Config, provider_name: &str) -> Result<Box<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Config, OpenAIConfig};
-    
+    use crate::config::Config;
+
     #[test]
     fn test_create_provider_unknown() {
         let mut config = Config::default();
         config.provider.default = "unknown".to_string();
-        
+        config.provider.fallback.clear();
+
         let result = create_provider(&config);
         assert!(result.is_err());
     }
-    
+
     #[test]
     fn test_create_provider_github_models() {
-        let config = Config::default(); // default is github-models
+        let mut config = Config::default(); // default is github-models
+        config.github_models.token = Some("test-token".to_string());
         let result = create_provider(&config);
         assert!(result.is_ok());
         assert_eq!(result.unwrap().provider_name(), "github-models");
