@@ -1,8 +1,13 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use cortex_tui::{app::CortexApp, config::Config, view::ChatWidget, error_panic_handler};
+use cortex_tui::{
+    app::CortexApp, 
+    config::Config, 
+    view::{ChatWidget, GitHubDashboard, A2aEventStream, CortexCommandPalette}, 
+    error_panic_handler
+};
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CrosstermEvent, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CrosstermEvent, KeyCode, KeyModifiers},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -121,6 +126,15 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+// Multi-view TUI enum
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum TuiView {
+    Chat,
+    GitHub,
+    A2aStream,
+    CommandPalette,
+}
+
 async fn run_tui(app: &mut CortexApp) -> Result<()> {
     // Setup terminal
     enable_raw_mode()?;
@@ -131,66 +145,167 @@ async fn run_tui(app: &mut CortexApp) -> Result<()> {
     
     // Create TUI state
     let mut chat_widget = ChatWidget::new();
-    let mut running = true;
+    let mut github_dashboard = GitHubDashboard::new();
+    let mut a2a_stream = A2aEventStream::new();
+    let mut command_palette = CortexCommandPalette::new();
+    let mut current_view = TuiView::Chat;
     
-    info!("Starting TUI event loop");
+    // Generate some sample data for development
+    a2a_stream.generate_sample_event("mcp-github", "tool_call");
+    a2a_stream.generate_sample_event("cortex-core", "agent_message");
+    
+    info!("Starting multi-view TUI event loop");
     
     let result = loop {
         // Update cursor for streaming
         chat_widget.update_cursor();
         
-        // Render
+        // Render based on current view
         terminal.draw(|frame| {
-            chat_widget.render(frame, frame.area());
+            if command_palette.is_visible() {
+                // Render current view first, then overlay command palette
+                match current_view {
+                    TuiView::Chat => chat_widget.render(frame, frame.area()),
+                    TuiView::GitHub => github_dashboard.render(frame, frame.area()),
+                    TuiView::A2aStream => a2a_stream.render(frame, frame.area()),
+                    TuiView::CommandPalette => {} // Never directly shown
+                }
+                command_palette.render(frame, frame.area());
+            } else {
+                match current_view {
+                    TuiView::Chat => chat_widget.render(frame, frame.area()),
+                    TuiView::GitHub => github_dashboard.render(frame, frame.area()),
+                    TuiView::A2aStream => a2a_stream.render(frame, frame.area()),
+                    TuiView::CommandPalette => {} // Never directly shown
+                }
+            }
         })?;
         
         // Handle events
         if event::poll(std::time::Duration::from_millis(100))? {
             match event::read()? {
                 CrosstermEvent::Key(key_event) => {
-                    match key_event.code {
-                        KeyCode::Char('q') if key_event.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) => {
+                    // Global shortcuts first
+                    match (key_event.code, key_event.modifiers) {
+                        (KeyCode::Char('q'), KeyModifiers::CONTROL) => {
                             info!("Received Ctrl+Q, shutting down");
-                            running = false;
                             break Ok(());
-                        }
-                        KeyCode::Esc => {
+                        },
+                        (KeyCode::Esc, _) if command_palette.is_visible() => {
+                            command_palette.hide();
+                        },
+                        (KeyCode::Esc, _) => {
                             info!("Received ESC, shutting down");
-                            running = false;
                             break Ok(());
-                        }
+                        },
+                        (KeyCode::Char('p'), KeyModifiers::CONTROL) => {
+                            command_palette.show();
+                        },
+                        (KeyCode::Char('1'), KeyModifiers::ALT) => {
+                            current_view = TuiView::Chat;
+                        },
+                        (KeyCode::Char('2'), KeyModifiers::ALT) => {
+                            current_view = TuiView::GitHub;
+                        },
+                        (KeyCode::Char('3'), KeyModifiers::ALT) => {
+                            current_view = TuiView::A2aStream;
+                        },
                         _ => {
-                            match chat_widget.handle_event(CrosstermEvent::Key(key_event))? {
-                                cortex_tui::view::chat::EventResponse::SendMessage(message) => {
-                                    info!("Sending message: {}", message);
-                                    
-                                    // Add user message to chat
-                                    chat_widget.add_message(cortex_tui::app::Message::user(&message));
-                                    
-                                    // Get response from AI (this would be async in real implementation)
-                                    let response = app.get_ai_response(&message).await?;
-                                    chat_widget.add_message(cortex_tui::app::Message::assistant(&response));
+                            // Handle command palette events first
+                            if command_palette.is_visible() {
+                                match command_palette.handle_event(CrosstermEvent::Key(key_event))? {
+                                    cortex_tui::view::cortex_command_palette::CommandPaletteResponse::ExecuteCommand(cmd_id, params) => {
+                                        info!("Executing command: {} with params: {:?}", cmd_id, params);
+                                        // TODO: Execute the command via MCP or direct handler
+                                        // For now, just handle view switching
+                                        match cmd_id.as_str() {
+                                            "tui.switch_view" => {
+                                                if let Some(view_name) = params.first() {
+                                                    match view_name.as_str() {
+                                                        "chat" => current_view = TuiView::Chat,
+                                                        "github" => current_view = TuiView::GitHub,
+                                                        "a2a" => current_view = TuiView::A2aStream,
+                                                        _ => {}
+                                                    }
+                                                }
+                                            },
+                                            _ => {
+                                                // TODO: Route to MCP or appropriate handler
+                                            }
+                                        }
+                                    },
+                                    cortex_tui::view::cortex_command_palette::CommandPaletteResponse::Cancel => {
+                                        // Command palette already handled hiding itself
+                                    },
+                                    _ => {}
                                 }
-                                cortex_tui::view::chat::EventResponse::RequestStreamingMessage(message) => {
-                                    info!("Sending streaming message: {}", message);
-                                    
-                                    // Add user message to chat
-                                    chat_widget.add_message(cortex_tui::app::Message::user(&message));
-                                    
-                                    // Start streaming (simulate with chunks for demo)
-                                    chat_widget.start_streaming("session-123".to_string(), "github".to_string());
-                                    
-                                    // Simulate streaming response
-                                    let response = app.get_ai_response(&message).await?;
-                                    for chunk in response.chars().collect::<Vec<_>>().chunks(3) {
-                                        let chunk_str: String = chunk.iter().collect();
-                                        chat_widget.append_streaming_chunk(&chunk_str);
-                                        // In real implementation, this would come from the provider stream
-                                        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
-                                    }
-                                    chat_widget.complete_streaming();
+                            } else {
+                                // Route events to current view
+                                match current_view {
+                                    TuiView::Chat => {
+                                        match chat_widget.handle_event(CrosstermEvent::Key(key_event))? {
+                                            cortex_tui::view::chat::EventResponse::SendMessage(message) => {
+                                                info!("Sending message: {}", message);
+                                                
+                                                // Add user message to chat
+                                                chat_widget.add_message(cortex_tui::app::Message::user(&message));
+                                                
+                                                // Get response from AI
+                                                let response = app.get_ai_response(&message).await?;
+                                                chat_widget.add_message(cortex_tui::app::Message::assistant(&response));
+                                            }
+                                            cortex_tui::view::chat::EventResponse::RequestStreamingMessage(message) => {
+                                                info!("Sending streaming message: {}", message);
+                                                
+                                                // Add user message to chat
+                                                chat_widget.add_message(cortex_tui::app::Message::user(&message));
+                                                
+                                                // Start streaming
+                                                chat_widget.start_streaming("session-123".to_string(), "github".to_string());
+                                                
+                                                // Get and stream response
+                                                let response = app.get_ai_response(&message).await?;
+                                                for chunk in response.chars().collect::<Vec<_>>().chunks(5) {
+                                                    let chunk_str: String = chunk.iter().collect();
+                                                    chat_widget.append_streaming_chunk(&chunk_str);
+                                                    tokio::time::sleep(tokio::time::Duration::from_millis(30)).await;
+                                                }
+                                                chat_widget.complete_streaming();
+                                            }
+                                            _ => {}
+                                        }
+                                    },
+                                    TuiView::GitHub => {
+                                        match github_dashboard.handle_event(CrosstermEvent::Key(key_event))? {
+                                            cortex_tui::view::github_dashboard::DashboardResponse::RefreshData => {
+                                                info!("Refreshing GitHub dashboard data");
+                                                // TODO: Trigger data refresh via MCP
+                                            }
+                                            cortex_tui::view::github_dashboard::DashboardResponse::OpenPR(pr_number) => {
+                                                info!("Opening PR #{}", pr_number);
+                                                // TODO: Handle PR opening
+                                            }
+                                            _ => {}
+                                        }
+                                    },
+                                    TuiView::A2aStream => {
+                                        match a2a_stream.handle_event(CrosstermEvent::Key(key_event))? {
+                                            cortex_tui::view::a2a_stream::A2aStreamResponse::PauseResume => {
+                                                info!("A2A stream paused/resumed");
+                                            }
+                                            cortex_tui::view::a2a_stream::A2aStreamResponse::ClearEvents => {
+                                                info!("Clearing A2A events");
+                                                a2a_stream.clear_events();
+                                            }
+                                            cortex_tui::view::a2a_stream::A2aStreamResponse::FilterLevel(level) => {
+                                                info!("Setting A2A filter level: {:?}", level);
+                                                a2a_stream.set_filter_level(level);
+                                            }
+                                            _ => {}
+                                        }
+                                    },
+                                    TuiView::CommandPalette => {} // Never directly active
                                 }
-                                cortex_tui::view::chat::EventResponse::None => {}
                             }
                         }
                     }
