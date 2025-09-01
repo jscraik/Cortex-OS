@@ -1,0 +1,93 @@
+rules:
+  - id: cortex.py.subprocess.shell_true
+    message: Command injection via subprocess with shell=True
+    severity: ERROR
+    languages: [python]
+    metadata: { category: cmd-injection, fix: shell=False, args list, shlex.split, validate inputs. }
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run($CMD, shell=True, ...)
+          - pattern: subprocess.Popen($CMD, shell=True, ...)
+          - pattern: os.system($CMD)
+      - metavariable-pattern:
+          metavariable: $CMD
+          pattern-regex: (?i)(user|input|prompt|cmd|arg|query|payload)
+  - id: cortex.py.eval_exec
+    message: Dangerous eval/exec on dynamic expressions
+    severity: ERROR
+    languages: [python]
+    metadata: { category: insecure-eval, fix: Avoid eval/exec; use safe parsers or whitelists. }
+    pattern-either:
+      - pattern: eval($X)
+      - pattern: exec($X)
+  - id: cortex.py.yaml.unsafe_load
+    message: Unsafe YAML load without SafeLoader
+    severity: ERROR
+    languages: [python]
+    metadata: { category: insecure-deser, fix: yaml.safe_load / Loader=SafeLoader. }
+    pattern-either:
+      - pattern: yaml.load($DATA)
+      - pattern: yaml.load($DATA, Loader=FullLoader)
+  - id: cortex.py.pickle.loads
+    message: Insecure pickle deserialization
+    severity: ERROR
+    languages: [python]
+    metadata: { category: insecure-deser, fix: Avoid pickle for untrusted data; use JSON or signed formats. }
+    pattern-either:
+      - pattern: pickle.loads($DATA)
+      - pattern: dill.loads($DATA)
+  - id: cortex.py.requests.untrusted_url
+    message: Potential SSRF via untrusted URL in requests
+    severity: WARNING
+    languages: [python]
+    metadata: { category: ssrf, fix: Allowlist domains, block link-local/metadata IPs, validate scheme. }
+    patterns:
+      - pattern: requests.$METHOD($URL, ...)
+      - metavariable-pattern:
+          metavariable: $METHOD
+          pattern-regex: (get|post|put|delete|head|options|request)
+      - metavariable-pattern:
+          metavariable: $URL
+          pattern-regex: (?i)(user|input|url|href|link|endpoint|target)
+  - id: cortex.py.path.traversal.open
+    message: User-influenced path used in file open
+    severity: ERROR
+    languages: [python]
+    metadata: { category: path-traversal, fix: Resolve against root, deny "..", validate extension and base dir. }
+    patterns:
+      - pattern: open($P, ...)
+      - metavariable-pattern:
+          metavariable: $P
+          pattern-regex: (?i)(user|input|path|file|name)
+  - id: cortex.py.llm.insecure_tool_invocation
+    message: Unvalidated tool/command call tied to LLM output
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: llm-tooling
+      fix: Allowlisted tools, Pydantic/Zod schemas, add approval gates for destructive ops.
+    patterns:
+      - pattern-either:
+          - pattern: subprocess.run($LLM_OUT, ...)
+          - pattern: os.system($LLM_OUT)
+      - metavariable-pattern:
+          metavariable: $LLM_OUT
+          pattern-regex: (?i)(llm|ai|model|completion|response|assistant|tool_call)
+  - id: cortex.py.secrets.aws
+    message: Possible AWS secret or access key in code
+    severity: ERROR
+    languages: [python]
+    metadata: { category: secrets, fix: Remove, rotate, move to environment or secret manager. }
+    pattern-regex: (AKIA[0-9A-Z]{16}|aws(.{0,20})?(secret|access)[-_ ]?key)
+  - id: cortex.pydantic.schema.missing
+    message: Missing Pydantic validation for untrusted data
+    severity: WARNING
+    languages: [python]
+    metadata:
+      category: schema-validation
+      fix: Define Pydantic models and validate inputs.
+    patterns:
+      - pattern: $INPUT
+      - metavariable-pattern:
+          metavariable: $INPUT
+          pattern-regex: (?i)(request\.json|get_json\(\)|os\.environ|user|input|data)

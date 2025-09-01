@@ -1,0 +1,11 @@
+{
+  "name": "cortex-sec",
+  "targets": {
+    "security": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx cortex-sec scan --sarif reports/security.sarif --json reports/security.json"
+      }
+    }
+  }
+}
