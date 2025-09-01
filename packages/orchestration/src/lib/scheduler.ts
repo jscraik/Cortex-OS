@@ -17,13 +17,24 @@ export class PriorityScheduler {
   private queue: Array<Task & { order: number }> = [];
   private counter = 0;
 
+  // Insert task into queue using binary search for correct position
   enqueue(task: Task): void {
     const t = taskSchema.parse(task);
-    this.queue.push({ ...t, order: this.counter++ });
-    // keep queue sorted by priority then order
-    this.queue.sort((a, b) =>
-      a.priority === b.priority ? a.order - b.order : a.priority - b.priority,
-    );
+    const newTask = { ...t, order: this.counter++ };
+    // Find insertion index using binary search
+    let left = 0, right = this.queue.length;
+    while (left < right) {
+      const mid = Math.floor((left + right) / 2);
+      const cmp = this.queue[mid].priority === newTask.priority
+        ? this.queue[mid].order - newTask.order
+        : this.queue[mid].priority - newTask.priority;
+      if (cmp <= 0) {
+        left = mid + 1;
+      } else {
+        right = mid;
+      }
+    }
+    this.queue.splice(left, 0, newTask);
   }
 
   async runNext(): Promise<any> {
