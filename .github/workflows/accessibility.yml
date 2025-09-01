@@ -22,3 +22,7 @@ jobs:
           fi
       - name: Run axe accessibility checks
         run: pnpm exec axe --dir ./apps/cortex-os/dist --exit
+      - name: Run Lighthouse accessibility audit
+        run: |
+          mkdir -p reports
+          npx -y lighthouse ./apps/cortex-os/dist/index.html --only-categories=accessibility --output=json --output-path=reports/lighthouse.json --quiet

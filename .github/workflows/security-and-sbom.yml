@@ -33,6 +33,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Generate SBOM (CycloneDX)
         run: pnpm sbom:generate
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Sign SBOM
+        run: cosign sign-blob --yes --output-signature sbom/sbom.cdx.json.sig sbom/sbom.cdx.json
+      - name: Generate provenance
+        run: echo '{}' > /tmp/predicate.json && cosign attest --yes --predicate /tmp/predicate.json --type slsaprovenance sbom/sbom.cdx.json > sbom/provenance.intoto.jsonl
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@v4
         with:

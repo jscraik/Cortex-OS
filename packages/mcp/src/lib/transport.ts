@@ -143,11 +143,16 @@ function createStdioTransport(config: StdioTransportConfig): Transport & EventEm
       } catch {
         throw new Error(`Command not found or not executable: ${config.command}`);
       }
-      child = spawn(config.command, config.args ?? [], {
-        cwd: config.cwd,
-        env: { ...process.env, ...(config.env ?? {}) },
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
+        child = spawn(config.command, config.args ?? [], {
+          cwd: config.cwd,
+          env: { ...(config.env ?? {}) },
+          stdio: ['pipe', 'pipe', 'pipe'],
+          shell: false,
+          windowsHide: true,
+          detached: false,
+          uid: config.uid,
+          gid: config.gid,
+        });
       if (child) {
         child.on('error', (err) => {
           connected = false;
