@@ -6,3 +6,4 @@ packages:
   - libs/**
   - libs/typescript/*
   - src
+  - apps/cortex-cli

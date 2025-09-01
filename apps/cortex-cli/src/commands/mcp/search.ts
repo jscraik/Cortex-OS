@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { createMarketplaceClient, SearchOptions } from './marketplace-client.js';
+import { getRiskLabel } from '../../lib/risk-label.js';
 
 export const mcpSearch = new Command('search')
   .description('Search MCP servers in the marketplace')
@@ -55,12 +56,12 @@ export const mcpSearch = new Command('search')
         );
 
         for (const server of limitedServers) {
-          const riskBadge = getRiskBadge(server.security?.riskLevel || 'medium');
+          const riskLabel = getRiskLabel(server.security?.riskLevel || 'medium');
           const verifiedBadge = server.security?.verifiedPublisher ? ' ✓' : '';
           const categories = server.category;
           const tags = server.tags ? ` [${server.tags.join(', ')}]` : '';
 
-          process.stdout.write(`${server.id}${verifiedBadge} ${riskBadge}\n`);
+          process.stdout.write(`${server.id}${verifiedBadge} ${riskLabel}\n`);
           process.stdout.write(`  ${server.name} - ${server.description || 'No description'}\n`);
           process.stdout.write(`  Category: ${categories}${tags}\n`);
           process.stdout.write(`  Owner: ${server.owner}\n`);
@@ -96,15 +97,3 @@ export const mcpSearch = new Command('search')
     }
   });
 
-function getRiskBadge(riskLevel: 'low' | 'medium' | 'high'): string {
-  switch (riskLevel) {
-    case 'low':
-      return '🟢';
-    case 'medium':
-      return '🟡';
-    case 'high':
-      return '🔴';
-    default:
-      return '🟡';
-  }
-}
