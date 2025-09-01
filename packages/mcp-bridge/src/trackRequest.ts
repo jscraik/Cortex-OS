@@ -3,6 +3,8 @@
  */
 import type { JsonRpcRequest, McpMetrics } from './mcp-client';
 import { PendingRequests } from './pendingRequests';
+import { waitForQueue } from './lib/wait-for-queue';
+import { REQUEST_QUEUE_LIMIT, QUEUE_CHECK_INTERVAL } from './lib/constants';
 
 interface TrackOptions {
   timeout: number;
@@ -21,6 +23,7 @@ export async function trackRequest<T>(
   delay: (ms: number) => Promise<void>,
   recordError: (error: Error, method?: string) => void,
 ): Promise<T> {
+  await waitForQueue(pending, delay, REQUEST_QUEUE_LIMIT, QUEUE_CHECK_INTERVAL);
   metrics.requestCount++;
   const startTime = Date.now();
   let attempt = 0;
