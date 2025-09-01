@@ -18,7 +18,9 @@
     "@cortex-os/mcp-registry": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
-    "@cortex-os/simlab": "workspace:*"
+    "@cortex-os/simlab": "workspace:*",
+    "@clack/prompts": "^0.11.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
