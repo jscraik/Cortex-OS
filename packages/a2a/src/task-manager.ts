@@ -102,7 +102,7 @@ export class EchoTaskProcessor implements TaskProcessor {
       message: {
         role: 'assistant',
         parts: [{
-          text: `Echo: ${params.message.parts.map(p => p.text).join(' ')}`
+          text: `Echo: ${params.message.parts.map(p => p.text).join(' ')}`,
         }],
       },
     };
