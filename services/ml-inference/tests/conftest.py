@@ -12,3 +12,4 @@ def pytest_configure(config):
     if str(src_path) not in sys.path:
         sys.path.insert(0, str(src_path))
     os.environ.setdefault("MODEL_NAME", "test-model")
+    os.environ.setdefault("API_TOKEN", "test-token")

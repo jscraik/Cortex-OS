@@ -23,7 +23,15 @@ async def test_health_ready_endpoints() -> None:
 async def test_metrics_endpoint() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        resp = await client.get("/metrics")
+        resp = await client.get("/metrics", headers={"Authorization": "Bearer test-token"})
 
     assert resp.status_code == 200
     assert b"inference_requests_total" in resp.content
+
+
+@pytest.mark.asyncio
+async def test_predict_requires_auth() -> None:
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/predict", headers={"Authorization": "Bearer wrong"}, json={"prompt": "hi"})
+    assert resp.status_code == 401
