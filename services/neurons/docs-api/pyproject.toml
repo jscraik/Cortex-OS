@@ -1,0 +1,18 @@
+[project]
+name = "docs-api"
+version = "0.1.0"
+description = "Cortex Docs API service"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.116.1,<1.0.0",
+    "uvicorn>=0.35.0,<1.0.0",
+    "pydantic>=2.6.0,<3.0.0",
+    "pydantic-settings>=2.1.0,<3.0.0",
+    "sqlalchemy>=2.0.0,<3.0.0",
+    "aiosqlite>=0.19.0,<1.0.0",
+    "asyncpg>=0.29.0,<1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -12,7 +12,7 @@ async def test_latency_slo() -> None:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         start = time.perf_counter()
-        resp = await client.post("/predict", json={"prompt": "hello"})
+        resp = await client.post("/predict", headers={"Authorization": "Bearer test-token"}, json={"prompt": "hello"})
         duration = time.perf_counter() - start
 
     assert resp.status_code == 200

@@ -8,24 +8,30 @@ import subprocess
 import time
 from functools import lru_cache
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Security
 from fastapi.responses import Response
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
     Histogram,
     generate_latest,
 )
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from pydantic import BaseModel
 
 MODEL_NAME = os.getenv("MODEL_NAME")
 if MODEL_NAME is None:
     raise RuntimeError("MODEL_NAME environment variable is required")
 
-GIT = shutil.which("git")
-if GIT is None:
+API_TOKEN = os.getenv("API_TOKEN")
+if API_TOKEN is None:
+    raise RuntimeError("API_TOKEN environment variable is required")
+
+git_path = shutil.which("git")
+if git_path is None:
     raise RuntimeError("git executable not found")
-COMMIT_HASH = subprocess.check_output([GIT, "rev-parse", "HEAD"], text=True).strip()  # noqa: S603
+COMMIT_HASH = subprocess.check_output([git_path, "rev-parse", "HEAD"], text=True).strip()  # noqa: S603
 
 REQUEST_COUNT = Counter(
     "inference_requests_total",
@@ -45,8 +51,18 @@ CACHE_HITS = Counter(
 
 app = FastAPI()
 
+if os.getenv("FORCE_HTTPS", "false").lower() == "true":
+    app.add_middleware(HTTPSRedirectMiddleware)
+
 LOGGER = logging.getLogger("ml_inference")
 logging.basicConfig(level=logging.INFO)
+
+security = HTTPBearer()
+
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)) -> None:
+    if credentials.credentials != API_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing token")
 
 
 class InferenceRequest(BaseModel):
@@ -62,12 +78,13 @@ BANNED_WORDS = {"badword"}
 
 @lru_cache(maxsize=1024)
 def _model_inference(prompt: str) -> str:
-    time.sleep(0.01)
     return prompt[::-1]
 
 
 @app.post("/predict")
-async def predict(request: InferenceRequest) -> dict[str, str]:
+async def predict(
+    request: InferenceRequest, _: None = Depends(verify_token)
+) -> dict[str, str]:
     if any(word in request.prompt.lower() for word in BANNED_WORDS):
         raise HTTPException(status_code=400, detail="Unsafe prompt")
 
@@ -98,6 +115,6 @@ async def ready() -> dict[str, str]:
 
 
 @app.get("/metrics")
-async def metrics() -> Response:
+async def metrics(_: None = Depends(verify_token)) -> Response:
     data = generate_latest()
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
