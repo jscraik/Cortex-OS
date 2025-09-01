@@ -1,70 +1,70 @@
 {
-  "artifact": "cortex-tui-readiness",
+  "artifact": "cortex-orchestration-readiness",
   "version": "1.0",
-  "apps_path": "apps/cortex-tui",
-  "commit": "8525026edf3a6717c82ca2994df82c7ddb430ad6",
+  "package_path": "packages/orchestration",
+  "commit": "a92d3b60a44a44ca26d529ea357cdb7f1ec59b87",
   "overall": {
-    "score": 51,
-    "rag": "red"
+    "score": 65,
+    "rag": "amber"
   },
   "areas": [
     {
       "name": "Architecture",
-      "score": 60,
+      "score": 65,
       "rag": "amber",
       "evidence": [
         {
-          "path": "apps/cortex-tui/src/config.rs",
-          "lines": "73-80",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/src/coordinator/mlx-first-coordinator.ts",
+          "lines": "6-15",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "Code Quality",
-      "score": 55,
-      "rag": "red",
+      "score": 70,
+      "rag": "amber",
       "evidence": [
         {
-          "path": "apps/cortex-tui/src/mcp/client.rs",
-          "lines": "6-8",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/src/errors.ts",
+          "lines": "1-9",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "API & Contracts",
-      "score": 65,
+      "score": 75,
       "rag": "amber",
       "evidence": [
         {
-          "path": "apps/cortex-tui/src/server/handlers.rs",
-          "lines": "17-66",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/src/schemas/workflow.zod.ts",
+          "lines": "1-36",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "Security & Compliance",
-      "score": 40,
-      "rag": "red",
+      "score": 60,
+      "rag": "amber",
       "evidence": [
         {
           "path": "SECURITY.md",
-          "lines": "",
-          "sha": ""
+          "lines": "1-15",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "Testing",
-      "score": 30,
+      "score": 40,
       "rag": "red",
       "evidence": [
         {
-          "path": "apps/cortex-tui/src/providers/mod.rs",
-          "lines": "89-104",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/tests/workflow-validator.test.ts",
+          "lines": "1-33",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
@@ -74,142 +74,157 @@
       "rag": "red",
       "evidence": [
         {
-          "path": ".github/workflows/cortex-tui-ci.yml",
-          "lines": "1-60",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/package.json",
+          "lines": "13-22",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "Runtime & Observability",
-      "score": 60,
+      "score": 80,
       "rag": "amber",
       "evidence": [
         {
-          "path": "apps/cortex-tui/src/main.rs",
-          "lines": "76-83",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/src/observability/otel.ts",
+          "lines": "1-53",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "Performance & SLOs",
-      "score": 50,
-      "rag": "red",
-      "evidence": []
+      "score": 60,
+      "rag": "amber",
+      "evidence": [
+        {
+          "path": "packages/orchestration/README.md",
+          "lines": "35-39",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
+        }
+      ]
     },
     {
       "name": "Accessibility & DX",
-      "score": 45,
-      "rag": "red",
+      "score": 65,
+      "rag": "amber",
       "evidence": [
         {
-          "path": "apps/cortex-tui/README.md",
-          "lines": "1-48",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/README.md",
+          "lines": "1-24",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     },
     {
       "name": "ML Integration",
-      "score": 55,
-      "rag": "amber",
+      "score": 85,
+      "rag": "green",
       "evidence": [
         {
-          "path": "apps/cortex-tui/src/providers/local.rs",
-          "lines": "23-66",
-          "sha": "8525026edf3a6717c82ca2994df82c7ddb430ad6"
+          "path": "packages/orchestration/src/lib/model-strategy.ts",
+          "lines": "1-90",
+          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
         }
       ]
     }
   ],
   "back_compat": [
     {
-      "path": "apps/cortex-tui/src/app.rs",
-      "lines": "122-132",
-      "reason": "MCP server management placeholders",
-      "removal_safe": true,
-      "replacement": "Implement full server CRUD"
+      "path": "packages/orchestration/src/coordinator/mlx-first-coordinator.ts",
+      "lines": "15",
+      "reason": "Imports from root src, violating domain boundaries",
+      "removal_safe": false,
+      "replacement": "Expose agent-selection via package interface"
     }
   ],
   "tests": {
     "coverage_total": 0,
     "gaps": [
       {
-        "path": "apps/cortex-tui/src/providers/mod.rs",
-        "lines": "89-104",
-        "why": "failing unit tests"
+        "path": "packages/orchestration",
+        "lines": "",
+        "why": "vitest not found"
       }
     ]
   },
   "ml": {
     "mlx": {
       "enabled": true,
-      "embeddings": [],
-      "rerankers": []
+      "models": [
+        "qwen2.5-0.5b-instruct",
+        "qwen3-coder-30b",
+        "qwen2.5-vl-3b",
+        "mixtral-8x7b",
+        "phi3-mini"
+      ],
+      "embeddings": [
+        "qwen3-embedding-4b"
+      ],
+      "rerankers": [
+        "qwen3-reranker-4b"
+      ]
     },
     "fallback": {
-      "ollama": [],
+      "ollama": [
+        "phi4-mini-reasoning:latest",
+        "qwen3-coder:30b",
+        "gemma3n:e4b",
+        "deepseek-coder:6.7b"
+      ],
       "frontier": []
     }
   },
   "ci_cd": {
     "workflows": [
-      "accessibility.yml",
-      "agentops.yml",
-      "agents-ci.yml",
       "ci.yml",
-      "cortex-tui-ci.yml"
+      "agents-ci.yml"
     ],
     "problems": [
-      "provider tests fail"
+      "package lacks build step and tests not runnable"
     ]
   },
   "a11y": {
     "issues": [
       {
-        "area": "screen-reader",
-        "path": "apps/cortex-tui/README.md"
+        "area": "docs",
+        "path": "packages/orchestration/README.md"
       }
     ]
   },
   "risks": [
     {
       "id": "R1",
-      "severity": "high",
-      "mitigation": "Fix failing provider tests"
+      "severity": "medium",
+      "mitigation": "Replace cross-domain imports with shared interface"
     },
     {
       "id": "R2",
       "severity": "high",
-      "mitigation": "Add SECURITY.md with disclosure policy"
+      "mitigation": "Restore vitest environment and achieve ≥95% coverage"
     },
     {
       "id": "R3",
       "severity": "medium",
-      "mitigation": "Implement MCP server management"
+      "mitigation": "Pin workspace:* dependencies"
     }
   ],
   "actions": [
     {
       "id": "A1",
-      "owner": "runtime-team",
-      "ETA": "2025-01-31"
+      "owner": "workflow-team",
+      "ETA": "2025-02-28"
     },
     {
       "id": "A2",
-      "owner": "security-team",
-      "ETA": "2024-12-15"
+      "owner": "workflow-team",
+      "ETA": "2025-01-31"
     },
     {
       "id": "A3",
-      "owner": "runtime-team",
-      "ETA": "2024-11-30"
-    },
-    {
-      "id": "A4",
-      "owner": "dx-team",
-      "ETA": "2025-02-15"
+      "owner": "security-team",
+      "ETA": "2025-03-31"
     }
   ]
 }
+
