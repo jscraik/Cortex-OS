@@ -12,6 +12,7 @@ This directory contains various reports generated during the development and mai
 - `/reports/scorecards/` - Contains production readiness scorecards and evaluations
 - `/reports/security/` - Contains security assessments and reports
 - `/reports/summaries/` - Contains summary reports and evaluations
+- `cortex-os-master-readiness.md` - Consolidated project readiness report
 
 ## Report Types
 
