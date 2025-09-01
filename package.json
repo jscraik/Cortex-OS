@@ -2,7 +2,7 @@
   "name": "cortex-os",
   "private": true,
   "version": "0.0.1",
-  "packageManager": "pnpm@9.9.0",
+  "packageManager": "pnpm@10.3.0",
   "engines": {
     "node": ">=20"
   },
@@ -73,7 +73,7 @@
     "mcp:smoke": "node packages/mcp/scripts/smoke/mcp-smoke.mjs",
     "mcp:test": "packages/mcp/scripts/test-mcp.sh",
     "mcp:start-with-tunnel": "packages/mcp/scripts/start-mcp-with-tunnel.sh",
-    "lint": "biome lint .",
+    "lint": "mise run lint",
     "lint:quality": "eslint \"{apps,packages}/**/*.{js,jsx,ts,tsx}\" --config=eslint.config.js",
     "lint:security": "eslint \"{apps,packages}/**/*.{js,jsx,ts,tsx}\" --config=eslint-security.config.js",
     "format": "biome format --write .",
@@ -171,8 +171,9 @@
     "nx:test:features": "pnpm -s nx run-many -t test --projects=@cortex-os/mvp-core,@cortex-os/mvp-server,@cortex-os/prp-runner,@cortex-os/agents,@cortex-os/kernel,@cortex-os/simlab,@cortex-os/evals,@cortex-os/rag,asbr,mvp --parallel=2",
     "nx:test:each": "pnpm -s nx show projects --with-target=test --noInteractive | xargs -n 1 -P 3 -I {} pnpm -s nx test {}",
     "nx:test:all:chunked": "pnpm nx:test:core && pnpm nx:test:a2a && pnpm nx:test:mcp && pnpm nx:test:services && pnpm nx:test:features",
-    "bootstrap": "mise install && mise run bootstrap",
-    "biome": "mise run biome"
+    "bootstrap": "mise run bootstrap",
+    "biome": "mise run biome",
+    "graph": "nx graph"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.60.0",
