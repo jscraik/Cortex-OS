@@ -37,7 +37,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install
-        run: npm ci || pnpm install || yarn install
+        run: pnpm install
 
       - name: Test with coverage
         run: npm run test:coverage || pnpm test:coverage || yarn test:coverage
