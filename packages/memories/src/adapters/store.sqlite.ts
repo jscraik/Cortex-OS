@@ -1,6 +1,7 @@
 import DatabaseImpl from 'better-sqlite3';
 import type { Memory, MemoryId } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import { encrypt, decrypt } from '../lib/crypto.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -31,33 +32,48 @@ export class SQLiteStore implements MemoryStore {
           id TEXT PRIMARY KEY,
           kind TEXT NOT NULL,
           text TEXT,
-          vector TEXT, -- JSON array stored as text
-          tags TEXT, -- JSON array stored as text
+          vector TEXT,
+          tags TEXT,
           ttl TEXT,
           createdAt TEXT,
           updatedAt TEXT,
-          provenance TEXT, -- JSON object stored as text
-          policy TEXT, -- JSON object stored as text
-          embeddingModel TEXT
+          provenance TEXT,
+          policy TEXT,
+          embeddingModel TEXT,
+          aclAgent TEXT,
+          aclTenant TEXT,
+          aclPurposes TEXT
         )
       `);
+
+    // Ensure ACL columns exist
+    try {
+      this.db.exec('ALTER TABLE memories ADD COLUMN aclAgent TEXT');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE memories ADD COLUMN aclTenant TEXT');
+    } catch {}
+    try {
+      this.db.exec('ALTER TABLE memories ADD COLUMN aclPurposes TEXT');
+    } catch {}
 
     // Create indexes
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_aclTenant ON memories(aclTenant)');
   }
 
   async upsert(m: Memory): Promise<Memory> {
     const stmt = this.db.prepare(`
-      INSERT OR REPLACE INTO memories 
-      (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR REPLACE INTO memories
+      (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel, aclAgent, aclTenant, aclPurposes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
       m.id,
       m.kind,
-      m.text || null,
+      m.text ? encrypt(m.text) : null,
       m.vector ? JSON.stringify(m.vector) : null,
       JSON.stringify(m.tags),
       m.ttl || null,
@@ -66,6 +82,9 @@ export class SQLiteStore implements MemoryStore {
       JSON.stringify(m.provenance),
       m.policy ? JSON.stringify(m.policy) : null,
       m.embeddingModel || null,
+      m.acl.agent,
+      m.acl.tenant,
+      JSON.stringify(m.acl.purposes),
     );
 
     return m;
@@ -86,34 +105,17 @@ export class SQLiteStore implements MemoryStore {
   }
 
   async searchByText(q: TextQuery): Promise<Memory[]> {
-    let sql = 'SELECT * FROM memories WHERE text IS NOT NULL';
-    const params: any[] = [];
-
-    if (q.text) {
-      sql += ' AND LOWER(text) LIKE LOWER(?)';
-      params.push(`%${q.text}%`);
-    }
-
-    if (q.filterTags && q.filterTags.length > 0) {
-      // For simplicity, we'll do a basic tag filter
-      // A more sophisticated implementation would parse the JSON tags
-      sql += ' AND (';
-      q.filterTags.forEach((tag, i) => {
-        if (i > 0) sql += ' OR ';
-        sql += 'tags LIKE ?';
-        params.push(`%"${tag}"%`);
-      });
-      sql += ')';
-    }
-
-    // Fetch more candidates to allow reranking in a second stage
-    const initialLimit = Math.max(q.topK * 10, q.topK);
-    sql += ' ORDER BY updatedAt DESC LIMIT ?';
-    params.push(initialLimit);
-
-    const stmt = this.db.prepare(sql);
-    const rows = stmt.all(...params);
-    const candidates = rows.map((row: any) => this.rowToMemory(row));
+    const stmt = this.db.prepare('SELECT * FROM memories');
+    const rows = stmt.all();
+    const candidates = rows
+      .map((row: any) => this.rowToMemory(row))
+      .filter((m: Memory) => {
+        if (!m.text) return false;
+        const matchesText = m.text.toLowerCase().includes(q.text.toLowerCase());
+        const matchesTags = !q.filterTags || q.filterTags.every((t) => m.tags.includes(t));
+        return matchesText && matchesTags;
+      })
+      .slice(0, q.topK);
 
     // Optional rerank stage using Model Gateway if query text is present
     const rerankEnabled = (process.env.MEMORIES_RERANK_ENABLED || 'true').toLowerCase() !== 'false';
@@ -274,17 +276,30 @@ export class SQLiteStore implements MemoryStore {
     return purgedCount;
   }
 
+  async forgetByActor(actor: string, tenant: string): Promise<number> {
+    const stmt = this.db.prepare(
+      'DELETE FROM memories WHERE json_extract(provenance, "$\.actor") = ? AND aclTenant = ?'
+    );
+    const result = stmt.run(actor, tenant);
+    return result.changes as number;
+  }
+
   private rowToMemory(row: any): Memory {
     return {
       id: row.id,
       kind: row.kind,
-      text: row.text ?? undefined,
+      text: row.text ? decrypt(row.text) : undefined,
       vector: row.vector ? JSON.parse(row.vector) : undefined,
       tags: row.tags ? JSON.parse(row.tags) : [],
       ttl: row.ttl ?? undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       provenance: row.provenance ? JSON.parse(row.provenance) : { source: 'unknown' },
+      acl: {
+        agent: row.aclAgent || '',
+        tenant: row.aclTenant || '',
+        purposes: row.aclPurposes ? JSON.parse(row.aclPurposes) : [],
+      },
       policy: row.policy ? JSON.parse(row.policy) : undefined,
       embeddingModel: row.embeddingModel ?? undefined,
     };

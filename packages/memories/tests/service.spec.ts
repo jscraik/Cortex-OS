@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { InMemoryStore } from '../src/adapters/store.memory.js';
 import { LocalEmbedder } from './util/local-embedder.js';
-import { createMemoryService } from '../src/service/memory-service.js';
+import { createMemoryService, type AccessContext } from '../src/service/memory-service.js';
 import { CompositeEmbedder } from '../src/adapters/embedder.composite.js';
 import { vi } from 'vitest';
+
+const ctx: AccessContext = { agent: 'agent1', tenant: 'tenant1', purposes: ['default'] };
 
 describe('MemoryService', () => {
   it('throws when embedder is missing', () => {
@@ -16,14 +18,15 @@ describe('MemoryService', () => {
   it('embeds when vector missing and embedder provided', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
     const now = new Date().toISOString();
-    const saved = await svc.save({
+    const saved = await svc.save(ctx, {
       id: 'm1',
       kind: 'note',
       text: 'abc',
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'system' },
+      provenance: { source: 'system', actor: 'agent1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
     });
     expect(saved.vector?.length).toBe(128);
     expect(saved.embeddingModel).toBe('local-sim');
@@ -37,13 +40,13 @@ describe('MemoryService', () => {
       },
     };
     const svc = createMemoryService(new InMemoryStore(), failing);
-    await expect(svc.search({ text: 'hello' })).rejects.toThrow();
+    await expect(svc.search(ctx, { text: 'hello' })).rejects.toThrow();
   });
 
   it('saves memory when vector present', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
     const now = new Date().toISOString();
-    const saved = await svc.save({
+    const saved = await svc.save(ctx, {
       id: 'm2',
       kind: 'note',
       text: 'pre',
@@ -51,7 +54,8 @@ describe('MemoryService', () => {
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'system' },
+      provenance: { source: 'system', actor: 'agent1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
     });
     expect(saved.vector).toEqual([0.1, 0.2]);
   });
@@ -61,16 +65,17 @@ describe('MemoryService', () => {
     const embedder = new LocalEmbedder();
     const svc = createMemoryService(store, embedder);
     const now = new Date().toISOString();
-    const mem = await svc.save({
+    const mem = await svc.save(ctx, {
       id: 'v1',
       kind: 'note',
       text: 'vector',
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'system' },
+      provenance: { source: 'system', actor: 'agent1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
     });
-    const results = await svc.search({ vector: mem.vector });
+    const results = await svc.search(ctx, { vector: mem.vector });
     expect(results[0]?.id).toBe('v1');
   });
 
@@ -80,23 +85,24 @@ describe('MemoryService', () => {
     const spy = vi.spyOn(embedder, 'embed');
     const svc = createMemoryService(store, embedder);
     const now = new Date().toISOString();
-    await svc.save({
+    await svc.save(ctx, {
       id: 't1',
       kind: 'note',
       text: 'hello world',
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'system' },
+      provenance: { source: 'system', actor: 'agent1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
     });
-    const results = await svc.search({ text: 'hello world' });
+    const results = await svc.search(ctx, { text: 'hello world' });
     expect(spy).toHaveBeenCalled();
     expect(results[0]?.id).toBe('t1');
   });
 
   it('returns empty search results when no query', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
-    const results = await svc.search({});
+    const results = await svc.search(ctx, {});
     expect(results).toEqual([]);
   });
 
@@ -110,24 +116,25 @@ describe('MemoryService', () => {
   it('deletes memory entries', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
     const now = new Date().toISOString();
-    await svc.save({
+    await svc.save(ctx, {
       id: 'd1',
       kind: 'note',
       text: 'bye',
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'system' },
+      provenance: { source: 'system', actor: 'agent1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
     });
-    await svc.del('d1');
-    const fetched = await svc.get('d1');
+    await svc.del(ctx, 'd1');
+    const fetched = await svc.get(ctx, 'd1');
     expect(fetched).toBeNull();
   });
 
   it('purges expired memories via service', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
     const now = new Date().toISOString();
-    await svc.save({
+    await svc.save(ctx, {
       id: 'p1',
       kind: 'note',
       text: 'temp',
@@ -135,15 +142,33 @@ describe('MemoryService', () => {
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'system' },
+      provenance: { source: 'system', actor: 'agent1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
     });
-    const purged = await svc.purge(new Date(Date.now() + 2000).toISOString());
+    const purged = await svc.purge(ctx, new Date(Date.now() + 2000).toISOString());
     expect(purged).toBe(1);
   });
 
   it('purges with current time when no timestamp provided', async () => {
     const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
-    const result = await svc.purge();
+    const result = await svc.purge(ctx);
     expect(result).toBe(0);
+  });
+
+  it('forgets memories by actor', async () => {
+    const svc = createMemoryService(new InMemoryStore(), new LocalEmbedder());
+    const now = new Date().toISOString();
+    await svc.save(ctx, {
+      id: 'f1',
+      kind: 'note',
+      text: 'forget',
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+      provenance: { source: 'user', actor: 'user1' },
+      acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
+    });
+    const removed = await svc.forget(ctx, 'user1');
+    expect(removed).toBe(1);
   });
 });

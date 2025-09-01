@@ -15,6 +15,7 @@ export interface Memory {
     evidence?: { uri: string; range?: [number, number] }[];
     hash?: string;
   };
+  acl: { agent: string; tenant: string; purposes: string[] };
   policy?: { pii?: boolean; scope?: 'session' | 'user' | 'org' };
   embeddingModel?: string;
 }

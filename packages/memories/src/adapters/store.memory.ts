@@ -86,4 +86,15 @@ export class InMemoryStore implements MemoryStore {
 
     return purgedCount;
   }
+
+  async forgetByActor(actor: string, tenant: string): Promise<number> {
+    let count = 0;
+    for (const [id, mem] of this.data.entries()) {
+      if (mem.provenance.actor === actor && mem.acl.tenant === tenant) {
+        this.data.delete(id);
+        count++;
+      }
+    }
+    return count;
+  }
 }
