@@ -1,0 +1,28 @@
+{
+  "artifact": "cortex-os-investor-readiness",
+  "version": "1.0",
+  "commit": "[SHA]",
+  "overall": {"score": 65, "rag": "amber"},
+  "areas": [
+    {"name": "Vision", "score": 80, "rag": "green", "evidence": ["README.md"]},
+    {"name": "Market", "score": 65, "rag": "amber", "evidence": ["MCP_Package_PRD.md"]},
+    {"name": "Moat", "score": 70, "rag": "amber", "evidence": ["AGENTS.md", "reports/compliance/license-scan.md"]},
+    {"name": "Technical Readiness", "score": 60, "rag": "amber", "evidence": ["reports/production-readiness-report.md"]},
+    {"name": "Compliance", "score": 75, "rag": "amber", "evidence": ["SECURITY.md", "sbom/sbom.cdx.json"]},
+    {"name": "Resilience", "score": 65, "rag": "amber", "evidence": ["reports/audits/orchestration.audit.md", "reports/production-readiness-action-plan.md"]},
+    {"name": "Accessibility", "score": 70, "rag": "amber", "evidence": ["libs/typescript/accessibility/src/index.ts", "apps/cortex-webui/__tests__/mvp-chat.a11y.test.ts"]},
+    {"name": "Monetization", "score": 60, "rag": "amber", "evidence": ["COMMERCIAL-LICENSE.md", "reports/mcp-marketplace-implementation.md"]},
+    {"name": "Risks", "score": 55, "rag": "amber", "evidence": ["docs/investor-readiness.md"]}
+  ],
+  "risks": [
+    {"id": "R1", "severity": "high", "area": "Regulatory", "mitigation": "Automated GDPR erasure + AI Act checks"},
+    {"id": "R2", "severity": "medium", "area": "SupplyChain", "mitigation": "SBOM scanning and license gating in CI"},
+    {"id": "R3", "severity": "medium", "area": "Adoption", "mitigation": "Freemium CLI + community connectors"},
+    {"id": "R4", "severity": "medium", "area": "Resilience", "mitigation": "Chaos suite to track MTTR"}
+  ],
+  "actions": [
+    {"id": "A1", "owner": "founder", "ETA": "2025-09-30", "description": "Finalize investor pitch deck and vision statement"},
+    {"id": "A2", "owner": "ops", "ETA": "2025-06-30", "description": "Implement supply chain SBOM scanning and compliance gating"},
+    {"id": "A3", "owner": "design", "ETA": "2025-04-30", "description": "Improve accessibility features in web UI"}
+  ]
+}
