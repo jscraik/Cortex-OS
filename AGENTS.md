@@ -67,5 +67,6 @@ Enforcement through automated checks:
 - Pre-commit hooks for agent contract compliance
 - Schema validation for agent configurations
 - Documentation synchronization checks
+- Pull request descriptions must follow `.github/pull_request_template.md`; the `review-automation` workflow fails otherwise
 
 </user_instructions>
