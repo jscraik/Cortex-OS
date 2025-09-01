@@ -71,4 +71,9 @@ describe('Qwen3Embedder', () => {
     const script = (cp.spawn as any).mock.calls[0][1][1];
     expect(script).toContain('/tmp/model');
   });
+
+  it('rejects unsafe model paths', async () => {
+    const { Qwen3Embedder } = await import('../src/embed/qwen3');
+    expect(() => new Qwen3Embedder({ modelPath: 'bad;path' as any })).toThrow('Invalid model path');
+  });
 });

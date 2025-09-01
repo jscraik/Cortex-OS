@@ -9,6 +9,12 @@ import path, { join } from 'path';
 import { buildQwen3EmbedScript } from './qwen3-script';
 import { type Embedder } from '../index.js';
 
+function assertSafeModelPath(p: string): void {
+  if (!/^[A-Za-z0-9_\/\.:-]+$/.test(p)) {
+    throw new Error('Invalid model path');
+  }
+}
+
 export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
 
 export interface Qwen3EmbedOptions {
@@ -33,6 +39,7 @@ export class Qwen3Embedder implements Embedder {
     this.modelPath = path.resolve(
       options.modelPath || path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`),
     );
+    assertSafeModelPath(this.modelPath);
     this.cacheDir = options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
     this.maxTokens = options.maxTokens || 512;
     this.batchSize = options.batchSize || 32;
