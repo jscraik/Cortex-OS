@@ -59,7 +59,7 @@ describe('mcp-core client', () => {
     });
 
     it('should redact passwords from a nested object', () => {
-      // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+      
       const dirty = { config: { user: { password: 'value' } } };
       // eslint-disable-next-line sonarjs/no-hardcoded-passwords
       const clean = { config: { user: { password: '[REDACTED]' } } };
