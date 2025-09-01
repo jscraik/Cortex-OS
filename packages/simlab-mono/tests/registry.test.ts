@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import registry from '../datasets/registry.json' assert { type: 'json' };
+import registry from '../datasets/registry.json' with { type: 'json' };
 
 describe('dataset registry', () => {
   it('matches checksum for critical scenarios', () => {
