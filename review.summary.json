@@ -7,7 +7,7 @@
     {"name":"Architecture & Boundaries","score":70,"rag":"amber","evidence":[{"path":".cortex/structure-guard.yaml","lines":"1-5","sha":"745a0ad3a7dae9605893bba232da5e75a4ff2314"},{"path":".github/CODEOWNERS","lines":"1-20","sha":"0ba8bc21d9a7b889def5a9438798a3415c7342bf"}]},
     {"name":"Code Quality & Maintainability","score":65,"rag":"amber","evidence":[{"path":"package.json","lines":"77-78","sha":"bf2c050aa19d304c6a2735a510f806ed0abeb439"}]},
     {"name":"API & Contracts","score":60,"rag":"amber","evidence":[{"path":"schemas/log-event.schema.json","lines":"1-19","sha":"3486210e822511f20ad12b5f9064b1ead1928b97"}]},
-    {"name":"Security & Compliance","score":40,"rag":"red","evidence":[{"path":"SECURITY.md","lines":"1-16","sha":"3228dc41ec0f0a545c8779db6410e95cb762fe60"},{"path":"gitleaks","lines":"65 leaks","sha":""}]},
+    {"name":"Security & Compliance","score":40,"rag":"red","evidence":[{"path":"SECURITY.md","lines":"1-16","sha":"3228dc41ec0f0a545c8779db6410e95cb762fe60"}]},
     {"name":"Testing & Coverage","score":30,"rag":"red","evidence":[{"path":"package.json","lines":"23-45","sha":"bf2c050aa19d304c6a2735a510f806ed0abeb439"},{"path":"terminal:fa1490","lines":"1-9","sha":""}]},
     {"name":"CI/CD & Release","score":55,"rag":"red","evidence":[{"path":"package.json","lines":"106-112","sha":"bf2c050aa19d304c6a2735a510f806ed0abeb439"}]},
     {"name":"Runtime & Observability","score":50,"rag":"red","evidence":[{"path":"infra/compose/docker-compose.dev.yml","lines":"2-38","sha":"089eb3f2654597c78199c13a755023e79c024f3d"}]},
