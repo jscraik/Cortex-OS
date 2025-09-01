@@ -1,45 +1,67 @@
-# Reports Directory
+# Cortex-OS Reports
 
-This directory contains various reports generated during the development and maintenance of the Cortex-OS project.
+[![CI Status](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../LICENSE)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Directory Structure](#directory-structure)
+- [Report Types](#report-types)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [Licensing](#licensing)
+
+## Overview
+
+This directory contains reports generated during the development and maintenance of the Cortex-OS project.
 
 ## Directory Structure
 
-- `/reports/audits/` - Contains audit reports for different components of the system
-- `/reports/compliance/` - Contains license scanning and compliance reports
-- `/reports/eslint/` - Contains ESLint static analysis reports for various packages
-- `/reports/implementation-plans/` - Contains implementation plans and fix strategies
-- `/reports/misc/` - Contains miscellaneous reports that don't fit other categories
-- `/reports/scorecards/` - Contains production readiness scorecards and evaluations
-- `/reports/security/` - Contains security assessments and reports
-- `/reports/summaries/` - Contains summary reports and evaluations
-- `cortex-os-master-readiness.md` - Consolidated project readiness report
+- `audits/` – audit reports for system components.
+- `compliance/` – license scanning and compliance reports.
+- `eslint/` – ESLint static analysis results.
+- `implementation-plans/` – implementation plans and fix strategies.
+- `misc/` – miscellaneous reports.
+- `scorecards/` – production readiness scorecards and evaluations.
+- `security/` – security assessments and reports.
+- `summaries/` – summary reports and evaluations.
+- `cortex-os-master-readiness.md` – consolidated project readiness report.
 
 ## Report Types
 
 ### Audit Reports
 
-Audit reports evaluate components against established standards and identify issues that need addressing.
+Evaluate components against established standards and identify issues.
 
 ### Compliance Reports
 
-Compliance reports ensure that the codebase adheres to licensing requirements and other legal obligations.
+Ensure the codebase adheres to licensing requirements and legal obligations.
 
 ### Implementation Plans
 
-Implementation plans outline the strategy for implementing new features or fixing identified issues.
+Outline strategies for implementing new features or fixing issues.
 
 ### Scorecards
 
-Scorecards provide a quantitative assessment of component readiness for production use.
+Provide quantitative assessments of component readiness for production use.
 
 ### Security Reports
 
-Security reports identify potential security vulnerabilities and suggest mitigations.
+Identify potential security vulnerabilities and suggest mitigations.
 
 ### Summaries
 
-Summary reports provide high-level overviews of project status, implementations, or evaluations.
+Offer high-level overviews of project status, implementations, or evaluations.
 
 ## Usage
 
-Reports should be referenced in development planning, issue remediation, and when making architectural decisions. Reports should be kept up-to-date as the codebase evolves.
+Reference these reports during development planning, issue remediation, and architectural decisions. Keep reports up to date as the codebase evolves.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+
+## Licensing
+
+Licensed under the [Apache 2.0 License](../LICENSE).

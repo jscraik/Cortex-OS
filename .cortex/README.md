@@ -1,32 +1,44 @@
-# .cortex/ Governance Hub
+# Cortex-OS Governance Hub
+
+[![CI Status](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../LICENSE)
 
 This directory is the **single source of truth** for all Cortex-OS governance, policies, and validation rules.
 
+## Table of Contents
+
+- [Authority Chain](#authority-chain)
+- [Directory Structure](#directory-structure)
+- [Usage](#usage)
+- [Validation](#validation)
+- [Contributing](#contributing)
+- [Licensing](#licensing)
+
 ## Authority Chain
 
-1. **`.cortex/rules/AGENTS.md`** - "AGENTS.md is the boss" - Core agentic behavior rules
-2. **`.cortex/rules/RULES_OF_AI.md`** - Fundamental AI governance principles
-3. **`.cortex/rules/COPILOT-INSTRUCTIONS.md`** - GitHub Copilot specific guidelines
-4. **`.cortex/policy/*.json`** - Machine-readable policies (validated by schemas)
-5. **Package-level configs** - Local overrides (must comply with global policies)
+1. **`.cortex/rules/AGENTS.md`** – "AGENTS.md is the boss" — core agentic behavior rules.
+2. **`.cortex/rules/RULES_OF_AI.md`** – fundamental AI governance principles.
+3. **`.cortex/rules/COPILOT-INSTRUCTIONS.md`** – GitHub Copilot guidelines.
+4. **`.cortex/policy/*.json`** – machine-readable policies validated against schemas.
+5. **Package-level configs** – local overrides that must comply with global policies.
 
 ## Directory Structure
 
-- **`schemas/`** - JSON Schemas for all policies and data structures
-- **`policy/`** - Runtime policies in JSON format (validated against schemas)
-- **`rules/`** - Human-readable governance documents (Markdown)
-- **`prompts/`** - Agent personas, capability packs, and workflows
-- **`gates/`** - Validation scripts that enforce policies
-- **`runbooks/`** - Operational procedures and incident response
-- **`audit/`** - Compliance tracking and audit logs
+- `schemas/` – JSON Schemas for policies and data structures.
+- `policy/` – Runtime policies in JSON format (schema-validated).
+- `rules/` – Human-readable governance documents.
+- `prompts/` – Agent personas, capability packs, and workflows.
+- `gates/` – Validation scripts enforcing policies.
+- `runbooks/` – Operational procedures and incident response.
+- `audit/` – Compliance tracking and audit logs.
 
 ## Usage
 
-All policies and schemas in this directory are enforced by:
+Policies and schemas here are enforced by:
 
-1. **Pre-commit hooks** - Local validation before commits
-2. **CI/CD pipelines** - Automated validation on PRs
-3. **Runtime enforcement** - Policy engines during execution
+1. **Pre-commit hooks** – local validation before commits.
+2. **CI/CD pipelines** – automated validation on pull requests.
+3. **Runtime enforcement** – policy engines during execution.
 
 ## Validation
 
@@ -36,3 +48,11 @@ Run all governance validation:
 cd .cortex/gates
 pnpm run validate
 ```
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+
+## Licensing
+
+Licensed under the [Apache 2.0 License](../LICENSE).

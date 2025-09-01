@@ -1,20 +1,34 @@
-# Patches
+# Cortex-OS Patches
 
-This directory contains patch files used for applying specific fixes and enhancements to the codebase.
+[![CI Status](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../LICENSE)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Contents](#contents)
+- [Usage](#usage)
+- [Creating New Patches](#creating-new-patches)
+- [Contributing](#contributing)
+- [Licensing](#licensing)
+
+## Overview
+
+This directory stores patch files used to apply targeted fixes and enhancements to the codebase.
 
 ## Contents
 
-- `memory-systems-enhancements.patch` - Contains enhancements for memory systems
+- `memory-systems-enhancements.patch` – enhancements for memory systems.
 
 ## Usage
 
-Patches can be applied using the `git apply` command:
+Apply a patch:
 
 ```bash
 git apply patches/memory-systems-enhancements.patch
 ```
 
-For more complex patches, you may need to use additional flags:
+For complex patches:
 
 ```bash
 git apply --ignore-whitespace --reject patches/memory-systems-enhancements.patch
@@ -22,13 +36,15 @@ git apply --ignore-whitespace --reject patches/memory-systems-enhancements.patch
 
 ## Creating New Patches
 
-To create a new patch:
+1. Implement changes in the codebase.
+2. Generate a patch: `git diff > patches/your-patch-name.patch`.
+3. Add an entry to this README.
+4. Commit the patch and README updates together.
 
-1. Make your changes in the codebase
-2. Run `git diff > patches/your-patch-name.patch`
-3. Add an entry to this README.md file
-4. Commit the patch file along with the README update
+## Contributing
 
-## Note
+Ensure patches are well documented and follow project versioning conventions. Contributions are welcome! See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 
-Ensure patches are properly documented and follow the versioning conventions of the project.
+## Licensing
+
+Licensed under the [Apache 2.0 License](../LICENSE).
