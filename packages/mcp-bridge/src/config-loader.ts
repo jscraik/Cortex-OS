@@ -24,7 +24,7 @@ export type McpConfig = z.infer<typeof McpConfigSchema>;
 export function hashString(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
-
+export function mergeMcpConfigs(configs: McpConfig[]): McpConfig {
   if (configs.length === 0) {
     throw new Error('No MCP configs provided to mergeMcpConfigs');
   }
