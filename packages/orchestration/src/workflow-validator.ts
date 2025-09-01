@@ -100,27 +100,15 @@ export function validateWorkflow(input: unknown): ValidationResult {
 /**
  * Optimized workflow structure validation
  */
-function validateWorkflowStructure(wf: any): ValidationResult {
-  const visited = new Set<string>();
-  const stack = new Set<string>();
-  const unreachableSteps = new Set(Object.keys(wf.steps));
-  let maxDepth = 0;
-  let cycleDetected = false;
-
-  // Pre-validate all step references
+function preValidate(wf: any): Set<string> {
   const stepIds = new Set(Object.keys(wf.steps));
-
-  // Validate entry point exists
   if (!stepIds.has(wf.entry)) {
     throw new Error(`Entry step '${wf.entry}' does not exist`);
   }
-
-  // Pre-validate all next/branch references
   for (const [stepId, step] of Object.entries(wf.steps) as [string, any][]) {
     if (step.next && !stepIds.has(step.next)) {
       throw new Error(`Step '${stepId}' references non-existent next step: ${step.next}`);
     }
-
     if (step.branches) {
       for (const branch of step.branches) {
         if (!stepIds.has(branch.to)) {
@@ -129,78 +117,71 @@ function validateWorkflowStructure(wf: any): ValidationResult {
       }
     }
   }
+  return stepIds;
+}
 
-  // Optimized DFS with path tracking and early termination
-  const visit = (stepId: string, depth: number = 0, path: string[] = []): void => {
-    // Prevent infinite recursion
-    if (depth > MAX_WORKFLOW_DEPTH) {
-      throw new Error(
-        `Workflow depth exceeds maximum (${MAX_WORKFLOW_DEPTH}). Possible infinite loop involving: ${path.slice(-5).join(' -> ')}`,
-      );
+function depthFirst(
+  wf: any,
+  stepId: string,
+  visited: Set<string>,
+  stack: Set<string>,
+  unreachable: Set<string>,
+  stats: { maxDepth: number; cycleDetected: boolean },
+  depth = 0,
+  path: string[] = [],
+): void {
+  if (depth > MAX_WORKFLOW_DEPTH) {
+    throw new Error(
+      `Workflow depth exceeds maximum (${MAX_WORKFLOW_DEPTH}). Possible infinite loop involving: ${path.slice(-5).join(' -> ')}`,
+    );
+  }
+  stats.maxDepth = Math.max(stats.maxDepth, depth);
+  if (stack.has(stepId)) {
+    stats.cycleDetected = true;
+    const cycleStart = path.indexOf(stepId);
+    const cycle = path.slice(cycleStart).concat(stepId).join(' -> ');
+    throw new Error(`Cycle detected: ${cycle}`);
+  }
+  if (visited.has(stepId)) {
+    unreachable.delete(stepId);
+    return;
+  }
+  stack.add(stepId);
+  visited.add(stepId);
+  unreachable.delete(stepId);
+  const step = wf.steps[stepId];
+  const currentPath = [...path, stepId];
+  if (step.next) depthFirst(wf, step.next, visited, stack, unreachable, stats, depth + 1, currentPath);
+  if (step.branches) {
+    for (const branch of step.branches) {
+      depthFirst(wf, branch.to, visited, stack, unreachable, stats, depth + 1, currentPath);
     }
+  }
+  stack.delete(stepId);
+}
 
-    // Track maximum depth
-    maxDepth = Math.max(maxDepth, depth);
+function validateWorkflowStructure(wf: any): ValidationResult {
+  const visited = new Set<string>();
+  const stack = new Set<string>();
+  const unreachableSteps = new Set(Object.keys(wf.steps));
+  const stats = { maxDepth: 0, cycleDetected: false };
+  preValidate(wf);
+  depthFirst(wf, wf.entry, visited, stack, unreachableSteps, stats);
 
-    // Cycle detection
-    if (stack.has(stepId)) {
-      cycleDetected = true;
-      const cycleStart = path.indexOf(stepId);
-      const cycle = path.slice(cycleStart).concat(stepId).join(' -> ');
-      throw new Error(`Cycle detected: ${cycle}`);
-    }
-
-    // Skip if already processed
-    if (visited.has(stepId)) {
-      unreachableSteps.delete(stepId);
-      return;
-    }
-
-    // Mark as reachable and being processed
-    stack.add(stepId);
-    visited.add(stepId);
-    unreachableSteps.delete(stepId);
-
-    const step = wf.steps[stepId];
-    const currentPath = [...path, stepId];
-
-    // Visit next step
-    if (step.next) {
-      visit(step.next, depth + 1, currentPath);
-    }
-
-    // Visit branch targets
-    if (step.branches) {
-      for (const branch of step.branches) {
-        visit(branch.to, depth + 1, currentPath);
-      }
-    }
-
-    // Remove from current processing stack
-    stack.delete(stepId);
-  };
-
-  // Start validation from entry point
-  visit(wf.entry);
-
-  const stats = {
+  const resultStats = {
     totalSteps: Object.keys(wf.steps).length,
     unreachableSteps: Array.from(unreachableSteps),
-    maxDepth,
-    cycleDetected,
+    maxDepth: stats.maxDepth,
+    cycleDetected: stats.cycleDetected,
   };
 
-  // Warn about unreachable steps (don't fail, just warn)
-  if (stats.unreachableSteps.length > 0) {
+  if (resultStats.unreachableSteps.length > 0) {
     console.warn(
-      `Workflow contains ${stats.unreachableSteps.length} unreachable steps: ${stats.unreachableSteps.join(', ')}`,
+      `Workflow contains ${resultStats.unreachableSteps.length} unreachable steps: ${resultStats.unreachableSteps.join(', ')}`,
     );
   }
 
-  return {
-    workflow: wf,
-    stats,
-  };
+  return { workflow: wf, stats: resultStats };
 }
 
 /**

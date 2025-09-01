@@ -3,5 +3,12 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/orchestration/src",
   "projectType": "library",
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @cortex-os/orchestration test"
+      }
+    }
+  }
 }

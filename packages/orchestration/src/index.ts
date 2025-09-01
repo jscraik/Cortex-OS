@@ -70,3 +70,7 @@ export {
 // MLX agent integration
 export { MLXAgent } from './integrations/mlx-agent.js';
 export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
+
+// Scheduling and sandbox utilities
+export { PriorityScheduler } from './lib/scheduler.js';
+export { runSandboxed } from './lib/sandbox.js';
