@@ -1,0 +1,102 @@
+name: Cortex-OS Governance Review
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Run on the 1st of every month at 06:00 UTC
+    - cron: "0 6 1 * *"
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  id-token: write
+
+concurrency:
+  group: governance-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # Fail if recommendation is not "go"
+      REQUIRED_RECOMMENDATION: "go"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install (minimal)
+        run: pnpm install
+
+      - name: Generate SBOM
+        run: |
+          mkdir -p reports
+          npx @cyclonedx/cyclonedx-npm --output-file reports/sbom.json || true
+
+      - name: Security & license scans
+        run: |
+          npx osv-scanner --recursive . || true
+          npx license-checker --json > reports/licenses.json || true
+          npx semgrep --config auto || true
+          npx gitleaks detect --source . --report-path reports/gitleaks.json || true
+
+      - name: Run governance prompt (JSON)
+        run: |
+          npx cortex-cli review --prompt .cortex/prompts/governance-review.md \
+            --output ./reports/cortex-os.governance.json
+
+      - name: Gate on recommendation
+        id: gate
+        run: |
+          rec=$(jq -r '.overall.recommendation' reports/cortex-os.governance.json)
+          echo "recommendation=$rec" >> "$GITHUB_OUTPUT"
+          if [ -z "$rec" ] || [ "$rec" = "null" ]; then
+            echo "No recommendation found"; exit 1
+          fi
+          if [ "$rec" != "$REQUIRED_RECOMMENDATION" ]; then
+            echo "Governance recommendation '$rec' != '$REQUIRED_RECOMMENDATION'"; exit 2
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cortex-os-governance-${{ github.run_id }}
+          path: reports/
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Governance Review" >> $GITHUB_STEP_SUMMARY
+          echo "Recommendation: **${{ steps.gate.outputs.recommendation }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+          jq '.overall, .areas, .risks[0:5], .licenses[0:10]' reports/cortex-os.governance.json >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create issue on failure (scheduled/manual only)
+        if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const rec = "${{ steps.gate.outputs.recommendation }}";
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Governance review failed: recommendation "${rec}"`,
+              body: [
+                "Automated governance review did not return a 'go' recommendation.",
+                `Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              ].join("\n\n"),
+              labels: ["governance","compliance","triage"]
+            });

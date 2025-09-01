@@ -1,5 +1,8 @@
 # Cortex-OS
 
+[![Cortex-OS Master Review](https://github.com/Cortex-OS/cortex-os/actions/workflows/master-review.yml/badge.svg)](https://github.com/Cortex-OS/cortex-os/actions/workflows/master-review.yml)
+[![Cortex-OS Governance Review](https://github.com/Cortex-OS/cortex-os/actions/workflows/governance-review.yml/badge.svg)](https://github.com/Cortex-OS/cortex-os/actions/workflows/governance-review.yml)
+
 **Autonomous Software Behavior Reasoning (ASBR) Runtime** - Clean, governed monorepo with strict import boundaries, SBOM, and CI gates.
 
 ## Requirements
