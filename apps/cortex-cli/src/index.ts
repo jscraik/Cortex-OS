@@ -20,6 +20,7 @@ import { simlabList } from './commands/simlab/list.js';
 import { simlabReport } from './commands/simlab/report.js';
 import { simlabRun } from './commands/simlab/run.js';
 import { tuiCommand } from './commands/tui.js';
+import { agentCreate } from './commands/agent/create.js';
 
 const program = new Command('cortex');
 const mcp = new Command('mcp');
@@ -61,4 +62,8 @@ evalCmd.addCommand(evalGate);
 program.addCommand(evalCmd);
 
 program.addCommand(tuiCommand);
+
+const agent = new Command('agent');
+agent.addCommand(agentCreate);
+program.addCommand(agent);
 program.parseAsync(process.argv);
