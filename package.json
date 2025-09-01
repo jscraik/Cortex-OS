@@ -2,9 +2,9 @@
   "name": "cortex-os",
   "private": true,
   "version": "0.0.1",
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@9.9.0",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20 <21"
   },
   "type": "module",
   "scripts": {
@@ -20,7 +20,7 @@
     "memory:clean": "bash scripts/kill-memory-hogs.sh",
     "vscode:optimize": "echo 'VS Code optimization disabled for stability'",
     "vscode:optimize:gentle": "echo 'VS Code optimization disabled for stability'",
-    "test": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048 --expose-gc\" VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 vitest run --no-coverage",
+    "test": "mise run test",
     "test:watch": "cross-env NODE_OPTIONS=\"--max-old-space-size=2048 --expose-gc\" VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 vitest --no-coverage",
     "test:coverage": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --expose-gc\" VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 vitest run --coverage --coverage.reporter=text-summary --coverage.reporter=json-summary",
     "test:coverage:threshold": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096 --expose-gc\" VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 vitest run --coverage --coverage.reporter=text-summary --coverage.reporter=json-summary --coverage.thresholds.statements=90 --coverage.thresholds.branches=90 --coverage.thresholds.functions=90 --coverage.thresholds.lines=90",
@@ -34,8 +34,6 @@
     "test:integration:cli": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run tests/integration/cli-commands.test.ts",
     "test:integration:e2e": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run tests/integration/end-to-end-scenarios.test.ts",
     "test:integration:security": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run tests/integration/security-validation.test.ts",
-    "test:accessibility": "turbo run test:accessibility",
-    "test:a11y": "turbo run test:a11y",
     "wcag3:assess": "node scripts/wcag3-tracker.mjs assess",
     "wcag3:status": "cat a11y/wcag-roadmap.md",
     "test:security": "npm run test:integration:security",
@@ -66,7 +64,7 @@
     "test:cli-tools": "./scripts/test-cli-tools.sh",
     "demo:comprehensive": "./scripts/comprehensive-demo.sh",
     "security:typecheck": "npx tsc --noEmit --project tsconfig.json",
-    "typecheck": "npx tsc --noEmit --project tsconfig.json",
+    "typecheck": "mise run typecheck",
     "security:run": "node scripts/run-security-tests.mjs",
     "mcp:start": "cd packages/mcp && npm start",
     "mcp:dev": "cd packages/mcp && npm run dev",
@@ -74,16 +72,12 @@
     "mcp:smoke": "node packages/mcp/scripts/smoke/mcp-smoke.mjs",
     "mcp:test": "packages/mcp/scripts/test-mcp.sh",
     "mcp:start-with-tunnel": "packages/mcp/scripts/start-mcp-with-tunnel.sh",
-    "lint": "eslint .",
+    "lint": "mise run lint",
     "lint:security": "eslint \"{apps,packages}/**/*.{js,jsx,ts,tsx}\" --config=eslint-security.config.js",
     "format": "prettier --write --ignore-path .prettierignore \"{apps,packages,scripts,tests,cli,server,src}/**/*.{js,jsx,ts,tsx,md,mdx,json,yml,yaml,css,scss}\" \"docs/**/*.md\" \"*.{md,json,yml,yaml}\" \"!site/**\" \"!deploy/**\" \"!**/*.html\"",
     "format:check": "prettier --check --ignore-path .prettierignore \"{apps,packages,scripts,tests,cli,server,src}/**/*.{js,jsx,ts,tsx,md,mdx,json,yml,yaml,css,scss}\" \"docs/**/*.md\" \"*.{md,json,yml,yaml}\" \"!site/**\" \"!deploy/**\" \"!**/*.html\"",
-    "build": "turbo run build",
+    "build": "mise run build",
     "build:wasm": "./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-javascript -o packages/mvp-core/wasm/tree-sitter-javascript.wasm && ./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-typescript/typescript -o packages/mvp-core/wasm/tree-sitter-typescript.wasm && ./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-python -o packages/mvp-core/wasm/tree-sitter-python.wasm && ./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-go -o packages/mvp-core/wasm/tree-sitter-go.wasm",
-    "build:with-gates": "turbo run gates:check && turbo run build",
-    "build:carbon": "./scripts/carbon-monitoring/carbon-aware-build.mjs turbo run build",
-    "dev": "turbo run dev",
-    "dev:secure": "op run --env-file=.env.1password -- turbo run dev",
     "docs:api": "python scripts/generate-api-docs.py",
     "docs:generate": "tsx scripts/generate-docs.ts",
     "docs:watch": "tsx scripts/generate-docs.ts && npx chokidar 'packages/*/src/**/*.{ts,tsx,py}' -c 'tsx scripts/generate-docs.ts'",
@@ -153,12 +147,6 @@
     "check:a11y-docs": "tsx tools/validators/axe-docs-check.ts",
     "fix:agents-heads": "tsx .cortex/tooling/check-agents.ts",
     "verify:all": "pnpm check:layout && pnpm check:docs && pnpm check:a11y-docs",
-    "simlab:smoke": "turbo run simlab:smoke --filter=@cortex-os/simlab-mono",
-    "simlab:critical": "turbo run simlab:critical --filter=@cortex-os/simlab-mono",
-    "simlab:full": "turbo run simlab:full --filter=@cortex-os/simlab-mono",
-    "simlab:report": "turbo run simlab:report --filter=@cortex-os/simlab-mono",
-    "simlab:gates": "turbo run simlab:gates --filter=@cortex-os/simlab-mono",
-    "sim:status": "turbo run sim:status --filter=@cortex-os/simlab-mono",
     "dev:orbstack": "docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml --profile dev-full up --build -d",
     "dev:orbstack:min": "docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml --profile dev-min up --build -d",
     "dev:orbstack:full": "docker compose --env-file infra/compose/.env.dev -f infra/compose/docker-compose.dev.yml --profile dev-full up --build -d",
@@ -176,7 +164,9 @@
     "nx:test:services": "pnpm -s nx run-many -t test --projects=@cortex-os/telemetry,@cortex-os/model-gateway,@cortex-os/observability,@cortex-os/orchestration,@cortex-os/gateway,@cortex-os/registry,@cortex-os/memories --parallel=2",
     "nx:test:features": "pnpm -s nx run-many -t test --projects=@cortex-os/mvp-core,@cortex-os/mvp-server,@cortex-os/prp-runner,@cortex-os/agents,@cortex-os/kernel,@cortex-os/simlab,@cortex-os/evals,@cortex-os/rag,asbr,mvp --parallel=2",
     "nx:test:each": "pnpm -s nx show projects --with-target=test --noInteractive | xargs -n 1 -P 3 -I {} pnpm -s nx test {}",
-    "nx:test:all:chunked": "pnpm nx:test:core && pnpm nx:test:a2a && pnpm nx:test:mcp && pnpm nx:test:services && pnpm nx:test:features"
+    "nx:test:all:chunked": "pnpm nx:test:core && pnpm nx:test:a2a && pnpm nx:test:mcp && pnpm nx:test:services && pnpm nx:test:features",
+    "bootstrap": "mise install && mise run bootstrap",
+    "biome": "mise run biome"
   },
   "//": "The following review and governance scripts were removed: review, typecheck, a11y, depgraph, unused, circles, vulns. If your workflow depends on them, please refer to project documentation for migration guidance or consider restoring them as needed.",
   "dependencies": {
@@ -234,6 +224,8 @@
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.1.0",
     "vitest": "^2.0.5",
-    "yaml": "^2.5.0"
+    "yaml": "^2.5.0",
+    "@nx/node": "^21.4.1",
+    "@biomejs/biome": "2.2.2"
   }
 }

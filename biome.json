@@ -1,0 +1,9 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.0.5/schema.json",
+  "formatter": { "lineWidth": 100 },
+  "linter": {
+    "rules": { "suspicious/noExplicitAny": "warn" },
+    "domains": { "test": "recommended", "next": "recommended" }
+  },
+  "files": { "ignore": ["**/dist/**","**/.next/**","**/build/**","**/coverage/**"] }
+}
