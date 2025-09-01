@@ -4,7 +4,6 @@ const RISK_LABELS = {
   high: '[HIGH]',
 } as const;
 
-export function getRiskLabel(riskLevel: 'low' | 'medium' | 'high'): string {
-  return RISK_LABELS[riskLevel] ?? RISK_LABELS.medium;
+  return RISK_LABELS[riskLevel];
 }
 
