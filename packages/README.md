@@ -26,5 +26,4 @@ This document outlines product specifications and technical summaries for every 
 | rag           | 0.0.1   | Retrieval-augmented generation components.                                         | Node/TypeScript                |
 | registry      | 1.0.0   | Schema registry service for Cortex-OS contracts.                                   | Node/TypeScript                |
 | security      | 0.1.0   | SPIFFE/SPIRE security with mTLS and workload identity management.                  | Node/TypeScript, SPIFFE/SPIRE  |
-| simlab        | 0.0.1   | Modular simulation laboratory utilities.                                           | Node/TypeScript                |
-| simlab-mono   | 0.1.0   | Monolithic simulation laboratory environment.                                      | Node/TypeScript                |
+| simlab        | 0.1.0   | Simulation harness for Cortex-OS with deterministic evaluation.                   | Node/TypeScript                |

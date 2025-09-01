@@ -1,4 +1,4 @@
-import { SimRunner } from '@cortex-os/simlab-mono';
+import { SimRunner } from '@cortex-os/simlab';
 
 export const wireSimlab = () => {
   return { runner: new SimRunner({}) };

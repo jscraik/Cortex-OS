@@ -53,7 +53,7 @@ Cortex-OS defines several agent roles, each with a specific focus. These roles a
 - **MCP Agents**: These agents primarily interact with external tools and services via the Model Context Protocol (MCP). Their `gather` step is focused on collecting information from these external sources.
 - **A2A Agents**: These agents are responsible for coordinating workflows between other agents. Their `plan` and `synthesize` steps often involve creating and sending tasks to other agents via the A2A event bus.
 - **RAG Agents**: These agents specialize in knowledge retrieval. Their `gather` step heavily utilizes the Retrieval-Augmented Generation (RAG) packages to find relevant information from documents and data sources.
-- **Simlab Agents**: These agents operate within the simulation environment (`simlab-mono`). Their actions are typically constrained to the simulated world, and they are used for testing and evaluating the behavior of other agents.
+- **Simlab Agents**: These agents operate within the simulation environment (`simlab`). Their actions are typically constrained to the simulated world, and they are used for testing and evaluating the behavior of other agents.
 
 Model Gateway APIs
 • POST /embeddings {model,texts[]} → vectors

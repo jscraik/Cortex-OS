@@ -18,7 +18,7 @@
     "@cortex-os/mcp-registry": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
-    "@cortex-os/simlab-mono": "workspace:*"
+    "@cortex-os/simlab": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

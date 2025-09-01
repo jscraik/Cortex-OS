@@ -101,7 +101,7 @@ This document provides a comprehensive analysis of technical debt, backward-comp
    - **Risk**: None - code was already commented out
 
 2. **Old Simlab Micro-package References** (`simlab.ts`)
-   - **Reason**: Consolidated into `@cortex-os/simlab-mono`
+   - **Reason**: Consolidated into `@cortex-os/simlab`
    - **Risk**: None - imports were broken and non-functional
 
 3. **npm/ppnpm Commands** (`package.json`)

@@ -8,7 +8,7 @@ export const simlabReport = new Command('report')
     const input = Buffer.concat(chunks).toString('utf8');
     const run = JSON.parse(input);
     process.stdout.write(
-      '# SimLab Report\n\nMigration in progress - markdown functionality not yet available in simlab-mono.\n\n```json\n' +
+      '# SimLab Report\n\nMigration in progress - markdown functionality not yet available in simlab.\n\n```json\n' +
         JSON.stringify(run, null, 2) +
         '\n```\n',
     );

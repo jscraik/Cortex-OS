@@ -24,7 +24,7 @@ This report provides a heuristic production readiness score (0-100%) for each pa
 | rag                    | 65           | 60          | 55       | 50      | 45            | 45            | 53      |
 | registry               | 60           | 55          | 50       | 45      | 40            | 40            | 48      |
 | security               | 85           | 80          | 90       | 70      | 60            | 60            | 74      |
-| simlab-mono            | 55           | 50          | 45       | 40      | 35            | 35            | 43      |
+| simlab                | 55           | 50          | 45       | 40      | 35            | 35            | 43      |
 | cortex-api             | 50           | 45          | 40       | 35      | 30            | 30            | 38      |
 | cortex-cli             | 60           | 55          | 50       | 45      | 40            | 40            | 48      |
 | cortex-marketplace     | 50           | 45          | 40       | 35      | 30            | 30            | 38      |

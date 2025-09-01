@@ -70,8 +70,8 @@
       "@cortex-os/evals/*": ["packages/evals/src/*"],
 
       // Simlab Packages
-      "@cortex-os/simlab-mono": ["packages/simlab-mono/src/index.ts"],
-      "@cortex-os/simlab-mono/*": ["packages/simlab-mono/src/*"],
+      "@cortex-os/simlab": ["packages/simlab/src/index.ts"],
+      "@cortex-os/simlab/*": ["packages/simlab/src/*"],
 
       // Moved Packages (now in root packages/)
       "@cortex-os/agents": ["packages/agents/src/index.ts"],
