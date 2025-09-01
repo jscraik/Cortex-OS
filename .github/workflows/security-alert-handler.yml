@@ -1,0 +1,49 @@
+name: security-alert-handler
+
+on:
+  workflow_run:
+    workflows: ['security', 'codeql']
+    types: [completed]
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion != 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create tracking issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+            const title = `Security alert: ${run.name} #${run.run_number}`;
+            const body = [
+              `A security workflow has failed.`,
+              `- **Workflow**: ${run.name}`,
+              `- **Run**: ${run.html_url}`,
+              `- **Conclusion**: ${run.conclusion}`,
+              `Please triage this alert following SECURITY.md guidelines.`
+            ].join('\n');
+            const existing = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} in:title "${title}"`
+            });
+            if (existing.data.total_count === 0) {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+                labels: ['security', 'triage']
+              });
+            }
+
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1.27.0
+        if: env.SLACK_WEBHOOK_URL != ''
+        with:
+          payload: |
+            {
+              "text": "Security workflow `${{ github.event.workflow_run.name }}` failed. Run: ${{ github.event.workflow_run.html_url }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
