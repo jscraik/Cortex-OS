@@ -1,8 +1,20 @@
 import fs from "node:fs";
 
 const file = process.argv[2] || "reports/security.json";
-const json = JSON.parse(fs.readFileSync(file, "utf8"));
-
+let json;
+try {
+  const data = fs.readFileSync(file, "utf8");
+  json = JSON.parse(data);
+} catch (err) {
+  if (err.code === "ENOENT") {
+    console.error(`Security report file not found: ${file}`);
+  } else if (err instanceof SyntaxError) {
+    console.error(`Malformed JSON in security report file: ${file}`);
+  } else {
+    console.error(`Error reading security report file: ${file}\n${err.message}`);
+  }
+  process.exit(2);
+}
 const thresholds = {
   HIGH: 0,
   MEDIUM: 10,
