@@ -22,12 +22,19 @@ describe('SimRunner determinism', () => {
     const seed = 42;
     const runner = new SimRunner({ deterministic: true, seed, maxTurns: 3, timeout: 5_000 });
     const result = await runner.runScenario(baseScenario);
-
-    expect(result.runId).toMatch(/-det$/);
+    expect(result.runId).toBe('scn-001-42-det');
     expect(result.scenarioId).toBe('scn-001');
     // Should include at least one agent response
     const agentTurns = result.turns.filter((t) => t.role === 'agent');
     expect(agentTurns.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('increments run id deterministically', async () => {
+    const runner = new SimRunner({ deterministic: true, seed: 5, maxTurns: 1, timeout: 5_000 });
+    const first = await runner.runScenario(baseScenario);
+    const second = await runner.runScenario(baseScenario);
+    expect(first.runId).toBe('scn-001-5-det');
+    expect(second.runId).toBe('scn-001-6-det');
   });
 
   it('generates deterministic batch IDs with same seed', async () => {

@@ -1,0 +1,7 @@
+{
+  "critical": {
+    "path": "sim/scenarios/critical.json",
+    "sha256": "af2e6994ea8c4351a0af313f21c5aa7857e47ad25be6b3e651b4f798dc7027cb",
+    "license": "Apache-2.0"
+  }
+}
