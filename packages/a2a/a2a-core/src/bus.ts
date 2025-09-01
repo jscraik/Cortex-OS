@@ -45,8 +45,12 @@ export function createBus(
         const handler = map.get(m.type);
         if (!handler) return;
         const run = async () => {
-          if (key && m.data !== undefined) {
-            m.data = decrypt({ ciphertext: m.data as string, nonce: m.headers.nonce, tag: m.headers.tag }, key);
+            const nonce = m.headers?.nonce;
+            const tag = m.headers?.tag;
+            if (typeof nonce !== 'string' || typeof tag !== 'string') {
+              throw new Error('Missing or invalid nonce/tag in message headers for decryption');
+            }
+            m.data = decrypt({ ciphertext: m.data as string, nonce, tag }, key);
           }
           const ctx = getCurrentTraceContext();
           if (ctx) injectTraceContext(m, ctx);
