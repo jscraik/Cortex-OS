@@ -1,4 +1,5 @@
 import * as path from 'path';
+import express, { type Application } from 'express';
 import request from 'supertest';
 import { fileURLToPath } from 'url';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -9,15 +10,16 @@ const __dirname = path.dirname(__filename);
 
 describe('Schema Registry', () => {
   let registry: SchemaRegistry;
-  let app: any;
+  let app: Application;
 
   beforeAll(() => {
     const contractsPath = path.join(__dirname, 'fixtures', 'contracts');
+    app = express();
     registry = new SchemaRegistry({
-      port: 3002, // Different port for testing
+      port: 3002,
       contractsPath,
-    });
-    app = registry.getApp(); // We'll need to add this method
+      apiKey: 'test-key',
+    }, app);
   });
 
   describe('Health Check', () => {
@@ -32,8 +34,15 @@ describe('Schema Registry', () => {
   });
 
   describe('Schema Listing', () => {
+    it('should reject requests without API key', async () => {
+      await request(app).get('/schemas').expect(401);
+    });
+
     it('should list all available schemas', async () => {
-      const response = await request(app).get('/schemas').expect(200);
+      const response = await request(app)
+        .get('/schemas')
+        .set('x-api-key', 'test-key')
+        .expect(200);
 
       expect(response.body).toMatchObject({
         schemas: expect.any(Array),
@@ -45,7 +54,10 @@ describe('Schema Registry', () => {
     });
 
     it('should include schema metadata', async () => {
-      const response = await request(app).get('/schemas').expect(200);
+      const response = await request(app)
+        .get('/schemas')
+        .set('x-api-key', 'test-key')
+        .expect(200);
 
       const firstSchema = response.body.schemas[0];
       expect(firstSchema).toMatchObject({
@@ -57,7 +69,10 @@ describe('Schema Registry', () => {
     });
 
     it('should skip schemas missing required metadata', async () => {
-      const response = await request(app).get('/schemas').expect(200);
+      const response = await request(app)
+        .get('/schemas')
+        .set('x-api-key', 'test-key')
+        .expect(200);
       const ids = response.body.schemas.map((s: any) => s.id);
       expect(ids).not.toContain('missing-metadata');
     });
@@ -65,7 +80,10 @@ describe('Schema Registry', () => {
 
   describe('Schema Retrieval', () => {
     it('should get specific schema by ID', async () => {
-      const response = await request(app).get('/schemas/user-created').expect(200);
+      const response = await request(app)
+        .get('/schemas/user-created')
+        .set('x-api-key', 'test-key')
+        .expect(200);
 
       expect(response.body).toMatchObject({
         schema: expect.any(Object),
@@ -77,7 +95,10 @@ describe('Schema Registry', () => {
     });
 
     it('should return 404 for non-existent schema', async () => {
-      const response = await request(app).get('/schemas/non-existent').expect(404);
+      const response = await request(app)
+        .get('/schemas/non-existent')
+        .set('x-api-key', 'test-key')
+        .expect(404);
 
       expect(response.body).toMatchObject({
         error: 'Schema not found',
@@ -86,13 +107,19 @@ describe('Schema Registry', () => {
     });
 
     it('should not match schema by filename when $id is missing', async () => {
-      await request(app).get('/schemas/missing-id').expect(404);
+      await request(app)
+        .get('/schemas/missing-id')
+        .set('x-api-key', 'test-key')
+        .expect(404);
     });
   });
 
   describe('Category Filtering', () => {
     it('should get schemas by category', async () => {
-      const response = await request(app).get('/categories/events').expect(200);
+      const response = await request(app)
+        .get('/categories/events')
+        .set('x-api-key', 'test-key')
+        .expect(200);
 
       expect(response.body).toMatchObject({
         category: 'events',
@@ -103,7 +130,10 @@ describe('Schema Registry', () => {
     });
 
     it('should return empty array for non-existent category', async () => {
-      const response = await request(app).get('/categories/non-existent').expect(200);
+      const response = await request(app)
+        .get('/categories/non-existent')
+        .set('x-api-key', 'test-key')
+        .expect(200);
 
       expect(response.body).toMatchObject({
         category: 'non-existent',
@@ -112,8 +142,38 @@ describe('Schema Registry', () => {
       });
     });
 
+    it('should handle category that is not a directory', async () => {
+      const response = await request(app)
+        .get('/categories/not-a-dir')
+        .set('x-api-key', 'test-key')
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        category: 'not-a-dir',
+        schemas: [],
+        count: 0,
+      });
+    });
+
+    it('should return 500 when category retrieval fails', async () => {
+      const original = (registry as any).getSchemasByCategory;
+      (registry as any).getSchemasByCategory = () => Promise.reject(new Error('boom'));
+      const response = await request(app)
+        .get('/categories/events')
+        .set('x-api-key', 'test-key')
+        .expect(500);
+      expect(response.body).toMatchObject({
+        error: 'Failed to retrieve category schemas',
+        message: 'boom',
+      });
+      (registry as any).getSchemasByCategory = original;
+    });
+
     it('should omit schemas missing metadata from category results', async () => {
-      const response = await request(app).get('/categories/events').expect(200);
+      const response = await request(app)
+        .get('/categories/events')
+        .set('x-api-key', 'test-key')
+        .expect(200);
       const ids = response.body.schemas.map((s: any) => s.id);
       expect(ids).not.toContain('missing-metadata');
     });
@@ -137,6 +197,7 @@ describe('Schema Registry', () => {
     it('should validate valid event', async () => {
       const response = await request(app)
         .post('/validate/user-created')
+        .set('x-api-key', 'test-key')
         .send(validUserCreatedEvent)
         .expect(200);
 
@@ -153,6 +214,7 @@ describe('Schema Registry', () => {
 
       const response = await request(app)
         .post('/validate/user-created')
+        .set('x-api-key', 'test-key')
         .send(invalidEvent)
         .expect(200);
 
@@ -163,7 +225,11 @@ describe('Schema Registry', () => {
     });
 
     it('should return 400 for missing event data', async () => {
-      const response = await request(app).post('/validate/user-created').send({}).expect(400);
+      const response = await request(app)
+        .post('/validate/user-created')
+        .set('x-api-key', 'test-key')
+        .send({})
+        .expect(400);
 
       expect(response.body).toMatchObject({
         error: 'No event data provided',
@@ -173,6 +239,7 @@ describe('Schema Registry', () => {
     it('should return 404 for non-existent schema', async () => {
       const response = await request(app)
         .post('/validate/non-existent')
+        .set('x-api-key', 'test-key')
         .send(validUserCreatedEvent)
         .expect(404);
 

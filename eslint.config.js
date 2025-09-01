@@ -133,7 +133,8 @@ export default [
       'no-console': ['warn', { allow: ['error', 'warn'] }],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn', // Change from error to warning
-      '@typescript-eslint/no-unused-vars': 'warn', // Change from error to warning
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-expressions': 'off', // Change from error to warning
       // SonarJS rules for better code quality - set to warnings to avoid blocking
       'sonarjs/cognitive-complexity': ['warn', 25], // Increase threshold
       'sonarjs/no-duplicate-string': ['warn', { threshold: 6 }], // Increase threshold

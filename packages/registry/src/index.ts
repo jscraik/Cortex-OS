@@ -6,10 +6,12 @@ import * as path from 'path';
 import Ajv from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
 import type { ValidateFunction } from 'ajv';
+import type { Server } from 'http';
 
 interface SchemaRegistryOptions {
   port?: number;
   contractsPath?: string;
+  apiKey?: string;
 }
 
 interface SchemaMeta {
@@ -71,14 +73,16 @@ export class SchemaRegistry {
   private readonly app: Application;
   private readonly port: number;
   private readonly contractsPath: string;
+  private readonly apiKey?: string;
   private readonly schemaCache = new Map<string, SchemaDocument>();
   private readonly ajv: Ajv;
   private readonly validatorCache = new Map<string, ValidateFunction>();
 
-  constructor(options: SchemaRegistryOptions = {}) {
+  constructor(options: SchemaRegistryOptions = {}, app: Application = express()) {
     this.port = options.port || 3001;
     this.contractsPath = options.contractsPath || path.join(process.cwd(), 'contracts');
-    this.app = express();
+    this.apiKey = options.apiKey || process.env.REGISTRY_API_KEY;
+    this.app = app;
     this.ajv = new Ajv({ strict: false });
     addFormats(this.ajv);
 
@@ -95,6 +99,18 @@ export class SchemaRegistry {
       }),
     );
     this.app.use(express.json());
+
+    if (this.apiKey) {
+      this.app.use((req, res, next) => {
+        if (req.path === '/health') {
+          return next();
+        }
+        if (req.header('x-api-key') !== this.apiKey) {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+        next();
+      });
+    }
   }
 
   private setupRoutes(): void {
@@ -382,14 +398,10 @@ export class SchemaRegistry {
     return validate(eventData) as boolean;
   }
 
-  public start(): void {
-    this.app.listen(this.port, () => {
+  public start(): Server {
+    return this.app.listen(this.port, () => {
       // Server started successfully
     });
-  }
-
-  public getApp(): Application {
-    return this.app;
   }
 }
 
