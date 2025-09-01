@@ -1,0 +1,35 @@
+{
+  "overall_score": 70,
+  "areas": {
+    "production": {
+      "score": 65,
+      "evidence": ["apps/cortex-webui/app/mvp/chat/page.tsx:270-278"],
+      "risks": ["Node dependencies not installed; test coverage unknown"],
+      "actions": ["Install dependencies and run full test suite to verify ≥95% coverage"]
+    },
+    "governance": {
+      "score": 75,
+      "evidence": ["AGENTS.md:1-40", ".github/CODEOWNERS:1-20"],
+      "risks": ["Structure guard enforcement not verified"],
+      "actions": ["Run structure validation and license checks in CI"]
+    },
+    "resilience": {
+      "score": 60,
+      "evidence": [".github/workflows/chaos.yml:1-13"],
+      "risks": ["Chaos workflow is placeholder"],
+      "actions": ["Implement fault injection tests and recovery runbooks"]
+    },
+    "accessibility": {
+      "score": 80,
+      "evidence": ["apps/cortex-webui/app/mvp/chat/page.tsx:270-278"],
+      "risks": ["Accessibility test suite not executed"],
+      "actions": ["Run pa11y and axe audits"]
+    },
+    "investor": {
+      "score": 65,
+      "evidence": ["docs/investor-deck.md:1-21"],
+      "risks": ["ARR projections unvalidated"],
+      "actions": ["Validate TAM and pricing with market research"]
+    }
+  }
+}
