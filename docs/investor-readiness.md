@@ -22,10 +22,15 @@ Estimated **SAM**: 10% of TAM through early adopter channels (≈$570M). **SOM**
 ### ARR Projection
 | Year | ARR (M USD) |
 |------|-------------|
-| 2025 | 10 |
-| 2026 | 120 |
-| 2027 | 285 |
 
+### Methodology & Assumptions
+The ARR projections are based on the following key assumptions:
+- **User Adoption**: Rapid onboarding of early adopters, targeting 5% market penetration within three years, leveraging developer and enterprise channels.
+- **Pricing**: Per-seat licensing and transaction fees as outlined in the TAM/SAM/SOM analysis.
+- **Marketplace Growth**: Expansion of high-margin connector listings, driving incremental revenue with minimal operational overhead.
+- **Retention & Expansion**: Strong retention rates and upsell opportunities through compliance and accessibility features.
+- **Go-to-Market**: Aggressive channel partnerships and direct sales to enterprise accounts.
+These projections do not account for potential macroeconomic headwinds or significant regulatory changes. Detailed calculation logic and sensitivity analysis are available upon request.
 ## Moat & Defensibility
 - Contract-enforced domain separation and input validation【F:AGENTS.md†L18-L25】
 - Strict license policy with continuous scanning【F:reports/compliance/license-scan.md†L1-L35】
