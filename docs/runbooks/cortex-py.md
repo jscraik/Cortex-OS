@@ -4,8 +4,8 @@
 Operational procedures for Cortex Py: deployment, rollback, failover, monitoring, incident response and disaster recovery.
 
 ## Pre-checks
-1. `pnpm --filter cortex-py lint`
-2. `pnpm --filter cortex-py test`
+1. `uv run ruff check .`
+2. `uv run pytest`
 3. Ensure Docker registry access and Kubernetes context.
 
 ## Deployment
