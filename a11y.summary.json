@@ -1,7 +1,7 @@
 {
   "artifact": "cortex-os-accessibility-readiness",
   "version": "1.0",
-  "commit": "0d7135cd72eb883b56e6ade1ef4723b28bf67aba",
+  "commit": "COMMIT_HASH_PLACEHOLDER",
   "overall": {"score": 50, "rag": "red"},
   "areas": [
     {"name":"Color/Contrast","score":40,"rag":"red","evidence":[{"path":"apps/cortex-tui/src/view/palette.rs","lines":"507-516"}]},
