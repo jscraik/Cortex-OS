@@ -1,21 +1,27 @@
 {
   "name": "@cortex-os/simlab",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./runner": "./dist/runner.js",
+    "./agent-adapter": "./dist/agent-adapter.js",
+    "./judge": "./dist/judge.js",
+    "./report": "./dist/report.js",
+    "./types": "./dist/types.js",
+    "./user-sim": "./dist/user-sim.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@cortex-os/contracts": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "^22.5.0",
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "dev": "tsx watch src/index.ts",
+    "simlab:smoke": "tsx src/scripts/run-smoke.ts",
+    "simlab:critical": "tsx src/scripts/run-critical.ts",
+    "simlab:full": "tsx src/scripts/run-full.ts",
+    "simlab:report": "tsx src/scripts/generate-report.ts",
+    "simlab:gates": "tsx src/scripts/check-gates.ts",
+    "sim:status": "node -e \"console.log('SimLab status coming soon')\""
   }
 }

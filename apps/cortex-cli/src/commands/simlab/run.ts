@@ -11,10 +11,10 @@ export const simlabRun = new Command('run')
   .action(async (opts) => {
     const span = tracer.startSpan('cli.simlab.run');
     try {
-      // Check if simlab-mono package is available
+      // Check if simlab package is available
       try {
         // Use relative path to avoid TypeScript module resolution issues
-        const simLabModule = await import('../../../../../packages/simlab-mono/src/index.js');
+        const simLabModule = await import('../../../../../packages/simlab/src/index.js');
         const { SimRunner } = simLabModule;
 
         const runner = new SimRunner({
@@ -62,7 +62,7 @@ export const simlabRun = new Command('run')
         }
       } catch (importError) {
         console.error('SimLab functionality is not available');
-        console.error('Please ensure @cortex-os/simlab-mono package is installed');
+        console.error('Please ensure @cortex-os/simlab package is installed');
         if (opts.json) {
           console.log(
             JSON.stringify({ error: 'SimLab not available', details: String(importError) })

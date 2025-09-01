@@ -21,6 +21,6 @@ export default defineWorkspace([
   'packages/prp-runner',
   'packages/model-gateway',
   'packages/rag',
-  'packages/simlab-mono',
+  'packages/simlab',
   'libs/typescript/contracts',
 ]);

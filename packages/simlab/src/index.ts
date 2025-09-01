@@ -1,34 +1,23 @@
-import { AgentConfigSchema, SimlabCommandSchema } from '@cortex-os/contracts';
-import {
-  createInMemoryStore,
-  createJsonOutput,
-  createStdOutput,
-  StructuredError,
-} from '@cortex-os/lib';
-import { z } from 'zod';
+/**
+ * @fileoverview SimLab - Simulation harness for Cortex-OS
+ * @version 1.0.0
+ * @author Cortex-OS Team
+ */
 
-const InputSchema = z.object({
-  config: AgentConfigSchema,
-  command: SimlabCommandSchema,
-  json: z.boolean().optional(),
-});
-export type SimlabInput = z.infer<typeof InputSchema>;
-
-export function handleSimlab(input: unknown): string {
-  const parsed = InputSchema.safeParse(input);
-  if (!parsed.success) {
-    const err = new StructuredError('INVALID_INPUT', 'Invalid Simlab input', {
-      issues: parsed.error.issues,
-    });
-    return createJsonOutput({ error: err.toJSON() });
-  }
-  const { config, command, json } = parsed.data;
-  const memory = createInMemoryStore({
-    maxItems: config.memory.maxItems,
-    maxBytes: config.memory.maxBytes,
-  });
-  memory.set('lastCommand', command);
-  if (json)
-    return createJsonOutput({ executed: true, scenario: command.scenario, step: command.step });
-  return createStdOutput(`Simlab executed scenario=${command.scenario} step=${command.step}`);
-}
+export type { AgentRequest, AgentResponse, PRPExecutor } from './agent-adapter';
+export { AgentAdapter } from './agent-adapter';
+export type { JudgeConfig } from './judge';
+export { Judge } from './judge';
+export { SimReporter } from './report';
+export type { SimRunnerConfig } from './runner';
+export { SimRunner } from './runner';
+// Re-export types from schemas
+export type {
+  SimBatchResult,
+  SimReport,
+  SimResult,
+  SimScenario,
+  SimScores,
+  SimTurn,
+} from './types';
+export { UserSimulator } from './user-sim';

@@ -108,7 +108,7 @@
     "out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-security.out"
   },
   {
-    "name": "simlab-mono",
-    "out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-simlab-mono.out"
+    "name": "simlab",
+    "out": "/Users/jamiecraik/.Cortex-OS-clean/reports/eslint-sonar-simlab.out"
   }
 ]

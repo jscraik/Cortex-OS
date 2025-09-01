@@ -35,7 +35,7 @@ The project uses `.cortex/` as the **governance hub** and single source of truth
   - `rag/` - Retrieval-Augmented Generation with embeddings
   - `agents/` - Agent implementations and enhanced behaviors
   - `asbr/` - Core ASBR reasoning logic
-  - `simlab-mono/` - Simulation environment for testing
+  - `simlab/` - Simulation environment for testing
 
 ### Communication Patterns
 

@@ -201,7 +201,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 <summary><strong>🛡️ Security & Quality</strong></summary>
 
 - **[security](./packages/security/)** - Security utilities, OWASP compliance, mTLS
-- **[simlab-mono](./packages/simlab-mono/)** - Simulation environment for testing
+- **[simlab](./packages/simlab/)** - Simulation environment for testing
 - **[contracts](./libs/typescript/contracts/)** - Type-safe contracts and validation
 
 </details>

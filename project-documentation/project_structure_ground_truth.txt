@@ -769,7 +769,7 @@ prp-runner
 rag
 registry
 security
-simlab-mono
+simlab
 
 ./packages/a2a:
 README-schema-registry.md
@@ -1983,7 +1983,7 @@ index.ts
 workload-identity.test.ts
 workload-identity.ts
 
-./packages/simlab-mono:
+./packages/simlab:
 README.md
 package.json
 sim
@@ -1992,13 +1992,13 @@ tests
 tsconfig.json
 vitest.config.ts
 
-./packages/simlab-mono/sim:
+./packages/simlab/sim:
 scenarios
 
-./packages/simlab-mono/sim/scenarios:
+./packages/simlab/sim/scenarios:
 critical.json
 
-./packages/simlab-mono/src:
+./packages/simlab/src:
 agent-adapter.ts
 index.ts
 judge.ts
@@ -2008,7 +2008,7 @@ scripts
 types.ts
 user-sim.ts
 
-./packages/simlab-mono/src/scripts:
+./packages/simlab/src/scripts:
 check-gates.ts
 generate-report.ts
 run-critical.ts
@@ -2016,7 +2016,7 @@ run-full.ts
 run-smoke.ts
 smoke-shared.ts
 
-./packages/simlab-mono/tests:
+./packages/simlab/tests:
 judge.test.ts
 reporter.test.ts
 runner.test.ts
