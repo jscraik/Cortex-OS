@@ -205,7 +205,20 @@ class TextChunker implements Chunker {
   ): DocumentChunk[] {
     const size = config.sliding?.size ?? 200;
     const overlap = config.sliding?.overlap ?? 20;
-    const step = Math.max(1, size - overlap);
+    if (overlap >= size) {
+      // Invalid configuration: overlap must be less than size
+      return [{
+        id: `${file.path}-sl-err`,
+        content: '',
+        metadata: {
+          type: 'sliding',
+          error: 'Invalid chunking configuration: overlap must be less than size',
+          overlap,
+          size,
+        },
+      }];
+    }
+    const step = size - overlap;
     const chunks: DocumentChunk[] = [];
     for (let i = 0; i < content.length; i += step) {
       const chunk = content.slice(i, i + size);
