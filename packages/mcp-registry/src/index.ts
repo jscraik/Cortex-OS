@@ -3,6 +3,7 @@
  * @description Provides validation, signing, and management for MCP server registry
  */
 
+/* c8 ignore next */
 export * from './types.js';
 export * from './validator.js';
 

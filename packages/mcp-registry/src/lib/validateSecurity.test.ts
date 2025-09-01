@@ -8,10 +8,17 @@ const baseManifest = {
 };
 
 test('flags insecure transports', () => {
+  // eslint-disable-next-line sonarjs/no-clear-text-protocols
   const manifest = { ...baseManifest, transports: { sse: { url: 'http://insecure' } } };
   const result = validateSecurity(manifest);
   expect(result.valid).toBe(false);
   expect(result.errors.some((e) => e.path === 'transports.sse.url')).toBe(true);
+});
+
+test('rejects non-object manifest', () => {
+  // @ts-expect-error intentional non-object
+  const result = validateSecurity('bad');
+  expect(result.valid).toBe(false);
 });
 
 test('warns on dangerous scopes and missing security info', () => {

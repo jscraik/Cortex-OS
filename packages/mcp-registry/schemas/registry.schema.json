@@ -1,6 +1,6 @@
 {
   "$id": "https://cortex-os.dev/mcp/registry.schema.json",
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MCP Registry Index",
   "description": "Central registry index for MCP servers with transport and install information",
   "type": "object",

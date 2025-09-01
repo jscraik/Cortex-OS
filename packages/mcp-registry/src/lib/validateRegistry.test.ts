@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import Ajv from 'ajv';
+import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import registrySchema from '../../schemas/registry.schema.json' assert { type: 'json' };
 import serverManifestSchema from '../../schemas/server-manifest.schema.json' assert { type: 'json' };

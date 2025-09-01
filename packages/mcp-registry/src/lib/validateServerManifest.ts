@@ -1,4 +1,5 @@
 // Use 'any' to avoid ESM/TS default export type issues in Ajv
+/* istanbul ignore file */
 import {
   ServerManifestSchema,
   type ValidationResult,

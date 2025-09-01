@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import Ajv from 'ajv';
+import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import registrySchema from '../../schemas/registry.schema.json' assert { type: 'json' };
 import serverManifestSchema from '../../schemas/server-manifest.schema.json' assert { type: 'json' };
@@ -57,4 +57,28 @@ test('emits warnings for missing repo', () => {
   const result = validateServerManifest(ajv, noRepo);
   expect(result.valid).toBe(true);
   expect(result.warnings.some((w) => w.path === 'repo')).toBe(true);
+});
+
+test('warns on missing logo and dangerous scope', () => {
+  const m = { ...baseManifest };
+  delete (m as any).logo;
+  m.scopes = ['system:exec'];
+  const result = validateServerManifest(ajv, m);
+  expect(result.warnings.some((w) => w.path === 'logo')).toBe(true);
+  expect(result.warnings.some((w) => w.path === 'scopes')).toBe(true);
+});
+
+test('errors on insecure transports', () => {
+  const m = {
+    ...baseManifest,
+    transports: {
+      // eslint-disable-next-line sonarjs/no-clear-text-protocols
+      sse: { url: 'http://insecure' },
+      // eslint-disable-next-line sonarjs/no-clear-text-protocols
+      streamableHttp: { url: 'http://also-insecure' },
+    },
+  };
+  const result = validateServerManifest(ajv, m);
+  expect(result.errors.some((e) => e.path === 'transports.sse.url')).toBe(true);
+  expect(result.errors.some((e) => e.path === 'transports.streamableHttp.url')).toBe(true);
 });

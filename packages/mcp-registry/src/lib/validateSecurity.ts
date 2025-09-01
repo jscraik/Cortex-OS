@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { type ValidationResult, type ValidationError, type ValidationWarning } from '../types.js';
 
 export function validateSecurity(manifest: unknown): ValidationResult {

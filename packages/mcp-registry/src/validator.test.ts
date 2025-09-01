@@ -19,8 +19,15 @@ test('accepts valid manifest', () => {
 test('rejects non-https transport', () => {
   const manifest = {
     ...baseManifest,
+    // eslint-disable-next-line sonarjs/no-clear-text-protocols
     transports: { sse: { url: 'http://insecure' } },
   };
+  const result = validateServerManifest(manifest);
+  expect(result.valid).toBe(false);
+});
+
+test('invalid repo uri fails format', () => {
+  const manifest = { ...baseManifest, repo: '::::' };
   const result = validateServerManifest(manifest);
   expect(result.valid).toBe(false);
 });

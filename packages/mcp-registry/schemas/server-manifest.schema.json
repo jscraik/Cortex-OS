@@ -1,6 +1,6 @@
 {
   "$id": "https://cortex-os.dev/mcp/server-manifest.schema.json",
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MCP Server Manifest",
   "description": "Complete manifest for an MCP server with transport, install, and security metadata",
   "type": "object",

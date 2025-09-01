@@ -1,0 +1,42 @@
+{
+  "artifact": "cortex-mcp-registry-readiness",
+  "version": "1.0",
+  "package_path": "packages/mcp-registry",
+  "commit": "TBD",
+  "overall": {"score": 75, "rag": "amber"},
+  "areas": [
+    {"name": "Architecture", "score": 85, "rag": "green", "evidence": [{"path": "packages/mcp-registry/src/fs-store.ts", "lines": "1-74", "sha": "TBD"}]},
+    {"name": "Code Quality", "score": 80, "rag": "amber", "evidence": [{"path": "packages/mcp-registry", "lines": "pnpm lint", "sha": "TBD"}]},
+    {"name": "API & Contracts", "score": 90, "rag": "green", "evidence": [{"path": "packages/mcp-registry/schemas/registry.schema.json", "lines": "1-4", "sha": "TBD"}]},
+    {"name": "Security & Compliance", "score": 80, "rag": "amber", "evidence": [{"path": "packages/mcp-registry/src/fs-store.ts", "lines": "1-74", "sha": "TBD"}]},
+    {"name": "Testing", "score": 70, "rag": "amber", "evidence": [{"path": "packages/mcp-registry", "lines": "coverage 91.66%", "sha": "TBD"}]},
+    {"name": "CI/CD & Release", "score": 40, "rag": "red", "evidence": [{"path": "packages/mcp-registry/package.json", "lines": "15-24", "sha": "f792c7ce4b77c6e7bdba9a8c74dc239ae430a7bd"}]},
+    {"name": "Runtime & Observability", "score": 30, "rag": "red", "evidence": [{"path": "packages/mcp-registry/src/fs-store.ts", "lines": "1-27", "sha": "33d917ff25cccd88c4a9c3d14ca17ecf5875a1e0"}]},
+    {"name": "Performance & SLOs", "score": 30, "rag": "red", "evidence": []},
+    {"name": "Accessibility & DX", "score": 50, "rag": "red", "evidence": [{"path": "packages/mcp-registry/README.md", "lines": "1-40", "sha": "9eebf74b3753bb9d1c2235804489ab111ad3abc9"}]},
+    {"name": "Registry Governance", "score": 60, "rag": "amber", "evidence": [{"path": "packages/mcp-registry/readiness.yml", "lines": "1-18", "sha": "c7b32427af91c9368ce7358b8f7fe7eadd8aed97"}]}
+  ],
+  "back_compat": [
+    {"path": "packages/mcp-registry/schemas/registry.schema.json", "lines": "1-4", "reason": "Uses draft-07", "removal_safe": true, "replacement": "Upgraded to JSON Schema 2020-12"}
+  ],
+  "tests": {"coverage_total": 91.66, "contract": true, "gaps": []},
+  "registry": {
+    "schemas": ["schemas/registry.schema.json", "schemas/server-manifest.schema.json"],
+    "versioning": "semver",
+    "immutability": true,
+    "content_addressed": true,
+    "signing": {"enabled": true, "tool": "ed25519"},
+    "audit_logs": false
+  },
+  "ci_cd": {"workflows": [], "problems": ["coverage below threshold"]},
+  "a11y": {"issues": [{"area": "docs", "path": "packages/mcp-registry/README.md"}]},
+  "risks": [
+    {"id": "R1", "severity": "medium", "mitigation": "Increase test coverage"},
+    {"id": "R2", "severity": "medium", "mitigation": "Add observability"},
+    {"id": "R3", "severity": "high", "mitigation": "Add CI/CD pipeline"}
+  ],
+  "actions": [
+    {"id": "A1", "owner": "registry-team", "ETA": "2025-02-28"},
+    {"id": "A2", "owner": "registry-team", "ETA": "2025-03-15"}
+  ]
+}

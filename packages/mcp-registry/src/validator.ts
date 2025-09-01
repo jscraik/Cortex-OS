@@ -2,7 +2,7 @@
  * @file Schema validator for MCP Registry
  */
 
-import AjvImport from 'ajv';
+import AjvImport from 'ajv/dist/2020.js';
 import addFormatsImport from 'ajv-formats';
 import registrySchema from '../schemas/registry.schema.json' with { type: 'json' };
 import serverManifestSchema from '../schemas/server-manifest.schema.json' with { type: 'json' };

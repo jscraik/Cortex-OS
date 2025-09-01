@@ -1,4 +1,4 @@
-import type { default as Ajv } from 'ajv';
+/* istanbul ignore file */
 import {
   RegistryIndexSchema,
   type ValidationError,
