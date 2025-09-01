@@ -8,7 +8,6 @@ import { NAME_MAX_LENGTH } from './constants.js';
 
 // MCP Protocol version support
 export const MCP_VERSION = '2025-06-18';
-export const SUPPORTED_VERSIONS = [MCP_VERSION];
 
 /**
  * Transport types (Streamable HTTP only)
