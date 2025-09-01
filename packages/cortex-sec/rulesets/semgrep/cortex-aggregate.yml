@@ -1,0 +1,17 @@
+rules:
+  - pattern: $X
+    id: cortex.include.js-ts
+    message: Include JS/TS rules
+    severity: INFO
+    languages: [generic]
+    paths:
+      include:
+        - cortex-js-ts.yml
+  - pattern: $X
+    id: cortex.include.py
+    message: Include Python rules
+    severity: INFO
+    languages: [generic]
+    paths:
+      include:
+        - cortex-py.yml
