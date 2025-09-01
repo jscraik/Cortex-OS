@@ -8,9 +8,14 @@ import { z } from 'zod';
 export const ULIDSchema = z.string().regex(/^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/);
 export type ULID = z.infer<typeof ULIDSchema>;
 
+// Request ID schema
+export const RequestIdSchema = z.string().min(1);
+export type RequestId = z.infer<typeof RequestIdSchema>;
+
 // Trace context
 export const TraceContextSchema = z.object({
   runId: ULIDSchema,
+  requestId: RequestIdSchema.optional(),
   traceId: z.string().optional(),
   spanId: z.string().optional(),
   parentSpanId: z.string().optional(),

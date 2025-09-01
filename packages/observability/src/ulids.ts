@@ -2,7 +2,7 @@
  * @fileoverview ULID generation and validation utilities
  */
 
-import { ulid } from 'ulid';
+import { ulid, decodeTime } from 'ulid';
 import { ULIDSchema, type ULID } from './types.js';
 
 /**
@@ -23,9 +23,7 @@ export function isValidULID(value: string): value is ULID {
  * Extract timestamp from ULID
  */
 export function getULIDTimestamp(runId: ULID): Date {
-  // ULID first 10 characters are timestamp in Crockford base32
-  const timestamp = parseInt(runId.slice(0, 10), 32);
-  return new Date(timestamp);
+  return new Date(decodeTime(runId));
 }
 
 /**
