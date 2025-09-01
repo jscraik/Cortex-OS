@@ -272,6 +272,7 @@ export default function ChatPage() {
           type="submit"
           disabled={streaming}
           aria-disabled={streaming}
+          aria-label="Send message"
         >
           Send
         </button>

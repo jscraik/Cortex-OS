@@ -1,0 +1,13 @@
+name: Chaos Testing
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run chaos experiments
+        run: echo "Chaos tests placeholder"
