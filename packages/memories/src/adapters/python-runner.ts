@@ -5,7 +5,9 @@ export class NodePythonRunner implements PythonRunner {
   async run(path: string, args: string[], options: Record<string, unknown> = {}): Promise<string> {
     return await new Promise((resolve, reject) => {
       const exe = typeof options.python === 'string' ? (options.python as string) : 'python3';
-      if (!/^[\w.-]+$/.test(exe)) {
+      // Allow typical path characters: word, dot, dash, slash, backslash, colon, space
+      // Disallow dangerous shell metacharacters
+      if (!/^[\w.\-\\/:\s]+$/.test(exe) || /[;&|`$<>]/.test(exe)) {
         return reject(new Error('invalid python path'));
       }
       /* nosemgrep javascript.lang.security.detect-child-process.detect-child-process */
