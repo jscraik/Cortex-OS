@@ -201,6 +201,7 @@ jobs:
                 issue_number: pull_number,
                 labels: ['needs-info'],
               });
+              core.setFailed(`Missing PR requirements: ${missing.map(req => req.name).join(', ')}`);
             }
 
   security-review:
