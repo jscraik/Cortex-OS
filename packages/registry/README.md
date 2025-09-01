@@ -9,6 +9,7 @@ A runtime schema registry service for serving Cortex-OS contract schemas via RES
 - **Schema Validation**: Event validation against JSON schemas
 - **CORS Support**: Default CORS for local development
 - **Security**: Helmet middleware for security headers
+- **Authentication**: Optional API key gating via `x-api-key`
 
 ## API Endpoints
 
@@ -71,6 +72,11 @@ registry.start();
 
 - `port`: Server port (default: 3001)
 - `contractsPath`: Path to contracts directory (default: `process.cwd()/contracts`)
+- `apiKey`: Optional API key for request authentication (default: `REGISTRY_API_KEY` env var)
+
+### Authentication
+
+Set an API key using the `REGISTRY_API_KEY` environment variable or the `apiKey` option. Clients must send the key in an `x-api-key` header for all endpoints except `/health`.
 
 ## Development
 
