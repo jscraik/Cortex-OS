@@ -10,7 +10,7 @@ import { buildQwen3EmbedScript } from './qwen3-script';
 import { type Embedder } from '../index.js';
 
 function assertSafeModelPath(p: string): void {
-  if (!/^[A-Za-z0-9_\/\.:-]+$/.test(p)) {
+  if (!/^[A-Za-z0-9_\/\.-]+$/.test(p)) {
     throw new Error('Invalid model path');
   }
 }
