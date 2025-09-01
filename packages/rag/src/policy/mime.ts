@@ -11,7 +11,7 @@ export enum ProcessingStrategy {
 }
 
 export interface ProcessingConfig {
-  chunker: 'text' | 'markdown' | 'code' | 'structured' | 'pdf' | 'ocr' | 'unstructured' | null;
+  chunker: 'text' | 'markdown' | 'code' | 'structured' | 'pdf' | 'ocr' | 'unstructured' | 'semantic' | 'sliding' | null;
   requiresOCR: boolean;
   requiresUnstructured: boolean;
   maxPages: number | null;
