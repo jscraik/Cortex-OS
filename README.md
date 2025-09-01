@@ -64,7 +64,7 @@ pnpm readiness:check
 pnpm dev
 
 # Start TUI interface
-cd apps/cortex-tui && cargo run
+cd apps/cortex-code && cargo run
 
 # Start web interface
 cd apps/cortex-webui && pnpm dev
@@ -103,7 +103,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 │     Apps        │    │    Packages      │    │     Libs        │
 │                 │    │                  │    │                 │
 │ • cortex-os     │───▶│ • a2a (comms)   │───▶│ • contracts     │
-│ • cortex-tui    │    │ • mcp (tools)    │    │ • types         │
+│ • cortex-code    │    │ • mcp (tools)    │    │ • types         │
 │ • cortex-webui  │    │ • orchestration  │    │ • utils         │
 │ • cortex-cli    │    │ • memories       │    │ • telemetry     │
 └─────────────────┘    │ • rag            │    └─────────────────┘
@@ -126,7 +126,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 
 | Category           | Purpose                  | Key Packages                              |
 | ------------------ | ------------------------ | ----------------------------------------- |
-| **Applications**   | User-facing interfaces   | `cortex-os`, `cortex-tui`, `cortex-webui` |
+| **Applications**   | User-facing interfaces   | `cortex-os`, `cortex-code`, `cortex-webui` |
 | **Communication**  | Agent-to-agent messaging | `a2a`, `mcp`, `orchestration`             |
 | **Intelligence**   | AI capabilities          | `agents`, `rag`, `cortex-ai-github`       |
 | **Infrastructure** | Core services            | `memories`, `security`, `registry`        |
@@ -161,7 +161,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 | Package                                          | Description                  | Documentation                                   |
 | ------------------------------------------------ | ---------------------------- | ----------------------------------------------- |
 | [cortex-ai-github](./packages/cortex-ai-github/) | AI-powered GitHub automation | [README](./packages/cortex-ai-github/README.md) |
-| [cortex-tui](./apps/cortex-tui/)                 | Terminal user interface      | [README](./apps/cortex-tui/README.md)           |
+| [cortex-code](./apps/cortex-code/)                 | Terminal user interface      | [README](./apps/cortex-code/README.md)           |
 | [a2a](./packages/a2a/)                           | Agent-to-agent communication | [README](./packages/a2a/README.md)              |
 | [mcp](./packages/mcp/)                           | Model Context Protocol       | [README](./packages/mcp/README.md)              |
 | [orchestration](./packages/orchestration/)       | Multi-agent workflows        | [README](./packages/orchestration/README.md)    |
@@ -210,7 +210,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 <summary><strong>🖥️ User Interfaces</strong></summary>
 
 - **[cortex-os](./apps/cortex-os/)** - Main ASBR runtime application
-- **[cortex-tui](./apps/cortex-tui/)** - Terminal UI with multi-view interface
+- **[cortex-code](./apps/cortex-code/)** - Terminal UI with multi-view interface
 - **[cortex-webui](./apps/cortex-webui/)** - Web-based dashboard and interface
 - **[cortex-cli](./apps/cortex-cli/)** - Command-line interface and tools
 
