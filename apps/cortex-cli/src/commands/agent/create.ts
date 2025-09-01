@@ -55,7 +55,9 @@ export const agentCreate = new Command('create')
         `name: ${parsed.name}`,
         `type: ${parsed.type}`,
         `mode: ${parsed.mode}`,
-        `tools: [${parsed.tools.join(', ')}]`,
+        parsed.tools.length > 0
+          ? `tools:\n${parsed.tools.map((tool) => `  - ${tool}`).join('\n')}`
+          : 'tools: []',
         '---',
       ].join('\n');
 
