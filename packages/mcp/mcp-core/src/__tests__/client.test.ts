@@ -21,15 +21,15 @@ vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
 });
 
 vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => {
-  return { StdioClientTransport: vi.fn() };
+  return { StdioClientTransport: vi.fn(() => ({ close: vi.fn() })) };
 });
 
 vi.mock('@modelcontextprotocol/sdk/client/sse.js', () => {
-  return { SSEClientTransport: vi.fn() };
+  return { SSEClientTransport: vi.fn(() => ({ close: vi.fn() })) };
 });
 
 vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => {
-  return { StreamableHTTPClientTransport: vi.fn() };
+  return { StreamableHTTPClientTransport: vi.fn(() => ({ close: vi.fn() })) };
 });
 
 // Import the mocked modules
@@ -59,13 +59,15 @@ describe('mcp-core client', () => {
     });
 
     it('should redact passwords from a nested object', () => {
-      const dirty = { config: { user: { password: 'supersecret' } } };
+      // eslint-disable-next-line sonarjs/no-hardcoded-passwords
+      const dirty = { config: { user: { password: 'value' } } };
+      // eslint-disable-next-line sonarjs/no-hardcoded-passwords
       const clean = { config: { user: { password: '[REDACTED]' } } };
       expect(redactSensitiveData(dirty)).toEqual(clean);
     });
 
     it('should handle arrays of objects', () => {
-      const dirty = [{ secret: '123' }, { credentials: { token: 'abc' } }];
+      const dirty = [{ secret: 'value' }, { credentials: { token: 'token-value' } }];
       const clean = [{ secret: '[REDACTED]' }, { credentials: { token: '[REDACTED]' } }];
       expect(redactSensitiveData(dirty)).toEqual(clean);
     });
@@ -112,6 +114,47 @@ describe('mcp-core client', () => {
       expect(mockConnect).toHaveBeenCalled();
     });
 
+    it('should create a streamableHttp client', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-stream',
+        transport: 'streamableHttp',
+        endpoint: 'http://localhost:8080',
+      };
+      await createEnhancedClient(serverInfo);
+      expect(MockStreamableHTTPClientTransport).toHaveBeenCalledWith(new URL('http://localhost:8080'));
+      expect(mockConnect).toHaveBeenCalled();
+    });
+
+    it('should expose rate limit info', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-info',
+        transport: 'stdio',
+        command: 'echo',
+      };
+      const client = await createEnhancedClient(serverInfo);
+      const info = await client.getRateLimitInfo('tool');
+      expect(info.remainingPoints).toBe(60);
+    });
+
+    it('should close transport and client', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-close',
+        transport: 'stdio',
+        command: 'echo',
+      };
+      const client = await createEnhancedClient(serverInfo);
+      await client.close();
+      expect(mockClose).toHaveBeenCalled();
+      const transport = MockStdioClientTransport.mock.results[0].value;
+      expect(transport.close).toHaveBeenCalled();
+    });
+
+    it('should throw on unsupported transport', async () => {
+      await expect(
+        createEnhancedClient({ name: 'bad', transport: 'ws' } as unknown as ServerInfo),
+      ).rejects.toThrow('Unsupported transport: ws');
+    });
+
     it('should rate limit tool calls', async () => {
       const serverInfo: ServerInfo = {
         name: 'test-limiter',
@@ -122,7 +165,7 @@ describe('mcp-core client', () => {
 
       // This is a bit of a hack to test the rate limiter.
       // We'll set the points to 1 to easily test the limit.
-      // @ts-ignore - private property
+      // @ts-expect-error - private property
       client.rateLimiter = {
         consume: vi
           .fn()
@@ -134,6 +177,17 @@ describe('mcp-core client', () => {
       await expect(client.callTool('test', {})).rejects.toThrow(
         'Rate limit exceeded for tool test',
       );
+    });
+
+    it('should allow calling tools without args', async () => {
+      const serverInfo: ServerInfo = {
+        name: 'test-noargs',
+        transport: 'stdio',
+        command: 'echo',
+      };
+      const client = await createEnhancedClient(serverInfo);
+      await client.callTool('ping');
+      expect(mockCallTool).toHaveBeenCalledWith({ name: 'ping', arguments: undefined });
     });
 
     it('should redact object data on sendRequest', async () => {
