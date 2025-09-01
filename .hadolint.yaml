@@ -1,0 +1,13 @@
+---
+# Hadolint configuration for Cortex-OS
+# Suppress non-critical Docker linting warnings for development
+
+ignored:
+  - DL3008  # Pin versions in apt get install (warning level)
+  - DL3013  # Pin versions in pip install (warning level)
+  - DL3018  # Pin versions in apk add (warning level)
+  - DL3042  # Avoid use of cache directory with pip (warning level)
+  - DL3059  # Multiple consecutive RUN instructions (info level)
+  - DL4006  # Set SHELL option -o pipefail before RUN with pipe (warning level)
+
+# Only error on severe security issues, not build optimization suggestions

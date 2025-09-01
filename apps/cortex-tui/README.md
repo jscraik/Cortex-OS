@@ -243,7 +243,7 @@ Commands:
 
 ### Configuration File
 
-Create `~/.cortex/config.toml`:
+Create `$HOME/.cortex/config.toml`:
 
 ```toml
 [ui]
@@ -262,7 +262,7 @@ max_tokens = 4096
 
 [logging]
 level = "info"
-file = "~/.cortex/logs/tui.log"
+file = "$HOME/.cortex/logs/tui.log"
 ```
 
 ## 🛡️ Security

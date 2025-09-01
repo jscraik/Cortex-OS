@@ -3,32 +3,33 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "default": "./src/index.ts",
+      "types": "./src/index.ts"
     },
     "./client": {
-      "import": "./dist/client.js",
-      "types": "./dist/client.d.ts"
+      "default": "./src/client.ts",
+      "types": "./src/client.ts"
     },
     "./server": {
-      "import": "./dist/server.js",
-      "types": "./dist/server.d.ts"
+      "default": "./src/server.ts",
+      "types": "./src/server.ts"
     },
     "./bridge": {
-      "import": "./dist/bridge.js",
-      "types": "./dist/bridge.d.ts"
+      "default": "./src/bridge.ts",
+      "types": "./src/bridge.ts"
     },
     "./registry": {
-      "import": "./dist/registry.js",
-      "types": "./dist/registry.d.ts"
+      "default": "./src/registry.ts",
+      "types": "./src/registry.ts"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

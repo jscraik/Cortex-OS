@@ -4,10 +4,10 @@ This directory is the **single source of truth** for all Cortex-OS governance, p
 
 ## Authority Chain
 
-1. **`.cortex/rules/AGENTS.md`** - "AGENTS.md is the boss" - Core agentic behavior rules
-2. **`.cortex/rules/RULES_OF_AI.md`** - Fundamental AI governance principles
-3. **`.cortex/rules/COPILOT-INSTRUCTIONS.md`** - GitHub Copilot specific guidelines
-4. **`.cortex/policy/*.json`** - Machine-readable policies (validated by schemas)
+1. **[`.cortex/rules/AGENTS.md`](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/rules/AGENTS.md)** - "AGENTS.md is the boss" - Core agentic behavior rules
+2. **[`.cortex/rules/RULES_OF_AI.md`](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/rules/RULES_OF_AI.md)** - Fundamental AI governance principles
+3. **[`.cortex/rules/COPILOT-INSTRUCTIONS.md`](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/rules/COPILOT-INSTRUCTIONS.md)** - GitHub Copilot specific guidelines
+4. **[`.cortex/policy/`](https://github.com/jamiescottcraik/Cortex-OS/tree/main/.cortex/policy)** - Machine-readable policies (validated by schemas)
 5. **Package-level configs** - Local overrides (must comply with global policies)
 
 ## Directory Structure

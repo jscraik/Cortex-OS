@@ -1,0 +1,16 @@
+# Cloudflare Tunnel config for cortex-ai-github
+# Usage:
+#  - Ensure you have created a tunnel and have credentials (cloudflared tunnel create cortex-ai-github)
+#  - Set env vars before running: TUNNEL_UUID and CLOUDFLARED_CREDENTIALS_FILE
+#  - Map a DNS hostname to this tunnel (cloudflared tunnel route dns cortex-ai-github cortex-github.yourdomain.com)
+#  - Start: cloudflared tunnel --config ./infrastructure/cloudflare/tunnel.config.yml run
+
+tunnel: ${TUNNEL_UUID}
+credentials-file: ${CLOUDFLARED_CREDENTIALS_FILE}
+
+ingress:
+  # Public hostname for cortex-ai-github via Cloudflare Tunnel
+  - hostname: cortex-github.brainwav.io
+    # cortex-ai-github server listens on PORT=3001
+    service: http://localhost:3001
+  - service: http_status:404

@@ -1,0 +1,61 @@
+# Cloudflare Tunnel Configuration for Cortex Semgrep GitHub App
+# This tunnel exposes the semgrep app running on localhost:3002
+
+tunnel: insula-semgrep-app
+credentials-file: /Users/jamiecraik/.cloudflared/insula-semgrep-app.json
+
+# Ingress rules - traffic routing configuration
+ingress:
+  # Main application routes
+  - hostname: insula-semgrep.brainwav.io
+    service: http://localhost:3002
+    originRequest:
+      # HTTP/2 support for better performance
+      http2Origin: true
+      # Connection timeout
+      connectTimeout: 30s
+      # TLS verification (skip for localhost)
+      noTLSVerify: true
+      # Keep-alive settings
+      keepAliveConnections: 10
+      # Buffering settings for webhook payloads
+      keepAliveTimeout: 90s
+      # Headers to preserve
+      originServerName: localhost
+
+  # Health check endpoint
+  - hostname: insula-semgrep.brainwav.io
+    path: /health
+    service: http://localhost:3002
+
+  # API endpoints
+  - hostname: insula-semgrep.brainwav.io
+    path: /api/*
+    service: http://localhost:3002
+
+  # Webhook endpoint
+  - hostname: insula-semgrep.brainwav.io
+    path: /webhook
+    service: http://localhost:3002
+    originRequest:
+      # Increase timeout for webhook processing
+      connectTimeout: 60s
+      keepAliveTimeout: 120s
+
+  # Catch-all for 404s
+  - service: http_status:404
+
+# Logging configuration
+loglevel: info
+
+# Metrics and monitoring
+metrics: localhost:8080
+
+# Connection settings
+protocol: auto
+
+# Retry configuration
+retries: 3
+
+# Grace period for shutdown
+grace-period: 30s

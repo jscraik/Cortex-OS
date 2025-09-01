@@ -20,6 +20,8 @@ _Event-driven messaging, CloudEvents 1.0 compliant, W3C Trace Context support_
 
 Cortex A2A provides a comprehensive Agent-to-Agent communication framework for the Cortex-OS ASBR runtime. Built on CloudEvents 1.0 specification and W3C Trace Context standards, it enables seamless coordination between AI agents through event-driven messaging patterns with strong type safety and distributed tracing capabilities.
 
+For detailed protocol specifications and implementation standards, see the [A2A Protocol Documentation](https://github.com/jamiescottcraik/Cortex-OS/blob/main/.cortex/context/protocols/network/a2a-protocol-documentation.md).
+
 ## ✨ Key Features
 
 ### 📨 CloudEvents Integration
