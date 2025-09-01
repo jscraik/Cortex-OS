@@ -8,11 +8,9 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "node ../../node_modules/vitest/vitest.mjs run"
   },
-  "dependencies": {
-    "@cortex-os/contracts": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.5.0",
     "typescript": "^5.5.4",
