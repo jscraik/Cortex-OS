@@ -28,14 +28,16 @@ export interface Transport {
   emit?(event: string, ...args: unknown[]): boolean;
 }
 
-export interface StdioTransportConfig {
-  type: 'stdio';
-  command: string;
-  args?: string[];
-  env?: Record<string, string>;
-  cwd?: string;
-  timeoutMs?: number;
-}
+  export interface StdioTransportConfig {
+    type: 'stdio';
+    command: string;
+    args?: string[];
+    env?: Record<string, string>;
+    cwd?: string;
+    timeoutMs?: number;
+    uid?: number;
+    gid?: number;
+  }
 
 export interface HttpTransportConfig {
   type: 'http';

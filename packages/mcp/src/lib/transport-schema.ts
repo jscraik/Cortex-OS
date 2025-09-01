@@ -28,11 +28,13 @@ export const stdioSchema = z
       .refine((cmd) => !pathTraversal.test(cmd), { message: 'Path traversal not allowed' })
       .refine((cmd) => !dangerousCommand.test(cmd), { message: 'Unsafe command detected' }),
     args: z.array(z.string()).optional(),
-    env: z.record(z.string()).optional(),
-    cwd: z.string().optional(),
-    timeoutMs: z.number().int().nonnegative().optional(),
-  })
-  .strict();
+      env: z.record(z.string()).optional(),
+      cwd: z.string().optional(),
+      timeoutMs: z.number().int().nonnegative().optional(),
+      uid: z.number().int().nonnegative().optional(),
+      gid: z.number().int().nonnegative().optional(),
+    })
+    .strict();
 
 export const httpSchema = z
   .object({
@@ -43,7 +45,22 @@ export const httpSchema = z
   })
   .strict();
 
-export const transportConfigSchema = z.union([stdioSchema, httpSchema]);
+export const sseSchema = z
+  .object({
+    type: z.literal('sse'),
+    url: z.string().url().refine((u) => u.startsWith('https://'), {
+      message: 'SSE URL must use https',
+    }),
+    writeUrl: z.string().url().optional(),
+    timeoutMs: z.number().int().nonnegative().optional(),
+    retryDelayMs: z.number().int().nonnegative().optional(),
+    maxRetries: z.number().int().nonnegative().optional(),
+    heartbeatIntervalMs: z.number().int().nonnegative().optional(),
+    headers: z.record(z.string()).optional(),
+  })
+  .strict();
+
+export const transportConfigSchema = z.union([stdioSchema, httpSchema, sseSchema]);
 
 export function parseTransportConfig(config: unknown): TransportConfig {
   return transportConfigSchema.parse(config) as TransportConfig;
