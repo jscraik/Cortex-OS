@@ -1,7 +1,7 @@
 [project]
 name = "cortex-os"
 version = "1.0.0"
-requires-python = "==3.11.6"
+requires-python = "~=3.11.6"
 description = "ASBR Cortex-OS Platform"
 license = { text = "MIT" }
 dependencies = [
