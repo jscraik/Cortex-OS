@@ -8,7 +8,7 @@ rust = "stable"
 NODE_ENV = "development"
 
 [tasks]
-bootstrap = ["corepack enable", "pnpm --version", "pnpm install --frozen-lockfile"]
+bootstrap = "corepack enable && pnpm --version && pnpm install --frozen-lockfile"
 typecheck = "pnpm nx run-many -t typecheck"
 lint = "pnpm nx run-many -t lint"
 biome = "pnpm biome check --write ."
