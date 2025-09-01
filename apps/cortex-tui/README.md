@@ -437,3 +437,4 @@ RUST_LOG=debug cargo run -- --debug 2> debug.log
 [![Ratatui](https://img.shields.io/badge/powered%20by-Ratatui-blue)](https://ratatui.rs/)
 
 </div>
+
