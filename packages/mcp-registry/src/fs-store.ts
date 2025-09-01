@@ -71,7 +71,7 @@ export async function upsert(si: ServerInfo) {
     await fs.writeFile(file, data);
   }
   const index = await readIndex();
-  if (index[si.name] && index[si.name].digest !== digest) throw new Error('immutable entry');
+  if (index[si.name] && index[si.name].digest !== digest) throw new Error(`Cannot modify existing registry entry '${si.name}': entries are immutable once published`);
   const signature = await signDigest(digest);
   index[si.name] = { digest, ...(signature ? { signature } : {}) };
   await writeIndex(index);
