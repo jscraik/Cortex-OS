@@ -20,4 +20,4 @@ jobs:
       - run: mise install
       - run: corepack enable && pnpm install --frozen-lockfile
       - run: pnpm nx run-many -t lint typecheck test build --parallel
-      - run: cargo fmt -- --check && cargo clippy -- -D warnings
+      - run: cargo fmt --manifest-path=./Cargo.toml -- --check && cargo clippy --manifest-path=./Cargo.toml -- -D warnings
