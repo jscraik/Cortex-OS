@@ -45,7 +45,13 @@ export async function readAll(): Promise<ServerInfo[]> {
   const results: ServerInfo[] = [];
   for (const { digest, signature } of Object.values(index)) {
     const file = join(dir(), `${digest}.json`);
-    const data = await fs.readFile(file, 'utf8');
+    let data: string;
+    try {
+      data = await fs.readFile(file, 'utf8');
+    } catch (err) {
+      // Skip missing or unreadable files
+      continue;
+    }
     if (digestFor(data) !== digest) throw new Error('checksum mismatch');
     if (!(await verifyDigest(digest, signature))) throw new Error('invalid signature');
     results.push(JSON.parse(data) as ServerInfo);
