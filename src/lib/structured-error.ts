@@ -4,6 +4,7 @@ export const errorCodes = {
   TIMEOUT: 'E1002',
   UPSTREAM_FAILURE: 'E1003',
   CONTRACT_VIOLATION: 'E1004',
+  SCENARIO_NOT_ALLOWED: 'E1005',
   UNKNOWN_ERROR: 'E1999',
 } as const;
 
