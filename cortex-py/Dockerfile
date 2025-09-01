@@ -21,7 +21,7 @@ RUN apt-get update &&     apt-get install -y gcc build-essential curl git &&    
 WORKDIR /app
 
 # Install uv and project dependencies
-COPY pyproject.toml uv.lock uv.toml ./
+COPY pyproject.toml uv.lock ./
 RUN pip3 install uv
 RUN if [ "$USE_CUDA_DOCKER" = "true" ]; then         uv pip install --system torch torchvision torchaudio --index-url https://download.pytorch.org/whl/$USE_CUDA_DOCKER_VER --no-cache-dir;     else         uv pip install --system torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --no-cache-dir;     fi
 RUN uv sync --frozen --system
