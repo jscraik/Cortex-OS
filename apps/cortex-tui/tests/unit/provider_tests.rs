@@ -91,9 +91,10 @@ async fn test_github_models_provider_stream() {
         .with_status(200)
         .with_header("content-type", "text/event-stream")
         .with_body(
-            "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n\
-                  data: {\"choices\":[{\"delta\":{\"content\":\" world!\"}}]}\n\n\
-                  data: [DONE]\n\n",
+            r#"data: {"choices":[{"delta":{"content":"Hello"}}]}
+data: {"choices":[{"delta":{"content":" world!"}}]}
+data: [DONE]
+"#,
         )
         .create();
 
