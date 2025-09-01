@@ -4,13 +4,14 @@
   "version": "0.1.1",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "scripts": {
     "dev": "node --watch --enable-source-maps --trace-warnings ./dist/server.js",
     "build": "tsc -p tsconfig.json",
     "start": "node --enable-source-maps ./dist/server.js",
-    "lint": "eslint --ext .ts src"
+    "lint": "eslint --ext .ts src",
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.3",
