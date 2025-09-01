@@ -1,0 +1,16 @@
+[tools]
+node = "20.11.1"
+pnpm = "9"
+python = "3.11"
+rust = "stable"
+
+[env]
+NODE_ENV = "development"
+
+[tasks]
+bootstrap = ["corepack enable", "pnpm --version", "pnpm install --frozen-lockfile"]
+typecheck = "pnpm nx run-many -t typecheck"
+lint = "pnpm nx run-many -t lint"
+biome = "pnpm biome check --write ."
+build = "pnpm nx run-many -t build"
+test = "pnpm nx run-many -t test"
