@@ -41,10 +41,25 @@ export const createMemoryService = (store: MemoryStore, embedder: Embedder): Mem
       return withSpan('memories.save', async () => {
         const parsed = memoryZ.parse(raw) as Memory;
         const redacted = parsed.text ? redactPII(parsed.text) : undefined;
+        // Validate or merge ACL
+        let acl;
+        if (parsed.acl) {
+          // Validate that input ACL matches context ACL
+          const aclMatches =
+            parsed.acl.agent === ctx.agent &&
+            parsed.acl.tenant === ctx.tenant &&
+            parsed.acl.purposes.every((p: string) => ctx.purposes.includes(p));
+          if (!aclMatches) {
+            throw new Error('Input ACL does not match context ACL');
+          }
+          acl = parsed.acl;
+        } else {
+          acl = { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes };
+        }
         const m: Memory = {
           ...parsed,
           text: redacted,
-          acl: { agent: ctx.agent, tenant: ctx.tenant, purposes: ctx.purposes },
+          acl,
         };
         const needsVector = !m.vector && m.text;
         let withVec: Memory;
