@@ -1,7 +1,7 @@
 {
   "artifact": "cortex-os-readiness",
   "version": "1.0",
-  "commit": "0d7135cd72eb883b56e6ade1ef4723b28bf67aba",
+  "commit": "COMMIT_HASH_HERE",
   "overall": {"score": 51, "rag": "red"},
   "areas": [
     {"name":"Architecture & Boundaries","score":70,"rag":"amber","evidence":[{"path":".cortex/structure-guard.yaml","lines":"1-5","sha":"745a0ad3a7dae9605893bba232da5e75a4ff2314"},{"path":".github/CODEOWNERS","lines":"1-20","sha":"0ba8bc21d9a7b889def5a9438798a3415c7342bf"}]},
