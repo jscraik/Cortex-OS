@@ -14,7 +14,8 @@ describe('InMemoryStore edge cases', () => {
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'user' },
+      provenance: { source: 'user', actor: 'agent1' },
+      acl: { agent: 'agent1', tenant: 'tenant1', purposes: ['default'] },
     };
     await store.upsert(m);
     await expect(store.searchByVector({ vector: [1], topK: 1 })).rejects.toThrow(
@@ -33,7 +34,8 @@ describe('InMemoryStore edge cases', () => {
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'user' },
+      provenance: { source: 'user', actor: 'agent1' },
+      acl: { agent: 'agent1', tenant: 'tenant1', purposes: ['default'] },
     };
     await store.upsert(m);
     const purged = await store.purgeExpired(new Date(Date.now() + 1000).toISOString());

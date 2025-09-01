@@ -22,6 +22,11 @@ export const memoryZ = z.object({
       .optional(),
     hash: z.string().optional(),
   }),
+  acl: z.object({
+    agent: z.string(),
+    tenant: z.string(),
+    purposes: z.array(z.string()).default([]),
+  }),
   policy: z
     .object({
       pii: z.boolean().optional(),

@@ -19,6 +19,7 @@ let sqliteAvailable = true;
   beforeEach(() => {
     store = new SQLiteStore(':memory:');
     process.env.MEMORIES_RERANK_ENABLED = 'false';
+    process.env.MEMORIES_ENCRYPTION_KEY = Buffer.alloc(32).toString('base64');
   });
 
   it('persists and retrieves memories', async () => {
@@ -29,7 +30,8 @@ let sqliteAvailable = true;
       tags: [],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'user' },
+       provenance: { source: 'user', actor: 'agent1' },
+       acl: { agent: 'agent1', tenant: 'tenant1', purposes: ['default'] },
     };
     await store.upsert(m);
     const fetched = await store.get('1');
@@ -45,7 +47,8 @@ let sqliteAvailable = true;
       tags: ['greet'],
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'user' },
+      provenance: { source: 'user', actor: 'agent1' },
+      acl: { agent: 'agent1', tenant: 'tenant1', purposes: ['default'] },
     };
     await store.upsert(m1);
     const byVec = await store.searchByVector({ vector: [0, 1], topK: 1 });
@@ -63,7 +66,8 @@ let sqliteAvailable = true;
       ttl: 'PT1S',
       createdAt: now,
       updatedAt: now,
-      provenance: { source: 'user' },
+      provenance: { source: 'user', actor: 'agent1' },
+      acl: { agent: 'agent1', tenant: 'tenant1', purposes: ['default'] },
     };
     await store.upsert(m);
     const purged = await store.purgeExpired(new Date(Date.now() + 2000).toISOString());

@@ -21,4 +21,5 @@ export interface MemoryStore {
   searchByText(q: TextQuery): Promise<Memory[]>;
   searchByVector(q: VectorQuery): Promise<Memory[]>;
   purgeExpired(nowISO: string): Promise<number>;
+  forgetByActor(actor: string, tenant: string): Promise<number>;
 }
