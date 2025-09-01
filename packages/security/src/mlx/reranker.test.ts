@@ -26,6 +26,7 @@ const error: http.RequestListener = (req, res) => {
 };
 
 beforeAll(async () => {
+  process.env.CORTEX_ALLOW_INSECURE_HTTP = '1';
   mlxHandler = success([0.2, 0.8]);
   frontierHandler = success([0.6, 0.4]);
   ollamaHandler = success([0.1, 0.9]);
@@ -58,6 +59,7 @@ afterAll(() => {
   delete process.env.MLX_SERVICE_URL;
   delete process.env.FRONTIER_API_URL;
   delete process.env.OLLAMA_API_URL;
+  delete process.env.CORTEX_ALLOW_INSECURE_HTTP;
 });
 
 describe('rerank', () => {

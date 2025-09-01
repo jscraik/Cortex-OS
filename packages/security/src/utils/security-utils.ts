@@ -9,6 +9,19 @@ import type { SecurityError } from '../types.js';
 export type { SecurityError };
 
 /**
+ * Ensure a URL uses HTTPS. Allows localhost HTTP only when
+ * `CORTEX_ALLOW_INSECURE_HTTP=1` for local testing.
+ */
+export function ensureHttpsUrl(urlStr: string): string {
+  const url = new URL(urlStr);
+  if (url.protocol === 'https:') return urlStr;
+  const allow = process.env.CORTEX_ALLOW_INSECURE_HTTP === '1';
+  const isLocal = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/.*)?$/.test(urlStr);
+  if (allow && isLocal) return urlStr;
+  throw new Error(`Insecure URL: ${urlStr}`);
+}
+
+/**
  * Generate a random nonce for cryptographic operations.
  * Requires Node.js 18+ where global `crypto` is available.
  */
