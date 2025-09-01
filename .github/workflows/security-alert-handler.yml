@@ -39,7 +39,7 @@ jobs:
 
       - name: Notify Slack
         uses: slackapi/slack-github-action@v1.27.0
-        if: env.SLACK_WEBHOOK_URL != ''
+        if: secrets.SLACK_WEBHOOK_URL != ''
         with:
           payload: |
             {
