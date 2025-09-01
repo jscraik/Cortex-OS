@@ -1,0 +1,23 @@
+{
+  "artifact": "cortex-os-accessibility-readiness",
+  "version": "1.0",
+  "commit": "0d7135cd72eb883b56e6ade1ef4723b28bf67aba",
+  "overall": {"score": 50, "rag": "red"},
+  "areas": [
+    {"name":"Color/Contrast","score":40,"rag":"red","evidence":[{"path":"apps/cortex-tui/src/view/palette.rs","lines":"507-516"}]},
+    {"name":"Labels/Roles","score":65,"rag":"amber","evidence":[{"path":"apps/cortex-webui/app/approvals/page.tsx","lines":"22-36"},{"path":"apps/cortex-webui/app/mvp/chat/page.tsx","lines":"169-184"}]},
+    {"name":"Keyboard Navigation","score":60,"rag":"amber","evidence":[{"path":"apps/cortex-webui/app/mvp/chat/page.tsx","lines":"169-175"},{"path":"apps/cortex-tui/src/view/palette.rs","lines":"151-179"}]},
+    {"name":"Screen Readers","score":55,"rag":"red","evidence":[{"path":"apps/cortex-webui/app/mvp/chat/page.tsx","lines":"193-224"}]},
+    {"name":"Error Handling","score":60,"rag":"amber","evidence":[{"path":"apps/cortex-webui/app/mvp/chat/page.tsx","lines":"251-254"}]},
+    {"name":"Neurodiversity","score":40,"rag":"red","evidence":[]},
+    {"name":"Testing/CI","score":30,"rag":"red","evidence":[{"path":".github/workflows/accessibility.yml","lines":"1-24"}]}
+  ],
+  "gap_matrix":[
+    {"app":"cortex-webui","criterion":"keyboard_nav","compliant":false},
+    {"app":"cortex-marketplace","criterion":"labels_roles","compliant":false},
+    {"app":"cortex-tui","criterion":"screen_reader","compliant":false},
+    {"app":"cortex-cli","criterion":"color_contrast","compliant":false}
+  ],
+  "risks":[{"id":"R1","severity":"high","area":"Keyboard Navigation","mitigation":"Add skip links and tab order tests"}],
+  "actions":[{"id":"A1","owner":"ux-team","ETA":"2025-09-12"}]
+}
