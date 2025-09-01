@@ -24,8 +24,8 @@ describe('latency benchmark', () => {
       latencies.push(performance.now() - start);
     }
     latencies.sort((a, b) => a - b);
-    const p95 = latencies[Math.floor(latencies.length * 0.95) - 1];
-    const p99 = latencies[Math.floor(latencies.length * 0.99) - 1];
+    const p95 = latencies[Math.ceil(latencies.length * 0.95) - 1];
+    const p99 = latencies[Math.ceil(latencies.length * 0.99) - 1];
     expect(p95).toBeGreaterThan(0);
     expect(p99).toBeGreaterThan(0);
     console.log('p95', p95.toFixed(2), 'ms', 'p99', p99.toFixed(2), 'ms');
