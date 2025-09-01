@@ -40,7 +40,7 @@ jobs:
         run: pnpm install
 
       - name: Test with coverage
-        run: npm run test:coverage || pnpm test:coverage || yarn test:coverage
+        run: pnpm test:coverage
 
       - name: Accessibility scans
         run: |
