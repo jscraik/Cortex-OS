@@ -44,8 +44,7 @@ jobs:
         with:
           config: |
             .semgrep/owasp-precise.yaml
-            .semgrep/owasp-top-10.yaml
-            .semgrep/llm-security.yaml
+            .semgrep/owasp-llm-top-ten.yaml
             .semgrep/mitre-atlas.yaml
 
       - name: Run npm audit
