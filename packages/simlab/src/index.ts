@@ -8,8 +8,7 @@ export type SimlabInput = z.infer<typeof InputSchema>;
 
 const ALLOWED_SCENARIOS = ['alpha', 'beta'] as const;
 
-function log(payload: Record<string, unknown>): void {
-  console.warn(JSON.stringify(withTimestamp(payload)));
+  console.log(JSON.stringify(withTimestamp(payload)));
 }
 
 export function handleSimlab(input: unknown): string {
