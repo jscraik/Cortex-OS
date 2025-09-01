@@ -3,18 +3,29 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022"],
+    "lib": [
+      "ES2022"
+    ],
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node" ],
+    "types": [
+      "node"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@cortex-os/lib": ["src/lib/index.ts"],
-      "@cortex-os/contracts": ["packages/contracts/src/index.ts"]
-    }
+      "@cortex-os/lib": [
+        "src/lib/index.ts"
+      ],
+      "@cortex-os/contracts": [
+        "packages/contracts/src/index.ts"
+      ]
+    },
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "jsx": "react-jsx"
   }
 }

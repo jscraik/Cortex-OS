@@ -1,0 +1,19 @@
+{
+  "tools": { "node": "v22.0.0", "pnpm": "9.0.0", "python": "3.11.13", "rust": "1.89.0" },
+  "files": [
+    {"path": ".mise.toml", "action": "create"},
+    {"path": ".tool-versions", "action": "create"},
+    {"path": ".node-version", "action": "create"},
+    {"path": "package.json", "action": "update"},
+    {"path": ".npmrc", "action": "update"},
+    {"path": "tsconfig.base.json", "action": "update"},
+    {"path": "nx.json", "action": "update"},
+    {"path": "next.config.ts", "action": "create"},
+    {"path": "rust-toolchain.toml", "action": "create"},
+    {"path": ".cargo/config.toml", "action": "create"},
+    {"path": ".editorconfig", "action": "create"},
+    {"path": ".github/workflows/verify.yml", "action": "create"}
+  ],
+  "ci": { "workflow": ".github/workflows/verify.yml", "status": "created" },
+  "nx": { "targets": ["build","lint","typecheck","test"], "results": { "build": "fail", "lint": "fail", "typecheck": "fail", "test": "fail" } }
+}
