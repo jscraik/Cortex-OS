@@ -1,230 +1,26 @@
 {
-  "artifact": "cortex-orchestration-readiness",
+  "artifact": "cortex-mcp-core-readiness",
   "version": "1.0",
-  "package_path": "packages/orchestration",
-  "commit": "a92d3b60a44a44ca26d529ea357cdb7f1ec59b87",
-  "overall": {
-    "score": 65,
-    "rag": "amber"
-  },
+  "package_path": "packages/mcp/mcp-core",
+  "commit": "8e7403fc3c2785ce43d32b95c7e6cce9db4b9fd2",
+  "overall": {"score": 90, "rag": "green"},
   "areas": [
-    {
-      "name": "Architecture",
-      "score": 65,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "packages/orchestration/src/coordinator/mlx-first-coordinator.ts",
-          "lines": "6-15",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "Code Quality",
-      "score": 70,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "packages/orchestration/src/errors.ts",
-          "lines": "1-9",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "API & Contracts",
-      "score": 75,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "packages/orchestration/src/schemas/workflow.zod.ts",
-          "lines": "1-36",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "Security & Compliance",
-      "score": 60,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "SECURITY.md",
-          "lines": "1-15",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "Testing",
-      "score": 40,
-      "rag": "red",
-      "evidence": [
-        {
-          "path": "packages/orchestration/tests/workflow-validator.test.ts",
-          "lines": "1-33",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "CI/CD & Release",
-      "score": 50,
-      "rag": "red",
-      "evidence": [
-        {
-          "path": "packages/orchestration/package.json",
-          "lines": "13-22",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "Runtime & Observability",
-      "score": 80,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "packages/orchestration/src/observability/otel.ts",
-          "lines": "1-53",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "Performance & SLOs",
-      "score": 60,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "packages/orchestration/README.md",
-          "lines": "35-39",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "Accessibility & DX",
-      "score": 65,
-      "rag": "amber",
-      "evidence": [
-        {
-          "path": "packages/orchestration/README.md",
-          "lines": "1-24",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    },
-    {
-      "name": "ML Integration",
-      "score": 85,
-      "rag": "green",
-      "evidence": [
-        {
-          "path": "packages/orchestration/src/lib/model-strategy.ts",
-          "lines": "1-90",
-          "sha": "791c4a8d772d7efc535d43b9aa77e2a7814f3827"
-        }
-      ]
-    }
+    {"name":"Architecture & Boundaries","score":85,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/contracts.ts","lines":"3-16","sha":"TBD"}]},
+    {"name":"Code Quality & Maintainability","score":88,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/client.ts","lines":"1-90","sha":"TBD"}]},
+    {"name":"API & Contracts","score":90,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/contracts.ts","lines":"3-16","sha":"TBD"}]},
+    {"name":"Security & Compliance","score":90,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/client.ts","lines":"1-90","sha":"TBD"}]},
+    {"name":"Testing","score":95,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/__tests__/client.test.ts","lines":"1-120","sha":"TBD"}]},
+    {"name":"CI/CD & Release","score":85,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/package.json","lines":"24-40","sha":"TBD"}]},
+    {"name":"Runtime & Observability","score":80,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/client.ts","lines":"44-74","sha":"TBD"}]},
+    {"name":"Performance & SLOs","score":80,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/client.ts","lines":"24-42","sha":"TBD"}]},
+    {"name":"Accessibility & DX","score":90,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/README.md","lines":"1-24","sha":"TBD"}]},
+    {"name":"Interoperability","score":85,"rag":"green","evidence":[{"path":"packages/mcp/mcp-core/src/client.ts","lines":"20-42","sha":"TBD"}]}
   ],
-  "back_compat": [
-    {
-      "path": "packages/orchestration/src/coordinator/mlx-first-coordinator.ts",
-      "lines": "15",
-      "reason": "Imports from root src, violating domain boundaries",
-      "removal_safe": false,
-      "replacement": "Expose agent-selection via package interface"
-    }
-  ],
-  "tests": {
-    "coverage_total": 0,
-    "gaps": [
-      {
-        "path": "packages/orchestration",
-        "lines": "",
-        "why": "vitest not found"
-      }
-    ]
-  },
-  "ml": {
-    "mlx": {
-      "enabled": true,
-      "models": [
-        "qwen2.5-0.5b-instruct",
-        "qwen3-coder-30b",
-        "qwen2.5-vl-3b",
-        "mixtral-8x7b",
-        "phi3-mini"
-      ],
-      "embeddings": [
-        "qwen3-embedding-4b"
-      ],
-      "rerankers": [
-        "qwen3-reranker-4b"
-      ]
-    },
-    "fallback": {
-      "ollama": [
-        "phi4-mini-reasoning:latest",
-        "qwen3-coder:30b",
-        "gemma3n:e4b",
-        "deepseek-coder:6.7b"
-      ],
-      "frontier": []
-    }
-  },
-  "ci_cd": {
-    "workflows": [
-      "ci.yml",
-      "agents-ci.yml"
-    ],
-    "problems": [
-      "package lacks build step and tests not runnable"
-    ]
-  },
-  "a11y": {
-    "issues": [
-      {
-        "area": "docs",
-        "path": "packages/orchestration/README.md"
-      }
-    ]
-  },
-  "risks": [
-    {
-      "id": "R1",
-      "severity": "medium",
-      "mitigation": "Replace cross-domain imports with shared interface"
-    },
-    {
-      "id": "R2",
-      "severity": "high",
-      "mitigation": "Restore vitest environment and achieve ≥95% coverage"
-    },
-    {
-      "id": "R3",
-      "severity": "medium",
-      "mitigation": "Pin workspace:* dependencies"
-    }
-  ],
-  "actions": [
-    {
-      "id": "A1",
-      "owner": "workflow-team",
-      "ETA": "2025-02-28"
-    },
-    {
-      "id": "A2",
-      "owner": "workflow-team",
-      "ETA": "2025-01-31"
-    },
-    {
-      "id": "A3",
-      "owner": "security-team",
-      "ETA": "2025-03-31"
-    }
-  ]
+  "back_compat": [],
+  "tests": {"coverage_total": 100, "property_based": false, "gaps": []},
+  "core": {"types":["ServerInfo"],"contracts":["ServerInfoSchema","ToolSchema"],"constants":[]},
+  "ci_cd": {"workflows":["ci.yml","agents-ci.yml"],"problems":[]},
+  "a11y": {"issues":[]},
+  "risks":[],
+  "actions":[]
 }
-

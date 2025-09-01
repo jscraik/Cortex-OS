@@ -25,7 +25,8 @@
     "build": "tsup src/index.ts src/contracts.ts src/client.ts --dts --format esm --external @modelcontextprotocol/sdk",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "release": "semantic-release"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^5.5.4",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "semantic-release": "^24.0.0"
   }
 }
