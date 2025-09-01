@@ -62,7 +62,7 @@
   ],
   "coverage": { "total": 0, "threshold": 95, "met": false, "reports": [] },
   "security": {
-    "critical_vulns": null,
+    "critical_vulns": { "count": 0, "scanned": false },
     "sbom": "sbom/sbom.cdx.json",
     "findings": [ { "tool": "semgrep", "id": "", "status": "not-run", "evidence": "" } ]
   },
