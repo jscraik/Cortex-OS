@@ -1,54 +1,50 @@
 # Cortex-OS Scripts Directory
 
+[![CI Status](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../LICENSE)
+
 This directory contains utility scripts, templates, fixes, tests, and other development tools for the Cortex-OS project.
+
+## Table of Contents
+
+- [Directory Structure](#directory-structure)
+- [Best Practices](#best-practices)
+- [Usage](#usage)
+- [Available Scripts](#available-scripts)
 
 ## Directory Structure
 
-- `/scripts/cleanup/` - Scripts for cleaning up and removing legacy code
-- `/scripts/code-quality/` - Scripts related to code quality, formatting, and static analysis
-- `/scripts/compliance/` - Scripts related to licensing, compliance, and governance
-- `/scripts/database/` - Scripts related to database management and operations
-- `/scripts/deploy/` - Scripts for deploying Cortex-OS to various environments
-- `/scripts/dist/` - Distribution and packaging scripts
-- `/scripts/fixes/` - Scripts that fix specific issues or perform one-time corrections
-- `/scripts/license/` - Scripts for license scanning and management
-- `/scripts/security/` - Scripts related to security fixes, validations, and improvements
-- `/scripts/temp/` - Temporary configuration files and snippets
-- `/scripts/templates/` - Template files used for code generation or injection
-- `/scripts/tests/` - Scripts for testing various components of the system
-- `/scripts/updates/` - Scripts that update components and configurations
-- `/scripts/utils/` - Utility scripts that help with common development tasks
+- `cleanup/` – remove legacy code.
+- `code-quality/` – formatting and static analysis helpers.
+- `compliance/` – license and governance tooling.
+- `database/` – database management utilities.
+- `deploy/` – deployment helpers.
+- `dist/` – distribution and packaging scripts.
+- `fixes/` – one-off fixes.
+- `license/` – license scanning and management.
+- `security/` – security validations and improvements.
+- `temp/` – temporary configuration files and snippets.
+- `templates/` – code generation templates.
+- `tests/` – scripts for testing components.
+- `updates/` – configuration and dependency updates.
+- `utils/` – miscellaneous development helpers.
 
 ## Best Practices
 
-1. **Script Organization**:
-   - Place scripts in the appropriate subdirectory based on their function
-   - Use descriptive filenames that indicate the script's purpose
-   - Include proper shebang lines for executable scripts
-
-2. **Template Files**:
-   - Store all template files in `/scripts/templates/`
-   - Use `.template` extension for non-executable templates
-   - Provide proper documentation in template files
-
-3. **Script Documentation**:
-   - Include a header comment explaining the script's purpose
-   - Document any required arguments or environment variables
-   - Add usage examples where appropriate
-
-4. **TypeScript Exclusion**:
-   - Template files and standalone TypeScript files used as templates are excluded from compilation in tsconfig.json
-   - Patterns: `scripts/**/*template*.ts`, `scripts/**/*-class.ts`, `scripts/**/*-standalone.ts`
+1. **Script organization** – use descriptive file names, place scripts in the correct subdirectory, and include shebang lines for executables.
+2. **Template files** – store in `scripts/templates/`, use the `.template` extension, and document usage within the file.
+3. **Script documentation** – include a header comment, document required arguments or environment variables, and add usage examples.
+4. **TypeScript exclusion** – template and standalone TypeScript files are excluded from compilation (`scripts/**/*template*.ts`, `scripts/**/*-class.ts`, `scripts/**/*-standalone.ts`).
 
 ## Usage
 
 To run a script:
 
 ```bash
-# For Node.js scripts
+# Node.js scripts
 node scripts/utils/example-script.mjs
 
-# For bash scripts
+# Bash scripts
 ./scripts/fixes/fix-terminal.sh
 ```
 
@@ -56,15 +52,15 @@ node scripts/utils/example-script.mjs
 
 ### Fixes
 
-- `fix-mlx-test.sh` - Fixes MLX test files
-- `fix-terminal.sh` - Resolves sudo terminal issues
+- `fix-mlx-test.sh` – fixes MLX test files.
+- `fix-terminal.sh` – resolves sudo terminal issues.
 
 ### Templates
 
-- `neo4j-secure-class.template` - Template for Neo4j secure class implementation
-- `neo4j-secure-standalone.ts` - Standalone TypeScript implementation of secure Neo4j class
+- `neo4j-secure-class.template` – Neo4j secure class template.
+- `neo4j-secure-standalone.ts` – standalone TypeScript implementation of the secure Neo4j class.
 
 ### Utils
 
-- `example-template-usage.mjs` - Example of how to use template files
-- `verify-template-setup.mjs` - Verifies template configuration is correct
+- `example-template-usage.mjs` – demonstrates template usage.
+- `verify-template-setup.mjs` – verifies template configuration.
