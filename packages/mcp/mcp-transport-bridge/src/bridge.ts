@@ -10,6 +10,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { StreamableHTTPServerTransport } from './streamable-http-server-transport.js';
+import { withRetry } from './lib/retry.js';
 
 /**
  * Configuration for MCP bridge
@@ -34,12 +35,16 @@ export const BridgeConfigSchema = z.object({
   target: z.discriminatedUnion('type', [
     z.object({
       type: z.literal('stdio'),
-      // Stdio target means we'll expose a stdio interface
     }),
     z.object({
       type: z.literal('streamableHttp'),
       port: z.number().int().min(1024).max(65535),
       host: z.string().default('localhost'),
+      tls: z.object({
+        key: z.string(),
+        cert: z.string(),
+        ca: z.string().optional(),
+      }),
     }),
   ]),
 
@@ -121,9 +126,6 @@ export class McpBridge {
     // Check client connection
     if (this.client) {
       try {
-        // Assuming the client has a method to check connection status.
-        // The MCP SDK doesn't explicitly define one, so we'll add a placeholder.
-        // In a real scenario, you would replace this with the actual method.
         details.clientConnected = true; // Placeholder
       } catch (error) {
         details.clientConnected = false;
@@ -139,9 +141,9 @@ export class McpBridge {
    */
   private async initializeSource(): Promise<void> {
     const { source } = this.config;
+    const { retries, timeout } = this.config.options;
 
     if (source.type === 'streamableHttp') {
-      // Connect to remote Streamable HTTP server
       const transport = new StreamableHTTPClientTransport(source.url, source.headers);
 
       this.client = new Client(
@@ -159,10 +161,9 @@ export class McpBridge {
         },
       );
 
-      await this.client.connect(transport);
+      await withRetry(() => this.client!.connect(transport), { retries, timeout });
       this.log(`📡 Connected to Streamable HTTP server: ${source.url}`);
     } else if (source.type === 'stdio') {
-      // Connect to a local stdio process
       const transport = new StdioClientTransport({
         command: source.command,
         args: source.args,
@@ -184,9 +185,7 @@ export class McpBridge {
         },
       );
 
-      await this.client.connect(transport);
-      this.log(`🔧 Connected to stdio process: ${source.command}`);
-      await this.client.connect(transport);
+      await withRetry(() => this.client!.connect(transport), { retries, timeout });
       this.log(`🔧 Connected to stdio process: ${source.command}`);
     }
   }
@@ -196,9 +195,9 @@ export class McpBridge {
    */
   private async initializeTarget(): Promise<void> {
     const { target } = this.config;
+    const { retries, timeout } = this.config.options;
 
     if (target.type === 'stdio') {
-      // Expose stdio interface
       const transport = new StdioServerTransport();
 
       this.server = new Server(
@@ -216,14 +215,12 @@ export class McpBridge {
         },
       );
 
-      // Proxy all methods from client to server
       await this.setupMethodProxying();
 
-      await this.server.connect(transport);
+      await withRetry(() => this.server!.connect(transport), { retries, timeout });
       this.log('📤 Exposed stdio interface');
     } else if (target.type === 'streamableHttp') {
-      // Expose Streamable HTTP interface
-      const transport = new StreamableHTTPServerTransport(target.port, target.host);
+      const transport = new StreamableHTTPServerTransport(target.port, target.host, target.tls);
 
       this.server = new Server(
         {
@@ -240,11 +237,10 @@ export class McpBridge {
         },
       );
 
-      // Proxy all methods from client to server
       await this.setupMethodProxying();
 
-      await this.server.connect(transport);
-      this.log(`📤 Exposed Streamable HTTP interface on http://${target.host}:${target.port}`);
+      await withRetry(() => this.server!.connect(transport), { retries, timeout });
+      this.log(`📤 Exposed Streamable HTTP interface on https://${target.host}:${target.port}`);
     }
   }
 
@@ -256,10 +252,6 @@ export class McpBridge {
       throw new Error('Client or server not initialized');
     }
 
-    // A more robust implementation would be to have a generic request handler
-    // that forwards all requests to the client. Since the SDK's Server class
-    // doesn't seem to support a wildcard handler, we'll define the methods
-    // to proxy explicitly. This makes it easier to extend in the future.
     const methodsToProxy = [
       'tools/list',
       'tools/call',
@@ -267,17 +259,14 @@ export class McpBridge {
       'resources/read',
       'prompts/list',
       'prompts/get',
-      // Add other methods to proxy here
     ];
 
     for (const method of methodsToProxy) {
       this.server.setRequestHandler(method, async (request: { params: any }) => {
-        // We assume the client has a generic `sendRequest` method.
-        // If not, this would need to be adapted.
         const response = await this.client!.sendRequest({
           jsonrpc: '2.0',
-          id: Math.random().toString(36).substring(2), // Generate a random ID
-          method: method,
+          id: Math.random().toString(36).substring(2),
+          method,
           params: request.params,
         });
         return response;
@@ -327,7 +316,10 @@ export class McpBridge {
       throw error;
     }
 
-    // Additional validation
+    if (this.config.source.type === 'streamableHttp' && !this.config.source.url.startsWith('https://')) {
+      throw new Error('Streamable HTTP source must use https');
+    }
+
     if (this.config.source.type === this.config.target.type) {
       throw new Error('Source and target must be different transport types');
     }
@@ -385,11 +377,16 @@ export async function bridgeStdioToHttp(
 export async function bridgeHttpToStdio(
   command: string,
   args?: string[],
-  options?: {
+  options: {
     port?: number;
     host?: string;
     env?: Record<string, string>;
     logging?: boolean;
+    tls: {
+      key: string;
+      cert: string;
+      ca?: string;
+    };
   },
 ): Promise<McpBridge> {
   const config: BridgeConfig = {
@@ -403,6 +400,7 @@ export async function bridgeHttpToStdio(
       type: 'streamableHttp',
       port: options?.port || 8080,
       host: options?.host || 'localhost',
+      tls: options.tls,
     },
     options: {
       logging: options?.logging || false,
