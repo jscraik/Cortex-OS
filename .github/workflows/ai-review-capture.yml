@@ -1,0 +1,33 @@
+name: AI Review → Action Points
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  capture:
+    if: github.event.pull_request.number != null || github.event.issue.pull_request != null
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+
+      - run: npm i -D zod @actions/core @actions/github undici
+      - run: node --experimental-modules scripts/ai-review-capture.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Comma-separated list of logins that are allowed to generate action points.
+          ALLOWLIST_BOT_LOGINS: 'github-actions[bot],copilot,openai,anthropic,claude,codex,claude-code'
+          USE_GH_MODELS: 'false' # set "true" to enable optional parse via GitHub Models
+          GH_MODELS_MODEL: 'auto'
