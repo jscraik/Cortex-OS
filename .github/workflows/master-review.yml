@@ -62,9 +62,14 @@ jobs:
       - name: Generate Master Review (JSON)
         run: |
           mkdir -p reports
+          if ! npx --no-install cortex-cli --version > /dev/null 2>&1; then
+            echo "Error: cortex-cli is not installed or not found in node_modules."; exit 1
+          fi
+          if [ ! -f .cortex/prompts/master-review.md ]; then
+            echo "Error: .cortex/prompts/master-review.md file not found."; exit 1
+          fi
           npx cortex-cli review --prompt .cortex/prompts/master-review.md \
             --output ./reports/cortex-os.master.json
-
       - name: Gate on readiness score
         id: gate
         run: |
