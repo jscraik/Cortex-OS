@@ -1,0 +1,29 @@
+name: chaos
+
+on:
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: Chaos seed
+        default: "42"
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - run: pnpm install --frozen-lockfile
+      - name: run chaos experiments
+        run: node ops/staging/chaos.mjs
+        env:
+          CHAOS_SEED: ${{ github.event.inputs.seed }}
+          STAGING_BASE_URL: http://localhost:3333
