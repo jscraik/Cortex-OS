@@ -15,7 +15,7 @@ import { createServer } from 'https';
 describe('StreamableHTTPServerTransport', () => {
   it('uses TLS 1.3', async () => {
     const transport = new StreamableHTTPServerTransport(8080, 'localhost', { key: 'k', cert: 'c' });
-    expect((createServer as unknown as any).mock.calls[0][0]).toMatchObject({
+    expect(vi.mocked(createServer).mock.calls[0][0]).toMatchObject({
       key: 'k',
       cert: 'c',
       minVersion: 'TLSv1.3',
