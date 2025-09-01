@@ -7,6 +7,7 @@ let mlxServer: http.Server;
 let frontierServer: http.Server;
 
 beforeAll(async () => {
+  process.env.CORTEX_ALLOW_INSECURE_HTTP = '1';
   mlxServer = http.createServer((req, res) => {
     if (req.method === 'POST' && req.url === '/embed') {
       res.setHeader('Content-Type', 'application/json');
@@ -34,6 +35,7 @@ afterAll(() => {
   frontierServer.close();
   delete process.env.MLX_SERVICE_URL;
   delete process.env.FRONTIER_API_URL;
+  delete process.env.CORTEX_ALLOW_INSECURE_HTTP;
 });
 
 describe('generateEmbedding', () => {

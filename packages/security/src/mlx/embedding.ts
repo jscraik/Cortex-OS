@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ensureHttpsUrl } from '../utils/security-utils.ts';
 
 const requestSchema = z.object({
   text: z.string().min(1),
@@ -8,11 +9,11 @@ const responseSchema = z.object({
   embeddings: z.array(z.array(z.number())),
 });
 
-const DEFAULT_SERVICE_URL = 'http://127.0.0.1:8765';
+const DEFAULT_SERVICE_URL = 'https://127.0.0.1:8765';
 
 export async function generateEmbedding(text: string): Promise<Float32Array> {
   const { text: validText } = requestSchema.parse({ text });
-  const baseUrl = process.env.MLX_SERVICE_URL || DEFAULT_SERVICE_URL;
+  const baseUrl = ensureHttpsUrl(process.env.MLX_SERVICE_URL || DEFAULT_SERVICE_URL);
   try {
     const res = await fetch(`${baseUrl}/embed`, {
       method: 'POST',
@@ -30,10 +31,11 @@ export async function generateEmbedding(text: string): Promise<Float32Array> {
     }
     return Float32Array.from(data.embeddings[0]);
   } catch (primaryError) {
-    const frontierUrl = process.env.FRONTIER_API_URL;
-    if (!frontierUrl) {
+    const frontierUrlEnv = process.env.FRONTIER_API_URL;
+    if (!frontierUrlEnv) {
       throw primaryError;
     }
+    const frontierUrl = ensureHttpsUrl(frontierUrlEnv);
     const res = await fetch(`${frontierUrl}/embed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

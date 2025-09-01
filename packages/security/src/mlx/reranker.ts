@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { callRerankService, type Candidate } from '../lib/rerank-service.ts';
+import { ensureHttpsUrl } from '../utils/security-utils.ts';
 
 const candidateSchema = z.object({
   text: z.string(),
@@ -11,8 +12,8 @@ const requestSchema = z.object({
   query: z.string().min(1),
 });
 
-const DEFAULT_MLX_URL = 'http://127.0.0.1:8765';
-const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
+const DEFAULT_MLX_URL = 'https://127.0.0.1:8765';
+const DEFAULT_OLLAMA_URL = 'https://127.0.0.1:11434';
 
 export async function rerank(candidates: Candidate[], query: string): Promise<Candidate[]> {
   const { candidates: validCandidates, query: validQuery } = requestSchema.parse({
@@ -21,9 +22,11 @@ export async function rerank(candidates: Candidate[], query: string): Promise<Ca
   });
 
   const services = [
-    process.env.MLX_SERVICE_URL || DEFAULT_MLX_URL,
-    process.env.FRONTIER_API_URL,
-    process.env.OLLAMA_API_URL || DEFAULT_OLLAMA_URL,
+    ensureHttpsUrl(process.env.MLX_SERVICE_URL || DEFAULT_MLX_URL),
+    process.env.FRONTIER_API_URL
+      ? ensureHttpsUrl(process.env.FRONTIER_API_URL)
+      : undefined,
+    ensureHttpsUrl(process.env.OLLAMA_API_URL || DEFAULT_OLLAMA_URL),
   ].filter(Boolean) as string[];
 
   for (const url of services) {
