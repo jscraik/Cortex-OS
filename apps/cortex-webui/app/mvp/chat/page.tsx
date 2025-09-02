@@ -82,10 +82,10 @@ export default function ChatPage() {
       const res = await apiFetch(`/api/chat/${sid}/tools`);
       const parsed = toolEventsSchema.parse(res);
       setToolEvents(parsed.events);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load tool events';
       console.error('Failed to load tool events:', e);
-      setError(e?.message || 'Failed to load tool events');
-    }
+      setError(message);
     return sid;
   }
 
