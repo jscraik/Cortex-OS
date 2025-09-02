@@ -64,7 +64,7 @@ export default function ChatPage() {
         setError(e.message);
       }
     })();
-  }, []);
+  }, [activeModel]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
