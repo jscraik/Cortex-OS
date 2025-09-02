@@ -7,111 +7,106 @@
  * @status active
  */
 
-import * as net from 'net';
+import * as net from "node:net";
 
 /**
  * Check if a port is available for use
  */
-export async function isPortAvailable(port: number, host = 'localhost'): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
+export async function isPortAvailable(
+	port: number,
+	host = "localhost",
+): Promise<boolean> {
+	return new Promise((resolve) => {
+		const server = net.createServer();
 
-    server.listen(port, host, () => {
-      server.close(() => {
-        resolve(true);
-      });
-    });
+		server.listen(port, host, () => {
+			server.close(() => {
+				resolve(true);
+			});
+		});
 
-    server.on('error', () => {
-      resolve(false);
-    });
-  });
+		server.on("error", () => {
+			resolve(false);
+		});
+	});
 }
 
 /**
  * Find an available port starting from a base port
  */
 export async function findAvailablePort(
-  startPort: number = 3000,
-  maxAttempts: number = 100,
-  host = 'localhost'
+	startPort: number = 3000,
+	maxAttempts: number = 100,
+	host = "localhost",
 ): Promise<number> {
-  for (let port = startPort; port < startPort + maxAttempts; port++) {
-    if (await isPortAvailable(port, host)) {
-      return port;
-    }
-  }
+	for (let port = startPort; port < startPort + maxAttempts; port++) {
+		if (await isPortAvailable(port, host)) {
+			return port;
+		}
+	}
 
-  throw new Error(`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`);
+	throw new Error(
+		`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`,
+	);
 }
 
 /**
  * Get an available port or use default if available
  */
-export async function getPort(preferredPort?: number, host = 'localhost'): Promise<number> {
-  if (preferredPort && (await isPortAvailable(preferredPort, host))) {
-    return preferredPort;
-  }
+export async function getPort(
+	preferredPort?: number,
+	host = "localhost",
+): Promise<number> {
+	if (preferredPort && (await isPortAvailable(preferredPort, host))) {
+		return preferredPort;
+	}
 
-  return findAvailablePort(preferredPort || 3000, 100, host);
+	return findAvailablePort(preferredPort || 3000, 100, host);
 }
 
 /**
  * Port ranges for different service types to avoid conflicts
  */
 export const PORT_RANGES = {
-  TEST_SERVERS: { start: 24000, end: 24999 },
-  WEB_SERVERS: { start: 3000, end: 3999 },
-  API_SERVERS: { start: 8000, end: 8999 },
-  WEBSOCKET_SERVERS: { start: 9000, end: 9999 },
-  MCP_SERVERS: { start: 10000, end: 10999 },
+	TEST_SERVERS: { start: 24000, end: 24999 },
+	WEB_SERVERS: { start: 3000, end: 3999 },
+	API_SERVERS: { start: 8000, end: 8999 },
+	WEBSOCKET_SERVERS: { start: 9000, end: 9999 },
+	MCP_SERVERS: { start: 10000, end: 10999 },
 } as const;
 
 /**
  * Get an available port within a specific range
  */
 export async function getPortInRange(
-  range: { start: number; end: number },
-  host = 'localhost'
+	range: { start: number; end: number },
+	host = "localhost",
 ): Promise<number> {
-  return findAvailablePort(range.start, range.end - range.start + 1, host);
+	return findAvailablePort(range.start, range.end - range.start + 1, host);
 }
 
 /**
  * Port allocation for tests to prevent conflicts
  */
-export class TestPortAllocator {
-  private static readonly allocatedPorts = new Set<number>();
+export const PortAllocator = {
+	allocatedPorts: new Set<number>(),
 
-  /**
-   * Allocate a port for testing, ensuring no conflicts
-   */
-  static async allocate(preferredPort?: number): Promise<number> {
-    const port = await getPortInRange(PORT_RANGES.TEST_SERVERS);
+	async allocate(_preferredPort?: number): Promise<number> {
+		const port = await getPortInRange(PORT_RANGES.TEST_SERVERS);
 
-    if (TestPortAllocator.allocatedPorts.has(port)) {
-      // If already allocated, find another one
-      return TestPortAllocator.allocate();
-    }
+		if (PortAllocator.allocatedPorts.has(port)) {
+			return PortAllocator.allocate();
+		}
 
-    TestPortAllocator.allocatedPorts.add(port);
-    return port;
-  }
+		PortAllocator.allocatedPorts.add(port);
+		return port;
+	},
 
-  /**
-   * Release a port when test is done
-   */
-  static release(port: number): void {
-    TestPortAllocator.allocatedPorts.delete(port);
-  }
+	release(port: number): void {
+		PortAllocator.allocatedPorts.delete(port);
+	},
 
-  /**
-   * Clear all allocated ports (for cleanup)
-   */
-  static clearAll(): void {
-    TestPortAllocator.allocatedPorts.clear();
-  }
-}
-
-// Export commonly used functions
-export { TestPortAllocator as PortAllocator };
+	clearAll(): void {
+		PortAllocator.allocatedPorts.clear();
+	},
+};

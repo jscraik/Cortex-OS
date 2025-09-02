@@ -3,37 +3,44 @@
 // Script to automatically fix command injection vulnerabilities
 // This script updates executor.py and mcp_server.py to use secure command execution
 
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-console.log('Automatically fixing command injection vulnerabilities...');
+console.log("Automatically fixing command injection vulnerabilities...");
 
 // Fix executor.py
-const executorPath = join('packages', 'mcp', 'src', 'python', 'src', 'executor.py');
-let executorContent = readFileSync(executorPath, 'utf-8');
+const executorPath = join(
+	"packages",
+	"mcp",
+	"src",
+	"python",
+	"src",
+	"executor.py",
+);
+let executorContent = readFileSync(executorPath, "utf-8");
 
 // Add a comment about security improvements
 executorContent = executorContent.replace(
-  '"""Secure executor for running user-provided Python code in a subprocess.',
-  `"""Secure executor for running user-provided Python code in a subprocess.
+	'"""Secure executor for running user-provided Python code in a subprocess.',
+	`"""Secure executor for running user-provided Python code in a subprocess.
 
 # SECURITY UPDATE: This module now uses SecureCommandExecutor for additional protection
 # against command injection and resource exhaustion attacks.
-`
+`,
 );
 
 // Add timeout validation and resource limits
 executorContent = executorContent.replace(
-  'DEFAULT_TIMEOUT = 3  # seconds',
-  `DEFAULT_TIMEOUT = 3  # seconds
+	"DEFAULT_TIMEOUT = 3  # seconds",
+	`DEFAULT_TIMEOUT = 3  # seconds
 MAX_TIMEOUT = 10  # Maximum allowed timeout
-MAX_CODE_LENGTH = 10000  # Maximum code length in characters`
+MAX_CODE_LENGTH = 10000  # Maximum code length in characters`,
 );
 
 // Add input validation to the run_code function
 executorContent = executorContent.replace(
-  'def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:',
-  `def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
+	"def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:",
+	`def run_code(code: str, timeout: int = DEFAULT_TIMEOUT) -> Tuple[int, str, str]:
     """Run \`code\` in a subprocess, return (exit_code, stdout, stderr).
 
     NOTE: Input validation and resource limits have been added for security.
@@ -49,29 +56,38 @@ executorContent = executorContent.replace(
         raise ValueError("Timeout must be a positive integer")
 
     if timeout > MAX_TIMEOUT:
-        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")`
+        raise ValueError(f"Timeout exceeds maximum allowed value of {MAX_TIMEOUT} seconds")`,
 );
 
 // Write the updated content back to the file
 writeFileSync(executorPath, executorContent);
 
-console.log('✅ Command injection vulnerabilities have been marked for fixing in executor.py');
+console.log(
+	"✅ Command injection vulnerabilities have been marked for fixing in executor.py",
+);
 
 // Fix mcp_server.py
-const mcpServerPath = join('packages', 'mcp', 'src', 'tools', 'docker', 'mcp_server.py');
-let mcpServerContent = readFileSync(mcpServerPath, 'utf-8');
+const mcpServerPath = join(
+	"packages",
+	"mcp",
+	"src",
+	"tools",
+	"docker",
+	"mcp_server.py",
+);
+let mcpServerContent = readFileSync(mcpServerPath, "utf-8");
 
 // Add import for SecureCommandExecutor
 mcpServerContent = mcpServerContent.replace(
-  'from pydantic import BaseModel',
-  `from pydantic import BaseModel
+	"from pydantic import BaseModel",
+	`from pydantic import BaseModel
 # SECURITY UPDATE: Import SecureCommandExecutor for safer command execution
-# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`
+# from cortex_os.mvp_core.secure_executor import SecureCommandExecutor`,
 );
 
 // Add validation to the run_docker_command function
 mcpServerContent = mcpServerContent.replace(
-  `def run_docker_command(command):
+	`def run_docker_command(command):
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=True)
         return {"stdout": result.stdout, "stderr": ""}
@@ -82,7 +98,7 @@ mcpServerContent = mcpServerContent.replace(
             "stdout": "",
             "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
         }`,
-  `def run_docker_command(command):
+	`def run_docker_command(command):
     # TODO: Replace with SecureCommandExecutor for better security
     # SECURITY UPDATE: Validate command before execution
     # if not isinstance(command, list):
@@ -105,18 +121,18 @@ mcpServerContent = mcpServerContent.replace(
             "stderr": "Error: 'docker' command not found. Is Docker installed and in your PATH?",
         }
     except Exception as e:
-        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`
+        return {"stdout": "", "stderr": f"Error executing command: {str(e)}"}`,
 );
 
 // Add validation to the uvicorn.run call
 mcpServerContent = mcpServerContent.replace(
-  `if __name__ == "__main__":
+	`if __name__ == "__main__":
     import uvicorn
 
     host = os.getenv("MCP_SERVER_HOST", "0.0.0.0")
     port = int(os.getenv("MCP_SERVER_PORT", "8765"))
     uvicorn.run(app, host=host, port=port, reload=True)`,
-  `if __name__ == "__main__":
+	`if __name__ == "__main__":
     import uvicorn
 
     # SECURITY UPDATE: Validate host and port
@@ -133,11 +149,15 @@ mcpServerContent = mcpServerContent.replace(
     # SECURITY UPDATE: Disable reload in production
     reload = os.getenv("MCP_SERVER_RELOAD", "false").lower() == "true"
 
-    uvicorn.run(app, host=host, port=port, reload=reload)`
+    uvicorn.run(app, host=host, port=port, reload=reload)`,
 );
 
 // Write the updated content back to the file
 writeFileSync(mcpServerPath, mcpServerContent);
 
-console.log('✅ Command injection vulnerabilities have been marked for fixing in mcp_server.py');
-console.log('⚠️  Please review the TODO comments and implement proper input validation');
+console.log(
+	"✅ Command injection vulnerabilities have been marked for fixing in mcp_server.py",
+);
+console.log(
+	"⚠️  Please review the TODO comments and implement proper input validation",
+);

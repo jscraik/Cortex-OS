@@ -1,59 +1,59 @@
 {
-  "name": "@cortex-os/security",
-  "version": "0.1.0",
-  "description": "SPIFFE/SPIRE security implementation for Cortex-OS with mTLS and workload identity management",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./spiffe": {
-      "types": "./dist/spiffe/index.d.ts",
-      "import": "./dist/spiffe/index.js"
-    },
-    "./mtls": {
-      "types": "./dist/mtls/index.d.ts",
-      "import": "./dist/mtls/index.js"
-    },
-    "./workload-identity": {
-      "types": "./dist/workload-identity/index.d.ts",
-      "import": "./dist/workload-identity/index.js"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/**/*.ts --dts --format esm --clean",
-    "dev": "tsup src/**/*.ts --dts --format esm --clean --watch",
-    "lint": "eslint src/**/*.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "semgrep": "semgrep scan --config=semgrep.yml --severity=WARNING --sarif -o semgrep.sarif ."
-  },
-  "keywords": [
-    "security",
-    "spiffe",
-    "spire",
-    "mtls",
-    "workload-identity",
-    "zero-trust"
-  ],
-  "dependencies": {
-    "@cortex-os/a2a-contracts": "workspace:*",
-    "@cortex-os/telemetry": "workspace:*",
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/sdk-trace-base": "^1.30.1",
-    "@types/node": "^20.9.0",
-    "tsup": "^8.0.2",
-    "typescript": "^5.2.2",
-    "vitest": "^3.2.4"
-  },
-  "peerDependencies": {
-    "@cortex-os/a2a-core": "workspace:*"
-  }
+	"name": "@cortex-os/security",
+	"version": "0.1.0",
+	"description": "SPIFFE/SPIRE security implementation for Cortex-OS with mTLS and workload identity management",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./spiffe": {
+			"types": "./dist/spiffe/index.d.ts",
+			"import": "./dist/spiffe/index.js"
+		},
+		"./mtls": {
+			"types": "./dist/mtls/index.d.ts",
+			"import": "./dist/mtls/index.js"
+		},
+		"./workload-identity": {
+			"types": "./dist/workload-identity/index.d.ts",
+			"import": "./dist/workload-identity/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsup src/**/*.ts --dts --format esm --clean",
+		"dev": "tsup src/**/*.ts --dts --format esm --clean --watch",
+		"lint": "eslint src/**/*.ts",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"semgrep": "semgrep scan --config=semgrep.yml --severity=WARNING --sarif -o semgrep.sarif ."
+	},
+	"keywords": [
+		"security",
+		"spiffe",
+		"spire",
+		"mtls",
+		"workload-identity",
+		"zero-trust"
+	],
+	"dependencies": {
+		"@cortex-os/a2a-contracts": "workspace:*",
+		"@cortex-os/telemetry": "workspace:*",
+		"zod": "^3.22.4"
+	},
+	"devDependencies": {
+		"@opentelemetry/api": "^1.9.0",
+		"@opentelemetry/sdk-trace-base": "^1.30.1",
+		"@types/node": "^20.9.0",
+		"tsup": "^8.0.2",
+		"typescript": "^5.2.2",
+		"vitest": "^3.2.4"
+	},
+	"peerDependencies": {
+		"@cortex-os/a2a-core": "workspace:*"
+	}
 }

@@ -1,170 +1,176 @@
-import crypto from 'crypto';
+import crypto from "node:crypto";
 
 export interface EmbeddingConfig {
-  provider: 'sentence-transformers' | 'local';
-  model?: string;
-  dimensions?: number;
-  batchSize?: number;
-  cachePath?: string;
+	provider: "sentence-transformers" | "local";
+	model?: string;
+	dimensions?: number;
+	batchSize?: number;
+	cachePath?: string;
 }
 
 export interface EmbeddingVector {
-  id: string;
-  text: string;
-  vector: number[];
-  metadata?: Record<string, any>;
-  timestamp: string;
+	id: string;
+	text: string;
+	vector: number[];
+	metadata?: Record<string, any>;
+	timestamp: string;
 }
 
 export interface EmbeddingQuery {
-  text: string;
-  topK?: number;
-  threshold?: number;
-  filter?: Record<string, any>;
+	text: string;
+	topK?: number;
+	threshold?: number;
+	filter?: Record<string, any>;
 }
 
 export interface EmbeddingResult {
-  id: string;
-  text: string;
-  similarity: number;
-  metadata?: Record<string, any>;
+	id: string;
+	text: string;
+	similarity: number;
+	metadata?: Record<string, any>;
 }
 
 export interface EmbeddingState {
-  config: EmbeddingConfig;
-  vectorStore: Map<string, EmbeddingVector>;
-  pythonPath: string;
+	config: EmbeddingConfig;
+	vectorStore: Map<string, EmbeddingVector>;
+	pythonPath: string;
 }
 
 export const createEmbeddingState = (
-  provider: EmbeddingConfig['provider'] = 'sentence-transformers',
+	provider: EmbeddingConfig["provider"] = "sentence-transformers",
 ): EmbeddingState => {
-  const configs: Record<EmbeddingConfig['provider'], EmbeddingConfig> = {
-    'sentence-transformers': {
-      provider: 'sentence-transformers',
-      model: 'Qwen/Qwen3-Embedding-0.6B',
-      dimensions: 1024,
-    },
-    local: {
-      provider: 'local',
-      model: 'Qwen/Qwen3-Embedding-0.6B',
-      dimensions: 1024,
-    },
-  };
+	const configs: Record<EmbeddingConfig["provider"], EmbeddingConfig> = {
+		"sentence-transformers": {
+			provider: "sentence-transformers",
+			model: "Qwen/Qwen3-Embedding-0.6B",
+			dimensions: 1024,
+		},
+		local: {
+			provider: "local",
+			model: "Qwen/Qwen3-Embedding-0.6B",
+			dimensions: 1024,
+		},
+	};
 
-  const config = configs[provider];
-  validateConfig(config);
-  return { config, vectorStore: new Map(), pythonPath: 'python' };
+	const config = configs[provider];
+	validateConfig(config);
+	return { config, vectorStore: new Map(), pythonPath: "python" };
 };
 
 export const generateEmbeddings = async (
-  state: EmbeddingState,
-  texts: string | string[],
+	state: EmbeddingState,
+	texts: string | string[],
 ): Promise<number[][]> => {
-  const textArray = Array.isArray(texts) ? texts : [texts];
+	const textArray = Array.isArray(texts) ? texts : [texts];
 
-  switch (state.config.provider) {
-    case 'sentence-transformers':
-      return generateWithSentenceTransformers(state.pythonPath, state.config, textArray);
-    case 'local':
-      return generateWithLocal(state.pythonPath, textArray);
-    default:
-      throw new Error(
-        `Embedding generation not implemented for provider: ${state.config.provider}`,
-      );
-  }
+	switch (state.config.provider) {
+		case "sentence-transformers":
+			return generateWithSentenceTransformers(
+				state.pythonPath,
+				state.config,
+				textArray,
+			);
+		case "local":
+			return generateWithLocal(state.pythonPath, textArray);
+		default:
+			throw new Error(
+				`Embedding generation not implemented for provider: ${state.config.provider}`,
+			);
+	}
 };
 
 export const addDocuments = async (
-  state: EmbeddingState,
-  texts: string[],
-  metadata?: Record<string, any>[],
-  ids?: string[],
+	state: EmbeddingState,
+	texts: string[],
+	metadata?: Record<string, any>[],
+	ids?: string[],
 ): Promise<{ state: EmbeddingState; ids: string[] }> => {
-  const embeddings = await generateEmbeddings(state, texts);
-  const newStore = new Map(state.vectorStore);
-  const documentIds: string[] = [];
+	const embeddings = await generateEmbeddings(state, texts);
+	const newStore = new Map(state.vectorStore);
+	const documentIds: string[] = [];
 
-  for (let i = 0; i < texts.length; i++) {
-    const id = ids?.[i] || generateId(texts[i]);
-    const vector: EmbeddingVector = {
-      id,
-      text: texts[i],
-      vector: embeddings[i],
-      metadata: metadata?.[i],
-      timestamp: new Date().toISOString(),
-    };
-    newStore.set(id, vector);
-    documentIds.push(id);
-  }
+	for (let i = 0; i < texts.length; i++) {
+		const id = ids?.[i] || generateId(texts[i]);
+		const vector: EmbeddingVector = {
+			id,
+			text: texts[i],
+			vector: embeddings[i],
+			metadata: metadata?.[i],
+			timestamp: new Date().toISOString(),
+		};
+		newStore.set(id, vector);
+		documentIds.push(id);
+	}
 
-  return { state: { ...state, vectorStore: newStore }, ids: documentIds };
+	return { state: { ...state, vectorStore: newStore }, ids: documentIds };
 };
 
 export const similaritySearch = async (
-  state: EmbeddingState,
-  query: EmbeddingQuery,
+	state: EmbeddingState,
+	query: EmbeddingQuery,
 ): Promise<EmbeddingResult[]> => {
-  const queryEmbedding = await generateEmbeddings(state, query.text);
-  const queryVector = queryEmbedding[0];
-  const results: EmbeddingResult[] = [];
+	const queryEmbedding = await generateEmbeddings(state, query.text);
+	const queryVector = queryEmbedding[0];
+	const results: EmbeddingResult[] = [];
 
-  for (const doc of state.vectorStore.values()) {
-    if (query.filter && !matchesFilter(doc.metadata, query.filter)) {
-      continue;
-    }
-    const similarity = cosineSimilarity(queryVector, doc.vector);
-    if (!query.threshold || similarity >= query.threshold) {
-      results.push({
-        id: doc.id,
-        text: doc.text,
-        similarity,
-        metadata: doc.metadata,
-      });
-    }
-  }
+	for (const doc of state.vectorStore.values()) {
+		if (query.filter && !matchesFilter(doc.metadata, query.filter)) {
+			continue;
+		}
+		const similarity = cosineSimilarity(queryVector, doc.vector);
+		if (!query.threshold || similarity >= query.threshold) {
+			results.push({
+				id: doc.id,
+				text: doc.text,
+				similarity,
+				metadata: doc.metadata,
+			});
+		}
+	}
 
-  results.sort((a, b) => b.similarity - a.similarity);
-  return query.topK ? results.slice(0, query.topK) : results;
+	results.sort((a, b) => b.similarity - a.similarity);
+	return query.topK ? results.slice(0, query.topK) : results;
 };
 
-export const getDocument = (state: EmbeddingState, id: string): EmbeddingVector | undefined =>
-  state.vectorStore.get(id);
+export const getDocument = (
+	state: EmbeddingState,
+	id: string,
+): EmbeddingVector | undefined => state.vectorStore.get(id);
 
 export const removeDocument = (
-  state: EmbeddingState,
-  id: string,
+	state: EmbeddingState,
+	id: string,
 ): { state: EmbeddingState; removed: boolean } => {
-  const newStore = new Map(state.vectorStore);
-  const removed = newStore.delete(id);
-  return { state: { ...state, vectorStore: newStore }, removed };
+	const newStore = new Map(state.vectorStore);
+	const removed = newStore.delete(id);
+	return { state: { ...state, vectorStore: newStore }, removed };
 };
 
 export const getStats = (state: EmbeddingState) => {
-  const totalVectors = state.vectorStore.size;
-  const dimensions = state.config.dimensions || 0;
-  const memoryUsage = `${Math.round(((totalVectors * dimensions * 4) / 1024 / 1024) * 100) / 100} MB`;
-  return {
-    totalDocuments: totalVectors,
-    dimensions,
-    provider: state.config.provider,
-    memoryUsage,
-  };
+	const totalVectors = state.vectorStore.size;
+	const dimensions = state.config.dimensions || 0;
+	const memoryUsage = `${Math.round(((totalVectors * dimensions * 4) / 1024 / 1024) * 100) / 100} MB`;
+	return {
+		totalDocuments: totalVectors,
+		dimensions,
+		provider: state.config.provider,
+		memoryUsage,
+	};
 };
 
 const validateConfig = (config: EmbeddingConfig): void => {
-  if (!['sentence-transformers', 'local'].includes(config.provider)) {
-    throw new Error(`Unsupported embedding provider: ${config.provider}`);
-  }
+	if (!["sentence-transformers", "local"].includes(config.provider)) {
+		throw new Error(`Unsupported embedding provider: ${config.provider}`);
+	}
 };
 
 const generateWithSentenceTransformers = async (
-  pythonPath: string,
-  config: EmbeddingConfig,
-  texts: string[],
+	pythonPath: string,
+	config: EmbeddingConfig,
+	texts: string[],
 ): Promise<number[][]> => {
-  const model = config.model || 'Qwen/Qwen3-Embedding-0.6B';
-  const pythonScript = `
+	const model = config.model || "Qwen/Qwen3-Embedding-0.6B";
+	const pythonScript = `
 import json
 import sys
 import os
@@ -182,12 +188,17 @@ texts = json.loads(sys.argv[1])
 embeddings = model.encode(texts).tolist()
 print(json.dumps(embeddings))
 `;
-  const result = await executePythonScript(pythonPath, pythonScript, [JSON.stringify(texts)]);
-  return JSON.parse(result);
+	const result = await executePythonScript(pythonPath, pythonScript, [
+		JSON.stringify(texts),
+	]);
+	return JSON.parse(result);
 };
 
-const generateWithLocal = async (pythonPath: string, texts: string[]): Promise<number[][]> => {
-  const pythonScript = `
+const generateWithLocal = async (
+	pythonPath: string,
+	texts: string[],
+): Promise<number[][]> => {
+	const pythonScript = `
 import json
 import sys
 import os
@@ -224,52 +235,58 @@ except Exception as e:
     print(f"Error: {e}", file=sys.stderr)
     sys.exit(1)
 `;
-  const result = await executePythonScript(pythonPath, pythonScript, [JSON.stringify(texts)]);
-  return JSON.parse(result);
+	const result = await executePythonScript(pythonPath, pythonScript, [
+		JSON.stringify(texts),
+	]);
+	return JSON.parse(result);
 };
 
 const cosineSimilarity = (a: number[], b: number[]): number => {
-  if (a.length !== b.length) {
-    throw new Error('Vectors must have the same length');
-  }
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  if (normA === 0 || normB === 0) {
-    return 0;
-  }
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+	if (a.length !== b.length) {
+		throw new Error("Vectors must have the same length");
+	}
+	let dotProduct = 0;
+	let normA = 0;
+	let normB = 0;
+	for (let i = 0; i < a.length; i++) {
+		dotProduct += a[i] * b[i];
+		normA += a[i] * a[i];
+		normB += b[i] * b[i];
+	}
+	if (normA === 0 || normB === 0) {
+		return 0;
+	}
+	return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 };
 
 const matchesFilter = (
-  metadata: Record<string, any> | undefined,
-  filter: Record<string, any>,
+	metadata: Record<string, any> | undefined,
+	filter: Record<string, any>,
 ): boolean => {
-  if (!metadata) return false;
-  for (const [key, value] of Object.entries(filter)) {
-    if (metadata[key] !== value) {
-      return false;
-    }
-  }
-  return true;
+	if (!metadata) return false;
+	for (const [key, value] of Object.entries(filter)) {
+		if (metadata[key] !== value) {
+			return false;
+		}
+	}
+	return true;
 };
 
 const generateId = (text: string): string => {
-  return crypto.createHash('sha256').update(text).digest('hex').substring(0, 16);
+	return crypto
+		.createHash("sha256")
+		.update(text)
+		.digest("hex")
+		.substring(0, 16);
 };
 
 const executePythonScript = async (
-  pythonPath: string,
-  script: string,
-  args: string[] = [],
+	pythonPath: string,
+	script: string,
+	args: string[] = [],
 ): Promise<string> => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
-  const { runPython } = await import('../../../../libs/python/exec.js');
-  return runPython('-c', [script, ...args], { python: pythonPath } as any);
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
+	const { runPython } = await import("../../../../libs/python/exec.js");
+	return runPython("-c", [script, ...args], { python: pythonPath } as any);
 };

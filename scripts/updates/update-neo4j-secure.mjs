@@ -2,26 +2,26 @@
 
 // Script to update neo4j.ts to use SecureNeo4j
 
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-console.log('Updating neo4j.ts to use SecureNeo4j...');
+console.log("Updating neo4j.ts to use SecureNeo4j...");
 
-const neo4jPath = join('packages', 'memories', 'src', 'adapters', 'neo4j.ts');
-let content = readFileSync(neo4jPath, 'utf-8');
+const neo4jPath = join("packages", "memories", "src", "adapters", "neo4j.ts");
+let content = readFileSync(neo4jPath, "utf-8");
 
 // Add import for SecureNeo4j
-if (!content.includes('SecureNeo4j')) {
-  content = content.replace(
-    "import neo4j, { Driver } from 'neo4j-driver';",
-    "import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/utils';"
-  );
+if (!content.includes("SecureNeo4j")) {
+	content = content.replace(
+		"import neo4j, { Driver } from 'neo4j-driver';",
+		"import neo4j, { Driver } from 'neo4j-driver';\nimport { SecureNeo4j } from '@cortex-os/utils';",
+	);
 }
 
 // Update the Neo4j class to extend SecureNeo4j and use its methods
 content = content.replace(
-  /export class Neo4j implements INeo4j \{[^}]*\}/s,
-  `export class Neo4j implements INeo4j {
+	/export class Neo4j implements INeo4j \{[^}]*\}/s,
+	`export class Neo4j implements INeo4j {
   private driver: Driver;
   private secureNeo4j: SecureNeo4j;
 
@@ -73,10 +73,10 @@ content = content.replace(
       throw error;
     }
   }
-}`
+}`,
 );
 
 // Write the updated content back to the file
 writeFileSync(neo4jPath, content);
 
-console.log('✅ neo4j.ts updated to use SecureNeo4j');
+console.log("✅ neo4j.ts updated to use SecureNeo4j");

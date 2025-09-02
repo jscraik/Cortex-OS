@@ -20,13 +20,13 @@ impl PullRequestAPI {
         options: Option<PRListOptions>,
     ) -> Result<Vec<PullRequest>> {
         let mut endpoint = format!("/repos/{}/{}/pulls", owner, repo);
-        
+
         if let Some(opts) = options {
             let mut query_params = vec![
                 format!("page={}", opts.page),
                 format!("per_page={}", opts.per_page),
             ];
-            
+
             if let Some(state) = &opts.state {
                 query_params.push(format!("state={}", state));
             }
@@ -42,11 +42,11 @@ impl PullRequestAPI {
             if let Some(direction) = &opts.direction {
                 query_params.push(format!("direction={}", direction));
             }
-            
+
             let query_string = query_params.join("&");
             endpoint = format!("{}?{}", endpoint, query_string);
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
@@ -132,13 +132,13 @@ impl PullRequestAPI {
     /// List issues
     pub async fn list_issues(&self, owner: &str, repo: &str, options: Option<IssueListOptions>) -> Result<Vec<Issue>> {
         let mut endpoint = format!("/repos/{}/{}/issues", owner, repo);
-        
+
         if let Some(opts) = options {
             let mut query_params = vec![
                 format!("page={}", opts.page),
                 format!("per_page={}", opts.per_page),
             ];
-            
+
             if let Some(state) = &opts.state {
                 query_params.push(format!("state={}", state));
             }
@@ -154,11 +154,11 @@ impl PullRequestAPI {
             if let Some(since) = &opts.since {
                 query_params.push(format!("since={}", since));
             }
-            
+
             let query_string = query_params.join("&");
             endpoint = format!("{}?{}", endpoint, query_string);
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
@@ -269,11 +269,11 @@ pub struct UpdateIssueData {
 impl PullRequest {
     /// Check if pull request can be merged
     pub fn can_merge(&self) -> bool {
-        self.mergeable.unwrap_or(false) && 
-        self.state == "open" && 
+        self.mergeable.unwrap_or(false) &&
+        self.state == "open" &&
         !self.draft
     }
-    
+
     /// Get merge status description
     pub fn get_merge_status(&self) -> String {
         if self.draft {
@@ -299,7 +299,7 @@ impl PullRequest {
             "Checking...".to_string()
         }
     }
-    
+
     /// Get PR age in days
     pub fn age_days(&self) -> Option<i64> {
         self.created_at.parse::<chrono::DateTime<chrono::Utc>>()
@@ -316,7 +316,7 @@ impl Issue {
     pub fn is_open(&self) -> bool {
         self.state == "open"
     }
-    
+
     /// Get issue age in days
     pub fn age_days(&self) -> Option<i64> {
         self.created_at.parse::<chrono::DateTime<chrono::Utc>>()
@@ -326,12 +326,12 @@ impl Issue {
             })
             .ok()
     }
-    
+
     /// Check if issue has specific label
     pub fn has_label(&self, label_name: &str) -> bool {
         self.labels.iter().any(|label| label.name == label_name)
     }
-    
+
     /// Get assignee logins
     pub fn get_assignee_logins(&self) -> Vec<&str> {
         self.assignees.iter().map(|user| user.login.as_str()).collect()
@@ -348,12 +348,12 @@ mod tests {
         pr.state = "open".to_string();
         pr.draft = true;
         assert_eq!(pr.get_merge_status(), "Draft PR");
-        
+
         pr.draft = false;
         pr.mergeable = Some(true);
         pr.mergeable_state = "clean".to_string();
         assert_eq!(pr.get_merge_status(), "Ready to merge");
-        
+
         pr.state = "closed".to_string();
         pr.merged = true;
         assert_eq!(pr.get_merge_status(), "Merged");
@@ -372,7 +372,7 @@ mod tests {
                 url: "".to_string(),
             }
         ];
-        
+
         assert!(issue.has_label("bug"));
         assert!(!issue.has_label("feature"));
     }

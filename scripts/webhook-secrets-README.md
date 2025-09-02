@@ -141,7 +141,7 @@ This will:
 | App | Webhook URL |
 |-----|-------------|
 | AI | `https://insula-ai.brainwav.io/webhook` |
-| Semgrep | `https://insula-semgrep.brainwav.io/webhook` |
+| Semgrep | `https://semgrep-github.brainwav.io/webhook` |
 | Structure | `https://insula-github.brainwav.io/webhook` |
 | Insula | `https://insula-insula.brainwav.io/webhook` |
 
@@ -186,7 +186,7 @@ Test webhook secret with curl:
 
 ```bash
 # Test webhook endpoint (should return "Unauthorized" without proper signature)
-curl -s -X POST https://insula-semgrep.brainwav.io/webhook \
+curl -s -X POST https://semgrep-github.brainwav.io/webhook \
   -H "Content-Type: application/json" \
   -d '{"test": true}'
 ```

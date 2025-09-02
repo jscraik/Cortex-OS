@@ -25,15 +25,15 @@ use tracing::{info, Level};
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
-    
+
     /// Run in CI mode (non-interactive)
     #[arg(long)]
     ci: bool,
-    
+
     /// Configuration file path
     #[arg(short, long)]
     config: Option<String>,
-    
+
     /// Enable debug logging
     #[arg(short, long)]
     debug: bool,
@@ -44,7 +44,7 @@ enum Commands {
     /// Interactive Code interface
     Code,
     /// Run a single command
-    Run { 
+    Run {
         /// The prompt to execute
         prompt: String,
         /// Output format for CI mode
@@ -77,11 +77,11 @@ enum McpAction {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    
+
     // Install panic handler and signal handlers for graceful shutdown
     error_panic_handler::install_panic_handler();
     error_panic_handler::install_signal_handlers();
-    
+
     // Initialize logging
     let level = if cli.debug { Level::DEBUG } else { Level::INFO };
     tracing_subscriber::fmt()
@@ -96,10 +96,10 @@ async fn main() -> Result<()> {
         Some(path) => Config::from_file(&path)?,
         None => Config::from_default_locations()?,
     };
-    
+
     // Create application
     let mut app = CortexApp::new(config).await?;
-    
+
     // Handle commands
     match cli.command.unwrap_or(Commands::Code) {
         Commands::Code => {
@@ -122,7 +122,7 @@ async fn main() -> Result<()> {
             handle_mcp_command(&mut app, action).await?;
         }
     }
-    
+
     Ok(())
 }
 
@@ -159,7 +159,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
     let result = loop {
         // Update cursor for streaming
         chat_widget.update_cursor();
-        
+
         // Render based on current view
         terminal.draw(|frame| {
             if command_palette.is_visible() {
@@ -180,7 +180,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
                 }
             }
         })?;
-        
+
         // Handle events
         if event::poll(std::time::Duration::from_millis(100))? {
             match event::read()? {
@@ -246,7 +246,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
                                         match chat_widget.handle_event(CrosstermEvent::Key(key_event))? {
                                             cortex_code::view::chat::EventResponse::SendMessage(message) => {
                                                 info!("Sending message: {}", message);
-                                                
+
                                                 // Add user message to chat
                                                 chat_widget.add_message(cortex_code::app::Message::user(&message));
                                                 
@@ -256,13 +256,13 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
                                             }
                                             cortex_code::view::chat::EventResponse::RequestStreamingMessage(message) => {
                                                 info!("Sending streaming message: {}", message);
-                                                
+
                                                 // Add user message to chat
                                                 chat_widget.add_message(cortex_code::app::Message::user(&message));
                                                 
                                                 // Start streaming
                                                 chat_widget.start_streaming("session-123".to_string(), "github".to_string());
-                                                
+
                                                 // Get and stream response
                                                 let response = app.get_ai_response(&message).await?;
                                                 for chunk in response.chars().collect::<Vec<_>>().chunks(5) {
@@ -317,7 +317,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
             }
         }
     };
-    
+
     // Restore terminal
     disable_raw_mode()?;
     execute!(
@@ -326,7 +326,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
         DisableMouseCapture
     )?;
     terminal.show_cursor()?;
-    
+
     result
 }
 

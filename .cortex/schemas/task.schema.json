@@ -1,12 +1,12 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://cortex.local/schemas/task.schema.json",
-  "type": "object",
-  "properties": {
-    "id": { "type": "string" },
-    "type": { "type": "string" },
-    "input": { "type": ["object", "array", "string", "number", "null"] },
-    "metadata": { "type": "object", "additionalProperties": true }
-  },
-  "required": ["id", "type"]
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://cortex.local/schemas/task.schema.json",
+	"type": "object",
+	"properties": {
+		"id": { "type": "string" },
+		"type": { "type": "string" },
+		"input": { "type": ["object", "array", "string", "number", "null"] },
+		"metadata": { "type": "object", "additionalProperties": true }
+	},
+	"required": ["id", "type"]
 }

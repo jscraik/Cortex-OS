@@ -1,56 +1,56 @@
 {
-  "$id": "https://cortex-os.org/contracts/cloudevents/agent-task-completed",
-  "title": "Agent Task Completed",
-  "description": "Schema for agent task completion events following CloudEvents specification",
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Unique event identifier"
-    },
-    "type": {
-      "type": "string",
-      "const": "agent.task.completed",
-      "description": "Event type identifier"
-    },
-    "source": {
-      "type": "string",
-      "description": "Event source identifier"
-    },
-    "specversion": {
-      "type": "string",
-      "const": "1.0",
-      "description": "CloudEvents specification version"
-    },
-    "time": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Event timestamp"
-    },
-    "data": {
-      "type": "object",
-      "properties": {
-        "taskId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique task identifier"
-        },
-        "result": {
-          "type": "object",
-          "description": "Task execution result"
-        },
-        "executionTime": {
-          "type": "number",
-          "description": "Execution time in milliseconds"
-        },
-        "metadata": {
-          "type": "object",
-          "description": "Additional metadata"
-        }
-      },
-      "required": ["taskId", "result", "executionTime"]
-    }
-  },
-  "required": ["id", "type", "source", "specversion", "time", "data"]
+	"$id": "https://cortex-os.org/contracts/cloudevents/agent-task-completed",
+	"title": "Agent Task Completed",
+	"description": "Schema for agent task completion events following CloudEvents specification",
+	"type": "object",
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid",
+			"description": "Unique event identifier"
+		},
+		"type": {
+			"type": "string",
+			"const": "agent.task.completed",
+			"description": "Event type identifier"
+		},
+		"source": {
+			"type": "string",
+			"description": "Event source identifier"
+		},
+		"specversion": {
+			"type": "string",
+			"const": "1.0",
+			"description": "CloudEvents specification version"
+		},
+		"time": {
+			"type": "string",
+			"format": "date-time",
+			"description": "Event timestamp"
+		},
+		"data": {
+			"type": "object",
+			"properties": {
+				"taskId": {
+					"type": "string",
+					"format": "uuid",
+					"description": "Unique task identifier"
+				},
+				"result": {
+					"type": "object",
+					"description": "Task execution result"
+				},
+				"executionTime": {
+					"type": "number",
+					"description": "Execution time in milliseconds"
+				},
+				"metadata": {
+					"type": "object",
+					"description": "Additional metadata"
+				}
+			},
+			"required": ["taskId", "result", "executionTime"]
+		}
+	},
+	"required": ["id", "type", "source", "specversion", "time", "data"]
 }

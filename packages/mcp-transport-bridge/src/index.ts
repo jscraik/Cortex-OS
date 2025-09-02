@@ -4,10 +4,10 @@
  */
 
 export {
-  type BridgeConfig,
-  BridgeConfigSchema,
-  bridgeHttpToStdio,
-  bridgeStdioToHttp,
-  createBridge,
-  McpBridge,
-} from './bridge.js';
+	type BridgeConfig,
+	BridgeConfigSchema,
+	bridgeHttpToStdio,
+	bridgeStdioToHttp,
+	createBridge,
+	McpBridge,
+} from "./bridge.js";

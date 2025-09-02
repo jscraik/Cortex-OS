@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Cloudflare Tunnel Setup for Cortex Semgrep GitHub App
-# Creates and configures tunnel: insula-semgrep-app -> insula-semgrep.brainwav.io:3002
+# Creates and configures tunnel: semgrep-github-app -> semgrep-github.brainwav.io:3002
 
 set -e
 
 TUNNEL_NAME="insula-semgrep-app"
-HOSTNAME="insula-semgrep.brainwav.io"
+HOSTNAME="semgrep-github.brainwav.io"
 LOCAL_PORT="3002"
 CONFIG_FILE="$(dirname "$0")/tunnel.config.yml"
 

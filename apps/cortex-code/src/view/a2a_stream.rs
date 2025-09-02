@@ -367,7 +367,7 @@ impl A2aEventStream {
 
     fn render_events(&self, frame: &mut Frame, area: Rect) {
         let filtered_events = self.get_filtered_events();
-        
+
         let events: Vec<ListItem> = filtered_events
             .iter()
             .enumerate()
@@ -396,7 +396,7 @@ impl A2aEventStream {
                 };
 
                 let time_str = event.timestamp.format("%H:%M:%S%.3f").to_string();
-                
+
                 let content = if self.show_details {
                     format!(
                         "{} {} [{}] {} -> {} | {} | {}",
@@ -443,7 +443,7 @@ impl A2aEventStream {
 
         let events_list = List::new(events)
             .block(Block::default().borders(Borders::ALL).title(title));
-        
+
         frame.render_widget(events_list, area);
     }
 

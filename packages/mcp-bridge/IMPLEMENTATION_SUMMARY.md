@@ -176,6 +176,52 @@ pnpm demo
 4. **Advanced Security**: Extend validation rules and domain allowlists
 5. **Performance**: Add caching and request optimization
 
+## ✅ Follow-ups implemented (from cross-ecosystem analysis)
+
+- Transport auto-fallback for resilient connections (HTTP/SSE with stdio fallback) in the SDK client (see `@cortex-os/mcp-core`)
+- Tool name qualification and collision handling across servers using a 64-char cap with SHA1 suffix; aggregated listing via `listQualifiedTools()` (see `mcp-bridge/connection-manager.ts`)
+- Tool-call lifecycle telemetry events: `tool-call-begin` and `tool-call-end` with timing and success/error info (see `mcp-bridge/mcp-client.ts`)
+- Event payload redaction for sensitive arguments to avoid leaking secrets in telemetry (`mcp-client.ts`)
+- Lint/type hygiene: node: protocol imports, removed non-null assertions, ensured Error rejections
+- Cloudflare Tunnel built-in as the public server interface for both the demo server and MLX MCP server. On failure, we now fall back to local-only mode and set `CORTEX_MCP_PUBLIC_URL` accordingly. To enforce hard-fail behavior, set `CORTEX_MCP_TUNNEL_STRICT=1`.
+- DRY refactor: Extracted a shared tunnel helper at `packages/mcp-bridge/src/lib/cloudflare-tunnel.ts` used by both demo and MLX servers.
+- A2A observability: Emits `mcp.tunnel.failed` when Cloudflare tunnel startup fails, with `{ port, reason }` payload.
+
+## 🔭 Upcoming small enhancements
+
+- Route tool-call telemetry to the A2A bus when consumers exist (optional, behind `CORTEX_MCP_A2A_TELEMETRY=1`)
+- Add a consumer/handler for `mcp.tunnel.failed` events to surface alerts in runtime logs/UI
+- Add minimal tests for:
+  - Qualified tool name truncation + hash suffix
+  - Event emission on tool-call success and error paths
+  - Fallback selection smoke test (mock transports)
+
+### ✅ Delta (this phase)
+
+- Added tests in `mcp-bridge`:
+  - Telemetry redaction: verifies `tool-call-begin` redacts sensitive fields and `tool-call-end` reports success + duration.
+  - Qualified tool names: validates truncation ≤ 64 chars with SHA1 suffix across multiple servers.
+- Test run notes:
+  - Package-scoped test run passed: 12 files, 75 tests green (`pnpm --filter @cortex-os/mcp-bridge test`).
+  - Workspace `nx` graph remains noisy; we intentionally avoid the workspace-wide runner for this scope.
+- Deferred: Fallback selection smoke test lives in `@cortex-os/mcp-core` (transport fallback logic). Will add there in the next phase to keep concerns separated.
+
+### New artifacts in this phase
+
+- `packages/mcp-bridge/src/lib/cloudflare-tunnel.ts` — shared Cloudflare quick/named tunnel helper
+- `packages/mcp-bridge/src/__tests__/tunnel-failure.event.test.ts` — verifies `mcp.tunnel.failed` A2A emission on tunnel failure
+
+## 📝 Outstanding TODOs
+
+- Runtime consumer for `mcp.tunnel.failed` to log/alert and optionally retry/backoff
+- Documentation updates:
+  - Environment vars: `CORTEX_MCP_TUNNEL_STRICT`, `CLOUDFLARE_TUNNEL_TOKEN`, `CLOUDFLARE_TUNNEL_HOSTNAME`/`TUNNEL_HOSTNAME`
+  - Public URL propagation semantics (`CORTEX_MCP_PUBLIC_URL`)
+- Optional: Wire tool-call telemetry to A2A via existing `__CORTEX_MCP_PUBLISH__` flag; add a basic subscriber
+- Health lifecycle: monitor/restart `cloudflared` child on unexpected exit
+- Type hygiene: Triage and fix app-level TypeScript errors in `@cortex-os/app`; stabilize Nx project graph
+- Optional: Consider exporting the tunnel helper if other packages need it; today it’s internal-only by design
+
 ## 🎉 Success Criteria Met
 
 Your original requirements:

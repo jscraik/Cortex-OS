@@ -1,13 +1,13 @@
 # Cloudflare Tunnel Configuration for Cortex Semgrep GitHub App
 # This tunnel exposes the semgrep app running on localhost:3002
 
-tunnel: insula-semgrep-app
-credentials-file: /Users/jamiecraik/.cloudflared/insula-semgrep-app.json
+tunnel: 8109c0a4-6704-4119-b38e-5faa28f0903e
+credentials-file: /Users/jamiecraik/.cloudflared/8109c0a4-6704-4119-b38e-5faa28f0903e.json
 
 # Ingress rules - traffic routing configuration
 ingress:
   # Main application routes
-  - hostname: insula-semgrep.brainwav.io
+  - hostname: semgrep-github.brainwav.io
     service: http://localhost:3002
     originRequest:
       # HTTP/2 support for better performance
@@ -24,17 +24,17 @@ ingress:
       originServerName: localhost
 
   # Health check endpoint
-  - hostname: insula-semgrep.brainwav.io
+  - hostname: semgrep-github.brainwav.io
     path: /health
     service: http://localhost:3002
 
   # API endpoints
-  - hostname: insula-semgrep.brainwav.io
+  - hostname: semgrep-github.brainwav.io
     path: /api/*
     service: http://localhost:3002
 
   # Webhook endpoint
-  - hostname: insula-semgrep.brainwav.io
+  - hostname: semgrep-github.brainwav.io
     path: /webhook
     service: http://localhost:3002
     originRequest:

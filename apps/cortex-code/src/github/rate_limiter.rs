@@ -57,10 +57,10 @@ impl GitHubRateLimiter {
         Fut: futures::Future<Output = Result<reqwest::Response>> + Send + 'static,
     {
         let (tx, rx) = tokio::sync::oneshot::channel();
-        
+
         {
             let mut state = self.state.lock().await;
-            
+
             // Add request to queue
             state.queue.push_back(Box::new(move || {
                 let fut = request_fn();
@@ -160,7 +160,7 @@ impl GitHubRateLimiter {
             .and_then(|h| h.to_str().ok())
             .and_then(|s| s.parse::<u64>().ok())
         {
-            state_guard.reset_time = 
+            state_guard.reset_time =
                 Instant::now() + Duration::from_secs(reset_timestamp.saturating_sub(
                     std::time::SystemTime::now()
                         .duration_since(std::time::UNIX_EPOCH)
@@ -245,15 +245,15 @@ impl GitHubRateLimiter {
         error: &crate::error::Error,
     ) {
         let mut state_guard = state.lock().await;
-        
+
         // Set remaining requests to 0 to trigger waiting
         state_guard.remaining_requests = 0;
-        
+
         // If we have retry-after header info, use it
         // This would need to be extracted from the error
         // For now, use a conservative estimate
         state_guard.reset_time = Instant::now() + Duration::from_secs(60);
-        
+
         warn!("Rate limit error handled: {:?}", error);
     }
 
@@ -285,7 +285,7 @@ impl GitHubRateLimiter {
     /// Calculate delay based on rate limit state
     pub async fn calculate_delay(&self) -> Duration {
         let state = self.state.lock().await;
-        
+
         if state.remaining_requests == 0 {
             // Wait until reset time
             state.reset_time.saturating_duration_since(Instant::now())
@@ -368,7 +368,7 @@ impl RetryManager {
 
                     last_error = Some(error);
                     let delay = self.calculate_backoff_delay(attempt);
-                    
+
                     debug!("Request failed, retrying in {:?} (attempt {})", delay, attempt + 1);
                     sleep(delay).await;
                 }
@@ -383,7 +383,7 @@ impl RetryManager {
         let jittered_delay = exponential_delay + Duration::from_millis(
             (rand::random::<f64>() * 1000.0) as u64
         );
-        
+
         std::cmp::min(jittered_delay, self.max_delay)
     }
 
@@ -427,7 +427,7 @@ mod tests {
     async fn test_rate_limiter_creation() {
         let limiter = GitHubRateLimiter::new();
         let status = limiter.get_rate_limit_status().await;
-        
+
         assert_eq!(status.remaining, 5000);
         assert_eq!(status.queue_length, 0);
     }
@@ -435,15 +435,15 @@ mod tests {
     #[test]
     fn test_backoff_calculation() {
         let retry_manager = RetryManager::new();
-        
+
         let delay_0 = retry_manager.calculate_backoff_delay(0);
         let delay_1 = retry_manager.calculate_backoff_delay(1);
         let delay_2 = retry_manager.calculate_backoff_delay(2);
-        
+
         // Exponential backoff should increase delays
         assert!(delay_1 > delay_0);
         assert!(delay_2 > delay_1);
-        
+
         // Should not exceed max delay
         let long_delay = retry_manager.calculate_backoff_delay(10);
         assert!(long_delay <= retry_manager.max_delay);

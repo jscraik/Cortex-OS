@@ -1,24 +1,24 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "CodexWebReviewReport",
-  "type": "object",
-  "required": ["timestamp", "overall", "scores", "findings"],
-  "properties": {
-    "timestamp": { "type": "string", "format": "date-time" },
-    "overall": { "type": "number", "minimum": 0, "maximum": 5 },
-    "scores": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["name", "weight", "score", "notes"],
-        "properties": {
-          "name": { "type": "string" },
-          "weight": { "type": "number" },
-          "score": { "type": "number", "minimum": 0, "maximum": 5 },
-          "notes": { "type": "array", "items": { "type": "string" } }
-        }
-      }
-    },
-    "findings": { "type": "object" }
-  }
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "CodexWebReviewReport",
+	"type": "object",
+	"required": ["timestamp", "overall", "scores", "findings"],
+	"properties": {
+		"timestamp": { "type": "string", "format": "date-time" },
+		"overall": { "type": "number", "minimum": 0, "maximum": 5 },
+		"scores": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["name", "weight", "score", "notes"],
+				"properties": {
+					"name": { "type": "string" },
+					"weight": { "type": "number" },
+					"score": { "type": "number", "minimum": 0, "maximum": 5 },
+					"notes": { "type": "array", "items": { "type": "string" } }
+				}
+			}
+		},
+		"findings": { "type": "object" }
+	}
 }

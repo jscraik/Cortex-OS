@@ -23,11 +23,12 @@ import { tuiCommand } from './commands/tui.js';
 import { agentCreate } from './commands/agent/create.js';
 
 
-const program = new Command('cortex');
-const mcp = new Command('mcp');
+const program = new Command("cortex");
+const mcp = new Command("mcp");
 mcp.addCommand(mcpAdd);
 mcp.addCommand(mcpBridge);
 mcp.addCommand(mcpDoctor);
+mcp.addCommand(mcpGet);
 mcp.addCommand(mcpList);
 mcp.addCommand(mcpRemove);
 mcp.addCommand(mcpSearch);
@@ -35,30 +36,30 @@ mcp.addCommand(mcpShow);
 
 program.addCommand(mcp);
 
-const a2a = new Command('a2a');
+const a2a = new Command("a2a");
 a2a.addCommand(a2aSend);
 a2a.addCommand(a2aList);
 a2a.addCommand(a2aDoctor);
 program.addCommand(a2a);
 
-const rag = new Command('rag');
+const rag = new Command("rag");
 rag.addCommand(ragIngest);
 rag.addCommand(ragQuery);
 rag.addCommand(ragEval);
 program.addCommand(rag);
 
-const simlab = new Command('simlab');
+const simlab = new Command("simlab");
 simlab.addCommand(simlabRun);
 simlab.addCommand(simlabBench);
 simlab.addCommand(simlabReport);
 simlab.addCommand(simlabList);
 program.addCommand(simlab);
 
-const ctl = new Command('ctl');
+const ctl = new Command("ctl");
 ctl.addCommand(ctlCheck);
 program.addCommand(ctl);
 
-const evalCmd = new Command('eval');
+const evalCmd = new Command("eval");
 evalCmd.addCommand(evalGate);
 program.addCommand(evalCmd);
 

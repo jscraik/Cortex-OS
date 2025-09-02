@@ -1,7 +1,7 @@
 {
-  "name": "@cortex-os/contracts",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/typescript/contracts/src",
-  "projectType": "library",
-  "targets": {}
+	"name": "@cortex-os/contracts",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/typescript/contracts/src",
+	"projectType": "library",
+	"targets": {}
 }

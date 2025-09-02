@@ -1,7 +1,7 @@
 {
-  "name": "@cortex-os/types",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/typescript/types/src",
-  "projectType": "library",
-  "targets": {}
+	"name": "@cortex-os/types",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/typescript/types/src",
+	"projectType": "library",
+	"targets": {}
 }

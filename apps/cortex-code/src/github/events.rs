@@ -89,7 +89,7 @@ impl GitHubEventStream {
     /// Subscribe to repository events
     pub async fn subscribe_to_repository(&mut self, owner: String, repo: String) -> Result<()> {
         let repo_key = format!("{}/{}", owner, repo);
-        
+
         self.active_streams.insert(
             repo_key.clone(),
             EventStreamState {
@@ -100,14 +100,14 @@ impl GitHubEventStream {
         );
 
         info!("Subscribed to events for repository: {}", repo_key);
-        
+
         // Start polling for this repository
         let client = self.client.clone();
         let repo_key_clone = repo_key.clone();
-        
+
         tokio::spawn(async move {
             let mut interval_stream = IntervalStream::new(interval(Duration::from_secs(30)));
-            
+
             while let Some(_) = interval_stream.next().await {
                 if let Err(e) = Self::poll_repository_events(&client, &owner, &repo).await {
                     warn!("Error polling events for {}: {:?}", repo_key_clone, e);
@@ -121,7 +121,7 @@ impl GitHubEventStream {
     /// Subscribe to user events
     pub async fn subscribe_to_user_events(&mut self, username: String) -> Result<()> {
         let user_key = format!("user:{}", username);
-        
+
         self.active_streams.insert(
             user_key.clone(),
             EventStreamState {
@@ -132,14 +132,14 @@ impl GitHubEventStream {
         );
 
         info!("Subscribed to events for user: {}", username);
-        
+
         // Start polling for this user
         let client = self.client.clone();
         let user_key_clone = user_key.clone();
-        
+
         tokio::spawn(async move {
             let mut interval_stream = IntervalStream::new(interval(Duration::from_secs(60)));
-            
+
             while let Some(_) = interval_stream.next().await {
                 if let Err(e) = Self::poll_user_events(&client, &username).await {
                     warn!("Error polling user events for {}: {:?}", user_key_clone, e);
@@ -153,7 +153,7 @@ impl GitHubEventStream {
     /// Poll repository events
     async fn poll_repository_events(client: &GitHubClient, owner: &str, repo: &str) -> Result<()> {
         let endpoint = format!("/repos/{}/{}/events", owner, repo);
-        
+
         match client.get::<Vec<RepoEvent>>(&endpoint).await {
             Ok(events) => {
                 debug!("Retrieved {} events for {}/{}", events.len(), owner, repo);
@@ -174,7 +174,7 @@ impl GitHubEventStream {
     /// Poll user events
     async fn poll_user_events(client: &GitHubClient, username: &str) -> Result<()> {
         let endpoint = format!("/users/{}/events", username);
-        
+
         match client.get::<Vec<RepoEvent>>(&endpoint).await {
             Ok(events) => {
                 debug!("Retrieved {} user events for {}", events.len(), username);
@@ -214,7 +214,7 @@ impl GitHubEventStream {
     pub async fn get_repository_activity_stats(&self, owner: &str, repo: &str, days: u32) -> Result<ActivityStats> {
         let endpoint = format!("/repos/{}/{}/events", owner, repo);
         let events: Vec<RepoEvent> = self.client.get(&endpoint).await?;
-        
+
         // Filter events from the last N days
         let cutoff = chrono::Utc::now() - chrono::Duration::days(days as i64);
         let recent_events: Vec<_> = events.into_iter()
@@ -290,18 +290,18 @@ impl WebhookEventProcessor {
     pub fn verify_signature(payload: &[u8], signature: &str, secret: &str) -> bool {
         use hmac::{Hmac, Mac};
         use sha2::Sha256;
-        
+
         type HmacSha256 = Hmac<Sha256>;
-        
+
         let mut mac = match HmacSha256::new_from_slice(secret.as_bytes()) {
             Ok(mac) => mac,
             Err(_) => return false,
         };
-        
+
         mac.update(payload);
         let expected = mac.finalize().into_bytes();
         let expected_hex = format!("sha256={}", hex::encode(expected));
-        
+
         // Constant-time comparison
         signature == expected_hex
     }
@@ -366,7 +366,7 @@ mod tests {
         };
 
         assert_eq!(stats.get_activity_rate(), 15.0 / 7.0);
-        
+
         let top_contributors = stats.get_top_contributors(1);
         assert_eq!(top_contributors[0].0, "user1");
         assert_eq!(top_contributors[0].1, 8);
@@ -376,7 +376,7 @@ mod tests {
     fn test_webhook_signature_verification() {
         let payload = b"test payload";
         let secret = "test_secret";
-        
+
         // This would fail without proper HMAC calculation
         let invalid_signature = "sha256=invalid";
         assert!(!WebhookEventProcessor::verify_signature(payload, invalid_signature, secret));

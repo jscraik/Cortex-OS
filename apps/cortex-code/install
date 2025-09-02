@@ -76,25 +76,25 @@ detect_arch() {
 
 check_dependencies() {
     local missing_deps=()
-    
+
     # Check for required tools
     if ! command -v curl &> /dev/null; then
         missing_deps+=("curl")
     fi
-    
+
     if ! command -v tar &> /dev/null && ! command -v unzip &> /dev/null; then
         missing_deps+=("tar or unzip")
     fi
-    
+
     # Check for optional but recommended tools
     if ! command -v git &> /dev/null; then
         log_warning "Git not found - some features will be limited"
     fi
-    
+
     if ! command -v python3 &> /dev/null; then
         log_warning "Python 3 not found - MLX provider will not work"
     fi
-    
+
     if [ ${#missing_deps[@]} -ne 0 ]; then
         log_error "Missing required dependencies: ${missing_deps[*]}"
         echo "Please install the missing dependencies and run this script again."
@@ -105,27 +105,27 @@ check_dependencies() {
 download_binary() {
     local download_url
     local filename
-    
+
     if [ "$OS" = "unknown" ] || [ "$ARCH" = "unknown" ]; then
         log_error "Unsupported platform: $OS-$ARCH"
         echo "Please build from source: cargo install --git $REPO_URL"
         exit 1
     fi
-    
+
     # Construct download URL (GitHub releases)
     download_url="$REPO_URL/releases/download/v$VERSION/$BINARY_NAME-$OS-$ARCH"
     filename="$BINARY_NAME-$OS-$ARCH"
-    
+
     if [ "$OS" = "windows" ]; then
         download_url="$download_url.exe"
         filename="$filename.exe"
     fi
-    
+
     log_info "Downloading $BINARY_NAME v$VERSION for $OS-$ARCH..."
-    
+
     # Create install directory
     mkdir -p "$INSTALL_DIR"
-    
+
     # Download binary
     if ! curl -fsSL "$download_url" -o "$INSTALL_DIR/$BINARY_NAME"; then
         log_error "Failed to download binary from $download_url"
@@ -135,7 +135,7 @@ download_binary() {
         echo "  2. Download manually from: $REPO_URL/releases"
         exit 1
     fi
-    
+
     # Make executable
     chmod +x "$INSTALL_DIR/$BINARY_NAME"
     log_success "Downloaded and installed binary"
@@ -143,10 +143,10 @@ download_binary() {
 
 setup_config() {
     log_info "Setting up configuration..."
-    
+
     # Create config directory
     mkdir -p "$CONFIG_DIR"
-    
+
     # Copy default configuration if it doesn't exist
     if [ ! -f "$CONFIG_DIR/cortex.json" ]; then
         cat > "$CONFIG_DIR/cortex.json" << 'EOF'
@@ -170,7 +170,7 @@ EOF
     else
         log_info "Using existing configuration"
     fi
-    
+
     # Create AGENTS.md if it doesn't exist
     if [ ! -f "$CONFIG_DIR/AGENTS.md" ]; then
         cat > "$CONFIG_DIR/AGENTS.md" << 'EOF'
@@ -196,10 +196,10 @@ EOF
 
 setup_shell_integration() {
     log_info "Setting up shell integration..."
-    
+
     local shell_rc=""
     local shell_name=""
-    
+
     # Detect shell
     if [ -n "${BASH_VERSION:-}" ]; then
         shell_name="bash"
@@ -217,10 +217,10 @@ setup_shell_integration() {
         log_warning "Unknown shell - manual PATH setup required"
         return
     fi
-    
+
     # Add to PATH if not already present
     local path_export="export PATH=\"\$HOME/.cortex/bin:\$PATH\""
-    
+
     if [ -f "$shell_rc" ] && grep -q ".cortex/bin" "$shell_rc"; then
         log_info "$shell_name PATH already configured"
     else
@@ -229,7 +229,7 @@ setup_shell_integration() {
         echo "$path_export" >> "$shell_rc"
         log_success "Added to $shell_name PATH"
     fi
-    
+
     # Create alias for convenience
     local alias_cmd="alias cortex='cortex-code'"
     if [ -f "$shell_rc" ] && ! grep -q "alias cortex=" "$shell_rc"; then
@@ -240,17 +240,17 @@ setup_shell_integration() {
 
 install_mcp_servers() {
     log_info "Installing MCP servers..."
-    
+
     # Check if we're in a Cortex-OS workspace
     if [ -f "package.json" ] && grep -q "cortex-os" "package.json" 2>/dev/null; then
         log_info "Detected Cortex-OS workspace - using local MCP servers"
         return
     fi
-    
+
     # Install basic MCP servers if available
     local mcp_servers=("cortex-mcp-fs" "cortex-mcp-git" "cortex-mcp-web")
     local installed_count=0
-    
+
     for server in "${mcp_servers[@]}"; do
         if command -v npm &> /dev/null; then
             if npm list -g "$server" &> /dev/null; then
@@ -267,7 +267,7 @@ install_mcp_servers() {
             fi
         fi
     done
-    
+
     if [ $installed_count -eq 0 ]; then
         log_warning "No MCP servers installed - some features will be limited"
         echo "  To install MCP servers later: npm install -g cortex-mcp-fs cortex-mcp-git"
@@ -278,7 +278,7 @@ install_mcp_servers() {
 
 verify_installation() {
     log_info "Verifying installation..."
-    
+
     # Test binary execution
     if "$INSTALL_DIR/$BINARY_NAME" --version &> /dev/null; then
         log_success "Binary is working correctly"
@@ -286,7 +286,7 @@ verify_installation() {
         log_error "Binary verification failed"
         exit 1
     fi
-    
+
     # Test configuration
     if [ -f "$CONFIG_DIR/cortex.json" ]; then
         log_success "Configuration file exists"
@@ -305,7 +305,7 @@ print_success_message() {
     echo "    ║                                                           ║"
     echo "    ╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     echo -e "${CYAN}${PACKAGE} What's installed:${NC}"
     echo "  • Cortex Code v$VERSION binary"
     echo "  • Default configuration"
@@ -313,21 +313,21 @@ print_success_message() {
     echo "  • Shell integration"
     echo "  • MCP server support"
     echo ""
-    
+
     echo -e "${YELLOW}${GEAR} Next steps:${NC}"
     echo "  1. Restart your shell or run: source ~/.bashrc"
     echo "  2. Run: cortex-code --help"
     echo "  3. Start the interface: cortex-code"
     echo "  4. Or start daemon mode: cortex-code daemon"
     echo ""
-    
+
     echo -e "${BLUE}${SPARKLES} Quick start:${NC}"
     echo "  cortex-code                    # Interactive mode"
     echo "  cortex-code chat \"Hello!\"       # Single question"
     echo "  cortex-code daemon             # Start HTTP server"
     echo "  cortex-code mcp list           # List MCP servers"
     echo ""
-    
+
     echo -e "${PURPLE}Documentation: $REPO_URL${NC}"
     echo -e "${GREEN}Happy coding with Cortex! ${SPARKLES}${NC}"
 }
@@ -341,17 +341,17 @@ main() {
     detect_os
     detect_arch
     log_info "Detected platform: $OS-$ARCH"
-    
+
     # Pre-installation checks
     check_dependencies
-    
+
     # Installation steps
     download_binary
     setup_config
     setup_shell_integration
     install_mcp_servers
     verify_installation
-    
+
     # Success!
     print_success_message
 }

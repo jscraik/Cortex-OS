@@ -1,43 +1,43 @@
 {
-  "input": {
-    "agent": {
-      "id": "test-agent-001",
-      "name": "Test Agent",
-      "capabilities": ["text-processing", "data-analysis", "code-review"]
-    },
-    "task": {
-      "id": "task-001",
-      "kind": "analysis",
-      "input": {
-        "code": "console.log(\"Hello, World!\");",
-        "language": "javascript"
-      },
-      "budget": {
-        "wallClockMs": 5000,
-        "maxSteps": 10
-      }
-    }
-  },
-  "output": {
-    "status": "completed",
-    "result": {
-      "code": "console.log(\"Hello, World!\");",
-      "language": "javascript"
-    },
-    "agent": "test-agent-001"
-  },
-  "metadata": {
-    "status": "completed",
-    "result": {
-      "code": "console.log(\"Hello, World!\");",
-      "language": "javascript"
-    },
-    "agent": "test-agent-001",
-    "goldenSeed": 12345,
-    "testType": "basic-execution"
-  },
-  "timestamp": 1756406226849,
-  "seed": 12345,
+	"input": {
+		"agent": {
+			"id": "test-agent-001",
+			"name": "Test Agent",
+			"capabilities": ["text-processing", "data-analysis", "code-review"]
+		},
+		"task": {
+			"id": "task-001",
+			"kind": "analysis",
+			"input": {
+				"code": "console.log(\"Hello, World!\");",
+				"language": "javascript"
+			},
+			"budget": {
+				"wallClockMs": 5000,
+				"maxSteps": 10
+			}
+		}
+	},
+	"output": {
+		"status": "completed",
+		"result": {
+			"code": "console.log(\"Hello, World!\");",
+			"language": "javascript"
+		},
+		"agent": "test-agent-001"
+	},
+	"metadata": {
+		"status": "completed",
+		"result": {
+			"code": "console.log(\"Hello, World!\");",
+			"language": "javascript"
+		},
+		"agent": "test-agent-001",
+		"goldenSeed": 12345,
+		"testType": "basic-execution"
+	},
+	"timestamp": 1756406226849,
+	"seed": 12345,
 
-  "nodeVersion": "v20.19.4"
+	"nodeVersion": "v20.19.4"
 }

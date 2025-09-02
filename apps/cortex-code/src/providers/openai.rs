@@ -28,11 +28,11 @@ impl ModelProvider for OpenAIProvider {
     fn provider_name(&self) -> &str {
         "openai"
     }
-    
+
     async fn complete(&self, prompt: &str) -> Result<String> {
         let default_endpoint = "https://api.openai.com/v1/chat/completions".to_string();
         let endpoint = self.config.endpoint.as_ref().unwrap_or(&default_endpoint);
-        
+
         let request_body = json!({
             "model": self.config.model,
             "messages": [
@@ -45,7 +45,7 @@ impl ModelProvider for OpenAIProvider {
             "max_tokens": 4000,
             "stream": false
         });
-        
+
         let response = self.client
             .post(endpoint)
             .header("Authorization", format!("Bearer {}", self.config.api_key))
@@ -54,7 +54,7 @@ impl ModelProvider for OpenAIProvider {
             .send()
             .await
             .map_err(|e| ProviderError::Api(format!("Request failed: {}", e)))?;
-        
+
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await
@@ -63,10 +63,10 @@ impl ModelProvider for OpenAIProvider {
                 format!("OpenAI API error {}: {}", status, error_text)
             ).into());
         }
-        
+
         let response_json: Value = response.json().await
             .map_err(|e| ProviderError::Api(format!("Invalid response format: {}", e)))?;
-        
+
         let content = response_json
             .get("choices")
             .and_then(|choices| choices.get(0))
@@ -74,14 +74,14 @@ impl ModelProvider for OpenAIProvider {
             .and_then(|message| message.get("content"))
             .and_then(|content| content.as_str())
             .ok_or_else(|| ProviderError::Api("No content in response".to_string()))?;
-        
+
         Ok(content.to_string())
     }
-    
+
     async fn stream(&self, prompt: &str) -> Result<ResponseStream> {
         let default_endpoint = "https://api.openai.com/v1/chat/completions".to_string();
         let endpoint = self.config.endpoint.as_ref().unwrap_or(&default_endpoint);
-        
+
         let request_body = json!({
             "model": self.config.model,
             "messages": [
@@ -94,7 +94,7 @@ impl ModelProvider for OpenAIProvider {
             "max_tokens": 4000,
             "stream": true
         });
-        
+
         let response = self.client
             .post(endpoint)
             .header("Authorization", format!("Bearer {}", self.config.api_key))
@@ -103,7 +103,7 @@ impl ModelProvider for OpenAIProvider {
             .send()
             .await
             .map_err(|e| ProviderError::Api(format!("Request failed: {}", e)))?;
-        
+
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await
@@ -112,7 +112,7 @@ impl ModelProvider for OpenAIProvider {
                 format!("OpenAI API error {}: {}", status, error_text)
             ).into());
         }
-        
+
         let stream = response.bytes_stream()
             .map(|chunk_result| {
                 chunk_result
@@ -125,7 +125,7 @@ impl ModelProvider for OpenAIProvider {
                                 if json_str == "[DONE]" {
                                     return Ok(None);
                                 }
-                                
+
                                 if let Ok(json_value) = serde_json::from_str::<Value>(json_str) {
                                     if let Some(content) = json_value
                                         .get("choices")
@@ -149,10 +149,10 @@ impl ModelProvider for OpenAIProvider {
                     Err(e) => Some(Err(e)),
                 }
             });
-        
+
         Ok(Box::pin(stream))
     }
-    
+
     fn supported_models(&self) -> Vec<String> {
         vec![
             "gpt-4o".to_string(),

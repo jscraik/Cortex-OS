@@ -9,7 +9,7 @@ mod tests {
     async fn test_mcp_registry_can_add_server() {
         // RED: This test will fail because we need proper MCP registry implementation
         let mut registry = McpRegistry::new();
-        
+
         let server_config = McpServerInfo {
             name: "cortex-fs".to_string(),
             transport: "stdio".to_string(),
@@ -18,10 +18,10 @@ mod tests {
             endpoint: None,
             env: Some(HashMap::new()),
         };
-        
+
         let result = registry.add_server("cortex-fs", server_config).await;
         assert!(result.is_ok());
-        
+
         let servers = registry.list_servers().await.unwrap();
         assert_eq!(servers.len(), 1);
         assert_eq!(servers[0].name, "cortex-fs");
@@ -38,10 +38,10 @@ mod tests {
             endpoint: None,
             env: None,
         };
-        
+
         let mut client = McpClient::new(server_info);
         let connect_result = client.connect().await;
-        
+
         // For now, we expect this to fail gracefully
         assert!(connect_result.is_err());
     }
@@ -57,26 +57,26 @@ mod tests {
             endpoint: None,
             env: None,
         };
-        
+
         let mut client = McpClient::new(server_info);
-        
+
         // Test tool execution with arguments
         let tool_args = serde_json::json!({
             "path": "/test/path",
             "recursive": true
         });
-        
+
         let result = client.execute_tool("list_files", tool_args).await;
-        
+
         // For now, we expect this to fail gracefully since we haven't implemented it
         assert!(result.is_err());
     }
 
-    #[tokio::test] 
+    #[tokio::test]
     async fn test_mcp_registry_can_remove_server() {
         // RED: Test server removal functionality
         let mut registry = McpRegistry::new();
-        
+
         // Add a server first
         let server_config = McpServerInfo {
             name: "test-server".to_string(),
@@ -86,13 +86,13 @@ mod tests {
             endpoint: None,
             env: None,
         };
-        
+
         registry.add_server("test-server", server_config).await.unwrap();
-        
+
         // Now remove it
         let remove_result = registry.remove_server("test-server").await;
         assert!(remove_result.is_ok());
-        
+
         let servers = registry.list_servers().await.unwrap();
         assert_eq!(servers.len(), 0);
     }
@@ -108,10 +108,10 @@ mod tests {
             endpoint: None,
             env: None,
         };
-        
+
         let mut client = McpClient::new(server_info);
         let result = client.connect().await;
-        
+
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("Failed to start MCP server"));
     }

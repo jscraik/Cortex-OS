@@ -65,20 +65,20 @@ impl GitHubModelsProvider {
         let mut headers = header::HeaderMap::new();
         headers.insert("Accept", "application/vnd.github+json".parse().unwrap());
         headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
-        
+
         // Use GitHub token from environment or config
         let token = config.token.clone()
             .or_else(|| std::env::var("GITHUB_TOKEN").ok())
             .ok_or_else(|| ProviderError::NotConfigured("GitHub token not found".to_string()))?;
-        
+
         let auth_header = format!("Bearer {}", token);
         headers.insert("Authorization", auth_header.parse().unwrap());
-        
+
         let client = Client::builder()
             .default_headers(headers)
             .build()
             .map_err(|e| ProviderError::Api(format!("Failed to create HTTP client: {}", e)))?;
-        
+
         Ok(Self {
             client,
             config: config.clone(),
@@ -91,7 +91,7 @@ impl ModelProvider for GitHubModelsProvider {
     fn provider_name(&self) -> &str {
         "github-models"
     }
-    
+
     async fn complete(&self, prompt: &str) -> Result<String> {
         let request = CompletionRequest {
             model: self.config.model.clone(),
@@ -109,7 +109,7 @@ impl ModelProvider for GitHubModelsProvider {
             temperature: Some(0.7),
             max_tokens: Some(1000),
         };
-        
+
         let url = format!("{}/inference/chat/completions", self.config.endpoint);
         let response = self.client
             .post(&url)
@@ -117,7 +117,7 @@ impl ModelProvider for GitHubModelsProvider {
             .send()
             .await
             .map_err(|e| ProviderError::Api(format!("Request failed: {}", e)))?;
-        
+
         let status = response.status();
         if status == 429 {
             return Err(ProviderError::RateLimited.into());
@@ -128,17 +128,17 @@ impl ModelProvider for GitHubModelsProvider {
                 .map_err(|e| ProviderError::Api(format!("Failed to parse error: {}", e)))?;
             return Err(ProviderError::Api(error.error.message).into());
         }
-        
+
         let completion: CompletionResponse = response.json().await
             .map_err(|e| ProviderError::Api(format!("Failed to parse response: {}", e)))?;
-        
+
         completion.choices
             .first()
             .and_then(|choice| choice.message.as_ref())
             .map(|msg| msg.content.clone())
             .ok_or_else(|| ProviderError::Api("No content in response".to_string()).into())
     }
-    
+
     async fn stream(&self, prompt: &str) -> Result<ResponseStream> {
         let request = CompletionRequest {
             model: self.config.model.clone(),
@@ -156,7 +156,7 @@ impl ModelProvider for GitHubModelsProvider {
             temperature: Some(0.7),
             max_tokens: Some(1000),
         };
-        
+
         let url = format!("{}/inference/chat/completions", self.config.endpoint);
         let response = self.client
             .post(&url)
@@ -164,16 +164,16 @@ impl ModelProvider for GitHubModelsProvider {
             .send()
             .await
             .map_err(|e| ProviderError::Api(format!("Request failed: {}", e)))?;
-        
+
         if !response.status().is_success() {
             return Err(ProviderError::Api(format!("HTTP {}", response.status())).into());
         }
-        
+
         let stream = response.bytes_stream()
             .map(|chunk| {
                 let chunk = chunk.map_err(|e| ProviderError::Api(format!("Stream error: {}", e)))?;
                 let text = String::from_utf8_lossy(&chunk);
-                
+
                 // Parse SSE format
                 for line in text.lines() {
                     if line.starts_with("data: ") {
@@ -181,7 +181,7 @@ impl ModelProvider for GitHubModelsProvider {
                         if data == "[DONE]" {
                             continue;
                         }
-                        
+
                         if let Ok(chunk_response) = serde_json::from_str::<CompletionResponse>(data) {
                             if let Some(choice) = chunk_response.choices.first() {
                                 if let Some(delta) = &choice.delta {
@@ -193,7 +193,7 @@ impl ModelProvider for GitHubModelsProvider {
                         }
                     }
                 }
-                
+
                 Ok(String::new())
             })
             .filter(|result| {
@@ -203,10 +203,10 @@ impl ModelProvider for GitHubModelsProvider {
                     Err(_) => futures::future::ready(true),
                 }
             });
-        
+
         Ok(Box::pin(stream))
     }
-    
+
     fn supported_models(&self) -> Vec<String> {
         vec![
             "openai/gpt-4o-mini".to_string(),

@@ -33,7 +33,7 @@ echo "📊 PM2 Status:"
 pm2 status cortex-structure-github
 
 echo "✅ Cortex Structure Guard GitHub App is running!"
-echo "🌐 Server running on port 3003"
+echo "🌐 Server running on port ${PORT:-3003}"
 echo "📁 Monitoring repository structure with automated organization"
 echo "📋 View logs: pm2 logs cortex-structure-github"
 echo "🔄 Restart: pm2 restart cortex-structure-github"

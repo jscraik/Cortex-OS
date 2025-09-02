@@ -1,66 +1,66 @@
 {
-  "$id": "https://cortex-os.org/contracts/cloudevents/agent-task-requested",
-  "title": "Agent Task Requested",
-  "description": "Schema for agent task request events following CloudEvents specification",
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Unique event identifier"
-    },
-    "type": {
-      "type": "string",
-      "const": "agent.task.requested",
-      "description": "Event type identifier"
-    },
-    "source": {
-      "type": "string",
-      "description": "Event source identifier"
-    },
-    "specversion": {
-      "type": "string",
-      "const": "1.0",
-      "description": "CloudEvents specification version"
-    },
-    "time": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Event timestamp"
-    },
-    "data": {
-      "type": "object",
-      "properties": {
-        "taskId": {
-          "type": "string",
-          "format": "uuid",
-          "description": "Unique task identifier"
-        },
-        "taskType": {
-          "type": "string",
-          "description": "Type of task to be executed"
-        },
-        "payload": {
-          "type": "object",
-          "description": "Task-specific data payload"
-        },
-        "priority": {
-          "type": "string",
-          "enum": ["low", "medium", "high", "critical"],
-          "default": "medium",
-          "description": "Task priority level"
-        },
-        "timeout": {
-          "type": "number",
-          "description": "Task timeout in milliseconds"
-        },
-        "metadata": {
-          "type": "object",
-          "description": "Additional metadata"
-        }
-      },
-      "required": ["taskId", "taskType", "payload"]
-    }
-  },
-  "required": ["id", "type", "source", "specversion", "time", "data"]
+	"$id": "https://cortex-os.org/contracts/cloudevents/agent-task-requested",
+	"title": "Agent Task Requested",
+	"description": "Schema for agent task request events following CloudEvents specification",
+	"type": "object",
+	"properties": {
+		"id": {
+			"type": "string",
+			"format": "uuid",
+			"description": "Unique event identifier"
+		},
+		"type": {
+			"type": "string",
+			"const": "agent.task.requested",
+			"description": "Event type identifier"
+		},
+		"source": {
+			"type": "string",
+			"description": "Event source identifier"
+		},
+		"specversion": {
+			"type": "string",
+			"const": "1.0",
+			"description": "CloudEvents specification version"
+		},
+		"time": {
+			"type": "string",
+			"format": "date-time",
+			"description": "Event timestamp"
+		},
+		"data": {
+			"type": "object",
+			"properties": {
+				"taskId": {
+					"type": "string",
+					"format": "uuid",
+					"description": "Unique task identifier"
+				},
+				"taskType": {
+					"type": "string",
+					"description": "Type of task to be executed"
+				},
+				"payload": {
+					"type": "object",
+					"description": "Task-specific data payload"
+				},
+				"priority": {
+					"type": "string",
+					"enum": ["low", "medium", "high", "critical"],
+					"default": "medium",
+					"description": "Task priority level"
+				},
+				"timeout": {
+					"type": "number",
+					"description": "Task timeout in milliseconds"
+				},
+				"metadata": {
+					"type": "object",
+					"description": "Additional metadata"
+				}
+			},
+			"required": ["taskId", "taskType", "payload"]
+		}
+	},
+	"required": ["id", "type", "source", "specversion", "time", "data"]
 }

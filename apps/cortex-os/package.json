@@ -1,22 +1,23 @@
 {
-  "name": "@cortex-os/app",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsx src/index.ts",
-    "test": "vitest run",
-    "lint": "eslint .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "inversify": "^6.0.1",
-    "@cortex-os/contracts": "workspace:*",
-    "@cortex-os/telemetry": "workspace:*",
-    "@cortex-os/memories": "workspace:*",
-    "@cortex-os/orchestration": "workspace:*",
-    "@cortex-os/mcp": "workspace:*",
-    "zod": "^3.22.4"
-  }
+	"name": "@cortex-os/app",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"dev": "tsx src/index.ts",
+		"test": "vitest run",
+		"lint": "eslint .",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"inversify": "^6.0.1",
+		"@cortex-os/contracts": "workspace:*",
+		"@cortex-os/telemetry": "workspace:*",
+		"@cortex-os/memories": "workspace:*",
+		"@cortex-os/orchestration": "workspace:*",
+		"@cortex-os/mcp": "workspace:*",
+		"@cortex-os/mcp-bridge": "workspace:*",
+		"zod": "^3.22.4"
+	}
 }

@@ -49,71 +49,71 @@ impl AgentsMd {
                 enable_audit: true,
             },
         };
-        
+
         if agents_md.path.exists() {
             agents_md.load().await?;
         } else {
             agents_md.initialize().await?;
         }
-        
+
         Ok(agents_md)
     }
-    
+
     pub async fn load(&mut self) -> Result<()> {
         let content = fs::read_to_string(&self.path).await
             .map_err(|e| crate::error::ProviderError::Api(format!("Failed to read AGENTS.md: {}", e)))?;
-        
+
         self.parse_markdown(&content)?;
         Ok(())
     }
-    
+
     pub async fn save(&mut self) -> Result<()> {
         self.metadata.last_updated = std::time::SystemTime::now();
         self.metadata.total_entries = self.entries.len();
-        
+
         let markdown_content = self.generate_markdown();
-        
+
         // Ensure parent directory exists
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent).await
                 .map_err(|e| crate::error::ProviderError::Api(format!("Failed to create directory: {}", e)))?;
         }
-        
+
         fs::write(&self.path, markdown_content).await
             .map_err(|e| crate::error::ProviderError::Api(format!("Failed to write AGENTS.md: {}", e)))?;
-        
+
         Ok(())
     }
-    
+
     pub async fn add_entry(&mut self, entry: AgentEntry) -> Result<()> {
         self.entries.push(entry);
         self.cleanup_old_entries().await?;
         self.save().await?;
         Ok(())
     }
-    
+
     pub fn get_entries(&self) -> &[AgentEntry] {
         &self.entries
     }
-    
+
     pub fn get_entries_by_session(&self, session_id: &str) -> Vec<&AgentEntry> {
         self.entries.iter()
             .filter(|entry| entry.session_id == session_id)
             .collect()
     }
-    
+
     pub fn get_entries_by_provider(&self, provider: &str) -> Vec<&AgentEntry> {
         self.entries.iter()
             .filter(|entry| entry.provider == provider)
             .collect()
     }
-    
+
     pub fn get_recent_context(&self, limit: usize) -> Vec<&AgentEntry> {
         let mut entries: Vec<&AgentEntry> = self.entries.iter().collect();
         entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
         entries.into_iter().take(limit).collect()
     }
-    
+
     pub fn search_entries(&self, query: &str) -> Vec<&AgentEntry> {
         let query_lower = query.to_lowercase();
         self.entries.iter()
@@ -124,57 +124,57 @@ impl AgentsMd {
             })
             .collect()
     }
-    
+
     async fn cleanup_old_entries(&mut self) -> Result<()> {
         if self.metadata.retention_days == 0 {
             return Ok(());
         }
-        
+
         let retention_duration = Duration::from_secs((self.metadata.retention_days as u64) * 24 * 60 * 60);
         let cutoff_time = std::time::SystemTime::now()
             .checked_sub(retention_duration)
             .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-        
+
         self.entries.retain(|entry| entry.timestamp >= cutoff_time);
-        
+
         Ok(())
     }
-    
+
     async fn initialize(&mut self) -> Result<()> {
         let initial_content = self.generate_initial_markdown();
-        
+
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent).await
                 .map_err(|e| crate::error::ProviderError::Api(format!("Failed to create directory: {}", e)))?;
         }
-        
+
         fs::write(&self.path, initial_content).await
             .map_err(|e| crate::error::ProviderError::Api(format!("Failed to create AGENTS.md: {}", e)))?;
-        
+
         Ok(())
     }
-    
+
     fn parse_markdown(&mut self, content: &str) -> Result<()> {
         // Simplified markdown parser for AGENTS.md format
         // In production, would use a proper markdown parser
-        
+
         let mut current_entry: Option<AgentEntry> = None;
         let mut in_metadata = false;
-        
+
         for line in content.lines() {
             let line = line.trim();
-            
+
             if line.starts_with("# AGENTS.md") {
                 in_metadata = true;
                 continue;
             }
-            
+
             if line.starts_with("## Session:") {
                 // Save previous entry if exists
                 if let Some(entry) = current_entry.take() {
                     self.entries.push(entry);
                 }
-                
+
                 // Start new entry
                 let session_id = line.strip_prefix("## Session:").unwrap_or("unknown").trim().to_string();
                 current_entry = Some(AgentEntry {
@@ -189,7 +189,7 @@ impl AgentsMd {
                 });
                 continue;
             }
-            
+
             if let Some(ref mut entry) = current_entry {
                 if line.starts_with("**Provider:**") {
                     entry.provider = line.strip_prefix("**Provider:**").unwrap_or("").trim().to_string();
@@ -206,18 +206,18 @@ impl AgentsMd {
                 }
             }
         }
-        
+
         // Save last entry if exists
         if let Some(entry) = current_entry {
             self.entries.push(entry);
         }
-        
+
         Ok(())
     }
-    
+
     fn generate_markdown(&self) -> String {
         let mut content = String::new();
-        
+
         // Header and metadata
         content.push_str("# AGENTS.md\n\n");
         content.push_str(&format!("**Version:** {}\n", self.metadata.version));
@@ -226,22 +226,22 @@ impl AgentsMd {
         content.push_str(&format!("**Total Entries:** {}\n", self.metadata.total_entries));
         content.push_str(&format!("**Retention Days:** {}\n", self.metadata.retention_days));
         content.push_str(&format!("**Audit Enabled:** {}\n\n", self.metadata.enable_audit));
-        
+
         content.push_str("---\n\n");
         content.push_str("## Agent Conversation Memory\n\n");
         content.push_str("This file maintains a record of AI agent conversations and decisions for context preservation and audit purposes.\n\n");
-        
+
         // Entries sorted by timestamp (newest first)
         let mut sorted_entries: Vec<&AgentEntry> = self.entries.iter().collect();
         sorted_entries.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-        
+
         for entry in sorted_entries {
             content.push_str(&format!("## Session: {}\n\n", entry.session_id));
             content.push_str(&format!("**Timestamp:** {:?}\n", entry.timestamp));
             content.push_str(&format!("**Provider:** {}\n", entry.provider));
             content.push_str(&format!("**Model:** {}\n", entry.model));
             content.push_str(&format!("**Summary:** {}\n\n", entry.conversation_summary));
-            
+
             if !entry.key_decisions.is_empty() {
                 content.push_str("**Key Decisions:**\n");
                 for decision in &entry.key_decisions {
@@ -249,7 +249,7 @@ impl AgentsMd {
                 }
                 content.push('\n');
             }
-            
+
             if !entry.context.is_empty() {
                 content.push_str("**Context:**\n");
                 for (key, value) in &entry.context {
@@ -257,18 +257,18 @@ impl AgentsMd {
                 }
                 content.push('\n');
             }
-            
+
             if !entry.tags.is_empty() {
                 content.push_str(&format!("**Tags:** {}\n", entry.tags.join(", ")));
                 content.push('\n');
             }
-            
+
             content.push_str("---\n\n");
         }
-        
+
         content
     }
-    
+
     fn generate_initial_markdown(&self) -> String {
         format!(
 r#"# AGENTS.md
@@ -295,7 +295,7 @@ This file maintains a record of AI agent conversations and decisions for context
 ### Structure
 Each session entry contains:
 - Session ID and timestamp
-- Provider and model information  
+- Provider and model information
 - Conversation summary
 - Key decisions made
 - Relevant context and tags
@@ -311,28 +311,28 @@ Each session entry contains:
             self.metadata.enable_audit
         )
     }
-    
+
     pub fn metadata(&self) -> &AgentMetadata {
         &self.metadata
     }
-    
+
     pub fn set_retention_days(&mut self, days: u32) {
         self.metadata.retention_days = days;
     }
-    
+
     pub fn set_audit_enabled(&mut self, enabled: bool) {
         self.metadata.enable_audit = enabled;
     }
-    
+
     pub fn get_stats(&self) -> MemoryStats {
         let total_entries = self.entries.len();
         let providers: std::collections::HashSet<String> = self.entries.iter().map(|e| e.provider.clone()).collect();
         let models: std::collections::HashSet<String> = self.entries.iter().map(|e| e.model.clone()).collect();
         let tags: std::collections::HashSet<String> = self.entries.iter().flat_map(|e| e.tags.iter().cloned()).collect();
-        
+
         let oldest_entry = self.entries.iter().min_by_key(|e| e.timestamp).map(|e| e.timestamp);
         let newest_entry = self.entries.iter().max_by_key(|e| e.timestamp).map(|e| e.timestamp);
-        
+
         MemoryStats {
             total_entries,
             unique_providers: providers.len(),
@@ -372,30 +372,30 @@ impl AgentEntry {
             tags: Vec::new(),
         }
     }
-    
+
     pub fn with_decisions(mut self, decisions: Vec<String>) -> Self {
         self.key_decisions = decisions;
         self
     }
-    
+
     pub fn with_context(mut self, context: HashMap<String, serde_json::Value>) -> Self {
         self.context = context;
         self
     }
-    
+
     pub fn with_tags(mut self, tags: Vec<String>) -> Self {
         self.tags = tags;
         self
     }
-    
+
     pub fn add_decision(&mut self, decision: String) {
         self.key_decisions.push(decision);
     }
-    
+
     pub fn add_context(&mut self, key: String, value: serde_json::Value) {
         self.context.insert(key, value);
     }
-    
+
     pub fn add_tag(&mut self, tag: String) {
         if !self.tags.contains(&tag) {
             self.tags.push(tag);

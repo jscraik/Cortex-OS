@@ -1,45 +1,45 @@
 {
-  "name": "@cortex-os/cortex-ai-github",
-  "version": "1.0.0",
-  "description": "AI-powered GitHub automation engine for Cortex-OS",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsx watch src/server/start.ts",
-    "start": "node dist/server/start.js",
-    "test": "vitest",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write src"
-  },
-  "dependencies": {
-    "@octokit/rest": "^20.0.2",
-    "@octokit/webhooks": "^12.0.10",
-    "express": "^4.18.2",
-    "crypto": "^1.0.1",
-    "zod": "^3.22.4",
-    "@cortex-os/a2a-core": "workspace:*",
-    "@cortex-os/contracts": "workspace:*",
-    "@cortex-os/types": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.10.0",
-    "tsx": "^4.6.2",
-    "typescript": "^5.3.3",
-    "vitest": "^1.0.0"
-  },
-  "keywords": [
-    "ai",
-    "github",
-    "automation",
-    "cortex",
-    "code-review"
-  ],
-  "author": "Cortex-OS Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "directory": "packages/cortex-ai-github"
-  }
+	"name": "@cortex-os/cortex-ai-github",
+	"version": "1.1.0",
+	"description": "Production-ready AI-powered GitHub automation with MLX integration, security-hardened and functionally architected",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx watch src/server/start.ts",
+		"start": "node dist/server/start.js",
+		"test": "vitest",
+		"lint": "eslint src --ext .ts",
+		"format": "prettier --write src"
+	},
+	"dependencies": {
+		"@octokit/rest": "^20.0.2",
+		"@octokit/webhooks": "^12.0.10",
+		"express": "^4.18.2",
+		"zod": "^3.22.4",
+		"@cortex-os/a2a-core": "workspace:*",
+		"@cortex-os/contracts": "workspace:*",
+		"@cortex-os/types": "workspace:*",
+		"@mlx-community/transformers": "^0.3.0"
+	},
+	"devDependencies": {
+		"@types/express": "^4.17.21",
+		"@types/node": "^20.10.0",
+		"tsx": "^4.6.2",
+		"typescript": "^5.3.3",
+		"vitest": "^1.0.0"
+	},
+	"keywords": [
+		"ai",
+		"github",
+		"automation",
+		"cortex",
+		"code-review"
+	],
+	"author": "Cortex-OS Team",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"directory": "packages/cortex-ai-github"
+	}
 }

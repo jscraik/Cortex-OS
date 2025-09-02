@@ -67,7 +67,7 @@ impl CortexCommandPalette {
     pub fn new() -> Self {
         let commands = Self::initialize_commands();
         let filtered_commands: Vec<usize> = (0..commands.len()).collect();
-        
+
         Self {
             commands,
             filtered_commands,
@@ -202,7 +202,7 @@ impl CortexCommandPalette {
                 ],
             },
 
-            // A2A Commands  
+            // A2A Commands
             CortexCommand {
                 id: "a2a.send_event".to_string(),
                 name: "Send A2A Event".to_string(),
@@ -378,7 +378,7 @@ impl CortexCommandPalette {
                 if !self.filtered_commands.is_empty() {
                     let cmd_index = self.filtered_commands[self.selected_index];
                     let command = &self.commands[cmd_index];
-                    
+
                     if command.parameters.is_empty() {
                         self.hide();
                         Ok(CommandPaletteResponse::ExecuteCommand(command.id.clone(), vec![]))
@@ -431,7 +431,7 @@ impl CortexCommandPalette {
                 },
                 KeyCode::Enter => {
                     let command = &self.commands[*command_index];
-                    
+
                     if *param_index < command.parameters.len() {
                         values.push(String::new());
                         if *param_index + 1 >= command.parameters.len() {
@@ -516,7 +516,7 @@ impl CortexCommandPalette {
         let search_block = Block::default()
             .borders(Borders::ALL)
             .title(" Search Commands ");
-        
+
         let search_text = match self.mode {
             PaletteMode::Search => {
                 Paragraph::new(format!("> {}", self.search_input))
@@ -527,13 +527,13 @@ impl CortexCommandPalette {
                 let command = &self.commands[command_index];
                 let param = &command.parameters[param_index];
                 let current_value = values.get(param_index).unwrap_or(&String::new());
-                
+
                 Paragraph::new(format!("{}: {}", param.name, current_value))
                     .block(search_block.clone().title(format!(" {} - {} ", command.name, param.description)))
                     .style(Style::default().fg(Color::Yellow))
             }
         };
-        
+
         frame.render_widget(search_text, chunks[0]);
 
         // Commands list

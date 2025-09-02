@@ -23,7 +23,7 @@ impl RepositoryAPI {
     /// List user's repositories
     pub async fn list_repositories(&self, options: Option<ListOptions>) -> Result<Vec<Repository>> {
         let mut endpoint = "/user/repos".to_string();
-        
+
         if let Some(opts) = options {
             let query_params = vec![
                 format!("page={}", opts.page),
@@ -31,19 +31,19 @@ impl RepositoryAPI {
                 opts.sort.map(|s| format!("sort={}", s)).unwrap_or_default(),
                 opts.direction.map(|d| format!("direction={}", d)).unwrap_or_default(),
             ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("&");
-            
+
             if !query_params.is_empty() {
                 endpoint = format!("{}?{}", endpoint, query_params);
             }
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
     /// List organization repositories
     pub async fn list_org_repositories(&self, org: &str, options: Option<ListOptions>) -> Result<Vec<Repository>> {
         let mut endpoint = format!("/orgs/{}/repos", org);
-        
+
         if let Some(opts) = options {
             let query_params = vec![
                 format!("page={}", opts.page),
@@ -51,12 +51,12 @@ impl RepositoryAPI {
                 opts.sort.map(|s| format!("sort={}", s)).unwrap_or_default(),
                 opts.direction.map(|d| format!("direction={}", d)).unwrap_or_default(),
             ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("&");
-            
+
             if !query_params.is_empty() {
                 endpoint = format!("{}?{}", endpoint, query_params);
             }
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
@@ -67,20 +67,20 @@ impl RepositoryAPI {
         } else {
             "/user/repos".to_string()
         };
-        
+
         self.client.post(&endpoint, Some(data)).await
     }
 
     // File operations
-    
+
     /// Get file contents
     pub async fn get_contents(&self, owner: &str, repo: &str, path: &str, ref_name: Option<&str>) -> Result<Content> {
         let mut endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
-        
+
         if let Some(ref_val) = ref_name {
             endpoint = format!("{}?ref={}", endpoint, ref_val);
         }
-        
+
         let content: Content = self.client.get(&endpoint).await?;
         debug!("Retrieved content for {} in {}/{}", path, owner, repo);
         Ok(content)
@@ -89,11 +89,11 @@ impl RepositoryAPI {
     /// Get directory contents
     pub async fn get_directory_contents(&self, owner: &str, repo: &str, path: &str, ref_name: Option<&str>) -> Result<Vec<Content>> {
         let mut endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
-        
+
         if let Some(ref_val) = ref_name {
             endpoint = format!("{}?ref={}", endpoint, ref_val);
         }
-        
+
         let contents: Vec<Content> = self.client.get(&endpoint).await?;
         debug!("Retrieved {} items from directory {} in {}/{}", contents.len(), path, owner, repo);
         Ok(contents)
@@ -108,7 +108,7 @@ impl RepositoryAPI {
         data: FileUpdateData,
     ) -> Result<FileResponse> {
         let endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
-        
+
         let response: FileResponse = self.client.put(&endpoint, Some(data)).await?;
         info!("File {} updated in {}/{}", path, owner, repo);
         Ok(response)
@@ -127,7 +127,7 @@ impl RepositoryAPI {
     /// Get file content as string (decodes base64)
     pub async fn get_file_content_string(&self, owner: &str, repo: &str, path: &str, ref_name: Option<&str>) -> Result<String> {
         let content = self.get_contents(owner, repo, path, ref_name).await?;
-        
+
         if let Some(encoded_content) = content.content {
             if content.encoding.as_ref().map(|e| e == "base64").unwrap_or(false) {
                 // Decode base64 content
@@ -156,7 +156,7 @@ impl RepositoryAPI {
         branch: Option<&str>,
     ) -> Result<FileResponse> {
         let encoded_content = base64_encode(content.as_bytes());
-        
+
         let data = FileUpdateData {
             message: message.to_string(),
             content: encoded_content,
@@ -165,12 +165,12 @@ impl RepositoryAPI {
             committer: None,
             author: None,
         };
-        
+
         self.create_or_update_file(owner, repo, path, data).await
     }
 
     // Branch operations
-    
+
     /// List branches
     pub async fn list_branches(&self, owner: &str, repo: &str) -> Result<Vec<Branch>> {
         let endpoint = format!("/repos/{}/{}/branches", owner, repo);
@@ -200,7 +200,7 @@ impl RepositoryAPI {
     }
 
     // Commit operations
-    
+
     /// Get commit information
     pub async fn get_commit(&self, owner: &str, repo: &str, sha: &str) -> Result<Commit> {
         let endpoint = format!("/repos/{}/{}/commits/{}", owner, repo, sha);
@@ -210,13 +210,13 @@ impl RepositoryAPI {
     /// List commits
     pub async fn list_commits(&self, owner: &str, repo: &str, options: Option<CommitListOptions>) -> Result<Vec<Commit>> {
         let mut endpoint = format!("/repos/{}/{}/commits", owner, repo);
-        
+
         if let Some(opts) = options {
             let mut query_params = vec![
                 format!("page={}", opts.page.unwrap_or(1)),
                 format!("per_page={}", opts.per_page.unwrap_or(30)),
             ];
-            
+
             if let Some(sha) = &opts.sha {
                 query_params.push(format!("sha={}", sha));
             }
@@ -232,11 +232,11 @@ impl RepositoryAPI {
             if let Some(until) = &opts.until {
                 query_params.push(format!("until={}", until));
             }
-            
+
             let query_string = query_params.join("&");
             endpoint = format!("{}?{}", endpoint, query_string);
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
@@ -247,7 +247,7 @@ impl RepositoryAPI {
     }
 
     // Tree operations for advanced file management
-    
+
     /// Get a git tree
     pub async fn get_tree(&self, owner: &str, repo: &str, tree_sha: &str, recursive: bool) -> Result<GitTree> {
         let mut endpoint = format!("/repos/{}/{}/git/trees/{}", owner, repo, tree_sha);
@@ -266,7 +266,7 @@ impl RepositoryAPI {
     }
 
     // Repository settings and metadata
-    
+
     /// Get repository topics/tags
     pub async fn get_topics(&self, owner: &str, repo: &str) -> Result<Vec<String>> {
         let endpoint = format!("/repos/{}/{}/topics", owner, repo);
@@ -293,7 +293,7 @@ impl RepositoryAPI {
         // GitHub doesn't provide a single stats endpoint, so we'll aggregate data
         let repo_info = self.get_repository(owner, repo).await?;
         let languages = self.get_languages(owner, repo).await?;
-        
+
         Ok(RepositoryStats {
             size: repo_info.size,
             stargazers_count: repo_info.stargazers_count,
@@ -473,7 +473,7 @@ impl Repository {
         let name = &self.name;
         repo_api.get_stats(owner, name).await
     }
-    
+
     /// Check if repository has certain features enabled
     pub fn has_feature(&self, feature: &str) -> bool {
         match feature {
@@ -485,7 +485,7 @@ impl Repository {
             _ => false,
         }
     }
-    
+
     /// Get clone URL based on preference
     pub fn get_clone_url(&self, prefer_ssh: bool) -> &str {
         if prefer_ssh {
@@ -505,7 +505,7 @@ mod tests {
         let mut repo = Repository::default();
         repo.has_issues = true;
         repo.has_wiki = false;
-        
+
         assert!(repo.has_feature("issues"));
         assert!(!repo.has_feature("wiki"));
         assert!(!repo.has_feature("unknown"));
@@ -516,7 +516,7 @@ mod tests {
         let mut repo = Repository::default();
         repo.clone_url = "https://github.com/user/repo.git".to_string();
         repo.ssh_url = "git@github.com:user/repo.git".to_string();
-        
+
         assert_eq!(repo.get_clone_url(false), "https://github.com/user/repo.git");
         assert_eq!(repo.get_clone_url(true), "git@github.com:user/repo.git");
     }

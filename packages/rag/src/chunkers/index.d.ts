@@ -1,2 +1,2 @@
-export * from './dispatch';
+export * from "./dispatch";
 //# sourceMappingURL=index.d.ts.map

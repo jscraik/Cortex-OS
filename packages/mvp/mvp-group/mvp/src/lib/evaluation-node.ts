@@ -5,10 +5,10 @@
  * @version 1.0.0
  */
 
-import { EvaluationNode } from '../nodes/index.js';
+import { EvaluationNode } from "../nodes/index.js";
 
 const evaluationNode = new EvaluationNode();
 
 export async function executeEvaluationNode(state: any): Promise<any> {
-  return await evaluationNode.execute(state);
+	return await evaluationNode.execute(state);
 }

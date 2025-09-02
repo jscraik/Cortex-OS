@@ -1,16 +1,16 @@
 export function buildQwen3EmbedScript(
-  modelPath: string,
-  texts: string[],
-  maxTokens: number,
-  useGPU: boolean,
+	modelPath: string,
+	texts: string[],
+	maxTokens: number,
+	useGPU: boolean,
 ): string {
-  return `
+	return `
 import json
 import sys
 import torch
 from transformers import AutoTokenizer, AutoModel
 import numpy as np
-use_gpu = ${useGPU ? 'True' : 'False'}
+use_gpu = ${useGPU ? "True" : "False"}
 device = 'cuda' if use_gpu and torch.cuda.is_available() else 'cpu'
 
 def mean_pooling(model_output, attention_mask):

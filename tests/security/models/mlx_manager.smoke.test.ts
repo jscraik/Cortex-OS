@@ -1,18 +1,18 @@
-import { execSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { execSync } from "node:child_process";
+import { describe, expect, it } from "vitest";
 
 const hasMLX = (() => {
-  try {
-    execSync('python -c "import mlx"', { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
+	try {
+		execSync('python -c "import mlx"', { stdio: "ignore" });
+		return true;
+	} catch {
+		return false;
+	}
 })();
 
-(hasMLX ? describe : describe.skip)('MLXModelManager (dev mode mock)', () => {
-  it('loads, generates, and unloads', () => {
-    const code = `
+(hasMLX ? describe : describe.skip)("MLXModelManager (dev mode mock)", () => {
+	it("loads, generates, and unloads", () => {
+		const code = `
 import asyncio, os, json, sys
 sys.path.append('docker')
 from model_manager import MLXModelManager
@@ -37,10 +37,10 @@ async def main():
     print(json.dumps({'ok':ok,'has_text': 'text' in out, 'tokens': out.get('tokens',0)}))
 asyncio.run(main())
 `;
-    const out = execSync('python -', { input: code }).toString().trim();
-    const obj = JSON.parse(out);
-    expect(obj.ok).toBe(true);
-    expect(obj.has_text).toBe(true);
-    expect(obj.tokens).toBeGreaterThan(0);
-  });
+		const out = execSync("python -", { input: code }).toString().trim();
+		const obj = JSON.parse(out);
+		expect(obj.ok).toBe(true);
+		expect(obj.has_text).toBe(true);
+		expect(obj.tokens).toBeGreaterThan(0);
+	});
 });

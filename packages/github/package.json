@@ -1,25 +1,25 @@
 {
-  "name": "@cortex-os/github",
-  "version": "1.0.0",
-  "description": "GitHub API client and operations for Cortex-OS",
-  "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "scripts": {
-    "build": "nx build github",
-    "test": "nx test github",
-    "lint": "nx lint github"
-  },
-  "keywords": [
-    "github",
-    "api",
-    "cortex-os",
-    "git",
-    "actions",
-    "pull-requests"
-  ],
-  "author": "Cortex-OS",
-  "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {}
+	"name": "@cortex-os/github",
+	"version": "1.0.0",
+	"description": "GitHub API client and operations for Cortex-OS",
+	"private": true,
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"scripts": {
+		"build": "nx build github",
+		"test": "nx test github",
+		"lint": "nx lint github"
+	},
+	"keywords": [
+		"github",
+		"api",
+		"cortex-os",
+		"git",
+		"actions",
+		"pull-requests"
+	],
+	"author": "Cortex-OS",
+	"license": "MIT",
+	"dependencies": {},
+	"devDependencies": {}
 }

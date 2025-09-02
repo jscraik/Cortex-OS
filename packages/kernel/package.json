@@ -1,77 +1,77 @@
 {
-  "name": "@cortex-os/kernel",
-  "version": "1.0.0",
-  "description": "Deterministic kernel for Cortex-OS with LangGraph state management",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
-    },
-    "./graph": {
-      "types": "./dist/graph-simple.d.ts",
-      "import": "./dist/graph-simple.js",
-      "require": "./dist/graph-simple.js"
-    },
-    "./state": {
-      "types": "./dist/state.d.ts",
-      "import": "./dist/state.js",
-      "require": "./dist/state.js"
-    },
-    "./nodes": {
-      "types": "./dist/nodes/index.d.ts",
-      "import": "./dist/nodes/index.js",
-      "require": "./dist/nodes/index.js"
-    },
-    "./mcp": {
-      "types": "./dist/mcp/adapter.d.ts",
-      "import": "./dist/mcp/adapter.js",
-      "require": "./dist/mcp/adapter.js"
-    }
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
-    "test:ci": "vitest run --coverage --reporter=verbose",
-    "gates:determinism": "vitest run tests/determinism.test.ts --reporter=dot",
-    "lint": "eslint src/**/*.ts",
-    "clean": "rm -rf dist"
-  },
-  "dependencies": {
-    "@cortex-os/prp-runner": "workspace:*",
-    "nanoid": "^5.0.4",
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "@types/node": "^20.9.0",
-    "@typescript-eslint/eslint-plugin": "^8.40.0",
-    "@typescript-eslint/parser": "^8.40.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "eslint": "^8.53.0",
-    "typescript": "^5.2.2",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "keywords": [
-    "cortex-os",
-    "kernel",
-    "langgraph",
-    "deterministic",
-    "mcp",
-    "prp"
-  ],
-  "author": "Cortex-OS Team",
-  "license": "(Apache-2.0 OR Commercial)"
+	"name": "@cortex-os/kernel",
+	"version": "1.0.0",
+	"description": "Deterministic kernel for Cortex-OS with LangGraph state management",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.js"
+		},
+		"./graph": {
+			"types": "./dist/graph-simple.d.ts",
+			"import": "./dist/graph-simple.js",
+			"require": "./dist/graph-simple.js"
+		},
+		"./state": {
+			"types": "./dist/state.d.ts",
+			"import": "./dist/state.js",
+			"require": "./dist/state.js"
+		},
+		"./nodes": {
+			"types": "./dist/nodes/index.d.ts",
+			"import": "./dist/nodes/index.js",
+			"require": "./dist/nodes/index.js"
+		},
+		"./mcp": {
+			"types": "./dist/mcp/adapter.d.ts",
+			"import": "./dist/mcp/adapter.js",
+			"require": "./dist/mcp/adapter.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"test": "vitest",
+		"test:watch": "vitest --watch",
+		"test:coverage": "vitest --coverage",
+		"test:ci": "vitest run --coverage --reporter=verbose",
+		"gates:determinism": "vitest run tests/determinism.test.ts --reporter=dot",
+		"lint": "eslint src/**/*.ts",
+		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"@cortex-os/prp-runner": "workspace:*",
+		"nanoid": "^5.0.4",
+		"zod": "^3.22.4"
+	},
+	"devDependencies": {
+		"@types/node": "^20.9.0",
+		"@typescript-eslint/eslint-plugin": "^8.40.0",
+		"@typescript-eslint/parser": "^8.40.0",
+		"@vitest/coverage-v8": "^3.2.4",
+		"eslint": "^8.53.0",
+		"typescript": "^5.2.2",
+		"vitest": "^3.2.4"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"keywords": [
+		"cortex-os",
+		"kernel",
+		"langgraph",
+		"deterministic",
+		"mcp",
+		"prp"
+	],
+	"author": "Cortex-OS Team",
+	"license": "(Apache-2.0 OR Commercial)"
 }

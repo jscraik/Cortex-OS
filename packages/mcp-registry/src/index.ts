@@ -4,8 +4,12 @@
  */
 
 // Re-export schemas for external use
-export { default as registrySchema } from '../schemas/registry.schema.json' with { type: 'json' };
-export { default as serverManifestSchema } from '../schemas/server-manifest.schema.json' with { type: 'json' };
-export * from './fs-store.js';
-export * from './types.js';
-export * from './validator.js';
+export { default as registrySchema } from "../schemas/registry.schema.json" with {
+	type: "json",
+};
+export { default as serverManifestSchema } from "../schemas/server-manifest.schema.json" with {
+	type: "json",
+};
+export * from "./fs-store.js";
+export * from "./types.js";
+export * from "./validator.js";

@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Quick start script for Cortex Semgrep Cloudflare Tunnel
-# Runs the tunnel: insula-semgrep-app -> insula-semgrep.brainwav.io:3002
+# Runs the tunnel: semgrep-github-app -> semgrep-github.brainwav.io:3002
 
-TUNNEL_NAME="insula-semgrep-app"
+TUNNEL_NAME="semgrep-github-app"
 CONFIG_FILE="$(dirname "$0")/tunnel.config.yml"
 
 echo "🚀 Starting Cloudflare Tunnel for Semgrep GitHub App"
 echo "   Tunnel: $TUNNEL_NAME"
 echo "   Config: $CONFIG_FILE"
-echo "   URL: https://insula-semgrep.brainwav.io"
+echo "   URL: https://semgrep-github.brainwav.io"
 echo
 
 # Check if tunnel exists

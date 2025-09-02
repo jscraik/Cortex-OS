@@ -45,10 +45,31 @@ fi
 
 CF_HOSTNAME="${CF_HOSTNAME:-cortex-github.brainwav.io}"
 
-echo "3) Verifying Cloudflare Tunnel at https://$CF_HOSTNAME/health (if reachable)..."
+TUNNEL_CONFIG="infrastructure/cloudflare/tunnel.config.yml"
+
+echo "3) Ensuring Cloudflare Tunnel is running..."
+if [[ -f "$TUNNEL_CONFIG" ]]; then
+  echo "   Using config: $TUNNEL_CONFIG"
+  if pgrep -af "cloudflared" | grep -q "--config $TUNNEL_CONFIG"; then
+    echo "   ℹ️  Cloudflare tunnel (config: $TUNNEL_CONFIG) already running"
+  else
+    echo "   🚀 Starting Cloudflare tunnel..."
+    nohup cloudflared tunnel --config "$TUNNEL_CONFIG" run > logs/tunnel.log 2>&1 &
+    sleep 2
+  fi
+else
+  echo "   ⚠️  Cloudflare tunnel config not found at $TUNNEL_CONFIG"
+fi
+
+echo "4) Verifying Cloudflare Tunnel at https://$CF_HOSTNAME/health (if reachable)..."
 curl -s -o /dev/null -w "%{http_code}\n" "https://$CF_HOSTNAME/health" || true
 
 echo "Done. Point your GitHub App Webhook URL to https://$CF_HOSTNAME/webhook"
+
+# Summary
+echo ""
+echo "✅ cortex-ai-github is running on port ${PORT}"
+echo "🌐 Public URL (Cloudflare): https://$CF_HOSTNAME"
 
 if [ -n "${APP_PID:-}" ]; then
   wait $APP_PID

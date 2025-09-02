@@ -48,7 +48,7 @@ impl ConversationContext {
             last_updated: now,
         }
     }
-    
+
     pub fn add_message(&mut self, role: MessageRole, content: String) {
         let message = ContextMessage {
             role,
@@ -56,53 +56,53 @@ impl ConversationContext {
             timestamp: std::time::SystemTime::now(),
             token_count: None, // Could implement token counting
         };
-        
+
         self.messages.push(message);
         self.last_updated = std::time::SystemTime::now();
     }
-    
+
     pub fn add_decision(&mut self, decision: String) {
         self.decisions.push(decision);
         self.last_updated = std::time::SystemTime::now();
     }
-    
+
     pub fn add_context(&mut self, key: String, value: serde_json::Value) {
         self.context_data.insert(key, value);
         self.last_updated = std::time::SystemTime::now();
     }
-    
+
     pub fn add_tag(&mut self, tag: String) {
         if !self.tags.contains(&tag) {
             self.tags.push(tag);
             self.last_updated = std::time::SystemTime::now();
         }
     }
-    
+
     pub fn get_messages(&self) -> &[ContextMessage] {
         &self.messages
     }
-    
+
     pub fn get_recent_messages(&self, count: usize) -> &[ContextMessage] {
         let start_index = self.messages.len().saturating_sub(count);
         &self.messages[start_index..]
     }
-    
+
     pub fn get_user_messages(&self) -> Vec<&ContextMessage> {
         self.messages.iter()
             .filter(|msg| matches!(msg.role, MessageRole::User))
             .collect()
     }
-    
+
     pub fn get_assistant_messages(&self) -> Vec<&ContextMessage> {
         self.messages.iter()
             .filter(|msg| matches!(msg.role, MessageRole::Assistant))
             .collect()
     }
-    
+
     pub fn message_count(&self) -> usize {
         self.messages.len()
     }
-    
+
     pub fn trim_context(&mut self, keep_count: usize) {
         if self.messages.len() > keep_count {
             let remove_count = self.messages.len() - keep_count;
@@ -110,12 +110,12 @@ impl ConversationContext {
             self.last_updated = std::time::SystemTime::now();
         }
     }
-    
+
     pub fn generate_summary(&self) -> ConversationSummary {
         let summary_text = self.create_conversation_summary();
         let duration = self.last_updated.duration_since(self.created_at)
             .unwrap_or_default();
-        
+
         ConversationSummary {
             text: summary_text,
             key_decisions: self.decisions.clone(),
@@ -125,18 +125,18 @@ impl ConversationContext {
             duration,
         }
     }
-    
+
     fn create_conversation_summary(&self) -> String {
         if self.messages.is_empty() {
             return "Empty conversation".to_string();
         }
-        
+
         let user_messages = self.get_user_messages();
         let assistant_messages = self.get_assistant_messages();
-        
+
         let main_topics = self.extract_main_topics();
         let interaction_pattern = self.analyze_interaction_pattern();
-        
+
         format!(
             "Conversation with {} messages over {} duration. Main topics: {}. Pattern: {}. {} decisions made.",
             self.messages.len(),
@@ -146,32 +146,32 @@ impl ConversationContext {
             self.decisions.len()
         )
     }
-    
+
     fn extract_main_topics(&self) -> String {
         // Simplified topic extraction - in production would use NLP
         let all_text: String = self.messages.iter()
             .map(|msg| msg.content.clone())
             .collect::<Vec<_>>()
             .join(" ");
-        
+
         // Simple keyword extraction (in production, use proper NLP)
         let keywords = ["implement", "create", "fix", "update", "analyze", "design", "test", "debug"];
         let found_keywords: Vec<&str> = keywords.iter()
             .filter(|&&keyword| all_text.to_lowercase().contains(keyword))
             .copied()
             .collect();
-        
+
         if found_keywords.is_empty() {
             "general discussion".to_string()
         } else {
             found_keywords.join(", ")
         }
     }
-    
+
     fn analyze_interaction_pattern(&self) -> String {
         let user_count = self.get_user_messages().len();
         let assistant_count = self.get_assistant_messages().len();
-        
+
         if user_count == 0 {
             "no user input".to_string()
         } else if assistant_count == 0 {
@@ -180,16 +180,16 @@ impl ConversationContext {
             let ratio = assistant_count as f64 / user_count as f64;
             match ratio {
                 r if r > 1.5 => "assistant-heavy",
-                r if r < 0.5 => "user-heavy", 
+                r if r < 0.5 => "user-heavy",
                 _ => "balanced"
             }.to_string()
         }
     }
-    
+
     fn format_duration(&self) -> String {
         let duration = self.last_updated.duration_since(self.created_at)
             .unwrap_or_default();
-        
+
         let seconds = duration.as_secs();
         if seconds < 60 {
             format!("{}s", seconds)
@@ -199,12 +199,12 @@ impl ConversationContext {
             format!("{}h {}m", seconds / 3600, (seconds % 3600) / 60)
         }
     }
-    
+
     pub fn get_context_for_prompt(&self, max_messages: usize) -> String {
         let recent_messages = self.get_recent_messages(max_messages);
-        
+
         let mut context = String::new();
-        
+
         // Add relevant context data
         if !self.context_data.is_empty() {
             context.push_str("Context:\n");
@@ -213,7 +213,7 @@ impl ConversationContext {
             }
             context.push('\n');
         }
-        
+
         // Add recent decisions
         if !self.decisions.is_empty() {
             context.push_str("Recent Decisions:\n");
@@ -222,7 +222,7 @@ impl ConversationContext {
             }
             context.push('\n');
         }
-        
+
         // Add message history
         context.push_str("Recent Messages:\n");
         for message in recent_messages {
@@ -233,46 +233,46 @@ impl ConversationContext {
             };
             context.push_str(&format!("{}: {}\n", role, message.content));
         }
-        
+
         context
     }
-    
+
     pub fn session_id(&self) -> &str {
         &self.session_id
     }
-    
+
     pub fn provider(&self) -> &str {
         &self.provider
     }
-    
+
     pub fn model(&self) -> &str {
         &self.model
     }
-    
+
     pub fn decisions(&self) -> &[String] {
         &self.decisions
     }
-    
+
     pub fn context_data(&self) -> &HashMap<String, serde_json::Value> {
         &self.context_data
     }
-    
+
     pub fn tags(&self) -> &[String] {
         &self.tags
     }
-    
+
     pub fn created_at(&self) -> std::time::SystemTime {
         self.created_at
     }
-    
+
     pub fn last_updated(&self) -> std::time::SystemTime {
         self.last_updated
     }
-    
+
     pub fn is_empty(&self) -> bool {
         self.messages.is_empty()
     }
-    
+
     pub fn estimated_token_count(&self) -> usize {
         // Simple estimation: ~4 characters per token
         self.messages.iter()
@@ -290,7 +290,7 @@ impl ContextMessage {
             token_count: None,
         }
     }
-    
+
     pub fn with_token_count(mut self, count: usize) -> Self {
         self.token_count = Some(count);
         self

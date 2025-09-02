@@ -1,29 +1,35 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Golden Trace Suite",
-  "type": "array",
-  "items": {
-    "type": "object",
-    "oneOf": [
-      { "required": ["name", "input", "expected"] },
-      { "required": ["name", "query", "docs", "expected"] }
-    ],
-    "properties": {
-      "name": { "type": "string" },
-      "input": { "type": "string" },
-      "query": { "type": "string" },
-      "docs": { "type": "array", "items": { "type": "string" } },
-      "expected": {
-        "type": "object",
-        "oneOf": [
-          { "required": ["contains"], "properties": { "contains": { "type": "string" } } },
-          { "required": ["regex"], "properties": { "regex": { "type": "string" } } },
-          {
-            "required": ["isPermutation"],
-            "properties": { "isPermutation": { "type": "boolean" } }
-          }
-        ]
-      }
-    }
-  }
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "Golden Trace Suite",
+	"type": "array",
+	"items": {
+		"type": "object",
+		"oneOf": [
+			{ "required": ["name", "input", "expected"] },
+			{ "required": ["name", "query", "docs", "expected"] }
+		],
+		"properties": {
+			"name": { "type": "string" },
+			"input": { "type": "string" },
+			"query": { "type": "string" },
+			"docs": { "type": "array", "items": { "type": "string" } },
+			"expected": {
+				"type": "object",
+				"oneOf": [
+					{
+						"required": ["contains"],
+						"properties": { "contains": { "type": "string" } }
+					},
+					{
+						"required": ["regex"],
+						"properties": { "regex": { "type": "string" } }
+					},
+					{
+						"required": ["isPermutation"],
+						"properties": { "isPermutation": { "type": "boolean" } }
+					}
+				]
+			}
+		}
+	}
 }

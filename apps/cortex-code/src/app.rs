@@ -48,22 +48,22 @@ pub struct McpServerInfo {
 impl CortexApp {
     pub async fn new(config: Config) -> Result<Self> {
         let provider = config.create_provider()?;
-        
+
         // Initialize memory storage if enabled
         let memory = if config.enable_memory().unwrap_or(true) {
             let memory_config = MemoryConfig::default()
                 .with_path(config.get_agents_md_path())
                 .with_retention_days(config.memory_retention_days().unwrap_or(30))
                 .with_audit_enabled(config.enable_audit().unwrap_or(true));
-                
+
             Some(MemoryStorage::new(memory_config).await?)
         } else {
             None
         };
-        
+
         // Initialize MCP service
         let mcp_service = Arc::new(McpService::new().await?);
-        
+
         Ok(Self {
             config,
             provider: Arc::new(Mutex::new(provider)),
@@ -75,17 +75,17 @@ impl CortexApp {
             },
         })
     }
-    
+
     pub async fn run_tui(&mut self) -> Result<()> {
         // This is now handled by main.rs with the actual TUI loop
         println!("TUI mode - this should not be called directly");
         Ok(())
     }
-    
+
     pub async fn run_ci(&mut self, prompt: &str, output_format: &str) -> Result<()> {
         let provider = self.provider.lock().await;
         let response = provider.complete(prompt).await?;
-        
+
         match output_format {
             "json" => {
                 let output = serde_json::json!({
@@ -102,27 +102,27 @@ impl CortexApp {
                 println!("{}", response);
             }
         }
-        
+
         Ok(())
     }
-    
+
     pub async fn run_single(&mut self, prompt: &str) -> Result<()> {
         let provider = self.provider.lock().await;
         let response = provider.complete(prompt).await?;
         println!("{}", response);
         Ok(())
     }
-    
+
     pub async fn run_daemon(&mut self, port: u16) -> Result<()> {
         let daemon = DaemonServer::new(self.clone(), port);
         daemon.start().await
     }
-    
+
     pub async fn get_ai_response(&mut self, prompt: &str) -> Result<String> {
         let provider = self.provider.lock().await;
         provider.complete(prompt).await
     }
-    
+
     pub async fn list_mcp_servers(&self) -> Result<Vec<McpServerInfo>> {
         let servers = self.mcp_service.list_servers().await?
             .into_iter()
@@ -133,7 +133,7 @@ impl CortexApp {
             .collect();
         Ok(servers)
     }
-    
+
     pub async fn add_mcp_server(&mut self, name: &str, config_str: &str) -> Result<()> {
         // Parse the config string as JSON
         let config: McpServerConfig = serde_json::from_str(config_str)
@@ -143,28 +143,28 @@ impl CortexApp {
                     value: format!("Invalid MCP server config: {}", e)
                 }
             ))?;
-        
+
         self.mcp_service.add_server(name, config).await?;
         Ok(())
     }
-    
+
     pub async fn remove_mcp_server(&mut self, name: &str) -> Result<()> {
         self.mcp_service.remove_server(name).await?;
         Ok(())
     }
-    
+
     // Memory management methods for daemon API
     pub fn get_memory_storage(&self) -> Result<&MemoryStorage> {
-        self.memory.as_ref().ok_or_else(|| 
+        self.memory.as_ref().ok_or_else(||
             crate::error::Error::Config(crate::error::ConfigError::MissingField("Memory storage not enabled".to_string()))
         )
     }
-    
+
     // Provider management methods for daemon API
     pub async fn get_available_providers(&self) -> Vec<String> {
         vec!["github".to_string(), "openai".to_string(), "anthropic".to_string(), "mlx".to_string()]
     }
-    
+
     pub async fn get_provider_models(&self, provider: &str) -> Vec<String> {
         match provider {
             "github" => vec!["gpt-4o-mini".to_string(), "gpt-4o".to_string(), "gpt-3.5-turbo".to_string()],
@@ -184,7 +184,7 @@ impl Message {
             timestamp: std::time::SystemTime::now(),
         }
     }
-    
+
     pub fn assistant(content: impl Into<String>) -> Self {
         Self {
             role: MessageRole::Assistant,
@@ -192,7 +192,7 @@ impl Message {
             timestamp: std::time::SystemTime::now(),
         }
     }
-    
+
     pub fn system(content: impl Into<String>) -> Self {
         Self {
             role: MessageRole::System,

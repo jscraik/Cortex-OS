@@ -1,18 +1,21 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Plan/Apply Receipt",
-  "type": "object",
-  "required": ["id", "planHash", "status", "startedAt", "diffs"],
-  "properties": {
-    "id": { "type": "string", "description": "ULID" },
-    "planHash": { "type": "string" },
-    "applyHash": { "type": "string" },
-    "startedAt": { "type": "string", "format": "date-time" },
-    "finishedAt": { "type": "string", "format": "date-time" },
-    "model": { "type": "string" },
-    "seed": { "type": "integer" },
-    "status": { "type": "string", "enum": ["planned", "applied", "failed", "aborted"] },
-    "diffs": { "type": "array", "items": { "type": "object" } },
-    "evidence": { "type": "array", "items": { "type": "object" } }
-  }
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "Plan/Apply Receipt",
+	"type": "object",
+	"required": ["id", "planHash", "status", "startedAt", "diffs"],
+	"properties": {
+		"id": { "type": "string", "description": "ULID" },
+		"planHash": { "type": "string" },
+		"applyHash": { "type": "string" },
+		"startedAt": { "type": "string", "format": "date-time" },
+		"finishedAt": { "type": "string", "format": "date-time" },
+		"model": { "type": "string" },
+		"seed": { "type": "integer" },
+		"status": {
+			"type": "string",
+			"enum": ["planned", "applied", "failed", "aborted"]
+		},
+		"diffs": { "type": "array", "items": { "type": "object" } },
+		"evidence": { "type": "array", "items": { "type": "object" } }
+	}
 }

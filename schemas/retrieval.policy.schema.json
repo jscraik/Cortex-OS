@@ -1,69 +1,69 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://cortex-os/schemas/retrieval.policy.schema.json",
-  "title": "Retrieval Policy",
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "version": { "type": "string" },
-    "description": { "type": "string" },
-    "mimePolicy": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "ocrMaxPages": { "type": "integer", "minimum": 1 },
-        "unstructuredMaxPages": { "type": "integer", "minimum": 1 },
-        "allowExecutables": { "type": "boolean" },
-        "allowArchives": { "type": "boolean" },
-        "allowUnknownTypes": { "type": "boolean" },
-        "maxFileSize": { "type": "integer", "minimum": 1 }
-      },
-      "required": [
-        "ocrMaxPages",
-        "unstructuredMaxPages",
-        "allowExecutables",
-        "allowArchives",
-        "allowUnknownTypes",
-        "maxFileSize"
-      ]
-    },
-    "overrides": {
-      "type": "object",
-      "description": "Pattern or MIME-specific overrides",
-      "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "processing": {
-            "type": "object",
-            "properties": {
-              "maxPages": { "type": ["integer", "null"], "minimum": 1 }
-            },
-            "additionalProperties": true
-          }
-        },
-        "additionalProperties": true
-      }
-    },
-    "dispatcher": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "timeout": { "type": "integer", "minimum": 1 },
-        "maxChunkSize": { "type": "integer", "minimum": 1 },
-        "enableParallel": { "type": "boolean" }
-      }
-    },
-    "security": {
-      "type": "object",
-      "properties": {
-        "sanitizeFilenames": { "type": "boolean" },
-        "blocklist": {
-          "type": "array",
-          "items": { "type": "string" }
-        }
-      },
-      "additionalProperties": false
-    }
-  },
-  "required": ["mimePolicy"]
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://cortex-os/schemas/retrieval.policy.schema.json",
+	"title": "Retrieval Policy",
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"version": { "type": "string" },
+		"description": { "type": "string" },
+		"mimePolicy": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"ocrMaxPages": { "type": "integer", "minimum": 1 },
+				"unstructuredMaxPages": { "type": "integer", "minimum": 1 },
+				"allowExecutables": { "type": "boolean" },
+				"allowArchives": { "type": "boolean" },
+				"allowUnknownTypes": { "type": "boolean" },
+				"maxFileSize": { "type": "integer", "minimum": 1 }
+			},
+			"required": [
+				"ocrMaxPages",
+				"unstructuredMaxPages",
+				"allowExecutables",
+				"allowArchives",
+				"allowUnknownTypes",
+				"maxFileSize"
+			]
+		},
+		"overrides": {
+			"type": "object",
+			"description": "Pattern or MIME-specific overrides",
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"processing": {
+						"type": "object",
+						"properties": {
+							"maxPages": { "type": ["integer", "null"], "minimum": 1 }
+						},
+						"additionalProperties": true
+					}
+				},
+				"additionalProperties": true
+			}
+		},
+		"dispatcher": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"timeout": { "type": "integer", "minimum": 1 },
+				"maxChunkSize": { "type": "integer", "minimum": 1 },
+				"enableParallel": { "type": "boolean" }
+			}
+		},
+		"security": {
+			"type": "object",
+			"properties": {
+				"sanitizeFilenames": { "type": "boolean" },
+				"blocklist": {
+					"type": "array",
+					"items": { "type": "string" }
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"required": ["mimePolicy"]
 }

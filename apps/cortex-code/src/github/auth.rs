@@ -125,7 +125,7 @@ impl TokenManager {
                 let installation_token = self
                     .get_installation_token(app_id, private_key, installation_id)
                     .await?;
-                
+
                 self.current_token = Some(installation_token.clone());
                 Ok(installation_token.token)
             }
@@ -256,13 +256,13 @@ impl TokenManager {
         // For now, return a placeholder
         // In a full implementation, we'd use the `jsonwebtoken` crate to create a proper JWT
         // signed with the GitHub App's private key
-        
+
         // This is a simplified version for demonstration
         // Real implementation would require:
         // 1. Parse the private key (PEM format)
         // 2. Create JWT with proper header and payload
         // 3. Sign with RS256 algorithm
-        
+
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -277,7 +277,7 @@ impl TokenManager {
         // Placeholder - would use proper JWT signing in production
         let jwt_payload = serde_json::to_string(&payload)?;
         let encoded = base64::encode(jwt_payload.as_bytes());
-        
+
         warn!("Using placeholder JWT - implement proper signing for production");
         Ok(encoded)
     }
@@ -324,7 +324,7 @@ pub fn create_auth_from_env() -> Result<Option<GitHubAuth>> {
         std::env::var("GITHUB_OAUTH_ACCESS_TOKEN"),
     ) {
         let refresh_token = std::env::var("GITHUB_OAUTH_REFRESH_TOKEN").ok();
-        
+
         return Ok(Some(GitHubAuth::OAuth {
             client_id,
             client_secret,
@@ -380,10 +380,10 @@ mod tests {
         };
 
         let manager = TokenManager::new(GitHubAuth::PersonalAccessToken("test".to_string()));
-        
+
         // Token should not be expired (expires in 1 minute, buffer is 5 minutes)
         assert!(!manager.is_token_expired(&token));
-        
+
         // Test expired token
         let expired_token = AuthToken {
             token: "test".to_string(),
@@ -391,23 +391,23 @@ mod tests {
             scopes: vec![],
             token_type: "Bearer".to_string(),
         };
-        
+
         assert!(manager.is_token_expired(&expired_token));
     }
 
     #[test]
     fn test_create_auth_from_env() {
         std::env::set_var("GITHUB_TOKEN", "test-token");
-        
+
         let auth = create_auth_from_env().unwrap();
         assert!(auth.is_some());
-        
+
         if let Some(GitHubAuth::PersonalAccessToken(token)) = auth {
             assert_eq!(token, "test-token");
         } else {
             panic!("Expected PersonalAccessToken");
         }
-        
+
         std::env::remove_var("GITHUB_TOKEN");
     }
 }

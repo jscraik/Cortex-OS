@@ -1,70 +1,70 @@
 {
-  "name": "@cortex-os/prp-runner",
-  "version": "1.0.0",
-  "description": "Production-grade PRP Neural Orchestration Engine",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": "./dist/index.js",
-    "./orchestrator": "./dist/orchestrator.js",
-    "./neurons": "./dist/neurons/index.js",
-    "./tools": "./dist/tools/index.js",
-    "./validation": "./dist/validation/index.js"
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
-    "test:ci": "vitest run --coverage --reporter=verbose",
-    "tdd:red": "echo 'TDD Phase 1: Write failing test' && vitest --watch",
-    "tdd:green": "echo 'TDD Phase 2: Make test pass' && vitest run",
-    "tdd:refactor": "echo 'TDD Phase 3: Refactor while keeping tests green' && vitest run --watch",
-    "gates:tdd": "vitest run --coverage --reporter=dot && echo 'TDD gates passed: All tests pass with 85%+ coverage'",
-    "lint": "eslint src/**/*.ts",
-    "clean": "rm -rf dist",
-    "precommit": "pnpm gates:tdd && pnpm lint"
-  },
-  "dependencies": {
-    "@cortex-os/a2a": "workspace:*",
-    "axe-core": "^4.9.1",
-    "chalk": "^5.3.0",
-    "chokidar": "^3.5.3",
-    "execa": "^9.6.0",
-    "express": "^4.18.2",
-    "fs-extra": "^11.3.1",
-    "glob": "^10.4.2",
-    "inquirer": "^9.2.12",
-    "lighthouse": "^11.4.0",
-    "ollama": "^0.5.17",
-    "ora": "^7.0.1",
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "@cortex-os/a2a": "workspace:*",
-    "@xenova/transformers": "^2.17.2",
-    "@vitest/coverage-v8": "^3.2.4",
-    "eslint": "^8.53.0",
-    "typescript": "^5.2.2",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "keywords": [
-    "ai",
-    "orchestration",
-    "neural",
-    "prp",
-    "cortex",
-    "production"
-  ],
-  "author": "Cortex-OS Team",
-  "license": "(Apache-2.0 OR Commercial)"
+	"name": "@cortex-os/prp-runner",
+	"version": "1.0.0",
+	"description": "Production-grade PRP Neural Orchestration Engine",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./orchestrator": "./dist/orchestrator.js",
+		"./neurons": "./dist/neurons/index.js",
+		"./tools": "./dist/tools/index.js",
+		"./validation": "./dist/validation/index.js"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"test": "vitest",
+		"test:watch": "vitest --watch",
+		"test:coverage": "vitest --coverage",
+		"test:ci": "vitest run --coverage --reporter=verbose",
+		"tdd:red": "echo 'TDD Phase 1: Write failing test' && vitest --watch",
+		"tdd:green": "echo 'TDD Phase 2: Make test pass' && vitest run",
+		"tdd:refactor": "echo 'TDD Phase 3: Refactor while keeping tests green' && vitest run --watch",
+		"gates:tdd": "vitest run --coverage --reporter=dot && echo 'TDD gates passed: All tests pass with 85%+ coverage'",
+		"lint": "eslint src/**/*.ts",
+		"clean": "rm -rf dist",
+		"precommit": "pnpm gates:tdd && pnpm lint"
+	},
+	"dependencies": {
+		"@cortex-os/a2a": "workspace:*",
+		"axe-core": "^4.9.1",
+		"chalk": "^5.3.0",
+		"chokidar": "^3.5.3",
+		"execa": "^9.6.0",
+		"express": "^4.18.2",
+		"fs-extra": "^11.3.1",
+		"glob": "^10.4.2",
+		"inquirer": "^9.2.12",
+		"lighthouse": "^11.4.0",
+		"ollama": "^0.5.17",
+		"ora": "^7.0.1",
+		"zod": "^3.22.4"
+	},
+	"devDependencies": {
+		"@cortex-os/a2a": "workspace:*",
+		"@xenova/transformers": "^2.17.2",
+		"@vitest/coverage-v8": "^3.2.4",
+		"eslint": "^8.53.0",
+		"typescript": "^5.2.2",
+		"vitest": "^3.2.4"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"keywords": [
+		"ai",
+		"orchestration",
+		"neural",
+		"prp",
+		"cortex",
+		"production"
+	],
+	"author": "Cortex-OS Team",
+	"license": "(Apache-2.0 OR Commercial)"
 }

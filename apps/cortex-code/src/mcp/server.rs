@@ -78,36 +78,36 @@ impl McpServerInfo {
             version: "1.0.0".to_string(),
         }
     }
-    
+
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
         self.description = description.into();
         self
     }
-    
+
     pub fn with_args(mut self, args: Vec<String>) -> Self {
         self.args = args;
         self
     }
-    
+
     pub fn with_env(mut self, env: HashMap<String, String>) -> Self {
         self.env = env;
         self
     }
-    
+
     pub fn with_working_dir(mut self, working_dir: PathBuf) -> Self {
         self.working_dir = Some(working_dir);
         self
     }
-    
+
     pub fn with_capabilities(mut self, capabilities: Vec<McpCapability>) -> Self {
         self.capabilities = capabilities;
         self
     }
-    
+
     pub fn is_running(&self) -> bool {
         matches!(self.status, McpServerStatus::Running)
     }
-    
+
     pub fn set_status(&mut self, status: McpServerStatus) {
         self.status = status;
     }
@@ -147,15 +147,15 @@ pub fn default_mcp_servers() -> Vec<McpServerInfo> {
         McpServerInfo::new("cortex-fs", "cortex-mcp-fs")
             .with_description("File system operations - read, write, search files")
             .with_capabilities(vec![McpCapability::Tools, McpCapability::Resources]),
-        
+
         McpServerInfo::new("cortex-git", "cortex-mcp-git")
             .with_description("Git operations - status, diff, commit, branch management")
             .with_capabilities(vec![McpCapability::Tools]),
-        
+
         McpServerInfo::new("cortex-web", "cortex-mcp-web")
             .with_description("Web scraping and HTTP requests")
             .with_capabilities(vec![McpCapability::Tools]),
-        
+
         McpServerInfo::new("cortex-db", "cortex-mcp-db")
             .with_description("Database operations and queries")
             .with_capabilities(vec![McpCapability::Tools, McpCapability::Resources]),

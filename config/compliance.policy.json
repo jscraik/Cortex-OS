@@ -1,13 +1,13 @@
 {
-  "exceptions": {
-    "devOnly": [
-      "eslint-plugin-sonarjs",
-      "jackspeak",
-      "path-scurry",
-      "package-json-from-dist",
-      "parse-cache-control",
-      "spdx-exceptions",
-      "tslib"
-    ]
-  }
+	"exceptions": {
+		"devOnly": [
+			"eslint-plugin-sonarjs",
+			"jackspeak",
+			"path-scurry",
+			"package-json-from-dist",
+			"parse-cache-control",
+			"spdx-exceptions",
+			"tslib"
+		]
+	}
 }

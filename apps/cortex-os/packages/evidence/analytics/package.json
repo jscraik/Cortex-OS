@@ -1,45 +1,45 @@
 {
-  "name": "@cortex-os/orchestration-analytics",
-  "version": "0.1.0",
-  "description": "Advanced agent orchestration analytics platform with performance monitoring and optimization insights",
-  "main": "src/index.ts",
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "typecheck": "pnpm -w exec tsc -p apps/cortex-os/brain/evidence/analytics/tsconfig.typecheck.json --noEmit",
-    "test": "vitest",
-    "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint src/**/*.ts",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@cortex-os/orchestration": "workspace:*",
-    "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.203.0",
-    "ws": "^8.17.0",
-    "d3": "^7.9.0",
-    "ml-matrix": "^6.11.0",
-    "pino": "^9.5.0"
-  },
-  "devDependencies": {
-    "@types/d3": "^7.4.3",
-    "@types/ws": "^8.5.10",
-    "@types/node": "^24.1.0",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
-    "@testing-library/dom": "^10.4.1"
-  },
-  "keywords": [
-    "agent-orchestration",
-    "analytics",
-    "performance-monitoring",
-    "optimization",
-    "langgraph",
-    "crewai",
-    "autogen",
-    "real-time-dashboard"
-  ],
-  "author": "Cortex OS Team",
-  "license": "(Apache-2.0 OR Commercial)"
+	"name": "@cortex-os/orchestration-analytics",
+	"version": "0.1.0",
+	"description": "Advanced agent orchestration analytics platform with performance monitoring and optimization insights",
+	"main": "src/index.ts",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"typecheck": "pnpm -w exec tsc -p apps/cortex-os/brain/evidence/analytics/tsconfig.typecheck.json --noEmit",
+		"test": "vitest",
+		"test:watch": "vitest watch",
+		"test:coverage": "vitest run --coverage",
+		"lint": "eslint src/**/*.ts",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@cortex-os/orchestration": "workspace:*",
+		"@opentelemetry/api": "^1.9.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.203.0",
+		"ws": "^8.17.0",
+		"d3": "^7.9.0",
+		"ml-matrix": "^6.11.0",
+		"pino": "^9.5.0"
+	},
+	"devDependencies": {
+		"@types/d3": "^7.4.3",
+		"@types/ws": "^8.5.10",
+		"@types/node": "^24.1.0",
+		"typescript": "^5.8.3",
+		"vitest": "^3.2.4",
+		"@testing-library/dom": "^10.4.1"
+	},
+	"keywords": [
+		"agent-orchestration",
+		"analytics",
+		"performance-monitoring",
+		"optimization",
+		"langgraph",
+		"crewai",
+		"autogen",
+		"real-time-dashboard"
+	],
+	"author": "Cortex OS Team",
+	"license": "(Apache-2.0 OR Commercial)"
 }

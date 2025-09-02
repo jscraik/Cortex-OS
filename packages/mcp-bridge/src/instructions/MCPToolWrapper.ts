@@ -6,324 +6,356 @@
  * and memory management.
  */
 
-import { exec } from 'child_process';
-import { EventEmitter } from 'events';
-import { promisify } from 'util';
-import { getErrorMessage } from '../../utils/type-guards.js';
+import { exec } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { promisify } from "node:util";
+import { getErrorMessage } from "../../utils/type-guards.js";
 
 const execAsync = promisify(exec);
 
 interface MCPToolResponse {
-  success: boolean;
-  data?: any;
-  error?: string;
+	success: boolean;
+	data?: any;
+	error?: string;
 }
 
 export class MCPToolWrapper extends EventEmitter {
-  private toolPrefix = 'mcp__ruv-swarm__';
-  private isInitialized = false;
+	/**
+	 * Initialize MCP tools
+	 */
+	async initialize(): Promise<void> {
+		try {
+			// Check if MCP tools are available
+			await this.checkToolAvailability();
+			this.isInitialized = true;
+			this.emit("initialized");
+		} catch (error) {
+			this.emit("error", error);
+			throw error;
+		}
+	}
 
-  constructor() {
-    super();
-  }
+	/**
+	 * Check if MCP tools are available
+	 */
+	private async checkToolAvailability(): Promise<void> {
+		try {
+			const { stdout } = await execAsync("npx ruv-swarm --version");
+			if (!stdout) {
+				throw new Error("ruv-swarm MCP tools not found");
+			}
+		} catch (_error) {
+			throw new Error(
+				"MCP tools not available. Please ensure ruv-swarm is installed.",
+			);
+		}
+	}
 
-  /**
-   * Initialize MCP tools
-   */
-  async initialize(): Promise<void> {
-    try {
-      // Check if MCP tools are available
-      await this.checkToolAvailability();
-      this.isInitialized = true;
-      this.emit('initialized');
-    } catch (error) {
-      this.emit('error', error);
-      throw error;
-    }
-  }
+	/**
+	 * Execute MCP tool via CLI
+	 */
+	private async executeTool(
+		toolName: string,
+		params: any,
+	): Promise<MCPToolResponse> {
+		try {
+			const command = `npx ruv-swarm mcp-execute ${toolName} '${JSON.stringify(params)}'`;
+			const { stdout, stderr } = await execAsync(command);
 
-  /**
-   * Check if MCP tools are available
-   */
-  private async checkToolAvailability(): Promise<void> {
-    try {
-      const { stdout } = await execAsync('npx ruv-swarm --version');
-      if (!stdout) {
-        throw new Error('ruv-swarm MCP tools not found');
-      }
-    } catch (error) {
-      throw new Error('MCP tools not available. Please ensure ruv-swarm is installed.');
-    }
-  }
+			if (stderr) {
+				return { success: false, error: stderr };
+			}
 
-  /**
-   * Execute MCP tool via CLI
-   */
-  private async executeTool(toolName: string, params: any): Promise<MCPToolResponse> {
-    try {
-      const command = `npx ruv-swarm mcp-execute ${toolName} '${JSON.stringify(params)}'`;
-      const { stdout, stderr } = await execAsync(command);
+			const result = JSON.parse(stdout);
+			return { success: true, data: result };
+		} catch (error) {
+			return { success: false, error: getErrorMessage(error) };
+		}
+	}
 
-      if (stderr) {
-        return { success: false, error: stderr };
-      }
+	// Swarm coordination tools
 
-      const result = JSON.parse(stdout);
-      return { success: true, data: result };
-    } catch (error) {
-      return { success: false, error: getErrorMessage(error) };
-    }
-  }
+	async initSwarm(params: {
+		topology: string;
+		maxAgents?: number;
+		strategy?: string;
+	}): Promise<any> {
+		return this.executeTool("swarm_init", params);
+	}
 
-  // Swarm coordination tools
+	async spawnAgent(params: {
+		type: string;
+		name?: string;
+		swarmId?: string;
+		capabilities?: string[];
+	}): Promise<any> {
+		return this.executeTool("agent_spawn", params);
+	}
 
-  async initSwarm(params: {
-    topology: string;
-    maxAgents?: number;
-    strategy?: string;
-  }): Promise<any> {
-    return this.executeTool('swarm_init', params);
-  }
+	async orchestrateTask(params: {
+		task: string;
+		priority?: string;
+		strategy?: string;
+		dependencies?: string[];
+	}): Promise<any> {
+		return this.executeTool("task_orchestrate", params);
+	}
 
-  async spawnAgent(params: {
-    type: string;
-    name?: string;
-    swarmId?: string;
-    capabilities?: string[];
-  }): Promise<any> {
-    return this.executeTool('agent_spawn', params);
-  }
+	async getSwarmStatus(swarmId?: string): Promise<any> {
+		return this.executeTool("swarm_status", { swarmId });
+	}
 
-  async orchestrateTask(params: {
-    task: string;
-    priority?: string;
-    strategy?: string;
-    dependencies?: string[];
-  }): Promise<any> {
-    return this.executeTool('task_orchestrate', params);
-  }
+	async monitorSwarm(params: {
+		swarmId?: string;
+		interval?: number;
+	}): Promise<any> {
+		return this.executeTool("swarm_monitor", params);
+	}
 
-  async getSwarmStatus(swarmId?: string): Promise<any> {
-    return this.executeTool('swarm_status', { swarmId });
-  }
+	// Neural and pattern tools
 
-  async monitorSwarm(params: { swarmId?: string; interval?: number }): Promise<any> {
-    return this.executeTool('swarm_monitor', params);
-  }
+	async analyzePattern(params: {
+		action: string;
+		operation?: string;
+		metadata?: any;
+	}): Promise<any> {
+		return this.executeTool("neural_patterns", params);
+	}
 
-  // Neural and pattern tools
+	async trainNeural(params: {
+		pattern_type: string;
+		training_data: string;
+		epochs?: number;
+	}): Promise<any> {
+		return this.executeTool("neural_train", params);
+	}
 
-  async analyzePattern(params: {
-    action: string;
-    operation?: string;
-    metadata?: any;
-  }): Promise<any> {
-    return this.executeTool('neural_patterns', params);
-  }
+	async predict(params: { modelId: string; input: string }): Promise<any> {
+		return this.executeTool("neural_predict", params);
+	}
 
-  async trainNeural(params: {
-    pattern_type: string;
-    training_data: string;
-    epochs?: number;
-  }): Promise<any> {
-    return this.executeTool('neural_train', params);
-  }
+	async getNeuralStatus(modelId?: string): Promise<any> {
+		return this.executeTool("neural_status", { modelId });
+	}
 
-  async predict(params: { modelId: string; input: string }): Promise<any> {
-    return this.executeTool('neural_predict', params);
-  }
+	// Memory management tools
 
-  async getNeuralStatus(modelId?: string): Promise<any> {
-    return this.executeTool('neural_status', { modelId });
-  }
+	async storeMemory(params: {
+		action: "store";
+		key: string;
+		value: string;
+		namespace?: string;
+		ttl?: number;
+	}): Promise<any> {
+		return this.executeTool("memory_usage", params);
+	}
 
-  // Memory management tools
+	async retrieveMemory(params: {
+		action: "retrieve";
+		key: string;
+		namespace?: string;
+	}): Promise<any> {
+		const result = await this.executeTool("memory_usage", params);
+		return result.success ? result.data : null;
+	}
 
-  async storeMemory(params: {
-    action: 'store';
-    key: string;
-    value: string;
-    namespace?: string;
-    ttl?: number;
-  }): Promise<any> {
-    return this.executeTool('memory_usage', params);
-  }
+	async searchMemory(params: {
+		pattern: string;
+		namespace?: string;
+		limit?: number;
+	}): Promise<any> {
+		return this.executeTool("memory_search", params);
+	}
 
-  async retrieveMemory(params: {
-    action: 'retrieve';
-    key: string;
-    namespace?: string;
-  }): Promise<any> {
-    const result = await this.executeTool('memory_usage', params);
-    return result.success ? result.data : null;
-  }
+	async deleteMemory(params: {
+		action: "delete";
+		key: string;
+		namespace?: string;
+	}): Promise<any> {
+		return this.executeTool("memory_usage", params);
+	}
 
-  async searchMemory(params: {
-    pattern: string;
-    namespace?: string;
-    limit?: number;
-  }): Promise<any> {
-    return this.executeTool('memory_search', params);
-  }
+	async listMemory(params: {
+		action: "list";
+		namespace?: string;
+	}): Promise<any> {
+		return this.executeTool("memory_usage", params);
+	}
 
-  async deleteMemory(params: { action: 'delete'; key: string; namespace?: string }): Promise<any> {
-    return this.executeTool('memory_usage', params);
-  }
+	// Performance and monitoring tools
 
-  async listMemory(params: { action: 'list'; namespace?: string }): Promise<any> {
-    return this.executeTool('memory_usage', params);
-  }
+	async getPerformanceReport(params?: {
+		format?: string;
+		timeframe?: string;
+	}): Promise<any> {
+		return this.executeTool("performance_report", params || {});
+	}
 
-  // Performance and monitoring tools
+	async analyzeBottlenecks(params?: {
+		component?: string;
+		metrics?: string[];
+	}): Promise<any> {
+		return this.executeTool("bottleneck_analyze", params || {});
+	}
 
-  async getPerformanceReport(params?: { format?: string; timeframe?: string }): Promise<any> {
-    return this.executeTool('performance_report', params || {});
-  }
+	async getTokenUsage(params?: {
+		operation?: string;
+		timeframe?: string;
+	}): Promise<any> {
+		return this.executeTool("token_usage", params || {});
+	}
 
-  async analyzeBottlenecks(params?: { component?: string; metrics?: string[] }): Promise<any> {
-    return this.executeTool('bottleneck_analyze', params || {});
-  }
+	// Agent management tools
 
-  async getTokenUsage(params?: { operation?: string; timeframe?: string }): Promise<any> {
-    return this.executeTool('token_usage', params || {});
-  }
+	async listAgents(swarmId?: string): Promise<any> {
+		return this.executeTool("agent_list", { swarmId });
+	}
 
-  // Agent management tools
+	async getAgentMetrics(agentId: string): Promise<any> {
+		return this.executeTool("agent_metrics", { agentId });
+	}
 
-  async listAgents(swarmId?: string): Promise<any> {
-    return this.executeTool('agent_list', { swarmId });
-  }
+	// Task management tools
 
-  async getAgentMetrics(agentId: string): Promise<any> {
-    return this.executeTool('agent_metrics', { agentId });
-  }
+	async getTaskStatus(taskId: string): Promise<any> {
+		return this.executeTool("task_status", { taskId });
+	}
 
-  // Task management tools
+	async getTaskResults(taskId: string): Promise<any> {
+		return this.executeTool("task_results", { taskId });
+	}
 
-  async getTaskStatus(taskId: string): Promise<any> {
-    return this.executeTool('task_status', { taskId });
-  }
+	// Advanced coordination tools
 
-  async getTaskResults(taskId: string): Promise<any> {
-    return this.executeTool('task_results', { taskId });
-  }
+	async optimizeTopology(swarmId?: string): Promise<any> {
+		return this.executeTool("topology_optimize", { swarmId });
+	}
 
-  // Advanced coordination tools
+	async loadBalance(params: { swarmId?: string; tasks: any[] }): Promise<any> {
+		return this.executeTool("load_balance", params);
+	}
 
-  async optimizeTopology(swarmId?: string): Promise<any> {
-    return this.executeTool('topology_optimize', { swarmId });
-  }
+	async syncCoordination(swarmId?: string): Promise<any> {
+		return this.executeTool("coordination_sync", { swarmId });
+	}
 
-  async loadBalance(params: { swarmId?: string; tasks: any[] }): Promise<any> {
-    return this.executeTool('load_balance', params);
-  }
+	async scaleSwarm(params: {
+		swarmId?: string;
+		targetSize: number;
+	}): Promise<any> {
+		return this.executeTool("swarm_scale", params);
+	}
 
-  async syncCoordination(swarmId?: string): Promise<any> {
-    return this.executeTool('coordination_sync', { swarmId });
-  }
+	// SPARC mode integration
 
-  async scaleSwarm(params: { swarmId?: string; targetSize: number }): Promise<any> {
-    return this.executeTool('swarm_scale', params);
-  }
+	async runSparcMode(params: {
+		mode: string;
+		task_description: string;
+		options?: any;
+	}): Promise<any> {
+		return this.executeTool("sparc_mode", params);
+	}
 
-  // SPARC mode integration
+	// Workflow tools
 
-  async runSparcMode(params: {
-    mode: string;
-    task_description: string;
-    options?: any;
-  }): Promise<any> {
-    return this.executeTool('sparc_mode', params);
-  }
+	async createWorkflow(params: {
+		name: string;
+		steps: any[];
+		triggers?: any[];
+	}): Promise<any> {
+		return this.executeTool("workflow_create", params);
+	}
 
-  // Workflow tools
+	async executeWorkflow(params: {
+		workflowId: string;
+		params?: any;
+	}): Promise<any> {
+		return this.executeTool("workflow_execute", params);
+	}
 
-  async createWorkflow(params: { name: string; steps: any[]; triggers?: any[] }): Promise<any> {
-    return this.executeTool('workflow_create', params);
-  }
+	// GitHub integration tools
 
-  async executeWorkflow(params: { workflowId: string; params?: any }): Promise<any> {
-    return this.executeTool('workflow_execute', params);
-  }
+	async analyzeRepository(params: {
+		repo: string;
+		analysis_type?: string;
+	}): Promise<any> {
+		return this.executeTool("github_repo_analyze", params);
+	}
 
-  // GitHub integration tools
+	async manageGitHubPR(params: {
+		repo: string;
+		action: string;
+		pr_number?: number;
+	}): Promise<any> {
+		return this.executeTool("github_pr_manage", params);
+	}
 
-  async analyzeRepository(params: { repo: string; analysis_type?: string }): Promise<any> {
-    return this.executeTool('github_repo_analyze', params);
-  }
+	// Dynamic Agent Architecture tools
 
-  async manageGitHubPR(params: { repo: string; action: string; pr_number?: number }): Promise<any> {
-    return this.executeTool('github_pr_manage', params);
-  }
+	async createDynamicAgent(params: {
+		agent_type: string;
+		capabilities?: string[];
+		resources?: any;
+	}): Promise<any> {
+		return this.executeTool("daa_agent_create", params);
+	}
 
-  // Dynamic Agent Architecture tools
+	async matchCapabilities(params: {
+		task_requirements: string[];
+		available_agents?: any[];
+	}): Promise<any> {
+		return this.executeTool("daa_capability_match", params);
+	}
 
-  async createDynamicAgent(params: {
-    agent_type: string;
-    capabilities?: string[];
-    resources?: any;
-  }): Promise<any> {
-    return this.executeTool('daa_agent_create', params);
-  }
+	// System tools
 
-  async matchCapabilities(params: {
-    task_requirements: string[];
-    available_agents?: any[];
-  }): Promise<any> {
-    return this.executeTool('daa_capability_match', params);
-  }
+	async runBenchmark(suite?: string): Promise<any> {
+		return this.executeTool("benchmark_run", { suite });
+	}
 
-  // System tools
+	async collectMetrics(components?: string[]): Promise<any> {
+		return this.executeTool("metrics_collect", { components });
+	}
 
-  async runBenchmark(suite?: string): Promise<any> {
-    return this.executeTool('benchmark_run', { suite });
-  }
+	async analyzeTrends(params: {
+		metric: string;
+		period?: string;
+	}): Promise<any> {
+		return this.executeTool("trend_analysis", params);
+	}
 
-  async collectMetrics(components?: string[]): Promise<any> {
-    return this.executeTool('metrics_collect', { components });
-  }
+	async analyzeCost(timeframe?: string): Promise<any> {
+		return this.executeTool("cost_analysis", { timeframe });
+	}
 
-  async analyzeTrends(params: { metric: string; period?: string }): Promise<any> {
-    return this.executeTool('trend_analysis', params);
-  }
+	async assessQuality(params: {
+		target: string;
+		criteria?: string[];
+	}): Promise<any> {
+		return this.executeTool("quality_assess", params);
+	}
 
-  async analyzeCost(timeframe?: string): Promise<any> {
-    return this.executeTool('cost_analysis', { timeframe });
-  }
+	async healthCheck(components?: string[]): Promise<any> {
+		return this.executeTool("health_check", { components });
+	}
 
-  async assessQuality(params: { target: string; criteria?: string[] }): Promise<any> {
-    return this.executeTool('quality_assess', params);
-  }
+	// Batch operations
 
-  async healthCheck(components?: string[]): Promise<any> {
-    return this.executeTool('health_check', { components });
-  }
+	async batchProcess(params: {
+		items: any[];
+		operation: string;
+	}): Promise<any> {
+		return this.executeTool("batch_process", params);
+	}
 
-  // Batch operations
+	async parallelExecute(tasks: any[]): Promise<any> {
+		return this.executeTool("parallel_execute", { tasks });
+	}
 
-  async batchProcess(params: { items: any[]; operation: string }): Promise<any> {
-    return this.executeTool('batch_process', params);
-  }
-
-  async parallelExecute(tasks: any[]): Promise<any> {
-    return this.executeTool('parallel_execute', { tasks });
-  }
-
-  /**
-   * Generic tool execution for custom tools
-   */
-  async executeMCPTool(toolName: string, params: any): Promise<any> {
-    return this.executeTool(toolName, params);
-  }
-
-  /**
-   * Helper to format tool responses
-   */
-  private formatResponse(response: MCPToolResponse): any {
-    if (response.success) {
-      return response.data;
-    } else {
-      throw new Error(`MCP Tool Error: ${response.error}`);
-    }
-  }
+	/**
+	 * Generic tool execution for custom tools
+	 */
+	async executeMCPTool(toolName: string, params: any): Promise<any> {
+		return this.executeTool(toolName, params);
+	}
 }

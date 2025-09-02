@@ -52,7 +52,7 @@ pub fn install_panic_handler() {
 fn save_crash_context() -> std::io::Result<()> {
     use std::fs;
     use std::io::Write;
-    
+
     let crash_info = format!(
         "Cortex Code Crash Report
 Time: {}
@@ -84,18 +84,18 @@ pub fn install_signal_handlers() {
     #[cfg(unix)]
     {
         use tokio::signal::unix::{signal, SignalKind};
-        
+
         tokio::spawn(async {
             let mut sigterm = signal(SignalKind::terminate()).expect("Failed to register SIGTERM handler");
             let mut sigint = signal(SignalKind::interrupt()).expect("Failed to register SIGINT handler");
-            
+
             tokio::select! {
                 _ = sigterm.recv() => {
                     tracing::info!("Received SIGTERM, shutting down gracefully");
                     graceful_shutdown().await;
                 }
                 _ = sigint.recv() => {
-                    tracing::info!("Received SIGINT (Ctrl+C), shutting down gracefully");  
+                    tracing::info!("Received SIGINT (Ctrl+C), shutting down gracefully");
                     graceful_shutdown().await;
                 }
             }
@@ -105,11 +105,11 @@ pub fn install_signal_handlers() {
     #[cfg(windows)]
     {
         use tokio::signal::windows;
-        
+
         tokio::spawn(async {
             let mut ctrl_c = windows::ctrl_c().expect("Failed to register Ctrl+C handler");
             let mut ctrl_break = windows::ctrl_break().expect("Failed to register Ctrl+Break handler");
-            
+
             tokio::select! {
                 _ = ctrl_c.recv() => {
                     tracing::info!("Received Ctrl+C, shutting down gracefully");
@@ -127,15 +127,15 @@ pub fn install_signal_handlers() {
 /// Perform graceful shutdown cleanup
 async fn graceful_shutdown() {
     tracing::info!("Starting graceful shutdown...");
-    
+
     // Save any pending state
     if let Err(e) = save_shutdown_state().await {
         tracing::error!("Failed to save shutdown state: {}", e);
     }
-    
+
     // Flush logs
     tracing::info!("Shutdown complete");
-    
+
     std::process::exit(0);
 }
 

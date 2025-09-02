@@ -58,7 +58,7 @@ impl ActionsAPI {
         } else {
             format!("/repos/{}/{}/actions/runs", owner, repo)
         };
-        
+
         let response: ListResponse<WorkflowRun> = self.client.get(&endpoint).await?;
         Ok(response.items)
     }
@@ -119,7 +119,7 @@ impl ActionsAPI {
         } else {
             format!("/repos/{}/{}/actions/artifacts", owner, repo)
         };
-        
+
         let response: ListResponse<Artifact> = self.client.get(&endpoint).await?;
         Ok(response.items)
     }
@@ -134,7 +134,7 @@ impl ActionsAPI {
     pub async fn list_repository_secrets(&self, owner: &str, repo: &str) -> Result<Vec<String>> {
         let endpoint = format!("/repos/{}/{}/actions/secrets", owner, repo);
         let response: serde_json::Value = self.client.get(&endpoint).await?;
-        
+
         let secrets = response.get("secrets")
             .and_then(|s| s.as_array())
             .map(|arr| {
@@ -143,7 +143,7 @@ impl ActionsAPI {
                     .collect()
             })
             .unwrap_or_default();
-            
+
         Ok(secrets)
     }
 
@@ -209,9 +209,9 @@ impl WorkflowMonitor {
     /// Start monitoring workflow runs for a repository
     pub async fn start_monitoring(&mut self, owner: String, repo: String) -> Result<()> {
         let mut interval_stream = IntervalStream::new(interval(Duration::from_secs(10)));
-        
+
         info!("Starting workflow monitoring for {}/{}", owner, repo);
-        
+
         while let Some(_) = interval_stream.next().await {
             if let Err(e) = self.poll_workflow_runs(&owner, &repo).await {
                 warn!("Error polling workflow runs: {:?}", e);
@@ -219,7 +219,7 @@ impl WorkflowMonitor {
                 tokio::time::sleep(Duration::from_secs(5)).await;
             }
         }
-        
+
         Ok(())
     }
 
@@ -227,14 +227,14 @@ impl WorkflowMonitor {
     pub async fn monitor_run(&mut self, owner: String, repo: String, run_id: u64) -> Result<()> {
         let mut last_check = Instant::now();
         let poll_interval = Duration::from_secs(5);
-        
+
         loop {
             if last_check.elapsed() >= poll_interval {
                 match self.actions_api.get_workflow_run(&owner, &repo, run_id).await {
                     Ok(run) => {
                         let previous_run = self.active_runs.get(&run_id);
                         let previous_status = previous_run.map(|r| r.status.clone());
-                        
+
                         // Check if status changed
                         if previous_run.is_none() || previous_run.unwrap().status != run.status {
                             let event_type = match run.status.as_str() {
@@ -243,7 +243,7 @@ impl WorkflowMonitor {
                                 "completed" => WorkflowEventType::Completed,
                                 _ => WorkflowEventType::StatusChanged,
                             };
-                            
+
                             let event = WorkflowRunEvent {
                                 run_id,
                                 event_type: event_type.clone(),
@@ -251,12 +251,12 @@ impl WorkflowMonitor {
                                 previous_status,
                                 jobs: None, // Could fetch jobs if needed
                             };
-                            
+
                             self.emit_event(&event).await;
                         }
-                        
+
                         self.active_runs.insert(run_id, run.clone());
-                        
+
                         // Stop monitoring if completed
                         if run.status == "completed" {
                             info!("Workflow run {} completed with conclusion: {:?}", run_id, run.conclusion);
@@ -267,22 +267,22 @@ impl WorkflowMonitor {
                         warn!("Failed to fetch workflow run {}: {:?}", run_id, e);
                     }
                 }
-                
+
                 last_check = Instant::now();
             }
-            
+
             tokio::time::sleep(Duration::from_millis(500)).await;
         }
-        
+
         Ok(())
     }
 
     async fn poll_workflow_runs(&mut self, owner: &str, repo: &str) -> Result<()> {
         let runs = self.actions_api.list_workflow_runs(owner, repo, None).await?;
-        
+
         for run in runs {
             let previous_run = self.active_runs.get(&run.id);
-            
+
             // Check for new or updated runs
             if previous_run.is_none() && (run.status == "queued" || run.status == "in_progress") {
                 // New active run
@@ -293,7 +293,7 @@ impl WorkflowMonitor {
                     previous_status: None,
                     jobs: None,
                 };
-                
+
                 self.emit_event(&event).await;
                 self.active_runs.insert(run.id, run);
             } else if let Some(prev_run) = previous_run {
@@ -304,7 +304,7 @@ impl WorkflowMonitor {
                     } else {
                         WorkflowEventType::StatusChanged
                     };
-                    
+
                     let event = WorkflowRunEvent {
                         run_id: run.id,
                         event_type,
@@ -312,22 +312,22 @@ impl WorkflowMonitor {
                         previous_status: Some(prev_run.status.clone()),
                         jobs: None,
                     };
-                    
+
                     self.emit_event(&event).await;
                     self.active_runs.insert(run.id, run);
                 }
             }
         }
-        
+
         // Remove completed runs older than 1 hour
         let cutoff = Instant::now() - Duration::from_secs(3600);
         self.active_runs.retain(|_, run| {
-            run.status != "completed" || 
+            run.status != "completed" ||
             run.updated_at.parse::<chrono::DateTime<chrono::Utc>>()
                 .map(|dt| dt.timestamp() as u64 > cutoff.elapsed().as_secs())
                 .unwrap_or(true)
         });
-        
+
         Ok(())
     }
 
@@ -378,7 +378,7 @@ impl WorkflowValidator {
         days: u32,
     ) -> Result<WorkflowAnalysis> {
         let runs = self.actions_api.list_workflow_runs(owner, repo, Some(&workflow_id.to_string())).await?;
-        
+
         // Filter runs from the last N days
         let cutoff = chrono::Utc::now() - chrono::Duration::days(days as i64);
         let recent_runs: Vec<_> = runs.into_iter()
@@ -403,13 +403,13 @@ impl WorkflowValidator {
         let successful_runs = recent_runs.iter()
             .filter(|run| run.conclusion.as_ref().map(|c| c == "success").unwrap_or(false))
             .count();
-        
+
         let success_rate = (successful_runs as f64 / total_runs as f64) * 100.0;
-        
+
         // Calculate average duration
         let mut total_duration_secs = 0u64;
         let mut runs_with_duration = 0;
-        
+
         for run in &recent_runs {
             if let (Some(started), Some(updated)) = (&run.run_started_at, Some(&run.updated_at)) {
                 if let (Ok(start_time), Ok(end_time)) = (
@@ -421,13 +421,13 @@ impl WorkflowValidator {
                 }
             }
         }
-        
+
         let average_duration_minutes = if runs_with_duration > 0 {
             (total_duration_secs as f64 / runs_with_duration as f64) / 60.0
         } else {
             0.0
         };
-        
+
         // Analyze failure reasons
         let mut failure_reasons = HashMap::new();
         for run in &recent_runs {
@@ -437,7 +437,7 @@ impl WorkflowValidator {
                 }
             }
         }
-        
+
         // Generate recommendations
         let mut recommendations = Vec::new();
         if success_rate < 80.0 {
@@ -446,7 +446,7 @@ impl WorkflowValidator {
         if average_duration_minutes > 30.0 {
             recommendations.push("Workflow takes more than 30 minutes on average. Consider optimization.".to_string());
         }
-        
+
         Ok(WorkflowAnalysis {
             total_runs,
             success_rate,
@@ -499,7 +499,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -545,7 +545,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: [18, 20]
@@ -590,7 +590,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
@@ -634,7 +634,7 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -668,7 +668,7 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -692,11 +692,11 @@ mod tests {
         let rust_workflow = WorkflowTemplate::generate_ci_workflow("rust", None);
         assert!(rust_workflow.contains("cargo test"));
         assert!(rust_workflow.contains("cargo fmt"));
-        
+
         let node_workflow = WorkflowTemplate::generate_ci_workflow("nodejs", Some("npm"));
         assert!(node_workflow.contains("npm ci"));
         assert!(node_workflow.contains("npm run"));
-        
+
         let yarn_workflow = WorkflowTemplate::generate_ci_workflow("nodejs", Some("yarn"));
         assert!(yarn_workflow.contains("yarn install"));
         assert!(yarn_workflow.contains("yarn"));
@@ -716,7 +716,7 @@ mod tests {
             previous_status: None,
             jobs: None,
         };
-        
+
         assert_eq!(event.event_type, WorkflowEventType::Started);
         assert_eq!(event.run_id, 123);
     }

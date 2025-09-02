@@ -9,7 +9,7 @@ fn test_config_loads_from_toml() {
     // Given
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("config.toml");
-    
+
     let config_content = r#"
 [provider]
 default = "github-models"
@@ -23,12 +23,12 @@ endpoint = "https://models.github.ai"
 zdr = true
 telemetry = false
 "#;
-    
+
     fs::write(&config_path, config_content).unwrap();
-    
+
     // When
     let config = Config::from_file(config_path.to_str().unwrap()).unwrap();
-    
+
     // Then
     assert_eq!(config.provider.default, "github-models");
     assert_eq!(config.provider.fallback, vec!["openai", "local-mlx"]);
@@ -41,10 +41,10 @@ telemetry = false
 fn test_config_handles_missing_file() {
     // Given
     let nonexistent_path = "/does/not/exist/config.toml";
-    
+
     // When
     let result = Config::from_file(nonexistent_path);
-    
+
     // Then
     assert!(result.is_err());
     match result.unwrap_err() {
@@ -60,18 +60,18 @@ fn test_config_validates_required_fields() {
     // Given
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("config.toml");
-    
+
     // Invalid config - missing provider.default
     let config_content = r#"
 [github-models]
 model = "openai/gpt-4o-mini"
 "#;
-    
+
     fs::write(&config_path, config_content).unwrap();
-    
+
     // When
     let result = Config::from_file(config_path.to_str().unwrap());
-    
+
     // Then
     assert!(result.is_err());
 }
@@ -80,7 +80,7 @@ model = "openai/gpt-4o-mini"
 fn test_config_from_default_locations() {
     // Given/When
     let result = Config::from_default_locations();
-    
+
     // Then - should either load config or create default
     match result {
         Ok(config) => {
@@ -98,10 +98,10 @@ fn test_config_provider_factory() {
     // Given
     let mut config = Config::default();
     config.provider.default = "github-models".to_string();
-    
+
     // When
     let provider = config.create_provider();
-    
+
     // Then
     assert!(provider.is_ok());
 }
@@ -111,10 +111,10 @@ fn test_config_unknown_provider_fails() {
     // Given
     let mut config = Config::default();
     config.provider.default = "unknown-provider".to_string();
-    
+
     // When
     let result = config.create_provider();
-    
+
     // Then
     assert!(result.is_err());
 }

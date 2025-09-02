@@ -76,10 +76,10 @@ impl DaemonServer {
             start_time: std::time::Instant::now(),
         }
     }
-    
+
     pub async fn start(&self) -> Result<()> {
         let app = self.create_router();
-        
+
         // Secure binding - only bind to localhost in development, configurable for production
         let bind_addr = if cfg!(debug_assertions) {
             format!("127.0.0.1:{}", self.port)
@@ -94,39 +94,39 @@ impl DaemonServer {
         
         info!("🚀 Cortex Code Daemon started on http://{}", bind_addr);
         info!("📚 API Documentation available at http://localhost:{}/docs", self.port);
-        
+
         axum::serve(listener, app).await
             .map_err(|e| crate::error::ProviderError::Api(format!("Server error: {}", e)).into())
     }
-    
+
     fn create_router(&self) -> Router {
         Router::new()
             // Health and status endpoints
             .route("/health", get(handlers::health_check))
             .route("/status", get(handlers::server_status))
-            
+
             // Chat endpoints
             .route("/api/v1/chat", post(handlers::chat))
             .route("/api/v1/chat/stream", post(handlers::chat_stream))
-            
-            // Memory endpoints  
+
+            // Memory endpoints
             .route("/api/v1/memory/sessions", get(handlers::list_sessions))
             .route("/api/v1/memory/sessions/:session_id", get(handlers::get_session))
             .route("/api/v1/memory/search", post(handlers::search_memory))
             .route("/api/v1/memory/export", get(handlers::export_memory))
-            
+
             // MCP endpoints
             .route("/api/v1/mcp/servers", get(handlers::list_mcp_servers))
             .route("/api/v1/mcp/servers/:server_name/tools", get(handlers::list_mcp_tools))
             .route("/api/v1/mcp/servers/:server_name/execute", post(handlers::execute_mcp_tool))
-            
+
             // Provider endpoints
             .route("/api/v1/providers", get(handlers::list_providers))
             .route("/api/v1/providers/:provider/models", get(handlers::list_models))
-            
+
             // Documentation
             .route("/docs", get(handlers::api_docs))
-            
+
             // Middleware
             .layer(
                 ServiceBuilder::new()
@@ -135,7 +135,7 @@ impl DaemonServer {
             )
             .with_state(self.app_state.clone())
     }
-    
+
     pub fn uptime(&self) -> u64 {
         self.start_time.elapsed().as_secs()
     }
@@ -169,7 +169,7 @@ impl ApiError {
             details: None,
         }
     }
-    
+
     pub fn with_details(mut self, details: serde_json::Value) -> Self {
         self.details = Some(details);
         self

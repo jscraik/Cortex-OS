@@ -1,60 +1,60 @@
 {
-  "name": "@cortex-os/mcp-marketplace",
-  "version": "1.0.0",
-  "description": "Central MCP Marketplace for server discovery and installation",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": "./dist/index.js",
-    "./api": "./dist/api/index.js",
-    "./client": "./dist/client/index.js",
-    "./registry": "./dist/registry/index.js"
-  },
-  "bin": {
-    "mcp-marketplace": "./dist/cli.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/api/server.ts",
-    "test": "vitest",
-    "lint": "eslint src/",
-    "format": "prettier --write src/",
-    "start": "node dist/api/server.js",
-    "marketplace:seed": "tsx src/cli/seed.ts",
-    "marketplace:validate": "tsx src/cli/validate.ts"
-  },
-  "dependencies": {
-    "@cortex-os/mcp-registry": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.17.4",
-    "@fastify/cors": "^9.0.1",
-    "@fastify/helmet": "^11.1.1",
-    "@fastify/rate-limit": "^9.1.0",
-    "@fastify/static": "^6.12.0",
-    "@fastify/websocket": "^10.0.1",
-    "fastify": "^4.24.3",
-    "zod": "^3.22.4",
-    "commander": "^11.1.0",
-    "chalk": "^5.3.0",
-    "ora": "^7.0.1",
-    "fuse.js": "^7.0.0",
-    "@noble/hashes": "^1.4.0",
-    "@noble/ed25519": "^2.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.9.0",
-    "typescript": "^5.2.2",
-    "tsx": "^4.20.4",
-    "vitest": "^3.2.4",
-    "eslint": "^8.53.0",
-    "prettier": "^3.0.3"
-  },
-  "files": [
-    "dist/",
-    "schemas/",
-    "static/"
-  ],
-  "engines": {
-    "node": ">=18.0.0"
-  }
+	"name": "@cortex-os/mcp-marketplace",
+	"version": "1.0.0",
+	"description": "Central MCP Marketplace for server discovery and installation",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js",
+		"./api": "./dist/api/index.js",
+		"./client": "./dist/client/index.js",
+		"./registry": "./dist/registry/index.js"
+	},
+	"bin": {
+		"mcp-marketplace": "./dist/cli.js"
+	},
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx src/api/server.ts",
+		"test": "vitest",
+		"lint": "eslint src/",
+		"format": "prettier --write src/",
+		"start": "node dist/api/server.js",
+		"marketplace:seed": "tsx src/cli/seed.ts",
+		"marketplace:validate": "tsx src/cli/validate.ts"
+	},
+	"dependencies": {
+		"@cortex-os/mcp-registry": "workspace:*",
+		"@modelcontextprotocol/sdk": "^1.17.4",
+		"@fastify/cors": "^9.0.1",
+		"@fastify/helmet": "^11.1.1",
+		"@fastify/rate-limit": "^9.1.0",
+		"@fastify/static": "^6.12.0",
+		"@fastify/websocket": "^10.0.1",
+		"fastify": "^4.24.3",
+		"zod": "^3.22.4",
+		"commander": "^11.1.0",
+		"chalk": "^5.3.0",
+		"ora": "^7.0.1",
+		"fuse.js": "^7.0.0",
+		"@noble/hashes": "^1.4.0",
+		"@noble/ed25519": "^2.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.9.0",
+		"typescript": "^5.2.2",
+		"tsx": "^4.20.4",
+		"vitest": "^3.2.4",
+		"eslint": "^8.53.0",
+		"prettier": "^3.0.3"
+	},
+	"files": [
+		"dist/",
+		"schemas/",
+		"static/"
+	],
+	"engines": {
+		"node": ">=18.0.0"
+	}
 }

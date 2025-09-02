@@ -4,4 +4,4 @@
 
 // Primary bridge APIs only. For managers/registry/client, import from `@cortex-os/mcp`.
 // During tests, resolve directly to the local source to avoid requiring a build of @cortex-os/mcp.
-export * from '../../mcp/src/bridge.js';
+export * from "../../mcp/src/bridge.js";

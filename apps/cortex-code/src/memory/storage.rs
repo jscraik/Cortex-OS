@@ -27,14 +27,14 @@ pub struct MemoryConfig {
 impl MemoryStorage {
     pub async fn new(config: MemoryConfig) -> Result<Self> {
         let agents_md = AgentsMd::new(config.agents_md_path.clone()).await?;
-        
+
         Ok(Self {
             agents_md: Arc::new(RwLock::new(agents_md)),
             active_contexts: Arc::new(RwLock::new(HashMap::new())),
             config,
         })
     }
-    
+
     pub async fn start_conversation(
         &self,
         provider: String,
@@ -42,19 +42,19 @@ impl MemoryStorage {
     ) -> Result<String> {
         let session_id = Uuid::new_v4().to_string();
         let context = ConversationContext::new(session_id.clone(), provider, model);
-        
+
         let mut contexts = self.active_contexts.write().await;
         contexts.insert(session_id.clone(), context);
-        
+
         Ok(session_id)
     }
-    
+
     pub async fn end_conversation(&self, session_id: &str) -> Result<()> {
         let context = {
             let mut contexts = self.active_contexts.write().await;
             contexts.remove(session_id)
         };
-        
+
         if let Some(context) = context {
             // Create summary and save to AGENTS.md
             let summary = context.generate_summary();
@@ -67,14 +67,14 @@ impl MemoryStorage {
             .with_decisions(summary.key_decisions)
             .with_context(summary.context)
             .with_tags(summary.tags);
-            
+
             let mut agents_md = self.agents_md.write().await;
             agents_md.add_entry(entry).await?;
         }
-        
+
         Ok(())
     }
-    
+
     pub async fn add_message(
         &self,
         session_id: &str,
@@ -84,25 +84,25 @@ impl MemoryStorage {
         let mut contexts = self.active_contexts.write().await;
         if let Some(context) = contexts.get_mut(session_id) {
             context.add_message(role, content);
-            
+
             // Auto-trim if context gets too long
             if context.message_count() > self.config.max_context_length {
                 context.trim_context(self.config.max_context_length / 2);
             }
         }
-        
+
         Ok(())
     }
-    
+
     pub async fn get_context(&self, session_id: &str) -> Option<ConversationContext> {
         let contexts = self.active_contexts.read().await;
         contexts.get(session_id).cloned()
     }
-    
+
     pub async fn get_recent_context(&self, limit: usize) -> Result<Vec<String>> {
         let agents_md = self.agents_md.read().await;
         let recent_entries = agents_md.get_recent_context(limit);
-        
+
         Ok(recent_entries.iter()
             .map(|entry| format!(
                 "Session: {} ({})\nSummary: {}\nDecisions: {}",
@@ -113,11 +113,11 @@ impl MemoryStorage {
             ))
             .collect())
     }
-    
+
     pub async fn search_memory(&self, query: &str) -> Result<Vec<String>> {
         let agents_md = self.agents_md.read().await;
         let matching_entries = agents_md.search_entries(query);
-        
+
         Ok(matching_entries.iter()
             .map(|entry| format!(
                 "Session: {} ({}, {})\nSummary: {}\nTags: {}",
@@ -129,11 +129,11 @@ impl MemoryStorage {
             ))
             .collect())
     }
-    
+
     pub async fn get_provider_history(&self, provider: &str) -> Result<Vec<String>> {
         let agents_md = self.agents_md.read().await;
         let provider_entries = agents_md.get_entries_by_provider(provider);
-        
+
         Ok(provider_entries.iter()
             .map(|entry| format!(
                 "Session: {} ({})\nSummary: {}",
@@ -143,7 +143,7 @@ impl MemoryStorage {
             ))
             .collect())
     }
-    
+
     pub async fn add_decision(&self, session_id: &str, decision: String) -> Result<()> {
         let mut contexts = self.active_contexts.write().await;
         if let Some(context) = contexts.get_mut(session_id) {
@@ -151,7 +151,7 @@ impl MemoryStorage {
         }
         Ok(())
     }
-    
+
     pub async fn add_context_data(
         &self,
         session_id: &str,
@@ -164,7 +164,7 @@ impl MemoryStorage {
         }
         Ok(())
     }
-    
+
     pub async fn add_tag(&self, session_id: &str, tag: String) -> Result<()> {
         let mut contexts = self.active_contexts.write().await;
         if let Some(context) = contexts.get_mut(session_id) {
@@ -172,13 +172,13 @@ impl MemoryStorage {
         }
         Ok(())
     }
-    
+
     pub async fn get_memory_stats(&self) -> Result<MemoryStorageStats> {
         let agents_md = self.agents_md.read().await;
         let active_contexts = self.active_contexts.read().await;
-        
+
         let agents_stats = agents_md.get_stats();
-        
+
         Ok(MemoryStorageStats {
             total_historical_entries: agents_stats.total_entries,
             active_conversations: active_contexts.len(),
@@ -189,21 +189,21 @@ impl MemoryStorage {
             newest_entry: agents_stats.newest_entry,
         })
     }
-    
+
     pub async fn cleanup_expired(&self) -> Result<usize> {
         let mut agents_md = self.agents_md.write().await;
         let initial_count = agents_md.get_entries().len();
-        
+
         // This would trigger cleanup in the AgentsMd implementation
         agents_md.save().await?;
-        
+
         let final_count = agents_md.get_entries().len();
         Ok(initial_count - final_count)
     }
-    
+
     pub async fn export_memory(&self, format: ExportFormat) -> Result<String> {
         let agents_md = self.agents_md.read().await;
-        
+
         match format {
             ExportFormat::Json => {
                 let entries = agents_md.get_entries();
@@ -218,7 +218,7 @@ impl MemoryStorage {
             ExportFormat::Csv => {
                 let entries = agents_md.get_entries();
                 let mut csv = String::from("timestamp,session_id,provider,model,summary,decisions,tags\n");
-                
+
                 for entry in entries {
                     csv.push_str(&format!(
                         "{:?},{},{},{},{},{},{}\n",
@@ -231,12 +231,12 @@ impl MemoryStorage {
                         entry.tags.join(";")
                     ));
                 }
-                
+
                 Ok(csv)
             }
         }
     }
-    
+
     pub fn config(&self) -> &MemoryConfig {
         &self.config
     }
@@ -284,22 +284,22 @@ impl MemoryConfig {
         self.agents_md_path = path;
         self
     }
-    
+
     pub fn with_retention_days(mut self, days: u32) -> Self {
         self.retention_days = days;
         self
     }
-    
+
     pub fn with_audit_enabled(mut self, enabled: bool) -> Self {
         self.enable_audit = enabled;
         self
     }
-    
+
     pub fn with_auto_summarize(mut self, enabled: bool) -> Self {
         self.auto_summarize = enabled;
         self
     }
-    
+
     pub fn with_max_context_length(mut self, length: usize) -> Self {
         self.max_context_length = length;
         self
