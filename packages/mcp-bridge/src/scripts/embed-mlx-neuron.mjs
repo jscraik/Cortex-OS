@@ -9,22 +9,22 @@
  * @status active
  */
 
-import { startIntegration } from '../mlx-mcp-integration.js';
+import { startIntegration } from "../mlx-mcp-integration.js";
 
-console.log('🧠 Embedding MLX neuron into MCP system...');
+console.log("🧠 Embedding MLX neuron into MCP system...");
 
 try {
-  // Start MLX HTTP server and auto-register
-  await startIntegration();
+	// Start MLX HTTP server and auto-register
+	await startIntegration();
 
-  console.log('✅ MLX neuron successfully embedded in MCP system');
-  console.log('🎯 MLX is now available to all MCP frontends:');
-  console.log('   - cortex mcp add mlx-neuron');
-  console.log('   - claude desktop mcp');
-  console.log('   - vs code extensions');
-  console.log('   - github copilot');
-  console.log('   - gemini cli');
+	console.log("✅ MLX neuron successfully embedded in MCP system");
+	console.log("🎯 MLX is now available to all MCP frontends:");
+	console.log("   - cortex mcp add mlx-neuron");
+	console.log("   - claude desktop mcp");
+	console.log("   - vs code extensions");
+	console.log("   - github copilot");
+	console.log("   - gemini cli");
 } catch (error) {
-  console.error('❌ Failed to embed MLX neuron:', error);
-  process.exit(1);
+	console.error("❌ Failed to embed MLX neuron:", error);
+	process.exit(1);
 }

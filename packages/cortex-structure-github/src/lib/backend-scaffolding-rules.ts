@@ -4,31 +4,31 @@
  */
 
 export interface BackendTemplate {
-  name: string;
-  description: string;
-  framework: string[];
-  language: string[];
-  files: BackendFile[];
-  dependencies?: string[];
+	name: string;
+	description: string;
+	framework: string[];
+	language: string[];
+	files: BackendFile[];
+	dependencies?: string[];
 }
 
 export interface BackendFile {
-  path: string;
-  content: string;
-  conditions?: string[];
+	path: string;
+	content: string;
+	conditions?: string[];
 }
 
 // Express.js Templates
 export const EXPRESS_TEMPLATES: BackendTemplate[] = [
-  {
-    name: 'express-controller',
-    description: 'Express.js controller with TypeScript',
-    framework: ['express'],
-    language: ['typescript'],
-    files: [
-      {
-        path: 'src/controllers/{{controllerName}}.controller.ts',
-        content: `import { Request, Response, NextFunction } from 'express';
+	{
+		name: "express-controller",
+		description: "Express.js controller with TypeScript",
+		framework: ["express"],
+		language: ["typescript"],
+		files: [
+			{
+				path: "src/controllers/{{controllerName}}.controller.ts",
+				content: `import { Request, Response, NextFunction } from 'express';
 import { {{ServiceName}}Service } from '../services/{{serviceName}}.service';
 import { validate{{ModelName}} } from '../validators/{{modelName}}.validator';
 import { ApiResponse } from '../types/api.types';
@@ -154,11 +154,11 @@ export class {{ControllerName}}Controller {
     }
   };
 }
-`
-      },
-      {
-        path: 'src/services/{{serviceName}}.service.ts',
-        content: `import { {{ModelName}} } from '../models/{{modelName}}.model';
+`,
+			},
+			{
+				path: "src/services/{{serviceName}}.service.ts",
+				content: `import { {{ModelName}} } from '../models/{{modelName}}.model';
 import { Create{{ModelName}}Dto, Update{{ModelName}}Dto } from '../dto/{{modelName}}.dto';
 
 export class {{ServiceName}}Service {
@@ -210,11 +210,11 @@ export class {{ServiceName}}Service {
     throw new Error('Method not implemented');
   }
 }
-`
-      },
-      {
-        path: 'src/routes/{{routeName}}.routes.ts',
-        content: `import { Router } from 'express';
+`,
+			},
+			{
+				path: "src/routes/{{routeName}}.routes.ts",
+				content: `import { Router } from 'express';
 import { {{ControllerName}}Controller } from '../controllers/{{controllerName}}.controller';
 import { auth } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validation.middleware';
@@ -269,23 +269,23 @@ router.put(
 router.delete('/:id', auth, {{controllerName}}Controller.delete);
 
 export default router;
-`
-      }
-    ]
-  }
+`,
+			},
+		],
+	},
 ];
 
 // FastAPI Templates
 export const FASTAPI_TEMPLATES: BackendTemplate[] = [
-  {
-    name: 'fastapi-router',
-    description: 'FastAPI router with Pydantic models',
-    framework: ['fastapi'],
-    language: ['python'],
-    files: [
-      {
-        path: 'app/routers/{{router_name}}.py',
-        content: `from typing import List, Optional
+	{
+		name: "fastapi-router",
+		description: "FastAPI router with Pydantic models",
+		framework: ["fastapi"],
+		language: ["python"],
+		files: [
+			{
+				path: "app/routers/{{router_name}}.py",
+				content: `from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -363,11 +363,11 @@ async def delete_{{singular_name}}(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="{{ModelName}} not found"
         )
-`
-      },
-      {
-        path: 'app/services/{{service_name}}_service.py',
-        content: `from typing import List, Optional
+`,
+			},
+			{
+				path: "app/services/{{service_name}}_service.py",
+				content: `from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from ..models.{{model_name}} import {{ModelName}}
@@ -424,23 +424,23 @@ class {{ServiceName}}Service:
             if hasattr({{ModelName}}, field) and value is not None:
                 query = query.filter(getattr({{ModelName}}, field) == value)
         return query.all()
-`
-      }
-    ]
-  }
+`,
+			},
+		],
+	},
 ];
 
 // Go Gin Templates
 export const GIN_TEMPLATES: BackendTemplate[] = [
-  {
-    name: 'gin-handler',
-    description: 'Go Gin handler with proper structure',
-    framework: ['gin'],
-    language: ['go'],
-    files: [
-      {
-        path: 'internal/handlers/{{handler_name}}.go',
-        content: `package handlers
+	{
+		name: "gin-handler",
+		description: "Go Gin handler with proper structure",
+		framework: ["gin"],
+		language: ["go"],
+		files: [
+			{
+				path: "internal/handlers/{{handler_name}}.go",
+				content: `package handlers
 
 import (
 	"net/http"
@@ -601,11 +601,11 @@ func (h *{{HandlerName}}Handler) Delete{{SingularName}}(c *gin.Context) {
 		"message": "{{SingularName}} deleted successfully",
 	})
 }
-`
-      },
-      {
-        path: 'internal/services/{{service_name}}.go',
-        content: `package services
+`,
+			},
+			{
+				path: "internal/services/{{service_name}}.go",
+				content: `package services
 
 import (
 	"{{module_name}}/internal/models"
@@ -657,23 +657,23 @@ func (s *{{ServiceName}}Service) Update(id uint, req models.Update{{ModelName}}R
 func (s *{{ServiceName}}Service) Delete(id uint) error {
 	return s.repo.Delete(id)
 }
-`
-      }
-    ]
-  }
+`,
+			},
+		],
+	},
 ];
 
 // Middleware Templates
 export const MIDDLEWARE_TEMPLATES: BackendTemplate[] = [
-  {
-    name: 'auth-middleware',
-    description: 'Authentication middleware',
-    framework: ['express', 'fastapi', 'gin'],
-    language: ['typescript', 'python', 'go'],
-    files: [
-      {
-        path: 'src/middleware/auth.middleware.ts',
-        content: `import { Request, Response, NextFunction } from 'express';
+	{
+		name: "auth-middleware",
+		description: "Authentication middleware",
+		framework: ["express", "fastapi", "gin"],
+		language: ["typescript", "python", "go"],
+		files: [
+			{
+				path: "src/middleware/auth.middleware.ts",
+				content: `import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../errors/auth.errors';
 
@@ -747,105 +747,119 @@ function extractToken(req: Request): string | null {
   return null;
 }
 `,
-        conditions: ['typescript']
-      }
-    ]
-  }
+				conditions: ["typescript"],
+			},
+		],
+	},
 ];
 
 // Template processing utilities
-export function processBackendTemplate(template: string, variables: Record<string, string>): string {
-  let processed = template;
+export function processBackendTemplate(
+	template: string,
+	variables: Record<string, string>,
+): string {
+	let processed = template;
 
-  for (const [key, value] of Object.entries(variables)) {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    processed = processed.replace(regex, value);
-  }
+	for (const [key, value] of Object.entries(variables)) {
+		const regex = new RegExp(`{{${key}}}`, "g");
+		processed = processed.replace(regex, value);
+	}
 
-  return processed;
+	return processed;
 }
 
 // Case conversion utilities for backend templates
 export function toSnakeCase(str: string): string {
-  return str.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+	return str
+		.replace(/([A-Z])/g, "_$1")
+		.toLowerCase()
+		.replace(/^_/, "");
 }
 
 export function toPascalCase(str: string): string {
-  return str.replace(/(?:^|[_-])(\w)/g, (_, char) => char.toUpperCase());
+	return str.replace(/(?:^|[_-])(\w)/g, (_, char) => char.toUpperCase());
 }
 
 export function toCamelCase(str: string): string {
-  const pascal = toPascalCase(str);
-  return pascal.charAt(0).toLowerCase() + pascal.slice(1);
+	const pascal = toPascalCase(str);
+	return pascal.charAt(0).toLowerCase() + pascal.slice(1);
 }
 
 export function toKebabCase(str: string): string {
-  return str.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '');
+	return str
+		.replace(/([A-Z])/g, "-$1")
+		.toLowerCase()
+		.replace(/^-/, "");
 }
 
-export function generateBackendVariables(modelName: string): Record<string, string> {
-  const pascalCase = toPascalCase(modelName);
-  const camelCase = toCamelCase(modelName);
-  const snakeCase = toSnakeCase(modelName);
-  const kebabCase = toKebabCase(modelName);
+export function generateBackendVariables(
+	modelName: string,
+): Record<string, string> {
+	const pascalCase = toPascalCase(modelName);
+	const camelCase = toCamelCase(modelName);
+	const snakeCase = toSnakeCase(modelName);
+	const kebabCase = toKebabCase(modelName);
 
-  return {
-    ModelName: pascalCase,
-    modelName: camelCase,
-    model_name: snakeCase,
-    'model-name': kebabCase,
-    MODEL_NAME: modelName.toUpperCase().replace(/[-_]/g, '_'),
+	return {
+		ModelName: pascalCase,
+		modelName: camelCase,
+		model_name: snakeCase,
+		"model-name": kebabCase,
+		MODEL_NAME: modelName.toUpperCase().replace(/[-_]/g, "_"),
 
-    ServiceName: pascalCase,
-    serviceName: camelCase,
-    service_name: snakeCase,
+		ServiceName: pascalCase,
+		serviceName: camelCase,
+		service_name: snakeCase,
 
-    ControllerName: pascalCase,
-    controllerName: camelCase,
-    controller_name: snakeCase,
+		ControllerName: pascalCase,
+		controllerName: camelCase,
+		controller_name: snakeCase,
 
-    HandlerName: pascalCase,
-    handler_name: snakeCase,
+		HandlerName: pascalCase,
+		handler_name: snakeCase,
 
-    RepositoryName: pascalCase,
-    repository_name: snakeCase,
+		RepositoryName: pascalCase,
+		repository_name: snakeCase,
 
-    SchemaName: pascalCase,
-    schema_name: snakeCase,
+		SchemaName: pascalCase,
+		schema_name: snakeCase,
 
-    // Pluralized versions
-    PluralName: pascalCase + 's',
-    pluralName: camelCase + 's',
-    plural_name: snakeCase + 's',
-    'plural-name': kebabCase + 's',
+		// Pluralized versions
+		PluralName: `${pascalCase}s`,
+		pluralName: `${camelCase}s`,
+		plural_name: `${snakeCase}s`,
+		"plural-name": `${kebabCase}s`,
 
-    SingularName: pascalCase,
-    singular_name: snakeCase,
+		SingularName: pascalCase,
+		singular_name: snakeCase,
 
-    // Route paths
-    routeName: camelCase,
-    route_name: snakeCase,
-    routePath: kebabCase,
-    route_path: snakeCase,
+		// Route paths
+		routeName: camelCase,
+		route_name: snakeCase,
+		routePath: kebabCase,
+		route_path: snakeCase,
 
-    // Descriptions
-    model_description: modelName.toLowerCase(),
-    tags: kebabCase,
-  };
+		// Descriptions
+		model_description: modelName.toLowerCase(),
+		tags: kebabCase,
+	};
 }
 
 // Get templates by framework and language
-export function getBackendTemplates(framework?: string, language?: string): BackendTemplate[] {
-  const allTemplates = [
-    ...EXPRESS_TEMPLATES,
-    ...FASTAPI_TEMPLATES,
-    ...GIN_TEMPLATES,
-    ...MIDDLEWARE_TEMPLATES,
-  ];
+export function getBackendTemplates(
+	framework?: string,
+	language?: string,
+): BackendTemplate[] {
+	const allTemplates = [
+		...EXPRESS_TEMPLATES,
+		...FASTAPI_TEMPLATES,
+		...GIN_TEMPLATES,
+		...MIDDLEWARE_TEMPLATES,
+	];
 
-  return allTemplates.filter(template => {
-    const frameworkMatch = !framework || template.framework.includes(framework);
-    const languageMatch = !language || template.language.includes(language);
-    return frameworkMatch && languageMatch;
-  });
+	return allTemplates.filter((template) => {
+		const frameworkMatch = !framework || template.framework.includes(framework);
+		const languageMatch = !language || template.language.includes(language);
+		return frameworkMatch && languageMatch;
+	});
 }

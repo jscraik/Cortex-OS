@@ -1,12 +1,10 @@
 {
-    // --- APPEARANCE & THEME (ACCESSIBILITY PRIORITY) --------------------------
     "workbench.colorTheme": "MacOS Modern Dark - Xcode Modern",
     "workbench.preferredHighContrastColorTheme": "MacOS Modern Dark - Xcode Civic",
     "workbench.fontAliasing": "antialiased",
     "workbench.list.fastScrollSensitivity": 5,
     "workbench.productIconTheme": "macos-modern",
     "workbench.iconTheme": "material-icon-theme",
-    // --- EDITOR BEHAVIOR & FONT (ACCESSIBILITY OPTIMIZED) --------------------
     "editor.accessibilitySupport": "off",
     "editor.accessibilityPageSize": 16,
     "editor.fontSize": 16,
@@ -24,10 +22,8 @@
     "editor.bracketPairColorization.enabled": true,
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
-    // --- FILE AUTO-SAVE SETTINGS ----------------------------------------------
     "files.autoSave": "afterDelay",
     "files.autoSaveDelay": 30000,
-    // --- CODE ACTIONS & FORMATTING (ENHANCED FOR PRODUCTIVITY) ----------------
     "editor.codeActionsOnSave": {
         "source.fixAll": "explicit",
         "source.fixAll.biome": "explicit",
@@ -78,12 +74,10 @@
         }
     },
     "hadolint.hadolintPath": "hadolint",
-    // --- SECURITY SETTINGS (User-level only) ---------------------------------
     "security.workspace.trust.untrustedFiles": "open",
     "markdownlint.config": {
         "default": true
     },
-    // --- TYPESCRIPT & JAVASCRIPT STACK SETTINGS -------------------------------
     "typescript.tsdk": "node_modules/typescript/lib",
     "typescript.validate.enable": true,
     "typescript.suggest.autoImports": true,
@@ -101,13 +95,11 @@
         "typescript",
         "typescriptreact"
     ],
-    // --- MONOREPO & TURBOREPO OPTIMIZATION ------------------------------------
     "typescript.preferences.useLabelDetailsInCompletionEntries": true,
     "typescript.suggest.completeFunctionCalls": true,
     "files.associations": {
         "turbo.json": "json"
     },
-    // --- FILE EXCLUSIONS (COGNITIVE LOAD REDUCTION) ---------------------------
     "files.exclude": {
         "**/node_modules": true,
         "**/.next": true,
@@ -144,14 +136,12 @@
         "**/dist/**": true
     },
     "files.autoGuessEncoding": true,
-    // --- GIT SETTINGS (ENHANCED AUTOMATION) -----------------------------------
     "git.autofetch": true,
     "git.autofetchPeriod": 180,
     "git.enableSmartCommit": true,
     "git.postCommitCommand": "push",
     "git.confirmSync": false,
     "git.openRepositoryInParentFolders": "never",
-    // --- PYTHON & TESTING -----------------------------------------------------
     "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
     "python.createEnvironment.trigger": "off",
@@ -162,7 +152,6 @@
     "python.linting.enabled": true,
     "python.linting.ruffEnabled": true,
     "python.formatting.provider": "none",
-    // --- TERMINAL CONFIGURATION -----------------------------------------------
     "terminal.integrated.fontFamily": "JetBrains Mono, monospace",
     "terminal.integrated.fontSize": 14,
     "terminal.integrated.gpuAcceleration": "auto",
@@ -181,14 +170,12 @@
     "github-actions.remote-name": "main",
     "gitlens.hovers.currentLine.over": "line",
     "gitlens.ai.model": "openai:gpt-4",
-    // --- GITLENS SETTINGS (ENHANCED AUTOMATION) -------------------------------
     "gitlens.gitCommands.skipConfirmations": [
         "fetch:command",
         "push:command"
     ],
     "gitlens.launchpad.indicator.enabled": false,
     "gitlens.views.repositories.showIncomingActivity": true,
-    // --- RUN ON SAVE AUTOMATION -----------------------------------------------
     "emeraldwalk.runonsave": {
         "commands": [
             {
@@ -197,7 +184,6 @@
             }
         ]
     },
-    // --- KEYBOARD SHORTCUTS ---------------------------------------------------
     "keybindings.shortcuts": [
         {
             "key": "cmd+alt+m",
@@ -220,7 +206,6 @@
             "args": "memory:clean:dry-run"
         }
     ],
-    // --- MATERIAL ICON THEME CONFIGURATION ------------------------------------
     "material-icon-theme.enableLogging": true,
     "material-icon-theme.opacity": 1,
     "material-icon-theme.folders.theme": "specific",
@@ -228,9 +213,7 @@
     "material-icon-theme.files.color": "#42a5f5",
     "material-icon-theme.activeIconPack": "none",
     "material-icon-theme.hidesExplorerArrows": false,
-    // --- FILE ASSOCIATIONS ----------------------------------------------------
     "material-icon-theme.files.associations": {
-        // AI & Security Files
         "RULES_OF_AI.md": "lock",
         "AGENTS.md": "robot",
         "ai-partnership.md": "robot",
@@ -265,7 +248,6 @@
         ".pre-commit-config.yaml": "pre-commit",
         ".pre-commit-hooks.yaml": "pre-commit",
         "pre-commit-config.yaml": "pre-commit",
-        // Cortex OS Specific Files
         "cortex-config.json": "settings",
         "cortex-config.yaml": "settings",
         "cortex-config.yml": "settings",
@@ -301,7 +283,6 @@
         "PERFORMANCE_OPTIMIZATION_REPORT.md": "document",
         "DEVELOPMENT_WORKFLOW_IMPROVEMENTS_REPORT.md": "document",
         "PHASE45_IMPLEMENTATION_SUMMARY.md": "document",
-        // Database & Data Files
         "*.sqlite": "database",
         "*.sqlite3": "database",
         "*.db": "database",
@@ -344,12 +325,10 @@
         "tdd.plan.json": "json",
         "MigrationPlan.json": "json",
         "initial.yaml": "yaml",
-        // Environment & Secrets
         ".env*": "tune",
         ".env.template": "tune",
         ".env.carbon": "tune",
         ".env.local": "tune",
-        // Git & CI/CD
         ".gitmodules": "git",
         ".gitignore": "git",
         ".commitlintrc.cjs": "settings",
@@ -357,7 +336,6 @@
         ".markdownlint.json": "settings",
         "ci.patch": "git",
         "git_plan.sh": "git",
-        // Project Structure Files
         ".project-structure.json": "json",
         "demo_sample_prp.json": "json",
         "test.json": "json",
@@ -369,31 +347,26 @@
         "demo-output.txt": "text",
         "marketplace-demo-output.txt": "text",
         "project-scan-results.json": "json",
-        // AI & ML Files
         "*.prompt": "copilot",
         "*.chatmode": "copilot",
         "*.gemini": "ai",
         "*.claude": "ai",
         "*.mcp": "robot",
         "mlxclaude": "ai",
-        // Development Tools
         "Dockerfile*": "docker",
         "docker-compose*.yml": "docker",
         "docker-compose*.yaml": "docker",
         "Containerfile*": "docker",
         ".dockerignore": "docker",
-        // Python Files
         "requirements*.txt": "python",
         "requirements*.txt.bak": "python",
         "pyproject.toml": "python",
         "setup.py": "python",
         "setup.cfg": "python",
-        // Node.js & JavaScript
         "package*.json": "nodejs",
         "package*.json.bak": "nodejs",
         "tsconfig.json": "tsconfig",
         "tsconfig*.json": "tsconfig",
-        // Documentation & Assets
         "SECURITY.md": "lock",
         "CONTRIBUTING.md": "document",
         "CHANGELOG.md": "changelog",
@@ -424,7 +397,6 @@
         "keras": "ai",
         "transformers": "ai",
         "huggingface": "ai",
-        // Cortex OS Specific Directories
         "cortex-instructions": "robot",
         "cortex-prompts": "robot",
         "cortex-specs": "document",
@@ -432,7 +404,6 @@
         "cortex-rules": "rules",
         "cortex-standards": "document",
         "cortex-templates": "template",
-        "cortex-brainstore": "database",
         "cortex-brainstore": "database",
         "cortex-os": "app",
         "cortex-cli": "command",
@@ -453,7 +424,6 @@
         "bridge": "api",
         "_inbox": "temp",
         "CONTEXT": "document",
-        // Apps & Services Structure
         "apps": "app",
         "api": "api",
         "web": "app",
@@ -463,7 +433,6 @@
         "asbr-portal": "app",
         "bun-react": "react",
         "docs-api": "docs",
-        // Packages & Libraries
         "packages": "lib",
         "a2a": "api",
         "a2a-protocol": "api",
@@ -509,7 +478,6 @@
         "ui2code": "ui",
         "utils": "tools",
         "yt-safe-downloader": "download",
-        // Data & Databases
         "data": "database",
         "datasets": "database",
         "cache": "temp",
@@ -517,7 +485,6 @@
         "performance-logs": "log",
         "backups": "archive",
         ":memory:": "database",
-        // Infrastructure & DevOps
         "infra": "server",
         "terraform": "server",
         "k8s": "kubernetes",
@@ -528,7 +495,6 @@
         "nginx": "server",
         "server": "server",
         "services": "api",
-        // Development & Testing
         "notebooks": "jupyter",
         "jupyter": "jupyter",
         "tests": "test",
@@ -540,21 +506,15 @@
         ".devcontainer": "container",
         ".husky": "git",
         ".changeset": "git",
-        ".changeset": "git",
-        ".claude": "ai",
-        ".husky": "git",
-        ".changeset": "git",
         ".claude": "ai",
         ".superdesign": "ui",
         ".gemini": "ai",
-        ".superdesign": "ui",
         "playwright-report": "test",
         ".coverage": "test",
         "node_modules": "node",
         "examples": "examples",
         "snapshots": "test",
         "out": "build",
-        // Documentation & Resources
         "docs": "docs",
         "docs-built": "docs",
         "docs-generated": "docs",
@@ -565,13 +525,11 @@
         "reviews": "docs",
         "migration-specs": "docs",
         "reports": "docs",
-        // Shared & Common
         "common": "shared",
         "shared": "shared",
         "lib": "lib",
         "vendor": "lib",
         "ext": "lib",
-        // CLI & Scripts
         "bin": "scripts",
         "cli": "command",
         "config": "config",
@@ -579,32 +537,27 @@
         "scripts": "tools",
         "tools": "tools",
         "plugins": "plugin",
-        // Version Control & CI/CD
         ".github": "github",
         ".vscode": "vscode",
         ".cortex": "app",
         ".cortex-os": "app",
         ".turbo": "turbo",
-        // Databases & Storage
         ".neo4j_data": "database",
         ".qdrant_data": "database",
         "provenance": "database",
         "schemas": "json",
-        // Build & Distribution
         "dist": "build",
         "site": "build",
         "uploads": "upload",
         "downloads": "download",
         "tmp": "temp",
         "term-code-temp": "temp",
-        // AI & Content Generation
         "personas": "robot",
         "voice": "audio",
         "issues": "bug",
         "ide": "vscode",
         "types": "typescript"
     },
-    // --- ACCESSIBILITY SIGNALS ------------------------------------------------
     "accessibility.signals.codeActionApplied": {
         "sound": "off"
     },
@@ -636,7 +589,6 @@
         "sound": "off"
     },
     "accessibility.hideAccessibleView": true,
-    // --- GITHUB COPILOT SETTINGS ----------------------------------------------
     "github.copilot.enable": {
         "*": true,
         "plaintext": false,
@@ -658,7 +610,6 @@
     "github.copilot.chat.languageContext.inline.typescript.enabled": true,
     "github.copilot.chat.languageContext.typescript.enabled": true,
     "github.copilot.chat.newWorkspace.useContext7": true,
-    // --- TERMINAL COMMANDS TO SKIP SHELL --------------------------------------
     "terminal.integrated.commandsToSkipShell": [
         "editor.action.accessibilityHelp",
         "editor.action.toggleTabFocusMode",
@@ -680,7 +631,6 @@
         "actions.find",
         "editor.action.startFindReplaceAction"
     ],
-    // --- MISC SETTINGS --------------------------------------------------------
     "redhat.telemetry.enabled": false,
     "docker.extension.enableComposeLanguageServer": true,
     "docker.commands.build": "--pull",
@@ -691,108 +641,97 @@
     "githubPullRequests.experimental.useQuickChat": true,
     "githubPullRequests.pullBranch": "never",
     "githubPullRequests.codingAgent.uiIntegration": true,
-    // --- SPELL CHECKER CONFIGURATION ------------------------------------------
     "cSpell.userWords": [
         "actioned",
         "Agentic",
-        "ASBR"
+        "aiexclude",
+        "apify",
+        "ASBR",
+        "autofetch",
+        "autogeneration",
+        "avaturl",
+        "axios",
+        "bmad",
+        "brainstore",
+        "brainwav",
+        "charliermarsh",
+        "chatmode",
+        "chatmodes",
+        "Codacy",
+        "codesearch",
+        "commitlintrc",
+        "Containerfile",
+        "Craik",
+        "datamax",
+        "Dependi",
+        "dependi",
+        "describedby",
+        "dockercompose",
+        "Dockerized",
+        "dotenv",
+        "emeraldwalk",
+        "esbenp",
+        "eslintcache",
+        "Fira",
+        "frontmatter",
+        "ghsa",
+        "gitmodules",
+        "huggingface",
+        "jamiescottcraik",
+        "keras",
+        "lighthouserc",
+        "lintstagedrc",
+        "llms",
+        "lycheeignore",
+        "mkdocs",
+        "mlxclaude",
+        "mypy",
+        "Ollama",
+        "passlib",
+        "pipefail",
+        "pycache",
+        "pyproject",
+        "pytest",
+        "qdrant",
+        "Qwen",
+        "runbooks",
+        "runonsave",
+        "sakura",
+        "Sandboxed",
+        "SARIF",
+        "scrollback",
+        "semgrep",
+        "Smol",
+        "sonarlint",
+        "sonarcloud",
+        "Summarise",
+        "superdesign",
+        "TURBOREPO",
+        "vitest",
+        "WCAG",
+        "windsurfrules",
+        "worktree",
+        "worktrees"
     ],
-    "cSpell.userWords": [
-        // --- SPELL CHECKER CONFIGURATION ------------------------------------------
-        "cSpell.userWords": [
-            "actioned",
-            "Agentic",
-            "aiexclude",
-            "apify",
-            "ASBR",
-            "autofetch",
-            "autogeneration",
-            "avaturl",
-            "axios",
-            "bmad",
-            "brainstore",
-            "brainwav",
-            "charliermarsh",
-            "chatmode",
-            "chatmodes",
-            "Codacy",
-            "codesearch",
-            "commitlintrc",
-            "Containerfile",
-            "Craik",
-            "datamax",
-            "Dependi",
-            "dependi",
-            "describedby",
-            "dockercompose",
-            "Dockerized",
-            "dotenv",
-            "emeraldwalk",
-            "esbenp",
-            "eslintcache",
-            "Fira",
-            "frontmatter",
-            "ghsa",
-            "gitmodules",
-            "huggingface",
-            "jamiescottcraik",
-            "keras",
-            "lighthouserc",
-            "lintstagedrc",
-            "llms",
-            "lycheeignore",
-            "mkdocs",
-            "mlxclaude",
-            "mypy",
-            "Ollama",
-            "passlib",
-            "pipefail",
-            "pycache",
-            "pyproject",
-            "pytest",
-            "qdrant",
-            "Qwen",
-            "runbooks",
-            "runonsave",
-            "sakura",
-            "Sandboxed",
-            "SARIF",
-            "scrollback",
-            "semgrep",
-            "Smol",
-            "sonarlint",
-            "sonarcloud",
-            "Summarise",
-            "superdesign",
-            "TURBOREPO",
-            "vitest",
-            "WCAG",
-            "windsurfrules",
-            "worktree",
-            "worktrees"
-        ],
-        "sonarlint.connectedMode.project": {
-            "connectionId": "jamiescottcraik",
-            "projectKey": "jamiescottcraik_cortex-os"
-        },
-        "nxConsole.generateAiAgentRules": true,
-        // Dependi Configuration - Add your API key here
-        "dependi.apiKey": "bf6e1e6b-564b-4f6a-af14-bd2f9195c5b9",
-        "dependi.vulnerability.enabled": true,
-        "dependi.vulnerability.ghsa.enabled": true,
-        // Language-specific Dependi settings
-        "dependi.rust.enabled": true,
-        "dependi.rust.lockFileEnabled": true,
-        "dependi.npm.enabled": true,
-        "dependi.npm.lockFileEnabled": true,
-        "dependi.go.enabled": true,
-        "dependi.python.enabled": true,
-        "dependi.python.lockFileEnabled": true,
-        "dependi.php.enabled": true,
-        "dependi.php.lockFileEnabled": true,
-        "dependi.dart.enabled": true,
-        "dependi.dart.lockFileEnabled": true
+    "sonarlint.connectedMode.project": {
+        "connectionId": "jamiescottcraik",
+        "projectKey": "jamiescottcraik_cortex-os"
     },
+    "nxConsole.generateAiAgentRules": true,
+    "dependi.apiKey": "bf6e1e6b-564b-4f6a-af14-bd2f9195c5b9",
+    "dependi.vulnerability.enabled": true,
+    "dependi.vulnerability.ghsa.enabled": true,
+    "dependi.rust.enabled": true,
+    "dependi.rust.lockFileEnabled": true,
+    "dependi.npm.enabled": true,
+    "dependi.npm.lockFileEnabled": true,
+    "dependi.go.enabled": true,
+    "dependi.python.enabled": true,
+    "dependi.python.lockFileEnabled": true,
+    "dependi.php.enabled": true,
+    "dependi.php.lockFileEnabled": true,
+    "dependi.dart.enabled": true,
+    "dependi.dart.lockFileEnabled": true,
     "workbench.editor.closeOnFileDelete": true,
     "workbench.settings.applyToAllProfiles": [],
     "yaml.maxItemsComputed": 7000,

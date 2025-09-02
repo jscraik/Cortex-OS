@@ -1,19 +1,19 @@
 {
-  "name": "infra-security",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Development and test deps for infra security helpers and tests",
-  "type": "module",
-  "scripts": {
-    "test": "vitest run --config vitest.config.ts --coverage && bats __tests__"
-  },
-  "devDependencies": {
-    "fast-check": "^3.3.0",
-    "axios": "^1.6.2",
-    "nock": "^13.3.0",
-    "minimist": "^1.2.8",
-    "vitest": "^3.2.4",
-    "bats": "^1.11.0",
-    "@vitest/coverage-v8": "^3.2.4"
-  }
+	"name": "infra-security",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Development and test deps for infra security helpers and tests",
+	"type": "module",
+	"scripts": {
+		"test": "vitest run --config vitest.config.ts --coverage && bats __tests__"
+	},
+	"devDependencies": {
+		"fast-check": "^3.3.0",
+		"axios": "^1.6.2",
+		"nock": "^13.3.0",
+		"minimist": "^1.2.8",
+		"vitest": "^3.2.4",
+		"bats": "^1.11.0",
+		"@vitest/coverage-v8": "^3.2.4"
+	}
 }

@@ -5,34 +5,34 @@
  * @status active
  */
 
-import { describe, expect, it } from 'vitest';
-import { preCerebrumValidation } from '../src/lib/gates/evaluation.js';
+import { describe, expect, it } from "vitest";
+import { preCerebrumValidation } from "../src/lib/gates/evaluation.js";
 
 // Define the minimal mock state type for the test
 interface MockState {
-  evidence: Array<{ id: string }>;
-  validationResults: {
-    strategy: { passed: boolean; blockers: string[]; majors: string[] };
-    build: { passed: boolean; blockers: string[]; majors: string[] };
-    evaluation: { passed: boolean; blockers: string[]; majors: string[] };
-  };
+	evidence: Array<{ id: string }>;
+	validationResults: {
+		strategy: { passed: boolean; blockers: string[]; majors: string[] };
+		build: { passed: boolean; blockers: string[]; majors: string[] };
+		evaluation: { passed: boolean; blockers: string[]; majors: string[] };
+	};
 }
 
 // Verify readiness logic when majors exist without blockers
 
-describe('Cerebrum readiness validation', () => {
-  it('should be false when a phase has majors but no blockers', async () => {
-    const mockState: MockState = {
-      evidence: Array.from({ length: 5 }, (_, idx) => ({ id: `e${idx}` })),
-      validationResults: {
-        strategy: { passed: true, blockers: [], majors: [] },
-        build: { passed: false, blockers: [], majors: ['missing docs'] },
-        evaluation: { passed: true, blockers: [], majors: [] },
-      },
-    };
+describe("Cerebrum readiness validation", () => {
+	it("should be false when a phase has majors but no blockers", async () => {
+		const mockState: MockState = {
+			evidence: Array.from({ length: 5 }, (_, idx) => ({ id: `e${idx}` })),
+			validationResults: {
+				strategy: { passed: true, blockers: [], majors: [] },
+				build: { passed: false, blockers: [], majors: ["missing docs"] },
+				evaluation: { passed: true, blockers: [], majors: [] },
+			},
+		};
 
-    const result = await preCerebrumValidation(mockState);
+		const result = await preCerebrumValidation(mockState);
 
-    expect(result.readyForCerebrum).toBe(false);
-  });
+		expect(result.readyForCerebrum).toBe(false);
+	});
 });

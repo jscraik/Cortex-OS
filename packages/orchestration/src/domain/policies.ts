@@ -1,15 +1,15 @@
 export interface EgressPolicy {
-  allowedDomains: string[];
+	allowedDomains: string[];
 }
 export interface ToolPolicy {
-  allowlist: string[];
+	allowlist: string[];
 }
 export interface BudgetPolicy {
-  maxConcurrent?: number;
+	maxConcurrent?: number;
 }
 
 export interface Policies {
-  egress?: EgressPolicy;
-  tools?: ToolPolicy;
-  budget?: BudgetPolicy;
+	egress?: EgressPolicy;
+	tools?: ToolPolicy;
+	budget?: BudgetPolicy;
 }

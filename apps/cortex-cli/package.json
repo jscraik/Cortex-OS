@@ -1,28 +1,28 @@
 {
-  "name": "@cortex-os/cli",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "bin": {
-    "cortex": "./dist/index.js"
-  },
-  "main": "./dist/index.js",
-  "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
-    "dev": "tsx src/index.ts",
-    "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "commander": "^12.1.0",
-    "@cortex-os/mcp-registry": "workspace:*",
-    "@cortex-os/mcp-core": "workspace:*",
-    "@cortex-os/telemetry": "workspace:*",
-    "@cortex-os/simlab": "workspace:*"
-  },
-  "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.5.4",
-    "tsx": "^4.19.0"
-  }
+	"name": "@cortex-os/cli",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"cortex": "./dist/index.js"
+	},
+	"main": "./dist/index.js",
+	"scripts": {
+		"build": "tsup src/index.ts --dts --format esm",
+		"dev": "tsx src/index.ts",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"commander": "^12.1.0",
+		"@cortex-os/mcp-registry": "workspace:*",
+		"@cortex-os/mcp-core": "workspace:*",
+		"@cortex-os/telemetry": "workspace:*",
+		"@cortex-os/simlab": "workspace:*"
+	},
+	"devDependencies": {
+		"tsup": "^8.0.0",
+		"typescript": "^5.5.4",
+		"tsx": "^4.19.0"
+	}
 }

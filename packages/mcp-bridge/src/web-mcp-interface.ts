@@ -7,205 +7,210 @@
  * @status active
  */
 
-import { universalCliHandler } from './universal-cli-handler.js';
+import { universalCliHandler } from "./universal-cli-handler.js";
 
 /**
  * Web interface for MCP server management
  * Provides a simple HTTP API for frontend integrations
  */
 export class WebMcpInterface {
-  /**
-   * Handle MCP server addition via web request
-   */
-  async handleAddServer(request: {
-    command: string;
-    frontend?: string;
-    autoApprove?: boolean;
-  }): Promise<{
-    status: number;
-    body: {
-      success: boolean;
-      message: string;
-      data?: unknown;
-      requiresConfirmation?: boolean;
-      securityLevel?: string;
-    };
-  }> {
-    try {
-      const result = await universalCliHandler.processMcpCommand(request.command, {
-        frontend: request.frontend || 'web',
-        autoApprove: request.autoApprove || false,
-        interactive: true,
-      });
+	/**
+	 * Handle MCP server addition via web request
+	 */
+	async handleAddServer(request: {
+		command: string;
+		frontend?: string;
+		autoApprove?: boolean;
+	}): Promise<{
+		status: number;
+		body: {
+			success: boolean;
+			message: string;
+			data?: unknown;
+			requiresConfirmation?: boolean;
+			securityLevel?: string;
+		};
+	}> {
+		try {
+			const result = await universalCliHandler.processMcpCommand(
+				request.command,
+				{
+					frontend: request.frontend || "web",
+					autoApprove: request.autoApprove || false,
+					interactive: true,
+				},
+			);
 
-      return {
-        status: result.success ? 200 : result.requiresConfirmation ? 202 : 400,
-        body: result,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        body: {
-          success: false,
-          message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      };
-    }
-  }
+			return {
+				status: result.success ? 200 : result.requiresConfirmation ? 202 : 400,
+				body: result,
+			};
+		} catch (error) {
+			return {
+				status: 500,
+				body: {
+					success: false,
+					message: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			};
+		}
+	}
 
-  /**
-   * Handle server approval via web request
-   */
-  async handleApproveServer(request: {
-    command: string;
-    frontend?: string;
-    force: boolean;
-  }): Promise<{
-    status: number;
-    body: {
-      success: boolean;
-      message: string;
-      data?: unknown;
-    };
-  }> {
-    try {
-      const result = await universalCliHandler.approveServer(request.command, {
-        frontend: request.frontend || 'web',
-        force: request.force,
-      });
+	/**
+	 * Handle server approval via web request
+	 */
+	async handleApproveServer(request: {
+		command: string;
+		frontend?: string;
+		force: boolean;
+	}): Promise<{
+		status: number;
+		body: {
+			success: boolean;
+			message: string;
+			data?: unknown;
+		};
+	}> {
+		try {
+			const result = await universalCliHandler.approveServer(request.command, {
+				frontend: request.frontend || "web",
+				force: request.force,
+			});
 
-      return {
-        status: result.success ? 200 : 400,
-        body: result,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        body: {
-          success: false,
-          message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      };
-    }
-  }
+			return {
+				status: result.success ? 200 : 400,
+				body: result,
+			};
+		} catch (error) {
+			return {
+				status: 500,
+				body: {
+					success: false,
+					message: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			};
+		}
+	}
 
-  /**
-   * Check if a server is installed
-   */
-  async handleCheckServer(request: { nameOrUrl: string }): Promise<{
-    status: number;
-    body: {
-      success: boolean;
-      message: string;
-      data?: unknown;
-    };
-  }> {
-    try {
-      const result = await universalCliHandler.checkServerInstallation(request.nameOrUrl);
+	/**
+	 * Check if a server is installed
+	 */
+	async handleCheckServer(request: { nameOrUrl: string }): Promise<{
+		status: number;
+		body: {
+			success: boolean;
+			message: string;
+			data?: unknown;
+		};
+	}> {
+		try {
+			const result = await universalCliHandler.checkServerInstallation(
+				request.nameOrUrl,
+			);
 
-      return {
-        status: 200,
-        body: result,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        body: {
-          success: false,
-          message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      };
-    }
-  }
+			return {
+				status: 200,
+				body: result,
+			};
+		} catch (error) {
+			return {
+				status: 500,
+				body: {
+					success: false,
+					message: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			};
+		}
+	}
 
-  /**
-   * List all configured servers
-   */
-  async handleListServers(): Promise<{
-    status: number;
-    body: {
-      success: boolean;
-      message: string;
-      data?: unknown;
-    };
-  }> {
-    try {
-      const result = await universalCliHandler.listServers();
-      return {
-        status: 200,
-        body: result,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        body: {
-          success: false,
-          message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      };
-    }
-  }
+	/**
+	 * List all configured servers
+	 */
+	async handleListServers(): Promise<{
+		status: number;
+		body: {
+			success: boolean;
+			message: string;
+			data?: unknown;
+		};
+	}> {
+		try {
+			const result = await universalCliHandler.listServers();
+			return {
+				status: 200,
+				body: result,
+			};
+		} catch (error) {
+			return {
+				status: 500,
+				body: {
+					success: false,
+					message: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			};
+		}
+	}
 
-  /**
-   * Remove a server
-   */
-  async handleRemoveServer(serverName: string): Promise<{
-    status: number;
-    body: {
-      success: boolean;
-      message: string;
-    };
-  }> {
-    try {
-      const result = await universalCliHandler.removeServer(serverName);
-      return {
-        status: result.success ? 200 : 400,
-        body: result,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        body: {
-          success: false,
-          message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      };
-    }
-  }
+	/**
+	 * Remove a server
+	 */
+	async handleRemoveServer(serverName: string): Promise<{
+		status: number;
+		body: {
+			success: boolean;
+			message: string;
+		};
+	}> {
+		try {
+			const result = await universalCliHandler.removeServer(serverName);
+			return {
+				status: result.success ? 200 : 400,
+				body: result,
+			};
+		} catch (error) {
+			return {
+				status: 500,
+				body: {
+					success: false,
+					message: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			};
+		}
+	}
 
-  /**
-   * Get server status
-   */
-  async handleServerStatus(serverName?: string): Promise<{
-    status: number;
-    body: {
-      success: boolean;
-      message: string;
-      data?: unknown;
-    };
-  }> {
-    try {
-      const result = await universalCliHandler.getServerStatus(serverName);
-      return {
-        status: 200,
-        body: result,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        body: {
-          success: false,
-          message: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        },
-      };
-    }
-  }
+	/**
+	 * Get server status
+	 */
+	async handleServerStatus(serverName?: string): Promise<{
+		status: number;
+		body: {
+			success: boolean;
+			message: string;
+			data?: unknown;
+		};
+	}> {
+		try {
+			const result = await universalCliHandler.getServerStatus(serverName);
+			return {
+				status: 200,
+				body: result,
+			};
+		} catch (error) {
+			return {
+				status: 500,
+				body: {
+					success: false,
+					message: `Server error: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			};
+		}
+	}
 
-  /**
-   * Generate HTML interface for testing
-   */
-  generateTestInterface(): string {
-    return `
+	/**
+	 * Generate HTML interface for testing
+	 */
+	generateTestInterface(): string {
+		return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -287,7 +292,7 @@ export class WebMcpInterface {
                 });
 
                 const result = await response.json();
-                
+
                 if (result.requiresConfirmation) {
                     showResult(result.message + '\\n\\nClick "Approve" to proceed with --force', 'warning');
                     showApproveButton(command, frontend);
@@ -310,7 +315,7 @@ export class WebMcpInterface {
                 });
 
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showResult(result.message, 'success');
                 } else {
@@ -358,7 +363,7 @@ export class WebMcpInterface {
     </script>
 </body>
 </html>`;
-  }
+	}
 }
 
 // Export singleton instance

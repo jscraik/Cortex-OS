@@ -1,14 +1,14 @@
 [
-  {
-    "name": "length-similarity",
-    "query": "hello",
-    "docs": ["h", "hello world", "hey"],
-    "expected": { "isPermutation": true }
-  },
-  {
-    "name": "distinct-order",
-    "query": "abc",
-    "docs": ["a", "ab", "abc", "abcd"],
-    "expected": { "isPermutation": true }
-  }
+	{
+		"name": "length-similarity",
+		"query": "hello",
+		"docs": ["h", "hello world", "hey"],
+		"expected": { "isPermutation": true }
+	},
+	{
+		"name": "distinct-order",
+		"query": "abc",
+		"docs": ["a", "ab", "abc", "abcd"],
+		"expected": { "isPermutation": true }
+	}
 ]

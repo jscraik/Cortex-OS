@@ -1,5 +1,5 @@
 {
-  "$id": "missing-metadata",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object"
+	"$id": "missing-metadata",
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object"
 }

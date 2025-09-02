@@ -1,2 +1,2 @@
-export * from './multi-model';
+export * from "./multi-model";
 //# sourceMappingURL=index.js.map

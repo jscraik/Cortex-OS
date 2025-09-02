@@ -3,63 +3,67 @@
  * Pure functions for parsing @cortex commands
  */
 
-import type { AITaskType, CommentTrigger } from '../types/github-models.js';
+import type { AITaskType, CommentTrigger } from "../types/github-models.js";
 
 export interface ParsedCommand {
-  taskType: AITaskType;
-  instructions?: string;
-  trigger: CommentTrigger;
+	taskType: AITaskType;
+	instructions?: string;
+	trigger: CommentTrigger;
 }
 
 export interface CommandParseResult {
-  command?: ParsedCommand;
-  error?: string;
+	command?: ParsedCommand;
+	error?: string;
 }
 
 export const parseGitHubComment = (
-  comment: string,
-  triggers: CommentTrigger[]
+	comment: string,
+	triggers: CommentTrigger[],
 ): CommandParseResult => {
-  if (!comment || !comment.includes('@cortex')) {
-    return { error: 'No @cortex command found' };
-  }
+	if (!comment || !comment.includes("@cortex")) {
+		return { error: "No @cortex command found" };
+	}
 
-  for (const trigger of triggers) {
-    const match = comment.match(trigger.pattern);
-    if (match) {
-      const instructions = match[1]?.trim();
+	for (const trigger of triggers) {
+		const match = comment.match(trigger.pattern);
+		if (match) {
+			const instructions = match[1]?.trim();
 
-      return {
-        command: {
-          taskType: trigger.taskType,
-          instructions: instructions || undefined,
-          trigger,
-        }
-      };
-    }
-  }
+			return {
+				command: {
+					taskType: trigger.taskType,
+					instructions: instructions || undefined,
+					trigger,
+				},
+			};
+		}
+	}
 
-  return { error: 'Unknown @cortex command' };
+	return { error: "Unknown @cortex command" };
 };
 
 export const listAvailableCommands = (triggers: CommentTrigger[]): string => {
-  return triggers
-    .map(trigger => `- \`@cortex ${trigger.taskType.replace('_', ' ')}\` - ${trigger.description}`)
-    .join('\n');
+	return triggers
+		.map(
+			(trigger) =>
+				`- \`@cortex ${trigger.taskType.replace("_", " ")}\` - ${trigger.description}`,
+		)
+		.join("\n");
 };
 
 export const validateUserPermissions = (
-  command: ParsedCommand,
-  userPermissions: string[]
+	command: ParsedCommand,
+	userPermissions: string[],
 ): boolean => {
-  return command.trigger.requiredPermissions.every(perm =>
-    userPermissions.includes(perm) || userPermissions.includes('admin')
-  );
+	return command.trigger.requiredPermissions.every(
+		(perm) =>
+			userPermissions.includes(perm) || userPermissions.includes("admin"),
+	);
 };
 
 export const createCommandParser = (triggers: CommentTrigger[]) => ({
-  parseComment: (comment: string) => parseGitHubComment(comment, triggers),
-  listAvailableCommands: () => listAvailableCommands(triggers),
-  validatePermissions: (command: ParsedCommand, userPermissions: string[]) =>
-    validateUserPermissions(command, userPermissions),
+	parseComment: (comment: string) => parseGitHubComment(comment, triggers),
+	listAvailableCommands: () => listAvailableCommands(triggers),
+	validatePermissions: (command: ParsedCommand, userPermissions: string[]) =>
+		validateUserPermissions(command, userPermissions),
 });

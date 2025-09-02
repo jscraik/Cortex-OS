@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from "node:crypto";
 
 export const uuid = (): string => {
-  return randomUUID();
+	return randomUUID();
 };

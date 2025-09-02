@@ -1,19 +1,19 @@
 {
-  "name": "@cortex-os/structure-guard",
-  "private": true,
-  "type": "module",
-  "main": "guard.ts",
-  "scripts": {
-    "test": "cd ../.. && npx vitest run tools/structure-guard/guard.spec.ts",
-    "test:enhanced": "cd ../.. && npx vitest run tools/structure-guard/guard-enhanced.spec.ts tools/structure-guard/mutation-tests.spec.ts",
-    "validate": "cd ../.. && npx tsx tools/structure-guard/guard-enhanced.ts"
-  },
-  "dependencies": {
-    "globby": "^14.1.0",
-    "micromatch": "^4.0.8",
-    "zod": "^3.25.76"
-  },
-  "devDependencies": {
-    "vitest": "^3.2.4"
-  }
+	"name": "@cortex-os/structure-guard",
+	"private": true,
+	"type": "module",
+	"main": "guard.ts",
+	"scripts": {
+		"test": "cd ../.. && npx vitest run tools/structure-guard/guard.spec.ts",
+		"test:enhanced": "cd ../.. && npx vitest run tools/structure-guard/guard-enhanced.spec.ts tools/structure-guard/mutation-tests.spec.ts",
+		"validate": "cd ../.. && npx tsx tools/structure-guard/guard-enhanced.ts"
+	},
+	"dependencies": {
+		"globby": "^14.1.0",
+		"micromatch": "^4.0.8",
+		"zod": "^3.25.76"
+	},
+	"devDependencies": {
+		"vitest": "^3.2.4"
+	}
 }

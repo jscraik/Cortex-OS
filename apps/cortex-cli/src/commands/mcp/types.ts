@@ -1,1 +1,1 @@
-export type Transport = 'stdio' | 'sse' | 'streamableHttp' | 'http';
+export type Transport = "stdio" | "sse" | "streamableHttp" | "http";

@@ -1,4 +1,4 @@
 {
-  "*.{ts,tsx,js,jsx,cjs,mjs}": ["eslint --fix"],
-  "*.{ts,tsx,js,jsx,json,md,yml,yaml,css,scss}": ["prettier -w"]
+	"*.{ts,tsx,js,jsx,cjs,mjs}": ["eslint --fix"],
+	"*.{ts,tsx,js,jsx,json,md,yml,yaml,css,scss}": ["prettier -w"]
 }

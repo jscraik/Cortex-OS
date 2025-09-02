@@ -155,7 +155,7 @@
     "severity": "high",
     "category": "security",
     "description": "Command injection vulnerability in MLX prompt handling",
-    "evidence": "Lines 35-36: prompt.replace(\"'\", \"\\\\\'\").replace(\"\\n\", \"\\\\n\") - insufficient escaping",
+    "evidence": "Lines 35-36: prompt.replace(\"\'\", \"\\\'\").replace(\"\n\", \"\\\n\") - insufficient escaping",
     "fix": "Use proper command argument passing or JSON escaping to prevent injection",
     "tests_to_add": "Test with malicious prompts containing shell metacharacters"
   },

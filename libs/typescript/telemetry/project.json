@@ -1,7 +1,7 @@
 {
-  "name": "@cortex-os/telemetry",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/typescript/telemetry/src",
-  "projectType": "library",
-  "targets": {}
+	"name": "@cortex-os/telemetry",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "libs/typescript/telemetry/src",
+	"projectType": "library",
+	"targets": {}
 }

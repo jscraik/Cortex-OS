@@ -1,12 +1,12 @@
-import type { Chunk, Embedder, Store } from '../index';
+import type { Chunk, Embedder, Store } from "../index";
 
 export async function ingestText(
-  source: string,
-  text: string,
-  E: Embedder,
-  S: Store,
+	source: string,
+	text: string,
+	E: Embedder,
+	S: Store,
 ): Promise<void> {
-  const chunk: Chunk = { id: `${source}#0`, text, source };
-  const [emb] = await E.embed([chunk.text]);
-  await S.upsert([{ ...chunk, embedding: emb }]);
+	const chunk: Chunk = { id: `${source}#0`, text, source };
+	const [emb] = await E.embed([chunk.text]);
+	await S.upsert([{ ...chunk, embedding: emb }]);
 }

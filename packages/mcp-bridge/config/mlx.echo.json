@@ -1,8 +1,22 @@
 {
-  "server": { "host": "127.0.0.1", "port": 8080, "workers": 1, "timeout": 30, "max_requests": 128 },
-  "models": {
-    "default": { "name": "echo", "description": "Echo model for development and CI" }
-  },
-  "cache": { "hf_home": "~/.cache/huggingface" },
-  "performance": { "batch_size": 1, "max_tokens": 64, "temperature": 0.0, "top_p": 1.0 }
+	"server": {
+		"host": "127.0.0.1",
+		"port": 8080,
+		"workers": 1,
+		"timeout": 30,
+		"max_requests": 128
+	},
+	"models": {
+		"default": {
+			"name": "echo",
+			"description": "Echo model for development and CI"
+		}
+	},
+	"cache": { "hf_home": "~/.cache/huggingface" },
+	"performance": {
+		"batch_size": 1,
+		"max_tokens": 64,
+		"temperature": 0.0,
+		"top_p": 1.0
+	}
 }

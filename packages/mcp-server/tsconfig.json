@@ -1,15 +1,15 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "module": "NodeNext",
-    "target": "ES2022",
-    "moduleResolution": "NodeNext",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "tests"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"module": "NodeNext",
+		"target": "ES2022",
+		"moduleResolution": "NodeNext",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "dist", "tests"]
 }

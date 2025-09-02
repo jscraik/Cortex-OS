@@ -1,173 +1,173 @@
 {
-  "name": "Cortex TUI",
-  "version": "2.0.0",
-  "description": "AI-powered terminal interface for Cortex-OS",
-  "homepage": "https://cortex-os.ai",
-  "repository": "https://github.com/cortex-os/cortex-tui",
-  "license": "MIT",
+	"name": "Cortex TUI",
+	"version": "2.0.0",
+	"description": "AI-powered terminal interface for Cortex-OS",
+	"homepage": "https://cortex-os.ai",
+	"repository": "https://github.com/cortex-os/cortex-tui",
+	"license": "MIT",
 
-  "runtime": {
-    "engine": "cortex-tui",
-    "platform": "terminal",
-    "version": "2.0.0"
-  },
+	"runtime": {
+		"engine": "cortex-tui",
+		"platform": "terminal",
+		"version": "2.0.0"
+	},
 
-  "providers": {
-    "default": "github",
-    "fallback": ["openai", "anthropic", "mlx"],
-    "config": {
-      "github": {
-        "base_url": "https://models.inference.ai.azure.com",
-        "models": ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
-        "free_tier": true,
-        "rate_limits": {
-          "requests_per_minute": 60,
-          "tokens_per_minute": 150000
-        }
-      },
-      "openai": {
-        "base_url": "https://api.openai.com/v1",
-        "models": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
-        "requires_key": true
-      },
-      "anthropic": {
-        "base_url": "https://api.anthropic.com",
-        "models": ["claude-3-sonnet", "claude-3-haiku", "claude-3-opus"],
-        "requires_key": true
-      },
-      "mlx": {
-        "type": "local",
-        "models": ["mlx-community/Llama-3.1-8B-Instruct"],
-        "requires_installation": "pip install mlx-lm"
-      }
-    }
-  },
+	"providers": {
+		"default": "github",
+		"fallback": ["openai", "anthropic", "mlx"],
+		"config": {
+			"github": {
+				"base_url": "https://models.inference.ai.azure.com",
+				"models": ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"],
+				"free_tier": true,
+				"rate_limits": {
+					"requests_per_minute": 60,
+					"tokens_per_minute": 150000
+				}
+			},
+			"openai": {
+				"base_url": "https://api.openai.com/v1",
+				"models": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
+				"requires_key": true
+			},
+			"anthropic": {
+				"base_url": "https://api.anthropic.com",
+				"models": ["claude-3-sonnet", "claude-3-haiku", "claude-3-opus"],
+				"requires_key": true
+			},
+			"mlx": {
+				"type": "local",
+				"models": ["mlx-community/Llama-3.1-8B-Instruct"],
+				"requires_installation": "pip install mlx-lm"
+			}
+		}
+	},
 
-  "features": {
-    "tui": {
-      "enabled": true,
-      "framework": "ratatui",
-      "version": "0.29.0",
-      "accessibility": "wcag-2.2-aa"
-    },
-    "daemon": {
-      "enabled": true,
-      "port": 8080,
-      "bind_address": "127.0.0.1"
-    },
-    "mcp": {
-      "enabled": true,
-      "servers": [
-        {
-          "name": "cortex-fs",
-          "command": "cortex-mcp-fs",
-          "description": "File system operations"
-        },
-        {
-          "name": "cortex-git",
-          "command": "cortex-mcp-git",
-          "description": "Git operations"
-        },
-        {
-          "name": "cortex-web",
-          "command": "cortex-mcp-web",
-          "description": "Web scraping and HTTP"
-        }
-      ]
-    },
-    "memory": {
-      "enabled": true,
-      "backend": "agents_md",
-      "retention_days": 30,
-      "audit_enabled": true
-    },
-    "metrics": {
-      "enabled": true,
-      "prometheus_endpoint": "/metrics",
-      "health_endpoint": "/health"
-    },
-    "streaming": {
-      "enabled": true,
-      "chunk_size": 1024,
-      "timeout_ms": 30000
-    }
-  },
+	"features": {
+		"tui": {
+			"enabled": true,
+			"framework": "ratatui",
+			"version": "0.29.0",
+			"accessibility": "wcag-2.2-aa"
+		},
+		"daemon": {
+			"enabled": true,
+			"port": 8080,
+			"bind_address": "127.0.0.1"
+		},
+		"mcp": {
+			"enabled": true,
+			"servers": [
+				{
+					"name": "cortex-fs",
+					"command": "cortex-mcp-fs",
+					"description": "File system operations"
+				},
+				{
+					"name": "cortex-git",
+					"command": "cortex-mcp-git",
+					"description": "Git operations"
+				},
+				{
+					"name": "cortex-web",
+					"command": "cortex-mcp-web",
+					"description": "Web scraping and HTTP"
+				}
+			]
+		},
+		"memory": {
+			"enabled": true,
+			"backend": "agents_md",
+			"retention_days": 30,
+			"audit_enabled": true
+		},
+		"metrics": {
+			"enabled": true,
+			"prometheus_endpoint": "/metrics",
+			"health_endpoint": "/health"
+		},
+		"streaming": {
+			"enabled": true,
+			"chunk_size": 1024,
+			"timeout_ms": 30000
+		}
+	},
 
-  "security": {
-    "network": {
-      "bind_localhost_only": true,
-      "tls_enabled": false,
-      "cors_enabled": true,
-      "allowed_origins": ["http://localhost:*"]
-    },
-    "execution": {
-      "sandbox_enabled": true,
-      "command_injection_protection": true,
-      "input_validation": true
-    },
-    "data": {
-      "encryption_at_rest": false,
-      "pii_detection": true,
-      "audit_logging": true
-    }
-  },
+	"security": {
+		"network": {
+			"bind_localhost_only": true,
+			"tls_enabled": false,
+			"cors_enabled": true,
+			"allowed_origins": ["http://localhost:*"]
+		},
+		"execution": {
+			"sandbox_enabled": true,
+			"command_injection_protection": true,
+			"input_validation": true
+		},
+		"data": {
+			"encryption_at_rest": false,
+			"pii_detection": true,
+			"audit_logging": true
+		}
+	},
 
-  "github_integration": {
-    "enabled": false,
-    "trigger_commands": ["/cortex"],
-    "permissions": ["issues:write", "pull_requests:write", "models:read"],
-    "workflows": {
-      "issue_triage": ".github/workflows/cortex-triage.yml",
-      "pr_review": ".github/workflows/cortex-review.yml",
-      "stats": ".github/workflows/cortex-stats.yml"
-    }
-  },
+	"github_integration": {
+		"enabled": false,
+		"trigger_commands": ["/cortex"],
+		"permissions": ["issues:write", "pull_requests:write", "models:read"],
+		"workflows": {
+			"issue_triage": ".github/workflows/cortex-triage.yml",
+			"pr_review": ".github/workflows/cortex-review.yml",
+			"stats": ".github/workflows/cortex-stats.yml"
+		}
+	},
 
-  "ui": {
-    "theme": "dark",
-    "keybindings": "default",
-    "vim_mode": false,
-    "components": {
-      "chat_widget": {
-        "enabled": true,
-        "streaming": true,
-        "history_size": 1000
-      },
-      "command_palette": {
-        "enabled": true,
-        "fuzzy_search": true,
-        "max_results": 10
-      },
-      "file_tree": {
-        "enabled": false,
-        "show_hidden": false,
-        "git_integration": true
-      },
-      "diff_viewer": {
-        "enabled": true,
-        "syntax_highlighting": true,
-        "side_by_side": true
-      },
-      "status_bar": {
-        "enabled": true,
-        "show_provider": true,
-        "show_model": true,
-        "show_tokens": true
-      }
-    }
-  },
+	"ui": {
+		"theme": "dark",
+		"keybindings": "default",
+		"vim_mode": false,
+		"components": {
+			"chat_widget": {
+				"enabled": true,
+				"streaming": true,
+				"history_size": 1000
+			},
+			"command_palette": {
+				"enabled": true,
+				"fuzzy_search": true,
+				"max_results": 10
+			},
+			"file_tree": {
+				"enabled": false,
+				"show_hidden": false,
+				"git_integration": true
+			},
+			"diff_viewer": {
+				"enabled": true,
+				"syntax_highlighting": true,
+				"side_by_side": true
+			},
+			"status_bar": {
+				"enabled": true,
+				"show_provider": true,
+				"show_model": true,
+				"show_tokens": true
+			}
+		}
+	},
 
-  "installation": {
-    "auto_install_deps": true,
-    "create_config": true,
-    "setup_github_actions": false,
-    "install_mcp_servers": true
-  },
+	"installation": {
+		"auto_install_deps": true,
+		"create_config": true,
+		"setup_github_actions": false,
+		"install_mcp_servers": true
+	},
 
-  "telemetry": {
-    "enabled": false,
-    "anonymous_usage": false,
-    "crash_reporting": false,
-    "performance_metrics": false
-  }
+	"telemetry": {
+		"enabled": false,
+		"anonymous_usage": false,
+		"crash_reporting": false,
+		"performance_metrics": false
+	}
 }

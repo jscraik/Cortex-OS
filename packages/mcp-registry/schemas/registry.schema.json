@@ -1,62 +1,62 @@
 {
-  "$id": "https://cortex-os.dev/mcp/registry.schema.json",
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MCP Registry Index",
-  "description": "Central registry index for MCP servers with transport and install information",
-  "type": "object",
-  "required": ["version", "servers", "metadata"],
-  "properties": {
-    "version": {
-      "type": "string",
-      "pattern": "^2025-\\d{2}-\\d{2}$",
-      "description": "Registry version in YYYY-MM-DD format"
-    },
-    "metadata": {
-      "type": "object",
-      "required": ["updatedAt", "serverCount"],
-      "properties": {
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "serverCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "categories": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "servers": {
-      "type": "array",
-      "items": {
-        "$ref": "server-manifest.schema.json"
-      },
-      "uniqueItems": true
-    },
-    "signing": {
-      "type": "object",
-      "required": ["sigstoreBundleUrl", "publicKey"],
-      "properties": {
-        "sigstoreBundleUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL to the Sigstore bundle for verification"
-        },
-        "publicKey": {
-          "type": "string",
-          "description": "Base64 encoded public key for signature verification"
-        },
-        "algorithm": {
-          "type": "string",
-          "enum": ["Ed25519", "ECDSA-P256"],
-          "default": "Ed25519"
-        }
-      }
-    }
-  }
+	"$id": "https://cortex-os.dev/mcp/registry.schema.json",
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "MCP Registry Index",
+	"description": "Central registry index for MCP servers with transport and install information",
+	"type": "object",
+	"required": ["version", "servers", "metadata"],
+	"properties": {
+		"version": {
+			"type": "string",
+			"pattern": "^2025-\\d{2}-\\d{2}$",
+			"description": "Registry version in YYYY-MM-DD format"
+		},
+		"metadata": {
+			"type": "object",
+			"required": ["updatedAt", "serverCount"],
+			"properties": {
+				"updatedAt": {
+					"type": "string",
+					"format": "date-time"
+				},
+				"serverCount": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"categories": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"servers": {
+			"type": "array",
+			"items": {
+				"$ref": "server-manifest.schema.json"
+			},
+			"uniqueItems": true
+		},
+		"signing": {
+			"type": "object",
+			"required": ["sigstoreBundleUrl", "publicKey"],
+			"properties": {
+				"sigstoreBundleUrl": {
+					"type": "string",
+					"format": "uri",
+					"description": "URL to the Sigstore bundle for verification"
+				},
+				"publicKey": {
+					"type": "string",
+					"description": "Base64 encoded public key for signature verification"
+				},
+				"algorithm": {
+					"type": "string",
+					"enum": ["Ed25519", "ECDSA-P256"],
+					"default": "Ed25519"
+				}
+			}
+		}
+	}
 }

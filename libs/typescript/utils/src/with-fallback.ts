@@ -3,19 +3,19 @@
  */
 
 export interface FallbackProvider<T> {
-  name: string;
-  execute: () => Promise<T>;
+	name: string;
+	execute: () => Promise<T>;
 }
 
 export interface FallbackOptions {
-  /**
-   * Whether to log warnings when providers fail
-   */
-  logWarnings?: boolean;
-  /**
-   * Custom error message when all providers fail
-   */
-  errorMessage?: string;
+	/**
+	 * Whether to log warnings when providers fail
+	 */
+	logWarnings?: boolean;
+	/**
+	 * Custom error message when all providers fail
+	 */
+	errorMessage?: string;
 }
 
 /**
@@ -27,38 +27,42 @@ export interface FallbackOptions {
  * @throws Error if all providers fail
  */
 export async function withFallback<T>(
-  providers: FallbackProvider<T>[],
-  options: FallbackOptions = {}
+	providers: FallbackProvider<T>[],
+	options: FallbackOptions = {},
 ): Promise<T> {
-  const { logWarnings = true, errorMessage } = options;
+	const { logWarnings = true, errorMessage } = options;
 
-  if (providers.length === 0) {
-    throw new Error('No providers available');
-  }
+	if (providers.length === 0) {
+		throw new Error("No providers available");
+	}
 
-  let lastError: Error | undefined;
+	let lastError: Error | undefined;
 
-  for (const provider of providers) {
-    try {
-      return await provider.execute();
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+	for (const provider of providers) {
+		try {
+			return await provider.execute();
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error(String(error));
 
-      if (logWarnings) {
-        console.warn(`Provider ${provider.name} failed:`, lastError.message);
-      }
-    }
-  }
+			if (logWarnings) {
+				console.warn(`Provider ${provider.name} failed:`, lastError.message);
+			}
+		}
+	}
 
-  const message =
-    errorMessage || `All providers failed. Last error: ${lastError?.message || 'Unknown error'}`;
+	const message =
+		errorMessage ||
+		`All providers failed. Last error: ${lastError?.message || "Unknown error"}`;
 
-  throw new Error(message);
+	throw new Error(message);
 }
 
 /**
  * Creates a fallback provider from a function
  */
-export function createProvider<T>(name: string, execute: () => Promise<T>): FallbackProvider<T> {
-  return { name, execute };
+export function createProvider<T>(
+	name: string,
+	execute: () => Promise<T>,
+): FallbackProvider<T> {
+	return { name, execute };
 }

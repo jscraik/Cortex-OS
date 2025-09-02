@@ -4,14 +4,14 @@
  */
 
 export interface ModelConfig {
-  path: string;
-  hf_path: string;
-  type: string;
-  memory_gb: number;
-  max_tokens?: number;
-  context_length: number;
-  capabilities?: string[];
-  dimensions?: number;
+	path: string;
+	hf_path: string;
+	type: string;
+	memory_gb: number;
+	max_tokens?: number;
+	context_length: number;
+	capabilities?: string[];
+	dimensions?: number;
 }
 
 /**
@@ -23,23 +23,23 @@ export interface ModelConfig {
  * @throws Error if model is not found or wrong type
  */
 export function getValidatedModelConfig(
-  models: Record<string, ModelConfig>,
-  modelName: string,
-  expectedType: string,
+	models: Record<string, ModelConfig>,
+	modelName: string,
+	expectedType: string,
 ): ModelConfig {
-  const modelConfig = models[modelName];
+	const modelConfig = models[modelName];
 
-  if (!modelConfig) {
-    throw new Error(`Model '${modelName}' not found in available models`);
-  }
+	if (!modelConfig) {
+		throw new Error(`Model '${modelName}' not found in available models`);
+	}
 
-  if (modelConfig.type !== expectedType) {
-    throw new Error(
-      `Model '${modelName}' is type '${modelConfig.type}', expected '${expectedType}'`,
-    );
-  }
+	if (modelConfig.type !== expectedType) {
+		throw new Error(
+			`Model '${modelName}' is type '${modelConfig.type}', expected '${expectedType}'`,
+		);
+	}
 
-  return modelConfig;
+	return modelConfig;
 }
 
 /**
@@ -48,12 +48,12 @@ export function getValidatedModelConfig(
  * @returns Promise<boolean> - true if path exists
  */
 export async function validateModelPath(filePath: string): Promise<boolean> {
-  try {
-    const fs = await import('fs');
-    return fs.existsSync(filePath);
-  } catch {
-    return false;
-  }
+	try {
+		const fs = await import("node:fs");
+		return fs.existsSync(filePath);
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -62,8 +62,8 @@ export async function validateModelPath(filePath: string): Promise<boolean> {
  * @returns Estimated token count (chars / 4)
  */
 export function estimateTokenCount(text: string): number {
-  // Rough approximation: 1 token ≈ 4 characters for most models
-  return Math.ceil(text.length / 4);
+	// Rough approximation: 1 token ≈ 4 characters for most models
+	return Math.ceil(text.length / 4);
 }
 
 /**
@@ -73,7 +73,9 @@ export function estimateTokenCount(text: string): number {
  * @throws Error if data is not a non-empty array
  */
 export function validateArrayResponse(data: unknown, context: string): void {
-  if (!Array.isArray(data) || data.length === 0) {
-    throw new Error(`Invalid ${context}: expected non-empty array, got ${typeof data}`);
-  }
+	if (!Array.isArray(data) || data.length === 0) {
+		throw new Error(
+			`Invalid ${context}: expected non-empty array, got ${typeof data}`,
+		);
+	}
 }

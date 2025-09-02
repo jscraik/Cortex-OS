@@ -1,16 +1,16 @@
 {
-  "name": "@cortex-os/a11y-utils",
-  "version": "1.0.0",
-  "description": "Cortex-OS Accessibility Utilities for WCAG 2.2 AA Compliance",
-  "main": "src/index.ts",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.4",
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.2"
-  }
+	"name": "@cortex-os/a11y-utils",
+	"version": "1.0.0",
+	"description": "Cortex-OS Accessibility Utilities for WCAG 2.2 AA Compliance",
+	"main": "src/index.ts",
+	"scripts": {
+		"build": "tsc",
+		"start": "node dist/index.js",
+		"dev": "ts-node src/index.ts"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.4",
+		"typescript": "^5.3.3",
+		"ts-node": "^10.9.2"
+	}
 }

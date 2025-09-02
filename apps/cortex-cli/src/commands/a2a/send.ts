@@ -1,20 +1,20 @@
-import { createBus } from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
-import { uuid } from '@cortex-os/utils';
-import { Command } from 'commander';
+import { createBus } from "@cortex-os/a2a-core/bus";
+import { inproc } from "@cortex-os/a2a-transport/inproc";
+import { uuid } from "@cortex-os/utils";
+import { Command } from "commander";
 
-export const a2aSend = new Command('send')
-  .description('Send an A2A message')
-  .requiredOption('--type <string>')
-  .requiredOption('--payload <json>')
-  .action(async (opts: any) => {
-    const bus = createBus(inproc());
-    await bus.publish({
-      id: uuid(),
-      type: opts.type,
-      occurredAt: new Date().toISOString(),
-      payload: JSON.parse(opts.payload),
-      headers: {},
-    } as any);
-    process.stdout.write('sent\n');
-  });
+export const a2aSend = new Command("send")
+	.description("Send an A2A message")
+	.requiredOption("--type <string>")
+	.requiredOption("--payload <json>")
+	.action(async (opts: unknown) => {
+		const bus = createBus(inproc());
+		await bus.publish({
+			id: uuid(),
+			type: opts.type,
+			occurredAt: new Date().toISOString(),
+			payload: JSON.parse(opts.payload),
+			headers: {},
+		} as unknown);
+		process.stdout.write("sent\n");
+	});

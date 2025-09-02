@@ -1,77 +1,77 @@
 {
-  "input": {
-    "agent": {
-      "id": "code-intel-001",
-      "name": "Code Intelligence Agent",
-      "capabilities": ["analyze", "review", "optimize", "security-scan"]
-    },
-    "tasks": [
-      {
-        "id": "task-001",
-        "kind": "analysis",
-        "input": {
-          "code": "console.log(\"Hello, World!\");",
-          "language": "javascript"
-        },
-        "budget": {
-          "wallClockMs": 5000,
-          "maxSteps": 10
-        }
-      },
-      {
-        "id": "analysis-task-001",
-        "kind": "code-analysis",
-        "input": {
-          "code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
-          "language": "javascript",
-          "context": "Test function for data processing",
-          "analysisType": "review",
-          "urgency": "medium"
-        },
-        "budget": {
-          "wallClockMs": 10000,
-          "maxSteps": 5
-        }
-      }
-    ]
-  },
-  "output": [
-    {
-      "taskId": "task-001",
-      "taskKind": "analysis",
-      "result": {
-        "status": "completed",
-        "result": {
-          "code": "console.log(\"Hello, World!\");",
-          "language": "javascript"
-        },
-        "agent": "code-intel-001"
-      },
-      "executionOrder": 0
-    },
-    {
-      "taskId": "analysis-task-001",
-      "taskKind": "code-analysis",
-      "result": {
-        "status": "completed",
-        "result": {
-          "code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
-          "language": "javascript",
-          "context": "Test function for data processing",
-          "analysisType": "review",
-          "urgency": "medium"
-        },
-        "agent": "code-intel-001"
-      },
-      "executionOrder": 1
-    }
-  ],
-  "metadata": {
-    "seed": 12345,
-    "testType": "multi-task"
-  },
-  "timestamp": 1756406226852,
-  "seed": 12345,
+	"input": {
+		"agent": {
+			"id": "code-intel-001",
+			"name": "Code Intelligence Agent",
+			"capabilities": ["analyze", "review", "optimize", "security-scan"]
+		},
+		"tasks": [
+			{
+				"id": "task-001",
+				"kind": "analysis",
+				"input": {
+					"code": "console.log(\"Hello, World!\");",
+					"language": "javascript"
+				},
+				"budget": {
+					"wallClockMs": 5000,
+					"maxSteps": 10
+				}
+			},
+			{
+				"id": "analysis-task-001",
+				"kind": "code-analysis",
+				"input": {
+					"code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
+					"language": "javascript",
+					"context": "Test function for data processing",
+					"analysisType": "review",
+					"urgency": "medium"
+				},
+				"budget": {
+					"wallClockMs": 10000,
+					"maxSteps": 5
+				}
+			}
+		]
+	},
+	"output": [
+		{
+			"taskId": "task-001",
+			"taskKind": "analysis",
+			"result": {
+				"status": "completed",
+				"result": {
+					"code": "console.log(\"Hello, World!\");",
+					"language": "javascript"
+				},
+				"agent": "code-intel-001"
+			},
+			"executionOrder": 0
+		},
+		{
+			"taskId": "analysis-task-001",
+			"taskKind": "code-analysis",
+			"result": {
+				"status": "completed",
+				"result": {
+					"code": "function processData(data) {\n  if (!data) {\n    throw new Error('Data is required');\n  }\n  return data.map(item => item * 2);\n}",
+					"language": "javascript",
+					"context": "Test function for data processing",
+					"analysisType": "review",
+					"urgency": "medium"
+				},
+				"agent": "code-intel-001"
+			},
+			"executionOrder": 1
+		}
+	],
+	"metadata": {
+		"seed": 12345,
+		"testType": "multi-task"
+	},
+	"timestamp": 1756406226852,
+	"seed": 12345,
 
-  "nodeVersion": "v20.19.4"
+	"nodeVersion": "v20.19.4"
 }

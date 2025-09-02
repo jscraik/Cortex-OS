@@ -1,68 +1,68 @@
-import { randomUUID } from 'node:crypto';
-import readline from 'node:readline';
-import fs from 'fs';
-import { z } from 'zod';
-import { NoopEmbedder } from '../adapters/embedder.noop.js';
-import { InMemoryStore } from '../adapters/store.memory.js';
-import type { Memory } from '../domain/types.js';
-import { createMemoryService } from '../service/memory-service.js';
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import readline from "node:readline";
+import { z } from "zod";
+import { NoopEmbedder } from "../adapters/embedder.noop.js";
+import { InMemoryStore } from "../adapters/store.memory.js";
+import type { Memory } from "../domain/types.js";
+import { createMemoryService } from "../service/memory-service.js";
 
 const cliSchema = z.object({
-  input: z.string(),
-  output: z.string(),
-  tags: z.array(z.string()).optional(),
+	input: z.string(),
+	output: z.string(),
+	tags: z.array(z.string()).optional(),
 });
 
 function parseArgs() {
-  const args = process.argv.slice(2);
-  const opts: Record<string, unknown> = {};
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === '--input' || arg === '-i') opts.input = args[++i];
-    else if (arg === '--output' || arg === '-o') opts.output = args[++i];
-    else if (arg === '--tags' || arg === '-t')
-      opts.tags = args[++i]
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-  }
-  return cliSchema.parse(opts);
+	const args = process.argv.slice(2);
+	const opts: Record<string, unknown> = {};
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i];
+		if (arg === "--input" || arg === "-i") opts.input = args[++i];
+		else if (arg === "--output" || arg === "-o") opts.output = args[++i];
+		else if (arg === "--tags" || arg === "-t")
+			opts.tags = args[++i]
+				.split(",")
+				.map((t) => t.trim())
+				.filter(Boolean);
+	}
+	return cliSchema.parse(opts);
 }
 
 async function main() {
-  const { input, output, tags } = parseArgs();
+	const { input, output, tags } = parseArgs();
 
-  const rl = readline.createInterface({
-    input: fs.createReadStream(input),
-    crlfDelay: Infinity,
-  });
+	const rl = readline.createInterface({
+		input: fs.createReadStream(input),
+		crlfDelay: Infinity,
+	});
 
-  const service = createMemoryService(new InMemoryStore(), new NoopEmbedder());
-  const memories: Memory[] = [];
+	const service = createMemoryService(new InMemoryStore(), new NoopEmbedder());
+	const memories: Memory[] = [];
 
-  for await (const line of rl) {
-    if (!line.trim()) continue;
-    const obj = JSON.parse(line);
-    const text = obj.text ?? obj.content ?? JSON.stringify(obj);
-    const now = new Date().toISOString();
-    const raw = {
-      id: obj.id ?? randomUUID(),
-      kind: 'note' as const,
-      text,
-      tags: [...(tags ?? []), ...(obj.tags ?? [])].filter(Boolean),
-      createdAt: obj.createdAt ?? now,
-      updatedAt: now,
-      provenance: { source: 'system' as const },
-    };
-    const saved = await service.save(raw);
-    memories.push(saved);
-  }
+	for await (const line of rl) {
+		if (!line.trim()) continue;
+		const obj = JSON.parse(line);
+		const text = obj.text ?? obj.content ?? JSON.stringify(obj);
+		const now = new Date().toISOString();
+		const raw = {
+			id: obj.id ?? randomUUID(),
+			kind: "note" as const,
+			text,
+			tags: [...(tags ?? []), ...(obj.tags ?? [])].filter(Boolean),
+			createdAt: obj.createdAt ?? now,
+			updatedAt: now,
+			provenance: { source: "system" as const },
+		};
+		const saved = await service.save(raw);
+		memories.push(saved);
+	}
 
-  fs.writeFileSync(output, JSON.stringify(memories, null, 2));
-  console.log(`Wrote ${memories.length} memories to ${output}`);
+	fs.writeFileSync(output, JSON.stringify(memories, null, 2));
+	console.log(`Wrote ${memories.length} memories to ${output}`);
 }
 
 main().catch((err) => {
-  console.error(err);
-  process.exit(1);
+	console.error(err);
+	process.exit(1);
 });

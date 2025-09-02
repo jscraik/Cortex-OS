@@ -3,132 +3,149 @@
  * Supports all Qwen3-Embedding models (0.6B, 4B, 8B)
  */
 
-import { spawn } from 'child_process';
-import { tmpdir } from 'os';
-import path, { join } from 'path';
-import type { Embedder } from '../index.js';
-import { buildQwen3EmbedScript } from './qwen3-script';
+import { spawn } from "node:child_process";
+import { tmpdir } from "node:os";
+import path, { join } from "node:path";
+import type { Embedder } from "../index.js";
+import { buildQwen3EmbedScript } from "./qwen3-script";
 
-export type Qwen3ModelSize = '0.6B' | '4B' | '8B';
+export type Qwen3ModelSize = "0.6B" | "4B" | "8B";
 
 export interface Qwen3EmbedOptions {
-  modelSize?: Qwen3ModelSize;
-  modelPath?: string;
-  maxTokens?: number;
-  batchSize?: number;
-  useGPU?: boolean;
-  cacheDir?: string;
+	modelSize?: Qwen3ModelSize;
+	modelPath?: string;
+	maxTokens?: number;
+	batchSize?: number;
+	useGPU?: boolean;
+	cacheDir?: string;
 }
 
 export class Qwen3Embedder implements Embedder {
-  private readonly modelSize: Qwen3ModelSize;
-  private readonly modelPath: string;
-  private readonly cacheDir: string;
-  private readonly maxTokens: number;
-  private readonly batchSize: number;
-  private readonly useGPU: boolean;
+	private readonly modelSize: Qwen3ModelSize;
+	private readonly modelPath: string;
+	private readonly cacheDir: string;
+	private readonly maxTokens: number;
+	private readonly batchSize: number;
+	private readonly useGPU: boolean;
 
-  constructor(options: Qwen3EmbedOptions = {}) {
-    this.modelSize = options.modelSize || '4B';
-    this.modelPath = path.resolve(
-      options.modelPath || path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`),
-    );
-    this.cacheDir =
-      options.cacheDir || join(process.env.HF_HOME || tmpdir(), 'qwen3-embedding-cache');
-    this.maxTokens = options.maxTokens || 512;
-    this.batchSize = options.batchSize || 32;
-    this.useGPU = options.useGPU ?? false;
-  }
+	constructor(options: Qwen3EmbedOptions = {}) {
+		this.modelSize = options.modelSize || "4B";
+		this.modelPath = path.resolve(
+			options.modelPath ||
+				path.join(process.cwd(), `models/Qwen3-Embedding-${this.modelSize}`),
+		);
+		this.cacheDir =
+			options.cacheDir ||
+			join(process.env.HF_HOME || tmpdir(), "qwen3-embedding-cache");
+		this.maxTokens = options.maxTokens || 512;
+		this.batchSize = options.batchSize || 32;
+		this.useGPU = options.useGPU ?? false;
+	}
 
-  async embed(texts: string[]): Promise<number[][]> {
-    if (texts.length === 0) return [];
-    const results: number[][] = [];
-    for (let i = 0; i < texts.length; i += this.batchSize) {
-      const batch = texts.slice(i, i + this.batchSize);
-      const batchResults = await this.embedBatch(batch);
-      results.push(...batchResults);
-    }
-    return results;
-  }
+	async embed(texts: string[]): Promise<number[][]> {
+		if (texts.length === 0) return [];
+		const results: number[][] = [];
+		for (let i = 0; i < texts.length; i += this.batchSize) {
+			const batch = texts.slice(i, i + this.batchSize);
+			const batchResults = await this.embedBatch(batch);
+			results.push(...batchResults);
+		}
+		return results;
+	}
 
-  private embedBatch(texts: string[]): Promise<number[][]> {
-    return this.embedWithModel(texts);
-  }
+	private embedBatch(texts: string[]): Promise<number[][]> {
+		return this.embedWithModel(texts);
+	}
 
-  private async embedWithModel(texts: string[]): Promise<number[][]> {
-    return new Promise((resolve, reject) => {
-      const script = buildQwen3EmbedScript(this.modelPath, texts, this.maxTokens, this.useGPU);
-      const python = spawn('python3', ['-c', script], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, TRANSFORMERS_CACHE: this.cacheDir, HF_HOME: this.cacheDir },
-      });
+	private async embedWithModel(texts: string[]): Promise<number[][]> {
+		return new Promise((resolve, reject) => {
+			const script = buildQwen3EmbedScript(
+				this.modelPath,
+				texts,
+				this.maxTokens,
+				this.useGPU,
+			);
+			const python = spawn("python3", ["-c", script], {
+				stdio: ["pipe", "pipe", "pipe"],
+				env: {
+					...process.env,
+					TRANSFORMERS_CACHE: this.cacheDir,
+					HF_HOME: this.cacheDir,
+				},
+			});
 
-      let stdout = '';
-      let stderr = '';
+			let stdout = "";
+			let stderr = "";
 
-      python.stdout?.on('data', (data) => (stdout += data.toString()));
-      python.stderr?.on('data', (data) => (stderr += data.toString()));
+			python.stdout?.on("data", (data) => {
+				stdout += data.toString();
+			});
+			python.stderr?.on("data", (data) => {
+				stderr += data.toString();
+			});
 
-      const timer = setTimeout(() => {
-        python.kill();
-        reject(new Error('Qwen3 embedder timed out'));
-      }, 30000);
+			const timer = setTimeout(() => {
+				python.kill();
+				reject(new Error("Qwen3 embedder timed out"));
+			}, 30000);
 
-      python.on('close', (code) => {
-        clearTimeout(timer);
-        if (code === 0) {
-          try {
-            const result = JSON.parse(stdout);
-            resolve(result.embeddings);
-          } catch (error) {
-            reject(new Error(`Failed to parse embedding result: ${error}`));
-          }
-        } else {
-          reject(new Error(`Python embedding process failed: ${stderr}`));
-        }
-      });
+			python.on("close", (code) => {
+				clearTimeout(timer);
+				if (code === 0) {
+					try {
+						const result = JSON.parse(stdout);
+						resolve(result.embeddings);
+					} catch (error) {
+						reject(new Error(`Failed to parse embedding result: ${error}`));
+					}
+				} else {
+					reject(new Error(`Python embedding process failed: ${stderr}`));
+				}
+			});
 
-      python.on('error', (err) => {
-        clearTimeout(timer);
-        reject(err);
-      });
-    });
-  }
+			python.on("error", (err) => {
+				clearTimeout(timer);
+				reject(err);
+			});
+		});
+	}
 
-  async close(): Promise<void> {
-    // No persistent process to cleanup - using spawn for each batch
-  }
+	async close(): Promise<void> {
+		// No persistent process to cleanup - using spawn for each batch
+	}
 }
 
 /**
  * Factory function for easy Qwen3 embedder creation
  */
-export function createQwen3Embedder(options?: Qwen3EmbedOptions): Qwen3Embedder {
-  return new Qwen3Embedder(options);
+export function createQwen3Embedder(
+	options?: Qwen3EmbedOptions,
+): Qwen3Embedder {
+	return new Qwen3Embedder(options);
 }
 
 /**
  * Optimized embedder configurations for different use cases
  */
 export const Qwen3Presets = {
-  // Fast development/testing
-  development: (): Qwen3Embedder =>
-    createQwen3Embedder({
-      modelSize: '0.6B',
-      batchSize: 64,
-    }),
+	// Fast development/testing
+	development: (): Qwen3Embedder =>
+		createQwen3Embedder({
+			modelSize: "0.6B",
+			batchSize: 64,
+		}),
 
-  // Balanced production
-  production: (): Qwen3Embedder =>
-    createQwen3Embedder({
-      modelSize: '4B',
-      batchSize: 32,
-    }),
+	// Balanced production
+	production: (): Qwen3Embedder =>
+		createQwen3Embedder({
+			modelSize: "4B",
+			batchSize: 32,
+		}),
 
-  // High-quality research
-  research: (): Qwen3Embedder =>
-    createQwen3Embedder({
-      modelSize: '8B',
-      batchSize: 16,
-    }),
+	// High-quality research
+	research: (): Qwen3Embedder =>
+		createQwen3Embedder({
+			modelSize: "8B",
+			batchSize: 16,
+		}),
 } as const;

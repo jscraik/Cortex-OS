@@ -1,16 +1,16 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "rootDir": "src",
-    "outDir": "dist"
-  },
-  "include": ["src", "prisma"],
-  "exclude": ["dist", "node_modules", "tests", "src/tools"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"rootDir": "src",
+		"outDir": "dist"
+	},
+	"include": ["src", "prisma"],
+	"exclude": ["dist", "node_modules", "tests", "src/tools"]
 }

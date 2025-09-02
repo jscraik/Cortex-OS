@@ -6,9 +6,9 @@ export const ok = <T>(value: T): Ok<T> => ({ ok: true, value });
 export const err = <E>(error: E): Err<E> => ({ ok: false, error });
 
 export async function wrap<T>(f: () => Promise<T>): Promise<Result<T>> {
-  try {
-    return ok(await f());
-  } catch (e: any) {
-    return err(e);
-  }
+	try {
+		return ok(await f());
+	} catch (e: any) {
+		return err(e);
+	}
 }

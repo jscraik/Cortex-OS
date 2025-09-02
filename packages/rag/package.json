@@ -1,23 +1,23 @@
 {
-  "name": "@cortex-os/rag",
-  "version": "0.0.1",
-  "private": true,
-  "type": "module",
-  "main": "src/index.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "docs:verify": "./scripts/verify-docs.sh"
-  },
-  "dependencies": {
-    "@cortex-os/contracts": "workspace:*",
-    "@cortex-os/model-gateway": "workspace:*"
-  },
-  "devDependencies": {
-    "@types/node": "^22.5.0",
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
-  }
+	"name": "@cortex-os/rag",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"main": "src/index.ts",
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "eslint .",
+		"test": "vitest run",
+		"docs:verify": "./scripts/verify-docs.sh"
+	},
+	"dependencies": {
+		"@cortex-os/contracts": "workspace:*",
+		"@cortex-os/model-gateway": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^22.5.0",
+		"typescript": "^5.5.4",
+		"vitest": "^2.0.5"
+	}
 }

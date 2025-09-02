@@ -5,10 +5,10 @@
  * @version 1.0.0
  */
 
-import { BuildNode } from '../nodes/index.js';
+import { BuildNode } from "../nodes/index.js";
 
 const buildNode = new BuildNode();
 
 export async function executeBuildNode(state: any): Promise<any> {
-  return await buildNode.execute(state);
+	return await buildNode.execute(state);
 }

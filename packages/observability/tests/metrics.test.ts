@@ -1,30 +1,33 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from "vitest";
 
 const recordSpy = vi.fn();
 const counterSpy = vi.fn();
 const gaugeSpy = vi.fn();
 
-vi.mock('@opentelemetry/api', () => ({
-  metrics: {
-    getMeter: () => ({
-      createHistogram: () => ({ record: recordSpy }),
-      createCounter: () => ({ add: counterSpy }),
-      createGauge: () => ({ record: gaugeSpy }),
-    }),
-  },
+vi.mock("@opentelemetry/api", () => ({
+	metrics: {
+		getMeter: () => ({
+			createHistogram: () => ({ record: recordSpy }),
+			createCounter: () => ({ add: counterSpy }),
+			createGauge: () => ({ record: gaugeSpy }),
+		}),
+	},
 }));
 
-import { calculateErrorBudget, recordLatency } from '../src/metrics/index.js';
+import { calculateErrorBudget, recordLatency } from "../src/metrics/index.js";
 
-describe('metrics', () => {
-  it('clamps negative latency', () => {
-    recordLatency('test', -10);
-    expect(recordSpy).toHaveBeenCalledWith(0, expect.objectContaining({ operation: 'test' }));
-  });
+describe("metrics", () => {
+	it("clamps negative latency", () => {
+		recordLatency("test", -10);
+		expect(recordSpy).toHaveBeenCalledWith(
+			0,
+			expect.objectContaining({ operation: "test" }),
+		);
+	});
 
-  it('calculates error budget', () => {
-    const res = calculateErrorBudget(90, 100, 0.95);
-    expect(res.actual).toBeCloseTo(0.9);
-    expect(res.burnRate).toBeGreaterThan(0);
-  });
+	it("calculates error budget", () => {
+		const res = calculateErrorBudget(90, 100, 0.95);
+		expect(res.actual).toBeCloseTo(0.9);
+		expect(res.burnRate).toBeGreaterThan(0);
+	});
 });

@@ -1,52 +1,52 @@
 {
-  "input": {
-    "basicAgent": {
-      "id": "test-agent-001",
-      "name": "Test Agent",
-      "capabilities": ["text-processing", "data-analysis", "code-review"]
-    },
-    "codeAgent": {
-      "_events": {},
-      "_eventsCount": 0,
-      "ollamaEndpoint": "http://localhost:11434",
-      "analysisHistory": {}
-    },
-    "task": {
-      "id": "task-001",
-      "kind": "analysis",
-      "input": {
-        "code": "console.log(\"Hello, World!\");",
-        "language": "javascript"
-      },
-      "budget": {
-        "wallClockMs": 5000,
-        "maxSteps": 10
-      }
-    }
-  },
-  "output": {
-    "execution": {
-      "agent": "test-agent-001",
-      "status": "completed",
-      "resultType": "object"
-    },
-    "analysis": {
-      "confidence": 0.85,
-      "modelUsed": "qwen3-coder-14b",
-      "suggestionsCount": 1
-    },
-    "coordination": {
-      "seed": 12345,
-      "workflow": "execute-then-analyze",
-      "timestamp": 1756406226897
-    }
-  },
-  "metadata": {
-    "seed": 12345,
-    "testType": "coordination"
-  },
-  "timestamp": 1756406226897,
-  "seed": 12345,
+	"input": {
+		"basicAgent": {
+			"id": "test-agent-001",
+			"name": "Test Agent",
+			"capabilities": ["text-processing", "data-analysis", "code-review"]
+		},
+		"codeAgent": {
+			"_events": {},
+			"_eventsCount": 0,
+			"ollamaEndpoint": "http://localhost:11434",
+			"analysisHistory": {}
+		},
+		"task": {
+			"id": "task-001",
+			"kind": "analysis",
+			"input": {
+				"code": "console.log(\"Hello, World!\");",
+				"language": "javascript"
+			},
+			"budget": {
+				"wallClockMs": 5000,
+				"maxSteps": 10
+			}
+		}
+	},
+	"output": {
+		"execution": {
+			"agent": "test-agent-001",
+			"status": "completed",
+			"resultType": "object"
+		},
+		"analysis": {
+			"confidence": 0.85,
+			"modelUsed": "qwen3-coder-14b",
+			"suggestionsCount": 1
+		},
+		"coordination": {
+			"seed": 12345,
+			"workflow": "execute-then-analyze",
+			"timestamp": 1756406226897
+		}
+	},
+	"metadata": {
+		"seed": 12345,
+		"testType": "coordination"
+	},
+	"timestamp": 1756406226897,
+	"seed": 12345,
 
-  "nodeVersion": "v20.19.4"
+	"nodeVersion": "v20.19.4"
 }

@@ -3,375 +3,421 @@
  * TDD approach for repository structure enforcement
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StructureValidator, CORTEX_STRUCTURE_RULES } from '../core/structure-validator';
-import type { StructureRule, StructureViolation } from '../core/structure-validator';
+import { beforeEach, describe, expect, it } from "vitest";
+import type { StructureRule } from "../core/structure-validator";
+import {
+	CORTEX_STRUCTURE_RULES,
+	StructureValidator,
+} from "../core/structure-validator";
 
-describe('StructureValidator', () => {
-  let validator: StructureValidator;
+describe("StructureValidator", () => {
+	let validator: StructureValidator;
 
-  beforeEach(() => {
-    validator = new StructureValidator(CORTEX_STRUCTURE_RULES);
-  });
+	beforeEach(() => {
+		validator = new StructureValidator(CORTEX_STRUCTURE_RULES);
+	});
 
-  describe('File Validation', () => {
-    describe('Application Placement Rules', () => {
-      it('should allow applications in apps/ directory', () => {
-        const validPaths = [
-          'apps/my-app/src/index.ts',
-          'apps/web-ui/package.json',
-          'apps/cli-tool/bin/cli.js'
-        ];
+	describe("File Validation", () => {
+		describe("Application Placement Rules", () => {
+			it("should allow applications in apps/ directory", () => {
+				const validPaths = [
+					"apps/my-app/src/index.ts",
+					"apps/web-ui/package.json",
+					"apps/cli-tool/bin/cli.js",
+				];
 
-        validPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const appViolations = violations.filter(v => v.rule === 'applications-placement');
-          expect(appViolations).toHaveLength(0);
-        });
-      });
+				validPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const appViolations = violations.filter(
+						(v) => v.rule === "applications-placement",
+					);
+					expect(appViolations).toHaveLength(0);
+				});
+			});
 
-      it('should flag applications outside apps/ directory', () => {
-        const invalidPaths = [
-          'packages/my-app/src/index.ts',
-          'libs/web-ui/package.json',
-          'src/cli-tool.js'
-        ];
+			it("should flag applications outside apps/ directory", () => {
+				const invalidPaths = [
+					"packages/my-app/src/index.ts",
+					"libs/web-ui/package.json",
+					"src/cli-tool.js",
+				];
 
-        invalidPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const appViolations = violations.filter(v => v.rule === 'applications-placement');
-          expect(appViolations.length).toBeGreaterThan(0);
-        });
-      });
-    });
+				invalidPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const appViolations = violations.filter(
+						(v) => v.rule === "applications-placement",
+					);
+					expect(appViolations.length).toBeGreaterThan(0);
+				});
+			});
+		});
 
-    describe('Package Placement Rules', () => {
-      it('should allow packages in packages/ directory', () => {
-        const validPaths = [
-          'packages/feature-auth/src/auth.ts',
-          'packages/module-payment/index.js',
-          'packages/package-core/package.json'
-        ];
+		describe("Package Placement Rules", () => {
+			it("should allow packages in packages/ directory", () => {
+				const validPaths = [
+					"packages/feature-auth/src/auth.ts",
+					"packages/module-payment/index.js",
+					"packages/package-core/package.json",
+				];
 
-        validPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const packageViolations = violations.filter(v => v.rule === 'packages-placement');
-          expect(packageViolations).toHaveLength(0);
-        });
-      });
+				validPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const packageViolations = violations.filter(
+						(v) => v.rule === "packages-placement",
+					);
+					expect(packageViolations).toHaveLength(0);
+				});
+			});
 
-      it('should flag packages outside packages/ directory', () => {
-        const invalidPaths = [
-          'apps/feature-auth/src/auth.ts',
-          'libs/module-payment/index.js',
-          'src/package-core.js'
-        ];
+			it("should flag packages outside packages/ directory", () => {
+				const invalidPaths = [
+					"apps/feature-auth/src/auth.ts",
+					"libs/module-payment/index.js",
+					"src/package-core.js",
+				];
 
-        invalidPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const packageViolations = violations.filter(v => v.rule === 'packages-placement');
-          expect(packageViolations.length).toBeGreaterThan(0);
-        });
-      });
-    });
+				invalidPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const packageViolations = violations.filter(
+						(v) => v.rule === "packages-placement",
+					);
+					expect(packageViolations.length).toBeGreaterThan(0);
+				});
+			});
+		});
 
-    describe('TypeScript Organization', () => {
-      it('should allow TypeScript files in proper locations', () => {
-        const validPaths = [
-          'apps/my-app/src/index.ts',
-          'packages/core/lib/utils.ts',
-          'libs/shared/types.ts',
-          'scripts/build.ts',
-          'tests/unit/auth.test.ts'
-        ];
+		describe("TypeScript Organization", () => {
+			it("should allow TypeScript files in proper locations", () => {
+				const validPaths = [
+					"apps/my-app/src/index.ts",
+					"packages/core/lib/utils.ts",
+					"libs/shared/types.ts",
+					"scripts/build.ts",
+					"tests/unit/auth.test.ts",
+				];
 
-        validPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const tsViolations = violations.filter(v => v.rule === 'typescript-organization');
-          expect(tsViolations.filter(v => v.type === 'misplaced_file')).toHaveLength(0);
-        });
-      });
+				validPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const tsViolations = violations.filter(
+						(v) => v.rule === "typescript-organization",
+					);
+					expect(
+						tsViolations.filter((v) => v.type === "misplaced_file"),
+					).toHaveLength(0);
+				});
+			});
 
-      it('should flag TypeScript files in root directory', () => {
-        const invalidPaths = [
-          'index.ts',
-          'app.ts',
-          'config.ts'
-        ];
+			it("should flag TypeScript files in root directory", () => {
+				const invalidPaths = ["index.ts", "app.ts", "config.ts"];
 
-        invalidPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const tsViolations = violations.filter(v => v.rule === 'typescript-organization');
-          expect(tsViolations.length).toBeGreaterThan(0);
-        });
-      });
+				invalidPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const tsViolations = violations.filter(
+						(v) => v.rule === "typescript-organization",
+					);
+					expect(tsViolations.length).toBeGreaterThan(0);
+				});
+			});
 
-      it('should validate TypeScript naming conventions', () => {
-        const validNames = [
-          'apps/test/index.ts',
-          'packages/core/utils.ts',
-          'libs/shared/my-component.ts',
-          'scripts/build-tool.ts'
-        ];
+			it("should validate TypeScript naming conventions", () => {
+				const validNames = [
+					"apps/test/index.ts",
+					"packages/core/utils.ts",
+					"libs/shared/my-component.ts",
+					"scripts/build-tool.ts",
+				];
 
-        const invalidNames = [
-          'apps/test/Index.ts', // PascalCase not allowed
-          'packages/core/Utils.ts',
-          'libs/shared/my_component.ts', // underscore mixed with hyphen
-          'scripts/buildTool.ts' // camelCase not allowed
-        ];
+				const invalidNames = [
+					"apps/test/Index.ts", // PascalCase not allowed
+					"packages/core/Utils.ts",
+					"libs/shared/my_component.ts", // underscore mixed with hyphen
+					"scripts/buildTool.ts", // camelCase not allowed
+				];
 
-        validNames.forEach(path => {
-          const violations = validator.validateFile(path);
-          const namingViolations = violations.filter(v => v.type === 'naming_violation');
-          expect(namingViolations).toHaveLength(0);
-        });
+				validNames.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const namingViolations = violations.filter(
+						(v) => v.type === "naming_violation",
+					);
+					expect(namingViolations).toHaveLength(0);
+				});
 
-        invalidNames.forEach(path => {
-          const violations = validator.validateFile(path);
-          const namingViolations = violations.filter(v => v.type === 'naming_violation');
-          expect(namingViolations.length).toBeGreaterThan(0);
-        });
-      });
-    });
+				invalidNames.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const namingViolations = violations.filter(
+						(v) => v.type === "naming_violation",
+					);
+					expect(namingViolations.length).toBeGreaterThan(0);
+				});
+			});
+		});
 
-    describe('Documentation Organization', () => {
-      it('should allow documentation files in proper locations', () => {
-        const validPaths = [
-          'docs/api.md',
-          'docs/guides/getting-started.md',
-          'README.md',
-          'apps/my-app/README.md',
-          'CHANGELOG.md'
-        ];
+		describe("Documentation Organization", () => {
+			it("should allow documentation files in proper locations", () => {
+				const validPaths = [
+					"docs/api.md",
+					"docs/guides/getting-started.md",
+					"README.md",
+					"apps/my-app/README.md",
+					"CHANGELOG.md",
+				];
 
-        validPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const docViolations = violations.filter(v => v.rule === 'documentation-organization');
-          expect(docViolations.filter(v => v.type === 'misplaced_file')).toHaveLength(0);
-        });
-      });
-    });
+				validPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const docViolations = violations.filter(
+						(v) => v.rule === "documentation-organization",
+					);
+					expect(
+						docViolations.filter((v) => v.type === "misplaced_file"),
+					).toHaveLength(0);
+				});
+			});
+		});
 
-    describe('Test File Placement', () => {
-      it('should allow test files in proper locations', () => {
-        const validPaths = [
-          'tests/unit/auth.test.ts',
-          'tests/integration/api.spec.js',
-          'apps/my-app/src/auth.test.ts',
-          'packages/core/lib/utils.spec.ts'
-        ];
+		describe("Test File Placement", () => {
+			it("should allow test files in proper locations", () => {
+				const validPaths = [
+					"tests/unit/auth.test.ts",
+					"tests/integration/api.spec.js",
+					"apps/my-app/src/auth.test.ts",
+					"packages/core/lib/utils.spec.ts",
+				];
 
-        validPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const testViolations = violations.filter(v => v.rule === 'test-files-placement');
-          expect(testViolations.filter(v => v.type === 'misplaced_file')).toHaveLength(0);
-        });
-      });
-    });
+				validPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const testViolations = violations.filter(
+						(v) => v.rule === "test-files-placement",
+					);
+					expect(
+						testViolations.filter((v) => v.type === "misplaced_file"),
+					).toHaveLength(0);
+				});
+			});
+		});
 
-    describe('Deep Nesting Prevention', () => {
-      it('should flag excessively nested files', () => {
-        const deepPaths = [
-          'apps/my-app/src/components/forms/fields/input/validators/email/index.ts', // 7+ levels
-          'packages/core/lib/utils/helpers/formatters/dates/iso/converter.ts' // 8+ levels
-        ];
+		describe("Deep Nesting Prevention", () => {
+			it("should flag excessively nested files", () => {
+				const deepPaths = [
+					"apps/my-app/src/components/forms/fields/input/validators/email/index.ts", // 7+ levels
+					"packages/core/lib/utils/helpers/formatters/dates/iso/converter.ts", // 8+ levels
+				];
 
-        deepPaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const nestingViolations = violations.filter(v => v.rule === 'prevent-deep-nesting');
-          expect(nestingViolations.length).toBeGreaterThan(0);
-        });
-      });
+				deepPaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const nestingViolations = violations.filter(
+						(v) => v.rule === "prevent-deep-nesting",
+					);
+					expect(nestingViolations.length).toBeGreaterThan(0);
+				});
+			});
 
-      it('should allow reasonable nesting levels', () => {
-        const reasonablePaths = [
-          'apps/my-app/src/components/Button.ts', // 4 levels
-          'packages/core/lib/utils/format.ts', // 4 levels
-          'libs/shared/types/api.ts' // 3 levels
-        ];
+			it("should allow reasonable nesting levels", () => {
+				const reasonablePaths = [
+					"apps/my-app/src/components/Button.ts", // 4 levels
+					"packages/core/lib/utils/format.ts", // 4 levels
+					"libs/shared/types/api.ts", // 3 levels
+				];
 
-        reasonablePaths.forEach(path => {
-          const violations = validator.validateFile(path);
-          const nestingViolations = violations.filter(v => v.rule === 'prevent-deep-nesting');
-          expect(nestingViolations).toHaveLength(0);
-        });
-      });
-    });
-  });
+				reasonablePaths.forEach((path) => {
+					const violations = validator.validateFile(path);
+					const nestingViolations = violations.filter(
+						(v) => v.rule === "prevent-deep-nesting",
+					);
+					expect(nestingViolations).toHaveLength(0);
+				});
+			});
+		});
+	});
 
-  describe('Path Suggestions', () => {
-    it('should suggest correct paths for misplaced applications', () => {
-      const violations = validator.validateFile('src/my-app.ts');
-      const appViolations = violations.filter(v => v.rule === 'applications-placement');
+	describe("Path Suggestions", () => {
+		it("should suggest correct paths for misplaced applications", () => {
+			const violations = validator.validateFile("src/my-app.ts");
+			const appViolations = violations.filter(
+				(v) => v.rule === "applications-placement",
+			);
 
-      if (appViolations.length > 0) {
-        expect(appViolations[0].suggestedPath).toBe('apps/my-app.ts');
-      }
-    });
+			if (appViolations.length > 0) {
+				expect(appViolations[0].suggestedPath).toBe("apps/my-app.ts");
+			}
+		});
 
-    it('should suggest correct paths for misplaced packages', () => {
-      const violations = validator.validateFile('src/feature-auth.ts');
-      const packageViolations = violations.filter(v => v.rule === 'packages-placement');
+		it("should suggest correct paths for misplaced packages", () => {
+			const violations = validator.validateFile("src/feature-auth.ts");
+			const packageViolations = violations.filter(
+				(v) => v.rule === "packages-placement",
+			);
 
-      if (packageViolations.length > 0) {
-        expect(packageViolations[0].suggestedPath).toBe('packages/feature-auth.ts');
-      }
-    });
+			if (packageViolations.length > 0) {
+				expect(packageViolations[0].suggestedPath).toBe(
+					"packages/feature-auth.ts",
+				);
+			}
+		});
 
-    it('should suggest correct paths for misplaced TypeScript files', () => {
-      const violations = validator.validateFile('utils.ts');
-      const tsViolations = violations.filter(v => v.rule === 'typescript-organization');
+		it("should suggest correct paths for misplaced TypeScript files", () => {
+			const violations = validator.validateFile("utils.ts");
+			const tsViolations = violations.filter(
+				(v) => v.rule === "typescript-organization",
+			);
 
-      if (tsViolations.length > 0) {
-        expect(tsViolations[0].suggestedPath).toBe('src/utils.ts');
-      }
-    });
+			if (tsViolations.length > 0) {
+				expect(tsViolations[0].suggestedPath).toBe("src/utils.ts");
+			}
+		});
 
-    it('should suggest test directory for test files', () => {
-      const violations = validator.validateFile('auth.test.ts');
-      const testViolations = violations.filter(v => v.rule === 'typescript-organization');
+		it("should suggest test directory for test files", () => {
+			const violations = validator.validateFile("auth.test.ts");
+			const testViolations = violations.filter(
+				(v) => v.rule === "typescript-organization",
+			);
 
-      if (testViolations.length > 0) {
-        expect(testViolations[0].suggestedPath).toBe('tests/auth.test.ts');
-      }
-    });
-  });
+			if (testViolations.length > 0) {
+				expect(testViolations[0].suggestedPath).toBe("tests/auth.test.ts");
+			}
+		});
+	});
 
-  describe('Repository Analysis', () => {
-    it('should calculate correct scores for clean repositories', () => {
-      const cleanFiles = [
-        'apps/web-ui/src/index.ts',
-        'packages/auth/lib/auth.ts',
-        'libs/shared/types.ts',
-        'docs/README.md',
-        'tests/auth.test.ts'
-      ];
+	describe("Repository Analysis", () => {
+		it("should calculate correct scores for clean repositories", () => {
+			const cleanFiles = [
+				"apps/web-ui/src/index.ts",
+				"packages/auth/lib/auth.ts",
+				"libs/shared/types.ts",
+				"docs/README.md",
+				"tests/auth.test.ts",
+			];
 
-      const result = validator.analyzeRepository(cleanFiles);
+			const result = validator.analyzeRepository(cleanFiles);
 
-      expect(result.violations).toHaveLength(0);
-      expect(result.score).toBe(100);
-      expect(result.summary.totalFiles).toBe(cleanFiles.length);
-      expect(result.summary.violationsCount).toBe(0);
-      expect(result.summary.autoFixableCount).toBe(0);
-    });
+			expect(result.violations).toHaveLength(0);
+			expect(result.score).toBe(100);
+			expect(result.summary.totalFiles).toBe(cleanFiles.length);
+			expect(result.summary.violationsCount).toBe(0);
+			expect(result.summary.autoFixableCount).toBe(0);
+		});
 
-    it('should calculate scores with penalties for violations', () => {
-      const messyFiles = [
-        'index.ts', // Root TS file - error (10 points)
-        'my-app.js', // Root app file - error (10 points)
-        'docs/very/deep/nested/file/structure.md', // Deep nesting - warning (5 points)
-        'apps/web-ui/src/Component.ts' // Naming violation - warning (5 points)
-      ];
+		it("should calculate scores with penalties for violations", () => {
+			const messyFiles = [
+				"index.ts", // Root TS file - error (10 points)
+				"my-app.js", // Root app file - error (10 points)
+				"docs/very/deep/nested/file/structure.md", // Deep nesting - warning (5 points)
+				"apps/web-ui/src/Component.ts", // Naming violation - warning (5 points)
+			];
 
-      const result = validator.analyzeRepository(messyFiles);
+			const result = validator.analyzeRepository(messyFiles);
 
-      expect(result.violations.length).toBeGreaterThan(0);
-      expect(result.score).toBeLessThan(100);
-      expect(result.summary.totalFiles).toBe(messyFiles.length);
-      expect(result.summary.violationsCount).toBeGreaterThan(0);
-    });
+			expect(result.violations.length).toBeGreaterThan(0);
+			expect(result.score).toBeLessThan(100);
+			expect(result.summary.totalFiles).toBe(messyFiles.length);
+			expect(result.summary.violationsCount).toBeGreaterThan(0);
+		});
 
-    it('should count auto-fixable violations correctly', () => {
-      const files = [
-        'src/my-app.ts', // Auto-fixable: move to apps/
-        'lib/feature.ts', // Auto-fixable: move to packages/
-        'script.sh' // Auto-fixable: move to scripts/
-      ];
+		it("should count auto-fixable violations correctly", () => {
+			const files = [
+				"src/my-app.ts", // Auto-fixable: move to apps/
+				"lib/feature.ts", // Auto-fixable: move to packages/
+				"script.sh", // Auto-fixable: move to scripts/
+			];
 
-      const result = validator.analyzeRepository(files);
+			const result = validator.analyzeRepository(files);
 
-      const autoFixableViolations = result.violations.filter(v => v.autoFixable);
-      expect(result.summary.autoFixableCount).toBe(autoFixableViolations.length);
-      expect(result.summary.autoFixableCount).toBeGreaterThan(0);
-    });
-  });
+			const autoFixableViolations = result.violations.filter(
+				(v) => v.autoFixable,
+			);
+			expect(result.summary.autoFixableCount).toBe(
+				autoFixableViolations.length,
+			);
+			expect(result.summary.autoFixableCount).toBeGreaterThan(0);
+		});
+	});
 
-  describe('Custom Rules', () => {
-    it('should work with custom rule sets', () => {
-      const customRules: StructureRule[] = [
-        {
-          name: 'custom-components',
-          description: 'Components should be in components/ directory',
-          pattern: '**/*Component.tsx',
-          allowedPaths: ['components/**/*'],
-          autoFix: true
-        }
-      ];
+	describe("Custom Rules", () => {
+		it("should work with custom rule sets", () => {
+			const customRules: StructureRule[] = [
+				{
+					name: "custom-components",
+					description: "Components should be in components/ directory",
+					pattern: "**/*Component.tsx",
+					allowedPaths: ["components/**/*"],
+					autoFix: true,
+				},
+			];
 
-      const customValidator = new StructureValidator(customRules);
+			const customValidator = new StructureValidator(customRules);
 
-      const violations = customValidator.validateFile('src/MyComponent.tsx');
-      expect(violations.length).toBeGreaterThan(0);
-      expect(violations[0].rule).toBe('custom-components');
-    });
+			const violations = customValidator.validateFile("src/MyComponent.tsx");
+			expect(violations.length).toBeGreaterThan(0);
+			expect(violations[0].rule).toBe("custom-components");
+		});
 
-    it('should handle empty rule sets gracefully', () => {
-      const emptyValidator = new StructureValidator([]);
+		it("should handle empty rule sets gracefully", () => {
+			const emptyValidator = new StructureValidator([]);
 
-      const violations = emptyValidator.validateFile('anywhere/any-file.ts');
-      expect(violations).toHaveLength(0);
+			const violations = emptyValidator.validateFile("anywhere/any-file.ts");
+			expect(violations).toHaveLength(0);
 
-      const result = emptyValidator.analyzeRepository(['file1.ts', 'file2.js']);
-      expect(result.score).toBe(100);
-      expect(result.violations).toHaveLength(0);
-    });
-  });
+			const result = emptyValidator.analyzeRepository(["file1.ts", "file2.js"]);
+			expect(result.score).toBe(100);
+			expect(result.violations).toHaveLength(0);
+		});
+	});
 
-  describe('Edge Cases', () => {
-    it('should handle empty file lists', () => {
-      const result = validator.analyzeRepository([]);
+	describe("Edge Cases", () => {
+		it("should handle empty file lists", () => {
+			const result = validator.analyzeRepository([]);
 
-      expect(result.violations).toHaveLength(0);
-      expect(result.score).toBe(100);
-      expect(result.summary.totalFiles).toBe(0);
-    });
+			expect(result.violations).toHaveLength(0);
+			expect(result.score).toBe(100);
+			expect(result.summary.totalFiles).toBe(0);
+		});
 
-    it('should handle files with no extensions', () => {
-      const violations = validator.validateFile('Dockerfile');
+		it("should handle files with no extensions", () => {
+			const violations = validator.validateFile("Dockerfile");
 
-      // Should not crash, may or may not have violations depending on rules
-      expect(Array.isArray(violations)).toBe(true);
-    });
+			// Should not crash, may or may not have violations depending on rules
+			expect(Array.isArray(violations)).toBe(true);
+		});
 
-    it('should handle very long file paths', () => {
-      const longPath = 'apps/' + 'very/'.repeat(20) + 'deep/file.ts';
+		it("should handle very long file paths", () => {
+			const longPath = `apps/${"very/".repeat(20)}deep/file.ts`;
 
-      const violations = validator.validateFile(longPath);
+			const violations = validator.validateFile(longPath);
 
-      expect(Array.isArray(violations)).toBe(true);
-      // Should definitely flag deep nesting
-      const nestingViolations = violations.filter(v => v.rule === 'prevent-deep-nesting');
-      expect(nestingViolations.length).toBeGreaterThan(0);
-    });
+			expect(Array.isArray(violations)).toBe(true);
+			// Should definitely flag deep nesting
+			const nestingViolations = violations.filter(
+				(v) => v.rule === "prevent-deep-nesting",
+			);
+			expect(nestingViolations.length).toBeGreaterThan(0);
+		});
 
-    it('should handle special characters in file paths', () => {
-      const specialPaths = [
-        'apps/my-app/src/file with spaces.ts',
-        'packages/core/lib/file@special.ts',
-        'docs/guide[1].md'
-      ];
+		it("should handle special characters in file paths", () => {
+			const specialPaths = [
+				"apps/my-app/src/file with spaces.ts",
+				"packages/core/lib/file@special.ts",
+				"docs/guide[1].md",
+			];
 
-      specialPaths.forEach(path => {
-        const violations = validator.validateFile(path);
-        expect(Array.isArray(violations)).toBe(true);
-      });
-    });
-  });
+			specialPaths.forEach((path) => {
+				const violations = validator.validateFile(path);
+				expect(Array.isArray(violations)).toBe(true);
+			});
+		});
+	});
 
-  describe('Performance', () => {
-    it('should handle large file lists efficiently', () => {
-      const largeFileList = Array.from({ length: 10000 }, (_, i) =>
-        `apps/app${i}/src/file${i}.ts`
-      );
+	describe("Performance", () => {
+		it("should handle large file lists efficiently", () => {
+			const largeFileList = Array.from(
+				{ length: 10000 },
+				(_, i) => `apps/app${i}/src/file${i}.ts`,
+			);
 
-      const startTime = Date.now();
-      const result = validator.analyzeRepository(largeFileList);
-      const endTime = Date.now();
+			const startTime = Date.now();
+			const result = validator.analyzeRepository(largeFileList);
+			const endTime = Date.now();
 
-      expect(result.summary.totalFiles).toBe(10000);
-      expect(endTime - startTime).toBeLessThan(5000); // Should complete in < 5 seconds
-    });
-  });
+			expect(result.summary.totalFiles).toBe(10000);
+			expect(endTime - startTime).toBeLessThan(5000); // Should complete in < 5 seconds
+		});
+	});
 });

@@ -9,93 +9,93 @@
  * @ai_provenance_hash N/A
  */
 
-import { EventEmitter } from 'events';
-import * as net from 'net';
-import WebSocket from 'ws';
-import type { AnalyticsConfig, DashboardData } from './types.js';
+import { EventEmitter } from "node:events";
+import * as net from "node:net";
+import WebSocket from "ws";
+import type { AnalyticsConfig, DashboardData } from "./types.js";
 
 /**
  * Find an available port starting from a base port
  */
-async function findAvailablePort(startPort: number = 9000): Promise<number> {
-  for (let port = startPort; port < startPort + 100; port++) {
-    if (await isPortAvailable(port)) {
-      return port;
-    }
-  }
-  throw new Error(`No available port found starting from ${startPort}`);
+async function _findAvailablePort(startPort: number = 9000): Promise<number> {
+	for (let port = startPort; port < startPort + 100; port++) {
+		if (await isPortAvailable(port)) {
+			return port;
+		}
+	}
+	throw new Error(`No available port found starting from ${startPort}`);
 }
 
 /**
  * Check if a port is available
  */
 async function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
+	return new Promise((resolve) => {
+		const server = net.createServer();
 
-    server.listen(port, 'localhost', () => {
-      server.close(() => {
-        resolve(true);
-      });
-    });
+		server.listen(port, "localhost", () => {
+			server.close(() => {
+				resolve(true);
+			});
+		});
 
-    server.on('error', () => {
-      resolve(false);
-    });
-  });
+		server.on("error", () => {
+			resolve(false);
+		});
+	});
 }
 
 /**
  * Real-time data streaming service for analytics dashboard
  */
 export class RealtimeDataStream extends EventEmitter {
-  private server?: WebSocket.Server;
-  private clients: Set<WebSocket> = new Set();
+	private server?: WebSocket.Server;
+	private clients: Set<WebSocket> = new Set();
 
-  constructor(
-    private config: AnalyticsConfig,
-    private port: number = 8080,
-  ) {
-    super();
-  }
+	constructor(
+		_config: AnalyticsConfig,
+		private port: number = 8080,
+	) {
+		super();
+	}
 
-  /**
-   * Start WebSocket server for real-time data streaming
-   */
-  start(): void {
-    this.server = new WebSocket.Server({ port: this.port });
+	/**
+	 * Start WebSocket server for real-time data streaming
+	 */
+	start(): void {
+		this.server = new WebSocket.Server({ port: this.port });
 
-    this.server.on('connection', (ws) => {
-      this.clients.add(ws);
+		this.server.on("connection", (ws) => {
+			this.clients.add(ws);
 
-      ws.on('close', () => {
-        this.clients.delete(ws);
-      });
-    });
-  }
+			ws.on("close", () => {
+				this.clients.delete(ws);
+			});
+		});
+	}
 
-  /**
-   * Broadcast data to all connected clients
-   */
-  broadcast(data: DashboardData): void {
-    const message = JSON.stringify(data);
+	/**
+	 * Broadcast data to all connected clients
+	 */
+	broadcast(data: DashboardData): void {
+		const message = JSON.stringify(data);
 
-    this.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
-  }
+		this.clients.forEach((client) => {
+			if (client.readyState === WebSocket.OPEN) {
+				client.send(message);
+			}
+		});
+	}
 
-  /**
-   * Stop the WebSocket server
-   */
-  stop(): void {
-    if (this.server) {
-      this.server.close();
-    }
-    this.clients.clear();
-  }
+	/**
+	 * Stop the WebSocket server
+	 */
+	stop(): void {
+		if (this.server) {
+			this.server.close();
+		}
+		this.clients.clear();
+	}
 }
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

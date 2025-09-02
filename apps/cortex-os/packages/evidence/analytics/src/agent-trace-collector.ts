@@ -9,50 +9,50 @@
  * @ai_provenance_hash N/A
  */
 
-import { SpanKind, trace } from '@opentelemetry/api';
-import { EventEmitter } from 'events';
-import type { AgentTrace, AnalyticsConfig } from './types.js';
+import { EventEmitter } from "node:events";
+import { SpanKind, trace } from "@opentelemetry/api";
+import type { AgentTrace, AnalyticsConfig } from "./types.js";
 
 /**
  * Collects OpenTelemetry traces from agent executions
  */
 export class AgentTraceCollector extends EventEmitter {
-  private tracer = trace.getTracer('orchestration-analytics-traces');
+	private tracer = trace.getTracer("orchestration-analytics-traces");
 
-  constructor(private config: AnalyticsConfig) {
-    super();
-  }
+	constructor(_config: AnalyticsConfig) {
+		super();
+	}
 
-  /**
-   * Start trace collection for an agent operation
-   */
-  startTrace(agentId: string, operationName: string): string {
-    const span = this.tracer.startSpan(`agent_${operationName}`, {
-      kind: SpanKind.INTERNAL,
-      attributes: {
-        'agent.id': agentId,
-        'operation.name': operationName,
-      },
-    });
+	/**
+	 * Start trace collection for an agent operation
+	 */
+	startTrace(agentId: string, operationName: string): string {
+		const span = this.tracer.startSpan(`agent_${operationName}`, {
+			kind: SpanKind.INTERNAL,
+			attributes: {
+				"agent.id": agentId,
+				"operation.name": operationName,
+			},
+		});
 
-    return span.spanContext().spanId;
-  }
+		return span.spanContext().spanId;
+	}
 
-  /**
-   * End trace collection
-   */
-  endTrace(spanId: string, success: boolean = true): void {
-    // Implementation would interact with actual OpenTelemetry spans
-    this.emit('traceCompleted', { spanId, success, timestamp: new Date() });
-  }
+	/**
+	 * End trace collection
+	 */
+	endTrace(spanId: string, success: boolean = true): void {
+		// Implementation would interact with actual OpenTelemetry spans
+		this.emit("traceCompleted", { spanId, success, timestamp: new Date() });
+	}
 
-  /**
-   * Get traces for a specific agent
-   */
-  getAgentTraces(_agentId?: string): AgentTrace[] {
-    // Mock implementation - would query actual trace backend
-    return [];
-  }
+	/**
+	 * Get traces for a specific agent
+	 */
+	getAgentTraces(_agentId?: string): AgentTrace[] {
+		// Mock implementation - would query actual trace backend
+		return [];
+	}
 }
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

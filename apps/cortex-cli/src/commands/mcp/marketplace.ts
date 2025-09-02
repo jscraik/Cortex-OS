@@ -21,28 +21,28 @@
  * add/search/get/show/bridge. This stub remains temporarily for compatibility.
  */
 export class McpMarketplaceCommand {
-  async initialize(): Promise<void> {
-    // no-op (legacy)
-    return;
-  }
-  async search(): Promise<void> {
-    throw new Error('Deprecated command: use "cortex mcp search"');
-  }
-  async show(): Promise<void> {
-    throw new Error('Deprecated command: use "cortex mcp show"');
-  }
-  async add(): Promise<void> {
-    throw new Error('Deprecated command: use "cortex mcp add"');
-  }
-  async remove(): Promise<void> {
-    throw new Error('Deprecated command: use "cortex mcp remove"');
-  }
-  async list(): Promise<void> {
-    throw new Error('Deprecated command: use "cortex mcp list"');
-  }
-  async bridge(): Promise<void> {
-    throw new Error('Deprecated command: use "cortex mcp bridge"');
-  }
+	async initialize(): Promise<void> {
+		// no-op (legacy)
+		return;
+	}
+	async search(): Promise<void> {
+		throw new Error('Deprecated command: use "cortex mcp search"');
+	}
+	async show(): Promise<void> {
+		throw new Error('Deprecated command: use "cortex mcp show"');
+	}
+	async add(): Promise<void> {
+		throw new Error('Deprecated command: use "cortex mcp add"');
+	}
+	async remove(): Promise<void> {
+		throw new Error('Deprecated command: use "cortex mcp remove"');
+	}
+	async list(): Promise<void> {
+		throw new Error('Deprecated command: use "cortex mcp list"');
+	}
+	async bridge(): Promise<void> {
+		throw new Error('Deprecated command: use "cortex mcp bridge"');
+	}
 }
 
 export default McpMarketplaceCommand;

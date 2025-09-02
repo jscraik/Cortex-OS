@@ -1,45 +1,45 @@
 {
-  "name": "@cortex-os/agents",
-  "version": "0.1.0",
-  "type": "module",
-  "private": true,
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/index.ts --dts --format esm --clean",
-    "dev": "tsup src/index.ts --dts --format esm --watch",
-    "test": "vitest run",
-    "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration",
-    "test:e2e": "vitest run tests/e2e",
-    "test:coverage": "vitest run --coverage",
-    "test:coverage:threshold": "vitest run --coverage --reporter=verbose",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src tests",
-    "format": "prettier --write src tests",
-    "security:run": "tsx ./examples/security-llamaguard-mlx.ts",
-    "security:audit": "tsx ./examples/audit-security-workflow.ts"
-  },
-  "dependencies": {
-    "@cortex-os/a2a": "workspace:*",
-    "@cortex-os/mcp": "workspace:*",
-    "@cortex-os/memories": "workspace:*",
-    "yaml": "^2.8.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@types/node": "^22.5.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "tsup": "^8.0.0",
-    "typescript": "^5.5.4",
-    "vitest": "^3.2.4"
-  }
+	"name": "@cortex-os/agents",
+	"version": "0.1.0",
+	"type": "module",
+	"private": true,
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"scripts": {
+		"build": "tsup src/index.ts --dts --format esm --clean",
+		"dev": "tsup src/index.ts --dts --format esm --watch",
+		"test": "vitest run",
+		"test:unit": "vitest run tests/unit",
+		"test:integration": "vitest run tests/integration",
+		"test:e2e": "vitest run tests/e2e",
+		"test:coverage": "vitest run --coverage",
+		"test:coverage:threshold": "vitest run --coverage --reporter=verbose",
+		"test:watch": "vitest",
+		"test:ui": "vitest --ui",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"lint": "eslint src tests",
+		"format": "prettier --write src tests",
+		"security:run": "tsx ./examples/security-llamaguard-mlx.ts",
+		"security:audit": "tsx ./examples/audit-security-workflow.ts"
+	},
+	"dependencies": {
+		"@cortex-os/a2a": "workspace:*",
+		"@cortex-os/mcp": "workspace:*",
+		"@cortex-os/memories": "workspace:*",
+		"yaml": "^2.8.0",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@types/node": "^22.5.0",
+		"@vitest/coverage-v8": "^3.2.4",
+		"tsup": "^8.0.0",
+		"typescript": "^5.5.4",
+		"vitest": "^3.2.4"
+	}
 }

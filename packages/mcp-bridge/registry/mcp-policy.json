@@ -1,199 +1,213 @@
 {
-  "$schema": "./mcp-policy.schema.json",
-  "version": "1.0.0",
-  "description": "MCP tool governance policy with side-effect controls and dry-run requirements",
-  "last_updated": "2025-08-18T00:00:00Z",
-  "global_settings": {
-    "writes_require_dryrun": true,
-    "approve_all_writes": true,
-    "log_all_tool_calls": true,
-    "timeout_ms": 30000,
-    "max_retries": 2
-  },
-  "tool_classifications": {
-    "read_only": {
-      "description": "Tools that only read data without side effects",
-      "requires_dryrun": false,
-      "requires_approval": false,
-      "max_execution_time_ms": 5000,
-      "allowed_without_review": true,
-      "examples": ["file.read", "git.status", "database.query", "web.fetch"]
-    },
-    "write_safe": {
-      "description": "Tools that write to safe, isolated locations",
-      "requires_dryrun": true,
-      "requires_approval": false,
-      "max_execution_time_ms": 15000,
-      "allowed_without_review": true,
-      "examples": ["file.write_temp", "log.append", "cache.set"]
-    },
-    "write_persistent": {
-      "description": "Tools that make persistent changes",
-      "requires_dryrun": true,
-      "requires_approval": true,
-      "max_execution_time_ms": 30000,
-      "allowed_without_review": false,
-      "examples": ["file.write", "database.update", "git.commit", "api.post"]
-    },
-    "system_modify": {
-      "description": "Tools that modify system state",
-      "requires_dryrun": true,
-      "requires_approval": true,
-      "max_execution_time_ms": 60000,
-      "allowed_without_review": false,
-      "examples": ["process.spawn", "network.configure", "service.restart"]
-    },
-    "external_network": {
-      "description": "Tools that make external network calls",
-      "requires_dryrun": false,
-      "requires_approval": true,
-      "max_execution_time_ms": 30000,
-      "allowed_without_review": false,
-      "examples": ["web.request", "api.call", "email.send", "webhook.trigger"]
-    }
-  },
-  "dry_run_requirements": {
-    "mandatory_for_writes": true,
-    "dry_run_timeout_ms": 10000,
-    "dry_run_must_succeed": true,
-    "show_dry_run_preview": true,
-    "require_confirmation_after_dry_run": true
-  },
-  "tool_registry": {
-    "file.read": {
-      "classification": "read_only",
-      "description": "Read file contents",
-      "side_effects": [],
-      "dry_run_supported": false,
-      "approval_required": false,
-      "allowed_paths": ["/tmp/cortex-*", "./workspace/**", "./output/**"],
-      "blocked_paths": ["/etc/**", "/System/**", "~/.ssh/**"]
-    },
-    "file.write": {
-      "classification": "write_persistent",
-      "description": "Write file contents",
-      "side_effects": ["filesystem_modification"],
-      "dry_run_supported": true,
-      "approval_required": true,
-      "allowed_paths": ["./workspace/**", "./output/**", "/tmp/cortex-*"],
-      "blocked_paths": ["/etc/**", "/System/**", "~/.ssh/**", "/usr/**"]
-    },
-    "git.status": {
-      "classification": "read_only",
-      "description": "Get git repository status",
-      "side_effects": [],
-      "dry_run_supported": false,
-      "approval_required": false
-    },
-    "git.commit": {
-      "classification": "write_persistent",
-      "description": "Commit changes to git repository",
-      "side_effects": ["version_control_modification"],
-      "dry_run_supported": true,
-      "approval_required": true
-    },
-    "process.spawn": {
-      "classification": "system_modify",
-      "description": "Spawn system process",
-      "side_effects": ["process_creation", "potential_system_modification"],
-      "dry_run_supported": true,
-      "approval_required": true,
-      "allowed_commands": ["npm", "node", "python", "git", "ls", "cat"],
-      "blocked_commands": ["rm", "sudo", "chmod", "chown", "kill", "killall"]
-    },
-    "web.request": {
-      "classification": "external_network",
-      "description": "Make HTTP request to external service",
-      "side_effects": ["network_egress", "potential_data_exfiltration"],
-      "dry_run_supported": false,
-      "approval_required": true,
-      "allowed_domains": ["api.openai.com", "api.anthropic.com", "api.together.xyz"],
-      "blocked_domains": ["*.internal", "localhost", "127.0.0.1", "169.254.169.254"]
-    },
-    "database.query": {
-      "classification": "read_only",
-      "description": "Execute read-only database query",
-      "side_effects": [],
-      "dry_run_supported": false,
-      "approval_required": false,
-      "allowed_operations": ["SELECT"],
-      "blocked_operations": ["INSERT", "UPDATE", "DELETE", "DROP", "CREATE"]
-    },
-    "database.update": {
-      "classification": "write_persistent",
-      "description": "Execute database update/insert",
-      "side_effects": ["database_modification"],
-      "dry_run_supported": true,
-      "approval_required": true,
-      "allowed_operations": ["INSERT", "UPDATE"],
-      "blocked_operations": ["DELETE", "DROP", "CREATE", "ALTER"]
-    }
-  },
-  "side_effect_controls": {
-    "filesystem_modification": {
-      "requires_sandbox": true,
-      "audit_required": true,
-      "rollback_supported": true,
-      "max_file_size_mb": 100,
-      "virus_scan_required": false
-    },
-    "network_egress": {
-      "requires_approval": true,
-      "audit_required": true,
-      "allowed_protocols": ["https"],
-      "blocked_ips": ["127.0.0.0/8", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
-      "max_request_size_mb": 10,
-      "max_response_size_mb": 50
-    },
-    "process_creation": {
-      "requires_approval": true,
-      "audit_required": true,
-      "resource_limits": {
-        "max_memory_mb": 512,
-        "max_cpu_percent": 50,
-        "max_execution_time_ms": 30000
-      },
-      "allowed_users": ["cortex", "nobody"],
-      "blocked_users": ["root", "admin"]
-    },
-    "database_modification": {
-      "requires_approval": true,
-      "audit_required": true,
-      "transaction_required": true,
-      "backup_before_change": true,
-      "max_rows_affected": 1000
-    }
-  },
-  "approval_workflows": {
-    "auto_approve": {
-      "conditions": [
-        "classification == 'read_only'",
-        "classification == 'write_safe' AND dry_run_successful == true"
-      ]
-    },
-    "require_human_approval": {
-      "conditions": [
-        "classification == 'write_persistent'",
-        "classification == 'system_modify'",
-        "classification == 'external_network'",
-        "side_effects.includes('network_egress')",
-        "side_effects.includes('process_creation')"
-      ],
-      "timeout_ms": 300000,
-      "escalation_timeout_ms": 600000
-    }
-  },
-  "monitoring": {
-    "emit_tool_metrics": true,
-    "track_approval_latency": true,
-    "alert_on_policy_violations": true,
-    "log_dry_run_results": true,
-    "audit_trail_retention_days": 90
-  },
-  "emergency_controls": {
-    "kill_switch_enabled": true,
-    "disable_all_writes": false,
-    "disable_network_tools": false,
-    "emergency_contact": "security@cortex-os.ai"
-  }
+	"$schema": "./mcp-policy.schema.json",
+	"version": "1.0.0",
+	"description": "MCP tool governance policy with side-effect controls and dry-run requirements",
+	"last_updated": "2025-08-18T00:00:00Z",
+	"global_settings": {
+		"writes_require_dryrun": true,
+		"approve_all_writes": true,
+		"log_all_tool_calls": true,
+		"timeout_ms": 30000,
+		"max_retries": 2
+	},
+	"tool_classifications": {
+		"read_only": {
+			"description": "Tools that only read data without side effects",
+			"requires_dryrun": false,
+			"requires_approval": false,
+			"max_execution_time_ms": 5000,
+			"allowed_without_review": true,
+			"examples": ["file.read", "git.status", "database.query", "web.fetch"]
+		},
+		"write_safe": {
+			"description": "Tools that write to safe, isolated locations",
+			"requires_dryrun": true,
+			"requires_approval": false,
+			"max_execution_time_ms": 15000,
+			"allowed_without_review": true,
+			"examples": ["file.write_temp", "log.append", "cache.set"]
+		},
+		"write_persistent": {
+			"description": "Tools that make persistent changes",
+			"requires_dryrun": true,
+			"requires_approval": true,
+			"max_execution_time_ms": 30000,
+			"allowed_without_review": false,
+			"examples": ["file.write", "database.update", "git.commit", "api.post"]
+		},
+		"system_modify": {
+			"description": "Tools that modify system state",
+			"requires_dryrun": true,
+			"requires_approval": true,
+			"max_execution_time_ms": 60000,
+			"allowed_without_review": false,
+			"examples": ["process.spawn", "network.configure", "service.restart"]
+		},
+		"external_network": {
+			"description": "Tools that make external network calls",
+			"requires_dryrun": false,
+			"requires_approval": true,
+			"max_execution_time_ms": 30000,
+			"allowed_without_review": false,
+			"examples": ["web.request", "api.call", "email.send", "webhook.trigger"]
+		}
+	},
+	"dry_run_requirements": {
+		"mandatory_for_writes": true,
+		"dry_run_timeout_ms": 10000,
+		"dry_run_must_succeed": true,
+		"show_dry_run_preview": true,
+		"require_confirmation_after_dry_run": true
+	},
+	"tool_registry": {
+		"file.read": {
+			"classification": "read_only",
+			"description": "Read file contents",
+			"side_effects": [],
+			"dry_run_supported": false,
+			"approval_required": false,
+			"allowed_paths": ["/tmp/cortex-*", "./workspace/**", "./output/**"],
+			"blocked_paths": ["/etc/**", "/System/**", "~/.ssh/**"]
+		},
+		"file.write": {
+			"classification": "write_persistent",
+			"description": "Write file contents",
+			"side_effects": ["filesystem_modification"],
+			"dry_run_supported": true,
+			"approval_required": true,
+			"allowed_paths": ["./workspace/**", "./output/**", "/tmp/cortex-*"],
+			"blocked_paths": ["/etc/**", "/System/**", "~/.ssh/**", "/usr/**"]
+		},
+		"git.status": {
+			"classification": "read_only",
+			"description": "Get git repository status",
+			"side_effects": [],
+			"dry_run_supported": false,
+			"approval_required": false
+		},
+		"git.commit": {
+			"classification": "write_persistent",
+			"description": "Commit changes to git repository",
+			"side_effects": ["version_control_modification"],
+			"dry_run_supported": true,
+			"approval_required": true
+		},
+		"process.spawn": {
+			"classification": "system_modify",
+			"description": "Spawn system process",
+			"side_effects": ["process_creation", "potential_system_modification"],
+			"dry_run_supported": true,
+			"approval_required": true,
+			"allowed_commands": ["npm", "node", "python", "git", "ls", "cat"],
+			"blocked_commands": ["rm", "sudo", "chmod", "chown", "kill", "killall"]
+		},
+		"web.request": {
+			"classification": "external_network",
+			"description": "Make HTTP request to external service",
+			"side_effects": ["network_egress", "potential_data_exfiltration"],
+			"dry_run_supported": false,
+			"approval_required": true,
+			"allowed_domains": [
+				"api.openai.com",
+				"api.anthropic.com",
+				"api.together.xyz"
+			],
+			"blocked_domains": [
+				"*.internal",
+				"localhost",
+				"127.0.0.1",
+				"169.254.169.254"
+			]
+		},
+		"database.query": {
+			"classification": "read_only",
+			"description": "Execute read-only database query",
+			"side_effects": [],
+			"dry_run_supported": false,
+			"approval_required": false,
+			"allowed_operations": ["SELECT"],
+			"blocked_operations": ["INSERT", "UPDATE", "DELETE", "DROP", "CREATE"]
+		},
+		"database.update": {
+			"classification": "write_persistent",
+			"description": "Execute database update/insert",
+			"side_effects": ["database_modification"],
+			"dry_run_supported": true,
+			"approval_required": true,
+			"allowed_operations": ["INSERT", "UPDATE"],
+			"blocked_operations": ["DELETE", "DROP", "CREATE", "ALTER"]
+		}
+	},
+	"side_effect_controls": {
+		"filesystem_modification": {
+			"requires_sandbox": true,
+			"audit_required": true,
+			"rollback_supported": true,
+			"max_file_size_mb": 100,
+			"virus_scan_required": false
+		},
+		"network_egress": {
+			"requires_approval": true,
+			"audit_required": true,
+			"allowed_protocols": ["https"],
+			"blocked_ips": [
+				"127.0.0.0/8",
+				"10.0.0.0/8",
+				"172.16.0.0/12",
+				"192.168.0.0/16"
+			],
+			"max_request_size_mb": 10,
+			"max_response_size_mb": 50
+		},
+		"process_creation": {
+			"requires_approval": true,
+			"audit_required": true,
+			"resource_limits": {
+				"max_memory_mb": 512,
+				"max_cpu_percent": 50,
+				"max_execution_time_ms": 30000
+			},
+			"allowed_users": ["cortex", "nobody"],
+			"blocked_users": ["root", "admin"]
+		},
+		"database_modification": {
+			"requires_approval": true,
+			"audit_required": true,
+			"transaction_required": true,
+			"backup_before_change": true,
+			"max_rows_affected": 1000
+		}
+	},
+	"approval_workflows": {
+		"auto_approve": {
+			"conditions": [
+				"classification == 'read_only'",
+				"classification == 'write_safe' AND dry_run_successful == true"
+			]
+		},
+		"require_human_approval": {
+			"conditions": [
+				"classification == 'write_persistent'",
+				"classification == 'system_modify'",
+				"classification == 'external_network'",
+				"side_effects.includes('network_egress')",
+				"side_effects.includes('process_creation')"
+			],
+			"timeout_ms": 300000,
+			"escalation_timeout_ms": 600000
+		}
+	},
+	"monitoring": {
+		"emit_tool_metrics": true,
+		"track_approval_latency": true,
+		"alert_on_policy_violations": true,
+		"log_dry_run_results": true,
+		"audit_trail_retention_days": 90
+	},
+	"emergency_controls": {
+		"kill_switch_enabled": true,
+		"disable_all_writes": false,
+		"disable_network_tools": false,
+		"emergency_contact": "security@cortex-os.ai"
+	}
 }

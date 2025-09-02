@@ -1,27 +1,27 @@
 {
-  "name": "@cortex-os/a2a-observability",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "scripts": {
-    "build": "tsup src/**/*.ts --dts --format esm",
-    "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "@cortex-os/a2a-core": "workspace:*",
-    "@cortex-os/telemetry": "workspace:*"
-  },
-  "devDependencies": {
-    "tsup": "^8.0.0",
-    "typescript": "^5.5.4"
-  }
+	"name": "@cortex-os/a2a-observability",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsup src/**/*.ts --dts --format esm",
+		"test": "vitest run",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@cortex-os/a2a-core": "workspace:*",
+		"@cortex-os/telemetry": "workspace:*"
+	},
+	"devDependencies": {
+		"tsup": "^8.0.0",
+		"typescript": "^5.5.4"
+	}
 }

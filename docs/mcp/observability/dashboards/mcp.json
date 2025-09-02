@@ -1,9 +1,25 @@
 {
-  "title": "MCP Operations",
-  "panels": [
-    { "type": "timeseries", "title": "Transport Connect Latency (ms)", "targets": [] },
-    { "type": "timeseries", "title": "tools.list/call Latency (ms)", "targets": [] },
-    { "type": "timeseries", "title": "resources.read Latency (ms)", "targets": [] },
-    { "type": "timeseries", "title": "subscriptions Notifications/s", "targets": [] }
-  ]
+	"title": "MCP Operations",
+	"panels": [
+		{
+			"type": "timeseries",
+			"title": "Transport Connect Latency (ms)",
+			"targets": []
+		},
+		{
+			"type": "timeseries",
+			"title": "tools.list/call Latency (ms)",
+			"targets": []
+		},
+		{
+			"type": "timeseries",
+			"title": "resources.read Latency (ms)",
+			"targets": []
+		},
+		{
+			"type": "timeseries",
+			"title": "subscriptions Notifications/s",
+			"targets": []
+		}
+	]
 }

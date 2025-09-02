@@ -1,6 +1,6 @@
-import { existsSync } from 'fs';
+import { existsSync } from "node:fs";
 
-if (!existsSync('docs')) {
-  console.warn('docs/ missing');
+if (!existsSync("docs")) {
+	console.warn("docs/ missing");
 }
-console.log('Docs validation complete');
+console.log("Docs validation complete");

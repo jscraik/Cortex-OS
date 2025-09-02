@@ -7,19 +7,19 @@
 
 // TODO: Implement strategy node when needed
 export async function executeStrategyNode(state: any): Promise<any> {
-  // Placeholder implementation - strategy phase is handled in graph-simple.ts
-  return {
-    ...state,
-    phase: 'strategy',
-    validationResults: {
-      ...state.validationResults,
-      strategy: {
-        passed: true,
-        blockers: [],
-        majors: [],
-        evidence: [],
-        timestamp: new Date().toISOString(),
-      },
-    },
-  };
+	// Placeholder implementation - strategy phase is handled in graph-simple.ts
+	return {
+		...state,
+		phase: "strategy",
+		validationResults: {
+			...state.validationResults,
+			strategy: {
+				passed: true,
+				blockers: [],
+				majors: [],
+				evidence: [],
+				timestamp: new Date().toISOString(),
+			},
+		},
+	};
 }

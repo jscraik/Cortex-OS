@@ -1,16 +1,16 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": ".",
-    "noEmit": true
-  },
-  "include": [
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "utils/**/*.ts",
-    "__tests__/**/*.ts",
-    "__tests__/**/*.tsx"
-  ],
-  "exclude": ["node_modules", "dist", "build"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "dist",
+		"rootDir": ".",
+		"noEmit": true
+	},
+	"include": [
+		"app/**/*.ts",
+		"app/**/*.tsx",
+		"utils/**/*.ts",
+		"__tests__/**/*.ts",
+		"__tests__/**/*.tsx"
+	],
+	"exclude": ["node_modules", "dist", "build"]
 }
