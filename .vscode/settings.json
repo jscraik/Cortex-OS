@@ -22,7 +22,7 @@
 		"editor.defaultFormatter": "biomejs.biome"
 	},
 	"[jsonc]": {
-		"editor.defaultFormatter": "biomejs.biome"
+		"editor.defaultFormatter": "vscode.json-language-features"
 	},
 	"files.eol": "\n",
 	"nxConsole.generateAiAgentRules": true,
@@ -42,7 +42,7 @@
 	"dependi.php.lockFileEnabled": true,
 	"dependi.dart.enabled": true,
 	"dependi.dart.lockFileEnabled": true,
-	"python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.11.13/bin/python",
+	"python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python",
 	"debug.javascript.defaultRuntimeExecutable": {
 		"pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
 	}

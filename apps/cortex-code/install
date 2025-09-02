@@ -334,9 +334,9 @@ print_success_message() {
 
 main() {
     print_header
-    
+
     log_info "Starting Cortex Code installation..."
-    
+
     # Detect system
     detect_os
     detect_arch

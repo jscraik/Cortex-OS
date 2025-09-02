@@ -30,7 +30,7 @@ pub fn install_panic_handler() {
         // Display user-friendly error message
         eprintln!("\n🚨 Cortex Code encountered an unexpected error");
         eprintln!("   This is a bug - please report it at: https://github.com/cortex-os/cortex-code/issues");
-        eprintln!("   
+        eprintln!("
 📍 Error Details:
    Location: {}
    Message: {}
