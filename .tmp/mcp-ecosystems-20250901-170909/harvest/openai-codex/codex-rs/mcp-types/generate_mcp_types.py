@@ -541,7 +541,7 @@ def map_type(
     if type_prop == "string":
         if const_prop := typedef.get("const", None):
             assert isinstance(const_prop, str)
-            return f'&\'static str = "{const_prop    }"'
+            return f'&\'static str = "{const_prop}"'
         else:
             return "String"
     elif type_prop == "integer":
