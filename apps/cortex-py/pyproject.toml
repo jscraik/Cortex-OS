@@ -1,0 +1,15 @@
+[project]
+name = "cortex-py"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+package = true
+dev-dependencies = [
+  "pytest>=8",
+  "ruff>=0.6"
+]

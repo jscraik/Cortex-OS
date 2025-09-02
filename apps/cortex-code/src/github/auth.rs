@@ -55,7 +55,7 @@ pub struct TokenManager {
 impl TokenManager {
     pub fn new(auth: GitHubAuth) -> Self {
         let client = reqwest::Client::builder()
-            .user_agent("cortex-tui/2.0.0")
+            .user_agent("cortex-code/2.0.0")
             .timeout(Duration::from_secs(30))
             .build()
             .expect("Failed to create HTTP client");

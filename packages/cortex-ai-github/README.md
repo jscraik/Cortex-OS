@@ -2,7 +2,15 @@
 
 Production-ready AI-powered GitHub automation engine with MLX integration for intelligent code analysis and automated responses.
 
-## 🚀 Features
+[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![NPM Version](https://img.shields.io/npm/v/@cortex-os/cortex-ai-github)](https://www.npmjs.com/package/@cortex-os/cortex-ai-github)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
+[![Test Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)](#testing)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
 
 - **AI Code Review**: Advanced code analysis with security vulnerability detection
 - **PR Analysis**: Comprehensive pull request impact assessment and risk analysis

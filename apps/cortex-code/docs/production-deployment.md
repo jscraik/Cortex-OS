@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers deploying Cortex TUI v2.0 in production environments with proper security, monitoring, and scalability considerations.
+This guide covers deploying Cortex Code v2.0 in production environments with proper security, monitoring, and scalability considerations.
 
 ## Security Configuration
 
@@ -38,7 +38,7 @@ Required environment variables for production:
 
 ```bash
 # Logging
-export RUST_LOG=info,cortex_tui=debug
+export RUST_LOG=info,cortex_code=debug
 
 # Network binding (required in production)
 export CORTEX_BIND_ADDRESS="127.0.0.1:8080"
@@ -64,7 +64,7 @@ export CORTEX_MEMORY_RETENTION_DAYS=30
 ```
 [Load Balancer/Reverse Proxy]
            ↓
-[Cortex TUI Daemon - Port 8080]
+[Cortex Code Daemon - Port 8080]
            ↓
 [MCP Servers] ← → [External APIs]
            ↓
@@ -146,13 +146,13 @@ Key metrics to monitor:
 
 ```bash
 # Production logging setup
-export RUST_LOG="info,cortex_tui=info,hyper=warn,reqwest=warn"
+export RUST_LOG="info,cortex_code=info,hyper=warn,reqwest=warn"
 
 # Enable structured logging for monitoring systems
 export CORTEX_LOG_FORMAT="json"  # or "pretty" for human-readable
 
 # Log rotation (use logrotate or similar)
-export CORTEX_LOG_FILE="/var/log/cortex/cortex-tui.log"
+export CORTEX_LOG_FILE="/var/log/cortex/cortex-code.log"
 ```
 
 ## High Availability Setup
@@ -163,12 +163,12 @@ export CORTEX_LOG_FILE="/var/log/cortex/cortex-tui.log"
 # Instance 1
 export CORTEX_BIND_ADDRESS="127.0.0.1:8080"
 export CORTEX_INSTANCE_ID="cortex-01"
-./cortex-tui daemon --port 8080
+./cortex-code daemon --port 8080
 
 # Instance 2
 export CORTEX_BIND_ADDRESS="127.0.0.1:8081"
 export CORTEX_INSTANCE_ID="cortex-02"
-./cortex-tui daemon --port 8081
+./cortex-code daemon --port 8081
 ```
 
 ### Load Balancer Configuration (nginx)
@@ -215,11 +215,11 @@ server {
 
 ```bash
 # Create dedicated user
-sudo useradd -r -s /bin/false cortex-tui
+sudo useradd -r -s /bin/false cortex-code
 
 # Set up secure directories
 sudo mkdir -p /var/lib/cortex /var/log/cortex /etc/cortex
-sudo chown cortex-tui:cortex-tui /var/lib/cortex /var/log/cortex
+sudo chown cortex-code:cortex-code /var/lib/cortex /var/log/cortex
 sudo chmod 750 /var/lib/cortex /var/log/cortex
 sudo chmod 755 /etc/cortex
 
@@ -230,18 +230,18 @@ sudo chmod 600 /var/lib/cortex/agents.md
 ### Systemd Service
 
 ```ini
-# /etc/systemd/system/cortex-tui.service
+# /etc/systemd/system/cortex-code.service
 [Unit]
-Description=Cortex TUI Daemon
+Description=Cortex Code Daemon
 After=network.target
 Requires=network.target
 
 [Service]
 Type=simple
-User=cortex-tui
-Group=cortex-tui
-WorkingDirectory=/opt/cortex-tui
-ExecStart=/opt/cortex-tui/cortex-tui daemon --port 8080
+User=cortex-code
+Group=cortex-code
+WorkingDirectory=/opt/cortex-code
+ExecStart=/opt/cortex-code/cortex-code daemon --port 8080
 Restart=always
 RestartSec=5
 
@@ -258,10 +258,10 @@ RestrictRealtime=true
 RestrictNamespaces=true
 
 # Environment
-Environment=RUST_LOG=info,cortex_tui=info
+Environment=RUST_LOG=info,cortex_code=info
 Environment=CORTEX_BIND_ADDRESS=127.0.0.1:8080
 Environment=CORTEX_AGENTS_MD_PATH=/var/lib/cortex/agents.md
-EnvironmentFile=-/etc/cortex/cortex-tui.env
+EnvironmentFile=-/etc/cortex/cortex-code.env
 
 [Install]
 WantedBy=multi-user.target
@@ -271,16 +271,16 @@ Enable and start the service:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable cortex-tui.service
-sudo systemctl start cortex-tui.service
+sudo systemctl enable cortex-code.service
+sudo systemctl start cortex-code.service
 ```
 
 ### Firewall Configuration
 
 ```bash
 # UFW example
-sudo ufw allow from 10.0.0.0/8 to any port 8080 comment 'Cortex TUI internal'
-sudo ufw deny 8080 comment 'Block external access to Cortex TUI'
+sudo ufw allow from 10.0.0.0/8 to any port 8080 comment 'Cortex Code internal'
+sudo ufw deny 8080 comment 'Block external access to Cortex Code'
 
 # iptables example
 iptables -A INPUT -s 10.0.0.0/8 -p tcp --dport 8080 -j ACCEPT
@@ -331,17 +331,17 @@ if [[ -z "$BACKUP_FILE" ]]; then
 fi
 
 # Stop service
-sudo systemctl stop cortex-tui.service
+sudo systemctl stop cortex-code.service
 
 # Restore files
 sudo tar -xzf "$BACKUP_FILE" -C "$RESTORE_DIR"
 
 # Fix permissions
-sudo chown -R cortex-tui:cortex-tui "$RESTORE_DIR"
+sudo chown -R cortex-code:cortex-code "$RESTORE_DIR"
 sudo chmod 600 "$RESTORE_DIR/agents.md"
 
 # Start service
-sudo systemctl start cortex-tui.service
+sudo systemctl start cortex-code.service
 
 echo "Restore completed from $BACKUP_FILE"
 ```
@@ -357,17 +357,17 @@ echo "Restore completed from $BACKUP_FILE"
    sudo netstat -tulpn | grep 8080
 
    # Check service status
-   sudo systemctl status cortex-tui.service
+   sudo systemctl status cortex-code.service
 
    # View logs
-   sudo journalctl -u cortex-tui.service -f
+   sudo journalctl -u cortex-code.service -f
    ```
 
 2. **Permission issues**
 
    ```bash
    # Fix file permissions
-   sudo chown -R cortex-tui:cortex-tui /var/lib/cortex
+   sudo chown -R cortex-code:cortex-code /var/lib/cortex
    sudo chmod 600 /var/lib/cortex/agents.md
    ```
 
@@ -378,7 +378,7 @@ echo "Restore completed from $BACKUP_FILE"
    df -h /var/lib/cortex
 
    # Check memory usage
-   sudo ps aux | grep cortex-tui
+   sudo ps aux | grep cortex-code
    ```
 
 4. **MCP connectivity issues**
@@ -388,15 +388,15 @@ echo "Restore completed from $BACKUP_FILE"
    curl -X GET http://localhost:8080/mcp/servers
 
    # Check MCP logs
-   grep "MCP" /var/log/cortex/cortex-tui.log
+   grep "MCP" /var/log/cortex/cortex-code.log
    ```
 
 ### Performance Tuning
 
 ```bash
 # Increase file descriptor limits
-echo "cortex-tui soft nofile 65536" >> /etc/security/limits.conf
-echo "cortex-tui hard nofile 65536" >> /etc/security/limits.conf
+echo "cortex-code soft nofile 65536" >> /etc/security/limits.conf
+echo "cortex-code hard nofile 65536" >> /etc/security/limits.conf
 
 # Tune kernel parameters for high-performance networking
 echo "net.core.somaxconn = 65535" >> /etc/sysctl.conf
@@ -413,7 +413,7 @@ The system exposes Prometheus-compatible metrics at `/metrics`:
 ```yaml
 # prometheus.yml
 scrape_configs:
-  - job_name: 'cortex-tui'
+  - job_name: 'cortex-code'
     static_configs:
       - targets: ['localhost:8080']
     metrics_path: '/metrics'
@@ -425,15 +425,15 @@ scrape_configs:
 ```yaml
 # cortex-alerts.yml
 groups:
-  - name: cortex-tui
+  - name: cortex-code
     rules:
       - alert: CortexTUIDown
-        expr: up{job="cortex-tui"} == 0
+        expr: up{job="cortex-code"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: 'Cortex TUI is down'
+          summary: 'Cortex Code is down'
 
       - alert: CortexTUIHighErrorRate
         expr: rate(cortex_requests_failed_total[5m]) / rate(cortex_requests_total[5m]) > 0.1
@@ -441,7 +441,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: 'High error rate in Cortex TUI'
+          summary: 'High error rate in Cortex Code'
 ```
 
 ## Version Updates
@@ -453,29 +453,29 @@ groups:
    ```bash
    # Build new version
    cargo build --release
-   sudo cp target/release/cortex-tui /opt/cortex-tui/cortex-tui.new
+   sudo cp target/release/cortex-code /opt/cortex-code/cortex-code.new
    ```
 
 2. **Update with zero downtime:**
 
    ```bash
    # Start new instance on different port
-   sudo -u cortex-tui CORTEX_BIND_ADDRESS="127.0.0.1:8081" \
-     /opt/cortex-tui/cortex-tui.new daemon --port 8081 &
+   sudo -u cortex-code CORTEX_BIND_ADDRESS="127.0.0.1:8081" \
+     /opt/cortex-code/cortex-code.new daemon --port 8081 &
 
    # Update load balancer to point to new instance
    # Then stop old instance
-   sudo systemctl stop cortex-tui.service
+   sudo systemctl stop cortex-code.service
 
    # Replace binary and restart
-   sudo mv /opt/cortex-tui/cortex-tui.new /opt/cortex-tui/cortex-tui
-   sudo systemctl start cortex-tui.service
+   sudo mv /opt/cortex-code/cortex-code.new /opt/cortex-code/cortex-code
+   sudo systemctl start cortex-code.service
    ```
 
 3. **Verify deployment:**
    ```bash
    curl http://localhost:8080/health
-   sudo systemctl status cortex-tui.service
+   sudo systemctl status cortex-code.service
    ```
 
-This deployment guide ensures secure, scalable, and maintainable production deployments of Cortex TUI v2.0.
+This deployment guide ensures secure, scalable, and maintainable production deployments of Cortex Code v2.0.

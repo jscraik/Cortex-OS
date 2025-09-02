@@ -28,9 +28,9 @@ pub fn install_panic_handler() {
         );
 
         // Display user-friendly error message
-        eprintln!("\n🚨 Cortex TUI encountered an unexpected error");
-        eprintln!("   This is a bug - please report it at: https://github.com/cortex-os/cortex-tui/issues");
-        eprintln!("
+        eprintln!("\n🚨 Cortex Code encountered an unexpected error");
+        eprintln!("   This is a bug - please report it at: https://github.com/cortex-os/cortex-code/issues");
+        eprintln!("   
 📍 Error Details:
    Location: {}
    Message: {}
@@ -54,7 +54,7 @@ fn save_crash_context() -> std::io::Result<()> {
     use std::io::Write;
 
     let crash_info = format!(
-        "Cortex TUI Crash Report
+        "Cortex Code Crash Report
 Time: {}
 Version: {}
 OS: {}

@@ -1,4 +1,4 @@
-//! Metrics and monitoring system for Cortex TUI
+//! Metrics and monitoring system for Cortex Code
 //! Provides performance tracking, usage statistics, and health monitoring
 
 use serde::{Deserialize, Serialize};

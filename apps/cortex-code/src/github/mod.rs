@@ -1,5 +1,5 @@
-//! GitHub Native Agent - Comprehensive GitHub integration for Cortex TUI
-//!
+//! GitHub Native Agent - Comprehensive GitHub integration for Cortex Code
+//! 
 //! This module provides production-ready GitHub API integration with:
 //! - Authentication and token management
 //! - Rate limiting and error handling

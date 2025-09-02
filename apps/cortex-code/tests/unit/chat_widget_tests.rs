@@ -1,5 +1,5 @@
-use cortex_tui::view::chat::{ChatWidget, ChatState};
-use cortex_tui::app::{Message, MessageRole};
+use cortex_code::view::chat::{ChatWidget, ChatState};
+use cortex_code::app::{Message, MessageRole};
 use ratatui::{
     backend::TestBackend,
     buffer::Buffer,
@@ -188,4 +188,4 @@ fn test_chat_widget_message_formatting() {
 }
 
 // Mock types for compilation (will be implemented in GREEN phase)
-use cortex_tui::view::chat::{FocusElement, EventResponse, Theme};
+use cortex_code::view::chat::{FocusElement, EventResponse, Theme};

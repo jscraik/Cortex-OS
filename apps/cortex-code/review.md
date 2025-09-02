@@ -1,20 +1,20 @@
-# Cortex TUI Code Review Summary
+# Cortex Code Code Review Summary
 
 ## Overview
 
-Comprehensive code review of the recently modified Cortex TUI codebase focusing on critical bugs, implementation gaps, dead code, and quality issues.
+Comprehensive code review of the recently modified Cortex Code codebase focusing on critical bugs, implementation gaps, dead code, and quality issues.
 
 ## Files Reviewed: 9
 
-- `apps/cortex-tui/src/server/daemon.rs`
-- `apps/cortex-tui/src/server/handlers.rs`
-- `apps/cortex-tui/src/view/chat.rs`
-- `apps/cortex-tui/src/main.rs`
-- `apps/cortex-tui/src/app.rs`
-- `apps/cortex-tui/src/providers/local.rs` (MLX provider)
-- `apps/cortex-tui/src/memory/storage.rs`
-- `apps/cortex-tui/src/memory/context.rs`
-- `apps/cortex-tui/src/memory/agents_md.rs`
+- `apps/cortex-code/src/server/daemon.rs`
+- `apps/cortex-code/src/server/handlers.rs`
+- `apps/cortex-code/src/view/chat.rs`
+- `apps/cortex-code/src/main.rs`
+- `apps/cortex-code/src/app.rs`
+- `apps/cortex-code/src/providers/local.rs` (MLX provider)
+- `apps/cortex-code/src/memory/storage.rs`
+- `apps/cortex-code/src/memory/context.rs`
+- `apps/cortex-code/src/memory/agents_md.rs`
 
 ## Issues Summary
 
@@ -42,19 +42,19 @@ Comprehensive code review of the recently modified Cortex TUI codebase focusing 
 ### 1. Command Injection in MLX Provider
 
 **Risk**: Remote code execution through malicious prompts
-**Location**: `/apps/cortex-tui/src/providers/local.rs` lines 35-36, 72-73
+**Location**: `/apps/cortex-code/src/providers/local.rs` lines 35-36, 72-73
 **Impact**: An attacker could execute arbitrary shell commands by crafting malicious prompts
 
 ### 2. Missing MCP Core Functionality
 
 **Risk**: Core MCP features advertised but not working
-**Location**: `/apps/cortex-tui/src/app.rs` lines 122-134
+**Location**: `/apps/cortex-code/src/app.rs` lines 122-134
 **Impact**: Application claims MCP support but operations fail silently
 
 ### 3. Fragile Markdown Parser
 
 **Risk**: Data corruption or parsing failures
-**Location**: `/apps/cortex-tui/src/memory/agents_md.rs` lines 156-215  
+**Location**: `/apps/cortex-code/src/memory/agents_md.rs` lines 156-215  
 **Impact**: Memory storage could fail or corrupt data with malformed markdown
 
 ## Architecture Issues

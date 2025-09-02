@@ -1,6 +1,6 @@
-use cortex_tui::config::Config;
-use cortex_tui::providers::{create_provider, ModelProvider};
-use cortex_tui::Error;
+use cortex_code::config::Config;
+use cortex_code::providers::{create_provider, ModelProvider};
+use cortex_code::Error;
 use mockito::{mock, Matcher, Mock};
 use tokio_test;
 
@@ -23,7 +23,7 @@ async fn test_provider_factory_creates_openai() {
     // Given
     let mut config = Config::default();
     config.provider.default = "openai".to_string();
-    config.openai = Some(cortex_tui::config::OpenAIConfig {
+    config.openai = Some(cortex_code::config::OpenAIConfig {
         api_key: "test-key".to_string(),
         model: "gpt-4".to_string(),
         endpoint: None,
@@ -48,7 +48,7 @@ async fn test_provider_factory_fails_unknown_provider() {
     // Then
     assert!(result.is_err());
     match result.unwrap_err() {
-        Error::Provider(cortex_tui::error::ProviderError::UnknownProvider(name)) => {
+        Error::Provider(cortex_code::error::ProviderError::UnknownProvider(name)) => {
             assert_eq!(name, "unknown-provider");
         }
         _ => panic!("Expected ProviderError::UnknownProvider"),
@@ -140,7 +140,7 @@ async fn test_provider_handles_rate_limiting() {
     // Then
     assert!(result.is_err());
     match result.unwrap_err() {
-        Error::Provider(cortex_tui::error::ProviderError::RateLimited) => {
+        Error::Provider(cortex_code::error::ProviderError::RateLimited) => {
             // Expected
         }
         _ => panic!("Expected ProviderError::RateLimited"),

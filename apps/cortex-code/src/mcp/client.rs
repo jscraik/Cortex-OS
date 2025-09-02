@@ -198,7 +198,7 @@ impl McpClient {
                 "sampling": {}
             },
             "clientInfo": {
-                "name": "cortex-tui",
+                "name": "cortex-code",
                 "version": "2.0.0"
             }
         });

@@ -282,7 +282,7 @@ impl Default for Config {
         components.insert("enabled".to_string(), serde_json::json!(true));
 
         Self {
-            name: "Cortex TUI".to_string(),
+            name: "Cortex Code".to_string(),
             version: "2.0.0".to_string(),
             description: "AI-powered terminal interface for Cortex-OS".to_string(),
 

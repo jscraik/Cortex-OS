@@ -1,4 +1,4 @@
-use cortex_tui::{app::CortexApp, config::Config};
+use cortex_code::{app::CortexApp, config::Config};
 use tempfile::TempDir;
 
 #[tokio::test]

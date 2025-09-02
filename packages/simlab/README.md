@@ -1,5 +1,14 @@
 # SimLab - Simulation Harness for Cortex-OS
 
+<div align="center">
+
+[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+</div>
+
 SimLab is an internal simulation and testing framework for evaluating Cortex-OS agent interactions. It provides deterministic, local-first simulation capabilities with comprehensive judging and reporting.
 
 ## Features

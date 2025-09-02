@@ -1,4 +1,4 @@
-# Cortex TUI Demo
+# Cortex Code Demo
 
 ## 🎯 Phase 2 Complete: Working TUI with ChatWidget
 
@@ -203,7 +203,7 @@ pub enum EventResponse {
 - **Configuration Management**: Hierarchical TOML config with environment variable support
 - **Comprehensive Testing**: TDD with insta snapshot testing framework
 
-The Cortex TUI v2.0 is now a **production-ready, enterprise-grade terminal application** that successfully combines and **exceeds** the capabilities of both OpenCode and Codex while maintaining the unique Cortex-OS architecture and governance model.
+The Cortex Code v2.0 is now a **production-ready, enterprise-grade terminal application** that successfully combines and **exceeds** the capabilities of both OpenCode and Codex while maintaining the unique Cortex-OS architecture and governance model.
 
 **Result**: A modern AI coding assistant TUI that surpasses both reference implementations in functionality, architecture, and maintainability.
 
@@ -241,7 +241,7 @@ The Cortex TUI v2.0 is now a **production-ready, enterprise-grade terminal appli
 - **Error Recovery**: Comprehensive error handling across all systems
 - **Configuration**: Hierarchical TOML configuration with validation
 
-The Cortex TUI v2.0 now includes **enterprise-grade MCP integration** and **comprehensive memory management**, making it a complete AI agent platform that **exceeds both OpenCode and Codex** in production readiness and feature completeness.
+The Cortex Code v2.0 now includes **enterprise-grade MCP integration** and **comprehensive memory management**, making it a complete AI agent platform that **exceeds both OpenCode and Codex** in production readiness and feature completeness.
 
 ## 🚀 Phase 5 Complete: Production-Ready Daemon Mode
 
@@ -303,7 +303,7 @@ GET  /docs                                # Interactive API documentation
 - **CORS Support** - Cross-origin resource sharing enabled
 - **Health Monitoring** - Detailed health checks for monitoring systems
 
-The Cortex TUI v2.0 now provides **complete API-driven operation** alongside its terminal interface, making it suitable for **integration with larger Cortex-OS workflows** and **external automation systems**.
+The Cortex Code v2.0 now provides **complete API-driven operation** alongside its terminal interface, making it suitable for **integration with larger Cortex-OS workflows** and **external automation systems**.
 
 ## ✨ Phase 5.1 Complete: Real-Time Streaming Support
 
@@ -348,4 +348,4 @@ Shift+Enter             # Send streaming message (real-time character streaming)
 - **Performance** - Efficient character buffering with auto-scrolling
 - **Accessibility** - Maintains WCAG 2.2 AA compliance during streaming
 
-The Cortex TUI v2.0 now delivers **ChatGPT-style real-time streaming responses** while maintaining enterprise-grade architecture, making it competitive with modern AI chat interfaces.
+The Cortex Code v2.0 now delivers **ChatGPT-style real-time streaming responses** while maintaining enterprise-grade architecture, making it competitive with modern AI chat interfaces.

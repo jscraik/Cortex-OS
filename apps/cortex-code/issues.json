@@ -1,6 +1,6 @@
 [
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "39",
     "severity": "medium",
     "category": "placeholder-code",
@@ -10,7 +10,7 @@
     "tests_to_add": "Test uptime calculation returns correct elapsed time"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "62",
     "severity": "medium",
     "category": "placeholder-code",
@@ -20,7 +20,7 @@
     "tests_to_add": "Test server status returns correct uptime"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "96",
     "severity": "medium",
     "category": "placeholder-code",
@@ -30,7 +30,7 @@
     "tests_to_add": "Test token counting for different message lengths"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "144",
     "severity": "low",
     "category": "placeholder-code",
@@ -40,7 +40,7 @@
     "tests_to_add": "Test sessions endpoint returns active sessions"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "291-292",
     "severity": "medium",
     "category": "placeholder-code",
@@ -50,7 +50,7 @@
     "tests_to_add": "Test MCP server info returns correct counts"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "308",
     "severity": "medium",
     "category": "placeholder-code",
@@ -60,7 +60,7 @@
     "tests_to_add": "Test MCP tools endpoint returns server tools"
   },
   {
-    "file": "apps/cortex-tui/src/server/handlers.rs",
+    "file": "apps/cortex-code/src/server/handlers.rs",
     "lines": "332",
     "severity": "high",
     "category": "placeholder-code",
@@ -70,7 +70,7 @@
     "tests_to_add": "Test MCP tool execution with various tools and arguments"
   },
   {
-    "file": "apps/cortex-tui/src/view/chat.rs",
+    "file": "apps/cortex-code/src/view/chat.rs",
     "lines": "176-180",
     "severity": "low",
     "category": "code-quality",
@@ -80,7 +80,7 @@
     "tests_to_add": "Test scrolling with different terminal heights"
   },
   {
-    "file": "apps/cortex-tui/src/view/chat.rs",
+    "file": "apps/cortex-code/src/view/chat.rs",
     "lines": "278-280",
     "severity": "low",
     "category": "code-quality",
@@ -90,7 +90,7 @@
     "tests_to_add": "Test scroll behavior with different page sizes"
   },
   {
-    "file": "apps/cortex-tui/src/view/chat.rs",
+    "file": "apps/cortex-code/src/view/chat.rs",
     "lines": "449-453",
     "severity": "medium",
     "category": "implementation-gap",
@@ -100,7 +100,7 @@
     "tests_to_add": "Test timestamp formatting across timezones and date boundaries"
   },
   {
-    "file": "apps/cortex-tui/src/app.rs",
+    "file": "apps/cortex-code/src/app.rs",
     "lines": "75-78",
     "severity": "medium",
     "category": "dead-code",
@@ -110,7 +110,7 @@
     "tests_to_add": "Ensure TUI functionality works through main.rs only"
   },
   {
-    "file": "apps/cortex-tui/src/app.rs",
+    "file": "apps/cortex-code/src/app.rs",
     "lines": "122-124",
     "severity": "high",
     "category": "placeholder-code",
@@ -120,7 +120,7 @@
     "tests_to_add": "Test MCP server listing returns connected servers"
   },
   {
-    "file": "apps/cortex-tui/src/app.rs",
+    "file": "apps/cortex-code/src/app.rs",
     "lines": "126-129",
     "severity": "high",
     "category": "placeholder-code",
@@ -130,7 +130,7 @@
     "tests_to_add": "Test MCP server addition with valid and invalid configurations"
   },
   {
-    "file": "apps/cortex-tui/src/app.rs",
+    "file": "apps/cortex-code/src/app.rs",
     "lines": "131-134",
     "severity": "high",
     "category": "placeholder-code",
@@ -140,7 +140,7 @@
     "tests_to_add": "Test MCP server removal cleans up resources properly"
   },
   {
-    "file": "apps/cortex-tui/src/app.rs",
+    "file": "apps/cortex-code/src/app.rs",
     "lines": "144-156",
     "severity": "medium",
     "category": "code-quality",
@@ -150,17 +150,17 @@
     "tests_to_add": "Test provider/model queries return current available options"
   },
   {
-    "file": "apps/cortex-tui/src/providers/local.rs",
+    "file": "apps/cortex-code/src/providers/local.rs",
     "lines": "35-36",
     "severity": "high",
     "category": "security",
     "description": "Command injection vulnerability in MLX prompt handling",
-    "evidence": "Lines 35-36: prompt.replace(\"\'\", \"\\\'\").replace(\"\n\", \"\\\n\") - insufficient escaping",
+  "evidence": "Lines 35-36: prompt.replace(\"'\", \"\\'\").replace(\"\\n\", \"\\\\n\") - insufficient escaping",
     "fix": "Use proper command argument passing or JSON escaping to prevent injection",
     "tests_to_add": "Test with malicious prompts containing shell metacharacters"
   },
   {
-    "file": "apps/cortex-tui/src/providers/local.rs",
+    "file": "apps/cortex-code/src/providers/local.rs",
     "lines": "72-73",
     "severity": "high",
     "category": "security",
@@ -170,7 +170,7 @@
     "tests_to_add": "Test streaming with injection attempts"
   },
   {
-    "file": "apps/cortex-tui/src/providers/local.rs",
+    "file": "apps/cortex-code/src/providers/local.rs",
     "lines": "100-103",
     "severity": "low",
     "category": "code-quality",
@@ -180,7 +180,7 @@
     "tests_to_add": "Test model discovery finds installed models"
   },
   {
-    "file": "apps/cortex-tui/src/memory/storage.rs",
+    "file": "apps/cortex-code/src/memory/storage.rs",
     "lines": "132",
     "severity": "medium",
     "category": "logic-error",
@@ -190,7 +190,7 @@
     "tests_to_add": "Test retention cleanup with various day values"
   },
   {
-    "file": "apps/cortex-tui/src/memory/context.rs",
+    "file": "apps/cortex-code/src/memory/context.rs",
     "lines": "276-281",
     "severity": "low",
     "category": "code-quality",
@@ -200,7 +200,7 @@
     "tests_to_add": "Test token counting accuracy against known token counts"
   },
   {
-    "file": "apps/cortex-tui/src/memory/agents_md.rs",
+    "file": "apps/cortex-code/src/memory/agents_md.rs",
     "lines": "180",
     "severity": "medium",
     "category": "logic-error",
@@ -210,7 +210,7 @@
     "tests_to_add": "Test timestamp parsing from various markdown date formats"
   },
   {
-    "file": "apps/cortex-tui/src/memory/agents_md.rs",
+    "file": "apps/cortex-code/src/memory/agents_md.rs",
     "lines": "156-215",
     "severity": "high",
     "category": "code-quality",
@@ -220,7 +220,7 @@
     "tests_to_add": "Test parsing with various markdown edge cases and malformed input"
   },
   {
-    "file": "apps/cortex-tui/src/server/daemon.rs",
+    "file": "apps/cortex-code/src/server/daemon.rs",
     "lines": "83",
     "severity": "medium",
     "category": "security",
@@ -230,7 +230,7 @@
     "tests_to_add": "Test daemon only accepts local connections by default"
   },
   {
-    "file": "apps/cortex-tui/src/server/daemon.rs",
+    "file": "apps/cortex-code/src/server/daemon.rs",
     "lines": "125",
     "severity": "low",
     "category": "security",

@@ -292,31 +292,28 @@ export default function ChatPage() {
 				</div>
 			)}
 
-			<form
-				onSubmit={sendMessage}
-				className="flex gap-2"
-				aria-label="Message composer"
-			>
-				<label htmlFor={composerId} className="sr-only">
-					Message
-				</label>
-				<textarea
-					id={composerId}
-					required
-					value={input}
-					onChange={(e) => setInput(e.target.value)}
-					className="border rounded p-2 flex-1 min-h-20"
-					placeholder="Type a message…"
-				/>
-				<button
-					className="border rounded px-3"
-					type="submit"
-					disabled={streaming}
-					aria-disabled={streaming}
-				>
-					Send
-				</button>
-			</form>
-		</main>
-	);
+      <form onSubmit={sendMessage} className="flex gap-2" aria-label="Message composer">
+        <label htmlFor="message" className="sr-only">
+          Message
+        </label>
+        <textarea
+          id="composer"
+          required
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="border rounded p-2 flex-1 min-h-20"
+          placeholder="Type a message…"
+        />
+        <button
+          className="border rounded px-3"
+          type="submit"
+          disabled={streaming}
+          aria-disabled={streaming}
+          aria-label="Send message"
+        >
+          Send
+        </button>
+      </form>
+    </main>
+  );
 }

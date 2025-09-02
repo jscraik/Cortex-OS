@@ -20,7 +20,7 @@ impl GitHubClient {
     /// Create a new GitHub client
     pub fn new(token_manager: TokenManager) -> GitHubResult<Self> {
         let http_client = Client::builder()
-            .user_agent("cortex-tui/2.0.0")
+            .user_agent("cortex-code/2.0.0")
             .timeout(std::time::Duration::from_secs(30))
             .build()?;
 
@@ -146,7 +146,7 @@ impl GitHubClient {
         
         headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", token))?);
         headers.insert(ACCEPT, HeaderValue::from_static("application/vnd.github.v3+json"));
-        headers.insert(USER_AGENT, HeaderValue::from_static("cortex-tui/2.0.0"));
+        headers.insert(USER_AGENT, HeaderValue::from_static("cortex-code/2.0.0"));
         headers.insert("X-GitHub-Api-Version", HeaderValue::from_static("2022-11-28"));
         
         Ok(headers)
@@ -403,7 +403,7 @@ impl GitHubClientBuilder {
             if let Some(user_agent) = self.user_agent {
                 client_builder = client_builder.user_agent(user_agent);
             } else {
-                client_builder = client_builder.user_agent("cortex-tui/2.0.0");
+                client_builder = client_builder.user_agent("cortex-code/2.0.0");
             }
             
             client.http_client = client_builder.build()?;

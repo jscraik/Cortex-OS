@@ -1,9 +1,9 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use cortex_tui::{
-    app::CortexApp,
-    config::Config,
-    view::{ChatWidget, GitHubDashboard, A2aEventStream, CortexCommandPalette},
+use cortex_code::{
+    app::CortexApp, 
+    config::Config, 
+    view::{ChatWidget, GitHubDashboard, A2aEventStream, CortexCommandPalette}, 
     error_panic_handler
 };
 use crossterm::{
@@ -19,8 +19,8 @@ use std::io;
 use tracing::{info, Level};
 
 #[derive(Parser)]
-#[command(name = "cortex-tui")]
-#[command(about = "Terminal UI for Cortex-OS AI coding agent")]
+#[command(name = "cortex-code")]
+#[command(about = "Cortex Code interface for Cortex-OS AI coding agent")]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]
@@ -41,8 +41,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Interactive TUI mode
-    Tui,
+    /// Interactive Code interface
+    Code,
     /// Run a single command
     Run {
         /// The prompt to execute
@@ -88,9 +88,9 @@ async fn main() -> Result<()> {
         .with_max_level(level)
         .with_target(false)
         .init();
-
-    info!("Starting Cortex TUI v{} with enhanced error handling", env!("CARGO_PKG_VERSION"));
-
+    
+    info!("Starting Cortex Code v{} with enhanced error handling", env!("CARGO_PKG_VERSION"));
+    
     // Load configuration
     let config = match cli.config {
         Some(path) => Config::from_file(&path)?,
@@ -101,12 +101,12 @@ async fn main() -> Result<()> {
     let mut app = CortexApp::new(config).await?;
 
     // Handle commands
-    match cli.command.unwrap_or(Commands::Tui) {
-        Commands::Tui => {
+    match cli.command.unwrap_or(Commands::Code) {
+        Commands::Code => {
             if cli.ci {
-                anyhow::bail!("TUI mode cannot be used with --ci flag");
+                anyhow::bail!("Code interface cannot be used with --ci flag");
             }
-            run_tui(&mut app).await?;
+            run_code(&mut app).await?;
         }
         Commands::Run { prompt, output } => {
             if cli.ci {
@@ -126,36 +126,36 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-// Multi-view TUI enum
+// Multi-view Code enum
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum TuiView {
+enum CodeView {
     Chat,
     GitHub,
     A2aStream,
     CommandPalette,
 }
 
-async fn run_tui(app: &mut CortexApp) -> Result<()> {
+async fn run_code(app: &mut CortexApp) -> Result<()> {
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-
-    // Create TUI state
+    
+    // Create interface state
     let mut chat_widget = ChatWidget::new();
     let mut github_dashboard = GitHubDashboard::new();
     let mut a2a_stream = A2aEventStream::new();
     let mut command_palette = CortexCommandPalette::new();
-    let mut current_view = TuiView::Chat;
-
+    let mut current_view = CodeView::Chat;
+    
     // Generate some sample data for development
     a2a_stream.generate_sample_event("mcp-github", "tool_call");
     a2a_stream.generate_sample_event("cortex-core", "agent_message");
-
-    info!("Starting multi-view TUI event loop");
-
+    
+    info!("Starting multi-view code event loop");
+    
     let result = loop {
         // Update cursor for streaming
         chat_widget.update_cursor();
@@ -165,18 +165,18 @@ async fn run_tui(app: &mut CortexApp) -> Result<()> {
             if command_palette.is_visible() {
                 // Render current view first, then overlay command palette
                 match current_view {
-                    TuiView::Chat => chat_widget.render(frame, frame.area()),
-                    TuiView::GitHub => github_dashboard.render(frame, frame.area()),
-                    TuiView::A2aStream => a2a_stream.render(frame, frame.area()),
-                    TuiView::CommandPalette => {} // Never directly shown
+                    CodeView::Chat => chat_widget.render(frame, frame.area()),
+                    CodeView::GitHub => github_dashboard.render(frame, frame.area()),
+                    CodeView::A2aStream => a2a_stream.render(frame, frame.area()),
+                    CodeView::CommandPalette => {} // Never directly shown
                 }
                 command_palette.render(frame, frame.area());
             } else {
                 match current_view {
-                    TuiView::Chat => chat_widget.render(frame, frame.area()),
-                    TuiView::GitHub => github_dashboard.render(frame, frame.area()),
-                    TuiView::A2aStream => a2a_stream.render(frame, frame.area()),
-                    TuiView::CommandPalette => {} // Never directly shown
+                    CodeView::Chat => chat_widget.render(frame, frame.area()),
+                    CodeView::GitHub => github_dashboard.render(frame, frame.area()),
+                    CodeView::A2aStream => a2a_stream.render(frame, frame.area()),
+                    CodeView::CommandPalette => {} // Never directly shown
                 }
             }
         })?;
@@ -202,29 +202,29 @@ async fn run_tui(app: &mut CortexApp) -> Result<()> {
                             command_palette.show();
                         },
                         (KeyCode::Char('1'), KeyModifiers::ALT) => {
-                            current_view = TuiView::Chat;
+                            current_view = CodeView::Chat;
                         },
                         (KeyCode::Char('2'), KeyModifiers::ALT) => {
-                            current_view = TuiView::GitHub;
+                            current_view = CodeView::GitHub;
                         },
                         (KeyCode::Char('3'), KeyModifiers::ALT) => {
-                            current_view = TuiView::A2aStream;
+                            current_view = CodeView::A2aStream;
                         },
                         _ => {
                             // Handle command palette events first
                             if command_palette.is_visible() {
                                 match command_palette.handle_event(CrosstermEvent::Key(key_event))? {
-                                    cortex_tui::view::cortex_command_palette::CommandPaletteResponse::ExecuteCommand(cmd_id, params) => {
+                                    cortex_code::view::cortex_command_palette::CommandPaletteResponse::ExecuteCommand(cmd_id, params) => {
                                         info!("Executing command: {} with params: {:?}", cmd_id, params);
                                         // TODO: Execute the command via MCP or direct handler
                                         // For now, just handle view switching
                                         match cmd_id.as_str() {
-                                            "tui.switch_view" => {
+                                            "code.switch_view" => {
                                                 if let Some(view_name) = params.first() {
                                                     match view_name.as_str() {
-                                                        "chat" => current_view = TuiView::Chat,
-                                                        "github" => current_view = TuiView::GitHub,
-                                                        "a2a" => current_view = TuiView::A2aStream,
+                                                        "chat" => current_view = CodeView::Chat,
+                                                        "github" => current_view = CodeView::GitHub,
+                                                        "a2a" => current_view = CodeView::A2aStream,
                                                         _ => {}
                                                     }
                                                 }
@@ -234,7 +234,7 @@ async fn run_tui(app: &mut CortexApp) -> Result<()> {
                                             }
                                         }
                                     },
-                                    cortex_tui::view::cortex_command_palette::CommandPaletteResponse::Cancel => {
+                                    cortex_code::view::cortex_command_palette::CommandPaletteResponse::Cancel => {
                                         // Command palette already handled hiding itself
                                     },
                                     _ => {}
@@ -242,24 +242,24 @@ async fn run_tui(app: &mut CortexApp) -> Result<()> {
                             } else {
                                 // Route events to current view
                                 match current_view {
-                                    TuiView::Chat => {
+                                    CodeView::Chat => {
                                         match chat_widget.handle_event(CrosstermEvent::Key(key_event))? {
-                                            cortex_tui::view::chat::EventResponse::SendMessage(message) => {
+                                            cortex_code::view::chat::EventResponse::SendMessage(message) => {
                                                 info!("Sending message: {}", message);
 
                                                 // Add user message to chat
-                                                chat_widget.add_message(cortex_tui::app::Message::user(&message));
-
+                                                chat_widget.add_message(cortex_code::app::Message::user(&message));
+                                                
                                                 // Get response from AI
                                                 let response = app.get_ai_response(&message).await?;
-                                                chat_widget.add_message(cortex_tui::app::Message::assistant(&response));
+                                                chat_widget.add_message(cortex_code::app::Message::assistant(&response));
                                             }
-                                            cortex_tui::view::chat::EventResponse::RequestStreamingMessage(message) => {
+                                            cortex_code::view::chat::EventResponse::RequestStreamingMessage(message) => {
                                                 info!("Sending streaming message: {}", message);
 
                                                 // Add user message to chat
-                                                chat_widget.add_message(cortex_tui::app::Message::user(&message));
-
+                                                chat_widget.add_message(cortex_code::app::Message::user(&message));
+                                                
                                                 // Start streaming
                                                 chat_widget.start_streaming("session-123".to_string(), "github".to_string());
 
@@ -275,36 +275,36 @@ async fn run_tui(app: &mut CortexApp) -> Result<()> {
                                             _ => {}
                                         }
                                     },
-                                    TuiView::GitHub => {
+                                    CodeView::GitHub => {
                                         match github_dashboard.handle_event(CrosstermEvent::Key(key_event))? {
-                                            cortex_tui::view::github_dashboard::DashboardResponse::RefreshData => {
+                                            cortex_code::view::github_dashboard::DashboardResponse::RefreshData => {
                                                 info!("Refreshing GitHub dashboard data");
                                                 // TODO: Trigger data refresh via MCP
                                             }
-                                            cortex_tui::view::github_dashboard::DashboardResponse::OpenPR(pr_number) => {
+                                            cortex_code::view::github_dashboard::DashboardResponse::OpenPR(pr_number) => {
                                                 info!("Opening PR #{}", pr_number);
                                                 // TODO: Handle PR opening
                                             }
                                             _ => {}
                                         }
                                     },
-                                    TuiView::A2aStream => {
+                                    CodeView::A2aStream => {
                                         match a2a_stream.handle_event(CrosstermEvent::Key(key_event))? {
-                                            cortex_tui::view::a2a_stream::A2aStreamResponse::PauseResume => {
+                                            cortex_code::view::a2a_stream::A2aStreamResponse::PauseResume => {
                                                 info!("A2A stream paused/resumed");
                                             }
-                                            cortex_tui::view::a2a_stream::A2aStreamResponse::ClearEvents => {
+                                            cortex_code::view::a2a_stream::A2aStreamResponse::ClearEvents => {
                                                 info!("Clearing A2A events");
                                                 a2a_stream.clear_events();
                                             }
-                                            cortex_tui::view::a2a_stream::A2aStreamResponse::FilterLevel(level) => {
+                                            cortex_code::view::a2a_stream::A2aStreamResponse::FilterLevel(level) => {
                                                 info!("Setting A2A filter level: {:?}", level);
                                                 a2a_stream.set_filter_level(level);
                                             }
                                             _ => {}
                                         }
                                     },
-                                    TuiView::CommandPalette => {} // Never directly active
+                                    CodeView::CommandPalette => {} // Never directly active
                                 }
                             }
                         }

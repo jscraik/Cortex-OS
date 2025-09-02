@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cortex TUI Installer - Zero-Config Setup
+# Cortex Code Installer - Zero-Config Setup
 # Inspired by OpenCode's installation approach
 # Licensed under MIT - see LICENSE file
 
 VERSION="2.0.0"
-BINARY_NAME="cortex-tui"
+BINARY_NAME="cortex-code"
 INSTALL_DIR="$HOME/.cortex/bin"
 CONFIG_DIR="$HOME/.cortex"
-REPO_URL="https://github.com/cortex-os/cortex-tui"
+REPO_URL="https://github.com/cortex-os/cortex-code"
 
 # Colors for output
 RED='\033[0;31m'
@@ -32,7 +32,7 @@ print_header() {
     echo -e "${PURPLE}"
     echo "    ╔═══════════════════════════════════════════════════════════╗"
     echo "    ║                                                           ║"
-    echo "    ║        ${SPARKLES} CORTEX TUI v${VERSION} INSTALLER ${SPARKLES}              ║"
+    echo "    ║        ${SPARKLES} CORTEX CODE v${VERSION} INSTALLER ${SPARKLES}              ║"
     echo "    ║                                                           ║"
     echo "    ║    AI-Powered Terminal Interface for Cortex-OS            ║"
     echo "    ║                                                           ║"
@@ -225,13 +225,13 @@ setup_shell_integration() {
         log_info "$shell_name PATH already configured"
     else
         echo "" >> "$shell_rc"
-        echo "# Cortex TUI" >> "$shell_rc"
+        echo "# Cortex Code" >> "$shell_rc"
         echo "$path_export" >> "$shell_rc"
         log_success "Added to $shell_name PATH"
     fi
 
     # Create alias for convenience
-    local alias_cmd="alias cortex='cortex-tui'"
+    local alias_cmd="alias cortex='cortex-code'"
     if [ -f "$shell_rc" ] && ! grep -q "alias cortex=" "$shell_rc"; then
         echo "$alias_cmd" >> "$shell_rc"
         log_success "Created 'cortex' alias"
@@ -307,7 +307,7 @@ print_success_message() {
     echo -e "${NC}"
 
     echo -e "${CYAN}${PACKAGE} What's installed:${NC}"
-    echo "  • Cortex TUI v$VERSION binary"
+    echo "  • Cortex Code v$VERSION binary"
     echo "  • Default configuration"
     echo "  • AGENTS.md memory file"
     echo "  • Shell integration"
@@ -316,16 +316,16 @@ print_success_message() {
 
     echo -e "${YELLOW}${GEAR} Next steps:${NC}"
     echo "  1. Restart your shell or run: source ~/.bashrc"
-    echo "  2. Run: cortex-tui --help"
-    echo "  3. Start the TUI: cortex-tui"
-    echo "  4. Or start daemon mode: cortex-tui daemon"
+    echo "  2. Run: cortex-code --help"
+    echo "  3. Start the interface: cortex-code"
+    echo "  4. Or start daemon mode: cortex-code daemon"
     echo ""
 
     echo -e "${BLUE}${SPARKLES} Quick start:${NC}"
-    echo "  cortex-tui                    # Interactive TUI mode"
-    echo "  cortex-tui chat \"Hello!\"       # Single question"
-    echo "  cortex-tui daemon             # Start HTTP server"
-    echo "  cortex-tui mcp list           # List MCP servers"
+    echo "  cortex-code                    # Interactive mode"
+    echo "  cortex-code chat \"Hello!\"       # Single question"
+    echo "  cortex-code daemon             # Start HTTP server"
+    echo "  cortex-code mcp list           # List MCP servers"
     echo ""
 
     echo -e "${PURPLE}Documentation: $REPO_URL${NC}"
@@ -334,9 +334,9 @@ print_success_message() {
 
 main() {
     print_header
-
-    log_info "Starting Cortex TUI installation..."
-
+    
+    log_info "Starting Cortex Code installation..."
+    
     # Detect system
     detect_os
     detect_arch

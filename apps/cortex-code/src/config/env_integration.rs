@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 
-/// Environment variable prefix for all Cortex TUI config
+/// Environment variable prefix for all Cortex Code config
 const ENV_PREFIX: &str = "CORTEX";
 
 /// Enhanced environment variable resolver that can override any config field

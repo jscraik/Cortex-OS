@@ -1,10 +1,10 @@
-# Licensing & Attribution Audit - Cortex TUI v2.0
+# Licensing & Attribution Audit - Cortex Code v2.0
 
 ## Current Implementation Status
 
 ### ✅ COMPLIANT: Reference-Based Implementation
 
-Our Cortex TUI v2.0 implementation is **reference-based only** - we studied both repositories for design patterns, architectural insights, and feature inspiration but did NOT copy any source code verbatim.
+Our Cortex Code v2.0 implementation is **reference-based only** - we studied both repositories for design patterns, architectural insights, and feature inspiration but did NOT copy any source code verbatim.
 
 ### Files Analyzed for Compliance
 
@@ -22,9 +22,9 @@ Our Cortex TUI v2.0 implementation is **reference-based only** - we studied both
   - Provider abstraction patterns
   - CLI argument structure
 
-### Current Cortex TUI Files - Original Implementation
+### Current Cortex Code Files - Original Implementation
 
-All files in `/Users/jamiecraik/.Cortex-OS/apps/cortex-tui/` are **original implementations**:
+All files in `/Users/jamiecraik/.Cortex-OS/apps/cortex-code/` are **original implementations**:
 
 #### Core Implementation (100% Original)
 
@@ -142,4 +142,4 @@ All dependencies in `Cargo.toml` have compatible licenses and are properly decla
 
 ---
 
-**CONCLUSION**: Cortex TUI v2.0 is fully compliant with all licensing requirements. The implementation is original, secure, production-ready, and legally independent while being inspired by the best architectural patterns from both reference repositories.
+**CONCLUSION**: Cortex Code v2.0 is fully compliant with all licensing requirements. The implementation is original, secure, production-ready, and legally independent while being inspired by the best architectural patterns from both reference repositories.

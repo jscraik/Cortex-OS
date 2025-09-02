@@ -1,4 +1,4 @@
-# Cortex TUI v2.0 - Final Implementation Status
+# Cortex Code v2.0 - Final Implementation Status
 
 ## ✅ COMPLETED MAJOR FIXES
 

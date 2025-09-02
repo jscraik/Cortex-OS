@@ -48,7 +48,7 @@ pub async fn server_status(State(state): State<AppState>) -> Result<Json<serde_j
     let app = state.app.read().await;
 
     let status = json!({
-        "service": "cortex-tui-daemon",
+        "service": "cortex-code-daemon",
         "version": env!("CARGO_PKG_VERSION"),
         "status": "running",
         "features": {
@@ -376,7 +376,7 @@ pub async fn api_docs() -> &'static str {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cortex TUI API Documentation</title>
+    <title>Cortex Code API Documentation</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
         h1, h2 { color: #333; }
@@ -386,9 +386,9 @@ pub async fn api_docs() -> &'static str {
     </style>
 </head>
 <body>
-    <h1>🤖 Cortex TUI API Documentation</h1>
-    <p>RESTful API for the Cortex TUI daemon service.</p>
-
+    <h1>🤖 Cortex Code API Documentation</h1>
+    <p>RESTful API for the Cortex Code daemon service.</p>
+    
     <h2>Health & Status</h2>
     <div class="endpoint">
         <span class="method">GET</span> /health<br>

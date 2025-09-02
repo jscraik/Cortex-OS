@@ -1,5 +1,5 @@
-use cortex_tui::config::{Config, ProviderConfig};
-use cortex_tui::Error;
+use cortex_code::config::{Config, ProviderConfig};
+use cortex_code::Error;
 use tempfile::TempDir;
 use std::fs;
 
@@ -48,7 +48,7 @@ fn test_config_handles_missing_file() {
     // Then
     assert!(result.is_err());
     match result.unwrap_err() {
-        Error::Config(cortex_tui::error::ConfigError::NotFound(path)) => {
+        Error::Config(cortex_code::error::ConfigError::NotFound(path)) => {
             assert_eq!(path, nonexistent_path);
         }
         _ => panic!("Expected ConfigError::NotFound"),

@@ -1,7 +1,7 @@
-//! Security tests for Cortex TUI
+//! Security tests for Cortex Code
 //! Tests for OWASP compliance, security vulnerabilities, and defensive measures
 
-use cortex_tui::{
+use cortex_code::{
     config::Config,
     providers::local::LocalMLXProvider,
     server::DaemonServer,
@@ -61,9 +61,9 @@ async fn test_daemon_server_secure_binding() {
 
 #[tokio::test]
 async fn test_memory_storage_prevents_path_traversal() {
-    use cortex_tui::memory::MemoryStorage;
-    use cortex_tui::memory::storage::MemoryConfig;
-
+    use cortex_code::memory::MemoryStorage;
+    use cortex_code::memory::storage::MemoryConfig;
+    
     let config = MemoryConfig::default()
         .with_path("/tmp/test_agents.md");
 

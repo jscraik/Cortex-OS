@@ -1,12 +1,15 @@
-# Cortex TUI
+# Cortex Code
 
 <div align="center">
 
+[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust Version](https://img.shields.io/badge/rust-1.70+-blue)](https://www.rust-lang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
 [![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](#testing)
 [![Security Scan](https://img.shields.io/badge/security-clean-green)](#security)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ratatui](https://img.shields.io/badge/ratatui-0.29.0-orange)](https://ratatui.rs/)
 
 **Terminal User Interface for Cortex-OS AI Coding Agent**  
@@ -18,7 +21,7 @@ _Multi-view TUI with AI chat, GitHub dashboard, A2A event streaming, and command
 
 ## 🎯 Overview
 
-Cortex TUI is a powerful terminal interface for the Cortex-OS ASBR runtime, providing developers with a comprehensive view of AI agent activities, GitHub integrations, and real-time system monitoring. Built with Rust and Ratatui for maximum performance and reliability.
+Cortex Code is a powerful terminal interface for the Cortex-OS ASBR runtime, providing developers with a comprehensive view of AI agent activities, GitHub integrations, and real-time system monitoring. Built with Rust and Ratatui for maximum performance and reliability.
 
 ## ✨ Features
 
@@ -56,14 +59,14 @@ Cortex TUI is a powerful terminal interface for the Cortex-OS ASBR runtime, prov
 ```bash
 # Clone the repository
 git clone https://github.com/cortex-os/cortex-os.git
-cd cortex-os/apps/cortex-tui
+cd cortex-os/apps/cortex-code
 
 # Build and run
 cargo run
 
 # Or build for release
 cargo build --release
-./target/release/cortex-tui
+./target/release/cortex-code
 ```
 
 ### Development Setup
@@ -227,7 +230,7 @@ cargo tarpaulin --out html
 ### CLI Options
 
 ```bash
-cortex-tui [OPTIONS] [COMMAND]
+cortex-code [OPTIONS] [COMMAND]
 
 Options:
     -c, --config <FILE>     Configuration file path
@@ -335,10 +338,10 @@ See the `examples/` directory for usage examples:
 cargo build --release
 
 # Create distribution package
-tar -czf cortex-tui-linux-x64.tar.gz -C target/release cortex-tui
+tar -czf cortex-code-linux-x64.tar.gz -C target/release cortex-code
 
 # Install system-wide (Linux/macOS)
-sudo cp target/release/cortex-tui /usr/local/bin/
+sudo cp target/release/cortex-code /usr/local/bin/
 ```
 
 ### Docker Deployment
@@ -351,8 +354,8 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates
-COPY --from=builder /app/target/release/cortex-tui /usr/local/bin/
-CMD ["cortex-tui"]
+COPY --from=builder /app/target/release/cortex-code /usr/local/bin/
+CMD ["cortex-code"]
 ```
 
 ## 🐛 Troubleshooting
@@ -393,7 +396,7 @@ RUST_BACKTRACE=1 cargo run
 
 ```bash
 # Enable comprehensive debugging
-RUST_LOG=cortex_tui=debug cargo run -- --debug
+RUST_LOG=cortex_code=debug cargo run -- --debug
 
 # Log to file
 RUST_LOG=debug cargo run -- --debug 2> debug.log
@@ -437,3 +440,4 @@ RUST_LOG=debug cargo run -- --debug 2> debug.log
 [![Ratatui](https://img.shields.io/badge/powered%20by-Ratatui-blue)](https://ratatui.rs/)
 
 </div>
+

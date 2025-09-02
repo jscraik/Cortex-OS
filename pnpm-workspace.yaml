@@ -1,10 +1,6 @@
 packages:
-  - packages/*
-  - packages/*/*
-  - packages/security
-  - packages/a2a/**
-  - libs/**
-  - libs/typescript/*
-  - apps/*
-  - apps/*/*
-  - src
+  - "apps/*"
+  - "packages/*"
+neverBuiltDependencies: []
+packageImportMethod: auto
+strict-peer-dependencies: true

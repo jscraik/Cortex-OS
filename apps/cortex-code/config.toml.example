@@ -1,4 +1,4 @@
-# Cortex TUI Configuration Example
+# Cortex Code Configuration Example
 # Copy this file to ~/.cortex/config.toml and customize
 
 [provider]

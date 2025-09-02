@@ -1,5 +1,5 @@
 [package]
-name = "cortex-tui"
+name = "cortex-code"
 version = "0.1.0"
 edition = "2021"
 authors = ["Cortex-OS Team"]
@@ -8,7 +8,7 @@ license = "MIT"
 repository = "https://github.com/cortex-os/cortex-os"
 
 [[bin]]
-name = "cortex-tui"
+name = "cortex-code"
 path = "src/main.rs"
 
 [dependencies]
