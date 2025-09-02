@@ -388,7 +388,7 @@ pub async fn api_docs() -> &'static str {
 <body>
     <h1>🤖 Cortex Code API Documentation</h1>
     <p>RESTful API for the Cortex Code daemon service.</p>
-    
+
     <h2>Health & Status</h2>
     <div class="endpoint">
         <span class="method">GET</span> /health<br>

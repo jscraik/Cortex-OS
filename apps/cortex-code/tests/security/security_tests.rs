@@ -63,7 +63,7 @@ async fn test_daemon_server_secure_binding() {
 async fn test_memory_storage_prevents_path_traversal() {
     use cortex_code::memory::MemoryStorage;
     use cortex_code::memory::storage::MemoryConfig;
-    
+
     let config = MemoryConfig::default()
         .with_path("/tmp/test_agents.md");
 

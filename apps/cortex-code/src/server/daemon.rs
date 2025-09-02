@@ -91,7 +91,7 @@ impl DaemonServer {
 
         let listener = tokio::net::TcpListener::bind(&bind_addr).await
             .map_err(|e| crate::error::ProviderError::Api(format!("Failed to bind to port {}: {}", self.port, e)))?;
-        
+
         info!("🚀 Cortex Code Daemon started on http://{}", bind_addr);
         info!("📚 API Documentation available at http://localhost:{}/docs", self.port);
 

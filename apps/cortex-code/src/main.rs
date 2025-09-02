@@ -1,9 +1,9 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use cortex_code::{
-    app::CortexApp, 
-    config::Config, 
-    view::{ChatWidget, GitHubDashboard, A2aEventStream, CortexCommandPalette}, 
+    app::CortexApp,
+    config::Config,
+    view::{ChatWidget, GitHubDashboard, A2aEventStream, CortexCommandPalette},
     error_panic_handler
 };
 use crossterm::{
@@ -88,9 +88,9 @@ async fn main() -> Result<()> {
         .with_max_level(level)
         .with_target(false)
         .init();
-    
+
     info!("Starting Cortex Code v{} with enhanced error handling", env!("CARGO_PKG_VERSION"));
-    
+
     // Load configuration
     let config = match cli.config {
         Some(path) => Config::from_file(&path)?,
@@ -142,20 +142,20 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    
+
     // Create interface state
     let mut chat_widget = ChatWidget::new();
     let mut github_dashboard = GitHubDashboard::new();
     let mut a2a_stream = A2aEventStream::new();
     let mut command_palette = CortexCommandPalette::new();
     let mut current_view = CodeView::Chat;
-    
+
     // Generate some sample data for development
     a2a_stream.generate_sample_event("mcp-github", "tool_call");
     a2a_stream.generate_sample_event("cortex-core", "agent_message");
-    
+
     info!("Starting multi-view code event loop");
-    
+
     let result = loop {
         // Update cursor for streaming
         chat_widget.update_cursor();
@@ -249,7 +249,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
 
                                                 // Add user message to chat
                                                 chat_widget.add_message(cortex_code::app::Message::user(&message));
-                                                
+
                                                 // Get response from AI
                                                 let response = app.get_ai_response(&message).await?;
                                                 chat_widget.add_message(cortex_code::app::Message::assistant(&response));
@@ -259,7 +259,7 @@ async fn run_code(app: &mut CortexApp) -> Result<()> {
 
                                                 // Add user message to chat
                                                 chat_widget.add_message(cortex_code::app::Message::user(&message));
-                                                
+
                                                 // Start streaming
                                                 chat_widget.start_streaming("session-123".to_string(), "github".to_string());
 

@@ -1,21 +1,7 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
-	"formatter": { "enabled": true },
-	"linter": { "enabled": true, "rules": { "recommended": true } },
-	"javascript": { "formatter": { "quoteStyle": "single" } },
-	"files": {
-		"includes": ["."],
-		"experimentalScannerIgnores": [
-			"**/node_modules/**",
-			"**/.pnpm/**",
-			"**/dist/**",
-			"**/.nx/**",
-			"**/.turbo/**",
-			"**/.git/**",
-			"**/.venv/**",
-			"**/.uv/**",
-			"**/.tmp/**",
-			"**/target/**"
-		]
-	}
+  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+  "formatter": { "enabled": true },
+  "linter": { "enabled": true, "rules": { "recommended": true } },
+  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "files": { "ignore": ["**/dist/**", "**/.nx/**"] }
 }
