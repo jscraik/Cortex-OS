@@ -1,47 +1,46 @@
 {
-  "name": "cortex-webui",
-  "version": "1.0.0",
-  "description": "A modern web interface for AI models with real-time chat capabilities",
-  "private": true,
-  "workspaces": [
-    "frontend",
-    "backend",
-    "cortex-cli",
-    "cortex-vscode"
-  ],
-  "scripts": {
-    "dev": "concurrently \"pnpm --filter cortex-webui-backend dev\" \"pnpm --filter cortex-webui-frontend dev\"",
-    "build": "pnpm --filter cortex-webui-backend build && pnpm --filter cortex-webui-frontend build",
-    "test": "pnpm --filter cortex-webui-backend test && pnpm --filter cortex-webui-frontend test",
-    "lint": "pnpm --filter cortex-webui-backend lint && pnpm --filter cortex-webui-frontend lint",
-    "start": "pnpm --filter cortex-webui-backend start",
-    "clean": "rimraf frontend/dist backend/dist"
-  },
-  "keywords": [
-    "ai",
-    "chat",
-    "webui",
-    "cortex",
-    "monorepo"
-  ],
-  "author": "brAInwav",
-  "license": "MIT",
-  "devDependencies": {
-    "@tailwindcss/container-queries": "^0.1.1",
-    "@tailwindcss/typography": "^0.5.16",
-    "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^14.6.1",
-    "autoprefixer": "^10.4.14",
-    "concurrently": "^8.0.1",
-    "jest-axe": "^10.0.0",
-    "jsdom": "^26.1.0",
-    "postcss": "^8.4.24",
-    "rimraf": "^5.0.1",
-    "tailwindcss": "^3.3.2"
-  },
-  "engines": {
-    "node": ">=16.0.0",
-    "pnpm": ">=7.0.0"
-  }
+	"name": "cortex-webui",
+	"version": "1.0.0",
+	"description": "A modern web interface for AI models with real-time chat capabilities",
+	"private": true,
+	"workspaces": [
+		"frontend",
+		"backend"
+	],
+	"scripts": {
+		"dev": "concurrently \"pnpm --filter cortex-webui-backend dev\" \"pnpm --filter cortex-webui-frontend dev\"",
+		"build": "pnpm --filter cortex-webui-backend build && pnpm --filter cortex-webui-frontend build",
+		"test": "vitest -c vitest.config.ts",
+		"lint": "pnpm --filter cortex-webui-backend lint && pnpm --filter cortex-webui-frontend lint",
+		"start": "pnpm --filter cortex-webui-backend start",
+		"clean": "rimraf frontend/dist backend/dist"
+	},
+	"keywords": [
+		"ai",
+		"chat",
+		"webui",
+		"cortex",
+		"monorepo"
+	],
+	"author": "brAInwav",
+	"license": "MIT",
+	"devDependencies": {
+		"@tailwindcss/container-queries": "^0.1.1",
+		"@tailwindcss/typography": "^0.5.16",
+		"@testing-library/jest-dom": "^6.8.0",
+		"@testing-library/react": "^16.3.0",
+		"@testing-library/user-event": "^14.6.1",
+		"autoprefixer": "^10.4.14",
+		"concurrently": "^8.0.1",
+		"jest-axe": "^10.0.0",
+		"jsdom": "^26.1.0",
+		"postcss": "^8.4.24",
+		"rimraf": "^5.0.1",
+		"tailwindcss": "^3.3.2",
+		"vitest": "^0.31.0"
+	},
+	"engines": {
+		"node": ">=16.0.0",
+		"pnpm": ">=7.0.0"
+	}
 }

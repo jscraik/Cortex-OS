@@ -125,14 +125,14 @@ impl ModelProvider for LocalMLXProvider {}
 
 ## File Structure
 
-```
+```text
 apps/cortex-code/                    # New Rust TUI
 ├── Cargo.toml                      # Ratatui 0.29.0 + dependencies
 ├── src/
 │   ├── main.rs                     # CLI entry point
 │   ├── lib.rs                      # Library exports
 │   ├── app.rs                      # Application state (MVC)
-│   ├── config.rs                   # TOML configuration
+│   ├── config.rs                   # JSON-first configuration loader (legacy TOML supported by extension)
 │   ├── error.rs                    # Custom error types
 │   └── providers/
 │       ├── mod.rs                  # Provider abstraction
@@ -141,7 +141,7 @@ apps/cortex-code/                    # New Rust TUI
 │       ├── anthropic.rs            # Anthropic adapter (stub)
 │       └── local.rs                # Local MLX adapter (stub)
 ├── tests/unit/                     # TDD unit tests
-├── config.toml.example             # Configuration template
+├── config/example.cortex.json      # JSON configuration template
 ├── build.sh                        # Build script
 └── README.md                       # Usage documentation
 
@@ -188,18 +188,15 @@ cortex code run "review this PR" --output json
 
 ### Configuration
 
-```toml
-# ~/.cortex/config.toml
-[provider]
-default = "github-models"
-fallback = ["openai", "local-mlx"]
-
-[github-models]
-model = "openai/gpt-4o-mini"
-
-[privacy]
-zdr = true
-telemetry = false
+```json
+{
+  "providers": {
+    "default": "github",
+    "fallback": ["openai", "mlx"],
+    "config": { "github": { "models": ["gpt-4o-mini"] } }
+  },
+  "privacy": { "zdr": true, "telemetry": false }
+}
 ```
 
 ## Quality Metrics Achieved

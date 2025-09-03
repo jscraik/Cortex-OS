@@ -1,5 +1,3 @@
-Direct answer: below is the complete, updated PRD that treats Cortex-OS as your agentic second brain, includes all current packages (MCP emphasized), adds wireframes, containerization, subagents, and the OrbStack + host-MLX plan.
-
 # docs/prd/cortex-os-agentic-second-brain.prd.md
 
 # Cortex-OS PRD — Agentic Second Brain

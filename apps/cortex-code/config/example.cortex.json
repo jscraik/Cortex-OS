@@ -1,0 +1,61 @@
+{
+	"name": "Cortex Code",
+	"version": "2.0.0",
+	"providers": {
+		"default": "github",
+		"fallback": ["openai", "anthropic", "mlx"],
+		"config": {
+			"github": { "base_url": "https://models.inference.ai.azure.com" },
+			"openai": { "base_url": "https://api.openai.com/v1" },
+			"anthropic": { "base_url": "https://api.anthropic.com" },
+			"mlx": { "type": "local" }
+		}
+	},
+	"features": {
+		"tui": { "enabled": true },
+		"daemon": { "enabled": true, "port": 8080, "bind_address": "127.0.0.1" },
+		"mcp": { "enabled": true, "servers": [] },
+		"memory": {
+			"enabled": true,
+			"backend": "agents_md",
+			"retention_days": 30,
+			"audit_enabled": true
+		},
+		"metrics": {
+			"enabled": true,
+			"prometheus_endpoint": "/metrics",
+			"health_endpoint": "/health"
+		},
+		"streaming": { "enabled": true, "chunk_size": 1024, "timeout_ms": 30000 }
+	},
+	"security": {
+		"network": {
+			"bind_localhost_only": true,
+			"tls_enabled": false,
+			"cors_enabled": true,
+			"allowed_origins": ["http://localhost:*"]
+		},
+		"execution": {
+			"sandbox_enabled": true,
+			"command_injection_protection": true,
+			"input_validation": true
+		},
+		"data": {
+			"encryption_at_rest": false,
+			"pii_detection": true,
+			"audit_logging": true
+		}
+	},
+	"ui": {
+		"theme": "dark",
+		"keybindings": "default",
+		"vim_mode": false,
+		"components": {
+			"chat_widget": { "enabled": true },
+			"command_palette": { "enabled": true },
+			"file_tree": { "enabled": false },
+			"diff_viewer": { "enabled": true },
+			"status_bar": { "enabled": true }
+		}
+	}
+}

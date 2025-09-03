@@ -1,2 +1,10 @@
-#!/usr/bin/env node
-import('../apps/cortex-cli/dist/index.js');
+#!/bin/bash
+# Cortex Code Launcher
+# Runs the Rust cortex-code binary from the apps/cortex-code directory
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Change to the cortex-code directory and run the binary
+cd "$PROJECT_ROOT/apps/cortex-code" || exit 1
+exec ./target/release/cortex-code "$@"

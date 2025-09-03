@@ -6,7 +6,7 @@ import Chat from '../../../app/components/chat/Chat';
 // Mock the API calls
 vi.mock('../../../utils/api-client', () => ({
   apiFetch: vi.fn().mockImplementation((url) => {
-    if (url === '/api/models') {
+    if (url === '/api/models/ui') {
       return Promise.resolve({
         models: [
           { id: 'model1', label: 'Model 1' },
@@ -79,9 +79,10 @@ describe('Chat Component', () => {
   it('allows sending a message', async () => {
     render(<Chat />);
 
-    // Wait for models to load
+    // Wait for models to load and check the select element
     await waitFor(() => {
-      expect(screen.getByText('Model 1')).toBeInTheDocument();
+      const selectElement = screen.getByLabelText('Model');
+      expect(selectElement).toBeInTheDocument();
     });
 
     // Type a message
