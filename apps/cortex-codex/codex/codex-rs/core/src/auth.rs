@@ -114,8 +114,11 @@ impl CodexAuth {
                             "Token data is not available after refresh.",
                         ))?;
 
-                    #[expect(clippy::unwrap_used)]
-                    let mut auth_lock = self.auth_dot_json.lock().unwrap();
+                    // Handle poisoned mutex by mapping to std::io::Error
+                    let mut auth_lock = self
+                        .auth_dot_json
+                        .lock()
+                        .map_err(|_| std::io::Error::other("Mutex poisoned while updating auth_dot_json"))?;
                     *auth_lock = Some(updated_auth_dot_json);
                 }
 
