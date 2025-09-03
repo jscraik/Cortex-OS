@@ -128,35 +128,7 @@ done
   if [ -f "$binary_list" ]; then sort "$binary_list"; fi
 } > "$summary"
 echo "Done. Summary: $summary"
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Side-by-side, line-by-line directory comparison with summary.
-# Usage: scripts/dir_diff_side_by_side.sh <dirA> <dirB> <outDir>
-
-if [ "${1:-}" = "" ] || [ "${2:-}" = "" ]; then
-  echo "Usage: $0 <dirA> <dirB> [outDir]" >&2
-  exit 2
-fi
-
-DIR_A=$(cd "$1" 2>/dev/null && pwd || true)
-DIR_B=$(cd "$2" 2>/dev/null && pwd || true)
-
-if [ -z "$DIR_A" ] || [ ! -d "$DIR_A" ]; then
-  echo "Error: dirA not found: $1" >&2
-  exit 1
-fi
-if [ -z "$DIR_B" ] || [ ! -d "$DIR_B" ]; then
-  echo "Error: dirB not found: $2" >&2
-  exit 1
-fi
-
-OUT_RAW=${3:-"comparisons/$(basename "$DIR_A")_vs_$(basename "$DIR_B")_$(date +%Y%m%dT%H%M%S)"}
-# Normalize OUT to absolute path and create base dir
-mkdir -p "$OUT_RAW"
-OUT=$(cd "$OUT_RAW" && pwd)
-mkdir -p "$OUT/diffs" "$OUT/tmp"
-
+# (Remove lines 131-276 entirely; no replacement needed.)
 WIDTH=${DIFF_WIDTH:-180}
 
 summary="$OUT/summary.txt"
