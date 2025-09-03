@@ -10,10 +10,25 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-import aioredis
+try:
+    # Prefer redis.asyncio (newer, maintained)
+    import redis.asyncio as redis_client
+except ImportError:
+    # Fallback to aioredis if redis package not available
+    import aioredis as redis_client
 from celery import Celery
 
-from ..core.circuit_breakers import circuit_breaker
+# Import circuit_breaker if available, otherwise create a dummy decorator
+try:
+    from ..core.circuit_breakers import circuit_breaker
+except ImportError:
+
+    def circuit_breaker(name):
+        def decorator(func):
+            return func
+
+        return decorator
+
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +169,7 @@ class TaskQueue:
         self.max_workers = max_workers
         self.enable_celery = enable_celery
 
-        self.redis: aioredis.Redis | None = None
+        self.redis: Any | None = None
         self.celery_app: Celery | None = None
         self.registry = TaskRegistry()
 
@@ -176,7 +191,7 @@ class TaskQueue:
         logger.info("Initializing task queue system")
 
         # Connect to Redis
-        self.redis = aioredis.from_url(self.redis_url)
+        self.redis = redis_client.from_url(self.redis_url)
         await self.redis.ping()
         logger.info("Connected to Redis")
 
@@ -213,33 +228,12 @@ class TaskQueue:
         self.running = True
         logger.info("Task queue system initialized successfully")
 
-    async def shutdown(self) -> None:
-        """Shutdown the task queue system."""
-        logger.info("Shutting down task queue system")
-
-        self.running = False
-
-        # Cancel all workers
-        for worker in self.workers:
-            worker.cancel()
-
-        # Wait for workers to finish
-        if self.workers:
-            await asyncio.gather(*self.workers, return_exceptions=True)
-
-        # Close Redis connection
-        if self.redis:
-            await self.redis.close()
-
-        logger.info("Task queue system shutdown complete")
-
     def _register_builtin_tasks(self) -> None:
         """Register built-in task functions."""
 
-        async def echo_task(message: str) -> str:
-            """Simple echo task for testing."""
-            await asyncio.sleep(0.1)  # Simulate work
-            return f"Echo: {message}"
+        async def echo_task(message: str) -> dict[str, Any]:
+            """Echo task for testing."""
+            return {"echo": message, "timestamp": time.time()}
 
         async def health_check_task() -> dict[str, Any]:
             """Health check task."""
@@ -252,24 +246,7 @@ class TaskQueue:
         # Register the functions after definition
         self.registry.register("echo", echo_task)
         self.registry.register("health_check", health_check_task)
-
-        # Register tool execution task after function definition
         self.registry.register("tool_execution", tool_execution_task)
-
-
-# Define the tool execution task function outside the method
-async def tool_execution_task(
-    tool_name: str, parameters: dict[str, Any]
-) -> dict[str, Any]:
-    """Execute MCP tool task."""
-    # This would integrate with the MCP server
-    # For now, return a placeholder
-    return {
-        "tool": tool_name,
-        "parameters": parameters,
-        "result": f"Executed {tool_name} with parameters {parameters}",
-        "execution_time": time.time(),
-    }
 
     async def submit_task(
         self,
@@ -325,15 +302,16 @@ async def tool_execution_task(
         task_result.started_at = time.time()
 
         try:
-            # Get task function
+            # Get the function
             func = self.registry.get(task_def.function_name)
             if not func:
-                raise ValueError(f"Unknown task function: {task_def.function_name}")
+                raise ValueError(f"Function {task_def.function_name} not registered")
 
             # Execute with timeout
             if task_def.timeout:
                 result = await asyncio.wait_for(
-                    func(*task_def.args, **task_def.kwargs), timeout=task_def.timeout
+                    func(*task_def.args, **task_def.kwargs),
+                    timeout=task_def.timeout,
                 )
             else:
                 result = await func(*task_def.args, **task_def.kwargs)
@@ -346,14 +324,14 @@ async def tool_execution_task(
                 task_result.completed_at - task_result.started_at
             )
 
+            # Update metrics
             self.total_tasks_processed += 1
             self.total_execution_time += task_result.execution_time
 
-            logger.info(
-                f"Task {task_def.task_id} completed successfully in {task_result.execution_time:.3f}s"
-            )
+            logger.info(f"Task {task_def.task_id} completed successfully")
 
         except Exception as e:
+            # Handle errors
             task_result.status = TaskStatus.FAILED
             task_result.error = str(e)
             task_result.completed_at = time.time()
@@ -361,26 +339,29 @@ async def tool_execution_task(
                 task_result.completed_at - task_result.started_at
             )
 
+            # Update metrics
             self.total_tasks_failed += 1
+
             logger.error(f"Task {task_def.task_id} failed: {e}")
 
             # Retry logic
             if task_result.attempts < task_def.max_retries:
                 task_result.status = TaskStatus.RETRYING
                 task_result.attempts += 1
+                logger.info(
+                    f"Retrying task {task_def.task_id} (attempt {task_result.attempts})"
+                )
 
                 # Schedule retry
-                await asyncio.sleep(
-                    task_def.retry_delay * (2**task_result.attempts)
-                )  # Exponential backoff
+                await asyncio.sleep(task_def.retry_delay)
                 return await self.execute_task(task_def)
 
         return task_result
 
     async def start_workers(self, num_workers: int | None = None) -> None:
-        """Start worker processes to consume tasks."""
+        """Start worker tasks."""
         if not self.running:
-            return
+            raise RuntimeError("Queue not initialized")
 
         num_workers = num_workers or self.max_workers
 
@@ -388,15 +369,15 @@ async def tool_execution_task(
             worker = asyncio.create_task(self._worker_loop(f"worker-{i}"))
             self.workers.append(worker)
 
-        logger.info(f"Started {num_workers} task workers")
+        logger.info(f"Started {num_workers} workers")
 
-    async def _worker_loop(self, worker_name: str) -> None:
-        """Main worker loop to process tasks."""
-        logger.info(f"Worker {worker_name} started")
+    async def _worker_loop(self, worker_id: str) -> None:
+        """Main worker loop."""
+        logger.info(f"Worker {worker_id} started")
 
         while self.running:
             try:
-                # Get task from highest priority queue
+                # Get tasks from priority queues (highest first)
                 task_data = None
                 for priority in [
                     TaskPriority.CRITICAL,
@@ -410,152 +391,82 @@ async def tool_execution_task(
                         task_data = json.loads(result[1])
                         break
 
-                if not task_data:
-                    continue
+                if task_data:
+                    task_def = TaskDefinition.from_dict(task_data)
+                    logger.info(
+                        f"Worker {worker_id} processing task {task_def.task_id}"
+                    )
 
-                # Execute task
-                task_def = TaskDefinition.from_dict(task_data)
-                task_result = await self.execute_task(task_def)
+                    # Execute task
+                    task_result = await self.execute_task(task_def)
 
-                # Store result
-                await self._store_task_result(task_result)
+                    # Store result
+                    await self._store_result(task_result)
+
+                    # Move from active to completed
+                    if task_def.task_id in self.active_tasks:
+                        del self.active_tasks[task_def.task_id]
+                    self.completed_tasks[task_def.task_id] = task_result
 
             except Exception as e:
-                logger.error(f"Worker {worker_name} error: {e}")
-                await asyncio.sleep(1)  # Brief pause before retrying
+                logger.error(f"Worker {worker_id} error: {e}")
+                await asyncio.sleep(1)
 
-        logger.info(f"Worker {worker_name} stopped")
+        logger.info(f"Worker {worker_id} stopped")
 
-    async def _store_task_result(self, task_result: TaskResult) -> None:
+    async def _store_result(self, task_result: TaskResult) -> None:
         """Store task result in Redis."""
         result_key = f"{self.queue_name}:results:{task_result.task_id}"
-        await self.redis.setex(
+        await self.redis.set(
             result_key,
-            3600,  # 1 hour TTL
             json.dumps(task_result.to_dict()),
+            ex=3600,  # Expire after 1 hour
         )
 
-        # Move from active to completed
-        if task_result.task_id in self.active_tasks:
-            del self.active_tasks[task_result.task_id]
-        self.completed_tasks[task_result.task_id] = task_result
-
-        # Limit completed tasks in memory
-        if len(self.completed_tasks) > 1000:
-            # Remove oldest
-            oldest_id = min(
-                self.completed_tasks.keys(),
-                key=lambda x: self.completed_tasks[x].completed_at or 0,
-            )
-            del self.completed_tasks[oldest_id]
-
-    async def get_task_result(self, task_id: str) -> TaskResult | None:
-        """Get task result by ID."""
-        # Check active tasks first
-        if task_id in self.active_tasks:
-            return self.active_tasks[task_id]
-
-        # Check completed tasks
-        if task_id in self.completed_tasks:
-            return self.completed_tasks[task_id]
-
-        # Check Redis
-        result_key = f"{self.queue_name}:results:{task_id}"
-        result_data = await self.redis.get(result_key)
-        if result_data:
-            result_dict = json.loads(result_data)
-            return TaskResult(
-                task_id=result_dict["task_id"],
-                status=TaskStatus(result_dict["status"]),
-                result=result_dict.get("result"),
-                error=result_dict.get("error"),
-                execution_time=result_dict.get("execution_time"),
-                attempts=result_dict.get("attempts", 0),
-                created_at=result_dict.get("created_at", 0),
-                started_at=result_dict.get("started_at"),
-                completed_at=result_dict.get("completed_at"),
-            )
-
-        return None
-
-    async def cancel_task(self, task_id: str) -> bool:
-        """Cancel a pending or running task."""
-        if task_id in self.active_tasks:
-            task_result = self.active_tasks[task_id]
-            if task_result.status in [TaskStatus.PENDING, TaskStatus.RETRYING]:
-                task_result.status = TaskStatus.CANCELLED
-                task_result.completed_at = time.time()
-                await self._store_task_result(task_result)
-                logger.info(f"Cancelled task {task_id}")
-                return True
-
-        return False
-
-    async def get_queue_size(self) -> int:
-        """Get total number of pending tasks."""
-        total = 0
+    async def get_queue_size(self) -> dict[str, int]:
+        """Get queue sizes by priority."""
+        sizes = {}
         for priority in TaskPriority:
             queue_key = f"{self.queue_name}:priority:{priority.value}"
             size = await self.redis.llen(queue_key)
-            total += size
-        return total
+            sizes[priority.name] = size
+        return sizes
 
-    async def get_status(self) -> dict[str, Any]:
-        """Get comprehensive queue status."""
-        queue_sizes = {}
-        for priority in TaskPriority:
-            queue_key = f"{self.queue_name}:priority:{priority.value}"
-            size = await self.redis.llen(queue_key)
-            queue_sizes[priority.name.lower()] = size
+    async def shutdown(self) -> None:
+        """Shutdown the task queue system."""
+        logger.info("Shutting down task queue system")
+        self.running = False
 
-        return {
-            "running": self.running,
-            "workers": len(self.workers),
-            "active_tasks": len(self.active_tasks),
-            "completed_tasks": len(self.completed_tasks),
-            "queue_sizes": queue_sizes,
-            "total_queue_size": sum(queue_sizes.values()),
-            "registered_functions": len(self.registry.list_functions()),
-            "metrics": {
-                "total_processed": self.total_tasks_processed,
-                "total_failed": self.total_tasks_failed,
-                "success_rate": (
-                    (self.total_tasks_processed - self.total_tasks_failed)
-                    / self.total_tasks_processed
-                    if self.total_tasks_processed > 0
-                    else 0
-                ),
-                "average_execution_time": (
-                    self.total_execution_time / self.total_tasks_processed
-                    if self.total_tasks_processed > 0
-                    else 0
-                ),
-            },
-            "registered_functions": self.registry.list_functions(),
-        }
+        # Cancel all workers
+        for worker in self.workers:
+            worker.cancel()
 
-    async def purge_completed_tasks(self, older_than_hours: int = 24) -> int:
-        """Purge completed tasks older than specified hours."""
-        cutoff_time = time.time() - (older_than_hours * 3600)
-        purged_count = 0
+        # Wait for workers to stop
+        if self.workers:
+            await asyncio.gather(*self.workers, return_exceptions=True)
 
-        for task_id in list(self.completed_tasks.keys()):
-            task_result = self.completed_tasks[task_id]
-            if task_result.completed_at and task_result.completed_at < cutoff_time:
-                del self.completed_tasks[task_id]
+        # Close Redis connection
+        if self.redis:
+            await self.redis.aclose()
 
-                # Remove from Redis too
-                result_key = f"{self.queue_name}:results:{task_id}"
-                await self.redis.delete(result_key)
-                purged_count += 1
-
-        logger.info(
-            f"Purged {purged_count} completed tasks older than {older_than_hours} hours"
-        )
-        return purged_count
+        logger.info("Task queue system shut down")
 
 
-# Task execution decorator for easy task registration
+# Define the tool execution task function outside the class
+async def tool_execution_task(
+    tool_name: str, parameters: dict[str, Any]
+) -> dict[str, Any]:
+    """Execute MCP tool task."""
+    # This would integrate with the MCP server
+    # For now, return a placeholder
+    return {
+        "tool": tool_name,
+        "parameters": parameters,
+        "result": f"Executed {tool_name} with parameters {parameters}",
+        "execution_time": time.time(),
+    }
+
+
 def task(
     queue: TaskQueue,
     name: str | None = None,

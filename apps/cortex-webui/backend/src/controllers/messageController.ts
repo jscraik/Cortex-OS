@@ -18,7 +18,7 @@ const createMessageSchema = z.object({
 });
 
 export class MessageController {
-  static async getMessagesByConversationId(req: AuthRequest, res: Response): Promise<void> {
+  static getMessagesByConversationId(req: AuthRequest, res: Response): void {
     try {
       if (!req.user) {
         throw new HttpError(401, 'Unauthorized');
@@ -27,7 +27,7 @@ export class MessageController {
       const { conversationId } = conversationIdSchema.parse(req.params);
 
       // Verify conversation exists and belongs to user
-      const conversation = await ConversationService.getConversationById(conversationId);
+      const conversation = ConversationService.getConversationById(conversationId);
       if (!conversation) {
         throw new HttpError(404, 'Conversation not found');
       }
@@ -36,7 +36,7 @@ export class MessageController {
         throw new HttpError(403, 'Forbidden');
       }
 
-      const messages = await MessageService.getMessagesByConversationId(conversationId);
+      const messages = MessageService.getMessagesByConversationId(conversationId);
       res.json(messages);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -49,7 +49,7 @@ export class MessageController {
     }
   }
 
-  static async createMessage(req: AuthRequest, res: Response): Promise<void> {
+  static createMessage(req: AuthRequest, res: Response): void {
     try {
       if (!req.user) {
         throw new HttpError(401, 'Unauthorized');
@@ -59,7 +59,7 @@ export class MessageController {
       const { content, role } = createMessageSchema.parse(req.body);
 
       // Verify conversation exists and belongs to user
-      const conversation = await ConversationService.getConversationById(conversationId);
+      const conversation = ConversationService.getConversationById(conversationId);
       if (!conversation) {
         throw new HttpError(404, 'Conversation not found');
       }
@@ -68,7 +68,7 @@ export class MessageController {
         throw new HttpError(403, 'Forbidden');
       }
 
-      const message = await MessageService.createMessage(conversationId, role, content);
+      const message = MessageService.createMessage(conversationId, role, content);
       res.status(201).json(message);
     } catch (error) {
       if (error instanceof z.ZodError) {

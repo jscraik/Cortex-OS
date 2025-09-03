@@ -9,118 +9,105 @@ import { UserModel } from '../models/user';
 import { getDatabase } from '../utils/database';
 
 export const AuthService = {
-	async hashPassword(password: string): Promise<string> {
-		const saltRounds = 10;
-		return await bcrypt.hash(password, saltRounds);
-	},
+  hashPassword(password: string): string {
+    const saltRounds = 10;
+    return bcrypt.hashSync(password, saltRounds);
+  },
 
-	async verifyPassword(password: string, hash: string): Promise<boolean> {
-		return await bcrypt.compare(password, hash);
-	},
+  verifyPassword(password: string, hash: string): boolean {
+    return bcrypt.compareSync(password, hash);
+  },
 
-	generateToken(userId: string): string {
-		return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-	},
+  generateToken(userId: string): string {
+    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  },
 
-	verifyToken(token: string): { userId: string } | null {
-		try {
-			return jwt.verify(token, JWT_SECRET) as { userId: string };
-		} catch {
-			return null;
-		}
-	},
+  verifyToken(token: string): { userId: string } | null {
+    try {
+      return jwt.verify(token, JWT_SECRET) as { userId: string };
+    } catch {
+      return null;
+    }
+  },
 
-	async register(
-		name: string,
-		email: string,
-		password: string,
-	): Promise<{ user: User; token: string }> {
-		const db = await getDatabase();
+  register(name: string, email: string, password: string): { user: User; token: string } {
+    const db = getDatabase();
 
-		// Check if user already exists
-		const existingUser = await db.get(
-			`SELECT * FROM ${UserModel.tableName} WHERE email = ?`,
-			[email],
-		);
-		if (existingUser) {
-			throw new Error('User with this email already exists');
-		}
+    // Check if user already exists
+    const existingUser = db
+      .prepare(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`)
+      .get(email);
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
 
-		// Hash password
-		const hashedPassword = await AuthService.hashPassword(password);
+    // Hash password
+    const hashedPassword = AuthService.hashPassword(password);
 
-		// Create user
-		const userId = uuidv4();
-		const now = new Date().toISOString();
-		const userRecord = {
-			id: userId,
-			email,
-			name,
-			password: hashedPassword,
-			created_at: now,
-			updated_at: now,
-		};
+    // Create user
+    const userId = uuidv4();
+    const now = new Date().toISOString();
+    const userRecord = {
+      id: userId,
+      email,
+      name,
+      password: hashedPassword,
+      created_at: now,
+      updated_at: now,
+    };
 
-		await db.run(
-			`INSERT INTO ${UserModel.tableName} (id, email, name, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
-			[
-				userRecord.id,
-				userRecord.email,
-				userRecord.name,
-				userRecord.password,
-				userRecord.created_at,
-				userRecord.updated_at,
-			],
-		);
+    db.prepare(
+      `INSERT INTO ${UserModel.tableName} (id, email, name, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+    ).run(
+      userRecord.id,
+      userRecord.email,
+      userRecord.name,
+      userRecord.password,
+      userRecord.created_at,
+      userRecord.updated_at,
+    );
 
-		const user = UserModel.fromRecord(userRecord);
-		const token = AuthService.generateToken(user.id);
+    const user = UserModel.fromRecord(userRecord);
+    const token = AuthService.generateToken(user.id);
 
-		// Remove password from returned user object
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { password: _password, ...userWithoutPassword } = user;
+    // Remove password from returned user object
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = user;
 
-		return { user: userWithoutPassword, token };
-	},
+    return { user: userWithoutPassword, token };
+  },
 
-	async login(
-		email: string,
-		password: string,
-	): Promise<{ user: User; token: string } | null> {
-		const db = await getDatabase();
+  login(email: string, password: string): { user: User; token: string } | null {
+    const db = getDatabase();
 
-		// Find user
-		const userRecord = await db.get(
-			`SELECT * FROM ${UserModel.tableName} WHERE email = ?`,
-			[email],
-		);
-		if (!userRecord) {
-			return null;
-		}
+    // Find user
+    const userRecord = db
+      .prepare(`SELECT * FROM ${UserModel.tableName} WHERE email = ?`)
+      .get(email);
+    if (!userRecord) {
+      return null;
+    }
 
-		// Verify password
-		const isValid = await AuthService.verifyPassword(
-			password,
-			userRecord.password,
-		);
-		if (!isValid) {
-			return null;
-		}
+    // Verify password
+    const isValid = AuthService.verifyPassword(password, userRecord.password);
+    if (!isValid) {
+      return null;
+    }
 
-		const user = UserModel.fromRecord(userRecord);
-		const token = AuthService.generateToken(user.id);
+    const user = UserModel.fromRecord(userRecord);
+    const token = AuthService.generateToken(user.id);
 
-		// Remove password from returned user object
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { password: _password, ...userWithoutPassword } = user;
+    // Remove password from returned user object
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...userWithoutPassword } = user;
 
-		return { user: userWithoutPassword, token };
-	},
+    return { user: userWithoutPassword, token };
+  },
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	async logout(_token: string): Promise<void> {
-		// In a more complex implementation, we might want to blacklist tokens
-		// For now, we'll just let the token expire naturally
-		return;
-	},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async logout(_token: string): Promise<void> {
+    // In a more complex implementation, we might want to blacklist tokens
+    // For now, we'll just let the token expire naturally
+    return;
+  },
 };

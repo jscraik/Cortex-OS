@@ -5,16 +5,16 @@ import { ModelModel } from '../models/model';
 import { getDatabase } from '../utils/database';
 
 export class ModelService {
-  static async getAllModels(): Promise<Model[]> {
-    const db = await getDatabase();
-    const records = await db.all(`SELECT * FROM ${ModelModel.tableName} ORDER BY name ASC`);
+  static getAllModels(): Model[] {
+    const db = getDatabase();
+    const records = db.prepare(`SELECT * FROM ${ModelModel.tableName} ORDER BY name ASC`).all();
 
     return records.map(ModelModel.fromRecord);
   }
 
-  static async getModelById(id: string): Promise<Model | null> {
-    const db = await getDatabase();
-    const record = await db.get(`SELECT * FROM ${ModelModel.tableName} WHERE id = ?`, [id]);
+  static getModelById(id: string): Model | null {
+    const db = getDatabase();
+    const record = db.prepare(`SELECT * FROM ${ModelModel.tableName} WHERE id = ?`).get(id);
 
     if (!record) {
       return null;
@@ -23,8 +23,8 @@ export class ModelService {
     return ModelModel.fromRecord(record);
   }
 
-  static async createModel(model: Omit<Model, 'id' | 'createdAt' | 'updatedAt'>): Promise<Model> {
-    const db = await getDatabase();
+  static createModel(model: Omit<Model, 'id' | 'createdAt' | 'updatedAt'>): Model {
+    const db = getDatabase();
 
     const modelId = `model_${Date.now()}`;
     const now = new Date().toISOString();
@@ -38,42 +38,41 @@ export class ModelService {
       updated_at: now,
     };
 
-    await db.run(
+    db.prepare(
       `INSERT INTO ${ModelModel.tableName} (id, name, description, provider, capabilities, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        modelRecord.id,
-        modelRecord.name,
-        modelRecord.description,
-        modelRecord.provider,
-        modelRecord.capabilities,
-        modelRecord.created_at,
-        modelRecord.updated_at,
-      ],
+    ).run(
+      modelRecord.id,
+      modelRecord.name,
+      modelRecord.description,
+      modelRecord.provider,
+      modelRecord.capabilities,
+      modelRecord.created_at,
+      modelRecord.updated_at,
     );
 
     return ModelModel.fromRecord(modelRecord);
   }
 
-  static async initializeDefaultModels(): Promise<void> {
-    const models = await this.getAllModels();
+  static initializeDefaultModels(): void {
+    const models = this.getAllModels();
 
     if (models.length === 0) {
       // Insert default models if none exist
-      await this.createModel({
+      this.createModel({
         name: 'GPT-4',
         description: 'OpenAI GPT-4 model',
         provider: 'openai',
         capabilities: ['text-generation', 'reasoning'],
       });
 
-      await this.createModel({
+      this.createModel({
         name: 'Claude 2',
         description: 'Anthropic Claude 2 model',
         provider: 'anthropic',
         capabilities: ['text-generation', 'analysis'],
       });
 
-      await this.createModel({
+      this.createModel({
         name: 'Llama 2',
         description: 'Meta Llama 2 model',
         provider: 'local',

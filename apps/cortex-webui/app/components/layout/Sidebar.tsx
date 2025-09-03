@@ -19,7 +19,7 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <div className="w-64 bg-white border-r flex flex-col">
+      <div className="w-64 bg-white border-r flex flex-col" role="banner">
         <div className="p-4 border-b">
           <h1 className="text-xl font-bold text-blue-600">brAInwav</h1>
           <p className="text-xs text-gray-500">Cortex WebUI</p>

@@ -1,10 +1,20 @@
 #!/bin/bash
 # Cortex Code Launcher
-# Runs the Rust cortex-code binary from the apps/cortex-code directory
+# Runs the Rust cortex-code binary (prefers cargo-installed version)
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-
-# Change to the cortex-code directory and run the binary
-cd "$PROJECT_ROOT/apps/cortex-code" || exit 1
-exec ./target/release/cortex-code "$@"
+# Try to use the cargo-installed version first, then fall back to local build
+if command -v cortex-code >/dev/null 2>&1; then
+    exec cortex-code "$@"
+else
+    # Fallback to local build
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    cd "$PROJECT_ROOT/apps/cortex-code" || exit 1
+    
+    if [ -f "./target/release/cortex-code" ]; then
+        exec ./target/release/cortex-code "$@"
+    else
+        echo "Error: cortex-code binary not found. Please run 'cargo install --path .' in apps/cortex-code" >&2
+        exit 1
+    fi
+fi

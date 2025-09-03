@@ -1,44 +1,40 @@
 // Database utility for Cortex WebUI backend
 
-import { Database, open } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import Database, { Database as DatabaseType } from 'better-sqlite3';
 import { DATABASE_PATH } from '../../../shared/constants';
 import { ConversationModel } from '../models/conversation';
 import { MessageModel } from '../models/message';
 import { ModelModel } from '../models/model';
 import { UserModel } from '../models/user';
 
-let db: Database | null = null;
+let db: DatabaseType | null = null;
 
-export const initializeDatabase = async (): Promise<Database> => {
+export const initializeDatabase = (): DatabaseType => {
   if (db) {
     return db;
   }
 
-  db = await open({
-    filename: DATABASE_PATH,
-    driver: sqlite3.Database,
-  });
+  db = new Database(DATABASE_PATH);
 
   // Create tables
-  await db.exec(UserModel.createTableSQL);
-  await db.exec(ConversationModel.createTableSQL);
-  await db.exec(MessageModel.createTableSQL);
-  await db.exec(ModelModel.createTableSQL);
+  db.exec(UserModel.createTableSQL);
+  db.exec(ConversationModel.createTableSQL);
+  db.exec(MessageModel.createTableSQL);
+  db.exec(ModelModel.createTableSQL);
 
   return db;
 };
 
-export const getDatabase = async (): Promise<Database> => {
+export const getDatabase = (): DatabaseType => {
   if (!db) {
-    return await initializeDatabase();
+    return initializeDatabase();
   }
   return db;
 };
 
-export const closeDatabase = async (): Promise<void> => {
+export const closeDatabase = (): void => {
   if (db) {
-    await db.close();
+    db.close();
     db = null;
   }
 };

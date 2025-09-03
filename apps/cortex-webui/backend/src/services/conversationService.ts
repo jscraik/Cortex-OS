@@ -6,19 +6,20 @@ import { ConversationModel } from '../models/conversation';
 import { getDatabase } from '../utils/database';
 
 export class ConversationService {
-  static async getConversationsByUserId(userId: string): Promise<Conversation[]> {
-    const db = await getDatabase();
-    const records = await db.all(
-      `SELECT * FROM ${ConversationModel.tableName} WHERE user_id = ? ORDER BY updated_at DESC`,
-      [userId],
-    );
+  static getConversationsByUserId(userId: string): Conversation[] {
+    const db = getDatabase();
+    const records = db
+      .prepare(
+        `SELECT * FROM ${ConversationModel.tableName} WHERE user_id = ? ORDER BY updated_at DESC`,
+      )
+      .all(userId);
 
     return records.map(ConversationModel.fromRecord);
   }
 
-  static async getConversationById(id: string): Promise<Conversation | null> {
-    const db = await getDatabase();
-    const record = await db.get(`SELECT * FROM ${ConversationModel.tableName} WHERE id = ?`, [id]);
+  static getConversationById(id: string): Conversation | null {
+    const db = getDatabase();
+    const record = db.prepare(`SELECT * FROM ${ConversationModel.tableName} WHERE id = ?`).get(id);
 
     if (!record) {
       return null;
@@ -27,8 +28,8 @@ export class ConversationService {
     return ConversationModel.fromRecord(record);
   }
 
-  static async createConversation(userId: string, title: string): Promise<Conversation> {
-    const db = await getDatabase();
+  static createConversation(userId: string, title: string): Conversation {
+    const db = getDatabase();
 
     const conversationId = uuidv4();
     const now = new Date().toISOString();
@@ -40,25 +41,21 @@ export class ConversationService {
       updated_at: now,
     };
 
-    await db.run(
+    db.prepare(
       `INSERT INTO ${ConversationModel.tableName} (id, title, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-      [
-        conversationRecord.id,
-        conversationRecord.title,
-        conversationRecord.user_id,
-        conversationRecord.created_at,
-        conversationRecord.updated_at,
-      ],
+    ).run(
+      conversationRecord.id,
+      conversationRecord.title,
+      conversationRecord.user_id,
+      conversationRecord.created_at,
+      conversationRecord.updated_at,
     );
 
     return ConversationModel.fromRecord(conversationRecord);
   }
 
-  static async updateConversation(
-    id: string,
-    updates: Partial<Conversation>,
-  ): Promise<Conversation | null> {
-    const db = await getDatabase();
+  static updateConversation(id: string, updates: Partial<Conversation>): Conversation | null {
+    const db = getDatabase();
 
     // Build update query
     const fields = [];
@@ -71,7 +68,7 @@ export class ConversationService {
 
     if (fields.length === 0) {
       // No valid fields to update
-      return await this.getConversationById(id);
+      return this.getConversationById(id);
     }
 
     fields.push('updated_at = ?');
@@ -79,18 +76,18 @@ export class ConversationService {
     values.push(id);
 
     const query = `UPDATE ${ConversationModel.tableName} SET ${fields.join(', ')} WHERE id = ?`;
-    await db.run(query, values);
+    db.prepare(query).run(...values);
 
-    return await this.getConversationById(id);
+    return this.getConversationById(id);
   }
 
-  static async deleteConversation(id: string): Promise<void> {
-    const db = await getDatabase();
+  static deleteConversation(id: string): void {
+    const db = getDatabase();
 
     // Delete associated messages first
-    await db.run(`DELETE FROM messages WHERE conversation_id = ?`, [id]);
+    db.prepare(`DELETE FROM messages WHERE conversation_id = ?`).run(id);
 
     // Delete conversation
-    await db.run(`DELETE FROM ${ConversationModel.tableName} WHERE id = ?`, [id]);
+    db.prepare(`DELETE FROM ${ConversationModel.tableName} WHERE id = ?`).run(id);
   }
 }

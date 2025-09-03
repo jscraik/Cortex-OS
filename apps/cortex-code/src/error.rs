@@ -54,6 +54,9 @@ pub enum ConfigError {
 
     #[error("Invalid value for {field}: {value}")]
     InvalidValue { field: String, value: String },
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
 }
 
 #[derive(Error, Debug)]

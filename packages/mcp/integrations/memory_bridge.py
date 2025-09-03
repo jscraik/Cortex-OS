@@ -3,6 +3,7 @@
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -470,7 +471,7 @@ class MemoryBridge:
         self,
         neo4j_store: Neo4jMemoryStore | None = None,
         vector_store: QdrantVectorStore | None = None,
-        embedding_function: callable | None = None,
+        embedding_function: Callable | None = None,
     ):
         self.neo4j_store = neo4j_store or Neo4jMemoryStore()
         self.vector_store = vector_store or QdrantVectorStore()
