@@ -1,5 +1,13 @@
 # Cortex CLI Task Tracker
 
+[![Overall Progress](https://img.shields.io/badge/Overall%20Progress-Phase%201%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Current Status](https://img.shields.io/badge/Status-Ready%20for%20Phase%202-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Foundation](https://img.shields.io/badge/Foundation-100%25%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Tests](https://img.shields.io/badge/Config%20Tests-11%2F11%20Passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/Methodology-TDD%20Compliant-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+
+## Current Status: 🟢 Ready for Phase 2 - Foundation Completeortex CLI Task Tracker
+
 ## Current Status: � Ready for Phase 2 - Foundation Complete
 
 ### Phase 1: Foundation Setup ✅ COMPLETED

@@ -1,5 +1,12 @@
 # Cortex CLI Software Engineering Plan
 
+[![Phase 1](https://img.shields.io/badge/Phase%201-Foundation%20Complete%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 1.1](https://img.shields.io/badge/Task%201.1-Project%20Setup%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 1.3](https://img.shields.io/badge/Task%201.3-Error%20Handling%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Next](https://img.shields.io/badge/Next-Task%202.1%20Chat%20Interface-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-11%2F11%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+
 ## TDD-Driven Development Strategy
 
 ### Core Software Engineering Principles

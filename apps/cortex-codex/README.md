@@ -1,5 +1,12 @@
 # Codex CLI (Rust Implementation)
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Phase 1](https://img.shields.io/badge/Phase%201-Foundation%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-11%2F11%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Rust Edition](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://rust-lang.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 We provide Codex CLI as a standalone, native executable to ensure a zero-dependency install.
 
 ## Installing Codex

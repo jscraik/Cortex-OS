@@ -1,5 +1,12 @@
 # codex-core
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Test Coverage](https://img.shields.io/badge/tests-11%2F11%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Rust Version](https://img.shields.io/badge/rust-nightly%202024-orange.svg)](https://rust-lang.org)
+[![Release](https://img.shields.io/badge/release-v0.1.1--config-blue.svg)](https://github.com/jamiescottcraik/Cortex-OS/releases)
+[![TDD](https://img.shields.io/badge/TDD-compliant-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 This crate implements the business logic for Codex. It is designed to be used by the various Codex UIs written in Rust.
 
 ## Configuration System
