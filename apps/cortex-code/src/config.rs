@@ -21,24 +21,6 @@ pub struct Config {
     pub features: FeaturesConfig,
     pub security: SecurityConfig,
     pub ui: UiConfig,
-
-    // Legacy compatibility
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub provider: Option<ProviderConfig>,
-    #[serde(rename = "github-models", skip_serializing_if = "Option::is_none")]
-    pub github_models: Option<GitHubModelsConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub openai: Option<OpenAIConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub anthropic: Option<AnthropicConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mcp: Option<McpConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub memory: Option<MemoryConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub privacy: Option<PrivacyConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tui: Option<TuiConfig>,
 }
 
 // New cortex.json configuration structures
@@ -399,16 +381,6 @@ impl Default for Config {
                     },
                 },
             },
-
-            // Legacy compatibility - all None
-            provider: None,
-            github_models: None,
-            openai: None,
-            anthropic: None,
-            mcp: None,
-            memory: None,
-            privacy: None,
-            tui: None,
         }
     }
 }
@@ -441,24 +413,20 @@ impl Config {
         let profile_manager = env_integration::ProfileManager::new();
         let profile_path = profile_manager.get_profile_config_path();
         if profile_path.exists() {
-            let mut config = Self::from_file(&profile_path)?;
+            let config = Self::from_file(&profile_path)?;
             return Ok(Self::apply_env_overrides(config));
         }
 
         let config_paths = vec![
-            // Check for cortex.json first (new format)
+            // New format only
             current_dir.join("cortex.json"),
             home_dir.join(".cortex").join("cortex.json"),
             config_dir.join("cortex.json"),
-
-            // Fallback to legacy config.toml
-            config_dir.join("config.toml"),
-            home_dir.join(".cortex").join("config.toml"),
         ];
 
         for path in config_paths {
             if path.exists() {
-                let mut config = Self::from_file(&path)?;
+                let config = Self::from_file(&path)?;
                 return Ok(Self::apply_env_overrides(config));
             }
         }
@@ -518,19 +486,11 @@ impl Config {
 
     // Provider configuration helpers
     pub fn get_default_provider(&self) -> &str {
-        if let Some(legacy) = &self.provider {
-            &legacy.default
-        } else {
-            &self.providers.default
-        }
+    &self.providers.default
     }
 
     pub fn get_fallback_providers(&self) -> &[String] {
-        if let Some(legacy) = &self.provider {
-            &legacy.fallback
-        } else {
-            &self.providers.fallback
-        }
+    &self.providers.fallback
     }
 
     pub fn get_provider_config(&self, provider_name: &str) -> Option<&ProviderConfigEntry> {
@@ -539,11 +499,7 @@ impl Config {
 
     // Memory configuration helpers
     pub fn get_agents_md_path(&self) -> PathBuf {
-        let path = if let Some(legacy) = &self.memory {
-            &legacy.path
-        } else {
-            "~/.cortex/agents.md"
-        };
+    let path = "~/.cortex/agents.md";
 
         if path.starts_with('~') {
             let home = dirs::home_dir().unwrap_or_default();
@@ -554,27 +510,15 @@ impl Config {
     }
 
     pub fn enable_memory(&self) -> Option<bool> {
-        if let Some(legacy_privacy) = &self.privacy {
-            Some(!legacy_privacy.zdr)
-        } else {
-            Some(self.features.memory.enabled)
-        }
+    Some(self.features.memory.enabled)
     }
 
     pub fn memory_retention_days(&self) -> Option<u32> {
-        if let Some(legacy) = &self.memory {
-            Some(legacy.retention_days)
-        } else {
-            Some(self.features.memory.retention_days)
-        }
+    Some(self.features.memory.retention_days)
     }
 
     pub fn enable_audit(&self) -> Option<bool> {
-        if let Some(legacy) = &self.memory {
-            Some(legacy.audit)
-        } else {
-            Some(self.features.memory.audit_enabled)
-        }
+    Some(self.features.memory.audit_enabled)
     }
 
     // Feature configuration helpers
@@ -612,10 +556,10 @@ impl Config {
             return Err(ConfigError::MissingField("providers.default".to_string()).into());
         }
 
-        // Validate that default provider exists in config or is a known provider
-        let known_providers = vec!["github", "openai", "anthropic", "mlx", "github-models", "local-mlx"];
+    // Validate that default provider exists in config or is a known provider
+    let known_providers = ["github", "openai", "anthropic", "mlx"];
 
-        if !known_providers.contains(&default_provider) && !self.providers.config.contains_key(default_provider) {
+    if !known_providers.contains(&default_provider) && !self.providers.config.contains_key(default_provider) {
             return Err(ConfigError::InvalidValue {
                 field: "providers.default".to_string(),
                 value: default_provider.to_string(),
@@ -623,17 +567,15 @@ impl Config {
         }
 
         // Validate daemon configuration
-        if self.features.daemon.enabled {
-            if self.features.daemon.port == 0 {
-                return Err(ConfigError::InvalidValue {
-                    field: "features.daemon.port".to_string(),
-                    value: "0".to_string(),
-                }.into());
-            }
+        if self.features.daemon.enabled && self.features.daemon.port == 0 {
+            return Err(ConfigError::InvalidValue {
+                field: "features.daemon.port".to_string(),
+                value: "0".to_string(),
+            }.into());
         }
 
         // Validate UI components
-        if !vec!["dark", "light", "auto"].contains(&self.ui.theme.as_str()) {
+    if !["dark", "light", "auto"].contains(&self.ui.theme.as_str()) {
             return Err(ConfigError::InvalidValue {
                 field: "ui.theme".to_string(),
                 value: self.ui.theme.clone(),

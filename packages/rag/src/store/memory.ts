@@ -1,4 +1,4 @@
-import type { Chunk, Store } from "../index";
+import type { Chunk, Store } from "../lib";
 
 export function memoryStore(): Store {
 	const items: Array<Chunk & { embedding?: number[] }> = [];

@@ -1,4 +1,4 @@
-import type { ServerManifest } from "@cortex-os/mcp-registry/src/types";
+import type { ServerManifest } from "@cortex-os/mcp-registry";
 import { Command } from "commander";
 import {
 	createMarketplaceClient,

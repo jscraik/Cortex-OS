@@ -123,7 +123,7 @@ cargo fmt --check
 
 ### Command Palette
 
-The command palette provides unified access to 30+ operations across 6 categories:
+The command palette provides unified access to 40+ operations across 6 categories:
 
 #### GitHub Commands
 
@@ -138,11 +138,154 @@ The command palette provides unified access to 30+ operations across 6 categorie
 - Install/manage MCP plugins
 - View MCP tool registry
 
+#### AI Coding Assistant Commands (Codex-Style)
+
+- `/explain` - Explain selected code or concept in plain English (Ctrl+E)
+- `/refactor` - Suggest code improvements for selected code (Ctrl+R)
+- `/test` - Generate unit tests for selected code (Ctrl+T)
+- `/document` - Create documentation for selected code (Ctrl+D)
+- `/find` - Search for code patterns in project (Ctrl+F)
+- `/fix` - Suggest bug fixes for error messages (Ctrl+X)
+- `/optimize` - Optimize performance of selected code (Ctrl+O)
+- `/security` - Scan selected code for vulnerabilities (Ctrl+S)
+- `/complexity` - Analyze code complexity metrics (Ctrl+C)
+- `/dependencies` - Analyze project dependencies (Ctrl+Y)
+- `/review` - Perform code review on selected code (Ctrl+V)
+- `/suggest` - Get AI suggestions for improving code (Ctrl+U)
+- `/debug` - Help debug issues with code (Ctrl+B)
+
 #### System Commands
 
 - Export logs and diagnostics
 - Health check and monitoring
 - Configuration management
+
+## 🖥️ Command Line Interface
+
+Cortex Code also provides a comprehensive CLI interface for all operations. This replaces the deprecated `@cortex-os/cli` package.
+
+### Basic Usage
+
+```bash
+# Interactive TUI mode (default)
+cortex-code
+
+# Run a single command in CI mode
+cortex-code run "explain this code" --ci
+
+# Start daemon server
+cortex-code daemon --port 8080
+```
+
+### MCP Management
+
+```bash
+# List MCP servers
+cortex-code mcp list
+
+# Add MCP server
+cortex-code mcp add my-server '{"transport": "stdio", "command": "my-mcp-server"}'
+
+# Remove MCP server
+cortex-code mcp remove my-server
+
+# Search MCP marketplace
+cortex-code mcp search "weather"
+
+# Show server details
+cortex-code mcp show my-server
+
+# Bridge MCP servers
+cortex-code mcp bridge
+
+# Diagnose MCP issues
+cortex-code mcp doctor
+```
+
+### A2A Messaging
+
+```bash
+# Send A2A message
+cortex-code a2a send --type "agent.message" --payload '{"content": "hello"}'
+
+# List A2A messages
+cortex-code a2a list
+
+# Diagnose A2A system
+cortex-code a2a doctor
+```
+
+### RAG Operations
+
+```bash
+# Ingest documents into RAG system
+cortex-code rag ingest ./docs
+
+# Query the RAG system
+cortex-code rag query "How do I configure authentication?"
+
+# Evaluate RAG performance
+cortex-code rag eval
+```
+
+### Simlab Operations
+
+```bash
+# Run simulation
+cortex-code simlab run my-simulation
+
+# Run benchmark
+cortex-code simlab bench performance-test
+
+# Generate report
+cortex-code simlab report
+
+# List simulations
+cortex-code simlab list
+```
+
+### Evaluation
+
+```bash
+# Run evaluation gate
+cortex-code eval gate security-gate
+```
+
+### Agent Management
+
+```bash
+# Create a new agent
+cortex-code agent create my-agent
+```
+
+### Control Operations
+
+```bash
+# Check system status
+cortex-code ctl check
+```
+
+### Enterprise Features
+
+```bash
+# Generate diagnostic report
+cortex-code diagnostics report
+
+# Run health checks
+cortex-code diagnostics health
+
+# Monitor system in real-time
+cortex-code diagnostics monitor
+
+# Cloud provider management
+cortex-code cloud list
+cortex-code cloud deploy my-service --image my/image
+cortex-code cloud status
+
+# Cloudflare tunnel management
+cortex-code tunnel start --port 8080
+cortex-code tunnel status
+```
 
 ## 🏗️ Architecture
 
@@ -440,4 +583,3 @@ RUST_LOG=debug cargo run -- --debug 2> debug.log
 [![Ratatui](https://img.shields.io/badge/powered%20by-Ratatui-blue)](https://ratatui.rs/)
 
 </div>
-

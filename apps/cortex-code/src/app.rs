@@ -1,12 +1,12 @@
 use crate::config::Config;
+use crate::features::{FeatureManager, FeatureConfig};
 use crate::memory::{MemoryStorage, storage::MemoryConfig};
-use crate::mcp::{McpService, McpClient};
+use crate::mcp::McpService;
 use crate::mcp::service::McpServerConfig;
 use serde::{Serialize, Deserialize};
 use crate::providers::ModelProvider;
 use crate::server::DaemonServer;
 use crate::Result;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -17,6 +17,7 @@ pub struct CortexApp {
     memory: Option<MemoryStorage>,
     mcp_service: Arc<McpService>,
     state: AppState,
+    feature_manager: Arc<FeatureManager>,
 }
 
 #[derive(Debug, Clone)]
@@ -49,6 +50,12 @@ impl CortexApp {
     pub async fn new(config: Config) -> Result<Self> {
         let provider = config.create_provider()?;
 
+        // Initialize feature manager
+        let feature_config = FeatureConfig::default();
+        let environment = std::env::var("CORTEX_ENV").unwrap_or_else(|_| "development".to_string());
+        let user_id = std::env::var("CORTEX_USER_ID").ok();
+        let feature_manager = Arc::new(FeatureManager::new(feature_config, environment, user_id));
+
         // Initialize memory storage if enabled
         let memory = if config.enable_memory().unwrap_or(true) {
             let memory_config = MemoryConfig::default()
@@ -73,6 +80,7 @@ impl CortexApp {
                 current_conversation: Vec::new(),
                 is_running: true,
             },
+            feature_manager,
         })
     }
 
@@ -173,6 +181,55 @@ impl CortexApp {
             "mlx" => vec!["local-model".to_string()],
             _ => vec![],
         }
+    }
+
+    // Add this new method to get current provider information
+    pub async fn get_current_provider_info(&self) -> (String, Vec<String>) {
+        let provider = self.provider.lock().await;
+        let provider_name = provider.provider_name().to_string();
+        let models = provider.supported_models();
+        (provider_name, models)
+    }
+
+    // Add this new method to switch providers
+    pub async fn switch_provider(&mut self, provider_name: &str) -> Result<()> {
+        // Update the config with the new provider
+        self.config.providers.default = provider_name.to_string();
+
+        // Create the new provider
+        let new_provider = self.config.create_provider()?;
+
+        // Replace the current provider
+        {
+            let mut provider = self.provider.lock().await;
+            *provider = new_provider;
+        }
+
+        Ok(())
+    }
+
+    // Feature management methods
+    pub async fn is_feature_enabled(&self, feature: &str) -> bool {
+        self.feature_manager.is_enabled(feature).await
+    }
+
+    pub async fn enable_feature(&self, feature: &str) -> Result<()> {
+        self.feature_manager.enable_feature_for_user(feature).await
+            .map_err(|e| crate::error::Error::Other(anyhow::anyhow!(e.to_string())))
+    }
+
+    pub async fn disable_feature(&self, feature: &str) -> Result<()> {
+        self.feature_manager.disable_feature_for_user(feature).await
+            .map_err(|e| crate::error::Error::Other(anyhow::anyhow!(e.to_string())))
+    }
+
+    pub async fn get_feature_stats(&self) -> Result<serde_json::Value> {
+        let stats = self.feature_manager.get_feature_stats().await;
+        Ok(serde_json::to_value(stats)?)
+    }
+
+    pub fn get_feature_manager(&self) -> Arc<FeatureManager> {
+        Arc::clone(&self.feature_manager)
     }
 }
 

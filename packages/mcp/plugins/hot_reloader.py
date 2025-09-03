@@ -1,15 +1,16 @@
 import asyncio
 import importlib
-import inspect
 import json
+import logging
 import os
 import time
-from typing import Dict, Type, Any, Optional, Callable, List
-from pathlib import Path
 from dataclasses import dataclass
-import logging
-from watchdog.observers import Observer
+from pathlib import Path
+from typing import Any
+
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from .base import BasePlugin
 
 
@@ -19,20 +20,20 @@ class PluginManifest:
     version: str
     description: str
     author: str
-    dependencies: List[str]
+    dependencies: list[str]
     entry_point: str
-    config_schema: Dict[str, Any]
+    config_schema: dict[str, Any]
 
 
 class PluginHotReloader:
     def __init__(self, plugin_dir: str = "plugins", auto_reload: bool = True):
         self.plugin_dir = Path(plugin_dir)
         self.auto_reload = auto_reload
-        self.plugins: Dict[str, BasePlugin] = {}
-        self.manifests: Dict[str, PluginManifest] = {}
-        self.plugin_classes: Dict[str, Type] = {}
+        self.plugins: dict[str, BasePlugin] = {}
+        self.manifests: dict[str, PluginManifest] = {}
+        self.plugin_classes: dict[str, type] = {}
         self.logger = logging.getLogger(__name__)
-        self.last_reload_times: Dict[str, float] = {}
+        self.last_reload_times: dict[str, float] = {}
         self.reload_cooldown = 5  # seconds
 
         if auto_reload:
@@ -167,7 +168,7 @@ class PluginHotReloader:
                         "Failed to restore plugin %s: %s", plugin_name, restore_exc
                     )
 
-    def _find_plugin_file(self, plugin_name: str) -> Optional[str]:
+    def _find_plugin_file(self, plugin_name: str) -> str | None:
         """Find the plugin file for a given plugin name."""
         for root, _, files in os.walk(self.plugin_dir):
             for file in files:
@@ -187,7 +188,7 @@ class PluginHotReloader:
 
         return PluginManifest(**data)
 
-    def _get_plugin_config(self, plugin_name: str) -> Dict[str, Any]:
+    def _get_plugin_config(self, plugin_name: str) -> dict[str, Any]:
         """Get configuration for a plugin."""
         return {}
 
@@ -197,7 +198,7 @@ class PluginHotReloader:
             raise ValueError(f"Plugin {plugin_name} not loaded")
         return self.plugins[plugin_name]
 
-    def list_plugins(self) -> List[str]:
+    def list_plugins(self) -> list[str]:
         """List all loaded plugins."""
         return list(self.plugins.keys())
 

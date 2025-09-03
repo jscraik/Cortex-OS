@@ -1,0 +1,61 @@
+# Brainwav MCP Integration Configuration
+# This configuration connects to your existing MCP server setup
+
+[app]
+theme = "default"
+log_level = "info"
+auto_save_interval = 30
+enable_telemetry = false
+
+[providers]
+default = "openai"
+
+[providers.openai]
+model = "gpt-4"
+temperature = 0.7
+
+# WebUI Configuration - matches your localhost:3000 setup
+[webui]
+enabled = true
+port = 3000
+host = "127.0.0.1"
+cors_enabled = true
+
+# Optional authentication for remote access
+# [webui.auth]
+# method = "ApiKey"
+# secret_key = "your-secure-api-key"
+
+# Server configuration with Cloudflare tunnel
+[server]
+daemon_mode = false
+port = 8080
+hot_reload = false
+
+# Your existing Cloudflare tunnel configuration
+[server.cloudflare]
+tunnel_name = "mcp-brainwav"
+auto_start = true
+domain = "mcp.brainwav.io"
+health_checks = true
+# tunnel_token = "your-tunnel-token-here"  # Optional: add if you have a specific token
+
+# MCP Server Configuration - connects to your existing setup
+[[mcp_servers]]
+name = "brainwav-mcp"
+auto_start = true
+package_path = "/Users/jamiecraik/.Cortex-OS/packages/mcp"
+remote_url = "http://localhost:3000"
+timeout = 30
+
+# You can add additional environment variables if needed
+# [mcp_servers.env]
+# NODE_ENV = "development"
+# MCP_PORT = "3000"
+
+# Development settings
+[dev]
+enabled = true
+file_watching = true
+performance_monitoring = true
+debug_endpoints = true

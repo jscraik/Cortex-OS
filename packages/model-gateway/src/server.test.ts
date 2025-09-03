@@ -14,7 +14,7 @@ vi.mock("./policy", () => ({
 
 class MockModelRouter {
 	// Single-text path used by server when texts.length === 1
-	async generateEmbedding({ text, model }: { text: string; model?: string }) {
+	async generateEmbedding({ text: _text, model }: { text: string; model?: string }) {
 		return {
 			embedding: [0.1, 0.2],
 			model: model || "mock-model",

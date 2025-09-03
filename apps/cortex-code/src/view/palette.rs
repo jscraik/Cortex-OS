@@ -227,7 +227,7 @@ impl CommandPalette {
         // Show cursor
         let cursor_x = area.x + self.input.visual_cursor() as u16 + 1;
         let cursor_y = area.y + 1;
-        frame.set_cursor_position((cursor_x, cursor_y));
+        frame.set_cursor(cursor_x, cursor_y);
     }
 
     fn render_results(&self, frame: &mut Frame, area: Rect) {

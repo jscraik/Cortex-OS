@@ -37,6 +37,7 @@ export interface SimulationResult {
  */
 export class Simulator {
 	private gates: SimulationGate[] = [];
+	private readonly config: Config;
 
 	constructor(config: Config) {
 		this.config = config;

@@ -1,7 +1,7 @@
 use crate::github::{GitHubRateLimiter, TokenManager};
 use crate::Result;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, USER_AGENT};
-use reqwest::{Client, Method, Request, Response};
+use reqwest::{Client, Method, Response};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::sync::Arc;
@@ -10,6 +10,7 @@ use tracing::{debug, warn};
 use url::Url;
 
 /// Main GitHub API client with authentication, rate limiting, and error handling
+#[derive(Clone)]
 pub struct GitHubClient {
     http_client: Client,
     token_manager: Arc<Mutex<TokenManager>>,
@@ -48,7 +49,7 @@ impl GitHubClient {
     /// Make a POST request
     pub async fn post<B, T>(&self, endpoint: &str, body: Option<B>) -> Result<T>
     where
-        B: Serialize,
+        B: Serialize + Clone + Send + 'static,
         T: DeserializeOwned,
     {
         let response = self.request(Method::POST, endpoint, body).await?;
@@ -58,7 +59,7 @@ impl GitHubClient {
     /// Make a PUT request
     pub async fn put<B, T>(&self, endpoint: &str, body: Option<B>) -> Result<T>
     where
-        B: Serialize,
+        B: Serialize + Clone + Send + 'static,
         T: DeserializeOwned,
     {
         let response = self.request(Method::PUT, endpoint, body).await?;
@@ -68,7 +69,7 @@ impl GitHubClient {
     /// Make a PATCH request
     pub async fn patch<B, T>(&self, endpoint: &str, body: Option<B>) -> Result<T>
     where
-        B: Serialize,
+        B: Serialize + Clone + Send + 'static,
         T: DeserializeOwned,
     {
         let response = self.request(Method::PATCH, endpoint, body).await?;
@@ -88,7 +89,7 @@ impl GitHubClient {
     /// Make a raw request and return the response
     pub async fn request_raw<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> Result<Response>
     where
-        B: Serialize,
+        B: Serialize + Clone + Send + 'static,
     {
         self.request(method, endpoint, body).await
     }
@@ -96,34 +97,41 @@ impl GitHubClient {
     /// Internal request method
     async fn request<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> Result<Response>
     where
-        B: Serialize,
+        B: Serialize + Clone + Send + 'static,
     {
         let url = self.build_url(endpoint)?;
+        let client = self.clone();
 
         self.rate_limiter
-            .make_request(|| async {
-                let mut headers = self.build_headers().await?;
+            .make_request(move || {
+                let client = client.clone();
+                let method = method.clone();
+                let url = url.clone();
+                let body = body.clone();
+                Box::pin(async move {
+                    let mut headers = client.build_headers().await?;
 
-                let mut request_builder = self.http_client.request(method.clone(), url.clone());
+                    let mut request_builder = client.http_client.request(method.clone(), url.clone());
 
-                if let Some(body) = &body {
-                    let json_body = serde_json::to_string(body)?;
-                    headers.insert("content-type", HeaderValue::from_static("application/json"));
-                    request_builder = request_builder.body(json_body);
-                }
+                    if let Some(body) = &body {
+                        let json_body = serde_json::to_string(body).map_err(crate::error::Error::Serialization)?;
+                        headers.insert("content-type", HeaderValue::from_static("application/json"));
+                        request_builder = request_builder.body(json_body);
+                    }
 
-                request_builder = request_builder.headers(headers);
+                    request_builder = request_builder.headers(headers);
 
-                let request = request_builder.build()?;
-                debug!("Making GitHub API request: {} {}", method, url);
+                    let request = request_builder.build().map_err(crate::error::Error::Http)?;
+                    debug!("Making GitHub API request: {} {}", method, url);
 
-                let response = self.http_client.execute(request).await?;
+                    let response = client.http_client.execute(request).await.map_err(crate::error::Error::Http)?;
 
-                if response.status().is_success() {
-                    Ok(response)
-                } else {
-                    Err(self.create_error_from_response(response).await)
-                }
+                    if response.status().is_success() {
+                        Ok(response)
+                    } else {
+                        Err(client.create_error_from_response(response).await)
+                    }
+                }) as std::pin::Pin<Box<dyn futures::Future<Output = Result<reqwest::Response>> + Send>>
             })
             .await
     }
@@ -144,7 +152,7 @@ impl GitHubClient {
             token_manager.get_token().await?
         };
 
-        headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", token))?);
+        headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", token)).map_err(|e| crate::error::Error::Other(anyhow::anyhow!(e.to_string())))?);
         headers.insert(ACCEPT, HeaderValue::from_static("application/vnd.github.v3+json"));
         headers.insert(USER_AGENT, HeaderValue::from_static("cortex-code/2.0.0"));
         headers.insert("X-GitHub-Api-Version", HeaderValue::from_static("2022-11-28"));
@@ -157,7 +165,6 @@ impl GitHubClient {
     where
         T: DeserializeOwned,
     {
-        let status = response.status();
         let text = response.text().await?;
 
         if text.is_empty() {
@@ -183,8 +190,7 @@ impl GitHubClient {
 
     /// Create an error from a failed response
     async fn create_error_from_response(&self, response: Response) -> crate::error::Error {
-        let status = response.status();
-        let status_code = status.as_u16();
+    let status_code = response.status().as_u16();
 
         match response.text().await {
             Ok(text) => {
@@ -267,26 +273,35 @@ impl GitHubClient {
     /// Download binary content (for artifacts, etc.)
     pub async fn download(&self, url: &str) -> Result<bytes::Bytes> {
         let response = self.rate_limiter
-            .make_request(|| async {
-                let headers = self.build_headers().await?;
+            .make_request({
+                let client = self.clone();
+                let url = url.to_string();
+                move || {
+                    let client = client.clone();
+                    let url = url.clone();
+                    Box::pin(async move {
+                        let headers = client.build_headers().await?;
 
-                let request = self.http_client
-                    .get(url)
-                    .headers(headers)
-                    .build()?;
+                        let request = client.http_client
+                            .get(&url)
+                            .headers(headers)
+                            .build()
+                            .map_err(crate::error::Error::Http)?;
 
-                debug!("Downloading from GitHub: {}", url);
-                let response = self.http_client.execute(request).await?;
+                        debug!("Downloading from GitHub: {}", url);
+                        let response = client.http_client.execute(request).await.map_err(crate::error::Error::Http)?;
 
-                if response.status().is_success() {
-                    Ok(response)
-                } else {
-                    Err(self.create_error_from_response(response).await)
+                        if response.status().is_success() {
+                            Ok(response)
+                        } else {
+                            Err(client.create_error_from_response(response).await)
+                        }
+                    }) as std::pin::Pin<Box<dyn futures::Future<Output = Result<reqwest::Response>> + Send>>
                 }
             })
             .await?;
 
-        let bytes = response.bytes().await?;
+        let bytes = response.bytes().await.map_err(crate::error::Error::Http)?;
         Ok(bytes)
     }
 

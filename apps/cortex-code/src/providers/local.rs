@@ -17,7 +17,7 @@ impl LocalMLXProvider {
 #[async_trait]
 impl ModelProvider for LocalMLXProvider {
     fn provider_name(&self) -> &str {
-        "local-mlx"
+    "mlx"
     }
 
     async fn complete(&self, prompt: &str) -> Result<String> {

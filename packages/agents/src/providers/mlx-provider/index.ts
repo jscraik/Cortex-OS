@@ -131,7 +131,6 @@ const generate = async (
 				const result = await withTimeout(
 					executeMLXGeneration(prompt, options, state),
 					state.config.timeout,
-					"MLX generation timed out",
 				);
 				state.failures = 0;
 				return result;
@@ -170,6 +169,7 @@ export const createMLXProvider = (config: MLXProviderConfig): ModelProvider => {
 		name: "mlx",
 		generate: (prompt: string, options: GenerateOptions = {}) =>
 			generate(prompt, options, state),
+		isAvailable: () => Promise.resolve(true),
 		shutdown: () => shutdown(state),
 	};
 };

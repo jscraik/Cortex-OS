@@ -5,6 +5,7 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { gunzip, gzip } from "zlib";
 import type { Evidence } from "../types/index.js";

@@ -10,7 +10,9 @@ import { z } from "zod";
 import type {
 	Agent,
 	EventBus,
+	ExecutionContext,
 	GenerateOptions,
+	GenerateResult,
 	MCPClient,
 	ModelProvider,
 } from "../lib/types.js";
@@ -47,8 +49,8 @@ export const testGenerationInputSchema = z.object({
 		"testng",
 		"go-test",
 	]),
-	includeEdgeCases: z.boolean().optional().default(true),
-	coverageTarget: z.number().min(0).max(100).optional().default(90),
+	includeEdgeCases: z.boolean(),
+	coverageTarget: z.number().min(0).max(100).default(90),
 	mockingStrategy: z
 		.enum(["minimal", "comprehensive", "auto"])
 		.optional()
@@ -126,82 +128,98 @@ export const createTestGenerationAgent = (
 
 	return {
 		id: agentId,
-		capability: "test-generation",
-		inputSchema: testGenerationInputSchema,
-		outputSchema: testGenerationOutputSchema,
+		name: "test-generation-agent",
+		capabilities: [{
+			name: "test-generation",
+			description: "Generates comprehensive test suites for code",
+		}],
 
 		execute: async (
-			input: TestGenerationInput,
-		): Promise<TestGenerationOutput> => {
+			context: ExecutionContext<TestGenerationInput>,
+		): Promise<GenerateResult<TestGenerationOutput>> => {
 			const traceId = generateTraceId();
 			const startTime = Date.now();
 
 			// Validate input
-			const validatedInput = validateSchema<TestGenerationInput>(
+			const validatedInput = validateSchema(
 				testGenerationInputSchema,
-				input,
+				context.input,
 			);
 
+			// Add defaults for optional fields
+			const inputWithDefaults = {
+				...validatedInput,
+				coverageTarget: validatedInput.coverageTarget ?? 80,
+				assertionStyle: validatedInput.assertionStyle ?? "expect",
+				mockingStrategy: validatedInput.mockingStrategy ?? "auto",
+			};
+
 			// Emit agent started event
-			config.eventBus.publish({
-				type: "agent.started",
-				data: {
-					agentId,
-					traceId,
-					capability: "test-generation",
-					input: validatedInput,
-					timestamp: new Date().toISOString(),
-				},
+			const createEvent = (type: string, data: any) => ({
+				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+				type,
+				data,
+				timestamp: new Date().toISOString(),
+				source: 'test-generation-agent'
 			});
+
+			config.eventBus.publish(createEvent("agent.started", {
+				agentId,
+				traceId,
+				capability: "test-generation",
+				input: validatedInput,
+				timestamp: new Date().toISOString(),
+			}));
 
 			try {
 				const result = await withTimeout(
-					generateTests(validatedInput, config),
-					timeout,
-					`Test generation timed out after ${timeout}ms`,
+					generateTests(inputWithDefaults, config),
+					timeout
 				);
 
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent completed event
-				config.eventBus.publish({
-					type: "agent.completed",
-					data: {
+				config.eventBus.publish(createEvent("agent.completed", {
+					agentId,
+					traceId,
+					capability: "test-generation",
+					metrics: {
+						latencyMs: executionTime,
+						tokensUsed: estimateTokens(validatedInput.sourceCode),
+						testCount: result.testCount,
+					},
+					timestamp: new Date().toISOString(),
+				}));
+
+				return {
+					content: `Generated ${result.testCount} test cases`,
+					data: result,
+					metadata: {
 						agentId,
 						traceId,
-						capability: "test-generation",
-						metrics: {
-							latencyMs: executionTime,
-							tokensUsed: estimateTokens(validatedInput.sourceCode),
-							testCount: result.testCount,
-						},
-						timestamp: new Date().toISOString(),
-					},
-				});
-
-				return result;
+						executionTime
+					}
+				};
 			} catch (error) {
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent failed event
-				config.eventBus.publish({
-					type: "agent.failed",
-					data: {
-						agentId,
-						traceId,
-						capability: "test-generation",
-						error: error instanceof Error ? error.message : "Unknown error",
-						errorCode: (error as any)?.code || undefined,
-						status:
-							typeof (error as any)?.status === "number"
-								? (error as any)?.status
-								: undefined,
-						metrics: {
-							latencyMs: executionTime,
-						},
-						timestamp: new Date().toISOString(),
+				config.eventBus.publish(createEvent("agent.failed", {
+					agentId,
+					traceId,
+					capability: "test-generation",
+					error: error instanceof Error ? error.message : "Unknown error",
+					errorCode: (error as any)?.code || undefined,
+					status:
+						typeof (error as any)?.status === "number"
+							? (error as any)?.status
+							: undefined,
+					metrics: {
+						latencyMs: executionTime,
 					},
-				});
+					timestamp: new Date().toISOString(),
+				}));
 
 				throw error;
 			}
@@ -398,14 +416,18 @@ const parseTestGenerationResponse = (
 
 	// Ensure all required fields are present
 	return {
-		tests: parsedResponse.tests || generateDefaultTests(framework, language),
+		tests: (parsedResponse.tests || []).map(test => ({
+			name: test.name || "should work correctly",
+			code: test.code || generateBasicTest(framework, language),
+			type: (test.type as any) || "positive-case",
+		})),
 		framework,
 		language,
 		testType,
-		coverage: parsedResponse.coverage || {
-			estimated: 85,
-			branches: ["main-path", "error-handling"],
-			uncoveredPaths: [],
+		coverage: {
+			estimated: parsedResponse.coverage?.estimated || 85,
+			branches: parsedResponse.coverage?.branches || ["main-path", "error-handling"],
+			uncoveredPaths: parsedResponse.coverage?.uncoveredPaths || [],
 		},
 		imports:
 			parsedResponse.imports || generateDefaultImports(framework, language),
@@ -425,7 +447,7 @@ const createFallbackResponse = (
 	framework: string,
 	language: string,
 	_testType: string,
-): ParsedTestResponse => {
+): TestGenerationOutput => {
 	return {
 		tests: [
 			{
@@ -434,6 +456,15 @@ const createFallbackResponse = (
 				type: "positive-case" as const,
 			},
 		],
+		framework,
+		language,
+		testType: _testType,
+		coverage: {
+			estimated: 70,
+			branches: [],
+			uncoveredPaths: [],
+		},
+		imports: [],
 		confidence: 0.7,
 		testCount: 1,
 		analysisTime: 1000,

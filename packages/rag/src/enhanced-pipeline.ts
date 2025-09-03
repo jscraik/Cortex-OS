@@ -41,10 +41,10 @@ export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
 
 	return {
 		embedQuery: (query: string) => embedQuery(embedder, query),
-		retrieveDocs: (queryEmbedding: number[], docs: Document[]) =>
-			retrieveDocs(embedder, queryEmbedding, docs, finalConfig.topK),
-		rerankDocs: (query: string, docs: Document[]) =>
-			rerankDocs(reranker, query, docs, finalConfig.rerank.topK),
+	    retrieveDocs: (queryEmbedding: number[], docs: Document[]) =>
+		    retrieveDocs(embedder, queryEmbedding, docs, finalConfig.topK ?? 10),
+	    rerankDocs: (query: string, docs: Document[]) =>
+		    rerankDocs(reranker, query, docs, finalConfig.rerank?.topK ?? 5),
 		generateAnswer: (
 			query: string,
 			docs: Document[],

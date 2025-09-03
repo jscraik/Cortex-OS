@@ -220,7 +220,7 @@ export class FrontendValidator implements GateValidator {
 		} catch (lighthouseError) {
 			console.warn(
 				"Lighthouse audit failed or not available:",
-				lighthouseError?.message || lighthouseError,
+				lighthouseError instanceof Error ? lighthouseError.message : lighthouseError,
 			);
 			return { hasLighthouse: false, results: resultsDefault };
 		}

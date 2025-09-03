@@ -1,7 +1,8 @@
 """Tests for core components."""
 
 import pytest
-from mcp.core.protocol import MCPProtocolHandler, MCPMessage, MessageType
+
+from mcp.core.protocol import MCPProtocolHandler, MessageType
 
 
 @pytest.mark.asyncio

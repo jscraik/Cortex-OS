@@ -1,11 +1,11 @@
 """Advanced caching mechanisms."""
 
-from typing import Any, Dict
+from typing import Any
 
 
 class AdvancedCache:
     def __init__(self):
-        self._store: Dict[str, Any] = {}
+        self._store: dict[str, Any] = {}
 
     def get(self, key: str) -> Any:
         return self._store.get(key)

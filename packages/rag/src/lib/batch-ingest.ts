@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { byChars } from "../chunk";
-import type { Chunk } from "../index";
+import type { Chunk } from "./types";
 import { discoverFiles, filterPaths } from "../pipeline/file-discovery";
 
 interface ResolveOptions {

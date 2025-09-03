@@ -1,5 +1,5 @@
 use crate::Result;
-use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEvent};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -269,6 +269,17 @@ impl CortexCommandPalette {
                 requires_confirmation: false,
                 parameters: vec![],
             },
+            CortexCommand {
+                id: "tui.toggle_mouse_mode".to_string(),
+                name: "Toggle Mouse Mode".to_string(),
+                description: "Switch between TUI mouse handling and terminal native copy/paste".to_string(),
+                category: CommandCategory::TUI,
+                keywords: vec!["mouse", "mode", "toggle", "copy", "paste", "terminal"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+M".to_string()),
+                mcp_tool: None,
+                requires_confirmation: false,
+                parameters: vec![],
+            },
 
             // AI Commands
             CortexCommand {
@@ -301,6 +312,30 @@ impl CortexCommandPalette {
                 parameters: vec![],
             },
 
+            // Model Management Commands
+            CortexCommand {
+                id: "ai.show_model".to_string(),
+                name: "Show Current Model".to_string(),
+                description: "Show the current AI model and provider".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["model", "provider", "current", "show"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+M M".to_string()),
+                mcp_tool: None,
+                requires_confirmation: false,
+                parameters: vec![],
+            },
+            CortexCommand {
+                id: "ai.switch_model_interactive".to_string(),
+                name: "Switch AI Model".to_string(),
+                description: "Interactively switch between available AI models".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["model", "switch", "change", "provider"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+M S".to_string()),
+                mcp_tool: None,
+                requires_confirmation: false,
+                parameters: vec![],
+            },
+
             // System Commands
             CortexCommand {
                 id: "system.export_logs".to_string(),
@@ -330,6 +365,320 @@ impl CortexCommandPalette {
                 mcp_tool: None,
                 requires_confirmation: false,
                 parameters: vec![],
+            },
+
+            // Codex-Style AI Commands
+            CortexCommand {
+                id: "ai.explain".to_string(),
+                name: "Explain Code".to_string(),
+                description: "Explain selected code or concept in plain English".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["explain", "code", "understand", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+E".to_string()),
+                mcp_tool: Some("ai_code_explanation".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to explain".to_string(),
+                        required: false,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "explanation_depth".to_string(),
+                        description: "Level of detail (brief, detailed, comprehensive)".to_string(),
+                        required: false,
+                        default_value: Some("detailed".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.refactor".to_string(),
+                name: "Refactor Code".to_string(),
+                description: "Suggest code improvements for selected code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["refactor", "improve", "code", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+R".to_string()),
+                mcp_tool: Some("ai_code_refactoring".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to refactor".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "refactoring_type".to_string(),
+                        description: "Type of refactoring (performance, readability, structure)".to_string(),
+                        required: false,
+                        default_value: Some("readability".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.test".to_string(),
+                name: "Generate Tests".to_string(),
+                description: "Generate unit tests for selected code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["test", "unit", "generate", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+T".to_string()),
+                mcp_tool: Some("ai_test_generation".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to test".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "test_framework".to_string(),
+                        description: "Test framework to use".to_string(),
+                        required: false,
+                        default_value: Some("default".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.document".to_string(),
+                name: "Document Code".to_string(),
+                description: "Create documentation for selected code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["document", "documentation", "comment", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+D".to_string()),
+                mcp_tool: Some("ai_documentation_generation".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to document".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "documentation_format".to_string(),
+                        description: "Documentation format (JSDoc, RustDoc, etc.)".to_string(),
+                        required: false,
+                        default_value: Some("auto".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.find".to_string(),
+                name: "Find Code Patterns".to_string(),
+                description: "Search for code patterns in project".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["find", "search", "pattern", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+F".to_string()),
+                mcp_tool: Some("code_pattern_search".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "search_pattern".to_string(),
+                        description: "Pattern to search for".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "file_types".to_string(),
+                        description: "File types to search in".to_string(),
+                        required: false,
+                        default_value: Some("all".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.fix".to_string(),
+                name: "Fix Code Issues".to_string(),
+                description: "Suggest bug fixes for error messages".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["fix", "bug", "error", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+X".to_string()),
+                mcp_tool: Some("ai_bug_fixing".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "error_message".to_string(),
+                        description: "Error message to fix".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "code_context".to_string(),
+                        description: "Relevant code context".to_string(),
+                        required: false,
+                        default_value: None,
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.optimize".to_string(),
+                name: "Optimize Code".to_string(),
+                description: "Optimize performance of selected code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["optimize", "performance", "speed", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+O".to_string()),
+                mcp_tool: Some("ai_performance_optimization".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to optimize".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "optimization_target".to_string(),
+                        description: "Optimization target (speed, memory, etc.)".to_string(),
+                        required: false,
+                        default_value: Some("speed".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.security".to_string(),
+                name: "Security Scan".to_string(),
+                description: "Scan selected code for vulnerabilities".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["security", "vulnerability", "scan", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+S".to_string()),
+                mcp_tool: Some("ai_security_scanning".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to scan".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "scan_depth".to_string(),
+                        description: "Scan depth (shallow, deep, comprehensive)".to_string(),
+                        required: false,
+                        default_value: Some("deep".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.complexity".to_string(),
+                name: "Analyze Complexity".to_string(),
+                description: "Analyze code complexity metrics".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["complexity", "metrics", "analyze", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+C".to_string()),
+                mcp_tool: Some("code_complexity_analysis".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to analyze".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "metrics_type".to_string(),
+                        description: "Type of metrics (cyclomatic, cognitive, etc.)".to_string(),
+                        required: false,
+                        default_value: Some("cyclomatic".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.dependencies".to_string(),
+                name: "Analyze Dependencies".to_string(),
+                description: "Analyze project dependencies".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["dependencies", "analyze", "project", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+Y".to_string()),
+                mcp_tool: Some("dependency_analysis".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "dependency_type".to_string(),
+                        description: "Type of dependencies (all, direct, transitive)".to_string(),
+                        required: false,
+                        default_value: Some("all".to_string()),
+                    },
+                    CommandParameter {
+                        name: "analysis_depth".to_string(),
+                        description: "Analysis depth (shallow, deep)".to_string(),
+                        required: false,
+                        default_value: Some("deep".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.review".to_string(),
+                name: "Code Review".to_string(),
+                description: "Perform code review on selected code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["review", "code", "analyze", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+V".to_string()),
+                mcp_tool: Some("ai_code_review".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code to review".to_string(),
+                        required: true,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "review_aspect".to_string(),
+                        description: "Aspect to review (style, security, performance)".to_string(),
+                        required: false,
+                        default_value: Some("comprehensive".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.suggest".to_string(),
+                name: "AI Suggestions".to_string(),
+                description: "Get AI suggestions for improving code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["suggest", "improve", "recommend", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+U".to_string()),
+                mcp_tool: Some("ai_suggestions".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "code_selection".to_string(),
+                        description: "Selected code for suggestions".to_string(),
+                        required: false,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "suggestion_type".to_string(),
+                        description: "Type of suggestions (all, style, performance)".to_string(),
+                        required: false,
+                        default_value: Some("all".to_string()),
+                    },
+                ],
+            },
+            CortexCommand {
+                id: "ai.debug".to_string(),
+                name: "Debug Code".to_string(),
+                description: "Help debug issues with code".to_string(),
+                category: CommandCategory::AI,
+                keywords: vec!["debug", "troubleshoot", "fix", "ai"].iter().map(|s| s.to_string()).collect(),
+                shortcut: Some("Ctrl+B".to_string()),
+                mcp_tool: Some("ai_debugging".to_string()),
+                requires_confirmation: false,
+                parameters: vec![
+                    CommandParameter {
+                        name: "error_message".to_string(),
+                        description: "Error message or issue description".to_string(),
+                        required: false,
+                        default_value: None,
+                    },
+                    CommandParameter {
+                        name: "code_context".to_string(),
+                        description: "Relevant code context".to_string(),
+                        required: false,
+                        default_value: None,
+                    },
+                ],
             },
         ]
     }
@@ -370,18 +719,19 @@ impl CortexCommandPalette {
 
     fn handle_search_key(&mut self, key: KeyEvent) -> Result<CommandPaletteResponse> {
         match key.code {
-            KeyCode::Escape => {
+            KeyCode::Esc => {
                 self.hide();
                 Ok(CommandPaletteResponse::Cancel)
             },
             KeyCode::Enter => {
                 if !self.filtered_commands.is_empty() {
                     let cmd_index = self.filtered_commands[self.selected_index];
-                    let command = &self.commands[cmd_index];
+                    let command_id = self.commands[cmd_index].id.clone();
+                    let has_params = !self.commands[cmd_index].parameters.is_empty();
 
-                    if command.parameters.is_empty() {
+                    if !has_params {
                         self.hide();
-                        Ok(CommandPaletteResponse::ExecuteCommand(command.id.clone(), vec![]))
+                        Ok(CommandPaletteResponse::ExecuteCommand(command_id, vec![]))
                     } else {
                         self.mode = PaletteMode::ParameterInput {
                             command_index: cmd_index,
@@ -425,25 +775,28 @@ impl CortexCommandPalette {
     fn handle_parameter_key(&mut self, key: KeyEvent) -> Result<CommandPaletteResponse> {
         if let PaletteMode::ParameterInput { command_index, param_index, ref mut values } = &mut self.mode {
             match key.code {
-                KeyCode::Escape => {
+                KeyCode::Esc => {
                     self.mode = PaletteMode::Search;
                     Ok(CommandPaletteResponse::None)
                 },
                 KeyCode::Enter => {
-                    let command = &self.commands[*command_index];
+                    let command_index_val = *command_index;
+                    let param_index_val = *param_index;
+                    let param_count = self.commands[command_index_val].parameters.len();
+                    let command_id = self.commands[command_index_val].id.clone();
 
-                    if *param_index < command.parameters.len() {
+                    if param_index_val < param_count {
                         values.push(String::new());
-                        if *param_index + 1 >= command.parameters.len() {
+                        if param_index_val + 1 >= param_count {
                             // All parameters collected
                             let final_values = values.clone();
                             self.hide();
-                            Ok(CommandPaletteResponse::ExecuteCommand(command.id.clone(), final_values))
+                            Ok(CommandPaletteResponse::ExecuteCommand(command_id, final_values))
                         } else {
                             // Move to next parameter
                             self.mode = PaletteMode::ParameterInput {
-                                command_index: *command_index,
-                                param_index: *param_index + 1,
+                                command_index: command_index_val,
+                                param_index: param_index_val + 1,
                                 values: values.clone(),
                             };
                             Ok(CommandPaletteResponse::None)
@@ -526,7 +879,8 @@ impl CortexCommandPalette {
             PaletteMode::ParameterInput { command_index, param_index, ref values } => {
                 let command = &self.commands[command_index];
                 let param = &command.parameters[param_index];
-                let current_value = values.get(param_index).unwrap_or(&String::new());
+                let empty_string = String::new();
+                let current_value = values.get(param_index).unwrap_or(&empty_string);
 
                 Paragraph::new(format!("{}: {}", param.name, current_value))
                     .block(search_block.clone().title(format!(" {} - {} ", command.name, param.description)))

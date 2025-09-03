@@ -4,11 +4,10 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Gauge, Clear},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Tabs, Gauge},
     Frame,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -22,7 +21,7 @@ pub struct GitHubDashboard {
     scroll_offset: usize,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 enum DashboardTab {
     Overview,
     PullRequests,

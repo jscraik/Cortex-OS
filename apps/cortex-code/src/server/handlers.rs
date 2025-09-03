@@ -8,9 +8,8 @@ use axum::{
     response::sse::Event,
 };
 use futures::{stream::{self, Stream}, StreamExt};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::json;
-use std::collections::HashMap;
 use std::convert::Infallible;
 use tracing::{error, info};
 
@@ -119,9 +118,7 @@ pub async fn chat_stream(
         })?;
 
     let stream = stream::iter(response.chars().collect::<Vec<_>>())
-        .map(|char| {
-            Ok(Event::default().data(char.to_string()))
-        });
+        .map(|ch| Ok(Event::default().data(ch.to_string())));
 
     Ok(Sse::new(stream))
 }
@@ -133,7 +130,7 @@ pub async fn list_sessions(
     let app = state.app.read().await;
 
     let sessions = if let Ok(storage) = app.get_memory_storage() {
-        let stats = storage.get_memory_stats().await.map_err(|e| {
+    let stats = storage.get_memory_stats().await.map_err(|_e| {
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new(
                 "Failed to get memory stats",
                 "memory_error"
@@ -202,7 +199,7 @@ pub async fn search_memory(
     let app = state.app.read().await;
 
     if let Ok(storage) = app.get_memory_storage() {
-        let results = storage.search_memory(&query.q).await.map_err(|e| {
+    let results = storage.search_memory(&query.q).await.map_err(|_e| {
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new(
                 "Search failed",
                 "search_error"
@@ -244,7 +241,7 @@ pub async fn export_memory(
             _ => crate::memory::storage::ExportFormat::Markdown,
         };
 
-        let export_data = storage.export_memory(format.clone()).await.map_err(|e| {
+    let export_data = storage.export_memory(format.clone()).await.map_err(|_e| {
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new(
                 "Export failed",
                 "export_error"
@@ -277,7 +274,7 @@ pub async fn list_mcp_servers(
 ) -> Result<Json<Vec<McpServerInfo>>, (StatusCode, Json<ApiError>)> {
     let app = state.app.read().await;
 
-    let servers = app.list_mcp_servers().await.map_err(|e| {
+    let servers = app.list_mcp_servers().await.map_err(|_e| {
         (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiError::new(
             "Failed to list MCP servers",
             "mcp_error"

@@ -1,9 +1,11 @@
 """Tests for plugin infrastructure."""
 
+from typing import Any
+
 import pytest
-from mcp.plugins.base import BasePlugin
+
 from mcp.core.protocol import Tool
-from typing import Dict, Any, List
+from mcp.plugins.base import BasePlugin
 
 
 class DummyPlugin(BasePlugin):
@@ -13,10 +15,10 @@ class DummyPlugin(BasePlugin):
     async def cleanup(self) -> None:
         self.initialized = False
 
-    def get_tools(self) -> List[Tool]:
+    def get_tools(self) -> list[Tool]:
         return []
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         raise NotImplementedError
 
 

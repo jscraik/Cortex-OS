@@ -3,9 +3,9 @@ use crate::mcp::{McpServerInfo, McpTool, McpResource, McpPrompt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Stdio;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::io::BufReader;
 use tokio::process::{Child, Command};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::Mutex;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

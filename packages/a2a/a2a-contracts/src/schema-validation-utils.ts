@@ -212,19 +212,20 @@ export function createVersionedSchema<T extends z.ZodType>(
 	eventType: string,
 	version: string,
 	schema: T,
-	opions: {
+	opts: {
 		description?: string;
 		examples?: z.infer<T>[];
 		tags?: string[];
 	} = {},
 ) {
+	const { description, examples, tags } = opts;
 	return {
 		eventType,
 		version,
 		schema,
-		description: options.description,
-		examples: options.examples,
-		tags: options.tags || [],
+		description,
+		examples,
+		tags: tags || [],
 	};
 }
 
@@ -257,7 +258,7 @@ export function isBackwardCompatible(
 		const newResult = newSchema.safeParse(data);
 
 		if (oldResult.success && !newResult.success) {
-			issue.push(
+			issues.push(
 				`Data ${JSON.stringify(data)} is valid in old schema but invalid in new schema`,
 			);
 		}
@@ -268,7 +269,7 @@ export function isBackwardCompatible(
 
 	return {
 		compatible: issues.length === 0,
-		issue,
+		issues,
 	};
 }
 
@@ -285,7 +286,9 @@ export function generateSchemaDocs(
 	// Check if it's a ZodObject using instanceof for better compatibility
 	if (schema instanceof z.ZodObject) {
 		isObject = true;
-		shape = Object.keys(schema.shape);
+		// Cast to ZodObject to access shape safely
+		const obj = schema as unknown as z.ZodObject<any>;
+		shape = Object.keys(obj.shape);
 	}
 
 	let docs = `# ${eventType}\n\n`;
@@ -342,7 +345,7 @@ export function createMigrationGuide(
  */
 export const PredefinedSchemas = {
 	// User events
-	userCreated: SchemaValidationUtils.createVersionedSchema(
+	userCreated: createVersionedSchema(
 		"user.created.v1",
 		"1.0.0",
 		EventPatterns.userCreated,
@@ -365,7 +368,7 @@ export const PredefinedSchemas = {
 	),
 
 	// Order events
-	orderCreated: SchemaValidationUtils.createVersionedSchema(
+	orderCreated: createVersionedSchema(
 		"order.created.v1",
 		"1.0.0",
 		EventPatterns.orderCreated,
@@ -395,7 +398,7 @@ export const PredefinedSchemas = {
 	),
 
 	// Payment events
-	paymentProcessed: SchemaValidationUtils.createVersionedSchema(
+	paymentProcessed: createVersionedSchema(
 		"payment.processed.v1",
 		"1.0.0",
 		EventPatterns.paymentProcessed,

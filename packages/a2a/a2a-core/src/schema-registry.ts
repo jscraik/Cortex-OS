@@ -6,7 +6,7 @@ import type {
 	SchemaSearchOptions,
 	ValidationResult,
 } from "@cortex-os/a2a-contracts/schema-registry-types";
-import type { z } from "zod";
+import type { z, ZodError } from "zod";
 
 /**
  * In-memory schema registry implementation
@@ -135,15 +135,16 @@ export class SchemaRegistry {
 			if (!schema) {
 				return {
 					valid: false,
-					errors: [
+					errors: ([
 						{
-							code: "CUSTOM",
+							// mimic ZodError issue shape
+							code: "custom",
 							message: version
 								? `No schema found for event type '${eventType}' version '${version}'`
 								: `No schema found for event type '${eventType}'`,
 							path: [],
-						},
-					] as unknown,
+						} as unknown,
+					] as unknown) as ZodError[],
 				};
 			}
 
@@ -171,13 +172,13 @@ export class SchemaRegistry {
 		} catch (error) {
 			return {
 				valid: false,
-				errors: [
+				errors: ([
 					{
-						code: "CUSTOM",
+						code: "custom",
 						message: `Validation error: ${error instanceof Error ? error.message : "Unknown error"}`,
 						path: [],
-					},
-				] as unknown,
+					} as unknown,
+				] as unknown) as ZodError[],
 			};
 		}
 	}
@@ -198,7 +199,7 @@ export class SchemaRegistry {
 
 		if (options.tags && options.tags.length > 0) {
 			results = results.filter((s) =>
-				options.tags.some((tag) => s.tags?.includes(tag)),
+				options.tags!.some((tag) => s.tags?.includes(tag)),
 			);
 		}
 

@@ -1,6 +1,7 @@
-from .base import BasePlugin
+from typing import Any
+
 from ..core.protocol import Tool
-from typing import Dict, Any, List
+from .base import BasePlugin
 
 
 class GitPlugin(BasePlugin):
@@ -10,8 +11,8 @@ class GitPlugin(BasePlugin):
     async def cleanup(self) -> None:
         self.initialized = False
 
-    def get_tools(self) -> List[Tool]:
+    def get_tools(self) -> list[Tool]:
         return []
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         raise NotImplementedError

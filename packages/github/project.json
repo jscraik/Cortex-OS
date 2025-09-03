@@ -5,26 +5,25 @@
 	"projectType": "library",
 	"targets": {
 		"build": {
-			"executor": "@nx/js:tsc",
-			"outputs": ["{options.outputPath}"],
+			"executor": "nx:run-commands",
+			"outputs": ["{projectRoot}/target"],
 			"options": {
-				"outputPath": "dist/packages/github",
-				"main": "packages/github/src/index.ts",
-				"tsConfig": "packages/github/tsconfig.lib.json"
+				"command": "cargo build --release",
+				"cwd": "packages/github"
 			}
 		},
 		"lint": {
-			"executor": "@nx/linter:eslint",
-			"outputs": ["{options.outputPath}"],
+			"executor": "nx:run-commands",
 			"options": {
-				"lintFilePatterns": ["packages/github/**/*.ts"]
+				"command": "cargo clippy -- -D warnings",
+				"cwd": "packages/github"
 			}
 		},
 		"test": {
-			"executor": "@nx/jest:jest",
-			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"executor": "nx:run-commands",
 			"options": {
-				"jestConfig": "packages/github/jest.config.ts"
+				"command": "cargo test",
+				"cwd": "packages/github"
 			}
 		}
 	},

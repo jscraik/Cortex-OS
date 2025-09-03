@@ -1,4 +1,4 @@
-import type { Embedder, Store } from "../index";
+import type { Embedder, Store } from "../lib";
 import { ingestText } from "../pipeline/ingest";
 import { query as doQuery } from "../pipeline/query";
 import {

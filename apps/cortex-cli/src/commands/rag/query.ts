@@ -1,6 +1,6 @@
-import { PyEmbedder } from "@cortex-os/rag-embed/python-client";
-import { query as doQuery } from "@cortex-os/rag-pipeline/query";
-import { memoryStore } from "@cortex-os/rag-store/memory";
+import { PyEmbedder } from "@cortex-os/rag/embed/python-client";
+import { query as doQuery } from "@cortex-os/rag/pipeline/query";
+import { memoryStore } from "@cortex-os/rag/store/memory";
 import { Command } from "commander";
 
 export const ragQuery = new Command("query")

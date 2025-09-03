@@ -154,7 +154,7 @@ describe("Schema Registry", () => {
 		});
 
 		it("should reject invalid event", async () => {
-			const invalidEvent = { ...validUserCreatedEvent };
+			const invalidEvent: any = { ...validUserCreatedEvent };
 			delete invalidEvent.data;
 
 			const response = await request(app)

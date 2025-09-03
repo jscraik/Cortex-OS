@@ -68,12 +68,13 @@ class ASBRServerClass {
 	private tasks = new Map<string, Task>();
 	private profiles = new Map<string, Profile>();
 	private artifacts = new Map<string, ArtifactRef>();
-	private idempotencyCache = new Map<
+	private readonly events = new Map<string, Event[]>();
+	private readonly idempotencyCache = new Map<
 		string,
 		{ taskId: string; expiry: number }
 	>();
 
-	private responseCache = new Map<string, { data: unknown; expiry: number }>();
+	private readonly responseCache = new Map<string, { data: unknown; expiry: number }>();
 	private cacheCleanupInterval?: NodeJS.Timeout;
 	private readonly CACHE_TTL = 30000; // 30 seconds
 	private readonly IDEMPOTENCY_TTL = 5 * 60 * 1000; // 5 minutes

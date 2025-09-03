@@ -236,7 +236,7 @@ const analyzeBundleSize = async () => {
 		}
 
 		// Get approximate bundle size
-		const stats = fs.statSync(distPath, { recursive: true });
+		const stats = fs.statSync(distPath);
 		return {
 			size: stats.size || 0,
 			gzipSize: Math.round((stats.size || 0) * 0.3), // Rough gzip estimate

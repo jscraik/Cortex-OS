@@ -1,7 +1,7 @@
 use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::io::BufReader;
 use tokio::process::{Child, ChildStdin, ChildStdout};
 use tokio::sync::{mpsc, oneshot};
 
@@ -55,18 +55,18 @@ impl McpTransport {
 
         let stdout_reader = stdout.map(BufReader::new);
 
-        let (request_sender, request_receiver) = mpsc::unbounded_channel();
-        let (response_sender, response_receiver) = mpsc::unbounded_channel();
+        let (_request_sender, _request_receiver) = mpsc::unbounded_channel();
+        let (_response_sender, _response_receiver) = mpsc::unbounded_channel();
 
         let transport = StdioTransport {
             stdin,
             stdout_reader,
-            request_sender,
-            response_receiver,
+            request_sender: _request_sender,
+            response_receiver: _response_receiver,
         };
 
         // Spawn the I/O handling task
-        if let (Some(mut stdin), Some(stdout_reader)) = (transport.stdin.as_ref(), transport.stdout_reader.as_ref()) {
+        if let (Some(_stdin), Some(_stdout_reader)) = (transport.stdin.as_ref(), transport.stdout_reader.as_ref()) {
             // Note: This is simplified - would need proper async handling
             tokio::spawn(async move {
                 // Handle stdin/stdout communication

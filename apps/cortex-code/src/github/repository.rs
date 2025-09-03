@@ -1,8 +1,8 @@
 use crate::github::{GitHubClient, types::*};
 use crate::Result;
-use base64::{encode as base64_encode, decode as base64_decode, DecodeError};
+use base64::{engine::general_purpose, Engine as _};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Repository API client for file operations, branches, and repository management
 pub struct RepositoryAPI {
@@ -117,11 +117,16 @@ impl RepositoryAPI {
     /// Delete a file
     pub async fn delete_file(&self, owner: &str, repo: &str, path: &str, data: FileDeleteData) -> Result<Commit> {
         let endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
-        let response: DeleteFileResponse = self.client.request_raw(reqwest::Method::DELETE, &endpoint, Some(data)).await?;
-        // Parse response
-        let parsed: DeleteFileResponse = serde_json::from_slice(&response.bytes().await?)?;
+        // Use raw DELETE with body, then deserialize to expected response type
+        let response = self
+            .client
+            .request_raw(reqwest::Method::DELETE, &endpoint, Some(data))
+            .await?;
+        let text = response.text().await.map_err(crate::error::Error::Http)?;
+        let response: DeleteFileResponse = serde_json::from_str(&text)
+            .map_err(crate::error::Error::Serialization)?;
         info!("File {} deleted from {}/{}", path, owner, repo);
-        Ok(parsed.commit)
+        Ok(response.commit)
     }
 
     /// Get file content as string (decodes base64)
@@ -131,8 +136,10 @@ impl RepositoryAPI {
         if let Some(encoded_content) = content.content {
             if content.encoding.as_ref().map(|e| e == "base64").unwrap_or(false) {
                 // Decode base64 content
-                let decoded_bytes = base64_decode(&encoded_content.replace('\n', ""))?;
-                let content_str = String::from_utf8(decoded_bytes)?;
+                let decoded_bytes = general_purpose::STANDARD
+                    .decode(encoded_content.replace('\n', ""))
+                    .map_err(|e| crate::error::Error::Other(anyhow::anyhow!(e)))?;
+                let content_str = String::from_utf8(decoded_bytes).map_err(|e| crate::error::Error::Other(anyhow::anyhow!(e)))?;
                 Ok(content_str)
             } else {
                 Ok(encoded_content)
@@ -155,7 +162,7 @@ impl RepositoryAPI {
         sha: Option<&str>,
         branch: Option<&str>,
     ) -> Result<FileResponse> {
-        let encoded_content = base64_encode(content.as_bytes());
+        let encoded_content = general_purpose::STANDARD.encode(content.as_bytes());
 
         let data = FileUpdateData {
             message: message.to_string(),
@@ -186,8 +193,10 @@ impl RepositoryAPI {
     /// Create a new branch
     pub async fn create_branch(&self, owner: &str, repo: &str, data: CreateBranchData) -> Result<GitReference> {
         let endpoint = format!("/repos/{}/{}/git/refs", owner, repo);
-        let response: GitReference = self.client.post(&endpoint, Some(data)).await?;
-        info!("Branch created: {}", data.ref_name);
+    // Log fields before moving data into request body
+    let ref_name = data.ref_name.clone();
+    let response: GitReference = self.client.post(&endpoint, Some(data)).await?;
+    info!("Branch created: {}", ref_name);
         Ok(response)
     }
 
@@ -260,8 +269,9 @@ impl RepositoryAPI {
     /// Create a git tree (for batch file operations)
     pub async fn create_tree(&self, owner: &str, repo: &str, data: CreateTreeData) -> Result<GitTree> {
         let endpoint = format!("/repos/{}/{}/git/trees", owner, repo);
-        let response: GitTree = self.client.post(&endpoint, Some(data)).await?;
-        info!("Tree created with {} items", data.tree.len());
+    let tree_len = data.tree.len();
+    let response: GitTree = self.client.post(&endpoint, Some(data)).await?;
+    info!("Tree created with {} items", tree_len);
         Ok(response)
     }
 

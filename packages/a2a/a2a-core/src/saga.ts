@@ -288,7 +288,9 @@ export class SagaOrchestrator<TCtx = any> {
 						"saga.step": step.name,
 					});
 
-					currentContext = await step.compensate(currentContext, originalError);
+					if (step.compensate) {
+						currentContext = await step.compensate(currentContext, originalError);
+					}
 
 					logWithSpan(
 						"info",
@@ -355,7 +357,10 @@ export class SagaOrchestrator<TCtx = any> {
 			throw new Error("Context store required for saga resumption");
 		}
 
-		let currentContext: TCtx;
+		// Preserve narrowing across async callbacks
+		const store = this.contextStore;
+
+	let currentContext: TCtx = {} as TCtx;
 		try {
 			// Load the context from the last known state
 			// Note: This assumes the context is stored separately or can be reconstructed
@@ -382,10 +387,12 @@ export class SagaOrchestrator<TCtx = any> {
 							? new Error(sagaContext.error.message)
 							: new Error("Unknown error during saga execution");
 
-						currentContext = await step.compensate(
-							currentContext,
-							originalError,
-						);
+						if (step.compensate) {
+							currentContext = await step.compensate(
+								currentContext,
+								originalError,
+							);
+						}
 
 						logWithSpan(
 							"info",
@@ -410,7 +417,7 @@ export class SagaOrchestrator<TCtx = any> {
 					});
 
 					sagaContext.state = SagaState.FAILED;
-					await this.contextStore.update(sagaContext.sagaId, sagaContext);
+					await store.update(sagaContext.sagaId, sagaContext);
 
 					return {
 						success: false,
@@ -424,7 +431,7 @@ export class SagaOrchestrator<TCtx = any> {
 
 			sagaContext.state = SagaState.COMPENSATED;
 			sagaContext.endTime = new Date();
-			await this.contextStore.update(sagaContext.sagaId, sagaContext);
+			await store.update(sagaContext.sagaId, sagaContext);
 
 			return {
 				success: false, // Compensation completed but original saga failed
@@ -437,7 +444,7 @@ export class SagaOrchestrator<TCtx = any> {
 
 			sagaContext.state = SagaState.FAILED;
 			sagaContext.endTime = new Date();
-			await this.contextStore.update(sagaContext.sagaId, sagaContext);
+			await store.update(sagaContext.sagaId, sagaContext);
 
 			return {
 				success: false,
@@ -456,7 +463,10 @@ export class SagaOrchestrator<TCtx = any> {
 			throw new Error("Context store required for saga resumption");
 		}
 
-		let currentContext: TCtx;
+		// Preserve narrowing across async callbacks
+		const store = this.contextStore;
+
+	let currentContext: TCtx = {} as TCtx;
 		try {
 			// Load the context from the last known state
 			// Note: This assumes the context is stored separately or can be reconstructed
@@ -488,7 +498,7 @@ export class SagaOrchestrator<TCtx = any> {
 						sagaContext.executedSteps.push(step.id);
 
 						// Update saga context
-						await this.contextStore.update(sagaContext.sagaId, {
+						await store.update(sagaContext.sagaId, {
 							currentStep: i + 1,
 							executedSteps: sagaContext.executedSteps,
 						});
@@ -526,7 +536,7 @@ export class SagaOrchestrator<TCtx = any> {
 							stack: err.stack,
 						};
 
-						await this.contextStore.update(sagaContext.sagaId, sagaContext);
+						await store.update(sagaContext.sagaId, sagaContext);
 
 						// Perform compensation in reverse order
 						currentContext = await this.compensate(
@@ -543,7 +553,7 @@ export class SagaOrchestrator<TCtx = any> {
 			// Mark saga as completed
 			sagaContext.state = SagaState.COMPLETED;
 			sagaContext.endTime = new Date();
-			await this.contextStore.update(sagaContext.sagaId, sagaContext);
+			await store.update(sagaContext.sagaId, sagaContext);
 
 			return {
 				success: true,
@@ -556,7 +566,7 @@ export class SagaOrchestrator<TCtx = any> {
 
 			sagaContext.state = SagaState.FAILED;
 			sagaContext.endTime = new Date();
-			await this.contextStore.update(sagaContext.sagaId, sagaContext);
+			await store.update(sagaContext.sagaId, sagaContext);
 
 			return {
 				success: false,

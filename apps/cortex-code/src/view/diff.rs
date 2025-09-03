@@ -341,7 +341,7 @@ impl DiffViewer {
 
                 frame.render_stateful_widget(
                     scrollbar,
-                    area.inner(ratatui::layout::Margin { vertical: 1, horizontal: 0 }),
+                    area.inner(&ratatui::layout::Margin { vertical: 1, horizontal: 0 }),
                     &mut scrollbar_state,
                 );
             }
@@ -382,7 +382,7 @@ impl DiffViewer {
                 }
             } else if line.starts_with("@@") {
                 // Save previous hunk if exists
-                if let Some(mut file) = current_file.as_mut() {
+                if let Some(file) = current_file.as_mut() {
                     if let Some(hunk) = current_hunk.take() {
                         file.hunks.push(hunk);
                     }
@@ -391,27 +391,34 @@ impl DiffViewer {
                 // Parse hunk header
                 current_hunk = Some(DiffHunk {
                     old_start: 1,
-                    old_count: 1,
+                    old_lines: 1,
                     new_start: 1,
-                    new_count: 1,
+                    new_lines: 1,
+                    header: String::new(),
                     lines: Vec::new(),
                 });
             } else if let Some(ref mut hunk) = current_hunk {
                 // Parse diff lines
-                if line.starts_with('+') {
+                if let Some(stripped) = line.strip_prefix('+') {
                     hunk.lines.push(DiffLine {
-                        line_type: LineType::Added,
-                        content: line[1..].to_string(),
+                        line_type: DiffLineType::Addition,
+                        content: stripped.to_string(),
+                        old_line_num: None,
+                        new_line_num: None, // TODO: Calculate line numbers
                     });
-                } else if line.starts_with('-') {
+                } else if let Some(stripped) = line.strip_prefix('-') {
                     hunk.lines.push(DiffLine {
-                        line_type: LineType::Removed,
-                        content: line[1..].to_string(),
+                        line_type: DiffLineType::Deletion,
+                        content: stripped.to_string(),
+                        old_line_num: None,
+                        new_line_num: None, // TODO: Calculate line numbers
                     });
-                } else if line.starts_with(' ') {
+                } else if let Some(stripped) = line.strip_prefix(' ') {
                     hunk.lines.push(DiffLine {
-                        line_type: LineType::Context,
-                        content: line[1..].to_string(),
+                        line_type: DiffLineType::Context,
+                        content: stripped.to_string(),
+                        old_line_num: None,
+                        new_line_num: None, // TODO: Calculate line numbers
                     });
                 }
             }
@@ -434,9 +441,10 @@ impl DiffViewer {
                     hunks: vec![
                         DiffHunk {
                             old_start: 1,
-                            old_count: 3,
+                            old_lines: 3,
                             new_start: 1,
-                            new_count: 3,
+                            new_lines: 3,
+                            header: "@@ -1,3 +1,3 @@".to_string(),
                             lines: vec![
                                 DiffLine {
                                     line_type: DiffLineType::Context,

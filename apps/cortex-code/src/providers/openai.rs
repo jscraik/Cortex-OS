@@ -5,7 +5,6 @@ use async_trait::async_trait;
 use futures::StreamExt;
 use reqwest::Client;
 use serde_json::{json, Value};
-use bytes::Bytes;
 
 #[derive(Debug, Clone)]
 pub struct OpenAIProvider {

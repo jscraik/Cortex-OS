@@ -256,7 +256,12 @@ export class Judge {
 		}
 
 		// Calculate weighted score
-		const weights = this.config.weights;
+		const weights = this.config.weights ?? {
+			goal: 0.4,
+			sop: 0.3,
+			brand: 0.2,
+			factual: 0.1,
+		};
 		const weightedScore =
 			scores.goal * weights.goal +
 			scores.sop * weights.sop +

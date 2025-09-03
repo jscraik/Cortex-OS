@@ -7,13 +7,20 @@ import {
 	SimlabCommandSchema,
 } from "@cortex-os/contracts";
 import { createJsonOutput } from "@cortex-os/lib";
-import { handleMCP } from "@cortex-os/mcp";
 import { handleRAG } from "@cortex-os/rag";
 import { handleSimlab } from "@cortex-os/simlab";
 import Fastify from "fastify";
 import client from "prom-client";
 import { z } from "zod";
 import { createAgentRoute } from "./lib/create-agent-route.js";
+
+// Stub MCP handler until the MCP package is available
+const handleMCP = async (request: any) => {
+	return createJsonOutput({
+		error: "MCP handler not implemented",
+		request,
+	});
+};
 
 const app = Fastify({ logger: true });
 

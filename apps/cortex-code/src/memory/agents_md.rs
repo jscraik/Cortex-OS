@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::fs;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -159,13 +158,13 @@ impl AgentsMd {
         // In production, would use a proper markdown parser
 
         let mut current_entry: Option<AgentEntry> = None;
-        let mut in_metadata = false;
+        let mut _in_metadata = false;
 
         for line in content.lines() {
             let line = line.trim();
 
             if line.starts_with("# AGENTS.md") {
-                in_metadata = true;
+                _in_metadata = true;
                 continue;
             }
 

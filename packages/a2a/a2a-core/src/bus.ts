@@ -23,7 +23,12 @@ export function createBus(
 		if (!schemaRegistry) return;
 		const result = schemaRegistry.validate(msg.type, msg.data);
 		if (!result.valid) {
-			throw new Error(`Schema validation failed: ${result.errors.join(", ")}`);
+			const errs = (result.errors || []).map((e) =>
+				(e as any)?.message ?? String(e),
+			);
+			throw new Error(
+				`Schema validation failed: ${errs.length ? errs.join(", ") : "unknown error"}`,
+			);
 		}
 	};
 

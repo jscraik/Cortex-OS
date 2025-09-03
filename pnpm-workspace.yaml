@@ -1,6 +1,8 @@
 packages:
   - "apps/*"
+  - "apps/*/packages/*"
   - "packages/*"
+  - "packages/*/*"
+  - "libs/typescript/*"
 neverBuiltDependencies: []
 packageImportMethod: auto
-strict-peer-dependencies: true

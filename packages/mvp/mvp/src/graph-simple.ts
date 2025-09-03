@@ -53,22 +53,20 @@ export class SimplePRPGraph {
 	): Promise<PRPState> {
 		const workflowSpan = startSpan("prp.workflow");
 		const startTime = Date.now();
-		let state: PRPState;
+		const deterministic = options.deterministic || false;
+		const runId =
+			options.runId ||
+			(deterministic
+				? `prp-deterministic-${generateDeterministicHash(blueprint)}`
+				: nanoid());
+
+		let state: PRPState = createInitialPRPState(blueprint, {
+			runId,
+			deterministic,
+			id: options.id,
+		});
 
 		try {
-			const deterministic = options.deterministic || false;
-			const runId =
-				options.runId ||
-				(deterministic
-					? `prp-deterministic-${generateDeterministicHash(blueprint)}`
-					: nanoid());
-
-			state = createInitialPRPState(blueprint, {
-				runId,
-				deterministic,
-				id: options.id,
-			});
-
 			// Initialize execution history
 			this.executionHistory.set(runId, []);
 			this.addToHistory(runId, state);
@@ -127,8 +125,9 @@ export class SimplePRPGraph {
 				},
 			};
 			this.addToHistory(state.runId, errorState);
-			workflowSpan.end();
 			return errorState;
+		} finally {
+			workflowSpan.end();
 		}
 	}
 

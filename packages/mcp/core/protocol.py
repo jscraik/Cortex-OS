@@ -1,8 +1,7 @@
-import asyncio
 import json
-from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 
 class MessageType(Enum):
@@ -16,21 +15,23 @@ class MessageType(Enum):
 class MCPMessage:
     type: MessageType
     id: str
-    method: Optional[str] = None
-    params: Optional[Dict[str, Any]] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[Dict[str, Any]] = None
+    method: str | None = None
+    params: dict[str, Any] | None = None
+    result: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
     jsonrpc: str = "2.0"
 
     def to_json(self) -> str:
-        return json.dumps({
-            "jsonrpc": self.jsonrpc,
-            "id": self.id,
-            "method": self.method,
-            "params": self.params,
-            "result": self.result,
-            "error": self.error
-        })
+        return json.dumps(
+            {
+                "jsonrpc": self.jsonrpc,
+                "id": self.id,
+                "method": self.method,
+                "params": self.params,
+                "result": self.result,
+                "error": self.error,
+            }
+        )
 
     @classmethod
     def from_json(cls, json_str: str) -> "MCPMessage":
@@ -42,17 +43,15 @@ class MCPMessage:
             params=data.get("params"),
             result=data.get("result"),
             error=data.get("error"),
-            jsonrpc=data.get("jsonrpc", "2.0")
+            jsonrpc=data.get("jsonrpc", "2.0"),
         )
-
-
 
 
 @dataclass
 class Tool:
     name: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
 
 
 class MCPProtocolHandler:
@@ -72,7 +71,7 @@ class MCPProtocolHandler:
             return MCPMessage(
                 type=MessageType.ERROR,
                 id=message.id,
-                error={"code": -32601, "message": "Method not found"}
+                error={"code": -32601, "message": "Method not found"},
             )
 
     async def _handle_request(self, message: MCPMessage) -> MCPMessage:
@@ -81,16 +80,12 @@ class MCPProtocolHandler:
             return MCPMessage(
                 type=MessageType.ERROR,
                 id=message.id,
-                error={"code": -32601, "message": "Method not found"}
+                error={"code": -32601, "message": "Method not found"},
             )
 
         try:
             result = await handler(message.params)
-            return MCPMessage(
-                type=MessageType.RESPONSE,
-                id=message.id,
-                result=result
-            )
+            return MCPMessage(type=MessageType.RESPONSE, id=message.id, result=result)
         except Exception as e:  # noqa: BLE001
             return MCPMessage(
                 type=MessageType.ERROR,
@@ -98,8 +93,8 @@ class MCPProtocolHandler:
                 error={
                     "code": -32603,
                     "message": str(e),
-                    "data": {"exception": str(type(e))}
-                }
+                    "data": {"exception": str(type(e))},
+                },
             )
 
     async def _handle_notification(self, message: MCPMessage) -> None:
@@ -107,11 +102,13 @@ class MCPProtocolHandler:
         if handler:
             await handler(message.params)
 
-    def create_request(self, method: str, params: Optional[Dict[str, Any]] = None) -> MCPMessage:
+    def create_request(
+        self, method: str, params: dict[str, Any] | None = None
+    ) -> MCPMessage:
         self.request_counter += 1
         return MCPMessage(
             type=MessageType.REQUEST,
             id=str(self.request_counter),
             method=method,
-            params=params or {}
+            params=params or {},
         )

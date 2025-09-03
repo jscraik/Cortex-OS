@@ -1,11 +1,11 @@
-import os
 import json
-import yaml
-from typing import Dict, Any, Optional, List, Union
-from pathlib import Path
-from dataclasses import dataclass, asdict
 import logging
-from jsonschema import validate, ValidationError
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 
 @dataclass
@@ -14,16 +14,16 @@ class ConfigSchema:
     default: Any
     description: str
     required: bool = False
-    enum: Optional[List[Any]] = None
-    items: Optional[Dict[str, Any]] = None
+    enum: list[Any] | None = None
+    items: dict[str, Any] | None = None
 
 
 class ConfigManager:
     def __init__(self, config_dir: str = "config", env_prefix: str = "MCP_"):
         self.config_dir = Path(config_dir)
         self.env_prefix = env_prefix
-        self.config_data: Dict[str, Any] = {}
-        self.config_schemas: Dict[str, ConfigSchema] = {}
+        self.config_data: dict[str, Any] = {}
+        self.config_schemas: dict[str, ConfigSchema] = {}
         self.logger = logging.getLogger(__name__)
 
         self.config_dir.mkdir(exist_ok=True)
@@ -34,7 +34,7 @@ class ConfigManager:
         for file_name in config_files:
             file_path = self.config_dir / file_name
             if file_path.exists():
-                with open(file_path, "r") as f:
+                with open(file_path) as f:
                     if file_name.endswith((".yaml", ".yml")):
                         data = yaml.safe_load(f)
                     else:
@@ -43,10 +43,10 @@ class ConfigManager:
 
         for key, value in os.environ.items():
             if key.startswith(self.env_prefix):
-                config_key = key[len(self.env_prefix):].lower()
+                config_key = key[len(self.env_prefix) :].lower()
                 self.config_data[config_key] = self._convert_env_value(value)
 
-    def _convert_env_value(self, value: str) -> Union[str, int, float, bool, List[str]]:
+    def _convert_env_value(self, value: str) -> str | int | float | bool | list[str]:
         try:
             return json.loads(value)
         except json.JSONDecodeError:
@@ -81,7 +81,7 @@ class ConfigManager:
     def register_schema(self, key: str, schema: ConfigSchema) -> None:
         self.config_schemas[key] = schema
 
-    def validate_config(self) -> List[str]:
+    def validate_config(self) -> list[str]:
         errors = []
         for key, schema in self.config_schemas.items():
             if key not in self.config_data:
@@ -109,7 +109,7 @@ class ConfigManager:
                 json.dump(self.config_data, f, indent=2)
         self.logger.info("Saved configuration to %s", file_path)
 
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         return self.config_data.copy()
 
     def reset_to_defaults(self) -> None:
@@ -117,5 +117,5 @@ class ConfigManager:
             if hasattr(schema, "default"):
                 self.config_data[key] = schema.default
 
-    def merge_config(self, other_config: Dict[str, Any]) -> None:
+    def merge_config(self, other_config: dict[str, Any]) -> None:
         self.config_data.update(other_config)
