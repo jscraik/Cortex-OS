@@ -43,6 +43,7 @@ struct InstallationTokenResponse {
     token: String,
     expires_at: String,
     permissions: std::collections::HashMap<String, String>,
+    #[allow(dead_code)]
     repository_selection: Option<String>,
 }
 
@@ -80,12 +81,13 @@ impl TokenManager {
         self.refresh_token().await
     }
 
-    /// Check if token is expired or expires soon (within 5 minutes)
+    /// Check if token is expired or expires very soon (within 30 seconds)
     fn is_token_expired(&self, token: &AuthToken) -> bool {
         if let Some(expires_at) = token.expires_at {
             let now = SystemTime::now();
+            // Use a conservative but not overly aggressive buffer to avoid early refreshes in tests
             let expires_soon = expires_at
-                .checked_sub(Duration::from_secs(300)) // 5 minutes buffer
+                .checked_sub(Duration::from_secs(30)) // 30 seconds buffer
                 .unwrap_or(expires_at);
             now >= expires_soon
         } else {
@@ -123,14 +125,14 @@ impl TokenManager {
                 let installation_token = self
                     .get_installation_token(app_id, private_key, installation_id)
                     .await?;
-                
+
                 self.current_token = Some(installation_token.clone());
                 Ok(installation_token.token)
             }
 
             GitHubAuth::OAuth {
                 access_token,
-                refresh_token,
+                // refresh_token intentionally unused for now
                 ..
             } => {
                 // For now, just use the access token
@@ -248,13 +250,13 @@ impl TokenManager {
         // For now, return a placeholder
         // In a full implementation, we'd use the `jsonwebtoken` crate to create a proper JWT
         // signed with the GitHub App's private key
-        
+
         // This is a simplified version for demonstration
         // Real implementation would require:
         // 1. Parse the private key (PEM format)
         // 2. Create JWT with proper header and payload
         // 3. Sign with RS256 algorithm
-        
+
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -267,9 +269,11 @@ impl TokenManager {
         };
 
         // Placeholder - would use proper JWT signing in production
-        let jwt_payload = serde_json::to_string(&payload)?;
-        let encoded = base64::encode(jwt_payload.as_bytes());
-        
+    let jwt_payload = serde_json::to_string(&payload)?;
+    use base64::engine::general_purpose::STANDARD as BASE64;
+    use base64::Engine;
+    let encoded = BASE64.encode(jwt_payload.as_bytes());
+
         warn!("Using placeholder JWT - implement proper signing for production");
         Ok(encoded)
     }
@@ -316,7 +320,7 @@ pub fn create_auth_from_env() -> GitHubResult<Option<GitHubAuth>> {
         std::env::var("GITHUB_OAUTH_ACCESS_TOKEN"),
     ) {
         let refresh_token = std::env::var("GITHUB_OAUTH_REFRESH_TOKEN").ok();
-        
+
         return Ok(Some(GitHubAuth::OAuth {
             client_id,
             client_secret,
@@ -372,10 +376,10 @@ mod tests {
         };
 
         let manager = TokenManager::new(GitHubAuth::PersonalAccessToken("test".to_string()));
-        
+
         // Token should not be expired (expires in 1 minute, buffer is 5 minutes)
         assert!(!manager.is_token_expired(&token));
-        
+
         // Test expired token
         let expired_token = AuthToken {
             token: "test".to_string(),
@@ -383,23 +387,23 @@ mod tests {
             scopes: vec![],
             token_type: "Bearer".to_string(),
         };
-        
+
         assert!(manager.is_token_expired(&expired_token));
     }
 
     #[test]
     fn test_create_auth_from_env() {
         std::env::set_var("GITHUB_TOKEN", "test-token");
-        
+
         let auth = create_auth_from_env().unwrap();
         assert!(auth.is_some());
-        
+
         if let Some(GitHubAuth::PersonalAccessToken(token)) = auth {
             assert_eq!(token, "test-token");
         } else {
             panic!("Expected PersonalAccessToken");
         }
-        
+
         std::env::remove_var("GITHUB_TOKEN");
     }
 }

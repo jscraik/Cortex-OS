@@ -1,0 +1,20 @@
+[package]
+edition = "2021"
+name = "cortex-common"
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+[dependencies]
+clap = { workspace = true, optional = true }
+cortex-core = { path = "../cortex-core" }
+cortex-protocol = { path = "../cortex-protocol" }
+serde = { workspace = true, optional = true }
+toml = { version = "0.9", optional = true }
+
+[features]
+# Separate feature so that `clap` is not a mandatory dependency.
+cli = ["clap", "serde", "toml"]
+elapsed = []
+sandbox_summary = []

@@ -2,6 +2,7 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"outDir": "dist",
+		"rootDir": "src",
 		"module": "esnext",
 		"target": "es2022",
 		"moduleResolution": "bundler",
@@ -9,5 +10,8 @@
 		"skipLibCheck": true,
 		"strict": true
 	},
-	"include": ["src/**/*", "tests/**/*"]
+	"include": [
+		"src/**/*",
+		"tests/**/*"
+	]
 }

@@ -4,8 +4,8 @@
  * @author Cortex-OS Team
  */
 
-import type { SimRunnerConfig } from "./runner";
-import type { SimScenario, SimTurn } from "./types";
+import type { SimRunnerConfig } from "./runner.js";
+import type { SimScenario, SimTurn } from "./types.js";
 
 interface PersonaStyle {
 	formality: "casual" | "professional" | "technical";
@@ -53,7 +53,7 @@ export class UserSimulator {
 
 		// Determine if user should continue conversation
 		if (this.shouldEndConversation(agentResponse, turnCount)) {
-			return null;
+			return Promise.resolve(null);
 		}
 
 		// Generate response based on agent's message and persona

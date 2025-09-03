@@ -1,9 +1,9 @@
-import type { Chunk, Store } from "../lib";
+import type { Chunk, Store } from "../lib/index.js";
 
 export function memoryStore(): Store {
 	const items: Array<Chunk & { embedding?: number[] }> = [];
 	return {
-		async upsert(chunks) {
+			async upsert(chunks: Chunk[]) {
 			for (const c of chunks) {
 				const i = items.findIndex((x) => x.id === c.id);
 				if (i >= 0) items[i] = c;

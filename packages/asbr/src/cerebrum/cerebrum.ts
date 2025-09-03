@@ -3,7 +3,6 @@
  * Implements planning, critiquing, simulation, and teaching capabilities
  */
 
-import { EvidenceCollector } from "../evidence/collector.js";
 import type { Config } from "../types/index.js";
 import { CritiqueEngine } from "./critique.js";
 import { type SimulationResult, Simulator } from "./simulator.js";
@@ -18,18 +17,14 @@ export interface CerebrumOptions {
  * Cerebrum - The meta-agent layer that orchestrates planning, simulation, critique, and teaching
  */
 export class Cerebrum {
-	private config: Config;
-	private simulator: Simulator;
-	private critiqueEngine: CritiqueEngine;
-	private teacher: Teacher;
-	private readonly evidenceCollector: EvidenceCollector;
+	private readonly simulator: Simulator;
+	private readonly critiqueEngine: CritiqueEngine;
+	private readonly teacher: Teacher;
 
 	constructor(options: CerebrumOptions) {
-		this.config = options.config;
 		this.simulator = new Simulator(options.config);
 		this.critiqueEngine = new CritiqueEngine();
 		this.teacher = new Teacher();
-		this.evidenceCollector = new EvidenceCollector();
 	}
 
 	/**

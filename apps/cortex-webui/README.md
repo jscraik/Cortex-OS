@@ -1,219 +1,197 @@
-# Cortex Web UI
+# Cortex WebUI
 
-<div align="center">
+A modern, accessible web interface for AI models with real-time chat capabilities, designed as part of the Cortex-OS ecosystem.
 
-[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
-[![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![React](https://img.shields.io/badge/React-18+-blue)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
-[![WCAG 2.1 AA](https://img.shields.io/badge/WCAG-2.1%20AA-green)](https://www.w3.org/WAI/WCAG21/quickref/)
-[![OpenAI Compatible](https://img.shields.io/badge/OpenAI-compatible-orange)](https://platform.openai.com/docs/api-reference)
-[![MLX Models](https://img.shields.io/badge/MLX-optimized-purple)](https://ml-explore.github.io/mlx/)
+## Features
 
-**Real-time Chat Interface with Server-Sent Events Streaming**
+- Real-time chat interface with streaming responses
+- Support for multiple AI models (OpenAI, Anthropic, local models)
+- User authentication and session management
+- Conversation history and management
+- File upload and processing
+- Dark/light theme support
+- Responsive design for desktop and mobile
+- Accessibility compliant (WCAG 2.1 AA)
+- WebSocket-based real-time communication
 
-*WCAG 2.1 AA compliant chat gateway with OpenAI-compatible backend integration*
+## Project Structure
 
-</div>
+```
+cortex-webui/
+├── backend/          # Node.js/Express backend API
+├── frontend/         # React/TypeScript frontend
+├── shared/           # Shared code between frontend and backend
+├── cortex-cli/       # Command-line interface (planned)
+├── cortex-vscode/    # VSCode extension (planned)
+├── docs/             # Documentation
+├── k8s/              # Kubernetes configurations
+└── utils/            # Utility functions
+```
 
----
+## Tech Stack
 
-## 🎯 Features
+### Frontend
 
-- **💬 Real-time Chat**: Server-Sent Events (SSE) streaming for instant responses
-- **🔌 OpenAI Compatible**: Works with OpenAI API and local compatible servers (Ollama, LocalAI)
-- **📱 Responsive Design**: Mobile-first, accessible chat interface
-- **♿ WCAG 2.1 AA**: Full accessibility compliance with screen reader support
-- **🍎 MLX Optimized**: Native Apple Silicon acceleration for local models
-- **📊 Observability**: Structured logging and performance metrics
-- **🎨 Modern UI**: Clean, minimalist chat experience
-- **⌨️ Keyboard Navigation**: Complete keyboard accessibility
+- React 18 with TypeScript
+- Vite for fast development and building
+- Tailwind CSS for styling
+- Zod for validation
+- WebSocket for real-time communication
 
-## Quick Start
+### Backend
 
-### Environment Configuration
+- Node.js with TypeScript
+- Express web framework
+- SQLite for data storage
+- WebSocket for real-time communication
+- JWT for authentication
+- Multer for file uploads
 
-Set the following environment variables (see repo `.env.example`):
+## Getting Started
 
-- `MODEL_API_PROVIDER` — must be `openai` or `compatible`.
-- `MODEL_API_BASE` — Base URL for OpenAI-compatible API (e.g. `https://api.openai.com` or `http://localhost:11434`).
-- `MODEL_API_KEY` — Provider API key (optional for some local providers).
+### Prerequisites
+
+- Node.js (v16 or higher)
+- pnpm (recommended) or npm
 
 ### Installation
 
+1. Clone the repository:
+
+   ```bash
+   git clone <repository-url>
+   cd cortex-webui
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+3. Set up environment variables:
+   - Copy `backend/.env.example` to `backend/.env` and configure
+   - Copy `frontend/.env.example` to `frontend/.env` and configure
+
+4. Start the development servers:
+   ```bash
+   pnpm dev
+   ```
+
+This will start both the backend (port 3001) and frontend (port 3000) servers.
+
+### Building for Production
+
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development server
-cd apps/cortex-webui
-pnpm dev
-
-# Build for production
 pnpm build
 ```
 
-## API Endpoints
+### Running in Production
 
-### Chat Streaming
-
-- **Route**: `GET /app/api/chat/[sessionId]/stream`
-- **Method**: Server-Sent Events (SSE)
-- **Events**: `token` events → `done` event
-
-The server emits JSON over `text/event-stream`:
-
-```jsonc
-{ "type": "token", "data": "<partial>" }
-{ "type": "done",  "messageId": "<uuid>", "text": "<full-text>" }
-```
-
-### Model Configuration
-
-The UI loads available models from `config/mlx-models.json`:
-
-```json
-{
-  "models": [
-    { "id": "gpt-4", "label": "GPT-4" },
-    { "id": "claude-3-sonnet", "label": "Claude 3 Sonnet" },
-    { "id": "llama3-8b", "label": "Llama 3 8B (Local)" }
-  ],
-  "default": "gpt-4"
-}
-```
-
-## Observability
-
-Set `CHAT_OBSERVABILITY=1` to enable structured logs on stream start/done:
-
-```jsonc
-{ "evt": "chat.stream.start", "sessionId": "...", "model": "..." }
-{ "evt": "chat.stream.done", "durationMs": 123, "tokenCount": 456 }
-```
-
-## Accessibility
-
-The MVP chat page targets WCAG 2.1 AA:
-
-- aria-live region for streamed tokens
-- skip link to composer, form labels, keyboard-friendly focus styles
-- minimal color usage; avoid color-only cues
-
-Use `pnpm pw:test` with repo-level axe tests to audit accessibility.
-
-## Development tips
-
-- For local OpenAI-compatible servers, ensure CORS and streaming are enabled.
-
-## Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   React Client  │───▶│  SSE Streaming   │───▶│  OpenAI API     │
-│                 │    │                  │    │                 │
-│ Message Compose │    │ Token Streaming  │    │ Chat Completion │
-│ Chat History    │    │ Session Management│    │ Model Selection │
-│ Model Selection │    │ Error Handling   │    │ Rate Limiting   │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   Observability │
-                       │                 │
-                       │ Structured Logs │
-                       │ Performance     │
-                       │ Token Metrics   │
-                       └─────────────────┘
+```bash
+pnpm start
 ```
 
 ## Development
 
-### Local Development
+### Frontend Development
+
+The frontend runs on port 3000 by default and proxies API requests to the backend on port 3001.
 
 ```bash
-# Install workspace dependencies
-pnpm install
-
-# Start development server
-cd apps/cortex-webui
+cd frontend
 pnpm dev
-
-# Open in browser
-open http://localhost:3000
 ```
 
-### Local Backend Setup
+### Backend Development
 
-For testing with local models (Ollama, LocalAI):
+The backend runs on port 3001 by default.
 
 ```bash
-# Example with Ollama
-export MODEL_API_PROVIDER=compatible
-export MODEL_API_BASE=http://localhost:11434
-export MODEL_API_KEY=""  # Optional for local servers
-
-# Start the development server
+cd backend
 pnpm dev
 ```
+
+## API Documentation
+
+The backend provides a RESTful API with the following main endpoints:
+
+### Authentication
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/logout` - Logout user
+
+### Conversations
+
+- `GET /api/conversations` - Get all conversations for user
+- `POST /api/conversations` - Create a new conversation
+- `GET /api/conversations/:id` - Get a specific conversation
+- `PUT /api/conversations/:id` - Update a conversation
+- `DELETE /api/conversations/:id` - Delete a conversation
+
+### Messages
+
+- `GET /api/conversations/:conversationId/messages` - Get messages for a conversation
+- `POST /api/conversations/:conversationId/messages` - Create a new message
+
+### Models
+
+- `GET /api/models` - Get all AI models
+- `GET /api/models/:id` - Get a specific AI model
+
+### Files
+
+- `POST /api/files/upload` - Upload a file
+- `DELETE /api/files/:id` - Delete a file
+
+## WebSocket API
+
+Real-time communication is available through WebSocket:
+
+- **Endpoint**: `ws://localhost:3001/ws`
+- **Authentication**: Pass JWT token as query parameter `?token=YOUR_JWT_TOKEN`
 
 ## Testing
 
-### Accessibility Testing
-
-Run the app-local Vitest configuration to test WCAG 2.1 AA compliance:
+Run tests for both frontend and backend:
 
 ```bash
-# Install workspace deps (if you haven't already)
-pnpm install
-
-# Run accessibility tests
-cd apps/cortex-webui
-pnpm exec vitest --config=vitest.config.ts __tests__/mvp-chat.a11y.test.ts --run
-```
-
-### Integration Testing
-
-```bash
-# Run all tests
 pnpm test
-
-# Run with coverage
-pnpm test:coverage
-
-# Run E2E tests
-pnpm test:e2e
 ```
 
-## Performance
+## Deployment
 
-- **Streaming Latency**: ~50ms first token (local models)
-- **Memory Usage**: <100MB base client
-- **Bundle Size**: ~500KB gzipped
-- **Lighthouse Score**: 95+ Performance, 100 Accessibility
+### Docker
 
-## Browser Support
+Build and run with Docker:
 
-- Chrome 88+
-- Firefox 85+
-- Safari 14+
-- Edge 88+
+```bash
+docker-compose up --build
+```
 
-*Requires Server-Sent Events and modern JavaScript features*
+### Kubernetes
+
+Deploy to Kubernetes using the manifests in the `k8s/` directory:
+
+```bash
+kubectl apply -f k8s/
+```
 
 ## Contributing
 
-1. Follow [CONTRIBUTING.md](../../CONTRIBUTING.md) guidelines
-2. Ensure WCAG 2.1 AA compliance
-3. Test with screen readers
-4. Maintain performance budgets
-5. Run accessibility tests before PR submission
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-## Notes
+## License
 
-- **Local Testing**: Ensure CORS and streaming are enabled for local OpenAI-compatible servers
-- **Test Isolation**: The per-app `vitest.config.ts` ensures tests run in a `jsdom` environment for DOM accessibility testing
-- **Workspace Integration**: Do not run tests from repository root unless you intend to run all packages' test suites
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built as part of the Cortex-OS ecosystem
+- Inspired by modern AI chat interfaces
+- Designed with accessibility in mind

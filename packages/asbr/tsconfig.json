@@ -20,10 +20,21 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": false,
-		"lib": ["ES2022", "DOM"],
+		"lib": [
+			"ES2022",
+			"DOM"
+		],
 		"moduleDetection": "force"
 	},
-	"include": ["src/**/*"],
-	"exclude": ["dist", "node_modules", "tests", "**/*.test.ts", "**/*.spec.ts"],
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"dist",
+		"node_modules",
+		"tests",
+		"**/*.test.ts",
+		"**/*.spec.ts"
+	],
 	"references": []
 }

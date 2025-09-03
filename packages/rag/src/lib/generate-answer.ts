@@ -1,5 +1,5 @@
-import type { MultiModelGenerator } from "../generation/multi-model";
-import type { Document } from "./types";
+import type { MultiModelGenerator } from "../generation/multi-model.js";
+import type { Document } from "./types.js";
 
 function buildContext(documents: Document[], maxLength?: number): string {
 	const contexts = documents.map(

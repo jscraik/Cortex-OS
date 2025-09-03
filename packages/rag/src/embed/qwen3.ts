@@ -6,8 +6,8 @@
 import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import path, { join } from "node:path";
-import type { Embedder } from "../lib";
-import { buildQwen3EmbedScript } from "./qwen3-script";
+import type { Embedder } from "../lib/index.js";
+import { buildQwen3EmbedScript } from "./qwen3-script.js";
 
 export type Qwen3ModelSize = "0.6B" | "4B" | "8B";
 

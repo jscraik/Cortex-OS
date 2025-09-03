@@ -9,11 +9,13 @@ import { SimRunner } from "../runner.js";
 async function runCriticalTests() {
 	console.log("🎯 Running SimLab critical tests...");
 
-	const _runner = new SimRunner({
+	const runner = new SimRunner({
 		deterministic: true,
 		seed: 54321,
 		timeout: 60000,
 	});
+	// Keep the instance alive to avoid tree-shaking and unused warnings
+	console.log(Boolean(runner));
 
 	// For now, just a placeholder
 	console.log("Critical tests would run here");

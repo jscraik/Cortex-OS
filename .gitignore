@@ -6,3 +6,4 @@ target/
 .uv/
 .tmp/
 **/.tmp/
+apps/cortex-webui/open-webui/

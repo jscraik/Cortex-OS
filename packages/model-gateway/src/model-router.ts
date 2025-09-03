@@ -110,7 +110,7 @@ export class ModelRouter implements IModelRouter {
 	private async ensureMcpLoaded(): Promise<boolean> {
 		if (this.mcpLoaded) return !!this.mcpAdapter;
 		try {
-			const mod = await import("./adapters/mcp-adapter.js");
+				const mod = await import("./adapters/mcp-adapter.js");
 			// createMCPAdapter returns a synchronous adapter object
 			this.mcpAdapter = mod.createMCPAdapter();
 			this.mcpLoaded = true;

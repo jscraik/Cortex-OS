@@ -11,7 +11,7 @@ export default defineConfig({
 		environment: "node",
 		include: ["simple-tests/**/*.test.ts"],
 		globals: true,
-		name: { label: "simple-tests", color: "cyan" },
+		name: "simple-tests",
 	},
 	resolve: {
 		alias: {

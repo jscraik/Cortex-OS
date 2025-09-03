@@ -1,5 +1,8 @@
 use crate::{GitHubError, GitHubResult};
+use futures::Future;
+use reqwest::Response;
 use std::collections::VecDeque;
+use std::pin::Pin;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
@@ -7,11 +10,11 @@ use tokio::time::sleep;
 use tracing::{debug, warn};
 
 /// GitHub API rate limiter with intelligent request queuing and backoff
+#[derive(Clone)]
 pub struct GitHubRateLimiter {
     state: Arc<Mutex<RateLimiterState>>,
 }
 
-#[derive(Debug)]
 struct RateLimiterState {
     remaining_requests: u64,
     reset_time: Instant,
@@ -29,10 +32,7 @@ struct ResourceLimit {
     used: u64,
 }
 
-type QueuedRequest = Box<
-    dyn FnOnce() -> Box<dyn futures::Future<Output = GitHubResult<reqwest::Response>> + Send + Unpin>
-        + Send,
->;
+type QueuedRequest = Box<dyn FnOnce() -> Pin<Box<dyn Future<Output = ()> + Send>> + Send>;
 
 impl GitHubRateLimiter {
     pub fn new() -> Self {
@@ -51,39 +51,49 @@ impl GitHubRateLimiter {
     }
 
     /// Make a rate-limited request
-    pub async fn make_request<F, Fut>(&self, request_fn: F) -> GitHubResult<reqwest::Response>
+    pub async fn make_request<F, Fut>(&self, request_fn: F) -> GitHubResult<Response>
     where
         F: FnOnce() -> Fut + Send + 'static,
-        Fut: futures::Future<Output = GitHubResult<reqwest::Response>> + Send + 'static,
+        Fut: Future<Output = GitHubResult<Response>> + Send + 'static,
     {
         let (tx, rx) = tokio::sync::oneshot::channel();
-        
+        let state_for_task = Arc::clone(&self.state);
+
         {
             let mut state = self.state.lock().await;
-            
+
             // Add request to queue
             state.queue.push_back(Box::new(move || {
                 let fut = request_fn();
-                Box::new(Box::pin(async move {
+                let state_for_task = Arc::clone(&state_for_task);
+                Box::pin(async move {
                     let result = fut.await;
-                    let _ = tx.send(result.clone());
-                    result
-                }))
+                    match &result {
+                        Ok(resp) => {
+                            // Update rate limit headers based on response
+                            GitHubRateLimiter::update_rate_limit_info(&state_for_task, resp).await;
+                        }
+                        Err(err) => {
+                            if GitHubRateLimiter::is_rate_limit_error(err) {
+                                GitHubRateLimiter::handle_rate_limit_error(&state_for_task, err).await;
+                            }
+                        }
+                    }
+                    let _ = tx.send(result);
+                })
             }));
 
             // Start processing if not already processing
             if !state.processing {
                 state.processing = true;
-                let state_clone = self.state.clone();
+                let state_clone = Arc::clone(&self.state);
                 tokio::spawn(async move {
-                    Self::process_queue(state_clone).await;
+                    GitHubRateLimiter::process_queue(state_clone).await;
                 });
             }
         }
 
-        rx.await.map_err(|_| {
-            GitHubError::Other(anyhow::anyhow!("Request cancelled"))
-        })?
+        rx.await.map_err(|_| GitHubError::Other(anyhow::anyhow!("Request cancelled")))?
     }
 
     async fn process_queue(state: Arc<Mutex<RateLimiterState>>) {
@@ -99,22 +109,11 @@ impl GitHubRateLimiter {
             };
 
             // Wait if rate limited
-            Self::wait_for_rate_limit(&state).await;
+            GitHubRateLimiter::wait_for_rate_limit(&state).await;
 
             // Execute request
             let future = request();
-            match future.await {
-                Ok(response) => {
-                    Self::update_rate_limit_info(&state, &response).await;
-                }
-                Err(e) => {
-                    warn!("Request failed: {:?}", e);
-                    // Handle rate limit errors
-                    if Self::is_rate_limit_error(&e) {
-                        Self::handle_rate_limit_error(&state, &e).await;
-                    }
-                }
-            }
+            future.await;
 
             // Brief pause between requests
             sleep(Duration::from_millis(100)).await;
@@ -122,26 +121,22 @@ impl GitHubRateLimiter {
     }
 
     async fn wait_for_rate_limit(state: &Arc<Mutex<RateLimiterState>>) {
-        let should_wait = {
+        let wait_duration = {
             let state_guard = state.lock().await;
-            state_guard.remaining_requests == 0 && Instant::now() < state_guard.reset_time
+            if state_guard.remaining_requests == 0 {
+                Some(state_guard.reset_time.saturating_duration_since(Instant::now()))
+            } else {
+                None
+            }
         };
 
-        if should_wait {
-            let wait_time = {
-                let state_guard = state.lock().await;
-                state_guard.reset_time.saturating_duration_since(Instant::now())
-            };
-
-            debug!("Rate limit reached, waiting {:?}", wait_time);
-            sleep(wait_time).await;
+        if let Some(d) = wait_duration {
+            debug!("Rate limit reached, waiting {:?}", d);
+            sleep(d).await;
         }
     }
 
-    async fn update_rate_limit_info(
-        state: &Arc<Mutex<RateLimiterState>>,
-        response: &reqwest::Response,
-    ) {
+    async fn update_rate_limit_info(state: &Arc<Mutex<RateLimiterState>>, response: &Response) {
         let mut state_guard = state.lock().await;
 
         // Update general rate limit info
@@ -160,13 +155,14 @@ impl GitHubRateLimiter {
             .and_then(|h| h.to_str().ok())
             .and_then(|s| s.parse::<u64>().ok())
         {
-            state_guard.reset_time = 
-                Instant::now() + Duration::from_secs(reset_timestamp.saturating_sub(
-                    std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs()
-                ));
+            state_guard.reset_time =
+                Instant::now()
+                    + Duration::from_secs(reset_timestamp.saturating_sub(
+                        std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs(),
+                    ));
         }
 
         // Update resource-specific limits (Actions, Search, etc.)
@@ -202,12 +198,13 @@ impl GitHubRateLimiter {
                 .and_then(|h| h.to_str().ok())
                 .and_then(|s| s.parse::<u64>().ok())
                 .map(|timestamp| {
-                    Instant::now() + Duration::from_secs(timestamp.saturating_sub(
-                        std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .unwrap_or_default()
-                            .as_secs()
-                    ))
+                    Instant::now()
+                        + Duration::from_secs(timestamp.saturating_sub(
+                            std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .unwrap_or_default()
+                                .as_secs(),
+                        ))
                 })
                 .unwrap_or_else(|| Instant::now() + Duration::from_secs(3600));
 
@@ -238,20 +235,17 @@ impl GitHubRateLimiter {
         }
     }
 
-    async fn handle_rate_limit_error(
-        state: &Arc<Mutex<RateLimiterState>>,
-        error: &GitHubError,
-    ) {
+    async fn handle_rate_limit_error(state: &Arc<Mutex<RateLimiterState>>, error: &GitHubError) {
         let mut state_guard = state.lock().await;
-        
+
         // Set remaining requests to 0 to trigger waiting
         state_guard.remaining_requests = 0;
-        
+
         // If we have retry-after header info, use it
         // This would need to be extracted from the error
         // For now, use a conservative estimate
         state_guard.reset_time = Instant::now() + Duration::from_secs(60);
-        
+
         warn!("Rate limit error handled: {:?}", error);
     }
 
@@ -283,7 +277,7 @@ impl GitHubRateLimiter {
     /// Calculate delay based on rate limit state
     pub async fn calculate_delay(&self) -> Duration {
         let state = self.state.lock().await;
-        
+
         if state.remaining_requests == 0 {
             // Wait until reset time
             state.reset_time.saturating_duration_since(Instant::now())
@@ -348,7 +342,7 @@ impl RetryManager {
     pub async fn execute_with_retry<F, Fut, T>(&self, mut f: F) -> GitHubResult<T>
     where
         F: FnMut() -> Fut,
-        Fut: futures::Future<Output = GitHubResult<T>>,
+        Fut: Future<Output = GitHubResult<T>>,
     {
         let mut last_error = None;
 
@@ -366,7 +360,7 @@ impl RetryManager {
 
                     last_error = Some(error);
                     let delay = self.calculate_backoff_delay(attempt);
-                    
+
                     debug!("Request failed, retrying in {:?} (attempt {})", delay, attempt + 1);
                     sleep(delay).await;
                 }
@@ -378,10 +372,9 @@ impl RetryManager {
 
     fn calculate_backoff_delay(&self, attempt: usize) -> Duration {
         let exponential_delay = self.base_delay * 2_u32.pow(attempt as u32);
-        let jittered_delay = exponential_delay + Duration::from_millis(
-            (rand::random::<f64>() * 1000.0) as u64
-        );
-        
+        let jittered_delay =
+            exponential_delay + Duration::from_millis((rand::random::<f64>() * 1000.0) as u64);
+
         std::cmp::min(jittered_delay, self.max_delay)
     }
 
@@ -423,7 +416,7 @@ mod tests {
     async fn test_rate_limiter_creation() {
         let limiter = GitHubRateLimiter::new();
         let status = limiter.get_rate_limit_status().await;
-        
+
         assert_eq!(status.remaining, 5000);
         assert_eq!(status.queue_length, 0);
     }
@@ -431,15 +424,15 @@ mod tests {
     #[test]
     fn test_backoff_calculation() {
         let retry_manager = RetryManager::new();
-        
+
         let delay_0 = retry_manager.calculate_backoff_delay(0);
         let delay_1 = retry_manager.calculate_backoff_delay(1);
         let delay_2 = retry_manager.calculate_backoff_delay(2);
-        
+
         // Exponential backoff should increase delays
         assert!(delay_1 > delay_0);
         assert!(delay_2 > delay_1);
-        
+
         // Should not exceed max delay
         let long_delay = retry_manager.calculate_backoff_delay(10);
         assert!(long_delay <= retry_manager.max_delay);
