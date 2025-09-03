@@ -1,17 +1,28 @@
--r ../../requirements.txt
-
 # GPL Tools Service Dependencies
 # file_path: docker/gpl-tools/requirements.txt
 # description: Python dependencies for GPL tools HTTP API service
 # maintainer: @jamiescottcraik
-# last_updated: 2025-08-05
-# version: 1.0.0
+# last_updated: 2025-09-03
+# version: 1.1.0
 # status: active
 
+# Core dependencies
+fastapi>=0.95.0
+uvicorn>=0.35.0
+pydantic>=2.5.0
+
 # Additional utilities for image processing
-Pillow==10.1.0
+Pillow>=10.1.0
 
 # Security and monitoring
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]>=3.3.0
+
+# MLX integration for GPL tools
+mlx>=0.30.0
+mlx-lm>=0.28.0
+
+# llama.cpp integration
+llama-cpp-python>=0.2.90
+gguf>=0.1.0
 
 # © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

@@ -3,32 +3,37 @@
  * Monitors repository changes and maintains organizational standards
  */
 
-import { spawn } from "node:child_process";
-import { createHmac, timingSafeEqual } from "node:crypto";
-import * as path from "node:path";
-import { Octokit } from "@octokit/rest";
-import { Webhooks } from "@octokit/webhooks";
-import express from "express";
-import * as fs from "fs-extra";
-import { z } from "zod";
-import { AutoFixEngine } from "../core/auto-fix-engine";
+import { spawn } from 'node:child_process';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import * as path from 'node:path';
+import { Octokit } from '@octokit/rest';
+import { Webhooks } from '@octokit/webhooks';
+import dotenv from 'dotenv';
+import express from 'express';
+import * as fs from 'fs-extra';
+import { z } from 'zod';
+
+// Load environment variables from .env file
+dotenv.config();
+
+import { AutoFixEngine } from '../core/auto-fix-engine';
 import {
 	CORTEX_STRUCTURE_RULES,
 	StructureValidator,
-} from "../core/structure-validator";
-import { analyzeBackendStructure } from "../lib/backend-structure-agent";
-import { ContextAnalyzer } from "../lib/context-analyzer";
-import { analyzeFrontendStructure } from "../lib/frontend-structure-agent";
+} from '../core/structure-validator';
+import { analyzeBackendStructure } from '../lib/backend-structure-agent';
+import { ContextAnalyzer } from '../lib/context-analyzer';
+import { analyzeFrontendStructure } from '../lib/frontend-structure-agent';
 
 // Environment validation
 const envSchema = z.object({
-	PORT: z.string().default("3003"),
+	PORT: z.string().default('3003'),
 	GITHUB_TOKEN: z.string().optional(),
 	WEBHOOK_SECRET: z.string().optional(),
 	STRUCTURE_APP_ID: z.string().optional(),
 	STRUCTURE_PRIVATE_KEY: z.string().optional(),
-	AUTO_FIX_ENABLED: z.string().default("false"),
-	DRY_RUN: z.string().default("true"),
+	AUTO_FIX_ENABLED: z.string().default('false'),
+	DRY_RUN: z.string().default('true'),
 });
 
 const env = envSchema.parse(process.env);
@@ -36,7 +41,7 @@ const env = envSchema.parse(process.env);
 // Initialize services
 const app = express();
 const webhooks = new Webhooks({
-	secret: env.WEBHOOK_SECRET || "development-secret",
+	secret: env.WEBHOOK_SECRET || 'development-secret',
 });
 
 const octokit = new Octokit({
@@ -47,50 +52,50 @@ const validator = new StructureValidator(CORTEX_STRUCTURE_RULES);
 const contextAnalyzer = new ContextAnalyzer();
 
 // Health check endpoint
-app.get("/health", (_req, res) => {
+app.get('/health', (_req, res) => {
 	res.json({
-		status: "healthy",
-		service: "cortex-structure-github",
+		status: 'healthy',
+		service: 'cortex-structure-github',
 		timestamp: new Date().toISOString(),
-		version: "1.0.0",
+		version: '1.0.0',
 	});
 });
 
 // Structure analysis endpoint (use JSON body parsing for this route only)
-app.post("/analyze", express.json(), async (req, res) => {
+app.post('/analyze', express.json(), async (req, res) => {
 	try {
 		const { repository, files } = req.body;
 
 		if (!repository) {
-			return res.status(400).json({ error: "Repository is required" });
+			return res.status(400).json({ error: 'Repository is required' });
 		}
 
 		// Perform structure analysis
 		const analysis = await performStructureAnalysis(repository, files);
 		return res.json(analysis);
 	} catch (error) {
-		console.error("Analysis error:", error);
-		return res.status(500).json({ error: "Internal server error" });
+		console.error('Analysis error:', error);
+		return res.status(500).json({ error: 'Internal server error' });
 	}
 });
 
 // Auto-fix endpoint (use JSON body parsing for this route only)
-app.post("/auto-fix", express.json(), async (req, res) => {
+app.post('/auto-fix', express.json(), async (req, res) => {
 	try {
 		const { repository, violations, dryRun = true } = req.body;
 
 		if (!repository || !violations) {
 			return res
 				.status(400)
-				.json({ error: "Repository and violations are required" });
+				.json({ error: 'Repository and violations are required' });
 		}
 
 		// Generate auto-fix plan
 		const plan = await generateAutoFixPlan(repository, violations, dryRun);
 		return res.json(plan);
 	} catch (error) {
-		console.error("Auto-fix error:", error);
-		return res.status(500).json({ error: "Internal server error" });
+		console.error('Auto-fix error:', error);
+		return res.status(500).json({ error: 'Internal server error' });
 	}
 });
 
@@ -99,12 +104,12 @@ function _verifyWebhookSignature(payload: Buffer, signature: string): boolean {
 	const webhookSecret = env.WEBHOOK_SECRET;
 	if (!webhookSecret) {
 		console.warn(
-			"⚠️  No webhook secret configured, skipping signature verification",
+			'⚠️  No webhook secret configured, skipping signature verification',
 		);
 		return true; // Allow in development
 	}
 
-	const expectedSignature = `sha256=${createHmac("sha256", webhookSecret).update(payload).digest("hex")}`;
+	const expectedSignature = `sha256=${createHmac('sha256', webhookSecret).update(payload).digest('hex')}`;
 
 	return timingSafeEqual(
 		Buffer.from(signature),
@@ -113,7 +118,7 @@ function _verifyWebhookSignature(payload: Buffer, signature: string): boolean {
 }
 
 async function _handleWebhookEvent(event: any): Promise<void> {
-	console.log(`📡 Handling webhook event: ${event.action || "unknown"}`);
+	console.log(`📡 Handling webhook event: ${event.action || 'unknown'}`);
 
 	// Basic event logging
 	if (event.repository) {
@@ -145,30 +150,30 @@ async function performStructureAnalysis(
 
 	for (const file of files) {
 		// Check for common structure violations
-		if (file.includes("node_modules/")) continue;
+		if (file.includes('node_modules/')) continue;
 
 		// Example checks
 		if (
-			file.startsWith("src/") &&
-			!file.includes(".ts") &&
-			!file.includes(".js") &&
-			!file.includes(".json")
+			file.startsWith('src/') &&
+			!file.includes('.ts') &&
+			!file.includes('.js') &&
+			!file.includes('.json')
 		) {
 			violations.push({
-				type: "file_extension",
+				type: 'file_extension',
 				file,
-				message: "Non-standard file extension in src directory",
-				severity: "warning",
+				message: 'Non-standard file extension in src directory',
+				severity: 'warning',
 			});
 		}
 
-		if (file.includes(" ") || (file.includes("_") && file.includes("-"))) {
+		if (file.includes(' ') || (file.includes('_') && file.includes('-'))) {
 			violations.push({
-				type: "naming_convention",
+				type: 'naming_convention',
 				file,
 				message:
-					"Inconsistent naming convention (mixing spaces, underscores, and hyphens)",
-				severity: "warning",
+					'Inconsistent naming convention (mixing spaces, underscores, and hyphens)',
+				severity: 'warning',
 			});
 		}
 	}
@@ -178,7 +183,7 @@ async function performStructureAnalysis(
 		score: Math.max(0, 100 - violations.length * 5),
 		suggestions:
 			violations.length > 0
-				? ["Run structure validation", "Fix naming conventions"]
+				? ['Run structure validation', 'Fix naming conventions']
 				: [],
 	};
 }
@@ -193,12 +198,12 @@ async function generateAutoFixPlan(
 	);
 
 	const fixes = violations
-		.filter((v) => v.type === "naming_convention")
+		.filter((v) => v.type === 'naming_convention')
 		.slice(0, 5) // Limit fixes
 		.map((violation) => ({
-			type: "rename_file",
+			type: 'rename_file',
 			from: violation.file,
-			to: violation.file.replace(/ /g, "-").replace(/_/g, "-"),
+			to: violation.file.replace(/ /g, '-').replace(/_/g, '-'),
 			description: `Rename ${violation.file} to follow naming conventions`,
 		}));
 
@@ -207,23 +212,23 @@ async function generateAutoFixPlan(
 		fixes,
 		dryRun,
 		estimatedTime: fixes.length * 30, // seconds
-		riskLevel: fixes.length > 3 ? "medium" : "low",
+		riskLevel: fixes.length > 3 ? 'medium' : 'low',
 	};
 }
 
 // Webhook endpoint: must receive RAW body and delegate to @octokit/webhooks
-app.use("/webhook", express.raw({ type: "application/json" }));
+app.use('/webhook', express.raw({ type: 'application/json' }));
 webhooks.onError((error) => {
-	console.error("❌ Webhook handler error:", error);
+	console.error('❌ Webhook handler error:', error);
 	if ((error as any).event) {
-		console.error("Event context:", (error as any).event.name);
+		console.error('Event context:', (error as any).event.name);
 	}
 });
-app.post("/webhook", async (req, res) => {
+app.post('/webhook', async (req, res) => {
 	try {
-		const id = req.headers["x-github-delivery"] as string | undefined;
-		const name = req.headers["x-github-event"] as string | undefined;
-		const signature = req.headers["x-hub-signature-256"] as string | undefined;
+		const id = req.headers['x-github-delivery'] as string | undefined;
+		const name = req.headers['x-github-event'] as string | undefined;
+		const signature = req.headers['x-hub-signature-256'] as string | undefined;
 
 		// Convert body to raw string for signature verification
 		const rawBody = req.body as
@@ -232,28 +237,28 @@ app.post("/webhook", async (req, res) => {
 			| Record<string, unknown>
 			| undefined;
 		const payload = Buffer.isBuffer(rawBody)
-			? rawBody.toString("utf8")
-			: typeof rawBody === "string"
+			? rawBody.toString('utf8')
+			: typeof rawBody === 'string'
 				? rawBody
 				: JSON.stringify(rawBody ?? {});
 
 		await webhooks.verifyAndReceive({
-			id: id || "",
-			name: (name || "unknown") as any,
+			id: id || '',
+			name: (name || 'unknown') as any,
 			payload,
-			signature: signature || "",
+			signature: signature || '',
 		});
 
 		res.status(200).json({ ok: true });
 	} catch (error) {
-		console.error("Webhook error:", error);
+		console.error('Webhook error:', error);
 		// Signature verification failures throw; respond 401
-		res.status(401).json({ error: "Signature verification failed" });
+		res.status(401).json({ error: 'Signature verification failed' });
 	}
 });
 
 // Handle push events
-webhooks.on("push", async ({ payload }) => {
+webhooks.on('push', async ({ payload }) => {
 	try {
 		console.log(`📁 Push event received for ${payload.repository.full_name}`);
 
@@ -265,7 +270,7 @@ webhooks.on("push", async ({ payload }) => {
 		]);
 
 		if (modifiedFiles.length === 0) {
-			console.log("No files modified, skipping analysis");
+			console.log('No files modified, skipping analysis');
 			return;
 		}
 
@@ -292,7 +297,7 @@ webhooks.on("push", async ({ payload }) => {
 
 			// Auto-fix if enabled and safe
 			if (
-				env.AUTO_FIX_ENABLED === "true" &&
+				env.AUTO_FIX_ENABLED === 'true' &&
 				analysis.summary.autoFixableCount > 0
 			) {
 				await attemptAutoFix(analysis.violations, tempDir);
@@ -302,13 +307,13 @@ webhooks.on("push", async ({ payload }) => {
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error processing push event:", error);
+		console.error('Error processing push event:', error);
 	}
 });
 
 // Handle pull request events
 webhooks.on(
-	["pull_request.opened", "pull_request.synchronize"],
+	['pull_request.opened', 'pull_request.synchronize'],
 	async ({ payload }) => {
 		try {
 			console.log(
@@ -325,7 +330,7 @@ webhooks.on(
 			const changedFiles = prFiles.data.map((file) => file.filename);
 
 			if (changedFiles.length === 0) {
-				console.log("No files changed in PR, skipping analysis");
+				console.log('No files changed in PR, skipping analysis');
 				return;
 			}
 
@@ -367,13 +372,13 @@ webhooks.on(
 				await fs.remove(tempDir);
 			}
 		} catch (error) {
-			console.error("Error processing PR event:", error);
+			console.error('Error processing PR event:', error);
 		}
 	},
 );
 
 // Handle issue comment events (for @insula commands)
-webhooks.on("issue_comment.created", async ({ payload }) => {
+webhooks.on('issue_comment.created', async ({ payload }) => {
 	try {
 		const comment = payload.comment.body;
 		const user = payload.comment.user.login;
@@ -383,8 +388,8 @@ webhooks.on("issue_comment.created", async ({ payload }) => {
 		);
 
 		// Check for @insula commands
-		if (comment.includes("@insula")) {
-			console.log("🎯 @insula command detected");
+		if (comment.includes('@insula')) {
+			console.log('🎯 @insula command detected');
 
 			// Frontend-specific commands
 			if (comment.match(/@insula\s+frontend\s+(analyze|check|review)/i)) {
@@ -417,12 +422,12 @@ webhooks.on("issue_comment.created", async ({ payload }) => {
 			}
 		}
 	} catch (error) {
-		console.error("Error processing comment event:", error);
+		console.error('Error processing comment event:', error);
 	}
 });
 
 // Handle pull request review comment events (for @insula commands in code review)
-webhooks.on("pull_request_review_comment.created", async ({ payload }) => {
+webhooks.on('pull_request_review_comment.created', async ({ payload }) => {
 	try {
 		const comment = payload.comment.body;
 		const user = payload.comment.user.login;
@@ -432,8 +437,8 @@ webhooks.on("pull_request_review_comment.created", async ({ payload }) => {
 		);
 
 		// Check for @insula commands in review comments
-		if (comment.includes("@insula")) {
-			console.log("🎯 @insula command detected in review comment");
+		if (comment.includes('@insula')) {
+			console.log('🎯 @insula command detected in review comment');
 
 			// Frontend-specific commands
 			if (comment.match(/@insula\s+frontend\s+(analyze|check|review)/i)) {
@@ -461,7 +466,7 @@ webhooks.on("pull_request_review_comment.created", async ({ payload }) => {
 			}
 		}
 	} catch (error) {
-		console.error("Error processing review comment event:", error);
+		console.error('Error processing review comment event:', error);
 	}
 });
 
@@ -473,7 +478,7 @@ async function handleAnalyzeCommand(payload: any, user: string) {
 		const issueNumber = payload.issue?.number || payload.pull_request?.number;
 
 		if (!issueNumber) {
-			console.error("No issue/PR number found for analysis");
+			console.error('No issue/PR number found for analysis');
 			return;
 		}
 
@@ -482,7 +487,7 @@ async function handleAnalyzeCommand(payload: any, user: string) {
 			owner: repo.owner.login,
 			repo: repo.name,
 			comment_id: payload.comment.id,
-			content: "eyes",
+			content: 'eyes',
 		});
 
 		// For PR comments, analyze the PR branch
@@ -546,16 +551,16 @@ async function handleAnalyzeCommand(payload: any, user: string) {
 					owner: repo.owner.login,
 					repo: repo.name,
 					comment_id: payload.comment.id,
-					content: "rocket",
+					content: 'rocket',
 				});
 
-				console.log("✅ Structure analysis completed and posted");
+				console.log('✅ Structure analysis completed and posted');
 			} finally {
 				await fs.remove(tempDir);
 			}
 		}
 	} catch (error) {
-		console.error("Error handling analyze command:", error);
+		console.error('Error handling analyze command:', error);
 
 		// Add error reaction
 		try {
@@ -563,10 +568,10 @@ async function handleAnalyzeCommand(payload: any, user: string) {
 				owner: payload.repository.owner.login,
 				repo: payload.repository.name,
 				comment_id: payload.comment.id,
-				content: "confused",
+				content: 'confused',
 			});
 		} catch (reactionError) {
-			console.error("Error adding error reaction:", reactionError);
+			console.error('Error adding error reaction:', reactionError);
 		}
 	}
 }
@@ -596,7 +601,7 @@ For now, please run \`@insula analyze\` to see what needs to be fixed manually.`
 			body: responseComment,
 		});
 	} catch (error) {
-		console.error("Error handling auto-fix command:", error);
+		console.error('Error handling auto-fix command:', error);
 	}
 }
 
@@ -641,7 +646,7 @@ I'm your repository structure guardian with specialized frontend & backend exper
 			body: helpComment,
 		});
 	} catch (error) {
-		console.error("Error handling help command:", error);
+		console.error('Error handling help command:', error);
 	}
 }
 
@@ -651,13 +656,13 @@ async function handleFrontendAnalysis(payload: any, user: string) {
 		console.log(`🎨 ${user} requested frontend structure analysis`);
 
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		const repo = payload.repository;
 		const issueNumber = payload.issue?.number || payload.pull_request?.number;
 
 		// Progressive status: Step 2 - Working
-		await updateProgressiveStatus(payload, "working");
+		await updateProgressiveStatus(payload, 'working');
 
 		// Clone repository for analysis
 		const tempDir = await cloneRepository(repo.clone_url, repo.default_branch);
@@ -667,8 +672,8 @@ async function handleFrontendAnalysis(payload: any, user: string) {
 			const commandContext = await contextAnalyzer.buildCommandContext(
 				payload,
 				tempDir,
-				"analyze",
-				"frontend",
+				'analyze',
+				'frontend',
 			);
 
 			// Generate context-aware response first
@@ -676,7 +681,7 @@ async function handleFrontendAnalysis(payload: any, user: string) {
 				commandContext,
 				user,
 			);
-			responseComment += "\n\n---\n\n";
+			responseComment += '\n\n---\n\n';
 
 			// Run frontend-specific analysis
 			const analysis = await analyzeFrontendStructure(tempDir);
@@ -692,16 +697,16 @@ async function handleFrontendAnalysis(payload: any, user: string) {
 			});
 
 			// Progressive status: Step 3 - Success
-			await updateProgressiveStatus(payload, "success");
-			console.log("✅ Frontend analysis posted");
+			await updateProgressiveStatus(payload, 'success');
+			console.log('✅ Frontend analysis posted');
 		} finally {
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error handling frontend analysis:", error);
+		console.error('Error handling frontend analysis:', error);
 		// Progressive status: Step 3 - Error
-		await updateProgressiveStatus(payload, "error");
-		await postErrorComment(payload, user, "frontend analysis");
+		await updateProgressiveStatus(payload, 'error');
+		await postErrorComment(payload, user, 'frontend analysis');
 	}
 }
 
@@ -710,7 +715,7 @@ async function handleFrontendFix(payload: any, user: string) {
 		console.log(`🔧 ${user} requested frontend auto-fix`);
 
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		// Clone repository for context analysis
 		const tempDir = await cloneRepository(
@@ -723,8 +728,8 @@ async function handleFrontendFix(payload: any, user: string) {
 			const commandContext = await contextAnalyzer.buildCommandContext(
 				payload,
 				tempDir,
-				"fix",
-				"frontend",
+				'fix',
+				'frontend',
 			);
 
 			// Generate context-aware response
@@ -759,7 +764,7 @@ For now, please run \`@insula frontend analyze\` to see specific frontend issues
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error handling frontend fix command:", error);
+		console.error('Error handling frontend fix command:', error);
 	}
 }
 
@@ -768,7 +773,7 @@ async function handleFrontendScaffold(payload: any, user: string) {
 		console.log(`🏗️ ${user} requested frontend scaffolding`);
 
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		// Clone repository for context analysis
 		const tempDir = await cloneRepository(
@@ -781,8 +786,8 @@ async function handleFrontendScaffold(payload: any, user: string) {
 			const commandContext = await contextAnalyzer.buildCommandContext(
 				payload,
 				tempDir,
-				"scaffold",
-				"frontend",
+				'scaffold',
+				'frontend',
 			);
 
 			// Generate context-aware response
@@ -817,7 +822,7 @@ For now, run \`@insula frontend analyze\` to understand current structure.`;
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error handling frontend scaffold command:", error);
+		console.error('Error handling frontend scaffold command:', error);
 	}
 }
 
@@ -827,13 +832,13 @@ async function handleBackendAnalysis(payload: any, user: string) {
 		console.log(`⚙️ ${user} requested backend structure analysis`);
 
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		const repo = payload.repository;
 		const issueNumber = payload.issue?.number || payload.pull_request?.number;
 
 		// Progressive status: Step 2 - Working
-		await updateProgressiveStatus(payload, "working");
+		await updateProgressiveStatus(payload, 'working');
 
 		// Clone repository for analysis
 		const tempDir = await cloneRepository(repo.clone_url, repo.default_branch);
@@ -843,8 +848,8 @@ async function handleBackendAnalysis(payload: any, user: string) {
 			const commandContext = await contextAnalyzer.buildCommandContext(
 				payload,
 				tempDir,
-				"analyze",
-				"backend",
+				'analyze',
+				'backend',
 			);
 
 			// Generate context-aware response first
@@ -852,7 +857,7 @@ async function handleBackendAnalysis(payload: any, user: string) {
 				commandContext,
 				user,
 			);
-			responseComment += "\n\n---\n\n";
+			responseComment += '\n\n---\n\n';
 
 			// Run backend-specific analysis
 			const analysis = await analyzeBackendStructure(tempDir);
@@ -868,16 +873,16 @@ async function handleBackendAnalysis(payload: any, user: string) {
 			});
 
 			// Progressive status: Step 3 - Success
-			await updateProgressiveStatus(payload, "success");
-			console.log("✅ Backend analysis posted");
+			await updateProgressiveStatus(payload, 'success');
+			console.log('✅ Backend analysis posted');
 		} finally {
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error handling backend analysis:", error);
+		console.error('Error handling backend analysis:', error);
 		// Progressive status: Step 3 - Error
-		await updateProgressiveStatus(payload, "error");
-		await postErrorComment(payload, user, "backend analysis");
+		await updateProgressiveStatus(payload, 'error');
+		await postErrorComment(payload, user, 'backend analysis');
 	}
 }
 
@@ -886,7 +891,7 @@ async function handleBackendFix(payload: any, user: string) {
 		console.log(`🔧 ${user} requested backend auto-fix`);
 
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		// Clone repository for context analysis
 		const tempDir = await cloneRepository(
@@ -899,8 +904,8 @@ async function handleBackendFix(payload: any, user: string) {
 			const commandContext = await contextAnalyzer.buildCommandContext(
 				payload,
 				tempDir,
-				"fix",
-				"backend",
+				'fix',
+				'backend',
 			);
 
 			// Generate context-aware response
@@ -935,7 +940,7 @@ For now, please run \`@insula backend analyze\` to see specific backend issues.`
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error handling backend fix command:", error);
+		console.error('Error handling backend fix command:', error);
 	}
 }
 
@@ -944,7 +949,7 @@ async function handleBackendScaffold(payload: any, user: string) {
 		console.log(`🏗️ ${user} requested backend scaffolding`);
 
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		// Clone repository for context analysis
 		const tempDir = await cloneRepository(
@@ -957,8 +962,8 @@ async function handleBackendScaffold(payload: any, user: string) {
 			const commandContext = await contextAnalyzer.buildCommandContext(
 				payload,
 				tempDir,
-				"scaffold",
-				"backend",
+				'scaffold',
+				'backend',
 			);
 
 			// Generate context-aware response
@@ -993,7 +998,7 @@ For now, run \`@insula backend analyze\` to understand current architecture.`;
 			await fs.remove(tempDir);
 		}
 	} catch (error) {
-		console.error("Error handling backend scaffold command:", error);
+		console.error('Error handling backend scaffold command:', error);
 	}
 }
 
@@ -1001,14 +1006,14 @@ For now, run \`@insula backend analyze\` to understand current architecture.`;
 function generateFrontendAnalysisComment(analysis: any, user: string): string {
 	let comment = `@${user} **🎨 Frontend Structure Analysis**\n\n`;
 	comment += `**Framework:** ${analysis.framework}\n`;
-	comment += `**Score:** ${analysis.score}/100 ${analysis.score >= 80 ? "🎉" : analysis.score >= 60 ? "⚠️" : "❌"}\n\n`;
+	comment += `**Score:** ${analysis.score}/100 ${analysis.score >= 80 ? '🎉' : analysis.score >= 60 ? '⚠️' : '❌'}\n\n`;
 
 	comment += `**📊 Component Analysis:**\n`;
 	comment += `- Total Components: ${analysis.componentAnalysis.totalComponents}\n`;
 	comment += `- Oversized: ${analysis.componentAnalysis.oversizedComponents.length}\n`;
 	comment += `- Misnamed: ${analysis.componentAnalysis.misnamedComponents.length}\n\n`;
 
-	if (analysis.framework === "react" || analysis.framework === "next") {
+	if (analysis.framework === 'react' || analysis.framework === 'next') {
 		comment += `**🪝 Hook Analysis:**\n`;
 		comment += `- Custom Hooks: ${analysis.hookAnalysis.customHooks}\n`;
 		comment += `- Misnamed: ${analysis.hookAnalysis.misnamedHooks.length}\n\n`;
@@ -1040,7 +1045,7 @@ function generateBackendAnalysisComment(analysis: any, user: string): string {
 	comment += `**Language:** ${analysis.language}\n`;
 	comment += `**Framework:** ${analysis.framework}\n`;
 	comment += `**Architecture:** ${analysis.architecture}\n`;
-	comment += `**Score:** ${analysis.score}/100 ${analysis.score >= 80 ? "🎉" : analysis.score >= 60 ? "⚠️" : "❌"}\n\n`;
+	comment += `**Score:** ${analysis.score}/100 ${analysis.score >= 80 ? '🎉' : analysis.score >= 60 ? '⚠️' : '❌'}\n\n`;
 
 	comment += `**📋 Layer Analysis:**\n`;
 	comment += `- Controllers: ${analysis.layerAnalysis.controllers.count} (${analysis.layerAnalysis.controllers.violations} issues)\n`;
@@ -1058,7 +1063,7 @@ function generateBackendAnalysisComment(analysis: any, user: string): string {
 	if (analysis.violations.length > 0) {
 		comment += `**🔍 Backend Issues:**\n`;
 		analysis.violations.slice(0, 5).forEach((violation: any) => {
-			comment += `- **${violation.file}**: ${violation.message} (${violation.layer || "general"})\n`;
+			comment += `- **${violation.file}**: ${violation.message} (${violation.layer || 'general'})\n`;
 		});
 
 		if (analysis.violations.length > 5) {
@@ -1090,7 +1095,7 @@ async function postErrorComment(payload: any, user: string, operation: string) {
 			body: errorComment,
 		});
 	} catch (error) {
-		console.error("Error posting error comment:", error);
+		console.error('Error posting error comment:', error);
 	}
 }
 
@@ -1102,7 +1107,7 @@ function generateAnalysisComment(
 	const { score, summary, violations } = analysis;
 
 	let comment = `@${user} **📁 Structure Analysis Results**\n\n`;
-	comment += `**Score:** ${score}/100 ${score >= 80 ? "🎉" : score >= 60 ? "⚠️" : "❌"}\n`;
+	comment += `**Score:** ${score}/100 ${score >= 80 ? '🎉' : score >= 60 ? '⚠️' : '❌'}\n`;
 	comment += `**Files Analyzed:** ${summary.totalFiles}\n`;
 	comment += `**Violations Found:** ${summary.violationsCount}\n`;
 	comment += `**Auto-fixable:** ${summary.autoFixableCount}\n\n`;
@@ -1121,7 +1126,7 @@ function generateAnalysisComment(
 		}, {});
 
 		for (const [type, typeViolations] of Object.entries(violationsByType)) {
-			comment += `### ${type.replace(/_/g, " ").toUpperCase()}\n`;
+			comment += `### ${type.replace(/_/g, ' ').toUpperCase()}\n`;
 			(typeViolations as any[]).slice(0, 5).forEach((violation) => {
 				comment += `- **${violation.file}**: ${violation.message}\n`;
 			});
@@ -1146,7 +1151,7 @@ function generateAnalysisComment(
 async function cloneRepository(cloneUrl: string, sha: string): Promise<string> {
 	// Import security validators
 	const { validateGitHubUrl, validateCommitSha } = await import(
-		"../lib/security-validators.js"
+		'../lib/security-validators.js'
 	);
 
 	// Use strengthened security validation
@@ -1161,36 +1166,36 @@ async function cloneRepository(cloneUrl: string, sha: string): Promise<string> {
 	}
 
 	const tempDir = path.join(
-		"/tmp",
-		`structure-analysis-${Date.now()}-${require("node:crypto").randomUUID()}`,
+		'/tmp',
+		`structure-analysis-${Date.now()}-${require('node:crypto').randomUUID()}`,
 	);
 	await fs.ensureDir(tempDir);
 
 	return new Promise((resolve, reject) => {
-		const clone = spawn("git", ["clone", "--depth", "1", cloneUrl, tempDir], {
-			stdio: "pipe",
+		const clone = spawn('git', ['clone', '--depth', '1', cloneUrl, tempDir], {
+			stdio: 'pipe',
 			timeout: 300000,
 		});
 
-		let stderr = "";
-		clone.stderr?.on("data", (data) => {
+		let stderr = '';
+		clone.stderr?.on('data', (data) => {
 			stderr += data.toString();
 		});
 
-		clone.on("close", (code) => {
+		clone.on('close', (code) => {
 			if (code === 0) {
-				const checkout = spawn("git", ["checkout", sha], {
+				const checkout = spawn('git', ['checkout', sha], {
 					cwd: tempDir,
-					stdio: "pipe",
+					stdio: 'pipe',
 					timeout: 60000,
 				});
 
-				let checkoutStderr = "";
-				checkout.stderr?.on("data", (data) => {
+				let checkoutStderr = '';
+				checkout.stderr?.on('data', (data) => {
 					checkoutStderr += data.toString();
 				});
 
-				checkout.on("close", (checkoutCode) => {
+				checkout.on('close', (checkoutCode) => {
 					if (checkoutCode === 0) {
 						resolve(tempDir);
 					} else {
@@ -1198,7 +1203,7 @@ async function cloneRepository(cloneUrl: string, sha: string): Promise<string> {
 					}
 				});
 
-				checkout.on("error", (error) => {
+				checkout.on('error', (error) => {
 					reject(new Error(`Checkout error: ${error.message}`));
 				});
 			} else {
@@ -1206,7 +1211,7 @@ async function cloneRepository(cloneUrl: string, sha: string): Promise<string> {
 			}
 		});
 
-		clone.on("error", (error) => {
+		clone.on('error', (error) => {
 			reject(new Error(`Clone error: ${error.message}`));
 		});
 	});
@@ -1215,7 +1220,7 @@ async function cloneRepository(cloneUrl: string, sha: string): Promise<string> {
 async function getAllFiles(dir: string): Promise<string[]> {
 	const files: string[] = [];
 
-	async function walk(currentDir: string, relativePath = "") {
+	async function walk(currentDir: string, relativePath = '') {
 		const entries = await fs.readdir(currentDir, { withFileTypes: true });
 
 		for (const entry of entries) {
@@ -1223,7 +1228,7 @@ async function getAllFiles(dir: string): Promise<string[]> {
 			const relativeFilePath = path.join(relativePath, entry.name);
 
 			// Skip hidden files and node_modules
-			if (entry.name.startsWith(".") || entry.name === "node_modules") {
+			if (entry.name.startsWith('.') || entry.name === 'node_modules') {
 				continue;
 			}
 
@@ -1244,15 +1249,15 @@ async function createCheckRun(payload: any, analysis: any) {
 		const checkRun = await octokit.rest.checks.create({
 			owner: payload.repository.owner.login,
 			repo: payload.repository.name,
-			name: "Repository Structure Guard",
+			name: 'Repository Structure Guard',
 			head_sha: payload.after || payload.pull_request?.head.sha,
-			status: "completed",
+			status: 'completed',
 			conclusion:
 				analysis.score >= 80
-					? "success"
+					? 'success'
 					: analysis.score >= 60
-						? "neutral"
-						: "failure",
+						? 'neutral'
+						: 'failure',
 			output: {
 				title: `Structure Score: ${analysis.score}/100`,
 				summary: generateCheckSummary(analysis),
@@ -1261,16 +1266,16 @@ async function createCheckRun(payload: any, analysis: any) {
 					start_line: 1,
 					end_line: 1,
 					annotation_level:
-						violation.severity === "error" ? "failure" : "warning",
+						violation.severity === 'error' ? 'failure' : 'warning',
 					message: violation.message,
-					title: `${violation.type}: ${violation.rule || "unknown"}`,
+					title: `${violation.type}: ${violation.rule || 'unknown'}`,
 				})),
 			},
 		});
 
 		console.log(`✅ Check run created: ${checkRun.data.html_url}`);
 	} catch (error) {
-		console.error("Error creating check run:", error);
+		console.error('Error creating check run:', error);
 	}
 }
 
@@ -1323,10 +1328,10 @@ ${
 				.slice(0, 5)
 				.map(
 					(v: any) =>
-						`- **${v.file}**: ${v.message}${v.suggestedPath ? `\n  - Suggested: \`${v.suggestedPath}\`` : ""}`,
+						`- **${v.file}**: ${v.message}${v.suggestedPath ? `\n  - Suggested: \`${v.suggestedPath}\`` : ''}`,
 				)
-				.join("\n")}`
-		: "🎉 No structural issues found!"
+				.join('\n')}`
+		: '🎉 No structural issues found!'
 }
 
 ---
@@ -1339,23 +1344,23 @@ ${
 			body: comment,
 		});
 
-		console.log("✅ PR comment created");
+		console.log('✅ PR comment created');
 	} catch (error) {
-		console.error("Error creating PR comment:", error);
+		console.error('Error creating PR comment:', error);
 	}
 }
 
 async function attemptAutoFix(violations: any[], tempDir: string) {
 	try {
-		const autoFix = new AutoFixEngine(tempDir, env.DRY_RUN === "true");
+		const autoFix = new AutoFixEngine(tempDir, env.DRY_RUN === 'true');
 		const plan = autoFix.generateFixPlan(violations);
 
 		if (plan.requiresApproval) {
-			console.log("Auto-fix requires approval, skipping");
+			console.log('Auto-fix requires approval, skipping');
 			return;
 		}
 
-		if (env.DRY_RUN !== "true") {
+		if (env.DRY_RUN !== 'true') {
 			const results = await autoFix.executeFixPlan(plan);
 			console.log(
 				`🔧 Auto-fix completed: ${results.filter((r) => r.success).length} successful fixes`,
@@ -1369,7 +1374,7 @@ async function attemptAutoFix(violations: any[], tempDir: string) {
 			);
 		}
 	} catch (error) {
-		console.error("Error during auto-fix:", error);
+		console.error('Error during auto-fix:', error);
 	}
 }
 
@@ -1410,24 +1415,24 @@ async function addReaction(payload: any, reaction: string): Promise<void> {
  */
 async function updateProgressiveStatus(
 	payload: any,
-	status: "processing" | "working" | "success" | "error" | "warning",
+	status: 'processing' | 'working' | 'success' | 'error' | 'warning',
 ): Promise<void> {
 	try {
 		switch (status) {
-			case "processing":
-				await addReaction(payload, "eyes");
+			case 'processing':
+				await addReaction(payload, 'eyes');
 				break;
-			case "working":
-				await addReaction(payload, "gear");
+			case 'working':
+				await addReaction(payload, 'gear');
 				break;
-			case "success":
-				await addReaction(payload, "rocket");
+			case 'success':
+				await addReaction(payload, 'rocket');
 				break;
-			case "error":
-				await addReaction(payload, "x");
+			case 'error':
+				await addReaction(payload, 'x');
 				break;
-			case "warning":
-				await addReaction(payload, "warning");
+			case 'warning':
+				await addReaction(payload, 'warning');
 				break;
 		}
 	} catch (error) {
@@ -1443,7 +1448,7 @@ app.listen(port, () => {
 		`📊 Monitoring repository structure with ${CORTEX_STRUCTURE_RULES.length} rules`,
 	);
 	console.log(
-		`🔧 Auto-fix: ${env.AUTO_FIX_ENABLED === "true" ? "Enabled" : "Disabled"}`,
+		`🔧 Auto-fix: ${env.AUTO_FIX_ENABLED === 'true' ? 'Enabled' : 'Disabled'}`,
 	);
-	console.log(`🧪 Dry run: ${env.DRY_RUN === "true" ? "Enabled" : "Disabled"}`);
+	console.log(`🧪 Dry run: ${env.DRY_RUN === 'true' ? 'Enabled' : 'Disabled'}`);
 });

@@ -1,12 +1,15 @@
 """Base transport interface for MCP protocol."""
 
 import asyncio
+import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from enum import Enum
 from typing import Any
 
 from ..protocol import MCPMessage
+
+logger = logging.getLogger(__name__)
 
 
 class ConnectionState(Enum):
@@ -28,13 +31,16 @@ class TransportError(Exception):
 class MCPTransport(ABC):
     """Base transport interface for MCP communication."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.state = ConnectionState.DISCONNECTED
-        self.message_handler: Callable[[MCPMessage], asyncio.Task] | None = None
-        self._connection_callbacks: dict[str, Callable] = {}
+        # Handler returning an MCPMessage when a message is received
+        # May return None for notifications (no response expected)
+        self.message_handler: Callable[[MCPMessage], Awaitable[MCPMessage | None]] | None = None
+        # Connection event callbacks
+        self._connection_callbacks: dict[str, Callable[..., None]] = {}
 
     @abstractmethod
-    async def connect(self, **kwargs) -> None:
+    async def connect(self, **kwargs: Any) -> None:
         """Establish connection."""
         pass
 
@@ -54,24 +60,24 @@ class MCPTransport(ABC):
         pass
 
     def set_message_handler(
-        self, handler: Callable[[MCPMessage], asyncio.Task]
+        self, handler: Callable[[MCPMessage], Awaitable[MCPMessage | None]]
     ) -> None:
         """Set the message handler callback."""
         self.message_handler = handler
 
-    def add_connection_callback(self, event: str, callback: Callable) -> None:
+    def add_connection_callback(self, event: str, callback: Callable[..., None]) -> None:
         """Add callback for connection events (connected, disconnected, error)."""
         self._connection_callbacks[event] = callback
 
-    def _notify_connection_event(self, event: str, **kwargs) -> None:
+    def _notify_connection_event(self, event: str, **kwargs: Any) -> None:
         """Notify connection event callbacks."""
         callback = self._connection_callbacks.get(event)
         if callback:
             try:
                 callback(**kwargs)
-            except Exception as e:
+            except Exception:
                 # Log error but don't propagate to avoid breaking transport
-                print(f"Connection callback error for {event}: {e}")
+                logger.exception("Connection callback error for %s", event)
 
     @property
     def is_connected(self) -> bool:
@@ -80,6 +86,9 @@ class MCPTransport(ABC):
 
     async def health_check(self) -> dict[str, Any]:
         """Perform health check on transport."""
+        # Yield control briefly to ensure this async method exercises await
+        # in implementations that don't need real async work.
+        await asyncio.sleep(0)
         return {
             "state": self.state.value,
             "connected": self.is_connected,

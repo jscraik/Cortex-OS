@@ -1,8 +1,12 @@
 {
 	"recommendations": [
+		"biomejs.biome",
+		"redhat.vscode-yaml",
+		"tamasfe.even-better-toml",
 		"dbaeumer.vscode-eslint",
 		"esbenp.prettier-vscode",
 		"ms-python.python",
-		"orta.vscode-jest"
+		"orta.vscode-jest",
+		"rust-lang.rust-analyzer"
 	]
 }

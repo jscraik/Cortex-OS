@@ -372,7 +372,7 @@ services:
 
   # Local AI - Ollama
   ollama:
-    image: ollama/ollama:0.1.17
+    image: ollama/ollama:0.5.4
     ports:
       - "11434:11434"
     volumes:

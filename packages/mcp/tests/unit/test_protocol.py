@@ -1,5 +1,6 @@
 """Unit tests for MCP protocol handling."""
 
+import asyncio
 import json
 
 import pytest
@@ -368,7 +369,7 @@ class TestProtocolEdgeCases:
                 handler.handle_message(request), timeout=0.5
             )
             assert False, "Should have timed out"
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass  # Expected
 
     @pytest.mark.asyncio
@@ -377,11 +378,17 @@ class TestProtocolEdgeCases:
         import gc
         import weakref
 
-        large_data = ["x" * 1000 for _ in range(1000)]
-        weak_ref = weakref.ref(large_data)
+        class Holder:
+            pass
+
+        holder = Holder()
+        holder.data = ["x" * 1000 for _ in range(1000)]
+        weak_ref = weakref.ref(holder)
+        size = len(holder.data)
 
         async def memory_handler(params):
-            return {"size": len(large_data)}
+            # Do not capture the holder object; return precomputed size
+            return {"size": size}
 
         handler.register_handler("test/memory", memory_handler)
 
@@ -396,7 +403,7 @@ class TestProtocolEdgeCases:
         assert response.result["size"] == 1000
 
         # Clear reference and force garbage collection
-        del large_data
+        del holder
         gc.collect()
 
         # Weak reference should be dead

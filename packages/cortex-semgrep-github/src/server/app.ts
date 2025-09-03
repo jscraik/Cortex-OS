@@ -3,18 +3,22 @@
  * @description GitHub App for automated security scanning with Semgrep
  */
 
-import { spawn } from "node:child_process";
-import { promises as fs } from "node:fs";
-import { join } from "node:path";
-import { Octokit } from "@octokit/rest";
-import { type EmitterWebhookEvent, Webhooks } from "@octokit/webhooks";
-import express from "express";
-import { z } from "zod";
-import type { SecurityScanResult } from "../lib/semgrep-scanner.js";
+import { spawn } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import { join } from 'node:path';
+import { Octokit } from '@octokit/rest';
+import { type EmitterWebhookEvent, Webhooks } from '@octokit/webhooks';
+import dotenv from 'dotenv';
+import express from 'express';
+import { z } from 'zod';
+import type { SecurityScanResult } from '../lib/semgrep-scanner.js';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const app = express();
 // Security: do not reveal Express signature header
-app.disable("x-powered-by");
+app.disable('x-powered-by');
 const port = process.env.PORT || 3002;
 
 // Environment validation
@@ -38,20 +42,20 @@ const webhooks = new Webhooks({
 });
 
 // Middleware: ensure raw body ONLY for /webhook; avoid global JSON that breaks signature verification
-app.use("/webhook", express.raw({ type: "application/json" }));
+app.use('/webhook', express.raw({ type: 'application/json' }));
 
 // Health check endpoint
-app.get("/health", (_req, res) => {
+app.get('/health', (_req, res) => {
 	res.json({
-		status: "healthy",
-		service: "cortex-semgrep-github",
+		status: 'healthy',
+		service: 'cortex-semgrep-github',
 		timestamp: new Date().toISOString(),
 	});
 });
 
 // Resolve binaries from safe, fixed directories only (avoid PATH lookups)
-const SAFE_BIN_DIRS = ["/usr/bin", "/usr/local/bin", "/opt/homebrew/bin"];
-async function resolveBinary(binName: "git" | "semgrep"): Promise<string> {
+const SAFE_BIN_DIRS = ['/usr/bin', '/usr/local/bin', '/opt/homebrew/bin'];
+async function resolveBinary(binName: 'git' | 'semgrep'): Promise<string> {
 	for (const dir of SAFE_BIN_DIRS) {
 		const candidate = join(dir, binName);
 		try {
@@ -70,40 +74,40 @@ async function runSemgrepAnalysis(
 	targetDir: string,
 ): Promise<string> {
 	// Use safe, built-in rulesets instead of external paths
-	const rulesets = ["auto", "security-audit", "owasp-top-ten"];
+	const rulesets = ['auto', 'security-audit', 'owasp-top-ten'];
 
 	return new Promise((resolve, reject) => {
 		const semgrep = spawn(
 			semgrepBin,
 			[
-				"--config",
-				rulesets.join(","),
-				"--json",
-				"--quiet",
-				"--timeout",
-				"300", // 5 minute timeout
-				"--max-target-bytes",
-				"10MB",
-				".",
+				'--config',
+				rulesets.join(','),
+				'--json',
+				'--quiet',
+				'--timeout',
+				'300', // 5 minute timeout
+				'--max-target-bytes',
+				'10MB',
+				'.',
 			],
 			{
 				cwd: targetDir,
-				stdio: "pipe",
+				stdio: 'pipe',
 				timeout: 300000,
 			},
 		);
 
-		let stdout = "";
-		let stderr = "";
+		let stdout = '';
+		let stderr = '';
 
-		semgrep.stdout?.on("data", (data) => {
+		semgrep.stdout?.on('data', (data) => {
 			stdout += data.toString();
 		});
-		semgrep.stderr?.on("data", (data) => {
+		semgrep.stderr?.on('data', (data) => {
 			stderr += data.toString();
 		});
 
-		semgrep.on("close", (code) => {
+		semgrep.on('close', (code) => {
 			// Semgrep exits with code 1 when findings are found; treat as success
 			if (code === 0 || code === 1) {
 				resolve(stdout);
@@ -112,7 +116,7 @@ async function runSemgrepAnalysis(
 			}
 		});
 
-		semgrep.on("error", (error) => {
+		semgrep.on('error', (error) => {
 			reject(new Error(`Semgrep execution error: ${error.message}`));
 		});
 	});
@@ -142,7 +146,7 @@ async function cloneRepository(
 	}
 
 	// Additional security checks
-	const suspiciousPatterns = ["..", "//", "\\", "$", "`", ";", "|", "&"];
+	const suspiciousPatterns = ['..', '//', '\\', '$', '`', ';', '|', '&'];
 	const allInputs = [owner, repo];
 
 	for (const input of allInputs) {
@@ -153,49 +157,49 @@ async function cloneRepository(
 		}
 	}
 
-	const tempDir = `/tmp/semgrep-scan-${Date.now()}-${require("node:crypto").randomUUID()}`;
+	const tempDir = `/tmp/semgrep-scan-${Date.now()}-${require('node:crypto').randomUUID()}`;
 	await fs.mkdir(tempDir, { recursive: true });
 
-	const gitBin = await resolveBinary("git");
+	const gitBin = await resolveBinary('git');
 	const repoUrl = `https://github.com/${owner}/${repo}.git`;
 
 	return new Promise((resolve, reject) => {
-		const clone = spawn(gitBin, ["clone", "--depth", "1", repoUrl, tempDir], {
-			stdio: "pipe",
+		const clone = spawn(gitBin, ['clone', '--depth', '1', repoUrl, tempDir], {
+			stdio: 'pipe',
 		});
 
 		// Set timeout manually
 		const timeout = setTimeout(() => {
-			clone.kill("SIGTERM");
-			reject(new Error("Clone timeout exceeded"));
+			clone.kill('SIGTERM');
+			reject(new Error('Clone timeout exceeded'));
 		}, 300000); // 5 minutes
 
-		let stderr = "";
-		clone.stderr?.on("data", (data) => {
+		let stderr = '';
+		clone.stderr?.on('data', (data) => {
 			stderr += data.toString();
 		});
 
-		clone.on("close", (code) => {
+		clone.on('close', (code) => {
 			clearTimeout(timeout);
 
 			if (code === 0) {
 				// Checkout specific SHA
-				const checkout = spawn(gitBin, ["checkout", sha], {
+				const checkout = spawn(gitBin, ['checkout', sha], {
 					cwd: tempDir,
-					stdio: "pipe",
+					stdio: 'pipe',
 				});
 
 				const checkoutTimeout = setTimeout(() => {
-					checkout.kill("SIGTERM");
-					reject(new Error("Checkout timeout exceeded"));
+					checkout.kill('SIGTERM');
+					reject(new Error('Checkout timeout exceeded'));
 				}, 60000); // 1 minute
 
-				let checkoutStderr = "";
-				checkout.stderr?.on("data", (data) => {
+				let checkoutStderr = '';
+				checkout.stderr?.on('data', (data) => {
 					checkoutStderr += data.toString();
 				});
 
-				checkout.on("close", (checkoutCode) => {
+				checkout.on('close', (checkoutCode) => {
 					clearTimeout(checkoutTimeout);
 
 					if (checkoutCode === 0) {
@@ -205,7 +209,7 @@ async function cloneRepository(
 					}
 				});
 
-				checkout.on("error", (error) => {
+				checkout.on('error', (error) => {
 					clearTimeout(checkoutTimeout);
 					reject(new Error(`Checkout error: ${error.message}`));
 				});
@@ -214,7 +218,7 @@ async function cloneRepository(
 			}
 		});
 
-		clone.on("error", (error) => {
+		clone.on('error', (error) => {
 			clearTimeout(timeout);
 			reject(new Error(`Clone error: ${error.message}`));
 		});
@@ -235,7 +239,7 @@ async function runSemgrepScan(
 
 		try {
 			// Run Semgrep with cortex-sec rules (secure path resolution)
-			const semgrepBin = await resolveBinary("semgrep");
+			const semgrepBin = await resolveBinary('semgrep');
 			const semgrepOutput = await runSemgrepAnalysis(semgrepBin, tempDir);
 
 			// Parse Semgrep results and convert to our format
@@ -259,12 +263,12 @@ async function runSemgrepScan(
 						message:
 							result.extra?.message ||
 							result.message ||
-							"Security issue detected",
-						severity: mapSemgrepSeverity(result.extra?.severity || "INFO"),
-						file: result.path.replace(`${tempDir}/`, ""),
+							'Security issue detected',
+						severity: mapSemgrepSeverity(result.extra?.severity || 'INFO'),
+						file: result.path.replace(`${tempDir}/`, ''),
 						startLine: result.start?.line,
 						endLine: result.end?.line,
-						evidence: result.extra?.lines || "",
+						evidence: result.extra?.lines || '',
 						tags: result.extra?.metadata || {},
 					}),
 				) || [];
@@ -273,24 +277,24 @@ async function runSemgrepScan(
 		} finally {
 			// Cleanup temporary directory (safe API)
 			fs.rm(tempDir, { recursive: true, force: true }).catch((error) =>
-				console.error("Cleanup error:", error),
+				console.error('Cleanup error:', error),
 			);
 		}
 	} catch (error) {
-		console.error("Semgrep scan failed:", error);
+		console.error('Semgrep scan failed:', error);
 		return [];
 	}
 }
 
 // Map Semgrep severity to our format
-function mapSemgrepSeverity(severity: string): "HIGH" | "MEDIUM" | "LOW" {
+function mapSemgrepSeverity(severity: string): 'HIGH' | 'MEDIUM' | 'LOW' {
 	switch (severity.toUpperCase()) {
-		case "ERROR":
-			return "HIGH";
-		case "WARNING":
-			return "MEDIUM";
+		case 'ERROR':
+			return 'HIGH';
+		case 'WARNING':
+			return 'MEDIUM';
 		default:
-			return "LOW";
+			return 'LOW';
 	}
 }
 
@@ -301,11 +305,11 @@ async function createCheckRun(
 	headSha: string,
 	results: SecurityScanResult[],
 ): Promise<void> {
-	const criticalCount = results.filter((r) => r.severity === "HIGH").length;
-	const mediumCount = results.filter((r) => r.severity === "MEDIUM").length;
-	const lowCount = results.filter((r) => r.severity === "LOW").length;
+	const criticalCount = results.filter((r) => r.severity === 'HIGH').length;
+	const mediumCount = results.filter((r) => r.severity === 'MEDIUM').length;
+	const lowCount = results.filter((r) => r.severity === 'LOW').length;
 
-	const conclusion = criticalCount > 0 ? "failure" : "success";
+	const conclusion = criticalCount > 0 ? 'failure' : 'success';
 	const title =
 		criticalCount > 0
 			? `🚨 Security issues found (${criticalCount} critical, ${mediumCount} medium, ${lowCount} low)`
@@ -318,21 +322,21 @@ async function createCheckRun(
 **Medium Issues**: ${mediumCount}
 **Low Issues**: ${lowCount}
 
-${results.length > 0 ? "### Issues Found:" : "### No issues found! 🎉"}
+${results.length > 0 ? '### Issues Found:' : '### No issues found! 🎉'}
 
 ${results
 	.slice(0, 10)
 	.map(
 		(result) => `
 **${result.ruleId}** (${result.severity})
-- **File**: \`${result.file}\`${result.startLine ? ` (line ${result.startLine})` : ""}
+- **File**: \`${result.file}\`${result.startLine ? ` (line ${result.startLine})` : ''}
 - **Issue**: ${result.message}
-${result.evidence ? `- **Evidence**: \`${result.evidence}\`` : ""}
+${result.evidence ? `- **Evidence**: \`${result.evidence}\`` : ''}
 `,
 	)
-	.join("\n")}
+	.join('\n')}
 
-${results.length > 10 ? `\n*... and ${results.length - 10} more issues*` : ""}
+${results.length > 10 ? `\n*... and ${results.length - 10} more issues*` : ''}
 
 ---
 *Powered by Cortex Semgrep GitHub App*
@@ -341,9 +345,9 @@ ${results.length > 10 ? `\n*... and ${results.length - 10} more issues*` : ""}
 	await octokit.rest.checks.create({
 		owner,
 		repo,
-		name: "Cortex Semgrep Security Scan",
+		name: 'Cortex Semgrep Security Scan',
 		head_sha: headSha,
-		status: "completed",
+		status: 'completed',
 		conclusion,
 		output: {
 			title,
@@ -354,8 +358,8 @@ ${results.length > 10 ? `\n*... and ${results.length - 10} more issues*` : ""}
 
 // Webhook handlers
 webhooks.on(
-	"pull_request.opened",
-	async ({ payload }: EmitterWebhookEvent<"pull_request.opened">) => {
+	'pull_request.opened',
+	async ({ payload }: EmitterWebhookEvent<'pull_request.opened'>) => {
 		const { pull_request, repository } = payload;
 
 		console.warn(`PR opened: ${repository.full_name}#${pull_request.number}`);
@@ -379,8 +383,8 @@ webhooks.on(
 );
 
 webhooks.on(
-	"pull_request.synchronize",
-	async ({ payload }: EmitterWebhookEvent<"pull_request.synchronize">) => {
+	'pull_request.synchronize',
+	async ({ payload }: EmitterWebhookEvent<'pull_request.synchronize'>) => {
 		const { pull_request, repository } = payload;
 
 		console.warn(`PR updated: ${repository.full_name}#${pull_request.number}`);
@@ -403,11 +407,11 @@ webhooks.on(
 	},
 );
 
-webhooks.on("push", async ({ payload }: EmitterWebhookEvent<"push">) => {
+webhooks.on('push', async ({ payload }: EmitterWebhookEvent<'push'>) => {
 	const { repository, head_commit } = payload;
 
 	// Only scan main/master branch pushes
-	if (!["main", "master"].includes(payload.ref.replace("refs/heads/", ""))) {
+	if (!['main', 'master'].includes(payload.ref.replace('refs/heads/', ''))) {
 		return;
 	}
 
@@ -429,21 +433,21 @@ webhooks.on("push", async ({ payload }: EmitterWebhookEvent<"push">) => {
 
 // Handle issue comment events (for @semgrep commands)
 webhooks.on(
-	"issue_comment.created",
-	async ({ payload }: EmitterWebhookEvent<"issue_comment.created">) => {
+	'issue_comment.created',
+	async ({ payload }: EmitterWebhookEvent<'issue_comment.created'>) => {
 		try {
 			if (!payload.comment || !payload.repository || !payload.comment.user)
 				return;
-			const comment = payload.comment.body || "";
-			const user = payload.comment.user.login || "unknown";
+			const comment = payload.comment.body || '';
+			const user = payload.comment.user.login || 'unknown';
 
 			console.warn(
 				`💬 Comment received from ${user}: ${comment.substring(0, 100)}...`,
 			);
 
 			// Check for @semgrep commands
-			if (comment.includes("@semgrep")) {
-				console.warn("🎯 @semgrep command detected");
+			if (comment.includes('@semgrep')) {
+				console.warn('🎯 @semgrep command detected');
 
 				// Add reaction to show we're working
 				const ownerLogin = payload.repository.owner?.login;
@@ -452,7 +456,7 @@ webhooks.on(
 					owner: ownerLogin,
 					repo: payload.repository.name,
 					comment_id: payload.comment.id,
-					content: "eyes",
+					content: 'eyes',
 				});
 
 				const scanRe = /@semgrep\s+(scan|security|check|analyze)/i;
@@ -468,30 +472,30 @@ webhooks.on(
 				}
 			}
 		} catch (error) {
-			console.error("Error processing comment event:", error);
+			console.error('Error processing comment event:', error);
 		}
 	},
 );
 
 // Handle pull request review comment events
 webhooks.on(
-	"pull_request_review_comment.created",
+	'pull_request_review_comment.created',
 	async ({
 		payload,
-	}: EmitterWebhookEvent<"pull_request_review_comment.created">) => {
+	}: EmitterWebhookEvent<'pull_request_review_comment.created'>) => {
 		try {
 			if (!payload.comment || !payload.repository || !payload.comment.user)
 				return;
-			const comment = payload.comment.body || "";
-			const user = payload.comment.user.login || "unknown";
+			const comment = payload.comment.body || '';
+			const user = payload.comment.user.login || 'unknown';
 
 			console.warn(
 				`💬 Review comment received from ${user}: ${comment.substring(0, 100)}...`,
 			);
 
 			// Check for @semgrep commands in review comments
-			if (comment.includes("@semgrep")) {
-				console.warn("🎯 @semgrep command detected in review comment");
+			if (comment.includes('@semgrep')) {
+				console.warn('🎯 @semgrep command detected in review comment');
 
 				const scanRe = /@semgrep\s+(scan|security|check|analyze)/i;
 				if (scanRe.exec(comment)) {
@@ -499,26 +503,26 @@ webhooks.on(
 				}
 			}
 		} catch (error) {
-			console.error("Error processing review comment event:", error);
+			console.error('Error processing review comment event:', error);
 		}
 	},
 );
 
 async function handleScanCommand(
 	payload:
-		| EmitterWebhookEvent<"issue_comment.created">["payload"]
-		| EmitterWebhookEvent<"pull_request_review_comment.created">["payload"],
+		| EmitterWebhookEvent<'issue_comment.created'>['payload']
+		| EmitterWebhookEvent<'pull_request_review_comment.created'>['payload'],
 	user: string,
 ) {
 	try {
 		// Progressive status: Step 1 - Processing
-		await updateProgressiveStatus(payload, "processing");
+		await updateProgressiveStatus(payload, 'processing');
 
 		const scanContext = validateScanContext(payload, user);
 		const prData = await fetchPRData(scanContext);
 
 		// Progressive status: Step 2 - Working
-		await updateProgressiveStatus(payload, "working");
+		await updateProgressiveStatus(payload, 'working');
 
 		const results = await runSemgrepScan(
 			scanContext.owner,
@@ -529,12 +533,12 @@ async function handleScanCommand(
 		await postScanResults(scanContext, results, prData.data.head.sha, user);
 
 		// Progressive status: Step 3 - Success
-		await updateProgressiveStatus(payload, "success");
+		await updateProgressiveStatus(payload, 'success');
 
-		console.warn("✅ Security scan completed and posted");
+		console.warn('✅ Security scan completed and posted');
 	} catch (error) {
 		// Progressive status: Step 3 - Error
-		await updateProgressiveStatus(payload, "error");
+		await updateProgressiveStatus(payload, 'error');
 		await handleScanError(error, payload);
 	}
 }
@@ -548,33 +552,33 @@ function validateScanContext(
 	const repo = payload.repository;
 	const ownerLogin = repo.owner?.login;
 	if (!ownerLogin) {
-		throw new Error("Repository owner.login not available");
+		throw new Error('Repository owner.login not available');
 	}
 
 	let issueNumber: number | undefined;
-	if ("issue" in payload && payload.issue) {
+	if ('issue' in payload && payload.issue) {
 		issueNumber = payload.issue.number;
-	} else if ("pull_request" in payload && payload.pull_request) {
+	} else if ('pull_request' in payload && payload.pull_request) {
 		issueNumber = payload.pull_request.number;
 	}
 
 	if (!issueNumber) {
-		throw new Error("No issue/PR number found for scan");
+		throw new Error('No issue/PR number found for scan');
 	}
 
 	const prNumber = resolvePRNumber(payload);
 	if (!prNumber) {
-		throw new Error("No PR number found for scan");
+		throw new Error('No PR number found for scan');
 	}
 
 	return { owner: ownerLogin, repo: repo.name, issueNumber, prNumber };
 }
 
 function resolvePRNumber(payload: any): number | undefined {
-	if ("pull_request" in payload && payload.pull_request) {
+	if ('pull_request' in payload && payload.pull_request) {
 		return payload.pull_request.number;
 	}
-	if ("issue" in payload && payload.issue && "pull_request" in payload.issue) {
+	if ('issue' in payload && payload.issue && 'pull_request' in payload.issue) {
 		return payload.issue.number;
 	}
 	return undefined;
@@ -642,24 +646,24 @@ async function addReaction(payload: any, reaction: string) {
  */
 async function updateProgressiveStatus(
 	payload: any,
-	status: "processing" | "working" | "success" | "error" | "warning",
+	status: 'processing' | 'working' | 'success' | 'error' | 'warning',
 ): Promise<void> {
 	try {
 		switch (status) {
-			case "processing":
-				await addReaction(payload, "eyes");
+			case 'processing':
+				await addReaction(payload, 'eyes');
 				break;
-			case "working":
-				await addReaction(payload, "gear");
+			case 'working':
+				await addReaction(payload, 'gear');
 				break;
-			case "success":
-				await addReaction(payload, "rocket");
+			case 'success':
+				await addReaction(payload, 'rocket');
 				break;
-			case "error":
-				await addReaction(payload, "x");
+			case 'error':
+				await addReaction(payload, 'x');
 				break;
-			case "warning":
-				await addReaction(payload, "warning");
+			case 'warning':
+				await addReaction(payload, 'warning');
 				break;
 		}
 	} catch (error) {
@@ -668,7 +672,7 @@ async function updateProgressiveStatus(
 }
 
 async function handleScanError(error: unknown, payload: any) {
-	console.error("Error handling scan command:", error);
+	console.error('Error handling scan command:', error);
 
 	try {
 		const repoOwnerLogin = payload.repository.owner?.login;
@@ -677,24 +681,24 @@ async function handleScanError(error: unknown, payload: any) {
 				owner: repoOwnerLogin,
 				repo: payload.repository.name,
 				comment_id: payload.comment.id,
-				content: "confused",
+				content: 'confused',
 			});
 		}
 	} catch (reactionError) {
-		console.error("Error adding error reaction:", reactionError);
+		console.error('Error adding error reaction:', reactionError);
 	}
 }
 
 // Webhook error logging
 webhooks.onError((error) => {
-	console.error("❌ Webhook handler error (semgrep):", error);
+	console.error('❌ Webhook handler error (semgrep):', error);
 });
 
 // Webhook endpoint: verify signature and dispatch using raw payload
-app.post("/webhook", async (req, res) => {
-	const signature = req.headers["x-hub-signature-256"] as string | undefined;
-	const id = req.headers["x-github-delivery"] as string | undefined;
-	const name = req.headers["x-github-event"] as string | undefined;
+app.post('/webhook', async (req, res) => {
+	const signature = req.headers['x-hub-signature-256'] as string | undefined;
+	const id = req.headers['x-github-delivery'] as string | undefined;
+	const name = req.headers['x-github-event'] as string | undefined;
 	const rawBody = req.body as
 		| Buffer
 		| string
@@ -702,8 +706,8 @@ app.post("/webhook", async (req, res) => {
 		| undefined;
 	let payload: string;
 	if (Buffer.isBuffer(rawBody)) {
-		payload = rawBody.toString("utf8");
-	} else if (typeof rawBody === "string") {
+		payload = rawBody.toString('utf8');
+	} else if (typeof rawBody === 'string') {
 		payload = rawBody;
 	} else {
 		payload = JSON.stringify(rawBody ?? {});
@@ -711,27 +715,27 @@ app.post("/webhook", async (req, res) => {
 
 	try {
 		await webhooks.verifyAndReceive({
-			id: id || "",
-			name: name || "unknown",
-			signature: signature || "",
+			id: id || '',
+			name: name || 'unknown',
+			signature: signature || '',
 			payload,
 		});
 
-		res.status(200).send("OK");
+		res.status(200).send('OK');
 	} catch (error) {
-		console.error("Webhook error:", error);
-		res.status(401).send("Unauthorized");
+		console.error('Webhook error:', error);
+		res.status(401).send('Unauthorized');
 	}
 });
 
 // Manual scan endpoint (JSON body)
-app.post("/scan", express.json(), async (req, res) => {
+app.post('/scan', express.json(), async (req, res) => {
 	const { owner, repo, sha } = req.body;
 
 	if (!owner || !repo || !sha) {
 		return res
 			.status(400)
-			.json({ error: "Missing required parameters: owner, repo, sha" });
+			.json({ error: 'Missing required parameters: owner, repo, sha' });
 	}
 
 	try {
@@ -741,11 +745,11 @@ app.post("/scan", express.json(), async (req, res) => {
 		res.json({
 			success: true,
 			results: results.length,
-			message: "Scan completed and check run created",
+			message: 'Scan completed and check run created',
 		});
 	} catch (error) {
-		console.error("Manual scan error:", error);
-		res.status(500).json({ error: "Scan failed" });
+		console.error('Manual scan error:', error);
+		res.status(500).json({ error: 'Scan failed' });
 	}
 });
 
@@ -761,8 +765,8 @@ app.listen(port, () => {
 // Help command handler
 async function handleSemgrepHelpCommand(
 	payload:
-		| EmitterWebhookEvent<"issue_comment.created">["payload"]
-		| EmitterWebhookEvent<"pull_request_review_comment.created">["payload"],
+		| EmitterWebhookEvent<'issue_comment.created'>['payload']
+		| EmitterWebhookEvent<'pull_request_review_comment.created'>['payload'],
 	user: string,
 ) {
 	try {
@@ -773,9 +777,9 @@ async function handleSemgrepHelpCommand(
 		if (!ownerLogin) return;
 
 		let issueNumber: number | undefined;
-		if ("issue" in payload && payload.issue) {
+		if ('issue' in payload && payload.issue) {
 			issueNumber = payload.issue.number;
-		} else if ("pull_request" in payload && payload.pull_request) {
+		} else if ('pull_request' in payload && payload.pull_request) {
 			issueNumber = payload.pull_request.number;
 		}
 
@@ -811,7 +815,7 @@ I'm your security guardian, keeping your code safe from vulnerabilities! 🔒`;
 			});
 		}
 	} catch (error) {
-		console.error("Error handling Semgrep help command:", error);
+		console.error('Error handling Semgrep help command:', error);
 	}
 }
 
@@ -827,10 +831,10 @@ function generateScanComment(
 		maxItems: number,
 		labelForRemainder: string,
 	): string => {
-		if (issues.length === 0) return "";
+		if (issues.length === 0) return '';
 		let section = `${heading} (${issues.length})\n`;
 		issues.slice(0, maxItems).forEach((issue) => {
-			section += `- **${issue.file}:${issue.startLine || "?"}** - ${issue.message}\n`;
+			section += `- **${issue.file}:${issue.startLine || '?'}** - ${issue.message}\n`;
 		});
 		const remaining = issues.length - maxItems;
 		if (remaining > 0)
@@ -847,18 +851,18 @@ function generateScanComment(
 		comment += `✅ **Excellent!** No security vulnerabilities detected.\n`;
 		comment += `Your code looks secure! 🎉\n`;
 	} else {
-		const high = results.filter((r) => r.severity === "HIGH");
-		const medium = results.filter((r) => r.severity === "MEDIUM");
-		const low = results.filter((r) => r.severity === "LOW");
+		const high = results.filter((r) => r.severity === 'HIGH');
+		const medium = results.filter((r) => r.severity === 'MEDIUM');
+		const low = results.filter((r) => r.severity === 'LOW');
 
-		comment += formatSection("## 🚨 High Severity", high, 3, "high severity");
+		comment += formatSection('## 🚨 High Severity', high, 3, 'high severity');
 		comment += formatSection(
-			"## ⚠️ Medium Severity",
+			'## ⚠️ Medium Severity',
 			medium,
 			3,
-			"medium severity",
+			'medium severity',
 		);
-		comment += formatSection("## ℹ️ Low Severity", low, 2, "low severity");
+		comment += formatSection('## ℹ️ Low Severity', low, 2, 'low severity');
 		comment += `💡 **Recommendation:** Address high and medium severity issues first.\n`;
 	}
 

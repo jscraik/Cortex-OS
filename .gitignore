@@ -17,6 +17,10 @@ __pycache__/
 .coverage
 coverage.xml
 
+# Environment files
+.env
+**/.env
+
 # Temporary and cache files
 tmp/
 .venv-*/

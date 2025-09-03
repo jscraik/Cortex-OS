@@ -10,7 +10,7 @@ else
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
     cd "$PROJECT_ROOT/apps/cortex-code" || exit 1
-    
+
     if [ -f "./target/release/cortex-code" ]; then
         exec ./target/release/cortex-code "$@"
     else

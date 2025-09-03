@@ -48,6 +48,12 @@ class PluginError(MCPError):
     pass
 
 
+class ConnectionPoolError(MCPError):
+    """Connection pool-related errors."""
+
+    pass
+
+
 class ToolExecutionError(MCPError):
     """Tool execution errors."""
 
@@ -108,8 +114,8 @@ class IntegrationError(MCPError):
     pass
 
 
-class MemoryError(MCPError):
-    """Memory system errors."""
+class MemoryServiceError(MCPError):
+    """Memory service/system errors."""
 
     pass
 

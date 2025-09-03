@@ -20,16 +20,19 @@ apps/cortex-code/
 ## Key Integration Points
 
 ### 1. Reference Implementation
+
 - **Path**: `./codex-reference/codex-rs/`
 - **Purpose**: Original Rust implementation for algorithm comparison
 - **Usage**: Reference for ensuring functional parity
 
 ### 2. CLI Compatibility
+
 - **Path**: `./codex-reference/codex-cli/`
 - **Purpose**: Command-line interface patterns and behaviors
 - **Usage**: Matching user experience and command structures
 
 ### 3. Documentation
+
 - **Path**: `./codex-reference/docs/`
 - **Purpose**: Official documentation and specifications
 - **Usage**: Understanding intended behavior and API contracts
@@ -37,6 +40,7 @@ apps/cortex-code/
 ## Development Workflow
 
 ### Updating the Submodule
+
 ```bash
 # Update to latest version
 cd apps/cortex-code/codex-reference
@@ -47,6 +51,7 @@ git commit -m "update: OpenAI Codex submodule to latest"
 ```
 
 ### Comparing Implementations
+
 ```bash
 # Compare specific files
 diff apps/cortex-code/src/main.rs apps/cortex-code/codex-reference/codex-rs/src/main.rs
@@ -56,6 +61,7 @@ diff apps/cortex-code/src/main.rs apps/cortex-code/codex-reference/codex-rs/src/
 ```
 
 ### Building Both Versions
+
 ```bash
 # Build OpenAI Codex
 cd apps/cortex-code/codex-reference/codex-rs

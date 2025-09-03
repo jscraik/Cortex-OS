@@ -74,7 +74,7 @@ async fn main() -> Result<()> {
         if let Some(prompt) = cli.prompt {
             let image_path = cli.images.first().and_then(|p| p.to_str());
             let response = app.run_single_with_image(&prompt, image_path).await?;
-            println!("{}", response);
+            println!("{response}");
         } else {
             anyhow::bail!("Non-interactive mode requires a prompt");
         }
@@ -156,8 +156,15 @@ async fn run_codex_tui_mode(app: &mut CortexApp, cli: &CodexLikeCli) -> Result<(
 
 // Import the existing TUI function from main.rs
 async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
+    use cortex_code::view::{
+        a2a_stream::A2aEventStream, chat::ChatWidget, cortex_command_palette::CortexCommandPalette,
+        github_dashboard::GitHubDashboard, status_bar::StatusBar,
+    };
     use crossterm::{
-        event::{self, DisableMouseCapture, EnableMouseCapture, Event as CrosstermEvent, KeyCode, KeyModifiers},
+        event::{
+            self, DisableMouseCapture, EnableMouseCapture, Event as CrosstermEvent, KeyCode,
+            KeyModifiers,
+        },
         execute,
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     };
@@ -166,14 +173,7 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
         layout::{Constraint, Direction, Layout},
         Terminal,
     };
-    use std::io::{self, Write};
-    use cortex_code::view::{
-        a2a_stream::A2aEventStream,
-        chat::ChatWidget,
-        cortex_command_palette::CortexCommandPalette,
-        github_dashboard::GitHubDashboard,
-        status_bar::StatusBar,
-    };
+    use std::io;
 
     info!("Starting Cortex Code - focused AI coding assistant");
 
@@ -190,17 +190,29 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
     let status_bar = StatusBar::new();
 
     // Initialize background tools (integrated, not separate views)
+    #[allow(dead_code)]
     struct CortexIntegratedTools {
         github_tools: GitHubDashboard,
         a2a_monitor: A2aEventStream,
-        mcp_manager: cortex_code::mcp::McpService,
+        mcp_manager: Option<cortex_code::mcp::McpService>,
         command_palette: CortexCommandPalette,
     }
+
+    let mcp_service = match cortex_code::mcp::McpService::new().await {
+        Ok(service) => Some(service),
+        Err(e) => {
+            log::warn!(
+                "Failed to initialize MCP service: {}, continuing without MCP",
+                e
+            );
+            None
+        }
+    };
 
     let mut cortex_tools = CortexIntegratedTools {
         github_tools: GitHubDashboard::new(),
         a2a_monitor: A2aEventStream::new(),
-        mcp_manager: cortex_code::mcp::McpService::new().await?,
+        mcp_manager: mcp_service,
         command_palette: CortexCommandPalette::new(),
     };
 
@@ -208,13 +220,23 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
     // The widgets themselves handle their data and display
 
     // Generate some sample data for demo
-    cortex_tools.a2a_monitor.generate_sample_event("cortex-mcp", "tool_call");
-    cortex_tools.a2a_monitor.generate_sample_event("cortex-core", "agent_message");
+    cortex_tools
+        .a2a_monitor
+        .generate_sample_event("cortex-mcp", "tool_call");
+    cortex_tools
+        .a2a_monitor
+        .generate_sample_event("cortex-core", "agent_message");
 
     // Welcome message similar to Cortex focused interface
-    chat_widget.add_message(cortex_code::app::Message::system("Welcome to Cortex Code - AI-powered coding assistant"));
-    chat_widget.add_message(cortex_code::app::Message::system("Available tools: MCP servers, GitHub integration, A2A events"));
-    chat_widget.add_message(cortex_code::app::Message::system("Press Ctrl+P for command palette, Ctrl+Q to quit"));
+    chat_widget.add_message(cortex_code::app::Message::system(
+        "Welcome to Cortex Code - AI-powered coding assistant",
+    ));
+    chat_widget.add_message(cortex_code::app::Message::system(
+        "Available tools: MCP servers, GitHub integration, A2A events",
+    ));
+    chat_widget.add_message(cortex_code::app::Message::system(
+        "Press Ctrl+P for command palette, Ctrl+Q to quit",
+    ));
 
     info!("Starting focused Cortex Code interface with background tools integration");
 
@@ -227,8 +249,8 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
-                    Constraint::Min(0),     // Chat interface
-                    Constraint::Length(1),  // Status bar
+                    Constraint::Min(0),    // Chat interface
+                    Constraint::Length(1), // Status bar
                 ])
                 .split(frame.size());
 
@@ -253,18 +275,18 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
                         (KeyCode::Char('q'), KeyModifiers::CONTROL) => {
                             info!("Received Ctrl+Q, shutting down");
                             break Ok(());
-                        },
+                        }
                         (KeyCode::Esc, _) if command_palette.is_visible() => {
                             command_palette.hide();
-                        },
+                        }
                         (KeyCode::Esc, _) => {
                             info!("Received ESC, shutting down");
                             break Ok(());
-                        },
+                        }
                         (KeyCode::Char('p'), KeyModifiers::CONTROL) => {
                             // Show command palette with available tools
                             command_palette.show();
-                        },
+                        }
                         _ => {
                             // Handle command palette events first
                             if command_palette.is_visible() {
@@ -293,8 +315,7 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
                                                 let mcp_count = mcp_servers.len();
 
                                                 chat_widget.add_message(cortex_code::app::Message::system(&format!(
-                                                    "🛠️ Tool Status: MCP ({} servers), GitHub (ready), A2A (monitoring)",
-                                                    mcp_count
+                                                    "🛠️ Tool Status: MCP ({mcp_count} servers), GitHub (ready), A2A (monitoring)"
                                                 )));
                                             },
                                             _ => {
@@ -310,23 +331,29 @@ async fn run_integrated_chat_interface(app: &mut CortexApp) -> Result<()> {
                             } else {
                                 // Route events to main chat interface
                                 match chat_widget.handle_event(CrosstermEvent::Key(key_event))? {
-                                    cortex_code::view::chat::EventResponse::SendMessage(message) => {
+                                    cortex_code::view::chat::EventResponse::SendMessage(
+                                        message,
+                                    ) => {
                                         info!("Sending message: {}", message);
 
                                         // Add user message to chat
-                                        chat_widget.add_message(cortex_code::app::Message::user(&message));
+                                        chat_widget
+                                            .add_message(cortex_code::app::Message::user(&message));
 
                                         // The AI can use standard response method
                                         let response = app.get_ai_response(&message).await?;
-                                        chat_widget.add_message(cortex_code::app::Message::assistant(&response));
-                                    },
-                                    cortex_code::view::chat::EventResponse::Continue => {},
+                                        chat_widget.add_message(
+                                            cortex_code::app::Message::assistant(&response),
+                                        );
+                                    }
+                                    cortex_code::view::chat::EventResponse::None => {}
+                                    _ => {}
                                 }
                             }
                         }
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     };
