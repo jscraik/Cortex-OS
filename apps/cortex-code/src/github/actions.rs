@@ -1,10 +1,9 @@
 use crate::github::{GitHubClient, types::*};
 use crate::Result;
-use serde_json::json;
 use std::collections::HashMap;
-use tokio::time::{interval, Duration, Instant};
+use tokio::time::{Duration, Instant, interval};
 use tokio_stream::{wrappers::IntervalStream, StreamExt};
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
 /// GitHub Actions API client for workflow management and monitoring
 pub struct ActionsAPI {
@@ -356,9 +355,9 @@ impl WorkflowValidator {
     /// Validate a workflow file from the repository
     pub async fn validate_workflow_file(
         &self,
-        owner: &str,
-        repo: &str,
-        workflow_path: &str,
+        _owner: &str,
+        _repo: &str,
+        _workflow_path: &str,
     ) -> Result<ValidationResult> {
         // This would fetch the workflow file content and validate it
         // For now, return a placeholder

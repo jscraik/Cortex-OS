@@ -19,8 +19,8 @@ import { simlabBench } from './commands/simlab/bench.js';
 import { simlabList } from './commands/simlab/list.js';
 import { simlabReport } from './commands/simlab/report.js';
 import { simlabRun } from './commands/simlab/run.js';
-import { tuiCommand } from './commands/tui.js';
 import { agentCreate } from './commands/agent/create.js';
+import { mcpGet } from './commands/mcp/get.js';
 
 
 const program = new Command("cortex");
@@ -62,9 +62,6 @@ program.addCommand(ctl);
 const evalCmd = new Command("eval");
 evalCmd.addCommand(evalGate);
 program.addCommand(evalCmd);
-
-
-program.addCommand(tuiCommand);
 
 const agent = new Command('agent');
 agent.addCommand(agentCreate);

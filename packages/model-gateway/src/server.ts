@@ -32,9 +32,7 @@ const ChatBodySchema = z.object({
 	tools: z.unknown().optional(),
 });
 
-type EmbeddingsBody = z.infer<typeof EmbeddingsBodySchema>;
-type RerankBody = z.infer<typeof RerankBodySchema>;
-type ChatBody = z.infer<typeof ChatBodySchema>;
+// inferred types are validated at the handler level; explicit aliases not exported to avoid unused warnings
 
 export function createServer(router?: IModelRouter): FastifyInstance {
 	const app = Fastify({ logger: true });

@@ -1,13 +1,13 @@
 """Event system for the MCP ecosystem."""
 
-from typing import Callable, Dict, List
+from collections.abc import Callable
 
 
 class EventSystem:
     """Simple event system placeholder."""
 
     def __init__(self) -> None:
-        self._listeners: Dict[str, List[Callable]] = {}
+        self._listeners: dict[str, list[Callable]] = {}
 
     def on(self, event: str, handler: Callable) -> None:
         self._listeners.setdefault(event, []).append(handler)

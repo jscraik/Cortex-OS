@@ -10,6 +10,7 @@
 			"options": {
 				"main": "packages/security/src/index.ts",
 				"tsConfig": "packages/security/tsconfig.json",
+				"outputPath": "dist/packages/security",
 				"assets": [],
 				"external": [
 					"@cortex-os/a2a-contracts",

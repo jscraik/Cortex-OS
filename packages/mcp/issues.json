@@ -1,0 +1,232 @@
+[
+  {
+    "file": "packages/mcp/pyproject.toml",
+    "lines": "28",
+    "severity": "high",
+    "category": "dependency-bug",
+    "description": "asyncio listed as explicit dependency - this is a built-in Python module",
+    "evidence": "Line 28: 'asyncio' in dependencies list",
+    "fix": "Remove 'asyncio' from dependencies list as it's part of Python standard library",
+    "tests_to_add": "None needed - configuration fix"
+  },
+  {
+    "file": "packages/mcp/pyproject.toml",
+    "lines": "66",
+    "severity": "medium",
+    "category": "dependency-issue",
+    "description": "zod-python dependency may be obsolete or non-standard",
+    "evidence": "Line 66: 'zod-python>=0.1.0' - unclear if this is a maintained package",
+    "fix": "Replace with pydantic for schema validation which is already included",
+    "tests_to_add": "Schema validation tests using pydantic"
+  },
+  {
+    "file": "packages/mcp/core/transports/base.py",
+    "lines": "30",
+    "severity": "high",
+    "category": "type-mismatch",
+    "description": "Incorrect type annotation for message_handler - returns Task but should be awaitable",
+    "evidence": "Line 30: message_handler: Optional[Callable[[MCPMessage], asyncio.Task]]",
+    "fix": "Change to Callable[[MCPMessage], Awaitable[Any]] and import Awaitable",
+    "tests_to_add": "Test message handler with proper async function"
+  },
+  {
+    "file": "packages/mcp/core/transports/base.py",
+    "lines": "68-69",
+    "severity": "medium",
+    "category": "error-handling",
+    "description": "Exception swallowed without proper logging",
+    "evidence": "Line 68-69: print() instead of proper logging",
+    "fix": "Use logger.error() with proper exception handling",
+    "tests_to_add": "Test callback error scenarios"
+  },
+  {
+    "file": "packages/mcp/core/transports/http_transport.py",
+    "lines": "41",
+    "severity": "high",
+    "category": "async-issue",
+    "description": "Incorrect await usage - message_handler should be awaited not treated as Task",
+    "evidence": "Line 41: response_message = await self.message_handler(message)",
+    "fix": "Check type annotation consistency with base class",
+    "tests_to_add": "Test message handler execution with mock responses"
+  },
+  {
+    "file": "packages/mcp/core/transports/http_transport.py",
+    "lines": "129-134",
+    "severity": "high",
+    "category": "logic-error",
+    "description": "Self-referential HTTP client call creates infinite loop potential",
+    "evidence": "Lines 129-134: Client posts to same server endpoint it's running on",
+    "fix": "Use proper target URL configuration or separate client/server logic",
+    "tests_to_add": "Test with separate client and server endpoints"
+  },
+  {
+    "file": "packages/mcp/core/transports/websocket_transport.py",
+    "lines": "157-170",
+    "severity": "medium",
+    "category": "error-handling",
+    "description": "Hard-coded error message creation without proper error context",
+    "evidence": "Lines 157-170: Creates generic error responses",
+    "fix": "Extract error response creation to utility method with proper context",
+    "tests_to_add": "Test error response formatting and correlation ID handling"
+  },
+  {
+    "file": "packages/mcp/core/transports/stdio_transport.py",
+    "lines": "133-144",
+    "severity": "medium",
+    "category": "missing-import",
+    "description": "MessageType imported but not used, error references undefined MessageType",
+    "evidence": "Line 133: references MessageType.ERROR but import missing",
+    "fix": "Add proper import: from ..protocol import MessageType",
+    "tests_to_add": "Test error message creation with proper MessageType"
+  },
+  {
+    "file": "packages/mcp/core/connection_pool.py",
+    "lines": "189",
+    "severity": "high",
+    "category": "missing-exception-class",
+    "description": "ConnectionPoolError referenced but never defined",
+    "evidence": "Line 189: raise ConnectionPoolError but class not defined",
+    "fix": "Define ConnectionPoolError class at module level",
+    "tests_to_add": "Test pool capacity limits and error handling"
+  },
+  {
+    "file": "packages/mcp/core/connection_pool.py",
+    "lines": "270",
+    "severity": "medium",
+    "category": "logic-error",
+    "description": "Circuit breaker state check uses string comparison instead of enum",
+    "evidence": "Line 270: connection.circuit_breaker.current_state == 'open'",
+    "fix": "Use proper enum comparison with CircuitBreakerState.OPEN",
+    "tests_to_add": "Test circuit breaker state checking with proper enum values"
+  },
+  {
+    "file": "packages/mcp/core/circuit_breakers.py",
+    "lines": "12",
+    "severity": "low",
+    "category": "unused-import",
+    "description": "circuit_breaker imported from third-party but custom implementation created",
+    "evidence": "Line 12: from circuit_breaker import CircuitBreaker not used",
+    "fix": "Remove unused import or clarify if it's for fallback behavior",
+    "tests_to_add": "None needed"
+  },
+  {
+    "file": "packages/mcp/tasks/task_queue.py",
+    "lines": "236",
+    "severity": "high",
+    "category": "decorator-error",
+    "description": "Task registration decorator syntax error - missing function call",
+    "evidence": "Line 236: @self.registry.register('echo') should be a method call",
+    "fix": "Change to proper decorator or use explicit registration",
+    "tests_to_add": "Test task registration and execution"
+  },
+  {
+    "file": "packages/mcp/tasks/distributed_queue.py",
+    "lines": "113-134",
+    "severity": "medium",
+    "category": "missing-imports",
+    "description": "time module used but not imported at function level",
+    "evidence": "Lines 113-134: time.time() called but import missing in function",
+    "fix": "Add import time at top of function or use existing import",
+    "tests_to_add": "Test task execution timing"
+  },
+  {
+    "file": "packages/mcp/security/auth.py",
+    "lines": "21",
+    "severity": "high",
+    "category": "security-vulnerability",
+    "description": "Secret key generated randomly on each startup",
+    "evidence": "Line 21: SECRET_KEY = secrets.token_urlsafe(32) - not persistent",
+    "fix": "Load from environment variable with secure default generation",
+    "tests_to_add": "Test token persistence across restarts"
+  },
+  {
+    "file": "packages/mcp/security/auth.py",
+    "lines": "419",
+    "severity": "medium",
+    "category": "dependency-injection",
+    "description": "Circular dependency in FastAPI dependency injection",
+    "evidence": "Line 419: get_current_user depends on get_current_user",
+    "fix": "Use Depends(get_current_user) instead of direct reference",
+    "tests_to_add": "Test dependency injection chain"
+  },
+  {
+    "file": "packages/mcp/integrations/a2a_bridge.py",
+    "lines": "191",
+    "severity": "medium",
+    "category": "decorator-missing-call",
+    "description": "register_handler decorator used incorrectly",
+    "evidence": "Line 191: @self.event_handler.register_handler('tool.execute') missing function call",
+    "fix": "Use proper method call syntax for registration",
+    "tests_to_add": "Test event handler registration and execution"
+  },
+  {
+    "file": "packages/mcp/integrations/memory_bridge.py",
+    "lines": "242",
+    "severity": "high",
+    "category": "sql-injection-risk",
+    "description": "Dynamic query construction with f-strings",
+    "evidence": "Line 242: f'MERGE (a)-[r:{relationship_type}]->(b)'",
+    "fix": "Use parameterized queries or validate relationship_type against whitelist",
+    "tests_to_add": "Test with malicious relationship_type values"
+  },
+  {
+    "file": "packages/mcp/integrations/orchestration_bridge.py",
+    "lines": "399-414",
+    "severity": "medium",
+    "category": "template-injection-risk",
+    "description": "Simple string replacement for template variables without validation",
+    "evidence": "Lines 399-414: Basic ${var} replacement without input sanitization",
+    "fix": "Use proper template engine like Jinja2 with sandboxing",
+    "tests_to_add": "Test with malicious template injection attempts"
+  },
+  {
+    "file": "packages/mcp/webui/app.py",
+    "lines": "176",
+    "severity": "high",
+    "category": "security-vulnerability",
+    "description": "CORS configured to allow all origins in production code",
+    "evidence": "Line 176: allow_origins=['*'] with comment about production",
+    "fix": "Use environment-based CORS configuration",
+    "tests_to_add": "Test CORS policy enforcement"
+  },
+  {
+    "file": "packages/mcp/webui/app.py",
+    "lines": "253",
+    "severity": "medium",
+    "category": "hardcoded-url",
+    "description": "WebSocket URL hardcoded to localhost",
+    "evidence": "Line 253: 'ws://localhost:8000/ws' hardcoded",
+    "fix": "Make WebSocket URL configurable based on current host",
+    "tests_to_add": "Test WebSocket connection from different hosts"
+  },
+  {
+    "file": "packages/mcp/cli/main.py",
+    "lines": "309-314",
+    "severity": "medium",
+    "category": "missing-imports",
+    "description": "Imports from non-existent modules",
+    "evidence": "Lines 309-314: Import statements for modules not found in codebase",
+    "fix": "Either create missing modules or remove imports and commands",
+    "tests_to_add": "Test all CLI commands for import errors"
+  },
+  {
+    "file": "packages/mcp/tests/conftest.py",
+    "lines": "99-100",
+    "severity": "medium",
+    "category": "test-configuration",
+    "description": "Mock object attributes set incorrectly",
+    "evidence": "Lines 99-100: pool.state = 'healthy' but should use enum",
+    "fix": "Use proper enum value from PoolState",
+    "tests_to_add": "Validate test fixture setup"
+  },
+  {
+    "file": "packages/mcp/tests/conftest.py",
+    "lines": "423-428",
+    "severity": "low",
+    "category": "security-test-data",
+    "description": "SQL injection test payloads may trigger security scanners",
+    "evidence": "Lines 423-428: Hardcoded injection payloads in code",
+    "fix": "Load test payloads from external configuration file",
+    "tests_to_add": "None needed - test improvement"
+  }
+]

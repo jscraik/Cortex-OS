@@ -57,7 +57,7 @@
 		}
 	},
 	"tags": ["scope:app", "type:app"],
-	"implicitDependencies": ["asbr", "a2a", "mcp", "memories", "orchestration"],
+	"implicitDependencies": ["asbr", "a2a", "memories", "orchestration"],
 	"namedInputs": {
 		"default": ["{projectRoot}/**/*", "sharedGlobals"],
 		"production": [

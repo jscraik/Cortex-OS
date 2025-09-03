@@ -49,6 +49,7 @@ export interface EventManager extends EventEmitter {
 		options: EventStreamOptions,
 		attempt?: number,
 	): Promise<{ events: Event[]; backoffMs?: number }>;
+	stop(): void;
 	getStats(): {
 		totalEvents: number;
 		activeSubscriptions: number;
@@ -394,6 +395,21 @@ class EventManagerClass extends EventEmitter {
 		if (this.globalEvents.length > 5000) {
 			this.globalEvents.splice(0, this.globalEvents.length - 5000);
 		}
+	}
+
+	async pollEvents(
+		options: EventStreamOptions,
+		attempt: number = 0,
+	): Promise<{ events: Event[]; backoffMs?: number }> {
+		const events = this.getEvents(options);
+
+		// If no events and this is not the first attempt, apply backoff
+		if (events.length === 0 && attempt > 0) {
+			const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 30000);
+			return { events: [], backoffMs };
+		}
+
+		return { events };
 	}
 
 	stop(): void {

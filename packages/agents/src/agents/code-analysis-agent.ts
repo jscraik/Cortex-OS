@@ -9,7 +9,9 @@ import { z } from "zod";
 import type {
 	Agent,
 	EventBus,
+	ExecutionContext,
 	GenerateOptions,
+	GenerateResult,
 	MCPClient,
 	MemoryPolicy,
 	ModelProvider,
@@ -46,7 +48,6 @@ export const codeAnalysisInputSchema = z.object({
 	]),
 	focus: z
 		.array(z.enum(["complexity", "performance", "security", "maintainability"]))
-		.optional()
 		.default(["complexity", "maintainability"]),
 	severity: z.enum(["low", "medium", "high"]).optional().default("medium"),
 	includeMetrics: z.boolean().optional().default(true),
@@ -137,80 +138,96 @@ export const createCodeAnalysisAgent = (
 
 	return {
 		id: agentId,
-		capability: "code-analysis",
-		inputSchema: codeAnalysisInputSchema,
-		outputSchema: codeAnalysisOutputSchema,
+		name: "Code Analysis Agent",
+		capabilities: [{ name: "code-analysis", description: "Code analysis and review" }],
 
-		execute: async (input: CodeAnalysisInput): Promise<CodeAnalysisOutput> => {
+		execute: async (context: ExecutionContext<CodeAnalysisInput>): Promise<GenerateResult<CodeAnalysisOutput>> => {
+			const { input } = context;
 			const traceId = generateTraceId();
 			const startTime = Date.now();
 
 			// Validate input
-			const validatedInput = validateSchema<CodeAnalysisInput>(
+			const validatedInput = validateSchema(
 				codeAnalysisInputSchema,
 				input,
 			);
 
+			// Ensure focus has default value
+			const inputWithDefaults = {
+				...validatedInput,
+				focus: validatedInput.focus || ["security", "maintainability"],
+				severity: validatedInput.severity || "medium" as const,
+				includeMetrics: validatedInput.includeMetrics ?? true,
+				includeSuggestions: validatedInput.includeSuggestions ?? true,
+			};
+
 			// Emit agent started event
-			config.eventBus.publish({
-				type: "agent.started",
-				data: {
-					agentId,
-					traceId,
-					capability: "code-analysis",
-					input: validatedInput,
-					timestamp: new Date().toISOString(),
-				},
+			const createEvent = (type: string, data: any) => ({
+				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+				type,
+				data,
+				timestamp: new Date().toISOString(),
+				source: 'code-analysis-agent'
 			});
+
+			config.eventBus.publish(createEvent("agent.started", {
+				agentId,
+				traceId,
+				capability: "code-analysis",
+				input: validatedInput,
+				timestamp: new Date().toISOString(),
+			}));
 
 			try {
 				const result = await withTimeout(
-					analyzeCode(validatedInput, config),
+					analyzeCode(inputWithDefaults, config),
 					timeout,
-					`Code analysis timed out after ${timeout}ms`,
 				);
 
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent completed event
-				config.eventBus.publish({
-					type: "agent.completed",
-					data: {
+				config.eventBus.publish(createEvent("agent.completed", {
+					agentId,
+					traceId,
+					capability: "code-analysis",
+					metrics: {
+						latencyMs: executionTime,
+						tokensUsed: estimateTokens(validatedInput.sourceCode),
+						suggestionsCount: result.suggestions.length,
+					},
+					timestamp: new Date().toISOString(),
+				}));
+
+				return {
+					content: `Code analysis completed: Found ${result.suggestions.length} suggestions with confidence ${result.confidence}`,
+					data: result,
+					metadata: {
 						agentId,
 						traceId,
-						capability: "code-analysis",
-						metrics: {
-							latencyMs: executionTime,
-							tokensUsed: estimateTokens(validatedInput.sourceCode),
-							suggestionsCount: result.suggestions.length,
-						},
-						timestamp: new Date().toISOString(),
+						executionTime,
+						tokensUsed: estimateTokens(validatedInput.sourceCode),
 					},
-				});
-
-				return result;
+				};
 			} catch (error) {
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent failed event
-				config.eventBus.publish({
-					type: "agent.failed",
-					data: {
-						agentId,
-						traceId,
-						capability: "code-analysis",
-						error: error instanceof Error ? error.message : "Unknown error",
-						errorCode: (error as any)?.code || undefined,
-						status:
-							typeof (error as any)?.status === "number"
-								? (error as any)?.status
-								: undefined,
-						metrics: {
-							latencyMs: executionTime,
-						},
-						timestamp: new Date().toISOString(),
+				config.eventBus.publish(createEvent("agent.failed", {
+					agentId,
+					traceId,
+					capability: "code-analysis",
+					error: error instanceof Error ? error.message : "Unknown error",
+					errorCode: (error as any)?.code || undefined,
+					status:
+						typeof (error as any)?.status === "number"
+							? (error as any)?.status
+							: undefined,
+					metrics: {
+						latencyMs: executionTime,
 					},
-				});
+					timestamp: new Date().toISOString(),
+				}));
 
 				throw error;
 			}

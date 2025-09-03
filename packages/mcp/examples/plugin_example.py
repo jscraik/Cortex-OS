@@ -1,8 +1,9 @@
 """Example of creating a simple plugin."""
 
-from mcp.plugins.base import BasePlugin
+from typing import Any
+
 from mcp.core.protocol import Tool
-from typing import Dict, Any, List
+from mcp.plugins.base import BasePlugin
 
 
 class MyPlugin(BasePlugin):
@@ -12,16 +13,19 @@ class MyPlugin(BasePlugin):
     async def cleanup(self) -> None:
         self.initialized = False
 
-    def get_tools(self) -> List[Tool]:
+    def get_tools(self) -> list[Tool]:
         return [
             Tool(
                 name="hello",
                 description="Say hello",
-                parameters={"type": "object", "properties": {"name": {"type": "string"}}},
+                parameters={
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}},
+                },
             )
         ]
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         if tool_name == "hello":
             return f"Hello, {arguments.get('name', 'World')}!"
         raise ValueError("Unknown tool")

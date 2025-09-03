@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
-import { PyEmbedder } from "@cortex-os/rag-embed/python-client";
-import { ingestText } from "@cortex-os/rag-pipeline/ingest";
-import { memoryStore } from "@cortex-os/rag-store/memory";
+import { PyEmbedder } from "@cortex-os/rag/embed/python-client";
+import { ingestText } from "@cortex-os/rag/pipeline/ingest";
+import { memoryStore } from "@cortex-os/rag/store/memory";
 import { Command } from "commander";
 
 export const ragIngest = new Command("ingest")

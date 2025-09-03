@@ -1,4 +1,5 @@
 use crate::Result;
+use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
 use tracing::{debug, warn};
@@ -275,8 +276,8 @@ impl TokenManager {
         };
 
         // Placeholder - would use proper JWT signing in production
-        let jwt_payload = serde_json::to_string(&payload)?;
-        let encoded = base64::encode(jwt_payload.as_bytes());
+    let jwt_payload = serde_json::to_string(&payload)?;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(jwt_payload.as_bytes());
 
         warn!("Using placeholder JWT - implement proper signing for production");
         Ok(encoded)
@@ -372,7 +373,8 @@ mod tests {
 
     #[test]
     fn test_token_expiration() {
-        let token = AuthToken {
+    // Token expiring in 1 minute is considered expired because of 5-minute buffer
+    let token = AuthToken {
             token: "test".to_string(),
             expires_at: Some(SystemTime::now() + Duration::from_secs(60)), // 1 minute
             scopes: vec![],
@@ -381,8 +383,8 @@ mod tests {
 
         let manager = TokenManager::new(GitHubAuth::PersonalAccessToken("test".to_string()));
 
-        // Token should not be expired (expires in 1 minute, buffer is 5 minutes)
-        assert!(!manager.is_token_expired(&token));
+    // Should be treated as expired because of the 5-minute buffer
+    assert!(manager.is_token_expired(&token));
 
         // Test expired token
         let expired_token = AuthToken {

@@ -89,7 +89,7 @@ impl GitHubModelsProvider {
 #[async_trait]
 impl ModelProvider for GitHubModelsProvider {
     fn provider_name(&self) -> &str {
-        "github-models"
+    "github"
     }
 
     async fn complete(&self, prompt: &str) -> Result<String> {
@@ -176,8 +176,7 @@ impl ModelProvider for GitHubModelsProvider {
 
                 // Parse SSE format
                 for line in text.lines() {
-                    if line.starts_with("data: ") {
-                        let data = &line[6..]; // Remove "data: " prefix
+                    if let Some(data) = line.strip_prefix("data: ") {
                         if data == "[DONE]" {
                             continue;
                         }

@@ -209,7 +209,6 @@ const performHealthCheck = async (state: FallbackState): Promise<void> => {
 			await withTimeout(
 				provider.generate("health check", { maxTokens: 1, temperature: 0 }),
 				5000,
-				"Health check timeout",
 			);
 			const latency = Date.now() - startTime;
 
@@ -236,7 +235,10 @@ const emitProviderFallback = (
 		// best-effort publish; swallow errors via catch on the returned promise
 		void bus
 			.publish({
+				id: crypto.randomUUID(),
 				type: "provider.fallback",
+				timestamp: new Date().toISOString(),
+				source: "fallback-chain",
 				data: {
 					failedProvider: provider.name,
 					reason:
@@ -268,6 +270,15 @@ export const createFallbackChain = (
 		generate: async (prompt: string, options: GenerateOptions = {}) => {
 			await performHealthCheck(state);
 			return generateWithFallback(prompt, options, state);
+		},
+
+		isAvailable: async () => {
+			// The fallback chain is available if at least one provider is healthy
+			const healthyProviders = state.config.providers.filter((provider: ModelProvider) => {
+				const health = state.providerHealth.get(provider.name);
+				return health?.isHealthy ?? false;
+			});
+			return healthyProviders.length > 0;
 		},
 
 		shutdown: async () => {

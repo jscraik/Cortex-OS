@@ -490,14 +490,16 @@ export class DeadLetterQueue {
 			await this.store.requeue(ids);
 
 			// Reset circuit breakers for recovered messages
-			const messages = await Promise.all(
+			const foundLists = await Promise.all(
 				ids.map((id) => this.store.findByCorrelationId(id)),
 			);
 			const messageTypes = new Set<string>();
 
-			messages.flat().forEach((msg) => {
-				if (msg) messageTypes.add(msg.type);
-			});
+			for (const list of foundLists) {
+				for (const msg of list) {
+					messageTypes.add(msg.type);
+				}
+			}
 
 			for (const type of messageTypes) {
 				await this.updateCircuitBreaker(type, false);
@@ -508,7 +510,7 @@ export class DeadLetterQueue {
 				`Bulk requeued messages from DLQ`,
 				{
 					count: ids.length,
-					affectedTypes: Array.from(messageTypes),
+					affectedTypes: Array.from(messageTypes).join(","),
 				},
 				span,
 			);

@@ -834,7 +834,7 @@ export class EvaluationNode {
 							const securityDetails = content.details;
 							if (securityDetails.summary) {
 								// Calculate security score based on vulnerability counts
-								const { critical, high, medium, total } =
+								const { critical, high, medium } =
 									securityDetails.summary;
 								const maxDeduction = critical * 25 + high * 15 + medium * 5;
 								securityScore = Math.max(

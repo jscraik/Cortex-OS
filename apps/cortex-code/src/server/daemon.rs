@@ -1,9 +1,7 @@
-use crate::{app::CortexApp, error::Result, memory::MemoryStorage};
+use crate::{app::CortexApp};
 use crate::server::handlers;
 use axum::{
-    extract::State,
     http::StatusCode,
-    response::Json,
     routing::{get, post},
     Router,
 };
@@ -12,7 +10,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower::ServiceBuilder;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing::{info, warn};
+use tracing::{info};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -77,7 +75,7 @@ impl DaemonServer {
         }
     }
 
-    pub async fn start(&self) -> Result<()> {
+    pub async fn start(&self) -> crate::error::Result<()> {
         let app = self.create_router();
 
         // Secure binding - only bind to localhost in development, configurable for production

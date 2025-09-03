@@ -1,4 +1,4 @@
-use std::panic::{self, PanicInfo};
+use std::panic;
 use tracing::error;
 
 /// Enhanced panic handler with context capture and user-friendly error display

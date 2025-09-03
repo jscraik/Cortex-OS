@@ -1,4 +1,5 @@
 use crate::app::{Message, MessageRole};
+// use crate::streaming::{StreamingManager, StreamingConfig};
 use crate::Result;
 use crossterm::event::Event;
 use ratatui::{
@@ -10,7 +11,7 @@ use ratatui::{
 };
 use std::collections::VecDeque;
 use tui_input::Input;
-use std::time::{Duration, Instant};
+use std::time::{Instant, Duration};
 
 #[derive(Debug, Clone)]
 pub struct ChatWidget {
@@ -21,6 +22,7 @@ pub struct ChatWidget {
     theme: Theme,
     state: ChatState,
     streaming_state: Option<StreamingState>,
+    // streaming_manager: Option<StreamingManager>, // Removed due to Debug/Clone issues
 }
 
 #[derive(Debug, Clone)]
@@ -66,6 +68,7 @@ impl Default for ChatWidget {
 
 impl ChatWidget {
     pub fn new() -> Self {
+        // let config = StreamingConfig::default();
         Self {
             messages: VecDeque::new(),
             scroll_offset: 0,
@@ -77,6 +80,7 @@ impl ChatWidget {
                 error_message: None,
             },
             streaming_state: None,
+            // streaming_manager: Some(StreamingManager::new(config)), // Removed due to Debug/Clone issues
         }
     }
 
@@ -392,7 +396,7 @@ impl ChatWidget {
         if self.focused_element == FocusElement::InputField {
             let cursor_x = chunks[0].x + self.input.visual_cursor() as u16 + 1;
             let cursor_y = chunks[0].y + 1;
-            frame.set_cursor_position((cursor_x, cursor_y));
+            frame.set_cursor(cursor_x, cursor_y);
         }
 
         // Send button

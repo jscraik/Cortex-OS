@@ -2,16 +2,16 @@
 	"name": "mvp",
 	"$schema": "https://raw.githubusercontent.com/nrwl/nx/master/packages/nx/schemas/project-schema.json",
 	"projectType": "library",
-	"sourceRoot": "packages/mvp/src",
+	"sourceRoot": "packages/mvp/mvp/src",
 	"targets": {
 		"build": {
 			"executor": "@nx/rollup:rollup",
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/mvp",
-				"tsConfig": "packages/mvp/tsconfig.lib.json",
-				"project": "packages/mvp/package.json",
-				"entryFile": "packages/mvp/src/index.ts",
+				"tsConfig": "packages/mvp/mvp/tsconfig.json",
+				"project": "packages/mvp/mvp/package.json",
+				"entryFile": "packages/mvp/mvp/src/index.ts",
 				"external": ["rxjs/operators", "rxjs/websocket", "rxjs/ajax"]
 			}
 		},
@@ -36,7 +36,6 @@
 		}
 	},
 	"tags": ["scope:mvp", "type:feature"],
-	"implicitDependencies": ["mvp-core"],
 	"namedInputs": {
 		"default": ["{projectRoot}/**/*", "sharedGlobals"],
 		"production": [

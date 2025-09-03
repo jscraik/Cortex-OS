@@ -1,4 +1,4 @@
-import type { Envelope } from "@cortex-os/a2a-contracts/envelope";
+import { createEnvelope, type Envelope } from "@cortex-os/a2a-contracts/envelope";
 import {
 	type OutboxConfig,
 	type OutboxMessage,
@@ -7,8 +7,8 @@ import {
 	type OutboxProcessor,
 	type OutboxPublisher,
 	type OutboxRepository,
-} from "../../a2a-contracts/src/outbox-types";
-import { createTraceParent } from "../../a2a-contracts/src/trace-context";
+} from "@cortex-os/a2a-contracts/outbox-types";
+import { createTraceParent } from "@cortex-os/a2a-contracts/trace-context";
 import { getCurrentTraceContext } from "./trace-context-manager";
 
 /**
@@ -35,19 +35,17 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
 			message.baggage = traceContext.baggage;
 		}
 
-		const envelope: Envelope = {
-			id: message.id,
+		// Build a CloudEvents-compliant envelope (adds defaults like ttlMs/headers)
+		const envelope: Envelope = createEnvelope({
 			type: message.eventType,
-			source: "/outbox-publisher",
-			specversion: "1.0",
-			time: message.createdAt.toISOString(),
+			source: "https://cortex-os/outbox-publisher",
 			data: message.payload,
 			correlationId: message.correlationId,
 			causationId: message.causationId,
 			traceparent: message.traceparent,
 			tracestate: message.tracestate,
 			baggage: message.baggage,
-		};
+		});
 
 		await this.transport.publish(envelope);
 	}

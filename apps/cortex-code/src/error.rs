@@ -36,6 +36,9 @@ pub enum Error {
 
     #[error("Other error: {0}")]
     Other(#[from] anyhow::Error),
+
+    #[error("URL parse error: {0}")]
+    UrlParse(#[from] url::ParseError),
 }
 
 #[derive(Error, Debug)]

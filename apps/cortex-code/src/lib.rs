@@ -11,6 +11,16 @@ pub mod model;
 pub mod providers;
 pub mod server;
 pub mod view;
+pub mod enhanced_config;
+pub mod cloudflare;
+pub mod webui;
+pub mod client_server;
+pub mod brainwav_integration;
+pub mod cloud_provider_agnostic;
+pub mod diagnostic_manager;
+pub mod tui;
+pub mod streaming;
+pub mod features;
 
 pub use error::{Error, Result};
 

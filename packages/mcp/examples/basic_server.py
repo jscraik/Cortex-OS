@@ -1,7 +1,8 @@
 import asyncio
 import logging
-from mcp.core.server import MCPServer
+
 from mcp.config.config_manager import ConfigManager
+from mcp.core.server import MCPServer
 
 logging.basicConfig(
     level=logging.INFO,

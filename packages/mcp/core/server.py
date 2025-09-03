@@ -1,13 +1,13 @@
-import asyncio
 import logging
-from typing import Dict, Any, Optional
-from .protocol import MCPProtocolHandler, MCPMessage, MessageType
-from ..plugins.hot_reloader import PluginHotReloader
+from typing import Any
+
 from ..config.config_manager import ConfigManager
+from ..plugins.hot_reloader import PluginHotReloader
+from .protocol import MCPMessage, MCPProtocolHandler
 
 
 class MCPServer:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.protocol_handler = MCPProtocolHandler()
         self.plugin_reloader = PluginHotReloader(
@@ -62,7 +62,7 @@ class MCPServer:
         """Handle an incoming MCP message."""
         return await self.protocol_handler.handle_message(message)
 
-    async def _handle_tools_list(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_tools_list(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle tools/list request."""
         tools = []
 
@@ -91,7 +91,7 @@ class MCPServer:
 
         return {"tools": tools}
 
-    async def _handle_tools_call(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _handle_tools_call(self, params: dict[str, Any]) -> dict[str, Any]:
         """Handle tools/call request."""
         tool_name = params.get("name")
         arguments = params.get("parameters", {})
@@ -114,7 +114,7 @@ class MCPServer:
     def _create_plugin_handler(self, plugin, tool_name: str):
         """Create a handler for a plugin tool."""
 
-        async def handler(params: Dict[str, Any]) -> Any:
+        async def handler(params: dict[str, Any]) -> Any:
             return await plugin.call_tool(tool_name, params)
 
         return handler

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 // Core GitHub types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Repository {
     pub id: u64,
     pub name: String,
@@ -30,9 +30,11 @@ pub struct Repository {
     pub disabled: bool,
     pub visibility: String,
     pub permissions: Option<Permissions>,
+    pub forks_count: u64,
+    pub open_issues_count: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct User {
     pub id: u64,
     pub login: String,
@@ -43,7 +45,7 @@ pub struct User {
     pub site_admin: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Permissions {
     pub admin: bool,
     pub maintain: Option<bool>,
@@ -53,7 +55,7 @@ pub struct Permissions {
 }
 
 // File operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Content {
     pub name: String,
     pub path: String,
@@ -67,7 +69,7 @@ pub struct Content {
     pub html_url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FileUpdateData {
     pub message: String,
     pub content: String, // Base64 encoded
@@ -77,34 +79,34 @@ pub struct FileUpdateData {
     pub author: Option<CommitAuthor>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CommitAuthor {
     pub name: String,
     pub email: String,
     pub date: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct FileResponse {
     pub content: Content,
     pub commit: Commit,
 }
 
 // Branch operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Branch {
     pub name: String,
     pub commit: BranchCommit,
     pub protected: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BranchCommit {
     pub sha: String,
     pub url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CreateBranchData {
     #[serde(rename = "ref")]
     pub ref_name: String, // refs/heads/branch-name
@@ -112,7 +114,7 @@ pub struct CreateBranchData {
 }
 
 // GitHub Actions types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Workflow {
     pub id: u64,
     pub name: String,
@@ -125,7 +127,7 @@ pub struct Workflow {
     pub badge_url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WorkflowRun {
     pub id: u64,
     pub name: Option<String>,
@@ -162,7 +164,7 @@ pub struct WorkflowRun {
     pub head_repository: Repository,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ReferencedWorkflow {
     pub path: String,
     pub sha: String,
@@ -170,14 +172,14 @@ pub struct ReferencedWorkflow {
     pub ref_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WorkflowDispatchData {
     #[serde(rename = "ref")]
     pub ref_name: String,
     pub inputs: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Job {
     pub id: u64,
     pub run_id: u64,
@@ -204,7 +206,7 @@ pub struct Job {
     pub runner_group_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Step {
     pub name: String,
     pub status: String,
@@ -214,7 +216,7 @@ pub struct Step {
     pub completed_at: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Artifact {
     pub id: u64,
     pub node_id: String,
@@ -229,7 +231,7 @@ pub struct Artifact {
     pub workflow_run: Option<WorkflowRunMinimal>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WorkflowRunMinimal {
     pub id: u64,
     pub repository_id: u64,
@@ -239,7 +241,7 @@ pub struct WorkflowRunMinimal {
 }
 
 // Pull request types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PullRequest {
     pub id: u64,
     pub number: u64,
@@ -285,7 +287,7 @@ pub struct PullRequest {
     pub issue_url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PullRequestBranch {
     pub label: String,
     #[serde(rename = "ref")]
@@ -295,7 +297,7 @@ pub struct PullRequestBranch {
     pub repo: Repository,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PullRequestLinks {
     #[serde(rename = "self")]
     pub self_link: Link,
@@ -308,12 +310,12 @@ pub struct PullRequestLinks {
     pub statuses: Link,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Link {
     pub href: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Team {
     pub id: u64,
     pub name: String,
@@ -327,7 +329,7 @@ pub struct Team {
     pub permission: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Label {
     pub id: u64,
     pub url: String,
@@ -337,7 +339,7 @@ pub struct Label {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Milestone {
     pub id: u64,
     pub number: u64,
@@ -356,7 +358,7 @@ pub struct Milestone {
     pub labels_url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct AutoMerge {
     pub enabled_by: User,
     pub merge_method: String,
@@ -364,7 +366,7 @@ pub struct AutoMerge {
     pub commit_message: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CreatePRData {
     pub title: String,
     pub head: String,
@@ -375,7 +377,7 @@ pub struct CreatePRData {
     pub issue: Option<u64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct UpdatePRData {
     pub title: Option<String>,
     pub body: Option<String>,
@@ -384,7 +386,7 @@ pub struct UpdatePRData {
     pub maintainer_can_modify: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MergePRData {
     pub commit_title: Option<String>,
     pub commit_message: Option<String>,
@@ -392,7 +394,7 @@ pub struct MergePRData {
     pub merge_method: Option<String>, // merge, squash, rebase
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MergeResult {
     pub sha: String,
     pub merged: bool,
@@ -400,7 +402,7 @@ pub struct MergeResult {
 }
 
 // Review types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Review {
     pub id: u64,
     pub user: User,
@@ -413,7 +415,7 @@ pub struct Review {
     pub author_association: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CreateReviewData {
     pub commit_id: Option<String>,
     pub body: Option<String>,
@@ -421,7 +423,7 @@ pub struct CreateReviewData {
     pub comments: Option<Vec<ReviewComment>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ReviewComment {
     pub path: String,
     pub position: Option<u64>,
@@ -433,7 +435,7 @@ pub struct ReviewComment {
 }
 
 // Issue types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Issue {
     pub id: u64,
     pub number: u64,
@@ -461,7 +463,7 @@ pub struct Issue {
 }
 
 // Comments
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Comment {
     pub id: u64,
     pub url: String,
@@ -474,7 +476,7 @@ pub struct Comment {
 }
 
 // Commit types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Commit {
     pub sha: String,
     pub url: String,
@@ -488,27 +490,27 @@ pub struct Commit {
     pub stats: Option<CommitStats>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GitUser {
     pub name: String,
     pub email: String,
     pub date: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Tree {
     pub sha: String,
     pub url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CommitParent {
     pub sha: String,
     pub url: String,
     pub html_url: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Verification {
     pub verified: bool,
     pub reason: String,
@@ -516,7 +518,7 @@ pub struct Verification {
     pub payload: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CommitStats {
     pub additions: u64,
     pub deletions: u64,

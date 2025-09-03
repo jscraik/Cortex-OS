@@ -1,5 +1,14 @@
 {
   "extends": "nx/presets/npm.json",
+  "namedInputs": {
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/.eslintrc.json",
+      "{workspaceRoot}/biome.json"
+    ]
+  },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",

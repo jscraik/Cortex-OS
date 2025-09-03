@@ -1,8 +1,6 @@
 """Plugin marketplace logic."""
 
-from typing import List
 
-
-def list_plugins() -> List[str]:
+def list_plugins() -> list[str]:
     """Placeholder plugin lister."""
     return []

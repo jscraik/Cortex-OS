@@ -1,16 +1,14 @@
-import { AgentConfigSchema, RAGQuerySchema } from "@cortex-os/contracts";
-import {
-	createJsonOutput,
-	createStdOutput,
-	StructuredError,
-} from "@cortex-os/lib";
+import { AgentConfigSchema, RAGQuerySchema } from "./lib/contracts-shim";
+import { createJsonOutput, createStdOutput, StructuredError } from "./lib/shims";
 import { z } from "zod";
 import { Qwen3Presets } from "./embed/qwen3";
+export { PyEmbedder } from "./embed/python-client";
 import {
 	createMultiModelGenerator,
 	ModelPresets,
 } from "./generation/multi-model";
 import { memoryStore } from "./store/memory";
+export * as lib from "./lib";
 
 const InputSchema = z.object({
 	config: AgentConfigSchema,

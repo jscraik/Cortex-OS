@@ -49,12 +49,12 @@ const generateViaMCP = async (
 
 	try {
 		const call = async () =>
-			(await config.mcpClient.callTool("text-generation", "generate", {
+			(await config.mcpClient.callTool("text-generation", {
 				model: config.modelName,
 				prompt,
 				...mergedOptions,
 			})) as MCPTextGenResult;
-		const result = await retry(call, config.retries ?? 2, 300, 2000);
+		const result = await retry(call, config.retries ?? 2, 300);
 
 		const endTime = Date.now();
 
@@ -62,7 +62,7 @@ const generateViaMCP = async (
 			throw new Error("Invalid response from MCP server");
 		}
 
-		const usage = {
+		const tokenUsage = {
 			promptTokens: result.usage?.promptTokens ?? estimateTokens(prompt),
 			completionTokens:
 				result.usage?.completionTokens ?? estimateTokens(result.text),
@@ -70,18 +70,21 @@ const generateViaMCP = async (
 				result.usage?.totalTokens ?? estimateTokens(prompt + result.text),
 		};
 		return {
-			text: result.text,
-			usage,
-			latencyMs: endTime - startTime,
-			provider: `mcp:${config.modelName}`,
+			content: result.text,
+			tokenUsage,
+			metadata: {
+				latencyMs: endTime - startTime,
+				provider: `mcp:${config.modelName}`,
+			},
 		};
 	} catch (error) {
 		const anyErr: any = error;
 		const status = anyErr?.status || anyErr?.response?.status;
 		const title = anyErr?.title || anyErr?.response?.statusText || "mcp_error";
 		const detail = anyErr?.detail || anyErr?.message || "";
+		const errorMessage = `${title} ${detail}`;
 		const err = new Error(
-			`MCP generation failed: ${redactSecrets(`${title} ${detail}`)}`,
+			`MCP generation failed: ${redactSecrets(errorMessage)}`,
 		);
 		(err as any).code = anyErr?.type || (status ? String(status) : "mcp_error");
 		(err as any).status = status;
@@ -97,8 +100,8 @@ export const createMCPProvider = (
 		withTimeout(
 			generateViaMCP(prompt, options, config),
 			config.timeout || 30000,
-			`MCP generation timed out after ${config.timeout || 30000}ms`,
 		),
+	isAvailable: () => Promise.resolve(true),
 	shutdown: () => Promise.resolve(),
 });
 
@@ -108,16 +111,16 @@ export const createMCPProviders = async (
 	try {
 		const tools = (await mcpClient.listTools?.()) || [];
 		const textGenTools = tools.filter(
-			(tool) =>
+			(tool: any) =>
 				tool.name === "text-generation" &&
-				(tool as any).schema?.properties?.model,
+				tool.schema?.properties?.model,
 		);
 
 		if (textGenTools.length === 0) {
 			return [];
 		}
 
-		const modelOptions = (textGenTools[0] as any).schema?.properties?.model
+		const modelOptions = textGenTools[0].schema?.properties?.model
 			?.enum || ["default"];
 
 		return modelOptions.map((model: string) =>

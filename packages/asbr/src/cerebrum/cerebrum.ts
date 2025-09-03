@@ -22,6 +22,7 @@ export class Cerebrum {
 	private simulator: Simulator;
 	private critiqueEngine: CritiqueEngine;
 	private teacher: Teacher;
+	private readonly evidenceCollector: EvidenceCollector;
 
 	constructor(options: CerebrumOptions) {
 		this.config = options.config;
@@ -135,6 +136,6 @@ export class Cerebrum {
 	}
 
 	private generateId(): string {
-		return `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `plan_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 	}
 }

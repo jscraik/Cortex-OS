@@ -4,8 +4,8 @@
  */
 
 // Respect AGENTS.md boundaries: import from public exports
-import { createEnhancedClient } from "@cortex-os/mcp-core/client";
-import type { ServerInfo } from "@cortex-os/mcp-core/contracts";
+import { createEnhancedClient } from "@cortex-os/mcp-core";
+import type { ServerInfo } from "@cortex-os/mcp-core";
 import type {
 	ChatRequest,
 	EmbeddingBatchRequest,

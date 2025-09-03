@@ -1,4 +1,6 @@
 import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
+import { spawn } from "node:child_process";
 import path, { join } from "node:path";
 
 /**
@@ -113,11 +115,11 @@ export class Qwen3Reranker implements Reranker {
 	}
 
 	/**
-   * Score a batch of documents against the query
-
-  private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
+	 * Score a batch of documents against the query
+	 */
+	private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
     return new Promise((resolve, reject) => {
-      const pythonScript = this.getPythonScript();
+	const pythonScript = this.getPythonScript();
       const child = spawn(this.pythonPath, ['-c', pythonScript], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {
@@ -176,9 +178,23 @@ export class Qwen3Reranker implements Reranker {
 
       child.stdin?.write(JSON.stringify(input));
       child.stdin?.end();
-    });
+	    });
 
-  }
+	}
+
+	/**
+	 * Load the embedded Python script used for reranking
+	 */
+	private getPythonScript(): string {
+		// Co-locate script next to package root, reuse same pattern as generation
+		const scriptPath = path.resolve(__dirname, "../../python/qwen3_rerank.py");
+		try {
+			return readFileSync(scriptPath, "utf8");
+		} catch {
+			// Fallback minimal script: echoes zero scores to avoid hard-crash in dev
+			return "import json,sys; data=json.load(sys.stdin); print(json.dumps({'scores':[0.0]*len(data.get('documents',[]))}))";
+		}
+	}
 
   /**
    * Create batches from documents array

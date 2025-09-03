@@ -20,8 +20,7 @@
 		"@fastify/rate-limit": "^10.1.1",
 		"@fastify/swagger": "^9.0.0",
 		"@fastify/swagger-ui": "^5.0.1",
-		"@cortex-os/mcp-registry": "workspace:*",
-		"@cortex-os/mcp": "workspace:*",
+		"@cortex-os/registry": "workspace:*",
 		"fastify": "^5.1.0",
 		"zod": "^3.23.8",
 		"pino": "^9.4.0"

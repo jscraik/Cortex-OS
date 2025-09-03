@@ -1,14 +1,14 @@
 use crate::error::{ProviderError, Result};
-use crate::mcp::{McpTool, McpResource, McpRegistry};
+use crate::mcp::McpRegistry;
+use crate::mcp::McpTool;
 use crate::mcp::server::McpServerInfo;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::process::Stdio;
 use std::sync::Arc;
 use tokio::process::Command;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// Production-ready MCP service that bridges to the TypeScript MCP core
 #[derive(Debug)]
@@ -77,7 +77,7 @@ impl McpService {
     }
 
     async fn initialize_default_servers(&self) -> Result<()> {
-        let mut registry = self.registry.write().await;
+    let registry = self.registry.write().await;
         registry.initialize_default_servers().await?;
 
         info!("Initialized {} default MCP servers", registry.list_servers().await.len());
@@ -90,7 +90,7 @@ impl McpService {
             .with_args(config.args.unwrap_or_default())
             .with_env(config.env.unwrap_or_default());
 
-        let mut registry = self.registry.write().await;
+    let registry = self.registry.write().await;
         registry.register_server(server_info).await?;
 
         info!("Added MCP server: {}", name);
@@ -98,7 +98,7 @@ impl McpService {
     }
 
     pub async fn remove_server(&self, name: &str) -> Result<()> {
-        let mut registry = self.registry.write().await;
+    let registry = self.registry.write().await;
         registry.unregister_server(name).await?;
 
         info!("Removed MCP server: {}", name);
@@ -152,7 +152,7 @@ impl McpService {
 
         // Get or start the server
         let registry = self.registry.read().await;
-        let client = if let Some(client) = registry.get_client(server_name).await {
+        let _client = if let Some(client) = registry.get_client(server_name).await {
             client
         } else {
             drop(registry);

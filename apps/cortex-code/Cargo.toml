@@ -12,23 +12,18 @@ name = "cortex-code"
 path = "src/main.rs"
 
 [dependencies]
-# TUI Framework (exact Codex version)
-ratatui = { version = "0.29.0", features = [
-    "scrolling-regions",
-    "unstable-rendered-line-info",
-    "unstable-widget-ref"
-]}
-crossterm = "0.28.1"
-tui-input = "0.14.0"
-tui-markdown = "0.3.3"
-ratatui-image = "8.0.0"
+# Core TUI dependencies
+ratatui = "0.26.0"
+crossterm = "0.27.0"
+tui-input = "0.10.0"
 
 # Async Runtime
 tokio = { version = "1", features = ["full"] }
 
-# HTTP & API
-reqwest = { version = "0.12", features = ["stream", "json"] }
-eventsource-stream = "0.2"
+# HTTP & API - pinned to compatible versions
+reqwest = { version = "=0.11.18", features = ["json", "stream"], default-features = false }
+url = "=2.2.2"
+idna = "=0.3.0"
 bytes = "1.0"
 
 # Serialization
@@ -56,31 +51,27 @@ axum = "0.7"
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "trace"] }
 
-# MCP integration
-uuid = { version = "1.0", features = ["v4"] }
+# Streaming utilities
+async-stream = "0.3"
 
 # Async utilities
 futures = "0.3"
 tokio-stream = "0.1"
-async-stream = "0.3"
-chrono = { version = "0.4.41", features = ["serde"] }
+chrono = { version = "0.4.30", features = ["serde"] }
 base64 = "0.21"
-rand = "0.9.2"
-url = "2.5.7"
+rand = "0.8"
+uuid = { version = "1.0", features = ["v4"] }
+
+# Basic security dependencies (compatible versions)
 hmac = "0.12.1"
 sha2 = "0.10.9"
 hex = "0.4.3"
+num_cpus = "1.0"
 
 [dev-dependencies]
 # Testing
 insta = { version = "1.34", features = ["yaml"] }
-mockito = "1.2"
 tempfile = "3"
 tokio-test = "0.4"
-
-# Test utilities
-assert_matches = "1.5"
-proptest = "1.4"
-
-[build-dependencies]
-# For build-time code generation if needed
+assert_cmd = "2.0"
+predicates = "3.0"

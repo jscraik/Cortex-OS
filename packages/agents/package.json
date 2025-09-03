@@ -30,7 +30,6 @@
 	},
 	"dependencies": {
 		"@cortex-os/a2a": "workspace:*",
-		"@cortex-os/mcp": "workspace:*",
 		"@cortex-os/memories": "workspace:*",
 		"yaml": "^2.8.0",
 		"zod": "^3.23.8"

@@ -13,7 +13,7 @@ export const startSpan = (name: string) => {
 	const span = {
 		name,
 		status: "OK",
-		attributes: {},
+		attributes: {} as Record<string, any>,
 		end: function () {
 			spans.push(this);
 		},

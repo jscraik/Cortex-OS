@@ -7,11 +7,11 @@ use tokio::time::sleep;
 use tracing::{debug, warn};
 
 /// GitHub API rate limiter with intelligent request queuing and backoff
+#[derive(Clone)]
 pub struct GitHubRateLimiter {
     state: Arc<Mutex<RateLimiterState>>,
 }
 
-#[derive(Debug)]
 struct RateLimiterState {
     remaining_requests: u64,
     reset_time: Instant,
@@ -29,10 +29,9 @@ struct ResourceLimit {
     used: u64,
 }
 
-type QueuedRequest = Box<
-    dyn FnOnce() -> Box<dyn futures::Future<Output = Result<reqwest::Response>> + Send + Unpin>
-        + Send,
->;
+type RequestFuture = Box<dyn futures::Future<Output = Result<reqwest::Response>> + Send>;
+type RequestFn = Box<dyn FnOnce() -> RequestFuture + Send>;
+type QueuedRequest = (RequestFn, tokio::sync::oneshot::Sender<Result<reqwest::Response>>);
 
 impl GitHubRateLimiter {
     pub fn new() -> Self {
@@ -56,20 +55,19 @@ impl GitHubRateLimiter {
         F: FnOnce() -> Fut + Send + 'static,
         Fut: futures::Future<Output = Result<reqwest::Response>> + Send + 'static,
     {
-        let (tx, rx) = tokio::sync::oneshot::channel();
+    let (tx, rx) = tokio::sync::oneshot::channel::<Result<reqwest::Response>>();
 
         {
             let mut state = self.state.lock().await;
 
             // Add request to queue
-            state.queue.push_back(Box::new(move || {
-                let fut = request_fn();
-                Box::new(Box::pin(async move {
-                    let result = fut.await;
-                    let _ = tx.send(result.clone());
-                    result
-                }))
-            }));
+            state.queue.push_back((
+                Box::new(move || {
+                    let fut = request_fn();
+                    Box::new(Box::pin(async move { fut.await })) as RequestFuture
+                }),
+                tx,
+            ));
 
             // Start processing if not already processing
             if !state.processing {
@@ -81,6 +79,7 @@ impl GitHubRateLimiter {
             }
         }
 
+        // Await the actual result from the executed request
         rx.await.map_err(|_| {
             crate::error::Error::Other(anyhow::anyhow!("Request cancelled"))
         })?
@@ -88,10 +87,10 @@ impl GitHubRateLimiter {
 
     async fn process_queue(state: Arc<Mutex<RateLimiterState>>) {
         loop {
-            let request = {
+            let (request, tx) = {
                 let mut state_guard = state.lock().await;
-                if let Some(request) = state_guard.queue.pop_front() {
-                    request
+                if let Some(queued) = state_guard.queue.pop_front() {
+                    queued
                 } else {
                     state_guard.processing = false;
                     break;
@@ -103,16 +102,18 @@ impl GitHubRateLimiter {
 
             // Execute request
             let future = request();
+            let future = Box::into_pin(future);
             match future.await {
                 Ok(response) => {
                     Self::update_rate_limit_info(&state, &response).await;
+                    let _ = tx.send(Ok(response));
                 }
                 Err(e) => {
                     warn!("Request failed: {:?}", e);
-                    // Handle rate limit errors
                     if Self::is_rate_limit_error(&e) {
                         Self::handle_rate_limit_error(&state, &e).await;
                     }
+                    let _ = tx.send(Err(e));
                 }
             }
 
@@ -250,7 +251,7 @@ impl GitHubRateLimiter {
         state_guard.remaining_requests = 0;
 
         // If we have retry-after header info, use it
-        // This would need to be extracted from the error
+        // This would need need to be extracted from the error
         // For now, use a conservative estimate
         state_guard.reset_time = Instant::now() + Duration::from_secs(60);
 

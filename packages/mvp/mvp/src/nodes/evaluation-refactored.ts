@@ -74,7 +74,7 @@ export class EvaluationNode {
 
 		evidence.push({
 			id: `eval-quality-${Date.now()}`,
-			type: "quality",
+			type: "analysis",
 			source: "quality_validator",
 			content: JSON.stringify(qualityValidation),
 			timestamp: new Date().toISOString(),
@@ -90,7 +90,7 @@ export class EvaluationNode {
 
 		evidence.push({
 			id: `eval-consensus-${Date.now()}`,
-			type: "decision",
+			type: "analysis",
 			source: "cerebrum",
 			content: JSON.stringify(consensus),
 			timestamp: new Date().toISOString(),
@@ -105,19 +105,22 @@ export class EvaluationNode {
 		return {
 			...state,
 			evidence: [...state.evidence, ...evidence],
-			status: decision === "ship" ? "completed" : "needs_revision",
+			phase: decision === "ship" ? "completed" : "evaluation",
 			metadata: {
 				...state.metadata,
-				evaluation: {
-					decision,
-					blockers: blockers.length,
-					majors: majors.length,
-					tddPassed: tddValidation.passed,
-					reviewPassed:
-						reviewValidation.blockers === 0 && reviewValidation.majors <= 3,
-					qualityPassed: qualityValidation.overall,
-					consensus: consensus.recommendation,
-					timestamp: new Date().toISOString(),
+				executionContext: {
+					...state.metadata.executionContext,
+					evaluation: {
+						decision,
+						blockers: blockers.length,
+						majors: majors.length,
+						tddPassed: tddValidation.passed,
+						reviewPassed:
+							reviewValidation.blockers === 0 && reviewValidation.majors <= 3,
+						qualityPassed: qualityValidation.overall,
+						consensus: consensus.recommendation,
+						timestamp: new Date().toISOString(),
+					},
 				},
 			},
 		};

@@ -134,7 +134,7 @@ const createOrchestratorState = (
 			const ttl = policy?.ttl || "PT1H";
 			const maxItemBytes = policy?.maxItemBytes ?? 256_000;
 			const redactPII = policy?.redactPII ?? config.redactPII ?? true;
-			return { namespace: ns, ttl, maxItemBytes, tagPrefix: "evt", redactPII };
+			return { namespace: ns, ttl: String(ttl), maxItemBytes, tagPrefix: "evt", redactPII };
 		};
 		// Fire and forget; wireOutbox sets up subscriptions
 		void wireOutbox(config.eventBus, config.memoryStore, resolver);
@@ -194,7 +194,6 @@ const executeTask = async (
 		const result = await withTimeout(
 			agent.execute(task.input),
 			task.timeout,
-			`Task ${task.id} timed out after ${task.timeout}ms`,
 		);
 
 		if (state.config.enableMetrics) {
@@ -432,7 +431,7 @@ export const getAvailableAgents = (
 ): Array<{ type: string; capability: string }> =>
 	Array.from(state.agents.entries()).map(([type, agent]) => ({
 		type,
-		capability: agent.capability,
+		capability: agent.capabilities[0]?.name || 'unknown',
 	}));
 
 export const shutdownOrchestrator = (state: OrchestratorState): void => {

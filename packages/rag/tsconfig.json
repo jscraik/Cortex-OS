@@ -1,8 +1,27 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"rootDir": "src",
-		"outDir": "dist"
+		"outDir": "dist",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"verbatimModuleSyntax": true,
+		"skipLibCheck": true,
+		"baseUrl": ".",
+		"paths": {
+			"fast-glob": [
+				"src/stubs/fast-glob.ts"
+			],
+			"micromatch": [
+				"src/stubs/micromatch.ts"
+			]
+		}
 	},
-	"include": ["src"]
+	"include": [
+		"src/**/*.ts",
+		"src/types/shims.d.ts"
+	],
+	"exclude": [
+		"src/**/*.js",
+		"dist"
+	]
 }

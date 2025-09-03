@@ -17,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^22.5.0",
+		"@types/micromatch": "^4.0.9",
 		"typescript": "^5.5.4",
 		"vitest": "^2.0.5"
 	}

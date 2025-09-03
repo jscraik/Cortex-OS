@@ -67,64 +67,42 @@ pub fn create_provider(config: &Config) -> Result<Box<dyn ModelProvider>> {
 
 fn create_specific_provider(config: &Config, provider_name: &str) -> Result<Box<dyn ModelProvider>> {
     match provider_name {
-        // New provider names from cortex.json
+        // Provider names from cortex.json
         "github" => {
-            // Use provider config from cortex.json or fallback to legacy
-            if let Some(legacy) = &config.github_models {
-                Ok(Box::new(GitHubModelsProvider::new(legacy)?))
-            } else {
-                // Create from cortex.json config
-                let provider_config = config.get_provider_config("github")
-                    .ok_or_else(|| ProviderError::NotConfigured("github".to_string()))?;
+            let provider_config = config.get_provider_config("github")
+                .ok_or_else(|| ProviderError::NotConfigured("github".to_string()))?;
 
-                let github_config = crate::config::GitHubModelsConfig {
-                    model: "gpt-4o-mini".to_string(), // Default from cortex.json
-                    endpoint: provider_config.base_url.clone()
-                        .unwrap_or_else(|| "https://models.inference.ai.azure.com".to_string()),
-                    token: std::env::var("GITHUB_TOKEN").ok(),
-                };
-                Ok(Box::new(GitHubModelsProvider::new(&github_config)?))
-            }
+            let github_config = crate::config::GitHubModelsConfig {
+                model: "gpt-4o-mini".to_string(),
+                endpoint: provider_config.base_url.clone()
+                    .unwrap_or_else(|| "https://models.inference.ai.azure.com".to_string()),
+                token: std::env::var("GITHUB_TOKEN").ok(),
+            };
+            Ok(Box::new(GitHubModelsProvider::new(&github_config)?))
         }
         "openai" => {
-            if let Some(legacy) = &config.openai {
-                Ok(Box::new(OpenAIProvider::new(legacy)?))
-            } else {
-                let api_key = std::env::var("OPENAI_API_KEY")
-                    .map_err(|_| ProviderError::NotConfigured("OPENAI_API_KEY not set".to_string()))?;
+            let api_key = std::env::var("OPENAI_API_KEY")
+                .map_err(|_| ProviderError::NotConfigured("OPENAI_API_KEY not set".to_string()))?;
 
-                let provider_config = config.get_provider_config("openai");
-                let openai_config = crate::config::OpenAIConfig {
-                    api_key,
-                    model: "gpt-4o-mini".to_string(),
-                    endpoint: provider_config.and_then(|c| c.base_url.clone()),
-                };
-                Ok(Box::new(OpenAIProvider::new(&openai_config)?))
-            }
+            let provider_config = config.get_provider_config("openai");
+            let openai_config = crate::config::OpenAIConfig {
+                api_key,
+                model: "gpt-4o-mini".to_string(),
+                endpoint: provider_config.and_then(|c| c.base_url.clone()),
+            };
+            Ok(Box::new(OpenAIProvider::new(&openai_config)?))
         }
         "anthropic" => {
-            if let Some(legacy) = &config.anthropic {
-                Ok(Box::new(AnthropicProvider::new(legacy)?))
-            } else {
-                let api_key = std::env::var("ANTHROPIC_API_KEY")
-                    .map_err(|_| ProviderError::NotConfigured("ANTHROPIC_API_KEY not set".to_string()))?;
+            let api_key = std::env::var("ANTHROPIC_API_KEY")
+                .map_err(|_| ProviderError::NotConfigured("ANTHROPIC_API_KEY not set".to_string()))?;
 
-                let anthropic_config = crate::config::AnthropicConfig {
-                    api_key,
-                    model: "claude-3-haiku-20240307".to_string(),
-                };
-                Ok(Box::new(AnthropicProvider::new(&anthropic_config)?))
-            }
+            let anthropic_config = crate::config::AnthropicConfig {
+                api_key,
+                model: "claude-3-haiku-20240307".to_string(),
+            };
+            Ok(Box::new(AnthropicProvider::new(&anthropic_config)?))
         }
         "mlx" => Ok(Box::new(LocalMLXProvider::new()?)),
-
-        // Legacy provider names for backward compatibility
-        "github-models" => {
-            let github_config = config.github_models.as_ref()
-                .ok_or_else(|| ProviderError::NotConfigured("github-models".to_string()))?;
-            Ok(Box::new(GitHubModelsProvider::new(github_config)?))
-        }
-        "local-mlx" => Ok(Box::new(LocalMLXProvider::new()?)),
 
         _ => Err(ProviderError::UnknownProvider(provider_name.to_string()).into()),
     }
@@ -133,12 +111,14 @@ fn create_specific_provider(config: &Config, provider_name: &str) -> Result<Box<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::{Config, OpenAIConfig};
+    use crate::config::Config;
 
     #[test]
     fn test_create_provider_unknown() {
-        let mut config = Config::default();
-        config.provider.default = "unknown".to_string();
+    let mut config = Config::default();
+    config.providers.default = "unknown".to_string();
+    // Ensure we don't fall back for this test
+    config.providers.fallback.clear();
 
         let result = create_provider(&config);
         assert!(result.is_err());
@@ -146,9 +126,12 @@ mod tests {
 
     #[test]
     fn test_create_provider_github_models() {
-        let config = Config::default(); // default is github-models
-        let result = create_provider(&config);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap().provider_name(), "github-models");
+    // Provide a fake token so provider creation does not fall back
+    std::env::set_var("GITHUB_TOKEN", "test-token");
+    let config = Config::default(); // default is github
+    let result = create_provider(&config);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().provider_name(), "github");
+    std::env::remove_var("GITHUB_TOKEN");
     }
 }

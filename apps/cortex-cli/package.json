@@ -3,20 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "deprecated": "This package has been archived. CLI functionality has been moved to cortex-code.",
+  "description": "DEPRECATED: Use cortex-code instead. This CLI has been archived.",
   "bin": {
     "cortex": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+  "build": "tsup --config tsup.config.ts",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "commander": "^12.1.0",
-    "@cortex-os/mcp-registry": "workspace:*",
-    "@cortex-os/mcp-core": "workspace:*",
+    "@cortex-os/registry": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
     "@cortex-os/simlab": "workspace:*",
     "@clack/prompts": "^0.11.0",

@@ -22,8 +22,6 @@ export class SecurityScanner {
 	private readonly TOOL_TIMEOUT = 45000; // 45 seconds per tool
 
 	async runSecurityScan(_state: PRPState): Promise<SecurityScanResult> {
-		const _scanStartTime = Date.now();
-
 		try {
 			const projectRoot = getProjectRoot();
 			const scanResults = {

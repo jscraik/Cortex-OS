@@ -43,7 +43,7 @@ export async function discoverFiles(
 	const { root, include, exclude, includePriority } =
 		discoverFilesSchema.parse(options);
 	const entries = await fg(["**/*"], { cwd: root, dot: true, onlyFiles: true });
-	const abs = entries.map((p) => path.resolve(root, p));
+	const abs = entries.map((p: string) => path.resolve(root, p));
 	return filterPaths({
 		paths: abs,
 		include,
