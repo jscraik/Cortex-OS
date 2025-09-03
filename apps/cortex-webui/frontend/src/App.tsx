@@ -1,6 +1,13 @@
 // Main App component
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+	Navigate,
+	Route,
+	BrowserRouter as Router,
+	Routes,
+	useNavigate,
+} from 'react-router-dom';
 import useAuth from './hooks/useAuth';
 import useConversations from './hooks/useConversations';
 import useMessages from './hooks/useMessages';
@@ -9,159 +16,165 @@ import Dashboard from './pages/Dashboard';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SettingsPage from './pages/SettingsPage';
-import { applyTheme, Theme, toggleTheme } from './utils/theme';
+import type { Theme } from './utils/theme';
+import { applyTheme, toggleTheme } from './utils/theme';
 
-type Page = 'login' | 'register' | 'dashboard' | 'chat' | 'settings';
+const AppContent: React.FC = () => {
+	const navigate = useNavigate();
+	const [theme, setTheme] = useState<Theme>('light');
+	const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
-const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>('login');
-  const [theme, setTheme] = useState<Theme>('light');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+	const auth = useAuth();
+	const conversations = useConversations();
+	const messages = useMessages();
 
-  const auth = useAuth();
-  const conversations = useConversations();
-  const messages = useMessages();
+	// Apply theme on mount
+	useEffect(() => {
+		applyTheme();
+		setTheme(
+			document.documentElement.classList.contains('dark') ? 'dark' : 'light',
+		);
+	}, []);
 
-  // Apply theme on mount
-  useEffect(() => {
-    applyTheme();
-    setTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-  }, []);
+	const handleLogin = async (email: string, password: string) => {
+		try {
+			await auth.login(email, password);
+		} catch (error) {
+			console.error('Login failed:', error);
+		}
+	};
 
-  // Handle authentication state changes
-  useEffect(() => {
-    if (auth.isAuthenticated) {
-      setCurrentPage('dashboard');
-    } else {
-      setCurrentPage('login');
-    }
-  }, [auth.isAuthenticated]);
+	const handleRegister = async (
+		name: string,
+		email: string,
+		password: string,
+	) => {
+		try {
+			await auth.register(name, email, password);
+		} catch (error) {
+			console.error('Registration failed:', error);
+		}
+	};
 
-  const handleLogin = async (email: string, password: string) => {
-    try {
-      await auth.login(email, password);
-    } catch (error) {
-      console.error('Login failed:', error);
-    }
-  };
+	const handleSendMessage = async (content: string) => {
+		if (conversations.activeConversation) {
+			await messages.sendMessage(conversations.activeConversation.id, content);
+		}
+	};
 
-  const handleRegister = async (name: string, email: string, password: string) => {
-    try {
-      await auth.register(name, email, password);
-    } catch (error) {
-      console.error('Registration failed:', error);
-    }
-  };
+	const handleCreateConversation = async () => {
+		const newConversation =
+			await conversations.createConversation('New Conversation');
+		if (newConversation) {
+			navigate(`/chat/${newConversation.id}`);
+		}
+	};
 
-  const handleSendMessage = async (content: string) => {
-    if (conversations.activeConversation) {
-      await messages.sendMessage(conversations.activeConversation.id, content);
-    }
-  };
+	const handleSelectConversation = async (id: string) => {
+		await conversations.selectConversation(id);
+		navigate(`/chat/${id}`);
+	};
 
-  const handleCreateConversation = async () => {
-    const newConversation = await conversations.createConversation('New Conversation');
-    if (newConversation) {
-      setCurrentPage('chat');
-    }
-  };
+	const handleThemeChange = (newTheme: Theme) => {
+		setTheme(newTheme);
+		toggleTheme();
+	};
 
-  const handleSelectConversation = async (id: string) => {
-    await conversations.selectConversation(id);
-    setCurrentPage('chat');
-  };
-
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-    toggleTheme();
-  };
-
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'login':
-        return (
-          <LoginPage
-            onLogin={handleLogin}
-            loading={auth.loading}
-            error={auth.error}
-            onSwitchToRegister={() => setCurrentPage('register')}
-          />
-        );
-
-      case 'register':
-        return (
-          <RegisterPage
-            onRegister={handleRegister}
-            loading={auth.loading}
-            error={auth.error}
-            onSwitchToLogin={() => setCurrentPage('login')}
-          />
-        );
-
-      case 'dashboard':
-        return (
-          <Dashboard
-            conversations={conversations.conversations}
-            activeConversationId={conversations.activeConversation?.id || null}
-            onSelectConversation={handleSelectConversation}
-            onCreateConversation={handleCreateConversation}
-            onLogout={auth.logout}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          />
-        );
-
-      case 'chat':
-        if (!conversations.activeConversation) {
-          return (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-500">No conversation selected</p>
-                <button
-                  onClick={() => setCurrentPage('dashboard')}
-                  className="mt-4 text-blue-500 hover:text-blue-700"
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <ChatPage
-            conversation={conversations.activeConversation}
-            messages={messages.messages}
-            conversations={conversations.conversations}
-            activeConversationId={conversations.activeConversation?.id || null}
-            onSendMessage={handleSendMessage}
-            onSelectConversation={handleSelectConversation}
-            onCreateConversation={handleCreateConversation}
-            onLogout={auth.logout}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            streaming={messages.streaming}
-            error={messages.error}
-          />
-        );
-
-      case 'settings':
-        return (
-          <SettingsPage
-            theme={theme}
-            onThemeChange={handleThemeChange}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          />
-        );
-
-      default:
-        return (
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-gray-500">Page not found</p>
-          </div>
-        );
-    }
-  };
-
-  return <div className="App">{renderCurrentPage()}</div>;
+	return (
+		<div className="App">
+			<Routes>
+				<Route
+					path="/login"
+					element={
+						<LoginPage
+							onLogin={handleLogin}
+							loading={auth.loading}
+							error={auth.error}
+						/>
+					}
+				/>
+				<Route
+					path="/register"
+					element={
+						<RegisterPage
+							onRegister={handleRegister}
+							loading={auth.loading}
+							error={auth.error}
+						/>
+					}
+				/>
+				<Route
+					path="/dashboard"
+					element={
+						auth.isAuthenticated ? (
+							<Dashboard
+								conversations={conversations.conversations}
+								activeConversationId={
+									conversations.activeConversation?.id || null
+								}
+								onSelectConversation={handleSelectConversation}
+								onCreateConversation={handleCreateConversation}
+								onLogout={auth.logout}
+								onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+							/>
+						) : (
+							<Navigate to="/login" />
+						)
+					}
+				/>
+				<Route
+					path="/chat/:conversationId"
+					element={
+						auth.isAuthenticated && conversations.activeConversation ? (
+							<ChatPage
+								conversation={conversations.activeConversation}
+								messages={messages.messages}
+								conversations={conversations.conversations}
+								activeConversationId={
+									conversations.activeConversation?.id || null
+								}
+								onSendMessage={handleSendMessage}
+								onSelectConversation={handleSelectConversation}
+								onCreateConversation={handleCreateConversation}
+								onLogout={auth.logout}
+								onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+								streaming={messages.streaming}
+								error={messages.error}
+							/>
+						) : (
+							<Navigate to="/dashboard" />
+						)
+					}
+				/>
+				<Route
+					path="/settings"
+					element={
+						auth.isAuthenticated ? (
+							<SettingsPage
+								theme={theme}
+								onThemeChange={handleThemeChange}
+								onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+							/>
+						) : (
+							<Navigate to="/login" />
+						)
+					}
+				/>
+				<Route
+					path="/"
+					element={
+						<Navigate to={auth.isAuthenticated ? '/dashboard' : '/login'} />
+					}
+				/>
+			</Routes>
+		</div>
+	);
 };
 
-export default App;
+export const App: React.FC = () => {
+	return (
+		<Router>
+			<AppContent />
+		</Router>
+	);
+};

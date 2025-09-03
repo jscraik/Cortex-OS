@@ -8,19 +8,26 @@ Cortex WebUI is a monorepo project with the following main components:
 
 ```
 cortex-webui/
-├── backend/                    # Node.js/Express/TypeScript backend
-├── frontend/                  # React/TypeScript frontend
+├── backend/                   # Node.js/Express/TypeScript backend
+├── frontend/                  # React/TypeScript frontend with Vite
 ├── shared/                    # Shared code between frontend and backend
-├── cortex-cli/                # Command-line interface (planned)
-├── cortex-vscode/             # VSCode extension (planned)
 ├── docs/                      # Documentation
-├── k8s/                      # Kubernetes configuration
-├── utils/                    # Utility functions
-├── open-webui/               # Integration with Open WebUI
-└── app/                      # Next.js application (existing)
+├── k8s/                       # Kubernetes configuration
+└── utils/                     # Utility functions
+```
+├── backend/                  # Express.js backend
+└── shared/                   # Shared types and constants
 ```
 
-## Backend
+## Architecture
+
+The application follows a monorepo structure with separate frontend and backend applications:
+
+### Frontend
+
+The frontend is built with Vite, React 18, and TypeScript. It provides a modern web interface for AI model interactions with real-time chat capabilities.
+
+### Backend
 
 The backend is built with Node.js, Express, and TypeScript. It provides a RESTful API and WebSocket server for real-time communication.
 
@@ -97,9 +104,16 @@ shared/
 └── constants/                # Application constants
 ```
 
-## Existing Next.js App
+## Migration Status
 
-The project also contains an existing Next.js application in the `app/` directory, which provides additional functionality.
+The project has been successfully migrated from Next.js to a Vite + Express architecture:
+
+- **Frontend**: Migrated from `app/` to `frontend/src/` with React Router
+- **Backend**: API routes migrated from `app/api/` to `backend/src/controllers/`
+- **Shared**: Common utilities and types moved to `shared/`
+- **Linting**: Updated to use consistent ESLint configurations
+
+The old `app/` directory can be safely removed after verifying all functionality works correctly.
 
 ## Development Workflow
 

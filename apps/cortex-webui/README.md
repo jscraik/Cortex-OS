@@ -21,8 +21,6 @@ cortex-webui/
 ├── backend/          # Node.js/Express backend API
 ├── frontend/         # React/TypeScript frontend
 ├── shared/           # Shared code between frontend and backend
-├── cortex-cli/       # Command-line interface (planned)
-├── cortex-vscode/    # VSCode extension (planned)
 ├── docs/             # Documentation
 ├── k8s/              # Kubernetes configurations
 └── utils/            # Utility functions

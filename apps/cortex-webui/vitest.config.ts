@@ -1,13 +1,31 @@
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
+const ROOT = fileURLToPath(new URL('.', import.meta.url));
+
 export default defineConfig({
-  test: {
-    include: ['**/__tests__/**/*.{test,spec}.{ts,tsx}', '**/__tests__/**/*.a11y.test.{ts,tsx}'],
-    environment: 'node',
-    // Run a11y/react tests with jsdom while keeping default node env for others
-    environmentMatchGlobs: [['**/*.a11y.test.{ts,tsx}', 'jsdom']],
-    setupFiles: ['./__tests__/setup.ts'],
-    globals: true,
-    reporters: ['default'],
-  },
+	root: ROOT,
+	test: {
+		include: [
+			'**/__tests__/**/*.{test,spec}.{ts,tsx}',
+			'**/__tests__/**/*.a11y.test.{ts,tsx}',
+		],
+		environment: 'jsdom',
+		setupFiles: ['./__tests__/setup.ts'],
+		globals: true,
+		reporters: ['default'],
+	},
+	resolve: {
+		alias: {
+			app: resolve(ROOT, 'app'),
+			'@': ROOT,
+			'@shared': resolve(ROOT, 'shared'),
+		},
+	},
+	// Use automatic JSX runtime for tests without requiring React import
+	esbuild: {
+		jsx: 'automatic',
+		jsxImportSource: 'react',
+	},
 });

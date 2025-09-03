@@ -4,9 +4,21 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  password: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserWithPassword extends User {
+  password: string;
+}
+
+export interface UserRecord {
+  id: string;
+  email: string;
+  name: string;
+  password: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Conversation {

@@ -7,7 +7,10 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 # HTTP client (pin to avoid ICU/idna requiring newer rustc)
-reqwest = { version = "=0.11.18", features = ["json", "stream"], default-features = false }
+reqwest = { version = "=0.11.18", features = [
+    "json",
+    "stream",
+], default-features = false }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -31,9 +34,8 @@ chrono = { version = "0.4", features = ["serde"] }
 # Base64 encoding (align with cortex-code)
 base64 = "0.21"
 
-# URL parsing (avoid ICU)
-url = "=2.2.2"
-idna = "=0.3.0"
+# URL parsing (compat across workspace)
+url = "2"
 
 # Cryptography for webhook verification
 hmac = "0.12"

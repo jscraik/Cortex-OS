@@ -97,6 +97,34 @@
 			"ram_gb": 24.0,
 			"path": "/Volumes/ExternalSSD/ai-models/local-models/gpt-oss-20b-8bit-mlx",
 			"size_bytes": null
+		},
+		{
+			"name": "GLM-4.5-mlx-4Bit",
+			"repo": "brAInwav/GLM-4.5-mlx-4Bit",
+			"ram_gb": 8.0,
+			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--brAInwav--GLM-4.5-mlx-4Bit",
+			"size_bytes": null
+		},
+		{
+			"name": "SmolLM-135M-Instruct-4bit",
+			"repo": "mlx-community/SmolLM-135M-Instruct-4bit",
+			"ram_gb": 0.5,
+			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--SmolLM-135M-Instruct-4bit",
+			"size_bytes": null
+		},
+		{
+			"name": "gpt-oss-20b-MLX-8bit",
+			"repo": "lmstudio-community/gpt-oss-20b-MLX-8bit",
+			"ram_gb": 24.0,
+			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit",
+			"size_bytes": null
+		},
+		{
+			"name": "Qwen3-Embedding-4B",
+			"repo": "Qwen/Qwen3-Embedding-4B",
+			"ram_gb": 4.0,
+			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--Qwen--Qwen3-Embedding-4B",
+			"size_bytes": null
 		}
 	],
 	"ollama": [
@@ -140,24 +168,6 @@
 			"tag": "30b",
 			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/qwen3-coder/30b",
 			"size_bytes": 18556688736
-		}
-	],
-	"huggingface_legacy": [
-		{
-			"dir": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit",
-			"name": "models--lmstudio-community--gpt-oss-20b-MLX-8bit"
-		},
-		{
-			"dir": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--brAInwav--GLM-4.5-mlx-4Bit",
-			"name": "models--brAInwav--GLM-4.5-mlx-4Bit"
-		},
-		{
-			"dir": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--SmolLM-135M-Instruct-4bit",
-			"name": "models--mlx-community--SmolLM-135M-Instruct-4bit"
-		},
-		{
-			"dir": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--Qwen--Qwen3-Embedding-4B",
-			"name": "models--Qwen--Qwen3-Embedding-4B"
 		}
 	],
 	"mlx_knife": [
