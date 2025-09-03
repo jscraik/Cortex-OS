@@ -2,7 +2,9 @@
 
 ## 🔍 Analysis Summary
 
-After comparing `~/.Cortex-OS/apps/cortex-code-backup` with the new `~/.Cortex-OS/apps/cortex-code`, I've identified **significant missing functionality** that should be transferred to enhance the new implementation.
+After comparing the legacy backup (now removed) with the new `~/.Cortex-OS/apps/cortex-code`, I've identified **significant missing functionality** that should be transferred to enhance the new implementation.
+
+> Note: The cortex-code-backup directory has been removed as obsolete. This plan remains for historical context.
 
 ## 📊 Capability Comparison
 
