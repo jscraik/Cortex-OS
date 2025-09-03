@@ -2,6 +2,19 @@
 name = "cortex-py"
 version = "0.1.0"
 requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.116.1",
+    "uvicorn>=0.35.0",
+    "mlx>=0.30.0",
+    "mlx-lm>=0.28.0",
+    "mlx-vlm>=0.4.0",
+    "llama-cpp-python>=0.2.90",
+    "sentence-transformers>=3.3.0",
+    "transformers>=4.55.4",
+    "torch>=2.8.0",
+    "gguf>=0.1.0",
+    "numpy>=1.26.4",
+]
 
 [build-system]
 requires = ["setuptools"]

@@ -42,14 +42,18 @@ class TestRedisIntegration:
         # Start a worker to process the task
         await real_task_queue.start_workers()
 
-        # Wait a bit for processing
-        await asyncio.sleep(0.5)
+        # Wait briefly for processing with small polling to reduce flakes in CI
+        processed = False
+        for _ in range(10):
+            if (
+                task_id in real_task_queue.completed_tasks
+                or task_id in real_task_queue.active_tasks
+            ):
+                processed = True
+                break
+            await asyncio.sleep(0.2)
 
-        # Check if task was processed
-        assert (
-            task_id in real_task_queue.completed_tasks
-            or task_id in real_task_queue.active_tasks
-        )
+        assert processed, "Task should be observed as active or completed"
 
     async def test_real_redis_health_check(self, real_task_queue):
         """Test health check task with real Redis."""

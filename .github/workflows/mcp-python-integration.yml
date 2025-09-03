@@ -1,0 +1,115 @@
+name: MCP Python Integration (Transports)
+
+on:
+  pull_request:
+    paths:
+      - 'packages/mcp/**'
+      - '.github/workflows/mcp-python-integration.yml'
+  push:
+    branches: ["main"]
+    paths:
+      - 'packages/mcp/**'
+      - '.github/workflows/mcp-python-integration.yml'
+
+jobs:
+  python-mcp-integration:
+    name: Python MCP transport tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv and set Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run MCP transport integration tests (HTTP/WS/STDIO)
+        working-directory: packages/mcp
+        run: |
+          uv run --no-sync \
+            --with pytest \
+            --with pytest-asyncio \
+            --with httpx \
+            --with fastapi \
+            --with websockets \
+            --with uvicorn \
+            pytest -q tests/integration/test_transports.py -q
+
+      - name: Run real MCP HTTP harness (echo roundtrip)
+        working-directory: packages/mcp
+        run: |
+          uv run --no-sync \
+            --with httpx \
+            --with fastapi \
+            --with uvicorn \
+            python testing/mcp_echo_http_harness.py
+
+      - name: Run real MCP WebSocket harness (echo roundtrip)
+        working-directory: packages/mcp
+        run: |
+          uv run --no-sync \
+            --with websockets \
+            python testing/mcp_echo_ws_harness.py
+
+  python-mcp-redis-integration:
+    name: Python MCP Redis-backed TaskQueue tests
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping || exit 1" 
+          --health-interval 2s 
+          --health-timeout 1s 
+          --health-retries 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv and set Python 3.12
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Wait for Redis to be ready
+        working-directory: packages/mcp
+        run: |
+          uv run --no-sync \
+            --with redis \
+            python - <<'PY'
+          import asyncio, time, sys
+          try:
+              import redis.asyncio as redis
+          except Exception as e:
+              print(f"Missing redis client: {e}")
+              sys.exit(1)
+          async def main():
+              r = redis.from_url('redis://localhost:6379')
+              for i in range(60):
+                  try:
+                      await r.ping()
+                      print('Redis is ready')
+                      return
+                  except Exception as e:
+                      time.sleep(1)
+              print('Redis not ready in time')
+              sys.exit(1)
+          asyncio.run(main())
+          PY
+
+      - name: Run Redis integration tests
+        working-directory: packages/mcp
+        run: |
+          uv run --no-sync \
+            --with pytest \
+            --with pytest-asyncio \
+            --with redis \
+            pytest -q tests/integration/test_redis_integration.py -q

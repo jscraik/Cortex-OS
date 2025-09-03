@@ -4,11 +4,13 @@
 //! This test file covers the core configuration functionality required for cortex-codex.
 
 use codex_core::config_types_new::SimpleConfig;
-use codex_core::config_types_new::{ModelProvider, ApiSettings, ModelConfig, LoggingConfig, RateLimit};
+use codex_core::config_types_new::{
+    ApiSettings, LoggingConfig, ModelConfig, ModelProvider, RateLimit,
+};
 use codex_core::error::ConfigError;
+use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
-use std::fs;
 
 #[test]
 fn test_config_default_profile_loads() {
@@ -20,7 +22,7 @@ fn test_config_default_profile_loads() {
     // Assert: Check that default values are reasonable
     assert_eq!(config.model.provider, ModelProvider::OpenAI);
     assert_eq!(config.api.timeout_seconds, 30);
-        assert_eq!(config.api.timeout_seconds, 30); // Should use defaults
+    assert_eq!(config.api.timeout_seconds, 30); // Should use defaults
 }
 
 #[test]
@@ -46,7 +48,7 @@ level = "debug"
 output = "stdout"
 
 [profiles.production]
-[profiles.production.model]
+[profiles.production.model] 
 provider = "openai"
 name = "gpt-4"
 temperature = 0.3
@@ -137,7 +139,7 @@ provider = "openai"  # Missing closing bracket
     // Assert: Should return appropriate error
     assert!(result.is_err());
     match result.unwrap_err() {
-        ConfigError::InvalidToml(_) => {}, // Expected
+        ConfigError::InvalidToml(_) => {} // Expected
         _ => panic!("Expected ParseError"),
     }
 }
@@ -147,7 +149,7 @@ fn test_config_override_invalid_format_returns_error() {
     // Arrange: Create malformed override string
     let invalid_overrides = vec![
         "invalid_format".to_string(), // No equals sign
-        "model.provider".to_string(),  // No value
+        "model.provider".to_string(), // No value
     ];
 
     // Act: Try to apply invalid overrides
@@ -156,7 +158,7 @@ fn test_config_override_invalid_format_returns_error() {
     // Assert: Should return appropriate error
     assert!(result.is_err());
     match result.unwrap_err() {
-        ConfigError::MalformedOverride(_) => {}, // Expected
+        ConfigError::MalformedOverride(_) => {} // Expected
         _ => panic!("Expected InvalidOverride error"),
     }
 }
@@ -184,18 +186,17 @@ output = "stdout"
 "#;
     fs::write(&config_path, config_content).unwrap();
 
-    let overrides = vec![
-        "model.name=overridden-model".to_string(),
-        "model.temperature=0.8".to_string(),
-    ];
-
     // Act: Load config and apply overrides
     let config = SimpleConfig::load_from_file(config_path).unwrap();
     // For this test, we'll create a new config with overrides applied
-    let override_config = SimpleConfig::with_overrides(vec![
-        "model.name=overridden-model".to_string(),
-        "model.temperature=0.8".to_string(),
-    ]).unwrap();
+    let override_config = SimpleConfig::with_overrides(
+        [
+            "model.name=overridden-model".to_string(),
+            "model.temperature=0.8".to_string(),
+        ]
+        .into(),
+    )
+    .unwrap();
 
     // Assert: File config loads correctly, then we test override behavior separately
     assert_eq!(config.model.provider, ModelProvider::Local); // From file
@@ -231,7 +232,7 @@ fn test_config_validation() {
     // Arrange: Create configuration with invalid values
     let invalid_overrides = vec![
         "api.timeout_seconds=-1".to_string(), // Negative timeout
-        "model.temperature=2.0".to_string(),   // Temperature > 1.0
+        "model.temperature=2.0".to_string(),  // Temperature > 1.0
     ];
 
     // Act: Try to create config with invalid values
@@ -240,7 +241,7 @@ fn test_config_validation() {
     // Assert: Should return validation error
     assert!(result.is_err());
     match result.unwrap_err() {
-        ConfigError::Validation(_) => {}, // Expected
+        ConfigError::Validation(_) => {} // Expected
         _ => panic!("Expected ValidationError"),
     }
 }
@@ -271,8 +272,17 @@ fn test_config_serialization_roundtrip() {
     let deserialized_config = SimpleConfig::from_toml_string(&toml_string).unwrap();
 
     // Assert: Roundtrip should preserve all values
-    assert_eq!(original_config.model.provider, deserialized_config.model.provider);
+    assert_eq!(
+        original_config.model.provider,
+        deserialized_config.model.provider
+    );
     assert_eq!(original_config.model.name, deserialized_config.model.name);
-    assert_eq!(original_config.model.temperature, deserialized_config.model.temperature);
-    assert_eq!(original_config.api.timeout_seconds, deserialized_config.api.timeout_seconds);
+    assert_eq!(
+        original_config.model.temperature,
+        deserialized_config.model.temperature
+    );
+    assert_eq!(
+        original_config.api.timeout_seconds,
+        deserialized_config.api.timeout_seconds
+    );
 }

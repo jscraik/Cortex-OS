@@ -3,15 +3,17 @@
 import asyncio
 import logging
 import time
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, AsyncContextManager
+from typing import Any
 
-from circuit_breaker import CircuitBreaker
-from tenacity import retry, stop_after_attempt, wait_exponential
-
+from .exceptions import ConnectionPoolError
 from .transports.base import MCPTransport
+from .transports.http_transport import HTTPTransport
+from .transports.stdio_transport import STDIOTransport
+from .transports.websocket_transport import WebSocketTransport
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +37,7 @@ class ConnectionConfig:
     max_retries: int = 3
     timeout: float = 30.0
     health_check_interval: float = 60.0
-    circuit_breaker_threshold: int = 5
-    circuit_breaker_timeout: float = 60.0
+    # circuit breaker fields removed (unused here)
 
 
 @dataclass
@@ -45,7 +46,6 @@ class PoolConnection:
 
     config: ConnectionConfig
     transport: MCPTransport
-    circuit_breaker: CircuitBreaker
     last_health_check: float = field(default_factory=time.time)
     failure_count: int = 0
     is_healthy: bool = True
@@ -83,13 +83,13 @@ class MCPConnectionPool:
         self.max_connection_age = max_connection_age
 
         self.connections: list[PoolConnection] = []
-        self.available_connections: asyncio.Queue = asyncio.Queue()
+        self.available_connections: asyncio.Queue[PoolConnection] = asyncio.Queue()
         self.connection_configs: list[ConnectionConfig] = []
 
         self.state = PoolState.INITIALIZING
         self._lock = asyncio.Lock()
-        self._health_check_task: asyncio.Task | None = None
-        self._cleanup_task: asyncio.Task | None = None
+        self._health_check_task: asyncio.Task[None] | None = None
+        self._cleanup_task: asyncio.Task[None] | None = None
 
         # Metrics
         self.total_connections_created = 0
@@ -130,8 +130,16 @@ class MCPConnectionPool:
             # Cancel background tasks
             if self._health_check_task:
                 self._health_check_task.cancel()
+                try:
+                    await self._health_check_task
+                except asyncio.CancelledError:
+                    pass
             if self._cleanup_task:
                 self._cleanup_task.cancel()
+                try:
+                    await self._cleanup_task
+                except asyncio.CancelledError:
+                    pass
 
             # Close all connections
             close_tasks = []
@@ -144,15 +152,23 @@ class MCPConnectionPool:
 
             self.connections.clear()
 
-            # Clear the queue
+            # Drain the queue and disconnect any queued connections
+            drained: list[PoolConnection] = []
             while not self.available_connections.empty():
-                self.available_connections.get_nowait()
+                try:
+                    drained.append(self.available_connections.get_nowait())
+                except asyncio.QueueEmpty:
+                    break
+            if drained:
+                tasks = [c.transport.disconnect() for c in drained if c.transport.is_connected]
+                if tasks:
+                    await asyncio.gather(*tasks, return_exceptions=True)
 
             self.state = PoolState.FAILED
             logger.info("Connection pool closed")
 
     @asynccontextmanager
-    async def get_connection(self) -> AsyncContextManager[PoolConnection]:
+    async def get_connection(self) -> AsyncIterator[PoolConnection]:
         """Get a connection from the pool using context manager."""
         connection = await self._acquire_connection()
         try:
@@ -163,7 +179,7 @@ class MCPConnectionPool:
     async def _acquire_connection(self) -> PoolConnection:
         """Acquire a connection from the pool."""
         # Try to get available connection
-        try:
+    try:
             connection = await asyncio.wait_for(
                 self.available_connections.get(), timeout=self.connection_timeout
             )
@@ -177,7 +193,7 @@ class MCPConnectionPool:
                 # Connection is unhealthy, create a new one
                 await self._remove_connection(connection)
 
-        except TimeoutError:
+    except asyncio.TimeoutError:
             # No available connections, try to create new one
             pass
 
@@ -195,7 +211,8 @@ class MCPConnectionPool:
 
     async def _release_connection(self, connection: PoolConnection) -> None:
         """Release a connection back to the pool."""
-        self.current_active_connections -= 1
+        if self.current_active_connections > 0:
+            self.current_active_connections -= 1
         connection.last_used = time.time()
 
         # Check if connection is still healthy before returning to pool
@@ -204,9 +221,6 @@ class MCPConnectionPool:
         else:
             await self._remove_connection(connection)
 
-    @retry(
-        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
     async def _create_connection(self) -> PoolConnection:
         """Create a new pooled connection with retry logic."""
         # Use round-robin to select configuration
@@ -214,52 +228,49 @@ class MCPConnectionPool:
             self.total_connections_created % len(self.connection_configs)
         ]
 
-        try:
-            # Create transport based on configuration
-            if config.transport_type == "http":
-                from .transports.http_transport import HTTPTransport
+        # Simple retry logic (3 attempts)
+        last_error = None
+        for attempt in range(3):
+            try:
+                # Create transport based on configuration
+                transport: MCPTransport
+                if config.transport_type == "http":
+                    transport = HTTPTransport(config.host, config.port)
+                elif config.transport_type == "websocket":
+                    transport = WebSocketTransport(config.host, config.port)
+                elif config.transport_type == "stdio":
+                    transport = STDIOTransport()
+                else:
+                    raise ValueError(
+                        f"Unsupported transport type: {config.transport_type}"
+                    )
 
-                transport = HTTPTransport(config.host, config.port)
-            elif config.transport_type == "websocket":
-                from .transports.websocket_transport import WebSocketTransport
+                # Connect transport
+                await transport.connect()
 
-                transport = WebSocketTransport(config.host, config.port)
-            elif config.transport_type == "stdio":
-                from .transports.stdio_transport import STDIOTransport
+                connection = PoolConnection(
+                    config=config,
+                    transport=transport,
+                )
 
-                transport = STDIOTransport()
-            else:
-                raise ValueError(f"Unsupported transport type: {config.transport_type}")
+                self.connections.append(connection)
+                self.total_connections_created += 1
 
-            # Setup circuit breaker
-            circuit_breaker = CircuitBreaker(
-                failure_threshold=config.circuit_breaker_threshold,
-                recovery_timeout=config.circuit_breaker_timeout,
-            )
+                return connection
 
-            # Connect transport
-            await transport.connect()
+            except Exception as e:
+                last_error = e
+                self.total_connection_failures += 1
+                if attempt < 2:  # Don't wait on last attempt
+                    await asyncio.sleep(
+                        min(4 * (2**attempt), 10)
+                    )  # Exponential backoff
+                continue
 
-            connection = PoolConnection(
-                config=config,
-                transport=transport,
-                circuit_breaker=circuit_breaker,
-            )
-
-            self.connections.append(connection)
-            await self.available_connections.put(connection)
-
-            self.total_connections_created += 1
-            logger.info(f"Created new connection to {config.host}:{config.port}")
-
-            return connection
-
-        except Exception as e:
-            self.total_connection_failures += 1
-            logger.error(
-                f"Failed to create connection to {config.host}:{config.port}: {e}"
-            )
-            raise ConnectionPoolError(f"Failed to create connection: {e}")
+        # If we get here, all retries failed
+        raise ConnectionPoolError(
+            f"Failed to create connection after 3 attempts: {last_error}"
+        )
 
     async def _remove_connection(self, connection: PoolConnection) -> None:
         """Remove a connection from the pool."""
@@ -273,14 +284,25 @@ class MCPConnectionPool:
             logger.info(
                 f"Removed connection to {connection.config.host}:{connection.config.port}"
             )
+        # Purge any lingering reference in the available queue
+        await self._purge_from_queue(connection)
+
+    async def _purge_from_queue(self, target: PoolConnection) -> None:
+        """Remove a specific connection from the available queue if present."""
+        temp: list[PoolConnection] = []
+        while not self.available_connections.empty():
+            try:
+                item = self.available_connections.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+            if item is not target:
+                temp.append(item)
+        for item in temp:
+            await self.available_connections.put(item)
 
     async def _is_connection_healthy(self, connection: PoolConnection) -> bool:
         """Check if a connection is healthy."""
         try:
-            # Check circuit breaker state
-            if connection.circuit_breaker.current_state == "open":
-                return False
-
             # Check if connection is too old
             if connection.age > self.max_connection_age:
                 return False
@@ -337,7 +359,11 @@ class MCPConnectionPool:
             # Try to create more connections
             while len(self.connections) < self.min_connections:
                 try:
-                    await self._create_connection()
+                    async with self._lock:
+                        if len(self.connections) < self.min_connections:
+                            await self._create_connection()
+                        else:
+                            break
                 except Exception as e:
                     logger.error(f"Failed to create replacement connection: {e}")
                     break
@@ -357,7 +383,6 @@ class MCPConnectionPool:
 
     async def _cleanup_idle_connections(self) -> None:
         """Remove idle connections that exceed max idle time."""
-        now = time.time()
         idle_connections = []
 
         for connection in self.connections[:]:
@@ -387,9 +412,3 @@ class MCPConnectionPool:
             "total_failures": self.total_connection_failures,
             "connection_configs": len(self.connection_configs),
         }
-
-
-class ConnectionPoolError(Exception):
-    """Connection pool specific error."""
-
-    pass

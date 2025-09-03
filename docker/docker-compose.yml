@@ -108,7 +108,7 @@ services:
 
   # Local AI - Ollama for local LLM inference
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.5.4
     ports:
       - '11434:11434'
     volumes:

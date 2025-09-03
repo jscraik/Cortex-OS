@@ -1,4 +1,5 @@
 import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -9,6 +10,9 @@ class MessageType(Enum):
     RESPONSE = "response"
     NOTIFICATION = "notification"
     ERROR = "error"
+
+
+METHOD_NOT_FOUND_MSG = "Method not found"
 
 
 @dataclass
@@ -22,16 +26,21 @@ class MCPMessage:
     jsonrpc: str = "2.0"
 
     def to_json(self) -> str:
-        return json.dumps(
-            {
-                "jsonrpc": self.jsonrpc,
-                "id": self.id,
-                "method": self.method,
-                "params": self.params,
-                "result": self.result,
-                "error": self.error,
-            }
-        )
+        # Build payload and omit fields that are None to keep JSON compact
+        payload: dict[str, Any] = {
+            "jsonrpc": self.jsonrpc,
+            "id": self.id,
+        }
+        if self.method is not None:
+            payload["method"] = self.method
+        if self.params is not None:
+            payload["params"] = self.params
+        if self.result is not None:
+            payload["result"] = self.result
+        if self.error is not None:
+            payload["error"] = self.error
+
+        return json.dumps(payload)
 
     @classmethod
     def from_json(cls, json_str: str) -> "MCPMessage":
@@ -55,32 +64,46 @@ class Tool:
 
 
 class MCPProtocolHandler:
-    def __init__(self):
-        self.message_handlers = {}
-        self.request_counter = 0
+    def __init__(self) -> None:
+        # Handlers are async callables taking optional params dict and returning any JSON-serializable result
+        self.message_handlers: dict[
+            str, Callable[[dict[str, Any] | None], Awaitable[Any]]
+        ] = {}
+        self.request_counter: int = 0
 
-    def register_handler(self, method: str, handler):
+    def register_handler(
+        self, method: str, handler: Callable[[dict[str, Any] | None], Awaitable[Any]]
+    ) -> None:
         self.message_handlers[method] = handler
 
-    async def handle_message(self, message: MCPMessage) -> MCPMessage:
+    async def handle_message(self, message: MCPMessage) -> MCPMessage | None:
         if message.type == MessageType.REQUEST:
             return await self._handle_request(message)
         elif message.type == MessageType.NOTIFICATION:
-            return await self._handle_notification(message)
+            await self._handle_notification(message)
+            return None
         else:
             return MCPMessage(
                 type=MessageType.ERROR,
                 id=message.id,
-                error={"code": -32601, "message": "Method not found"},
+                error={"code": -32601, "message": METHOD_NOT_FOUND_MSG},
             )
 
     async def _handle_request(self, message: MCPMessage) -> MCPMessage:
-        handler = self.message_handlers.get(message.method)
-        if not handler:
+        # Ensure method is provided and a handler exists
+        if message.method is None:
             return MCPMessage(
                 type=MessageType.ERROR,
                 id=message.id,
-                error={"code": -32601, "message": "Method not found"},
+                error={"code": -32601, "message": METHOD_NOT_FOUND_MSG},
+            )
+
+        handler = self.message_handlers.get(message.method)
+        if handler is None:
+            return MCPMessage(
+                type=MessageType.ERROR,
+                id=message.id,
+                error={"code": -32601, "message": METHOD_NOT_FOUND_MSG},
             )
 
         try:
@@ -98,8 +121,10 @@ class MCPProtocolHandler:
             )
 
     async def _handle_notification(self, message: MCPMessage) -> None:
+        if message.method is None:
+            return
         handler = self.message_handlers.get(message.method)
-        if handler:
+        if handler is not None:
             await handler(message.params)
 
     def create_request(

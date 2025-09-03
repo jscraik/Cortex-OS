@@ -80,7 +80,39 @@ codex chat "Summarize the README in 3 bullet points"
 
 This is additive and does not affect existing commands.
 
+#### Chat flags for multi‑turn and sessions
+
+- `--session NAME`: persist history to `$CODEX_HOME/sessions/NAME.jsonl`
+- `--session-file PATH`: persist history to a custom JSONL path
+- `--reset`: start fresh, truncating the session file
+- `--repl`: stay in a simple line‑based REPL (type `:q` to quit)
+- `PROMPT` can be `-` to read from stdin; optional when `--repl` is used
+
+Note: When using `--repl` or sessions, the JSONL history includes both user and assistant items. This is expected and allows full turn-by-turn replay.
+
+Examples:
+
+```shell
+# Single turn (unchanged)
+codex chat "Start a plan for Phase 2"
+
+# Read entire prompt from stdin
+echo "Write a haiku about Codex" | codex chat -
+
+# Persist a named session
+codex chat --session demo "Initial message"
+
+# Reset an existing session
+codex chat --session demo --reset "Fresh start"
+
+# REPL with session persistence
+codex chat --session demo --repl
 ```
+
+Developer notes:
+
+- Session metadata may include Git details (commit, branch, repo URL) when Codex runs inside a git repo.
+- For hermetic testing, you can set `CODEX_RS_SSE_FIXTURE` to a local `.sse` file to bypass network calls in CLI/exec tests.
 
 ### Experimenting with the Codex Sandbox
 

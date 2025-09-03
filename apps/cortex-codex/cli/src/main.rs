@@ -250,7 +250,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
         Some(Subcommand::GenerateTs(gen_cli)) => {
             codex_protocol_ts::generate_ts(&gen_cli.out_dir, gen_cli.prettier.as_deref())?;
         }
-    Some(Subcommand::Chat(mut chat_cli)) => {
+        Some(Subcommand::Chat(mut chat_cli)) => {
             // Merge root-level config overrides with subcommand-specific ones.
             prepend_config_flags(&mut chat_cli.config_overrides, cli.config_overrides);
 
@@ -304,8 +304,11 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
 
             // Helper closure to run a single turn given text input.
             let run_turn = |text: String,
-                                prior: &Vec<codex_core::ResponseItem>|
-             -> anyhow::Result<(codex_core::ResponseItem, Vec<codex_core::ResponseItem>)> {
+                            prior: &Vec<codex_core::ResponseItem>|
+             -> anyhow::Result<(
+                codex_core::ResponseItem,
+                Vec<codex_core::ResponseItem>,
+            )> {
                 let user_item = codex_core::ResponseItem::Message {
                     id: None,
                     role: "user".to_string(),
@@ -333,7 +336,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 while let Some(event) = stream.next().await {
                     match event? {
                         codex_core::ResponseEvent::OutputTextDelta(s) => {
-                            print!("{}", s);
+                            print!("{s}");
                             use std::io::Write as _;
                             std::io::stdout().flush().ok();
                         }
@@ -398,9 +401,10 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 }
             } else {
                 // Single turn. PROMPT is required in this mode.
-                let p = chat_cli.prompt.clone().ok_or_else(|| {
-                    anyhow::anyhow!("PROMPT is required unless --repl is used")
-                })?;
+                let p = chat_cli
+                    .prompt
+                    .clone()
+                    .ok_or_else(|| anyhow::anyhow!("PROMPT is required unless --repl is used"))?;
                 let text = if p == "-" { read_stdin_all()? } else { p };
                 let (user_item, prompt_input) = run_turn(text, &session_history)?;
                 let assistant_items = stream_turn(&client, prompt_input).await?;
@@ -446,7 +450,7 @@ fn resolve_session_path(
     if let Some(name) = session_name {
         let mut p = codex_home.to_path_buf();
         p.push("sessions");
-        p.push(format!("{}.jsonl", name));
+        p.push(format!("{name}.jsonl"));
         return Some(p);
     }
     None
@@ -471,7 +475,7 @@ fn read_history_jsonl(path: &Path) -> Vec<codex_core::ResponseItem> {
     };
     let reader = BufReader::new(f);
     let mut items = Vec::new();
-    for line in reader.lines().flatten() {
+    for line in reader.lines().map_while(Result::ok) {
         if line.trim().is_empty() {
             continue;
         }
@@ -485,7 +489,7 @@ fn read_history_jsonl(path: &Path) -> Vec<codex_core::ResponseItem> {
 fn append_history_jsonl(path: &Path, item: &codex_core::ResponseItem) -> anyhow::Result<()> {
     let mut file = OpenOptions::new().create(true).append(true).open(path)?;
     let line = serde_json::to_string(item)?;
-    writeln!(file, "{}", line)?;
+    writeln!(file, "{line}")?;
     Ok(())
 }
 
@@ -494,4 +498,87 @@ fn read_stdin_all() -> anyhow::Result<String> {
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf)?;
     Ok(buf)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn resolve_session_path_by_name_and_file() {
+        let tmp = TempDir::new().expect("tmp");
+        let home = tmp.path();
+        // By name
+        let p = resolve_session_path(home, &Some("demo".to_string()), None).expect("path");
+        assert!(p.ends_with("sessions/demo.jsonl"), "{}", p.display());
+        // By explicit file
+        let explicit = home.join("my.jsonl");
+        let p2 = resolve_session_path(home, &None, Some(explicit.clone())).expect("path");
+        assert_eq!(p2, explicit);
+    }
+
+    #[test]
+    fn history_jsonl_roundtrip() {
+        let tmp = TempDir::new().expect("tmp");
+        let f = tmp.path().join("hist.jsonl");
+        // Empty read returns empty
+        let items0 = read_history_jsonl(&f);
+        assert!(items0.is_empty());
+
+        // Append two items, then read back
+        let u1 = codex_core::ResponseItem::Message {
+            id: None,
+            role: "user".into(),
+            content: vec![codex_core::ContentItem::InputText { text: "hi".into() }],
+        };
+        let a1 = codex_core::ResponseItem::Message {
+            id: None,
+            role: "assistant".into(),
+            content: vec![codex_core::ContentItem::OutputText {
+                text: "hello".into(),
+            }],
+        };
+        ensure_parent_dir(&f).unwrap();
+        append_history_jsonl(&f, &u1).unwrap();
+        append_history_jsonl(&f, &a1).unwrap();
+
+        let items = read_history_jsonl(&f);
+        assert_eq!(items.len(), 2);
+        // Spot-check roles
+        match &items[0] {
+            codex_core::ResponseItem::Message { role, .. } => assert_eq!(role, "user"),
+            _ => panic!("expected message"),
+        }
+        match &items[1] {
+            codex_core::ResponseItem::Message { role, .. } => assert_eq!(role, "assistant"),
+            _ => panic!("expected message"),
+        }
+    }
+
+    #[test]
+    fn chat_cli_parsing() {
+        // REPL with session name, no prompt
+        let args = ["codex", "chat", "--session", "demo", "--repl"];
+        let cli = MultitoolCli::parse_from(args);
+        match cli.subcommand {
+            Some(Subcommand::Chat(cmd)) => {
+                assert_eq!(cmd.session_name.as_deref(), Some("demo"));
+                assert!(cmd.repl);
+                assert!(cmd.prompt.is_none());
+            }
+            _ => panic!("expected Chat command"),
+        }
+
+        // Single-turn with stdin prompt
+        let args2 = ["codex", "chat", "-"];
+        let cli2 = MultitoolCli::parse_from(args2);
+        match cli2.subcommand {
+            Some(Subcommand::Chat(cmd)) => {
+                assert_eq!(cmd.prompt.as_deref(), Some("-"));
+                assert!(!cmd.repl);
+            }
+            _ => panic!("expected Chat command"),
+        }
+    }
 }

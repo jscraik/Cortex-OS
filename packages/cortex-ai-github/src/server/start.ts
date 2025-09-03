@@ -3,9 +3,13 @@
  * Reads env vars, initializes the AI app, and starts the webhook server.
  */
 
+import dotenv from "dotenv";
 import { CortexAiGitHubApp } from "../core/ai-github-app.js";
 import type { GitHubModel } from "../types/github-models.js";
 import { CortexWebhookServer } from "./webhook-server.js";
+
+// Load environment variables from .env file
+dotenv.config();
 
 const required = (name: string, value: string | undefined) => {
 	if (!value || value.trim() === "") {

@@ -1,11 +1,13 @@
 // Basic Chat Interface Tests (Task 2.1) - TDD Approach
 // These tests focus on the public API and core chat functionality
 
-use codex_core::config::{Config, ConfigOverrides, find_codex_home, load_config_as_toml_with_cli_overrides};
-use codex_core::{ConversationManager, AuthManager}; // Using public re-exports
+use codex_core::config::{
+    find_codex_home, load_config_as_toml_with_cli_overrides, Config, ConfigOverrides,
+};
+use codex_core::{AuthManager, ConversationManager}; // Using public re-exports
 use codex_login::AuthMode;
-use std::sync::Arc;
 use std::path::PathBuf;
+use std::sync::Arc;
 use uuid::Uuid;
 
 /// Helper function to create a minimal test config
@@ -30,7 +32,10 @@ async fn test_conversation_manager_creation() {
 
     // Basic validation that the manager was created
     // This tests the foundation for chat functionality
-    assert_eq!(std::mem::size_of_val(&conversation_manager), std::mem::size_of::<ConversationManager>());
+    assert_eq!(
+        std::mem::size_of_val(&conversation_manager),
+        std::mem::size_of::<ConversationManager>()
+    );
 }
 
 #[tokio::test]
@@ -39,7 +44,11 @@ async fn test_config_loading_for_chat() {
     let config_result = create_test_config();
 
     // This should succeed - if it fails, our chat system can't start
-    assert!(config_result.is_ok(), "Config loading failed: {:?}", config_result.err());
+    assert!(
+        config_result.is_ok(),
+        "Config loading failed: {:?}",
+        config_result.err()
+    );
 }
 
 #[tokio::test]
@@ -48,7 +57,10 @@ async fn test_auth_manager_initialization() {
     let auth_manager = create_test_auth_manager();
 
     // Basic validation
-    assert_eq!(std::mem::size_of_val(&auth_manager), std::mem::size_of::<AuthManager>());
+    assert_eq!(
+        std::mem::size_of_val(&auth_manager),
+        std::mem::size_of::<AuthManager>()
+    );
 }
 
 #[tokio::test]
@@ -58,7 +70,10 @@ async fn test_conversation_manager_with_auth() {
     let conversation_manager = ConversationManager::new(auth_manager.clone());
 
     // This validates the basic setup required for chat functionality
-    assert_eq!(std::mem::size_of_val(&conversation_manager), std::mem::size_of::<ConversationManager>());
+    assert_eq!(
+        std::mem::size_of_val(&conversation_manager),
+        std::mem::size_of::<ConversationManager>()
+    );
 }
 
 #[tokio::test]
@@ -82,8 +97,14 @@ async fn test_conversation_creation_flow() {
     let config = create_test_config().expect("Config should load for conversation creation");
 
     // Validate that we have the components needed for conversation creation
-    assert!(!config.model.is_empty(), "Model should be configured for conversation");
-    assert_eq!(std::mem::size_of_val(&conversation_manager), std::mem::size_of::<ConversationManager>());
+    assert!(
+        !config.model.is_empty(),
+        "Model should be configured for conversation"
+    );
+    assert_eq!(
+        std::mem::size_of_val(&conversation_manager),
+        std::mem::size_of::<ConversationManager>()
+    );
 }
 
 /// Test conversation forking (advanced chat functionality)
@@ -96,19 +117,25 @@ async fn test_conversation_forking_for_chat() {
 
     // Test that the conversation manager exists and could theoretically handle forking
     // (We can't test the actual forking without a running conversation, but we can test setup)
-    assert_eq!(std::mem::size_of_val(&conversation_manager), std::mem::size_of::<ConversationManager>());
+    assert_eq!(
+        std::mem::size_of_val(&conversation_manager),
+        std::mem::size_of::<ConversationManager>()
+    );
 
     // Test that we can create multiple conversation managers (for parallel chats)
     let auth_manager2 = Arc::new(create_test_auth_manager());
     let conversation_manager2 = ConversationManager::new(auth_manager2);
-    assert_eq!(std::mem::size_of_val(&conversation_manager2), std::mem::size_of::<ConversationManager>());
+    assert_eq!(
+        std::mem::size_of_val(&conversation_manager2),
+        std::mem::size_of::<ConversationManager>()
+    );
 }
 
 /// Test message history data structures
 #[tokio::test]
 async fn test_message_history_structures() {
     // Test: We should be able to work with message history data structures
-    use codex_protocol::models::{ResponseItem, ContentItem};
+    use codex_protocol::models::{ContentItem, ResponseItem};
 
     // Create a mock message history that would be used in chat
     let user_message = ResponseItem::Message {
@@ -176,21 +203,31 @@ async fn test_chat_message_validation() {
     // Test: Chat messages should be properly validated before processing
 
     // Test empty message handling
-    let empty_message = "";
+    let empty_message = String::new();
     assert!(empty_message.is_empty(), "Empty messages should be detectable");
 
     // Test very long message handling
     let long_message = "x".repeat(10000);
-    assert!(long_message.len() == 10000, "Long messages should be measurable");
+    assert_eq!(long_message.len(), 10000, "Long messages should be measurable");
 
     // Test special characters in messages
     let special_chars_message = "Hello! 🚀 Can you help with <script>alert('test')</script>?";
-    assert!(special_chars_message.contains("🚀"), "Emoji should be preserved");
-    assert!(special_chars_message.contains("<script>"), "HTML should be detectable for safety");
+    assert!(
+        special_chars_message.contains("🚀"),
+        "Emoji should be preserved"
+    );
+    assert!(
+        special_chars_message.contains("<script>"),
+        "HTML should be detectable for safety"
+    );
 
     // Test newlines and formatting
     let multiline_message = "Line 1\nLine 2\n\nLine 4";
-    assert_eq!(multiline_message.lines().count(), 4, "Multiline messages should be parseable");
+    assert_eq!(
+        multiline_message.lines().count(),
+        4,
+        "Multiline messages should be parseable"
+    );
 }
 
 /// Test concurrent chat operations
@@ -202,13 +239,15 @@ async fn test_concurrent_chat_operations() {
     let auth_manager = Arc::new(create_test_auth_manager());
 
     // Spawn multiple tasks that create conversation managers concurrently
-    let tasks: Vec<_> = (0..5).map(|i| {
-        let auth_manager = auth_manager.clone();
-        task::spawn(async move {
-            let conversation_manager = ConversationManager::new(auth_manager);
-            (i, std::mem::size_of_val(&conversation_manager))
+    let tasks: Vec<_> = (0..5)
+        .map(|i| {
+            let auth_manager = auth_manager.clone();
+            task::spawn(async move {
+                let conversation_manager = ConversationManager::new(auth_manager);
+                (i, std::mem::size_of_val(&conversation_manager))
+            })
         })
-    }).collect();
+        .collect();
 
     // Wait for all tasks to complete using tokio's join_all equivalent
     let mut results = Vec::new();

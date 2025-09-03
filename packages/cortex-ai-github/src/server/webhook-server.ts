@@ -3,25 +3,25 @@
  * Handles GitHub webhook events and comment-as-API triggers
  */
 
-import crypto from "node:crypto";
-import { EventEmitter } from "node:events";
-import express from "express";
-import { z } from "zod";
-import type { CortexAiGitHubApp } from "../core/ai-github-app.js";
-import type { CommentTrigger, GitHubContext } from "../types/github-models.js";
+import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
+import express from 'express';
+import { z } from 'zod';
+import type { CortexAiGitHubApp } from '../core/ai-github-app.js';
+import type { CommentTrigger, GitHubContext } from '../types/github-models.js';
 import type {
 	GitHubWebhookPayload,
 	ProgressiveStatus,
-} from "../types/webhook-types.js";
+} from '../types/webhook-types.js';
 
 interface WebhookEvents {
-	"comment:trigger": [
+	'comment:trigger': [
 		trigger: CommentTrigger,
 		context: GitHubContext,
 		user: string,
 	];
-	"webhook:verified": [event: string, delivery: string];
-	"webhook:invalid": [reason: string, headers: Record<string, string>];
+	'webhook:verified': [event: string, delivery: string];
+	'webhook:invalid': [reason: string, headers: Record<string, string>];
 }
 
 export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
@@ -29,7 +29,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 	private aiApp: CortexAiGitHubApp;
 	private webhookSecret: string;
 	private triggers: CommentTrigger[];
-	private server?: import("http").Server;
+	private server?: import('http').Server;
 
 	constructor(aiApp: CortexAiGitHubApp, webhookSecret: string) {
 		super();
@@ -43,62 +43,69 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		this.setupRoutes();
 	}
 
+	/**
+	 * Get the current queue size from the AI app
+	 */
+	get queueSize(): number {
+		return this.aiApp.queueSize || 0;
+	}
+
 	private initializeDefaultTriggers(): CommentTrigger[] {
 		return [
 			{
-				pattern: /@cortex\s+review/i,
-				taskType: "code_review",
-				description: "Perform AI code review on PR",
-				requiredPermissions: ["read"],
+				pattern: /@cortex\s+review(?:\s+(.+))?/i,
+				taskType: 'code_review',
+				description: 'Perform AI code review on PR',
+				requiredPermissions: ['read'],
 			},
 			{
-				pattern: /@cortex\s+analyze/i,
-				taskType: "pr_analysis",
-				description: "Comprehensive PR analysis",
-				requiredPermissions: ["read"],
+				pattern: /@cortex\s+analyze(?:\s+(.+))?/i,
+				taskType: 'pr_analysis',
+				description: 'Comprehensive PR analysis',
+				requiredPermissions: ['read'],
 			},
 			{
-				pattern: /@cortex\s+secure/i,
-				taskType: "security_scan",
-				description: "Security vulnerability analysis",
-				requiredPermissions: ["read"],
+				pattern: /@cortex\s+secure(?:\s+(.+))?/i,
+				taskType: 'security_scan',
+				description: 'Security vulnerability analysis',
+				requiredPermissions: ['read'],
 			},
 			{
-				pattern: /@cortex\s+document/i,
-				taskType: "documentation",
-				description: "Generate documentation",
-				requiredPermissions: ["write"],
+				pattern: /@cortex\s+document(?:\s+(.+))?/i,
+				taskType: 'documentation',
+				description: 'Generate documentation',
+				requiredPermissions: ['write'],
 			},
 			{
-				pattern: /@cortex\s+triage/i,
-				taskType: "issue_triage",
-				description: "Intelligent issue triage",
-				requiredPermissions: ["read"],
+				pattern: /@cortex\s+triage(?:\s+(.+))?/i,
+				taskType: 'issue_triage',
+				description: 'Intelligent issue triage',
+				requiredPermissions: ['read'],
 			},
 			{
-				pattern: /@cortex\s+optimize/i,
-				taskType: "workflow_optimize",
-				description: "Workflow optimization analysis",
-				requiredPermissions: ["read"],
+				pattern: /@cortex\s+optimize(?:\s+(.+))?/i,
+				taskType: 'workflow_optimize',
+				description: 'Workflow optimization analysis',
+				requiredPermissions: ['read'],
 			},
 			{
-				pattern: /@cortex\s+health/i,
-				taskType: "repo_health",
-				description: "Repository health check",
-				requiredPermissions: ["read"],
+				pattern: /@cortex\s+health(?:\s+(.+))?/i,
+				taskType: 'repo_health',
+				description: 'Repository health check',
+				requiredPermissions: ['read'],
 			},
 			{
 				pattern: /@cortex\s+fix(?:\s+(.+))?/i,
-				taskType: "auto_fix",
-				description: "Automated code fixes",
-				requiredPermissions: ["write", "admin"],
+				taskType: 'auto_fix',
+				description: 'Automated code fixes',
+				requiredPermissions: ['write', 'admin'],
 			},
 		];
 	}
 
 	private setupMiddleware(): void {
 		// Raw body parsing for webhook signature verification
-		this.app.use("/webhook", express.raw({ type: "application/json" }));
+		this.app.use('/webhook', express.raw({ type: 'application/json' }));
 
 		// Standard JSON parsing for other endpoints
 		this.app.use(express.json());
@@ -106,10 +113,10 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		// Security headers
 		this.app.use((_req, res, next) => {
 			res.set({
-				"X-Content-Type-Options": "nosniff",
-				"X-Frame-Options": "DENY",
-				"X-XSS-Protection": "1; mode=block",
-				"Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+				'X-Content-Type-Options': 'nosniff',
+				'X-Frame-Options': 'DENY',
+				'X-XSS-Protection': '1; mode=block',
+				'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 			});
 			next();
 		});
@@ -117,9 +124,9 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 
 	private setupRoutes(): void {
 		// Health check endpoint
-		this.app.get("/health", (_req, res) => {
+		this.app.get('/health', (_req, res) => {
 			res.json({
-				status: "healthy",
+				status: 'healthy',
 				timestamp: new Date().toISOString(),
 				queueSize: this.aiApp.queueSize,
 				activeTaskCount: this.aiApp.activeTaskCount,
@@ -128,49 +135,49 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		});
 
 		// Main webhook endpoint
-		this.app.post("/webhook", async (req, res) => {
+		this.app.post('/webhook', async (req, res) => {
 			try {
-				const signature = req.get("X-Hub-Signature-256");
-				const delivery = req.get("X-GitHub-Delivery");
-				const event = req.get("X-GitHub-Event");
+				const signature = req.get('X-Hub-Signature-256');
+				const delivery = req.get('X-GitHub-Delivery');
+				const event = req.get('X-GitHub-Event');
 
 				if (!signature || !delivery || !event) {
 					this.emit(
-						"webhook:invalid",
-						"Missing required headers",
+						'webhook:invalid',
+						'Missing required headers',
 						req.headers as Record<string, string>,
 					);
 					return res
 						.status(400)
-						.json({ error: "Missing required webhook headers" });
+						.json({ error: 'Missing required webhook headers' });
 				}
 
 				if (!this.verifyWebhookSignature(req.body, signature)) {
-					this.emit("webhook:invalid", "Invalid signature", {
+					this.emit('webhook:invalid', 'Invalid signature', {
 						signature,
 						delivery,
 						event,
 					});
-					return res.status(401).json({ error: "Invalid webhook signature" });
+					return res.status(401).json({ error: 'Invalid webhook signature' });
 				}
 
-				this.emit("webhook:verified", event, delivery);
+				this.emit('webhook:verified', event, delivery);
 
 				const payload = JSON.parse(req.body.toString());
 				await this.handleWebhookEvent(event, payload);
 
 				return res.status(200).json({ received: true, delivery });
 			} catch (error) {
-				console.error("Webhook processing error:", error);
+				console.error('Webhook processing error:', error);
 				return res.status(500).json({
-					error: "Internal server error",
+					error: 'Internal server error',
 					message: error instanceof Error ? error.message : String(error),
 				});
 			}
 		});
 
 		// Trigger management endpoints
-		this.app.get("/triggers", (_req, res) => {
+		this.app.get('/triggers', (_req, res) => {
 			res.json({
 				triggers: this.triggers.map((t) => ({
 					pattern: t.pattern.source,
@@ -181,28 +188,28 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 			});
 		});
 
-		this.app.post("/triggers", (req, res) => {
+		this.app.post('/triggers', (req, res) => {
 			try {
 				const triggerSchema = z.object({
 					pattern: z.string(),
 					taskType: z.enum([
-						"code_review",
-						"pr_analysis",
-						"security_scan",
-						"documentation",
-						"issue_triage",
-						"workflow_optimize",
-						"repo_health",
-						"auto_fix",
+						'code_review',
+						'pr_analysis',
+						'security_scan',
+						'documentation',
+						'issue_triage',
+						'workflow_optimize',
+						'repo_health',
+						'auto_fix',
 					]),
 					description: z.string(),
-					requiredPermissions: z.array(z.enum(["read", "write", "admin"])),
+					requiredPermissions: z.array(z.enum(['read', 'write', 'admin'])),
 				});
 
 				const validated = triggerSchema.parse(req.body);
 
 				const newTrigger: CommentTrigger = {
-					pattern: new RegExp(validated.pattern, "i"),
+					pattern: new RegExp(validated.pattern, 'i'),
 					taskType: validated.taskType,
 					description: validated.description,
 					requiredPermissions: validated.requiredPermissions,
@@ -211,7 +218,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				this.triggers.push(newTrigger);
 
 				res.status(201).json({
-					message: "Trigger added successfully",
+					message: 'Trigger added successfully',
 					trigger: {
 						pattern: newTrigger.pattern.source,
 						taskType: newTrigger.taskType,
@@ -221,7 +228,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				});
 			} catch (error) {
 				res.status(400).json({
-					error: "Invalid trigger configuration",
+					error: 'Invalid trigger configuration',
 					details: error instanceof Error ? error.message : String(error),
 				});
 			}
@@ -231,9 +238,9 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 	private verifyWebhookSignature(payload: Buffer, signature: string): boolean {
 		try {
 			const expectedSignature = crypto
-				.createHmac("sha256", this.webhookSecret)
+				.createHmac('sha256', this.webhookSecret)
 				.update(payload)
-				.digest("hex");
+				.digest('hex');
 
 			const expected = `sha256=${expectedSignature}`;
 			return crypto.timingSafeEqual(
@@ -241,7 +248,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				Buffer.from(expected),
 			);
 		} catch (error) {
-			console.error("Signature verification error:", error);
+			console.error('Signature verification error:', error);
 			return false;
 		}
 	}
@@ -251,26 +258,26 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		payload: GitHubWebhookPayload,
 	): Promise<void> {
 		switch (event) {
-			case "issue_comment":
-				if (payload.action === "created") {
+			case 'issue_comment':
+				if (payload.action === 'created') {
 					await this.handleCommentCreated(payload);
 				}
 				break;
 
-			case "pull_request_review_comment":
-				if (payload.action === "created") {
+			case 'pull_request_review_comment':
+				if (payload.action === 'created') {
 					await this.handleReviewCommentCreated(payload);
 				}
 				break;
 
-			case "pull_request":
-				if (["opened", "synchronize"].includes(payload.action)) {
+			case 'pull_request':
+				if (['opened', 'synchronize'].includes(payload.action)) {
 					await this.handlePullRequestEvent(payload);
 				}
 				break;
 
-			case "issues":
-				if (payload.action === "opened") {
+			case 'issues':
+				if (payload.action === 'opened') {
 					await this.handleIssueOpened(payload);
 				}
 				break;
@@ -284,7 +291,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		payload: GitHubWebhookPayload,
 	): Promise<void> {
 		if (!payload.comment) {
-			console.warn("handleCommentCreated called without comment in payload");
+			console.warn('handleCommentCreated called without comment in payload');
 			return;
 		}
 
@@ -295,14 +302,14 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 			if (trigger.pattern.test(comment)) {
 				const context = this.buildGitHubContext(payload);
 
-				this.emit("comment:trigger", trigger, context, user);
+				this.emit('comment:trigger', trigger, context, user);
 
 				// Progressive status: Step 1 - Processing
-				await this.updateProgressiveStatus(payload, "processing");
+				await this.updateProgressiveStatus(payload, 'processing');
 
 				try {
 					// Progressive status: Step 2 - Working
-					await this.updateProgressiveStatus(payload, "working");
+					await this.updateProgressiveStatus(payload, 'working');
 
 					const taskId = await this.aiApp.queueTask({
 						taskType: trigger.taskType,
@@ -315,12 +322,12 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 					);
 
 					// Progressive status: Step 3 - Success
-					await this.updateProgressiveStatus(payload, "success");
+					await this.updateProgressiveStatus(payload, 'success');
 				} catch (error) {
 					console.error(`❌ Failed to queue ${trigger.taskType} task:`, error);
 
 					// Progressive status: Step 3 - Error
-					await this.updateProgressiveStatus(payload, "error");
+					await this.updateProgressiveStatus(payload, 'error');
 				}
 
 				break; // Only process first matching trigger
@@ -338,42 +345,96 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 	private async handlePullRequestEvent(
 		payload: GitHubWebhookPayload,
 	): Promise<void> {
-		// Auto-trigger analysis for new/updated PRs if configured
+		// Auto-trigger analysis for new/updated PRs
 		const context = this.buildGitHubContext(payload);
 
-		// Example: Auto-review for PRs with specific labels
-		if (
-			payload.pull_request?.labels?.some(
-				(label) => label.name === "auto-review",
-			)
-		) {
+		if (payload.action === 'opened') {
+			// Auto-trigger code review for new PRs
 			await this.aiApp.queueTask({
-				taskType: "code_review",
+				taskType: 'code_review',
 				githubContext: context,
-				instructions: "Automated review triggered by PR label",
+				instructions: 'Automated code review for new PR',
 			});
+		} else if (payload.action === 'synchronize') {
+			// Auto-trigger review for updated PRs
+			await this.aiApp.queueTask({
+				taskType: 'code_review',
+				githubContext: context,
+				instructions: 'Automated review for PR updates',
+			});
+		}
+
+		// Additional triggers based on labels or content
+		if (payload.pull_request?.labels) {
+			const labels = payload.pull_request.labels.map((label) => label.name);
+
+			if (labels.some((label) => label.includes('security'))) {
+				await this.aiApp.queueTask({
+					taskType: 'security_scan',
+					githubContext: context,
+					instructions: 'Automated security scan for security-related PR',
+				});
+			}
+
+			if (
+				labels.some(
+					(label) => label.includes('docs') || label.includes('documentation'),
+				)
+			) {
+				await this.aiApp.queueTask({
+					taskType: 'documentation',
+					githubContext: context,
+					instructions: 'Automated documentation review for docs PR',
+				});
+			}
 		}
 	}
 
 	private async handleIssueOpened(
 		payload: GitHubWebhookPayload,
 	): Promise<void> {
-		// Auto-triage for new issues if configured
+		// Auto-triage for new issues
 		if (!payload.issue) {
-			console.warn("handleIssueOpened called without issue in payload");
+			console.warn('handleIssueOpened called without issue in payload');
 			return;
 		}
 
 		const context = this.buildGitHubContext(payload);
+		const title = payload.issue.title.toLowerCase();
+		const body = payload.issue.body?.toLowerCase() || '';
 
+		// Always triage new issues
+		await this.aiApp.queueTask({
+			taskType: 'issue_triage',
+			githubContext: context,
+			instructions: 'Automated triage for new issue',
+		});
+
+		// Security analysis for security-related issues
 		if (
-			payload.repository.name.includes("support") ||
-			payload.issue.title.toLowerCase().includes("bug")
+			title.includes('security') ||
+			title.includes('vulnerability') ||
+			body.includes('security') ||
+			body.includes('vulnerability')
 		) {
 			await this.aiApp.queueTask({
-				taskType: "issue_triage",
+				taskType: 'security_scan',
 				githubContext: context,
-				instructions: "Automated triage for new issue",
+				instructions: 'Automated security analysis for security issue',
+			});
+		}
+
+		// Performance analysis for performance issues
+		if (
+			title.includes('performance') ||
+			title.includes('slow') ||
+			body.includes('performance') ||
+			body.includes('slow')
+		) {
+			await this.aiApp.queueTask({
+				taskType: 'repo_health',
+				githubContext: context,
+				instructions: 'Automated performance analysis for performance issue',
 			});
 		}
 	}
@@ -388,7 +449,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 			context.pr = {
 				number: payload.pull_request.number,
 				title: payload.pull_request.title,
-				body: payload.pull_request.body || "",
+				body: payload.pull_request.body || '',
 				base: payload.pull_request.base.ref,
 				head: payload.pull_request.head.ref,
 				files: [], // Would need additional API call to fetch files
@@ -399,7 +460,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 			context.issue = {
 				number: payload.issue.number,
 				title: payload.issue.title,
-				body: payload.issue.body || "",
+				body: payload.issue.body || '',
 				labels: payload.issue.labels?.map((label) => label.name) || [],
 			};
 		}
@@ -411,7 +472,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		comment: string,
 		pattern: RegExp,
 	): string | undefined {
-		const match = comment.match(pattern);
+		const match = pattern.exec(comment);
 		if (match?.[1]) {
 			return match[1].trim();
 		}
@@ -438,7 +499,9 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 					resolve();
 				});
 
-				this.server.on("error", reject);
+				this.server.on('error', (error) =>
+					reject(new Error(`Server error: ${error.message}`)),
+				);
 			} catch (error) {
 				reject(error);
 			}
@@ -449,7 +512,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		return new Promise((resolve) => {
 			if (this.server) {
 				this.server.close(() => {
-					console.log("Cortex AI GitHub webhook server stopped");
+					console.log('Cortex AI GitHub webhook server stopped');
 					resolve();
 				});
 			} else {
@@ -466,7 +529,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 		reaction: string,
 	): Promise<void> {
 		try {
-			const { Octokit } = await import("@octokit/rest");
+			const { Octokit } = await import('@octokit/rest');
 			const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
 			// Determine if it's an issue comment or PR review comment
@@ -481,14 +544,14 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 						repo,
 						comment_id: payload.comment.id,
 						content: reaction as
-							| "+1"
-							| "-1"
-							| "laugh"
-							| "confused"
-							| "heart"
-							| "hooray"
-							| "rocket"
-							| "eyes",
+							| '+1'
+							| '-1'
+							| 'laugh'
+							| 'confused'
+							| 'heart'
+							| 'hooray'
+							| 'rocket'
+							| 'eyes',
 					});
 				} else if (payload.pull_request) {
 					// PR review comment
@@ -497,14 +560,14 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 						repo,
 						comment_id: payload.comment.id,
 						content: reaction as
-							| "+1"
-							| "-1"
-							| "laugh"
-							| "confused"
-							| "heart"
-							| "hooray"
-							| "rocket"
-							| "eyes",
+							| '+1'
+							| '-1'
+							| 'laugh'
+							| 'confused'
+							| 'heart'
+							| 'hooray'
+							| 'rocket'
+							| 'eyes',
 					});
 				}
 			}
@@ -524,20 +587,20 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 	): Promise<void> {
 		try {
 			switch (status) {
-				case "processing":
-					await this.addReaction(payload, "eyes");
+				case 'processing':
+					await this.addReaction(payload, 'eyes');
 					break;
-				case "working":
-					await this.addReaction(payload, "gear");
+				case 'working':
+					await this.addReaction(payload, 'gear');
 					break;
-				case "success":
-					await this.addReaction(payload, "rocket");
+				case 'success':
+					await this.addReaction(payload, 'rocket');
 					break;
-				case "error":
-					await this.addReaction(payload, "x");
+				case 'error':
+					await this.addReaction(payload, 'x');
 					break;
-				case "warning":
-					await this.addReaction(payload, "warning");
+				case 'warning':
+					await this.addReaction(payload, 'warning');
 					break;
 			}
 		} catch (error) {

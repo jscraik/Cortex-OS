@@ -21,14 +21,14 @@ use tracing::trace;
 use tracing::warn;
 use uuid::Uuid;
 
-use crate::chat_completions::AggregateStreamExt;
 use crate::chat_completions::stream_chat_completions;
+use crate::chat_completions::AggregateStreamExt;
+use crate::client_common::create_reasoning_param_for_request;
+use crate::client_common::create_text_param_for_request;
 use crate::client_common::Prompt;
 use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::client_common::ResponsesApiRequest;
-use crate::client_common::create_reasoning_param_for_request;
-use crate::client_common::create_text_param_for_request;
 use crate::config::Config;
 use crate::error::CodexErr;
 use crate::error::Result;
@@ -387,9 +387,6 @@ struct SseEvent {
     item: Option<Value>,
     delta: Option<String>,
 }
-
-#[derive(Debug, Deserialize)]
-struct ResponseCreated {}
 
 #[derive(Debug, Deserialize)]
 struct ResponseCompleted {

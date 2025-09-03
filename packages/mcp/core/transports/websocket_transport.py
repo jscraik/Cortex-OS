@@ -1,14 +1,12 @@
 """WebSocket transport implementation for MCP protocol."""
 
 import asyncio
+import contextlib
 import json
 import logging
 from typing import Any
 
-import websockets
-from websockets.exceptions import ConnectionClosed, WebSocketException
-
-from ..protocol import MCPMessage
+from ..protocol import MCPMessage, MessageType
 from .base import ConnectionState, MCPTransport, TransportError
 
 logger = logging.getLogger(__name__)
@@ -21,18 +19,26 @@ class WebSocketTransport(MCPTransport):
         super().__init__()
         self.host = host
         self.port = port
-        self.websocket: websockets.WebSocketServerProtocol | None = None
-        self.server: websockets.WebSocketServer | None = None
-        self.clients: set[websockets.WebSocketServerProtocol] = set()
-        self._receive_task: asyncio.Task | None = None
+        # Types use Any to avoid import-time dependency on websockets
+        self.websocket: Any | None = None
+        self.server: Any | None = None
+        self.clients: set[Any] = set()
+        self._receive_task: asyncio.Task[Any] | None = None
 
-    async def connect(self, **kwargs) -> None:
+    async def connect(self, **_kwargs: Any) -> None:
         """Start WebSocket server."""
         try:
             self.state = ConnectionState.CONNECTING
 
             # Start WebSocket server
-            self.server = await websockets.serve(
+            try:
+                ws_mod = __import__("websockets")
+            except Exception as e:  # noqa: BLE001
+                raise TransportError(
+                    "websockets is required for WebSocketTransport. Please install 'websockets'."
+                ) from e
+
+            self.server = await ws_mod.serve(
                 self._handle_client_connection,
                 self.host,
                 self.port,
@@ -48,7 +54,7 @@ class WebSocketTransport(MCPTransport):
         except Exception as e:
             self.state = ConnectionState.ERROR
             self._notify_connection_event("error", error=e)
-            raise TransportError(f"Failed to start WebSocket server: {e}")
+            raise TransportError(f"Failed to start WebSocket server: {e}") from e
 
     async def disconnect(self) -> None:
         """Stop WebSocket server and close all connections."""
@@ -58,10 +64,8 @@ class WebSocketTransport(MCPTransport):
             # Cancel receive task
             if self._receive_task:
                 self._receive_task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await self._receive_task
-                except asyncio.CancelledError:
-                    pass
 
             # Close all client connections
             if self.clients:
@@ -83,7 +87,7 @@ class WebSocketTransport(MCPTransport):
         except Exception as e:
             self.state = ConnectionState.ERROR
             self._notify_connection_event("error", error=e)
-            raise TransportError(f"Failed to stop WebSocket server: {e}")
+            raise TransportError(f"Failed to stop WebSocket server: {e}") from e
 
     async def send_message(self, message: MCPMessage) -> None:
         """Broadcast message to all connected clients."""
@@ -97,27 +101,25 @@ class WebSocketTransport(MCPTransport):
         message_json = message.to_json()
 
         # Send to all connected clients
-        disconnected_clients = set()
+        disconnected_clients: set[Any] = set()
         for client in self.clients:
             try:
                 await client.send(message_json)
-            except (ConnectionClosed, WebSocketException) as e:
+            except Exception as e:
                 logger.warning(f"Failed to send to client: {e}")
                 disconnected_clients.add(client)
 
         # Remove disconnected clients
         self.clients -= disconnected_clients
 
-    async def send_to_client(
-        self, client: websockets.WebSocketServerProtocol, message: MCPMessage
-    ) -> None:
+    async def send_to_client(self, client: Any, message: MCPMessage) -> None:
         """Send message to specific client."""
         try:
             await client.send(message.to_json())
-        except (ConnectionClosed, WebSocketException) as e:
+        except Exception as e:
             logger.warning(f"Failed to send to specific client: {e}")
             self.clients.discard(client)
-            raise TransportError(f"Failed to send to client: {e}")
+            raise TransportError(f"Failed to send to client: {e}") from e
 
     async def receive_messages(self) -> None:
         """Start receiving messages (handled by client connections)."""
@@ -126,36 +128,32 @@ class WebSocketTransport(MCPTransport):
         while self.is_connected:
             await asyncio.sleep(1)
 
-    async def _handle_client_connection(
-        self, websocket: websockets.WebSocketServerProtocol, path: str
-    ) -> None:
+    async def _handle_client_connection(self, websocket: Any, _path: str | None = None) -> None:
         """Handle new client WebSocket connection."""
         self.clients.add(websocket)
         logger.info(f"New WebSocket client connected from {websocket.remote_address}")
 
         try:
             await self._handle_client_messages(websocket)
-        except ConnectionClosed:
-            logger.info(f"WebSocket client {websocket.remote_address} disconnected")
         except Exception as e:
-            logger.error(
-                f"Error handling WebSocket client {websocket.remote_address}: {e}"
+            # Treat any exception as a disconnection or client error
+            logger.info(
+                f"WebSocket client {getattr(websocket, 'remote_address', '<unknown>')} disconnected or errored: {e}"
             )
         finally:
             self.clients.discard(websocket)
 
-    async def _handle_client_messages(
-        self, websocket: websockets.WebSocketServerProtocol
-    ) -> None:
+    async def _handle_client_messages(self, websocket: Any) -> None:
         """Handle messages from a specific client."""
         async for message_data in websocket:
             try:
                 message = MCPMessage.from_json(message_data)
 
                 if self.message_handler:
-                    # Process message and send response back to this client
+                    # Process message and send response back to this client if any
                     response_message = await self.message_handler(message)
-                    await self.send_to_client(websocket, response_message)
+                    if response_message is not None:
+                        await self.send_to_client(websocket, response_message)
                 else:
                     logger.warning("No message handler configured")
 
@@ -194,7 +192,7 @@ class WebSocketTransport(MCPTransport):
 
     async def ping_clients(self) -> dict[str, bool]:
         """Ping all connected clients and return results."""
-        results = {}
+        results: dict[str, bool] = {}
         for i, client in enumerate(self.clients):
             try:
                 pong = await client.ping()

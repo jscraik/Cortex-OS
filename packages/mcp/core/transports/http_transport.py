@@ -2,11 +2,7 @@
 
 import asyncio
 import json
-from typing import Any
-
-import httpx
-import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from typing import Any, cast
 
 from ..protocol import MCPMessage
 from .base import ConnectionState, MCPTransport, TransportError
@@ -19,16 +15,17 @@ class HTTPTransport(MCPTransport):
         super().__init__()
         self.host = host
         self.port = port
-        self.app = FastAPI(title="MCP HTTP Transport", version="1.0.0")
-        self.server: uvicorn.Server | None = None
-        self.client = httpx.AsyncClient()
-        self._setup_routes()
+        # Defer FastAPI import and app creation until connect()
+        self.app: Any | None = None
+        self.server: Any | None = None  # set in connect()
+        self.client: Any | None = None  # set in connect()
 
     def _setup_routes(self) -> None:
         """Setup FastAPI routes for MCP protocol."""
+        # Import FastAPI types only when setting up routes
+        from fastapi import HTTPException, Request, Response
 
-        @self.app.post("/mcp/message")
-        async def handle_message(request: Request) -> dict[str, Any]:
+        async def handle_message(request: Request) -> Any:
             """Handle incoming MCP messages."""
             try:
                 body = await request.json()
@@ -42,22 +39,22 @@ class HTTPTransport(MCPTransport):
                 # Process message asynchronously
                 response_message = await self.message_handler(message)
 
-                # Return response as JSON
+                # Return response as JSON if provided (requests); else 204 No Content
+                if response_message is None:
+                    return Response(status_code=204)
                 response_dict = json.loads(response_message.to_json())
-                return response_dict
+                return cast(dict[str, Any], response_dict)
 
-            except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="Invalid JSON")
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+            except json.JSONDecodeError as e:  # invalid request body JSON
+                raise HTTPException(status_code=400, detail="Invalid JSON") from e
+            except Exception as e:  # noqa: BLE001
+                raise HTTPException(status_code=500, detail=str(e)) from e
 
-        @self.app.get("/mcp/health")
-        async def health_check() -> dict[str, Any]:
+        async def health_check_endpoint() -> dict[str, Any]:
             """Health check endpoint."""
             return await self.health_check()
 
-        @self.app.get("/mcp/info")
-        async def server_info() -> dict[str, Any]:
+        def server_info() -> dict[str, Any]:
             """Server information endpoint."""
             return {
                 "transport": "http",
@@ -66,10 +63,42 @@ class HTTPTransport(MCPTransport):
                 "state": self.state.value,
             }
 
-    async def connect(self, **kwargs) -> None:
+        # Register routes
+        assert (
+            self.app is not None
+        ), "FastAPI app must be initialized before setting up routes"
+        self.app.add_api_route("/mcp/message", handle_message, methods=["POST"])
+        self.app.add_api_route("/mcp/health", health_check_endpoint, methods=["GET"])
+        self.app.add_api_route("/mcp/info", server_info, methods=["GET"])
+
+    async def connect(self, **_kwargs: Any) -> None:
         """Start HTTP server."""
         try:
             self.state = ConnectionState.CONNECTING
+
+            # Lazy import optional dependencies
+            try:
+                from fastapi import FastAPI
+            except Exception as e:  # noqa: BLE001
+                raise TransportError(
+                    "FastAPI is required for HTTPTransport. Please install 'fastapi'."
+                ) from e
+            try:
+                import uvicorn
+            except Exception as e:  # noqa: BLE001
+                raise TransportError(
+                    "uvicorn is required for HTTPTransport. Please install 'uvicorn'."
+                ) from e
+            try:
+                import httpx
+            except Exception as e:  # noqa: BLE001
+                raise TransportError(
+                    "httpx is required for HTTPTransport. Please install 'httpx'."
+                ) from e
+
+            # Initialize FastAPI app and routes lazily now that deps are present
+            self.app = FastAPI(title="MCP HTTP Transport", version="1.0.0")
+            self._setup_routes()
 
             config = uvicorn.Config(
                 app=self.app,
@@ -79,6 +108,7 @@ class HTTPTransport(MCPTransport):
                 access_log=True,
             )
             self.server = uvicorn.Server(config)
+            self.client = httpx.AsyncClient()
 
             # Start server in background
             server_task = asyncio.create_task(self.server.serve())
@@ -95,7 +125,7 @@ class HTTPTransport(MCPTransport):
         except Exception as e:
             self.state = ConnectionState.ERROR
             self._notify_connection_event("error", error=e)
-            raise TransportError(f"Failed to start HTTP server: {e}")
+            raise TransportError(f"Failed to start HTTP server: {e}") from e
 
     async def disconnect(self) -> None:
         """Stop HTTP server."""
@@ -106,7 +136,8 @@ class HTTPTransport(MCPTransport):
                 self.server.should_exit = True
                 await self.server.shutdown()
 
-            await self.client.aclose()
+            if self.client:
+                await self.client.aclose()
 
             self.state = ConnectionState.DISCONNECTED
             self._notify_connection_event("disconnected")
@@ -114,7 +145,7 @@ class HTTPTransport(MCPTransport):
         except Exception as e:
             self.state = ConnectionState.ERROR
             self._notify_connection_event("error", error=e)
-            raise TransportError(f"Failed to stop HTTP server: {e}")
+            raise TransportError(f"Failed to stop HTTP server: {e}") from e
 
     async def send_message(self, message: MCPMessage) -> None:
         """Send message via HTTP POST."""
@@ -128,9 +159,12 @@ class HTTPTransport(MCPTransport):
 
             # Send to configured remote endpoint, not to self
             # This should be configured with actual remote server URL
-            if hasattr(self, "remote_url") and self.remote_url:
+            remote_url = getattr(self, "remote_url", None)
+            if remote_url:
+                if not self.client:
+                    raise TransportError("HTTP client not initialized")
                 response = await self.client.post(
-                    f"{self.remote_url}/mcp/message",
+                    f"{remote_url}/mcp/message",
                     json=message_data,
                     timeout=30.0,
                 )
@@ -140,7 +174,7 @@ class HTTPTransport(MCPTransport):
                 raise TransportError("No remote URL configured for message sending")
 
         except Exception as e:
-            raise TransportError(f"Failed to send HTTP message: {e}")
+            raise TransportError(f"Failed to send HTTP message: {e}") from e
 
     async def receive_messages(self) -> None:
         """HTTP transport receives via endpoint handlers."""
@@ -153,6 +187,8 @@ class HTTPTransport(MCPTransport):
     async def send_to_endpoint(self, url: str, message: MCPMessage) -> MCPMessage:
         """Send message to specific HTTP endpoint and get response."""
         try:
+            if not self.client:
+                raise TransportError("HTTP client not initialized")
             message_data = json.loads(message.to_json())
 
             response = await self.client.post(
@@ -166,7 +202,7 @@ class HTTPTransport(MCPTransport):
             return MCPMessage.from_json(json.dumps(response_data))
 
         except Exception as e:
-            raise TransportError(f"Failed to send to endpoint {url}: {e}")
+            raise TransportError(f"Failed to send to endpoint {url}: {e}") from e
 
     async def health_check(self) -> dict[str, Any]:
         """Enhanced health check for HTTP transport."""

@@ -47,15 +47,7 @@ struct SessionMetaWithGit {
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct SessionStateSnapshot {}
 
-#[derive(Serialize, Deserialize, Default, Clone)]
-pub struct SavedSession {
-    pub session: SessionMeta,
-    #[serde(default)]
-    pub items: Vec<ResponseItem>,
-    #[serde(default)]
-    pub state: SessionStateSnapshot,
-    pub session_id: Uuid,
-}
+// Removed obsolete SavedSession container which was never constructed.
 
 /// Records all [`ResponseItem`]s for a session and flushes them to disk after
 /// every update.

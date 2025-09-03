@@ -692,9 +692,12 @@ dependencies = [
  "codex-protocol-ts",
  "codex-tui",
  "serde_json",
+ "tempfile",
  "tokio",
+ "tokio-stream",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

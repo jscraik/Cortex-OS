@@ -44,12 +44,18 @@
 		"pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
 	},
 	"[yaml]": {
-		"editor.defaultFormatter": "redhat.vscode-yaml"
+		"editor.defaultFormatter": "redhat.vscode-yaml",
+		"editor.codeActionsOnSave": {
+			"source.organizeImports.biome": "never"
+		}
 	},
 	"[rust]": {
 		"editor.defaultFormatter": "rust-lang.rust-analyzer"
 	},
 	"[toml]": {
-		"editor.defaultFormatter": "tamasfe.even-better-toml"
+		"editor.defaultFormatter": "tamasfe.even-better-toml",
+		"editor.codeActionsOnSave": {
+			"source.organizeImports.biome": "never"
+		}
 	}
 }

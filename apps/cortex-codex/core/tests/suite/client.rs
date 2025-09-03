@@ -1,26 +1,26 @@
-use codex_core::CodexAuth;
-use codex_core::ConversationManager;
-use codex_core::ModelProviderInfo;
-use codex_core::NewConversation;
-use codex_core::WireApi;
 use codex_core::built_in_model_providers;
 use codex_core::protocol::EventMsg;
 use codex_core::protocol::InputItem;
 use codex_core::protocol::Op;
 use codex_core::spawn::CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR;
+use codex_core::CodexAuth;
+use codex_core::ConversationManager;
+use codex_core::ModelProviderInfo;
+use codex_core::NewConversation;
+use codex_core::WireApi;
 use codex_protocol::mcp_protocol::AuthMode;
 use core_test_support::load_default_config_for_test;
 use core_test_support::load_sse_fixture_with_id;
 use core_test_support::wait_for_event;
 use serde_json::json;
 use tempfile::TempDir;
-use wiremock::Mock;
-use wiremock::MockServer;
-use wiremock::ResponseTemplate;
 use wiremock::matchers::header_regex;
 use wiremock::matchers::method;
 use wiremock::matchers::path;
 use wiremock::matchers::query_param;
+use wiremock::Mock;
+use wiremock::MockServer;
+use wiremock::ResponseTemplate;
 
 /// Build minimal SSE stream with completed marker using the JSON fixture.
 fn sse_completed(id: &str) -> String {
@@ -95,8 +95,8 @@ fn write_auth_json(
     let auth_json = json!({
         "OPENAI_API_KEY": openai_api_key,
         "tokens": tokens,
-        // RFC3339 datetime; value doesn't matter for these tests
-        "last_refresh": "2025-08-06T20:41:36.232376Z",
+    // RFC3339 datetime; set to current time to avoid token refresh during tests
+    "last_refresh": chrono::Utc::now().to_rfc3339(),
     });
 
     std::fs::write(
@@ -230,12 +230,10 @@ async fn includes_base_instructions_override_in_request() {
     let request = &server.received_requests().await.unwrap()[0];
     let request_body = request.body_json::<serde_json::Value>().unwrap();
 
-    assert!(
-        request_body["instructions"]
-            .as_str()
-            .unwrap()
-            .contains("test instructions")
-    );
+    assert!(request_body["instructions"]
+        .as_str()
+        .unwrap()
+        .contains("test instructions"));
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -577,12 +575,10 @@ async fn includes_user_instructions_message_in_request() {
     let request = &server.received_requests().await.unwrap()[0];
     let request_body = request.body_json::<serde_json::Value>().unwrap();
 
-    assert!(
-        !request_body["instructions"]
-            .as_str()
-            .unwrap()
-            .contains("be nice")
-    );
+    assert!(!request_body["instructions"]
+        .as_str()
+        .unwrap()
+        .contains("be nice"));
     assert_message_role(&request_body["input"][0], "user");
     assert_message_starts_with(&request_body["input"][0], "<user_instructions>");
     assert_message_ends_with(&request_body["input"][0], "</user_instructions>");

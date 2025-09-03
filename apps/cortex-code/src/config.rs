@@ -486,7 +486,7 @@ impl Config {
     /// Set a configuration override using dot notation (e.g., "providers.default")
     pub fn set_override(&mut self, key: &str, value: &str) -> Result<()> {
         let mut config_json = serde_json::to_value(&*self)?;
-        
+
         // Handle nested keys with dot notation
         let parts: Vec<&str> = key.split('.').collect();
         if parts.is_empty() {

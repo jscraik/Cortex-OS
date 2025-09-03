@@ -3,102 +3,103 @@
  * Following TDD principles with 90%+ coverage target
  */
 
-import { createHmac } from "node:crypto.js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest.js";
-import { CortexAiGitHubApp } from "../core/ai-github-app.js";
-import { CortexWebhookServer } from "../server/webhook-server.js";
-import type { GitHubModelsConfig } from "../types/github-models.js";
+import { createHmac } from 'node:crypto';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CortexWebhookServer } from '../server/webhook-server.js';
+import type { GitHubModelsConfig } from '../types/github-models.js';
+
+// Mock app interface matching what the webhook server expects
+interface MockAiApp {
+	queueTask: (taskType: string, payload: any) => void;
+	queueSize: number;
+}
 
 // Test utilities
 const createValidSignature = (payload: string, secret: string): string => {
-	const signature = createHmac("sha256", secret).update(payload).digest("hex");
+	const signature = createHmac('sha256', secret).update(payload).digest('hex');
 	return `sha256=${signature}`;
 };
 
-const createMockAiApp = (): CortexAiGitHubApp => {
-	const mockConfig: GitHubModelsConfig = {
-		token: "test-token",
-		baseUrl: "https://test.api.com",
-		defaultModel: "gpt-4o-mini",
-		maxTokens: 1000,
-		temperature: 0.3,
-	};
-
-	const app = new CortexAiGitHubApp(mockConfig);
-
-	// Mock the queueTask method
-	vi.spyOn(app, "queueTask").mockResolvedValue("test-task-id");
-
-	return app;
+const createMockAiApp = () => {
+	// Create a simple mock without using the real class
+	return {
+		queueTask: vi.fn().mockResolvedValue('test-task-id'),
+		queueSize: 0,
+		activeTaskCount: 0,
+		rateLimit: { remaining: 5000, resetTime: new Date() },
+	} as any;
 };
 
 const createPRCommentPayload = (commentBody: string) => ({
-	action: "created",
+	action: 'created',
 	comment: {
 		id: 123,
 		body: commentBody,
-		user: { login: "testuser" },
+		user: { login: 'testuser' },
 	},
 	issue: {
 		number: 456,
-		pull_request: { url: "https://api.github.com/repos/owner/repo/pulls/456" },
+		pull_request: { url: 'https://api.github.com/repos/owner/repo/pulls/456' },
 	},
 	repository: {
-		name: "test-repo",
-		owner: { login: "test-owner" },
+		name: 'test-repo',
+		owner: { login: 'test-owner' },
 	},
 });
 
-const createPREventPayload = (action: string = "opened") => ({
+const createPREventPayload = (action: string = 'opened') => ({
 	action,
 	pull_request: {
 		number: 789,
-		title: "Test PR",
-		body: "Test PR description",
-		base: { ref: "main" },
-		head: { ref: "feature-branch", sha: "abc123" },
+		title: 'Test PR',
+		body: 'Test PR description',
+		base: { ref: 'main' },
+		head: { ref: 'feature-branch', sha: 'abc123' },
 		labels: [],
 	},
 	repository: {
-		name: "test-repo",
-		owner: { login: "test-owner" },
+		name: 'test-repo',
+		owner: { login: 'test-owner' },
 	},
 });
 
-describe("CortexWebhookServer", () => {
+describe('CortexWebhookServer', () => {
 	let server: CortexWebhookServer;
-	let mockAiApp: CortexAiGitHubApp;
-	const testSecret = "test-webhook-secret.js";
+	let mockAiApp: MockAiApp;
+	const testSecret = 'test-webhook-secret.js';
 	const testPort = 3001;
 
 	beforeEach(() => {
 		mockAiApp = createMockAiApp();
-		server = new CortexWebhookServer(mockAiApp, testSecret, testPort);
+		// Type assertion to bypass the interface requirement since we only need specific methods
+		server = new CortexWebhookServer(mockAiApp as any, testSecret);
 
 		// Reset all mocks
 		vi.clearAllMocks();
 	});
 
 	afterEach(async () => {
-		await server.stop();
+		if (server) {
+			await server.stop();
+		}
 	});
 
-	describe("Constructor and Initialization", () => {
-		it("should initialize with correct parameters", () => {
+	describe('Constructor and Initialization', () => {
+		it('should initialize with correct parameters', () => {
 			expect(server).toBeInstanceOf(CortexWebhookServer);
 			expect(server.queueSize).toBe(0);
 		});
 
-		it("should initialize default triggers", () => {
+		it('should initialize default triggers', () => {
 			// Access private method for testing
 			const triggers = (server as any).triggers;
 			expect(triggers).toHaveLength(8);
-			expect(triggers.map((t: any) => t.taskType)).toContain("code_review");
+			expect(triggers.map((t: any) => t.taskType)).toContain('code_review');
 		});
 	});
 
-	describe("Signature Verification", () => {
-		it("should accept valid signatures", () => {
+	describe('Signature Verification', () => {
+		it('should accept valid signatures', () => {
 			const payload = Buffer.from('{"test": true}');
 			const validSignature = createValidSignature(
 				payload.toString(),
@@ -112,9 +113,9 @@ describe("CortexWebhookServer", () => {
 			expect(result).toBe(true);
 		});
 
-		it("should reject invalid signatures", () => {
+		it('should reject invalid signatures', () => {
 			const payload = Buffer.from('{"test": true}');
-			const invalidSignature = "sha256=invalid.js";
+			const invalidSignature = 'sha256=invalid.js';
 
 			const result = (server as any).verifyWebhookSignature(
 				payload,
@@ -123,9 +124,9 @@ describe("CortexWebhookServer", () => {
 			expect(result).toBe(false);
 		});
 
-		it("should reject malformed signatures", () => {
+		it('should reject malformed signatures', () => {
 			const payload = Buffer.from('{"test": true}');
-			const malformedSignature = "invalid-format.js";
+			const malformedSignature = 'invalid-format.js';
 
 			const result = (server as any).verifyWebhookSignature(
 				payload,
@@ -134,46 +135,46 @@ describe("CortexWebhookServer", () => {
 			expect(result).toBe(false);
 		});
 
-		it("should handle empty payload gracefully", () => {
-			const payload = Buffer.from("");
-			const signature = createValidSignature("", testSecret);
+		it('should handle empty payload gracefully', () => {
+			const payload = Buffer.from('');
+			const signature = createValidSignature('', testSecret);
 
 			const result = (server as any).verifyWebhookSignature(payload, signature);
 			expect(result).toBe(true);
 		});
 	});
 
-	describe("Command Processing", () => {
-		it("should queue code review task for @cortex review", async () => {
-			const payload = createPRCommentPayload("@cortex review this code");
+	describe('Command Processing', () => {
+		it('should queue code review task for @cortex review', async () => {
+			const payload = createPRCommentPayload('@cortex review this code');
 
 			await (server as any).handleCommentCreated(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith({
-				taskType: "code_review",
+				taskType: 'code_review',
 				githubContext: expect.objectContaining({
-					owner: "test-owner",
-					repo: "test-repo",
+					owner: 'test-owner',
+					repo: 'test-repo',
 				}),
-				instructions: "this code",
+				instructions: 'this code',
 			});
 		});
 
-		it("should queue security scan for @cortex secure", async () => {
-			const payload = createPRCommentPayload("@cortex secure");
+		it('should queue security scan for @cortex secure', async () => {
+			const payload = createPRCommentPayload('@cortex secure');
 
 			await (server as any).handleCommentCreated(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith({
-				taskType: "security_scan",
+				taskType: 'security_scan',
 				githubContext: expect.any(Object),
 				instructions: undefined,
 			});
 		});
 
-		it("should handle multiple commands correctly", async () => {
-			const reviewPayload = createPRCommentPayload("@cortex review");
-			const analyzePayload = createPRCommentPayload("@cortex analyze");
+		it('should handle multiple commands correctly', async () => {
+			const reviewPayload = createPRCommentPayload('@cortex review');
+			const analyzePayload = createPRCommentPayload('@cortex analyze');
 
 			await (server as any).handleCommentCreated(reviewPayload);
 			await (server as any).handleCommentCreated(analyzePayload);
@@ -182,87 +183,87 @@ describe("CortexWebhookServer", () => {
 			expect(mockAiApp.queueTask).toHaveBeenNthCalledWith(
 				1,
 				expect.objectContaining({
-					taskType: "code_review",
+					taskType: 'code_review',
 				}),
 			);
 			expect(mockAiApp.queueTask).toHaveBeenNthCalledWith(
 				2,
 				expect.objectContaining({
-					taskType: "pr_analysis",
+					taskType: 'pr_analysis',
 				}),
 			);
 		});
 
-		it("should ignore non-command comments", async () => {
-			const payload = createPRCommentPayload("This is just a regular comment");
+		it('should ignore non-command comments', async () => {
+			const payload = createPRCommentPayload('This is just a regular comment');
 
 			await (server as any).handleCommentCreated(payload);
 
 			expect(mockAiApp.queueTask).not.toHaveBeenCalled();
 		});
 
-		it("should extract instructions from commands", async () => {
+		it('should extract instructions from commands', async () => {
 			const payload = createPRCommentPayload(
-				"@cortex fix security issues in auth module",
+				'@cortex fix security issues in auth module',
 			);
 
 			await (server as any).handleCommentCreated(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
 				expect.objectContaining({
-					instructions: "security issues in auth module",
+					instructions: 'security issues in auth module',
 				}),
 			);
 		});
 	});
 
-	describe("Pull Request Event Handling", () => {
-		it("should auto-trigger code review for new PRs", async () => {
-			const payload = createPREventPayload("opened");
+	describe('Pull Request Event Handling', () => {
+		it('should auto-trigger code review for new PRs', async () => {
+			const payload = createPREventPayload('opened');
 
 			await (server as any).handlePullRequestEvent(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith({
-				taskType: "code_review",
+				taskType: 'code_review',
 				githubContext: expect.objectContaining({
 					pr: expect.objectContaining({
 						number: 789,
-						title: "Test PR",
+						title: 'Test PR',
 					}),
 				}),
-				instructions: "Automated code review for new PR",
+				instructions: 'Automated code review for new PR',
 			});
 		});
 
-		it("should trigger security scan for security-related PRs", async () => {
-			const securityPayload = createPREventPayload("opened");
+		it('should trigger security scan for security-related PRs', async () => {
+			const securityPayload = createPREventPayload('opened');
 			securityPayload.pull_request.title =
-				"Fix authentication vulnerability.js";
+				'Fix authentication vulnerability.js';
 
 			await (server as any).handlePullRequestEvent(securityPayload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
-				expect.objectContaining({ taskType: "code_review" }),
+				expect.objectContaining({ taskType: 'code_review' }),
 			);
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
-				expect.objectContaining({ taskType: "security_scan" }),
+				expect.objectContaining({ taskType: 'security_scan' }),
 			);
 		});
 
-		it("should trigger documentation task for docs PRs", async () => {
-			const docsPayload = createPREventPayload("opened");
-			docsPayload.pull_request.title = "Update API documentation.js";
+		it('should trigger documentation task for docs PRs', async () => {
+			const docsPayload = createPREventPayload('opened');
+			docsPayload.pull_request.title = 'Update API documentation.js';
 
 			await (server as any).handlePullRequestEvent(docsPayload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
-				expect.objectContaining({ taskType: "documentation" }),
+				expect.objectContaining({ taskType: 'documentation' }),
 			);
 		});
 
-		it("should handle PR synchronize events", async () => {
-			const payload = createPREventPayload("synchronize");
-			payload.pull_request.body = "Added security improvements.js";
+		it('should handle PR synchronize events', async () => {
+			const payload = createPREventPayload('synchronize');
+			payload.pull_request.body = 'Added security improvements.js';
 
 			await (server as any).handlePullRequestEvent(payload);
 
@@ -270,9 +271,9 @@ describe("CortexWebhookServer", () => {
 		});
 	});
 
-	describe("Issue Event Handling", () => {
-		const createIssuePayload = (title: string, body = "") => ({
-			action: "opened",
+	describe('Issue Event Handling', () => {
+		const createIssuePayload = (title: string, body = '') => ({
+			action: 'opened',
 			issue: {
 				number: 123,
 				title,
@@ -280,98 +281,98 @@ describe("CortexWebhookServer", () => {
 				labels: [],
 			},
 			repository: {
-				name: "test-repo",
-				owner: { login: "test-owner" },
+				name: 'test-repo',
+				owner: { login: 'test-owner' },
 			},
 		});
 
-		it("should auto-triage new issues", async () => {
-			const payload = createIssuePayload("Bug report");
+		it('should auto-triage new issues', async () => {
+			const payload = createIssuePayload('Bug report');
 
 			await (server as any).handleIssueOpened(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
-				expect.objectContaining({ taskType: "issue_triage" }),
+				expect.objectContaining({ taskType: 'issue_triage' }),
 			);
 		});
 
-		it("should trigger security analysis for security issues", async () => {
-			const payload = createIssuePayload("Security vulnerability in login");
+		it('should trigger security analysis for security issues', async () => {
+			const payload = createIssuePayload('Security vulnerability in login');
 
 			await (server as any).handleIssueOpened(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
-				expect.objectContaining({ taskType: "security_scan" }),
+				expect.objectContaining({ taskType: 'security_scan' }),
 			);
 		});
 
-		it("should trigger repo health check for performance issues", async () => {
-			const payload = createIssuePayload("App is running slow");
+		it('should trigger repo health check for performance issues', async () => {
+			const payload = createIssuePayload('App is running slow');
 
 			await (server as any).handleIssueOpened(payload);
 
 			expect(mockAiApp.queueTask).toHaveBeenCalledWith(
-				expect.objectContaining({ taskType: "repo_health" }),
+				expect.objectContaining({ taskType: 'repo_health' }),
 			);
 		});
 	});
 
-	describe("Context Building", () => {
-		it("should build PR context correctly", () => {
+	describe('Context Building', () => {
+		it('should build PR context correctly', () => {
 			const payload = createPREventPayload();
 
 			const context = (server as any).buildGitHubContext(payload);
 
 			expect(context).toEqual({
-				owner: "test-owner",
-				repo: "test-repo",
+				owner: 'test-owner',
+				repo: 'test-repo',
 				pr: {
 					number: 789,
-					title: "Test PR",
-					body: "Test PR description",
-					base: "main",
-					head: "feature-branch",
+					title: 'Test PR',
+					body: 'Test PR description',
+					base: 'main',
+					head: 'feature-branch',
 					files: [],
 				},
 			});
 		});
 
-		it("should build issue context correctly", () => {
+		it('should build issue context correctly', () => {
 			const payload = {
 				issue: {
 					number: 456,
-					title: "Test Issue",
-					body: "Issue description",
-					labels: [{ name: "bug" }, { name: "priority-high" }],
+					title: 'Test Issue',
+					body: 'Issue description',
+					labels: [{ name: 'bug' }, { name: 'priority-high' }],
 				},
 				repository: {
-					name: "test-repo",
-					owner: { login: "test-owner" },
+					name: 'test-repo',
+					owner: { login: 'test-owner' },
 				},
 			};
 
 			const context = (server as any).buildGitHubContext(payload);
 
 			expect(context).toEqual({
-				owner: "test-owner",
-				repo: "test-repo",
+				owner: 'test-owner',
+				repo: 'test-repo',
 				issue: {
 					number: 456,
-					title: "Test Issue",
-					body: "Issue description",
-					labels: ["bug", "priority-high"],
+					title: 'Test Issue',
+					body: 'Issue description',
+					labels: ['bug', 'priority-high'],
 				},
 			});
 		});
 	});
 
-	describe("Trigger Management", () => {
-		it("should add custom triggers", () => {
+	describe('Trigger Management', () => {
+		it('should add custom triggers', () => {
 			const customTrigger = {
 				pattern: /@cortex\s+custom/i,
-				taskType: "code_review" as const,
-				description: "Custom trigger",
-				requiredPermissions: ["read" as const],
+				taskType: 'code_review' as const,
+				description: 'Custom trigger',
+				requiredPermissions: ['read' as const],
 			};
 
 			server.addTrigger(customTrigger);
@@ -380,7 +381,7 @@ describe("CortexWebhookServer", () => {
 			expect(triggers).toContainEqual(customTrigger);
 		});
 
-		it("should remove triggers by pattern", () => {
+		it('should remove triggers by pattern', () => {
 			const patternToRemove = /@cortex\s+review/i;
 
 			const removed = server.removeTrigger(patternToRemove.source);
@@ -394,13 +395,13 @@ describe("CortexWebhookServer", () => {
 		});
 	});
 
-	describe("Error Handling", () => {
-		it("should handle AI app errors gracefully", async () => {
-			vi.spyOn(mockAiApp, "queueTask").mockRejectedValue(
-				new Error("AI service unavailable"),
+	describe('Error Handling', () => {
+		it('should handle AI app errors gracefully', async () => {
+			vi.spyOn(mockAiApp, 'queueTask').mockRejectedValue(
+				new Error('AI service unavailable'),
 			);
 
-			const payload = createPRCommentPayload("@cortex review");
+			const payload = createPRCommentPayload('@cortex review');
 
 			// Should not throw
 			await expect(
@@ -408,8 +409,8 @@ describe("CortexWebhookServer", () => {
 			).resolves.toBeUndefined();
 		});
 
-		it("should handle malformed payloads gracefully", async () => {
-			const malformedPayload = { invalid: "payload" };
+		it('should handle malformed payloads gracefully', async () => {
+			const malformedPayload = { invalid: 'payload' };
 
 			// Should not throw
 			await expect(
@@ -418,14 +419,14 @@ describe("CortexWebhookServer", () => {
 		});
 	});
 
-	describe("Server Lifecycle", () => {
-		it("should start server on specified port", async () => {
+	describe('Server Lifecycle', () => {
+		it('should start server on specified port', async () => {
 			const startPromise = server.start(testPort);
 
 			await expect(startPromise).resolves.toBeUndefined();
 		});
 
-		it("should stop server gracefully", async () => {
+		it('should stop server gracefully', async () => {
 			await server.start(testPort);
 
 			const stopPromise = server.stop();
@@ -433,7 +434,7 @@ describe("CortexWebhookServer", () => {
 			await expect(stopPromise).resolves.toBeUndefined();
 		});
 
-		it("should handle multiple stop calls gracefully", async () => {
+		it('should handle multiple stop calls gracefully', async () => {
 			await server.start(testPort);
 
 			await server.stop();

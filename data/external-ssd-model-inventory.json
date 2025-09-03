@@ -1,173 +1,170 @@
 {
 	"mlx": [
 		{
-			"name": "qwen3-embedding-0.6b-mlx",
-			"repo": "mlx-community/qwen3-embedding-0.6b-mlx",
-			"ram_gb": 1.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/qwen3-embedding-0.6b-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "qwen3-embedding-4b-mlx",
-			"repo": "mlx-community/qwen3-embedding-4b-mlx",
-			"ram_gb": 3.5,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/qwen3-embedding-4b-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "qwen3-embedding-8b-mlx",
-			"repo": "mlx-community/qwen3-embedding-8b-mlx",
-			"ram_gb": 7.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/qwen3-embedding-8b-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "gemma2-emb-15b-moe",
-			"repo": null,
-			"ram_gb": 12.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/gemma2-emb-15b-moe",
-			"size_bytes": null
-		},
-		{
-			"name": "qwen3-reranker-4b-mlx",
-			"repo": "mlx-community/qwen3-reranker-4b-mlx",
-			"ram_gb": 4.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/qwen3-reranker-4b-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "qwen3-coder-7b-mlx",
-			"repo": "mlx-community/qwen3-coder-7b-mlx",
-			"ram_gb": 8.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/qwen3-coder-7b-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "llamaguard-2-14b-mlx",
-			"repo": null,
-			"ram_gb": 16.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/llamaguard-2-14b-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "Qwen3-Coder-30B-A3B-Instruct-4bit",
-			"repo": "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
-			"ram_gb": 17.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/Qwen3-Coder-30B-A3B-Instruct-4bit",
-			"size_bytes": null
-		},
-		{
-			"name": "Qwen3-30B-A3B-Instruct-4bit",
-			"repo": "mlx-community/Qwen3-30B-A3B-Instruct-4bit",
-			"ram_gb": 22.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/Qwen3-30B-A3B-Instruct-4bit",
-			"size_bytes": null
-		},
-		{
-			"name": "Mixtral-8x7B-v0.1-hf-4bit-mlx",
-			"repo": "mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx",
-			"ram_gb": 12.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/Mixtral-8x7B-v0.1-hf-4bit-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "Qwen2.5-VL-3B-Instruct-6bit",
-			"repo": "mlx-community/Qwen2.5-VL-3B-Instruct-6bit",
-			"ram_gb": 3.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/Qwen2.5-VL-3B-Instruct-6bit",
-			"size_bytes": null
-		},
-		{
-			"name": "Qwen2.5-7B-Instruct-4bit-mlx",
-			"repo": "mlx-community/Qwen2.5-7B-Instruct-4bit-mlx",
-			"ram_gb": 7.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/Qwen2.5-7B-Instruct-4bit-mlx",
-			"size_bytes": null
-		},
-		{
-			"name": "Phi-3-mini-4k-instruct-4bit",
-			"repo": "mlx-community/Phi-3-mini-4k-instruct-4bit",
-			"ram_gb": 2.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/Phi-3-mini-4k-instruct-4bit",
-			"size_bytes": null
-		},
-		{
-			"name": "gpt-oss-20b-8bit-mlx",
-			"repo": null,
-			"ram_gb": 24.0,
-			"path": "/Volumes/ExternalSSD/ai-models/local-models/gpt-oss-20b-8bit-mlx",
-			"size_bytes": null
-		},
-		{
 			"name": "GLM-4.5-mlx-4Bit",
 			"repo": "brAInwav/GLM-4.5-mlx-4Bit",
 			"ram_gb": 8.0,
 			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--brAInwav--GLM-4.5-mlx-4Bit",
-			"size_bytes": null
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
 		},
 		{
-			"name": "SmolLM-135M-Instruct-4bit",
-			"repo": "mlx-community/SmolLM-135M-Instruct-4bit",
-			"ram_gb": 0.5,
-			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--SmolLM-135M-Instruct-4bit",
-			"size_bytes": null
+			"name": "GLM-4.5-4bit",
+			"repo": "mlx-community/GLM-4.5-4bit",
+			"ram_gb": 8.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--GLM-4.5-4bit",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
 		},
 		{
 			"name": "gpt-oss-20b-MLX-8bit",
 			"repo": "lmstudio-community/gpt-oss-20b-MLX-8bit",
 			"ram_gb": 24.0,
 			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--lmstudio-community--gpt-oss-20b-MLX-8bit",
-			"size_bytes": null
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
 		},
+		{
+			"name": "Llama-3.1-8B-Instruct",
+			"repo": "mlx-community/Llama-3.1-8B-Instruct",
+			"ram_gb": 12.0,
+			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--Llama-3.1-8B-Instruct",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
+		},
+		{
+			"name": "SmolLM-135M-Instruct-4bit",
+			"repo": "mlx-community/SmolLM-135M-Instruct-4bit",
+			"ram_gb": 1.0,
+			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--SmolLM-135M-Instruct-4bit",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
+		},
+		{
+			"name": "Mixtral-8x7B-v0.1-hf-4bit-mlx",
+			"repo": "mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx",
+			"ram_gb": 32.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Mixtral-8x7B-v0.1-hf-4bit-mlx",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
+		},
+		{
+			"name": "Qwen2.5-0.5B-Instruct-4bit",
+			"repo": "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
+			"ram_gb": 1.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen2.5-0.5B-Instruct-4bit",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
+		},
+		{
+			"name": "Qwen2.5-VL-3B-Instruct-6bit",
+			"repo": "mlx-community/Qwen2.5-VL-3B-Instruct-6bit",
+			"ram_gb": 6.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit",
+			"size_bytes": null,
+			"type": "vision",
+			"status": "available"
+		},
+		{
+			"name": "Qwen3-Coder-30B-A3B-Instruct-4bit",
+			"repo": "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
+			"ram_gb": 32.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Qwen3-Coder-30B-A3B-Instruct-4bit",
+			"size_bytes": null,
+			"type": "code",
+			"status": "available"
+		},
+		{
+			"name": "Phi-3-mini-4k-instruct-4bit",
+			"repo": "mlx-community/Phi-3-mini-4k-instruct-4bit",
+			"ram_gb": 4.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/hub/models--mlx-community--Phi-3-mini-4k-instruct-4bit",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
+		},
+		{
+			"name": "gemma-2-2b-it-4bit",
+			"repo": "mlx-community/gemma-2-2b-it-4bit",
+			"ram_gb": 4.0,
+			"path": "/Volumes/ExternalSSD/huggingface_cache/models--mlx-community--gemma-2-2b-it-4bit",
+			"size_bytes": null,
+			"type": "chat",
+			"status": "available"
+		}
+	],
+	"embedding_models": [
 		{
 			"name": "Qwen3-Embedding-4B",
 			"repo": "Qwen/Qwen3-Embedding-4B",
 			"ram_gb": 4.0,
 			"path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--Qwen--Qwen3-Embedding-4B",
-			"size_bytes": null
+			"size_bytes": null,
+			"type": "embedding",
+			"status": "available",
+			"dimensions": 4096
+		}
+	],
+	"llama_cpp": [
+		{
+			"name": "mistral-7b-v0.1.Q4_K_M",
+			"repo": "TheBloke/Mistral-7B-v0.1-GGUF",
+			"ram_gb": 8.0,
+			"path": "/Volumes/ExternalSSD/ai-models/llama.cpp/models/mistral-7b-v0.1.Q4_K_M.gguf",
+			"size_bytes": 4368438912,
+			"type": "chat",
+			"status": "available",
+			"format": "gguf",
+			"quantization": "Q4_K_M"
 		}
 	],
 	"ollama": [
 		{
 			"name": "deepseek-coder",
 			"tag": "6.7b",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/deepseek-coder/6.7b",
-			"note": "manifest shows model layers and sizes"
-		},
-		{
-			"name": "gemma3n",
-			"tag": "e4b",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/gemma3n/e4b"
+			"ram_gb": 8.0,
+			"type": "code",
+			"status": "available"
 		},
 		{
 			"name": "gpt-oss",
 			"tag": "20b",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/gpt-oss/20b",
-			"size_bytes": 13780154624
-		},
-		{
-			"name": "granite-embedding",
-			"tag": "278m",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/granite-embedding/278m",
-			"size_bytes": 562765632
-		},
-		{
-			"name": "nomic-embed-text",
-			"tag": "v1.5",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/nomic-embed-text/v1.5",
-			"size_bytes": 274290656
-		},
-		{
-			"name": "phi4-mini-reasoning",
-			"tag": "latest",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/phi4-mini-reasoning/latest",
-			"size_bytes": 3152477440
+			"ram_gb": 24.0,
+			"type": "chat",
+			"status": "available"
 		},
 		{
 			"name": "qwen3-coder",
 			"tag": "30b",
-			"manifest_path": "/Volumes/ExternalSSD/ai-models/ollama/models/manifests/registry.ollama.ai/library/qwen3-coder/30b",
-			"size_bytes": 18556688736
+			"ram_gb": 32.0,
+			"type": "code",
+			"status": "available"
+		},
+		{
+			"name": "phi4-mini-reasoning",
+			"tag": "latest",
+			"ram_gb": 4.0,
+			"type": "reasoning",
+			"status": "available"
+		}
+	],
+	"local_models": [
+		{
+			"name": "Qwen3-Coder-30B-A3B-Instruct-4bit",
+			"repo": "local",
+			"ram_gb": 32.0,
+			"path": "/Volumes/ExternalSSD/ai-models/local-models/Qwen3-Coder-30B-A3B-Instruct-4bit",
+			"size_bytes": null,
+			"type": "code",
+			"status": "available",
+			"format": "transformers"
 		}
 	],
 	"mlx_knife": [
@@ -175,7 +172,49 @@
 			"name": "SmolLM-135M-Instruct-4bit",
 			"id": "642e06af",
 			"size": "82.6 MB",
-			"modified": "1 days ago"
+			"modified": "1 days ago",
+			"status": "available"
 		}
-	]
+	],
+	"infrastructure": {
+		"llama_cpp_server": {
+			"binary_path": "/Volumes/ExternalSSD/ai-models/llama.cpp/build/bin/llama-server",
+			"status": "built",
+			"metal_support": true,
+			"default_port": 8081,
+			"current_model": "mistral-7b-v0.1.Q4_K_M.gguf",
+			"running": true
+		},
+		"ollama": {
+			"models_path": "/Volumes/ExternalSSD/ai-models/ollama",
+			"status": "available"
+		},
+		"huggingface_cache": {
+			"primary_path": "/Volumes/ExternalSSD/ai-cache/huggingface",
+			"secondary_path": "/Volumes/ExternalSSD/huggingface_cache",
+			"models_path": "/Volumes/ExternalSSD/models/hf",
+			"hub_path": "/Volumes/ExternalSSD/ai-cache/huggingface/hub",
+			"status": "available",
+			"note": "Multiple cache locations detected"
+		},
+		"mlx_cache": {
+			"primary_models": "/Volumes/ExternalSSD/ai-cache/huggingface/models--mlx-community--SmolLM-135M-Instruct-4bit",
+			"temp_cache": "/Volumes/ExternalSSD/ai-tmp",
+			"status": "available",
+			"note": "MLX models scattered across multiple cache locations"
+		}
+	},
+	"cache_locations": {
+		"huggingface_primary": "/Volumes/ExternalSSD/ai-cache/huggingface",
+		"huggingface_secondary": "/Volumes/ExternalSSD/huggingface_cache",
+		"huggingface_models": "/Volumes/ExternalSSD/models/hf",
+		"mlx_temp": "/Volumes/ExternalSSD/ai-tmp",
+		"ollama_models": "/Volumes/ExternalSSD/ai-models/ollama"
+	},
+	"optimization_needed": {
+		"consolidate_hf_cache": true,
+		"cleanup_mlx_temp": true,
+		"verify_model_sizes": true,
+		"test_model_loading": true
+	}
 }

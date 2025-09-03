@@ -1,0 +1,573 @@
+
+> cortex-os@0.0.1 structure:validate /Users/jamiecraik/.Cortex-OS
+> npx tsx tools/structure-guard/guard-enhanced.ts
+
+Filtered out 75229 denied files
+❌ Disallowed file placements:
+  - .dockerignore
+  - .editorconfig
+  - .env.development.example
+  - .env.example
+  - .env.staging.example
+  - .gitattributes
+  - .gitignore
+  - .gitmodules
+  - .graphite_config
+  - .markdownlintignore
+  - .mermaidrc
+  - .npmrc
+  - .nxignore
+  - .prettierignore
+  - .prettierrc
+  - .structure-override
+  - .tool-versions
+  - .vitestrc
+  - 1753683755292-30b3431f487b4cc1863e57a81d78e289.sh
+  - Dockerfile.optimized
+  - LICENSE
+  - Makefile
+  - NOTICE
+  - graph.html
+  - knip.jsonc
+  - pyproject.toml.ruff
+  - test-autonomous-github-apps.sh
+  - .cortex/COMPLETION-SUMMARY.md
+  - .cortex/README.md
+  - .cortex/config.yml
+  - .cortex/enhancement-plan.md
+  - .cortex/eval.config.json
+  - .cortex/layout.allowlist.json
+  - .cortex/mcp.index.json
+  - .cortex/mcp.runtime.json
+  - .cortex/neurons.json
+  - .cortex/production-deployment-checklist.md
+  - .cortex/prp-implementation-guide.md
+  - .cortex/structure-guard.yaml
+  - .cortex/validate.cjs
+  - .cortex/commands/.gitkeep
+  - .cortex/audit/checks.json
+  - .cortex/audit/library_transfer_20250826_182506.md
+  - .cortex/audit/library_transfer_20250826_183348.md
+  - .cortex/audit/provenance.md
+  - .cortex/context/Nx-console.md
+  - .cortex/context/Nx.md
+  - .cortex/docs/agents-framework.md
+  - .cortex/docs/capability-map.md
+  - .cortex/docs/containerization-plan.md
+  - .cortex/docs/cortex-os-prd-agentic-2nd-brain.md
+  - .cortex/docs/cortex-system-architecture.md
+  - .cortex/docs/frontier-tools-integration.md
+  - .cortex/docs/project-structure.md
+  - .cortex/docs/runtime-map.md
+  - .cortex/docs/sub-agents.md
+  - .cortex/docs/vision.md
+  - .cortex/gates/eval-gate.js
+  - .cortex/gates/package-lock.json
+  - .cortex/gates/package.json
+  - .cortex/gates/validate-context.ts
+  - .cortex/gates/validate-docs.js
+  - .cortex/gates/validate-docs.ts
+  - .cortex/gates/validate-policies.js
+  - .cortex/gates/validate-policies.ts
+  - .cortex/gates/validate-structure.ts
+  - .cortex/indexes/a2a.index.json
+  - .cortex/indexes/mcp.index.json
+  - .cortex/indexes/rag.index.json
+  - .cortex/indexes/simlab.index.json
+  - .cortex/policy/agents.mandates.json
+  - .cortex/policy/egress.allowlist.json
+  - .cortex/policy/mcp-governance.json
+  - .cortex/policy/mcp-governance.test.ts
+  - .cortex/policy/mcp-security-validator.test.ts
+  - .cortex/policy/mcp-security-validator.ts
+  - .cortex/policy/model-gateway.json
+  - .cortex/policy/policy.agents.json
+  - .cortex/policy/policy.repo.json
+  - .cortex/policy/policy.tools.json
+  - .cortex/policy/policy.tools.test.ts
+  - .cortex/policy/rules.yaml
+  - .cortex/library/index.md
+  - .cortex/reports/cortex-cli-enhancement-implementation-plan.md
+  - .cortex/reports/cortex-cli-implementation-plan.md
+  - .cortex/reports/cortex-os-accessibility-implementation-plan.md
+  - .cortex/reports/cortex-os-architecture-assessment.md
+  - .cortex/reports/cortex-os-containerization-deployment-strategy.md
+  - .cortex/reports/cortex-os-development-roadmap.md
+  - .cortex/reports/cortex-os-governance-compliance-framework.md
+  - .cortex/reports/cortex-os-husky-precommit-fix-summary.md
+  - .cortex/reports/cortex-os-implementation-summary.md
+  - .cortex/reports/cortex-os-observability-implementation-plan.md
+  - .cortex/reports/cortex-os-performance-optimization-plan.md
+  - .cortex/reports/cortex-os-performance-optimization-strategy.md
+  - .cortex/reports/cortex-os-product-requirements-document.md
+  - .cortex/reports/cortex-os-security-implementation-plan.md
+  - .cortex/rules/AGENTS.md
+  - .cortex/rules/CLAUDE.md
+  - .cortex/rules/COPILOT-INSTRUCTIONS.md
+  - .cortex/rules/GEMINI.md
+  - .cortex/rules/QWEN.md
+  - .cortex/rules/RULES_OF_AI.md
+  - .cortex/rules/structure-guard.json
+  - .cortex/runbooks/developer.md
+  - .cortex/runbooks/incident.md
+  - .cortex/runbooks/release.md
+  - .cortex/tooling/check-agents.ts
+  - .cortex/tooling/check-index.ts
+  - .cortex/tooling/report.ts
+  - .cortex/tools/.gitkeep
+  - .cortex/schemas/mandates.schema.json
+  - .cortex/schemas/mcp-governance.schema.json
+  - .cortex/schemas/memory.schema.json
+  - .cortex/schemas/policy.agents.schema.json
+  - .cortex/schemas/policy.repo.schema.json
+  - .cortex/schemas/policy.tools.schema.json
+  - .cortex/schemas/task.schema.json
+  - .cortex/schemas/workflow.schema.json
+  - .cortex/context/agents/anthropic-agents.md
+  - .cortex/context/agents/anthropic-sub-agents.md
+  - .cortex/context/agents/crewai.md
+  - .cortex/context/agents/google-agents.md
+  - .cortex/context/agents/langfuse-agents.md
+  - .cortex/context/agents/langgraph-agents.md
+  - .cortex/context/agents/langgraph.md
+  - .cortex/context/agents/openai-agents-framework.md
+  - .cortex/context/agents/pydantic-ai.md
+  - .cortex/context/ai-ml/crewai.md
+  - .cortex/context/ai-ml/langgraph.md
+  - .cortex/context/ai-ml/mlx.md
+  - .cortex/context/ai-ml/pydantic-ai.md
+  - .cortex/context/ai-ml/pydantic.md
+  - .cortex/context/ai-ml/pytorch.md
+  - .cortex/context/process/Scrum.md
+  - .cortex/context/process/cortex-os-implementation-plan.md
+  - .cortex/context/dev-tools/jest.md
+  - .cortex/context/dev-tools/node.js.md
+  - .cortex/context/dev-tools/npm.md
+  - .cortex/context/dev-tools/pnpm.md
+  - .cortex/context/dev-tools/prettier.md
+  - .cortex/context/dev-tools/prisma.md
+  - .cortex/context/dev-tools/semgrep.md
+  - .cortex/context/dev-tools/sqlite.md
+  - .cortex/context/dev-tools/turborepo.md
+  - .cortex/context/dev-tools/typescript.md
+  - .cortex/context/dev-tools/uv.md
+  - .cortex/context/dev-tools/vitest.md
+  - .cortex/context/web-frameworks/express.js.md
+  - .cortex/context/web-frameworks/fastapi.md
+  - .cortex/context/web-frameworks/ink.md
+  - .cortex/context/web-frameworks/next.js.md
+  - .cortex/context/web-frameworks/react-native.md
+  - .cortex/context/web-frameworks/react.md
+  - .cortex/context/web-frameworks/shadcn-ui.md
+  - .cortex/context/web-frameworks/tailwind-css.md
+  - .cortex/context/protocols/a2a-protocol-documentation.md
+  - .cortex/context/protocols/http.md
+  - .cortex/context/protocols/model-context-protocol.md
+  - .cortex/policy/tools/git.json
+  - .cortex/library/flows/.gitkeep
+  - .cortex/library/blueprints/.gitkeep
+  - .cortex/library/mcp/semsearch.ts
+  - .cortex/library/personas/cerebrum.yaml
+  - .cortex/library/packs/template.neuron.yaml
+  - .cortex/prompts/flows/README.md
+  - .cortex/library/schemas/inputs.core.schema.json
+  - .cortex/library/schemas/inputs.core.ts
+  - .cortex/library/schemas/outputs.core.schema.json
+  - .cortex/library/schemas/outputs.core.ts
+  - .cortex/library/schemas/prompt.schema.ts
+  - .cortex/library/rules/CORTEX_PROMPT_POLICY.md
+  - .cortex/library/rules/PROMPT_SPECS.index.md
+  - .cortex/library/rules/a11y.md
+  - .cortex/library/rules/ai-security.yml
+  - .cortex/library/rules/identity.md
+  - .cortex/library/rules/memory.md
+  - .cortex/library/rules/output_format.md
+  - .cortex/library/rules/reasoning.md
+  - .cortex/library/rules/refusal.md
+  - .cortex/library/rules/review_loop.md
+  - .cortex/library/rules/security.md
+  - .cortex/library/rules/security.yml
+  - .cortex/library/rules/style.md
+  - .cortex/library/rules/tool_preambles.md
+  - .cortex/prompts/personas/README.md
+  - .cortex/schemas/events/agent-lifecycle.schema.json
+  - .cortex/schemas/tools/mcp-tool.schema.json
+  - .cortex/prompts/packs/README.md
+  - .cortex/schemas/errors/problem-json.schema.json
+  - .cortex/context/ai-ml/frameworks/mlx.md
+  - .cortex/context/ai-ml/frameworks/pytorch.md
+  - .cortex/context/ai-ml/libraries/pydantic.md
+  - .cortex/context/ai-ml/protocols/OpenAI-api
+  - .cortex/context/ai-ml/protocols/OpenAI-api.md
+  - .cortex/context/ai-ml/protocols/model-context-protocol.md
+  - .cortex/context/ai-ml/providers/Zai.md
+  - .cortex/context/ai-ml/providers/open-webui.md
+  - .cortex/context/ai-ml/providers/openai-cli.md
+  - .cortex/context/ai-ml/providers/openai-harmony.md
+  - .cortex/context/dev-tools/testing/jest.md
+  - .cortex/context/dev-tools/testing/vitest.md
+  - .cortex/context/dev-tools/formatting/biome.md
+  - .cortex/context/dev-tools/formatting/eslint.md
+  - .cortex/context/dev-tools/formatting/prettier.md
+  - .cortex/context/dev-tools/formatting/semgrep.md
+  - .cortex/context/dev-tools/package-management/mise.md
+  - .cortex/context/dev-tools/package-management/npm.md
+  - .cortex/context/dev-tools/package-management/pnpm.md
+  - .cortex/context/dev-tools/package-management/turborepo.md
+  - .cortex/context/dev-tools/package-management/vite.md
+  - .cortex/context/dev-tools/ui/shadcn-ui.md
+  - .cortex/context/dev-tools/ui/tailwind-css.md
+  - .cortex/context/web-frameworks/python-frameworks/fastapi.md
+  - .cortex/context/protocols/database/prisma.md
+  - .cortex/context/protocols/database/sqlite.md
+  - .cortex/context/protocols/network/a2a-protocol-documentation.md
+  - .cortex/context/protocols/network/http.md
+  - .cortex/context/protocols/network/mcp.md
+  - .cortex/context/protocols/network/uv.md
+  - .cortex/context/web-frameworks/js-frameworks/express.js.md
+  - .cortex/context/web-frameworks/js-frameworks/ink.md
+  - .cortex/context/web-frameworks/js-frameworks/next.js.md
+  - .cortex/context/web-frameworks/js-frameworks/node.js.md
+  - .cortex/context/web-frameworks/js-frameworks/react-native.md
+  - .cortex/context/web-frameworks/js-frameworks/react.md
+  - .cortex/library/packs/auth/auth0/add-feature-auth0-javascript.yaml
+  - .cortex/library/packs/auth/auth0/rule-auth0-javascript-coding-standards.yaml
+  - .cortex/library/packs/auth/auth0/setup-auth0-javascript.yaml
+  - .cortex/library/packs/auth/clerk/add-feature-clerk-javascript.yaml
+  - .cortex/library/packs/auth/clerk/rule-clerk-javascript-coding-standards.yaml
+  - .cortex/library/packs/auth/clerk/setup-clerk-javascript.yaml
+  - .cortex/library/packs/auth/better-auth/add-feature-better-auth-javascript.yaml
+  - .cortex/library/packs/auth/better-auth/rule-better-auth-javascript-coding-standards.yaml
+  - .cortex/library/packs/auth/better-auth/setup-better-auth-javascript.yaml
+  - .cortex/library/packs/backend/laravel/add-feature-laravel.yaml
+  - .cortex/library/packs/backend/laravel/rule-laravel-coding-standards.yaml
+  - .cortex/library/packs/backend/appwrite/setup-appwrite-javascript.yaml
+  - .cortex/library/packs/backend/firebase/setup-firebase-javascript.yaml
+  - .cortex/library/packs/backend/supabase/add-feature-supabase-javascript.yaml
+  - .cortex/library/packs/backend/supabase/ask.yaml
+  - .cortex/library/packs/backend/supabase/rule-supabase-javascript-coding-standards.yaml
+  - .cortex/library/packs/backend/supabase/setup-supabase-javascript.yaml
+  - .cortex/library/packs/backend/supabase/supabase-admin.yaml
+  - .cortex/library/packs/documentation/general/csharp-docs.prompt.yaml
+  - .cortex/library/packs/documentation/general/java-docs.prompt.yaml
+  - .cortex/library/packs/backend/spring/create-oo-component-documentation.prompt.yaml
+  - .cortex/library/packs/backend/spring/create-spring-boot-java-project.prompt.yaml
+  - .cortex/library/packs/backend/spring/java-springboot.prompt.yaml
+  - .cortex/library/packs/backend/spring/update-oo-component-documentation.prompt.yaml
+  - .cortex/library/packs/database/drizzle/setup-drizzle-javascript.yaml
+  - .cortex/library/packs/database/neon/setup-neon-javascript.yaml
+  - .cortex/library/packs/database/prisma/setup-prisma-javascript.yaml
+  - .cortex/library/packs/frontend/angular/setup-appwrite-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-auth0-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-better-auth-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-clerk-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-drizzle-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-firebase-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-neon-angular.yaml
+  - .cortex/library/packs/frontend/angular/setup-supabase-angular.yaml
+  - .cortex/library/packs/frontend/remix/rule-remix-2-15-3-min.yaml
+  - .cortex/library/packs/frontend/remix/rule-remix-2-15-3.yaml
+  - .cortex/library/packs/frontend/remix/rule-remix-coding-standards.yaml
+  - .cortex/library/packs/frontend/remix/setup-clerk-remix.yaml
+  - .cortex/library/packs/frontend/tailwind/GoogleDiffusion.yaml
+  - .cortex/library/packs/frontend/tailwind/setup-tailwind-v4-uni.yaml
+  - .cortex/library/packs/frontend/nextjs/03-fal-api.yaml
+  - .cortex/library/packs/frontend/nextjs/07-deploy.yaml
+  - .cortex/library/packs/frontend/nextjs/Grok2.yaml
+  - .cortex/library/packs/frontend/nextjs/Modules.yaml
+  - .cortex/library/packs/frontend/nextjs/add-feature-clerk-next.yaml
+  - .cortex/library/packs/frontend/nextjs/analyst.yaml
+  - .cortex/library/packs/frontend/nextjs/architect.yaml
+  - .cortex/library/packs/frontend/nextjs/bmad-master.yaml
+  - .cortex/library/packs/frontend/nextjs/create-architectural-decision-record.prompt.yaml
+  - .cortex/library/packs/frontend/nextjs/dev.yaml
+  - .cortex/library/packs/frontend/nextjs/next-intl-add-language.prompt.yaml
+  - .cortex/library/packs/frontend/nextjs/pm.yaml
+  - .cortex/library/packs/frontend/nextjs/po.yaml
+  - .cortex/library/packs/frontend/nextjs/qa.yaml
+  - .cortex/library/packs/frontend/nextjs/rule-clerk-next-coding-standards.yaml
+  - .cortex/library/packs/frontend/nextjs/same.new.yaml
+  - .cortex/library/packs/frontend/nextjs/setup-next-shadcn.yaml
+  - .cortex/library/packs/frontend/nextjs/sm.yaml
+  - .cortex/library/packs/frontend/nextjs/system copy.yaml
+  - .cortex/library/packs/frontend/nextjs/system.yaml
+  - .cortex/library/packs/frontend/nextjs/ux-expert.yaml
+  - .cortex/library/packs/frontend/react/01-next-shadcn.yaml
+  - .cortex/library/packs/frontend/react/02-dashboard.yaml
+  - .cortex/library/packs/frontend/react/04-text-to-image.yaml
+  - .cortex/library/packs/frontend/react/05-ui-improvements.yaml
+  - .cortex/library/packs/frontend/react/06-token-system.yaml
+  - .cortex/library/packs/frontend/react/4-5.yaml
+  - .cortex/library/packs/frontend/react/4o.yaml
+  - .cortex/library/packs/frontend/react/Agent.yaml
+  - .cortex/library/packs/frontend/react/Loveable.yaml
+  - .cortex/library/packs/frontend/react/README-batch-init.yaml
+  - .cortex/library/packs/frontend/react/add-feature-angular.yaml
+  - .cortex/library/packs/frontend/react/add-feature-auth0-react.yaml
+  - .cortex/library/packs/frontend/react/add-feature-better-auth-react.yaml
+  - .cortex/library/packs/frontend/react/add-feature-clerk-react.yaml
+  - .cortex/library/packs/frontend/react/add-feature-clerk-tanstack.yaml
+  - .cortex/library/packs/frontend/react/add-feature-next.yaml
+  - .cortex/library/packs/frontend/react/add-feature-react.yaml
+  - .cortex/library/packs/frontend/react/add-feature-remix.yaml
+  - .cortex/library/packs/frontend/react/add-feature-supabase-react.yaml
+  - .cortex/library/packs/frontend/react/add-feature-svelte.yaml
+  - .cortex/library/packs/frontend/react/azure-resource-health-diagnose.prompt.yaml
+  - .cortex/library/packs/frontend/react/claude-flow-swarm.yaml
+  - .cortex/library/packs/frontend/react/create-spring-boot-kotlin-project.prompt.yaml
+  - .cortex/library/packs/frontend/react/docs-writer.yaml
+  - .cortex/library/packs/frontend/react/javascript-typescript-jest.prompt.yaml
+  - .cortex/library/packs/frontend/react/kotlin-springboot.prompt.yaml
+  - .cortex/library/packs/frontend/react/rule-angular-19-ext.yaml
+  - .cortex/library/packs/frontend/react/rule-angular-19-min.yaml
+  - .cortex/library/packs/frontend/react/rule-angular-19.yaml
+  - .cortex/library/packs/frontend/react/rule-angular-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-auth0-react-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-better-auth-react-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-clerk-react-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-clerk-svelte-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-clerk-tanstack-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-next-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-next-shadcn-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-react-18-supabase.yaml
+  - .cortex/library/packs/frontend/react/rule-react-18.yaml
+  - .cortex/library/packs/frontend/react/rule-react-19-ext.yaml
+  - .cortex/library/packs/frontend/react/rule-react-19-min.yaml
+  - .cortex/library/packs/frontend/react/rule-react-19.yaml
+  - .cortex/library/packs/frontend/react/rule-remix-2-15-3-ext.yaml
+  - .cortex/library/packs/frontend/react/rule-supabase-react-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/rule-svelte-coding-standards.yaml
+  - .cortex/library/packs/frontend/react/setup-appwrite-next.yaml
+  - .cortex/library/packs/frontend/react/setup-appwrite-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-appwrite-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-auth0-react.yaml
+  - .cortex/library/packs/frontend/react/setup-auth0-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-auth0-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-better-auth-react.yaml
+  - .cortex/library/packs/frontend/react/setup-better-auth-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-better-auth-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-biome.yaml
+  - .cortex/library/packs/frontend/react/setup-clerk-next.yaml
+  - .cortex/library/packs/frontend/react/setup-clerk-react.yaml
+  - .cortex/library/packs/frontend/react/setup-clerk-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-drizzle-next.yaml
+  - .cortex/library/packs/frontend/react/setup-drizzle-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-drizzle-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-firebase-next.yaml
+  - .cortex/library/packs/frontend/react/setup-firebase-react.yaml
+  - .cortex/library/packs/frontend/react/setup-firebase-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-firebase-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-neon-next.yaml
+  - .cortex/library/packs/frontend/react/setup-neon-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-neon-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-next-shadcn-dashboard-supabase.yaml
+  - .cortex/library/packs/frontend/react/setup-next-shadcn-dashboard.yaml
+  - .cortex/library/packs/frontend/react/setup-next-shadcn-dashboard2.yaml
+  - .cortex/library/packs/frontend/react/setup-prisma-angular.yaml
+  - .cortex/library/packs/frontend/react/setup-prisma-next.yaml
+  - .cortex/library/packs/frontend/react/setup-prisma-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-prisma-tanstack.yaml
+  - .cortex/library/packs/frontend/react/setup-shadcn-uni.yaml
+  - .cortex/library/packs/frontend/react/setup-supabase-next.yaml
+  - .cortex/library/packs/frontend/react/setup-supabase-react.yaml
+  - .cortex/library/packs/frontend/react/setup-supabase-remix.yaml
+  - .cortex/library/packs/frontend/react/setup-supabase-tanstack.yaml
+  - .cortex/library/packs/frontend/react/suggest-awesome-github-copilot-chatmodes.prompt.yaml
+  - .cortex/library/packs/frontend/react/suggest-awesome-github-copilot-prompts.prompt.yaml
+  - .cortex/library/packs/frontend/react/system-2025-04-20.yaml
+  - .cortex/library/packs/frontend/react/v0.yaml
+  - .cortex/library/packs/mobile/flutter/rule-flutter-3-29-coding-standards.yaml
+  - .cortex/library/packs/frontend/svelte/add-feature-auth0-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/add-feature-better-auth-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/add-feature-clerk-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/add-feature-supabase-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/rule-auth0-svelte-coding-standards.yaml
+  - .cortex/library/packs/frontend/svelte/rule-better-auth-svelte-coding-standards.yaml
+  - .cortex/library/packs/frontend/svelte/setup-auth0-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/setup-better-auth-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/setup-clerk-svelte.yaml
+  - .cortex/library/packs/frontend/svelte/setup-supabase-svelte.yaml
+  - .cortex/library/packs/frontend/vue/Prompt.yaml
+  - .cortex/library/packs/frontend/vue/add-feature-clerk-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/add-feature-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/add-feature-vue.yaml
+  - .cortex/library/packs/frontend/vue/optimized-standards.yaml
+  - .cortex/library/packs/frontend/vue/rule-clerk-nuxt-coding-standards.yaml
+  - .cortex/library/packs/frontend/vue/rule-nuxt-coding-standards.yaml
+  - .cortex/library/packs/frontend/vue/rule-tailwind-v4-ext.yaml
+  - .cortex/library/packs/frontend/vue/rule-tailwind-v4.yaml
+  - .cortex/library/packs/frontend/vue/rule-vue-2.yaml
+  - .cortex/library/packs/frontend/vue/rule-vue-coding-standards.yaml
+  - .cortex/library/packs/frontend/vue/setup-appwrite-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-appwrite-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-auth0-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-better-auth-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-clerk-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-clerk-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-drizzle-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-drizzle-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-firebase-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-firebase-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-neon-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-neon-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-prisma-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-prisma-vue.yaml
+  - .cortex/library/packs/frontend/vue/setup-supabase-nuxt.yaml
+  - .cortex/library/packs/frontend/vue/setup-supabase-vue.yaml
+  - .cortex/library/packs/frontend/vue/v0-model.yaml
+  - .cortex/library/packs/frontend/vue/v0-tools.yaml
+  - .cortex/library/packs/frontend/vue/vue3.yaml
+  - .cortex/library/packs/research/general/Grok3.yaml
+  - .cortex/library/packs/research/general/README.yaml
+  - .cortex/library/packs/research/general/Whatsapp-LLama4-Jul-19-2025.yaml
+  - .cortex/library/packs/research/general/comment-code-generate-a-tutorial.prompt.yaml
+  - .cortex/library/packs/research/general/create-github-issue-feature-from-specification.prompt.yaml
+  - .cortex/library/packs/research/general/create-github-issues-for-unmet-specification-requirements.prompt.yaml
+  - .cortex/library/packs/research/general/create-readme.prompt.yaml
+  - .cortex/library/packs/research/general/my-issues.prompt.yaml
+  - .cortex/library/packs/research/general/my-pull-requests.prompt.yaml
+  - .cortex/library/packs/research/general/prp_spec.yaml
+  - .cortex/library/packs/research/general/regular.yaml
+  - .cortex/library/packs/research/general/rule-claude-sonnet-37.yaml
+  - .cortex/library/packs/research/general/tags.yaml
+  - .cortex/library/packs/roles/analyst/coordination.yaml
+  - .cortex/library/packs/roles/architect/architect copy.yaml
+  - .cortex/library/packs/roles/architect/claude-flow-help.yaml
+  - .cortex/library/packs/roles/architect/claude-flow-memory.yaml
+  - .cortex/library/packs/roles/architect/code.yaml
+  - .cortex/library/packs/roles/architect/create-llms.prompt.yaml
+  - .cortex/library/packs/roles/architect/create-specification.prompt.yaml
+  - .cortex/library/packs/roles/architect/dotnet-design-pattern-review.prompt.yaml
+  - .cortex/library/packs/roles/architect/sparc copy.yaml
+  - .cortex/library/packs/roles/architect/sparc.yaml
+  - .cortex/library/packs/roles/architect/spec-pseudocode.yaml
+  - .cortex/library/packs/roles/architect/update-llms.prompt.yaml
+  - .cortex/library/packs/roles/architect/update-specification.prompt.yaml
+  - .cortex/library/packs/roles/product/devops.yaml
+  - .cortex/library/packs/roles/product/gen-specs-as-issues.prompt.yaml
+  - .cortex/library/packs/roles/product/integration.yaml
+  - .cortex/library/packs/roles/product/mcp.yaml
+  - .cortex/library/packs/roles/product/multi-stage-dockerfile.prompt.yaml
+  - .cortex/library/packs/mobile/ios/CLAUDE.yaml
+  - .cortex/library/packs/mobile/ios/DALLE.yaml
+  - .cortex/library/packs/mobile/ios/ai-prompt-engineering-safety-review.prompt.yaml
+  - .cortex/library/packs/mobile/ios/az-cost-optimize.prompt.yaml
+  - .cortex/library/packs/mobile/ios/csharp-async.prompt.yaml
+  - .cortex/library/packs/mobile/ios/csharp-tunit.prompt.yaml
+  - .cortex/library/packs/mobile/ios/debug.yaml
+  - .cortex/library/packs/mobile/ios/dotnet-best-practices.prompt.yaml
+  - .cortex/library/packs/mobile/ios/ef-core.prompt.yaml
+  - .cortex/library/packs/mobile/ios/prp_planning.yaml
+  - .cortex/library/packs/mobile/ios/system-2025-04-16.yaml
+  - .cortex/library/packs/mobile/ios/tdd.yaml
+  - .cortex/library/packs/mobile/ios/tutorial.yaml
+  - .cortex/library/packs/security/general/aspnet-minimal-api-openapi.prompt.yaml
+  - .cortex/library/packs/security/general/memory-bank.yaml
+  - .cortex/library/packs/security/general/prp_base.yaml
+  - .cortex/library/packs/security/general/security-review.yaml
+  - .cortex/library/packs/security/general/system.cortex.yaml
+  - .cortex/library/packs/security/general/update-avm-modules-in-bicep.prompt.yaml
+  - .cortex/library/packs/security/general/update-markdown-file-index.prompt.yaml
+  - .cortex/library/packs/testing/general/Grok3withDeepSearch.yaml
+  - .cortex/library/packs/testing/general/GrokJailBreakPrompt.yaml
+  - .cortex/library/packs/testing/general/README.yaml
+  - .cortex/library/packs/testing/general/csharp-mstest.prompt.yaml
+  - .cortex/library/packs/testing/general/csharp-nunit.prompt.yaml
+  - .cortex/library/packs/testing/general/csharp-xunit.prompt.yaml
+  - .cortex/library/packs/testing/general/get-docs.yaml
+  - .cortex/library/packs/testing/general/java-junit.prompt.yaml
+  - .cortex/library/packs/testing/general/prompt-compliance.prompt.yaml
+  - .cortex/library/packs/testing/general/prp_task.yaml
+  - .cortex/library/packs/testing/general/refinement-optimization-mode.yaml
+  - .cortex/library/packs/testing/general/review-and-refactor.prompt.yaml
+
+Auto-fix: Move files to allowed locations or extend 'allowedGlobs' in policy.json
+❌ Package structure violations:
+  agents:
+    - Disallowed files: packages/agents/.dockerignore, packages/agents/Dockerfile, packages/agents/examples/audit-security-workflow.prisma.ts, packages/agents/examples/audit-security-workflow.ts, packages/agents/examples/security-llamaguard-mlx.ts, packages/agents/scripts/run-agent-tests-dist.mjs, packages/agents/scripts/run-agent-tests.mjs, packages/agents/scripts/smoke-fallback.mjs, packages/agents/src/index.ts, packages/agents/docs/reports/agents-readiness-review.md, packages/agents/resources/templates/manifest.json, packages/agents/src/events/agent-events.ts, packages/agents/src/integrations/dependabot.ts, packages/agents/src/integrations/memory-policies-config.ts, packages/agents/src/integrations/outbox.ts, packages/agents/src/agents/code-analysis-agent.ts, packages/agents/src/agents/documentation-agent.ts, packages/agents/src/agents/security-agent.ts, packages/agents/src/agents/test-generation-agent.ts, packages/agents/src/lib/event-bus.ts, packages/agents/src/lib/secret-store.ts, packages/agents/src/lib/shims-for-triage.d.ts, packages/agents/src/lib/types.ts, packages/agents/src/lib/utils.ts, packages/agents/src/lib/validate.ts, packages/agents/src/orchestration/agent-orchestrator.ts, packages/agents/src/providers/fallback-chain.ts, packages/agents/src/providers/mcp-provider.ts, packages/agents/resources/templates/agents/README.md, packages/agents/resources/templates/agents/code-analysis.md, packages/agents/resources/templates/agents/documentation.md, packages/agents/resources/templates/agents/security.md, packages/agents/resources/templates/agents/test-generation.md, packages/agents/src/providers/mlx-provider/gateway-client.ts, packages/agents/src/providers/mlx-provider/index.ts, packages/agents/src/providers/mlx-provider/thermal-monitor.ts, packages/agents/src/providers/mlx-provider/types.ts, packages/agents/resources/templates/models/README.md, packages/agents/resources/templates/models/gpt-oss-20b-mlx.md, packages/agents/resources/templates/models/llamaguard-mlx.md, packages/agents/resources/templates/models/smollm-135m-mlx.md
+  a2a:
+    - Disallowed files: packages/a2a/.dockerignore, packages/a2a/Dockerfile, packages/a2a/docker-compose.yml, packages/a2a/nginx.conf, packages/a2a/orbstack.yml, packages/a2a/prometheus.yml, packages/a2a-services/common/package.json, packages/a2a-services/common/tsconfig.json, packages/a2a-services/common/vitest.config.ts, packages/a2a-services/schema-registry/package.json, packages/a2a-services/schema-registry/project.json, packages/a2a-services/schema-registry/tsconfig.json, packages/a2a-services/schema-registry/vitest.config.ts, packages/a2a/a2a-contracts/package.json, packages/a2a/a2a-contracts/tsconfig.json, packages/a2a/a2a-core/README.md, packages/a2a/a2a-core/package.json, packages/a2a/a2a-core/tsconfig.json, packages/a2a/a2a-core/tsup.config.ts, packages/a2a/a2a-events/package.json, packages/a2a/a2a-events/project.json, packages/a2a/a2a-events/tsconfig.lib.json, packages/a2a/a2a-examples/schema-registry-example.ts, packages/a2a/a2a-examples/trace-context-example.ts, packages/a2a/a2a-handlers/package.json, packages/a2a/a2a-handlers/project.json, packages/a2a/a2a-handlers/tsconfig.json, packages/a2a/a2a-handlers/vitest.config.ts, packages/a2a/a2a-observability/package.json, packages/a2a/a2a-observability/project.json, packages/a2a/a2a-observability/tsconfig.json, packages/a2a/a2a-observability/vitest.config.ts, packages/a2a/a2a-python-workers/README.md, packages/a2a/a2a-transport/package.json, packages/a2a/a2a-transport/tsconfig.json, packages/a2a/docs/asyncapi.yaml, packages/a2a/scripts/build-image.sh, packages/a2a/scripts/deploy-orbstack.sh, packages/a2a/src/index.ts, packages/a2a/src/protocol.ts, packages/a2a/src/rpc-handler.ts, packages/a2a/src/task-manager.ts, packages/a2a-services/common/src/index.ts, packages/a2a-services/schema-registry/src/index.ts, packages/a2a-services/schema-registry/src/schemas.ts, packages/a2a-services/schema-registry/src/service.ts, packages/a2a/a2a-contracts/src/# Code Citations.md, packages/a2a/a2a-contracts/src/agents.ts, packages/a2a/a2a-contracts/src/commands.ts, packages/a2a/a2a-contracts/src/envelope.ts, packages/a2a/a2a-contracts/src/events.ts, packages/a2a/a2a-contracts/src/index.ts, packages/a2a/a2a-contracts/src/outbox-types.ts, packages/a2a/a2a-contracts/src/schema-registry-types.ts, packages/a2a/a2a-contracts/src/schema-validation-utils.ts, packages/a2a/a2a-contracts/src/trace-context.ts, packages/a2a/a2a-core/src/# Code Citations.md, packages/a2a/a2a-core/src/bus.ts, packages/a2a/a2a-core/src/circuitBreaker.ts, packages/a2a/a2a-core/src/dlq.ts, packages/a2a/a2a-core/src/idempotency.ts, packages/a2a/a2a-core/src/index.ts, packages/a2a/a2a-core/src/outbox.ts, packages/a2a/a2a-core/src/router.ts, packages/a2a/a2a-core/src/saga.ts, packages/a2a/a2a-core/src/schema-registry.ts, packages/a2a/a2a-core/src/send.ts, packages/a2a/a2a-core/src/trace-context-manager.ts, packages/a2a/a2a-core/src/transport.ts, packages/a2a/a2a-handlers/src/health.handler.ts, packages/a2a/a2a-handlers/src/index.ts, packages/a2a/a2a-events/src/index.ts, packages/a2a/a2a-examples/ping-pong/consumer.ts, packages/a2a/a2a-examples/ping-pong/producer.ts, packages/a2a/a2a-observability/src/metrics.ts, packages/a2a/a2a-observability/src/otel.ts, packages/a2a/a2a-python-workers/echo-py/pyproject.toml, packages/a2a/a2a-transport/src/fsq.ts, packages/a2a/a2a-transport/src/index.ts, packages/a2a/a2a-transport/src/inproc.ts, packages/a2a/a2a-transport/src/stdio.ts, packages/a2a-services/common/src/middleware/rateLimiter.ts, packages/a2a/a2a-events/src/github/envelope.ts, packages/a2a/a2a-events/src/github/error.ts, packages/a2a/a2a-events/src/github/index.ts, packages/a2a/a2a-events/src/github/issue.ts, packages/a2a/a2a-events/src/github/pull-request.ts, packages/a2a/a2a-events/src/github/repository.ts, packages/a2a/a2a-events/src/github/routing.ts, packages/a2a/a2a-events/src/github/workflow.ts, packages/a2a/a2a-python-workers/echo-py/src/echo/main.py
+  asbr:
+    - Disallowed files: packages/asbr/tsconfig.tsbuildinfo, packages/asbr/test-fixtures/tokens.json, packages/asbr/src/cli.ts, packages/asbr/src/index.ts, packages/asbr/src/core/config.ts, packages/asbr/src/core/events.ts, packages/asbr/src/api/auth.ts, packages/asbr/src/api/server.ts, packages/asbr/src/accessibility/aria-announcer.ts, packages/asbr/src/accessibility/keyboard-nav.ts, packages/asbr/src/cerebrum/cerebrum.ts, packages/asbr/src/cerebrum/critique.ts, packages/asbr/src/cerebrum/index.ts, packages/asbr/src/cerebrum/simulator.ts, packages/asbr/src/cerebrum/teacher.ts, packages/asbr/src/cerebrum/types.ts, packages/asbr/src/diff/generator.ts, packages/asbr/src/diff/normalizer.ts, packages/asbr/src/diff/validator.ts, packages/asbr/src/lib/create-task.ts, packages/asbr/src/lib/emit-plan-started.ts, packages/asbr/src/lib/logger.ts, packages/asbr/src/lib/resolve-idempotency.ts, packages/asbr/src/lib/validate-task-input.ts, packages/asbr/src/sdk/index.ts, packages/asbr/src/evidence/collector.ts, packages/asbr/src/evidence/storage.ts, packages/asbr/src/security/owasp-llm-guard.ts, packages/asbr/src/types/index.ts, packages/asbr/src/types/pidusage.d.ts, packages/asbr/src/mcp/sandbox.ts, packages/asbr/src/xdg/index.ts, packages/asbr/src/accessibility/lib/key-handlers.ts
+  contracts:
+    - Disallowed files: packages/contracts/tsconfig.tsbuildinfo, packages/contracts/src/index.ts
+  cortex-structure-github:
+    - Must have one of: src/index.ts, src/index.js, index.ts
+    - Disallowed files: packages/cortex-structure-github/.env.example, packages/cortex-structure-github/ecosystem.config.cjs, packages/cortex-structure-github/start-with-tunnel.sh, packages/cortex-structure-github/start.sh, packages/cortex-structure-github/src/lib/backend-scaffolding-rules.ts, packages/cortex-structure-github/src/lib/backend-structure-agent.ts, packages/cortex-structure-github/src/lib/context-analyzer.ts, packages/cortex-structure-github/src/lib/frontend-scaffolding-rules.ts, packages/cortex-structure-github/src/lib/frontend-structure-agent.ts, packages/cortex-structure-github/src/lib/progress-updater.ts, packages/cortex-structure-github/src/lib/security-validators.ts, packages/cortex-structure-github/src/core/auto-fix-engine.ts, packages/cortex-structure-github/src/core/structure-validator.ts, packages/cortex-structure-github/src/server/app.ts, packages/cortex-structure-github/src/server/start.ts, packages/cortex-structure-github/src/types/github-api-types.ts, packages/cortex-structure-github/infrastructure/cloudflare/tunnel.config.yml
+  cortex-ai-github:
+    - Disallowed files: packages/cortex-ai-github/.env.example, packages/cortex-ai-github/Dockerfile, packages/cortex-ai-github/cortex-ai-github.service, packages/cortex-ai-github/deploy-hook.sh, packages/cortex-ai-github/run-standalone.sh, packages/cortex-ai-github/setup-auto-deploy.sh, packages/cortex-ai-github/start-server.sh, packages/cortex-ai-github/scripts/start-with-tunnel.sh, packages/cortex-ai-github/src/index.ts, packages/cortex-ai-github/src/core/ai-github-app.ts, packages/cortex-ai-github/infrastructure/cloudflare/tunnel.config.yml, packages/cortex-ai-github/src/lib/command-parser.ts, packages/cortex-ai-github/src/lib/github-response.ts, packages/cortex-ai-github/src/lib/mlx-engine.ts, packages/cortex-ai-github/src/lib/model-client.ts, packages/cortex-ai-github/src/lib/rate-limiter.ts, packages/cortex-ai-github/src/lib/system-prompts.ts, packages/cortex-ai-github/src/lib/webhook-validator.ts, packages/cortex-ai-github/src/types/github-models.ts, packages/cortex-ai-github/src/types/webhook-types.ts, packages/cortex-ai-github/src/server/start.ts, packages/cortex-ai-github/src/server/webhook-server.ts
+  evals:
+    - Disallowed files: packages/evals/src/index.ts, packages/evals/src/types.ts, packages/evals/src/lib/router-embedder.ts, packages/evals/src/suites/rag.ts, packages/evals/src/suites/router.ts
+  cortex-semgrep-github:
+    - Must have one of: src/index.ts, src/index.js, index.ts
+    - Disallowed files: packages/cortex-semgrep-github/.env.example, packages/cortex-semgrep-github/start-with-tunnel.sh, packages/cortex-semgrep-github/start.sh, packages/cortex-semgrep-github/tsconfig.tsbuildinfo, packages/cortex-semgrep-github/src/server/app.ts, packages/cortex-semgrep-github/src/server/start.ts, packages/cortex-semgrep-github/infrastructure/cloudflare/setup-tunnel.sh, packages/cortex-semgrep-github/infrastructure/cloudflare/start-tunnel.sh, packages/cortex-semgrep-github/infrastructure/cloudflare/tunnel.config.yml, packages/cortex-semgrep-github/src/lib/comment-formatter.ts, packages/cortex-semgrep-github/src/lib/scan-operations.ts
+  gateway:
+    - Must have one of: src/index.ts, src/index.js, index.ts
+    - Disallowed files: packages/gateway/tsconfig.tsbuildinfo, packages/gateway/scripts/build-openapi.cjs, packages/gateway/scripts/publish-pacts.cjs, packages/gateway/src/server.ts, packages/gateway/src/lib/create-agent-route.ts, packages/gateway/src/lib/mlx.ts
+  kernel:
+    - Disallowed files: packages/kernel/patch-hints.diff, packages/kernel/examples/basic-integration.ts, packages/kernel/src/graph-simple.ts, packages/kernel/src/index.ts, packages/kernel/src/state.ts, packages/kernel/src/lib/determinism.ts, packages/kernel/src/lib/history.ts, packages/kernel/src/lib/phase-utils.ts, packages/kernel/src/lib/run-command.ts, packages/kernel/src/nodes/build.ts, packages/kernel/src/nodes/evaluation.ts, packages/kernel/src/nodes/index.ts, packages/kernel/src/nodes/strategy.ts, packages/kernel/src/mcp/adapter.ts, packages/kernel/src/teaching/behavior-extension.ts, packages/kernel/src/teaching/example-capture.ts, packages/kernel/src/utils/id.ts, packages/kernel/src/utils/time.ts, packages/kernel/src/lib/gates/build.ts, packages/kernel/src/lib/gates/evaluation.ts, packages/kernel/src/lib/gates/strategy.ts
+  mcp-core:
+    - Disallowed files: packages/mcp-core/src/client.ts, packages/mcp-core/src/contracts.ts, packages/mcp-core/src/index.ts
+  mcp-registry:
+    - Disallowed files: packages/mcp-registry/src/fs-store.ts, packages/mcp-registry/src/index.ts, packages/mcp-registry/src/types.ts
+  mcp:
+    - Disallowed files: packages/mcp-core/package.json, packages/mcp-core/tsconfig.json, packages/mcp-registry/package.json, packages/mcp-registry/tsconfig.json, packages/mcp/.coverage, packages/mcp/__init__.py, packages/mcp/coverage.xml, packages/mcp/pyproject.toml, packages/mcp/requirements.txt, packages/mcp-core/src/client.ts, packages/mcp-core/src/contracts.ts, packages/mcp-core/src/index.ts, packages/mcp-registry/src/fs-store.ts, packages/mcp-registry/src/index.ts, packages/mcp-registry/src/types.ts, packages/mcp/cache/__init__.py, packages/mcp/cache/advanced_cache.py, packages/mcp/cli/__init__.py, packages/mcp/cli/main.py, packages/mcp/cli/server.py, packages/mcp/cli/tools.py, packages/mcp/config/__init__.py, packages/mcp/config/config_manager.py, packages/mcp/cost/__init__.py, packages/mcp/cost/cost_optimizer.py, packages/mcp/core/__init__.py, packages/mcp/core/caching.py, packages/mcp/core/circuit_breakers.py, packages/mcp/core/client.py, packages/mcp/core/connection_pool.py, packages/mcp/core/event_system.py, packages/mcp/core/exceptions.py, packages/mcp/core/protocol.py, packages/mcp/core/rate_limiting.py, packages/mcp/core/server.py, packages/mcp/core/streaming.py, packages/mcp/error_handling/__init__.py, packages/mcp/error_handling/error_handler.py, packages/mcp/examples/basic_server.py, packages/mcp/examples/client_example.py, packages/mcp/examples/plugin_example.py, packages/mcp/infrastructure/README.md, packages/mcp/infrastructure/backup.py, packages/mcp/infrastructure/database.py, packages/mcp/infrastructure/load_balancer.py, packages/mcp/infrastructure/migrations.py, packages/mcp/infrastructure/models.py, packages/mcp/infrastructure/scaling.py, packages/mcp/integrations/__init__.py, packages/mcp/integrations/a2a_bridge.py, packages/mcp/integrations/memory_bridge.py, packages/mcp/integrations/orchestration_bridge.py, packages/mcp/marketplace/__init__.py, packages/mcp/marketplace/plugin_marketplace.py, packages/mcp/htmlcov/.gitignore, packages/mcp/htmlcov/class_index.html, packages/mcp/htmlcov/coverage_html_cb_6fb7b396.js, packages/mcp/htmlcov/favicon_32_cb_58284776.png, packages/mcp/htmlcov/function_index.html, packages/mcp/htmlcov/index.html, packages/mcp/htmlcov/keybd_closed_cb_ce680311.png, packages/mcp/htmlcov/status.json, packages/mcp/htmlcov/style_cb_6b508a39.css, packages/mcp/htmlcov/z_10414145323772df_auth_py.html, packages/mcp/htmlcov/z_10414145323772df_middleware_py.html, packages/mcp/htmlcov/z_10414145323772df_vulnerability_scanner_py.html, packages/mcp/htmlcov/z_1ea838694151cac8_config_manager_py.html, packages/mcp/htmlcov/z_3935125dd4b80ed9___init___py.html, packages/mcp/htmlcov/z_3935125dd4b80ed9_a2a_bridge_py.html, packages/mcp/htmlcov/z_3935125dd4b80ed9_memory_bridge_py.html, packages/mcp/htmlcov/z_3935125dd4b80ed9_orchestration_bridge_py.html, packages/mcp/htmlcov/z_41a982ab6a2506a0___init___py.html, packages/mcp/htmlcov/z_41a982ab6a2506a0_base_py.html, packages/mcp/htmlcov/z_41a982ab6a2506a0_http_transport_py.html, packages/mcp/htmlcov/z_41a982ab6a2506a0_stdio_transport_py.html, packages/mcp/htmlcov/z_41a982ab6a2506a0_websocket_transport_py.html, packages/mcp/htmlcov/z_434c77fc11d56e0c___init___py.html, packages/mcp/htmlcov/z_434c77fc11d56e0c_main_py.html, packages/mcp/htmlcov/z_434c77fc11d56e0c_server_py.html, packages/mcp/htmlcov/z_434c77fc11d56e0c_tools_py.html, packages/mcp/htmlcov/z_57760688d1f824db_caching_py.html, packages/mcp/htmlcov/z_57760688d1f824db_circuit_breakers_py.html, packages/mcp/htmlcov/z_57760688d1f824db_client_py.html, packages/mcp/htmlcov/z_57760688d1f824db_connection_pool_py.html, packages/mcp/htmlcov/z_57760688d1f824db_event_system_py.html, packages/mcp/htmlcov/z_57760688d1f824db_exceptions_py.html, packages/mcp/htmlcov/z_57760688d1f824db_protocol_py.html, packages/mcp/htmlcov/z_57760688d1f824db_rate_limiting_py.html, packages/mcp/htmlcov/z_57760688d1f824db_server_py.html, packages/mcp/htmlcov/z_57760688d1f824db_streaming_py.html, packages/mcp/htmlcov/z_5caf520a5ad64cff_distributed_queue_py.html, packages/mcp/htmlcov/z_5caf520a5ad64cff_task_queue_py.html, packages/mcp/htmlcov/z_6076c8b544023ed7_error_handler_py.html, packages/mcp/htmlcov/z_61acb17d544d08f8_plugin_marketplace_py.html, packages/mcp/htmlcov/z_61ad76c896771784_advanced_cache_py.html, packages/mcp/htmlcov/z_7f5979fb78f082e8_test_framework_py.html, packages/mcp/htmlcov/z_8876c53984c5890e_health_py.html, packages/mcp/htmlcov/z_8876c53984c5890e_metrics_py.html, packages/mcp/htmlcov/z_8876c53984c5890e_monitoring_py.html, packages/mcp/htmlcov/z_8876c53984c5890e_structured_logging_py.html, packages/mcp/htmlcov/z_8876c53984c5890e_tracing_py.html, packages/mcp/htmlcov/z_8c8766c39341f5d9_cost_optimizer_py.html, packages/mcp/htmlcov/z_d3fac12e003dcf27_app_py.html, packages/mcp/htmlcov/z_e73236870873ac66_base_py.html, packages/mcp/htmlcov/z_e73236870873ac66_git_plugin_py.html, packages/mcp/htmlcov/z_e73236870873ac66_github_plugin_py.html, packages/mcp/htmlcov/z_e73236870873ac66_hot_reloader_py.html, packages/mcp/htmlcov/z_e73236870873ac66_youtube_plugin_py.html, packages/mcp/performance/profiler.py, packages/mcp/plugins/__init__.py, packages/mcp/plugins/base.py, packages/mcp/plugins/git_plugin.py, packages/mcp/plugins/github_plugin.py, packages/mcp/plugins/hot_reloader.py, packages/mcp/plugins/youtube_plugin.py, packages/mcp/security/__init__.py, packages/mcp/security/auth.py, packages/mcp/security/middleware.py, packages/mcp/security/vulnerability_scanner.py, packages/mcp/observability/__init__.py, packages/mcp/observability/health.py, packages/mcp/observability/metrics.py, packages/mcp/observability/monitoring.py, packages/mcp/observability/structured_logging.py, packages/mcp/observability/tracing.py, packages/mcp/scripts/setup-tunnel.sh, packages/mcp/scripts/start-mcp-server.sh, packages/mcp/scripts/start-mcp-with-tunnel.sh, packages/mcp/testing/__init__.py, packages/mcp/testing/test_framework.py, packages/mcp/tasks/__init__.py, packages/mcp/tasks/distributed_queue.py, packages/mcp/tasks/task_queue.py, packages/mcp/tasks/task_queue_corrupted.py.backup, packages/mcp/tasks/task_queue_fixed.py, packages/mcp/webui/__init__.py, packages/mcp/webui/app.py, packages/mcp/core/transports/__init__.py, packages/mcp/core/transports/base.py, packages/mcp/core/transports/http_transport.py, packages/mcp/core/transports/stdio_transport.py, packages/mcp/core/transports/websocket_transport.py, packages/mcp/infrastructure/cloudflare/tunnel.config.yml, packages/mcp/plugins/examples/__init__.py, packages/mcp/webui/templates/.gitkeep, packages/mcp/webui/static/.gitkeep, packages/mcp/webui/static/dashboard.js, packages/mcp/webui/static/styles.css
+  model-gateway:
+    - Disallowed files: packages/model-gateway/.dockerignore, packages/model-gateway/Dockerfile, packages/model-gateway/src/audit.ts, packages/model-gateway/src/handlers.ts, packages/model-gateway/src/index.ts, packages/model-gateway/src/model-router.ts, packages/model-gateway/src/policy.ts, packages/model-gateway/src/server.ts, packages/model-gateway/src/lib/estimate-token-count.ts, packages/model-gateway/src/adapters/mcp-adapter.ts, packages/model-gateway/src/adapters/mlx-adapter.ts, packages/model-gateway/src/adapters/ollama-adapter.ts, packages/model-gateway/src/adapters/types.ts
+  memories:
+    - Disallowed files: packages/memories/LICENSE, packages/memories/prisma/schema.prisma, packages/memories/src/errors.ts, packages/memories/src/index.ts, packages/memories/docs/plan/CRITICAL_FINDINGS_UPDATE.md, packages/memories/docs/plan/REVISED_TDD_PLAN.md, packages/memories/src/core/in-memory-cache.ts, packages/memories/src/adapters/embedder.composite.ts, packages/memories/src/adapters/embedder.mlx.ts, packages/memories/src/adapters/embedder.noop.ts, packages/memories/src/adapters/embedder.ollama.ts, packages/memories/src/adapters/mlx-embedder.py, packages/memories/src/adapters/store.memory.ts, packages/memories/src/adapters/store.sqlite.ts, packages/memories/src/domain/policies.ts, packages/memories/src/domain/types.ts, packages/memories/src/observability/otel.ts, packages/memories/src/ports/Embedder.ts, packages/memories/src/ports/MemoryStore.ts, packages/memories/src/privacy/redact.ts, packages/memories/src/schemas/memory.zod.ts, packages/memories/src/tools/init-memory.ts, packages/memories/src/tools/jsonl-to-memory.ts, packages/memories/src/tools/memory-cli.ts, packages/memories/src/service/memory-service.ts, packages/memories/src/service/queries.ts, packages/memories/src/adapters/store.prisma/client.ts, packages/memories/src/adapters/store.prisma/prisma.schema
+  mvp:
+    - Disallowed files: packages/mvp/mvp-core/LICENSE, packages/mvp/mvp-core/README.md, packages/mvp/mvp-core/package.json, packages/mvp/mvp-core/tsconfig.json, packages/mvp/mvp-core/vitest.config.ts, packages/mvp/mvp/FIXES_SUMMARY.md, packages/mvp/mvp/FIX_PLAN.md, packages/mvp/mvp/PRODUCTION_IMPLEMENTATION_PLAN.md, packages/mvp/mvp/README.md, packages/mvp/mvp/SCORECARD.md, packages/mvp/mvp/TDD_PLAN.md, packages/mvp/mvp/package.json, packages/mvp/mvp/project.json, packages/mvp/mvp/tsconfig.json, packages/mvp/mvp/vitest.config.ts, packages/mvp/mvp-server/FINAL_SUMMARY.md, packages/mvp/mvp-server/FIX_PLAN.md, packages/mvp/mvp-server/IMPROVEMENTS_SUMMARY.md, packages/mvp/mvp-server/LICENSE, packages/mvp/mvp-server/README.md, packages/mvp/mvp-server/SCORECARD.md, packages/mvp/mvp-server/TDD_PLAN.md, packages/mvp/mvp-server/package.json, packages/mvp/mvp-server/tsconfig.json, packages/mvp/mvp-server/vitest.config.ts, packages/mvp/mvp/src/graph-simple.ts, packages/mvp/mvp/src/index.ts, packages/mvp/mvp/src/state.ts, packages/mvp/mvp/src/test-refactored-build.ts, packages/mvp/mvp-core/src/circuit.ts, packages/mvp/mvp-core/src/config.ts, packages/mvp/mvp-core/src/env.ts, packages/mvp/mvp-core/src/errors.ts, packages/mvp/mvp-core/src/health.ts, packages/mvp/mvp-core/src/ids.ts, packages/mvp/mvp-core/src/index.ts, packages/mvp/mvp-core/src/logger.ts, packages/mvp/mvp-core/src/result.ts, packages/mvp/mvp-core/src/retry.ts, packages/mvp/mvp-core/src/secure-db.ts, packages/mvp/mvp-core/src/secure-executor.ts, packages/mvp/mvp-core/src/time.ts, packages/mvp/mvp-core/src/validation.ts, packages/mvp/mvp-server/src/McpConnection.ts, packages/mvp/mvp-server/src/ToolRegistry.ts, packages/mvp/mvp-server/src/config.ts, packages/mvp/mvp-server/src/http-server.ts, packages/mvp/mvp-server/src/index.ts, packages/mvp/mvp-server/src/server.ts, packages/mvp/mvp-server/tests/setup.ts, packages/mvp/mvp/src/lib/llm.ts, packages/mvp/mvp/src/lib/utils.ts, packages/mvp/mvp/src/lib/validation-types.ts, packages/mvp/mvp/src/nodes/build.ts, packages/mvp/mvp/src/nodes/evaluation-refactored.ts, packages/mvp/mvp/src/nodes/evaluation.ts, packages/mvp/mvp/src/nodes/index.ts, packages/mvp/mvp/src/observability/otel.ts, packages/mvp/mvp/src/mcp/adapter.ts, packages/mvp/mvp/src/teaching/behavior-extension.ts, packages/mvp/mvp/src/teaching/example-capture.ts, packages/mvp/mvp/src/validators/api-schema-validator.ts, packages/mvp/mvp/src/validators/backend-validator.ts, packages/mvp/mvp/src/validators/documentation-validator.ts, packages/mvp/mvp/src/validators/frontend-validator.ts, packages/mvp/mvp/src/validators/security-scanner.ts, packages/mvp/mvp/src/utils/id.ts, packages/mvp/mvp-core/src/observability/otel.ts, packages/mvp/mvp-server/src/middleware/error.ts, packages/mvp/mvp-server/src/plugins/logging.ts, packages/mvp/mvp-server/src/plugins/security.ts, packages/mvp/mvp-server/src/routes/health.ts, packages/mvp/mvp-server/src/routes/metrics.ts, packages/mvp/mvp-server/src/routes/version.ts, packages/mvp/mvp-server/src/tools/ConfigValidator.ts, packages/mvp/mvp-server/src/tools/GenerateGuide.ts, packages/mvp/mvp/src/nodes/evaluation/code-review-validator.ts, packages/mvp/mvp/src/nodes/evaluation/quality-budget-validator.ts, packages/mvp/mvp/src/nodes/evaluation/tdd-validator.ts, packages/mvp/mvp-group/mvp/src/lib/build-node.ts, packages/mvp/mvp-group/mvp/src/lib/evaluation-node.ts, packages/mvp/mvp-group/mvp/src/lib/feature-flags.ts, packages/mvp/mvp-group/mvp/src/lib/kernel.ts, packages/mvp/mvp-group/mvp/src/lib/strategy-node.ts, packages/mvp/mvp-group/mvp/src/lib/utils.ts, packages/mvp/mvp-group/mvp/src/lib/validation-types.ts, packages/mvp/mvp-group/mvp/src/lib/validation-utils.ts
+  observability:
+    - Disallowed files: packages/observability/src/index.ts, packages/observability/src/types.ts, packages/observability/src/ulids.ts, packages/observability/src/logging/index.ts, packages/observability/src/tracing/index.ts, packages/observability/src/metrics/index.ts
+  prp-runner:
+    - Disallowed files: packages/prp-runner/src/# Code Citations.md, packages/prp-runner/src/a2a-ai-agent.ts, packages/prp-runner/src/ai-capabilities.ts, packages/prp-runner/src/asbr-ai-integration.ts, packages/prp-runner/src/asbr-ai-mcp-integration.ts, packages/prp-runner/src/asbr-ai-mcp-server.ts, packages/prp-runner/src/index.ts, packages/prp-runner/src/llm-bridge.ts, packages/prp-runner/src/mlx-adapter.ts, packages/prp-runner/src/orchestrator.ts, packages/prp-runner/src/unified-ai-evidence-workflow.ts, packages/prp-runner/src/lib/create-execution-context.ts, packages/prp-runner/src/lib/execute-neuron.ts, packages/prp-runner/src/lib/insights.ts, packages/prp-runner/src/types/contracts.d.ts, packages/prp-runner/src/lib/server/capabilities-router.ts, packages/prp-runner/src/lib/server/health-router.ts, packages/prp-runner/src/lib/server/knowledge-router.ts, packages/prp-runner/src/lib/server/tools-router.ts, packages/prp-runner/src/lib/reranker/index.ts, packages/prp-runner/src/lib/embedding/index.ts
+  orchestration:
+    - Disallowed files: packages/orchestration/LICENSE, packages/orchestration/examples/mlx-integration-demo.ts, packages/orchestration/src/REFACTORING_NOTES.md, packages/orchestration/src/errors.ts, packages/orchestration/src/index.ts, packages/orchestration/src/prp-integration.ts, packages/orchestration/src/service.ts, packages/orchestration/src/types.ts, packages/orchestration/src/workflow-validator.ts, packages/orchestration/src/bridges/agent.bridge.ts, packages/orchestration/src/bridges/memories.bridge.ts, packages/orchestration/src/bridges/python-agent-bridge.ts, packages/orchestration/src/coordinator/mlx-first-coordinator.ts, packages/orchestration/src/cli/approve.ts, packages/orchestration/src/cli/replay.ts, packages/orchestration/src/domain/policies.ts, packages/orchestration/src/domain/types.ts, packages/orchestration/src/mlx/__init__.py, packages/orchestration/src/mlx/batched_inference.py, packages/orchestration/src/mlx/kv_cache_manager.py, packages/orchestration/src/mlx/thermal_guard.py, packages/orchestration/src/mlx/tiered_model_manager.py, packages/orchestration/src/lib/agent-health-monitor.ts, packages/orchestration/src/lib/audit-a2a-adapter.ts, packages/orchestration/src/lib/audit.ts, packages/orchestration/src/lib/checkpoints.ts, packages/orchestration/src/lib/circuit-breaker.ts, packages/orchestration/src/lib/error-classifier.ts, packages/orchestration/src/lib/hitl.ts, packages/orchestration/src/lib/model-router.ts, packages/orchestration/src/lib/model-strategy.ts, packages/orchestration/src/lib/policy-engine.ts, packages/orchestration/src/lib/supervisor.ts, packages/orchestration/src/lib/telemetry.ts, packages/orchestration/src/integrations/mlx-agent.ts, packages/orchestration/src/providers/mlx-first-provider.ts, packages/orchestration/src/schemas/orchestrator.zod.ts, packages/orchestration/src/schemas/workflow.zod.ts, packages/orchestration/src/utils/resilience.ts, packages/orchestration/src/service/Middleware.ts, packages/orchestration/src/observability/otel.ts, packages/orchestration/src/mlx/tests/test_batched_inference.py, packages/orchestration/src/mlx/tests/test_kv_cache_manager.py, packages/orchestration/src/mlx/tests/test_thermal_guard.py, packages/orchestration/src/mlx/tests/test_tiered_model_manager.py, packages/orchestration/src/lib/dlq/index.ts, packages/orchestration/src/lib/outbox/index.ts, packages/orchestration/src/lib/outbox/outbox/package.json, packages/orchestration/src/lib/outbox/outbox/tsconfig.json, packages/orchestration/src/lib/outbox/outbox/vitest.config.ts, packages/orchestration/src/lib/outbox/outbox/src/index.ts, packages/orchestration/src/lib/outbox/outbox/src/schema.ts, packages/orchestration/src/lib/outbox/outbox/src/service.ts
+  rag:
+    - Disallowed files: packages/rag/requirements.txt, packages/rag/tsconfig.tsbuildinfo, packages/rag/docs/INITIATIVE-SUMMARY.md, packages/rag/docs/setup-guide.md, packages/rag/examples/enhanced-rag-demo.ts, packages/rag/python/mlx_generate.py, packages/rag/scripts/verify-docs.sh, packages/rag/src/enhanced-pipeline.d.ts.map, packages/rag/src/enhanced-pipeline.js.map, packages/rag/src/enhanced-pipeline.ts, packages/rag/src/index.d.ts.map, packages/rag/src/index.js.map, packages/rag/src/index.ts, packages/rag/docs/plan/dependency-analysis.md, packages/rag/docs/plan/enhancement-summary.md, packages/rag/docs/plan/implementation-tracker.md, packages/rag/docs/plan/mlx-integration-requirements.md, packages/rag/docs/plan/qwen-tdd-plan.md, packages/rag/docs/plan/roadmap.md, packages/rag/docs/plan/strict-tdd-implementation-plan.md, packages/rag/docs/plan/summary.md, packages/rag/docs/plan/tdd-implementation-plan.md, packages/rag/docs/plan/technical-spec.md, packages/rag/docs/plan/test-specifications.md, packages/rag/src/chunk/index.ts, packages/rag/src/chunkers/dispatch.d.ts.map, packages/rag/src/chunkers/dispatch.js.map, packages/rag/src/chunkers/dispatch.ts, packages/rag/src/chunkers/index.d.ts.map, packages/rag/src/chunkers/index.js.map, packages/rag/src/chunkers/index.ts, packages/rag/src/embed/python-client.ts, packages/rag/src/embed/qwen3-script.d.ts, packages/rag/src/embed/qwen3-script.d.ts.map, packages/rag/src/embed/qwen3-script.js, packages/rag/src/embed/qwen3-script.js.map, packages/rag/src/embed/qwen3-script.ts, packages/rag/src/embed/qwen3.d.ts, packages/rag/src/embed/qwen3.d.ts.map, packages/rag/src/embed/qwen3.js, packages/rag/src/embed/qwen3.js.map, packages/rag/src/embed/qwen3.ts, packages/rag/src/eval/harness.d.ts, packages/rag/src/eval/harness.d.ts.map, packages/rag/src/eval/harness.js, packages/rag/src/eval/harness.js.map, packages/rag/src/eval/harness.ts, packages/rag/src/eval/metrics.d.ts, packages/rag/src/eval/metrics.d.ts.map, packages/rag/src/eval/metrics.js, packages/rag/src/eval/metrics.js.map, packages/rag/src/eval/metrics.ts, packages/rag/src/generation/index.d.ts, packages/rag/src/generation/index.d.ts.map, packages/rag/src/generation/index.js, packages/rag/src/generation/index.js.map, packages/rag/src/generation/index.ts, packages/rag/src/generation/multi-model.d.ts, packages/rag/src/generation/multi-model.d.ts.map, packages/rag/src/generation/multi-model.js, packages/rag/src/generation/multi-model.js.map, packages/rag/src/generation/multi-model.ts, packages/rag/src/pipeline/batch-ingest.ts, packages/rag/src/pipeline/file-discovery.ts, packages/rag/src/pipeline/index.ts, packages/rag/src/pipeline/ingest.d.ts, packages/rag/src/pipeline/ingest.d.ts.map, packages/rag/src/pipeline/ingest.js, packages/rag/src/pipeline/ingest.js.map, packages/rag/src/pipeline/ingest.ts, packages/rag/src/pipeline/query.d.ts, packages/rag/src/pipeline/query.d.ts.map, packages/rag/src/pipeline/query.js, packages/rag/src/pipeline/query.js.map, packages/rag/src/pipeline/query.ts, packages/rag/src/pipeline/qwen3-reranker.d.ts, packages/rag/src/pipeline/qwen3-reranker.d.ts.map, packages/rag/src/pipeline/qwen3-reranker.js, packages/rag/src/pipeline/qwen3-reranker.js.map, packages/rag/src/pipeline/qwen3-reranker.ts, packages/rag/src/pipeline/rerank_fusion.ts, packages/rag/src/policy/index.d.ts.map, packages/rag/src/policy/index.js.map, packages/rag/src/policy/index.ts, packages/rag/src/policy/load.d.ts.map, packages/rag/src/policy/load.js.map, packages/rag/src/policy/load.ts, packages/rag/src/policy/mime.d.ts.map, packages/rag/src/policy/mime.js.map, packages/rag/src/policy/mime.ts, packages/rag/src/lib/batch-ingest.ts, packages/rag/src/lib/contracts-shim.ts, packages/rag/src/lib/embed-query.d.ts, packages/rag/src/lib/embed-query.d.ts.map, packages/rag/src/lib/embed-query.js, packages/rag/src/lib/embed-query.js.map, packages/rag/src/lib/embed-query.ts, packages/rag/src/lib/generate-answer.d.ts, packages/rag/src/lib/generate-answer.d.ts.map, packages/rag/src/lib/generate-answer.js, packages/rag/src/lib/generate-answer.js.map, packages/rag/src/lib/generate-answer.ts, packages/rag/src/lib/index.d.ts, packages/rag/src/lib/index.d.ts.map, packages/rag/src/lib/index.js, packages/rag/src/lib/index.js.map, packages/rag/src/lib/index.ts, packages/rag/src/lib/rerank-docs.d.ts, packages/rag/src/lib/rerank-docs.d.ts.map, packages/rag/src/lib/rerank-docs.js, packages/rag/src/lib/rerank-docs.js.map, packages/rag/src/lib/rerank-docs.ts, packages/rag/src/lib/retrieve-docs.d.ts, packages/rag/src/lib/retrieve-docs.d.ts.map, packages/rag/src/lib/retrieve-docs.js, packages/rag/src/lib/retrieve-docs.js.map, packages/rag/src/lib/retrieve-docs.ts, packages/rag/src/lib/run-process.d.ts, packages/rag/src/lib/run-process.d.ts.map, packages/rag/src/lib/run-process.js, packages/rag/src/lib/run-process.js.map, packages/rag/src/lib/run-process.ts, packages/rag/src/lib/shims.ts, packages/rag/src/lib/types.d.ts, packages/rag/src/lib/types.d.ts.map, packages/rag/src/lib/types.js, packages/rag/src/lib/types.js.map, packages/rag/src/lib/types.ts, packages/rag/src/stubs/fast-glob.ts, packages/rag/src/stubs/micromatch.ts, packages/rag/src/store/memory.d.ts, packages/rag/src/store/memory.d.ts.map, packages/rag/src/store/memory.js, packages/rag/src/store/memory.js.map, packages/rag/src/store/memory.ts, packages/rag/src/types/shims.d.ts
+  security:
+    - Disallowed files: packages/security/semgrep.yml, packages/security/vitest.config.mjs, packages/security/src/index.ts, packages/security/src/types.ts, packages/security/test/setup.ts, packages/security/src/lib/rerank-service.ts, packages/security/src/mlx/embedding.ts, packages/security/src/mlx/index.ts, packages/security/src/mlx/reranker.ts, packages/security/src/mtls/helpers.ts, packages/security/src/mtls/index.ts, packages/security/src/mtls/mtls.ts, packages/security/src/spiffe/client.ts, packages/security/src/spiffe/index.ts, packages/security/src/utils/index.ts, packages/security/src/utils/security-utils.ts, packages/security/src/workload-identity/index.ts, packages/security/src/workload-identity/workload-identity.ts
+  registry:
+    - Disallowed files: packages/registry/src/index.ts, packages/registry/test/fixtures/contracts/commands/create-user.json, packages/registry/test/fixtures/contracts/events/missing-id.json, packages/registry/test/fixtures/contracts/events/missing-metadata.json, packages/registry/test/fixtures/contracts/events/user-created.json
+  simlab:
+    - Disallowed files: packages/simlab/src/agent-adapter.ts, packages/simlab/src/index.ts, packages/simlab/src/judge.ts, packages/simlab/src/report.ts, packages/simlab/src/runner.ts, packages/simlab/src/types.ts, packages/simlab/src/user-sim.ts, packages/simlab/sim/scenarios/critical.json, packages/simlab/src/scripts/check-gates.ts, packages/simlab/src/scripts/generate-report.ts, packages/simlab/src/scripts/run-critical.ts, packages/simlab/src/scripts/run-full.ts, packages/simlab/src/scripts/run-smoke.ts, packages/simlab/src/scripts/smoke-shared.ts
+  a2a-services:
+    - Disallowed files: packages/a2a-services/common/package.json, packages/a2a-services/common/tsconfig.json, packages/a2a-services/common/vitest.config.ts, packages/a2a-services/schema-registry/package.json, packages/a2a-services/schema-registry/project.json, packages/a2a-services/schema-registry/tsconfig.json, packages/a2a-services/schema-registry/vitest.config.ts, packages/a2a-services/common/src/index.ts, packages/a2a-services/schema-registry/src/index.ts, packages/a2a-services/schema-registry/src/schemas.ts, packages/a2a-services/schema-registry/src/service.ts, packages/a2a-services/common/src/middleware/rateLimiter.ts
+❌ Disallowed root entries:
+  - 1753683755292-30b3431f487b4cc1863e57a81d78e289.sh
+  - Critical_Gaps_Implementation_Summary.md
+  - DEPENDENCY_UPDATE_REPORT.md
+  - MCP_Package_PRD.md
+  - MCP_Production_Readiness_Gap_Analysis.md
+  - SECURITY_COMPLETION_SUMMARY.md
+  - SECURITY_FIXES.md
+  - SECURITY_IMPLEMENTATION_COMPLETION.md
+  - STRUCTURE_GUARD_DEPLOYMENT.md
+  - TECHNICAL_DEBT_ANALYSIS.md
+  - cleanup-report.md
+  - commit-message.txt
+  - cortex-os.master.json
+  - demo-mlx-integration.py
+  - fix-dependencies.py
+  - graph.html
+  - graph.json
+  - install-mlx-tools.py
+  - issues.json
+  - mcp-defect-analysis-issues.json
+  - mcp-defect-analysis-review.md
+  - mcp-defect-patches.md
+  - patch-hints.md
+  - patches.md
+  - pyproject.toml.ruff
+  - review.md
+  - settings.json
+  - structure_report.txt
+  - test-autonomous-github-apps.sh
+  - test-gpt-oss.py
+  - test-insula-frontend-backend-commands.js
+  - test-mlx-quick.py
+  - test_security_implementation.js
+
+Auto-fix: Move files to allowed locations or add to 'allowedRootEntries' in policy.json
+ ELIFECYCLE  Command failed with exit code 6.
