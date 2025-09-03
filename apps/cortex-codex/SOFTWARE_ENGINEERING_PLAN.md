@@ -54,14 +54,14 @@ cargo test --workspace --all-features
 git reset --hard v0.1.0-foundation
 ```
 
-#### Task 1.2: Configuration System Integration (TDD)
+#### Task 1.2: Configuration System Integration (TDD) ✅ COMPLETED
 
-- [ ] **Test**: Write tests for profile-based configuration loading
-- [ ] **Test**: Write tests for configuration override parsing
-- [ ] **Implementation**: Port cortex-code config system to codex core
-- [ ] **Implementation**: Add dot-notation override support
-- [ ] **Verification**: All config tests pass
-- [ ] **Rollback Point**: Git tag `v0.1.1-config`
+- [x] **Test**: Write tests for profile-based configuration loading
+- [x] **Test**: Write tests for configuration override parsing
+- [x] **Implementation**: Port cortex-code config system to codex core
+- [x] **Implementation**: Add dot-notation override support
+- [x] **Verification**: All config tests pass (11/11 tests passing)
+- [x] **Rollback Point**: Git tag `v0.1.1-config`
 
 **Files Created/Modified**:
 
@@ -153,14 +153,18 @@ async fn test_provider_registration() {
 - [ ] **Verification**: OpenAI provider tests pass (with mocks)
 - [ ] **Rollback Point**: Git tag `v0.2.1-openai`
 
-#### Task 2.3: Anthropic Provider Implementation (TDD)  and Anthropic Compatiable Provide rr 
+#### Task 2.3: Anthropic Provider Implementation (TDD)  and Anthropic Compatible Provider [`Z.ai API`](https://docs.z.ai/scenario-example/develop-tools/claude)
 
 - [ ] **Test**: Write tests for Anthropic API integration
 - [ ] **Implementation**: Port Anthropic provider from cortex-code
 - [ ] **Verification**: Anthropic provider tests pass (with mocks)
 - [ ] **Rollback Point**: Git tag `v0.2.2-anthropic`
 
-- [ ] **
+- [ ] **Test**: Write tests for Z.ai API integration
+- [ ] **Implementation**: Create Z.ai provider
+- [ ] **Verification**: Z.ai provider tests pass (with mocks)
+- [ ] **Rollback Point**: Git tag `v0.2.2-zai`
+
 #### Task 2.4: Local/OSS Provider Implementation (TDD)
 
 - [ ] **Test**: Write tests for local model integration (Ollama/MLX)

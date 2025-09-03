@@ -12,9 +12,18 @@
   - [x] Initialize git repository
   - [x] Create task management system
 
+- [x] **Task 1.2**: Configuration System Integration (TDD) ✅ COMPLETED
+  - [x] Write tests for profile-based configuration loading
+  - [x] Write tests for configuration override parsing  
+  - [x] Write tests for environment variable support
+  - [x] Write tests for configuration validation
+  - [x] Implement comprehensive configuration system with TDD
+  - [x] Add dot-notation override support
+  - [x] **Result**: 11/11 tests passing, fully TDD-compliant configuration system
+
 #### 🔄 IN PROGRESS
 
-- [ ] **Task 2.1**: Basic Chat Interface (TDD)
+- [ ] **Task 2.1**: Basic Chat Interface (TDD) - NEXT PRIORITY
   - [ ] Write tests for chat message handling
   - [ ] Write tests for message history
   - [ ] Implement simple chat interface
@@ -26,13 +35,10 @@
   - [ ] Implement provider abstraction
   - [ ] Add configuration for providers
 
-#### 📋 Previously Next Up
-
-- [ ] **Task 1.2**: Configuration System Integration (TDD)
-- [x] **Task 1.3**: Error Handling & Logging (TDD)
-
 #### 📋 TODO - NEXT UP
 
+- [ ] **Task 2.1**: Basic Chat Interface (TDD) - NEXT PRIORITY
+- [ ] **Task 2.2**: Model Provider Abstraction (TDD)
 - [ ] **Task 2.3**: Streaming Support (TDD)
 
 ### Task Details

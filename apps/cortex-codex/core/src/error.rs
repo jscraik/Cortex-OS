@@ -123,6 +123,27 @@ pub enum CodexErr {
 
     #[error("{0}")]
     EnvVar(EnvVarError),
+
+    #[error(transparent)]
+    Config(#[from] ConfigError),
+}
+
+#[derive(Error, Debug)]
+pub enum ConfigError {
+    #[error("Invalid TOML: {0}")]
+    InvalidToml(#[from] toml::de::Error),
+
+    #[error("Malformed override: {0}")]
+    MalformedOverride(String),
+
+    #[error("Validation error: {0}")]
+    Validation(String),
+
+    #[error("IO error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("Serialization error: {0}")]
+    Serialization(#[from] toml::ser::Error),
 }
 
 #[derive(Debug)]
