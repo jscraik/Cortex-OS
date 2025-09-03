@@ -7,8 +7,11 @@ export type ToolEvent = {
 };
 
 // Declare the global property
-declare global {
-  var __cortexToolStore: Map<string, ToolEvent[]> | undefined;
+  namespace NodeJS {
+    interface Global {
+      __cortexToolStore?: Map<string, ToolEvent[]>;
+    }
+  }
 }
 
 const toolStore: Map<string, ToolEvent[]> = globalThis.__cortexToolStore || new Map();
