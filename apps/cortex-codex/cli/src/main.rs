@@ -149,6 +149,10 @@ struct ChatCommand {
     #[clap(skip)]
     config_overrides: CliConfigOverrides,
 
+    /// Tell the chat command to use the specified directory as its working root.
+    #[clap(long = "cd", short = 'C', value_name = "DIR")]
+    cwd: Option<PathBuf>,
+
     /// The prompt to send to the model.
     /// Use "-" to read the prompt from stdin.
     /// Optional when using --repl.
@@ -254,6 +258,11 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             // Merge root-level config overrides with subcommand-specific ones.
             prepend_config_flags(&mut chat_cli.config_overrides, cli.config_overrides);
 
+            // If a working directory was provided, change to it before doing any work.
+            if let Some(dir) = &chat_cli.cwd {
+                std::env::set_current_dir(dir)?;
+            }
+
             // Load full Config with overrides (keeps existing behavior intact).
             let cfg = codex_core::config::Config::load_with_cli_overrides(
                 chat_cli
@@ -341,6 +350,21 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                             std::io::stdout().flush().ok();
                         }
                         codex_core::ResponseEvent::OutputItemDone(item) => {
+                            // When using aggregated streams (default), deltas are not emitted.
+                            // Print the final assistant message text here so users see output.
+                            if let codex_core::ResponseItem::Message { content, role, .. } = &item {
+                                if role == "assistant" {
+                                    for c in content {
+                                        if let codex_core::ContentItem::OutputText { text } = c {
+                                            if !text.is_empty() {
+                                                print!("{text}");
+                                                use std::io::Write as _;
+                                                std::io::stdout().flush().ok();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             completed_items.push(item);
                         }
                         codex_core::ResponseEvent::Completed { .. } => {
@@ -577,6 +601,17 @@ mod tests {
             Some(Subcommand::Chat(cmd)) => {
                 assert_eq!(cmd.prompt.as_deref(), Some("-"));
                 assert!(!cmd.repl);
+            }
+            _ => panic!("expected Chat command"),
+        }
+
+        // -C/--cd working directory parsing
+        let args3 = ["codex", "chat", "-C", "/tmp", "-"];
+        let cli3 = MultitoolCli::parse_from(args3);
+        match cli3.subcommand {
+            Some(Subcommand::Chat(cmd)) => {
+                assert_eq!(cmd.cwd.as_deref(), Some(std::path::Path::new("/tmp")));
+                assert_eq!(cmd.prompt.as_deref(), Some("-"));
             }
             _ => panic!("expected Chat command"),
         }

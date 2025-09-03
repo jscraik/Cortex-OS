@@ -70,6 +70,31 @@ codex completion zsh
 codex completion fish
 ```
 
+The generated completions include subcommands and flags such as `codex chat -C/--cd <DIR>`.
+
+Install completions (optional):
+
+- zsh (macOS default):
+
+```shell
+mkdir -p ~/.zsh/completions
+codex completion zsh > ~/.zsh/completions/_codex
+echo 'fpath+=(~/.zsh/completions)' >> ~/.zshrc
+echo 'autoload -U compinit && compinit' >> ~/.zshrc
+exec $SHELL
+```
+
+- bash:
+
+```shell
+codex completion bash | sudo tee /etc/bash_completion.d/codex > /dev/null
+# or for user-local:
+mkdir -p ~/.bash_completion.d
+codex completion bash > ~/.bash_completion.d/codex
+echo 'source ~/.bash_completion.d/codex' >> ~/.bashrc
+exec $SHELL
+```
+
 ### Chat (one-off)
 
 Send a single prompt and stream the reply without starting the interactive TUI:
@@ -86,6 +111,7 @@ This is additive and does not affect existing commands.
 - `--session-file PATH`: persist history to a custom JSONL path
 - `--reset`: start fresh, truncating the session file
 - `--repl`: stay in a simple line‑based REPL (type `:q` to quit)
+- `-C, --cd DIR`: run Chat using DIR as the working root (same semantics as `codex exec -C`)
 - `PROMPT` can be `-` to read from stdin; optional when `--repl` is used
 
 Note: When using `--repl` or sessions, the JSONL history includes both user and assistant items. This is expected and allows full turn-by-turn replay.
@@ -107,6 +133,9 @@ codex chat --session demo --reset "Fresh start"
 
 # REPL with session persistence
 codex chat --session demo --repl
+
+# Change the working directory for a one-off chat
+codex chat -C ./examples "List files in the project and suggest a cleanup plan"
 ```
 
 Developer notes:
