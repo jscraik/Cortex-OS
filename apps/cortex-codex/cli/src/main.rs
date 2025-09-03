@@ -1,21 +1,24 @@
 use clap::CommandFactory;
 use clap::Parser;
-use clap_complete::Shell;
 use clap_complete::generate;
+use clap_complete::Shell;
 use codex_arg0::arg0_dispatch_or_else;
-use codex_chatgpt::apply_command::ApplyCommand;
 use codex_chatgpt::apply_command::run_apply_command;
-use codex_cli::LandlockCommand;
-use codex_cli::SeatbeltCommand;
+use codex_chatgpt::apply_command::ApplyCommand;
 use codex_cli::login::run_login_status;
 use codex_cli::login::run_login_with_api_key;
 use codex_cli::login::run_login_with_chatgpt;
 use codex_cli::login::run_logout;
 use codex_cli::proto;
+use codex_cli::LandlockCommand;
+use codex_cli::SeatbeltCommand;
 use codex_common::CliConfigOverrides;
 use codex_exec::Cli as ExecCli;
 use codex_tui::Cli as TuiCli;
 use std::path::PathBuf;
+use std::sync::Arc;
+use tokio_stream::StreamExt;
+use uuid::Uuid;
 
 use crate::proto::ProtoCli;
 
@@ -76,6 +79,10 @@ enum Subcommand {
     /// Internal: generate TypeScript protocol bindings.
     #[clap(hide = true)]
     GenerateTs(GenerateTsCommand),
+
+    /// Send a single prompt and stream the assistant's reply to stdout.
+    #[clap(visible_alias = "c")]
+    Chat(ChatCommand),
 }
 
 #[derive(Debug, Parser)]
@@ -133,6 +140,16 @@ struct GenerateTsCommand {
     /// Optional path to the Prettier executable to format generated files
     #[arg(short = 'p', long = "prettier", value_name = "PRETTIER_BIN")]
     prettier: Option<PathBuf>,
+}
+
+#[derive(Debug, Parser)]
+struct ChatCommand {
+    #[clap(skip)]
+    config_overrides: CliConfigOverrides,
+
+    /// The prompt to send to the model.
+    #[arg(value_name = "PROMPT", required = true)]
+    prompt: String,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -211,6 +228,62 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
         }
         Some(Subcommand::GenerateTs(gen_cli)) => {
             codex_protocol_ts::generate_ts(&gen_cli.out_dir, gen_cli.prettier.as_deref())?;
+        }
+        Some(Subcommand::Chat(mut chat_cli)) => {
+            // Merge root-level config overrides with subcommand-specific ones.
+            prepend_config_flags(&mut chat_cli.config_overrides, cli.config_overrides);
+
+            // Load full Config with overrides (keeps existing behavior intact).
+            let cfg = codex_core::config::Config::load_with_cli_overrides(
+                chat_cli
+                    .config_overrides
+                    .parse_overrides()
+                    .map_err(anyhow::Error::msg)?,
+                codex_core::config::ConfigOverrides::default(),
+            )?;
+
+            // Create AuthManager and ModelClient like other entry points do.
+            let auth_manager = Arc::new(codex_core::AuthManager::new(
+                cfg.codex_home.clone(),
+                cfg.preferred_auth_method,
+            ));
+            let provider = cfg.model_provider.clone();
+            let effort = cfg.model_reasoning_effort;
+            let summary = cfg.model_reasoning_summary;
+            let client = codex_core::ModelClient::new(
+                Arc::new(cfg.clone()),
+                Some(auth_manager),
+                provider,
+                effort,
+                summary,
+                Uuid::new_v4(),
+            );
+
+            // Build a minimal Prompt with the user message.
+            let mut prompt = codex_core::Prompt::default();
+            prompt.input = vec![codex_core::ResponseItem::Message {
+                id: None,
+                role: "user".to_string(),
+                content: vec![codex_core::ContentItem::InputText {
+                    text: chat_cli.prompt,
+                }],
+            }];
+
+            // Stream and print deltas to stdout.
+            let mut stream = client.stream(&prompt).await?;
+            while let Some(event) = stream.next().await {
+                match event? {
+                    codex_core::ResponseEvent::OutputTextDelta(s) => {
+                        print!("{}", s);
+                        use std::io::Write as _;
+                        std::io::stdout().flush().ok();
+                    }
+                    codex_core::ResponseEvent::Completed { .. } => {
+                        println!();
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 

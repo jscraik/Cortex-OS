@@ -70,11 +70,23 @@ codex completion zsh
 codex completion fish
 ```
 
+### Chat (one-off)
+
+Send a single prompt and stream the reply without starting the interactive TUI:
+
+```shell
+codex chat "Summarize the README in 3 bullet points"
+```
+
+This is additive and does not affect existing commands.
+
+```
+
 ### Experimenting with the Codex Sandbox
 
 To test to see what happens when a command is run under the sandbox provided by Codex, we provide the following subcommands in Codex CLI:
 
-```
+```shell
 # macOS
 codex debug seatbelt [--full-auto] [COMMAND]...
 
