@@ -5,15 +5,12 @@
 
 import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { promisify } from "node:util";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 import { gunzip, gzip } from "zlib";
 import type { Evidence } from "../types/index.js";
 import { ValidationError } from "../types/index.js";
 import { getDataPath, pathExists } from "../xdg/index.js";
 
-const _gzipAsync = promisify(gzip);
-const _gunzipAsync = promisify(gunzip);
 
 export interface StorageOptions {
 	compression?: boolean;

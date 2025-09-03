@@ -1,4 +1,5 @@
 use crate::{GitHubClient, types::*, GitHubResult};
+use crate::a2a_integration::GitHubEventPublisher;
 use tracing::{debug, info};
 
 /// Pull Request API client for PR and issue management
@@ -9,7 +10,7 @@ pub struct PullRequestAPI {
 
 impl PullRequestAPI {
     pub fn new(client: GitHubClient) -> Self {
-        Self { 
+        Self {
             client,
             event_publisher: None,
         }
@@ -33,13 +34,13 @@ impl PullRequestAPI {
         options: Option<PRListOptions>,
     ) -> GitHubResult<Vec<PullRequest>> {
         let mut endpoint = format!("/repos/{}/{}/pulls", owner, repo);
-        
+
         if let Some(opts) = options {
             let mut query_params = vec![
                 format!("page={}", opts.page),
                 format!("per_page={}", opts.per_page),
             ];
-            
+
             if let Some(state) = &opts.state {
                 query_params.push(format!("state={}", state));
             }
@@ -55,11 +56,11 @@ impl PullRequestAPI {
             if let Some(direction) = &opts.direction {
                 query_params.push(format!("direction={}", direction));
             }
-            
+
             let query_string = query_params.join("&");
             endpoint = format!("{}?{}", endpoint, query_string);
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
@@ -73,7 +74,7 @@ impl PullRequestAPI {
     pub async fn create_pull_request(&self, owner: &str, repo: &str, data: CreatePRData) -> GitHubResult<PullRequest> {
         let endpoint = format!("/repos/{}/{}/pulls", owner, repo);
         let pr: PullRequest = self.client.post(&endpoint, Some(data)).await?;
-        
+
         // Publish PR event
         if let Some(publisher) = &self.event_publisher {
             let event = crate::a2a_integration::PullRequestEvent {
@@ -83,12 +84,12 @@ impl PullRequestAPI {
                 actor: pr.user.clone(),
                 changes: None,
             };
-            
+
             if let Err(e) = publisher.publish_pull_request_event(event).await {
                 tracing::warn!("Failed to publish PR created event: {:?}", e);
             }
         }
-        
+
         info!("Created pull request #{} in {}/{}", pr.number, owner, repo);
         Ok(pr)
     }
@@ -117,7 +118,7 @@ impl PullRequestAPI {
     ) -> GitHubResult<MergeResult> {
         let endpoint = format!("/repos/{}/{}/pulls/{}/merge", owner, repo, number);
         let result: MergeResult = self.client.put(&endpoint, data).await?;
-        
+
         // Publish merge event
         if let Some(publisher) = &self.event_publisher {
             if let Ok(pr) = self.get_pull_request(owner, repo, number).await {
@@ -128,13 +129,13 @@ impl PullRequestAPI {
                     actor: pr.user.clone(),
                     changes: None,
                 };
-                
+
                 if let Err(e) = publisher.publish_pull_request_event(event).await {
                     tracing::warn!("Failed to publish PR merged event: {:?}", e);
                 }
             }
         }
-        
+
         info!("Merged pull request #{} in {}/{}", number, owner, repo);
         Ok(result)
     }
@@ -179,13 +180,13 @@ impl PullRequestAPI {
     /// List issues
     pub async fn list_issues(&self, owner: &str, repo: &str, options: Option<IssueListOptions>) -> GitHubResult<Vec<Issue>> {
         let mut endpoint = format!("/repos/{}/{}/issues", owner, repo);
-        
+
         if let Some(opts) = options {
             let mut query_params = vec![
                 format!("page={}", opts.page),
                 format!("per_page={}", opts.per_page),
             ];
-            
+
             if let Some(state) = &opts.state {
                 query_params.push(format!("state={}", state));
             }
@@ -201,11 +202,11 @@ impl PullRequestAPI {
             if let Some(since) = &opts.since {
                 query_params.push(format!("since={}", since));
             }
-            
+
             let query_string = query_params.join("&");
             endpoint = format!("{}?{}", endpoint, query_string);
         }
-        
+
         self.client.get_paginated(&endpoint).await
     }
 
@@ -219,7 +220,7 @@ impl PullRequestAPI {
     pub async fn create_issue(&self, owner: &str, repo: &str, data: CreateIssueData) -> GitHubResult<Issue> {
         let endpoint = format!("/repos/{}/{}/issues", owner, repo);
         let issue: Issue = self.client.post(&endpoint, Some(data)).await?;
-        
+
         // Publish issue event
         if let Some(publisher) = &self.event_publisher {
             let event = crate::a2a_integration::IssueEvent {
@@ -229,12 +230,12 @@ impl PullRequestAPI {
                 actor: issue.user.clone(),
                 changes: None,
             };
-            
+
             if let Err(e) = publisher.publish_issue_event(event).await {
                 tracing::warn!("Failed to publish issue created event: {:?}", e);
             }
         }
-        
+
         info!("Created issue #{} in {}/{}", issue.number, owner, repo);
         Ok(issue)
     }
@@ -332,11 +333,11 @@ pub struct UpdateIssueData {
 impl PullRequest {
     /// Check if pull request can be merged
     pub fn can_merge(&self) -> bool {
-        self.mergeable.unwrap_or(false) && 
-        self.state == "open" && 
+        self.mergeable.unwrap_or(false) &&
+        self.state == "open" &&
         !self.draft
     }
-    
+
     /// Get merge status description
     pub fn get_merge_status(&self) -> String {
         if self.draft {
@@ -362,7 +363,7 @@ impl PullRequest {
             "Checking...".to_string()
         }
     }
-    
+
     /// Get PR age in days
     pub fn age_days(&self) -> Option<i64> {
         self.created_at.parse::<chrono::DateTime<chrono::Utc>>()
@@ -379,7 +380,7 @@ impl Issue {
     pub fn is_open(&self) -> bool {
         self.state == "open"
     }
-    
+
     /// Get issue age in days
     pub fn age_days(&self) -> Option<i64> {
         self.created_at.parse::<chrono::DateTime<chrono::Utc>>()
@@ -389,12 +390,12 @@ impl Issue {
             })
             .ok()
     }
-    
+
     /// Check if issue has specific label
     pub fn has_label(&self, label_name: &str) -> bool {
         self.labels.iter().any(|label| label.name == label_name)
     }
-    
+
     /// Get assignee logins
     pub fn get_assignee_logins(&self) -> Vec<&str> {
         self.assignees.iter().map(|user| user.login.as_str()).collect()
@@ -471,14 +472,14 @@ mod tests {
             patch_url: "".to_string(),
             issue_url: "".to_string(),
         };
-        
+
         assert_eq!(pr.get_merge_status(), "Draft PR");
-        
+
         pr.draft = false;
         pr.mergeable = Some(true);
         pr.mergeable_state = "clean".to_string();
         assert_eq!(pr.get_merge_status(), "Ready to merge");
-        
+
         pr.state = "closed".to_string();
         pr.merged = true;
         assert_eq!(pr.get_merge_status(), "Merged");
@@ -486,7 +487,7 @@ mod tests {
 
     #[test]
     fn test_issue_label_check() {
-        let mut issue = Issue {
+    let issue = Issue {
             id: 1,
             number: 1,
             title: "Test Issue".to_string(),
@@ -520,7 +521,7 @@ mod tests {
             events_url: "".to_string(),
             labels_url: "".to_string(),
         };
-        
+
         assert!(issue.has_label("bug"));
         assert!(!issue.has_label("feature"));
     }

@@ -2,9 +2,9 @@ import type { FastifyInstance } from "fastify";
 import Fastify from "fastify";
 import client from "prom-client";
 import { z } from "zod";
-import { auditEvent, record } from "./audit";
+import { auditEvent, record } from "./audit.js";
 import { createModelRouter, type IModelRouter } from "./model-router.js";
-import { enforce, loadGrant } from "./policy";
+import { enforce, loadGrant } from "./policy.js";
 
 // Request validation schemas
 const EmbeddingsBodySchema = z.object({

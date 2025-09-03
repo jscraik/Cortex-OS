@@ -9,11 +9,12 @@ import { SimRunner } from "../runner.js";
 async function runFullTests() {
 	console.log("🌙 Running SimLab full test suite...");
 
-	const _runner = new SimRunner({
+	const runner = new SimRunner({
 		deterministic: true,
 		seed: 98765,
 		timeout: 120000,
 	});
+	console.log(Boolean(runner));
 
 	// For now, just a placeholder
 	console.log("Full test suite would run here");

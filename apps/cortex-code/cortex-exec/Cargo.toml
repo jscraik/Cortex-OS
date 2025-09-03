@@ -1,0 +1,35 @@
+[package]
+edition = "2021"
+name = "cortex-exec"
+version = { workspace = true }
+
+[[bin]]
+name = "cortex-exec"
+path = "src/main.rs"
+
+[lib]
+name = "cortex_exec"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+cortex-core = { path = "../cortex-core" }
+cortex-protocol = { path = "../cortex-protocol" }
+owo-colors = "4.2.0"
+serde_json = { workspace = true }
+shlex = "1.3.0"
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+
+[dev-dependencies]
+assert_cmd = "2"
+libc = "0.2"
+predicates = "3"
+tempfile = "3.13.0"
+wiremock = "0.6"

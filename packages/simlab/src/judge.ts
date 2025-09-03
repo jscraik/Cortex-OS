@@ -4,7 +4,7 @@
  * @author Cortex-OS Team
  */
 
-import type { SimResult, SimScenario, SimScores, SimTurn } from "./types";
+import type { SimResult, SimScenario, SimScores, SimTurn } from "./types.js";
 
 export interface JudgeConfig {
 	strictMode?: boolean;

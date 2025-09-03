@@ -34,4 +34,4 @@ export interface Generator {
 	close?(): Promise<void>;
 }
 
-export * from "./multi-model";
+export * from "./multi-model.js";

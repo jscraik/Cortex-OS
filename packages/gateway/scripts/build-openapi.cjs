@@ -1,98 +1,109 @@
 #!/usr/bin/env node
-/* Generate OpenAPI from Zod schemas */
+/* Generate OpenAPI JSON without external generators (keep it simple) */
 const { writeFileSync, mkdirSync } = require("node:fs");
 const { join } = require("node:path");
-const { OpenAPIRegistry, OpenAPIGenerator } = require("zod-to-openapi");
 
-const { z } = require("zod");
+const components = {
+	AgentConfig: {
+		type: "object",
+		properties: {
+			seed: { type: "integer", minimum: 1, default: 1 },
+			maxTokens: { type: "integer", minimum: 1, maximum: 4096, default: 1024 },
+			timeoutMs: { type: "integer", minimum: 1, maximum: 120000, default: 30000 },
+			memory: {
+				type: "object",
+				properties: {
+					maxItems: { type: "integer", minimum: 1 },
+					maxBytes: { type: "integer", minimum: 1 },
+				},
+				required: ["maxItems", "maxBytes"],
+			},
+		},
+		required: ["seed", "maxTokens", "timeoutMs", "memory"],
+	},
+	MCPRequest: {
+		type: "object",
+		properties: {
+			tool: { type: "string" },
+			args: { type: "object", additionalProperties: true },
+		},
+		required: ["tool"],
+	},
+	A2AMessage: {
+		type: "object",
+		properties: {
+			from: { type: "string" },
+			to: { type: "string" },
+			action: { type: "string" },
+			data: { type: "object", additionalProperties: true },
+		},
+		required: ["from", "to", "action"],
+	},
+	RAGQuery: {
+		type: "object",
+		properties: {
+			query: { type: "string", minLength: 1 },
+			topK: { type: "integer", minimum: 1, maximum: 100, default: 5 },
+		},
+		required: ["query"],
+	},
+	SimlabCommand: {
+		type: "object",
+		properties: {
+			scenario: { type: "string" },
+			step: { type: "string" },
+			params: { type: "object", additionalProperties: true },
+		},
+		required: ["scenario", "step"],
+	},
+	MCPBody: {
+		type: "object",
+		properties: {
+			config: { $ref: "#/components/schemas/AgentConfig" },
+			request: { $ref: "#/components/schemas/MCPRequest" },
+			json: { type: "boolean" },
+		},
+		required: ["config", "request"],
+	},
+	A2ABody: {
+		type: "object",
+		properties: {
+			config: { $ref: "#/components/schemas/AgentConfig" },
+			message: { $ref: "#/components/schemas/A2AMessage" },
+			json: { type: "boolean" },
+		},
+		required: ["config", "message"],
+	},
+	RAGBody: {
+		type: "object",
+		properties: {
+			config: { $ref: "#/components/schemas/AgentConfig" },
+			query: { $ref: "#/components/schemas/RAGQuery" },
+			json: { type: "boolean" },
+		},
+		required: ["config", "query"],
+	},
+	SimlabBody: {
+		type: "object",
+		properties: {
+			config: { $ref: "#/components/schemas/AgentConfig" },
+			command: { $ref: "#/components/schemas/SimlabCommand" },
+			json: { type: "boolean" },
+		},
+		required: ["config", "command"],
+	},
+};
 
-// Inline import of contracts (require via ts-node would be heavier). Duplicate minimal shapes here tied to contracts names.
-const _MessageEnvelopeSchema = z.object({
-	id: z.string().min(1),
-	kind: z.enum(["MCP", "A2A", "RAG", "SIMLAB"]),
-	ts: z.string(),
-	payload: z.unknown(),
-	meta: z.object({
-		seed: z.number().int().positive(),
-		traceId: z.string().optional(),
-	}),
-});
-const AgentConfigSchema = z.object({
-	seed: z.number().int().positive().default(1),
-	maxTokens: z.number().int().positive().max(4096).default(1024),
-	timeoutMs: z.number().int().positive().max(120000).default(30000),
-	memory: z.object({
-		maxItems: z.number().int().positive(),
-		maxBytes: z.number().int().positive(),
-	}),
-});
-const MCPRequestSchema = z.object({
-	tool: z.string(),
-	args: z.record(z.unknown()).optional(),
-});
-const A2AMessageSchema = z.object({
-	from: z.string(),
-	to: z.string(),
-	action: z.string(),
-	data: z.record(z.unknown()).optional(),
-});
-const RAGQuerySchema = z.object({
-	query: z.string().min(1),
-	topK: z.number().int().positive().max(100).default(5),
-});
-const SimlabCommandSchema = z.object({
-	scenario: z.string(),
-	step: z.string(),
-	params: z.record(z.unknown()).optional(),
-});
-
-const registry = new OpenAPIRegistry();
-
-const MCPBody = registry.register(
-	"MCPBody",
-	z.object({
-		config: AgentConfigSchema,
-		request: MCPRequestSchema,
-		json: z.boolean().optional(),
-	}),
-);
-const A2ABody = registry.register(
-	"A2ABody",
-	z.object({
-		config: AgentConfigSchema,
-		message: A2AMessageSchema,
-		json: z.boolean().optional(),
-	}),
-);
-const RAGBody = registry.register(
-	"RAGBody",
-	z.object({
-		config: AgentConfigSchema,
-		query: RAGQuerySchema,
-		json: z.boolean().optional(),
-	}),
-);
-const SimlabBody = registry.register(
-	"SimlabBody",
-	z.object({
-		config: AgentConfigSchema,
-		command: SimlabCommandSchema,
-		json: z.boolean().optional(),
-	}),
-);
-
-const spec = new OpenAPIGenerator(
-	registry.definitions,
-	"3.0.0",
-).generateDocument({
+const spec = {
 	openapi: "3.0.0",
 	info: { title: "Cortex-OS Gateway", version: "0.0.1" },
+	components: { schemas: components },
 	paths: {
 		"/mcp": {
 			post: {
 				requestBody: {
 					required: true,
-					content: { "application/json": { schema: MCPBody } },
+					content: { "application/json": { schema: { $ref: "#/components/schemas/MCPBody" } } },
 				},
 				responses: { 200: { description: "OK" } },
 			},
@@ -101,7 +112,7 @@ const spec = new OpenAPIGenerator(
 			post: {
 				requestBody: {
 					required: true,
-					content: { "application/json": { schema: A2ABody } },
+					content: { "application/json": { schema: { $ref: "#/components/schemas/A2ABody" } } },
 				},
 				responses: { 200: { description: "OK" } },
 			},
@@ -110,7 +121,7 @@ const spec = new OpenAPIGenerator(
 			post: {
 				requestBody: {
 					required: true,
-					content: { "application/json": { schema: RAGBody } },
+					content: { "application/json": { schema: { $ref: "#/components/schemas/RAGBody" } } },
 				},
 				responses: { 200: { description: "OK" } },
 			},
@@ -119,17 +130,14 @@ const spec = new OpenAPIGenerator(
 			post: {
 				requestBody: {
 					required: true,
-					content: { "application/json": { schema: SimlabBody } },
+					content: { "application/json": { schema: { $ref: "#/components/schemas/SimlabBody" } } },
 				},
 				responses: { 200: { description: "OK" } },
 			},
 		},
 	},
-});
+};
 
 mkdirSync(join(__dirname, "..", "dist"), { recursive: true });
-writeFileSync(
-	join(__dirname, "..", "openapi.json"),
-	JSON.stringify(spec, null, 2),
-);
+writeFileSync(join(__dirname, "..", "openapi.json"), JSON.stringify(spec, null, 2));
 console.log("OpenAPI written to packages/gateway/openapi.json");

@@ -1,12 +1,14 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
+		"rootDir": "src",
 		"outDir": "dist",
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"verbatimModuleSyntax": true,
 		"skipLibCheck": true,
 		"baseUrl": ".",
+		"noEmit": false,
 		"paths": {
 			"fast-glob": [
 				"src/stubs/fast-glob.ts"
@@ -17,11 +19,11 @@
 		}
 	},
 	"include": [
-		"src/**/*.ts",
-		"src/types/shims.d.ts"
+		"src",
+		"scripts"
 	],
 	"exclude": [
-		"src/**/*.js",
-		"dist"
+		"dist",
+		"node_modules"
 	]
 }

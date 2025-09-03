@@ -3,7 +3,7 @@
  * @version 1.0.0
  */
 
-import type { SimScenario, SimTurn } from "./types";
+import type { SimScenario, SimTurn } from "./types.js";
 
 export interface AgentRequest {
 	scenario: SimScenario;

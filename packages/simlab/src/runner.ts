@@ -8,11 +8,11 @@ import {
 	AgentAdapter,
 	type AgentResponse,
 	type PRPExecutor,
-} from "./agent-adapter";
-import { Judge } from "./judge";
-import { SimReporter } from "./report";
-import type { SimBatchResult, SimResult, SimScenario, SimTurn } from "./types";
-import { UserSimulator } from "./user-sim";
+} from "./agent-adapter.js";
+import { Judge } from "./judge.js";
+import { SimReporter } from "./report.js";
+import type { SimBatchResult, SimResult, SimScenario, SimTurn } from "./types.js";
+import { UserSimulator } from "./user-sim.js";
 
 export interface SimRunnerConfig {
 	deterministic?: boolean;

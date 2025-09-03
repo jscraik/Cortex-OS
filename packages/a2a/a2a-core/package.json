@@ -13,17 +13,52 @@
 		"./bus": {
 			"import": "./dist/bus.js",
 			"types": "./dist/bus.d.ts"
+		},
+		"./send": {
+			"import": "./dist/send.js",
+			"types": "./dist/send.d.ts"
+		},
+		"./schema-registry": {
+			"import": "./dist/schema-registry.js",
+			"types": "./dist/schema-registry.d.ts"
+		},
+		"./trace-context-manager": {
+			"import": "./dist/trace-context-manager.js",
+			"types": "./dist/trace-context-manager.d.ts"
+		},
+		"./transport": {
+			"import": "./dist/transport.js",
+			"types": "./dist/transport.d.ts"
+		},
+		"./dlq": {
+			"import": "./dist/dlq.js",
+			"types": "./dist/dlq.d.ts"
+		},
+		"./outbox": {
+			"import": "./dist/outbox.js",
+			"types": "./dist/outbox.d.ts"
+		},
+		"./router": {
+			"import": "./dist/router.js",
+			"types": "./dist/router.d.ts"
+		},
+		"./saga": {
+			"import": "./dist/saga.js",
+			"types": "./dist/saga.d.ts"
+		},
+		"./idempotency": {
+			"import": "./dist/idempotency.js",
+			"types": "./dist/idempotency.d.ts"
 		}
 	},
 	"scripts": {
-		"build": "tsup src/**/*.ts --dts --format esm",
+		"build": "tsup",
 		"test": "vitest run",
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
 	"dependencies": {
 		"@cortex-os/a2a-contracts": "file:../a2a-contracts",
-		"axios": "^1.4.0",
-		"opossum": "^6.2.0"
+		"axios": "^1.4.0"
 	},
 	"devDependencies": {
 		"tsup": "^8.0.0",

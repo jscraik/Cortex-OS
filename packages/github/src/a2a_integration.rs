@@ -1,5 +1,5 @@
 //! A2A Event Bus Integration for GitHub Operations
-//! 
+//!
 //! This module provides integration with the Cortex-OS A2A event bus,
 //! allowing GitHub operations to publish events for real-time updates
 //! across the entire Cortex-OS ecosystem.
@@ -9,7 +9,6 @@ use crate::types::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tracing::{debug, info, warn, error};
 use uuid::Uuid;
 
@@ -21,24 +20,24 @@ pub struct GitHubA2APublisher {
     config: A2AConfig,
 }
 
-/// GitHub event publisher interface  
+/// GitHub event publisher interface
 pub trait GitHubEventPublisher: Send + Sync {
-    async fn publish_repository_event(&self, event: RepositoryEvent) -> GitHubResult<()>;
-    async fn publish_pull_request_event(&self, event: PullRequestEvent) -> GitHubResult<()>;
-    async fn publish_issue_event(&self, event: IssueEvent) -> GitHubResult<()>;
-    async fn publish_workflow_event(&self, event: WorkflowEvent) -> GitHubResult<()>;
-    async fn publish_error_event(&self, event: ErrorEvent) -> GitHubResult<()>;
+    fn publish_repository_event(&self, event: RepositoryEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
+    fn publish_pull_request_event(&self, event: PullRequestEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
+    fn publish_issue_event(&self, event: IssueEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
+    fn publish_workflow_event(&self, event: WorkflowEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
+    fn publish_error_event(&self, event: ErrorEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
 }
 
 /// A2A event bus interface
 pub trait A2AEventBus: Send + Sync {
-    async fn publish(&self, topic: &str, event: A2AEvent) -> GitHubResult<()>;
-    async fn subscribe(&self, topic: &str, handler: Box<dyn A2AEventHandler + Send + Sync>) -> GitHubResult<()>;
+    fn publish(&self, topic: &str, event: A2AEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
+    fn subscribe(&self, topic: &str, handler: Box<dyn A2AEventHandler + Send + Sync>) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
 }
 
 /// A2A event handler interface
 pub trait A2AEventHandler: Send + Sync {
-    async fn handle_event(&self, event: A2AEvent) -> GitHubResult<()>;
+    fn handle_event(&self, event: A2AEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
 }
 
 /// A2A configuration
@@ -99,7 +98,7 @@ pub enum RepositoryAction {
     Transferred,
 }
 
-/// Pull request events  
+/// Pull request events
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PullRequestEvent {
     pub action: PullRequestAction,
@@ -169,7 +168,7 @@ pub enum WorkflowAction {
     InProgress,
 }
 
-/// Error events  
+/// Error events
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorEvent {
     pub operation: String,
@@ -259,7 +258,7 @@ impl GitHubA2APublisher {
                 Err(err) => {
                     attempts += 1;
                     last_error = Some(err);
-                    
+
                     if attempts < self.config.retry_attempts {
                         warn!("Failed to publish A2A event (attempt {}), retrying...", attempts);
                         tokio::time::sleep(tokio::time::Duration::from_millis(
@@ -275,17 +274,19 @@ impl GitHubA2APublisher {
             self.config.retry_attempts,
             last_error.unwrap_or_else(|| GitHubError::A2AEvent("Unknown error".to_string()))
         );
-        
+
         error!("{}", error_msg);
         Err(GitHubError::A2AEvent(error_msg))
     }
 }
 
 impl GitHubEventPublisher for GitHubA2APublisher {
-    async fn publish_repository_event(&self, event: RepositoryEvent) -> GitHubResult<()> {
+    fn publish_repository_event(&self, event: RepositoryEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        let this = self.clone();
+        Box::pin(async move {
         let topic = match event.action {
             RepositoryAction::Created => "github.repository.created",
-            RepositoryAction::Updated => "github.repository.updated", 
+            RepositoryAction::Updated => "github.repository.updated",
             RepositoryAction::Deleted => "github.repository.deleted",
             RepositoryAction::Archived => "github.repository.archived",
             RepositoryAction::Unarchived => "github.repository.unarchived",
@@ -295,15 +296,17 @@ impl GitHubEventPublisher for GitHubA2APublisher {
         };
 
         let payload = serde_json::to_value(&event)?;
-        let a2a_event = self.create_a2a_event(&format!("repository.{:?}", event.action).to_lowercase(), payload);
-        
-        self.publish_with_retry(topic, a2a_event).await
+        let a2a_event = this.create_a2a_event(&format!("repository.{:?}", event.action).to_lowercase(), payload);
+        this.publish_with_retry(topic, a2a_event).await
+        })
     }
 
-    async fn publish_pull_request_event(&self, event: PullRequestEvent) -> GitHubResult<()> {
+    fn publish_pull_request_event(&self, event: PullRequestEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        let this = self.clone();
+        Box::pin(async move {
         let topic = match event.action {
             PullRequestAction::Opened => "github.pullrequest.opened",
-            PullRequestAction::Closed => "github.pullrequest.closed", 
+            PullRequestAction::Closed => "github.pullrequest.closed",
             PullRequestAction::Merged => "github.pullrequest.merged",
             PullRequestAction::Reopened => "github.pullrequest.reopened",
             PullRequestAction::Synchronized => "github.pullrequest.synchronized",
@@ -318,12 +321,14 @@ impl GitHubEventPublisher for GitHubA2APublisher {
         };
 
         let payload = serde_json::to_value(&event)?;
-        let a2a_event = self.create_a2a_event(&format!("pullrequest.{:?}", event.action).to_lowercase(), payload);
-        
-        self.publish_with_retry(topic, a2a_event).await
+        let a2a_event = this.create_a2a_event(&format!("pullrequest.{:?}", event.action).to_lowercase(), payload);
+        this.publish_with_retry(topic, a2a_event).await
+        })
     }
 
-    async fn publish_issue_event(&self, event: IssueEvent) -> GitHubResult<()> {
+    fn publish_issue_event(&self, event: IssueEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        let this = self.clone();
+        Box::pin(async move {
         let topic = match event.action {
             IssueAction::Opened => "github.issue.opened",
             IssueAction::Closed => "github.issue.closed",
@@ -338,33 +343,37 @@ impl GitHubEventPublisher for GitHubA2APublisher {
         };
 
         let payload = serde_json::to_value(&event)?;
-        let a2a_event = self.create_a2a_event(&format!("issue.{:?}", event.action).to_lowercase(), payload);
-        
-        self.publish_with_retry(topic, a2a_event).await
+        let a2a_event = this.create_a2a_event(&format!("issue.{:?}", event.action).to_lowercase(), payload);
+        this.publish_with_retry(topic, a2a_event).await
+        })
     }
 
-    async fn publish_workflow_event(&self, event: WorkflowEvent) -> GitHubResult<()> {
+    fn publish_workflow_event(&self, event: WorkflowEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        let this = self.clone();
+        Box::pin(async move {
         let topic = match event.action {
             WorkflowAction::Started => "github.workflow.started",
             WorkflowAction::Completed => "github.workflow.completed",
-            WorkflowAction::Cancelled => "github.workflow.cancelled", 
+            WorkflowAction::Cancelled => "github.workflow.cancelled",
             WorkflowAction::Failed => "github.workflow.failed",
             WorkflowAction::Requested => "github.workflow.requested",
             WorkflowAction::InProgress => "github.workflow.in_progress",
         };
 
         let payload = serde_json::to_value(&event)?;
-        let a2a_event = self.create_a2a_event(&format!("workflow.{:?}", event.action).to_lowercase(), payload);
-        
-        self.publish_with_retry(topic, a2a_event).await
+        let a2a_event = this.create_a2a_event(&format!("workflow.{:?}", event.action).to_lowercase(), payload);
+        this.publish_with_retry(topic, a2a_event).await
+        })
     }
 
-    async fn publish_error_event(&self, event: ErrorEvent) -> GitHubResult<()> {
+    fn publish_error_event(&self, event: ErrorEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        let this = self.clone();
+        Box::pin(async move {
         let topic = "github.error";
         let payload = serde_json::to_value(&event)?;
-        let a2a_event = self.create_a2a_event("error", payload);
-        
-        self.publish_with_retry(topic, a2a_event).await
+        let a2a_event = this.create_a2a_event("error", payload);
+        this.publish_with_retry(topic, a2a_event).await
+        })
     }
 }
 
@@ -372,25 +381,11 @@ impl GitHubEventPublisher for GitHubA2APublisher {
 pub struct NullEventPublisher;
 
 impl GitHubEventPublisher for NullEventPublisher {
-    async fn publish_repository_event(&self, _event: RepositoryEvent) -> GitHubResult<()> {
-        Ok(())
-    }
-    
-    async fn publish_pull_request_event(&self, _event: PullRequestEvent) -> GitHubResult<()> {
-        Ok(())
-    }
-    
-    async fn publish_issue_event(&self, _event: IssueEvent) -> GitHubResult<()> {
-        Ok(())
-    }
-    
-    async fn publish_workflow_event(&self, _event: WorkflowEvent) -> GitHubResult<()> {
-        Ok(())
-    }
-    
-    async fn publish_error_event(&self, _event: ErrorEvent) -> GitHubResult<()> {
-        Ok(())
-    }
+    fn publish_repository_event(&self, _event: RepositoryEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> { Box::pin(async { Ok(()) }) }
+    fn publish_pull_request_event(&self, _event: PullRequestEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> { Box::pin(async { Ok(()) }) }
+    fn publish_issue_event(&self, _event: IssueEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> { Box::pin(async { Ok(()) }) }
+    fn publish_workflow_event(&self, _event: WorkflowEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> { Box::pin(async { Ok(()) }) }
+    fn publish_error_event(&self, _event: ErrorEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> { Box::pin(async { Ok(()) }) }
 }
 
 #[cfg(test)]
@@ -400,7 +395,7 @@ mod tests {
     #[tokio::test]
     async fn test_null_event_publisher() {
         let publisher = NullEventPublisher;
-        
+
         // Should not error on any event
         assert!(publisher.publish_repository_event(RepositoryEvent {
             action: RepositoryAction::Created,
@@ -415,12 +410,12 @@ mod tests {
         std::env::set_var("CORTEX_A2A_ENABLED", "true");
         std::env::set_var("CORTEX_A2A_PUBLISHER_ID", "test-publisher");
         std::env::set_var("CORTEX_A2A_RETRY_ATTEMPTS", "5");
-        
+
         let publisher = futures::executor::block_on(GitHubA2APublisher::from_env()).unwrap();
         assert_eq!(publisher.config.publisher_id, "test-publisher");
         assert_eq!(publisher.config.retry_attempts, 5);
         assert!(publisher.config.enabled);
-        
+
         // Cleanup
         std::env::remove_var("CORTEX_A2A_ENABLED");
         std::env::remove_var("CORTEX_A2A_PUBLISHER_ID");
@@ -431,10 +426,10 @@ mod tests {
     fn test_a2a_event_creation() {
         let config = A2AConfig::default();
         let publisher = GitHubA2APublisher::new(config, None);
-        
+
         let payload = serde_json::json!({ "test": "data" });
         let event = publisher.create_a2a_event("test.event", payload);
-        
+
         assert_eq!(event.event_type, "test.event");
         assert_eq!(event.source, "github-client");
         assert!(!event.event_id.is_empty());

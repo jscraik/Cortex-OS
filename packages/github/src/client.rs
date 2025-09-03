@@ -47,7 +47,7 @@ impl GitHubClient {
     /// Make a POST request
     pub async fn post<B, T>(&self, endpoint: &str, body: Option<B>) -> GitHubResult<T>
     where
-        B: Serialize,
+        B: Serialize + Send + 'static,
         T: DeserializeOwned,
     {
         let response = self.request(Method::POST, endpoint, body).await?;
@@ -57,7 +57,7 @@ impl GitHubClient {
     /// Make a PUT request
     pub async fn put<B, T>(&self, endpoint: &str, body: Option<B>) -> GitHubResult<T>
     where
-        B: Serialize,
+        B: Serialize + Send + 'static,
         T: DeserializeOwned,
     {
         let response = self.request(Method::PUT, endpoint, body).await?;
@@ -67,7 +67,7 @@ impl GitHubClient {
     /// Make a PATCH request
     pub async fn patch<B, T>(&self, endpoint: &str, body: Option<B>) -> GitHubResult<T>
     where
-        B: Serialize,
+        B: Serialize + Send + 'static,
         T: DeserializeOwned,
     {
         let response = self.request(Method::PATCH, endpoint, body).await?;
@@ -87,7 +87,7 @@ impl GitHubClient {
     /// Make a raw request and return the response
     pub async fn request_raw<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> GitHubResult<Response>
     where
-        B: Serialize,
+        B: Serialize + Send + 'static,
     {
         self.request(method, endpoint, body).await
     }
@@ -95,34 +95,61 @@ impl GitHubClient {
     /// Internal request method
     async fn request<B>(&self, method: Method, endpoint: &str, body: Option<B>) -> GitHubResult<Response>
     where
-        B: Serialize,
+        B: Serialize + Send + 'static,
     {
         let url = self.build_url(endpoint)?;
-        
-        self.rate_limiter
-            .make_request(|| async {
-                let headers = self.build_headers().await?;
-                
-                let mut request_builder = self.http_client.request(method.clone(), url.clone());
-                
-                if let Some(body) = &body {
+
+        let http_client = self.http_client.clone();
+        let rate_limiter = self.rate_limiter.clone();
+        let base_headers = self.build_headers().await?; // build once to avoid borrowing self in closure
+        let body_owned = body; // move into closure
+        let method_cloned = method.clone();
+        let url_cloned = url.clone();
+
+        rate_limiter
+            .make_request(move || async move {
+                // start with base headers captured by value
+                let mut headers = base_headers.clone();
+
+                let mut request_builder = http_client.request(method_cloned.clone(), url_cloned.clone());
+
+                if let Some(ref body) = body_owned {
                     let json_body = serde_json::to_string(body)?;
-                    let mut headers = headers;
                     headers.insert("content-type", HeaderValue::from_static("application/json"));
                     request_builder = request_builder.headers(headers).body(json_body);
                 } else {
                     request_builder = request_builder.headers(headers);
                 }
-                
+
                 let request = request_builder.build()?;
-                debug!("Making GitHub API request: {} {}", method, url);
-                
-                let response = self.http_client.execute(request).await?;
-                
+                debug!("Making GitHub API request: {} {}", method_cloned, url_cloned);
+
+                let response = http_client.execute(request).await?;
+
                 if response.status().is_success() {
                     Ok(response)
                 } else {
-                    Err(self.create_error_from_response(response).await)
+                    // we can't call a &self method here; replicate minimal error mapping
+                    let status = response.status();
+                    let status_code = status.as_u16();
+                    let text = response.text().await.unwrap_or_default();
+                    let err = if let Ok(github_error) = serde_json::from_str::<serde_json::Value>(&text) {
+                        let message = github_error
+                            .get("message")
+                            .and_then(|m| m.as_str())
+                            .unwrap_or("Unknown error")
+                            .to_string();
+                        match status_code {
+                            401 => GitHubError::Authentication("Token authentication failed".to_string()),
+                            403 | 429 => GitHubError::RateLimit("API rate limit exceeded".to_string()),
+                            404 => GitHubError::NotFound(format!("Resource not found: {}", message)),
+                            422 => GitHubError::Validation(format!("Validation failed: {}", message)),
+                            _ => GitHubError::Api(message),
+                        }
+                    } else {
+                        GitHubError::Api(format!("HTTP {} - {}", status_code, text))
+                    };
+                    Err(err)
                 }
             })
             .await
@@ -137,18 +164,18 @@ impl GitHubClient {
     /// Build request headers with authentication
     async fn build_headers(&self) -> GitHubResult<HeaderMap> {
         let mut headers = HeaderMap::new();
-        
+
         // Get authentication token
         let token = {
             let mut token_manager = self.token_manager.lock().await;
             token_manager.get_token().await?
         };
-        
+
         headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", token))?);
         headers.insert(ACCEPT, HeaderValue::from_static("application/vnd.github.v3+json"));
         headers.insert(USER_AGENT, HeaderValue::from_static("cortex-code/2.0.0"));
         headers.insert("X-GitHub-Api-Version", HeaderValue::from_static("2022-11-28"));
-        
+
         Ok(headers)
     }
 
@@ -158,7 +185,7 @@ impl GitHubClient {
         T: DeserializeOwned,
     {
         let text = response.text().await?;
-        
+
         if text.is_empty() {
             // Handle empty responses (like for DELETE requests)
             if std::mem::size_of::<T>() == 0 {
@@ -182,7 +209,7 @@ impl GitHubClient {
     async fn create_error_from_response(&self, response: Response) -> GitHubError {
         let status = response.status();
         let status_code = status.as_u16();
-        
+
         match response.text().await {
             Ok(text) => {
                 // Try to parse GitHub error response
@@ -217,17 +244,17 @@ impl GitHubClient {
     {
         let mut all_items = Vec::new();
         let mut next_url = Some(endpoint.to_string());
-        
+
         while let Some(url) = next_url {
             let response = self.request_raw(Method::GET, &url, None::<()>).await?;
-            
+
             // Parse link header for pagination
             next_url = self.parse_next_link(response.headers());
-            
+
             let items: Vec<T> = self.parse_response(response).await?;
             all_items.extend(items);
         }
-        
+
         Ok(all_items)
     }
 
@@ -243,7 +270,7 @@ impl GitHubClient {
                     if parts.len() >= 2 {
                         let url_part = parts[0].trim();
                         let rel_part = parts[1].trim();
-                        
+
                         if url_part.starts_with('<') && url_part.ends_with('>') && rel_part.contains("next") {
                             let url = &url_part[1..url_part.len()-1];
                             // Convert full URL to relative endpoint
@@ -259,26 +286,47 @@ impl GitHubClient {
 
     /// Download binary content (for artifacts, etc.)
     pub async fn download(&self, url: &str) -> GitHubResult<bytes::Bytes> {
-        let response = self.rate_limiter
-            .make_request(|| async {
-                let headers = self.build_headers().await?;
-                
-                let request = self.http_client
-                    .get(url)
-                    .headers(headers)
+        let http_client = self.http_client.clone();
+        let headers = self.build_headers().await?;
+        let url_owned = url.to_string();
+        let rate_limiter = self.rate_limiter.clone();
+        let response = rate_limiter
+            .make_request(move || async move {
+                let request = http_client
+                    .get(&url_owned)
+                    .headers(headers.clone())
                     .build()?;
-                
-                debug!("Downloading from GitHub: {}", url);
-                let response = self.http_client.execute(request).await?;
-                
+
+                debug!("Downloading from GitHub: {}", url_owned);
+                let response = http_client.execute(request).await?;
+
                 if response.status().is_success() {
                     Ok(response)
                 } else {
-                    Err(self.create_error_from_response(response).await)
+                    let status = response.status();
+                    let status_code = status.as_u16();
+                    let text = response.text().await.unwrap_or_default();
+                    let err = if let Ok(github_error) = serde_json::from_str::<serde_json::Value>(&text) {
+                        let message = github_error
+                            .get("message")
+                            .and_then(|m| m.as_str())
+                            .unwrap_or("Unknown error")
+                            .to_string();
+                        match status_code {
+                            401 => GitHubError::Authentication("Token authentication failed".to_string()),
+                            403 | 429 => GitHubError::RateLimit("API rate limit exceeded".to_string()),
+                            404 => GitHubError::NotFound(format!("Resource not found: {}", message)),
+                            422 => GitHubError::Validation(format!("Validation failed: {}", message)),
+                            _ => GitHubError::Api(message),
+                        }
+                    } else {
+                        GitHubError::Api(format!("HTTP {} - {}", status_code, text))
+                    };
+                    Err(err)
                 }
             })
             .await?;
-        
+
         let bytes = response.bytes().await?;
         Ok(bytes)
     }
@@ -297,23 +345,23 @@ impl GitHubClient {
     /// Validate API token and scopes
     pub async fn validate_token(&self) -> GitHubResult<TokenValidation> {
         let response = self.request_raw(Method::GET, "/user", None::<()>).await?;
-        
+
         let scopes = response
             .headers()
             .get("x-oauth-scopes")
             .and_then(|h| h.to_str().ok())
             .map(|s| s.split(',').map(|scope| scope.trim().to_string()).collect())
             .unwrap_or_default();
-            
+
         let rate_limit = response
             .headers()
             .get("x-ratelimit-limit")
             .and_then(|h| h.to_str().ok())
             .and_then(|s| s.parse().ok())
             .unwrap_or(60); // Unauthenticated limit
-        
+
         let user: serde_json::Value = self.parse_response(response).await?;
-        
+
         Ok(TokenValidation {
             valid: true,
             scopes,
@@ -395,17 +443,17 @@ impl GitHubClientBuilder {
         // Rebuild HTTP client with custom settings if needed
         if self.timeout.is_some() || self.user_agent.is_some() {
             let mut client_builder = Client::builder();
-            
+
             if let Some(timeout) = self.timeout {
                 client_builder = client_builder.timeout(timeout);
             }
-            
+
             if let Some(user_agent) = self.user_agent {
                 client_builder = client_builder.user_agent(user_agent);
             } else {
                 client_builder = client_builder.user_agent("cortex-code/2.0.0");
             }
-            
+
             client.http_client = client_builder.build()?;
         }
 
@@ -428,10 +476,10 @@ mod tests {
     fn test_url_building() {
         let token_manager = TokenManager::new(GitHubAuth::PersonalAccessToken("test".to_string()));
         let client = GitHubClient::new(token_manager).unwrap();
-        
+
         let url = client.build_url("/repos/owner/repo").unwrap();
         assert_eq!(url.as_str(), "https://api.github.com/repos/owner/repo");
-        
+
         let url2 = client.build_url("repos/owner/repo").unwrap();
         assert_eq!(url2.as_str(), "https://api.github.com/repos/owner/repo");
     }
@@ -440,13 +488,13 @@ mod tests {
     fn test_link_header_parsing() {
         let token_manager = TokenManager::new(GitHubAuth::PersonalAccessToken("test".to_string()));
         let client = GitHubClient::new(token_manager).unwrap();
-        
+
         let mut headers = HeaderMap::new();
         headers.insert(
             "link",
             HeaderValue::from_static(r#"<https://api.github.com/repos/owner/repo/issues?page=2>; rel="next", <https://api.github.com/repos/owner/repo/issues?page=5>; rel="last""#)
         );
-        
+
         let next_link = client.parse_next_link(&headers);
         assert_eq!(next_link, Some("/repos/owner/repo/issues?page=2".to_string()));
     }
@@ -454,14 +502,14 @@ mod tests {
     #[tokio::test]
     async fn test_client_builder() {
         let token_manager = TokenManager::new(GitHubAuth::PersonalAccessToken("test".to_string()));
-        
+
         let client = GitHubClientBuilder::new()
             .with_token_manager(token_manager)
             .with_timeout(std::time::Duration::from_secs(60))
             .with_user_agent("test-agent/1.0.0")
             .build()
             .unwrap();
-        
+
         assert!(!client.is_authenticated().await); // Token not validated yet
     }
 }
