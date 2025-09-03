@@ -29,7 +29,7 @@ echo "  Structure:     ${STRUCTURE_PORT}"
 check_port() {
     local port=$1
     if lsof -i :$port > /dev/null 2>&1; then
-        echo "❌ Port $port is already in use"
+    echo "❌ Port $port is already in use (hint: ./free-ports.sh $port or ./free-ports.sh all)"
         return 1
     else
         echo "✅ Port $port is available"
