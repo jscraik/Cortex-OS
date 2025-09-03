@@ -14,10 +14,7 @@ export const AuthService = {
 		return await bcrypt.hash(password, saltRounds);
 	},
 
-	async verifyPassword(
-		password: string,
-		hash: string,
-	): Promise<boolean> {
+	async verifyPassword(password: string, hash: string): Promise<boolean> {
 		return await bcrypt.compare(password, hash);
 	},
 

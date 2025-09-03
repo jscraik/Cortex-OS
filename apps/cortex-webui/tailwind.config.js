@@ -1,11 +1,9 @@
-import tailwindTypography from '@tailwindcss/typography';
 import tailwindContainerQueries from '@tailwindcss/container-queries';
+import tailwindTypography from '@tailwindcss/typography';
 
 /** @type {import('tailwindcss').Config} */
 export default {
-	content: [
-		'./frontend/src/**/*.{js,ts,jsx,tsx,mdx}',
-	],
+	content: ['./frontend/src/**/*.{js,ts,jsx,tsx,mdx}'],
 	theme: {
 		extend: {
 			colors: {
@@ -43,8 +41,5 @@ export default {
 			},
 		},
 	},
-	plugins: [
-		tailwindTypography,
-		tailwindContainerQueries,
-	],
+	plugins: [tailwindTypography, tailwindContainerQueries],
 };

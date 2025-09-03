@@ -24,8 +24,8 @@ export default [
 				{
 					argsIgnorePattern: '^_',
 					varsIgnorePattern: '^_',
-					destructuredArrayIgnorePattern: '^_'
-				}
+					destructuredArrayIgnorePattern: '^_',
+				},
 			],
 		},
 	},

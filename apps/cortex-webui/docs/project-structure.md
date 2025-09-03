@@ -15,8 +15,10 @@ cortex-webui/
 ├── k8s/                       # Kubernetes configuration
 └── utils/                     # Utility functions
 ```
+
 ├── backend/                  # Express.js backend
 └── shared/                   # Shared types and constants
+
 ```
 
 ## Architecture
@@ -34,6 +36,7 @@ The backend is built with Node.js, Express, and TypeScript. It provides a RESTfu
 ### Structure
 
 ```
+
 backend/
 ├── src/
 │   ├── controllers/          # Request handlers
@@ -50,6 +53,7 @@ backend/
 ├── package.json
 ├── tsconfig.json
 └── .env.example
+
 ```
 
 ### Key Components
@@ -67,6 +71,7 @@ The frontend is built with React, TypeScript, and Vite. It provides a modern, re
 ### Structure
 
 ```
+
 frontend/
 ├── src/
 │   ├── components/           # React components
@@ -82,6 +87,7 @@ frontend/
 ├── tsconfig.json
 ├── vite.config.ts
 └── .env.example
+
 ```
 
 ### Key Components
@@ -99,9 +105,11 @@ The shared directory contains code that is used by both the frontend and backend
 ### Structure
 
 ```
+
 shared/
 ├── types/                    # Common TypeScript types
 └── constants/                # Application constants
+
 ```
 
 ## Migration Status
