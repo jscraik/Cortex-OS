@@ -5,8 +5,7 @@ import time
 from unittest.mock import AsyncMock
 
 import pytest
-
-from ...tasks.task_queue import (
+from mcp.tasks.task_queue import (
     TaskDefinition,
     TaskPriority,
     TaskQueue,

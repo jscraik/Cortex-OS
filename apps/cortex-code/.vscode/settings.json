@@ -2,8 +2,7 @@
   "typescript.tsserver.path": "/Users/jamiecraik/Library/pnpm/global/5/.pnpm/typescript@5.9.2/node_modules/typescript/lib/tsserver.js",
   "typescript.preferences.includePackageJsonAutoImports": "auto",
   "typescript.suggest.autoImports": true,
-  "rust-analyzer.server.path": "/Users/jamiecraik/.cargo/bin/rust-analyzer",
-  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.check.command": "clippy",
   "rust-analyzer.cargo.buildScripts.enable": true,
   "rust-analyzer.procMacro.enable": true,
   "files.associations": {
@@ -20,6 +19,12 @@
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[yml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
   "search.exclude": {
     "**/target": true,
     "**/Cargo.lock": true
@@ -29,5 +34,9 @@
   },
   "terminal.integrated.env.osx": {
     "PATH": "/Users/jamiecraik/.local/share/mise/shims:${env:PATH}"
-  }
+  },
+  "debug.javascript.defaultRuntimeExecutable": {
+    "pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
+  },
+  "python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python"
 }

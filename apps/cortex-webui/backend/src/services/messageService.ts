@@ -6,22 +6,23 @@ import { MessageModel } from '../models/message';
 import { getDatabase } from '../utils/database';
 
 export class MessageService {
-  static async getMessagesByConversationId(conversationId: string): Promise<Message[]> {
-    const db = await getDatabase();
-    const records = await db.all(
-      `SELECT * FROM ${MessageModel.tableName} WHERE conversation_id = ? ORDER BY created_at ASC`,
-      [conversationId],
-    );
+  static getMessagesByConversationId(conversationId: string): Message[] {
+    const db = getDatabase();
+    const records = db
+      .prepare(
+        `SELECT * FROM ${MessageModel.tableName} WHERE conversation_id = ? ORDER BY created_at ASC`,
+      )
+      .all(conversationId);
 
     return records.map(MessageModel.fromRecord);
   }
 
-  static async createMessage(
+  static createMessage(
     conversationId: string,
     role: 'user' | 'assistant' | 'system',
     content: string,
-  ): Promise<Message> {
-    const db = await getDatabase();
+  ): Message {
+    const db = getDatabase();
 
     const messageId = uuidv4();
     const now = new Date().toISOString();
@@ -33,24 +34,23 @@ export class MessageService {
       created_at: now,
     };
 
-    await db.run(
+    db.prepare(
       `INSERT INTO ${MessageModel.tableName} (id, conversation_id, role, content, created_at) VALUES (?, ?, ?, ?, ?)`,
-      [
-        messageRecord.id,
-        messageRecord.conversation_id,
-        messageRecord.role,
-        messageRecord.content,
-        messageRecord.created_at,
-      ],
+    ).run(
+      messageRecord.id,
+      messageRecord.conversation_id,
+      messageRecord.role,
+      messageRecord.content,
+      messageRecord.created_at,
     );
 
     return MessageModel.fromRecord(messageRecord);
   }
 
-  static async deleteMessagesByConversationId(conversationId: string): Promise<void> {
-    const db = await getDatabase();
-    await db.run(`DELETE FROM ${MessageModel.tableName} WHERE conversation_id = ?`, [
+  static deleteMessagesByConversationId(conversationId: string): void {
+    const db = getDatabase();
+    db.prepare(`DELETE FROM ${MessageModel.tableName} WHERE conversation_id = ?`).run(
       conversationId,
-    ]);
+    );
   }
 }

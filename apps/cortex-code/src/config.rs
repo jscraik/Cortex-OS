@@ -449,35 +449,90 @@ impl Config {
             config = overridden_config;
         }
 
-        // Apply provider credentials
-        if let Some(default_provider) = credentials.default_provider {
-            config.providers.default = default_provider;
-        }
-
-        // Override daemon settings
-        if let Some(port) = credentials.daemon_port {
-            config.features.daemon.port = port;
-        }
-
-        if let Some(bind_address) = credentials.bind_address {
-            config.features.daemon.bind_address = bind_address;
-        }
-
-        // Override security settings
-        if let Some(tls_enabled) = credentials.tls_enabled {
-            config.security.network.tls_enabled = tls_enabled;
-        }
-
-        if let Some(cors_origins) = credentials.cors_origins {
-            config.security.network.allowed_origins = cors_origins;
-        }
-
-        // Override privacy settings
-        if credentials.memory_disabled {
-            config.features.memory.enabled = false;
-        }
-
         config
+    }
+
+    /// Apply configuration profile (codex-style)
+    pub fn apply_profile(&mut self, profile_name: &str) -> Result<()> {
+        // Look for profile configuration in standard locations
+        let profile_paths = vec![
+            PathBuf::from(format!("profiles/{}.json", profile_name)),
+            dirs::home_dir()
+                .unwrap_or_default()
+                .join(".cortex")
+                .join("profiles")
+                .join(format!("{}.json", profile_name)),
+        ];
+
+        for path in profile_paths {
+            if path.exists() {
+                let profile_config = Self::from_file(&path)?;
+                self.merge_config(profile_config);
+                return Ok(());
+            }
+        }
+
+        Err(ConfigError::NotFound(format!("Profile '{}' not found", profile_name)).into())
+    }
+
+    /// Apply key-value configuration overrides (codex-style -c key=value)
+    pub fn apply_overrides(&mut self, overrides: &std::collections::HashMap<String, String>) -> Result<()> {
+        for (key, value) in overrides {
+            self.set_override(key, value)?;
+        }
+        Ok(())
+    }
+
+    /// Set a configuration override using dot notation (e.g., "providers.default")
+    pub fn set_override(&mut self, key: &str, value: &str) -> Result<()> {
+        let mut config_json = serde_json::to_value(&*self)?;
+        
+        // Handle nested keys with dot notation
+        let parts: Vec<&str> = key.split('.').collect();
+        if parts.is_empty() {
+            return Err(ConfigError::ValidationError(format!("Empty configuration key")).into());
+        }
+
+        // Navigate to the parent object
+        let mut current = &mut config_json;
+        for part in &parts[..parts.len() - 1] {
+            if !current.is_object() {
+                current.as_object_mut().unwrap().insert(part.to_string(), Value::Object(serde_json::Map::new()));
+            }
+            current = current.get_mut(part).unwrap();
+        }
+
+        // Set the final value
+        let final_key = parts[parts.len() - 1];
+        if let Some(obj) = current.as_object_mut() {
+            // Try to parse as JSON first, then as string
+            let parsed_value = serde_json::from_str(value)
+                .unwrap_or_else(|_| Value::String(value.to_string()));
+            obj.insert(final_key.to_string(), parsed_value);
+        }
+
+        // Parse back to Config
+        *self = serde_json::from_value(config_json)?;
+        Ok(())
+    }
+
+    /// Merge another config into this one (for profile support)
+    fn merge_config(&mut self, other: Config) {
+        // Convert both to JSON for easy merging
+        let mut self_json = serde_json::to_value(&*self).unwrap_or_default();
+        let other_json = serde_json::to_value(other).unwrap_or_default();
+
+        // Merge the JSON objects
+        if let (Some(self_obj), Some(other_obj)) = (self_json.as_object_mut(), other_json.as_object()) {
+            for (key, value) in other_obj {
+                self_obj.insert(key.clone(), value.clone());
+            }
+        }
+
+        // Parse back to Config
+        if let Ok(merged_config) = serde_json::from_value(self_json) {
+            *self = merged_config;
+        }
     }
 
     pub fn create_provider(&self) -> Result<Box<dyn ModelProvider>> {

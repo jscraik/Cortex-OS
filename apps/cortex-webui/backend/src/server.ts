@@ -11,20 +11,12 @@ import { WebSocketServer } from 'ws';
 dotenv.config();
 
 // Import constants
-import {
-	API_BASE_PATH,
-	CORS_OPTIONS,
-	WS_BASE_PATH,
-} from '../../shared/constants';
+import { API_BASE_PATH, CORS_OPTIONS, WS_BASE_PATH } from '../../shared/constants';
 import { getApprovals, postApproval } from './controllers/approvalsController';
 
 // Import controllers
 import { AuthController } from './controllers/authController';
-import {
-	getChatSession,
-	postChatMessage,
-	streamChatSSE,
-} from './controllers/chatController';
+import { getChatSession, postChatMessage, streamChatSSE } from './controllers/chatController';
 import { getContextMap } from './controllers/contextMapController';
 import { ConversationController } from './controllers/conversationController';
 import { postCrawl } from './controllers/crawlController';
@@ -58,7 +50,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
-	res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // API Routes
@@ -68,40 +60,40 @@ app.post(`${API_BASE_PATH}/auth/logout`, AuthController.logout);
 
 // Protected routes
 app.get(
-	`${API_BASE_PATH}/conversations`,
-	authenticateToken,
-	ConversationController.getConversations,
+  `${API_BASE_PATH}/conversations`,
+  authenticateToken,
+  ConversationController.getConversations,
 );
 app.post(
-	`${API_BASE_PATH}/conversations`,
-	authenticateToken,
-	ConversationController.createConversation,
+  `${API_BASE_PATH}/conversations`,
+  authenticateToken,
+  ConversationController.createConversation,
 );
 app.get(
-	`${API_BASE_PATH}/conversations/:id`,
-	authenticateToken,
-	ConversationController.getConversationById,
+  `${API_BASE_PATH}/conversations/:id`,
+  authenticateToken,
+  ConversationController.getConversationById,
 );
 app.put(
-	`${API_BASE_PATH}/conversations/:id`,
-	authenticateToken,
-	ConversationController.updateConversation,
+  `${API_BASE_PATH}/conversations/:id`,
+  authenticateToken,
+  ConversationController.updateConversation,
 );
 app.delete(
-	`${API_BASE_PATH}/conversations/:id`,
-	authenticateToken,
-	ConversationController.deleteConversation,
+  `${API_BASE_PATH}/conversations/:id`,
+  authenticateToken,
+  ConversationController.deleteConversation,
 );
 
 app.get(
-	`${API_BASE_PATH}/conversations/:conversationId/messages`,
-	authenticateToken,
-	MessageController.getMessagesByConversationId,
+  `${API_BASE_PATH}/conversations/:conversationId/messages`,
+  authenticateToken,
+  MessageController.getMessagesByConversationId,
 );
 app.post(
-	`${API_BASE_PATH}/conversations/:conversationId/messages`,
-	authenticateToken,
-	MessageController.createMessage,
+  `${API_BASE_PATH}/conversations/:conversationId/messages`,
+  authenticateToken,
+  MessageController.createMessage,
 );
 
 app.get(`${API_BASE_PATH}/models`, ModelController.getModels);
@@ -123,74 +115,66 @@ app.get(`${API_BASE_PATH}/approvals`, getApprovals);
 app.post(`${API_BASE_PATH}/approvals`, postApproval);
 
 app.post(
-	`${API_BASE_PATH}/files/upload`,
-	authenticateToken,
-	uploadMiddleware,
-	FileController.uploadFile,
+  `${API_BASE_PATH}/files/upload`,
+  authenticateToken,
+  uploadMiddleware,
+  FileController.uploadFile,
 );
-app.delete(
-	`${API_BASE_PATH}/files/:id`,
-	authenticateToken,
-	FileController.deleteFile,
-);
+app.delete(`${API_BASE_PATH}/files/:id`, authenticateToken, FileController.deleteFile);
 
 // Error handling middleware
 app.use(errorHandler);
 
 // WebSocket connection handling
 wss.on('connection', (ws) => {
-	console.log('WebSocket client connected');
+  console.log('WebSocket client connected');
 
-	ws.on('message', (message) => {
-		console.log('Received message:', message);
-		// Echo the message back
-		ws.send(JSON.stringify({ type: 'echo', payload: message.toString() }));
-	});
+  ws.on('message', (message) => {
+    console.log('Received message:', message);
+    // Echo the message back
+    ws.send(JSON.stringify({ type: 'echo', payload: message.toString() }));
+  });
 
-	ws.on('close', () => {
-		console.log('WebSocket client disconnected');
-	});
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+  });
 
-	// Send welcome message
-	ws.send(
-		JSON.stringify({
-			type: 'welcome',
-			payload: 'Connected to Cortex WebUI WebSocket',
-		}),
-	);
+  // Send welcome message
+  ws.send(
+    JSON.stringify({
+      type: 'welcome',
+      payload: 'Connected to Cortex WebUI WebSocket',
+    }),
+  );
 });
 
 // Initialize database and start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 4000;
 
-const startServer = async () => {
-	try {
-		// Initialize database
-		await initializeDatabase();
-		console.log('Database initialized');
+const startServer = () => {
+  try {
+    // Initialize database
+    initializeDatabase();
+    console.log('Database initialized');
 
-		// Initialize default models
-		await ModelService.initializeDefaultModels();
-		console.log('Default models initialized');
+    // Initialize default models
+    ModelService.initializeDefaultModels();
+    console.log('Default models initialized');
 
-		// Initialize upload directory
-		await FileService.initializeUploadDirectory();
-		console.log('Upload directory initialized');
+    // Initialize upload directory
+    FileService.initializeUploadDirectory();
+    console.log('Upload directory initialized');
 
-		// Start server
-		server.listen(PORT, () => {
-			console.log(`Cortex WebUI backend server running on port ${PORT}`);
-			console.log(
-				`API endpoints available at http://localhost:${PORT}${API_BASE_PATH}`,
-			);
-			console.log(
-				`WebSocket server available at ws://localhost:${PORT}${WS_BASE_PATH}`,
-			);
-		});
-	} catch (error) {
-		console.error('Failed to start server:', error);
-		process.exit(1);
-	}
+    // Start server
+    server.listen(PORT, () => {
+      console.log(`Cortex WebUI backend server running on port ${PORT}`);
+      console.log(`API endpoints available at http://localhost:${PORT}${API_BASE_PATH}`);
+      console.log(`WebSocket server available at ws://localhost:${PORT}${WS_BASE_PATH}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
 startServer();

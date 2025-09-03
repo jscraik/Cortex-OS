@@ -1,0 +1,3 @@
+[submodule "apps/cortex-code/codex-reference"]
+	path = apps/cortex-code/codex-reference
+	url = https://github.com/openai/codex.git

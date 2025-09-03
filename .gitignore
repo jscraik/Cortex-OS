@@ -7,3 +7,23 @@ target/
 .tmp/
 **/.tmp/
 apps/cortex-webui/open-webui/
+
+# Build artifacts
+*.tsbuildinfo
+*.d.ts.map
+*.js.map
+*.pyc
+__pycache__/
+.coverage
+coverage.xml
+
+# Temporary and cache files
+tmp/
+.venv-*/
+comparisons/
+
+# Backup files
+*.backup
+
+# Development files
+*.log

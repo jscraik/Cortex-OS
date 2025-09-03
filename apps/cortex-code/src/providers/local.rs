@@ -13,6 +13,7 @@ pub struct LocalMLXProvider {
 
 impl LocalMLXProvider {
     pub fn new() -> Result<Self> {
+        // Don't fail during initialization - check availability later
         Ok(Self {
             model_path: None,
             model_name: "mlx-community/Llama-3.1-8B-Instruct".to_string(),
@@ -20,6 +21,7 @@ impl LocalMLXProvider {
     }
 
     pub fn with_model_path(model_path: String, model_name: String) -> Result<Self> {
+        // Don't fail during initialization - check availability later
         Ok(Self {
             model_path: Some(model_path),
             model_name,

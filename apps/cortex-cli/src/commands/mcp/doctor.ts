@@ -1,4 +1,4 @@
-import { createClient } from "@cortex-os/mcp-core/client";
+import { createEnhancedClient } from "@cortex-os/mcp-core/client";
 import { readAll } from "@cortex-os/mcp-registry/fs-store";
 import { tracer } from "@cortex-os/telemetry";
 import { Command } from "commander";
@@ -19,7 +19,7 @@ export const mcpDoctor = new Command("doctor")
 				};
 				try {
 					if (s.transport === "stdio") {
-						const client = await createClient(s);
+						const client = await createEnhancedClient(s);
 						// Test basic connectivity
 						await new Promise((res) => setTimeout(res, 150));
 						await client.close();
@@ -32,7 +32,7 @@ export const mcpDoctor = new Command("doctor")
 						}).catch(() => fetch(url, { signal: AbortSignal.timeout(5000) }));
 						item.ok = !!res && res.ok;
 					} else if (s.transport === "sse") {
-						const client = await createClient(s);
+						const client = await createEnhancedClient(s);
 						// Test SSE connectivity
 						await new Promise((res) => setTimeout(res, 150));
 						await client.close();

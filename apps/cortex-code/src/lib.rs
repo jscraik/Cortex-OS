@@ -24,6 +24,9 @@ pub mod tui;
 pub mod streaming;
 pub mod features;
 
+// Codex-style modules
+pub mod codex_cli;
+
 pub use error::{Error, Result};
 
 // Re-export key types
