@@ -65,11 +65,11 @@ class PluginHotReloader:
             {"__init__": _init, "on_modified": _on_modified},
         )
 
-    observer = Observer()
-    observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
-    observer.start()
-    # Store observer dynamically to avoid strict typing on optional dep
-    self.observer = observer
+        observer = Observer()
+        observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
+        observer.start()
+        # Store observer dynamically to avoid strict typing on optional dep
+        self.observer = observer
 
     def schedule_reload(self, plugin_name: str) -> None:
         """Schedule a plugin reload with cooldown."""
