@@ -6,8 +6,8 @@ import statistics
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from email.mime.multipart import MimeMultipart
-from email.mime.text import MimeText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from enum import Enum
 from typing import Any
 
