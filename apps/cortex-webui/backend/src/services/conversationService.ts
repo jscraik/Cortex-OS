@@ -2,24 +2,26 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { Conversation } from '../../../shared/types';
-import { ConversationModel } from '../models/conversation';
+import { ConversationModel, type ConversationRecord } from '../models/conversation';
 import { getDatabase } from '../utils/database';
 
 export class ConversationService {
   static getConversationsByUserId(userId: string): Conversation[] {
     const db = getDatabase();
-    const records = db
-      .prepare(
-        `SELECT * FROM ${ConversationModel.tableName} WHERE user_id = ? ORDER BY updated_at DESC`,
-      )
-      .all(userId);
+      const records = db
+        .prepare(
+          `SELECT * FROM ${ConversationModel.tableName} WHERE user_id = ? ORDER BY updated_at DESC`,
+        )
+        .all(userId) as ConversationRecord[];
 
-    return records.map(ConversationModel.fromRecord);
+      return records.map(ConversationModel.fromRecord);
   }
 
   static getConversationById(id: string): Conversation | null {
     const db = getDatabase();
-    const record = db.prepare(`SELECT * FROM ${ConversationModel.tableName} WHERE id = ?`).get(id);
+      const record = db
+        .prepare(`SELECT * FROM ${ConversationModel.tableName} WHERE id = ?`)
+        .get(id) as ConversationRecord | undefined;
 
     if (!record) {
       return null;

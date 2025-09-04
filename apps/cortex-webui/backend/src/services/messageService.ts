@@ -2,19 +2,19 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { Message } from '../../../shared/types';
-import { MessageModel } from '../models/message';
+import { MessageModel, type MessageRecord } from '../models/message';
 import { getDatabase } from '../utils/database';
 
 export class MessageService {
   static getMessagesByConversationId(conversationId: string): Message[] {
     const db = getDatabase();
-    const records = db
-      .prepare(
-        `SELECT * FROM ${MessageModel.tableName} WHERE conversation_id = ? ORDER BY created_at ASC`,
-      )
-      .all(conversationId);
+      const records = db
+        .prepare(
+          `SELECT * FROM ${MessageModel.tableName} WHERE conversation_id = ? ORDER BY created_at ASC`,
+        )
+        .all(conversationId) as MessageRecord[];
 
-    return records.map(MessageModel.fromRecord);
+      return records.map(MessageModel.fromRecord);
   }
 
   static createMessage(
@@ -26,12 +26,12 @@ export class MessageService {
 
     const messageId = uuidv4();
     const now = new Date().toISOString();
-    const messageRecord = {
-      id: messageId,
-      conversation_id: conversationId,
-      role,
-      content,
-      created_at: now,
+      const messageRecord: MessageRecord = {
+        id: messageId,
+        conversation_id: conversationId,
+        role,
+        content,
+        created_at: now,
     };
 
     db.prepare(

@@ -1,26 +1,30 @@
 // AI Model service for Cortex WebUI backend
 
 import { Model } from '../../../shared/types';
-import { ModelModel } from '../models/model';
+import { ModelModel, type ModelRecord } from '../models/model';
 import { getDatabase } from '../utils/database';
 
 export class ModelService {
   static getAllModels(): Model[] {
     const db = getDatabase();
-    const records = db.prepare(`SELECT * FROM ${ModelModel.tableName} ORDER BY name ASC`).all();
+      const records = db
+        .prepare(`SELECT * FROM ${ModelModel.tableName} ORDER BY name ASC`)
+        .all() as ModelRecord[];
 
-    return records.map(ModelModel.fromRecord);
+      return records.map(ModelModel.fromRecord);
   }
 
   static getModelById(id: string): Model | null {
     const db = getDatabase();
-    const record = db.prepare(`SELECT * FROM ${ModelModel.tableName} WHERE id = ?`).get(id);
+      const record = db
+        .prepare(`SELECT * FROM ${ModelModel.tableName} WHERE id = ?`)
+        .get(id) as ModelRecord | undefined;
 
-    if (!record) {
-      return null;
-    }
+      if (!record) {
+        return null;
+      }
 
-    return ModelModel.fromRecord(record);
+      return ModelModel.fromRecord(record);
   }
 
   static createModel(model: Omit<Model, 'id' | 'createdAt' | 'updatedAt'>): Model {
@@ -28,15 +32,15 @@ export class ModelService {
 
     const modelId = `model_${Date.now()}`;
     const now = new Date().toISOString();
-    const modelRecord = {
-      id: modelId,
-      name: model.name,
-      description: model.description,
-      provider: model.provider,
-      capabilities: JSON.stringify(model.capabilities),
-      created_at: now,
-      updated_at: now,
-    };
+      const modelRecord: ModelRecord = {
+        id: modelId,
+        name: model.name,
+        description: model.description,
+        provider: model.provider,
+        capabilities: JSON.stringify(model.capabilities),
+        created_at: now,
+        updated_at: now,
+      };
 
     db.prepare(
       `INSERT INTO ${ModelModel.tableName} (id, name, description, provider, capabilities, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,

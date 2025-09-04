@@ -1,5 +1,7 @@
 // Database utility for Cortex WebUI backend
 
+import fs from 'fs';
+import path from 'path';
 import Database, { Database as DatabaseType } from 'better-sqlite3';
 import { DATABASE_PATH } from '../../../shared/constants';
 import { ConversationModel } from '../models/conversation';
@@ -14,7 +16,12 @@ export const initializeDatabase = (): DatabaseType => {
     return db;
   }
 
-  db = new Database(DATABASE_PATH);
+    const dbDir = path.dirname(DATABASE_PATH);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+
+    db = new Database(DATABASE_PATH);
 
   // Create tables
   db.exec(UserModel.createTableSQL);
