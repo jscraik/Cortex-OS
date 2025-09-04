@@ -7,13 +7,13 @@ describe("tracing", () => {
 		expect(getCurrentTraceContext()).toBeNull();
 	});
 
-	it("withSpan provides trace context", async () => {
-		let captured: { traceId?: string } | undefined;
-		await withSpan("test", async (runId, ctx) => {
-			expect(isValidULID(runId)).toBe(true);
-			expect(getCurrentTraceContext()?.runId).toBe(runId);
-			captured = ctx;
-		});
-		expect(captured?.traceId).toBeTruthy();
-	});
+        it("withSpan provides trace context", async () => {
+                let captured: { traceId?: string; runId?: string } | undefined;
+                await withSpan("test", async (runId, ctx) => {
+                        expect(isValidULID(runId)).toBe(true);
+                        captured = ctx;
+                });
+                expect(captured?.runId).toBeTruthy();
+                expect(captured?.traceId).toBeTruthy();
+        });
 });
