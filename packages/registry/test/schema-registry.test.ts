@@ -1,7 +1,8 @@
+import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import request from "supertest";
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SchemaRegistry } from "../src/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,14 +12,14 @@ describe("Schema Registry", () => {
 	let registry: SchemaRegistry;
 	let app: any;
 
-	beforeAll(() => {
-		const contractsPath = path.join(__dirname, "fixtures", "contracts");
-		registry = new SchemaRegistry({
-			port: 3002, // Different port for testing
-			contractsPath,
-		});
-		app = registry.getApp(); // We'll need to add this method
-	});
+        beforeAll(() => {
+                const contractsPath = path.join(__dirname, "fixtures", "contracts");
+                registry = new SchemaRegistry({
+                        port: 3002, // Different port for testing
+                        contractsPath,
+                });
+                app = registry.getApp(); // We'll need to add this method
+        });
 
 	describe("Health Check", () => {
 		it("should return healthy status", async () => {
@@ -94,36 +95,94 @@ describe("Schema Registry", () => {
 		});
 	});
 
-	describe("Category Filtering", () => {
-		it("should get schemas by category", async () => {
-			const response = await request(app).get("/categories/events").expect(200);
+        describe("Category Filtering", () => {
+                it("should get schemas by category", async () => {
+                        const response = await request(app).get("/categories/events").expect(200);
 
-			expect(response.body).toMatchObject({
-				category: "events",
-				schemas: expect.any(Array),
-				count: expect.any(Number),
-				timestamp: expect.any(String),
-			});
-		});
+                        expect(response.body).toMatchObject({
+                                category: "events",
+                                schemas: expect.any(Array),
+                                count: expect.any(Number),
+                                timestamp: expect.any(String),
+                        });
+                });
 
-		it("should return empty array for non-existent category", async () => {
-			const response = await request(app)
-				.get("/categories/non-existent")
-				.expect(200);
+                it("should return empty array for non-existent category", async () => {
+                        const response = await request(app)
+                                .get("/categories/non-existent")
+                                .expect(200);
 
-			expect(response.body).toMatchObject({
-				category: "non-existent",
-				schemas: [],
-				count: 0,
-			});
-		});
+                        expect(response.body).toMatchObject({
+                                category: "non-existent",
+                                schemas: [],
+                                count: 0,
+                        });
+                });
 
-		it("should omit schemas missing metadata from category results", async () => {
-			const response = await request(app).get("/categories/events").expect(200);
-			const ids = response.body.schemas.map((s: any) => s.id);
-			expect(ids).not.toContain("missing-metadata");
-		});
-	});
+                it("should omit schemas missing metadata from category results", async () => {
+                        const response = await request(app).get("/categories/events").expect(200);
+                        const ids = response.body.schemas.map((s: any) => s.id);
+                        expect(ids).not.toContain("missing-metadata");
+                });
+        });
+
+        describe("Runtime Schema Registration", () => {
+                const runtimeSchema = {
+                        $id: "runtime-test",
+                        title: "Runtime Test",
+                        description: "A schema registered at runtime",
+                        type: "object",
+                        properties: { foo: { type: "string" } },
+                        required: ["foo"],
+                };
+                const category = "events";
+                const schemaPath = path.join(
+                        __dirname,
+                        "fixtures",
+                        "contracts",
+                        category,
+                        "runtime-test.json",
+                );
+
+                afterAll(async () => {
+                        try {
+                                await fs.unlink(schemaPath);
+                        } catch {}
+                });
+
+                it("should register and retrieve a new schema", async () => {
+                        await request(app)
+                                .post("/schemas")
+                                .send({ category, schema: runtimeSchema })
+                                .expect(201);
+
+                        const response = await request(app)
+                                .get("/schemas/runtime-test")
+                                .expect(200);
+
+                        expect(response.body.schema.$id).toBe("runtime-test");
+                });
+        });
+
+        describe("Metrics", () => {
+                it("should expose metrics", async () => {
+                        const response = await request(app).get("/metrics").expect(200);
+                        expect(response.text).toContain("process_cpu_user_seconds_total");
+                });
+        });
+
+        describe("Authentication", () => {
+                it("should reject requests without valid API key", async () => {
+                        process.env.REGISTRY_API_KEY = "secret";
+                        const authRegistry = new SchemaRegistry({
+                                port: 3003,
+                                contractsPath: path.join(__dirname, "fixtures", "contracts"),
+                        });
+                        const authApp = authRegistry.getApp();
+                        await request(authApp).get("/schemas").expect(401);
+                        delete process.env.REGISTRY_API_KEY;
+                });
+        });
 
 	describe("Event Validation", () => {
 		const validUserCreatedEvent = {
