@@ -1,25 +1,58 @@
 import { handleA2A } from "@cortex-os/a2a";
 import {
-	A2AMessageSchema,
-	AgentConfigSchema,
-	MCPRequestSchema,
-	RAGQuerySchema,
-	SimlabCommandSchema,
+        A2AMessageSchema,
+        AgentConfigSchema,
+        MCPRequestSchema,
+        RAGQuerySchema,
+        SimlabCommandSchema,
 } from "@cortex-os/contracts";
 import { createJsonOutput } from "@cortex-os/lib";
 import { handleRAG } from "@cortex-os/rag";
 import { handleSimlab } from "@cortex-os/simlab";
+import { createEnhancedClient, type ServerInfo } from "@cortex-os/mcp-core";
 import Fastify from "fastify";
 import client from "prom-client";
 import { z } from "zod";
 import { createAgentRoute } from "./lib/create-agent-route.js";
 
-// Stub MCP handler until the MCP package is available
-const handleMCP = async (request: any) => {
-	return createJsonOutput({
-		error: "MCP handler not implemented",
-		request,
-	});
+function getMCPServerInfo(): ServerInfo | null {
+        const transport = (process.env.MCP_TRANSPORT || "") as ServerInfo["transport"];
+        const name = process.env.MCP_NAME || "gateway-mcp";
+        if (!transport) return null;
+        if (transport === "stdio") {
+                const command = process.env.MCP_COMMAND;
+                if (!command) return null;
+                const args = process.env.MCP_ARGS ? JSON.parse(process.env.MCP_ARGS) : undefined;
+                return { name, transport, command, args } as ServerInfo;
+        }
+        if (transport === "sse" || transport === "streamableHttp") {
+                const endpoint = process.env.MCP_ENDPOINT;
+                if (!endpoint) return null;
+                return { name, transport, endpoint } as ServerInfo;
+        }
+        return null;
+}
+
+const handleMCP = async ({ request }: any) => {
+        const si = getMCPServerInfo();
+        if (!si) {
+                return createJsonOutput({
+                        error: {
+                                code: "MCP_NOT_CONFIGURED",
+                                message: "MCP transport not configured",
+                        },
+                });
+        }
+        const client = await createEnhancedClient(si);
+        try {
+                const result = await client.callTool({
+                        name: request.tool,
+                        arguments: request.args,
+                });
+                return createJsonOutput(result);
+        } finally {
+                await client.close();
+        }
 };
 
 const app = Fastify({ logger: true });
