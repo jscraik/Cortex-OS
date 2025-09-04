@@ -4,10 +4,10 @@ vi.mock("@cortex-os/orchestration", () => ({
         createEngine: (config: unknown) => ({ config }),
 }));
 
-import { createPRPOrchestrationEngine } from "../src/lib/create-prp-orchestration-engine.js";
+import { createPRPOrchestrationEngine } from "./create-prp-orchestration-engine";
 
 describe("createPRPOrchestrationEngine", () => {
-        it("parses configuration overrides", () => {
+        it("returns engine with parsed configuration", () => {
                 const engine = createPRPOrchestrationEngine({
                         maxConcurrentOrchestrations: 1,
                 });
