@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import click
+from typing import Any
 import uvicorn
 from rich.console import Console
 from rich.panel import Panel
@@ -65,7 +66,7 @@ cli_context = CLIContext()
 )
 @click.option("--debug", is_flag=True, help="Enable debug mode")
 @click.pass_context
-def cli(ctx, config_dir: str, log_level: str, debug: bool):
+def cli(ctx: Any, config_dir: str, log_level: str, debug: bool) -> None:
     """MCP (Model Context Protocol) management CLI.
 
     This tool provides comprehensive management capabilities for MCP servers,
@@ -92,14 +93,14 @@ def cli(ctx, config_dir: str, log_level: str, debug: bool):
 @click.option("--config-dir", default="config", help="Configuration directory")
 @click.pass_context
 def serve(
-    _ctx,
+    _ctx: Any,
     host: str,
     port: int,
     workers: int,
     reload: bool,
     plugin_dir: str,
     config_dir: str,
-):
+) -> None:
     """Start the MCP web server with FastAPI interface."""
     console.print(
         Panel.fit(
@@ -139,7 +140,7 @@ def serve(
     "--format", "output_format", default="table", type=click.Choice(["table", "json"])
 )
 @click.pass_context
-def status(ctx, output_format: str):
+def status(_ctx: Any, output_format: str) -> None:
     """Show MCP system status and health information."""
 
     async def get_status():
@@ -239,7 +240,7 @@ def status(ctx, output_format: str):
 @click.option(
     "--level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"])
 )
-def logs(lines: int, follow: bool, level: str):
+def logs(lines: int, follow: bool, level: str) -> None:
     """Show MCP system logs."""
     log_file = cli_context.config_dir / "mcp.log"
 
@@ -273,7 +274,7 @@ def logs(lines: int, follow: bool, level: str):
 
 @cli.command()
 @click.confirmation_option(prompt="This will stop all MCP processes. Continue?")
-def shutdown():
+def shutdown() -> None:
     """Shutdown all MCP services gracefully."""
 
     async def shutdown_services():
@@ -311,7 +312,7 @@ def shutdown():
 
 
 @cli.command()
-def version():
+def version() -> None:
     """Show MCP version information."""
     version_info = {
         "mcp_version": "1.0.0",
@@ -336,7 +337,7 @@ cli.add_command(task_commands, name="tasks")
 cli.add_command(auth_commands, name="auth")
 
 
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     cli(obj={})
 
