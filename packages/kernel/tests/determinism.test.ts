@@ -32,9 +32,11 @@ describe("Cortex Kernel Determinism", () => {
 
 			const run1 = await kernel.runPRPWorkflow(blueprint, {
 				runId: "test-run-1",
+				deterministic: true,
 			});
 			const run2 = await kernel.runPRPWorkflow(blueprint, {
 				runId: "test-run-2",
+				deterministic: true,
 			});
 
 			// Evidence timestamps should be stable across runs

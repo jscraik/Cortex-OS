@@ -3,15 +3,13 @@
  * @description GitHub App for automated security scanning with Semgrep
  */
 
-import { spawn } from 'node:child_process';
-import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
 import { Octokit } from '@octokit/rest';
 import { type EmitterWebhookEvent, Webhooks } from '@octokit/webhooks';
 import dotenv from 'dotenv';
 import express from 'express';
 import { z } from 'zod';
-import type { SecurityScanResult } from '../lib/semgrep-scanner.js';
+import { generateScanComment } from '../lib/comment-formatter.js';
+import { runSemgrepScan, type SecurityScanResult } from '../lib/semgrep-scanner.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -46,263 +44,31 @@ app.use('/webhook', express.raw({ type: 'application/json' }));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
-	res.json({
-		status: 'healthy',
-		service: 'cortex-semgrep-github',
-		timestamp: new Date().toISOString(),
-	});
+        res.json({
+                status: 'healthy',
+                service: 'cortex-semgrep-github',
+                timestamp: new Date().toISOString(),
+        });
 });
+ 
+type CommentPayload =
+        | EmitterWebhookEvent<'issue_comment.created'>['payload']
+        | EmitterWebhookEvent<'pull_request_review_comment.created'>['payload'];
 
-// Resolve binaries from safe, fixed directories only (avoid PATH lookups)
-const SAFE_BIN_DIRS = ['/usr/bin', '/usr/local/bin', '/opt/homebrew/bin'];
-async function resolveBinary(binName: 'git' | 'semgrep'): Promise<string> {
-	for (const dir of SAFE_BIN_DIRS) {
-		const candidate = join(dir, binName);
-		try {
-			await fs.access(candidate);
-			return candidate;
-		} catch {
-			// continue
-		}
-	}
-	throw new Error(`Required binary not found in safe paths: ${binName}`);
-}
-
-// Secure Semgrep analysis execution
-async function runSemgrepAnalysis(
-	semgrepBin: string,
-	targetDir: string,
-): Promise<string> {
-	// Use safe, built-in rulesets instead of external paths
-	const rulesets = ['auto', 'security-audit', 'owasp-top-ten'];
-
-	return new Promise((resolve, reject) => {
-		const semgrep = spawn(
-			semgrepBin,
-			[
-				'--config',
-				rulesets.join(','),
-				'--json',
-				'--quiet',
-				'--timeout',
-				'300', // 5 minute timeout
-				'--max-target-bytes',
-				'10MB',
-				'.',
-			],
-			{
-				cwd: targetDir,
-				stdio: 'pipe',
-				timeout: 300000,
-			},
-		);
-
-		let stdout = '';
-		let stderr = '';
-
-		semgrep.stdout?.on('data', (data) => {
-			stdout += data.toString();
-		});
-		semgrep.stderr?.on('data', (data) => {
-			stderr += data.toString();
-		});
-
-		semgrep.on('close', (code) => {
-			// Semgrep exits with code 1 when findings are found; treat as success
-			if (code === 0 || code === 1) {
-				resolve(stdout);
-			} else {
-				reject(new Error(`Semgrep failed with code ${code}: ${stderr}`));
-			}
-		});
-
-		semgrep.on('error', (error) => {
-			reject(new Error(`Semgrep execution error: ${error.message}`));
-		});
-	});
-}
-
-// Secure repository cloning with spawn to prevent injection
-async function cloneRepository(
-	owner: string,
-	repo: string,
-	sha: string,
-): Promise<string> {
-	// Comprehensive input validation to prevent injection
-	const ownerPattern = /^[a-zA-Z0-9_.-]{1,39}$/; // GitHub username limits
-	const repoPattern = /^[a-zA-Z0-9_.-]{1,100}$/; // GitHub repo name limits
-	const shaPattern = /^[a-fA-F0-9]{40}$/;
-
-	if (!ownerPattern.test(owner)) {
-		throw new Error(`Invalid owner format: ${owner}`);
-	}
-
-	if (!repoPattern.test(repo)) {
-		throw new Error(`Invalid repository name format: ${repo}`);
-	}
-
-	if (!shaPattern.test(sha)) {
-		throw new Error(`Invalid SHA format: ${sha}`);
-	}
-
-	// Additional security checks
-	const suspiciousPatterns = ['..', '//', '\\', '$', '`', ';', '|', '&'];
-	const allInputs = [owner, repo];
-
-	for (const input of allInputs) {
-		for (const pattern of suspiciousPatterns) {
-			if (input.includes(pattern)) {
-				throw new Error(`Input contains suspicious pattern: ${pattern}`);
-			}
-		}
-	}
-
-	const tempDir = `/tmp/semgrep-scan-${Date.now()}-${require('node:crypto').randomUUID()}`;
-	await fs.mkdir(tempDir, { recursive: true });
-
-	const gitBin = await resolveBinary('git');
-	const repoUrl = `https://github.com/${owner}/${repo}.git`;
-
-	return new Promise((resolve, reject) => {
-		const clone = spawn(gitBin, ['clone', '--depth', '1', repoUrl, tempDir], {
-			stdio: 'pipe',
-		});
-
-		// Set timeout manually
-		const timeout = setTimeout(() => {
-			clone.kill('SIGTERM');
-			reject(new Error('Clone timeout exceeded'));
-		}, 300000); // 5 minutes
-
-		let stderr = '';
-		clone.stderr?.on('data', (data) => {
-			stderr += data.toString();
-		});
-
-		clone.on('close', (code) => {
-			clearTimeout(timeout);
-
-			if (code === 0) {
-				// Checkout specific SHA
-				const checkout = spawn(gitBin, ['checkout', sha], {
-					cwd: tempDir,
-					stdio: 'pipe',
-				});
-
-				const checkoutTimeout = setTimeout(() => {
-					checkout.kill('SIGTERM');
-					reject(new Error('Checkout timeout exceeded'));
-				}, 60000); // 1 minute
-
-				let checkoutStderr = '';
-				checkout.stderr?.on('data', (data) => {
-					checkoutStderr += data.toString();
-				});
-
-				checkout.on('close', (checkoutCode) => {
-					clearTimeout(checkoutTimeout);
-
-					if (checkoutCode === 0) {
-						resolve(tempDir);
-					} else {
-						reject(new Error(`Checkout failed: ${checkoutStderr}`));
-					}
-				});
-
-				checkout.on('error', (error) => {
-					clearTimeout(checkoutTimeout);
-					reject(new Error(`Checkout error: ${error.message}`));
-				});
-			} else {
-				reject(new Error(`Clone failed: ${stderr}`));
-			}
-		});
-
-		clone.on('error', (error) => {
-			clearTimeout(timeout);
-			reject(new Error(`Clone error: ${error.message}`));
-		});
-	});
-}
-
-// Semgrep scan function
-async function runSemgrepScan(
-	owner: string,
-	repo: string,
-	sha: string,
-): Promise<SecurityScanResult[]> {
-	try {
-		console.warn(`Running Semgrep scan for ${owner}/${repo} at ${sha}`);
-
-		// Clone repository securely
-		const tempDir = await cloneRepository(owner, repo, sha);
-
-		try {
-			// Run Semgrep with cortex-sec rules (secure path resolution)
-			const semgrepBin = await resolveBinary('semgrep');
-			const semgrepOutput = await runSemgrepAnalysis(semgrepBin, tempDir);
-
-			// Parse Semgrep results and convert to our format
-			const semgrepData = JSON.parse(semgrepOutput);
-			const results: SecurityScanResult[] =
-				semgrepData.results?.map(
-					(result: {
-						check_id: string;
-						message?: string;
-						extra?: {
-							message?: string;
-							severity?: string;
-							lines?: string;
-							metadata?: Record<string, unknown>;
-						};
-						path: string;
-						start?: { line: number };
-						end?: { line: number };
-					}) => ({
-						ruleId: result.check_id,
-						message:
-							result.extra?.message ||
-							result.message ||
-							'Security issue detected',
-						severity: mapSemgrepSeverity(result.extra?.severity || 'INFO'),
-						file: result.path.replace(`${tempDir}/`, ''),
-						startLine: result.start?.line,
-						endLine: result.end?.line,
-						evidence: result.extra?.lines || '',
-						tags: result.extra?.metadata || {},
-					}),
-				) || [];
-
-			return results;
-		} finally {
-			// Cleanup temporary directory (safe API)
-			fs.rm(tempDir, { recursive: true, force: true }).catch((error) =>
-				console.error('Cleanup error:', error),
-			);
-		}
-	} catch (error) {
-		console.error('Semgrep scan failed:', error);
-		return [];
-	}
-}
-
-// Map Semgrep severity to our format
-function mapSemgrepSeverity(severity: string): 'HIGH' | 'MEDIUM' | 'LOW' {
-	switch (severity.toUpperCase()) {
-		case 'ERROR':
-			return 'HIGH';
-		case 'WARNING':
-			return 'MEDIUM';
-		default:
-			return 'LOW';
-	}
-}
-
+type ReactionContent =
+        | '+1'
+        | '-1'
+        | 'confused'
+        | 'heart'
+        | 'hooray'
+        | 'laugh'
+        | 'rocket'
+        | 'eyes';
 // Create GitHub check run (use REST API namespace)
 async function createCheckRun(
-	owner: string,
-	repo: string,
-	headSha: string,
+        owner: string,
+        repo: string,
+        headSha: string,
 	results: SecurityScanResult[],
 ): Promise<void> {
 	const criticalCount = results.filter((r) => r.severity === 'HIGH').length;
@@ -518,19 +284,19 @@ async function handleScanCommand(
 		// Progressive status: Step 1 - Processing
 		await updateProgressiveStatus(payload, 'processing');
 
-		const scanContext = validateScanContext(payload, user);
-		const prData = await fetchPRData(scanContext);
+                const scanContext = validateScanContext(payload, user);
+                const prData = await fetchPRData(scanContext);
 
-		// Progressive status: Step 2 - Working
-		await updateProgressiveStatus(payload, 'working');
+                // Progressive status: Step 2 - Working
+                await updateProgressiveStatus(payload, 'working');
 
-		const results = await runSemgrepScan(
-			scanContext.owner,
-			scanContext.repo,
-			prData.data.head.sha,
-		);
+                const results = await runSemgrepScan(
+                        scanContext.owner,
+                        scanContext.repo,
+                        prData.data.head.sha,
+                );
 
-		await postScanResults(scanContext, results, prData.data.head.sha, user);
+                await postScanResults(scanContext, results, prData.data.head.sha);
 
 		// Progressive status: Step 3 - Success
 		await updateProgressiveStatus(payload, 'success');
@@ -544,8 +310,8 @@ async function handleScanCommand(
 }
 
 function validateScanContext(
-	payload: any,
-	user: string,
+        payload: CommentPayload,
+        user: string,
 ): { owner: string; repo: string; issueNumber: number; prNumber: number } {
 	console.warn(`🔍 ${user} requested security scan`);
 
@@ -574,7 +340,7 @@ function validateScanContext(
 	return { owner: ownerLogin, repo: repo.name, issueNumber, prNumber };
 }
 
-function resolvePRNumber(payload: any): number | undefined {
+function resolvePRNumber(payload: CommentPayload): number | undefined {
 	if ('pull_request' in payload && payload.pull_request) {
 		return payload.pull_request.number;
 	}
@@ -597,12 +363,16 @@ async function fetchPRData(context: {
 }
 
 async function postScanResults(
-	context: { owner: string; repo: string; issueNumber: number },
-	results: SecurityScanResult[],
-	sha: string,
-	user: string,
-) {
-	const responseComment = generateScanComment(results, user, sha);
+        context: { owner: string; repo: string; issueNumber: number },
+        results: SecurityScanResult[],
+        sha: string,
+): Promise<void> {
+        const responseComment = generateScanComment(
+                results,
+                context.owner,
+                context.repo,
+                sha,
+        );
 
 	await octokit.rest.issues.createComment({
 		owner: context.owner,
@@ -612,28 +382,29 @@ async function postScanResults(
 	});
 }
 
-async function addReaction(payload: any, reaction: string) {
+async function addReaction(
+        payload: CommentPayload,
+        reaction: ReactionContent,
+): Promise<void> {
 	try {
 		const owner = payload.repository.owner.login;
 		const repo = payload.repository.name;
 
-		if (payload.issue) {
-			// Issue comment
-			await octokit.rest.reactions.createForIssueComment({
-				owner,
-				repo,
-				comment_id: payload.comment.id,
-				content: reaction as any,
-			});
-		} else if (payload.pull_request) {
-			// PR review comment
-			await octokit.rest.reactions.createForPullRequestReviewComment({
-				owner,
-				repo,
-				comment_id: payload.comment.id,
-				content: reaction as any,
-			});
-		}
+                if ('issue' in payload && payload.issue) {
+                        await octokit.rest.reactions.createForIssueComment({
+                                owner,
+                                repo,
+                                comment_id: payload.comment.id,
+                                content: reaction,
+                        });
+                } else if ('pull_request' in payload && payload.pull_request) {
+                        await octokit.rest.reactions.createForPullRequestReviewComment({
+                                owner,
+                                repo,
+                                comment_id: payload.comment.id,
+                                content: reaction,
+                        });
+                }
 	} catch (error) {
 		console.error(`Failed to add ${reaction} reaction:`, error);
 		// Don't throw - reactions are non-critical
@@ -645,33 +416,33 @@ async function addReaction(payload: any, reaction: string) {
  * Updates reactions in sequence: 👀 → ⚙️ → 🚀/❌
  */
 async function updateProgressiveStatus(
-	payload: any,
-	status: 'processing' | 'working' | 'success' | 'error' | 'warning',
+        payload: CommentPayload,
+        status: 'processing' | 'working' | 'success' | 'error' | 'warning',
 ): Promise<void> {
 	try {
 		switch (status) {
-			case 'processing':
-				await addReaction(payload, 'eyes');
-				break;
-			case 'working':
-				await addReaction(payload, 'gear');
-				break;
-			case 'success':
-				await addReaction(payload, 'rocket');
-				break;
-			case 'error':
-				await addReaction(payload, 'x');
-				break;
-			case 'warning':
-				await addReaction(payload, 'warning');
-				break;
+                        case 'processing':
+                                await addReaction(payload, 'eyes');
+                                break;
+                        case 'working':
+                                await addReaction(payload, 'gear');
+                                break;
+                        case 'success':
+                                await addReaction(payload, 'rocket');
+                                break;
+                        case 'error':
+                                await addReaction(payload, '-1');
+                                break;
+                        case 'warning':
+                                await addReaction(payload, 'confused');
+                                break;
 		}
 	} catch (error) {
 		console.error(`Failed to update progressive status ${status}:`, error);
 	}
 }
 
-async function handleScanError(error: unknown, payload: any) {
+async function handleScanError(error: unknown, payload: CommentPayload) {
 	console.error('Error handling scan command:', error);
 
 	try {
@@ -819,53 +590,3 @@ I'm your security guardian, keeping your code safe from vulnerabilities! 🔒`;
 	}
 }
 
-// Generate a human-friendly scan comment
-function generateScanComment(
-	results: SecurityScanResult[],
-	user: string,
-	sha: string,
-): string {
-	const formatSection = (
-		heading: string,
-		issues: SecurityScanResult[],
-		maxItems: number,
-		labelForRemainder: string,
-	): string => {
-		if (issues.length === 0) return '';
-		let section = `${heading} (${issues.length})\n`;
-		issues.slice(0, maxItems).forEach((issue) => {
-			section += `- **${issue.file}:${issue.startLine || '?'}** - ${issue.message}\n`;
-		});
-		const remaining = issues.length - maxItems;
-		if (remaining > 0)
-			section += `- ... and ${remaining} more ${labelForRemainder} issues\n`;
-		section += `\n`;
-		return section;
-	};
-
-	let comment = `@${user} **🛡️ Security Scan Results**\n\n`;
-	comment += `**Commit:** \`${sha.substring(0, 7)}\`\n`;
-	comment += `**Issues Found:** ${results.length}\n\n`;
-
-	if (results.length === 0) {
-		comment += `✅ **Excellent!** No security vulnerabilities detected.\n`;
-		comment += `Your code looks secure! 🎉\n`;
-	} else {
-		const high = results.filter((r) => r.severity === 'HIGH');
-		const medium = results.filter((r) => r.severity === 'MEDIUM');
-		const low = results.filter((r) => r.severity === 'LOW');
-
-		comment += formatSection('## 🚨 High Severity', high, 3, 'high severity');
-		comment += formatSection(
-			'## ⚠️ Medium Severity',
-			medium,
-			3,
-			'medium severity',
-		);
-		comment += formatSection('## ℹ️ Low Severity', low, 2, 'low severity');
-		comment += `💡 **Recommendation:** Address high and medium severity issues first.\n`;
-	}
-
-	comment += `---\n*Security scan completed at ${new Date().toISOString()}*`;
-	return comment;
-}

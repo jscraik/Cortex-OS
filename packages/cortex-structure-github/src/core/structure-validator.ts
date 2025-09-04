@@ -191,84 +191,93 @@ export class StructureValidator {
 		this.rules = rules;
 	}
 
-	validateFile(filePath: string): StructureViolation[] {
-		const violations: StructureViolation[] = [];
+        validateFile(filePath: string): StructureViolation[] {
+                const violations: StructureViolation[] = [];
 
-		for (const rule of this.rules) {
-			// Check if file matches rule pattern
-			if (!minimatch(filePath, rule.pattern)) {
-				continue;
-			}
+                for (const rule of this.rules) {
+                        if (!minimatch(filePath, rule.pattern)) continue;
 
-			// Check allowed paths
-			const isInAllowedPath = rule.allowedPaths.some((path) =>
-				minimatch(filePath, path),
-			);
+                        this.checkAllowedPaths(filePath, rule, violations);
+                        this.checkDisallowedPaths(filePath, rule, violations);
+                        this.checkNamingConvention(filePath, rule, violations);
+                        this.checkDirectoryDepth(filePath, rule, violations);
+                }
 
-			if (!isInAllowedPath) {
-				violations.push({
-					type: "misplaced_file",
-					severity: "error",
-					file: filePath,
-					message: `File violates rule: ${rule.description}`,
-					suggestedPath: this.suggestCorrectPath(filePath, rule),
-					autoFixable: rule.autoFix || false,
-					rule: rule.name,
-				});
-			}
+                return violations;
+        }
 
-			// Check disallowed paths
-			if (rule.disallowedPaths) {
-				const isInDisallowedPath = rule.disallowedPaths.some((path) =>
-					minimatch(filePath, path),
-				);
+        private checkAllowedPaths(
+                filePath: string,
+                rule: StructureRule,
+                violations: StructureViolation[],
+        ): void {
+                const isInAllowedPath = rule.allowedPaths.some((p) => minimatch(filePath, p));
+                if (isInAllowedPath) return;
+                violations.push({
+                        type: "misplaced_file",
+                        severity: "error",
+                        file: filePath,
+                        message: `File violates rule: ${rule.description}`,
+                        suggestedPath: this.suggestCorrectPath(filePath, rule),
+                        autoFixable: rule.autoFix || false,
+                        rule: rule.name,
+                });
+        }
 
-				if (isInDisallowedPath) {
-					violations.push({
-						type: "misplaced_file",
-						severity: "error",
-						file: filePath,
-						message: `File is in disallowed location: ${rule.description}`,
-						suggestedPath: this.suggestCorrectPath(filePath, rule),
-						autoFixable: rule.autoFix || false,
-						rule: rule.name,
-					});
-				}
-			}
+        private checkDisallowedPaths(
+                filePath: string,
+                rule: StructureRule,
+                violations: StructureViolation[],
+        ): void {
+                if (!rule.disallowedPaths) return;
+                const isInDisallowedPath = rule.disallowedPaths.some((p) => minimatch(filePath, p));
+                if (!isInDisallowedPath) return;
+                violations.push({
+                        type: "misplaced_file",
+                        severity: "error",
+                        file: filePath,
+                        message: `File is in disallowed location: ${rule.description}`,
+                        suggestedPath: this.suggestCorrectPath(filePath, rule),
+                        autoFixable: rule.autoFix || false,
+                        rule: rule.name,
+                });
+        }
 
-			// Check naming convention
-			if (rule.namingConvention) {
-				const fileName = filePath.split("/").pop() || "";
-				if (!rule.namingConvention.test(fileName)) {
-					violations.push({
-						type: "naming_violation",
-						severity: "warning",
-						file: filePath,
-						message: `File name doesn't follow naming convention for ${rule.name}`,
-						autoFixable: false,
-						rule: rule.name,
-					});
-				}
-			}
+        private checkNamingConvention(
+                filePath: string,
+                rule: StructureRule,
+                violations: StructureViolation[],
+        ): void {
+                if (!rule.namingConvention) return;
+                const fileName = filePath.split("/").pop() || "";
+                if (rule.namingConvention.test(fileName)) return;
+                violations.push({
+                        type: "naming_violation",
+                        severity: "warning",
+                        file: filePath,
+                        message: `File name doesn't follow naming convention for ${rule.name}`,
+                        autoFixable: false,
+                        rule: rule.name,
+                });
+        }
 
-			// Check directory depth
-			if (rule.name === "prevent-deep-nesting") {
-				const depth = filePath.split("/").length;
-				if (depth > 6) {
-					violations.push({
-						type: "architecture_violation",
-						severity: "warning",
-						file: filePath,
-						message: `File is nested too deeply (${depth} levels). Consider restructuring.`,
-						autoFixable: false,
-						rule: rule.name,
-					});
-				}
-			}
-		}
-
-		return violations;
-	}
+        private checkDirectoryDepth(
+                filePath: string,
+                rule: StructureRule,
+                violations: StructureViolation[],
+        ): void {
+                if (rule.name !== "prevent-deep-nesting") return;
+                const depth = filePath.split("/").length;
+                if (depth <= 6) return;
+                violations.push({
+                        type: "architecture_violation",
+                        severity: "warning",
+                        file: filePath,
+                        message: `File is nested too deeply (${depth} levels). Consider restructuring.`,
+                        autoFixable: false,
+                        rule: rule.name,
+                });
+        }
 
 	private suggestCorrectPath(
 		filePath: string,
