@@ -1,0 +1,419 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "creationInfo": {
+    "comment": "This SPDX document has been converted from CycloneDX format.",
+    "created": "2025-09-04T23:37:42.5742551Z"
+  },
+  "name": "CycloneDX BOM",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "http://spdx.org/spdxdocs/CycloneDX BOM-bce3106c-87bb-48e7-95d8-69afd89b426a",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-1",
+      "downloadLocation": "NOASSERTION",
+      "name": "cortex-os",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.0.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-2",
+      "downloadLocation": "NOASSERTION",
+      "name": "@anthropic-ai/sdk",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.60.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-3",
+      "downloadLocation": "NOASSERTION",
+      "name": "@frost-beta/clip",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.3.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-4",
+      "downloadLocation": "NOASSERTION",
+      "name": "@measured/puck",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.20.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-5",
+      "downloadLocation": "NOASSERTION",
+      "name": "@testing-library/react",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "16.3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-6",
+      "downloadLocation": "NOASSERTION",
+      "name": "@testing-library/user-event",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "14.6.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-7",
+      "downloadLocation": "NOASSERTION",
+      "name": "@types/react",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "19.1.12"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-8",
+      "downloadLocation": "NOASSERTION",
+      "name": "@types/react-dom",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "19.1.9"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-9",
+      "downloadLocation": "NOASSERTION",
+      "name": "axios",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.11.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-10",
+      "downloadLocation": "NOASSERTION",
+      "name": "chalk",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "5.6.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-11",
+      "downloadLocation": "NOASSERTION",
+      "name": "chokidar",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.6.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-12",
+      "downloadLocation": "NOASSERTION",
+      "name": "commander",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "11.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-13",
+      "downloadLocation": "NOASSERTION",
+      "name": "crawlee",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.14.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-14",
+      "downloadLocation": "NOASSERTION",
+      "name": "dotenv",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "16.6.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-15",
+      "downloadLocation": "NOASSERTION",
+      "name": "execa",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "9.6.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-16",
+      "downloadLocation": "NOASSERTION",
+      "name": "inquirer",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "9.3.7"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-17",
+      "downloadLocation": "NOASSERTION",
+      "name": "js-tiktoken",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.0.21"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-18",
+      "downloadLocation": "NOASSERTION",
+      "name": "nanoid",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "5.1.5"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-19",
+      "downloadLocation": "NOASSERTION",
+      "name": "ora",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "7.0.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-20",
+      "downloadLocation": "NOASSERTION",
+      "name": "react",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "19.1.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-21",
+      "downloadLocation": "NOASSERTION",
+      "name": "react-dom",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "19.1.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-22",
+      "downloadLocation": "NOASSERTION",
+      "name": "typescript-eslint",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "8.42.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-23",
+      "downloadLocation": "NOASSERTION",
+      "name": "vite-tsconfig-paths",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "5.1.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-24",
+      "downloadLocation": "NOASSERTION",
+      "name": "web-tree-sitter",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.25.8"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-25",
+      "downloadLocation": "NOASSERTION",
+      "name": "zod",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.25.76"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-26",
+      "downloadLocation": "NOASSERTION",
+      "name": "cross-env",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "7.0.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-27",
+      "downloadLocation": "NOASSERTION",
+      "name": "eslint-plugin-boundaries",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.2.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-28",
+      "downloadLocation": "NOASSERTION",
+      "name": "cyclonedx-bom",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.0.9"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-29",
+      "downloadLocation": "NOASSERTION",
+      "name": "eslint",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "9.34.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-30",
+      "downloadLocation": "NOASSERTION",
+      "name": "eslint-plugin-import",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.32.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-31",
+      "downloadLocation": "NOASSERTION",
+      "name": "eslint-plugin-sonarjs",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.0.5"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-32",
+      "downloadLocation": "NOASSERTION",
+      "name": "fast-glob",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.3.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-33",
+      "downloadLocation": "NOASSERTION",
+      "name": "globby",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "14.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-34",
+      "downloadLocation": "NOASSERTION",
+      "name": "husky",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "9.1.7"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-35",
+      "downloadLocation": "NOASSERTION",
+      "name": "micromatch",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.0.8"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-36",
+      "downloadLocation": "NOASSERTION",
+      "name": "lint-staged",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "15.5.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-37",
+      "downloadLocation": "NOASSERTION",
+      "name": "nx",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-38",
+      "downloadLocation": "NOASSERTION",
+      "name": "vitest",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.1.9"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-39",
+      "downloadLocation": "NOASSERTION",
+      "name": "ts-node",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "10.9.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-40",
+      "downloadLocation": "NOASSERTION",
+      "name": "@biomejs/biome",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.2.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-41",
+      "downloadLocation": "NOASSERTION",
+      "name": "yaml",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.8.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-42",
+      "downloadLocation": "NOASSERTION",
+      "name": "typescript",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "5.9.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-43",
+      "downloadLocation": "NOASSERTION",
+      "name": "@commitlint/cli",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "19.8.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-44",
+      "downloadLocation": "NOASSERTION",
+      "name": "@commitlint/config-conventional",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "19.8.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-45",
+      "downloadLocation": "NOASSERTION",
+      "name": "@eslint/js",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "9.34.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-46",
+      "downloadLocation": "NOASSERTION",
+      "name": "@cyclonedx/bom",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-47",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/devkit",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-48",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/eslint",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-49",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/next",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-50",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/js",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-51",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/node",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-52",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/react",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-53",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/rollup",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-54",
+      "downloadLocation": "NOASSERTION",
+      "name": "@nx/vite",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-55",
+      "downloadLocation": "NOASSERTION",
+      "name": "@types/node",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "22.18.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-56",
+      "downloadLocation": "NOASSERTION",
+      "name": "@typescript-eslint/parser",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "8.42.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-57",
+      "downloadLocation": "NOASSERTION",
+      "name": "@typescript-eslint/eslint-plugin",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "8.42.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-58",
+      "downloadLocation": "NOASSERTION",
+      "name": "@vitest/coverage-v8",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.1.9"
+    }
+  ]
+}
