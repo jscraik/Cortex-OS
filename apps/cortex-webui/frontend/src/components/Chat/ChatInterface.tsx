@@ -17,11 +17,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   error,
 }) => {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full glass-card">
       <div className="flex-1 overflow-y-auto p-4">
         <MessageList messages={messages} streaming={streaming} />
       </div>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t border-white/40 dark:border-gray-700">
         <MessageInput onSendMessage={onSendMessage} disabled={streaming} />
         {error && (
           <div className="mt-2 text-red-500 text-sm" role="alert">
