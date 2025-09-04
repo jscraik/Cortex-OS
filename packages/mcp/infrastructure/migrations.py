@@ -308,7 +308,8 @@ else:
         """Get current migration status."""
         try:
             # Get database manager
-            db_manager = await get_database_manager()
+            # Ensure database connectivity (manager obtained if needed)
+            await get_database_manager()
 
             # Get current revision from database
             async with db_manager.get_session() as session:
@@ -368,7 +369,8 @@ else:
     async def validate_database_schema(self) -> dict[str, Any]:
         """Validate that database schema matches models."""
         try:
-            db_manager = await get_database_manager()
+            # Ensure database connectivity (manager obtained if needed)
+            await get_database_manager()
 
             # Create sync engine for Alembic operations
             sync_url = self._get_sync_database_url()
