@@ -174,11 +174,11 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
     if (brMatch) {
       return <br />;
     } else {
-      return <div dangerouslySetInnerHTML={{ __html: token.text || '' }} />;
+      return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
     }
   }
 
-  return <div dangerouslySetInnerHTML={{ __html: token.text || '' }} />;
+  return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
 };
 
 export default HTMLToken;
