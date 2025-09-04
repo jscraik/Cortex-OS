@@ -5,12 +5,12 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Optional, cast
 from contextlib import suppress
 
-import docker
-import psutil
-from kubernetes import client, config
+import docker  # type: ignore[reportMissingTypeStubs]
+import psutil  # type: ignore[reportMissingTypeStubs]
+from kubernetes import client, config  # type: ignore[reportMissingTypeStubs]
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -137,10 +137,10 @@ class ScalingPolicy:
 class ResourceMonitor:
     """Monitors system resources for scaling decisions."""
 
-    def __init__(self, collection_interval: int = 30):
+    def __init__(self, collection_interval: int = 30) -> None:
         self.collection_interval = collection_interval
         self._running = False
-        self._monitor_task: asyncio.Task | None = None
+        self._monitor_task: asyncio.Task[Any] | None = None
         self.current_metrics: dict[str, float] = {}
         self.metric_history: dict[str, list[tuple[datetime, float]]] = {}
         self.history_retention = timedelta(hours=24)
@@ -200,7 +200,7 @@ class ResourceMonitor:
 
             # Update current metrics
             timestamp = datetime.now()
-            metric_values = {
+            metric_values: dict[str, float] = {
                 "cpu_percent": cpu_percent,
                 "cpu_load": load_avg,
                 "memory_percent": memory.percent,
@@ -209,7 +209,7 @@ class ResourceMonitor:
                 "swap_percent": swap.percent,
                 "disk_percent": (disk.used / disk.total) * 100,
                 "disk_free_gb": disk.free / (1024**3),
-                "process_count": process_count,
+                "process_count": float(process_count),
             }
 
             if disk_io:
@@ -266,7 +266,7 @@ class ResourceMonitor:
                     gauge = metrics.get_custom_metric(metric_id)
                 try:
                     # Prometheus Gauge without labels supports .set(value)
-                    gauge.set(value)  # type: ignore[call-arg]
+                    gauge.set(value)
                 except Exception as e:  # Defensive: do not break monitor on metrics errors
                     logger.debug(f"Metric update failed for {metric_id}: {e}")
 
@@ -325,14 +325,14 @@ class ResourceMonitor:
 class ContainerScaler:
     """Docker container scaling implementation."""
 
-    def __init__(self):
-        self.docker_client = None
+    def __init__(self) -> None:
+        self.docker_client: Optional[Any] = None
         self._initialize_docker()
 
-    def _initialize_docker(self):
+    def _initialize_docker(self) -> None:
         """Initialize Docker client."""
         try:
-            self.docker_client = docker.from_env()
+            self.docker_client = cast(Any, docker).from_env()  # type: ignore[attr-defined]
             logger.info("Docker client initialized")
         except Exception as e:
             logger.warning(f"Docker not available: {e}")
@@ -372,7 +372,7 @@ class ContainerScaler:
             logger.error(f"Failed to create container: {e}")
             return None
 
-    async def destroy_container(self, server_node: ServerNode):
+    async def destroy_container(self, server_node: ServerNode) -> None:
         """Destroy a container instance."""
         if not self.docker_client:
             return
@@ -390,12 +390,12 @@ class ContainerScaler:
 class KubernetesScaler:
     """Kubernetes deployment scaling implementation."""
 
-    def __init__(self, namespace: str = "default"):
+    def __init__(self, namespace: str = "default") -> None:
         self.namespace = namespace
-        self.k8s_client = None
+        self.k8s_client: Optional[Any] = None
         self._initialize_k8s()
 
-    def _initialize_k8s(self):
+    def _initialize_k8s(self) -> None:
         """Initialize Kubernetes client."""
         try:
             # Try to load in-cluster config first
@@ -458,7 +458,7 @@ class KubernetesScaler:
 class PredictiveScaler:
     """Predictive scaling based on historical patterns."""
 
-    def __init__(self, resource_monitor: ResourceMonitor):
+    def __init__(self, resource_monitor: ResourceMonitor) -> None:
         self.resource_monitor = resource_monitor
         self.prediction_window = timedelta(minutes=15)
         self.history_window = timedelta(days=7)
@@ -506,7 +506,7 @@ class PredictiveScaler:
 class DynamicScalingManager:
     """Main dynamic scaling coordinator."""
 
-    def __init__(self, load_balancer: LoadBalancer):
+    def __init__(self, load_balancer: LoadBalancer) -> None:
         self.load_balancer = load_balancer
         self.resource_monitor = ResourceMonitor()
         self.container_scaler = ContainerScaler()
@@ -519,15 +519,15 @@ class DynamicScalingManager:
         self.scaling_history: list[dict[str, Any]] = []
 
         # Control
-        self._running = False
-        self._scaling_task: asyncio.Task | None = None
+    self._running = False
+    self._scaling_task: asyncio.Task[Any] | None = None
 
         # Default policy
         self._create_default_policy()
 
         logger.info("Dynamic scaling manager initialized")
 
-    def _create_default_policy(self):
+    def _create_default_policy(self) -> None:
         """Create default scaling policy."""
         default_metrics = [
             ScalingMetric("cpu_percent", 0, 80, 30, 1.0, ResourceType.CPU),
@@ -546,7 +546,7 @@ class DynamicScalingManager:
 
         self.policies["default"] = default_policy
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the scaling manager."""
         if self._running:
             return
@@ -556,21 +556,19 @@ class DynamicScalingManager:
         self._scaling_task = asyncio.create_task(self._scaling_loop())
         logger.info("Dynamic scaling manager started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the scaling manager."""
         self._running = False
 
         if self._scaling_task:
             self._scaling_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._scaling_task
-            except asyncio.CancelledError:
-                pass
 
         await self.resource_monitor.stop()
         logger.info("Dynamic scaling manager stopped")
 
-    async def _scaling_loop(self):
+    async def _scaling_loop(self) -> None:
         """Main scaling evaluation loop."""
         while self._running:
             try:
@@ -581,9 +579,9 @@ class DynamicScalingManager:
             except Exception as e:
                 logger.error(f"Scaling loop error: {e}")
 
-    async def _evaluate_scaling_policies(self):
+    async def _evaluate_scaling_policies(self) -> None:
         """Evaluate all scaling policies and take action if needed."""
-        for policy_name, policy in self.policies.items():
+        for _policy_name, policy in self.policies.items():
             if not policy.enabled:
                 continue
 
@@ -609,7 +607,7 @@ class DynamicScalingManager:
             elif action in [ScalingAction.SCALE_DOWN, ScalingAction.SCALE_IN]:
                 await self._scale_down(policy, utilization)
 
-    async def _update_policy_metrics(self, policy: ScalingPolicy):
+    async def _update_policy_metrics(self, policy: ScalingPolicy) -> None:
         """Update policy metrics from resource monitor."""
         current_metrics = self.resource_monitor.current_metrics
 
@@ -617,7 +615,7 @@ class DynamicScalingManager:
             if metric.name in current_metrics:
                 metric.current_value = current_metrics[metric.name]
 
-    async def _scale_up(self, policy: ScalingPolicy, utilization: float):
+    async def _scale_up(self, policy: ScalingPolicy, utilization: float) -> None:
         """Scale up resources."""
         try:
             current_servers = len(self.load_balancer.get_available_servers())
@@ -650,7 +648,7 @@ class DynamicScalingManager:
         except Exception as e:
             logger.error(f"Scale up failed: {e}")
 
-    async def _scale_down(self, policy: ScalingPolicy, utilization: float):
+    async def _scale_down(self, policy: ScalingPolicy, utilization: float) -> None:
         """Scale down resources."""
         try:
             available_servers = self.load_balancer.get_available_servers()
@@ -686,7 +684,7 @@ class DynamicScalingManager:
 
     def _record_scaling_event(
         self, action: str, policy: str, utilization: float, new_count: int
-    ):
+    ) -> None:
         """Record a scaling event."""
         event = {
             "timestamp": datetime.now().isoformat(),
@@ -703,15 +701,27 @@ class DynamicScalingManager:
         if len(self.scaling_history) > 1000:
             self.scaling_history = self.scaling_history[-500:]
 
-        # Record metrics
-        metrics.record_counter(f"scaling_action_{action}", 1)
+        # Record metrics via a custom counter
+        counter_name = f"scaling_action_{action}"
+        counter = metrics.get_custom_metric(counter_name)
+        if counter is None:
+            metrics.add_custom_metric(
+                counter_name,
+                "counter",
+                f"Number of '{action}' scaling actions",
+            )
+            counter = metrics.get_custom_metric(counter_name)
+        try:
+            counter.inc()  # type: ignore[call-arg]
+        except Exception as e:
+            logger.debug(f"Counter update failed for {counter_name}: {e}")
 
-    def add_policy(self, policy: ScalingPolicy):
+    def add_policy(self, policy: ScalingPolicy) -> None:
         """Add a scaling policy."""
         self.policies[policy.name] = policy
         logger.info(f"Added scaling policy: {policy.name}")
 
-    def remove_policy(self, policy_name: str):
+    def remove_policy(self, policy_name: str) -> None:
         """Remove a scaling policy."""
         if policy_name in self.policies:
             del self.policies[policy_name]
