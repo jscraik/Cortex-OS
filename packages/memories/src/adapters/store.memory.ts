@@ -1,3 +1,4 @@
+import { isExpired } from "../core/ttl.js";
 import type { Memory, MemoryId } from "../domain/types.js";
 import type {
 	MemoryStore,
@@ -63,38 +64,16 @@ export class InMemoryStore implements MemoryStore {
 		return itemsWithScores;
 	}
 
-	async purgeExpired(nowISO: string): Promise<number> {
-		const now = new Date(nowISO).getTime();
-		let purgedCount = 0;
+        async purgeExpired(nowISO: string): Promise<number> {
+                let purgedCount = 0;
 
-		for (const [id, memory] of this.data.entries()) {
-			if (memory.ttl) {
-				try {
-					const created = new Date(memory.createdAt).getTime();
-					// Parse ISO duration (simplified version)
-					const match = memory.ttl.match(
-						/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/,
-					);
-					if (match) {
-						const days = Number(match[1] || 0);
-						const hours = Number(match[2] || 0);
-						const minutes = Number(match[3] || 0);
-						const seconds = Number(match[4] || 0);
-						const ttlMs =
-							(((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
+                for (const [id, memory] of this.data.entries()) {
+                        if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
+                                this.data.delete(id);
+                                purgedCount++;
+                        }
+                }
 
-						if (created + ttlMs <= now) {
-							this.data.delete(id);
-							purgedCount++;
-						}
-					}
-				} catch (_error) {
-					// Ignore invalid TTL formats
-					console.warn(`Invalid TTL format for memory ${id}: ${memory.ttl}`);
-				}
-			}
-		}
-
-		return purgedCount;
-	}
+                return purgedCount;
+        }
 }
