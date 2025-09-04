@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import click
+from typing import Any
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
@@ -158,8 +159,8 @@ def create_plugin():
 def health_check(config_file: str) -> None:
     """Perform comprehensive health check of MCP components."""
 
-    async def check_health() -> dict[str, object]:
-        health_results: dict[str, object] = {}
+    async def check_health() -> dict[str, Any]:
+        health_results: dict[str, Any] = {}
 
         try:
             # Load configuration
@@ -252,7 +253,7 @@ def health_check(config_file: str) -> None:
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-    _task = progress.add_task("Performing health check...", total=None)
+        _task = progress.add_task("Performing health check...", total=None)
 
         try:
             results = asyncio.run(check_health())
@@ -414,7 +415,7 @@ def reset_server(config_file: str) -> None:
                     _config_data = json.load(f)
             else:
                 console.print("[yellow]No configuration found, using defaults[/yellow]")
-                _config: dict = {}
+                _config = {}
 
             # Reset components
             console.print("[yellow]Resetting server state...[/yellow]")
@@ -458,7 +459,7 @@ def reset_server(config_file: str) -> None:
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-    _task = progress.add_task("Resetting server...", total=None)
+        _task = progress.add_task("Resetting server...", total=None)
 
         try:
             asyncio.run(perform_reset())
