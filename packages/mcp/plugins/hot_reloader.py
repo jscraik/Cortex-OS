@@ -51,17 +51,22 @@ class PluginHotReloader:
             self.auto_reload = False
             return
 
-        class PluginFileHandler(FileSystemEventHandler):
-            def __init__(self, reloader: "PluginHotReloader"):
-                self.reloader = reloader
+        def _on_modified(self, event: Any) -> None:  # pragma: no cover - IO callback
+            if getattr(event, "src_path", "").endswith(".py"):
+                plugin_name = Path(event.src_path).stem
+                self.reloader.schedule_reload(plugin_name)
 
-            def on_modified(self, event: Any) -> None:
-                if event.src_path.endswith(".py"):
-                    plugin_name = Path(event.src_path).stem
-                    self.reloader.schedule_reload(plugin_name)
+        def _init(self, reloader: "PluginHotReloader") -> None:
+            self.reloader = reloader
+
+        PluginFileHandler = type(
+            "PluginFileHandler",
+            (FileSystemEventHandler,),
+            {"__init__": _init, "on_modified": _on_modified},
+        )
 
         observer = Observer()
-        observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
+    observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
         observer.start()
         # Store observer dynamically to avoid strict typing on optional dep
         self.observer = observer
