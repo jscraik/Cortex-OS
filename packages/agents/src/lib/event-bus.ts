@@ -50,7 +50,24 @@ export function createEventBus(config: EventBusConfig = {}): EventBus {
                         emitter.emit(envelope.type, envelope);
                 },
                 subscribe: <T>(type: string, handler: (msg: Envelope<T>) => void) => {
-                        const wrapped = (e: Envelope) => handler(e as Envelope<T>);
+                        const isEnvelope = (obj: any): obj is Envelope<T> => {
+                                return (
+                                        obj &&
+                                        typeof obj === "object" &&
+                                        typeof obj.type === "string" &&
+                                        "data" in obj &&
+                                        typeof obj.id === "string" &&
+                                        typeof obj.timestamp === "string" &&
+                                        typeof obj.source === "string"
+                                );
+                        };
+                        const wrapped = (e: Envelope) => {
+                                if (isEnvelope(e)) {
+                                        handler(e);
+                                } else {
+                                        console.error("Received event with invalid Envelope type", e);
+                                }
+                        };
                         emitter.on(type, wrapped);
                         return {
                                 unsubscribe: () => {
