@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
+"""Simple embedding regression suite with logging and parallelization."""
 from __future__ import annotations
 
 import argparse
 import json
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from cortex_mlx.router import ModelRouter
+
+logger = logging.getLogger(__name__)
 
 
 def main():
@@ -19,16 +24,22 @@ def main():
     router = ModelRouter()
     suite_path = Path(__file__).with_name("traces").joinpath("v1", f"{args.suite}.json")
     suite = json.loads(Path(suite_path).read_text())
-    results = []
-    failures = 0
-    for case in suite:
+
+    def run(case: dict) -> dict:
         text = case["text"]
-        a = router.embed(text)["embedding"]
-        b = router.embed(text)["embedding"]
-        ok = isinstance(a, list) and len(a) > 0 and a == b
-        if not ok:
-            failures += 1
-        results.append({"name": case["name"], "ok": ok, "len": len(a)})
+        try:
+            a = router.embed(text)["embedding"]
+            b = router.embed(text)["embedding"]
+            ok = isinstance(a, list) and len(a) > 0 and a == b
+            return {"name": case["name"], "ok": ok, "len": len(a)}
+        except Exception as e:  # pragma: no cover - diagnostics only
+            logger.error("embed failed for %s: %s", case["name"], e)
+            return {"name": case["name"], "ok": False, "len": 0, "error": str(e)}
+
+    with ThreadPoolExecutor() as ex:
+        results = list(ex.map(run, suite))
+
+    failures = sum(1 for r in results if not r["ok"])
 
     if args.out:
         Path(args.out).write_text(
