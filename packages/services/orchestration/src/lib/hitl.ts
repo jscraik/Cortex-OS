@@ -1,65 +1,83 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { EventEmitter } from "node:events";
+import { randomUUID } from "node:crypto";
 
-const STORE =
-	process.env.CORTEX_HITL_STORE ||
-	path.join(process.cwd(), "data", "events", "hitl.jsonl");
-
-async function appendJsonl(file: string, obj: any) {
-	await fs.mkdir(path.dirname(file), { recursive: true });
-	await fs.appendFile(file, `${JSON.stringify(obj)}\n`, "utf8");
+interface HitlRequest {
+        id: string;
+        runId: string;
+        node: string;
+        proposal: unknown;
+        ts: string;
 }
 
-async function readJsonl(file: string): Promise<any[]> {
-	try {
-		const text = await fs.readFile(file, "utf8");
-		return text
-			.split(/\n+/)
-			.filter(Boolean)
-			.map((l) => JSON.parse(l));
-	} catch (e: any) {
-		if (e?.code === "ENOENT") return [];
-		throw e;
-	}
+interface HitlDecision {
+        requestId: string;
+        approved: boolean;
+        ts: string;
 }
 
+const emitter = new EventEmitter();
+const pending = new Map<string, (approved: boolean) => void>();
+
+/**
+ * Wait for a human decision on a proposal. Emits a "request" event that
+ * listeners can handle to present the proposal to a human reviewer.
+ */
 export async function waitForApproval(
-	runId: string,
-	node: string,
-	proposal: unknown,
+        runId: string,
+        node: string,
+        proposal: unknown,
 ): Promise<boolean> {
-	const id = crypto.randomUUID();
-	const request = {
-		id,
-		type: "request",
-		runId,
-		node,
-		proposal,
-		ts: new Date().toISOString(),
-	};
-	await appendJsonl(STORE, request);
+        const id = randomUUID();
+        const req: HitlRequest = {
+                id,
+                runId,
+                node,
+                proposal,
+                ts: new Date().toISOString(),
+        };
+        emitter.emit("request", req);
 
-	const deadline =
-		Date.now() + (Number(process.env.CORTEX_HITL_TIMEOUT_MS) || 5 * 60_000);
-	while (Date.now() < deadline) {
-		const rows = await readJsonl(STORE);
-		const decision = rows.find(
-			(r) => r.type === "decision" && r.requestId === id,
-		);
-		if (decision) return Boolean(decision.approved);
-		await new Promise((r) => setTimeout(r, 500));
-	}
-	throw new Error("HITL approval timeout");
+        const timeout = Number(process.env.CORTEX_HITL_TIMEOUT_MS) || 5 * 60_000;
+        return await new Promise<boolean>((resolve, reject) => {
+                const to = setTimeout(() => {
+                        pending.delete(id);
+                        reject(new Error("HITL approval timeout"));
+                }, timeout);
+                pending.set(id, (approved) => {
+                        clearTimeout(to);
+                        resolve(approved);
+                });
+        });
 }
+
+/** Submit a decision for a given request. */
+export function submitDecision(requestId: string, approved: boolean) {
+        const resolver = pending.get(requestId);
+        if (resolver) {
+                pending.delete(requestId);
+                resolver(approved);
+        }
+        const decision: HitlDecision = {
+                requestId,
+                approved,
+                ts: new Date().toISOString(),
+        };
+        emitter.emit("decision", decision);
+}
+
+/** Subscribe to HITL requests. */
+export function onHitlRequest(listener: (req: HitlRequest) => void) {
+        emitter.on("request", listener);
+}
+
 export function requiresApproval(proposal: unknown) {
-	// naive heuristic: if proposal includes dataClass === 'sensitive' or path outside workspace
-	try {
-		const p = proposal as any;
-		if (p?.dataClass === "sensitive") return true;
-		if (p?.path && typeof p.path === "string") {
-			const cwd = process.cwd();
-			return !p.path.startsWith(cwd);
-		}
-	} catch {}
-	return false;
+        try {
+                const p = proposal as any;
+                if (p?.dataClass === "sensitive") return true;
+                if (p?.path && typeof p.path === "string") {
+                        const cwd = process.cwd();
+                        return !p.path.startsWith(cwd);
+                }
+        } catch {}
+        return false;
 }
