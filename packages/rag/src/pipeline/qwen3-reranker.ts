@@ -188,13 +188,12 @@ export class Qwen3Reranker implements Reranker {
 	private getPythonScript(): string {
 		// Co-locate script next to package root, reuse same pattern as generation
 		const scriptPath = path.resolve(__dirname, "../../python/qwen3_rerank.py");
-		try {
-			return readFileSync(scriptPath, "utf8");
-		} catch {
-			// Fallback minimal script: echoes zero scores to avoid hard-crash in dev
-			return "import json,sys; data=json.load(sys.stdin); print(json.dumps({'scores':[0.0]*len(data.get('documents',[]))}))";
-		}
-	}
+                try {
+                        return readFileSync(scriptPath, "utf8");
+                } catch {
+                        throw new Error(`Missing Qwen3 reranker script at ${scriptPath}`);
+                }
+        }
 
   /**
    * Create batches from documents array

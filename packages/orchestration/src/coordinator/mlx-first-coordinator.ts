@@ -4,9 +4,10 @@
  */
 
 import {
-	buildAgentPrompt,
-	parseAgentSelection,
-} from "../../../../src/lib/agent-selection.js";
+        buildAgentPrompt,
+        parseAgentSelection,
+        type AgentInfo,
+} from "../utils/agent-selection.js";
 import { OrchestrationError } from "../errors.js";
 import { MLXFirstModelProvider } from "../providers/mlx-first-provider.js";
 import {
@@ -272,11 +273,7 @@ Provide quick decision with reasoning.`;
 
 	async selectOptimalAgent(
 		taskDescription: string,
-		availableAgents: Array<{
-			id: string;
-			capabilities: string[];
-			currentLoad: number;
-		}>,
+		availableAgents: AgentInfo[],
 		urgency: "low" | "medium" | "high" | "critical" = "medium",
 	): Promise<{ agentId: string; reasoning: string; confidence: number }> {
 		const prompt = buildAgentPrompt(taskDescription, availableAgents, urgency);

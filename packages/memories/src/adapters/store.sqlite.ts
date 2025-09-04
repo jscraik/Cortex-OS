@@ -1,3 +1,4 @@
+import { isExpired } from "../core/ttl.js";
 import DatabaseImpl from "better-sqlite3";
 import type { Memory, MemoryId } from "../domain/types.js";
 import type {
@@ -259,62 +260,46 @@ export class SQLiteStore implements MemoryStore {
 		}
 	}
 
-	async purgeExpired(nowISO: string): Promise<number> {
-		const now = new Date(nowISO).getTime();
-		let purgedCount = 0;
+        async purgeExpired(nowISO: string): Promise<number> {
+                let purgedCount = 0;
 
-		// Get all memories with TTL
-		const stmt = this.db.prepare(
-			"SELECT * FROM memories WHERE ttl IS NOT NULL",
-		);
-		const rows = stmt.all();
+                const stmt = this.db.prepare("SELECT * FROM memories WHERE ttl IS NOT NULL");
+                const rows = stmt.all();
 
-		const expiredIds: string[] = [];
+                const expiredIds: string[] = [];
+                for (const row of rows) {
+                        const memory = this.rowToMemory(row);
+                        if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
+                                expiredIds.push(memory.id);
+                        }
+                }
 
-		for (const row of rows) {
-			const memory = this.rowToMemory(row);
-			if (!memory.ttl) continue;
-			const created = new Date(memory.createdAt).getTime();
-			const ttlRegex = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/;
-			const match = ttlRegex.exec(memory.ttl);
-			if (!match) continue;
-			const days = Number(match[1] || 0);
-			const hours = Number(match[2] || 0);
-			const minutes = Number(match[3] || 0);
-			const seconds = Number(match[4] || 0);
-			const ttlMs =
-				(((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
-			if (created + ttlMs <= now) expiredIds.push(memory.id);
-		}
+                // Delete expired memories
+                if (expiredIds.length > 0) {
+                        const placeholders = expiredIds.map(() => "?").join(",");
+                        const deleteStmt = this.db.prepare(`DELETE FROM memories WHERE id IN (${placeholders})`);
+                        const result = deleteStmt.run(...expiredIds);
+                        purgedCount = result.changes;
+                }
 
-		// Delete expired memories
-		if (expiredIds.length > 0) {
-			const placeholders = expiredIds.map(() => "?").join(",");
-			const deleteStmt = this.db.prepare(
-				`DELETE FROM memories WHERE id IN (${placeholders})`,
-			);
-			const result = deleteStmt.run(...expiredIds);
-			purgedCount = result.changes;
-		}
+                return purgedCount;
+        }
 
-		return purgedCount;
-	}
-
-	private rowToMemory(row: any): Memory {
-		return {
-			id: row.id,
-			kind: row.kind,
-			text: row.text ?? undefined,
-			vector: row.vector ? JSON.parse(row.vector) : undefined,
-			tags: row.tags ? JSON.parse(row.tags) : [],
-			ttl: row.ttl ?? undefined,
-			createdAt: row.createdAt,
-			updatedAt: row.updatedAt,
-			provenance: row.provenance
-				? JSON.parse(row.provenance)
-				: { source: "unknown" },
-			policy: row.policy ? JSON.parse(row.policy) : undefined,
-			embeddingModel: row.embeddingModel ?? undefined,
-		};
-	}
+        private rowToMemory(row: any): Memory {
+                return {
+                        id: row.id,
+                        kind: row.kind,
+                        text: row.text ?? undefined,
+                        vector: row.vector ? JSON.parse(row.vector) : undefined,
+                        tags: row.tags ? JSON.parse(row.tags) : [],
+                        ttl: row.ttl ?? undefined,
+                        createdAt: row.createdAt,
+                        updatedAt: row.updatedAt,
+                        provenance: row.provenance
+                                ? JSON.parse(row.provenance)
+                                : { source: "unknown" },
+                        policy: row.policy ? JSON.parse(row.policy) : undefined,
+                        embeddingModel: row.embeddingModel ?? undefined,
+                };
+        }
 }

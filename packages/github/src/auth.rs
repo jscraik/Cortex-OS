@@ -1,4 +1,5 @@
 use crate::error::{GitHubError, GitHubResult};
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime};
 use tracing::{debug, warn};
@@ -109,7 +110,7 @@ impl TokenManager {
                 let auth_token = AuthToken {
                     token: token.clone(),
                     expires_at: None, // PATs don't expire
-                    scopes: vec![], // Will be populated by validation
+                    scopes: vec![],   // Will be populated by validation
                     token_type: "Bearer".to_string(),
                 };
 
@@ -177,7 +178,9 @@ impl TokenManager {
 
             if rate_limit_remaining == 0 {
                 warn!("GitHub API rate limit exceeded during token validation");
-                return Err(GitHubError::RateLimit("API rate limit exceeded".to_string()));
+                return Err(GitHubError::RateLimit(
+                    "API rate limit exceeded".to_string(),
+                ));
             }
 
             warn!("GitHub token validation failed: forbidden");
@@ -222,16 +225,16 @@ impl TokenManager {
             .await?;
 
         if !response.status().is_success() {
-            return Err(GitHubError::Authentication("GitHub App authentication failed".to_string()));
+            return Err(GitHubError::Authentication(
+                "GitHub App authentication failed".to_string(),
+            ));
         }
 
         let token_response: InstallationTokenResponse = response.json().await?;
 
         // Parse expiration time
         let expires_at = chrono::DateTime::parse_from_rfc3339(&token_response.expires_at)
-            .map_err(|_| {
-                GitHubError::Configuration("Invalid token expiration format".to_string())
-            })?
+            .map_err(|_| GitHubError::Configuration("Invalid token expiration format".to_string()))?
             .timestamp();
 
         let auth_token = AuthToken {
@@ -246,36 +249,25 @@ impl TokenManager {
     }
 
     /// Create JWT for GitHub App authentication
-    fn create_github_app_jwt(&self, app_id: &str, _private_key: &str) -> GitHubResult<String> {
-        // For now, return a placeholder
-        // In a full implementation, we'd use the `jsonwebtoken` crate to create a proper JWT
-        // signed with the GitHub App's private key
-
-        // This is a simplified version for demonstration
-        // Real implementation would require:
-        // 1. Parse the private key (PEM format)
-        // 2. Create JWT with proper header and payload
-        // 3. Sign with RS256 algorithm
-
+    /// Create JWT for GitHub App authentication
+    fn create_github_app_jwt(&self, app_id: &str, private_key: &str) -> GitHubResult<String> {
         let now = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
+            .map_err(|e| GitHubError::Authentication(format!("System time error: {}", e)))?
             .as_secs();
 
-        let payload = GitHubAppJWT {
+        let claims = GitHubAppJWT {
             iss: app_id.to_string(),
             iat: now,
             exp: now + 600, // 10 minutes
         };
 
-        // Placeholder - would use proper JWT signing in production
-    let jwt_payload = serde_json::to_string(&payload)?;
-    use base64::engine::general_purpose::STANDARD as BASE64;
-    use base64::Engine;
-    let encoded = BASE64.encode(jwt_payload.as_bytes());
+        let encoding_key = EncodingKey::from_rsa_pem(private_key.as_bytes())
+            .map_err(|e| GitHubError::Authentication(format!("Invalid private key: {}", e)))?;
+        let header = Header::new(Algorithm::RS256);
 
-        warn!("Using placeholder JWT - implement proper signing for production");
-        Ok(encoded)
+        encode(&header, &claims, &encoding_key)
+            .map_err(|e| GitHubError::Authentication(format!("JWT encoding failed: {}", e)))
     }
 
     /// Get current token info

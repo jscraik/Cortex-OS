@@ -15,9 +15,8 @@ export class PyEmbedder {
       if (!json || !Array.isArray(json.embeddings))
         throw new Error("Invalid embed response");
       return json.embeddings;
-    } catch {
-      // Fallback: simple deterministic encoding to keep flow working in dev
-      return texts.map((t) => [t.length, 0, 0]);
+    } catch (err) {
+      throw new Error(`Python embedder failed: ${err}`);
     }
   }
 }

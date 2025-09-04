@@ -6,6 +6,9 @@ import addFormats from "ajv-formats";
 import cors from "cors";
 import express, { type Application } from "express";
 import helmet from "helmet";
+import { z } from "zod";
+import { logger } from "./logger.js";
+import { collectDefaultMetrics, Registry } from "prom-client";
 
 interface SchemaRegistryOptions {
 	port?: number;
@@ -75,21 +78,23 @@ export class SchemaRegistry {
 	private readonly app: Application;
 	private readonly port: number;
 	private readonly contractsPath: string;
-	private readonly schemaCache = new Map<string, SchemaDocument>();
-	private readonly ajv: Ajv;
-	private readonly validatorCache = new Map<string, ValidateFunction>();
+        private readonly schemaCache = new Map<string, SchemaDocument>();
+        private readonly ajv: Ajv;
+        private readonly validatorCache = new Map<string, ValidateFunction>();
+        private readonly metricsRegistry = new Registry();
 
 	constructor(options: SchemaRegistryOptions = {}) {
 		this.port = options.port || 3001;
 		this.contractsPath =
 			options.contractsPath || path.join(process.cwd(), "contracts");
 		this.app = express();
-		this.ajv = new Ajv({ strict: false });
-		addFormats(this.ajv);
+                this.ajv = new Ajv({ strict: true });
+                addFormats(this.ajv);
 
-		this.setupMiddleware();
-		this.setupRoutes();
-	}
+                collectDefaultMetrics({ register: this.metricsRegistry });
+                this.setupMiddleware();
+                this.setupRoutes();
+        }
 
 	private setupMiddleware(): void {
 		this.app.use(helmet());
@@ -99,32 +104,113 @@ export class SchemaRegistry {
 				credentials: true,
 			}),
 		);
-		this.app.use(express.json());
-	}
+                this.app.use(express.json());
+                this.app.use((req, res, next) => {
+                        if (req.path === "/health" || req.path === "/metrics") {
+                                return next();
+                        }
+                        const expectedKey = process.env.REGISTRY_API_KEY;
+                        if (expectedKey && req.get("x-api-key") !== expectedKey) {
+                                return res.status(401).json({ error: "Unauthorized" });
+                        }
+                        next();
+                });
+        }
 
 	private setupRoutes(): void {
-		// Health check endpoint
-		this.app.get("/health", (_req, res) => {
-			res.json({ status: "healthy", timestamp: new Date().toISOString() });
-		});
+                // Health check endpoint
+                this.app.get("/health", (_req, res) => {
+                        res.json({ status: "healthy", timestamp: new Date().toISOString() });
+                });
 
-		// List all available schemas
-		this.app.get("/schemas", (_req, res) => {
-			this.getAvailableSchemas()
-				.then((schemas) => {
-					res.json({
-						schemas,
-						count: schemas.length,
-						timestamp: new Date().toISOString(),
-					});
-				})
-				.catch((error) => {
-					res.status(500).json({
-						error: "Failed to list schemas",
-						message: error instanceof Error ? error.message : "Unknown error",
-					});
-				});
-		});
+                // Metrics endpoint
+                this.app.get("/metrics", async (_req, res) => {
+                        try {
+                                res.set("Content-Type", this.metricsRegistry.contentType);
+                                res.end(await this.metricsRegistry.metrics());
+                        } catch (error) {
+                                logger.error({ err: error }, "Failed to collect metrics");
+                                res.status(500).end();
+                        }
+                });
+
+                // List all available schemas
+                this.app.get("/schemas", (_req, res) => {
+                        this.getAvailableSchemas()
+                                .then((schemas) => {
+                                        res.json({
+                                                schemas,
+                                                count: schemas.length,
+                                                timestamp: new Date().toISOString(),
+                                        });
+                                })
+                                .catch((error) => {
+                                        logger.error({ err: error }, "Failed to list schemas");
+                                        res.status(500).json({
+                                                error: "Failed to list schemas",
+                                                message: error instanceof Error ? error.message : "Unknown error",
+                                        });
+                                });
+                });
+
+                // Register new schema
+                this.app.post("/schemas", async (req, res) => {
+                        const payloadSchema = z.object({
+                                category: z.string(),
+                                schema: z.record(z.any()),
+                        });
+                        const parsed = payloadSchema.safeParse(req.body);
+                        if (!parsed.success) {
+                                return res.status(400).json({
+                                        error: "Invalid schema payload",
+                                        issues: parsed.error.issues,
+                                });
+                        }
+
+                        const { category, schema } = parsed.data;
+                        if (typeof schema.$id !== "string") {
+                                return res.status(400).json({
+                                        error: "Schema must include $id",
+                                });
+                        }
+
+                        try {
+                                this.ajv.compile(schema);
+                        } catch (error) {
+                                logger.error({ err: error }, "Invalid schema");
+                                return res.status(400).json({
+                                        error: "Invalid schema",
+                                        message:
+                                                error instanceof Error
+                                                        ? error.message
+                                                        : "Unknown error",
+                                });
+                        }
+
+                        const categoryDir = path.join(this.contractsPath, category);
+                        const fileName = `${schema.$id.replace(/[^a-zA-Z0-9-_]/g, "_")}.json`;
+                        const filePath = path.join(categoryDir, fileName);
+
+                        try {
+                                await fs.mkdir(categoryDir, { recursive: true });
+                                await fs.writeFile(filePath, JSON.stringify(schema, null, 2));
+                                this.schemaCache.set(schema.$id, schema);
+                                this.validatorCache.delete(schema.$id);
+                                return res.status(201).json({
+                                        message: "Schema registered",
+                                        schemaId: schema.$id,
+                                });
+                        } catch (error) {
+                                logger.error({ err: error }, "Failed to register schema");
+                                return res.status(500).json({
+                                        error: "Failed to register schema",
+                                        message:
+                                                error instanceof Error
+                                                        ? error.message
+                                                        : "Unknown error",
+                                });
+                        }
+                });
 
 		// Get specific schema by ID
 		this.app.get("/schemas/:schemaId", (req, res) => {
@@ -145,13 +231,14 @@ export class SchemaRegistry {
 						timestamp: new Date().toISOString(),
 					});
 				})
-				.catch((error) => {
-					res.status(500).json({
-						error: "Failed to retrieve schema",
-						message: error instanceof Error ? error.message : "Unknown error",
-					});
-				});
-		});
+                                .catch((error) => {
+                                        logger.error({ err: error }, "Failed to retrieve schema");
+                                        res.status(500).json({
+                                                error: "Failed to retrieve schema",
+                                                message: error instanceof Error ? error.message : "Unknown error",
+                                        });
+                                });
+                });
 
 		// Validate event against schema
 		this.app.post("/validate/:schemaId", (req, res) => {
@@ -186,13 +273,14 @@ export class SchemaRegistry {
 						timestamp: new Date().toISOString(),
 					});
 				})
-				.catch((error) => {
-					res.status(500).json({
-						error: "Validation failed",
-						message: error instanceof Error ? error.message : "Unknown error",
-					});
-				});
-		});
+                                .catch((error) => {
+                                        logger.error({ err: error }, "Validation failed");
+                                        res.status(500).json({
+                                                error: "Validation failed",
+                                                message: error instanceof Error ? error.message : "Unknown error",
+                                        });
+                                });
+                });
 
 		// Get schemas by category
 		this.app.get("/categories/:category", (req, res) => {
@@ -207,14 +295,23 @@ export class SchemaRegistry {
 						timestamp: new Date().toISOString(),
 					});
 				})
-				.catch((error) => {
-					res.status(500).json({
-						error: "Failed to retrieve category schemas",
-						message: error instanceof Error ? error.message : "Unknown error",
-					});
-				});
-		});
-	}
+                                .catch((error) => {
+                                        logger.error({ err: error }, "Failed to retrieve category schemas");
+                                        res.status(500).json({
+                                                error: "Failed to retrieve category schemas",
+                                                message: error instanceof Error ? error.message : "Unknown error",
+                                        });
+                                });
+                });
+
+                // Global error handler
+                this.app.use(
+                        (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+                                logger.error({ err }, "Unhandled error");
+                                res.status(500).json({ error: "Internal Server Error" });
+                        },
+                );
+        }
 
 	private async getAvailableSchemas(): Promise<SchemaMeta[]> {
 		const schemas: SchemaMeta[] = [];
@@ -393,11 +490,11 @@ export class SchemaRegistry {
 		return validate(eventData) as boolean;
 	}
 
-	public start(): void {
-		this.app.listen(this.port, () => {
-			// Server started successfully
-		});
-	}
+        public start(): void {
+                this.app.listen(this.port, () => {
+                        logger.info(`Schema Registry listening on port ${this.port}`);
+                });
+        }
 
 	public getApp(): Application {
 		return this.app;

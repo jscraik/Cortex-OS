@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { z } from "zod";
 import { validateCommandInput } from "./validation.js";
 
 // Secure command execution wrapper that prevents command injection
@@ -25,10 +26,36 @@ export class SecureCommandExecutor {
 		"info",
 	]);
 
-	// Resource limits
-	private static readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
-	private static readonly DEFAULT_MEMORY_LIMIT = 1024 * 1024 * 100; // 100 MB
-	private static readonly MAX_CONCURRENT_PROCESSES = 10;
+        // Resource limits (configurable)
+        private static DEFAULT_TIMEOUT = 30000; // 30 seconds
+        private static DEFAULT_MEMORY_LIMIT = 1024 * 1024 * 100; // 100 MB
+        private static MAX_CONCURRENT_PROCESSES = 10;
+
+        private static readonly configSchema = z.object({
+                defaultTimeout: z.number().int().positive().optional(),
+                defaultMemoryLimit: z.number().int().positive().optional(),
+                maxConcurrentProcesses: z.number().int().positive().optional(),
+        });
+
+        static configure(options: {
+                defaultTimeout?: number;
+                defaultMemoryLimit?: number;
+                maxConcurrentProcesses?: number;
+        }) {
+                const result = SecureCommandExecutor.configSchema.safeParse(options);
+                if (!result.success) {
+                        throw new Error(`Invalid configuration: ${result.error}`);
+                }
+                if (result.data.defaultTimeout !== undefined) {
+                        SecureCommandExecutor.DEFAULT_TIMEOUT = result.data.defaultTimeout;
+                }
+                if (result.data.defaultMemoryLimit !== undefined) {
+                        SecureCommandExecutor.DEFAULT_MEMORY_LIMIT = result.data.defaultMemoryLimit;
+                }
+                if (result.data.maxConcurrentProcesses !== undefined) {
+                        SecureCommandExecutor.MAX_CONCURRENT_PROCESSES = result.data.maxConcurrentProcesses;
+                }
+        }
 
 	// Process tracking
 	private static concurrentProcesses = 0;

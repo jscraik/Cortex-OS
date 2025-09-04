@@ -34,10 +34,15 @@ export async function prepareStore(
 	E: Embedder,
 	S: Store,
 ) {
-	for (const d of dataset.docs) {
-		// Use stable mem:// URI so doc.id is traceable for matching.
-		await ingestText(`mem://${d.id}`, d.text, E as any, S as any);
-	}
+        for (const d of dataset.docs) {
+                // Use stable mem:// URI so doc.id is traceable for matching.
+                await ingestText({
+                        source: `mem://${d.id}`,
+                        text: d.text,
+                        embedder: E as any,
+                        store: S as any,
+                });
+        }
 }
 
 export async function runRetrievalEval(
