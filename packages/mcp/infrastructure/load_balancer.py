@@ -3,13 +3,15 @@
 import asyncio
 import hashlib
 import time
-from collections.abc import Callable, AsyncIterator
+from collections.abc import Callable
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, AsyncIterator
+from typing import Any
 
+from collections.abc import AsyncIterator
+import aiohttp  # type: ignore[import-not-found]
 import aiohttp  # type: ignore[import-not-found]
 
 from ..observability.metrics import get_metrics_collector
