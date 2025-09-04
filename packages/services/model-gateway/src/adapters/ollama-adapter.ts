@@ -157,6 +157,9 @@ export class OllamaAdapter implements OllamaAdapterApi {
 		documents: string[],
 		model?: string,
 	): Promise<{ scores: number[]; model: string }> {
-		return this.impl.rerank?.(query, documents, model) as any;
+		if (!this.impl.rerank) {
+			return Promise.reject(new Error("rerank method is not implemented in OllamaAdapterApi"));
+		}
+		return this.impl.rerank(query, documents, model);
 	}
 }
