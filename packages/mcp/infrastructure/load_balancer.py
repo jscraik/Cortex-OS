@@ -159,7 +159,7 @@ class HealthChecker:
         self.timeout = timeout
         self.session: aiohttp.ClientSession | None = None
         self._running = False
-    self._check_task: asyncio.Task[None] | None = None
+    self._check_task = None
 
     async def start(self) -> None:
         """Start the health checker."""
