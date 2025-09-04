@@ -30,10 +30,8 @@ class MCPClient:
         await self.transport.disconnect()
         if self._receive_task is not None:
             self._receive_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._receive_task
-            except asyncio.CancelledError:
-                pass
             self._receive_task = None
 
     async def _handle_incoming(self, message: MCPMessage) -> MCPMessage | None:
