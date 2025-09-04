@@ -3,7 +3,7 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from alembic import command
 from alembic.config import Config
@@ -16,17 +16,17 @@ from ..observability.structured_logging import get_logger
 from .database import DatabaseConfig, get_database_manager
 from . import models
 
-logger = get_logger(__name__)
-metrics = get_metrics_collector()
+logger: Any = get_logger(__name__)
+metrics: Any = get_metrics_collector()
 
 
 class MigrationManager:
     """Manages database migrations using Alembic."""
 
     def __init__(self, database_config: DatabaseConfig | None = None):
-        self.db_config: DatabaseConfig = database_config or DatabaseConfig()
-        self.migrations_dir: Path = Path(__file__).parent / "migrations"
-        self.alembic_cfg: Config | None = None
+    self.db_config = database_config or DatabaseConfig()
+    self.migrations_dir: Path = Path(__file__).parent / "migrations"
+    self.alembic_cfg: Any | None = None
         self._setup_alembic_config()
 
     def _setup_alembic_config(self) -> None:
@@ -41,7 +41,7 @@ class MigrationManager:
             self._create_alembic_ini(alembic_ini)
 
         # Create Alembic config
-        cfg = Config(str(alembic_ini))
+    cfg: Any = Config(str(alembic_ini))
         self.alembic_cfg = cfg
         cfg.set_main_option("script_location", str(self.migrations_dir))
 
@@ -391,14 +391,14 @@ else:
 
                 # Check if current schema matches expected
                 # This is a simplified check - full implementation would compare all tables/columns
-                current_tables = set(context.get_bind().table_names())
-                base = getattr(models, "Base", None)
+                current_tables: set[str] = set(context.get_bind().table_names())
+                base: Any = getattr(models, "Base", None)
                 if base is None:
                     raise RuntimeError("models.Base not found")
-                expected_tables = set(base.metadata.tables.keys())
+                expected_tables: set[str] = set(base.metadata.tables.keys())
 
-                missing_tables = expected_tables - current_tables
-                extra_tables = current_tables - expected_tables
+                missing_tables: set[str] = expected_tables - current_tables
+                extra_tables: set[str] = current_tables - expected_tables
 
             sync_engine.dispose()
 
@@ -429,7 +429,7 @@ else:
             # Ensure database connectivity (manager obtained if needed)
             await get_database_manager()
 
-            backup_info = {
+            backup_info: dict[str, Any] = {
                 "backup_path": backup_path,
                 "timestamp": asyncio.get_event_loop().time(),
                 "database_type": self.db_config.database_url.split("://")[0],
