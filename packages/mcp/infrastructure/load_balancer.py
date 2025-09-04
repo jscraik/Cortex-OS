@@ -199,7 +199,7 @@ class HealthChecker:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Health check loop error: {e}")
+                logger.error("Health check loop error", exc_info=e)
 
     async def check_server_health(self, server: ServerNode) -> bool:
         """Check health of a single server."""
@@ -225,7 +225,8 @@ class HealthChecker:
                             server.cpu_usage = health_data.get("cpu_usage", 0.0)
                             server.memory_usage = health_data.get("memory_usage", 0.0)
                             server.disk_usage = health_data.get("disk_usage", 0.0)
-                    except:
+                    except Exception:
+                        # Ignore JSON parsing/resource extraction errors
                         pass
 
                     return True
@@ -234,11 +235,14 @@ class HealthChecker:
                     return False
 
         except TimeoutError:
-            logger.warning(f"Health check timeout for {server.url}")
+            logger.warning("Health check timeout for server", extra={"url": server.url})
             server.update_metrics(self.timeout, False)
             return False
         except Exception as e:
-            logger.warning(f"Health check failed for {server.url}: {e}")
+            logger.warning(
+                "Health check failed for server",
+                extra={"url": server.url, "error": str(e)},
+            )
             server.update_metrics(0, False)
             return False
 
@@ -265,7 +269,9 @@ class LoadBalancer:
         self.scale_up_threshold = 0.8  # Scale up when average load > 80%
         self.scale_down_threshold = 0.3  # Scale down when average load < 30%
 
-        logger.info(f"Load balancer initialized with {algorithm.value} algorithm")
+        logger.info(
+            "Load balancer initialized", extra={"algorithm": algorithm.value}
+        )
 
     async def start(self):
         """Start the load balancer."""
@@ -284,7 +290,7 @@ class LoadBalancer:
         if self.algorithm == LoadBalancingAlgorithm.CONSISTENT_HASH:
             self.consistent_hash.add_node(server.id)
 
-        logger.info(f"Added server {server.id} at {server.url}")
+    logger.info("Added server", extra={"server_id": server.id, "url": server.url})
 
     def remove_server(self, server_id: str):
         """Remove a server from the pool."""
@@ -294,7 +300,7 @@ class LoadBalancer:
             if self.algorithm == LoadBalancingAlgorithm.CONSISTENT_HASH:
                 self.consistent_hash.remove_node(server_id)
 
-            logger.info(f"Removed server {server_id}")
+            logger.info("Removed server", extra={"server_id": server_id})
 
     def get_available_servers(self) -> list[ServerNode]:
         """Get list of available servers."""
@@ -405,10 +411,12 @@ class LoadBalancer:
                 if is_healthy:
                     if server.status == ServerStatus.UNHEALTHY:
                         server.status = ServerStatus.HEALTHY
-                        logger.info(f"Server {server.id} recovered")
+                        logger.info("Server recovered", extra={"server_id": server.id})
                 elif server.status == ServerStatus.HEALTHY:
                     server.status = ServerStatus.UNHEALTHY
-                    logger.warning(f"Server {server.id} marked unhealthy")
+                    logger.warning(
+                        "Server marked unhealthy", extra={"server_id": server.id}
+                    )
 
     async def request_completed(
         self, server_id: str, response_time: float, success: bool
