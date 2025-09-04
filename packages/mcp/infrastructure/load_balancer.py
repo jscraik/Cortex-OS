@@ -3,16 +3,14 @@
 import asyncio
 import hashlib
 import time
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
-from collections.abc import AsyncIterator
-import aiohttp  # type: ignore[import-not-found]
-import aiohttp  # type: ignore[import-not-found]
+import aiohttp
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -161,7 +159,7 @@ class HealthChecker:
         self.timeout = timeout
         self.session: aiohttp.ClientSession | None = None
         self._running = False
-        self._check_task = None
+    self._check_task: Optional[asyncio.Task[Any]] = None
 
     async def start(self) -> None:
         """Start the health checker."""
@@ -478,7 +476,9 @@ class AutoScaler:
     """Automatic scaling system for server pools."""
 
     def __init__(
-    self, load_balancer: LoadBalancer, scale_provider: Callable[..., Any] | None = None
+        self,
+        load_balancer: LoadBalancer,
+        scale_provider: Callable[..., Any] | None = None,
     ):
         self.load_balancer = load_balancer
         self.scale_provider = scale_provider  # Function to create/destroy servers
@@ -486,7 +486,7 @@ class AutoScaler:
         self.scale_cooldown = 300  # 5 minutes
         self.last_scale_action: datetime | None = None
         self._running = False
-        self._scale_task = None
+    self._scale_task: Optional[asyncio.Task[Any]] = None
 
         logger.info("Auto-scaler initialized")
 
