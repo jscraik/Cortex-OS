@@ -1,0 +1,12 @@
+name: 'Project Setup'
+description: 'Setup Node.js and pnpm using mise and install dependencies'
+runs:
+  using: 'composite'
+  steps:
+    - uses: jdx/mise-action@v2
+    - run: mise trust --yes .
+      shell: bash
+    - run: corepack enable
+      shell: bash
+    - run: pnpm install --frozen-lockfile
+      shell: bash
