@@ -243,8 +243,10 @@ class Neo4jMemoryStore:
         self.query_count += 1
         self.last_query_time = time.time()
 
-        if not self._rel_type_pattern.fullmatch(relationship_type):
-            raise ValueError("Invalid relationship type")
+            raise ValueError(
+                f"Invalid relationship type: '{relationship_type}'. "
+                f"Expected pattern: '{self._rel_type_pattern.pattern}'."
+            )
 
         query = (
             "MATCH (a:Memory {node_id: $from_node_id})\n"
