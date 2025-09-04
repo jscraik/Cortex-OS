@@ -32,8 +32,10 @@ if not SECRET_KEY:
             raise RuntimeError(
                 "JWT_SECRET_KEY environment variable must be set in production"
             )
-        SECRET_KEY = secrets.token_urlsafe(32)
-        secret_file.write_text(SECRET_KEY)
+        # Write the secret with restrictive permissions (0o600)
+        fd = os.open(secret_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(SECRET_KEY)
         logger.warning(
             "Generated development JWT secret stored at %s. Set JWT_SECRET_KEY for production.",
             secret_file,
