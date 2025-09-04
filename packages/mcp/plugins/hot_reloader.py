@@ -46,8 +46,8 @@ class PluginHotReloader:
     def _setup_file_watcher(self) -> None:
         """Setup file watcher for hot-reloading."""
         try:
-            from watchdog.events import FileSystemEventHandler  # type: ignore[import-not-found]
-            from watchdog.observers import Observer  # type: ignore[import-not-found]
+            from watchdog.events import FileSystemEventHandler  # pragma: no cover
+            from watchdog.observers import Observer  # pragma: no cover
         except Exception as e:  # pragma: no cover - optional dependency
             self.logger.warning(
                 "watchdog not available, disabling auto-reload: %s", e
@@ -67,7 +67,8 @@ class PluginHotReloader:
         observer = Observer()
         observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
         observer.start()
-        self.observer = observer
+    # Store observer dynamically to avoid strict typing on optional dep
+    self.observer = observer  # type: ignore[assignment]
 
     def schedule_reload(self, plugin_name: str) -> None:
         """Schedule a plugin reload with cooldown."""
@@ -103,9 +104,10 @@ class PluginHotReloader:
 
     async def stop(self) -> None:
         """Stop the hot-reloader."""
-        if hasattr(self, "observer") and self.observer.is_alive():
-            self.observer.stop()
-            self.observer.join()
+        observer = getattr(self, "observer", None)
+        if observer and getattr(observer, "is_alive", lambda: False)():
+            observer.stop()
+            observer.join()
         self.logger.info("Plugin hot-reloader stopped")
 
     async def load_plugin(self, plugin_path: str) -> str:
