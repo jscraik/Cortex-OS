@@ -6,6 +6,7 @@
 import { z } from "zod";
 
 // Base types
+// eslint-disable-next-line sonarjs/redundant-type-aliases
 export type UUID = string;
 export type EvidenceRisk = "low" | "medium" | "high" | "unknown";
 export type TaskStatus =
@@ -235,16 +236,18 @@ export type UnsubscribeFunction = () => void;
 
 // Configuration Types
 export const ConfigSchema = z.object({
-	events: z.object({
-		transport: z.enum(["socket", "sse"]),
+        events: z.object({
+                transport: z.enum(["socket", "sse"]),
 
-		heartbeat_ms: z.number().positive(),
-		idle_timeout_ms: z.number().positive(),
-	}),
-	determinism: z.object({
-		max_normalize_bytes: z.number().positive(),
-		max_concurrency: z.number().positive(),
-		normalize: z.object({
+                heartbeat_ms: z.number().positive(),
+                idle_timeout_ms: z.number().positive(),
+                max_task_events: z.number().positive(),
+                max_global_events: z.number().positive(),
+        }),
+        determinism: z.object({
+                max_normalize_bytes: z.number().positive(),
+                max_concurrency: z.number().positive(),
+                normalize: z.object({
 			newline: z.enum(["LF", "CRLF"]),
 			trim_trailing_ws: z.boolean(),
 			strip_dates: z.boolean(),

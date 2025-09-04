@@ -6,7 +6,6 @@
 import { createHmac } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CortexWebhookServer } from '../server/webhook-server.js';
-import type { GitHubModelsConfig } from '../types/github-models.js';
 
 // Mock app interface matching what the webhook server expects
 interface MockAiApp {

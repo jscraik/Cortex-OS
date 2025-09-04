@@ -1,12 +1,12 @@
-export interface Envelope {
-	type: string;
-	data: any;
-	id: string;
-	timestamp: string;
-	source: string;
+export interface Envelope<T = unknown> {
+        type: string;
+        data: T;
+        id: string;
+        timestamp: string;
+        source: string;
 }
 
-export interface Agent<TInput = any, TOutput = any> {
+export interface Agent<TInput = unknown, TOutput = unknown> {
 	id: string;
 	name: string;
 	capabilities: AgentCapability[];
@@ -14,9 +14,9 @@ export interface Agent<TInput = any, TOutput = any> {
 }
 
 export interface AgentCapability {
-	name: string;
-	description: string;
-	parameters?: Record<string, any>;
+        name: string;
+        description: string;
+        parameters?: Record<string, unknown>;
 }
 
 export interface AgentDependencies {
@@ -25,21 +25,31 @@ export interface AgentDependencies {
 	mcpClient?: MCPClient;
 }
 
+export interface EventBusStats {
+        totalEventsPublished: number;
+        eventsByType: Record<string, number>;
+}
+
 export interface EventBus {
-	publish: (msg: Envelope) => Promise<void>;
-	bind: (handlers: Array<{ type: string; handle: (msg: Envelope) => Promise<void> }>) => Promise<void>;
+        publish: <T = unknown>(msg: Envelope<T>) => Promise<void>;
+        subscribe: <T = unknown>(
+                type: string,
+                handler: (msg: Envelope<T>) => void,
+        ) => EventSubscription;
+        getStats: () => EventBusStats;
+        shutdown: () => void;
 }
 
 export interface EventSubscription {
-	unsubscribe: () => Promise<void>;
+        unsubscribe: () => void;
 }
 
-export interface ExecutionContext<TInput = any> {
+export interface ExecutionContext<TInput = unknown> {
 	userId?: string;
 	sessionId?: string;
 	traceId?: string;
 	input: TInput;
-	metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
 }
 
 export interface GenerateOptions {
@@ -48,37 +58,37 @@ export interface GenerateOptions {
 	maxTokens?: number;
 	stop?: string[];
 	stream?: boolean;
-	responseFormat?: {
-		type: 'json' | 'text';
-		schema?: any;
-	};
+        responseFormat?: {
+                type: 'json' | 'text';
+                schema?: unknown;
+        };
 	systemPrompt?: string;
 	seed?: number;
 }
 
-export interface GenerateResult<TOutput = any> {
+export interface GenerateResult<TOutput = unknown> {
 	content: string;
 	tokenUsage?: {
 		promptTokens: number;
 		completionTokens: number;
 		totalTokens: number;
 	};
-	metadata?: Record<string, any>;
+        metadata?: Record<string, unknown>;
 	data?: TOutput;
 }
 
 export interface MCPClient {
-	call: (method: string, params?: any) => Promise<any>;
-	callTool: (name: string, params?: any) => Promise<any>;
-	listResources: () => Promise<any[]>;
-	listTools: () => Promise<any[]>;
-	readResource: (uri: string) => Promise<any>;
+        call: (method: string, params?: unknown) => Promise<unknown>;
+        callTool: (name: string, params?: unknown) => Promise<unknown>;
+        listResources: () => Promise<unknown[]>;
+        listTools: () => Promise<unknown[]>;
+        readResource: (uri: string) => Promise<unknown>;
 }
 
 export interface MCPServerInfo {
-	name: string;
-	version: string;
-	capabilities?: Record<string, any>;
+        name: string;
+        version: string;
+        capabilities?: Record<string, unknown>;
 }
 
 export interface ModelProvider {
@@ -105,29 +115,29 @@ export interface MemoryPolicy {
 
 // Error classes
 export class AgentError extends Error {
-	constructor(message: string, public code?: string, public details?: any) {
-		super(message);
-		this.name = 'AgentError';
-	}
+        constructor(message: string, public code?: string, public details?: unknown) {
+                super(message);
+                this.name = 'AgentError';
+        }
 }
 
 export class ProviderError extends Error {
-	constructor(message: string, public provider?: string, public details?: any) {
-		super(message);
-		this.name = 'ProviderError';
-	}
+        constructor(message: string, public provider?: string, public details?: unknown) {
+                super(message);
+                this.name = 'ProviderError';
+        }
 }
 
 export class ValidationError extends Error {
-	constructor(message: string, public field?: string, public value?: any) {
-		super(message);
-		this.name = 'ValidationError';
-	}
+        constructor(message: string, public field?: string, public value?: unknown) {
+                super(message);
+                this.name = 'ValidationError';
+        }
 }
 
 export interface MemoryStore {
-	store: (key: string, value: any, options?: any) => Promise<void>;
-	retrieve: (key: string) => Promise<any>;
-	delete: (key: string) => Promise<void>;
-	list: (prefix?: string) => Promise<string[]>;
+        store: (key: string, value: unknown, options?: unknown) => Promise<void>;
+        retrieve: (key: string) => Promise<unknown>;
+        delete: (key: string) => Promise<void>;
+        list: (prefix?: string) => Promise<string[]>;
 }

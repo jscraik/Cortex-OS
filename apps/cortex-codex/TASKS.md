@@ -41,6 +41,10 @@
   - [x] Session JSONL and resume tests
   - [x] REPL loop and stdin `-` support
   - [x] README updated
+  - [x] Verification: core/cli chat tests pass
+  - [x] Rollback Point: `v0.1.2-chat`
+
+#### 🔄 IN PROGRESS
 
 - [ ] **Task 2.2**: Model Provider Abstraction (TDD)
   - [ ] Write tests for provider interface
@@ -50,7 +54,6 @@
 
 #### 📋 TODO - NEXT UP
 
-- [ ] **Task 2.2**: Model Provider Abstraction (TDD)
 - [ ] **Task 2.3**: Streaming Support (TDD)
 
 ### Task Details
@@ -60,7 +63,7 @@
 **Priority**: HIGH  
 **Estimated Time**: 4-6 hours  
 **Dependencies**: Foundation completed  
-**Target Tag**: `v0.2.0-chat`
+ **Target Tag**: `v0.1.2-chat`
 
 **Test-First Approach**:
 
@@ -70,10 +73,10 @@
 
 **Acceptance Criteria**:
 
-- [ ] Unit/integration tests for message append, read-back, and ordering
-- [ ] History persists across runs (smoke test)
-- [ ] Streaming placeholder interface compiles behind a feature flag
-- [ ] All quality gates pass (see Definition of Done)
+ - [x] Unit/integration tests for message append, read-back, and ordering
+ - [x] History persists across runs (smoke test)
+ - [x] Streaming placeholder interface compiles behind a feature flag
+ - [x] All quality gates pass (see Definition of Done)
 
 **Files to Modify**:
 

@@ -20,8 +20,8 @@
 		"simlab:smoke": "tsx src/scripts/run-smoke.ts",
 		"simlab:critical": "tsx src/scripts/run-critical.ts",
 		"simlab:full": "tsx src/scripts/run-full.ts",
-		"simlab:report": "tsx src/scripts/generate-report.ts",
-		"simlab:gates": "tsx src/scripts/check-gates.ts",
-		"sim:status": "node -e \"console.log('SimLab status coming soon')\""
-	}
+                "simlab:report": "tsx src/scripts/generate-report.ts",
+                "simlab:gates": "tsx src/scripts/check-gates.ts",
+                "sim:status": "tsx src/scripts/status.ts"
+        }
 }

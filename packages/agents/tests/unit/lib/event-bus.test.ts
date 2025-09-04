@@ -24,14 +24,14 @@ describe("Event Bus", () => {
 		};
 
 		// Validate event fits schema
-		const validated = validateAgentEvent(evt);
-		await bus.publish(validated as any);
+                const validated = validateAgentEvent(evt);
+                await bus.publish(validated);
 
 		expect(handler).toHaveBeenCalledTimes(1);
 		expect(handler.mock.calls[0][0].type).toBe("agent.started");
 
-		sub.unsubscribe();
-		await bus.publish(validated as any);
+                sub.unsubscribe();
+                await bus.publish(validated);
 		expect(handler).toHaveBeenCalledTimes(1);
 	});
 
@@ -65,8 +65,8 @@ describe("Event Bus", () => {
 			},
 		};
 
-		await bus.publish(validateAgentEvent(started) as any);
-		await bus.publish(validateAgentEvent(completed) as any);
+                await bus.publish(validateAgentEvent(started));
+                await bus.publish(validateAgentEvent(completed));
 
 		expect(seen).toEqual(["workflow.started", "workflow.completed"]);
 	});

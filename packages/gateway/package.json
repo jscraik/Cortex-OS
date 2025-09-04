@@ -16,14 +16,14 @@
 	"dependencies": {
 		"fastify": "^4.28.1",
 		"zod": "^3.23.8",
-		"prom-client": "^15.1.3",
-		"@cortex-os/lib": "workspace:*",
-		"@cortex-os/model-gateway": "workspace:*",
-		"@cortex-os/contracts": "workspace:*",
-		"@cortex-os/a2a": "workspace:*",
-		"@cortex-os/rag": "workspace:*",
-		"@cortex-os/simlab": "workspace:*"
-	},
+                "prom-client": "^15.1.3",
+                "@cortex-os/lib": "workspace:*",
+                "@cortex-os/mcp-core": "workspace:*",
+                "@cortex-os/contracts": "workspace:*",
+                "@cortex-os/a2a": "workspace:*",
+                "@cortex-os/rag": "workspace:*",
+                "@cortex-os/simlab": "workspace:*"
+        },
 	"devDependencies": {
 		"tsx": "^4.16.2",
 		"typescript": "^5.5.4",

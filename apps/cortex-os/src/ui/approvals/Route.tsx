@@ -30,14 +30,14 @@ export default function Approvals() {
 	}
 
 	return (
-		<section aria-label="Pending approvals">
-			<div aria-live="polite" />
-			<ul aria-describedby="list-desc">
-				<p id="list-desc" className="sr-only">
-					List of proposals awaiting approval
-				</p>
-				{items.map((it) => (
-					<li key={it.id}>
+                <section aria-label="Pending approvals">
+                        <div aria-live="polite" />
+                        <p id="list-desc" className="sr-only">
+                                List of proposals awaiting approval
+                        </p>
+                        <ul aria-describedby="list-desc">
+                                {items.map((it) => (
+                                        <li key={it.id}>
 						<h3>{it.node} proposal</h3>
 						<pre>{JSON.stringify(it.proposal, null, 2)}</pre>
 						<button

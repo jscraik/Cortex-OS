@@ -8,6 +8,10 @@ import {
 	ModelPresets,
 } from "./generation/multi-model.js";
 import { memoryStore } from "./store/memory.js";
+export { memoryStore } from "./store/memory.js";
+export { fileStore } from "./store/file.js";
+export { RAGPipeline, type RAGPipelineConfig } from "./rag-pipeline.js";
+export type { Embedder, Chunk, Store, Pipeline } from "./lib/index.js";
 export * as lib from "./lib/index.js";
 
 const InputSchema = z.object({

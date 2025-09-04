@@ -4,8 +4,9 @@
 [![Task 1.1](https://img.shields.io/badge/Task%201.1-Project%20Setup%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.3](https://img.shields.io/badge/Task%201.3-Error%20Handling%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 2.1](https://img.shields.io/badge/Task%202.1-Chat%20CLI%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Next](https://img.shields.io/badge/Next-Task%202.2%20Provider%20Abstraction-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![TDD](https://img.shields.io/badge/TDD-11%2F11%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-15%2F15%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 
 ## TDD-Driven Development Strategy
 
