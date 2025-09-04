@@ -17,9 +17,9 @@ dependencies = [
     "graphiti-core>=0.3.0",
     "httpx>=0.25.0",
     "llama-cpp-python>=0.2.90",
-    "mlx>=0.30.0",
-    "mlx-lm>=0.28.0", 
-    "mlx-vlm>=0.4.0",
+    "mlx>=0.29.0,<0.30.0",
+    "mlx-lm>=0.27.0,<0.28.0",
+    "mlx-vlm>=0.3.0,<0.4.0",
     "networkx>=3.0",
     "numpy>=1.26.4",
     "pandas>=2.1.4",
@@ -73,7 +73,7 @@ ignore = ["E501"]
 "packages/mcp-bridge/src/tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in MCP bridge tools
 
 # Specific module exceptions
-"**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling  
+"**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling
 "**/resource_monitor.py" = ["S108", "S110"]  # Allow temp files and exception handling
 "**/kv_cache_manager.py" = ["S301", "S108", "N801"]  # Allow pickle/temp files and mock class name
 "**/tiered_model_manager.py" = ["N801"]  # Allow mock class name 'mx'

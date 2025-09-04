@@ -7,14 +7,13 @@ use crate::config_types::ShellEnvironmentPolicyToml;
 use crate::config_types::Tui;
 use crate::config_types::UriBasedFileOpener;
 use crate::config_types::Verbosity;
-use crate::config_types_new::{ModelProvider, ApiSettings, ModelConfig, LoggingConfig, RateLimit};
-use crate::error::ConfigError;
 use crate::git_info::resolve_root_git_project_for_trust;
 use crate::model_family::ModelFamily;
 use crate::model_family::find_family_for_model;
 use crate::model_provider_info::ModelProviderInfo;
 use crate::model_provider_info::built_in_model_providers;
 use crate::openai_model_info::get_model_info;
+use crate::config_types_new::{ApiSettings, ModelConfig, LoggingConfig};
 use crate::protocol::AskForApproval;
 use crate::protocol::SandboxPolicy;
 use codex_protocol::config_types::ReasoningEffort;
@@ -22,7 +21,7 @@ use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::SandboxMode;
 use codex_protocol::mcp_protocol::AuthMode;
 use dirs::home_dir;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -189,18 +188,7 @@ pub struct Config {
     pub disable_paste_burst: bool,
 
     pub use_experimental_reasoning_summary: bool,
-
-    // New TDD fields for configuration system
-    /// Simplified model configuration
-    pub model_config: ModelConfig,
-
-    /// API settings for the configuration system
-    pub api: ApiSettings,
-
-    /// Logging configuration
-    pub logging: LoggingConfig,
 }
-
 
 impl Config {
     /// Load configuration with *generic* CLI overrides (`-c key=value`) applied
@@ -827,6 +815,11 @@ impl Config {
             use_experimental_reasoning_summary: cfg
                 .use_experimental_reasoning_summary
                 .unwrap_or(false),
+
+            // TODO: Add proper initialization for these fields
+            model_config: ModelConfig::default(),
+            api: ApiSettings::default(),
+            logging: LoggingConfig::default(),
         };
         Ok(config)
     }

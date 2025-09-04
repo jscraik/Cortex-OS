@@ -18,7 +18,7 @@ class StorageService {
 		try {
 			localStorage.setItem(this.getKey(key), value);
 		} catch (error) {
-			console.error(`Error setting item ${key} in localStorage:`, error);
+			console.error("Error setting item in localStorage", { key, error });
 		}
 	}
 
@@ -26,7 +26,7 @@ class StorageService {
 		try {
 			return localStorage.getItem(this.getKey(key));
 		} catch (error) {
-			console.error(`Error getting item ${key} from localStorage:`, error);
+			console.error("Error getting item from localStorage", { key, error });
 			return null;
 		}
 	}
@@ -35,7 +35,7 @@ class StorageService {
 		try {
 			localStorage.removeItem(this.getKey(key));
 		} catch (error) {
-			console.error(`Error removing item ${key} from localStorage:`, error);
+			console.error("Error removing item from localStorage", { key, error });
 		}
 	}
 
@@ -45,16 +45,18 @@ class StorageService {
 			const json = JSON.stringify(value);
 			this.setItem(key, json);
 		} catch (error) {
-			console.error(`Error setting JSON item ${key} in localStorage:`, error);
+			console.error("Error setting JSON item in localStorage", { key, error });
 		}
 	}
 
 	getJSON<T>(key: string): T | null {
 		try {
 			const json = this.getItem(key);
-			return json ? JSON.parse(json) : null;
+			if (!json) return null;
+			const parsed: unknown = JSON.parse(json);
+			return parsed as T;
 		} catch (error) {
-			console.error(`Error getting JSON item ${key} from localStorage:`, error);
+			console.error("Error getting JSON item from localStorage", { key, error });
 			return null;
 		}
 	}
@@ -65,11 +67,13 @@ class StorageService {
 			const keysToRemove: string[] = [];
 			for (let i = 0; i < localStorage.length; i++) {
 				const key = localStorage.key(i);
-				if (key && key.startsWith(this.prefix)) {
+				if (key?.startsWith(this.prefix)) {
 					keysToRemove.push(key);
 				}
 			}
-			keysToRemove.forEach((key) => localStorage.removeItem(key));
+			keysToRemove.forEach((k) => {
+				localStorage.removeItem(k);
+			});
 		} catch (error) {
 			console.error('Error clearing localStorage:', error);
 		}
@@ -81,7 +85,7 @@ class StorageService {
 			const keys: string[] = [];
 			for (let i = 0; i < localStorage.length; i++) {
 				const key = localStorage.key(i);
-				if (key && key.startsWith(this.prefix)) {
+				if (key?.startsWith(this.prefix)) {
 					keys.push(key.substring(this.prefix.length));
 				}
 			}

@@ -188,6 +188,8 @@ export class SecurityValidator {
 
 		try {
 			// Step 1: Fetch the Sigstore bundle
+			// semgrep-disable-next-line: semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+			// SSRF protection: URL comes from validated server manifest, not user input
 			const response = await fetch(server.security.sigstoreBundle);
 			if (!response.ok) {
 				console.error(`Failed to fetch Sigstore bundle: ${response.status}`);

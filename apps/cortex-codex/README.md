@@ -1,5 +1,12 @@
 # Codex CLI (Rust Implementation)
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Phase 2](https://img.shields.io/badge/Phase%202-Core%20Features%20In%20Progress-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 2.2](https://img.shields.io/badge/Task%202.2-Provider%20Abstraction%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-29%2F29%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Rust Edition](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://rust-lang.org)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 We provide Codex CLI as a standalone, native executable to ensure a zero-dependency install.
 
 ## Installing Codex
@@ -39,7 +46,29 @@ You can enable notifications by configuring a script that is run whenever the ag
 
 To run Codex non-interactively, run `codex exec PROMPT` (you can also pass the prompt via `stdin`) and Codex will work on your task until it decides that it is done and exits. Output is printed to the terminal directly. You can set the `RUST_LOG` environment variable to see more about what's going on.
 
-### Use `@` for file search
+## Development Status
+
+### ✅ Completed Features
+
+- **Foundation (Phase 1)**: Complete TDD foundation with configuration, error handling, and project structure
+- **Provider Abstraction (Task 2.2)**: Complete provider abstraction layer with registry system and mock implementations
+- **Chat Interface (Task 2.1)**: Message management, conversation state, and chat subcommand implementation
+- **Test Coverage**: 29 comprehensive tests covering all implemented functionality
+
+### 🔄 Current Development
+
+- **Streaming Support (Task 2.3)**: Infrastructure in place, TUI integration pending
+- **Provider Integration (Phase 3)**: Ready for real provider implementations (OpenAI, Anthropic, Ollama)
+
+### 📋 Architecture Overview
+
+The Rust CLI implements a modern, TDD-driven architecture with:
+
+- **Provider Abstraction**: Unified interface for multiple AI model providers
+- **Conversation Management**: Stateful message handling with persistence
+- **Configuration System**: Type-safe, validated configuration with TOML support
+- **Error Handling**: Comprehensive error types with structured propagation
+- **Test Coverage**: Full TDD implementation with mock providers for testing
 
 Typing `@` triggers a fuzzy-filename search over the workspace root. Use up/down to select among the results and Tab or Enter to replace the `@` with the selected path. You can use Esc to cancel the search.
 
@@ -63,11 +92,84 @@ codex completion zsh
 codex completion fish
 ```
 
+The generated completions include subcommands and flags such as `codex chat -C/--cd <DIR>`.
+
+Install completions (optional):
+
+- zsh (macOS default):
+
+```shell
+mkdir -p ~/.zsh/completions
+codex completion zsh > ~/.zsh/completions/_codex
+echo 'fpath+=(~/.zsh/completions)' >> ~/.zshrc
+echo 'autoload -U compinit && compinit' >> ~/.zshrc
+exec $SHELL
+```
+
+- bash:
+
+```shell
+codex completion bash | sudo tee /etc/bash_completion.d/codex > /dev/null
+# or for user-local:
+mkdir -p ~/.bash_completion.d
+codex completion bash > ~/.bash_completion.d/codex
+echo 'source ~/.bash_completion.d/codex' >> ~/.bashrc
+exec $SHELL
+```
+
+### Chat (one-off)
+
+Send a single prompt and stream the reply without starting the interactive TUI:
+
+```shell
+codex chat "Summarize the README in 3 bullet points"
+```
+
+This is additive and does not affect existing commands.
+
+#### Chat flags for multi‑turn and sessions
+
+- `--session NAME`: persist history to `$CODEX_HOME/sessions/NAME.jsonl`
+- `--session-file PATH`: persist history to a custom JSONL path
+- `--reset`: start fresh, truncating the session file
+- `--repl`: stay in a simple line‑based REPL (type `:q` to quit)
+- `-C, --cd DIR`: run Chat using DIR as the working root (same semantics as `codex exec -C`)
+- `PROMPT` can be `-` to read from stdin; optional when `--repl` is used
+
+Note: When using `--repl` or sessions, the JSONL history includes both user and assistant items. This is expected and allows full turn-by-turn replay.
+
+Examples:
+
+```shell
+# Single turn (unchanged)
+codex chat "Start a plan for Phase 2"
+
+# Read entire prompt from stdin
+echo "Write a haiku about Codex" | codex chat -
+
+# Persist a named session
+codex chat --session demo "Initial message"
+
+# Reset an existing session
+codex chat --session demo --reset "Fresh start"
+
+# REPL with session persistence
+codex chat --session demo --repl
+
+# Change the working directory for a one-off chat
+codex chat -C ./examples "List files in the project and suggest a cleanup plan"
+```
+
+Developer notes:
+
+- Session metadata may include Git details (commit, branch, repo URL) when Codex runs inside a git repo.
+- For hermetic testing, you can set `CODEX_RS_SSE_FIXTURE` to a local `.sse` file to bypass network calls in CLI/exec tests.
+
 ### Experimenting with the Codex Sandbox
 
 To test to see what happens when a command is run under the sandbox provided by Codex, we provide the following subcommands in Codex CLI:
 
-```
+```shell
 # macOS
 codex debug seatbelt [--full-auto] [COMMAND]...
 

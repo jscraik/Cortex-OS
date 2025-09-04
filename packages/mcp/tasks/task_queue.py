@@ -13,8 +13,8 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
 from importlib import import_module
+from typing import Any
 
 # Import circuit_breaker if available, otherwise create a dummy decorator
 try:
@@ -345,7 +345,7 @@ class TaskQueue:
                         func(*task_def.args, **task_def.kwargs),
                         timeout=task_def.timeout,
                     )
-                except asyncio.TimeoutError as te:
+                except TimeoutError as te:
                     # Normalize timeout error message for tests
                     raise RuntimeError("Task execution timeout") from te
             else:
@@ -625,7 +625,7 @@ def task(
             )
 
         # Add submit method to function
-        setattr(func, "submit", submit_task)  # type: ignore[attr-defined]
+        func.submit = submit_task  # type: ignore[attr-defined]
         return func
 
     return decorator

@@ -42,7 +42,12 @@ similar = "2.7.0"
 strum_macros = "0.27.2"
 tempfile = "3"
 thiserror = "2.0.16"
-time = { version = "0.3", features = ["formatting", "parsing", "local-offset", "macros"] }
+time = { version = "0.3", features = [
+    "formatting",
+    "parsing",
+    "local-offset",
+    "macros",
+] }
 tokio = { version = "1", features = [
     "io-std",
     "macros",
@@ -84,7 +89,11 @@ predicates = "3"
 pretty_assertions = "1.4.1"
 tempfile = "3"
 tokio-test = "0.4"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+tracing-subscriber = { version = "0.3", features = [
+    "env-filter",
+    "fmt",
+    "json",
+] }
 tracing-test = "0.2"
 walkdir = "2.5.0"
 wiremock = "0.6"

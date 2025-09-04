@@ -1,5 +1,73 @@
 # Cortex CLI Changelog
 
+## [Unreleased] - 2025-09-04
+
+### ✅ COMPLETED: Task 2.2 - Provider Abstraction Layer (TDD)
+
+#### Provider Abstraction Features
+
+- **Provider Abstraction System**: Complete provider abstraction layer with unified interface
+- **Provider Registry**: Dynamic provider registration and management system
+- **Mock Providers**: Comprehensive mock implementations for OpenAI, Anthropic, and Ollama
+- **Streaming Support**: Infrastructure for streaming responses with futures integration
+- **Configuration Integration**: Provider configuration validation and error handling
+
+#### Provider Implementation Files
+
+- `core/src/providers/traits.rs` - Core ModelProvider trait with async methods
+- `core/src/providers/registry.rs` - Provider registry for dynamic provider management
+- `core/src/providers/mocks.rs` - Mock provider implementations for testing
+- `core/tests/provider_abstraction_tests.rs` - 10 comprehensive tests covering all functionality
+- Enhanced error handling with ConfigurationError variant
+
+#### Provider Testing Coverage
+
+- Provider trait implementation tests (basic operations)
+- Provider registry tests (registration, discovery, defaults)
+- Mock provider tests (OpenAI, Anthropic, Ollama behavior)
+- Streaming support tests
+- Configuration validation tests
+- Error handling tests for provider operations
+
+### ✅ COMPLETED: Task 2.1 - Chat Interface Implementation
+
+#### Chat Interface Features
+
+- **Conversation Management**: Stateful conversation handling with persistence
+- **Message History**: Message storage and retrieval system
+- **CLI Integration**: Chat subcommand with conversation state management
+
+#### Chat Implementation Files
+
+- `core/src/conversation_manager.rs` - Conversation state management
+- `core/src/message_history.rs` - Message persistence and retrieval
+- `core/tests/config_tests.rs` - Configuration validation tests
+- Enhanced chat subcommand in `cli/src/main.rs`
+
+## [v0.1.2-chat] - 2025-09-03
+
+### Features
+
+- `codex chat` subcommand with streaming output (single-turn)
+- Multi-turn chat options:
+  - `--session NAME` and `--session-file PATH` for JSONL history
+  - `--reset` to truncate an existing session file
+  - `--repl` simple line-based REPL (type `:q` to quit)
+  - Support `-` to read the prompt from stdin
+- Session JSONL persists both user and assistant items for accurate replay
+- Session metadata includes Git info when available (commit hash, branch, repo URL)
+
+### Testing & Tooling
+
+- Mocked SSE chat completions via wiremock in core test suite
+- Fixture-driven SSE for hermetic tests via `CODEX_RS_SSE_FIXTURE`
+- CLI one-off chat integration tests (once-only streaming assertions)
+- Clippy strict (`-D warnings`) passes across updated crates
+
+### Docs
+
+- Expanded README with chat usage, sessions/REPL flags, and developer SSE fixture notes
+
 ## [v0.1.1-config] - 2025-09-03
 
 ### ✅ COMPLETED: Task 1.2 - Configuration System Integration (TDD)
@@ -39,7 +107,7 @@
 
 ## [Unreleased] - 2025-09-03
 
-### Added
+### Added (plan, ci, infra)
 
 - Complete software engineering plan with TDD principles
 - Task tracking system with rollback points

@@ -24,6 +24,7 @@ Production-ready AI-powered GitHub automation engine with MLX integration for in
 ## 🔧 MLX Integration
 
 This app features **full MLX integration** with Apple Silicon optimization:
+
 - Real MLX model processing via `mlx-lm` Python package
 - Local AI inference without external API dependencies
 - Secure input sanitization preventing command injection
@@ -47,11 +48,13 @@ Comment on any GitHub issue or PR with these commands:
 ## ⚙️ Installation & Setup
 
 ### Prerequisites
+
 - Node.js 20+
 - Python 3.9+ with MLX support
 - GitHub App with webhook permissions
 
 ### Environment Variables
+
 ```bash
 GITHUB_TOKEN=your_github_token
 WEBHOOK_SECRET=your_webhook_secret
@@ -60,32 +63,37 @@ GITHUB_MODELS_TOKEN=your_models_token
 ```
 
 ### Install Dependencies
+
 ```bash
 pnpm install
 ```
 
 ### Install MLX (for Apple Silicon)
+
 ```bash
 pip install mlx-lm transformers
 ```
 
 ### Build & Start
+
 ```bash
 pnpm build
 pnpm start
 ```
 
-The server will run on port 3000 and handle GitHub webhook events.
+The server will run on port 3001 and handle GitHub webhook events.
 
 ## 🏗️ Architecture
 
 ### Functional Design
+
 - **Security-First**: All inputs sanitized, no command injection vulnerabilities
 - **Functional Programming**: Pure functions, minimal classes, <40 lines per function
 - **Modular Structure**: Separated concerns with utility modules
 - **Type Safety**: Comprehensive TypeScript interfaces with validation
 
 ### Core Components
+
 - `ai-github-app.ts` - Main application orchestrator
 - `webhook-server.ts` - GitHub webhook event handler  
 - `mlx-engine.ts` - MLX AI processing with security
@@ -96,12 +104,14 @@ The server will run on port 3000 and handle GitHub webhook events.
 ## 🔒 Security
 
 ### Input Validation
+
 - Comprehensive regex validation for all GitHub parameters
 - Input length limits (prompts max 8000 chars)
 - Suspicious pattern detection and filtering
 - Path traversal prevention
 
 ### Command Injection Prevention
+
 - All shell operations use validated parameter arrays
 - No string interpolation in spawn commands
 - Whitelist validation for MLX parameters
@@ -110,14 +120,17 @@ The server will run on port 3000 and handle GitHub webhook events.
 ## 🧪 Testing
 
 ### Run Tests
+
 ```bash
 pnpm test
 ```
 
 ### Trigger Verification
+
 All trigger patterns tested and verified working:
+
 - Pattern recognition: ✅ 100%
-- Instruction extraction: ✅ 100% 
+- Instruction extraction: ✅ 100%
 - Context building: ✅ 100%
 - Webhook handling: ✅ 100%
 
@@ -131,11 +144,13 @@ All trigger patterns tested and verified working:
 ## 🚨 Monitoring
 
 Health check endpoint available at:
+
 ```
 GET /health
 ```
 
 Returns:
+
 ```json
 {
   "status": "healthy",
@@ -152,6 +167,7 @@ Returns:
 ## 🛠️ Development
 
 ### Code Standards
+
 - Functions ≤40 lines (industrial standard)
 - Functional programming patterns
 - Named exports only
@@ -159,6 +175,7 @@ Returns:
 - Security-first architecture
 
 ### Adding New AI Tasks
+
 1. Add task type to `types/github-models.ts`
 2. Create system prompt in `lib/system-prompts.ts`
 3. Add trigger pattern to `webhook-server.ts`
@@ -167,6 +184,7 @@ Returns:
 ## 📞 Support
 
 For issues or questions:
+
 - Check GitHub App webhook configuration
 - Verify environment variables are set
 - Ensure MLX dependencies are installed
@@ -175,6 +193,7 @@ For issues or questions:
 ## 🎯 Production Ready
 
 This GitHub App has been thoroughly reviewed and hardened:
+
 - ✅ No security vulnerabilities
 - ✅ Industrial coding standards
 - ✅ Comprehensive testing

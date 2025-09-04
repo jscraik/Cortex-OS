@@ -4,12 +4,12 @@
  */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/require-await, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument, no-console */
 
-import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import * as path from "node:path";
 import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex } from "@noble/hashes/utils";
 import Fuse from "fuse.js";
+import { existsSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import * as path from "node:path";
 import type {
 	ApiResponse,
 	RegistryIndex,
@@ -59,7 +59,7 @@ export class MarketplaceRegistry {
 	constructor(
 		private registryUrl: string = "https://registry.cortex-os.dev/v1/registry.json",
 		private cacheDir: string = "./.cortex/registry/cache",
-	) {}
+	) { }
 
 	/**
 	 * Initialize the registry by loading from cache or fetching
@@ -97,6 +97,8 @@ export class MarketplaceRegistry {
 				);
 			}
 
+			// semgrep-disable-next-line: semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+			// SSRF protection: URL validated above against allowlist
 			const response = await fetch(this.registryUrl);
 			if (!response.ok) {
 				throw new Error(

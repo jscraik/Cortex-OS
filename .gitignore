@@ -27,6 +27,10 @@ tmp/
 .venv-*/
 comparisons/
 
+# Security scan reports (do not commit large artifacts)
+semgrep-report.json
+reports/
+
 # Backup files
 *.backup
 

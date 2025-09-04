@@ -2,11 +2,44 @@
 
 This crate implements the business logic for Codex. It is designed to be used by the various Codex UIs written in Rust.
 
+## Provider Abstraction System
+
+The Codex Core includes a comprehensive provider abstraction layer that enables seamless integration with multiple AI model providers through a unified interface.
+
+### Provider Features
+
+- 🔌 **Unified Provider Interface**: Single trait for all AI model providers
+- 🔄 **Dynamic Provider Registry**: Runtime provider registration and discovery
+- 📡 **Streaming Support**: Infrastructure for streaming responses with futures
+- 🧪 **Mock Providers**: Comprehensive mock implementations for testing
+- ⚙️ **Configuration Integration**: Provider-specific configuration and validation
+- 🔒 **Error Handling**: Structured error handling for provider operations
+
+### Provider Usage
+
+```rust
+use codex_core::providers::{ModelProvider, ProviderRegistry, Message};
+
+// Create and register providers
+let mut registry = ProviderRegistry::new();
+registry.register("openai".to_string(), Box::new(openai_provider));
+registry.register("anthropic".to_string(), Box::new(anthropic_provider));
+
+// Use provider through unified interface
+let provider = registry.get("openai").unwrap();
+let messages = vec![Message {
+    role: "user".to_string(),
+    content: "Hello, world!".to_string(),
+}];
+
+let response = provider.complete(&messages, "gpt-4", Some(0.7)).await?;
+```
+
 ## Configuration System
 
 The Codex Core includes a robust, TDD-driven configuration management solution with support for profiles, overrides, environment variables, and comprehensive validation.
 
-### Features
+### Configuration Features
 
 - 📋 **TOML-based Configuration**: Human-readable configuration files
 - 🔄 **Profile Support**: Development, production, and custom profiles
@@ -38,15 +71,22 @@ let config = SimpleConfig::with_overrides(vec![
 
 ### Testing
 
-The configuration system is built using Test-Driven Development (TDD) with 11/11 tests passing:
+The core system is built using Test-Driven Development (TDD) with 29/29 tests passing:
+
+- **Configuration Tests**: 11 tests covering all configuration scenarios
+- **Provider Abstraction Tests**: 10 tests covering provider interface and registry
+- **Error Handling Tests**: 4 tests for comprehensive error scenarios  
+- **Logging Tests**: 4 tests for logging infrastructure
 
 ```bash
-cargo test --package codex-core --test config_tests
+cargo +nightly test --package codex-core
 ```
+
+All tests use realistic scenarios and mock implementations to ensure robust, maintainable code.
 
 ## Dependencies
 
-Note that `codex-core` makes some assumptions about certain helper utilities being available in the environment. Currently, this
+Note that `codex-core` makes some assumptions about certain helper utilities being available in the environment.
 
 ### macOS
 

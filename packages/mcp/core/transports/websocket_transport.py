@@ -128,7 +128,9 @@ class WebSocketTransport(MCPTransport):
         while self.is_connected:
             await asyncio.sleep(1)
 
-    async def _handle_client_connection(self, websocket: Any, _path: str | None = None) -> None:
+    async def _handle_client_connection(
+        self, websocket: Any, _path: str | None = None
+    ) -> None:
         """Handle new client WebSocket connection."""
         self.clients.add(websocket)
         logger.info(f"New WebSocket client connected from {websocket.remote_address}")

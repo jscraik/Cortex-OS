@@ -6,7 +6,7 @@ repos:
       # Biome linting and formatting with command validation
       - id: biome-check
         name: Biome Check
-        entry: bash -c 'if command -v ./biome >/dev/null 2>&1; then ./biome check --apply; else echo "Biome not found at ./biome, skipping"; exit 0; fi'
+        entry: bash -c 'if command -v ./biome >/dev/null 2>&1; then ./biome check --apply "$@"; else echo "Biome not found at ./biome, skipping"; exit 0; fi'
         language: system
         files: \.(js|jsx|ts|tsx|json|jsonc)$
         pass_filenames: true
@@ -23,7 +23,7 @@ repos:
       # Python formatting and linting with uv validation
       - id: ruff-check
         name: Ruff Check
-        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff check --fix; elif command -v ruff >/dev/null 2>&1; then ruff check --fix; else echo "Ruff not found, skipping Python linting"; exit 0; fi'
+        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff check --fix -- "$@"; elif command -v ruff >/dev/null 2>&1; then ruff check --fix -- "$@"; else echo "Ruff not found, skipping Python linting"; exit 0; fi'
         language: system
         files: \.py$
         pass_filenames: true
@@ -31,7 +31,7 @@ repos:
 
       - id: ruff-format
         name: Ruff Format
-        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff format; elif command -v ruff >/dev/null 2>&1; then ruff format; else echo "Ruff not found, skipping Python formatting"; exit 0; fi'
+        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff format -- "$@"; elif command -v ruff >/dev/null 2>&1; then ruff format -- "$@"; else echo "Ruff not found, skipping Python formatting"; exit 0; fi'
         language: system
         files: \.py$
         pass_filenames: true

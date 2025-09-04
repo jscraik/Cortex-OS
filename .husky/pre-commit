@@ -23,6 +23,22 @@ else
   echo "Warning: pnpm not found, skipping lint-staged"
 fi
 
+# Run ast-grep checks
+if command -v ast-grep >/dev/null 2>&1; then
+  echo "Running ast-grep checks..."
+  pnpm lint:ast-grep:check || { echo "❌ ast-grep checks failed"; exit 1; }
+else
+  echo "Warning: ast-grep not found, skipping ast-grep checks"
+fi
+
+# Run ripgrep checks
+if command -v rg >/dev/null 2>&1; then
+  echo "Running ripgrep checks..."
+  pnpm lint:ripgrep:all || { echo "❌ ripgrep checks failed"; exit 1; }
+else
+  echo "Warning: ripgrep not found, skipping ripgrep checks"
+fi
+
 # Run TypeScript type checking
 if command -v pnpm >/dev/null 2>&1; then
   echo "Running TypeScript type checking..."

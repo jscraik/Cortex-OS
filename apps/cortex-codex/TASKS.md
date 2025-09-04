@@ -12,6 +12,12 @@
   - [x] Initialize git repository
   - [x] Create task management system
 
+- [x] **Task 1.1**: Basic TUI Foundation (TDD) ✅ COMPLETED  
+  - [x] Create foundational project structure
+  - [x] Implement basic TUI components
+  - [x] Set up testing infrastructure
+  - [x] **Result**: Foundation established with proper build system
+
 - [x] **Task 1.2**: Configuration System Integration (TDD) ✅ COMPLETED
   - [x] Write tests for profile-based configuration loading
   - [x] Write tests for configuration override parsing  
@@ -21,25 +27,45 @@
   - [x] Add dot-notation override support
   - [x] **Result**: 11/11 tests passing, fully TDD-compliant configuration system
 
+- [x] **Task 1.3**: Error Handling (TDD) ✅ COMPLETED
+  - [x] Write comprehensive error handling tests
+  - [x] Write logging infrastructure tests  
+  - [x] Implement structured error types with thiserror
+  - [x] Add tracing integration for logging
+  - [x] **Result**: Robust error handling with comprehensive test coverage
+
+- [x] **Task 2.1**: Chat CLI + Sessions + REPL (TDD) ✅ COMPLETED
+  - [x] One-off chat streaming tests (mock SSE)
+  - [x] Session JSONL and resume tests
+  - [x] REPL loop and stdin `-` support
+  - [x] Conversation management implementation
+  - [x] Message history implementation
+  - [x] README updated
+
+- [x] **Task 2.2**: Model Provider Abstraction (TDD) ✅ COMPLETED
+  - [x] Write tests for provider interface (10 comprehensive tests)
+  - [x] Write tests for model switching and validation
+  - [x] Write tests for provider registry management
+  - [x] Write tests for streaming support
+  - [x] Implement provider abstraction traits
+  - [x] Implement provider registry system
+  - [x] Add mock provider implementations (OpenAI, Anthropic, Ollama)
+  - [x] Add streaming support infrastructure
+  - [x] **Result**: Complete provider abstraction layer ready for real provider integration
+
 #### 🔄 IN PROGRESS
 
-- [ ] **Task 2.1**: Basic Chat Interface (TDD) - NEXT PRIORITY
-  - [ ] Write tests for chat message handling
-  - [ ] Write tests for message history
-  - [ ] Implement simple chat interface
-  - [ ] Add message persistence
-
-- [ ] **Task 2.2**: Model Provider Abstraction (TDD)
-  - [ ] Write tests for provider interface
-  - [ ] Write tests for model switching
-  - [ ] Implement provider abstraction
-  - [ ] Add configuration for providers
+- [ ] **Task 2.3**: Streaming Support (TDD)
+  - [ ] Write tests for streaming responses in TUI
+  - [ ] Write tests for stream interruption handling
+  - [ ] Implement streaming in TUI components
+  - [ ] Add streaming controls and status indicators
 
 #### 📋 TODO - NEXT UP
 
-- [ ] **Task 2.1**: Basic Chat Interface (TDD) - NEXT PRIORITY
-- [ ] **Task 2.2**: Model Provider Abstraction (TDD)
-- [ ] **Task 2.3**: Streaming Support (TDD)
+- [ ] **Task 3.1**: OpenAI Integration (TDD)
+- [ ] **Task 3.2**: Anthropic Integration (TDD)  
+- [ ] **Task 3.3**: Local Model Support (TDD)
 
 ### Task Details
 

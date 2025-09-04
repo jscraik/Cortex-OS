@@ -3,10 +3,10 @@
  * @description Handles registry management and caching
  */
 
+import type { RegistryData } from "@cortex-os/mcp-registry";
 import { existsSync, mkdirSync } from "node:fs";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { RegistryData } from "@cortex-os/mcp-registry";
 
 export interface RegistryConfig {
 	registries: Record<string, string>;
@@ -58,7 +58,7 @@ export class RegistryService {
 					info.serverCount = data.serverCount;
 				}
 			} catch (error) {
-				console.warn(`Registry ${name} health check failed:`, error);
+				console.warn("Registry health check failed", { name, error });
 			}
 
 			registries.push(info);
@@ -105,10 +105,10 @@ export class RegistryService {
 		} catch (error) {
 			// If fetch fails, return stale cache if available
 			if (diskCached) {
-				console.warn(
-					`Using stale cache for registry ${name} due to fetch error:`,
+				console.warn("Using stale cache for registry due to fetch error", {
+					name,
 					error,
-				);
+				});
 				return diskCached.data;
 			}
 			throw error;
@@ -220,7 +220,7 @@ export class RegistryService {
 
 			return cached;
 		} catch (error) {
-			console.warn(`Failed to load disk cache for ${name}:`, error);
+			console.warn("Failed to load disk cache", { name, error });
 			return null;
 		}
 	}
@@ -237,7 +237,7 @@ export class RegistryService {
 		try {
 			await writeFile(cachePath, JSON.stringify(cacheEntry, null, 2));
 		} catch (error) {
-			console.warn(`Failed to save disk cache for ${name}:`, error);
+			console.warn("Failed to save disk cache", { name, error });
 		}
 	}
 
@@ -270,7 +270,7 @@ export class RegistryService {
 				mkdirSync(this.config.cacheDir, { recursive: true });
 			}
 		} catch (error) {
-			console.warn("Failed to create cache directory:", error);
+			console.warn("Failed to create cache directory", { error });
 		}
 	}
 }
