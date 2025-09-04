@@ -1,10 +1,10 @@
 """Main CLI entry point for MCP management."""
 
-from typing import Any
 import asyncio
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import uvicorn
