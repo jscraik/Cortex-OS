@@ -23,7 +23,12 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 async function writeJson(file: string, value: unknown): Promise<void> {
   await fs.mkdir(dirname(file), { recursive: true });
   const lock = `${file}.lock`;
-  const handle = await fs.open(lock, "wx").catch(() => null);
+  const handle = await fs.open(lock, "wx").catch((err) => {
+    if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+      return null;
+    }
+    throw err;
+  });
   if (!handle) throw new Error("Registry file is locked");
   try {
     const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
