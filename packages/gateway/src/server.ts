@@ -44,7 +44,25 @@ function getMCPServerInfo(): ServerInfo | null {
         return null;
 }
 
-const handleMCP = async ({ request }: any) => {
+type MCPHandlerParams = z.infer<
+    ReturnType<typeof z.object>
+>;
+
+// The schema used in createAgentRoute is:
+// z.object({
+//   config: AgentConfigSchema,
+//   request: MCPRequestSchema,
+//   json: z.boolean().optional(),
+// })
+type MCPRouteSchema = z.infer<
+    typeof z.object({
+        config: AgentConfigSchema,
+        request: MCPRequestSchema,
+        json: z.boolean().optional(),
+    })
+>;
+
+const handleMCP = async ({ request }: MCPRouteSchema) => {
         const si = getMCPServerInfo();
         if (!si) {
                 return createJsonOutput({
