@@ -1,6 +1,6 @@
 'use client';
 
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../../utils/id';
 
 export interface Notification {
   id: string;
@@ -27,7 +27,7 @@ class NotificationStore {
 
   addNotification(notification: Omit<Notification, 'id'>) {
     const newNotification: Notification = {
-      id: uuidv4(),
+      id: generateId(),
       ...notification,
     };
 

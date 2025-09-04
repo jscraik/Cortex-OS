@@ -2,7 +2,7 @@
 
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { generateId } from '../../../utils/id';
 // Note: UI message shape may include extra fields like timestamp/model for display
 // compared to shared backend types.
 import { apiFetch } from '../../../utils/api-client';
@@ -104,7 +104,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 
 		// Add user message
 		const userMessage = {
-			id: uuidv4(),
+                        id: generateId(),
 			role: 'user',
 			content,
 			timestamp: Date.now(),
@@ -114,7 +114,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		addMessage(userMessage);
 
 		// Add temporary assistant message
-		const assistantMessageId = uuidv4();
+                const assistantMessageId = generateId();
 		const assistantMessage = {
 			id: assistantMessageId,
 			role: 'assistant',

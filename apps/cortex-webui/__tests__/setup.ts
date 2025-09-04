@@ -21,6 +21,11 @@ vi.mock('next/navigation', () => {
 	};
 });
 
+// Minimal mock for next/link used in layout components
+vi.mock('next/link', () => ({
+        default: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // Mock window for client-side code
 if (typeof window !== 'undefined') {
 	// jsdom doesn't implement scrollIntoView by default
