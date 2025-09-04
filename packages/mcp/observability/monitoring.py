@@ -520,12 +520,12 @@ class AlertManager:
             Last Triggered: {alert.last_triggered}
             """
 
-            msg = MimeMultipart()
+            msg = MIMEMultipart()
             msg["From"] = self.config.smtp_from
             msg["To"] = ", ".join(self.config.alert_emails)
             msg["Subject"] = subject
 
-            msg.attach(MimeText(body, "plain"))
+            msg.attach(MIMEText(body, "plain"))
 
             with smtplib.SMTP(self.config.smtp_host, self.config.smtp_port) as server:
                 if self.config.smtp_username:
