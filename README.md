@@ -50,8 +50,8 @@ Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) 
 git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os
 
-# Install dependencies (uses exact pnpm version)
-pnpm install
+# Run automated setup (trusts mise and installs dependencies)
+./scripts/dev-setup.sh
 
 # Verify installation
 pnpm readiness:check
@@ -335,4 +335,3 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 [![GitHub PRs](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
 
 </div>
-
