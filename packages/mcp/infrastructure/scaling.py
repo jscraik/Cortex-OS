@@ -200,7 +200,7 @@ class ResourceMonitor:
 
             # Update current metrics
             timestamp = datetime.now()
-            metrics = {
+            metric_values = {
                 "cpu_percent": cpu_percent,
                 "cpu_load": load_avg,
                 "memory_percent": memory.percent,
@@ -213,7 +213,7 @@ class ResourceMonitor:
             }
 
             if disk_io:
-                metrics.update(
+                metric_values.update(
                     {
                         "disk_read_mb_s": disk_io.read_bytes
                         / (1024**2)
@@ -225,7 +225,7 @@ class ResourceMonitor:
                 )
 
             if network_io:
-                metrics.update(
+                metric_values.update(
                     {
                         "network_recv_mb_s": network_io.bytes_recv
                         / (1024**2)
@@ -236,10 +236,10 @@ class ResourceMonitor:
                     }
                 )
 
-            self.current_metrics = metrics
+            self.current_metrics = metric_values
 
             # Store in history
-            for metric_name, value in metrics.items():
+            for metric_name, value in metric_values.items():
                 if metric_name not in self.metric_history:
                     self.metric_history[metric_name] = []
 
@@ -254,7 +254,7 @@ class ResourceMonitor:
                 ]
 
             # Record Prometheus metrics
-            for metric_name, value in metrics.items():
+            for metric_name, value in metric_values.items():
                 metrics.record_gauge(f"resource_{metric_name}", value)
 
         except Exception as e:
