@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
+from contextlib import suppress
 
 import docker
 import psutil
@@ -159,10 +160,8 @@ class ResourceMonitor:
 
         if self._monitor_task:
             self._monitor_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._monitor_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Resource monitor stopped")
 
@@ -182,7 +181,7 @@ class ResourceMonitor:
         try:
             # CPU metrics
             cpu_percent = psutil.cpu_percent(interval=1)
-            cpu_count = psutil.cpu_count()
+            _cpu_count = psutil.cpu_count()
             load_avg = os.getloadavg()[0] if hasattr(os, "getloadavg") else 0
 
             # Memory metrics
@@ -389,7 +388,7 @@ class KubernetesScaler:
             # Try to load in-cluster config first
             try:
                 config.load_incluster_config()
-            except:
+            except Exception:
                 # Fall back to local config
                 config.load_kube_config()
 
