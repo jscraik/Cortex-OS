@@ -182,7 +182,7 @@ class DatabaseManager:
 
         @event.listens_for(sync_engine, "before_cursor_execute")
         def before_cursor_execute(
-            _conn, _cursor, statement, _parameters, context, _executemany  # noqa: ANN001
+            _conn, _cursor, _statement, _parameters, context, _executemany  # noqa: ANN001,ARG001
         ) -> None:
             """Track query start time."""
             context._query_start_time = time.time()
