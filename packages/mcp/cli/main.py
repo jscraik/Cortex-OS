@@ -8,10 +8,10 @@ from pathlib import Path
 
 import click
 import uvicorn
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
+from rich.console import Console  # type: ignore[import-not-found]
+from rich.panel import Panel  # type: ignore[import-not-found]
+from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
+from rich.table import Table  # type: ignore[import-not-found]
 
 from ..core.server import MCPServer
 from ..tasks.task_queue import TaskQueue
@@ -24,7 +24,7 @@ from .server import server_commands
 from .tasks import task_commands
 from .tools import tool_commands
 
-console = Console()
+console: Any = Console()
 
 
 class CLIContext:
