@@ -18,6 +18,7 @@ repos:
         language: system
         files: \.(ts|tsx)$
         pass_filenames: false
+        stages: [pre-push]
 
       # Python formatting and linting with uv validation
       - id: ruff-check
@@ -26,6 +27,7 @@ repos:
         language: system
         files: \.py$
         pass_filenames: true
+        stages: [pre-push]
 
       - id: ruff-format
         name: Ruff Format
@@ -33,6 +35,7 @@ repos:
         language: system
         files: \.py$
         pass_filenames: true
+        stages: [pre-push]
 
       # Security checks with proper error handling
       - id: security-audit
@@ -101,6 +104,7 @@ exclude: |
     coverage/.*|
     __pycache__/.*|
     \.venv/.*|
+    \.mcp-quick-venv/.*|
     mcp-servers/.*|
     test-results/.*|
     playwright-report/.*

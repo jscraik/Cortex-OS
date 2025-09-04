@@ -1,29 +1,5 @@
 # Cortex CLI Changelog
 
-## [v0.1.2-chat] - 2025-09-03
-
-### Features
-
-- `codex chat` subcommand with streaming output (single-turn)
-- Multi-turn chat options:
-  - `--session NAME` and `--session-file PATH` for JSONL history
-  - `--reset` to truncate an existing session file
-  - `--repl` simple line-based REPL (type `:q` to quit)
-  - Support `-` to read the prompt from stdin
-- Session JSONL persists both user and assistant items for accurate replay
-- Session metadata includes Git info when available (commit hash, branch, repo URL)
-
-### Testing & Tooling
-
-- Mocked SSE chat completions via wiremock in core test suite
-- Fixture-driven SSE for hermetic tests via `CODEX_RS_SSE_FIXTURE`
-- CLI one-off chat integration tests (once-only streaming assertions)
-- Clippy strict (`-D warnings`) passes across updated crates
-
-### Docs
-
-- Expanded README with chat usage, sessions/REPL flags, and developer SSE fixture notes
-
 ## [v0.1.1-config] - 2025-09-03
 
 ### ✅ COMPLETED: Task 1.2 - Configuration System Integration (TDD)
@@ -63,7 +39,7 @@
 
 ## [Unreleased] - 2025-09-03
 
-### Added (plan, ci, infra)
+### Added
 
 - Complete software engineering plan with TDD principles
 - Task tracking system with rollback points

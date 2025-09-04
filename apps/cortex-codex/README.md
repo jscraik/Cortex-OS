@@ -1,12 +1,5 @@
 # Codex CLI (Rust Implementation)
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Phase 1](https://img.shields.io/badge/Phase%201-Foundation%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![TDD](https://img.shields.io/badge/TDD-11%2F11%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Rust Edition](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://rust-lang.org)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
 We provide Codex CLI as a standalone, native executable to ensure a zero-dependency install.
 
 ## Installing Codex
@@ -70,84 +63,11 @@ codex completion zsh
 codex completion fish
 ```
 
-The generated completions include subcommands and flags such as `codex chat -C/--cd <DIR>`.
-
-Install completions (optional):
-
-- zsh (macOS default):
-
-```shell
-mkdir -p ~/.zsh/completions
-codex completion zsh > ~/.zsh/completions/_codex
-echo 'fpath+=(~/.zsh/completions)' >> ~/.zshrc
-echo 'autoload -U compinit && compinit' >> ~/.zshrc
-exec $SHELL
-```
-
-- bash:
-
-```shell
-codex completion bash | sudo tee /etc/bash_completion.d/codex > /dev/null
-# or for user-local:
-mkdir -p ~/.bash_completion.d
-codex completion bash > ~/.bash_completion.d/codex
-echo 'source ~/.bash_completion.d/codex' >> ~/.bashrc
-exec $SHELL
-```
-
-### Chat (one-off)
-
-Send a single prompt and stream the reply without starting the interactive TUI:
-
-```shell
-codex chat "Summarize the README in 3 bullet points"
-```
-
-This is additive and does not affect existing commands.
-
-#### Chat flags for multi‑turn and sessions
-
-- `--session NAME`: persist history to `$CODEX_HOME/sessions/NAME.jsonl`
-- `--session-file PATH`: persist history to a custom JSONL path
-- `--reset`: start fresh, truncating the session file
-- `--repl`: stay in a simple line‑based REPL (type `:q` to quit)
-- `-C, --cd DIR`: run Chat using DIR as the working root (same semantics as `codex exec -C`)
-- `PROMPT` can be `-` to read from stdin; optional when `--repl` is used
-
-Note: When using `--repl` or sessions, the JSONL history includes both user and assistant items. This is expected and allows full turn-by-turn replay.
-
-Examples:
-
-```shell
-# Single turn (unchanged)
-codex chat "Start a plan for Phase 2"
-
-# Read entire prompt from stdin
-echo "Write a haiku about Codex" | codex chat -
-
-# Persist a named session
-codex chat --session demo "Initial message"
-
-# Reset an existing session
-codex chat --session demo --reset "Fresh start"
-
-# REPL with session persistence
-codex chat --session demo --repl
-
-# Change the working directory for a one-off chat
-codex chat -C ./examples "List files in the project and suggest a cleanup plan"
-```
-
-Developer notes:
-
-- Session metadata may include Git details (commit, branch, repo URL) when Codex runs inside a git repo.
-- For hermetic testing, you can set `CODEX_RS_SSE_FIXTURE` to a local `.sse` file to bypass network calls in CLI/exec tests.
-
 ### Experimenting with the Codex Sandbox
 
 To test to see what happens when a command is run under the sandbox provided by Codex, we provide the following subcommands in Codex CLI:
 
-```shell
+```
 # macOS
 codex debug seatbelt [--full-auto] [COMMAND]...
 

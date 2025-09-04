@@ -14,6 +14,7 @@ workspace = true
 [dependencies]
 anyhow = "1"
 async-channel = "2.3.1"
+async-trait = "0.1"
 base64 = "0.22"
 bytes = "1.10.1"
 chrono = { version = "0.4", features = ["serde"] }
@@ -25,7 +26,6 @@ env-flags = "0.1.1"
 eventsource-stream = "0.2.3"
 futures = "0.3"
 libc = "0.2.175"
-fs2 = "0.4"
 mcp-types = { path = "../mcp-types" }
 mime_guess = "2.0"
 os_info = "3.12.0"
@@ -42,12 +42,7 @@ similar = "2.7.0"
 strum_macros = "0.27.2"
 tempfile = "3"
 thiserror = "2.0.16"
-time = { version = "0.3", features = [
-    "formatting",
-    "parsing",
-    "local-offset",
-    "macros",
-] }
+time = { version = "0.3", features = ["formatting", "parsing", "local-offset", "macros"] }
 tokio = { version = "1", features = [
     "io-std",
     "macros",
@@ -89,5 +84,7 @@ predicates = "3"
 pretty_assertions = "1.4.1"
 tempfile = "3"
 tokio-test = "0.4"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+tracing-test = "0.2"
 walkdir = "2.5.0"
 wiremock = "0.6"

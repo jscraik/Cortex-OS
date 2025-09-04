@@ -23,11 +23,11 @@
 
 #### 🔄 IN PROGRESS
 
-- [x] **Task 2.1**: Chat CLI + Sessions + REPL (TDD)
-  - [x] One-off chat streaming tests (mock SSE)
-  - [x] Session JSONL and resume tests
-  - [x] REPL loop and stdin `-` support
-  - [x] README updated
+- [ ] **Task 2.1**: Basic Chat Interface (TDD) - NEXT PRIORITY
+  - [ ] Write tests for chat message handling
+  - [ ] Write tests for message history
+  - [ ] Implement simple chat interface
+  - [ ] Add message persistence
 
 - [ ] **Task 2.2**: Model Provider Abstraction (TDD)
   - [ ] Write tests for provider interface
@@ -37,6 +37,7 @@
 
 #### 📋 TODO - NEXT UP
 
+- [ ] **Task 2.1**: Basic Chat Interface (TDD) - NEXT PRIORITY
 - [ ] **Task 2.2**: Model Provider Abstraction (TDD)
 - [ ] **Task 2.3**: Streaming Support (TDD)
 

@@ -86,12 +86,12 @@ if command -v ollama &> /dev/null; then
     ollama serve &
     OLLAMA_PID=$!
     sleep 5  # Wait for Ollama to start
-    
+
     echo "Pulling models..."
     ollama pull qwen3-coder:30b || echo "⚠️  Failed to pull qwen3-coder:30b"
     ollama pull phi4-mini-reasoning:latest || echo "⚠️  Failed to pull phi4-mini-reasoning:latest"
     ollama pull llama3.2:3b || echo "⚠️  Failed to pull llama3.2:3b"
-    
+
     # Stop Ollama service
     kill $OLLAMA_PID 2>/dev/null || true
     echo "Ollama service stopped"

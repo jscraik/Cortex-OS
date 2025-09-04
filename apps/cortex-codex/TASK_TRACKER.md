@@ -1,26 +1,21 @@
-# Cortex CLI Task Tracker
+# Cortex Task Tracker
 
-[![Overall Progress](https://img.shields.io/badge/Overall%20Progress-Phase%201%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Current Status](https://img.shields.io/badge/Status-Phase%202%20In%20Progress-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Foundation](https://img.shields.io/badge/Foundation-100%25%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Tests](https://img.shields.io/badge/Config%20Tests-11%2F11%20Passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![TDD](https://img.shields.io/badge/Methodology-TDD%20Compliant-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-
-## Current Status: 🟢 Phase 2 In Progress - Foundation Complete
+## Current Status: ✅ Ready for Phase 2 - Foundation Complete
 
 ### Phase 1: Foundation Setup ✅ COMPLETED
 
-- [x] **Task 1.1**: Basic TUI Foundation (TDD) - `v0.1.0-base`
+- [x] **Task 1.1**: Basic TUI Foundation (TDD) - `v0.1.0-foundation` ✅ COMPLETED  
 - [x] **Task 1.2**: Configuration System (TDD) - `v0.1.1-config` ✅ COMPLETED  
-- [x] **Task 1.3**: Error Handling (TDD) - `v0.1.2-errors`
+- [x] **Task 1.3**: Error Handling (TDD) - `v0.1.2-errors` ✅ COMPLETED
 
 ### Phase 2: Core Features 🔄 IN PROGRESS
 
-- [x] **Task 2.1**: Chat CLI + Sessions + REPL (TDD) - Tag: `v0.1.2-chat`
-  - [x] One-off chat streaming with mock SSE
-  - [x] Session JSONL persistence and resume
-  - [x] REPL mode and stdin via `-`
-  - [x] README updated; tests pass
+- [ ] **Task 2.1**: Basic Chat Interface (TDD) - Target: `v0.2.0-chat`
+  - [ ] Write tests for chat message handling
+  - [ ] Write tests for message history
+  - [ ] Implement simple chat interface
+  - [ ] Add message persistence
+  - [ ] Verification: Chat interface tests pass
   
 - [ ] **Task 2.2**: Model Provider Abstraction (TDD) - Target: `v0.2.1-providers`
   - [ ] Write tests for provider interface
@@ -60,6 +55,7 @@
 
 ### This Week
 
+- [ ] Complete Task 2.1: Basic Chat Interface
 - [ ] Begin Task 2.2: Provider Abstraction
 
 ### Success Criteria
