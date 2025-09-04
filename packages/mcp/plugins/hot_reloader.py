@@ -42,8 +42,8 @@ class PluginHotReloader:
         try:
             events = importlib.import_module("watchdog.events")
             observers = importlib.import_module("watchdog.observers")
-            FileSystemEventHandler = getattr(events, "FileSystemEventHandler")
-            Observer = getattr(observers, "Observer")
+            FileSystemEventHandler = events.FileSystemEventHandler
+            Observer = observers.Observer
         except Exception as e:  # pragma: no cover - optional dependency
             self.logger.warning(
                 "watchdog not available, disabling auto-reload: %s", e
@@ -65,11 +65,11 @@ class PluginHotReloader:
             {"__init__": _init, "on_modified": _on_modified},
         )
 
-        observer = Observer()
+    observer = Observer()
     observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
-        observer.start()
-        # Store observer dynamically to avoid strict typing on optional dep
-        self.observer = observer
+    observer.start()
+    # Store observer dynamically to avoid strict typing on optional dep
+    self.observer = observer
 
     def schedule_reload(self, plugin_name: str) -> None:
         """Schedule a plugin reload with cooldown."""
