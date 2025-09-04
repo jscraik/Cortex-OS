@@ -5,13 +5,9 @@ export type ToolEvent = {
   status?: 'start' | 'complete' | 'error';
   createdAt: string;
 };
-
-// Declare the global property
-  namespace NodeJS {
-    interface Global {
-      __cortexToolStore?: Map<string, ToolEvent[]>;
-    }
-  }
+declare global {
+  // eslint-disable-next-line no-var
+  var __cortexToolStore: Map<string, ToolEvent[]> | undefined;
 }
 
 const toolStore: Map<string, ToolEvent[]> = globalThis.__cortexToolStore || new Map();
