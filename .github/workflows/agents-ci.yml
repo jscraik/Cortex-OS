@@ -16,13 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install pnpm
-        run: npm i -g pnpm@9
-      - name: Install deps
-        run: pnpm i --frozen-lockfile
+      - uses: ./.github/actions/setup
       - name: Typecheck (agents)
         run: pnpm -w --filter @cortex-os/agents typecheck
       - name: Build (agents)
