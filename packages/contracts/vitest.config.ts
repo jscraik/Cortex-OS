@@ -12,6 +12,6 @@ export default defineConfig({
 			"tests/**/*.spec.ts",
 		],
 		exclude: ["**/node_modules/**", "**/dist/**", "**/build/**"],
-		passWithNoTests: true,
+		passWithNoTests: false,
 	},
 });
