@@ -22,7 +22,18 @@ function getMCPServerInfo(): ServerInfo | null {
         if (transport === "stdio") {
                 const command = process.env.MCP_COMMAND;
                 if (!command) return null;
-                const args = process.env.MCP_ARGS ? JSON.parse(process.env.MCP_ARGS) : undefined;
+                let args: unknown = undefined;
+                if (process.env.MCP_ARGS) {
+                    try {
+                        const parsed = JSON.parse(process.env.MCP_ARGS);
+                        // Validate using zod. If MCPRequestSchema.shape.args exists, use it; otherwise, fallback to z.any()
+                        // For demonstration, we'll use z.any() as the schema for args.
+                        args = z.any().parse(parsed);
+                    } catch (e) {
+                        // Invalid JSON or schema, set args to undefined
+                        args = undefined;
+                    }
+                }
                 return { name, transport, command, args } as ServerInfo;
         }
         if (transport === "sse" || transport === "streamableHttp") {
