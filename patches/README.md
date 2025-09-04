@@ -13,20 +13,20 @@ This directory contains patch files used for applying specific fixes and enhance
 
 ## Contents
 
-- `memory-systems-enhancements.patch` - Contains enhancements for memory systems
+Currently no patches are provided. Add new patch files as needed.
 
 ## Usage
 
 Patches can be applied using the `git apply` command:
 
 ```bash
-git apply patches/memory-systems-enhancements.patch
+git apply patches/your-patch-name.patch
 ```
 
 For more complex patches, you may need to use additional flags:
 
 ```bash
-git apply --ignore-whitespace --reject patches/memory-systems-enhancements.patch
+git apply --ignore-whitespace --reject patches/your-patch-name.patch
 ```
 
 ## Creating New Patches
