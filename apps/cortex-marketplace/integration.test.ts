@@ -34,7 +34,7 @@ describe("MCP Marketplace Integration Tests", () => {
 					verified: true,
 				},
 				category: "development",
-				license: "MIT",
+                                license: "Apache-2.0",
 				transport: {
 					stdio: { command: "npx", args: ["-y", "@test/filesystem"] },
 				},
@@ -64,7 +64,7 @@ describe("MCP Marketplace Integration Tests", () => {
 				capabilities: { tools: true, resources: true, prompts: true },
 				publisher: { name: "GitHub", email: "test@github.com", verified: true },
 				category: "development",
-				license: "MIT",
+                                license: "Apache-2.0",
 				transport: { stdio: { command: "npx", args: ["-y", "@test/github"] } },
 				install: {
 					claude: "claude mcp add test-github -- npx -y @test/github",

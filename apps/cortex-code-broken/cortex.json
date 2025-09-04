@@ -4,7 +4,7 @@
   "description": "AI-powered terminal interface for Cortex-OS",
   "homepage": "https://cortex-os.ai",
   "repository": "https://github.com/cortex-os/cortex-code",
-  "license": "MIT",
+  "license": "Apache-2.0",
 
   "runtime": {
     "engine": "cortex-code",

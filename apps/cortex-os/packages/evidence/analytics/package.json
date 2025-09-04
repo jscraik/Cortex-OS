@@ -41,5 +41,5 @@
 		"real-time-dashboard"
 	],
 	"author": "Cortex OS Team",
-	"license": "(Apache-2.0 OR Commercial)"
+     "license": "Apache-2.0"
 }

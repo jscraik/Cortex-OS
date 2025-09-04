@@ -2,8 +2,9 @@
 	"name": "@cortex-os/app",
 	"version": "1.0.0",
 	"private": true,
-	"type": "module",
-	"scripts": {
+        "type": "module",
+        "license": "Apache-2.0",
+        "scripts": {
 		"build": "tsc -p tsconfig.json",
 		"dev": "tsx src/index.ts",
 		"test": "vitest run",
