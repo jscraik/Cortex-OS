@@ -62,7 +62,7 @@ class MCPServer:
         """Handle an incoming MCP message."""
         return await self.protocol_handler.handle_message(message)
 
-    async def _handle_tools_list(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_tools_list(self, _params: dict[str, Any]) -> dict[str, Any]:
         """Handle tools/list request."""
         tools = []
 
