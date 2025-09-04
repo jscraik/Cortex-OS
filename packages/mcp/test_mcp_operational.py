@@ -36,7 +36,7 @@ class MockMCPTransport(MCPTransport):
     def is_connected(self) -> bool:
         return self.state == ConnectionState.CONNECTED
 
-    async def connect(self, **kwargs) -> None:
+    async def connect(self, **_kwargs) -> None:
         """Mock connection that can succeed or fail."""
         logger.info("MockTransport: Attempting connection...")
         await asyncio.sleep(0.1)  # Simulate connection delay
@@ -114,7 +114,6 @@ async def test_connection_lifecycle():
     print("\n🧪 Testing connection lifecycle...")
 
     # Create a custom transport factory for testing
-    original_create_connection = None
 
     config = ConnectionConfig(host="localhost", port=8080, transport_type="stdio")
 
