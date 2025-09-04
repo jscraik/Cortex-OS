@@ -10,12 +10,11 @@ from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
 from .database import DatabaseConfig, get_database_manager
-from .models import Base
+from . import models
 
 logger = get_logger(__name__)
 metrics = get_metrics_collector()
@@ -25,12 +24,12 @@ class MigrationManager:
     """Manages database migrations using Alembic."""
 
     def __init__(self, database_config: DatabaseConfig | None = None):
-        self.db_config = database_config or DatabaseConfig()
-        self.migrations_dir = Path(__file__).parent / "migrations"
-        self.alembic_cfg = None
+        self.db_config: DatabaseConfig = database_config or DatabaseConfig()
+        self.migrations_dir: Path = Path(__file__).parent / "migrations"
+        self.alembic_cfg: Config | None = None
         self._setup_alembic_config()
 
-    def _setup_alembic_config(self):
+    def _setup_alembic_config(self) -> None:
         """Setup Alembic configuration."""
         # Ensure migrations directory exists
         self.migrations_dir.mkdir(exist_ok=True)
@@ -41,18 +40,19 @@ class MigrationManager:
         if not alembic_ini.exists():
             self._create_alembic_ini(alembic_ini)
 
-        # Create Alembic config
-        self.alembic_cfg = Config(str(alembic_ini))
-        self.alembic_cfg.set_main_option("script_location", str(self.migrations_dir))
+    # Create Alembic config
+    cfg = Config(str(alembic_ini))
+    self.alembic_cfg = cfg
+    cfg.set_main_option("script_location", str(self.migrations_dir))
 
         # Convert async URL to sync URL for Alembic
-        sync_url = self._get_sync_database_url()
-        self.alembic_cfg.set_main_option("sqlalchemy.url", sync_url)
+    sync_url = self._get_sync_database_url()
+    cfg.set_main_option("sqlalchemy.url", sync_url)
 
         # Setup logging
-        self.alembic_cfg.set_main_option("logger", "mcp.migrations")
+    cfg.set_main_option("logger", "mcp.migrations")
 
-    def _create_alembic_ini(self, alembic_ini_path: Path):
+    def _create_alembic_ini(self, alembic_ini_path: Path) -> None:
         """Create alembic.ini configuration file."""
         alembic_ini_content = """# Alembic configuration for MCP
 
@@ -130,7 +130,7 @@ datefmt = %Y-%m-%d %H:%M:%S
 
         return url
 
-    async def initialize_migrations(self):
+    async def initialize_migrations(self) -> bool:
         """Initialize migrations directory and create initial migration."""
         try:
             # Check if migrations are already initialized
@@ -140,6 +140,7 @@ datefmt = %Y-%m-%d %H:%M:%S
                 return True
 
             # Initialize Alembic
+            assert self.alembic_cfg is not None
             command.init(self.alembic_cfg, str(self.migrations_dir))
 
             # Create env.py with async support
@@ -156,7 +157,7 @@ datefmt = %Y-%m-%d %H:%M:%S
             metrics.record_error("migration_init_failed", "database")
             return False
 
-    def _create_env_py(self):
+    def _create_env_py(self) -> None:
         """Create env.py with async support."""
         env_py_path = self.migrations_dir / "env.py"
 
@@ -234,7 +235,7 @@ else:
         env_py_path.write_text(env_py_content)
         logger.info("Created async-compatible env.py")
 
-    async def _create_initial_migration(self):
+    async def _create_initial_migration(self) -> None:
         """Create initial migration with all models."""
         try:
             # Generate initial migration
@@ -276,6 +277,7 @@ else:
         try:
             # Generate migration in executor
             loop = asyncio.get_event_loop()
+            assert self.alembic_cfg is not None
             result = await loop.run_in_executor(
                 None,
                 lambda: command.revision(
@@ -294,6 +296,7 @@ else:
         """Rollback to a specific migration."""
         try:
             loop = asyncio.get_event_loop()
+            assert self.alembic_cfg is not None
             await loop.run_in_executor(
                 None, lambda: command.downgrade(self.alembic_cfg, revision)
             )
@@ -313,8 +316,8 @@ else:
 
             # Get current revision from database
             async with db_manager.get_session() as session:
-                # Cast to AsyncSession for type-checkers
-                _session = cast(AsyncSession, session)
+                # Treat as Any for strict type checkers
+                _session: Any = session
                 result = await _session.execute(
                     text("SELECT version_num FROM alembic_version LIMIT 1")
                 )
@@ -389,7 +392,7 @@ else:
                 # Check if current schema matches expected
                 # This is a simplified check - full implementation would compare all tables/columns
                 current_tables = set(context.get_bind().table_names())
-                expected_tables = set(Base.metadata.tables.keys())
+                expected_tables = set(models.Base.metadata.tables.keys())
 
                 missing_tables = expected_tables - current_tables
                 extra_tables = current_tables - expected_tables
@@ -469,19 +472,19 @@ async def get_migration_manager() -> MigrationManager:
     return _migration_manager
 
 
-async def run_migrations():
+async def run_migrations() -> bool:
     """Convenience function to run migrations."""
     migration_manager = await get_migration_manager()
     return await migration_manager.run_migrations()
 
 
-async def create_migration(message: str):
+async def create_migration(message: str) -> str | None:
     """Convenience function to create a migration."""
     migration_manager = await get_migration_manager()
     return await migration_manager.create_migration(message)
 
 
-async def get_migration_status():
+async def get_migration_status() -> dict[str, Any]:
     """Convenience function to get migration status."""
     migration_manager = await get_migration_manager()
     return await migration_manager.get_migration_status()
