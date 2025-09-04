@@ -16,16 +16,24 @@ class MCPClient:
         self.transport = transport or HTTPTransport()
         self.protocol = MCPProtocolHandler()
         self._pending: dict[str, asyncio.Future[MCPMessage]] = {}
+        self._receive_task: asyncio.Task | None = None
         self.transport.set_message_handler(self._handle_incoming)
 
     async def connect(self, **kwargs: Any) -> None:
         """Connect the underlying transport."""
         await self.transport.connect(**kwargs)
-        asyncio.create_task(self.transport.receive_messages())
+        self._receive_task = asyncio.create_task(self.transport.receive_messages())
 
     async def disconnect(self) -> None:
         """Disconnect the underlying transport."""
         await self.transport.disconnect()
+        if self._receive_task is not None:
+            self._receive_task.cancel()
+            try:
+                await self._receive_task
+            except asyncio.CancelledError:
+                pass
+            self._receive_task = None
 
     async def _handle_incoming(self, message: MCPMessage) -> MCPMessage | None:
         future = self._pending.pop(message.id, None)
