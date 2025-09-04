@@ -29,7 +29,7 @@ def tool_commands():
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def list_tools(output_format: str, config_file: str):
+def list_tools(output_format: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """List all available tools."""
 
     async def get_tools():
@@ -67,7 +67,7 @@ def list_tools(output_format: str, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Loading tools...", total=None)
+        _task = progress.add_task("Loading tools...", total=None)
 
         try:
             result = asyncio.run(get_tools())
@@ -136,7 +136,7 @@ def list_tools(output_format: str, config_file: str):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def tool_info(tool_name: str, config_file: str):
+def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Get detailed information about a specific tool."""
 
     async def get_tool_info():
@@ -185,7 +185,7 @@ def tool_info(tool_name: str, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task(f"Getting info for {tool_name}...", total=None)
+        _task = progress.add_task(f"Getting info for {tool_name}...", total=None)
 
         try:
             result = asyncio.run(get_tool_info())
@@ -236,7 +236,7 @@ def tool_info(tool_name: str, config_file: str):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
+def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Execute a tool with given parameters."""
     # Parse parameters
     parameters = {}
@@ -299,7 +299,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task(f"Executing {tool_name}...", total=None)
+        _task = progress.add_task(f"Executing {tool_name}...", total=None)
 
         try:
             response = asyncio.run(execute_tool())
@@ -342,7 +342,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def test_tools(tool: str, config_file: str):
+def test_tools(tool: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Test tools with sample data to verify they work correctly."""
 
     async def run_tests():
@@ -445,7 +445,7 @@ def test_tools(tool: str, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Running tool tests...", total=None)
+        _task = progress.add_task("Running tool tests...", total=None)
 
         try:
             result = asyncio.run(run_tests())
