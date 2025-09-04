@@ -229,7 +229,7 @@ def health_check(config_file: str):
 
             # Memory Bridge
             try:
-                memory_config = integration_config.get("memory_bridge", {})
+                _memory_config = integration_config.get("memory_bridge", {})
                 memory_bridge = MemoryBridge()
 
                 memory_health = await memory_bridge.health_check()
@@ -414,7 +414,7 @@ def reset_server(config_file: str):
                     config = json.load(f)
             else:
                 console.print("[yellow]No configuration found, using defaults[/yellow]")
-                config = {}
+                _config: dict = {}
 
             # Reset components
             console.print("[yellow]Resetting server state...[/yellow]")
