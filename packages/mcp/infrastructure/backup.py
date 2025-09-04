@@ -650,13 +650,11 @@ class BackupManager:
             # Apply retention policy
             should_delete = False
 
-            if age > timedelta(days=self.config.keep_daily_for_days):
-                if metadata.backup_type != BackupType.FULL:
-                    should_delete = True
-                elif age > timedelta(
-                    days=self.config.keep_monthly_for_months * 30
-                ):
-                    should_delete = True
+            if age > timedelta(days=self.config.keep_daily_for_days) and (
+                metadata.backup_type != BackupType.FULL
+                or age > timedelta(days=self.config.keep_monthly_for_months * 30)
+            ):
+                should_delete = True
 
             # Always keep at least one backup
             if len(self.metadata_cache) <= 1:
