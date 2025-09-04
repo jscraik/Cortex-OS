@@ -1,7 +1,13 @@
 #!/bin/bash
 # GitHub Apps Diagnostic and Setup Script
+# Determine Cortex-OS home directory
+ROOT_DIR="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}"
+if [ ! -d "$ROOT_DIR/packages" ]; then
+    ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+
 # Load central port registry
-PORTS_FILE="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}/config/ports.env"
+PORTS_FILE="$ROOT_DIR/config/ports.env"
 if [ -f "$PORTS_FILE" ]; then
     # shellcheck source=/dev/null
     . "$PORTS_FILE"
@@ -38,8 +44,8 @@ echo
 echo "📡 Port Status:"
 echo "---------------"
 for port in "$GITHUB_AI_PORT" "$SEMGREP_PORT" "$STRUCTURE_PORT"; do
-    if lsof -i :$port > /dev/null 2>&1; then
-        echo "✅ Port $port: $(lsof -i :$port | tail -1 | awk '{print $1}')"
+    if lsof -i :"$port" > /dev/null 2>&1; then
+        echo "✅ Port $port: $(lsof -i :"$port" | tail -1 | awk '{print $1}')"
     else
         echo "❌ Port $port: Not in use"
     fi
@@ -50,12 +56,13 @@ echo
 echo "⚙️ Configuration Status:"
 echo "------------------------"
 for app in cortex-ai-github cortex-semgrep-github cortex-structure-github; do
-    env_file="/Users/jamiecraik/.Cortex-OS/packages/$app/.env"
+    env_file="$ROOT_DIR/packages/$app/.env"
+    example_file="$ROOT_DIR/packages/$app/.env.example"
     if [ -f "$env_file" ]; then
         echo "✅ $app: .env exists"
     else
         echo "❌ $app: .env missing"
-        echo "   Example: /Users/jamiecraik/.Cortex-OS/packages/$app/.env.example"
+        echo "   Example: $example_file"
     fi
 done
 echo
@@ -64,7 +71,7 @@ echo
 echo "🏗️ Build Status:"
 echo "----------------"
 for app in cortex-ai-github cortex-semgrep-github cortex-structure-github; do
-    dist_dir="/Users/jamiecraik/.Cortex-OS/packages/$app/dist"
+    dist_dir="$ROOT_DIR/packages/$app/dist"
     if [ -d "$dist_dir" ]; then
         echo "✅ $app: Built (dist/ exists)"
     else
