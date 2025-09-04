@@ -28,14 +28,13 @@ export function wireA2A(): A2AWiring {
         // Optional: MCP telemetry -> A2A when enabled
         let publishMcp: ((event: McpTelemetryEvent) => void) | undefined;
         if (process.env.CORTEX_MCP_A2A_TELEMETRY === "1") {
-                publishMcp = (evt: McpTelemetryEvent) =>
-                        void bus.publish(
-                                createEnvelope({
-                                        type: evt.type,
-                                        data: evt.payload,
-                                        source: "urn:cortex-os:mcp",
-                                }),
-                        );
+                publishMcp = (evt: McpTelemetryEvent) => void bus.publish(
+                        createEnvelope({
+                                type: evt.type,
+                                data: evt.payload,
+                                source: "urn:cortex-os:mcp",
+                        }),
+                );
         }
 
         const publish = (
