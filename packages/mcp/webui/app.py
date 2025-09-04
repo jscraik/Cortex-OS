@@ -200,7 +200,7 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Manage application lifecycle."""
     global mcp_server, connection_pool, task_queue
 
@@ -222,15 +222,15 @@ async def lifespan(app: FastAPI):
             else:
                 logger.warning("Database migrations failed")
 
-        # Initialize caching system
-        logger.info("Initializing cache system...")
-        cache = get_cache()
-        logger.info("Cache system initialized")
+    # Initialize caching system
+    logger.info("Initializing cache system...")
+    get_cache()
+    logger.info("Cache system initialized")
 
-        # Initialize rate limiting
-        logger.info("Initializing rate limiting...")
-        rate_limiter = await get_rate_limit_manager()
-        logger.info("Rate limiting initialized")
+    # Initialize rate limiting
+    logger.info("Initializing rate limiting...")
+    await get_rate_limit_manager()
+    logger.info("Rate limiting initialized")
 
         # Initialize MCP server
         config = {
@@ -597,7 +597,7 @@ async def reload_plugin(plugin_name: str, user: User = Depends(get_current_user)
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/api/pool/status")
@@ -711,9 +711,7 @@ async def deep_health_check():
     health_status = await health_manager.get_overall_health()
 
     # Add component-specific health checkers
-    if mcp_server and hasattr(health_manager, "checkers"):
-        # Add server health
-        if "server" not in health_manager.checkers:
+    if mcp_server and hasattr(health_manager, "checkers") and "server" not in health_manager.checkers:
             from ..observability.health import (
                 HealthChecker,
                 HealthCheckResult,
@@ -760,7 +758,7 @@ async def prometheus_metrics():
         return metrics_data
     except Exception as e:
         logger.error("Failed to generate metrics", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to generate metrics")
+        raise HTTPException(status_code=500, detail="Failed to generate metrics") from e
 
 
 @app.get("/metrics/summary")
@@ -773,7 +771,7 @@ async def metrics_summary():
         logger.error("Failed to generate metrics summary", error=str(e))
         raise HTTPException(
             status_code=500, detail="Failed to generate metrics summary"
-        )
+        ) from e
 
 
 @app.get("/observability/info")
@@ -807,7 +805,7 @@ async def database_status():
         return status
     except Exception as e:
         logger.error("Failed to get database status", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/database/migrations/status")
@@ -820,7 +818,7 @@ async def migration_status():
         return status
     except Exception as e:
         logger.error("Failed to get migration status", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/database/migrations/run")
@@ -836,7 +834,7 @@ async def run_database_migrations():
         }
     except Exception as e:
         logger.error("Failed to run migrations", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/cache/stats")
@@ -848,7 +846,7 @@ async def cache_statistics():
         return stats
     except Exception as e:
         logger.error("Failed to get cache stats", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.delete("/cache/clear")
@@ -863,7 +861,7 @@ async def clear_cache():
         }
     except Exception as e:
         logger.error("Failed to clear cache", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/cache/invalidate")
@@ -875,7 +873,7 @@ async def invalidate_cache_tags(tags: list[str]):
         return {"deleted_count": deleted_count, "tags": tags}
     except Exception as e:
         logger.error("Failed to invalidate cache tags", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/rate-limiting/status")
@@ -892,7 +890,7 @@ async def rate_limiting_status():
         }
     except Exception as e:
         logger.error("Failed to get rate limiting status", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/rate-limiting/usage/{identifier}")
@@ -904,7 +902,7 @@ async def rate_limiting_usage(identifier: str, rule_key: str = "api_default"):
         return usage
     except Exception as e:
         logger.error("Failed to get rate limiting usage", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.delete("/rate-limiting/reset/{identifier}")
@@ -916,7 +914,7 @@ async def reset_rate_limit(identifier: str, rule_key: str = "api_default"):
         return {"success": success, "identifier": identifier, "rule": rule_key}
     except Exception as e:
         logger.error("Failed to reset rate limit", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/security/status")
