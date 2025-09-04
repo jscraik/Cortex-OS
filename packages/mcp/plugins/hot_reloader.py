@@ -179,7 +179,6 @@ class PluginHotReloader:
 
     def _load_manifest(self, plugin_path: str) -> PluginManifest:
         """Load plugin manifest from file."""
-    _plugin_name = Path(plugin_path).stem
         manifest_path = Path(plugin_path).with_name("manifest.json")
         if not manifest_path.exists():
             raise ValueError(f"Manifest not found for plugin: {plugin_path}")
