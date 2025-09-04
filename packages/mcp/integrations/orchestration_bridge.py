@@ -369,7 +369,6 @@ class StepExecutor:
 
         # If expecting response, wait for it
         if config.get("wait_for_response", False):
-            timeout = config.get("timeout", 30)
             # Implementation would wait for response via correlation_id
             # For now, return the correlation_id
             return {"correlation_id": correlation_id, "status": "published"}
