@@ -189,28 +189,47 @@ describe("Security Scanner", () => {
 		});
 
 		it("should parse semgrep output correctly", () => {
-			const parseResults = (output: any) => {
-				return (
-					output.results?.map((result: any) => ({
-						ruleId: result.check_id,
-						message:
-							result.extra?.message ||
-							result.message ||
-							"Security issue detected",
-						severity:
-							result.extra?.severity === "ERROR"
-								? "HIGH"
-								: result.extra?.severity === "WARNING"
-									? "MEDIUM"
-									: "LOW",
-						file: result.path.replace("/tmp/semgrep-scan-123/", ""),
-						startLine: result.start?.line,
-						endLine: result.end?.line,
-						evidence: result.extra?.lines || "",
-						tags: result.extra?.metadata || {},
-					})) || []
-				);
-			};
+                       interface SemgrepRawResult {
+                               check_id: string;
+                               message?: string;
+                               extra?: {
+                                       message?: string;
+                                       severity?: string;
+                                       lines?: string;
+                                       metadata?: Record<string, unknown>;
+                               };
+                               path: string;
+                               start?: { line: number };
+                               end?: { line: number };
+                       }
+
+                       const parseResults = (output: {
+                               results?: SemgrepRawResult[];
+                       }) => {
+                               return (
+                                       output.results?.map((result) => ({
+                                               ruleId: result.check_id,
+                                               message:
+                                                       result.extra?.message ||
+                                                       result.message ||
+                                                       "Security issue detected",
+                                               severity:
+                                                       result.extra?.severity === "ERROR"
+                                                               ? "HIGH"
+                                                               : result.extra?.severity === "WARNING"
+                                                                       ? "MEDIUM"
+                                                                       : "LOW",
+                                               file: result.path.replace(
+                                                       "/tmp/semgrep-scan-123/",
+                                                       "",
+                                               ),
+                                               startLine: result.start?.line,
+                                               endLine: result.end?.line,
+                                               evidence: result.extra?.lines || "",
+                                               tags: result.extra?.metadata || {},
+                                       })) || []
+                               );
+                       };
 
 			const results = parseResults(mockSemgrepOutput);
 
@@ -228,9 +247,11 @@ describe("Security Scanner", () => {
 		});
 
 		it("should handle empty semgrep results", () => {
-			const parseResults = (output: any) => {
-				return output.results?.map(() => ({})) || [];
-			};
+                       const parseResults = (output: {
+                               results: unknown[] | null;
+                       }) => {
+                               return output.results?.map(() => ({})) || [];
+                       };
 
 			const results = parseResults({ results: null });
 			expect(results).toEqual([]);
