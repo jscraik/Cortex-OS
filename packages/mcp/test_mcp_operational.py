@@ -36,7 +36,7 @@ class MockMCPTransport(MCPTransport):
     def is_connected(self) -> bool:
         return self.state == ConnectionState.CONNECTED
 
-    async def connect(self, **_kwargs) -> None:
+    async def connect(self, **_kwargs: Any) -> None:
         """Mock connection that can succeed or fail."""
         logger.info("MockTransport: Attempting connection...")
         await asyncio.sleep(0.1)  # Simulate connection delay
@@ -159,8 +159,8 @@ async def test_error_handling() -> None:
     transport = MockMCPTransport(should_fail=True)
 
     try:
-    await transport.connect()
-    raise AssertionError("Should have failed")
+        await transport.connect()
+        raise AssertionError("Should have failed")
     except ConnectionPoolError:
         print("✅ Connection failure handled correctly!")
 
