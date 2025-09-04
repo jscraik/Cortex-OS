@@ -1,7 +1,6 @@
 import { createEnvelope } from "@cortex-os/a2a-contracts/envelope";
 import { TOKENS } from "@cortex-os/contracts";
-// Deep import allowed by tsconfig path mapping to start the manager inside runtime
-import { McpDemoServer } from "@cortex-os/mcp-bridge/src/mcp-demo-server";
+import { z } from "zod";
 import { container } from "./boot";
 import { wireA2A } from "./boot/a2a";
 
@@ -11,33 +10,39 @@ type OrchestrationService = unknown;
 type MCPGatewayService = unknown;
 
 export async function startRuntime() {
-	const memories = container.get(TOKENS.Memories) as MemoriesService;
-	const orchestration = container.get(
-		TOKENS.Orchestration,
-	) as OrchestrationService;
-	const mcp = container.get(TOKENS.MCPGateway) as MCPGatewayService;
+        const memories = container.get(TOKENS.Memories) as MemoriesService;
+        const orchestration = container.get(
+                TOKENS.Orchestration,
+        ) as OrchestrationService;
+        const mcp = container.get(TOKENS.MCPGateway) as MCPGatewayService;
 
-	// Wire A2A bus (also sets global MCP telemetry publisher when enabled)
-	const bus = wireA2A();
+        // Wire A2A bus
+        const { bus } = wireA2A();
 
-	// Auto-start Universal MCP Manager with Cloudflare Tunnel as the server interface
-	const port = process.env.CORTEX_MCP_MANAGER_PORT
-		? Number(process.env.CORTEX_MCP_MANAGER_PORT)
-		: 3000;
-	const manager = new McpDemoServer(port);
-	await manager.start();
+        // Validate environment configuration
+        const envSchema = z.object({
+                CORTEX_MCP_MANAGER_PORT: z
+                        .coerce.number()
+                        .int()
+                        .min(1)
+                        .max(65535)
+                        .default(3000),
+                CORTEX_MCP_PUBLIC_URL: z.string().url().optional(),
+        });
+        const { CORTEX_MCP_MANAGER_PORT: port, CORTEX_MCP_PUBLIC_URL } = envSchema.parse(
+                process.env,
+        );
 
-	// Publish the public URL via A2A for other services to consume
-	const publicUrl = manager.getPublicUrl() || process.env.CORTEX_MCP_PUBLIC_URL;
-	if (publicUrl) {
-		void bus.publish(
-			createEnvelope({
-				type: "mcp.public-url",
-				data: { url: publicUrl, port },
-				source: "urn:cortex-os:mcp-manager",
-			}),
-		);
-	}
+        // Publish the public URL via A2A for other services to consume
+        if (CORTEX_MCP_PUBLIC_URL) {
+                void bus.publish(
+                        createEnvelope({
+                                type: "mcp.public-url",
+                                data: { url: CORTEX_MCP_PUBLIC_URL, port },
+                                source: "urn:cortex-os:mcp-manager",
+                        }),
+                );
+        }
 
-	return { memories, orchestration, mcp, bus, mcpManager: manager };
+        return { memories, orchestration, mcp, bus };
 }
