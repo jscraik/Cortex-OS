@@ -4,7 +4,7 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 from alembic import command
 from alembic.config import Config
@@ -24,7 +24,7 @@ metrics: Any = get_metrics_collector()
 class MigrationManager:
     """Manages database migrations using Alembic."""
 
-    def __init__(self, database_config: DatabaseConfig | None = None):
+    def __init__(self, database_config: Any | None = None):
         # Treat DatabaseConfig as Any to avoid strict-typing issues
         db_config_factory: Any = _DatabaseConfig
         self.db_config = database_config or db_config_factory()
@@ -118,7 +118,7 @@ datefmt = %Y-%m-%d %H:%M:%S
 
     def _get_sync_database_url(self) -> str:
         """Convert async database URL to sync URL for Alembic."""
-        url = self.db_config.database_url
+        url: str = str(self.db_config.database_url)
 
         # Convert async drivers to sync drivers
         url_mappings = {
