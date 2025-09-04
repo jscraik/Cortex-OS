@@ -7,12 +7,12 @@ import { UPLOAD_DIR } from '../../../shared/constants';
 import type { FileUpload } from '../../../shared/types';
 
 export class FileService {
-  static initializeUploadDirectory(): void {
+  static async initializeUploadDirectory(): Promise<void> {
     try {
-      fs.accessSync(UPLOAD_DIR);
-    } catch (_error) {
+      await fs.access(UPLOAD_DIR);
+    } catch {
       // Directory doesn't exist, create it
-      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      await fs.mkdir(UPLOAD_DIR, { recursive: true });
     }
   }
 
