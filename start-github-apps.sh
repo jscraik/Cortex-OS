@@ -4,8 +4,14 @@
 echo "🚀 Setting up GitHub Apps..."
 echo "=============================="
 
+# Determine Cortex-OS home directory
+ROOT_DIR="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}"
+if [ ! -d "$ROOT_DIR/packages" ]; then
+    ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+fi
+
 # Load central port registry
-PORTS_FILE="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}/config/ports.env"
+PORTS_FILE="$ROOT_DIR/config/ports.env"
 if [ -f "$PORTS_FILE" ]; then
     # shellcheck source=/dev/null
     . "$PORTS_FILE"
@@ -28,7 +34,7 @@ echo "  Structure:     ${STRUCTURE_PORT}"
 # Function to check if a port is available
 check_port() {
     local port=$1
-    if lsof -i :$port > /dev/null 2>&1; then
+    if lsof -i :"$port" > /dev/null 2>&1; then
     echo "❌ Port $port is already in use (hint: ./free-ports.sh $port or ./free-ports.sh all)"
         return 1
     else
@@ -62,7 +68,7 @@ echo "🔧 Starting GitHub Apps with placeholder config..."
 
 # Start cortex-ai-github
 echo "Starting cortex-ai-github on port $GITHUB_AI_PORT..."
-cd /Users/jamiecraik/.Cortex-OS/packages/cortex-ai-github
+cd "$ROOT_DIR/packages/cortex-ai-github" || exit
 mkdir -p logs
 PORT="$GITHUB_AI_PORT" nohup pnpm dev > logs/app.log 2>&1 &
 AI_PID=$!
@@ -73,7 +79,7 @@ sleep 2
 
 # Start cortex-semgrep-github
 echo "Starting cortex-semgrep-github on port $SEMGREP_PORT..."
-cd /Users/jamiecraik/.Cortex-OS/packages/cortex-semgrep-github
+cd "$ROOT_DIR/packages/cortex-semgrep-github" || exit
 mkdir -p logs
 PORT="$SEMGREP_PORT" nohup pnpm dev > logs/app.log 2>&1 &
 SEMGREP_PID=$!
@@ -84,7 +90,7 @@ sleep 2
 
 # Start cortex-structure-github
 echo "Starting cortex-structure-github on port $STRUCTURE_PORT..."
-cd /Users/jamiecraik/.Cortex-OS/packages/cortex-structure-github
+cd "$ROOT_DIR/packages/cortex-structure-github" || exit
 mkdir -p logs
 PORT="$STRUCTURE_PORT" nohup pnpm dev > logs/app.log 2>&1 &
 STRUCTURE_PID=$!
@@ -99,7 +105,7 @@ sleep 5
 echo
 echo "🔍 Checking service status..."
 for port in "$GITHUB_AI_PORT" "$SEMGREP_PORT" "$STRUCTURE_PORT"; do
-    if lsof -i :$port > /dev/null 2>&1; then
+    if lsof -i :"$port" > /dev/null 2>&1; then
         echo "✅ Port $port: Service running"
     else
         echo "❌ Port $port: Service failed to start"
