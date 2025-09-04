@@ -3,7 +3,7 @@
 [![Overall Progress](https://img.shields.io/badge/Overall%20Progress-Phase%201%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Current Status](https://img.shields.io/badge/Status-Phase%202%20In%20Progress-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Foundation](https://img.shields.io/badge/Foundation-100%25%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Tests](https://img.shields.io/badge/Config%20Tests-11%2F11%20Passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Tests](https://img.shields.io/badge/Core%20Tests-15%2F15%20Passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![TDD](https://img.shields.io/badge/Methodology-TDD%20Compliant-green.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 
 ## Current Status: 🟢 Phase 2 In Progress - Foundation Complete
@@ -49,10 +49,10 @@
 - `v0.1.0-base` - Basic TUI foundation ✅
 - `v0.1.1-config` - Configuration system ✅ COMPLETED
 - `v0.1.2-errors` - Error handling ✅
+- `v0.1.2-chat` - Chat CLI + Sessions ✅
 
 ### Next Planned Tags
 
-- `v0.2.0-chat` - Basic chat interface
 - `v0.2.1-providers` - Provider abstraction
 - `v0.2.2-streaming` - Streaming support
 
