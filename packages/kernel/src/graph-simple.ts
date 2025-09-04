@@ -9,11 +9,12 @@
 import { z } from "zod";
 import { fixedTimestamp } from "./lib/determinism.js";
 import {
-	createInitialPRPState,
-	type PRPState,
-	validateStateTransition,
+        createInitialPRPState,
+        type PRPState,
+        validateStateTransition,
 } from "./state.js";
 import { generateId } from "./utils/id.js";
+import type { PRPOrchestrator } from "@cortex-os/prp-runner";
 
 // Zod schema for validating generateId inputs and run options
 const RunOptionsSchema = z
@@ -27,13 +28,7 @@ const RunOptionsSchema = z
  * Factory function to create a new CortexKernel instance
  */
 export function createKernel(orchestrator: PRPOrchestrator): CortexKernel {
-	return new CortexKernel(orchestrator);
-}
-
-// Import real interfaces from prp-runner
-interface PRPOrchestrator {
-	getNeuronCount(): number;
-	// Real orchestrator interface - simplified for testing
+        return new CortexKernel(orchestrator);
 }
 
 interface Blueprint {
