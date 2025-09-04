@@ -45,9 +45,7 @@ class PluginHotReloader:
             FileSystemEventHandler = events.FileSystemEventHandler
             Observer = observers.Observer
         except Exception as e:  # pragma: no cover - optional dependency
-            self.logger.warning(
-                "watchdog not available, disabling auto-reload: %s", e
-            )
+            self.logger.warning("watchdog not available, disabling auto-reload: %s", e)
             self.auto_reload = False
             return
 

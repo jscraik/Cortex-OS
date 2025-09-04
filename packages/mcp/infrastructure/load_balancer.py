@@ -269,9 +269,7 @@ class LoadBalancer:
         self.scale_up_threshold = 0.8  # Scale up when average load > 80%
         self.scale_down_threshold = 0.3  # Scale down when average load < 30%
 
-        logger.info(
-            "Load balancer initialized", extra={"algorithm": algorithm.value}
-        )
+        logger.info("Load balancer initialized", extra={"algorithm": algorithm.value})
 
     async def start(self) -> None:
         """Start the load balancer."""

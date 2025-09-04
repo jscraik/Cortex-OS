@@ -271,7 +271,9 @@ class MetricsCollector:
             self.logger.error(f"Error setting circuit breaker state: {e}")
 
     @contextmanager
-    def time_operation(self, operation_name: str, _labels: dict[str, str] | None = None):
+    def time_operation(
+        self, operation_name: str, _labels: dict[str, str] | None = None
+    ):
         """Context manager to time operations."""
         start_time = time.time()
         try:

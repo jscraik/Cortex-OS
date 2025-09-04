@@ -267,7 +267,9 @@ class ResourceMonitor:
                 try:
                     # Prometheus Gauge without labels supports .set(value)
                     gauge.set(value)
-                except Exception as e:  # Defensive: do not break monitor on metrics errors
+                except (
+                    Exception
+                ) as e:  # Defensive: do not break monitor on metrics errors
                     logger.debug(f"Metric update failed for {metric_id}: {e}")
 
         except Exception as e:

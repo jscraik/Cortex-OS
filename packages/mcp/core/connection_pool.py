@@ -131,11 +131,13 @@ class MCPConnectionPool:
             if self._health_check_task:
                 self._health_check_task.cancel()
                 import contextlib
+
                 with contextlib.suppress(asyncio.CancelledError):
                     await self._health_check_task
             if self._cleanup_task:
                 self._cleanup_task.cancel()
                 import contextlib
+
                 with contextlib.suppress(asyncio.CancelledError):
                     await self._cleanup_task
 

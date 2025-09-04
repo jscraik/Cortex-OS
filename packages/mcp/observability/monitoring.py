@@ -680,6 +680,7 @@ class AdvancedMonitoringSystem:
             if task and not task.done():
                 task.cancel()
                 from contextlib import suppress
+
                 with suppress(asyncio.CancelledError):
                     await task
 

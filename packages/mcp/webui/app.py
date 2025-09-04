@@ -711,30 +711,34 @@ async def deep_health_check():
     health_status = await health_manager.get_overall_health()
 
     # Add component-specific health checkers
-    if mcp_server and hasattr(health_manager, "checkers") and "server" not in health_manager.checkers:
-            from ..observability.health import (
-                HealthChecker,
-                HealthCheckResult,
-                HealthStatus,
-            )
+    if (
+        mcp_server
+        and hasattr(health_manager, "checkers")
+        and "server" not in health_manager.checkers
+    ):
+        from ..observability.health import (
+            HealthChecker,
+            HealthCheckResult,
+            HealthStatus,
+        )
 
-            class ServerHealthChecker(HealthChecker):
-                async def _perform_check(self) -> HealthCheckResult:
-                    if mcp_server and mcp_server.running:
-                        return HealthCheckResult(
-                            name="server",
-                            status=HealthStatus.HEALTHY,
-                            message="MCP server running",
-                            details={"running": True},
-                        )
-                    else:
-                        return HealthCheckResult(
-                            name="server",
-                            status=HealthStatus.UNHEALTHY,
-                            message="MCP server not running",
-                        )
+        class ServerHealthChecker(HealthChecker):
+            async def _perform_check(self) -> HealthCheckResult:
+                if mcp_server and mcp_server.running:
+                    return HealthCheckResult(
+                        name="server",
+                        status=HealthStatus.HEALTHY,
+                        message="MCP server running",
+                        details={"running": True},
+                    )
+                else:
+                    return HealthCheckResult(
+                        name="server",
+                        status=HealthStatus.UNHEALTHY,
+                        message="MCP server not running",
+                    )
 
-            health_manager.add_checker(ServerHealthChecker("server"))
+        health_manager.add_checker(ServerHealthChecker("server"))
 
     # Determine HTTP status based on overall health
     status_code = 200

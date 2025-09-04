@@ -352,6 +352,7 @@ class PerformanceProfiler:
         if self._monitoring_task:
             self._monitoring_task.cancel()
             from contextlib import suppress
+
             with suppress(asyncio.CancelledError):
                 await self._monitoring_task
 

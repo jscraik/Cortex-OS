@@ -66,7 +66,9 @@ class MCPServer:
             return MCPMessage(type=MessageType.RESPONSE, id=message.id, result={})
         return response
 
-    async def _handle_tools_list(self, _params: dict[str, Any] | None) -> dict[str, Any]:
+    async def _handle_tools_list(
+        self, _params: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Handle tools/list request."""
         tools = []
 

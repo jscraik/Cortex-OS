@@ -230,12 +230,14 @@ class BackupManager:
         if self._backup_task:
             self._backup_task.cancel()
             import contextlib
+
             with contextlib.suppress(asyncio.CancelledError):
                 await self._backup_task
 
         if self._cleanup_task:
             self._cleanup_task.cancel()
             import contextlib
+
             with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
 

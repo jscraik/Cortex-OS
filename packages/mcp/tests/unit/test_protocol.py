@@ -365,9 +365,7 @@ class TestProtocolEdgeCases:
 
         # Test with timeout
         with pytest.raises(TimeoutError):
-            await asyncio.wait_for(
-                handler.handle_message(request), timeout=0.5
-            )
+            await asyncio.wait_for(handler.handle_message(request), timeout=0.5)
 
     @pytest.mark.asyncio
     async def test_handler_memory_cleanup(self, handler):

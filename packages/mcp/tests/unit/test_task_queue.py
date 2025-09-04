@@ -240,15 +240,9 @@ class TestTaskQueue:
     async def test_task_priority_handling(self, task_queue, mock_redis):
         """Test priority-based task handling."""
         # Submit tasks with different priorities
-        await task_queue.submit_task(
-            "echo", "low", priority=TaskPriority.LOW
-        )
-        await task_queue.submit_task(
-            "echo", "high", priority=TaskPriority.HIGH
-        )
-        await task_queue.submit_task(
-            "echo", "normal", priority=TaskPriority.NORMAL
-        )
+        await task_queue.submit_task("echo", "low", priority=TaskPriority.LOW)
+        await task_queue.submit_task("echo", "high", priority=TaskPriority.HIGH)
+        await task_queue.submit_task("echo", "normal", priority=TaskPriority.NORMAL)
 
         # Verify Redis calls were made with correct priority queues
         mock_redis.lpush.assert_called()

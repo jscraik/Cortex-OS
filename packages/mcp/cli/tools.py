@@ -242,7 +242,9 @@ def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - confi
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def call_tool(tool_name: str, params: str, param_list: tuple[str, ...], config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
+def call_tool(
+    tool_name: str, params: str, param_list: tuple[str, ...], config_file: str
+) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Execute a tool with given parameters."""
     # Parse parameters
     parameters = {}
