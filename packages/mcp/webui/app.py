@@ -222,15 +222,15 @@ async def lifespan(_app: FastAPI):
             else:
                 logger.warning("Database migrations failed")
 
-    # Initialize caching system
-    logger.info("Initializing cache system...")
-    get_cache()
-    logger.info("Cache system initialized")
+        # Initialize caching system
+        logger.info("Initializing cache system...")
+        get_cache()
+        logger.info("Cache system initialized")
 
-    # Initialize rate limiting
-    logger.info("Initializing rate limiting...")
-    await get_rate_limit_manager()
-    logger.info("Rate limiting initialized")
+        # Initialize rate limiting
+        logger.info("Initializing rate limiting...")
+        await get_rate_limit_manager()
+        logger.info("Rate limiting initialized")
 
         # Initialize MCP server
         config = {
