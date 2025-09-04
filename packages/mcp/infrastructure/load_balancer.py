@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, AsyncIterator
 
 import aiohttp  # type: ignore[import-not-found]
 
@@ -159,7 +159,7 @@ class HealthChecker:
         self.timeout = timeout
         self.session: aiohttp.ClientSession | None = None
         self._running = False
-    self._check_task = None
+        self._check_task = None
 
     async def start(self) -> None:
         """Start the health checker."""
@@ -208,6 +208,8 @@ class HealthChecker:
             health_url = f"{server.url}/health"
 
             start_time = time.time()
+            # Narrow type for type checkers
+            assert self.session is not None
             async with self.session.get(health_url) as response:
                 response_time = time.time() - start_time
 
@@ -482,9 +484,9 @@ class AutoScaler:
         self.scale_cooldown = 300  # 5 minutes
         self.last_scale_action: datetime | None = None
         self._running = False
-    self._scale_task = None
+        self._scale_task = None
 
-    logger.info("Auto-scaler initialized")
+        logger.info("Auto-scaler initialized")
 
     async def start(self) -> None:
         """Start the auto-scaler."""
@@ -600,7 +602,7 @@ def get_load_balancer() -> LoadBalancer:
 @asynccontextmanager
 async def load_balanced_request(
     client_ip: str | None = None, session_id: str | None = None
-):
+) -> AsyncIterator[ServerNode]:
     """Context manager for load balanced requests."""
     lb = get_load_balancer()
     server = await lb.select_server(client_ip, session_id)
