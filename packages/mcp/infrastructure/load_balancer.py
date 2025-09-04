@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any
 
-import aiohttp
+import aiohttp  # type: ignore[import-not-found]
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -88,7 +88,7 @@ class ServerNode:
             and self.current_connections < self.max_connections
         )
 
-    def update_metrics(self, response_time: float, success: bool):
+    def update_metrics(self, response_time: float, success: bool) -> None:
         """Update server metrics."""
         self.total_requests += 1
         if not success:
@@ -159,9 +159,9 @@ class HealthChecker:
         self.timeout = timeout
         self.session: aiohttp.ClientSession | None = None
         self._running = False
-        self._check_task: asyncio.Task | None = None
+    self._check_task: asyncio.Task[None] | None = None
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the health checker."""
         if self._running:
             return
@@ -174,7 +174,7 @@ class HealthChecker:
 
         logger.info("Health checker started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the health checker."""
         self._running = False
 
@@ -190,7 +190,7 @@ class HealthChecker:
 
         logger.info("Health checker stopped")
 
-    async def _health_check_loop(self):
+    async def _health_check_loop(self) -> None:
         """Main health checking loop."""
         while self._running:
             try:
@@ -198,8 +198,8 @@ class HealthChecker:
                 # Health checks will be triggered by load balancer
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error("Health check loop error", exc_info=e)
+            except Exception:
+                logger.exception("Health check loop error")
 
     async def check_server_health(self, server: ServerNode) -> bool:
         """Check health of a single server."""
@@ -273,26 +273,26 @@ class LoadBalancer:
             "Load balancer initialized", extra={"algorithm": algorithm.value}
         )
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the load balancer."""
         await self.health_checker.start()
         logger.info("Load balancer started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the load balancer."""
         await self.health_checker.stop()
         logger.info("Load balancer stopped")
 
-    def add_server(self, server: ServerNode):
+    def add_server(self, server: ServerNode) -> None:
         """Add a server to the pool."""
         self.servers[server.id] = server
 
         if self.algorithm == LoadBalancingAlgorithm.CONSISTENT_HASH:
             self.consistent_hash.add_node(server.id)
 
-    logger.info("Added server", extra={"server_id": server.id, "url": server.url})
+        logger.info("Added server", extra={"server_id": server.id, "url": server.url})
 
-    def remove_server(self, server_id: str):
+    def remove_server(self, server_id: str) -> None:
         """Remove a server from the pool."""
         if server_id in self.servers:
             del self.servers[server_id]
@@ -395,7 +395,7 @@ class LoadBalancer:
         """Select server based on resource utilization."""
         return min(servers, key=lambda s: s.load_score)
 
-    async def _periodic_health_checks(self):
+    async def _periodic_health_checks(self) -> None:
         """Run periodic health checks on servers."""
         current_time = datetime.now()
 
@@ -420,7 +420,7 @@ class LoadBalancer:
 
     async def request_completed(
         self, server_id: str, response_time: float, success: bool
-    ):
+    ) -> None:
         """Record completion of a request."""
         if server_id in self.servers:
             server = self.servers[server_id]
@@ -435,7 +435,7 @@ class LoadBalancer:
                 duration=response_time,
             )
 
-    async def request_started(self, server_id: str):
+    async def request_started(self, server_id: str) -> None:
         """Record start of a request."""
         if server_id in self.servers:
             self.servers[server_id].current_connections += 1
@@ -484,11 +484,11 @@ class AutoScaler:
         self.scale_cooldown = 300  # 5 minutes
         self.last_scale_action: datetime | None = None
         self._running = False
-        self._scale_task: asyncio.Task | None = None
+    self._scale_task: asyncio.Task[None] | None = None
 
         logger.info("Auto-scaler initialized")
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the auto-scaler."""
         if self._running or not self.scale_provider:
             return
@@ -497,7 +497,7 @@ class AutoScaler:
         self._scale_task = asyncio.create_task(self._scaling_loop())
         logger.info("Auto-scaler started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the auto-scaler."""
         self._running = False
 
@@ -510,7 +510,7 @@ class AutoScaler:
 
         logger.info("Auto-scaler stopped")
 
-    async def _scaling_loop(self):
+    async def _scaling_loop(self) -> None:
         """Main scaling loop."""
         while self._running:
             try:
@@ -518,10 +518,10 @@ class AutoScaler:
                 await self._check_scaling_conditions()
             except asyncio.CancelledError:
                 break
-            except Exception as e:
-                logger.error(f"Auto-scaling error: {e}")
+            except Exception:
+                logger.exception("Auto-scaling error")
 
-    async def _check_scaling_conditions(self):
+    async def _check_scaling_conditions(self) -> None:
         """Check if scaling action is needed."""
         # Check cooldown
         if (
@@ -552,7 +552,7 @@ class AutoScaler:
         ):
             await self._scale_down()
 
-    async def _scale_up(self):
+    async def _scale_up(self) -> None:
         """Scale up by adding a server."""
         try:
             if self.scale_provider:
@@ -561,10 +561,10 @@ class AutoScaler:
                     self.load_balancer.add_server(new_server)
                     self.last_scale_action = datetime.now()
                     logger.info(f"Scaled up: added server {new_server.id}")
-        except Exception as e:
-            logger.error(f"Scale up failed: {e}")
+        except Exception:
+            logger.exception("Scale up failed")
 
-    async def _scale_down(self):
+    async def _scale_down(self) -> None:
         """Scale down by removing a server."""
         try:
             available_servers = self.load_balancer.get_available_servers()
@@ -583,8 +583,8 @@ class AutoScaler:
             self.last_scale_action = datetime.now()
             logger.info(f"Scaled down: removed server {server_to_remove.id}")
 
-        except Exception as e:
-            logger.error(f"Scale down failed: {e}")
+        except Exception:
+            logger.exception("Scale down failed")
 
 
 # Global load balancer instance
