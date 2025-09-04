@@ -2,7 +2,7 @@
 # Free one or more ports using the central port registry where possible.
 set -euo pipefail
 
-PORTS_FILE="/Users/jamiecraik/.Cortex-OS/config/ports.env"
+PORTS_FILE="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}/config/ports.env"
 
 usage() {
   echo "Usage: $0 [all|3001 3002 ...]"
