@@ -17,7 +17,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, streaming }) => {
         <div className="flex justify-start">
           <div className="max-w-[80%]">
             <div className="text-xs text-gray-500">assistant</div>
-            <div className="px-3 py-2 rounded-xl backdrop-blur-sm bg-white/20 border border-white/40 dark:border-gray-700">
+            <div className="glass-card px-3 py-2 rounded-xl">
               <span className="inline-block h-2 w-2 animate-pulse bg-gray-400 rounded-full mr-1"></span>
               <span className="inline-block h-2 w-2 animate-pulse bg-gray-400 rounded-full mr-1 delay-75"></span>
               <span className="inline-block h-2 w-2 animate-pulse bg-gray-400 rounded-full delay-150"></span>
