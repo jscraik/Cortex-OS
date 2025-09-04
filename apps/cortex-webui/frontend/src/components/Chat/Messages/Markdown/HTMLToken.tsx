@@ -111,7 +111,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
         />
       );
     } else {
-      return <div dangerouslySetInnerHTML={{ __html: token.text || '' }} />;
+      return <div dangerouslySetInnerHTML={{ __html: sanitizedHtml || '' }} />;
     }
   } else if (token.text && token.text.includes('<status')) {
     const match = token.text.match(/<status title="([^"]+)" done="(true|false)" ?\/?>/);
