@@ -3,7 +3,7 @@
  */
 
 import { EventEmitter } from "node:events";
-import { PRPOrchestrator } from "@cortex-os/prp-runner";
+import { PRPOrchestrator, type Neuron } from "@cortex-os/prp-runner";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
 
@@ -24,7 +24,15 @@ export interface PRPEngine {
 }
 
 export function createEngine(
-	config: Partial<OrchestrationConfig> = {},
+        config: Partial<OrchestrationConfig> = {},
+        logger: winston.Logger = winston.createLogger({
+                level: "info",
+                format: winston.format.combine(
+                        winston.format.timestamp(),
+                        winston.format.json(),
+                ),
+                transports: [new winston.transports.Console()],
+        }),
 ): PRPEngine {
 	const defaults: OrchestrationConfig = {
 		maxConcurrentOrchestrations: 10,
@@ -37,14 +45,6 @@ export function createEngine(
 		performanceMonitoring: true,
 	} as OrchestrationConfig;
 
-	const logger = winston.createLogger({
-		level: "info",
-		format: winston.format.combine(
-			winston.format.timestamp(),
-			winston.format.json(),
-		),
-		transports: [new winston.transports.Console()],
-	});
 
 	if ("fallbackStrategy" in config) {
 		throw new Error("fallbackStrategy option was removed");
@@ -64,7 +64,7 @@ export async function orchestrateTask(
 	task: Task,
 	agents: Agent[],
 	context: Partial<PlanningContext> = {},
-	neurons: any[] = [],
+	neurons: Neuron[] = [],
 ): Promise<OrchestrationResult> {
 	if (engine.active.size >= engine.config.maxConcurrentOrchestrations) {
 		throw new Error("Maximum concurrent orchestrations reached");

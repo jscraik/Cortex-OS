@@ -298,79 +298,57 @@ export class Judge {
 
 	// Helper methods for evaluation criteria
 
-	private hasUnprofessionalLanguage(content: string): boolean {
-		const unprofessionalTerms = ["stupid", "dumb", "whatever", "ugh"];
-		return unprofessionalTerms.some((term) => content.includes(term));
-	}
+        private hasUnprofessionalLanguage(content: string): boolean {
+                const terms = [/\bstupid\b/i, /\bdumb\b/i, /whatever/i, /\bugh\b/i];
+                return terms.some((r) => r.test(content));
+        }
 
-	private hasImproperInformationHandling(content: string): boolean {
-		const improperPhrases = ["i guess", "probably", "i think maybe"];
-		return improperPhrases.some((phrase) => content.includes(phrase));
-	}
+        private hasImproperInformationHandling(content: string): boolean {
+                const phrases = [/\bi guess\b/i, /probably/i, /i think maybe/i];
+                return phrases.some((r) => r.test(content));
+        }
 
-	private missesEscalationOpportunity(content: string): boolean {
-		const lower = content.toLowerCase();
-		if (
-			lower.includes("can't") ||
-			lower.includes("cannot") ||
-			lower.includes("unable")
-		) {
-			return !(
-				lower.includes("escalate") ||
-				lower.includes("transfer") ||
-				lower.includes("manager")
-			);
-		}
-		return false;
-	}
+        private missesEscalationOpportunity(content: string): boolean {
+                const issue = /(can't|cannot|unable)/i.test(content);
+                const escalation = /(escalate|transfer|manager)/i.test(content);
+                return issue && !escalation;
+        }
 
-	private hasHelpfulTone(content: string): boolean {
-		const helpfulIndicators = [
-			"happy to help",
-			"glad to assist",
-			"let me help",
-		];
-		return helpfulIndicators.some((indicator) => content.includes(indicator));
-	}
+        private hasHelpfulTone(content: string): boolean {
+                const indicators = [/happy to help/i, /glad to assist/i, /let me help/i];
+                return indicators.some((r) => r.test(content));
+        }
 
-	private isClearAndConcise(content: string): boolean {
-		// Basic check: not too long, has clear structure
-		return content.length < 500 && content.includes(".");
-	}
+        private isClearAndConcise(content: string): boolean {
+                return content.length < 500 && /[.!?]/.test(content);
+        }
 
-	private showsAppropriateEmpathy(content: string): boolean {
-		const empathyIndicators = [
-			"sorry",
-			"understand",
-			"apologize",
-			"appreciate",
-		];
-		return empathyIndicators.some((indicator) => content.includes(indicator));
-	}
+        private showsAppropriateEmpathy(content: string): boolean {
+                const indicators = [/sorry/i, /understand/i, /apologiz(?:e|ing)/i, /appreciate/i];
+                return indicators.some((r) => r.test(content));
+        }
 
-	private containsFactualUncertainty(content: string): boolean {
-		const uncertaintyIndicators = ["i'm not sure", "maybe", "i think"];
-		return uncertaintyIndicators.some((indicator) =>
-			content.includes(indicator),
-		);
-	}
+        private containsFactualUncertainty(content: string): boolean {
+                const indicators = [/i'm not sure/i, /maybe/i, /i think/i];
+                return indicators.some((r) => r.test(content));
+        }
 
-	private contradictsEarlierStatements(
-		content: string,
-		agentTurns: SimTurn[],
-	): boolean {
-		const lower = content.toLowerCase();
-		for (const turn of agentTurns) {
-			const prev = turn.content.toLowerCase();
-			if (prev.includes("i can") && lower.includes("i cannot")) {
-				return true;
-			}
-			if (prev.includes("i cannot") && lower.includes("i can")) {
-				return true;
-			}
-		}
-		return false;
-	}
+        private contradictsEarlierStatements(
+                content: string,
+                agentTurns: SimTurn[],
+        ): boolean {
+                const lower = content.toLowerCase();
+                for (const turn of agentTurns) {
+                        const prev = turn.content.toLowerCase();
+                        if (/i can\b/.test(prev) && /i cannot\b/.test(lower)) {
+                                return true;
+                        }
+                        if (/i cannot\b/.test(prev) && /i can\b/.test(lower)) {
+                                return true;
+                        }
+                }
+                return false;
+        }
 
 	private hasEvidence(turns: SimTurn[]): boolean {
 		const agentTurns = turns.filter((turn) => turn.role === "agent");

@@ -15,6 +15,9 @@ export interface Store {
 }
 export interface Pipeline {
     ingest(chunks: Chunk[]): Promise<void>;
+    retrieve(query: string, topK?: number): Promise<Array<Chunk & {
+        score?: number;
+    }>>;
 }
 export interface Document {
     id: string;

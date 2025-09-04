@@ -12,11 +12,10 @@
   - [x] Initialize git repository
   - [x] Create task management system
 
-- [x] **Task 1.1**: Basic TUI Foundation (TDD) ✅ COMPLETED  
-  - [x] Create foundational project structure
-  - [x] Implement basic TUI components
-  - [x] Set up testing infrastructure
-  - [x] **Result**: Foundation established with proper build system
+- [x] **Task 1.1**: Project Setup & Build System (TDD)
+  - [x] Fix Rust edition compatibility issues
+  - [x] Ensure all workspace members compile
+  - [x] Rollback Point: `v0.1.0-foundation`
 
 - [x] **Task 1.2**: Configuration System Integration (TDD) ✅ COMPLETED
   - [x] Write tests for profile-based configuration loading
@@ -27,45 +26,35 @@
   - [x] Add dot-notation override support
   - [x] **Result**: 11/11 tests passing, fully TDD-compliant configuration system
 
-- [x] **Task 1.3**: Error Handling (TDD) ✅ COMPLETED
-  - [x] Write comprehensive error handling tests
-  - [x] Write logging infrastructure tests  
-  - [x] Implement structured error types with thiserror
-  - [x] Add tracing integration for logging
-  - [x] **Result**: Robust error handling with comprehensive test coverage
-
-- [x] **Task 2.1**: Chat CLI + Sessions + REPL (TDD) ✅ COMPLETED
-  - [x] One-off chat streaming tests (mock SSE)
-  - [x] Session JSONL and resume tests
-  - [x] REPL loop and stdin `-` support
-  - [x] Conversation management implementation
-  - [x] Message history implementation
-  - [x] README updated
-
-- [x] **Task 2.2**: Model Provider Abstraction (TDD) ✅ COMPLETED
-  - [x] Write tests for provider interface (10 comprehensive tests)
-  - [x] Write tests for model switching and validation
-  - [x] Write tests for provider registry management
-  - [x] Write tests for streaming support
-  - [x] Implement provider abstraction traits
-  - [x] Implement provider registry system
-  - [x] Add mock provider implementations (OpenAI, Anthropic, Ollama)
-  - [x] Add streaming support infrastructure
-  - [x] **Result**: Complete provider abstraction layer ready for real provider integration
+- [x] **Task 1.3**: Error Handling & Logging (TDD)
+  - [x] Write tests for error propagation and formatting
+  - [x] Write tests for structured logging output
+  - [x] Implement comprehensive error types
+  - [x] Add structured logging with tracing
+  - [x] Verification: Error handling and logging tests pass
+  - [x] Rollback Point: `v0.1.2-errors`
 
 #### 🔄 IN PROGRESS
 
-- [ ] **Task 2.3**: Streaming Support (TDD)
-  - [ ] Write tests for streaming responses in TUI
-  - [ ] Write tests for stream interruption handling
-  - [ ] Implement streaming in TUI components
-  - [ ] Add streaming controls and status indicators
+- [x] **Task 2.1**: Chat CLI + Sessions + REPL (TDD)
+  - [x] One-off chat streaming tests (mock SSE)
+  - [x] Session JSONL and resume tests
+  - [x] REPL loop and stdin `-` support
+  - [x] README updated
+  - [x] Verification: core/cli chat tests pass
+  - [x] Rollback Point: `v0.1.2-chat`
+
+#### 🔄 IN PROGRESS
+
+- [ ] **Task 2.2**: Model Provider Abstraction (TDD)
+  - [ ] Write tests for provider interface
+  - [ ] Write tests for model switching
+  - [ ] Implement provider abstraction
+  - [ ] Add configuration for providers
 
 #### 📋 TODO - NEXT UP
 
-- [ ] **Task 3.1**: OpenAI Integration (TDD)
-- [ ] **Task 3.2**: Anthropic Integration (TDD)  
-- [ ] **Task 3.3**: Local Model Support (TDD)
+- [ ] **Task 2.3**: Streaming Support (TDD)
 
 ### Task Details
 
@@ -74,7 +63,7 @@
 **Priority**: HIGH  
 **Estimated Time**: 4-6 hours  
 **Dependencies**: Foundation completed  
-**Target Tag**: `v0.2.0-chat`
+ **Target Tag**: `v0.1.2-chat`
 
 **Test-First Approach**:
 
@@ -84,10 +73,10 @@
 
 **Acceptance Criteria**:
 
-- [ ] Unit/integration tests for message append, read-back, and ordering
-- [ ] History persists across runs (smoke test)
-- [ ] Streaming placeholder interface compiles behind a feature flag
-- [ ] All quality gates pass (see Definition of Done)
+ - [x] Unit/integration tests for message append, read-back, and ordering
+ - [x] History persists across runs (smoke test)
+ - [x] Streaming placeholder interface compiles behind a feature flag
+ - [x] All quality gates pass (see Definition of Done)
 
 **Files to Modify**:
 

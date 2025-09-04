@@ -91,34 +91,41 @@ export class MTLSClient {
 	/**
 	 * Receive data from the mTLS connection
 	 */
-	async receive(): Promise<Buffer> {
-		return new Promise((resolve, reject) => {
-			if (!this.tlsSocket) {
-				reject(new MTLSError("No active mTLS connection"));
-				return;
-			}
+        async receive(): Promise<Buffer> {
+                return new Promise((resolve, reject) => {
+                        if (!this.tlsSocket) {
+                                reject(new MTLSError("No active mTLS connection"));
+                                return;
+                        }
 
-			let data = Buffer.alloc(0);
+                        const chunks: Buffer[] = [];
 
-			const onData = (chunk: Buffer) => {
-				data = Buffer.concat([data, chunk]);
-				this.tlsSocket?.removeListener("data", onData);
-				resolve(data);
-			};
+                        const onData = (chunk: Buffer) => {
+                                chunks.push(chunk);
+                        };
 
-			const onError = (error: Error) => {
-				this.tlsSocket?.removeListener("data", onData);
-				reject(
-					new MTLSError(`Failed to receive data: ${error.message}`, undefined, {
-						originalError: error,
-					}),
-				);
-			};
+                        const onEnd = () => {
+                                cleanup();
+                                resolve(Buffer.concat(chunks));
+                        };
 
-			this.tlsSocket.once("data", onData);
-			this.tlsSocket.once("error", onError);
-		});
-	}
+                        const onError = (error: Error) => {
+                                cleanup();
+                                reject(new MTLSError(`Failed to receive data: ${error.message}`, undefined, { originalError: error }));
+                        };
+
+                        const cleanup = () => {
+                                this.tlsSocket?.removeListener("data", onData);
+                                this.tlsSocket?.removeListener("end", onEnd);
+                                this.tlsSocket?.removeListener("error", onError);
+                        };
+
+                        this.tlsSocket.on("data", onData);
+                        this.tlsSocket.once("end", onEnd);
+                        this.tlsSocket.once("error", onError);
+                });
+        }
+
 
 	/**
 	 * Close the mTLS connection

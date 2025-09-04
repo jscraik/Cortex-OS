@@ -1,13 +1,12 @@
 # Cortex CLI Software Engineering Plan
 
-[![Phase 2](https://img.shields.io/badge/Phase%202-Core%20Features%20In%20Progress-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Phase 1](https://img.shields.io/badge/Phase%201-Foundation%20Complete%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.1](https://img.shields.io/badge/Task%201.1-Project%20Setup%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.3](https://img.shields.io/badge/Task%201.3-Error%20Handling%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Task 2.1](https://img.shields.io/badge/Task%202.1-Chat%20Interface%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Task 2.2](https://img.shields.io/badge/Task%202.2-Provider%20Abstraction%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Next](https://img.shields.io/badge/Next-Task%202.3%20Streaming%20Support-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![TDD](https://img.shields.io/badge/TDD-29%2F29%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 2.1](https://img.shields.io/badge/Task%202.1-Chat%20CLI%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Next](https://img.shields.io/badge/Next-Task%202.2%20Provider%20Abstraction-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-15%2F15%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 
 ## TDD-Driven Development Strategy
 
@@ -50,9 +49,9 @@
 #### Task 1.1: Project Setup & Build System
 
 - [x] **Test**: Create integration test that verifies project builds
-- [ ] **Implementation**: Fix Rust edition compatibility issues
-- [ ] **Verification**: Ensure all workspace members compile
-- [ ] **Rollback Point**: Git tag `v0.1.0-foundation`
+- [x] **Implementation**: Fix Rust edition compatibility issues
+- [x] **Verification**: Ensure all workspace members compile
+- [x] **Rollback Point**: Git tag `v0.1.0-foundation`
 
 **Files Modified**: `Cargo.toml`, `rust-toolchain.toml`, individual package `Cargo.toml`
 
@@ -97,12 +96,12 @@ fn test_config_override_parsing() {
 
 #### Task 1.3: Error Handling & Logging (TDD)
 
-- [ ] **Test**: Write tests for error propagation and formatting
-- [ ] **Test**: Write tests for structured logging output
-- [ ] **Implementation**: Implement comprehensive error types
-- [ ] **Implementation**: Add structured logging with tracing
-- [ ] **Verification**: Error handling and logging tests pass
-- [ ] **Rollback Point**: Git tag `v0.1.2-errors`
+- [x] **Test**: Write tests for error propagation and formatting
+- [x] **Test**: Write tests for structured logging output
+- [x] **Implementation**: Implement comprehensive error types
+- [x] **Implementation**: Add structured logging with tracing
+- [x] **Verification**: Error handling and logging tests pass
+- [x] **Rollback Point**: Git tag `v0.1.2-errors`
 
 **Files Created/Modified**:
 
@@ -129,44 +128,14 @@ Verification: `cargo +nightly test -p codex-core --test all` and `-p codex-cli` 
 
 Rollback Point: tag `v0.1.2-chat`.
 
-#### Task 2.2: Provider Abstraction Layer (TDD) ✅ COMPLETED
+#### Task 2.2: Provider Abstraction Layer (TDD)
 
-- [x] **Test**: Write tests for provider trait implementation (10 comprehensive tests)
-- [x] **Test**: Write tests for provider discovery and registration
-- [x] **Test**: Write tests for provider configuration validation
-- [x] **Test**: Write tests for streaming support infrastructure
-- [x] **Implementation**: Create provider trait and registry system
-- [x] **Implementation**: Add provider lifecycle management  
-- [x] **Implementation**: Mock providers for testing (OpenAI, Anthropic, Ollama)
-- [x] **Implementation**: Streaming support with futures integration
-- [x] **Verification**: Provider abstraction tests implemented and architecture complete
-- [x] **Rollback Point**: Implementation ready for `v0.2.1-providers` tag
-
-**Files Created:**
-
-- `core/src/providers/traits.rs` - Core ModelProvider trait
-- `core/src/providers/registry.rs` - Provider registry system
-- `core/src/providers/mocks.rs` - Mock provider implementations  
-- `core/tests/provider_abstraction_tests.rs` - Comprehensive test suite
-
-**Existing Provider Infrastructure:**
-
-- 📁 `ollama/` - Complete Ollama implementation ready for integration
-  - `OllamaClient` with health checking and connection management
-  - Model pulling with progress reporting (CLI and TUI reporters)
-  - Native and OpenAI-compatible API support
-- 📁 `chatgpt/` - Existing ChatGPT subscription method implementation (separate from OpenAI API)
-- 📁 `mcp-client/` and `mcp-server/` - MCP protocol foundation
-
-**Provider Integration Strategy:**
-
-- **OpenAI**: Two separate implementations
-  - Keep existing `chatgpt/` subscription method
-  - Add new OpenAI API provider for direct API access
-- **Anthropic**: Two separate API integrations
-  - Direct Anthropic API provider
-  - Z.ai API provider (Anthropic-compatible)
-- **Local Models**: Integration of existing Ollama implementation
+- [ ] **Test**: Write tests for provider trait implementation
+- [ ] **Test**: Write tests for provider discovery and registration
+- [ ] **Implementation**: Create provider trait and registry
+- [ ] **Implementation**: Add provider lifecycle management
+- [ ] **Verification**: Provider abstraction tests pass
+- [ ] **Rollback Point**: Git tag `v0.2.0-provider-base`
 
 **Files Created/Modified**:
 
@@ -195,76 +164,62 @@ async fn test_provider_registration() {
 }
 ```
 
----
+#### Task 2.2: OpenAI Provider Implementation (TDD) keep the chatgpt subscription method currently included; add the OpenAI API implementation as a separate method
 
-### Phase 3: Provider Integration (TDD)
+- [ ] **Test**: Write tests for OpenAI API integration
+- [ ] **Test**: Write tests for streaming responses
+- [ ] **Implementation**: Port OpenAI provider from cortex-code
+- [ ] **Implementation**: Add retry logic and rate limiting
+- [ ] **Verification**: OpenAI provider tests pass (with mocks)
+- [ ] **Rollback Point**: Git tag `v0.2.1-openai`
 
-#### Task 3.1: OpenAI Integration (TDD)
-
-**📋 NOTE**: Keep existing ChatGPT subscription method in `chatgpt/` directory and add separate OpenAI API integration
-
-- [ ] **Test**: Write tests for OpenAI API integration (separate from ChatGPT subscription)
-- [ ] **Test**: Write tests for streaming responses via OpenAI API
-- [ ] **Implementation**: Create new OpenAI API provider (keeping existing ChatGPT subscription method)
-- [ ] **Implementation**: Add retry logic and rate limiting for OpenAI API
-- [ ] **Implementation**: Replace mock OpenAI provider with real API integration
-- [ ] **Verification**: Both ChatGPT subscription and OpenAI API providers work independently
-- [ ] **Rollback Point**: Git tag `v0.3.0-openai`
-
-#### Task 3.2: Anthropic Integration (TDD)
-
-**📋 NOTE**: Separate integrations for Anthropic API and Z.ai API (Anthropic-compatible)
+#### Task 2.3: Anthropic Provider Implementation (TDD)  and Anthropic Compatible Provider [`Z.ai API`](https://docs.z.ai/scenario-example/develop-tools/claude)
 
 - [ ] **Test**: Write tests for Anthropic API integration
-- [ ] **Test**: Write tests for Z.ai API integration (Anthropic-compatible)
-- [ ] **Implementation**: Replace mock Anthropic provider with real Anthropic API integration
-- [ ] **Implementation**: Create separate Z.ai provider for Anthropic-compatible API
-- [ ] **Verification**: Both Anthropic and Z.ai providers work independently
-- [ ] **Rollback Point**: Git tag `v0.3.1-anthropic`
+- [ ] **Implementation**: Port Anthropic provider from cortex-code
+- [ ] **Verification**: Anthropic provider tests pass (with mocks)
+- [ ] **Rollback Point**: Git tag `v0.2.2-anthropic`
 
-#### Task 3.3: Local Model Support (TDD)
+- [ ] **Test**: Write tests for Z.ai API integration
+- [ ] **Implementation**: Create Z.ai provider
+- [ ] **Verification**: Z.ai provider tests pass (with mocks)
+- [ ] **Rollback Point**: Git tag `v0.2.2-zai`
 
-**📋 NOTE**: Ollama implementation already exists in `ollama/` directory with:
+#### Task 2.4: Local/OSS Provider Implementation (TDD)
 
-- `OllamaClient` for server communication
-- Model pulling and progress reporting
-- Health checking and connection management
-
-- [ ] **Test**: Write comprehensive tests for existing Ollama integration
-- [ ] **Integration**: Connect real `OllamaClient` to provider abstraction system
-- [ ] **Test**: Validate local model downloading and serving
-- [ ] **Implementation**: Replace mock Ollama provider with real implementation
-- [ ] **Verification**: Local provider tests pass with real Ollama server
-- [ ] **Rollback Point**: Git tag `v0.3.2-local`
+- [ ] **Test**: Write tests for local model integration (Ollama/MLX)
+- [ ] **Implementation**: Port local providers from cortex-code
+- [ ] **Verification**: Local provider tests pass
+- [ ] **Rollback Point**: Git tag `v0.2.3-local`
 
 ---
 
-### Phase 4: MCP Integration (TDD)
+### Phase 3: MCP Integration (TDD)
 
 **Goal**: Integrate Model Context Protocol support from cortex-code
 
-#### Task 4.1: MCP Client Foundation (TDD)
+#### Task 3.1: MCP Client Foundation (TDD)
 
 - [ ] **Test**: Write tests for MCP protocol handling
 - [ ] **Test**: Write tests for server discovery and connection
 - [ ] **Implementation**: Port MCP client from cortex-code
 - [ ] **Implementation**: Add connection pooling and lifecycle management
 - [ ] **Verification**: MCP client tests pass
-- [ ] **Rollback Point**: Git tag `v0.4.0-mcp-client`
+- [ ] **Rollback Point**: Git tag `v0.3.0-mcp-client`
 
-#### Task 4.2: MCP Server Registry (TDD)
+#### Task 3.2: MCP Server Registry (TDD)
 
 - [ ] **Test**: Write tests for server registration and management
 - [ ] **Implementation**: Create MCP server registry system
 - [ ] **Verification**: MCP registry tests pass
-- [ ] **Rollback Point**: Git tag `v0.4.1-mcp-registry`
+- [ ] **Rollback Point**: Git tag `v0.3.1-mcp-registry`
 
-#### Task 4.3: Tool Integration (TDD)
+#### Task 3.3: Tool Integration (TDD)
 
 - [ ] **Test**: Write tests for tool discovery and execution
 - [ ] **Implementation**: Integrate MCP tools with codex workflow
 - [ ] **Verification**: Tool integration tests pass
-- [ ] **Rollback Point**: Git tag `v0.4.2-mcp-tools`
+- [ ] **Rollback Point**: Git tag `v0.3.2-mcp-tools`
 
 ---
 

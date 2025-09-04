@@ -24,6 +24,8 @@ const GRANTS: Record<string, Grant> = {
 	},
 };
 
+const rateCounters = new Map<string, { count: number; reset: number }>();
+
 export async function loadGrant(service: string): Promise<Grant> {
 	const grant = GRANTS[service];
 	if (!grant) throw new Error(`No grant found for service ${service}`);
@@ -32,18 +34,33 @@ export async function loadGrant(service: string): Promise<Grant> {
 
 // Helper to enforce a grant for an operation. Throws on disallowed operations.
 export async function enforce(
-	grant: Grant,
-	operation: "embeddings" | "rerank" | "chat",
-	_body?: unknown,
+        grant: Grant,
+        operation: "embeddings" | "rerank" | "chat",
+        _body?: unknown,
 ) {
 	const ruleMap: Record<string, keyof Grant["rules"]> = {
 		embeddings: "allow_embeddings",
 		rerank: "allow_rerank",
 		chat: "allow_chat",
 	};
-	const ruleKey = ruleMap[operation];
-	if (!ruleKey || !grant.rules[ruleKey]) {
-		throw new Error(`Operation ${operation} not allowed by policy`);
-	}
-	return true;
+        const ruleKey = ruleMap[operation];
+        if (!ruleKey || !grant.rules[ruleKey]) {
+                throw new Error(`Operation ${operation} not allowed by policy`);
+        }
+        const limit = grant.rate.perMinute;
+        const now = Date.now();
+        const counter = rateCounters.get(operation) || {
+                count: 0,
+                reset: now + 60_000,
+        };
+        if (now > counter.reset) {
+                counter.count = 0;
+                counter.reset = now + 60_000;
+        }
+        if (counter.count >= limit) {
+                throw new Error(`Rate limit exceeded for ${operation}`);
+        }
+        counter.count += 1;
+        rateCounters.set(operation, counter);
+        return true;
 }

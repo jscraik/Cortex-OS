@@ -4,6 +4,7 @@
  */
 
 import type { TaskInput } from "../types/index.js";
+import { MCPToolRegistry } from "../mcp/sandbox.js";
 
 export interface SecurityScanResult {
 	allowed: boolean;
@@ -48,21 +49,23 @@ export interface SecurityPolicy {
  * OWASP LLM Top 10 Security Guard
  */
 export class OWASPLLMGuard {
-	private policy: SecurityPolicy;
-	private requestCounts = new Map<
-		string,
-		{ minute: number; hour: number; lastReset: number }
-	>();
-	private auditLog: Array<{
-		timestamp: string;
-		event: string;
-		details: unknown;
-	}> = [];
+        private policy: SecurityPolicy;
+        private registry?: MCPToolRegistry;
+        private requestCounts = new Map<
+                string,
+                { minute: number; hour: number; lastReset: number }
+        >();
+        private auditLog: Array<{
+                timestamp: string;
+                event: string;
+                details: unknown;
+        }> = [];
 
-	constructor(policy: SecurityPolicy) {
-		this.policy = policy;
-		this.setupCleanupInterval();
-	}
+        constructor(policy: SecurityPolicy, registry?: MCPToolRegistry) {
+                this.policy = policy;
+                this.registry = registry;
+                this.setupCleanupInterval();
+        }
 
 	/**
 	 * Scan task input for security threats
@@ -452,30 +455,29 @@ export class OWASPLLMGuard {
 		return threats;
 	}
 
-	private detectSupplyChainRisks(toolName: string): DetectedThreat[] {
-		const threats: DetectedThreat[] = [];
+        private detectSupplyChainRisks(toolName: string): DetectedThreat[] {
+                const threats: DetectedThreat[] = [];
 
-		// Check for unverified tools (in a real implementation,
-		// this would check against a verified tool registry)
-		const trustedTools = [
-			"filesystem",
-			"web_search",
-			"calculator",
-			"text_processor",
-		];
+                if (!this.registry) {
+                        return threats;
+                }
 
-		if (!trustedTools.includes(toolName)) {
-			threats.push({
-				type: "LLM05_SupplyChainVulnerabilities",
-				severity: "medium",
-				description: `Unverified tool in use: ${toolName}`,
-				evidence: `Tool: ${toolName}`,
-				mitigation: "Use only verified and approved tools",
-			});
-		}
+                const isTrusted = this.registry
+                        .getAvailableTools()
+                        .some((t) => t.name === toolName);
 
-		return threats;
-	}
+                if (!isTrusted) {
+                        threats.push({
+                                type: "LLM05_SupplyChainVulnerabilities",
+                                severity: "medium",
+                                description: `Unverified tool in use: ${toolName}`,
+                                evidence: `Tool: ${toolName}`,
+                                mitigation: "Use only verified and approved tools",
+                        });
+                }
+
+                return threats;
+        }
 
 	private calculateRiskScore(threats: DetectedThreat[]): number {
 		const severityWeights = {

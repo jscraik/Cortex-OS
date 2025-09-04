@@ -4,7 +4,7 @@ import { ndcgAtK, precisionAtK, recallAtK, } from "./metrics";
 export async function prepareStore(dataset, E, S) {
     for (const d of dataset.docs) {
         // Use stable mem:// URI so doc.id is traceable for matching.
-        await ingestText(`mem://${d.id}`, d.text, E, S);
+        await ingestText({ source: `mem://${d.id}`, text: d.text, embedder: E, store: S });
     }
 }
 export async function runRetrievalEval(dataset, E, S, { k }) {

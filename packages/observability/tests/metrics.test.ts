@@ -1,17 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 
-const recordSpy = vi.fn();
-const counterSpy = vi.fn();
-const gaugeSpy = vi.fn();
+const { recordSpy, counterSpy, gaugeSpy } = vi.hoisted(() => ({
+        recordSpy: vi.fn(),
+        counterSpy: vi.fn(),
+        gaugeSpy: vi.fn(),
+}));
 
 vi.mock("@opentelemetry/api", () => ({
-	metrics: {
-		getMeter: () => ({
-			createHistogram: () => ({ record: recordSpy }),
-			createCounter: () => ({ add: counterSpy }),
-			createGauge: () => ({ record: gaugeSpy }),
-		}),
-	},
+        metrics: {
+                getMeter: () => ({
+                        createHistogram: () => ({ record: recordSpy }),
+                        createCounter: () => ({ add: counterSpy }),
+                        createGauge: () => ({ record: gaugeSpy }),
+                }),
+        },
 }));
 
 import { calculateErrorBudget, recordLatency } from "../src/metrics/index.js";

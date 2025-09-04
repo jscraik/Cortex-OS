@@ -12,14 +12,32 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
   try {
     const buf = await fs.readFile(file, "utf8");
     return JSON.parse(buf) as T;
-  } catch {
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") {
+      console.error(`Failed to read ${file}:`, err);
+    }
     return fallback;
   }
 }
 
 async function writeJson(file: string, value: unknown): Promise<void> {
   await fs.mkdir(dirname(file), { recursive: true });
-  await fs.writeFile(file, JSON.stringify(value, null, 2));
+  const lock = `${file}.lock`;
+  const handle = await fs.open(lock, "wx").catch((err) => {
+    if ((err as NodeJS.ErrnoException).code === "EEXIST") {
+      return null;
+    }
+    throw err;
+  });
+  if (!handle) throw new Error("Registry file is locked");
+  try {
+    const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
+    await fs.writeFile(tmp, JSON.stringify(value, null, 2));
+    await fs.rename(tmp, file);
+  } finally {
+    await handle.close();
+    await fs.unlink(lock).catch(() => {});
+  }
 }
 
 export async function readAll(): Promise<ServerInfo[]> {
