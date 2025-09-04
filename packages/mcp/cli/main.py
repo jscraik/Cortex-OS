@@ -7,17 +7,17 @@ from pathlib import Path
 from typing import Any
 
 import click
-import uvicorn
 from rich.console import Console  # type: ignore[import-not-found]
 from rich.panel import Panel  # type: ignore[import-not-found]
 from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
 from rich.table import Table  # type: ignore[import-not-found]
+import uvicorn
 
 from ..core.server import MCPServer
 from ..tasks.task_queue import TaskQueue
 from ..webui.app import app
 
-# Import and register subcommand groups (kept at top to satisfy E402)
+# Import and register subcommand groups (kept adjacent to other imports)
 from .auth import auth_commands
 from .plugins import plugin_commands
 from .server import server_commands
