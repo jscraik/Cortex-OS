@@ -5,10 +5,11 @@ import json
 import sys
 
 import click
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
+from typing import Any
+from rich.console import Console  # type: ignore[import-not-found]
+from rich.panel import Panel  # type: ignore[import-not-found]
+from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
+from rich.table import Table  # type: ignore[import-not-found]
 
 from ..core.protocol import MCPMessage, MessageType
 from ..core.server import MCPServer
@@ -17,7 +18,7 @@ console = Console()
 
 
 @click.group()
-def tool_commands():
+def tool_commands() -> None:
     """Tool management commands."""
     pass
 
@@ -32,7 +33,7 @@ def tool_commands():
 def list_tools(output_format: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """List all available tools."""
 
-    async def get_tools():
+    async def get_tools() -> dict[str, Any]:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -57,7 +58,7 @@ def list_tools(output_format: str, config_file: str) -> None:  # noqa: ARG001 - 
             if response.error:
                 return {"error": response.error.get("message", "Unknown error")}
 
-            return response.result
+            return response.result or {}
 
         except Exception as e:
             return {"error": str(e)}
@@ -139,7 +140,7 @@ def list_tools(output_format: str, config_file: str) -> None:  # noqa: ARG001 - 
 def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Get detailed information about a specific tool."""
 
-    async def get_tool_info():
+    async def get_tool_info() -> dict[str, Any]:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -164,7 +165,8 @@ def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - confi
             if response.error:
                 return {"error": response.error.get("message", "Unknown error")}
 
-            tools = response.result.get("tools", [])
+            result_payload = response.result or {}
+            tools = result_payload.get("tools", [])
             tool = None
 
             for t in tools:
@@ -236,7 +238,7 @@ def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - confi
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
+def call_tool(tool_name: str, params: str, param_list: tuple[str, ...], config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Execute a tool with given parameters."""
     # Parse parameters
     parameters = {}
@@ -264,7 +266,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str) 
         except json.JSONDecodeError:
             parameters[key] = value
 
-    async def execute_tool():
+    async def execute_tool() -> Any:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -345,7 +347,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str) 
 def test_tools(tool: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Test tools with sample data to verify they work correctly."""
 
-    async def run_tests():
+    async def run_tests() -> dict[str, Any]:
         try:
             server_config = {
                 "plugin_dir": "plugins",
