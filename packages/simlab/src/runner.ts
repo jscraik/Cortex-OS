@@ -5,14 +5,15 @@
  */
 
 import {
-	AgentAdapter,
-	type AgentResponse,
-	type PRPExecutor,
+        AgentAdapter,
+        type AgentResponse,
+        type PRPExecutor,
 } from "./agent-adapter.js";
 import { Judge } from "./judge.js";
 import { SimReporter } from "./report.js";
 import type { SimBatchResult, SimResult, SimScenario, SimTurn } from "./types.js";
 import { UserSimulator } from "./user-sim.js";
+import { simScenarioSchema } from "./schemas.js";
 
 export interface SimRunnerConfig {
 	deterministic?: boolean;
@@ -54,14 +55,15 @@ export class SimRunner {
 	/**
 	 * Run a single simulation scenario
 	 */
-	async runScenario(scenario: SimScenario): Promise<SimResult> {
-		const runId = this.generateRunId(scenario.id);
-		const startTime = Date.now();
+        async runScenario(scenario: SimScenario): Promise<SimResult> {
+                const parsedScenario = simScenarioSchema.parse(scenario);
+                const runId = this.generateRunId(parsedScenario.id);
+                const startTime = Date.now();
 
 		try {
 			// Initialize conversation with user simulation
-			const initialMessage =
-				await this.userSim.generateInitialMessage(scenario);
+                        const initialMessage =
+                                await this.userSim.generateInitialMessage(parsedScenario);
 
 			const turns: SimTurn[] = [
 				{
@@ -77,11 +79,11 @@ export class SimRunner {
 
 			while (turnCount < (this.config.maxTurns || 10)) {
 				// Agent responds via PRP
-				const agentResponse = await this.agentAdapter.execute({
-					scenario,
-					conversationHistory: turns,
-					userMessage: lastResponse,
-				});
+                                const agentResponse = await this.agentAdapter.execute({
+                                        scenario: parsedScenario,
+                                        conversationHistory: turns,
+                                        userMessage: lastResponse,
+                                });
 
 				turns.push({
 					role: "agent" as const,
@@ -90,16 +92,16 @@ export class SimRunner {
 				});
 
 				// Check if conversation should end
-				if (this.shouldEndConversation(agentResponse, scenario)) {
-					break;
-				}
+                                if (this.shouldEndConversation(agentResponse, parsedScenario)) {
+                                        break;
+                                }
 
 				// User simulator responds
-				const userResponse = await this.userSim.generateResponse(
-					scenario,
-					turns,
-					agentResponse.content,
-				);
+                                const userResponse = await this.userSim.generateResponse(
+                                        parsedScenario,
+                                        turns,
+                                        agentResponse.content,
+                                );
 
 				if (!userResponse) {
 					break; // User simulation indicates conversation end
@@ -116,51 +118,52 @@ export class SimRunner {
 			}
 
 			// Judge the conversation
-			const judged = await this.judge.evaluate(scenario, turns);
-			const finalResult: SimResult = {
-				scenarioId: judged.scenarioId,
-				runId,
-				passed: judged.passed,
-				scores: judged.scores,
-				judgeNotes: judged.judgeNotes,
-				failures: judged.failures,
-				turns: judged.turns,
-				metadata: {
-					duration: Date.now() - startTime,
-					seed: this.config.seed,
-					version: "1.0.0",
-				},
-				timestamp: new Date().toISOString(),
-			};
-			return finalResult;
-		} catch (error) {
-			return {
-				scenarioId: scenario.id,
-				runId,
-				passed: false,
-				scores: { goal: 0, sop: 0, brand: 0, factual: 0 },
-				judgeNotes: `Simulation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-				failures: ["simulation_error"],
-				turns: [],
-				timestamp: new Date().toISOString(),
-			};
-		}
-	}
+                        const judged = await this.judge.evaluate(parsedScenario, turns);
+                        const finalResult: SimResult = {
+                                scenarioId: judged.scenarioId,
+                                runId,
+                                passed: judged.passed,
+                                scores: judged.scores,
+                                judgeNotes: judged.judgeNotes,
+                                failures: judged.failures,
+                                turns: judged.turns,
+                                metadata: {
+                                        duration: Date.now() - startTime,
+                                        seed: this.config.seed,
+                                        version: "1.0.0",
+                                },
+                                timestamp: new Date().toISOString(),
+                        };
+                        return finalResult;
+                } catch (error) {
+                        return {
+                                scenarioId: parsedScenario.id,
+                                runId,
+                                passed: false,
+                                scores: { goal: 0, sop: 0, brand: 0, factual: 0 },
+                                judgeNotes: `Simulation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                failures: ["simulation_error"],
+                                turns: [],
+                                timestamp: new Date().toISOString(),
+                        };
+                }
+        }
 
 	/**
 	 * Run multiple scenarios as a batch
 	 */
-	async runBatch(scenarios: SimScenario[]): Promise<SimBatchResult> {
-		const batchId = this.generateBatchId();
-		const results: SimResult[] = [];
+        async runBatch(scenarios: SimScenario[]): Promise<SimBatchResult> {
+                const parsed = scenarios.map((s) => simScenarioSchema.parse(s));
+                const batchId = this.generateBatchId();
+                const results: SimResult[] = [];
 
-		for (const scenario of scenarios) {
-			const result = await this.runScenario(scenario);
-			results.push(result);
-		}
+                for (const scenario of parsed) {
+                        const result = await this.runScenario(scenario);
+                        results.push(result);
+                }
 
-		return this.reporter.createBatchResult(batchId, results);
-	}
+                return this.reporter.createBatchResult(batchId, results);
+        }
 
 	private shouldEndConversation(
 		agentResponse: AgentResponse,
