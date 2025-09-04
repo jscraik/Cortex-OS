@@ -145,7 +145,7 @@ class ResourceMonitor:
         self.metric_history: dict[str, list[tuple[datetime, float]]] = {}
         self.history_retention = timedelta(hours=24)
 
-    async def start(self):
+    async def start(self) -> None:
         """Start resource monitoring."""
         if self._running:
             return
@@ -154,7 +154,7 @@ class ResourceMonitor:
         self._monitor_task = asyncio.create_task(self._monitoring_loop())
         logger.info("Resource monitor started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop resource monitoring."""
         self._running = False
 
@@ -165,7 +165,7 @@ class ResourceMonitor:
 
         logger.info("Resource monitor stopped")
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop."""
         while self._running:
             try:
@@ -176,7 +176,7 @@ class ResourceMonitor:
             except Exception as e:
                 logger.error(f"Resource monitoring error: {e}")
 
-    async def _collect_metrics(self):
+    async def _collect_metrics(self) -> None:
         """Collect system metrics."""
         try:
             # CPU metrics
@@ -255,7 +255,20 @@ class ResourceMonitor:
 
             # Record Prometheus metrics
             for metric_name, value in metric_values.items():
-                metrics.record_gauge(f"resource_{metric_name}", value)
+                metric_id = f"resource_{metric_name}"
+                gauge = metrics.get_custom_metric(metric_id)
+                if gauge is None:
+                    metrics.add_custom_metric(
+                        metric_id,
+                        "gauge",
+                        f"Resource metric {metric_name}",
+                    )
+                    gauge = metrics.get_custom_metric(metric_id)
+                try:
+                    # Prometheus Gauge without labels supports .set(value)
+                    gauge.set(value)  # type: ignore[call-arg]
+                except Exception as e:  # Defensive: do not break monitor on metrics errors
+                    logger.debug(f"Metric update failed for {metric_id}: {e}")
 
         except Exception as e:
             logger.error(f"Failed to collect metrics: {e}")
