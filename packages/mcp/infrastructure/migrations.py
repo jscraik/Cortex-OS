@@ -24,9 +24,9 @@ class MigrationManager:
     """Manages database migrations using Alembic."""
 
     def __init__(self, database_config: DatabaseConfig | None = None):
-    self.db_config = database_config or DatabaseConfig()
-    self.migrations_dir: Path = Path(__file__).parent / "migrations"
-    self.alembic_cfg: Any | None = None
+        self.db_config = database_config or DatabaseConfig()
+        self.migrations_dir: Path = Path(__file__).parent / "migrations"
+        self.alembic_cfg: Any | None = None
         self._setup_alembic_config()
 
     def _setup_alembic_config(self) -> None:
@@ -41,7 +41,7 @@ class MigrationManager:
             self._create_alembic_ini(alembic_ini)
 
         # Create Alembic config
-    cfg: Any = Config(str(alembic_ini))
+        cfg: Any = Config(str(alembic_ini))
         self.alembic_cfg = cfg
         cfg.set_main_option("script_location", str(self.migrations_dir))
 
