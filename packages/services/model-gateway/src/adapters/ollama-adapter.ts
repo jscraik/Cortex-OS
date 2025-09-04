@@ -143,7 +143,14 @@ export class OllamaAdapter implements OllamaAdapterApi {
 		model?: string,
 		options?: { temperature?: number; max_tokens?: number },
 	): Promise<ChatResponse> {
-		return this.impl.generateChat(request as any, model, options);
+		// Type guard to ensure correct format for impl.generateChat
+		let formattedRequest: { messages: Message[]; model?: string; temperature?: number; max_tokens?: number };
+		if (Array.isArray(request)) {
+			formattedRequest = { messages: request, model, ...options };
+		} else {
+			formattedRequest = { ...request, model: request.model ?? model, ...options };
+		}
+		return this.impl.generateChat(formattedRequest, formattedRequest.model, options);
 	}
 	rerank(
 		query: string,
