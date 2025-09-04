@@ -22,7 +22,7 @@ try:
 except ImportError:
 
     def circuit_breaker(
-        name: str, config: Any | None = None
+        _name: str, _config: Any | None = None
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -576,10 +576,10 @@ class TaskQueue:
                 await self.redis.aclose()
             elif hasattr(self.redis, "close"):
                 # Some clients expose sync close; call in thread if needed
-                try:
+                from contextlib import suppress
+
+                with suppress(Exception):
                     await asyncio.to_thread(self.redis.close)
-                except Exception:
-                    pass
 
         logger.info("Task queue system shut down")
 
