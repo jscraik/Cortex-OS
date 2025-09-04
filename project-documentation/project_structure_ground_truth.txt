@@ -2186,6 +2186,12 @@ user.py
 
 ./simple-tests:
 basic.test.ts
+sbom-schema.test.ts
+
+./simple-tests/fixtures:
+cyclonedx-sample.json
+golden.rag.dataset.json
+long-running.js
 
 ./tests:
 security
@@ -2298,8 +2304,11 @@ models.py
 index.ts
 report.schema.json
 
-./tools/schemas:
+./tools/schema:
+README.md
 cyclonedx-1.5.schema.json
+jsf-0.82.schema.json
+spdx.schema.json
 
 ./tools/scripts:
 generate-code-map.ts
