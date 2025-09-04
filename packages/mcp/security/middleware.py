@@ -274,7 +274,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
 
         except HTTPException:
             raise
-    except Exception as e:
+        except Exception as e:
             logger.error(
                 "Request validation error",
                 error=str(e),
