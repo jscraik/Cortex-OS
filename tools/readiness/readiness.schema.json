@@ -25,14 +25,15 @@
 				"architecture": { "type": "boolean" },
 				"reliability": { "type": "boolean" }
 			},
-			"required": [
-				"tdd",
-				"contracts",
-				"security",
-				"docs",
-				"architecture",
-				"reliability"
-			]
+                        "required": [
+                                "tdd",
+                                "contracts",
+                                "a11y",
+                                "security",
+                                "docs",
+                                "architecture",
+                                "reliability"
+                        ]
 		},
 		"thresholds": {
 			"type": "object",

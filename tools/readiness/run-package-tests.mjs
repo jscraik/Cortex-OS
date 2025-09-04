@@ -13,19 +13,32 @@ function log(msg) {
 }
 
 function findPackageRoots() {
-	const workspaceRoot = process.cwd();
-	const pattern = "packages/**/package.json";
-	const entries = fg.sync(pattern, {
-		cwd: workspaceRoot,
-		ignore: ["**/node_modules/**", "**/dist/**", "**/build/**"],
-		dot: false,
-	});
-	const pkgDirs = entries
-		.map((p) => path.dirname(path.resolve(workspaceRoot, p)))
-		// filter only real directories
-		.filter((dir) => fs.existsSync(dir) && fs.statSync(dir).isDirectory());
-	// de-duplicate in case of overlaps
-	return Array.from(new Set(pkgDirs));
+        const workspaceRoot = process.cwd();
+        const patterns = [
+                "packages/**/package.json",
+                "apps/**/package.json",
+                "servers/**/package.json",
+                "services/**/package.json",
+                "libs/**/package.json",
+        ];
+        const entries = fg.sync(patterns, {
+                cwd: workspaceRoot,
+                ignore: ["**/node_modules/**", "**/dist/**", "**/build/**"],
+                dot: false,
+        });
+        const rootPkg = path.join(workspaceRoot, "package.json");
+        const pkgDirs = entries
+                .map((p) => path.dirname(path.resolve(workspaceRoot, p)))
+                // filter only real directories excluding workspace root
+                .filter(
+                        (dir) =>
+                                dir !== workspaceRoot &&
+                                fs.existsSync(dir) &&
+                                fs.statSync(dir).isDirectory() &&
+                                path.join(dir, "package.json") !== rootPkg,
+                );
+        // de-duplicate in case of overlaps
+        return Array.from(new Set(pkgDirs));
 }
 
 async function runCoverage(pkgDir) {
