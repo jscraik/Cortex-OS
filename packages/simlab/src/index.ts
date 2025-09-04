@@ -13,17 +13,41 @@ export type { SimRunnerConfig } from "./runner.js";
 export { SimRunner } from "./runner.js";
 // Re-export types from schemas
 export type {
-	SimBatchResult,
-	SimReport,
-	SimResult,
-	SimScenario,
-	SimScores,
-	SimTurn,
+        SimBatchResult,
+        SimReport,
+        SimResult,
+        SimScenario,
+        SimScores,
+        SimTurn,
 } from "./types.js";
 export { UserSimulator } from "./user-sim.js";
+import { z } from "zod";
+import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join, dirname } from "node:path";
 
-// Minimal HTTP handler for gateway integration
-export async function handleSimlab(_input: unknown): Promise<string> {
-	// Placeholder implementation until full contract wiring
-	return JSON.stringify({ status: "not_implemented", module: "simlab" });
+// HTTP handler for gateway integration
+export async function handleSimlab(input: unknown): Promise<string> {
+        const schema = z.object({ action: z.enum(["ping", "status"]).default("status") });
+        const { action } = schema.parse(input ?? {});
+
+        if (action === "ping") {
+                return JSON.stringify({ status: "ok", timestamp: new Date().toISOString() });
+        }
+
+        const scenarioDir = join(
+                dirname(fileURLToPath(new URL("./index.ts", import.meta.url))),
+                "../sim/scenarios",
+        );
+        let scenarioCount = 0;
+        try {
+                scenarioCount = readdirSync(scenarioDir).filter((f) => f.endsWith(".json")).length;
+        } catch {
+                scenarioCount = 0;
+        }
+        return JSON.stringify({
+                status: "ok",
+                scenarios: scenarioCount,
+                timestamp: new Date().toISOString(),
+        });
 }

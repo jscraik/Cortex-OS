@@ -424,14 +424,13 @@ import { ingestText } from '@cortex-os/rag/pipeline/ingest';
 import { query } from '@cortex-os/rag/pipeline/query';
 
 // Individual text ingestion
-await ingestText('document.md', fullDocumentText, embedder, store, {
+await ingestText({
+  source: 'document.md',
+  text: fullDocumentText,
+  embedder,
+  store,
   chunkSize: 400,
-  chunkOverlap: 80,
-  metadata: {
-    author: 'AI Team',
-    category: 'documentation',
-    lastModified: new Date().toISOString()
-  }
+  overlap: 80
 });
 
 // Batch ingestion inspired by RAG-Anything

@@ -1,3 +1,11 @@
 import type { Embedder, Store } from "../lib";
-export declare function ingestText(source: string, text: string, E: Embedder, S: Store): Promise<void>;
+export interface IngestTextParams {
+  source: string;
+  text: string;
+  embedder: Embedder;
+  store: Store;
+  chunkSize?: number;
+  overlap?: number;
+}
+export declare function ingestText(params: IngestTextParams): Promise<void>;
 //# sourceMappingURL=ingest.d.ts.map

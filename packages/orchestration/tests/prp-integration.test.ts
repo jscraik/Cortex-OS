@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createEngine, orchestrateTask } from "../src/prp-integration.js";
 import type { Task } from "../src/types.js";
+import winston from "winston";
 import { TaskStatus } from "../src/types.js";
 
 const executePRPCycle = vi.fn();
@@ -55,6 +56,7 @@ describe("orchestrateTask", () => {
 		const pending = new Promise((pr) => {
 			resolve = pr;
 		});
+
 		executePRPCycle.mockReturnValueOnce(pending);
 		const first = orchestrateTask(engine, baseTask, []);
 		await expect(
@@ -69,9 +71,14 @@ describe("orchestrateTask", () => {
 		await first;
 	});
 
-	it("rejects removed fallbackStrategy option", () => {
-		expect(() => createEngine({ fallbackStrategy: "seq" } as any)).toThrow(
-			"fallbackStrategy option was removed",
-		);
-	});
+        it("rejects removed fallbackStrategy option", () => {
+                expect(() => createEngine({ fallbackStrategy: "seq" } as any)).toThrow("fallbackStrategy option was removed");
+        });
+
+        it("allows injecting custom logger", () => {
+                const logger = winston.createLogger();
+                const engine = createEngine({}, logger);
+                expect(engine.logger).toBe(logger);
+        });
+
 });

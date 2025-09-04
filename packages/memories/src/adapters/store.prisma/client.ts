@@ -1,4 +1,5 @@
 // Prisma-backed MemoryStore with full vector search and TTL support
+import { isExpired } from "../../core/ttl.js";
 import type { Memory } from "../../domain/types.js";
 import type {
 	MemoryStore,
@@ -101,70 +102,42 @@ export class PrismaStore implements MemoryStore {
 		return scoredCandidates;
 	}
 
-	async purgeExpired(nowISO: string): Promise<number> {
-		const now = new Date(nowISO).getTime();
+        async purgeExpired(nowISO: string): Promise<number> {
+                const allRows = await this.prisma.memory.findMany({
+                        where: { ttl: { not: null } },
+                });
 
-		// Fetch all memories with TTL to check expiration in application code
-		const allRows = await this.prisma.memory.findMany({
-			where: { ttl: { not: null } },
-		});
+                const expiredIds: string[] = [];
+                for (const row of allRows) {
+                        const memory = prismaToDomain(row);
+                        if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
+                                expiredIds.push(memory.id);
+                        }
+                }
 
-		const expiredIds: string[] = [];
+                if (expiredIds.length > 0) {
+                        const result = await this.prisma.memory.deleteMany({
+                                where: { id: { in: expiredIds } },
+                        });
+                        return result.count;
+                }
 
-		for (const row of allRows) {
-			try {
-				const memory = prismaToDomain(row);
-				if (memory.ttl) {
-					const created = new Date(memory.createdAt).getTime();
-					// Parse ISO duration format
-					const match = memory.ttl.match(
-						/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/,
-					);
-					if (match) {
-						const days = Number(match[1] || 0);
-						const hours = Number(match[2] || 0);
-						const minutes = Number(match[3] || 0);
-						const seconds = Number(match[4] || 0);
-						const ttlMs =
-							(((days * 24 + hours) * 60 + minutes) * 60 + seconds) * 1000;
-
-						if (created + ttlMs <= now) {
-							expiredIds.push(memory.id);
-						}
-					}
-				}
-			} catch (_error) {
-				// Ignore invalid TTL formats
-				console.warn(`Invalid TTL format for memory ${row.id}: ${row.ttl}`);
-			}
-		}
-
-		// Delete expired memories
-		if (expiredIds.length > 0) {
-			const result = await this.prisma.memory.deleteMany({
-				where: {
-					id: { in: expiredIds },
-				},
-			});
-			return result.count;
-		}
-
-		return 0;
-	}
+                return 0;
+        }
 }
 
 function prismaToDomain(row: any): Memory {
-	return {
-		id: row.id,
-		kind: row.kind,
-		text: row.text ?? undefined,
-		vector: row.vector ?? undefined,
-		tags: row.tags ?? [],
-		ttl: row.ttl ?? undefined,
-		createdAt: new Date(row.createdAt).toISOString(),
-		updatedAt: new Date(row.updatedAt).toISOString(),
-		provenance: row.provenance,
-		policy: row.policy ?? undefined,
-		embeddingModel: row.embeddingModel ?? undefined,
-	};
+        return {
+                id: row.id,
+                kind: row.kind,
+                text: row.text ?? undefined,
+                vector: row.vector ?? undefined,
+                tags: row.tags ?? [],
+                ttl: row.ttl ?? undefined,
+                createdAt: new Date(row.createdAt).toISOString(),
+                updatedAt: new Date(row.updatedAt).toISOString(),
+                provenance: row.provenance,
+                policy: row.policy ?? undefined,
+                embeddingModel: row.embeddingModel ?? undefined,
+        };
 }

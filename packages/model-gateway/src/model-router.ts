@@ -472,11 +472,11 @@ export class ModelRouter implements IModelRouter {
 					model: m.name,
 				};
 			} else {
-				const response = await (this.ollamaAdapter as any).rerank(
-					request.query,
-					request.documents,
-					m.name,
-				);
+                                const response = await this.ollamaAdapter.rerank(
+                                        request.query,
+                                        request.documents,
+                                        m.name,
+                                );
 				return {
 					documents: request.documents,
 					scores: response.scores,

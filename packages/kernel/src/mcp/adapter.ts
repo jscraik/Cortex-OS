@@ -302,12 +302,12 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 			const abs = path.isAbsolute(file)
 				? file
 				: path.join(context.workingDirectory, file);
-			const { stdout } = await runCommand(
-				["npx", "eslint", abs, "-f", "json"],
-				{
-					cwd: context.workingDirectory,
-				},
-			);
+                        const { stdout } = await runCommand(
+                                `npx eslint "${abs}" -f json`,
+                                {
+                                        cwd: context.workingDirectory,
+                                },
+                        );
 			const parsed = JSON.parse(stdout);
 			if (!Array.isArray(parsed) || parsed.length === 0) {
 				throw new Error("ESLint did not return a valid report for the file.");

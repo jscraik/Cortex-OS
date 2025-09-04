@@ -4,6 +4,7 @@
  */
 
 import type { SimScenario, SimTurn } from "./types.js";
+import { agentRequestSchema } from "./schemas.js";
 
 export interface AgentRequest {
 	scenario: SimScenario;
@@ -28,36 +29,37 @@ export interface PRPExecutor {
  * default for tests.
  */
 export class AgentAdapter {
-	constructor(private executor: PRPExecutor = new BasicPRPExecutor()) {}
+        constructor(private executor: PRPExecutor = new BasicPRPExecutor()) {}
 
-	async execute(request: AgentRequest): Promise<AgentResponse> {
-		try {
-			const result = await this.executor.executePRP(request);
-			return {
-				content: result.content,
-				completed:
-					result.completed ??
-					this.isGoalAchieved(result.content, request.scenario),
-				metadata: {
-					...result.metadata,
-					prpVersion: "1.0.0",
-					executedAt: new Date().toISOString(),
-				},
-			};
-		} catch (error) {
-			return {
-				content: `I apologize, but I encountered an error processing your request: ${
-					error instanceof Error ? error.message : "Unknown error"
-				}`,
-				completed: false,
-				metadata: {
-					error: true,
-					errorMessage:
-						error instanceof Error ? error.message : "Unknown error",
-				},
-			};
-		}
-	}
+        async execute(request: AgentRequest): Promise<AgentResponse> {
+                const parsed = agentRequestSchema.parse(request);
+                try {
+                        const result = await this.executor.executePRP(parsed);
+                        return {
+                                content: result.content,
+                                completed:
+                                        result.completed ??
+                                        this.isGoalAchieved(result.content, parsed.scenario),
+                                metadata: {
+                                        ...result.metadata,
+                                        prpVersion: "1.0.0",
+                                        executedAt: new Date().toISOString(),
+                                },
+                        };
+                } catch (error) {
+                        return {
+                                content: `I apologize, but I encountered an error processing your request: ${
+                                        error instanceof Error ? error.message : "Unknown error"
+                                }`,
+                                completed: false,
+                                metadata: {
+                                        error: true,
+                                        errorMessage:
+                                                error instanceof Error ? error.message : "Unknown error",
+                                },
+                        };
+                }
+        }
 
 	private isGoalAchieved(response: string, scenario: SimScenario): boolean {
 		const successIndicators = scenario.success_criteria || [];
@@ -68,36 +70,53 @@ export class AgentAdapter {
 }
 
 class BasicPRPExecutor implements PRPExecutor {
-	executePRP({ scenario, userMessage }: AgentRequest): Promise<AgentResponse> {
-		const goal = scenario.goal.toLowerCase();
-		const message = userMessage.toLowerCase();
+        private classify(goal: string): "help" | "info" | "troubleshoot" | "general" {
+                const lower = goal.toLowerCase();
+                if (/(help|assist|support)/.test(lower)) return "help";
+                if (/(information|inform|explain|question)/.test(lower)) return "info";
+                if (/(troubleshoot|problem|error|issue)/.test(lower)) return "troubleshoot";
+                return "general";
+        }
 
-		if (goal.includes("help") && message.includes("help")) {
-			return Promise.resolve({
-				content:
-					"I'd be happy to help you! Could you please tell me more about what you need assistance with?",
-			});
-		}
+        async executePRP({ scenario, conversationHistory, userMessage }: AgentRequest): Promise<AgentResponse> {
+                const goalType = this.classify(scenario.goal);
+                const lowerMsg = userMessage.toLowerCase();
 
-		if (goal.includes("information") && message.includes("question")) {
-			return Promise.resolve({
-				content:
-					"I can provide information on that topic. Let me gather the relevant details for you.",
-			});
-		}
+                // Avoid repeating identical agent responses
+                const lastAgentTurn = [...conversationHistory].reverse().find((t) => t.role === "agent");
+                if (lastAgentTurn && lastAgentTurn.content.toLowerCase() === lowerMsg) {
+                        return {
+                                content: "It looks like we've already covered that. Is there anything else you need?",
+                        };
+                }
 
-		if (goal.includes("troubleshoot") || goal.includes("problem")) {
-			return Promise.resolve({
-				content:
-					"I understand you're experiencing an issue. Let me help you troubleshoot this step by step.",
-			});
-		}
+                const successHint = scenario.success_criteria[0];
 
-		return Promise.resolve({
-			content:
-				"Thank you for your message. I'm here to assist you with your request.",
-		});
-	}
+                switch (goalType) {
+                        case "help":
+                                return {
+                                        content: `I'm here to help. ${successHint ? `Let's work toward ${successHint}.` : "How can I assist further?"}`,
+                                };
+                        case "info":
+                                if (/[?]/.test(userMessage)) {
+                                        return {
+                                                content: "Here's the information you requested: [placeholder details].",
+                                        };
+                                }
+                                return {
+                                        content: "What specific information would you like to know?",
+                                };
+                        case "troubleshoot":
+                                return {
+                                        content:
+                                                "I understand you're encountering an issue. Let's go through some steps to resolve it.",
+                                };
+                        default:
+                                return {
+                                        content: "Thank you for your message. How can I assist you today?",
+                                };
+                }
+        }
 }
 
 export default AgentAdapter;

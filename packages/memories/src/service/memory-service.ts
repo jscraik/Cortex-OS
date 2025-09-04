@@ -46,23 +46,46 @@ export const createMemoryService = (
 		},
 		get: (id) => store.get(id),
 		del: (id) => store.delete(id),
-		search: async (q) => {
-			return withSpan("memories.search", async () => {
-				const topK = q.topK ?? 8;
-				if (q.vector) {
-					return store.searchByVector({
-						vector: q.vector,
-						topK,
-						filterTags: q.tags,
-					});
-				}
-				if (q.text) {
-					const v = (await embedder.embed([q.text]))[0];
-					return store.searchByVector({ vector: v, topK, filterTags: q.tags });
-				}
-				return [];
-			});
-		},
+                  search: async (q) => {
+                        return withSpan("memories.search", async () => {
+                                const topK = q.topK ?? 8;
+                                if (q.vector) {
+                                        return store.searchByVector({
+                                                vector: q.vector,
+                                                topK,
+                                                filterTags: q.tags,
+                                                queryText: q.text,
+                                        });
+                                }
+                                if (q.text) {
+                                        const textResults = await store.searchByText({
+                                                text: q.text,
+                                                topK,
+                                                filterTags: q.tags,
+                                        });
+                                        if (textResults.length < topK) {
+                                                try {
+                                                        const v = (await embedder.embed([q.text]))[0];
+                                                        const vecResults = await store.searchByVector({
+                                                                vector: v,
+                                                                topK,
+                                                                filterTags: q.tags,
+                                                                queryText: q.text,
+                                                        });
+                                                        const seen = new Set(textResults.map((m) => m.id));
+                                                        for (const m of vecResults) {
+                                                                if (!seen.has(m.id)) textResults.push(m);
+                                                                if (textResults.length >= topK) break;
+                                                        }
+                                                } catch {
+                                                        // ignore embedding errors
+                                                }
+                                        }
+                                        return textResults;
+                                }
+                                return [];
+                        });
+                  },
 		purge: (nowISO) =>
 			withSpan("memories.purge", async () =>
 				store.purgeExpired(nowISO ?? new Date().toISOString()),
