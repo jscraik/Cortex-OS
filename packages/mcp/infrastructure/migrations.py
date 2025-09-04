@@ -40,17 +40,17 @@ class MigrationManager:
         if not alembic_ini.exists():
             self._create_alembic_ini(alembic_ini)
 
-    # Create Alembic config
-    cfg = Config(str(alembic_ini))
-    self.alembic_cfg = cfg
-    cfg.set_main_option("script_location", str(self.migrations_dir))
+        # Create Alembic config
+        cfg = Config(str(alembic_ini))
+        self.alembic_cfg = cfg
+        cfg.set_main_option("script_location", str(self.migrations_dir))
 
         # Convert async URL to sync URL for Alembic
-    sync_url = self._get_sync_database_url()
-    cfg.set_main_option("sqlalchemy.url", sync_url)
+        sync_url = self._get_sync_database_url()
+        cfg.set_main_option("sqlalchemy.url", sync_url)
 
         # Setup logging
-    cfg.set_main_option("logger", "mcp.migrations")
+        cfg.set_main_option("logger", "mcp.migrations")
 
     def _create_alembic_ini(self, alembic_ini_path: Path) -> None:
         """Create alembic.ini configuration file."""
@@ -392,7 +392,10 @@ else:
                 # Check if current schema matches expected
                 # This is a simplified check - full implementation would compare all tables/columns
                 current_tables = set(context.get_bind().table_names())
-                expected_tables = set(models.Base.metadata.tables.keys())
+                base = getattr(models, "Base", None)
+                if base is None:
+                    raise RuntimeError("models.Base not found")
+                expected_tables = set(base.metadata.tables.keys())
 
                 missing_tables = expected_tables - current_tables
                 extra_tables = current_tables - expected_tables
