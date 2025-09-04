@@ -339,9 +339,8 @@ class EventManagerClass extends EventEmitter {
 	private setupHeartbeat(subscriptionId: string): void {
                 const interval = setInterval(() => {
                         const subscription = this.subscriptions.get(subscriptionId);
-                        if (!subscription) {
-                                clearInterval(interval);
                                 this.heartbeatIntervals.delete(subscriptionId);
+                                return;
                         }
                         // Heartbeat is handled in SSE stream creation
                 }, this.config.events.heartbeat_ms);
