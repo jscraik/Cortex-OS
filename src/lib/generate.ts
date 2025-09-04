@@ -4,12 +4,25 @@ export interface ModelStrategy {
 	[task: string]: { primary: { model: string }; fallback: { model: string } };
 }
 
+export interface GenerateOptions {
+        prompt: string;
+        context?: string;
+        maxTokens?: number;
+        temperature?: number;
+        stream?: boolean;
+        model: string;
+}
+
+export type GenerateFn = (
+        opts: GenerateOptions,
+) => Promise<{ content: string; model: string }>;
+
 export interface GenerateDeps {
-	modelStrategy: ModelStrategy;
-	mlxGenerate: (opts: any) => Promise<{ content: string; model: string }>;
-	ollamaGenerate: (opts: any) => Promise<{ content: string; model: string }>;
-	isHealthy: (provider: string, model: string) => boolean;
-	markUnhealthy: (provider: string, model: string) => void;
+        modelStrategy: ModelStrategy;
+        mlxGenerate: GenerateFn;
+        ollamaGenerate: GenerateFn;
+        isHealthy: (provider: string, model: string) => boolean;
+        markUnhealthy: (provider: string, model: string) => void;
 }
 
 const requestSchema = z.object({
