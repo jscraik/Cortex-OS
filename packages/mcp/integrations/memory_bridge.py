@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -121,6 +122,9 @@ class Neo4jMemoryStore:
         self.query_count = 0
         self.last_query_time: float | None = None
 
+        # Allowed relationship type pattern to prevent Cypher injection
+        self._rel_type_pattern = re.compile(r"^[A-Z][A-Z0-9_]*$")
+
     async def initialize(self) -> None:
         """Initialize Neo4j connection."""
         try:
@@ -239,14 +243,17 @@ class Neo4jMemoryStore:
         self.query_count += 1
         self.last_query_time = time.time()
 
-        query = f"""
-        MATCH (a:Memory {{node_id: $from_node_id}})
-        MATCH (b:Memory {{node_id: $to_node_id}})
-        MERGE (a)-[r:{relationship_type}]->(b)
-        SET r += $properties
-        SET r.created_at = $created_at
-        RETURN r
-        """
+        if not self._rel_type_pattern.fullmatch(relationship_type):
+            raise ValueError("Invalid relationship type")
+
+        query = (
+            "MATCH (a:Memory {node_id: $from_node_id})\n"
+            "MATCH (b:Memory {node_id: $to_node_id})\n"
+            f"MERGE (a)-[r:{relationship_type}]->(b)\n"
+            "SET r += $properties\n"
+            "SET r.created_at = $created_at\n"
+            "RETURN r"
+        )
 
         async with self.driver.session() as session:
             await session.run(
@@ -271,8 +278,12 @@ class Neo4jMemoryStore:
 
         rel_filter = ""
         if relationship_types:
-            rel_types = "|".join(relationship_types)
-            rel_filter = f"[r:{rel_types}]"
+            sanitized = []
+            for rel in relationship_types:
+                if not self._rel_type_pattern.fullmatch(rel):
+                    raise ValueError("Invalid relationship type")
+                sanitized.append(rel)
+            rel_filter = f"[r:{'|'.join(sanitized)}]"
         else:
             rel_filter = "[r]"
 

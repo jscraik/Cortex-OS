@@ -19,18 +19,24 @@ logger = logging.getLogger(__name__)
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT configuration - Must be set via environment in production
+# JWT configuration - must be stable across restarts
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 if not SECRET_KEY:
-    if os.getenv("ENVIRONMENT") == "production":
-        raise RuntimeError(
-            "JWT_SECRET_KEY environment variable must be set in production"
-        )
+    from pathlib import Path
+
+    secret_file = Path(__file__).resolve().parent / ".jwt_secret"
+    if secret_file.exists():
+        SECRET_KEY = secret_file.read_text().strip()
     else:
-        # Generate a persistent key for development (warn user)
+        if os.getenv("ENVIRONMENT") == "production":
+            raise RuntimeError(
+                "JWT_SECRET_KEY environment variable must be set in production"
+            )
         SECRET_KEY = secrets.token_urlsafe(32)
+        secret_file.write_text(SECRET_KEY)
         logger.warning(
-            "Using auto-generated JWT secret key for development. Set JWT_SECRET_KEY environment variable for production."
+            "Generated development JWT secret stored at %s. Set JWT_SECRET_KEY for production.",
+            secret_file,
         )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
