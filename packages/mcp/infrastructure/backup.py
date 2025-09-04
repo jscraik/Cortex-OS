@@ -229,17 +229,15 @@ class BackupManager:
         """Stop background tasks."""
         if self._backup_task:
             self._backup_task.cancel()
-            try:
+            import contextlib
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._backup_task
-            except asyncio.CancelledError:
-                pass
 
         if self._cleanup_task:
             self._cleanup_task.cancel()
-            try:
+            import contextlib
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Background backup tasks stopped")
 
@@ -543,12 +541,12 @@ class BackupManager:
             f"Cloud upload would be implemented for backup: {metadata.backup_id}"
         )
 
-    async def _pg_dump(self, db_config, output_file: Path):
+    async def _pg_dump(self, _db_config, _output_file: Path):
         """Create PostgreSQL dump."""
         # This would implement actual pg_dump
         logger.info("PostgreSQL dump would be created")
 
-    async def _mysql_dump(self, db_config, output_file: Path):
+    async def _mysql_dump(self, _db_config, _output_file: Path):
         """Create MySQL dump."""
         # This would implement actual mysqldump
         logger.info("MySQL dump would be created")
