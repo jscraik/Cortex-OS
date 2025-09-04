@@ -4,8 +4,8 @@ import asyncio
 import json
 import sys
 
-import click
 from typing import Any
+import click
 from rich.console import Console  # type: ignore[import-not-found]
 from rich.panel import Panel  # type: ignore[import-not-found]
 from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
