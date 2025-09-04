@@ -1,7 +1,7 @@
 #!/bin/bash
 # GitHub Apps Diagnostic and Setup Script
 # Load central port registry
-PORTS_FILE="/Users/jamiecraik/.Cortex-OS/config/ports.env"
+PORTS_FILE="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}/config/ports.env"
 if [ -f "$PORTS_FILE" ]; then
     # shellcheck source=/dev/null
     . "$PORTS_FILE"
