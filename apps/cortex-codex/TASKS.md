@@ -12,6 +12,11 @@
   - [x] Initialize git repository
   - [x] Create task management system
 
+- [x] **Task 1.1**: Project Setup & Build System (TDD)
+  - [x] Fix Rust edition compatibility issues
+  - [x] Ensure all workspace members compile
+  - [x] Rollback Point: `v0.1.0-foundation`
+
 - [x] **Task 1.2**: Configuration System Integration (TDD) ✅ COMPLETED
   - [x] Write tests for profile-based configuration loading
   - [x] Write tests for configuration override parsing  
@@ -20,6 +25,14 @@
   - [x] Implement comprehensive configuration system with TDD
   - [x] Add dot-notation override support
   - [x] **Result**: 11/11 tests passing, fully TDD-compliant configuration system
+
+- [x] **Task 1.3**: Error Handling & Logging (TDD)
+  - [x] Write tests for error propagation and formatting
+  - [x] Write tests for structured logging output
+  - [x] Implement comprehensive error types
+  - [x] Add structured logging with tracing
+  - [x] Verification: Error handling and logging tests pass
+  - [x] Rollback Point: `v0.1.2-errors`
 
 #### 🔄 IN PROGRESS
 
