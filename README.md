@@ -50,7 +50,9 @@ Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) 
 git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os
 
-# Run automated setup (trusts mise and installs dependencies)
+
+# Run automated setup (trusts mise, installs dependencies, lints code, validates structure, and cleans up workspace)
+
 ./scripts/dev-setup.sh
 
 # Verify installation

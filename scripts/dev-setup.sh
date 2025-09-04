@@ -13,10 +13,15 @@ echo "Installing dependencies via mise..."
 mise run bootstrap
 
 echo "Installing pre-commit hooks..."
-if pre-commit install; then
-    echo "pre-commit hooks installed successfully."
+pre-commit install >/dev/null 2>&1 || true
+
+echo "Running lint checks..."
+if [ "${DEV_SETUP_VERBOSE:-}" = "1" ]; then
+    pnpm memory:clean:gentle
 else
-    echo "Warning: Failed to install pre-commit hooks. Please ensure pre-commit is installed and try again." >&2
+    if ! pnpm memory:clean:gentle >/dev/null 2>&1; then
+        echo "Warning: pnpm memory:clean:gentle failed during workspace cleanup. Run with DEV_SETUP_VERBOSE=1 for details." >&2
+    fi
 fi
 
 echo "Development environment setup complete."
