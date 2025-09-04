@@ -1,8 +1,26 @@
 #!/bin/bash
 # GitHub Apps Diagnostic and Setup Script
+# Load central port registry
+PORTS_FILE="${CORTEX_OS_HOME:-$HOME/.Cortex-OS}/config/ports.env"
+if [ -f "$PORTS_FILE" ]; then
+    # shellcheck source=/dev/null
+    . "$PORTS_FILE"
+else
+    MCP_PORT=${MCP_PORT:-3000}
+    GITHUB_AI_PORT=${GITHUB_AI_PORT:-3001}
+    SEMGREP_PORT=${SEMGREP_PORT:-3002}
+    STRUCTURE_PORT=${STRUCTURE_PORT:-3003}
+fi
+
 
 echo "🔍 GitHub Apps Diagnostic Report"
 echo "================================="
+echo
+echo "📘 Port registry (expected):"
+echo "  MCP:           ${MCP_PORT}"
+echo "  GitHub AI:     ${GITHUB_AI_PORT}"
+echo "  Semgrep:       ${SEMGREP_PORT}"
+echo "  Structure:     ${STRUCTURE_PORT}"
 echo
 
 # Check if processes are running
@@ -19,7 +37,7 @@ echo
 # Check ports
 echo "📡 Port Status:"
 echo "---------------"
-for port in 3001 3002 3003; do
+for port in "$GITHUB_AI_PORT" "$SEMGREP_PORT" "$STRUCTURE_PORT"; do
     if lsof -i :$port > /dev/null 2>&1; then
         echo "✅ Port $port: $(lsof -i :$port | tail -1 | awk '{print $1}')"
     else
@@ -74,7 +92,7 @@ echo "cp packages/cortex-structure-github/.env.example packages/cortex-structure
 echo
 echo "# Build all apps:"
 echo "cd packages/cortex-ai-github && pnpm build"
-echo "cd packages/cortex-semgrep-github && pnpm build" 
+echo "cd packages/cortex-semgrep-github && pnpm build"
 echo "cd packages/cortex-structure-github && pnpm build"
 echo
 echo "# Start apps (in separate terminals):"

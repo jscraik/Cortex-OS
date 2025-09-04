@@ -48,7 +48,7 @@ level = "debug"
 output = "stdout"
 
 [profiles.production]
-[profiles.production.model] 
+[profiles.production.model]
 provider = "openai"
 name = "gpt-4"
 temperature = 0.3
