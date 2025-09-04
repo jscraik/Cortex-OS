@@ -85,7 +85,7 @@ rules:
     severity: WARNING
     languages: [javascript, typescript]
     metadata: { category: template-injection, fix: "Escape user input or use safe templating APIs." }
-    pattern-regex: "[`'\\\"]\\s*\\$\\{[^}]+\\}\\s*[`'\\\"]"
+    pattern-regex: "[`'\"]\\s*\\$\\{[^}]+\\}\\s*[`'\"]"
   - id: cortex.zod.schema.missing
     message: Zod schema validation missing for untrusted data
     severity: WARNING
