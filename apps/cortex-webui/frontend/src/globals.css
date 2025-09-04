@@ -28,6 +28,12 @@ body {
   outline-offset: 2px;
 }
 
+@layer components {
+  .glass-card {
+    @apply bg-white/30 dark:bg-gray-800/30 backdrop-blur-md border border-white/40 dark:border-gray-700 rounded-xl shadow-lg;
+  }
+}
+
 /* Animation for streaming indicators */
 .animate-pulse-fast {
   animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;

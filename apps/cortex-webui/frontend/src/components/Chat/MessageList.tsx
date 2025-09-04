@@ -9,7 +9,7 @@ interface MessageListProps {
 
 const MessageList: React.FC<MessageListProps> = ({ messages, streaming }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="log" aria-live="polite" aria-relevant="additions">
       {messages.map((message) => (
         <MessageItem key={message.id} message={message} />
       ))}
@@ -17,7 +17,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, streaming }) => {
         <div className="flex justify-start">
           <div className="max-w-[80%]">
             <div className="text-xs text-gray-500">assistant</div>
-            <div className="bg-gray-100 rounded px-2 py-1">
+            <div className="px-3 py-2 rounded-xl backdrop-blur-sm bg-white/20 border border-white/40 dark:border-gray-700">
               <span className="inline-block h-2 w-2 animate-pulse bg-gray-400 rounded-full mr-1"></span>
               <span className="inline-block h-2 w-2 animate-pulse bg-gray-400 rounded-full mr-1 delay-75"></span>
               <span className="inline-block h-2 w-2 animate-pulse bg-gray-400 rounded-full delay-150"></span>
