@@ -22,6 +22,18 @@ dev = [
   "jsonschema>=4.21",
 ]
 
+authors = [{ name = "Cortex Team" }]
+readme = "README.md"
+keywords = ["mlx", "cortex", "adapter"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Source = "https://github.com/AutonomousResearchGroup/Cortex-OS"
+
 [tool.uv]
 dev-dependencies = [
   "pytest>=8.3",
