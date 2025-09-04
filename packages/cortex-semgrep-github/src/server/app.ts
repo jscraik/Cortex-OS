@@ -428,7 +428,7 @@ async function updateProgressiveStatus(
                                 await addReaction(payload, 'gear');
                                 break;
                         case 'success':
-                                await addReaction(payload, 'hooray');
+                                await addReaction(payload, 'rocket');
                                 break;
                         case 'error':
                                 await addReaction(payload, '-1');
