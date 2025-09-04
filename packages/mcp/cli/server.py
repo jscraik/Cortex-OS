@@ -15,7 +15,7 @@ from ..core.server import MCPServer
 from ..integrations.a2a_bridge import A2ABridge
 from ..integrations.memory_bridge import MemoryBridge
 
-console = Console()
+console: Any = Console()
 
 
 @click.group()
