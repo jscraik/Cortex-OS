@@ -24,24 +24,32 @@ export interface MLXAdapterApi {
 
 export function createMLXAdapter(): MLXAdapterApi {
         const defaultModel = process.env.MLX_DEFAULT_MODEL || "mlx-default";
+        // Local helper for embedding generation
+        async function generateEmbedding({ text, model }: { text: string; model?: string }) {
+                const usedModel = model || defaultModel;
+                const hash = Array.from(text).reduce(
+                        (h, c) => (h * 31 + c.charCodeAt(0)) >>> 0,
+                        0,
+                );
+                const vec = new Array(8)
+                        .fill(0)
+                        .map((_, i) => ((hash >> (i % 8)) & 0xff) / 255);
+                return { embedding: vec, model: usedModel };
+        }
         return {
                 async isAvailable(): Promise<boolean> {
                         return true;
                 },
-                async generateEmbedding({ text, model }: { text: string; model?: string }) {
-                        const usedModel = model || defaultModel;
-                        const hash = Array.from(text).reduce(
-                                (h, c) => (h * 31 + c.charCodeAt(0)) >>> 0,
-                                0,
-                        );
-                        const vec = new Array(8)
-                                .fill(0)
-                                .map((_, i) => ((hash >> (i % 8)) & 0xff) / 255);
-                        return { embedding: vec, model: usedModel };
-                },
+                // Local helper for embedding generation
+                generateEmbedding,
                 async generateEmbeddings({ texts, model }: { texts: string[]; model?: string }) {
+                        // Use the local method reference instead of 'this'
                         return Promise.all(
-                                texts.map((t) => this.generateEmbedding({ text: t, model } as any)),
+                                texts.map((t) => 
+                                        // Call the local method directly
+                                        // No 'as any' needed, type is correct
+                                        (this as MLXAdapterApi).generateEmbedding({ text: t, model })
+                                ),
                         );
                 },
                 async generateChat({ messages, model }: {
