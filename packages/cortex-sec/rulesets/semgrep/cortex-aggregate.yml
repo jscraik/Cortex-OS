@@ -1,1 +1,3 @@
 rules:
+  - include: cortex-js-ts.yml
+  - include: cortex-py.yml
