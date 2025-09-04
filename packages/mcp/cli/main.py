@@ -16,6 +16,13 @@ from ..core.server import MCPServer
 from ..tasks.task_queue import TaskQueue
 from ..webui.app import app
 
+# Import and register subcommand groups (kept at top to satisfy E402)
+from .auth import auth_commands
+from .plugins import plugin_commands
+from .server import server_commands
+from .tasks import task_commands
+from .tools import tool_commands
+
 console = Console()
 
 
@@ -85,7 +92,7 @@ def cli(ctx, config_dir: str, log_level: str, debug: bool):
 @click.option("--config-dir", default="config", help="Configuration directory")
 @click.pass_context
 def serve(
-    ctx,
+    _ctx,
     host: str,
     port: int,
     workers: int,
@@ -173,7 +180,7 @@ def status(ctx, output_format: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Checking MCP status...", total=None)
+        _task = progress.add_task("Checking MCP status...", total=None)
 
         try:
             status_info = asyncio.run(get_status())
@@ -270,8 +277,6 @@ def shutdown():
     """Shutdown all MCP services gracefully."""
 
     async def shutdown_services():
-        services = []
-
         try:
             # Initialize services that might be running
             server = MCPServer({"plugin_dir": "plugins", "config_dir": "config"})
@@ -294,7 +299,7 @@ def shutdown():
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Shutting down services...", total=None)
+        _task = progress.add_task("Shutting down services...", total=None)
 
         try:
             asyncio.run(shutdown_services())
@@ -323,13 +328,6 @@ def version():
 
     console.print(panel)
 
-
-# Import and register subcommand groups
-from .auth import auth_commands
-from .plugins import plugin_commands
-from .server import server_commands
-from .tasks import task_commands
-from .tools import tool_commands
 
 cli.add_command(server_commands, name="server")
 cli.add_command(tool_commands, name="tools")
