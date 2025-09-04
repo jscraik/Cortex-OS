@@ -34,6 +34,8 @@
   - [x] Verification: Error handling and logging tests pass
   - [x] Rollback Point: `v0.1.2-errors`
 
+#### 🔄 IN PROGRESS
+
 - [x] **Task 2.1**: Chat CLI + Sessions + REPL (TDD)
   - [x] One-off chat streaming tests (mock SSE)
   - [x] Session JSONL and resume tests
