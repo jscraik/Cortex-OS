@@ -76,7 +76,7 @@ class MockMCPTransport(MCPTransport):
             await asyncio.sleep(0.1)  # Simulate message receiving loop
 
 
-async def test_basic_imports():
+async def test_basic_imports() -> None:
     """Test that all core imports work correctly."""
     print("🧪 Testing basic imports...")
 
@@ -89,7 +89,7 @@ async def test_basic_imports():
     print("✅ All core imports successful!")
 
 
-async def test_connection_pool_basic():
+async def test_connection_pool_basic() -> None:
     """Test basic connection pool functionality."""
     print("\n🧪 Testing connection pool basic functionality...")
 
@@ -109,7 +109,7 @@ async def test_connection_pool_basic():
     print("✅ Connection pool basic functionality works!")
 
 
-async def test_connection_lifecycle():
+async def test_connection_lifecycle() -> None:
     """Test connection lifecycle with mock transport."""
     print("\n🧪 Testing connection lifecycle...")
 
@@ -121,7 +121,7 @@ async def test_connection_lifecycle():
     pool.add_connection_config(config)
 
     # Manually patch the connection creation for testing
-    async def mock_create_connection():
+    async def mock_create_connection() -> Any:
         from core.connection_pool import PoolConnection
 
         transport = MockMCPTransport(should_fail=False)
@@ -151,7 +151,7 @@ async def test_connection_lifecycle():
     print("✅ Connection lifecycle test successful!")
 
 
-async def test_error_handling():
+async def test_error_handling() -> None:
     """Test error handling and resilience."""
     print("\n🧪 Testing error handling...")
 
@@ -159,8 +159,8 @@ async def test_error_handling():
     transport = MockMCPTransport(should_fail=True)
 
     try:
-        await transport.connect()
-        assert False, "Should have failed"
+    await transport.connect()
+    raise AssertionError("Should have failed")
     except ConnectionPoolError:
         print("✅ Connection failure handled correctly!")
 
@@ -171,7 +171,7 @@ async def test_error_handling():
     print("✅ Error handling test successful!")
 
 
-async def test_transport_communication():
+async def test_transport_communication() -> None:
     """Test mock transport communication."""
     print("\n🧪 Testing transport communication...")
 
@@ -196,7 +196,7 @@ async def test_transport_communication():
     print("✅ Transport communication test successful!")
 
 
-async def test_performance_metrics():
+async def test_performance_metrics() -> None:
     """Test performance and metrics collection."""
     print("\n🧪 Testing performance metrics...")
 
@@ -219,7 +219,7 @@ async def test_performance_metrics():
     print("✅ Performance metrics test successful!")
 
 
-async def main():
+async def main() -> bool:
     """Run all tests to demonstrate MCP package is operational."""
     print("🚀 Starting MCP Package Operational Test Suite")
     print("=" * 50)
