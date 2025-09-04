@@ -13,6 +13,10 @@ echo "Installing dependencies via mise..."
 mise run bootstrap
 
 echo "Installing pre-commit hooks..."
-pre-commit install >/dev/null 2>&1 || true
+if pre-commit install; then
+    echo "pre-commit hooks installed successfully."
+else
+    echo "Warning: Failed to install pre-commit hooks. Please ensure pre-commit is installed and try again." >&2
+fi
 
 echo "Development environment setup complete."
