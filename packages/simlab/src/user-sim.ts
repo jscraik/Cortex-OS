@@ -118,61 +118,56 @@ export class UserSimulator {
 	/**
 	 * Determine if conversation should end
 	 */
-	private shouldEndConversation(
-		agentResponse: string,
-		turnCount: number,
-	): boolean {
-		// End if agent indicates completion
-		const completionIndicators = [
-			"is there anything else",
-			"glad i could help",
-			"problem solved",
-			"task completed",
-		];
+        private shouldEndConversation(
+                agentResponse: string,
+                turnCount: number,
+        ): boolean {
+                const completionIndicators = [
+                        /is there anything else/i,
+                        /glad i could help/i,
+                        /problem solved/i,
+                        /task completed/i,
+                        /happy to assist further/i,
+                ];
 
-		// Slightly bias toward shorter conversations when timeout is tight
-		const maxTurnsBias =
-			this.config.timeout && this.config.timeout < 15000 ? 10 : 20;
-		if (turnCount > maxTurnsBias) {
-			return true;
-		}
+                const maxTurnsBias =
+                        this.config.timeout && this.config.timeout < 15000 ? 10 : 20;
+                if (turnCount > maxTurnsBias) {
+                        return true;
+                }
 
-		return completionIndicators.some((indicator) =>
-			agentResponse.toLowerCase().includes(indicator),
-		);
-	}
+                return completionIndicators.some((r) => r.test(agentResponse));
+        }
 
 	/**
 	 * Check if agent response is helpful
 	 */
-	private isHelpful(response: string): boolean {
-		const helpfulIndicators = [
-			"here is",
-			"i can help",
-			"solution",
-			"answer",
-			"information",
-		];
+        private isHelpful(response: string): boolean {
+                const helpfulIndicators = [
+                        /\bhere(?:'s| is)\b/i,
+                        /i can help/i,
+                        /solution/i,
+                        /answer/i,
+                        /information/i,
+                        /step-by-step/i,
+                ];
 
-		return helpfulIndicators.some((indicator) =>
-			response.toLowerCase().includes(indicator),
-		);
-	}
+                return helpfulIndicators.some((r) => r.test(response));
+        }
 
 	/**
 	 * Check if agent response needs clarification
 	 */
-	private needsClarification(response: string): boolean {
-		const clarificationIndicators = [
-			"could you clarify",
-			"need more information",
-			"can you be more specific",
-			"what do you mean",
-		];
-		return clarificationIndicators.some((indicator) =>
-			response.toLowerCase().includes(indicator),
-		);
-	}
+        private needsClarification(response: string): boolean {
+                const clarificationIndicators = [
+                        /could you clarify/i,
+                        /need more information/i,
+                        /be more specific/i,
+                        /what do you mean/i,
+                        /unclear/i,
+                ];
+                return clarificationIndicators.some((r) => r.test(response));
+        }
 
 	/**
 	 * Generate positive response
