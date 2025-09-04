@@ -56,7 +56,7 @@ jobs:
             const missing = requirements.filter(req => !req.check);
 
             if (missing.length > 0) {
-              const comment = `## ⚠️ PR Requirements Check\n\nThe following requirements are missing from your PR:\n\n${missing.map(req => `- ❌ ${req.name}`).join('\\n')}\n\nPlease update your PR description to include all required sections.\n\nSee the [PR template](.github/pull_request_template.md) for guidance.`;
+              const comment = `## ⚠️ PR Requirements Check\n\nThe following requirements are missing from your PR:\n\n${missing.map(req => `- ❌ ${req.name}`).join('\n')}\n\nPlease update your PR description to include all required sections.\n\nSee the [PR template](.github/pull_request_template.md) for guidance.`;
 
               await github.rest.issues.createComment({
                 owner,
