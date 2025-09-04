@@ -5,23 +5,25 @@ rules:
     languages: [javascript, typescript]
     metadata:
       category: cmd-injection
-      fix: Use execFile/spawn with args array, avoid shell, validate/escape inputs.
-    patterns:
+      fix: "Use execFile/spawn with args array, avoid shell, validate/escape inputs."
+    mode: taint
+    pattern-sources:
+      - pattern-either:
+          - pattern: req.body
+          - pattern: req.query
+          - pattern: req.params
+          - pattern: process.env
+    pattern-sinks:
       - pattern-either:
           - pattern: child_process.exec($CMD, ...)
           - pattern: require('child_process').exec($CMD, ...)
           - pattern: child_process.execSync($CMD, ...)
           - pattern: require('child_process').execSync($CMD, ...)
-          - pattern: child_process.spawn($CMD, $ARGS, { ... shell: true, ... })
-          - pattern: child_process.spawnSync($CMD, $ARGS, { ... shell: true, ... })
-      - metavariable-pattern:
-          metavariable: $CMD
-          pattern-regex: (?i)(user|input|prompt|msg|cmd|query|arg|payload)
   - id: cortex.node.eval_like
     message: Dynamic eval or Function constructor detected
     severity: ERROR
     languages: [javascript, typescript]
-    metadata: { category: insecure-eval, fix: Avoid eval/Function; use safe parsing or whitelists. }
+    metadata: { category: insecure-eval, fix: "Avoid eval/Function; use safe parsing or whitelists." }
     pattern-either:
       - pattern: eval($X)
       - pattern: new Function($X, ...)
@@ -30,33 +32,41 @@ rules:
     message: Potential SSRF / open redirect via untrusted URL
     severity: WARNING
     languages: [javascript, typescript]
-    metadata: { category: ssrf, fix: Allowlist hosts, parse/validate URL, block localhost/169.254.169.254. }
-    patterns:
+    metadata: { category: ssrf, fix: "Allowlist hosts, parse/validate URL, block localhost/169.254.169.254." }
+    mode: taint
+    pattern-sources:
+      - pattern-either:
+          - pattern: req.body
+          - pattern: req.query
+          - pattern: req.params
+          - pattern: process.env
+    pattern-sinks:
       - pattern-either:
           - pattern: fetch($URL, ...)
           - pattern: axios($URL, ...)
           - pattern: axios.get($URL, ...)
           - pattern: request($URL, ...)
-      - metavariable-pattern:
-          metavariable: $URL
-          pattern-regex: (?i)(user|input|url|href|link|target|endpoint)
   - id: cortex.path.traversal.join
     message: Path traversal risk when joining user-controlled segments
     severity: ERROR
     languages: [javascript, typescript]
-    metadata: { category: path-traversal, fix: Normalize, forbid "..", restrict roots, use path.resolve + allowlist. }
-    patterns:
+    metadata: { category: path-traversal, fix: "Normalize, forbid '..', restrict roots, use path.resolve + allowlist." }
+    mode: taint
+    pattern-sources:
+      - pattern-either:
+          - pattern: req.body
+          - pattern: req.query
+          - pattern: req.params
+          - pattern: process.env
+    pattern-sinks:
       - pattern: path.join($A, $B)
-      - metavariable-pattern:
-          metavariable: $B
-          pattern-regex: (?i)(user|input|file|path|name)
   - id: cortex.llm.insecure_tool_invocation
     message: Unvalidated tool/command call tied to LLM output
     severity: WARNING
     languages: [javascript, typescript]
     metadata:
       category: llm-tooling
-      fix: Add allowlisted tools, structured args with schema validation (zod), human-in-the-loop for dangerous ops.
+      fix: "Add allowlisted tools, structured args with schema validation (zod), human-in-the-loop for dangerous ops."
     patterns:
       - pattern-either:
           - pattern: $TOOL($LLM_OUT, ...)
@@ -68,21 +78,21 @@ rules:
     message: Possible AWS secret or access key in code
     severity: ERROR
     languages: [javascript, typescript]
-    metadata: { category: secrets, fix: Remove, rotate, use env + secret manager. }
+    metadata: { category: secrets, fix: "Remove, rotate, use env + secret manager." }
     pattern-regex: (AKIA[0-9A-Z]{16}|aws(.{0,20})?(secret|access)[-_ ]?key)
   - id: cortex.template.injection.unsafe_interpolation
     message: Templating interpolation may lead to injection if input is untrusted
     severity: WARNING
     languages: [javascript, typescript]
-    metadata: { category: template-injection, fix: Escape user input or use safe templating APIs. }
-    pattern-regex: [`'"']\s*\$\{[^}]+\}\s*[`'"']
+    metadata: { category: template-injection, fix: "Escape user input or use safe templating APIs." }
+    pattern-regex: "[`'\\\"]\\s*\\$\\{[^}]+\\}\\s*[`'\\\"]"
   - id: cortex.zod.schema.missing
     message: Zod schema validation missing for untrusted data
     severity: WARNING
     languages: [javascript, typescript]
     metadata:
       category: schema-validation
-      fix: Wrap input with zod schema parse/validate.
+      fix: "Wrap input with zod schema parse/validate."
     patterns:
       - pattern-either:
           - pattern: $INPUT
