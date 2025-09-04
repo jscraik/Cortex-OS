@@ -3,16 +3,12 @@
 import asyncio
 import json
 import sys
-from typing import Any
+from typing import Any, cast
 
 import click
 from rich.console import Console  # type: ignore[import-not-found]
 from rich.panel import Panel  # type: ignore[import-not-found]
-from rich.progress import (  # type: ignore[import-not-found]
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-)
+from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
 from rich.table import Table  # type: ignore[import-not-found]
 
 from ..core.protocol import MCPMessage, MessageType
@@ -45,7 +41,7 @@ def list_tools(output_format: str, config_file: str) -> None:  # noqa: ARG001 - 
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Get tools using protocol
@@ -152,7 +148,7 @@ def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - confi
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Get all tools
@@ -181,7 +177,7 @@ def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - confi
             if not tool:
                 return {"error": f"Tool '{tool_name}' not found"}
 
-            return tool
+            return cast(dict[str, Any], tool)
 
         except Exception as e:
             return {"error": str(e)}
@@ -278,7 +274,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple[str, ...], config_f
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Execute tool
@@ -359,7 +355,7 @@ def test_tools(tool: str, config_file: str) -> None:  # noqa: ARG001 - config_fi
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Get available tools
@@ -378,7 +374,8 @@ def test_tools(tool: str, config_file: str) -> None:  # noqa: ARG001 - config_fi
                     "error": list_response.error.get("message", "Failed to list tools")
                 }
 
-            tools = list_response.result.get("tools", [])
+            result_payload = list_response.result or {}
+            tools = result_payload.get("tools", [])
 
             if tool:
                 # Filter to specific tool
@@ -393,7 +390,7 @@ def test_tools(tool: str, config_file: str) -> None:  # noqa: ARG001 - config_fi
                 tool_name = tool_info.get("name")
 
                 # Generate test parameters based on tool definition
-                test_params = {}
+                test_params: dict[str, Any] = {}
                 parameters = tool_info.get("parameters", {})
 
                 for param_name, param_info in parameters.items():
