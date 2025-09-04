@@ -364,13 +364,10 @@ class TestProtocolEdgeCases:
         )
 
         # Test with timeout
-        try:
-            response = await asyncio.wait_for(
+        with pytest.raises(TimeoutError):
+            await asyncio.wait_for(
                 handler.handle_message(request), timeout=0.5
             )
-            assert False, "Should have timed out"
-        except TimeoutError:
-            pass  # Expected
 
     @pytest.mark.asyncio
     async def test_handler_memory_cleanup(self, handler):
