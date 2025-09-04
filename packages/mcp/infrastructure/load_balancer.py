@@ -484,9 +484,9 @@ class AutoScaler:
         self.scale_cooldown = 300  # 5 minutes
         self.last_scale_action: datetime | None = None
         self._running = False
-    self._scale_task: asyncio.Task[None] | None = None
+    self._scale_task = None
 
-        logger.info("Auto-scaler initialized")
+    logger.info("Auto-scaler initialized")
 
     async def start(self) -> None:
         """Start the auto-scaler."""
