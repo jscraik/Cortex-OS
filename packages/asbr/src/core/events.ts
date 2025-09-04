@@ -43,8 +43,8 @@ export interface EventManager extends EventEmitter {
 		callback: (event: Event) => void,
 	): string;
 	unsubscribe(subscriptionId: string): void;
-	getEvents(options: EventStreamOptions): Event[];
-	createSSEStream(res: any, options: EventStreamOptions): string;
+        getEvents(options: EventStreamOptions): Event[];
+        createSSEStream(res: Response, options: EventStreamOptions): string;
 	pollEvents(
 		options: EventStreamOptions,
 		attempt?: number,
@@ -61,10 +61,11 @@ export interface EventManager extends EventEmitter {
  * Event Manager with SSE and WebSocket support
  */
 class EventManagerClass extends EventEmitter {
-	private config: Config;
-	private subscriptions = new Map<string, EventSubscription>();
-	private eventBuffer = new Map<string, Event[]>(); // taskId -> events
-	private globalEvents: Event[] = [];
+        private config: Config;
+        private subscriptions = new Map<string, EventSubscription>();
+        private eventBuffer = new Map<string, Event[]>(); // taskId -> events
+        private globalEvents: Event[] = [];
+        private lastEventTimes = new Map<string, number>();
 	private heartbeatIntervals = new Map<string, NodeJS.Timeout>();
 	private cleanupInterval?: NodeJS.Timeout;
 	private eventCounter = 0;
@@ -137,18 +138,19 @@ class EventManagerClass extends EventEmitter {
 	 */
 	async emitEvent(event: Event): Promise<void> {
 		// Store event in buffer
-		if (!this.eventBuffer.has(event.taskId)) {
-			this.eventBuffer.set(event.taskId, []);
-		}
+                if (!this.eventBuffer.has(event.taskId)) {
+                        this.eventBuffer.set(event.taskId, []);
+                }
 
-		const taskEvents = this.eventBuffer.get(event.taskId)!;
-		taskEvents.push(event);
+                const taskEvents = this.eventBuffer.get(event.taskId)!;
+                taskEvents.push(event);
+                this.lastEventTimes.set(event.taskId, Date.now());
 
-		// Also store in global events
-		this.globalEvents.push(event);
+                // Also store in global events
+                this.globalEvents.push(event);
 
-		// Keep buffer size manageable
-		this.maintainBufferSize(event.taskId);
+                // Keep buffer size manageable
+                this.maintainBufferSize(event.taskId);
 
 		// Persist to NDJSON ledger
 		await this.persistEvent(event);
@@ -335,16 +337,14 @@ class EventManagerClass extends EventEmitter {
 	}
 
 	private setupHeartbeat(subscriptionId: string): void {
-		const interval = setInterval(() => {
-			const subscription = this.subscriptions.get(subscriptionId);
-			if (!subscription) {
-				clearInterval(interval);
-				this.heartbeatIntervals.delete(subscriptionId);
-				return;
-			}
-
-			// Heartbeat is handled in SSE stream creation
-		}, this.config.events.heartbeat_ms);
+                const interval = setInterval(() => {
+                        const subscription = this.subscriptions.get(subscriptionId);
+                        if (!subscription) {
+                                clearInterval(interval);
+                                this.heartbeatIntervals.delete(subscriptionId);
+                        }
+                        // Heartbeat is handled in SSE stream creation
+                }, this.config.events.heartbeat_ms);
 
 		this.heartbeatIntervals.set(subscriptionId, interval);
 	}
@@ -384,18 +384,19 @@ class EventManagerClass extends EventEmitter {
 		}
 	}
 
-	private maintainBufferSize(taskId: string): void {
-		const events = this.eventBuffer.get(taskId);
-		if (events && events.length > 1000) {
-			// Keep only the last 1000 events per task
-			events.splice(0, events.length - 1000);
-		}
+        private maintainBufferSize(taskId: string): void {
+                const taskLimit = this.config.events.max_task_events;
+                const globalLimit = this.config.events.max_global_events;
 
-		// Also maintain global events buffer
-		if (this.globalEvents.length > 5000) {
-			this.globalEvents.splice(0, this.globalEvents.length - 5000);
-		}
-	}
+                const events = this.eventBuffer.get(taskId);
+                if (events && events.length > taskLimit) {
+                        events.splice(0, events.length - taskLimit);
+                }
+
+                if (this.globalEvents.length > globalLimit) {
+                        this.globalEvents.splice(0, this.globalEvents.length - globalLimit);
+                }
+        }
 
 	async pollEvents(
 		options: EventStreamOptions,
@@ -433,19 +434,26 @@ class EventManagerClass extends EventEmitter {
 		}
 	}
 
-	private setupCleanupInterval(): void {
-		// Clean up expired subscriptions every minute
-		this.cleanupInterval = setInterval(() => {
-			const now = Date.now();
-			const idleTimeout = this.config.events.idle_timeout_ms;
+        private setupCleanupInterval(): void {
+                // Clean up expired subscriptions every minute
+                this.cleanupInterval = setInterval(() => {
+                        const now = Date.now();
+                        const idleTimeout = this.config.events.idle_timeout_ms;
 
-			for (const [id, subscription] of this.subscriptions) {
-				if (now - subscription.createdAt > idleTimeout) {
-					this.unsubscribe(id);
-				}
-			}
-		}, 60000);
-	}
+                        for (const [id, subscription] of this.subscriptions) {
+                                if (now - subscription.createdAt > idleTimeout) {
+                                        this.unsubscribe(id);
+                                }
+                        }
+
+                        for (const [taskId, lastTime] of this.lastEventTimes) {
+                                if (now - lastTime > idleTimeout) {
+                                        this.eventBuffer.delete(taskId);
+                                        this.lastEventTimes.delete(taskId);
+                                }
+                        }
+                }, 60000);
+        }
 }
 
 /**
