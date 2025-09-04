@@ -762,7 +762,7 @@ class AdvancedMonitoringSystem:
             db_manager = await get_database_manager()
 
             start_time = time.time()
-            health_status = await db_manager.get_health_status()
+            await db_manager.get_health_status()
             db_response_time = (time.time() - start_time) * 1000  # ms
 
             await self.metrics_collector.collect_metric(
@@ -781,7 +781,7 @@ class AdvancedMonitoringSystem:
 
             # Get other metrics from global metrics collector
             global_metrics = get_metrics_collector()
-            prometheus_data = global_metrics.get_prometheus_metrics()
+            global_metrics.get_prometheus_metrics()
 
             # Parse error rate from prometheus data (simplified)
             error_rate = 0  # Would parse from actual prometheus data
