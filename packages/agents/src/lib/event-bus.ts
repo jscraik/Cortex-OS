@@ -109,7 +109,7 @@ export function validateAgentEvent<T>(event: {
         timestamp?: string;
         source?: string;
 }): Envelope<T> {
-        if (!event.type || event.data === undefined) {
+        if (!event.type || !event.data) {
                 throw new Error("Invalid event: missing type or data");
         }
 
