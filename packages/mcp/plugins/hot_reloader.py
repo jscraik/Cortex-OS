@@ -9,12 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from watchdog.events import FileSystemEventHandler as _FileSystemEventHandler
-    from watchdog.observers import Observer as _Observer
-
 from .base import BasePlugin
 
 
@@ -46,8 +40,10 @@ class PluginHotReloader:
     def _setup_file_watcher(self) -> None:
         """Setup file watcher for hot-reloading."""
         try:
-            from watchdog.events import FileSystemEventHandler  # pragma: no cover
-            from watchdog.observers import Observer  # pragma: no cover
+            events = importlib.import_module("watchdog.events")
+            observers = importlib.import_module("watchdog.observers")
+            FileSystemEventHandler = getattr(events, "FileSystemEventHandler")
+            Observer = getattr(observers, "Observer")
         except Exception as e:  # pragma: no cover - optional dependency
             self.logger.warning(
                 "watchdog not available, disabling auto-reload: %s", e
@@ -67,8 +63,8 @@ class PluginHotReloader:
         observer = Observer()
         observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
         observer.start()
-    # Store observer dynamically to avoid strict typing on optional dep
-    self.observer = observer  # type: ignore[assignment]
+        # Store observer dynamically to avoid strict typing on optional dep
+        self.observer = observer
 
     def schedule_reload(self, plugin_name: str) -> None:
         """Schedule a plugin reload with cooldown."""
