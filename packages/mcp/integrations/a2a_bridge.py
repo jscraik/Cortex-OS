@@ -248,8 +248,8 @@ class A2ABridge:
 
             return {"error": "Task queue not available"}
 
-    @self.event_handler.register_handler("health.check")
-    async def handle_health_check(_event: A2AEvent) -> dict[str, Any]:
+        @self.event_handler.register_handler("health.check")
+        async def handle_health_check(_event: A2AEvent) -> dict[str, Any]:
             """Handle health check requests from A2A."""
             return {
                 "status": "healthy",
