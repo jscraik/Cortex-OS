@@ -2,7 +2,7 @@
 name = "cortex-mlx"
 version = "0.0.1"
 description = "MLX integration for Cortex-OS"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
   "numpy>=1.26",
   "pydantic>=2.8",
@@ -33,11 +33,11 @@ dev-dependencies = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py313"
 select = ["E", "F", "I", "N"]
 
 [tool.pyright]
-pythonVersion = "3.12"
+pythonVersion = "3.13"
 venvPath = ".venv"
 typeCheckingMode = "basic"
 

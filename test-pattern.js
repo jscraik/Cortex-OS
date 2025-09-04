@@ -11,7 +11,7 @@ const patterns = [
 ];
 
 const testPath =
-	'packages/mcp/.venv-mcp311/lib/python3.11/site-packages/jwt/__pycache__/jwk_set_cache.cpython-311.pyc';
+	'packages/mcp/.venv-mcp313/lib/python3.13/site-packages/jwt/__pycache__/jwk_set_cache.cpython-313.pyc';
 
 console.log('Testing path:', testPath);
 patterns.forEach((pattern) => {
