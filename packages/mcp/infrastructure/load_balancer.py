@@ -4,7 +4,7 @@ import asyncio
 import hashlib
 import time
 from collections.abc import Callable
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -113,7 +113,7 @@ class ConsistentHashRing:
         """Hash a key to a ring position."""
         return int(hashlib.md5(key.encode()).hexdigest(), 16)
 
-    def add_node(self, node_id: str):
+    def add_node(self, node_id: str) -> None:
         """Add a node to the hash ring."""
         if node_id in self.nodes:
             return
@@ -124,7 +124,7 @@ class ConsistentHashRing:
             hash_value = self._hash(replica_key)
             self.ring[hash_value] = node_id
 
-    def remove_node(self, node_id: str):
+    def remove_node(self, node_id: str) -> None:
         """Remove a node from the hash ring."""
         if node_id not in self.nodes:
             return
