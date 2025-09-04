@@ -9,8 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from watchdog.events import FileSystemEventHandler as _FileSystemEventHandler
+    from watchdog.observers import Observer as _Observer
 
 from .base import BasePlugin
 
@@ -42,12 +45,21 @@ class PluginHotReloader:
 
     def _setup_file_watcher(self) -> None:
         """Setup file watcher for hot-reloading."""
+        try:
+            from watchdog.events import FileSystemEventHandler  # type: ignore[import-not-found]
+            from watchdog.observers import Observer  # type: ignore[import-not-found]
+        except Exception as e:  # pragma: no cover - optional dependency
+            self.logger.warning(
+                "watchdog not available, disabling auto-reload: %s", e
+            )
+            self.auto_reload = False
+            return
 
         class PluginFileHandler(FileSystemEventHandler):
             def __init__(self, reloader: "PluginHotReloader"):
                 self.reloader = reloader
 
-            def on_modified(self, event):  # type: ignore[override]
+            def on_modified(self, event: Any) -> None:
                 if event.src_path.endswith(".py"):
                     plugin_name = Path(event.src_path).stem
                     self.reloader.schedule_reload(plugin_name)
@@ -105,9 +117,12 @@ class PluginHotReloader:
 
             # Load module
             spec = importlib.util.spec_from_file_location(manifest.name, plugin_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(
+                    f"Cannot load spec for {manifest.name} from {plugin_path}"
+                )
             module = importlib.util.module_from_spec(spec)
-            assert spec and spec.loader
-            spec.loader.exec_module(module)  # type: ignore[assignment]
+            spec.loader.exec_module(module)
 
             # Initialize plugin
             plugin_class = getattr(module, manifest.entry_point)
@@ -141,9 +156,12 @@ class PluginHotReloader:
             del self.plugins[plugin_name]
 
             spec = importlib.util.spec_from_file_location(plugin_name, plugin_file)
+            if spec is None or spec.loader is None:
+                raise ImportError(
+                    f"Cannot load spec for {plugin_name} from {plugin_file}"
+                )
             module = importlib.util.module_from_spec(spec)
-            assert spec and spec.loader
-            spec.loader.exec_module(module)  # type: ignore[assignment]
+            spec.loader.exec_module(module)
 
             plugin_class = getattr(module, self.manifests[plugin_name].entry_point)
             self.plugin_classes[plugin_name] = plugin_class
