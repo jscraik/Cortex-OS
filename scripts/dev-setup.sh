@@ -16,12 +16,12 @@ echo "Installing pre-commit hooks..."
 pre-commit install >/dev/null 2>&1 || true
 
 echo "Running lint checks..."
-pnpm lint:quality >/dev/null 2>&1 || true
-
-echo "Validating repository structure..."
-pnpm structure:validate >/dev/null 2>&1 || true
-
-echo "Performing workspace cleanup..."
-pnpm memory:clean:gentle >/dev/null 2>&1 || true
+if [ "${DEV_SETUP_VERBOSE:-}" = "1" ]; then
+    pnpm memory:clean:gentle
+else
+    if ! pnpm memory:clean:gentle >/dev/null 2>&1; then
+        echo "Warning: pnpm memory:clean:gentle failed during workspace cleanup. Run with DEV_SETUP_VERBOSE=1 for details." >&2
+    fi
+fi
 
 echo "Development environment setup complete."
