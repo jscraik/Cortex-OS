@@ -23,28 +23,23 @@ export class OllamaEmbedder implements Embedder {
 		return `ollama-${this.modelName}`;
 	}
 
-	async embed(texts: string[]): Promise<number[][]> {
-		try {
-			const embeddings: number[][] = [];
+        async embed(texts: string[]): Promise<number[][]> {
+                try {
+                        const requests = texts.map((text) =>
+                                this.client
+                                        .post("/api/embeddings", { model: this.modelName, prompt: text })
+                                        .then((response: any) => {
+                                                if (response.data && Array.isArray(response.data.embedding)) {
+                                                        return response.data.embedding as number[];
+                                                }
+                                                throw new Error("Invalid response from Ollama embedding API");
+                                        }),
+                        );
 
-			// Ollama doesn't have a native batch API, so we'll process sequentially
-			for (const text of texts) {
-				const response = await this.client.post("/api/embeddings", {
-					model: this.modelName,
-					prompt: text,
-				});
-
-				if (response.data && Array.isArray(response.data.embedding)) {
-					embeddings.push(response.data.embedding);
-				} else {
-					throw new Error("Invalid response from Ollama embedding API");
-				}
-			}
-
-			return embeddings;
-		} catch (error) {
-			console.error("Ollama embedding failed:", error);
-			throw error;
-		}
-	}
+                        return await Promise.all(requests);
+                } catch (error) {
+                        console.error("Ollama embedding failed:", error);
+                        throw error;
+                }
+        }
 }
