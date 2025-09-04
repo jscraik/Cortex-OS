@@ -12,10 +12,10 @@ from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, text
 
+from . import models
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
 from .database import DatabaseConfig as _DatabaseConfig, get_database_manager
-from . import models
 
 logger: Any = get_logger(__name__)
 metrics: Any = get_metrics_collector()
