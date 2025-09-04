@@ -621,16 +621,16 @@ async function handleHelpCommand(payload: any, user: string) {
 
 🎨 **Frontend Commands:**
 - \`@insula frontend analyze\` - Frontend-specific analysis (React/Vue/Angular)
-- \`@insula frontend fix\` - Auto-fix frontend issues (coming soon)
+- \`@insula frontend fix\` - Auto-fix frontend issues
 - \`@insula frontend scaffold\` - Generate frontend templates (coming soon)
 
 ⚙️ **Backend Commands:**
 - \`@insula backend analyze\` - Backend-specific analysis (Node.js/Python/Go)
-- \`@insula backend fix\` - Auto-fix backend issues (coming soon)
+- \`@insula backend fix\` - Auto-fix backend issues
 - \`@insula backend scaffold\` - Generate backend templates (coming soon)
 
 🔧 **Fix Commands:**
-- \`@insula fix\` - Auto-fix general issues (coming soon)
+- \`@insula fix\` - Auto-fix general issues
 - \`@insula autofix\` - Same as fix
 
 ❓ **Help:**
@@ -1138,8 +1138,8 @@ function generateAnalysisComment(
 		}
 
 		if (summary.autoFixableCount > 0) {
-			comment += `💡 **Good news!** ${summary.autoFixableCount} violations can be auto-fixed.\n`;
-			comment += `Run \`@insula fix\` to apply automatic fixes (coming soon).\n\n`;
+                        comment += `💡 **Good news!** ${summary.autoFixableCount} violations can be auto-fixed.\n`;
+                        comment += `Run \`@insula fix\` to apply automatic fixes.\n\n`;
 		}
 	}
 
