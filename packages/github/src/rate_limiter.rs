@@ -8,6 +8,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 use tokio::time::sleep;
 use tracing::{debug, warn};
+const MAX_QUEUE_SIZE: usize = 1000;
 
 /// GitHub API rate limiter with intelligent request queuing and backoff
 #[derive(Clone)]
@@ -61,6 +62,9 @@ impl GitHubRateLimiter {
 
         {
             let mut state = self.state.lock().await;
+            if state.queue.len() >= MAX_QUEUE_SIZE {
+                return Err(GitHubError::RateLimit("Request queue full".to_string()));
+            }
 
             // Add request to queue
             state.queue.push_back(Box::new(move || {
@@ -75,7 +79,8 @@ impl GitHubRateLimiter {
                         }
                         Err(err) => {
                             if GitHubRateLimiter::is_rate_limit_error(err) {
-                                GitHubRateLimiter::handle_rate_limit_error(&state_for_task, err).await;
+                                GitHubRateLimiter::handle_rate_limit_error(&state_for_task, err)
+                                    .await;
                             }
                         }
                     }
@@ -93,7 +98,8 @@ impl GitHubRateLimiter {
             }
         }
 
-        rx.await.map_err(|_| GitHubError::Other(anyhow::anyhow!("Request cancelled")))?
+        rx.await
+            .map_err(|_| GitHubError::Other(anyhow::anyhow!("Request cancelled")))?
     }
 
     async fn process_queue(state: Arc<Mutex<RateLimiterState>>) {
@@ -115,8 +121,14 @@ impl GitHubRateLimiter {
             let future = request();
             future.await;
 
-            // Brief pause between requests
-            sleep(Duration::from_millis(100)).await;
+            // Calculate dynamic delay between requests
+            let delay = {
+                let state_guard = state.lock().await;
+                GitHubRateLimiter::calculate_delay(&state_guard)
+            };
+            if delay > Duration::ZERO {
+                sleep(delay).await;
+            }
         }
     }
 
@@ -124,7 +136,11 @@ impl GitHubRateLimiter {
         let wait_duration = {
             let state_guard = state.lock().await;
             if state_guard.remaining_requests == 0 {
-                Some(state_guard.reset_time.saturating_duration_since(Instant::now()))
+                Some(
+                    state_guard
+                        .reset_time
+                        .saturating_duration_since(Instant::now()),
+                )
             } else {
                 None
             }
@@ -133,6 +149,20 @@ impl GitHubRateLimiter {
         if let Some(d) = wait_duration {
             debug!("Rate limit reached, waiting {:?}", d);
             sleep(d).await;
+        }
+    }
+
+    fn calculate_delay(state: &RateLimiterState) -> Duration {
+        if state.remaining_requests == 0 {
+            return Duration::from_secs(1);
+        }
+        let now = Instant::now();
+        if state.reset_time > now {
+            let span = state.reset_time - now;
+            let remaining = state.remaining_requests.max(1) as u32;
+            span / remaining
+        } else {
+            Duration::ZERO
         }
     }
 
@@ -155,14 +185,15 @@ impl GitHubRateLimiter {
             .and_then(|h| h.to_str().ok())
             .and_then(|s| s.parse::<u64>().ok())
         {
-            state_guard.reset_time =
-                Instant::now()
-                    + Duration::from_secs(reset_timestamp.saturating_sub(
+            state_guard.reset_time = Instant::now()
+                + Duration::from_secs(
+                    reset_timestamp.saturating_sub(
                         std::time::SystemTime::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap_or_default()
                             .as_secs(),
-                    ));
+                    ),
+                );
         }
 
         // Update resource-specific limits (Actions, Search, etc.)
@@ -199,12 +230,14 @@ impl GitHubRateLimiter {
                 .and_then(|s| s.parse::<u64>().ok())
                 .map(|timestamp| {
                     Instant::now()
-                        + Duration::from_secs(timestamp.saturating_sub(
-                            std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .unwrap_or_default()
-                                .as_secs(),
-                        ))
+                        + Duration::from_secs(
+                            timestamp.saturating_sub(
+                                std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap_or_default()
+                                    .as_secs(),
+                            ),
+                        )
                 })
                 .unwrap_or_else(|| Instant::now() + Duration::from_secs(3600));
 
@@ -224,12 +257,10 @@ impl GitHubRateLimiter {
 
     fn is_rate_limit_error(error: &GitHubError) -> bool {
         match error {
-            GitHubError::Network(reqwest_error) => {
-                reqwest_error
-                    .status()
-                    .map(|status| status == 403 || status == 429)
-                    .unwrap_or(false)
-            }
+            GitHubError::Network(reqwest_error) => reqwest_error
+                .status()
+                .map(|status| status == 403 || status == 429)
+                .unwrap_or(false),
             GitHubError::RateLimit(_) => true,
             _ => false,
         }
@@ -271,23 +302,6 @@ impl GitHubRateLimiter {
                     )
                 })
                 .collect(),
-        }
-    }
-
-    /// Calculate delay based on rate limit state
-    pub async fn calculate_delay(&self) -> Duration {
-        let state = self.state.lock().await;
-
-        if state.remaining_requests == 0 {
-            // Wait until reset time
-            state.reset_time.saturating_duration_since(Instant::now())
-        } else if let Some(last_request) = state.last_request {
-            // Ensure minimum spacing between requests
-            let min_interval = Duration::from_millis(100);
-            let since_last = Instant::now().saturating_duration_since(last_request);
-            min_interval.saturating_sub(since_last)
-        } else {
-            Duration::from_millis(0)
         }
     }
 }
@@ -361,7 +375,11 @@ impl RetryManager {
                     last_error = Some(error);
                     let delay = self.calculate_backoff_delay(attempt);
 
-                    debug!("Request failed, retrying in {:?} (attempt {})", delay, attempt + 1);
+                    debug!(
+                        "Request failed, retrying in {:?} (attempt {})",
+                        delay,
+                        attempt + 1
+                    );
                     sleep(delay).await;
                 }
             }
