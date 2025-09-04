@@ -53,9 +53,8 @@ class TestOWASPTop10Compliance:
     def test_a02_cryptographic_failures(self, authenticator):
         """Test protection against cryptographic failures (OWASP A02)."""
         # Test 1: Password storage
-
-    # Create user and verify password is hashed
-    authenticator.user_store._create_default_users()
+        # Create user and verify password is hashed
+        authenticator.user_store._create_default_users()
         stored_user = authenticator.user_store.users["admin"]
 
         assert stored_user.hashed_password != "admin123", "Password should be hashed"
@@ -334,7 +333,7 @@ class TestOWASPTop10Compliance:
     def test_a09_security_logging_monitoring_failures(self, test_client, authenticator):
         """Test security logging and monitoring (OWASP A09)."""
         # Test 1: Authentication events are logged
-    with patch("mcp.security.auth.logger") as mock_logger:
+        with patch("mcp.security.auth.logger") as mock_logger:
             # Trigger authentication failure
             with suppress(Exception):
                 asyncio.run(
