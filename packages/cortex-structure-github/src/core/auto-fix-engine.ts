@@ -8,11 +8,11 @@ import * as path from "path";
 import type { StructureViolation } from "./structure-validator.js";
 
 export interface AutoFixResult {
-	success: boolean;
-	error?: string;
-	oldPath: string;
-	newPath: string;
-	action: "move" | "rename" | "create_directory";
+        success: boolean;
+        error?: string;
+        oldPath: string;
+        newPath: string;
+        action: "move" | "rename" | "create_directory" | "create_file";
 }
 
 export interface AutoFixPlan {
@@ -235,15 +235,15 @@ export class AutoFixEngine {
 				newPath: filePath,
 				action: "create_file",
 			};
-		} catch (error) {
-			return {
-				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
-				oldPath: "",
-				newPath: filePath,
-				action: "create_directory",
-			};
-		}
+                } catch (error) {
+                        return {
+                                success: false,
+                                error: error instanceof Error ? error.message : "Unknown error",
+                                oldPath: "",
+                                newPath: filePath,
+                                action: "create_file",
+                        };
+                }
 	}
 
 	private isMoveSafe(source: string, target: string): boolean {
@@ -283,19 +283,20 @@ export class AutoFixEngine {
 		return "low";
 	}
 
-	private mapActionToResult(
-		actionType: string,
-	): "move" | "rename" | "create_directory" {
-		switch (actionType) {
-			case "move_file":
-				return "move";
-			case "rename_file":
-				return "rename";
-			case "create_directory":
-			case "create_file":
-				return "create_directory";
-			default:
-				return "move";
-		}
-	}
+        private mapActionToResult(
+                actionType: string,
+        ): "move" | "rename" | "create_directory" | "create_file" {
+                switch (actionType) {
+                        case "move_file":
+                                return "move";
+                        case "rename_file":
+                                return "rename";
+                        case "create_directory":
+                                return "create_directory";
+                        case "create_file":
+                                return "create_file";
+                        default:
+                                return "move";
+                }
+        }
 }

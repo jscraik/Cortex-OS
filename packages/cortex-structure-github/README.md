@@ -7,7 +7,7 @@ Production-ready repository structure analysis and enforcement GitHub App with a
 - **Structure Analysis**: Comprehensive repository organization assessment
 - **Violation Detection**: Automated identification of structure and naming issues
 - **Smart Recommendations**: Intelligent suggestions for repository improvements
-- **Auto-fix Engine**: Safe, targeted structure corrections (coming soon)
+- **Auto-fix Engine**: Safe, targeted structure corrections
 - **Command Interface**: Easy @insula command triggers in comments
 - **Secure Processing**: Input validation and path traversal prevention
 - **Performance Optimized**: Efficient analysis with resource management
@@ -29,7 +29,7 @@ Comment on any GitHub issue or PR with these commands:
 @insula analyze                  # Full structure analysis
 @insula check                    # Same as analyze
 @insula review                   # Structure review
-@insula fix                      # Auto-fix issues (coming soon)
+@insula fix                      # Auto-fix issues
 @insula autofix                  # Same as fix
 @insula help                     # Show available commands
 @insula commands                 # List all commands
@@ -78,7 +78,6 @@ The server will run on port 3003 and handle GitHub webhook events.
 - `app.ts` - Main webhook server and event handler
 - `structure-validator.ts` - Repository structure validation engine
 - `auto-fix-engine.ts` - Automated structure correction system
-- `cortex-structure-rules.ts` - Comprehensive structure rule definitions
 
 ## 🔒 Security
 
@@ -193,10 +192,9 @@ Example output:
 - Security-first architecture
 
 ### Adding New Rules
-1. Define rule in `cortex-structure-rules.ts`
-2. Implement validation logic in `structure-validator.ts`
-3. Add auto-fix capability in `auto-fix-engine.ts`
-4. Test with various repository structures
+1. Define rule in `structure-validator.ts`
+2. Add auto-fix capability in `auto-fix-engine.ts`
+3. Test with various repository structures
 
 ## 🔧 Structure Rules
 
@@ -238,7 +236,6 @@ This GitHub App has been thoroughly reviewed and hardened:
 
 ## 🔮 Future Features
 
-- **Auto-fix Implementation**: Automated structure corrections
 - **Custom Rule Engine**: User-defined structure rules
 - **Integration Hooks**: CI/CD pipeline integration
 - **Metrics Dashboard**: Structure health trends
