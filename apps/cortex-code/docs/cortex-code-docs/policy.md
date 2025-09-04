@@ -92,7 +92,7 @@ When contributing to Cortex Code:
 
 1. **Code Quality**: Submit well-tested, documented code
 2. **Respectful Communication**: Maintain professional and respectful communication
-3. **Licensing Compliance**: Ensure contributions comply with the MIT License
+3. **Licensing Compliance**: Ensure contributions comply with the Apache License 2.0
 4. **Security Reporting**: Report security vulnerabilities responsibly
 
 ### Issue Reporting

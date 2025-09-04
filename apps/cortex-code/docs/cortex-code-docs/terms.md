@@ -20,7 +20,7 @@ You must be at least 13 years old to use Cortex Code. If you are under 18, you r
 
 ### License
 
-Cortex Code is licensed under the MIT License, which allows you to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject to the terms of the license.
+Cortex Code is licensed under the Apache License 2.0, which allows you to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject to the terms of the license.
 
 ### Restrictions
 

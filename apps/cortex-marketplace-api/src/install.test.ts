@@ -19,7 +19,7 @@ describe("install command utilities", () => {
 		publisher: { name: "Tester", verified: true },
 		repository: "https://example.com",
 		homepage: "https://example.com",
-		license: "MIT",
+                license: "Apache-2.0",
 		category: "development",
 		tags: ["test"],
 		transport: { streamableHttp: { url: "https://example.com", headers: {} } },

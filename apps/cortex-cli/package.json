@@ -5,6 +5,7 @@
   "type": "module",
   "deprecated": "This package has been archived. CLI functionality has been moved to cortex-code.",
   "description": "DEPRECATED: Use cortex-code instead. This CLI has been archived.",
+  "license": "Apache-2.0",
   "bin": {
     "cortex": "./dist/index.js"
   },

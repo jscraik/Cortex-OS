@@ -10,7 +10,7 @@ Cortex Code is a terminal-based user interface (TUI) for the Cortex-OS AI coding
 
 ### Is Cortex Code free to use?
 
-Yes, Cortex Code is open-source and free to use under the MIT license. While the core application is free, some AI providers may charge for their services (e.g., OpenAI, Anthropic). GitHub Models offers a free tier with rate limits.
+Yes, Cortex Code is open-source and free to use under the Apache 2.0 license. While the core application is free, some AI providers may charge for their services (e.g., OpenAI, Anthropic). GitHub Models offers a free tier with rate limits.
 
 ### What programming languages is Cortex Code written in?
 
@@ -278,11 +278,11 @@ We welcome contributions! You can:
 
 ### What license is Cortex Code released under?
 
-Cortex Code is released under the MIT License, a permissive open-source license.
+Cortex Code is released under the Apache License 2.0, a permissive open-source license.
 
 ### Can I use Cortex Code in commercial projects?
 
-Yes, the MIT License allows use in commercial projects. However, you are responsible for complying with the terms of service of any AI providers you use.
+Yes, the Apache License 2.0 allows use in commercial projects. However, you are responsible for complying with the terms of service of any AI providers you use.
 
 ## Related Documentation
 
