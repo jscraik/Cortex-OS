@@ -160,7 +160,11 @@ class MCPConnectionPool:
                 except asyncio.QueueEmpty:
                     break
             if drained:
-                tasks = [c.transport.disconnect() for c in drained if c.transport.is_connected]
+                tasks = [
+                    c.transport.disconnect()
+                    for c in drained
+                    if c.transport.is_connected
+                ]
                 if tasks:
                     await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -179,7 +183,7 @@ class MCPConnectionPool:
     async def _acquire_connection(self) -> PoolConnection:
         """Acquire a connection from the pool."""
         # Try to get available connection
-    try:
+        try:
             connection = await asyncio.wait_for(
                 self.available_connections.get(), timeout=self.connection_timeout
             )
@@ -189,11 +193,10 @@ class MCPConnectionPool:
                 connection.last_used = time.time()
                 self.current_active_connections += 1
                 return connection
-            else:
-                # Connection is unhealthy, create a new one
-                await self._remove_connection(connection)
 
-    except asyncio.TimeoutError:
+            # Connection is unhealthy, create a new one
+            await self._remove_connection(connection)
+        except asyncio.TimeoutError:
             # No available connections, try to create new one
             pass
 
@@ -206,7 +209,7 @@ class MCPConnectionPool:
                 return connection
 
         raise ConnectionPoolError(
-            "No available connections and pool is at maximum capacity"
+            "No available connections and pool is at maximum capacity",
         )
 
     async def _release_connection(self, connection: PoolConnection) -> None:
