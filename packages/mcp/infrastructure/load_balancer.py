@@ -180,10 +180,8 @@ class HealthChecker:
 
         if self._check_task:
             self._check_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._check_task
-            except asyncio.CancelledError:
-                pass
 
         if self.session:
             await self.session.close()
@@ -476,7 +474,7 @@ class AutoScaler:
     """Automatic scaling system for server pools."""
 
     def __init__(
-        self, load_balancer: LoadBalancer, scale_provider: Callable | None = None
+    self, load_balancer: LoadBalancer, scale_provider: Callable[..., Any] | None = None
     ):
         self.load_balancer = load_balancer
         self.scale_provider = scale_provider  # Function to create/destroy servers
@@ -503,10 +501,8 @@ class AutoScaler:
 
         if self._scale_task:
             self._scale_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._scale_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Auto-scaler stopped")
 
