@@ -5,6 +5,7 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash, randomBytes } from "crypto";
+import type { NextFunction, Request, Response } from "express";
 import {
 	AuthenticationError,
 	AuthorizationError,
@@ -13,12 +14,16 @@ import {
 import { getConfigPath, pathExists } from "../xdg/index.js";
 
 export interface TokenInfo {
-	id: string;
-	token: string;
-	scopes: string[];
-	expiresAt: string;
-	createdAt: string;
-	lastUsed?: string;
+        id: string;
+        tokenHash: string;
+        scopes: string[];
+        expiresAt: string;
+        createdAt: string;
+        lastUsed?: string;
+}
+
+export interface GeneratedToken extends TokenInfo {
+        token: string;
 }
 
 export interface TokensConfig {
@@ -29,10 +34,18 @@ export interface TokensConfig {
 /**
  * Authentication middleware for Express
  */
+export interface AuthenticatedRequest extends Request {
+        auth?: { tokenId: string; scopes: string[] };
+}
+
 export function createAuthMiddleware() {
-	return async (req: any, res: any, next: any) => {
+        return async (
+                req: AuthenticatedRequest,
+                res: Response,
+                next: NextFunction,
+        ) => {
 		// Only allow loopback connections
-		const clientIp = req.ip || req.socket?.remoteAddress;
+                const clientIp = req.ip || req.socket?.remoteAddress || "";
 		if (!isLoopbackAddress(clientIp)) {
 			res.status(403).json({ error: "Access denied: loopback only" });
 			return;
@@ -61,41 +74,42 @@ export function createAuthMiddleware() {
 
 			next();
 		} catch (error) {
-			if (
-				error instanceof AuthenticationError ||
-				error instanceof AuthorizationError
-			) {
-				res.status(error.statusCode).json({ error: error.message });
-			} else {
-				res.status(500).json({ error: "Authentication failed" });
-			}
-		}
-	};
+                        if (error instanceof AuthenticationError || error instanceof AuthorizationError) {
+                                res.status(error.statusCode).json({ error: error.message });
+                        } else {
+                                res.status(500).json({ error: "Authentication failed" });
+                        }
+                }
+        };
 }
 
 /**
  * Middleware to check if token has required scopes
  */
 export function requireScopes(...requiredScopes: string[]) {
-	return (req: any, res: any, next: any) => {
-		if (!req.auth) {
-			res.status(401).json({ error: "Authentication required" });
-			return;
-		}
+        return (
+                req: AuthenticatedRequest,
+                res: Response,
+                next: NextFunction,
+        ) => {
+                if (!req.auth) {
+                        res.status(401).json({ error: "Authentication required" });
+                        return;
+                }
 
-		const hasAllScopes = requiredScopes.every(
-			(scope) =>
-				req.auth.scopes.includes(scope) || req.auth.scopes.includes("*"),
-		);
+                const scopes = req.auth.scopes;
+                const hasAllScopes = requiredScopes.every(
+                        (scope) => scopes.includes(scope) || scopes.includes("*"),
+                );
 
-		if (!hasAllScopes) {
-			res.status(403).json({
-				error: "Insufficient privileges",
-				required: requiredScopes,
-				available: req.auth.scopes,
-			});
-			return;
-		}
+                if (!hasAllScopes) {
+                        res.status(403).json({
+                                error: "Insufficient privileges",
+                                required: requiredScopes,
+                                available: scopes,
+                        });
+                        return;
+                }
 
 		next();
 	};
@@ -127,40 +141,42 @@ export function isLoopbackAddress(ip: string): boolean {
  * Generate a new scoped token
  */
 export async function generateToken(
-	scopes: string[],
-	ttlHours: number = 24,
-): Promise<TokenInfo> {
-	const tokenBytes = randomBytes(32);
-	const token = tokenBytes.toString("base64url");
-	const id = createHash("sha256").update(token).digest("hex").substring(0, 16);
+        scopes: string[],
+        ttlHours: number = 24,
+): Promise<GeneratedToken> {
+        const tokenBytes = randomBytes(32);
+        const token = tokenBytes.toString("base64url");
+        const tokenHash = createHash("sha256").update(token).digest("hex");
+        const id = tokenHash.substring(0, 16);
 
-	const now = new Date();
-	const expiresAt = new Date(now.getTime() + ttlHours * 60 * 60 * 1000);
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + ttlHours * 60 * 60 * 1000);
 
-	const tokenInfo: TokenInfo = {
-		id,
-		token,
-		scopes: [...scopes], // Copy array to prevent mutations
-		expiresAt: expiresAt.toISOString(),
-		createdAt: now.toISOString(),
-	};
+        const tokenInfo: TokenInfo = {
+                id,
+                tokenHash,
+                scopes: [...scopes], // Copy array to prevent mutations
+                expiresAt: expiresAt.toISOString(),
+                createdAt: now.toISOString(),
+        };
 
-	await saveToken(tokenInfo);
-	return tokenInfo;
+        await saveToken(tokenInfo);
+        return { ...tokenInfo, token };
 }
 
 /**
  * Validate a token and return its info
  */
 export async function validateToken(token: string): Promise<TokenInfo> {
-	let tokens: TokenInfo[];
-	try {
-		tokens = await loadTokens();
-	} catch (error: unknown) {
-		const msg = error instanceof Error ? error.message : String(error);
-		throw new AuthenticationError(`Unable to load tokens: ${msg}`);
-	}
-	const tokenInfo = tokens.find((t) => t.token === token);
+        let tokens: TokenInfo[];
+        try {
+                tokens = await loadTokens();
+        } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : String(error);
+                throw new AuthenticationError(`Unable to load tokens: ${msg}`);
+        }
+        const tokenHash = createHash("sha256").update(token).digest("hex");
+        const tokenInfo = tokens.find((t) => t.tokenHash === tokenHash);
 
 	if (!tokenInfo) {
 		throw new AuthenticationError("Invalid token");
@@ -293,24 +309,23 @@ async function saveTokens(tokens: TokenInfo[]): Promise<void> {
 /**
  * Initialize authentication system with a default admin token
  */
-export async function initializeAuth(): Promise<TokenInfo> {
-	let tokens: TokenInfo[];
-	try {
-		tokens = await loadTokens();
-	} catch (error: unknown) {
-		const msg = error instanceof Error ? error.message : String(error);
-		throw new ValidationError(`Failed to initialize authentication: ${msg}`);
-	}
+export async function initializeAuth(): Promise<GeneratedToken> {
+        let tokens: TokenInfo[] = [];
+        try {
+                tokens = await loadTokens();
+        } catch (error: unknown) {
+                const msg = error instanceof Error ? error.message : String(error);
+                throw new ValidationError(`Failed to initialize authentication: ${msg}`);
+        }
 
-	// Check if we already have an admin token
-	const adminToken = tokens.find(
-		(t) => t.scopes.includes("*") && new Date(t.expiresAt) > new Date(),
-	);
+        // Remove existing admin tokens to prevent orphaned entries
+        const remainingTokens = tokens.filter(
+                (t) => !(t.scopes.includes("*") && new Date(t.expiresAt) > new Date()),
+        );
+        if (remainingTokens.length !== tokens.length) {
+                await saveTokens(remainingTokens);
+        }
 
-	if (adminToken) {
-		return adminToken;
-	}
-
-	// Generate new admin token with full privileges
-	return await generateToken(["*"], 24 * 30); // 30 days
+        // Generate new admin token with full privileges
+        return await generateToken(["*"], 24 * 30); // 30 days
 }
