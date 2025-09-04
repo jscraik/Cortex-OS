@@ -1,12 +1,12 @@
 """Main CLI entry point for MCP management."""
 
+from typing import Any, Dict
 import asyncio
 import logging
 import sys
 from pathlib import Path
 
 import click
-from typing import Any
 import uvicorn
 from rich.console import Console
 from rich.panel import Panel
@@ -30,7 +30,7 @@ console = Console()
 class CLIContext:
     """Shared CLI context for MCP operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config_dir = Path.home() / ".mcp"
         self.config_file = self.config_dir / "config.json"
         self.log_level = "INFO"
@@ -39,7 +39,7 @@ class CLIContext:
         # Ensure config directory exists
         self.config_dir.mkdir(exist_ok=True)
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Setup logging configuration."""
         logging.basicConfig(
             level=getattr(logging, self.log_level),
@@ -143,7 +143,7 @@ def serve(
 def status(_ctx: Any, output_format: str) -> None:
     """Show MCP system status and health information."""
 
-    async def get_status():
+    async def get_status() -> Dict[str, Any]:
         try:
             # Initialize core components
             server_config = {
@@ -277,7 +277,7 @@ def logs(lines: int, follow: bool, level: str) -> None:
 def shutdown() -> None:
     """Shutdown all MCP services gracefully."""
 
-    async def shutdown_services():
+    async def shutdown_services() -> None:
         try:
             # Initialize services that might be running
             server = MCPServer({"plugin_dir": "plugins", "config_dir": "config"})
