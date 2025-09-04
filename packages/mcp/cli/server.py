@@ -8,7 +8,11 @@ from typing import Any
 
 import click
 from rich.console import Console  # type: ignore[import-not-found]
-from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
+from rich.progress import (  # type: ignore[import-not-found]
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+)
 from rich.table import Table  # type: ignore[import-not-found]
 
 from ..core.server import MCPServer

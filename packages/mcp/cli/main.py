@@ -7,11 +7,15 @@ from pathlib import Path
 from typing import Any
 
 import click
+import uvicorn
 from rich.console import Console  # type: ignore[import-not-found]
 from rich.panel import Panel  # type: ignore[import-not-found]
-from rich.progress import Progress, SpinnerColumn, TextColumn  # type: ignore[import-not-found]
+from rich.progress import (  # type: ignore[import-not-found]
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+)
 from rich.table import Table  # type: ignore[import-not-found]
-import uvicorn
 
 from ..core.server import MCPServer
 from ..tasks.task_queue import TaskQueue

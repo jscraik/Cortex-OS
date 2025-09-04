@@ -55,7 +55,22 @@ members = [
 line-length = 88
 indent-width = 4
 target-version = "py311"
-src = ["services", "libs/python"]
+src = [
+  "services",
+  "libs/python",
+  "packages",
+  "apps/cortex-py",
+  "servers/src",
+]
+exclude = [
+  ".venv",
+  "venv",
+  "env",
+  "node_modules",
+  "**/__pycache__/**",
+  "llama.cpp/**",
+  "**/site-packages/**",
+]
 
 [tool.ruff.lint]
 select = ["E","F","I","N","W","B","SIM","S","UP","RUF"]
@@ -63,9 +78,11 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 # Test files can use assert statements
-"**/tests/**/*.py" = ["S101","SLF001"]
-"**/test_*.py" = ["S101","SLF001"]
-"tests/*" = ["S101","SLF001"]
+"**/tests/**/*.py" = ["S101","SLF001","S106"]
+"**/test/**/*.py" = ["S101","SLF001","S106"]
+"**/*_test.py" = ["S101","SLF001","S106"]
+"**/test_*.py" = ["S101","SLF001","S106"]
+"tests/*" = ["S101","SLF001","S106"]
 
 # Development and infrastructure files
 "docker/**/*.py" = ["S104", "S603", "S607", "S110"]  # Allow subprocess and binding in docker utilities
