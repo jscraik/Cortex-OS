@@ -617,7 +617,7 @@ class BackupManager:
         shutil.copy2(backup_file, decrypted_file)
         return decrypted_file
 
-    async def _restore_database(self, backup_dir: Path):
+    async def _restore_database(self, _backup_dir: Path):
         """Restore database from backup."""
         logger.warning(
             "Database restore is a critical operation - implement with caution"
@@ -653,9 +653,13 @@ class BackupManager:
             if age > timedelta(days=self.config.keep_daily_for_days):
                 if metadata.backup_type != BackupType.FULL:
                     should_delete = True
-                elif age > timedelta(days=self.config.keep_weekly_for_weeks * 7):
-                    if age > timedelta(days=self.config.keep_monthly_for_months * 30):
-                        should_delete = True
+                elif (
+                    age
+                    > timedelta(days=self.config.keep_weekly_for_weeks * 7)
+                    and age
+                    > timedelta(days=self.config.keep_monthly_for_months * 30)
+                ):
+                    should_delete = True
 
             # Always keep at least one backup
             if len(self.metadata_cache) <= 1:
