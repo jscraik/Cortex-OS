@@ -62,7 +62,7 @@ rules:
     message: User-influenced path used in file open
     severity: ERROR
     languages: [python]
-    metadata: { category: path-traversal, fix: "Resolve against root, deny '..', validate extension and base dir." }
+    metadata: { category: path-traversal, fix: "Resolve against root, deny \"..\", validate extension and base dir." }
     mode: taint
     pattern-sources:
       - pattern-either:
