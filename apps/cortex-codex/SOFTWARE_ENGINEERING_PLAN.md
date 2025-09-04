@@ -4,8 +4,9 @@
 [![Task 1.1](https://img.shields.io/badge/Task%201.1-Project%20Setup%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Task 1.3](https://img.shields.io/badge/Task%201.3-Error%20Handling%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 2.1](https://img.shields.io/badge/Task%202.1-Chat%20CLI%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Next](https://img.shields.io/badge/Next-Task%202.2%20Provider%20Abstraction-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![TDD](https://img.shields.io/badge/TDD-11%2F11%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io-badge/TDD-15%2F15%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 
 ## TDD-Driven Development Strategy
 
@@ -48,9 +49,9 @@
 #### Task 1.1: Project Setup & Build System
 
 - [x] **Test**: Create integration test that verifies project builds
-- [ ] **Implementation**: Fix Rust edition compatibility issues
-- [ ] **Verification**: Ensure all workspace members compile
-- [ ] **Rollback Point**: Git tag `v0.1.0-foundation`
+- [x] **Implementation**: Fix Rust edition compatibility issues
+- [x] **Verification**: Ensure all workspace members compile
+- [x] **Rollback Point**: Git tag `v0.1.0-foundation`
 
 **Files Modified**: `Cargo.toml`, `rust-toolchain.toml`, individual package `Cargo.toml`
 
@@ -95,12 +96,12 @@ fn test_config_override_parsing() {
 
 #### Task 1.3: Error Handling & Logging (TDD)
 
-- [ ] **Test**: Write tests for error propagation and formatting
-- [ ] **Test**: Write tests for structured logging output
-- [ ] **Implementation**: Implement comprehensive error types
-- [ ] **Implementation**: Add structured logging with tracing
-- [ ] **Verification**: Error handling and logging tests pass
-- [ ] **Rollback Point**: Git tag `v0.1.2-errors`
+- [x] **Test**: Write tests for error propagation and formatting
+- [x] **Test**: Write tests for structured logging output
+- [x] **Implementation**: Implement comprehensive error types
+- [x] **Implementation**: Add structured logging with tracing
+- [x] **Verification**: Error handling and logging tests pass
+- [x] **Rollback Point**: Git tag `v0.1.2-errors`
 
 **Files Created/Modified**:
 
