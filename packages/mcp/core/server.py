@@ -60,9 +60,13 @@ class MCPServer:
 
     async def handle_message(self, message: MCPMessage) -> MCPMessage:
         """Handle an incoming MCP message."""
-        return await self.protocol_handler.handle_message(message)
+        response = await self.protocol_handler.handle_message(message)
+        if response is None:
+            # Normalize notifications into an empty response for callers expecting a message
+            return MCPMessage(type=MessageType.RESPONSE, id=message.id, result={})
+        return response
 
-    async def _handle_tools_list(self, _params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_tools_list(self, _params: dict[str, Any] | None) -> dict[str, Any]:
         """Handle tools/list request."""
         tools = []
 
@@ -91,8 +95,9 @@ class MCPServer:
 
         return {"tools": tools}
 
-    async def _handle_tools_call(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_tools_call(self, params: dict[str, Any] | None) -> dict[str, Any]:
         """Handle tools/call request."""
+        params = params or {}
         tool_name = params.get("name")
         arguments = params.get("parameters", {})
 
