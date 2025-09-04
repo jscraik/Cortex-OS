@@ -1,5 +1,5 @@
-use crate::{GitHubClient, types::*, GitHubResult};
 use crate::a2a_integration::GitHubEventPublisher; // bring trait into scope for publish_* methods
+use crate::{types::*, GitHubClient, GitHubResult};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use std::collections::HashMap;
@@ -36,7 +36,10 @@ impl RepositoryAPI {
     }
 
     /// List user's repositories
-    pub async fn list_repositories(&self, options: Option<ListOptions>) -> GitHubResult<Vec<Repository>> {
+    pub async fn list_repositories(
+        &self,
+        options: Option<ListOptions>,
+    ) -> GitHubResult<Vec<Repository>> {
         let mut endpoint = "/user/repos".to_string();
 
         if let Some(opts) = options {
@@ -44,8 +47,14 @@ impl RepositoryAPI {
                 format!("page={}", opts.page),
                 format!("per_page={}", opts.per_page),
                 opts.sort.map(|s| format!("sort={}", s)).unwrap_or_default(),
-                opts.direction.map(|d| format!("direction={}", d)).unwrap_or_default(),
-            ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("&");
+                opts.direction
+                    .map(|d| format!("direction={}", d))
+                    .unwrap_or_default(),
+            ]
+            .into_iter()
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join("&");
 
             if !query_params.is_empty() {
                 endpoint = format!("{}?{}", endpoint, query_params);
@@ -56,7 +65,11 @@ impl RepositoryAPI {
     }
 
     /// List organization repositories
-    pub async fn list_org_repositories(&self, org: &str, options: Option<ListOptions>) -> GitHubResult<Vec<Repository>> {
+    pub async fn list_org_repositories(
+        &self,
+        org: &str,
+        options: Option<ListOptions>,
+    ) -> GitHubResult<Vec<Repository>> {
         let mut endpoint = format!("/orgs/{}/repos", org);
 
         if let Some(opts) = options {
@@ -64,8 +77,14 @@ impl RepositoryAPI {
                 format!("page={}", opts.page),
                 format!("per_page={}", opts.per_page),
                 opts.sort.map(|s| format!("sort={}", s)).unwrap_or_default(),
-                opts.direction.map(|d| format!("direction={}", d)).unwrap_or_default(),
-            ].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("&");
+                opts.direction
+                    .map(|d| format!("direction={}", d))
+                    .unwrap_or_default(),
+            ]
+            .into_iter()
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join("&");
 
             if !query_params.is_empty() {
                 endpoint = format!("{}?{}", endpoint, query_params);
@@ -87,13 +106,19 @@ impl RepositoryAPI {
 
         // Publish repository created event
         if let Some(publisher) = &self.event_publisher {
+            let actor = match self.client.get::<crate::types::User>("/user").await {
+                Ok(user) => user,
+                Err(e) => {
+                    warn!("Failed to fetch authenticated user: {:?}", e);
+                    crate::types::User::default()
+                }
+            };
             let event = crate::a2a_integration::RepositoryEvent {
                 action: crate::a2a_integration::RepositoryAction::Created,
                 repository: repo.clone(),
-                actor: crate::types::User::default(), // Would need to get current user
+                actor,
                 changes: None,
             };
-
             if let Err(e) = publisher.publish_repository_event(event).await {
                 warn!("Failed to publish repository created event: {:?}", e);
             }
@@ -105,7 +130,13 @@ impl RepositoryAPI {
     // File operations
 
     /// Get file contents
-    pub async fn get_contents(&self, owner: &str, repo: &str, path: &str, ref_name: Option<&str>) -> GitHubResult<Content> {
+    pub async fn get_contents(
+        &self,
+        owner: &str,
+        repo: &str,
+        path: &str,
+        ref_name: Option<&str>,
+    ) -> GitHubResult<Content> {
         let mut endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
 
         if let Some(ref_val) = ref_name {
@@ -118,7 +149,13 @@ impl RepositoryAPI {
     }
 
     /// Get directory contents
-    pub async fn get_directory_contents(&self, owner: &str, repo: &str, path: &str, ref_name: Option<&str>) -> GitHubResult<Vec<Content>> {
+    pub async fn get_directory_contents(
+        &self,
+        owner: &str,
+        repo: &str,
+        path: &str,
+        ref_name: Option<&str>,
+    ) -> GitHubResult<Vec<Content>> {
         let mut endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
 
         if let Some(ref_val) = ref_name {
@@ -126,7 +163,13 @@ impl RepositoryAPI {
         }
 
         let contents: Vec<Content> = self.client.get(&endpoint).await?;
-        debug!("Retrieved {} items from directory {} in {}/{}", contents.len(), path, owner, repo);
+        debug!(
+            "Retrieved {} items from directory {} in {}/{}",
+            contents.len(),
+            path,
+            owner,
+            repo
+        );
         Ok(contents)
     }
 
@@ -146,9 +189,18 @@ impl RepositoryAPI {
     }
 
     /// Delete a file
-    pub async fn delete_file(&self, owner: &str, repo: &str, path: &str, data: FileDeleteData) -> GitHubResult<Commit> {
+    pub async fn delete_file(
+        &self,
+        owner: &str,
+        repo: &str,
+        path: &str,
+        data: FileDeleteData,
+    ) -> GitHubResult<Commit> {
         let endpoint = format!("/repos/{}/{}/contents/{}", owner, repo, path);
-        let response = self.client.request_raw(reqwest::Method::DELETE, &endpoint, Some(data)).await?;
+        let response = self
+            .client
+            .request_raw(reqwest::Method::DELETE, &endpoint, Some(data))
+            .await?;
         // Parse response
         let parsed: DeleteFileResponse = serde_json::from_slice(&response.bytes().await?)?;
         info!("File {} deleted from {}/{}", path, owner, repo);
@@ -156,11 +208,22 @@ impl RepositoryAPI {
     }
 
     /// Get file content as string (decodes base64)
-    pub async fn get_file_content_string(&self, owner: &str, repo: &str, path: &str, ref_name: Option<&str>) -> GitHubResult<String> {
+    pub async fn get_file_content_string(
+        &self,
+        owner: &str,
+        repo: &str,
+        path: &str,
+        ref_name: Option<&str>,
+    ) -> GitHubResult<String> {
         let content = self.get_contents(owner, repo, path, ref_name).await?;
 
         if let Some(encoded_content) = content.content {
-            if content.encoding.as_ref().map(|e| e == "base64").unwrap_or(false) {
+            if content
+                .encoding
+                .as_ref()
+                .map(|e| e == "base64")
+                .unwrap_or(false)
+            {
                 // Decode base64 content
                 let decoded_bytes = BASE64.decode(&encoded_content.replace('\n', ""))?;
                 let content_str = String::from_utf8(decoded_bytes)?;
@@ -169,7 +232,9 @@ impl RepositoryAPI {
                 Ok(encoded_content)
             }
         } else {
-            Err(crate::error::GitHubError::Api("Content not available".to_string()))
+            Err(crate::error::GitHubError::Api(
+                "Content not available".to_string(),
+            ))
         }
     }
 
@@ -184,7 +249,7 @@ impl RepositoryAPI {
         sha: Option<&str>,
         branch: Option<&str>,
     ) -> GitHubResult<FileResponse> {
-    let encoded_content = BASE64.encode(content.as_bytes());
+        let encoded_content = BASE64.encode(content.as_bytes());
 
         let data = FileUpdateData {
             message: message.to_string(),
@@ -213,7 +278,12 @@ impl RepositoryAPI {
     }
 
     /// Create a new branch
-    pub async fn create_branch(&self, owner: &str, repo: &str, data: CreateBranchData) -> GitHubResult<GitReference> {
+    pub async fn create_branch(
+        &self,
+        owner: &str,
+        repo: &str,
+        data: CreateBranchData,
+    ) -> GitHubResult<GitReference> {
         let endpoint = format!("/repos/{}/{}/git/refs", owner, repo);
         let data_for_log = data.clone();
         let response: GitReference = self.client.post(&endpoint, Some(data)).await?;
@@ -238,7 +308,12 @@ impl RepositoryAPI {
     }
 
     /// List commits
-    pub async fn list_commits(&self, owner: &str, repo: &str, options: Option<CommitListOptions>) -> GitHubResult<Vec<Commit>> {
+    pub async fn list_commits(
+        &self,
+        owner: &str,
+        repo: &str,
+        options: Option<CommitListOptions>,
+    ) -> GitHubResult<Vec<Commit>> {
         let mut endpoint = format!("/repos/{}/{}/commits", owner, repo);
 
         if let Some(opts) = options {
@@ -271,7 +346,13 @@ impl RepositoryAPI {
     }
 
     /// Compare two commits
-    pub async fn compare_commits(&self, owner: &str, repo: &str, base: &str, head: &str) -> GitHubResult<Comparison> {
+    pub async fn compare_commits(
+        &self,
+        owner: &str,
+        repo: &str,
+        base: &str,
+        head: &str,
+    ) -> GitHubResult<Comparison> {
         let endpoint = format!("/repos/{}/{}/compare/{}...{}", owner, repo, base, head);
         self.client.get(&endpoint).await
     }
@@ -286,7 +367,12 @@ impl RepositoryAPI {
     }
 
     /// Update repository topics/tags
-    pub async fn update_topics(&self, owner: &str, repo: &str, topics: Vec<String>) -> GitHubResult<Vec<String>> {
+    pub async fn update_topics(
+        &self,
+        owner: &str,
+        repo: &str,
+        topics: Vec<String>,
+    ) -> GitHubResult<Vec<String>> {
         let endpoint = format!("/repos/{}/{}/topics", owner, repo);
         let data = UpdateTopicsData { names: topics };
         let response: TopicsResponse = self.client.put(&endpoint, Some(data)).await?;
@@ -294,7 +380,11 @@ impl RepositoryAPI {
     }
 
     /// Get repository languages
-    pub async fn get_languages(&self, owner: &str, repo: &str) -> GitHubResult<HashMap<String, u64>> {
+    pub async fn get_languages(
+        &self,
+        owner: &str,
+        repo: &str,
+    ) -> GitHubResult<HashMap<String, u64>> {
         let endpoint = format!("/repos/{}/{}/languages", owner, repo);
         self.client.get(&endpoint).await
     }
@@ -309,7 +399,7 @@ impl RepositoryAPI {
             size: repo_info.size,
             stargazers_count: repo_info.stargazers_count,
             watchers_count: repo_info.watchers_count,
-            forks_count: 0, // Would need to be added to Repository struct
+            forks_count: 0,       // Would need to be added to Repository struct
             open_issues_count: 0, // Would need to be added to Repository struct
             languages,
             default_branch: repo_info.default_branch,
@@ -493,7 +583,10 @@ mod tests {
         repo.clone_url = "https://github.com/user/repo.git".to_string();
         repo.ssh_url = "git@github.com:user/repo.git".to_string();
 
-        assert_eq!(repo.get_clone_url(false), "https://github.com/user/repo.git");
+        assert_eq!(
+            repo.get_clone_url(false),
+            "https://github.com/user/repo.git"
+        );
         assert_eq!(repo.get_clone_url(true), "git@github.com:user/repo.git");
     }
 }
