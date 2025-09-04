@@ -3,7 +3,7 @@
 import asyncio
 import hashlib
 import time
-from collections.abc import Callable
+from collections.abc import Callable, AsyncIterator
 from contextlib import asynccontextmanager, suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
