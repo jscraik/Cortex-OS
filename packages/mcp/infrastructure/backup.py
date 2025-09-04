@@ -653,11 +653,8 @@ class BackupManager:
             if age > timedelta(days=self.config.keep_daily_for_days):
                 if metadata.backup_type != BackupType.FULL:
                     should_delete = True
-                elif (
-                    age
-                    > timedelta(days=self.config.keep_weekly_for_weeks * 7)
-                    and age
-                    > timedelta(days=self.config.keep_monthly_for_months * 30)
+                elif age > timedelta(
+                    days=self.config.keep_monthly_for_months * 30
                 ):
                     should_delete = True
 
