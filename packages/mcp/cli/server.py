@@ -18,7 +18,7 @@ console = Console()
 
 
 @click.group()
-def server_commands():
+def server_commands() -> None:
     """Server management commands."""
     pass
 
@@ -27,7 +27,7 @@ def server_commands():
 @click.option("--config-dir", default="config", help="Configuration directory")
 @click.option("--plugin-dir", default="plugins", help="Plugin directory")
 @click.option("--force", is_flag=True, help="Overwrite existing configuration")
-def init_server(config_dir: str, plugin_dir: str, force: bool):
+def init_server(config_dir: str, plugin_dir: str, force: bool) -> None:
     """Initialize MCP server configuration."""
     config_path = Path(config_dir)
     plugin_path = Path(plugin_dir)
@@ -155,11 +155,11 @@ def create_plugin():
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def health_check(config_file: str):
+def health_check(config_file: str) -> None:
     """Perform comprehensive health check of MCP components."""
 
-    async def check_health():
-        health_results = {}
+    async def check_health() -> dict[str, object]:
+        health_results: dict[str, object] = {}
 
         try:
             # Load configuration
@@ -252,7 +252,7 @@ def health_check(config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Performing health check...", total=None)
+    _task = progress.add_task("Performing health check...", total=None)
 
         try:
             results = asyncio.run(check_health())
@@ -325,7 +325,7 @@ def health_check(config_file: str):
 @click.option(
     "--validate", is_flag=True, help="Validate configuration without starting server"
 )
-def config_info(config_file: str, validate: bool):
+def config_info(config_file: str, validate: bool) -> None:
     """Show or validate server configuration."""
     config_path = Path(config_file)
 
@@ -402,16 +402,16 @@ def config_info(config_file: str, validate: bool):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def reset_server(config_file: str):
+def reset_server(config_file: str) -> None:
     """Reset server state and clear all data."""
 
-    async def perform_reset():
+    async def perform_reset() -> None:
         try:
             # Load configuration
             config_path = Path(config_file)
             if config_path.exists():
                 with open(config_path) as f:
-                    config = json.load(f)
+                    _config_data = json.load(f)
             else:
                 console.print("[yellow]No configuration found, using defaults[/yellow]")
                 _config: dict = {}
@@ -439,7 +439,7 @@ def reset_server(config_file: str):
 
             # Reset memory systems
             try:
-                memory_bridge = MemoryBridge()
+                _memory_bridge = MemoryBridge()
                 # Note: In production, you'd want more controlled cleanup
                 console.print("[green]✅ Memory systems reset[/green]")
             except Exception as e:
@@ -458,7 +458,7 @@ def reset_server(config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Resetting server...", total=None)
+    _task = progress.add_task("Resetting server...", total=None)
 
         try:
             asyncio.run(perform_reset())
