@@ -1,6 +1,6 @@
 """Main CLI entry point for MCP management."""
 
-from typing import Any, Dict
+from typing import Any
 import asyncio
 import logging
 import sys
@@ -143,7 +143,7 @@ def serve(
 def status(_ctx: Any, output_format: str) -> None:
     """Show MCP system status and health information."""
 
-    async def get_status() -> Dict[str, Any]:
+    async def get_status() -> dict[str, Any]:
         try:
             # Initialize core components
             server_config = {
