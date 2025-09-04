@@ -679,10 +679,9 @@ class AdvancedMonitoringSystem:
         for task in tasks:
             if task and not task.done():
                 task.cancel()
-                try:
+                from contextlib import suppress
+                with suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
 
         logger.info("Monitoring system stopped")
 
