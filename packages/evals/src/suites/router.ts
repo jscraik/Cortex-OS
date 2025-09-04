@@ -31,9 +31,9 @@ export async function runRouterSuite(
         router?: Router,
 ): Promise<SuiteOutcome> {
         const thresholds = {
-                embedLatencyMs: opts.thresholds.embedLatencyMs ?? 2000,
-                chatLatencyMs: opts.thresholds.chatLatencyMs ?? 2000,
-                rerankLatencyMs: opts.thresholds.rerankLatencyMs ?? 2000,
+                embedLatencyMs: opts.thresholds.embedLatencyMs,
+                chatLatencyMs: opts.thresholds.chatLatencyMs,
+                rerankLatencyMs: opts.thresholds.rerankLatencyMs,
         };
 
         const r = router ?? createModelRouter();
