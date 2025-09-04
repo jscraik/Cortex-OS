@@ -3,13 +3,14 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -308,22 +309,25 @@ else:
         """Get current migration status."""
         try:
             # Get database manager
-            # Ensure database connectivity (manager obtained if needed)
-            await get_database_manager()
+            db_manager = await get_database_manager()
 
             # Get current revision from database
             async with db_manager.get_session() as session:
-                result = await session.execute(
+                # Cast to AsyncSession for type-checkers
+                _session = cast(AsyncSession, session)
+                result = await _session.execute(
                     text("SELECT version_num FROM alembic_version LIMIT 1")
                 )
-                current_revision = result.scalar()
+                current_revision: str | None = result.scalar()
 
             # Get script directory
-            script_dir = ScriptDirectory.from_config(self.alembic_cfg)
+            assert self.alembic_cfg is not None
+            cfg = self.alembic_cfg
+            script_dir = ScriptDirectory.from_config(cfg)
             head_revision = script_dir.get_current_head()
 
             # Get pending migrations
-            pending_migrations = []
+            pending_migrations: list[str] = []
             if current_revision != head_revision:
                 # This is simplified - in a real implementation you'd get all pending revisions
                 pending_migrations = [head_revision]
@@ -343,7 +347,9 @@ else:
     async def list_migrations(self) -> list[dict[str, Any]]:
         """List all migrations."""
         try:
-            script_dir = ScriptDirectory.from_config(self.alembic_cfg)
+            assert self.alembic_cfg is not None
+            cfg = self.alembic_cfg
+            script_dir = ScriptDirectory.from_config(cfg)
             migrations = []
 
             for revision in script_dir.walk_revisions():
@@ -414,7 +420,8 @@ else:
                 backup_path = f"/tmp/mcp_backup_{int(timestamp)}.sql"
 
             # This is a simplified backup - real implementation would use database-specific tools
-            db_manager = await get_database_manager()
+            # Ensure database connectivity (manager obtained if needed)
+            await get_database_manager()
 
             backup_info = {
                 "backup_path": backup_path,
