@@ -24,8 +24,8 @@ export const DEFAULT_CONFIG: Config = {
                 transport: "socket",
                 heartbeat_ms: 10000,
                 idle_timeout_ms: 60000,
-                max_task_events: 100,
-                max_global_events: 1000,
+                max_task_events: 1000,
+                max_global_events: 10000,
         },
         determinism: {
                 max_normalize_bytes: 5_000_000,
