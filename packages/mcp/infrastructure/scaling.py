@@ -662,21 +662,21 @@ class DynamicScalingManager:
                 available_servers, key=lambda s: s.current_connections
             )
 
-                for metric_name, value in metric_values.items():
-                    metric_id = f"resource_{metric_name}"
-                    gauge = metrics.get_custom_metric(metric_id)
-                    if gauge is None:
-                        metrics.add_custom_metric(
-                            metric_id,
-                            "gauge",
-                            f"Resource metric {metric_name}",
-                        )
-                        gauge = metrics.get_custom_metric(metric_id)
-                    try:
-                        if gauge is not None and hasattr(gauge, "set"):
-                            cast(Any, gauge).set(value)
-                    except Exception as e:  # Defensive: do not break monitor on metrics errors
-                        logger.debug(f"Metric update failed for {metric_id}: {e}")
+            # Remove from load balancer first
+            self.load_balancer.remove_server(server_to_remove.id)
+
+            # Destroy container
+            await self.container_scaler.destroy_container(server_to_remove)
+
+            self.last_scaling_action = datetime.now()
+
+            # Record scaling event
+            self._record_scaling_event(
+                "scale_down", policy.name, utilization, len(available_servers) - 1
+            )
+
+            logger.info(
+                f"Scaled down: removed server {server_to_remove.id} (utilization: {utilization:.1%})"
             )
 
         except Exception as e:
