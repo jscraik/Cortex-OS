@@ -32,7 +32,7 @@ This audit reviews workspace hoisting, build pipelines, scripts, TypeScript sett
 
 ### Python Packaging
 
-`pyproject.toml` requires Python `>=3.11` but does not pin the exact patch release. `uv.toml` merely sets `workspace = true` without a specified toolchain version, leaving reproductions fragile.
+`pyproject.toml` requires Python `>=3.13` but does not pin the exact patch release. `uv.toml` merely sets `workspace = true` without a specified toolchain version, leaving reproductions fragile.
 
 ## Fix Plan
 
@@ -40,7 +40,7 @@ This audit reviews workspace hoisting, build pipelines, scripts, TypeScript sett
 2. Define a workspace hoist pattern (e.g., `public-hoist-pattern=['@cortex-os/*']`) to ensure consistent dependency resolution.
 3. Consolidate the `format` task in `turbo.json` into a single definition.
 4. Standardize script naming (`test:*`, `build`, etc.) and enforce via `lint-staged` and `husky` hooks.
-5. Pin exact Python versions in `pyproject.toml` and `uv.toml` (e.g., `python = '3.11.6'`).
+5. Pin exact Python versions in `pyproject.toml` and `uv.toml` (e.g., `python = '3.13.5'`).
 
 ## Score
 
