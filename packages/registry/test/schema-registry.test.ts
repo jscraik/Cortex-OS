@@ -145,9 +145,11 @@ describe("Schema Registry", () => {
                 );
 
                 afterAll(async () => {
-                        try {
-                                await fs.unlink(schemaPath);
-                        } catch {}
+                        } catch (err: any) {
+                                if (err?.code !== "ENOENT") {
+                                        console.error("Error cleaning up runtime schema file:", err);
+                                }
+                        }
                 });
 
                 it("should register and retrieve a new schema", async () => {
