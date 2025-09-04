@@ -92,7 +92,7 @@ export function createServer(router?: IModelRouter): FastifyInstance {
 		const body = validation.data;
 		req.log.debug({ body }, "Received embeddings request");
 		const grant = await loadGrant("model-gateway");
-		enforce(grant, "embeddings", body as any);
+                enforce(grant, "embeddings", body);
 		await record(
 			auditEvent(
 				"model-gateway",
@@ -164,7 +164,7 @@ export function createServer(router?: IModelRouter): FastifyInstance {
 		const body = validation.data;
 		req.log.debug({ body }, "Received rerank request");
 		const grant = await loadGrant("model-gateway");
-		enforce(grant, "rerank", body as any);
+                enforce(grant, "rerank", body);
 		await record(
 			auditEvent(
 				"model-gateway",
@@ -230,7 +230,7 @@ export function createServer(router?: IModelRouter): FastifyInstance {
 		const body = validation.data;
 		req.log.debug({ body }, "Received chat request");
 		const grant = await loadGrant("model-gateway");
-		enforce(grant, "chat", body as any);
+                enforce(grant, "chat", body);
 		await record(
 			auditEvent(
 				"model-gateway",

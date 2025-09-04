@@ -4,6 +4,7 @@
  */
 
 import path from "node:path";
+import os from "node:os";
 import { z } from "zod";
 import { runPython } from "../../../../libs/python/exec.js";
 import { estimateTokenCount } from "../lib/estimate-token-count.js";
@@ -40,11 +41,11 @@ type ChatMessage = { role: ChatRole; content: string };
 
 // Configuration paths - can be overridden via environment
 const HUGGINGFACE_CACHE =
-	process.env.HF_HOME ||
-	process.env.TRANSFORMERS_CACHE ||
-	"/Volumes/ExternalSSD/huggingface_cache";
+        process.env.HF_HOME ||
+        process.env.TRANSFORMERS_CACHE ||
+        path.join(os.homedir(), ".cache", "huggingface");
 const MLX_CACHE_DIR =
-	process.env.MLX_CACHE_DIR || "/Volumes/ExternalSSD/ai-cache";
+        process.env.MLX_CACHE_DIR || path.join(os.homedir(), ".cache", "mlx");
 const MODEL_BASE_PATH = process.env.MLX_MODEL_BASE_PATH || HUGGINGFACE_CACHE;
 
 // MLX model configurations with configurable paths
