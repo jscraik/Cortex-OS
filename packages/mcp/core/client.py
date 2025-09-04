@@ -1,6 +1,7 @@
 """MCP client core implementation."""
 
 import asyncio
+import contextlib
 import json
 from typing import Any
 
