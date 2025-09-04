@@ -240,13 +240,13 @@ class TestTaskQueue:
     async def test_task_priority_handling(self, task_queue, mock_redis):
         """Test priority-based task handling."""
         # Submit tasks with different priorities
-        low_task = await task_queue.submit_task(
+        await task_queue.submit_task(
             "echo", "low", priority=TaskPriority.LOW
         )
-        high_task = await task_queue.submit_task(
+        await task_queue.submit_task(
             "echo", "high", priority=TaskPriority.HIGH
         )
-        normal_task = await task_queue.submit_task(
+        await task_queue.submit_task(
             "echo", "normal", priority=TaskPriority.NORMAL
         )
 
