@@ -2,15 +2,15 @@
 
 import asyncio
 import os
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Optional, cast
-from contextlib import suppress
+from typing import Any, cast
 
-import docker  # type: ignore[reportMissingTypeStubs]
-import psutil  # type: ignore[reportMissingTypeStubs]
-from kubernetes import client, config  # type: ignore[reportMissingTypeStubs]
+import docker  # type: ignore
+import psutil  # type: ignore
+from kubernetes import client, config  # type: ignore
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -326,13 +326,13 @@ class ContainerScaler:
     """Docker container scaling implementation."""
 
     def __init__(self) -> None:
-        self.docker_client: Optional[Any] = None
+        self.docker_client: Any | None = None
         self._initialize_docker()
 
     def _initialize_docker(self) -> None:
         """Initialize Docker client."""
         try:
-            self.docker_client = cast(Any, docker).from_env()  # type: ignore[attr-defined]
+            self.docker_client = cast(Any, docker).from_env()  # type: ignore
             logger.info("Docker client initialized")
         except Exception as e:
             logger.warning(f"Docker not available: {e}")
@@ -392,7 +392,7 @@ class KubernetesScaler:
 
     def __init__(self, namespace: str = "default") -> None:
         self.namespace = namespace
-        self.k8s_client: Optional[Any] = None
+        self.k8s_client: Any | None = None
         self._initialize_k8s()
 
     def _initialize_k8s(self) -> None:
