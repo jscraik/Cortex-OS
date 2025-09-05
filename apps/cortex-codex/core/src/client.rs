@@ -21,14 +21,14 @@ use tracing::trace;
 use tracing::warn;
 use uuid::Uuid;
 
-use crate::chat_completions::stream_chat_completions;
 use crate::chat_completions::AggregateStreamExt;
-use crate::client_common::create_reasoning_param_for_request;
-use crate::client_common::create_text_param_for_request;
+use crate::chat_completions::stream_chat_completions;
 use crate::client_common::Prompt;
 use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::client_common::ResponsesApiRequest;
+use crate::client_common::create_reasoning_param_for_request;
+use crate::client_common::create_text_param_for_request;
 use crate::config::Config;
 use crate::error::CodexErr;
 use crate::error::Result;
@@ -161,12 +161,15 @@ impl ModelClient {
                 .await?;
 
                 // Force streaming mode (deltas forwarded immediately).
-                let mut streaming = crate::chat_completions::AggregatedChatStream::streaming_mode(response_stream);
+                let mut streaming =
+                    crate::chat_completions::AggregatedChatStream::streaming_mode(response_stream);
                 let (tx, rx) = mpsc::channel::<Result<ResponseEvent>>(16);
                 tokio::spawn(async move {
                     use futures::StreamExt;
                     while let Some(ev) = streaming.next().await {
-                        if tx.send(ev).await.is_err() { break; }
+                        if tx.send(ev).await.is_err() {
+                            break;
+                        }
                     }
                 });
                 Ok(ResponseStream { rx_event: rx })

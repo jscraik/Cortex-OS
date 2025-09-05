@@ -1,17 +1,17 @@
 use clap::CommandFactory;
 use clap::Parser;
-use clap_complete::generate;
 use clap_complete::Shell;
+use clap_complete::generate;
 use codex_arg0::arg0_dispatch_or_else;
-use codex_chatgpt::apply_command::run_apply_command;
 use codex_chatgpt::apply_command::ApplyCommand;
+use codex_chatgpt::apply_command::run_apply_command;
+use codex_cli::LandlockCommand;
+use codex_cli::SeatbeltCommand;
 use codex_cli::login::run_login_status;
 use codex_cli::login::run_login_with_api_key;
 use codex_cli::login::run_login_with_chatgpt;
 use codex_cli::login::run_logout;
 use codex_cli::proto;
-use codex_cli::LandlockCommand;
-use codex_cli::SeatbeltCommand;
 use codex_common::CliConfigOverrides;
 use codex_exec::Cli as ExecCli;
 use codex_tui::Cli as TuiCli;
@@ -368,10 +368,14 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                         }
                         codex_core::ResponseEvent::OutputItemDone(item) => {
                             if !*printed_any_delta {
-                                if let codex_core::ResponseItem::Message { role, content, .. } = &item {
+                                if let codex_core::ResponseItem::Message { role, content, .. } =
+                                    &item
+                                {
                                     if role == "assistant" {
                                         if let Some(text) = content.iter().find_map(|c| match c {
-                                            codex_core::ContentItem::OutputText { text } => Some(text),
+                                            codex_core::ContentItem::OutputText { text } => {
+                                                Some(text)
+                                            }
                                             _ => None,
                                         }) {
                                             print!("{text}");
@@ -402,7 +406,8 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 if let Some(p) = chat_cli.prompt.clone() {
                     let first_text = if p == "-" { read_stdin_all()? } else { p };
                     let (user_item, prompt_input) = run_turn(first_text, &session_history)?;
-                    let assistant_items = stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
+                    let assistant_items =
+                        stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
                     // Persist and update in-memory history
                     if let Some(path) = session_path.as_deref() {
                         ensure_parent_dir(path)?;
@@ -431,7 +436,8 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                         break;
                     }
                     let (user_item, prompt_input) = run_turn(line, &session_history)?;
-                    let assistant_items = stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
+                    let assistant_items =
+                        stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
                     if let Some(path) = session_path.as_deref() {
                         ensure_parent_dir(path)?;
                         append_history_jsonl(path, &user_item)?;
@@ -450,7 +456,8 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                     .ok_or_else(|| anyhow::anyhow!("PROMPT is required unless --repl is used"))?;
                 let text = if p == "-" { read_stdin_all()? } else { p };
                 let (user_item, prompt_input) = run_turn(text, &session_history)?;
-                let assistant_items = stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
+                let assistant_items =
+                    stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
                 if let Some(path) = session_path.as_deref() {
                     ensure_parent_dir(path)?;
                     append_history_jsonl(path, &user_item)?;
