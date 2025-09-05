@@ -166,7 +166,14 @@ class KVCacheManager:
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def _compress_kv_states(self, kv_states: np.ndarray) -> bytes:
-        """Compress KV states using LZ4"""
+        """Compress KV states using LZ4
+
+        WARNING: Uses pickle for numpy array serialization - only use with trusted data.
+        This is safe for internal KV cache states as they don't come from user input.
+        """
+        if not isinstance(kv_states, np.ndarray):
+            raise TypeError("KV states must be numpy arrays for security")
+
         if not self.compression_enabled:
             return pickle.dumps(kv_states)
 
@@ -178,13 +185,26 @@ class KVCacheManager:
     def _decompress_kv_states(
         self, compressed_data: bytes, is_compressed: bool = True
     ) -> np.ndarray:
-        """Decompress KV states"""
+        """Decompress KV states
+
+        WARNING: Uses pickle for numpy array deserialization - only use with trusted data.
+        This is safe for internal KV cache states as they don't come from user input.
+        """
+        if not isinstance(compressed_data, bytes):
+            raise TypeError("Compressed data must be bytes for security")
+
         if not is_compressed or not self.compression_enabled:
-            return pickle.loads(compressed_data)
+            result = pickle.loads(compressed_data)
+            if not isinstance(result, np.ndarray):
+                raise TypeError("Deserialized KV states must be numpy arrays")
+            return result
 
         # Decompress and deserialize
         decompressed = lz4.frame.decompress(compressed_data)
-        return pickle.loads(decompressed)
+        result = pickle.loads(decompressed)
+        if not isinstance(result, np.ndarray):
+            raise TypeError("Deserialized KV states must be numpy arrays")
+        return result
 
     def put(
         self,

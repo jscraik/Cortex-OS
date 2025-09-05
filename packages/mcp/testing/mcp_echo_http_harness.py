@@ -56,7 +56,9 @@ async def main() -> int:
         async with httpx.AsyncClient() as probe:
             for _ in range(50):
                 try:
-                    r = await probe.get(f"http://127.0.0.1:{port}/mcp/health", timeout=1.0)
+                    r = await probe.get(
+                        f"http://127.0.0.1:{port}/mcp/health", timeout=1.0
+                    )
                     if r.status_code == 200:
                         break
                 except Exception:

@@ -6,8 +6,8 @@ import statistics
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from email.mime.multipart import MimeMultipart
-from email.mime.text import MimeText
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from enum import Enum
 from typing import Any
 
@@ -520,12 +520,12 @@ class AlertManager:
             Last Triggered: {alert.last_triggered}
             """
 
-            msg = MimeMultipart()
+            msg = MIMEMultipart()
             msg["From"] = self.config.smtp_from
             msg["To"] = ", ".join(self.config.alert_emails)
             msg["Subject"] = subject
 
-            msg.attach(MimeText(body, "plain"))
+            msg.attach(MIMEText(body, "plain"))
 
             with smtplib.SMTP(self.config.smtp_host, self.config.smtp_port) as server:
                 if self.config.smtp_username:
@@ -679,10 +679,10 @@ class AdvancedMonitoringSystem:
         for task in tasks:
             if task and not task.done():
                 task.cancel()
-                try:
+                from contextlib import suppress
+
+                with suppress(asyncio.CancelledError):
                     await task
-                except asyncio.CancelledError:
-                    pass
 
         logger.info("Monitoring system stopped")
 
@@ -763,7 +763,7 @@ class AdvancedMonitoringSystem:
             db_manager = await get_database_manager()
 
             start_time = time.time()
-            health_status = await db_manager.get_health_status()
+            await db_manager.get_health_status()
             db_response_time = (time.time() - start_time) * 1000  # ms
 
             await self.metrics_collector.collect_metric(
@@ -782,7 +782,7 @@ class AdvancedMonitoringSystem:
 
             # Get other metrics from global metrics collector
             global_metrics = get_metrics_collector()
-            prometheus_data = global_metrics.get_prometheus_metrics()
+            global_metrics.get_prometheus_metrics()
 
             # Parse error rate from prometheus data (simplified)
             error_rate = 0  # Would parse from actual prometheus data

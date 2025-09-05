@@ -3,7 +3,7 @@ from typing import Any
 
 from ..config.config_manager import ConfigManager
 from ..plugins.hot_reloader import PluginHotReloader
-from .protocol import MCPMessage, MCPProtocolHandler
+from .protocol import MCPMessage, MCPProtocolHandler, MessageType
 
 
 class MCPServer:
@@ -60,9 +60,15 @@ class MCPServer:
 
     async def handle_message(self, message: MCPMessage) -> MCPMessage:
         """Handle an incoming MCP message."""
-        return await self.protocol_handler.handle_message(message)
+        response = await self.protocol_handler.handle_message(message)
+        if response is None:
+            # Normalize notifications into an empty response for callers expecting a message
+            return MCPMessage(type=MessageType.RESPONSE, id=message.id, result={})
+        return response
 
-    async def _handle_tools_list(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_tools_list(
+        self, _params: dict[str, Any] | None
+    ) -> dict[str, Any]:
         """Handle tools/list request."""
         tools = []
 
@@ -91,13 +97,14 @@ class MCPServer:
 
         return {"tools": tools}
 
-    async def _handle_tools_call(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def _handle_tools_call(self, params: dict[str, Any] | None) -> dict[str, Any]:
         """Handle tools/call request."""
+        params = params or {}
         tool_name = params.get("name")
         arguments = params.get("parameters", {})
 
         # Split plugin and tool name
-        if "." in tool_name:
+        if tool_name and "." in tool_name:
             plugin_name, actual_tool_name = tool_name.split(".", 1)
             plugin = self.plugin_reloader.get_plugin(plugin_name)
             return await plugin.call_tool(actual_tool_name, arguments)
@@ -111,10 +118,10 @@ class MCPServer:
             }
         raise ValueError(f"Unknown server tool: {tool_name}")
 
-    def _create_plugin_handler(self, plugin, tool_name: str):
+    def _create_plugin_handler(self, plugin: Any, tool_name: str) -> Any:
         """Create a handler for a plugin tool."""
 
-        async def handler(params: dict[str, Any]) -> Any:
+        async def handler(params: dict[str, Any] | None) -> Any:
             return await plugin.call_tool(tool_name, params)
 
         return handler

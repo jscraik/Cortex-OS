@@ -203,12 +203,18 @@ async fn test_chat_message_validation() {
     // Test: Chat messages should be properly validated before processing
 
     // Test empty message handling
-    let empty_message = String::new();
-    assert!(empty_message.is_empty(), "Empty messages should be detectable");
+    let empty_message = "";
+    assert!(
+        empty_message.is_empty(),
+        "Empty messages should be detectable"
+    );
 
     // Test very long message handling
     let long_message = "x".repeat(10000);
-    assert_eq!(long_message.len(), 10000, "Long messages should be measurable");
+    assert!(
+        long_message.len() == 10000,
+        "Long messages should be measurable"
+    );
 
     // Test special characters in messages
     let special_chars_message = "Hello! 🚀 Can you help with <script>alert('test')</script>?";

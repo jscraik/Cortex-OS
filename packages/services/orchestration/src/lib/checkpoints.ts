@@ -144,9 +144,7 @@ export async function loadCheckpointHistory<TState = any>(
 
 					// Validate integrity
 					if (!validateCheckpointIntegrity(checkpointWithIntegrity)) {
-						console.warn(
-							`Checkpoint integrity validation failed for runId: ${runId}, node: ${parsed.node}, skipping`,
-						);
+						console.warn('Checkpoint integrity validation failed (skipping)', { runId, node: parsed.node });
 						continue;
 					}
 
@@ -156,16 +154,11 @@ export async function loadCheckpointHistory<TState = any>(
 					checkpoints.push(checkpoint);
 				} else {
 					// Legacy checkpoint without integrity validation
-					console.warn(
-						`Loading legacy checkpoint without integrity validation for runId: ${runId}, node: ${parsed.node}`,
-					);
+					console.warn('Loading legacy checkpoint without integrity validation', { runId, node: parsed.node });
 					checkpoints.push(parsed);
 				}
 			} catch (parseError) {
-				console.warn(
-					`Failed to parse checkpoint line for runId: ${runId}:`,
-					parseError,
-				);
+				console.warn('Failed to parse checkpoint line', { runId, error: parseError });
 				// Continue processing other checkpoints
 			}
 		}
@@ -201,16 +194,11 @@ export async function loadCheckpointHistoryWithIntegrity<TState = any>(
 					if (validateCheckpointIntegrity(checkpointWithIntegrity)) {
 						checkpoints.push(checkpointWithIntegrity);
 					} else {
-						console.warn(
-							`Checkpoint integrity validation failed for runId: ${runId}, node: ${parsed.node}`,
-						);
+						console.warn('Checkpoint integrity validation failed', { runId, node: parsed.node });
 					}
 				}
 			} catch (parseError) {
-				console.warn(
-					`Failed to parse checkpoint line for runId: ${runId}:`,
-					parseError,
-				);
+				console.warn('Failed to parse checkpoint line', { runId, error: parseError });
 			}
 		}
 
@@ -263,14 +251,9 @@ export async function cleanupOldCheckpoints(
 
 		await fs.writeFile(file, newContent, "utf8");
 
-		console.info(
-			`Cleaned up old checkpoints for runId: ${runId}, kept: ${toKeep.length}, removed: ${history.length - toKeep.length}`,
-		);
+		console.info('Cleaned up old checkpoints', { runId, kept: toKeep.length, removed: history.length - toKeep.length });
 	} catch (error) {
-		console.warn(
-			`Failed to cleanup old checkpoints for runId: ${runId}:`,
-			error,
-		);
+		console.warn('Failed to cleanup old checkpoints', { runId, error });
 	}
 }
 

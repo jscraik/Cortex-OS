@@ -1,9 +1,9 @@
 # Codex CLI (Rust Implementation)
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Phase 1](https://img.shields.io/badge/Phase%201-Foundation%20Complete-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![Task 1.2](https://img.shields.io/badge/Task%201.2-Configuration%20System%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
-[![TDD](https://img.shields.io/badge/TDD-11%2F11%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Phase 2](https://img.shields.io/badge/Phase%202-Core%20Features%20In%20Progress-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 2.2](https://img.shields.io/badge/Task%202.2-Provider%20Abstraction%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-29%2F29%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Rust Edition](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://rust-lang.org)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -46,7 +46,29 @@ You can enable notifications by configuring a script that is run whenever the ag
 
 To run Codex non-interactively, run `codex exec PROMPT` (you can also pass the prompt via `stdin`) and Codex will work on your task until it decides that it is done and exits. Output is printed to the terminal directly. You can set the `RUST_LOG` environment variable to see more about what's going on.
 
-### Use `@` for file search
+## Development Status
+
+### ✅ Completed Features
+
+- **Foundation (Phase 1)**: Complete TDD foundation with configuration, error handling, and project structure
+- **Provider Abstraction (Task 2.2)**: Complete provider abstraction layer with registry system and mock implementations
+- **Chat Interface (Task 2.1)**: Message management, conversation state, and chat subcommand implementation
+- **Test Coverage**: 29 comprehensive tests covering all implemented functionality
+
+### 🔄 Current Development
+
+- **Streaming Support (Task 2.3)**: Infrastructure in place, TUI integration pending
+- **Provider Integration (Phase 3)**: Ready for real provider implementations (OpenAI, Anthropic, Ollama)
+
+### 📋 Architecture Overview
+
+The Rust CLI implements a modern, TDD-driven architecture with:
+
+- **Provider Abstraction**: Unified interface for multiple AI model providers
+- **Conversation Management**: Stateful message handling with persistence
+- **Configuration System**: Type-safe, validated configuration with TOML support
+- **Error Handling**: Comprehensive error types with structured propagation
+- **Test Coverage**: Full TDD implementation with mock providers for testing
 
 Typing `@` triggers a fuzzy-filename search over the workspace root. Use up/down to select among the results and Tab or Enter to replace the `@` with the selected path. You can use Esc to cancel the search.
 

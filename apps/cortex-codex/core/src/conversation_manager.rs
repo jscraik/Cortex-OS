@@ -12,17 +12,17 @@ use crate::codex::CodexSpawnOk;
 use crate::codex::INITIAL_SUBMIT_ID;
 use crate::codex_conversation::CodexConversation;
 use crate::config::Config;
+use crate::environment_context::ENVIRONMENT_CONTEXT_START;
 use crate::error::CodexErr;
 use crate::error::Result as CodexResult;
 use crate::protocol::Event;
 use crate::protocol::EventMsg;
 use crate::protocol::SessionConfiguredEvent;
 use crate::rollout::RolloutRecorder;
-use crate::environment_context::ENVIRONMENT_CONTEXT_START;
 // client_common does not export its tag constants; use the prefix literal here.
 const USER_INSTRUCTIONS_TAG_PREFIX: &str = "<user_instructions>";
-use tracing::info;
 use codex_protocol::models::ResponseItem;
+use tracing::info;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InitialHistory {
@@ -163,10 +163,19 @@ impl ConversationManager {
             truncate_after_dropping_last_messages(conversation_history, num_messages_to_drop);
         match &history {
             InitialHistory::New => {
-                info!(original_len, drop = num_messages_to_drop, "fork: no prefix remains; starting new");
+                info!(
+                    original_len,
+                    drop = num_messages_to_drop,
+                    "fork: no prefix remains; starting new"
+                );
             }
             InitialHistory::Resumed(items) => {
-                info!(original_len, kept_len = items.len(), drop = num_messages_to_drop, "fork: resuming with prefix");
+                info!(
+                    original_len,
+                    kept_len = items.len(),
+                    drop = num_messages_to_drop,
+                    "fork: resuming with prefix"
+                );
             }
         }
 
@@ -220,17 +229,17 @@ fn truncate_after_dropping_last_messages(items: Vec<ResponseItem>, n: usize) -> 
         // No prefix remains after dropping; start a new conversation.
         InitialHistory::New
     } else {
-    InitialHistory::Resumed(items.into_iter().take(cut_index).collect())
+        InitialHistory::Resumed(items.into_iter().take(cut_index).collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::environment_context::EnvironmentContext;
     use codex_protocol::models::ContentItem;
     use codex_protocol::models::ReasoningItemReasoningSummary;
     use codex_protocol::models::ResponseItem;
-    use crate::environment_context::EnvironmentContext;
 
     fn user_msg(text: &str) -> ResponseItem {
         ResponseItem::Message {
@@ -297,9 +306,7 @@ mod tests {
             content: vec![ContentItem::InputText {
                 text: format!(
                     "{}{}{}",
-                    "<user_instructions>\n\n",
-                    "be helpful",
-                    "\n\n</user_instructions>"
+                    "<user_instructions>\n\n", "be helpful", "\n\n</user_instructions>"
                 ),
             }],
         };

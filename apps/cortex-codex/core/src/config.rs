@@ -13,6 +13,7 @@ use crate::model_family::find_family_for_model;
 use crate::model_provider_info::ModelProviderInfo;
 use crate::model_provider_info::built_in_model_providers;
 use crate::openai_model_info::get_model_info;
+use crate::config_types_new::{ApiSettings, ModelConfig, LoggingConfig};
 use crate::protocol::AskForApproval;
 use crate::protocol::SandboxPolicy;
 use codex_protocol::config_types::ReasoningEffort;
@@ -814,6 +815,11 @@ impl Config {
             use_experimental_reasoning_summary: cfg
                 .use_experimental_reasoning_summary
                 .unwrap_or(false),
+
+            // TODO: Add proper initialization for these fields
+            model_config: ModelConfig::default(),
+            api: ApiSettings::default(),
+            logging: LoggingConfig::default(),
         };
         Ok(config)
     }

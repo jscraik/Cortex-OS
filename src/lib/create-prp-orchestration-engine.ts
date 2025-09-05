@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { PRPOrchestrationEngine } from "../../packages/orchestration/src/prp-integration.js";
-import type { OrchestrationConfig } from "../../packages/orchestration/src/types.js";
+import { createEngine } from "@cortex-os/orchestration";
+import type { OrchestrationConfig } from "@cortex-os/orchestration";
 
 const configSchema = z
 	.object({
@@ -12,7 +12,7 @@ const configSchema = z
 	.passthrough();
 
 export function createPRPOrchestrationEngine(
-	config: Partial<OrchestrationConfig> = {},
-): PRPOrchestrationEngine {
-	return new PRPOrchestrationEngine(configSchema.parse(config));
+        config: Partial<OrchestrationConfig> = {},
+) {
+        return createEngine(configSchema.parse(config));
 }

@@ -424,7 +424,7 @@ class TestCompleteWorkflow:
         # Verify all workflows completed successfully
         assert len(completed_workflows) == 5
 
-        for i, workflow in enumerate(completed_workflows):
+        for _, workflow in enumerate(completed_workflows):
             assert workflow.status.value == "completed"
             assert workflow.progress == 100.0
 
@@ -441,7 +441,7 @@ class TestCompleteWorkflow:
     ):
         """Test retrieving and using memory context in tools."""
         # Store some context first
-        memory_id_1 = await memory_bridge.store_tool_context(
+        await memory_bridge.store_tool_context(
             tool_name="context_producer",
             execution_id="exec_001",
             context_data={
@@ -452,7 +452,7 @@ class TestCompleteWorkflow:
             user_id="context_user",
         )
 
-        memory_id_2 = await memory_bridge.store_conversation_context(
+        await memory_bridge.store_conversation_context(
             session_id="session_123",
             user_id="context_user",
             message_content="I prefer dark themes and English language",

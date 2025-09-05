@@ -3,6 +3,7 @@ node_modules/
 dist/
 target/
 .venv/
+.mcp-quick-venv/
 .uv/
 .tmp/
 **/.tmp/
@@ -26,8 +27,15 @@ tmp/
 .venv-*/
 comparisons/
 
+# Security scan reports (do not commit large artifacts)
+semgrep-report.json
+reports/
+
 # Backup files
 *.backup
 
 # Development files
 *.log
+
+# Security scan artifacts
+semgrep-report.json

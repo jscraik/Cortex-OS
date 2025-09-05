@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncGenerator
 
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import NullPool
@@ -18,13 +19,22 @@ class Base(DeclarativeBase):
 
 
 # Create async engine with connection pooling
+url = make_url(settings.DATABASE_URL)
+pool_kwargs = (
+    {
+        "pool_size": settings.DATABASE_POOL_SIZE,
+        "max_overflow": settings.DATABASE_MAX_OVERFLOW,
+    }
+    if url.get_backend_name() != "sqlite"
+    else {}
+)
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
     pool_pre_ping=True,
     poolclass=NullPool if settings.DEBUG else None,
+    **pool_kwargs,
 )
 
 # Create async session factory
@@ -35,14 +45,25 @@ AsyncSessionLocal = async_sessionmaker(
 
 async def init_db() -> None:
     """Initialize database and create tables."""
-    async with engine.begin() as conn:
-        # Import all models to ensure they are registered
+    # Import all models to ensure they are registered with the metadata
+    import importlib
+    import pkgutil
 
-        # Create all tables
+    try:
+        models_pkg = importlib.import_module("models")
+        if hasattr(models_pkg, "__path__"):
+            for _, name, _ in pkgutil.walk_packages(
+                models_pkg.__path__, models_pkg.__name__ + "."
+            ):
+                importlib.import_module(name)
+    except ModuleNotFoundError:
+        pass
+
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db() -> AsyncGenerator[AsyncSession]:
     """Dependency to get database session."""
     async with AsyncSessionLocal() as session:
         try:
@@ -51,8 +72,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
 async def close_db() -> None:

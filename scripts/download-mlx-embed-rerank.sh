@@ -31,9 +31,9 @@ echo ""
 download_model() {
     local model_repo="$1"
     local model_type="$2"
-    
+
     echo "⬇️  Downloading $model_type model: $model_repo"
-    
+
     python3 -c "
 from huggingface_hub import snapshot_download
 import os
@@ -58,7 +58,7 @@ echo "🔍 Downloading MLX Embedding Models..."
 
 # Qwen3 Embedding Models (MLX-optimized)
 download_model "mlx-community/Qwen3-Embedding-4B-4bit-DWQ" "embedding"
-download_model "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ" "embedding" 
+download_model "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ" "embedding"
 download_model "mlx-community/Qwen3-Embedding-8B-4bit-DWQ" "embedding"
 
 # BGE Embedding Models (MLX-optimized)
@@ -89,7 +89,7 @@ models = api.list_models(
 print('Available MLX Reranker Models:')
 for model in models:
     print(f'  - {model.id}')
-    
+
 # Also search for bge-reranker models
 bge_models = api.list_models(
     search='bge-reranker',
@@ -109,7 +109,7 @@ echo "🎯 Attempting to download additional reranker models..."
 # Try some common reranker model names
 potential_rerankers=(
     "mlx-community/bge-reranker-base"
-    "mlx-community/bge-reranker-large" 
+    "mlx-community/bge-reranker-large"
     "mlx-community/bge-reranker-v2-m3"
 )
 
@@ -127,7 +127,7 @@ try:
     # Check if model exists
     info = api.model_info('$model')
     print('✅ Model exists, downloading...')
-    
+
     snapshot_download(
         repo_id='$model',
         cache_dir='$HF_CACHE',
@@ -150,7 +150,7 @@ cache_dir = '$HF_CACHE/hub'
 if os.path.exists(cache_dir):
     embedding_count = 0
     reranker_count = 0
-    
+
     for item in os.listdir(cache_dir):
         if 'models--' in item:
             if 'embedding' in item.lower() or 'embed' in item.lower():
@@ -161,7 +161,7 @@ if os.path.exists(cache_dir):
                 reranker_count += 1
                 if 'mlx' in item.lower():
                     print(f'🔄 Reranker: {item.replace(\"models--\", \"\").replace(\"--\", \"/\")}')
-    
+
     print(f'\\n📊 Total embedding models: {embedding_count}')
     print(f'📊 Total reranker models: {reranker_count}')
 else:

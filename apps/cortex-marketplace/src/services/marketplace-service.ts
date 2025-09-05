@@ -93,32 +93,76 @@ export class MarketplaceService {
 			return cached.result;
 		}
 
-		// Get all servers from registries
-		const allServers = await this.getAllServers();
+                const registries = await this.registryService.listRegistries();
+                const filteredServers: ServerManifest[] = [];
+                const facets = {
+                        categories: {} as Record<string, number>,
+                        riskLevels: {} as Record<string, number>,
+                        publishers: {} as Record<string, number>,
+                };
+                const query = request.q?.toLowerCase();
 
-		// Apply filters
-		let filteredServers = this.applyFilters(allServers, request);
+                for (const registry of registries) {
+                        try {
+                                const data = await this.registryService.getRegistry(registry.name);
+                                for (const server of data?.servers || []) {
+                                        const matchesQuery =
+                                                !query ||
+                                                server.name.toLowerCase().includes(query) ||
+                                                server.description.toLowerCase().includes(query) ||
+                                                server.id.toLowerCase().includes(query) ||
+                                                server.tags?.some((tag) =>
+                                                        tag.toLowerCase().includes(query),
+                                                );
 
-		// Sort results
-		filteredServers = this.sortResults(filteredServers, request);
+                                        if (matchesQuery) {
+                                                if (server.category) {
+                                                        facets.categories[server.category] =
+                                                                (facets.categories[server.category] || 0) + 1;
+                                                }
+                                                if (server.security?.riskLevel) {
+                                                        const risk = server.security.riskLevel;
+                                                        facets.riskLevels[risk] =
+                                                                (facets.riskLevels[risk] || 0) + 1;
+                                                }
+                                                if (server.publisher?.name) {
+                                                        const pub = server.publisher.name;
+                                                        facets.publishers[pub] =
+                                                                (facets.publishers[pub] || 0) + 1;
+                                                }
+                                        }
 
-		// Calculate facets
-		const facets = this.calculateFacets(allServers, request);
+                                        if (this.passesFilters(server, request)) {
+                                                filteredServers.push(server);
+                                        }
+                                }
+                        } catch (error) {
+                                console.warn(`Failed to load registry ${registry.name}:`, error);
+                        }
+                }
 
-		// Apply pagination
-		const total = filteredServers.length;
-		const paginatedServers = filteredServers.slice(
-			request.offset,
-			request.offset + request.limit,
-		);
+                const seen = new Set<string>();
+                const uniqueServers = filteredServers.filter((server) => {
+                        if (seen.has(server.id)) return false;
+                        seen.add(server.id);
+                        return true;
+                });
 
-		const result: SearchResult = {
-			servers: paginatedServers,
-			total,
-			offset: request.offset,
-			limit: request.limit,
-			facets,
-		};
+                const sortedServers = this.sortResults(uniqueServers, request);
+
+                const total = sortedServers.length;
+                const paginatedServers = sortedServers.slice(
+                        request.offset,
+                        request.offset + request.limit,
+                );
+
+                const result: SearchResult = {
+                        servers: paginatedServers,
+                        total,
+                        offset: request.offset,
+                        limit: request.limit,
+                        facets,
+                };
 
 		// Cache result
 		this.searchCache.set(cacheKey, { result, timestamp: Date.now() });
@@ -246,92 +290,87 @@ export class MarketplaceService {
 		});
 	}
 
-	/**
-	 * Apply search filters
-	 */
-	private applyFilters(
-		servers: ServerManifest[],
-		request: SearchRequest,
-	): ServerManifest[] {
-		let filtered = servers;
+        private passesFilters(
+                server: ServerManifest,
+                request: SearchRequest,
+        ): boolean {
+                if (request.q) {
+                        const query = request.q.toLowerCase();
+                        const matches =
+                                server.name.toLowerCase().includes(query) ||
+                                server.description.toLowerCase().includes(query) ||
+                                server.id.toLowerCase().includes(query) ||
+                                server.tags?.some((tag) => tag.toLowerCase().includes(query));
+                        if (!matches) {
+                                return false;
+                        }
+                }
 
-		// Text search
-		if (request.q) {
-			const query = request.q.toLowerCase();
-			filtered = filtered.filter(
-				(server) =>
-					server.name.toLowerCase().includes(query) ||
-					server.description.toLowerCase().includes(query) ||
-					server.id.toLowerCase().includes(query) ||
-					server.tags?.some((tag) => tag.toLowerCase().includes(query)),
-			);
-		}
+                if (request.category && server.category !== request.category) {
+                        return false;
+                }
 
-		// Category filter
-		if (request.category) {
-			filtered = filtered.filter(
-				(server) => server.category === request.category,
-			);
-		}
+                if (
+                        request.riskLevel &&
+                        server.security?.riskLevel !== request.riskLevel
+                ) {
+                        return false;
+                }
 
-		// Risk level filter
-		if (request.riskLevel) {
-			filtered = filtered.filter(
-				(server) => server.security?.riskLevel === request.riskLevel,
-			);
-		}
+                if (
+                        request.featured !== undefined &&
+                        Boolean(server.featured) !== request.featured
+                ) {
+                        return false;
+                }
 
-		// Featured filter
-		if (request.featured !== undefined) {
-			filtered = filtered.filter(
-				(server) => Boolean(server.featured) === request.featured,
-			);
-		}
+                if (
+                        request.publisher &&
+                        !server.publisher?.name
+                                .toLowerCase()
+                                .includes(request.publisher.toLowerCase())
+                ) {
+                        return false;
+                }
 
-		// Publisher filter
-		if (request.publisher) {
-			filtered = filtered.filter((server) =>
-				server.publisher?.name
-					.toLowerCase()
-					.includes(request.publisher?.toLowerCase()),
-			);
-		}
+                if (request.minRating !== undefined) {
+                        if (server.rating === undefined || server.rating < request.minRating) {
+                                return false;
+                        }
+                }
 
-		// Minimum rating filter
-		if (request.minRating !== undefined) {
-			const min = request.minRating;
-			filtered = filtered.filter(
-				(server) => server.rating !== undefined && server.rating >= min,
-			);
-		}
+                if (request.tags && request.tags.length > 0) {
+                        if (
+                                !(
+                                        server.tags &&
+                                        request.tags.some((tag) =>
+                                                server.tags?.some((serverTag) =>
+                                                        serverTag.toLowerCase().includes(tag.toLowerCase()),
+                                                ),
+                                        )
+                                )
+                        ) {
+                                return false;
+                        }
+                }
 
-		// Tags filter
-		if (request.tags && request.tags.length > 0) {
-			filtered = filtered.filter(
-				(server) =>
-					server.tags &&
-					request.tags?.some((tag) =>
-						server.tags?.some((serverTag) =>
-							serverTag.toLowerCase().includes(tag.toLowerCase()),
-						),
-					),
-			);
-		}
+                if (request.capabilities && request.capabilities.length > 0) {
+                        if (
+                                !request.capabilities.every(
+                                        (cap) => server.capabilities[cap] === true,
+                                )
+                        ) {
+                                return false;
+                        }
+                }
 
-		// Capabilities filter
-		if (request.capabilities && request.capabilities.length > 0) {
-			filtered = filtered.filter((server) =>
-				request.capabilities?.every((cap) => server.capabilities[cap] === true),
-			);
-		}
+                return true;
+        }
 
-		return filtered;
-	}
-
-	/**
-	 * Sort search results
-	 */
-	private sortResults(
+        /**
+         * Sort search results
+         */
+        private sortResults(
 		servers: ServerManifest[],
 		request: SearchRequest,
 	): ServerManifest[] {
@@ -372,54 +411,9 @@ export class MarketplaceService {
 		});
 	}
 
-	/**
-	 * Calculate search facets
-	 */
-	private calculateFacets(
-		allServers: ServerManifest[],
-		request: SearchRequest,
-	): SearchResult["facets"] {
-		const categories: Record<string, number> = {};
-		const riskLevels: Record<string, number> = {};
-		const publishers: Record<string, number> = {};
-
-		// Apply existing filters except the one we're calculating facets for
-		let baseFiltered = allServers;
-		if (request.q) {
-			const query = request.q.toLowerCase();
-			baseFiltered = baseFiltered.filter(
-				(server) =>
-					server.name.toLowerCase().includes(query) ||
-					server.description.toLowerCase().includes(query) ||
-					server.id.toLowerCase().includes(query),
-			);
-		}
-
-		for (const server of baseFiltered) {
-			// Category facets
-			if (server.category) {
-				categories[server.category] = (categories[server.category] || 0) + 1;
-			}
-
-			// Risk level facets
-			if (server.security?.riskLevel) {
-				const risk = server.security.riskLevel;
-				riskLevels[risk] = (riskLevels[risk] || 0) + 1;
-			}
-
-			// Publisher facets
-			if (server.publisher?.name) {
-				const pub = server.publisher.name;
-				publishers[pub] = (publishers[pub] || 0) + 1;
-			}
-		}
-
-		return { categories, riskLevels, publishers };
-	}
-
-	/**
-	 * Format category name for display
-	 */
+        /**
+         * Format category name for display
+         */
 	private formatCategoryName(category: string): string {
 		return category
 			.split("-")

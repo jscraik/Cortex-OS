@@ -2,6 +2,7 @@
 
 import logging
 import os
+import time
 from typing import Any
 
 from celery import Celery
@@ -127,7 +128,7 @@ class CeleryTaskQueue:
                         exc=e,
                         countdown=60 * (2**self.request.retries),  # Exponential backoff
                         max_retries=3,
-                    )
+                    ) from e
                 raise
 
         @self.celery_app.task(name="mcp.tasks.reload_plugin", bind=True)
@@ -147,7 +148,7 @@ class CeleryTaskQueue:
                 if self.request.retries < 2:  # Fewer retries for plugin operations
                     raise self.retry(
                         exc=e, countdown=30 * (2**self.request.retries), max_retries=2
-                    )
+                    ) from e
                 raise
 
         @self.celery_app.task(name="mcp.tasks.health_check")
@@ -169,7 +170,7 @@ class CeleryTaskQueue:
             }
 
         @self.celery_app.task(name="mcp.tasks.batch_operation", bind=True)
-        def batch_operation_task(self, operation: str, items: list) -> dict[str, Any]:
+        def batch_operation_task(_self, operation: str, items: list) -> dict[str, Any]:
             """Execute batch operations."""
             import time
 
@@ -320,7 +321,7 @@ class CeleryTaskQueue:
             total_reserved = 0
 
             if active_tasks:
-                for worker, tasks in active_tasks.items():
+                for _worker, tasks in active_tasks.items():
                     total_active += len(tasks)
                     for task in tasks:
                         queue = task.get("delivery_info", {}).get(
@@ -332,11 +333,11 @@ class CeleryTaskQueue:
                         queue_stats[queue]["active"] += 1
 
             if scheduled_tasks:
-                for worker, tasks in scheduled_tasks.items():
+                for _worker, tasks in scheduled_tasks.items():
                     total_scheduled += len(tasks)
 
             if reserved_tasks:
-                for worker, tasks in reserved_tasks.items():
+                for _worker, tasks in reserved_tasks.items():
                     total_reserved += len(tasks)
 
             return {

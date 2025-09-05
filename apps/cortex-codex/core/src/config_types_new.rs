@@ -1,15 +1,20 @@
 use serde::{Deserialize, Serialize};
 
 /// Model provider enumeration for simplified configuration
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ModelProvider {
-    #[default]
     OpenAI,
     Anthropic,
     Local,
     Azure,
     #[serde(rename = "custom")]
     Custom(String),
+}
+
+impl Default for ModelProvider {
+    fn default() -> Self {
+        ModelProvider::OpenAI
+    }
 }
 
 /// Rate limiting configuration
@@ -77,9 +82,19 @@ impl Default for LoggingConfig {
 }
 
 /// Simplified configuration struct for TDD testing
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SimpleConfig {
     pub model: ModelConfig,
     pub api: ApiSettings,
     pub logging: LoggingConfig,
+}
+
+impl Default for SimpleConfig {
+    fn default() -> Self {
+        Self {
+            model: ModelConfig::default(),
+            api: ApiSettings::default(),
+            logging: LoggingConfig::default(),
+        }
+    }
 }
