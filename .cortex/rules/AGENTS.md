@@ -1,6 +1,6 @@
 # AGENTS.md
 
-> **Authority:** This file defines agent roles and workflow for Cortex-OS.  
+> **Authority:** This file is the single source of truth for agent roles and workflow for Cortex-OS.
 > All implementation must match specifications in this file.  
 > CI must validate consistency between this spec and `packages/agents/*`.
 
