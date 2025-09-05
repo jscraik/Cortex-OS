@@ -7,9 +7,10 @@ import os
 import pickle
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional, Callable, Coroutine
+from typing import Any
 
 import redis.asyncio as redis
 from redis.asyncio import Redis
@@ -637,7 +638,7 @@ class AdvancedCache:
 
     def __init__(self, config: CacheConfig | None = None):
         self.config = config or CacheConfig.from_env()
-        self.backend: Optional[CacheBackendInterface] = None
+        self.backend: CacheBackendInterface | None = None
         self._refresh_tasks: dict[str, asyncio.Task[Any]] = {}
         self._invalidation_tags: dict[str, list[str]] = {}
 
@@ -674,7 +675,11 @@ class AdvancedCache:
             return default
 
     async def set(
-        self, key: str, value: Any, ttl: int | None = None, tags: Optional[list[str]] = None
+        self,
+        key: str,
+        value: Any,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Set value in cache with optional TTL and tags."""
         try:
@@ -704,7 +709,7 @@ class AdvancedCache:
         key: str,
         factory: Callable[..., Any],
         ttl: int | None = None,
-        tags: Optional[list[str]] = None,
+        tags: list[str] | None = None,
     ) -> Any:
         """Get from cache or set using factory function."""
         value = await self.get(key)
@@ -836,8 +841,8 @@ def get_cache() -> AdvancedCache:
 # Decorators for caching
 def cached(
     ttl: int | None = None,
-    tags: Optional[list[str]] = None,
-    key_func: Optional[Callable[..., Any]] = None,
+    tags: list[str] | None = None,
+    key_func: Callable[..., Any] | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Coroutine[Any, Any, Any]]]:
     """Decorator for caching function results."""
 
