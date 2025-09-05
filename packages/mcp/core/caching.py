@@ -7,10 +7,9 @@ import os
 import pickle
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, Callable, Coroutine
 
 import redis.asyncio as redis
 from redis.asyncio import Redis
@@ -638,8 +637,8 @@ class AdvancedCache:
 
     def __init__(self, config: CacheConfig | None = None):
         self.config = config or CacheConfig.from_env()
-        self.backend: CacheBackendInterface | None = None
-        self._refresh_tasks: dict[str, asyncio.Task] = {}
+        self.backend: Optional[CacheBackendInterface] = None
+        self._refresh_tasks: dict[str, asyncio.Task[Any]] = {}
         self._invalidation_tags: dict[str, list[str]] = {}
 
         # Initialize backend
@@ -656,6 +655,7 @@ class AdvancedCache:
     async def get(self, key: str, default: Any = None) -> Any:
         """Get value from cache with optional default."""
         try:
+            assert self.backend is not None, "Cache backend not initialized"
             value = await self.backend.get(key)
 
             if value is None:
@@ -674,10 +674,11 @@ class AdvancedCache:
             return default
 
     async def set(
-        self, key: str, value: Any, ttl: int | None = None, tags: list[str] = None
+        self, key: str, value: Any, ttl: int | None = None, tags: Optional[list[str]] = None
     ) -> bool:
         """Set value in cache with optional TTL and tags."""
         try:
+            assert self.backend is not None, "Cache backend not initialized"
             success = await self.backend.set(key, value, ttl or self.config.default_ttl)
 
             if success and tags:
@@ -701,12 +702,12 @@ class AdvancedCache:
     async def get_or_set(
         self,
         key: str,
-        factory: Callable[[], Any],
+        factory: Callable[..., Any],
         ttl: int | None = None,
-        tags: list[str] = None,
+        tags: Optional[list[str]] = None,
     ) -> Any:
         """Get from cache or set using factory function."""
-        value = await self.get(key)
+    value = await self.get(key)
 
         if value is not None:
             return value
@@ -727,6 +728,7 @@ class AdvancedCache:
 
     async def delete(self, key: str) -> bool:
         """Delete key from cache."""
+        assert self.backend is not None, "Cache backend not initialized"
         success = await self.backend.delete(key)
 
         # Cancel auto-refresh task if exists
@@ -755,6 +757,7 @@ class AdvancedCache:
 
     async def clear(self) -> bool:
         """Clear entire cache."""
+        assert self.backend is not None, "Cache backend not initialized"
         success = await self.backend.clear()
 
         # Cancel all auto-refresh tasks
@@ -767,6 +770,7 @@ class AdvancedCache:
 
     async def get_stats(self) -> dict[str, Any]:
         """Get comprehensive cache statistics."""
+        assert self.backend is not None, "Cache backend not initialized"
         backend_stats = await self.backend.get_stats()
 
         return {
@@ -793,11 +797,12 @@ class AdvancedCache:
         # Calculate refresh time (80% of TTL)
         refresh_delay = self.config.default_ttl * self.config.auto_refresh_threshold
 
-        async def refresh_task():
+        async def refresh_task() -> None:
             try:
                 await asyncio.sleep(refresh_delay)
 
                 # Check if key still exists
+                assert self.backend is not None, "Cache backend not initialized"
                 if await self.backend.exists(key):
                     logger.debug(f"Auto-refreshing cache key: {key}")
                     # Here you would typically call the original factory function
@@ -811,7 +816,7 @@ class AdvancedCache:
             finally:
                 self._refresh_tasks.pop(key, None)
 
-        self._refresh_tasks[key] = asyncio.create_task(refresh_task())
+    self._refresh_tasks[key] = asyncio.create_task(refresh_task())
 
 
 # Global cache instance
