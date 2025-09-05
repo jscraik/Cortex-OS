@@ -22,12 +22,52 @@ export const EvidenceSchema = z.object({
 		"analysis",
 		"validation",
 		"llm-generation",
+		"coverage",
+		"a11y",
+		"security",
+		"sbom",
 	]),
 	source: z.string(),
 	content: z.string(),
 	timestamp: z.string(),
 	phase: z.enum(["strategy", "build", "evaluation"]),
+	commitSha: z.string().optional(),
+	lineRange: z.string().optional(),
 	metadata: z.record(z.unknown()).optional(),
+});
+
+/**
+ * Human approval record for gates
+ */
+export const HumanApprovalSchema = z.object({
+	gateId: z.enum(["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"]),
+	actor: z.string(),
+	decision: z.enum(["approved", "rejected", "pending"]),
+	timestamp: z.string(),
+	commitSha: z.string(),
+	rationale: z.string(),
+	signature: z.string().optional(),
+});
+
+/**
+ * Gate execution result
+ */
+export const GateResultSchema = z.object({
+	id: z.enum(["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"]),
+	name: z.string(),
+	status: z.enum(["pending", "running", "passed", "failed", "skipped"]),
+	requiresHumanApproval: z.boolean(),
+	humanApproval: HumanApprovalSchema.optional(),
+	automatedChecks: z.array(z.object({
+		name: z.string(),
+		status: z.enum(["pass", "fail", "skip"]),
+		output: z.string().optional(),
+		duration: z.number().optional(),
+	})),
+	artifacts: z.array(z.string()),
+	evidence: z.array(z.string()), // Evidence IDs
+	timestamp: z.string(),
+	nextSteps: z.array(z.string()).optional(),
 });
 
 /**
