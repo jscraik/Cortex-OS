@@ -4,7 +4,7 @@
  */
 
 import type { ChildProcess } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { writeFile, unlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { type ServerManifest, ServerManifestSchema } from "../types.js";
@@ -196,86 +196,94 @@ print(f"CONFIDENCE:{confidence:.3f}")
 };
 
 async function executeMLXScript(
-	script: string,
-	pythonPath: string,
+        script: string,
+        pythonPath: string,
 ): Promise<string> {
-	const tmpDir = os.tmpdir();
-	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
-	await writeFile(scriptPath, script);
-	// Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	const { spawnPythonProcess } = await import(
-		"../../../../libs/python/exec.js"
-	);
-	return new Promise((resolve, reject) => {
-		const child: ChildProcess = spawnPythonProcess([scriptPath], {
-			python: pythonPath,
-		});
-		let output = "";
-		let error = "";
-		child.stdout?.on("data", (d) => {
-			output += d.toString();
-		});
-		child.stderr?.on("data", (d) => {
-			error += d.toString();
-		});
-		child.on("close", (code) =>
-			code === 0
-				? resolve(output)
-				: reject(new Error(`Script failed: ${error}`)),
-		);
-		const to = setTimeout(() => {
-			try {
-				child.kill();
-			} catch {}
-			reject(new Error("Script timeout"));
-		}, 10000);
-		// clear timeout if process exits
-		child.on("exit", () => clearTimeout(to));
-	});
+        const tmpDir = os.tmpdir();
+        const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
+        await writeFile(scriptPath, script);
+        // Use the centralized Python spawner so env merging and PYTHONPATH handling are consistent
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        const { spawnPythonProcess } = await import(
+                "../../../../libs/python/exec.js"
+        );
+        try {
+                return await new Promise((resolve, reject) => {
+                        const child: ChildProcess = spawnPythonProcess([scriptPath], {
+                                python: pythonPath,
+                        });
+                        let output = "";
+                        let error = "";
+                        child.stdout?.on("data", (d) => {
+                                output += d.toString();
+                        });
+                        child.stderr?.on("data", (d) => {
+                                error += d.toString();
+                        });
+                        child.on("close", (code) =>
+                                code === 0
+                                        ? resolve(output)
+                                        : reject(new Error(`Script failed: ${error}`)),
+                        );
+                        const to = setTimeout(() => {
+                                try {
+                                        child.kill();
+                                } catch {}
+                                reject(new Error("Script timeout"));
+                        }, 10000);
+                        // clear timeout if process exits
+                        child.on("exit", () => clearTimeout(to));
+                });
+        } finally {
+                await unlink(scriptPath).catch(() => {});
+        }
 }
 
 async function executeMLXScriptWithInput(
-	script: string,
-	pythonPath: string,
-	input: string,
+        script: string,
+        pythonPath: string,
+        input: string,
 ): Promise<string> {
-	const tmpDir = os.tmpdir();
-	const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
-	await writeFile(scriptPath, script);
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	const { spawnPythonProcess } = await import(
-		"../../../../libs/python/exec.js"
-	);
-	return new Promise((resolve, reject) => {
-		const child: ChildProcess = spawnPythonProcess([scriptPath], {
-			python: pythonPath,
-		});
-		let output = "";
-		let error = "";
-		child.stdout?.on("data", (d) => {
-			output += d.toString();
-		});
-		child.stderr?.on("data", (d) => {
-			error += d.toString();
-		});
-		child.on("close", (code) =>
-			code === 0
-				? resolve(output)
-				: reject(new Error(`Script failed: ${error}`)),
-		);
-		if (child.stdin) {
-			child.stdin.write(input);
-			child.stdin.end();
-		}
-		const to = setTimeout(() => {
-			try {
-				child.kill();
-			} catch {}
-			reject(new Error("Script timeout"));
-		}, 10000);
-		child.on("exit", () => clearTimeout(to));
-	});
+        const tmpDir = os.tmpdir();
+        const scriptPath = path.join(tmpDir, `mlx-script-${Date.now()}.py`);
+        await writeFile(scriptPath, script);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        const { spawnPythonProcess } = await import(
+                "../../../../libs/python/exec.js"
+        );
+        try {
+                return await new Promise((resolve, reject) => {
+                        const child: ChildProcess = spawnPythonProcess([scriptPath], {
+                                python: pythonPath,
+                        });
+                        let output = "";
+                        let error = "";
+                        child.stdout?.on("data", (d) => {
+                                output += d.toString();
+                        });
+                        child.stderr?.on("data", (d) => {
+                                error += d.toString();
+                        });
+                        child.on("close", (code) =>
+                                code === 0
+                                        ? resolve(output)
+                                        : reject(new Error(`Script failed: ${error}`)),
+                        );
+                        if (child.stdin) {
+                                child.stdin.write(input);
+                                child.stdin.end();
+                        }
+                        const to = setTimeout(() => {
+                                try {
+                                        child.kill();
+                                } catch {}
+                                reject(new Error("Script timeout"));
+                        }, 10000);
+                        child.on("exit", () => clearTimeout(to));
+                });
+        } finally {
+                await unlink(scriptPath).catch(() => {});
+        }
 }
 
 function parseEmbeddingResult(output: string, model: string): EmbeddingResult {
