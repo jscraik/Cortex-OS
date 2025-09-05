@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -9,7 +10,6 @@ from typing import Any, Dict, Optional, Protocol
 
 import httpx
 import instructor
-
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -107,17 +107,40 @@ class OllamaAdapter:
     def __init__(
         self,
         base_url: str = "http://localhost:11434",
-        model: str = "llama3",
+        models: Optional[list[str]] = None,
+        embed_models: Optional[list[str]] = None,
         api_key: str = "ollama",
     ) -> None:
-        """
+        """Configure access to an Ollama instance.
+
         Args:
             base_url: The base URL for the Ollama instance.
-            model: The model name to use.
-            api_key: The API key for authentication. Default is "ollama", which is expected for local Ollama instances.
+            models: Optional list of chat models. Falls back to ``OLLAMA_MODELS``
+                environment variable or ``["qwen3-coder:30b"]`` if unset.
+            embed_models: Optional list of embedding models. Falls back to
+                ``OLLAMA_EMBED_MODELS`` environment variable or
+                ``["nomic-embed-text:v1.5"]``.
+            api_key: The API key for authentication. Default is "ollama", which
+                is expected for local Ollama instances.
         """
+
+        chat_env = os.getenv("OLLAMA_MODELS")
+        if models is None:
+            if chat_env:
+                models = [m.strip() for m in chat_env.split(",") if m.strip()]
+            else:
+                models = ["qwen3-coder:30b"]
+
+        embed_env = os.getenv("OLLAMA_EMBED_MODELS")
+        if embed_models is None:
+            if embed_env:
+                embed_models = [m.strip() for m in embed_env.split(",") if m.strip()]
+            else:
+                embed_models = ["nomic-embed-text:v1.5"]
+
         self.base_url = base_url
-        self.model = model
+        self.models = models
+        self.embed_models = embed_models
         self._client = instructor.from_openai(
             OpenAI(base_url=f"{base_url}/v1", api_key=api_key),
             mode=instructor.Mode.JSON,
@@ -131,21 +154,35 @@ class OllamaAdapter:
             return False
 
     def chat(self, prompt: str, timeout: float) -> str:
-        res = self._client.chat.completions.create(
-            model=self.model,
-            response_model=_OllamaChat,
-            messages=[{"role": "user", "content": prompt}],
-            timeout=timeout,
-        )
-        return res.response
+        last_err: Exception | None = None
+        for model in self.models:
+            try:
+                res = self._client.chat.completions.create(
+                    model=model,
+                    response_model=_OllamaChat,
+                    messages=[{"role": "user", "content": prompt}],
+                    timeout=timeout,
+                )
+                return res.response
+            except Exception as exc:  # pragma: no cover - depends on model availability
+                last_err = exc
+                logger.warning("chat model %s failed: %s", model, exc)
+        raise RuntimeError(f"All chat models failed: {last_err}")
 
     def embed(self, text: str, timeout: float) -> list[float]:
-        res = self._client.embeddings.create(
-            model="nomic-embed-text",
-            input=text,
-            timeout=timeout,
-        )
-        return res.data[0].embedding
+        last_err: Exception | None = None
+        for model in self.embed_models:
+            try:
+                res = self._client.embeddings.create(
+                    model=model,
+                    input=text,
+                    timeout=timeout,
+                )
+                return res.data[0].embedding
+            except Exception as exc:  # pragma: no cover - depends on model availability
+                last_err = exc
+                logger.warning("embed model %s failed: %s", model, exc)
+        raise RuntimeError(f"All embed models failed: {last_err}")
 
     def rerank(self, query: str, docs: list[str], timeout: float) -> list[int]:
         q = self.embed(query, timeout)
