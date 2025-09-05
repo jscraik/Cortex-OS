@@ -8,6 +8,7 @@ import argparse
 import json
 import os
 import sys
+import logging
 
 # Constants
 DEFAULT_MAX_LENGTH = 512
@@ -17,18 +18,26 @@ DEFAULT_CACHE_DIR = "/Volumes/ExternalSSD/huggingface_cache"
 DEFAULT_MLX_CACHE_DIR = "/Volumes/ExternalSSD/ai-cache"
 FALLBACK_TEST_TEXT = "test"
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 try:
     import mlx_lm
     import mlx_vlm
+except ImportError as e:
+    logger.error("Error importing MLX dependencies: %s", e)
+    logger.error(
+        "Please install with: pip install mlx mlx-lm mlx-vlm transformers torch numpy"
+    )
+    mlx_lm = mlx_vlm = None
+
+try:
     import torch
     from transformers import AutoModel, AutoTokenizer
 except ImportError as e:
-    print(f"Error importing MLX dependencies: {e}", file=sys.stderr)
-    print(
-        "Please install with: pip install mlx mlx-lm mlx-vlm transformers torch numpy",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+    logger.error("Error importing transformer dependencies: %s", e)
+    torch = None
+    AutoModel = AutoTokenizer = None
 
 
 # Configure cache directories (defaults; runtime can override)
@@ -60,7 +69,7 @@ class MLXUnified:
         else:
             self.model_type = "chat"  # Default to chat
 
-        print(f"Detected model type: {self.model_type} for {model_name}")
+        logger.info("Detected model type %s for %s", self.model_type, model_name)
 
     def load_model(self) -> None:
         """Load the appropriate model based on type"""
@@ -68,7 +77,6 @@ class MLXUnified:
             if self.model_type == "embedding":
                 self.model = AutoModel.from_pretrained(
                     self.model_path,
-                    trust_remote_code=True,
                     cache_dir=os.environ.get("TRANSFORMERS_CACHE"),
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(
@@ -85,17 +93,16 @@ class MLXUnified:
             elif self.model_type == "reranking":
                 self.model = AutoModel.from_pretrained(
                     self.model_path,
-                    trust_remote_code=True,
                     cache_dir=os.environ.get("TRANSFORMERS_CACHE"),
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(
                     self.model_path, cache_dir=os.environ.get("TRANSFORMERS_CACHE")
                 )
 
-            print(f"✅ Loaded {self.model_type} model: {self.model_name}")
+            logger.info("Loaded %s model: %s", self.model_type, self.model_name)
 
         except Exception as e:
-            print(f"❌ Failed to load model {self.model_name}: {e}", file=sys.stderr)
+            logger.exception("Failed to load model %s: %s", self.model_name, e)
             raise
 
     def generate_embedding(self, text: str) -> list[float]:
@@ -338,7 +345,7 @@ def main():
         if args.json_only:
             print(json.dumps({"error": str(e)}))
         else:
-            print(f"Error: {e}", file=sys.stderr)
+            logger.error("Error: %s", e)
         sys.exit(1)
 
 
