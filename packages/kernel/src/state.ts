@@ -238,6 +238,7 @@ export const createInitialPRPState = (
 		runId?: string;
 		llmConfig?: PRPState["metadata"]["llmConfig"];
 		deterministic?: boolean;
+		enforcementProfile?: EnforcementProfile;
 	} = {},
 ): PRPState => {
 	const now = options.deterministic
@@ -251,6 +252,9 @@ export const createInitialPRPState = (
 		runId,
 		phase: "strategy",
 		blueprint,
+		enforcementProfile: options.enforcementProfile,
+		gates: {},
+		approvals: [],
 		outputs: {},
 		validationResults: {},
 		evidence: [],
