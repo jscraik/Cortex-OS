@@ -1,35 +1,79 @@
 #!/usr/bin/env python3
 
-"""
-Download a release artifact for the npm package and publish it.
+"""Utility to download an npm release artifact for a given version and publish it.
 
-Given a release version like `0.20.0`, this script:
-  - Downloads the `codex-npm-<version>.tgz` asset from the GitHub release
-    tagged `rust-v<version>` in the `openai/codex` repository using `gh`.
-  - Runs `npm publish` on the downloaded tarball to publish `@openai/codex`.
+This script performs conservative validation on inputs and runs external
+commands without invoking a shell to avoid command injection risks. It will
+download the GitHub release asset named `codex-npm-<version>.tgz` from the
+`openai/codex` repo (tagged `rust-v<version>`) using the `gh` CLI and then
+call `npm publish` on the downloaded tarball.
 
-Flags:
-  - `--dry-run` delegates to `npm publish --dry-run`. The artifact is still
-    downloaded so npm can inspect the archive contents without publishing.
+Usage:
+  publish_to_npm.py 0.20.0 [--dir /path/to/dir] [--dry-run]
 
 Requirements:
-  - GitHub CLI (`gh`) must be installed and authenticated to access the repo.
-  - npm must be logged in with an account authorized to publish
-    `@openai/codex`. This may trigger a browser for 2FA.
+  - `gh` (GitHub CLI) available in PATH and authenticated for `openai/codex`.
+  - `npm` installed and logged in for publishing `@openai/codex`.
 """
+
+from __future__ import annotations
 
 import argparse
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from subprocess import CompletedProcess
+
+
+def _is_safe_arg(a: object) -> bool:
+    """Conservative validation for CLI args passed to subprocess.
+
+    Allows alphanumerics plus a small set of safe punctuation characters.
+    This intentionally excludes characters like `;`, `|`, `&`, `$`, `` ` ``,
+    and newlines which could be abused when combined with shell invocation.
+    """
+
+    return isinstance(a, str) and bool(re.match(r"^[A-Za-z0-9._\-@:/\\]+$", a))
 
 
 def run_checked(cmd: list[str], cwd: Path | None = None) -> None:
-    """Run a subprocess command and raise if it fails."""
-    proc = subprocess.run(cmd, cwd=str(cwd) if cwd else None)
-    proc.check_returncode()
+    """Run a command with checked arguments and raise on non-zero exit."""
+
+    if not all(_is_safe_arg(x) for x in cmd):
+        raise ValueError(f"Refusing to run unsafe command: {cmd}")
+
+    # Arguments are validated above with `_is_safe_arg` — call subprocess
+    # without a shell. Suppress the generic semgrep injection rule here.
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection
+    subprocess.run(cmd, cwd=str(cwd) if cwd else None, check=True)
+
+
+def safe_exec(
+    cmd_list: list[str], env: dict[str, str] | None = None
+) -> CompletedProcess[bytes]:
+    """Run a validated command and return CompletedProcess capturing output."""
+
+    if not all(_is_safe_arg(x) for x in cmd_list):
+        raise ValueError(f"Refusing to run unsafe command: {cmd_list}")
+
+    # Arguments are validated above with `_is_safe_arg` — call subprocess
+    # without a shell and capture output. Suppress the generic semgrep
+    # injection rule here.
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection
+    return subprocess.run(cmd_list, env=env, check=False, capture_output=True)
+
+
+def validate_version(v: str) -> str:
+    """Validate version looks like a semantic version (X.Y.Z with optional suffix)."""
+
+    pattern = r"^(\d+)\.(\d+)\.(\d+)(?:[-+][A-Za-z0-9_.-]+)?$"
+    if not re.match(pattern, v):
+        raise argparse.ArgumentTypeError(f"Invalid version format: {v}")
+    return v
 
 
 def main() -> int:
@@ -38,8 +82,10 @@ def main() -> int:
             "Download the npm release artifact for a given version and publish it."
         )
     )
+
     parser.add_argument(
         "version",
+        type=lambda s: validate_version(s.lstrip("v")),
         help="Release version to publish, e.g. 0.20.0 (without the 'v' prefix)",
     )
     parser.add_argument(
@@ -55,25 +101,34 @@ def main() -> int:
         action="store_true",
         help="Delegate to `npm publish --dry-run` (still downloads the artifact).",
     )
+
     args = parser.parse_args()
 
-    version: str = args.version.lstrip("v")
+    version: str = args.version
     tag = f"rust-v{version}"
     asset_name = f"codex-npm-{version}.tgz"
 
-    download_dir_context_manager = (
-        tempfile.TemporaryDirectory() if args.dir is None else None
-    )
-    # Use provided dir if set, else the temporary one created above
-    download_dir: Path = (
-        args.dir if args.dir else Path(download_dir_context_manager.name)
-    )  # type: ignore[arg-type]
+    if args.dir:
+        download_dir = args.dir
+        download_dir_context_manager = None
+    else:
+        download_dir_context_manager = tempfile.TemporaryDirectory()
+        download_dir = Path(download_dir_context_manager.name)
+
     download_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1) Download the artifact using gh
+    # Locate `gh` and `npm` in PATH
     repo = "openai/codex"
+    gh_path = shutil.which("gh")
+    if not gh_path:
+        print("Error: 'gh' command not found in PATH", file=sys.stderr)
+        return 1
+
+    npm_path = shutil.which("npm") or "npm"
+
+    # Download the release asset using `gh release download`
     gh_cmd = [
-        "gh",
+        gh_path,
         "release",
         "download",
         tag,
@@ -84,9 +139,13 @@ def main() -> int:
         "--dir",
         str(download_dir),
     ]
+
     print(f"Downloading {asset_name} from {repo}@{tag} into {download_dir}...")
-    # Even in --dry-run we download so npm can inspect the tarball.
-    run_checked(gh_cmd)
+    try:
+        run_checked(gh_cmd)
+    except subprocess.CalledProcessError as e:
+        print(f"gh release download failed (exit {e.returncode})", file=sys.stderr)
+        return e.returncode
 
     artifact_path = download_dir / asset_name
     if not args.dry_run and not artifact_path.is_file():
@@ -96,23 +155,33 @@ def main() -> int:
         )
         return 1
 
-    # 2) Publish to npm
-    npm_cmd = ["npm", "publish"]
+    # Prepare npm publish command. We pass the artifact path as an argument.
+    npm_cmd = [npm_path, "publish"]
     if args.dry_run:
         npm_cmd.append("--dry-run")
     npm_cmd.append(str(artifact_path))
 
     # Ensure CI is unset so npm can open a browser for 2FA if needed.
     env = os.environ.copy()
-    if env.get("CI"):
-        env.pop("CI")
+    env.pop("CI", None)
 
     print("Running:", " ".join(npm_cmd))
-    proc = subprocess.run(npm_cmd, env=env)
-    proc.check_returncode()
+
+    proc = safe_exec(npm_cmd, env=env)
+    try:
+        proc.check_returncode()
+    except subprocess.CalledProcessError as e:
+        stderr = proc.stderr.decode(errors="replace") if proc.stderr else ""
+        stdout = proc.stdout.decode(errors="replace") if proc.stdout else ""
+        print(f"npm publish failed (exit {e.returncode}):", file=sys.stderr)
+        if stdout:
+            print("stdout:", stdout, file=sys.stderr)
+        if stderr:
+            print("stderr:", stderr, file=sys.stderr)
+        return e.returncode
 
     print("Publish complete.")
-    # Keep the temporary directory alive until here; it is cleaned up on exit
+
     return 0
 
 

@@ -55,6 +55,9 @@ cd cortex-os
 
 ./scripts/dev-setup.sh
 
+# Set up environment (optional - uses ~/.Cortex-OS by default)
+export CORTEX_OS_HOME="$HOME/.Cortex-OS"
+
 # Verify installation
 pnpm readiness:check
 ```
@@ -71,9 +74,22 @@ cd apps/cortex-code && cargo run
 # Start web interface
 cd apps/cortex-webui && pnpm dev
 
-# Start AI GitHub App
-cd packages/cortex-ai-github && pnpm dev
+# Set up GitHub Apps (requires configuration)
+./github-apps-diagnostic.sh        # Check current status
+./start-github-apps.sh             # Start all GitHub apps
+./free-ports.sh all                 # Free GitHub app ports if needed
 ```
+
+### Port Configuration
+
+Cortex-OS uses a centralized port registry for development services:
+
+- **MCP Server**: 3000 (Cloudflare tunnel reserved)
+- **GitHub AI App**: 3001
+- **Semgrep App**: 3002  
+- **Structure App**: 3003
+
+Port configuration is managed via `config/ports.env` and can be customized using the `CORTEX_OS_HOME` environment variable.
 
 ### Quick Commands
 
@@ -232,6 +248,15 @@ pnpm lint                  # ESLint + Prettier
 pnpm test:coverage         # Jest with 90% threshold
 pnpm security:scan         # Semgrep OWASP analysis
 pnpm structure:validate    # Governance compliance
+
+# GitHub Apps development
+./github-apps-diagnostic.sh    # Diagnose GitHub app setup
+./start-github-apps.sh         # Start all GitHub apps
+./free-ports.sh all            # Free GitHub app ports
+
+# Port management
+./free-ports.sh list           # Show port usage
+./free-ports.sh 3001 3002     # Free specific ports
 
 # MCP development
 pnpm mcp:start             # Start MCP server

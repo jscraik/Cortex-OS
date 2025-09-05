@@ -92,8 +92,10 @@ def main():
 
     for cmd, name in test_commands:
         try:
+            # Split shell command into list for security (prevent command injection)
+            cmd_list = cmd.split() if isinstance(cmd, str) else cmd
             result = subprocess.run(
-                cmd, shell=True, check=True, capture_output=True, text=True
+                cmd_list, shell=False, check=True, capture_output=True, text=True
             )
             print(f"✅ {name}: {result.stdout.strip()}")
         except subprocess.CalledProcessError:

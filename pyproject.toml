@@ -1,7 +1,7 @@
 [project]
 name = "cortex-os"
 version = "1.0.0"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 description = "ASBR Cortex-OS Platform"
 license = { text = "MIT" }
 dependencies = [
@@ -9,6 +9,7 @@ dependencies = [
     "faiss-cpu>=1.12.0",
     "fastapi>=0.116.1",
     "gguf>=0.1.0",
+    "graphiti-core>=0.3.0",
     "httpx>=0.28.1",
     "hypothesis",
     "instructor>=1.11.2",
@@ -42,6 +43,10 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = []
+include = ["README.md"]
+
 [tool.uv]
 package = false
 
@@ -50,31 +55,51 @@ members = [
   "services/ml-inference",
   "services/data-pipeline",
   "libs/python/cortex_core",
-  "libs/python/cortex_ml"
+  "libs/python/cortex_ml",
 ]
 
 [tool.ruff]
 line-length = 88
 indent-width = 4
-target-version = "py311"
-src = ["services", "libs/python"]
+target-version = "py313"
+src = ["services", "libs/python", "packages", "apps/cortex-py", "servers/src"]
+exclude = [
+  ".venv",
+  "venv",
+  "env",
+  "node_modules",
+  "**/__pycache__/**",
+  "llama.cpp/**",
+  "**/site-packages/**",
+]
 
 [tool.ruff.lint]
-select = ["E","F","I","N","W","B","SIM","S","UP","RUF"]
+select = ["E", "F", "I", "N", "W", "B", "SIM", "S", "UP", "RUF"]
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 # Test files can use assert statements
-"**/tests/**/*.py" = ["S101","SLF001"]
-"**/test_*.py" = ["S101","SLF001"]
-"tests/*" = ["S101","SLF001"]
+"**/tests/**/*.py" = ["S101", "SLF001", "S106"]
+"**/test/**/*.py" = ["S101", "SLF001", "S106"]
+"**/*_test.py" = ["S101", "SLF001", "S106"]
+"**/test_*.py" = ["S101", "SLF001", "S106"]
+"tests/*" = ["S101", "SLF001", "S106"]
 
 # Development and infrastructure files
-"docker/**/*.py" = ["S104", "S603", "S607", "S110"]  # Allow subprocess and binding in docker utilities
-"tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in tool scripts
-"packages/mcp-bridge/src/tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in MCP bridge tools
+"docker/**/*.py" = [
+  "S104",
+  "S603",
+  "S607",
+  "S110",
+] # Allow subprocess and binding in docker utilities
+"tools/**/*.py" = ["S603", "S607"] # Allow subprocess in tool scripts
+"packages/mcp-bridge/src/tools/**/*.py" = [
+  "S603",
+  "S607",
+] # Allow subprocess in MCP bridge tools
 
 # Specific module exceptions
+
 "**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling
 "**/resource_monitor.py" = ["S108", "S110"]  # Allow temp files and exception handling
 "**/kv_cache_manager.py" = ["S301", "S108", "N801"]  # Allow pickle/temp files and mock class name
@@ -87,11 +112,11 @@ ignore = ["E501"]
 # Targeted file exceptions
 "packages/mcp-bridge/src/python/src/executor.py" = ["S603"]
 "packages/mcp-bridge/src/python/src/server.py" = ["S104"]
-"docker/mlx-server.py" = ["RUF006"]  # Background task intentionally not awaited
-"docker/gpl-tools/gpl_service.py" = ["B008"]  # FastAPI File/Form default pattern
+"docker/mlx-server.py" = ["RUF006"]                         # Background task intentionally not awaited
+"docker/gpl-tools/gpl_service.py" = ["B008"]                # FastAPI File/Form default pattern
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -109,16 +134,34 @@ namespace_packages = true
 minversion = "8.0"
 testpaths = ["tests", "services/*/tests", "libs/python/*/tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = ["--cov=services","--cov=libs/python","--cov-report=term-missing","--cov-report=xml","--cov-report=html","--cov-fail-under=80","--strict-markers","-vv"]
+addopts = [
+  "--cov=services",
+  "--cov=libs/python",
+  "--cov-report=term-missing",
+  "--cov-report=xml",
+  "--cov-report=html",
+  "--cov-fail-under=80",
+  "--strict-markers",
+  "-vv",
+]
 
 [tool.bandit]
-exclude_dirs = ["tests","*/tests/*"]
+exclude_dirs = ["tests", "*/tests/*"]
 skips = ["B101"]
 
 [tool.coverage.run]
 branch = true
 parallel = true
-omit = ["*/tests/*","*/__pycache__/*","*/site-packages/*"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/site-packages/*"]
 
 [tool.coverage.report]
-exclude_lines = ["pragma: no cover","def __repr__","if self.debug:","raise AssertionError","raise NotImplementedError","if __name__ == .__main__.:","class .*\\bProtocol\\):"," @(abc\\.)?abstractmethod"]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "class .*\\bProtocol\\):",
+  " @(abc\\.)?abstractmethod",
+]

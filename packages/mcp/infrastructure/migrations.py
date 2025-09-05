@@ -1,3 +1,4 @@
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false, reportUnknownVariableType=false
 """Database migration system using Alembic."""
 
 import asyncio
@@ -13,23 +14,26 @@ from sqlalchemy import create_engine, text
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
-from .database import DatabaseConfig, get_database_manager
-from .models import Base
+from . import models
+from .database import DatabaseConfig as _DatabaseConfig
+from .database import get_database_manager
 
-logger = get_logger(__name__)
-metrics = get_metrics_collector()
+logger: Any = get_logger(__name__)
+metrics: Any = get_metrics_collector()
 
 
 class MigrationManager:
     """Manages database migrations using Alembic."""
 
-    def __init__(self, database_config: DatabaseConfig | None = None):
-        self.db_config = database_config or DatabaseConfig()
-        self.migrations_dir = Path(__file__).parent / "migrations"
-        self.alembic_cfg = None
+    def __init__(self, database_config: Any | None = None):
+        # Treat DatabaseConfig as Any to avoid strict-typing issues
+        db_config_factory: Any = _DatabaseConfig
+        self.db_config = database_config or db_config_factory()
+        self.migrations_dir: Path = Path(__file__).parent / "migrations"
+        self.alembic_cfg: Any | None = None
         self._setup_alembic_config()
 
-    def _setup_alembic_config(self):
+    def _setup_alembic_config(self) -> None:
         """Setup Alembic configuration."""
         # Ensure migrations directory exists
         self.migrations_dir.mkdir(exist_ok=True)
@@ -41,17 +45,18 @@ class MigrationManager:
             self._create_alembic_ini(alembic_ini)
 
         # Create Alembic config
-        self.alembic_cfg = Config(str(alembic_ini))
-        self.alembic_cfg.set_main_option("script_location", str(self.migrations_dir))
+        cfg: Any = Config(str(alembic_ini))
+        self.alembic_cfg = cfg
+        cfg.set_main_option("script_location", str(self.migrations_dir))
 
         # Convert async URL to sync URL for Alembic
         sync_url = self._get_sync_database_url()
-        self.alembic_cfg.set_main_option("sqlalchemy.url", sync_url)
+        cfg.set_main_option("sqlalchemy.url", sync_url)
 
         # Setup logging
-        self.alembic_cfg.set_main_option("logger", "mcp.migrations")
+        cfg.set_main_option("logger", "mcp.migrations")
 
-    def _create_alembic_ini(self, alembic_ini_path: Path):
+    def _create_alembic_ini(self, alembic_ini_path: Path) -> None:
         """Create alembic.ini configuration file."""
         alembic_ini_content = """# Alembic configuration for MCP
 
@@ -114,7 +119,7 @@ datefmt = %Y-%m-%d %H:%M:%S
 
     def _get_sync_database_url(self) -> str:
         """Convert async database URL to sync URL for Alembic."""
-        url = self.db_config.database_url
+        url: str = str(self.db_config.database_url)
 
         # Convert async drivers to sync drivers
         url_mappings = {
@@ -129,7 +134,7 @@ datefmt = %Y-%m-%d %H:%M:%S
 
         return url
 
-    async def initialize_migrations(self):
+    async def initialize_migrations(self) -> bool:
         """Initialize migrations directory and create initial migration."""
         try:
             # Check if migrations are already initialized
@@ -139,6 +144,7 @@ datefmt = %Y-%m-%d %H:%M:%S
                 return True
 
             # Initialize Alembic
+            assert self.alembic_cfg is not None
             command.init(self.alembic_cfg, str(self.migrations_dir))
 
             # Create env.py with async support
@@ -155,7 +161,7 @@ datefmt = %Y-%m-%d %H:%M:%S
             metrics.record_error("migration_init_failed", "database")
             return False
 
-    def _create_env_py(self):
+    def _create_env_py(self) -> None:
         """Create env.py with async support."""
         env_py_path = self.migrations_dir / "env.py"
 
@@ -233,7 +239,7 @@ else:
         env_py_path.write_text(env_py_content)
         logger.info("Created async-compatible env.py")
 
-    async def _create_initial_migration(self):
+    async def _create_initial_migration(self) -> None:
         """Create initial migration with all models."""
         try:
             # Generate initial migration
@@ -275,6 +281,7 @@ else:
         try:
             # Generate migration in executor
             loop = asyncio.get_event_loop()
+            assert self.alembic_cfg is not None
             result = await loop.run_in_executor(
                 None,
                 lambda: command.revision(
@@ -293,6 +300,7 @@ else:
         """Rollback to a specific migration."""
         try:
             loop = asyncio.get_event_loop()
+            assert self.alembic_cfg is not None
             await loop.run_in_executor(
                 None, lambda: command.downgrade(self.alembic_cfg, revision)
             )
@@ -312,17 +320,21 @@ else:
 
             # Get current revision from database
             async with db_manager.get_session() as session:
-                result = await session.execute(
+                # Treat as Any for strict type checkers
+                _session: Any = session
+                result = await _session.execute(
                     text("SELECT version_num FROM alembic_version LIMIT 1")
                 )
-                current_revision = result.scalar()
+                current_revision: str | None = result.scalar()
 
             # Get script directory
-            script_dir = ScriptDirectory.from_config(self.alembic_cfg)
+            assert self.alembic_cfg is not None
+            cfg = self.alembic_cfg
+            script_dir = ScriptDirectory.from_config(cfg)
             head_revision = script_dir.get_current_head()
 
             # Get pending migrations
-            pending_migrations = []
+            pending_migrations: list[str] = []
             if current_revision != head_revision:
                 # This is simplified - in a real implementation you'd get all pending revisions
                 pending_migrations = [head_revision]
@@ -342,7 +354,9 @@ else:
     async def list_migrations(self) -> list[dict[str, Any]]:
         """List all migrations."""
         try:
-            script_dir = ScriptDirectory.from_config(self.alembic_cfg)
+            assert self.alembic_cfg is not None
+            cfg = self.alembic_cfg
+            script_dir = ScriptDirectory.from_config(cfg)
             migrations = []
 
             for revision in script_dir.walk_revisions():
@@ -368,7 +382,8 @@ else:
     async def validate_database_schema(self) -> dict[str, Any]:
         """Validate that database schema matches models."""
         try:
-            db_manager = await get_database_manager()
+            # Ensure database connectivity (manager obtained if needed)
+            await get_database_manager()
 
             # Create sync engine for Alembic operations
             sync_url = self._get_sync_database_url()
@@ -380,11 +395,14 @@ else:
 
                 # Check if current schema matches expected
                 # This is a simplified check - full implementation would compare all tables/columns
-                current_tables = set(context.get_bind().table_names())
-                expected_tables = set(Base.metadata.tables.keys())
+                current_tables: set[str] = set(context.get_bind().table_names())
+                base: Any = getattr(models, "Base", None)
+                if base is None:
+                    raise RuntimeError("models.Base not found")
+                expected_tables: set[str] = set(base.metadata.tables.keys())
 
-                missing_tables = expected_tables - current_tables
-                extra_tables = current_tables - expected_tables
+                missing_tables: set[str] = expected_tables - current_tables
+                extra_tables: set[str] = current_tables - expected_tables
 
             sync_engine.dispose()
 
@@ -412,9 +430,10 @@ else:
                 backup_path = f"/tmp/mcp_backup_{int(timestamp)}.sql"
 
             # This is a simplified backup - real implementation would use database-specific tools
-            db_manager = await get_database_manager()
+            # Ensure database connectivity (manager obtained if needed)
+            await get_database_manager()
 
-            backup_info = {
+            backup_info: dict[str, Any] = {
                 "backup_path": backup_path,
                 "timestamp": asyncio.get_event_loop().time(),
                 "database_type": self.db_config.database_url.split("://")[0],
@@ -460,19 +479,19 @@ async def get_migration_manager() -> MigrationManager:
     return _migration_manager
 
 
-async def run_migrations():
+async def run_migrations() -> bool:
     """Convenience function to run migrations."""
     migration_manager = await get_migration_manager()
     return await migration_manager.run_migrations()
 
 
-async def create_migration(message: str):
+async def create_migration(message: str) -> str | None:
     """Convenience function to create a migration."""
     migration_manager = await get_migration_manager()
     return await migration_manager.create_migration(message)
 
 
-async def get_migration_status():
+async def get_migration_status() -> dict[str, Any]:
     """Convenience function to get migration status."""
     migration_manager = await get_migration_manager()
     return await migration_manager.get_migration_status()

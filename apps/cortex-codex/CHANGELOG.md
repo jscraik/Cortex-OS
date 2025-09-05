@@ -1,5 +1,49 @@
 # Cortex CLI Changelog
 
+## [Unreleased] - 2025-09-04
+
+### ✅ COMPLETED: Task 2.2 - Provider Abstraction Layer (TDD)
+
+#### Provider Abstraction Features
+
+- **Provider Abstraction System**: Complete provider abstraction layer with unified interface
+- **Provider Registry**: Dynamic provider registration and management system
+- **Mock Providers**: Comprehensive mock implementations for OpenAI, Anthropic, and Ollama
+- **Streaming Support**: Infrastructure for streaming responses with futures integration
+- **Configuration Integration**: Provider configuration validation and error handling
+
+#### Provider Implementation Files
+
+- `core/src/providers/traits.rs` - Core ModelProvider trait with async methods
+- `core/src/providers/registry.rs` - Provider registry for dynamic provider management
+- `core/src/providers/mocks.rs` - Mock provider implementations for testing
+- `core/tests/provider_abstraction_tests.rs` - 10 comprehensive tests covering all functionality
+- Enhanced error handling with ConfigurationError variant
+
+#### Provider Testing Coverage
+
+- Provider trait implementation tests (basic operations)
+- Provider registry tests (registration, discovery, defaults)
+- Mock provider tests (OpenAI, Anthropic, Ollama behavior)
+- Streaming support tests
+- Configuration validation tests
+- Error handling tests for provider operations
+
+### ✅ COMPLETED: Task 2.1 - Chat Interface Implementation
+
+#### Chat Interface Features
+
+- **Conversation Management**: Stateful conversation handling with persistence
+- **Message History**: Message storage and retrieval system
+- **CLI Integration**: Chat subcommand with conversation state management
+
+#### Chat Implementation Files
+
+- `core/src/conversation_manager.rs` - Conversation state management
+- `core/src/message_history.rs` - Message persistence and retrieval
+- `core/tests/config_tests.rs` - Configuration validation tests
+- Enhanced chat subcommand in `cli/src/main.rs`
+
 ## [v0.1.2-chat] - 2025-09-03
 
 ### Features

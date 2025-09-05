@@ -48,6 +48,7 @@ pub use conversation_manager::NewConversation;
 pub use auth::AuthManager;
 pub use auth::CodexAuth;
 pub mod model_family;
+pub mod providers;
 mod openai_model_info;
 mod openai_tools;
 pub mod plan_tool;

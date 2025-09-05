@@ -4,25 +4,37 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 import uvicorn
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
+from rich.console import Console  # type: ignore[import-not-found]
+from rich.panel import Panel  # type: ignore[import-not-found]
+from rich.progress import (  # type: ignore[import-not-found]
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+)
+from rich.table import Table  # type: ignore[import-not-found]
 
 from ..core.server import MCPServer
 from ..tasks.task_queue import TaskQueue
 from ..webui.app import app
 
-console = Console()
+# Import and register subcommand groups (kept adjacent to other imports)
+from .auth import auth_commands
+from .plugins import plugin_commands
+from .server import server_commands
+from .tasks import task_commands
+from .tools import tool_commands
+
+console: Any = Console()
 
 
 class CLIContext:
     """Shared CLI context for MCP operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config_dir = Path.home() / ".mcp"
         self.config_file = self.config_dir / "config.json"
         self.log_level = "INFO"
@@ -31,7 +43,7 @@ class CLIContext:
         # Ensure config directory exists
         self.config_dir.mkdir(exist_ok=True)
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         """Setup logging configuration."""
         logging.basicConfig(
             level=getattr(logging, self.log_level),
@@ -58,7 +70,7 @@ cli_context = CLIContext()
 )
 @click.option("--debug", is_flag=True, help="Enable debug mode")
 @click.pass_context
-def cli(ctx, config_dir: str, log_level: str, debug: bool):
+def cli(ctx: Any, config_dir: str, log_level: str, debug: bool) -> None:
     """MCP (Model Context Protocol) management CLI.
 
     This tool provides comprehensive management capabilities for MCP servers,
@@ -85,14 +97,14 @@ def cli(ctx, config_dir: str, log_level: str, debug: bool):
 @click.option("--config-dir", default="config", help="Configuration directory")
 @click.pass_context
 def serve(
-    ctx,
+    _ctx: Any,
     host: str,
     port: int,
     workers: int,
     reload: bool,
     plugin_dir: str,
     config_dir: str,
-):
+) -> None:
     """Start the MCP web server with FastAPI interface."""
     console.print(
         Panel.fit(
@@ -132,10 +144,10 @@ def serve(
     "--format", "output_format", default="table", type=click.Choice(["table", "json"])
 )
 @click.pass_context
-def status(ctx, output_format: str):
+def status(_ctx: Any, output_format: str) -> None:
     """Show MCP system status and health information."""
 
-    async def get_status():
+    async def get_status() -> dict[str, Any]:
         try:
             # Initialize core components
             server_config = {
@@ -173,7 +185,7 @@ def status(ctx, output_format: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Checking MCP status...", total=None)
+        _task = progress.add_task("Checking MCP status...", total=None)
 
         try:
             status_info = asyncio.run(get_status())
@@ -232,7 +244,7 @@ def status(ctx, output_format: str):
 @click.option(
     "--level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"])
 )
-def logs(lines: int, follow: bool, level: str):
+def logs(lines: int, follow: bool, level: str) -> None:
     """Show MCP system logs."""
     log_file = cli_context.config_dir / "mcp.log"
 
@@ -266,12 +278,10 @@ def logs(lines: int, follow: bool, level: str):
 
 @cli.command()
 @click.confirmation_option(prompt="This will stop all MCP processes. Continue?")
-def shutdown():
+def shutdown() -> None:
     """Shutdown all MCP services gracefully."""
 
-    async def shutdown_services():
-        services = []
-
+    async def shutdown_services() -> None:
         try:
             # Initialize services that might be running
             server = MCPServer({"plugin_dir": "plugins", "config_dir": "config"})
@@ -294,7 +304,7 @@ def shutdown():
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Shutting down services...", total=None)
+        _task = progress.add_task("Shutting down services...", total=None)
 
         try:
             asyncio.run(shutdown_services())
@@ -306,7 +316,7 @@ def shutdown():
 
 
 @cli.command()
-def version():
+def version() -> None:
     """Show MCP version information."""
     version_info = {
         "mcp_version": "1.0.0",
@@ -324,13 +334,6 @@ def version():
     console.print(panel)
 
 
-# Import and register subcommand groups
-from .auth import auth_commands
-from .plugins import plugin_commands
-from .server import server_commands
-from .tasks import task_commands
-from .tools import tool_commands
-
 cli.add_command(server_commands, name="server")
 cli.add_command(tool_commands, name="tools")
 cli.add_command(plugin_commands, name="plugins")
@@ -338,7 +341,7 @@ cli.add_command(task_commands, name="tasks")
 cli.add_command(auth_commands, name="auth")
 
 
-def main():
+def main() -> None:
     """Main entry point for the CLI."""
     cli(obj={})
 

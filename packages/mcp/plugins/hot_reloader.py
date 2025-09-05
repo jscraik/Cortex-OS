@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import importlib.util
 import json
 import logging
 import os
@@ -7,9 +8,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 
 from .base import BasePlugin
 
@@ -41,19 +39,34 @@ class PluginHotReloader:
 
     def _setup_file_watcher(self) -> None:
         """Setup file watcher for hot-reloading."""
+        try:
+            events = importlib.import_module("watchdog.events")
+            observers = importlib.import_module("watchdog.observers")
+            FileSystemEventHandler = events.FileSystemEventHandler
+            Observer = observers.Observer
+        except Exception as e:  # pragma: no cover - optional dependency
+            self.logger.warning("watchdog not available, disabling auto-reload: %s", e)
+            self.auto_reload = False
+            return
 
-        class PluginFileHandler(FileSystemEventHandler):
-            def __init__(self, reloader: "PluginHotReloader"):
-                self.reloader = reloader
+        def _on_modified(self, event: Any) -> None:  # pragma: no cover - IO callback
+            if getattr(event, "src_path", "").endswith(".py"):
+                plugin_name = Path(event.src_path).stem
+                self.reloader.schedule_reload(plugin_name)
 
-            def on_modified(self, event):  # type: ignore[override]
-                if event.src_path.endswith(".py"):
-                    plugin_name = Path(event.src_path).stem
-                    self.reloader.schedule_reload(plugin_name)
+        def _init(self, reloader: "PluginHotReloader") -> None:
+            self.reloader = reloader
+
+        PluginFileHandler = type(
+            "PluginFileHandler",
+            (FileSystemEventHandler,),
+            {"__init__": _init, "on_modified": _on_modified},
+        )
 
         observer = Observer()
         observer.schedule(PluginFileHandler(self), str(self.plugin_dir), recursive=True)
         observer.start()
+        # Store observer dynamically to avoid strict typing on optional dep
         self.observer = observer
 
     def schedule_reload(self, plugin_name: str) -> None:
@@ -90,9 +103,10 @@ class PluginHotReloader:
 
     async def stop(self) -> None:
         """Stop the hot-reloader."""
-        if hasattr(self, "observer") and self.observer.is_alive():
-            self.observer.stop()
-            self.observer.join()
+        observer = getattr(self, "observer", None)
+        if observer and getattr(observer, "is_alive", lambda: False)():
+            observer.stop()
+            observer.join()
         self.logger.info("Plugin hot-reloader stopped")
 
     async def load_plugin(self, plugin_path: str) -> str:
@@ -104,9 +118,12 @@ class PluginHotReloader:
 
             # Load module
             spec = importlib.util.spec_from_file_location(manifest.name, plugin_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(
+                    f"Cannot load spec for {manifest.name} from {plugin_path}"
+                )
             module = importlib.util.module_from_spec(spec)
-            assert spec and spec.loader
-            spec.loader.exec_module(module)  # type: ignore[assignment]
+            spec.loader.exec_module(module)
 
             # Initialize plugin
             plugin_class = getattr(module, manifest.entry_point)
@@ -140,9 +157,12 @@ class PluginHotReloader:
             del self.plugins[plugin_name]
 
             spec = importlib.util.spec_from_file_location(plugin_name, plugin_file)
+            if spec is None or spec.loader is None:
+                raise ImportError(
+                    f"Cannot load spec for {plugin_name} from {plugin_file}"
+                )
             module = importlib.util.module_from_spec(spec)
-            assert spec and spec.loader
-            spec.loader.exec_module(module)  # type: ignore[assignment]
+            spec.loader.exec_module(module)
 
             plugin_class = getattr(module, self.manifests[plugin_name].entry_point)
             self.plugin_classes[plugin_name] = plugin_class
@@ -178,7 +198,6 @@ class PluginHotReloader:
 
     def _load_manifest(self, plugin_path: str) -> PluginManifest:
         """Load plugin manifest from file."""
-        plugin_name = Path(plugin_path).stem
         manifest_path = Path(plugin_path).with_name("manifest.json")
         if not manifest_path.exists():
             raise ValueError(f"Manifest not found for plugin: {plugin_path}")
@@ -188,7 +207,7 @@ class PluginHotReloader:
 
         return PluginManifest(**data)
 
-    def _get_plugin_config(self, plugin_name: str) -> dict[str, Any]:
+    def _get_plugin_config(self, _plugin_name: str) -> dict[str, Any]:
         """Get configuration for a plugin."""
         return {}
 

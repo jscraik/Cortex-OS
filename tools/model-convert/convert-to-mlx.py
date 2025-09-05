@@ -9,67 +9,70 @@ Usage:
 """
 
 import argparse
+import logging
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
 
-def check_mlxknife():
-    """Check if mlx-knife is available."""
-    try:
-        mlxknife_path = shutil.which("mlxknife")
-        if not mlxknife_path:
-            return False
-        result = subprocess.run(
-            [mlxknife_path, "--version"], capture_output=True, text=True
+
+def get_mlxknife_path() -> str:
+    """Return path to mlxknife if available, else raise error."""
+    mlxknife_path = shutil.which("mlxknife")
+    if not mlxknife_path:
+        raise FileNotFoundError(
+            "mlxknife not found. Install from https://github.com/mzau/mlx-knife.git"
         )
-        return result.returncode == 0
-    except FileNotFoundError:
-        return False
+    result = subprocess.run(
+        [mlxknife_path, "--version"], capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"mlxknife --version failed: {result.stderr}")
+    return mlxknife_path
 
 
-def convert_model(hf_model: str, output_path: str):
+def convert_model(hf_model: str, output_path: str, task: str) -> bool:
     """Convert HuggingFace model to MLX format using mlx-knife."""
-
-    if not check_mlxknife():
-        print(
-            "Error: mlx-knife not found. Install from https://github.com/mzau/mlx-knife.git"
-        )
-        sys.exit(1)
+    try:
+        mlxknife_path = get_mlxknife_path()
+    except (FileNotFoundError, RuntimeError) as err:
+        logger.error(err)
+        return False
 
     output_dir = Path(output_path)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build mlxknife command
-    mlxknife_path = shutil.which("mlxknife")
-    if not mlxknife_path:
-        print("Error: mlx-knife not found in PATH")
+    cmd = [
+        mlxknife_path,
+        "convert",
+        "--model",
+        hf_model,
+        "--output",
+        str(output_dir),
+        "--task",
+        task,
+    ]
+
+    logger.info("Converting %s to MLX format", hf_model)
+    logger.debug("Command: %s", " ".join(cmd))
+
+    process = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+    )
+    assert process.stdout is not None  # for type checkers
+    for line in process.stdout:
+        print(line, end="")
+    return_code = process.wait()
+    if return_code != 0:
+        logger.error("mlxknife conversion failed with exit code %s", return_code)
         return False
-
-    cmd = [mlxknife_path, "convert", "--model", hf_model, "--output", str(output_dir)]
-
-    # Add model-specific flags if needed
-    if "reranker" in hf_model.lower():
-        cmd.extend(["--task", "text-classification"])
-    elif "embed" in hf_model.lower() or "bge" in hf_model.lower():
-        cmd.extend(["--task", "feature-extraction"])
-
-    print(f"Converting {hf_model} to MLX format...")
-    print(f"Command: {' '.join(cmd)}")
-
-    try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
-        print(f"✅ Successfully converted {hf_model} to {output_dir}")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Error converting {hf_model}:")
-        print(f"stdout: {e.stdout}")
-        print(f"stderr: {e.stderr}")
-        return False
+    logger.info("✅ Successfully converted %s to %s", hf_model, output_dir)
+    return True
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Convert HuggingFace models to MLX format"
     )
@@ -77,12 +80,19 @@ def main():
     parser.add_argument(
         "--out", "--output", required=True, help="Output directory for MLX model"
     )
+    parser.add_argument(
+        "--task",
+        required=True,
+        choices=["feature-extraction", "text-classification"],
+        help="Task type for model conversion",
+    )
 
     args = parser.parse_args()
 
-    success = convert_model(args.hf, args.out)
+    success = convert_model(args.hf, args.out, args.task)
     sys.exit(0 if success else 1)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     main()

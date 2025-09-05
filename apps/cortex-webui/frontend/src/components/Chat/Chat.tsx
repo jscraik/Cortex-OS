@@ -2,12 +2,17 @@
 
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { generateId } from '../../../../utils/id';
 // Note: UI message shape may include extra fields like timestamp/model for display
 // compared to shared backend types.
-import { apiFetch } from '../../../utils/api-client';
-import { useChatStore } from '../../../utils/chat-store';
-import notificationStore from '../../utils/notification-store';
+import { apiFetch } from '../../utils/api-client';
+import type {
+	ChatMessage,
+	ChatMessageRole,
+	UseChatStoreApi,
+} from '../../utils/chat-store';
+import { useChatStore } from '../../utils/chat-store';
+import { generateId } from '../../utils/id';
+import { addNotification } from '../../utils/notification-store';
 import MessageInput from './MessageInput/MessageInput';
 import Messages from './Messages/Messages';
 import ModelSelector from './ModelSelector/ModelSelector';
@@ -26,24 +31,9 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 	const [imageGenerationEnabled, setImageGenerationEnabled] = useState(false);
 	const [codeInterpreterEnabled, setCodeInterpreterEnabled] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-	type ChatSettings = {
-		temperature: number;
-		maxTokens: number;
-		topP: number;
-		webSearch: boolean;
-		codeExecution: boolean;
-		memoryQuery: boolean;
-	};
+	// Chat settings are now managed inside SettingsModal tabs; local state deprecated
 
-	const [chatSettings, setChatSettings] = useState<ChatSettings>({
-		temperature: 0.7,
-		maxTokens: 1024,
-		topP: 0.9,
-		webSearch: false,
-		codeExecution: false,
-		memoryQuery: false,
-	});
-
+	const chat: UseChatStoreApi = useChatStore(sessionId);
 	const {
 		messages,
 		addMessage,
@@ -51,14 +41,14 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		deleteMessage,
 		editMessage,
 		clearMessages,
-	} = useChatStore(sessionId);
+	} = chat;
 
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const eventSourceRef = useRef<EventSource | null>(null);
 
 	// Load models from API
 	useEffect(() => {
-		const fetchModels = async () => {
+		const fetchModels = async (): Promise<void> => {
 			try {
 				const data = await apiFetch<{
 					models: { id: string; label: string }[];
@@ -79,10 +69,9 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				}
 			} catch (error: unknown) {
 				if (process.env.NODE_ENV !== 'production') {
-					// eslint-disable-next-line no-console
 					console.error('Failed to fetch models:', error);
 				}
-				notificationStore.addNotification({
+				addNotification({
 					type: 'error',
 					message: 'Failed to load models',
 				});
@@ -96,16 +85,17 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			}
 		};
 
-		fetchModels();
+		void fetchModels();
 	}, []);
 
-	const handleSendMessage = async (content: string) => {
+	const handleSendMessage = async (content: string): Promise<void> => {
 		if (!content.trim() || streaming) return;
 
 		// Add user message
-		const userMessage = {
-                        id: generateId(),
-			role: 'user',
+		const idGen = generateId as unknown as () => string;
+		const userMessage: ChatMessage = {
+			id: idGen(),
+			role: 'user' as ChatMessageRole,
 			content,
 			timestamp: Date.now(),
 			model: selectedModelIds[0],
@@ -114,10 +104,10 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		addMessage(userMessage);
 
 		// Add temporary assistant message
-                const assistantMessageId = generateId();
-		const assistantMessage = {
+		const assistantMessageId: string = idGen();
+		const assistantMessage: ChatMessage = {
 			id: assistantMessageId,
-			role: 'assistant',
+			role: 'assistant' as ChatMessageRole,
 			content: '',
 			timestamp: Date.now(),
 			model: selectedModelIds[0],
@@ -141,15 +131,26 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			// 2) Start SSE stream for assistant response
 			const es = new EventSource(
 				`/api/chat/${encodeURIComponent(sessionId)}/stream`,
-				{ withCredentials: false },
+				{
+					withCredentials: false,
+				},
 			);
 			eventSourceRef.current = es;
 
 			let accumulated = '';
-			es.onmessage = (evt) => {
+			type SsePayload =
+				| { type: 'token'; data: string }
+				| { type: 'done' }
+				| { type: string };
+			const isToken = (p: SsePayload): p is { type: 'token'; data: string } =>
+				p.type === 'token';
+
+			es.onmessage = (evt: MessageEvent) => {
 				try {
-					const payload = JSON.parse(evt.data || '{}');
-					if (payload.type === 'token' && typeof payload.data === 'string') {
+					const raw =
+						typeof evt.data === 'string' ? evt.data : String(evt.data ?? '{}');
+					const payload = JSON.parse(raw) as SsePayload;
+					if (isToken(payload)) {
 						accumulated += payload.data;
 						updateMessage(assistantMessageId, { content: accumulated });
 					} else if (payload.type === 'done') {
@@ -177,7 +178,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				updateMessage(assistantMessageId, {
 					content: 'Sorry, I encountered an error processing your request.',
 				});
-				notificationStore.addNotification({
+				addNotification({
 					type: 'error',
 					message: 'Failed to get response from AI model',
 				});
@@ -190,18 +191,16 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				(error as Record<string, unknown>).name === 'AbortError';
 			if (isAbort) {
 				if (process.env.NODE_ENV !== 'production') {
-					// eslint-disable-next-line no-console
 					console.log('Stream cancelled');
 				}
 			} else {
 				if (process.env.NODE_ENV !== 'production') {
-					// eslint-disable-next-line no-console
 					console.error('Error streaming response:', error);
 				}
 				updateMessage(assistantMessageId, {
 					content: 'Sorry, I encountered an error processing your request.',
 				});
-				notificationStore.addNotification({
+				addNotification({
 					type: 'error',
 					message: 'Failed to get response from AI model',
 				});
@@ -210,11 +209,11 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		}
 	};
 
-	const handleEditMessage = (messageId: string, content: string) => {
+	const handleEditMessage = (messageId: string, content: string): void => {
 		editMessage(messageId, content);
 	};
 
-	const handleDeleteMessage = (messageId: string) => {
+	const handleDeleteMessage = (messageId: string): void => {
 		deleteMessage(messageId);
 	};
 
@@ -233,13 +232,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		setSelectedModelIds(modelIds);
 	};
 
-	const handleSaveSettings = (settings: ChatSettings) => {
-		setChatSettings(settings);
-		notificationStore.addNotification({
-			type: 'success',
-			message: 'Chat settings saved successfully',
-		});
-	};
+	// Settings saving handled within SettingsModal; no-op here
 
 	return (
 		<div className="flex flex-col h-full">
@@ -279,7 +272,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 					</button>
 					<button
 						type="button"
-						onClick={clearMessages}
+						onClick={() => clearMessages()}
 						className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
 						aria-label="Clear chat"
 					>
@@ -320,7 +313,9 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			)}
 
 			<MessageInput
-				onSendMessage={handleSendMessage}
+				onSendMessage={(c) => {
+					void handleSendMessage(c);
+				}}
 				disabled={streaming}
 				placeholder="Type a message..."
 				files={files}
@@ -336,11 +331,9 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 			<SettingsModal
 				isOpen={isSettingsOpen}
 				onClose={() => setIsSettingsOpen(false)}
-				onSave={handleSaveSettings}
-				initialSettings={chatSettings}
 			/>
 		</div>
 	);
 };
 
-export default Chat;
+export { Chat };

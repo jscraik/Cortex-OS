@@ -647,11 +647,7 @@ class RateLimitManager:
     def _is_exempt(self, identifier: str, rule: RateLimitRule) -> bool:
         """Check if identifier is exempt from rate limiting."""
         # Check if identifier is in exempt lists
-        if identifier in rule.exempt_users or identifier in rule.exempt_ips:
-            return True
-
-        # Add more exemption logic as needed (e.g., admin roles)
-        return False
+        return identifier in rule.exempt_users or identifier in rule.exempt_ips
 
     async def reset_rate_limit(
         self, identifier: str, rule_key: str = "api_default"

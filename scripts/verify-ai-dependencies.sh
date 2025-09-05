@@ -25,7 +25,7 @@ check_python_package() {
     local package=$1
     local min_version=$2
     echo -n "Checking $package >= $min_version... "
-    
+
     if python -c "import $package; print($package.__version__)" 2>/dev/null; then
         local version=$(python -c "import $package; print($package.__version__)" 2>/dev/null)
         echo -e "${GREEN}✓ Found $version${NC}"
@@ -40,7 +40,7 @@ check_python_package() {
 check_node_package() {
     local package=$1
     echo -n "Checking Node.js package $package... "
-    
+
     if npm list $package >/dev/null 2>&1; then
         local version=$(npm list $package --depth=0 2>/dev/null | grep "$package@" | sed 's/.*@//')
         echo -e "${GREEN}✓ Found $version${NC}"
@@ -56,12 +56,12 @@ errors=0
 echo -e "${YELLOW}=== System Requirements ===${NC}"
 
 # Check Python
-echo -n "Python 3.11+... "
+echo -n "Python 3.13+... "
 if command_exists python3; then
     python_version=$(python3 --version | sed 's/Python //')
     echo -e "${GREEN}✓ $python_version${NC}"
 else
-    echo -e "${RED}✗ Python 3.11+ required${NC}"
+    echo -e "${RED}✗ Python 3.13+ required${NC}"
     ((errors++))
 fi
 

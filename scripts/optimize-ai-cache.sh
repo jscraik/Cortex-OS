@@ -34,11 +34,11 @@ move_models() {
     local src="$1"
     local dst="$2"
     local model_type="$3"
-    
+
     if [ -d "$src" ] && [ -d "$src"/*/ ] 2>/dev/null; then
         echo "📦 Moving $model_type models from $src to $dst"
         mkdir -p "$dst"
-        
+
         for model_dir in "$src"/models--*; do
             if [ -d "$model_dir" ]; then
                 model_name=$(basename "$model_dir")

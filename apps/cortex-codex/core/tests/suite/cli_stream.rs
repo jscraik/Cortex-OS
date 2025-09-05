@@ -49,8 +49,6 @@ async fn chat_mode_stream_cli() {
         server.uri()
     );
     let mut cmd = AssertCommand::new("cargo");
-    // Ensure child cargo uses the workspace rust-toolchain (nightly) and not any parent override
-    cmd.env_remove("RUSTUP_TOOLCHAIN");
     cmd.arg("run")
         .arg("-p")
         .arg("codex-cli")
@@ -115,8 +113,6 @@ async fn chat_subcommand_streams_once() {
         server.uri()
     );
     let mut cmd = AssertCommand::new("cargo");
-    // Ensure child cargo uses the workspace rust-toolchain (nightly) and not any parent override
-    cmd.env_remove("RUSTUP_TOOLCHAIN");
     cmd.arg("run")
         .arg("-p")
         .arg("codex-cli")
@@ -193,8 +189,6 @@ async fn exec_cli_applies_experimental_instructions_file() {
 
     let home = TempDir::new().unwrap();
     let mut cmd = AssertCommand::new("cargo");
-    // Ensure child cargo uses the workspace rust-toolchain (nightly) and not any parent override
-    cmd.env_remove("RUSTUP_TOOLCHAIN");
     cmd.arg("run")
         .arg("-p")
         .arg("codex-cli")
@@ -258,8 +252,6 @@ async fn responses_api_stream_cli() {
 
     let home = TempDir::new().unwrap();
     let mut cmd = AssertCommand::new("cargo");
-    // Ensure child cargo uses the workspace rust-toolchain (nightly) and not any parent override
-    cmd.env_remove("RUSTUP_TOOLCHAIN");
     cmd.arg("run")
         .arg("-p")
         .arg("codex-cli")
@@ -306,8 +298,6 @@ async fn integration_creates_and_checks_session_file() {
     // 4. Run the codex CLI through cargo (ensures the right bin is built) and invoke `exec`,
     //    which is what records a session.
     let mut cmd = AssertCommand::new("cargo");
-    // Ensure child cargo uses the workspace rust-toolchain (nightly) and not any parent override
-    cmd.env_remove("RUSTUP_TOOLCHAIN");
     cmd.arg("run")
         .arg("-p")
         .arg("codex-cli")
@@ -472,8 +462,6 @@ async fn integration_creates_and_checks_session_file() {
     let resume_path_str = path.to_string_lossy().replace('\\', "/");
     let resume_override = format!("experimental_resume=\"{resume_path_str}\"");
     let mut cmd2 = AssertCommand::new("cargo");
-    // Ensure child cargo uses the workspace rust-toolchain (nightly) and not any parent override
-    cmd2.env_remove("RUSTUP_TOOLCHAIN");
     cmd2.arg("run")
         .arg("-p")
         .arg("codex-cli")

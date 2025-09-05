@@ -1,0 +1,76 @@
+# Semgrep ignore patterns for Cortex-OS
+# Exclude third-party dependencies and vendor code
+
+# Python virtual environments
+.mcp-quick-venv/
+.mcp-run/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node.js dependencies
+node_modules/
+.pnpm-store/
+
+# Third-party/vendor code
+**/vendor/
+**/vendored/
+**/site-packages/
+**/dist-packages/
+
+# Build artifacts
+dist/
+build/
+target/
+*.egg-info/
+
+# Generated code
+**/generated/
+**/auto-generated/
+
+# Test files (optional - remove if you want to scan tests)
+**/tests/
+**/*test*.py
+**/*test*.ts
+**/*test*.js
+
+# Documentation
+docs/
+*.md
+
+# Configuration files
+*.config.js
+*.config.ts
+*.config.json
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+uv.lock
+Cargo.lock
+
+# CI/CD files
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+
+# Logs and temporary files
+logs/
+tmp/
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

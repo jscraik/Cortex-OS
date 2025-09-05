@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import logging
+import math
 import time
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol
 
@@ -10,24 +13,35 @@ import instructor
 from openai import OpenAI
 from pydantic import BaseModel
 
+logger = logging.getLogger(__name__)
+
 
 class ModelAdapter(Protocol):
+    """Protocol for model backends used by :class:`ModelRouter`."""
+
     name: str
 
     def available(self) -> bool: ...
+
     def chat(self, prompt: str, timeout: float) -> str: ...
+
     def embed(self, text: str, timeout: float) -> list[float]: ...
+
     def rerank(self, query: str, docs: list[str], timeout: float) -> list[int]: ...
 
 
 @dataclass
 class RouterConfig:
+    """Configuration for :class:`ModelRouter`."""
+
     timeout_seconds: float = 20.0
     retries: int = 1
     budget_ms: int = 10_000
 
 
 class MLXAdapter:
+    """Adapter using local MLX models when available."""
+
     name = "mlx"
 
     def __init__(self) -> None:
@@ -51,13 +65,33 @@ class MLXAdapter:
         return out
 
     def embed(self, text: str, timeout: float) -> list[float]:
-        # Placeholder embedding using simple hashing to keep deterministic without model load
-        # Not a semantic embedding; for smoke tests only
-        return [((hash(text) >> i) & 0xFFFF) / 65535.0 for i in range(0, 64, 4)]
+        """Compute a lightweight bag-of-words embedding."""
+
+        dim = 128
+        vec = [0.0] * dim
+        counts = Counter(text.lower().split())
+        for token, c in counts.items():
+            idx = hash(token) % dim
+            vec[idx] += float(c)
+        norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+        return [x / norm for x in vec]
 
     def rerank(self, query: str, docs: list[str], timeout: float) -> list[int]:
-        # Naive rerank by length similarity to query
-        scored = sorted(enumerate(docs), key=lambda x: abs(len(x[1]) - len(query)))
+        """Rerank documents by cosine similarity to the query."""
+
+        q = self.embed(query, timeout)
+
+        def cos(a: list[float], b: list[float]) -> float:
+            dot = sum(x * y for x, y in zip(a, b))
+            na = math.sqrt(sum(x * x for x in a)) or 1.0
+            nb = math.sqrt(sum(x * x for x in b)) or 1.0
+            return dot / (na * nb)
+
+        scored = []
+        for i, d in enumerate(docs):
+            e = self.embed(d, timeout)
+            scored.append((i, cos(q, e)))
+        scored.sort(key=lambda x: x[1], reverse=True)
         return [i for i, _ in scored]
 
 
@@ -66,6 +100,8 @@ class _OllamaChat(BaseModel):
 
 
 class OllamaAdapter:
+    """Adapter for an Ollama server."""
+
     name = "ollama"
 
     def __init__(
@@ -112,16 +148,13 @@ class OllamaAdapter:
         return res.data[0].embedding
 
     def rerank(self, query: str, docs: list[str], timeout: float) -> list[int]:
-        # Basic strategy: embed and cosine similarity
-        import math
-
         q = self.embed(query, timeout)
 
         def cos(a: list[float], b: list[float]) -> float:
             dot = sum(x * y for x, y in zip(a, b))
-            na = math.sqrt(sum(x * x for x in a))
-            nb = math.sqrt(sum(x * x for x in b))
-            return dot / (na * nb + 1e-9)
+            na = math.sqrt(sum(x * x for x in a)) or 1.0
+            nb = math.sqrt(sum(x * x for x in b)) or 1.0
+            return dot / (na * nb)
 
         scored = []
         for i, d in enumerate(docs):
@@ -132,9 +165,15 @@ class OllamaAdapter:
 
 
 class ModelRouter:
-    def __init__(self, config: Optional[RouterConfig] = None) -> None:
+    """Route requests to the first available model adapter."""
+
+    def __init__(
+        self,
+        config: Optional[RouterConfig] = None,
+        adapters: Optional[list[ModelAdapter]] = None,
+    ) -> None:
         self.config = config or RouterConfig()
-        self.chain: list[ModelAdapter] = [MLXAdapter(), OllamaAdapter()]
+        self.chain: list[ModelAdapter] = adapters or [MLXAdapter(), OllamaAdapter()]
 
     def _first_available(self) -> Optional[ModelAdapter]:
         for a in self.chain:
@@ -160,6 +199,7 @@ class ModelRouter:
                 }
             except Exception as e:  # pragma: no cover
                 last_err = str(e)
+                logger.exception("chat failed via %s", adapter.name)
         raise RuntimeError(last_err or "Unknown router error")
 
     def embed(self, text: str) -> Dict[str, Any]:

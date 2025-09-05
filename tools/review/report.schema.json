@@ -13,7 +13,7 @@
 				"required": ["name", "weight", "score", "notes"],
 				"properties": {
 					"name": { "type": "string" },
-					"weight": { "type": "number" },
+                                        "weight": { "type": "number", "minimum": 0, "maximum": 1 },
 					"score": { "type": "number", "minimum": 0, "maximum": 5 },
 					"notes": { "type": "array", "items": { "type": "string" } }
 				}

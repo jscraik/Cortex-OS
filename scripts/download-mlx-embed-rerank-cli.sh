@@ -31,9 +31,9 @@ echo ""
 download_model() {
     local model_repo="$1"
     local model_type="$2"
-    
+
     echo "⬇️  Downloading $model_type model: $model_repo"
-    
+
     if huggingface-cli download "$model_repo" --cache-dir "$HF_CACHE" --quiet; then
         echo "✅ Downloaded: $model_repo"
     else
@@ -47,7 +47,7 @@ echo "🔍 Downloading MLX Embedding Models..."
 
 # Qwen3 Embedding Models (MLX-optimized)
 download_model "mlx-community/Qwen3-Embedding-4B-4bit-DWQ" "embedding"
-download_model "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ" "embedding" 
+download_model "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ" "embedding"
 download_model "mlx-community/Qwen3-Embedding-8B-4bit-DWQ" "embedding"
 
 # BGE Embedding Models (MLX-optimized)
@@ -59,7 +59,7 @@ echo "🔄 Searching for MLX Reranker Models..."
 # Try to download some potential reranker models
 potential_rerankers=(
     "mlx-community/bge-reranker-base"
-    "mlx-community/bge-reranker-large" 
+    "mlx-community/bge-reranker-large"
     "mlx-community/bge-reranker-v2-m3"
 )
 
@@ -75,11 +75,11 @@ echo "=============================="
 if [ -d "$HF_CACHE/hub" ]; then
     echo "🔍 MLX Embedding Models:"
     find "$HF_CACHE/hub" -name "models--mlx-community*" -type d | grep -i "embed" | sed 's|.*models--||' | sed 's|--|/|g' | sed 's/^/  📦 /'
-    
+
     echo ""
     echo "🔄 MLX Reranker Models:"
     find "$HF_CACHE/hub" -name "models--mlx-community*" -type d | grep -i "rerank" | sed 's|.*models--||' | sed 's|--|/|g' | sed 's/^/  📦 /'
-    
+
     echo ""
     echo "📊 All MLX Embedding/Reranker Models:"
     find "$HF_CACHE/hub" -name "models--*" -type d | grep -E "(embed|rerank)" | sed 's|.*models--||' | sed 's|--|/|g' | sed 's/^/  📦 /'
