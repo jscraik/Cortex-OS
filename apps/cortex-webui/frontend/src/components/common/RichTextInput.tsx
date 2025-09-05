@@ -1,5 +1,6 @@
 'use client';
 
+import DOMPurify from 'dompurify';
 import React, { useEffect, useRef, useState } from 'react';
 
 interface RichTextInputProps {
@@ -23,14 +24,16 @@ const RichTextInput: React.FC<RichTextInputProps> = ({
   const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.innerHTML = value;
+    if (editorRef.current && value !== editorRef.current.textContent) {
+      // Use textContent instead of innerHTML to avoid XSS
+      editorRef.current.textContent = value;
     }
   }, [value]);
 
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      // Use textContent instead of innerHTML to avoid XSS
+      onChange(editorRef.current.textContent || '');
     }
   };
 

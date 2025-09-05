@@ -410,14 +410,41 @@ class RedisCacheBackend(CacheBackendInterface):
         return f"{self.config.redis_prefix}{key}"
 
     def _serialize(self, value: Any) -> bytes:
-        """Serialize value for storage."""
+        """Serialize value for storage.
+
+        WARNING: pickle serialization is used for complex objects.
+        Only use with trusted internal data.
+        """
         try:
             if self.config.serialization_format == "json":
-                serialized = json.dumps(value).encode("utf-8")
+                try:
+                    serialized = json.dumps(value).encode("utf-8")
+                except (TypeError, ValueError):
+                    # Fall back to pickle for complex objects, but log warning
+                    import logging
+
+                    logging.warning(
+                        "Failed to serialize with JSON, falling back to pickle. "
+                        "Ensure data is from trusted sources."
+                    )
+                    serialized = pickle.dumps(value)
             elif self.config.serialization_format == "pickle":
+                # Log warning about pickle usage
+                import logging
+
+                logging.debug(
+                    "Using pickle serialization - ensure data is from trusted sources"
+                )
                 serialized = pickle.dumps(value)
             else:
-                serialized = pickle.dumps(value)  # Default to pickle
+                # Default to pickle with warning
+                import logging
+
+                logging.warning(
+                    "Unknown serialization format, defaulting to pickle. "
+                    "Ensure data is from trusted sources."
+                )
+                serialized = pickle.dumps(value)
 
             # Compression for large objects
             if (
@@ -447,8 +474,14 @@ class RedisCacheBackend(CacheBackendInterface):
             if self.config.serialization_format == "json":
                 return json.loads(data.decode("utf-8"))
             elif self.config.serialization_format == "pickle":
+                logger.warning(
+                    "Using pickle deserialization - ensure data is from trusted source"
+                )
                 return pickle.loads(data)
             else:
+                logger.warning(
+                    "Using pickle deserialization as default - ensure data is from trusted source"
+                )
                 return pickle.loads(data)  # Default to pickle
 
         except Exception as e:
