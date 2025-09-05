@@ -707,7 +707,7 @@ class AdvancedCache:
         tags: Optional[list[str]] = None,
     ) -> Any:
         """Get from cache or set using factory function."""
-    value = await self.get(key)
+        value = await self.get(key)
 
         if value is not None:
             return value
@@ -789,7 +789,7 @@ class AdvancedCache:
             "invalidation_tags": len(self._invalidation_tags),
         }
 
-    async def _schedule_auto_refresh(self, key: str, current_value: Any):
+    async def _schedule_auto_refresh(self, key: str, current_value: Any) -> None:
         """Schedule auto-refresh for a cache entry."""
         if key in self._refresh_tasks:
             return  # Already scheduled
@@ -816,7 +816,7 @@ class AdvancedCache:
             finally:
                 self._refresh_tasks.pop(key, None)
 
-    self._refresh_tasks[key] = asyncio.create_task(refresh_task())
+        self._refresh_tasks[key] = asyncio.create_task(refresh_task())
 
 
 # Global cache instance
@@ -835,8 +835,10 @@ def get_cache() -> AdvancedCache:
 
 # Decorators for caching
 def cached(
-    ttl: int | None = None, tags: list[str] = None, key_func: Callable | None = None
-):
+    ttl: int | None = None,
+    tags: Optional[list[str]] = None,
+    key_func: Optional[Callable[..., Any]] = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Coroutine[Any, Any, Any]]]:
     """Decorator for caching function results."""
 
     def decorator(func):
