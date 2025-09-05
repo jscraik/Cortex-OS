@@ -35,6 +35,11 @@ export type {
 } from "./agents/test-generation-agent.js";
 export { createTestGenerationAgent } from "./agents/test-generation-agent.js";
 export type {
+        LangGraphInput,
+        LangGraphOutput,
+} from "./agents/langgraph-agent.js";
+export { createLangGraphAgent } from "./agents/langgraph-agent.js";
+export type {
 	AgentCompletedEvent,
 	AgentFailedEvent,
 	AgentStartedEvent,
