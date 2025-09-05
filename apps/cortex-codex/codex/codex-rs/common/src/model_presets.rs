@@ -11,6 +11,8 @@ pub struct ModelPreset {
     pub description: &'static str,
     /// Model slug (e.g., "gpt-5").
     pub model: &'static str,
+    /// Identifier of the model provider to use for this preset.
+    pub provider_id: &'static str,
     /// Reasoning effort to apply for this preset.
     pub effort: ReasoningEffort,
 }
@@ -26,6 +28,7 @@ pub fn builtin_model_presets() -> &'static [ModelPreset] {
             label: "gpt-5 minimal",
             description: "— fastest responses with limited reasoning; ideal for coding, instructions, or lightweight tasks",
             model: "gpt-5",
+            provider_id: "openai",
             effort: ReasoningEffort::Minimal,
         },
         ModelPreset {
@@ -33,6 +36,7 @@ pub fn builtin_model_presets() -> &'static [ModelPreset] {
             label: "gpt-5 low",
             description: "— balances speed with some reasoning; useful for straightforward queries and short explanations",
             model: "gpt-5",
+            provider_id: "openai",
             effort: ReasoningEffort::Low,
         },
         ModelPreset {
@@ -40,6 +44,7 @@ pub fn builtin_model_presets() -> &'static [ModelPreset] {
             label: "gpt-5 medium",
             description: "— default setting; provides a solid balance of reasoning depth and latency for general-purpose tasks",
             model: "gpt-5",
+            provider_id: "openai",
             effort: ReasoningEffort::Medium,
         },
         ModelPreset {
@@ -47,6 +52,7 @@ pub fn builtin_model_presets() -> &'static [ModelPreset] {
             label: "gpt-5 high",
             description: "— maximizes reasoning depth for complex or ambiguous problems",
             model: "gpt-5",
+            provider_id: "openai",
             effort: ReasoningEffort::High,
         },
     ];
