@@ -8,6 +8,7 @@ import asyncio
 import logging
 import time
 from functools import lru_cache
+from typing import Any
 
 try:
     import mlx.core as mx
