@@ -1,0 +1,6 @@
+{
+  "name": "@cortex-os/a2a-services",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": ["common", "schema-registry"]
+}

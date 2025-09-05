@@ -28,6 +28,8 @@ mise trust
 if [ "$MINIMAL" -eq 1 ]; then
     echo "Running minimal dependency install..."
     pnpm install
+    echo "Installing minimal pre-commit hooks..."
+    pre-commit install --config .pre-commit-config-lite.yaml >/dev/null 2>&1 || true
 else
     echo "Installing dependencies via mise..."
     mise run bootstrap
