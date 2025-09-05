@@ -16,7 +16,7 @@ function safeSpawn(executable, args, options) {
   if (executable.includes(';') || executable.includes('|') || executable.includes('&')) {
     throw new Error('Executable path contains potentially dangerous characters');
   }
-  // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
+  // nosemgrep: javascript.lang.security.detect-child-process.detect-child-process
   // This is safe because we validate the executable parameter above
   return spawn(executable, args, options);
 }
