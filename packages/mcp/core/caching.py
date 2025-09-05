@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 import redis.asyncio as redis
 from redis.asyncio import Redis
@@ -343,7 +343,7 @@ class RedisCacheBackend(CacheBackendInterface):
         self._lua_scripts = {}
         self._load_lua_scripts()
 
-    async def _ensure_connected(self):
+    async def _ensure_connected(self) -> Redis:
         """Ensure Redis connection is established."""
         if self.redis is None:
             self.redis = redis.Redis(
@@ -355,6 +355,7 @@ class RedisCacheBackend(CacheBackendInterface):
                 socket_connect_timeout=10.0,
                 retry_on_timeout=True,
             )
+        return self.redis
 
     def _load_lua_scripts(self):
         """Load Lua scripts for atomic operations."""
@@ -491,13 +492,13 @@ class RedisCacheBackend(CacheBackendInterface):
     async def get(self, key: str) -> Any | None:
         """Get value from Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
 
             redis_key = self._get_key(key)
             stats_key = f"{self.config.redis_prefix}stats"
 
             # Use Lua script for atomic get with stats
-            result = await self.redis.eval(
+            result = await redis_conn.eval(
                 self._lua_scripts["get_with_stats"],
                 2,
                 redis_key,
@@ -518,7 +519,7 @@ class RedisCacheBackend(CacheBackendInterface):
     async def set(self, key: str, value: Any, ttl: int = 0) -> bool:
         """Set value in Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
 
             serialized = self._serialize(value)
             size_bytes = len(serialized)
@@ -528,7 +529,7 @@ class RedisCacheBackend(CacheBackendInterface):
             stats_key = f"{self.config.redis_prefix}stats"
 
             # Use Lua script for atomic set with metadata
-            await self.redis.eval(
+            await redis_conn.eval(
                 self._lua_scripts["set_with_meta"],
                 3,
                 redis_key,
@@ -550,21 +551,21 @@ class RedisCacheBackend(CacheBackendInterface):
     async def delete(self, key: str) -> bool:
         """Delete key from Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
 
             redis_key = self._get_key(key)
             meta_key = f"{redis_key}:meta"
             stats_key = f"{self.config.redis_prefix}stats"
 
             # Get size before deletion
-            meta = await self.redis.hgetall(meta_key)
+            meta = await redis_conn.hgetall(meta_key)
             size_bytes = int(meta.get(b"size_bytes", 0))
 
-            deleted = await self.redis.delete(redis_key, meta_key)
+            deleted = await redis_conn.delete(redis_key, meta_key)
 
             if deleted > 0:
-                await self.redis.hincrby(stats_key, "deletes", 1)
-                await self.redis.hincrby(stats_key, "total_size_bytes", -size_bytes)
+                await redis_conn.hincrby(stats_key, "deletes", 1)
+                await redis_conn.hincrby(stats_key, "total_size_bytes", -size_bytes)
                 return True
 
             return False
@@ -577,9 +578,9 @@ class RedisCacheBackend(CacheBackendInterface):
     async def exists(self, key: str) -> bool:
         """Check if key exists in Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
             redis_key = self._get_key(key)
-            return bool(await self.redis.exists(redis_key))
+            return bool(await redis_conn.exists(redis_key))
         except Exception as e:
             logger.error(f"Cache exists error: {e}")
             return False
@@ -587,16 +588,16 @@ class RedisCacheBackend(CacheBackendInterface):
     async def clear(self) -> bool:
         """Clear all Redis cache entries."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
             pattern = f"{self.config.redis_prefix}*"
 
             cursor = 0
             deleted_count = 0
 
             while True:
-                cursor, keys = await self.redis.scan(cursor, match=pattern, count=100)
+                cursor, keys = await redis_conn.scan(cursor, match=pattern, count=100)
                 if keys:
-                    deleted_count += await self.redis.delete(*keys)
+                    deleted_count += await redis_conn.delete(*keys)
                 if cursor == 0:
                     break
 
@@ -610,10 +611,10 @@ class RedisCacheBackend(CacheBackendInterface):
     async def get_stats(self) -> CacheStats:
         """Get Redis cache statistics."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
             stats_key = f"{self.config.redis_prefix}stats"
 
-            stats_data = await self.redis.hgetall(stats_key)
+            stats_data = await redis_conn.hgetall(stats_key)
 
             if stats_data:
                 return CacheStats(
