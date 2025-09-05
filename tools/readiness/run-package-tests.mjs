@@ -34,8 +34,7 @@ function findPackageRoots() {
                         (dir) =>
                                 dir !== workspaceRoot &&
                                 fs.existsSync(dir) &&
-                                fs.statSync(dir).isDirectory() &&
-                                path.join(dir, "package.json") !== rootPkg,
+                                fs.statSync(dir).isDirectory(),
                 );
         // de-duplicate in case of overlaps
         return Array.from(new Set(pkgDirs));
