@@ -41,21 +41,28 @@ except ImportError as e:
 
 try:
     import instructor
-    from openai import OpenAI
     from pydantic import BaseModel
 
-    # Configure instructor client for Ollama API
-    ollama_client = instructor.from_openai(
-        OpenAI(
-            base_url="http://localhost:11434/v1",
-            api_key="ollama",
-        ),
-        mode=instructor.Mode.JSON,
-    )
+    try:
+        from cortex_ml.instructor_client import create_sync_instructor
+
+        ollama_client = create_sync_instructor()
+    except Exception:
+        # Fallback: construct directly via openai
+        from openai import OpenAI
+
+        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
+        base = OpenAI(base_url=base_url, api_key="ollama")
+        mode = getattr(getattr(instructor, "Mode", None), "JSON", None)
+        ollama_client = (
+            instructor.from_openai(base, mode=mode)
+            if mode is not None
+            else instructor.from_openai(base)
+        )
 except ImportError as e:
     logger.error("Error importing instructor dependencies: %s", e)
     logger.error("Please install with: pip install instructor openai")
-    instructor = OpenAI = BaseModel = ollama_client = None
+    instructor = BaseModel = ollama_client = None
 
 
 # Configure cache directories (defaults; runtime can override)

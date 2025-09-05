@@ -5,38 +5,39 @@ requires-python = ">=3.13"
 description = "ASBR Cortex-OS Platform"
 license = { text = "MIT" }
 dependencies = [
-    "chromadb>=1.0.20",
-    "faiss-cpu>=1.12.0",
-    "fastapi>=0.116.1",
-    "gguf>=0.1.0",
-    "graphiti-core>=0.3.0",
-    "httpx>=0.28.1",
-    "hypothesis",
-    "instructor>=1.11.2",
+  "chromadb>=1.0.20",
+  "faiss-cpu>=1.12.0",
+  "fastapi>=0.116.1",
+  "gguf>=0.1.0",
+  "graphiti-core>=0.3.0",
+  "httpx>=0.28.1",
+  "hypothesis",
+  "instructor>=1.11.2",
+  "openai>=1.52.0",
 
-    "llama-cpp-python>=0.2.90",
-    "fastapi>=0.95.0",
+  "llama-cpp-python>=0.2.90",
+  "fastapi>=0.95.0",
 
-    "graphiti-core>=0.3.0",
-    "httpx>=0.25.0",
-    "llama-cpp-python>=0.2.90",
-    "mlx>=0.30.0",
-    "mlx-lm>=0.28.0",
-    "mlx-vlm>=0.4.0",
-    "networkx>=3.0",
-    "numpy>=1.26.4",
-    "pandas>=2.1.4",
-    "prometheus-client>=0.22.1",
-    "protobuf>=4.21.0,<5.0.0",
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "qdrant-client>=1.12.1",
-    "sentence-transformers>=3.3.0",
-    "sentencepiece>=0.2.0",
-    "torch>=2.8.0",
-    "transformers>=4.55.4",
-    "uvicorn>=0.35.0",
+  "graphiti-core>=0.3.0",
+  "httpx>=0.25.0",
+  "llama-cpp-python>=0.2.90",
+  "mlx>=0.30.0",
+  "mlx-lm>=0.28.0",
+  "mlx-vlm>=0.4.0",
+  "networkx>=3.0",
+  "numpy>=1.26.4",
+  "pandas>=2.1.4",
+  "prometheus-client>=0.22.1",
+  "protobuf>=4.21.0,<5.0.0",
+  "pytest>=8.4.1",
+  "pytest-asyncio>=1.1.0",
+  "pytest-cov>=6.2.1",
+  "qdrant-client>=1.12.1",
+  "sentence-transformers>=3.3.0",
+  "sentencepiece>=0.2.0",
+  "torch>=2.8.0",
+  "transformers>=4.55.4",
+  "uvicorn>=0.35.0",
 ]
 
 [build-system]
@@ -100,14 +101,29 @@ ignore = ["E501"]
 
 # Specific module exceptions
 
-"**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling
-"**/resource_monitor.py" = ["S108", "S110"]  # Allow temp files and exception handling
-"**/kv_cache_manager.py" = ["S301", "S108", "N801"]  # Allow pickle/temp files and mock class name
-"**/tiered_model_manager.py" = ["N801"]  # Allow mock class name 'mx'
-"**/mcp_server.py" = ["S603", "S104"]  # Allow subprocess and binding for MCP servers
-"**/model_manager.py" = ["S110"]  # Allow exception handling patterns
-"**/bridge/mlx_bridge.py" = ["S301", "S108"]  # Allow pickle in test bridge
-"**/convert-to-mlx.py" = ["S603", "S607"]  # Allow subprocess in conversion tools
+"**/thermal_guard.py" = [
+  "S311",
+  "S603",
+  "S607",
+  "S110",
+] # Allow random, subprocess, and exception handling
+"**/resource_monitor.py" = [
+  "S108",
+  "S110",
+] # Allow temp files and exception handling
+"**/kv_cache_manager.py" = [
+  "S301",
+  "S108",
+  "N801",
+] # Allow pickle/temp files and mock class name
+"**/tiered_model_manager.py" = ["N801"] # Allow mock class name 'mx'
+"**/mcp_server.py" = [
+  "S603",
+  "S104",
+] # Allow subprocess and binding for MCP servers
+"**/model_manager.py" = ["S110"] # Allow exception handling patterns
+"**/bridge/mlx_bridge.py" = ["S301", "S108"] # Allow pickle in test bridge
+"**/convert-to-mlx.py" = ["S603", "S607"] # Allow subprocess in conversion tools
 
 # Targeted file exceptions
 "packages/mcp-bridge/src/python/src/executor.py" = ["S603"]

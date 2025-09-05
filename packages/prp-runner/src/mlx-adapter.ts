@@ -7,6 +7,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 
 export interface MLXConfig {
 	modelName: string;
@@ -48,6 +49,22 @@ export class MLXAdapter {
 	}
 
 	/**
+	 * Determine whether the runtime environment appears to have mlx-knife available.
+	 * We keep this extremely defensive – any error means 'not available'.
+	 */
+	private isRuntimeAvailable(): boolean {
+		// If explicit path provided and exists on FS we assume available.
+		if (this.config.knifePath && existsSync(this.config.knifePath)) return true;
+		// Best-effort PATH lookup by spawning 'which' synchronously via shell (cheap & safe in tests)
+		try {
+			const resolved = process.env.PATH?.split(":").some((p) => existsSync(`${p}/mlx-knife`));
+			return Boolean(resolved);
+		} catch {
+			return false;
+		}
+	}
+
+	/**
 	 * Validate MLX configuration
 	 */
 	private validateConfig(): void {
@@ -63,6 +80,10 @@ export class MLXAdapter {
 	 * List available MLX models
 	 */
 	async listModels(): Promise<MLXModelInfo[]> {
+		if (!this.isRuntimeAvailable()) {
+			// Return empty – caller tests can decide to skip.
+			return [];
+		}
 		try {
 			const output = await this.executeCommand(["list"]);
 			return this.parseModelList(output);
@@ -77,6 +98,7 @@ export class MLXAdapter {
 	 * Check if a specific model is available
 	 */
 	async isModelAvailable(modelName: string): Promise<boolean> {
+		if (!this.isRuntimeAvailable()) return false;
 		try {
 			// Try using mlx-knife show command first (faster than listing all models)
 			const info = await this.getModelInfo(modelName);
@@ -106,6 +128,9 @@ export class MLXAdapter {
 	 * Generate text using MLX model via mlx-knife
 	 */
 	async generate(options: MLXGenerateOptions): Promise<string> {
+		if (!this.isRuntimeAvailable()) {
+			throw new Error(`MLX runtime unavailable: cannot generate with ${this.config.modelName}`);
+		}
 		const { prompt, maxTokens = 512, temperature = 0.7 } = options;
 
 		// Get the actual model name that mlx-knife recognizes
@@ -144,6 +169,7 @@ export class MLXAdapter {
 	 * Get model information
 	 */
 	async getModelInfo(modelName?: string): Promise<MLXModelInfo | null> {
+		if (!this.isRuntimeAvailable()) return null;
 		const targetModel = modelName || this.config.modelName;
 
 		try {
@@ -158,6 +184,9 @@ export class MLXAdapter {
 	 * Check model health
 	 */
 	async checkHealth(): Promise<{ healthy: boolean; message: string }> {
+		if (!this.isRuntimeAvailable()) {
+			return { healthy: false, message: "MLX runtime unavailable" };
+		}
 		try {
 			const info = await this.getModelInfo();
 			if (!info) {

@@ -1,3 +1,29 @@
 LICENSE
 NOTICE
 COMMERCIAL-LICENSE.md
+
+# --- Legacy docs (temporary) ---
+
+# Tracked in docs/legacy-docs-normalization.md
+
+docs/legacy/**
+docs/archive/**
+docs/**/deep-dive-\*.md
+reports/**
+htmlcov/**
+node_modules/**
+**/node_modules/**
+packages/**/node_modules/**
+apps/**/node_modules/**
+servers/**/node_modules/**
+tools/**/node_modules/**
+**/CHANGELOG.md
+**/History.md
+**/HISTORY.md
+**/LICENSE
+**/NOTICE
+**/README.old.md
+**/dist/**
+coverage/**
+sbom/**
+**/generated/**

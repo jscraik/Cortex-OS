@@ -11,8 +11,9 @@ export default defineWorkspace([
 	"packages/asbr",
 	"packages/kernel",
 	"packages/mcp",
-	"packages/mcp-bridge",
-	"packages/mcp-server",
+	// Removed non-existent workspace entries causing Vitest startup errors
+	// "packages/mcp-bridge",
+	// "packages/mcp-server",
 	"packages/memories",
 	"packages/mvp",
 	"packages/mvp-core",

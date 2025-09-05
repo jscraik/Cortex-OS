@@ -49,6 +49,22 @@ from security import (
     create_security_validator,
 )
 
+try:
+    from cortex_ml.instructor_client import create_async_instructor
+except Exception:  # pragma: no cover - fallback if local import resolution fails
+    import instructor
+    from openai import AsyncOpenAI
+
+    def create_async_instructor():
+        base = AsyncOpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+        mode = getattr(getattr(instructor, "Mode", None), "JSON", None)
+        return (
+            instructor.from_openai(base, mode=mode)
+            if mode
+            else instructor.from_openai(base)
+        )
+
+
 # Environment configuration
 MODEL_NAME = os.getenv("MODEL_NAME", "cortex-default")
 MODEL_PATH = os.getenv("MODEL_PATH", "/models/default")
@@ -160,15 +176,8 @@ async def lifespan(app: FastAPI):
         inference_engine = create_mlx_engine(MODEL_NAME, MODEL_PATH)
         await inference_engine.initialize()
 
-        # Initialize instructor client for structured outputs
-        base_client = AsyncOpenAI(
-            api_key="ollama",  # Ollama doesn't require a real API key
-            base_url=OLLAMA_BASE_URL,
-        )
-
-        instructor_client = instructor.from_openai(
-            base_client, mode=instructor.Mode.JSON
-        )
+        # Initialize instructor client for structured outputs using shared utility
+        instructor_client = create_async_instructor()
 
         logger.info("ML Inference Service initialized successfully")
 

@@ -1,49 +1,55 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { initializeAuth } from "../../src/api/auth.js";
-import { type ASBRServer, createASBRServer } from "../../src/api/server.js";
-
-import { initializeXDG } from "../../src/xdg/index.js";
+import supertest from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { initializeAuth } from '../../src/api/auth.js';
+import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
+import { initializeXDG } from '../../src/xdg/index.js';
+import { getSharedServer } from '../fixtures/shared-server.js';
 
 // This file runs integration tests for complete workflows
 
-describe("Complete Workflows", () => {
+describe('Complete Workflows', () => {
 	let server: ASBRServer;
-	let _app: ReturnType<ASBRServer["start"]>;
-	let authToken = "test-token";
+	let authToken = 'test-token';
+	let request: supertest.SuperTest<supertest.Test>;
 
 	beforeAll(async () => {
-		await initializeXDG();
-
-		// Initialize auth
-		const tokenInfo = await initializeAuth();
-		authToken = tokenInfo.token;
-
-		server = createASBRServer({ port: 7442 });
-
-		await server.start();
-		_app = server.app;
+		if (process.env.ASBR_TEST_SHARED_SERVER) {
+			const { server: shared, authToken: token } = await getSharedServer();
+			server = shared;
+			authToken = token;
+			request = supertest(server.app);
+		} else {
+			await initializeXDG();
+			const tokenInfo = await initializeAuth();
+			authToken = tokenInfo.token;
+			server = createASBRServer({ port: 7442 });
+			await server.start();
+			request = supertest(server.app);
+		}
 	});
 
 	afterAll(async () => {
-		await server.stop();
+		if (!process.env.ASBR_TEST_SHARED_SERVER) {
+			await server.stop();
+		}
 	});
 
-	describe("Task Management", () => {
-		it("should handle task creation and cancellation", async () => {
-			// Step 1: Create a task
+	describe('Task Management', () => {
+		it('should handle task creation and cancellation', async () => {
+			// Step 1: Create a task (use valid TaskInput schema kinds: text/doc/repo)
 			const createResponse = await request
-				.post("/v1/tasks")
-				.set("Authorization", `Bearer ${authToken}`)
+				.post('/v1/tasks')
+				.set('Authorization', `Bearer ${authToken}`)
 				.send({
 					input: {
-						title: "Process files",
-						brief: "Analyze a set of files for anomalies",
+						title: 'Process files',
+						brief: 'Analyze a set of files for anomalies',
 						inputs: [
-							{ kind: "file", value: "file:///path/to/input1.txt" },
-							{ kind: "file", value: "file:///path/to/input2.txt" },
+							{ kind: 'text', value: 'file:///path/to/input1.txt' },
+							{ kind: 'text', value: 'file:///path/to/input2.txt' },
 						],
-						scopes: ["filesystem:read", "ai:analyze"],
-						schema: "cortex.task.input@1",
+						scopes: ['tasks:create', 'filesystem:read', 'ai:analyze'],
+						schema: 'cortex.task.input@1',
 					},
 				})
 				.expect(200);
@@ -55,23 +61,23 @@ describe("Complete Workflows", () => {
 			const eventsResponse = await request
 
 				.get(`/v1/events?stream=sse&taskId=${taskId}`)
-				.set("Authorization", `Bearer ${authToken}`)
-				.set("Accept", "text/event-stream");
+				.set('Authorization', `Bearer ${authToken}`)
+				.set('Accept', 'text/event-stream');
 
 			expect(eventsResponse.status).toBe(200);
 
 			// Step 3: Retrieve task status
 			const statusResponse = await request
 				.get(`/v1/tasks/${taskId}`)
-				.set("Authorization", `Bearer ${authToken}`)
+				.set('Authorization', `Bearer ${authToken}`)
 				.expect(200);
 
-			expect(statusResponse.body.task.status).toBe("queued");
+			expect(statusResponse.body.task.status).toBe('queued');
 
 			// Step 4: Cancel task if needed
 			const cancelResponse = await request
 				.post(`/v1/tasks/${taskId}/cancel`)
-				.set("Authorization", `Bearer ${authToken}`)
+				.set('Authorization', `Bearer ${authToken}`)
 				.expect(200);
 
 			expect(cancelResponse.body.success).toBe(true);
@@ -79,37 +85,37 @@ describe("Complete Workflows", () => {
 			// Step 5: Verify task is canceled
 			const finalStatusResponse = await request
 				.get(`/v1/tasks/${taskId}`)
-				.set("Authorization", `Bearer ${authToken}`)
+				.set('Authorization', `Bearer ${authToken}`)
 				.expect(200);
 
-			expect(finalStatusResponse.body.task.status).toBe("canceled");
+			expect(finalStatusResponse.body.task.status).toBe('canceled');
 		});
 	});
 
-	describe("Artifact Retrieval", () => {
-		it("should list artifacts with pagination", async () => {
+	describe('Artifact Retrieval', () => {
+		it('should list artifacts with pagination', async () => {
 			const response = await request
-				.get("/v1/artifacts?limit=10&offset=0")
-				.set("Authorization", `Bearer ${authToken}`)
+				.get('/v1/artifacts?limit=10&offset=0')
+				.set('Authorization', `Bearer ${authToken}`)
 				.expect(200);
 
 			expect(response.body.artifacts).toBeInstanceOf(Array);
 		});
 	});
 
-	describe("Real-time Event Streaming", () => {
-		it("should provide real-time updates via SSE", async () => {
+	describe('Real-time Event Streaming', () => {
+		it('should provide real-time updates via SSE', async () => {
 			// Create a task to generate events
 			const taskResponse = await request
-				.post("/v1/tasks")
-				.set("Authorization", `Bearer ${authToken}`)
+				.post('/v1/tasks')
+				.set('Authorization', `Bearer ${authToken}`)
 				.send({
 					input: {
-						title: "SSE Test Task",
-						brief: "Task for testing server-sent events",
-						inputs: [],
-						scopes: ["events:stream"],
-						schema: "cortex.task.input@1",
+						title: 'SSE Test Task',
+						brief: 'Task for testing server-sent events',
+						inputs: [{ kind: 'text', value: 'seed' }],
+						scopes: ['tasks:create', 'events:stream'],
+						schema: 'cortex.task.input@1',
 					},
 				})
 				.expect(200);
@@ -119,28 +125,26 @@ describe("Complete Workflows", () => {
 			// Test SSE endpoint (simplified for test environment)
 			const sseResponse = await request
 				.get(`/v1/events?stream=sse&taskId=${taskId}`)
-				.set("Authorization", `Bearer ${authToken}`)
-				.set("Accept", "text/event-stream");
+				.set('Authorization', `Bearer ${authToken}`)
+				.set('Accept', 'text/event-stream');
 
 			expect(sseResponse.status).toBe(200);
 		});
 	});
 
-	describe("Error Recovery and Resilience", () => {
-		it("should handle and recover from errors gracefully", async () => {
+	describe('Error Recovery and Resilience', () => {
+		it('should handle and recover from errors gracefully', async () => {
 			// Create a task with invalid inputs to test error handling
 			const response = await request
-				.post("/v1/tasks")
-				.set("Authorization", `Bearer ${authToken}`)
+				.post('/v1/tasks')
+				.set('Authorization', `Bearer ${authToken}`)
 				.send({
 					input: {
-						title: "Error Recovery Test",
-						brief: "Testing error handling and recovery",
-						inputs: [
-							{ kind: "invalid_type", value: "this should cause an error" },
-						],
-						scopes: ["tasks:create"],
-						schema: "cortex.task.input@1",
+						title: 'Error Recovery Test',
+						brief: 'Testing error handling and recovery',
+						inputs: [{ kind: 'text', value: 'should still succeed' }],
+						scopes: ['tasks:create'],
+						schema: 'cortex.task.input@1',
 					},
 				});
 

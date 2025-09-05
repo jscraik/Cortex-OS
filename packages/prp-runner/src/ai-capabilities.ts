@@ -11,7 +11,7 @@ import {
 	createRerankerAdapter,
 	type EmbeddingAdapter,
 	type RerankerAdapter,
-} from "./embedding-adapter.js";
+} from "./embedding-adapter";
 import {
 	checkProviderHealth,
 	configureLLM,

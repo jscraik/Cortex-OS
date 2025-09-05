@@ -8,7 +8,7 @@
 
 import type { AICoreCapabilities } from "./ai-capabilities.js";
 import { ASBRAIIntegration } from "./asbr-ai-integration.js";
-import { EmbeddingAdapter } from "./embedding-adapter.js";
+import { EmbeddingAdapter } from "./embedding-adapter";
 
 /**
  * Configuration for the unified evidence collection workflow

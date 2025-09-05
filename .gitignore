@@ -17,6 +17,10 @@ apps/cortex-webui/open-webui/
 __pycache__/
 .coverage
 coverage.xml
+**/coverage/
+coverage/
+htmlcov/
+**/htmlcov/
 
 # Environment files
 .env

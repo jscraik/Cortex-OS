@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 // Root Vitest config: only orchestrates projects. Avoid sweeping up non-Vitest
@@ -9,6 +6,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		// Strict worker limits to prevent memory exhaustion
+		fileParallelism: false, // ensure only one file runs at a time
 		maxWorkers: 1,
 		// Memory management settings
 		isolate: true,
@@ -24,7 +22,15 @@ export default defineConfig({
 		pool: "forks",
 		poolOptions: {
 			forks: {
+				// Enforce a single child process and cap memory per worker
 				singleFork: true,
+				maxForks: 1,
+				minForks: 1,
+				execArgv: [
+					"--max-old-space-size=2048",
+					"--heapsnapshot-near-heap-limit=2",
+					"--expose-gc",
+				],
 			},
 		},
 		// Ensure built artifacts never get swept into discovery
@@ -62,32 +68,10 @@ export default defineConfig({
 			all: true,
 			clean: true,
 		},
-		// Route to explicit project configs for proper isolation; filter to only
-		// include configs that actually exist on disk to avoid startup errors
-		// when packages are missing or in migration.
-		projects: (() => {
-			// Resolve candidates relative to this config file (repo root),
-			// not the process cwd (which may be a package folder when invoked via Nx).
-			const configDir = path.dirname(fileURLToPath(import.meta.url));
-			const candidates = [
-				// Minimal test suite to ensure vitest runs without external dependencies
-				path.join(configDir, "vitest.basic.config.ts"),
-			];
-
-			const existing = candidates.filter((abs) => fs.existsSync(abs));
-			const missing = candidates.filter((abs) => !fs.existsSync(abs));
-			if (missing.length > 0) {
-				// Use console.warn so it's visible during CI/test runs
-				// but do not fail the test startup because of missing per-package configs.
-				// eslint-disable-next-line no-console
-				console.warn(
-					"[vitest.config] Missing project configs:",
-					missing.map((m) => path.relative(configDir, m)),
-				);
-			}
-			// Return absolute paths so Vitest can locate them regardless of CWD
-			return existing;
-		})(),
+		// Route to explicit project config for proper isolation.
+		// Use a relative path that Vitest resolves from the repo root.
+		// @ts-expect-error projects is supported by Vitest at runtime
+		projects: ["vitest.basic.config.ts"],
 		setupFiles: ["tests/setup/vitest.setup.ts"],
 		// Quality gates enforcement
 		passWithNoTests: false,

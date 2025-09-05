@@ -1,15 +1,11 @@
 # Contributing to Cortex-OS
 
-<div align="center">
-
 [![Contributors Welcome](https://img.shields.io/badge/contributors-welcome-brightgreen.svg)](https://github.com/cortex-os/cortex-os/issues)
 [![Good First Issues](https://img.shields.io/badge/good%20first%20issues-available-blue.svg)](https://github.com/cortex-os/cortex-os/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Thank you for your interest in contributing to Cortex-OS!**  
 _Your contributions help make AI agent systems more accessible and powerful_
-
-</div>
 
 ---
 
@@ -353,6 +349,55 @@ async function processMessage(
 - Add status badges for build, coverage, and security
 - Follow GitHub's recommended README structure
 
+### Docs Style (Markdown)
+
+Follow these conventions for all `*.md` files:
+
+| Aspect            | Guideline                                                                     |
+| ----------------- | ----------------------------------------------------------------------------- |
+| Line Length       | Soft wrap allowed; no hard wraps mid-sentence unless improving diff clarity   |
+| Headings          | Use `#` through `####`; never skip levels; one H1 per document                |
+| Code Fences       | Always specify language (`bash`, `typescript`, `python`, `json`, etc.)        |
+| Tables            | Compact, align with single spaces, keep header row concise                    |
+| Links             | Prefer relative links within repo; wrap bare external URLs in angle brackets  |
+| Badges            | Group at top (README) or inside centered `<div>`; avoid excessive badges      |
+| Admonitions       | Use simple blockquotes (`> Note:` / `> Warning:`) instead of HTML             |
+| HTML              | Avoid raw HTML except for necessary alignment wrappers or diagrams            |
+| Lint Suppressions | Use `<!-- markdownlint-disable rule -->` sparingly with justification comment |
+| File Naming       | Kebab-case: `architecture-overview.md`, `quick-start.md`                      |
+| Front Matter      | Only when required by docs tooling; keep minimal                              |
+| Diagrams          | Prefer Mermaid fenced blocks (` ```mermaid `)                                 |
+| Lists             | Use `-` for unordered, `1.` for ordered; keep items concise                   |
+
+#### Examples
+
+```markdown
+> Note: This guide assumes Node.js 20+.
+
+# Show how to run coverage (example)
+
+$ pnpm test:coverage
+```
+
+#### Linting Locally
+
+```bash
+# Lint all markdown
+npx markdownlint-cli2 "**/*.md"
+
+# Lint only changed files (simulation of hook)
+git diff --name-only --diff-filter=ACM origin/main | grep -E '\.md$' | xargs npx markdownlint-cli2
+```
+
+#### Common Pitfalls
+
+| Issue                 | Fix                                              |
+| --------------------- | ------------------------------------------------ |
+| Bare URL flagged      | Wrap in `< >` or convert to `[text](url)`        |
+| Long code block lines | Acceptable if inside fenced block (rule relaxed) |
+| HTML tables           | Replace with pure markdown tables                |
+| Multiple H1 headings  | Downshift to `##` for subsequent sections        |
+
 ## 🚀 Development Workflow
 
 ### Branch Strategy
@@ -602,19 +647,18 @@ interface ComponentProps {
   className?: string;
 }
 
-export const Component: React.FC<ComponentProps> = ({
-  data,
-  onAction,
-  className
-}) => {
+export const Component: React.FC<ComponentProps> = ({ data, onAction, className }) => {
   // Use hooks for state management
   const [state, setState] = useState<StateType>(initialState);
 
   // Event handlers
-  const handleAction = useCallback((action: ActionType) => {
-    setState(prev => updateState(prev, action));
-    onAction(action);
-  }, [onAction]);
+  const handleAction = useCallback(
+    (action: ActionType) => {
+      setState((prev) => updateState(prev, action));
+      onAction(action);
+    },
+    [onAction],
+  );
 
   // Render with accessibility
   return (
@@ -674,7 +718,7 @@ What actually happened.
 
 **DO NOT** create public issues for security vulnerabilities. Instead:
 
-1. Email security@cortex-os.dev with details
+1. Email <security@cortex-os.dev> with details
 2. Include "SECURITY" in the subject line
 3. Provide detailed reproduction steps
 4. Allow us to respond before public disclosure
@@ -727,7 +771,7 @@ We follow the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUCT.md). In s
 - **GitHub Discussions**: For general questions and discussions
 - **GitHub Issues**: For bug reports and feature requests
 - **Pull Requests**: For code contributions and reviews
-- **Security Email**: security@cortex-os.dev for security issues
+- **Security Email**: <security@cortex-os.dev> for security issues
 
 ### Getting Help
 
@@ -759,8 +803,8 @@ We recognize contributions in several ways:
 
 - **General Questions**: [GitHub Discussions](https://github.com/cortex-os/cortex-os/discussions)
 - **Bug Reports**: [GitHub Issues](https://github.com/cortex-os/cortex-os/issues)
-- **Security Issues**: security@cortex-os.dev
-- **Maintainer Contact**: team@cortex-os.dev
+- **Security Issues**: <security@cortex-os.dev>
+- **Maintainer Contact**: <team@cortex-os.dev>
 
 ## 📜 License
 
@@ -768,12 +812,8 @@ By contributing to Cortex-OS, you agree that your contributions will be licensed
 
 ---
 
-<div align="center">
-
 **Thank you for contributing to Cortex-OS!** 🚀  
 _Together, we're building the future of AI agent systems_
 
 [![Contributors](https://img.shields.io/github/contributors/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/graphs/contributors)
 [![GitHub Stars](https://img.shields.io/github/stars/cortex-os/cortex-os?style=social)](https://github.com/cortex-os/cortex-os)
-
-</div>

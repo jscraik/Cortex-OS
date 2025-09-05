@@ -82,4 +82,43 @@ if [ -f .git/COMMIT_EDITMSG ]; then
     fi
 fi
 
+# 8. Markdown lint only for changed markdown files
+echo "📘 Running markdownlint on staged markdown files..."
+md_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\\.md$' || true)
+if [ -n "${md_files}" ]; then
+    # Filter out large legacy/report/security/analysis docs unless explicitly staged for cleanup
+    filtered_md_files=$(echo "${md_files}" | grep -Ev '^(docs/(analysis|reports|security|legacy)/|docs/mcp\.|docs/mlx-|docs/security/)' || true)
+    if [ -z "${filtered_md_files}" ]; then
+        echo "ℹ️  Only legacy/large docs changed; skipping markdownlint (use pnpm docs:lint:all for full scan)."
+    else
+        tmp_list=$(mktemp)
+        echo "# markdownlint-cli2 configuration input" > "$tmp_list"
+        while IFS= read -r f; do
+            if [ -f "$f" ]; then
+                echo "$f" >> "$tmp_list"
+            fi
+        done <<< "$filtered_md_files"
+        if [ -s "$tmp_list" ]; then
+            if command -v markdownlint-cli2 >/dev/null 2>&1; then
+                markdownlint-cli2 --config .markdownlint-cli2.yaml "@$tmp_list" || {
+                    echo "❌ Markdown lint failed. Fix issues or add justified suppressions."
+                    rm -f "$tmp_list"
+                    exit 1
+                }
+            else
+                npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml "@$tmp_list" || {
+                    echo "❌ Markdown lint failed. Fix issues or add justified suppressions."
+                    rm -f "$tmp_list"
+                    exit 1
+                }
+            fi
+        else
+            echo "ℹ️  No curated markdown files to lint (filtered)."
+        fi
+        rm -f "$tmp_list"
+    fi
+else
+    echo "ℹ️  No staged markdown files to lint."
+fi
+
 echo "✅ All pre-commit checks passed!"
