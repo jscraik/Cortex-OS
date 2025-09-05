@@ -148,16 +148,6 @@ export abstract class BaseGate {
 			// Execute automated checks
 			const automatedResults = await this.runAutomatedChecks(context);
 
-			// Collect evidence from checks
-			for (const result of automatedResults) {
-				if (result.evidence) {
-					for (const evidenceItem of result.evidence) {
-						evidence.push(evidenceItem.id);
-						// Evidence should be added to context.state.evidence by the check
-					}
-				}
-			}
-
 			// Determine if human approval is required
 			const needsApproval = this.requiresHumanApproval && this.shouldRequestApproval(automatedResults);
 
