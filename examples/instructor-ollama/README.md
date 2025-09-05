@@ -1,12 +1,12 @@
 # Instructor + Ollama Example
 
-This example demonstrates using the [OpenAI Instructor](https://github.com/jxnl/instructor) library with a local [Ollama](https://ollama.com) instance running the `gpt-oss` model.
+This example demonstrates using the [OpenAI Instructor](https://github.com/jxnl/instructor) library with a local [Ollama](https://ollama.com) instance. By default it targets the `qwen3-coder:30b` model but you can override the model list via the `OLLAMA_MODELS` environment variable.
 
 ## Prerequisites
 
 - Python 3.11+
 - Ollama installed and running
-- `gpt-oss` model available: `ollama pull gpt-oss:20b`
+- `qwen3-coder:30b` model available: `ollama pull qwen3-coder:30b`
 
 ## Install Dependencies
 
