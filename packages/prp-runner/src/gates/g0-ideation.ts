@@ -87,7 +87,12 @@ class DuplicationCheck implements AutomatedCheck {
 	name = "duplication-check";
 	description = "Check for duplicate work against existing backlog";
 
-	async execute(context: GateContext) {
+	async execute(context: GateContext): Promise<{
+		status: "pass" | "fail" | "skip";
+		output?: string;
+		duration?: number;
+		evidence?: Evidence[];
+	}> {
 		// For now, this is a placeholder - in production would integrate with GitHub Issues API
 		const evidence = [{
 			id: nanoid(),
