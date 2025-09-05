@@ -1,82 +1,25 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "Cortex-OS Egress Allowlist Policy",
-	"description": "Defines allowed external hosts for frontier API access",
-	"type": "object",
-	"properties": {
-		"version": {
-			"type": "string",
-			"const": "1.0"
-		},
-		"policy": {
-			"type": "object",
-			"properties": {
-				"privacy_mode": {
-					"type": "boolean",
-					"description": "When true, blocks all frontier egress"
-				},
-				"frontier_providers": {
-					"type": "array",
-					"items": {
-						"type": "object",
-						"properties": {
-							"name": {
-								"type": "string"
-							},
-							"hosts": {
-								"type": "array",
-								"items": {
-									"type": "string",
-									"format": "hostname"
-								}
-							},
-							"rate_limit": {
-								"type": "object",
-								"properties": {
-									"requests_per_minute": {
-										"type": "integer",
-										"minimum": 1
-									},
-									"tokens_per_day": {
-										"type": "integer",
-										"minimum": 1
-									}
-								},
-								"required": ["requests_per_minute"]
-							}
-						},
-						"required": ["name", "hosts"]
-					}
-				}
-			},
-			"required": ["privacy_mode", "frontier_providers"]
-		}
-	},
-	"required": ["version", "policy"],
-	"examples": [
-		{
-			"version": "1.0",
-			"policy": {
-				"privacy_mode": false,
-				"frontier_providers": [
-					{
-						"name": "anthropic",
-						"hosts": ["api.anthropic.com"],
-						"rate_limit": {
-							"requests_per_minute": 60,
-							"tokens_per_day": 1000000
-						}
-					},
-					{
-						"name": "openai",
-						"hosts": ["api.openai.com"],
-						"rate_limit": {
-							"requests_per_minute": 100,
-							"tokens_per_day": 2000000
-						}
-					}
-				]
-			}
-		}
-	]
+  "$schema": "../schemas/egress.allowlist.schema.json",
+  "version": "1.0",
+  "policy": {
+    "privacy_mode": false,
+    "frontier_providers": [
+      {
+        "name": "anthropic",
+        "hosts": ["api.anthropic.com"],
+        "rate_limit": {
+          "requests_per_minute": 60,
+          "tokens_per_day": 1000000
+        }
+      },
+      {
+        "name": "openai",
+        "hosts": ["api.openai.com"],
+        "rate_limit": {
+          "requests_per_minute": 100,
+          "tokens_per_day": 2000000
+        }
+      }
+    ]
+  }
 }
