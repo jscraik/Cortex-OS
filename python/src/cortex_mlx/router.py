@@ -68,11 +68,22 @@ class _OllamaChat(BaseModel):
 class OllamaAdapter:
     name = "ollama"
 
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3") -> None:
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434",
+        model: str = "llama3",
+        api_key: str = "ollama",
+    ) -> None:
+        """
+        Args:
+            base_url: The base URL for the Ollama instance.
+            model: The model name to use.
+            api_key: The API key for authentication. Default is "ollama", which is expected for local Ollama instances.
+        """
         self.base_url = base_url
         self.model = model
         self._client = instructor.from_openai(
-            OpenAI(base_url=f"{base_url}/v1", api_key="ollama"),
+            OpenAI(base_url=f"{base_url}/v1", api_key=api_key),
             mode=instructor.Mode.JSON,
         )
 
