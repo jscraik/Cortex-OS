@@ -16,6 +16,7 @@ const schemaMap: Record<string, string> = {
 	"agents.mandates.json": ".cortex/schemas/mandates.schema.json",
 	"mcp-governance.json": ".cortex/schemas/mcp-governance.schema.json",
 	"model-gateway.json": ".cortex/schemas/policy.tools.schema.json",
+	"egress.allowlist.json": ".cortex/schemas/egress.allowlist.schema.json",
 };
 
 async function main() {
