@@ -8,6 +8,7 @@
 	},
 	"type": "module",
 	"scripts": {
+        "postinstall": "bash -lc 'scripts/ensure-efficiency-tools.sh || true'",
 		"readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
 		"readiness:check": "node tools/readiness/check-readiness.mjs",
 		"archive:docs:dry": "node scripts/maintenance/relocate-files.mjs --dry",

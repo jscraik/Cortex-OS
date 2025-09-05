@@ -4,6 +4,13 @@ set -euo pipefail
 # Pre-commit hooks for Cortex-OS
 # Ensures code quality and standards before commits
 
+# Ensure efficiency tools are installed (no-op in CI)
+if [ "${CI:-}" != "true" ] && [ "${GITHUB_ACTIONS:-}" != "true" ]; then
+    if [ -x scripts/ensure-efficiency-tools.sh ]; then
+        scripts/ensure-efficiency-tools.sh || true
+    fi
+fi
+
 echo "🔍 Running pre-commit checks..."
 
 # 1. Check for secrets and sensitive data
