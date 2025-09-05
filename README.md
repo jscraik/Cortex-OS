@@ -102,7 +102,7 @@ Cortex-OS uses a centralized port registry for development services:
 
 - **MCP Server**: 3000 (Cloudflare tunnel reserved)
 - **GitHub AI App**: 3001
-- **Semgrep App**: 3002  
+- **Semgrep App**: 3002
 - **Structure App**: 3003
 
 Port configuration is managed via `config/ports.env` and can be customized using the `CORTEX_OS_HOME` environment variable.
@@ -158,13 +158,13 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 
 ### 📦 Package Categories
 
-| Category           | Purpose                  | Key Packages                              |
-| ------------------ | ------------------------ | ----------------------------------------- |
+| Category           | Purpose                  | Key Packages                               |
+| ------------------ | ------------------------ | ------------------------------------------ |
 | **Applications**   | User-facing interfaces   | `cortex-os`, `cortex-code`, `cortex-webui` |
-| **Communication**  | Agent-to-agent messaging | `a2a`, `mcp`, `orchestration`             |
-| **Intelligence**   | AI capabilities          | `agents`, `rag`, `cortex-ai-github`       |
-| **Infrastructure** | Core services            | `memories`, `security`, `registry`        |
-| **Governance**     | Validation & policies    | `.cortex/`, quality gates                 |
+| **Communication**  | Agent-to-agent messaging | `a2a`, `mcp`, `orchestration`              |
+| **Intelligence**   | AI capabilities          | `agents`, `rag`, `cortex-ai-github`        |
+| **Infrastructure** | Core services            | `memories`, `security`, `registry`         |
+| **Governance**     | Validation & policies    | `.cortex/`, quality gates                  |
 
 ### 🔄 Communication Patterns
 
@@ -195,7 +195,7 @@ Cortex-OS implements a **governed monorepo architecture** with strict separation
 | Package                                          | Description                  | Documentation                                   |
 | ------------------------------------------------ | ---------------------------- | ----------------------------------------------- |
 | [cortex-ai-github](./packages/cortex-ai-github/) | AI-powered GitHub automation | [README](./packages/cortex-ai-github/README.md) |
-| [cortex-code](./apps/cortex-code/)                 | Terminal user interface      | [README](./apps/cortex-code/README.md)           |
+| [cortex-code](./apps/cortex-code/)               | Terminal user interface      | [README](./apps/cortex-code/README.md)          |
 | [a2a](./packages/a2a/)                           | Agent-to-agent communication | [README](./packages/a2a/README.md)              |
 | [mcp](./packages/mcp/)                           | Model Context Protocol       | [README](./packages/mcp/README.md)              |
 | [orchestration](./packages/orchestration/)       | Multi-agent workflows        | [README](./packages/orchestration/README.md)    |
