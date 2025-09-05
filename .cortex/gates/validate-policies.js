@@ -15,6 +15,8 @@ const schemaMapping = {
 	"agents.mandates.json": "mandates.schema.json",
 	"policy.agents.json": "policy.agents.schema.json",
 	"policy.repo.json": "policy.repo.schema.json",
+	"model-gateway.json": "policy.tools.schema.json",
+	"egress.allowlist.json": "egress.allowlist.schema.json",
 };
 
 // Validate all policy files
