@@ -62,6 +62,22 @@ export CORTEX_OS_HOME="$HOME/.Cortex-OS"
 pnpm readiness:check
 ```
 
+### Efficiency Tools Auto-Setup
+
+This repo auto-ensures a small set of CLI tools that speed up development (e.g., `ripgrep`, `ctags`, `hyperfine`, `delta`, `gitleaks`, `semgrep`, `codeql`, `src`).
+
+- Auto-run points: `postinstall`, `post-checkout`, `post-merge`, and `pre-commit` will quietly ensure required tools are present.
+- Hooks path: `postinstall` configures `git config --local core.hooksPath .githooks` (skipped in CI) so Git uses our hooks.
+- Opt-out: set `CORTEX_EFFICIENCY_SETUP_SKIP=1` to skip all auto-ensure behavior (useful for constrained or managed environments).
+- Manual commands:
+
+```bash
+pnpm ensure:tools   # Check and install missing tools
+pnpm install:tools  # Force-install tools without checks
+```
+
+If you prefer not to modify your environment, export `CORTEX_EFFICIENCY_SETUP_SKIP=1` before `pnpm install` and in your shell profile.
+
 ### Development Server
 
 ```bash
