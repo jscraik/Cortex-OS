@@ -8,9 +8,17 @@
 set -euo pipefail
 
 MINIMAL=0
+usage() {
+    echo "Usage: $0 [--minimal] [--help]"
+    echo
+    echo "  --minimal   Install dependencies without git hooks or extra tooling."
+    echo "  --help      Show this help message and exit."
+}
 for arg in "$@"; do
     case "$arg" in
         --minimal) MINIMAL=1 ;;
+        --help) usage; exit 0 ;;
+        *) echo "Unknown option: $arg" >&2; usage >&2; exit 1 ;;
     esac
 done
 
