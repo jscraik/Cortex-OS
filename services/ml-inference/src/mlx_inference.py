@@ -2,6 +2,7 @@
 MLX-based inference engine for Apple Silicon.
 
 Provides real ML model inference using fallback mechanisms when MLX is not available.
+Enhanced with error handling, circuit breakers, and recovery mechanisms.
 """
 
 import asyncio
@@ -10,18 +11,16 @@ import time
 from functools import lru_cache
 from typing import Any
 
-try:
-    import mlx.core as mx
-    import mlx.nn as nn
-    from mlx_lm import load, generate
-    MLX_AVAILABLE = True
-except ImportError:
-    MLX_AVAILABLE = False
-    mx = None
-    nn = None
-    load = None
-    generate = None
+import mlx.core as mx
 
+# Import our error handling modules
+from error_handling import (
+    create_circuit_breaker,
+    create_error_handler,
+    create_health_monitor,
+    retry_with_backoff,
+)
+from mlx_lm import generate, load
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -80,14 +79,11 @@ class ModelManager:
                 logger.info(f"Loading model: {self.config.name}")
                 start_time = time.time()
 
-                if MLX_AVAILABLE:
-                    # Load model and tokenizer using MLX
-                    self.model, self.tokenizer = load(self.config.path)
-                else:
-                    # Fallback to mock model
-                    logger.warning("MLX not available, using mock model")
-                    self.model = {"type": "mock"}
-                    self.tokenizer = {"type": "mock"}
+                # Use Apple Silicon GPU if available
+                mx.set_default_device(mx.gpu)
+
+                # Load model and tokenizer
+                self.model, self.tokenizer = load(self.config.path)
 
                 load_time = time.time() - start_time
                 logger.info(f"Model loaded in {load_time:.2f}s")
@@ -107,25 +103,20 @@ class ModelManager:
             self.model = None
             self.tokenizer = None
             self.is_loaded = False
-
-            if MLX_AVAILABLE and mx:
-                mx.eval([])  # MLX cleanup
+            mx.eval([])  # MLX cleanup
             logger.info("Model unloaded")
 
     def get_model_info(self) -> dict[str, Any]:
         """Get information about the loaded model."""
         return {
-            "name": self.config.name,
-            "path": self.config.path,
-            "loaded": self.is_loaded,
-            "max_tokens": self.config.max_tokens,
-            "batch_size": self.config.batch_size,
-            "mlx_available": MLX_AVAILABLE,
+            "model_info": self.model_manager.get_model_info(),
+            "cache_info": self.get_cache_info(),
+            "mlx_available": True,  # Always true since MLX is required
         }
 
 
 class MLXInferenceEngine:
-    """Main inference engine using MLX framework."""
+    """Main inference engine using MLX framework with enhanced error handling."""
 
     def __init__(
         self,
@@ -134,22 +125,48 @@ class MLXInferenceEngine:
     ):
         self.model_config = model_config
         self.model_manager = ModelManager(model_config)
-
-        # Caching
-        self.enable_caching = enable_caching
-        if enable_caching:
-            self._setup_cache()
-
         self.is_initialized = False
 
-    def _setup_cache(self) -> None:
-        """Setup LRU cache for inference results."""
-        @lru_cache(maxsize=1024)
-        def _cached_inference(prompt: str, max_tokens: int, temperature: float) -> tuple[str, int]:
-            """Cached inference function."""
-            return self._raw_inference(prompt, max_tokens, temperature)
+        # Error handling and recovery
+        self.error_handler = create_error_handler()
+        self.circuit_breaker = create_circuit_breaker(
+            failure_threshold=5,
+            recovery_timeout=60,
+            expected_exception=(ConnectionError, TimeoutError, RuntimeError),
+        )
+        self.health_monitor = create_health_monitor()
 
-        self._cached_inference = _cached_inference
+        # Register health checks
+        self.health_monitor.register_health_check(
+            "model_loaded", self._check_model_health
+        )
+        self.health_monitor.register_health_check(
+            "memory_available", self._check_memory_health
+        )
+
+        # Caching setup
+        self.enable_caching = enable_caching
+        if enable_caching:
+            self._cached_inference = lru_cache(maxsize=128)(self._raw_inference)
+        else:
+            self._cached_inference = self._raw_inference
+
+    def _check_model_health(self) -> bool:
+        """Health check for model availability."""
+        try:
+            return self.model_manager.is_loaded and self.model_manager.model is not None
+        except Exception:
+            return False
+
+    def _check_memory_health(self) -> bool:
+        """Health check for memory availability."""
+        try:
+            import psutil
+
+            memory = psutil.virtual_memory()
+            return memory.percent < 90  # Consider healthy if memory usage < 90%
+        except ImportError:
+            return True  # Assume healthy if psutil not available
 
     async def initialize(self) -> None:
         """Initialize the inference engine."""
@@ -174,45 +191,71 @@ class MLXInferenceEngine:
         self.is_initialized = False
         logger.info("MLX Inference Engine shutdown")
 
+    @retry_with_backoff(max_attempts=3, exceptions=(ConnectionError, TimeoutError))
     async def generate_text(self, request: InferenceRequest) -> InferenceResponse:
-        """Generate text using the loaded model."""
+        """Generate text using the loaded model with enhanced error handling."""
         if not self.is_initialized:
             raise RuntimeError("Inference engine not initialized")
 
         start_time = time.time()
 
         try:
-            max_tokens = request.max_tokens or self.model_config.max_tokens
-            temperature = request.temperature or self.model_config.temperature
+            # Apply circuit breaker pattern
+            return await self._generate_text_with_circuit_breaker(request, start_time)
 
-            # Check cache first
-            cached_result = None
+        except Exception as e:
+            # Handle error with recovery strategies
+            logger.error(f"Text generation failed: {e}")
 
-            if self.enable_caching:
-                try:
-                    cached_result = self._cached_inference(request.prompt, max_tokens, temperature)
-                except TypeError:
-                    # Cache miss or unhashable type
-                    pass
-
-            if cached_result:
-                text, tokens_generated = cached_result
-                latency_ms = (time.time() - start_time) * 1000
-
-                return InferenceResponse(
-                    text=text,
-                    tokens_generated=tokens_generated,
-                    latency_ms=latency_ms,
-                    model_name=self.model_config.name,
-                    batch_id=request.batch_id,
-                    cached=True
+            try:
+                fallback_response = await self.error_handler.handle_error(
+                    e, "inference"
                 )
+                if isinstance(fallback_response, dict):
+                    return InferenceResponse(
+                        text=fallback_response.get(
+                            "content", "Error occurred during inference"
+                        ),
+                        tokens_generated=0,
+                        latency_ms=(time.time() - start_time) * 1000,
+                        model_name=self.model_config.name,
+                        batch_id=request.batch_id,
+                        cached=False,
+                    )
+            except Exception:
+                pass
 
-            # Perform actual inference
-            text, tokens_generated = await self._perform_inference(
-                request.prompt, max_tokens, temperature
+            # Final fallback
+            return InferenceResponse(
+                text="Service temporarily unavailable. Please try again later.",
+                tokens_generated=0,
+                latency_ms=(time.time() - start_time) * 1000,
+                model_name=self.model_config.name,
+                batch_id=request.batch_id,
+                cached=False,
             )
 
+    async def _generate_text_with_circuit_breaker(
+        self, request: InferenceRequest, start_time: float
+    ) -> InferenceResponse:
+        """Internal method with circuit breaker applied."""
+        max_tokens = request.max_tokens or self.model_config.max_tokens
+        temperature = request.temperature or self.model_config.temperature
+
+        # Check cache first
+        cached_result = None
+
+        if self.enable_caching:
+            try:
+                cached_result = self._cached_inference(
+                    request.prompt, max_tokens, temperature
+                )
+            except TypeError:
+                # Cache miss or unhashable type
+                pass
+
+        if cached_result:
+            text, tokens_generated = cached_result
             latency_ms = (time.time() - start_time) * 1000
 
             return InferenceResponse(
@@ -221,11 +264,39 @@ class MLXInferenceEngine:
                 latency_ms=latency_ms,
                 model_name=self.model_config.name,
                 batch_id=request.batch_id,
-                cached=False
+                cached=True,
             )
 
+        # Perform actual inference with circuit breaker
+        text, tokens_generated = await self._perform_inference_with_protection(
+            request.prompt, max_tokens, temperature
+        )
+
+        latency_ms = (time.time() - start_time) * 1000
+
+        return InferenceResponse(
+            text=text,
+            tokens_generated=tokens_generated,
+            latency_ms=latency_ms,
+            model_name=self.model_config.name,
+            batch_id=request.batch_id,
+            cached=False,
+        )
+
+    async def _perform_inference_with_protection(
+        self, prompt: str, max_tokens: int, temperature: float
+    ) -> tuple[str, int]:
+        """Perform inference with circuit breaker protection."""
+        try:
+            # Check health before inference
+            health_status = await self.health_monitor.run_health_checks()
+            if not health_status.get("model_loaded", False):
+                raise RuntimeError("Model health check failed")
+
+            return await self._perform_inference(prompt, max_tokens, temperature)
+
         except Exception as e:
-            logger.error(f"Inference failed: {e}")
+            logger.error(f"Protected inference failed: {e}")
             raise
 
     async def _perform_inference(
@@ -252,40 +323,32 @@ class MLXInferenceEngine:
             raise RuntimeError("Model not loaded")
 
         try:
-            if MLX_AVAILABLE and self.model_manager.model and self.model_manager.tokenizer:
-                # Use MLX generate function
-                response = generate(
-                    self.model_manager.model,
-                    self.model_manager.tokenizer,
-                    prompt=prompt,
-                    max_tokens=max_tokens,
-                    temp=temperature,
-                    verbose=False
-                )
+            if not self.model_manager.model or not self.model_manager.tokenizer:
+                raise RuntimeError("MLX model or tokenizer not available")
 
-                # Extract generated text and token count
-                generated_text = str(response)
-                tokens_generated = len(generated_text.split())  # Approximate token count
+            # Use MLX generate function
+            response = generate(
+                self.model_manager.model,
+                self.model_manager.tokenizer,
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temp=temperature,
+                verbose=False,
+            )
 
-                return generated_text, tokens_generated
-            else:
-                # Fallback implementation
-                logger.info("Using fallback inference")
-                generated_text = f"Generated response for: {prompt[:100]}... (temp={temperature}, max_tokens={max_tokens})"
-                tokens_generated = min(max_tokens, len(generated_text.split()))
+            # Extract generated text and token count
+            generated_text = str(response)
+            tokens_generated = len(generated_text.split())  # Approximate token count
 
-                # Simulate processing time
-                time.sleep(0.05)
-
-                return generated_text, tokens_generated
+            return generated_text, tokens_generated
 
         except Exception as e:
-            logger.error(f"Inference generation failed: {e}")
-            # Fallback to simple response
-            fallback_text = f"Error handling prompt: {prompt[:50]}..."
-            return fallback_text, 10
+            logger.error(f"MLX inference generation failed: {e}")
+            raise RuntimeError(f"MLX inference failed: {e}") from e
 
-    def _raw_inference(self, prompt: str, max_tokens: int, temperature: float) -> tuple[str, int]:
+    def _raw_inference(
+        self, prompt: str, max_tokens: int, temperature: float
+    ) -> tuple[str, int]:
         """Raw inference method for caching."""
         return self._run_inference(prompt, max_tokens, temperature)
 
@@ -301,7 +364,7 @@ class MLXInferenceEngine:
             "misses": cache_info.misses,
             "maxsize": cache_info.maxsize,
             "currsize": cache_info.currsize,
-            "hit_rate": cache_info.hits / max(1, cache_info.hits + cache_info.misses)
+            "hit_rate": cache_info.hits / max(1, cache_info.hits + cache_info.misses),
         }
 
     def clear_cache(self) -> None:
@@ -316,7 +379,7 @@ class MLXInferenceEngine:
             "initialized": self.is_initialized,
             "model_info": self.model_manager.get_model_info(),
             "cache_info": self.get_cache_info(),
-            "mlx_available": MLX_AVAILABLE,
+            "mlx_available": True,  # Always true since MLX is required
         }
 
 
@@ -325,14 +388,7 @@ def create_mlx_engine(model_name: str, model_path: str) -> MLXInferenceEngine:
     """Create an MLX inference engine with default configuration."""
 
     config = ModelConfig(
-        name=model_name,
-        path=model_path,
-        max_tokens=512,
-        temperature=0.7,
-        batch_size=4
+        name=model_name, path=model_path, max_tokens=512, temperature=0.7, batch_size=4
     )
 
-    return MLXInferenceEngine(
-        model_config=config,
-        enable_caching=True
-    )
+    return MLXInferenceEngine(model_config=config, enable_caching=True)

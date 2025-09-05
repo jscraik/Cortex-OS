@@ -1,0 +1,82 @@
+groups:
+  - name: ml_inference_alerts
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(ml_inference_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in ML inference service"
+          description: "Error rate is {{ $value }} errors per second"
+
+      # Circuit breaker open
+      - alert: CircuitBreakerOpen
+        expr: ml_inference_circuit_breaker_state == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Circuit breaker is open"
+          description: "ML inference circuit breaker has been open for more than 1 minute"
+
+      # High response time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(ml_inference_request_duration_seconds_bucket[5m])) > 10
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time in ML inference"
+          description: "95th percentile response time is {{ $value }} seconds"
+
+      # Memory usage high
+      - alert: HighMemoryUsage
+        expr: ml_inference_memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job="ml-inference"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ML inference service is down"
+          description: "ML inference service has been down for more than 1 minute"
+
+      # Low health score
+      - alert: LowHealthScore
+        expr: ml_inference_health_score < 70
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low health score"
+          description: "Health score is {{ $value }}%"
+
+      # Queue size high
+      - alert: HighQueueSize
+        expr: ml_inference_queue_size > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High queue size"
+          description: "Request queue size is {{ $value }}"
+
+      # Too many retries
+      - alert: HighRetryRate
+        expr: rate(ml_inference_retries_total[5m]) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High retry rate"
+          description: "Retry rate is {{ $value }} retries per second"

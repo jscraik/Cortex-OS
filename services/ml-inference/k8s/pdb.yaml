@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ml-inference-pdb
+  namespace: cortex-os
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: ml-inference

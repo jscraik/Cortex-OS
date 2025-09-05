@@ -6,9 +6,9 @@ Supports multiple model types and uses ExternalSSD cache
 
 import argparse
 import json
+import logging
 import os
 import sys
-import logging
 
 # Constants
 DEFAULT_MAX_LENGTH = 512
@@ -39,11 +39,36 @@ except ImportError as e:
     torch = None
     AutoModel = AutoTokenizer = None
 
+try:
+    import instructor
+    from openai import OpenAI
+    from pydantic import BaseModel
+
+    # Configure instructor client for Ollama API
+    ollama_client = instructor.from_openai(
+        OpenAI(
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+        ),
+        mode=instructor.Mode.JSON,
+    )
+except ImportError as e:
+    logger.error("Error importing instructor dependencies: %s", e)
+    logger.error("Please install with: pip install instructor openai")
+    instructor = OpenAI = BaseModel = ollama_client = None
+
 
 # Configure cache directories (defaults; runtime can override)
 os.environ.setdefault("HF_HOME", DEFAULT_CACHE_DIR)
 os.environ.setdefault("TRANSFORMERS_CACHE", DEFAULT_CACHE_DIR)
 os.environ.setdefault("MLX_CACHE_DIR", DEFAULT_MLX_CACHE_DIR)
+
+
+class ChatResponse(BaseModel):
+    """Structured chat response model for instructor validation"""
+
+    content: str
+    usage: dict[str, int]
 
 
 class MLXUnified:
@@ -139,7 +164,7 @@ class MLXUnified:
         max_tokens: int = DEFAULT_MAX_TOKENS,
         temperature: float = DEFAULT_TEMPERATURE,
     ) -> dict[str, str | dict[str, int]]:
-        """Generate chat completion"""
+        """Generate chat completion using instructor for structured outputs"""
         if not self.model or self.model_type != "chat":
             raise ValueError("Chat model not loaded")
 
@@ -152,6 +177,38 @@ class MLXUnified:
                     "Each message must be a dict with 'role' and 'content' keys"
                 )
 
+        try:
+            # Use instructor with Ollama API for structured outputs
+            if ollama_client:
+                response = ollama_client.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    response_model=ChatResponse,
+                )
+                return {
+                    "content": response.content,
+                    "usage": response.usage,
+                }
+            else:
+                # Fallback to direct MLX inference if instructor unavailable
+                logger.warning(
+                    "Instructor not available, falling back to direct MLX inference"
+                )
+                return self._generate_chat_fallback(messages, max_tokens, temperature)
+
+        except Exception as e:
+            logger.error("Error with instructor inference, falling back to MLX: %s", e)
+            return self._generate_chat_fallback(messages, max_tokens, temperature)
+
+    def _generate_chat_fallback(
+        self,
+        messages: list[dict[str, str]],
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        temperature: float = DEFAULT_TEMPERATURE,
+    ) -> dict[str, str | dict[str, int]]:
+        """Fallback chat generation using direct MLX inference"""
         # Format messages into prompt
         if "vl" in self.model_name.lower():
             # Vision-language model - handle specially

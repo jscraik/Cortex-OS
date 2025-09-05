@@ -29,6 +29,9 @@ export type {
 	Evidence,
 	PRPState,
 	ValidationGate,
+	GateResult,
+	HumanApproval,
+	EnforcementProfile,
 } from "./state.js";
 export {
 	createInitialPRPState,
