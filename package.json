@@ -243,6 +243,7 @@
 		"fast-glob": "^3.3.3",
 		"globby": "^14.1.0",
 		"husky": "^9.1.6",
+		"js-yaml": "^4.1.0",
 		"lint-staged": "^15.2.8",
 		"micromatch": "^4.0.8",
 		"nx": "^21.4.1",

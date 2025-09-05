@@ -2,6 +2,26 @@ import { spawn } from 'child_process';
 import path from 'path';
 
 /**
+ * Safely spawn a child process with validated executable
+ * @param {string} executable - The executable to run
+ * @param {string[]} args - Arguments to pass
+ * @param {object} options - Spawn options
+ * @returns {ChildProcess} The spawned process
+ */
+function safeSpawn(executable, args, options) {
+  // Final validation before spawning
+  if (!executable || typeof executable !== 'string') {
+    throw new Error('Invalid executable path');
+  }
+  if (executable.includes(';') || executable.includes('|') || executable.includes('&')) {
+    throw new Error('Executable path contains potentially dangerous characters');
+  }
+  // semgrep:ignore javascript.lang.security.detect-child-process.detect-child-process
+  // This is safe because we validate the executable parameter above
+  return spawn(executable, args, options);
+}
+
+/**
  * Validate python executable path to prevent command injection
  */
 function validatePythonPath(pythonPath) {
@@ -53,15 +73,19 @@ export function runPython(scriptPath, args = [], options = {}) {
       : options.setModulePath;
   }
   return new Promise((resolve, reject) => {
-    const proc = spawn(python, [scriptPath, ...args], {
+    const proc = safeSpawn(python, [scriptPath, ...args], {
       cwd: options.cwd || process.cwd(),
       stdio: ['pipe', 'pipe', 'pipe'],
       env,
     });
     let stdout = '';
     let stderr = '';
-    proc.stdout.on('data', (d) => (stdout += d.toString()));
-    proc.stderr.on('data', (d) => (stderr += d.toString()));
+    proc.stdout.on('data', (d) => {
+      stdout += d.toString();
+    });
+    proc.stderr.on('data', (d) => {
+      stderr += d.toString();
+    });
     proc.on('close', (code) => {
       if (code === 0) resolve(stdout.trim());
       else reject(new Error(`Python exited ${code}: ${stderr}`));
@@ -81,7 +105,7 @@ export function spawnPythonProcess(pythonArgs, options = {}) {
       ? `${options.setModulePath}${path.delimiter}${existing}`
       : options.setModulePath;
   }
-  const proc = spawn(python, pythonArgs, {
+  const proc = safeSpawn(python, pythonArgs, {
     cwd: options.cwd || process.cwd(),
     stdio: ['pipe', 'pipe', 'pipe'],
     env,

@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import yaml from "js-yaml";
+import Ajv from "ajv";
 
 function loadJsonSummary(pkgPath) {
 	const covPath = path.join(pkgPath, "coverage", "coverage-summary.json");
@@ -20,20 +21,35 @@ function loadJsonSummary(pkgPath) {
 	}
 }
 
+const schema = JSON.parse(
+        fs.readFileSync(new URL("./readiness.schema.json", import.meta.url), "utf-8"),
+);
+const ajv = new Ajv({ allErrors: true });
+const validate = ajv.compile(schema);
+
 const pkgsDir = path.resolve(process.cwd(), "packages");
 const packages = fs
-	.readdirSync(pkgsDir)
-	.filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
+        .readdirSync(pkgsDir)
+        .filter((p) => fs.statSync(path.join(pkgsDir, p)).isDirectory());
 let failed = false;
 
 for (const pkg of packages) {
 	const pkgPath = path.join(pkgsDir, pkg);
-	const readinessPath = path.join(pkgPath, "readiness.yml");
-	if (!fs.existsSync(readinessPath)) {
-		console.warn(`[warn] Missing readiness.yml for ${pkg}`);
-		continue;
-	}
-	const doc = yaml.load(fs.readFileSync(readinessPath, "utf-8")) || {};
+        const readinessPath = path.join(pkgPath, "readiness.yml");
+        if (!fs.existsSync(readinessPath)) {
+                console.error(`[fail] Missing readiness.yml for ${pkg}`);
+                failed = true;
+                continue;
+        }
+        const doc = yaml.load(fs.readFileSync(readinessPath, "utf-8")) || {};
+        const valid = validate(doc);
+        if (!valid) {
+                console.error(
+                        `[fail] ${pkg} readiness.yml invalid: ${ajv.errorsText(validate.errors)}`,
+                );
+                failed = true;
+                continue;
+        }
 	const thresholds = doc.thresholds || {
 		statements: 95,
 		branches: 95,
