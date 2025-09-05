@@ -11,7 +11,8 @@ This example demonstrates using the [OpenAI Instructor](https://github.com/jxnl/
 ## Install Dependencies
 
 ```bash
-uv pip install -r ../../pyproject.toml  # installs project deps including instructor
+
+uv pip install -e ../..  # installs project deps including instructor in editable mode
 ```
 
 ## Run
