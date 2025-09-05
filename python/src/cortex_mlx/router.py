@@ -8,6 +8,10 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol
 
 import httpx
+import instructor
+
+from openai import OpenAI
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -91,13 +95,33 @@ class MLXAdapter:
         return [i for i, _ in scored]
 
 
+class _OllamaChat(BaseModel):
+    response: str
+
+
 class OllamaAdapter:
     """Adapter for an Ollama server."""
 
     name = "ollama"
 
-    def __init__(self, base_url: str = "http://localhost:11434") -> None:
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434",
+        model: str = "llama3",
+        api_key: str = "ollama",
+    ) -> None:
+        """
+        Args:
+            base_url: The base URL for the Ollama instance.
+            model: The model name to use.
+            api_key: The API key for authentication. Default is "ollama", which is expected for local Ollama instances.
+        """
         self.base_url = base_url
+        self.model = model
+        self._client = instructor.from_openai(
+            OpenAI(base_url=f"{base_url}/v1", api_key=api_key),
+            mode=instructor.Mode.JSON,
+        )
 
     def available(self) -> bool:
         try:
@@ -107,23 +131,21 @@ class OllamaAdapter:
             return False
 
     def chat(self, prompt: str, timeout: float) -> str:
-        r = httpx.post(
-            self.base_url + "/api/generate",
-            json={"model": "llama3", "prompt": prompt, "stream": False},
+        res = self._client.chat.completions.create(
+            model=self.model,
+            response_model=_OllamaChat,
+            messages=[{"role": "user", "content": prompt}],
             timeout=timeout,
         )
-        r.raise_for_status()
-        data = r.json()
-        return data.get("response", "")
+        return res.response
 
     def embed(self, text: str, timeout: float) -> list[float]:
-        r = httpx.post(
-            self.base_url + "/api/embeddings",
-            json={"model": "nomic-embed-text", "prompt": text},
+        res = self._client.embeddings.create(
+            model="nomic-embed-text",
+            input=text,
             timeout=timeout,
         )
-        r.raise_for_status()
-        return r.json().get("embedding", [])
+        return res.data[0].embedding
 
     def rerank(self, query: str, docs: list[str], timeout: float) -> list[int]:
         q = self.embed(query, timeout)

@@ -12,8 +12,17 @@ dependencies = [
     "graphiti-core>=0.3.0",
     "httpx>=0.28.1",
     "hypothesis",
+    "instructor>=1.11.2",
+    "openai>=1.60.0",
     "llama-cpp-python>=0.2.90",
-    "mlx-vlm>=0.4.0; sys_platform == 'darwin'",
+    
+    
+    "graphiti-core>=0.3.0",
+    "httpx>=0.25.0",
+    "llama-cpp-python>=0.2.90",
+    "mlx>=0.30.0",
+    "mlx-lm>=0.28.0",
+    "mlx-vlm>=0.4.0",
     "networkx>=3.0",
     "numpy>=1.26.4",
     "pandas>=2.1.4",
@@ -90,29 +99,15 @@ ignore = ["E501"]
 ] # Allow subprocess in MCP bridge tools
 
 # Specific module exceptions
-"**/thermal_guard.py" = [
-  "S311",
-  "S603",
-  "S607",
-  "S110",
-] # Allow random, subprocess, and exception handling
-"**/resource_monitor.py" = [
-  "S108",
-  "S110",
-] # Allow temp files and exception handling
-"**/kv_cache_manager.py" = [
-  "S301",
-  "S108",
-  "N801",
-] # Allow pickle/temp files and mock class name
-"**/tiered_model_manager.py" = ["N801"] # Allow mock class name 'mx'
-"**/mcp_server.py" = [
-  "S603",
-  "S104",
-] # Allow subprocess and binding for MCP servers
-"**/model_manager.py" = ["S110"] # Allow exception handling patterns
-"**/bridge/mlx_bridge.py" = ["S301", "S108"] # Allow pickle in test bridge
-"**/convert-to-mlx.py" = ["S603", "S607"] # Allow subprocess in conversion tools
+
+"**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling
+"**/resource_monitor.py" = ["S108", "S110"]  # Allow temp files and exception handling
+"**/kv_cache_manager.py" = ["S301", "S108", "N801"]  # Allow pickle/temp files and mock class name
+"**/tiered_model_manager.py" = ["N801"]  # Allow mock class name 'mx'
+"**/mcp_server.py" = ["S603", "S104"]  # Allow subprocess and binding for MCP servers
+"**/model_manager.py" = ["S110"]  # Allow exception handling patterns
+"**/bridge/mlx_bridge.py" = ["S301", "S108"]  # Allow pickle in test bridge
+"**/convert-to-mlx.py" = ["S603", "S607"]  # Allow subprocess in conversion tools
 
 # Targeted file exceptions
 "packages/mcp-bridge/src/python/src/executor.py" = ["S603"]
