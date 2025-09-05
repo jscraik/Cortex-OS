@@ -171,6 +171,10 @@ struct ChatCommand {
     /// When set, PROMPT is optional and used as the first turn if provided.
     #[arg(long = "repl")]
     repl: bool,
+
+    /// Disable aggregation and force raw token streaming (prints each delta as it arrives).
+    #[arg(long = "no-aggregate")]
+    no_aggregate: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -328,19 +332,55 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             async fn stream_turn(
                 client: &codex_core::ModelClient,
                 prompt_input: Vec<codex_core::ResponseItem>,
+                force_raw: bool,
             ) -> anyhow::Result<Vec<codex_core::ResponseItem>> {
                 let mut prompt = codex_core::Prompt::default();
                 prompt.input = prompt_input;
-                let mut stream = client.stream(&prompt).await?;
+                let mut stream = if force_raw {
+                    client.stream_raw(&prompt).await?
+                } else {
+                    client.stream(&prompt).await?
+                };
                 let mut completed_items: Vec<codex_core::ResponseItem> = Vec::new();
-                while let Some(event) = stream.next().await {
-                    match event? {
+                // Track whether we've printed any token deltas. When the provider
+                // (Chat Completions wire API) is aggregated by the core client it
+                // suppresses per‑token `OutputTextDelta` events and only emits a
+                // final `OutputItemDone` containing the full assistant message.
+                // The original loop only printed deltas, so in aggregated mode
+                // nothing was printed (breaking our CLI streaming test). If we
+                // see a terminal assistant message item *and* no deltas were
+                // printed yet, we now print its text so the user still sees the
+                // response once. This preserves real streaming when available
+                // while remaining backward compatible with aggregated mode.
+                let mut printed_any_delta = false;
+
+                fn process_event(
+                    ev: codex_core::ResponseEvent,
+                    printed_any_delta: &mut bool,
+                    completed_items: &mut Vec<codex_core::ResponseItem>,
+                ) {
+                    match ev {
                         codex_core::ResponseEvent::OutputTextDelta(s) => {
                             print!("{s}");
                             use std::io::Write as _;
                             std::io::stdout().flush().ok();
+                            *printed_any_delta = true;
                         }
                         codex_core::ResponseEvent::OutputItemDone(item) => {
+                            if !*printed_any_delta {
+                                if let codex_core::ResponseItem::Message { role, content, .. } = &item {
+                                    if role == "assistant" {
+                                        if let Some(text) = content.iter().find_map(|c| match c {
+                                            codex_core::ContentItem::OutputText { text } => Some(text),
+                                            _ => None,
+                                        }) {
+                                            print!("{text}");
+                                            use std::io::Write as _;
+                                            std::io::stdout().flush().ok();
+                                        }
+                                    }
+                                }
+                            }
                             completed_items.push(item);
                         }
                         codex_core::ResponseEvent::Completed { .. } => {
@@ -348,6 +388,9 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                         }
                         _ => {}
                     }
+                }
+                while let Some(event) = stream.next().await {
+                    process_event(event?, &mut printed_any_delta, &mut completed_items);
                 }
                 Ok(completed_items)
             }
@@ -359,7 +402,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                 if let Some(p) = chat_cli.prompt.clone() {
                     let first_text = if p == "-" { read_stdin_all()? } else { p };
                     let (user_item, prompt_input) = run_turn(first_text, &session_history)?;
-                    let assistant_items = stream_turn(&client, prompt_input).await?;
+                    let assistant_items = stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
                     // Persist and update in-memory history
                     if let Some(path) = session_path.as_deref() {
                         ensure_parent_dir(path)?;
@@ -388,7 +431,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                         break;
                     }
                     let (user_item, prompt_input) = run_turn(line, &session_history)?;
-                    let assistant_items = stream_turn(&client, prompt_input).await?;
+                    let assistant_items = stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
                     if let Some(path) = session_path.as_deref() {
                         ensure_parent_dir(path)?;
                         append_history_jsonl(path, &user_item)?;
@@ -407,7 +450,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                     .ok_or_else(|| anyhow::anyhow!("PROMPT is required unless --repl is used"))?;
                 let text = if p == "-" { read_stdin_all()? } else { p };
                 let (user_item, prompt_input) = run_turn(text, &session_history)?;
-                let assistant_items = stream_turn(&client, prompt_input).await?;
+                let assistant_items = stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
                 if let Some(path) = session_path.as_deref() {
                     ensure_parent_dir(path)?;
                     append_history_jsonl(path, &user_item)?;

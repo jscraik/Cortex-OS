@@ -155,19 +155,19 @@ This document summarizes all the improvements made to the MCP security implement
 
 ## Summary of Files Modified
 
-### Bug Fixes:
+### Bug Fixes
 
 1. `packages/mcp/mcp-transport/src/sse.ts` - Fixed imports and error handling
 2. `packages/mcp/mcp-transport/src/https.ts` - Added memory cleanup and better error handling
 3. `packages/mcp/mcp-transport/src/stdio.ts` - Improved timeout management and data redaction
 4. `packages/mcp/mcp-core/src/client.ts` - Improved type safety
 
-### Backward Compatibility Removal:
+### Backward Compatibility Removal
 
 1. `packages/mcp/src/mcp-config-storage.ts` - Removed legacy format handling and detectTransportType method
 2. `packages/mcp/src/mcp-client.ts` - Removed unused fallbackMode option
 
-### Test Improvements:
+### Test Improvements
 
 1. `packages/mcp/tests/data-redaction.test.ts` - Enhanced tests
 2. `packages/mcp/tests/rate-limiting.test.ts` - Added resource cleanup tests

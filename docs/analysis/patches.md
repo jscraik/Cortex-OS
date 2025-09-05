@@ -2,7 +2,7 @@
 
 ## 1. Fix String Escaping Issues
 
-### MLXAdapter TypeScript fixes:
+### MLXAdapter TypeScript fixes
 
 ```diff
 --- a/packages/model-gateway/src/adapters/mlx-adapter.ts
@@ -24,7 +24,7 @@
    }
 ```
 
-### Python MLX script fixes:
+### Python MLX script fixes
 
 ```diff
 --- a/apps/cortex-py/src/mlx/mlx_unified.py

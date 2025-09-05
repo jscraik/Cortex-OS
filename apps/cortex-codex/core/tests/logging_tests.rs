@@ -4,7 +4,7 @@
 //! and captures appropriate context information throughout the system.
 
 use tracing::{debug, error, info, warn};
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 use tracing_test::traced_test;
 
 /// Test basic logging configuration and output capture
@@ -95,7 +95,11 @@ fn test_logging_performance() {
     let duration = start.elapsed();
 
     // Logging 1000 messages should complete quickly (< 100ms on most systems)
-    assert!(duration.as_millis() < 1000, "Logging took too long: {:?}", duration);
+    assert!(
+        duration.as_millis() < 1000,
+        "Logging took too long: {:?}",
+        duration
+    );
 }
 
 /// Test logging in concurrent scenarios
@@ -124,19 +128,16 @@ fn test_concurrent_logging() {
 /// Test logging configuration for different output formats
 #[test]
 fn test_logging_output_formats() {
-    // Test JSON format
-    let json_subscriber = fmt::layer()
-        .json()
-        .with_filter(EnvFilter::new("info"));
+    // Build two format layers (json + compact) and attach them to a registry to
+    // ensure generic type inference succeeds (previously `compact_subscriber`
+    // was unused causing a type inference failure on `fmt::layer()`).
+    let json_layer = fmt::layer().json().with_filter(EnvFilter::new("info"));
+    let compact_layer = fmt::layer().compact().with_filter(EnvFilter::new("info"));
 
-    // Test compact format
-    let compact_subscriber = fmt::layer()
-        .compact()
-        .with_filter(EnvFilter::new("info"));
-
-    // Both should be constructible without panicking
+    // Construct a registry with both layers; this should compile and not panic.
     let _registry = tracing_subscriber::registry()
-        .with(json_subscriber);
+        .with(json_layer)
+        .with(compact_layer);
 }
 
 /// Test logging with spans for request tracing

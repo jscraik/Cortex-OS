@@ -1,10 +1,12 @@
+# Markdownlint ignore patterns
+
 LICENSE
 NOTICE
 COMMERCIAL-LICENSE.md
 
-# --- Legacy docs (temporary) ---
+--- Legacy docs (temporary) ---
 
-# Tracked in docs/legacy-docs-normalization.md
+Tracked in docs/legacy-docs-normalization.md
 
 docs/legacy/**
 docs/archive/**
@@ -27,3 +29,14 @@ tools/**/node_modules/**
 coverage/**
 sbom/**
 **/generated/**
+
+Additional targeted exclusions (Batch 4 noise reduction)
+Upstream dependency changelogs: extremely long historical lines; not curated here
+**/CHANGELOG-\*.md
+**/changelog-_.md
+\*\*/changelog-pre_.md
+Generic CHANGELOG.md already ignored by \*\*/CHANGELOG.md rule above
+
+Retained for wrapping
+Keep first-party long-form docs (e.g., servers/README.md) INCLUDED for wrapping
+Do NOT add blanket README.md exclusion; intentional

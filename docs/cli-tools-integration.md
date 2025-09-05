@@ -1,12 +1,13 @@
 # CLI Tools Integration Summary
 
-This document provides a comprehensive overview of all CLI tools integrated into the Cortex-OS project for development, security, and workflow management.
+This document provides a comprehensive overview of all CLI tools integrated into the
+Cortex-OS project for development, security, and workflow management.
 
 ## 🔍 Security Scanning - Semgrep
 
 Semgrep is integrated for comprehensive security analysis with multiple rulesets:
 
-### Available Scripts
+### Available Scripts (Security Scanning)
 
 - `pnpm security:scan` - OWASP security scan (ERROR level only)
 - `pnpm security:scan:all` - Combined OWASP precise + top 10 improved rules
@@ -14,7 +15,7 @@ Semgrep is integrated for comprehensive security analysis with multiple rulesets
 - `pnpm security:scan:atlas` - MITRE ATLAS framework rules
 - `pnpm security:scan:ci` - CI-friendly scan with JSON output
 
-### Current Status
+### Current Status (Security Scanning)
 
 - ✅ 18 security findings identified in main scan
 - ✅ 154 findings from LLM-specific rules
@@ -32,7 +33,7 @@ Semgrep is integrated for comprehensive security analysis with multiple rulesets
 
 Graphite CLI is integrated for modern Git workflow management with stacked PRs:
 
-### Available Scripts
+### Available Scripts (Git Workflow)
 
 - `pnpm graphite:stack` - View and manage stack operations
 - `pnpm graphite:branch` - Create and manage feature branches
@@ -40,7 +41,7 @@ Graphite CLI is integrated for modern Git workflow management with stacked PRs:
 - `pnpm graphite:restack` - Rebase and fix stack conflicts
 - `pnpm graphite:sync` - Sync with remote repository
 
-### Current Status
+### Current Status (Git Workflow)
 
 - ✅ Graphite CLI 1.6.8 installed and operational
 - ✅ Configuration file created (`.graphite_config`)
@@ -57,14 +58,14 @@ Graphite CLI is integrated for modern Git workflow management with stacked PRs:
 
 Mermaid CLI is integrated for creating diagrams from text descriptions:
 
-### Available Scripts
+### Available Scripts (Diagram Generation)
 
 - `pnpm mermaid:generate` - Generate all .mmd files to PNG
 - `pnpm mermaid:docs` - Generate architecture diagram
 - `pnpm mermaid:workflow` - Generate workflow diagrams
 - `pnpm mermaid:validate` - Validate all Mermaid files
 
-### Current Status
+### Current Status (Diagram Generation)
 
 - ✅ Mermaid CLI 11.9.0 installed and operational
 - ✅ Architecture diagram created and generated
@@ -144,3 +145,4 @@ pnpm graphite:submit
 - **Documentation**: Architecture diagram auto-generated
 - **Workflow**: Modern stacked PR workflow ready
 - **Performance**: Memory-optimized configurations for large monorepo
+

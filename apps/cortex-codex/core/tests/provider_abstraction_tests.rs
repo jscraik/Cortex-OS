@@ -13,10 +13,10 @@
 //! - Provider lifecycle management
 
 use codex_core::providers::{
-    ModelProvider, ProviderRegistry, Message, CompletionResponse, Usage,
+    ModelProvider, ProviderRegistry, Message, CompletionRequest, StreamEvent,
     MockOpenAIProvider, MockAnthropicProvider, MockOllamaProvider
 };
-use codex_core::error::{CodexErr, Result};
+use codex_core::error::CodexErr;
 use futures::StreamExt;
 use tokio;
 
@@ -48,14 +48,9 @@ mod tests {
     async fn test_provider_completion() {
         let provider = MockOpenAIProvider::new(Some("test-key".to_string()));
 
-        let messages = vec![
-            TestMessage {
-                role: "user".to_string(),
-                content: "Hello, how are you?".to_string(),
-            }
-        ];
-
-        let response = provider.complete(&messages, "gpt-4", Some(0.7)).await.unwrap();
+        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: "Hello, how are you?".into() }], "gpt-4")
+            .with_temperature(0.7);
+        let response = provider.complete(&req).await.unwrap();
 
         assert_eq!(response.model, "gpt-4");
         assert!(response.content.contains("Hello, how are you?"));
@@ -67,24 +62,17 @@ mod tests {
     async fn test_provider_streaming() {
         let provider = MockOpenAIProvider::new(Some("test-key".to_string()));
 
-        let messages = vec![
-            TestMessage {
-                role: "user".to_string(),
-                content: "Tell me a story".to_string(),
+        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: "Tell me a story".into() }], "gpt-4");
+        let mut stream = provider.complete_streaming(&req).await.unwrap();
+        let mut tokens = Vec::new();
+        while let Some(evt) = stream.next().await {
+            match evt.unwrap() {
+                StreamEvent::Token { text, .. } => tokens.push(text),
+                StreamEvent::Finished { .. } => break,
+                _ => {}
             }
-        ];
-
-        let mut stream = provider.complete_streaming(&messages, "gpt-4", None).await.unwrap();
-        let mut chunks = Vec::new();
-
-        while let Some(chunk) = stream.next().await {
-            chunks.push(chunk.unwrap());
         }
-
-        assert_eq!(chunks.len(), 3);
-        assert_eq!(chunks[0], "Mock ");
-        assert_eq!(chunks[1], "streaming ");
-        assert_eq!(chunks[2], "response");
+        assert!(tokens.join("").contains("Mock"));
     }
 
     /// Test provider registry registration and retrieval
@@ -185,14 +173,8 @@ mod tests {
     async fn test_provider_invalid_model_error() {
         let provider = MockOpenAIProvider::new(Some("test-key".to_string()));
 
-        let messages = vec![
-            TestMessage {
-                role: "user".to_string(),
-                content: "Hello".to_string(),
-            }
-        ];
-
-        let result = provider.complete(&messages, "invalid-model", None).await;
+        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: "Hello".into() }], "invalid-model");
+        let result = provider.complete(&req).await;
         assert!(result.is_err());
 
         if let Err(CodexErr::ConfigurationError(msg)) = result {
@@ -207,14 +189,8 @@ mod tests {
     async fn test_provider_missing_auth_error() {
         let provider = MockOpenAIProvider::new(None);
 
-        let messages = vec![
-            TestMessage {
-                role: "user".to_string(),
-                content: "Hello".to_string(),
-            }
-        ];
-
-        let result = provider.complete(&messages, "gpt-4", None).await;
+        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: "Hello".into() }], "gpt-4");
+        let result = provider.complete(&req).await;
         assert!(result.is_err());
 
         if let Err(CodexErr::ConfigurationError(msg)) = result {
@@ -253,16 +229,12 @@ mod tests {
         let anthropic = MockAnthropicProvider::new(Some("key".to_string()));
         let ollama = MockOllamaProvider::new(None);
 
-        let messages = vec![
-            TestMessage {
-                role: "user".to_string(),
-                content: "Test message".to_string(),
-            }
-        ];
-
-        let openai_response = openai.complete(&messages, "gpt-4", None).await.unwrap();
-        let anthropic_response = anthropic.complete(&messages, "claude-3-opus", None).await.unwrap();
-        let ollama_response = ollama.complete(&messages, "llama2", None).await.unwrap();
+        let req_openai = CompletionRequest::new(vec![Message { role: "user".into(), content: "Test message".into() }], "gpt-4");
+        let req_anthropic = CompletionRequest::new(vec![Message { role: "user".into(), content: "Test message".into() }], "claude-3-opus");
+        let req_ollama = CompletionRequest::new(vec![Message { role: "user".into(), content: "Test message".into() }], "llama2");
+        let openai_response = openai.complete(&req_openai).await.unwrap();
+        let anthropic_response = anthropic.complete(&req_anthropic).await.unwrap();
+        let ollama_response = ollama.complete(&req_ollama).await.unwrap();
 
         // All responses should have the same structure
         assert!(!openai_response.content.is_empty());

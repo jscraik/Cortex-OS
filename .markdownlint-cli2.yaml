@@ -12,4 +12,5 @@ config:
   MD033:
     allowed_elements:
       - sup
+      - img
 # Other rules inherit defaults

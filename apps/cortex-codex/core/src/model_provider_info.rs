@@ -282,6 +282,42 @@ pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
             },
         ),
         (BUILT_IN_OSS_MODEL_PROVIDER_ID, create_oss_provider()),
+        (
+            "anthropic",
+            P {
+                name: "Anthropic".into(),
+                base_url: std::env::var("ANTHROPIC_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
+                env_key: Some("ANTHROPIC_API_KEY".into()),
+                env_key_instructions: Some("Set ANTHROPIC_API_KEY to your Claude API key".into()),
+                wire_api: WireApi::Chat,
+                query_params: None,
+                http_headers: Some([
+                    ("anthropic-version".to_string(), "2023-06-01".to_string()),
+                ].into_iter().collect()),
+                env_http_headers: None,
+                request_max_retries: None,
+                stream_max_retries: None,
+                stream_idle_timeout_ms: None,
+                requires_openai_auth: false,
+            },
+        ),
+        (
+            "zai",
+            P {
+                name: "Z.ai".into(),
+                base_url: std::env::var("ZAI_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
+                env_key: Some("ZAI_API_KEY".into()),
+                env_key_instructions: Some("Set ZAI_API_KEY to your Z.ai key".into()),
+                wire_api: WireApi::Chat,
+                query_params: None,
+                http_headers: None,
+                env_http_headers: None,
+                request_max_retries: None,
+                stream_max_retries: None,
+                stream_idle_timeout_ms: None,
+                requires_openai_auth: false,
+            },
+        ),
     ]
     .into_iter()
     .map(|(k, v)| (k.to_string(), v))

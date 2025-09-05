@@ -4,16 +4,19 @@
 //! used for testing and development without requiring actual API keys or
 //! network connectivity.
 
-use super::traits::{CompletionResponse, Message, ModelProvider, Usage};
+use super::traits::{
+    BoxStream, CompletionRequest, CompletionResponse, ModelProvider, StreamResult, Usage,
+    response_to_stream,
+};
 use crate::error::{CodexErr, Result};
 use async_trait::async_trait;
-use futures::stream;
-use futures::Stream;
 
 /// Mock OpenAI provider for testing
 pub struct MockOpenAIProvider {
     name: String,
     api_key: Option<String>,
+    // Base URL retained for potential future test customization; suppress dead_code warning.
+    #[allow(dead_code)]
     base_url: String,
     available_models: Vec<String>,
 }
@@ -51,53 +54,53 @@ impl ModelProvider for MockOpenAIProvider {
         Ok(self.available_models.clone())
     }
 
-    async fn complete(
-        &self,
-        messages: &[Message],
-        model: &str,
-        _temperature: Option<f32>,
-    ) -> Result<CompletionResponse> {
+    async fn complete(&self, req: &CompletionRequest) -> Result<CompletionResponse> {
         if self.api_key.is_none() {
-            return Err(CodexErr::ConfigurationError("OpenAI API key not provided".to_string()));
+            return Err(CodexErr::ConfigurationError(
+                "OpenAI API key not provided".to_string(),
+            ));
         }
 
-        if !self.available_models.contains(&model.to_string()) {
-            return Err(CodexErr::ConfigurationError(format!("Model '{}' not available", model)));
+        if !self.available_models.contains(&req.model) {
+            return Err(CodexErr::ConfigurationError(format!(
+                "Model '{}' not available",
+                req.model
+            )));
         }
 
         // Mock response based on input
-        let content = format!("Mock OpenAI response to: {}",
-            messages.last().map(|m| m.content.as_str()).unwrap_or("empty"));
+        let content = format!(
+            "Mock OpenAI response to: {}",
+            req.messages
+                .last()
+                .map(|m| m.content.as_str())
+                .unwrap_or("empty")
+        );
 
         Ok(CompletionResponse {
             content,
-            model: model.to_string(),
+            model: req.model.clone(),
             usage: Usage {
                 prompt_tokens: 10,
                 completion_tokens: 15,
                 total_tokens: 25,
             },
+            finish_reason: Some("stop".into()),
         })
     }
 
     async fn complete_streaming(
         &self,
-        _messages: &[Message],
-        _model: &str,
-        _temperature: Option<f32>,
-    ) -> Result<Box<dyn Stream<Item = Result<String>> + Send + Unpin>> {
-        // Mock streaming implementation
-        let mock_chunks = vec![
-            Ok("Mock ".to_string()),
-            Ok("streaming ".to_string()),
-            Ok("response".to_string()),
-        ];
-        Ok(Box::new(stream::iter(mock_chunks)))
+        req: &CompletionRequest,
+    ) -> Result<BoxStream<'static, StreamResult>> {
+        Ok(response_to_stream(self.complete(req).await?))
     }
 
     async fn validate_config(&self) -> Result<()> {
         if self.api_key.is_none() {
-            return Err(CodexErr::ConfigurationError("OpenAI API key required".to_string()));
+            return Err(CodexErr::ConfigurationError(
+                "OpenAI API key required".to_string(),
+            ));
         }
         // In real implementation, would make a test request to the API
         Ok(())
@@ -143,51 +146,52 @@ impl ModelProvider for MockAnthropicProvider {
         Ok(self.available_models.clone())
     }
 
-    async fn complete(
-        &self,
-        messages: &[Message],
-        model: &str,
-        _temperature: Option<f32>,
-    ) -> Result<CompletionResponse> {
+    async fn complete(&self, req: &CompletionRequest) -> Result<CompletionResponse> {
         if self.api_key.is_none() {
-            return Err(CodexErr::ConfigurationError("Anthropic API key not provided".to_string()));
+            return Err(CodexErr::ConfigurationError(
+                "Anthropic API key not provided".to_string(),
+            ));
         }
 
-        if !self.available_models.contains(&model.to_string()) {
-            return Err(CodexErr::ConfigurationError(format!("Model '{}' not available", model)));
+        if !self.available_models.contains(&req.model) {
+            return Err(CodexErr::ConfigurationError(format!(
+                "Model '{}' not available",
+                req.model
+            )));
         }
 
-        let content = format!("Mock Claude response to: {}",
-            messages.last().map(|m| m.content.as_str()).unwrap_or("empty"));
+        let content = format!(
+            "Mock Claude response to: {}",
+            req.messages
+                .last()
+                .map(|m| m.content.as_str())
+                .unwrap_or("empty")
+        );
 
         Ok(CompletionResponse {
             content,
-            model: model.to_string(),
+            model: req.model.clone(),
             usage: Usage {
                 prompt_tokens: 12,
                 completion_tokens: 18,
                 total_tokens: 30,
             },
+            finish_reason: Some("stop".into()),
         })
     }
 
     async fn complete_streaming(
         &self,
-        _messages: &[Message],
-        _model: &str,
-        _temperature: Option<f32>,
-    ) -> Result<Box<dyn Stream<Item = Result<String>> + Send + Unpin>> {
-        let mock_chunks = vec![
-            Ok("Mock ".to_string()),
-            Ok("Claude ".to_string()),
-            Ok("streaming".to_string()),
-        ];
-        Ok(Box::new(stream::iter(mock_chunks)))
+        req: &CompletionRequest,
+    ) -> Result<BoxStream<'static, StreamResult>> {
+        Ok(response_to_stream(self.complete(req).await?))
     }
 
     async fn validate_config(&self) -> Result<()> {
         if self.api_key.is_none() {
-            return Err(CodexErr::ConfigurationError("Anthropic API key required".to_string()));
+            return Err(CodexErr::ConfigurationError(
+                "Anthropic API key required".to_string(),
+            ));
         }
         Ok(())
     }
@@ -196,6 +200,8 @@ impl ModelProvider for MockAnthropicProvider {
 /// Mock Ollama provider for testing
 pub struct MockOllamaProvider {
     name: String,
+    // Base URL retained for parity with real implementation.
+    #[allow(dead_code)]
     base_url: String,
     available_models: Vec<String>,
 }
@@ -232,42 +238,39 @@ impl ModelProvider for MockOllamaProvider {
         Ok(self.available_models.clone())
     }
 
-    async fn complete(
-        &self,
-        messages: &[Message],
-        model: &str,
-        _temperature: Option<f32>,
-    ) -> Result<CompletionResponse> {
-        if !self.available_models.contains(&model.to_string()) {
-            return Err(CodexErr::ConfigurationError(format!("Model '{}' not available", model)));
+    async fn complete(&self, req: &CompletionRequest) -> Result<CompletionResponse> {
+        if !self.available_models.contains(&req.model) {
+            return Err(CodexErr::ConfigurationError(format!(
+                "Model '{}' not available",
+                req.model
+            )));
         }
 
-        let content = format!("Mock Ollama response to: {}",
-            messages.last().map(|m| m.content.as_str()).unwrap_or("empty"));
+        let content = format!(
+            "Mock Ollama response to: {}",
+            req.messages
+                .last()
+                .map(|m| m.content.as_str())
+                .unwrap_or("empty")
+        );
 
         Ok(CompletionResponse {
             content,
-            model: model.to_string(),
+            model: req.model.clone(),
             usage: Usage {
                 prompt_tokens: 8,
                 completion_tokens: 12,
                 total_tokens: 20,
             },
+            finish_reason: Some("stop".into()),
         })
     }
 
     async fn complete_streaming(
         &self,
-        _messages: &[Message],
-        _model: &str,
-        _temperature: Option<f32>,
-    ) -> Result<Box<dyn Stream<Item = Result<String>> + Send + Unpin>> {
-        let mock_chunks = vec![
-            Ok("Mock ".to_string()),
-            Ok("Ollama ".to_string()),
-            Ok("response".to_string()),
-        ];
-        Ok(Box::new(stream::iter(mock_chunks)))
+        req: &CompletionRequest,
+    ) -> Result<BoxStream<'static, StreamResult>> {
+        Ok(response_to_stream(self.complete(req).await?))
     }
 
     async fn validate_config(&self) -> Result<()> {
