@@ -18,6 +18,18 @@ graph TB
             ORCH[Orchestration<br/>packages/orchestration/]
         end
 
+        subgraph "Configuration & Scripts"
+            CONFIG[Port Registry<br/>config/ports.env]
+            SCRIPTS[Management Scripts<br/>./start-github-apps.sh<br/>./free-ports.sh]
+        end
+
+        subgraph "GitHub Apps"
+            GITHUB_AI[GitHub AI App<br/>:3001]
+            SEMGREP[Semgrep App<br/>:3002]
+            STRUCTURE[Structure App<br/>:3003]
+            MCP_SRV[MCP Server<br/>:3000]
+        end
+
         subgraph "Contracts & Types"
             CONTRACTS[Contracts<br/>libs/typescript/contracts/]
             UTILS[Utils<br/>libs/typescript/utils/]
@@ -48,6 +60,17 @@ graph TB
     MVP --> MEM
 
     ORCH --> A2A
+
+    %% Configuration connections
+    CONFIG --> GITHUB_AI
+    CONFIG --> SEMGREP
+    CONFIG --> STRUCTURE
+    CONFIG --> MCP_SRV
+    
+    SCRIPTS --> CONFIG
+    SCRIPTS --> GITHUB_AI
+    SCRIPTS --> SEMGREP
+    SCRIPTS --> STRUCTURE
     ORCH --> MCP
     ORCH --> MEM
 
@@ -81,6 +104,46 @@ graph TB
 ```
 
 ## System Overview
+
+The Cortex-OS architecture implements a clean separation of concerns with strict boundaries between components. The system follows the Autonomous Software Behavior Reasoning (ASBR) pattern with event-driven communication.
+
+## Configuration Management
+
+### Centralized Port Registry
+
+Cortex-OS uses a centralized port configuration system to manage development services:
+
+- **Configuration Files**:
+  - `config/ports.env` - Environment variable definitions
+  - `config/ports.json` - Structured service registry with metadata
+
+- **Port Allocation**:
+  - MCP Server: 3000 (reserved for Cloudflare tunnel)
+  - GitHub AI App: 3001
+  - Semgrep App: 3002
+  - Structure App: 3003
+
+### Environment Configuration
+
+The system supports flexible environment configuration:
+
+```bash
+# Default configuration location
+CORTEX_OS_HOME="$HOME/.Cortex-OS"
+
+# Custom configuration location
+export CORTEX_OS_HOME="/custom/path"
+```
+
+### Management Scripts
+
+Development scripts have been centralized and made portable:
+
+- `./start-github-apps.sh` - Start all GitHub applications
+- `./github-apps-diagnostic.sh` - Diagnose and troubleshoot setup
+- `./free-ports.sh` - Manage port allocation and cleanup
+
+All scripts now use the `CORTEX_OS_HOME` environment variable instead of hardcoded paths, making them portable across different development environments.
 
 This diagram shows the high-level architecture of the Cortex-OS system:
 

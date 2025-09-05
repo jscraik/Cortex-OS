@@ -259,7 +259,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
 
                 return response
 
-            except TimeoutError:
+            except TimeoutError as err:
                 logger.warning(
                     "Request timeout",
                     method=request.method,
@@ -270,7 +270,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
                 raise HTTPException(
                     status_code=status.HTTP_408_REQUEST_TIMEOUT,
                     detail="Request timeout",
-                )
+                ) from err
 
         except HTTPException:
             raise
@@ -285,7 +285,7 @@ class RequestValidationMiddleware(BaseHTTPMiddleware):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal security error",
-            )
+            ) from e
 
     async def _scan_request_for_threats(self, request: Request):
         """Scan request for security threats."""

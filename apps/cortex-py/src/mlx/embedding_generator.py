@@ -20,7 +20,8 @@ try:
 
     MLX_AVAILABLE = True
 except ImportError as e:  # pragma: no cover - diagnostics for missing deps
-    print(f"MLX core not available: {e}", file=sys.stderr)
+    logging.basicConfig(level=logging.INFO)
+    logging.error("MLX core not available: %s", e)
     MLX_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -203,8 +204,8 @@ if __name__ == "__main__":
         ValueError,
         ImportError,
     ) as e:  # pragma: no cover - CLI error path
-        print(f"Error: {e}", file=sys.stderr)
+        logger.error("Error: %s", e)
         sys.exit(1)
     except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+        logger.error("Unexpected error: %s", e)
         sys.exit(1)

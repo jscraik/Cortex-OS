@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM python:3.11-slim AS base
+FROM python:3.13-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -26,7 +26,7 @@ COPY packages/rag/src/index/faissd.proto packages/rag/src/index/
 WORKDIR /app/packages/faissd
 
 # Sync dependencies
-RUN uv sync --no-dev -p 3.11
+RUN uv sync --no-dev -p 3.13
 
 # Pre-generate protobufs inside image for faster start
 RUN FAISSD_PROTO_PATH=/app/packages/rag/src/index/faissd.proto \

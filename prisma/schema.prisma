@@ -8,31 +8,37 @@ datasource db {
 }
 
 model Source {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   kind      String
-  url       String?  @db.Text
-  createdAt DateTime @default(now())
+  url       String?    @db.Text
+  createdAt DateTime   @default(now())
   documents Document[]
 }
 
 model Document {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   sourceId  String
+  source    Source     @relation(fields: [sourceId], references: [id])
   title     String
   mime      String
-  sha256    String   @unique
-  createdAt DateTime @default(now())
+  sha256    String     @unique
+  createdAt DateTime   @default(now())
   chunks    Chunk[]
+  evidence  Evidence[]
+
   @@index([sourceId])
 }
 
 model Chunk {
-  id         String   @id @default(cuid())
+  id         String     @id @default(cuid())
   documentId String
+  document   Document   @relation(fields: [documentId], references: [id])
   ord        Int
-  text       String   @db.Text
+  text       String     @db.Text
   embedding  Bytes?
   meta       Json?
+  evidence   Evidence[]
+
   @@index([documentId, ord])
 }
 
@@ -44,12 +50,14 @@ model Project {
 }
 
 model Task {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   projectId String
+  project   Project    @relation(fields: [projectId], references: [id])
   title     String
-  status    String   @default("backlog")
-  createdAt DateTime @default(now())
+  status    String     @default("backlog")
+  createdAt DateTime   @default(now())
   evidence  Evidence[]
+
   @@index([projectId])
 }
 
@@ -60,4 +68,7 @@ model Evidence {
   chunkId    String
   start      Int?
   end        Int?
+  task       Task     @relation(fields: [taskId], references: [id])
+  document   Document @relation(fields: [documentId], references: [id])
+  chunk      Chunk    @relation(fields: [chunkId], references: [id])
 }

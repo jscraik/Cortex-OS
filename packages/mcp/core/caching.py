@@ -7,7 +7,7 @@ import os
 import pickle
 import time
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -292,7 +292,7 @@ class MemoryCacheBackend(CacheBackendInterface):
             self.stats.entry_count = len(self.data)
             return self.stats
 
-    async def _remove_entry(self, key: str):
+    async def _remove_entry(self, key: str) -> None:
         """Remove entry and update tracking."""
         if key in self.data:
             entry = self.data.pop(key)
@@ -301,14 +301,14 @@ class MemoryCacheBackend(CacheBackendInterface):
                 self.access_order.remove(key)
             self.stats.entry_count = len(self.data)
 
-    async def _evict_lru(self):
+    async def _evict_lru(self) -> None:
         """Evict least recently used entry."""
         if self.access_order:
             lru_key = self.access_order[0]
             await self._remove_entry(lru_key)
             self.stats.evictions += 1
 
-    async def _periodic_cleanup(self):
+    async def _periodic_cleanup(self) -> None:
         """Periodic cleanup of expired entries."""
         while True:
             try:
@@ -340,10 +340,10 @@ class RedisCacheBackend(CacheBackendInterface):
         self.config = config
         self.redis: Redis | None = None
         self.stats = CacheStats()
-        self._lua_scripts = {}
+        self._lua_scripts: dict[str, str] = {}
         self._load_lua_scripts()
 
-    async def _ensure_connected(self):
+    async def _ensure_connected(self) -> Redis:
         """Ensure Redis connection is established."""
         if self.redis is None:
             self.redis = redis.Redis(
@@ -355,8 +355,9 @@ class RedisCacheBackend(CacheBackendInterface):
                 socket_connect_timeout=10.0,
                 retry_on_timeout=True,
             )
+        return self.redis
 
-    def _load_lua_scripts(self):
+    def _load_lua_scripts(self) -> None:
         """Load Lua scripts for atomic operations."""
         # Atomic get with stats update
         self._lua_scripts["get_with_stats"] = """
@@ -410,14 +411,41 @@ class RedisCacheBackend(CacheBackendInterface):
         return f"{self.config.redis_prefix}{key}"
 
     def _serialize(self, value: Any) -> bytes:
-        """Serialize value for storage."""
+        """Serialize value for storage.
+
+        WARNING: pickle serialization is used for complex objects.
+        Only use with trusted internal data.
+        """
         try:
             if self.config.serialization_format == "json":
-                serialized = json.dumps(value).encode("utf-8")
+                try:
+                    serialized = json.dumps(value).encode("utf-8")
+                except (TypeError, ValueError):
+                    # Fall back to pickle for complex objects, but log warning
+                    import logging
+
+                    logging.warning(
+                        "Failed to serialize with JSON, falling back to pickle. "
+                        "Ensure data is from trusted sources."
+                    )
+                    serialized = pickle.dumps(value)
             elif self.config.serialization_format == "pickle":
+                # Log warning about pickle usage
+                import logging
+
+                logging.debug(
+                    "Using pickle serialization - ensure data is from trusted sources"
+                )
                 serialized = pickle.dumps(value)
             else:
-                serialized = pickle.dumps(value)  # Default to pickle
+                # Default to pickle with warning
+                import logging
+
+                logging.warning(
+                    "Unknown serialization format, defaulting to pickle. "
+                    "Ensure data is from trusted sources."
+                )
+                serialized = pickle.dumps(value)
 
             # Compression for large objects
             if (
@@ -447,8 +475,14 @@ class RedisCacheBackend(CacheBackendInterface):
             if self.config.serialization_format == "json":
                 return json.loads(data.decode("utf-8"))
             elif self.config.serialization_format == "pickle":
+                logger.warning(
+                    "Using pickle deserialization - ensure data is from trusted source"
+                )
                 return pickle.loads(data)
             else:
+                logger.warning(
+                    "Using pickle deserialization as default - ensure data is from trusted source"
+                )
                 return pickle.loads(data)  # Default to pickle
 
         except Exception as e:
@@ -458,13 +492,13 @@ class RedisCacheBackend(CacheBackendInterface):
     async def get(self, key: str) -> Any | None:
         """Get value from Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
 
             redis_key = self._get_key(key)
             stats_key = f"{self.config.redis_prefix}stats"
 
             # Use Lua script for atomic get with stats
-            result = await self.redis.eval(
+            result = await redis_conn.eval(
                 self._lua_scripts["get_with_stats"],
                 2,
                 redis_key,
@@ -485,7 +519,7 @@ class RedisCacheBackend(CacheBackendInterface):
     async def set(self, key: str, value: Any, ttl: int = 0) -> bool:
         """Set value in Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
 
             serialized = self._serialize(value)
             size_bytes = len(serialized)
@@ -495,7 +529,7 @@ class RedisCacheBackend(CacheBackendInterface):
             stats_key = f"{self.config.redis_prefix}stats"
 
             # Use Lua script for atomic set with metadata
-            await self.redis.eval(
+            await redis_conn.eval(
                 self._lua_scripts["set_with_meta"],
                 3,
                 redis_key,
@@ -517,21 +551,21 @@ class RedisCacheBackend(CacheBackendInterface):
     async def delete(self, key: str) -> bool:
         """Delete key from Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
 
             redis_key = self._get_key(key)
             meta_key = f"{redis_key}:meta"
             stats_key = f"{self.config.redis_prefix}stats"
 
             # Get size before deletion
-            meta = await self.redis.hgetall(meta_key)
+            meta = await redis_conn.hgetall(meta_key)
             size_bytes = int(meta.get(b"size_bytes", 0))
 
-            deleted = await self.redis.delete(redis_key, meta_key)
+            deleted = await redis_conn.delete(redis_key, meta_key)
 
             if deleted > 0:
-                await self.redis.hincrby(stats_key, "deletes", 1)
-                await self.redis.hincrby(stats_key, "total_size_bytes", -size_bytes)
+                await redis_conn.hincrby(stats_key, "deletes", 1)
+                await redis_conn.hincrby(stats_key, "total_size_bytes", -size_bytes)
                 return True
 
             return False
@@ -544,9 +578,9 @@ class RedisCacheBackend(CacheBackendInterface):
     async def exists(self, key: str) -> bool:
         """Check if key exists in Redis cache."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
             redis_key = self._get_key(key)
-            return bool(await self.redis.exists(redis_key))
+            return bool(await redis_conn.exists(redis_key))
         except Exception as e:
             logger.error(f"Cache exists error: {e}")
             return False
@@ -554,16 +588,16 @@ class RedisCacheBackend(CacheBackendInterface):
     async def clear(self) -> bool:
         """Clear all Redis cache entries."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
             pattern = f"{self.config.redis_prefix}*"
 
             cursor = 0
             deleted_count = 0
 
             while True:
-                cursor, keys = await self.redis.scan(cursor, match=pattern, count=100)
+                cursor, keys = await redis_conn.scan(cursor, match=pattern, count=100)
                 if keys:
-                    deleted_count += await self.redis.delete(*keys)
+                    deleted_count += await redis_conn.delete(*keys)
                 if cursor == 0:
                     break
 
@@ -577,10 +611,10 @@ class RedisCacheBackend(CacheBackendInterface):
     async def get_stats(self) -> CacheStats:
         """Get Redis cache statistics."""
         try:
-            await self._ensure_connected()
+            redis_conn = await self._ensure_connected()
             stats_key = f"{self.config.redis_prefix}stats"
 
-            stats_data = await self.redis.hgetall(stats_key)
+            stats_data = await redis_conn.hgetall(stats_key)
 
             if stats_data:
                 return CacheStats(
@@ -605,7 +639,7 @@ class AdvancedCache:
     def __init__(self, config: CacheConfig | None = None):
         self.config = config or CacheConfig.from_env()
         self.backend: CacheBackendInterface | None = None
-        self._refresh_tasks: dict[str, asyncio.Task] = {}
+        self._refresh_tasks: dict[str, asyncio.Task[Any]] = {}
         self._invalidation_tags: dict[str, list[str]] = {}
 
         # Initialize backend
@@ -622,6 +656,7 @@ class AdvancedCache:
     async def get(self, key: str, default: Any = None) -> Any:
         """Get value from cache with optional default."""
         try:
+            assert self.backend is not None, "Cache backend not initialized"
             value = await self.backend.get(key)
 
             if value is None:
@@ -640,10 +675,15 @@ class AdvancedCache:
             return default
 
     async def set(
-        self, key: str, value: Any, ttl: int | None = None, tags: list[str] = None
+        self,
+        key: str,
+        value: Any,
+        ttl: int | None = None,
+        tags: list[str] | None = None,
     ) -> bool:
         """Set value in cache with optional TTL and tags."""
         try:
+            assert self.backend is not None, "Cache backend not initialized"
             success = await self.backend.set(key, value, ttl or self.config.default_ttl)
 
             if success and tags:
@@ -667,9 +707,9 @@ class AdvancedCache:
     async def get_or_set(
         self,
         key: str,
-        factory: Callable[[], Any],
+        factory: Callable[..., Any],
         ttl: int | None = None,
-        tags: list[str] = None,
+        tags: list[str] | None = None,
     ) -> Any:
         """Get from cache or set using factory function."""
         value = await self.get(key)
@@ -693,6 +733,7 @@ class AdvancedCache:
 
     async def delete(self, key: str) -> bool:
         """Delete key from cache."""
+        assert self.backend is not None, "Cache backend not initialized"
         success = await self.backend.delete(key)
 
         # Cancel auto-refresh task if exists
@@ -721,6 +762,7 @@ class AdvancedCache:
 
     async def clear(self) -> bool:
         """Clear entire cache."""
+        assert self.backend is not None, "Cache backend not initialized"
         success = await self.backend.clear()
 
         # Cancel all auto-refresh tasks
@@ -733,6 +775,7 @@ class AdvancedCache:
 
     async def get_stats(self) -> dict[str, Any]:
         """Get comprehensive cache statistics."""
+        assert self.backend is not None, "Cache backend not initialized"
         backend_stats = await self.backend.get_stats()
 
         return {
@@ -751,7 +794,7 @@ class AdvancedCache:
             "invalidation_tags": len(self._invalidation_tags),
         }
 
-    async def _schedule_auto_refresh(self, key: str, current_value: Any):
+    async def _schedule_auto_refresh(self, key: str, current_value: Any) -> None:
         """Schedule auto-refresh for a cache entry."""
         if key in self._refresh_tasks:
             return  # Already scheduled
@@ -759,11 +802,12 @@ class AdvancedCache:
         # Calculate refresh time (80% of TTL)
         refresh_delay = self.config.default_ttl * self.config.auto_refresh_threshold
 
-        async def refresh_task():
+        async def refresh_task() -> None:
             try:
                 await asyncio.sleep(refresh_delay)
 
                 # Check if key still exists
+                assert self.backend is not None, "Cache backend not initialized"
                 if await self.backend.exists(key):
                     logger.debug(f"Auto-refreshing cache key: {key}")
                     # Here you would typically call the original factory function
@@ -796,8 +840,10 @@ def get_cache() -> AdvancedCache:
 
 # Decorators for caching
 def cached(
-    ttl: int | None = None, tags: list[str] = None, key_func: Callable | None = None
-):
+    ttl: int | None = None,
+    tags: list[str] | None = None,
+    key_func: Callable[..., Any] | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Coroutine[Any, Any, Any]]]:
     """Decorator for caching function results."""
 
     def decorator(func):

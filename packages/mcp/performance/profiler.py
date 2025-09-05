@@ -351,10 +351,10 @@ class PerformanceProfiler:
         """Stop background monitoring."""
         if self._monitoring_task:
             self._monitoring_task.cancel()
-            try:
+            from contextlib import suppress
+
+            with suppress(asyncio.CancelledError):
                 await self._monitoring_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Performance monitoring stopped")
 

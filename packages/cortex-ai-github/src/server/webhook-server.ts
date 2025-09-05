@@ -3,9 +3,9 @@
  * Handles GitHub webhook events and comment-as-API triggers
  */
 
+import express from 'express';
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
-import express from 'express';
 import { z } from 'zod';
 import type { CortexAiGitHubApp } from '../core/ai-github-app.js';
 import type { CommentTrigger, GitHubContext } from '../types/github-models.js';
@@ -168,7 +168,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 
 				return res.status(200).json({ received: true, delivery });
 			} catch (error) {
-				console.error('Webhook processing error:', error);
+				console.error('Webhook processing error', { error });
 				return res.status(500).json({
 					error: 'Internal server error',
 					message: error instanceof Error ? error.message : String(error),
@@ -248,7 +248,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				Buffer.from(expected),
 			);
 		} catch (error) {
-			console.error('Signature verification error:', error);
+			console.error('Signature verification error', { error });
 			return false;
 		}
 	}
@@ -283,7 +283,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				break;
 
 			default:
-				console.log(`Unhandled webhook event: ${event}`);
+				console.log('Unhandled webhook event', { event });
 		}
 	}
 
@@ -317,14 +317,12 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 						instructions: this.extractInstructions(comment, trigger.pattern),
 					});
 
-					console.log(
-						`✅ Queued ${trigger.taskType} task ${taskId} for ${user}`,
-					);
+					console.log('Queued task', { status: 'ok', taskType: trigger.taskType, taskId, user });
 
 					// Progressive status: Step 3 - Success
 					await this.updateProgressiveStatus(payload, 'success');
 				} catch (error) {
-					console.error(`❌ Failed to queue ${trigger.taskType} task:`, error);
+					console.error('Failed to queue task', { taskType: trigger.taskType, error });
 
 					// Progressive status: Step 3 - Error
 					await this.updateProgressiveStatus(payload, 'error');
@@ -572,7 +570,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 				}
 			}
 		} catch (error) {
-			console.error(`Failed to add ${reaction} reaction:`, error);
+			console.error('Failed to add reaction', { reaction, error });
 			// Don't throw - reactions are non-critical
 		}
 	}
@@ -604,7 +602,7 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 					break;
 			}
 		} catch (error) {
-			console.error(`Failed to update progressive status ${status}:`, error);
+			console.error('Failed to update progressive status', { status, error });
 		}
 	}
 }

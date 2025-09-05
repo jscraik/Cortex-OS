@@ -56,17 +56,17 @@ sudo systemctl enable redis
 docker run -d --name redis -p 6379:6379 redis:alpine
 ```
 
-#### **Python 3.11+**
+#### **Python 3.13+**
 
 ```bash
 # macOS
-brew install python@3.11
+brew install python@3.13
 
 # Ubuntu/Debian  
-sudo apt install python3.11 python3.11-venv python3.11-dev
+sudo apt install python3.13 python3.13-venv python3.13-dev
 
 # CentOS/RHEL
-sudo yum install python3.11 python3.11-venv python3.11-devel
+sudo yum install python3.13 python3.13-venv python3.13-devel
 ```
 
 #### **Node.js 18+ & pnpm**
@@ -90,9 +90,9 @@ npm install -g pnpm
 cd packages/mcp
 
 # Create Python virtual environment
-python3.11 -m venv .venv-mcp311
-source .venv-mcp311/bin/activate  # Linux/macOS
-# .venv-mcp311\Scripts\activate   # Windows
+python3.13 -m venv .venv-mcp313
+source .venv-mcp313/bin/activate  # Linux/macOS
+# .venv-mcp313\Scripts\activate   # Windows
 
 # Install dependencies
 pip install -e .
@@ -159,7 +159,7 @@ redis-cli ping  # Should return PONG
 
 ```bash
 cd packages/mcp
-source .venv-mcp311/bin/activate
+source .venv-mcp313/bin/activate
 
 # Core functionality tests
 python -m pytest tests/test_core.py tests/test_plugins.py -v
@@ -335,7 +335,7 @@ async def health_check():
 
 ```dockerfile
 # Dockerfile for MCP Python package
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 

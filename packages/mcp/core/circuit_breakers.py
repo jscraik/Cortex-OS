@@ -141,10 +141,10 @@ class AdvancedCircuitBreaker:
                     loop.run_in_executor(None, lambda: func(*args, **kwargs)),
                     timeout=self.config.request_timeout,
                 )
-        except TimeoutError:
+        except TimeoutError as err:
             raise CircuitBreakerError(
                 f"Request timed out after {self.config.request_timeout}s"
-            )
+            ) from err
 
     async def _can_proceed(self) -> bool:
         """Check if request can proceed based on circuit breaker state."""
@@ -185,16 +185,14 @@ class AdvancedCircuitBreaker:
             if self.state == CircuitBreakerState.HALF_OPEN:
                 if self.metrics.consecutive_successes >= self.config.success_threshold:
                     await self._transition_to_closed()
-            elif self.state == CircuitBreakerState.CLOSED:
+            elif self.state == CircuitBreakerState.CLOSED and (
+                self.metrics.total_calls >= 10
+                and self.metrics.slow_call_rate > self.config.slow_call_rate_threshold
+            ):
                 # Check slow call rate
-                if (
-                    self.metrics.total_calls >= 10
-                    and self.metrics.slow_call_rate
-                    > self.config.slow_call_rate_threshold
-                ):
-                    await self._transition_to_open()
+                await self._transition_to_open()
 
-    async def _record_failure(self, error: Exception, execution_time: float) -> None:
+    async def _record_failure(self, _error: Exception, execution_time: float) -> None:
         """Record failed call."""
         async with self._lock:
             self.metrics.total_calls += 1

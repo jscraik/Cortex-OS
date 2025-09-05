@@ -35,7 +35,9 @@ class MCPTransport(ABC):
         self.state = ConnectionState.DISCONNECTED
         # Handler returning an MCPMessage when a message is received
         # May return None for notifications (no response expected)
-        self.message_handler: Callable[[MCPMessage], Awaitable[MCPMessage | None]] | None = None
+        self.message_handler: (
+            Callable[[MCPMessage], Awaitable[MCPMessage | None]] | None
+        ) = None
         # Connection event callbacks
         self._connection_callbacks: dict[str, Callable[..., None]] = {}
 
@@ -65,7 +67,9 @@ class MCPTransport(ABC):
         """Set the message handler callback."""
         self.message_handler = handler
 
-    def add_connection_callback(self, event: str, callback: Callable[..., None]) -> None:
+    def add_connection_callback(
+        self, event: str, callback: Callable[..., None]
+    ) -> None:
         """Add callback for connection events (connected, disconnected, error)."""
         self._connection_callbacks[event] = callback
 

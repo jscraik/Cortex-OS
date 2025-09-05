@@ -13,8 +13,8 @@ import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
 from importlib import import_module
+from typing import Any
 
 # Import circuit_breaker if available, otherwise create a dummy decorator
 try:
@@ -22,7 +22,7 @@ try:
 except ImportError:
 
     def circuit_breaker(
-        name: str, config: Any | None = None
+        _name: str, _config: Any | None = None
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -345,7 +345,7 @@ class TaskQueue:
                         func(*task_def.args, **task_def.kwargs),
                         timeout=task_def.timeout,
                     )
-                except asyncio.TimeoutError as te:
+                except TimeoutError as te:
                     # Normalize timeout error message for tests
                     raise RuntimeError("Task execution timeout") from te
             else:
@@ -576,10 +576,10 @@ class TaskQueue:
                 await self.redis.aclose()
             elif hasattr(self.redis, "close"):
                 # Some clients expose sync close; call in thread if needed
-                try:
+                from contextlib import suppress
+
+                with suppress(Exception):
                     await asyncio.to_thread(self.redis.close)
-                except Exception:
-                    pass
 
         logger.info("Task queue system shut down")
 
@@ -625,7 +625,7 @@ def task(
             )
 
         # Add submit method to function
-        setattr(func, "submit", submit_task)  # type: ignore[attr-defined]
+        func.submit = submit_task  # type: ignore[attr-defined]
         return func
 
     return decorator

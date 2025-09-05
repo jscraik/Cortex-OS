@@ -1,4 +1,5 @@
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { setTimeout as delay } from "node:timers/promises";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
@@ -7,16 +8,17 @@ import { describe, expect, it } from "vitest";
 import { RegistryService } from "./registry-service.js";
 
 describe("RegistryService", () => {
-	it("creates cache directory synchronously", () => {
-		const baseDir = mkdtempSync(path.join(os.tmpdir(), "registry-test-"));
-		const cacheDir = path.join(baseDir, "cache");
+        it("creates cache directory asynchronously", async () => {
+                const baseDir = mkdtempSync(path.join(os.tmpdir(), "registry-test-"));
+                const cacheDir = path.join(baseDir, "cache");
 
-		new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
+                new RegistryService({ registries: {}, cacheDir, cacheTtl: 1000 });
+                await delay(10);
 
-		expect(existsSync(cacheDir)).toBe(true);
+                expect(existsSync(cacheDir)).toBe(true);
 
-		rmSync(baseDir, { recursive: true, force: true });
-	});
+                rmSync(baseDir, { recursive: true, force: true });
+        });
 
 	it("aborts fetch when request exceeds timeout", async () => {
 		const server = http.createServer(() => {

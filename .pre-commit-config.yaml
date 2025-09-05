@@ -6,7 +6,7 @@ repos:
       # Biome linting and formatting with command validation
       - id: biome-check
         name: Biome Check
-        entry: bash -c 'if command -v ./biome >/dev/null 2>&1; then ./biome check --apply; else echo "Biome not found at ./biome, skipping"; exit 0; fi'
+        entry: bash -c 'if command -v ./biome >/dev/null 2>&1; then ./biome check --apply "$@"; else echo "Biome not found at ./biome, skipping"; exit 0; fi'
         language: system
         files: \.(js|jsx|ts|tsx|json|jsonc)$
         pass_filenames: true
@@ -18,21 +18,24 @@ repos:
         language: system
         files: \.(ts|tsx)$
         pass_filenames: false
+        stages: [pre-push]
 
       # Python formatting and linting with uv validation
       - id: ruff-check
         name: Ruff Check
-        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff check --fix; elif command -v ruff >/dev/null 2>&1; then ruff check --fix; else echo "Ruff not found, skipping Python linting"; exit 0; fi'
+        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff check --fix -- "$@"; elif command -v ruff >/dev/null 2>&1; then ruff check --fix -- "$@"; else echo "Ruff not found, skipping Python linting"; exit 0; fi'
         language: system
         files: \.py$
         pass_filenames: true
+        stages: [pre-push]
 
       - id: ruff-format
         name: Ruff Format
-        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff format; elif command -v ruff >/dev/null 2>&1; then ruff format; else echo "Ruff not found, skipping Python formatting"; exit 0; fi'
+        entry: bash -c 'if command -v uv >/dev/null 2>&1; then uv run ruff format -- "$@"; elif command -v ruff >/dev/null 2>&1; then ruff format -- "$@"; else echo "Ruff not found, skipping Python formatting"; exit 0; fi'
         language: system
         files: \.py$
         pass_filenames: true
+        stages: [pre-push]
 
       # Security checks with proper error handling
       - id: security-audit
@@ -64,7 +67,7 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
       - id: detect-private-key
         exclude: LLMs\.txt$
       - id: check-case-conflict
@@ -101,6 +104,7 @@ exclude: |
     coverage/.*|
     __pycache__/.*|
     \.venv/.*|
+    \.mcp-quick-venv/.*|
     mcp-servers/.*|
     test-results/.*|
     playwright-report/.*
@@ -113,8 +117,8 @@ ci:
 
     for more information, see https://pre-commit.ci
   autofix_prs: true
-  autoupdate_branch: ''
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
   skip: []
   submodules: false

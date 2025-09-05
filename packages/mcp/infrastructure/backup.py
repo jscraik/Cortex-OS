@@ -225,25 +225,25 @@ class BackupManager:
         self._cleanup_task = asyncio.create_task(self._cleanup_loop())
         logger.info("Backup cleanup task started")
 
-    async def stop_background_tasks(self):
+    async def stop_background_tasks(self) -> None:
         """Stop background tasks."""
         if self._backup_task:
             self._backup_task.cancel()
-            try:
+            import contextlib
+
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._backup_task
-            except asyncio.CancelledError:
-                pass
 
         if self._cleanup_task:
             self._cleanup_task.cancel()
-            try:
+            import contextlib
+
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("Background backup tasks stopped")
 
-    async def _auto_backup_loop(self):
+    async def _auto_backup_loop(self) -> None:
         """Automatic backup loop."""
         while True:
             try:
@@ -269,7 +269,7 @@ class BackupManager:
                 logger.error(f"Auto backup failed: {e}")
                 await asyncio.sleep(300)  # Wait 5 minutes before retry
 
-    async def _cleanup_loop(self):
+    async def _cleanup_loop(self) -> None:
         """Backup cleanup loop."""
         while True:
             try:
@@ -400,7 +400,7 @@ class BackupManager:
 
         return metadata
 
-    async def _backup_database(self, backup_dir: Path):
+    async def _backup_database(self, backup_dir: Path) -> None:
         """Backup database to directory."""
         try:
             db_manager = await get_database_manager()
@@ -445,7 +445,7 @@ class BackupManager:
             logger.error(f"Database backup failed: {e}")
             raise
 
-    async def _backup_cache(self, backup_dir: Path):
+    async def _backup_cache(self, backup_dir: Path) -> None:
         """Backup cache state."""
         try:
             cache = get_cache()
@@ -469,7 +469,7 @@ class BackupManager:
             logger.error(f"Cache backup failed: {e}")
             # Don't fail the entire backup for cache issues
 
-    async def _backup_config(self, backup_dir: Path):
+    async def _backup_config(self, backup_dir: Path) -> None:
         """Backup configuration files."""
         try:
             config_data = {
@@ -492,7 +492,7 @@ class BackupManager:
         except Exception as e:
             logger.error(f"Configuration backup failed: {e}")
 
-    async def _backup_logs(self, backup_dir: Path):
+    async def _backup_logs(self, backup_dir: Path) -> None:
         """Backup recent logs."""
         try:
             logs_dir = backup_dir / "logs"
@@ -512,7 +512,7 @@ class BackupManager:
         except Exception as e:
             logger.error(f"Logs backup failed: {e}")
 
-    async def _create_archive(self, source_dir: Path, output_file: Path):
+    async def _create_archive(self, source_dir: Path, output_file: Path) -> None:
         """Create compressed archive."""
         if self.config.compression_enabled:
             with tarfile.open(output_file, "w:gz") as tar:
@@ -536,19 +536,19 @@ class BackupManager:
         shutil.move(backup_file, encrypted_file)
         return encrypted_file
 
-    async def _upload_to_cloud(self, metadata: BackupMetadata):
+    async def _upload_to_cloud(self, metadata: BackupMetadata) -> None:
         """Upload backup to cloud storage (placeholder)."""
         # This would implement actual cloud upload based on provider
         logger.info(
             f"Cloud upload would be implemented for backup: {metadata.backup_id}"
         )
 
-    async def _pg_dump(self, db_config, output_file: Path):
+    async def _pg_dump(self, _db_config: Any, _output_file: Path) -> None:
         """Create PostgreSQL dump."""
         # This would implement actual pg_dump
         logger.info("PostgreSQL dump would be created")
 
-    async def _mysql_dump(self, db_config, output_file: Path):
+    async def _mysql_dump(self, _db_config: Any, _output_file: Path) -> None:
         """Create MySQL dump."""
         # This would implement actual mysqldump
         logger.info("MySQL dump would be created")
@@ -619,14 +619,14 @@ class BackupManager:
         shutil.copy2(backup_file, decrypted_file)
         return decrypted_file
 
-    async def _restore_database(self, backup_dir: Path):
+    async def _restore_database(self, _backup_dir: Path) -> None:
         """Restore database from backup."""
         logger.warning(
             "Database restore is a critical operation - implement with caution"
         )
         # This would implement actual database restoration
 
-    async def _restore_config(self, backup_dir: Path):
+    async def _restore_config(self, backup_dir: Path) -> None:
         """Restore configuration from backup."""
         config_file = backup_dir / "config.json"
         if config_file.exists():
@@ -638,7 +638,7 @@ class BackupManager:
                 timestamp=config_data.get("backup_timestamp"),
             )
 
-    async def _cleanup_old_backups(self):
+    async def _cleanup_old_backups(self) -> None:
         """Clean up old backups according to retention policy."""
         now = datetime.now()
         backups_to_delete = []
@@ -652,12 +652,11 @@ class BackupManager:
             # Apply retention policy
             should_delete = False
 
-            if age > timedelta(days=self.config.keep_daily_for_days):
-                if metadata.backup_type != BackupType.FULL:
-                    should_delete = True
-                elif age > timedelta(days=self.config.keep_weekly_for_weeks * 7):
-                    if age > timedelta(days=self.config.keep_monthly_for_months * 30):
-                        should_delete = True
+            if age > timedelta(days=self.config.keep_daily_for_days) and (
+                metadata.backup_type != BackupType.FULL
+                or age > timedelta(days=self.config.keep_monthly_for_months * 30)
+            ):
+                should_delete = True
 
             # Always keep at least one backup
             if len(self.metadata_cache) <= 1:
@@ -673,7 +672,7 @@ class BackupManager:
         if backups_to_delete:
             logger.info(f"Cleaned up {len(backups_to_delete)} old backups")
 
-    async def _delete_backup(self, backup_id: str):
+    async def _delete_backup(self, backup_id: str) -> None:
         """Delete a backup."""
         if backup_id not in self.metadata_cache:
             return

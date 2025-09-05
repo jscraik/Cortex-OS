@@ -1,5 +1,6 @@
 # Config
 
+
 Codex supports several mechanisms for setting config values:
 
 - Config-specific command-line flags, such as `--model o3` (highest precedence).
@@ -9,8 +10,6 @@ Codex supports several mechanisms for setting config values:
   - For consistency with `config.toml`, values are in TOML format rather than JSON format, so use `{a = 1, b = 2}` rather than `{"a": 1, "b": 2}`.
   - If `value` cannot be parsed as a valid TOML value, it is treated as a string value. This means that both `-c model="o3"` and `-c model=o3` are equivalent.
 - The `$CODEX_HOME/config.toml` configuration file where the `CODEX_HOME` environment value defaults to `~/.codex`. (Note `CODEX_HOME` will also be where logs and other Codex-related information are stored.)
-
-Tip: For one‑off runs without changing your shell’s current directory, the CLI also supports a working‑directory override via `codex chat -C <DIR>` and `codex exec -C <DIR>`. See the CLI README for details.
 
 Both the `--config` flag and the `config.toml` file support the following options:
 

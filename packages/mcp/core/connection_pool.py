@@ -130,16 +130,16 @@ class MCPConnectionPool:
             # Cancel background tasks
             if self._health_check_task:
                 self._health_check_task.cancel()
-                try:
+                import contextlib
+
+                with contextlib.suppress(asyncio.CancelledError):
                     await self._health_check_task
-                except asyncio.CancelledError:
-                    pass
             if self._cleanup_task:
                 self._cleanup_task.cancel()
-                try:
+                import contextlib
+
+                with contextlib.suppress(asyncio.CancelledError):
                     await self._cleanup_task
-                except asyncio.CancelledError:
-                    pass
 
             # Close all connections
             close_tasks = []
@@ -194,9 +194,9 @@ class MCPConnectionPool:
                 self.current_active_connections += 1
                 return connection
 
-            # Connection is unhealthy, create a new one
+            # Connection is unhealthy, remove it and create a new one
             await self._remove_connection(connection)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # No available connections, try to create new one
             pass
 

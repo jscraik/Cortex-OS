@@ -161,9 +161,13 @@ class DatabaseManager:
 
     def _setup_event_listeners(self):
         """Setup SQLAlchemy event listeners for monitoring."""
+        if not self.engine:
+            return
 
-        @event.listens_for(self.engine.sync_engine, "connect")
-        def on_connect(dbapi_connection, connection_record):
+        sync_engine = self.engine.sync_engine
+
+        @event.listens_for(sync_engine, "connect")
+        def on_connect(_dbapi_connection, _connection_record):  # noqa: ANN001
             """Track new connections."""
             self._connection_count += 1
             metrics.set_connection_pool_size(
@@ -171,8 +175,8 @@ class DatabaseManager:
             )
             logger.debug("Database connection established")
 
-        @event.listens_for(self.engine.sync_engine, "close")
-        def on_close(dbapi_connection, connection_record):
+        @event.listens_for(sync_engine, "close")
+        def on_close(_dbapi_connection, _connection_record):  # noqa: ANN001
             """Track closed connections."""
             self._connection_count = max(0, self._connection_count - 1)
             metrics.set_connection_pool_size(
@@ -180,17 +184,27 @@ class DatabaseManager:
             )
             logger.debug("Database connection closed")
 
-        @event.listens_for(self.engine.sync_engine, "before_cursor_execute")
+        @event.listens_for(sync_engine, "before_cursor_execute")
         def before_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+            _conn,
+            _cursor,
+            _statement,
+            _parameters,
+            context,
+            _executemany,  # noqa: ANN001,ARG001
+        ) -> None:
             """Track query start time."""
             context._query_start_time = time.time()
 
-        @event.listens_for(self.engine.sync_engine, "after_cursor_execute")
+        @event.listens_for(sync_engine, "after_cursor_execute")
         def after_cursor_execute(
-            conn, cursor, statement, parameters, context, executemany
-        ):
+            _conn,
+            _cursor,
+            statement,
+            _parameters,
+            context,
+            _executemany,  # noqa: ANN001
+        ) -> None:
             """Track query completion and performance."""
             if hasattr(context, "_query_start_time"):
                 duration = time.time() - context._query_start_time

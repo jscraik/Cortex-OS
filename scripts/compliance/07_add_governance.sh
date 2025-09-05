@@ -173,7 +173,7 @@ write pyproject.toml <<'TOML'
 [project]
 name = "cortex-os"
 version = "1.0.0"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 description = "ASBR Cortex-OS Platform"
 license = { text = "MIT" }
 
@@ -195,7 +195,7 @@ members = [
 [tool.ruff]
 line-length = 88
 indent-width = 4
-target-version = "py311"
+target-version = "py313"
 src = ["services", "libs/python"]
 
 [tool.ruff.lint]
@@ -206,7 +206,7 @@ ignore = ["E501"]
 "tests/*" = ["S101"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 strict = true
 warn_return_any = true
 warn_unused_configs = true

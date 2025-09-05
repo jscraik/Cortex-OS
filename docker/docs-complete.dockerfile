@@ -49,7 +49,7 @@ RUN find docs/site -name "*.css" -type f -exec sh -c 'cssnano "$1" "$1.tmp" && m
 RUN find docs/site -name "*.js" -type f -exec sh -c 'terser "$1" -o "$1.tmp" --compress --mangle && mv "$1.tmp" "$1"' _ {} \; 2>/dev/null || true
 
 # Stage 2: Python API Builder
-FROM python:3.12-alpine AS api-builder
+FROM python:3.13-alpine AS api-builder
 
 WORKDIR /app
 
