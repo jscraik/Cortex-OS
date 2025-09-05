@@ -30,8 +30,6 @@ use uuid::Uuid;
 use crate::config::Config;
 use crate::config_types::HistoryPersistence;
 
-// Use stable, cross-platform advisory file locking via fs2
-
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 #[cfg(unix)]
@@ -111,17 +109,17 @@ pub(crate) async fn append_entry(text: &str, session_id: &Uuid, config: &Config)
     tokio::task::spawn_blocking(move || -> Result<()> {
         // Retry a few times to avoid indefinite blocking when contended.
         for _ in 0..MAX_RETRIES {
-            match fs2::FileExt::try_lock_exclusive(&history_file) {
+            match history_file.try_lock() {
                 Ok(()) => {
                     // While holding the exclusive lock, write the full line.
                     history_file.write_all(line.as_bytes())?;
                     history_file.flush()?;
                     return Ok(());
                 }
-                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                Err(std::fs::TryLockError::WouldBlock) => {
                     std::thread::sleep(RETRY_SLEEP);
                 }
-                Err(e) => return Err(e),
+                Err(e) => return Err(e.into()),
             }
         }
 
@@ -213,7 +211,7 @@ pub(crate) fn lookup(log_id: u64, offset: usize, config: &Config) -> Option<Hist
     // Open & lock file for reading using a shared lock.
     // Retry a few times to avoid indefinite blocking.
     for _ in 0..MAX_RETRIES {
-        let lock_result = fs2::FileExt::try_lock_shared(&file);
+        let lock_result = file.try_lock_shared();
 
         match lock_result {
             Ok(()) => {
@@ -240,7 +238,7 @@ pub(crate) fn lookup(log_id: u64, offset: usize, config: &Config) -> Option<Hist
                 // Not found at requested offset.
                 return None;
             }
-            Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+            Err(std::fs::TryLockError::WouldBlock) => {
                 std::thread::sleep(RETRY_SLEEP);
             }
             Err(e) => {

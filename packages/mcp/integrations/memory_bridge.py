@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import re
 import time
 from collections.abc import Callable
@@ -108,12 +109,24 @@ class Neo4jMemoryStore:
         self,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
-        password: str = "password",
+        password: str | None = None,
         database: str = "mcp",
     ):
         self.uri = uri
         self.username = username
-        self.password = password
+
+        # Get password from environment or parameter
+        if password is not None:
+            self.password = password
+        elif "NEO4J_PASSWORD" in os.environ:
+            self.password = os.environ["NEO4J_PASSWORD"]
+        else:
+            raise ValueError(
+                "Neo4j password must be provided either via 'password' parameter "
+                "or 'NEO4J_PASSWORD' environment variable. "
+                "Hardcoded passwords are not allowed for security."
+            )
+
         self.database = database
         self.driver: Any | None = None
 
@@ -243,6 +256,7 @@ class Neo4jMemoryStore:
         self.query_count += 1
         self.last_query_time = time.time()
 
+        if not self._rel_type_pattern.match(relationship_type):
             raise ValueError(
                 f"Invalid relationship type: '{relationship_type}'. "
                 f"Expected pattern: '{self._rel_type_pattern.pattern}'."

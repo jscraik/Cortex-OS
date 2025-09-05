@@ -58,6 +58,10 @@ pub enum CodexErr {
     #[error("timeout waiting for child process to exit")]
     Timeout,
 
+    /// Configuration or validation error
+    #[error("configuration error: {0}")]
+    ConfigurationError(String),
+
     /// Returned by run_command_stream when the child could not be spawned (its stdout/stderr pipes
     /// could not be captured). Analogous to the previous `CodexError::Spawn` variant.
     #[error("spawn failed: child stdout/stderr not captured")]

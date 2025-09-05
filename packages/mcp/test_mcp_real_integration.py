@@ -11,7 +11,7 @@ from core.connection_pool import ConnectionConfig, MCPConnectionPool
 from core.transports.stdio_transport import STDIOTransport
 
 
-async def test_with_simple_mcp_server():
+async def test_with_simple_mcp_server() -> None:
     """Test with a simple echo MCP server using STDIO transport."""
     print("🧪 Testing MCP package with a simple echo server...")
 
@@ -27,10 +27,8 @@ async def handle_stdio():
             line = input()
             if not line:
                 break
-            
             # Parse the message
             message = json.loads(line)
-            
             # Create echo response
             response = {
                 "jsonrpc": "2.0",
@@ -41,16 +39,14 @@ async def handle_stdio():
                     "server": "simple_echo"
                 }
             }
-            
             # Send response
             print(json.dumps(response))
             sys.stdout.flush()
-            
         except (EOFError, KeyboardInterrupt):
             break
         except Exception as e:
             error_response = {
-                "jsonrpc": "2.0", 
+                "jsonrpc": "2.0",
                 "id": 1,
                 "error": {"code": -1, "message": str(e)}
             }
@@ -85,12 +81,11 @@ if __name__ == "__main__":
         raise
 
 
-async def test_mcp_protocol_compliance():
+async def test_mcp_protocol_compliance() -> None:
     """Test that the MCP package follows proper MCP protocol."""
     print("\n🧪 Testing MCP protocol compliance...")
 
     # Test MCP message structure
-    mcp_message = {"jsonrpc": "2.0", "method": "tools/list", "id": 1}
 
     # Test that our transports can handle MCP messages
     config = ConnectionConfig(host="localhost", port=3000, transport_type="stdio")
@@ -105,7 +100,7 @@ async def test_mcp_protocol_compliance():
     print("✅ MCP protocol structure compliance verified!")
 
 
-async def main():
+async def main() -> bool:
     """Run real MCP integration tests."""
     print("🚀 Testing MCP Package with Real MCP Integration")
     print("=" * 55)

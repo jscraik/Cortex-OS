@@ -473,7 +473,8 @@ class CacheHealthChecker(HealthChecker):
             # Get cache stats
             stats = await cache.get_stats()
 
-            is_healthy = retrieved is not None and retrieved.get("test") == True
+            # True when a value was retrieved and the test flag is truthy
+            is_healthy = bool(retrieved and retrieved.get("test"))
 
             return HealthCheckResult(
                 name=self.name,

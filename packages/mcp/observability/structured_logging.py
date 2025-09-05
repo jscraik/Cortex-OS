@@ -154,7 +154,7 @@ class StructuredLogger:
         extra_data = {}
         for key, value in kwargs.items():
             if value is not None:
-                if isinstance(value, (dict, list, str, int, float, bool)):
+                if isinstance(value, (dict, list, str, int, float, bool)):  # noqa: UP038
                     extra_data[key] = value
                 elif hasattr(value, "__dict__"):
                     extra_data[key] = value.__dict__

@@ -64,9 +64,9 @@ class HTTPTransport(MCPTransport):
             }
 
         # Register routes
-        assert (
-            self.app is not None
-        ), "FastAPI app must be initialized before setting up routes"
+        assert self.app is not None, (
+            "FastAPI app must be initialized before setting up routes"
+        )
         self.app.add_api_route("/mcp/message", handle_message, methods=["POST"])
         self.app.add_api_route("/mcp/health", health_check_endpoint, methods=["GET"])
         self.app.add_api_route("/mcp/info", server_info, methods=["GET"])

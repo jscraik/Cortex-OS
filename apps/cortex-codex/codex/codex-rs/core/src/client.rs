@@ -21,14 +21,14 @@ use tracing::trace;
 use tracing::warn;
 use uuid::Uuid;
 
-use crate::chat_completions::stream_chat_completions;
 use crate::chat_completions::AggregateStreamExt;
-use crate::client_common::create_reasoning_param_for_request;
-use crate::client_common::create_text_param_for_request;
+use crate::chat_completions::stream_chat_completions;
 use crate::client_common::Prompt;
 use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
 use crate::client_common::ResponsesApiRequest;
+use crate::client_common::create_reasoning_param_for_request;
+use crate::client_common::create_text_param_for_request;
 use crate::config::Config;
 use crate::default_client::create_client;
 use crate::error::CodexErr;
@@ -310,11 +310,9 @@ impl ModelClient {
                                 // Prefer the plan_type provided in the error message if present
                                 // because it's more up to date than the one encoded in the auth
                                 // token.
-                                let plan_type = if let Some(pt) = error.plan_type {
-                                    Some(pt)
-                                } else {
-                                    auth.and_then(|a| a.get_plan_type())
-                                };
+                                let plan_type = error
+                                    .plan_type
+                                    .or_else(|| auth.and_then(|a| a.get_plan_type()));
                                 let resets_in_seconds = error.resets_in_seconds;
                                 return Err(CodexErr::UsageLimitReached(UsageLimitReachedError {
                                     plan_type,

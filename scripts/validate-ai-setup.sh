@@ -18,11 +18,11 @@ LLAMA_SERVER="$AI_MODELS/llama.cpp/build/bin/llama-server"
 if [ -f "$LLAMA_SERVER" ]; then
     echo "  ✅ llama-server binary found"
     echo "  📊 Binary info: $(file "$LLAMA_SERVER" | cut -d: -f2-)"
-    
+
     # Check for GGUF models
     GGUF_COUNT=$(find "$AI_MODELS/llama.cpp/models" -name "*.gguf" 2>/dev/null | wc -l)
     echo "  📦 GGUF models available: $GGUF_COUNT"
-    
+
     if [ "$GGUF_COUNT" -gt 0 ]; then
         echo "  📋 Available models:"
         find "$AI_MODELS/llama.cpp/models" -name "*.gguf" -exec basename {} \; | sed 's/^/    - /'
@@ -38,7 +38,7 @@ if command -v ollama >/dev/null 2>&1; then
     echo "  ✅ Ollama binary found"
     OLLAMA_VERSION=$(ollama --version 2>/dev/null | head -1)
     echo "  📊 Version: $OLLAMA_VERSION"
-    
+
     echo "  📦 Installed models:"
     ollama list 2>/dev/null | tail -n +2 | sed 's/^/    /' || echo "    No models found"
 else
@@ -54,7 +54,7 @@ HF_CACHE="$EXTERNAL_SSD/ai-cache/huggingface/hub"
 if [ -d "$HF_CACHE" ]; then
     MLX_COUNT=$(find "$HF_CACHE" -name "models--*mlx*" -type d 2>/dev/null | wc -l)
     echo "  📦 MLX models in HF cache: $MLX_COUNT"
-    
+
     if [ "$MLX_COUNT" -gt 0 ]; then
         echo "  📋 Available MLX models:"
         find "$HF_CACHE" -name "models--*mlx*" -type d -exec basename {} \; | sed 's/models--//g' | sed 's/--/\//g' | sed 's/^/    - /'

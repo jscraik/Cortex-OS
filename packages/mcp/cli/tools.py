@@ -3,21 +3,26 @@
 import asyncio
 import json
 import sys
+from typing import Any, cast
 
 import click
-from rich.console import Console
-from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich.table import Table
+from rich.console import Console  # type: ignore[import-not-found]
+from rich.panel import Panel  # type: ignore[import-not-found]
+from rich.progress import (  # type: ignore[import-not-found]
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+)
+from rich.table import Table  # type: ignore[import-not-found]
 
 from ..core.protocol import MCPMessage, MessageType
 from ..core.server import MCPServer
 
-console = Console()
+console: Any = Console()
 
 
 @click.group()
-def tool_commands():
+def tool_commands() -> None:
     """Tool management commands."""
     pass
 
@@ -29,10 +34,10 @@ def tool_commands():
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def list_tools(output_format: str, config_file: str):
+def list_tools(output_format: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """List all available tools."""
 
-    async def get_tools():
+    async def get_tools() -> dict[str, Any]:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -40,7 +45,7 @@ def list_tools(output_format: str, config_file: str):
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Get tools using protocol
@@ -57,7 +62,7 @@ def list_tools(output_format: str, config_file: str):
             if response.error:
                 return {"error": response.error.get("message", "Unknown error")}
 
-            return response.result
+            return response.result or {}
 
         except Exception as e:
             return {"error": str(e)}
@@ -67,7 +72,7 @@ def list_tools(output_format: str, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Loading tools...", total=None)
+        _task = progress.add_task("Loading tools...", total=None)
 
         try:
             result = asyncio.run(get_tools())
@@ -136,10 +141,10 @@ def list_tools(output_format: str, config_file: str):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def tool_info(tool_name: str, config_file: str):
+def tool_info(tool_name: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Get detailed information about a specific tool."""
 
-    async def get_tool_info():
+    async def get_tool_info() -> dict[str, Any]:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -147,7 +152,7 @@ def tool_info(tool_name: str, config_file: str):
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Get all tools
@@ -164,7 +169,8 @@ def tool_info(tool_name: str, config_file: str):
             if response.error:
                 return {"error": response.error.get("message", "Unknown error")}
 
-            tools = response.result.get("tools", [])
+            result_payload = response.result or {}
+            tools = result_payload.get("tools", [])
             tool = None
 
             for t in tools:
@@ -175,7 +181,7 @@ def tool_info(tool_name: str, config_file: str):
             if not tool:
                 return {"error": f"Tool '{tool_name}' not found"}
 
-            return tool
+            return cast(dict[str, Any], tool)
 
         except Exception as e:
             return {"error": str(e)}
@@ -185,7 +191,7 @@ def tool_info(tool_name: str, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task(f"Getting info for {tool_name}...", total=None)
+        _task = progress.add_task(f"Getting info for {tool_name}...", total=None)
 
         try:
             result = asyncio.run(get_tool_info())
@@ -236,7 +242,9 @@ def tool_info(tool_name: str, config_file: str):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
+def call_tool(
+    tool_name: str, params: str, param_list: tuple[str, ...], _config_file: str
+) -> None:
     """Execute a tool with given parameters."""
     # Parse parameters
     parameters = {}
@@ -264,7 +272,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
         except json.JSONDecodeError:
             parameters[key] = value
 
-    async def execute_tool():
+    async def execute_tool() -> Any:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -272,7 +280,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Execute tool
@@ -299,7 +307,7 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task(f"Executing {tool_name}...", total=None)
+        _task = progress.add_task(f"Executing {tool_name}...", total=None)
 
         try:
             response = asyncio.run(execute_tool())
@@ -342,10 +350,10 @@ def call_tool(tool_name: str, params: str, param_list: tuple, config_file: str):
 @click.option(
     "--config-file", default="config/server.json", help="Server configuration file"
 )
-def test_tools(tool: str, config_file: str):
+def test_tools(tool: str, config_file: str) -> None:  # noqa: ARG001 - config_file accepted for parity
     """Test tools with sample data to verify they work correctly."""
 
-    async def run_tests():
+    async def run_tests() -> dict[str, Any]:
         try:
             server_config = {
                 "plugin_dir": "plugins",
@@ -353,7 +361,7 @@ def test_tools(tool: str, config_file: str):
                 "auto_reload": False,
             }
 
-            server = MCPServer(server_config)
+            server: Any = MCPServer(server_config)
             await server.initialize()
 
             # Get available tools
@@ -372,7 +380,8 @@ def test_tools(tool: str, config_file: str):
                     "error": list_response.error.get("message", "Failed to list tools")
                 }
 
-            tools = list_response.result.get("tools", [])
+            result_payload = list_response.result or {}
+            tools = result_payload.get("tools", [])
 
             if tool:
                 # Filter to specific tool
@@ -387,7 +396,7 @@ def test_tools(tool: str, config_file: str):
                 tool_name = tool_info.get("name")
 
                 # Generate test parameters based on tool definition
-                test_params = {}
+                test_params: dict[str, Any] = {}
                 parameters = tool_info.get("parameters", {})
 
                 for param_name, param_info in parameters.items():
@@ -445,7 +454,7 @@ def test_tools(tool: str, config_file: str):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task("Running tool tests...", total=None)
+        _task = progress.add_task("Running tool tests...", total=None)
 
         try:
             result = asyncio.run(run_tests())

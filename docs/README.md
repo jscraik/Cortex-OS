@@ -22,9 +22,12 @@ This directory contains comprehensive documentation for the Cortex-OS project, i
 
 ### Key Documents
 
+- `architecture.md` - System architecture including configuration management
 - `repository-organization.md` - Repository structure and organization principles
 - `repository-organization-improvements.md` - Recent improvements and changes
 - `final-status-report.md` - Project status and completion summaries
+- `brainwav-cortex-mcp-user-guide.md` - MCP integration and usage guide
+- `dev-tools-reference.md` - Development tools and script references
 - Various implementation and status reports
 
 ## Documentation Types
@@ -48,6 +51,25 @@ This directory contains comprehensive documentation for the Cortex-OS project, i
 ### Process Documentation
 
 #### Development Workflows
+
+- Setup and installation procedures
+- Build and test automation
+- Code quality and security validation
+- Deployment and release processes
+
+#### Configuration Management
+
+- Environment variable configuration
+- Port allocation and management
+- Service configuration and setup
+- Development script usage
+
+#### GitHub Apps Integration
+
+- Setup and configuration procedures
+- Diagnostic and troubleshooting tools
+- Port management and conflict resolution
+- Service orchestration and monitoring
 
 - Setup and installation guides
 - Development best practices

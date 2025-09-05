@@ -57,7 +57,7 @@ export class MarketplaceRegistry {
 	constructor(
 		private registryUrl: string = "https://registry.cortex-os.dev/v1/registry.json",
 		private cacheDir: string = "./.cortex/registry/cache",
-	) {}
+	) { }
 
 	/**
 	 * Initialize the registry by loading from cache or fetching
@@ -96,12 +96,12 @@ export class MarketplaceRegistry {
 				);
 			}
 
-                        const response = await fetch(this.registryUrl);
-                        if (!response.ok) {
-                                throw new Error(
-                                        `Failed to fetch registry: ${response.status} ${response.statusText}`,
-                                );
-                        }
+			const response = await fetch(this.registryUrl);
+			if (!response.ok) {
+				throw new Error(
+					`Failed to fetch registry: ${response.status} ${response.statusText}`,
+				);
+			}
 
                         const data: unknown = await response.json();
                         const result = RegistryIndexSchema.safeParse(data);

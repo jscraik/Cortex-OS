@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import Chat from '../../../app/components/chat/Chat';
+import Chat from '../../frontend/src/components/Chat/Chat';
 
 // Mock the API calls
 vi.mock('../../../utils/api-client', () => ({

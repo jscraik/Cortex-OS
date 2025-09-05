@@ -11,6 +11,35 @@
 
 This directory contains utility scripts, templates, fixes, tests, and other development tools for the Cortex-OS project.
 
+## New Management Scripts (Root Level)
+
+**Important**: Key management scripts have been moved to the repository root for easy access:
+
+### GitHub Apps Management
+
+- **`../github-apps-diagnostic.sh`** - Comprehensive diagnostic and status checking for all GitHub apps
+- **`../start-github-apps.sh`** - Start all GitHub apps (AI, Semgrep, Structure) with proper configuration  
+- **`../free-ports.sh`** - Manage port allocation and free ports used by GitHub apps
+
+#### Usage Examples
+
+```bash
+# From repository root:
+./github-apps-diagnostic.sh    # Check GitHub apps status
+./start-github-apps.sh         # Start all GitHub apps
+./free-ports.sh all            # Free all GitHub app ports
+./free-ports.sh list           # Show current port usage
+```
+
+### Port Configuration
+
+The new centralized port management system uses:
+
+- **`config/ports.env`** - Environment variable definitions for all services
+- **`config/ports.json`** - Structured service registry with metadata
+
+All scripts now support the `CORTEX_OS_HOME` environment variable for portable configuration.
+
 ## Directory Structure
 
 - `/scripts/cleanup/` - Scripts for cleaning up and removing legacy code

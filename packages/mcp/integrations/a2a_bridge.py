@@ -249,7 +249,7 @@ class A2ABridge:
             return {"error": "Task queue not available"}
 
         @self.event_handler.register_handler("health.check")
-        async def handle_health_check(event: A2AEvent) -> dict[str, Any]:
+        async def handle_health_check(_event: A2AEvent) -> dict[str, Any]:
             """Handle health check requests from A2A."""
             return {
                 "status": "healthy",
@@ -440,7 +440,7 @@ class A2ABridge:
         tool_name: str,
         result: Any,
         execution_time: float,
-        correlation_id: str | None = None,
+        _correlation_id: str | None = None,
     ) -> str:
         """Publish tool execution result to A2A bus."""
         return await self.publish_event(

@@ -46,45 +46,79 @@ members = [
   "services/ml-inference",
   "services/data-pipeline",
   "libs/python/cortex_core",
-  "libs/python/cortex_ml"
+  "libs/python/cortex_ml",
 ]
 
 [tool.ruff]
 line-length = 88
 indent-width = 4
 target-version = "py313"
-src = ["services", "libs/python"]
+src = ["services", "libs/python", "packages", "apps/cortex-py", "servers/src"]
+exclude = [
+  ".venv",
+  "venv",
+  "env",
+  "node_modules",
+  "**/__pycache__/**",
+  "llama.cpp/**",
+  "**/site-packages/**",
+]
 
 [tool.ruff.lint]
-select = ["E","F","I","N","W","B","SIM","S","UP","RUF"]
+select = ["E", "F", "I", "N", "W", "B", "SIM", "S", "UP", "RUF"]
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 # Test files can use assert statements
-"**/tests/**/*.py" = ["S101","SLF001"]
-"**/test_*.py" = ["S101","SLF001"]
-"tests/*" = ["S101","SLF001"]
+"**/tests/**/*.py" = ["S101", "SLF001", "S106"]
+"**/test/**/*.py" = ["S101", "SLF001", "S106"]
+"**/*_test.py" = ["S101", "SLF001", "S106"]
+"**/test_*.py" = ["S101", "SLF001", "S106"]
+"tests/*" = ["S101", "SLF001", "S106"]
 
 # Development and infrastructure files
-"docker/**/*.py" = ["S104", "S603", "S607", "S110"]  # Allow subprocess and binding in docker utilities
-"tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in tool scripts
-"packages/mcp-bridge/src/tools/**/*.py" = ["S603", "S607"]  # Allow subprocess in MCP bridge tools
+"docker/**/*.py" = [
+  "S104",
+  "S603",
+  "S607",
+  "S110",
+] # Allow subprocess and binding in docker utilities
+"tools/**/*.py" = ["S603", "S607"] # Allow subprocess in tool scripts
+"packages/mcp-bridge/src/tools/**/*.py" = [
+  "S603",
+  "S607",
+] # Allow subprocess in MCP bridge tools
 
 # Specific module exceptions
-"**/thermal_guard.py" = ["S311", "S603", "S607", "S110"]  # Allow random, subprocess, and exception handling  
-"**/resource_monitor.py" = ["S108", "S110"]  # Allow temp files and exception handling
-"**/kv_cache_manager.py" = ["S301", "S108", "N801"]  # Allow pickle/temp files and mock class name
-"**/tiered_model_manager.py" = ["N801"]  # Allow mock class name 'mx'
-"**/mcp_server.py" = ["S603", "S104"]  # Allow subprocess and binding for MCP servers
-"**/model_manager.py" = ["S110"]  # Allow exception handling patterns
-"**/bridge/mlx_bridge.py" = ["S301", "S108"]  # Allow pickle in test bridge
-"**/convert-to-mlx.py" = ["S603", "S607"]  # Allow subprocess in conversion tools
+"**/thermal_guard.py" = [
+  "S311",
+  "S603",
+  "S607",
+  "S110",
+] # Allow random, subprocess, and exception handling
+"**/resource_monitor.py" = [
+  "S108",
+  "S110",
+] # Allow temp files and exception handling
+"**/kv_cache_manager.py" = [
+  "S301",
+  "S108",
+  "N801",
+] # Allow pickle/temp files and mock class name
+"**/tiered_model_manager.py" = ["N801"] # Allow mock class name 'mx'
+"**/mcp_server.py" = [
+  "S603",
+  "S104",
+] # Allow subprocess and binding for MCP servers
+"**/model_manager.py" = ["S110"] # Allow exception handling patterns
+"**/bridge/mlx_bridge.py" = ["S301", "S108"] # Allow pickle in test bridge
+"**/convert-to-mlx.py" = ["S603", "S607"] # Allow subprocess in conversion tools
 
 # Targeted file exceptions
 "packages/mcp-bridge/src/python/src/executor.py" = ["S603"]
 "packages/mcp-bridge/src/python/src/server.py" = ["S104"]
-"docker/mlx-server.py" = ["RUF006"]  # Background task intentionally not awaited
-"docker/gpl-tools/gpl_service.py" = ["B008"]  # FastAPI File/Form default pattern
+"docker/mlx-server.py" = ["RUF006"]                         # Background task intentionally not awaited
+"docker/gpl-tools/gpl_service.py" = ["B008"]                # FastAPI File/Form default pattern
 
 [tool.mypy]
 python_version = "3.13"
@@ -105,16 +139,34 @@ namespace_packages = true
 minversion = "8.0"
 testpaths = ["tests", "services/*/tests", "libs/python/*/tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = ["--cov=services","--cov=libs/python","--cov-report=term-missing","--cov-report=xml","--cov-report=html","--cov-fail-under=80","--strict-markers","-vv"]
+addopts = [
+  "--cov=services",
+  "--cov=libs/python",
+  "--cov-report=term-missing",
+  "--cov-report=xml",
+  "--cov-report=html",
+  "--cov-fail-under=80",
+  "--strict-markers",
+  "-vv",
+]
 
 [tool.bandit]
-exclude_dirs = ["tests","*/tests/*"]
+exclude_dirs = ["tests", "*/tests/*"]
 skips = ["B101"]
 
 [tool.coverage.run]
 branch = true
 parallel = true
-omit = ["*/tests/*","*/__pycache__/*","*/site-packages/*"]
+omit = ["*/tests/*", "*/__pycache__/*", "*/site-packages/*"]
 
 [tool.coverage.report]
-exclude_lines = ["pragma: no cover","def __repr__","if self.debug:","raise AssertionError","raise NotImplementedError","if __name__ == .__main__.:","class .*\\bProtocol\\):"," @(abc\\.)?abstractmethod"]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "class .*\\bProtocol\\):",
+  " @(abc\\.)?abstractmethod",
+]

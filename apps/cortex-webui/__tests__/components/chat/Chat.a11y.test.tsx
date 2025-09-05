@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import { beforeEach, describe, expect, it } from 'vitest';
-import Chat from '../../../app/components/chat/Chat';
+import { Chat } from '../../../frontend/src/components/Chat/Chat';
 
 expect.extend(toHaveNoViolations);
 

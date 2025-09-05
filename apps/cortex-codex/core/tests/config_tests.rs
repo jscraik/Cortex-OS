@@ -186,16 +186,18 @@ output = "stdout"
 "#;
     fs::write(&config_path, config_content).unwrap();
 
+    let overrides = vec![
+        "model.name=overridden-model".to_string(),
+        "model.temperature=0.8".to_string(),
+    ];
+
     // Act: Load config and apply overrides
     let config = SimpleConfig::load_from_file(config_path).unwrap();
     // For this test, we'll create a new config with overrides applied
-    let override_config = SimpleConfig::with_overrides(
-        [
-            "model.name=overridden-model".to_string(),
-            "model.temperature=0.8".to_string(),
-        ]
-        .into(),
-    )
+    let override_config = SimpleConfig::with_overrides(vec![
+        "model.name=overridden-model".to_string(),
+        "model.temperature=0.8".to_string(),
+    ])
     .unwrap();
 
     // Assert: File config loads correctly, then we test override behavior separately

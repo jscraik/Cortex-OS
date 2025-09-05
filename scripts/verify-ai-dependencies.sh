@@ -25,7 +25,7 @@ check_python_package() {
     local package=$1
     local min_version=$2
     echo -n "Checking $package >= $min_version... "
-    
+
     if python -c "import $package; print($package.__version__)" 2>/dev/null; then
         local version=$(python -c "import $package; print($package.__version__)" 2>/dev/null)
         echo -e "${GREEN}✓ Found $version${NC}"
@@ -40,7 +40,7 @@ check_python_package() {
 check_node_package() {
     local package=$1
     echo -n "Checking Node.js package $package... "
-    
+
     if npm list $package >/dev/null 2>&1; then
         local version=$(npm list $package --depth=0 2>/dev/null | grep "$package@" | sed 's/.*@//')
         echo -e "${GREEN}✓ Found $version${NC}"
