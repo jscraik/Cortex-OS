@@ -3,8 +3,8 @@
  * @description Handles registry management and caching
  */
 
-import { existsSync, mkdirSync } from "node:fs";
-import { readFile, unlink, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
 import path from "node:path";
 import type { RegistryData } from "@cortex-os/mcp-registry";
 
@@ -33,7 +33,7 @@ export class RegistryService {
 
 	constructor(config: RegistryConfig) {
 		this.config = config;
-		this.ensureCacheDir();
+                void this.ensureCacheDir();
 	}
 
 	/**
@@ -158,72 +158,78 @@ export class RegistryService {
 	/**
 	 * Fetch registry data from URL
 	 */
-	private async fetchRegistry(url: string): Promise<RegistryData> {
-		const controller = new AbortController();
-		const timeout = setTimeout(
-			() => controller.abort(),
-			this.config.fetchTimeout ?? 10000,
-		);
+        private async fetchRegistry(url: string): Promise<RegistryData> {
+                if (url.startsWith("file://")) {
+                        const fileUrl = new URL(url);
+                        const content = await readFile(fileUrl, "utf-8");
+                        return JSON.parse(content) as RegistryData;
+                }
 
-		try {
-			const response = await fetch(url, {
-				headers: {
-					"User-Agent": "Cortex-OS-Marketplace/1.0",
-					Accept: "application/json",
-				},
-				signal: controller.signal,
-			});
+                const controller = new AbortController();
+                const timeout = setTimeout(
+                        () => controller.abort(),
+                        this.config.fetchTimeout ?? 10000,
+                );
 
-			if (!response.ok) {
-				throw new Error(
-					`Failed to fetch registry: ${response.status} ${response.statusText}`,
-				);
-			}
+                try {
+                        const response = await fetch(url, {
+                                headers: {
+                                        "User-Agent": "Cortex-OS-Marketplace/1.0",
+                                        Accept: "application/json",
+                                },
+                                signal: controller.signal,
+                        });
 
-			const data = await response.json();
+                        if (!response.ok) {
+                                throw new Error(
+                                        `Failed to fetch registry: ${response.status} ${response.statusText}`,
+                                );
+                        }
 
-			// Basic validation
-			if (!data || typeof data !== "object") {
-				throw new Error("Invalid registry data: not an object");
-			}
+                        const data = await response.json();
 
-			if (!Array.isArray(data.servers)) {
-				throw new Error("Invalid registry data: servers must be an array");
-			}
+                        if (!data || typeof data !== "object") {
+                                throw new Error("Invalid registry data: not an object");
+                        }
 
-			return data as RegistryData;
-		} finally {
-			clearTimeout(timeout);
-		}
-	}
+                        if (!Array.isArray(data.servers)) {
+                                throw new Error("Invalid registry data: servers must be an array");
+                        }
+
+                        return data as RegistryData;
+                } finally {
+                        clearTimeout(timeout);
+                }
+        }
 
 	/**
 	 * Load registry data from disk cache
 	 */
-	private async loadFromDisk(
-		name: string,
-	): Promise<{ data: RegistryData; timestamp: number } | null> {
-		const cachePath = this.getCachePath(name);
+        private async loadFromDisk(
+                name: string,
+        ): Promise<{ data: RegistryData; timestamp: number } | null> {
+                const cachePath = this.getCachePath(name);
 
-		try {
-			if (!existsSync(cachePath)) {
-				return null;
-			}
+                try {
+                        await access(cachePath, fsConstants.F_OK);
+                } catch {
+                        return null;
+                }
 
-			const content = await readFile(cachePath, "utf-8");
-			const cached = JSON.parse(content);
+                try {
+                        const content = await readFile(cachePath, "utf-8");
+                        const cached = JSON.parse(content);
 
-			// Validate cache structure
-			if (!cached.data || !cached.timestamp) {
-				return null;
-			}
+                        if (!cached.data || !cached.timestamp) {
+                                return null;
+                        }
 
-			return cached;
-		} catch (error) {
-			console.warn(`Failed to load disk cache for ${name}:`, error);
-			return null;
-		}
-	}
+                        return cached;
+                } catch (error) {
+                        console.warn(`Failed to load disk cache for ${name}:`, error);
+                        return null;
+                }
+        }
 
 	/**
 	 * Save registry data to disk cache
@@ -264,13 +270,11 @@ export class RegistryService {
 	/**
 	 * Ensure cache directory exists
 	 */
-	private ensureCacheDir(): void {
-		try {
-			if (!existsSync(this.config.cacheDir)) {
-				mkdirSync(this.config.cacheDir, { recursive: true });
-			}
-		} catch (error) {
-			console.warn("Failed to create cache directory:", error);
-		}
-	}
+        private async ensureCacheDir(): Promise<void> {
+                try {
+                        await mkdir(this.config.cacheDir, { recursive: true });
+                } catch (error) {
+                        console.warn("Failed to create cache directory:", error);
+                }
+        }
 }

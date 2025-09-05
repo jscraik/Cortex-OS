@@ -6,7 +6,10 @@
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import pino from "pino";
 import { build } from "./app.js";
+
+const logger = pino({ level: process.env.LOG_LEVEL || "info" });
 
 type LoggerLevel = "debug" | "info" | "warn" | "error";
 
@@ -58,13 +61,13 @@ async function loadConfig(): Promise<ServerConfig> {
 		if (fileConfig.cacheTtl && !process.env.CACHE_TTL) {
 			config.cacheTtl = fileConfig.cacheTtl;
 		}
-	} catch (e) {
-		const msg = e instanceof Error ? e.message : String(e);
-		console.log(
-			"Using default configuration (config file not found or invalid):",
-			msg,
-		);
-	}
+        } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                logger.warn(
+                        { err: msg },
+                        "Using default configuration (config file not found or invalid)",
+                );
+        }
 
 	return config;
 }
@@ -72,13 +75,17 @@ async function loadConfig(): Promise<ServerConfig> {
 async function start(): Promise<void> {
 	let server: ReturnType<typeof build> | null = null;
 	try {
-		const config = await loadConfig();
-		console.log("Starting Cortex MCP Marketplace API...");
-		console.log(`Port: ${config.port}`);
-		console.log(`Host: ${config.host}`);
-		console.log(`Cache Dir: ${config.cacheDir}`);
-		console.log(`Cache TTL: ${config.cacheTtl}ms`);
-		console.log(`Registries: ${Object.keys(config.registries).join(", ")}`);
+                const config = await loadConfig();
+                logger.info("Starting Cortex MCP Marketplace API...");
+                logger.info({ port: config.port, host: config.host }, "Server configuration");
+                logger.info(
+                        { cacheDir: config.cacheDir, cacheTtl: config.cacheTtl },
+                        "Cache settings",
+                );
+                logger.info(
+                        { registries: Object.keys(config.registries) },
+                        "Configured registries",
+                );
 
 		server = build({
 			logger: config.logLevel !== "error",
@@ -92,48 +99,48 @@ async function start(): Promise<void> {
 		const signals: NodeJS.Signals[] = ["SIGTERM", "SIGINT"];
 		signals.forEach((signal) => {
 			process.on(signal, async () => {
-				console.log(`Received ${signal}, gracefully shutting down...`);
-				try {
-					if (server) {
-						await server.close();
-					}
-					console.log("Server closed successfully");
-					process.exit(0);
-				} catch (err) {
-					console.error("Error during shutdown:", err);
-					process.exit(1);
-				}
-			});
-		});
+                                logger.info(`Received ${signal}, gracefully shutting down...`);
+                                try {
+                                        if (server) {
+                                                await server.close();
+                                        }
+                                        logger.info("Server closed successfully");
+                                        process.exit(0);
+                                } catch (err) {
+                                        logger.error({ err }, "Error during shutdown");
+                                        process.exit(1);
+                                }
+                        });
+                });
 
-		process.on("uncaughtException", (error) => {
-			console.error("Uncaught Exception:", error);
-			process.exit(1);
-		});
-		process.on("unhandledRejection", (reason, promise) => {
-			console.error("Unhandled Rejection at:", promise, "reason:", reason);
-			process.exit(1);
-		});
+                process.on("uncaughtException", (error) => {
+                        logger.error({ err: error }, "Uncaught Exception");
+                        process.exit(1);
+                });
+                process.on("unhandledRejection", (reason, promise) => {
+                        logger.error({ reason, promise }, "Unhandled Rejection");
+                        process.exit(1);
+                });
 
-		await server.listen({ port: config.port, host: config.host });
-		console.log("🚀 Marketplace API server started successfully!");
-		console.log(
-			`📖 API Documentation: http://${config.host}:${config.port}/documentation`,
-		);
-		console.log(`🏥 Health Check: http://${config.host}:${config.port}/health`);
-	} catch (error) {
-		console.error("Failed to start server:", error);
-		if (server) {
-			try {
-				await server.close();
-			} catch (closeError) {
-				console.error("Error closing server:", closeError);
-			}
-		}
-		process.exit(1);
-	}
+                await server.listen({ port: config.port, host: config.host });
+                logger.info("🚀 Marketplace API server started successfully!");
+                logger.info(
+                        `📖 API Documentation: http://${config.host}:${config.port}/documentation`,
+                );
+                logger.info(`🏥 Health Check: http://${config.host}:${config.port}/health`);
+        } catch (error) {
+                logger.error({ err: error }, "Failed to start server");
+                if (server) {
+                        try {
+                                await server.close();
+                        } catch (closeError) {
+                                logger.error({ err: closeError }, "Error closing server");
+                        }
+                }
+                process.exit(1);
+        }
 }
 
 if (process.env.NODE_ENV !== "test") {
-	start();
+        start();
 }
