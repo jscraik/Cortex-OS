@@ -19,7 +19,7 @@
  * @status IMPLEMENTATION_READY
  */
 
-import { BaseGate, type AutomatedCheck, type GateContext, type HumanApprovalSpec } from "./base.js";
+import { BaseGate, type AutomatedCheck, type GateContext, type HumanApprovalSpec, type Evidence } from "./base.js";
 import { nanoid } from "nanoid";
 
 /**
