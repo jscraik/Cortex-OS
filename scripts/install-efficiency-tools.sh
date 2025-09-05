@@ -5,8 +5,12 @@ set -euo pipefail
 sudo apt-get update
 sudo apt-get install -y ripgrep universal-ctags hyperfine git-delta gitleaks
 
-# Install Node-based CLIs
-npm install -g @ast-grep/cli jscodeshift sonar-scanner @withgraphite/graphite-cli
+# Node-based CLIs are not installed globally to avoid version conflicts and permission issues.
+# Use npx to run these tools, e.g.:
+#   npx @ast-grep/cli <args>
+#   npx jscodeshift <args>
+#   npx sonar-scanner <args>
+#   npx @withgraphite/graphite-cli <args>
 
 # Install semgrep via pip
 pip install semgrep
