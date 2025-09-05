@@ -8,6 +8,7 @@
 	},
 	"type": "module",
 	"scripts": {
+                "preinstall": "bash scripts/mise-trust.sh",
 		"postinstall": "bash -lc 'if [ \"${CI:-}\" != \"true\" ] && [ \"${GITHUB_ACTIONS:-}\" != \"true\" ] && [ \"${CORTEX_EFFICIENCY_SETUP_SKIP:-}\" != \"1\" ] && [ \"${CORTEX_EFFICIENCY_SETUP_SKIP:-}\" != \"true\" ]; then if command -v git >/dev/null 2>&1 && [ -d .git ]; then git config --local core.hooksPath .githooks || true; fi; scripts/ensure-efficiency-tools.sh || true; fi'",
 		"docs:lint": "markdownlint-cli2 \"README.md\" \"CONTRIBUTING.md\" \"docs/quick-start.md\" \"docs/python-integration.md\" \"docs/architecture-overview.md\" --config .markdownlint-cli2.yaml",
 		"docs:lint:all": "markdownlint-cli2 \"README.md\" \"CONTRIBUTING.md\" \"docs/**/*.md\" \"!docs/legacy/**\" \"!docs/archive/**\" \"!**/node_modules/**\" \"!**/CHANGELOG.md\" \"!**/History.md\" \"!**/HISTORY.md\" --config .markdownlint-cli2.yaml",

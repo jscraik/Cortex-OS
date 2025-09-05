@@ -44,13 +44,10 @@ See the full guide: [docs/quick-start.md](./docs/quick-start.md)
 git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os
 
-# Trust repository config to silence mise warnings (suppresses trust prompts)
-mise trust
-
-# Run automated setup (installs deps, sets up git hooks, lints, validates structure)
+# Run automated setup (installs deps, auto-trusts mise, sets up hooks, lints, validates structure)
 ./scripts/dev-setup.sh
 
-# For a minimal setup without git hooks or extra tooling:
+# For a minimal setup with lightweight hooks:
 # ./scripts/dev-setup.sh --minimal
 
 # Optional: customize workspace home (defaults to ~/.Cortex-OS)
