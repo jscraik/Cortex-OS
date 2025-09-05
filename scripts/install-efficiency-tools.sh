@@ -21,5 +21,18 @@ if [ ! -x /usr/local/bin/codeql ]; then
 fi
 
 # Install Sourcegraph CLI
-curl -L https://sourcegraph.com/.api/src-cli/src_linux_amd64 -o /usr/local/bin/src
-chmod +x /usr/local/bin/src
+SRC_URL="https://sourcegraph.com/.api/src-cli/src_linux_amd64"
+SRC_SHA256_URL="https://sourcegraph.com/.api/src-cli/src_linux_amd64.sha256"
+SRC_BIN="/usr/local/bin/src"
+curl -L "$SRC_URL" -o /tmp/src
+curl -L "$SRC_SHA256_URL" -o /tmp/src.sha256
+# The checksum file contains the hash and the filename, so we need to adjust it
+(cd /tmp && sha256sum -c <(sed "s| .*|  src|" src.sha256))
+if [ $? -eq 0 ]; then
+  mv /tmp/src "$SRC_BIN"
+  chmod +x "$SRC_BIN"
+  rm /tmp/src.sha256
+else
+  echo "Checksum verification for Sourcegraph CLI failed!" >&2
+  exit 1
+fi
