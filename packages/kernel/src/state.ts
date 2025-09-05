@@ -204,6 +204,9 @@ export type PRPState = z.infer<typeof PRPStateSchema>;
 export type Evidence = z.infer<typeof EvidenceSchema>;
 export type ValidationGate = z.infer<typeof ValidationGateSchema>;
 export type CerebrumDecision = z.infer<typeof CerebrumDecisionSchema>;
+export type HumanApproval = z.infer<typeof HumanApprovalSchema>;
+export type GateResult = z.infer<typeof GateResultSchema>;
+export type EnforcementProfile = z.infer<typeof EnforcementProfileSchema>;
 
 /**
  * State transition validation
