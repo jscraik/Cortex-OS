@@ -14,6 +14,7 @@ use std::env::VarError;
 use std::time::Duration;
 
 use crate::error::EnvVarError;
+use async_trait::async_trait;
 const DEFAULT_STREAM_IDLE_TIMEOUT_MS: u64 = 300_000;
 const DEFAULT_STREAM_MAX_RETRIES: u64 = 5;
 const DEFAULT_REQUEST_MAX_RETRIES: u64 = 4;
@@ -83,6 +84,51 @@ pub struct ModelProviderInfo {
     /// Whether this provider requires some form of standard authentication (API key, ChatGPT token).
     #[serde(default)]
     pub requires_openai_auth: bool,
+}
+
+#[async_trait]
+pub trait ModelProvider: Send + Sync {
+    fn info(&self) -> &ModelProviderInfo;
+    async fn create_request_builder<'a>(
+        &'a self,
+        client: &'a reqwest::Client,
+        auth: &Option<CodexAuth>,
+    ) -> crate::error::Result<reqwest::RequestBuilder>;
+}
+
+#[async_trait]
+impl ModelProvider for ModelProviderInfo {
+    fn info(&self) -> &ModelProviderInfo {
+        self
+    }
+
+    async fn create_request_builder<'a>(
+        &'a self,
+        client: &'a reqwest::Client,
+        auth: &Option<CodexAuth>,
+    ) -> crate::error::Result<reqwest::RequestBuilder> {
+        ModelProviderInfo::create_request_builder(self, client, auth).await
+    }
+}
+
+pub struct ProviderRegistry {
+    providers: HashMap<String, Box<dyn ModelProvider>>,
+}
+
+impl ProviderRegistry {
+    pub fn new() -> Self {
+        Self {
+            providers: HashMap::new(),
+        }
+    }
+
+    pub fn insert(&mut self, id: String, provider: Box<dyn ModelProvider>) {
+        self.providers.insert(id, provider);
+    }
+
+    pub fn get(&self, id: &str) -> Option<&dyn ModelProvider> {
+        self.providers.get(id).map(|p| p.as_ref())
+    }
 }
 
 impl ModelProviderInfo {

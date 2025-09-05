@@ -15,7 +15,7 @@ use tokio::time::timeout;
 use tracing::debug;
 use tracing::trace;
 
-use crate::ModelProviderInfo;
+use crate::ModelProvider;
 use crate::client_common::Prompt;
 use crate::client_common::ResponseEvent;
 use crate::client_common::ResponseStream;
@@ -33,7 +33,7 @@ pub(crate) async fn stream_chat_completions(
     prompt: &Prompt,
     model_family: &ModelFamily,
     client: &reqwest::Client,
-    provider: &ModelProviderInfo,
+    provider: &dyn ModelProvider,
 ) -> Result<ResponseStream> {
     // Build messages array
     let mut messages = Vec::<serde_json::Value>::new();
@@ -277,12 +277,12 @@ pub(crate) async fn stream_chat_completions(
 
     debug!(
         "POST to {}: {}",
-        provider.get_full_url(&None),
+        provider.info().get_full_url(&None),
         serde_json::to_string_pretty(&payload).unwrap_or_default()
     );
 
     let mut attempt = 0;
-    let max_retries = provider.request_max_retries();
+    let max_retries = provider.info().request_max_retries();
     loop {
         attempt += 1;
 
@@ -301,7 +301,7 @@ pub(crate) async fn stream_chat_completions(
                 tokio::spawn(process_chat_sse(
                     stream,
                     tx_event,
-                    provider.stream_idle_timeout(),
+                    provider.info().stream_idle_timeout(),
                 ));
                 return Ok(ResponseStream { rx_event });
             }
