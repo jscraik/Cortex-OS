@@ -1,9 +1,103 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
-	"formatter": { "enabled": true },
-	"linter": { "enabled": true, "rules": { "recommended": true } },
+	"formatter": {
+		"enabled": true,
+		"includes": [
+			"apps/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"packages/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"libs/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"services/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"servers/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"src/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"tests/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"simple-tests/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"contracts/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"config/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"tools/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"!apps/cortex-code/codex-reference/**",
+			"!apps/cortex-codex/**",
+			"!apps/cortex-cli/**"
+		]
+	},
+	"linter": {
+		"enabled": true,
+		"rules": { "recommended": true },
+		"includes": [
+			"apps/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"packages/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"libs/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"services/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"servers/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"src/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"tests/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"simple-tests/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"contracts/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"config/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"tools/**/*.{js,jsx,ts,tsx,mjs,cjs}",
+			"!apps/cortex-code/codex-reference/**",
+			"!apps/cortex-codex/**",
+			"!apps/cortex-cli/**"
+		]
+	},
 	"javascript": { "formatter": { "quoteStyle": "single" } },
+	"json": { "formatter": { "enabled": false }, "linter": { "enabled": false } },
+	"css": { "formatter": { "enabled": false }, "linter": { "enabled": false } },
+	"graphql": { "formatter": { "enabled": false }, "linter": { "enabled": false } },
+	"html": { "formatter": { "enabled": false } },
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
 	"files": {
-		"includes": ["**", "!**/dist", "!**/.nx"]
+		"includes": [
+			"apps/**",
+			"packages/**",
+			"libs/**",
+			"services/**",
+			"servers/**",
+			"src/**",
+			"tests/**",
+			"simple-tests/**",
+			"contracts/**",
+			"config/**",
+			"tools/**",
+			"!node_modules",
+			"!**/node_modules",
+			"!.venv",
+			"!dist",
+			"!**/dist",
+			"!build",
+			"!**/build",
+			"!coverage",
+			"!**/coverage",
+			"!reports",
+			"!logs",
+			"!.nx",
+			"!**/.nx",
+			"!.turbo",
+			"!**/.turbo",
+			"!.next",
+			"!**/.next",
+			"!**/.git",
+			"!**/.cache",
+			"!**/__pycache__",
+			"!**/.pytest_cache",
+			"!apps/cortex-code/codex-reference",
+			"!apps/cortex-codex",
+			"!apps/cortex-cli"
+		],
+		"ignoreUnknown": true,
+		"experimentalScannerIgnores": [
+			"node_modules",
+			"dist",
+			"build",
+			".next",
+			".turbo",
+			".nx",
+			".cache",
+			"__pycache__",
+			".pytest_cache"
+		]
 	}
 }
