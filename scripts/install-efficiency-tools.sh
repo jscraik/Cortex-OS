@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Allow opt-out to be respected when invoked indirectly by tooling
+if [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" = "1" ] || [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" = "true" ]; then
+  exit 0
+fi
+
 # Cross-platform installer for efficiency tools used in this repo.
 # - Linux (Debian/Ubuntu): apt-get
 # - macOS: Homebrew for packages, direct downloads where appropriate

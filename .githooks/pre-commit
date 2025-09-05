@@ -4,8 +4,8 @@ set -euo pipefail
 # Pre-commit hooks for Cortex-OS
 # Ensures code quality and standards before commits
 
-# Ensure efficiency tools are installed (no-op in CI)
-if [ "${CI:-}" != "true" ] && [ "${GITHUB_ACTIONS:-}" != "true" ]; then
+# Ensure efficiency tools are installed (no-op in CI or if opted-out)
+if [ "${CI:-}" != "true" ] && [ "${GITHUB_ACTIONS:-}" != "true" ] && [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" != "1" ] && [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" != "true" ]; then
     if [ -x scripts/ensure-efficiency-tools.sh ]; then
         scripts/ensure-efficiency-tools.sh || true
     fi
@@ -16,10 +16,17 @@ echo "🔍 Running pre-commit checks..."
 # 1. Check for secrets and sensitive data
 echo "🔐 Checking for secrets..."
 if command -v gitleaks >/dev/null 2>&1; then
-    gitleaks detect --source . --config .gitleaks.toml --no-git || {
-        echo "❌ Secrets detected! Please remove them before committing."
-        exit 1
-    }
+    if [ -f .gitleaks.toml ]; then
+        gitleaks detect --source . --config .gitleaks.toml --no-git || {
+            echo "❌ Secrets detected! Please remove them before committing."
+            exit 1
+        }
+    else
+        gitleaks detect --source . --no-git || {
+            echo "❌ Secrets detected! Please remove them before committing."
+            exit 1
+        }
+    fi
 fi
 
 # 2. Run linting
@@ -29,10 +36,10 @@ if ! mise run lint; then
     exit 1
 fi
 
-# 3. Run formatting check
-echo "📝 Checking code formatting..."
-if ! pnpm format:check; then
-    echo "❌ Code formatting issues detected! Run 'pnpm format' to fix."
+# 3. Run formatting on staged files only (faster, avoids repo-wide noise)
+echo "📝 Checking code formatting (staged files)..."
+if ! pnpm biome:staged; then
+    echo "❌ Code formatting issues detected! Run 'pnpm biome:staged' or 'pnpm format' to fix."
     exit 1
 fi
 
@@ -50,9 +57,13 @@ if ! pnpm test:security:unit; then
     exit 1
 fi
 
-# 6. Check for large files
+# 6. Check for large files (cross-platform)
 echo "📊 Checking for large files..."
-large_files=$(git diff --cached --name-only | xargs -I {} sh -c 'test -f "{}" && stat -c%s "{}" | test $(cat) -gt 1048576 && echo "{}"' || true)
+large_files=$(git diff --cached --name-only | while read -r f; do
+    [ -f "$f" ] || continue
+    size=$(wc -c < "$f" | tr -d ' ')
+    if [ "${size:-0}" -gt 1048576 ]; then echo "$f"; fi
+done)
 if [ -n "$large_files" ]; then
     echo "❌ Large files detected (>1MB):"
     echo "$large_files"

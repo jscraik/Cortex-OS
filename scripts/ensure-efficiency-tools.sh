@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Opt-out guard and CI-safe: allow developers to skip via env var
+if [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" = "1" ] || [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" = "true" ]; then
+  exit 0
+fi
+
 # Fast guard: skip in CI environments
 if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ]; then
   exit 0

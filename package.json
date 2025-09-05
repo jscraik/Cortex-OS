@@ -8,7 +8,9 @@
 	},
 	"type": "module",
 	"scripts": {
-        "postinstall": "bash -lc 'scripts/ensure-efficiency-tools.sh || true'",
+		"postinstall": "bash -lc 'if [ \"${CI:-}\" != \"true\" ] && [ \"${GITHUB_ACTIONS:-}\" != \"true\" ] && [ \"${CORTEX_EFFICIENCY_SETUP_SKIP:-}\" != \"1\" ] && [ \"${CORTEX_EFFICIENCY_SETUP_SKIP:-}\" != \"true\" ]; then if command -v git >/dev/null 2>&1 && [ -d .git ]; then git config --local core.hooksPath .githooks || true; fi; scripts/ensure-efficiency-tools.sh || true; fi'",
+		"ensure:tools": "bash -lc 'scripts/ensure-efficiency-tools.sh'",
+		"install:tools": "bash -lc 'scripts/install-efficiency-tools.sh'",
 		"readiness:init": "node tools/readiness/generate-readiness-yml.mjs",
 		"readiness:check": "node tools/readiness/check-readiness.mjs",
 		"archive:docs:dry": "node scripts/maintenance/relocate-files.mjs --dry",
@@ -92,6 +94,9 @@
 		"lint:ripgrep:all": "pnpm lint:ripgrep:todo && pnpm lint:ripgrep:console && pnpm lint:ripgrep:secrets && pnpm lint:ripgrep:debugger",
 		"format": "biome format --write .",
 		"format:check": "biome check .",
+		"biome:staged": "biome check --staged --write --no-errors-on-unmatched --max-diagnostics=none",
+		"biome:changed": "biome check --changed --no-errors-on-unmatched --max-diagnostics=none",
+		"biome:ci": "biome ci --changed --no-errors-on-unmatched --max-diagnostics=none",
 		"build": "mise run build",
 		"build:wasm": "./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-javascript -o packages/mvp-core/wasm/tree-sitter-javascript.wasm && ./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-typescript/typescript -o packages/mvp-core/wasm/tree-sitter-typescript.wasm && ./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-python -o packages/mvp-core/wasm/tree-sitter-python.wasm && ./node_modules/.bin/tree-sitter build --wasm node_modules/tree-sitter-go -o packages/mvp-core/wasm/tree-sitter-go.wasm",
 		"docs:api": "python scripts/generate-api-docs.py",
@@ -253,5 +258,10 @@
 		"typescript-eslint": "^8.1.0",
 		"vitest": "^2.0.5",
 		"yaml": "^2.5.0"
+	},
+	"lint-staged": {
+		"**/*.{js,jsx,ts,tsx}": [
+			"biome check --write --no-errors-on-unmatched --max-diagnostics=none"
+		]
 	}
 }
