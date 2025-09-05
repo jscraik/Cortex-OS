@@ -51,9 +51,15 @@ git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os
 
 
+# Trust repository config to silence mise warnings
+mise trust
+
 # Run automated setup (trusts mise, installs dependencies, lints code, validates structure, and cleans up workspace)
 
 ./scripts/dev-setup.sh
+
+# For a minimal setup without git hooks or extra tooling
+# ./scripts/dev-setup.sh --minimal
 
 # Set up environment (optional - uses ~/.Cortex-OS by default)
 export CORTEX_OS_HOME="$HOME/.Cortex-OS"
