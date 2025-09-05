@@ -66,7 +66,7 @@ pub(crate) async fn apply_patch(
             // give the user the option to expand the set of writable roots so
             // that similar patches can be auto-approved in the future during
             // this session.
-            let rx_approve = ReviewDecision::Approved;
+            let rx_approve = request_user_approval(sess, turn_context, sub_id, call_id, &action).await;
             match rx_approve {
                 ReviewDecision::Approved | ReviewDecision::ApprovedForSession => {
                     InternalApplyPatchInvocation::DelegateToExec(ApplyPatchExec {
