@@ -6,8 +6,7 @@
  * This script enforces monorepo structure policies by:
  * 1. Checking for disallowed file placements
  * 2. Ensuring required files exist
- * 3. Validating file patt// Report findings
-let exitCode = 0;ackages
+ * 3. Validating file patterns and package structures
  * 4. Enforcing import rules
  */
 
@@ -64,20 +63,26 @@ const policy = policySchema.parse(JSON.parse(readFileSync(policyPath, 'utf8')));
 
 // Get all files in the repository, excluding ignored directories
 const files = await globby(
-	[
-		'**/*',
-		'!**/node_modules/**',
-		'!**/dist/**',
-		'!**/.git/**',
-		'!**/.turbo/**',
-	],
-	{ dot: true },
+        [
+                '**/*',
+                '!**/node_modules/**',
+                '!**/dist/**',
+                '!**/.git/**',
+                '!**/.turbo/**',
+        ],
+        { dot: true },
 );
 
+function validateDeniedFiles(files: string[]): string[] {
+        return files.filter((f) =>
+                micromatch.isMatch(f, policy.deniedGlobs, { dot: true }),
+        );
+}
+
 function validateAllowedFiles(files: string[]): string[] {
-	return files.filter(
-		(f) => !micromatch.isMatch(f, policy.allowedGlobs, { dot: true }),
-	);
+        return files.filter(
+                (f) => !micromatch.isMatch(f, policy.allowedGlobs, { dot: true }),
+        );
 }
 
 function validateProtectedFiles(files: string[]): string[] {
@@ -212,19 +217,18 @@ function validatePackageStructure(
 }
 
 function validateRootEntries(files: string[]): string[] {
-	const rootEntries = files.filter((f) => !f.includes('/'));
-	const disallowed = rootEntries.filter(
-		(f) => !policy.allowedRootEntries.includes(f),
-	);
-	return disallowed;
+        const rootEntries = files.filter((f) => !f.includes('/'));
+        const disallowed = rootEntries.filter(
+                (f) => !policy.allowedRootEntries.includes(f),
+        );
+        return disallowed;
 }
 
 // Filter out denied files first
-const filteredFiles = files.filter(
-	(f) => !micromatch.isMatch(f, policy.deniedGlobs, { dot: true }),
-);
+const deniedFiles = validateDeniedFiles(files);
+const filteredFiles = files.filter((f) => !deniedFiles.includes(f));
 
-console.log(`Filtered out ${files.length - filteredFiles.length} denied files`);
+console.log(`Filtered out ${deniedFiles.length} denied files`);
 
 // Run validations on filtered files
 const disallowedFiles = validateAllowedFiles(filteredFiles);
@@ -284,3 +288,11 @@ if (exitCode === 0) {
 }
 
 process.exitCode = exitCode;
+
+export {
+        validateDeniedFiles,
+        validateAllowedFiles,
+        validateProtectedFiles,
+        validatePackageStructure,
+        validateRootEntries,
+};

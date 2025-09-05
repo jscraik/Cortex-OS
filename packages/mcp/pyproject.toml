@@ -13,12 +13,11 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 # Production dependencies
 dependencies = [
@@ -48,8 +47,8 @@ dependencies = [
     "qdrant-client>=1.7.0", # Vector storage
 
     # AI/ML dependencies
-    "mlx>=0.30.0",
-    "mlx-lm>=0.28.0",
+    "mlx>=0.29.0; sys_platform == 'darwin'",
+    "mlx-lm>=0.27.0; sys_platform == 'darwin'",
     "sentence-transformers>=3.3.0",
     "transformers>=4.55.4",
     "llama-cpp-python>=0.2.90",
@@ -177,7 +176,7 @@ exclude_lines = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -204,7 +203,7 @@ module = [
 ignore_missing_imports = true
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py313"
 line-length = 88
 
 [tool.ruff.lint]
@@ -234,7 +233,7 @@ exclude_dirs = ["tests"]
 skips = ["B101", "B601"]
 
 [tool.black]
-target-version = ['py311']
+target-version = ['py313']
 line-length = 88
 include = '\.pyi?$'
 extend-exclude = '''

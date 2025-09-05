@@ -129,7 +129,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["nginx", "-g", "daemon off;"]
 
 # Stage 3: Development Environment (multi-target build)
-FROM python:3.11-slim as development
+FROM python:3.13-slim as development
 
 # Development-specific packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -154,7 +154,7 @@ EXPOSE 8000
 CMD ["mkdocs", "serve", "--dev-addr", "0.0.0.0:8000", "--livereload"]
 
 # Stage 4: Testing Environment
-FROM python:3.11-slim as testing
+FROM python:3.13-slim as testing
 
 # Install testing dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

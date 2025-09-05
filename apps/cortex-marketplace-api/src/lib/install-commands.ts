@@ -1,5 +1,9 @@
 import type { ClientType, InstallCommand, ServerManifest } from "../types.js";
 
+function shellEscape(value: string): string {
+        return JSON.stringify(value);
+}
+
 export function generateCommands(server: ServerManifest): InstallCommand[] {
 	const commands: InstallCommand[] = [];
 	const claude = generateClaudeCommand(server);
@@ -36,27 +40,27 @@ function buildClaudeHttpCommand(server: ServerManifest): string {
 		throw new Error("Server does not support Streamable HTTP transport");
 	}
 	const config = server.transport.streamableHttp;
-	let command = `claude mcp add --transport streamableHttp ${server.id} ${config.url}`;
-	if (config.headers) {
-		for (const [key, value] of Object.entries(config.headers)) {
-			command += ` --header "${key}: ${value}"`;
-		}
-	}
-	if (config.auth && config.auth.type !== "none") {
-		switch (config.auth.type) {
-			case "bearer":
-				command += ' --header "Authorization: Bearer <YOUR_TOKEN>"';
-				break;
-			case "oauth2":
-				if (config.auth.clientId) {
-					command += ` --oauth2-client-id ${config.auth.clientId}`;
-				}
-				if (config.auth.scopes) {
-					command += ` --oauth2-scopes "${config.auth.scopes.join(" ")}"`;
-				}
-				break;
-		}
-	}
+        let command = `claude mcp add --transport streamableHttp ${shellEscape(server.id)} ${shellEscape(config.url)}`;
+        if (config.headers) {
+                for (const [key, value] of Object.entries(config.headers)) {
+                        command += ` --header ${shellEscape(`${key}: ${value}`)}`;
+                }
+        }
+        if (config.auth && config.auth.type !== "none") {
+                switch (config.auth.type) {
+                        case "bearer":
+                                command += ` --header ${shellEscape("Authorization: Bearer <YOUR_TOKEN>")}`;
+                                break;
+                        case "oauth2":
+                                if (config.auth.clientId) {
+                                        command += ` --oauth2-client-id ${shellEscape(config.auth.clientId)}`;
+                                }
+                                if (config.auth.scopes) {
+                                        command += ` --oauth2-scopes ${shellEscape(config.auth.scopes.join(" "))}`;
+                                }
+                                break;
+                }
+        }
 	return command;
 }
 

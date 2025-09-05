@@ -6,24 +6,59 @@
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { build } from "./app.js";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import type { ServerManifest } from "@cortex-os/mcp-registry";
 
 describe("Marketplace API Server", () => {
-	let app: FastifyInstance;
+        let app: FastifyInstance;
+        let testCacheDir: string;
 
-	beforeEach(async () => {
-		app = build({
-			logger: false,
-			registries: {
-				official: "https://registry.cortex-os.dev/v1/registry.json",
-			},
-			cacheDir: "/tmp/test-cache",
-			cacheTtl: 300000,
-		});
-	});
+        beforeEach(async () => {
+                testCacheDir = await mkdtemp(path.join(tmpdir(), "marketplace-test-"));
+                const mockRegistryData = {
+                        version: "2025-01-15",
+                        mcpVersion: "2025-06-18",
+                        updatedAt: "2025-01-15T12:00:00Z",
+                        serverCount: 2,
+                        servers: [
+                                {
+                                        id: "filesystem",
+                                        name: "Test Filesystem",
+                                        description: "Test filesystem access server",
+                                        category: "development",
+                                        security: { riskLevel: "medium" },
+                                },
+                                {
+                                        id: "github",
+                                        name: "Test GitHub",
+                                        description: "GitHub integration",
+                                        category: "development",
+                                        security: { riskLevel: "low" },
+                                },
+                        ],
+                } as {
+                        version: string;
+                        mcpVersion: string;
+                        updatedAt: string;
+                        serverCount: number;
+                        servers: ServerManifest[];
+                };
+                const registryPath = path.join(testCacheDir, "registry.json");
+                await writeFile(registryPath, JSON.stringify(mockRegistryData));
+                app = build({
+                        logger: false,
+                        registries: { test: `file://${registryPath}` },
+                        cacheDir: testCacheDir,
+                        cacheTtl: 300000,
+                });
+        });
 
-	afterEach(async () => {
-		await app.close();
-	});
+        afterEach(async () => {
+                await app.close();
+                await rm(testCacheDir, { recursive: true, force: true });
+        });
 
 	describe("Health Check", () => {
 		it("should respond to health check", async () => {

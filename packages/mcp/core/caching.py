@@ -292,7 +292,7 @@ class MemoryCacheBackend(CacheBackendInterface):
             self.stats.entry_count = len(self.data)
             return self.stats
 
-    async def _remove_entry(self, key: str):
+    async def _remove_entry(self, key: str) -> None:
         """Remove entry and update tracking."""
         if key in self.data:
             entry = self.data.pop(key)
@@ -301,14 +301,14 @@ class MemoryCacheBackend(CacheBackendInterface):
                 self.access_order.remove(key)
             self.stats.entry_count = len(self.data)
 
-    async def _evict_lru(self):
+    async def _evict_lru(self) -> None:
         """Evict least recently used entry."""
         if self.access_order:
             lru_key = self.access_order[0]
             await self._remove_entry(lru_key)
             self.stats.evictions += 1
 
-    async def _periodic_cleanup(self):
+    async def _periodic_cleanup(self) -> None:
         """Periodic cleanup of expired entries."""
         while True:
             try:
@@ -340,7 +340,7 @@ class RedisCacheBackend(CacheBackendInterface):
         self.config = config
         self.redis: Redis | None = None
         self.stats = CacheStats()
-        self._lua_scripts = {}
+        self._lua_scripts: dict[str, str] = {}
         self._load_lua_scripts()
 
     async def _ensure_connected(self) -> Redis:
@@ -357,7 +357,7 @@ class RedisCacheBackend(CacheBackendInterface):
             )
         return self.redis
 
-    def _load_lua_scripts(self):
+    def _load_lua_scripts(self) -> None:
         """Load Lua scripts for atomic operations."""
         # Atomic get with stats update
         self._lua_scripts["get_with_stats"] = """

@@ -56,12 +56,12 @@ errors=0
 echo -e "${YELLOW}=== System Requirements ===${NC}"
 
 # Check Python
-echo -n "Python 3.11+... "
+echo -n "Python 3.13+... "
 if command_exists python3; then
     python_version=$(python3 --version | sed 's/Python //')
     echo -e "${GREEN}✓ $python_version${NC}"
 else
-    echo -e "${RED}✗ Python 3.11+ required${NC}"
+    echo -e "${RED}✗ Python 3.13+ required${NC}"
     ((errors++))
 fi
 

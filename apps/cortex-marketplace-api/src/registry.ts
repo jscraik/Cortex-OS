@@ -2,14 +2,12 @@
  * @file MCP Marketplace Registry
  * @description Registry management for MCP marketplace servers
  */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/require-await, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument, no-console */
-
-import { sha256 } from "@noble/hashes/sha256";
-import { bytesToHex } from "@noble/hashes/utils";
-import Fuse from "fuse.js";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import * as path from "node:path";
+import { sha256 } from "@noble/hashes/sha256";
+import { bytesToHex } from "@noble/hashes/utils";
+import Fuse from "fuse.js";
 import type {
 	ApiResponse,
 	RegistryIndex,
@@ -33,7 +31,7 @@ const ALLOWED_REGISTRY_DOMAINS = [
 /**
  * Security: Validate registry URL to prevent SSRF attacks
  */
-function validateRegistryUrl(url: string): boolean {
+export function validateRegistryUrl(url: string): boolean {
 	try {
 		const parsedUrl = new URL(url);
 
@@ -67,20 +65,21 @@ export class MarketplaceRegistry {
 	async initialize(): Promise<void> {
 		await this.ensureCacheDir();
 
-		try {
-			await this.loadFromCache();
+                try {
+                        await this.loadFromCache();
 
-			// Fetch updates if cache is stale
-			if (this.isCacheStale()) {
-				await this.fetchRegistry();
-			}
-		} catch (error) {
-			console.warn(
-				"Failed to load from cache, fetching fresh registry:",
-				error,
-			);
-			await this.fetchRegistry();
-		}
+                        // Fetch updates if cache is stale
+                        if (this.isCacheStale()) {
+                                await this.fetchRegistry();
+                        }
+                } catch (error) {
+                        // eslint-disable-next-line no-console
+                        console.warn(
+                                "Failed to load from cache, fetching fresh registry:",
+                                error,
+                        );
+                        await this.fetchRegistry();
+                }
 
 		this.buildSearchIndex();
 	}
@@ -97,8 +96,6 @@ export class MarketplaceRegistry {
 				);
 			}
 
-			// semgrep-disable-next-line: semgrep.owasp-top-10-2021-a10-server-side-request-forgery
-			// SSRF protection: URL validated above against allowlist
 			const response = await fetch(this.registryUrl);
 			if (!response.ok) {
 				throw new Error(
@@ -106,26 +103,29 @@ export class MarketplaceRegistry {
 				);
 			}
 
-			const data = await response.json();
-			const result = RegistryIndexSchema.safeParse(data);
+                        const data: unknown = await response.json();
+                        const result = RegistryIndexSchema.safeParse(data);
 
 			if (!result.success) {
 				throw new Error(`Invalid registry format: ${result.error.message}`);
 			}
 
-			this.registry = result.data;
-			this.lastUpdate = new Date();
+                        this.registry = result.data;
+                        this.lastUpdate = new Date();
 
-			// Cache the registry
-			await this.saveToCache();
+                        // Cache the registry
+                        await this.saveToCache();
 
-			console.log(
-				`✅ Registry updated: ${this.registry.serverCount} servers available`,
-			);
-		} catch (error) {
-			console.error("Failed to fetch registry:", error);
-			throw error;
-		}
+                        // eslint-disable-next-line no-console
+                        console.log(
+                                `✅ Registry updated: ${this.registry.serverCount} servers available`,
+                                ` (checksum: ${this.getRegistryChecksum()})`,
+                        );
+                } catch (error) {
+                        // eslint-disable-next-line no-console
+                        console.error("Failed to fetch registry:", error);
+                        throw error;
+                }
 	}
 
 	/**
@@ -324,21 +324,21 @@ export class MarketplaceRegistry {
 			throw new Error("Cache files not found");
 		}
 
-		const [registryData, metaData] = await Promise.all([
-			readFile(this.cacheFile, "utf-8"),
-			readFile(this.metaFile, "utf-8"),
-		]);
+                const [registryData, metaData] = await Promise.all([
+                        readFile(this.cacheFile, "utf-8"),
+                        readFile(this.metaFile, "utf-8"),
+                ]);
 
-		const registry = JSON.parse(registryData);
-		const meta = JSON.parse(metaData);
+                const registry: unknown = JSON.parse(registryData);
+                const meta: unknown = JSON.parse(metaData);
 
-		const result = RegistryIndexSchema.safeParse(registry);
-		if (!result.success) {
-			throw new Error("Invalid cached registry format");
-		}
+                const result = RegistryIndexSchema.safeParse(registry);
+                if (!result.success) {
+                        throw new Error("Invalid cached registry format");
+                }
 
-		this.registry = result.data;
-		this.lastUpdate = new Date(meta.lastUpdate);
+                this.registry = result.data;
+                this.lastUpdate = new Date((meta as { lastUpdate: string }).lastUpdate);
 	}
 
 	private async saveToCache(): Promise<void> {

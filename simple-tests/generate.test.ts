@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createGenerate, type ModelStrategy } from "../../src/lib/generate.js";
+import { createGenerate, type ModelStrategy } from "../src/lib/generate.js";
 
 describe("createGenerate", () => {
 	const strategy: ModelStrategy = {
