@@ -13,7 +13,8 @@ sudo apt-get install -y ripgrep universal-ctags hyperfine git-delta gitleaks
 #   npx @withgraphite/graphite-cli <args>
 
 # Install semgrep via pip
-pip install semgrep
+SEMGREP_VERSION="1.62.0"
+pip install semgrep=="$SEMGREP_VERSION"
 
 # Install CodeQL CLI
 CODEQL_VERSION="2.17.3"
