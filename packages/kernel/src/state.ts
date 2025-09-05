@@ -92,6 +92,31 @@ export const CerebrumDecisionSchema = z.object({
 });
 
 /**
+ * Enforcement Profile from initial.md
+ */
+export const EnforcementProfileSchema = z.object({
+	budgets: z.object({
+		coverageLines: z.number().min(0).max(100).default(95),
+		coverageBranches: z.number().min(0).max(100).default(90),
+		performanceLCP: z.number().positive().default(2500),
+		performanceTBT: z.number().positive().default(300),
+		a11yScore: z.number().min(0).max(100).default(95),
+	}),
+	architecture: z.object({
+		allowedPackageBoundaries: z.array(z.string()).default([]),
+		namingConventions: z.record(z.string()).default({}),
+		repoLayout: z.array(z.string()).default([]),
+		crossBoundaryImports: z.array(z.string()).default([]),
+	}),
+	governance: z.object({
+		licensePolicy: z.string().default("(Apache-2.0 OR Commercial)"),
+		codeownersMapping: z.record(z.array(z.string())).default({}),
+		structureGuardExceptions: z.array(z.string()).default([]),
+		requiredChecks: z.array(z.string()).default([]),
+	}),
+});
+
+/**
  * Core PRP State following the state machine diagram
  */
 export const PRPStateSchema = z.object({
@@ -110,10 +135,19 @@ export const PRPStateSchema = z.object({
 		metadata: z.record(z.unknown()).optional(),
 	}),
 
+	// Enforcement profile from initial.md
+	enforcementProfile: EnforcementProfileSchema.optional(),
+
+	// Gate execution results (G0-G7)
+	gates: z.record(GateResultSchema).default({}),
+
+	// Human approvals tracking
+	approvals: z.array(HumanApprovalSchema).default([]),
+
 	// Execution outputs by neuron ID
 	outputs: z.record(z.unknown()),
 
-	// Validation results by phase
+	// Validation results by phase (legacy, maintained for compatibility)
 	validationResults: z.object({
 		strategy: ValidationGateSchema.optional(),
 		build: ValidationGateSchema.optional(),
