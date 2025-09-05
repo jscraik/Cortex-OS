@@ -39,3 +39,4 @@ reports/
 
 # Security scan artifacts
 semgrep-report.json
+logs/*.log
