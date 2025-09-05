@@ -166,7 +166,14 @@ class KVCacheManager:
         return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def _compress_kv_states(self, kv_states: np.ndarray) -> bytes:
-        """Compress KV states using LZ4"""
+        """Compress KV states using LZ4
+
+        WARNING: Uses pickle for numpy array serialization - only use with trusted data.
+        This is safe for internal KV cache states as they don't come from user input.
+        """
+        if not isinstance(kv_states, np.ndarray):
+            raise TypeError("KV states must be numpy arrays for security")
+
         if not self.compression_enabled:
             return pickle.dumps(kv_states)
 
