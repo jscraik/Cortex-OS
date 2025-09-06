@@ -115,5 +115,11 @@ No direct import from Feature A inside orchestrator implementation.
 ## 13. When Unsure
 Prefer adding a TODO with context + create smallest safe abstraction. Do NOT guess cross-boundary contracts—locate or define them formally first.
 
+## 9A. Multi-Language (Rust/Python) Interplay
+- Rust (`codex-rs/`) used for performance / analysis tooling; expose functionality via CLI or generated artifacts—do NOT import Rust internals directly into TS.
+- Python (`apps/cortex-py/`) integrates model/instructor workflows; invoke via defined MCP tools or CLI bridges—avoid ad-hoc `child_process` without contract.
+- Cross-language data exchange: JSON (validated via Zod schemas) or well-defined file artifacts in `data/`.
+- When adding new Rust/Python capability: 1) define contract schema, 2) add thin adapter (MCP tool / bus handler), 3) add round‑trip test (TS -> Rust/Py -> TS).
+
 ---
 If any rule here conflicts with higher authority files, defer upward and document the conflict in your PR description.
