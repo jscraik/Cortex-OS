@@ -128,7 +128,7 @@ Add TODO + smallest safe abstraction; never guess a contract.
 4. Migrate one consumer at a time
 5. `pnpm structure:validate` + `pnpm security:scan:diff`
 6. Remove old after zero refs
-7. Version + backward-compat test if schema changed
+7. Version + backward-compat test if schema changed (see Section 15.3 Contract Versioning Rules)
 Anti-pattern: big-bang rename.
 </details>
 
@@ -136,7 +136,7 @@ Anti-pattern: big-bang rename.
 Name (past-tense / lifecycle); envelope core fields; lean data shape; add schema (AsyncAPI + Zod); round-trip + handler tests; optional new fields; propagate `traceparent`; add `correlation_id` if workflow; link in README.
 </details>
 
-<details><summary><strong>15A. New Event JSON Template</strong></summary>
+<details><summary><strong>15.1 New Event JSON Template</strong></summary>
 Minimal illustrative envelope (include only needed optional fields):
 
 ```jsonc
@@ -163,7 +163,7 @@ Implementation Steps:
 5. Document in producing package README (Events section).
 </details>
 
-<details><summary><strong>15B. Contract Test Scaffold (Example)</strong></summary>
+<details><summary><strong>15.2 Contract Test Scaffold (Example)</strong></summary>
 ```ts
 // contracts/tests/task-created.contract.test.ts
 import { z } from 'zod';
@@ -196,7 +196,7 @@ Notes:
 - Trace context included when part of workflow.
 </details>
 
-<details><summary><strong>15C. Contract Versioning Rules</strong></summary>
+<details><summary><strong>15.3 Contract Versioning Rules</strong></summary>
 Version (new major or explicit version tag) when:
 - Removing a required field or changing its semantic meaning.
 - Changing data type of an existing field (string -> object, enum narrowing, etc.).
