@@ -6,9 +6,8 @@ import type { MemoryStore, TextQuery, VectorQuery } from "../ports/MemoryStore.j
 // when SQLite bindings are unavailable (e.g., in environments without native
 // compilation support).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-let DatabaseImpl: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let loadVec: any;
+let DatabaseImpl: typeof import("better-sqlite3") | undefined;
+let loadVec: typeof import("sqlite-vec")["load"] | undefined;
 try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
         DatabaseImpl = require("better-sqlite3");
