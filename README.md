@@ -206,26 +206,30 @@ Key components now in place:
 4. Semgrep baseline + diff flow: treat newly introduced findings as red; historical tech-debt tracked separately.
 5. SARIF upload enables native GitHub Security tab visibility (code scanning alerts) without vendor lock-in.
 6. Optional SonarCloud workflow (`.github/workflows/sonar.yml`) supports multi-language metrics
-	(SAST, coverage, maintainability). Disable by removing or making conditional.
+  (SAST, coverage, maintainability). Disable by removing or making conditional.
 
 #### Semgrep Usage
 
 Baseline (captures current state – do NOT run casually unless intentionally resetting):
+
 ```bash
 pnpm security:scan:baseline   # writes reports/semgrep-baseline.json
 ```
 
 Diff against baseline (local developer check before large refactors / PR polish):
+
 ```bash
 pnpm security:scan:diff       # generates current + compares; exits non-zero on NEW findings
 ```
 
 CI pipeline runs (excerpt):
+
 ```bash
 pnpm security:scan:ci         # produces JSON report consumed for SARIF conversion
 ```
 
 Reports directory structure (examples):
+
 ```text
 reports/
   semgrep-baseline.json   # canonical baseline – versioned in repo if approved
