@@ -182,5 +182,19 @@ Rust via CLI artifacts only; Python via MCP/CLI bridge; exchange JSON validated 
 - Silent External API Drift: No Zod validation wrapper -> downstream handlers crash unpredictably.
 </details>
 
+<details><summary><strong>19. First PR (External Contributor) Quick Path</strong></summary>
+1. Fork & clone; run `./scripts/dev-setup.sh` (or `--minimal`).
+2. Pick a small issue (docs, test gap, minor fix). Avoid cross-boundary refactors initially.
+3. Create branch: `feat/<short-descriptor>` (Conventional Commit style for first commit later).
+4. Add/adjust failing test FIRST; confirm it fails.
+5. Implement minimal fix/feature; keep changes < ~200 lines diff.
+6. Run: `pnpm lint && pnpm test && pnpm structure:validate && pnpm security:scan:diff`.
+7. Update README or relevant package docs if behavior changed.
+8. Commit with Conventional Commit: `feat(xyz): short summary` (one focused commit preferred).
+9. Open PR including: purpose, test plan (commands + outcome), risk notes, any follow-up TODOs.
+10. Respond to review by amending new commits (avoid force push unless instructed).
+Signal quality: green tests, no boundary violations, clear test plan, smallest viable change.
+</details>
+
 ---
 If any rule conflicts upward authority, defer & document in PR description.
