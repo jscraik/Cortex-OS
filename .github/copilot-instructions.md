@@ -161,5 +161,19 @@ Before publishing a new event type:
 - Correlation: Add `correlation_id` for request/response or multi-step orchestration traces.
 - Documentation: Link event in producing package README or event index.
 
+## 16. Triaging a Failing Test (Multi-Package)
+1. Identify scope: note failing path; run focused: `pnpm vitest run <package> --reporter=verbose` or use workspace filter `pnpm test --filter <package>`.
+2. Check contract violations: if failure references data shape, open `libs/typescript/contracts` + related schema.
+3. Re-run with trace: add `DEBUG=cortex:*` (or package-specific debug env) to surface internal logs.
+4. If cross-feature event mismatch: capture envelope emitted vs expected (log via temporary `console.dir(envelope, {depth:4})`).
+5. Add a narrow reproduction test beside the failing area before broad fixes; keep original failing test intact.
+6. Only refactor after green; remove any temporary debug output.
+Fast sanity commands:
+```bash
+pnpm test --filter a2a
+pnpm test:coverage --filter orchestration
+pnpm structure:validate
+```
+
 ---
 If any rule here conflicts with higher authority files, defer upward and document the conflict in your PR description.
