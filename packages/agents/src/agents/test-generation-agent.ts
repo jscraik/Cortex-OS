@@ -187,7 +187,7 @@ export const createTestGenerationAgent = (
                                                 traceId,
                                                 capability: "test-generation",
                                                 result,
-                                                evidence: [],
+                                                evidence: Array.isArray(result?.testFiles) ? result.testFiles : [],
                                                 metrics: {
                                                         latencyMs: executionTime,
                                                         tokensUsed: estimateTokens(
