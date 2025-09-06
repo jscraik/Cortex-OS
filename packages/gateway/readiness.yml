@@ -5,7 +5,7 @@ coverage:
   functions: 0
   lines: 0
 checklist:
-  tdd: false
+  tdd: true
   contracts: false
   a11y: false
   security: false
