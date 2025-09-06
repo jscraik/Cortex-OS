@@ -65,11 +65,6 @@ const identity = await spiffeClient.fetchWorkloadIdentity();
 
 // Setup mTLS
 const mtlsManager = new MTLSManager(identity);
-await mtlsManager.createSecureServer({
-  port: 8443,
-  cert: identity.x509Certificate,
-  key: identity.privateKey
-});
 
 // Emit a contract-validated security event
 const emitter = new SecurityEventEmitter({
