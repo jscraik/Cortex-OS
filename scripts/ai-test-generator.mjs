@@ -22,7 +22,17 @@ async function main() {
     max_tokens: 1000,
     messages: [{ role: "user", content: prompt }],
   });
-  const content = resp.content[0]?.text ?? "";
+  let content = "";
+  if (
+    Array.isArray(resp.content) &&
+    resp.content.length > 0 &&
+    typeof resp.content[0].text === "string"
+  ) {
+    content = resp.content[0].text;
+  } else {
+    console.error("Unexpected API response structure: missing or invalid 'content[0].text'");
+    process.exit(1);
+  }
   writeFileSync(outPath, content);
   console.log(`Generated tests written to ${outPath}`);
 }
