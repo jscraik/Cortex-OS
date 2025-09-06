@@ -205,7 +205,8 @@ Key components now in place:
 3. Root `.env` enforced: commit requires presence (prevents missing runtime vars drift); file is intentionally minimal.
 4. Semgrep baseline + diff flow: treat newly introduced findings as red; historical tech-debt tracked separately.
 5. SARIF upload enables native GitHub Security tab visibility (code scanning alerts) without vendor lock-in.
-6. Optional SonarCloud workflow (`.github/workflows/sonar.yml`) supports multi-language metrics (SAST, coverage, maintainability). Disable by removing or making conditional.
+6. Optional SonarCloud workflow (`.github/workflows/sonar.yml`) supports multi-language metrics
+	(SAST, coverage, maintainability). Disable by removing or making conditional.
 
 #### Semgrep Usage
 
@@ -225,11 +226,11 @@ pnpm security:scan:ci         # produces JSON report consumed for SARIF conversi
 ```
 
 Reports directory structure (examples):
-```
+```text
 reports/
-	semgrep-baseline.json   # canonical baseline – versioned in repo if approved
-	semgrep-current.json    # transient diff artefact
-	semgrep-results.json    # CI raw scan output
+  semgrep-baseline.json   # canonical baseline – versioned in repo if approved
+  semgrep-current.json    # transient diff artefact
+  semgrep-results.json    # CI raw scan output
 ```
 
 #### SonarCloud (Optional)
