@@ -273,6 +273,44 @@ Further detail: see [`SECURITY.md`](./SECURITY.md) and future `docs/code-quality
 
 ---
 
+## Automated Linting & Scheduled Quality Runs
+
+In addition to on-demand commands and the existing **nightly quality** workflow, the repository includes a **scheduled lint** workflow: `scheduled-lint.yml`.
+
+### Schedule
+
+Runs weekly (cron: Monday 03:10 UTC) and can be triggered manually via the Actions tab.
+
+### Workflow Steps
+
+| Phase | Command | Purpose |
+|-------|---------|---------|
+| Biome (changed) | `pnpm biome:ci` | Fast style + formatting validation |
+| ESLint (quality) | `pnpm lint:quality` | Core quality & import rules |
+| ESLint (security) | `pnpm lint:security` | Security-focused rules (sonarjs, boundaries) |
+| Ruff (Python) | `pnpm python:lint` | Python style & lint consistency |
+| Structure | `pnpm structure:validate` | Enforces architecture governance |
+| Pattern Guard | `pnpm lint:ripgrep:hardened` | Detects secrets, debug statements, forbidden patterns |
+| AST Policy | `pnpm lint:ast-grep:check` | Enforces structural AST policies |
+
+All steps soft-fail (`|| true`) to ensure an aggregated summary; review logs for violations. Promote to hard failure by removing `|| true` once baseline is clean.
+
+### Local Parity
+
+```bash
+pnpm lint:all            # Aggregated lint suite
+pnpm structure:validate  # Governance integrity
+pre-commit run --all-files
+```
+
+### Future Enhancements (Optional)
+
+1. Open an issue automatically if violations increase week-over-week.
+2. Upload SARIF for AST-Grep + pattern guard to unify security dashboards.
+3. Persist weekly lint trend JSON similar to coverage trend.
+
+---
+
 ## Contributing
 
 We welcome contributions! See the [Contributing Guide](./CONTRIBUTING.md) for details.
