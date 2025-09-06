@@ -188,13 +188,20 @@ export const createCodeAnalysisAgent = (
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent completed event
+                                // Construct evidence array with analysis parameters
+                                const evidence = [
+                                        { type: "language", value: validatedInput.language },
+                                        { type: "analysisType", value: validatedInput.analysisType },
+                                        { type: "focus", value: validatedInput.focus },
+                                        { type: "sourceCodeLength", value: validatedInput.sourceCode.length }
+                                ];
                                 config.eventBus.publish(
                                         createEvent("agent.completed", {
                                                 agentId,
                                                 traceId,
                                                 capability: "code-analysis",
                                                 result,
-                                                evidence: [],
+                                                evidence,
                                                 metrics: {
                                                         latencyMs: executionTime,
                                                         tokensUsed: estimateTokens(
