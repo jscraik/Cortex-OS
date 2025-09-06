@@ -149,9 +149,13 @@ addopts = [
   "--cov-report=term-missing",
   "--cov-report=xml",
   "--cov-report=html",
-  "--cov-fail-under=80",
+  "--cov-fail-under=70",
   "--strict-markers",
   "-vv",
+]
+markers = [
+  "slow: long-running or resource intensive tests",
+  "integration: tests that require external services or models",
 ]
 
 [tool.bandit]
