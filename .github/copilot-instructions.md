@@ -125,6 +125,33 @@ Anti-pattern: big-bang rename.
 Name (past-tense / lifecycle); envelope core fields; lean data shape; add schema (AsyncAPI + Zod); round-trip + handler tests; optional new fields; propagate `traceparent`; add `correlation_id` if workflow; link in README.
 </details>
 
+<details><summary><strong>15A. New Event JSON Template</strong></summary>
+Minimal illustrative envelope (include only needed optional fields):
+
+```jsonc
+{
+  "specversion": "1.0",
+  "type": "task.created",          // lifecycle or domain event
+  "source": "urn:cortex:tasks",    // producing feature URN
+  "id": "uuid-v4-or-ulid",         // globally unique
+  "time": "2025-09-06T12:34:56Z",  // RFC3339
+  "traceparent": "00-<traceId>-<spanId>-01", // propagate if part of flow
+  "correlation_id": "req-123",     // if request/response or workflow
+  "data": {
+    "taskId": "task-789",
+    "priority": "high",
+    "requestedBy": "user-42"
+  }
+}
+```
+Implementation Steps:
+1. Add Zod schema in `libs/typescript/contracts/<domain>/events.ts`.
+2. Register / extend AsyncAPI or CloudEvents schema under `contracts/`.
+3. Add contract test: validate sample -> round trip via create/parse.
+4. Add producing handler test + (if needed) consuming feature test.
+5. Document in producing package README (Events section).
+</details>
+
 <details><summary><strong>16. Triaging Failing Test</strong></summary>
 1. Narrow scope (`pnpm test --filter <pkg>`)
 2. Inspect schemas in `libs/typescript/contracts`
