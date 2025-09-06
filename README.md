@@ -283,15 +283,15 @@ Runs three times daily at 10:00, 14:00, and 20:00 UTC (GMT). You can also trigge
 
 ### Workflow Steps
 
-| Phase | Command | Purpose |
-|-------|---------|---------|
-| Biome (changed) | `pnpm biome:ci` | Fast style + formatting validation |
-| ESLint (quality) | `pnpm lint:quality` | Core quality & import rules |
-| ESLint (security) | `pnpm lint:security` | Security-focused rules (sonarjs, boundaries) |
-| Ruff (Python) | `pnpm python:lint` | Python style & lint consistency |
-| Structure | `pnpm structure:validate` | Enforces architecture governance |
-| Pattern Guard | `pnpm lint:ripgrep:hardened` | Detects secrets, debug statements, forbidden patterns |
-| AST Policy | `pnpm lint:ast-grep:check` | Enforces structural AST policies |
+| Phase             | Command                      | Purpose                                               |
+| ----------------- | ---------------------------- | ----------------------------------------------------- |
+| Biome (changed)   | `pnpm biome:ci`              | Fast style + formatting validation                    |
+| ESLint (quality)  | `pnpm lint:quality`          | Core quality & import rules                           |
+| ESLint (security) | `pnpm lint:security`         | Security-focused rules (sonarjs, boundaries)          |
+| Ruff (Python)     | `pnpm python:lint`           | Python style & lint consistency                       |
+| Structure         | `pnpm structure:validate`    | Enforces architecture governance                      |
+| Pattern Guard     | `pnpm lint:ripgrep:hardened` | Detects secrets, debug statements, forbidden patterns |
+| AST Policy        | `pnpm lint:ast-grep:check`   | Enforces structural AST policies                      |
 
 All steps soft-fail (`|| true`) to ensure an aggregated summary; review logs for violations.
 Promote to hard failure by removing `|| true` once baseline is clean.
