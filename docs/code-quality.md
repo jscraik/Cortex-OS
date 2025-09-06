@@ -38,7 +38,8 @@ Current configs (see `.semgrep/`):
 
 ### Baseline vs Diff Strategy
 
-We maintain a stored baseline capturing existing (accepted) findings. New PRs must not introduce *additional* findings of equal or higher severity unless explicitly justified.
+We maintain a stored baseline capturing existing (accepted) findings. New PRs must not
+introduce *additional* findings of equal or higher severity unless explicitly justified.
 
 Commands:
 
@@ -50,14 +51,16 @@ pnpm security:scan:ci         # CI raw scan (feeds SARIF)
 
 Baseline regeneration workflow:
 
-1. Create an issue: "Rotate Semgrep baseline <date>".
+1. Create an issue: "Rotate Semgrep baseline <date>". *(Use ISO date e.g. 2025-09-06)*
 2. Run `pnpm security:scan:baseline` locally.
 3. Review diff; ensure only intended changes.
 4. Commit with: `chore(security): refresh semgrep baseline` + link issue.
 5. Ensure CI still passes (no surges in new findings).
 
 ## Baseline Regeneration Script (Planned)
+
 A helper script (`scripts/security/semgrep-baseline-regenerate.mjs`) will:
+
 - Refuse to run if git working tree dirty.
 - Prompt for confirmation & issue reference.
 - Run full baseline scan and stage result.
@@ -65,17 +68,21 @@ A helper script (`scripts/security/semgrep-baseline-regenerate.mjs`) will:
 ## Secrets Management
 
 Tracked `.env` file: placeholder-only; real values sourced from:
+
 - GitHub Actions secrets (`SONAR_TOKEN`, etc.)
 - Developer secret manager (1Password / vault)
 - Local untracked overlays (`.env.local` ignored)
 
 Secret detection layers:
+
 - `pattern-guard.sh` (staged diff) – regex for OpenAI, GitHub, Sonar, entropy.
 - `gitleaks` (workflow + manual) – deep scan including history (HEAD scope by default).
 
 ## SonarCloud (Optional Tier)
 
-`sonar-project.properties` config enables code smells, duplication, and security hotspot analysis. If disabled, remove or limit `sonar.yml` workflow. Use when longitudinal maintainability metrics are desired.
+`sonar-project.properties` config enables code smells, duplication, and security hotspot analysis.
+If disabled, remove or limit `sonar.yml` workflow. Use when longitudinal maintainability
+metrics are desired.
 
 ## License & Dependency Governance
 
@@ -85,6 +92,7 @@ Dependency drift diff (planned) will compare lockfile hash vs previous nightly a
 ## Nightly Quality Workflow (Planned)
 
 Planned tasks:
+
 - Full Semgrep (all profiles)
 - License scan
 - Dependency diff (pnpm + Python uv lock)
@@ -95,6 +103,7 @@ Planned tasks:
 ## Secret Redaction Playbook
 
 See `docs/secret-redaction.md` (to be added) for step-by-step:
+
 - Rotate → Revoke → Replace
 - Containment assessment
 - History rewrite (filter-repo) vs forward rotation only
