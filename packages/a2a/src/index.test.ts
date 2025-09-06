@@ -6,12 +6,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { JsonRpcRequest, JsonRpcResponse } from "./index";
 import {
-	A2A_ERROR_CODES,
-	A2ARpcHandler,
-	EchoTaskProcessor,
-	handleA2A,
-	InMemoryTaskStore,
-	TaskManager,
+        A2A_ERROR_CODES,
+        A2ARpcHandler,
+        EchoTaskProcessor,
+        handleA2A,
+        InMemoryTaskStore,
+        TaskManager,
+        createTaskEventStream,
 } from "./index";
 
 describe("A2A Protocol Implementation", () => {
@@ -334,8 +335,8 @@ describe("A2A Protocol Implementation", () => {
 		});
 	});
 
-	describe("Integration Tests", () => {
-		it("should handle complete A2A workflow", async () => {
+        describe("Integration Tests", () => {
+                it("should handle complete A2A workflow", async () => {
 			// 1. Send a task
 			const sendResponse = await handleA2A({
 				jsonrpc: "2.0",
@@ -367,6 +368,46 @@ describe("A2A Protocol Implementation", () => {
 			const getResult = JSON.parse(getResponse) as JsonRpcResponse;
 			expect(getResult.error).toBeUndefined();
 			expect((getResult.result as any).id).toBe("workflow-task");
-		});
-	});
+                });
+        });
+
+        describe("Streaming Support", () => {
+                it("emits taskCompleted events", async () => {
+                        const manager = new TaskManager();
+                        const events: any[] = [];
+                        manager.on("taskCompleted", (payload) => events.push(payload));
+
+                        await manager.sendTask({
+                                id: "stream-task",
+                                message: {
+                                        role: "user",
+                                        parts: [{ text: "stream me" }],
+                                },
+                        });
+
+                        expect(events).toHaveLength(1);
+                        expect(events[0].id).toBe("stream-task");
+                        expect(events[0].status).toBe("completed");
+                });
+
+                it("writes SSE events to stream", async () => {
+                        const manager = new TaskManager();
+                        const stream = createTaskEventStream(manager);
+                        const chunks: string[] = [];
+                        stream.on("data", (chunk) => chunks.push(chunk.toString()));
+
+                        await manager.sendTask({
+                                id: "sse-task",
+                                message: {
+                                        role: "user",
+                                        parts: [{ text: "sse" }],
+                                },
+                        });
+
+                        const output = chunks.join("");
+
+                        expect(output).toContain("event: taskCompleted");
+                        expect(output).toMatch(/data:.*"sse-task"/);
+                });
+        });
 });
