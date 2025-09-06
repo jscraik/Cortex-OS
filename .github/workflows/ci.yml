@@ -14,22 +14,13 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: jdx/mise-action@v2
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
-          path: |
-            ~/.pnpm-store
-            node_modules/.cache/nx
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-      - run: corepack enable
-      - run: pnpm -v
-      - run: pnpm install --frozen-lockfile
-
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          node-version: '22'
+          pnpm-version: '9'
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -39,8 +30,14 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac
+        with:
+          tool_versions: |
+            nodejs 22
+            bun 1.2.2
       - run: bun -v
       - run: bun install --frozen-lockfile || true
       - run: bun run -T nx run-many -t test --parallel || true
