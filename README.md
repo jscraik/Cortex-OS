@@ -293,7 +293,8 @@ Runs weekly (cron: Monday 03:10 UTC) and can be triggered manually via the Actio
 | Pattern Guard | `pnpm lint:ripgrep:hardened` | Detects secrets, debug statements, forbidden patterns |
 | AST Policy | `pnpm lint:ast-grep:check` | Enforces structural AST policies |
 
-All steps soft-fail (`|| true`) to ensure an aggregated summary; review logs for violations. Promote to hard failure by removing `|| true` once baseline is clean.
+All steps soft-fail (`|| true`) to ensure an aggregated summary; review logs for violations.
+Promote to hard failure by removing `|| true` once baseline is clean.
 
 ### Local Parity
 
