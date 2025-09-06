@@ -5,7 +5,7 @@
  */
 
 export type { AgentRequest, AgentResponse, PRPExecutor } from "./agent-adapter.js";
-export { AgentAdapter } from "./agent-adapter.js";
+export { AgentAdapter, RealPRPExecutor } from "./agent-adapter.js";
 export type { JudgeConfig } from "./judge.js";
 export { Judge } from "./judge.js";
 export { SimReporter } from "./report.js";
@@ -21,6 +21,9 @@ export type {
         SimTurn,
 } from "./types.js";
 export { UserSimulator } from "./user-sim.js";
+export type { FailureInjector } from "./failure-injector.js";
+export { RandomFailureInjector } from "./failure-injector.js";
+export { generateTests } from "./auto-test.js";
 import { z } from "zod";
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";

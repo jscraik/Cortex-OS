@@ -14,23 +14,26 @@ import { SimReporter } from "./report.js";
 import type { SimBatchResult, SimResult, SimScenario, SimTurn } from "./types.js";
 import { UserSimulator } from "./user-sim.js";
 import { simScenarioSchema } from "./schemas.js";
+import type { FailureInjector } from "./failure-injector.js";
 
 export interface SimRunnerConfig {
 	deterministic?: boolean;
 	seed?: number;
 	maxTurns?: number;
 	timeout?: number;
-	debug?: boolean;
-	executor?: PRPExecutor;
+        debug?: boolean;
+        executor?: PRPExecutor;
+        failureInjector?: FailureInjector;
 }
 
 export class SimRunner {
 	private readonly userSim: UserSimulator;
 	private readonly agentAdapter: AgentAdapter;
 	private readonly judge: Judge;
-	private readonly reporter: SimReporter;
-	private readonly config: SimRunnerConfig;
-	private readonly rng: () => number;
+        private readonly reporter: SimReporter;
+        private readonly config: SimRunnerConfig;
+        private readonly rng: () => number;
+        private readonly failureInjector?: FailureInjector;
 
 	constructor(config: SimRunnerConfig = {}) {
 		this.config = {
@@ -48,8 +51,9 @@ export class SimRunner {
 
 		this.userSim = new UserSimulator(this.config);
 		this.agentAdapter = new AgentAdapter(this.config.executor);
-		this.judge = new Judge();
-		this.reporter = new SimReporter();
+                this.judge = new Judge();
+                this.reporter = new SimReporter();
+                this.failureInjector = this.config.failureInjector;
 	}
 
 	/**
@@ -79,11 +83,18 @@ export class SimRunner {
 
 			while (turnCount < (this.config.maxTurns || 10)) {
 				// Agent responds via PRP
-                                const agentResponse = await this.agentAdapter.execute({
+                                const rawResponse = await this.agentAdapter.execute({
                                         scenario: parsedScenario,
                                         conversationHistory: turns,
                                         userMessage: lastResponse,
                                 });
+                                const agentResponse =
+                                        this.failureInjector?.maybeInject({
+                                                scenario: parsedScenario,
+                                                turns,
+                                                agentResponse: rawResponse,
+                                                rng: this.rng,
+                                        }) ?? rawResponse;
 
 				turns.push({
 					role: "agent" as const,
