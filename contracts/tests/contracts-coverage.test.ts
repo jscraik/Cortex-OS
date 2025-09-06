@@ -29,7 +29,11 @@ function extractSchemas(file: string): SchemaRef[] {
   const refs: SchemaRef[] = [];
   const exportRegex = /export\s+const\s+(\w+?Schema)\s*=\s*z\.object/gi;
   let m: RegExpExecArray | null;
-  while ((m = exportRegex.exec(src))) {
+  // eslint-friendly regex iteration
+  // Using manual loop to avoid assignment within condition warnings
+  for (;;) {
+    m = exportRegex.exec(src);
+    if (!m) break;
     refs.push({ file, exportName: m[1] });
   }
   return refs;
