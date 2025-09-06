@@ -1,4 +1,4 @@
-import { TOKENS } from "@cortex-os/contracts";
+import { TOKENS } from "../src/tokens";
 import { describe, expect, test } from "vitest";
 import { createContainer } from "../src/boot";
 

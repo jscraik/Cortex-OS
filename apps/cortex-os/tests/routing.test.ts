@@ -1,6 +1,5 @@
-import { healthHandler } from "@cortex-os/a2a-handlers/health.handler";
 import { describe, expect, test, vi } from "vitest";
-import { wireA2A } from "../src/boot/a2a";
+import { healthHandler, wireA2A } from "../src/boot/a2a";
 
 function envelope() {
 	return {

@@ -1,8 +1,7 @@
-import { createEnvelope } from "@cortex-os/a2a-contracts/envelope";
-import { TOKENS } from "@cortex-os/contracts";
+import { TOKENS } from "./tokens";
 import { z } from "zod";
 import { container } from "./boot";
-import { wireA2A } from "./boot/a2a";
+import { createEnvelope, wireA2A } from "./boot/a2a";
 
 // Lightweight service shapes to avoid any
 type MemoriesService = unknown;
