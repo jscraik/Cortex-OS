@@ -139,5 +139,15 @@ Prefer adding a TODO with context + create smallest safe abstraction. Do NOT gue
 - Cross-language data exchange: JSON (validated via Zod schemas) or well-defined file artifacts in `data/`.
 - When adding new Rust/Python capability: 1) define contract schema, 2) add thin adapter (MCP tool / bus handler), 3) add round‑trip test (TS -> Rust/Py -> TS).
 
+## 14. Refactor Playbook (Boundary Reshaping)
+1. Identify target boundary & consumers: run `pnpm nx graph` and list importing packages.
+2. Add characterization tests (capture current observable behavior & contracts).
+3. Introduce new abstraction/path in parallel (do NOT delete old yet); wire via feature DI.
+4. Migrate one consumer at a time; keep commit diff minimal.
+5. Run `pnpm structure:validate` + `pnpm security:scan:diff` (catch sneaky boundary leaks & new risks).
+6. Remove deprecated path only after zero runtime references (grep + type errors clean).
+7. If contract shape changed: version schema + add backward‑compat validation test in `contracts/tests/`.
+Anti-pattern: Big-bang rename removing old symbols before test suite passes.
+
 ---
 If any rule here conflicts with higher authority files, defer upward and document the conflict in your PR description.
