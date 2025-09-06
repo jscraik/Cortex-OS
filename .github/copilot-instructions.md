@@ -23,6 +23,32 @@ Concise, actionable rules for AI coding agents. Follow exactly; optimize for saf
 - Persistent / recall memory: use service interface exposed by `packages/memories`; never new a DB client in a feature package.
 - Orchestrating multi-step agent flow: emit domain events; let `packages/orchestration` subscribe & coordinate.
 
+## 3A. New Feature Package vs Extend Existing
+Create a NEW package under `apps/cortex-os/packages/` ONLY if:
+- Boundary: New domain language / ubiquitous terms not present elsewhere.
+- Lifecycle: Independent versioning or can be replaced without touching existing packages.
+- Integration: Primarily communicates by events/contracts, not requiring deep internal calls.
+- Size Pressure: Adding to existing package would push it past ~500–800 LoC core logic or blur responsibility.
+Otherwise EXTEND an existing package—prefer evolution over proliferation.
+
+Heuristics (reject new package if any apply): Adds <3 files, only one consumer, or just a thin façade around an existing service.
+
+## 3B. Recommended Internal Layout (Feature Package)
+```
+apps/cortex-os/packages/<feature>/
+  src/
+    domain/        # Entities, value objects, pure logic (no IO)
+    app/           # Use-cases / service layer orchestrating domain + infra
+    infra/         # Adapters (bus bindings, persistence impl, MCP tool wrappers)
+    index.ts       # Public exports (keep tight)
+  __tests__/       # Co-located tests (mirror domain/app/infra folders)
+  README.md        # Purpose + contract references
+```
+Rules:
+- Domain layer must not import from `infra/`.
+- `app/` may depend on domain + infra through interfaces.
+- Re-exports in `index.ts` only; no deep consumer imports.
+
 ## 4. Change Workflow (Micro-Commit Discipline)
 1. Write/adjust failing test (Vitest; add to nearest `__tests__` or existing suite) BEFORE code.
 2. Implement minimal passing change.
