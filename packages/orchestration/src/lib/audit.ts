@@ -53,7 +53,7 @@ export async function record(evt: ReturnType<typeof auditEvent>) {
                 const span = trace.getSpan(context.active());
                 span?.addEvent("audit", {
                         type: evt.type,
-                        subject: JSON.stringify(evt.subject),
+                        subject: evt.subject,
                 });
         } catch {
                 // ignore optional telemetry failures
