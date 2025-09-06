@@ -1,51 +1,53 @@
 {
-	"name": "@cortex-os/orchestration",
-	"version": "0.1.0",
-	"type": "module",
-	"main": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js"
-		}
-	},
-	"scripts": {
-		"dev": "tsc --watch",
-		"build": "echo \"No build step required for this package\"",
-		"lint": "eslint src --ext .ts --no-ignore",
-		"test": "vitest",
-		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test:coverage": "vitest --coverage",
-		"replay": "tsx src/cli/replay.ts",
-		"approve": "tsx src/cli/approve.ts"
-	},
-	"dependencies": {
-		"@opentelemetry/api": "^1.9.0",
-		"zod": "^3.23.8",
-		"@cortex-os/agents": "workspace:*",
-		"@cortex-os/memories": "workspace:*",
-		"@langchain/community": "^0.3.49",
-		"@langchain/core": "^0.3.30",
-		"@langchain/openai": "^0.6.3",
-		"@qdrant/js-client-rest": "^1.12.0",
-		"openai": "^4.68.4",
-		"jsonwebtoken": "^9.0.2",
-		"langchain": "^0.3.30",
-		"neo4j-driver": "^5.25.0",
-		"uuid": "^10.0.0",
-		"winston": "^3.14.2"
-	},
-	"devDependencies": {
-		"@types/node": "^22.10.1",
-		"eslint": "^9.33.0",
-		"tsup": "^8.1.0",
-		"tsx": "^4.19.1",
-		"typescript": "^5.7.2",
-		"vitest": "^3.2.4",
-		"@types/jsonwebtoken": "^9.0.7",
-		"@types/uuid": "^10.0.0",
-		"@typescript-eslint/eslint-plugin": "^8.18.0",
-		"@typescript-eslint/parser": "^8.18.0"
-	}
+  "name": "@cortex-os/orchestration",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "pretest": "pnpm --filter @cortex-os/a2a-core build",
+    "dev": "tsc --watch",
+    "build": "echo \"No build step required for this package\"",
+    "lint": "eslint src --ext .ts --no-ignore",
+    "test": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:coverage": "vitest --coverage",
+    "replay": "tsx src/cli/replay.ts",
+    "approve": "tsx src/cli/approve.ts"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "zod": "^3.23.8",
+    "@cortex-os/agents": "workspace:*",
+    "@cortex-os/memories": "workspace:*",
+    "@langchain/community": "^0.3.49",
+    "@langchain/core": "^0.3.30",
+    "@langchain/openai": "^0.6.3",
+    "@qdrant/js-client-rest": "^1.12.0",
+    "openai": "^4.68.4",
+    "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.3.30",
+    "neo4j-driver": "^5.25.0",
+    "uuid": "^10.0.0",
+    "winston": "^3.14.2",
+    "@cortex-os/a2a-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "eslint": "^9.33.0",
+    "tsup": "^8.1.0",
+    "tsx": "^4.19.1",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0"
+  }
 }
