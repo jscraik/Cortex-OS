@@ -14,7 +14,6 @@ dependencies = [
   "hypothesis",
   "instructor>=1.11.2",
   "openai>=1.52.0",
-  "llama-cpp-python>=0.2.90",
   "mlx>=0.30.0; sys_platform == \"darwin\"",
   "mlx-lm>=0.28.0; sys_platform == \"darwin\"",
   "mlx-vlm>=0.4.0; sys_platform == \"darwin\"",
