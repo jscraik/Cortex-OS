@@ -51,7 +51,8 @@ git push --force
 ```
 
 `replacements.txt` format:
-```
+
+```text
 5005a2cd7edcb3d05f14b21eae1a0a861ea33e99==REDACTED_SONAR_TOKEN
 sk-.*==REDACTED_OPENAI_KEY
 ```
@@ -75,6 +76,7 @@ rg "sk-" -n || true
 ```
 
 Checklist:
+
 - [ ] All old tokens revoked
 - [ ] New tokens stored in secret manager only
 - [ ] CI secrets updated (if rotated)
@@ -90,7 +92,7 @@ Checklist:
 
 ## 7. Communication Template
 
-```
+```text
 Subject: Secret Exposure Remediation Completed
 
 We detected accidental inclusion of <SECRET TYPE>. Immediate actions:
