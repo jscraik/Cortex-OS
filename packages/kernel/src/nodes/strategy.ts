@@ -23,7 +23,7 @@ export class StrategyNode {
 		}
 
                 evidence.push({
-                        id: `strategy-blueprint-${nanoid()}`,
+                        id: generateId("strategy-blueprint", state.metadata.deterministic),
                         type: "validation",
                         source: "strategy_node",
                         content: `Blueprint validation: ${state.blueprint.title}`,
