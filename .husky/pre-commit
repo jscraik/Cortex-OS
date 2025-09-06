@@ -68,7 +68,7 @@ else
   echo "No staged markdown files to lint."
 fi
 
-echo "Running test suite..."
-pnpm test:safe
+echo "Running unit tests..."
+pnpm test:unit
 
 echo "✅ All pre-commit checks passed!"
