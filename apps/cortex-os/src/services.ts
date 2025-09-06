@@ -1,13 +1,40 @@
 export function provideMemories() {
-  return {};
+  return new Proxy({}, {
+    get(_target, prop) {
+      if (typeof prop === "string") {
+        return function () {
+          throw new Error(`Memories service method "${prop}" is not implemented.`);
+        };
+      }
+      return undefined;
+    }
+  });
 }
 
 export function provideOrchestration() {
-  return {};
+  return new Proxy({}, {
+    get(_target, prop) {
+      if (typeof prop === "string") {
+        return function () {
+          throw new Error(`Orchestration service method "${prop}" is not implemented.`);
+        };
+      }
+      return undefined;
+    }
+  });
 }
 
 export function provideMCP() {
-  return {};
+  return new Proxy({}, {
+    get(_target, prop) {
+      if (typeof prop === "string") {
+        return function () {
+          throw new Error(`MCP service method "${prop}" is not implemented.`);
+        };
+      }
+      return undefined;
+    }
+  });
 }
 
 export const tracer = {
