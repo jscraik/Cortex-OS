@@ -279,7 +279,7 @@ In addition to on-demand commands and the existing **nightly quality** workflow,
 
 ### Schedule
 
-Runs weekly (cron: Monday 03:10 UTC) and can be triggered manually via the Actions tab.
+Runs three times daily at 10:00, 14:00, and 20:00 UTC (GMT). You can also trigger it manually via the Actions tab.
 
 ### Workflow Steps
 
