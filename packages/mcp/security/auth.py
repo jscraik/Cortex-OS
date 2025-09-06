@@ -26,7 +26,7 @@ def _load_secret_key() -> str:
     env_key = os.getenv("JWT_SECRET_KEY")
     if env_key:
         return env_key
-    secret_path = Path(os.getenv("JWT_SECRET_FILE", Path(__file__).resolve().parent / ".jwt_secret"))
+    secret_path = Path(os.getenv("JWT_SECRET_FILE", str(Path(__file__).resolve().parent / ".jwt_secret")))
     if secret_path.exists():
         return secret_path.read_text().strip()
     if os.getenv("ENVIRONMENT") == "production":
