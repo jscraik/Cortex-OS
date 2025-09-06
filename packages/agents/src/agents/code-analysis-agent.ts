@@ -162,13 +162,14 @@ export const createCodeAnalysisAgent = (
 			};
 
 			// Emit agent started event
-			const createEvent = (type: string, data: any) => ({
-				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-				type,
-				data,
-				timestamp: new Date().toISOString(),
-				source: 'code-analysis-agent'
-			});
+                        const createEvent = (type: string, data: any) => ({
+                                specversion: "1.0",
+                                id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                                type,
+                                data,
+                                timestamp: new Date().toISOString(),
+                                source: "code-analysis-agent",
+                        });
 
 			config.eventBus.publish(createEvent("agent.started", {
 				agentId,
@@ -187,17 +188,31 @@ export const createCodeAnalysisAgent = (
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent completed event
-				config.eventBus.publish(createEvent("agent.completed", {
-					agentId,
-					traceId,
-					capability: "code-analysis",
-					metrics: {
-						latencyMs: executionTime,
-						tokensUsed: estimateTokens(validatedInput.sourceCode),
-						suggestionsCount: result.suggestions.length,
-					},
-					timestamp: new Date().toISOString(),
-				}));
+                                // Construct evidence array with analysis parameters
+                                const evidence = [
+                                        { type: "language", value: validatedInput.language },
+                                        { type: "analysisType", value: validatedInput.analysisType },
+                                        { type: "focus", value: validatedInput.focus },
+                                        { type: "sourceCodeLength", value: validatedInput.sourceCode.length }
+                                ];
+                                config.eventBus.publish(
+                                        createEvent("agent.completed", {
+                                                agentId,
+                                                traceId,
+                                                capability: "code-analysis",
+                                                result,
+                                                evidence,
+                                                metrics: {
+                                                        latencyMs: executionTime,
+                                                        tokensUsed: estimateTokens(
+                                                                validatedInput.sourceCode,
+                                                        ),
+                                                        suggestionsCount:
+                                                                result.suggestions.length,
+                                                },
+                                                timestamp: new Date().toISOString(),
+                                        }),
+                                );
 
 				return {
 					content: `Code analysis completed: Found ${result.suggestions.length} suggestions with confidence ${result.confidence}`,
