@@ -7,8 +7,8 @@ def compute_scores(query: str, documents: list[str]) -> list[float]:
     q_words = set(query.lower().split())
     scores: list[float] = []
     for doc in documents:
-        d_words = doc.lower().split()
-        score = sum(1 for w in d_words if w in q_words)
+        d_words = set(doc.lower().split())
+        score = len(q_words.intersection(d_words))
         scores.append(float(score))
     return scores
 
