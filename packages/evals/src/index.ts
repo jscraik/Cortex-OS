@@ -34,8 +34,12 @@ export async function runGate(
                         rawOptions.dataset = rawOptions.dataset ?? cfg.dataset;
                 }
                 const parsed = suite.optionsSchema.parse(rawOptions);
+                const dep = (deps as Record<string, unknown>)[s.name];
+                if (dep === undefined) {
+                        throw new Error(`Missing required dependency for suite: ${s.name}`);
+                }
                 outcomes.push(
-                        await suite.run(s.name, parsed as never, (deps as Record<string, unknown>)[s.name]),
+                        await suite.run(s.name, parsed as never, dep),
                 );
         }
 
