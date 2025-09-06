@@ -232,22 +232,37 @@ export class SchemaRegistry {
   ): Promise<{ schema: SchemaDocument; version: string; hash: string } | null> {
     const categoryPath = path.join(this.contractsPath, category);
     const files = await fs.readdir(categoryPath).catch(() => []);
-    let candidate: { schema: SchemaDocument; version: string; hash: string } | null = null;
-    for (const file of files) {
-      const parsed = parseFileName(file);
-      if (!parsed || parsed.id !== schemaId) continue;
-      if (version && parsed.version !== version) continue;
-      const schemaPath = path.join(categoryPath, file);
+
+    // Filter files matching the schemaId
+    const matchingFiles = files
+      .map(file => {
+        const parsed = parseFileName(file);
+        return parsed && parsed.id === schemaId ? { file, version: parsed.version } : null;
+      })
+      .filter((item): item is { file: string; version: string } => !!item);
+
+    if (version) {
+      // Look for the specific version
+      const match = matchingFiles.find(f => f.version === version);
+      if (!match) return null;
+      const schemaPath = path.join(categoryPath, match.file);
       const content = await fs.readFile(schemaPath, "utf-8");
       const schemaData: unknown = JSON.parse(content);
-      if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId) continue;
+      if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId) return null;
       const hash = computeHash(content);
-      if (version) return { schema: schemaData, version: parsed.version, hash };
-      if (!candidate || compareVersions(parsed.version, candidate.version) > 0) {
-        candidate = { schema: schemaData, version: parsed.version, hash };
-      }
+      return { schema: schemaData, version: version, hash };
+    } else {
+      // No version specified: find the latest version by sorting
+      if (matchingFiles.length === 0) return null;
+      matchingFiles.sort((a, b) => compareVersions(a.version, b.version));
+      const latest = matchingFiles[matchingFiles.length - 1];
+      const schemaPath = path.join(categoryPath, latest.file);
+      const content = await fs.readFile(schemaPath, "utf-8");
+      const schemaData: unknown = JSON.parse(content);
+      if (!isValidSchemaDocument(schemaData) || schemaData.$id !== schemaId) return null;
+      const hash = computeHash(content);
+      return { schema: schemaData, version: latest.version, hash };
     }
-    return candidate;
   }
 
   private async getSchemasByCategory(category: string): Promise<SchemaMeta[]> {
