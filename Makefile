@@ -2,7 +2,7 @@ SHELL := /bin/sh
 
 # OrbStack dev profiles via Makefile wrappers
 
-.PHONY: dev-min dev-full web api workers obs demo down ps logs codex-test codex-test-unit codex-test-integration codex-test-coverage
+.PHONY: dev-min dev-full web api workers obs demo down ps logs codex-test codex-test-unit codex-test-integration codex-test-coverage submodules-sync
 
 dev-min:
 	pnpm dev:orbstack:min
@@ -48,4 +48,12 @@ codex-test-integration:
 
 codex-test-coverage:
 	pnpm codex:test:coverage
+
+# Sync and update all git submodules (init + remote tracking)
+submodules-sync:
+	@git submodule sync --recursive
+	@git submodule update --init --recursive
+	# Optionally pull latest remote tracking branches (comment out if strict pinning)
+	@git submodule update --remote --recursive || echo "(remote update skipped / non-critical)"
+	@echo "✅ Submodules synchronized"
 

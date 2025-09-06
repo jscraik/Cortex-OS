@@ -5,7 +5,7 @@ This repository uses Git submodules to vendor external code while keeping a clea
 ## OpenAI Codex
 
 Path: `external/openai-codex`
-Remote: https://github.com/openai/codex.git
+Remote: <https://github.com/openai/codex.git>
 
 ### Cloning With Submodules
 
@@ -70,6 +70,7 @@ git add .gitmodules
 ### CI Considerations
 
 Ensure CI workflows either:
+
 - Use `git clone --recurse-submodules`
 - Or run `git submodule update --init --recursive` before build/test
 
@@ -79,7 +80,19 @@ Treat submodule updates like dependency bumps: review diff, licenses, and securi
 
 ### Sync Helper
 
-A helper Make target (to be added) will provide a one-liner: `make submodules-sync`.
+Use the provided Make target to initialize and update all submodules:
+
+```bash
+make submodules-sync
+```
+
+This performs:
+
+1. `git submodule sync --recursive` (refresh URLs)
+2. `git submodule update --init --recursive` (ensure checkout)
+3. `git submodule update --remote --recursive` (attempt remote tracking update; non-fatal if pinned)
+
+Comment out step 3 in the `Makefile` if you prefer strict commit pinning without auto-advancing remote tracking branches.
 
 ---
 
