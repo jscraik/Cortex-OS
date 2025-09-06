@@ -119,58 +119,43 @@ describe("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 			expect(result1).toEqual(result2); // Will fail due to timing differences
 		});
 
-		it("should generate deterministic IDs when deterministic mode enabled", () => {
-			const state1 = createInitialPRPState(
-				{ title: "Test", description: "Test", requirements: [] },
-				{ id: "fixed-id", runId: "fixed-run-id" },
-			);
+                it("should generate deterministic IDs when deterministic mode enabled", () => {
+                        const state1 = createInitialPRPState(
+                                { title: "Test", description: "Test", requirements: [] },
+                                { id: "fixed-id", runId: "fixed-run-id", deterministic: true },
+                        );
 
-			const state2 = createInitialPRPState(
-				{ title: "Test", description: "Test", requirements: [] },
-				{ id: "fixed-id", runId: "fixed-run-id" },
-			);
+                        const state2 = createInitialPRPState(
+                                { title: "Test", description: "Test", requirements: [] },
+                                { id: "fixed-id", runId: "fixed-run-id", deterministic: true },
+                        );
 
-			// This should pass, but default ID generation uses Date.now()
-			expect(state1.id).toBe(state2.id);
-			expect(state1.runId).toBe(state2.runId);
+                        expect(state1.id).toBe(state2.id);
+                        expect(state1.runId).toBe(state2.runId);
+                        expect(state1.metadata.startTime).toBe(state2.metadata.startTime);
+                });
+        });
 
-			// This will FAIL due to Date.now() timestamps
-			expect(state1.metadata.startTime).toBe(state2.metadata.startTime);
-		});
-	});
+        describe("[Critical] Validation Logic Errors", () => {
+                it("should fail API validation when schema is missing", () => {
+                        const buildNode = new BuildNode();
 
-	describe("[Critical] Validation Logic Errors", () => {
-		it("should fail API validation when schema is missing", () => {
-			const buildNode = new BuildNode();
+                        const mockState: Partial<PRPState> = {
+                                blueprint: {
+                                        title: "API Test",
+                                        description: "Has API",
+                                        requirements: ["REST API"],
+                                },
+                        } as any;
 
-			// Mock state with API but no schema
-			const mockState: Partial<PRPState> = {
-				blueprint: {
-					title: "API Test",
-					description: "Has API",
-					requirements: ["REST API"],
-				},
-				outputs: {
-					"api-check": { hasAPI: true, hasSchema: false },
-				},
-			} as any; // TODO: Replace with proper PRPState mock type
+                        const result = (buildNode as any).validateAPISchema(mockState);
 
-			const result = (
-				buildNode as unknown as {
-					validateAPIDesign: (state: Partial<PRPState>) => {
-						passed: boolean;
-						details: { validation: string };
-					};
-				}
-			).validateAPIDesign(mockState);
+                        expect(result.passed).toBe(false);
+                        expect(result.details.validation).toBe("missing");
+                });
 
-			// This will FAIL due to "hasAPI ? true : true" logic
-			expect(result.passed).toBe(false); // Should fail but returns true!
-			expect(result.details.validation).toBe("failed"); // Should indicate failure
-		});
-
-		it("should require ALL phases to pass for cerebrum promotion", () => {
-			const evaluationNode = new EvaluationNode();
+                it("should require ALL phases to pass for cerebrum promotion", () => {
+                        const evaluationNode = new EvaluationNode();
 
 			// Mock state with mixed validation results
 			const mockState: Partial<PRPState> = {
@@ -181,35 +166,41 @@ describe("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 				},
 			} as any; // TODO: Replace with proper PRPState mock type
 
-			const canPromote = evaluationNode.checkPreCerebrumConditions(mockState);
+                        const canPromote = evaluationNode.checkPreCerebrumConditions(mockState);
+                        expect(canPromote).toBe(false);
+                });
+        });
 
-			// This will FAIL due to "||" instead of "&&" logic
-			expect(canPromote).toBe(false); // Should be false but returns true!
-		});
-	});
+        describe("[Critical] Interface Implementation Gaps", () => {
+                it("should implement all required Neuron interface methods", async () => {
+                        const adapter = new MCPAdapter();
+                        const mockTool = {
+                                name: "test-neuron",
+                                description: "Test neuron",
+                                schema: { type: "object" },
+                        };
 
-	describe("[Critical] Interface Implementation Gaps", () => {
-		it("should implement all required Neuron interface methods", () => {
-			const adapter = new MCPAdapter();
-			const mockTool = {
-				name: "test-neuron",
-				description: "Test neuron",
-				schema: { type: "object" },
-			};
+                        const neuron = adapter.createNeuronFromTool(mockTool, "build");
 
-			const neuron = adapter.createNeuronFromTool(mockTool, "build");
+                        expect(neuron.dependencies).toBeInstanceOf(Array);
+                        expect(neuron.tools).toBeInstanceOf(Array);
+                        expect(neuron.phase).toBe("build");
 
-			// These will FAIL due to incomplete interface implementation
-			expect(neuron.dependencies).toBeInstanceOf(Array);
-			expect(neuron.tools).toBeInstanceOf(Array);
-			expect(neuron.phase).toBe("build");
+                        const mockState = {
+                                runId: "run-test",
+                                blueprint: {
+                                        title: "",
+                                        description: "",
+                                        requirements: [],
+                                },
+                                evidence: [],
+                                validationResults: {},
+                                metadata: { startTime: new Date().toISOString() },
+                        } as any;
 
-			// This will throw TypeError - execute method doesn't exist
-			expect(async () => {
-				await neuron.execute({}, {});
-			}).not.toThrow();
-		});
-	});
+                        await expect(neuron.execute(mockState, {})).resolves.toBeDefined();
+                });
+        });
 });
 
 describe("🔴 TDD RED PHASE: Backward Compatibility Detection", () => {
