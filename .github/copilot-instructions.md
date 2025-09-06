@@ -144,5 +144,16 @@ pnpm structure:validate
 Rust via CLI artifacts only; Python via MCP/CLI bridge; exchange JSON validated by Zod or file artifacts in `data/`; new capability: schema -> adapter -> round-trip test.
 </details>
 
+<details><summary><strong>18. Common Pitfalls & Avoidance</strong></summary>
+- Deep Import Reach-Through: Importing `../otherFeature/infra/*` — use event or contract instead.
+- Duplicate Schema Types: Re-declaring inline instead of importing from `libs/typescript/contracts`.
+- Missing Optional Defaults: Adding optional field but not handling `undefined` in consumer (add safe fallback or default assignment).
+- Premature Package Split: Creating new package for 1–2 files; extend existing until clear boundary emerges.
+- Big-Bang Refactor: Deleting old path before consumer migration; follow Refactor Playbook.
+- Unbounded Accumulation: Collecting full model output in array while also streaming; choose aggregate or stream pattern.
+- Skipped Contract Test: Changing event shape without updating `contracts/tests/` -> hidden runtime break.
+- Silent External API Drift: No Zod validation wrapper -> downstream handlers crash unpredictably.
+</details>
+
 ---
 If any rule conflicts upward authority, defer & document in PR description.
