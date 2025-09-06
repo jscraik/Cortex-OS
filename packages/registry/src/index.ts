@@ -40,8 +40,9 @@ function computeHash(content: string): string {
 }
 
 function parseFileName(file: string): { id: string; version: string } | null {
-  const match = file.match(/^(.+)@(\d+\.\d+\.\d+)\.json$/);
-  return match ? { id: match[1], version: match[2] } : null;
+  // Match: name@MAJOR.MINOR.PATCH.json, where each version part is a non-negative integer with no leading zeros (except zero)
+  const match = file.match(/^(.+)@(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.json$/);
+  return match ? { id: match[1], version: `${match[2]}.${match[3]}.${match[4]}` } : null;
 }
 
 function compareVersions(a: string, b: string): number {
