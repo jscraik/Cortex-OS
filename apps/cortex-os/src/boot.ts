@@ -1,8 +1,10 @@
-import { TOKENS } from "@cortex-os/contracts";
-import { provideMCP } from "@cortex-os/mcp/service";
-import { provideMemories } from "@cortex-os/memories/service";
-import { provideOrchestration } from "@cortex-os/orchestration/service";
-import { tracer } from "@cortex-os/telemetry";
+import { TOKENS } from "./tokens";
+import {
+  provideMCP,
+  provideMemories,
+  provideOrchestration,
+  tracer,
+} from "./services";
 import { Container } from "inversify";
 
 export function createContainer(): Container {

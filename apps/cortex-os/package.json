@@ -11,12 +11,8 @@
 		"lint": "eslint .",
 		"typecheck": "tsc -p tsconfig.json --noEmit"
 	},
-	"dependencies": {
-		"inversify": "^6.0.1",
-		"@cortex-os/contracts": "workspace:*",
-		"@cortex-os/telemetry": "workspace:*",
-		"@cortex-os/memories": "workspace:*",
-		"@cortex-os/orchestration": "workspace:*",
-		"zod": "^3.22.4"
-	}
+        "dependencies": {
+                "inversify": "^6.0.1",
+                "zod": "^3.22.4"
+        }
 }
