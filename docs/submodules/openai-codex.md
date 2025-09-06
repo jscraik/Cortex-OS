@@ -3,7 +3,7 @@
 This document mirrors the local (previously untracked) `README.CORTEX.md` that lived inside the submodule directory `external/openai-codex/`.
 It is now tracked in the main repository so guidance survives fresh clones and CI contexts without modifying upstream contents.
 
-> Upstream repository: https://github.com/openai/codex
+> Upstream repository: <https://github.com/openai/codex>
 
 ## Purpose
 
