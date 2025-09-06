@@ -1,12 +1,22 @@
 import { isExpired } from "../core/ttl.js";
-import DatabaseImpl from "better-sqlite3";
-import { load as loadVec } from "sqlite-vec";
 import type { Memory, MemoryId } from "../domain/types.js";
-import type {
-        MemoryStore,
-        TextQuery,
-        VectorQuery,
-} from "../ports/MemoryStore.js";
+import type { MemoryStore, TextQuery, VectorQuery } from "../ports/MemoryStore.js";
+
+// Attempt dynamic loading of native modules so the package can be imported even
+// when SQLite bindings are unavailable (e.g., in environments without native
+// compilation support).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let DatabaseImpl: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let loadVec: any;
+try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+        DatabaseImpl = require("better-sqlite3");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+        ({ load: loadVec } = require("sqlite-vec"));
+} catch {
+        // Modules not available; constructor will throw if used
+}
 
 function padVector(vec: number[], dim: number): number[] {
         if (vec.length === dim) return vec;
@@ -15,10 +25,13 @@ function padVector(vec: number[], dim: number): number[] {
 }
 
 export class SQLiteStore implements MemoryStore {
-        private db: InstanceType<typeof DatabaseImpl>;
+        private db: any;
         private readonly dim: number;
 
         constructor(path: string, dimension?: number) {
+                if (!DatabaseImpl || !loadVec) {
+                        throw new Error("sqlite:unavailable");
+                }
                 this.db = new DatabaseImpl(path);
                 loadVec(this.db);
                 this.dim = dimension || Number(process.env.MEMORIES_VECTOR_DIM) || 1536;
@@ -75,11 +88,14 @@ export class SQLiteStore implements MemoryStore {
                 if (row) {
                         if (m.vector) {
                                 const padded = padVector(m.vector, this.dim);
+                                const buffer = Buffer.from(
+                                        new Float32Array(padded).buffer,
+                                );
                                 this.db
                                         .prepare(
                                                 "INSERT OR REPLACE INTO memory_embeddings(rowid, embedding) VALUES (?, ?)",
                                         )
-                                        .run(BigInt(row.rowid), padded);
+                                        .run(BigInt(row.rowid), buffer);
                         } else {
                                 this.db.prepare("DELETE FROM memory_embeddings WHERE rowid = ?").run(BigInt(row.rowid));
                         }

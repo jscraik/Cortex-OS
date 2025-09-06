@@ -11,15 +11,16 @@ export class CompositeEmbedder implements Embedder {
         private current: Embedder;
 
         constructor(
-                embedders: Embedder[] = [
+                embedders: Embedder | Embedder[] = [
                         new MLXEmbedder(),
                         new OllamaEmbedder(),
                         new NoopEmbedder(),
                 ],
         ) {
-                if (embedders.length === 0) throw new Error("embedders:empty");
-                this.embedders = embedders;
-                this.current = embedders[0];
+                const list = Array.isArray(embedders) ? embedders : [embedders];
+                if (list.length === 0) throw new Error("embedders:empty");
+                this.embedders = list;
+                this.current = list[0];
         }
 
         name(): string {
