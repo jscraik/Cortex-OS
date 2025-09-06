@@ -35,7 +35,7 @@ export const agentCompletedEventSchema = baseEventSchema.extend({
                 agentId: z.string(),
                 traceId: z.string(),
                 capability: z.string(),
-                result: z.any(),
+                result: z.unknown(),
                 evidence: z.array(z.string()),
                 metrics: z.object({
                         latencyMs: z.number(),
