@@ -196,7 +196,7 @@ class MCPConnectionPool:
 
             # Connection is unhealthy, remove it and create a new one
             await self._remove_connection(connection)
-        except TimeoutError:
+        except asyncio.TimeoutError:
             # No available connections, try to create new one
             pass
 
