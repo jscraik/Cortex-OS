@@ -90,6 +90,16 @@ Precedence: CLI > env (`CORTEX_STREAM_MODE`) > config > internal.
 `pnpm lint && pnpm test`; risk surfaces -> `pnpm security:scan:diff`; boundary refactor -> `pnpm structure:validate` + `pnpm nx graph`.
 </details>
 
+<details><summary><strong>10A. Security Red Flags (Run Extra Scans)</strong></summary>
+Trigger `pnpm security:scan:diff` + consider manual review when:
+1. Network surface change (new fetch/http client, widened CORS, added socket/WS endpoint).
+2. Dynamic code or shell execution introduced (`eval`, `Function`, child process spawning, template execution).
+3. Persistence schema or serialization logic modified (possible injection / deserialization risk).
+4. Secrets or credential handling touched (token parsing, auth headers, key rotation logic).
+5. External API integration added/updated without existing Zod validation layer.
+If ≥2 occur in one PR, add a short SECURITY NOTES block in description.
+</details>
+
 <details><summary><strong>11. PR Expectations</strong></summary>
 Include test plan; avoid CI/license/global config edits; keep diffs small/chunked.
 </details>
