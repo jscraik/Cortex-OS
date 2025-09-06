@@ -163,6 +163,39 @@ Implementation Steps:
 5. Document in producing package README (Events section).
 </details>
 
+<details><summary><strong>15B. Contract Test Scaffold (Example)</strong></summary>
+```ts
+// contracts/tests/task-created.contract.test.ts
+import { z } from 'zod';
+import { taskCreatedSchema } from '../../libs/typescript/contracts/tasks/events';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
+
+describe('contract: task.created', () => {
+  it('validates round-trip envelope', () => {
+    const envelope = createEnvelope({
+      type: 'task.created',
+      source: 'urn:cortex:tasks',
+      data: { taskId: 'task-123', priority: 'high' },
+      traceparent: '00-11111111111111111111111111111111-2222222222222222-01'
+    });
+
+    // Validate envelope data against schema
+    const parsed = taskCreatedSchema.parse(envelope.data);
+    expect(parsed.taskId).toBe('task-123');
+  });
+
+  it('rejects missing required field', () => {
+    const bad = { taskId: undefined } as any;
+    expect(() => taskCreatedSchema.parse(bad)).toThrow();
+  });
+});
+```
+Notes:
+- Keep schemas imported from central contracts.
+- Negative test asserts strictness.
+- Trace context included when part of workflow.
+</details>
+
 <details><summary><strong>16. Triaging Failing Test</strong></summary>
 1. Narrow scope (`pnpm test --filter <pkg>`)
 2. Inspect schemas in `libs/typescript/contracts`
