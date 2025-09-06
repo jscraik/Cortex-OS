@@ -1,5 +1,4 @@
 import js from "@eslint/js";
-import sonarjs from "eslint-plugin-sonarjs";
 import ts from "typescript-eslint";
 
 // Security-focused overlay config. Assumes base config already registered sonarjs.
