@@ -156,7 +156,7 @@ export function getCurrentTraceContext(): TraceContext | null {
   const span = trace.getActiveSpan();
   if (!span) return null;
 
-  const runId = (span as any).attributes?.["cortex.run_id"] as string;
+  const runId = span.getAttributes()["cortex.run_id"] as string;
   if (!runId) return null;
 
   return {
