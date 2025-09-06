@@ -149,5 +149,17 @@ Prefer adding a TODO with context + create smallest safe abstraction. Do NOT gue
 7. If contract shape changed: version schema + add backward‑compat validation test in `contracts/tests/`.
 Anti-pattern: Big-bang rename removing old symbols before test suite passes.
 
+## 15. Minimal Event Definition Checklist
+Before publishing a new event type:
+- Name: Past-tense domain verb or clear lifecycle noun (`resource.created`, `task.assigned`). Avoid ambiguous catch-alls.
+- Envelope: `type`, `source` (URN style `urn:cortex:<feature>`), deterministic `id`, optional `time`.
+- Data Shape: Small, version-friendly (avoid nesting large opaque blobs). Prefer stable identifiers over full embedded objects.
+- Schema: Add/extend CloudEvents/AsyncAPI spec + Zod schema in `libs/typescript/contracts`.
+- Tests: Contract round-trip test (serialize -> validate -> consume) + at least one feature handler test.
+- Backward Compat: Adding fields must be optional (`z.optional`) unless version bumped.
+- Tracing: Include `traceparent` propagation if part of a workflow chain.
+- Correlation: Add `correlation_id` for request/response or multi-step orchestration traces.
+- Documentation: Link event in producing package README or event index.
+
 ---
 If any rule here conflicts with higher authority files, defer upward and document the conflict in your PR description.
