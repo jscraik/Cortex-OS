@@ -12,13 +12,16 @@
 			"require": "./dist/index.js"
 		}
 	},
-	"scripts": {
-		"build": "tsc -p tsconfig.json",
-		"lint": "eslint .",
-		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "vitest run"
-	},
-	"dependencies": {
-		"neo4j-driver": "^5.28.1"
-	}
+        "scripts": {
+                "build": "tsc -p tsconfig.json",
+                "lint": "eslint .",
+                "typecheck": "tsc -p tsconfig.json --noEmit",
+                "test": "vitest run"
+        },
+        "dependencies": {
+                "neo4j-driver": "^5.28.1"
+        },
+        "devDependencies": {
+                "fast-check": "^4.3.0"
+        }
 }

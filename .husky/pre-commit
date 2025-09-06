@@ -1,75 +1,69 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-# Source common utilities
+#!/usr/bin/env bash
 . "$(dirname "$0")/common.sh"
+set -euo pipefail
 
-# Check Node.js version compatibility
 EXPECTED_NODE_VERSION="20"
 CURRENT_NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
-
 if [ "$CURRENT_NODE_VERSION" != "$EXPECTED_NODE_VERSION" ]; then
   echo "Warning: Node.js version mismatch"
   echo "Expected: Node.js $EXPECTED_NODE_VERSION.x"
   echo "Current: Node.js $CURRENT_NODE_VERSION.x"
-  echo "Some checks may not work as expected"
 fi
 
-# Run lint-staged for staged files
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Running lint-staged..."
-  pnpm lint-staged || { echo "❌ lint-staged failed"; exit 1; }
-else
-  echo "Warning: pnpm not found, skipping lint-staged"
+echo "🔐 Checking for secrets..."
+gitleaks detect --source . --config .gitleaks.toml --no-git
+
+echo "Running lint-staged..."
+pnpm lint-staged
+
+echo "Running ast-grep checks..."
+pnpm lint:ast-grep:check
+
+echo "Running ripgrep checks..."
+pnpm lint:ripgrep:all
+
+echo "Running Biome on staged files..."
+pnpm biome:staged
+
+echo "Running TypeScript type checking..."
+pnpm typecheck
+
+echo "Validating contracts..."
+pnpm run validate:contracts
+
+echo "Running Cortex validation..."
+pnpm run cortex:validate
+
+echo "Running Python checks..."
+(cd python && uv run ruff check . && uv run pyright)
+
+echo "Checking for large files..."
+large_files=$(git diff --cached --name-only | while read -r f; do
+  [ -f "$f" ] || continue
+  size=$(wc -c < "$f" | tr -d ' ')
+  if [ "$size" -gt 1048576 ]; then echo "$f"; fi
+done)
+if [ -n "$large_files" ]; then
+  echo "❌ Large files detected (>1MB):"
+  echo "$large_files"
+  exit 1
 fi
 
-# Run ast-grep checks
-if command -v ast-grep >/dev/null 2>&1; then
-  echo "Running ast-grep checks..."
-  pnpm lint:ast-grep:check || { echo "❌ ast-grep checks failed"; exit 1; }
+echo "Running markdownlint on staged markdown files..."
+md_files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.md$' || true)
+if [ -n "$md_files" ]; then
+  tmp_list=$(mktemp)
+  echo '# markdownlint-cli2 configuration input' > "$tmp_list"
+  for f in $md_files; do
+    [ -f "$f" ] && echo "$f" >> "$tmp_list"
+  done
+  markdownlint-cli2 --config .markdownlint-cli2.yaml "@$tmp_list"
+  rm -f "$tmp_list"
 else
-  echo "Warning: ast-grep not found, skipping ast-grep checks"
+  echo "No staged markdown files to lint."
 fi
 
-# Run ripgrep checks
-if command -v rg >/dev/null 2>&1; then
-  echo "Running ripgrep checks..."
-  pnpm lint:ripgrep:all || { echo "❌ ripgrep checks failed"; exit 1; }
-else
-  echo "Warning: ripgrep not found, skipping ripgrep checks"
-fi
-
-# Run TypeScript type checking
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Running TypeScript type checking..."
-  pnpm typecheck || { echo "❌ TypeScript type checking failed"; exit 1; }
-else
-  echo "Warning: pnpm not found, skipping TypeScript type checking"
-fi
-
-# Validate contracts
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Validating contracts..."
-  pnpm run validate:contracts || { echo "❌ Contract validation failed"; exit 1; }
-else
-  echo "Warning: pnpm not found, skipping contract validation"
-fi
-
-# Run Cortex validation
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Running Cortex validation..."
-  pnpm run cortex:validate || { echo "❌ Cortex validation failed"; exit 1; }
-else
-  echo "Warning: pnpm not found, skipping Cortex validation"
-fi
-
-# Run Python checks if uv is available
-if command -v uv >/dev/null 2>&1; then
-  echo "Running Python checks..."
-  (cd python && uv run ruff check . && uv run pyright) || { echo "❌ Python checks failed"; exit 1; }
-else
-  echo "Warning: uv not found, skipping Python checks"
-fi
+echo "Running test suite..."
+pnpm test:safe
 
 echo "✅ All pre-commit checks passed!"
-exit 0
