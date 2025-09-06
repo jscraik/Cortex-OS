@@ -246,6 +246,8 @@ Currently included:
 | ---- | -------- | ------- |
 | `external/openai-codex` | <https://github.com/openai/codex.git> | Reference implementation; selectively copy patterns (no direct cross-imports in governed domains). |
 
+See overlay governance guide: [openai-codex overlay](./docs/submodules/openai-codex.md)
+
 ### Working With Submodules
 
 Clone (including submodules):
