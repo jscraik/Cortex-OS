@@ -11,7 +11,12 @@ if [ "$CURRENT_NODE_VERSION" != "$EXPECTED_NODE_VERSION" ]; then
 fi
 
 echo "🔐 Checking for secrets..."
-gitleaks detect --source . --config .gitleaks.toml --no-git
+if ! gitleaks detect --source . --config .gitleaks.toml --no-git; then
+  echo "❌ gitleaks detected potential secrets or encountered an error."
+  echo "Please review the gitleaks output above, remove any secrets from your code, or check your .gitleaks.toml configuration."
+  echo "If you believe this is a false positive, consult the project documentation for guidance."
+  exit 1
+fi
 
 echo "Running lint-staged..."
 pnpm lint-staged
