@@ -242,8 +242,8 @@ This repository uses `git submodule` for certain external, read-only references.
 
 Currently included:
 
-| Path | Upstream | Purpose |
-| ---- | -------- | ------- |
+| Path                    | Upstream                              | Purpose                                                                                            |
+| ----------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `external/openai-codex` | <https://github.com/openai/codex.git> | Reference implementation; selectively copy patterns (no direct cross-imports in governed domains). |
 
 See overlay governance guide: [openai-codex overlay](./docs/submodules/openai-codex.md)
