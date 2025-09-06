@@ -10,3 +10,5 @@ export type { Logger } from "./logger.js";
 export { createLogger } from "./logger.js";
 export type { Err, Ok, Result } from "./result.js";
 export type { RetryPolicy } from "./retry.js";
+export type { CloudEvent, CloudEventInit } from "./cloudevents.js";
+export { createCloudEvent } from "./cloudevents.js";
