@@ -44,5 +44,6 @@ reports/
 # Security scan artifacts
 semgrep-report.json
 logs/*.log
-\n+# Upstream mirrors / vendored external references for cortex-codex (kept locally only)
+# Upstream mirrors / vendored external references for cortex-codex (kept locally only)
 apps/cortex-codex/external/
+!packages/observability/dist/
