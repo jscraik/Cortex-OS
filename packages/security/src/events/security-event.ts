@@ -27,7 +27,7 @@ export class SecurityEventEmitter {
 
         async emit<T>(options: SecurityEventOptions<T>): Promise<Envelope> {
                 return withSpan("security.event.emit", async (span) => {
-                        const eventData = { ...options.data, evidence: options.evidence ?? [] };
+                        const eventData = { evidence: options.evidence ?? [], ...options.data };
 
                         const envelope = createEnvelope({
                                 type: options.type,
