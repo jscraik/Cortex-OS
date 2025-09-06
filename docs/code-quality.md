@@ -5,27 +5,27 @@
 
 ## Layers of Enforcement
 
-| Layer | Purpose | Tools | Failure Effect |
-|-------|---------|-------|----------------|
-| Pre-commit | Instant local feedback (fast) | Biome, ESLint (subset), pattern-guard, .env presence | Block commit |
-| Pre-push | Heavy validation | TypeScript project refs, Ruff, full lint, Semgrep focused, tests+coverage, structure guard | Block push |
-| CI (PR) | Reproducible gates | Semgrep SARIF, SonarCloud (optional), license scan, dependency audit, SBOM (release) | Block merge |
-| Nightly | Drift & supply-chain audit | Full Semgrep suite, license policy, dependency diff, secret scan | Open issues / alerts |
-| Release | Compliance snapshot | SBOM, coverage freeze, provenance (future) | Block release if failing |
+| Layer      | Purpose                       | Tools                                                                                      | Failure Effect           |
+| ---------- | ----------------------------- | ------------------------------------------------------------------------------------------ | ------------------------ |
+| Pre-commit | Instant local feedback (fast) | Biome, ESLint (subset), pattern-guard, .env presence                                       | Block commit             |
+| Pre-push   | Heavy validation              | TypeScript project refs, Ruff, full lint, Semgrep focused, tests+coverage, structure guard | Block push               |
+| CI (PR)    | Reproducible gates            | Semgrep SARIF, SonarCloud (optional), license scan, dependency audit, SBOM (release)       | Block merge              |
+| Nightly    | Drift & supply-chain audit    | Full Semgrep suite, license policy, dependency diff, secret scan                           | Open issues / alerts     |
+| Release    | Compliance snapshot           | SBOM, coverage freeze, provenance (future)                                                 | Block release if failing |
 
 ## Static Analysis Stack
 
-| Domain | Tool | Rationale |
-|--------|------|-----------|
-| Formatting / style | Biome | Fast + unified TS/JS formatting & lint hints |
-| Type correctness | tsc (incremental) | Contract safety, ensures project references intact |
-| Python lint | Ruff | Fast, opinionated, security checks |
-| Rust | Clippy + rustfmt | Enforce no warnings, consistent style |
-| Security (code) | Semgrep | OWASP + custom patterns + LLM awareness |
-| Secrets | pattern-guard + gitleaks | Early catch + deep scan |
-| Architecture | structure validator / Nx | Enforce import boundaries & layering |
-| Licensing | license-scanner.mjs | Policy-based license allow/deny |
-| Code health metrics | SonarCloud (optional) | PR decoration & maintainability debt tracking |
+| Domain              | Tool                     | Rationale                                          |
+| ------------------- | ------------------------ | -------------------------------------------------- |
+| Formatting / style  | Biome                    | Fast + unified TS/JS formatting & lint hints       |
+| Type correctness    | tsc (incremental)        | Contract safety, ensures project references intact |
+| Python lint         | Ruff                     | Fast, opinionated, security checks                 |
+| Rust                | Clippy + rustfmt         | Enforce no warnings, consistent style              |
+| Security (code)     | Semgrep                  | OWASP + custom patterns + LLM awareness            |
+| Secrets             | pattern-guard + gitleaks | Early catch + deep scan                            |
+| Architecture        | structure validator / Nx | Enforce import boundaries & layering               |
+| Licensing           | license-scanner.mjs      | Policy-based license allow/deny                    |
+| Code health metrics | SonarCloud (optional)    | PR decoration & maintainability debt tracking      |
 
 ## Semgrep Profiles
 
@@ -39,7 +39,7 @@ Current configs (see `.semgrep/`):
 ### Baseline vs Diff Strategy
 
 We maintain a stored baseline capturing existing (accepted) findings. New PRs must not
-introduce *additional* findings of equal or higher severity unless explicitly justified.
+introduce _additional_ findings of equal or higher severity unless explicitly justified.
 
 Commands:
 
@@ -51,7 +51,7 @@ pnpm security:scan:ci         # CI raw scan (feeds SARIF)
 
 Baseline regeneration workflow:
 
-1. Create an issue: "Rotate Semgrep baseline [DATE]". *(Use ISO date e.g. 2025-09-06)*
+1. Create an issue: "Rotate Semgrep baseline [DATE]". _(Use ISO date e.g. 2025-09-06)_
 2. Run `pnpm security:scan:baseline` locally.
 3. Review diff; ensure only intended changes.
 4. Commit with: `chore(security): refresh semgrep baseline` + link issue.
@@ -119,12 +119,12 @@ See `docs/secret-redaction.md` (to be added) for step-by-step:
 
 ## Performance Targets
 
-| Layer | Target Runtime |
-|-------|----------------|
-| Pre-commit | < 3s typical (cold < 6s) |
-| Pre-push | < 90s full workspace |
-| CI PR (node layer) | < 6 min end-to-end |
-| Nightly | < 15 min (parallelizable) |
+| Layer              | Target Runtime            |
+| ------------------ | ------------------------- |
+| Pre-commit         | < 3s typical (cold < 6s)  |
+| Pre-push           | < 90s full workspace      |
+| CI PR (node layer) | < 6 min end-to-end        |
+| Nightly            | < 15 min (parallelizable) |
 
 ## Future Enhancements (Backlog)
 
@@ -141,4 +141,5 @@ See `docs/secret-redaction.md` (to be added) for step-by-step:
 - Streaming & CLI modes: `docs/streaming-modes.md`
 
 ---
+
 Maintainers: Update this document when adding or materially changing quality gates.
