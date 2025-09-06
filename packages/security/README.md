@@ -29,6 +29,7 @@
 - **🆔 Workload Identity**: Dynamic identity attestation and credential rotation
 - **🔄 Automatic Certificate Rotation**: Seamless certificate lifecycle management
 - **📊 Security Telemetry**: Comprehensive security event monitoring and alerting
+- **📨 Contract-Validated Events**: Emit CloudEvents with contract registry validation and policy enforcement
 - **🔒 Zero Trust Architecture**: Never trust, always verify security model
 - **🤖 LLM Security Analysis**: OWASP Top-10 LLM and MITRE ATLAS static analysis
 - **⚡ High Performance**: Optimized security operations with minimal overhead
@@ -51,7 +52,7 @@ pnpm test
 ### Basic Usage
 
 ```typescript
-import { SpiffeClient, WorkloadIdentity, MTLSManager } from '@cortex-os/security';
+import { SpiffeClient, WorkloadIdentity, MTLSManager, SecurityEventEmitter } from '@cortex-os/security';
 
 // Initialize SPIFFE client
 const spiffeClient = new SpiffeClient({
@@ -64,10 +65,24 @@ const identity = await spiffeClient.fetchWorkloadIdentity();
 
 // Setup mTLS
 const mtlsManager = new MTLSManager(identity);
-const secureServer = await mtlsManager.createSecureServer({
+await mtlsManager.createSecureServer({
   port: 8443,
   cert: identity.x509Certificate,
   key: identity.privateKey
+});
+
+// Emit a contract-validated security event
+const emitter = new SecurityEventEmitter({
+  registry: { validate: async () => true },
+  policyRouter: { enforce: async () => undefined }
+});
+
+await emitter.emit({
+  type: 'security.audit',
+  source: 'urn:cortex:security',
+  schemaId: 'https://cortex.test/schemas/security/audit',
+  data: { action: 'login' },
+  evidence: ['trace-123']
 });
 ```
 
