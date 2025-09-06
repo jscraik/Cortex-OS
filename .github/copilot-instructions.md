@@ -64,6 +64,15 @@ Security / Semgrep diff: `pnpm security:scan:diff`
 Structure rules: `pnpm structure:validate`
 Python tests (where applicable): `uv sync && uv run pytest`
 
+## 5A. Additional Helpful Commands
+- Readiness / env sanity: `pnpm readiness:check`
+- Full lint (all packages): `pnpm lint:all`
+- Security scan (focused): `pnpm security:scan` | all profiles: `pnpm security:scan:all`
+- Dependency graph (impact planning): `pnpm nx graph`
+- Structure governance: `pnpm structure:validate`
+- Coverage threshold enforcement: `pnpm test:coverage`
+- Baseline Semgrep (rare / controlled): `pnpm security:scan:baseline`
+
 ## 6. Contracts & Schemas
 - When adding an event: update AsyncAPI / CloudEvents schema in `contracts/` and matching Zod schema in `libs/typescript/contracts`.
 - Add validation test in `contracts/tests/` proving backward compatibility (no breaking field removals without version bump).
