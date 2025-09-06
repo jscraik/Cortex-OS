@@ -4,6 +4,8 @@
 
 ![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-v9.9.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
 
+<!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
+
 <!-- markdownlint-enable MD013 -->
 
 ## Autonomous Software Behavior Reasoning (ASBR) Runtime
