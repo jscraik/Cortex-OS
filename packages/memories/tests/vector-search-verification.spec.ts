@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InMemoryStore } from "../src/adapters/store.memory.js";
 import { PrismaStore } from "../src/adapters/store.prisma/client.js";
+import { SQLiteStore } from "../src/adapters/store.sqlite.js";
 import type { Memory } from "../src/domain/types.js";
 
 // Mock Prisma client for testing
@@ -20,9 +21,9 @@ describe("Vector Search Implementation Verification", () => {
 		vi.clearAllMocks();
 	});
 
-	it("InMemoryStore performs accurate cosine similarity search", async () => {
-		const store = new InMemoryStore();
-		const now = new Date().toISOString();
+        it("InMemoryStore performs accurate cosine similarity search", async () => {
+                const store = new InMemoryStore();
+                const now = new Date().toISOString();
 
 		// Insert records with known vectors
 		const rec1: Memory = {
@@ -55,9 +56,45 @@ describe("Vector Search Implementation Verification", () => {
 		const res = await store.searchByVector({ vector: queryVector, topK: 5 });
 
 		// Should return rec1 first due to higher similarity
-		expect(res[0]?.id).toBe("vec-1");
-		expect(res).toHaveLength(2);
-	});
+                expect(res[0]?.id).toBe("vec-1");
+                expect(res).toHaveLength(2);
+        });
+
+        it("SQLiteStore with sqlite-vec returns nearest neighbors", async () => {
+                const store = new SQLiteStore(":memory:", 4);
+                const now = new Date().toISOString();
+
+                const rec1: Memory = {
+                        id: "vec-1",
+                        kind: "embedding",
+                        text: "similar to query",
+                        vector: [1, 0, 0, 0],
+                        tags: ["vector"],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: "system" },
+                } as Memory;
+
+                const rec2: Memory = {
+                        id: "vec-2",
+                        kind: "embedding",
+                        text: "different from query",
+                        vector: [0, 1, 0, 0],
+                        tags: ["vector"],
+                        createdAt: now,
+                        updatedAt: now,
+                        provenance: { source: "system" },
+                } as Memory;
+
+                await store.upsert(rec1);
+                await store.upsert(rec2);
+
+                const queryVector = [0.9, 0.1, 0, 0];
+                const res = await store.searchByVector({ vector: queryVector, topK: 5 });
+
+                expect(res[0]?.id).toBe("vec-1");
+                expect(res).toHaveLength(2);
+        });
 
 	it("PrismaStore performs accurate cosine similarity search", async () => {
 		const store = new PrismaStore(mockPrisma as any);

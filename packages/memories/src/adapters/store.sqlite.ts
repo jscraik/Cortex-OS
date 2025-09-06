@@ -1,37 +1,30 @@
 import { isExpired } from "../core/ttl.js";
 import DatabaseImpl from "better-sqlite3";
+import { load as loadVec } from "sqlite-vec";
 import type { Memory, MemoryId } from "../domain/types.js";
 import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
+        MemoryStore,
+        TextQuery,
+        VectorQuery,
 } from "../ports/MemoryStore.js";
 
-// Helper function to calculate cosine similarity
-function cosineSimilarity(a: number[], b: number[]): number {
-	if (a.length !== b.length) {
-		throw new Error("Vectors must have the same length");
-	}
-
-	const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
-	const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-	const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-
-	if (magnitudeA === 0 || magnitudeB === 0) {
-		return 0;
-	}
-
-	return dotProduct / (magnitudeA * magnitudeB);
+function padVector(vec: number[], dim: number): number[] {
+        if (vec.length === dim) return vec;
+        if (vec.length > dim) return vec.slice(0, dim);
+        return vec.concat(Array(dim - vec.length).fill(0));
 }
 
 export class SQLiteStore implements MemoryStore {
-	private db: InstanceType<typeof DatabaseImpl>;
+        private db: InstanceType<typeof DatabaseImpl>;
+        private readonly dim: number;
 
-	constructor(path: string) {
-		this.db = new DatabaseImpl(path);
+        constructor(path: string, dimension?: number) {
+                this.db = new DatabaseImpl(path);
+                loadVec(this.db);
+                this.dim = dimension || Number(process.env.MEMORIES_VECTOR_DIM) || 1536;
 
-		// Create table if it doesn't exist
-		this.db.exec(`
+                // Create table if it doesn't exist
+                this.db.exec(`
         CREATE TABLE IF NOT EXISTS memories (
           id TEXT PRIMARY KEY,
           kind TEXT NOT NULL,
@@ -47,12 +40,16 @@ export class SQLiteStore implements MemoryStore {
         )
       `);
 
-		// Create indexes
-		this.db.exec("CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)");
-		this.db.exec(
-			"CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)",
-		);
-	}
+                this.db.exec(
+                        `CREATE VIRTUAL TABLE IF NOT EXISTS memory_embeddings USING vec0(embedding float[${this.dim}])`,
+                );
+
+                // Create indexes
+                this.db.exec("CREATE INDEX IF NOT EXISTS idx_kind ON memories(kind)");
+                this.db.exec(
+                        "CREATE INDEX IF NOT EXISTS idx_embeddingModel ON memories(embeddingModel)",
+                );
+        }
 
 	async upsert(m: Memory): Promise<Memory> {
 		const stmt = this.db.prepare(`
@@ -61,22 +58,35 @@ export class SQLiteStore implements MemoryStore {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-		stmt.run(
-			m.id,
-			m.kind,
-			m.text || null,
-			m.vector ? JSON.stringify(m.vector) : null,
-			JSON.stringify(m.tags),
-			m.ttl || null,
-			m.createdAt,
-			m.updatedAt,
-			JSON.stringify(m.provenance),
-			m.policy ? JSON.stringify(m.policy) : null,
-			m.embeddingModel || null,
-		);
+                stmt.run(
+                        m.id,
+                        m.kind,
+                        m.text || null,
+                        m.vector ? JSON.stringify(m.vector) : null,
+                        JSON.stringify(m.tags),
+                        m.ttl || null,
+                        m.createdAt,
+                        m.updatedAt,
+                        JSON.stringify(m.provenance),
+                        m.policy ? JSON.stringify(m.policy) : null,
+                        m.embeddingModel || null,
+                );
+                const row = this.db.prepare("SELECT rowid FROM memories WHERE id = ?").get(m.id);
+                if (row) {
+                        if (m.vector) {
+                                const padded = padVector(m.vector, this.dim);
+                                this.db
+                                        .prepare(
+                                                "INSERT OR REPLACE INTO memory_embeddings(rowid, embedding) VALUES (?, ?)",
+                                        )
+                                        .run(BigInt(row.rowid), padded);
+                        } else {
+                                this.db.prepare("DELETE FROM memory_embeddings WHERE rowid = ?").run(BigInt(row.rowid));
+                        }
+                }
 
-		return m;
-	}
+                return m;
+        }
 
 	async get(id: MemoryId): Promise<Memory | null> {
 		const stmt = this.db.prepare("SELECT * FROM memories WHERE id = ?");
@@ -87,10 +97,13 @@ export class SQLiteStore implements MemoryStore {
 		return this.rowToMemory(row);
 	}
 
-	async delete(id: MemoryId): Promise<void> {
-		const stmt = this.db.prepare("DELETE FROM memories WHERE id = ?");
-		stmt.run(id);
-	}
+        async delete(id: MemoryId): Promise<void> {
+                const row = this.db.prepare("SELECT rowid FROM memories WHERE id = ?").get(id);
+                if (row) {
+                        this.db.prepare("DELETE FROM memory_embeddings WHERE rowid = ?").run(BigInt(row.rowid));
+                }
+                this.db.prepare("DELETE FROM memories WHERE id = ?").run(id);
+        }
 
 	async searchByText(q: TextQuery): Promise<Memory[]> {
 		let sql = "SELECT * FROM memories WHERE text IS NOT NULL";
@@ -140,71 +153,58 @@ export class SQLiteStore implements MemoryStore {
 		return candidates.slice(0, q.topK);
 	}
 
-	async searchByVector(q: VectorQuery): Promise<Memory[]> {
-		// SQLite doesn't have native vector search capabilities
-		// We'll fetch candidates and perform similarity matching in memory
-		let sql = "SELECT * FROM memories WHERE vector IS NOT NULL";
-		const params: any[] = [];
+        async searchByVector(q: VectorQuery): Promise<Memory[]> {
+                const padded = padVector(q.vector, this.dim);
+                let sql =
+                        "SELECT m.*, v.distance FROM memory_embeddings v JOIN memories m ON m.rowid = v.rowid WHERE v.embedding MATCH ? AND k = ?";
+                const initialLimit = Math.max(q.topK * 10, q.topK);
+                const params: any[] = [JSON.stringify(padded), initialLimit];
 
-		if (q.filterTags && q.filterTags.length > 0) {
-			sql += " AND (";
-			q.filterTags.forEach((tag, i) => {
-				if (i > 0) sql += " OR ";
-				sql += "tags LIKE ?";
-				params.push(`%"${tag}"%`);
-			});
-			sql += ")";
-		}
+                if (q.filterTags && q.filterTags.length > 0) {
+                        sql += " AND (";
+                        q.filterTags.forEach((tag, i) => {
+                                if (i > 0) sql += " OR ";
+                                sql += "m.tags LIKE ?";
+                                params.push(`%"${tag}"%`);
+                        });
+                        sql += ")";
+                }
 
-		sql += " ORDER BY updatedAt DESC LIMIT ?";
-		params.push(q.topK * 10); // Fetch more candidates for similarity matching
+                sql += " ORDER BY v.distance";
 
-		const stmt = this.db.prepare(sql);
-		const rows = stmt.all(...params);
+                const rows = this.db.prepare(sql).all(...params);
+                const candidates = rows.map((row: any) => this.rowToMemory(row));
 
-		const candidates = rows
-			.map((row: any) => this.rowToMemory(row))
-			.filter((memory) => memory.vector) as Memory[];
+                let results = candidates.slice(0, q.topK);
 
-		// Perform similarity matching
-		let scoredCandidates = candidates
-			.map((memory) => ({
-				memory,
-				score: cosineSimilarity(q.vector, memory.vector!),
-			}))
-			.sort((a, b) => b.score - a.score)
-			.slice(0, q.topK)
-			.map((item) => item.memory);
+                const rerankEnabled =
+                        (process.env.MEMORIES_RERANK_ENABLED || "true").toLowerCase() !== "false";
+                if (rerankEnabled && q.queryText && candidates.length > 1) {
+                        try {
+                                const start = Date.now();
+                                const reranked = await this.rerankWithModelGateway(
+                                        q.queryText,
+                                        candidates,
+                                );
+                                const latency = Date.now() - start;
+                                await this.writeOutboxEvent({
+                                        type: "rerank.completed",
+                                        data: {
+                                                strategy: "vec0+mlxr",
+                                                totalCandidates: candidates.length,
+                                                returned: q.topK,
+                                                latencyMs: latency,
+                                                timestamp: new Date().toISOString(),
+                                        },
+                                });
+                                results = reranked.slice(0, q.topK);
+                        } catch {
+                                // keep initial results on failure
+                        }
+                }
 
-		// Optional second-stage reranking if original query text is provided
-		const rerankEnabled =
-			(process.env.MEMORIES_RERANK_ENABLED || "true").toLowerCase() !== "false";
-		if (rerankEnabled && q.queryText && candidates.length > 1) {
-			try {
-				const start = Date.now();
-				const reranked = await this.rerankWithModelGateway(
-					q.queryText,
-					candidates,
-				);
-				const latency = Date.now() - start;
-				await this.writeOutboxEvent({
-					type: "rerank.completed",
-					data: {
-						strategy: "cosine+mlxr",
-						totalCandidates: candidates.length,
-						returned: q.topK,
-						latencyMs: latency,
-						timestamp: new Date().toISOString(),
-					},
-				});
-				scoredCandidates = reranked.slice(0, q.topK);
-			} catch {
-				// keep cosine results on failure
-			}
-		}
-
-		return scoredCandidates;
-	}
+                return results;
+        }
 
 	// Second-stage reranking via Model Gateway (/rerank) with Qwen3 MLX primary
 	private async rerankWithModelGateway(
@@ -263,23 +263,27 @@ export class SQLiteStore implements MemoryStore {
         async purgeExpired(nowISO: string): Promise<number> {
                 let purgedCount = 0;
 
-                const stmt = this.db.prepare("SELECT * FROM memories WHERE ttl IS NOT NULL");
+                const stmt = this.db.prepare("SELECT rowid, * FROM memories WHERE ttl IS NOT NULL");
                 const rows = stmt.all();
 
                 const expiredIds: string[] = [];
+                const expiredRowids: number[] = [];
                 for (const row of rows) {
                         const memory = this.rowToMemory(row);
                         if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
                                 expiredIds.push(memory.id);
+                                expiredRowids.push(row.rowid as number);
                         }
                 }
 
-                // Delete expired memories
                 if (expiredIds.length > 0) {
                         const placeholders = expiredIds.map(() => "?").join(",");
-                        const deleteStmt = this.db.prepare(`DELETE FROM memories WHERE id IN (${placeholders})`);
-                        const result = deleteStmt.run(...expiredIds);
-                        purgedCount = result.changes;
+                        this.db.prepare(`DELETE FROM memories WHERE id IN (${placeholders})`).run(...expiredIds);
+                        const rowPlaceholders = expiredRowids.map(() => "?").join(",");
+                        this.db
+                                .prepare(`DELETE FROM memory_embeddings WHERE rowid IN (${rowPlaceholders})`)
+                                .run(...expiredRowids);
+                        purgedCount = expiredIds.length;
                 }
 
                 return purgedCount;

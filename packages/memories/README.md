@@ -25,7 +25,7 @@ Cortex Memories provides comprehensive long-term state management for the Cortex
 ### 💾 Hybrid Storage Architecture
 - **🌐 Neo4j Graph Storage** - Complex relationship modeling with Cypher queries
 - **🔍 Qdrant Vector Search** - High-performance similarity search and retrieval
-- **🗃️ SQLite Adapter** - Local development and testing support
+ - **🗃️ SQLite Adapter** - Local development and testing support with `sqlite-vec` search
 - **⚗️ Prisma Integration** - Type-safe database operations with schema management
 
 ### 🧠 MLX Intelligence

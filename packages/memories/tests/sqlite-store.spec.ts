@@ -5,21 +5,21 @@ import type { Memory } from "../src/domain/types.js";
 let sqliteAvailable = true;
 
 (function checkSQLite() {
-	try {
-		new SQLiteStore(":memory:");
-	} catch {
-		sqliteAvailable = false;
-	}
+        try {
+                new SQLiteStore(":memory:", 2);
+        } catch {
+                sqliteAvailable = false;
+        }
 })();
 
 (sqliteAvailable ? describe : describe.skip)("SQLiteStore", () => {
 	let store: SQLiteStore;
 	const now = new Date().toISOString();
 
-	beforeEach(() => {
-		store = new SQLiteStore(":memory:");
-		process.env.MEMORIES_RERANK_ENABLED = "false";
-	});
+        beforeEach(() => {
+                store = new SQLiteStore(":memory:", 2);
+                process.env.MEMORIES_RERANK_ENABLED = "false";
+        });
 
 	it("persists and retrieves memories", async () => {
 		const m: Memory = {
