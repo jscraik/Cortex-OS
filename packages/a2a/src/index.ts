@@ -39,18 +39,20 @@ export {
 export type { RpcHandler } from "./rpc-handler.js";
 // Main handler
 export {
-	A2ARpcHandler,
-	createA2ARpcHandler,
-	handleA2A,
+        A2ARpcHandler,
+        createA2ARpcHandler,
+        handleA2A,
 } from "./rpc-handler.js";
 // Re-export task management
 export type { Task, TaskProcessor, TaskStore } from "./task-manager.js";
 export {
-	createTaskManager,
-	EchoTaskProcessor,
-	InMemoryTaskStore,
-	TaskManager,
+        createTaskManager,
+        EchoTaskProcessor,
+        InMemoryTaskStore,
+        TaskManager,
 } from "./task-manager.js";
+// Streaming utilities
+export { createTaskEventStream } from "./streaming.js";
 
 // Default export for convenience
 import { handleA2A } from "./rpc-handler.js";
