@@ -87,6 +87,15 @@ Python tests (where applicable): `uv sync && uv run pytest`
 - Stream model output using established streaming modes (see `docs/streaming-modes.md`); respect flag precedence (CLI flag > env > config).
 - Avoid unbounded in-memory accumulation; prefer event streaming or chunked processing.
 
+## 9B. Streaming Modes (Quick Matrix)
+| CLI Flag / Mode | Effect | Overrides | Typical Use |
+|-----------------|--------|-----------|-------------|
+| (default) token streaming | Emit token deltas to stdout | Falls back if no higher precedence | Interactive CLI feedback |
+| `--aggregate` | Suppress deltas; emit final aggregated output | Overrides default/env/config | Deterministic logs / scripting |
+| `--no-aggregate` | Force token streaming even if aggregate configured | Overrides `--aggregate` in config | Force live progress |
+| `--json` / `--stream-json` | Emit structured JSON events (`delta`, `item`, `completed`) | Highest for format | Programmatic pipelines |
+Precedence: CLI flag > `CORTEX_STREAM_MODE` env > config file > internal default. Validate downstream consumers when changing event shapes.
+
 ## 10. Security & Governance Hooks
 - Run before commit (locally) when modifying code: `pnpm lint && pnpm test`.
 - For risk surfaces (network, file IO, auth): run `pnpm security:scan:diff` before push.
