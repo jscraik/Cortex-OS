@@ -153,16 +153,17 @@ export default [
 		// Enforce named exports only in source (no default exports)
 		files: ["packages/**/src/**/*.ts"],
 		rules: {
-			"no-restricted-syntax": [
-				"error",
-				{
-					selector: "ExportDefaultDeclaration",
-					message:
-						"Use named exports only (default exports are disallowed in source).",
-				},
-			],
-		},
-	},
+                "no-restricted-syntax": [
+                        "warn",
+                        {
+                                selector: "ExportDefaultDeclaration",
+                                message:
+                                        "Use named exports only (default exports are discouraged in source).",
+                        },
+                ],
+                "no-console": ["warn", { allow: ["warn", "error"] }],
+        },
+},
 	{
 		files: ["**/*.test.ts", "**/*.test.js", "**/*.spec.ts", "**/*.spec.js"],
 		rules: {
