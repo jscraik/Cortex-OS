@@ -235,3 +235,64 @@ Built with ❤️ by the Cortex-OS Team
 ![GitHub Stars](https://img.shields.io/github/stars/cortex-os/cortex-os?style=social) ![GitHub Forks](https://img.shields.io/github/forks/cortex-os/cortex-os?style=social) ![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os) ![GitHub PRs](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)
 
 <!-- markdownlint-enable MD013 -->
+
+## Submodules
+
+This repository uses `git submodule` for certain external, read-only references.
+
+Currently included:
+
+| Path | Upstream | Purpose |
+| ---- | -------- | ------- |
+| `external/openai-codex` | <https://github.com/openai/codex.git> | Reference implementation; selectively copy patterns (no direct cross-imports in governed domains). |
+
+### Working With Submodules
+
+Clone (including submodules):
+
+```bash
+git clone --recurse-submodules https://github.com/cortex-os/cortex-os.git
+```
+
+If you already cloned without `--recurse-submodules`:
+
+```bash
+git submodule update --init --recursive
+```
+
+Pull latest (root + all submodules):
+
+```bash
+git pull --recurse-submodules
+# Or explicitly
+git submodule update --remote --merge
+```
+
+Inspect status:
+
+```bash
+git submodule status
+```
+
+Pin a submodule to a newer upstream commit:
+
+```bash
+cd external/openai-codex
+git fetch origin
+git checkout <new-commit-or-tag>
+cd -
+git add external/openai-codex
+git commit -m "chore(submodule): bump openai-codex to <sha>"
+```
+
+Remove a submodule (example for `external/openai-codex`):
+
+```bash
+git submodule deinit -f external/openai-codex
+rm -rf .git/modules/external/openai-codex
+git rm -f external/openai-codex
+# Edit .gitmodules if other entries remain
+```
+
+> Governance: Do **not** import submodule code directly across feature boundaries.
+> Copy needed snippets into governed packages and add tests + attribution.

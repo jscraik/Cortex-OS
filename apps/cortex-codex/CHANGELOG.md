@@ -1,6 +1,38 @@
 # Cortex CLI Changelog
 
-## [Unreleased] - 2025-09-04
+## [Unreleased] - 2025-09-06
+
+### Planned / In Progress
+
+#### Task Restructure
+
+- Split original `Task 2.2` into:
+  - `Task 2.2a`: Provider Abstraction Scaffold (trait, registry, mock provider placeholders, baseline auth shaping)
+  - `Task 2.2b`: Provider Switching & Aggregation Parity (resolution matrix, aggregation adapter parity subset,
+    session meta propagation, extended auth)
+- Added proposed `Task 2.5`: Reasoning & Verbosity Controls (delta accumulation, final block emission, verbosity
+  shaping, minimal pipeline stub)
+
+#### Upcoming Streaming Normalization (Task 2.3)
+
+- Introduce canonical streaming mode enum: `Raw | Aggregate | JsonOnce | JsonStream`
+- Normalize legacy flags (`--aggregate`, `--no-aggregate`, `--json`, `--stream-json`, `--stream-mode`) into single deterministic mode
+- Deterministic conflict precedence (draft): `--no-aggregate` > `--aggregate` > JSON flags > default raw
+- Add comprehensive normalization + precedence test matrix (all valid/invalid combinations)
+- Provider dispatch integration tests to assert selected mode is propagated
+
+#### Reasoning Pipeline (Task 2.5)
+
+- Minimal `ReasoningAccumulator` (buffer + delta apply + finalize)
+- Tests for ordered delta accumulation & single final emission
+- Verbosity flag shaping (quiet vs verbose reasoning events)
+- Feature-gated until upstream provider reasoning events integrated
+
+### Notes
+
+- These changes restructure roadmap without altering already tagged work
+- No breaking runtime changes yet; implementation pending for normalization and reasoning
+- Documentation (`TASKS.md`, `TASK_TRACKER.md`) updated to reflect split and new phase
 
 ### ✅ COMPLETED: Task 2.2 - Provider Abstraction Layer (TDD)
 
@@ -75,7 +107,7 @@
 #### Added
 
 - **Configuration System**: Complete TDD-driven configuration system with 11/11 tests passing
-- **Profile Support**: TOML-based configuration with profile loading (development, production)  
+- **Profile Support**: TOML-based configuration with profile loading (development, production)
 - **Override System**: Dot-notation configuration overrides (e.g., `model.provider=openai`)
 - **Environment Variables**: Support for `CODEX_MODEL_PROVIDER`, `CODEX_API_TIMEOUT_SECONDS`
 - **Configuration Validation**: Comprehensive validation with detailed error messages
@@ -84,10 +116,10 @@
 #### Files Created
 
 - `core/src/config_types_new.rs` - Modern configuration types (ModelProvider, ApiSettings, etc.)
-- `core/src/config_tdd.rs` - TDD-focused SimpleConfig implementation  
+- `core/src/config_tdd.rs` - TDD-focused SimpleConfig implementation
 - `core/tests/config_tests.rs` - Comprehensive test suite (11 tests)
 
-#### Files Modified  
+#### Files Modified
 
 - `core/src/error.rs` - Extended with ConfigError enum for configuration-specific errors
 - `core/src/lib.rs` - Added new configuration modules
