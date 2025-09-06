@@ -52,6 +52,7 @@ Rules: domain !-> infra; `app` mediates; re-export only via `index.ts`.
 2. Minimal code
 3. Green -> refactor
 4. Conventional Commit (`feat(a2a): ...`)
+Mnemonic: "Test → Code → Green → Clean → Tag (commit)".
 </details>
 
 <details><summary><strong>5. Commands (+ Extra)</strong></summary>
