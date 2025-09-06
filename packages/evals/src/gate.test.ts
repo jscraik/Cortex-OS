@@ -41,7 +41,7 @@ describe("runGate", () => {
                                 { name: "router", enabled: false, thresholds: {} },
                         ],
                 };
-                const res = await runGate(cfg);
+                const res = await runGate(cfg, { rag: {}, router: {} } as any);
                 expect(res.pass).toBe(true);
         });
 
@@ -66,11 +66,11 @@ describe("runGate", () => {
                                 { name: "router", enabled: false, thresholds: {} },
                         ],
                 };
-                const res = await runGate(cfg);
+                const res = await runGate(cfg, { rag: {}, router: {} } as any);
                 expect(res.pass).toBe(false);
         });
 
         it("throws on invalid config", async () => {
-                await expect(runGate({} as any)).rejects.toThrow();
+                await expect(runGate({} as any, {} as any)).rejects.toThrow();
         });
 });
