@@ -23,7 +23,7 @@ jobs:
           pnpm-version: '9'
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      - run: pnpm test:coverage:threshold
       - run: pnpm build
 
   bun-lane:

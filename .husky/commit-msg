@@ -1,28 +1,8 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
 
 # Source common utilities
 . "$(dirname "$0")/common.sh"
 
-# Check if commitlint is available
-if command -v commitlint >/dev/null 2>&1; then
-  echo "Validating commit message..."
-  pnpm exec commitlint --edit "$1" || {
-    echo "❌ Commit message validation failed"
-    echo "Please follow the conventional commit format:"
-    echo "  feat: add new feature"
-    echo "  fix: resolve issue"
-    echo "  docs: update documentation"
-    echo "  chore: routine tasks"
-    echo "  ci: continuous integration changes"
-    echo "  test: add or modify tests"
-    echo "  refactor: code restructuring"
-    echo "  style: formatting changes"
-    echo "  perf: performance improvements"
-    echo "  build: build system changes"
-    exit 1
-  }
-  echo "✅ Commit message valid"
-else
-  echo "Warning: commitlint not available, skipping commit message validation"
-fi
+# Validate commit message using commitlint
+echo "Validating commit message..."
+pnpm exec commitlint --edit "$1"

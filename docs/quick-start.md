@@ -88,7 +88,7 @@ pnpm nx graph          # Visualize dependency graph
 | ----------------------- | ----------------------------------------------------- |
 | Ports in use            | `./free-ports.sh all` then retry                      |
 | Missing tools           | `pnpm ensure:tools` or rerun `./scripts/dev-setup.sh` |
-| Git hooks not running   | `git config --local core.hooksPath .githooks`         |
+| Git hooks not running   | `git config --local core.hooksPath .husky`            |
 | Lint errors after merge | Run `pnpm lint --fix` then commit                     |
 | Slow first install      | Enable corepack: `corepack enable`                    |
 

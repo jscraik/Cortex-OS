@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Skip in CI environments or when explicitly opted-out
-if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" = "1" ] || [ "${CORTEX_EFFICIENCY_SETUP_SKIP:-}" = "true" ]; then
-  exit 0
-fi
-
-[ -x scripts/ensure-efficiency-tools.sh ] && scripts/ensure-efficiency-tools.sh || true
