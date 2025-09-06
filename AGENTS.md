@@ -23,7 +23,10 @@ These instructions apply to all developers and AI agents working in this reposit
 Run the following checks before submitting a commit:
 
 ```bash
-pre-commit run --files <changed_files>
+# Run pre-commit on specific changed files (replace with actual filenames)
+pre-commit run --files path/to/changed_file1.py path/to/changed_file2.js
+# Or run on all files
+pre-commit run --all-files
 # For code changes
 pnpm lint
 pnpm test
