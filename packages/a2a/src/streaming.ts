@@ -22,11 +22,18 @@ export function createTaskEventStream(taskManager: TaskManager): Readable {
         taskManager.on("taskCancelled", onCancelled);
         taskManager.on("taskFailed", onFailed);
 
-        stream.on("close", () => {
+        // Cleanup function to remove listeners, only runs once
+        let cleanedUp = false;
+        const cleanup = () => {
+                if (cleanedUp) return;
+                cleanedUp = true;
                 taskManager.off("taskCompleted", onCompleted);
                 taskManager.off("taskCancelled", onCancelled);
                 taskManager.off("taskFailed", onFailed);
-        });
+        };
+        stream.on("close", cleanup);
+        stream.on("end", cleanup);
+        stream.on("error", cleanup);
 
         // Initial comment to keep connection alive
         stream.push(": connected\n\n");
