@@ -4,6 +4,7 @@
         "module": "ESNext",
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
+        "noEmit": false,
         "outDir": "../../dist/packages/asbr",
         "declaration": true,
         "types": [
