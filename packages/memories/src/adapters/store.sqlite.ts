@@ -79,7 +79,7 @@ export class SQLiteStore implements MemoryStore {
                                         .prepare(
                                                 "INSERT OR REPLACE INTO memory_embeddings(rowid, embedding) VALUES (?, ?)",
                                         )
-                                        .run(BigInt(row.rowid), JSON.stringify(padded));
+                                        .run(BigInt(row.rowid), padded);
                         } else {
                                 this.db.prepare("DELETE FROM memory_embeddings WHERE rowid = ?").run(BigInt(row.rowid));
                         }
