@@ -51,7 +51,7 @@ pnpm security:scan:ci         # CI raw scan (feeds SARIF)
 
 Baseline regeneration workflow:
 
-1. Create an issue: "Rotate Semgrep baseline <date>". *(Use ISO date e.g. 2025-09-06)*
+1. Create an issue: "Rotate Semgrep baseline [DATE]". *(Use ISO date e.g. 2025-09-06)*
 2. Run `pnpm security:scan:baseline` locally.
 3. Review diff; ensure only intended changes.
 4. Commit with: `chore(security): refresh semgrep baseline` + link issue.
