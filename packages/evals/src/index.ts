@@ -20,7 +20,7 @@ type SuiteDeps = {
 
 export async function runGate(
         config: unknown,
-        deps: Partial<SuiteDeps>,
+        deps: SuiteDeps,
 ): Promise<GateResult> {
         const startedAt = new Date().toISOString();
         const cfg = GateConfigSchema.parse(config);
