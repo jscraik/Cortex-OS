@@ -194,6 +194,73 @@ codex --sandbox danger-full-access
 
 The same setting can be persisted in `~/.codex/config.toml` via the top-level `sandbox_mode = "MODE"` key, e.g. `sandbox_mode = "workspace-write"`.
 
+### Streaming Modes
+
+Codex supports multiple streaming presentation modes for model responses. These control how incremental output is surfaced in the TUI and non‑interactive `exec` flows.
+
+Modes:
+
+- `auto` (default): Behaves like the Responses API aggregate mode — Codex buffers partial deltas and prints a single finalized assistant message when complete (unless a provider only supports raw, in which case raw is shown).
+- `aggregate`: Force aggregation even if raw token streaming is available. Useful for cleaner logs or when piping output.
+- `raw`: Display token deltas as they arrive with minimal post‑processing.
+- `json`: Emit structured NDJSON events (one JSON object per line) describing the streaming lifecycle (`delta`, `item`, `completed`). Intended for tooling and programmatic consumption.
+
+CLI flags (mutually exclusive shortcuts):
+
+````shell
+# Explicit mode selection
+codex exec --stream-mode raw "Explain the streaming design"
+
+# Convenience aliases
+codex exec --aggregate "Summarize this project"
+codex exec --raw "Draft a README section"
+codex exec --json-stream "Generate structured output"
+
+Deprecated legacy aliases (still accepted with a warning, prefer the above):
+
+```shell
+# Old forms (will print deprecation notices)
+codex chat --no-aggregate "Stream tokens"      # -> --stream-mode raw
+codex chat --aggregate   "One final answer"    # -> --stream-mode aggregate
+codex chat --stream-json "Structured events"   # -> --stream-mode json
+codex chat --json        "Structured events"   # -> --stream-mode json
+````
+
+The unified `--stream-mode <auto|aggregate|raw|json>` flag is the canonical interface going forward; legacy flags may be removed in a future release once external automation migrates.
+
+````
+
+TUI supports the same flags; when `--json-stream` is used, Codex still renders a human‑friendly view while internally consuming the structured events.
+
+Configuration precedence (lowest to highest):
+
+1. `~/.codex/config.toml` `stream_mode = "..."`
+2. Environment variable `CODEX_STREAM_MODE` (warns & falls back to `auto` if unrecognized)
+3. CLI flags (`--stream-mode`, `--aggregate`, `--raw`, `--json-stream`)
+
+Example config snippet:
+
+```toml
+stream_mode = "aggregate"
+````
+
+Environment override example:
+
+```shell
+CODEX_STREAM_MODE=raw codex exec "Tail the build output and summarize issues"
+```
+
+JSON streaming format (illustrative):
+
+```json
+{"type":"delta","id":"msg_1","text":"Hello"}
+{"type":"delta","id":"msg_1","text":" world"}
+{"type":"item","id":"msg_1","final":true,"text":"Hello world"}
+{"type":"completed","conversation_id":"abc123"}
+```
+
+NOTE: The `json` mode is currently an extended feature not yet present in upstream `openai/codex` `codex-rs`. If you share a single `config.toml` across binaries and run an upstream build that does not know `json`, it will fall back to `auto` (with a warning) rather than failing.
+
 ## Code Organization
 
 This folder is the root of a Cargo workspace. It contains quite a bit of experimental code, but here are the key crates:
@@ -202,3 +269,135 @@ This folder is the root of a Cargo workspace. It contains quite a bit of experim
 - [`exec/`](./exec) "headless" CLI for use in automation.
 - [`tui/`](./tui) CLI that launches a fullscreen TUI built with [Ratatui](https://ratatui.rs/).
 - [`cli/`](./cli) CLI multitool that provides the aforementioned CLIs via subcommands.
+
+## Testing & Coverage
+
+We provide unified scripts, Makefile targets, and Nx run-commands for exercising the Rust workspace in isolation from the larger monorepo.
+
+### Quick Commands
+
+From repo root (via `pnpm` scripts):
+
+```shell
+pnpm codex:test             # All workspace crates (unit + doc + ignored excluded by default)
+pnpm codex:test:unit        # Focus on fast unit-style tests (skips those tagged integration/slow)
+pnpm codex:test:integration # Only tests marked with #[ignore] (live / external)
+pnpm codex:test:coverage    # Instrument with LLVM source-based coverage, emit lcov if grcov present
+```
+
+Makefile shortcuts:
+
+```shell
+make codex-test
+make codex-test-unit
+make codex-test-integration
+make codex-test-coverage
+```
+
+Nx targets (optional, integrates with `nx run` & dep graph):
+
+```shell
+pnpm nx test cortex-codex-rust
+pnpm nx run cortex-codex-rust:test-unit
+pnpm nx run cortex-codex-rust:test-integration
+pnpm nx run cortex-codex-rust:coverage
+```
+
+### Integration Test Heuristic
+
+Currently, we treat tests annotated with `#[ignore]` (e.g. those in `core/tests/suite/live_cli.rs`) as integration/live tests. This keeps default `cargo test` runs deterministic and free of real API calls. To run them:
+
+```shell
+cargo test --workspace -- --ignored
+```
+
+### Coverage Details
+
+We now use [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov) for source-based coverage. The script `pnpm codex:test:coverage` runs:
+
+```shell
+cargo llvm-cov --workspace --lcov --output-path target/coverage/lcov.info --html
+```
+
+This produces:
+
+- `apps/cortex-codex/target/coverage/lcov.info` (CI/IDE ingestion)
+- `apps/cortex-codex/target/coverage/html/` (human browsable report)
+
+Open the HTML report via:
+
+```shell
+open apps/cortex-codex/target/coverage/html/index.html
+```
+
+Install the tool once with:
+
+```shell
+pnpm codex:install:coverage-tools   # installs cargo-llvm-cov
+```
+
+### Fast Inner Loop
+
+During development you can narrow to a single crate or test:
+
+```shell
+cd apps/cortex-codex
+cargo test -p core stream_mode
+```
+
+Or continuously watch (requires `cargo-watch`):
+
+```shell
+cargo watch -x 'test -p core'
+```
+
+### Tool Installation Helper
+
+Install `cargo-llvm-cov` (idempotent):
+
+```shell
+pnpm codex:install:coverage-tools
+```
+
+### xtask Automation
+
+We ship an `xtask` helper crate (`apps/cortex-codex/xtask`) with subcommands:
+
+```shell
+pnpm codex:coverage:xtask            # cargo llvm-cov run (lcov + html)
+pnpm codex:coverage:report           # cargo llvm-cov --no-run (re-generate reports)
+cd apps/cortex-codex/xtask && cargo run -- doctor  # tool availability summary
+```
+
+Pass extra test filters after `--`:
+
+```shell
+cd apps/cortex-codex/xtask
+cargo run -- coverage -- stream_mode
+```
+
+### CI Artifact (Example Snippet)
+
+Add a job step (GitHub Actions example) to persist `lcov.info` + HTML:
+
+```yaml
+- name: Codex coverage
+  run: pnpm codex:test:coverage
+- name: Upload coverage (lcov)
+  uses: actions/upload-artifact@v4
+  with:
+    name: codex-coverage-lcov
+    path: apps/cortex-codex/target/coverage/lcov.info
+- name: Upload coverage html
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: codex-coverage-html
+    path: apps/cortex-codex/target/coverage/html
+```
+
+### Future Improvements
+
+- Distinguish `slow` tests with a custom attribute macro
+- Provide a `cargo-xtask` wrapper for richer workflows
+- Gate live tests behind an explicit `CODEx_LIVE=1` env toggle for clarity

@@ -20,6 +20,7 @@ import { getChatSession, postChatMessage, streamChatSSE } from './controllers/ch
 import { getContextMap } from './controllers/contextMapController';
 import { ConversationController } from './controllers/conversationController';
 import { postCrawl } from './controllers/crawlController';
+import { DocumentController, documentUploadMiddleware } from './controllers/documentController';
 import { FileController, uploadMiddleware } from './controllers/fileController';
 import { MessageController } from './controllers/messageController';
 import { ModelController } from './controllers/modelController';
@@ -121,6 +122,15 @@ app.post(
   FileController.uploadFile,
 );
 app.delete(`${API_BASE_PATH}/files/:id`, authenticateToken, FileController.deleteFile);
+
+// Document processing routes
+app.post(
+  `${API_BASE_PATH}/documents/parse`,
+  authenticateToken,
+  documentUploadMiddleware.single('document'),
+  DocumentController.parseDocument,
+);
+app.get(`${API_BASE_PATH}/documents/supported-types`, DocumentController.getSupportedTypes);
 
 // Error handling middleware
 app.use(errorHandler);

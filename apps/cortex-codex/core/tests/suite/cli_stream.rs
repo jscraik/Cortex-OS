@@ -203,6 +203,331 @@ async fn chat_subcommand_streams_no_aggregate() {
     server.verify().await;
 }
 
+/// Explicitly forces aggregate mode via --aggregate (even though default Auto aggregates) to
+/// ensure the flag path does not regress.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_subcommand_streams_aggregate_flag() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let home = TempDir::new().unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+    let mut cmd = AssertCommand::new("cargo");
+    cmd.arg("run")
+        .arg("-p")
+        .arg("codex-cli")
+        .arg("--quiet")
+        .arg("--")
+        .arg("chat")
+        .arg("--aggregate")
+        .arg("-c")
+        .arg(&provider_override)
+        .arg("-c")
+        .arg("model_provider=\"mock\"")
+        .arg("hello?");
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()));
+
+    let output = cmd.output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let hi_lines = stdout.lines().filter(|line| line.trim() == "hi").count();
+    assert_eq!(hi_lines, 1);
+    server.verify().await;
+}
+
+/// Verify precedence: config raw < env aggregate < CLI --no-aggregate.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_stream_mode_precedence_cli_over_env() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let home = TempDir::new().unwrap();
+    // config raw
+    std::fs::write(
+        home.path().join("config.toml"),
+        "stream_mode=\"raw\"\nmodel_provider=\"mock\"",
+    )
+    .unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+    let mut cmd = AssertCommand::new("cargo");
+    cmd.arg("run")
+        .arg("-p")
+        .arg("codex-cli")
+        .arg("--quiet")
+        .arg("--")
+        .arg("chat")
+        .arg("--no-aggregate") // CLI should force raw (already raw) but tests precedence layering
+        .arg("-c")
+        .arg(&provider_override)
+        .arg("hello?");
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()))
+        .env("CODEX_STREAM_MODE", "aggregate"); // env tries to force aggregate
+
+    let output = cmd.output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let hi_lines = stdout.lines().filter(|line| line.trim() == "hi").count();
+    assert_eq!(hi_lines, 1);
+    server.verify().await;
+}
+
+/// Verify env overrides config when CLI silent: config raw < env aggregate.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_stream_mode_precedence_env_over_config() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let home = TempDir::new().unwrap();
+    std::fs::write(
+        home.path().join("config.toml"),
+        "stream_mode=\"raw\"\nmodel_provider=\"mock\"",
+    )
+    .unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+    let mut cmd = AssertCommand::new("cargo");
+    cmd.arg("run")
+        .arg("-p")
+        .arg("codex-cli")
+        .arg("--quiet")
+        .arg("--")
+        .arg("chat")
+        .arg("-c")
+        .arg(&provider_override)
+        .arg("hello?");
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()))
+        .env("CODEX_STREAM_MODE", "aggregate");
+
+    let output = cmd.output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let hi_lines = stdout.lines().filter(|line| line.trim() == "hi").count();
+    assert_eq!(hi_lines, 1);
+    server.verify().await;
+}
+
+/// JSON streaming mode should emit NDJSON lines with expected types.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_stream_mode_json() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    let home = TempDir::new().unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+    let mut cmd = AssertCommand::new("cargo");
+    cmd.arg("run")
+        .arg("-p")
+        .arg("codex-cli")
+        .arg("--quiet")
+        .arg("--")
+        .arg("chat")
+        .arg("--stream-json")
+        .arg("-c")
+        .arg(&provider_override)
+        .arg("-c")
+        .arg("model_provider=\"mock\"")
+        .arg("hello?");
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()));
+    let output = cmd.output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut saw_delta = false;
+    let mut saw_item = false;
+    let mut saw_completed = false;
+    for line in stdout.lines().filter(|l| !l.trim().is_empty()) {
+        let v: serde_json::Value = serde_json::from_str(line).expect("valid json line");
+        match v.get("type").and_then(|t| t.as_str()).unwrap_or("") {
+            "delta" => {
+                saw_delta = true;
+            }
+            "item" => {
+                saw_item = true;
+            }
+            "completed" => {
+                saw_completed = true;
+            }
+            other => panic!("unexpected event type {other}"),
+        }
+    }
+    assert!(saw_delta, "expected at least one delta event");
+    assert!(saw_item, "expected at least one item event");
+    assert!(saw_completed, "expected a completed event");
+    server.verify().await;
+}
+
+/// --json alias should behave identically to --stream-json.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_stream_mode_json_alias() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    let home = TempDir::new().unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+    let mut cmd = AssertCommand::new("cargo");
+    cmd.arg("run")
+        .arg("-p")
+        .arg("codex-cli")
+        .arg("--quiet")
+        .arg("--")
+        .arg("chat")
+        .arg("--json")
+        .arg("-c")
+        .arg(&provider_override)
+        .arg("-c")
+        .arg("model_provider=\"mock\"")
+        .arg("hello?");
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()));
+    let output = cmd.output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut saw_delta = false;
+    let mut saw_item = false;
+    let mut saw_completed = false;
+    for line in stdout.lines().filter(|l| !l.trim().is_empty()) {
+        let v: serde_json::Value = serde_json::from_str(line).expect("valid json line");
+        match v.get("type").and_then(|t| t.as_str()).unwrap_or("") {
+            "delta" => {
+                saw_delta = true;
+            }
+            "item" => {
+                saw_item = true;
+            }
+            "completed" => {
+                saw_completed = true;
+            }
+            other => panic!("unexpected event type {other}"),
+        }
+    }
+    assert!(saw_delta, "expected at least one delta event");
+    assert!(saw_item, "expected at least one item event");
+    assert!(saw_completed, "expected a completed event");
+    server.verify().await;
+}
+
 /// When the provider emits only a final full message (no token deltas) the
 /// aggregated default mode should still print exactly one line containing the
 /// final content (regression guard for earlier suppression bug).
@@ -673,6 +998,155 @@ async fn integration_creates_and_checks_session_file() {
         orig_len,
         "original rollout file should not change on resume"
     );
+}
+
+/// Test env-only JSON streaming (no CLI flags) to ensure environment variable precedence works.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_stream_mode_env_only_json() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    let home = TempDir::new().unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+    let mut cmd = AssertCommand::new("cargo");
+    cmd.arg("run")
+        .arg("-p")
+        .arg("codex-cli")
+        .arg("--quiet")
+        .arg("--")
+        .arg("chat")
+        .arg("-c")
+        .arg(&provider_override)
+        .arg("-c")
+        .arg("model_provider=\"mock\"")
+        .arg("hello?");
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()))
+        .env("CODEX_STREAM_MODE", "json"); // JSON mode via env only
+
+    let output = cmd.output().unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut saw_delta = false;
+    let mut saw_item = false;
+    let mut saw_completed = false;
+    for line in stdout.lines().filter(|l| !l.trim().is_empty()) {
+        let v: serde_json::Value = serde_json::from_str(line).expect("valid json line");
+        match v.get("type").and_then(|t| t.as_str()).unwrap_or("") {
+            "delta" => {
+                saw_delta = true;
+            }
+            "item" => {
+                saw_item = true;
+            }
+            "completed" => {
+                saw_completed = true;
+            }
+            other => panic!("unexpected event type {other}"),
+        }
+    }
+    assert!(saw_delta, "expected at least one delta event");
+    assert!(saw_item, "expected at least one item event");
+    assert!(saw_completed, "expected a completed event");
+    server.verify().await;
+}
+
+/// End-to-end test piping JSON output to a helper script for structural validation.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn chat_stream_json_piping_validation() {
+    if std::env::var(CODEX_SANDBOX_NETWORK_DISABLED_ENV_VAR).is_ok() {
+        println!(
+            "Skipping test because it cannot execute when network is disabled in a Codex sandbox."
+        );
+        return;
+    }
+    let server = MockServer::start().await;
+    let sse = concat!(
+        "data: {\"choices\":[{\"delta\":{\"content\":\"test\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{\"content\":\" response\"}}]}\n\n",
+        "data: {\"choices\":[{\"delta\":{}}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_raw(sse, "text/event-stream"),
+        )
+        .expect(1)
+        .mount(&server)
+        .await;
+    let home = TempDir::new().unwrap();
+    let provider_override = format!(
+        "model_providers.mock={{ name = \"mock\", base_url = \"{}/v1\", env_key = \"PATH\", wire_api = \"chat\" }}",
+        server.uri()
+    );
+
+    // Create a helper script to validate JSON structure
+    let script_content = r#"#!/bin/bash
+# JSON validation script - expects at least one delta, one item, one completed
+deltas=0
+items=0
+completed=0
+while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    if echo "$line" | jq -e '.type == "delta"' >/dev/null 2>&1; then
+        ((deltas++))
+    elif echo "$line" | jq -e '.type == "item"' >/dev/null 2>&1; then
+        ((items++))
+    elif echo "$line" | jq -e '.type == "completed"' >/dev/null 2>&1; then
+        ((completed++))
+    fi
+done
+[[ $deltas -gt 0 && $items -gt 0 && $completed -gt 0 ]]
+"#;
+    let script_path = home.path().join("validate_json.sh");
+    std::fs::write(&script_path, script_content).unwrap();
+    std::fs::set_permissions(&script_path, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    let mut cmd = AssertCommand::new("bash");
+    cmd.arg("-c")
+        .arg(format!(
+            "cd {} && cargo run -p codex-cli --quiet -- chat --json -c '{}' -c 'model_provider=\"mock\"' 'hello?' | '{}'",
+            env!("CARGO_MANIFEST_DIR"),
+            provider_override,
+            script_path.display()
+        ));
+    cmd.env("CODEX_HOME", home.path())
+        .env("OPENAI_API_KEY", "dummy")
+        .env("OPENAI_BASE_URL", format!("{}/v1", server.uri()));
+
+    let output = cmd.output().unwrap();
+    assert!(
+        output.status.success(),
+        "JSON piping validation failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    server.verify().await;
 }
 
 /// Integration test to verify git info is collected and recorded in session files.

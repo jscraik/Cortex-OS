@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "GitHub API client and operations for Cortex-OS",
 	"private": true,
-        "scripts": {
+	"scripts": {
 		"build": "nx build github",
 		"test": "nx test github",
 		"lint": "nx lint github"
@@ -17,7 +17,7 @@
 		"pull-requests"
 	],
 	"author": "Cortex-OS",
-	"license": "MIT",
+	"license": "Apache-2.0",
 	"dependencies": {},
 	"devDependencies": {}
 }

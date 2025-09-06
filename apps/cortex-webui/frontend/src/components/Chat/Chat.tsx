@@ -1,16 +1,17 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 // Note: UI message shape may include extra fields like timestamp/model for display
 // compared to shared backend types.
 import { apiFetch } from '../../utils/api-client';
 import type {
-	ChatMessage,
-	ChatMessageRole,
-	UseChatStoreApi,
+    ChatMessage,
+    ChatMessageRole,
+    UseChatStoreApi,
 } from '../../utils/chat-store';
 import { useChatStore } from '../../utils/chat-store';
+import { contextManager, type ContextWindow } from '../../utils/context-manager';
 import { generateId } from '../../utils/id';
 import { addNotification } from '../../utils/notification-store';
 import MessageInput from './MessageInput/MessageInput';
@@ -31,6 +32,13 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 	const [imageGenerationEnabled, setImageGenerationEnabled] = useState(false);
 	const [codeInterpreterEnabled, setCodeInterpreterEnabled] = useState(false);
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	const [contextOptimized, setContextOptimized] = useState(false);
+	const [memoryStats, setMemoryStats] = useState<{
+		messageCount: number;
+		tokenCount: number;
+		estimatedMemoryKB: number;
+		utilizationPercent: number;
+	} | null>(null);
 	// Chat settings are now managed inside SettingsModal tabs; local state deprecated
 
 	const chat: UseChatStoreApi = useChatStore(sessionId);
@@ -45,6 +53,44 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 
 	const abortControllerRef = useRef<AbortController | null>(null);
 	const eventSourceRef = useRef<EventSource | null>(null);
+
+	// Update memory stats when messages change
+	useEffect(() => {
+		if (messages.length > 0) {
+			const stats = contextManager.getMemoryStats(messages);
+			setMemoryStats(stats);
+			
+			// Auto-optimize context if approaching limits
+			if (stats.utilizationPercent > 80 && !contextOptimized) {
+				optimizeContext();
+			}
+		}
+	}, [messages, contextOptimized]);
+
+	const optimizeContext = useCallback(async () => {
+		try {
+			const optimizedWindow: ContextWindow = await contextManager.optimizeContext(messages);
+			
+			// Replace messages with optimized ones
+			clearMessages();
+			optimizedWindow.messages.forEach(message => {
+				addMessage(message);
+			});
+			
+			setContextOptimized(true);
+			
+			addNotification({
+				type: 'info',
+				message: `Context optimized: ${messages.length} → ${optimizedWindow.messages.length} messages`,
+			});
+		} catch (error) {
+			console.error('Failed to optimize context:', error);
+			addNotification({
+				type: 'error',
+				message: 'Failed to optimize conversation context',
+			});
+		}
+	}, [messages, addMessage, clearMessages]);
 
 	// Load models from API
 	useEffect(() => {
@@ -248,8 +294,44 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 						onModelChange={handleModelChange}
 						disabled={streaming}
 					/>
+					{/* Memory Statistics */}
+					{memoryStats && (
+						<div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+							{memoryStats.messageCount} messages • {memoryStats.tokenCount} tokens 
+							{memoryStats.utilizationPercent > 70 && (
+								<span className={`ml-1 ${memoryStats.utilizationPercent > 90 ? 'text-red-500' : 'text-amber-500'}`}>
+									({memoryStats.utilizationPercent}%)
+								</span>
+							)}
+						</div>
+					)}
 				</div>
 				<div className="flex space-x-2">
+					{/* Context Optimization Button */}
+					{memoryStats && memoryStats.utilizationPercent > 60 && (
+						<button
+							type="button"
+							onClick={optimizeContext}
+							className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 disabled:opacity-50"
+							disabled={streaming}
+							aria-label="Optimize context"
+							title="Optimize conversation context to improve performance"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								className="h-5 w-5"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<title>Optimize context</title>
+								<path
+									fillRule="evenodd"
+									d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+									clipRule="evenodd"
+								/>
+							</svg>
+						</button>
+					)}
 					<button
 						type="button"
 						onClick={() => setIsSettingsOpen(true)}
@@ -326,6 +408,11 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				setImageGenerationEnabled={setImageGenerationEnabled}
 				codeInterpreterEnabled={codeInterpreterEnabled}
 				setCodeInterpreterEnabled={setCodeInterpreterEnabled}
+				lastUserMessage={
+					messages
+						.filter(m => m.role === 'user')
+						.slice(-1)[0]?.content
+				}
 			/>
 
 			<SettingsModal

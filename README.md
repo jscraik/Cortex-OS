@@ -102,6 +102,7 @@ Full guide: [Python Integration](./docs/python-integration.md)
 - **[Python Integration](./docs/python-integration.md)** – Instructor + Ollama
 - **[Deployment Guide](./docs/deployment.md)** – Production deployment
 - **[Security Guide](./docs/security.md)** – Security practices and compliance
+- **[Streaming Modes](./docs/streaming-modes.md)** – Token, aggregated, and JSON streaming (CLI + config)
 
 ### 🛠️ Development Documentation
 
@@ -161,13 +162,30 @@ Full guide: [Python Integration](./docs/python-integration.md)
 
 ## Development & Quality Gates (Summary)
 
+### 🔁 Streaming Modes (CLI Summary)
+
+The CLI and runtime support flexible model output streaming with strict precedence control.
+
+- Default behavior: token deltas streamed to stdout
+- Aggregated final output: use `--aggregate` (or set config `stream.mode = "aggregate"`)
+- Force token streaming when aggregate is configured: `--no-aggregate`
+- JSON event streaming for programmatic consumption: `--json` (alias) or `--stream-json` (emits events: `delta`, `item`, `completed`)
+- Precedence: CLI flag > environment (`CORTEX_STREAM_MODE`) > config file > internal default
+
+See full spec & examples: [Streaming Modes Documentation](./docs/streaming-modes.md)
+
 ```bash
 pnpm lint               # ESLint + Prettier
 pnpm test:coverage      # 90% coverage threshold
 pnpm security:scan      # Semgrep OWASP profiles
 pnpm structure:validate # Governance/import rules
 pnpm nx graph           # Dependency visualization
+scripts/list-rust-editions.sh -e 2024  # Audit crates pinned to Rust 2024 edition
+scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config files
 ```
+
+> **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
+> and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
 
 ---
 

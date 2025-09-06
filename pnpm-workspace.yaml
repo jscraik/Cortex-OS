@@ -6,5 +6,6 @@ packages:
   - "packages/*"
   - "packages/*/*"
   - "libs/typescript/*"
+  - "website"
 neverBuiltDependencies: []
 packageImportMethod: auto

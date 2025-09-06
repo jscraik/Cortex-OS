@@ -24,6 +24,30 @@ use uuid::Uuid;
 
 use crate::proto::ProtoCli;
 
+/// CLI argument enum for stream mode selection
+#[derive(Debug, Clone, clap::ValueEnum)]
+enum StreamModeArg {
+    /// Auto-detect best streaming mode (default)
+    Auto,
+    /// Force aggregation (single final message)
+    Aggregate,
+    /// Force raw token streaming (immediate deltas)
+    Raw,
+    /// Emit structured JSON events (delta/item/completed)
+    Json,
+}
+
+impl From<StreamModeArg> for codex_core::config::StreamMode {
+    fn from(arg: StreamModeArg) -> Self {
+        match arg {
+            StreamModeArg::Auto => codex_core::config::StreamMode::Auto,
+            StreamModeArg::Aggregate => codex_core::config::StreamMode::Aggregate,
+            StreamModeArg::Raw => codex_core::config::StreamMode::Raw,
+            StreamModeArg::Json => codex_core::config::StreamMode::Json,
+        }
+    }
+}
+
 /// Codex CLI
 ///
 /// If no subcommand is specified, options will be forwarded to the interactive CLI.
@@ -172,9 +196,34 @@ struct ChatCommand {
     #[arg(long = "repl")]
     repl: bool,
 
+    /// Unified streaming mode control. Preferred over legacy flags.
+    #[arg(long = "stream-mode", value_enum, conflicts_with_all = ["aggregate", "no_aggregate", "stream_json", "json"])]
+    stream_mode: Option<StreamModeArg>,
+
+    /// Force aggregation (opposite of --no-aggregate). Mutually exclusive with --no-aggregate.
+    /// DEPRECATED: Use --stream-mode aggregate instead.
+    #[arg(long = "aggregate", conflicts_with = "no_aggregate")]
+    aggregate: bool,
+
     /// Disable aggregation and force raw token streaming (prints each delta as it arrives).
-    #[arg(long = "no-aggregate")]
+    /// DEPRECATED: Use --stream-mode raw instead.
+    #[arg(
+        long = "no-aggregate",
+        visible_alias = "raw",
+        conflicts_with = "aggregate"
+    )]
     no_aggregate: bool,
+
+    /// Stream structured JSON lines (one per event) instead of plain text.
+    /// DEPRECATED: Use --stream-mode json instead.
+    #[arg(long = "stream-json", conflicts_with_all = ["aggregate", "no_aggregate"])]
+    stream_json: bool,
+
+    /// Convenience alias: equivalent to --stream-json plus aggregation semantics.
+    /// Cannot be combined with raw/aggregate flags.
+    /// DEPRECATED: Use --stream-mode json instead.
+    #[arg(long = "json", conflicts_with_all = ["aggregate", "no_aggregate", "stream_json"])]
+    json: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -259,12 +308,18 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             prepend_config_flags(&mut chat_cli.config_overrides, cli.config_overrides);
 
             // Load full Config with overrides (keeps existing behavior intact).
+            // Determine stream mode override from CLI flags with deprecation warnings
+            let stream_mode_override = compute_stream_mode_override(&chat_cli);
+
+            let mut overrides = codex_core::config::ConfigOverrides::default();
+            overrides.stream_mode_override = stream_mode_override;
+
             let cfg = codex_core::config::Config::load_with_cli_overrides(
                 chat_cli
                     .config_overrides
                     .parse_overrides()
                     .map_err(anyhow::Error::msg)?,
-                codex_core::config::ConfigOverrides::default(),
+                overrides,
             )?;
 
             // Resolve session file path if provided.
@@ -332,14 +387,15 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             async fn stream_turn(
                 client: &codex_core::ModelClient,
                 prompt_input: Vec<codex_core::ResponseItem>,
-                force_raw: bool,
+                stream_mode: codex_core::config::StreamMode,
             ) -> anyhow::Result<Vec<codex_core::ResponseItem>> {
                 let mut prompt = codex_core::Prompt::default();
                 prompt.input = prompt_input;
-                let mut stream = if force_raw {
-                    client.stream_raw(&prompt).await?
-                } else {
-                    client.stream(&prompt).await?
+                let mut stream = match stream_mode {
+                    codex_core::config::StreamMode::Raw => client.stream_raw(&prompt).await?,
+                    codex_core::config::StreamMode::Aggregate
+                    | codex_core::config::StreamMode::Auto
+                    | codex_core::config::StreamMode::Json => client.stream(&prompt).await?,
                 };
                 let mut completed_items: Vec<codex_core::ResponseItem> = Vec::new();
                 // Track whether we've printed any token deltas. When the provider
@@ -358,29 +414,85 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                     ev: codex_core::ResponseEvent,
                     printed_any_delta: &mut bool,
                     completed_items: &mut Vec<codex_core::ResponseItem>,
+                    as_json: bool,
                 ) {
+                    if as_json {
+                        // Serialize a lightweight representation of the event.
+                        // We avoid serializing full items except for OutputItemDone.
+                        #[derive(serde::Serialize)]
+                        struct JsonEvent<'a> {
+                            r#type: &'static str,
+                            #[serde(skip_serializing_if = "Option::is_none")]
+                            delta: Option<&'a str>,
+                            #[serde(skip_serializing_if = "Option::is_none")]
+                            item: Option<&'a codex_core::ResponseItem>,
+                        }
+                        match &ev {
+                            codex_core::ResponseEvent::OutputTextDelta(s) => {
+                                let line = serde_json::to_string(&JsonEvent {
+                                    r#type: "delta",
+                                    delta: Some(s),
+                                    item: None,
+                                })
+                                .ok();
+                                if let Some(l) = line {
+                                    println!("{l}");
+                                }
+                            }
+                            codex_core::ResponseEvent::OutputItemDone(item) => {
+                                let line = serde_json::to_string(&JsonEvent {
+                                    r#type: "item",
+                                    delta: None,
+                                    item: Some(item),
+                                })
+                                .ok();
+                                if let Some(l) = line {
+                                    println!("{l}");
+                                }
+                            }
+                            codex_core::ResponseEvent::Completed { .. } => {
+                                let line = serde_json::to_string(&JsonEvent {
+                                    r#type: "completed",
+                                    delta: None,
+                                    item: None,
+                                })
+                                .ok();
+                                if let Some(l) = line {
+                                    println!("{l}");
+                                }
+                            }
+                            codex_core::ResponseEvent::Created => {}
+                            _ => {}
+                        }
+                    }
                     match ev {
                         codex_core::ResponseEvent::OutputTextDelta(s) => {
-                            print!("{s}");
-                            use std::io::Write as _;
-                            std::io::stdout().flush().ok();
+                            if !as_json {
+                                print!("{s}");
+                                use std::io::Write as _;
+                                std::io::stdout().flush().ok();
+                            }
                             *printed_any_delta = true;
                         }
                         codex_core::ResponseEvent::OutputItemDone(item) => {
                             if !*printed_any_delta {
-                                if let codex_core::ResponseItem::Message { role, content, .. } =
-                                    &item
-                                {
-                                    if role == "assistant" {
-                                        if let Some(text) = content.iter().find_map(|c| match c {
-                                            codex_core::ContentItem::OutputText { text } => {
-                                                Some(text)
+                                if !as_json {
+                                    if let codex_core::ResponseItem::Message {
+                                        role, content, ..
+                                    } = &item
+                                    {
+                                        if role == "assistant" {
+                                            if let Some(text) = content.iter().find_map(|c| match c
+                                            {
+                                                codex_core::ContentItem::OutputText { text } => {
+                                                    Some(text)
+                                                }
+                                                _ => None,
+                                            }) {
+                                                print!("{text}");
+                                                use std::io::Write as _;
+                                                std::io::stdout().flush().ok();
                                             }
-                                            _ => None,
-                                        }) {
-                                            print!("{text}");
-                                            use std::io::Write as _;
-                                            std::io::stdout().flush().ok();
                                         }
                                     }
                                 }
@@ -388,13 +500,20 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                             completed_items.push(item);
                         }
                         codex_core::ResponseEvent::Completed { .. } => {
-                            println!();
+                            if !as_json {
+                                println!();
+                            }
                         }
                         _ => {}
                     }
                 }
                 while let Some(event) = stream.next().await {
-                    process_event(event?, &mut printed_any_delta, &mut completed_items);
+                    process_event(
+                        event?,
+                        &mut printed_any_delta,
+                        &mut completed_items,
+                        matches!(stream_mode, codex_core::config::StreamMode::Json),
+                    );
                 }
                 Ok(completed_items)
             }
@@ -407,7 +526,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                     let first_text = if p == "-" { read_stdin_all()? } else { p };
                     let (user_item, prompt_input) = run_turn(first_text, &session_history)?;
                     let assistant_items =
-                        stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
+                        stream_turn(&client, prompt_input, cfg.stream_mode).await?;
                     // Persist and update in-memory history
                     if let Some(path) = session_path.as_deref() {
                         ensure_parent_dir(path)?;
@@ -437,7 +556,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                     }
                     let (user_item, prompt_input) = run_turn(line, &session_history)?;
                     let assistant_items =
-                        stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
+                        stream_turn(&client, prompt_input, cfg.stream_mode).await?;
                     if let Some(path) = session_path.as_deref() {
                         ensure_parent_dir(path)?;
                         append_history_jsonl(path, &user_item)?;
@@ -456,8 +575,7 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
                     .ok_or_else(|| anyhow::anyhow!("PROMPT is required unless --repl is used"))?;
                 let text = if p == "-" { read_stdin_all()? } else { p };
                 let (user_item, prompt_input) = run_turn(text, &session_history)?;
-                let assistant_items =
-                    stream_turn(&client, prompt_input, chat_cli.no_aggregate).await?;
+                let assistant_items = stream_turn(&client, prompt_input, cfg.stream_mode).await?;
                 if let Some(path) = session_path.as_deref() {
                     ensure_parent_dir(path)?;
                     append_history_jsonl(path, &user_item)?;
@@ -470,6 +588,96 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
     }
 
     Ok(())
+}
+
+/// Compute the effective stream mode override from ChatCommand flags, emitting
+/// deprecation warnings for legacy flags. New --stream-mode takes precedence
+/// (clap already prevents mixing them). Extracted for unit testing.
+fn compute_stream_mode_override(chat_cli: &ChatCommand) -> Option<codex_core::config::StreamMode> {
+    if let Some(mode) = chat_cli.stream_mode {
+        return Some(mode.into());
+    }
+    let mut warned = false;
+    let mode = if chat_cli.stream_json || chat_cli.json {
+        if chat_cli.json {
+            eprintln!("(deprecated) --json: use --stream-mode json");
+        } else {
+            eprintln!("(deprecated) --stream-json: use --stream-mode json");
+        }
+        warned = true;
+        Some(codex_core::config::StreamMode::Json)
+    } else if chat_cli.aggregate {
+        eprintln!("(deprecated) --aggregate: use --stream-mode aggregate");
+        warned = true;
+        Some(codex_core::config::StreamMode::Aggregate)
+    } else if chat_cli.no_aggregate {
+        eprintln!("(deprecated) --no-aggregate: use --stream-mode raw");
+        warned = true;
+        Some(codex_core::config::StreamMode::Raw)
+    } else {
+        None
+    };
+    if warned {
+        eprintln!(
+            "         See --help for current flags or set CODEX_STREAM_MODE environment variable."
+        );
+    }
+    mode
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser as _;
+
+    // Helper to parse just the Chat subcommand args returning ChatCommand
+    fn parse_chat(args: &[&str]) -> ChatCommand {
+        // Build full CLI args: binary name + subcommand + provided args
+        let mut full: Vec<String> = vec!["codex".into(), "chat".into()];
+        full.extend(args.iter().map(|s| s.to_string()));
+        // MultitoolCli parsing will route to Chat subcommand.
+        let cli = MultitoolCli::parse_from(&full);
+        match cli.subcommand.expect("chat subcommand") {
+            Subcommand::Chat(chat) => chat,
+            _ => panic!("expected chat subcommand"),
+        }
+    }
+
+    #[test]
+    fn legacy_aggregate_maps_to_aggregate() {
+        let chat = parse_chat(&["--aggregate", "hello"]);
+        let mode = compute_stream_mode_override(&chat);
+        assert!(matches!(mode, Some(codex_core::config::StreamMode::Aggregate)));
+    }
+
+    #[test]
+    fn legacy_no_aggregate_maps_to_raw() {
+        let chat = parse_chat(&["--no-aggregate", "hello"]);
+        let mode = compute_stream_mode_override(&chat);
+        assert!(matches!(mode, Some(codex_core::config::StreamMode::Raw)));
+    }
+
+    #[test]
+    fn legacy_stream_json_maps_to_json() {
+        let chat = parse_chat(&["--stream-json", "hello"]);
+        let mode = compute_stream_mode_override(&chat);
+        assert!(matches!(mode, Some(codex_core::config::StreamMode::Json)));
+    }
+
+    #[test]
+    fn legacy_json_maps_to_json() {
+        let chat = parse_chat(&["--json", "hello"]);
+        let mode = compute_stream_mode_override(&chat);
+        assert!(matches!(mode, Some(codex_core::config::StreamMode::Json)));
+    }
+
+    #[test]
+    fn new_stream_mode_takes_precedence() {
+        // Provide only new flag.
+        let chat = parse_chat(&["--stream-mode", "raw", "hello"]);
+        let mode = compute_stream_mode_override(&chat);
+        assert!(matches!(mode, Some(codex_core::config::StreamMode::Raw)));
+    }
 }
 
 /// Prepend root-level overrides so they have lower precedence than

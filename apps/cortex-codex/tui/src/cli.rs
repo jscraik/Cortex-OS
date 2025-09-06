@@ -1,6 +1,7 @@
 use clap::Parser;
 use codex_common::ApprovalModeCliArg;
 use codex_common::CliConfigOverrides;
+use codex_core::config::StreamMode;
 use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
@@ -60,4 +61,29 @@ pub struct Cli {
 
     #[clap(skip)]
     pub config_overrides: CliConfigOverrides,
+
+    /// Preferred streaming display mode for model responses (auto, aggregate, raw, json).
+    #[arg(long = "stream-mode", value_name = "MODE", value_parser = stream_mode_parser)]
+    pub stream_mode: Option<StreamMode>,
+
+    /// Force aggregated (single final) output even when raw streaming available.
+    #[arg(long = "aggregate", conflicts_with_all=["raw","json","stream_mode"], requires_if("false","json"))]
+    pub aggregate: bool,
+
+    /// Force raw token delta streaming.
+    #[arg(long = "raw", conflicts_with_all=["aggregate","json","stream_mode"], requires_if("false","json"))]
+    pub raw: bool,
+
+    /// Emit structured NDJSON streaming events to the TUI (still rendered, but drives internal display differently).
+    #[arg(long = "json-stream", conflicts_with_all=["aggregate","raw","stream_mode"], alias="json-events")]
+    pub json_stream: bool,
+}
+
+fn stream_mode_parser(s: &str) -> Result<StreamMode, String> {
+    StreamMode::parse(s).ok_or_else(|| {
+        format!(
+            "invalid stream mode `{}` (expected auto|aggregate|raw|json)",
+            s
+        )
+    })
 }

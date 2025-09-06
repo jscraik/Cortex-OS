@@ -1,0 +1,4 @@
+{"type":"delta","delta":"Hel"}
+{"type":"delta","delta":"lo"}
+{"type":"item","item":{"Message":{"id":null,"role":"assistant","content":[{"OutputText":{"text":"Hello"}}]}}}
+{"type":"completed"}

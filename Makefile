@@ -2,7 +2,7 @@ SHELL := /bin/sh
 
 # OrbStack dev profiles via Makefile wrappers
 
-.PHONY: dev-min dev-full web api workers obs demo down ps logs
+.PHONY: dev-min dev-full web api workers obs demo down ps logs codex-test codex-test-unit codex-test-integration codex-test-coverage
 
 dev-min:
 	pnpm dev:orbstack:min
@@ -35,4 +35,17 @@ ps:
 
 logs:
 	pnpm dev:orbstack:logs
+
+# Cortex Codex Rust test helpers
+codex-test:
+	pnpm codex:test
+
+codex-test-unit:
+	pnpm codex:test:unit
+
+codex-test-integration:
+	pnpm codex:test:integration
+
+codex-test-coverage:
+	pnpm codex:test:coverage
 

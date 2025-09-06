@@ -1,6 +1,0 @@
-[submodule "apps/cortex-code/codex-reference"]
-	path = apps/cortex-code/codex-reference
-	url = https://github.com/openai/codex.git
-[submodule "llama.cpp"]
-	path = llama.cpp
-	url = https://github.com/ggml-org/llama.cpp

@@ -37,7 +37,7 @@
 		"code-review"
 	],
 	"author": "Cortex-OS Team",
-	"license": "MIT",
+	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
 		"directory": "packages/cortex-ai-github"

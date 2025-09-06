@@ -20,7 +20,7 @@ use codex_protocol::config_types::ReasoningSummary;
 use codex_protocol::config_types::SandboxMode;
 use codex_protocol::mcp_protocol::AuthMode;
 use dirs::home_dir;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
@@ -178,7 +178,6 @@ pub struct Config {
     pub preferred_auth_method: AuthMode,
 
     pub use_experimental_streamable_shell_tool: bool,
-
     /// Include the `view_image` tool that lets the agent attach a local image path to context.
     pub include_view_image_tool: bool,
     /// When true, disables burst-paste detection for typed input entirely.
@@ -187,6 +186,44 @@ pub struct Config {
     pub disable_paste_burst: bool,
 
     pub use_experimental_reasoning_summary: bool,
+    /// Streaming display mode for Chat wire API.
+    /// Auto (default): aggregate like Responses API (single final message).
+    /// Aggregate: force aggregation even if raw mode available.
+    /// Raw: stream token deltas as they arrive.
+    /// Json: emit structured NDJSON events (delta/item/completed).
+    pub stream_mode: StreamMode,
+}
+
+/// How CLI/UI should present streaming responses for Chat wire API providers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum StreamMode {
+    Auto,
+    Aggregate,
+    Raw,
+    /// Emit structured JSON lines for each streaming event.
+    Json,
+}
+
+impl StreamMode {
+    pub fn parse(s: &str) -> Option<Self> {
+        match s.to_ascii_lowercase().as_str() {
+            "auto" => Some(StreamMode::Auto),
+            "aggregate" => Some(StreamMode::Aggregate),
+            "raw" => Some(StreamMode::Raw),
+            "json" => Some(StreamMode::Json),
+            _ => None,
+        }
+    }
+
+    /// Parse with fallback: returns (mode, warned).
+    /// If the input is unrecognized, returns Auto and sets warned=true so caller can log once.
+    pub fn parse_with_fallback(s: &str) -> (Self, bool) {
+        match Self::parse(s) {
+            Some(m) => (m, false),
+            None => (Self::Auto, true),
+        }
+    }
 }
 
 impl Config {
@@ -501,6 +538,11 @@ pub struct ConfigToml {
     /// All characters are inserted as they are received, and no buffering
     /// or placeholder replacement will occur for fast keypress bursts.
     pub disable_paste_burst: Option<bool>,
+
+    /// Preferred streaming display mode for Chat wire API providers.
+    /// One of: "auto" (default) | "aggregate" | "raw".
+    /// When unset or invalid, defaults to "auto".
+    pub stream_mode: Option<StreamMode>,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -609,6 +651,8 @@ pub struct ConfigOverrides {
     pub disable_response_storage: Option<bool>,
     pub show_raw_agent_reasoning: Option<bool>,
     pub tools_web_search_request: Option<bool>,
+    /// Explicit override for streaming mode (from CLI flags like --aggregate / --no-aggregate)
+    pub stream_mode_override: Option<StreamMode>,
 }
 
 impl Config {
@@ -637,6 +681,7 @@ impl Config {
             disable_response_storage,
             show_raw_agent_reasoning,
             tools_web_search_request: override_tools_web_search_request,
+            stream_mode_override,
         } = overrides;
 
         let config_profile = match config_profile_key.as_ref().or(cfg.profile.as_ref()) {
@@ -705,6 +750,24 @@ impl Config {
         let include_view_image_tool = include_view_image_tool
             .or(cfg.tools.as_ref().and_then(|t| t.view_image))
             .unwrap_or(true);
+
+        // Resolve stream_mode precedence: config.toml < env var < CLI override
+        let env_stream_mode = std::env::var("CODEX_STREAM_MODE").ok().and_then(|raw| {
+            let (mode, warned) = StreamMode::parse_with_fallback(&raw);
+            if warned {
+                tracing::warn!(
+                    target = "codex.config",
+                    original = %raw,
+                    fallback = ?mode,
+                    "Unrecognized CODEX_STREAM_MODE value; falling back to default"
+                );
+            }
+            Some(mode)
+        });
+        let resolved_stream_mode = stream_mode_override
+            .or(env_stream_mode)
+            .or(cfg.stream_mode)
+            .unwrap_or(StreamMode::Auto);
 
         let model = model
             .or(config_profile.model)
@@ -814,6 +877,7 @@ impl Config {
             use_experimental_reasoning_summary: cfg
                 .use_experimental_reasoning_summary
                 .unwrap_or(false),
+            stream_mode: resolved_stream_mode,
         };
         Ok(config)
     }
@@ -1322,6 +1386,85 @@ disable_response_storage = true
 
         assert_eq!(expected_zdr_profile_config, zdr_profile_config);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_stream_mode_precedence_and_json_parse() -> std::io::Result<()> {
+        use std::env;
+        let fixture = create_test_fixture()?;
+
+        // Base config sets nothing (default Auto). Provide a config.toml stream_mode via cfg clone.
+        let mut cfg = fixture.cfg.clone();
+        cfg.stream_mode = Some(StreamMode::Aggregate); // config.toml preference
+
+        // No env / no override -> should use config Aggregate.
+        env::remove_var("CODEX_STREAM_MODE");
+        let config_a = Config::load_from_base_config_with_overrides(
+            cfg.clone(),
+            ConfigOverrides {
+                cwd: Some(fixture.cwd()),
+                ..Default::default()
+            },
+            fixture.codex_home(),
+        )?;
+        assert_eq!(config_a.stream_mode, StreamMode::Aggregate);
+
+        // Env overrides config when no CLI override specified.
+        env::set_var("CODEX_STREAM_MODE", "raw");
+        let config_b = Config::load_from_base_config_with_overrides(
+            cfg.clone(),
+            ConfigOverrides {
+                cwd: Some(fixture.cwd()),
+                ..Default::default()
+            },
+            fixture.codex_home(),
+        )?;
+        assert_eq!(config_b.stream_mode, StreamMode::Raw);
+
+        // CLI override beats env.
+        let config_c = Config::load_from_base_config_with_overrides(
+            cfg.clone(),
+            ConfigOverrides {
+                cwd: Some(fixture.cwd()),
+                stream_mode_override: Some(StreamMode::Json),
+                ..Default::default()
+            },
+            fixture.codex_home(),
+        )?;
+        assert_eq!(config_c.stream_mode, StreamMode::Json);
+
+        // Clean up env var to avoid test ordering side-effects.
+        env::remove_var("CODEX_STREAM_MODE");
+        Ok(())
+    }
+
+    #[test]
+    fn test_stream_mode_invalid_env_fallback() -> std::io::Result<()> {
+        // If CODEX_STREAM_MODE is set to an invalid value we should fall back to Auto;
+        // precedence rules mean this (fallback) Auto coming from env parsing still
+        // overrides any config.toml preference.
+        use std::env;
+        let fixture = create_test_fixture()?;
+
+        // Config prefers Raw explicitly.
+        let mut cfg = fixture.cfg.clone();
+        cfg.stream_mode = Some(StreamMode::Raw);
+
+        // Set invalid env var (mixed case & unknown token) to exercise fallback path.
+        env::set_var("CODEX_STREAM_MODE", "WeIrD_Mode_Value");
+        let config = Config::load_from_base_config_with_overrides(
+            cfg.clone(),
+            ConfigOverrides {
+                cwd: Some(fixture.cwd()),
+                ..Default::default()
+            },
+            fixture.codex_home(),
+        )?;
+        // Expect Auto (fallback) instead of Raw (config) because env precedence applies even when invalid.
+        assert_eq!(config.stream_mode, StreamMode::Auto);
+
+        env::remove_var("CODEX_STREAM_MODE");
         Ok(())
     }
 

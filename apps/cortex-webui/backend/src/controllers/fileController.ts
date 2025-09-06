@@ -1,6 +1,6 @@
 // File controller for Cortex WebUI backend
 
-import type { Response } from 'express';
+import { RequestHandler, Response } from 'express';
 import multer from 'multer';
 import type { AuthRequest } from '../middleware/auth';
 import { HttpError } from '../middleware/errorHandler';
@@ -27,7 +27,7 @@ const upload = multer({
   },
 });
 
-export const uploadMiddleware = upload.single('file');
+export const uploadMiddleware: RequestHandler = upload.single('file');
 
 export class FileController {
   static async uploadFile(req: AuthRequest, res: Response): Promise<void> {
