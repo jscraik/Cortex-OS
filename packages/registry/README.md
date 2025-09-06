@@ -27,6 +27,7 @@
 - **📋 Schema Registry**: Centralized storage and versioning for JSON schemas
 - **✅ Contract Validation**: Real-time validation of A2A communication contracts
 - **🔄 Version Management**: Semantic versioning with backward compatibility checks
+- **🔐 Provenance Hashing**: SHA-256 hash pins for every schema version
 - **🛡️ Security Headers**: Helmet.js integration for security best practices
 - **🌐 CORS Support**: Configurable cross-origin resource sharing
 - **📊 Health Monitoring**: Comprehensive health checks and metrics endpoints
@@ -88,18 +89,18 @@ Returns all available schemas with metadata.
 ### Get Schema by ID
 
 ```http
-GET /schemas/:schemaId
+GET /schemas/:schemaId?version=1.0.0
 ```
 
-Returns a specific schema by its ID.
+Returns a specific schema by its ID and version with a SHA-256 `hash` field.
 
 ### Validate Event
 
 ```http
-POST /validate/:schemaId
+POST /validate/:schemaId?version=1.0.0
 ```
 
-Validates an event against a specific schema.
+Validates an event against a specific schema version.
 
 ### Get Schemas by Category
 

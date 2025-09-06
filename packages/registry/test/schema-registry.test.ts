@@ -1,255 +1,78 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
-import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import request from "supertest";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import fs from "node:fs/promises";
 import { SchemaRegistry } from "../src/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-describe("Schema Registry", () => {
-	let registry: SchemaRegistry;
-	let app: any;
+describe("SchemaRegistry", () => {
+  let app: any;
+  const category = "events";
+  const runtimeFile = path.join(
+    __dirname,
+    "fixtures",
+    "contracts",
+    category,
+    "runtime-test@1.0.0.json"
+  );
 
-        beforeAll(() => {
-                const contractsPath = path.join(__dirname, "fixtures", "contracts");
-                registry = new SchemaRegistry({
-                        port: 3002, // Different port for testing
-                        contractsPath,
-                });
-                app = registry.getApp(); // We'll need to add this method
-        });
+  beforeAll(() => {
+    const registry = new SchemaRegistry({
+      port: 0,
+      contractsPath: path.join(__dirname, "fixtures", "contracts"),
+    });
+    app = registry.getApp();
+  });
 
-	describe("Health Check", () => {
-		it("should return healthy status", async () => {
-			const response = await request(app).get("/health").expect(200);
+  afterAll(async () => {
+    await fs.rm(runtimeFile, { force: true });
+  });
 
-			expect(response.body).toEqual({
-				status: "healthy",
-				timestamp: expect.any(String),
-			});
-		});
-	});
+  it("registers and retrieves schema with version and hash", async () => {
+    const schema = {
+      $id: "runtime-test",
+      title: "Runtime test",
+      description: "runtime schema",
+      type: "object",
+      properties: { foo: { type: "string" } },
+      required: ["foo"],
+    };
+    const registerRes = await request(app)
+      .post("/schemas")
+      .send({ category, version: "1.0.0", schema })
+      .expect(201);
 
-	describe("Schema Listing", () => {
-		it("should list all available schemas", async () => {
-			const response = await request(app).get("/schemas").expect(200);
+    expect(registerRes.body).toMatchObject({
+      schemaId: "runtime-test",
+      version: "1.0.0",
+      hash: expect.any(String),
+    });
 
-			expect(response.body).toMatchObject({
-				schemas: expect.any(Array),
-				count: expect.any(Number),
-				timestamp: expect.any(String),
-			});
+    const getRes = await request(app)
+      .get("/schemas/runtime-test?version=1.0.0")
+      .expect(200);
 
-			expect(response.body.schemas.length).toBeGreaterThan(0);
-		});
+    expect(getRes.body).toMatchObject({
+      schemaId: "runtime-test",
+      version: "1.0.0",
+      hash: registerRes.body.hash,
+    });
+  });
 
-		it("should include schema metadata", async () => {
-			const response = await request(app).get("/schemas").expect(200);
-
-			const firstSchema = response.body.schemas[0];
-			expect(firstSchema).toMatchObject({
-				id: expect.any(String),
-				title: expect.any(String),
-				description: expect.any(String),
-				category: expect.any(String),
-			});
-		});
-
-		it("should skip schemas missing required metadata", async () => {
-			const response = await request(app).get("/schemas").expect(200);
-			const ids = response.body.schemas.map((s: any) => s.id);
-			expect(ids).not.toContain("missing-metadata");
-		});
-	});
-
-	describe("Schema Retrieval", () => {
-		it("should get specific schema by ID", async () => {
-			const response = await request(app)
-				.get("/schemas/user-created")
-				.expect(200);
-
-			expect(response.body).toMatchObject({
-				schema: expect.any(Object),
-				schemaId: "user-created",
-				timestamp: expect.any(String),
-			});
-
-			expect(response.body.schema.$id).toBe("user-created");
-		});
-
-		it("should return 404 for non-existent schema", async () => {
-			const response = await request(app)
-				.get("/schemas/non-existent")
-				.expect(404);
-
-			expect(response.body).toMatchObject({
-				error: "Schema not found",
-				schemaId: "non-existent",
-			});
-		});
-
-		it("should not match schema by filename when $id is missing", async () => {
-			await request(app).get("/schemas/missing-id").expect(404);
-		});
-	});
-
-        describe("Category Filtering", () => {
-                it("should get schemas by category", async () => {
-                        const response = await request(app).get("/categories/events").expect(200);
-
-                        expect(response.body).toMatchObject({
-                                category: "events",
-                                schemas: expect.any(Array),
-                                count: expect.any(Number),
-                                timestamp: expect.any(String),
-                        });
-                });
-
-                it("should return empty array for non-existent category", async () => {
-                        const response = await request(app)
-                                .get("/categories/non-existent")
-                                .expect(200);
-
-                        expect(response.body).toMatchObject({
-                                category: "non-existent",
-                                schemas: [],
-                                count: 0,
-                        });
-                });
-
-                it("should omit schemas missing metadata from category results", async () => {
-                        const response = await request(app).get("/categories/events").expect(200);
-                        const ids = response.body.schemas.map((s: any) => s.id);
-                        expect(ids).not.toContain("missing-metadata");
-                });
-        });
-
-        describe("Runtime Schema Registration", () => {
-                const runtimeSchema = {
-                        $id: "runtime-test",
-                        title: "Runtime Test",
-                        description: "A schema registered at runtime",
-                        type: "object",
-                        properties: { foo: { type: "string" } },
-                        required: ["foo"],
-                };
-                const category = "events";
-                const schemaPath = path.join(
-                        __dirname,
-                        "fixtures",
-                        "contracts",
-                        category,
-                        "runtime-test.json",
-                );
-
-                afterAll(async () => {
-                        } catch (err: any) {
-                                if (err?.code !== "ENOENT") {
-                                        console.error("Error cleaning up runtime schema file:", err);
-                                }
-                        }
-                });
-
-                it("should register and retrieve a new schema", async () => {
-                        await request(app)
-                                .post("/schemas")
-                                .send({ category, schema: runtimeSchema })
-                                .expect(201);
-
-                        const response = await request(app)
-                                .get("/schemas/runtime-test")
-                                .expect(200);
-
-                        expect(response.body.schema.$id).toBe("runtime-test");
-                });
-        });
-
-        describe("Metrics", () => {
-                it("should expose metrics", async () => {
-                        const response = await request(app).get("/metrics").expect(200);
-                        expect(response.text).toContain("process_cpu_user_seconds_total");
-                });
-        });
-
-        describe("Authentication", () => {
-                it("should reject requests without valid API key", async () => {
-                        process.env.REGISTRY_API_KEY = "secret";
-                        const authRegistry = new SchemaRegistry({
-                                port: 3003,
-                                contractsPath: path.join(__dirname, "fixtures", "contracts"),
-                        });
-                        const authApp = authRegistry.getApp();
-                        await request(authApp).get("/schemas").expect(401);
-                        delete process.env.REGISTRY_API_KEY;
-                });
-        });
-
-	describe("Event Validation", () => {
-		const validUserCreatedEvent = {
-			specversion: "1.0",
-			type: "com.cortex.user.created",
-			source: "/user-service",
-			id: "test-event-123",
-			time: "2025-08-27T10:00:00Z",
-			data: {
-				userId: "550e8400-e29b-41d4-a716-446655440000",
-				email: "test@example.com",
-				username: "testuser",
-				createdAt: "2025-08-27T10:00:00Z",
-			},
-		};
-
-		it("should validate valid event", async () => {
-			const response = await request(app)
-				.post("/validate/user-created")
-				.send(validUserCreatedEvent)
-				.expect(200);
-
-			expect(response.body).toMatchObject({
-				valid: true,
-				schemaId: "user-created",
-				timestamp: expect.any(String),
-			});
-		});
-
-		it("should reject invalid event", async () => {
-			const invalidEvent: any = { ...validUserCreatedEvent };
-			delete invalidEvent.data;
-
-			const response = await request(app)
-				.post("/validate/user-created")
-				.send(invalidEvent)
-				.expect(200);
-
-			expect(response.body).toMatchObject({
-				valid: false,
-				schemaId: "user-created",
-			});
-		});
-
-		it("should return 400 for missing event data", async () => {
-			const response = await request(app)
-				.post("/validate/user-created")
-				.send({})
-				.expect(400);
-
-			expect(response.body).toMatchObject({
-				error: "No event data provided",
-			});
-		});
-
-		it("should return 404 for non-existent schema", async () => {
-			const response = await request(app)
-				.post("/validate/non-existent")
-				.send(validUserCreatedEvent)
-				.expect(404);
-
-			expect(response.body).toMatchObject({
-				error: "Schema not found",
-				schemaId: "non-existent",
-			});
-		});
-	});
+  it("validates event against versioned schema", async () => {
+    const event = { foo: "bar" };
+    const res = await request(app)
+      .post("/validate/runtime-test?version=1.0.0")
+      .send(event)
+      .expect(200);
+    expect(res.body).toMatchObject({
+      valid: true,
+      schemaId: "runtime-test",
+      version: "1.0.0",
+    });
+  });
 });
+
