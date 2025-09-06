@@ -5,7 +5,7 @@
 [![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
 [![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 </div>
 
@@ -86,17 +86,17 @@ spec:
         app: cortex-os
     spec:
       containers:
-      - name: cortex-os
-        image: cortex-os:latest
-        ports:
-        - containerPort: 3000
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
+        - name: cortex-os
+          image: cortex-os:latest
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '1Gi'
+              cpu: '500m'
 ```
 
 ### Docker Deployment
@@ -110,14 +110,14 @@ services:
   cortex-os:
     image: cortex-os:latest
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
     volumes:
       - app-data:/app/data
     restart: unless-stopped
-    
+
   database:
     image: postgres:14
     environment:
@@ -141,7 +141,7 @@ Terraform for AWS deployment:
 # deployment/terraform/aws/main.tf
 resource "aws_ecs_cluster" "cortex_cluster" {
   name = "cortex-os"
-  
+
   setting {
     name  = "containerInsights"
     value = "enabled"
@@ -172,7 +172,7 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-  - "/etc/prometheus/rules/*.yml"
+  - '/etc/prometheus/rules/*.yml'
 
 scrape_configs:
   - job_name: 'cortex-os'
@@ -185,7 +185,7 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          - alertmanager:9093
+            - alertmanager:9093
 ```
 
 ### Grafana Dashboards
@@ -210,8 +210,8 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value }} for 5 minutes"
+          summary: 'High error rate detected'
+          description: 'Error rate is {{ $value }} for 5 minutes'
 
       - alert: HighMemoryUsage
         expr: process_memory_usage / process_memory_limit > 0.9
@@ -219,8 +219,8 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: "High memory usage"
-          description: "Memory usage is {{ $value }}%"
+          summary: 'High memory usage'
+          description: 'Memory usage is {{ $value }}%'
 ```
 
 ## CI/CD Pipeline
@@ -240,12 +240,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Build Docker image
         run: |
           docker build -t cortex-os:${{ github.sha }} .
           docker tag cortex-os:${{ github.sha }} cortex-os:latest
-      
+
       - name: Deploy to Kubernetes
         run: |
           kubectl set image deployment/cortex-os cortex-os=cortex-os:${{ github.sha }}
@@ -292,16 +292,16 @@ spec:
     matchLabels:
       app: cortex-os
   policyTypes:
-  - Ingress
-  - Egress
+    - Ingress
+    - Egress
   ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
 ```
 
 ### RBAC Configuration
@@ -319,9 +319,9 @@ kind: ClusterRole
 metadata:
   name: cortex-os-role
 rules:
-- apiGroups: [""]
-  resources: ["pods", "services"]
-  verbs: ["get", "list", "watch"]
+  - apiGroups: ['']
+    resources: ['pods', 'services']
+    verbs: ['get', 'list', 'watch']
 ```
 
 ## Backup and Recovery
@@ -433,11 +433,11 @@ docker service scale cortex_cortex-os=5
 # Update resource limits
 resources:
   requests:
-    memory: "1Gi"
-    cpu: "500m"
+    memory: '1Gi'
+    cpu: '500m'
   limits:
-    memory: "2Gi"
-    cpu: "1000m"
+    memory: '2Gi'
+    cpu: '1000m'
 ```
 
 ### Auto-scaling
@@ -456,12 +456,12 @@ spec:
   minReplicas: 3
   maxReplicas: 10
   metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
 ```
 
 ## Performance Optimization
@@ -475,7 +475,7 @@ FROM pg_stats
 WHERE tablename = 'cortex_data';
 
 -- Index optimization
-CREATE INDEX CONCURRENTLY idx_cortex_data_timestamp 
+CREATE INDEX CONCURRENTLY idx_cortex_data_timestamp
 ON cortex_data(created_at);
 
 -- Connection pooling
@@ -493,7 +493,7 @@ const httpRequestDuration = new prometheus.Histogram({
   name: 'http_request_duration_seconds',
   help: 'Duration of HTTP requests in seconds',
   labelNames: ['method', 'route', 'status'],
-  buckets: [0.1, 0.5, 1, 2, 5]
+  buckets: [0.1, 0.5, 1, 2, 5],
 });
 
 // Memory monitoring
@@ -503,7 +503,7 @@ const memoryUsage = new prometheus.Gauge({
   collect() {
     const usage = process.memoryUsage();
     this.set(usage.heapUsed);
-  }
+  },
 });
 ```
 
@@ -512,11 +512,13 @@ const memoryUsage = new prometheus.Gauge({
 ### Common Issues
 
 1. **High Memory Usage**
+
    - Check for memory leaks
    - Analyze heap dumps
    - Optimize garbage collection
 
 2. **Database Connection Issues**
+
    - Check connection pool settings
    - Verify database health
    - Check network connectivity
@@ -547,11 +549,13 @@ curl -v http://localhost:3000/health
 ### Incident Response
 
 1. **Incident Detection**
+
    - Monitor alerts and dashboards
    - Verify issue severity
    - Assemble response team
 
 2. **Incident Response**
+
    - Follow escalation procedures
    - Implement immediate fixes
    - Document actions taken
@@ -564,11 +568,13 @@ curl -v http://localhost:3000/health
 ### Deployment Procedures
 
 1. **Pre-deployment**
+
    - Code review and testing
    - Backup current state
    - Prepare rollback plan
 
 2. **Deployment**
+
    - Execute deployment scripts
    - Monitor system health
    - Verify functionality

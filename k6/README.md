@@ -5,7 +5,7 @@
 [![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
 [![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 </div>
 
@@ -18,7 +18,7 @@ This directory contains K6 performance testing configurations and scripts for ev
 K6 is used for:
 
 - **Load Testing** - Normal operational load simulation
-- **Stress Testing** - High load and breaking point testing  
+- **Stress Testing** - High load and breaking point testing
 - **Spike Testing** - Sudden load increase testing
 - **Volume Testing** - Large data volume handling
 - **Endurance Testing** - Long-duration performance testing
@@ -142,8 +142,8 @@ Performance thresholds for:
 export let options = {
   thresholds: {
     http_req_duration: ['p(95)<500'], // 95% of requests under 500ms
-    http_req_failed: ['rate<0.01'],   // Error rate under 1%
-    http_reqs: ['rate>100'],          // Throughput over 100 RPS
+    http_req_failed: ['rate<0.01'], // Error rate under 1%
+    http_reqs: ['rate>100'], // Throughput over 100 RPS
   },
 };
 ```

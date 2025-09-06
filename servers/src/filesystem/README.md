@@ -16,13 +16,16 @@ Node.js server implementing Model Context Protocol (MCP) for filesystem operatio
 The server uses a flexible directory access control system. Directories can be specified via command-line arguments or dynamically via [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots).
 
 ### Method 1: Command-line Arguments
+
 Specify Allowed directories when starting the server:
+
 ```bash
 mcp-server-filesystem /path/to/dir1 /path/to/dir2
 ```
 
 ### Method 2: MCP Roots (Recommended)
-MCP clients that support [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots) can dynamically update the Allowed directories. 
+
+MCP clients that support [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots) can dynamically update the Allowed directories.
 
 Roots notified by Client to Server, completely replace any server-side Allowed directories when provided.
 
@@ -35,14 +38,15 @@ This is the recommended method, as this enables runtime directory updates via `r
 The server's directory access control follows this flow:
 
 1. **Server Startup**
+
    - Server starts with directories from command-line arguments (if provided)
    - If no arguments provided, server starts with empty allowed directories
 
 2. **Client Connection & Initialization**
    - Client connects and sends `initialize` request with capabilities
    - Server checks if client supports roots protocol (`capabilities.roots`)
-   
 3. **Roots Protocol Handling** (if client supports roots)
+
    - **On initialization**: Server requests roots from client via `roots/list`
    - Client responds with its configured roots
    - Server replaces ALL allowed directories with client's roots
@@ -50,6 +54,7 @@ The server's directory access control follows this flow:
    - Server requests updated roots and replaces allowed directories again
 
 4. **Fallback Behavior** (if client doesn't support roots)
+
    - Server continues using command-line directories only
    - No dynamic updates possible
 
@@ -60,13 +65,12 @@ The server's directory access control follows this flow:
 
 **Note**: The server will only allow operations within directories specified either via `args` or via Roots.
 
-
-
 ## API
 
 ### Tools
 
 - **read_text_file**
+
   - Read complete contents of a file as text
   - Inputs:
     - `path` (string)
@@ -76,23 +80,27 @@ The server's directory access control follows this flow:
   - Cannot specify both `head` and `tail` simultaneously
 
 - **read_media_file**
+
   - Read an image or audio file
   - Inputs:
     - `path` (string)
   - Streams the file and returns base64 data with the corresponding MIME type
 
 - **read_multiple_files**
+
   - Read multiple files simultaneously
   - Input: `paths` (string[])
   - Failed reads won't stop the entire operation
 
 - **write_file**
+
   - Create new file or overwrite existing (exercise caution with this)
   - Inputs:
     - `path` (string): File location
     - `content` (string): File content
 
 - **edit_file**
+
   - Make selective edits using advanced pattern matching and formatting
   - Features:
     - Line-based and multi-line content matching
@@ -111,16 +119,19 @@ The server's directory access control follows this flow:
   - Best Practice: Always use dryRun first to preview changes before applying them
 
 - **create_directory**
+
   - Create new directory or ensure it exists
   - Input: `path` (string)
   - Creates parent directories if needed
   - Succeeds silently if directory exists
 
 - **list_directory**
+
   - List directory contents with [FILE] or [DIR] prefixes
   - Input: `path` (string)
 
 - **list_directory_with_sizes**
+
   - List directory contents with [FILE] or [DIR] prefixes, including file sizes
   - Inputs:
     - `path` (string): Directory path to list
@@ -129,6 +140,7 @@ The server's directory access control follows this flow:
   - Shows total files, directories, and combined size
 
 - **directory_tree**
+
   - Get a recursive tree view of files and directories as a JSON structure
   - Input: `path` (string): Starting directory path
   - Returns JSON structure with:
@@ -138,6 +150,7 @@ The server's directory access control follows this flow:
   - Output is formatted with 2-space indentation for readability
 
 - **move_file**
+
   - Move or rename files and directories
   - Inputs:
     - `source` (string)
@@ -145,6 +158,7 @@ The server's directory access control follows this flow:
   - Fails if destination exists
 
 - **search_files**
+
   - Recursively search for files/directories that match or do not match patterns
   - Inputs:
     - `path` (string): Starting directory
@@ -165,8 +179,8 @@ The server's directory access control follows this flow:
       - `children` (array): Present only for directories
         - Empty array for empty directories
         - Omitted for files
-    
 - **get_file_info**
+
   - Get detailed file/directory metadata
   - Input: `path` (string)
   - Returns:
@@ -184,11 +198,13 @@ The server's directory access control follows this flow:
     - Directories that this server can read/write from
 
 ## Usage with Claude Desktop
+
 Add this to your `claude_desktop_config.json`:
 
 Note: you can provide sandboxed directories to the server by mounting them to `/projects`. Adding the `ro` flag will make the directory readonly by the server.
 
 ### Docker
+
 Note: all directories must be mounted to `/projects` by default.
 
 ```json
@@ -200,9 +216,12 @@ Note: all directories must be mounted to `/projects` by default.
         "run",
         "-i",
         "--rm",
-        "--mount", "type=bind,src=/Users/username/Desktop,dst=/projects/Desktop",
-        "--mount", "type=bind,src=/path/to/other/allowed/dir,dst=/projects/other/allowed/dir,ro",
-        "--mount", "type=bind,src=/path/to/file.txt,dst=/projects/path/to/file.txt",
+        "--mount",
+        "type=bind,src=/Users/username/Desktop,dst=/projects/Desktop",
+        "--mount",
+        "type=bind,src=/path/to/other/allowed/dir,dst=/projects/other/allowed/dir,ro",
+        "--mount",
+        "type=bind,src=/path/to/file.txt,dst=/projects/path/to/file.txt",
         "mcp/filesystem",
         "/projects"
       ]
@@ -250,7 +269,8 @@ Alternatively, you can add the configuration to a file called `.vscode/mcp.json`
 You can provide sandboxed directories to the server by mounting them to `/projects`. Adding the `ro` flag will make the directory readonly by the server.
 
 ### Docker
-Note: all directories must be mounted to `/projects` by default. 
+
+Note: all directories must be mounted to `/projects` by default.
 
 ```json
 {
@@ -261,7 +281,8 @@ Note: all directories must be mounted to `/projects` by default.
         "run",
         "-i",
         "--rm",
-        "--mount", "type=bind,src=${workspaceFolder},dst=/projects/workspace",
+        "--mount",
+        "type=bind,src=${workspaceFolder},dst=/projects/workspace",
         "mcp/filesystem",
         "/projects"
       ]
@@ -277,11 +298,7 @@ Note: all directories must be mounted to `/projects` by default.
   "servers": {
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "${workspaceFolder}"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
     }
   }
 }
@@ -297,4 +314,4 @@ docker build -t mcp/filesystem -f src/filesystem/Dockerfile .
 
 ## License
 
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+This MCP server is licensed under the Apache License 2.0. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the Apache License 2.0. For more details, please see the LICENSE file in the project repository.

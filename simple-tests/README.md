@@ -5,7 +5,7 @@
 [![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
 [![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 </div>
 
@@ -84,20 +84,16 @@ simple-tests/
 module.exports = {
   testMatch: ['<rootDir>/simple-tests/**/*.test.js'],
   testTimeout: 5000, // 5 second timeout
-  collectCoverageFrom: [
-    'src/**/*.js',
-    '!src/**/*.test.js',
-    '!src/tests/**'
-  ],
+  collectCoverageFrom: ['src/**/*.js', '!src/**/*.test.js', '!src/tests/**'],
   coverageThreshold: {
     global: {
       branches: 70,
       functions: 70,
       lines: 70,
-      statements: 70
-    }
+      statements: 70,
+    },
   },
-  setupFilesAfterEnv: ['<rootDir>/simple-tests/utils/test-setup.js']
+  setupFilesAfterEnv: ['<rootDir>/simple-tests/utils/test-setup.js'],
 };
 ```
 
@@ -118,10 +114,10 @@ export default defineConfig({
         lines: 70,
         functions: 70,
         branches: 70,
-        statements: 70
-      }
-    }
-  }
+        statements: 70,
+      },
+    },
+  },
 });
 ```
 
@@ -193,7 +189,7 @@ describe('Configuration', () => {
     it('should override with environment variables', () => {
       process.env.PORT = '8080';
       process.env.NODE_ENV = 'production';
-      
+
       const config = loadConfig();
       expect(config.port).toBe(8080);
       expect(config.environment).toBe('production');
@@ -205,9 +201,9 @@ describe('Configuration', () => {
       const config = {
         port: 3000,
         database: { url: 'postgresql://localhost/test' },
-        environment: 'test'
+        environment: 'test',
       };
-      
+
       expect(() => validateConfig(config)).not.toThrow();
     });
 
@@ -232,21 +228,21 @@ describe('System Startup', () => {
   it('should start system successfully', async () => {
     const system = await startSystem({
       port: 0, // Use random port
-      database: { url: ':memory:' }
+      database: { url: ':memory:' },
     });
-    
+
     expect(system).toBeDefined();
     expect(system.isRunning()).toBe(true);
-    
+
     await stopSystem(system);
   });
 
   it('should handle startup errors gracefully', async () => {
     const invalidConfig = {
       port: -1,
-      database: { url: 'invalid://url' }
+      database: { url: 'invalid://url' },
     };
-    
+
     await expect(startSystem(invalidConfig)).rejects.toThrow();
   });
 });
@@ -273,10 +269,8 @@ describe('API Endpoints', () => {
 
   describe('Health Check', () => {
     it('should return health status', async () => {
-      const response = await request(app)
-        .get('/health')
-        .expect(200);
-      
+      const response = await request(app).get('/health').expect(200);
+
       expect(response.body).toHaveProperty('status', 'ok');
       expect(response.body).toHaveProperty('timestamp');
     });
@@ -284,10 +278,8 @@ describe('API Endpoints', () => {
 
   describe('API Info', () => {
     it('should return API information', async () => {
-      const response = await request(app)
-        .get('/api/info')
-        .expect(200);
-      
+      const response = await request(app).get('/api/info').expect(200);
+
       expect(response.body).toHaveProperty('name');
       expect(response.body).toHaveProperty('version');
     });
@@ -295,9 +287,7 @@ describe('API Endpoints', () => {
 
   describe('Authentication', () => {
     it('should reject requests without auth', async () => {
-      await request(app)
-        .get('/api/protected')
-        .expect(401);
+      await request(app).get('/api/protected').expect(401);
     });
   });
 });
@@ -330,11 +320,11 @@ describe('Agent Creation', () => {
     const agentConfig = {
       name: 'test-agent',
       type: 'simple',
-      capabilities: ['text-generation']
+      capabilities: ['text-generation'],
     };
 
     const agent = await agentManager.createAgent(agentConfig);
-    
+
     expect(agent).toBeDefined();
     expect(agent.id).toBeDefined();
     expect(agent.name).toBe('test-agent');
@@ -344,11 +334,12 @@ describe('Agent Creation', () => {
   it('should validate agent configuration', async () => {
     const invalidConfig = {
       name: '', // Invalid empty name
-      type: 'unknown'
+      type: 'unknown',
     };
 
-    await expect(agentManager.createAgent(invalidConfig))
-      .rejects.toThrow('Invalid agent configuration');
+    await expect(agentManager.createAgent(invalidConfig)).rejects.toThrow(
+      'Invalid agent configuration',
+    );
   });
 });
 ```
@@ -378,7 +369,7 @@ describe('Memory Storage', () => {
     const memory = {
       content: 'Test memory content',
       type: 'text',
-      metadata: { source: 'test' }
+      metadata: { source: 'test' },
     };
 
     const stored = await memoryService.store(memory);
@@ -392,12 +383,12 @@ describe('Memory Storage', () => {
   it('should search memories by content', async () => {
     await memoryService.store({
       content: 'JavaScript programming tutorial',
-      type: 'text'
+      type: 'text',
     });
 
     await memoryService.store({
       content: 'Python data science guide',
-      type: 'text'
+      type: 'text',
     });
 
     const results = await memoryService.search('JavaScript');
@@ -422,7 +413,7 @@ export async function createTestApp(config = {}) {
     environment: 'test',
     database: { url: ':memory:' },
     logging: { level: 'error' },
-    ...config
+    ...config,
   };
 
   return await createServer(testConfig);
@@ -432,7 +423,7 @@ export async function createTestDatabase() {
   return await createDatabase({
     url: ':memory:',
     sync: true,
-    logging: false
+    logging: false,
   });
 }
 
@@ -443,7 +434,7 @@ export function createMockAgent(overrides = {}) {
     type: 'simple',
     status: 'active',
     capabilities: ['text-generation'],
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -477,7 +468,7 @@ export function createMockRequest(overrides = {}) {
     params: {},
     query: {},
     user: null,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -488,7 +479,7 @@ export function createMockResponse() {
     send: vi.fn().mockReturnThis(),
     setHeader: vi.fn().mockReturnThis(),
     statusCode: 200,
-    headers: {}
+    headers: {},
   };
   return res;
 }
@@ -500,7 +491,7 @@ export function createMockDatabase() {
     update: vi.fn(),
     delete: vi.fn(),
     close: vi.fn(),
-    isConnected: vi.fn().mockReturnValue(true)
+    isConnected: vi.fn().mockReturnValue(true),
   };
 }
 ```
@@ -591,7 +582,7 @@ it('should handle async operations', async () => {
 });
 
 it('should handle promises', () => {
-  return promiseFunction().then(result => {
+  return promiseFunction().then((result) => {
     expect(result).toBe(expected);
   });
 });
@@ -617,7 +608,7 @@ import { vi } from 'vitest';
 it('should call external service', () => {
   const mockService = vi.fn().mockResolvedValue('success');
   const result = processWithService(mockService);
-  
+
   expect(mockService).toHaveBeenCalledWith(expectedArgs);
   expect(result).toBe('success');
 });

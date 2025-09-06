@@ -5,7 +5,7 @@
 [![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
 [![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 </div>
 
@@ -35,4 +35,4 @@ This document outlines product specifications and technical summaries for every 
 | rag           | 0.0.1   | Retrieval-augmented generation components.                                         | Node/TypeScript                |
 | registry      | 1.0.0   | Schema registry service for Cortex-OS contracts.                                   | Node/TypeScript                |
 | security      | 0.1.0   | SPIFFE/SPIRE security with mTLS and workload identity management.                  | Node/TypeScript, SPIFFE/SPIRE  |
-| simlab        | 0.1.0   | Simulation harness for Cortex-OS with deterministic evaluation.                   | Node/TypeScript                |
+| simlab        | 0.1.0   | Simulation harness for Cortex-OS with deterministic evaluation.                    | Node/TypeScript                |
