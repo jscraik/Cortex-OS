@@ -17,7 +17,13 @@ export class CloudEvent<T = unknown> implements CloudEventInit<T> {
   datacontenttype: string;
   data: T;
   constructor(init: CloudEventInit<T>) {
-    Object.assign(this, init);
+    this.id = init.id;
+    this.source = init.source;
+    this.type = init.type;
+    this.subject = init.subject;
+    this.time = init.time;
+    this.datacontenttype = init.datacontenttype;
+    this.data = init.data;
   }
 }
 
