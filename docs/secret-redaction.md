@@ -11,10 +11,10 @@ Comprehensive procedure for responding to accidental secret commits.
 
 ## 2. Decision: Rewrite vs Forward Rotation
 
-| Scenario | Recommended Action |
-|----------|-------------------|
-| Single recent commit, low fork count | History rewrite OK |
-| Widely forked / starred repo | Prefer forward rotation only |
+| Scenario                             | Recommended Action                                      |
+| ------------------------------------ | ------------------------------------------------------- |
+| Single recent commit, low fork count | History rewrite OK                                      |
+| Widely forked / starred repo         | Prefer forward rotation only                            |
 | Multiple secrets across many commits | Forward rotation + targeted filter-repo for worst cases |
 
 Forward-only rotation is normally sufficient because leaked secrets must be assumed compromised permanently.
@@ -105,12 +105,13 @@ No evidence of malicious use as of <TIMESTAMP>. Monitoring continues.
 
 ## 8. Tooling References
 
-| Need | Tool |
-|------|------|
-| Broad codebase scan | gitleaks |
+| Need                  | Tool                    |
+| --------------------- | ----------------------- |
+| Broad codebase scan   | gitleaks                |
 | Targeted pattern scan | ripgrep / pattern-guard |
-| Rewrite history | git filter-repo / BFG |
-| Secret entropy hints | trufflehog / gitleaks |
+| Rewrite history       | git filter-repo / BFG   |
+| Secret entropy hints  | trufflehog / gitleaks   |
 
 ---
+
 Maintain this playbook as new providers and token formats appear.
