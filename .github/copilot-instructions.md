@@ -196,6 +196,23 @@ Notes:
 - Trace context included when part of workflow.
 </details>
 
+<details><summary><strong>15C. Contract Versioning Rules</strong></summary>
+Version (new major or explicit version tag) when:
+- Removing a required field or changing its semantic meaning.
+- Changing data type of an existing field (string -> object, enum narrowing, etc.).
+- Splitting one event into multiple with different guarantees.
+- Tightening validation (e.g., widening -> narrowing acceptable values) that could reject existing producers.
+Do NOT version for:
+- Adding optional fields (keep optional in schema).
+- Documentation-only clarifications.
+- Internal reordering or code refactors with identical schema.
+Process:
+1. Introduce new versioned schema alongside old (e.g., `task.created.v2`).
+2. Mark old schema deprecated (comment + README note) but keep tests until zero consumers.
+3. Add dual-parse compatibility test ensuring old still passes until removal milestone.
+4. Communicate upgrade path (what changed + migration snippet).
+</details>
+
 <details><summary><strong>16. Triaging Failing Test</strong></summary>
 1. Narrow scope (`pnpm test --filter <pkg>`)
 2. Inspect schemas in `libs/typescript/contracts`
