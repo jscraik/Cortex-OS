@@ -259,3 +259,37 @@ Signal quality: green tests, no boundary violations, clear test plan, smallest v
 
 ---
 If any rule conflicts upward authority, defer & document in PR description.
+
+<details><summary><strong>20. Glossary</strong></summary>
+
+<strong>A2A</strong>: Application-to-Application event bus layer (`packages/a2a`) handling CloudEvent envelopes for decoupled feature communication.
+
+<strong>MCP</strong>: Model Context Protocol; extension surface for exposing external tools/capabilities to the runtime. Add new external integrations by extending MCP rather than direct cross-feature calls.
+
+<strong>Envelope</strong>: Standard CloudEvent wrapper produced via helper (e.g., `createEnvelope`) containing metadata (`type`, `source`, `id`, `time`, optional `traceparent`, `correlation_id`) plus validated `data` payload.
+
+<strong>Contract</strong>: Canonical Zod schema + (optionally) AsyncAPI / JSON schema definition living in `libs/typescript/contracts` that defines stable cross-boundary data shapes (events, tool IO). Contract-first governs changes (see Section 15.3).
+
+<strong>Feature Package</strong>: A cohesive domain capability mounted under `apps/cortex-os/packages/<feature>` following domain/app/infra layering; communicates outward only via events (A2A) or MCP tools.
+
+<strong>Bus</strong>: Publish/subscribe abstraction in `packages/a2a` for emitting and handling CloudEvents; the sole mechanism for cross-feature domain communication (no direct imports across feature directories).
+
+<strong>Handler</strong>: Function bound to one or more event types (via bus binding) executing a use-case in response to an event; should validate inputs and remain side-effect predictable.
+
+<strong>Schema</strong>: Zod validator representing the runtime & compile-time contract for an event or tool payload; imported (never re-declared) by producers & consumers.
+
+<strong>traceparent</strong>: W3C trace context header value propagated through events to correlate spans across async boundaries; include if part of a workflow or request chain.
+
+<strong>correlation_id</strong>: Explicit workflow/request correlation token placed in the envelope when multi-step orchestration or request/response semantics require deterministic trace grouping beyond tracing infrastructure.
+
+<strong>Versioned Event</strong>: A contract variant (e.g., `task.created.v2`) introduced when a breaking schema change occurs; old version retained until all consumers migrate (see Section 15.3).
+
+<strong>Reach-Through Import</strong>: An import that violates layering or boundaries (e.g., feature A importing feature B's infra layer directly); replaced with event contract usage.
+
+<strong>Streaming Mode</strong>: Output strategy controlling token emission vs aggregation (`--aggregate`, `--no-aggregate`, `--json`, etc.); resolved by precedence chain (CLI > env > config > internal).
+
+<strong>Minimal Event Checklist</strong>: Governance list ensuring a new event is lean, validated, documented, and tested (see Section 15).
+
+<strong>Playbook Consistency Check</strong>: Script (added separately) enforcing repository boundary rules (e.g., forbidding reach-through imports) to keep architecture sound.
+
+</details>
