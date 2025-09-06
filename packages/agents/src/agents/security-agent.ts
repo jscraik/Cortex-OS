@@ -259,13 +259,14 @@ ${sanitizeText(content)}
 	};
 
 	// Event creation helper
-	const createEvent = (type: string, data: any) => ({
-		id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-		type,
-		data,
-		timestamp: new Date().toISOString(),
-		source: 'security-agent'
-	});
+        const createEvent = (type: string, data: any) => ({
+                specversion: "1.0",
+                id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                type,
+                data,
+                timestamp: new Date().toISOString(),
+                source: "security-agent",
+        });
 
 	return {
 		id: agentId,
@@ -314,18 +315,22 @@ ${sanitizeText(content)}
 						timestamp: new Date().toISOString(),
 					}));
 				}
-				const out = await withTimeout(
-					evaluate(validatedWithContext),
-					timeout,
-				);
-				const dur = Date.now() - start;
-				config.eventBus.publish(createEvent("agent.completed", {
-					agentId,
-					traceId,
-					capability: "security",
-					metrics: { latencyMs: dur },
-					timestamp: new Date().toISOString(),
-				}));
+                                const out = await withTimeout(
+                                        evaluate(validatedWithContext),
+                                        timeout,
+                                );
+                                const dur = Date.now() - start;
+                                config.eventBus.publish(
+                                        createEvent("agent.completed", {
+                                                agentId,
+                                                traceId,
+                                                capability: "security",
+                                                result: out,
+                                                evidence: [],
+                                                metrics: { latencyMs: dur },
+                                                timestamp: new Date().toISOString(),
+                                        }),
+                                );
 
 				return {
 					content: `Security analysis completed: ${out.decision}`,
