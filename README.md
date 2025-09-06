@@ -264,7 +264,8 @@ pnpm structure:validate   # Governance / import boundary integrity
 - Prefer suppressions (`// semgrep-disable-next-line <rule-id>`) with justification comments.
 - Run `pnpm security:scan:diff` before pushing if you touched risky surfaces (auth, network, dynamic exec, file IO).
 - Use `nx graph` to visualize dependency impact of refactors prior to wide code moves.
-- Use the canonical variable catalog in `.env.example`; keep the tracked `.env` scrubbed (no real secrets) and load real values via untracked overlays or secret manager.
+- Use the canonical variable catalog in `.env.example`; keep the tracked `.env` scrubbed
+  (no real secrets) and load real values via untracked overlays or a secret manager.
 
 Further detail: see [`SECURITY.md`](./SECURITY.md) and future `docs/code-quality.md` (placeholder to expand if needed).
 
