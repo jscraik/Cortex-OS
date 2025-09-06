@@ -191,12 +191,12 @@ scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config fil
 
 This repository enforces a layered quality model combining fast local feedback, pre-push hard gates, and CI/PR decoration:
 
-| Layer | Scope | Tools | Failing Effect |
-| ----- | ----- | ----- | -------------- |
-| Pre-commit (fast) | Staged files only | Biome/ESLint formatting, minimal lint, pattern guard, `.env` presence check | Blocks commit (fix immediately) |
-| Pre-push (full) | Entire workspace | Typecheck (TS/py), Ruff, Semgrep focused profiles, tests + coverage, structural governance | Blocks push (stops degraded code) |
-| CI Workflows | Trusted baseline | Semgrep SARIF (OWASP + LLM + Top 10), optional SonarCloud, structure validation, license + security scans | Blocks merge via required checks |
-| PR Decoration | Incremental risk | GitHub code scanning alerts (SARIF), Sonar summary (if enabled) | Surfaces issues inline |
+| Layer             | Scope             | Tools                                                                                                     | Failing Effect                    |
+| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Pre-commit (fast) | Staged files only | Biome/ESLint formatting, minimal lint, pattern guard, `.env` presence check                               | Blocks commit (fix immediately)   |
+| Pre-push (full)   | Entire workspace  | Typecheck (TS/py), Ruff, Semgrep focused profiles, tests + coverage, structural governance                | Blocks push (stops degraded code) |
+| CI Workflows      | Trusted baseline  | Semgrep SARIF (OWASP + LLM + Top 10), optional SonarCloud, structure validation, license + security scans | Blocks merge via required checks  |
+| PR Decoration     | Incremental risk  | GitHub code scanning alerts (SARIF), Sonar summary (if enabled)                                           | Surfaces issues inline            |
 
 Key components now in place:
 
@@ -206,7 +206,7 @@ Key components now in place:
 4. Semgrep baseline + diff flow: treat newly introduced findings as red; historical tech-debt tracked separately.
 5. SARIF upload enables native GitHub Security tab visibility (code scanning alerts) without vendor lock-in.
 6. Optional SonarCloud workflow (`.github/workflows/sonar.yml`) supports multi-language metrics
-  (SAST, coverage, maintainability). Disable by removing or making conditional.
+   (SAST, coverage, maintainability). Disable by removing or making conditional.
 
 #### Semgrep Usage
 
