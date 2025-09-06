@@ -98,7 +98,7 @@ pnpm nx graph          # Visualize dependency graph
 
 ## Next Steps
 
-- Read the [Architecture Overview](./architecture-overview)
+- Read the [Architecture Overview](../architecture/overview)
 - Explore [Development Setup](../development/contributing)
-- Learn about [Python Integration](./python-integration)
+- Learn about [Python Integration](../guides/python-integration)
 - Review [Contributing Guidelines](../development/contributing)

@@ -3,8 +3,9 @@ import { themes as prismThemes } from 'prism-react-renderer';
 
 const config: Config = {
     title: 'Cortex Docs',
-    url: 'https://docs.cortex-os.com',
-    baseUrl: '/',
+    url: 'https://jamiescottcraik.github.io',
+    baseUrl: '/Cortex-OS/',
+    trailingSlash: false,
     favicon: 'img/favicon.png',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
@@ -13,6 +14,7 @@ const config: Config = {
     // GitHub pages deployment config
     organizationName: 'jamiescottcraik',
     projectName: 'Cortex-OS',
+    deploymentBranch: 'gh-pages',
 
     markdown: {
         mermaid: true,

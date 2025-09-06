@@ -131,5 +131,5 @@ CORTEX_CONFIG = {
 
 ## Next Steps
 
-- [MCP Tools](./mcp-tools) - Learn about tool integration
-- [Deployment](./deployment) - Deploy your agents
+- Explore advanced MCP tools for integration
+- Review [Deployment options](../getting-started/installation) for your agents
