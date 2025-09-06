@@ -5,6 +5,7 @@ A Model Context Protocol server that provides time and timezone conversion capab
 ### Available Tools
 
 - `get_current_time` - Get current time in a specific timezone or system timezone.
+
   - Required arguments:
     - `timezone` (string): IANA timezone name (e.g., 'America/New_York', 'Europe/London')
 
@@ -19,7 +20,7 @@ A Model Context Protocol server that provides time and timezone conversion capab
 ### Using uv (recommended)
 
 When using [`uv`](https://docs.astral.sh/uv/) no specific installation is needed. We will
-use [`uvx`](https://docs.astral.sh/uv/guides/tools/) to directly run *mcp-server-time*.
+use [`uvx`](https://docs.astral.sh/uv/guides/tools/) to directly run _mcp-server-time_.
 
 ### Using PIP
 
@@ -54,6 +55,7 @@ Add to your Claude settings:
   }
 }
 ```
+
 </details>
 
 <details>
@@ -69,6 +71,7 @@ Add to your Claude settings:
   }
 }
 ```
+
 </details>
 
 <details>
@@ -84,6 +87,7 @@ Add to your Claude settings:
   }
 }
 ```
+
 </details>
 
 ### Configure for Zed
@@ -101,6 +105,7 @@ Add to your Zed settings.json:
   }
 ],
 ```
+
 </details>
 
 <details>
@@ -114,6 +119,7 @@ Add to your Zed settings.json:
   }
 },
 ```
+
 </details>
 
 ### Configure for VS Code
@@ -145,6 +151,7 @@ Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace
   }
 }
 ```
+
 </details>
 
 <details>
@@ -162,6 +169,7 @@ Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace
   }
 }
 ```
+
 </details>
 
 ### Configure for Zencoder
@@ -176,10 +184,11 @@ Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace
 
 ```json
 {
-    "command": "uvx",
-    "args": ["mcp-server-time"]
-  }
+  "command": "uvx",
+  "args": ["mcp-server-time"]
+}
 ```
+
 </details>
 
 ### Customization - System Timezone
@@ -187,6 +196,7 @@ Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace
 By default, the server automatically detects your system's timezone. You can override this by adding the argument `--local-timezone` to the `args` list in the configuration.
 
 Example:
+
 ```json
 {
   "command": "python",
@@ -197,6 +207,7 @@ Example:
 ## Example Interactions
 
 1. Get current time:
+
 ```json
 {
   "name": "get_current_time",
@@ -205,7 +216,9 @@ Example:
   }
 }
 ```
+
 Response:
+
 ```json
 {
   "timezone": "Europe/Warsaw",
@@ -215,6 +228,7 @@ Response:
 ```
 
 2. Convert time between timezones:
+
 ```json
 {
   "name": "convert_time",
@@ -225,7 +239,9 @@ Response:
   }
 }
 ```
+
 Response:
+
 ```json
 {
   "source": {
@@ -238,7 +254,7 @@ Response:
     "datetime": "2024-01-01T12:30:00+09:00",
     "is_dst": false
   },
-  "time_difference": "+13.0h",
+  "time_difference": "+13.0h"
 }
 ```
 
@@ -284,4 +300,4 @@ Pull requests are welcome! Feel free to contribute new ideas, bug fixes, or enha
 
 ## License
 
-mcp-server-time is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+mcp-server-time is licensed under the Apache License 2.0. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the Apache License 2.0. For more details, please see the LICENSE file in the project repository.

@@ -1,6 +1,5 @@
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 import Layout from '@theme/Layout';
 import clsx from 'clsx';
@@ -19,7 +18,7 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/intro">
+            to="./intro">
             Get Started - 5min ⏱️
           </Link>
         </div>
@@ -35,9 +34,7 @@ export default function Home(): JSX.Element {
       title={`Hello from ${siteConfig.title}`}
       description="Autonomous Software-Based Reasoning (ASBR) Platform">
       <HomepageHeader />
-      <main>
-        <HomepageFeatures />
-      </main>
+      <main />
     </Layout>
   );
 }

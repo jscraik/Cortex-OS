@@ -17,6 +17,7 @@ An MCP server implementation that provides a tool for dynamic and reflective pro
 Facilitates a detailed, step-by-step thinking process for problem-solving and analysis.
 
 **Inputs:**
+
 - `thought` (string): The current thinking step
 - `nextThoughtNeeded` (boolean): Whether another thought step is needed
 - `thoughtNumber` (integer): Current thought number
@@ -30,6 +31,7 @@ Facilitates a detailed, step-by-step thinking process for problem-solving and an
 ## Usage
 
 The Sequential Thinking tool is designed for:
+
 - Breaking down complex problems into steps
 - Planning and design with room for revision
 - Analysis that might need course correction
@@ -50,10 +52,7 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "sequential-thinking": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     }
   }
 }
@@ -66,12 +65,7 @@ Add this to your `claude_desktop_config.json`:
   "mcpServers": {
     "sequentialthinking": {
       "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "mcp/sequentialthinking"
-      ]
+      "args": ["run", "--rm", "-i", "mcp/sequentialthinking"]
     }
   }
 }
@@ -105,10 +99,7 @@ For NPX installation:
   "servers": {
     "sequential-thinking": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     }
   }
 }
@@ -121,12 +112,7 @@ For Docker installation:
   "servers": {
     "sequential-thinking": {
       "command": "docker",
-      "args": [
-        "run",
-        "--rm",
-        "-i",
-        "mcp/sequentialthinking"
-      ]
+      "args": ["run", "--rm", "-i", "mcp/sequentialthinking"]
     }
   }
 }
@@ -142,4 +128,4 @@ docker build -t mcp/sequentialthinking -f src/sequentialthinking/Dockerfile .
 
 ## License
 
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+This MCP server is licensed under the Apache License 2.0. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the Apache License 2.0. For more details, please see the LICENSE file in the project repository.

@@ -18,10 +18,25 @@ import pytest
 
 HF_CACHE = Path(os.environ.get("HF_CACHE_PATH", "~/.cache/huggingface")).expanduser()
 
+REQUIRED_MODELS = ["Qwen3-Embedding-0.6B", "Qwen3-Reranker-4B"]
+
+
+def _model_path(name: str) -> Path:
+    return HF_CACHE / f"hub/models--Qwen--{name}"
+
+
+pytestmark = [pytest.mark.slow, pytest.mark.integration]
+
+if not all(_model_path(m).exists() for m in REQUIRED_MODELS):
+    pytest.skip(
+        "Required Qwen models not found in cache; set HF_CACHE_PATH to run",
+        allow_module_level=True,
+    )
+
 
 def ensure_model(name: str) -> Path:
     """Ensure the given Qwen model is available in the cache or skip."""
-    path = HF_CACHE / f"hub/models--Qwen--{name}"
+    path = _model_path(name)
     if not path.exists():
         pytest.skip(f"{name} model not found in cache: {path}")
     return path

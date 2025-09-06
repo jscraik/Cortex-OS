@@ -5,12 +5,15 @@ A basic implementation of persistent memory using a local knowledge graph. This 
 ## Core Concepts
 
 ### Entities
+
 Entities are the primary nodes in the knowledge graph. Each entity has:
+
 - A unique name (identifier)
 - An entity type (e.g., "person", "organization", "event")
 - A list of observations
 
 Example:
+
 ```json
 {
   "name": "John_Smith",
@@ -20,9 +23,11 @@ Example:
 ```
 
 ### Relations
+
 Relations define directed connections between entities. They are always stored in active voice and describe how entities interact or relate to each other.
 
 Example:
+
 ```json
 {
   "from": "John_Smith",
@@ -30,7 +35,9 @@ Example:
   "relationType": "works_at"
 }
 ```
+
 ### Observations
+
 Observations are discrete pieces of information about an entity. They are:
 
 - Stored as strings
@@ -39,21 +46,20 @@ Observations are discrete pieces of information about an entity. They are:
 - Should be atomic (one fact per observation)
 
 Example:
+
 ```json
 {
   "entityName": "John_Smith",
-  "observations": [
-    "Speaks fluent Spanish",
-    "Graduated in 2019",
-    "Prefers morning meetings"
-  ]
+  "observations": ["Speaks fluent Spanish", "Graduated in 2019", "Prefers morning meetings"]
 }
 ```
 
 ## API
 
 ### Tools
+
 - **create_entities**
+
   - Create multiple new entities in the knowledge graph
   - Input: `entities` (array of objects)
     - Each object contains:
@@ -63,6 +69,7 @@ Example:
   - Ignores entities with existing names
 
 - **create_relations**
+
   - Create multiple new relations between entities
   - Input: `relations` (array of objects)
     - Each object contains:
@@ -72,6 +79,7 @@ Example:
   - Skips duplicate relations
 
 - **add_observations**
+
   - Add new observations to existing entities
   - Input: `observations` (array of objects)
     - Each object contains:
@@ -81,12 +89,14 @@ Example:
   - Fails if entity doesn't exist
 
 - **delete_entities**
+
   - Remove entities and their relations
   - Input: `entityNames` (string[])
   - Cascading deletion of associated relations
   - Silent operation if entity doesn't exist
 
 - **delete_observations**
+
   - Remove specific observations from entities
   - Input: `deletions` (array of objects)
     - Each object contains:
@@ -95,6 +105,7 @@ Example:
   - Silent operation if observation doesn't exist
 
 - **delete_relations**
+
   - Remove specific relations from the graph
   - Input: `relations` (array of objects)
     - Each object contains:
@@ -104,11 +115,13 @@ Example:
   - Silent operation if relation doesn't exist
 
 - **read_graph**
+
   - Read the entire knowledge graph
   - No input required
   - Returns complete graph structure with all entities and relations
 
 - **search_nodes**
+
   - Search for nodes based on query
   - Input: `query` (string)
   - Searches across:
@@ -145,15 +158,13 @@ Add this to your claude_desktop_config.json:
 ```
 
 #### NPX
+
 ```json
 {
   "mcpServers": {
     "memory": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
     }
   }
 }
@@ -168,10 +179,7 @@ The server can be configured using the following environment variables:
   "mcpServers": {
     "memory": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
       "env": {
         "MEMORY_FILE_PATH": "/path/to/custom/memory.json"
       }
@@ -207,10 +215,7 @@ Alternatively, you can add the configuration to a file called `.vscode/mcp.json`
   "servers": {
     "memory": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
     }
   }
 }
@@ -223,14 +228,7 @@ Alternatively, you can add the configuration to a file called `.vscode/mcp.json`
   "servers": {
     "memory": {
       "command": "docker",
-      "args": [
-        "run",
-        "-i",
-        "-v",
-        "claude-memory:/app/dist",
-        "--rm",
-        "mcp/memory"
-      ]
+      "args": ["run", "-i", "-v", "claude-memory:/app/dist", "--rm", "mcp/memory"]
     }
   }
 }
@@ -240,7 +238,7 @@ Alternatively, you can add the configuration to a file called `.vscode/mcp.json`
 
 The prompt for utilizing memory depends on the use case. Changing the prompt will help the model determine the frequency and types of memories created.
 
-Here is an example prompt for chat personalization. You could use this prompt in the "Custom Instructions" field of a [Claude.ai Project](https://www.anthropic.com/news/projects). 
+Here is an example prompt for chat personalization. You could use this prompt in the "Custom Instructions" field of a [Claude.ai Project](https://www.anthropic.com/news/projects).
 
 ```
 Follow these steps for each interaction:
@@ -273,11 +271,11 @@ Follow these steps for each interaction:
 Docker:
 
 ```sh
-docker build -t mcp/memory -f src/memory/Dockerfile . 
+docker build -t mcp/memory -f src/memory/Dockerfile .
 ```
 
 For Awareness: a prior mcp/memory volume contains an index.js file that could be overwritten by the new container. If you are using a docker volume for storage, delete the old docker volume's `index.js` file before starting the new container.
 
 ## License
 
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+This MCP server is licensed under the Apache License 2.0. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the Apache License 2.0. For more details, please see the LICENSE file in the project repository.

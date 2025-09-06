@@ -18,9 +18,11 @@ async-trait = "0.1"
 base64 = "0.22"
 bytes = "1.10.1"
 chrono = { version = "0.4", features = ["serde"] }
+# codex-anthropic = { path = "../anthropic" }  # TODO: Enable after external packages compile
 codex-apply-patch = { path = "../apply-patch" }
 codex-mcp-client = { path = "../mcp-client" }
 codex-protocol = { path = "../protocol" }
+# codex-zai = { path = "../zai" }  # TODO: Enable after external packages compile
 dirs = "6"
 env-flags = "0.1.1"
 eventsource-stream = "0.2.3"
@@ -43,17 +45,17 @@ strum_macros = "0.27.2"
 tempfile = "3"
 thiserror = "2.0.16"
 time = { version = "0.3", features = [
-    "formatting",
-    "parsing",
-    "local-offset",
-    "macros",
+  "formatting",
+  "parsing",
+  "local-offset",
+  "macros",
 ] }
 tokio = { version = "1", features = [
-    "io-std",
-    "macros",
-    "process",
-    "rt-multi-thread",
-    "signal",
+  "io-std",
+  "macros",
+  "process",
+  "rt-multi-thread",
+  "signal",
 ] }
 tokio-util = "0.7.16"
 toml = "0.9.5"
@@ -90,9 +92,9 @@ pretty_assertions = "1.4.1"
 tempfile = "3"
 tokio-test = "0.4"
 tracing-subscriber = { version = "0.3", features = [
-    "env-filter",
-    "fmt",
-    "json",
+  "env-filter",
+  "fmt",
+  "json",
 ] }
 tracing-test = "0.2"
 walkdir = "2.5.0"
