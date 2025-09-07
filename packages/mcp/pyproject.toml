@@ -70,6 +70,7 @@ dependencies = [
     # Data validation and serialization
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
+    "jsonschema>=4.21.0",
 
 
     # Circuit breakers and resilience
@@ -154,6 +155,7 @@ markers = [
     "security: marks tests as security tests",
     "performance: marks tests as performance tests",
     "unit: marks tests as unit tests",
+    "asyncio: marks async tests",
 ]
 asyncio_mode = "auto"
 
