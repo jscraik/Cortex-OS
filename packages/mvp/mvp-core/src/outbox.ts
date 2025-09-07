@@ -20,7 +20,7 @@ export class InMemoryOutbox {
   }
 
   get dlq(): CloudEvent[] {
-    return this.deadLetters;
+    return [...this.deadLetters];
   }
 
   get size(): number {
