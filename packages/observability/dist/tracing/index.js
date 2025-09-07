@@ -119,7 +119,7 @@ export function getCurrentTraceContext() {
     const span = trace.getActiveSpan();
     if (!span)
         return null;
-    const runId = span.attributes?.["cortex.run_id"];
+    const runId = span.getAttributes()["cortex.run_id"];
     if (!runId)
         return null;
     return {

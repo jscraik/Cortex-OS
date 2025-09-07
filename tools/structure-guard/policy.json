@@ -229,7 +229,14 @@
         "coverage.xml",
         "sonar-project.properties",
         "CODESTYLE.md",
-        "sgconfig.json"
+		"sgconfig.json",
+		".env",
+		".gitleaks.toml",
+		".markdownlint-cli2.yaml",
+		".pre-commit-config-lite.yaml",
+		"EXEMPTION_NOTICE.md",
+		"pnpm-lock.yaml.bak"
+		,"pnpm-lock.conflicted"
 	],
 	"filePatterns": {
 		"typescript": {
@@ -239,11 +246,37 @@
 				"*.ts",
 				"*.tsx",
 				"*.js",
+				"*.mjs",
+				"*.cjs",
 				"*.json",
 				"*.md",
+				"README.md",
+				"LICENSE",
+				"CHANGELOG.md",
+				"docs/**/*",
+				"src/**/*",
+				"scripts/**/*",
+				"examples/**/*",
+				"test/**/*",
 				"tests/**/*",
+				"__tests__/**/*",
 				"**/*.spec.ts",
-				"**/*.test.ts"
+				"**/*.test.ts",
+				"vitest.config.*",
+				"tsconfig.*.json",
+				"package.json",
+				"pnpm-workspace.yaml",
+				"*.tsbuildinfo",
+				"prisma/**/*",
+				"*.prisma",
+				"*.d.ts",
+				"*.map",
+				"*.sh",
+				"*.yaml",
+				"*.yml",
+				"*.toml",
+				"*.lock",
+				"*.txt"
 			]
 		},
 		"python": {

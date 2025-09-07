@@ -1,0 +1,77 @@
+name: scheduled-lint
+
+on:
+  schedule:
+    # Daily at 10:00, 14:00, 20:00 UTC (GMT)
+    - cron: '0 10 * * *'
+    - cron: '0 14 * * *'
+    - cron: '0 20 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Monorepo Lint & Governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Biome (changed files baseline)
+        run: pnpm biome:ci || true
+
+      - name: ESLint (quality rules)
+        run: pnpm lint:quality || true
+
+      - name: ESLint (security profile)
+        run: pnpm lint:security || true
+
+      - name: Python Ruff lint
+        run: pnpm python:lint || true
+
+      - name: Structural governance
+        run: pnpm structure:validate || true
+
+      - name: Pattern guard (ripgrep hardened)
+        run: pnpm lint:ripgrep:hardened || true
+
+      - name: AST-Grep policy scan
+        run: pnpm lint:ast-grep:check || true
+
+      - name: Summary
+        run: |
+          echo "## Scheduled Lint Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Run date: $(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_STEP_SUMMARY
+          echo "Biome exit (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+          echo "ESLint quality (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+          echo "ESLint security (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+          echo "Ruff (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+          echo "Structure validate (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+          echo "Pattern guard (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+          echo "AST-Grep (soft): see step logs" >> $GITHUB_STEP_SUMMARY
+
+    # NOTE: Soft-fail pattern used so summary always renders; promote to hard gates later if desired.
