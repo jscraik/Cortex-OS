@@ -23,7 +23,8 @@ This plan outlines incremental tasks to bring the `packages/agents` module to op
 
 ## Regular Commit Rhythm
 
-- Aim for commits no larger than ~50 lines.\n- Run `pre-commit run --files <file>` and `pnpm test` (or `pnpm docs:lint` for docs) before each commit.
+- Aim for commits no larger than ~50 lines.
+- Run `pre-commit run --files <file>` and `pnpm test` (or `pnpm docs:lint` for docs) before each commit.
 
 ## Testing Strategy
 
