@@ -7,11 +7,11 @@ export type EventHandler<T = unknown> = (event: CloudEvent<T>) => Promise<void> 
  * Minimal A2A router dispatching CloudEvents by type.
  */
 export class A2ARouter {
-  private handlers = new Map<string, EventHandler<any>[]>();
+  private readonly handlers = new Map<string, EventHandler<unknown>[]>();
 
   on<T>(type: string, handler: EventHandler<T>): void {
     const arr = this.handlers.get(type) ?? [];
-    arr.push(handler as EventHandler<any>);
+    arr.push(handler as EventHandler<unknown>);
     this.handlers.set(type, arr);
   }
 

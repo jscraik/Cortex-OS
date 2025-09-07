@@ -4,8 +4,8 @@ import type { CloudEvent } from './cloudevents.js';
  * In-memory outbox with dead-letter queue for CloudEvents.
  */
 export class InMemoryOutbox {
-  private queue: CloudEvent[] = [];
-  private deadLetters: CloudEvent[] = [];
+  private readonly queue: CloudEvent[] = [];
+  private readonly deadLetters: CloudEvent[] = [];
 
   enqueue(event: CloudEvent): void {
     this.queue.push(event);
