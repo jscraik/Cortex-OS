@@ -63,7 +63,7 @@ export class SQLiteStore implements MemoryStore {
                 );
         }
 
-	async upsert(m: Memory): Promise<Memory> {
+	async upsert(m: Memory, namespace = "default"): Promise<Memory> {
 		const stmt = this.db.prepare(`
       INSERT OR REPLACE INTO memories
       (id, kind, text, vector, tags, ttl, createdAt, updatedAt, provenance, policy, embeddingModel)
@@ -103,7 +103,7 @@ export class SQLiteStore implements MemoryStore {
                 return m;
         }
 
-	async get(id: MemoryId): Promise<Memory | null> {
+	async get(id: MemoryId, namespace = "default"): Promise<Memory | null> {
 		const stmt = this.db.prepare("SELECT * FROM memories WHERE id = ?");
 		const row = stmt.get(id);
 
@@ -112,7 +112,7 @@ export class SQLiteStore implements MemoryStore {
 		return this.rowToMemory(row);
 	}
 
-        async delete(id: MemoryId): Promise<void> {
+        async delete(id: MemoryId, namespace = "default"): Promise<void> {
                 const row = this.db.prepare("SELECT rowid FROM memories WHERE id = ?").get(id);
                 if (row) {
                         this.db.prepare("DELETE FROM memory_embeddings WHERE rowid = ?").run(BigInt(row.rowid));
@@ -120,7 +120,7 @@ export class SQLiteStore implements MemoryStore {
                 this.db.prepare("DELETE FROM memories WHERE id = ?").run(id);
         }
 
-	async searchByText(q: TextQuery): Promise<Memory[]> {
+	async searchByText(q: TextQuery, namespace = "default"): Promise<Memory[]> {
 		let sql = "SELECT * FROM memories WHERE text IS NOT NULL";
 		const params: any[] = [];
 
@@ -168,7 +168,7 @@ export class SQLiteStore implements MemoryStore {
 		return candidates.slice(0, q.topK);
 	}
 
-        async searchByVector(q: VectorQuery): Promise<Memory[]> {
+        async searchByVector(q: VectorQuery, namespace = "default"): Promise<Memory[]> {
                 const padded = padVector(q.vector, this.dim);
                 let sql =
                         "SELECT m.*, v.distance FROM memory_embeddings v JOIN memories m ON m.rowid = v.rowid WHERE v.embedding MATCH ? AND k = ?";
@@ -275,7 +275,7 @@ export class SQLiteStore implements MemoryStore {
 		}
 	}
 
-        async purgeExpired(nowISO: string): Promise<number> {
+        async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
                 let purgedCount = 0;
 
                 const stmt = this.db.prepare("SELECT rowid, * FROM memories WHERE ttl IS NOT NULL");
