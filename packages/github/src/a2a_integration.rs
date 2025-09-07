@@ -9,7 +9,7 @@ use crate::types::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tracing::{debug, info, warn, error};
+use tracing::{debug, info, warn, error, instrument};
 use uuid::Uuid;
 
 /// A2A event publisher for GitHub operations
@@ -40,6 +40,52 @@ pub trait A2AEventHandler: Send + Sync {
     fn handle_event(&self, event: A2AEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>>;
 }
 
+/// Simple HTTP-based event bus using POST requests
+pub struct HttpEventBus {
+    client: reqwest::Client,
+    endpoint: String,
+}
+
+impl HttpEventBus {
+    pub fn new(endpoint: String) -> Self {
+        Self { client: reqwest::Client::new(), endpoint }
+    }
+}
+
+impl A2AEventBus for HttpEventBus {
+    fn publish(&self, topic: &str, event: A2AEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        let url = format!("{}/{}", self.endpoint.trim_end_matches('/'), topic);
+        let client = self.client.clone();
+        let url_for_err = url.clone();
+        Box::pin(async move {
+            client
+                .post(&url)
+                .json(&event)
+                .send()
+                .await
+                .map_err(|e| {
+                    // Try to extract status code if available
+                    let status = if let Some(status) = e.status() {
+                        format!("{}", status)
+                    } else {
+                        "unknown".to_string()
+                    };
+                    GitHubError::A2AEvent(format!(
+                        "Failed to send HTTP request to {}: status: {}, error: {}",
+                        url_for_err, status, e
+                    ))
+                })?;
+            Ok(())
+        })
+    }
+
+    /// The HTTP-based event bus only supports publishing events, not subscription.
+    /// This method is a no-op and does not register any handlers.
+    fn subscribe(&self, _topic: &str, _handler: Box<dyn A2AEventHandler + Send + Sync>) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
+        Box::pin(async { Ok(()) })
+    }
+}
+
 /// A2A configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct A2AConfig {
@@ -66,14 +112,21 @@ impl Default for A2AConfig {
     }
 }
 
-/// Generic A2A event structure
+/// CloudEvents-compliant A2A event structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct A2AEvent {
-    pub event_id: String,
+    pub specversion: String,
+    pub id: String,
+    #[serde(rename = "type")]
     pub event_type: String,
     pub source: String,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
-    pub payload: serde_json::Value,
+    pub time: chrono::DateTime<chrono::Utc>,
+    #[serde(rename = "datacontenttype")]
+    pub data_content_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub dataschema: Option<String>,
+    pub data: serde_json::Value,
+    #[serde(flatten)]
     pub metadata: HashMap<String, String>,
 }
 
@@ -212,28 +265,39 @@ impl GitHubA2APublisher {
                 .unwrap_or(5000),
         };
 
-        // TODO: Initialize actual A2A event bus connection
-        // For now, return with None event bus (events will be logged but not published)
-        Ok(Self::new(config, None))
+        let event_bus = if config.enabled {
+            config
+                .event_bus_url
+                .as_ref()
+                .map(|url| Arc::new(HttpEventBus::new(url.clone())) as Arc<dyn A2AEventBus + Send + Sync>)
+        } else {
+            None
+        };
+
+        Ok(Self::new(config, event_bus))
     }
 
     /// Create A2A event from GitHub event data
     fn create_a2a_event(&self, event_type: &str, payload: serde_json::Value) -> A2AEvent {
         let mut metadata = HashMap::new();
         metadata.insert("publisher_id".to_string(), self.publisher_id.clone());
-        metadata.insert("source".to_string(), "github-client".to_string());
+        metadata.insert("correlation_id".to_string(), Uuid::new_v4().to_string());
 
         A2AEvent {
-            event_id: Uuid::new_v4().to_string(),
+            specversion: "1.0".to_string(),
+            id: Uuid::new_v4().to_string(),
             event_type: event_type.to_string(),
             source: self.publisher_id.clone(),
-            timestamp: chrono::Utc::now(),
-            payload,
+            time: chrono::Utc::now(),
+            data_content_type: "application/json".to_string(),
+            dataschema: None,
+            data: payload,
             metadata,
         }
     }
 
     /// Publish event to A2A bus with retry logic
+    #[instrument(name = "publish_a2a_event", skip(self, event), fields(event_type = %event.event_type, correlation_id = event.metadata.get("correlation_id")))]
     async fn publish_with_retry(&self, topic: &str, event: A2AEvent) -> GitHubResult<()> {
         if !self.config.enabled {
             debug!("A2A publishing disabled, skipping event: {}", event.event_type);
@@ -410,16 +474,19 @@ mod tests {
         std::env::set_var("CORTEX_A2A_ENABLED", "true");
         std::env::set_var("CORTEX_A2A_PUBLISHER_ID", "test-publisher");
         std::env::set_var("CORTEX_A2A_RETRY_ATTEMPTS", "5");
+        std::env::set_var("CORTEX_A2A_EVENT_BUS_URL", "http://example.com");
 
         let publisher = futures::executor::block_on(GitHubA2APublisher::from_env()).unwrap();
         assert_eq!(publisher.config.publisher_id, "test-publisher");
         assert_eq!(publisher.config.retry_attempts, 5);
         assert!(publisher.config.enabled);
+        assert!(publisher.event_bus.is_some());
 
         // Cleanup
         std::env::remove_var("CORTEX_A2A_ENABLED");
         std::env::remove_var("CORTEX_A2A_PUBLISHER_ID");
         std::env::remove_var("CORTEX_A2A_RETRY_ATTEMPTS");
+        std::env::remove_var("CORTEX_A2A_EVENT_BUS_URL");
     }
 
     #[test]
@@ -430,9 +497,38 @@ mod tests {
         let payload = serde_json::json!({ "test": "data" });
         let event = publisher.create_a2a_event("test.event", payload);
 
+        assert_eq!(event.specversion, "1.0");
         assert_eq!(event.event_type, "test.event");
         assert_eq!(event.source, "github-client");
-        assert!(!event.event_id.is_empty());
+        assert_eq!(event.data["test"], "data");
+        assert!(!event.id.is_empty());
         assert!(event.metadata.contains_key("publisher_id"));
+        assert!(event.metadata.contains_key("correlation_id"));
+    }
+
+    #[tokio::test]
+    async fn test_publish_repository_event_sends_cloudevent() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+
+        let mut config = A2AConfig::default();
+        config.event_bus_url = Some(url.clone());
+        let publisher = GitHubA2APublisher::new(config, Some(Arc::new(HttpEventBus::new(url.clone()))));
+
+        let _m = server
+            .mock("POST", "/github.repository.created")
+            .match_header("content-type", "application/json")
+            .create_async()
+            .await;
+
+        let repo_event = RepositoryEvent {
+            action: RepositoryAction::Created,
+            repository: Repository::default(),
+            actor: User::default(),
+            changes: None,
+        };
+
+        publisher.publish_repository_event(repo_event).await.unwrap();
+        _m.assert_async().await;
     }
 }
