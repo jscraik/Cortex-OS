@@ -197,30 +197,38 @@ export class EvaluationNode {
 		};
 	}
 
-	private async preCerebrumValidation(
-		state: PRPState,
-	): Promise<ReadinessResult<PreCerebrumDetails>> {
-		// Final validation before Cerebrum decision
-		const hasAllPhases = !!(
-			state.validationResults?.strategy &&
-			state.validationResults?.build &&
-			state.validationResults?.evaluation
-		);
+        checkPreCerebrumConditions(state: PRPState): boolean {
+                return Object.values(state.validationResults || {}).every(
+                        (result) => result?.passed && result?.blockers.length === 0,
+                );
+        }
 
-		const allPhasesPassedOrAcceptable = Object.values(
-			state.validationResults || {},
-		).every((result) => result?.passed || result?.blockers.length === 0);
+        private async preCerebrumValidation(
+                state: PRPState,
+        ): Promise<ReadinessResult<PreCerebrumDetails>> {
+                // Final validation before Cerebrum decision
+                const hasAllPhases = !!(
+                        state.validationResults?.strategy &&
+                        state.validationResults?.build &&
+                        state.validationResults?.evaluation
+                );
 
-		return {
-			readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,
-			details: {
-				phasesComplete: hasAllPhases,
-				phasesAcceptable: allPhasesPassedOrAcceptable,
-				evidenceCount: state.evidence.length,
-				evidenceThreshold: 10, // Minimum evidence required
-			},
-		};
-	}
+                const allPhasesPassedOrAcceptable = Object.values(
+                        state.validationResults || {},
+                ).every(
+                        (result) => result?.passed && result?.blockers.length === 0,
+                );
+
+                return {
+                        readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,
+                        details: {
+                                phasesComplete: hasAllPhases,
+                                phasesAcceptable: allPhasesPassedOrAcceptable,
+                                evidenceCount: state.evidence.length,
+                                evidenceThreshold: 10, // Minimum evidence required
+                        },
+                };
+        }
 }
 
 // Type definitions for validation methods

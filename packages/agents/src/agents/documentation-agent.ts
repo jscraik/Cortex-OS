@@ -169,13 +169,14 @@ export const createDocumentationAgent = (
 			};
 
 			// Emit agent started event
-			const createEvent = (type: string, data: any) => ({
-				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-				type,
-				data,
-				timestamp: new Date().toISOString(),
-				source: 'documentation-agent'
-			});
+                        const createEvent = (type: string, data: any) => ({
+                                specversion: "1.0",
+                                id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                                type,
+                                data,
+                                timestamp: new Date().toISOString(),
+                                source: "documentation-agent",
+                        });
 
 			config.eventBus.publish(createEvent("agent.started", {
 				agentId,
@@ -194,17 +195,23 @@ export const createDocumentationAgent = (
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent completed event
-				config.eventBus.publish(createEvent("agent.completed", {
-					agentId,
-					traceId,
-					capability: "documentation",
-					metrics: {
-						latencyMs: executionTime,
-						tokensUsed: estimateTokens(validatedInput.sourceCode),
-						sectionsCount: result.sections.length,
-					},
-					timestamp: new Date().toISOString(),
-				}));
+                                config.eventBus.publish(
+                                        createEvent("agent.completed", {
+                                                agentId,
+                                                traceId,
+                                                capability: "documentation",
+                                                result,
+                                                evidence: [],
+                                                metrics: {
+                                                        latencyMs: executionTime,
+                                                        tokensUsed: estimateTokens(
+                                                                validatedInput.sourceCode,
+                                                        ),
+                                                        sectionsCount: result.sections.length,
+                                                },
+                                                timestamp: new Date().toISOString(),
+                                        }),
+                                );
 
 				return {
 					content: `Documentation generated: ${result.sections.length} sections`,

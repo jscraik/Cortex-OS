@@ -1,6 +1,6 @@
 import type { FastifyRequest } from "fastify";
-import { auditEvent, record } from "../audit";
-import { enforce, loadGrant } from "../policy";
+import { auditEvent, record } from "../audit.js";
+import { enforce, loadGrant } from "../policy.js";
 
 export async function applyAuditPolicy(
 	req: FastifyRequest,

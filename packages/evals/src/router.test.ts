@@ -1,8 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-vi.mock("@cortex-os/model-gateway", () => ({ createModelRouter: vi.fn() }));
-
-import { RouterOptions, runRouterSuite } from "./suites/router";
+import { RouterOptions, runRouterSuite, routerSuite } from "./suites/router";
 
 describe("runRouterSuite", () => {
 	const baseRouter = {
@@ -35,12 +33,18 @@ describe("runRouterSuite", () => {
 		expect(res.pass).toBe(false);
 	});
 
-	it("fails when chat capability missing", async () => {
+        it("fails when chat capability missing", async () => {
                 const router = {
                         ...baseRouter,
                         hasAvailableModels: (cap: string) => cap !== "chat",
                 } as any;
                 const res = await runRouterSuite("router", RouterOptions.parse({}), router);
-		expect(res.pass).toBe(false);
-	});
+                expect(res.pass).toBe(false);
+        });
+
+        it("routerSuite.run delegates to runRouterSuite", async () => {
+                const router = { ...baseRouter, hasAvailableModels: () => true };
+                const res = await routerSuite.run("router", RouterOptions.parse({}), router as any);
+                expect(res.pass).toBe(true);
+        });
 });

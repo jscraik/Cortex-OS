@@ -11,20 +11,7 @@ import { z } from "zod";
 import { runCommand } from "../lib/run-command.js";
 import type { PRPState } from "../state.js";
 import { generateId } from "../utils/id.js";
-
-// Neuron interface definition
-interface Neuron {
-	id: string;
-	role: string;
-	phase: "strategy" | "build" | "evaluation";
-	dependencies: string[];
-	tools: string[];
-	requiresLLM?: boolean;
-	execute(
-		state: PRPState,
-		context: Record<string, unknown>,
-	): Promise<NeuronResult>;
-}
+import type { Neuron } from "@cortex-os/prp-runner";
 
 interface NeuronResult {
 	output: unknown;
@@ -163,17 +150,17 @@ export class MCPAdapter {
 	/**
 	 * Convert MCP tools to kernel-compatible neurons
 	 */
-	createNeuronFromTool(
-		tool: MCPTool,
-		phase: "strategy" | "build" | "evaluation",
-	): Neuron {
-		return {
-			id: `mcp-${tool.name}`,
-			role: `mcp-tool-${tool.name}`,
-			phase,
-			dependencies: [],
-			tools: [tool.name],
-			requiresLLM: false,
+        createNeuronFromTool(
+                tool: MCPTool,
+                phase: "strategy" | "build" | "evaluation",
+        ): Neuron {
+                return {
+                        id: `mcp-${tool.name}`,
+                        role: `mcp-tool-${tool.name}`,
+                        phase,
+                        dependencies: [],
+                        tools: [tool.name],
+                        requiresLLM: false,
 
 			execute: async (state: PRPState, context: Record<string, unknown>) => {
 				const _mcpContext = this.createContext(state, {
@@ -219,10 +206,10 @@ export class MCPAdapter {
 					metrics,
 				};
 
-				return result;
-			},
-		};
-	}
+                                return result;
+                        },
+                } as unknown as Neuron;
+        }
 
 	/**
 	 * Extract tool parameters from blueprint

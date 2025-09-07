@@ -2,6 +2,7 @@ import type { Evidence, PRPState } from "../state.js";
 
 import { generateId } from "../utils/id.js";
 import { currentTimestamp } from "../utils/time.js";
+import { nanoid } from "nanoid";
 
 /**
  * Strategy Phase Gates:
@@ -21,14 +22,14 @@ export class StrategyNode {
 			blockers.push("Blueprint missing title or description");
 		}
 
-		evidence.push({
-			id: generateId("strategy-blueprint", state.metadata.deterministic),
-			type: "validation",
-			source: "strategy_node",
-			content: `Blueprint validation: ${state.blueprint.title}`,
-			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 1),
-			phase: "strategy",
-		});
+                evidence.push({
+                        id: generateId("strategy-blueprint", state.metadata.deterministic),
+                        type: "validation",
+                        source: "strategy_node",
+                        content: `Blueprint validation: ${state.blueprint.title}`,
+                        timestamp: currentTimestamp(state.metadata.deterministic ?? false, 1),
+                        phase: "strategy",
+                });
 
 		// Gate 2: Security baseline check
 		const securityBaseline = await this.validateSecurityBaseline(state);

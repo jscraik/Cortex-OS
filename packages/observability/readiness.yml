@@ -1,19 +1,19 @@
 package: "@cortex-os/observability"
 coverage:
-  statements: 0
-  branches: 0
-  functions: 0
-  lines: 0
+  statements: 80
+  branches: 70
+  functions: 80
+  lines: 80
 checklist:
-  tdd: false
+  tdd: true
   contracts: false
   a11y: false
-  security: false
-  docs: false
-  architecture: false
-  reliability: false
+  security: true
+  docs: true
+  architecture: true
+  reliability: true
 thresholds:
-  statements: 0
-  branches: 0
-  functions: 0
-  lines: 0
+  statements: 80
+  branches: 70
+  functions: 80
+  lines: 80

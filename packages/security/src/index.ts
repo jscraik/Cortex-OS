@@ -1,11 +1,10 @@
 // SPIFFE/SPIRE Implementation
 
-// MLX integrations
-export * from "./mlx/index.ts";
-
 // mTLS Implementation
 export * from "./mtls/index.ts";
 export * from "./spiffe/index.ts";
+// Security Events
+export * from "./events/security-event.ts";
 // Types and Interfaces
 export * from "./types.ts";
 // Security Utilities

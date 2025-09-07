@@ -155,13 +155,14 @@ export const createTestGenerationAgent = (
 			};
 
 			// Emit agent started event
-			const createEvent = (type: string, data: any) => ({
-				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-				type,
-				data,
-				timestamp: new Date().toISOString(),
-				source: 'test-generation-agent'
-			});
+                        const createEvent = (type: string, data: any) => ({
+                                specversion: "1.0",
+                                id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                                type,
+                                data,
+                                timestamp: new Date().toISOString(),
+                                source: "test-generation-agent",
+                        });
 
 			config.eventBus.publish(createEvent("agent.started", {
 				agentId,
@@ -180,17 +181,23 @@ export const createTestGenerationAgent = (
 				const executionTime = Date.now() - startTime;
 
 				// Emit agent completed event
-				config.eventBus.publish(createEvent("agent.completed", {
-					agentId,
-					traceId,
-					capability: "test-generation",
-					metrics: {
-						latencyMs: executionTime,
-						tokensUsed: estimateTokens(validatedInput.sourceCode),
-						testCount: result.testCount,
-					},
-					timestamp: new Date().toISOString(),
-				}));
+                                config.eventBus.publish(
+                                        createEvent("agent.completed", {
+                                                agentId,
+                                                traceId,
+                                                capability: "test-generation",
+                                                result,
+                                                evidence: Array.isArray(result?.testFiles) ? result.testFiles : [],
+                                                metrics: {
+                                                        latencyMs: executionTime,
+                                                        tokensUsed: estimateTokens(
+                                                                validatedInput.sourceCode,
+                                                        ),
+                                                        testCount: result.testCount,
+                                                },
+                                                timestamp: new Date().toISOString(),
+                                        }),
+                                );
 
 				return {
 					content: `Generated ${result.testCount} test cases`,

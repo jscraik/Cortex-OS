@@ -11,7 +11,7 @@
 ### Phase 1: Foundation Setup ✅ COMPLETED
 
 - [x] **Task 1.1**: Basic TUI Foundation (TDD) - `v0.1.0-base`
-- [x] **Task 1.2**: Configuration System (TDD) - `v0.1.1-config` ✅ COMPLETED  
+- [x] **Task 1.2**: Configuration System (TDD) - `v0.1.1-config` ✅ COMPLETED
 - [x] **Task 1.3**: Error Handling (TDD) - `v0.1.2-errors`
 
 ### Phase 2: Core Features 🔄 IN PROGRESS
@@ -21,20 +21,51 @@
   - [x] Session JSONL persistence and resume
   - [x] REPL mode and stdin via `-`
   - [x] README updated; tests pass
-  
-- [ ] **Task 2.2**: Model Provider Abstraction (TDD) - Target: `v0.2.1-providers`
-  - [ ] Write tests for provider interface
-  - [ ] Write tests for model switching
-  - [ ] Implement provider abstraction
-  - [ ] Add configuration for providers
-  - [ ] Verification: Provider abstraction tests pass
 
-- [ ] **Task 2.3**: Streaming Support (TDD) - Target: `v0.2.2-streaming`
-  - [ ] Write tests for streaming responses
-  - [ ] Write tests for stream interruption
-  - [ ] Implement streaming in TUI
-  - [ ] Add streaming controls
-  - [ ] Verification: Streaming tests pass
+[ ] **Task 2.2a**: Provider Abstraction Scaffold (TDD) - Target: `v0.2.1-provider-scaffold` (STATUS: In Progress)
+
+- [x] Introduce trait & registry skeleton
+- [x] Initial mock provider(s)
+- [ ] Model switching tests (pending)
+- [ ] Auth header shaping tests
+- [ ] Config selection tests
+- [ ] Verification: Scaffold tests pass
+
+- [ ] **Task 2.2b**: Provider Switching & Streaming Parity - Target: `v0.2.1-providers`
+
+- [ ] Implement canonical resolve logic for model->family->provider
+- [ ] Add reasoning/verbosity placeholders (or defer to 2.5)
+- [ ] Port aggregation adapter parity if needed
+- [ ] Verification: Switching & aggregation tests pass
+
+- [ ] **Task 2.3**: Streaming Support (Normalization + Controls) - Target: `v0.2.2-streaming`
+
+- [ ] Add flag normalization layer (legacy -> canonical)
+- [ ] Test matrix for all legacy/new flag combos (conflict detection & precedence)
+- [ ] Implement raw vs aggregate vs json mode selection
+- [ ] Integrate with provider wire API dispatch
+- [ ] Verification: Streaming tests pass
+
+- [ ] **Task 2.5**: Reasoning & Verbosity Controls (Proposed)
+
+- [ ] Reasoning delta accumulation tests
+- [ ] Final reasoning emission test
+- [ ] Verbosity param shaping tests
+- [ ] Implementation of minimal reasoning pipeline
+- [ ] Verification: reasoning tests green
+
+### Quality Gate Snapshot (Live)
+
+| Gate                     | Status                                              | Action                           |
+| ------------------------ | --------------------------------------------------- | -------------------------------- |
+| Build & Tests            | Partially Red (CLI streaming flag failures earlier) | Implement normalization & re-run |
+| Warnings (`-D warnings`) | Failing (unused imports/mut)                        | Clean or allow in tests          |
+| Coverage >=95%           | Not yet measured in this fork                       | Run llvm-cov baseline            |
+| Provider Scaffold        | Partial                                             | Add tests (2.2a)                 |
+| Streaming Parity         | Not implemented                                     | Task 2.3                         |
+| Reasoning Support        | Missing                                             | Task 2.5                         |
+| Session Meta Parity      | Partial                                             | Add meta test                    |
+| Auth Mode Fallback       | Unverified                                          | Port subset tests                |
 
 ### Phase 3: Provider Integration 📋 PLANNED
 
@@ -58,16 +89,18 @@
 
 ## Current Sprint Goals 🎯
 
-### This Week
+### This Week (Updated)
 
-- [ ] Begin Task 2.2: Provider Abstraction
+- [ ] Finalize streaming flag normalization (Task 2.3 start)
+- [ ] Add provider switching tests (2.2a → 2.2b bridge)
+- [ ] Draft reasoning task scaffolding (2.5) if bandwidth
 
-### Success Criteria
+### Success Criteria (Refined)
 
-- All existing tests continue to pass
-- New features have >= 95% test coverage (enforced)
-- Performance remains under baseline targets
-- Simple TUI experience is preserved
+- 0 failing tests in workspace
+- No warnings under `cargo clippy -- -D warnings`
+- Coverage command documented & baseline captured
+- Provider switching + streaming normalization tests green
 
 ## GitHub Integration Note 📝
 

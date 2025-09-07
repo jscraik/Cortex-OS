@@ -1,3 +1,5 @@
+// Unified merged implementation: in-memory services replacing previous dynamic proxy stubs.
+// If future persistence/backends are introduced, adapt these factories behind the same API surface.
 
 type Memory = {
   id: string;
@@ -8,7 +10,7 @@ type Memory = {
   provenance: { source: string };
 };
 
-type MemoryService = {
+export type MemoryService = {
   save: (m: Memory) => Promise<Memory>;
   get: (id: string) => Promise<Memory | null>;
 };
@@ -27,10 +29,12 @@ export function provideMemories(): MemoryService {
 }
 
 export function provideOrchestration() {
+  // Placeholder orchestration surface – extend with real orchestrator wiring.
   return { config: {} };
 }
 
 export function provideMCP() {
+  // Minimal MCP facade; extend with tool registry + lifecycle as needed.
   return {
     async callTool() {
       return {};
@@ -50,5 +54,5 @@ export const tracer = {
 };
 
 export function configureAuditPublisherWithBus(_publish: (evt: unknown) => void) {
-  // TODO: wire audit events to bus
+  // TODO: wire audit events to bus (currently no-op stub)
 }

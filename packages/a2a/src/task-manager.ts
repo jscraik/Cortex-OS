@@ -4,6 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { EventEmitter } from "node:events";
 import {
 	A2A_ERROR_CODES,
 	type TaskCancelParams,
@@ -116,15 +117,17 @@ export class EchoTaskProcessor implements TaskProcessor {
 	}
 }
 
-export class TaskManager {
-	constructor(
-		private readonly store: TaskStore = new InMemoryTaskStore(),
-		private readonly processor: TaskProcessor = new EchoTaskProcessor(),
-		private readonly config = {
-			taskTimeoutMs: 30000,
-			maxConcurrentTasks: 10,
-		},
-	) {}
+export class TaskManager extends EventEmitter {
+        constructor(
+                private readonly store: TaskStore = new InMemoryTaskStore(),
+                private readonly processor: TaskProcessor = new EchoTaskProcessor(),
+                private readonly config = {
+                        taskTimeoutMs: 30000,
+                        maxConcurrentTasks: 10,
+                },
+        ) {
+                super();
+        }
 
 	/**
 	 * Send a task for processing (tasks/send)
@@ -141,11 +144,13 @@ export class TaskManager {
 			params,
 		};
 
-		await this.store.save(task);
+                await this.store.save(task);
+                this.emit("taskStarted", { id: taskId });
 
 		try {
-			// Update status to running
-			await this.store.update(taskId, { status: "running" });
+                        // Update status to running
+                        await this.store.update(taskId, { status: "running" });
+                        this.emit("taskRunning", { id: taskId });
 
 			// Process the task
 			const result = await Promise.race([
@@ -154,12 +159,14 @@ export class TaskManager {
 			]);
 
 			// Update with result
-			await this.store.update(taskId, {
-				status: "completed",
-				result,
-			});
+                        await this.store.update(taskId, {
+                                status: "completed",
+                                result,
+                        });
 
-			return result;
+                        this.emit("taskCompleted", { id: taskId, ...result });
+
+                        return result;
 		} catch (error) {
 			const taskError = {
 				code:
@@ -170,16 +177,18 @@ export class TaskManager {
 				data: error instanceof Error ? { stack: error.stack } : error,
 			};
 
-			await this.store.update(taskId, {
-				status: "failed",
-				error: taskError,
-			});
+                        await this.store.update(taskId, {
+                                status: "failed",
+                                error: taskError,
+                        });
 
-			throw new StructuredError(
-				"TASK_EXECUTION_FAILED",
-				`Task ${taskId} failed: ${taskError.message}`,
-				{ taskId, error: taskError },
-			);
+                        this.emit("taskFailed", { id: taskId, error: taskError });
+
+                        throw new StructuredError(
+                                "TASK_EXECUTION_FAILED",
+                                `Task ${taskId} failed: ${taskError.message}`,
+                                { taskId, error: taskError },
+                        );
 		}
 	}
 
@@ -232,14 +241,16 @@ export class TaskManager {
 			);
 		}
 
-		await this.store.update(params.id, {
-			status: "cancelled",
-			error: {
-				code: A2A_ERROR_CODES.TASK_CANCELLED,
-				message: "Task was cancelled",
-			},
-		});
-	}
+                await this.store.update(params.id, {
+                        status: "cancelled",
+                        error: {
+                                code: A2A_ERROR_CODES.TASK_CANCELLED,
+                                message: "Task was cancelled",
+                        },
+                });
+
+                this.emit("taskCancelled", { id: params.id });
+        }
 
 	/**
 	 * List tasks (utility method)

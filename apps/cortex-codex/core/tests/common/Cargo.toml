@@ -1,3 +1,5 @@
+cargo-features = ["edition2024"]
+
 [package]
 name = "core_test_support"
 version = { workspace = true }
