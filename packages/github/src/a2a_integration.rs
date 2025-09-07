@@ -79,6 +79,8 @@ impl A2AEventBus for HttpEventBus {
         })
     }
 
+    /// The HTTP-based event bus only supports publishing events, not subscription.
+    /// This method is a no-op and does not register any handlers.
     fn subscribe(&self, _topic: &str, _handler: Box<dyn A2AEventHandler + Send + Sync>) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
         Box::pin(async { Ok(()) })
     }
