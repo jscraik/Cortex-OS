@@ -157,3 +157,33 @@ Contracts support:
 - [Service Integration](/packages/README.md)
 - [Event Architecture](/../AGENTS.md)
 - [API Guidelines](/docs/)
+
+## Schema Coverage Guard
+
+This repository enforces a lightweight **schema coverage guard** to ensure every
+exported `*Schema` in contract event files has at least one explicit test
+reference. The guard:
+
+- Scans `libs/typescript/contracts/**/events.ts` files for `export const <Name>Schema = z.object(...)`
+- Fails if any discovered schema name is missing from test sources under `contracts/tests/`
+- Provides fast feedback in CI via the dedicated workflow: `.github/workflows/contracts-coverage.yml`
+
+Run locally:
+
+```bash
+pnpm vitest run contracts/tests/contracts-coverage.test.ts
+```
+
+When adding a new schema export, create or update a test referencing it (a
+minimal positive + negative parse test is sufficient). See
+`mcp-events.contract.test.ts` for an example covering multiple schemas.
+
+Rationale:
+
+- Catches silent contract drift (schemas added without validation tests)
+- Keeps contract surface intentional and observable in PRs
+- Encourages minimal characterization tests for each new contract
+
+If a schema is intentionally experimental, wrap its test in `describe.skip`
+with a comment and open a tracking issue to avoid accidental removal by future
+cleanups.

@@ -44,5 +44,20 @@ reports/
 # Security scan artifacts
 semgrep-report.json
 logs/*.log
-\n+# Upstream mirrors / vendored external references for cortex-codex (kept locally only)
+# Upstream mirrors / vendored external references for cortex-codex (kept locally only)
 apps/cortex-codex/external/
+!packages/observability/dist/
+
+# Docusaurus build/cache artifacts (exclude generated site outputs)
+website/.docusaurus/
+website/build/
+
+# Rust compiler ICE diagnostic dumps
+apps/cortex-codex/rustc-ice-*.txt
+
+# Lockfile conflict & backups
+pnpm-lock.conflicted
+pnpm-lock.yaml.bak
+
+# Misc backup & transient files
+*.bak

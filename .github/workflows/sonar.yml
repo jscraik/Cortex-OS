@@ -1,0 +1,64 @@
+name: sonar-quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  # For Sonar PR decoration; "id-token" needed if using OIDC (not here)
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.3.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate TypeScript coverage
+        run: pnpm test:coverage || true
+
+      - name: Python deps
+        run: |
+          if command -v uv >/dev/null 2>&1; then uv sync; else pip install coverage pytest; fi
+
+      - name: Python tests (coverage)
+        run: |
+          if [ -f pyproject.toml ]; then \
+            (uv run pytest --cov --cov-report=xml || echo 'Python tests failed; continue for analysis'); \
+          fi
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Upload coverage artifacts (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-artifacts
+          path: |
+            coverage
+            coverage.xml
+            reports/**

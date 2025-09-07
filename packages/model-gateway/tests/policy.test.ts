@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Grant } from "../src/policy.js";
+import type { Grant } from "../src/policy.ts";
 
 describe("policy rate limiting", () => {
         it("throws after exceeding perMinute limit", async () => {
                 vi.resetModules();
-                const { enforce } = await import("../src/policy.js");
+                const { enforce } = await import("../src/policy.ts");
                 const grant: Grant = {
                         actions: ["embeddings"],
                         rate: { perMinute: 2 },

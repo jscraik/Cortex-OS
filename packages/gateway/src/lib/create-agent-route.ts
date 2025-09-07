@@ -1,10 +1,10 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { createJsonOutput } from "@cortex-os/lib";
-import { type ZodType, z } from "zod";
+import { z, type ZodTypeAny } from "zod";
 
 const CommonQuery = z.object({ json: z.coerce.boolean().optional() });
 
-export function createAgentRoute<T extends ZodType<any, any>>(
+export function createAgentRoute<T extends ZodTypeAny>(
         app: FastifyInstance,
         path: string,
         schema: T,

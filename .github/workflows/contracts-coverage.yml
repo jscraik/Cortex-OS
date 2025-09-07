@@ -1,0 +1,34 @@
+name: contracts-coverage
+on:
+  pull_request:
+    paths:
+      - 'libs/typescript/contracts/**'
+      - 'contracts/tests/**'
+      - '.github/workflows/contracts-coverage.yml'
+      - 'vitest.workspace.ts'
+  push:
+    branches: [ main ]
+    paths:
+      - 'libs/typescript/contracts/**'
+      - 'contracts/tests/**'
+      - '.github/workflows/contracts-coverage.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  schema-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          node-version: '22'
+          pnpm-version: '9'
+      - name: Run schema coverage test
+        run: pnpm vitest run contracts/tests/contracts-coverage.test.ts --reporter=dot
+      - name: Fast MCP events schema sanity tests
+        run: pnpm vitest run contracts/tests/mcp-events.contract.test.ts --reporter=dot

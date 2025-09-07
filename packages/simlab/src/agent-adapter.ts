@@ -5,6 +5,8 @@
 
 import type { SimScenario, SimTurn } from "./types.js";
 import { agentRequestSchema } from "./schemas.js";
+// Local import of PRP runner to avoid build dependency
+import { createPRPOrchestrator, type Blueprint, type Neuron } from "../../prp-runner/src/index.js";
 
 export interface AgentRequest {
 	scenario: SimScenario;
@@ -93,10 +95,14 @@ class BasicPRPExecutor implements PRPExecutor {
                 const successHint = scenario.success_criteria[0];
 
                 switch (goalType) {
-                        case "help":
+                        case "help": {
+                                const hint = successHint
+                                        ? `Let's work toward ${successHint}.`
+                                        : "How can I assist further?";
                                 return {
-                                        content: `I'm here to help. ${successHint ? `Let's work toward ${successHint}.` : "How can I assist further?"}`,
+                                        content: `I'm here to help. ${hint}`,
                                 };
+                        }
                         case "info":
                                 if (/[?]/.test(userMessage)) {
                                         return {
@@ -119,4 +125,42 @@ class BasicPRPExecutor implements PRPExecutor {
         }
 }
 
-export default AgentAdapter;
+export class RealPRPExecutor implements PRPExecutor {
+        private orchestrator = createPRPOrchestrator();
+
+        constructor() {
+                const neuron: Neuron = {
+                        id: "simple",
+                        role: "responder",
+                        phase: "strategy",
+                        dependencies: [],
+                        tools: [],
+                        requiresLLM: false,
+                        async execute() {
+                                return {
+                                        output: "PRP response",
+                                        evidence: [],
+                                        nextSteps: [],
+                                        artifacts: [],
+                                        metrics: {
+                                                startTime: new Date().toISOString(),
+                                                endTime: new Date().toISOString(),
+                                        },
+                                };
+                        },
+                };
+                this.orchestrator.registerNeuron(neuron);
+        }
+
+        async executePRP({ scenario }: AgentRequest): Promise<AgentResponse> {
+                const blueprint: Blueprint = {
+                        title: scenario.name,
+                        description: scenario.goal,
+                        requirements: [],
+                };
+                const result = await this.orchestrator.executePRPCycle(blueprint);
+                const content = String(result.outputs["simple"] ?? "");
+                return { content: `PRP: ${content}` };
+        }
+}
+

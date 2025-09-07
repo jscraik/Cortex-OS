@@ -58,7 +58,7 @@
 ```bash
 # Test Command
 cargo test --workspace --all-features
-# Rollback Command  
+# Rollback Command
 git reset --hard v0.1.0-foundation
 ```
 
@@ -86,7 +86,7 @@ fn test_config_profile_loading() {
     assert_eq!(config.model_provider, "local");
 }
 
-#[test] 
+#[test]
 fn test_config_override_parsing() {
     let overrides = vec!["model.provider=openai", "api.timeout=30"];
     let config = Config::with_overrides(overrides).unwrap();
@@ -158,7 +158,7 @@ async fn test_provider_registration() {
     let mut registry = ProviderRegistry::new();
     let openai_provider = OpenAIProvider::new("test-key");
     registry.register("openai", Box::new(openai_provider));
-    
+
     let provider = registry.get("openai").unwrap();
     assert_eq!(provider.name(), "openai");
 }
@@ -173,7 +173,7 @@ async fn test_provider_registration() {
 - [ ] **Verification**: OpenAI provider tests pass (with mocks)
 - [ ] **Rollback Point**: Git tag `v0.2.1-openai`
 
-#### Task 2.3: Anthropic Provider Implementation (TDD)  and Anthropic Compatible Provider [`Z.ai API`](https://docs.z.ai/scenario-example/develop-tools/claude)
+#### Task 2.3: Anthropic Provider Implementation (TDD) and Anthropic Compatible Provider [`Z.ai API`](https://docs.z.ai/scenario-example/develop-tools/claude)
 
 - [ ] **Test**: Write tests for Anthropic API integration
 - [ ] **Implementation**: Port Anthropic provider from cortex-code
@@ -245,15 +245,15 @@ async fn test_provider_registration() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_function_name() {
         // Arrange
         let input = create_test_input();
-        
-        // Act  
+
+        // Act
         let result = function_under_test(input);
-        
+
         // Assert
         assert_eq!(result.expected_field, expected_value);
     }
@@ -282,7 +282,7 @@ async fn test_complete_chat_workflow() {
 ### Test Categories
 
 - **Unit Tests**: Individual function/method testing
-- **Integration Tests**: Component interaction testing  
+- **Integration Tests**: Component interaction testing
 - **E2E Tests**: Complete user workflow testing
 - **Property Tests**: Random input validation using quickcheck
 - **Performance Tests**: Latency and throughput validation
@@ -368,7 +368,7 @@ async fn test_complete_chat_workflow() {
 - [ ] Build time < 30 seconds
 - [ ] Binary size < 50MB
 
-### Phase 2: Core Features  
+### Phase 2: Core Features
 
 - [ ] Response time < 2 seconds for simple queries
 - [ ] Memory usage < 100MB baseline
@@ -386,3 +386,100 @@ async fn test_complete_chat_workflow() {
 - [ ] Performance regression < 10%
 - [ ] Security vulnerabilities = 0
 - [ ] User experience matches original codex simplicity
+
+---
+
+## Operational Readiness (Added)
+
+### Current Gaps Identified vs Upstream `codex-rs`
+
+1. CLI legacy streaming flags:
+
+   - Failing tests reveal clap debug assertion referencing a `requires*` relationship for `aggregate` -> `json` that no longer exists in our attribute declarations. Indicates either:
+     - a stale compiled build that still includes an old attribute macro state, or
+     - hidden duplication / second definition of the CLI (multiple `#[derive(Parser)]` blocks) earlier in the file or in a re-export, or
+     - accidental leftover of a removed field via a feature gated include.
+   - Action: Audit `cli/src/main.rs` for duplicate struct or conditional compilation; run `cargo clean && cargo test` (already planned) and add a targeted unit test asserting argument graph integrity using `MultitoolCli::command().debug_assert()`.
+
+2. Orphaned test code remnants were removed, but plan must track follow-up: add focused tests for JSONL roundtrip already merged into module (ensure no duplication) and add negative tests for invalid flag combinations.
+
+3. Provider Abstraction Status Inconsistency:
+
+   - `CHANGELOG.md` claims Task 2.2 completed with registry + mocks; `TASK_TRACKER.md` and plan still list it as not started.
+   - Action: Harmonize status: if partial implementation exists (traits, registry), mark as "In Progress – core trait landed, coverage pending".
+
+4. Stream Mode Mapping:
+
+   - Upstream `codex-rs` uses internal aggregation adapter (`AggregateStreamExt`) based on provider wire API selection (Responses vs Chat). Local variant introduces explicit `--stream-mode` plus legacy flags. Need a mapping parity table & tests:
+     - `--stream-mode aggregate` => upstream aggregated-only behaviour.
+     - `--stream-mode raw` => upstream streaming (delta) behaviour.
+     - `--stream-mode json` => requires parity with `--json` (structured event output) if retained.
+   - Action: Implement translator function(s) plus tests for each legacy combination, then deprecate legacy flags with warning once translator test coverage = 100%.
+
+5. Missing Reasoning / Verbosity Controls:
+
+   - Upstream includes reasoning output (cumulative reasoning stream) and verbosity flags in client request shaping. Local fork currently omits reasoning-specific controls.
+   - Action: Create Phase 2.5 task: "Reasoning & Verbosity Controls" to port minimal config + stream adapter pieces (no UI coupling yet).
+
+6. Session JSONL Metadata Parity:
+
+   - Upstream session meta lines include Git info and tool usage metrics. Local JSONL persists messages but may lack meta parity.
+   - Action: Add meta writer test verifying required keys: `created_at`, `git.branch?`, `git.commit?`, `model`, `provider`.
+
+7. Toolchain & Warnings Gate:
+
+   - Must enforce `-D warnings` across workspace to align with upstream quality bar; current run shows multiple warnings in tests (unused imports/mut). These should be cleaned or allowed only in test modules with `#[allow(...)]` justification comment blocks.
+
+8. Coverage Enforcement:
+   - Plan states 95% coverage but no automated cargo-llvm-cov gate documented in repository-specific Makefile/CI here yet.
+   - Action: Add section for local coverage command & gating script (future PR if not in scope now).
+
+### Operational Readiness Checklist (New)
+
+| Category             | Gate                                      | Status                                     | Action                               |
+| -------------------- | ----------------------------------------- | ------------------------------------------ | ------------------------------------ |
+| Build                | `cargo test --workspace --all-features`   | PARTIAL (CLI streaming flag tests failing) | Fix flag graph & re-run              |
+| Warnings             | `cargo clippy --workspace -- -D warnings` | Pending                                    | Remove unused imports/mut            |
+| Formatting           | `cargo fmt --check`                       | Pending                                    | Run and fix drift                    |
+| Coverage             | `cargo llvm-cov --fail-under-lines 95`    | Pending                                    | Add instrumentation run              |
+| Provider Abstraction | Trait + registry + mocks                  | PARTIAL                                    | Add switching tests                  |
+| Streaming Modes      | Raw/Aggregate/JSON parity                 | FAILING (tests)                            | Implement translator & tests         |
+| Session Persistence  | JSONL meta parity                         | PARTIAL                                    | Add meta test                        |
+| Config Overrides     | Dot-notation & env                        | PASS                                       | Add negative tests (invalid keys)    |
+| Auth Handling        | ChatGPT + API key                         | Untested locally                           | Port auth tests from upstream subset |
+
+### Immediate Rectification Tasks
+
+1. Fix CLI flag graph: add unit test `test_cli_stream_flag_graph()` calling `MultitoolCli::command().debug_assert()`.
+2. Add translator tests for: `--aggregate`, `--no-aggregate`, `--stream-json`, `--json`, `--stream-mode <variant>` combined with invalid mixes (ensure clap rejects and test error messages where stable).
+3. Normalize provider abstraction progress across docs; move status to "In Progress" with concrete subtasks.
+4. Introduce reasoning & verbosity Phase 2.5 task (port minimal structures not yet surfaced in UX).
+5. Add session meta parity test & implement Git info capture (reuse upstream pattern using repo root discovery).
+6. Clean warnings (remove unused `mut`, imports) or allow with explicit reasons inside tests.
+7. Add coverage invocation instructions & future CI note.
+8. Add auth mode partial test (simulate plan enforcing ChatGPT vs API key logic) or explicitly defer with rationale.
+
+### Added Phase 2.5 (Proposed)
+
+- **Task 2.5**: Reasoning & Verbosity Controls (TDD)
+  - [ ] Tests: reasoning delta accumulation & final reasoning emission parity with upstream aggregated mode.
+  - [ ] Tests: verbosity flag shaping request payload.
+  - [ ] Implementation: minimal subset of `create_reasoning_param_for_request` analogue and pipeline pass-through.
+  - [ ] Verification: reasoning tests green.
+
+## Alignment Notes with Upstream
+
+| Upstream Feature                    | Present Here                           | Delta                                                | Follow-up                              |
+| ----------------------------------- | -------------------------------------- | ---------------------------------------------------- | -------------------------------------- |
+| AggregateStreamExt adapter          | Partial (custom flags instead)         | Using explicit flag set vs implicit provider mapping | Keep adapter concept; translator tests |
+| Responses vs Chat wire API switch   | Not fully validated                    | Lacks unified dispatch code parity                   | Add dispatch parity review             |
+| Reasoning content aggregation       | Missing                                | No reasoning deltas                                  | Phase 2.5                              |
+| Auth mode fallbacks (plan-based)    | Likely missing                         | Not ported test suite                                | Port subset auth tests                 |
+| Session meta instrumentation        | Partial                                | Meta fields uncertain                                | Add verification test                  |
+| CLI debug / hidden commands         | Possibly pruned                        | Fewer debug surfaces                                 | Accept simplification (document)       |
+| Tool invocation (apply_patch, plan) | apply_patch present? plan tool unknown | Need explicit config flags parity                    | Audit & add tasks                      |
+
+## Document Status Corrections
+
+- CHANGELOG claims Task 2.2 completed; contradicts task trackers. Update CHANGELOG after actual completion or adjust wording to "Scaffold Landed".
+- TASK_TRACKER & TASKS: add Phase 2.5 entry, mark Provider Abstraction as In Progress (scaffold) not Complete.

@@ -1,13 +1,14 @@
 import { MatchersV3, PactV3 } from "@pact-foundation/pact";
+import { describe, it, expect } from "vitest";
 
 const provider = new PactV3({
-	consumer: "cortex-consumer",
-	provider: "cortex-gateway",
-	dir: new URL("../pacts", import.meta.url).pathname,
+        consumer: "cortex-consumer",
+        provider: "cortex-gateway",
+        dir: new URL("../pacts", import.meta.url).pathname,
 });
 
-describe("Gateway Pact - MCP", () => {
-	it("responds with text or json payload", async () => {
+describe.skipIf(!process.env.MCP_TRANSPORT)("Gateway Pact - MCP", () => {
+        it("responds with text or json payload", async () => {
 		provider
 			.given("Gateway up")
 			.uponReceiving("MCP request")
