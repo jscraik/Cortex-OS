@@ -5,13 +5,13 @@
  * No custom classes - pure functional approach
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 // Avoid circular import by importing agents directly
-import { createCodeAnalysisAgent } from "../agents/code-analysis-agent.js";
-import { createDocumentationAgent } from "../agents/documentation-agent.js";
-import { createSecurityAgent } from "../agents/security-agent.js";
-import { createTestGenerationAgent } from "../agents/test-generation-agent.js";
-import { wireOutbox } from "../integrations/outbox.js";
+import { createCodeAnalysisAgent } from '../agents/code-analysis-agent.js';
+import { createDocumentationAgent } from '../agents/documentation-agent.js';
+import { createSecurityAgent } from '../agents/security-agent.js';
+import { createTestGenerationAgent } from '../agents/test-generation-agent.js';
+import { wireOutbox } from '../integrations/outbox.js';
 import type {
 	Agent,
 	EventBus,
@@ -19,23 +19,23 @@ import type {
 	MemoryPolicy,
 	MemoryStore,
 	ModelProvider,
-} from "../lib/types.js";
-import { generateAgentId, withTimeout } from "../lib/utils.js";
+} from '../lib/types.js';
+import { generateAgentId, withTimeout } from '../lib/utils.js';
 
 // Orchestration schemas
 export const workflowTaskSchema = z.object({
 	id: z.string(),
 	agentType: z.enum([
-		"code-analysis",
-		"test-generation",
-		"documentation",
-		"security",
+		'code-analysis',
+		'test-generation',
+		'documentation',
+		'security',
 	]),
 	input: z.any(),
 	dependsOn: z.array(z.string()).optional().default([]),
 	timeout: z.number().optional().default(30000),
 	retries: z.number().optional().default(3),
-	priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
+	priority: z.enum(['low', 'medium', 'high']).optional().default('medium'),
 });
 
 export const workflowSchema = z.object({
@@ -49,7 +49,7 @@ export const workflowSchema = z.object({
 
 export const orchestrationResultSchema = z.object({
 	workflowId: z.string(),
-	status: z.enum(["completed", "failed", "timeout", "cancelled"]),
+	status: z.enum(['completed', 'failed', 'timeout', 'cancelled']),
 	results: z.record(z.string(), z.any()),
 	errors: z.record(z.string(), z.string()).optional(),
 	metrics: z.object({
@@ -78,11 +78,12 @@ export interface OrchestratorConfig {
 	memoryStore?: MemoryStore;
 	memoryPolicies?: Partial<
 		Record<
-			"code-analysis" | "test-generation" | "documentation" | "security",
+			'code-analysis' | 'test-generation' | 'documentation' | 'security',
 			MemoryPolicy
 		>
 	>;
 	redactPII?: boolean;
+	authorize?: (workflow: Workflow) => Promise<boolean> | boolean;
 }
 
 interface OrchestratorState {
@@ -130,11 +131,17 @@ const createOrchestratorState = (
 			const policy =
 				(config.memoryPolicies && cap && config.memoryPolicies[cap]) ||
 				undefined;
-			const ns = policy?.namespace || "agents:outbox";
-			const ttl = policy?.ttl || "PT1H";
+			const ns = policy?.namespace || 'agents:outbox';
+			const ttl = policy?.ttl || 'PT1H';
 			const maxItemBytes = policy?.maxItemBytes ?? 256_000;
 			const redactPII = policy?.redactPII ?? config.redactPII ?? true;
-			return { namespace: ns, ttl: String(ttl), maxItemBytes, tagPrefix: "evt", redactPII };
+			return {
+				namespace: ns,
+				ttl: String(ttl),
+				maxItemBytes,
+				tagPrefix: 'evt',
+				redactPII,
+			};
 		};
 		// Fire and forget; wireOutbox sets up subscriptions
 		void wireOutbox(config.eventBus, config.memoryStore, resolver);
@@ -150,28 +157,28 @@ const initializeAgents = (state: OrchestratorState): void => {
 	};
 
 	state.agents.set(
-		"code-analysis",
+		'code-analysis',
 		createCodeAnalysisAgent({
 			...agentConfig,
-			memoryPolicy: state.config.memoryPolicies?.["code-analysis"],
+			memoryPolicy: state.config.memoryPolicies?.['code-analysis'],
 		} as any),
 	);
 	state.agents.set(
-		"test-generation",
+		'test-generation',
 		createTestGenerationAgent({
 			...agentConfig,
-			memoryPolicy: state.config.memoryPolicies?.["test-generation"],
+			memoryPolicy: state.config.memoryPolicies?.['test-generation'],
 		} as any),
 	);
 	state.agents.set(
-		"documentation",
+		'documentation',
 		createDocumentationAgent({
 			...agentConfig,
 			memoryPolicy: state.config.memoryPolicies?.documentation,
 		} as any),
 	);
 	state.agents.set(
-		"security",
+		'security',
 		createSecurityAgent({
 			...agentConfig,
 			memoryPolicy: state.config.memoryPolicies?.security,
@@ -191,10 +198,7 @@ const executeTask = async (
 	state.runningTasks.add(task.id);
 
 	try {
-		const result = await withTimeout(
-			agent.execute(task.input),
-			task.timeout,
-		);
+		const result = await withTimeout(agent.execute(task.input), task.timeout);
 
 		if (state.config.enableMetrics) {
 			state.metrics.tasksCompleted++;
@@ -217,10 +221,10 @@ const executeTasksInParallel = async (
 
 	taskResults.forEach((result, index) => {
 		const task = tasks[index];
-		if (result.status === "fulfilled") {
+		if (result.status === 'fulfilled') {
 			results[task.id] = result.value;
 		} else {
-			errors[task.id] = result.reason?.message || "Task failed";
+			errors[task.id] = result.reason?.message || 'Task failed';
 		}
 	});
 };
@@ -249,7 +253,7 @@ const executeTasksSequentially = async (
 			const remaining = tasks.filter((task) => !completed.has(task.id));
 			if (remaining.length > 0) {
 				errors.dependency =
-					"Circular dependency or missing dependency detected";
+					'Circular dependency or missing dependency detected';
 				break;
 			}
 			break;
@@ -268,7 +272,7 @@ const executeTasksSequentially = async (
 				completed.add(task.id);
 			} catch (error) {
 				errors[task.id] =
-					error instanceof Error ? error.message : "Task failed";
+					error instanceof Error ? error.message : 'Task failed';
 			} finally {
 				inProgress.delete(task.id);
 			}
@@ -285,7 +289,7 @@ const executeWorkflowInternal = async (
 ): Promise<OrchestrationResult> => {
 	const results: Record<string, any> = {};
 	const errors: Record<string, string> = {};
-	let status: OrchestrationResult["status"] = "completed";
+	let status: OrchestrationResult['status'] = 'completed';
 
 	try {
 		if (workflow.parallel) {
@@ -295,11 +299,11 @@ const executeWorkflowInternal = async (
 		}
 
 		if (Object.keys(errors).length > 0) {
-			status = "failed";
+			status = 'failed';
 		}
 	} catch (error) {
-		status = "timeout";
-		errors.workflow = error instanceof Error ? error.message : "Unknown error";
+		status = 'timeout';
+		errors.workflow = error instanceof Error ? error.message : 'Unknown error';
 	}
 
 	const totalTime = Math.max(1, Date.now() - startTime);
@@ -319,7 +323,7 @@ const executeWorkflowInternal = async (
 	};
 
 	state.config.eventBus.publish({
-		type: "workflow.completed" as any,
+		type: 'workflow.completed' as any,
 		data: {
 			workflowId: workflow.id,
 			status,
@@ -357,8 +361,32 @@ export const executeWorkflow = async (
 		throw new Error(`Workflow ${workflowId} is already running`);
 	}
 
+	if (state.config.authorize) {
+		const allowed = await state.config.authorize(validatedWorkflow);
+		if (!allowed) {
+			const timestamp = new Date().toISOString();
+			state.config.eventBus.publish({
+				type: 'security.workflow_unauthorized' as any,
+				data: { workflowId, reason: 'not authorized', timestamp },
+			});
+			return {
+				workflowId,
+				status: 'failed',
+				results: {},
+				errors: { authz: 'Workflow not authorized' },
+				metrics: {
+					totalTime: 0,
+					tasksCompleted: 0,
+					tasksTotal: validatedWorkflow.tasks.length,
+					agentsUsed: [],
+				},
+				timestamp,
+			};
+		}
+	}
+
 	state.config.eventBus.publish({
-		type: "workflow.started" as any,
+		type: 'workflow.started' as any,
 		data: {
 			workflowId,
 			name: workflow.name,
@@ -412,7 +440,7 @@ export const cancelWorkflow = async (
 	}
 
 	state.config.eventBus.publish({
-		type: "workflow.cancelled" as any,
+		type: 'workflow.cancelled' as any,
 		data: {
 			workflowId,
 			timestamp: new Date().toISOString(),
@@ -481,7 +509,7 @@ export const createWorkflowBuilder = (id: string, name: string) => {
 			workflow.timeout = ms;
 			return api;
 		},
-		addTask(task: Omit<WorkflowTask, "id"> & { id?: string }) {
+		addTask(task: Omit<WorkflowTask, 'id'> & { id?: string }) {
 			const taskId = task.id || generateAgentId();
 			(workflow.tasks as WorkflowTask[]).push({
 				...task,
@@ -491,31 +519,31 @@ export const createWorkflowBuilder = (id: string, name: string) => {
 		},
 		addCodeAnalysis(input: any, options?: Partial<WorkflowTask>) {
 			return api.addTask({
-				agentType: "code-analysis",
+				agentType: 'code-analysis',
 				input,
 				...options,
 			} as any);
 		},
 		addTestGeneration(input: any, options?: Partial<WorkflowTask>) {
 			return api.addTask({
-				agentType: "test-generation",
+				agentType: 'test-generation',
 				input,
 				...options,
 			} as any);
 		},
 		addDocumentation(input: any, options?: Partial<WorkflowTask>) {
 			return api.addTask({
-				agentType: "documentation",
+				agentType: 'documentation',
 				input,
 				...options,
 			} as any);
 		},
 		addSecurity(input: any, options?: Partial<WorkflowTask>) {
-			return api.addTask({ agentType: "security", input, ...options } as any);
+			return api.addTask({ agentType: 'security', input, ...options } as any);
 		},
 		build(): Workflow {
 			if (!workflow.id || !workflow.name) {
-				throw new Error("Workflow ID and name are required");
+				throw new Error('Workflow ID and name are required');
 			}
 			return workflowSchema.parse(workflow);
 		},

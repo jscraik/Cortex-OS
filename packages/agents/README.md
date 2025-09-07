@@ -221,8 +221,17 @@ const orch = createOrchestrator({
     security: { namespace: 'agents:security', ttl: 'PT1H', maxItemBytes: 256000, redactPII: true },
   },
   redactPII: true, // default for all capabilities (can be overridden per capability)
+  authorize: async (workflow) => {
+    // return false to block unauthorized workflows
+    return checkPermissions(workflow)
+  },
 });
 ```
+
+## Authorization and Audit Hooks
+
+- Provide an optional `authorize` function to gate workflow execution.
+- Unauthorized attempts emit `security.workflow_unauthorized` events that persist via the governed outbox for audit trails.
 
 ## Event Timestamps and Errors
 
