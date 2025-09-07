@@ -1,6 +1,7 @@
-import { ingestText as ingestTextHelper } from "./pipeline/ingest.js";
-import type { Chunk, Embedder, Store } from "./lib/index.js";
-import { z } from "zod";
+import { z } from 'zod';
+import { CitationBundler } from './lib/citation-bundler.js';
+import type { Chunk, CitationBundle, Embedder, Store } from './lib/index.js';
+import { ingestText as ingestTextHelper } from './pipeline/ingest.js';
 
 export interface RAGPipelineConfig {
   embedder: Embedder;
@@ -17,14 +18,16 @@ export class RAGPipeline {
 
   constructor(config: RAGPipelineConfig) {
     const schema = z.object({
-      embedder: z.custom<Embedder>((e): e is Embedder =>
-        typeof e === "object" && e !== null && typeof (e as any).embed === "function"
+      embedder: z.custom<Embedder>(
+        (e): e is Embedder =>
+          typeof e === 'object' && e !== null && typeof (e as any).embed === 'function',
       ),
-      store: z.custom<Store>((s): s is Store =>
-        typeof s === "object" &&
-        s !== null &&
-        typeof (s as any).upsert === "function" &&
-        typeof (s as any).query === "function"
+      store: z.custom<Store>(
+        (s): s is Store =>
+          typeof s === 'object' &&
+          s !== null &&
+          typeof (s as any).upsert === 'function' &&
+          typeof (s as any).query === 'function',
       ),
       chunkSize: z.number().int().positive().default(300),
       chunkOverlap: z.number().int().nonnegative().default(0),
@@ -41,7 +44,7 @@ export class RAGPipeline {
     const embeddings = await this.E.embed(texts);
     if (embeddings.length !== chunks.length) {
       throw new Error(
-        `Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`
+        `Embedding count (${embeddings.length}) does not match chunk count (${chunks.length})`,
       );
     }
     const toUpsert = chunks.map((c, i) => ({ ...c, embedding: embeddings[i] }));
@@ -59,8 +62,10 @@ export class RAGPipeline {
     });
   }
 
-  async retrieve(query: string, topK = 5) {
+  async retrieve(query: string, topK = 5): Promise<CitationBundle> {
     const [emb] = await this.E.embed([query]);
-    return this.S.query(emb, topK);
+    const chunks = await this.S.query(emb, topK);
+    const bundler = new CitationBundler();
+    return bundler.bundle(chunks);
   }
 }
