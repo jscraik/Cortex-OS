@@ -14,7 +14,7 @@ This document details a TDD-driven roadmap to bring `packages/orchestration` to 
 1. **Deterministic pipelines**
    - _Test:_ validate DAG validator rejects cycles.
    - _Impl:_ ensure topological sort enforces order.
-   - _Commit cadence:_ `test(orchestration): add DAG cycle coverage` → `feat(orchestration): enforce topological sort` → `refactor(orchestration): tidy validator`.
+   - _Commit cadence:_ `test(orchestration): add DAG cycle coverage` → `feat(orchestration): enforce topological sort` → `refactor(orchestration): clean up validator`.
 2. **Sequential/parallel execution**
    - _Test:_ simulate concurrent steps; ensure ordering and isolation.
    - _Impl:_ refine scheduler to cap concurrency and handle errors.
