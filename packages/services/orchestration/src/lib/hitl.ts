@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:events";
 import { randomUUID } from "node:crypto";
+import { createLogger } from "@cortex-os/observability";
+import { TypeGuards } from "@cortex-os/utils";
 
 interface HitlRequest {
         id: string;
@@ -70,14 +72,33 @@ export function onHitlRequest(listener: (req: HitlRequest) => void) {
         emitter.on("request", listener);
 }
 
-export function requiresApproval(proposal: unknown) {
+export function requiresApproval(proposal: unknown): boolean {
         try {
-                const p = proposal as any;
-                if (p?.dataClass === "sensitive") return true;
-                if (p?.path && typeof p.path === "string") {
-                        const cwd = process.cwd();
-                        return !p.path.startsWith(cwd);
+                // Use proper type guard instead of 'any' assertion
+                if (!TypeGuards.isProposalShape(proposal)) {
+                        return false;
                 }
-        } catch {}
-        return false;
+                
+                // Check for sensitive data classification
+                if (proposal.dataClass === "sensitive") {
+                        return true;
+                }
+                
+                // Check for paths outside current working directory
+                if (proposal.path && typeof proposal.path === "string") {
+                        const cwd = process.cwd();
+                        return !proposal.path.startsWith(cwd);
+                }
+                
+                return false;
+        } catch (error) {
+                // Use structured logging for parsing errors
+                const logger = createLogger('hitl');
+                logger.warn({
+                        error: error instanceof Error ? error.message : String(error),
+                        context: 'proposal-validation',
+                        proposalType: typeof proposal
+                }, 'Failed to validate proposal for approval check');
+                return false;
+        }
 }

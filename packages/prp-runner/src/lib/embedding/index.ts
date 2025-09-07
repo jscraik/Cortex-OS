@@ -285,7 +285,7 @@ const executePythonScript = async (
 	script: string,
 	args: string[] = [],
 ): Promise<string> => {
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	 
 	// @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
 	const { runPython } = await import("../../../../libs/python/exec.js");
 	return runPython("-c", [script, ...args], { python: pythonPath } as any);

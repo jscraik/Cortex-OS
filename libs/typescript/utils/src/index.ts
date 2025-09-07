@@ -4,6 +4,7 @@ export * from "./ids.js";
 export * from "./port-utils.js";
 export * from "./secure-neo4j.js";
 export * from "./timeout.js";
+export * as TypeGuards from "./type-guards.js";
 export * from "./validation.js";
 export * from "./vector.js";
 export * from "./with-fallback.js";

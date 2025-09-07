@@ -4,138 +4,150 @@
  * Global setup and configuration for all tests
  */
 
-import { afterEach, beforeEach, vi } from "vitest";
+import { afterEach, beforeEach, vi } from 'vitest';
 
 // Global test setup
 beforeEach(() => {
-	// Clear all mocks before each test
-	vi.clearAllMocks();
+  // Clear all mocks before each test
+  vi.clearAllMocks();
 
-	// Reset environment variables
-	process.env.NODE_ENV = "test";
+  // Reset environment variables
+  process.env.NODE_ENV = 'test';
 
-	// Mock console methods to avoid noise in test output
-	vi.spyOn(console, "log").mockImplementation(() => {});
-	vi.spyOn(console, "warn").mockImplementation(() => {});
-	vi.spyOn(console, "error").mockImplementation(() => {});
+  // Mock console methods to avoid noise in test output
+  vi.spyOn(console, 'log').mockImplementation(() => {});
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
 afterEach(() => {
-	// Clean up any timers
-	vi.clearAllTimers();
+  // Clean up any timers
+  vi.clearAllTimers();
 
-	// Restore mocked console methods
-	vi.restoreAllMocks();
+  // Restore mocked console methods
+  vi.restoreAllMocks();
 });
 
 // Note: Node.js crypto is available in test environment, no mocking needed
 
 // Global test utilities
-declare global {
-	namespace Vi {
-		interface JestAssertion<_T = any> {
-			toBeUUID(): void;
-			toBeValidDate(): void;
-		}
-	}
+// Vitest matcher type augmentation (avoid TS namespaces per lint rule)
+declare module 'vitest' {
+  interface Assertion {
+    toBeUUID(): void;
+    toBeValidDate(): void;
+  }
+  interface AsymmetricMatchersContaining {
+    toBeUUID(): void;
+    toBeValidDate(): void;
+  }
 }
 
 // Custom matchers
 expect.extend({
-	toBeUUID(received: string) {
-		const uuidRegex =
-			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-		const pass = uuidRegex.test(received);
+  toBeUUID(received: string) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const pass = uuidRegex.test(received);
 
-		return {
-			message: () => `expected ${received} to be a valid UUID`,
-			pass,
-		};
-	},
+    return {
+      message: () => `expected ${received} to be a valid UUID`,
+      pass,
+    };
+  },
 
-	toBeValidDate(received: string) {
-		const date = new Date(received);
-		const pass = !Number.isNaN(date.getTime());
+  toBeValidDate(received: string) {
+    const date = new Date(received);
+    const pass = !Number.isNaN(date.getTime());
 
-		return {
-			message: () => `expected ${received} to be a valid ISO date string`,
-			pass,
-		};
-	},
+    return {
+      message: () => `expected ${received} to be a valid ISO date string`,
+      pass,
+    };
+  },
 });
 
 // Note: Removed unused createMockResponse helper
 
 // Mock event bus for testing
-export const createMockEventBus = () => {
-	const published: any[] = [];
-	const subscribers: Map<string, Function[]> = new Map();
+interface PublishedEvent {
+  type: string;
+  [key: string]: unknown;
+}
 
-	return {
-		publish: vi.fn(async (event: any) => {
-			published.push(event);
-			const handlers = subscribers.get(event.type) || [];
-			await Promise.all(handlers.map((handler) => handler(event)));
-		}),
-		subscribe: vi.fn((eventType: string, handler: Function) => {
-			const handlers = subscribers.get(eventType) || [];
-			handlers.push(handler);
-			subscribers.set(eventType, handlers);
-		}),
-		unsubscribe: vi.fn((eventType: string, handler: Function) => {
-			const handlers = subscribers.get(eventType) || [];
-			const index = handlers.indexOf(handler);
-			if (index > -1) {
-				handlers.splice(index, 1);
-			}
-		}),
-		published,
-		subscribers,
-	};
+type EventHandler = (event: PublishedEvent) => Promise<void> | void;
+
+export const createMockEventBus = () => {
+  const published: PublishedEvent[] = [];
+  const subscribers: Map<string, EventHandler[]> = new Map();
+
+  const publish = vi.fn(async (event: PublishedEvent) => {
+    published.push(event);
+    const handlers = subscribers.get(event.type) || [];
+    await Promise.all(handlers.map((handler) => handler(event)));
+  });
+
+  const subscribe = vi.fn((eventType: string, handler: EventHandler) => {
+    const handlers = subscribers.get(eventType) || [];
+    handlers.push(handler);
+    subscribers.set(eventType, handlers);
+  });
+
+  const unsubscribe = vi.fn((eventType: string, handler: EventHandler) => {
+    const handlers = subscribers.get(eventType) || [];
+    const index = handlers.indexOf(handler);
+    if (index > -1) handlers.splice(index, 1);
+  });
+
+  return { publish, subscribe, unsubscribe, published, subscribers };
 };
 
 // Mock MCP client for testing
 export const createMockMCPClient = () => {
-	const calls: any[] = [];
-	const responses = new Map<string, any>();
-	const errors = new Map<string, Error>();
+  const calls: Array<{ server: string; tool: string; args: unknown }> = [];
+  const responses = new Map<string, unknown>();
+  const errors = new Map<string, Error>();
 
-	return {
-		callTool: vi.fn(async (server: string, tool: string, args: any) => {
-			const key = `${server}.${tool}`;
-			calls.push({ server, tool, args });
+  const callTool = vi.fn(async (server: string, tool: string, args: unknown) => {
+    const key = `${server}.${tool}`;
+    calls.push({ server, tool, args });
+    if (errors.has(key)) {
+      const err = errors.get(key);
+      if (err) throw err;
+    }
+    return responses.get(key) ?? { result: 'mock result' };
+  });
 
-			if (errors.has(key)) {
-				throw errors.get(key);
-			}
+  const callToolWithFallback = vi.fn(async (servers: string[], tool: string, args: unknown) => {
+    let lastError: unknown;
+    for (const server of servers) {
+      try {
+        return await callTool(server, tool, args);
+      } catch (err) {
+        // Record and attempt next server (fallback strategy)
+        lastError = err;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error('All servers failed');
+  });
 
-			return responses.get(key) || { result: "mock result" };
-		}),
-		callToolWithFallback: vi.fn(async function (
-			servers: string[],
-			tool: string,
-			args: any,
-		) {
-			// Try each server in order
-			for (const server of servers) {
-				try {
-					return await this.callTool(server, tool, args);
-				} catch (_error) {
-					// Continue to next server
-				}
-			}
-			throw new Error("All servers failed");
-		}),
-		discoverServers: vi.fn(async () => []),
-		isConnected: vi.fn(async () => true),
-		mockResponse: (server: string, tool: string, response: any) => {
-			responses.set(`${server}.${tool}`, response);
-		},
-		mockError: (server: string, tool: string, error: Error) => {
-			errors.set(`${server}.${tool}`, error);
-		},
-		calls,
-		responses,
-		errors,
-	};
+  const discoverServers = vi.fn(async () => [] as string[]);
+  const isConnected = vi.fn(async () => true);
+  const mockResponse = (server: string, tool: string, response: unknown) => {
+    responses.set(`${server}.${tool}`, response);
+  };
+  const mockError = (server: string, tool: string, error: Error) => {
+    errors.set(`${server}.${tool}`, error);
+  };
+
+  return {
+    callTool,
+    callToolWithFallback,
+    discoverServers,
+    isConnected,
+    mockResponse,
+    mockError,
+    calls,
+    responses,
+    errors,
+  };
 };

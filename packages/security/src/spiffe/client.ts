@@ -136,7 +136,7 @@ export class SpiffeClient {
         ): Promise<Response> {
                 let attempt = 0;
                 let delay = 500;
-                // eslint-disable-next-line no-constant-condition
+                 
                 while (true) {
                         try {
                                 const res = await this.fetchWithTimeout(path, init);

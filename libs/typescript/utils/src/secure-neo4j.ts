@@ -197,6 +197,16 @@ export class SecureNeo4j {
 		}
 	}
 
+	// Type guard for record objects
+	private isRecord(value: unknown): value is Record<string, unknown> {
+		return (
+			typeof value === "object" &&
+			value !== null &&
+			!Array.isArray(value) &&
+			Object.getPrototypeOf(value) === Object.prototype
+		);
+	}
+
 	// Validate properties to prevent injection
 	private validateProperties(props: Record<string, unknown>) {
 		for (const [key, value] of Object.entries(props)) {
@@ -220,8 +230,10 @@ export class SecureNeo4j {
 					);
 				}
 			} else if (typeof value === "object" && value !== null) {
-				// Recursively validate nested objects
-				this.validateProperties(value);
+				// Recursively validate nested objects using type guard
+				if (this.isRecord(value)) {
+					this.validateProperties(value);
+				}
 			}
 		}
 	}

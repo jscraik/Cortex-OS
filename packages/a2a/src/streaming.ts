@@ -1,5 +1,6 @@
 import { Readable } from "node:stream";
-import type { TaskManager, TaskResult } from "./task-manager.js";
+import type { TaskManager } from "./task-manager.js";
+import type { TaskResult } from "./protocol.js";
 
 /**
  * Create a Server-Sent Events stream from TaskManager events.

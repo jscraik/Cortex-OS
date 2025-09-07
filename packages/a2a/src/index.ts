@@ -54,6 +54,4 @@ export {
 // Streaming utilities
 export { createTaskEventStream } from "./streaming.js";
 
-// Default export for convenience
-import { handleA2A } from "./rpc-handler.js";
-export default { handleA2A };
+// handleA2A is already exported above in the main handler block

@@ -164,7 +164,7 @@ export class TaskManager extends EventEmitter {
                                 result,
                         });
 
-                        this.emit("taskCompleted", { id: taskId, ...result });
+                        this.emit("taskCompleted", { ...result, id: taskId });
 
                         return result;
 		} catch (error) {

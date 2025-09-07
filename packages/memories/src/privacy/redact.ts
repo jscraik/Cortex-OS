@@ -32,12 +32,12 @@ export function redactPII(text: string): string {
         });
 
         // Replace SSN patterns - with word boundaries
-        // eslint-disable-next-line sonarjs/duplicates-in-character-class
+         
         result = result.replace(/\b\d{3}[\s-]?\d{2}[\s-]?\d{4}\b/g, "[REDACTED]");
 
         // Replace basic address patterns (number + street name)
         result = result.replace(
-                // eslint-disable-next-line sonarjs/duplicates-in-character-class
+                 
                 /\b\d+\s+[A-Za-z]+\s+(?:st(?:reet)?|ave(?:nue)?|rd|road|blvd|boulevard|ln|lane|dr(?:ive)?|way)\b/gi,
                 "[REDACTED]",
         );

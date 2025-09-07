@@ -6,7 +6,7 @@
 import { z } from "zod";
 
 // Base types
-// eslint-disable-next-line sonarjs/redundant-type-aliases
+ 
 export type UUID = string;
 export type EvidenceRisk = "low" | "medium" | "high" | "unknown";
 export type TaskStatus =

@@ -5,13 +5,13 @@ import type { MemoryStore, TextQuery, VectorQuery } from "../ports/MemoryStore.j
 // Attempt dynamic loading of native modules so the package can be imported even
 // when SQLite bindings are unavailable (e.g., in environments without native
 // compilation support).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let DatabaseImpl: typeof import("better-sqlite3") | undefined;
 let loadVec: typeof import("sqlite-vec")["load"] | undefined;
 try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         DatabaseImpl = require("better-sqlite3");
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         ({ load: loadVec } = require("sqlite-vec"));
 } catch {
         // Modules not available; constructor will throw if used

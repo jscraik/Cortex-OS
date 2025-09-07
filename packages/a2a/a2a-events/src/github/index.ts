@@ -308,7 +308,7 @@ export function createGitHubEventBatch(
 	}
 
 	// Create envelopes for each batch
-	const { createA2AEventEnvelope } = require("./envelope");
+	import { createA2AEventEnvelope } from "./envelope";
 	return batches.map((batch) =>
 		createA2AEventEnvelope(batch[0] as GitHubEventData, {
 			priority: options?.priority,

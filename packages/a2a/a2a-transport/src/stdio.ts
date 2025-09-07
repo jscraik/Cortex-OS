@@ -1,6 +1,9 @@
 import { spawn } from "node:child_process";
 import type { Envelope } from "@cortex-os/a2a-contracts/envelope";
 import type { Transport } from "@cortex-os/a2a-core/transport";
+import { createLogger } from "@cortex-os/observability";
+
+const logger = createLogger('a2a-stdio-transport');
 
 export function stdio(
 	command: string,
@@ -44,7 +47,13 @@ export function stdio(
 				if (handlers) {
 					for (const fn of handlers) fn(msg);
 				}
-			} catch {}
+			} catch (error) {
+				// Use structured logging for message parsing errors
+				logger.warn({
+					error: error instanceof Error ? error.message : String(error),
+					context: 'stdio-message-parsing'
+				}, 'Failed to parse JSON message from stdio');
+			}
 		}
 	});
 	return {

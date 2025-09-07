@@ -9,7 +9,7 @@ describe('build output', () => {
 
   it('emits compiled artifacts', () => {
     if (existsSync(dist)) rmSync(dist, { recursive: true, force: true });
-    // eslint-disable-next-line sonarjs/no-os-command-from-path
+     
     execSync('pnpm --filter @cortex-os/asbr build', { cwd: root, stdio: 'inherit' });
     expect(existsSync(join(dist, 'index.js'))).toBe(true);
   });

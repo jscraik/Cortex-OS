@@ -60,7 +60,7 @@ export class SimplePRPGraph {
 				? `prp-deterministic-${generateDeterministicHash(blueprint)}`
 				: nanoid());
 
-		let state: PRPState = createInitialPRPState(blueprint, {
+		const state: PRPState = createInitialPRPState(blueprint, {
 			runId,
 			deterministic,
 			id: options.id,
