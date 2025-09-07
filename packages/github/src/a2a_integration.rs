@@ -56,13 +56,25 @@ impl A2AEventBus for HttpEventBus {
     fn publish(&self, topic: &str, event: A2AEvent) -> std::pin::Pin<Box<dyn futures::Future<Output = GitHubResult<()>> + Send>> {
         let url = format!("{}/{}", self.endpoint.trim_end_matches('/'), topic);
         let client = self.client.clone();
+        let url_for_err = url.clone();
         Box::pin(async move {
             client
                 .post(&url)
                 .json(&event)
                 .send()
                 .await
-                .map_err(|e| GitHubError::A2AEvent(e.to_string()))?;
+                .map_err(|e| {
+                    // Try to extract status code if available
+                    let status = if let Some(status) = e.status() {
+                        format!("{}", status)
+                    } else {
+                        "unknown".to_string()
+                    };
+                    GitHubError::A2AEvent(format!(
+                        "Failed to send HTTP request to {}: status: {}, error: {}",
+                        url_for_err, status, e
+                    ))
+                })?;
             Ok(())
         })
     }
