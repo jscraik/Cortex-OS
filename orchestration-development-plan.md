@@ -1,6 +1,6 @@
 # Orchestration Package Development Plan
 
-This document details a TDD-driven roadmap to bring `packages/orchestration` to operational readiness. Each task follows strict software engineering practices: red‑green‑refactor, micro-commits, and Conventional Commits.
+This document details a TDD-driven roadmap to bring `packages/orchestration` to operational readiness. Each task follows strict software engineering practices: red-green-refactor, micro-commits, and Conventional Commits.
 
 ## Guiding Principles
 
