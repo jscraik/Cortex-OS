@@ -11,7 +11,7 @@ This document outlines a strict software engineering and test-driven development
 2. **Commit Strategy**
    - One feature or fix per commit using Conventional Commits.
    - Include tests and implementation together.
-   - Run `pre-commit run --files <changed_files>` and `pnpm test` (or `pnpm docs:lint` for docs) before committing.
+   - Run `pre-commit run --files changed_files` (e.g., `pre-commit run --files file1.js file2.ts`) and `pnpm test` (or `pnpm docs:lint` for docs) before committing.
 
 ## Packages Overview
 
