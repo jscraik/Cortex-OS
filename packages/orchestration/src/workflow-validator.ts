@@ -102,11 +102,21 @@ function topologicalSort(wf: any, nodes: Set<string>): string[] {
         const order: string[] = [];
 
         while (queue.length > 0) {
-                const id = queue.shift()!;
+                const id = queue.shift();
+                if (id === undefined) {
+                        // Should not happen, but break defensively
+                        break;
+                }
                 order.push(id);
 
-                for (const next of adj.get(id)!) {
-                        inDegree.set(next, inDegree.get(next)! - 1);
+                const neighbors = adj.get(id) ?? [];
+                for (const next of neighbors) {
+                        const nextInDegree = inDegree.get(next);
+                        if (nextInDegree === undefined) {
+                                // Defensive: skip if next is not in inDegree map
+                                continue;
+                        }
+                        inDegree.set(next, nextInDegree - 1);
                         if (inDegree.get(next) === 0) {
                                 queue.push(next);
                                 queue.sort();
