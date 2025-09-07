@@ -1,18 +1,24 @@
 // Contracts Coverage Test
+// Note: explicit vitest imports to ensure globals are available even if workspace config does not enable globals.
+import { describe, expect, it } from 'vitest';
 // Ensures every exported *Schema in libs/typescript/contracts/**/events.ts has at least one test file referencing it.
 // This acts as a safety net to prevent silent addition of untested contracts.
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-interface SchemaRef { file: string; exportName: string; }
+interface SchemaRef {
+    file: string;
+    exportName: string;
+}
 
 function walk(dir: string, acc: string[] = []): string[] {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
         if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
         const full = path.join(dir, e.name);
-        if (e.isDirectory()) walk(full, acc); else if (e.isFile()) acc.push(full);
+        if (e.isDirectory()) walk(full, acc);
+        else if (e.isFile()) acc.push(full);
     }
     return acc;
 }
@@ -24,7 +30,8 @@ const __dirname = path.dirname(__filename);
 // Walk upward until we find package.json to establish repo root (more robust than relative assumption)
 function findRepoRoot(start: string): string {
     let current = start;
-    for (let i = 0; i < 10; i++) { // safety bound
+    for (let i = 0; i < 10; i++) {
+        // safety bound
         if (existsSync(path.join(current, 'package.json'))) return current;
         const parent = path.dirname(current);
         if (parent === current) break;
@@ -46,7 +53,7 @@ if (!existsSync(contractsRoot)) {
 
 function findEventFiles(): string[] {
     const files = walk(contractsRoot);
-    return files.filter(f => f.endsWith('events.ts'));
+    return files.filter((f) => f.endsWith('events.ts'));
 }
 
 function extractSchemas(file: string): SchemaRef[] {
@@ -78,17 +85,20 @@ describe('contracts: schema coverage', () => {
 
     // Map schema -> test files referencing it
     const testDir = path.join(root, 'contracts', 'tests');
-    const testFiles = walk(testDir).filter(f => f.endsWith('.test.ts'));
+    const testFiles = walk(testDir).filter((f) => f.endsWith('.test.ts'));
 
     const testContentCache: Record<string, string> = {};
     const hasReference = (schema: SchemaRef): boolean => {
-        return testFiles.some(tf => {
-            if (!testContentCache[tf]) testContentCache[tf] = readFileSync(tf, 'utf8');
-            return new RegExp(`\\b${schema.exportName}\\b`).test(testContentCache[tf]);
+        return testFiles.some((tf) => {
+            if (!testContentCache[tf])
+                testContentCache[tf] = readFileSync(tf, 'utf8');
+            return new RegExp(`\\b${schema.exportName}\\b`).test(
+                testContentCache[tf],
+            );
         });
     };
 
-    schemas.forEach(schema => {
+    schemas.forEach((schema) => {
         it(`has test coverage for ${path.relative(root, schema.file)}::${schema.exportName}`, () => {
             expect(hasReference(schema)).toBe(true);
         });

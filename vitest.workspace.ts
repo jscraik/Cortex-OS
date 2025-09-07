@@ -24,4 +24,6 @@ export default defineWorkspace([
 	"packages/rag",
 	"packages/simlab",
 	"libs/typescript/contracts",
+	// Added root-level contracts test directory for schema coverage guard
+	"contracts",
 ]);
