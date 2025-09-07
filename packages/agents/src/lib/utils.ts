@@ -35,12 +35,15 @@ export function filterDefined<T>(array: (T | undefined | null)[]): T[] {
   return array.filter((item): item is T => item != null);
 }
 
+// Secure ID helpers (centralized randomness handled in utils package RNG)
+import { secureId } from '@cortex-os/utils';
+
 export function generateAgentId(): string {
-  return `agent_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return secureId('agent');
 }
 
 export function generateTraceId(): string {
-  return `trace_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return secureId('trace');
 }
 
 export function isDefined<T>(value: T | undefined | null): value is T {
