@@ -48,7 +48,7 @@ class SSETransport(MCPTransport):
                         data = json.loads(data_str)
                         validate_mcp_message(data)
                         if self.message_handler:
-                            message = MCPMessage.from_json(data_str)
+                            message = MCPMessage.from_dict(data)
                             await self.message_handler(message)
                     except Exception:  # pragma: no cover - log and notify
                         logger.exception("Failed to handle SSE message")
