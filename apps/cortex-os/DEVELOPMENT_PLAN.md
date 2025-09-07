@@ -6,8 +6,8 @@ This document outlines the strict software engineering and test-driven developme
 
 ## Development Plan
 
-| Stage                                       | Objective                                                | Commit Breakdown (TDD)                                                                                                                                                                     | Notes                                       |
-| ------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| Stage | Objective | Commit Breakdown (TDD) | Notes |
+|-------|-----------|------------------------|-------|
 | **0. Scaffolding Review**                   | Confirm baseline DI and event bus wiring.                | 1. ✅ Add regression tests for current DI & event routing.<br>2. ✅ Fix any failing tests.                                                                                                 | Locks in existing behavior before new work. |
 | **1. Contract Registry**                    | Maintain contract definitions with lookup & validation.  | 1. ❌ Add failing tests for registering & retrieving contracts.<br>2. ✅ Implement registry with schema validation.<br>3. ✅ Integrate registry into DI container.                         | Use JSON schema + provenance tags.          |
 | **2. Policy Router**                        | Enforce routing policy rules.                            | 1. ❌ Test: events violating policy should be rejected.<br>2. ✅ Implement router; config-driven policies.<br>3. ✅ Link with contract registry for contract-aware routing.                | Supports future hot-reload.                 |
