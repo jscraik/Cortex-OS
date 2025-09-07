@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-webui-backend
+  namespace: cortex-webui
+  labels:
+    app.kubernetes.io/name: cortex-webui
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: cortex-os
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cortex-webui
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cortex-webui
+        app.kubernetes.io/component: backend
+        app.kubernetes.io/part-of: cortex-os
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: backend
+        image: cortex-webui-backend:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3001
+          name: http
+          protocol: TCP
+        env:
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: cortex-webui-secrets
+              key: jwt-secret
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-webui-secrets
+              key: openai-api-key
+              optional: true
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cortex-webui-secrets
+              key: anthropic-api-key
+              optional: true
+        envFrom:
+        - configMapRef:
+            name: cortex-webui-config
+        volumeMounts:
+        - name: data-storage
+          mountPath: /app/data
+        - name: upload-storage
+          mountPath: /app/uploads
+        - name: logs
+          mountPath: /app/logs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: data-storage
+        persistentVolumeClaim:
+          claimName: cortex-webui-data-pvc
+      - name: upload-storage
+        persistentVolumeClaim:
+          claimName: cortex-webui-uploads-pvc
+      - name: logs
+        emptyDir: {}
+      restartPolicy: Always

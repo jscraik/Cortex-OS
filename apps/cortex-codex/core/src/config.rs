@@ -1228,6 +1228,7 @@ disable_response_storage = true
                 model_providers: fixture.model_provider_map.clone(),
                 project_doc_max_bytes: PROJECT_DOC_MAX_BYTES,
                 codex_home: fixture.codex_home(),
+                stream_mode: StreamMode::Auto,
                 history: History::default(),
                 file_opener: UriBasedFileOpener::VsCode,
                 tui: Tui::default(),
@@ -1287,6 +1288,7 @@ disable_response_storage = true
             model_providers: fixture.model_provider_map.clone(),
             project_doc_max_bytes: PROJECT_DOC_MAX_BYTES,
             codex_home: fixture.codex_home(),
+            stream_mode: StreamMode::Auto,
             history: History::default(),
             file_opener: UriBasedFileOpener::VsCode,
             tui: Tui::default(),
@@ -1361,6 +1363,7 @@ disable_response_storage = true
             model_providers: fixture.model_provider_map.clone(),
             project_doc_max_bytes: PROJECT_DOC_MAX_BYTES,
             codex_home: fixture.codex_home(),
+            stream_mode: StreamMode::Auto,
             history: History::default(),
             file_opener: UriBasedFileOpener::VsCode,
             tui: Tui::default(),
@@ -1391,7 +1394,7 @@ disable_response_storage = true
 
     #[test]
     fn test_stream_mode_precedence_and_json_parse() -> std::io::Result<()> {
-        use std::env;
+        // Use fully-qualified std env functions to avoid any shadowing.
         let fixture = create_test_fixture()?;
 
         // Base config sets nothing (default Auto). Provide a config.toml stream_mode via cfg clone.
@@ -1399,7 +1402,9 @@ disable_response_storage = true
         cfg.stream_mode = Some(StreamMode::Aggregate); // config.toml preference
 
         // No env / no override -> should use config Aggregate.
-        env::remove_var("CODEX_STREAM_MODE");
+        unsafe {
+        std::env::remove_var("CODEX_STREAM_MODE");
+        }
         let config_a = Config::load_from_base_config_with_overrides(
             cfg.clone(),
             ConfigOverrides {
@@ -1411,7 +1416,9 @@ disable_response_storage = true
         assert_eq!(config_a.stream_mode, StreamMode::Aggregate);
 
         // Env overrides config when no CLI override specified.
-        env::set_var("CODEX_STREAM_MODE", "raw");
+        unsafe {
+        std::env::set_var("CODEX_STREAM_MODE", "raw");
+        }
         let config_b = Config::load_from_base_config_with_overrides(
             cfg.clone(),
             ConfigOverrides {
@@ -1435,7 +1442,9 @@ disable_response_storage = true
         assert_eq!(config_c.stream_mode, StreamMode::Json);
 
         // Clean up env var to avoid test ordering side-effects.
-        env::remove_var("CODEX_STREAM_MODE");
+        unsafe {
+        std::env::remove_var("CODEX_STREAM_MODE");
+        }
         Ok(())
     }
 
@@ -1444,7 +1453,7 @@ disable_response_storage = true
         // If CODEX_STREAM_MODE is set to an invalid value we should fall back to Auto;
         // precedence rules mean this (fallback) Auto coming from env parsing still
         // overrides any config.toml preference.
-        use std::env;
+        // Use fully-qualified std env functions to avoid any shadowing.
         let fixture = create_test_fixture()?;
 
         // Config prefers Raw explicitly.
@@ -1452,7 +1461,9 @@ disable_response_storage = true
         cfg.stream_mode = Some(StreamMode::Raw);
 
         // Set invalid env var (mixed case & unknown token) to exercise fallback path.
-        env::set_var("CODEX_STREAM_MODE", "WeIrD_Mode_Value");
+        unsafe {
+        std::env::set_var("CODEX_STREAM_MODE", "WeIrD_Mode_Value");
+        }
         let config = Config::load_from_base_config_with_overrides(
             cfg.clone(),
             ConfigOverrides {
@@ -1464,7 +1475,9 @@ disable_response_storage = true
         // Expect Auto (fallback) instead of Raw (config) because env precedence applies even when invalid.
         assert_eq!(config.stream_mode, StreamMode::Auto);
 
-        env::remove_var("CODEX_STREAM_MODE");
+        unsafe {
+        std::env::remove_var("CODEX_STREAM_MODE");
+        }
         Ok(())
     }
 

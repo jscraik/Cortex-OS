@@ -7,6 +7,8 @@ This repository uses Git submodules to vendor external code while keeping a clea
 Path: `external/openai-codex`
 Remote: <https://github.com/openai/codex.git>
 
+Overlay governance & usage guide: [docs/submodules/openai-codex.md](./submodules/openai-codex.md)
+
 ### Cloning With Submodules
 
 Fresh clone including submodules:

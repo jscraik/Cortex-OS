@@ -54,13 +54,12 @@ type MCPHandlerParams = z.infer<
 //   request: MCPRequestSchema,
 //   json: z.boolean().optional(),
 // })
-type MCPRouteSchema = z.infer<
-    typeof z.object({
+const MCPRoute = z.object({
         config: AgentConfigSchema,
         request: MCPRequestSchema,
         json: z.boolean().optional(),
-    })
->;
+});
+type MCPRouteSchema = z.infer<typeof MCPRoute>;
 
 const handleMCP = async ({ request }: MCPRouteSchema) => {
         const si = getMCPServerInfo();
@@ -90,48 +89,39 @@ const { default: openapiSpec } = await import("../openapi.json", {
 	assert: { type: "json" },
 });
 
+createAgentRoute(app, "/mcp", MCPRoute, handleMCP);
+
 createAgentRoute(
-	app,
-	"/mcp",
-	z.object({
-		config: AgentConfigSchema,
-		request: MCPRequestSchema,
-		json: z.boolean().optional(),
-	}),
-	handleMCP,
+        app,
+        "/a2a",
+        z.object({
+                config: AgentConfigSchema,
+                message: A2AMessageSchema,
+                json: z.boolean().optional(),
+        }),
+        handleA2A,
 );
 
 createAgentRoute(
-	app,
-	"/a2a",
-	z.object({
-		config: AgentConfigSchema,
-		message: A2AMessageSchema,
-		json: z.boolean().optional(),
-	}),
-	handleA2A,
+        app,
+        "/rag",
+        z.object({
+                config: AgentConfigSchema,
+                query: RAGQuerySchema,
+                json: z.boolean().optional(),
+        }),
+        handleRAG,
 );
 
 createAgentRoute(
-	app,
-	"/rag",
-	z.object({
-		config: AgentConfigSchema,
-		query: RAGQuerySchema,
-		json: z.boolean().optional(),
-	}),
-	handleRAG,
-);
-
-createAgentRoute(
-	app,
-	"/simlab",
-	z.object({
-		config: AgentConfigSchema,
-		command: SimlabCommandSchema,
-		json: z.boolean().optional(),
-	}),
-	handleSimlab,
+        app,
+        "/simlab",
+        z.object({
+                config: AgentConfigSchema,
+                command: SimlabCommandSchema,
+                json: z.boolean().optional(),
+        }),
+        handleSimlab,
 );
 
 app.get("/openapi.json", async (_req, reply) => {

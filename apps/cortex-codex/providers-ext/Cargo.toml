@@ -1,0 +1,14 @@
+cargo-features = ["edition2024"]
+
+[package]
+name = "codex-providers-ext"
+version = { workspace = true }
+edition = "2024"
+
+[lib]
+name = "codex_providers_ext"
+path = "src/lib.rs"
+
+[dependencies]
+codex-core = { path = "../core" }
+

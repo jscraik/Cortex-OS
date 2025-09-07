@@ -1,9 +1,27 @@
-import { prepareStore, runRetrievalEval } from "@cortex-os/rag/eval/harness";
-import { memoryStore } from "@cortex-os/rag/store/memory";
 import { z } from "zod";
-import { createRouterEmbedder } from "../lib/router-embedder";
 import { GoldenDatasetSchema, type GoldenDataset, type SuiteOutcome } from "../types";
-import type { Embedder } from "@cortex-os/rag/lib";
+
+export interface Embedder {
+        embed(texts: string[]): Promise<number[][]>;
+}
+
+export interface RagDeps {
+        createEmbedder(): Promise<Embedder>;
+        createMemoryStore(): unknown;
+        prepareStore(dataset: GoldenDataset, embedder: Embedder, store: unknown): Promise<void>;
+        runRetrievalEval(
+                dataset: GoldenDataset,
+                embedder: Embedder,
+                store: unknown,
+                opts: { k: number },
+        ): Promise<{
+                k: number;
+                ndcg: number;
+                recall: number;
+                precision: number;
+                totalQueries: number;
+        }>;
+}
 
 export const RagOptions = z.object({
         dataset: GoldenDatasetSchema,
@@ -23,14 +41,14 @@ export type RagOptions = z.infer<typeof RagOptions>;
 export async function runRagSuite(
         name: string,
         opts: RagOptions,
-        embedder?: Embedder,
+        deps: RagDeps,
 ): Promise<SuiteOutcome> {
         const { dataset, k, thresholds } = opts;
-        const E = embedder ?? (await createRouterEmbedder());
-        const S = memoryStore();
+        const E = await deps.createEmbedder();
+        const S = deps.createMemoryStore();
 
-        await prepareStore(dataset, E, S);
-        const summary = await runRetrievalEval(dataset, E, S, { k });
+        await deps.prepareStore(dataset, E, S);
+        const summary = await deps.runRetrievalEval(dataset, E, S, { k });
 
         const th = {
                 ndcg: thresholds.ndcg ?? 0.8,
@@ -61,6 +79,5 @@ export async function runRagSuite(
 export const ragSuite = {
         name: "rag",
         optionsSchema: RagOptions,
-        run: (name: string, opts: RagOptions) => runRagSuite(name, opts),
+        run: (name: string, opts: RagOptions, deps: RagDeps) => runRagSuite(name, opts, deps),
 };
-

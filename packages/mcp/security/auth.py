@@ -2,6 +2,8 @@
 
 import logging
 import os
+import secrets
+from pathlib import Path
 import time
 from datetime import datetime, timedelta
 from typing import Any
@@ -18,27 +20,29 @@ logger = logging.getLogger(__name__)
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# JWT configuration - must be stable across restarts
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-if not SECRET_KEY:
-    from pathlib import Path
 
-    secret_file = Path(__file__).resolve().parent / ".jwt_secret"
-    if secret_file.exists():
-        SECRET_KEY = secret_file.read_text().strip()
-    else:
-        if os.getenv("ENVIRONMENT") == "production":
-            raise RuntimeError(
-                "JWT_SECRET_KEY environment variable must be set in production"
-            )
-        # Write the secret with restrictive permissions (0o600)
-        fd = os.open(secret_file, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with os.fdopen(fd, "w") as f:
-            f.write(SECRET_KEY)
-        logger.warning(
-            "Generated development JWT secret stored at %s. Set JWT_SECRET_KEY for production.",
-            secret_file,
-        )
+
+def _load_secret_key() -> str:
+    env_key = os.getenv("JWT_SECRET_KEY")
+    if env_key:
+        return env_key
+    secret_path = Path(os.getenv("JWT_SECRET_FILE", str(Path(__file__).resolve().parent / ".jwt_secret")))
+    if secret_path.exists():
+        return secret_path.read_text().strip()
+    if os.getenv("ENVIRONMENT") == "production":
+        raise RuntimeError("JWT_SECRET_KEY environment variable must be set in production")
+    key = secrets.token_urlsafe(32)
+    fd = os.open(secret_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(key)
+    logger.warning(
+        "Generated development JWT secret stored at %s. Set JWT_SECRET_KEY for production.",
+        secret_path,
+    )
+    return key
+
+# JWT configuration - must be stable across restarts
+SECRET_KEY = _load_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7

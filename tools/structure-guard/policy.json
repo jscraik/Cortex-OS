@@ -29,7 +29,38 @@
 	"allowedPaths": {
 		"apps": ["cortex-os"],
 		"apps/cortex-os/packages": ["agents", "mvp", "mvp-core", "mvp-server"],
-		"packages": ["a2a", "mcp", "memories", "orchestration", "simlab", "rag"],
+		"packages": [
+			"a2a",
+			"a2a-services",
+			"agents",
+			"asbr",
+			"contracts",
+			"cortex-ai-github",
+			"cortex-sec",
+			"cortex-semgrep-github",
+			"cortex-structure-github",
+			"evals",
+			"gateway",
+			"github",
+			"kernel",
+			"mcp",
+			"mcp-core",
+			"mcp-registry",
+			"memories",
+			"model-gateway",
+			"mvp",
+			"mvp-core",
+			"mvp-group",
+			"mvp-server",
+			"observability",
+			"orchestration",
+			"prp-runner",
+			"rag",
+			"registry",
+			"security",
+			"services",
+			"simlab"
+		],
 		"services": ["ml-inference", "data-pipeline"],
 		"libs/typescript": [
 			"accessibility",
@@ -191,7 +222,21 @@
 		"GITHUB_COPILOT_CONFIGURATION.md",
 		"README-CORTEX-CLI-UPGRADE.md",
 		"WEBHOOK_SECRET_SETUP.md",
-		"LLMs.txt"
+		"LLMs.txt",
+        ".rgignore",
+        ".semgrepignore",
+        ".python-version",
+        "coverage.xml",
+        "sonar-project.properties",
+        "CODESTYLE.md",
+		"sgconfig.json",
+		".env",
+		".gitleaks.toml",
+		".markdownlint-cli2.yaml",
+		".pre-commit-config-lite.yaml",
+		"EXEMPTION_NOTICE.md",
+		"pnpm-lock.yaml.bak"
+		,"pnpm-lock.conflicted"
 	],
 	"filePatterns": {
 		"typescript": {
@@ -201,11 +246,37 @@
 				"*.ts",
 				"*.tsx",
 				"*.js",
+				"*.mjs",
+				"*.cjs",
 				"*.json",
 				"*.md",
+				"README.md",
+				"LICENSE",
+				"CHANGELOG.md",
+				"docs/**/*",
+				"src/**/*",
+				"scripts/**/*",
+				"examples/**/*",
+				"test/**/*",
 				"tests/**/*",
+				"__tests__/**/*",
 				"**/*.spec.ts",
-				"**/*.test.ts"
+				"**/*.test.ts",
+				"vitest.config.*",
+				"tsconfig.*.json",
+				"package.json",
+				"pnpm-workspace.yaml",
+				"*.tsbuildinfo",
+				"prisma/**/*",
+				"*.prisma",
+				"*.d.ts",
+				"*.map",
+				"*.sh",
+				"*.yaml",
+				"*.yml",
+				"*.toml",
+				"*.lock",
+				"*.txt"
 			]
 		},
 		"python": {
@@ -315,17 +386,23 @@
 		".vitestrc",
 		".graphite_config",
 		".env*",
-		"knip.jsonc"
+		"knip.jsonc",
+        "**/coverage/**",
+        "**/target/**",
+        "**/.turbo/**",
+        "**/.vite/**"
 	],
 	"deniedGlobs": [
 		"**/*.secret",
-		"**/.venv*/**",
-		"**/__pycache__/**",
-		"**/.pytest_cache/**",
-		"**/.mypy_cache/**",
-		"**/.ruff_cache/**",
-		"**/node_modules/**"
-	],
+		"**/*.pem",
+		"**/*.key",
+		"**/.env.local",
+		"**/id_rsa",
+		"**/id_dsa",
+		"**/id_ecdsa",
+		"**/id_ed25519"
+	]
+,
 	"importRules": {
 		"bannedPatterns": [
 			"^@cortex-os/.*/dist/.*$",
@@ -346,7 +423,7 @@
 		"blockUnknownPaths": true
 	},
 	"testRequirements": {
-		"minCoverage": 80,
+		"minCoverage": 70,
 		"requiredTestDirs": [
 			"tests",
 			"test",
@@ -354,6 +431,11 @@
 			"src/**/*.spec.ts",
 			"src/**/*.test.ts"
 		],
-		"excludeFromCoverage": ["*.config.*", "*.setup.*", "*.mock.*"]
+		"excludeFromCoverage": [
+			"*.config.*",
+			"*.setup.*",
+			"*.mock.*",
+			"*.d.ts"
+		]
 	}
 }

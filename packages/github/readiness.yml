@@ -1,11 +1,11 @@
-package: "@cortex-os/github"
+package: '@cortex-os/github'
 coverage:
   statements: 0
   branches: 0
   functions: 0
   lines: 0
 checklist:
-  tdd: false
+  tdd: true
   contracts: false
   a11y: false
   security: false
@@ -13,7 +13,7 @@ checklist:
   architecture: false
   reliability: false
 thresholds:
-  statements: 0
-  branches: 0
-  functions: 0
-  lines: 0
+  statements: 80
+  branches: 80
+  functions: 80
+  lines: 80

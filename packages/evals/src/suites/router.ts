@@ -1,8 +1,7 @@
-import { createModelRouter } from "@cortex-os/model-gateway";
 import { z } from "zod";
 import type { SuiteOutcome } from "../types";
 
-interface Router {
+export interface Router {
         initialize(): Promise<void>;
         generateEmbedding(request: { text: string }): Promise<{ embedding: number[] }>;
         generateChat(request: {
@@ -28,35 +27,34 @@ export type RouterOptions = z.infer<typeof RouterOptions>;
 export async function runRouterSuite(
         name: string,
         opts: RouterOptions,
-        router?: Router,
+        router: Router,
 ): Promise<SuiteOutcome> {
         const thresholds = {
-                embedLatencyMs: opts.thresholds.embedLatencyMs,
-                chatLatencyMs: opts.thresholds.chatLatencyMs,
-                rerankLatencyMs: opts.thresholds.rerankLatencyMs,
+                embedLatencyMs: opts.thresholds.embedLatencyMs ?? 2000,
+                chatLatencyMs: opts.thresholds.chatLatencyMs ?? 2000,
+                rerankLatencyMs: opts.thresholds.rerankLatencyMs ?? 2000,
         };
 
-        const r = router ?? createModelRouter();
-        await r.initialize();
+        await router.initialize();
 
         const t0 = Date.now();
-        const emb = await r.generateEmbedding({ text: "hi" });
+        const emb = await router.generateEmbedding({ text: "hi" });
         const embedLatencyMs = Date.now() - t0;
 
         const t1 = Date.now();
-        const chat = await r.generateChat({
+        const chat = await router.generateChat({
                 messages: [{ role: "user", content: "ping" }],
         });
         const chatLatencyMs = Date.now() - t1;
 
         const t2 = Date.now();
-        const rerank = await r.rerank({ query: "q", documents: ["a", "b", "c"] });
+        const rerank = await router.rerank({ query: "q", documents: ["a", "b", "c"] });
         const rerankLatencyMs = Date.now() - t2;
 
         const metrics = {
-                hasEmbedding: r.hasAvailableModels("embedding") ? 1 : 0,
-                hasChat: r.hasAvailableModels("chat") ? 1 : 0,
-                hasRerank: r.hasAvailableModels("reranking") ? 1 : 0,
+                hasEmbedding: router.hasAvailableModels("embedding") ? 1 : 0,
+                hasChat: router.hasAvailableModels("chat") ? 1 : 0,
+                hasRerank: router.hasAvailableModels("reranking") ? 1 : 0,
                 embedDim: emb.embedding.length,
                 chatTokens: chat.content.trim().split(/\s+/).filter(Boolean).length,
                 rerankScores: rerank.scores.length,
@@ -89,6 +87,6 @@ export async function runRouterSuite(
 export const routerSuite = {
         name: "router",
         optionsSchema: RouterOptions,
-        run: (name: string, opts: RouterOptions) => runRouterSuite(name, opts),
+        run: (name: string, opts: RouterOptions, router: Router) =>
+                runRouterSuite(name, opts, router),
 };
-

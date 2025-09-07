@@ -77,8 +77,10 @@ export const createMemoryService = (
                                                                 if (!seen.has(m.id)) textResults.push(m);
                                                                 if (textResults.length >= topK) break;
                                                         }
-                                                } catch {
-                                                        // ignore embedding errors
+                                                } catch (err) {
+                                                        throw err instanceof Error
+                                                                ? err
+                                                                : new Error("embedding:failed");
                                                 }
                                         }
                                         return textResults;

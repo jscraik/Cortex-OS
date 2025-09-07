@@ -5,12 +5,12 @@ coverage:
   functions: 0
   lines: 0
 checklist:
-  tdd: false
-  contracts: false
+  tdd: true
+  contracts: true
   a11y: false
-  security: false
-  docs: false
-  architecture: false
+  security: true
+  docs: true
+  architecture: true
   reliability: false
 thresholds:
   statements: 0

@@ -4,6 +4,8 @@
 
 ![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-v9.9.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
 
+<!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
+
 <!-- markdownlint-enable MD013 -->
 
 ## Autonomous Software Behavior Reasoning (ASBR) Runtime
@@ -187,6 +189,127 @@ scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config fil
 > **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
 > and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
 
+### 🛡️ Code Quality & Security Automation
+
+This repository enforces a layered quality model combining fast local feedback, pre-push hard gates, and CI/PR decoration:
+
+| Layer             | Scope             | Tools                                                                                                     | Failing Effect                    |
+| ----------------- | ----------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Pre-commit (fast) | Staged files only | Biome/ESLint formatting, minimal lint, pattern guard, `.env` presence check                               | Blocks commit (fix immediately)   |
+| Pre-push (full)   | Entire workspace  | Typecheck (TS/py), Ruff, Semgrep focused profiles, tests + coverage, structural governance                | Blocks push (stops degraded code) |
+| CI Workflows      | Trusted baseline  | Semgrep SARIF (OWASP + LLM + Top 10), optional SonarCloud, structure validation, license + security scans | Blocks merge via required checks  |
+| PR Decoration     | Incremental risk  | GitHub code scanning alerts (SARIF), Sonar summary (if enabled)                                           | Surfaces issues inline            |
+
+Key components now in place:
+
+1. Fast hooks separated from heavy gates to keep commit latency low.
+2. Hardened pattern guard prevents accidental introduction of disallowed patterns (secrets, debug noise, forbidden imports).
+3. Root `.env` enforced: commit requires presence (prevents missing runtime vars drift); file is intentionally minimal.
+4. Semgrep baseline + diff flow: treat newly introduced findings as red; historical tech-debt tracked separately.
+5. SARIF upload enables native GitHub Security tab visibility (code scanning alerts) without vendor lock-in.
+6. Optional SonarCloud workflow (`.github/workflows/sonar.yml`) supports multi-language metrics
+   (SAST, coverage, maintainability). Disable by removing or making conditional.
+
+#### Semgrep Usage
+
+Baseline (captures current state – do NOT run casually unless intentionally resetting):
+
+```bash
+pnpm security:scan:baseline   # writes reports/semgrep-baseline.json
+```
+
+Diff against baseline (local developer check before large refactors / PR polish):
+
+```bash
+pnpm security:scan:diff       # generates current + compares; exits non-zero on NEW findings
+```
+
+CI pipeline runs (excerpt):
+
+```bash
+pnpm security:scan:ci         # produces JSON report consumed for SARIF conversion
+```
+
+Reports directory structure (examples):
+
+```text
+reports/
+  semgrep-baseline.json   # canonical baseline – versioned in repo if approved
+  semgrep-current.json    # transient diff artefact
+  semgrep-results.json    # CI raw scan output
+```
+
+#### SonarCloud (Optional)
+
+`sonar-project.properties` config exists at repo root. CI workflow (`sonar.yml`) performs:
+
+1. Install + cache dependencies
+2. Run tests & collect coverage
+3. Invoke Sonar scanner for PR decoration + quality gate
+
+To disable: delete the workflow or restrict with a branch condition.
+
+#### Common Commands
+
+```bash
+pnpm lint:all             # Full lint suite across workspace
+pnpm security:scan        # Focused Semgrep (primary OWASP profile)
+pnpm security:scan:all    # Expanded profiles (OWASP + LLM + MITRE ATLAS)
+pnpm security:scan:diff   # New issues vs baseline only
+pnpm test:coverage        # Enforces 90%+ threshold
+pnpm structure:validate   # Governance / import boundary integrity
+```
+
+#### Developer Workflow Tips
+
+- Keep baseline churn intentional – treat resets as mini change-control events.
+- Prefer suppressions (`// semgrep-disable-next-line <rule-id>`) with justification comments.
+- Run `pnpm security:scan:diff` before pushing if you touched risky surfaces (auth, network, dynamic exec, file IO).
+- Use `nx graph` to visualize dependency impact of refactors prior to wide code moves.
+- Use the canonical variable catalog in `.env.example`; keep the tracked `.env` scrubbed
+  (no real secrets) and load real values via untracked overlays or a secret manager.
+
+Further detail: see [`SECURITY.md`](./SECURITY.md) and future `docs/code-quality.md` (placeholder to expand if needed).
+
+---
+
+## Automated Linting & Scheduled Quality Runs
+
+In addition to on-demand commands and the existing **nightly quality** workflow, the repository includes a **scheduled lint** workflow: `scheduled-lint.yml`.
+
+### Schedule
+
+Runs three times daily at 10:00, 14:00, and 20:00 UTC (GMT). You can also trigger it manually via the Actions tab.
+
+### Workflow Steps
+
+| Phase             | Command                      | Purpose                                               |
+| ----------------- | ---------------------------- | ----------------------------------------------------- |
+| Biome (changed)   | `pnpm biome:ci`              | Fast style + formatting validation                    |
+| ESLint (quality)  | `pnpm lint:quality`          | Core quality & import rules                           |
+| ESLint (security) | `pnpm lint:security`         | Security-focused rules (sonarjs, boundaries)          |
+| Ruff (Python)     | `pnpm python:lint`           | Python style & lint consistency                       |
+| Structure         | `pnpm structure:validate`    | Enforces architecture governance                      |
+| Pattern Guard     | `pnpm lint:ripgrep:hardened` | Detects secrets, debug statements, forbidden patterns |
+| AST Policy        | `pnpm lint:ast-grep:check`   | Enforces structural AST policies                      |
+
+All steps soft-fail (`|| true`) to ensure an aggregated summary; review logs for violations.
+Promote to hard failure by removing `|| true` once baseline is clean.
+
+### Local Parity
+
+```bash
+pnpm lint:all            # Aggregated lint suite
+pnpm structure:validate  # Governance integrity
+pre-commit run --all-files
+```
+
+### Future Enhancements (Optional)
+
+1. Open an issue automatically if violations increase week-over-week.
+2. Upload SARIF for AST-Grep + pattern guard to unify security dashboards.
+3. Persist weekly lint trend JSON similar to coverage trend.
+
 ---
 
 ## Contributing
@@ -242,9 +365,11 @@ This repository uses `git submodule` for certain external, read-only references.
 
 Currently included:
 
-| Path | Upstream | Purpose |
-| ---- | -------- | ------- |
+| Path                    | Upstream                              | Purpose                                                                                            |
+| ----------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `external/openai-codex` | <https://github.com/openai/codex.git> | Reference implementation; selectively copy patterns (no direct cross-imports in governed domains). |
+
+See overlay governance guide: [openai-codex overlay](./docs/submodules/openai-codex.md)
 
 ### Working With Submodules
 
