@@ -21,7 +21,21 @@ MCP_MESSAGE_SCHEMA: dict[str, Any] = {
             "enum": ["request", "response", "notification", "error"],
         },
     },
-    "required": ["id", "type", "jsonrpc"],
+    "required": ["type", "jsonrpc"],
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "type": {
+                        "enum": ["request", "response"]
+                    }
+                }
+            },
+            "then": {
+                "required": ["id"]
+            }
+        }
+    ],
     "additionalProperties": True,
 }
 
