@@ -12,3 +12,5 @@ export type { Err, Ok, Result } from "./result.js";
 export type { RetryPolicy } from "./retry.js";
 export type { CloudEvent, CloudEventInit } from "./cloudevents.js";
 export { createCloudEvent } from "./cloudevents.js";
+export { InMemoryOutbox } from "./outbox.js";
+export { A2ARouter } from "./a2a.js";
