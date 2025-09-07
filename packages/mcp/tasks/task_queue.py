@@ -10,7 +10,7 @@ import json
 import logging
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from enum import Enum
 from importlib import import_module
@@ -134,10 +134,11 @@ class TaskDefinition:
 
 
 class TaskRegistry:
-    """Registry for task functions."""
+    """Registry for task functions with optional allowlist."""
 
-    def __init__(self) -> None:
+    def __init__(self, allowed_tools: Iterable[str] | None = None) -> None:
         self._functions: dict[str, Callable[..., Any]] = {}
+        self.allowed_tools = set(allowed_tools) if allowed_tools is not None else None
 
     def register(self, name: str, func: Callable[..., Any]) -> None:
         """Register a task function."""
@@ -145,12 +146,16 @@ class TaskRegistry:
         logger.info(f"Registered task function: {name}")
 
     def get(self, name: str) -> Callable[..., Any] | None:
-        """Get registered task function."""
+        """Get registered task function if allowlisted."""
+        if self.allowed_tools is not None and name not in self.allowed_tools:
+            raise PermissionError(f"Tool {name} not allowlisted")
         return self._functions.get(name)
 
     def list_functions(self) -> list[str]:
-        """List all registered function names."""
-        return list(self._functions.keys())
+        """List allowlisted function names."""
+        if self.allowed_tools is None:
+            return list(self._functions.keys())
+        return [name for name in self._functions if name in self.allowed_tools]
 
     def unregister(self, name: str) -> None:
         """Unregister a task function."""
@@ -167,6 +172,7 @@ class TaskQueue:
         queue_name: str = "mcp_tasks",
         max_workers: int = 4,
         enable_celery: bool = True,
+        allowed_tools: Iterable[str] | None = None,
     ):
         self.redis_url = redis_url
         self.queue_name = queue_name
@@ -175,7 +181,7 @@ class TaskQueue:
 
         self.redis: Any | None = None
         self.celery_app: Any | None = None
-        self.registry = TaskRegistry()
+        self.registry = TaskRegistry(allowed_tools=allowed_tools)
 
         # Task tracking
         self.active_tasks: dict[str, TaskResult] = {}
@@ -273,10 +279,15 @@ class TaskQueue:
                 "queue_size": await self.get_queue_size(),
             }
 
+        async def tool_execution_wrapper(
+            tool_name: str, parameters: dict[str, Any]
+        ) -> dict[str, Any]:
+            return await tool_execution_task(self, tool_name, parameters)
+
         # Register the functions after definition
         self.registry.register("echo", echo_task)
         self.registry.register("health_check", health_check_task)
-        self.registry.register("tool_execution", tool_execution_task)
+        self.registry.register("tool_execution", tool_execution_wrapper)
 
     async def submit_task(
         self,
@@ -586,15 +597,17 @@ class TaskQueue:
 
 # Define the tool execution task function outside the class
 async def tool_execution_task(
-    tool_name: str, parameters: dict[str, Any]
+    queue: "TaskQueue", tool_name: str, parameters: dict[str, Any]
 ) -> dict[str, Any]:
-    """Execute MCP tool task."""
-    # This would integrate with the MCP server
-    # For now, return a placeholder
+    """Execute MCP tool task with registry lookup and allowlist enforcement."""
+    func = queue.registry.get(tool_name)
+    if func is None:
+        raise ValueError(f"Function {tool_name} not registered")
+    result = await func(**parameters)
     return {
         "tool": tool_name,
         "parameters": parameters,
-        "result": f"Executed {tool_name} with parameters {parameters}",
+        "result": result,
         "execution_time": time.time(),
     }
 
