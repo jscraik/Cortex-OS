@@ -15,13 +15,14 @@ const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000;
 let cacheCleanupTimer: NodeJS.Timeout | null = null;
 
 interface ValidationResult {
-	workflow: any;
-	stats: {
-		totalSteps: number;
-		unreachableSteps: string[];
-		maxDepth: number;
-		cycleDetected: boolean;
-	};
+        workflow: any;
+        stats: {
+                totalSteps: number;
+                unreachableSteps: string[];
+                maxDepth: number;
+                cycleDetected: boolean;
+        };
+        topologicalOrder: string[];
 }
 
 /**
@@ -61,6 +62,63 @@ function initializeCacheCleanup(): void {
 	if (cacheCleanupTimer.unref) {
 		cacheCleanupTimer.unref();
 	}
+}
+
+function topologicalSort(wf: any, nodes: Set<string>): string[] {
+        const inDegree = new Map<string, number>();
+        const adj = new Map<string, string[]>();
+
+        for (const id of nodes) {
+                inDegree.set(id, 0);
+                adj.set(id, []);
+        }
+
+        for (const id of nodes) {
+                const step = wf.steps[id];
+
+                if (step.next && nodes.has(step.next)) {
+                        adj.get(id)!.push(step.next);
+                        inDegree.set(step.next, (inDegree.get(step.next) ?? 0) + 1);
+                }
+
+                if (step.branches) {
+                        for (const branch of step.branches) {
+                                if (nodes.has(branch.to)) {
+                                        adj.get(id)!.push(branch.to);
+                                        inDegree.set(
+                                                branch.to,
+                                                (inDegree.get(branch.to) ?? 0) + 1,
+                                        );
+                                }
+                        }
+                }
+        }
+
+        const queue = Array.from(inDegree.entries())
+                .filter(([, deg]) => deg === 0)
+                .map(([id]) => id)
+                .sort();
+
+        const order: string[] = [];
+
+        while (queue.length > 0) {
+                const id = queue.shift()!;
+                order.push(id);
+
+                for (const next of adj.get(id)!) {
+                        inDegree.set(next, inDegree.get(next)! - 1);
+                        if (inDegree.get(next) === 0) {
+                                queue.push(next);
+                                queue.sort();
+                        }
+                }
+        }
+
+        if (order.length !== nodes.size) {
+                throw new Error("Cycle detected during topological sort");
+        }
+
+        return order;
 }
 
 /**
@@ -191,14 +249,16 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 		stack.delete(stepId);
 	};
 
-	// Start validation from entry point
-	visit(wf.entry);
+        // Start validation from entry point
+        visit(wf.entry);
 
-	const stats = {
-		totalSteps: Object.keys(wf.steps).length,
-		unreachableSteps: Array.from(unreachableSteps),
-		maxDepth,
-		cycleDetected,
+        const order = topologicalSort(wf, visited);
+
+        const stats = {
+                totalSteps: Object.keys(wf.steps).length,
+                unreachableSteps: Array.from(unreachableSteps),
+                maxDepth,
+                cycleDetected,
 	};
 
 	// Warn about unreachable steps (don't fail, just warn)
@@ -208,10 +268,11 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 		);
 	}
 
-	return {
-		workflow: wf,
-		stats,
-	};
+        return {
+                workflow: wf,
+                stats,
+                topologicalOrder: order,
+        };
 }
 
 /**
