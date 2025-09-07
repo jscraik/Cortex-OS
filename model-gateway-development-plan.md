@@ -34,7 +34,8 @@
 
 ### 5. VRAM/token budget enforcement
 
-1. Add tests verifying requests exceeding `performance-config.json` budgets are rejected.
+1. Add tests verifying requests exceeding `performance-config.json` budgets are rejected.  
+   > **Note:** `performance-config.json` defines per-model VRAM and token budgets. See `docs/performance-config.schema.json` for the schema and documentation.
 2. Implement budget manager enforcing VRAM and token thresholds per request.
 3. Emit metrics and alerts when budgets are breached.
 
