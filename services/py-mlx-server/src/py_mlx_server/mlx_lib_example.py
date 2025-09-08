@@ -1,6 +1,6 @@
 try:
     import mlx.core as mx
-except Exception:  # pragma: no cover - optional dependency
+except ImportError:  # pragma: no cover - optional dependency
     mx = None
 
 
