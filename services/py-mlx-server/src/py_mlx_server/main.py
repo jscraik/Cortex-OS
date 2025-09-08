@@ -1,13 +1,22 @@
 from dataclasses import dataclass
 import os
 
+def get_port_env_var(var_name="PORT", default="8000"):
+    value = os.getenv(var_name, default)
+    try:
+        return int(value)
+    except ValueError:
+        raise ValueError(
+            f"Invalid value for {var_name}: '{value}'. Must be a valid integer."
+        )
+
 from fastapi import FastAPI
 
 
 @dataclass
 class Settings:
     host: str = os.getenv("HOST", "0.0.0.0")
-    port: int = int(os.getenv("PORT", "8000"))
+    port: int = get_port_env_var()
 
 
 settings = Settings()
