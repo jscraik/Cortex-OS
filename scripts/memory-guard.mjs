@@ -44,11 +44,11 @@ export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }
       log({ pid, rssMB, action: 'check' });
       if (rssMB > maxRssMB) {
         if (!warned.has(pid)) {
-          try { process.kill(pid, 'SIGUSR2'); } catch {}
+          try { process.kill(pid, 'SIGUSR2'); } catch (err) { log({ pid, action: 'sigusr2_failed', error: err && err.message ? err.message : String(err) }); }
           warned.set(pid, true);
           log({ pid, rssMB, action: 'sigusr2' });
         } else {
-          try { process.kill(pid, 'SIGKILL'); } catch {}
+          try { process.kill(pid, 'SIGKILL'); } catch (err) { log({ pid, action: 'sigkill_failed', error: err && err.message ? err.message : String(err) }); }
           log({ pid, rssMB, action: 'killed' });
         }
       }
