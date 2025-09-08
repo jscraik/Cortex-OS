@@ -23,6 +23,7 @@ export default defineWorkspace([
 	"packages/model-gateway",
 	"packages/rag",
 	"packages/simlab",
+	"packages/cortex-logging",
 	"libs/typescript/contracts",
 	// Added root-level contracts test directory for schema coverage guard
 	"contracts",

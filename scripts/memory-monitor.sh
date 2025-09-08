@@ -46,6 +46,27 @@ monitor_memory() {
         pkill -f "tsserver.js"
     fi
     
+    # Check for runaway Vitest processes
+    vitest_count=$(ps aux | grep -E "node.*vitest" | grep -v grep | wc -l | tr -d ' ')
+    vitest_memory=$(ps aux | awk '/vitest/ && !/grep/ {sum += $6} END {print int(sum/1024)}')
+    
+    if [ "$vitest_count" -gt 3 ]; then
+        echo "⚠️  Too many Vitest processes ($vitest_count), killing excess..."
+        pkill -f "node.*vitest"
+    elif [ "${vitest_memory:-0}" -gt 1500 ]; then
+        echo "⚠️  Vitest processes using ${vitest_memory}MB, restarting..."
+        pkill -f "vitest"
+    fi
+    
+    # Check for long-running gitleaks processes  
+    gitleaks_count=$(ps aux | grep -E "gitleaks" | grep -v grep | wc -l | tr -d ' ')
+    if [ "$gitleaks_count" -gt 0 ]; then
+        gitleaks_runtime=$(ps aux | awk '/gitleaks/ && !/grep/ {print $10}' | head -1)
+        echo "⚠️  Found $gitleaks_count gitleaks processes (runtime: $gitleaks_runtime)"
+        # Kill if running more than 10 minutes
+        ps aux | awk '/gitleaks/ && !/grep/ && $10 > "10:00" {system("kill " $2)}'
+    fi
+    
     # VS Code monitoring DISABLED to prevent instability
     vscode_memory=$(ps aux | grep "Code Helper\|Visual Studio Code" | grep -v grep | awk '{sum += $6} END {print int(sum/1024)}')
     if [ "${vscode_memory:-0}" -gt 0 ]; then

@@ -1,8 +1,8 @@
 import js from '@eslint/js';
 import sonarjs from 'eslint-plugin-sonarjs';
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 
 // Consolidated flat config: declare sonarjs plugin once and layer rule sets.
 const baseTypeScript = ts.configs.recommended.map((config) => ({
