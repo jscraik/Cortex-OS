@@ -25,13 +25,13 @@ export function createBus(
   acl: TopicACL = {},
 ) {
   const assertPublishAllowed = (type: string) => {
-    if (!acl[type]?.publish) {
+    if (acl[type]?.publish === false) {
       throw new Error(`Publish not allowed for topic ${type}`);
     }
   };
 
   const assertSubscribeAllowed = (type: string) => {
-    if (!acl[type]?.subscribe) {
+    if (acl[type]?.subscribe === false) {
       throw new Error(`Subscribe not allowed for topic ${type}`);
     }
   };
