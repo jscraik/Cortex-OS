@@ -80,4 +80,3 @@ class SearchEventCreate(BaseModel):
         if v not in allowed_types:
             raise ValueError(f"Search type must be one of: {', '.join(allowed_types)}")
         return v
-

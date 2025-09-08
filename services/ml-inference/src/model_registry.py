@@ -4,21 +4,21 @@ Provides model management, A/B testing, and version control capabilities.
 """
 
 import asyncio
-import json
 import hashlib
+import json
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 import aiofiles
-from pydantic import BaseModel, Field
 
 
 class ModelStatus(str, Enum):
     """Model status enumeration."""
+
     PENDING = "pending"
     ACTIVE = "active"
     DEPRECATED = "deprecated"
@@ -28,6 +28,7 @@ class ModelStatus(str, Enum):
 
 class DeploymentStrategy(str, Enum):
     """Deployment strategy for model rollouts."""
+
     BLUE_GREEN = "blue_green"
     CANARY = "canary"
     A_B_TEST = "a_b_test"
@@ -38,6 +39,7 @@ class DeploymentStrategy(str, Enum):
 @dataclass
 class ModelMetadata:
     """Model metadata information."""
+
     model_id: str
     version: str
     name: str
@@ -46,25 +48,26 @@ class ModelMetadata:
     framework: str
     created_at: datetime
     created_by: str
-    tags: List[str]
-    parameters: Dict[str, Any]
-    performance_metrics: Dict[str, float]
+    tags: list[str]
+    parameters: dict[str, Any]
+    performance_metrics: dict[str, float]
     file_hash: str
     file_size: int
-    dependencies: List[str]
+    dependencies: list[str]
     status: ModelStatus = ModelStatus.PENDING
 
 
 @dataclass
 class ABTestConfig:
     """A/B testing configuration."""
+
     test_id: str
     model_a: str
     model_b: str
     traffic_split: float  # Percentage for model B (0.0 to 1.0)
     start_time: datetime
-    end_time: Optional[datetime]
-    success_metrics: List[str]
+    end_time: datetime | None
+    success_metrics: list[str]
     confidence_threshold: float = 0.95
     min_sample_size: int = 1000
 
@@ -72,6 +75,7 @@ class ABTestConfig:
 @dataclass
 class DeploymentConfig:
     """Model deployment configuration."""
+
     deployment_id: str
     model_version: str
     strategy: DeploymentStrategy
@@ -98,13 +102,18 @@ class ModelRegistry:
         self.ab_tests_path = self.registry_path / "ab_tests"
 
         # Create subdirectories
-        for path in [self.models_path, self.metadata_path, self.deployments_path, self.ab_tests_path]:
+        for path in [
+            self.models_path,
+            self.metadata_path,
+            self.deployments_path,
+            self.ab_tests_path,
+        ]:
             path.mkdir(parents=True, exist_ok=True)
 
-        self._active_models: Dict[str, str] = {}  # model_name -> version
-        self._model_metadata: Dict[str, ModelMetadata] = {}
-        self._ab_tests: Dict[str, ABTestConfig] = {}
-        self._deployments: Dict[str, DeploymentConfig] = {}
+        self._active_models: dict[str, str] = {}  # model_name -> version
+        self._model_metadata: dict[str, ModelMetadata] = {}
+        self._ab_tests: dict[str, ABTestConfig] = {}
+        self._deployments: dict[str, DeploymentConfig] = {}
 
         # Load existing data
         asyncio.create_task(self._load_registry())
@@ -115,29 +124,37 @@ class ModelRegistry:
             # Load model metadata
             metadata_file = self.metadata_path / "registry.json"
             if metadata_file.exists():
-                async with aiofiles.open(metadata_file, 'r') as f:
+                async with aiofiles.open(metadata_file) as f:
                     data = json.loads(await f.read())
                     for model_data in data.get("models", []):
                         metadata = ModelMetadata(**model_data)
-                        metadata.created_at = datetime.fromisoformat(model_data["created_at"])
-                        self._model_metadata[f"{metadata.name}:{metadata.version}"] = metadata
+                        metadata.created_at = datetime.fromisoformat(
+                            model_data["created_at"]
+                        )
+                        self._model_metadata[f"{metadata.name}:{metadata.version}"] = (
+                            metadata
+                        )
 
             # Load active models
             active_file = self.metadata_path / "active_models.json"
             if active_file.exists():
-                async with aiofiles.open(active_file, 'r') as f:
+                async with aiofiles.open(active_file) as f:
                     self._active_models = json.loads(await f.read())
 
             # Load A/B tests
             ab_tests_file = self.ab_tests_path / "active_tests.json"
             if ab_tests_file.exists():
-                async with aiofiles.open(ab_tests_file, 'r') as f:
+                async with aiofiles.open(ab_tests_file) as f:
                     data = json.loads(await f.read())
                     for test_data in data.get("tests", []):
                         test_config = ABTestConfig(**test_data)
-                        test_config.start_time = datetime.fromisoformat(test_data["start_time"])
+                        test_config.start_time = datetime.fromisoformat(
+                            test_data["start_time"]
+                        )
                         if test_data.get("end_time"):
-                            test_config.end_time = datetime.fromisoformat(test_data["end_time"])
+                            test_config.end_time = datetime.fromisoformat(
+                                test_data["end_time"]
+                            )
                         self._ab_tests[test_config.test_id] = test_config
 
         except Exception as e:
@@ -154,12 +171,12 @@ class ModelRegistry:
                 ]
             }
             metadata_file = self.metadata_path / "registry.json"
-            async with aiofiles.open(metadata_file, 'w') as f:
+            async with aiofiles.open(metadata_file, "w") as f:
                 await f.write(json.dumps(metadata_data, indent=2))
 
             # Save active models
             active_file = self.metadata_path / "active_models.json"
-            async with aiofiles.open(active_file, 'w') as f:
+            async with aiofiles.open(active_file, "w") as f:
                 await f.write(json.dumps(self._active_models, indent=2))
 
             # Save A/B tests
@@ -168,13 +185,15 @@ class ModelRegistry:
                     {
                         **asdict(test),
                         "start_time": test.start_time.isoformat(),
-                        "end_time": test.end_time.isoformat() if test.end_time else None
+                        "end_time": test.end_time.isoformat()
+                        if test.end_time
+                        else None,
                     }
                     for test in self._ab_tests.values()
                 ]
             }
             ab_tests_file = self.ab_tests_path / "active_tests.json"
-            async with aiofiles.open(ab_tests_file, 'w') as f:
+            async with aiofiles.open(ab_tests_file, "w") as f:
                 await f.write(json.dumps(ab_tests_data, indent=2))
 
         except Exception as e:
@@ -197,10 +216,10 @@ class ModelRegistry:
         model_type: str,
         framework: str,
         created_by: str,
-        tags: Optional[List[str]] = None,
-        parameters: Optional[Dict[str, Any]] = None,
-        performance_metrics: Optional[Dict[str, float]] = None,
-        dependencies: Optional[List[str]] = None
+        tags: list[str] | None = None,
+        parameters: dict[str, Any] | None = None,
+        performance_metrics: dict[str, float] | None = None,
+        dependencies: list[str] | None = None,
     ) -> str:
         """Register a new model version."""
 
@@ -227,7 +246,7 @@ class ModelRegistry:
             description=description,
             model_type=model_type,
             framework=framework,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             created_by=created_by,
             tags=tags or [],
             parameters=parameters or {},
@@ -235,7 +254,7 @@ class ModelRegistry:
             file_hash=file_hash,
             file_size=file_size,
             dependencies=dependencies or [],
-            status=ModelStatus.PENDING
+            status=ModelStatus.PENDING,
         )
 
         # Copy model file to registry
@@ -243,6 +262,7 @@ class ModelRegistry:
         registry_model_path.mkdir(parents=True, exist_ok=True)
 
         import shutil
+
         shutil.copy2(model_path, registry_model_path / model_path_obj.name)
 
         # Store metadata
@@ -272,15 +292,15 @@ class ModelRegistry:
             del self._active_models[model_name]
             await self._save_registry()
 
-    def get_active_model(self, model_name: str) -> Optional[str]:
+    def get_active_model(self, model_name: str) -> str | None:
         """Get the active version of a model."""
         return self._active_models.get(model_name)
 
-    def get_model_metadata(self, model_id: str) -> Optional[ModelMetadata]:
+    def get_model_metadata(self, model_id: str) -> ModelMetadata | None:
         """Get metadata for a specific model version."""
         return self._model_metadata.get(model_id)
 
-    def list_models(self, model_name: Optional[str] = None) -> List[ModelMetadata]:
+    def list_models(self, model_name: str | None = None) -> list[ModelMetadata]:
         """List all models or models for a specific name."""
         models = list(self._model_metadata.values())
         if model_name:
@@ -293,8 +313,8 @@ class ModelRegistry:
         model_a: str,
         model_b: str,
         traffic_split: float,
-        duration_hours: Optional[int] = None,
-        success_metrics: Optional[List[str]] = None
+        duration_hours: int | None = None,
+        success_metrics: list[str] | None = None,
     ) -> None:
         """Start an A/B test between two models."""
 
@@ -308,10 +328,11 @@ class ModelRegistry:
         if not 0.0 <= traffic_split <= 1.0:
             raise ValueError("Traffic split must be between 0.0 and 1.0")
 
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         end_time = None
         if duration_hours:
             from datetime import timedelta
+
             end_time = start_time + timedelta(hours=duration_hours)
 
         ab_test = ABTestConfig(
@@ -323,7 +344,7 @@ class ModelRegistry:
             end_time=end_time,
             success_metrics=success_metrics or ["accuracy", "response_time"],
             confidence_threshold=0.95,
-            min_sample_size=1000
+            min_sample_size=1000,
         )
 
         self._ab_tests[test_id] = ab_test
@@ -332,18 +353,19 @@ class ModelRegistry:
     async def stop_ab_test(self, test_id: str) -> None:
         """Stop an A/B test."""
         if test_id in self._ab_tests:
-            self._ab_tests[test_id].end_time = datetime.now(timezone.utc)
+            self._ab_tests[test_id].end_time = datetime.now(UTC)
             await self._save_registry()
 
-    def get_ab_test(self, test_id: str) -> Optional[ABTestConfig]:
+    def get_ab_test(self, test_id: str) -> ABTestConfig | None:
         """Get A/B test configuration."""
         return self._ab_tests.get(test_id)
 
-    def list_active_ab_tests(self) -> List[ABTestConfig]:
+    def list_active_ab_tests(self) -> list[ABTestConfig]:
         """List all active A/B tests."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return [
-            test for test in self._ab_tests.values()
+            test
+            for test in self._ab_tests.values()
             if test.end_time is None or test.end_time > now
         ]
 
@@ -354,7 +376,7 @@ class ModelRegistry:
             return False
 
         # Check if test is active
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if test.end_time and test.end_time < now:
             return False
 
@@ -373,20 +395,24 @@ class ModelRegistry:
         metadata = self._model_metadata[model_id]
 
         # Remove from active models if it's active
-        if metadata.name in self._active_models and self._active_models[metadata.name] == metadata.version:
+        if (
+            metadata.name in self._active_models
+            and self._active_models[metadata.name] == metadata.version
+        ):
             del self._active_models[metadata.name]
 
         # Remove model files
         model_dir = self.models_path / metadata.name / metadata.version
         if model_dir.exists():
             import shutil
+
             shutil.rmtree(model_dir)
 
         # Remove metadata
         del self._model_metadata[model_id]
         await self._save_registry()
 
-    def get_registry_stats(self) -> Dict[str, Any]:
+    def get_registry_stats(self) -> dict[str, Any]:
         """Get registry statistics."""
         total_models = len(self._model_metadata)
         active_models = len(self._active_models)
@@ -402,7 +428,8 @@ class ModelRegistry:
             "active_models": active_models,
             "active_ab_tests": active_tests,
             "status_distribution": status_counts,
-            "registry_size_gb": sum(m.file_size for m in self._model_metadata.values()) / (1024**3)
+            "registry_size_gb": sum(m.file_size for m in self._model_metadata.values())
+            / (1024**3),
         }
 
 
@@ -419,7 +446,7 @@ class ModelVersionManager:
         model_id: str,
         strategy: DeploymentStrategy = DeploymentStrategy.IMMEDIATE,
         environment: str = "production",
-        rollout_percentage: float = 100.0
+        rollout_percentage: float = 100.0,
     ) -> str:
         """Deploy a model with specified strategy."""
 
@@ -456,6 +483,6 @@ class ModelVersionManager:
         # For now, just activate the model
         await self.registry.activate_model(model_id)
 
-    def get_model_lineage(self, model_name: str) -> List[ModelMetadata]:
+    def get_model_lineage(self, model_name: str) -> list[ModelMetadata]:
         """Get the version history/lineage for a model."""
         return self.registry.list_models(model_name)

@@ -10,25 +10,25 @@ import { promises as fs } from 'node:fs';
  * Generate prp.md markdown document from PRP state
  */
 export function generatePRPMarkdown(state, document, reviewJson) {
-    const sections = [
-        generateHeader(document),
-        generateObjective(state),
-        generateScopeAndNonGoals(state),
-        generateConstraints(state),
-        generateDesignSummary(state),
-        generateInterfacesAndContracts(state),
-        generateTestPlan(state),
-        generateVerificationResults(state),
-        generateReviewerSummary(reviewJson),
-        generateDecisionsAndApprovals(state),
-        generateReleaseNotes(state),
-        generateArtifacts(state),
-        generateFollowUps(state),
-    ];
-    return sections.filter(Boolean).join('\n\n---\n\n');
+  const sections = [
+    generateHeader(document),
+    generateObjective(state),
+    generateScopeAndNonGoals(state),
+    generateConstraints(state),
+    generateDesignSummary(state),
+    generateInterfacesAndContracts(state),
+    generateTestPlan(state),
+    generateVerificationResults(state),
+    generateReviewerSummary(reviewJson),
+    generateDecisionsAndApprovals(state),
+    generateReleaseNotes(state),
+    generateArtifacts(state),
+    generateFollowUps(state),
+  ];
+  return sections.filter(Boolean).join('\n\n---\n\n');
 }
 function generateHeader(document) {
-    return `# PRP Document
+  return `# PRP Document
 
 **ID:** ${document.id}
 **Title:** ${document.title}
@@ -46,7 +46,7 @@ ${document.links.pr ? `- Pull Request: ${document.links.pr}` : ''}
 ${document.links.checks ? `- Checks: ${document.links.checks}` : ''}`;
 }
 function generateObjective(state) {
-    return `## 1. Objective
+  return `## 1. Objective
 
 **Problem:** ${state.blueprint.description}
 
@@ -56,11 +56,11 @@ function generateObjective(state) {
 ${state.blueprint.requirements.map((req) => `- ${req}`).join('\n')}`;
 }
 function generateScopeAndNonGoals(state) {
-    // Extract scope information from blueprint metadata if available
-    const metadata = state.blueprint.metadata || {};
-    const scope = metadata.scope || [];
-    const nonGoals = metadata.nonGoals || [];
-    return `## 2. Scope & Non-Goals
+  // Extract scope information from blueprint metadata if available
+  const metadata = state.blueprint.metadata || {};
+  const scope = metadata.scope || [];
+  const nonGoals = metadata.nonGoals || [];
+  return `## 2. Scope & Non-Goals
 
 **In Scope:**
 ${scope.length > 0 ? scope.map((item) => `- ${item}`).join('\n') : '- To be defined based on requirements'}
@@ -69,13 +69,13 @@ ${scope.length > 0 ? scope.map((item) => `- ${item}`).join('\n') : '- To be defi
 ${nonGoals.length > 0 ? nonGoals.map((item) => `- ${item}`).join('\n') : '- To be defined during specification phase'}`;
 }
 function generateConstraints(state) {
-    const profile = state.enforcementProfile;
-    if (!profile) {
-        return `## 3. Constraints (from initial.md)
+  const profile = state.enforcementProfile;
+  if (!profile) {
+    return `## 3. Constraints (from initial.md)
 
 No enforcement profile loaded - using default constraints.`;
-    }
-    return `## 3. Constraints (from initial.md)
+  }
+  return `## 3. Constraints (from initial.md)
 
 **Coverage Requirements:**
 - Lines: ≥ ${profile.budgets.coverageLines}%
@@ -98,43 +98,48 @@ No enforcement profile loaded - using default constraints.`;
 - No cross-boundary imports without adapter`;
 }
 function generateDesignSummary(state) {
-    // Look for design evidence in the state
-    const designEvidence = state.evidence.filter((e) => e.type === 'analysis' && e.source.includes('design'));
-    const designContent = designEvidence.length > 0
-        ? designEvidence
-            .map((e) => {
+  // Look for design evidence in the state
+  const designEvidence = state.evidence.filter(
+    (e) => e.type === 'analysis' && e.source.includes('design'),
+  );
+  const designContent =
+    designEvidence.length > 0
+      ? designEvidence
+          .map((e) => {
             try {
-                const parsed = JSON.parse(e.content);
-                return `- ${parsed.summary || e.source}`;
+              const parsed = JSON.parse(e.content);
+              return `- ${parsed.summary || e.source}`;
+            } catch {
+              return `- ${e.source}`;
             }
-            catch {
-                return `- ${e.source}`;
-            }
-        })
-            .join('\n')
-        : '- Design summary to be captured during G1 Specification gate';
-    return `## 4. Design Summary
+          })
+          .join('\n')
+      : '- Design summary to be captured during G1 Specification gate';
+  return `## 4. Design Summary
 
 ${designContent}
 
 **Architecture Diagrams:** To be provided in design phase
 **Sequence Flows:** To be documented in /docs/`;
 }
-function generateInterfacesAndContracts(_state) {
-    return `## 5. Interfaces & Contracts
+function generateInterfacesAndContracts(state) {
+  // If the state already tracks discovered interfaces or contracts, surface simple counts.
+  const interfaceCount = Array.isArray(state?.interfaces) ? state.interfaces.length : 0;
+  const contractCount = Array.isArray(state?.contracts) ? state.contracts.length : 0;
+  return `## 5. Interfaces & Contracts
 
 **API Specifications:** To be defined during specification phase
-**Type Definitions:** To be generated during implementation
+**Type Definitions:** ${interfaceCount > 0 ? `${interfaceCount} candidate interface${interfaceCount === 1 ? '' : 's'} discovered` : 'To be generated during implementation'}
+**Contracts:** ${contractCount > 0 ? `${contractCount} contract${contractCount === 1 ? '' : 's'} referenced` : 'Will be enumerated as events/tools are formalized'}
 **Error Models:** Following problem+json standard`;
 }
 function generateTestPlan(state) {
-    const testEvidence = state.evidence.filter((e) => e.type === 'test');
-    const testContent = testEvidence.length > 0
-        ? testEvidence
-            .map((e) => `- ${e.source}: ${e.content.slice(0, 100)}...`)
-            .join('\n')
-        : '- Unit tests for core logic\n- Integration tests for API endpoints\n- End-to-end tests for user workflows';
-    return `## 6. Test Plan
+  const testEvidence = state.evidence.filter((e) => e.type === 'test');
+  const testContent =
+    testEvidence.length > 0
+      ? testEvidence.map((e) => `- ${e.source}: ${e.content.slice(0, 100)}...`).join('\n')
+      : '- Unit tests for core logic\n- Integration tests for API endpoints\n- End-to-end tests for user workflows';
+  return `## 6. Test Plan
 
 ${testContent}
 
@@ -145,37 +150,37 @@ ${testContent}
 - Security: Input validation and authorization checks`;
 }
 function generateVerificationResults(state) {
-    const gateResults = Object.values(state.gates);
-    const completedGates = gateResults.filter((g) => g.status === 'passed' || g.status === 'failed');
-    if (completedGates.length === 0) {
-        return `## 7. Verification Results
+  const gateResults = Object.values(state.gates);
+  const completedGates = gateResults.filter((g) => g.status === 'passed' || g.status === 'failed');
+  if (completedGates.length === 0) {
+    return `## 7. Verification Results
 
 No gates have been executed yet.`;
-    }
-    const results = completedGates
-        .map((gate) => {
-        const passed = gate.automatedChecks.filter((c) => c.status === 'pass').length;
-        const total = gate.automatedChecks.length;
-        return `**${gate.name} (${gate.id}):**
+  }
+  const results = completedGates
+    .map((gate) => {
+      const passed = gate.automatedChecks.filter((c) => c.status === 'pass').length;
+      const total = gate.automatedChecks.length;
+      return `**${gate.name} (${gate.id}):**
 - Status: ${gate.status}
 - Checks: ${passed}/${total} passed
 - Evidence: ${gate.evidence.length} items`;
     })
-        .join('\n\n');
-    return `## 7. Verification Results
+    .join('\n\n');
+  return `## 7. Verification Results
 
 ${results}`;
 }
 function generateReviewerSummary(reviewJson) {
-    if (!reviewJson) {
-        return `## 8. Reviewer Summary
+  if (!reviewJson) {
+    return `## 8. Reviewer Summary
 
 Review JSON will be generated upon completion of verification gates.`;
-    }
-    const findingsText = reviewJson.findings
-        .map((finding) => `- **${finding.id}** (${finding.severity}): ${finding.recommendation}`)
-        .join('\n');
-    return `## 8. Reviewer Summary
+  }
+  const findingsText = reviewJson.findings
+    .map((finding) => `- **${finding.id}** (${finding.severity}): ${finding.recommendation}`)
+    .join('\n');
+  return `## 8. Reviewer Summary
 
 \`\`\`json
 {
@@ -183,12 +188,14 @@ Review JSON will be generated upon completion of verification gates.`;
   "scores": ${JSON.stringify(reviewJson.scores, null, 2)},
   "findings": [
     ${reviewJson.findings
-        .map((f) => `{
+      .map(
+        (f) => `{
       "id": "${f.id}",
       "severity": "${f.severity}",
       "recommendation": "${f.recommendation}"
-    }`)
-        .join(',\n    ')}
+    }`,
+      )
+      .join(',\n    ')}
   ]
 }
 \`\`\`
@@ -197,34 +204,33 @@ Review JSON will be generated upon completion of verification gates.`;
 ${findingsText || 'No findings to report'}`;
 }
 function generateDecisionsAndApprovals(state) {
-    const approvals = state.approvals.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-    if (approvals.length === 0) {
-        return `## 9. Decisions & Approvals
+  const approvals = state.approvals.sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+  );
+  if (approvals.length === 0) {
+    return `## 9. Decisions & Approvals
 
 No approvals recorded yet.`;
-    }
-    const approvalText = approvals
-        .map((approval) => {
-        const gateNames = {
-            G0: 'Product Approval',
-            G1: 'Architecture',
-            G2: 'Test Plan',
-            G3: 'Code Review',
-            G4: 'Verification',
-            G5: 'Triage',
-            G6: 'Release Readiness',
-            G7: 'Release',
-        };
-        const gateName = gateNames[approval.gateId] || approval.gateId;
-        const date = new Date(approval.timestamp).toISOString().split('T')[0];
-        const time = new Date(approval.timestamp)
-            .toISOString()
-            .split('T')[1]
-            .split('.')[0];
-        return `- **${gateName}** — ${approval.decision} by ${approval.actor} @ ${date}T${time}Z (SHA: ${approval.commitSha.slice(0, 7)})`;
+  }
+  const approvalText = approvals
+    .map((approval) => {
+      const gateNames = {
+        G0: 'Product Approval',
+        G1: 'Architecture',
+        G2: 'Test Plan',
+        G3: 'Code Review',
+        G4: 'Verification',
+        G5: 'Triage',
+        G6: 'Release Readiness',
+        G7: 'Release',
+      };
+      const gateName = gateNames[approval.gateId] || approval.gateId;
+      const date = new Date(approval.timestamp).toISOString().split('T')[0];
+      const time = new Date(approval.timestamp).toISOString().split('T')[1].split('.')[0];
+      return `- **${gateName}** — ${approval.decision} by ${approval.actor} @ ${date}T${time}Z (SHA: ${approval.commitSha.slice(0, 7)})`;
     })
-        .join('\n');
-    return `## 9. Decisions & Approvals
+    .join('\n');
+  return `## 9. Decisions & Approvals
 
 ${approvalText}
 
@@ -232,14 +238,10 @@ ${approvalText}
 ${approvals.map((a) => `- ${a.gateId}: ${a.rationale}`).join('\n')}`;
 }
 function generateReleaseNotes(state) {
-    const version = state.metadata?.version || '0.1.0';
-    const highlights = state.outputs.highlights || [
-        'Initial implementation',
-    ];
-    const breakingChanges = state.outputs.breakingChanges || [
-        'None',
-    ];
-    return `## 10. Release Notes
+  const version = state.metadata?.version || '0.1.0';
+  const highlights = state.outputs.highlights || ['Initial implementation'];
+  const breakingChanges = state.outputs.breakingChanges || ['None'];
+  return `## 10. Release Notes
 
 **Version:** ${version}
 
@@ -253,13 +255,14 @@ ${breakingChanges.map((c) => `- ${c}`).join('\n')}
 ${breakingChanges.includes('None') ? 'N/A - no breaking changes' : 'See migration guide in documentation'}`;
 }
 function generateArtifacts(state) {
-    const allArtifacts = Object.values(state.gates)
-        .flatMap((gate) => gate.artifacts)
-        .filter((artifact, index, array) => array.indexOf(artifact) === index); // Dedupe
-    const artifactText = allArtifacts.length > 0
-        ? allArtifacts.map((artifact) => `- ${artifact}`).join('\n')
-        : '- No artifacts generated yet';
-    return `## 11. Artifacts
+  const allArtifacts = Object.values(state.gates)
+    .flatMap((gate) => gate.artifacts)
+    .filter((artifact, index, array) => array.indexOf(artifact) === index); // Dedupe
+  const artifactText =
+    allArtifacts.length > 0
+      ? allArtifacts.map((artifact) => `- ${artifact}`).join('\n')
+      : '- No artifacts generated yet';
+  return `## 11. Artifacts
 
 ${artifactText}
 
@@ -267,13 +270,14 @@ ${artifactText}
 **Gates Executed:** ${Object.keys(state.gates).length}`;
 }
 function generateFollowUps(state) {
-    const followUps = Object.values(state.gates)
-        .flatMap((gate) => gate.nextSteps || [])
-        .filter((step) => !step.includes('proceed')); // Filter out "proceed to next gate" steps
-    const followUpText = followUps.length > 0
-        ? followUps.map((step) => `- ${step}`).join('\n')
-        : '- No follow-up actions required';
-    return `## 12. Follow-ups
+  const followUps = Object.values(state.gates)
+    .flatMap((gate) => gate.nextSteps || [])
+    .filter((step) => !step.includes('proceed')); // Filter out "proceed to next gate" steps
+  const followUpText =
+    followUps.length > 0
+      ? followUps.map((step) => `- ${step}`).join('\n')
+      : '- No follow-up actions required';
+  return `## 12. Follow-ups
 
 ${followUpText}
 
@@ -286,64 +290,62 @@ ${followUpText}
  * Write prp.md file to filesystem
  */
 export async function writePRPDocument(prpContent, outputPath) {
-    await fs.writeFile(outputPath, prpContent, 'utf-8');
+  await fs.writeFile(outputPath, prpContent, 'utf-8');
 }
 /**
  * Generate machine-checkable review JSON
  */
 export function generateReviewJSON(state) {
-    const scores = {};
-    const findings = [];
-    // Analyze gate results to determine scores
-    for (const gate of Object.values(state.gates)) {
-        const category = getGateCategory(gate.id);
-        const failedChecks = gate.automatedChecks.filter((c) => c.status === 'fail');
-        if (failedChecks.length === 0) {
-            scores[category] = 'green';
-        }
-        else if (failedChecks.some((c) => c.name.includes('blocker'))) {
-            scores[category] = 'red';
-        }
-        else {
-            scores[category] = 'amber';
-        }
-        // Convert failed checks to findings
-        for (const check of failedChecks) {
-            findings.push({
-                id: `${gate.id}-${check.name}`,
-                severity: check.name.includes('blocker')
-                    ? 'blocker'
-                    : check.name.includes('major')
-                        ? 'major'
-                        : 'minor',
-                evidence: [
-                    {
-                        path: gate.id,
-                        lines: '1-10', // Placeholder - would be actual line ranges
-                        sha: 'unknown',
-                    },
-                ],
-                recommendation: check.output || `Fix ${check.name} in ${gate.name}`,
-            });
-        }
+  const scores = {};
+  const findings = [];
+  // Analyze gate results to determine scores
+  for (const gate of Object.values(state.gates)) {
+    const category = getGateCategory(gate.id);
+    const failedChecks = gate.automatedChecks.filter((c) => c.status === 'fail');
+    if (failedChecks.length === 0) {
+      scores[category] = 'green';
+    } else if (failedChecks.some((c) => c.name.includes('blocker'))) {
+      scores[category] = 'red';
+    } else {
+      scores[category] = 'amber';
     }
-    return {
-        schema: 'com.cortex.review/v1',
-        scores,
-        findings,
-    };
+    // Convert failed checks to findings
+    for (const check of failedChecks) {
+      findings.push({
+        id: `${gate.id}-${check.name}`,
+        severity: check.name.includes('blocker')
+          ? 'blocker'
+          : check.name.includes('major')
+            ? 'major'
+            : 'minor',
+        evidence: [
+          {
+            path: gate.id,
+            lines: '1-10', // Placeholder - would be actual line ranges
+            sha: 'unknown',
+          },
+        ],
+        recommendation: check.output || `Fix ${check.name} in ${gate.name}`,
+      });
+    }
+  }
+  return {
+    schema: 'com.cortex.review/v1',
+    scores,
+    findings,
+  };
 }
 function getGateCategory(gateId) {
-    const categories = {
-        G0: 'planning',
-        G1: 'design',
-        G2: 'tests',
-        G3: 'implementation',
-        G4: 'security',
-        G5: 'review',
-        G6: 'validation',
-        G7: 'release',
-    };
-    return categories[gateId] || 'unknown';
+  const categories = {
+    G0: 'planning',
+    G1: 'design',
+    G2: 'tests',
+    G3: 'implementation',
+    G4: 'security',
+    G5: 'review',
+    G6: 'validation',
+    G7: 'release',
+  };
+  return categories[gateId] || 'unknown';
 }
 //# sourceMappingURL=prp-generator.js.map

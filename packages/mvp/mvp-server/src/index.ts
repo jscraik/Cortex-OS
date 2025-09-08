@@ -7,7 +7,10 @@ async function main() {
 	const close = async () => {
 		try {
 			await app.close();
-		} catch {}
+		} catch (err) {
+			// Swallow errors during shutdown to ensure fast termination (logged for visibility)
+			app.log.warn({ err }, "graceful shutdown encountered error");
+		}
 		process.exit(0);
 	};
 	process.on("SIGINT", close);

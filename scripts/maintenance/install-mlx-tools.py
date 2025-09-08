@@ -92,8 +92,14 @@ def main():
 
     for cmd, name in test_commands:
         try:
-            # Split shell command into list for security (prevent command injection)
-            cmd_list = cmd.split() if isinstance(cmd, str) else cmd
+            # SECURITY: Use shlex.split() for proper command parsing (prevent injection)
+            if isinstance(cmd, str):
+                import shlex
+
+                cmd_list = shlex.split(cmd)
+            else:
+                cmd_list = cmd
+
             result = subprocess.run(
                 cmd_list, shell=False, check=True, capture_output=True, text=True
             )

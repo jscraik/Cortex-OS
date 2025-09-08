@@ -1,9 +1,7 @@
-cargo-features = ["edition2024"]
-
 [package]
 name = "codex-chat-cli-plus"
 version = { workspace = true }
-edition = "2024"
+edition = { workspace = true }
 
 [[bin]]
 name = "codex-chat"

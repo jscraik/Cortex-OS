@@ -19,9 +19,7 @@ class ContentValidationRequest(BaseModel):
     def validate_content_type(cls, v: str) -> str:
         allowed_types = {"markdown", "html", "rst", "plain_text", "asciidoc"}
         if v not in allowed_types:
-            raise ValueError(
-                f"Content type must be one of: {', '.join(allowed_types)}"
-            )
+            raise ValueError(f"Content type must be one of: {', '.join(allowed_types)}")
         return v
 
 
@@ -57,4 +55,3 @@ class ContentValidationResponse(BaseModel):
     accessibility_score: float = Field(..., description="Accessibility score")
     suggestions: list[str] = Field(..., description="Improvement suggestions")
     validated_at: datetime = Field(..., description="Validation timestamp")
-

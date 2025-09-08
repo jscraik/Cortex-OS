@@ -2,6 +2,65 @@
  * MCP Dashboard Real-time JavaScript
  */
 
+// Security: Allowlisted API endpoints to prevent SSRF
+const ALLOWED_API_ENDPOINTS = [
+    '/api/status',
+    '/api/tools',
+    '/api/tools/call',
+    '/api/pool/status',
+    '/api/plugins',
+    '/api/circuit-breakers',
+    '/api/metrics'
+];
+
+/**
+ * Secure fetch wrapper with endpoint validation and timeout
+ * @param {string} url - API endpoint to fetch
+ * @param {object} options - Fetch options
+ * @returns {Promise<Response>} - Fetch response
+ */
+async function secureFetch(url, options = {}) {
+    // Validate that the URL is an allowed API endpoint
+    const isAllowed = ALLOWED_API_ENDPOINTS.some(endpoint => {
+        return url === endpoint || url.startsWith(endpoint + '?') || url.startsWith(endpoint + '/');
+    });
+    
+    if (!isAllowed) {
+        throw new Error(`API endpoint not allowed: ${url}`);
+    }
+    
+    // Add timeout if not specified
+    const timeoutMs = 10000; // 10 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout');
+        }
+        throw error;
+    }
+}
+
 class MCPDashboard {
     constructor() {
         this.ws = null;
@@ -127,7 +186,7 @@ class MCPDashboard {
 
     async fetchStatus() {
         try {
-            const response = await fetch('/api/status');
+            const response = await secureFetch('/api/status');
             const data = await response.json();
             this.updateServerStatus(data);
         } catch (error) {
@@ -161,7 +220,7 @@ class MCPDashboard {
 
     async fetchTools() {
         try {
-            const response = await fetch('/api/tools');
+            const response = await secureFetch('/api/tools');
             const data = await response.json();
             this.updateToolsList(data.tools || []);
         } catch (error) {
@@ -199,7 +258,7 @@ class MCPDashboard {
 
     async testTool(toolName) {
         try {
-            const response = await fetch('/api/tools/call', {
+            const response = await secureFetch('/api/tools/call', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: toolName, parameters: {} })
@@ -241,7 +300,7 @@ class MCPDashboard {
 
     async fetchConnectionPool() {
         try {
-            const response = await fetch('/api/pool/status');
+            const response = await secureFetch('/api/pool/status');
             const data = await response.json();
             this.updateConnectionPoolStatus(data);
         } catch (error) {

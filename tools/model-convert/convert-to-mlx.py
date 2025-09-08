@@ -25,8 +25,20 @@ def get_mlxknife_path() -> str:
         raise FileNotFoundError(
             "mlxknife not found. Install from https://github.com/mzau/mlx-knife.git"
         )
+
+    # SECURITY: Validate mlxknife binary path for safety
+    import os
+
+    if not os.path.isfile(mlxknife_path) or not os.access(mlxknife_path, os.X_OK):
+        raise RuntimeError(f"mlxknife at {mlxknife_path} is not executable")
+
+    # SECURITY: Test mlxknife version with secure subprocess execution
     result = subprocess.run(
-        [mlxknife_path, "--version"], capture_output=True, text=True
+        [mlxknife_path, "--version"],
+        capture_output=True,
+        text=True,
+        shell=False,  # Prevent shell injection
+        timeout=10,  # Prevent hanging
     )
     if result.returncode != 0:
         raise RuntimeError(f"mlxknife --version failed: {result.stderr}")
@@ -41,8 +53,30 @@ def convert_model(hf_model: str, output_path: str, task: str) -> bool:
         logger.error(err)
         return False
 
-    output_dir = Path(output_path)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # SECURITY: Validate inputs to prevent injection
+    # Validate HuggingFace model name format
+    import re
+
+    if not re.match(
+        r"^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?(/[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?)?$",
+        hf_model,
+    ):
+        logger.error("Invalid HuggingFace model name format: %s", hf_model)
+        return False
+
+    # Validate task parameter
+    valid_tasks = ["feature-extraction", "text-classification"]
+    if task not in valid_tasks:
+        logger.error("Invalid task: %s. Must be one of: %s", task, valid_tasks)
+        return False
+
+    # Validate and create output directory
+    try:
+        output_dir = Path(output_path).resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
+    except (OSError, ValueError) as e:
+        logger.error("Invalid output path: %s", e)
+        return False
 
     cmd = [
         mlxknife_path,
@@ -58,8 +92,13 @@ def convert_model(hf_model: str, output_path: str, task: str) -> bool:
     logger.info("Converting %s to MLX format", hf_model)
     logger.debug("Command: %s", " ".join(cmd))
 
+    # SECURITY: Use secure subprocess execution
     process = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        shell=False,  # Prevent shell injection
     )
     assert process.stdout is not None  # for type checkers
     for line in process.stdout:

@@ -24,16 +24,8 @@ MCP_MESSAGE_SCHEMA: dict[str, Any] = {
     "required": ["type", "jsonrpc"],
     "allOf": [
         {
-            "if": {
-                "properties": {
-                    "type": {
-                        "enum": ["request", "response"]
-                    }
-                }
-            },
-            "then": {
-                "required": ["id"]
-            }
+            "if": {"properties": {"type": {"enum": ["request", "response"]}}},
+            "then": {"required": ["id"]},
         }
     ],
     "additionalProperties": True,

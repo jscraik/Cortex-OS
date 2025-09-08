@@ -56,4 +56,3 @@ class ABTestResponse(BaseModel):
     start_date: datetime = Field(..., description="Start date")
     end_date: datetime | None = Field(None, description="End date")
     winner: str | None = Field(None, description="Winning variant")
-

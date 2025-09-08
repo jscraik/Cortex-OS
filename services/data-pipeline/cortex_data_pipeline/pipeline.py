@@ -68,9 +68,7 @@ def mask_pii(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def backfill(
-    current: pd.DataFrame, historical: list[dict[str, Any]]
-) -> pd.DataFrame:
+def backfill(current: pd.DataFrame, historical: list[dict[str, Any]]) -> pd.DataFrame:
     """Merge historical records while avoiding duplicate ``id`` values."""
 
     hist_df = pd.DataFrame(historical)

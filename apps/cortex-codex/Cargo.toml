@@ -32,8 +32,7 @@ version = "0.0.0"
 # crates created with `cargo new -w ...` automatically inherit the 2024
 # edition.
 # 
-# CRITICAL: DO NOT CHANGE edition = "2024" - This is required for CLI functionality
-# Even though edition2024 is not stable, it's essential for this codebase
+# Using edition 2024 with nightly Rust
 edition = "2024"
 
 [workspace.lints]

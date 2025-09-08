@@ -594,8 +594,8 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
 /// deprecation warnings for legacy flags. New --stream-mode takes precedence
 /// (clap already prevents mixing them). Extracted for unit testing.
 fn compute_stream_mode_override(chat_cli: &ChatCommand) -> Option<codex_core::config::StreamMode> {
-    if let Some(mode) = chat_cli.stream_mode {
-        return Some(mode.into());
+    if let Some(mode) = &chat_cli.stream_mode {
+        return Some(mode.clone().into());
     }
     let mut warned = false;
     let mode = if chat_cli.stream_json || chat_cli.json {

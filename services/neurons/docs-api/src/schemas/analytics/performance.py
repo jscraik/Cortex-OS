@@ -30,4 +30,3 @@ class PerformanceMetricsResponse(BaseModel):
         ..., description="Endpoint-specific metrics"
     )
     generated_at: datetime | None = Field(None, description="Generation timestamp")
-

@@ -249,7 +249,7 @@ class DatabaseManager:
             raise
 
     @asynccontextmanager
-    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+    async def get_session(self) -> AsyncGenerator[AsyncSession]:
         """Get database session with automatic cleanup."""
         if not self._is_initialized:
             raise RuntimeError("Database not initialized. Call initialize() first.")
@@ -354,7 +354,7 @@ async def get_database_manager() -> DatabaseManager:
     return _database_manager
 
 
-async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_db_session() -> AsyncGenerator[AsyncSession]:
     """Dependency for getting database session."""
     db_manager = await get_database_manager()
     async with db_manager.get_session() as session:

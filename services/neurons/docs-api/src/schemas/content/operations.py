@@ -160,4 +160,3 @@ class ContentWorkflow(BaseModel):
         if v not in allowed_statuses:
             raise ValueError(f"Status must be one of: {', '.join(allowed_statuses)}")
         return v
-

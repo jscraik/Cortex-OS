@@ -15,6 +15,7 @@ def test_init_db_creates_tables(monkeypatch, tmp_path):
     importlib.reload(config)
     importlib.reload(database)
     import sys
+
     sys.modules.pop("models", None)
     importlib.import_module("models")
     from models import Example
@@ -38,6 +39,7 @@ def test_get_db_rollback_on_error(monkeypatch, tmp_path):
     importlib.reload(config)
     importlib.reload(database)
     import sys
+
     sys.modules.pop("models", None)
     importlib.import_module("models")
     from models import Example
@@ -62,4 +64,3 @@ def test_get_db_rollback_on_error(monkeypatch, tmp_path):
             assert len(result.all()) == 1
 
     asyncio.run(run())
-

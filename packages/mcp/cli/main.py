@@ -258,10 +258,41 @@ def logs(lines: int, follow: bool, level: str) -> None:
 
     try:
         if follow:
-            # Use tail -f equivalent
+            # SECURITY: Use secure subprocess execution with validated inputs
+            import shutil
             import subprocess
 
-            subprocess.run(["tail", "-f", "-n", str(lines), str(log_file)])
+            # Validate tail command path
+            tail_path = shutil.which("tail")
+            if not tail_path or tail_path != "/usr/bin/tail":
+                console.print(
+                    "[red]Error: tail command not found or in unexpected location[/red]"
+                )
+                return
+
+            # Validate log file path is within config directory (prevent path traversal)
+            try:
+                resolved_log_file = log_file.resolve()
+                config_dir_resolved = cli_context.config_dir.resolve()
+                if not resolved_log_file.is_relative_to(config_dir_resolved):
+                    console.print("[red]Error: Invalid log file path[/red]")
+                    return
+            except (OSError, ValueError):
+                console.print("[red]Error: Invalid log file path[/red]")
+                return
+
+            # Validate lines parameter (prevent injection)
+            if not isinstance(lines, int) or lines < 1 or lines > 10000:
+                console.print("[red]Error: Invalid lines parameter[/red]")
+                return
+
+            # SECURITY: Secure subprocess execution
+            subprocess.run(
+                [tail_path, "-f", "-n", str(lines), str(resolved_log_file)],
+                shell=False,  # Prevent shell injection
+                timeout=3600,  # 1 hour timeout for following logs
+                check=False,  # Don't raise on non-zero exit
+            )
         else:
             # Show last N lines
             with open(log_file) as f:

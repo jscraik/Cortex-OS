@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pandas as pd  # type: ignore[import-untyped]
 import pytest
-
 from cortex_data_pipeline import (
     add_lineage_metadata,
     backfill,
@@ -57,9 +56,11 @@ def test_transform() -> None:
 
 
 def test_transform_non_numeric_error() -> None:
-    df = ingest([
-        {"id": 1, "value": "a", "email": "a@example.com"},
-    ])
+    df = ingest(
+        [
+            {"id": 1, "value": "a", "email": "a@example.com"},
+        ]
+    )
     with pytest.raises(ValueError, match="Non-numeric value"):
         transform(df)
 
@@ -78,4 +79,4 @@ def test_ingest_invalid_schema_failure() -> None:
 
 def test_ingest_invalid_email_failure() -> None:
     with pytest.raises(ValueError):
-        ingest([{ "id": 1, "value": 10, "email": "not-an-email" }])
+        ingest([{"id": 1, "value": 10, "email": "not-an-email"}])

@@ -1,9 +1,7 @@
-cargo-features = ["edition2024"]
-
 [package]
-edition = "2024"
 name = "codex-mcp-server"
 version = { workspace = true }
+edition = { workspace = true }
 
 [[bin]]
 name = "codex-mcp-server"

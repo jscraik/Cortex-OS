@@ -29,8 +29,5 @@ class SearchAnalyticsResponse(BaseModel):
     no_results_queries: list[SearchAnalyticsQuery] = Field(
         ..., description="Queries with no results"
     )
-    search_performance: dict[str, Any] = Field(
-        ..., description="Performance metrics"
-    )
+    search_performance: dict[str, Any] = Field(..., description="Performance metrics")
     generated_at: datetime | None = Field(None, description="Generation timestamp")
-

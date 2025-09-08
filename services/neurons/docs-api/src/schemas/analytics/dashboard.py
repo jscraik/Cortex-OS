@@ -23,4 +23,3 @@ class DashboardMetricsResponse(BaseModel):
         ..., description="Device type breakdown percentages"
     )
     generated_at: datetime = Field(..., description="Generation timestamp")
-
