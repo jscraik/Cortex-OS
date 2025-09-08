@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-MEMORY_THRESHOLD=${MEMORY_THRESHOLD:-75}
+MEMORY_THRESHOLD_MB=${MEMORY_THRESHOLD_MB:-4096}
 DEV_COMMAND=${DEV_COMMAND:-"pnpm dev:turbo"}
 GUARD_INTERVAL=${GUARD_INTERVAL:-15}
 
@@ -15,8 +15,8 @@ log() {
 
 # Function to start memory guard in background
 start_memory_guard() {
-    log "🛡️  Starting memory guard (threshold: ${MEMORY_THRESHOLD}%)"
-    bash scripts/auto-memory-guard.sh daemon &
+    log "🛡️  Starting memory guard (limit: ${MEMORY_THRESHOLD_MB}MB)"
+    node scripts/memory-guard.mjs --max "$MEMORY_THRESHOLD_MB" --interval "$((GUARD_INTERVAL*1000))" &
     GUARD_PID=$!
     echo $GUARD_PID > /tmp/.cortex-memory-guard.pid
 }
