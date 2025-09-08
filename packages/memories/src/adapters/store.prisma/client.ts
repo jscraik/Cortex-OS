@@ -37,7 +37,7 @@ type PrismaLike = {
 export class PrismaStore implements MemoryStore {
 	constructor(private prisma: PrismaLike) {}
 
-	async upsert(m: Memory): Promise<Memory> {
+	async upsert(m: Memory, namespace = "default"): Promise<Memory> {
 		const saved = await this.prisma.memory.upsert({
 			where: { id: m.id },
 			create: m,
@@ -46,16 +46,16 @@ export class PrismaStore implements MemoryStore {
 		return prismaToDomain(saved);
 	}
 
-	async get(id: string): Promise<Memory | null> {
+	async get(id: string, namespace = "default"): Promise<Memory | null> {
 		const row = await this.prisma.memory.findUnique({ where: { id } });
 		return row ? prismaToDomain(row) : null;
 	}
 
-	async delete(id: string): Promise<void> {
+	async delete(id: string, namespace = "default"): Promise<void> {
 		await this.prisma.memory.delete({ where: { id } });
 	}
 
-	async searchByText(q: TextQuery): Promise<Memory[]> {
+	async searchByText(q: TextQuery, namespace = "default"): Promise<Memory[]> {
 		const rows = await this.prisma.memory.findMany({
 			where: {
 				AND: [
@@ -71,7 +71,7 @@ export class PrismaStore implements MemoryStore {
 		return rows.map(prismaToDomain);
 	}
 
-	async searchByVector(q: VectorQuery): Promise<Memory[]> {
+	async searchByVector(q: VectorQuery, namespace = "default"): Promise<Memory[]> {
 		// Fetch candidates with vectors and matching tags
 		const candidateRows = await this.prisma.memory.findMany({
 			where: {
@@ -102,7 +102,7 @@ export class PrismaStore implements MemoryStore {
 		return scoredCandidates;
 	}
 
-        async purgeExpired(nowISO: string): Promise<number> {
+        async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
                 const allRows = await this.prisma.memory.findMany({
                         where: { ttl: { not: null } },
                 });

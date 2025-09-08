@@ -1,79 +1,85 @@
 import { isExpired } from "../core/ttl.js";
 import type { Memory, MemoryId } from "../domain/types.js";
-import type {
-	MemoryStore,
-	TextQuery,
-	VectorQuery,
-} from "../ports/MemoryStore.js";
+import type { MemoryStore, TextQuery, VectorQuery } from "../ports/MemoryStore.js";
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
-	if (a.length !== b.length) {
-		throw new Error("Vectors must have the same length");
-	}
+        if (a.length !== b.length) {
+                throw new Error("Vectors must have the same length");
+        }
 
-	const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
-	const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-	const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+        const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
+        const magnitudeA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
+        const magnitudeB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
 
-	if (magnitudeA === 0 || magnitudeB === 0) {
-		return 0;
-	}
+        if (magnitudeA === 0 || magnitudeB === 0) {
+                return 0;
+        }
 
-	return dotProduct / (magnitudeA * magnitudeB);
+        return dotProduct / (magnitudeA * magnitudeB);
 }
 
 export class InMemoryStore implements MemoryStore {
-	private data = new Map<MemoryId, Memory>();
+        private data = new Map<string, Map<MemoryId, Memory>>();
 
-	async upsert(m: Memory) {
-		this.data.set(m.id, m);
-		return m;
-	}
-	async get(id: MemoryId) {
-		return this.data.get(id) ?? null;
-	}
-	async delete(id: MemoryId) {
-		this.data.delete(id);
-	}
+        private ns(name: string) {
+                let store = this.data.get(name);
+                if (!store) {
+                        store = new Map();
+                        this.data.set(name, store);
+                }
+                return store;
+        }
 
-	async searchByText(q: TextQuery) {
-		const items = [...this.data.values()].filter(
-			(x) =>
-				(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))) &&
-				(x.text?.toLowerCase().includes(q.text.toLowerCase()) ?? false),
-		);
-		return items.slice(0, q.topK);
-	}
+        async upsert(m: Memory, namespace = "default") {
+                this.ns(namespace).set(m.id, m);
+                return m;
+        }
+        async get(id: MemoryId, namespace = "default") {
+                return this.ns(namespace).get(id) ?? null;
+        }
+        async delete(id: MemoryId, namespace = "default") {
+                this.ns(namespace).delete(id);
+        }
 
-	async searchByVector(q: VectorQuery) {
-		const itemsWithScores = [...this.data.values()]
-			.filter(
-				(x) =>
-					x.vector &&
-					(!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))),
-			)
-			.map((x) => ({
-				memory: x,
-				score: cosineSimilarity(q.vector, x.vector!),
-			}))
-			.sort((a, b) => b.score - a.score)
-			.slice(0, q.topK)
-			.map((item) => item.memory);
+        async searchByText(q: TextQuery, namespace = "default") {
+                const items = [...this.ns(namespace).values()].filter(
+                        (x) =>
+                                (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))) &&
+                                (x.text?.toLowerCase().includes(q.text.toLowerCase()) ?? false),
+                );
+                return items.slice(0, q.topK);
+        }
 
-		return itemsWithScores;
-	}
+        async searchByVector(q: VectorQuery, namespace = "default") {
+                const itemsWithScores = [...this.ns(namespace).values()]
+                        .filter(
+                                (x) =>
+                                        x.vector &&
+                                        (!q.filterTags || q.filterTags.every((t) => x.tags.includes(t))),
+                        )
+                        .map((x) => ({
+                                memory: x,
+                                score: cosineSimilarity(q.vector, x.vector!),
+                        }))
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, q.topK)
+                        .map((item) => item.memory);
 
-        async purgeExpired(nowISO: string): Promise<number> {
+                return itemsWithScores;
+        }
+
+        async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
                 let purgedCount = 0;
-
-                for (const [id, memory] of this.data.entries()) {
-                        if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
-                                this.data.delete(id);
-                                purgedCount++;
+                const maps = namespace ? [this.ns(namespace)] : [...this.data.values()];
+                for (const store of maps) {
+                        for (const [id, memory] of store.entries()) {
+                                if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
+                                        store.delete(id);
+                                        purgedCount++;
+                                }
                         }
                 }
-
                 return purgedCount;
         }
 }

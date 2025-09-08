@@ -15,10 +15,10 @@ export interface TextQuery {
 }
 
 export interface MemoryStore {
-	upsert(m: Memory): Promise<Memory>;
-	get(id: MemoryId): Promise<Memory | null>;
-	delete(id: MemoryId): Promise<void>;
-	searchByText(q: TextQuery): Promise<Memory[]>;
-	searchByVector(q: VectorQuery): Promise<Memory[]>;
-	purgeExpired(nowISO: string): Promise<number>;
+        upsert(m: Memory, namespace?: string): Promise<Memory>;
+        get(id: MemoryId, namespace?: string): Promise<Memory | null>;
+        delete(id: MemoryId, namespace?: string): Promise<void>;
+        searchByText(q: TextQuery, namespace?: string): Promise<Memory[]>;
+        searchByVector(q: VectorQuery, namespace?: string): Promise<Memory[]>;
+        purgeExpired(nowISO: string, namespace?: string): Promise<number>;
 }
