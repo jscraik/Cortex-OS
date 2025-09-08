@@ -115,6 +115,8 @@ export {
 	truncateToTokens,
 	withTimeout,
 } from "./lib/utils.js";
+export { DynamicSpeculativePlanner } from "./lib/dsp.js";
+export type { DSPConfig } from "./lib/dsp.js";
 // Validation utilities
 export {
 	createValidator,
