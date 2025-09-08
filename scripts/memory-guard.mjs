@@ -20,6 +20,10 @@ function getProcessList(pattern) {
 }
 
 function getRssMB(pid) {
+  // Validate that pid is a positive integer
+  if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) {
+    return 0;
+  }
   try {
     const out = execSync(`ps -o rss= -p ${pid}`).toString().trim();
     return Number(out) / 1024;
