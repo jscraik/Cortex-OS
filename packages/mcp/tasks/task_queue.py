@@ -600,7 +600,10 @@ async def tool_execution_task(
     queue: "TaskQueue", tool_name: str, parameters: dict[str, Any]
 ) -> dict[str, Any]:
     """Execute MCP tool task with registry lookup and allowlist enforcement."""
-    func = queue.registry.get(tool_name)
+    try:
+        func = queue.registry.get(tool_name)
+    except PermissionError as e:
+        raise ValueError(f"Function {tool_name} is not allowlisted") from e
     if func is None:
         raise ValueError(f"Function {tool_name} not registered")
     result = await func(**parameters)
