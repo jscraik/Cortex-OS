@@ -13,18 +13,11 @@ on:
 
 jobs:
   agents-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-        with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup
-        with:
-          node-version: '22'
-          pnpm-version: '9'
-      - name: Typecheck (agents)
-        run: pnpm -w --filter @cortex-os/agents typecheck
-      - name: Build (agents)
-        run: pnpm -w --filter @cortex-os/agents build
-      - name: Tests (agents)
-        run: pnpm -w --filter @cortex-os/agents test -- --reporter=verbose
+    uses: ./.github/workflows/ci-node-setup.yml
+    with:
+      node-version: '22'
+      pnpm-version: '9'
+      run: |
+        pnpm -w --filter @cortex-os/agents typecheck
+        pnpm -w --filter @cortex-os/agents build
+        pnpm -w --filter @cortex-os/agents test -- --reporter=verbose

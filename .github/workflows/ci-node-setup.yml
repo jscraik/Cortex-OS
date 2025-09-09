@@ -1,0 +1,35 @@
+name: CI Node Setup
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node.js version
+        required: false
+        type: string
+        default: '22'
+      pnpm-version:
+        description: pnpm version
+        required: false
+        type: string
+        default: '9'
+      run:
+        description: Commands to run after setup
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@2c04b2341174e4a2c65d8d6c2c6c3e2c4012b897
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs['node-version'] }}
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ inputs['pnpm-version'] }}
+      - name: Run commands
+        run: ${{ inputs.run }}
