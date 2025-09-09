@@ -64,11 +64,17 @@ if [[ "$COVERAGE" == true ]]; then
 fi
 
 if [[ "$MONITORED" == true ]]; then
-  # Start memory monitor in the background
-  if [[ -x scripts/memory-monitor.sh ]]; then
-    scripts/memory-monitor.sh daemon >/dev/null 2>&1 &
-  fi
+  # Start unified memory guard targeting vitest processes
+  node scripts/memory-guard.mjs --pattern vitest --max 2048 --interval 1000 &
+  GUARD_PID=$!
 fi
 
 echo "Running: ${CMD[*]}"
 "${CMD[@]}" "$@"
+STATUS=$?
+
+if [[ "$MONITORED" == true ]]; then
+  kill $GUARD_PID 2>/dev/null || true
+fi
+
+exit $STATUS
