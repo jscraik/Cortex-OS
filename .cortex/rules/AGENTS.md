@@ -10,7 +10,7 @@
 
 - **Kernel:** Single deterministic orchestrator (`CortexKernel`) using LangGraph
 - **Workflow:** PRP Loop — `plan → generate → review → refactor`
-- **Neurons:** Role-based agents that interface with kernel nodes
+- **Agents:** Role-based agents that interface with kernel nodes
 - **Local-First:** On-device execution (MLX inference, local vector DB, no cloud dependencies)
 - **Teaching:** Review steps include educational feedback
 
@@ -58,38 +58,32 @@ pnpm test
 - Enforces quality gates
 - Manages provenance
 
-### ProductManagerNeuron
+### CodeAnalysisAgent
 
-- Derives goals from briefs
-- Creates acceptance criteria
-- Output: `Plan`
+- Performs static analysis of code
+- Can be used for architecture and review-related tasks
+- Output: `AnalysisReport`
 
-### ArchitectNeuron
-
-- Designs system architecture
-- Documents decisions (ADRs)
-- Output: `Architecture.md`
-
-### ImplementerNeuron
-
-- Generates code from plans
-- Output: `{ code }`
-
-### ReviewerNeuron
-
-- Evidence-based code review
-- Output: `Review` with evidence links
-
-### QANeuron
-
-- Test generation and coverage
-- Output: `{ failing, coverage, fixes }`
-
-### DocsNeuron
+### DocumentationAgent
 
 - Maintains documentation
 - Validates links and versions
 - Output: `{ docsChanges, linkcheck }`
+
+### LangGraphAgent
+
+- Integrates with LangGraph for stateful workflows
+- Output: `GraphState`
+
+### SecurityAgent
+
+- Scans for security vulnerabilities
+- Output: `SecurityReport`
+
+### TestGenerationAgent
+
+- Generates tests and measures coverage
+- Output: `{ failing, coverage, fixes }`
 
 ---
 
@@ -163,13 +157,10 @@ Tools under `packages/mcp/`:
 
 ## 7) Implementation Notes
 
-⚠️ **Inconsistencies to resolve:**
+⚠️ **Implementation Status & Notes:**
 
-- Missing SecurityNeuron, A11yNeuron, PerformanceNeuron implementations
-- TeacherNeuron, ResearcherNeuron not in current codebase
-- ProjectManagerNeuron referenced but not implemented
-- MCP path should be `packages/mcp/` not `apps/cortex-os/packages/mcp/`
-- Missing determinism tests referenced in spec
-- No evidence of LangGraph integration in kernel
+- **Agent Mismatch**: The implemented agents (`CodeAnalysisAgent`, `DocumentationAgent`, `LangGraphAgent`, `SecurityAgent`, `TestGenerationAgent`) do not directly map to the legacy agent roles originally specified. Roles like `ProductManager`, `Implementer`, and `Reviewer` are not explicitly implemented as separate agents.
+- **Inadequate Determinism Tests**: While test files for determinism exist (e.g., `packages/kernel/tests/determinism.test.ts`), they are known to be flawed and do not provide true determinism guarantees.
+- **Inconsistent LangGraph Integration**: LangGraph is used in the `orchestration` and `agents` packages, but the core kernel (`packages/kernel/src/graph-simple.ts`) is explicitly a non-LangGraph implementation, creating an architectural inconsistency.
 
 📍 **Action Required:** Align this spec with actual implementation in `packages/agents/`
