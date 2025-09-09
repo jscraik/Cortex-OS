@@ -48,4 +48,3 @@ class DocumentRelationResponse(BaseModel):
 
     class Config:
         from_attributes = True
-

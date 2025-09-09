@@ -132,34 +132,49 @@ class ThermalGuard:
 
             try:
                 # Check for Apple Silicon indicators
-                # SECURITY NOTE: This subprocess call is safe because:
-                # 1. The command is hardcoded and not user-controlled
-                # 2. Only system information is retrieved
-                # 3. A timeout is enforced
+                # SECURITY: Use secure subprocess execution with validated command path
                 sysctl_path = shutil.which("sysctl")
-                if not sysctl_path:
+                if not sysctl_path or not os.path.isfile(sysctl_path):
+                    logger.debug("sysctl command not found")
                     return False
 
+                # Validate that sysctl is in expected system paths
+                allowed_sysctl_paths = ["/usr/sbin/sysctl", "/sbin/sysctl"]
+                if sysctl_path not in allowed_sysctl_paths:
+                    logger.warning(f"Unexpected sysctl path: {sysctl_path}")
+                    return False
+
+                # Secure subprocess execution with explicit argument array
                 result = subprocess.run(
                     [sysctl_path, "-n", "machdep.cpu.brand_string"],
                     capture_output=True,
                     text=True,
                     timeout=5,
+                    # Security: Prevent shell injection
+                    shell=False,
+                    check=False,  # Don't raise on non-zero exit
                 )
 
                 if result.returncode == 0:
                     cpu_brand = result.stdout.strip()
+                    # Validate output format (should be Apple processor name)
+                    if len(cpu_brand) > 100:  # Sanity check output length
+                        logger.warning("Unexpected sysctl output length")
+                        return False
                     return "Apple" in cpu_brand
 
+                logger.debug(f"sysctl returned non-zero: {result.returncode}")
                 return False
 
-            except Exception as e:
+            except subprocess.TimeoutExpired:
+                logger.warning("sysctl command timed out")
+                return False
+            except subprocess.SubprocessError as e:
                 logger.warning(f"Could not detect Apple Silicon: {e}")
                 return False
-                cpu_brand = result.stdout.strip()
-                return "Apple" in cpu_brand
-
-            return False
+            except Exception as e:
+                logger.warning(f"Unexpected error detecting Apple Silicon: {e}")
+                return False
 
         except Exception as e:
             logger.warning(f"Could not detect Apple Silicon: {e}")
@@ -258,9 +273,21 @@ class ThermalGuard:
             return 70.0  # Mock temperature for non-Apple Silicon
 
         try:
+            # SECURITY: Validate powermetrics command path
+            powermetrics_path = shutil.which("powermetrics")
+            if not powermetrics_path or not os.path.isfile(powermetrics_path):
+                logger.debug("powermetrics command not found")
+                return 75.0
+
+            # Validate powermetrics is in expected system path
+            expected_paths = ["/usr/bin/powermetrics", "/usr/sbin/powermetrics"]
+            if powermetrics_path not in expected_paths:
+                logger.warning(f"Unexpected powermetrics path: {powermetrics_path}")
+                return 75.0
+
             # Use powermetrics to get GPU temperature (no sudo by default)
             base_cmd = [
-                "powermetrics",
+                powermetrics_path,
                 "--samplers",
                 "gpu_power",
                 "--sample-count",
@@ -268,21 +295,34 @@ class ThermalGuard:
                 "--format",
                 "plist",
             ]
-            # First attempt without sudo
+            # SECURITY: First attempt without sudo - secure subprocess execution
             result = await asyncio.create_subprocess_exec(
                 *base_cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                # Security: Prevent shell injection
+                shell=False,
+                # Limit environment variables
+                env={"PATH": "/usr/bin:/usr/sbin:/bin:/sbin"},
             )
             stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
 
             if result.returncode != 0 and self._allow_sudo():
+                # SECURITY: Validate sudo path before using
+                sudo_path = shutil.which("sudo")
+                if sudo_path != "/usr/bin/sudo":
+                    logger.warning(f"Unexpected sudo path: {sudo_path}")
+                    return 75.0
+
                 # Optional retry with sudo -n if explicitly allowed
-                sudo_cmd = ["sudo", "-n", *base_cmd]
+                sudo_cmd = [sudo_path, "-n", *base_cmd]
                 result = await asyncio.create_subprocess_exec(
                     *sudo_cmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    # Security: Prevent shell injection
+                    shell=False,
+                    env={"PATH": "/usr/bin:/usr/sbin:/bin:/sbin"},
                 )
                 stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
 
@@ -317,13 +357,25 @@ class ThermalGuard:
             return 60.0  # Mock temperature
 
         try:
-            # Try to get CPU temperature via sysctl
+            # SECURITY: Validate sysctl command path
+            sysctl_path = shutil.which("sysctl")
+            if not sysctl_path or sysctl_path not in [
+                "/usr/sbin/sysctl",
+                "/sbin/sysctl",
+            ]:
+                logger.debug("sysctl command not found or in unexpected location")
+                return 65.0
+
+            # Try to get CPU temperature via sysctl - secure subprocess execution
             result = await asyncio.create_subprocess_exec(
-                "sysctl",
+                sysctl_path,
                 "-n",
                 "machdep.xcpm.cpu_thermal_state",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                # Security: Prevent shell injection
+                shell=False,
+                env={"PATH": "/usr/bin:/usr/sbin:/bin:/sbin"},
             )
 
             stdout, _ = await asyncio.wait_for(result.communicate(), timeout=5.0)
@@ -346,14 +398,23 @@ class ThermalGuard:
             return 30.0  # Mock utilization
 
         try:
-            # Use ioreg to get GPU utilization
+            # SECURITY: Validate ioreg command path
+            ioreg_path = shutil.which("ioreg")
+            if not ioreg_path or ioreg_path != "/usr/sbin/ioreg":
+                logger.debug("ioreg command not found or in unexpected location")
+                return 25.0
+
+            # Use ioreg to get GPU utilization - secure subprocess execution
             result = await asyncio.create_subprocess_exec(
-                "ioreg",
+                ioreg_path,
                 "-l",
                 "-w",
                 "0",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                # Security: Prevent shell injection
+                shell=False,
+                env={"PATH": "/usr/bin:/usr/sbin:/bin:/sbin"},
             )
 
             stdout, _ = await asyncio.wait_for(result.communicate(), timeout=5.0)
@@ -381,9 +442,18 @@ class ThermalGuard:
     async def _get_power_draw(self) -> float:
         """Get system power draw in watts"""
         try:
+            # SECURITY: Validate powermetrics command path
+            powermetrics_path = shutil.which("powermetrics")
+            if not powermetrics_path or powermetrics_path not in [
+                "/usr/bin/powermetrics",
+                "/usr/sbin/powermetrics",
+            ]:
+                logger.debug("powermetrics command not found or in unexpected location")
+                return 50.0
+
             # Use powermetrics for power measurement (no sudo by default)
             base_cmd = [
-                "powermetrics",
+                powermetrics_path,
                 "--samplers",
                 "cpu_power,gpu_power",
                 "--sample-count",
@@ -391,19 +461,30 @@ class ThermalGuard:
                 "--format",
                 "plist",
             ]
+            # SECURITY: Secure subprocess execution
             result = await asyncio.create_subprocess_exec(
                 *base_cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                shell=False,
+                env={"PATH": "/usr/bin:/usr/sbin:/bin:/sbin"},
             )
             stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
 
             if result.returncode != 0 and self._allow_sudo():
-                sudo_cmd = ["sudo", "-n", *base_cmd]
+                # SECURITY: Validate sudo path
+                sudo_path = shutil.which("sudo")
+                if sudo_path != "/usr/bin/sudo":
+                    logger.warning(f"Unexpected sudo path: {sudo_path}")
+                    return 50.0
+
+                sudo_cmd = [sudo_path, "-n", *base_cmd]
                 result = await asyncio.create_subprocess_exec(
                     *sudo_cmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    shell=False,
+                    env={"PATH": "/usr/bin:/usr/sbin:/bin:/sbin"},
                 )
                 stdout, _ = await asyncio.wait_for(result.communicate(), timeout=10.0)
 

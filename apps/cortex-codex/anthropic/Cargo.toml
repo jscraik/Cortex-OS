@@ -1,9 +1,7 @@
-cargo-features = ["edition2024"]
-
 [package]
-edition = "2024"
 name = "codex-anthropic"
 version = { workspace = true }
+edition = { workspace = true }
 
 [lib]
 name = "codex_anthropic"

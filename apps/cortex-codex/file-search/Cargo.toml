@@ -1,9 +1,7 @@
-cargo-features = ["edition2024"]
-
 [package]
-edition = "2024"
 name = "codex-file-search"
 version = { workspace = true }
+edition = { workspace = true }
 
 [[bin]]
 name = "codex-file-search"

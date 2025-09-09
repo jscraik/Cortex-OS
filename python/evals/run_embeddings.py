@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Simple embedding regression suite with logging and parallelization."""
+
 from __future__ import annotations
 
 import argparse

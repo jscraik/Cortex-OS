@@ -13,7 +13,7 @@ from mcp.core.protocol import MCPProtocolHandler
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
+def event_loop() -> Generator[asyncio.AbstractEventLoop]:
     """Create event loop for test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -21,7 +21,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest.fixture(scope="function")
-async def temp_directory() -> AsyncGenerator[str, None]:
+async def temp_directory() -> AsyncGenerator[str]:
     """Create temporary directory for tests."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir

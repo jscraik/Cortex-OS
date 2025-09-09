@@ -6,23 +6,25 @@ Provides detailed performance analytics, alerting, distributed tracing, and real
 
 import asyncio
 import logging
-import time
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Callable
 from collections import defaultdict, deque
-import json
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
 
 from prometheus_client import (
-    Counter, Histogram, Gauge, Summary,
-    CollectorRegistry, generate_latest,
-    CONTENT_TYPE_LATEST
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,9 +33,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PerformanceMetrics:
     """Performance metrics collection."""
+
     request_count: int = 0
     total_latency: float = 0.0
-    min_latency: float = float('inf')
+    min_latency: float = float("inf")
     max_latency: float = 0.0
     error_count: int = 0
     cache_hits: int = 0
@@ -63,6 +66,7 @@ class PerformanceMetrics:
 @dataclass
 class AlertRule:
     """Alert rule configuration."""
+
     name: str
     metric: str
     threshold: float
@@ -76,6 +80,7 @@ class AlertRule:
 @dataclass
 class Alert:
     """Alert instance."""
+
     rule_name: str
     severity: str
     message: str
@@ -83,94 +88,88 @@ class Alert:
     threshold: float
     timestamp: datetime
     resolved: bool = False
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
 
 
 class PrometheusMetrics:
     """Prometheus metrics collector."""
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(self, registry: CollectorRegistry | None = None):
         self.registry = registry or CollectorRegistry()
 
         # Request metrics
         self.request_total = Counter(
-            'inference_requests_total',
-            'Total inference requests',
-            ['method', 'status'],
-            registry=self.registry
+            "inference_requests_total",
+            "Total inference requests",
+            ["method", "status"],
+            registry=self.registry,
         )
 
         self.request_duration = Histogram(
-            'inference_request_duration_seconds',
-            'Request duration in seconds',
-            ['method'],
-            registry=self.registry
+            "inference_request_duration_seconds",
+            "Request duration in seconds",
+            ["method"],
+            registry=self.registry,
         )
 
         self.tokens_generated_total = Counter(
-            'inference_tokens_generated_total',
-            'Total tokens generated',
-            registry=self.registry
+            "inference_tokens_generated_total",
+            "Total tokens generated",
+            registry=self.registry,
         )
 
         # Model metrics
         self.model_loading_duration = Histogram(
-            'model_loading_duration_seconds',
-            'Model loading duration in seconds',
-            registry=self.registry
+            "model_loading_duration_seconds",
+            "Model loading duration in seconds",
+            registry=self.registry,
         )
 
         self.active_models = Gauge(
-            'active_models_count',
-            'Number of active models',
-            registry=self.registry
+            "active_models_count", "Number of active models", registry=self.registry
         )
 
         # System metrics
         self.memory_usage = Gauge(
-            'system_memory_usage_bytes',
-            'System memory usage in bytes',
-            registry=self.registry
+            "system_memory_usage_bytes",
+            "System memory usage in bytes",
+            registry=self.registry,
         )
 
         self.cpu_usage = Gauge(
-            'system_cpu_usage_percent',
-            'System CPU usage percentage',
-            registry=self.registry
+            "system_cpu_usage_percent",
+            "System CPU usage percentage",
+            registry=self.registry,
         )
 
         # Cache metrics
         self.cache_hits = Counter(
-            'inference_cache_hits_total',
-            'Cache hits',
-            registry=self.registry
+            "inference_cache_hits_total", "Cache hits", registry=self.registry
         )
 
         self.cache_misses = Counter(
-            'inference_cache_misses_total',
-            'Cache misses',
-            registry=self.registry
+            "inference_cache_misses_total", "Cache misses", registry=self.registry
         )
 
         # Error metrics
         self.errors_total = Counter(
-            'inference_errors_total',
-            'Total errors',
-            ['error_type'],
-            registry=self.registry
+            "inference_errors_total",
+            "Total errors",
+            ["error_type"],
+            registry=self.registry,
         )
 
         # Circuit breaker metrics
         self.circuit_breaker_state = Gauge(
-            'circuit_breaker_state',
-            'Circuit breaker state (0=closed, 1=open, 2=half-open)',
-            registry=self.registry
+            "circuit_breaker_state",
+            "Circuit breaker state (0=closed, 1=open, 2=half-open)",
+            registry=self.registry,
         )
 
         self.circuit_breaker_failures = Counter(
-            'circuit_breaker_failures_total',
-            'Circuit breaker failures',
-            registry=self.registry
+            "circuit_breaker_failures_total",
+            "Circuit breaker failures",
+            registry=self.registry,
         )
 
     def record_request(self, method: str, status: str, duration: float):
@@ -210,11 +209,11 @@ class AlertManager:
     """Alert management system."""
 
     def __init__(self):
-        self.rules: Dict[str, AlertRule] = {}
-        self.active_alerts: Dict[str, Alert] = {}
+        self.rules: dict[str, AlertRule] = {}
+        self.active_alerts: dict[str, Alert] = {}
         self.alert_history: deque = deque(maxlen=1000)
-        self.last_alert_time: Dict[str, datetime] = {}
-        self.alert_handlers: List[Callable[[Alert], None]] = []
+        self.last_alert_time: dict[str, datetime] = {}
+        self.alert_handlers: list[Callable[[Alert], None]] = []
 
     def add_rule(self, rule: AlertRule):
         """Add an alert rule."""
@@ -235,15 +234,7 @@ class AlertManager:
         """Evaluate a rule against a value."""
         triggered = False
 
-        if rule.operator == 'gt' and value > rule.threshold:
-            triggered = True
-        elif rule.operator == 'gte' and value >= rule.threshold:
-            triggered = True
-        elif rule.operator == 'lt' and value < rule.threshold:
-            triggered = True
-        elif rule.operator == 'lte' and value <= rule.threshold:
-            triggered = True
-        elif rule.operator == 'eq' and value == rule.threshold:
+        if (rule.operator == "gt" and value > rule.threshold) or (rule.operator == "gte" and value >= rule.threshold) or (rule.operator == "lt" and value < rule.threshold) or (rule.operator == "lte" and value <= rule.threshold) or (rule.operator == "eq" and value == rule.threshold):
             triggered = True
 
         if triggered:
@@ -267,7 +258,7 @@ class AlertManager:
             message=f"{rule.description} (value: {value}, threshold: {rule.threshold})",
             value=value,
             threshold=rule.threshold,
-            timestamp=now
+            timestamp=now,
         )
 
         self.active_alerts[rule.name] = alert
@@ -293,11 +284,11 @@ class AlertManager:
             del self.active_alerts[rule_name]
             logger.info(f"RESOLVED: {rule_name}")
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """Get all active alerts."""
         return list(self.active_alerts.values())
 
-    def get_alert_summary(self) -> Dict[str, Any]:
+    def get_alert_summary(self) -> dict[str, Any]:
         """Get alert summary."""
         severity_counts = defaultdict(int)
         for alert in self.active_alerts.values():
@@ -307,7 +298,7 @@ class AlertManager:
             "total_active": len(self.active_alerts),
             "by_severity": dict(severity_counts),
             "total_rules": len(self.rules),
-            "enabled_rules": sum(1 for rule in self.rules.values() if rule.enabled)
+            "enabled_rules": sum(1 for rule in self.rules.values() if rule.enabled),
         }
 
 
@@ -325,13 +316,17 @@ class PerformanceAnalyzer:
         success: bool,
         cache_hit: bool,
         tokens: int = 0,
-        error_type: Optional[str] = None
+        error_type: str | None = None,
     ):
         """Record a request for analysis."""
         self.current_metrics.request_count += 1
         self.current_metrics.total_latency += latency
-        self.current_metrics.min_latency = min(self.current_metrics.min_latency, latency)
-        self.current_metrics.max_latency = max(self.current_metrics.max_latency, latency)
+        self.current_metrics.min_latency = min(
+            self.current_metrics.min_latency, latency
+        )
+        self.current_metrics.max_latency = max(
+            self.current_metrics.max_latency, latency
+        )
 
         if not success:
             self.current_metrics.error_count += 1
@@ -353,7 +348,9 @@ class PerformanceAnalyzer:
         """Get current metrics snapshot."""
         return self.current_metrics
 
-    def get_percentiles(self, percentiles: List[float] = [50, 90, 95, 99]) -> Dict[str, float]:
+    def get_percentiles(
+        self, percentiles: list[float] = [50, 90, 95, 99]
+    ) -> dict[str, float]:
         """Calculate latency percentiles from recent history."""
         if not self.metrics_history:
             return {f"p{p}": 0.0 for p in percentiles}
@@ -372,7 +369,7 @@ class PerformanceAnalyzer:
 
         return result
 
-    def detect_anomalies(self) -> List[str]:
+    def detect_anomalies(self) -> list[str]:
         """Detect performance anomalies."""
         anomalies = []
 
@@ -382,18 +379,24 @@ class PerformanceAnalyzer:
         recent_metrics = list(self.metrics_history)[-10:]
 
         # Calculate baseline
-        avg_latency = sum(m.avg_latency for m in recent_metrics if m.request_count > 0) / len(recent_metrics)
+        avg_latency = sum(
+            m.avg_latency for m in recent_metrics if m.request_count > 0
+        ) / len(recent_metrics)
         avg_error_rate = sum(m.error_rate for m in recent_metrics) / len(recent_metrics)
 
         current = self.current_metrics
 
         # Latency spike detection
         if current.avg_latency > avg_latency * 2:
-            anomalies.append(f"Latency spike: {current.avg_latency:.2f}ms (baseline: {avg_latency:.2f}ms)")
+            anomalies.append(
+                f"Latency spike: {current.avg_latency:.2f}ms (baseline: {avg_latency:.2f}ms)"
+            )
 
         # Error rate spike detection
         if current.error_rate > avg_error_rate * 2 and current.error_rate > 5:
-            anomalies.append(f"Error rate spike: {current.error_rate:.1f}% (baseline: {avg_error_rate:.1f}%)")
+            anomalies.append(
+                f"Error rate spike: {current.error_rate:.1f}% (baseline: {avg_error_rate:.1f}%)"
+            )
 
         # Memory usage check
         if PSUTIL_AVAILABLE and current.memory_usage_mb > 0:
@@ -402,7 +405,7 @@ class PerformanceAnalyzer:
 
         return anomalies
 
-    def generate_report(self) -> Dict[str, Any]:
+    def generate_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report."""
         current = self.current_metrics
         percentiles = self.get_percentiles()
@@ -413,17 +416,19 @@ class PerformanceAnalyzer:
             "current_metrics": {
                 "requests": current.request_count,
                 "avg_latency_ms": current.avg_latency,
-                "min_latency_ms": current.min_latency if current.min_latency != float('inf') else 0,
+                "min_latency_ms": current.min_latency
+                if current.min_latency != float("inf")
+                else 0,
                 "max_latency_ms": current.max_latency,
                 "error_rate_percent": current.error_rate,
                 "cache_hit_rate_percent": current.cache_hit_rate,
                 "tokens_generated": current.tokens_generated,
                 "memory_usage_mb": current.memory_usage_mb,
-                "cpu_usage_percent": current.cpu_usage_percent
+                "cpu_usage_percent": current.cpu_usage_percent,
             },
             "percentiles": percentiles,
             "anomalies": anomalies,
-            "health_score": self._calculate_health_score(current)
+            "health_score": self._calculate_health_score(current),
         }
 
     def _calculate_health_score(self, metrics: PerformanceMetrics) -> float:
@@ -453,7 +458,7 @@ class PerformanceAnalyzer:
         return max(0.0, score)
 
 
-def create_default_alert_rules() -> List[AlertRule]:
+def create_default_alert_rules() -> list[AlertRule]:
     """Create default alert rules."""
     return [
         AlertRule(
@@ -462,7 +467,7 @@ def create_default_alert_rules() -> List[AlertRule]:
             threshold=5.0,
             operator="gt",
             severity="high",
-            description="Error rate exceeded 5%"
+            description="Error rate exceeded 5%",
         ),
         AlertRule(
             name="high_latency",
@@ -470,7 +475,7 @@ def create_default_alert_rules() -> List[AlertRule]:
             threshold=1000.0,  # 1 second
             operator="gt",
             severity="medium",
-            description="Average latency exceeded 1 second"
+            description="Average latency exceeded 1 second",
         ),
         AlertRule(
             name="low_cache_hit_rate",
@@ -478,7 +483,7 @@ def create_default_alert_rules() -> List[AlertRule]:
             threshold=20.0,
             operator="lt",
             severity="low",
-            description="Cache hit rate below 20%"
+            description="Cache hit rate below 20%",
         ),
         AlertRule(
             name="high_memory_usage",
@@ -486,7 +491,7 @@ def create_default_alert_rules() -> List[AlertRule]:
             threshold=1000.0,  # 1GB
             operator="gt",
             severity="medium",
-            description="Memory usage exceeded 1GB"
+            description="Memory usage exceeded 1GB",
         ),
         AlertRule(
             name="critical_error_rate",
@@ -494,18 +499,18 @@ def create_default_alert_rules() -> List[AlertRule]:
             threshold=20.0,
             operator="gt",
             severity="critical",
-            description="Critical error rate exceeded 20%"
-        )
+            description="Critical error rate exceeded 20%",
+        ),
     ]
 
 
 def log_alert_handler(alert: Alert):
     """Simple log-based alert handler."""
     level = {
-        'low': logging.INFO,
-        'medium': logging.WARNING,
-        'high': logging.ERROR,
-        'critical': logging.CRITICAL
+        "low": logging.INFO,
+        "medium": logging.WARNING,
+        "high": logging.ERROR,
+        "critical": logging.CRITICAL,
     }.get(alert.severity, logging.WARNING)
 
     logger.log(level, f"ALERT [{alert.severity.upper()}]: {alert.message}")
@@ -527,7 +532,7 @@ class MonitoringService:
         self.alert_manager.add_handler(log_alert_handler)
 
         # Background monitoring task
-        self._monitoring_task: Optional[asyncio.Task] = None
+        self._monitoring_task: asyncio.Task | None = None
         self._running = False
 
     async def start(self):
@@ -559,10 +564,18 @@ class MonitoringService:
 
                 # Check for alerts
                 current_metrics = self.performance_analyzer.get_current_metrics()
-                self.alert_manager.check_metric("error_rate", current_metrics.error_rate)
-                self.alert_manager.check_metric("avg_latency", current_metrics.avg_latency)
-                self.alert_manager.check_metric("cache_hit_rate", current_metrics.cache_hit_rate)
-                self.alert_manager.check_metric("memory_usage_mb", current_metrics.memory_usage_mb)
+                self.alert_manager.check_metric(
+                    "error_rate", current_metrics.error_rate
+                )
+                self.alert_manager.check_metric(
+                    "avg_latency", current_metrics.avg_latency
+                )
+                self.alert_manager.check_metric(
+                    "cache_hit_rate", current_metrics.cache_hit_rate
+                )
+                self.alert_manager.check_metric(
+                    "memory_usage_mb", current_metrics.memory_usage_mb
+                )
 
                 await asyncio.sleep(30)  # Check every 30 seconds
 
@@ -578,7 +591,7 @@ class MonitoringService:
         success: bool,
         cache_hit: bool,
         tokens: int = 0,
-        error_type: Optional[str] = None
+        error_type: str | None = None,
     ):
         """Record a request across all monitoring systems."""
         # Prometheus metrics
@@ -598,32 +611,36 @@ class MonitoringService:
             success,
             cache_hit,
             tokens,
-            error_type
+            error_type,
         )
 
     def get_metrics_export(self) -> str:
         """Get Prometheus metrics export."""
         return self.prometheus.generate_metrics()
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """Get comprehensive performance report."""
         return self.performance_analyzer.generate_report()
 
-    def get_alert_summary(self) -> Dict[str, Any]:
+    def get_alert_summary(self) -> dict[str, Any]:
         """Get alert summary."""
         return self.alert_manager.get_alert_summary()
 
-    def get_health_status(self) -> Dict[str, Any]:
+    def get_health_status(self) -> dict[str, Any]:
         """Get overall health status."""
         report = self.get_performance_report()
         alerts = self.get_alert_summary()
 
         return {
             "health_score": report["health_score"],
-            "status": "healthy" if report["health_score"] > 80 else "degraded" if report["health_score"] > 50 else "unhealthy",
+            "status": "healthy"
+            if report["health_score"] > 80
+            else "degraded"
+            if report["health_score"] > 50
+            else "unhealthy",
             "active_alerts": alerts["total_active"],
             "critical_alerts": alerts["by_severity"].get("critical", 0),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 

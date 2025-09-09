@@ -155,4 +155,3 @@ class DocumentListResponse(BaseModel):
     page_size: int = Field(..., description="Items per page")
     total_pages: int = Field(..., description="Total number of pages")
     filters_applied: dict[str, Any] | None = Field(None, description="Applied filters")
-

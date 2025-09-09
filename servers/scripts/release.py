@@ -39,12 +39,28 @@ class GitHashParamType(click.ParamType):
             self.fail("Git hash must contain only hex digits (0-9, a-f)")
 
         try:
-            # Verify hash exists in repo
+            # SECURITY: Verify hash exists in repo with secure subprocess execution
+            import shutil
+
+            git_path = shutil.which("git")
+            if not git_path or git_path != "/usr/bin/git":
+                self.fail("Git command not found or in unexpected location")
+
+            # Validate git hash format more strictly
+            if not re.match(r"^[0-9a-fA-F]{8,40}$", value):
+                self.fail("Invalid git hash format")
+
             subprocess.run(
-                ["git", "rev-parse", "--verify", value], check=True, capture_output=True
+                [git_path, "rev-parse", "--verify", value],
+                check=True,
+                capture_output=True,
+                shell=False,  # Prevent shell injection
+                timeout=10,  # Prevent hanging
             )
         except subprocess.CalledProcessError:
             self.fail(f"Git hash {value} not found in repository")
+        except subprocess.TimeoutExpired:
+            self.fail("Git command timed out")
 
         return GitHash(value.lower())
 
@@ -102,18 +118,35 @@ class PyPiPackage:
 def has_changes(path: Path, git_hash: GitHash) -> bool:
     """Check if any files changed between current state and git hash"""
     try:
+        # SECURITY: Validate inputs and use secure subprocess execution
+        import shutil
+
+        git_path = shutil.which("git")
+        if not git_path or git_path != "/usr/bin/git":
+            return False
+
+        # Validate git hash format
+        if not re.match(r"^[0-9a-fA-F]{8,40}$", git_hash):
+            return False
+
+        # Validate path is a directory
+        if not path.is_dir():
+            return False
+
         output = subprocess.run(
-            ["git", "diff", "--name-only", git_hash, "--", "."],
+            [git_path, "diff", "--name-only", git_hash, "--", "."],
             cwd=path,
             check=True,
             capture_output=True,
             text=True,
+            shell=False,  # Prevent shell injection
+            timeout=30,  # Prevent hanging
         )
 
         changed_files = [Path(f) for f in output.stdout.splitlines()]
         relevant_files = [f for f in changed_files if f.suffix in [".py", ".ts"]]
         return len(relevant_files) >= 1
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return False
 
 

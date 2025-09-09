@@ -1,8 +1,8 @@
 import importlib.util
 from pathlib import Path
 
-import pytest
 import numpy as np
+import pytest
 
 repo_root = Path(__file__).resolve().parents[3]
 module_path = (

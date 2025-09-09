@@ -70,13 +70,10 @@ export function parseInitialMd(content: string): InitialMdContent {
           try {
             const codeContent = currentList.join('\n');
             const parsed =
-              codeBlockLang === 'yaml'
-                ? parseYaml(codeContent)
-                : JSON.parse(codeContent);
+              codeBlockLang === 'yaml' ? parseYaml(codeContent) : JSON.parse(codeContent);
 
             // Merge parsed configuration
-            if (parsed.budgets)
-              result.budgets = { ...result.budgets, ...parsed.budgets };
+            if (parsed.budgets) result.budgets = { ...result.budgets, ...parsed.budgets };
             if (parsed.architecture)
               result.architecture = {
                 ...result.architecture,
@@ -196,11 +193,7 @@ function parseYaml(content: string): Record<string, unknown> {
 } /**
  * Assign collected content to appropriate section
  */
-function finishSection(
-  result: InitialMdContent,
-  section: string,
-  content: string[],
-) {
+function finishSection(result: InitialMdContent, section: string, content: string[]) {
   const sectionLower = section.toLowerCase();
 
   if (sectionLower.includes('requirement')) {
@@ -211,10 +204,7 @@ function finishSection(
     result.references = [...(result.references || []), ...content];
   } else if (sectionLower.includes('test')) {
     result.tests.push(...content);
-  } else if (
-    sectionLower.includes('acceptance') ||
-    sectionLower.includes('criteria')
-  ) {
+  } else if (sectionLower.includes('acceptance') || sectionLower.includes('criteria')) {
     result.acceptance_criteria.push(...content);
   }
 }
@@ -222,9 +212,7 @@ function finishSection(
 /**
  * Convert InitialMdContent to EnforcementProfile
  */
-export function compileEnforcementProfile(
-  initialMd: InitialMdContent,
-): EnforcementProfile {
+export function compileEnforcementProfile(initialMd: InitialMdContent): EnforcementProfile {
   const defaults: EnforcementProfile = {
     budgets: {
       coverageLines: 95,
@@ -252,21 +240,15 @@ export function compileEnforcementProfile(
     budgets: {
       ...defaults.budgets,
       ...(initialMd.budgets?.coverage && {
-        coverageLines:
-          initialMd.budgets.coverage.lines ?? defaults.budgets.coverageLines,
-        coverageBranches:
-          initialMd.budgets.coverage.branches ??
-          defaults.budgets.coverageBranches,
+        coverageLines: initialMd.budgets.coverage.lines ?? defaults.budgets.coverageLines,
+        coverageBranches: initialMd.budgets.coverage.branches ?? defaults.budgets.coverageBranches,
       }),
       ...(initialMd.budgets?.performance && {
-        performanceLCP:
-          initialMd.budgets.performance.lcp ?? defaults.budgets.performanceLCP,
-        performanceTBT:
-          initialMd.budgets.performance.tbt ?? defaults.budgets.performanceTBT,
+        performanceLCP: initialMd.budgets.performance.lcp ?? defaults.budgets.performanceLCP,
+        performanceTBT: initialMd.budgets.performance.tbt ?? defaults.budgets.performanceTBT,
       }),
       ...(initialMd.budgets?.accessibility && {
-        a11yScore:
-          initialMd.budgets.accessibility.score ?? defaults.budgets.a11yScore,
+        a11yScore: initialMd.budgets.accessibility.score ?? defaults.budgets.a11yScore,
       }),
     },
     architecture: {
@@ -322,7 +304,9 @@ export async function loadInitialMd(
       const content = await fs.readFile(fullPath, 'utf-8');
       const parsed = parseInitialMd(content);
       return compileEnforcementProfile(parsed);
-    } catch { }
+    } catch {
+      // Swallow read/parse errors for this path; proceed to next candidate.
+    }
   }
 
   // No initial.md found, return defaults

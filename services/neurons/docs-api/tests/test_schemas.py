@@ -13,4 +13,3 @@ def test_document_create_too_many_tags():
     tags = [str(i) for i in range(21)]
     with pytest.raises(ValidationError):
         DocumentCreate(path="/p", title="t", content="c", tags=tags)
-

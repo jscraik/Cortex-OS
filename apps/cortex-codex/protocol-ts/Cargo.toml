@@ -1,9 +1,7 @@
-cargo-features = ["edition2024"]
-
 [package]
-edition = "2024"
 name = "codex-protocol-ts"
 version = { workspace = true }
+edition = { workspace = true }
 
 [lints]
 workspace = true

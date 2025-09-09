@@ -21,6 +21,7 @@ All events are logged to stdout as JSON for metrics collection.
 
 The development helper `scripts/dev-with-memory-guard.sh` now uses this utility.
 
+
 ## Test suite integration
 
 Run the Vitest suite under memory protection:

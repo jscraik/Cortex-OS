@@ -40,6 +40,18 @@ pub enum ProviderError {
 
     #[error("unknown error: {message}")]
     Unknown { message: String },
+
+    #[error("no providers registered")]
+    NoProvidersRegistered,
+
+    #[error("unknown provider: {provider}")]
+    UnknownProvider { provider: String },
+
+    #[error("model not supported: {model}")]
+    ModelNotSupported { model: String },
+
+    #[error("no resolution path available")]
+    NoResolutionPath,
 }
 
 impl ProviderError {
@@ -91,6 +103,18 @@ impl From<ProviderError> for CodexErr {
             }
             Unknown { message } => {
                 CodexErr::ConfigurationError(format!("unknown provider error: {message}"))
+            }
+            NoProvidersRegistered => {
+                CodexErr::ConfigurationError("no providers registered".into())
+            }
+            UnknownProvider { provider } => {
+                CodexErr::ConfigurationError(format!("unknown provider: {provider}"))
+            }
+            ModelNotSupported { model } => {
+                CodexErr::ConfigurationError(format!("model not supported: {model}"))
+            }
+            NoResolutionPath => {
+                CodexErr::ConfigurationError("no resolution path available".into())
             }
         }
     }

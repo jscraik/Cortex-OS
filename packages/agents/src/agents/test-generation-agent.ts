@@ -217,7 +217,9 @@ export const createTestGenerationAgent = (
 					traceId,
 					capability: "test-generation",
 					error: error instanceof Error ? error.message : "Unknown error",
-					errorCode: (error as any)?.code || undefined,
+					errorCode: (typeof error === "object" && error !== null && "code" in error)
+						? (error as { code?: string | number }).code
+						: undefined,
 					status:
 						typeof (error as any)?.status === "number"
 							? (error as any)?.status
@@ -246,7 +248,6 @@ const generateTests = async (
 		language,
 		testType,
 		framework,
-		includeEdgeCases,
 		coverageTarget,
 	} = input;
 

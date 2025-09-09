@@ -33,7 +33,9 @@ class SSETransport(MCPTransport):
         self.state = ConnectionState.DISCONNECTED
         self._notify_connection_event("disconnected")
 
-    async def send_message(self, message: MCPMessage) -> None:  # pragma: no cover - SSE is receive only
+    async def send_message(
+        self, message: MCPMessage
+    ) -> None:  # pragma: no cover - SSE is receive only
         raise TransportError("SSE transport is receive-only")
 
     async def receive_messages(self) -> None:

@@ -6,7 +6,9 @@ import { Command } from 'commander';
 const platform = os.platform();
 
 function getProcessList(pattern) {
+
   const output = execSync('ps -eo pid,rss,command').toString().trim().split('\n').slice(1);
+
   return output.map(line => {
     const match = line.trim().match(/^(\d+)\s+(\d+)\s+(.*)$/);
     if (!match) return null;
@@ -21,7 +23,9 @@ function getProcessList(pattern) {
 
 function getRssMB(pid) {
   // Validate that pid is a positive integer
+
   if (!Number.isInteger(pid) || pid <= 0) {
+
     return 0;
   }
   try {
@@ -44,11 +48,13 @@ export function startGuard({ pids = [], pattern = 'node', maxRssMB, intervalMs }
       log({ pid, rssMB, action: 'check' });
       if (rssMB > maxRssMB) {
         if (!warned.has(pid)) {
+
           try { process.kill(pid, 'SIGUSR2'); } catch {}
           warned.set(pid, true);
           log({ pid, rssMB, action: 'sigusr2' });
         } else {
           try { process.kill(pid, 'SIGKILL'); } catch {}
+
           log({ pid, rssMB, action: 'killed' });
         }
       }

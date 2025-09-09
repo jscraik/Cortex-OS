@@ -6,22 +6,20 @@ Provides circuit breakers, retry logic, graceful degradation, and health monitor
 
 import asyncio
 import logging
-import time
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Optional, Dict, List
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from typing import Any
 
-import instructor
-from openai import AsyncOpenAI
 from pydantic import BaseModel
 from tenacity import (
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,13 +27,15 @@ logger = logging.getLogger(__name__)
 
 class CircuitBreakerState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Failing, reject requests
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, reject requests
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
 class ErrorSeverity(Enum):
     """Error severity levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -44,6 +44,7 @@ class ErrorSeverity(Enum):
 
 class RecoveryStrategy(Enum):
     """Recovery strategies for different error types."""
+
     RETRY = "retry"
     FALLBACK = "fallback"
     DEGRADE = "degrade"
@@ -53,10 +54,11 @@ class RecoveryStrategy(Enum):
 @dataclass
 class ErrorMetrics:
     """Metrics for error tracking and analysis."""
+
     total_errors: int = 0
     error_rate: float = 0.0
-    last_error_time: Optional[datetime] = None
-    error_types: Dict[str, int] = field(default_factory=dict)
+    last_error_time: datetime | None = None
+    error_types: dict[str, int] = field(default_factory=dict)
     recovery_attempts: int = 0
     successful_recoveries: int = 0
 
@@ -64,6 +66,7 @@ class ErrorMetrics:
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for circuit breaker."""
+
     failure_threshold: int = 5
     recovery_timeout: int = 60  # seconds
     expected_exception: type = Exception
@@ -77,7 +80,7 @@ class CircuitBreaker:
         self.config = config
         self.state = CircuitBreakerState.CLOSED
         self.failure_count = 0
-        self.last_failure_time: Optional[datetime] = None
+        self.last_failure_time: datetime | None = None
         self.half_open_calls = 0
 
     def __call__(self, func: Callable) -> Callable:
@@ -108,7 +111,9 @@ class CircuitBreaker:
         """Check if enough time has passed to attempt reset."""
         if not self.last_failure_time:
             return True
-        return (datetime.now() - self.last_failure_time).total_seconds() > self.config.recovery_timeout
+        return (
+            datetime.now() - self.last_failure_time
+        ).total_seconds() > self.config.recovery_timeout
 
     def _on_success(self):
         """Handle successful call."""
@@ -128,16 +133,20 @@ class CircuitBreaker:
 
         if self.failure_count >= self.config.failure_threshold:
             self.state = CircuitBreakerState.OPEN
-            logger.warning(f"Circuit breaker opened after {self.failure_count} failures")
+            logger.warning(
+                f"Circuit breaker opened after {self.failure_count} failures"
+            )
 
 
 class CircuitBreakerOpenError(Exception):
     """Raised when circuit breaker is open."""
+
     pass
 
 
 class GracefulDegradationError(Exception):
     """Raised when graceful degradation is activated."""
+
     pass
 
 
@@ -146,14 +155,14 @@ class ErrorHandler:
 
     def __init__(self):
         self.metrics = ErrorMetrics()
-        self.recovery_strategies: Dict[type, RecoveryStrategy] = {
+        self.recovery_strategies: dict[type, RecoveryStrategy] = {
             ConnectionError: RecoveryStrategy.RETRY,
             TimeoutError: RecoveryStrategy.RETRY,
             MemoryError: RecoveryStrategy.DEGRADE,
             CircuitBreakerOpenError: RecoveryStrategy.FALLBACK,
             ValueError: RecoveryStrategy.FAIL_FAST,
         }
-        self.fallback_responses: Dict[str, Any] = {}
+        self.fallback_responses: dict[str, Any] = {}
 
     def register_fallback(self, operation: str, response: Any):
         """Register a fallback response for an operation."""
@@ -164,7 +173,9 @@ class ErrorHandler:
         """Determine error severity level."""
         if isinstance(error, (MemoryError, SystemExit, KeyboardInterrupt)):
             return ErrorSeverity.CRITICAL
-        elif isinstance(error, (ConnectionError, TimeoutError, CircuitBreakerOpenError)):
+        elif isinstance(
+            error, (ConnectionError, TimeoutError, CircuitBreakerOpenError)
+        ):
             return ErrorSeverity.HIGH
         elif isinstance(error, (ValueError, TypeError)):
             return ErrorSeverity.MEDIUM
@@ -177,7 +188,9 @@ class ErrorHandler:
         self.metrics.last_error_time = datetime.now()
 
         error_type = type(error).__name__
-        self.metrics.error_types[error_type] = self.metrics.error_types.get(error_type, 0) + 1
+        self.metrics.error_types[error_type] = (
+            self.metrics.error_types.get(error_type, 0) + 1
+        )
 
         severity = self.get_error_severity(error)
         logger.error(f"Error in {operation}: {error} (severity: {severity.value})")
@@ -218,9 +231,9 @@ class HealthMonitor:
     """Health monitoring and alerting system."""
 
     def __init__(self):
-        self.health_checks: Dict[str, Callable] = {}
-        self.health_status: Dict[str, bool] = {}
-        self.last_check_time: Dict[str, datetime] = {}
+        self.health_checks: dict[str, Callable] = {}
+        self.health_status: dict[str, bool] = {}
+        self.last_check_time: dict[str, datetime] = {}
         self.check_interval = 30  # seconds
 
     def register_health_check(self, name: str, check_func: Callable):
@@ -229,13 +242,17 @@ class HealthMonitor:
         self.health_status[name] = True
         logger.info(f"Registered health check: {name}")
 
-    async def run_health_checks(self) -> Dict[str, bool]:
+    async def run_health_checks(self) -> dict[str, bool]:
         """Run all registered health checks."""
         results = {}
 
         for name, check_func in self.health_checks.items():
             try:
-                result = await check_func() if asyncio.iscoroutinefunction(check_func) else check_func()
+                result = (
+                    await check_func()
+                    if asyncio.iscoroutinefunction(check_func)
+                    else check_func()
+                )
                 results[name] = bool(result)
                 self.health_status[name] = results[name]
                 self.last_check_time[name] = datetime.now()
@@ -251,7 +268,7 @@ class HealthMonitor:
         """Get overall system health status."""
         return all(self.health_status.values()) if self.health_status else False
 
-    def get_health_report(self) -> Dict[str, Any]:
+    def get_health_report(self) -> dict[str, Any]:
         """Get detailed health report."""
         return {
             "overall_health": self.get_overall_health(),
@@ -271,7 +288,7 @@ def retry_with_backoff(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     max_delay: float = 60.0,
-    exceptions: tuple = (Exception,)
+    exceptions: tuple = (Exception,),
 ):
     """Retry decorator with exponential backoff."""
     return retry(
@@ -285,13 +302,14 @@ def retry_with_backoff(
 
 class ErrorResponse(BaseModel):
     """Structured error response model."""
+
     error_type: str
     message: str
     severity: str
     timestamp: str
     operation: str
-    recovery_suggestion: Optional[str] = None
-    support_id: Optional[str] = None
+    recovery_suggestion: str | None = None
+    support_id: str | None = None
 
 
 def create_error_handler() -> ErrorHandler:
@@ -299,16 +317,22 @@ def create_error_handler() -> ErrorHandler:
     handler = ErrorHandler()
 
     # Register default fallback responses
-    handler.register_fallback("inference", {
-        "content": "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.",
-        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-        "fallback": True,
-    })
+    handler.register_fallback(
+        "inference",
+        {
+            "content": "I apologize, but I'm experiencing technical difficulties. Please try again in a moment.",
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+            "fallback": True,
+        },
+    )
 
-    handler.register_fallback("embedding", {
-        "embeddings": [[0.0] * 768],  # Zero embedding as fallback
-        "fallback": True,
-    })
+    handler.register_fallback(
+        "embedding",
+        {
+            "embeddings": [[0.0] * 768],  # Zero embedding as fallback
+            "fallback": True,
+        },
+    )
 
     return handler
 
@@ -316,7 +340,7 @@ def create_error_handler() -> ErrorHandler:
 def create_circuit_breaker(
     failure_threshold: int = 5,
     recovery_timeout: int = 60,
-    expected_exception: type = Exception
+    expected_exception: type = Exception,
 ) -> CircuitBreaker:
     """Factory function to create circuit breaker with custom configuration."""
     config = CircuitBreakerConfig(
