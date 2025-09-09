@@ -240,6 +240,7 @@ export class HealthService {
     try {
       const requiredEnvVars = [
         'JWT_SECRET',
+        'MODEL_API_KEY',
         'NODE_ENV'
       ];
       
