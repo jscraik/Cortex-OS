@@ -7,7 +7,7 @@ EDGE_IP_VERSION_ARG="${3:-}"
 EDGE_IP_VERSION="${EDGE_IP_VERSION_ARG:-${EDGE_IP_VERSION:-4}}"
 
 if [[ -z "${SERVICE_NAME}" ]]; then
-  echo "Usage: $0 <service-name> [local-port]"
+  echo "Usage: $0 <service-name> [local-port] [edge-ip-version]"
   exit 2
 fi
 
