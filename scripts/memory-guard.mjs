@@ -6,7 +6,7 @@ import { Command } from 'commander';
 const platform = os.platform();
 
 function getProcessList(pattern) {
-  const output = execSync('ps -ax -o pid,rss,command').toString().trim().split('\n').slice(1);
+  const output = execSync('ps -eo pid,rss,command').toString().trim().split('\n').slice(1);
   return output.map(line => {
     const match = line.trim().match(/^(\d+)\s+(\d+)\s+(.*)$/);
     if (!match) return null;
