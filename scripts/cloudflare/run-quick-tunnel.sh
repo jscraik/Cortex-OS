@@ -3,6 +3,8 @@ set -euo pipefail
 
 SERVICE_NAME="${1:-}"
 LOCAL_PORT="${2:-}"
+EDGE_IP_VERSION_ARG="${3:-}"
+EDGE_IP_VERSION="${EDGE_IP_VERSION_ARG:-${EDGE_IP_VERSION:-4}}"
 
 if [[ -z "${SERVICE_NAME}" ]]; then
   echo "Usage: $0 <service-name> [local-port]"
@@ -50,7 +52,7 @@ echo "[cloudflared:${SERVICE_NAME}] Exposing http://localhost:${LOCAL_PORT} (met
     awk '/https:\/\/.*trycloudflare\.com/ {print $1; fflush(); exit 0}' > "$URL_FILE"
 ) &
 
-exec cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 \
+exec cloudflared tunnel --no-autoupdate --edge-ip-version "${EDGE_IP_VERSION}" --protocol http2 \
   --metrics 127.0.0.1:"${METRICS_PORT}" \
   --url "http://localhost:${LOCAL_PORT}" \
   2>&1 | tee -a "$LOG_FILE"
