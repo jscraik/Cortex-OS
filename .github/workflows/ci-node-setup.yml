@@ -25,9 +25,11 @@ jobs:
       - uses: actions/checkout@2c04b2341174e4a2c65d8d6c2c6c3e2c4012b897
         with:
           fetch-depth: 0
-      - uses: ./.github/actions/setup
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs['node-version'] }}
-          pnpm-version: ${{ inputs['pnpm-version'] }}
+      - uses: pnpm/action-setup@v2
+        with:
+          version: ${{ inputs['pnpm-version'] }}
       - name: Run commands
         run: ${{ inputs.run }}
