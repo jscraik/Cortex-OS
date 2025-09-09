@@ -8,10 +8,10 @@
 
 ## 0) Overview
 
-- **Kernel:** Single deterministic orchestrator (`CortexKernel`) using LangGraph
+- **Kernel:** Simplified state machine (`CortexKernel`) without LangGraph; LangGraph support provided via dedicated agents and orchestration layer
 - **Workflow:** PRP Loop — `plan → generate → review → refactor`
 - **Agents:** Role-based agents that interface with kernel nodes
-- **Local-First:** On-device execution (MLX inference, local vector DB, no cloud dependencies)
+- **Local-First:** Prefers on-device execution (MLX inference, local vector DB) with optional remote model gateway
 - **Teaching:** Review steps include educational feedback
 
 ---
@@ -52,38 +52,33 @@ pnpm test
 
 ## 2) Agent Roles
 
-### Cerebrum (Orchestrator)
-
-- Routes workflow phases
-- Enforces quality gates
-- Manages provenance
+Agents live under `packages/agents/src/agents/`:
 
 ### CodeAnalysisAgent
 
-- Performs static analysis of code
-- Can be used for architecture and review-related tasks
-- Output: `AnalysisReport`
+- Performs static analysis of source code
+- Output: `CodeAnalysisOutput`
 
 ### DocumentationAgent
 
-- Maintains documentation
+- Generates project documentation from source code
 - Validates links and versions
-- Output: `{ docsChanges, linkcheck }`
+- Output: `DocumentationOutput`
 
 ### LangGraphAgent
 
-- Integrates with LangGraph for stateful workflows
-- Output: `GraphState`
+- Executes workflows using LangGraph
+- Output: `LangGraphOutput`
 
 ### SecurityAgent
 
 - Scans for security vulnerabilities
-- Output: `SecurityReport`
+- Output: `SecurityOutput`
 
 ### TestGenerationAgent
 
-- Generates tests and measures coverage
-- Output: `{ failing, coverage, fixes }`
+- Generates tests and coverage metrics
+- Output: `TestGenerationOutput`
 
 ---
 
@@ -157,10 +152,6 @@ Tools under `packages/mcp/`:
 
 ## 7) Implementation Notes
 
-⚠️ **Implementation Status & Notes:**
-
-- **Agent Mismatch**: The implemented agents (`CodeAnalysisAgent`, `DocumentationAgent`, `LangGraphAgent`, `SecurityAgent`, `TestGenerationAgent`) do not directly map to the legacy agent roles originally specified. Roles like `ProductManager`, `Implementer`, and `Reviewer` are not explicitly implemented as separate agents.
-- **Inadequate Determinism Tests**: While test files for determinism exist (e.g., `packages/kernel/tests/determinism.test.ts`), they are known to be flawed and do not provide true determinism guarantees.
-- **Inconsistent LangGraph Integration**: LangGraph is used in the `orchestration` and `agents` packages, but the core kernel (`packages/kernel/src/graph-simple.ts`) is explicitly a non-LangGraph implementation, creating an architectural inconsistency.
-
-📍 **Action Required:** Align this spec with actual implementation in `packages/agents/`
+- `packages/kernel/src/graph-simple.ts` provides a non-LangGraph kernel implementation
+- LangGraph integration is available through `packages/agents` and `packages/orchestration`
+- Determinism tests exist (e.g., `packages/kernel/tests/determinism.test.ts`) but are not yet comprehensive
