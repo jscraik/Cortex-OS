@@ -22,7 +22,7 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@2c04b2341174e4a2c65d8d6c2c6c3e2c4012b897
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
