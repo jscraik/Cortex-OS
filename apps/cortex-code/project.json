@@ -1,0 +1,20 @@
+{
+    "name": "cortex-code-rust",
+    "projectType": "application",
+    "root": "apps/cortex-codex",
+    "sourceRoot": "apps/cortex-codex",
+    "targets": {
+        "test": {
+            "command": "pnpm codex:test"
+        },
+        "test-unit": {
+            "command": "pnpm codex:test:unit"
+        },
+        "test-integration": {
+            "command": "pnpm codex:test:integration"
+        },
+        "coverage": {
+            "command": "pnpm codex:test:coverage"
+        }
+    }
+}

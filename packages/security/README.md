@@ -5,8 +5,8 @@
 [![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
 [![GitHub Issues](https://img.shields.io/github/issues/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/issues)
 [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/cortex-os/cortex-os)](https://github.com/cortex-os/cortex-os/pulls)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)](https://www.typescriptlang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
 [![Test Coverage](https://img.shields.io/badge/coverage-95%25+-brightgreen)](#testing)
 [![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
@@ -16,7 +16,7 @@
 
 **SPIFFE/SPIRE Security Implementation for Cortex-OS**
 
-*Zero-trust security with mTLS, workload identity management, and LLM-aware static analysis*
+_Zero-trust security with mTLS, workload identity management, and LLM-aware static analysis_
 
 </div>
 
@@ -52,12 +52,17 @@ pnpm test
 ### Basic Usage
 
 ```typescript
-import { SpiffeClient, WorkloadIdentity, MTLSManager, SecurityEventEmitter } from '@cortex-os/security';
+import {
+  SpiffeClient,
+  WorkloadIdentity,
+  MTLSManager,
+  SecurityEventEmitter,
+} from '@cortex-os/security';
 
 // Initialize SPIFFE client
 const spiffeClient = new SpiffeClient({
   socketPath: '/tmp/spire-agent/public/api.sock',
-  trustDomain: 'cortex-os.local'
+  trustDomain: 'cortex-os.local',
 });
 
 // Get workload identity
@@ -69,7 +74,7 @@ const mtlsManager = new MTLSManager(identity);
 // Emit a contract-validated security event
 const emitter = new SecurityEventEmitter({
   registry: { validate: async () => true },
-  policyRouter: { enforce: async () => undefined }
+  policyRouter: { enforce: async () => undefined },
 });
 
 await emitter.emit({
@@ -77,7 +82,7 @@ await emitter.emit({
   source: 'urn:cortex:security',
   schemaId: 'https://cortex.test/schemas/security/audit',
   data: { action: 'login' },
-  evidence: ['trace-123']
+  evidence: ['trace-123'],
 });
 ```
 

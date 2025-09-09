@@ -1,0 +1,42 @@
+# Development Dockerfile for Rust hot-reload with cargo-watch
+FROM --platform=$BUILDPLATFORM rust:1.80-alpine AS base
+
+# Install system dependencies including cargo-watch
+RUN apk add --no-cache \
+    musl-dev \
+    pkgconfig \
+    openssl-dev \
+    openssl-libs-static \
+    git
+
+# Install cargo-watch for hot reloading
+RUN cargo install cargo-watch
+
+# Set working directory
+WORKDIR /workspace
+
+# Create non-root user
+RUN addgroup -g 1000 cortex && \
+    adduser -D -s /bin/sh -u 1000 -G cortex cortex
+
+# Change ownership of workspace
+RUN chown -R cortex:cortex /workspace
+
+# Switch to non-root user
+USER cortex
+
+# Set environment variables
+ENV RUST_LOG=debug
+ENV CARGO_TARGET_DIR=/workspace/target
+
+# Default command uses cargo-watch for the main binary
+CMD ["cargo", "watch", "-x", "run --bin codex"]
+
+# Labels for OrbStack optimization
+LABEL \
+    org.opencontainers.image.title="Cortex Code Development" \
+    org.opencontainers.image.description="Development container with hot-reload for Rust Cortex Code" \
+    org.opencontainers.image.vendor="Cortex-OS" \
+    orbstack.optimize="true" \
+    orbstack.rust-dev="true" \
+    orbstack.hot-reload="true"

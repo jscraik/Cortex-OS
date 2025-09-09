@@ -25,13 +25,13 @@ You can install Cortex Code by building from source:
 ```bash
 # Clone the repository
 git clone https://github.com/cortex-os/cortex-os.git
-cd cortex-os/apps/cortex-code
+cd cortex-os/apps/cortex-codex
 
 # Build the project
 cargo build --release
 
 # Run Cortex Code
-./target/release/cortex-code
+./target/release/codex
 ```
 
 ### What are the system requirements?
@@ -160,7 +160,7 @@ Ensure that:
 
 ```bash
 # For zsh (default on macOS)
-echo 'export PATH="$PATH:/path/to/cortex-code"' >> ~/.zshrc
+echo 'alias cortex="codex"' >> ~/.zshrc && source ~/.zshrc
 source ~/.zshrc
 ```
 

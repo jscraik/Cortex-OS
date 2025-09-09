@@ -1,0 +1,41 @@
+name: TDD Enforcement
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tdd-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: |
+        npm install -g pnpm
+        pnpm install
+        
+    - name: Build TDD Coach
+      run: |
+        cd packages/tdd-coach
+        pnpm build
+        
+    - name: Run TDD Coach Status Check
+      run: |
+        cd packages/tdd-coach
+        node dist/cli/tdd-coach.js status
+        
+    - name: Run TDD Coach Validation
+      run: |
+        cd packages/tdd-coach
+        # Validate key source files
+        node dist/cli/tdd-coach.js validate --files src/TDDCoach.ts src/core/TDDStateMachine.ts

@@ -224,6 +224,68 @@ function validateRootEntries(files: string[]): string[] {
         return disallowed;
 }
 
+// Add import validation function
+async function validateImports(files: string[]): Promise<{ file: string; errors: string[] }[]> {
+	const importErrors: { file: string; errors: string[] }[] = [];
+	
+	// Get all TypeScript files
+	const tsFiles = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
+	
+	// Process each TypeScript file
+	for (const file of tsFiles) {
+		try {
+			const content = readFileSync(file, 'utf8');
+			
+			// Extract import statements
+			const importRegex = /import\s+.*?from\s+['"](.*?)['"]|import\s+['"](.*?)['"]/g;
+			let match;
+			
+			while ((match = importRegex.exec(content)) !== null) {
+				const importPath = match[1] || match[2];
+				
+				if (importPath) {
+					// Check banned patterns
+					for (const bannedPattern of policy.importRules.bannedPatterns) {
+						const regex = new RegExp(bannedPattern);
+						if (regex.test(importPath)) {
+							const fileErrors = importErrors.find(e => e.file === file)?.errors || [];
+							if (!importErrors.find(e => e.file === file)) {
+								importErrors.push({ file, errors: [...fileErrors, `Banned import pattern: ${importPath}`] });
+							} else {
+								importErrors.find(e => e.file === file)?.errors.push(`Banned import pattern: ${importPath}`);
+							}
+						}
+					}
+					
+					// Check for cross-package imports that aren't allowed
+					if (file.startsWith('packages/') && importPath.startsWith('@cortex-os/')) {
+						const currentPackage = file.split('/')[1];
+						const importedPackage = importPath.split('/')[1];
+						
+						// If importing from a different package
+						if (currentPackage !== importedPackage) {
+							// Check if the import is in the allowed list
+							if (!policy.importRules.allowedCrossPkgImports.includes(importPath.split('/').slice(0, 2).join('/'))) {
+								const fileErrors = importErrors.find(e => e.file === file)?.errors || [];
+								if (!importErrors.find(e => e.file === file)) {
+									importErrors.push({ file, errors: [...fileErrors, `Cross-package import not allowed: ${importPath}`] });
+								} else {
+									importErrors.find(e => e.file === file)?.errors.push(`Cross-package import not allowed: ${importPath}`);
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (error) {
+			// Skip files that can't be read
+			console.warn(`Could not read file ${file} for import validation: ${error}`);
+		}
+	}
+	
+	return importErrors;
+}
+
 // Filter out denied files first
 const deniedFiles = validateDeniedFiles(files);
 const filteredFiles = files.filter((f) => !deniedFiles.includes(f));
@@ -235,6 +297,8 @@ const disallowedFiles = validateAllowedFiles(filteredFiles);
 const missingProtected = validateProtectedFiles(filteredFiles);
 const packageStructureErrors = validatePackageStructure(filteredFiles);
 const disallowedRootEntries = validateRootEntries(filteredFiles);
+// Run import validation
+const importErrors = await validateImports(filteredFiles);
 
 // Report findings
 let exitCode = 0;
@@ -283,6 +347,17 @@ if (disallowedRootEntries.length > 0) {
 	exitCode = Math.max(exitCode, 6);
 }
 
+if (importErrors.length > 0) {
+	console.error('❌ Import validation errors:');
+	for (const { file, errors } of importErrors) {
+		console.error(`  ${file}:`);
+		for (const e of errors) {
+			console.error(`    - ${e}`);
+		}
+	}
+	exitCode = Math.max(exitCode, 7);
+}
+
 if (exitCode === 0) {
 	console.log('✅ All structure checks passed');
 }
@@ -295,4 +370,5 @@ export {
         validateProtectedFiles,
         validatePackageStructure,
         validateRootEntries,
+        validateImports,
 };

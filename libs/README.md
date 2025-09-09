@@ -1,4 +1,3 @@
-
 # Cortex-OS Libraries
 
 <div align="center">
@@ -77,9 +76,9 @@ Utility functions for:
 These libraries are referenced throughout the codebase via:
 
 ```typescript
-import { ContractSchema } from '@cortex-os/contracts'
-import { CommonTypes } from '@cortex-os/types'
-import { UtilityFunction } from '@cortex-os/utils'
+import { ContractSchema } from '@cortex-os/contracts';
+import { CommonTypes } from '@cortex-os/types';
+import { UtilityFunction } from '@cortex-os/utils';
 ```
 
 ## Development Guidelines

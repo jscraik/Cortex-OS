@@ -12,6 +12,11 @@
  *   const response = await handleA2A(jsonRpcRequest);
  */
 
+// In-memory outbox repository
+export { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
+// Outbox integration
+export type { A2AOutboxIntegration } from './outbox-integration.js';
+export { createA2AOutboxIntegration } from './outbox-integration.js';
 // Re-export core types and schemas
 export type {
 	A2AErrorCode,
@@ -23,7 +28,7 @@ export type {
 	TaskResult,
 	TaskSendParams,
 	TaskStatus,
-} from "./protocol.js";
+} from './protocol.js';
 export {
 	A2A_ERROR_CODES,
 	JsonRpcRequestSchema,
@@ -34,24 +39,24 @@ export {
 	TaskResultSchema,
 	TaskSendParamsSchema,
 	TaskStatusSchema,
-} from "./protocol.js";
+} from './protocol.js';
 // Re-export RPC handling
-export type { RpcHandler } from "./rpc-handler.js";
+export type { RpcHandler } from './rpc-handler.js';
 // Main handler
 export {
-        A2ARpcHandler,
-        createA2ARpcHandler,
-        handleA2A,
-} from "./rpc-handler.js";
-// Re-export task management
-export type { Task, TaskProcessor, TaskStore } from "./task-manager.js";
-export {
-        createTaskManager,
-        EchoTaskProcessor,
-        InMemoryTaskStore,
-        TaskManager,
-} from "./task-manager.js";
+	A2ARpcHandler,
+	createA2ARpcHandler,
+	handleA2A,
+} from './rpc-handler.js';
 // Streaming utilities
-export { createTaskEventStream } from "./streaming.js";
+export { createTaskEventStream } from './streaming.js';
+// Re-export task management
+export type { Task, TaskProcessor, TaskStore } from './task-manager.js';
+export {
+	createTaskManager,
+	EchoTaskProcessor,
+	InMemoryTaskStore,
+	TaskManager,
+} from './task-manager.js';
 
 // handleA2A is already exported above in the main handler block

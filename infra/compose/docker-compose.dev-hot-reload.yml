@@ -1,0 +1,212 @@
+# Hot-reload development environment for OrbStack
+# Extends the main docker-compose.dev.yml with hot-reload optimizations
+version: '3.8'
+
+services:
+  # Node.js services with hot-reload
+  cortex-os-hot:
+    extends:
+      file: docker-compose.dev.yml
+      service: cortex-os
+    container_name: cortexos_cortex_os_hot
+    volumes:
+      # Bind mount source code for hot-reload
+      - ../../apps/cortex-os/src:/app/src:cached
+      - ../../apps/cortex-os/package.json:/app/package.json:ro
+      - ../../packages:/workspace/packages:cached
+    environment:
+      - NODE_ENV=development
+      - NATS_URL=nats://nats:4222
+      - MODEL_GATEWAY_URL=http://model-gateway:8080
+      - NODE_OPTIONS=--max-old-space-size=384 --inspect=0.0.0.0:9229
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Node.js debugger
+    command: ["node", "--inspect=0.0.0.0:9229", "--watch", "src/runtime.js"]
+    profiles:
+      - hot-reload
+      - dev-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.debug: "true"
+
+  model-gateway-hot:
+    extends:
+      file: docker-compose.dev.yml
+      service: model-gateway
+    container_name: cortexos_model_gateway_hot
+    volumes:
+      - ../../packages/model-gateway/src:/app/src:cached
+      - ../../packages/model-gateway/package.json:/app/package.json:ro
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=384 --inspect=0.0.0.0:9228
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "8081:8080"
+      - "9228:9228"  # Node.js debugger
+    command: ["node", "--inspect=0.0.0.0:9228", "--watch", "src/server.js"]
+    profiles:
+      - hot-reload
+      - dev-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.debug: "true"
+
+  mcp-registry-hot:
+    extends:
+      file: docker-compose.dev.yml
+      service: mcp-registry
+    container_name: cortexos_mcp_registry_hot
+    volumes:
+      - ../../packages/mcp-registry/src:/app/src:cached
+      - ../../packages/mcp-registry/package.json:/app/package.json:ro
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--inspect=0.0.0.0:9227
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "8082:8090"
+      - "9227:9227"  # Node.js debugger
+    command: ["node", "--inspect=0.0.0.0:9227", "--watch", "src/server.js"]
+    profiles:
+      - hot-reload
+      - dev-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.debug: "true"
+
+  agents-workers-hot:
+    extends:
+      file: docker-compose.dev.yml
+      service: agents-workers
+    container_name: cortexos_agents_workers_hot
+    volumes:
+      - ../../packages/agents/src:/app/src:cached
+      - ../../packages/agents/package.json:/app/package.json:ro
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=256 --inspect=0.0.0.0:9226
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "9226:9226"  # Node.js debugger
+    command: ["node", "--inspect=0.0.0.0:9226", "--watch", "src/worker.js"]
+    profiles:
+      - hot-reload
+      - workers-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.debug: "true"
+
+  # Python services with hot-reload
+  cortex-py-hot:
+    extends:
+      service: cortex-py-ml
+      file: ../orbstack.yml
+    container_name: cortexos_py_ml_hot
+    volumes:
+      - ../../apps/cortex-py/src:/app/src:cached
+      - ../../apps/cortex-py/pyproject.toml:/app/pyproject.toml:ro
+    environment:
+      - PYTHONPATH=/app/src
+      - LOG_LEVEL=DEBUG
+      - PYTHONDONTWRITEBYTECODE=1
+      - RELOAD=true
+    command: ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/src"]
+    profiles:
+      - hot-reload
+      - python-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.python-debug: "true"
+
+  # Rust services with cargo watch (for development)
+  cortex-code-watch:
+    build:
+      context: ../../
+      dockerfile: apps/cortex-code/Dockerfile.dev
+      platforms:
+        - linux/arm64
+        - linux/amd64
+    container_name: cortexos_code_watch
+    volumes:
+      - ../../apps/cortex-code:/workspace:cached
+      - code_target_cache:/workspace/target
+    environment:
+      - RUST_LOG=debug
+      - CARGO_TARGET_DIR=/workspace/target
+    working_dir: /workspace
+    command: ["cargo", "watch", "-x", "run --bin codex"]
+    profiles:
+      - hot-reload
+      - rust-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.rust-watch: "true"
+
+  # Web services with hot-reload
+  cortex-web-hot:
+    extends:
+      file: docker-compose.dev.yml
+      service: cortex-web
+    container_name: cortexos_cortex_web_hot
+    volumes:
+      - ../../apps/cortex-webui/src:/app/src:cached
+      - ../../apps/cortex-webui/public:/app/public:cached
+      - ../../apps/cortex-webui/package.json:/app/package.json:ro
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "3001:3000"
+    command: ["npm", "run", "dev"]
+    profiles:
+      - hot-reload
+      - web-hot
+    labels:
+      orbstack.hot-reload: "true"
+      orbstack.nextjs: "true"
+
+  # File watcher service for non-Node.js hot reload triggers
+  file-watcher:
+    image: alpine:latest
+    container_name: cortex_file_watcher
+    volumes:
+      - ../../:/workspace:ro
+    working_dir: /workspace
+    command: |
+      sh -c "
+        apk add --no-cache inotify-tools curl &&
+        echo 'Starting file watcher for hot reload triggers...' &&
+        while inotifywait -r -e modify,create,delete \
+          --exclude '\.(git|node_modules|target|dist|build|coverage)' \
+          /workspace; do
+          echo 'File change detected, notifying services...'
+          # Trigger reload for services that don't auto-detect changes
+          curl -X POST http://cortex-os-hot:3000/reload 2>/dev/null || true
+        done
+      "
+    profiles:
+      - hot-reload
+      - file-watch
+    depends_on:
+      - cortex-os-hot
+    labels:
+      orbstack.service: "file-watcher"
+      orbstack.hot-reload: "true"
+
+volumes:
+  code_target_cache:
+    driver: local
+    labels:
+      orbstack.volume: "cache"
+      orbstack.service: "cortex-code"
+
+networks:
+  default:
+    external: true
+    name: cortex-net

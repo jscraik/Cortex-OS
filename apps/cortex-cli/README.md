@@ -72,15 +72,15 @@ cortex-code mcp list
 
 For each cortex-cli command, simply replace `cortex` with `cortex-code`:
 
-| Old Command | New Command |
-|-------------|-------------|
-| `cortex mcp list` | `cortex-code mcp list` |
+| Old Command                                 | New Command                                      |
+| ------------------------------------------- | ------------------------------------------------ |
+| `cortex mcp list`                           | `cortex-code mcp list`                           |
 | `cortex a2a send --type foo --payload '{}'` | `cortex-code a2a send --type foo --payload '{}'` |
-| `cortex rag query "question"` | `cortex-code rag query "question"` |
-| `cortex simlab run test` | `cortex-code simlab run test` |
-| `cortex eval gate security` | `cortex-code eval gate security` |
-| `cortex agent create mybot` | `cortex-code agent create mybot` |
-| `cortex ctl check` | `cortex-code ctl check` |
+| `cortex rag query "question"`               | `cortex-code rag query "question"`               |
+| `cortex simlab run test`                    | `cortex-code simlab run test`                    |
+| `cortex eval gate security`                 | `cortex-code eval gate security`                 |
+| `cortex agent create mybot`                 | `cortex-code agent create mybot`                 |
+| `cortex ctl check`                          | `cortex-code ctl check`                          |
 
 ## Build cortex-code
 

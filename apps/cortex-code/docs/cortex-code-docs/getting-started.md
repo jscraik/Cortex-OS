@@ -16,23 +16,24 @@ This guide will help you set up and start using Cortex Code, the terminal-based 
 ```bash
 # Clone the repository
 git clone https://github.com/cortex-os/cortex-os.git
-cd cortex-os/apps/cortex-code
+cd cortex-os/apps/cortex-codex
 
 # Build the project
 cargo build --release
 
 # Run Cortex Code
-./target/release/cortex-code
+./target/release/codex
 ```
 
 ### Option 2: Install via Cargo
 
 ```bash
 # Install directly from crates.io (when available)
-cargo install cortex-code
+# Create a convenient alias so you can run `cortex`
+echo 'alias cortex="codex"' >> ~/.zshrc && source ~/.zshrc
 
 # Run Cortex Code
-cortex-code
+cortex
 ```
 
 ## Configuration
@@ -71,7 +72,7 @@ export CORTEX_DEBUG="true"
 After installation, launch Cortex Code:
 
 ```bash
-cortex-code
+cortex
 ```
 
 Upon first launch, you'll be presented with the multi-view TUI interface:
@@ -174,4 +175,4 @@ Enable comprehensive debugging:
 RUST_LOG=debug cargo run -- --debug
 ```
 
-> 💡 **Pro Tip**: Use `cortex-code --help` to see all available commands and flags.
+> 💡 **Pro Tip**: Use `cortex --help` to see all available commands and flags.

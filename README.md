@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable MD013 -->
 
-![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-v9.9.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
 
 <!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
 
@@ -198,17 +198,34 @@ This repository enforces a layered quality model combining fast local feedback, 
 | Pre-commit (fast) | Staged files only | Biome/ESLint formatting, minimal lint, pattern guard, `.env` presence check                               | Blocks commit (fix immediately)   |
 | Pre-push (full)   | Entire workspace  | Typecheck (TS/py), Ruff, Semgrep focused profiles, tests + coverage, structural governance                | Blocks push (stops degraded code) |
 | CI Workflows      | Trusted baseline  | Semgrep SARIF (OWASP + LLM + Top 10), optional SonarCloud, structure validation, license + security scans | Blocks merge via required checks  |
-| PR Decoration     | Incremental risk  | GitHub code scanning alerts (SARIF), Sonar summary (if enabled)                                           | Surfaces issues inline            |
 
-Key components now in place:
+### 🧪 TDD Enforcement
 
-1. Fast hooks separated from heavy gates to keep commit latency low.
-2. Hardened pattern guard prevents accidental introduction of disallowed patterns (secrets, debug noise, forbidden imports).
-3. Root `.env` enforced: commit requires presence (prevents missing runtime vars drift); file is intentionally minimal.
-4. Semgrep baseline + diff flow: treat newly introduced findings as red; historical tech-debt tracked separately.
-5. SARIF upload enables native GitHub Security tab visibility (code scanning alerts) without vendor lock-in.
-6. Optional SonarCloud workflow (`.github/workflows/sonar.yml`) supports multi-language metrics
-   (SAST, coverage, maintainability). Disable by removing or making conditional.
+This repository enforces Test-Driven Development practices using the TDD Coach package:
+
+| Layer          | Scope         | Tools                  | Failing Effect                     |
+| -------------- | ------------- | ---------------------- | ---------------------------------- |
+| Development    | Real-time     | TDD Coach Watch Mode   | Immediate feedback in IDE          |
+| Pre-commit     | Staged files  | TDD Coach Validation   | Blocks non-TDD compliant commits   |
+| CI/CD Pipeline | Pull requests | TDD Coach Status Check | Blocks merge of non-compliant code |
+
+To enforce TDD practices:
+
+```bash
+# Set up TDD Coach
+make tdd-setup
+
+# Check current TDD status
+make tdd-status
+
+# Validate specific files
+make tdd-validate FILES="src/file1.ts src/file2.ts"
+
+# Run in watch mode during development
+make tdd-watch
+```
+
+See [TDD Enforcement Guide](./docs/tdd-enforcement-guide.md) for detailed instructions.
 
 #### Semgrep Usage
 

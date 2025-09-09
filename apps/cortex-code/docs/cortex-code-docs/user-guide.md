@@ -221,10 +221,10 @@ Add the following to your configuration file (`~/.cortex/cortex.json`):
 
 You can manage tunnels using Cortex Code's CLI:
 
-- `cortex-code tunnel setup`: Setup tunnel configuration
-- `cortex-code tunnel start [--port <PORT>]`: Start Cloudflare tunnel
-- `cortex-code tunnel stop`: Stop Cloudflare tunnel
-- `cortex-code tunnel status`: Get tunnel status
+- `cortex tunnel setup`: Setup tunnel configuration
+- `cortex tunnel start [--port <PORT>]`: Start Cloudflare tunnel
+- `cortex tunnel stop`: Stop Cloudflare tunnel
+- `cortex tunnel status`: Get tunnel status
 
 #### Security
 

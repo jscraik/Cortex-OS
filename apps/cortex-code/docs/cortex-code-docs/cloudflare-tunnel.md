@@ -44,7 +44,7 @@ This opens a browser window to authenticate with your Cloudflare account.
 Run the setup command:
 
 ```bash
-cortex-code tunnel setup
+cortex tunnel setup
 ```
 
 Edit your configuration file (`~/.cortex/cortex.json`):
@@ -72,26 +72,26 @@ Edit your configuration file (`~/.cortex/cortex.json`):
 
 ```bash
 # Start TUI with automatic tunnel
-cortex-code
+cortex
 
 # Or start WebUI daemon with tunnel
-cortex-code daemon --port 3000
+cortex daemon --port 3000
 ```
 
 Cortex Code provides several CLI commands for managing Cloudflare tunnels:
 
 ```bash
 # Setup tunnel configuration
-cortex-code tunnel setup
+cortex tunnel setup
 
 # Start tunnel manually
-cortex-code tunnel start --port 3000
+cortex tunnel start --port 3000
 
 # Check tunnel status
-cortex-code tunnel status
+cortex tunnel status
 
 # Stop tunnel
-cortex-code tunnel stop
+cortex tunnel stop
 ```
 
 ## Configuration Options
@@ -171,7 +171,7 @@ curl -X POST https://your-tunnel-url.trycloudflare.com/api/tunnel/control \
 
 ### Getting Help
 
-- Check tunnel status: `cortex-code tunnel status`
+- Check tunnel status: `cortex tunnel status`
 - View tunnel logs in the terminal output
 - Cloudflare Tunnel docs: <https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/>
 

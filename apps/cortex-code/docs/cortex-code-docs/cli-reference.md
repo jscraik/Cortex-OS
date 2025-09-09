@@ -9,7 +9,7 @@ Cortex Code can be launched and controlled through command-line arguments. The C
 ## Basic Usage
 
 ```bash
-cortex-code [OPTIONS] [COMMAND]
+cortex [OPTIONS] [COMMAND]
 ```
 
 ## Options
@@ -45,7 +45,7 @@ cortex-code [OPTIONS] [COMMAND]
 Launches the TUI interface:
 
 ```bash
-cortex-code
+cortex
 ```
 
 ### Daemon Mode
@@ -53,7 +53,7 @@ cortex-code
 Starts Cortex Code in daemon mode, which exposes a REST API:
 
 ```bash
-cortex-code daemon [--port <PORT>] [--bind <BIND>]
+cortex daemon [--port <PORT>] [--bind <BIND>]
 ```
 
 ### MCP Commands
@@ -61,7 +61,7 @@ cortex-code daemon [--port <PORT>] [--bind <BIND>]
 Manage Model Context Protocol servers:
 
 ```bash
-cortex-code mcp <SUBCOMMAND>
+cortex mcp <SUBCOMMAND>
 ```
 
 Subcommands:
@@ -75,7 +75,7 @@ Subcommands:
 Manage Cloudflare tunnel integration:
 
 ```bash
-cortex-code tunnel <SUBCOMMAND>
+cortex tunnel <SUBCOMMAND>
 ```
 
 Subcommands:
@@ -90,7 +90,7 @@ Subcommands:
 Manage Brainwav MCP integration:
 
 ```bash
-cortex-code brainwav <SUBCOMMAND>
+cortex brainwav <SUBCOMMAND>
 ```
 
 Subcommands:
@@ -106,7 +106,7 @@ Subcommands:
 Run diagnostics and health checks:
 
 ```bash
-cortex-code diagnostics <SUBCOMMAND>
+cortex diagnostics <SUBCOMMAND>
 ```
 
 Subcommands:
@@ -121,7 +121,7 @@ Subcommands:
 Manage cloud provider integration:
 
 ```bash
-cortex-code cloud <SUBCOMMAND>
+cortex cloud <SUBCOMMAND>
 ```
 
 Subcommands:
@@ -136,7 +136,7 @@ Subcommands:
 Display help information:
 
 ```bash
-cortex-code --help
+cortex --help
 ```
 
 ### Version
@@ -144,7 +144,7 @@ cortex-code --help
 Display version information:
 
 ```bash
-cortex-code --version
+cortex --version
 ```
 
 ## Environment Variables
@@ -177,43 +177,43 @@ On macOS, Cortex Code looks for configuration files in the following locations (
 ### Launch with Custom Configuration
 
 ```bash
-cortex-code --config /path/to/custom-config.json
+cortex --config /path/to/custom-config.json
 ```
 
 ### Launch in Daemon Mode
 
 ```bash
-cortex-code daemon --port 9090 --bind 0.0.0.0
+cortex daemon --port 9090 --bind 0.0.0.0
 ```
 
 ### Enable Debug Logging
 
 ```bash
-cortex-code --debug
+cortex --debug
 ```
 
 ### Use Specific Profile
 
 ```bash
-cortex-code --profile development
+cortex --profile development
 ```
 
 ### Combine Multiple Options
 
 ```bash
-cortex-code --config ~/.cortex/prod.json --profile production --log-level warn
+cortex --config ~/.cortex/prod.json --profile production --log-level warn
 ```
 
 ### Setup Cloudflare Tunnel
 
 ```bash
-cortex-code tunnel setup
+cortex tunnel setup
 ```
 
 ### Start Tunnel on Custom Port
 
 ```bash
-cortex-code tunnel start --port 3000
+cortex tunnel start --port 3000
 ```
 
 ## Exit Codes
@@ -260,7 +260,7 @@ If you get a "command not found" error, ensure that:
 
 ```bash
 # For zsh (default on macOS)
-echo 'export PATH="$PATH:/path/to/cortex-code"' >> ~/.zshrc
+echo 'alias cortex="codex"' >> ~/.zshrc && source ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -268,10 +268,10 @@ source ~/.zshrc
 
 If you encounter permission issues:
 
-1. Ensure the cortex-code binary has execute permissions:
+1. Ensure the cortex binary is available (via alias or symlink to the built `codex` binary):
 
    ```bash
-   chmod +x /path/to/cortex-code
+   ln -sf /path/to/codex ~/.local/bin/cortex
    ```
 
 2. On macOS, you may need to grant terminal access in System Preferences > Security & Privacy > Privacy > Developer Tools

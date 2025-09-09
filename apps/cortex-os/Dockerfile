@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 
-FROM node:20-slim AS base
+FROM --platform=$BUILDPLATFORM node:20-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -23,6 +23,17 @@ COPY --from=build /out/cortex-os .
 USER nodeusr
 EXPOSE 3000
 HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD curl -fsS http://localhost:3000/health || exit 1
+
+# Labels for OrbStack optimization
+LABEL \
+    org.opencontainers.image.title="Cortex OS Runtime" \
+    org.opencontainers.image.description="ASBR Runtime orchestrator" \
+    org.opencontainers.image.vendor="Cortex-OS" \
+    org.opencontainers.image.source="https://github.com/your-org/cortex-os" \
+    orbstack.optimize="true" \
+    orbstack.node="true" \
+    orbstack.platform="linux/arm64,linux/amd64"
+
 ENTRYPOINT ["/usr/bin/tini","--"]
 CMD ["node","dist/server.js"]
 

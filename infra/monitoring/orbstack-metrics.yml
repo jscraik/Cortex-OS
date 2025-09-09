@@ -1,0 +1,148 @@
+# OrbStack Health Monitoring and Metrics Collection
+version: '3.8'
+
+services:
+  # Container metrics exporter
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cortex_cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    privileged: true
+    profiles:
+      - monitoring
+      - observability
+    labels:
+      orbstack.service: "cadvisor"
+      orbstack.tier: "monitoring"
+      orbstack.optimize: "true"
+
+  # Node metrics exporter
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: cortex_node_exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    profiles:
+      - monitoring
+      - observability
+    labels:
+      orbstack.service: "node-exporter"
+      orbstack.tier: "monitoring"
+      orbstack.optimize: "true"
+
+  # OrbStack-specific metrics collector
+  orbstack-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.orbstack-monitor
+    container_name: cortex_orbstack_monitor
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./orbstack-config:/config:ro
+    environment:
+      - MONITOR_INTERVAL=30
+      - DOCKER_API_VERSION=1.41
+      - LOG_LEVEL=INFO
+    profiles:
+      - monitoring
+      - observability
+    labels:
+      orbstack.service: "orbstack-monitor"
+      orbstack.tier: "monitoring"
+      orbstack.optimize: "true"
+
+  # Enhanced Prometheus with OrbStack targets
+  prometheus-orbstack:
+    image: prom/prometheus:latest
+    container_name: cortex_prometheus_orbstack
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus-orbstack.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-rules:/etc/prometheus/rules:ro
+      - prometheus_orbstack_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    profiles:
+      - monitoring
+      - observability
+    depends_on:
+      - cadvisor
+      - node-exporter
+      - orbstack-monitor
+    labels:
+      orbstack.service: "prometheus"
+      orbstack.tier: "monitoring"
+      orbstack.optimize: "true"
+
+  # Grafana with OrbStack dashboards
+  grafana-orbstack:
+    image: grafana/grafana:latest
+    container_name: cortex_grafana_orbstack
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=orbstack123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-clock-panel
+    volumes:
+      - grafana_orbstack_data:/var/lib/grafana
+      - ./grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana-datasources:/etc/grafana/provisioning/datasources:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
+    profiles:
+      - monitoring
+      - observability
+    depends_on:
+      - prometheus-orbstack
+    labels:
+      orbstack.service: "grafana"
+      orbstack.tier: "monitoring"
+      orbstack.optimize: "true"
+
+volumes:
+  prometheus_orbstack_data:
+    driver: local
+    labels:
+      orbstack.volume: "metrics"
+  grafana_orbstack_data:
+    driver: local
+    labels:
+      orbstack.volume: "dashboards"
+
+networks:
+  monitoring:
+    driver: bridge
+    labels:
+      orbstack.network: "monitoring"

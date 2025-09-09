@@ -73,6 +73,10 @@ export interface IModelRouter {
 	getAvailableModels(capability: ModelCapability): ModelConfig[];
 	hasAvailableModels(capability: ModelCapability): boolean;
 	hasCapability(capability: ModelCapability): boolean;
+	// Add method to check if privacy mode is enabled
+	isPrivacyModeEnabled(): boolean;
+	// Add method to enable/disable privacy mode
+	setPrivacyMode(enabled: boolean): void;
 }
 
 export class ModelRouter implements IModelRouter {
@@ -84,6 +88,8 @@ export class ModelRouter implements IModelRouter {
 	private mcpLoaded = false;
 	private readonly availableModels: Map<ModelCapability, ModelConfig[]> =
 		new Map();
+	// Add privacy mode flag
+	private privacyModeEnabled: boolean = false;
 
 	constructor(
 		mlxAdapter: MLXAdapterApi = new MLXAdapter(),
@@ -93,6 +99,11 @@ export class ModelRouter implements IModelRouter {
 		this.mlxAdapter = mlxAdapter;
 		this.ollamaAdapter = ollamaAdapter;
 		this.frontierAdapter = frontierAdapter;
+		
+		// Check for privacy mode environment variable
+		if (process.env.CORTEX_PRIVACY_MODE === 'true') {
+			this.privacyModeEnabled = true;
+		}
 	}
 
 	async initialize(): Promise<void> {
@@ -159,48 +170,52 @@ export class ModelRouter implements IModelRouter {
 					provider: 'mlx',
 					capabilities: ['embedding'],
 					priority: 100,
-					fallback: ['qwen3-embedding-8b-mlx', ...ollamaFallback],
+					fallback: this.privacyModeEnabled ? [] : ['qwen3-embedding-8b-mlx', ...ollamaFallback],
 				},
 				{
 					name: 'qwen3-embedding-8b-mlx',
 					provider: 'mlx',
 					capabilities: ['embedding'],
 					priority: 90,
-					fallback: ['qwen3-embedding-4b-mlx', ...ollamaFallback],
+					fallback: this.privacyModeEnabled ? [] : ['qwen3-embedding-4b-mlx', ...ollamaFallback],
 				},
 			);
 		}
-		if (ollamaAvailable) {
-			embeddingModels.push({
-				name: 'nomic-embed-text',
-				provider: 'ollama',
-				capabilities: ['embedding'],
-				priority: mlxAvailable ? 50 : 100,
-				fallback: [],
-			});
-		}
-		if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
-			embeddingModels.push({
-				name: 'mcp-embeddings',
-				provider: 'mcp',
-				capabilities: ['embedding'],
-				priority: 80,
-				fallback: [],
-			});
-		}
-		if (
-			!mlxAvailable &&
-			!ollamaAvailable &&
-			!mcpAvailable &&
-			frontierAvailable
-		) {
-			embeddingModels.push({
-				name: 'frontier-embedding',
-				provider: 'frontier',
-				capabilities: ['embedding'],
-				priority: 70,
-				fallback: [],
-			});
+		
+		// Only include non-MLX providers if privacy mode is disabled
+		if (!this.privacyModeEnabled) {
+			if (ollamaAvailable) {
+				embeddingModels.push({
+					name: 'nomic-embed-text',
+					provider: 'ollama',
+					capabilities: ['embedding'],
+					priority: mlxAvailable ? 50 : 100,
+					fallback: [],
+				});
+			}
+			if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
+				embeddingModels.push({
+					name: 'mcp-embeddings',
+					provider: 'mcp',
+					capabilities: ['embedding'],
+					priority: 80,
+					fallback: [],
+				});
+			}
+			if (
+				!mlxAvailable &&
+				!ollamaAvailable &&
+				!mcpAvailable &&
+				frontierAvailable
+			) {
+				embeddingModels.push({
+					name: 'frontier-embedding',
+					provider: 'frontier',
+					capabilities: ['embedding'],
+					priority: 70,
+					fallback: [],
+				});
+			}
 		}
 		return embeddingModels;
 	}
@@ -224,7 +239,8 @@ export class ModelRouter implements IModelRouter {
 				{ name: 'llama2', priority: 70, fallback: [] as string[] },
 			];
 
-			if (mcpAvailable) {
+			// Only include MCP if privacy mode is disabled
+			if (mcpAvailable && !this.privacyModeEnabled) {
 				chatModels.push({
 					name: 'mcp-chat',
 					provider: 'mcp',
@@ -240,7 +256,8 @@ export class ModelRouter implements IModelRouter {
 						(name) => name === m.name || name.startsWith(m.name),
 					)
 				) {
-					if (mcpAvailable) m.fallback = ['mcp-chat'];
+					// Only add MCP fallback if privacy mode is disabled
+					if (mcpAvailable && !this.privacyModeEnabled) m.fallback = ['mcp-chat'];
 					chatModels.push({
 						name: m.name,
 						provider: 'ollama',
@@ -255,23 +272,27 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 		}
-		if (!ollamaAvailable && mcpAvailable) {
-			chatModels.push({
-				name: 'mcp-chat',
-				provider: 'mcp',
-				capabilities: ['chat'],
-				priority: 70,
-				fallback: [],
-			});
-		}
-		if (!ollamaAvailable && !mcpAvailable && frontierAvailable) {
-			chatModels.push({
-				name: 'frontier-chat',
-				provider: 'frontier',
-				capabilities: ['chat'],
-				priority: 50,
-				fallback: [],
-			});
+		
+		// Only include non-local providers if privacy mode is disabled
+		if (!this.privacyModeEnabled) {
+			if (!ollamaAvailable && mcpAvailable) {
+				chatModels.push({
+					name: 'mcp-chat',
+					provider: 'mcp',
+					capabilities: ['chat'],
+					priority: 70,
+					fallback: [],
+				});
+			}
+			if (!ollamaAvailable && !mcpAvailable && frontierAvailable) {
+				chatModels.push({
+					name: 'frontier-chat',
+					provider: 'frontier',
+					capabilities: ['chat'],
+					priority: 50,
+					fallback: [],
+				});
+			}
 		}
 		return chatModels;
 	}
@@ -289,40 +310,44 @@ export class ModelRouter implements IModelRouter {
 				provider: 'mlx',
 				capabilities: ['reranking'],
 				priority: 100,
-				fallback: ollamaAvailable ? ['nomic-embed-text'] : [],
+				fallback: this.privacyModeEnabled ? [] : (ollamaAvailable ? ['nomic-embed-text'] : []),
 			});
 		}
-		if (ollamaAvailable) {
-			rerankingModels.push({
-				name: 'nomic-embed-text',
-				provider: 'ollama',
-				capabilities: ['reranking'],
-				priority: mlxAvailable ? 80 : 100,
-				fallback: [],
-			});
-		}
-		if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
-			rerankingModels.push({
-				name: 'mcp-rerank',
-				provider: 'mcp',
-				capabilities: ['reranking'],
-				priority: 60,
-				fallback: [],
-			});
-		}
-		if (
-			!mlxAvailable &&
-			!ollamaAvailable &&
-			!mcpAvailable &&
-			frontierAvailable
-		) {
-			rerankingModels.push({
-				name: 'frontier-rerank',
-				provider: 'frontier',
-				capabilities: ['reranking'],
-				priority: 50,
-				fallback: [],
-			});
+		
+		// Only include non-MLX providers if privacy mode is disabled
+		if (!this.privacyModeEnabled) {
+			if (ollamaAvailable) {
+				rerankingModels.push({
+					name: 'nomic-embed-text',
+					provider: 'ollama',
+					capabilities: ['reranking'],
+					priority: mlxAvailable ? 80 : 100,
+					fallback: [],
+				});
+			}
+			if (!mlxAvailable && !ollamaAvailable && mcpAvailable) {
+				rerankingModels.push({
+					name: 'mcp-rerank',
+					provider: 'mcp',
+					capabilities: ['reranking'],
+					priority: 60,
+					fallback: [],
+				});
+			}
+			if (
+				!mlxAvailable &&
+				!ollamaAvailable &&
+				!mcpAvailable &&
+				frontierAvailable
+			) {
+				rerankingModels.push({
+					name: 'frontier-rerank',
+					provider: 'frontier',
+					capabilities: ['reranking'],
+					priority: 50,
+					fallback: [],
+				});
+			}
 		}
 		return rerankingModels;
 	}
@@ -337,12 +362,27 @@ export class ModelRouter implements IModelRouter {
 			const requested = models.find((m) => m.name === requestedModel);
 			if (requested) return requested;
 		}
-		return [...models].sort((a, b) => b.priority - a.priority)[0];
+		
+		// In privacy mode, only select MLX models
+		const filteredModels = this.privacyModeEnabled 
+			? models.filter(m => m.provider === 'mlx') 
+			: models;
+			
+		if (filteredModels.length === 0) return null;
+		
+		return [...filteredModels].sort((a, b) => b.priority - a.priority)[0];
 	}
 
 	hasCapability(capability: ModelCapability): boolean {
 		const models = this.availableModels.get(capability);
-		return !!models && models.length > 0;
+		if (!models || models.length === 0) return false;
+		
+		// In privacy mode, check if there are any MLX models available
+		if (this.privacyModeEnabled) {
+			return models.some(m => m.provider === 'mlx');
+		}
+		
+		return true;
 	}
 
 	async generateEmbedding(
@@ -627,6 +667,16 @@ export class ModelRouter implements IModelRouter {
 		const models = this.availableModels.get(capability);
 		return !!models && models.length > 0;
 	}
+
+	// Add privacy mode methods
+	isPrivacyModeEnabled(): boolean {
+		return this.privacyModeEnabled;
+	}
+
+	setPrivacyMode(enabled: boolean): void {
+		this.privacyModeEnabled = enabled;
+	}
+
 }
 
 /** Factory to create a model router using default adapters */

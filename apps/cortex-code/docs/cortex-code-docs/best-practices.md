@@ -303,7 +303,7 @@ Use streaming for long responses:
    - Monitor Cloudflare dashboard for errors
 
 2. Debugging:
-   - Use `cortex-code tunnel status` to check tunnel state
+   - Use `cortex tunnel status` to check tunnel state
    - Review Cloudflare tunnel logs
    - Test connectivity with simple HTTP requests
 
@@ -475,7 +475,7 @@ Use streaming for long responses:
 2. Use debug mode:
 
    ```bash
-   cortex-code --debug
+   cortex --debug
    ```
 
 3. Review logs:

@@ -1,85 +1,57 @@
-[package]
-name = "cortex-code"
-version = "0.1.0"
-edition = "2021"
-authors = ["Cortex-OS Team"]
-description = "Terminal UI for Cortex-OS AI coding agent"
-license = "Apache-2.0"
-repository = "https://github.com/jamiescottcraik/Cortex-OS"
+cargo-features = ["edition2024"]
 
-[[bin]]
-name = "cortex-code"
-path = "src/main.rs"
+[workspace]
+members = [
+  "ansi-escape",
+  "anthropic",
+  "apply-patch",
+  "arg0",
+  "cli",
+  "common",
+  "core",
+  "exec",
+  "execpolicy",
+  "file-search",
+  "linux-sandbox",
+  "login",
+  "mcp-client",
+  "mcp-server",
+  "mcp-types",
+  "ollama",
+  "protocol",
+  "protocol-ts",
+  "tui",
+  "zai",
+]
+resolver = "2"
 
-[[bin]]
-name = "cortex-codex"
-path = "src/codex_main.rs"
+[workspace.package]
+version = "0.0.0"
+# Track the edition for all workspace crates in one place. Individual
+# crates can still override this value, but keeping it here means new
+# crates created with `cargo new -w ...` automatically inherit the 2024
+# edition.
+# 
+# Using edition 2024 with nightly Rust
+edition = "2024"
 
-[dependencies]
-# Core TUI dependencies
-ratatui = "0.26.0"
-crossterm = "0.27.0"
-tui-input = "0.10.0"
+[workspace.lints]
+rust = {}
 
-# Async Runtime
-tokio = { version = "1", features = ["full"] }
+[workspace.lints.clippy]
+expect_used = "deny"
+uninlined_format_args = "deny"
+unwrap_used = "deny"
 
-# HTTP & API - pinned to compatible versions
-reqwest = { version = "=0.11.18", features = [
-    "json",
-    "stream",
-], default-features = false }
-url = "=2.2.2"
-idna = "=0.3.0"
-bytes = "1.0"
+[profile.release]
+lto = "fat"
+# Because we bundle some of these executables with the TypeScript CLI, we
+# remove everything to make the binary as small as possible.
+strip = "symbols"
 
-# Serialization
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-toml = "0.8"
+# See https://github.com/openai/codex/issues/1411 for details.
+codegen-units = 1
 
-# Configuration & CLI
-clap = { version = "4", features = ["derive"] }
-clap_complete = "4"
-directories = "5.0"
-
-# Error handling
-anyhow = "1.0"
-thiserror = "1.0"
-
-# Logging
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-# Async traits
-async-trait = "0.1"
-
-# Server components (for daemon mode)
-axum = "0.7"
-tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "trace"] }
-
-# Streaming utilities
-async-stream = "0.3"
-
-# Async utilities
-futures = "0.3"
-tokio-stream = "0.1"
-chrono = { version = "0.4.30", features = ["serde"] }
-base64 = "0.21"
-rand = "0.8"
-uuid = { version = "1.0", features = ["v4"] }
-
-# Basic security dependencies (compatible versions)
-hmac = "0.12.1"
-sha2 = "0.10.9"
-hex = "0.4.3"
-num_cpus = "1.0"
-
-[dev-dependencies]
-# Testing
-insta = { version = "1.34", features = ["yaml"] }
-tempfile = "3"
-tokio-test = "0.4"
-assert_cmd = "2.0"
-predicates = "3.0"
+[patch.crates-io]
+# ratatui = { path = "../../ratatui" }
+ratatui = { git = "https://github.com/nornagon/ratatui", branch = "nornagon-v0.29.0-patch" }

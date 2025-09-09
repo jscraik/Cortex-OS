@@ -6,11 +6,11 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
 [![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#testing)
 [![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)](https://www.typescriptlang.org/)
 
 **Retrieval-Augmented Generation Pipeline for Cortex-OS ASBR**  
-*Enhanced chunking, multi-model embeddings, Qwen3 reranking, and batch ingest capabilities*
+_Enhanced chunking, multi-model embeddings, Qwen3 reranking, and batch ingest capabilities_
 
 </div>
 
@@ -23,24 +23,28 @@ Cortex RAG provides comprehensive Retrieval-Augmented Generation functionality a
 ## ✨ Key Features
 
 ### 🔍 Advanced RAG Pipeline
+
 - **📊 RAGPipeline** - Main pipeline class for ingest and retrieval operations
 - **🎯 Type-Safe Interfaces** - Embedder, Store, and core type abstractions
 - **🧩 Smart Chunking** - Configurable text chunking with overlap management
 - **🔄 Batch Processing** - Concurrent ingestion with configurable limits
 
 ### 🧠 Multi-Model Intelligence
+
 - **🐍 Python Client Integration** - Seamless Python-based embedding services
 - **📈 Qwen3 Reranker** - Advanced reranking with custom model support
 - **🔗 Composite Embedders** - Multiple provider fallback chains
 - **⚡ Embedding Optimization** - Batch operations and intelligent caching
 
 ### 💾 Flexible Storage
+
 - **🧠 Memory Store** - In-memory storage for testing and development
 - **🗄️ Vector Storage** - Abstract interface for vector similarity search
 - **🔍 Similarity Search** - High-performance retrieval with scoring
 - **📊 Metadata Support** - Rich metadata storage and filtering
 
 ### 🚀 Production Features
+
 - **🏗️ Consolidated Architecture** - Single package for all RAG functionality
 - **🧪 Comprehensive Testing** - 95% test coverage with deterministic tests
 - **📈 Performance Optimized** - Batch processing and memory-efficient operations
@@ -70,7 +74,7 @@ import { MemoryStore } from '@cortex-os/rag/store/memory';
 const embedder: Embedder = new PythonEmbedder({
   endpoint: 'http://localhost:8000/embed',
   timeout: 30000,
-  batchSize: 32
+  batchSize: 32,
 });
 
 // Initialize vector store
@@ -82,39 +86,42 @@ const pipeline = new RAGPipeline({
   store,
   maxContextTokens: 4000,
   chunkSize: 500,
-  chunkOverlap: 100
+  chunkOverlap: 100,
 });
 
 // Ingest documents
 await pipeline.ingest([
-  { 
-    id: 'doc-1', 
-    text: 'Cortex-OS is an advanced AI agent platform designed for autonomous software behavior reasoning.', 
+  {
+    id: 'doc-1',
+    text: 'Cortex-OS is an advanced AI agent platform designed for autonomous software behavior reasoning.',
     source: 'documentation.md',
-    metadata: { 
+    metadata: {
       category: 'technical',
-      lastModified: '2024-09-01T00:00:00Z'
-    }
+      lastModified: '2024-09-01T00:00:00Z',
+    },
   },
-  { 
-    id: 'doc-2', 
-    text: 'The system implements event-driven architecture with A2A communication patterns for seamless agent coordination.', 
+  {
+    id: 'doc-2',
+    text: 'The system implements event-driven architecture with A2A communication patterns for seamless agent coordination.',
     source: 'architecture.md',
-    metadata: { 
+    metadata: {
       category: 'architecture',
-      importance: 'high'
-    }
-  }
+      importance: 'high',
+    },
+  },
 ]);
 
 // Retrieve relevant chunks
 const results = await pipeline.retrieve('How does agent communication work?', 5);
 
-console.log('Retrieved results:', results.map(r => ({
-  text: r.text.substring(0, 100) + '...',
-  score: r.score,
-  source: r.metadata?.source
-})));
+console.log(
+  'Retrieved results:',
+  results.map((r) => ({
+    text: r.text.substring(0, 100) + '...',
+    score: r.score,
+    source: r.metadata?.source,
+  })),
+);
 ```
 
 ## 🏗️ Architecture
@@ -208,19 +215,19 @@ import { byChars } from '@cortex-os/rag/chunk';
 const sentenceAwareChunks = byChars(text, 500, 75, {
   respectSentences: true,
   minChunkSize: 100,
-  maxChunkSize: 600
+  maxChunkSize: 600,
 });
 
 // Code-aware chunking for technical documents
 const codeAwareChunks = byChars(codeText, 400, 50, {
   preserveCodeBlocks: true,
-  respectIndentation: true
+  respectIndentation: true,
 });
 
 // Semantic chunking for better context preservation
 const semanticChunks = byChars(text, 400, 100, {
   semanticBoundaries: true,
-  contextWindow: 2 // Consider surrounding chunks
+  contextWindow: 2, // Consider surrounding chunks
 });
 ```
 
@@ -239,15 +246,15 @@ const pythonEmbedder = new PythonEmbedder({
   retries: 3,
   authentication: {
     type: 'bearer',
-    token: process.env.EMBEDDING_API_KEY
-  }
+    token: process.env.EMBEDDING_API_KEY,
+  },
 });
 
 // Batch embedding for performance
 const texts = [
   'Multi-agent system coordination',
   'Event-driven architecture patterns',
-  'Vector database optimization'
+  'Vector database optimization',
 ];
 
 const embeddings = await pythonEmbedder.embed(texts);
@@ -267,9 +274,9 @@ class CustomEmbedder implements Embedder {
   async embed(texts: string[]): Promise<number[][]> {
     // Custom embedding logic
     const embeddings = await this.customModel.encode(texts);
-    return embeddings.map(e => Array.from(e));
+    return embeddings.map((e) => Array.from(e));
   }
-  
+
   async isHealthy(): Promise<boolean> {
     return this.customModel.isLoaded();
   }
@@ -279,7 +286,7 @@ class CustomEmbedder implements Embedder {
 const customPipeline = new RAGPipeline({
   embedder: new CustomEmbedder(),
   store: memoryStore,
-  maxContextTokens: 4000
+  maxContextTokens: 4000,
 });
 ```
 
@@ -294,7 +301,7 @@ import { Qwen3Reranker } from '@cortex-os/rag';
 const reranker = new Qwen3Reranker({
   modelPath: process.env.QWEN3_RERANKER_MODEL_PATH,
   cacheDir: process.env.QWEN3_RERANKER_CACHE_DIR,
-  pythonPath: process.env.QWEN3_RERANKER_PYTHON || 'python3'
+  pythonPath: process.env.QWEN3_RERANKER_PYTHON || 'python3',
 });
 
 // Initial retrieval
@@ -304,14 +311,17 @@ const initialResults = await pipeline.retrieve(query, 20); // Get more initial r
 const rerankedResults = await reranker.rerank(query, initialResults, {
   topK: 5,
   threshold: 0.7,
-  diversityWeight: 0.3
+  diversityWeight: 0.3,
 });
 
-console.log('Reranked results:', rerankedResults.map(r => ({
-  text: r.text.substring(0, 80) + '...',
-  originalScore: r.score,
-  rerankScore: r.rerankScore
-})));
+console.log(
+  'Reranked results:',
+  rerankedResults.map((r) => ({
+    text: r.text.substring(0, 80) + '...',
+    originalScore: r.score,
+    rerankScore: r.rerankScore,
+  })),
+);
 ```
 
 ### Advanced Reranking Configuration
@@ -324,7 +334,7 @@ const rerankerConfig = {
   pythonPath: process.env.QWEN3_RERANKER_PYTHON || 'python3',
   maxSequenceLength: 512,
   batchSize: 8,
-  temperature: 0.1
+  temperature: 0.1,
 };
 
 const reranker = new Qwen3Reranker(rerankerConfig);
@@ -336,7 +346,7 @@ const enhancedPipeline = new RAGPipeline({
   reranker,
   maxContextTokens: 4000,
   rerankingEnabled: true,
-  rerankingTopK: 10
+  rerankingTopK: 10,
 });
 
 const results = await enhancedPipeline.retrieve(query, 5); // Automatically reranked
@@ -353,7 +363,7 @@ import { MemoryStore } from '@cortex-os/rag/store/memory';
 const memoryStore = new MemoryStore({
   maxSize: 10000, // Maximum number of stored vectors
   dimensions: 1024, // Embedding dimensions
-  distanceMetric: 'cosine' // or 'euclidean', 'dot'
+  distanceMetric: 'cosine', // or 'euclidean', 'dot'
 });
 
 // Store vectors with metadata
@@ -364,18 +374,18 @@ await memoryStore.store([
     metadata: {
       text: 'Chunk content...',
       source: 'document.md',
-      category: 'technical'
-    }
+      category: 'technical',
+    },
   },
   {
-    id: 'chunk-2', 
+    id: 'chunk-2',
     vector: embedding2,
     metadata: {
       text: 'Another chunk...',
       source: 'guide.md',
-      category: 'tutorial'
-    }
-  }
+      category: 'tutorial',
+    },
+  },
 ]);
 
 // Similarity search with filtering
@@ -383,14 +393,14 @@ const similar = await memoryStore.query(queryEmbedding, {
   topK: 5,
   threshold: 0.7,
   filter: {
-    category: 'technical'
-  }
+    category: 'technical',
+  },
 });
 ```
 
 ### Custom Store Implementation
 
-```typescript
+```
 import { Store } from '@cortex-os/rag';
 
 class DatabaseStore implements Store {
@@ -398,7 +408,7 @@ class DatabaseStore implements Store {
     // Custom database storage logic
     await this.database.insertVectors(items);
   }
-  
+
   async query(vector: number[], options: QueryOptions): Promise<QueryResult[]> {
     // Custom similarity search logic
     const results = await this.database.similaritySearch(vector, options);
@@ -408,7 +418,7 @@ class DatabaseStore implements Store {
       metadata: r.metadata
     }));
   }
-  
+
   async delete(ids: string[]): Promise<void> {
     await this.database.deleteVectors(ids);
   }
@@ -419,7 +429,7 @@ class DatabaseStore implements Store {
 
 ### Batch Ingest
 
-```typescript
+```
 import { ingestText } from '@cortex-os/rag/pipeline/ingest';
 import { query } from '@cortex-os/rag/pipeline/query';
 
@@ -451,19 +461,19 @@ await pipeline.ingestBatch(documents, {
 
 ### Advanced Querying
 
-```typescript
+```
 // Query with custom options
 const queryResults = await query(
-  { 
-    q: 'How to implement agent coordination?', 
+  {
+    q: 'How to implement agent coordination?',
     topK: 10,
     threshold: 0.75,
     filter: {
       category: ['technical', 'architecture'],
       lastModified: { gte: '2024-01-01T00:00:00Z' }
     }
-  }, 
-  embedder, 
+  },
+  embedder,
   store
 );
 
@@ -483,11 +493,11 @@ const multiResults = await pipeline.retrieveMulti([
 
 ### Running Tests
 
-```bash
+```
 # Unit tests
 npm test
 
-# Integration tests  
+# Integration tests
 npm run test:integration
 
 # Deterministic behavior tests
@@ -502,18 +512,18 @@ npm run test:coverage
 
 ### Test Coverage
 
-| Component | Coverage | Notes |
-|-----------|----------|--------|
-| RAG Pipeline | 97% | Core pipeline operations |
-| Text Chunking | 98% | All chunking strategies |
-| Embedding Integration | 94% | Python client and interfaces |
-| Vector Storage | 96% | Memory store and queries |
-| Qwen3 Reranking | 92% | Model loading and reranking |
-| **Overall** | **95%** | Industry leading coverage |
+| Component             | Coverage | Notes                        |
+| --------------------- | -------- | ---------------------------- |
+| RAG Pipeline          | 97%      | Core pipeline operations     |
+| Text Chunking         | 98%      | All chunking strategies      |
+| Embedding Integration | 94%      | Python client and interfaces |
+| Vector Storage        | 96%      | Memory store and queries     |
+| Qwen3 Reranking       | 92%      | Model loading and reranking  |
+| **Overall**           | **95%**  | Industry leading coverage    |
 
 ### Deterministic Testing
 
-```typescript
+```
 // Deterministic test patterns
 import { RAGPipeline, MemoryStore, MockEmbedder } from '@cortex-os/rag/testing';
 
@@ -523,20 +533,20 @@ describe('RAG Pipeline Deterministic Behavior', () => {
       dimension: 768,
       seed: 12345 // Fixed seed for deterministic embeddings
     });
-    
+
     const store = new MemoryStore();
     const pipeline = new RAGPipeline({ embedder: mockEmbedder, store });
-    
+
     // First run
     await pipeline.ingest([testDocument]);
     const results1 = await pipeline.retrieve('test query', 3);
-    
+
     // Second run with same conditions
     const store2 = new MemoryStore();
     const pipeline2 = new RAGPipeline({ embedder: mockEmbedder, store: store2 });
     await pipeline2.ingest([testDocument]);
     const results2 = await pipeline2.retrieve('test query', 3);
-    
+
     // Results should be identical
     expect(results1).toEqual(results2);
   });
@@ -547,34 +557,34 @@ describe('RAG Pipeline Deterministic Behavior', () => {
 
 ### Performance Metrics
 
-| Operation | Typical Latency | Throughput | Notes |
-|-----------|----------------|------------|--------|
-| Text Chunking | <10ms | 1000 docs/sec | Character-based chunking |
-| Embedding Generation | <100ms | 50 texts/sec | Python client backend |
-| Vector Storage | <5ms | 2000 ops/sec | In-memory store |
-| Similarity Search | <20ms | 500 queries/sec | Memory store query |
-| Batch Ingest | <2s | 100 docs/batch | Concurrent processing |
+| Operation            | Typical Latency | Throughput      | Notes                    |
+| -------------------- | --------------- | --------------- | ------------------------ |
+| Text Chunking        | <10ms           | 1000 docs/sec   | Character-based chunking |
+| Embedding Generation | <100ms          | 50 texts/sec    | Python client backend    |
+| Vector Storage       | <5ms            | 2000 ops/sec    | In-memory store          |
+| Similarity Search    | <20ms           | 500 queries/sec | Memory store query       |
+| Batch Ingest         | <2s             | 100 docs/batch  | Concurrent processing    |
 
 ### Performance Optimization
 
-```typescript
+```
 // Optimized pipeline configuration
 const optimizedPipeline = new RAGPipeline({
   embedder: pythonEmbedder,
   store: memoryStore,
-  
+
   // Chunking optimization
   chunkSize: 400, // Optimal for most embedding models
   chunkOverlap: 80, // 20% overlap for context preservation
-  
+
   // Batch processing
   batchSize: 32, // Balance memory and throughput
   concurrency: 4, // CPU cores available
-  
+
   // Caching
   enableEmbeddingCache: true,
   cacheSize: 1000,
-  
+
   // Memory management
   maxContextTokens: 4000,
   memoryLimit: '2GB'
@@ -595,12 +605,12 @@ pipeline.on('performance', (metrics) => {
 
 ### Environment Variables
 
-```bash
+```
 # Python embedding service
 PYTHON_EMBEDDING_ENDPOINT=http://localhost:8000/embed
 PYTHON_EMBEDDING_TIMEOUT=30000
 
-# Qwen3 reranker configuration  
+# Qwen3 reranker configuration
 QWEN3_RERANKER_MODEL_PATH=Qwen/Qwen2-0.5B-Instruct
 QWEN3_RERANKER_CACHE_DIR=./cache/qwen3-models
 QWEN3_RERANKER_PYTHON=python3
@@ -619,27 +629,27 @@ RAG_MEMORY_LIMIT=2GB
 
 ### Pipeline Configuration
 
-```typescript
+```
 interface RAGPipelineConfig {
   // Core components
   embedder: Embedder;
   store: Store;
   reranker?: Reranker;
-  
+
   // Chunking settings
   chunkSize?: number;          // Default: 500
   chunkOverlap?: number;       // Default: 100
-  
+
   // Processing limits
   maxContextTokens?: number;   // Default: 4000
   batchSize?: number;          // Default: 16
   concurrency?: number;        // Default: 2
-  
+
   // Performance settings
   enableEmbeddingCache?: boolean;  // Default: false
   cacheSize?: number;          // Default: 1000
   memoryLimit?: string;        // Default: '1GB'
-  
+
   // Reranking options
   rerankingEnabled?: boolean;   // Default: false
   rerankingTopK?: number;       // Default: 10
@@ -650,7 +660,7 @@ interface RAGPipelineConfig {
 
 ### Multi-Document RAG
 
-```typescript
+```
 // Multi-document ingestion with categorization
 const documentCategories = [
   { category: 'technical', documents: technicalDocs },
@@ -673,7 +683,7 @@ const technicalResults = await pipeline.retrieve('API implementation details', 5
 
 ### Hybrid Search
 
-```typescript
+```
 // Combine vector similarity with keyword search
 const hybridResults = await pipeline.retrieveHybrid(
   'agent communication patterns',
@@ -695,19 +705,19 @@ const multiModalResults = await pipeline.retrieveMultiModal({
 
 ### Custom Retrieval Strategies
 
-```typescript
+```
 // Implement custom retrieval strategy
 class SemanticRetrievalStrategy {
   async retrieve(query: string, pipeline: RAGPipeline, options: any) {
     // Phase 1: Broad retrieval
     const broadResults = await pipeline.retrieve(query, options.topK * 2);
-    
+
     // Phase 2: Semantic clustering
     const clustered = await this.clusterBySemantic(broadResults);
-    
+
     // Phase 3: Diversified selection
     const diversified = this.selectDiverse(clustered, options.topK);
-    
+
     return diversified;
   }
 }
@@ -726,7 +736,7 @@ We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING
 
 ### Development Setup
 
-```bash
+```
 # Clone and install dependencies
 git clone https://github.com/cortex-os/cortex-os.git
 cd cortex-os/packages/rag
@@ -799,4 +809,3 @@ pnpm test
 [![RAG](https://img.shields.io/badge/architecture-RAG-green)](https://github.com/cortex-os/cortex-os)
 
 </div>
-

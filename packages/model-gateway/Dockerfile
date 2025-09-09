@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 
-# Base with pnpm enabled
-FROM node:20-slim AS base
+# Base with pnpm enabled - OrbStack optimized
+FROM --platform=$BUILDPLATFORM node:20-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -30,6 +30,17 @@ COPY --from=build /out/model-gateway .
 USER nodeusr
 EXPOSE 8080
 HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD curl -fsS http://localhost:8080/health || exit 1
+
+# Labels for OrbStack optimization
+LABEL \
+    org.opencontainers.image.title="Model Gateway" \
+    org.opencontainers.image.description="AI model routing and policy enforcement gateway" \
+    org.opencontainers.image.vendor="Cortex-OS" \
+    org.opencontainers.image.source="https://github.com/your-org/cortex-os" \
+    orbstack.optimize="true" \
+    orbstack.node="true" \
+    orbstack.service="model-gateway"
+
 ENTRYPOINT ["/usr/bin/tini","--"]
 CMD ["node","src/server.js"]
 

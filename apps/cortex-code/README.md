@@ -1,618 +1,403 @@
-# Cortex Code
+# Codex CLI (Rust Implementation)
 
-<div align="center">
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Phase 2](https://img.shields.io/badge/Phase%202-Core%20Features%20In%20Progress-yellow.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Task 2.2](https://img.shields.io/badge/Task%202.2-Provider%20Abstraction%20✅-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![TDD](https://img.shields.io/badge/TDD-29%2F29%20tests%20passing-brightgreen.svg)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Rust Edition](https://img.shields.io/badge/rust-edition%202024-orange.svg)](https://rust-lang.org)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](LICENSE)
 
-[![CI](https://github.com/jamiescottcraik/Cortex-OS/actions/workflows/ci.yml/badge.svg)](https://github.com/jamiescottcraik/Cortex-OS/actions/workflows/ci.yml)
-[![GitHub Issues](https://img.shields.io/github/issues/jamiescottcraik/Cortex-OS)](https://github.com/jamiescottcraik/Cortex-OS/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/jamiescottcraik/Cortex-OS)](https://github.com/jamiescottcraik/Cortex-OS/pulls)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Rust Version](https://img.shields.io/badge/rust-1.70+-blue)](https://www.rust-lang.org/)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
-[![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](#testing)
-[![Security Scan](https://img.shields.io/badge/security-clean-green)](#security)
-[![Ratatui](https://img.shields.io/badge/ratatui-0.29.0-orange)](https://ratatui.rs/)
+We provide Codex CLI as a standalone, native executable to ensure a zero-dependency install.
 
-**Terminal User Interface for Cortex-OS AI Coding Agent**  
-_Multi-view TUI with AI chat, GitHub dashboard, A2A event streaming, and command palette_
+## Installing Codex
 
-</div>
+Today, the easiest way to install Codex is via `npm`, though we plan to publish Codex to other package managers soon.
 
----
-
-## 🎯 Overview
-
-Cortex Code is a powerful terminal interface for the Cortex-OS ASBR runtime, providing developers with a comprehensive view of AI agent activities, GitHub integrations, and real-time system monitoring. Built with Rust and Ratatui for maximum performance and reliability.
-
-## ✨ Features
-
-### 🖥️ Multi-View Interface
-
-- **💬 AI Chat**: Interactive conversation with AI agents and streaming responses
-- **🐙 GitHub Dashboard**: Real-time GitHub activity monitoring with 5 comprehensive tabs
-- **🔄 A2A Event Stream**: Live visualization of agent-to-agent communications
-- **⌨️ Command Palette**: Unified command interface with 40+ operations including enhanced Codex-style commands
-
-### 🎮 User Experience
-
-- **🚀 Fast Navigation**: `Alt+1/2/3` view switching, `Ctrl+P` command palette
-- **📊 Real-time Updates**: Live streaming of AI responses and system events
-- **🎨 Rich Visualization**: Syntax highlighting, progress bars, status indicators
-- **⚡ Responsive**: Optimized event handling and rendering
-
-### 🔧 Developer Features
-
-- **🛠️ MCP Integration**: Manage Model Context Protocol servers and tools
-- **📈 System Monitoring**: Track agent performance, rate limits, and health metrics
-- **🔍 Event Filtering**: Configurable log levels and search capabilities
-- **📋 Command History**: Persistent command and conversation history
-- **🛡️ Enhanced Security**: Hardened against command injection and other vulnerabilities
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Rust** 1.70 or later
-- **Cargo** (included with Rust)
-- **Terminal** with Unicode support (recommended: iTerm2, Alacrity, or Windows Terminal)
-
-### Installation
-
-```
-# Clone the repository
-git clone https://github.com/jamiescottcraik/Cortex-OS.git
-cd Cortex-OS/apps/cortex-code
-
-# Build and run
-cargo run
-
-# Or build for release
-cargo build --release
-./target/release/cortex-code
+```shell
+npm i -g @openai/codex@native
+codex
 ```
 
-### Development Setup
+You can also download a platform-specific release directly from our [GitHub Releases](https://github.com/openai/codex/releases).
 
-```
-# Install development dependencies
-rustup component add rustfmt clippy
+## What's new in the Rust CLI
 
-# Run with debug logging
-RUST_LOG=debug cargo run -- --debug
+While we are [working to close the gap between the TypeScript and Rust implementations of Codex CLI](https://github.com/openai/codex/issues/1262), note that the Rust CLI has a number of features that the TypeScript CLI does not!
 
-# Run tests
-cargo test
+### Config
 
-# Check code quality
-cargo clippy -- -D warnings
-cargo fmt --check
-```
+Codex supports a rich set of configuration options. Note that the Rust CLI uses `config.toml` instead of `config.json`. See [`docs/config.md`](../docs/config.md) for details.
 
-## 🎮 Usage
+### Model Context Protocol Support
 
-### Basic Navigation
+Codex CLI functions as an MCP client that can connect to MCP servers on startup. See the [`mcp_servers`](../docs/config.md#mcp_servers) section in the configuration documentation for details.
 
-| Shortcut | Action                         |
-| -------- | ------------------------------ |
-| `Alt+1`  | Switch to AI Chat view         |
-| `Alt+2`  | Switch to GitHub Dashboard     |
-| `Alt+3`  | Switch to A2A Event Stream     |
-| `Ctrl+P` | Open command palette           |
-| `Ctrl+Q` | Exit application               |
-| `Esc`    | Cancel/close current operation |
+It is still experimental, but you can also launch Codex as an MCP _server_ by running `codex mcp`. Use the [`@modelcontextprotocol/inspector`](https://github.com/modelcontextprotocol/inspector) to try it out:
 
-### AI Chat View
-
-- **Enter**: Send message to AI
-- **Ctrl+Enter**: Send streaming message
-- **Up/Down**: Navigate message history
-- **Tab**: Switch between input modes
-
-### GitHub Dashboard
-
-- **Tab**: Switch between dashboard tabs (Overview, PRs, Issues, AI Tasks, Analytics)
-- **Enter**: Open selected item
-- **R**: Refresh data
-- **N**: Create new PR/issue (context-dependent)
-
-### A2A Event Stream
-
-- **Space**: Pause/resume stream
-- **D**: Toggle detailed view
-- **C**: Clear all events
-- **1-5**: Filter by log level (Debug, Info, Warning, Error, Critical)
-- **Up/Down**: Navigate event list
-
-### Enhanced Command Palette
-
-The command palette provides unified access to 40+ operations across 6 categories with enhanced Codex-style commands:
-
-#### GitHub Commands
-
-- `@cortex review` - AI code review on PR
-- `@cortex analyze` - Comprehensive PR analysis
-- `@cortex secure` - Security vulnerability scan
-- `@cortex document` - Generate documentation
-
-#### MCP Commands
-
-- List/start/stop MCP servers
-- Install/manage MCP plugins
-- View MCP tool registry
-
-#### AI Coding Assistant Commands (Codex-Style)
-
-- `/explain` - Explain selected code or concept in plain English (Ctrl+E)
-- `/refactor` - Suggest code improvements for selected code (Ctrl+R)
-- `/test` - Generate unit tests for selected code (Ctrl+T)
-- `/document` - Create documentation for selected code (Ctrl+D)
-- `/find` - Search for code patterns in project (Ctrl+F)
-- `/fix` - Suggest bug fixes for error messages (Ctrl+X)
-- `/optimize` - Optimize performance of selected code (Ctrl+O)
-- `/security` - Scan selected code for vulnerabilities (Ctrl+S)
-- `/complexity` - Analyze code complexity metrics (Ctrl+C)
-- `/dependencies` - Analyze project dependencies (Ctrl+Y)
-- `/review` - Perform code review on selected code (Ctrl+V)
-- `/suggest` - Get AI suggestions for improving code (Ctrl+U)
-- `/debug` - Help debug issues with code (Ctrl+B)
-
-#### System Commands
-
-- Export logs and diagnostics
-- Health check and monitoring
-- Configuration management
-
-## 🖥️ Command Line Interface
-
-Cortex Code also provides a comprehensive CLI interface for all operations. This replaces the deprecated `@cortex-os/cli` package.
-
-### Basic Usage
-
-```
-# Interactive TUI mode (default)
-cortex-code
-
-# Run a single command in CI mode
-cortex-code run "explain this code" --ci
-
-# Start daemon server
-cortex-code daemon --port 8080
+```shell
+npx @modelcontextprotocol/inspector codex mcp
 ```
 
-### MCP Management
+### Notifications
 
-```bash
-# List MCP servers
-cortex-code mcp list
+You can enable notifications by configuring a script that is run whenever the agent finishes a turn. The [notify documentation](../docs/config.md#notify) includes a detailed example that explains how to get desktop notifications via [terminal-notifier](https://github.com/julienXX/terminal-notifier) on macOS.
 
-# Add MCP server
-cortex-code mcp add my-server '{"transport": "stdio", "command": "my-mcp-server"}'
+### `codex exec` to run Codex programmatially/non-interactively
 
-# Remove MCP server
-cortex-code mcp remove my-server
+To run Codex non-interactively, run `codex exec PROMPT` (you can also pass the prompt via `stdin`) and Codex will work on your task until it decides that it is done and exits. Output is printed to the terminal directly. You can set the `RUST_LOG` environment variable to see more about what's going on.
 
-# Search MCP marketplace
-cortex-code mcp search "weather"
+## Development Status
 
-# Show server details
-cortex-code mcp show my-server
+### ✅ Completed Features
 
-# Bridge MCP servers
-cortex-code mcp bridge
+- **Foundation (Phase 1)**: Complete TDD foundation with configuration, error handling, and project structure
+- **Provider Abstraction (Task 2.2)**: Complete provider abstraction layer with registry system and mock implementations
+- **Chat Interface (Task 2.1)**: Message management, conversation state, and chat subcommand implementation
+- **Test Coverage**: 29 comprehensive tests covering all implemented functionality
 
-# Diagnose MCP issues
-cortex-code mcp doctor
+### 🔄 Current Development
+
+- **Streaming Support (Task 2.3)**: Infrastructure in place, TUI integration pending
+- **Provider Integration (Phase 3)**: Ready for real provider implementations (OpenAI, Anthropic, Ollama)
+
+### 📋 Architecture Overview
+
+The Rust CLI implements a modern, TDD-driven architecture with:
+
+- **Provider Abstraction**: Unified interface for multiple AI model providers
+- **Conversation Management**: Stateful message handling with persistence
+- **Configuration System**: Type-safe, validated configuration with TOML support
+- **Error Handling**: Comprehensive error types with structured propagation
+- **Test Coverage**: Full TDD implementation with mock providers for testing
+
+Typing `@` triggers a fuzzy-filename search over the workspace root. Use up/down to select among the results and Tab or Enter to replace the `@` with the selected path. You can use Esc to cancel the search.
+
+### Esc–Esc to edit a previous message
+
+When the chat composer is empty, press Esc to prime “backtrack” mode. Press Esc again to open a transcript preview highlighting the last user message; press Esc repeatedly to step to older user messages. Press Enter to confirm and Codex will fork the conversation from that point, trim the visible transcript accordingly, and pre‑fill the composer with the selected user message so you can edit and resubmit it.
+
+In the transcript preview, the footer shows an `Esc edit prev` hint while editing is active.
+
+### `--cd`/`-C` flag
+
+Sometimes it is not convenient to `cd` to the directory you want Codex to use as the "working root" before running Codex. Fortunately, `codex` supports a `--cd` option so you can specify whatever folder you want. You can confirm that Codex is honoring `--cd` by double-checking the **workdir** it reports in the TUI at the start of a new session.
+
+### Shell completions
+
+Generate shell completion scripts via:
+
+```shell
+codex completion bash
+codex completion zsh
+codex completion fish
 ```
 
-### A2A Messaging
+The generated completions include subcommands and flags such as `codex chat -C/--cd <DIR>`.
 
-```bash
-# Send A2A message
-cortex-code a2a send --type "agent.message" --payload '{"content": "hello"}'
+Install completions (optional):
 
-# List A2A messages
-cortex-code a2a list
+- zsh (macOS default):
 
-# Diagnose A2A system
-cortex-code a2a doctor
+```shell
+mkdir -p ~/.zsh/completions
+codex completion zsh > ~/.zsh/completions/_codex
+echo 'fpath+=(~/.zsh/completions)' >> ~/.zshrc
+echo 'autoload -U compinit && compinit' >> ~/.zshrc
+exec $SHELL
 ```
 
-### RAG Operations
+- bash:
 
-```bash
-# Ingest documents into RAG system
-cortex-code rag ingest ./docs
-
-# Query the RAG system
-cortex-code rag query "How do I configure authentication?"
-
-# Evaluate RAG performance
-cortex-code rag eval
+```shell
+codex completion bash | sudo tee /etc/bash_completion.d/codex > /dev/null
+# or for user-local:
+mkdir -p ~/.bash_completion.d
+codex completion bash > ~/.bash_completion.d/codex
+echo 'source ~/.bash_completion.d/codex' >> ~/.bashrc
+exec $SHELL
 ```
 
-### Simlab Operations
+### Chat (one-off)
 
-```bash
-# Run simulation
-cortex-code simlab run my-simulation
+Send a single prompt and stream the reply without starting the interactive TUI:
 
-# Run benchmark
-cortex-code simlab bench performance-test
-
-# Generate report
-cortex-code simlab report
-
-# List simulations
-cortex-code simlab list
+```shell
+codex chat "Summarize the README in 3 bullet points"
 ```
 
-### Evaluation
+This is additive and does not affect existing commands.
 
-```bash
-# Run evaluation gate
-cortex-code eval gate security-gate
+#### Chat flags for multi‑turn and sessions
+
+- `--session NAME`: persist history to `$CODEX_HOME/sessions/NAME.jsonl`
+- `--session-file PATH`: persist history to a custom JSONL path
+- `--reset`: start fresh, truncating the session file
+- `--repl`: stay in a simple line‑based REPL (type `:q` to quit)
+- `-C, --cd DIR`: run Chat using DIR as the working root (same semantics as `codex exec -C`)
+- `PROMPT` can be `-` to read from stdin; optional when `--repl` is used
+
+Note: When using `--repl` or sessions, the JSONL history includes both user and assistant items. This is expected and allows full turn-by-turn replay.
+
+Examples:
+
+```shell
+# Single turn (unchanged)
+codex chat "Start a plan for Phase 2"
+
+# Read entire prompt from stdin
+echo "Write a haiku about Codex" | codex chat -
+
+# Persist a named session
+codex chat --session demo "Initial message"
+
+# Reset an existing session
+codex chat --session demo --reset "Fresh start"
+
+# REPL with session persistence
+codex chat --session demo --repl
+
+# Change the working directory for a one-off chat
+codex chat -C ./examples "List files in the project and suggest a cleanup plan"
 ```
 
-### Agent Management
+Developer notes:
 
-```bash
-# Create a new agent
-cortex-code agent create my-agent
+- Session metadata may include Git details (commit, branch, repo URL) when Codex runs inside a git repo.
+- For hermetic testing, you can set `CODEX_RS_SSE_FIXTURE` to a local `.sse` file to bypass network calls in CLI/exec tests.
+
+### Experimenting with the Codex Sandbox
+
+To test to see what happens when a command is run under the sandbox provided by Codex, we provide the following subcommands in Codex CLI:
+
+```shell
+# macOS
+codex debug seatbelt [--full-auto] [COMMAND]...
+
+# Linux
+codex debug landlock [--full-auto] [COMMAND]...
 ```
 
-### Control Operations
+### Selecting a sandbox policy via `--sandbox`
 
-```bash
-# Check system status
-cortex-code ctl check
+The Rust CLI exposes a dedicated `--sandbox` (`-s`) flag that lets you pick the sandbox policy **without** having to reach for the generic `-c/--config` option:
+
+```shell
+# Run Codex with the default, read-only sandbox
+codex --sandbox read-only
+
+# Allow the agent to write within the current workspace while still blocking network access
+codex --sandbox workspace-write
+
+# Danger! Disable sandboxing entirely (only do this if you are already running in a container or other isolated env)
+codex --sandbox danger-full-access
 ```
 
-### Enterprise Features
+The same setting can be persisted in `~/.codex/config.toml` via the top-level `sandbox_mode = "MODE"` key, e.g. `sandbox_mode = "workspace-write"`.
 
-```bash
-# Generate diagnostic report
-cortex-code diagnostics report
+### Streaming Modes
 
-# Run health checks
-cortex-code diagnostics health
+Codex supports multiple streaming presentation modes for model responses. These control how incremental output is surfaced in the TUI and non‑interactive `exec` flows.
 
-# Monitor system in real-time
-cortex-code diagnostics monitor
+Modes:
 
-# Cloud provider management
-cortex-code cloud list
-cortex-code cloud deploy my-service --image my/image
-cortex-code cloud status
+- `auto` (default): Behaves like the Responses API aggregate mode — Codex buffers partial deltas and prints a single finalized assistant message when complete (unless a provider only supports raw, in which case raw is shown).
+- `aggregate`: Force aggregation even if raw token streaming is available. Useful for cleaner logs or when piping output.
+- `raw`: Display token deltas as they arrive with minimal post‑processing.
+- `json`: Emit structured NDJSON events (one JSON object per line) describing the streaming lifecycle (`delta`, `item`, `completed`). Intended for tooling and programmatic consumption.
 
-# Cloudflare tunnel management
-cortex-code tunnel start --port 8080
-cortex-code tunnel status
+CLI flags (mutually exclusive shortcuts):
+
+````shell
+# Explicit mode selection
+codex exec --stream-mode raw "Explain the streaming design"
+
+# Convenience aliases
+codex exec --aggregate "Summarize this project"
+codex exec --raw "Draft a README section"
+codex exec --json-stream "Generate structured output"
+
+Deprecated legacy aliases (still accepted with a warning, prefer the above):
+
+```shell
+# Old forms (will print deprecation notices)
+codex chat --no-aggregate "Stream tokens"      # -> --stream-mode raw
+codex chat --aggregate   "One final answer"    # -> --stream-mode aggregate
+codex chat --stream-json "Structured events"   # -> --stream-mode json
+codex chat --json        "Structured events"   # -> --stream-mode json
+````
+
+The unified `--stream-mode <auto|aggregate|raw|json>` flag is the canonical interface going forward; legacy flags may be removed in a future release once external automation migrates.
+
+````
+
+TUI supports the same flags; when `--json-stream` is used, Codex still renders a human‑friendly view while internally consuming the structured events.
+
+Configuration precedence (lowest to highest):
+
+1. `~/.codex/config.toml` `stream_mode = "..."`
+2. Environment variable `CODEX_STREAM_MODE` (warns & falls back to `auto` if unrecognized)
+3. CLI flags (`--stream-mode`, `--aggregate`, `--raw`, `--json-stream`)
+
+Example config snippet:
+
+```toml
+stream_mode = "aggregate"
+````
+
+Environment override example:
+
+```shell
+CODEX_STREAM_MODE=raw codex exec "Tail the build output and summarize issues"
 ```
 
-## 🏗️ Architecture
-
-### Component Structure
-
-```rust
-src/
-├── main.rs              # Application entry point and TUI loop
-├── app.rs               # Core application state and logic
-├── config.rs            # Configuration management
-├── view/                # UI components
-│   ├── chat.rs         # AI chat interface
-│   ├── github_dashboard.rs  # GitHub activity monitoring
-│   ├── a2a_stream.rs   # Event stream visualization
-│   ├── cortex_command_palette.rs  # Command interface
-│   └── mod.rs          # View module exports
-├── github/             # GitHub API integration
-│   ├── client.rs       # API client and authentication
-│   ├── types.rs        # GitHub data structures
-│   └── mod.rs          # GitHub module exports
-├── mcp/                # MCP integration
-│   ├── client.rs       # MCP client implementation
-│   ├── service.rs      # MCP service management
-│   └── mod.rs          # MCP module exports
-└── memory/             # Persistent storage
-    ├── storage.rs      # Memory management
-    └── mod.rs          # Memory module exports
-```
-
-### Key Technologies
-
-- **[Ratatui](https://ratatui.rs/)** - Modern TUI framework
-- **[Crossterm](https://crates.io/crates/crossterm)** - Cross-platform terminal handling
-- **[Tokio](https://tokio.rs/)** - Async runtime for concurrent operations
-- **[Serde](https://serde.rs/)** - Serialization for configuration and data
-- **[Clap](https://clap.rs/)** - Command-line argument parsing
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Unit tests
-cargo test
-
-# Integration tests
-cargo test --test integration
-
-# Test with coverage (requires cargo-tarpaulin)
-cargo install cargo-tarpaulin
-cargo tarpaulin --out html
-```
-
-### Test Coverage
-
-| Component          | Coverage |
-| ------------------ | -------- |
-| Core App Logic     | 95%      |
-| UI Components      | 89%      |
-| GitHub Integration | 91%      |
-| MCP Integration    | 87%      |
-| **Overall**        | **92%**  |
-
-## 📊 Performance
-
-### Benchmarks
-
-| Metric           | Value          | Notes             |
-| ---------------- | -------------- | ----------------- |
-| Startup Time     | <100ms         | Cold start        |
-| Memory Usage     | 8-15MB         | Typical operation |
-| CPU Usage        | <5%            | Idle state        |
-| Event Processing | 10k events/sec | A2A stream        |
-| Render Rate      | 60 FPS         | UI refresh        |
-
-### Optimization Features
-
-- **Lazy Loading**: Components load data on-demand
-- **Event Batching**: Multiple events processed per frame
-- **Memory Pooling**: Reused allocations for frequent operations
-- **Async I/O**: Non-blocking network and file operations
-
-## 🔧 Configuration
-
-### CLI Options
-
-```bash
-cortex-code [OPTIONS] [COMMAND]
-
-Options:
-    -c, --config <FILE>     Configuration file path
-    -d, --debug             Enable debug logging
-        --ci                Run in CI mode (non-interactive)
-
-Commands:
-    tui                     Interactive TUI mode (default)
-    run <PROMPT>            Execute single command
-    daemon                  Start daemon server
-    mcp <ACTION>            MCP server management
-```
-
-### Configuration File
-
-Preferred config is JSON. Create `$HOME/.cortex/cortex.json` or add `cortex.json` to your project root:
+JSON streaming format (illustrative):
 
 ```json
-{
-    "providers": {
-        "default": "github",
-        "fallback": ["openai", "anthropic", "mlx"],
-        "config": {
-            "github": { "base_url": "https://models.inference.ai.azure.com" }
-        }
-    },
-    "ui": { "theme": "dark", "keybindings": "default", "vim_mode": false }
-}
+{"type":"delta","id":"msg_1","text":"Hello"}
+{"type":"delta","id":"msg_1","text":" world"}
+{"type":"item","id":"msg_1","final":true,"text":"Hello world"}
+{"type":"completed","conversation_id":"abc123"}
 ```
 
-## 🛡️ Security
+NOTE: The `json` mode is currently an extended feature not yet present in upstream `openai/codex` `codex-rs`. If you share a single `config.toml` across binaries and run an upstream build that does not know `json`, it will fall back to `auto` (with a warning) rather than failing.
 
-### Security Features
+## Code Organization
 
-- **🔐 Secure Token Storage**: GitHub tokens encrypted at rest
-- **🌐 Network Security**: TLS encryption for all API calls
-- **🛡️ Input Validation**: All user inputs sanitized and validated
-- **📋 Audit Logging**: Comprehensive logging of user actions
-- **🚫 Privilege Separation**: Minimal required permissions
-- **🔒 Command Injection Protection**: MLX provider hardened against injection attacks
-- **🛡️ Secure Network Binding**: Daemon mode binds to localhost by default
+This folder is the root of a Cargo workspace. It contains quite a bit of experimental code, but here are the key crates:
 
-### Security Best Practices
+- [`core/`](./core) contains the business logic for Codex. Ultimately, we hope this to be a library crate that is generally useful for building other Rust/native applications that use Codex.
+- [`exec/`](./exec) "headless" CLI for use in automation.
+- [`tui/`](./tui) CLI that launches a fullscreen TUI built with [Ratatui](https://ratatui.rs/).
+- [`cli/`](./cli) CLI multitool that provides the aforementioned CLIs via subcommands.
 
-- Store tokens in secure credential managers
-- Use read-only tokens when possible
-- Enable audit logging in production
-- Regularly rotate API tokens
-- Monitor for suspicious activity
+## Testing & Coverage
 
-## 📄 License
+We provide unified scripts, Makefile targets, and Nx run-commands for exercising the Rust workspace in isolation from the larger monorepo.
 
-This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details.
+### Quick Commands
 
-Portions of this software were inspired by or reference implementations from:
+From repo root (via `pnpm` scripts):
 
-- [SST OpenCode](https://github.com/sst/opencode) (MIT License)
-- [OpenAI Codex CLI](https://github.com/openai/codex) (Apache License 2.0)
-
-See [LICENSING_AUDIT.md](LICENSING_AUDIT.md) for detailed licensing information.
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-tui-feature`)
-3. **Write** tests for new functionality
-4. **Ensure** code passes `cargo clippy` and `cargo fmt`
-5. **Test** thoroughly with `cargo test`
-6. **Commit** with descriptive messages
-7. **Push** and create a Pull Request
-
-### Code Quality Standards
-
-- **Rust Format**: `cargo fmt` compliance required
-- **Clippy**: No warnings allowed (`cargo clippy -- -D warnings`)
-- **Testing**: Maintain >90% test coverage
-- **Documentation**: Public APIs must be documented
-- **Performance**: Benchmark significant changes
-
-## 📚 Documentation
-
-### API Documentation
-
-```
-# Generate documentation
-cargo doc --open
-
-# Documentation with private items
-cargo doc --document-private-items --open
+```shell
+pnpm codex:test             # All workspace crates (unit + doc + ignored excluded by default)
+pnpm codex:test:unit        # Focus on fast unit-style tests (skips those tagged integration/slow)
+pnpm codex:test:integration # Only tests marked with #[ignore] (live / external)
+pnpm codex:test:coverage    # Instrument with LLVM source-based coverage, emit lcov if grcov present
 ```
 
-### Examples
+Makefile shortcuts:
 
-See the `examples/` directory for usage examples:
-
-- `basic_usage.rs` - Simple TUI setup
-- `custom_views.rs` - Creating custom view components
-- `event_handling.rs` - Advanced event processing
-- `github_integration.rs` - GitHub API usage
-
-## 🚀 Deployment
-
-For production deployment, see our [Production Deployment Guide](docs/production-deployment.md) which includes:
-
-- Security hardening recommendations
-- High availability setup
-- Monitoring integration
-- Backup and recovery procedures
-
-### Binary Distribution
-
-```
-# Build optimized release
-cargo build --release
-
-# Create distribution package
-tar -czf cortex-code-linux-x64.tar.gz -C target/release cortex-code
-
-# Install system-wide (Linux/macOS)
-sudo cp target/release/cortex-code /usr/local/bin/
+```shell
+make codex-test
+make codex-test-unit
+make codex-test-integration
+make codex-test-coverage
 ```
 
-### Docker Deployment
+Nx targets (optional, integrates with `nx run` & dep graph):
 
-``dockerfile
-FROM rust:1.70-slim as builder
-WORKDIR /app
-COPY . .
-RUN cargo build --release
-
-FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y ca-certificates
-COPY --from=builder /app/target/release/cortex-code /usr/local/bin/
-CMD ["cortex-code"]
-
+```shell
+pnpm nx test cortex-code-rust
+pnpm nx run cortex-code-rust:test-unit
+pnpm nx run cortex-code-rust:test-integration
+pnpm nx run cortex-code-rust:coverage
 ```
 
-## 🐛 Troubleshooting
+### Integration Test Heuristic
 
-### Common Issues
+Currently, we treat tests annotated with `#[ignore]` (e.g. those in `core/tests/suite/live_cli.rs`) as integration/live tests. This keeps default `cargo test` runs deterministic and free of real API calls. To run them:
 
-**Terminal Rendering Issues**
-
+```shell
+cargo test --workspace -- --ignored
 ```
 
-# Ensure TERM is set correctly
+### Coverage Details
 
-export TERM=xterm-256color
+We now use [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov) for source-based coverage. The script `pnpm codex:test:coverage` runs:
 
-# Check terminal capabilities
-
-infocmp $TERM
-
+```shell
+cargo llvm-cov --workspace --lcov --output-path target/coverage/lcov.info --html
 ```
 
-**High CPU Usage**
+This produces:
 
+- `apps/cortex-codex/target/coverage/lcov.info` (CI/IDE ingestion)
+- `apps/cortex-codex/target/coverage/html/` (human browsable report)
+
+Open the HTML report via:
+
+```shell
+open apps/cortex-codex/target/coverage/html/index.html
 ```
 
-# Reduce refresh rate in config
+Install the tool once with:
 
-refresh_rate = 30
-
-# Enable event batching
-
-event_batching = true
-
+```shell
+pnpm codex:install:coverage-tools   # installs cargo-llvm-cov
 ```
 
-**Memory Leaks**
+### Fast Inner Loop
 
+During development you can narrow to a single crate or test:
+
+```shell
+cd apps/cortex-codex
+cargo test -p core stream_mode
 ```
 
-# Monitor memory usage
+Or continuously watch (requires `cargo-watch`):
 
-cargo run --features memory-profiling
-
-# Run with memory debugging
-
-RUST_BACKTRACE=1 cargo run
-
+```shell
+cargo watch -x 'test -p core'
 ```
 
-### Debug Mode
+### Tool Installation Helper
 
+Install `cargo-llvm-cov` (idempotent):
+
+```shell
+pnpm codex:install:coverage-tools
 ```
 
-# Enable comprehensive debugging
+### xtask Automation
 
-RUST_LOG=cortex_code=debug cargo run -- --debug
+We ship an `xtask` helper crate (`apps/cortex-codex/xtask`) with subcommands:
 
-# Log to file
-
-RUST_LOG=debug cargo run -- --debug 2> debug.log
-
+```shell
+pnpm codex:coverage:xtask            # cargo llvm-cov run (lcov + html)
+pnpm codex:coverage:report           # cargo llvm-cov --no-run (re-generate reports)
+cd apps/cortex-codex/xtask && cargo run -- doctor  # tool availability summary
 ```
 
-## 📈 Roadmap
+Pass extra test filters after `--`:
 
-### Upcoming Features
-
-- **🎨 Theme Customization** - Custom color schemes and layouts
-- **🔌 Plugin System** - Custom view components and integrations
-- **📱 Mobile Support** - Responsive design for smaller terminals
-- **🌐 Remote Access** - Web-based terminal interface
-- **🔔 Notifications** - System notifications for important events
-
-### Version History
-
-- **v2.0.0** (Current) - Security hardening, enhanced commands, production deployment guide
-- **v0.3.0** - Multi-view interface, command palette
-- **v0.2.0** - GitHub dashboard, A2A event streaming
-- **v0.1.0** - Basic chat interface, MCP integration
-
-## 🙏 Acknowledgments
-
-- **[Ratatui Team](https://ratatui.rs/)** - Excellent TUI framework
-- **[Crossterm](https://github.com/crossterm-rs/crossterm)** - Cross-platform terminal library
-- **Rust Community** - Amazing ecosystem and support
-
-## 📞 Support
-
-- **🐛 Issues**: [GitHub Issues](https://github.com/jamiescottcraik/Cortex-OS/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/jamiescottcraik/Cortex-OS/discussions)
-- **📖 Documentation**: [docs.cortex-os.dev](https://docs.cortex-os.dev)
-
----
-
-<div align="center">
-
-**Built with 🦀 Rust and ❤️ by the Cortex-OS Team**
-
-[![Rust](https://img.shields.io/badge/made%20with-Rust-orange)](https://www.rust-lang.org/)
-[![Ratatui](https://img.shields.io/badge/powered%20by-Ratatui-blue)](https://ratatui.rs/)
-
-</div>
+```shell
+cd apps/cortex-codex/xtask
+cargo run -- coverage -- stream_mode
 ```
+
+### CI Artifact (Example Snippet)
+
+Add a job step (GitHub Actions example) to persist `lcov.info` + HTML:
+
+```yaml
+- name: Codex coverage
+  run: pnpm codex:test:coverage
+- name: Upload coverage (lcov)
+  uses: actions/upload-artifact@v4
+  with:
+    name: codex-coverage-lcov
+    path: apps/cortex-codex/target/coverage/lcov.info
+- name: Upload coverage html
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: codex-coverage-html
+    path: apps/cortex-codex/target/coverage/html
+```
+
+### Future Improvements
+
+- Distinguish `slow` tests with a custom attribute macro
+- Provide a `cargo-xtask` wrapper for richer workflows
+- Gate live tests behind an explicit `CODEx_LIVE=1` env toggle for clarity

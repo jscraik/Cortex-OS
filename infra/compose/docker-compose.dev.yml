@@ -1,4 +1,13 @@
 
+version: '3.8'
+
+# OrbStack optimized development environment for Cortex-OS
+# Profiles: dev-min, dev-full, web, api, workers, observability
+
+x-orbstack-labels: &orbstack-labels
+  orbstack.optimize: "true"
+  orbstack.platform: "linux/arm64,linux/amd64"
+
 services:
   nats:
     container_name: cortexos_nats
@@ -16,12 +25,19 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+    labels:
+      <<: *orbstack-labels
+      orbstack.service: "nats"
+      orbstack.tier: "messaging"
 
   model-gateway:
     container_name: cortexos_model_gateway
     build:
       context: ../../
       dockerfile: packages/model-gateway/Dockerfile
+      platforms:
+        - linux/arm64
+        - linux/amd64
     profiles: ["dev-min","dev-full"]
     environment:
       # MLX runs host-native (Metal) on macOS; OrbStack exposes host via host.docker.internal
@@ -42,6 +58,11 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+    labels:
+      <<: *orbstack-labels
+      orbstack.service: "model-gateway"
+      orbstack.tier: "api"
+      orbstack.node: "true"
 
   mcp-registry:
     container_name: cortexos_mcp_registry

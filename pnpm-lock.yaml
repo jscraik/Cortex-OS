@@ -708,6 +708,21 @@ importers:
 
   packages/a2a:
     dependencies:
+      '@cortex-os/a2a-contracts':
+        specifier: workspace:*
+        version: link:a2a-contracts
+      '@cortex-os/a2a-core':
+        specifier: workspace:*
+        version: link:a2a-core
+      '@cortex-os/telemetry':
+        specifier: workspace:*
+        version: link:../../libs/typescript/telemetry
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -1332,9 +1347,15 @@ importers:
       '@cortex-os/orchestration':
         specifier: workspace:*
         version: link:../orchestration
+      '@types/chokidar':
+        specifier: ^2.1.7
+        version: 2.1.7
       axios:
         specifier: ^1.7.2
         version: 1.11.0(debug@4.4.1)
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
       fastify:
         specifier: ^4.28.1
         version: 4.29.1
@@ -6407,6 +6428,10 @@ packages:
 
   '@types/chai@5.2.2':
     resolution: {integrity: sha512-8kB30R7Hwqf40JPiKhVzodJs2Qc1ZJ5zuT3uzw5Hq/dhNCl3G3l83jfpdI1e20BP348+fV7VIL/+FxaXkqBmWg==}
+
+  '@types/chokidar@2.1.7':
+    resolution: {integrity: sha512-A7/MFHf6KF7peCzjEC1BBTF8jpmZTokb3vr/A0NxRGfwRLK3Ws+Hq6ugVn6cJIMfM6wkCak/aplWrxbTcu8oig==}
+    deprecated: This is a stub types definition. chokidar provides its own type definitions, so you do not need this installed.
 
   '@types/connect-history-api-fallback@1.5.4':
     resolution: {integrity: sha512-n6Cr2xS1h4uAulPRdlw6Jl6s1oG8KrVilPN2yUITEs+K48EzMJJ3W1xy8K5eWuFvjp3R74AOIGSmp2UfBJ8HFw==}
@@ -14672,6 +14697,10 @@ packages:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
@@ -20786,6 +20815,10 @@ snapshots:
   '@types/chai@5.2.2':
     dependencies:
       '@types/deep-eql': 4.0.2
+
+  '@types/chokidar@2.1.7':
+    dependencies:
+      chokidar: 3.6.0
 
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
@@ -30786,6 +30819,8 @@ snapshots:
   uuid@10.0.0: {}
 
   uuid@11.1.0: {}
+
+  uuid@13.0.0: {}
 
   uuid@8.3.2: {}
 
