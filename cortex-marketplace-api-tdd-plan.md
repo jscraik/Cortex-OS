@@ -20,7 +20,7 @@ This document summarizes a security-focused review of `apps/cortex-marketplace-a
 
 > **Security-by-Design** – Every external marketplace interaction must validate, authenticate, and cryptographically verify data before use. Unverified data **must never** enter the runtime.
 
-- All network calls must pass domain allowlisting **and** Ed25519 signature checks.
+- All network calls must pass domain allowlisting **and** Ed25519 signature checks (as specified in [RFC 8032](https://datatracker.ietf.org/doc/html/rfc8032)).
 - Every new module requires unit tests that enforce the above checks.
 - Configuration must flow through explicit environment variables with sane defaults.
 
