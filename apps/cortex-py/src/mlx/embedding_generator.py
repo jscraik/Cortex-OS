@@ -32,14 +32,14 @@ DEFAULT_CONFIG_PATH = Path(__file__).with_name("embedding_models.json")
 
 def load_model_config(path: str | None = None) -> dict[str, dict[str, Any]]:
     config_file = Path(path) if path else DEFAULT_CONFIG_PATH
-    with open(config_file, "rb") as f:
-        if config_file.suffix == ".json":
+    if config_file.suffix == ".json":
+        with open(config_file, "r", encoding="utf-8") as f:
             return json.load(f)
-        if config_file.suffix in {".toml", ".tml"}:
-            import tomllib
-
+    if config_file.suffix in {".toml", ".tml"}:
+        import tomllib
+        with open(config_file, "rb") as f:
             return tomllib.load(f)
-        raise ValueError("Unsupported config format")
+    raise ValueError("Unsupported config format")
 
 
 class MLXEmbeddingGenerator:
