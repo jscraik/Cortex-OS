@@ -9,7 +9,7 @@ export function redact<T extends ZodTypeAny>(schema: T, data: unknown): unknown 
 }
 
 function _redact(schema: ZodTypeAny, value: any): any {
-  if (schema instanceof ZodObject && value && typeof value === 'object') {
+  if (schema instanceof ZodObject && value && typeof value === 'object' && !Array.isArray(value)) {
     const result: Record<string, unknown> = {};
     const shape = schema.shape;
     for (const key of Object.keys(shape)) {
