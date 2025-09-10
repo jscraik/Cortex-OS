@@ -39,5 +39,5 @@
 
 5. **Release Readiness Gate**
    - Create a failing CI test that runs `pnpm lint`, `pnpm test`, and a smoke deployment.
-   - Add make/CI script ensuring the gate passes before release tags.
+   - Add make/CI script ensuring the gate passes before release tags. The smoke deployment must verify that the server starts successfully and responds with HTTP 200 to a `/healthz` (or equivalent) health check endpoint.
    - Commit: `ci(asbr): enforce release readiness checks`.
