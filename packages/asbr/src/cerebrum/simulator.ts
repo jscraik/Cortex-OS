@@ -3,8 +3,8 @@
  * Simulates plans to validate feasibility before execution
  */
 
-import type { Config } from "../types/index.js";
-import type { Plan } from "./types.js";
+import type { Config } from '../types/index.js';
+import type { Plan } from './types.js';
 
 export interface SimulationOptions {
 	timeoutMs?: number;
@@ -50,7 +50,7 @@ export class Simulator {
 		_options?: SimulationOptions,
 	): Promise<SimulationResult> {
 		const startTime = Date.now();
-		const failures: SimulationResult["failures"] = [];
+		const failures: SimulationResult['failures'] = [];
 		let gatesPassed = 0;
 
 		// Run each gate
@@ -62,7 +62,7 @@ export class Simulator {
 				} else {
 					failures.push({
 						gateId: gate.id,
-						reason: result.reason || "Unknown failure",
+						reason: result.reason || 'Unknown failure',
 					});
 				}
 			} catch (error) {
@@ -84,8 +84,8 @@ export class Simulator {
 			failures,
 			warnings: this.generateWarnings(plan),
 			recommendation: success
-				? "Plan is ready for execution"
-				: "Plan requires modifications",
+				? 'Plan is ready for execution'
+				: 'Plan requires modifications',
 		};
 	}
 
@@ -106,12 +106,12 @@ export class Simulator {
 	private setupDefaultGates(): void {
 		// Safety gate - checks for potentially dangerous operations
 		this.gates.push({
-			id: "safety-check",
-			name: "Safety Check",
+			id: 'safety-check',
+			name: 'Safety Check',
 			description:
-				"Validates that the plan does not contain dangerous operations",
+				'Validates that the plan does not contain dangerous operations',
 			check: async (plan: Plan) => {
-				const dangerousKeywords = ["delete", "rm -rf", "format", "wipe"];
+				const dangerousKeywords = ['delete', 'rm -rf', 'format', 'wipe'];
 				const planText = JSON.stringify(plan).toLowerCase();
 
 				for (const keyword of dangerousKeywords) {
@@ -129,9 +129,9 @@ export class Simulator {
 
 		// Resource gate - checks for required tools
 		this.gates.push({
-			id: "resource-check",
-			name: "Resource Check",
-			description: "Validates that required tools are available",
+			id: 'resource-check',
+			name: 'Resource Check',
+			description: 'Validates that required tools are available',
 			check: async (_plan: Plan) => {
 				// In a real implementation, this would check the tool registry
 				// For now, we'll just pass
@@ -141,14 +141,14 @@ export class Simulator {
 
 		// Complexity gate - checks plan complexity
 		this.gates.push({
-			id: "complexity-check",
-			name: "Complexity Check",
-			description: "Validates that the plan is not overly complex",
+			id: 'complexity-check',
+			name: 'Complexity Check',
+			description: 'Validates that the plan is not overly complex',
 			check: async (plan: Plan) => {
 				if (plan.steps.length > 50) {
 					return {
 						passed: false,
-						reason: "Plan has too many steps (over 50)",
+						reason: 'Plan has too many steps (over 50)',
 					};
 				}
 
@@ -162,7 +162,7 @@ export class Simulator {
 
 		// Check for long-running plans
 		if (plan.steps.length > 10) {
-			warnings.push("Plan has many steps which may increase execution time");
+			warnings.push('Plan has many steps which may increase execution time');
 		}
 
 		return warnings;

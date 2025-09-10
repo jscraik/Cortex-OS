@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { GitHubRepositorySchema, GitHubUserSchema } from "./repository";
+import { z } from 'zod';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Pull Request Branch Schema
 export const PullRequestBranchSchema = z.object({
@@ -16,7 +16,7 @@ export type PullRequestBranch = z.infer<typeof PullRequestBranchSchema>;
 export const PullRequestSchema = z.object({
 	id: z.number(),
 	number: z.number(),
-	state: z.enum(["open", "closed"]),
+	state: z.enum(['open', 'closed']),
 	title: z.string(),
 	body: z.string().nullable(),
 	user: GitHubUserSchema,
@@ -48,19 +48,19 @@ export type PullRequest = z.infer<typeof PullRequestSchema>;
 
 // Pull Request Action Types
 export const PullRequestActionSchema = z.enum([
-	"opened",
-	"closed",
-	"merged",
-	"reopened",
-	"synchronized",
-	"ready_for_review",
-	"converted_to_draft",
-	"assigned",
-	"unassigned",
-	"labeled",
-	"unlabeled",
-	"review_requested",
-	"review_request_removed",
+	'opened',
+	'closed',
+	'merged',
+	'reopened',
+	'synchronized',
+	'ready_for_review',
+	'converted_to_draft',
+	'assigned',
+	'unassigned',
+	'labeled',
+	'unlabeled',
+	'review_requested',
+	'review_request_removed',
 ]);
 
 export type PullRequestAction = z.infer<typeof PullRequestActionSchema>;
@@ -96,8 +96,8 @@ export type PullRequestChanges = z.infer<typeof PullRequestChangesSchema>;
 // Pull Request Event Schema
 export const PullRequestEventSchema = z.object({
 	event_id: z.string().uuid(),
-	event_type: z.literal("github.pull_request"),
-	source: z.literal("github-client"),
+	event_type: z.literal('github.pull_request'),
+	source: z.literal('github-client'),
 	timestamp: z.string().datetime(),
 
 	// Event-specific data
@@ -127,19 +127,19 @@ export type PullRequestEvent = z.infer<typeof PullRequestEventSchema>;
 
 // Pull Request Event Topics Mapping
 export const PULL_REQUEST_EVENT_TOPICS = {
-	opened: "github.pullrequest.opened",
-	closed: "github.pullrequest.closed",
-	merged: "github.pullrequest.merged",
-	reopened: "github.pullrequest.reopened",
-	synchronized: "github.pullrequest.synchronized",
-	ready_for_review: "github.pullrequest.ready_for_review",
-	converted_to_draft: "github.pullrequest.converted_to_draft",
-	assigned: "github.pullrequest.assigned",
-	unassigned: "github.pullrequest.unassigned",
-	labeled: "github.pullrequest.labeled",
-	unlabeled: "github.pullrequest.unlabeled",
-	review_requested: "github.pullrequest.review_requested",
-	review_request_removed: "github.pullrequest.review_request_removed",
+	opened: 'github.pullrequest.opened',
+	closed: 'github.pullrequest.closed',
+	merged: 'github.pullrequest.merged',
+	reopened: 'github.pullrequest.reopened',
+	synchronized: 'github.pullrequest.synchronized',
+	ready_for_review: 'github.pullrequest.ready_for_review',
+	converted_to_draft: 'github.pullrequest.converted_to_draft',
+	assigned: 'github.pullrequest.assigned',
+	unassigned: 'github.pullrequest.unassigned',
+	labeled: 'github.pullrequest.labeled',
+	unlabeled: 'github.pullrequest.unlabeled',
+	review_requested: 'github.pullrequest.review_requested',
+	review_request_removed: 'github.pullrequest.review_request_removed',
 } as const;
 
 // Validation Functions
@@ -168,10 +168,10 @@ export function createPullRequestEvent(
 			description: string | null;
 		};
 	},
-): Omit<PullRequestEvent, "event_id" | "timestamp"> {
+): Omit<PullRequestEvent, 'event_id' | 'timestamp'> {
 	return {
-		event_type: "github.pull_request",
-		source: "github-client",
+		event_type: 'github.pull_request',
+		source: 'github-client',
 		action,
 		pull_request: pullRequest,
 		repository,
@@ -200,30 +200,30 @@ export function getPullRequestEventTopic(action: PullRequestAction): string {
 
 // Pull Request State Helpers
 export function isPullRequestMergeable(pr: PullRequest): boolean {
-	return (pr.mergeable ?? false) && pr.state === "open" && !pr.draft;
+	return (pr.mergeable ?? false) && pr.state === 'open' && !pr.draft;
 }
 
 export function getPullRequestMergeStatus(pr: PullRequest): string {
 	if (pr.draft) {
-		return "draft";
-	} else if (pr.state === "closed") {
-		return pr.merged ? "merged" : "closed";
+		return 'draft';
+	} else if (pr.state === 'closed') {
+		return pr.merged ? 'merged' : 'closed';
 	} else if (pr.mergeable !== null) {
 		if (pr.mergeable) {
 			switch (pr.mergeable_state) {
-				case "clean":
-					return "ready";
-				case "unstable":
-					return "conflicts";
-				case "dirty":
-					return "failing_checks";
+				case 'clean':
+					return 'ready';
+				case 'unstable':
+					return 'conflicts';
+				case 'dirty':
+					return 'failing_checks';
 				default:
 					return pr.mergeable_state;
 			}
 		} else {
-			return "blocked";
+			return 'blocked';
 		}
 	} else {
-		return "checking";
+		return 'checking';
 	}
 }

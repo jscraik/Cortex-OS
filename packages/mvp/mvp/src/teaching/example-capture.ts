@@ -5,26 +5,26 @@
  * @version 1.0.0
  */
 
-import type { PRPState } from "../state.js";
-import { generateId } from "../utils/id.js";
+import type { PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
 
 /**
  * Captured example for teaching and behavior extension
  */
 export interface CapturedExample {
 	id: string;
-	type: "workflow" | "validation" | "decision" | "correction";
+	type: 'workflow' | 'validation' | 'decision' | 'correction';
 	context: {
-		prpPhase: PRPState["phase"];
-		blueprint: PRPState["blueprint"];
+		prpPhase: PRPState['phase'];
+		blueprint: PRPState['blueprint'];
 		inputState: Partial<PRPState>;
 	};
 	userAction: {
 		type:
-			| "validation_override"
-			| "gate_adjustment"
-			| "neuron_guidance"
-			| "workflow_modification";
+			| 'validation_override'
+			| 'gate_adjustment'
+			| 'neuron_guidance'
+			| 'workflow_modification';
 		description: string;
 		parameters: any;
 		timestamp: string;
@@ -54,9 +54,9 @@ export interface TeachingPattern {
 	};
 	adaptation: {
 		type:
-			| "gate_modification"
-			| "workflow_adjustment"
-			| "validation_enhancement";
+			| 'gate_modification'
+			| 'workflow_adjustment'
+			| 'validation_enhancement';
 		parameters: any;
 	};
 	examples: string[]; // CapturedExample IDs that support this pattern
@@ -78,25 +78,25 @@ export class ExampleCaptureSystem {
 	 * Capture user interaction as learning example
 	 */
 	captureExample(
-		type: CapturedExample["type"],
-		context: CapturedExample["context"],
-		userAction: CapturedExample["userAction"],
-		outcome: CapturedExample["outcome"],
-		metadata: Partial<CapturedExample["metadata"]> = {},
+		type: CapturedExample['type'],
+		context: CapturedExample['context'],
+		userAction: CapturedExample['userAction'],
+		outcome: CapturedExample['outcome'],
+		metadata: Partial<CapturedExample['metadata']> = {},
 		deterministic = false,
 	): CapturedExample | null {
 		if (!this.activeCapture) {
 			return null;
 		}
 		const example: CapturedExample = {
-			id: generateId("example", deterministic),
+			id: generateId('example', deterministic),
 			type,
 			context,
 			userAction,
 			outcome,
 			metadata: {
-				capturedBy: "system",
-				environment: "development",
+				capturedBy: 'system',
+				environment: 'development',
 				tags: [],
 				...metadata,
 			},
@@ -125,14 +125,14 @@ export class ExampleCaptureSystem {
 		deterministic = false,
 	): CapturedExample | null {
 		return this.captureExample(
-			"validation",
+			'validation',
 			{
 				prpPhase: prpState.phase,
 				blueprint: prpState.blueprint,
 				inputState: { validationResults: prpState.validationResults },
 			},
 			{
-				type: "validation_override",
+				type: 'validation_override',
 				description: `User override: ${userOverride.reasoning}`,
 				parameters: {
 					originalValidation,
@@ -146,7 +146,7 @@ export class ExampleCaptureSystem {
 				learningValue: finalOutcome.success ? 0.8 : 0.3,
 			},
 			{
-				tags: ["validation", "override", prpState.phase],
+				tags: ['validation', 'override', prpState.phase],
 			},
 			deterministic,
 		);
@@ -158,7 +158,7 @@ export class ExampleCaptureSystem {
 	captureWorkflowModification(
 		prpState: PRPState,
 		modification: {
-			type: "gate_adjustment" | "neuron_reordering" | "phase_skipping";
+			type: 'gate_adjustment' | 'neuron_reordering' | 'phase_skipping';
 			description: string;
 			changes: any;
 		},
@@ -166,14 +166,14 @@ export class ExampleCaptureSystem {
 		deterministic = false,
 	): CapturedExample | null {
 		return this.captureExample(
-			"workflow",
+			'workflow',
 			{
 				prpPhase: prpState.phase,
 				blueprint: prpState.blueprint,
 				inputState: { phase: prpState.phase, outputs: prpState.outputs },
 			},
 			{
-				type: "workflow_modification",
+				type: 'workflow_modification',
 				description: modification.description,
 				parameters: modification,
 				timestamp: new Date().toISOString(),
@@ -184,7 +184,7 @@ export class ExampleCaptureSystem {
 				learningValue: outcome.improved ? 0.9 : 0.2,
 			},
 			{
-				tags: ["workflow", modification.type, prpState.phase],
+				tags: ['workflow', modification.type, prpState.phase],
 			},
 			deterministic,
 		);
@@ -264,7 +264,7 @@ export class ExampleCaptureSystem {
 					confidence: 0.5,
 				},
 				adaptation: {
-					type: "gate_modification",
+					type: 'gate_modification',
 					parameters: example.userAction.parameters,
 				},
 				examples: [example.id],
@@ -279,8 +279,8 @@ export class ExampleCaptureSystem {
 	 * Calculate similarity between contexts
 	 */
 	private calculateContextSimilarity(
-		context1: CapturedExample["context"],
-		context2: CapturedExample["context"],
+		context1: CapturedExample['context'],
+		context2: CapturedExample['context'],
 	): number {
 		let similarity = 0;
 
@@ -328,8 +328,8 @@ export class ExampleCaptureSystem {
 	/**
 	 * Extract keywords from blueprint for similarity comparison
 	 */
-	private extractKeywords(blueprint: PRPState["blueprint"]): string[] {
-		const text = `${blueprint.title} ${blueprint.description} ${blueprint.requirements?.join(" ")}`;
+	private extractKeywords(blueprint: PRPState['blueprint']): string[] {
+		const text = `${blueprint.title} ${blueprint.description} ${blueprint.requirements?.join(' ')}`;
 		return text
 			.toLowerCase()
 			.split(/\s+/)
@@ -371,8 +371,8 @@ export class ExampleCaptureSystem {
 	 * Get captured examples for analysis
 	 */
 	getExamples(filter?: {
-		type?: CapturedExample["type"];
-		phase?: PRPState["phase"];
+		type?: CapturedExample['type'];
+		phase?: PRPState['phase'];
 		tags?: string[];
 	}): CapturedExample[] {
 		let examples = Array.from(this.examples.values());

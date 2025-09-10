@@ -1,20 +1,20 @@
-import { withSpan } from "../observability/otel";
-import { auditEvent, record } from "./audit";
+import { withSpan } from '../observability/otel';
+import { auditEvent, record } from './audit';
 import {
 	type Checkpoint,
 	loadLatestCheckpoint,
 	saveCheckpoint,
-} from "./checkpoints";
-import { requiresApproval, waitForApproval } from "./hitl";
-import { enforce, loadGrant } from "./policy-engine";
+} from './checkpoints';
+import { requiresApproval, waitForApproval } from './hitl';
+import { enforce, loadGrant } from './policy-engine';
 
 export type Node =
-	| "plan"
-	| "gather"
-	| "critic"
-	| "synthesize"
-	| "verify"
-	| "done";
+	| 'plan'
+	| 'gather'
+	| 'critic'
+	| 'synthesize'
+	| 'verify'
+	| 'done';
 
 export interface RetryPolicy {
 	maxRetries: number;
@@ -49,7 +49,7 @@ async function criticFn(state: any, _ctx: RunContext) {
 	return state;
 }
 async function buildArtifactProposal(_state: any) {
-	return { path: "/tmp/test", content: "test" };
+	return { path: '/tmp/test', content: 'test' };
 }
 async function commitArtifact(_proposal: any) {
 	return {};
@@ -65,16 +65,16 @@ const nodeFns: Record<Node, NodeFn> = {
 	synthesize: async (state, ctx) => {
 		const proposal = await buildArtifactProposal(state);
 		if (requiresApproval(proposal)) {
-			const ok = await waitForApproval(ctx.runId, "synthesize", proposal);
-			if (!ok) throw new Error("Approval denied");
+			const ok = await waitForApproval(ctx.runId, 'synthesize', proposal);
+			if (!ok) throw new Error('Approval denied');
 		}
-		enforce(await loadGrant("fs.write"), "write", {
+		enforce(await loadGrant('fs.write'), 'write', {
 			path: (proposal as any).path,
 		});
 		record(
 			auditEvent(
-				"fs",
-				"write",
+				'fs',
+				'write',
 				{ runId: ctx.runId },
 				{ path: (proposal as any).path },
 			),
@@ -87,11 +87,11 @@ const nodeFns: Record<Node, NodeFn> = {
 };
 
 const edges: Record<Node, Node | null> = {
-	plan: "gather",
-	gather: "critic",
-	critic: "synthesize",
-	synthesize: "verify",
-	verify: "done",
+	plan: 'gather',
+	gather: 'critic',
+	critic: 'synthesize',
+	synthesize: 'verify',
+	verify: 'done',
 	done: null,
 };
 
@@ -137,27 +137,27 @@ function withDeadline<T>(
 		let to: NodeJS.Timeout | undefined;
 		const onAbort = () => {
 			clearTimeout(to as any);
-			reject(new Error("Operation aborted"));
+			reject(new Error('Operation aborted'));
 		};
 		if (signal) {
 			if (signal.aborted) return onAbort();
-			signal.addEventListener("abort", onAbort, { once: true });
+			signal.addEventListener('abort', onAbort, { once: true });
 		}
 		if (deadlineMs) {
 			to = setTimeout(() => {
-				if (signal) signal.removeEventListener("abort", onAbort);
-				reject(new Error("Deadline exceeded"));
+				if (signal) signal.removeEventListener('abort', onAbort);
+				reject(new Error('Deadline exceeded'));
 			}, deadlineMs);
 		}
 		promise.then(
 			(v) => {
 				if (to) clearTimeout(to);
-				if (signal) signal.removeEventListener("abort", onAbort);
+				if (signal) signal.removeEventListener('abort', onAbort);
 				resolve(v);
 			},
 			(e) => {
 				if (to) clearTimeout(to);
-				if (signal) signal.removeEventListener("abort", onAbort);
+				if (signal) signal.removeEventListener('abort', onAbort);
 				reject(e);
 			},
 		);
@@ -175,11 +175,11 @@ export async function runSupervisor(
 ) {
 	// Idempotency: if a latest checkpoint exists at or after startAt, resume from it
 	const latest = await loadLatestCheckpoint(ctx.runId);
-	let node: Node = opts.startAt ?? "plan";
+	let node: Node = opts.startAt ?? 'plan';
 	let state = initialState;
 	if (latest) {
 		// resume from the next node after the last completed checkpoint
-		node = edges[latest.node] ?? "done";
+		node = edges[latest.node] ?? 'done';
 		state = latest.state;
 	}
 

@@ -3,9 +3,9 @@
 <div align="center">
 
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/orchestration)](https://www.npmjs.com/package/@cortex-os/orchestration)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
-[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](#testing)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://img.shields.io/badge/build-passing-brightgreen)
+[![Test Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)](https://img.shields.io/badge/coverage-93%25-brightgreen)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](https://img.shields.io/badge/security-OWASP%20compliant-green)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
 
@@ -23,18 +23,21 @@ Cortex Orchestration provides **production-ready multi-agent coordination** for 
 ## ✨ Key Features
 
 ### 🤖 Real AI Agent Execution
+
 - **🐍 LangGraph Integration** - State-based workflows with persistent checkpointing
 - **👥 CrewAI Coordination** - Role-based swarm intelligence with specialized agents
 - **🗣️ AutoGen Conversations** - Multi-agent conversational AI for complex reasoning
 - **🌉 Python-TypeScript Bridge** - Seamless IPC communication via JSON over stdio
 
 ### 🚀 Advanced Orchestration
+
 - **🧠 Intelligent Agent Routing** - Automatic framework selection based on task complexity
 - **⚡ Resource Management** - Memory allocation, load balancing, and performance monitoring
 - **🔄 Error Recovery** - Graceful failure handling with agent restart and task redistribution
 - **📊 Performance Monitoring** - Real-time metrics and execution analytics
 
 ### 🛡️ Production Features
+
 - **🔒 OWASP LLM Top-10 Compliance** - Secure agent-to-agent communication
 - **📈 Scalable Architecture** - Handle multiple concurrent orchestrations
 - **🎯 Adaptive Decision Making** - Dynamic strategy selection and optimization
@@ -188,12 +191,14 @@ await engine.cleanup();
 ### Core Components
 
 #### TypeScript Layer
+
 - **MultiAgentCoordinationEngine** - Main orchestration controller
 - **PythonAgentBridge** - IPC communication with Python processes
 - **ResourceManager** - Memory and CPU allocation management
 - **PerformanceMonitor** - Real-time execution metrics
 
 #### Python Layer (packages/python-agents/)
+
 - **LangGraphStateEngine** - State-based workflows with checkpointing
 - **CrewAICoordinator** - Swarm intelligence with role specialization
 - **AutoGenConversationEngine** - Multi-agent conversational reasoning
@@ -637,4 +642,3 @@ pnpm test
 [![AI Orchestration](https://img.shields.io/badge/AI-orchestration-green)](https://github.com/cortex-os/cortex-os)
 
 </div>
-

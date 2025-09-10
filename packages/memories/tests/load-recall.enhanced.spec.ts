@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { InMemoryStore } from "../src/adapters/store.memory.js";
-import type { Memory } from "../src/domain/types.js";
+import { describe, expect, it } from 'vitest';
+import { InMemoryStore } from '../src/adapters/store.memory.js';
+import type { Memory } from '../src/domain/types.js';
 
-describe("MemoryStore load and recall", () => {
-	it("retrieves the correct record when many exist with similar content", async () => {
+describe('MemoryStore load and recall', () => {
+	it('retrieves the correct record when many exist with similar content', async () => {
 		const store = new InMemoryStore();
 		const now = new Date().toISOString();
 
@@ -11,24 +11,24 @@ describe("MemoryStore load and recall", () => {
 		for (let i = 0; i < 1000; i++) {
 			const rec: Memory = {
 				id: `id-${i}`,
-				kind: "note",
+				kind: 'note',
 				text: `message ${i} with common text pattern`,
 				tags: [`tag-${i % 10}`],
 				createdAt: now,
 				updatedAt: now,
-				provenance: { source: "user" },
+				provenance: { source: 'user' },
 			} as Memory;
 			await store.upsert(rec);
 		}
 
 		// Search for a specific record
-		const res = await store.searchByText({ text: "message 999", topK: 5 });
+		const res = await store.searchByText({ text: 'message 999', topK: 5 });
 		expect(res).toHaveLength(1);
-		expect(res[0]?.text).toBe("message 999 with common text pattern");
-		expect(res[0]?.id).toBe("id-999");
+		expect(res[0]?.text).toBe('message 999 with common text pattern');
+		expect(res[0]?.id).toBe('id-999');
 	});
 
-	it("performs well under high load with vector searches", async () => {
+	it('performs well under high load with vector searches', async () => {
 		const store = new InMemoryStore();
 		const now = new Date().toISOString();
 
@@ -36,13 +36,13 @@ describe("MemoryStore load and recall", () => {
 		for (let i = 0; i < 500; i++) {
 			const rec: Memory = {
 				id: `vec-${i}`,
-				kind: "embedding",
+				kind: 'embedding',
 				text: `vector message ${i}`,
 				vector: Array(128).fill(i / 500), // Create distinct vectors
-				tags: ["vector"],
+				tags: ['vector'],
 				createdAt: now,
 				updatedAt: now,
-				provenance: { source: "system" },
+				provenance: { source: 'system' },
 			} as Memory;
 			await store.upsert(rec);
 		}
@@ -56,7 +56,7 @@ describe("MemoryStore load and recall", () => {
 		expect(res.length).toBeGreaterThan(0);
 	});
 
-	it("maintains performance with mixed data types", async () => {
+	it('maintains performance with mixed data types', async () => {
 		const store = new InMemoryStore();
 		const now = new Date().toISOString();
 
@@ -66,37 +66,37 @@ describe("MemoryStore load and recall", () => {
 				// Text-only records
 				const rec: Memory = {
 					id: `text-${i}`,
-					kind: "note",
+					kind: 'note',
 					text: `text message ${i}`,
-					tags: ["text"],
+					tags: ['text'],
 					createdAt: now,
 					updatedAt: now,
-					provenance: { source: "user" },
+					provenance: { source: 'user' },
 				} as Memory;
 				await store.upsert(rec);
 			} else if (i % 3 === 1) {
 				// Vector-only records
 				const rec: Memory = {
 					id: `vec-${i}`,
-					kind: "embedding",
+					kind: 'embedding',
 					vector: Array(64).fill(i / 300),
-					tags: ["vector"],
+					tags: ['vector'],
 					createdAt: now,
 					updatedAt: now,
-					provenance: { source: "system" },
+					provenance: { source: 'system' },
 				} as Memory;
 				await store.upsert(rec);
 			} else {
 				// Records with both
 				const rec: Memory = {
 					id: `mixed-${i}`,
-					kind: "artifact",
+					kind: 'artifact',
 					text: `mixed message ${i}`,
 					vector: Array(64).fill(1 - i / 300),
-					tags: ["mixed", `category-${i % 5}`],
+					tags: ['mixed', `category-${i % 5}`],
 					createdAt: now,
 					updatedAt: now,
-					provenance: { source: "agent" },
+					provenance: { source: 'agent' },
 				} as Memory;
 				await store.upsert(rec);
 			}
@@ -104,13 +104,13 @@ describe("MemoryStore load and recall", () => {
 
 		// Test different search types
 		const textResults = await store.searchByText({
-			text: "text message 150",
+			text: 'text message 150',
 			topK: 3,
 		});
 		const vectorResults = await store.searchByVector({
 			vector: Array(64).fill(0.5),
 			topK: 3,
-			filterTags: ["vector"],
+			filterTags: ['vector'],
 		});
 
 		expect(textResults).toHaveLength(1);

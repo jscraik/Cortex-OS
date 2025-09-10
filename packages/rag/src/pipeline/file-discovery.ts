@@ -1,10 +1,10 @@
-import path from "node:path";
-import fg from "fast-glob";
-import micromatch from "micromatch";
-import { z } from "zod";
+import path from 'node:path';
+import fg from 'fast-glob';
+import micromatch from 'micromatch';
+import { z } from 'zod';
 
 const baseSchema = z.object({
-	include: z.array(z.string()).default(["**/*"]),
+	include: z.array(z.string()).default(['**/*']),
 	exclude: z.array(z.string()).default([]),
 	includePriority: z.boolean().default(false),
 });
@@ -42,7 +42,7 @@ export async function discoverFiles(
 ): Promise<string[]> {
 	const { root, include, exclude, includePriority } =
 		discoverFilesSchema.parse(options);
-	const entries = await fg(["**/*"], { cwd: root, dot: true, onlyFiles: true });
+	const entries = await fg(['**/*'], { cwd: root, dot: true, onlyFiles: true });
 	const abs = entries.map((p: string) => path.resolve(root, p));
 	return filterPaths({
 		paths: abs,

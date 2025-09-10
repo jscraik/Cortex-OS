@@ -4,7 +4,7 @@
  */
 
 import type { ChildProcess } from "node:child_process";
-import { writeFile, unlink } from "node:fs/promises";
+import { unlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { type ServerManifest, ServerManifestSchema } from "../types.js";

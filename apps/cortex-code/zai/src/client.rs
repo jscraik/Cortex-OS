@@ -115,9 +115,9 @@ impl ZaiClient {
         request: ZaiChatCompletionRequest,
     ) -> Result<ZaiChatCompletionResponse, ZaiError> {
         let url = format!("{}/chat/completions", self.base_url);
-        
+
         debug!("Sending chat completion request to Z.ai: {:?}", request);
-        
+
         let response = self
             .build_request_builder("POST", &url)?
             .json(&request)
@@ -135,11 +135,11 @@ impl ZaiClient {
     ) -> Result<ZaiStream, ZaiError> {
         // Ensure streaming is enabled
         request.stream = Some(true);
-        
+
         let url = format!("{}/chat/completions", self.base_url);
-        
+
         debug!("Sending streaming chat completion request to Z.ai: {:?}", request);
-        
+
         let response = self
             .build_request_builder("POST", &url)?
             .json(&request)
@@ -162,9 +162,9 @@ impl ZaiClient {
     /// List available models
     pub async fn list_models(&self) -> Result<ZaiModelsResponse, ZaiError> {
         let url = format!("{}/models", self.base_url);
-        
+
         debug!("Fetching available models from Z.ai");
-        
+
         let response = self
             .build_request_builder("GET", &url)?
             .send()
@@ -177,9 +177,9 @@ impl ZaiClient {
     /// Get a specific model
     pub async fn get_model(&self, model_id: &str) -> Result<ZaiModel, ZaiError> {
         let url = format!("{}/models/{}", self.base_url, model_id);
-        
+
         debug!("Fetching model details for: {}", model_id);
-        
+
         let response = self
             .build_request_builder("GET", &url)?
             .send()
@@ -221,11 +221,11 @@ impl ZaiClient {
         T: serde::de::DeserializeOwned,
     {
         let status = response.status();
-        
+
         if status.is_success() {
             let text = response.text().await.map_err(ZaiError::HttpError)?;
             debug!("Z.ai API response: {}", text);
-            
+
             serde_json::from_str(&text).map_err(ZaiError::JsonError)
         } else {
             let error_text = response.text().await.unwrap_or_default();
@@ -284,10 +284,10 @@ impl ZaiClient {
     /// Test the connection to Z.ai API
     pub async fn test_connection(&self) -> Result<(), ZaiError> {
         info!("Testing connection to Z.ai API");
-        
+
         // Try to list models as a simple connectivity test
         let _models = self.list_models().await?;
-        
+
         info!("Successfully connected to Z.ai API");
         Ok(())
     }
@@ -295,9 +295,9 @@ impl ZaiClient {
     /// Get API usage statistics (if supported by Z.ai)
     pub async fn get_usage(&self) -> Result<HashMap<String, Value>, ZaiError> {
         let url = format!("{}/usage", self.base_url);
-        
+
         debug!("Fetching usage statistics from Z.ai");
-        
+
         let response = self
             .build_request_builder("GET", &url)?
             .send()
@@ -316,10 +316,10 @@ mod tests {
     fn test_api_key_validation() {
         // Valid key
         assert!(ZaiClient::validate_api_key("zai-1234567890abcdef").is_ok());
-        
+
         // Empty key
         assert!(ZaiClient::validate_api_key("").is_err());
-        
+
         // Too short
         assert!(ZaiClient::validate_api_key("zai-123").is_err());
     }
@@ -351,7 +351,7 @@ mod tests {
         let client = ZaiClient::new("zai-test-key")
             .unwrap()
             .with_default_model("z-ai-large");
-        
+
         assert_eq!(client.default_model(), Some("z-ai-large"));
     }
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
-import { readFileSync } from "node:fs";
-import { globby } from "globby";
-import micromatch from "micromatch";
-import { z } from "zod";
+import { readFileSync } from 'node:fs';
+import { globby } from 'globby';
+import micromatch from 'micromatch';
+import { z } from 'zod';
 
 type Policy = {
 	protectedFiles: string[];
@@ -15,12 +15,12 @@ const policySchema = z.object({
 	deniedGlobs: z.array(z.string()).default([]),
 });
 const policy: Policy = policySchema.parse(
-	JSON.parse(readFileSync("tools/structure-guard/policy.json", "utf8")),
+	JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8')),
 );
 
 await (async () => {
 	const files = await globby(
-		["**/*", "!**/node_modules/**", "!**/dist/**", "!**/.git/**"],
+		['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'],
 		{
 			dot: true,
 		},
@@ -31,7 +31,7 @@ await (async () => {
 	);
 	if (denied.length) {
 		console.error(`Denied paths:
-		${denied.join("\n")}`);
+		${denied.join('\n')}`);
 		console.error(
 			"Auto-fix: remove or relocate these files, or update 'deniedGlobs'.",
 		);
@@ -43,7 +43,7 @@ await (async () => {
 	);
 	if (bad.length) {
 		console.error(`Disallowed paths:
-		${bad.join("\n")}`);
+		${bad.join('\n')}`);
 		console.error(
 			"Auto-fix: move files to allowed locations or extend 'allowedGlobs'.",
 		);
@@ -55,7 +55,7 @@ await (async () => {
 	);
 	if (missing.length) {
 		console.error(`Missing protected paths:
-		${missing.join("\n")}`);
+		${missing.join('\n')}`);
 		console.error(
 			"Auto-fix: restore required files or adjust 'protectedFiles'.",
 		);

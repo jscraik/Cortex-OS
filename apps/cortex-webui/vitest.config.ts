@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
+const FRONTEND_SRC = resolve(ROOT, 'frontend', 'src');
 
 export default defineConfig({
 	root: ROOT,
@@ -19,7 +20,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			app: resolve(ROOT, 'app'),
-			'@': ROOT,
+			'@': FRONTEND_SRC,
 			'@shared': resolve(ROOT, 'shared'),
 		},
 	},

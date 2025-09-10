@@ -1,15 +1,15 @@
-import { greedyToTarget } from "@cortex-os/simlab-agents/rule-agent";
-import { runScenario } from "@cortex-os/simlab-core/runner";
-import { counterEnv } from "@cortex-os/simlab-env/local-counter";
-import { expect, it } from "vitest";
+import { greedyToTarget } from '@cortex-os/simlab-agents/rule-agent';
+import { runScenario } from '@cortex-os/simlab-core/runner';
+import { counterEnv } from '@cortex-os/simlab-env/local-counter';
+import { expect, it } from 'vitest';
 
-it("reaches target deterministically", async () => {
+it('reaches target deterministically', async () => {
 	const scenario = {
-		id: "s1",
+		id: 's1',
 		steps: 10,
 		seed: { value: 123 },
-		agent: { id: "a", kind: "rule" },
-		env: { id: "e", kind: "local-counter" },
+		agent: { id: 'a', kind: 'rule' },
+		env: { id: 'e', kind: 'local-counter' },
 	} as any;
 	const res = await runScenario(
 		scenario,
@@ -20,13 +20,13 @@ it("reaches target deterministically", async () => {
 	expect(res.totalReward).toBeCloseTo(1, 5);
 });
 
-it("produces identical runs for the same seed", async () => {
+it('produces identical runs for the same seed', async () => {
 	const scenario = {
-		id: "s1",
+		id: 's1',
 		steps: 10,
 		seed: { value: 42 },
-		agent: { id: "a", kind: "rule" },
-		env: { id: "e", kind: "local-counter" },
+		agent: { id: 'a', kind: 'rule' },
+		env: { id: 'e', kind: 'local-counter' },
 	} as any;
 	const run1 = await runScenario(
 		scenario,

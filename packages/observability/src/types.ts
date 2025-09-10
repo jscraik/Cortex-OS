@@ -2,7 +2,7 @@
  * @fileoverview Observability types and interfaces
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // ULID schema
 export const ULIDSchema = z
@@ -25,12 +25,12 @@ export type MetricLabels = z.infer<typeof MetricLabelsSchema>;
 
 // Log levels
 export const LogLevelSchema = z.enum([
-	"trace",
-	"debug",
-	"info",
-	"warn",
-	"error",
-	"fatal",
+	'trace',
+	'debug',
+	'info',
+	'warn',
+	'error',
+	'fatal',
 ]);
 export type LogLevel = z.infer<typeof LogLevelSchema>;
 

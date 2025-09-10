@@ -1,4 +1,4 @@
-import { promises as fs } from "node:fs";
+import { promises as fs } from 'node:fs';
 
 export type AuditEvent = {
 	service: string;
@@ -27,8 +27,8 @@ export async function record(event: AuditEvent): Promise<void> {
 	const logPath = process.env.CORTEX_AUDIT_LOG;
 	const line = `${JSON.stringify(event)}\n`;
 	if (logPath) {
-		await fs.appendFile(logPath, line, "utf8");
+		await fs.appendFile(logPath, line, 'utf8');
 	} else {
-		console.log("audit", line.trim());
+		console.log('audit', line.trim());
 	}
 }

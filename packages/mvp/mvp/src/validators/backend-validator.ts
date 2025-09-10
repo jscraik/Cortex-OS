@@ -10,30 +10,30 @@ import {
 	getProjectRoot,
 	readJsonFile,
 	truncateString,
-} from "../lib/utils.js";
+} from '../lib/utils.js';
 import type {
 	CompilationResult,
 	GateValidator,
 	TestResult,
 	ValidationResult,
-} from "../lib/validation-types.js";
-import type { PRPState } from "../state.js";
+} from '../lib/validation-types.js';
+import type { PRPState } from '../state.js';
 
 export class BackendValidator implements GateValidator {
 	async validate(state: PRPState): Promise<ValidationResult> {
 		const hasBackendReq = state.blueprint.requirements?.some(
 			(req) =>
-				req.toLowerCase().includes("api") ||
-				req.toLowerCase().includes("backend") ||
-				req.toLowerCase().includes("server"),
+				req.toLowerCase().includes('api') ||
+				req.toLowerCase().includes('backend') ||
+				req.toLowerCase().includes('server'),
 		);
 
 		if (!hasBackendReq) {
 			return {
 				passed: true,
 				details: {
-					type: "frontend-only",
-					reason: "No backend requirements specified",
+					type: 'frontend-only',
+					reason: 'No backend requirements specified',
 				},
 			};
 		}
@@ -46,8 +46,8 @@ export class BackendValidator implements GateValidator {
 				return {
 					passed: false,
 					details: {
-						reason: "No package.json or pyproject.toml found",
-						compilation: "failed",
+						reason: 'No package.json or pyproject.toml found',
+						compilation: 'failed',
 						testsPassed: 0,
 						testsFailed: 0,
 						coverage: 0,
@@ -66,7 +66,7 @@ export class BackendValidator implements GateValidator {
 			return {
 				passed,
 				details: {
-					compilation: compilationResult.passed ? "success" : "failed",
+					compilation: compilationResult.passed ? 'success' : 'failed',
 					build: compilationResult,
 					testsPassed: testResult.testsPassed,
 					testsFailed: testResult.testsFailed,
@@ -82,9 +82,9 @@ export class BackendValidator implements GateValidator {
 				passed: false,
 				details: {
 					reason: `Backend validation error: ${
-						error instanceof Error ? error.message : "unknown error"
+						error instanceof Error ? error.message : 'unknown error'
 					}`,
-					compilation: "error",
+					compilation: 'error',
 					testsPassed: 0,
 					testsFailed: 0,
 					coverage: 0,
@@ -95,10 +95,10 @@ export class BackendValidator implements GateValidator {
 
 	private analyzeProjectStructure(projectRoot: string) {
 		const hasPackageJson = fileExists(
-			createFilePath(projectRoot, "package.json"),
+			createFilePath(projectRoot, 'package.json'),
 		);
 		const hasPyprojectToml = fileExists(
-			createFilePath(projectRoot, "pyproject.toml"),
+			createFilePath(projectRoot, 'pyproject.toml'),
 		);
 
 		// More accurate backend detection
@@ -108,7 +108,7 @@ export class BackendValidator implements GateValidator {
 		if (hasPackageJson) {
 			try {
 				const packageJson = readJsonFile(
-					createFilePath(projectRoot, "package.json"),
+					createFilePath(projectRoot, 'package.json'),
 				);
 				// Check for backend-specific dependencies and scripts
 				const deps = {
@@ -122,52 +122,52 @@ export class BackendValidator implements GateValidator {
 					deps.fastify ||
 					deps.koa ||
 					deps.hapi ||
-					deps["@nestjs/core"] ||
+					deps['@nestjs/core'] ||
 					deps.next ||
 					deps.nuxt ||
 					deps.gatsby ||
 					deps.sveltekit ||
 					scripts.serve ||
 					scripts.start ||
-					fileExists(createFilePath(projectRoot, "server")) ||
-					fileExists(createFilePath(projectRoot, "api")) ||
-					(fileExists(createFilePath(projectRoot, "src")) &&
-						(fileExists(createFilePath(projectRoot, "src", "server.ts")) ||
-							fileExists(createFilePath(projectRoot, "src", "server.js")) ||
-							fileExists(createFilePath(projectRoot, "src", "app.ts")) ||
-							fileExists(createFilePath(projectRoot, "src", "app.js"))))
+					fileExists(createFilePath(projectRoot, 'server')) ||
+					fileExists(createFilePath(projectRoot, 'api')) ||
+					(fileExists(createFilePath(projectRoot, 'src')) &&
+						(fileExists(createFilePath(projectRoot, 'src', 'server.ts')) ||
+							fileExists(createFilePath(projectRoot, 'src', 'server.js')) ||
+							fileExists(createFilePath(projectRoot, 'src', 'app.ts')) ||
+							fileExists(createFilePath(projectRoot, 'src', 'app.js'))))
 				);
 			} catch (_error) {
 				// If package.json is invalid, fall back to directory structure
 				hasNodeBackend =
-					fileExists(createFilePath(projectRoot, "server")) ||
-					fileExists(createFilePath(projectRoot, "api"));
+					fileExists(createFilePath(projectRoot, 'server')) ||
+					fileExists(createFilePath(projectRoot, 'api'));
 			}
 		}
 
 		if (hasPyprojectToml) {
 			// Check for Python backend indicators
 			hasPythonBackend = !!(
-				fileExists(createFilePath(projectRoot, "main.py")) ||
-				fileExists(createFilePath(projectRoot, "app.py")) ||
-				fileExists(createFilePath(projectRoot, "server.py")) ||
-				fileExists(createFilePath(projectRoot, "wsgi.py")) ||
-				fileExists(createFilePath(projectRoot, "asgi.py")) ||
-				fileExists(createFilePath(projectRoot, "manage.py")) || // Django
-				fileExists(createFilePath(projectRoot, "src", "main.py")) ||
-				(fileExists(createFilePath(projectRoot, "app")) &&
-					fileExists(createFilePath(projectRoot, "app", "__init__.py")))
+				fileExists(createFilePath(projectRoot, 'main.py')) ||
+				fileExists(createFilePath(projectRoot, 'app.py')) ||
+				fileExists(createFilePath(projectRoot, 'server.py')) ||
+				fileExists(createFilePath(projectRoot, 'wsgi.py')) ||
+				fileExists(createFilePath(projectRoot, 'asgi.py')) ||
+				fileExists(createFilePath(projectRoot, 'manage.py')) || // Django
+				fileExists(createFilePath(projectRoot, 'src', 'main.py')) ||
+				(fileExists(createFilePath(projectRoot, 'app')) &&
+					fileExists(createFilePath(projectRoot, 'app', '__init__.py')))
 			);
 		}
 
 		// Determine primary type - prioritize the one with backend indicators
-		let type: "node" | "python" = "node";
+		let type: 'node' | 'python' = 'node';
 		if (hasPythonBackend && !hasNodeBackend) {
-			type = "python";
+			type = 'python';
 		} else if (hasPackageJson && !hasPyprojectToml) {
-			type = "node";
+			type = 'node';
 		} else if (hasPyprojectToml && !hasPackageJson) {
-			type = "python";
+			type = 'python';
 		}
 
 		return {
@@ -186,15 +186,15 @@ export class BackendValidator implements GateValidator {
 	): Promise<CompilationResult> {
 		let compilationResult: CompilationResult = {
 			passed: true,
-			command: "",
-			stdout: "",
-			stderr: "",
+			command: '',
+			stdout: '',
+			stderr: '',
 			duration: 0,
 		};
 
-		if (structure.hasNodeBackend && structure.type === "node") {
+		if (structure.hasNodeBackend && structure.type === 'node') {
 			compilationResult = await this.runNodeCompilation(projectRoot);
-		} else if (structure.hasPythonBackend && structure.type === "python") {
+		} else if (structure.hasPythonBackend && structure.type === 'python') {
 			compilationResult = await this.runPythonCompilation(projectRoot);
 		}
 
@@ -206,20 +206,20 @@ export class BackendValidator implements GateValidator {
 	): Promise<CompilationResult> {
 		try {
 			const packageJson = readJsonFile(
-				createFilePath(projectRoot, "package.json"),
+				createFilePath(projectRoot, 'package.json'),
 			);
 
 			if (packageJson.scripts?.build) {
 				const startTime = Date.now();
 				try {
-					const { stdout, stderr } = await execAsync("pnpm run build", {
+					const { stdout, stderr } = await execAsync('pnpm run build', {
 						cwd: projectRoot,
 						timeout: 60000,
 						maxBuffer: 1024 * 1024,
 					});
 					return {
 						passed: true,
-						command: "pnpm run build",
+						command: 'pnpm run build',
 						stdout: truncateString(stdout, 500),
 						stderr: truncateString(stderr, 500),
 						duration: Date.now() - startTime,
@@ -227,8 +227,8 @@ export class BackendValidator implements GateValidator {
 				} catch (buildError: any) {
 					return {
 						passed: false,
-						command: "pnpm run build",
-						stdout: truncateString(buildError.stdout || "", 500),
+						command: 'pnpm run build',
+						stdout: truncateString(buildError.stdout || '', 500),
 						stderr: truncateString(
 							buildError.stderr || buildError.message,
 							500,
@@ -241,24 +241,24 @@ export class BackendValidator implements GateValidator {
 			// Package.json parsing failed
 		}
 
-		return { passed: true, command: "", stdout: "", stderr: "", duration: 0 };
+		return { passed: true, command: '', stdout: '', stderr: '', duration: 0 };
 	}
 
 	private async runPythonCompilation(
 		projectRoot: string,
 	): Promise<CompilationResult> {
 		try {
-			await execAsync("which mypy", { timeout: 2000 });
+			await execAsync('which mypy', { timeout: 2000 });
 			const startTime = Date.now();
 			try {
-				const { stdout, stderr } = await execAsync("mypy .", {
+				const { stdout, stderr } = await execAsync('mypy .', {
 					cwd: projectRoot,
 					timeout: 60000,
 					maxBuffer: 1024 * 1024,
 				});
 				return {
-					passed: !stderr.includes("error"),
-					command: "mypy .",
+					passed: !stderr.includes('error'),
+					command: 'mypy .',
 					stdout: truncateString(stdout, 500),
 					stderr: truncateString(stderr, 500),
 					duration: Date.now() - startTime,
@@ -266,31 +266,31 @@ export class BackendValidator implements GateValidator {
 			} catch (mypyError: any) {
 				return {
 					passed: false,
-					command: "mypy .",
-					stdout: truncateString(mypyError.stdout || "", 500),
+					command: 'mypy .',
+					stdout: truncateString(mypyError.stdout || '', 500),
 					stderr: truncateString(mypyError.stderr || mypyError.message, 500),
 					duration: Date.now() - startTime,
 				};
 			}
 		} catch {
 			try {
-				await execAsync("python -m py_compile apps/**/*.py", {
+				await execAsync('python -m py_compile apps/**/*.py', {
 					cwd: projectRoot,
 					timeout: 30000,
 				});
 				return {
 					passed: true,
-					command: "py_compile",
-					stdout: "",
-					stderr: "",
+					command: 'py_compile',
+					stdout: '',
+					stderr: '',
 					duration: 0,
 				};
 			} catch {
 				return {
 					passed: false,
-					command: "py_compile",
-					stdout: "",
-					stderr: "",
+					command: 'py_compile',
+					stdout: '',
+					stderr: '',
 					duration: 0,
 				};
 			}
@@ -303,7 +303,7 @@ export class BackendValidator implements GateValidator {
 			typeof BackendValidator.prototype.analyzeProjectStructure
 		>,
 	): Promise<TestResult> {
-		if (structure.type === "node") {
+		if (structure.type === 'node') {
 			return this.runNodeTests(projectRoot);
 		} else {
 			return this.runPythonTests(projectRoot);
@@ -313,12 +313,12 @@ export class BackendValidator implements GateValidator {
 	private async runNodeTests(projectRoot: string): Promise<TestResult> {
 		try {
 			const packageJson = readJsonFile(
-				createFilePath(projectRoot, "package.json"),
+				createFilePath(projectRoot, 'package.json'),
 			);
 
 			if (packageJson.scripts?.test) {
 				try {
-					const { stdout, stderr } = await execAsync("pnpm test", {
+					const { stdout, stderr } = await execAsync('pnpm test', {
 						cwd: projectRoot,
 						timeout: 120000,
 						maxBuffer: 1024 * 1024,
@@ -330,7 +330,7 @@ export class BackendValidator implements GateValidator {
 					const coverageMatch = testOutput.match(/(\d+\.?\d*)%.*coverage/i);
 
 					return {
-						passed: !testOutput.includes("failed") || failedMatch?.[1] === "0",
+						passed: !testOutput.includes('failed') || failedMatch?.[1] === '0',
 						testsPassed: passedMatch ? parseInt(passedMatch[1], 10) : 0,
 						testsFailed: failedMatch ? parseInt(failedMatch[1], 10) : 0,
 						coverage: coverageMatch ? parseFloat(coverageMatch[1]) : 0,
@@ -353,8 +353,8 @@ export class BackendValidator implements GateValidator {
 
 	private async runPythonTests(projectRoot: string): Promise<TestResult> {
 		try {
-			await execAsync("which pytest", { timeout: 2000 });
-			const { stdout, stderr } = await execAsync("pytest --tb=short", {
+			await execAsync('which pytest', { timeout: 2000 });
+			const { stdout, stderr } = await execAsync('pytest --tb=short', {
 				cwd: projectRoot,
 				timeout: 120000,
 				maxBuffer: 1024 * 1024,
@@ -366,7 +366,7 @@ export class BackendValidator implements GateValidator {
 			const coverageMatch = testOutput.match(/(\d+)%/i);
 
 			return {
-				passed: !testOutput.includes("FAILED"),
+				passed: !testOutput.includes('FAILED'),
 				testsPassed: passedMatch ? parseInt(passedMatch[1], 10) : 0,
 				testsFailed: failedMatch ? parseInt(failedMatch[1], 10) : 0,
 				coverage: coverageMatch ? parseInt(coverageMatch[1], 10) : 0,

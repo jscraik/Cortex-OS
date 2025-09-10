@@ -3,38 +3,38 @@
  * Defines the fundamental data structures for task planning, execution, and coordination
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // ================================
 // Core Enums
 // ================================
 
 export enum TaskStatus {
-	PENDING = "pending",
-	PLANNING = "planning",
-	EXECUTING = "executing",
-	COMPLETED = "completed",
-	FAILED = "failed",
-	CANCELLED = "cancelled",
-	PAUSED = "paused",
+	PENDING = 'pending',
+	PLANNING = 'planning',
+	EXECUTING = 'executing',
+	COMPLETED = 'completed',
+	FAILED = 'failed',
+	CANCELLED = 'cancelled',
+	PAUSED = 'paused',
 }
 
 export enum OrchestrationStrategy {
-	SEQUENTIAL = "sequential",
-	PARALLEL = "parallel",
-	ADAPTIVE = "adaptive",
-	HIERARCHICAL = "hierarchical",
-	REACTIVE = "reactive",
+	SEQUENTIAL = 'sequential',
+	PARALLEL = 'parallel',
+	ADAPTIVE = 'adaptive',
+	HIERARCHICAL = 'hierarchical',
+	REACTIVE = 'reactive',
 }
 
 export enum AgentRole {
-	PLANNER = "planner",
-	EXECUTOR = "executor",
-	COORDINATOR = "coordinator",
-	VALIDATOR = "validator",
-	MONITOR = "monitor",
-	SPECIALIST = "specialist",
-	WORKER = "worker",
+	PLANNER = 'planner',
+	EXECUTOR = 'executor',
+	COORDINATOR = 'coordinator',
+	VALIDATOR = 'validator',
+	MONITOR = 'monitor',
+	SPECIALIST = 'specialist',
+	WORKER = 'worker',
 }
 
 // ================================
@@ -99,7 +99,7 @@ export interface Agent {
 	name: string;
 	role: AgentRole;
 	capabilities: string[];
-	status: "available" | "busy" | "offline";
+	status: 'available' | 'busy' | 'offline';
 	metadata: Record<string, any>;
 	lastSeen: Date;
 }
@@ -135,8 +135,8 @@ export interface PlanningContext {
 	};
 	preferences: {
 		strategy: OrchestrationStrategy;
-		quality: "fast" | "balanced" | "thorough";
-		failureHandling: "strict" | "resilient" | "permissive";
+		quality: 'fast' | 'balanced' | 'thorough';
+		failureHandling: 'strict' | 'resilient' | 'permissive';
 	};
 }
 
@@ -219,7 +219,7 @@ export interface LangChainAgent {
 // ================================
 
 export interface CoordinationProtocol {
-	type: "consensus" | "voting" | "auction" | "hierarchy";
+	type: 'consensus' | 'voting' | 'auction' | 'hierarchy';
 	participants: string[];
 	rules: Record<string, unknown>;
 	timeout: number;
@@ -229,7 +229,7 @@ export interface CoordinationMessage {
 	id: string;
 	from: string;
 	to: string | string[];
-	type: "proposal" | "vote" | "decision" | "status" | "resource_request";
+	type: 'proposal' | 'vote' | 'decision' | 'status' | 'resource_request';
 	payload: any;
 	timestamp: Date;
 	priority: number;
@@ -319,7 +319,7 @@ export interface QdrantConfig {
 	apiKey?: string;
 	collectionName: string;
 	vectorSize: number;
-	distance: "cosine" | "euclid" | "dot";
+	distance: 'cosine' | 'euclid' | 'dot';
 	timeout: number;
 }
 
@@ -340,17 +340,17 @@ export interface DatabaseConfig {
 
 export interface OrchestrationEvent {
 	type:
-		| "task_created"
-		| "task_started"
-		| "task_completed"
-		| "task_failed"
-		| "agent_assigned"
-		| "agent_freed"
-		| "plan_created"
-		| "plan_updated"
-		| "coordination_started"
-		| "decision_made"
-		| "resource_allocated";
+		| 'task_created'
+		| 'task_started'
+		| 'task_completed'
+		| 'task_failed'
+		| 'agent_assigned'
+		| 'agent_freed'
+		| 'plan_created'
+		| 'plan_updated'
+		| 'coordination_started'
+		| 'decision_made'
+		| 'resource_allocated';
 	taskId?: string;
 	agentId?: string;
 	planId?: string;
@@ -402,23 +402,23 @@ export interface LangChainResult {
 }
 
 export enum AgentCapability {
-	TASK_PLANNING = "task_planning",
-	RESOURCE_OPTIMIZATION = "resource_optimization",
-	RISK_ASSESSMENT = "risk_assessment",
-	CODE_GENERATION = "code_generation",
-	TESTING = "testing",
-	DEPLOYMENT = "deployment",
-	MONITORING = "monitoring",
-	COMMUNICATION = "communication",
-	LEARNING = "learning",
-	DECISION_MAKING = "decision_making",
+	TASK_PLANNING = 'task_planning',
+	RESOURCE_OPTIMIZATION = 'resource_optimization',
+	RISK_ASSESSMENT = 'risk_assessment',
+	CODE_GENERATION = 'code_generation',
+	TESTING = 'testing',
+	DEPLOYMENT = 'deployment',
+	MONITORING = 'monitoring',
+	COMMUNICATION = 'communication',
+	LEARNING = 'learning',
+	DECISION_MAKING = 'decision_making',
 }
 
 export enum CoordinationStrategy {
-	HIERARCHICAL = "hierarchical",
-	PEER_TO_PEER = "peer_to_peer",
-	PIPELINE = "pipeline",
-	BROADCAST = "broadcast",
+	HIERARCHICAL = 'hierarchical',
+	PEER_TO_PEER = 'peer_to_peer',
+	PIPELINE = 'pipeline',
+	BROADCAST = 'broadcast',
 }
 
 export interface MultiAgentConfig {
@@ -436,18 +436,18 @@ export interface MessageProtocol {
 	id: string;
 	fromAgent: string;
 	toAgent: string;
-	type: "peer-to-peer" | "supervisor-subordinate" | "broadcast";
-	status: "active" | "inactive" | "error";
+	type: 'peer-to-peer' | 'supervisor-subordinate' | 'broadcast';
+	status: 'active' | 'inactive' | 'error';
 	messageQueue: any[];
 	lastActivity: Date;
 }
 
 export interface SynchronizationPoint {
 	id: string;
-	type: "phase-dependency" | "checkpoint" | "barrier";
+	type: 'phase-dependency' | 'checkpoint' | 'barrier';
 	dependentPhase: string;
 	prerequisites: string[];
-	status: "pending" | "completed" | "failed";
+	status: 'pending' | 'completed' | 'failed';
 	waitingAgents: string[];
 	completedPrerequisites: string[];
 	timeout: number;
@@ -527,11 +527,11 @@ export interface CoordinationResult {
 }
 
 export enum DecisionStrategy {
-	GREEDY = "greedy",
-	CONSERVATIVE = "conservative",
-	BALANCED = "balanced",
-	AGGRESSIVE = "aggressive",
-	ADAPTIVE = "adaptive",
+	GREEDY = 'greedy',
+	CONSERVATIVE = 'conservative',
+	BALANCED = 'balanced',
+	AGGRESSIVE = 'aggressive',
+	ADAPTIVE = 'adaptive',
 }
 
 export interface AdaptiveConfig {
@@ -607,14 +607,14 @@ export interface OrchestrationState {
 	id: string;
 	taskId: string;
 	status:
-		| "initializing"
-		| "planning"
-		| "deciding"
-		| "executing"
-		| "validating"
-		| "completed"
-		| "failed"
-		| "cancelled";
+		| 'initializing'
+		| 'planning'
+		| 'deciding'
+		| 'executing'
+		| 'validating'
+		| 'completed'
+		| 'failed'
+		| 'cancelled';
 	strategy: OrchestrationStrategy;
 	planningContext: PlanningContext;
 	currentPhase: string;

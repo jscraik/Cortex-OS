@@ -2,8 +2,8 @@
 # dev-setup.sh - Configure Cortex-OS development environment.
 # Usage: ./scripts/dev-setup.sh [--minimal]
 #
-# Trusts .mise config, installs dependencies, and sets up pre-commit hooks.
-# The --minimal flag installs dependencies without git hooks or extra tooling.
+# Trusts .mise config and installs dependencies. Husky is used for git hooks.
+# The --minimal flag installs dependencies without extra tooling.
 
 set -euo pipefail
 
@@ -28,14 +28,9 @@ mise trust
 if [ "$MINIMAL" -eq 1 ]; then
     echo "Running minimal dependency install..."
     pnpm install
-    echo "Installing minimal pre-commit hooks..."
-    pre-commit install --config .pre-commit-config-lite.yaml >/dev/null 2>&1 || true
 else
     echo "Installing dependencies via mise..."
     mise run bootstrap
-
-    echo "Installing pre-commit hooks..."
-    pre-commit install >/dev/null 2>&1 || true
 
     echo "Running lint checks..."
     if [ "${DEV_SETUP_VERBOSE:-}" = "1" ]; then

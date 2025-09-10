@@ -3,7 +3,7 @@ import type {
 	ExecutionState,
 	Neuron,
 	NeuronResult,
-} from "../orchestrator.js";
+} from '../orchestrator.js';
 
 export async function executeNeuron(
 	neuron: Neuron,
@@ -13,7 +13,7 @@ export async function executeNeuron(
 	try {
 		return await neuron.execute(state, context);
 	} catch (error) {
-		console.error("Error executing neuron:", error);
+		console.error('Error executing neuron:', error);
 		throw error;
 	}
 }

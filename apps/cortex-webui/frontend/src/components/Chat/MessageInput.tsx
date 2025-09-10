@@ -36,8 +36,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
 	// Add message to history when sent
 	const addToHistory = useCallback((message: string) => {
-		setMessageHistory(prev => {
-			const newHistory = [message, ...prev.filter(msg => msg !== message)].slice(0, 10); // Keep last 10
+		setMessageHistory((prev) => {
+			const newHistory = [
+				message,
+				...prev.filter((msg) => msg !== message),
+			].slice(0, 10); // Keep last 10
 			return newHistory;
 		});
 		setHistoryIndex(-1);
@@ -68,25 +71,32 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			setTimeout(() => {
 				const textarea = textareaRef.current;
 				if (textarea) {
-					textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+					textarea.selectionStart = textarea.selectionEnd =
+						textarea.value.length;
 				}
 			}, 0);
 		}
 	}, [lastUserMessage]);
 
-	const navigateHistory = useCallback((direction: 'up' | 'down') => {
-		if (messageHistory.length === 0) return;
+	const navigateHistory = useCallback(
+		(direction: 'up' | 'down') => {
+			if (messageHistory.length === 0) return;
 
-		if (direction === 'up') {
-			const newIndex = historyIndex < messageHistory.length - 1 ? historyIndex + 1 : historyIndex;
-			setHistoryIndex(newIndex);
-			setInput(messageHistory[newIndex] || '');
-		} else {
-			const newIndex = historyIndex > 0 ? historyIndex - 1 : -1;
-			setHistoryIndex(newIndex);
-			setInput(newIndex >= 0 ? messageHistory[newIndex] : '');
-		}
-	}, [messageHistory, historyIndex]);
+			if (direction === 'up') {
+				const newIndex =
+					historyIndex < messageHistory.length - 1
+						? historyIndex + 1
+						: historyIndex;
+				setHistoryIndex(newIndex);
+				setInput(messageHistory[newIndex] || '');
+			} else {
+				const newIndex = historyIndex > 0 ? historyIndex - 1 : -1;
+				setHistoryIndex(newIndex);
+				setInput(newIndex >= 0 ? messageHistory[newIndex] : '');
+			}
+		},
+		[messageHistory, historyIndex],
+	);
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		// Send message: Enter (but not Shift+Enter)
@@ -155,7 +165,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 					{charCount} characters
 				</div>
 			)}
-			
+
 			<form onSubmit={handleSubmit} className="flex gap-2 items-end">
 				<div className="flex-1 relative">
 					<textarea
@@ -168,13 +178,13 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						placeholder={placeholder}
 						rows={1}
 					/>
-					
+
 					{/* Keyboard shortcut hints (show on focus) */}
 					<div className="absolute bottom-1 right-1 text-xs text-gray-400 dark:text-gray-500 pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity">
 						⏎ Send • ⇧⏎ New line
 					</div>
 				</div>
-				
+
 				<button
 					type="submit"
 					disabled={disabled || !input.trim()}
@@ -196,13 +206,33 @@ const MessageInput: React.FC<MessageInputProps> = ({
 					</svg>
 				</button>
 			</form>
-			
+
 			{/* Keyboard shortcuts help */}
 			<div className="text-xs text-gray-500 dark:text-gray-400 space-x-4">
-				<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl+L</kbd> Clear</span>
-				<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl+R</kbd> Recall last</span>
-				<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">↑↓</kbd> History</span>
-				<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> Unfocus</span>
+				<span>
+					<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+						Ctrl+L
+					</kbd>{' '}
+					Clear
+				</span>
+				<span>
+					<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+						Ctrl+R
+					</kbd>{' '}
+					Recall last
+				</span>
+				<span>
+					<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+						↑↓
+					</kbd>{' '}
+					History
+				</span>
+				<span>
+					<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+						Esc
+					</kbd>{' '}
+					Unfocus
+				</span>
 			</div>
 		</div>
 	);

@@ -6,12 +6,12 @@
  * @status TDD-CRITICAL
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createKernel } from "../src/graph-simple.js";
-import type { PRPState } from "../src/state.js";
+import { createKernel } from '../src/graph-simple.js';
+import type { PRPState } from '../src/state.js';
 
-describe("Cortex Kernel Determinism", () => {
+describe('Cortex Kernel Determinism', () => {
 	let kernel: ReturnType<typeof createKernel>;
 	let mockOrchestrator: { getNeuronCount: () => number };
 
@@ -22,20 +22,20 @@ describe("Cortex Kernel Determinism", () => {
 		kernel = createKernel(mockOrchestrator);
 	});
 
-	describe("Reproducible Execution", () => {
-		it("should produce identical results for identical inputs", async () => {
+	describe('Reproducible Execution', () => {
+		it('should produce identical results for identical inputs', async () => {
 			const blueprint = {
-				title: "Test Project",
-				description: "A test project for determinism validation",
-				requirements: ["Feature A", "Feature B", "Testing"],
+				title: 'Test Project',
+				description: 'A test project for determinism validation',
+				requirements: ['Feature A', 'Feature B', 'Testing'],
 			};
 
 			const run1 = await kernel.runPRPWorkflow(blueprint, {
-				runId: "test-run-1",
+				runId: 'test-run-1',
 				deterministic: true,
 			});
 			const run2 = await kernel.runPRPWorkflow(blueprint, {
-				runId: "test-run-2",
+				runId: 'test-run-2',
 				deterministic: true,
 			});
 
@@ -50,31 +50,31 @@ describe("Cortex Kernel Determinism", () => {
 			);
 		});
 
-		it("should maintain consistent state transitions", async () => {
+		it('should maintain consistent state transitions', async () => {
 			const blueprint = {
-				title: "State Transition Test",
-				description: "Testing state machine determinism",
-				requirements: ["Requirement 1"],
+				title: 'State Transition Test',
+				description: 'Testing state machine determinism',
+				requirements: ['Requirement 1'],
 			};
 
 			const _result = await kernel.runPRPWorkflow(blueprint, {
-				runId: "transition-test",
+				runId: 'transition-test',
 			});
-			const history = kernel.getExecutionHistory("transition-test");
+			const history = kernel.getExecutionHistory('transition-test');
 
 			// Verify state transitions follow expected pattern
 			expect(history.length).toBeGreaterThan(0);
 
 			// Check phase progression
 			const phases = history.map((state) => state.phase);
-			expect(phases).toContain("strategy");
+			expect(phases).toContain('strategy');
 		});
 
-		it("should generate identical IDs across deterministic runs", async () => {
+		it('should generate identical IDs across deterministic runs', async () => {
 			const blueprint = {
-				title: "Deterministic ID Test",
-				description: "Ensures run and state IDs are deterministic",
-				requirements: ["Deterministic"],
+				title: 'Deterministic ID Test',
+				description: 'Ensures run and state IDs are deterministic',
+				requirements: ['Deterministic'],
 			};
 
 			const run1 = await kernel.runPRPWorkflow(blueprint, {
@@ -94,42 +94,42 @@ describe("Cortex Kernel Determinism", () => {
 function normalizeForComparison(state: PRPState): PRPState {
 	return {
 		...state,
-		id: "NORMALIZED",
-		runId: "NORMALIZED",
+		id: 'NORMALIZED',
+		runId: 'NORMALIZED',
 		metadata: {
 			...state.metadata,
-			startTime: "NORMALIZED",
-			endTime: "NORMALIZED",
+			startTime: 'NORMALIZED',
+			endTime: 'NORMALIZED',
 		},
 		evidence: state.evidence.map((e) => ({
 			...e,
-			id: "NORMALIZED",
-			timestamp: "NORMALIZED",
+			id: 'NORMALIZED',
+			timestamp: 'NORMALIZED',
 		})),
 		validationResults: {
 			strategy: state.validationResults.strategy
 				? {
 						...state.validationResults.strategy,
-						timestamp: "NORMALIZED",
+						timestamp: 'NORMALIZED',
 					}
 				: undefined,
 			build: state.validationResults.build
 				? {
 						...state.validationResults.build,
-						timestamp: "NORMALIZED",
+						timestamp: 'NORMALIZED',
 					}
 				: undefined,
 			evaluation: state.validationResults.evaluation
 				? {
 						...state.validationResults.evaluation,
-						timestamp: "NORMALIZED",
+						timestamp: 'NORMALIZED',
 					}
 				: undefined,
 		},
 		cerebrum: state.cerebrum
 			? {
 					...state.cerebrum,
-					timestamp: "NORMALIZED",
+					timestamp: 'NORMALIZED',
 				}
 			: undefined,
 	};

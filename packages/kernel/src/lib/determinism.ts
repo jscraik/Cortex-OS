@@ -1,5 +1,5 @@
 export function fixedTimestamp(label: string): string {
-	const base = Date.parse("2025-08-21T00:00:00.000Z");
+	const base = Date.parse('2025-08-21T00:00:00.000Z');
 	let hash = 0;
 	for (const char of label) {
 		hash = (hash << 5) - hash + char.charCodeAt(0);

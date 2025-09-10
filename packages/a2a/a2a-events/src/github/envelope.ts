@@ -1,12 +1,12 @@
-import { z } from "zod";
-import { ErrorEventSchema } from "./error";
-import { IssueEventSchema } from "./issue";
-import { PullRequestEventSchema } from "./pull-request";
-import { RepositoryEventSchema } from "./repository";
-import { WorkflowEventSchema } from "./workflow";
+import { z } from 'zod';
+import { ErrorEventSchema } from './error';
+import { IssueEventSchema } from './issue';
+import { PullRequestEventSchema } from './pull-request';
+import { RepositoryEventSchema } from './repository';
+import { WorkflowEventSchema } from './workflow';
 
 // GitHub Event Union Type
-export const GitHubEventDataSchema = z.discriminatedUnion("event_type", [
+export const GitHubEventDataSchema = z.discriminatedUnion('event_type', [
 	RepositoryEventSchema,
 	PullRequestEventSchema,
 	IssueEventSchema,
@@ -18,18 +18,18 @@ export type GitHubEventData = z.infer<typeof GitHubEventDataSchema>;
 
 // A2A Event Envelope Priority
 export const EventPrioritySchema = z.enum([
-	"low",
-	"normal",
-	"high",
-	"critical",
+	'low',
+	'normal',
+	'high',
+	'critical',
 ]);
 export type EventPriority = z.infer<typeof EventPrioritySchema>;
 
 // A2A Event Envelope Delivery Mode
 export const DeliveryModeSchema = z.enum([
-	"fire_and_forget",
-	"at_least_once",
-	"exactly_once",
+	'fire_and_forget',
+	'at_least_once',
+	'exactly_once',
 ]);
 export type DeliveryMode = z.infer<typeof DeliveryModeSchema>;
 
@@ -69,11 +69,11 @@ export type RoutingInfo = z.infer<typeof RoutingInfoSchema>;
 
 // A2A Event Envelope Metadata
 export const EnvelopeMetadataSchema = z.object({
-	version: z.string().default("1.0"),
-	schema_version: z.string().default("1.0"),
-	content_type: z.string().default("application/json"),
-	encoding: z.string().default("utf-8"),
-	compression: z.enum(["none", "gzip", "brotli"]).default("none"),
+	version: z.string().default('1.0'),
+	schema_version: z.string().default('1.0'),
+	content_type: z.string().default('application/json'),
+	encoding: z.string().default('utf-8'),
+	compression: z.enum(['none', 'gzip', 'brotli']).default('none'),
 	size_bytes: z.number().positive().optional(),
 	checksum: z.string().optional(),
 	tags: z.array(z.string()).default([]),
@@ -86,7 +86,7 @@ export type EnvelopeMetadata = z.infer<typeof EnvelopeMetadataSchema>;
 export const A2AEventEnvelopeSchema = z.object({
 	// Envelope identification
 	envelope_id: z.string().uuid(),
-	envelope_version: z.string().default("1.0"),
+	envelope_version: z.string().default('1.0'),
 	created_at: z.string().datetime(),
 	expires_at: z.string().datetime().optional(),
 
@@ -95,8 +95,8 @@ export const A2AEventEnvelopeSchema = z.object({
 
 	// Routing and delivery
 	routing: RoutingInfoSchema,
-	priority: EventPrioritySchema.default("normal"),
-	delivery_mode: DeliveryModeSchema.default("at_least_once"),
+	priority: EventPrioritySchema.default('normal'),
+	delivery_mode: DeliveryModeSchema.default('at_least_once'),
 	retry_policy: RetryPolicySchema.default({}),
 
 	// Correlation and tracing
@@ -120,14 +120,14 @@ export const A2AEventEnvelopeSchema = z.object({
 	// Source information
 	source_info: z
 		.object({
-			service_name: z.string().default("github-client"),
+			service_name: z.string().default('github-client'),
 			service_version: z.string().optional(),
 			host_name: z.string().optional(),
 			process_id: z.string().optional(),
 			thread_id: z.string().optional(),
 			user_id: z.string().optional(),
 		})
-		.default({ service_name: "github-client" }),
+		.default({ service_name: 'github-client' }),
 });
 
 export type A2AEventEnvelope = z.infer<typeof A2AEventEnvelopeSchema>;
@@ -152,7 +152,7 @@ export function createA2AEventEnvelope(
 		routing?: Partial<RoutingInfo>;
 		metadata?: Partial<EnvelopeMetadata>;
 		expiresIn?: number; // milliseconds
-		sourceInfo?: Partial<A2AEventEnvelope["source_info"]>;
+		sourceInfo?: Partial<A2AEventEnvelope['source_info']>;
 	},
 ): A2AEventEnvelope {
 	const now = new Date();
@@ -170,7 +170,7 @@ export function createA2AEventEnvelope(
 
 	return {
 		envelope_id: envelopeId,
-		envelope_version: "1.0",
+		envelope_version: '1.0',
 		created_at: now.toISOString(),
 		expires_at: expiresAt,
 
@@ -184,8 +184,8 @@ export function createA2AEventEnvelope(
 			...options?.routing,
 		},
 
-		priority: options?.priority ?? "normal",
-		delivery_mode: options?.deliveryMode ?? "at_least_once",
+		priority: options?.priority ?? 'normal',
+		delivery_mode: options?.deliveryMode ?? 'at_least_once',
 		retry_policy: {
 			max_attempts: 3,
 			initial_delay_ms: 1000,
@@ -205,18 +205,18 @@ export function createA2AEventEnvelope(
 		},
 
 		metadata: {
-			version: "1.0",
-			schema_version: "1.0",
-			content_type: "application/json",
-			encoding: "utf-8",
-			compression: "none",
+			version: '1.0',
+			schema_version: '1.0',
+			content_type: 'application/json',
+			encoding: 'utf-8',
+			compression: 'none',
 			tags: [],
 			labels: {},
 			...options?.metadata,
 		},
 
 		source_info: {
-			service_name: "github-client",
+			service_name: 'github-client',
 			service_version: process.env.npm_package_version,
 			host_name: process.env.HOSTNAME,
 			process_id: process.pid.toString(),
@@ -228,37 +228,37 @@ export function createA2AEventEnvelope(
 // Topic Resolution Helper
 function getEventTopic(event: GitHubEventData): string {
 	switch (event.event_type) {
-		case "github.repository":
+		case 'github.repository':
 			return `github.repository.${event.action}`;
-		case "github.pull_request":
+		case 'github.pull_request':
 			return `github.pullrequest.${event.action}`;
-		case "github.issue":
+		case 'github.issue':
 			return `github.issue.${event.action}`;
-		case "github.workflow":
+		case 'github.workflow':
 			return `github.workflow.${event.action}`;
-		case "github.error":
-			return "github.error";
+		case 'github.error':
+			return 'github.error';
 		default:
-			return "github.unknown";
+			return 'github.unknown';
 	}
 }
 
 // Partition Key Helper (for event distribution)
 function getPartitionKey(event: GitHubEventData): string {
-	if ("repository" in event && event.repository) {
+	if ('repository' in event && event.repository) {
 		return event.repository.id.toString();
 	}
-	if ("actor" in event && event.actor) {
+	if ('actor' in event && event.actor) {
 		return event.actor.id.toString();
 	}
-	return "default";
+	return 'default';
 }
 
 // Routing Key Helper (for targeted delivery)
 function getRoutingKey(event: GitHubEventData): string {
-	const baseKey = event.event_type.replace(".", "_");
-	if ("repository" in event && event.repository) {
-		return `${baseKey}.${event.repository.full_name.replace("/", "_")}`;
+	const baseKey = event.event_type.replace('.', '_');
+	if ('repository' in event && event.repository) {
+		return `${baseKey}.${event.repository.full_name.replace('/', '_')}`;
 	}
 	return baseKey;
 }
@@ -291,8 +291,8 @@ export function shouldRetryEnvelope(envelope: A2AEventEnvelope): boolean {
 	return (
 		state.attempt_count < envelope.retry_policy.max_attempts &&
 		!isExpiredEnvelope(envelope) &&
-		(envelope.delivery_mode === "at_least_once" ||
-			envelope.delivery_mode === "exactly_once")
+		(envelope.delivery_mode === 'at_least_once' ||
+			envelope.delivery_mode === 'exactly_once')
 	);
 }
 
@@ -323,7 +323,7 @@ export function cloneEnvelope(envelope: A2AEventEnvelope): A2AEventEnvelope {
 
 export function updateProcessingState(
 	envelope: A2AEventEnvelope,
-	update: Partial<NonNullable<A2AEventEnvelope["processing_state"]>>,
+	update: Partial<NonNullable<A2AEventEnvelope['processing_state']>>,
 ): A2AEventEnvelope {
 	const clone = cloneEnvelope(envelope);
 	clone.processing_state = {
@@ -390,7 +390,7 @@ export function matchesFilter(
 
 	if (filter.repositoryIds) {
 		const event = envelope.event;
-		if ("repository" in event && event.repository) {
+		if ('repository' in event && event.repository) {
 			if (!filter.repositoryIds.includes(event.repository.id)) {
 				return false;
 			}
@@ -401,7 +401,7 @@ export function matchesFilter(
 
 	if (filter.actorIds) {
 		const event = envelope.event;
-		if ("actor" in event && event.actor) {
+		if ('actor' in event && event.actor) {
 			if (!filter.actorIds.includes(event.actor.id)) {
 				return false;
 			}

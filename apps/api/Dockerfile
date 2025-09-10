@@ -21,4 +21,3 @@ ENV APP_MODULE=${APP_MODULE}
 EXPOSE 8082
 HEALTHCHECK --interval=10s --timeout=2s --retries=3 CMD curl -fsS http://localhost:8082/health || exit 1
 CMD ["python","-m","uvicorn","--host","0.0.0.0","--port","8082","${APP_MODULE}"]
-

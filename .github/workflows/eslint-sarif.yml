@@ -1,0 +1,57 @@
+name: eslint-sarif
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eslint-code-scanning:
+    name: ESLint SARIF (Code Scanning)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.3.0
+
+      - name: Install dependencies (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache ESLint cache (local memory)
+        uses: actions/cache@v4
+        with:
+          path: .eslintcache
+          key: ${{ runner.os }}-eslintcache-${{ hashFiles('eslint.config.js', 'eslint-security.config.js', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-eslintcache-
+
+      - name: Generate ESLint SARIF
+        run: pnpm lint:eslint:sarif
+
+      - name: Upload ESLint SARIF
+        if: ${{ hashFiles('reports/eslint.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/eslint.sarif

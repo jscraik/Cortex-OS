@@ -3,7 +3,7 @@
  * Provides a lightweight implementation used by the router and tests.
  */
 
-import type { ChatResponse, Message } from "./types.js";
+import type { ChatResponse, Message } from './types.js';
 
 export interface OllamaAdapterApi {
 	isAvailable(model?: string): Promise<boolean>;
@@ -42,9 +42,9 @@ export interface OllamaAdapterApi {
 export function createOllamaAdapter(): OllamaAdapterApi {
 	// Allow forcing availability via env for tests/local runs
 	const forced = process.env.OLLAMA_AVAILABLE?.toLowerCase();
-	const forcedAvailable = forced === "1" || forced === "true";
+	const forcedAvailable = forced === '1' || forced === 'true';
 
-	const defaultModel = process.env.OLLAMA_DEFAULT_MODEL || "nomic-embed-text";
+	const defaultModel = process.env.OLLAMA_DEFAULT_MODEL || 'nomic-embed-text';
 
 	return {
 		async isAvailable(): Promise<boolean> {
@@ -53,7 +53,7 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		},
 		async listModels(): Promise<string[]> {
 			// Return a minimal set; callers typically check for existence
-			return forcedAvailable ? [defaultModel, "llama2"] : [];
+			return forcedAvailable ? [defaultModel, 'llama2'] : [];
 		},
 		async generateEmbedding(text: string, model?: string) {
 			const usedModel = model || defaultModel;
@@ -87,11 +87,11 @@ export function createOllamaAdapter(): OllamaAdapterApi {
 		) {
 			const messages = Array.isArray(req) ? req : req.messages;
 			const usedModel =
-				(Array.isArray(req) ? model : req.model) || model || "llama2";
-			const lastUser = [...messages].reverse().find((m) => m.role === "user");
+				(Array.isArray(req) ? model : req.model) || model || 'llama2';
+			const lastUser = [...messages].reverse().find((m) => m.role === 'user');
 			const content = lastUser
 				? `echo(${lastUser.content.slice(0, 64)})`
-				: "ok";
+				: 'ok';
 			return { content, model: usedModel };
 		},
 		async rerank(query: string, documents: string[], model?: string) {
@@ -144,13 +144,26 @@ export class OllamaAdapter implements OllamaAdapterApi {
 		options?: { temperature?: number; max_tokens?: number },
 	): Promise<ChatResponse> {
 		// Type guard to ensure correct format for impl.generateChat
-		let formattedRequest: { messages: Message[]; model?: string; temperature?: number; max_tokens?: number };
+		let formattedRequest: {
+			messages: Message[];
+			model?: string;
+			temperature?: number;
+			max_tokens?: number;
+		};
 		if (Array.isArray(request)) {
 			formattedRequest = { messages: request, model, ...options };
 		} else {
-			formattedRequest = { ...request, model: request.model ?? model, ...options };
+			formattedRequest = {
+				...request,
+				model: request.model ?? model,
+				...options,
+			};
 		}
-		return this.impl.generateChat(formattedRequest, formattedRequest.model, options);
+		return this.impl.generateChat(
+			formattedRequest,
+			formattedRequest.model,
+			options,
+		);
 	}
 	rerank(
 		query: string,
@@ -158,7 +171,9 @@ export class OllamaAdapter implements OllamaAdapterApi {
 		model?: string,
 	): Promise<{ scores: number[]; model: string }> {
 		if (!this.impl.rerank) {
-			return Promise.reject(new Error("rerank method is not implemented in OllamaAdapterApi"));
+			return Promise.reject(
+				new Error('rerank method is not implemented in OllamaAdapterApi'),
+			);
 		}
 		return this.impl.rerank(query, documents, model);
 	}

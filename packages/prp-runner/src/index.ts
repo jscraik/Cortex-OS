@@ -20,9 +20,8 @@ export * from './runner.js';
 
 export { createExecutionContext } from './lib/create-execution-context.js';
 export { executeNeuron } from './lib/execute-neuron.js';
-export { LLMBridge } from './llm-bridge.js';
 export type { LLMConfig } from './llm-bridge.js';
-export { createPRPOrchestrator } from './orchestrator.js';
+export { LLMBridge } from './llm-bridge.js';
 export type {
 	Blueprint,
 	ExecutionContext,
@@ -31,5 +30,6 @@ export type {
 	Neuron,
 	NeuronResult,
 	PRPExecutionResult,
-	PRPOrchestrator
+	PRPOrchestrator,
 } from './orchestrator.js';
+export { createPRPOrchestrator } from './orchestrator.js';

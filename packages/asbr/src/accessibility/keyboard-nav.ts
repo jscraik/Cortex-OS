@@ -8,14 +8,14 @@ import {
 	handleEscape,
 	handleHomeEnd,
 	handleTab,
-} from "./lib/key-handlers.js";
+} from './lib/key-handlers.js';
 
 export interface KeyboardHandlerOptions {
 	trapFocus?: boolean;
 	escapeHandler?: () => void;
 	enterHandler?: () => void;
-	tabHandler?: (direction: "forward" | "backward") => void;
-	arrowHandler?: (direction: "up" | "down" | "left" | "right") => void;
+	tabHandler?: (direction: 'forward' | 'backward') => void;
+	arrowHandler?: (direction: 'up' | 'down' | 'left' | 'right') => void;
 }
 
 export interface FocusableElement {
@@ -32,7 +32,7 @@ export interface NavigationContext {
 	elements: FocusableElement[];
 	currentIndex: number;
 	wrap: boolean;
-	orientation: "horizontal" | "vertical" | "both";
+	orientation: 'horizontal' | 'vertical' | 'both';
 }
 
 /**
@@ -49,7 +49,7 @@ export class KeyboardNavigationManager {
 	 */
 	registerContext(
 		contextId: string,
-		context: Omit<NavigationContext, "currentIndex">,
+		context: Omit<NavigationContext, 'currentIndex'>,
 	): void {
 		this.contexts.set(contextId, {
 			...context,
@@ -94,7 +94,7 @@ export class KeyboardNavigationManager {
 	/**
 	 * Move focus within the active context
 	 */
-	moveFocus(direction: "next" | "previous" | "first" | "last"): boolean {
+	moveFocus(direction: 'next' | 'previous' | 'first' | 'last'): boolean {
 		if (!this.activeContext) {
 			return false;
 		}
@@ -109,14 +109,14 @@ export class KeyboardNavigationManager {
 		let newIndex: number;
 
 		switch (direction) {
-			case "next":
+			case 'next':
 				newIndex = context.currentIndex + 1;
 				if (newIndex >= focusableElements.length) {
 					newIndex = context.wrap ? 0 : context.currentIndex;
 				}
 				break;
 
-			case "previous":
+			case 'previous':
 				newIndex = context.currentIndex - 1;
 				if (newIndex < 0) {
 					newIndex = context.wrap
@@ -125,11 +125,11 @@ export class KeyboardNavigationManager {
 				}
 				break;
 
-			case "first":
+			case 'first':
 				newIndex = 0;
 				break;
 
-			case "last":
+			case 'last':
 				newIndex = focusableElements.length - 1;
 				break;
 
@@ -150,7 +150,7 @@ export class KeyboardNavigationManager {
 	 * Handle arrow key navigation
 	 */
 	handleArrowKey(
-		key: "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight",
+		key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
 	): boolean {
 		if (!this.activeContext) {
 			return false;
@@ -159,23 +159,23 @@ export class KeyboardNavigationManager {
 		const context = this.contexts.get(this.activeContext)!;
 
 		switch (context.orientation) {
-			case "horizontal":
-				if (key === "ArrowLeft") {
-					return this.moveFocus("previous");
-				} else if (key === "ArrowRight") {
-					return this.moveFocus("next");
+			case 'horizontal':
+				if (key === 'ArrowLeft') {
+					return this.moveFocus('previous');
+				} else if (key === 'ArrowRight') {
+					return this.moveFocus('next');
 				}
 				break;
 
-			case "vertical":
-				if (key === "ArrowUp") {
-					return this.moveFocus("previous");
-				} else if (key === "ArrowDown") {
-					return this.moveFocus("next");
+			case 'vertical':
+				if (key === 'ArrowUp') {
+					return this.moveFocus('previous');
+				} else if (key === 'ArrowDown') {
+					return this.moveFocus('next');
 				}
 				break;
 
-			case "both":
+			case 'both':
 				// For grid-like navigation, implement 2D movement
 				return this.handleGridNavigation(key);
 		}
@@ -193,7 +193,7 @@ export class KeyboardNavigationManager {
 		}
 
 		const trapHandler = (event: KeyboardEvent) => {
-			if (event.key === "Tab" && this.activeContext === contextId) {
+			if (event.key === 'Tab' && this.activeContext === contextId) {
 				const focusableElements = context.elements.filter((el) => !el.disabled);
 
 				if (focusableElements.length === 0) {
@@ -223,7 +223,7 @@ export class KeyboardNavigationManager {
 			}
 		};
 
-		document.addEventListener("keydown", trapHandler);
+		document.addEventListener('keydown', trapHandler);
 		this.eventListeners.set(`${contextId}-trap`, trapHandler);
 	}
 
@@ -233,7 +233,7 @@ export class KeyboardNavigationManager {
 	removeFocusTrap(contextId: string): void {
 		const handler = this.eventListeners.get(`${contextId}-trap`);
 		if (handler) {
-			document.removeEventListener("keydown", handler);
+			document.removeEventListener('keydown', handler);
 			this.eventListeners.delete(`${contextId}-trap`);
 		}
 	}
@@ -243,30 +243,30 @@ export class KeyboardNavigationManager {
 	 */
 	getKeyboardShortcuts(contextId?: string): string[] {
 		const shortcuts = [
-			"Tab - Navigate to next element",
-			"Shift+Tab - Navigate to previous element",
-			"Enter - Activate focused element",
-			"Space - Toggle or activate (where applicable)",
-			"Escape - Cancel or close",
+			'Tab - Navigate to next element',
+			'Shift+Tab - Navigate to previous element',
+			'Enter - Activate focused element',
+			'Space - Toggle or activate (where applicable)',
+			'Escape - Cancel or close',
 		];
 
 		if (contextId) {
 			const context = this.contexts.get(contextId);
 			if (context) {
 				switch (context.orientation) {
-					case "horizontal":
-						shortcuts.push("Arrow Left/Right - Navigate between items");
+					case 'horizontal':
+						shortcuts.push('Arrow Left/Right - Navigate between items');
 						break;
-					case "vertical":
-						shortcuts.push("Arrow Up/Down - Navigate between items");
+					case 'vertical':
+						shortcuts.push('Arrow Up/Down - Navigate between items');
 						break;
-					case "both":
-						shortcuts.push("Arrow Keys - Navigate in any direction");
+					case 'both':
+						shortcuts.push('Arrow Keys - Navigate in any direction');
 						break;
 				}
 
 				if (context.wrap) {
-					shortcuts.push("Navigation wraps around at boundaries");
+					shortcuts.push('Navigation wraps around at boundaries');
 				}
 			}
 		}
@@ -287,32 +287,32 @@ export class KeyboardNavigationManager {
 			const htmlElement = element.element;
 
 			// Set ARIA attributes
-			htmlElement.setAttribute("role", element.role || "button");
-			htmlElement.setAttribute("tabindex", element.disabled ? "-1" : "0");
+			htmlElement.setAttribute('role', element.role || 'button');
+			htmlElement.setAttribute('tabindex', element.disabled ? '-1' : '0');
 
 			if (element.ariaLabel) {
-				htmlElement.setAttribute("aria-label", element.ariaLabel);
+				htmlElement.setAttribute('aria-label', element.ariaLabel);
 			}
 
 			// Set position in set
 			htmlElement.setAttribute(
-				"aria-setsize",
+				'aria-setsize',
 				context.elements.length.toString(),
 			);
-			htmlElement.setAttribute("aria-posinset", (index + 1).toString());
+			htmlElement.setAttribute('aria-posinset', (index + 1).toString());
 
 			// Set disabled state
 			if (element.disabled) {
-				htmlElement.setAttribute("aria-disabled", "true");
+				htmlElement.setAttribute('aria-disabled', 'true');
 			} else {
-				htmlElement.removeAttribute("aria-disabled");
+				htmlElement.removeAttribute('aria-disabled');
 			}
 
 			// Set current state
 			if (index === context.currentIndex && contextId === this.activeContext) {
-				htmlElement.setAttribute("aria-current", "true");
+				htmlElement.setAttribute('aria-current', 'true');
 			} else {
-				htmlElement.removeAttribute("aria-current");
+				htmlElement.removeAttribute('aria-current');
 			}
 		});
 	}
@@ -323,12 +323,12 @@ export class KeyboardNavigationManager {
 	announceNavigationState(contextId: string): string {
 		const context = this.contexts.get(contextId);
 		if (!context) {
-			return "";
+			return '';
 		}
 
 		const currentElement = context.elements[context.currentIndex];
 		if (!currentElement) {
-			return "";
+			return '';
 		}
 
 		const position = context.currentIndex + 1;
@@ -370,14 +370,14 @@ export class KeyboardNavigationManager {
 			}
 		};
 
-		document.addEventListener("keydown", keyHandler);
+		document.addEventListener('keydown', keyHandler);
 		this.eventListeners.set(contextId, keyHandler);
 	}
 
 	private cleanupKeyboardHandlers(contextId: string): void {
 		const handler = this.eventListeners.get(contextId);
 		if (handler) {
-			document.removeEventListener("keydown", handler);
+			document.removeEventListener('keydown', handler);
 			this.eventListeners.delete(contextId);
 		}
 
@@ -385,17 +385,17 @@ export class KeyboardNavigationManager {
 	}
 
 	private handleGridNavigation(
-		key: "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight",
+		key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight',
 	): boolean {
 		// Simplified grid navigation - in a real implementation,
 		// this would handle 2D grid movement based on element positions
 		switch (key) {
-			case "ArrowUp":
-			case "ArrowLeft":
-				return this.moveFocus("previous");
-			case "ArrowDown":
-			case "ArrowRight":
-				return this.moveFocus("next");
+			case 'ArrowUp':
+			case 'ArrowLeft':
+				return this.moveFocus('previous');
+			case 'ArrowDown':
+			case 'ArrowRight':
+				return this.moveFocus('next');
 		}
 		return false;
 	}
@@ -423,11 +423,11 @@ export function createFocusableElement(
 	return {
 		id: options.id || element.id || `focusable-${Date.now()}`,
 		element,
-		role: options.role || element.getAttribute("role") || undefined,
-		disabled: options.disabled || element.hasAttribute("disabled"),
+		role: options.role || element.getAttribute('role') || undefined,
+		disabled: options.disabled || element.hasAttribute('disabled'),
 		ariaLabel:
-			options.ariaLabel || element.getAttribute("aria-label") || undefined,
+			options.ariaLabel || element.getAttribute('aria-label') || undefined,
 		tabIndex:
-			options.tabIndex || parseInt(element.getAttribute("tabindex") || "0", 10),
+			options.tabIndex || parseInt(element.getAttribute('tabindex') || '0', 10),
 	};
 }

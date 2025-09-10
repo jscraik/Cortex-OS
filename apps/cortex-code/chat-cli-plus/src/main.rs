@@ -410,4 +410,3 @@ mod tests {
         assert!(matches!(compute_stream_mode_from_cli(&cli), Some(CliStreamMode::Raw)));
     }
 }
-

@@ -3,12 +3,12 @@
  * Manages config, data, state, and cache directories according to the blueprint
  */
 
-import { constants } from "node:fs";
-import { access, mkdir, stat } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
-import { logWarn } from "../lib/logger.js";
-import type { XDGPaths } from "../types/index.js";
+import { constants } from 'node:fs';
+import { access, mkdir, stat } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { logWarn } from '../lib/logger.js';
+import type { XDGPaths } from '../types/index.js';
 
 /**
  * Get XDG base directories with ASBR-specific subdirectories
@@ -17,16 +17,16 @@ export function getXDGPaths(): XDGPaths {
 	const home = homedir();
 
 	// Use XDG environment variables or fallback to defaults
-	const configHome = process.env.XDG_CONFIG_HOME || join(home, ".config");
-	const dataHome = process.env.XDG_DATA_HOME || join(home, ".local", "share");
-	const stateHome = process.env.XDG_STATE_HOME || join(home, ".local", "state");
-	const cacheHome = process.env.XDG_CACHE_HOME || join(home, ".cache");
+	const configHome = process.env.XDG_CONFIG_HOME || join(home, '.config');
+	const dataHome = process.env.XDG_DATA_HOME || join(home, '.local', 'share');
+	const stateHome = process.env.XDG_STATE_HOME || join(home, '.local', 'state');
+	const cacheHome = process.env.XDG_CACHE_HOME || join(home, '.cache');
 
 	return {
-		config: join(configHome, "cortex", "asbr"),
-		data: join(dataHome, "cortex", "asbr"),
-		state: join(stateHome, "cortex", "asbr"),
-		cache: join(cacheHome, "cortex", "asbr"),
+		config: join(configHome, 'cortex', 'asbr'),
+		data: join(dataHome, 'cortex', 'asbr'),
+		state: join(stateHome, 'cortex', 'asbr'),
+		cache: join(cacheHome, 'cortex', 'asbr'),
 	};
 }
 
@@ -43,21 +43,21 @@ export async function ensureDirectories(): Promise<void> {
 	await mkdir(paths.cache, { recursive: true });
 
 	// Create CONFIG subdirectories
-	await mkdir(join(paths.config, "policies"), { recursive: true });
+	await mkdir(join(paths.config, 'policies'), { recursive: true });
 
 	// Create DATA subdirectories
-	await mkdir(join(paths.data, "artifacts"), { recursive: true });
-	await mkdir(join(paths.data, "evidence"), { recursive: true });
-	await mkdir(join(paths.data, "profiles"), { recursive: true });
+	await mkdir(join(paths.data, 'artifacts'), { recursive: true });
+	await mkdir(join(paths.data, 'evidence'), { recursive: true });
+	await mkdir(join(paths.data, 'profiles'), { recursive: true });
 
 	// Create STATE subdirectories
-	await mkdir(join(paths.state, "checkpoints"), { recursive: true });
-	await mkdir(join(paths.state, "connectors"), { recursive: true });
-	await mkdir(join(paths.state, "receipts"), { recursive: true });
+	await mkdir(join(paths.state, 'checkpoints'), { recursive: true });
+	await mkdir(join(paths.state, 'connectors'), { recursive: true });
+	await mkdir(join(paths.state, 'receipts'), { recursive: true });
 
 	// Create CACHE subdirectories
-	await mkdir(join(paths.cache, "indexes"), { recursive: true });
-	await mkdir(join(paths.cache, "tmp"), { recursive: true });
+	await mkdir(join(paths.cache, 'indexes'), { recursive: true });
+	await mkdir(join(paths.cache, 'tmp'), { recursive: true });
 }
 
 /**
@@ -72,7 +72,7 @@ export function getConfigPath(filename: string): string {
  * Get path for data files with date-based organization
  */
 export function getDataPath(
-	type: "artifacts" | "evidence" | "profiles",
+	type: 'artifacts' | 'evidence' | 'profiles',
 	...segments: string[]
 ): string {
 	const paths = getXDGPaths();
@@ -88,7 +88,7 @@ export function getArtifactPath(
 	filename?: string,
 ): string {
 	const paths = getXDGPaths();
-	const artifactDir = join(paths.data, "artifacts", date, uuid);
+	const artifactDir = join(paths.data, 'artifacts', date, uuid);
 	return filename ? join(artifactDir, filename) : artifactDir;
 }
 
@@ -135,10 +135,10 @@ export async function isDirectory(path: string): Promise<boolean> {
 /**
  * Get a temporary directory path in the ASBR cache
  */
-export function getTempPath(prefix: string = "tmp"): string {
+export function getTempPath(prefix: string = 'tmp'): string {
 	const timestamp = Date.now();
 	const random = Math.random().toString(36).substring(2, 8);
-	return getCachePath("tmp", `${prefix}_${timestamp}_${random}`);
+	return getCachePath('tmp', `${prefix}_${timestamp}_${random}`);
 }
 
 /**
@@ -147,14 +147,14 @@ export function getTempPath(prefix: string = "tmp"): string {
 export async function cleanupTempFiles(
 	maxAgeMs: number = 24 * 60 * 60 * 1000,
 ): Promise<void> {
-	const tmpDir = getCachePath("tmp");
+	const tmpDir = getCachePath('tmp');
 
 	if (!(await pathExists(tmpDir))) {
 		return;
 	}
 
 	try {
-		const { readdir, stat, rm } = await import("node:fs/promises");
+		const { readdir, stat, rm } = await import('node:fs/promises');
 		const files = await readdir(tmpDir);
 		const now = Date.now();
 
@@ -167,7 +167,7 @@ export async function cleanupTempFiles(
 			}
 		}
 	} catch (error) {
-		logWarn("Failed to cleanup temp files", { error });
+		logWarn('Failed to cleanup temp files', { error });
 	}
 }
 

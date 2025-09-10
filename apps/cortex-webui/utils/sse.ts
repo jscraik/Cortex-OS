@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * Minimal SSE helper with optional auth token and auto-retry.
@@ -31,14 +31,14 @@ export function openSSE(
 	let attempt = 0;
 
 	const token =
-		typeof window !== "undefined"
-			? localStorage.getItem("access_token")
+		typeof window !== 'undefined'
+			? localStorage.getItem('access_token')
 			: undefined;
 	const qs = new URLSearchParams();
 	for (const [k, v] of Object.entries(params)) {
 		if (v !== undefined) qs.set(k, String(v));
 	}
-	if (token) qs.set("access_token", token);
+	if (token) qs.set('access_token', token);
 
 	function connect() {
 		if (aborted) return;

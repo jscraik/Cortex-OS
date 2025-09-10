@@ -32,19 +32,19 @@ validate_orbstack_detected() {
 validate_compose_files() {
     local compose_dir="${1:-}"
     [[ -z "$compose_dir" ]] && { echo "ERROR: compose_dir required"; return 1; }
-    
+
     local required_files=(
         "$compose_dir/docker-compose.dev.yml"
         "$compose_dir/.env.dev"
     )
-    
+
     for file in "${required_files[@]}"; do
-        [[ ! -f "$file" ]] && { 
+        [[ ! -f "$file" ]] && {
             echo "ERROR: Missing required file: $file"
             return 1
         }
     done
-    
+
     echo "SUCCESS: All compose files present"
 }
 
@@ -52,10 +52,10 @@ validate_compose_files() {
 get_profile_flags() {
     local profiles="${1:-}"
     [[ -z "$profiles" ]] && { echo "ERROR: profiles required"; return 1; }
-    
+
     local profile_flags=""
     IFS=',' read -ra profile_array <<< "$profiles"
-    
+
     for profile in "${profile_array[@]}"; do
         # Validate profile name (alphanumeric, dash, underscore only)
         [[ ! "$profile" =~ ^[a-zA-Z0-9_-]+$ ]] && {
@@ -64,7 +64,7 @@ get_profile_flags() {
         }
         profile_flags+="--profile $profile "
     done
-    
+
     echo "$profile_flags"
 }
 
@@ -72,12 +72,12 @@ get_profile_flags() {
 compose_config_test() {
     local compose_dir="${1:-}"
     local env_file="${2:-}"
-    
+
     [[ -z "$compose_dir" || -z "$env_file" ]] && {
         echo "ERROR: compose_dir and env_file required"
         return 1
     }
-    
+
     docker compose \
         --env-file "$env_file" \
         -f "$compose_dir/docker-compose.dev.yml" \
@@ -86,7 +86,7 @@ compose_config_test() {
         echo "ERROR: Invalid compose configuration"
         return 1
     }
-    
+
     echo "SUCCESS: Compose configuration valid"
 }
 
@@ -94,12 +94,12 @@ compose_start_services() {
     local compose_dir="${1:-}"
     local env_file="${2:-}"
     local profile_flags="${3:-}"
-    
+
     [[ -z "$compose_dir" || -z "$env_file" ]] && {
         echo "ERROR: compose_dir and env_file required"
         return 1
     }
-    
+
     # shellcheck disable=SC2086
     docker compose \
         --env-file "$env_file" \
@@ -112,12 +112,12 @@ compose_start_services() {
 compose_stop_services() {
     local compose_dir="${1:-}"
     local env_file="${2:-}"
-    
+
     [[ -z "$compose_dir" || -z "$env_file" ]] && {
         echo "ERROR: compose_dir and env_file required"
         return 1
     }
-    
+
     docker compose \
         --env-file "$env_file" \
         -f "$compose_dir/docker-compose.dev.yml" \

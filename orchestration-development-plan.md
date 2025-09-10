@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD005 -->
 # Orchestration Package Development Plan
 
 This document details a TDD-driven roadmap to bring `packages/orchestration` to operational readiness. Each task follows strict software engineering practices: red-green-refactor, micro-commits, and Conventional Commits.
@@ -7,14 +8,18 @@ This document details a TDD-driven roadmap to bring `packages/orchestration` to 
 - **TDD:** start with failing tests, implement minimal code, refactor once green.
 - **Micro-commits:** one focused change per commit including tests and code.
 - **Conventional Commits:** e.g., `feat(orchestration): support branch steps`.
-- **Validation:** `pre-commit run --files <changed>` and `pnpm lint && pnpm test` for code; `pnpm docs:lint` for docs.
+- **Validation:** `pnpm lint && pnpm test` for code; `pnpm docs:lint` for docs.
+   Optionally, `pnpm biome:staged` (staged lint/format) and `pnpm test:safe` (quick tests) before committing.
 
 ## Milestone 0 – Harden Existing Features
 
 1. **Deterministic pipelines**
    - _Test:_ validate DAG validator rejects cycles.
    - _Impl:_ ensure topological sort enforces order.
-   - _Commit cadence:_ `test(orchestration): add DAG cycle coverage` → `feat(orchestration): enforce topological sort` → `refactor(orchestration): clean up validator`.
+    - _Commit cadence:_
+      `test(orchestration): add DAG cycle coverage` →
+      `feat(orchestration): enforce topological sort` →
+      `refactor(orchestration): clean up validator`.
 2. **Sequential/parallel execution**
    - _Test:_ simulate concurrent steps; ensure ordering and isolation.
    - _Impl:_ refine scheduler to cap concurrency and handle errors.

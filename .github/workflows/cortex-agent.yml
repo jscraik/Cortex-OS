@@ -15,18 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Cortex
         run: |
           curl -L https://github.com/${{ github.repository }}/releases/latest/download/cortex-linux-x64 -o cortex
           chmod +x cortex
-          
+
       - name: Parse Command
         id: parse
         run: |
           COMMAND=$(echo "${{ github.event.comment.body }}" | sed 's|/cortex ||')
           echo "command=$COMMAND" >> $GITHUB_OUTPUT
-          
+
       - name: Run Cortex Agent
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,14 +35,14 @@ jobs:
           ./cortex run --ci \
             --prompt "${{ steps.parse.outputs.command }}" \
             --output response.json
-            
+
       - name: Post Response
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const response = JSON.parse(fs.readFileSync('response.json'));
-            
+
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: context.issue.number,

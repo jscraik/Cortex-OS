@@ -1,52 +1,51 @@
-import { handleA2A } from "@cortex-os/a2a";
+import { handleA2A } from '@cortex-os/a2a';
 import {
-        A2AMessageSchema,
-        AgentConfigSchema,
-        MCPRequestSchema,
-        RAGQuerySchema,
-        SimlabCommandSchema,
-} from "@cortex-os/contracts";
-import { createJsonOutput } from "@cortex-os/lib";
-import { handleRAG } from "@cortex-os/rag";
-import { handleSimlab } from "@cortex-os/simlab";
-import { createEnhancedClient, type ServerInfo } from "@cortex-os/mcp-core";
-import Fastify from "fastify";
-import client from "prom-client";
-import { z } from "zod";
-import { createAgentRoute } from "./lib/create-agent-route.js";
+	A2AMessageSchema,
+	AgentConfigSchema,
+	MCPRequestSchema,
+	RAGQuerySchema,
+	SimlabCommandSchema,
+} from '@cortex-os/contracts';
+import { createJsonOutput } from '@cortex-os/lib';
+import { createEnhancedClient, type ServerInfo } from '@cortex-os/mcp-core';
+import { handleRAG } from '@cortex-os/rag';
+import { handleSimlab } from '@cortex-os/simlab';
+import Fastify from 'fastify';
+import client from 'prom-client';
+import { z } from 'zod';
+import { createAgentRoute } from './lib/create-agent-route.js';
 
 function getMCPServerInfo(): ServerInfo | null {
-        const transport = (process.env.MCP_TRANSPORT || "") as ServerInfo["transport"];
-        const name = process.env.MCP_NAME || "gateway-mcp";
-        if (!transport) return null;
-        if (transport === "stdio") {
-                const command = process.env.MCP_COMMAND;
-                if (!command) return null;
-                let args: unknown = undefined;
-                if (process.env.MCP_ARGS) {
-                    try {
-                        const parsed = JSON.parse(process.env.MCP_ARGS);
-                        // Validate using zod. If MCPRequestSchema.shape.args exists, use it; otherwise, fallback to z.any()
-                        // For demonstration, we'll use z.any() as the schema for args.
-                        args = z.any().parse(parsed);
-                    } catch (e) {
-                        // Invalid JSON or schema, set args to undefined
-                        args = undefined;
-                    }
-                }
-                return { name, transport, command, args } as ServerInfo;
-        }
-        if (transport === "sse" || transport === "streamableHttp") {
-                const endpoint = process.env.MCP_ENDPOINT;
-                if (!endpoint) return null;
-                return { name, transport, endpoint } as ServerInfo;
-        }
-        return null;
+	const transport = (process.env.MCP_TRANSPORT ||
+		'') as ServerInfo['transport'];
+	const name = process.env.MCP_NAME || 'gateway-mcp';
+	if (!transport) return null;
+	if (transport === 'stdio') {
+		const command = process.env.MCP_COMMAND;
+		if (!command) return null;
+		let args: unknown;
+		if (process.env.MCP_ARGS) {
+			try {
+				const parsed = JSON.parse(process.env.MCP_ARGS);
+				// Validate using zod. If MCPRequestSchema.shape.args exists, use it; otherwise, fallback to z.any()
+				// For demonstration, we'll use z.any() as the schema for args.
+				args = z.any().parse(parsed);
+			} catch (e) {
+				// Invalid JSON or schema, set args to undefined
+				args = undefined;
+			}
+		}
+		return { name, transport, command, args } as ServerInfo;
+	}
+	if (transport === 'sse' || transport === 'streamableHttp') {
+		const endpoint = process.env.MCP_ENDPOINT;
+		if (!endpoint) return null;
+		return { name, transport, endpoint } as ServerInfo;
+	}
+	return null;
 }
 
-type MCPHandlerParams = z.infer<
-    ReturnType<typeof z.object>
->;
+type MCPHandlerParams = z.infer<ReturnType<typeof z.object>>;
 
 // The schema used in createAgentRoute is:
 // z.object({
@@ -55,82 +54,82 @@ type MCPHandlerParams = z.infer<
 //   json: z.boolean().optional(),
 // })
 const MCPRoute = z.object({
-        config: AgentConfigSchema,
-        request: MCPRequestSchema,
-        json: z.boolean().optional(),
+	config: AgentConfigSchema,
+	request: MCPRequestSchema,
+	json: z.boolean().optional(),
 });
 type MCPRouteSchema = z.infer<typeof MCPRoute>;
 
 const handleMCP = async ({ request }: MCPRouteSchema) => {
-        const si = getMCPServerInfo();
-        if (!si) {
-                return createJsonOutput({
-                        error: {
-                                code: "MCP_NOT_CONFIGURED",
-                                message: "MCP transport not configured",
-                        },
-                });
-        }
-        const client = await createEnhancedClient(si);
-        try {
-                const result = await client.callTool({
-                        name: request.tool,
-                        arguments: request.args,
-                });
-                return createJsonOutput(result);
-        } finally {
-                await client.close();
-        }
+	const si = getMCPServerInfo();
+	if (!si) {
+		return createJsonOutput({
+			error: {
+				code: 'MCP_NOT_CONFIGURED',
+				message: 'MCP transport not configured',
+			},
+		});
+	}
+	const client = await createEnhancedClient(si);
+	try {
+		const result = await client.callTool({
+			name: request.tool,
+			arguments: request.args,
+		});
+		return createJsonOutput(result);
+	} finally {
+		await client.close();
+	}
 };
 
 const app = Fastify({ logger: true });
 
-const { default: openapiSpec } = await import("../openapi.json", {
-	assert: { type: "json" },
+const { default: openapiSpec } = await import('../openapi.json', {
+	assert: { type: 'json' },
 });
 
-createAgentRoute(app, "/mcp", MCPRoute, handleMCP);
+createAgentRoute(app, '/mcp', MCPRoute, handleMCP);
 
 createAgentRoute(
-        app,
-        "/a2a",
-        z.object({
-                config: AgentConfigSchema,
-                message: A2AMessageSchema,
-                json: z.boolean().optional(),
-        }),
-        handleA2A,
+	app,
+	'/a2a',
+	z.object({
+		config: AgentConfigSchema,
+		message: A2AMessageSchema,
+		json: z.boolean().optional(),
+	}),
+	handleA2A,
 );
 
 createAgentRoute(
-        app,
-        "/rag",
-        z.object({
-                config: AgentConfigSchema,
-                query: RAGQuerySchema,
-                json: z.boolean().optional(),
-        }),
-        handleRAG,
+	app,
+	'/rag',
+	z.object({
+		config: AgentConfigSchema,
+		query: RAGQuerySchema,
+		json: z.boolean().optional(),
+	}),
+	handleRAG,
 );
 
 createAgentRoute(
-        app,
-        "/simlab",
-        z.object({
-                config: AgentConfigSchema,
-                command: SimlabCommandSchema,
-                json: z.boolean().optional(),
-        }),
-        handleSimlab,
+	app,
+	'/simlab',
+	z.object({
+		config: AgentConfigSchema,
+		command: SimlabCommandSchema,
+		json: z.boolean().optional(),
+	}),
+	handleSimlab,
 );
 
-app.get("/openapi.json", async (_req, reply) => {
-	reply.header("content-type", "application/json");
+app.get('/openapi.json', async (_req, reply) => {
+	reply.header('content-type', 'application/json');
 	return createJsonOutput(openapiSpec);
 });
 
 export async function start(port = Number(process.env.PORT) || 3333) {
-	await app.listen({ port, host: "0.0.0.0" });
+	await app.listen({ port, host: '0.0.0.0' });
 	return app;
 }
 
@@ -141,20 +140,20 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
 const httpHistogram = new client.Histogram({
-	name: "http_request_duration_ms",
-	help: "Duration of HTTP requests in ms",
-	labelNames: ["route", "method", "status"] as const,
+	name: 'http_request_duration_ms',
+	help: 'Duration of HTTP requests in ms',
+	labelNames: ['route', 'method', 'status'] as const,
 	buckets: [10, 25, 50, 100, 200, 300, 400, 600, 800, 1200, 2000],
 	registers: [register],
 });
 const httpErrors = new client.Counter({
-	name: "http_request_errors_total",
-	help: "HTTP request errors",
-	labelNames: ["route", "method"] as const,
+	name: 'http_request_errors_total',
+	help: 'HTTP request errors',
+	labelNames: ['route', 'method'] as const,
 	registers: [register],
 });
 
-app.addHook("onResponse", async (req, reply) => {
+app.addHook('onResponse', async (req, reply) => {
 	try {
 		const route = req.routeOptions?.url || req.url;
 		const method = req.method;
@@ -163,11 +162,11 @@ app.addHook("onResponse", async (req, reply) => {
 		httpHistogram.labels({ route, method, status }).observe(diff);
 		if (reply.statusCode >= 500) httpErrors.labels({ route, method }).inc();
 	} catch (err) {
-		app.log.error({ err }, "metrics collection failed");
+		app.log.error({ err }, 'metrics collection failed');
 	}
 });
 
-app.get("/metrics", async (_req, reply) => {
-	reply.header("content-type", register.contentType);
+app.get('/metrics', async (_req, reply) => {
+	reply.header('content-type', register.contentType);
 	return register.metrics();
 });

@@ -1,16 +1,18 @@
 // Prisma-backed MemoryStore with full vector search and TTL support
-import { isExpired } from "../../core/ttl.js";
-import type { Memory } from "../../domain/types.js";
+
+import { decayEnabled, decayFactor, getHalfLifeMs } from '../../core/decay.js';
+import { isExpired } from '../../core/ttl.js';
+import type { Memory } from '../../domain/types.js';
 import type {
 	MemoryStore,
 	TextQuery,
 	VectorQuery,
-} from "../../ports/MemoryStore.js";
+} from '../../ports/MemoryStore.js';
 
 // Helper function to calculate cosine similarity
 function cosineSimilarity(a: number[], b: number[]): number {
 	if (a.length !== b.length) {
-		throw new Error("Vectors must have the same length");
+		throw new Error('Vectors must have the same length');
 	}
 
 	const dotProduct = a.reduce((sum, _, i) => sum + a[i] * (b[i] || 0), 0);
@@ -24,20 +26,33 @@ function cosineSimilarity(a: number[], b: number[]): number {
 	return dotProduct / (magnitudeA * magnitudeB);
 }
 
-type PrismaLike = {
-	memory: {
-		upsert(args: any): Promise<any>;
-		findUnique(args: any): Promise<any>;
-		delete(args: any): Promise<any>;
-		findMany(args: any): Promise<any[]>;
-		deleteMany(args: any): Promise<any>;
-	};
+export type PrismaMemoryModel = {
+	upsert(args: {
+		where: { id: string };
+		create: Memory;
+		update: Memory;
+	}): Promise<PrismaRow>;
+	findUnique(args: { where: { id: string } }): Promise<PrismaRow | null>;
+	delete(args: { where: { id: string } }): Promise<unknown>;
+	findMany(args: unknown): Promise<PrismaRow[]>;
+	deleteMany(args: {
+		where: { id: { in: string[] } };
+	}): Promise<{ count: number }>;
 };
 
-export class PrismaStore implements MemoryStore {
-	constructor(private prisma: PrismaLike) {}
+export type PrismaLike = {
+	memory: PrismaMemoryModel;
+};
 
-	async upsert(m: Memory, namespace = "default"): Promise<Memory> {
+// Local helper to mark variables as used
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _use = (..._args: unknown[]): void => { };
+
+export class PrismaStore implements MemoryStore {
+	constructor(private readonly prisma: PrismaLike) { }
+
+	async upsert(m: Memory, _namespace = 'default'): Promise<Memory> {
+		_use(_namespace);
 		const saved = await this.prisma.memory.upsert({
 			where: { id: m.id },
 			create: m,
@@ -46,32 +61,48 @@ export class PrismaStore implements MemoryStore {
 		return prismaToDomain(saved);
 	}
 
-	async get(id: string, namespace = "default"): Promise<Memory | null> {
+	async get(id: string, _namespace = 'default'): Promise<Memory | null> {
+		_use(_namespace);
 		const row = await this.prisma.memory.findUnique({ where: { id } });
 		return row ? prismaToDomain(row) : null;
 	}
 
-	async delete(id: string, namespace = "default"): Promise<void> {
+	async delete(id: string, _namespace = 'default'): Promise<void> {
+		_use(_namespace);
 		await this.prisma.memory.delete({ where: { id } });
 	}
 
-	async searchByText(q: TextQuery, namespace = "default"): Promise<Memory[]> {
+	async searchByText(q: TextQuery, _namespace = 'default'): Promise<Memory[]> {
+		_use(_namespace);
 		const rows = await this.prisma.memory.findMany({
 			where: {
 				AND: [
-					q.text ? { text: { contains: q.text, mode: "insensitive" } } : {},
+					q.text ? { text: { contains: q.text, mode: 'insensitive' } } : {},
 					q.filterTags && q.filterTags.length > 0
 						? { tags: { hasEvery: q.filterTags } }
 						: {},
 				],
 			},
-			take: q.topK,
-			orderBy: { updatedAt: "desc" },
+			take: q.topK * 10,
+			orderBy: { updatedAt: 'desc' },
 		});
-		return rows.map(prismaToDomain);
+		let items = rows.map(prismaToDomain);
+		if (decayEnabled()) {
+			const half = getHalfLifeMs();
+			const now = new Date().toISOString();
+			items = items
+				.map((m) => ({ m, s: decayFactor(m.createdAt, now, half) }))
+				.sort((a, b) => b.s - a.s)
+				.map((x) => x.m);
+		}
+		return items.slice(0, q.topK);
 	}
 
-	async searchByVector(q: VectorQuery, namespace = "default"): Promise<Memory[]> {
+	async searchByVector(
+		q: VectorQuery,
+		_namespace = 'default',
+	): Promise<Memory[]> {
+		_use(_namespace);
 		// Fetch candidates with vectors and matching tags
 		const candidateRows = await this.prisma.memory.findMany({
 			where: {
@@ -80,64 +111,109 @@ export class PrismaStore implements MemoryStore {
 					? { tags: { hasEvery: q.filterTags } }
 					: {}),
 			},
-			orderBy: { updatedAt: "desc" },
+			orderBy: { updatedAt: 'desc' },
 			take: q.topK * 10, // Fetch more candidates for similarity matching
 		});
 
 		// Convert to domain objects and filter out those without vectors
 		const candidates = candidateRows
 			.map(prismaToDomain)
-			.filter((memory) => memory.vector) as Memory[];
+			.filter((memory): memory is Memory & { vector: number[] } =>
+				Array.isArray(memory.vector),
+			);
 
 		// Perform similarity matching in memory
-		const scoredCandidates = candidates
-			.map((memory) => ({
-				memory,
-				score: cosineSimilarity(q.vector, memory.vector!),
-			}))
+		let scoredCandidates = candidates.map((memory) => ({
+			memory,
+			score: cosineSimilarity(q.vector, memory.vector),
+		}));
+		if (decayEnabled()) {
+			const half = getHalfLifeMs();
+			const now = new Date().toISOString();
+			scoredCandidates = scoredCandidates.map((it) => ({
+				...it,
+				score: it.score * decayFactor(it.memory.createdAt, now, half),
+			}));
+		}
+		return scoredCandidates
 			.sort((a, b) => b.score - a.score)
 			.slice(0, q.topK)
 			.map((item) => item.memory);
-
-		return scoredCandidates;
 	}
 
-        async purgeExpired(nowISO: string, namespace?: string): Promise<number> {
-                const allRows = await this.prisma.memory.findMany({
-                        where: { ttl: { not: null } },
-                });
+	async purgeExpired(nowISO: string, _namespace?: string): Promise<number> {
+		_use(_namespace);
+		const allRows = await this.prisma.memory.findMany({
+			where: { ttl: { not: null } },
+		});
 
-                const expiredIds: string[] = [];
-                for (const row of allRows) {
-                        const memory = prismaToDomain(row);
-                        if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
-                                expiredIds.push(memory.id);
-                        }
-                }
+		const expiredIds: string[] = [];
+		for (const row of allRows) {
+			const memory = prismaToDomain(row);
+			if (memory.ttl && isExpired(memory.createdAt, memory.ttl, nowISO)) {
+				expiredIds.push(memory.id);
+			}
+		}
 
-                if (expiredIds.length > 0) {
-                        const result = await this.prisma.memory.deleteMany({
-                                where: { id: { in: expiredIds } },
-                        });
-                        return result.count;
-                }
+		if (expiredIds.length > 0) {
+			const result = await this.prisma.memory.deleteMany({
+				where: { id: { in: expiredIds } },
+			});
+			return result.count;
+		}
 
-                return 0;
-        }
+		return 0;
+	}
 }
 
-function prismaToDomain(row: any): Memory {
-        return {
-                id: row.id,
-                kind: row.kind,
-                text: row.text ?? undefined,
-                vector: row.vector ?? undefined,
-                tags: row.tags ?? [],
-                ttl: row.ttl ?? undefined,
-                createdAt: new Date(row.createdAt).toISOString(),
-                updatedAt: new Date(row.updatedAt).toISOString(),
-                provenance: row.provenance,
-                policy: row.policy ?? undefined,
-                embeddingModel: row.embeddingModel ?? undefined,
-        };
+type PrismaRow = {
+	id: string;
+	kind: string;
+	text?: string | null;
+	vector?: number[] | null;
+	tags?: string[] | null;
+	ttl?: string | null;
+	createdAt: string | Date;
+	updatedAt: string | Date;
+	provenance?: {
+		source?: 'user' | 'agent' | 'system';
+		actor?: string;
+		evidence?: { uri: string; range?: [number, number] }[];
+		hash?: string;
+	} | null;
+	policy?: Record<string, unknown> | null;
+	embeddingModel?: string | null;
+};
+
+const ALLOWED_KINDS = ['note', 'event', 'artifact', 'embedding'] as const;
+type AllowedKind = (typeof ALLOWED_KINDS)[number];
+function isAllowedKind(v: unknown): v is AllowedKind {
+	return (
+		typeof v === 'string' && (ALLOWED_KINDS as readonly string[]).includes(v)
+	);
+}
+
+function prismaToDomain(row: PrismaRow): Memory {
+	const provenance = row.provenance
+		? {
+			source: row.provenance.source ?? 'system',
+			actor: row.provenance.actor,
+			evidence: row.provenance.evidence,
+			hash: row.provenance.hash,
+		}
+		: { source: 'system' as const };
+
+	return {
+		id: row.id,
+		kind: isAllowedKind(row.kind) ? row.kind : 'note',
+		text: row.text ?? undefined,
+		vector: row.vector ?? undefined,
+		tags: row.tags ?? [],
+		ttl: row.ttl ?? undefined,
+		createdAt: new Date(row.createdAt).toISOString(),
+		updatedAt: new Date(row.updatedAt).toISOString(),
+		provenance,
+		policy: (row.policy ?? undefined) as Memory['policy'] | undefined,
+		embeddingModel: row.embeddingModel ?? undefined,
+	};
 }

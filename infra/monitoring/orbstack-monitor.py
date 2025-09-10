@@ -62,16 +62,16 @@ class OrbStackMonitor:
         self.monitor_interval = int(os.getenv('MONITOR_INTERVAL', '30'))
         self.app = FastAPI(title="OrbStack Monitor", version="1.0.0")
         self.setup_routes()
-        
+
     def setup_routes(self):
         @self.app.get("/health")
         async def health_check():
             return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
-        
+
         @self.app.get("/metrics/containers")
         async def get_container_metrics():
             return self.get_all_container_metrics()
-            
+
         @self.app.get("/metrics/orbstack")
         async def get_orbstack_metrics():
             return self.get_orbstack_specific_metrics()
@@ -79,32 +79,32 @@ class OrbStackMonitor:
     def get_container_service_name(self, container) -> str:
         """Extract service name from container labels"""
         labels = container.attrs.get('Config', {}).get('Labels', {})
-        
+
         # Check OrbStack service label
         if 'orbstack.service' in labels:
             return labels['orbstack.service']
-        
+
         # Check docker-compose service label
         if 'com.docker.compose.service' in labels:
             return labels['com.docker.compose.service']
-            
+
         # Fallback to container name
         return container.name.replace('cortexos_', '').replace('cortex_', '')
 
     def is_rosetta_container(self, container) -> bool:
         """Check if container is using Rosetta emulation"""
         labels = container.attrs.get('Config', {}).get('Labels', {})
-        
+
         # Check explicit rosetta label
         if 'orbstack.rosetta' in labels:
             return labels['orbstack.rosetta'].lower() == 'true'
-            
+
         # Check platform architecture
         platform = container.attrs.get('Platform', '')
         if 'amd64' in platform.lower() and psutil.cpu_count(logical=False) > 4:
             # Likely M1/M2 Mac running x86_64 container
             return True
-            
+
         return False
 
     def get_container_platform(self, container) -> str:
@@ -122,12 +122,12 @@ class OrbStackMonitor:
     def collect_container_metrics(self) -> List[ContainerMetrics]:
         """Collect metrics from all running containers"""
         containers = []
-        
+
         try:
             for container in self.docker_client.containers.list():
                 try:
                     stats = container.stats(stream=False)
-                    
+
                     # Calculate CPU usage
                     cpu_percent = 0.0
                     if 'cpu_stats' in stats and 'precpu_stats' in stats:
@@ -135,7 +135,7 @@ class OrbStackMonitor:
                                    stats['precpu_stats']['cpu_usage']['total_usage']
                         system_delta = stats['cpu_stats']['system_cpu_usage'] - \
                                       stats['precpu_stats']['system_cpu_usage']
-                        
+
                         if system_delta > 0:
                             cpu_percent = (cpu_delta / system_delta) * \
                                          len(stats['cpu_stats']['cpu_usage']['percpu_usage']) * 100
@@ -177,66 +177,66 @@ class OrbStackMonitor:
                         is_rosetta=is_rosetta,
                         platform=platform
                     )
-                    
+
                     containers.append(container_metrics)
-                    
+
                 except Exception as e:
                     logger.warning(f"Failed to collect metrics for container {container.name}: {e}")
-                    
+
         except Exception as e:
             logger.error(f"Failed to collect container metrics: {e}")
-            
+
         return containers
 
     def update_prometheus_metrics(self, containers: List[ContainerMetrics]):
         """Update Prometheus metrics with collected data"""
         rosetta_count = 0
         native_count = 0
-        
+
         for container in containers:
             # Update container metrics
             container_cpu_usage.labels(
                 container_name=container.name,
                 service=container.service
             ).set(container.cpu_percent)
-            
+
             container_memory_usage.labels(
                 container_name=container.name,
                 service=container.service
             ).set(container.memory_usage)
-            
+
             container_memory_limit.labels(
                 container_name=container.name,
                 service=container.service
             ).set(container.memory_limit)
-            
+
             # Update counters (these should be monotonically increasing)
             container_network_rx.labels(
                 container_name=container.name,
                 service=container.service
             )._value._value = container.network_rx
-            
+
             container_network_tx.labels(
                 container_name=container.name,
                 service=container.service
             )._value._value = container.network_tx
-            
+
             container_disk_io_read.labels(
                 container_name=container.name,
                 service=container.service
             )._value._value = container.disk_read
-            
+
             container_disk_io_write.labels(
                 container_name=container.name,
                 service=container.service
             )._value._value = container.disk_write
-            
+
             # Count Rosetta vs native containers
             if container.is_rosetta:
                 rosetta_count += 1
             else:
                 native_count += 1
-                
+
         # Update OrbStack-specific metrics
         orbstack_rosetta_usage.set(rosetta_count)
         orbstack_native_containers.set(native_count)
@@ -251,17 +251,17 @@ class OrbStackMonitor:
                     volume_info = volume.attrs
                     labels = volume_info.get('Labels', {})
                     service_name = labels.get('orbstack.service', 'unknown')
-                    
+
                     # This is a simplified approach - actual volume size detection
                     # would require more sophisticated methods
                     orbstack_volume_size.labels(
                         volume_name=volume.name,
                         service=service_name
                     ).set(0)  # Placeholder - implement actual size detection
-                    
+
                 except Exception as e:
                     logger.debug(f"Could not get size for volume {volume.name}: {e}")
-                    
+
         except Exception as e:
             logger.error(f"Failed to collect volume metrics: {e}")
 
@@ -288,7 +288,7 @@ class OrbStackMonitor:
                 "disk_usage": psutil.disk_usage('/').percent,
                 "docker_version": self.docker_client.version()
             }
-            
+
             return {
                 "timestamp": datetime.utcnow().isoformat(),
                 "system": system_info,
@@ -304,21 +304,21 @@ class OrbStackMonitor:
     def monitor_loop(self):
         """Main monitoring loop"""
         logger.info(f"Starting OrbStack monitor with {self.monitor_interval}s interval")
-        
+
         while True:
             try:
                 # Collect container metrics
                 containers = self.collect_container_metrics()
                 self.update_prometheus_metrics(containers)
-                
+
                 # Collect volume metrics
                 self.collect_volume_metrics()
-                
+
                 logger.info(f"Collected metrics for {len(containers)} containers")
-                
+
             except Exception as e:
                 logger.error(f"Error in monitoring loop: {e}")
-                
+
             time.sleep(self.monitor_interval)
 
     def start(self):
@@ -326,11 +326,11 @@ class OrbStackMonitor:
         # Start Prometheus metrics server
         start_http_server(9201)
         logger.info("Prometheus metrics server started on port 9201")
-        
+
         # Start monitoring loop in background thread
         monitor_thread = threading.Thread(target=self.monitor_loop, daemon=True)
         monitor_thread.start()
-        
+
         # Start FastAPI server for REST API
         uvicorn.run(self.app, host="0.0.0.0", port=9200, log_level="info")
 

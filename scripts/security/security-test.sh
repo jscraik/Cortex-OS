@@ -59,14 +59,14 @@ if command -v grep >/dev/null 2>&1; then
   else
     echo "⚠️  SecureDatabaseWrapper not found in imports"
   fi
-  
+
   # Check if SecureNeo4j is imported where needed
   if grep -r "import.*SecureNeo4j" packages/ 2>/dev/null; then
     echo "✅ SecureNeo4j is being imported"
   else
     echo "⚠️  SecureNeo4j not found in imports"
   fi
-  
+
   # Check if SecureCommandExecutor is imported where needed
   if grep -r "import.*SecureCommandExecutor" packages/ 2>/dev/null; then
     echo "✅ SecureCommandExecutor is being imported"

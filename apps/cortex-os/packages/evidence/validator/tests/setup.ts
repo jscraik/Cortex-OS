@@ -3,11 +3,11 @@
  * @description Test setup for evidence validator
  */
 
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { afterAll, beforeAll } from "vitest";
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { afterAll, beforeAll } from 'vitest';
 
-const TEST_DATA_DIR = path.join(__dirname, "test-data");
+const TEST_DATA_DIR = path.join(__dirname, 'test-data');
 
 beforeAll(async () => {
 	// Ensure test directories exist
@@ -15,7 +15,7 @@ beforeAll(async () => {
 
 	// Create test files
 	await writeFile(
-		path.join(TEST_DATA_DIR, "sample.ts"),
+		path.join(TEST_DATA_DIR, 'sample.ts'),
 		`import { Component } from "react";
 
 export class SampleComponent extends Component {
@@ -26,7 +26,7 @@ export class SampleComponent extends Component {
 	);
 
 	await writeFile(
-		path.join(TEST_DATA_DIR, "readme.md"),
+		path.join(TEST_DATA_DIR, 'readme.md'),
 		`# Sample Project
 
 This is a sample project for testing evidence validation.

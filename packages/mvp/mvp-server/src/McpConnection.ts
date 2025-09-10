@@ -1,11 +1,11 @@
 /** Minimal McpConnection implementation to satisfy tests. */
-import type { WebSocket } from "ws";
-import type { ToolRegistry } from "./ToolRegistry.js";
+import type { WebSocket } from 'ws';
+import type { ToolRegistry } from './ToolRegistry.js';
 
 type JsonRecord = Record<string, unknown>;
 
 enum MsgType {
-	Request = "request",
+	Request = 'request',
 }
 
 type RequestMsg = {
@@ -24,8 +24,8 @@ export class McpConnection {
 	) {
 		this.id = `conn-${Date.now()}`;
 		this.send({
-			type: "notification",
-			method: "capabilities",
+			type: 'notification',
+			method: 'capabilities',
 			params: {
 				tools: this.tools
 					.list()
@@ -33,7 +33,7 @@ export class McpConnection {
 			},
 		});
 
-		this.ws.on("message", (data: Buffer) => {
+		this.ws.on('message', (data: Buffer) => {
 			try {
 				const message = JSON.parse(data.toString()) as RequestMsg | JsonRecord;
 				this.handleMessage(message);
@@ -52,35 +52,35 @@ export class McpConnection {
 	}
 
 	private handleMessage(msg: RequestMsg | JsonRecord) {
-		if ((msg as RequestMsg)?.type === "request") {
+		if ((msg as RequestMsg)?.type === 'request') {
 			const req = msg as RequestMsg;
 			switch (req.method) {
-				case "initialize":
+				case 'initialize':
 					this.send({
 						id: req.id,
-						type: "response",
+						type: 'response',
 						result: {
-							protocolVersion: "2024-11-05",
-							serverInfo: { name: "cortex-mcp-server", version: "0.1.0" },
+							protocolVersion: '2024-11-05',
+							serverInfo: { name: 'cortex-mcp-server', version: '0.1.0' },
 						},
 					});
 					break;
-				case "tools/list":
+				case 'tools/list':
 					this.send({
 						id: req.id,
-						type: "response",
+						type: 'response',
 						result: { tools: this.tools.list().map((t) => ({ name: t.name })) },
 					});
 					break;
-				case "ping":
+				case 'ping':
 					this.send({
 						id: req.id,
-						type: "response",
+						type: 'response',
 						result: { pong: true, timestamp: Date.now() },
 					});
 					break;
 				default:
-					this.send({ id: req.id, type: "error", error: "unknown_method" });
+					this.send({ id: req.id, type: 'error', error: 'unknown_method' });
 			}
 		}
 	}

@@ -114,4 +114,3 @@ npx prisma validate
 ```
 
 This command checks that the schema and migrations are internally consistent.
-

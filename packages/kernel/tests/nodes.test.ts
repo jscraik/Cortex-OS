@@ -1,18 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { createEvidence } from "../src/lib/phase-utils.js";
+import { describe, expect, it } from 'vitest';
+import { createEvidence } from '../src/lib/phase-utils.js';
 import {
 	runBuildNode,
 	runEvaluationNode,
 	runStrategyNode,
-} from "../src/nodes/index.js";
-import { createInitialPRPState } from "../src/state.js";
+} from '../src/nodes/index.js';
+import { createInitialPRPState } from '../src/state.js';
 
-describe("PRP nodes", () => {
-	it("runs strategy, build and evaluation phases", async () => {
+describe('PRP nodes', () => {
+	it('runs strategy, build and evaluation phases', async () => {
 		const blueprint = {
-			title: "Test",
-			description: "desc",
-			requirements: ["security", "backend"],
+			title: 'Test',
+			description: 'desc',
+			requirements: ['security', 'backend'],
 		};
 		let state = createInitialPRPState(blueprint, { deterministic: true });
 
@@ -21,7 +21,7 @@ describe("PRP nodes", () => {
 
 		state = await runBuildNode(state);
 		state.evidence.push(
-			createEvidence(state, "extra", "test", "extra", {}, "build"),
+			createEvidence(state, 'extra', 'test', 'extra', {}, 'build'),
 		);
 		expect(state.validationResults.build?.passed).toBe(true);
 

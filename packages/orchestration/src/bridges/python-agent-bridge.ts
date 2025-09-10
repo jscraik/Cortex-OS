@@ -9,12 +9,12 @@
  * @ai_provenance_hash implementation_phase_1
  */
 
-import type { ChildProcess } from "node:child_process";
-import { EventEmitter } from "node:events";
-import fs from "node:fs";
-import path from "node:path";
-import winston from "winston";
-import { spawnPythonProcess } from "../../../../libs/python/exec.js";
+import type { ChildProcess } from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
+import path from 'node:path';
+import winston from 'winston';
+import { spawnPythonProcess } from '../../../../libs/python/exec.js';
 
 export interface PythonAgentConfig {
 	pythonPath?: string;
@@ -31,7 +31,7 @@ export interface AgentTaskPayload {
 	requirements: string[];
 	dependencies?: string[];
 	metadata?: Record<string, unknown>;
-	agentType?: "langgraph" | "crewai";
+	agentType?: 'langgraph' | 'crewai';
 }
 
 export interface AgentTaskResult {
@@ -44,7 +44,7 @@ export interface AgentTaskResult {
 }
 
 export interface AgentBridgeMessage {
-	type: "result" | "error" | "query_response";
+	type: 'result' | 'error' | 'query_response';
 	from: string;
 	payload: {
 		coordinationId?: string;
@@ -85,27 +85,27 @@ export class PythonAgentBridge extends EventEmitter {
 		super();
 
 		this.config = {
-			pythonPath: config.pythonPath || "python3",
+			pythonPath: config.pythonPath || 'python3',
 			bridgeScriptPath:
 				config.bridgeScriptPath ||
 				path.resolve(
 					process.cwd(),
-					"packages/python-agents/src/agent_bridge.py",
+					'packages/python-agents/src/agent_bridge.py',
 				),
-			bridgeModule: config.bridgeModule || "src.agent_bridge",
+			bridgeModule: config.bridgeModule || 'src.agent_bridge',
 			timeout: config.timeout || 30000,
 			maxRetries: config.maxRetries || 3,
 		};
 
 		this.logger = winston.createLogger({
-			level: "info",
+			level: 'info',
 			format: winston.format.combine(
 				winston.format.timestamp(),
 				winston.format.json(),
 			),
 			transports: [
 				new winston.transports.Console(),
-				new winston.transports.File({ filename: "python-agent-bridge.log" }),
+				new winston.transports.File({ filename: 'python-agent-bridge.log' }),
 			],
 		});
 	}
@@ -118,14 +118,14 @@ export class PythonAgentBridge extends EventEmitter {
 			return;
 		}
 
-		this.logger.info("Initializing Python Agent Bridge");
+		this.logger.info('Initializing Python Agent Bridge');
 
 		try {
 			await this.startPythonProcess();
 			this.isInitialized = true;
-			this.logger.info("Python Agent Bridge initialized successfully");
+			this.logger.info('Python Agent Bridge initialized successfully');
 		} catch (error) {
-			this.logger.error("Failed to initialize Python Agent Bridge", { error });
+			this.logger.error('Failed to initialize Python Agent Bridge', { error });
 			throw error;
 		}
 	}
@@ -135,7 +135,7 @@ export class PythonAgentBridge extends EventEmitter {
 	 */
 	async executeAgentTask(payload: AgentTaskPayload): Promise<AgentTaskResult> {
 		if (!this.isInitialized) {
-			throw new Error("Python Agent Bridge not initialized");
+			throw new Error('Python Agent Bridge not initialized');
 		}
 
 		return new Promise((resolve, reject) => {
@@ -151,7 +151,7 @@ export class PythonAgentBridge extends EventEmitter {
 			this.pendingTasks.set(coordinationId, { resolve, reject, timeout });
 
 			// Send task to Python agent using the canonical bridge protocol
-			const message = { type: "task-assignment", payload };
+			const message = { type: 'task-assignment', payload };
 
 			this.sendMessageToPython(message);
 		});
@@ -160,15 +160,15 @@ export class PythonAgentBridge extends EventEmitter {
 	/**
 	 * Query agent status and capabilities
 	 */
-	async queryAgents(queryType: "status"): Promise<Record<string, unknown>>;
+	async queryAgents(queryType: 'status'): Promise<Record<string, unknown>>;
 	async queryAgents(
-		queryType: "capabilities",
+		queryType: 'capabilities',
 	): Promise<Record<string, string[]>>;
 	async queryAgents(
-		queryType: "status" | "capabilities",
+		queryType: 'status' | 'capabilities',
 	): Promise<Record<string, unknown> | Record<string, string[]>> {
 		if (!this.isInitialized) {
-			throw new Error("Python Agent Bridge not initialized");
+			throw new Error('Python Agent Bridge not initialized');
 		}
 
 		return new Promise((resolve, reject) => {
@@ -189,7 +189,7 @@ export class PythonAgentBridge extends EventEmitter {
 
 			// Send query to Python agent
 			const message = {
-				type: "agent-query",
+				type: 'agent-query',
 				payload: { queryType, queryId },
 			};
 
@@ -201,25 +201,25 @@ export class PythonAgentBridge extends EventEmitter {
 	 * Get agent status
 	 */
 	async getAgentStatus(): Promise<Record<string, unknown>> {
-		return this.queryAgents("status");
+		return this.queryAgents('status');
 	}
 
 	/**
 	 * Get agent capabilities
 	 */
 	async getAgentCapabilities(): Promise<Record<string, string[]>> {
-		return this.queryAgents("capabilities");
+		return this.queryAgents('capabilities');
 	}
 
 	/**
 	 * Shutdown the Python agent bridge
 	 */
 	async shutdown(): Promise<void> {
-		this.logger.info("Shutting down Python Agent Bridge");
+		this.logger.info('Shutting down Python Agent Bridge');
 
 		// Send shutdown message
 		if (this.pythonProcess && !this.pythonProcess.killed) {
-			const message = { type: "shutdown", payload: {} };
+			const message = { type: 'shutdown', payload: {} };
 			this.sendMessageToPython(message);
 		}
 
@@ -228,37 +228,37 @@ export class PythonAgentBridge extends EventEmitter {
 
 		// Kill Python process
 		if (this.pythonProcess) {
-			this.pythonProcess.kill("SIGTERM");
+			this.pythonProcess.kill('SIGTERM');
 
 			// Force kill after 5 seconds if not terminated
 			setTimeout(() => {
 				if (this.pythonProcess && !this.pythonProcess.killed) {
-					this.pythonProcess.kill("SIGKILL");
+					this.pythonProcess.kill('SIGKILL');
 				}
 			}, 5000);
 		}
 
 		this.isInitialized = false;
-		this.logger.info("Python Agent Bridge shutdown completed");
+		this.logger.info('Python Agent Bridge shutdown completed');
 	}
 
 	private async startPythonProcess(): Promise<void> {
 		return new Promise((resolve, reject) => {
-			this.logger.info("Starting Python agent process", {
+			this.logger.info('Starting Python agent process', {
 				pythonPath: this.config.pythonPath,
 				scriptPath: this.config.bridgeScriptPath,
 			});
 
-			const pythonArgs = ["-m", this.config.bridgeModule!];
+			const pythonArgs = ['-m', this.config.bridgeModule!];
 
 			// Discover monorepo root (so tests run from package still resolve python paths)
 			const findRepoRoot = (): string => {
 				let dir = process.cwd();
 				while (true) {
 					if (
-						fs.existsSync(path.join(dir, "pnpm-workspace.yaml")) ||
-						fs.existsSync(path.join(dir, "turbo.json")) ||
-						fs.existsSync(path.join(dir, ".git"))
+						fs.existsSync(path.join(dir, 'pnpm-workspace.yaml')) ||
+						fs.existsSync(path.join(dir, 'turbo.json')) ||
+						fs.existsSync(path.join(dir, '.git'))
 					) {
 						return dir;
 					}
@@ -270,9 +270,9 @@ export class PythonAgentBridge extends EventEmitter {
 
 			const repoRoot = findRepoRoot();
 			const pythonPathParts = [
-				path.resolve(repoRoot, "packages/python-agents"),
+				path.resolve(repoRoot, 'packages/python-agents'),
 			];
-			const existingPyPath = process.env.PYTHONPATH || "";
+			const existingPyPath = process.env.PYTHONPATH || '';
 			if (existingPyPath) pythonPathParts.push(existingPyPath);
 			const modulePath = pythonPathParts.join(path.delimiter);
 
@@ -283,19 +283,19 @@ export class PythonAgentBridge extends EventEmitter {
 			});
 
 			// Handle process startup
-			this.pythonProcess.on("spawn", () => {
-				this.logger.info("Python agent process spawned successfully");
+			this.pythonProcess.on('spawn', () => {
+				this.logger.info('Python agent process spawned successfully');
 				this.setupProcessHandlers();
 				resolve();
 			});
 
-			this.pythonProcess.on("error", (error) => {
-				this.logger.error("Python agent process error", { error });
+			this.pythonProcess.on('error', (error) => {
+				this.logger.error('Python agent process error', { error });
 				reject(error);
 			});
 
 			// Handle process exit during startup
-			this.pythonProcess.on("exit", (code, signal) => {
+			this.pythonProcess.on('exit', (code, signal) => {
 				if (!this.isInitialized) {
 					reject(
 						new Error(
@@ -311,66 +311,66 @@ export class PythonAgentBridge extends EventEmitter {
 		if (!this.pythonProcess) return;
 
 		// Handle stdout messages
-		this.pythonProcess.stdout?.on("data", (data) => {
+		this.pythonProcess.stdout?.on('data', (data) => {
 			const output = data.toString();
-			const lines = output.split("\n").filter((line: string) => line.trim());
+			const lines = output.split('\n').filter((line: string) => line.trim());
 
 			for (const line of lines) {
-				if (line.startsWith("PYTHON_BRIDGE:")) {
+				if (line.startsWith('PYTHON_BRIDGE:')) {
 					try {
-						const messageJson = line.replace("PYTHON_BRIDGE:", "").trim();
+						const messageJson = line.replace('PYTHON_BRIDGE:', '').trim();
 						const message: AgentBridgeMessage = JSON.parse(messageJson);
 						this.handlePythonMessage(message);
 					} catch (error) {
-						this.logger.error("Failed to parse Python message", {
+						this.logger.error('Failed to parse Python message', {
 							line,
 							error,
 						});
 					}
 				} else {
 					// Regular Python output (for debugging)
-					this.logger.debug("Python output", { output: line });
+					this.logger.debug('Python output', { output: line });
 				}
 			}
 		});
 
 		// Handle stderr
-		this.pythonProcess.stderr?.on("data", (data) => {
+		this.pythonProcess.stderr?.on('data', (data) => {
 			const error = data.toString();
-			this.logger.warn("Python stderr", { error });
+			this.logger.warn('Python stderr', { error });
 		});
 
 		// Handle process exit
-		this.pythonProcess.on("exit", (code, signal) => {
-			this.logger.info("Python agent process exited", { code, signal });
+		this.pythonProcess.on('exit', (code, signal) => {
+			this.logger.info('Python agent process exited', { code, signal });
 			this.isInitialized = false;
 			this.cleanupPendingOperations();
-			this.emit("processExit", { code, signal });
+			this.emit('processExit', { code, signal });
 		});
 
 		// Handle process close
-		this.pythonProcess.on("close", (code, signal) => {
-			this.logger.info("Python agent process closed", { code, signal });
+		this.pythonProcess.on('close', (code, signal) => {
+			this.logger.info('Python agent process closed', { code, signal });
 			this.pythonProcess = null;
 		});
 	}
 
 	private handlePythonMessage(message: AgentBridgeMessage): void {
-		this.logger.info("Received message from Python", { message });
+		this.logger.info('Received message from Python', { message });
 		const { type, payload } = message;
 
 		switch (type) {
-			case "result":
+			case 'result':
 				this.handleTaskResult(payload);
 				break;
-			case "error":
+			case 'error':
 				this.handleTaskError(payload);
 				break;
-			case "query_response":
+			case 'query_response':
 				this.handleQueryResponse(payload);
 				break;
 			default:
-				this.logger.warn("Unknown message type from Python", { type, payload });
+				this.logger.warn('Unknown message type from Python', { type, payload });
 		}
 	}
 
@@ -378,11 +378,11 @@ export class PythonAgentBridge extends EventEmitter {
 		coordinationId?: string;
 		result?: AgentTaskResult;
 	}): void {
-		this.logger.info("Handling task result", { payload });
+		this.logger.info('Handling task result', { payload });
 		const { coordinationId, result } = payload;
 
 		if (!coordinationId || !result) {
-			this.logger.warn("Malformed task result payload", { payload });
+			this.logger.warn('Malformed task result payload', { payload });
 			return;
 		}
 
@@ -392,7 +392,7 @@ export class PythonAgentBridge extends EventEmitter {
 			this.pendingTasks.delete(coordinationId);
 			pendingTask.resolve(result);
 		} else {
-			this.logger.warn("Received result for unknown coordination ID", {
+			this.logger.warn('Received result for unknown coordination ID', {
 				coordinationId,
 			});
 		}
@@ -403,10 +403,10 @@ export class PythonAgentBridge extends EventEmitter {
 		error?: string;
 	}): void {
 		const coordinationId = payload.coordinationId;
-		const error = payload.error ?? "Unknown error from Python agent";
+		const error = payload.error ?? 'Unknown error from Python agent';
 
 		if (!coordinationId) {
-			this.logger.warn("Received error without coordination ID", { payload });
+			this.logger.warn('Received error without coordination ID', { payload });
 			return;
 		}
 
@@ -416,7 +416,7 @@ export class PythonAgentBridge extends EventEmitter {
 			this.pendingTasks.delete(coordinationId);
 			pendingTask.reject(new Error(error));
 		} else {
-			this.logger.warn("Received error for unknown coordination ID", {
+			this.logger.warn('Received error for unknown coordination ID', {
 				coordinationId,
 				error,
 			});
@@ -431,7 +431,7 @@ export class PythonAgentBridge extends EventEmitter {
 		const data = payload.data;
 
 		if (!queryId) {
-			this.logger.warn("Received query response without query ID", { payload });
+			this.logger.warn('Received query response without query ID', { payload });
 			return;
 		}
 
@@ -441,7 +441,7 @@ export class PythonAgentBridge extends EventEmitter {
 			this.pendingQueries.delete(queryId);
 			pendingQuery.resolve(data);
 		} else {
-			this.logger.warn("Received query response for unknown query ID", {
+			this.logger.warn('Received query response for unknown query ID', {
 				queryId,
 			});
 		}
@@ -449,15 +449,15 @@ export class PythonAgentBridge extends EventEmitter {
 
 	private sendMessageToPython(message: unknown): void {
 		if (!this.pythonProcess?.stdin) {
-			throw new Error("Python process not available");
+			throw new Error('Python process not available');
 		}
 
 		try {
 			const messageJson = JSON.stringify(message as Record<string, unknown>);
 			this.pythonProcess.stdin.write(`${messageJson}\n`);
-			this.logger.debug("Sent message to Python", { message });
+			this.logger.debug('Sent message to Python', { message });
 		} catch (error) {
-			this.logger.error("Failed to send message to Python", { error });
+			this.logger.error('Failed to send message to Python', { error });
 			throw error;
 		}
 	}
@@ -466,14 +466,14 @@ export class PythonAgentBridge extends EventEmitter {
 		// Clean up pending tasks
 		for (const [_coordinationId, pendingTask] of this.pendingTasks) {
 			clearTimeout(pendingTask.timeout);
-			pendingTask.reject(new Error("Python agent bridge shutdown"));
+			pendingTask.reject(new Error('Python agent bridge shutdown'));
 		}
 		this.pendingTasks.clear();
 
 		// Clean up pending queries
 		for (const [_queryId, pendingQuery] of this.pendingQueries) {
 			clearTimeout(pendingQuery.timeout);
-			pendingQuery.reject(new Error("Python agent bridge shutdown"));
+			pendingQuery.reject(new Error('Python agent bridge shutdown'));
 		}
 		this.pendingQueries.clear();
 	}

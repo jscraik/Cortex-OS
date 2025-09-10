@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Validation schemas for different types of input
 export const idSchema = z
@@ -59,14 +59,14 @@ export const validateNeo4jInput = {
 // Command execution validation
 export const validateCommandInput = {
 	docker: (command: string[]) => {
-		const allowedSubcommands = ["ps", "images", "inspect", "logs"];
+		const allowedSubcommands = ['ps', 'images', 'inspect', 'logs'];
 
 		if (command.length < 2) {
-			return { success: false, error: "Invalid command format" };
+			return { success: false, error: 'Invalid command format' };
 		}
 
-		if (command[0] !== "docker") {
-			return { success: false, error: "Only docker commands are allowed" };
+		if (command[0] !== 'docker') {
+			return { success: false, error: 'Only docker commands are allowed' };
 		}
 
 		if (!allowedSubcommands.includes(command[1])) {
@@ -78,7 +78,7 @@ export const validateCommandInput = {
 
 		for (let i = 2; i < command.length; i++) {
 			const param = command[i];
-			if (param.startsWith("-")) continue;
+			if (param.startsWith('-')) continue;
 
 			const containerIdSchema = z
 				.string()
@@ -96,12 +96,12 @@ export const validateCommandInput = {
 
 	generic: (command: string[]) => {
 		if (command.length === 0) {
-			return { success: false, error: "Command cannot be empty" };
+			return { success: false, error: 'Command cannot be empty' };
 		}
 
 		for (const part of command) {
 			if (part.length > 1000) {
-				return { success: false, error: "Argument too long" };
+				return { success: false, error: 'Argument too long' };
 			}
 
 			if (/[;&|`$(){}[\]<>]/.test(part)) {

@@ -1,18 +1,18 @@
 'use client';
 
-import React from 'react';
+import type React from 'react';
 import MarkdownTokens from './MarkdownTokens';
 
 interface MarkdownProps {
-  content: string;
+	content: string;
 }
 
 const Markdown: React.FC<MarkdownProps> = ({ content }) => {
-  return (
-    <div className="markdown-content">
-      <MarkdownTokens content={content} />
-    </div>
-  );
+	return (
+		<div className="markdown-content">
+			<MarkdownTokens content={content} />
+		</div>
+	);
 };
 
 export default Markdown;

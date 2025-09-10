@@ -1,30 +1,30 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 
-vi.mock("@cortex-os/telemetry");
+vi.mock('@cortex-os/telemetry');
 
 import {
 	extractTrustDomain,
 	extractWorkloadPath,
 	generateNonce,
 	isCertificateExpired,
-} from "./security-utils.ts";
+} from './security-utils.ts';
 
-describe("SPIFFE helpers", () => {
-	it("extracts trust domain and workload path", () => {
-		const id = "spiffe://example.org/my/service";
-		expect(extractTrustDomain(id)).toBe("example.org");
-		expect(extractWorkloadPath(id)).toBe("/my/service");
+describe('SPIFFE helpers', () => {
+	it('extracts trust domain and workload path', () => {
+		const id = 'spiffe://example.org/my/service';
+		expect(extractTrustDomain(id)).toBe('example.org');
+		expect(extractWorkloadPath(id)).toBe('/my/service');
 	});
 
-	it("returns null for invalid ID", () => {
-		expect(extractTrustDomain("invalid")).toBeNull();
-		expect(extractWorkloadPath("invalid")).toBeNull();
+	it('returns null for invalid ID', () => {
+		expect(extractTrustDomain('invalid')).toBeNull();
+		expect(extractWorkloadPath('invalid')).toBeNull();
 	});
 });
 
-describe("generateNonce", () => {
-	it("uses crypto.getRandomValues", () => {
-		const spy = vi.spyOn(global.crypto, "getRandomValues");
+describe('generateNonce', () => {
+	it('uses crypto.getRandomValues', () => {
+		const spy = vi.spyOn(global.crypto, 'getRandomValues');
 		const nonce = generateNonce(16);
 		expect(nonce).toHaveLength(32);
 		expect(spy).toHaveBeenCalled();
@@ -32,7 +32,7 @@ describe("generateNonce", () => {
 	});
 });
 
-describe("isCertificateExpired", () => {
+describe('isCertificateExpired', () => {
 	vi.useFakeTimers();
 	const validCert = `-----BEGIN CERTIFICATE-----
 MIIBpzCCARCgAwIBAgIUEBg4HaIqwHHPmviDSN5sDG63AcwwDQYJKoZIhvcNAQEL
@@ -57,13 +57,13 @@ AQELBQADgYEAGkwghltyXDd4wWuRpMtTpMB9nqwjveNBTvusArwT+qT8vyFDEmb3
 ozHeorRz4QAb+p1vUVGTroH0XMHgJAEw/05UcQJwV/zvbsJeLoXi6JM=
 -----END CERTIFICATE-----`;
 
-	it("detects valid certificate", () => {
-		vi.setSystemTime(new Date("2025-08-29T00:00:00Z"));
+	it('detects valid certificate', () => {
+		vi.setSystemTime(new Date('2025-08-29T00:00:00Z'));
 		expect(isCertificateExpired(validCert)).toBe(false);
 	});
 
-	it("detects expired certificate", () => {
-		vi.setSystemTime(new Date("2025-08-30T01:00:00Z"));
+	it('detects expired certificate', () => {
+		vi.setSystemTime(new Date('2025-08-30T01:00:00Z'));
 		expect(isCertificateExpired(expiredCert)).toBe(true);
 	});
 	vi.useRealTimers();

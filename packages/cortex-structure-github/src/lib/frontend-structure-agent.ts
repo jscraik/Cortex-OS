@@ -3,19 +3,19 @@
  * Specialized analysis for React, Vue, Angular, and other frontend frameworks
  */
 
-import * as path from "path";
+import * as path from 'path';
 
 export interface FrontendStructureConfig {
-	framework: "react" | "vue" | "angular" | "next" | "nuxt" | "svelte" | "auto";
-	componentConvention: "PascalCase" | "kebab-case" | "camelCase";
+	framework: 'react' | 'vue' | 'angular' | 'next' | 'nuxt' | 'svelte' | 'auto';
+	componentConvention: 'PascalCase' | 'kebab-case' | 'camelCase';
 	fileExtensions: string[];
 	enforceBarrelExports: boolean;
 	maxComponentSize: number; // lines
 }
 
 export interface FrontendViolation {
-	type: "component" | "hook" | "utils" | "styles" | "assets" | "routing";
-	severity: "error" | "warning" | "info";
+	type: 'component' | 'hook' | 'utils' | 'styles' | 'assets' | 'routing';
+	severity: 'error' | 'warning' | 'info';
 	file: string;
 	line?: number;
 	message: string;
@@ -48,32 +48,32 @@ export interface FrontendAnalysisResult {
 
 const _FRONTEND_RULES = {
 	react: {
-		componentDirs: ["src/components", "components", "src/pages", "pages"],
-		hookDirs: ["src/hooks", "hooks"],
-		utilDirs: ["src/utils", "utils", "src/lib", "lib"],
-		styleDirs: ["src/styles", "styles", "src/css", "css"],
-		assetDirs: ["src/assets", "assets", "public"],
-		componentExtensions: [".tsx", ".jsx"],
+		componentDirs: ['src/components', 'components', 'src/pages', 'pages'],
+		hookDirs: ['src/hooks', 'hooks'],
+		utilDirs: ['src/utils', 'utils', 'src/lib', 'lib'],
+		styleDirs: ['src/styles', 'styles', 'src/css', 'css'],
+		assetDirs: ['src/assets', 'assets', 'public'],
+		componentExtensions: ['.tsx', '.jsx'],
 		hookPattern: /^use[A-Z][a-zA-Z]*$/,
 		componentPattern: /^[A-Z][a-zA-Z]*$/,
 	},
 	vue: {
-		componentDirs: ["src/components", "components"],
-		hookDirs: ["src/composables", "composables"],
-		utilDirs: ["src/utils", "utils"],
-		styleDirs: ["src/styles", "styles"],
-		assetDirs: ["src/assets", "assets", "public"],
-		componentExtensions: [".vue"],
+		componentDirs: ['src/components', 'components'],
+		hookDirs: ['src/composables', 'composables'],
+		utilDirs: ['src/utils', 'utils'],
+		styleDirs: ['src/styles', 'styles'],
+		assetDirs: ['src/assets', 'assets', 'public'],
+		componentExtensions: ['.vue'],
 		componentPattern: /^[A-Z][a-zA-Z]*$/,
 	},
 	angular: {
-		componentDirs: ["src/app/components", "src/app"],
-		serviceDirs: ["src/app/services"],
-		utilDirs: ["src/app/utils", "src/app/shared"],
-		styleDirs: ["src/styles"],
-		assetDirs: ["src/assets"],
-		componentExtensions: [".component.ts"],
-		serviceExtensions: [".service.ts"],
+		componentDirs: ['src/app/components', 'src/app'],
+		serviceDirs: ['src/app/services'],
+		utilDirs: ['src/app/utils', 'src/app/shared'],
+		styleDirs: ['src/styles'],
+		assetDirs: ['src/assets'],
+		componentExtensions: ['.component.ts'],
+		serviceExtensions: ['.service.ts'],
 	},
 };
 
@@ -84,7 +84,7 @@ export async function analyzeFrontendStructure(
 	const detectedFramework = await detectFramework(repoPath);
 	const finalConfig: FrontendStructureConfig = {
 		framework: config.framework || detectedFramework,
-		componentConvention: config.componentConvention || "PascalCase",
+		componentConvention: config.componentConvention || 'PascalCase',
 		fileExtensions:
 			config.fileExtensions || getDefaultExtensions(detectedFramework),
 		enforceBarrelExports: config.enforceBarrelExports ?? true,
@@ -128,10 +128,10 @@ export async function analyzeFrontendStructure(
 async function detectFramework(repoPath: string): Promise<string> {
 	// Check package.json for framework dependencies
 	try {
-		const packageJsonPath = path.join(repoPath, "package.json");
+		const packageJsonPath = path.join(repoPath, 'package.json');
 		const packageJson = JSON.parse(
-			await import("node:fs").then((fs) =>
-				fs.promises.readFile(packageJsonPath, "utf-8"),
+			await import('node:fs').then((fs) =>
+				fs.promises.readFile(packageJsonPath, 'utf-8'),
 			),
 		);
 
@@ -140,33 +140,33 @@ async function detectFramework(repoPath: string): Promise<string> {
 			...packageJson.devDependencies,
 		};
 
-		if (dependencies["@angular/core"]) return "angular";
-		if (dependencies.next) return "next";
-		if (dependencies.nuxt) return "nuxt";
-		if (dependencies.vue) return "vue";
-		if (dependencies.svelte) return "svelte";
-		if (dependencies.react) return "react";
+		if (dependencies['@angular/core']) return 'angular';
+		if (dependencies.next) return 'next';
+		if (dependencies.nuxt) return 'nuxt';
+		if (dependencies.vue) return 'vue';
+		if (dependencies.svelte) return 'svelte';
+		if (dependencies.react) return 'react';
 
-		return "auto";
+		return 'auto';
 	} catch {
-		return "auto";
+		return 'auto';
 	}
 }
 
 function getDefaultExtensions(framework: string): string[] {
 	switch (framework) {
-		case "react":
-		case "next":
-			return [".tsx", ".jsx", ".ts", ".js"];
-		case "vue":
-		case "nuxt":
-			return [".vue", ".ts", ".js"];
-		case "angular":
-			return [".component.ts", ".service.ts", ".module.ts"];
-		case "svelte":
-			return [".svelte", ".ts", ".js"];
+		case 'react':
+		case 'next':
+			return ['.tsx', '.jsx', '.ts', '.js'];
+		case 'vue':
+		case 'nuxt':
+			return ['.vue', '.ts', '.js'];
+		case 'angular':
+			return ['.component.ts', '.service.ts', '.module.ts'];
+		case 'svelte':
+			return ['.svelte', '.ts', '.js'];
 		default:
-			return [".tsx", ".jsx", ".vue", ".ts", ".js"];
+			return ['.tsx', '.jsx', '.vue', '.ts', '.js'];
 	}
 }
 
@@ -202,7 +202,7 @@ async function analyzeHooks(
 		unusedHooks: [] as string[],
 	};
 
-	if (config.framework === "react" || config.framework === "next") {
+	if (config.framework === 'react' || config.framework === 'next') {
 		// Scan for hook files and validate naming patterns
 		// Check for unused hooks
 		// Validate hook placement
@@ -224,16 +224,16 @@ async function analyzeRouting(
 
 	// Framework-specific routing analysis
 	switch (config.framework) {
-		case "next":
+		case 'next':
 			// Analyze pages/ or app/ directory structure
 			break;
-		case "nuxt":
+		case 'nuxt':
 			// Analyze pages/ directory
 			break;
-		case "react":
+		case 'react':
 			// Look for react-router setup
 			break;
-		case "vue":
+		case 'vue':
 			// Look for vue-router setup
 			break;
 	}
@@ -248,11 +248,11 @@ function calculateFrontendScore(violations: FrontendViolation[]): number {
 
 	const penalty = violations.reduce((total, violation) => {
 		switch (violation.severity) {
-			case "error":
+			case 'error':
 				return total + errorWeight;
-			case "warning":
+			case 'warning':
 				return total + warningWeight;
-			case "info":
+			case 'info':
 				return total + infoWeight;
 			default:
 				return total;
@@ -268,9 +268,9 @@ function generateFrontendRecommendations(
 ): string[] {
 	const recommendations: string[] = [];
 
-	const errorCount = violations.filter((v) => v.severity === "error").length;
+	const errorCount = violations.filter((v) => v.severity === 'error').length;
 	const warningCount = violations.filter(
-		(v) => v.severity === "warning",
+		(v) => v.severity === 'warning',
 	).length;
 
 	if (errorCount > 0) {
@@ -317,19 +317,19 @@ async function applyFrontendFix(
 ): Promise<void> {
 	// Implementation would apply specific fixes based on violation type
 	switch (violation.type) {
-		case "component":
+		case 'component':
 			// Fix component naming, move files, etc.
 			break;
-		case "hook":
+		case 'hook':
 			// Fix hook naming, move files, etc.
 			break;
-		case "utils":
+		case 'utils':
 			// Organize utility functions
 			break;
-		case "styles":
+		case 'styles':
 			// Organize CSS/styling files
 			break;
-		case "routing":
+		case 'routing':
 			// Fix routing structure
 			break;
 	}

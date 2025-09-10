@@ -61,5 +61,8 @@
 	"sonarlint.connectedMode.project": {
 		"connectionId": "jamiescottcraik",
 		"projectKey": "jamiescottcraik_cortex-os"
+	},
+	"[markdown]": {
+		"editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
 	}
 }

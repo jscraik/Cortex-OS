@@ -60,4 +60,3 @@ prometheus.remote_write "metrics_service" {
     }
   }
 }
-

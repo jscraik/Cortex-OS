@@ -1,7 +1,7 @@
-import { vi } from "vitest";
+import { vi } from 'vitest';
 
 const mockSpan = {
-	spanContext: () => ({ traceId: "trace-id", spanId: "span-id" }),
+	spanContext: () => ({ traceId: 'trace-id', spanId: 'span-id' }),
 	setAttributes: vi.fn(),
 	setStatus: vi.fn(),
 	recordException: vi.fn(),

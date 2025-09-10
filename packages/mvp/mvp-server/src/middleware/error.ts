@@ -1,5 +1,5 @@
-import { AppError, problems } from "@cortex-os/mvp-core";
-import type { FastifyError, FastifyPluginCallback } from "fastify";
+import { AppError, problems } from '@cortex-os/mvp-core';
+import type { FastifyError, FastifyPluginCallback } from 'fastify';
 
 export const registerErrorHandler: FastifyPluginCallback = (
 	app,
@@ -7,14 +7,14 @@ export const registerErrorHandler: FastifyPluginCallback = (
 	done,
 ) => {
 	app.setErrorHandler((err: FastifyError, _req, reply) => {
-		console.log("Error handler called:", err);
+		console.log('Error handler called:', err);
 		const p =
 			err instanceof AppError
 				? err.problem
 				: problems.internal(
-						process.env.NODE_ENV === "development" ? err.message : undefined,
+						process.env.NODE_ENV === 'development' ? err.message : undefined,
 					);
-		reply.code(p.status).type("application/problem+json").send(p);
+		reply.code(p.status).type('application/problem+json').send(p);
 	});
 	done();
 };

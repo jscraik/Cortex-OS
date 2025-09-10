@@ -1,4 +1,4 @@
-import type { Embedder } from "../ports/Embedder.js";
+import type { Embedder } from '../ports/Embedder.js';
 
 /**
  * NoopEmbedder returns empty vectors for all inputs.
@@ -6,7 +6,7 @@ import type { Embedder } from "../ports/Embedder.js";
  */
 export class NoopEmbedder implements Embedder {
 	name(): string {
-		return "noop";
+		return 'noop';
 	}
 
 	async embed(texts: string[]): Promise<number[][]> {

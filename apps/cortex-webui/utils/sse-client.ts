@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * Minimal SSE helper that supports auth via token query param.
@@ -14,7 +14,7 @@ export function openSSE(
 ) {
 	let withToken = url;
 	if (opts?.token) {
-		const sep = url.includes("?") ? "&" : "?";
+		const sep = url.includes('?') ? '&' : '?';
 		const qp = `token=${encodeURIComponent(opts.token)}`;
 		withToken = `${url}${sep}${qp}`;
 	}

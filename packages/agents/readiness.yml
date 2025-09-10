@@ -1,9 +1,9 @@
 package: "@cortex-os/agents"
 coverage:
-  statements: 0
-  branches: 0
-  functions: 0
-  lines: 0
+  statements: 50
+  branches: 60
+  functions: 60
+  lines: 50
 checklist:
   tdd: false
   contracts: false
@@ -13,7 +13,7 @@ checklist:
   architecture: false
   reliability: false
 thresholds:
-  statements: 0
-  branches: 0
-  functions: 0
-  lines: 0
+  statements: 50
+  branches: 60
+  functions: 60
+  lines: 50

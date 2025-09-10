@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { GitHubRepositorySchema, GitHubUserSchema } from "./repository";
+import { z } from 'zod';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Workflow Commit Schema
 export const WorkflowCommitSchema = z.object({
@@ -22,16 +22,16 @@ export type WorkflowCommit = z.infer<typeof WorkflowCommitSchema>;
 // Workflow Job Step Schema
 export const WorkflowStepSchema = z.object({
 	name: z.string(),
-	status: z.enum(["queued", "in_progress", "completed"]),
+	status: z.enum(['queued', 'in_progress', 'completed']),
 	conclusion: z
 		.enum([
-			"success",
-			"failure",
-			"neutral",
-			"cancelled",
-			"timed_out",
-			"action_required",
-			"skipped",
+			'success',
+			'failure',
+			'neutral',
+			'cancelled',
+			'timed_out',
+			'action_required',
+			'skipped',
 		])
 		.nullable(),
 	number: z.number(),
@@ -53,16 +53,16 @@ export const WorkflowJobSchema = z.object({
 	head_sha: z.string(),
 	url: z.string().url(),
 	html_url: z.string().url(),
-	status: z.enum(["queued", "in_progress", "completed"]),
+	status: z.enum(['queued', 'in_progress', 'completed']),
 	conclusion: z
 		.enum([
-			"success",
-			"failure",
-			"neutral",
-			"cancelled",
-			"timed_out",
-			"action_required",
-			"skipped",
+			'success',
+			'failure',
+			'neutral',
+			'cancelled',
+			'timed_out',
+			'action_required',
+			'skipped',
 		])
 		.nullable(),
 	created_at: z.string().datetime(),
@@ -99,16 +99,16 @@ export const WorkflowRunSchema = z.object({
 	display_title: z.string(),
 	run_number: z.number(),
 	event: z.string(),
-	status: z.enum(["queued", "in_progress", "completed"]),
+	status: z.enum(['queued', 'in_progress', 'completed']),
 	conclusion: z
 		.enum([
-			"success",
-			"failure",
-			"neutral",
-			"cancelled",
-			"timed_out",
-			"action_required",
-			"stale",
+			'success',
+			'failure',
+			'neutral',
+			'cancelled',
+			'timed_out',
+			'action_required',
+			'stale',
 		])
 		.nullable(),
 	workflow_id: z.number(),
@@ -140,12 +140,12 @@ export type WorkflowRun = z.infer<typeof WorkflowRunSchema>;
 
 // Workflow Action Types
 export const WorkflowActionSchema = z.enum([
-	"started",
-	"completed",
-	"cancelled",
-	"failed",
-	"requested",
-	"in_progress",
+	'started',
+	'completed',
+	'cancelled',
+	'failed',
+	'requested',
+	'in_progress',
 ]);
 
 export type WorkflowAction = z.infer<typeof WorkflowActionSchema>;
@@ -153,8 +153,8 @@ export type WorkflowAction = z.infer<typeof WorkflowActionSchema>;
 // Workflow Event Schema
 export const WorkflowEventSchema = z.object({
 	event_id: z.string().uuid(),
-	event_type: z.literal("github.workflow"),
-	source: z.literal("github-client"),
+	event_type: z.literal('github.workflow'),
+	source: z.literal('github-client'),
 	timestamp: z.string().datetime(),
 
 	// Event-specific data
@@ -175,12 +175,12 @@ export type WorkflowEvent = z.infer<typeof WorkflowEventSchema>;
 
 // Workflow Event Topics Mapping
 export const WORKFLOW_EVENT_TOPICS = {
-	started: "github.workflow.started",
-	completed: "github.workflow.completed",
-	cancelled: "github.workflow.cancelled",
-	failed: "github.workflow.failed",
-	requested: "github.workflow.requested",
-	in_progress: "github.workflow.in_progress",
+	started: 'github.workflow.started',
+	completed: 'github.workflow.completed',
+	cancelled: 'github.workflow.cancelled',
+	failed: 'github.workflow.failed',
+	requested: 'github.workflow.requested',
+	in_progress: 'github.workflow.in_progress',
 } as const;
 
 // Validation Functions
@@ -202,7 +202,7 @@ export function createWorkflowEvent(
 		jobs?: WorkflowJob[];
 		triggeringEvent?: string;
 	},
-): Omit<WorkflowEvent, "event_id" | "timestamp"> {
+): Omit<WorkflowEvent, 'event_id' | 'timestamp'> {
 	const duration =
 		workflowRun.run_started_at && workflowRun.updated_at
 			? (new Date(workflowRun.updated_at).getTime() -
@@ -211,8 +211,8 @@ export function createWorkflowEvent(
 			: null;
 
 	return {
-		event_type: "github.workflow",
-		source: "github-client",
+		event_type: 'github.workflow',
+		source: 'github-client',
 		action,
 		workflow_run: workflowRun,
 		repository,
@@ -228,10 +228,10 @@ export function createWorkflowEvent(
 			actor_id: actor.id.toString(),
 			actor_login: actor.login,
 			workflow_status: workflowRun.status,
-			workflow_conclusion: workflowRun.conclusion ?? "null",
+			workflow_conclusion: workflowRun.conclusion ?? 'null',
 			workflow_event: workflowRun.event,
-			workflow_branch: workflowRun.head_branch ?? "null",
-			workflow_duration_seconds: duration?.toString() ?? "null",
+			workflow_branch: workflowRun.head_branch ?? 'null',
+			workflow_duration_seconds: duration?.toString() ?? 'null',
 			workflow_attempt: workflowRun.run_attempt.toString(),
 		},
 	};
@@ -243,23 +243,23 @@ export function getWorkflowEventTopic(action: WorkflowAction): string {
 
 // Workflow Helper Functions
 export function isWorkflowRunning(run: WorkflowRun): boolean {
-	return run.status === "queued" || run.status === "in_progress";
+	return run.status === 'queued' || run.status === 'in_progress';
 }
 
 export function isWorkflowCompleted(run: WorkflowRun): boolean {
-	return run.status === "completed";
+	return run.status === 'completed';
 }
 
 export function isWorkflowSuccessful(run: WorkflowRun): boolean {
-	return run.status === "completed" && run.conclusion === "success";
+	return run.status === 'completed' && run.conclusion === 'success';
 }
 
 export function isWorkflowFailed(run: WorkflowRun): boolean {
 	return (
-		run.status === "completed" &&
-		(run.conclusion === "failure" ||
-			run.conclusion === "cancelled" ||
-			run.conclusion === "timed_out")
+		run.status === 'completed' &&
+		(run.conclusion === 'failure' ||
+			run.conclusion === 'cancelled' ||
+			run.conclusion === 'timed_out')
 	);
 }
 
@@ -280,15 +280,15 @@ export function getWorkflowDurationInMinutes(run: WorkflowRun): number | null {
 
 // Workflow Job Helpers
 export function getFailedJobs(jobs: WorkflowJob[]): WorkflowJob[] {
-	return jobs.filter((job) => job.conclusion === "failure");
+	return jobs.filter((job) => job.conclusion === 'failure');
 }
 
 export function getSuccessfulJobs(jobs: WorkflowJob[]): WorkflowJob[] {
-	return jobs.filter((job) => job.conclusion === "success");
+	return jobs.filter((job) => job.conclusion === 'success');
 }
 
 export function getRunningJobs(jobs: WorkflowJob[]): WorkflowJob[] {
-	return jobs.filter((job) => job.status === "in_progress");
+	return jobs.filter((job) => job.status === 'in_progress');
 }
 
 export function getJobDurationInSeconds(job: WorkflowJob): number | null {
@@ -303,11 +303,11 @@ export function getJobDurationInSeconds(job: WorkflowJob): number | null {
 
 // Workflow Step Helpers
 export function getFailedSteps(job: WorkflowJob): WorkflowStep[] {
-	return job.steps.filter((step) => step.conclusion === "failure");
+	return job.steps.filter((step) => step.conclusion === 'failure');
 }
 
 export function getSuccessfulSteps(job: WorkflowJob): WorkflowStep[] {
-	return job.steps.filter((step) => step.conclusion === "success");
+	return job.steps.filter((step) => step.conclusion === 'success');
 }
 
 // Workflow Run Analysis
@@ -327,10 +327,10 @@ export function analyzeWorkflowRun(
 ): WorkflowRunAnalysis {
 	const analysis: WorkflowRunAnalysis = {
 		totalJobs: jobs?.length ?? 0,
-		successfulJobs: jobs?.filter((j) => j.conclusion === "success").length ?? 0,
-		failedJobs: jobs?.filter((j) => j.conclusion === "failure").length ?? 0,
+		successfulJobs: jobs?.filter((j) => j.conclusion === 'success').length ?? 0,
+		failedJobs: jobs?.filter((j) => j.conclusion === 'failure').length ?? 0,
 		cancelledJobs:
-			jobs?.filter((j) => j.conclusion === "cancelled").length ?? 0,
+			jobs?.filter((j) => j.conclusion === 'cancelled').length ?? 0,
 		duration: getWorkflowDurationInSeconds(run),
 		successRate: 0,
 		failureReasons: [],

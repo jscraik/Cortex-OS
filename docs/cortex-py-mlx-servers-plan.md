@@ -6,10 +6,8 @@ The `apps/cortex-py` package will ship with host-native MLX model servers that m
 
 ## Engineering Principles
 
-- **TDD Workflow**: write a failing test, implement minimal code to pass, refactor with tests green.
-- **Small Commits**: each commit addresses a single requirement and contains both tests and implementation.
-- **Quality Gates**: run `pre-commit run --files <changed>` and `pnpm test` for code changes or `pnpm docs:lint` for docs.
-- **Security**: include thermal and memory guard coverage and avoid unchecked resource usage.
+  Optionally, use `pnpm biome:staged` (staged format/lint) and `pnpm test:safe` (quick tests) locally.
+  Husky hooks run automatically on commit.
 
 ## Staged Implementation
 

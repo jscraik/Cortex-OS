@@ -3,13 +3,14 @@
  * Updates GitHub comments in real-time to show task progress
  */
 
-import { Octokit } from "@octokit/rest";
+import { Octokit } from '@octokit/rest';
+import { randomUUID } from 'node:crypto';
 
 export interface ProgressStep {
 	step: number;
 	totalSteps: number;
 	title: string;
-	status: "pending" | "running" | "completed" | "error";
+	status: 'pending' | 'running' | 'completed' | 'error';
 	details?: string;
 	startTime?: Date;
 	endTime?: Date;
@@ -23,13 +24,20 @@ export interface ProgressState {
 	steps: ProgressStep[];
 	startTime: Date;
 	endTime?: Date;
-	status: "running" | "completed" | "error";
+	status: 'running' | 'completed' | 'error';
 }
 
+type RepoRef = { owner: { login: string }; name: string };
+type GitHubPayloadLike = {
+	repository: RepoRef;
+	issue?: { number: number };
+	pull_request?: { number: number };
+};
+
 export class LiveProgressUpdater {
-	private octokit: Octokit;
-	private activeProgress = new Map<string, ProgressState>();
-	private cleanupInterval: NodeJS.Timeout;
+	private readonly octokit: Octokit;
+	private readonly activeProgress = new Map<string, ProgressState>();
+	private readonly cleanupInterval: NodeJS.Timeout;
 	private readonly MAX_ACTIVE_TASKS = 100;
 	private readonly STALE_TASK_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -50,7 +58,7 @@ export class LiveProgressUpdater {
 	 * Start a new progress tracking session
 	 */
 	async startProgress(
-		payload: any,
+		payload: GitHubPayloadLike,
 		taskType: string,
 		user: string,
 		steps: Array<{ title: string; details?: string }>,
@@ -65,7 +73,7 @@ export class LiveProgressUpdater {
 			step: index + 1,
 			totalSteps: steps.length,
 			title: step.title,
-			status: "pending" as const,
+			status: 'pending' as const,
 			details: step.details,
 		}));
 
@@ -76,14 +84,14 @@ export class LiveProgressUpdater {
 			taskType,
 			steps: progressSteps,
 			startTime: new Date(),
-			status: "running",
+			status: 'running',
 		});
 
 		try {
 			const comment = await this.octokit.rest.issues.createComment({
 				owner,
 				repo,
-				issue_number: issueNumber,
+				issue_number: issueNumber as number,
 				body: initialComment,
 			});
 
@@ -95,17 +103,17 @@ export class LiveProgressUpdater {
 				taskType,
 				steps: progressSteps,
 				startTime: new Date(),
-				status: "running",
+				status: 'running',
 			};
 
 			this.activeProgress.set(taskId, progressState);
 
 			// Start first step
-			await this.updateStepStatus(taskId, 1, "running");
+			await this.updateStepStatus(taskId, 1, 'running');
 
 			return taskId;
 		} catch (error) {
-			console.error("Error creating progress comment:", error);
+			console.error('Error creating progress comment:', error);
 			throw error;
 		}
 	}
@@ -116,7 +124,7 @@ export class LiveProgressUpdater {
 	async updateStepStatus(
 		taskId: string,
 		stepNumber: number,
-		status: "pending" | "running" | "completed" | "error",
+		status: 'pending' | 'running' | 'completed' | 'error',
 		details?: string,
 	): Promise<void> {
 		const progressState = this.activeProgress.get(taskId);
@@ -135,18 +143,18 @@ export class LiveProgressUpdater {
 		step.status = status;
 		if (details) step.details = details;
 
-		if (status === "running") {
+		if (status === 'running') {
 			step.startTime = new Date();
-		} else if (status === "completed" || status === "error") {
+		} else if (status === 'completed' || status === 'error') {
 			step.endTime = new Date();
 
 			// Auto-start next step if current step completed successfully
-			if (status === "completed" && stepNumber < progressState.steps.length) {
+			if (status === 'completed' && stepNumber < progressState.steps.length) {
 				const nextStep = progressState.steps.find(
 					(s) => s.step === stepNumber + 1,
 				);
 				if (nextStep) {
-					nextStep.status = "running";
+					nextStep.status = 'running';
 					nextStep.startTime = new Date();
 				}
 			}
@@ -161,7 +169,7 @@ export class LiveProgressUpdater {
 	 */
 	async completeTask(
 		taskId: string,
-		status: "completed" | "error",
+		status: 'completed' | 'error',
 		finalMessage?: string,
 	): Promise<void> {
 		const progressState = this.activeProgress.get(taskId);
@@ -172,8 +180,8 @@ export class LiveProgressUpdater {
 
 		// Mark any remaining steps as completed or error
 		progressState.steps.forEach((step) => {
-			if (step.status === "pending" || step.status === "running") {
-				step.status = status === "completed" ? "completed" : "error";
+			if (step.status === 'pending' || step.status === 'running') {
+				step.status = status === 'completed' ? 'completed' : 'error';
 				step.endTime = new Date();
 			}
 		});
@@ -183,8 +191,8 @@ export class LiveProgressUpdater {
 			progressState.steps.push({
 				step: progressState.steps.length + 1,
 				totalSteps: progressState.steps.length + 1,
-				title: "Result",
-				status: "completed",
+				title: 'Result',
+				status: 'completed',
 				details: finalMessage,
 				startTime: new Date(),
 				endTime: new Date(),
@@ -208,9 +216,9 @@ export class LiveProgressUpdater {
 			// For now, we'll need to pass them or extract from context
 
 			// Real-time progress updates removed - use progressive reactions instead
-			console.log("Progress update logged:", updatedComment);
+			console.warn('Progress update logged:', updatedComment);
 		} catch (error) {
-			console.error("Error updating progress comment:", error);
+			console.error('Error updating progress comment:', error);
 		}
 	}
 
@@ -225,37 +233,44 @@ export class LiveProgressUpdater {
 		let comment = `@${user} **${taskType.toUpperCase()} Progress**\n\n`;
 
 		// Status indicator
-		const statusEmoji =
-			status === "completed" ? "✅" : status === "error" ? "❌" : "⚙️";
-		const statusText =
-			status === "completed"
-				? "Completed"
-				: status === "error"
-					? "Failed"
-					: "In Progress";
+		let statusEmoji = '⚙️';
+		let statusText = 'In Progress';
+		if (status === 'completed') {
+			statusEmoji = '✅';
+			statusText = 'Completed';
+		} else if (status === 'error') {
+			statusEmoji = '❌';
+			statusText = 'Failed';
+		}
 
 		comment += `${statusEmoji} **Status:** ${statusText} (${elapsedSeconds}s)\n\n`;
 
 		// Progress bar
-		const completedSteps = steps.filter((s) => s.status === "completed").length;
+		const completedSteps = steps.filter((s) => s.status === 'completed').length;
 		const totalSteps = steps.length;
 		const progressPercent = Math.round((completedSteps / totalSteps) * 100);
 
 		const progressBar =
-			"█".repeat(Math.round(progressPercent / 5)) +
-			"░".repeat(20 - Math.round(progressPercent / 5));
+			'█'.repeat(Math.round(progressPercent / 5)) +
+			'░'.repeat(20 - Math.round(progressPercent / 5));
 		comment += `**Progress:** ${progressPercent}% [${progressBar}] ${completedSteps}/${totalSteps}\n\n`;
 
 		// Step details
 		comment += `**Steps:**\n`;
 		for (const step of steps) {
 			const stepEmoji = this.getStepEmoji(step.status);
-			const duration =
-				step.startTime && step.endTime
-					? ` (${Math.round((step.endTime.getTime() - step.startTime.getTime()) / 1000)}s)`
-					: step.startTime && step.status === "running"
-						? ` (${Math.round((Date.now() - step.startTime.getTime()) / 1000)}s)`
-						: "";
+			let duration = '';
+			if (step.startTime && step.endTime) {
+				const seconds = Math.round(
+					(step.endTime.getTime() - step.startTime.getTime()) / 1000,
+				);
+				duration = ` (${seconds}s)`;
+			} else if (step.startTime && step.status === 'running') {
+				const seconds = Math.round(
+					(Date.now() - step.startTime.getTime()) / 1000,
+				);
+				duration = ` (${seconds}s)`;
+			}
 
 			comment += `${stepEmoji} **${step.step}.** ${step.title}${duration}\n`;
 
@@ -269,22 +284,21 @@ export class LiveProgressUpdater {
 		return comment;
 	}
 
-	private getStepEmoji(status: ProgressStep["status"]): string {
+	private getStepEmoji(status: ProgressStep['status']): string {
 		switch (status) {
-			case "pending":
-				return "⏳";
-			case "running":
-				return "⚙️";
-			case "completed":
-				return "✅";
-			case "error":
-				return "❌";
+			case 'pending':
+				return '⏳';
+			case 'running':
+				return '⚙️';
+			case 'completed':
+				return '✅';
+			case 'error':
+				return '❌';
 		}
 	}
 
 	private generateTaskId(): string {
-		const crypto = require("node:crypto");
-		return `task_${Date.now()}_${crypto.randomUUID().substring(0, 8)}`;
+		return `task_${Date.now()}_${randomUUID().substring(0, 8)}`;
 	}
 
 	/**
@@ -313,7 +327,7 @@ export class LiveProgressUpdater {
 
 			if (taskAge > this.STALE_TASK_TIMEOUT) {
 				staleTasks.push(taskId);
-				console.log(
+				console.warn(
 					`Cleaning up stale progress task: ${taskId} (age: ${Math.round(taskAge / 60000)}min)`,
 				);
 			}
@@ -336,7 +350,7 @@ export class LiveProgressUpdater {
 
 			const toRemove = entries.slice(0, entries.length - this.MAX_ACTIVE_TASKS);
 			for (const [taskId] of toRemove) {
-				console.log(`Removing old progress task due to limit: ${taskId}`);
+				console.warn(`Removing old progress task due to limit: ${taskId}`);
 				this.activeProgress.delete(taskId);
 			}
 		}
@@ -350,6 +364,6 @@ export class LiveProgressUpdater {
 			clearInterval(this.cleanupInterval);
 		}
 		this.activeProgress.clear();
-		console.log("LiveProgressUpdater destroyed and resources cleaned up");
+		console.warn('LiveProgressUpdater destroyed and resources cleaned up');
 	}
 }

@@ -3,14 +3,13 @@
  * XDG-compliant persistence for evidence with governance features
  */
 
-import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
-import { gunzip, gzip } from "zlib";
-import type { Evidence } from "../types/index.js";
-import { ValidationError } from "../types/index.js";
-import { getDataPath, pathExists } from "../xdg/index.js";
-
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { gunzip, gzip } from 'zlib';
+import type { Evidence } from '../types/index.js';
+import { ValidationError } from '../types/index.js';
+import { getDataPath, pathExists } from '../xdg/index.js';
 
 export interface StorageOptions {
 	compression?: boolean;
@@ -71,9 +70,9 @@ export class EvidenceStorage {
 	async storeEvidence(evidence: Evidence): Promise<void> {
 		// Organize by date for efficient cleanup
 		const date = new Date(evidence.createdAt);
-		const dateStr = date.toISOString().split("T")[0]; // YYYY-MM-DD
+		const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
-		const evidenceDir = getDataPath("evidence", dateStr);
+		const evidenceDir = getDataPath('evidence', dateStr);
 		await mkdir(evidenceDir, { recursive: true });
 
 		const filename = `${evidence.id}.json`;
@@ -90,7 +89,7 @@ export class EvidenceStorage {
 				content = await this.encrypt(content);
 			}
 
-			await writeFile(filepath, content, "utf-8");
+			await writeFile(filepath, content, 'utf-8');
 
 			// Update cache
 			this.evidenceCache.set(evidence.id, evidence);
@@ -115,7 +114,7 @@ export class EvidenceStorage {
 		}
 
 		// Search through date directories
-		const evidenceBaseDir = getDataPath("evidence");
+		const evidenceBaseDir = getDataPath('evidence');
 
 		if (!(await pathExists(evidenceBaseDir))) {
 			return null;
@@ -154,7 +153,7 @@ export class EvidenceStorage {
 		total: number;
 		hasMore: boolean;
 	}> {
-		const evidenceBaseDir = getDataPath("evidence");
+		const evidenceBaseDir = getDataPath('evidence');
 
 		if (!(await pathExists(evidenceBaseDir))) {
 			return { evidence: [], total: 0, hasMore: false };
@@ -171,9 +170,9 @@ export class EvidenceStorage {
 				const files = await readdir(dateDirPath);
 
 				for (const file of files) {
-					if (!file.endsWith(".json")) continue;
+					if (!file.endsWith('.json')) continue;
 
-					const evidenceId = file.replace(".json", "");
+					const evidenceId = file.replace('.json', '');
 
 					// Skip if specific IDs requested and this isn't one
 					if (query.ids && !query.ids.includes(evidenceId)) {
@@ -229,19 +228,19 @@ export class EvidenceStorage {
 			evidenceId,
 			deletedAt: new Date().toISOString(),
 			originalEvidence: evidence,
-			deletedBy: "system", // In real implementation, would track user
+			deletedBy: 'system', // In real implementation, would track user
 		};
 
 		const receiptPath = getDataPath(
-			"evidence",
-			"receipts",
+			'evidence',
+			'receipts',
 			`delete_${evidenceId}_${Date.now()}.json`,
 		);
-		await writeFile(receiptPath, JSON.stringify(receipt, null, 2), "utf-8");
+		await writeFile(receiptPath, JSON.stringify(receipt, null, 2), 'utf-8');
 
 		// Remove the actual evidence file
-		const date = new Date(evidence.createdAt).toISOString().split("T")[0];
-		const filepath = join(getDataPath("evidence", date), `${evidenceId}.json`);
+		const date = new Date(evidence.createdAt).toISOString().split('T')[0];
+		const filepath = join(getDataPath('evidence', date), `${evidenceId}.json`);
 
 		if (await pathExists(filepath)) {
 			await rm(filepath);
@@ -265,9 +264,9 @@ export class EvidenceStorage {
 
 		const cutoffDate = new Date();
 		cutoffDate.setDate(cutoffDate.getDate() - this.options.retention.days);
-		const cutoffDateStr = cutoffDate.toISOString().split("T")[0];
+		const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
 
-		const evidenceBaseDir = getDataPath("evidence");
+		const evidenceBaseDir = getDataPath('evidence');
 
 		if (!(await pathExists(evidenceBaseDir))) {
 			return { deletedCount: 0, freedBytes: 0 };
@@ -286,19 +285,19 @@ export class EvidenceStorage {
 
 					for (const file of files) {
 						const filepath = join(dateDirPath, file);
-						const stats = await import("node:fs/promises").then((fs) =>
+						const stats = await import('node:fs/promises').then((fs) =>
 							fs.stat(filepath),
 						);
 						freedBytes += stats.size;
 
 						// Create deletion receipt before removing
-						const evidenceId = file.replace(".json", "");
+						const evidenceId = file.replace('.json', '');
 						const evidence = await this.loadEvidenceFile(filepath);
 
 						await this.createDeletionReceipt(
 							evidenceId,
 							evidence,
-							"retention_policy",
+							'retention_policy',
 						);
 
 						await rm(filepath);
@@ -325,22 +324,22 @@ export class EvidenceStorage {
 	 * Get storage statistics
 	 */
 	async getStorageStats(): Promise<StorageStats> {
-		const evidenceBaseDir = getDataPath("evidence");
+		const evidenceBaseDir = getDataPath('evidence');
 
 		if (!(await pathExists(evidenceBaseDir))) {
 			return {
 				totalEvidence: 0,
 				sizeBytes: 0,
-				oldestEntry: "",
-				newestEntry: "",
+				oldestEntry: '',
+				newestEntry: '',
 				sourceBreakdown: {},
 			};
 		}
 
 		let totalEvidence = 0;
 		let sizeBytes = 0;
-		let oldestDate = "";
-		let newestDate = "";
+		let oldestDate = '';
+		let newestDate = '';
 		const sourceBreakdown: Record<string, number> = {};
 
 		try {
@@ -357,10 +356,10 @@ export class EvidenceStorage {
 				const files = await readdir(dateDirPath);
 
 				for (const file of files) {
-					if (!file.endsWith(".json")) continue;
+					if (!file.endsWith('.json')) continue;
 
 					const filepath = join(dateDirPath, file);
-					const stats = await import("node:fs/promises").then((fs) =>
+					const stats = await import('node:fs/promises').then((fs) =>
 						fs.stat(filepath),
 					);
 					sizeBytes += stats.size;
@@ -396,18 +395,18 @@ export class EvidenceStorage {
 	 */
 	async exportEvidence(
 		query: EvidenceQuery,
-		format: "json" | "jsonl" | "csv" = "jsonl",
+		format: 'json' | 'jsonl' | 'csv' = 'jsonl',
 	): Promise<string> {
 		const result = await this.queryEvidence({ ...query, limit: undefined });
 
 		switch (format) {
-			case "json":
+			case 'json':
 				return JSON.stringify(result.evidence, null, 2);
 
-			case "jsonl":
-				return result.evidence.map((e) => JSON.stringify(e)).join("\n");
+			case 'jsonl':
+				return result.evidence.map((e) => JSON.stringify(e)).join('\n');
 
-			case "csv":
+			case 'csv':
 				return this.convertToCSV(result.evidence);
 
 			default:
@@ -416,7 +415,7 @@ export class EvidenceStorage {
 	}
 
 	private async loadEvidenceFile(filepath: string): Promise<Evidence> {
-		let content = await readFile(filepath, "utf-8");
+		let content = await readFile(filepath, 'utf-8');
 
 		if (this.options.encryption) {
 			content = await this.decrypt(content);
@@ -439,8 +438,8 @@ export class EvidenceStorage {
 
 		return dateDirs.filter((dateDir) => {
 			return (
-				dateDir >= dateRange.start.split("T")[0] &&
-				dateDir <= dateRange.end.split("T")[0]
+				dateDir >= dateRange.start.split('T')[0] &&
+				dateDir <= dateRange.end.split('T')[0]
 			);
 		});
 	}
@@ -484,25 +483,25 @@ export class EvidenceStorage {
 			originalEvidence: evidence,
 		};
 
-		const receiptDir = getDataPath("evidence", "receipts");
+		const receiptDir = getDataPath('evidence', 'receipts');
 		await mkdir(receiptDir, { recursive: true });
 
 		const receiptPath = join(
 			receiptDir,
 			`delete_${evidenceId}_${Date.now()}.json`,
 		);
-		await writeFile(receiptPath, JSON.stringify(receipt, null, 2), "utf-8");
+		await writeFile(receiptPath, JSON.stringify(receipt, null, 2), 'utf-8');
 	}
 
 	private convertToCSV(evidence: Evidence[]): string {
 		const headers = [
-			"id",
-			"source",
-			"claim",
-			"confidence",
-			"risk",
-			"createdAt",
-			"pointerCount",
+			'id',
+			'source',
+			'claim',
+			'confidence',
+			'risk',
+			'createdAt',
+			'pointerCount',
 		];
 		const rows = evidence.map((e) => [
 			e.id,
@@ -515,9 +514,9 @@ export class EvidenceStorage {
 		]);
 
 		const csvContent = [
-			headers.join(","),
-			...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
-		].join("\n");
+			headers.join(','),
+			...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+		].join('\n');
 
 		return csvContent;
 	}
@@ -525,28 +524,28 @@ export class EvidenceStorage {
 	private async encrypt(content: string): Promise<string> {
 		const key = this.getEncryptionKey();
 		const iv = randomBytes(12);
-		const cipher = createCipheriv("aes-256-gcm", key, iv);
+		const cipher = createCipheriv('aes-256-gcm', key, iv);
 		const encrypted = Buffer.concat([
-			cipher.update(content, "utf8"),
+			cipher.update(content, 'utf8'),
 			cipher.final(),
 		]);
 		const tag = cipher.getAuthTag();
-		return Buffer.concat([iv, tag, encrypted]).toString("base64");
+		return Buffer.concat([iv, tag, encrypted]).toString('base64');
 	}
 
 	private async decrypt(content: string): Promise<string> {
-		const data = Buffer.from(content, "base64");
+		const data = Buffer.from(content, 'base64');
 		const iv = data.subarray(0, 12);
 		const tag = data.subarray(12, 28);
 		const encrypted = data.subarray(28);
 		const key = this.getEncryptionKey();
-		const decipher = createDecipheriv("aes-256-gcm", key, iv);
+		const decipher = createDecipheriv('aes-256-gcm', key, iv);
 		decipher.setAuthTag(tag);
 		const decrypted = Buffer.concat([
 			decipher.update(encrypted),
 			decipher.final(),
 		]);
-		return decrypted.toString("utf8");
+		return decrypted.toString('utf8');
 	}
 
 	private async compress(content: string): Promise<string> {
@@ -555,7 +554,7 @@ export class EvidenceStorage {
 				if (err) {
 					reject(err);
 				} else {
-					resolve(buffer.toString("base64"));
+					resolve(buffer.toString('base64'));
 				}
 			});
 		});
@@ -563,12 +562,12 @@ export class EvidenceStorage {
 
 	private async decompress(content: string): Promise<string> {
 		return new Promise((resolve, reject) => {
-			const buffer = Buffer.from(content, "base64");
+			const buffer = Buffer.from(content, 'base64');
 			gunzip(buffer, (err, result) => {
 				if (err) {
 					reject(err);
 				} else {
-					resolve(result.toString("utf-8"));
+					resolve(result.toString('utf-8'));
 				}
 			});
 		});
@@ -578,13 +577,13 @@ export class EvidenceStorage {
 		const keyHex = process.env.EVIDENCE_ENCRYPTION_KEY;
 		if (!keyHex) {
 			throw new ValidationError(
-				"EVIDENCE_ENCRYPTION_KEY environment variable not set. Please provide a 64-character hex string (32 bytes) as EVIDENCE_ENCRYPTION_KEY in your environment.",
+				'EVIDENCE_ENCRYPTION_KEY environment variable not set. Please provide a 64-character hex string (32 bytes) as EVIDENCE_ENCRYPTION_KEY in your environment.',
 			);
 		}
-		const key = Buffer.from(keyHex, "hex");
+		const key = Buffer.from(keyHex, 'hex');
 		if (key.length !== 32) {
 			throw new ValidationError(
-				"EVIDENCE_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32",
+				'EVIDENCE_ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Generate with: openssl rand -hex 32',
 			);
 		}
 		return key;

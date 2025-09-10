@@ -8,7 +8,7 @@
  */
 export function isRecord(value: unknown): value is Record<string, unknown> {
 	return (
-		typeof value === "object" &&
+		typeof value === 'object' &&
 		value !== null &&
 		!Array.isArray(value) &&
 		Object.getPrototypeOf(value) === Object.prototype
@@ -25,10 +25,8 @@ export function hasProperties<T extends string>(
 	if (!isRecord(value)) {
 		return false;
 	}
-	
-	return properties.every(
-		(prop) => prop in value && value[prop] !== undefined,
-	);
+
+	return properties.every((prop) => prop in value && value[prop] !== undefined);
 }
 
 /**
@@ -43,15 +41,12 @@ export function isProposalShape(value: unknown): value is ProposalShape {
 	if (!isRecord(value)) {
 		return false;
 	}
-	
-	const hasValidDataClass = 
-		!("dataClass" in value) || 
-		typeof value.dataClass === "string";
-		
-	const hasValidPath = 
-		!("path" in value) || 
-		typeof value.path === "string";
-	
+
+	const hasValidDataClass =
+		!('dataClass' in value) || typeof value.dataClass === 'string';
+
+	const hasValidPath = !('path' in value) || typeof value.path === 'string';
+
 	return hasValidDataClass && hasValidPath;
 }
 
@@ -66,27 +61,27 @@ export function isError(value: unknown): value is Error {
  * Type guard for string values
  */
 export function isString(value: unknown): value is string {
-	return typeof value === "string";
+	return typeof value === 'string';
 }
 
 /**
  * Type guard for number values
  */
 export function isNumber(value: unknown): value is number {
-	return typeof value === "number" && !Number.isNaN(value);
+	return typeof value === 'number' && !Number.isNaN(value);
 }
 
 /**
  * Type guard for boolean values
  */
 export function isBoolean(value: unknown): value is boolean {
-	return typeof value === "boolean";
+	return typeof value === 'boolean';
 }
 
 /**
  * Type guard validation result (distinct from validation.ts ValidationResult)
  */
-export type TypeGuardResult<T> = 
+export type TypeGuardResult<T> =
 	| { success: true; data: T; error?: never }
 	| { success: false; data?: never; error: string };
 
@@ -101,9 +96,9 @@ export function safeValidate<T>(
 	if (guard(value)) {
 		return { success: true, data: value };
 	}
-	
-	return { 
-		success: false, 
-		error: `${errorMessage}: received ${typeof value}` 
+
+	return {
+		success: false,
+		error: `${errorMessage}: received ${typeof value}`,
 	};
 }

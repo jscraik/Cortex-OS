@@ -1,58 +1,58 @@
-import { context, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
-import type { EnhancedSpanContext, WorkflowMetrics } from "../lib/telemetry.js";
+import { context, metrics, SpanStatusCode, trace } from '@opentelemetry/api';
+import type { EnhancedSpanContext, WorkflowMetrics } from '../lib/telemetry.js';
 import {
 	gatherSpanAttributes,
 	recordErrorMetrics,
 	recordSuccessMetrics,
-} from "../lib/telemetry.js";
+} from '../lib/telemetry.js';
 
-export type { EnhancedSpanContext } from "../lib/telemetry.js";
+export type { EnhancedSpanContext } from '../lib/telemetry.js';
 
-export const tracer = trace.getTracer("@cortex-os/orchestration");
-export const meter = metrics.getMeter("@cortex-os/orchestration");
+export const tracer = trace.getTracer('@cortex-os/orchestration');
+export const meter = metrics.getMeter('@cortex-os/orchestration');
 
 // Create comprehensive metrics
 export const workflowMetrics: WorkflowMetrics & Record<string, any> = {
 	// Duration histograms
-	stepDuration: meter.createHistogram("workflow_step_duration_ms", {
-		description: "Duration of workflow step execution in milliseconds",
+	stepDuration: meter.createHistogram('workflow_step_duration_ms', {
+		description: 'Duration of workflow step execution in milliseconds',
 	}),
 
 	coordinationDuration: meter.createHistogram(
-		"agent_coordination_duration_ms",
+		'agent_coordination_duration_ms',
 		{
-			description: "Duration of multi-agent coordination in milliseconds",
+			description: 'Duration of multi-agent coordination in milliseconds',
 		},
 	),
 
 	// Counters
-	retryAttempts: meter.createCounter("workflow_retry_attempts_total", {
-		description: "Total number of retry attempts",
+	retryAttempts: meter.createCounter('workflow_retry_attempts_total', {
+		description: 'Total number of retry attempts',
 	}),
 
-	stepExecutions: meter.createCounter("workflow_step_executions_total", {
-		description: "Total number of workflow step executions",
+	stepExecutions: meter.createCounter('workflow_step_executions_total', {
+		description: 'Total number of workflow step executions',
 	}),
 
-	coordinationFailures: meter.createCounter("coordination_failures_total", {
-		description: "Total number of coordination failures",
+	coordinationFailures: meter.createCounter('coordination_failures_total', {
+		description: 'Total number of coordination failures',
 	}),
 
-	circuitBreakerTrips: meter.createCounter("circuit_breaker_trips_total", {
-		description: "Total number of circuit breaker trips",
+	circuitBreakerTrips: meter.createCounter('circuit_breaker_trips_total', {
+		description: 'Total number of circuit breaker trips',
 	}),
 
 	// Gauges (UpDown counters)
-	activeWorkflows: meter.createUpDownCounter("active_workflows", {
-		description: "Number of currently active workflows",
+	activeWorkflows: meter.createUpDownCounter('active_workflows', {
+		description: 'Number of currently active workflows',
 	}),
 
-	activeAgents: meter.createUpDownCounter("active_agents", {
-		description: "Number of currently active agents",
+	activeAgents: meter.createUpDownCounter('active_agents', {
+		description: 'Number of currently active agents',
 	}),
 
-	resourceUtilization: meter.createGauge("resource_utilization_ratio", {
-		description: "Resource utilization ratio (0-1)",
+	resourceUtilization: meter.createGauge('resource_utilization_ratio', {
+		description: 'Resource utilization ratio (0-1)',
 	}),
 };
 
@@ -90,7 +90,7 @@ export async function withEnhancedSpan<T>(
 	// Add custom events for important milestones
 	span.addEvent(`${name}.started`, {
 		timestamp: startTime,
-		"thread.id": process.pid,
+		'thread.id': process.pid,
 	});
 
 	try {
@@ -149,7 +149,7 @@ export function updateResourceUtilization(
 ): void {
 	workflowMetrics.resourceUtilization.record(utilization, {
 		resource_type: resourceType,
-		agent_id: agentId || "unknown",
+		agent_id: agentId || 'unknown',
 	});
 }
 
@@ -184,7 +184,7 @@ export function recordAgentActivation(
 ): void {
 	workflowMetrics.activeAgents.add(1, {
 		agent_id: agentId,
-		capabilities: capabilities.join(","),
+		capabilities: capabilities.join(','),
 	});
 }
 

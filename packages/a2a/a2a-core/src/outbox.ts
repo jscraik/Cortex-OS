@@ -1,4 +1,7 @@
-import { createEnvelope, type Envelope } from "@cortex-os/a2a-contracts/envelope";
+import {
+	createEnvelope,
+	type Envelope,
+} from '@cortex-os/a2a-contracts/envelope';
 import {
 	type OutboxConfig,
 	type OutboxMessage,
@@ -7,9 +10,9 @@ import {
 	type OutboxProcessor,
 	type OutboxPublisher,
 	type OutboxRepository,
-} from "@cortex-os/a2a-contracts/outbox-types";
-import { createTraceParent } from "@cortex-os/a2a-contracts/trace-context";
-import { getCurrentTraceContext } from "./trace-context-manager";
+} from '@cortex-os/a2a-contracts/outbox-types';
+import { createTraceParent } from '@cortex-os/a2a-contracts/trace-context';
+import { getCurrentTraceContext } from './trace-context-manager';
 
 /**
  * Enhanced Transactional Outbox Pattern Implementation
@@ -38,7 +41,7 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
 		// Build a CloudEvents-compliant envelope (adds defaults like ttlMs/headers)
 		const envelope: Envelope = createEnvelope({
 			type: message.eventType,
-			source: "https://cortex-os/outbox-publisher",
+			source: 'https://cortex-os/outbox-publisher',
 			data: message.payload,
 			correlationId: message.correlationId,
 			causationId: message.causationId,
@@ -84,7 +87,7 @@ async function processBatch(
 	for (let i = 0; i < results.length; i++) {
 		const result = results[i];
 		const message = messages[i];
-		if (result.status === "fulfilled") {
+		if (result.status === 'fulfilled') {
 			successful++;
 			await repo.markProcessed(message.id, new Date());
 		} else {
@@ -92,7 +95,7 @@ async function processBatch(
 			const error =
 				result.reason instanceof Error
 					? result.reason.message
-					: "Unknown error";
+					: 'Unknown error';
 			await handleError(message, error);
 		}
 	}
@@ -139,7 +142,7 @@ export async function processPendingMessages(
 	for (const message of messages) {
 		if (message.retryCount >= config.dlqThreshold) {
 			deadLettered++;
-			await repo.moveToDeadLetter(message.id, "Max retries exceeded");
+			await repo.moveToDeadLetter(message.id, 'Max retries exceeded');
 		}
 	}
 
@@ -245,14 +248,14 @@ export function createReliableOutboxProcessor(
 		if (isRunning) return;
 
 		isRunning = true;
-		console.log("Starting outbox processor...");
+		console.log('Starting outbox processor...');
 
 		processingTimer = setInterval(async () => {
 			try {
 				await processPending();
 				await processRetries();
 			} catch (error) {
-				console.error("Background processing error:", error);
+				console.error('Background processing error:', error);
 			}
 		}, config.processingIntervalMs);
 	};
@@ -265,7 +268,7 @@ export function createReliableOutboxProcessor(
 			clearInterval(processingTimer);
 			processingTimer = undefined;
 		}
-		console.log("Stopped outbox processor");
+		console.log('Stopped outbox processor');
 	};
 
 	return { processPending, processRetries, start, stop };
@@ -285,13 +288,13 @@ export class EnhancedOutbox {
 	 * Add message to outbox within a database transaction
 	 */
 	async addToOutbox(
-		message: Omit<OutboxMessage, "id" | "createdAt">,
+		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
 	): Promise<OutboxMessage> {
 		// Generate idempotency key if not provided
 		const idempotencyKey =
 			message.idempotencyKey || this.generateIdempotencyKey(message);
 
-		const outboxMessage: Omit<OutboxMessage, "id" | "createdAt"> = {
+		const outboxMessage: Omit<OutboxMessage, 'id' | 'createdAt'> = {
 			...message,
 			idempotencyKey,
 			status: OutboxMessageStatus.PENDING,
@@ -307,7 +310,7 @@ export class EnhancedOutbox {
 	 * Add multiple messages to outbox in a single transaction
 	 */
 	async addBatchToOutbox(
-		messages: Array<Omit<OutboxMessage, "id" | "createdAt">>,
+		messages: Array<Omit<OutboxMessage, 'id' | 'createdAt'>>,
 	): Promise<OutboxMessage[]> {
 		const outboxMessages = messages.map((message) => ({
 			...message,
@@ -360,16 +363,16 @@ export class EnhancedOutbox {
 	}
 
 	private generateIdempotencyKey(
-		message: Omit<OutboxMessage, "id" | "createdAt">,
+		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
 	): string {
 		// Generate deterministic idempotency key based on aggregate and event
 		const components = [
 			message.aggregateType,
 			message.aggregateId,
 			message.eventType,
-			message.correlationId || "no-correlation",
+			message.correlationId || 'no-correlation',
 		];
-		return components.join(":");
+		return components.join(':');
 	}
 
 	private extractTraceContext(): {
@@ -383,7 +386,7 @@ export class EnhancedOutbox {
 		}
 
 		return {
-			traceparent: `00-${traceContext.traceId}-${traceContext.spanId}-${traceContext.traceFlags.toString(16).padStart(2, "0")}`,
+			traceparent: `00-${traceContext.traceId}-${traceContext.spanId}-${traceContext.traceFlags.toString(16).padStart(2, '0')}`,
 			tracestate: traceContext.traceState,
 			baggage: traceContext.baggage,
 		};

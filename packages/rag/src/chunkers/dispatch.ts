@@ -2,7 +2,7 @@ import {
 	type ProcessingConfig,
 	ProcessingStrategy,
 	type StrategyDecision,
-} from "../policy/mime";
+} from '../policy/mime';
 
 export interface ProcessingFile {
 	path: string;
@@ -51,14 +51,14 @@ class TextChunker implements Chunker {
 		file: ProcessingFile,
 		config: ProcessingConfig,
 	): Promise<DocumentChunk[]> {
-		const content = file.content.toString("utf-8");
+		const content = file.content.toString('utf-8');
 
 		switch (config.chunker) {
-			case "markdown":
+			case 'markdown':
 				return Promise.resolve(this.chunkMarkdown(content, file));
-			case "code":
+			case 'code':
 				return Promise.resolve(this.chunkCode(content, file));
-			case "structured":
+			case 'structured':
 				return Promise.resolve(this.chunkStructured(content, file));
 			default:
 				return Promise.resolve(this.chunkPlainText(content, file));
@@ -77,7 +77,7 @@ class TextChunker implements Chunker {
 			chunks.push({
 				id: `${file.path}-text-${chunks.length + 1}`,
 				content: chunk,
-				metadata: { type: "text", position: i, length: chunk.length },
+				metadata: { type: 'text', position: i, length: chunk.length },
 			});
 		}
 		return chunks;
@@ -95,7 +95,7 @@ class TextChunker implements Chunker {
 				chunks.push({
 					id: `${file.path}-md-${index + 1}`,
 					content: section.trim(),
-					metadata: { type: "markdown_section", section: index },
+					metadata: { type: 'markdown_section', section: index },
 				});
 			}
 		});
@@ -103,9 +103,9 @@ class TextChunker implements Chunker {
 	}
 
 	private chunkCode(content: string, file: ProcessingFile): DocumentChunk[] {
-		const lines = content.split("\n");
+		const lines = content.split('\n');
 		const chunks: DocumentChunk[] = [];
-		let currentChunk = "";
+		let currentChunk = '';
 		let chunkStart = 0;
 
 		lines.forEach((line, index) => {
@@ -117,7 +117,7 @@ class TextChunker implements Chunker {
 					id: `${file.path}-code-${chunks.length + 1}`,
 					content: currentChunk.trim(),
 					metadata: {
-						type: "code_block",
+						type: 'code_block',
 						startLine: chunkStart,
 						endLine: index,
 					},
@@ -132,7 +132,7 @@ class TextChunker implements Chunker {
 				id: `${file.path}-code-${chunks.length + 1}`,
 				content: currentChunk.trim(),
 				metadata: {
-					type: "code_block",
+					type: 'code_block',
 					startLine: chunkStart,
 					endLine: lines.length - 1,
 				},
@@ -145,14 +145,14 @@ class TextChunker implements Chunker {
 		content: string,
 		file: ProcessingFile,
 	): DocumentChunk[] {
-		if (file.mimeType === "application/json") {
+		if (file.mimeType === 'application/json') {
 			try {
 				const data: unknown = JSON.parse(content);
 				return [
 					{
 						id: `${file.path}-json-1`,
 						content: JSON.stringify(data, null, 2),
-						metadata: { type: "json_document", structure: "parsed" },
+						metadata: { type: 'json_document', structure: 'parsed' },
 					},
 				];
 			} catch (_err) {
@@ -160,8 +160,8 @@ class TextChunker implements Chunker {
 			}
 		}
 
-		if (file.mimeType === "text/csv") {
-			const lines = content.split("\n");
+		if (file.mimeType === 'text/csv') {
+			const lines = content.split('\n');
 			const header = lines[0];
 			const chunks: DocumentChunk[] = [];
 			const chunkSize = 100;
@@ -169,9 +169,9 @@ class TextChunker implements Chunker {
 				const chunkLines = [header, ...lines.slice(i, i + chunkSize)];
 				chunks.push({
 					id: `${file.path}-csv-${chunks.length + 1}`,
-					content: chunkLines.join("\n"),
+					content: chunkLines.join('\n'),
 					metadata: {
-						type: "csv_chunk",
+						type: 'csv_chunk',
 						rowStart: i,
 						rowEnd: Math.min(i + chunkSize - 1, lines.length - 1),
 					},
@@ -194,7 +194,7 @@ class PdfChunker implements Chunker {
 			chunks.push({
 				id: `${file.path}-pdf-page-${page}`,
 				content: `Content from PDF page ${page}`,
-				metadata: { type: "pdf_page", page, extractionMethod: "native" },
+				metadata: { type: 'pdf_page', page, extractionMethod: 'native' },
 			});
 		}
 		return Promise.resolve(chunks);
@@ -215,10 +215,10 @@ class OcrChunker implements Chunker {
 				id: `${file.path}-ocr-page-${page}`,
 				content: `OCR extracted text from page ${page}`,
 				metadata: {
-					type: "ocr_page",
+					type: 'ocr_page',
 					page,
 					confidence: 0.9,
-					ocrEngine: "tesseract",
+					ocrEngine: 'tesseract',
 				},
 			});
 		}
@@ -233,7 +233,7 @@ class UnstructuredChunker implements Chunker {
 	): Promise<DocumentChunk[]> {
 		const maxPages = Math.min(config.maxPages || 50, 50);
 		const chunks: DocumentChunk[] = [];
-		const elementTypes = ["heading", "paragraph", "list", "table"];
+		const elementTypes = ['heading', 'paragraph', 'list', 'table'];
 		const elementsPerPage = 3;
 		for (let page = 1; page <= maxPages; page++) {
 			for (let element = 1; element <= elementsPerPage; element++) {
@@ -246,7 +246,7 @@ class UnstructuredChunker implements Chunker {
 						type: elementType,
 						page,
 						element,
-						apiProvider: "unstructured",
+						apiProvider: 'unstructured',
 					},
 				});
 			}
@@ -290,10 +290,10 @@ export class ProcessingDispatcher {
 			if (!strategy.processing) {
 				return {
 					success: false,
-					error: "Invalid strategy: missing processing configuration",
+					error: 'Invalid strategy: missing processing configuration',
 					strategy: strategy.strategy,
 					processingTimeMs: performance.now() - startTime,
-					metadata: { errorDetails: "No processing configuration provided" },
+					metadata: { errorDetails: 'No processing configuration provided' },
 				};
 			}
 			const chunks = await this.processWithTimeout(file, strategy);
@@ -303,7 +303,7 @@ export class ProcessingDispatcher {
 				strategy: strategy.strategy,
 				processingTimeMs: performance.now() - startTime,
 				metadata: {
-					chunker: strategy.processing.chunker || "unknown",
+					chunker: strategy.processing.chunker || 'unknown',
 					totalChunks: chunks.length,
 					processingDetails: strategy.processing,
 				},
@@ -311,13 +311,13 @@ export class ProcessingDispatcher {
 		} catch (_error) {
 			return {
 				success: false,
-				error: `Processing failed: ${_error instanceof Error ? _error.message : "Unknown error"}`,
+				error: `Processing failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
 				strategy: strategy.strategy,
 				processingTimeMs: performance.now() - startTime,
 				metadata: {
 					errorDetails:
-						_error instanceof Error ? _error.message : "Unknown error",
-					attemptedChunker: strategy.processing?.chunker || "unknown",
+						_error instanceof Error ? _error.message : 'Unknown error',
+					attemptedChunker: strategy.processing?.chunker || 'unknown',
 				},
 			};
 		}
@@ -329,7 +329,7 @@ export class ProcessingDispatcher {
 	): Promise<DocumentChunk[]> {
 		const processing = strategy.processing;
 		if (!processing) {
-			throw new Error("Missing processing configuration");
+			throw new Error('Missing processing configuration');
 		}
 		const processingPromise = this.routeToChunker(
 			file,
@@ -339,7 +339,7 @@ export class ProcessingDispatcher {
 		let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 		const timeoutPromise = new Promise<never>((_, reject) => {
 			timeoutHandle = setTimeout(
-				() => reject(new Error("Processing timeout")),
+				() => reject(new Error('Processing timeout')),
 				this.config.timeout,
 			);
 		});

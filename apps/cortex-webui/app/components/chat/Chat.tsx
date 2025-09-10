@@ -2,11 +2,11 @@
 
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { generateId } from '../../../utils/id';
 // Note: UI message shape may include extra fields like timestamp/model for display
 // compared to shared backend types.
 import { apiFetch } from '../../../utils/api-client';
 import { useChatStore } from '../../../utils/chat-store';
+import { generateId } from '../../../utils/id';
 import notificationStore from '../../utils/notification-store';
 import MessageInput from './MessageInput/MessageInput';
 import Messages from './Messages/Messages';
@@ -104,7 +104,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 
 		// Add user message
 		const userMessage = {
-                        id: generateId(),
+			id: generateId(),
 			role: 'user',
 			content,
 			timestamp: Date.now(),
@@ -114,7 +114,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		addMessage(userMessage);
 
 		// Add temporary assistant message
-                const assistantMessageId = generateId();
+		const assistantMessageId = generateId();
 		const assistantMessage = {
 			id: assistantMessageId,
 			role: 'assistant',

@@ -9,14 +9,14 @@
  * @ai_provenance_hash N/A
  */
 
-import type { SpanContext } from "@opentelemetry/api";
+import type { SpanContext } from '@opentelemetry/api';
 
 /**
  * Core agent metrics interface
  */
 export interface AgentMetrics {
 	agentId: string;
-	agentType: "langgraph" | "crewai" | "autogen" | "custom";
+	agentType: 'langgraph' | 'crewai' | 'autogen' | 'custom';
 	framework: string;
 	timestamp: Date;
 	executionTime: number;
@@ -55,14 +55,14 @@ export interface OrchestrationMetrics {
  */
 export interface InteractionPattern {
 	id: string;
-	patternType: "request-response" | "broadcast" | "cascade" | "circular";
+	patternType: 'request-response' | 'broadcast' | 'cascade' | 'circular';
 	participants: string[];
 	frequency: number;
 	averageLatency: number;
 	successRate: number;
 	communicationVolume: number;
 	dependencies: string[];
-	criticality: "low" | "medium" | "high";
+	criticality: 'low' | 'medium' | 'high';
 	detectedAt: Date;
 }
 
@@ -72,11 +72,11 @@ export interface InteractionPattern {
 export interface OptimizationRecommendation {
 	id: string;
 	type:
-		| "resource-allocation"
-		| "workflow-restructure"
-		| "agent-scaling"
-		| "bottleneck-resolution";
-	priority: "low" | "medium" | "high" | "critical";
+		| 'resource-allocation'
+		| 'workflow-restructure'
+		| 'agent-scaling'
+		| 'bottleneck-resolution';
+	priority: 'low' | 'medium' | 'high' | 'critical';
 	title: string;
 	description: string;
 	expectedImpact: {
@@ -85,7 +85,7 @@ export interface OptimizationRecommendation {
 		reliabilityImprovement: number;
 	};
 	implementation: {
-		difficulty: "easy" | "medium" | "hard";
+		difficulty: 'easy' | 'medium' | 'hard';
 		estimatedTime: number;
 		requiredResources: string[];
 		steps: string[];
@@ -120,7 +120,7 @@ export interface AgentStatus {
 	agentId: string;
 	name: string;
 	framework: string;
-	status: "active" | "idle" | "busy" | "error" | "offline";
+	status: 'active' | 'idle' | 'busy' | 'error' | 'offline';
 	currentTask?: string;
 	lastActivity: Date;
 	healthScore: number;
@@ -182,11 +182,11 @@ export interface WorkflowBottleneck {
 	id: string;
 	location: string;
 	type:
-		| "agent-overload"
-		| "communication-lag"
-		| "resource-contention"
-		| "dependency-wait";
-	severity: "low" | "medium" | "high" | "critical";
+		| 'agent-overload'
+		| 'communication-lag'
+		| 'resource-contention'
+		| 'dependency-wait';
+	severity: 'low' | 'medium' | 'high' | 'critical';
 	impactScope: string[];
 	averageDelay: number;
 	frequency: number;
@@ -230,17 +230,17 @@ export interface ResourceUtilization {
 export interface TrendAnalysis {
 	period: string;
 	performance: {
-		direction: "improving" | "declining" | "stable";
+		direction: 'improving' | 'declining' | 'stable';
 		magnitude: number;
 		confidence: number;
 	};
 	resourceUsage: {
-		direction: "increasing" | "decreasing" | "stable";
+		direction: 'increasing' | 'decreasing' | 'stable';
 		magnitude: number;
 		projectedCapacity: Date;
 	};
 	errorRates: {
-		direction: "improving" | "worsening" | "stable";
+		direction: 'improving' | 'worsening' | 'stable';
 		magnitude: number;
 	};
 	scalability: {
@@ -254,7 +254,7 @@ export interface TrendAnalysis {
  * Predictive model for workload distribution
  */
 export interface PredictiveModel {
-	modelType: "linear-regression" | "neural-network" | "ensemble";
+	modelType: 'linear-regression' | 'neural-network' | 'ensemble';
 	accuracy: number;
 	predictions: {
 		timeHorizon: string;
@@ -273,14 +273,14 @@ export interface PredictiveModel {
 export interface CrossAgentDependency {
 	sourceAgent: string;
 	targetAgent: string;
-	dependencyType: "data" | "control" | "resource" | "timing";
+	dependencyType: 'data' | 'control' | 'resource' | 'timing';
 	strength: number;
 	frequency: number;
-	criticality: "low" | "medium" | "high";
+	criticality: 'low' | 'medium' | 'high';
 	latency: number;
 	reliability: number;
 	impact: {
-		onFailure: "cascade" | "isolated" | "degraded";
+		onFailure: 'cascade' | 'isolated' | 'degraded';
 		recoveryTime: number;
 	};
 }
@@ -310,7 +310,7 @@ export interface TimeSeriesData {
  */
 export interface InteractionNode {
 	id: string;
-	type: "agent" | "orchestrator" | "service";
+	type: 'agent' | 'orchestrator' | 'service';
 	framework: string;
 	position: { x: number; y: number };
 	size: number;
@@ -333,8 +333,8 @@ export interface InteractionNode {
  */
 export interface Alert {
 	id: string;
-	type: "performance" | "resource" | "error" | "security";
-	severity: "info" | "warning" | "error" | "critical";
+	type: 'performance' | 'resource' | 'error' | 'security';
+	severity: 'info' | 'warning' | 'error' | 'critical';
 	title: string;
 	description: string;
 	source: string;
@@ -349,7 +349,7 @@ export interface Alert {
  */
 export interface PerformanceAnomaly {
 	id: string;
-	type: "spike" | "dip" | "pattern-break" | "drift";
+	type: 'spike' | 'dip' | 'pattern-break' | 'drift';
 	metric: string;
 	severity: number;
 	duration: number;
@@ -371,7 +371,7 @@ export interface AgentTrace {
 	startTime: Date;
 	endTime?: Date;
 	duration?: number;
-	status: "started" | "completed" | "error";
+	status: 'started' | 'completed' | 'error';
 	tags: Record<string, unknown>;
 	logs: TraceLog[];
 	context: SpanContext;
@@ -382,7 +382,7 @@ export interface AgentTrace {
  */
 export interface TraceLog {
 	timestamp: Date;
-	level: "debug" | "info" | "warning" | "error";
+	level: 'debug' | 'info' | 'warning' | 'error';
 	message: string;
 	fields?: Record<string, unknown>;
 }
@@ -414,7 +414,7 @@ export interface AnalyticsConfig {
 		notificationChannels: string[];
 	};
 	storage: {
-		backend: "memory" | "file" | "database";
+		backend: 'memory' | 'file' | 'database';
 		compressionEnabled: boolean;
 		encryptionEnabled: boolean;
 	};

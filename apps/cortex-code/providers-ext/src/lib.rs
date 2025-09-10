@@ -15,4 +15,3 @@ mod tests {
         assert!(reg.list_providers().is_empty());
     }
 }
-

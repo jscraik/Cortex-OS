@@ -1,7 +1,7 @@
-import { tmpdir } from "node:os";
-import { readFileSync } from "node:fs";
-import { spawn } from "node:child_process";
-import path, { join } from "node:path";
+import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path, { join } from 'node:path';
 
 /**
  * Document with relevance score for reranking
@@ -68,7 +68,7 @@ export class Qwen3Reranker implements Reranker {
 	constructor(options: Qwen3RerankOptions = {}) {
 		const defaultPath =
 			process.env.QWEN_RERANKER_MODEL_PATH ||
-			path.resolve(process.cwd(), "models/Qwen3-Reranker-4B");
+			path.resolve(process.cwd(), 'models/Qwen3-Reranker-4B');
 		this.modelPath = options.modelPath || defaultPath;
 		this.maxLength = options.maxLength || 512;
 		this.topK = options.topK || 10;
@@ -76,8 +76,8 @@ export class Qwen3Reranker implements Reranker {
 
 		this.cacheDir =
 			options.cacheDir ||
-			join(process.env.HF_HOME || tmpdir(), "qwen3-reranker-cache");
-		this.pythonPath = options.pythonPath || "python3";
+			join(process.env.HF_HOME || tmpdir(), 'qwen3-reranker-cache');
+		this.pythonPath = options.pythonPath || 'python3';
 		this.timeoutMs = options.timeoutMs ?? 30000;
 	}
 
@@ -117,69 +117,73 @@ export class Qwen3Reranker implements Reranker {
 	/**
 	 * Score a batch of documents against the query
 	 */
-	private scoreBatch(query: string, documents: RerankDocument[]): Promise<number[]> {
-    return new Promise((resolve, reject) => {
-	const pythonScript = this.getPythonScript();
-      const child = spawn(this.pythonPath, ['-c', pythonScript], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          TRANSFORMERS_CACHE: this.cacheDir,
-          HF_HOME: this.cacheDir,
-        },
-      });
+	private scoreBatch(
+		query: string,
+		documents: RerankDocument[],
+	): Promise<number[]> {
+		return new Promise((resolve, reject) => {
+			const pythonScript = this.getPythonScript();
+			const child = spawn(this.pythonPath, ['-c', pythonScript], {
+				stdio: ['pipe', 'pipe', 'pipe'],
+				env: {
+					...process.env,
+					TRANSFORMERS_CACHE: this.cacheDir,
+					HF_HOME: this.cacheDir,
+				},
+			});
 
-      let stdout = '';
-      let stderr = '';
+			let stdout = '';
+			let stderr = '';
 
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
+			child.stdout?.on('data', (data) => {
+				stdout += data.toString();
+			});
 
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
+			child.stderr?.on('data', (data) => {
+				stderr += data.toString();
+			});
 
-      const timer = setTimeout(() => {
-        child.kill();
-        reject(new Error('Qwen3 reranker timed out'));
-      }, this.timeoutMs);
+			const timer = setTimeout(() => {
+				child.kill();
+				reject(new Error('Qwen3 reranker timed out'));
+			}, this.timeoutMs);
 
-      child.on('close', (code) => {
-        clearTimeout(timer);
-        if (code !== 0) {
-          reject(new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`));
-          return;
-        }
+			child.on('close', (code) => {
+				clearTimeout(timer);
+				if (code !== 0) {
+					reject(
+						new Error(`Qwen3 reranker failed with code ${code}: ${stderr}`),
+					);
+					return;
+				}
 
-        try {
-          const result = JSON.parse(stdout.trim());
-          if (result.error) {
-            reject(new Error(`Qwen3 reranker error: ${result.error}`));
-          } else {
-            resolve(result.scores || []);
-          }
-        } catch (err) {
-          reject(new Error(`Failed to parse Qwen3 reranker output: ${err}`));
-        }
-      });
+				try {
+					const result = JSON.parse(stdout.trim());
+					if (result.error) {
+						reject(new Error(`Qwen3 reranker error: ${result.error}`));
+					} else {
+						resolve(result.scores || []);
+					}
+				} catch (err) {
+					reject(new Error(`Failed to parse Qwen3 reranker output: ${err}`));
+				}
+			});
 
-      child.on('error', (err) => {
-        reject(new Error(`Failed to spawn Qwen3 reranker process: ${err}`));
-      });
+			child.on('error', (err) => {
+				reject(new Error(`Failed to spawn Qwen3 reranker process: ${err}`));
+			});
 
-      // Send input data
-      const input = {
-        query,
-        documents: documents.map((doc) => doc.text),
-        model_path: this.modelPath,
-        max_length: this.maxLength,
-      };
+			// Send input data
+			const input = {
+				query,
+				documents: documents.map((doc) => doc.text),
+				model_path: this.modelPath,
+				max_length: this.maxLength,
+			};
 
-      child.stdin?.write(JSON.stringify(input));
-      child.stdin?.end();
-	    });
-
+			child.stdin?.write(JSON.stringify(input));
+			child.stdin?.end();
+		});
 	}
 
 	/**
@@ -187,17 +191,17 @@ export class Qwen3Reranker implements Reranker {
 	 */
 	private getPythonScript(): string {
 		// Co-locate script next to package root, reuse same pattern as generation
-		const scriptPath = path.resolve(__dirname, "../../python/qwen3_rerank.py");
-                try {
-                        return readFileSync(scriptPath, "utf8");
-                } catch {
-                        throw new Error(`Missing Qwen3 reranker script at ${scriptPath}`);
-                }
-        }
+		const scriptPath = path.resolve(__dirname, '../../python/qwen3_rerank.py');
+		try {
+			return readFileSync(scriptPath, 'utf8');
+		} catch {
+			throw new Error(`Missing Qwen3 reranker script at ${scriptPath}`);
+		}
+	}
 
-  /**
-   * Create batches from documents array
-   */
+	/**
+	 * Create batches from documents array
+	 */
 	private createBatches(
 		documents: RerankDocument[],
 		batchSize: number,

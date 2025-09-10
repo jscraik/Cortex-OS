@@ -31,7 +31,7 @@ version = "0.0.0"
 # crates can still override this value, but keeping it here means new
 # crates created with `cargo new -w ...` automatically inherit the 2024
 # edition.
-# 
+#
 # Using edition 2024 with nightly Rust
 edition = "2024"
 

@@ -1,5 +1,5 @@
-import type { Handler } from "@cortex-os/a2a-core/bus";
-import { tracer } from "@cortex-os/telemetry";
+import type { Handler } from '@cortex-os/a2a-core/bus';
+import { tracer } from '@cortex-os/telemetry';
 
 export function withOtel(handler: Handler): Handler {
 	return {

@@ -2,30 +2,30 @@
  * @fileoverview Metrics collection with P50/P95/P99 and error budgets
  */
 
-import { metrics } from "@opentelemetry/api";
-import type { ErrorBudget, MetricLabels, ULID } from "../types.js";
+import { metrics } from '@opentelemetry/api';
+import type { ErrorBudget, MetricLabels, ULID } from '../types.js';
 
-const meter = metrics.getMeter("@cortex-os/observability");
+const meter = metrics.getMeter('@cortex-os/observability');
 
 // Latency histogram for P50/P95/P99
-const latencyHistogram = meter.createHistogram("cortex_latency_ms", {
-	description: "Request latency in milliseconds",
-	unit: "ms",
+const latencyHistogram = meter.createHistogram('cortex_latency_ms', {
+	description: 'Request latency in milliseconds',
+	unit: 'ms',
 });
 
 // Success/failure counter for error budget
-const operationCounter = meter.createCounter("cortex_operations_total", {
-	description: "Total operations by status",
+const operationCounter = meter.createCounter('cortex_operations_total', {
+	description: 'Total operations by status',
 });
 
 // Provider health gauge
-const providerHealthGauge = meter.createGauge("cortex_provider_health", {
-	description: "Provider health score (0-1)",
+const providerHealthGauge = meter.createGauge('cortex_provider_health', {
+	description: 'Provider health score (0-1)',
 });
 
 // VRAM usage gauge
-const vramGauge = meter.createGauge("cortex_vram_usage_ratio", {
-	description: "VRAM usage ratio (0-1)",
+const vramGauge = meter.createGauge('cortex_vram_usage_ratio', {
+	description: 'VRAM usage ratio (0-1)',
 });
 
 /**
@@ -53,7 +53,7 @@ export function recordOperation(
 ): void {
 	operationCounter.add(1, {
 		operation,
-		status: success ? "success" : "error",
+		status: success ? 'success' : 'error',
 		run_id: runId,
 		...labels,
 	});
@@ -97,7 +97,7 @@ export function calculateErrorBudget(
 			actual: 1.0,
 			budget: 1.0,
 			burnRate: 0,
-			window: "30d",
+			window: '30d',
 		};
 	}
 
@@ -110,6 +110,6 @@ export function calculateErrorBudget(
 		actual,
 		budget,
 		burnRate,
-		window: "30d",
+		window: '30d',
 	};
 }

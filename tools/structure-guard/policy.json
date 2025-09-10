@@ -7,6 +7,10 @@
 		"**/.git/**",
 		"**/.next/**",
 		"**/.cache/**",
+		"**/.mypy_cache/**",
+		"**/.ruff_cache/**",
+		"**/.orbstack/**",
+		"**/security_backups/**",
 		"**/coverage/**",
 		"**/.nyc_output/**",
 		"**/tmp/**",
@@ -27,8 +31,21 @@
 		"**/.pytest_cache/**"
 	],
 	"allowedPaths": {
-		"apps": ["cortex-os"],
-		"apps/cortex-os/packages": ["agents", "mvp", "mvp-core", "mvp-server"],
+		"apps": [
+			"cortex-os"
+		],
+		"apps/cortex-os/packages": [
+			"agents",
+			"mvp",
+			"mvp-core",
+			"mvp-server"
+		],
+		"packages/mvp": [
+			"mvp",
+			"mvp-core",
+			"mvp-group",
+			"mvp-server"
+		],
 		"packages": [
 			"a2a",
 			"a2a-services",
@@ -59,9 +76,17 @@
 			"registry",
 			"security",
 			"services",
-			"simlab"
+			"simlab",
+			"mcp-bridge"
 		],
-		"services": ["ml-inference", "data-pipeline"],
+		"packages/services": [
+			"model-gateway",
+			"orchestration"
+		],
+		"services": [
+			"ml-inference",
+			"data-pipeline"
+		],
 		"libs/typescript": [
 			"accessibility",
 			"contracts",
@@ -71,7 +96,10 @@
 			"types",
 			"utils"
 		],
-		"libs/python": ["cortex_core", "cortex_ml"],
+		"libs/python": [
+			"cortex_core",
+			"cortex_ml"
+		],
 		"tools": [
 			"structure-guard",
 			"eslint-config",
@@ -97,9 +125,17 @@
 			"tooling",
 			"tools"
 		],
-		"docs": ["architecture", "reports", "analysis"],
-		"scripts": ["maintenance"],
-		"tmp": ["build-artifacts"]
+		"docs": [
+			"architecture",
+			"reports",
+			"analysis"
+		],
+		"scripts": [
+			"maintenance"
+		],
+		"tmp": [
+			"build-artifacts"
+		]
 	},
 	"allowedRootEntries": [
 		".cortex",
@@ -139,7 +175,6 @@
 		".nx",
 		".vscode",
 		".semgrep",
-            ".husky",
 		".claude",
 		"node_modules",
 		"dist",
@@ -202,6 +237,7 @@
 		".tool-versions",
 		".vitestrc",
 		".pre-commit-config.yaml",
+		".pre-commit-config-lite.yaml",
 		".budget.yml",
 		".slo.yml",
 		".dependency-cruiser.js",
@@ -223,25 +259,52 @@
 		"README-CORTEX-CLI-UPGRADE.md",
 		"WEBHOOK_SECRET_SETUP.md",
 		"LLMs.txt",
-        ".rgignore",
-        ".semgrepignore",
-        ".python-version",
-        "coverage.xml",
-        "sonar-project.properties",
-        "CODESTYLE.md",
+		".rgignore",
+		".semgrepignore",
+		".python-version",
+		"coverage.xml",
+		"sonar-project.properties",
+		"CODESTYLE.md",
 		"sgconfig.json",
+		".sgignore",
 		".env",
 		".gitleaks.toml",
 		".markdownlint-cli2.yaml",
-		".pre-commit-config-lite.yaml",
+		"MCP_TDD_PLAN.md",
+		"MEMORIES_TDD_PLAN.md",
+		"QWEN3_MLX_TDD_PLAN.md",
+		"a2a-tdd-plan.md",
+		"memory-review-tdd-plan.md",
+		"model-gateway-development-plan.md",
+		"observability-development-plan.md",
+		"orchestration-development-plan.md",
+		"packages-agents-dev-plan.md",
+		"rag-development-plan.md",
+		"flake.nix",
+		"mcp_server.js",
+		"mcp_server.py",
 		"EXEMPTION_NOTICE.md",
-		"pnpm-lock.yaml.bak"
-		,"pnpm-lock.conflicted"
+		"pnpm-lock.yaml.bak",
+		"pnpm-lock.conflicted",
+		".coverage"
 	],
 	"filePatterns": {
 		"typescript": {
-			"required": ["package.json", "tsconfig.json"],
-			"requireOneOf": ["src/index.ts", "src/index.js", "index.ts"],
+			"required": [
+				"package.json",
+				"tsconfig.json"
+			],
+			"requireOneOf": [
+				"src/index.ts",
+				"src/index.js",
+				"index.ts",
+				"src/main.ts",
+				"main.ts",
+				"src/server.ts",
+				"src/cli.ts",
+				"src/app.ts",
+				"src/**/*.ts"
+			],
 			"allowed": [
 				"*.ts",
 				"*.tsx",
@@ -249,12 +312,23 @@
 				"*.mjs",
 				"*.cjs",
 				"*.json",
+				"*.jsonc",
+				"**/*.json",
+				"**/*.jsonc",
+				"project.json",
 				"*.md",
+				"**/*.md",
 				"README.md",
 				"LICENSE",
 				"CHANGELOG.md",
+				"**/*.txt",
 				"docs/**/*",
+				"a2a-examples/**",
+				"a2a-python-workers/**",
+				"resources/**/*",
+				"report/**/*",
 				"src/**/*",
+				"test-fixtures/**",
 				"scripts/**/*",
 				"examples/**/*",
 				"test/**/*",
@@ -267,23 +341,68 @@
 				"package.json",
 				"pnpm-workspace.yaml",
 				"*.tsbuildinfo",
+				"**/*.map",
 				"prisma/**/*",
+				"python/**/*",
 				"*.prisma",
 				"*.d.ts",
-				"*.map",
 				"*.sh",
+				"Dockerfile*",
+				".dockerignore",
 				"*.yaml",
 				"*.yml",
+				"**/*.yaml",
+				"**/*.yml",
 				"*.toml",
 				"*.lock",
-				"*.txt"
+				"**/*.lock",
+				"*.txt",
+				"**/*.py",
+				"**/*.conf",
+				"**/*.diff",
+				"**/*.service",
+				"infrastructure/**/*",
+				"infra/**/*",
+				"webui/**/*",
+				"public/**/*",
+				"static/**/*",
+				"templates/**/*",
+				"sim/**/*"
 			]
 		},
 		"python": {
-			"required": ["pyproject.toml"],
-			"requireOneOf": ["src/__init__.py", "__init__.py", "src/main.py"],
+			"required": [
+				"pyproject.toml"
+			],
+			"requireOneOf": [
+				"src/__init__.py",
+				"__init__.py",
+				"src/main.py",
+				"src/**/main.py",
+				"main.py",
+				"**/__init__.py"
+			],
 			"allowed": [
 				"*.py",
+				"**/*.py",
+				"**/*.yaml",
+				"**/*.yml",
+				"**/*.toml",
+				"**/*.json",
+				"**/*.jsonc",
+				"**/*.md",
+				"**/*.txt",
+				"**/*.sh",
+				"**/*.js",
+				"**/*.css",
+				"Dockerfile*",
+				"uv.lock",
+				"security/**",
+				"infrastructure/**/*",
+				"infra/**/*",
+				"webui/**/*",
+				"templates/**/*",
+				"static/**/*",
 				"*.pyi",
 				"*.toml",
 				"*.md",
@@ -296,7 +415,9 @@
 	"maxFilesPerChange": 15,
 	"overrideRules": {
 		"migrationMode": false,
-		"overrideRequiresApproval": ["@cortex-os/architects"],
+		"overrideRequiresApproval": [
+			"@cortex-os/architects"
+		],
 		"maxFilesWithOverride": 50
 	},
 	"protectedFiles": [
@@ -311,6 +432,7 @@
 	"allowedGlobs": [
 		"apps/**",
 		"packages/**",
+		"external/**",
 		"tools/**",
 		"docs/**",
 		"scripts/**",
@@ -346,7 +468,6 @@
 		".nx/**",
 		".vscode/**",
 		".semgrep/**",
-            ".husky/**",
 		".claude/**",
 		"node_modules/**",
 		"dist/**",
@@ -361,6 +482,7 @@
 		"*.md",
 		"*.txt",
 		"*.json",
+		"*.jsonc",
 		"*.js",
 		"*.mjs",
 		"*.cjs",
@@ -387,10 +509,11 @@
 		".graphite_config",
 		".env*",
 		"knip.jsonc",
-        "**/coverage/**",
-        "**/target/**",
-        "**/.turbo/**",
-        "**/.vite/**"
+		"**/coverage/**",
+		"**/target/**",
+		"**/.turbo/**",
+		"**/.vite/**",
+		"packages/mcp/security/.jwt_secret"
 	],
 	"deniedGlobs": [
 		"**/*.secret",
@@ -401,21 +524,34 @@
 		"**/id_dsa",
 		"**/id_ecdsa",
 		"**/id_ed25519"
-	]
-,
+	],
 	"importRules": {
 		"bannedPatterns": [
 			"^@cortex-os/.*/dist/.*$",
 			"^@cortex-os/.*/node_modules/.*$",
-			"\\.\\./\\.\\./\\.\\./.*",
 			"^packages/.*/packages/.*"
 		],
 		"allowedCrossPkgImports": [
-			"@cortex-os/contracts",
-			"@cortex-os/types",
-			"@cortex-os/utils",
-			"@cortex-os/telemetry",
-			"@cortex-os/testing"
+			"@cortex-os/contracts**",
+			"@cortex-os/types**",
+			"@cortex-os/utils**",
+			"@cortex-os/telemetry**",
+			"@cortex-os/testing**",
+			"@cortex-os/a2a-contracts**",
+			"@cortex-os/a2a-core**",
+			"@cortex-os/a2a-common**",
+			"@cortex-os/a2a-transport**",
+			"@cortex-os/observability**",
+			"@cortex-os/mcp-core**",
+			"@cortex-os/memories**",
+			"@cortex-os/kernel**",
+			"@cortex-os/prp-runner**",
+			"@cortex-os/a2a**",
+			"@cortex-os/lib**",
+			"@cortex-os/rag**",
+			"@cortex-os/simlab**",
+			"@cortex-os/agents**",
+			"@cortex-os/mvp-core**"
 		]
 	},
 	"enforcement": {

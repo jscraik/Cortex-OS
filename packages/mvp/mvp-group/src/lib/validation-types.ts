@@ -3,7 +3,7 @@
  * @description Type definitions and interfaces for validation system
  */
 
-import type { PRPState } from "../state.js";
+import type { PRPState } from '../state.js';
 
 export interface ValidationResult {
 	passed: boolean;
@@ -27,7 +27,7 @@ export interface SecurityScanResult {
 
 export interface SecurityVulnerability {
 	tool: string;
-	severity: "critical" | "high" | "medium" | "low" | "info";
+	severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
 	type: string;
 	ruleId?: string;
 	message: string;
@@ -78,8 +78,8 @@ export interface FrontendValidationResult {
 			severity: string;
 		};
 		tools?: {
-			lighthouse: "available" | "simulated";
-			axe: "available" | "simulated";
+			lighthouse: 'available' | 'simulated';
+			axe: 'available' | 'simulated';
 		};
 		isWebApp?: boolean;
 		projectType?: string;

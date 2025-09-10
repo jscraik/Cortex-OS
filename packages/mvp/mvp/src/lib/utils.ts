@@ -1,7 +1,7 @@
-import { exec } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-import { promisify } from "node:util";
+import { exec } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
 // Removed incorrect import of generateId
 
@@ -9,7 +9,7 @@ import { promisify } from "node:util";
 function generateId(prefix: string, randomize: boolean): string {
 	const randomPart = randomize
 		? Math.random().toString(36).substring(2, 10)
-		: "";
+		: '';
 	return `${prefix}${randomPart}`;
 }
 export const execAsync = promisify(exec);
@@ -23,7 +23,7 @@ export function fileExists(filePath: string): boolean {
 }
 
 export function readJsonFile<T = any>(filePath: string): T {
-	return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+	return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
 }
 
 export function getBasename(filePath: string): string {

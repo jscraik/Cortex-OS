@@ -19,10 +19,20 @@ describe('EvaluationNode', () => {
 	let mockState: PRPState;
 
 	// Helper types and utilities for exec mocking
-	type ExecCallback = (error: Error | null, stdout: string, stderr: string) => void;
-	type ExecMockFn = (cmd: string, options: unknown, callback?: ExecCallback) => void;
+	type ExecCallback = (
+		error: Error | null,
+		stdout: string,
+		stderr: string,
+	) => void;
+	type ExecMockFn = (
+		cmd: string,
+		options: unknown,
+		callback?: ExecCallback,
+	) => void;
 	function mockExec(impl: ExecMockFn) {
-		(exec as unknown as { mockImplementation: (fn: ExecMockFn) => void }).mockImplementation(impl);
+		(
+			exec as unknown as { mockImplementation: (fn: ExecMockFn) => void }
+		).mockImplementation(impl);
 	}
 
 	beforeEach(() => {
@@ -65,7 +75,11 @@ describe('EvaluationNode', () => {
 			passed: true,
 			blockers: [],
 			majors: [],
-			evidence: ['build-backend-123', 'build-security-456', 'build-frontend-789'],
+			evidence: [
+				'build-backend-123',
+				'build-security-456',
+				'build-frontend-789',
+			],
 			timestamp: new Date().toISOString(),
 		};
 		mockState = base;
@@ -120,7 +134,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mockState);
 
-			const tddEvidence = result.evidence.find((e) => e.source === 'tdd_validator');
+			const tddEvidence = result.evidence.find(
+				(e) => e.source === 'tdd_validator',
+			);
 			const tddDetails = JSON.parse(tddEvidence?.content || '{}');
 
 			expect(tddDetails.passed).toBe(true);
@@ -152,14 +168,18 @@ describe('EvaluationNode', () => {
 				'TDD cycle not completed - missing tests or failing tests',
 			);
 
-			const tddEvidence = result.evidence.find((e) => e.source === 'tdd_validator');
+			const tddEvidence = result.evidence.find(
+				(e) => e.source === 'tdd_validator',
+			);
 			const tddDetails = JSON.parse(tddEvidence?.content || '{}');
 			expect(tddDetails.passed).toBe(false);
 			expect(tddDetails.details.coverage).toBeLessThan(80);
 		});
 
 		it('should handle Python projects with pytest', async () => {
-			const mockGlob = vi.fn().mockResolvedValue(['test_main.py', 'test_api.py']);
+			const mockGlob = vi
+				.fn()
+				.mockResolvedValue(['test_main.py', 'test_api.py']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.existsSync as Mock).mockImplementation((path: string) => {
@@ -178,7 +198,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mockState);
 
-			const tddEvidence = result.evidence.find((e) => e.source === 'tdd_validator');
+			const tddEvidence = result.evidence.find(
+				(e) => e.source === 'tdd_validator',
+			);
 			const tddDetails = JSON.parse(tddEvidence?.content || '{}');
 
 			expect(tddDetails.passed).toBe(true);
@@ -205,7 +227,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mockState);
 
-			const tddEvidence = result.evidence.find((e) => e.source === 'tdd_validator');
+			const tddEvidence = result.evidence.find(
+				(e) => e.source === 'tdd_validator',
+			);
 			const tddDetails = JSON.parse(tddEvidence?.content || '{}');
 
 			expect(tddDetails.details.gitTddEvidence).toBe(true);
@@ -256,12 +280,16 @@ describe('EvaluationNode', () => {
 				}
 			});
 
-			const mockGlob = vi.fn().mockResolvedValue(['src/app.ts', 'src/utils.ts']);
+			const mockGlob = vi
+				.fn()
+				.mockResolvedValue(['src/app.ts', 'src/utils.ts']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			const result = await evaluationNode.execute(mockState);
 
-			const reviewEvidence = result.evidence.find((e) => e.source === 'code_reviewer');
+			const reviewEvidence = result.evidence.find(
+				(e) => e.source === 'code_reviewer',
+			);
 			const reviewDetails = JSON.parse(reviewEvidence?.content || '{}');
 
 			expect(reviewDetails.details.tools).toContain('ESLint');
@@ -296,7 +324,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mockState);
 
-			const reviewEvidence = result.evidence.find((e) => e.source === 'code_reviewer');
+			const reviewEvidence = result.evidence.find(
+				(e) => e.source === 'code_reviewer',
+			);
 			const reviewDetails = JSON.parse(reviewEvidence?.content || '{}');
 
 			expect(reviewDetails.details.tools).toContain('Complexity Analysis');
@@ -318,7 +348,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mockState);
 
-			const reviewEvidence = result.evidence.find((e) => e.source === 'code_reviewer');
+			const reviewEvidence = result.evidence.find(
+				(e) => e.source === 'code_reviewer',
+			);
 			const reviewDetails = JSON.parse(reviewEvidence?.content || '{}');
 
 			expect(reviewDetails.details.tools).toContain('TODO/FIXME Scanner');
@@ -363,7 +395,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mockState);
 
-			const reviewEvidence = result.evidence.find((e) => e.source === 'code_reviewer');
+			const reviewEvidence = result.evidence.find(
+				(e) => e.source === 'code_reviewer',
+			);
 			const reviewDetails = JSON.parse(reviewEvidence?.content || '{}');
 
 			expect(reviewDetails.details.tools).toContain('Pylint');
@@ -379,15 +413,17 @@ describe('EvaluationNode', () => {
         function veryComplexFunction() {
           // Many if/else statements to trigger complexity
           ${Array(20)
-					.fill(0)
-					.map((_, i) => `if (condition${i}) { /* logic */ }`)
-					.join('\n')}
+						.fill(0)
+						.map((_, i) => `if (condition${i}) { /* logic */ }`)
+						.join('\n')}
         }
       `);
 
 			const result = await evaluationNode.execute(mockState);
 
-			const reviewEvidence = result.evidence.find((e) => e.source === 'code_reviewer');
+			const reviewEvidence = result.evidence.find(
+				(e) => e.source === 'code_reviewer',
+			);
 			const reviewDetails = JSON.parse(reviewEvidence?.content || '{}');
 
 			expect(reviewDetails.details.recommendations).toContain(
@@ -400,7 +436,9 @@ describe('EvaluationNode', () => {
 		it('should extract real scores from build evidence', async () => {
 			const result = await evaluationNode.execute(mockState);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 
 			expect(budgetDetails.accessibility.score).toBe(96); // From frontend evidence
@@ -411,33 +449,49 @@ describe('EvaluationNode', () => {
 		it('should provide detailed accessibility budget info', async () => {
 			const result = await evaluationNode.execute(mockState);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 
 			expect(budgetDetails.accessibility.details.wcagLevel).toBe('AAA');
-			expect(budgetDetails.accessibility.details.keyMetrics.colorContrast).toBe(true);
-			expect(budgetDetails.accessibility.details.auditTools).toContain('Axe-core');
+			expect(budgetDetails.accessibility.details.keyMetrics.colorContrast).toBe(
+				true,
+			);
+			expect(budgetDetails.accessibility.details.auditTools).toContain(
+				'Axe-core',
+			);
 		});
 
 		it('should provide detailed performance budget info', async () => {
 			const result = await evaluationNode.execute(mockState);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 
 			expect(budgetDetails.performance.details.coreWebVitals.lcp).toBe('good');
-			expect(budgetDetails.performance.details.budgets.totalJavaScript).toBeDefined();
-			expect(budgetDetails.performance.details.auditTools).toContain('Lighthouse');
+			expect(
+				budgetDetails.performance.details.budgets.totalJavaScript,
+			).toBeDefined();
+			expect(budgetDetails.performance.details.auditTools).toContain(
+				'Lighthouse',
+			);
 		});
 
 		it('should provide detailed security budget info', async () => {
 			const result = await evaluationNode.execute(mockState);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 
 			expect(budgetDetails.security.details.riskLevel).toBeDefined();
-			expect(budgetDetails.security.details.compliance.owaspTop10).toBeDefined();
+			expect(
+				budgetDetails.security.details.compliance.owaspTop10,
+			).toBeDefined();
 			expect(budgetDetails.security.details.scanTools).toContain('Semgrep');
 		});
 
@@ -446,7 +500,9 @@ describe('EvaluationNode', () => {
 			const lowScoreState: PRPState = {
 				...mockState,
 				evidence: [
-					...mockState.evidence.filter((e) => e.source !== 'frontend_validation'),
+					...mockState.evidence.filter(
+						(e) => e.source !== 'frontend_validation',
+					),
 					{
 						id: 'build-frontend-low',
 						type: 'analysis',
@@ -464,7 +520,9 @@ describe('EvaluationNode', () => {
 				'Accessibility score 75 below threshold',
 			);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 			expect(budgetDetails.accessibility.passed).toBe(false);
 			expect(budgetDetails.accessibility.details.recommendations).toContain(
@@ -483,7 +541,9 @@ describe('EvaluationNode', () => {
 						type: 'analysis',
 						source: 'security_scanner',
 						content: JSON.stringify({
-							details: { summary: { critical: 2, high: 5, medium: 3, total: 10 } },
+							details: {
+								summary: { critical: 2, high: 5, medium: 3, total: 10 },
+							},
 						}),
 						timestamp: new Date().toISOString(),
 						phase: 'build',
@@ -494,10 +554,14 @@ describe('EvaluationNode', () => {
 			const result = await evaluationNode.execute(highSecurityIssuesState);
 
 			expect(
-				result.validationResults.evaluation?.blockers.some((b) => b.includes('Security score')),
+				result.validationResults.evaluation?.blockers.some((b) =>
+					b.includes('Security score'),
+				),
 			).toBe(true);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 			expect(budgetDetails.security.passed).toBe(false);
 		});
@@ -507,7 +571,9 @@ describe('EvaluationNode', () => {
 			const mediumPerfState: PRPState = {
 				...mockState,
 				evidence: [
-					...mockState.evidence.filter((e) => e.source !== 'frontend_validation'),
+					...mockState.evidence.filter(
+						(e) => e.source !== 'frontend_validation',
+					),
 					{
 						id: 'build-frontend-med',
 						type: 'analysis',
@@ -521,7 +587,9 @@ describe('EvaluationNode', () => {
 
 			const result = await evaluationNode.execute(mediumPerfState);
 
-			const budgetEvidence = result.evidence.find((e) => e.source === 'quality_budgets');
+			const budgetEvidence = result.evidence.find(
+				(e) => e.source === 'quality_budgets',
+			);
 			const budgetDetails = JSON.parse(budgetEvidence?.content || '{}');
 
 			expect(budgetDetails.performance.details.recommendations).toContain(
@@ -625,7 +693,9 @@ describe('EvaluationNode', () => {
 	describe('overall evaluation', () => {
 		it('should pass evaluation with all gates satisfied', async () => {
 			// Mock comprehensive successful state
-			const mockGlob = vi.fn().mockResolvedValue(['test1.test.ts', 'test2.test.ts']);
+			const mockGlob = vi
+				.fn()
+				.mockResolvedValue(['test1.test.ts', 'test2.test.ts']);
 			vi.doMock('glob', () => ({ glob: mockGlob }));
 
 			(fs.existsSync as Mock).mockReturnValue(true);
@@ -651,10 +721,18 @@ describe('EvaluationNode', () => {
 		it('should aggregate all evaluation evidence', async () => {
 			const result = await evaluationNode.execute(mockState);
 
-			expect(result.evidence.some((e) => e.source === 'tdd_validator')).toBe(true);
-			expect(result.evidence.some((e) => e.source === 'code_reviewer')).toBe(true);
-			expect(result.evidence.some((e) => e.source === 'quality_budgets')).toBe(true);
-			expect(result.validationResults.evaluation?.evidence.length).toBeGreaterThan(0);
+			expect(result.evidence.some((e) => e.source === 'tdd_validator')).toBe(
+				true,
+			);
+			expect(result.evidence.some((e) => e.source === 'code_reviewer')).toBe(
+				true,
+			);
+			expect(result.evidence.some((e) => e.source === 'quality_budgets')).toBe(
+				true,
+			);
+			expect(
+				result.validationResults.evaluation?.evidence.length,
+			).toBeGreaterThan(0);
 		});
 
 		it('should handle evaluation errors gracefully', async () => {
@@ -667,7 +745,9 @@ describe('EvaluationNode', () => {
 
 			// Should not crash, should provide error details
 			expect(result.validationResults.evaluation).toBeDefined();
-			expect(result.evidence.some((e) => e.source === 'tdd_validator')).toBe(true);
+			expect(result.evidence.some((e) => e.source === 'tdd_validator')).toBe(
+				true,
+			);
 		});
 	});
 });

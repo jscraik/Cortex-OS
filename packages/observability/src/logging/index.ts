@@ -2,32 +2,32 @@
  * @fileoverview Structured logging with redaction and ULID linking
  */
 
-import pino from "pino";
-import type { LogEntry, LogLevel, TraceContext, ULID } from "../types.js";
+import pino from 'pino';
+import type { LogEntry, LogLevel, TraceContext, ULID } from '../types.js';
 
 // Sensitive fields to redact
 const REDACTED_FIELDS = [
-	"password",
-	"token",
-	"secret",
-	"apiKey",
-	"authorization",
-	"cookie",
-	"session",
+	'password',
+	'token',
+	'secret',
+	'apiKey',
+	'authorization',
+	'cookie',
+	'session',
 ];
 
 /**
  * Create logger with redaction
  */
-export function createLogger(component: string, level: LogLevel = "info") {
+export function createLogger(component: string, level: LogLevel = 'info') {
 	return pino({
 		level,
 		redact: {
 			paths: REDACTED_FIELDS,
-			censor: "[REDACTED]",
+			censor: '[REDACTED]',
 		},
 		formatters: {
-			log(object) {
+			log(object: Record<string, unknown>) {
 				return {
 					component,
 					...object,
@@ -92,8 +92,8 @@ function redactSensitiveData(
 	for (const key of Object.keys(result)) {
 		const lowerKey = key.toLowerCase();
 		if (REDACTED_FIELDS.some((field) => lowerKey.includes(field))) {
-			result[key] = "[REDACTED]";
-		} else if (typeof result[key] === "object" && result[key] !== null) {
+			result[key] = '[REDACTED]';
+		} else if (typeof result[key] === 'object' && result[key] !== null) {
 			result[key] = redactSensitiveData(result[key] as Record<string, unknown>);
 		}
 	}

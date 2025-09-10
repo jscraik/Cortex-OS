@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 export interface DependabotProject {
 	packageEcosystem: string;
@@ -18,12 +18,12 @@ export const loadDependabotConfig = async (
 ): Promise<DependabotConfig | null> => {
 	const filePath = path
 		? resolve(cwd, path)
-		: resolve(cwd, ".github/dependabot.yml");
+		: resolve(cwd, '.github/dependabot.yml');
 	try {
-		const raw = await readFile(filePath, "utf8");
+		const raw = await readFile(filePath, 'utf8');
 		let parsed: any = {};
 		try {
-			const mod = await import("yaml");
+			const mod = await import('yaml');
 			parsed = (mod as any).parse
 				? (mod as any).parse(raw)
 				: (mod as any).default.parse(raw);
@@ -35,9 +35,9 @@ export const loadDependabotConfig = async (
 		const projects: DependabotProject[] = updates
 			.map((u: any) => ({
 				packageEcosystem: String(
-					u.package_ecosystem || u.packageEcosystem || "",
+					u.package_ecosystem || u.packageEcosystem || '',
 				),
-				directory: String(u.directory || ""),
+				directory: String(u.directory || ''),
 				scheduleInterval: u.schedule?.interval,
 			}))
 			.filter((p: DependabotProject) => p.packageEcosystem && p.directory);
@@ -69,13 +69,13 @@ export const assessDependabotConfig = (
 	let hasJsEcosystem = false;
 
 	for (const p of projects) {
-		const interval = (p.scheduleInterval || "").toLowerCase();
-		if (interval === "daily" || interval === "weekly") dailyOrWeekly++;
+		const interval = (p.scheduleInterval || '').toLowerCase();
+		if (interval === 'daily' || interval === 'weekly') dailyOrWeekly++;
 		else monthlyOrOther++;
-		if (p.packageEcosystem === "github-actions") hasGithubActions = true;
-		if (["npm", "pnpm", "yarn", "npm_and_yarn"].includes(p.packageEcosystem))
+		if (p.packageEcosystem === 'github-actions') hasGithubActions = true;
+		if (['npm', 'pnpm', 'yarn', 'npm_and_yarn'].includes(p.packageEcosystem))
 			hasJsEcosystem = true;
-		if (!p.scheduleInterval || interval === "monthly" || interval === "")
+		if (!p.scheduleInterval || interval === 'monthly' || interval === '')
 			weakProjects.push(p);
 	}
 

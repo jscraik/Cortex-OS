@@ -1,15 +1,15 @@
-import { TOKENS } from "./tokens";
+import { Container } from 'inversify';
 import {
-  provideMCP,
-  provideMemories,
-  provideOrchestration,
-  tracer,
-} from "./services";
-import { Container } from "inversify";
+	provideMCP,
+	provideMemories,
+	provideOrchestration,
+	tracer,
+} from './services';
+import { TOKENS } from './tokens';
 
 export function createContainer(): Container {
 	const container = new Container({
-		defaultScope: "Singleton",
+		defaultScope: 'Singleton',
 		skipBaseClassChecks: true,
 		autoBindInjectable: false,
 	});
@@ -23,7 +23,7 @@ export function createContainer(): Container {
 }
 
 function validateContainer(container: Container): void {
-	const span = tracer.startSpan("container.validation");
+	const span = tracer.startSpan('container.validation');
 	try {
 		const requiredTokens = [
 			TOKENS.Memories,

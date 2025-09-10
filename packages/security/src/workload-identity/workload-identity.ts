@@ -3,17 +3,17 @@
  * @description Workload identity attestation and management for SPIFFE/SPIRE
  */
 
-import { logWithSpan, withSpan } from "@cortex-os/telemetry";
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 import {
 	type SpiffeId,
 	type WorkloadIdentity,
 	WorkloadIdentityError,
 	WorkloadIdentitySchema,
-} from "../types.ts";
+} from '../types.ts';
 import {
 	extractTrustDomain,
 	extractWorkloadPath,
-} from "../utils/security-utils.ts";
+} from '../utils/security-utils.ts';
 
 /**
  * Workload Identity Manager
@@ -30,16 +30,16 @@ export class WorkloadIdentityManager {
 	 * Attest a workload identity
 	 */
 	async attestWorkload(spiffeId: SpiffeId): Promise<WorkloadIdentity> {
-		return withSpan("workload-identity.attest", async () => {
+		return withSpan('workload-identity.attest', async () => {
 			try {
-				logWithSpan("info", "Attesting workload identity", {
+				logWithSpan('info', 'Attesting workload identity', {
 					spiffeId,
 				});
 
 				// Check cache first
 				const cached = this.attestationCache.get(spiffeId);
 				if (cached && cached.expiresAt > Date.now()) {
-					logWithSpan("debug", "Using cached workload identity", {
+					logWithSpan('debug', 'Using cached workload identity', {
 						spiffeId,
 						cacheExpiresAt: new Date(cached.expiresAt).toISOString(),
 					});
@@ -81,7 +81,7 @@ export class WorkloadIdentityManager {
 				// Store in identities map
 				this.identities.set(spiffeId, validatedIdentity);
 
-				logWithSpan("info", "Workload identity attested successfully", {
+				logWithSpan('info', 'Workload identity attested successfully', {
 					spiffeId,
 					trustDomain,
 					workloadPath,
@@ -89,13 +89,13 @@ export class WorkloadIdentityManager {
 
 				return validatedIdentity;
 			} catch (error) {
-				logWithSpan("error", "Failed to attest workload identity", {
+				logWithSpan('error', 'Failed to attest workload identity', {
 					spiffeId,
-					error: error instanceof Error ? error.message : "Unknown error",
+					error: error instanceof Error ? error.message : 'Unknown error',
 				});
 
 				throw new WorkloadIdentityError(
-					`Failed to attest workload identity: ${error instanceof Error ? error.message : "Unknown error"}`,
+					`Failed to attest workload identity: ${error instanceof Error ? error.message : 'Unknown error'}`,
 					undefined,
 					{ spiffeId, originalError: error },
 				);
@@ -125,7 +125,7 @@ export class WorkloadIdentityManager {
 		this.attestationCache.delete(spiffeId);
 
 		if (removed) {
-			logWithSpan("info", "Workload identity revoked", {
+			logWithSpan('info', 'Workload identity revoked', {
 				spiffeId,
 			});
 		}
@@ -149,7 +149,7 @@ export class WorkloadIdentityManager {
 		for (const [key, expectedValue] of Object.entries(requiredSelectors)) {
 			const actualValue = identity.selectors[key];
 			if (actualValue !== expectedValue) {
-				logWithSpan("debug", "Selector validation failed", {
+				logWithSpan('debug', 'Selector validation failed', {
 					spiffeId,
 					selector: key,
 					expected: expectedValue,
@@ -167,7 +167,7 @@ export class WorkloadIdentityManager {
 	 */
 	clearCache(): void {
 		this.attestationCache.clear();
-		logWithSpan("info", "Workload identity cache cleared");
+		logWithSpan('info', 'Workload identity cache cleared');
 	}
 
 	/**
@@ -207,28 +207,28 @@ export class WorkloadIdentityAttestor {
 	 * Attest workload using SPIFFE Workload API
 	 */
 	async attestWithWorkloadAPI(spiffeId: SpiffeId): Promise<WorkloadIdentity> {
-		return withSpan("workload-attestor.attest-api", async () => {
+		return withSpan('workload-attestor.attest-api', async () => {
 			try {
-				logWithSpan("info", "Attesting workload via Workload API", {
+				logWithSpan('info', 'Attesting workload via Workload API', {
 					spiffeId,
 				});
 
 				if (!this.apiClient) {
 					throw new WorkloadIdentityError(
-						"Workload API client not configured",
+						'Workload API client not configured',
 						spiffeId,
 					);
 				}
 
 				return await this.apiClient.attestWorkload(spiffeId);
 			} catch (error) {
-				logWithSpan("error", "Workload API attestation failed", {
+				logWithSpan('error', 'Workload API attestation failed', {
 					spiffeId,
-					error: error instanceof Error ? error.message : "Unknown error",
+					error: error instanceof Error ? error.message : 'Unknown error',
 				});
 
 				throw new WorkloadIdentityError(
-					`Workload API attestation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+					`Workload API attestation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 					undefined,
 					{ spiffeId, originalError: error },
 				);
@@ -242,10 +242,10 @@ export class WorkloadIdentityAttestor {
 	async batchAttest(
 		spiffeIds: SpiffeId[],
 	): Promise<Map<SpiffeId, WorkloadIdentity>> {
-		return withSpan("workload-attestor.batch-attest", async () => {
+		return withSpan('workload-attestor.batch-attest', async () => {
 			const results = new Map<SpiffeId, WorkloadIdentity>();
 
-			logWithSpan("info", "Starting batch workload attestation", {
+			logWithSpan('info', 'Starting batch workload attestation', {
 				count: spiffeIds.length,
 			});
 
@@ -254,15 +254,15 @@ export class WorkloadIdentityAttestor {
 					const identity = await this.manager.attestWorkload(spiffeId);
 					results.set(spiffeId, identity);
 				} catch (error) {
-					logWithSpan("error", "Failed to attest workload in batch", {
+					logWithSpan('error', 'Failed to attest workload in batch', {
 						spiffeId,
-						error: error instanceof Error ? error.message : "Unknown error",
+						error: error instanceof Error ? error.message : 'Unknown error',
 					});
 					// Continue with other workloads even if one fails
 				}
 			}
 
-			logWithSpan("info", "Batch workload attestation completed", {
+			logWithSpan('info', 'Batch workload attestation completed', {
 				requested: spiffeIds.length,
 				successful: results.size,
 			});

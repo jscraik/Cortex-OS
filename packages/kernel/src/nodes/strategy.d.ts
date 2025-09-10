@@ -1,4 +1,4 @@
-import type { PRPState } from "../state.js";
+import type { PRPState } from '../state.js';
 /**
  * Strategy Phase Gates:
  * - ✅ Blueprint linked in PRP doc
@@ -7,9 +7,9 @@ import type { PRPState } from "../state.js";
  * - ✅ Architecture diagram consistent with repo structure
  */
 export declare class StrategyNode {
-    execute(state: PRPState): Promise<PRPState>;
-    private validateSecurityBaseline;
-    private validateUXAccessibility;
-    private validateArchitecture;
+	execute(state: PRPState): Promise<PRPState>;
+	private validateSecurityBaseline;
+	private validateUXAccessibility;
+	private validateArchitecture;
 }
 //# sourceMappingURL=strategy.d.ts.map

@@ -3,10 +3,10 @@
  * @description Tests for McpConnection WebSocket handler
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
-import { WebSocket } from "ws";
-import { McpConnection } from "../src/McpConnection";
-import { ToolRegistry } from "../src/ToolRegistry.js";
+import { beforeEach, describe, expect, it } from 'vitest';
+import { WebSocket } from 'ws';
+import { McpConnection } from '../src/McpConnection';
+import { ToolRegistry } from '../src/ToolRegistry.js';
 
 // Mock WebSocket
 class MockWebSocket extends WebSocket {
@@ -14,7 +14,7 @@ class MockWebSocket extends WebSocket {
 	readyState = WebSocket.OPEN;
 
 	constructor() {
-		super("ws://localhost");
+		super('ws://localhost');
 		this.readyState = WebSocket.OPEN;
 	}
 
@@ -27,11 +27,11 @@ class MockWebSocket extends WebSocket {
 	}
 
 	simulateMessage(message: any) {
-		this.emit("message", Buffer.from(JSON.stringify(message)));
+		this.emit('message', Buffer.from(JSON.stringify(message)));
 	}
 }
 
-describe("McpConnection", () => {
+describe('McpConnection', () => {
 	let mockWs: MockWebSocket;
 	let toolRegistry: ToolRegistry;
 	let connection: McpConnection;
@@ -42,10 +42,10 @@ describe("McpConnection", () => {
 
 		// Register a test tool
 		const testTool = {
-			name: "test_tool",
-			description: "A test tool",
+			name: 'test_tool',
+			description: 'A test tool',
 			async run(args: any) {
-				return { result: "success", args };
+				return { result: 'success', args };
 			},
 		};
 		toolRegistry.register(testTool);
@@ -53,29 +53,29 @@ describe("McpConnection", () => {
 		connection = new McpConnection(mockWs, toolRegistry);
 	});
 
-	describe("Connection Initialization", () => {
-		it("should create connection with unique ID", () => {
+	describe('Connection Initialization', () => {
+		it('should create connection with unique ID', () => {
 			expect(connection.getConnectionId()).toMatch(/^conn-\d+$/);
 		});
 
-		it("should send capabilities on connection", () => {
+		it('should send capabilities on connection', () => {
 			expect(mockWs.messages).toHaveLength(1);
 			const message = JSON.parse(mockWs.getLastMessage());
-			expect(message.type).toBe("notification");
-			expect(message.method).toBe("capabilities");
+			expect(message.type).toBe('notification');
+			expect(message.method).toBe('capabilities');
 			expect(message.params.tools).toHaveLength(1);
-			expect(message.params.tools[0].name).toBe("test_tool");
+			expect(message.params.tools[0].name).toBe('test_tool');
 		});
 	});
 
-	describe("Message Handling", () => {
-		it("should handle initialize request", () => {
+	describe('Message Handling', () => {
+		it('should handle initialize request', () => {
 			const initMessage = {
-				id: "1",
-				type: "request",
-				method: "initialize",
+				id: '1',
+				type: 'request',
+				method: 'initialize',
 				params: {
-					clientInfo: { name: "test-client", version: "1.0.0" },
+					clientInfo: { name: 'test-client', version: '1.0.0' },
 					capabilities: {},
 				},
 			};
@@ -83,40 +83,40 @@ describe("McpConnection", () => {
 			mockWs.simulateMessage(initMessage);
 
 			const response = JSON.parse(mockWs.getLastMessage());
-			expect(response.id).toBe("1");
-			expect(response.type).toBe("response");
-			expect(response.result.protocolVersion).toBe("2024-11-05");
-			expect(response.result.serverInfo.name).toBe("cortex-mcp-server");
+			expect(response.id).toBe('1');
+			expect(response.type).toBe('response');
+			expect(response.result.protocolVersion).toBe('2024-11-05');
+			expect(response.result.serverInfo.name).toBe('cortex-mcp-server');
 		});
 
-		it("should handle tools/list request", () => {
+		it('should handle tools/list request', () => {
 			const listMessage = {
-				id: "2",
-				type: "request",
-				method: "tools/list",
+				id: '2',
+				type: 'request',
+				method: 'tools/list',
 			};
 
 			mockWs.simulateMessage(listMessage);
 
 			const response = JSON.parse(mockWs.getLastMessage());
-			expect(response.id).toBe("2");
-			expect(response.type).toBe("response");
+			expect(response.id).toBe('2');
+			expect(response.type).toBe('response');
 			expect(response.result.tools).toHaveLength(1);
-			expect(response.result.tools[0].name).toBe("test_tool");
+			expect(response.result.tools[0].name).toBe('test_tool');
 		});
 
-		it("should handle ping request", () => {
+		it('should handle ping request', () => {
 			const pingMessage = {
-				id: "5",
-				type: "request",
-				method: "ping",
+				id: '5',
+				type: 'request',
+				method: 'ping',
 			};
 
 			mockWs.simulateMessage(pingMessage);
 
 			const response = JSON.parse(mockWs.getLastMessage());
-			expect(response.id).toBe("5");
-			expect(response.type).toBe("response");
+			expect(response.id).toBe('5');
+			expect(response.type).toBe('response');
 			expect(response.result.pong).toBe(true);
 			expect(response.result.timestamp).toBeDefined();
 		});

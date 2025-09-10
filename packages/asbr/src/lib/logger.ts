@@ -1,7 +1,7 @@
 export type LogMeta = Record<string, unknown>;
 
 function log(
-	level: "info" | "warn" | "error",
+	level: 'info' | 'warn' | 'error',
 	message: string,
 	meta?: LogMeta,
 ): void {
@@ -12,17 +12,17 @@ function log(
 		...meta,
 	};
 	// eslint-disable-next-line no-console
-	console[level === "info" ? "log" : level](JSON.stringify(entry));
+	console[level === 'info' ? 'log' : level](JSON.stringify(entry));
 }
 
 export function logInfo(message: string, meta?: LogMeta): void {
-	log("info", message, meta);
+	log('info', message, meta);
 }
 
 export function logWarn(message: string, meta?: LogMeta): void {
-	log("warn", message, meta);
+	log('warn', message, meta);
 }
 
 export function logError(message: string, meta?: LogMeta): void {
-	log("error", message, meta);
+	log('error', message, meta);
 }

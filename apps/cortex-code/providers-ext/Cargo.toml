@@ -9,4 +9,3 @@ path = "src/lib.rs"
 
 [dependencies]
 codex-core = { path = "../core" }
-

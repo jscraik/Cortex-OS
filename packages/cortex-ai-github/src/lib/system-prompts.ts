@@ -3,7 +3,7 @@
  * Extracted for maintainability and testability
  */
 
-import type { AITaskType } from "../types/github-models.js";
+import type { AITaskType } from '../types/github-models.js';
 
 export const SYSTEM_PROMPTS: Record<AITaskType, string> = {
 	code_review: `You are an expert code reviewer for the Cortex AI system. Analyze code changes with focus on:

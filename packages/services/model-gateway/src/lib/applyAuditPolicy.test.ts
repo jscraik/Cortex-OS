@@ -1,29 +1,29 @@
-import { describe, it, expect, vi } from "vitest";
-import type { FastifyRequest } from "fastify";
+import type { FastifyRequest } from 'fastify';
+import { describe, expect, it, vi } from 'vitest';
 
-vi.mock("../policy.js", () => ({
-        loadGrant: vi.fn().mockResolvedValue({
-                actions: ["embeddings"],
-                rate: { perMinute: 60 },
-                rules: { allow_embeddings: true, allow_rerank: true, allow_chat: true },
-        }),
-        enforce: vi.fn(),
+vi.mock('../policy.js', () => ({
+	loadGrant: vi.fn().mockResolvedValue({
+		actions: ['embeddings'],
+		rate: { perMinute: 60 },
+		rules: { allow_embeddings: true, allow_rerank: true, allow_chat: true },
+	}),
+	enforce: vi.fn(),
 }));
 
-vi.mock("../audit.js", () => ({
-        auditEvent: vi.fn(() => ({ id: "1" })),
-        record: vi.fn().mockResolvedValue(undefined),
+vi.mock('../audit.js', () => ({
+	auditEvent: vi.fn(() => ({ id: '1' })),
+	record: vi.fn().mockResolvedValue(undefined),
 }));
 
-const { applyAuditPolicy } = await import("./applyAuditPolicy.ts");
-const { enforce } = await import("../policy.js");
-const { record } = await import("../audit.js");
+const { applyAuditPolicy } = await import('./applyAuditPolicy.ts');
+const { enforce } = await import('../policy.js');
+const { record } = await import('../audit.js');
 
-describe("applyAuditPolicy", () => {
-        it("enforces policy and records audit", async () => {
-                const req = { headers: {} } as unknown as FastifyRequest;
-                await applyAuditPolicy(req, "embeddings", { text: "hi" });
-                expect(enforce).toHaveBeenCalled();
-                expect(record).toHaveBeenCalled();
-        });
+describe('applyAuditPolicy', () => {
+	it('enforces policy and records audit', async () => {
+		const req = { headers: {} } as unknown as FastifyRequest;
+		await applyAuditPolicy(req, 'embeddings', { text: 'hi' });
+		expect(enforce).toHaveBeenCalled();
+		expect(record).toHaveBeenCalled();
+	});
 });

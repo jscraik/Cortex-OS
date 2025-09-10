@@ -1,29 +1,43 @@
 export interface Embedder {
-    embed(queries: string[]): Promise<number[][]>;
+	embed(queries: string[]): Promise<number[][]>;
 }
 export interface Chunk {
-    id: string;
-    text: string;
-    source?: string;
-    embedding?: number[];
+	id: string;
+	text: string;
+	source?: string;
+	embedding?: number[];
 }
 export interface Store {
-    upsert(chunks: Chunk[]): Promise<void>;
-    query(embedding: number[], k?: number): Promise<Array<Chunk & {
-        score?: number;
-    }>>;
+	upsert(chunks: Chunk[]): Promise<void>;
+	query(
+		embedding: number[],
+		k?: number,
+	): Promise<
+		Array<
+			Chunk & {
+				score?: number;
+			}
+		>
+	>;
 }
 export interface Pipeline {
-    ingest(chunks: Chunk[]): Promise<void>;
-    retrieve(query: string, topK?: number): Promise<Array<Chunk & {
-        score?: number;
-    }>>;
+	ingest(chunks: Chunk[]): Promise<void>;
+	retrieve(
+		query: string,
+		topK?: number,
+	): Promise<
+		Array<
+			Chunk & {
+				score?: number;
+			}
+		>
+	>;
 }
 export interface Document {
-    id: string;
-    content: string;
-    metadata?: Record<string, unknown>;
-    embedding?: number[];
-    similarity?: number;
+	id: string;
+	content: string;
+	metadata?: Record<string, unknown>;
+	embedding?: number[];
+	similarity?: number;
 }
 //# sourceMappingURL=types.d.ts.map

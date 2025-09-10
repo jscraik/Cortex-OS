@@ -4,11 +4,11 @@ export interface GenerationConfig {
 	temperature?: number;
 	topP?: number;
 	stream?: boolean;
-	provider?: "mlx" | "ollama";
+	provider?: 'mlx' | 'ollama';
 }
 
 export interface ChatMessage {
-	role: "system" | "user" | "assistant";
+	role: 'system' | 'user' | 'assistant';
 	content: string;
 }
 
@@ -19,7 +19,7 @@ export interface GenerationResponse {
 		completionTokens: number;
 		totalTokens: number;
 	};
-	provider: "mlx" | "ollama";
+	provider: 'mlx' | 'ollama';
 }
 
 export interface Generator {
@@ -34,4 +34,4 @@ export interface Generator {
 	close?(): Promise<void>;
 }
 
-export * from "./multi-model.js";
+export * from './multi-model.js';

@@ -10,12 +10,12 @@ import {
 	getProjectRoot,
 	getRelativePath,
 	readJsonFile,
-} from "../lib/utils.js";
+} from '../lib/utils.js';
 import type {
 	SecurityScanResult,
 	SecurityVulnerability,
-} from "../lib/validation-types.js";
-import type { PRPState } from "../state.js";
+} from '../lib/validation-types.js';
+import type { PRPState } from '../state.js';
 
 export class SecurityScanner {
 	private readonly SCAN_TIMEOUT = 120000; // 2 minutes total timeout
@@ -40,7 +40,7 @@ export class SecurityScanner {
 			const timeoutPromise = new Promise<SecurityVulnerability[]>(
 				(_, reject) => {
 					setTimeout(
-						() => reject(new Error("Security scan timeout")),
+						() => reject(new Error('Security scan timeout')),
 						this.SCAN_TIMEOUT,
 					);
 				},
@@ -52,26 +52,26 @@ export class SecurityScanner {
 
 			// Process results from parallel scans
 			results.forEach((result, index) => {
-				if (result.status === "fulfilled") {
+				if (result.status === 'fulfilled') {
 					scanResults.vulnerabilities.push(...result.value);
 				} else {
-					const toolNames = ["Semgrep", "ESLint Security", "Bandit"];
+					const toolNames = ['Semgrep', 'ESLint Security', 'Bandit'];
 					scanResults.vulnerabilities.push({
 						tool: toolNames[index].toLowerCase(),
-						severity: "info",
-						type: "scan_timeout",
+						severity: 'info',
+						type: 'scan_timeout',
 						message: `${toolNames[index]} scan timed out or failed: ${result.reason}`,
-						file: "",
+						file: '',
 						line: 0,
 					});
 				}
 			});
 
 			scanResults.blockers = scanResults.vulnerabilities.filter(
-				(v) => v.severity === "critical" || v.severity === "high",
+				(v) => v.severity === 'critical' || v.severity === 'high',
 			).length;
 			scanResults.majors = scanResults.vulnerabilities.filter(
-				(v) => v.severity === "medium",
+				(v) => v.severity === 'medium',
 			).length;
 
 			if (
@@ -81,10 +81,10 @@ export class SecurityScanner {
 				const basicFindings = await this.runBasicSecurityChecks(projectRoot);
 				scanResults.vulnerabilities.push(...basicFindings);
 				scanResults.majors += basicFindings.filter(
-					(f) => f.severity === "medium",
+					(f) => f.severity === 'medium',
 				).length;
 				scanResults.blockers += basicFindings.filter(
-					(f) => f.severity === "high",
+					(f) => f.severity === 'high',
 				).length;
 			}
 
@@ -99,18 +99,18 @@ export class SecurityScanner {
 					summary: {
 						total: scanResults.vulnerabilities.length,
 						critical: scanResults.vulnerabilities.filter(
-							(v) => v.severity === "critical",
+							(v) => v.severity === 'critical',
 						).length,
 						high: scanResults.vulnerabilities.filter(
-							(v) => v.severity === "high",
+							(v) => v.severity === 'high',
 						).length,
 						medium: scanResults.vulnerabilities.filter(
-							(v) => v.severity === "medium",
+							(v) => v.severity === 'medium',
 						).length,
-						low: scanResults.vulnerabilities.filter((v) => v.severity === "low")
+						low: scanResults.vulnerabilities.filter((v) => v.severity === 'low')
 							.length,
 						info: scanResults.vulnerabilities.filter(
-							(v) => v.severity === "info",
+							(v) => v.severity === 'info',
 						).length,
 					},
 				},
@@ -120,18 +120,18 @@ export class SecurityScanner {
 				blockers: 0,
 				majors: 1,
 				details: {
-					tools: ["Error"],
+					tools: ['Error'],
 					error:
 						error instanceof Error
 							? error.message
-							: "Unknown security scan error",
+							: 'Unknown security scan error',
 					vulnerabilities: [
 						{
-							tool: "system",
-							severity: "medium",
-							type: "scan_error",
-							message: "Security scan could not be completed",
-							file: "",
+							tool: 'system',
+							severity: 'medium',
+							type: 'scan_error',
+							message: 'Security scan could not be completed',
+							file: '',
 							line: 0,
 						},
 					],
@@ -152,13 +152,13 @@ export class SecurityScanner {
 		projectRoot: string,
 	): Promise<SecurityVulnerability[]> {
 		try {
-			await execAsync("which semgrep", { timeout: 2000 });
+			await execAsync('which semgrep', { timeout: 2000 });
 
-			const semgrepDir = createFilePath(projectRoot, ".semgrep");
+			const semgrepDir = createFilePath(projectRoot, '.semgrep');
 			const useLocalRules = fileExists(semgrepDir);
 			const semgrepCmd = useLocalRules
-				? "semgrep --quiet --json --config .semgrep"
-				: "semgrep --quiet --json --config auto";
+				? 'semgrep --quiet --json --config .semgrep'
+				: 'semgrep --quiet --json --config auto';
 
 			try {
 				const { stdout } = await execAsync(semgrepCmd, {
@@ -173,45 +173,45 @@ export class SecurityScanner {
 
 					return findings.map((finding: any) => {
 						const severity = this.mapSemgrepSeverity(
-							finding.extra?.severity || "INFO",
+							finding.extra?.severity || 'INFO',
 						);
 						return {
-							tool: "semgrep",
+							tool: 'semgrep',
 							severity,
-							type: finding.check_id?.split(".").pop() || "unknown",
+							type: finding.check_id?.split('.').pop() || 'unknown',
 							ruleId: finding.check_id,
 							message:
-								finding.extra?.message || "Security vulnerability detected",
-							file: getRelativePath(projectRoot, finding.path || ""),
+								finding.extra?.message || 'Security vulnerability detected',
+							file: getRelativePath(projectRoot, finding.path || ''),
 							line: finding.start?.line || 0,
 							column: finding.start?.col || 0,
-							code: finding.extra?.lines || "",
-							confidence: finding.extra?.metadata?.confidence || "MEDIUM",
+							code: finding.extra?.lines || '',
+							confidence: finding.extra?.metadata?.confidence || 'MEDIUM',
 						};
 					});
 				}
 			} catch (semgrepError: any) {
-				console.warn("Semgrep scan failed:", semgrepError.message);
+				console.warn('Semgrep scan failed:', semgrepError.message);
 				return [
 					{
-						tool: "semgrep",
-						severity: "info",
-						type: "scan_error",
+						tool: 'semgrep',
+						severity: 'info',
+						type: 'scan_error',
 						message: `Semgrep scan failed: ${semgrepError.message}`,
-						file: "",
+						file: '',
 						line: 0,
 					},
 				];
 			}
 		} catch (semgrepNotFound) {
-			console.warn("Semgrep not found:", semgrepNotFound);
+			console.warn('Semgrep not found:', semgrepNotFound);
 			return [
 				{
-					tool: "semgrep",
-					severity: "info",
-					type: "not_available",
-					message: "Semgrep not available on PATH; skipping Semgrep scan",
-					file: "",
+					tool: 'semgrep',
+					severity: 'info',
+					type: 'not_available',
+					message: 'Semgrep not available on PATH; skipping Semgrep scan',
+					file: '',
 					line: 0,
 				},
 			];
@@ -224,31 +224,31 @@ export class SecurityScanner {
 		projectRoot: string,
 	): Promise<SecurityVulnerability[]> {
 		try {
-			if (fileExists(createFilePath(projectRoot, "package.json"))) {
+			if (fileExists(createFilePath(projectRoot, 'package.json'))) {
 				const packageJson = readJsonFile(
-					createFilePath(projectRoot, "package.json"),
+					createFilePath(projectRoot, 'package.json'),
 				);
 				const hasSecurityPlugin =
-					packageJson.dependencies?.["eslint-plugin-security"] ||
-					packageJson.devDependencies?.["eslint-plugin-security"];
+					packageJson.dependencies?.['eslint-plugin-security'] ||
+					packageJson.devDependencies?.['eslint-plugin-security'];
 
 				if (hasSecurityPlugin) {
 					const { stdout } = await execAsync(
-						"npx eslint --format json --ext .js,.ts,.jsx,.tsx .",
+						'npx eslint --format json --ext .js,.ts,.jsx,.tsx .',
 						{
 							cwd: projectRoot,
 							timeout: this.TOOL_TIMEOUT,
 							maxBuffer: 1024 * 1024,
 						},
-					).catch(() => ({ stdout: "[]" }));
+					).catch(() => ({ stdout: '[]' }));
 
-					const eslintResults = JSON.parse(stdout || "[]");
+					const eslintResults = JSON.parse(stdout || '[]');
 					return (eslintResults || []).flatMap((result: any) =>
 						(result.messages || [])
-							.filter((msg: any) => msg.ruleId?.includes("security"))
+							.filter((msg: any) => msg.ruleId?.includes('security'))
 							.map((msg: any) => ({
-								tool: "eslint-security",
-								severity: msg.severity === 2 ? "medium" : "low",
+								tool: 'eslint-security',
+								severity: msg.severity === 2 ? 'medium' : 'low',
 								type: msg.ruleId,
 								message: msg.message,
 								file: getRelativePath(projectRoot, result.filePath),
@@ -261,11 +261,11 @@ export class SecurityScanner {
 		} catch (eslintError: any) {
 			return [
 				{
-					tool: "eslint",
-					severity: "info",
-					type: "scan_error",
+					tool: 'eslint',
+					severity: 'info',
+					type: 'scan_error',
 					message: `ESLint security scan failed: ${eslintError?.message || String(eslintError)}`,
-					file: "",
+					file: '',
 					line: 0,
 				},
 			];
@@ -279,12 +279,12 @@ export class SecurityScanner {
 	): Promise<SecurityVulnerability[]> {
 		try {
 			if (
-				fileExists(createFilePath(projectRoot, "pyproject.toml")) ||
-				fileExists(createFilePath(projectRoot, "requirements.txt"))
+				fileExists(createFilePath(projectRoot, 'pyproject.toml')) ||
+				fileExists(createFilePath(projectRoot, 'requirements.txt'))
 			) {
-				await execAsync("which bandit", { timeout: 2000 });
+				await execAsync('which bandit', { timeout: 2000 });
 
-				const { stdout } = await execAsync("bandit -r . -f json", {
+				const { stdout } = await execAsync('bandit -r . -f json', {
 					cwd: projectRoot,
 					timeout: this.TOOL_TIMEOUT,
 					maxBuffer: 1024 * 1024,
@@ -292,11 +292,11 @@ export class SecurityScanner {
 
 				const banditResults = JSON.parse(stdout);
 				return (banditResults.results || []).map((finding: any) => ({
-					tool: "bandit",
+					tool: 'bandit',
 					severity: this.mapBanditSeverity(finding.issue_severity),
 					type: finding.test_id,
 					message: finding.issue_text,
-					file: getRelativePath(projectRoot, finding.filename || ""),
+					file: getRelativePath(projectRoot, finding.filename || ''),
 					line: finding.line_number || 0,
 					column: 0,
 					confidence: finding.issue_confidence,
@@ -305,11 +305,11 @@ export class SecurityScanner {
 		} catch (banditError: any) {
 			return [
 				{
-					tool: "bandit",
-					severity: "info",
-					type: "not_available",
+					tool: 'bandit',
+					severity: 'info',
+					type: 'not_available',
 					message: `Bandit unavailable or failed: ${banditError?.message || String(banditError)}`,
-					file: "",
+					file: '',
 					line: 0,
 				},
 			];
@@ -324,19 +324,19 @@ export class SecurityScanner {
 		const findings: SecurityVulnerability[] = [];
 
 		try {
-			const glob = await import("glob");
+			const glob = await import('glob');
 			const patterns = [
-				"**/*.js",
-				"**/*.ts",
-				"**/*.py",
-				"**/*.jsx",
-				"**/*.tsx",
+				'**/*.js',
+				'**/*.ts',
+				'**/*.py',
+				'**/*.jsx',
+				'**/*.tsx',
 			];
 
 			for (const pattern of patterns) {
 				const files = await glob.glob(pattern, {
 					cwd: projectRoot,
-					ignore: ["node_modules/**", ".git/**", "dist/**", "build/**"],
+					ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
 				});
 
 				for (const file of files.slice(0, 50)) {
@@ -348,7 +348,7 @@ export class SecurityScanner {
 				}
 			}
 		} catch (error) {
-			console.debug("Basic security checks failed:", error);
+			console.debug('Basic security checks failed:', error);
 		}
 
 		return findings.slice(0, 10);
@@ -359,12 +359,12 @@ export class SecurityScanner {
 		relativePath: string,
 	): Promise<SecurityVulnerability[]> {
 		try {
-			const fs = await import("node:fs");
-			const path = await import("node:path");
+			const fs = await import('node:fs');
+			const path = await import('node:path');
 
 			const filePath = path.join(projectRoot, relativePath);
-			const content = fs.readFileSync(filePath, "utf8");
-			const lines = content.split("\n");
+			const content = fs.readFileSync(filePath, 'utf8');
+			const lines = content.split('\n');
 			const findings: SecurityVulnerability[] = [];
 
 			const secretPatterns = [
@@ -380,14 +380,14 @@ export class SecurityScanner {
 				secretPatterns.forEach((pattern) => {
 					if (
 						pattern.test(line) &&
-						!line.includes("process.env") &&
-						!line.includes("config")
+						!line.includes('process.env') &&
+						!line.includes('config')
 					) {
 						findings.push({
-							tool: "basic-check",
-							severity: "high",
-							type: "hardcoded_secret",
-							message: "Potential hardcoded secret detected",
+							tool: 'basic-check',
+							severity: 'high',
+							type: 'hardcoded_secret',
+							message: 'Potential hardcoded secret detected',
 							file: relativePath,
 							line: index + 1,
 							code: line.trim(),
@@ -398,10 +398,10 @@ export class SecurityScanner {
 				sqlPatterns.forEach((pattern) => {
 					if (pattern.test(line)) {
 						findings.push({
-							tool: "basic-check",
-							severity: "medium",
-							type: "sql_injection",
-							message: "Potential SQL injection vulnerability",
+							tool: 'basic-check',
+							severity: 'medium',
+							type: 'sql_injection',
+							message: 'Potential SQL injection vulnerability',
 							file: relativePath,
 							line: index + 1,
 							code: line.trim(),
@@ -413,7 +413,7 @@ export class SecurityScanner {
 			return findings;
 		} catch (error) {
 			console.debug(
-				"Basic security check: failed to read file",
+				'Basic security check: failed to read file',
 				relativePath,
 				error,
 			);
@@ -423,43 +423,43 @@ export class SecurityScanner {
 
 	private mapSemgrepSeverity(
 		severity: string,
-	): SecurityVulnerability["severity"] {
+	): SecurityVulnerability['severity'] {
 		switch (severity.toUpperCase()) {
-			case "ERROR":
-			case "CRITICAL":
-				return "critical";
-			case "WARNING":
-			case "HIGH":
-				return "high";
-			case "INFO":
-			case "MEDIUM":
-				return "medium";
-			case "LOW":
-				return "low";
+			case 'ERROR':
+			case 'CRITICAL':
+				return 'critical';
+			case 'WARNING':
+			case 'HIGH':
+				return 'high';
+			case 'INFO':
+			case 'MEDIUM':
+				return 'medium';
+			case 'LOW':
+				return 'low';
 			default:
-				return "info";
+				return 'info';
 		}
 	}
 
 	private mapBanditSeverity(
 		severity: string,
-	): SecurityVulnerability["severity"] {
+	): SecurityVulnerability['severity'] {
 		switch (severity.toUpperCase()) {
-			case "HIGH":
-				return "high";
-			case "MEDIUM":
-				return "medium";
-			case "LOW":
-				return "low";
+			case 'HIGH':
+				return 'high';
+			case 'MEDIUM':
+				return 'medium';
+			case 'LOW':
+				return 'low';
 			default:
-				return "info";
+				return 'info';
 		}
 	}
 
 	private hasOnlyInfoMessages(
 		vulnerabilities: SecurityVulnerability[],
 	): boolean {
-		return vulnerabilities.every((v) => v.severity === "info");
+		return vulnerabilities.every((v) => v.severity === 'info');
 	}
 
 	private identifyActiveTools(
@@ -468,11 +468,11 @@ export class SecurityScanner {
 		const toolsUsed = new Set(vulnerabilities.map((v) => v.tool));
 		const tools = [];
 
-		if (toolsUsed.has("semgrep")) tools.push("Semgrep");
-		if (toolsUsed.has("eslint-security")) tools.push("ESLint Security");
-		if (toolsUsed.has("bandit")) tools.push("Bandit");
-		if (toolsUsed.has("basic-check")) tools.push("Basic Checks");
+		if (toolsUsed.has('semgrep')) tools.push('Semgrep');
+		if (toolsUsed.has('eslint-security')) tools.push('ESLint Security');
+		if (toolsUsed.has('bandit')) tools.push('Bandit');
+		if (toolsUsed.has('basic-check')) tools.push('Basic Checks');
 
-		return tools.length > 0 ? tools : ["Basic Checks"];
+		return tools.length > 0 ? tools : ['Basic Checks'];
 	}
 }

@@ -2,7 +2,7 @@ export type MemoryId = string;
 
 export interface Memory {
 	id: MemoryId;
-	kind: "note" | "event" | "artifact" | "embedding";
+	kind: 'note' | 'event' | 'artifact' | 'embedding';
 	text?: string;
 	vector?: number[];
 	tags: string[];
@@ -10,12 +10,12 @@ export interface Memory {
 	createdAt: string;
 	updatedAt: string;
 	provenance: {
-		source: "user" | "agent" | "system";
+		source: 'user' | 'agent' | 'system';
 		actor?: string;
 		evidence?: { uri: string; range?: [number, number] }[];
 		hash?: string;
 	};
-	policy?: { pii?: boolean; scope?: "session" | "user" | "org" };
+	policy?: { pii?: boolean; scope?: 'session' | 'user' | 'org' };
 	embeddingModel?: string;
 }
 

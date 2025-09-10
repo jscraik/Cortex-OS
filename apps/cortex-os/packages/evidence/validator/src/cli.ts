@@ -3,11 +3,11 @@
  * @description CLI implementation matching the specification
  */
 
-import { readFile } from "node:fs/promises";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
-import { type Finding, FindingSchema } from "./types";
-import { EvidenceValidator } from "./validator";
+import { readFile } from 'node:fs/promises';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { type Finding, FindingSchema } from './types';
+import { EvidenceValidator } from './validator';
 
 /**
  * Validate findings from JSON file as per specification
@@ -19,12 +19,12 @@ export async function validateFindings(
 ): Promise<void> {
 	try {
 		// Load findings from JSON file
-		const findingsData = await readFile(inputFile, "utf-8");
+		const findingsData = await readFile(inputFile, 'utf-8');
 		const findings: unknown = JSON.parse(findingsData);
 
 		// Validate JSON structure
 		if (!Array.isArray(findings)) {
-			throw new Error("Findings file must contain an array of findings");
+			throw new Error('Findings file must contain an array of findings');
 		}
 
 		// Parse and validate each finding
@@ -56,7 +56,7 @@ export async function validateFindings(
 		for (const result of results) {
 			if (!result.isValid) {
 				errors.push(
-					`Finding validation failed for ${result.finding.path}: ${result.errors.join(", ")}`,
+					`Finding validation failed for ${result.finding.path}: ${result.errors.join(', ')}`,
 				);
 			}
 
@@ -80,7 +80,7 @@ export async function validateFindings(
 
 		// Report results
 		if (errors.length > 0) {
-			console.error("Validation failed:");
+			console.error('Validation failed:');
 			for (const err of errors) console.error(`  ${err}`);
 			process.exit(1);
 		} else {
@@ -109,7 +109,7 @@ export async function main(): Promise<void> {
 	const args = process.argv.slice(2);
 
 	if (args.length !== 2) {
-		console.error("Usage: validate-evidence <repository-root> <findings-file>");
+		console.error('Usage: validate-evidence <repository-root> <findings-file>');
 		process.exit(1);
 	}
 

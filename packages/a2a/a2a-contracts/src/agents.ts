@@ -7,7 +7,7 @@ export interface AgentInterface {
 	id: string;
 	name: string;
 	capabilities: AgentCapabilities;
-	status: "online" | "offline" | "busy";
+	status: 'online' | 'offline' | 'busy';
 	metadata: Record<string, unknown>;
 }
 
@@ -49,7 +49,7 @@ export interface AgentExtension {
 
 export interface AgentEndpoint {
 	path: string;
-	method: "GET" | "POST" | "PUT" | "DELETE";
+	method: 'GET' | 'POST' | 'PUT' | 'DELETE';
 	description: string;
 }
 
@@ -82,18 +82,18 @@ export interface AgentCard {
 }
 
 export enum TransportProtocol {
-	HTTP = "http",
-	WEBSOCKET = "websocket",
-	MQTT = "mqtt",
-	GRPC = "grpc",
-	LOCAL = "local",
+	HTTP = 'http',
+	WEBSOCKET = 'websocket',
+	MQTT = 'mqtt',
+	GRPC = 'grpc',
+	LOCAL = 'local',
 }
 
 export interface A2AMessage {
 	id: string;
 	from: string;
 	to: string;
-	type: "request" | "response" | "notification" | "error";
+	type: 'request' | 'response' | 'notification' | 'error';
 	protocol: TransportProtocol;
 	payload: unknown;
 	timestamp: Date;
@@ -105,14 +105,14 @@ export interface A2AMessage {
 }
 
 export interface A2ARequest extends A2AMessage {
-	type: "request";
+	type: 'request';
 	method: string;
 	parameters: Record<string, unknown>;
 }
 
 export interface A2AResponse extends A2AMessage {
-	type: "response";
-	status: "success" | "error";
+	type: 'response';
+	status: 'success' | 'error';
 	result?: unknown;
 	error?: {
 		code: string;

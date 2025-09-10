@@ -6,7 +6,7 @@ Experimental FastAPI service showcasing MLX integration.
 
 - `GET /ping` returns a simple liveness check
 - `GET /health` reports service readiness
-- Optional MLX example via `mlx_lib_example`
+- `POST /embed` computes embeddings with installed MLX when available (falls back to a deterministic embedding otherwise)
 
 ## Run
 
@@ -14,9 +14,30 @@ Experimental FastAPI service showcasing MLX integration.
 uvicorn py_mlx_server.main:app --host 0.0.0.0 --port 8000
 ```
 
-## MLX Library Example
+Docker:
 
-```python
-from py_mlx_server.mlx_lib_example import build_array
-print(build_array())  # `[1.0, 2.0, 3.0]` when MLX is available
+```bash
+docker build -t cortex-mlx-embed:local services/py-mlx-server
+docker run --rm -p 8000:8000 cortex-mlx-embed:local
 ```
+
+## Embed API
+
+- Request: `POST /embed`
+  - Body: `{ "input": string | string[], "model?": string }` (also accepts `{ "texts": string[] }`)
+- Response: `{ "embeddings": number[][], "model": string, "dimensions": number }`
+
+Curl smoke test:
+
+```bash
+curl -sS http://127.0.0.1:8000/embed \
+  -H 'Content-Type: application/json' \
+  -d '{"input":"hello"}' | jq .dimensions
+```
+
+Environment variables:
+
+- `HOST` (default `0.0.0.0`)
+- `PORT` (default `8000`)
+- `EMBEDDINGS_MODEL` (default `qwen3-embed`)
+- `EMBEDDINGS_DIM` (default `768`)

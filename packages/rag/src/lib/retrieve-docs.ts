@@ -1,5 +1,5 @@
-import type { Qwen3Embedder } from "../embed/qwen3.js";
-import type { Document } from "./types.js";
+import type { Qwen3Embedder } from '../embed/qwen3.js';
+import type { Document } from './types.js';
 
 function cosineSimilarity(a: number[], b: number[]): number {
 	const dotProduct = a.reduce((sum, ai, i) => sum + ai * b[i], 0);

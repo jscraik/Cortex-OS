@@ -21,10 +21,10 @@ NC='\033[0m' # No Color
 run_check() {
   local description="$1"
   local check_command="$2"
-  
+
   TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
   echo -e "${BLUE}[CHECK]${NC} $description"
-  
+
   if eval "$check_command" >/dev/null 2>&1; then
     PASSED_CHECKS=$((PASSED_CHECKS + 1))
     echo -e "  ${GREEN}✅ PASSED${NC}"

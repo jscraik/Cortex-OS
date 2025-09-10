@@ -30,7 +30,7 @@ log_error() {
 # Environment setup
 setup_environment() {
     log "Setting up environment..."
-    
+
     # Set default values if not provided
     export DATABASE_URL=${DATABASE_URL:-"sqlite:///tmp/docs.db"}
     export REDIS_URL=${REDIS_URL:-"redis://localhost:6379/0"}
@@ -38,16 +38,16 @@ setup_environment() {
     export LOG_LEVEL=${LOG_LEVEL:-"INFO"}
     export DOCS_API_PORT=${DOCS_API_PORT:-8001}
     export NGINX_PORT=${NGINX_PORT:-80}
-    
+
     log_success "Environment configured"
 }
 
 # Database initialization
 init_database() {
     log "Initializing database..."
-    
+
     cd /opt/docs-api
-    
+
     # Wait for database to be available
     if echo "$DATABASE_URL" | grep -q "postgresql"; then
         log "Waiting for PostgreSQL to be ready..."
@@ -84,14 +84,14 @@ else:
     exit(1)
         "
     fi
-    
+
     # Run database migrations
     log "Running database migrations..."
     python -m alembic upgrade head || {
         log_error "Database migration failed"
         exit 1
     }
-    
+
     log_success "Database initialized"
     cd -
 }
@@ -99,7 +99,7 @@ else:
 # Service dependencies check
 check_dependencies() {
     log "Checking service dependencies..."
-    
+
     # Check Redis connection
     if echo "$REDIS_URL" | grep -q "redis://"; then
         log "Checking Redis connection..."
@@ -125,7 +125,7 @@ except Exception as e:
     print('Continuing without Redis...')
         "
     fi
-    
+
     # Check Elasticsearch connection
     if echo "$ELASTICSEARCH_URL" | grep -q "http"; then
         log "Checking Elasticsearch connection..."
@@ -146,41 +146,41 @@ except Exception as e:
     print('Continuing without Elasticsearch...')
         "
     fi
-    
+
     log_success "Dependencies checked"
 }
 
 # Create necessary directories
 setup_directories() {
     log "Setting up directories..."
-    
+
     # Ensure log directories exist
     mkdir -p /var/log/nginx /var/log/supervisor /var/log/docs-api
-    
+
     # Ensure nginx cache directories exist
     mkdir -p /var/cache/nginx/client_temp \
              /var/cache/nginx/proxy_temp \
              /var/cache/nginx/fastcgi_temp \
              /var/cache/nginx/uwsgi_temp \
              /var/cache/nginx/scgi_temp
-    
+
     # Set proper permissions
     chown -R appuser:appgroup /var/log/docs-api
-    
+
     log_success "Directories configured"
 }
 
 # Pre-warm application
 prewarm_application() {
     log "Pre-warming application..."
-    
+
     # Start API service in background to pre-warm
     cd /opt/docs-api
     python -c "
 from src.main import app
 print('Application pre-warmed successfully')
     " || log_warning "Application pre-warming failed"
-    
+
     cd -
     log_success "Application pre-warmed"
 }
@@ -188,12 +188,12 @@ print('Application pre-warmed successfully')
 # Handle graceful shutdown
 cleanup() {
     log "Received shutdown signal, cleaning up..."
-    
+
     # Stop supervisor and all child processes
     if [ -f /var/run/supervisord.pid ]; then
         supervisorctl shutdown
     fi
-    
+
     log_success "Cleanup completed"
     exit 0
 }
@@ -204,17 +204,17 @@ trap cleanup SIGTERM SIGINT
 # Main initialization
 main() {
     log "Starting Cortex OS Documentation container..."
-    
+
     # Run initialization steps
     setup_environment
     setup_directories
     init_database
     check_dependencies
     prewarm_application
-    
+
     log_success "Initialization completed successfully"
     log "Starting services..."
-    
+
     # Execute the main command (supervisor)
     exec "$@"
 }

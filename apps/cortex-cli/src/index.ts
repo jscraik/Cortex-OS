@@ -3,11 +3,13 @@ import { Command } from 'commander';
 import { a2aDoctor } from './commands/a2a/doctor.js';
 import { a2aList } from './commands/a2a/list.js';
 import { a2aSend } from './commands/a2a/send.js';
+import { agentCreate } from './commands/agent/create.js';
 import { ctlCheck } from './commands/ctl/check.js';
 import { evalGate } from './commands/eval/gate.js';
 import { mcpAdd } from './commands/mcp/add.js';
 import { mcpBridge } from './commands/mcp/bridge.js';
 import { mcpDoctor } from './commands/mcp/doctor.js';
+import { mcpGet } from './commands/mcp/get.js';
 import { mcpList } from './commands/mcp/list.js';
 import { mcpRemove } from './commands/mcp/remove.js';
 import { mcpSearch } from './commands/mcp/search.js';
@@ -19,8 +21,6 @@ import { simlabBench } from './commands/simlab/bench.js';
 import { simlabList } from './commands/simlab/list.js';
 import { simlabReport } from './commands/simlab/report.js';
 import { simlabRun } from './commands/simlab/run.js';
-import { agentCreate } from './commands/agent/create.js';
-import { mcpGet } from './commands/mcp/get.js';
 
 
 const program = new Command("cortex");

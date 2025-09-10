@@ -1,13 +1,13 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { runProcess } from "../lib/run-process.js";
-import type { ChatMessage, GenerationConfig, Generator } from "./index.js";
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { runProcess } from '../lib/run-process.js';
+import type { ChatMessage, GenerationConfig, Generator } from './index.js';
 
 const packageRoot = path.resolve(
 	path.dirname(fileURLToPath(import.meta.url)),
-	"..",
-	"..",
+	'..',
+	'..',
 );
 
 /**
@@ -17,7 +17,7 @@ export interface ModelSpec {
 	/** Model identifier or path */
 	model: string;
 	/** Backend to use for this model */
-	backend: "mlx" | "ollama";
+	backend: 'mlx' | 'ollama';
 	/** Display name for the model */
 	name?: string;
 	/** Model description */
@@ -109,9 +109,9 @@ export class MultiModelGenerator implements Generator {
 		prompt: string,
 		config: Partial<GenerationConfig>,
 	): Promise<string> {
-		if (model.backend === "ollama") {
+		if (model.backend === 'ollama') {
 			return this.generateWithOllama(model, prompt, config);
-		} else if (model.backend === "mlx") {
+		} else if (model.backend === 'mlx') {
 			return this.generateWithMLX(model, prompt, config);
 		} else {
 			throw new Error(`Unsupported backend: ${model.backend}`);
@@ -126,9 +126,9 @@ export class MultiModelGenerator implements Generator {
 		messages: ChatMessage[],
 		config: Partial<GenerationConfig>,
 	): Promise<string> {
-		if (model.backend === "ollama") {
+		if (model.backend === 'ollama') {
 			return this.chatWithOllama(model, messages, config);
-		} else if (model.backend === "mlx") {
+		} else if (model.backend === 'mlx') {
 			return this.chatWithMLX(model, messages, config);
 		} else {
 			throw new Error(`Unsupported backend: ${model.backend}`);
@@ -144,10 +144,10 @@ export class MultiModelGenerator implements Generator {
 		config: Partial<GenerationConfig>,
 	): Promise<string> {
 		try {
-			const response = await fetch("http://localhost:11434/api/generate", {
-				method: "POST",
+			const response = await fetch('http://localhost:11434/api/generate', {
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json",
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					model: model.model,
@@ -169,7 +169,7 @@ export class MultiModelGenerator implements Generator {
 			}
 
 			const result = await response.json();
-			return result.response || "";
+			return result.response || '';
 		} catch (error) {
 			throw new Error(`Ollama generation failed: ${error}`);
 		}
@@ -184,10 +184,10 @@ export class MultiModelGenerator implements Generator {
 		config: Partial<GenerationConfig>,
 	): Promise<string> {
 		try {
-			const response = await fetch("http://localhost:11434/api/chat", {
-				method: "POST",
+			const response = await fetch('http://localhost:11434/api/chat', {
+				method: 'POST',
 				headers: {
-					"Content-Type": "application/json",
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					model: model.model,
@@ -209,7 +209,7 @@ export class MultiModelGenerator implements Generator {
 			}
 
 			const result = await response.json();
-			return result.message?.content || "";
+			return result.message?.content || '';
 		} catch (error) {
 			throw new Error(`Ollama chat failed: ${error}`);
 		}
@@ -232,12 +232,12 @@ export class MultiModelGenerator implements Generator {
 			top_p: config.topP,
 		});
 		const result = await runProcess<{ text?: string; error?: string }>(
-			"python3",
-			["-c", pythonScript],
+			'python3',
+			['-c', pythonScript],
 			{ input, timeoutMs: this.timeout },
 		);
 		if (result.error) throw new Error(`MLX error: ${result.error}`);
-		return result.text || "";
+		return result.text || '';
 	}
 
 	/**
@@ -259,23 +259,23 @@ export class MultiModelGenerator implements Generator {
 	private formatMessagesAsPrompt(messages: ChatMessage[]): string {
 		return `${messages
 			.map((msg) => {
-				if (msg.role === "system") {
+				if (msg.role === 'system') {
 					return `System: ${msg.content}`;
-				} else if (msg.role === "user") {
+				} else if (msg.role === 'user') {
 					return `User: ${msg.content}`;
 				} else {
 					return `Assistant: ${msg.content}`;
 				}
 			})
-			.join("\n\n")}\n\nAssistant:`;
+			.join('\n\n')}\n\nAssistant:`;
 	}
 
 	/**
 	 * Get Python script for MLX generation
 	 */
 	private getMLXPythonScript(): string {
-		const scriptPath = path.join(packageRoot, "python", "mlx_generate.py");
-		return readFileSync(scriptPath, "utf8");
+		const scriptPath = path.join(packageRoot, 'python', 'mlx_generate.py');
+		return readFileSync(scriptPath, 'utf8');
 	}
 
 	/**
@@ -301,43 +301,43 @@ export function createMultiModelGenerator(
 export const ModelPresets = {
 	/** Coding and development tasks */
 	coding: {
-		model: "qwen3-coder:30b",
-		backend: "ollama" as const,
-		name: "Qwen3 Coder 30B",
-		description: "Specialized for coding and programming tasks",
+		model: 'qwen3-coder:30b',
+		backend: 'ollama' as const,
+		name: 'Qwen3 Coder 30B',
+		description: 'Specialized for coding and programming tasks',
 		useCases: [
-			"code generation",
-			"debugging",
-			"code explanation",
-			"refactoring",
+			'code generation',
+			'debugging',
+			'code explanation',
+			'refactoring',
 		],
 	},
 
 	/** Reasoning and analysis */
 	reasoning: {
-		model: "phi4-mini-reasoning",
-		backend: "ollama" as const,
-		name: "Phi4 Mini Reasoning",
-		description: "Optimized for logical reasoning and analysis",
-		useCases: ["problem solving", "analysis", "logical reasoning", "planning"],
+		model: 'phi4-mini-reasoning',
+		backend: 'ollama' as const,
+		name: 'Phi4 Mini Reasoning',
+		description: 'Optimized for logical reasoning and analysis',
+		useCases: ['problem solving', 'analysis', 'logical reasoning', 'planning'],
 	},
 
 	/** General chat and assistance */
 	chat: {
-		model: "qwen3:14b",
-		backend: "ollama" as const,
-		name: "Qwen3 14B",
-		description: "General purpose conversational model",
-		useCases: ["general chat", "Q&A", "summarization", "writing assistance"],
+		model: 'qwen3:14b',
+		backend: 'ollama' as const,
+		name: 'Qwen3 14B',
+		description: 'General purpose conversational model',
+		useCases: ['general chat', 'Q&A', 'summarization', 'writing assistance'],
 	},
 
 	/** Compact and fast responses */
 	fast: {
-		model: "qwen3:7b",
-		backend: "ollama" as const,
-		name: "Qwen3 7B",
-		description: "Fast responses with good quality",
-		useCases: ["quick responses", "simple tasks", "real-time chat"],
+		model: 'qwen3:7b',
+		backend: 'ollama' as const,
+		name: 'Qwen3 7B',
+		description: 'Fast responses with good quality',
+		useCases: ['quick responses', 'simple tasks', 'real-time chat'],
 	},
 } as const;
 

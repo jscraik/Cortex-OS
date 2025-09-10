@@ -9,7 +9,6 @@ export * from './gates/g4-verification.js';
 export * from './gates/g5-triage.js';
 export * from './gates/g6-release-readiness.js';
 export * from './gates/g7-release.js';
-export * from './runner.js';
 /**
  * @file packages/prp-runner/src/index.ts
  * @description Main export for PRP Runner package
@@ -21,4 +20,5 @@ export { createExecutionContext } from './lib/create-execution-context.js';
 export { executeNeuron } from './lib/execute-neuron.js';
 export { LLMBridge } from './llm-bridge.js';
 export { createPRPOrchestrator } from './orchestrator.js';
+export * from './runner.js';
 //# sourceMappingURL=index.js.map

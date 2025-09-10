@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { GitHubRepositorySchema, GitHubUserSchema } from "./repository";
+import { z } from 'zod';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Issue Label Schema
 export const IssueLabelSchema = z.object({
@@ -17,7 +17,7 @@ export type IssueLabel = z.infer<typeof IssueLabelSchema>;
 export const IssueMilestoneSchema = z.object({
 	id: z.number(),
 	number: z.number(),
-	state: z.enum(["open", "closed"]),
+	state: z.enum(['open', 'closed']),
 	title: z.string(),
 	description: z.string().nullable(),
 	creator: GitHubUserSchema,
@@ -41,7 +41,7 @@ export const IssueSchema = z.object({
 	body: z.string().nullable(),
 	user: GitHubUserSchema,
 	labels: z.array(IssueLabelSchema),
-	state: z.enum(["open", "closed"]),
+	state: z.enum(['open', 'closed']),
 	locked: z.boolean(),
 	assignee: GitHubUserSchema.nullable(),
 	assignees: z.array(GitHubUserSchema),
@@ -51,16 +51,16 @@ export const IssueSchema = z.object({
 	updated_at: z.string().datetime(),
 	closed_at: z.string().datetime().nullable(),
 	author_association: z.enum([
-		"OWNER",
-		"MEMBER",
-		"COLLABORATOR",
-		"CONTRIBUTOR",
-		"FIRST_TIME_CONTRIBUTOR",
-		"FIRST_TIMER",
-		"NONE",
+		'OWNER',
+		'MEMBER',
+		'COLLABORATOR',
+		'CONTRIBUTOR',
+		'FIRST_TIME_CONTRIBUTOR',
+		'FIRST_TIMER',
+		'NONE',
 	]),
 	active_lock_reason: z
-		.enum(["resolved", "off-topic", "too heated", "spam"])
+		.enum(['resolved', 'off-topic', 'too heated', 'spam'])
 		.nullable(),
 	closed_by: GitHubUserSchema.nullable(),
 	html_url: z.string().url(),
@@ -71,21 +71,21 @@ export type Issue = z.infer<typeof IssueSchema>;
 
 // Issue Action Types
 export const IssueActionSchema = z.enum([
-	"opened",
-	"closed",
-	"reopened",
-	"assigned",
-	"unassigned",
-	"labeled",
-	"unlabeled",
-	"milestoned",
-	"demilestoned",
-	"edited",
-	"locked",
-	"unlocked",
-	"pinned",
-	"unpinned",
-	"transferred",
+	'opened',
+	'closed',
+	'reopened',
+	'assigned',
+	'unassigned',
+	'labeled',
+	'unlabeled',
+	'milestoned',
+	'demilestoned',
+	'edited',
+	'locked',
+	'unlocked',
+	'pinned',
+	'unpinned',
+	'transferred',
 ]);
 
 export type IssueAction = z.infer<typeof IssueActionSchema>;
@@ -111,8 +111,8 @@ export type IssueChanges = z.infer<typeof IssueChangesSchema>;
 // Issue Event Schema
 export const IssueEventSchema = z.object({
 	event_id: z.string().uuid(),
-	event_type: z.literal("github.issue"),
-	source: z.literal("github-client"),
+	event_type: z.literal('github.issue'),
+	source: z.literal('github-client'),
 	timestamp: z.string().datetime(),
 
 	// Event-specific data
@@ -135,21 +135,21 @@ export type IssueEvent = z.infer<typeof IssueEventSchema>;
 
 // Issue Event Topics Mapping
 export const ISSUE_EVENT_TOPICS = {
-	opened: "github.issue.opened",
-	closed: "github.issue.closed",
-	reopened: "github.issue.reopened",
-	assigned: "github.issue.assigned",
-	unassigned: "github.issue.unassigned",
-	labeled: "github.issue.labeled",
-	unlabeled: "github.issue.unlabeled",
-	milestoned: "github.issue.milestoned",
-	demilestoned: "github.issue.demilestoned",
-	edited: "github.issue.edited",
-	locked: "github.issue.locked",
-	unlocked: "github.issue.unlocked",
-	pinned: "github.issue.pinned",
-	unpinned: "github.issue.unpinned",
-	transferred: "github.issue.transferred",
+	opened: 'github.issue.opened',
+	closed: 'github.issue.closed',
+	reopened: 'github.issue.reopened',
+	assigned: 'github.issue.assigned',
+	unassigned: 'github.issue.unassigned',
+	labeled: 'github.issue.labeled',
+	unlabeled: 'github.issue.unlabeled',
+	milestoned: 'github.issue.milestoned',
+	demilestoned: 'github.issue.demilestoned',
+	edited: 'github.issue.edited',
+	locked: 'github.issue.locked',
+	unlocked: 'github.issue.unlocked',
+	pinned: 'github.issue.pinned',
+	unpinned: 'github.issue.unpinned',
+	transferred: 'github.issue.transferred',
 } as const;
 
 // Validation Functions
@@ -173,10 +173,10 @@ export function createIssueEvent(
 		label?: IssueLabel;
 		milestone?: IssueMilestone;
 	},
-): Omit<IssueEvent, "event_id" | "timestamp"> {
+): Omit<IssueEvent, 'event_id' | 'timestamp'> {
 	return {
-		event_type: "github.issue",
-		source: "github-client",
+		event_type: 'github.issue',
+		source: 'github-client',
 		action,
 		issue,
 		repository,
@@ -207,51 +207,51 @@ export function getIssueEventTopic(action: IssueAction): string {
 
 // Issue Helper Functions
 export function isIssueOpen(issue: Issue): boolean {
-	return issue.state === "open";
+	return issue.state === 'open';
 }
 
 export function getIssuePriority(
 	issue: Issue,
-): "low" | "medium" | "high" | "critical" | "unknown" {
+): 'low' | 'medium' | 'high' | 'critical' | 'unknown' {
 	const labels = issue.labels.map((l) => l.name.toLowerCase());
 
-	if (labels.some((l) => l.includes("critical") || l.includes("p0"))) {
-		return "critical";
-	} else if (labels.some((l) => l.includes("high") || l.includes("p1"))) {
-		return "high";
-	} else if (labels.some((l) => l.includes("medium") || l.includes("p2"))) {
-		return "medium";
-	} else if (labels.some((l) => l.includes("low") || l.includes("p3"))) {
-		return "low";
+	if (labels.some((l) => l.includes('critical') || l.includes('p0'))) {
+		return 'critical';
+	} else if (labels.some((l) => l.includes('high') || l.includes('p1'))) {
+		return 'high';
+	} else if (labels.some((l) => l.includes('medium') || l.includes('p2'))) {
+		return 'medium';
+	} else if (labels.some((l) => l.includes('low') || l.includes('p3'))) {
+		return 'low';
 	}
 
-	return "unknown";
+	return 'unknown';
 }
 
 export function getIssueType(
 	issue: Issue,
-): "bug" | "feature" | "enhancement" | "question" | "documentation" | "other" {
+): 'bug' | 'feature' | 'enhancement' | 'question' | 'documentation' | 'other' {
 	const labels = issue.labels.map((l) => l.name.toLowerCase());
 
 	if (
 		labels.some(
-			(l) => l.includes("bug") || l.includes("error") || l.includes("fix"),
+			(l) => l.includes('bug') || l.includes('error') || l.includes('fix'),
 		)
 	) {
-		return "bug";
-	} else if (labels.some((l) => l.includes("feature") || l.includes("new"))) {
-		return "feature";
+		return 'bug';
+	} else if (labels.some((l) => l.includes('feature') || l.includes('new'))) {
+		return 'feature';
 	} else if (
-		labels.some((l) => l.includes("enhancement") || l.includes("improve"))
+		labels.some((l) => l.includes('enhancement') || l.includes('improve'))
 	) {
-		return "enhancement";
-	} else if (labels.some((l) => l.includes("question") || l.includes("help"))) {
-		return "question";
-	} else if (labels.some((l) => l.includes("doc") || l.includes("readme"))) {
-		return "documentation";
+		return 'enhancement';
+	} else if (labels.some((l) => l.includes('question') || l.includes('help'))) {
+		return 'question';
+	} else if (labels.some((l) => l.includes('doc') || l.includes('readme'))) {
+		return 'documentation';
 	}
 
-	return "other";
+	return 'other';
 }
 
 export function hasIssueLabel(issue: Issue, labelName: string): boolean {

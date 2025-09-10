@@ -1,17 +1,17 @@
-import type { Envelope } from "@cortex-os/a2a-contracts/envelope";
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
 	DeadLetterQueue,
 	type DeadLetterStore,
 	ErrorCategory,
 	QuarantineLevel,
-} from "@cortex-os/a2a-core/dlq";
-import { SagaOrchestrator } from "@cortex-os/a2a-core/saga";
-import * as telemetry from "@cortex-os/telemetry";
-import { describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+} from '@cortex-os/a2a-core/dlq';
+import { SagaOrchestrator } from '@cortex-os/a2a-core/saga';
+import * as telemetry from '@cortex-os/telemetry';
+import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
-describe("Telemetry integration", () => {
-	it("creates span and logs in DeadLetterQueue", async () => {
+describe('Telemetry integration', () => {
+	it('creates span and logs in DeadLetterQueue', async () => {
 		const store: DeadLetterStore = {
 			enqueue: vi.fn().mockResolvedValue(undefined),
 			updateCircuitBreaker: vi.fn().mockResolvedValue(undefined),
@@ -56,28 +56,28 @@ describe("Telemetry integration", () => {
 			payload: z.any(),
 		});
 		const envelope: Envelope = envelopeSchema.parse({
-			id: "1",
-			type: "test",
+			id: '1',
+			type: 'test',
 			payload: {},
 		});
 
-		await dlq.handleFailed(envelope, new Error("network failure"), 0);
+		await dlq.handleFailed(envelope, new Error('network failure'), 0);
 
 		expect(telemetry.withSpan).toHaveBeenCalledWith(
-			"dlq.handleFailed",
+			'dlq.handleFailed',
 			expect.any(Function),
 		);
 		expect(telemetry.logWithSpan).toHaveBeenCalled();
 		const span = (telemetry.logWithSpan as any).mock.calls[0][3];
 		expect(span).toBeDefined();
-		expect(span.spanContext().traceId).toBe("trace-id");
+		expect(span.spanContext().traceId).toBe('trace-id');
 	});
 
-	it("creates span and logs in SagaOrchestrator", async () => {
+	it('creates span and logs in SagaOrchestrator', async () => {
 		const orchestrator = new SagaOrchestrator();
 		orchestrator.addStep({
-			id: "step1",
-			name: "step1",
+			id: 'step1',
+			name: 'step1',
 			execute: async (ctx) => ctx,
 		});
 
@@ -87,12 +87,12 @@ describe("Telemetry integration", () => {
 		await orchestrator.execute(initialContext);
 
 		expect(telemetry.withSpan).toHaveBeenCalledWith(
-			"saga.step.step1",
+			'saga.step.step1',
 			expect.any(Function),
 		);
 		expect(telemetry.logWithSpan).toHaveBeenCalled();
 		const span = (telemetry.logWithSpan as any).mock.calls[0][3];
 		expect(span).toBeDefined();
-		expect(span.spanContext().traceId).toBe("trace-id");
+		expect(span.spanContext().traceId).toBe('trace-id');
 	});
 });

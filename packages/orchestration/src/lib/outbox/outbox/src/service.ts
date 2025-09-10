@@ -1,6 +1,6 @@
-import { rateLimiter } from "@cortex-os/a2a-common";
-import express from "express";
-import { type OutboxMessage, OutboxMessageStatus } from "./schema";
+import { rateLimiter } from '@cortex-os/a2a-common';
+import express from 'express';
+import { type OutboxMessage, OutboxMessageStatus } from './schema';
 
 const outbox: OutboxMessage[] = [];
 const poisonQueue: OutboxMessage[] = [];
@@ -12,33 +12,33 @@ export function createService() {
 	app.use(express.json());
 	app.use(rateLimiter);
 
-	app.post("/messages", (req, res) => {
+	app.post('/messages', (req, res) => {
 		const message = req.body as OutboxMessage;
 		message.status = OutboxMessageStatus.enum.pending;
 		outbox.push(message);
 		res.status(202).json(message);
 	});
 
-	app.get("/messages/:id", (req, res) => {
+	app.get('/messages/:id', (req, res) => {
 		const { id } = req.params;
 		const message =
 			outbox.find((m) => m.id === id) || poisonQueue.find((m) => m.id === id);
 		if (message) {
 			res.json(message);
 		} else {
-			res.status(404).send("Message not found");
+			res.status(404).send('Message not found');
 		}
 	});
 
-	app.get("/poison-messages", (_req, res) => {
+	app.get('/poison-messages', (_req, res) => {
 		res.json(poisonQueue);
 	});
 
-	app.post("/fail", (_req, res) => {
-		res.status(500).send("Internal Server Error");
+	app.post('/fail', (_req, res) => {
+		res.status(500).send('Internal Server Error');
 	});
 
-	app.post("/process-outbox", (_req, res) => {
+	app.post('/process-outbox', (_req, res) => {
 		const pendingMessages = outbox.filter(
 			(m) => m.status === OutboxMessageStatus.enum.pending,
 		);
@@ -69,7 +69,7 @@ export function createService() {
 				}
 			}
 		}
-		res.status(200).send("Outbox processed");
+		res.status(200).send('Outbox processed');
 	});
 
 	return app;
@@ -79,33 +79,33 @@ export function createTestService() {
 	const app = express();
 	app.use(express.json());
 
-	app.post("/messages", (req, res) => {
+	app.post('/messages', (req, res) => {
 		const message = req.body as OutboxMessage;
 		message.status = OutboxMessageStatus.enum.pending;
 		outbox.push(message);
 		res.status(202).json(message);
 	});
 
-	app.get("/messages/:id", (req, res) => {
+	app.get('/messages/:id', (req, res) => {
 		const { id } = req.params;
 		const message =
 			outbox.find((m) => m.id === id) || poisonQueue.find((m) => m.id === id);
 		if (message) {
 			res.json(message);
 		} else {
-			res.status(404).send("Message not found");
+			res.status(404).send('Message not found');
 		}
 	});
 
-	app.get("/poison-messages", (_req, res) => {
+	app.get('/poison-messages', (_req, res) => {
 		res.json(poisonQueue);
 	});
 
-	app.post("/fail", (_req, res) => {
-		res.status(500).send("Internal Server Error");
+	app.post('/fail', (_req, res) => {
+		res.status(500).send('Internal Server Error');
 	});
 
-	app.post("/process-outbox", (_req, res) => {
+	app.post('/process-outbox', (_req, res) => {
 		const pendingMessages = outbox.filter(
 			(m) => m.status === OutboxMessageStatus.enum.pending,
 		);
@@ -138,7 +138,7 @@ export function createTestService() {
 				retries.delete(message.id);
 			}
 		}
-		res.status(200).send("Outbox processed");
+		res.status(200).send('Outbox processed');
 	});
 
 	return app;

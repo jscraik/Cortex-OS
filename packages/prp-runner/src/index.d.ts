@@ -22,5 +22,14 @@ export { executeNeuron } from './lib/execute-neuron.js';
 export { LLMBridge } from './llm-bridge.js';
 export type { LLMConfig } from './llm-bridge.js';
 export { createPRPOrchestrator } from './orchestrator.js';
-export type { Blueprint, ExecutionContext, ExecutionMetrics, ExecutionState, Neuron, NeuronResult, PRPExecutionResult, PRPOrchestrator } from './orchestrator.js';
+export type {
+	Blueprint,
+	ExecutionContext,
+	ExecutionMetrics,
+	ExecutionState,
+	Neuron,
+	NeuronResult,
+	PRPExecutionResult,
+	PRPOrchestrator,
+} from './orchestrator.js';
 //# sourceMappingURL=index.d.ts.map

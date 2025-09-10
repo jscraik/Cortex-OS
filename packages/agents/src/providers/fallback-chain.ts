@@ -10,8 +10,8 @@ import type {
 	GenerateOptions,
 	GenerateResult,
 	ModelProvider,
-} from "../lib/types.js";
-import { withTimeout } from "../lib/utils.js";
+} from '../lib/types.js';
+import { withTimeout } from '../lib/utils.js';
 
 export interface FallbackChainConfig {
 	providers: ModelProvider[];
@@ -162,7 +162,7 @@ const generateWithFallback = async (
 	const healthyProviders = getHealthyProviders(state);
 
 	if (healthyProviders.length === 0) {
-		throw new Error("No healthy providers available");
+		throw new Error('No healthy providers available');
 	}
 
 	let lastError: Error | undefined;
@@ -179,7 +179,7 @@ const generateWithFallback = async (
 				return result;
 			} catch (error) {
 				lastError =
-					error instanceof Error ? error : new Error("Provider failed");
+					error instanceof Error ? error : new Error('Provider failed');
 
 				// Emit fallback event (best-effort)
 				emitProviderFallback(state, provider, error, attempt);
@@ -191,7 +191,7 @@ const generateWithFallback = async (
 		}
 	}
 
-	throw lastError || new Error("All providers failed");
+	throw lastError || new Error('All providers failed');
 };
 
 const performHealthCheck = async (state: FallbackState): Promise<void> => {
@@ -207,7 +207,7 @@ const performHealthCheck = async (state: FallbackState): Promise<void> => {
 		try {
 			const startTime = Date.now();
 			await withTimeout(
-				provider.generate("health check", { maxTokens: 1, temperature: 0 }),
+				provider.generate('health check', { maxTokens: 1, temperature: 0 }),
 				5000,
 			);
 			const latency = Date.now() - startTime;
@@ -236,13 +236,13 @@ const emitProviderFallback = (
 		void bus
 			.publish({
 				id: crypto.randomUUID(),
-				type: "provider.fallback",
+				type: 'provider.fallback',
 				timestamp: new Date().toISOString(),
-				source: "fallback-chain",
+				source: 'fallback-chain',
 				data: {
 					failedProvider: provider.name,
 					reason:
-						error instanceof Error ? error.message : String(error ?? "unknown"),
+						error instanceof Error ? error.message : String(error ?? 'unknown'),
 					attempt,
 					timestamp: new Date().toISOString(),
 				},
@@ -251,10 +251,10 @@ const emitProviderFallback = (
 				/* no-op */
 			});
 	} catch (e) {
-		if (process.env.NODE_ENV !== "production") {
+		if (process.env.NODE_ENV !== 'production') {
 			// best-effort debug logging
 			// eslint-disable-next-line no-console
-			console.debug("[fallback-chain] emitProviderFallback failed", e);
+			console.debug('[fallback-chain] emitProviderFallback failed', e);
 		}
 	}
 };
@@ -265,7 +265,7 @@ export const createFallbackChain = (
 	const state = createFallbackState(config);
 
 	return {
-		name: `fallback:${config.providers.map((p) => p.name).join(",")}`,
+		name: `fallback:${config.providers.map((p) => p.name).join(',')}`,
 
 		generate: async (prompt: string, options: GenerateOptions = {}) => {
 			await performHealthCheck(state);
@@ -274,10 +274,12 @@ export const createFallbackChain = (
 
 		isAvailable: async () => {
 			// The fallback chain is available if at least one provider is healthy
-			const healthyProviders = state.config.providers.filter((provider: ModelProvider) => {
-				const health = state.providerHealth.get(provider.name);
-				return health?.isHealthy ?? false;
-			});
+			const healthyProviders = state.config.providers.filter(
+				(provider: ModelProvider) => {
+					const health = state.providerHealth.get(provider.name);
+					return health?.isHealthy ?? false;
+				},
+			);
 			return healthyProviders.length > 0;
 		},
 

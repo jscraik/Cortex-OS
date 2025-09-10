@@ -3,9 +3,9 @@
 <div align="center">
 
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/memories)](https://www.npmjs.com/package/@cortex-os/memories)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#build-status)
-[![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](#testing)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://img.shields.io/badge/build-passing-brightgreen)
+[![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](https://img.shields.io/badge/coverage-92%25-brightgreen)
+[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](https://img.shields.io/badge/security-OWASP%20compliant-green)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue)](https://www.typescriptlang.org/)
 
@@ -25,7 +25,7 @@ Cortex Memories provides comprehensive long-term state management for the Cortex
 ### 💾 Hybrid Storage Architecture
 - **🌐 Neo4j Graph Storage** - Complex relationship modeling with Cypher queries
 - **🔍 Qdrant Vector Search** - High-performance similarity search and retrieval
- - **🗃️ SQLite Adapter** - Local development and testing support with `sqlite-vec` search
+- **🗃️ SQLite Adapter** - Local development and testing support with `sqlite-vec` search
 - **⚗️ Prisma Integration** - Type-safe database operations with schema management
 
 ### 🧠 MLX Intelligence
@@ -642,6 +642,148 @@ const encryptedPolicy: MemoryPolicy = {
 
 ## 🚀 Advanced Usage
 
+### Policy-Aware Store Factory
+
+Build a layered store (short-term + long-term) and apply per-namespace encryption using a simple config.
+
+```typescript
+import {
+  InMemoryStore,
+  createPolicyAwareStore,
+  buildNamespaceSelector,
+} from '@cortex-os/memories';
+
+// Underlying stores
+const shortTerm = new InMemoryStore();
+const longTerm = new InMemoryStore();
+
+// Configure encryption for select namespaces
+const selector = buildNamespaceSelector({
+  namespaces: ['secure', 'pii'],      // exact matches
+  // or use a regex instead (takes precedence if provided)
+  // regex: '^sec:'
+});
+
+const store = createPolicyAwareStore({
+  shortTerm,
+  longTerm,
+  encryption: {
+    secret: process.env.MEMORIES_ENCRYPTION_SECRET!,
+    selector,
+    encryptVectors: true,
+    encryptTags: true,
+  },
+});
+
+// Session memories go to short-term, user/org to long-term (via LayeredMemoryStore)
+await store.upsert({
+  id: 'm1',
+  kind: 'note',
+  text: 'sensitive',
+  tags: ['x'],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  provenance: { source: 'user' },
+  policy: { scope: 'session' },
+}, 'secure'); // encrypted at rest due to namespace selection
+```
+
+#### Environment-Driven Wiring
+
+You can also derive the policy-encrypted layered store from environment variables.
+
+```typescript
+import { InMemoryStore, createPolicyStoreFromEnv } from '@cortex-os/memories';
+
+const shortTerm = new InMemoryStore();
+const longTerm = new InMemoryStore();
+const store = createPolicyStoreFromEnv(shortTerm, longTerm);
+```
+
+Supported environment variables:
+
+- `MEMORIES_ENCRYPTION_SECRET`: secret used for AES-256-GCM (required to enable encryption)
+- `MEMORIES_ENCRYPTION_NAMESPACES`: comma-separated list of namespaces to encrypt (e.g., `secure,pii`)
+- `MEMORIES_ENCRYPTION_REGEX`: regex pattern for namespace encryption (e.g., `^sec:`)
+- `MEMORIES_ENCRYPT_VECTORS`: `true|false` encrypt vector arrays (as JSON)
+- `MEMORIES_ENCRYPT_TAGS`: `true|false` encrypt tags (as JSON)
+
+When `MEMORIES_ENCRYPTION_SECRET` is not set, encryption is disabled and a plain layered store is returned.
+
+#### Layered Backends via Env
+
+Control short- and long-term adapters independently:
+
+- `MEMORIES_SHORT_STORE`: `memory | sqlite | prisma | local` (default: `memory`)
+- `MEMORIES_LONG_STORE`: `memory | sqlite | prisma | local` (default: `sqlite` if available)
+
+Then build the store with:
+
+```typescript
+import { createPolicyAwareStoreFromEnv } from '@cortex-os/memories';
+const store = createPolicyAwareStoreFromEnv();
+```
+
+#### Example Env Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "MEMORIES_ENCRYPTION_SECRET": { "type": "string" },
+    "MEMORIES_ENCRYPTION_NAMESPACES": { "type": "string", "description": "comma-separated" },
+    "MEMORIES_ENCRYPTION_REGEX": { "type": "string" },
+    "MEMORIES_ENCRYPT_VECTORS": { "type": "string", "enum": ["true", "false"] },
+    "MEMORIES_ENCRYPT_TAGS": { "type": "string", "enum": ["true", "false"] },
+    "MEMORIES_SHORT_STORE": { "type": "string", "enum": ["memory","sqlite","prisma","local"] },
+    "MEMORIES_LONG_STORE": { "type": "string", "enum": ["memory","sqlite","prisma","local"] },
+    "MEMORIES_SQLITE_PATH": { "type": "string" },
+    "MEMORIES_VECTOR_DIM": { "type": "string", "pattern": "^\\d+$" },
+    "LOCAL_MEMORY_BASE_URL": { "type": "string", "format": "uri" },
+    "LOCAL_MEMORY_API_KEY": { "type": "string" },
+    "LOCAL_MEMORY_NAMESPACE": { "type": "string" }
+  }
+}
+```
+
+### Layered Short- and Long-Term Stores
+
+```typescript
+import { InMemoryStore, LayeredMemoryStore } from '@cortex-os/memories';
+
+// Compose a short-term (ephemeral) store and a long-term (durable) store
+const shortTerm = new InMemoryStore();
+const longTerm = new InMemoryStore();
+const store = new LayeredMemoryStore(shortTerm, longTerm);
+
+// Session-scoped memories go to short-term
+await store.upsert({
+  id: 's1',
+  kind: 'note',
+  text: 'ephemeral thought',
+  tags: ['session'],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  provenance: { source: 'user' },
+  policy: { scope: 'session' },
+});
+
+// User/org scoped memories go to long-term
+await store.upsert({
+  id: 'u1',
+  kind: 'note',
+  text: 'long-lived note',
+  tags: ['user'],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  provenance: { source: 'agent' },
+  policy: { scope: 'user' },
+});
+
+// Searches merge results across layers
+const results = await store.searchByText({ text: 'note', topK: 5 });
+```
+
 ### Custom Embedding Providers
 
 ```typescript
@@ -709,6 +851,28 @@ console.log(`Migrated ${result.totalRecords} memories in ${result.duration}ms`);
 
 We welcome contributions! Please see our [Contributing Guide](../../CONTRIBUTING.md) for details.
 
+## 📣 Events
+
+This package currently does not emit cross-feature A2A bus events. It exposes internal Node-style events for observability and integrations inside the same process:
+
+- `memory.stored` — emitted after a successful upsert/store
+- `memory.retrieved` — emitted on successful retrieval
+- `policy.violation` — emitted when an operation violates configured policies
+
+Future cross-boundary communication, if introduced, will follow contract-first rules:
+
+- Contract schemas live under `libs/typescript/contracts` and include Zod validators
+- Events are published via the A2A bus (see `packages/a2a`)
+- All new fields start optional; breaking changes are versioned (e.g., `event.v2`)
+- Governance guidelines: `.cortex/rules/RULES_OF_AI.md`
+
+If/when this package begins producing bus events, this section will document:
+
+- Event name and lifecycle (e.g., `memory.item.created`)
+- Minimal envelope example and required fields
+- Link to the Zod schema and AsyncAPI definition
+- Round-trip contract test path under `contracts/tests/`
+
 ### Development Setup
 
 ```bash
@@ -747,6 +911,7 @@ pnpm test
 - **[MLX Integration Guide](./docs/mlx-integration.md)** - Setting up local ML inference
 - **[Policy Configuration](./docs/policies.md)** - Memory governance and compliance
 - **[Migration Guide](./docs/migration.md)** - Upgrading from legacy systems
+- **[Deployment Guide](./docs/deployment.md)** - Env config for stores, encryption, embedders
 - **[Examples](./examples/)** - Usage examples and tutorials
 
 ### Community
@@ -786,4 +951,3 @@ pnpm test
 [![Neo4j](https://img.shields.io/badge/graph-Neo4j-green)](https://neo4j.com/)
 
 </div>
-

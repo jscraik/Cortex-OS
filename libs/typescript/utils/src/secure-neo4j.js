@@ -1,5 +1,5 @@
-import neo4j from "neo4j-driver";
-import { validateNeo4jInput } from "./validation.js";
+import neo4j from 'neo4j-driver';
+import { validateNeo4jInput } from './validation.js';
 // Secure Neo4j wrapper that prevents injection vulnerabilities
 export class SecureNeo4j {
 	driver;
@@ -8,10 +8,10 @@ export class SecureNeo4j {
 	activeSessions = 0;
 	constructor(uri, user, pass) {
 		this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), {
-			userAgent: "cortex-os/0.1",
+			userAgent: 'cortex-os/0.1',
 			// Add security configurations
 			encrypted: true,
-			trust: "TRUST_SYSTEM_CA_SIGNED_CERTIFICATES",
+			trust: 'TRUST_SYSTEM_CA_SIGNED_CERTIFICATES',
 			// Add connection pooling configurations
 			maxConnectionPoolSize: this.maxPoolSize,
 			connectionAcquisitionTimeout: 60000,
@@ -35,7 +35,7 @@ export class SecureNeo4j {
 			this.activeSessions++;
 			return this.driver.session();
 		}
-		throw new Error("Maximum session pool size reached");
+		throw new Error('Maximum session pool size reached');
 	}
 	// Return a session to the pool
 	returnSession(session) {
@@ -119,7 +119,7 @@ export class SecureNeo4j {
 		}
 		// Validate depth (prevent excessive resource usage)
 		if (depth < 1 || depth > 5) {
-			throw new Error("Depth must be between 1 and 5");
+			throw new Error('Depth must be between 1 and 5');
 		}
 		const session = this.getSession();
 		try {
@@ -140,8 +140,8 @@ export class SecureNeo4j {
 				},
 			);
 			const record = result.records[0];
-			const nodes = record?.get("nodes") ?? [];
-			const rels = record?.get("rels") ?? [];
+			const nodes = record?.get('nodes') ?? [];
+			const rels = record?.get('rels') ?? [];
 			return {
 				nodes: nodes.map((n) => ({ id: n.id, label: n.label, props: n.props })),
 				rels: rels.map((r) => ({
@@ -164,7 +164,7 @@ export class SecureNeo4j {
 				throw new Error(`Invalid property key: ${key}`);
 			}
 			// Validate property values
-			if (typeof value === "string") {
+			if (typeof value === 'string') {
 				// Prevent very long strings that could be used for DoS
 				if (value.length > 10000) {
 					throw new Error(`Property value too long for key: ${key}`);
@@ -175,7 +175,7 @@ export class SecureNeo4j {
 						`Invalid characters in property value for key: ${key}`,
 					);
 				}
-			} else if (typeof value === "object" && value !== null) {
+			} else if (typeof value === 'object' && value !== null) {
 				// Recursively validate nested objects
 				this.validateProperties(value);
 			}

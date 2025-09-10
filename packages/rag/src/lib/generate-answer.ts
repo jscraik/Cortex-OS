@@ -1,11 +1,11 @@
-import type { MultiModelGenerator } from "../generation/multi-model.js";
-import type { Document } from "./types.js";
+import type { MultiModelGenerator } from '../generation/multi-model.js';
+import type { Document } from './types.js';
 
 function buildContext(documents: Document[], maxLength?: number): string {
 	const contexts = documents.map(
 		(doc, index) => `[Document ${index + 1}]\n${doc.content}\n`,
 	);
-	let context = contexts.join("\n");
+	let context = contexts.join('\n');
 	if (maxLength && context.length > maxLength) {
 		context = `${context.substring(0, maxLength)}...`;
 	}

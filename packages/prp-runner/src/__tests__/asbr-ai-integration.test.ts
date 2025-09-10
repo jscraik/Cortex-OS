@@ -8,16 +8,16 @@
  * @maintainer @jamiescottcraik
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	AI_EVIDENCE_PRESETS,
 	type AIEvidenceConfig,
 	ASBRAIIntegration,
 	createASBRAIIntegration,
-} from "../asbr-ai-integration.js";
+} from '../asbr-ai-integration.js';
 
 // Mock dependencies before importing
-vi.mock("../ai-capabilities.js", () => ({
+vi.mock('../ai-capabilities.js', () => ({
 	createAICapabilities: vi.fn(() => ({
 		generate: vi.fn(),
 		addKnowledge: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock("../ai-capabilities.js", () => ({
 	})),
 }));
 
-describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
+describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 	let asbrAI: ASBRAIIntegration;
 	let mockAICapabilities: any;
 
@@ -51,18 +51,18 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 		vi.restoreAllMocks();
 	});
 
-	describe("🚨 Critical Integration Issues (Should FAIL)", () => {
-		it("should fail - evidence enhancement without AI capabilities", async () => {
+	describe('🚨 Critical Integration Issues (Should FAIL)', () => {
+		it('should fail - evidence enhancement without AI capabilities', async () => {
 			// RED: This should fail because AI capabilities aren't properly initialized
 			const context = {
-				taskId: "test-task-1",
-				claim: "The system should handle user authentication",
+				taskId: 'test-task-1',
+				claim: 'The system should handle user authentication',
 				sources: [
 					{
-						type: "file" as const,
-						path: "/src/auth.ts",
+						type: 'file' as const,
+						path: '/src/auth.ts',
 						content:
-							"export function authenticate(user: User) { return true; }",
+							'export function authenticate(user: User) { return true; }',
 					},
 				],
 			};
@@ -71,7 +71,7 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			mockAICapabilities.generate.mockResolvedValue(null);
 			mockAICapabilities.searchKnowledge.mockResolvedValue([]);
 			mockAICapabilities.ragQuery.mockResolvedValue({
-				answer: "",
+				answer: '',
 				sources: [],
 			});
 
@@ -84,17 +84,17 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(result.insights.relevanceScore).toBeGreaterThan(0);
 		});
 
-		it("should fail - semantic search without embeddings", async () => {
+		it('should fail - semantic search without embeddings', async () => {
 			// RED: This should fail because embedding search isn't properly working
-			const claim = "Authentication mechanisms in the codebase";
+			const claim = 'Authentication mechanisms in the codebase';
 			const contextSources = [
-				"JWT tokens are used for authentication",
-				"OAuth2 flow handles third-party auth",
+				'JWT tokens are used for authentication',
+				'OAuth2 flow handles third-party auth',
 			];
 
 			// Mock embedding search to fail
 			mockAICapabilities.addKnowledge.mockRejectedValue(
-				new Error("Embedding model not available"),
+				new Error('Embedding model not available'),
 			);
 			mockAICapabilities.searchKnowledge.mockResolvedValue([]);
 
@@ -105,23 +105,23 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(result.suggestedSources.length).toBeGreaterThan(0);
 		});
 
-		it("should fail - fact checking without RAG capabilities", async () => {
+		it('should fail - fact checking without RAG capabilities', async () => {
 			// RED: This should fail because RAG fact-checking isn't implemented
 			const evidence = {
-				id: "evidence-1",
-				taskId: "task-1",
-				claim: "The authentication system uses bcrypt for password hashing",
+				id: 'evidence-1',
+				taskId: 'task-1',
+				claim: 'The authentication system uses bcrypt for password hashing',
 				confidence: 0.8,
-				riskLevel: "low" as const,
-				source: { type: "file", id: "auth-file" },
+				riskLevel: 'low' as const,
+				source: { type: 'file', id: 'auth-file' },
 				timestamp: new Date().toISOString(),
-				tags: ["security"],
+				tags: ['security'],
 				relatedEvidenceIds: [],
 			};
 
 			// Mock RAG to return empty results
 			mockAICapabilities.ragQuery.mockResolvedValue({
-				answer: "",
+				answer: '',
 				sources: [],
 				confidence: 0,
 			});
@@ -134,43 +134,43 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(result.supportingEvidence.length).toBeGreaterThan(0);
 		});
 
-		it("should fail - evidence insights without comprehensive analysis", async () => {
+		it('should fail - evidence insights without comprehensive analysis', async () => {
 			// RED: This should fail because comprehensive evidence analysis isn't working
 			const evidenceCollection = [
 				{
-					id: "evidence-1",
-					taskId: "task-1",
-					claim: "Authentication uses JWT tokens",
+					id: 'evidence-1',
+					taskId: 'task-1',
+					claim: 'Authentication uses JWT tokens',
 					confidence: 0.9,
-					riskLevel: "low" as const,
-					source: { type: "file", id: "auth-1" },
+					riskLevel: 'low' as const,
+					source: { type: 'file', id: 'auth-1' },
 					timestamp: new Date().toISOString(),
-					tags: ["auth"],
+					tags: ['auth'],
 					relatedEvidenceIds: [],
 				},
 				{
-					id: "evidence-2",
-					taskId: "task-1",
-					claim: "Password validation is implemented",
+					id: 'evidence-2',
+					taskId: 'task-1',
+					claim: 'Password validation is implemented',
 					confidence: 0.7,
-					riskLevel: "medium" as const,
-					source: { type: "file", id: "auth-2" },
+					riskLevel: 'medium' as const,
+					source: { type: 'file', id: 'auth-2' },
 					timestamp: new Date().toISOString(),
-					tags: ["validation"],
+					tags: ['validation'],
 					relatedEvidenceIds: [],
 				},
 			];
 
 			// Mock AI analysis to return minimal results
 			mockAICapabilities.ragQuery.mockResolvedValue({
-				answer: "Basic analysis",
+				answer: 'Basic analysis',
 				sources: [],
 				confidence: 0.5,
 			});
 
 			const result = await asbrAI.generateEvidenceInsights(
 				evidenceCollection,
-				"Authentication System Review",
+				'Authentication System Review',
 			);
 
 			// This should fail because we expect comprehensive insights
@@ -181,11 +181,11 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(result.confidenceMetrics.averageConfidence).toBeCloseTo(0.8, 1);
 		});
 
-		it("should fail - preset configurations without proper validation", async () => {
+		it('should fail - preset configurations without proper validation', async () => {
 			// RED: This should fail because preset validation isn't implemented
-			const conservative = createASBRAIIntegration("conservative");
-			const balanced = createASBRAIIntegration("balanced");
-			const aggressive = createASBRAIIntegration("aggressive");
+			const conservative = createASBRAIIntegration('conservative');
+			const balanced = createASBRAIIntegration('balanced');
+			const aggressive = createASBRAIIntegration('aggressive');
 
 			// Access private config to test validation
 			const conservativeConfig = (conservative as any).config;
@@ -212,34 +212,34 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			);
 		});
 
-		it("should fail - deterministic evidence collection", async () => {
+		it('should fail - deterministic evidence collection', async () => {
 			// RED: This should fail because evidence collection isn't deterministic
 			const context = {
-				taskId: "determinism-test",
-				claim: "System performance meets requirements",
+				taskId: 'determinism-test',
+				claim: 'System performance meets requirements',
 				sources: [
 					{
-						type: "file" as const,
-						path: "/src/performance.ts",
-						content: "export const MAX_LATENCY = 100; // milliseconds",
+						type: 'file' as const,
+						path: '/src/performance.ts',
+						content: 'export const MAX_LATENCY = 100; // milliseconds',
 					},
 				],
 			};
 
 			// Mock consistent AI responses
 			mockAICapabilities.generate.mockResolvedValue(
-				"Detailed performance analysis showing 95ms average latency",
+				'Detailed performance analysis showing 95ms average latency',
 			);
 			mockAICapabilities.searchKnowledge.mockResolvedValue([
 				{
-					text: "Related performance metric",
+					text: 'Related performance metric',
 					similarity: 0.85,
-					metadata: { source: "docs" },
+					metadata: { source: 'docs' },
 				},
 			]);
 			mockAICapabilities.ragQuery.mockResolvedValue({
-				answer: "Performance analysis suggests adequate latency levels",
-				sources: [{ text: "Performance data", similarity: 0.9 }],
+				answer: 'Performance analysis suggests adequate latency levels',
+				sources: [{ text: 'Performance data', similarity: 0.9 }],
 				confidence: 0.88,
 			});
 
@@ -257,23 +257,23 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			);
 		});
 
-		it("should fail - error handling and graceful degradation", async () => {
+		it('should fail - error handling and graceful degradation', async () => {
 			// RED: This should fail because error handling isn't comprehensive
 			const context = {
-				taskId: "error-test",
-				claim: "Error handling validation",
+				taskId: 'error-test',
+				claim: 'Error handling validation',
 				sources: [],
 			};
 
 			// Mock all AI capabilities to fail
 			mockAICapabilities.generate.mockRejectedValue(
-				new Error("MLX model unavailable"),
+				new Error('MLX model unavailable'),
 			);
 			mockAICapabilities.searchKnowledge.mockRejectedValue(
-				new Error("Embedding service down"),
+				new Error('Embedding service down'),
 			);
 			mockAICapabilities.ragQuery.mockRejectedValue(
-				new Error("RAG pipeline failed"),
+				new Error('RAG pipeline failed'),
 			);
 
 			// Should gracefully handle all failures and still return valid evidence
@@ -288,19 +288,19 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(result.aiMetadata.qualityScores).toBeDefined();
 		});
 
-		it("should fail - memory efficiency with large evidence collections", async () => {
+		it('should fail - memory efficiency with large evidence collections', async () => {
 			// RED: This should fail because memory management isn't optimized
 			const largeEvidenceCollection = Array.from({ length: 100 }, (_, i) => ({
 				id: `evidence-${i}`,
-				taskId: "memory-test",
+				taskId: 'memory-test',
 				claim: `Large evidence claim ${i}`,
 				confidence: 0.5 + (i % 5) * 0.1,
-				riskLevel: ["low", "medium", "high"][i % 3] as const,
-				source: { type: "file", id: `file-${i}` },
+				riskLevel: ['low', 'medium', 'high'][i % 3] as const,
+				source: { type: 'file', id: `file-${i}` },
 				timestamp: new Date().toISOString(),
 				tags: [`tag-${i % 10}`],
 				relatedEvidenceIds: [],
-				content: "Large content block ".repeat(100), // Simulate large content
+				content: 'Large content block '.repeat(100), // Simulate large content
 			}));
 
 			// Track memory usage
@@ -308,7 +308,7 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 
 			const result = await asbrAI.generateEvidenceInsights(
 				largeEvidenceCollection,
-				"Large Scale Evidence Analysis",
+				'Large Scale Evidence Analysis',
 			);
 
 			const memoryAfter = process.memoryUsage().heapUsed;
@@ -320,14 +320,14 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(result.confidenceMetrics.averageConfidence).toBeGreaterThan(0);
 		});
 
-		it("should fail - concurrent evidence processing", async () => {
+		it('should fail - concurrent evidence processing', async () => {
 			// RED: This should fail because concurrent processing isn't thread-safe
 			const contexts = Array.from({ length: 5 }, (_, i) => ({
 				taskId: `concurrent-task-${i}`,
 				claim: `Concurrent claim ${i}`,
 				sources: [
 					{
-						type: "file" as const,
+						type: 'file' as const,
 						path: `/src/file-${i}.ts`,
 						content: `export const value${i} = ${i};`,
 					},
@@ -360,16 +360,16 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 			expect(cacheSize).toBe(5);
 		});
 
-		it("should fail - integration with real ASBR Evidence Collector API", async () => {
+		it('should fail - integration with real ASBR Evidence Collector API', async () => {
 			// RED: This should fail because ASBR API integration isn't implemented
 			const context = {
-				taskId: "asbr-integration-test",
-				claim: "ASBR integration works correctly",
+				taskId: 'asbr-integration-test',
+				claim: 'ASBR integration works correctly',
 				sources: [
 					{
-						type: "repo" as const,
-						url: "https://github.com/cortex-os/asbr",
-						content: "ASBR repository documentation and code",
+						type: 'repo' as const,
+						url: 'https://github.com/cortex-os/asbr',
+						content: 'ASBR repository documentation and code',
 					},
 				],
 			};
@@ -397,15 +397,15 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 		});
 	});
 
-	describe("🔍 Configuration and Preset Validation", () => {
-		it("should validate AI_EVIDENCE_PRESETS constants", () => {
+	describe('🔍 Configuration and Preset Validation', () => {
+		it('should validate AI_EVIDENCE_PRESETS constants', () => {
 			// These should exist but might not be properly configured
 			expect(AI_EVIDENCE_PRESETS.CONSERVATIVE).toBeDefined();
 			expect(AI_EVIDENCE_PRESETS.BALANCED).toBeDefined();
 			expect(AI_EVIDENCE_PRESETS.AGGRESSIVE).toBeDefined();
 		});
 
-		it("should validate AIEvidenceConfig interface compliance", () => {
+		it('should validate AIEvidenceConfig interface compliance', () => {
 			const config: AIEvidenceConfig = {
 				enableMLXGeneration: true,
 				enableEmbeddingSearch: true,
@@ -416,7 +416,7 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 				minAIConfidence: 0.6,
 				requireHumanValidation: false,
 				enableFactChecking: true,
-				preferredMLXModel: "QWEN_SMALL",
+				preferredMLXModel: 'QWEN_SMALL',
 				temperature: 0.3,
 				maxTokens: 512,
 			};
@@ -426,42 +426,42 @@ describe("🟢 TDD GREEN PHASE: ASBR AI Integration Tests", () => {
 		});
 	});
 
-	describe("🏗️ Core Integration Methods", () => {
-		it("should test collectEnhancedEvidence method signature", () => {
-			expect(typeof asbrAI.collectEnhancedEvidence).toBe("function");
+	describe('🏗️ Core Integration Methods', () => {
+		it('should test collectEnhancedEvidence method signature', () => {
+			expect(typeof asbrAI.collectEnhancedEvidence).toBe('function');
 		});
 
-		it("should test searchRelatedEvidence method signature", () => {
-			expect(typeof asbrAI.searchRelatedEvidence).toBe("function");
+		it('should test searchRelatedEvidence method signature', () => {
+			expect(typeof asbrAI.searchRelatedEvidence).toBe('function');
 		});
 
-		it("should test factCheckEvidence method signature", () => {
-			expect(typeof asbrAI.factCheckEvidence).toBe("function");
+		it('should test factCheckEvidence method signature', () => {
+			expect(typeof asbrAI.factCheckEvidence).toBe('function');
 		});
 
-		it("should test generateEvidenceInsights method signature", () => {
-			expect(typeof asbrAI.generateEvidenceInsights).toBe("function");
+		it('should test generateEvidenceInsights method signature', () => {
+			expect(typeof asbrAI.generateEvidenceInsights).toBe('function');
 		});
 	});
 });
 
-describe("📋 ASBR AI Integration TDD Checklist", () => {
-	it("should verify TDD compliance checklist", () => {
+describe('📋 ASBR AI Integration TDD Checklist', () => {
+	it('should verify TDD compliance checklist', () => {
 		// This test serves as a checklist for TDD compliance
 		const tddChecklist = {
-			redPhaseTests: "Tests written that fail initially ✅",
-			greenPhaseImplementation: "Minimal code to make tests pass ✅",
-			refactorPhase: "Code refactored while keeping tests green ⏳",
-			reviewPhase: "Code reviewed against standards ⏳",
-			accessibilityConsidered: "N/A - Backend integration ✅",
-			securityValidated: "Security implications reviewed ⏳",
-			errorHandlingTested: "Error states handled gracefully ✅",
-			documentationUpdated: "Documentation reflects changes ⏳",
+			redPhaseTests: 'Tests written that fail initially ✅',
+			greenPhaseImplementation: 'Minimal code to make tests pass ✅',
+			refactorPhase: 'Code refactored while keeping tests green ⏳',
+			reviewPhase: 'Code reviewed against standards ⏳',
+			accessibilityConsidered: 'N/A - Backend integration ✅',
+			securityValidated: 'Security implications reviewed ⏳',
+			errorHandlingTested: 'Error states handled gracefully ✅',
+			documentationUpdated: 'Documentation reflects changes ⏳',
 		};
 
 		// Fail this test to remind us of TDD compliance
 		expect(
-			Object.values(tddChecklist).filter((status) => status.includes("❌"))
+			Object.values(tddChecklist).filter((status) => status.includes('❌'))
 				.length,
 		).toBe(0);
 	});

@@ -1,11 +1,11 @@
 'use client';
 
-import { WEBUI_BASE_URL } from '@/lib/constants';
-import { useSettingsStore } from '@/stores/settingsStore';
 import DOMPurify from 'dompurify';
 import type { Token } from 'marked';
 import type React from 'react';
 import { useMemo } from 'react';
+import { WEBUI_BASE_URL } from '@/lib/constants';
+import { useSettingsStore } from '@/stores/settingsStore';
 import Source from './Source';
 
 interface HTMLTokenProps {

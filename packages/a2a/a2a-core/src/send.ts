@@ -1,9 +1,9 @@
 import {
 	createEnvelope,
 	type Envelope,
-} from "@cortex-os/a2a-contracts/envelope";
-import axios from "axios";
-import { SimpleCircuitBreaker } from "./circuitBreaker.js";
+} from '@cortex-os/a2a-contracts/envelope';
+import axios from 'axios';
+import { SimpleCircuitBreaker } from './circuitBreaker.js';
 
 const options = {
 	timeout: 3000, // If our service takes longer than 3 seconds, trigger a failure

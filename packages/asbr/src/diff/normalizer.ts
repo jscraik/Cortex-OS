@@ -3,11 +3,11 @@
  * Implements configurable normalization as specified in the blueprint
  */
 
-import { createHash } from "crypto";
-import type { Config } from "../types/index.js";
+import { createHash } from 'crypto';
+import type { Config } from '../types/index.js';
 
 export interface NormalizationOptions {
-	newline: "LF" | "CRLF";
+	newline: 'LF' | 'CRLF';
 	trim_trailing_ws: boolean;
 	strip_dates: boolean;
 	max_normalize_bytes: number;
@@ -40,7 +40,7 @@ export class ContentNormalizer {
 	 * Normalize content for deterministic comparison
 	 */
 	normalize(content: string, filename?: string): NormalizedContent {
-		const originalSize = Buffer.byteLength(content, "utf8");
+		const originalSize = Buffer.byteLength(content, 'utf8');
 
 		// Skip normalization if content is too large
 		if (originalSize > this.options.max_normalize_bytes) {
@@ -72,7 +72,7 @@ export class ContentNormalizer {
 		}
 
 		const hash = this.calculateHash(normalized);
-		const finalSize = Buffer.byteLength(normalized, "utf8");
+		const finalSize = Buffer.byteLength(normalized, 'utf8');
 
 		return {
 			content: normalized,
@@ -114,18 +114,18 @@ export class ContentNormalizer {
 	}
 
 	private normalizeNewlines(content: string): string {
-		if (this.options.newline === "LF") {
-			return content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+		if (this.options.newline === 'LF') {
+			return content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 		} else {
-			return content.replace(/\r\n/g, "\r\n").replace(/(?<!\r)\n/g, "\r\n");
+			return content.replace(/\r\n/g, '\r\n').replace(/(?<!\r)\n/g, '\r\n');
 		}
 	}
 
 	private trimTrailingWhitespace(content: string): string {
 		return content
-			.split("\n")
-			.map((line) => line.replace(/\s+$/, ""))
-			.join("\n");
+			.split('\n')
+			.map((line) => line.replace(/\s+$/, ''))
+			.join('\n');
 	}
 
 	private stripDates(content: string): string {
@@ -144,25 +144,25 @@ export class ContentNormalizer {
 
 		let normalized = content;
 		for (const pattern of datePatterns) {
-			normalized = normalized.replace(pattern, "[TIMESTAMP_REMOVED]");
+			normalized = normalized.replace(pattern, '[TIMESTAMP_REMOVED]');
 		}
 
 		return normalized;
 	}
 
 	private normalizeByFileType(content: string, filename: string): string {
-		const extension = filename.split(".").pop()?.toLowerCase();
+		const extension = filename.split('.').pop()?.toLowerCase();
 
 		switch (extension) {
-			case "json":
+			case 'json':
 				return this.normalizeJSON(content);
-			case "xml":
+			case 'xml':
 				return this.normalizeXML(content);
-			case "yaml":
-			case "yml":
+			case 'yaml':
+			case 'yml':
 				return this.normalizeYAML(content);
-			case "md":
-			case "markdown":
+			case 'md':
+			case 'markdown':
 				return this.normalizeMarkdown(content);
 			default:
 				return content;
@@ -182,23 +182,23 @@ export class ContentNormalizer {
 
 	private normalizeXML(content: string): string {
 		// Basic XML normalization - remove extra whitespace between tags
-		return content.replace(/>\s+</g, "><").replace(/^\s+|\s+$/g, "");
+		return content.replace(/>\s+</g, '><').replace(/^\s+|\s+$/g, '');
 	}
 
 	private normalizeYAML(content: string): string {
 		// Normalize YAML indentation and spacing
 		return content
-			.split("\n")
+			.split('\n')
 			.map((line) => {
 				// Normalize indentation to 2 spaces
 				const match = line.match(/^(\s*)(.*)/);
 				if (match) {
 					const indent = Math.floor(match[1].length / 2) * 2;
-					return " ".repeat(indent) + match[2];
+					return ' '.repeat(indent) + match[2];
 				}
 				return line;
 			})
-			.join("\n");
+			.join('\n');
 	}
 
 	private normalizeMarkdown(content: string): string {
@@ -206,16 +206,16 @@ export class ContentNormalizer {
 		return (
 			content
 				// Normalize heading spacing
-				.replace(/^(#{1,6})\s+/gm, "$1 ")
+				.replace(/^(#{1,6})\s+/gm, '$1 ')
 				// Normalize list formatting
-				.replace(/^(\s*)[*+-]\s+/gm, "$1- ")
+				.replace(/^(\s*)[*+-]\s+/gm, '$1- ')
 				// Normalize link formatting
-				.replace(/\[([^\]]+)\]\s*\(\s*([^)]+)\s*\)/g, "[$1]($2)")
+				.replace(/\[([^\]]+)\]\s*\(\s*([^)]+)\s*\)/g, '[$1]($2)')
 		);
 	}
 
 	private calculateHash(content: string): string {
-		return createHash("sha256").update(content, "utf8").digest("hex");
+		return createHash('sha256').update(content, 'utf8').digest('hex');
 	}
 }
 

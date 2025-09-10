@@ -5,8 +5,8 @@ import type {
 	SchemaRegistryStats,
 	SchemaSearchOptions,
 	ValidationResult,
-} from "@cortex-os/a2a-contracts/schema-registry-types";
-import type { z, ZodError } from "zod";
+} from '@cortex-os/a2a-contracts/schema-registry-types';
+import type { ZodError, z } from 'zod';
 
 /**
  * In-memory schema registry implementation
@@ -40,7 +40,7 @@ export class SchemaRegistry {
 	 * Register a new schema
 	 */
 	register(
-		schema: Omit<RegisteredSchema, "id" | "createdAt" | "updatedAt">,
+		schema: Omit<RegisteredSchema, 'id' | 'createdAt' | 'updatedAt'>,
 	): string {
 		const id = this.generateSchemaId(schema.eventType, schema.version);
 		const now = new Date();
@@ -135,16 +135,16 @@ export class SchemaRegistry {
 			if (!schema) {
 				return {
 					valid: false,
-					errors: ([
+					errors: [
 						{
 							// mimic ZodError issue shape
-							code: "custom",
+							code: 'custom',
 							message: version
 								? `No schema found for event type '${eventType}' version '${version}'`
 								: `No schema found for event type '${eventType}'`,
 							path: [],
 						} as unknown,
-					] as unknown) as ZodError[],
+					] as unknown as ZodError[],
 				};
 			}
 
@@ -172,13 +172,13 @@ export class SchemaRegistry {
 		} catch (error) {
 			return {
 				valid: false,
-				errors: ([
+				errors: [
 					{
-						code: "custom",
-						message: `Validation error: ${error instanceof Error ? error.message : "Unknown error"}`,
+						code: 'custom',
+						message: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
 						path: [],
 					} as unknown,
-				] as unknown) as ZodError[],
+				] as unknown as ZodError[],
 			};
 		}
 	}
@@ -267,15 +267,15 @@ export class SchemaRegistry {
 
 			if (!newResult.success) {
 				issues.push(
-					"New schema rejects data that was valid in previous version",
+					'New schema rejects data that was valid in previous version',
 				);
 				recommendations.push(
-					"Consider making the new schema more permissive or providing migration guidance",
+					'Consider making the new schema more permissive or providing migration guidance',
 				);
 			}
 		} catch (error) {
 			issues.push(
-				`Compatibility check failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+				`Compatibility check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			);
 		}
 
@@ -340,8 +340,8 @@ export class SchemaRegistry {
 	}
 
 	private compareVersions(version1: string, version2: string): number {
-		const v1 = version1.split(".").map(Number);
-		const v2 = version2.split(".").map(Number);
+		const v1 = version1.split('.').map(Number);
+		const v2 = version2.split('.').map(Number);
 
 		for (let i = 0; i < Math.max(v1.length, v2.length); i++) {
 			const part1 = v1[i] || 0;
@@ -356,8 +356,8 @@ export class SchemaRegistry {
 
 	private validateSchema(schema: z.ZodSchema): void {
 		// Basic schema validation - ensure it's a valid Zod schema
-		if (!schema || typeof schema.parse !== "function") {
-			throw new Error("Invalid schema: must be a valid Zod schema");
+		if (!schema || typeof schema.parse !== 'function') {
+			throw new Error('Invalid schema: must be a valid Zod schema');
 		}
 	}
 

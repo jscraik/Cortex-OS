@@ -108,7 +108,7 @@ write pnpm-workspace.yaml <<'YAML'
 packages:
   - "apps/cortex-os"
   - "packages/agents"
-  - "packages/asbr" 
+  - "packages/asbr"
   - "packages/kernel"
   - "packages/mvp"
   - "packages/mvp-server"

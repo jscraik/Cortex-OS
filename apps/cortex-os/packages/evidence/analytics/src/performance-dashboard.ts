@@ -14,7 +14,7 @@ import type {
 	Alert,
 	DashboardData,
 	InteractionNode,
-} from "./types.js";
+} from './types.js';
 
 /**
  * Performance dashboard utilities and data aggregation
@@ -26,7 +26,7 @@ export class PerformanceDashboard {
 	generateInteractionGraph(agentStatuses: AgentStatus[]): InteractionNode[] {
 		return agentStatuses.map((agent, index) => ({
 			id: agent.agentId,
-			type: "agent" as const,
+			type: 'agent' as const,
 			framework: agent.framework,
 			position: {
 				x: (index % 5) * 150,
@@ -46,15 +46,15 @@ export class PerformanceDashboard {
 	/**
 	 * Get agent color based on status
 	 */
-	private getAgentColor(status: AgentStatus["status"]): string {
+	private getAgentColor(status: AgentStatus['status']): string {
 		const colors = {
-			active: "#4CAF50",
-			idle: "#FFC107",
-			busy: "#FF9800",
-			error: "#F44336",
-			offline: "#9E9E9E",
+			active: '#4CAF50',
+			idle: '#FFC107',
+			busy: '#FF9800',
+			error: '#F44336',
+			offline: '#9E9E9E',
 		};
-		return colors[status] || "#9E9E9E";
+		return colors[status] || '#9E9E9E';
 	}
 
 	/**
@@ -67,14 +67,14 @@ export class PerformanceDashboard {
 		if (data.overview.systemLoad > 0.9) {
 			alerts.push({
 				id: `high-load-${Date.now()}`,
-				type: "performance",
-				severity: "critical",
-				title: "High System Load",
+				type: 'performance',
+				severity: 'critical',
+				title: 'High System Load',
 				description: `System load is at ${(data.overview.systemLoad * 100).toFixed(1)}%`,
-				source: "system-monitor",
+				source: 'system-monitor',
 				timestamp: new Date(),
 				acknowledged: false,
-				actions: ["Scale up agents", "Investigate bottlenecks"],
+				actions: ['Scale up agents', 'Investigate bottlenecks'],
 			});
 		}
 

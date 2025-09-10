@@ -1,11 +1,11 @@
-import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import readline from "node:readline";
-import { z } from "zod";
-import { NoopEmbedder } from "../adapters/embedder.noop.js";
-import { InMemoryStore } from "../adapters/store.memory.js";
-import type { Memory } from "../domain/types.js";
-import { createMemoryService } from "../service/memory-service.js";
+import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import readline from 'node:readline';
+import { z } from 'zod';
+import { createEmbedderFromEnv } from '../service/embedder-factory.js';
+import { InMemoryStore } from '../adapters/store.memory.js';
+import type { Memory } from '../domain/types.js';
+import { createMemoryService } from '../service/memory-service.js';
 
 const cliSchema = z.object({
 	input: z.string(),
@@ -18,11 +18,11 @@ function parseArgs() {
 	const opts: Record<string, unknown> = {};
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
-		if (arg === "--input" || arg === "-i") opts.input = args[++i];
-		else if (arg === "--output" || arg === "-o") opts.output = args[++i];
-		else if (arg === "--tags" || arg === "-t")
+		if (arg === '--input' || arg === '-i') opts.input = args[++i];
+		else if (arg === '--output' || arg === '-o') opts.output = args[++i];
+		else if (arg === '--tags' || arg === '-t')
 			opts.tags = args[++i]
-				.split(",")
+				.split(',')
 				.map((t) => t.trim())
 				.filter(Boolean);
 	}
@@ -37,7 +37,7 @@ async function main() {
 		crlfDelay: Infinity,
 	});
 
-	const service = createMemoryService(new InMemoryStore(), new NoopEmbedder());
+  const service = createMemoryService(new InMemoryStore(), createEmbedderFromEnv());
 	const memories: Memory[] = [];
 
 	for await (const line of rl) {
@@ -47,12 +47,12 @@ async function main() {
 		const now = new Date().toISOString();
 		const raw = {
 			id: obj.id ?? randomUUID(),
-			kind: "note" as const,
+			kind: 'note' as const,
 			text,
 			tags: [...(tags ?? []), ...(obj.tags ?? [])].filter(Boolean),
 			createdAt: obj.createdAt ?? now,
 			updatedAt: now,
-			provenance: { source: "system" as const },
+			provenance: { source: 'system' as const },
 		};
 		const saved = await service.save(raw);
 		memories.push(saved);

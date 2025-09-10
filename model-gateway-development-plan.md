@@ -4,7 +4,9 @@
 
 - **Strict TDD**: begin each feature with a failing test, implement the minimal code to pass, then refactor while keeping tests green.
 - **Micro-commits**: one focused change per commit (test and implementation together).
-- **Continuous validation**: run `pre-commit run --files <changed-files>` and `pnpm lint && pnpm test` (or `pnpm docs:lint` for docs) before each commit.
+- **Continuous validation**: run `pnpm lint && pnpm test` (or `pnpm docs:lint` for docs)
+   before each commit. Optionally, use `pnpm biome:staged` and `pnpm test:safe` locally;
+   Husky hooks run automatically on commit.
 
 ## Development Roadmap
 
@@ -35,7 +37,8 @@
 ### 5. VRAM/token budget enforcement
 
 1. Add tests verifying requests exceeding `performance-config.json` budgets are rejected.  
-   > **Note:** `performance-config.json` defines per-model VRAM and token budgets. See `docs/performance-config.schema.json` for the schema and documentation.
+   > **Note:** `performance-config.json` defines per-model VRAM and token budgets.
+   > See `docs/performance-config.schema.json` for the schema and documentation.
 2. Implement budget manager enforcing VRAM and token thresholds per request.
 3. Emit metrics and alerts when budgets are breached.
 

@@ -6,7 +6,7 @@
 
 export interface ThermalStatus {
 	temperature: number;
-	level: "normal" | "warm" | "hot" | "critical";
+	level: 'normal' | 'warm' | 'hot' | 'critical';
 	throttled: boolean;
 	timestamp: number;
 }
@@ -14,7 +14,7 @@ export interface ThermalStatus {
 export interface MemoryStatus {
 	used: number;
 	available: number;
-	pressure: "normal" | "warning" | "critical";
+	pressure: 'normal' | 'warning' | 'critical';
 	swapUsed: number;
 }
 
@@ -35,13 +35,13 @@ export interface MLXProviderConfig {
 }
 
 export const DEFAULT_CONFIG = {
-	modelPath: "",
+	modelPath: '',
 	maxTokens: 2048,
 	temperature: 0.7,
 	thermalThreshold: 85,
 	memoryThreshold: 0.8,
 	enableThermalMonitoring: true,
-	gatewayUrl: process.env.MODEL_GATEWAY_URL || "http://localhost:8081",
+	gatewayUrl: process.env.MODEL_GATEWAY_URL || 'http://localhost:8081',
 	timeout: 30000,
 	maxConcurrency: 2,
 	circuitBreakerThreshold: 5,

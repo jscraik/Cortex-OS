@@ -34,7 +34,7 @@ export type {
 	StrategicDecision,
 	SynchronizationPoint,
 	Task,
-} from "./types.js";
+} from './types.js';
 // Enums
 export {
 	AgentRole,
@@ -42,12 +42,12 @@ export {
 	DecisionStrategy,
 	OrchestrationStrategy,
 	Schemas,
-} from "./types.js";
+} from './types.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {
 	maxConcurrentOrchestrations: 10,
-	defaultStrategy: "adaptive" as const,
+	defaultStrategy: 'adaptive' as const,
 	planningTimeout: 300000, // 5 minutes
 	executionTimeout: 1800000, // 30 minutes
 	qualityThreshold: 0.8,
@@ -55,12 +55,12 @@ export const OrchestrationDefaults = {
 };
 
 // Version info
-export const version = "1.0.0";
-export const name = "@cortex-os/orchestration";
+export const version = '1.0.0';
+export const name = '@cortex-os/orchestration';
 
-export type { MLXAgentCapabilities } from "./integrations/mlx-agent.js";
+export type { MLXAgentCapabilities } from './integrations/mlx-agent.js';
 
 // MLX agent integration
-export { MLXAgent } from "./integrations/mlx-agent.js";
+export { MLXAgent } from './integrations/mlx-agent.js';
 // PRP Neural Orchestration Engine
-export { cleanup, createEngine, orchestrateTask } from "./prp-integration.js";
+export { cleanup, createEngine, orchestrateTask } from './prp-integration.js';

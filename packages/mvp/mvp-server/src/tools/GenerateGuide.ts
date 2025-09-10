@@ -3,18 +3,18 @@
  * @description GenerateGuide MCP tool for creating documentation and guides
  */
 
-import type { Tool } from "../tool.js";
+import type { Tool } from '../tool.js';
 
 export interface GenerateGuideArgs {
 	topic: string;
-	type?: "api" | "tutorial" | "reference" | "guide" | "troubleshooting";
-	format?: "markdown" | "html" | "json" | "yaml";
-	audience?: "developer" | "user" | "admin" | "general";
+	type?: 'api' | 'tutorial' | 'reference' | 'guide' | 'troubleshooting';
+	format?: 'markdown' | 'html' | 'json' | 'yaml';
+	audience?: 'developer' | 'user' | 'admin' | 'general';
 	sections?: string[];
 	include_examples?: boolean;
 	include_code_samples?: boolean;
 	include_diagrams?: boolean;
-	accessibility_level?: "basic" | "enhanced" | "full";
+	accessibility_level?: 'basic' | 'enhanced' | 'full';
 	output_path?: string;
 }
 
@@ -32,7 +32,7 @@ export interface GuideSection {
 	id: string;
 	title: string;
 	content: string;
-	type: "overview" | "procedure" | "reference" | "example" | "troubleshooting";
+	type: 'overview' | 'procedure' | 'reference' | 'example' | 'troubleshooting';
 	level: number;
 	tags: string[];
 }
@@ -46,7 +46,7 @@ export interface GuideMetadata {
 	type: string;
 	audience: string;
 	estimated_reading_time: number;
-	difficulty_level: "beginner" | "intermediate" | "advanced";
+	difficulty_level: 'beginner' | 'intermediate' | 'advanced';
 	prerequisites: string[];
 	related_topics: string[];
 }
@@ -68,43 +68,43 @@ export interface AccessibilityFeatures {
  * code examples, and structured content based on the specified topic and requirements.
  */
 export class GenerateGuide implements Tool {
-	name = "generate_guide";
+	name = 'generate_guide';
 	description =
-		"Generate comprehensive documentation guides with accessibility features, code examples, and structured content";
+		'Generate comprehensive documentation guides with accessibility features, code examples, and structured content';
 
 	private readonly templateStructures = {
 		api: [
-			"overview",
-			"authentication",
-			"endpoints",
-			"examples",
-			"errors",
-			"rate-limits",
+			'overview',
+			'authentication',
+			'endpoints',
+			'examples',
+			'errors',
+			'rate-limits',
 		],
 		tutorial: [
-			"introduction",
-			"prerequisites",
-			"setup",
-			"steps",
-			"verification",
-			"next-steps",
+			'introduction',
+			'prerequisites',
+			'setup',
+			'steps',
+			'verification',
+			'next-steps',
 		],
-		reference: ["overview", "syntax", "parameters", "examples", "related"],
+		reference: ['overview', 'syntax', 'parameters', 'examples', 'related'],
 		// Ensure 6 default sections for generic guides
 		guide: [
-			"overview",
-			"prerequisites",
-			"implementation",
-			"examples",
-			"troubleshooting",
-			"next-steps",
+			'overview',
+			'prerequisites',
+			'implementation',
+			'examples',
+			'troubleshooting',
+			'next-steps',
 		],
 		troubleshooting: [
-			"problem",
-			"symptoms",
-			"causes",
-			"solutions",
-			"prevention",
+			'problem',
+			'symptoms',
+			'causes',
+			'solutions',
+			'prevention',
 		],
 	};
 
@@ -122,9 +122,9 @@ export class GenerateGuide implements Tool {
 		const formattedContent = this.formatContent(content, sections, args);
 
 		const result: GenerateGuideResult = {
-			title: this.generateTitle(args.topic, args.type || "guide"),
+			title: this.generateTitle(args.topic, args.type || 'guide'),
 			content: formattedContent,
-			format: args.format || "markdown",
+			format: args.format || 'markdown',
 			sections,
 			metadata,
 			accessibility_features: accessibilityFeatures,
@@ -140,46 +140,46 @@ export class GenerateGuide implements Tool {
 
 	private validateArgs(args: GenerateGuideArgs): void {
 		if (!args.topic || args.topic.trim().length === 0) {
-			throw new Error("Topic is required and cannot be empty");
+			throw new Error('Topic is required and cannot be empty');
 		}
 
 		const validTypes = [
-			"api",
-			"tutorial",
-			"reference",
-			"guide",
-			"troubleshooting",
+			'api',
+			'tutorial',
+			'reference',
+			'guide',
+			'troubleshooting',
 		];
 		if (args.type && !validTypes.includes(args.type)) {
 			throw new Error(
-				`Invalid type: ${args.type}. Must be one of: ${validTypes.join(", ")}`,
+				`Invalid type: ${args.type}. Must be one of: ${validTypes.join(', ')}`,
 			);
 		}
 
-		const validFormats = ["markdown", "html", "json", "yaml"];
+		const validFormats = ['markdown', 'html', 'json', 'yaml'];
 		if (args.format && !validFormats.includes(args.format)) {
 			throw new Error(
-				`Invalid format: ${args.format}. Must be one of: ${validFormats.join(", ")}`,
+				`Invalid format: ${args.format}. Must be one of: ${validFormats.join(', ')}`,
 			);
 		}
 
-		const validAudiences = ["developer", "user", "admin", "general"];
+		const validAudiences = ['developer', 'user', 'admin', 'general'];
 		if (args.audience && !validAudiences.includes(args.audience)) {
 			throw new Error(
-				`Invalid audience: ${args.audience}. Must be one of: ${validAudiences.join(", ")}`,
+				`Invalid audience: ${args.audience}. Must be one of: ${validAudiences.join(', ')}`,
 			);
 		}
 	}
 
 	private async generateContent(args: GenerateGuideArgs): Promise<string> {
-		const type = args.type || "guide";
+		const type = args.type || 'guide';
 		const sections =
 			this.templateStructures[type] || this.templateStructures.guide;
 
 		let content = `# ${this.generateTitle(args.topic, type)}\n\n`;
 
 		// Add accessibility notice
-		if (args.accessibility_level !== "basic") {
+		if (args.accessibility_level !== 'basic') {
 			content += this.generateAccessibilityNotice();
 		}
 
@@ -212,7 +212,7 @@ export class GenerateGuide implements Tool {
 	private async generateSections(
 		args: GenerateGuideArgs,
 	): Promise<GuideSection[]> {
-		const type = args.type || "guide";
+		const type = args.type || 'guide';
 		const sectionTypes =
 			args.sections ||
 			this.templateStructures[type] ||
@@ -237,14 +237,14 @@ export class GenerateGuide implements Tool {
 
 	private generateTitle(topic: string, type: string): string {
 		const typeMapping = {
-			api: "API Reference",
-			tutorial: "Tutorial",
-			reference: "Reference Guide",
-			guide: "Guide",
-			troubleshooting: "Troubleshooting Guide",
+			api: 'API Reference',
+			tutorial: 'Tutorial',
+			reference: 'Reference Guide',
+			guide: 'Guide',
+			troubleshooting: 'Troubleshooting Guide',
 		};
 
-		const typeName = typeMapping[type as keyof typeof typeMapping] || "Guide";
+		const typeName = typeMapping[type as keyof typeof typeMapping] || 'Guide';
 		return `${this.capitalizeTitle(topic)} ${typeName}`;
 	}
 
@@ -252,19 +252,19 @@ export class GenerateGuide implements Tool {
 		return text
 			.split(/[-_\s]/)
 			.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-			.join(" ");
+			.join(' ');
 	}
 
 	private generateIntroduction(args: GenerateGuideArgs): string {
-		const audience = args.audience || "general";
+		const audience = args.audience || 'general';
 		const audienceText = {
 			developer:
-				"This guide is designed for developers and technical implementers.",
-			user: "This guide is written for end users and non-technical stakeholders.",
+				'This guide is designed for developers and technical implementers.',
+			user: 'This guide is written for end users and non-technical stakeholders.',
 			admin:
-				"This guide is intended for system administrators and DevOps professionals.",
+				'This guide is intended for system administrators and DevOps professionals.',
 			general:
-				"This guide is designed to be accessible to users of all technical levels.",
+				'This guide is designed to be accessible to users of all technical levels.',
 		};
 
 		return `## Introduction\n\nWelcome to the ${this.capitalizeTitle(args.topic)} documentation. ${audienceText[audience]}\n\n`;
@@ -306,7 +306,7 @@ export class GenerateGuide implements Tool {
 				`## Implementation\n\nDetailed implementation guide for ${args.topic}:\n\n`,
 			verification: () =>
 				`## Verification\n\nTo verify your setup is working correctly:\n\n1. Run the test command\n2. Check the output\n3. Verify expected behavior\n\n`,
-			"next-steps": () =>
+			'next-steps': () =>
 				`## Next Steps\n\nNow that you've completed this guide, consider:\n\n- Exploring advanced features\n- Reading related documentation\n- Joining the community\n\n`,
 		};
 
@@ -318,7 +318,7 @@ export class GenerateGuide implements Tool {
 	}
 
 	private generateCodeSamples(args: GenerateGuideArgs): string {
-		return `## Code Samples\n\n### JavaScript Example\n\n\`\`\`javascript\n// Example code for ${args.topic}\nconst example = {\n  topic: "${args.topic}",\n  initialized: true\n};\n\nconsole.log(example);\n\`\`\`\n\n### TypeScript Example\n\n\`\`\`typescript\ninterface ${this.capitalizeTitle(args.topic).replace(/\s/g, "")}Config {\n  enabled: boolean;\n  options: string[];\n}\n\nconst config: ${this.capitalizeTitle(args.topic).replace(/\s/g, "")}Config = {\n  enabled: true,\n  options: ["option1", "option2"]\n};\n\`\`\`\n\n`;
+		return `## Code Samples\n\n### JavaScript Example\n\n\`\`\`javascript\n// Example code for ${args.topic}\nconst example = {\n  topic: "${args.topic}",\n  initialized: true\n};\n\nconsole.log(example);\n\`\`\`\n\n### TypeScript Example\n\n\`\`\`typescript\ninterface ${this.capitalizeTitle(args.topic).replace(/\s/g, '')}Config {\n  enabled: boolean;\n  options: string[];\n}\n\nconst config: ${this.capitalizeTitle(args.topic).replace(/\s/g, '')}Config = {\n  enabled: true,\n  options: ["option1", "option2"]\n};\n\`\`\`\n\n`;
 	}
 
 	private generateExamples(args: GenerateGuideArgs): string {
@@ -343,11 +343,11 @@ export class GenerateGuide implements Tool {
 		return {
 			created_at: new Date().toISOString(),
 			last_updated: new Date().toISOString(),
-			version: "1.0.0",
-			author: "Cortex OS Documentation Generator",
+			version: '1.0.0',
+			author: 'Cortex OS Documentation Generator',
 			topic: args.topic,
-			type: args.type || "guide",
-			audience: args.audience || "general",
+			type: args.type || 'guide',
+			audience: args.audience || 'general',
 			estimated_reading_time: readingTime,
 			difficulty_level: this.determineDifficultyLevel(args),
 			prerequisites: this.generatePrerequisites(args),
@@ -357,33 +357,33 @@ export class GenerateGuide implements Tool {
 
 	private determineDifficultyLevel(
 		args: GenerateGuideArgs,
-	): "beginner" | "intermediate" | "advanced" {
-		if (args.type === "api" || args.include_code_samples) {
-			return "intermediate";
+	): 'beginner' | 'intermediate' | 'advanced' {
+		if (args.type === 'api' || args.include_code_samples) {
+			return 'intermediate';
 		}
-		if (args.type === "reference") {
-			return "advanced";
+		if (args.type === 'reference') {
+			return 'advanced';
 		}
-		return "beginner";
+		return 'beginner';
 	}
 
 	private generatePrerequisites(args: GenerateGuideArgs): string[] {
 		const prerequisites = [];
 
-		if (args.type === "api") {
+		if (args.type === 'api') {
 			prerequisites.push(
-				"Basic understanding of REST APIs",
-				"HTTP methods knowledge",
+				'Basic understanding of REST APIs',
+				'HTTP methods knowledge',
 			);
 		}
 		if (args.include_code_samples) {
 			prerequisites.push(
-				"Programming experience",
-				"Development environment setup",
+				'Programming experience',
+				'Development environment setup',
 			);
 		}
-		if (args.audience === "developer") {
-			prerequisites.push("Software development experience");
+		if (args.audience === 'developer') {
+			prerequisites.push('Software development experience');
 		}
 
 		return prerequisites;
@@ -408,8 +408,8 @@ export class GenerateGuide implements Tool {
 		return {
 			alt_text_count: altTextMatches.length,
 			heading_structure: headingMatches.length > 0,
-			keyboard_navigation: args.accessibility_level === "full",
-			screen_reader_friendly: args.accessibility_level !== "basic",
+			keyboard_navigation: args.accessibility_level === 'full',
+			screen_reader_friendly: args.accessibility_level !== 'basic',
 			color_contrast_compliant: true,
 			semantic_markup: true,
 			aria_labels: ariaLabelMatches.length,
@@ -422,11 +422,11 @@ export class GenerateGuide implements Tool {
 		args: GenerateGuideArgs,
 	): string {
 		switch (args.format) {
-			case "html":
+			case 'html':
 				return this.convertToHTML(content);
-			case "json":
+			case 'json':
 				return JSON.stringify({ content, sections }, null, 2);
-			case "yaml":
+			case 'yaml':
 				return this.convertToYAML(content, sections);
 			default:
 				return content;
@@ -436,24 +436,24 @@ export class GenerateGuide implements Tool {
 	private convertToHTML(markdown: string): string {
 		// Basic markdown to HTML conversion
 		return markdown
-			.replace(/^# (.+)$/gm, "<h1>$1</h1>")
-			.replace(/^## (.+)$/gm, "<h2>$1</h2>")
-			.replace(/^### (.+)$/gm, "<h3>$1</h3>")
-			.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-			.replace(/\*(.+?)\*/g, "<em>$1</em>")
-			.replace(/`(.+?)`/g, "<code>$1</code>")
+			.replace(/^# (.+)$/gm, '<h1>$1</h1>')
+			.replace(/^## (.+)$/gm, '<h2>$1</h2>')
+			.replace(/^### (.+)$/gm, '<h3>$1</h3>')
+			.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+			.replace(/\*(.+?)\*/g, '<em>$1</em>')
+			.replace(/`(.+?)`/g, '<code>$1</code>')
 			.replace(
 				/```(\w+)?\n([\s\S]*?)\n```/g,
 				'<pre><code class="language-$1">$2</code></pre>',
 			)
-			.replace(/\n\n/g, "</p><p>")
-			.replace(/^(?!<[h|p|pre])/gm, "<p>")
-			.replace(/(?<!>)$/gm, "</p>");
+			.replace(/\n\n/g, '</p><p>')
+			.replace(/^(?!<[h|p|pre])/gm, '<p>')
+			.replace(/(?<!>)$/gm, '</p>');
 	}
 
 	private convertToYAML(content: string, sections: GuideSection[]): string {
 		const yamlData = {
-			title: sections[0]?.title || "Generated Guide",
+			title: sections[0]?.title || 'Generated Guide',
 			content: content,
 			sections: sections.map((s) => ({
 				id: s.id,
@@ -464,33 +464,33 @@ export class GenerateGuide implements Tool {
 		};
 
 		// Basic YAML serialization
-		return `---\ntitle: "${yamlData.title}"\ncontent: |\n  ${content.replace(/\n/g, "\n  ")}\nsections:\n${sections.map((s) => `  - id: ${s.id}\n    title: "${s.title}"\n    type: ${s.type}\n    level: ${s.level}`).join("\n")}\n---`;
+		return `---\ntitle: "${yamlData.title}"\ncontent: |\n  ${content.replace(/\n/g, '\n  ')}\nsections:\n${sections.map((s) => `  - id: ${s.id}\n    title: "${s.title}"\n    type: ${s.type}\n    level: ${s.level}`).join('\n')}\n---`;
 	}
 
-	private mapSectionType(sectionType: string): GuideSection["type"] {
-		const mapping: Record<string, GuideSection["type"]> = {
-			overview: "overview",
-			steps: "procedure",
-			endpoints: "reference",
-			examples: "example",
-			troubleshooting: "troubleshooting",
+	private mapSectionType(sectionType: string): GuideSection['type'] {
+		const mapping: Record<string, GuideSection['type']> = {
+			overview: 'overview',
+			steps: 'procedure',
+			endpoints: 'reference',
+			examples: 'example',
+			troubleshooting: 'troubleshooting',
 		};
 
-		return mapping[sectionType] || "overview";
+		return mapping[sectionType] || 'overview';
 	}
 
 	private generateSectionTags(
 		sectionType: string,
 		args: GenerateGuideArgs,
 	): string[] {
-		const baseTags = [args.topic, args.type || "guide"];
+		const baseTags = [args.topic, args.type || 'guide'];
 
 		const sectionTags: Record<string, string[]> = {
-			authentication: ["security", "auth"],
-			endpoints: ["api", "reference"],
-			examples: ["examples", "code"],
-			troubleshooting: ["debug", "issues"],
-			setup: ["installation", "config"],
+			authentication: ['security', 'auth'],
+			endpoints: ['api', 'reference'],
+			examples: ['examples', 'code'],
+			troubleshooting: ['debug', 'issues'],
+			setup: ['installation', 'config'],
 		};
 
 		return [...baseTags, ...(sectionTags[sectionType] || [])];
@@ -502,7 +502,7 @@ export class GenerateGuide implements Tool {
 	): Promise<string> {
 		// In a real implementation, this would write to the file system
 		// For this MCP tool, we'll return the intended file path
-		const extension = result.format === "markdown" ? "md" : result.format;
+		const extension = result.format === 'markdown' ? 'md' : result.format;
 		const fileName = `${outputPath}.${extension}`;
 
 		return fileName;

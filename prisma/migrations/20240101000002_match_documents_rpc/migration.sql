@@ -24,7 +24,7 @@ as $$
     (c.embedding <=> query_embedding) as similarity
   from "Chunk" c
   join "Document" d on c."documentId" = d.id
-  where c.embedding is not null 
+  where c.embedding is not null
     and (c.embedding <=> query_embedding) < match_threshold
   order by c.embedding <=> query_embedding
   limit match_count;

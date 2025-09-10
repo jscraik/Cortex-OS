@@ -1,13 +1,13 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { globby } from "globby";
-import * as ts from "typescript";
-import { z } from "zod";
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { globby } from 'globby';
+import * as ts from 'typescript';
+import { z } from 'zod';
 
 const argSchema = z.object({
-	targetDir: z.string().default("."),
+	targetDir: z.string().default('.'),
 	gitignore: z.string().optional(),
-	out: z.string().default("codemap.json"),
+	out: z.string().default('codemap.json'),
 });
 
 interface CodeInfo {
@@ -21,7 +21,7 @@ async function parseArgs() {
 	const [targetDir, gitignore, out] = process.argv.slice(2);
 	const result = argSchema.safeParse({ targetDir, gitignore, out });
 	if (!result.success) {
-		console.error("Invalid arguments:", result.error.flatten().fieldErrors);
+		console.error('Invalid arguments:', result.error.flatten().fieldErrors);
 		process.exit(1);
 	}
 	return result.data;
@@ -51,7 +51,7 @@ function extractTS(content: string, fileName: string) {
 	for (const range of comments) {
 		const text = content
 			.slice(range.pos, range.end)
-			.replace(/^\/[/*]+/, "")
+			.replace(/^\/[/*]+/, '')
 			.trim();
 		if (text) docstrings.push(text);
 	}
@@ -80,13 +80,13 @@ async function main() {
 	let ignorePatterns: string[] = [];
 	if (gitignore) {
 		try {
-			const gi = await fs.readFile(path.resolve(gitignore), "utf8");
+			const gi = await fs.readFile(path.resolve(gitignore), 'utf8');
 			ignorePatterns = gi.split(/\r?\n/).filter(Boolean);
 		} catch {
 			// ignore if gitignore cannot be read
 		}
 	}
-	const files = await globby(["**/*.{ts,tsx,js,jsx,py}"], {
+	const files = await globby(['**/*.{ts,tsx,js,jsx,py}'], {
 		cwd: targetDir,
 		gitignore: true,
 		ignore: ignorePatterns,
@@ -94,9 +94,9 @@ async function main() {
 	const map: Record<string, CodeInfo> = {};
 	for (const file of files) {
 		const fullPath = path.join(targetDir, file);
-		const content = await fs.readFile(fullPath, "utf8");
+		const content = await fs.readFile(fullPath, 'utf8');
 		const ext = path.extname(file);
-		map[file] = ext === ".py" ? extractPy(content) : extractTS(content, file);
+		map[file] = ext === '.py' ? extractPy(content) : extractTS(content, file);
 	}
 	await fs.writeFile(out, JSON.stringify(map, null, 2));
 	// eslint-disable-next-line no-console

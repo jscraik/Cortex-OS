@@ -61,4 +61,3 @@ jobs:
         with:
           name: bandit-report
           path: bandit-report.json
-

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Simplified Envelope schema for testing purposes
 const SimplifiedEnvelope = z.object({
@@ -10,10 +10,10 @@ const SimplifiedEnvelope = z.object({
 });
 
 export const OutboxMessageStatus = z.enum([
-	"pending",
-	"sent",
-	"failed",
-	"poisoned",
+	'pending',
+	'sent',
+	'failed',
+	'poisoned',
 ]);
 
 export const OutboxMessage = SimplifiedEnvelope.extend({

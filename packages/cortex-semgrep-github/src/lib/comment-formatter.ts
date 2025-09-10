@@ -3,7 +3,7 @@
  * Extracted from large generateScanComment method
  */
 
-import type { SecurityScanResult } from "./semgrep-scanner.js";
+import type { SecurityScanResult } from './semgrep-scanner.js';
 
 export interface ScanSummary {
 	total: number;
@@ -19,11 +19,11 @@ export const summarizeResults = (
 	return {
 		total: results.length,
 		critical: results.filter(
-			(r) => r.severity === "HIGH" && r.ruleId.includes("critical"),
+			(r) => r.severity === 'HIGH' && r.ruleId.includes('critical'),
 		).length,
-		high: results.filter((r) => r.severity === "HIGH").length,
-		medium: results.filter((r) => r.severity === "MEDIUM").length,
-		low: results.filter((r) => r.severity === "LOW").length,
+		high: results.filter((r) => r.severity === 'HIGH').length,
+		medium: results.filter((r) => r.severity === 'MEDIUM').length,
+		low: results.filter((r) => r.severity === 'LOW').length,
 	};
 };
 
@@ -31,7 +31,7 @@ export const formatScanSection = (
 	title: string,
 	items: SecurityScanResult[],
 ): string => {
-	if (items.length === 0) return "";
+	if (items.length === 0) return '';
 
 	const section = items
 		.slice(0, 5) // Limit to first 5 items
@@ -39,10 +39,10 @@ export const formatScanSection = (
 			(item) =>
 				`- **${item.ruleId}**: ${item.message} (${item.file}:${item.startLine})`,
 		)
-		.join("\n");
+		.join('\n');
 
 	const remaining =
-		items.length > 5 ? `\n_... and ${items.length - 5} more_` : "";
+		items.length > 5 ? `\n_... and ${items.length - 5} more_` : '';
 
 	return `### ${title}\n${section}${remaining}\n`;
 };
@@ -66,18 +66,18 @@ Great job maintaining secure code! 🎉`;
 	}
 
 	const critical = results.filter(
-		(r) => r.severity === "HIGH" && r.ruleId.includes("critical"),
+		(r) => r.severity === 'HIGH' && r.ruleId.includes('critical'),
 	);
 	const high = results.filter(
-		(r) => r.severity === "HIGH" && !r.ruleId.includes("critical"),
+		(r) => r.severity === 'HIGH' && !r.ruleId.includes('critical'),
 	);
-	const medium = results.filter((r) => r.severity === "MEDIUM");
-	const low = results.filter((r) => r.severity === "LOW");
+	const medium = results.filter((r) => r.severity === 'MEDIUM');
+	const low = results.filter((r) => r.severity === 'LOW');
 
-	const criticalSection = formatScanSection("🚨 Critical Issues", critical);
-	const highSection = formatScanSection("⚠️ High Severity", high);
-	const mediumSection = formatScanSection("⚡ Medium Severity", medium);
-	const lowSection = formatScanSection("💡 Low Severity", low);
+	const criticalSection = formatScanSection('🚨 Critical Issues', critical);
+	const highSection = formatScanSection('⚠️ High Severity', high);
+	const mediumSection = formatScanSection('⚡ Medium Severity', medium);
+	const lowSection = formatScanSection('💡 Low Severity', low);
 
 	return `## 🛡️ Security Scan Results
 

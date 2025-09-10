@@ -4,7 +4,7 @@
  * This module provides tools for validating security and compliance evidence.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 const EvidenceSchema = z.object({
 	type: z.string().min(1),

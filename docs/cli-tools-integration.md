@@ -145,4 +145,3 @@ pnpm graphite:submit
 - **Documentation**: Architecture diagram auto-generated
 - **Workflow**: Modern stacked PR workflow ready
 - **Performance**: Memory-optimized configurations for large monorepo
-

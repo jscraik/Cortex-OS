@@ -6,13 +6,13 @@
  * @status IMPLEMENTATION_READY
  */
 
+import { promises as fs } from 'node:fs';
 import type {
 	Evidence,
 	GateResult,
 	HumanApproval,
 	PRPState,
 } from '@cortex-os/kernel';
-import { promises as fs } from 'node:fs';
 
 export interface PRPDocument {
 	id: string;
@@ -158,15 +158,15 @@ function generateDesignSummary(state: PRPState): string {
 	const designContent =
 		designEvidence.length > 0
 			? designEvidence
-				.map((e: Evidence) => {
-					try {
-						const parsed = JSON.parse(e.content);
-						return `- ${parsed.summary || e.source}`;
-					} catch {
-						return `- ${e.source}`;
-					}
-				})
-				.join('\n')
+					.map((e: Evidence) => {
+						try {
+							const parsed = JSON.parse(e.content);
+							return `- ${parsed.summary || e.source}`;
+						} catch {
+							return `- ${e.source}`;
+						}
+					})
+					.join('\n')
 			: '- Design summary to be captured during G1 Specification gate';
 
 	return `## 4. Design Summary
@@ -192,8 +192,8 @@ function generateTestPlan(state: PRPState): string {
 	const testContent =
 		testEvidence.length > 0
 			? testEvidence
-				.map((e: Evidence) => `- ${e.source}: ${e.content.slice(0, 100)}...`)
-				.join('\n')
+					.map((e: Evidence) => `- ${e.source}: ${e.content.slice(0, 100)}...`)
+					.join('\n')
 			: '- Unit tests for core logic\n- Integration tests for API endpoints\n- End-to-end tests for user workflows';
 
 	return `## 6. Test Plan
@@ -319,7 +319,8 @@ ${approvals.map((a: HumanApproval) => `- ${a.gateId}: ${a.rationale}`).join('\n'
 }
 
 function generateReleaseNotes(state: PRPState): string {
-	const version = (state.metadata as { version?: string } | undefined)?.version || '0.1.0';
+	const version =
+		(state.metadata as { version?: string } | undefined)?.version || '0.1.0';
 	const highlights = (state.outputs.highlights as string[]) || [
 		'Initial implementation',
 	];

@@ -45,6 +45,12 @@ pnpm dev
 4. **Document** your changes and update relevant docs
 5. **Submit** a pull request with clear description
 
+### Git Hooks & Node Version
+
+- Git hooks are managed with `husky` and run via `.husky/*` scripts (Husky-only; Python `pre-commit` is not used).
+- Supported local Node.js versions for dev tooling: `20.x` or `22.x`. Other versions may work but will print a warning.
+- Hooks are installed automatically on `pnpm install` via `core.hooksPath=.husky`.
+
 ## 📋 Development Guidelines
 
 ### Code Standards
@@ -414,6 +420,34 @@ git checkout -b fix/issue-description
 # Or for documentation
 git checkout -b docs/improve-contributing-guide
 ```
+
+### Stacked PRs with Graphite (Recommended)
+
+For incremental, reviewable changes, we recommend stacked PRs using the Graphite CLI:
+
+```bash
+# Sync and create a new branch on top of your current stack
+pnpm graphite:sync
+pnpm graphite:branch -- --name "feature/my-change"
+
+# Commit small focused changes and push
+git add -A && git commit -m "feat(xyz): small focused change"
+
+# Restack if base changed
+pnpm graphite:restack
+
+# Submit your stack as PRs
+pnpm graphite:submit:stack
+
+# One-shot combo when you're confident:
+pnpm graphite:auto
+```
+
+Notes:
+
+- Keep changes small and independent; prefer many small PRs over one large PR.
+- Our Graphite config auto-updates PR descriptions and deletes merged branches.
+- Protected branches cannot be rebased (`main`, `develop`, `staging`).
 
 ### Commit Message Format
 

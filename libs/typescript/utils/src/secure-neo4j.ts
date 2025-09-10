@@ -1,5 +1,5 @@
-import neo4j, { type Driver, type Session } from "neo4j-driver";
-import { validateNeo4jInput } from "./validation.js";
+import neo4j, { type Driver, type Session } from 'neo4j-driver';
+import { validateNeo4jInput } from './validation.js';
 
 // Secure Neo4j wrapper that prevents injection vulnerabilities
 export class SecureNeo4j {
@@ -10,10 +10,10 @@ export class SecureNeo4j {
 
 	constructor(uri: string, user: string, pass: string) {
 		this.driver = neo4j.driver(uri, neo4j.auth.basic(user, pass), {
-			userAgent: "cortex-os/0.1",
+			userAgent: 'cortex-os/0.1',
 			// Add security configurations
 			encrypted: true,
-			trust: "TRUST_SYSTEM_CA_SIGNED_CERTIFICATES",
+			trust: 'TRUST_SYSTEM_CA_SIGNED_CERTIFICATES',
 			// Add connection pooling configurations
 			maxConnectionPoolSize: this.maxPoolSize,
 			connectionAcquisitionTimeout: 60000,
@@ -41,7 +41,7 @@ export class SecureNeo4j {
 			return this.driver.session();
 		}
 
-		throw new Error("Maximum session pool size reached");
+		throw new Error('Maximum session pool size reached');
 	}
 
 	// Return a session to the pool
@@ -148,7 +148,7 @@ export class SecureNeo4j {
 
 		// Validate depth (prevent excessive resource usage)
 		if (depth < 1 || depth > 5) {
-			throw new Error("Depth must be between 1 and 5");
+			throw new Error('Depth must be between 1 and 5');
 		}
 
 		const session = this.getSession();
@@ -171,12 +171,12 @@ export class SecureNeo4j {
 			);
 
 			const record = result.records[0];
-			const nodes = (record?.get("nodes") ?? []) as Array<{
+			const nodes = (record?.get('nodes') ?? []) as Array<{
 				id: string;
 				label: string;
 				props: Record<string, unknown>;
 			}>;
-			const rels = (record?.get("rels") ?? []) as Array<{
+			const rels = (record?.get('rels') ?? []) as Array<{
 				from: string;
 				to: string;
 				type: string;
@@ -200,7 +200,7 @@ export class SecureNeo4j {
 	// Type guard for record objects
 	private isRecord(value: unknown): value is Record<string, unknown> {
 		return (
-			typeof value === "object" &&
+			typeof value === 'object' &&
 			value !== null &&
 			!Array.isArray(value) &&
 			Object.getPrototypeOf(value) === Object.prototype
@@ -217,7 +217,7 @@ export class SecureNeo4j {
 			}
 
 			// Validate property values
-			if (typeof value === "string") {
+			if (typeof value === 'string') {
 				// Prevent very long strings that could be used for DoS
 				if (value.length > 10000) {
 					throw new Error(`Property value too long for key: ${key}`);
@@ -229,7 +229,7 @@ export class SecureNeo4j {
 						`Invalid characters in property value for key: ${key}`,
 					);
 				}
-			} else if (typeof value === "object" && value !== null) {
+			} else if (typeof value === 'object' && value !== null) {
 				// Recursively validate nested objects using type guard
 				if (this.isRecord(value)) {
 					this.validateProperties(value);

@@ -3,11 +3,11 @@
  * Implements planning, critiquing, simulation, and teaching capabilities
  */
 
-import type { Config } from "../types/index.js";
-import { CritiqueEngine } from "./critique.js";
-import { type SimulationResult, Simulator } from "./simulator.js";
-import { Teacher } from "./teacher.js";
-import type { Plan, PlanningContext, PlanOptions } from "./types.js";
+import type { Config } from '../types/index.js';
+import { CritiqueEngine } from './critique.js';
+import { type SimulationResult, Simulator } from './simulator.js';
+import { Teacher } from './teacher.js';
+import type { Plan, PlanningContext, PlanOptions } from './types.js';
 
 export interface CerebrumOptions {
 	config: Config;
@@ -41,10 +41,10 @@ export class Cerebrum {
 			id: this.generateId(),
 			title:
 				context.intent.substring(0, 50) +
-				(context.intent.length > 50 ? "..." : ""),
+				(context.intent.length > 50 ? '...' : ''),
 			description: context.intent,
 			steps: [],
-			status: "planning",
+			status: 'planning',
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 		};
@@ -53,31 +53,31 @@ export class Cerebrum {
 		// A real implementation would use LLMs to generate the actual plan
 		plan.steps = [
 			{
-				id: "1",
-				title: "Analyze requirements",
-				description: "Break down the intent into actionable steps",
-				status: "pending",
+				id: '1',
+				title: 'Analyze requirements',
+				description: 'Break down the intent into actionable steps',
+				status: 'pending',
 				order: 1,
 			},
 			{
-				id: "2",
-				title: "Gather resources",
-				description: "Identify tools and data needed for execution",
-				status: "pending",
+				id: '2',
+				title: 'Gather resources',
+				description: 'Identify tools and data needed for execution',
+				status: 'pending',
 				order: 2,
 			},
 			{
-				id: "3",
-				title: "Execute plan",
-				description: "Run the steps in sequence",
-				status: "pending",
+				id: '3',
+				title: 'Execute plan',
+				description: 'Run the steps in sequence',
+				status: 'pending',
 				order: 3,
 			},
 			{
-				id: "4",
-				title: "Validate results",
-				description: "Check that the output meets the intent",
-				status: "pending",
+				id: '4',
+				title: 'Validate results',
+				description: 'Check that the output meets the intent',
+				status: 'pending',
 				order: 4,
 			},
 		];
@@ -119,10 +119,10 @@ export class Cerebrum {
 		// For now, we'll just return a placeholder
 		const plan: Plan = {
 			id: planId,
-			title: "Replayed Plan",
-			description: "A plan that has been replayed with modifications",
+			title: 'Replayed Plan',
+			description: 'A plan that has been replayed with modifications',
 			steps: [],
-			status: "planning",
+			status: 'planning',
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 		};

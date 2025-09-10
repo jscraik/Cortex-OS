@@ -36,6 +36,25 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Optional OpenTelemetry metrics
+try:  # pragma: no cover - import guard
+    from opentelemetry import metrics as _otel_metrics  # type: ignore
+
+    _METER = _otel_metrics.get_meter("mcp.tasks")
+    _otel_tool_counter = _METER.create_counter(
+        name="mcp_tool_executions_total",
+        unit="1",
+        description="Total tool executions",
+    )
+    _otel_tool_duration = _METER.create_histogram(
+        name="mcp_tool_execution_duration_seconds",
+        unit="s",
+        description="Tool execution duration",
+    )
+except Exception:  # pragma: no cover - proceed without OTEL
+    _otel_tool_counter = None
+    _otel_tool_duration = None
+
 
 class TaskStatus(Enum):
     """Task execution status."""
@@ -195,6 +214,8 @@ class TaskQueue:
         self.total_tasks_processed = 0
         self.total_tasks_failed = 0
         self.total_execution_time = 0.0
+        # Per-tool metrics
+        self.tool_metrics: dict[str, dict[str, float | int]] = {}
 
     async def initialize(self) -> None:
         """Initialize the task queue system."""
@@ -549,6 +570,7 @@ class TaskQueue:
                 "total_tasks_processed": self.total_tasks_processed,
                 "total_tasks_failed": self.total_tasks_failed,
                 "total_execution_time": self.total_execution_time,
+                "tools": self.tool_metrics,
             },
         }
 
@@ -603,16 +625,41 @@ async def tool_execution_task(
     try:
         func = queue.registry.get(tool_name)
     except PermissionError as e:
-        raise ValueError(f"Function {tool_name} is not allowlisted") from e
+        # Preserve PermissionError to honor tests and signal authorization issues
+        raise e
     if func is None:
         raise ValueError(f"Function {tool_name} not registered")
+    start = time.time()
     result = await func(**parameters)
+    duration = time.time() - start
+    # Update per-tool metrics
+    tm = queue.tool_metrics.setdefault(tool_name, {"count": 0, "total_latency": 0.0})
+    tm["count"] = int(tm.get("count", 0)) + 1
+    tm["total_latency"] = float(tm.get("total_latency", 0.0)) + float(duration)
+    # Prometheus-style metrics
+    try:
+        from ..observability.metrics import get_metrics_collector
+
+        get_metrics_collector().record_tool_execution(tool_name, duration)
+    except Exception:  # pragma: no cover
+        pass
+    # OpenTelemetry metrics (optional)
+    if _otel_tool_counter and _otel_tool_duration:  # pragma: no cover - env dependent
+        try:
+            _otel_tool_counter.add(1, {"tool_name": tool_name})
+            _otel_tool_duration.record(duration, {"tool_name": tool_name})
+        except Exception:
+            pass
     return {
         "tool": tool_name,
         "parameters": parameters,
         "result": result,
-        "execution_time": time.time(),
+        "execution_time": duration,
     }
+
+def get_tool_metrics(queue: "TaskQueue") -> dict[str, dict[str, float | int]]:
+    """Expose per-tool metrics snapshot."""
+    return queue.tool_metrics
 
 
 def task(

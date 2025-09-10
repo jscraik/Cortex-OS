@@ -1,19 +1,19 @@
-import { describe, expect, it, vi } from "vitest";
-import { createExecutionContext } from "../lib/create-execution-context.js";
-import { executeNeuron } from "../lib/execute-neuron.js";
-import type { ExecutionState, Neuron } from "../orchestrator.js";
+import { describe, expect, it, vi } from 'vitest';
+import { createExecutionContext } from '../lib/create-execution-context.js';
+import { executeNeuron } from '../lib/execute-neuron.js';
+import type { ExecutionState, Neuron } from '../orchestrator.js';
 
-describe("helper functions", () => {
-	it("creates an execution context", () => {
+describe('helper functions', () => {
+	it('creates an execution context', () => {
 		const context = createExecutionContext();
-		expect(context).toHaveProperty("workingDirectory", process.cwd());
+		expect(context).toHaveProperty('workingDirectory', process.cwd());
 	});
 
-	it("executes a neuron and returns its result", async () => {
+	it('executes a neuron and returns its result', async () => {
 		const neuron: Neuron = {
-			id: "n1",
-			role: "test",
-			phase: "strategy",
+			id: 'n1',
+			role: 'test',
+			phase: 'strategy',
 			dependencies: [],
 			tools: [],
 			execute: vi.fn(async () => ({
@@ -34,9 +34,9 @@ describe("helper functions", () => {
 		};
 
 		const state: ExecutionState = {
-			id: "s1",
-			phase: "strategy",
-			blueprint: { title: "", description: "", requirements: [] },
+			id: 's1',
+			phase: 'strategy',
+			blueprint: { title: '', description: '', requirements: [] },
 			outputs: {},
 		};
 

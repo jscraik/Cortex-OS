@@ -1,5 +1,5 @@
 // A2A Events - Main Export
-export const A2A_EVENTS_VERSION = "1.0.0";
+export const A2A_EVENTS_VERSION = '1.0.0';
 
 // Re-export key types for convenience
 export type {
@@ -26,9 +26,9 @@ export type {
 	// Routing
 	RoutingRule,
 	WorkflowEvent,
-} from "./github";
+} from './github';
 // GitHub Events
-export * from "./github";
+export * from './github';
 
 // Re-export key functions
 export {
@@ -52,4 +52,4 @@ export {
 	validateA2AEventEnvelope,
 	validateGitHubEvent,
 	validateRoutingConfiguration,
-} from "./github";
+} from './github';

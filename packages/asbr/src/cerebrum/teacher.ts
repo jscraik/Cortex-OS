@@ -4,8 +4,8 @@
  */
 
 export interface TeachingOptions {
-	format?: "summary" | "detailed" | "tutorial";
-	audience?: "beginner" | "intermediate" | "expert";
+	format?: 'summary' | 'detailed' | 'tutorial';
+	audience?: 'beginner' | 'intermediate' | 'expert';
 	includeExamples?: boolean;
 }
 
@@ -32,19 +32,19 @@ export class Teacher {
 		// In a real implementation, this would use an LLM to generate teaching materials
 		// For now, we'll create a basic structured output
 
-		const format = options?.format || "summary";
-		const audience = options?.audience || "intermediate";
+		const format = options?.format || 'summary';
+		const audience = options?.audience || 'intermediate';
 
-		let teachingContent = "";
+		let teachingContent = '';
 
 		switch (format) {
-			case "summary":
+			case 'summary':
 				teachingContent = this.generateSummary(content);
 				break;
-			case "detailed":
+			case 'detailed':
 				teachingContent = this.generateDetailedExplanation(content);
 				break;
-			case "tutorial":
+			case 'tutorial':
 				teachingContent = this.generateTutorial(content);
 				break;
 			default:
@@ -53,7 +53,7 @@ export class Teacher {
 
 		return {
 			id: this.generateId(),
-			title: `Learning session on: ${content.substring(0, 30)}${content.length > 30 ? "..." : ""}`,
+			title: `Learning session on: ${content.substring(0, 30)}${content.length > 30 ? '...' : ''}`,
 			content: teachingContent,
 			format,
 			createdAt: new Date().toISOString(),
@@ -69,15 +69,15 @@ export class Teacher {
 	): Promise<TeachingSession> {
 		const combinedContent = sessions
 			.map((session) => `## ${session.title}\n\n${session.content}`)
-			.join("\n\n");
+			.join('\n\n');
 
 		return {
 			id: this.generateId(),
-			title: "Generated Curriculum",
+			title: 'Generated Curriculum',
 			content: combinedContent,
-			format: "detailed",
+			format: 'detailed',
 			createdAt: new Date().toISOString(),
-			tags: ["curriculum", "learning-path"],
+			tags: ['curriculum', 'learning-path'],
 		};
 	}
 

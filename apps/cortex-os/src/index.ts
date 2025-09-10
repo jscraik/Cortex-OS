@@ -1,8 +1,8 @@
-import { startRuntime } from "./runtime";
+import { startRuntime } from './runtime';
 
 startRuntime()
-	.then(() => console.log("Cortex-OS runtime started"))
+	.then(() => console.log('Cortex-OS runtime started'))
 	.catch((e) => {
-		console.error("Runtime failed", e);
+		console.error('Runtime failed', e);
 		process.exit(1);
 	});

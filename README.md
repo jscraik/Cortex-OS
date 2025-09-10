@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable MD013 -->
 
-![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-%3E%3D20-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-20.x%20or%2022.x-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
 
 <!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
 
@@ -67,6 +67,14 @@ pnpm build
 pnpm test:coverage
 pnpm security:scan
 pnpm structure:validate
+
+# Husky-only hooks
+# Manually run a quick pre-commit equivalent if needed:
+pnpm biome:staged  # format + lint staged files
+pnpm test:safe     # safe, minimal tests
+
+# Emergency: bypass hooks (use sparingly)
+HUSKY=0 git commit -m "chore: temp bypass"
 ```
 
 ---
@@ -318,7 +326,9 @@ Promote to hard failure by removing `|| true` once baseline is clean.
 ```bash
 pnpm lint:all            # Aggregated lint suite
 pnpm structure:validate  # Governance integrity
-pre-commit run --all-files
+# Manual pre-commit equivalent (Husky hooks run automatically on commit)
+pnpm biome:staged  # format + lint staged files
+pnpm test:safe     # quick, low-risk tests
 ```
 
 ### Future Enhancements (Optional)

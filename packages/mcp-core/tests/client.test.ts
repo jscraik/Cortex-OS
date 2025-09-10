@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import http from 'node:http';
-import { AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
+import { describe, expect, it } from 'vitest';
 import { createEnhancedClient } from '../src/client.js';
 
 describe('createEnhancedClient', () => {

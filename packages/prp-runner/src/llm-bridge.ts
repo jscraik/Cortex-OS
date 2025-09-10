@@ -3,13 +3,13 @@
  * Functional LLM bridge utilities connecting orchestrator to MLX/Ollama services.
  */
 
-import { Ollama } from "ollama";
-import { z } from "zod";
+import { Ollama } from 'ollama';
+import { z } from 'zod';
 import {
 	AVAILABLE_MLX_MODELS,
 	createMLXAdapter,
 	type MLXAdapter,
-} from "./mlx-adapter.js";
+} from './mlx-adapter.js';
 
 interface OllamaAdapter {
 	generate(options: {
@@ -21,7 +21,7 @@ interface OllamaAdapter {
 }
 
 export interface LLMConfig {
-	provider: "mlx" | "ollama";
+	provider: 'mlx' | 'ollama';
 	endpoint?: string;
 	model?: string;
 	mlxModel?: keyof typeof AVAILABLE_MLX_MODELS | string;
@@ -41,7 +41,7 @@ export interface LLMState {
 }
 
 const llmConfigSchema = z.object({
-	provider: z.enum(["mlx", "ollama"]),
+	provider: z.enum(['mlx', 'ollama']),
 	endpoint: z.string().url().optional(),
 	model: z.string().optional(),
 	mlxModel: z.string().optional(),
@@ -50,13 +50,13 @@ const llmConfigSchema = z.object({
 
 function normalizeConfig(config: LLMConfig): LLMConfig {
 	const normalized = { ...config };
-	if (normalized.provider === "ollama") {
-		if (!normalized.endpoint) throw new Error("Ollama endpoint is required");
+	if (normalized.provider === 'ollama') {
+		if (!normalized.endpoint) throw new Error('Ollama endpoint is required');
 		delete normalized.mlxModel;
 		delete normalized.knifePath;
 	} else {
 		if (!normalized.mlxModel)
-			throw new Error("MLX model is required for MLX provider");
+			throw new Error('MLX model is required for MLX provider');
 		delete (normalized as any).endpoint;
 		delete (normalized as any).model;
 	}
@@ -68,7 +68,7 @@ function createOllamaAdapter(cfg: LLMConfig): OllamaAdapter {
 	return {
 		async generate({ prompt, temperature, maxTokens, model }) {
 			const res = await client.generate({
-				model: model || cfg.model || "llama3",
+				model: model || cfg.model || 'llama3',
 				prompt,
 				stream: false,
 				options: {
@@ -76,7 +76,7 @@ function createOllamaAdapter(cfg: LLMConfig): OllamaAdapter {
 					num_predict: maxTokens ?? 512,
 				},
 			});
-			return { text: res.response || "" };
+			return { text: res.response || '' };
 		},
 	};
 }
@@ -85,7 +85,7 @@ export function configureLLM(config: LLMConfig): LLMState {
 	const normalized = normalizeConfig(config);
 	const cfg = llmConfigSchema.parse(normalized);
 	const state: LLMState = { config: cfg };
-	if (cfg.provider === "ollama") {
+	if (cfg.provider === 'ollama') {
 		state.ollamaAdapter = createOllamaAdapter(cfg);
 	} else {
 		state.mlxAdapter = createMLXAdapter(cfg.mlxModel!, {
@@ -106,8 +106,8 @@ export function getModel(state: LLMState): string {
 }
 
 function getDefaultModel(state: LLMState): string {
-	return state.config.provider === "ollama"
-		? "llama3"
+	return state.config.provider === 'ollama'
+		? 'llama3'
 		: state.config.mlxModel || AVAILABLE_MLX_MODELS.QWEN_SMALL;
 }
 
@@ -116,8 +116,8 @@ export function getMLXAdapter(state: LLMState): MLXAdapter | undefined {
 }
 
 export async function listMLXModels(state: LLMState) {
-	if (state.config.provider !== "mlx" || !state.mlxAdapter) {
-		throw new Error("MLX adapter not available");
+	if (state.config.provider !== 'mlx' || !state.mlxAdapter) {
+		throw new Error('MLX adapter not available');
 	}
 	return state.mlxAdapter.listModels();
 }
@@ -125,13 +125,13 @@ export async function listMLXModels(state: LLMState) {
 export async function checkProviderHealth(
 	state: LLMState,
 ): Promise<{ healthy: boolean; message: string }> {
-	if (state.config.provider === "mlx" && state.mlxAdapter) {
+	if (state.config.provider === 'mlx' && state.mlxAdapter) {
 		return state.mlxAdapter.checkHealth();
 	}
-	if (state.config.provider === "ollama" && state.ollamaAdapter) {
+	if (state.config.provider === 'ollama' && state.ollamaAdapter) {
 		try {
-			await state.ollamaAdapter.generate({ prompt: "", maxTokens: 1 });
-			return { healthy: true, message: "Ollama healthy" };
+			await state.ollamaAdapter.generate({ prompt: '', maxTokens: 1 });
+			return { healthy: true, message: 'Ollama healthy' };
 		} catch (error) {
 			return {
 				healthy: false,
@@ -139,7 +139,7 @@ export async function checkProviderHealth(
 			};
 		}
 	}
-	return { healthy: false, message: "Unknown provider" };
+	return { healthy: false, message: 'Unknown provider' };
 }
 
 export async function generate(
@@ -147,8 +147,8 @@ export async function generate(
 	prompt: string,
 	options: LLMGenerateOptions = {},
 ): Promise<string> {
-	if (state.config.provider === "ollama") {
-		if (!state.ollamaAdapter) throw new Error("Ollama adapter not initialized");
+	if (state.config.provider === 'ollama') {
+		if (!state.ollamaAdapter) throw new Error('Ollama adapter not initialized');
 		const result = await state.ollamaAdapter.generate({
 			prompt,
 			temperature: options.temperature,
@@ -157,7 +157,7 @@ export async function generate(
 		});
 		return result.text;
 	}
-	if (state.config.provider === "mlx") {
+	if (state.config.provider === 'mlx') {
 		return generateWithMLX(state, prompt, options);
 	}
 	throw new Error(
@@ -170,7 +170,7 @@ async function generateWithMLX(
 	prompt: string,
 	options: LLMGenerateOptions,
 ): Promise<string> {
-	if (!state.mlxAdapter) throw new Error("MLX adapter not initialized");
+	if (!state.mlxAdapter) throw new Error('MLX adapter not initialized');
 	const health = await state.mlxAdapter.checkHealth();
 	if (!health.healthy) {
 		throw new Error(`MLX model not healthy: ${health.message}`);
@@ -185,7 +185,7 @@ async function generateWithMLX(
 export async function shutdown(state: LLMState): Promise<void> {
 	if (
 		state.mlxAdapter &&
-		typeof (state.mlxAdapter as any).shutdown === "function"
+		typeof (state.mlxAdapter as any).shutdown === 'function'
 	) {
 		await (state.mlxAdapter as any).shutdown();
 	}

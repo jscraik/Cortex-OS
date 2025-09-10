@@ -4,7 +4,12 @@
  * @author Cortex-OS Team
  */
 
-import type { SimBatchResult, SimReport, SimResult, SimScores } from "./types.js";
+import type {
+	SimBatchResult,
+	SimReport,
+	SimResult,
+	SimScores,
+} from './types.js';
 
 /**
  * Generates reports and summaries from simulation results
@@ -101,8 +106,8 @@ export class SimReporter {
 		// Count critical failures (P0)
 		const criticalFailures = allScenarios.filter(
 			(s) =>
-				s.failures.includes("missing_evidence") ||
-				s.failures.includes("sop_violation"),
+				s.failures.includes('missing_evidence') ||
+				s.failures.includes('sop_violation'),
 		).length;
 
 		// Calculate trends (simplified - compare latest vs previous batch)
@@ -148,17 +153,17 @@ export class SimReporter {
 		const latestBatch = batchResults[batchResults.length - 1];
 
 		const lines = [
-			"=== SimLab Report Summary ===",
+			'=== SimLab Report Summary ===',
 			`Overall Pass Rate: ${(overall.passRate * 100).toFixed(1)}%`,
 			`Critical Failures: ${overall.criticalFailures}`,
-			"",
-			"=== Latest Batch ===",
+			'',
+			'=== Latest Batch ===',
 			`Scenarios: ${latestBatch?.summary.totalScenarios || 0}`,
 			`Passed: ${latestBatch?.summary.passed || 0}`,
 			`Failed: ${latestBatch?.summary.failed || 0}`,
 			`Pass Rate: ${((latestBatch?.summary.passRate || 0) * 100).toFixed(1)}%`,
-			"",
-			"=== Average Scores ===",
+			'',
+			'=== Average Scores ===',
 			`Goal: ${((latestBatch?.summary.avgScores.goal || 0) * 100).toFixed(1)}%`,
 			`SOP: ${((latestBatch?.summary.avgScores.sop || 0) * 100).toFixed(1)}%`,
 			`Brand: ${((latestBatch?.summary.avgScores.brand || 0) * 100).toFixed(1)}%`,
@@ -166,16 +171,16 @@ export class SimReporter {
 		];
 
 		if (Object.keys(overall.trends).length > 0) {
-			lines.push("", "=== Trends ===");
+			lines.push('', '=== Trends ===');
 			Object.entries(overall.trends).forEach(([key, value]) => {
-				const direction = value > 0 ? "↑" : value < 0 ? "↓" : "→";
+				const direction = value > 0 ? '↑' : value < 0 ? '↓' : '→';
 				lines.push(
 					`${key}: ${direction} ${(Math.abs(value) * 100).toFixed(1)}%`,
 				);
 			});
 		}
 
-		return lines.join("\n");
+		return lines.join('\n');
 	}
 
 	/**

@@ -1,17 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
-import type { MLXAdapter } from "../src/adapters/mlx-adapter";
-import type { OllamaAdapter } from "../src/adapters/ollama-adapter";
-import { ModelRouter } from "../src/model-router";
+import { describe, expect, it, vi } from 'vitest';
+import type { MLXAdapter } from '../src/adapters/mlx-adapter';
+import type { OllamaAdapter } from '../src/adapters/ollama-adapter';
+import { ModelRouter } from '../src/model-router';
 
-describe("ModelRouter initialization", () => {
-	it("registers models based on adapter availability", async () => {
+describe('ModelRouter initialization', () => {
+	it('registers models based on adapter availability', async () => {
 		const mlxAdapter = {
 			isAvailable: vi.fn().mockResolvedValue(true),
 			generateEmbeddings: vi.fn(),
 		} as unknown as MLXAdapter;
 		const ollamaAdapter = {
 			isAvailable: vi.fn().mockResolvedValue(true),
-			listModels: vi.fn().mockResolvedValue(["llama2"]),
+			listModels: vi.fn().mockResolvedValue(['llama2']),
 			generateChat: vi.fn(),
 			generateEmbeddings: vi.fn(),
 			rerank: vi.fn(),
@@ -22,9 +22,9 @@ describe("ModelRouter initialization", () => {
 
 		expect(mlxAdapter.isAvailable).toHaveBeenCalled();
 		expect(ollamaAdapter.isAvailable).toHaveBeenCalled();
-		expect(router.hasAvailableModels("embedding")).toBe(true);
-		expect(router.getAvailableModels("chat")).toEqual([
-			expect.objectContaining({ name: "llama2", provider: "ollama" }),
+		expect(router.hasAvailableModels('embedding')).toBe(true);
+		expect(router.getAvailableModels('chat')).toEqual([
+			expect.objectContaining({ name: 'llama2', provider: 'ollama' }),
 		]);
 	});
 });

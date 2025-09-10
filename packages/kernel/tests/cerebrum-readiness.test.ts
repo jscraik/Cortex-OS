@@ -5,8 +5,8 @@
  * @status active
  */
 
-import { describe, expect, it } from "vitest";
-import { preCerebrumValidation } from "../src/lib/gates/evaluation.js";
+import { describe, expect, it } from 'vitest';
+import { preCerebrumValidation } from '../src/lib/gates/evaluation.js';
 
 // Define the minimal mock state type for the test
 interface MockState {
@@ -20,13 +20,13 @@ interface MockState {
 
 // Verify readiness logic when majors exist without blockers
 
-describe("Cerebrum readiness validation", () => {
-	it("should be false when a phase has majors but no blockers", async () => {
+describe('Cerebrum readiness validation', () => {
+	it('should be false when a phase has majors but no blockers', async () => {
 		const mockState: MockState = {
 			evidence: Array.from({ length: 5 }, (_, idx) => ({ id: `e${idx}` })),
 			validationResults: {
 				strategy: { passed: true, blockers: [], majors: [] },
-				build: { passed: false, blockers: [], majors: ["missing docs"] },
+				build: { passed: false, blockers: [], majors: ['missing docs'] },
 				evaluation: { passed: true, blockers: [], majors: [] },
 			},
 		};

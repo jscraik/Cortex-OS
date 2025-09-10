@@ -3,27 +3,27 @@
  * Automatically fixes structural violations when safe to do so
  */
 
-import * as fs from "fs-extra";
-import * as path from "path";
-import type { StructureViolation } from "./structure-validator.js";
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import type { StructureViolation } from './structure-validator.js';
 
 export interface AutoFixResult {
-        success: boolean;
-        error?: string;
-        oldPath: string;
-        newPath: string;
-        action: "move" | "rename" | "create_directory" | "create_file";
+	success: boolean;
+	error?: string;
+	oldPath: string;
+	newPath: string;
+	action: 'move' | 'rename' | 'create_directory' | 'create_file';
 }
 
 export interface AutoFixPlan {
 	violations: StructureViolation[];
 	fixes: AutoFixAction[];
-	riskLevel: "low" | "medium" | "high";
+	riskLevel: 'low' | 'medium' | 'high';
 	requiresApproval: boolean;
 }
 
 export interface AutoFixAction {
-	type: "move_file" | "rename_file" | "create_directory" | "create_file";
+	type: 'move_file' | 'rename_file' | 'create_directory' | 'create_file';
 	source: string;
 	target: string;
 	description: string;
@@ -54,7 +54,7 @@ export class AutoFixEngine {
 		}
 
 		const riskLevel = this.assessRiskLevel(fixes);
-		const requiresApproval = riskLevel === "high" || fixes.length > 10;
+		const requiresApproval = riskLevel === 'high' || fixes.length > 10;
 
 		return {
 			violations: fixableViolations,
@@ -77,7 +77,7 @@ export class AutoFixEngine {
 			} catch (error) {
 				results.push({
 					success: false,
-					error: error instanceof Error ? error.message : "Unknown error",
+					error: error instanceof Error ? error.message : 'Unknown error',
 					oldPath: fix.source,
 					newPath: fix.target,
 					action: this.mapActionToResult(fix.type),
@@ -97,9 +97,9 @@ export class AutoFixEngine {
 		const targetFile = path.join(this.baseDir, violation.suggestedPath);
 
 		// Determine the type of fix needed
-		if (violation.type === "misplaced_file") {
+		if (violation.type === 'misplaced_file') {
 			return {
-				type: "move_file",
+				type: 'move_file',
 				source: sourceFile,
 				target: targetFile,
 				description: `Move ${violation.file} to ${violation.suggestedPath}`,
@@ -107,9 +107,9 @@ export class AutoFixEngine {
 			};
 		}
 
-		if (violation.type === "naming_violation") {
+		if (violation.type === 'naming_violation') {
 			return {
-				type: "rename_file",
+				type: 'rename_file',
 				source: sourceFile,
 				target: targetFile,
 				description: `Rename ${violation.file} to follow naming convention`,
@@ -131,17 +131,17 @@ export class AutoFixEngine {
 		}
 
 		switch (fix.type) {
-			case "move_file":
+			case 'move_file':
 				return await this.moveFile(fix.source, fix.target);
 
-			case "rename_file":
+			case 'rename_file':
 				return await this.renameFile(fix.source, fix.target);
 
-			case "create_directory":
+			case 'create_directory':
 				return await this.createDirectory(fix.target);
 
-			case "create_file":
-				return await this.createFile(fix.target, "");
+			case 'create_file':
+				return await this.createFile(fix.target, '');
 
 			default:
 				throw new Error(`Unsupported fix type: ${fix.type}`);
@@ -163,15 +163,15 @@ export class AutoFixEngine {
 				success: true,
 				oldPath: source,
 				newPath: target,
-				action: "move",
+				action: 'move',
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
+				error: error instanceof Error ? error.message : 'Unknown error',
 				oldPath: source,
 				newPath: target,
-				action: "move",
+				action: 'move',
 			};
 		}
 	}
@@ -187,15 +187,15 @@ export class AutoFixEngine {
 				success: true,
 				oldPath: source,
 				newPath: target,
-				action: "rename",
+				action: 'rename',
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
+				error: error instanceof Error ? error.message : 'Unknown error',
 				oldPath: source,
 				newPath: target,
-				action: "rename",
+				action: 'rename',
 			};
 		}
 	}
@@ -206,17 +206,17 @@ export class AutoFixEngine {
 
 			return {
 				success: true,
-				oldPath: "",
+				oldPath: '',
 				newPath: dirPath,
-				action: "create_directory",
+				action: 'create_directory',
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : "Unknown error",
-				oldPath: "",
+				error: error instanceof Error ? error.message : 'Unknown error',
+				oldPath: '',
 				newPath: dirPath,
-				action: "create_directory",
+				action: 'create_directory',
 			};
 		}
 	}
@@ -231,19 +231,19 @@ export class AutoFixEngine {
 
 			return {
 				success: true,
-				oldPath: "",
+				oldPath: '',
 				newPath: filePath,
-				action: "create_file",
+				action: 'create_file',
 			};
-                } catch (error) {
-                        return {
-                                success: false,
-                                error: error instanceof Error ? error.message : "Unknown error",
-                                oldPath: "",
-                                newPath: filePath,
-                                action: "create_file",
-                        };
-                }
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Unknown error',
+				oldPath: '',
+				newPath: filePath,
+				action: 'create_file',
+			};
+		}
 	}
 
 	private isMoveSafe(source: string, target: string): boolean {
@@ -253,11 +253,11 @@ export class AutoFixEngine {
 
 		// Check if it's a critical file
 		const criticalFiles = [
-			"package.json",
-			"tsconfig.json",
-			"README.md",
-			".gitignore",
-			"LICENSE",
+			'package.json',
+			'tsconfig.json',
+			'README.md',
+			'.gitignore',
+			'LICENSE',
 		];
 
 		const fileName = path.basename(source);
@@ -268,35 +268,35 @@ export class AutoFixEngine {
 		return this.isMoveSafe(source, target);
 	}
 
-	private assessRiskLevel(fixes: AutoFixAction[]): "low" | "medium" | "high" {
+	private assessRiskLevel(fixes: AutoFixAction[]): 'low' | 'medium' | 'high' {
 		const unsafeFixes = fixes.filter((f) => !f.safe).length;
 		const totalFixes = fixes.length;
 
 		if (unsafeFixes > 0 || totalFixes > 20) {
-			return "high";
+			return 'high';
 		}
 
 		if (totalFixes > 5) {
-			return "medium";
+			return 'medium';
 		}
 
-		return "low";
+		return 'low';
 	}
 
-        private mapActionToResult(
-                actionType: string,
-        ): "move" | "rename" | "create_directory" | "create_file" {
-                switch (actionType) {
-                        case "move_file":
-                                return "move";
-                        case "rename_file":
-                                return "rename";
-                        case "create_directory":
-                                return "create_directory";
-                        case "create_file":
-                                return "create_file";
-                        default:
-                                return "move";
-                }
-        }
+	private mapActionToResult(
+		actionType: string,
+	): 'move' | 'rename' | 'create_directory' | 'create_file' {
+		switch (actionType) {
+			case 'move_file':
+				return 'move';
+			case 'rename_file':
+				return 'rename';
+			case 'create_directory':
+				return 'create_directory';
+			case 'create_file':
+				return 'create_file';
+			default:
+				return 'move';
+		}
+	}
 }

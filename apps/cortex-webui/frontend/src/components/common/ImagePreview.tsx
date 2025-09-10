@@ -57,7 +57,12 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({
 	};
 
 	const safeFetch = (url: string) => {
-		// semgrep-disable-next-line: semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+		// Validate URL against allowlist to prevent SSRF
+		if (!isAllowedRemoteHostname(url)) {
+			throw new Error(
+				`Requests to ${url} are not allowed for security reasons`,
+			);
+		}
 		return fetch(url);
 	};
 

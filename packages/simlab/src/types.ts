@@ -4,7 +4,7 @@
  */
 
 export interface SimTurn {
-	role: "user" | "agent" | "tool";
+	role: 'user' | 'agent' | 'tool';
 	content: string;
 	timestamp?: string;
 	metadata?: Record<string, unknown>;
@@ -64,11 +64,11 @@ export interface SimReport {
 export interface SimPersona {
 	locale: string;
 	tone: string;
-	tech_fluency: "low" | "med" | "high";
+	tech_fluency: 'low' | 'med' | 'high';
 	attributes?: {
 		role?: string;
 		experience_level?: string;
-		urgency?: "low" | "medium" | "high";
+		urgency?: 'low' | 'medium' | 'high';
 		preferred_communication?: string;
 	};
 }
@@ -84,7 +84,7 @@ export interface SimScenario {
 	kb_refs: string[];
 	success_criteria: string[];
 	variants?: number;
-	difficulty?: "basic" | "intermediate" | "advanced";
+	difficulty?: 'basic' | 'intermediate' | 'advanced';
 	category?: string;
 	tags?: string[];
 	timeout_seconds?: number;

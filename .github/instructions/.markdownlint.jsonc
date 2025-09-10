@@ -1,0 +1,18 @@
+{
+    "MD013": false,
+    "MD022": false,
+    "MD031": false,
+    "MD032": false,
+    "MD009": false,
+    "MD033": {
+        "allowed_elements": [
+            "br",
+            "img",
+            "details",
+            "summary"
+        ]
+    },
+    "MD041": {
+        "allow_preamble": true
+    }
+}

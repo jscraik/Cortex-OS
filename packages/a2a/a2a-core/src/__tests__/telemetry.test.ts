@@ -1,15 +1,15 @@
-import { logWithSpan, withSpan } from "@cortex-os/telemetry";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { DeadLetterStore } from "../dlq";
-import { DeadLetterQueue } from "../dlq";
-import { SagaOrchestrator } from "../saga";
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DeadLetterStore } from '../dlq';
+import { DeadLetterQueue } from '../dlq';
+import { SagaOrchestrator } from '../saga';
 
 beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-describe("DeadLetterQueue telemetry", () => {
-	it("creates span and logs when handling failed message", async () => {
+describe('DeadLetterQueue telemetry', () => {
+	it('creates span and logs when handling failed message', async () => {
 		const store: DeadLetterStore = {
 			enqueue: vi.fn(),
 			dequeueBatch: vi.fn(),
@@ -25,32 +25,32 @@ describe("DeadLetterQueue telemetry", () => {
 
 		const dlq = new DeadLetterQueue(store);
 		const result = await dlq.handleFailed(
-			{ id: "1", type: "test", payload: {}, headers: {} } as unknown,
-			new Error("network timeout"),
+			{ id: '1', type: 'test', payload: {}, headers: {} } as unknown,
+			new Error('network timeout'),
 		);
 
-		expect(result).toBe("retry");
+		expect(result).toBe('retry');
 		expect(withSpan).toHaveBeenCalledWith(
-			"dlq.handleFailed",
+			'dlq.handleFailed',
 			expect.any(Function),
 		);
 		expect(logWithSpan).toHaveBeenCalledWith(
-			"info",
-			"Retrying message",
-			expect.objectContaining({ envelopeId: "1", retryCount: 1 }),
+			'info',
+			'Retrying message',
+			expect.objectContaining({ envelopeId: '1', retryCount: 1 }),
 			expect.any(Object),
 		);
 	});
 });
 
-describe("SagaOrchestrator telemetry", () => {
-	it("records error span and logs when step fails", async () => {
+describe('SagaOrchestrator telemetry', () => {
+	it('records error span and logs when step fails', async () => {
 		const orchestrator = new SagaOrchestrator<{ count: number }>();
 		orchestrator.addStep({
-			id: "s1",
-			name: "step1",
+			id: 's1',
+			name: 'step1',
 			execute: async () => {
-				throw new Error("boom");
+				throw new Error('boom');
 			},
 		});
 
@@ -58,13 +58,13 @@ describe("SagaOrchestrator telemetry", () => {
 
 		expect(result.success).toBe(false);
 		expect(withSpan).toHaveBeenCalledWith(
-			"saga.step.step1",
+			'saga.step.step1',
 			expect.any(Function),
 		);
 		expect(logWithSpan).toHaveBeenCalledWith(
-			"error",
-			"Saga step failed",
-			expect.objectContaining({ step: "step1" }),
+			'error',
+			'Saga step failed',
+			expect.objectContaining({ step: 'step1' }),
 			expect.any(Object),
 		);
 	});

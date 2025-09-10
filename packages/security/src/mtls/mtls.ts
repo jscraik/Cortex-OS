@@ -3,10 +3,10 @@
  * @description Mutual TLS implementation for secure service-to-service communication
  */
 
-import * as tls from "node:tls";
-import { logWithSpan, withSpan } from "@cortex-os/telemetry";
-import { type MTLSConfig, MTLSConfigSchema, MTLSError } from "../types.ts";
-import { createClientSocket, loadCertificates } from "./helpers.ts";
+import * as tls from 'node:tls';
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
+import { type MTLSConfig, MTLSConfigSchema, MTLSError } from '../types.ts';
+import { createClientSocket, loadCertificates } from './helpers.ts';
 
 /**
  * mTLS Client for secure service-to-service communication
@@ -20,7 +20,7 @@ export class MTLSClient {
 			this.config = MTLSConfigSchema.parse(config);
 		} catch (error) {
 			throw new MTLSError(
-				`Invalid mTLS configuration: ${error instanceof Error ? error.message : "Unknown error"}`,
+				`Invalid mTLS configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
 				undefined,
 				{ originalError: error },
 			);
@@ -31,9 +31,9 @@ export class MTLSClient {
 	 * Establish mTLS connection to a server
 	 */
 	async connect(host: string, port: number): Promise<void> {
-		return withSpan("mtls.connect", async () => {
+		return withSpan('mtls.connect', async () => {
 			try {
-				logWithSpan("info", "Establishing mTLS connection", {
+				logWithSpan('info', 'Establishing mTLS connection', {
 					host,
 					port,
 					serverName: this.config.serverName,
@@ -47,15 +47,15 @@ export class MTLSClient {
 					certs,
 				);
 			} catch (error) {
-				logWithSpan("error", "Failed to establish mTLS connection", {
-					error: error instanceof Error ? error.message : "Unknown error",
+				logWithSpan('error', 'Failed to establish mTLS connection', {
+					error: error instanceof Error ? error.message : 'Unknown error',
 					host,
 					port,
 				});
 
 				throw new MTLSError(
 					`Failed to establish mTLS connection: ${
-						error instanceof Error ? error.message : "Unknown error"
+						error instanceof Error ? error.message : 'Unknown error'
 					}`,
 					undefined,
 					{ host, port, originalError: error },
@@ -70,7 +70,7 @@ export class MTLSClient {
 	async send(data: Buffer | string): Promise<void> {
 		return new Promise((resolve, reject) => {
 			if (!this.tlsSocket) {
-				reject(new MTLSError("No active mTLS connection"));
+				reject(new MTLSError('No active mTLS connection'));
 				return;
 			}
 
@@ -91,41 +91,44 @@ export class MTLSClient {
 	/**
 	 * Receive data from the mTLS connection
 	 */
-        async receive(): Promise<Buffer> {
-                return new Promise((resolve, reject) => {
-                        if (!this.tlsSocket) {
-                                reject(new MTLSError("No active mTLS connection"));
-                                return;
-                        }
+	async receive(): Promise<Buffer> {
+		return new Promise((resolve, reject) => {
+			if (!this.tlsSocket) {
+				reject(new MTLSError('No active mTLS connection'));
+				return;
+			}
 
-                        const chunks: Buffer[] = [];
+			const chunks: Buffer[] = [];
 
-                        const onData = (chunk: Buffer) => {
-                                chunks.push(chunk);
-                        };
+			const onData = (chunk: Buffer) => {
+				chunks.push(chunk);
+			};
 
-                        const onEnd = () => {
-                                cleanup();
-                                resolve(Buffer.concat(chunks));
-                        };
+			const onEnd = () => {
+				cleanup();
+				resolve(Buffer.concat(chunks));
+			};
 
-                        const onError = (error: Error) => {
-                                cleanup();
-                                reject(new MTLSError(`Failed to receive data: ${error.message}`, undefined, { originalError: error }));
-                        };
+			const onError = (error: Error) => {
+				cleanup();
+				reject(
+					new MTLSError(`Failed to receive data: ${error.message}`, undefined, {
+						originalError: error,
+					}),
+				);
+			};
 
-                        const cleanup = () => {
-                                this.tlsSocket?.removeListener("data", onData);
-                                this.tlsSocket?.removeListener("end", onEnd);
-                                this.tlsSocket?.removeListener("error", onError);
-                        };
+			const cleanup = () => {
+				this.tlsSocket?.removeListener('data', onData);
+				this.tlsSocket?.removeListener('end', onEnd);
+				this.tlsSocket?.removeListener('error', onError);
+			};
 
-                        this.tlsSocket.on("data", onData);
-                        this.tlsSocket.once("end", onEnd);
-                        this.tlsSocket.once("error", onError);
-                });
-        }
-
+			this.tlsSocket.on('data', onData);
+			this.tlsSocket.once('end', onEnd);
+			this.tlsSocket.once('error', onError);
+		});
+	}
 
 	/**
 	 * Close the mTLS connection
@@ -139,7 +142,7 @@ export class MTLSClient {
 
 			this.tlsSocket.end(() => {
 				this.tlsSocket = undefined;
-				logWithSpan("info", "mTLS connection closed");
+				logWithSpan('info', 'mTLS connection closed');
 				resolve(void 0);
 			});
 		});
@@ -184,7 +187,7 @@ export class MTLSServer {
 			this.connectionHandler = connectionHandler;
 		} catch (error) {
 			throw new MTLSError(
-				`Invalid mTLS configuration: ${error instanceof Error ? error.message : "Unknown error"}`,
+				`Invalid mTLS configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
 				undefined,
 				{ originalError: error },
 			);
@@ -194,10 +197,10 @@ export class MTLSServer {
 	/**
 	 * Start the mTLS server
 	 */
-	async listen(port: number, host = "0.0.0.0"): Promise<void> {
-		return withSpan("mtls.listen", async () => {
+	async listen(port: number, host = '0.0.0.0'): Promise<void> {
+		return withSpan('mtls.listen', async () => {
 			try {
-				logWithSpan("info", "Starting mTLS server", {
+				logWithSpan('info', 'Starting mTLS server', {
 					host,
 					port,
 				});
@@ -215,8 +218,8 @@ export class MTLSServer {
 						maxVersion: this.config.maxVersion,
 					});
 
-					this.server.on("secureConnection", (socket) => {
-						logWithSpan("info", "Secure connection established", {
+					this.server.on('secureConnection', (socket) => {
+						logWithSpan('info', 'Secure connection established', {
 							remoteAddress: socket.remoteAddress,
 							remotePort: socket.remotePort,
 							authorized: socket.authorized,
@@ -226,10 +229,10 @@ export class MTLSServer {
 						this.handleSecureConnection(socket);
 					});
 
-					this.server.on("error", (error) => {
+					this.server.on('error', (error) => {
 						const errorMessage =
-							error instanceof Error ? error.message : "Unknown error";
-						logWithSpan("error", "mTLS server error", {
+							error instanceof Error ? error.message : 'Unknown error';
+						logWithSpan('error', 'mTLS server error', {
 							error: errorMessage,
 							host,
 							port,
@@ -244,7 +247,7 @@ export class MTLSServer {
 					});
 
 					this.server.listen(port, host, () => {
-						logWithSpan("info", "mTLS server listening", {
+						logWithSpan('info', 'mTLS server listening', {
 							host,
 							port,
 						});
@@ -252,15 +255,15 @@ export class MTLSServer {
 					});
 				});
 			} catch (error) {
-				logWithSpan("error", "Failed to start mTLS server", {
-					error: error instanceof Error ? error.message : "Unknown error",
+				logWithSpan('error', 'Failed to start mTLS server', {
+					error: error instanceof Error ? error.message : 'Unknown error',
 					host,
 					port,
 				});
 
 				throw new MTLSError(
 					`Failed to start mTLS server: ${
-						error instanceof Error ? error.message : "Unknown error"
+						error instanceof Error ? error.message : 'Unknown error'
 					}`,
 					undefined,
 					{ host, port, originalError: error },
@@ -275,17 +278,17 @@ export class MTLSServer {
 	private handleSecureConnection(socket: tls.TLSSocket): void {
 		this.connectionHandler?.(socket);
 
-		socket.on("error", (error) => {
+		socket.on('error', (error) => {
 			const errorMessage =
-				error instanceof Error ? error.message : "Unknown error";
-			logWithSpan("error", "Secure connection error", {
+				error instanceof Error ? error.message : 'Unknown error';
+			logWithSpan('error', 'Secure connection error', {
 				error: errorMessage,
 				remoteAddress: socket.remoteAddress,
 			});
 		});
 
-		socket.on("close", () => {
-			logWithSpan("info", "Secure connection closed", {
+		socket.on('close', () => {
+			logWithSpan('info', 'Secure connection closed', {
 				remoteAddress: socket.remoteAddress,
 			});
 		});
@@ -303,7 +306,7 @@ export class MTLSServer {
 
 			this.server.close(() => {
 				this.server = undefined;
-				logWithSpan("info", "mTLS server closed");
+				logWithSpan('info', 'mTLS server closed');
 				resolve(void 0);
 			});
 		});

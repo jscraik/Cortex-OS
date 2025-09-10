@@ -3,19 +3,19 @@
  * Implements security policies and sandboxing for MCP tools
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
-import pidusage from "pidusage";
-import { loadMCPAllowlist, loadSecurityPolicies } from "../core/config.js";
+import { type ChildProcess, spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import pidusage from 'pidusage';
+import { loadMCPAllowlist, loadSecurityPolicies } from '../core/config.js';
 import type {
 	MCPAllowlistEntry,
 	SecurityPolicy,
 	SecurityRule,
-} from "../types/index.js";
-import { AuthorizationError, ValidationError } from "../types/index.js";
-import { getCachePath, getTempPath } from "../xdg/index.js";
+} from '../types/index.js';
+import { AuthorizationError, ValidationError } from '../types/index.js';
+import { getCachePath, getTempPath } from '../xdg/index.js';
 
 export interface SandboxContext {
 	toolName: string;
@@ -63,7 +63,7 @@ export class MCPSandbox {
 		}
 
 		// Check version match (exact or semver range)
-		if (entry.version !== version && entry.version !== "*") {
+		if (entry.version !== version && entry.version !== '*') {
 			return false;
 		}
 
@@ -129,12 +129,12 @@ export class MCPSandbox {
 	async killTool(processId: string): Promise<void> {
 		const process = this.runningProcesses.get(processId);
 		if (process) {
-			process.kill("SIGTERM");
+			process.kill('SIGTERM');
 
 			// Force kill after 5 seconds
 			setTimeout(() => {
 				if (!process.killed) {
-					process.kill("SIGKILL");
+					process.kill('SIGKILL');
 				}
 			}, 5000);
 
@@ -157,24 +157,24 @@ export class MCPSandbox {
 		context: SandboxContext,
 	): Promise<void> {
 		switch (rule.type) {
-			case "shell_deny":
+			case 'shell_deny':
 				// Deny shell execution
 				if (
 					context.args.some(
-						(arg) => typeof arg === "string" && arg.includes("shell"),
+						(arg) => typeof arg === 'string' && arg.includes('shell'),
 					)
 				) {
 					throw new AuthorizationError(
-						"Shell execution denied by security policy",
+						'Shell execution denied by security policy',
 					);
 				}
 				break;
 
-			case "egress_deny":
+			case 'egress_deny':
 				// Deny network egress (would be implemented with network policies)
 				break;
 
-			case "file_access":
+			case 'file_access':
 				// Restrict file access to allowed paths
 				if (rule.allowlist) {
 					const workingDir = context.workingDir;
@@ -187,7 +187,7 @@ export class MCPSandbox {
 				}
 				break;
 
-			case "api_rate_limit":
+			case 'api_rate_limit':
 				// Implement rate limiting (would require persistent storage)
 				break;
 		}
@@ -228,15 +228,15 @@ export class MCPSandbox {
 		context: SandboxContext,
 	): Promise<unknown> {
 		return new Promise((resolve, reject) => {
-			const cgexecPath = "/usr/bin/cgexec";
+			const cgexecPath = '/usr/bin/cgexec';
 			const useCgroup = existsSync(cgexecPath);
 			const baseCmd =
-				context.toolName === "node" ? process.execPath : context.toolName;
+				context.toolName === 'node' ? process.execPath : context.toolName;
 			const command = useCgroup ? cgexecPath : baseCmd;
 			const args = useCgroup
 				? [
-						"-g",
-						"cpu,memory:cortex-sandbox",
+						'-g',
+						'cpu,memory:cortex-sandbox',
 						baseCmd,
 						...(context.args as string[]),
 					]
@@ -247,37 +247,37 @@ export class MCPSandbox {
 				env: sandbox.environment,
 				uid: 65534,
 				gid: 65534,
-				stdio: ["ignore", "pipe", "pipe"],
+				stdio: ['ignore', 'pipe', 'pipe'],
 			});
 
 			if (!child.pid) {
-				reject(new Error("Failed to start process"));
+				reject(new Error('Failed to start process'));
 				return;
 			}
 
 			sandbox.processId = String(child.pid);
 			this.runningProcesses.set(sandbox.processId, child);
 
-			let stdout = "";
-			let stderr = "";
-			child.stdout?.on("data", (chunk) => {
+			let stdout = '';
+			let stderr = '';
+			child.stdout?.on('data', (chunk) => {
 				stdout += chunk.toString();
 			});
-			child.stderr?.on("data", (chunk) => {
+			child.stderr?.on('data', (chunk) => {
 				stderr += chunk.toString();
 			});
 
 			const timeout = setTimeout(() => {
-				child.kill("SIGTERM");
+				child.kill('SIGTERM');
 			}, context.timeout);
 
-			child.on("error", (err) => {
+			child.on('error', (err) => {
 				clearTimeout(timeout);
 				this.runningProcesses.delete(sandbox.processId);
 				reject(err);
 			});
 
-			child.on("close", (code) => {
+			child.on('close', (code) => {
 				clearTimeout(timeout);
 				this.runningProcesses.delete(sandbox.processId);
 				if (code === 0) {
@@ -309,7 +309,7 @@ export class MCPSandbox {
 		env: Record<string, string>,
 	): Record<string, string> {
 		// Only allow safe environment variables
-		const safeKeys = ["LANG", "LC_ALL", "TZ"];
+		const safeKeys = ['LANG', 'LC_ALL', 'TZ'];
 		const safeEnv: Record<string, string> = {};
 
 		for (const key of safeKeys) {
@@ -363,7 +363,7 @@ export class MCPToolRegistry {
 			toolName: tool.name,
 			version: tool.version,
 			args,
-			workingDir: getCachePath("tools", tool.name),
+			workingDir: getCachePath('tools', tool.name),
 			environment: {},
 			timeout: 30000, // 30 seconds
 		};
@@ -388,15 +388,15 @@ export class MCPToolRegistry {
 		// For now, simulate some tools
 		const simulatedTools: MCPToolInfo[] = [
 			{
-				name: "filesystem",
-				version: "1.0.0",
-				description: "File system operations",
+				name: 'filesystem',
+				version: '1.0.0',
+				description: 'File system operations',
 				schema: {},
 			},
 			{
-				name: "web-search",
-				version: "2.1.0",
-				description: "Web search capabilities",
+				name: 'web-search',
+				version: '2.1.0',
+				description: 'Web search capabilities',
 				schema: {},
 			},
 		];

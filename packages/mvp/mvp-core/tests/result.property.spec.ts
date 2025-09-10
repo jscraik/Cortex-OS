@@ -1,9 +1,9 @@
-import fc from "fast-check";
-import { describe, it } from "vitest";
-import { err, ok, wrap } from "../src/result.js";
+import fc from 'fast-check';
+import { describe, it } from 'vitest';
+import { err, ok, wrap } from '../src/result.js';
 
-describe("result property tests", () => {
-	it("ok returns value", () => {
+describe('result property tests', () => {
+	it('ok returns value', () => {
 		fc.assert(
 			fc.property(fc.anything(), (value) => {
 				return ok(value).value === value;
@@ -12,7 +12,7 @@ describe("result property tests", () => {
 		);
 	});
 
-	it("err returns error", () => {
+	it('err returns error', () => {
 		fc.assert(
 			fc.property(fc.string(), (msg) => {
 				const e = new Error(msg);
@@ -22,7 +22,7 @@ describe("result property tests", () => {
 		);
 	});
 
-	it("wrap resolves", async () => {
+	it('wrap resolves', async () => {
 		await fc.assert(
 			fc.asyncProperty(fc.anything(), async (value) => {
 				const r = await wrap(async () => value);
@@ -32,7 +32,7 @@ describe("result property tests", () => {
 		);
 	});
 
-	it("wrap captures errors", async () => {
+	it('wrap captures errors', async () => {
 		await fc.assert(
 			fc.asyncProperty(fc.string(), async (msg) => {
 				const r = await wrap(async () => {

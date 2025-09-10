@@ -1,29 +1,29 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock("axios", () => ({
+vi.mock('axios', () => ({
 	default: { post: vi.fn() },
 }));
 
-vi.mock("@cortex-os/a2a-contracts/envelope", () => ({
+vi.mock('@cortex-os/a2a-contracts/envelope', () => ({
 	createEnvelope: vi.fn((params: unknown) => params),
 }));
 
-describe("send", () => {
+describe('send', () => {
 	beforeEach(() => {
 		vi.resetModules();
 		vi.clearAllMocks();
 	});
 
-	it("sends envelope to outboxUrl and returns envelope", async () => {
-		const axios = (await import("axios")).default as any;
+	it('sends envelope to outboxUrl and returns envelope', async () => {
+		const axios = (await import('axios')).default as any;
 		axios.post.mockResolvedValue({});
 
-		const { send } = await import("./send.js");
+		const { send } = await import('./send.js');
 		const params = {
-			type: "event.test.v1",
-			source: "urn:test",
-			data: { foo: "bar" },
-			outboxUrl: "http://example.com",
+			type: 'event.test.v1',
+			source: 'urn:test',
+			data: { foo: 'bar' },
+			outboxUrl: 'http://example.com',
 		};
 
 		const envelope = await send(params);
@@ -37,19 +37,19 @@ describe("send", () => {
 		});
 	});
 
-	it("propagates errors from axios", async () => {
-		const axios = (await import("axios")).default as any;
-		axios.post.mockRejectedValue(new Error("network error"));
+	it('propagates errors from axios', async () => {
+		const axios = (await import('axios')).default as any;
+		axios.post.mockRejectedValue(new Error('network error'));
 
-		const { send } = await import("./send.js");
+		const { send } = await import('./send.js');
 
 		await expect(
 			send({
-				type: "event.test.v1",
-				source: "urn:test",
+				type: 'event.test.v1',
+				source: 'urn:test',
 				data: {},
-				outboxUrl: "http://example.com",
+				outboxUrl: 'http://example.com',
 			}),
-		).rejects.toThrow("network error");
+		).rejects.toThrow('network error');
 	});
 });

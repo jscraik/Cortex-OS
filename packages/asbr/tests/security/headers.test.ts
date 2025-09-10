@@ -1,9 +1,9 @@
-import { type ASBRServer, createASBRServer } from "@/api/server.js";
-import request from "supertest";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { getSharedServer } from "../fixtures/shared-server.js";
+import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { type ASBRServer, createASBRServer } from '@/api/server.js';
+import { getSharedServer } from '../fixtures/shared-server.js';
 
-describe("security headers", () => {
+describe('security headers', () => {
 	let server: ASBRServer;
 
 	beforeAll(async () => {
@@ -22,8 +22,8 @@ describe("security headers", () => {
 		}
 	});
 
-	it("omits HSTS on HTTP", async () => {
-		const res = await request(server.app).get("/health");
-		expect(res.headers["strict-transport-security"]).toBeUndefined();
+	it('omits HSTS on HTTP', async () => {
+		const res = await request(server.app).get('/health');
+		expect(res.headers['strict-transport-security']).toBeUndefined();
 	});
 });

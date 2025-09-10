@@ -1,7 +1,7 @@
 /**
  * @fileoverview ULID generation and validation utilities
  */
-import { type ULID } from "./types.js";
+import { type ULID } from './types.js';
 /**
  * Generate a new ULID for run identification
  */

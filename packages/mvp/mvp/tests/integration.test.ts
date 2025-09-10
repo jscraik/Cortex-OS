@@ -6,10 +6,10 @@
  * @status TDD-CRITICAL
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
-import { SimplePRPGraph } from "../src/graph-simple.js";
+import { beforeEach, describe, expect, it } from 'vitest';
+import { SimplePRPGraph } from '../src/graph-simple.js';
 
-describe("Cortex Kernel Integration", () => {
+describe('Cortex Kernel Integration', () => {
 	let graph: SimplePRPGraph;
 	let mockOrchestrator: { getNeuronCount: () => number };
 
@@ -20,22 +20,22 @@ describe("Cortex Kernel Integration", () => {
 		graph = new SimplePRPGraph(mockOrchestrator);
 	});
 
-	describe("Basic Integration", () => {
-		it("should successfully run a complete PRP workflow", async () => {
+	describe('Basic Integration', () => {
+		it('should successfully run a complete PRP workflow', async () => {
 			const blueprint = {
-				title: "Integration Test Project",
-				description: "A test project to validate kernel integration",
-				requirements: ["Feature A", "Feature B", "Testing"],
+				title: 'Integration Test Project',
+				description: 'A test project to validate kernel integration',
+				requirements: ['Feature A', 'Feature B', 'Testing'],
 			};
 
 			const result = await graph.runPRPWorkflow(blueprint, {
-				runId: "integration-test-001",
+				runId: 'integration-test-001',
 			});
 
 			// Verify final state
-			expect(result.phase).toBe("completed");
-			expect(result.runId).toBe("integration-test-001");
-			expect(result.blueprint.title).toBe("Integration Test Project");
+			expect(result.phase).toBe('completed');
+			expect(result.runId).toBe('integration-test-001');
+			expect(result.blueprint.title).toBe('Integration Test Project');
 
 			// Verify metadata
 			expect(result.metadata.startTime).toBeDefined();
@@ -47,107 +47,107 @@ describe("Cortex Kernel Integration", () => {
 			expect(result.validationResults.evaluation?.passed).toBe(true);
 
 			// Verify cerebrum decision
-			expect(result.cerebrum?.decision).toBe("promote");
+			expect(result.cerebrum?.decision).toBe('promote');
 			expect(result.cerebrum?.confidence).toBeGreaterThan(0.9);
 		});
 
-		it("should maintain execution history", async () => {
+		it('should maintain execution history', async () => {
 			const blueprint = {
-				title: "History Test",
-				description: "Test execution history tracking",
-				requirements: ["Track phases"],
+				title: 'History Test',
+				description: 'Test execution history tracking',
+				requirements: ['Track phases'],
 			};
 
 			const _result = await graph.runPRPWorkflow(blueprint, {
-				runId: "history-test-001",
+				runId: 'history-test-001',
 			});
 
-			const history = graph.getExecutionHistory("history-test-001");
+			const history = graph.getExecutionHistory('history-test-001');
 
 			// Should have tracked all phase transitions
 			expect(history.length).toBeGreaterThan(1);
 
 			// Check phase progression
 			const phases = history.map((state) => state.phase);
-			expect(phases).toContain("strategy");
-			expect(phases[phases.length - 1]).toBe("completed");
+			expect(phases).toContain('strategy');
+			expect(phases[phases.length - 1]).toBe('completed');
 		});
 
-		it("should handle orchestrator integration correctly", async () => {
+		it('should handle orchestrator integration correctly', async () => {
 			const blueprint = {
-				title: "Orchestrator Integration",
-				description: "Test orchestrator method calls",
-				requirements: ["Integration validation"],
+				title: 'Orchestrator Integration',
+				description: 'Test orchestrator method calls',
+				requirements: ['Integration validation'],
 			};
 
 			const result = await graph.runPRPWorkflow(blueprint);
 
 			// Workflow should complete successfully
-			expect(result.phase).toBe("completed");
+			expect(result.phase).toBe('completed');
 		});
 	});
 
-	describe("Error Handling", () => {
-		it("should gracefully handle workflow errors", async () => {
+	describe('Error Handling', () => {
+		it('should gracefully handle workflow errors', async () => {
 			// Create a kernel that will simulate an error
 			const errorOrchestrator = {
 				getNeuronCount: () => {
-					throw new Error("Simulated orchestrator error");
+					throw new Error('Simulated orchestrator error');
 				},
 			};
 
 			const errorGraph = new SimplePRPGraph(errorOrchestrator);
 
 			const blueprint = {
-				title: "Error Test",
-				description: "Test error handling",
-				requirements: ["Error simulation"],
+				title: 'Error Test',
+				description: 'Test error handling',
+				requirements: ['Error simulation'],
 			};
 
 			// This should not throw but should handle the error gracefully
 			const result = await errorGraph.runPRPWorkflow(blueprint);
 
 			// Should complete but may recycle due to error
-			expect(["completed", "recycled"]).toContain(result.phase);
+			expect(['completed', 'recycled']).toContain(result.phase);
 		});
 	});
 
-	describe("Workflow Phases", () => {
-		it("should execute all three main phases", async () => {
+	describe('Workflow Phases', () => {
+		it('should execute all three main phases', async () => {
 			const blueprint = {
-				title: "Phase Test",
-				description: "Test all workflow phases",
-				requirements: ["Phase validation"],
+				title: 'Phase Test',
+				description: 'Test all workflow phases',
+				requirements: ['Phase validation'],
 			};
 
 			const _result = await graph.runPRPWorkflow(blueprint, {
-				runId: "phase-test-001",
+				runId: 'phase-test-001',
 			});
 
-			const history = graph.getExecutionHistory("phase-test-001");
+			const history = graph.getExecutionHistory('phase-test-001');
 			const phases = history.map((state) => state.phase);
 
 			// Should include the main workflow phases
-			expect(phases).toContain("strategy");
-			expect(phases.some((p) => p === "build")).toBe(true);
-			expect(phases.some((p) => p === "evaluation")).toBe(true);
-			expect(phases[phases.length - 1]).toBe("completed");
+			expect(phases).toContain('strategy');
+			expect(phases.some((p) => p === 'build')).toBe(true);
+			expect(phases.some((p) => p === 'evaluation')).toBe(true);
+			expect(phases[phases.length - 1]).toBe('completed');
 		});
 
-		it("should validate state transitions correctly", async () => {
+		it('should validate state transitions correctly', async () => {
 			const blueprint = {
-				title: "Transition Test",
-				description: "Test state transition validation",
-				requirements: ["State machine validation"],
+				title: 'Transition Test',
+				description: 'Test state transition validation',
+				requirements: ['State machine validation'],
 			};
 
 			const result = await graph.runPRPWorkflow(blueprint);
 
 			// Final state should be valid
-			expect(["completed", "recycled"]).toContain(result.phase);
+			expect(['completed', 'recycled']).toContain(result.phase);
 
 			// All validation results should be present for completed workflows
-			if (result.phase === "completed") {
+			if (result.phase === 'completed') {
 				expect(result.validationResults.strategy).toBeDefined();
 				expect(result.validationResults.build).toBeDefined();
 				expect(result.validationResults.evaluation).toBeDefined();

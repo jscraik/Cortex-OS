@@ -38,4 +38,3 @@ VOLUME ["/data/snapshots"]
 ENV PYTHONPATH=/app/packages/faissd
 
 CMD ["uv", "run", "python", "server.py"]
-

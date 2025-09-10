@@ -28,6 +28,7 @@ Cortex RAG provides comprehensive Retrieval-Augmented Generation functionality a
 - **🎯 Type-Safe Interfaces** - Embedder, Store, and core type abstractions
 - **🧩 Smart Chunking** - Configurable text chunking with overlap management
 - **🔄 Batch Processing** - Concurrent ingestion with configurable limits
+- **🕒 Freshness Routing** - Tie-break retrievals by recency with configurable epsilon
 
 ### 🧠 Multi-Model Intelligence
 
@@ -87,6 +88,8 @@ const pipeline = new RAGPipeline({
   maxContextTokens: 4000,
   chunkSize: 500,
   chunkOverlap: 100,
+  // Prefer newer sources when scores are similar
+  freshnessEpsilon: 0.02,
 });
 
 // Ingest documents
@@ -462,6 +465,16 @@ await pipeline.ingestBatch(documents, {
 ### Advanced Querying
 
 ```
+// Freshness-aware routing prefers newer sources when relevance scores tie
+const resultsFresh = await pipeline.retrieve('latest release notes');
+```
+
+## 🕒 Freshness Routing
+
+- Sorts primarily by similarity score.
+- When scores are within `freshnessEpsilon` (default 0.02), newer `updatedAt` wins.
+- `ingestText` automatically stamps `updatedAt` at ingest time; you can also set it when using `pipeline.ingest`.
+
 // Query with custom options
 const queryResults = await query(
   {

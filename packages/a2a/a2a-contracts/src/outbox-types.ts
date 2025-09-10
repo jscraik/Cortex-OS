@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Transactional Outbox Pattern Implementation
@@ -9,11 +9,11 @@ import { z } from "zod";
  * Outbox message status enumeration
  */
 export enum OutboxMessageStatus {
-	PENDING = "PENDING",
-	PROCESSING = "PROCESSING",
-	PUBLISHED = "PUBLISHED",
-	FAILED = "FAILED",
-	DEAD_LETTER = "DEAD_LETTER",
+	PENDING = 'PENDING',
+	PROCESSING = 'PROCESSING',
+	PUBLISHED = 'PUBLISHED',
+	FAILED = 'FAILED',
+	DEAD_LETTER = 'DEAD_LETTER',
 }
 
 /**
@@ -25,10 +25,10 @@ export const OutboxMessageSchema = z.object({
 		.string()
 		.min(1)
 		.describe('Type of aggregate (e.g., "user", "order")'),
-	aggregateId: z.string().min(1).describe("ID of the aggregate"),
-	eventType: z.string().min(1).describe("Event type to be published"),
-	payload: z.unknown().describe("Event payload data"),
-	metadata: z.record(z.unknown()).optional().describe("Additional metadata"),
+	aggregateId: z.string().min(1).describe('ID of the aggregate'),
+	eventType: z.string().min(1).describe('Event type to be published'),
+	payload: z.unknown().describe('Event payload data'),
+	metadata: z.record(z.unknown()).optional().describe('Additional metadata'),
 	status: z
 		.nativeEnum(OutboxMessageStatus)
 		.default(OutboxMessageStatus.PENDING),
@@ -42,17 +42,17 @@ export const OutboxMessageSchema = z.object({
 	idempotencyKey: z
 		.string()
 		.optional()
-		.describe("Idempotency key to prevent duplicates"),
+		.describe('Idempotency key to prevent duplicates'),
 	correlationId: z
 		.string()
 		.uuid()
 		.optional()
-		.describe("Correlation ID for related messages"),
+		.describe('Correlation ID for related messages'),
 	causationId: z
 		.string()
 		.uuid()
 		.optional()
-		.describe("ID of the event that caused this message"),
+		.describe('ID of the event that caused this message'),
 	// W3C Trace Context for distributed tracing
 	traceparent: z.string().optional(),
 	tracestate: z.string().optional(),
@@ -105,14 +105,14 @@ export interface OutboxRepository {
 	 * Save a new outbox message
 	 */
 	save(
-		message: Omit<OutboxMessage, "id" | "createdAt">,
+		message: Omit<OutboxMessage, 'id' | 'createdAt'>,
 	): Promise<OutboxMessage>;
 
 	/**
 	 * Save multiple outbox messages in a transaction
 	 */
 	saveBatch(
-		messages: Array<Omit<OutboxMessage, "id" | "createdAt">>,
+		messages: Array<Omit<OutboxMessage, 'id' | 'createdAt'>>,
 	): Promise<OutboxMessage[]>;
 
 	/**

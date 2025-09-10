@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import type { Evidence, PRPState } from "../state.js";
-import { generateId } from "../utils/id.js";
-import { currentTimestamp } from "../utils/time.js";
+import fs from 'node:fs';
+import path from 'node:path';
+import type { Evidence, PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Build Phase Gates:
@@ -21,22 +21,22 @@ export class BuildNode {
 		// Gate 1: Backend compilation and tests
 		const backendValidation = await this.validateBackend(state);
 		if (!backendValidation.passed) {
-			blockers.push("Backend compilation or tests failed");
+			blockers.push('Backend compilation or tests failed');
 		}
 
 		evidence.push({
-			id: generateId("build-backend", state.metadata.deterministic),
-			type: "test",
-			source: "backend_validation",
+			id: generateId('build-backend', state.metadata.deterministic),
+			type: 'test',
+			source: 'backend_validation',
 			content: JSON.stringify(backendValidation),
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 4),
-			phase: "build",
+			phase: 'build',
 		});
 
 		// Gate 2: API schema validation
 		const apiValidation = await this.validateAPISchema(state);
 		if (!apiValidation.passed) {
-			blockers.push("API schema validation failed");
+			blockers.push('API schema validation failed');
 		}
 
 		// Gate 3: Security scanning
@@ -53,12 +53,12 @@ export class BuildNode {
 		}
 
 		evidence.push({
-			id: generateId("build-security", state.metadata.deterministic),
-			type: "analysis",
-			source: "security_scanner",
+			id: generateId('build-security', state.metadata.deterministic),
+			type: 'analysis',
+			source: 'security_scanner',
 			content: JSON.stringify(securityScan),
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 5),
-			phase: "build",
+			phase: 'build',
 		});
 
 		// Gate 4: Frontend performance
@@ -77,7 +77,7 @@ export class BuildNode {
 		// Gate 5: Documentation completeness
 		const docsValidation = await this.validateDocumentation(state);
 		if (!docsValidation.passed) {
-			majors.push("Documentation incomplete - missing API docs or usage notes");
+			majors.push('Documentation incomplete - missing API docs or usage notes');
 		}
 
 		return {
@@ -102,9 +102,9 @@ export class BuildNode {
 		// Simulated backend validation - in real implementation would run actual tests
 		const hasBackendReq = state.blueprint.requirements?.some(
 			(req) =>
-				req.toLowerCase().includes("api") ||
-				req.toLowerCase().includes("backend") ||
-				req.toLowerCase().includes("server"),
+				req.toLowerCase().includes('api') ||
+				req.toLowerCase().includes('backend') ||
+				req.toLowerCase().includes('server'),
 		);
 
 		// Mock compilation and test results; fail when backend requirements missing
@@ -113,12 +113,12 @@ export class BuildNode {
 			passed,
 			details: passed
 				? {
-						compilation: "success",
+						compilation: 'success',
 						testsPassed: 45,
 						testsFailed: 0,
 						coverage: 92,
 					}
-				: { reason: "backend requirements missing" },
+				: { reason: 'backend requirements missing' },
 		};
 	}
 
@@ -127,25 +127,25 @@ export class BuildNode {
 	): Promise<ValidationResult<APISchemaDetails>> {
 		const hasAPI = state.blueprint.requirements?.some(
 			(req) =>
-				req.toLowerCase().includes("api") ||
-				req.toLowerCase().includes("endpoint"),
+				req.toLowerCase().includes('api') ||
+				req.toLowerCase().includes('endpoint'),
 		);
 
 		if (!hasAPI) {
 			return {
 				passed: true,
-				details: { schemaFormat: "N/A", validation: "skipped" },
+				details: { schemaFormat: 'N/A', validation: 'skipped' },
 			};
 		}
 
-		const schemaPathYaml = path.resolve("openapi.yaml");
+		const schemaPathYaml = path.resolve('openapi.yaml');
 		const exists = fs.existsSync(schemaPathYaml);
 
 		return {
 			passed: exists,
 			details: {
-				schemaFormat: exists ? "OpenAPI 3.0" : "missing",
-				validation: exists ? "found" : "missing",
+				schemaFormat: exists ? 'OpenAPI 3.0' : 'missing',
+				validation: exists ? 'found' : 'missing',
 			},
 		};
 	}
@@ -158,12 +158,12 @@ export class BuildNode {
 			blockers: 0,
 			majors: 1, // Example: one major security issue found
 			details: {
-				tools: ["CodeQL", "Semgrep"],
+				tools: ['CodeQL', 'Semgrep'],
 				vulnerabilities: [
 					{
-						severity: "major",
-						type: "potential-xss",
-						file: "frontend/src/component.tsx",
+						severity: 'major',
+						type: 'potential-xss',
+						file: 'frontend/src/component.tsx',
 						line: 42,
 					},
 				],
@@ -176,9 +176,9 @@ export class BuildNode {
 	): Promise<FrontendResult<FrontendDetails>> {
 		const hasFrontend = state.blueprint.requirements?.some(
 			(req) =>
-				req.toLowerCase().includes("ui") ||
-				req.toLowerCase().includes("frontend") ||
-				req.toLowerCase().includes("interface"),
+				req.toLowerCase().includes('ui') ||
+				req.toLowerCase().includes('frontend') ||
+				req.toLowerCase().includes('interface'),
 		);
 
 		// Mock Lighthouse and Axe scores; fail when frontend requirements missing
@@ -197,10 +197,10 @@ export class BuildNode {
 						},
 						axe: {
 							violations: 2,
-							severity: "minor",
+							severity: 'minor',
 						},
 					}
-				: { reason: "frontend requirements missing" },
+				: { reason: 'frontend requirements missing' },
 		};
 	}
 
@@ -209,24 +209,24 @@ export class BuildNode {
 	): Promise<ValidationResult<DocsDetails>> {
 		const hasDocsReq = state.blueprint.requirements?.some(
 			(req) =>
-				req.toLowerCase().includes("doc") ||
-				req.toLowerCase().includes("guide") ||
-				req.toLowerCase().includes("readme"),
+				req.toLowerCase().includes('doc') ||
+				req.toLowerCase().includes('guide') ||
+				req.toLowerCase().includes('readme'),
 		);
 
 		if (!hasDocsReq) {
-			return { passed: true, details: { readme: "skipped" } };
+			return { passed: true, details: { readme: 'skipped' } };
 		}
 
-		const readme = path.resolve("README.md");
+		const readme = path.resolve('README.md');
 		const readmeExists = fs.existsSync(readme);
 
 		return {
 			passed: readmeExists,
 			details: {
 				readme: readmeExists,
-				schemaFormat: readmeExists ? "markdown" : "missing",
-				validation: readmeExists ? "found" : "missing",
+				schemaFormat: readmeExists ? 'markdown' : 'missing',
+				validation: readmeExists ? 'found' : 'missing',
 			},
 		};
 	}

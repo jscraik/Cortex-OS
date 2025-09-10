@@ -11,10 +11,10 @@ export function fusionRerank(
 	alpha = 0.7,
 ) {
 	if (!Array.isArray(queryEmb) || queryEmb.length === 0) {
-		throw new TypeError("queryEmb must be a non-empty number array");
+		throw new TypeError('queryEmb must be a non-empty number array');
 	}
 	if (!Array.isArray(docs)) {
-		throw new TypeError("docs must be an array");
+		throw new TypeError('docs must be an array');
 	}
 	if (docs.length === 0) return [] as { id: string; score: number }[];
 

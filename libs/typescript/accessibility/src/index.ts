@@ -33,7 +33,7 @@ export class A11yUtils {
 	// Convert hex color to RGB
 	private static hexToRgb(hex: string): { r: number; g: number; b: number } {
 		// Remove # if present
-		hex = hex.replace(/^#/, "");
+		hex = hex.replace(/^#/, '');
 
 		// Parse RGB values
 		const bigint = parseInt(hex, 16);
@@ -85,21 +85,21 @@ export class A11yUtils {
 
 		return (event: KeyboardEvent) => {
 			switch (event.key) {
-				case "ArrowDown":
+				case 'ArrowDown':
 					event.preventDefault();
 					currentIndex = (currentIndex + 1) % items.length;
 					items[currentIndex].focus();
 					break;
-				case "ArrowUp":
+				case 'ArrowUp':
 					event.preventDefault();
 					currentIndex = (currentIndex - 1 + items.length) % items.length;
 					items[currentIndex].focus();
 					break;
-				case "Enter":
+				case 'Enter':
 					event.preventDefault();
 					onSelect(items[currentIndex], currentIndex);
 					break;
-				case "Escape":
+				case 'Escape':
 					event.preventDefault();
 					// Close or blur the component
 					if (document.activeElement instanceof HTMLElement) {
@@ -125,24 +125,24 @@ export class A11yUtils {
 function example() {
 	// Check color contrast
 	console.log(
-		"Contrast ratio (black/white):",
-		A11yUtils.getContrastRatio("#000000", "#FFFFFF"),
+		'Contrast ratio (black/white):',
+		A11yUtils.getContrastRatio('#000000', '#FFFFFF'),
 	);
 	console.log(
-		"Meets AA contrast:",
-		A11yUtils.meetsAaContrast("#000000", "#FFFFFF"),
+		'Meets AA contrast:',
+		A11yUtils.meetsAaContrast('#000000', '#FFFFFF'),
 	);
 
 	// Generate screen reader text
 	console.log(
-		"Screen reader text:",
-		A11yUtils.generateSrText("Close", "Close dialog"),
+		'Screen reader text:',
+		A11yUtils.generateSrText('Close', 'Close dialog'),
 	);
 
 	// Generate ARIA label
 	console.log(
-		"ARIA label:",
-		A11yUtils.generateAriaLabel("button", "Submit", "Contact form"),
+		'ARIA label:',
+		A11yUtils.generateAriaLabel('button', 'Submit', 'Contact form'),
 	);
 }
 

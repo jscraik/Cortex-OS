@@ -3,8 +3,8 @@
  * Tests systematic improvements: structured logging and type guards
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { requiresApproval, waitForApproval, submitDecision, onHitlRequest } from "../hitl";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { onHitlRequest, requiresApproval, submitDecision, waitForApproval } from "../hitl";
 
 // Mock the logger to test structured logging
 vi.mock("@cortex-os/observability", () => ({

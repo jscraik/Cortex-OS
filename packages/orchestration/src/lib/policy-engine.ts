@@ -1,10 +1,10 @@
-import path from "node:path";
-import { z } from "zod";
+import path from 'node:path';
+import { z } from 'zod';
 export const Grant = z.object({
 	tool: z.string(),
 	actions: z.array(z.string()),
 	args: z.record(z.any()).default({}),
-	dataClass: z.enum(["public", "internal", "sensitive"]).default("internal"),
+	dataClass: z.enum(['public', 'internal', 'sensitive']).default('internal'),
 	rate: z.object({ perMinute: z.number().int().min(1) }),
 	fsScope: z.array(z.string()).default([]),
 });
@@ -12,14 +12,14 @@ export type Grant = z.infer<typeof Grant>;
 
 export async function loadGrant(id: string): Promise<Grant> {
 	// read from .cortex/policy/tools/*.json, validate by schema
-	const fs = await import("node:fs");
-	const path = await import("node:path");
+	const fs = await import('node:fs');
+	const path = await import('node:path');
 	const filePath = path.join(
 		process.cwd(),
-		".cortex/policy/tools",
+		'.cortex/policy/tools',
 		`${id}.json`,
 	);
-	const content = fs.readFileSync(filePath, "utf-8");
+	const content = fs.readFileSync(filePath, 'utf-8');
 	return Grant.parse(JSON.parse(content));
 }
 // naive in-memory rate limiter per process
@@ -30,17 +30,17 @@ export function enforce(
 	action: string,
 	args: Record<string, unknown>,
 ) {
-	if (!grant.actions.includes(action)) throw new Error("action not allowed");
+	if (!grant.actions.includes(action)) throw new Error('action not allowed');
 
 	// fsScope check for path args
 	const p = (args?.path ?? (args as any)?.targetPath) as string | undefined;
 	if (p && grant.fsScope.length > 0) {
 		const rel = path.relative(process.cwd(), p);
 		const allowed = grant.fsScope.some((scope) => {
-			const norm = scope.endsWith("/") ? scope : `${scope}/`;
+			const norm = scope.endsWith('/') ? scope : `${scope}/`;
 			return rel === scope || rel.startsWith(norm);
 		});
-		if (!allowed) throw new Error("path not within fsScope");
+		if (!allowed) throw new Error('path not within fsScope');
 	}
 
 	// simple rate limiting using sliding window of 60s
@@ -49,7 +49,7 @@ export function enforce(
 	const windowMs = 60_000;
 	const arr = (rateMap.get(key) ?? []).filter((t) => now - t < windowMs);
 	if (arr.length >= grant.rate.perMinute)
-		throw new Error("rate limit exceeded");
+		throw new Error('rate limit exceeded');
 	arr.push(now);
 	rateMap.set(key, arr);
 	return true;

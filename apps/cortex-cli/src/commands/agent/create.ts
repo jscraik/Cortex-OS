@@ -1,6 +1,7 @@
 // plated: cortex
+
+import { intro, outro, select, text } from '@clack/prompts';
 import { Command } from 'commander';
-import { intro, select, text, outro } from '@clack/prompts';
 import { z } from 'zod';
 
 export const agentCreate = new Command('create')

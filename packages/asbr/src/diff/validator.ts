@@ -3,10 +3,10 @@
  * Ensures deterministic diff generation and validates integrity
  */
 
-import { createHash } from "crypto";
-import type { Config } from "../types/index.js";
-import { DiffGenerator, type DiffResult, type FileDiff } from "./generator.js";
-import { ContentNormalizer } from "./normalizer.js";
+import { createHash } from 'crypto';
+import type { Config } from '../types/index.js';
+import { DiffGenerator, type DiffResult, type FileDiff } from './generator.js';
+import { ContentNormalizer } from './normalizer.js';
 
 export interface ValidationResult {
 	isValid: boolean;
@@ -65,12 +65,12 @@ export class DiffValidator {
 			diffResult.oldDigest === oldDigest && diffResult.newDigest === newDigest;
 
 		if (!digestsMatch) {
-			errors.push("Digest mismatch detected");
+			errors.push('Digest mismatch detected');
 		}
 
 		// Validate diff format
 		if (!this.isValidUnifiedDiff(diffResult.diff)) {
-			errors.push("Invalid unified diff format");
+			errors.push('Invalid unified diff format');
 		}
 
 		// Validate stats consistency
@@ -79,7 +79,7 @@ export class DiffValidator {
 			calculatedStats.additions !== diffResult.stats.additions ||
 			calculatedStats.deletions !== diffResult.stats.deletions
 		) {
-			warnings.push("Diff statistics mismatch");
+			warnings.push('Diff statistics mismatch');
 		}
 
 		// Check for potential issues
@@ -92,7 +92,7 @@ export class DiffValidator {
 		if (
 			diffResult.metadata.oldSize > this.config.determinism.max_normalize_bytes
 		) {
-			warnings.push("Content exceeds normalization limit");
+			warnings.push('Content exceeds normalization limit');
 		}
 
 		return {
@@ -126,7 +126,7 @@ export class DiffValidator {
 			(path, index) => paths.indexOf(path) !== index,
 		);
 		if (duplicates.length > 0) {
-			errors.push(`Duplicate file paths: ${duplicates.join(", ")}`);
+			errors.push(`Duplicate file paths: ${duplicates.join(', ')}`);
 		}
 
 		// Validate each file diff
@@ -135,11 +135,11 @@ export class DiffValidator {
 
 			// Basic validation
 			if (!fileDiff.path) {
-				fileErrors.push("Missing file path");
+				fileErrors.push('Missing file path');
 			}
 
 			if (!fileDiff.diff) {
-				fileErrors.push("Missing diff content");
+				fileErrors.push('Missing diff content');
 			}
 
 			// Validate diff format
@@ -149,7 +149,7 @@ export class DiffValidator {
 
 			// Check operation consistency
 			if (
-				fileDiff.operation === "rename" &&
+				fileDiff.operation === 'rename' &&
 				(!fileDiff.oldPath || !fileDiff.newPath)
 			) {
 				fileErrors.push(
@@ -173,7 +173,7 @@ export class DiffValidator {
 		const sortedPaths = fileDiffs.map((f) => f.path).sort();
 		const expectedOrder = [...sortedPaths];
 		if (JSON.stringify(sortedPaths) !== JSON.stringify(expectedOrder)) {
-			warnings.push("Files not in deterministic order");
+			warnings.push('Files not in deterministic order');
 		}
 
 		return {
@@ -210,9 +210,9 @@ export class DiffValidator {
 			const diffResult = this.generator.generateDiff(oldContent, newContent);
 
 			// Create a digest of the entire diff content
-			const diffDigest = createHash("sha256")
+			const diffDigest = createHash('sha256')
 				.update(diffResult.diff + diffResult.oldDigest + diffResult.newDigest)
-				.digest("hex");
+				.digest('hex');
 
 			results.push({
 				iteration: i + 1,
@@ -250,7 +250,7 @@ export class DiffValidator {
 			} else {
 				return {
 					success: false,
-					error: "Applied diff does not match expected content",
+					error: 'Applied diff does not match expected content',
 				};
 			}
 		} catch (error) {
@@ -268,12 +268,12 @@ export class DiffValidator {
 		validation: ValidationResult,
 		reproducibility?: ReproducibilityTest,
 	): string {
-		let report = "# Diff Validation Report\n\n";
+		let report = '# Diff Validation Report\n\n';
 
 		report += `## Summary\n`;
-		report += `- **Valid**: ${validation.isValid ? "✅" : "❌"}\n`;
-		report += `- **Reproducible**: ${validation.reproducible ? "✅" : "❌"}\n`;
-		report += `- **Digests Match**: ${validation.digestsMatch ? "✅" : "❌"}\n\n`;
+		report += `- **Valid**: ${validation.isValid ? '✅' : '❌'}\n`;
+		report += `- **Reproducible**: ${validation.reproducible ? '✅' : '❌'}\n`;
+		report += `- **Digests Match**: ${validation.digestsMatch ? '✅' : '❌'}\n\n`;
 
 		report += `## Statistics\n`;
 		report += `- Total Files: ${validation.stats.totalFiles}\n`;
@@ -286,7 +286,7 @@ export class DiffValidator {
 			validation.errors.forEach((error) => {
 				report += `- ❌ ${error}\n`;
 			});
-			report += "\n";
+			report += '\n';
 		}
 
 		if (validation.warnings.length > 0) {
@@ -294,13 +294,13 @@ export class DiffValidator {
 			validation.warnings.forEach((warning) => {
 				report += `- ⚠️ ${warning}\n`;
 			});
-			report += "\n";
+			report += '\n';
 		}
 
 		if (reproducibility) {
 			report += `## Reproducibility Test\n`;
 			report += `- Iterations: ${reproducibility.iterations}\n`;
-			report += `- All Digests Match: ${reproducibility.allDigestsMatch ? "✅" : "❌"}\n`;
+			report += `- All Digests Match: ${reproducibility.allDigestsMatch ? '✅' : '❌'}\n`;
 
 			if (!reproducibility.allDigestsMatch) {
 				report += `\n### Digest Results\n`;
@@ -314,16 +314,16 @@ export class DiffValidator {
 	}
 
 	private isValidUnifiedDiff(diff: string): boolean {
-		const lines = diff.split("\n");
+		const lines = diff.split('\n');
 
 		// Check for basic unified diff structure
 		let hasFileHeader = false;
 		let hasHunkHeader = false;
 
 		for (const line of lines) {
-			if (line.startsWith("---") || line.startsWith("+++")) {
+			if (line.startsWith('---') || line.startsWith('+++')) {
 				hasFileHeader = true;
-			} else if (line.startsWith("@@")) {
+			} else if (line.startsWith('@@')) {
 				hasHunkHeader = true;
 			} else if (line.length > 0 && !line.match(/^[ +\-\\]/)) {
 				// Invalid line format
@@ -338,14 +338,14 @@ export class DiffValidator {
 		additions: number;
 		deletions: number;
 	} {
-		const lines = diff.split("\n");
+		const lines = diff.split('\n');
 		let additions = 0;
 		let deletions = 0;
 
 		for (const line of lines) {
-			if (line.startsWith("+") && !line.startsWith("+++")) {
+			if (line.startsWith('+') && !line.startsWith('+++')) {
 				additions++;
-			} else if (line.startsWith("-") && !line.startsWith("---")) {
+			} else if (line.startsWith('-') && !line.startsWith('---')) {
 				deletions++;
 			}
 		}
@@ -375,8 +375,8 @@ export class DiffValidator {
 	private applyDiff(originalContent: string, diff: string): string {
 		// Simplified diff application - in a real implementation,
 		// this would use a proper patch library
-		const lines = originalContent.split("\n");
-		const diffLines = diff.split("\n");
+		const lines = originalContent.split('\n');
+		const diffLines = diff.split('\n');
 
 		const result = [...lines];
 		let lineOffset = 0;
@@ -384,26 +384,26 @@ export class DiffValidator {
 		for (let i = 0; i < diffLines.length; i++) {
 			const line = diffLines[i];
 
-			if (line.startsWith("@@")) {
+			if (line.startsWith('@@')) {
 				// Parse hunk header
 				const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
 				if (match) {
 					lineOffset = parseInt(match[1], 10) - 1;
 				}
-			} else if (line.startsWith("-")) {
+			} else if (line.startsWith('-')) {
 				// Delete line
 				result.splice(lineOffset, 1);
-			} else if (line.startsWith("+")) {
+			} else if (line.startsWith('+')) {
 				// Add line
 				result.splice(lineOffset, 0, line.substring(1));
 				lineOffset++;
-			} else if (line.startsWith(" ")) {
+			} else if (line.startsWith(' ')) {
 				// Context line
 				lineOffset++;
 			}
 		}
 
-		return result.join("\n");
+		return result.join('\n');
 	}
 }
 

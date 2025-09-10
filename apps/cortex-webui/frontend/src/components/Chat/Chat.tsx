@@ -6,12 +6,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // compared to shared backend types.
 import { apiFetch } from '../../utils/api-client';
 import type {
-    ChatMessage,
-    ChatMessageRole,
-    UseChatStoreApi,
+	ChatMessage,
+	ChatMessageRole,
+	UseChatStoreApi,
 } from '../../utils/chat-store';
 import { useChatStore } from '../../utils/chat-store';
-import { contextManager, type ContextWindow } from '../../utils/context-manager';
+import {
+	type ContextWindow,
+	contextManager,
+} from '../../utils/context-manager';
 import { generateId } from '../../utils/id';
 import { addNotification } from '../../utils/notification-store';
 import MessageInput from './MessageInput/MessageInput';
@@ -59,7 +62,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 		if (messages.length > 0) {
 			const stats = contextManager.getMemoryStats(messages);
 			setMemoryStats(stats);
-			
+
 			// Auto-optimize context if approaching limits
 			if (stats.utilizationPercent > 80 && !contextOptimized) {
 				optimizeContext();
@@ -69,16 +72,17 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 
 	const optimizeContext = useCallback(async () => {
 		try {
-			const optimizedWindow: ContextWindow = await contextManager.optimizeContext(messages);
-			
+			const optimizedWindow: ContextWindow =
+				await contextManager.optimizeContext(messages);
+
 			// Replace messages with optimized ones
 			clearMessages();
-			optimizedWindow.messages.forEach(message => {
+			optimizedWindow.messages.forEach((message) => {
 				addMessage(message);
 			});
-			
+
 			setContextOptimized(true);
-			
+
 			addNotification({
 				type: 'info',
 				message: `Context optimized: ${messages.length} → ${optimizedWindow.messages.length} messages`,
@@ -297,9 +301,12 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 					{/* Memory Statistics */}
 					{memoryStats && (
 						<div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-							{memoryStats.messageCount} messages • {memoryStats.tokenCount} tokens 
+							{memoryStats.messageCount} messages • {memoryStats.tokenCount}{' '}
+							tokens
 							{memoryStats.utilizationPercent > 70 && (
-								<span className={`ml-1 ${memoryStats.utilizationPercent > 90 ? 'text-red-500' : 'text-amber-500'}`}>
+								<span
+									className={`ml-1 ${memoryStats.utilizationPercent > 90 ? 'text-red-500' : 'text-amber-500'}`}
+								>
 									({memoryStats.utilizationPercent}%)
 								</span>
 							)}
@@ -409,9 +416,7 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 				codeInterpreterEnabled={codeInterpreterEnabled}
 				setCodeInterpreterEnabled={setCodeInterpreterEnabled}
 				lastUserMessage={
-					messages
-						.filter(m => m.role === 'user')
-						.slice(-1)[0]?.content
+					messages.filter((m) => m.role === 'user').slice(-1)[0]?.content
 				}
 			/>
 
@@ -423,4 +428,4 @@ const Chat: React.FC<ChatProps> = ({ sessionId = 'default-session' }) => {
 	);
 };
 
-export { Chat };
+export default Chat;

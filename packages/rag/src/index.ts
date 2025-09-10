@@ -1,18 +1,25 @@
-import { AgentConfigSchema, RAGQuerySchema } from "./lib/contracts-shim.js";
-import { createJsonOutput, createStdOutput, StructuredError } from "./lib/shims.js";
-import { z } from "zod";
-import { Qwen3Presets } from "./embed/qwen3.js";
-export { PyEmbedder } from "./embed/python-client.js";
+import { z } from 'zod';
+import { Qwen3Presets } from './embed/qwen3.js';
+import { AgentConfigSchema, RAGQuerySchema } from './lib/contracts-shim.js';
+import {
+	createJsonOutput,
+	createStdOutput,
+	StructuredError,
+} from './lib/shims.js';
+
+export { PyEmbedder } from './embed/python-client.js';
+
 import {
 	createMultiModelGenerator,
 	ModelPresets,
-} from "./generation/multi-model.js";
-import { memoryStore } from "./store/memory.js";
-export { memoryStore } from "./store/memory.js";
-export { fileStore } from "./store/file.js";
-export { RAGPipeline, type RAGPipelineConfig } from "./rag-pipeline.js";
-export type { Embedder, Chunk, Store, Pipeline } from "./lib/index.js";
-export * as lib from "./lib/index.js";
+} from './generation/multi-model.js';
+import { memoryStore } from './store/memory.js';
+
+export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
+export * as lib from './lib/index.js';
+export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
+export { fileStore } from './store/file.js';
+export { memoryStore } from './store/memory.js';
 
 const InputSchema = z.object({
 	config: AgentConfigSchema,
@@ -24,7 +31,7 @@ export type RAGInput = z.infer<typeof InputSchema>;
 export async function handleRAG(input: unknown): Promise<string> {
 	const parsed = InputSchema.safeParse(input);
 	if (!parsed.success) {
-		const err = new StructuredError("INVALID_INPUT", "Invalid RAG input", {
+		const err = new StructuredError('INVALID_INPUT', 'Invalid RAG input', {
 			issues: parsed.error.issues,
 		});
 		return createJsonOutput({ error: err.toJSON() });
@@ -41,7 +48,7 @@ export async function handleRAG(input: unknown): Promise<string> {
 
 	const [embedding] = await embedder.embed([query.query]);
 	const results = await store.query(embedding, query.topK);
-		const context = results.map((r: { text: string }) => r.text).join("\n");
+	const context = results.map((r: { text: string }) => r.text).join('\n');
 	const prompt = context ? `${context}\n\n${query.query}` : query.query;
 	const answer = await generator.generate(prompt, {
 		maxTokens: config.maxTokens,

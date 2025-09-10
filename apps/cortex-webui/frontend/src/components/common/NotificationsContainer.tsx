@@ -1,60 +1,66 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import NotificationToast from './NotificationToast';
 
 interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  message: string;
-  timestamp: number;
+	id: string;
+	type: 'success' | 'error' | 'warning' | 'info';
+	message: string;
+	timestamp: number;
 }
 
 const NotificationsContainer: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+	const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Function to add a new notification
-  const addNotification = (type: 'success' | 'error' | 'warning' | 'info', message: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const newNotification: Notification = {
-      id,
-      type,
-      message,
-      timestamp: Date.now(),
-    };
+	// Function to add a new notification
+	const addNotification = (
+		type: 'success' | 'error' | 'warning' | 'info',
+		message: string,
+	) => {
+		const id = Math.random().toString(36).substr(2, 9);
+		const newNotification: Notification = {
+			id,
+			type,
+			message,
+			timestamp: Date.now(),
+		};
 
-    setNotifications((prev) => [...prev, newNotification]);
-  };
+		setNotifications((prev) => [...prev, newNotification]);
+	};
 
-  // Function to remove a notification
-  const removeNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
-  };
+	// Function to remove a notification
+	const removeNotification = (id: string) => {
+		setNotifications((prev) =>
+			prev.filter((notification) => notification.id !== id),
+		);
+	};
 
-  // Expose addNotification to global scope for easy access
-  useEffect(() => {
-    // @ts-ignore
-    window.addNotification = addNotification;
+	// Expose addNotification to global scope for easy access
+	useEffect(() => {
+		// @ts-expect-error
+		window.addNotification = addNotification;
 
-    return () => {
-      // @ts-ignore
-      delete window.addNotification;
-    };
-  }, []);
+		return () => {
+			// @ts-expect-error
+			delete window.addNotification;
+		};
+	}, []);
 
-  return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
-      {notifications.map((notification) => (
-        <NotificationToast
-          key={notification.id}
-          id={notification.id}
-          type={notification.type}
-          message={notification.message}
-          onClose={removeNotification}
-        />
-      ))}
-    </div>
-  );
+	return (
+		<div className="fixed top-4 right-4 z-50 space-y-2">
+			{notifications.map((notification) => (
+				<NotificationToast
+					key={notification.id}
+					id={notification.id}
+					type={notification.type}
+					message={notification.message}
+					onClose={removeNotification}
+				/>
+			))}
+		</div>
+	);
 };
 
 export default NotificationsContainer;

@@ -17,4 +17,3 @@ datasources:
         filterByTraceID: true
         spanStartTimeShift: "-10m"
         spanEndTimeShift: "10m"
-

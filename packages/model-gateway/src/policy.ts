@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 const GrantSchema = z.object({
 	actions: z.array(z.string()),
@@ -13,8 +13,8 @@ const GrantSchema = z.object({
 export type Grant = z.infer<typeof GrantSchema>;
 
 const GRANTS: Record<string, Grant> = {
-	"model-gateway": {
-		actions: ["embeddings", "rerank", "chat"],
+	'model-gateway': {
+		actions: ['embeddings', 'rerank', 'chat'],
 		rate: { perMinute: 60 },
 		rules: {
 			allow_embeddings: true,
@@ -34,33 +34,33 @@ export async function loadGrant(service: string): Promise<Grant> {
 
 // Helper to enforce a grant for an operation. Throws on disallowed operations.
 export async function enforce(
-        grant: Grant,
-        operation: "embeddings" | "rerank" | "chat",
-        _body?: unknown,
+	grant: Grant,
+	operation: 'embeddings' | 'rerank' | 'chat',
+	_body?: unknown,
 ) {
-	const ruleMap: Record<string, keyof Grant["rules"]> = {
-		embeddings: "allow_embeddings",
-		rerank: "allow_rerank",
-		chat: "allow_chat",
+	const ruleMap: Record<string, keyof Grant['rules']> = {
+		embeddings: 'allow_embeddings',
+		rerank: 'allow_rerank',
+		chat: 'allow_chat',
 	};
-        const ruleKey = ruleMap[operation];
-        if (!ruleKey || !grant.rules[ruleKey]) {
-                throw new Error(`Operation ${operation} not allowed by policy`);
-        }
-        const limit = grant.rate.perMinute;
-        const now = Date.now();
-        const counter = rateCounters.get(operation) || {
-                count: 0,
-                reset: now + 60_000,
-        };
-        if (now > counter.reset) {
-                counter.count = 0;
-                counter.reset = now + 60_000;
-        }
-        if (counter.count >= limit) {
-                throw new Error(`Rate limit exceeded for ${operation}`);
-        }
-        counter.count += 1;
-        rateCounters.set(operation, counter);
-        return true;
+	const ruleKey = ruleMap[operation];
+	if (!ruleKey || !grant.rules[ruleKey]) {
+		throw new Error(`Operation ${operation} not allowed by policy`);
+	}
+	const limit = grant.rate.perMinute;
+	const now = Date.now();
+	const counter = rateCounters.get(operation) || {
+		count: 0,
+		reset: now + 60_000,
+	};
+	if (now > counter.reset) {
+		counter.count = 0;
+		counter.reset = now + 60_000;
+	}
+	if (counter.count >= limit) {
+		throw new Error(`Rate limit exceeded for ${operation}`);
+	}
+	counter.count += 1;
+	rateCounters.set(operation, counter);
+	return true;
 }

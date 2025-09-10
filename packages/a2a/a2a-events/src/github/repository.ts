@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // GitHub User Schema
 export const GitHubUserSchema = z.object({
@@ -6,7 +6,7 @@ export const GitHubUserSchema = z.object({
 	login: z.string(),
 	avatar_url: z.string().url(),
 	html_url: z.string().url(),
-	type: z.enum(["User", "Organization", "Bot"]),
+	type: z.enum(['User', 'Organization', 'Bot']),
 	site_admin: z.boolean(),
 	name: z.string().optional(),
 	email: z.string().email().optional(),
@@ -40,21 +40,21 @@ export const GitHubRepositorySchema = z.object({
 	has_downloads: z.boolean(),
 	archived: z.boolean(),
 	disabled: z.boolean(),
-	visibility: z.enum(["public", "private", "internal"]),
+	visibility: z.enum(['public', 'private', 'internal']),
 });
 
 export type GitHubRepository = z.infer<typeof GitHubRepositorySchema>;
 
 // Repository Action Types
 export const RepositoryActionSchema = z.enum([
-	"created",
-	"updated",
-	"deleted",
-	"archived",
-	"unarchived",
-	"publicized",
-	"privatized",
-	"transferred",
+	'created',
+	'updated',
+	'deleted',
+	'archived',
+	'unarchived',
+	'publicized',
+	'privatized',
+	'transferred',
 ]);
 
 export type RepositoryAction = z.infer<typeof RepositoryActionSchema>;
@@ -95,8 +95,8 @@ export type RepositoryChanges = z.infer<typeof RepositoryChangesSchema>;
 // Repository Event Schema
 export const RepositoryEventSchema = z.object({
 	event_id: z.string().uuid(),
-	event_type: z.literal("github.repository"),
-	source: z.literal("github-client"),
+	event_type: z.literal('github.repository'),
+	source: z.literal('github-client'),
 	timestamp: z.string().datetime(),
 
 	// Event-specific data
@@ -113,14 +113,14 @@ export type RepositoryEvent = z.infer<typeof RepositoryEventSchema>;
 
 // Repository Event Topics Mapping
 export const REPOSITORY_EVENT_TOPICS = {
-	created: "github.repository.created",
-	updated: "github.repository.updated",
-	deleted: "github.repository.deleted",
-	archived: "github.repository.archived",
-	unarchived: "github.repository.unarchived",
-	publicized: "github.repository.publicized",
-	privatized: "github.repository.privatized",
-	transferred: "github.repository.transferred",
+	created: 'github.repository.created',
+	updated: 'github.repository.updated',
+	deleted: 'github.repository.deleted',
+	archived: 'github.repository.archived',
+	unarchived: 'github.repository.unarchived',
+	publicized: 'github.repository.publicized',
+	privatized: 'github.repository.privatized',
+	transferred: 'github.repository.transferred',
 } as const;
 
 // Validation Functions
@@ -138,10 +138,10 @@ export function createRepositoryEvent(
 	repository: GitHubRepository,
 	actor: GitHubUser,
 	changes?: RepositoryChanges,
-): Omit<RepositoryEvent, "event_id" | "timestamp"> {
+): Omit<RepositoryEvent, 'event_id' | 'timestamp'> {
 	return {
-		event_type: "github.repository",
-		source: "github-client",
+		event_type: 'github.repository',
+		source: 'github-client',
 		action,
 		repository,
 		actor,

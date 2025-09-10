@@ -1,1 +1,1 @@
-export * from "./health.handler.js";
+export * from './health.handler.js';

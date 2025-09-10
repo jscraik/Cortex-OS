@@ -1,5 +1,5 @@
-import { createHash } from "crypto";
-import type { Task, TaskInput } from "../types/index.js";
+import { createHash } from 'crypto';
+import type { Task, TaskInput } from '../types/index.js';
 
 /**
  * Determine idempotency key and check for existing tasks
@@ -18,7 +18,7 @@ export function resolveIdempotency(
 			inputs: input.inputs,
 			scopes: input.scopes.sort(),
 		});
-		key = createHash("sha256").update(base).digest("hex").substring(0, 16);
+		key = createHash('sha256').update(base).digest('hex').substring(0, 16);
 	}
 
 	const cacheEntry = cache.get(key);

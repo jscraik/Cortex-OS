@@ -8,6 +8,6 @@ export function hasTty(proc = process) {
 	);
 }
 export function isCi(env = process.env) {
-	return env.CI === "true";
+	return env.CI === 'true';
 }
 //# sourceMappingURL=env.js.map

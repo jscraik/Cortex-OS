@@ -3,8 +3,8 @@
  * Manages task lifecycle and execution following A2A protocol
  */
 
-import { randomUUID } from "node:crypto";
-import { EventEmitter } from "node:events";
+import { randomUUID } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import {
 	A2A_ERROR_CODES,
 	type TaskCancelParams,
@@ -13,7 +13,7 @@ import {
 	type TaskResult,
 	type TaskSendParams,
 	type TaskStatus,
-} from "./protocol.js";
+} from './protocol.js';
 
 // Simple implementation for StructuredError
 class StructuredError extends Error {
@@ -23,7 +23,7 @@ class StructuredError extends Error {
 		public details?: unknown,
 	) {
 		super(message);
-		this.name = "StructuredError";
+		this.name = 'StructuredError';
 	}
 }
 
@@ -104,12 +104,12 @@ export class EchoTaskProcessor implements TaskProcessor {
 
 		return {
 			id,
-			status: "completed",
+			status: 'completed',
 			message: {
-				role: "assistant",
+				role: 'assistant',
 				parts: [
 					{
-						text: `Echo: ${params.message.parts.map((p) => p.text).join(" ")}`,
+						text: `Echo: ${params.message.parts.map((p) => p.text).join(' ')}`,
 					},
 				],
 			},
@@ -118,16 +118,16 @@ export class EchoTaskProcessor implements TaskProcessor {
 }
 
 export class TaskManager extends EventEmitter {
-        constructor(
-                private readonly store: TaskStore = new InMemoryTaskStore(),
-                private readonly processor: TaskProcessor = new EchoTaskProcessor(),
-                private readonly config = {
-                        taskTimeoutMs: 30000,
-                        maxConcurrentTasks: 10,
-                },
-        ) {
-                super();
-        }
+	constructor(
+		private readonly store: TaskStore = new InMemoryTaskStore(),
+		private readonly processor: TaskProcessor = new EchoTaskProcessor(),
+		private readonly config = {
+			taskTimeoutMs: 30000,
+			maxConcurrentTasks: 10,
+		},
+	) {
+		super();
+	}
 
 	/**
 	 * Send a task for processing (tasks/send)
@@ -138,19 +138,19 @@ export class TaskManager extends EventEmitter {
 
 		const task: Task = {
 			id: taskId,
-			status: "pending",
+			status: 'pending',
 			createdAt: now,
 			updatedAt: now,
 			params,
 		};
 
-                await this.store.save(task);
-                this.emit("taskStarted", { id: taskId });
+		await this.store.save(task);
+		this.emit('taskStarted', { id: taskId });
 
 		try {
-                        // Update status to running
-                        await this.store.update(taskId, { status: "running" });
-                        this.emit("taskRunning", { id: taskId });
+			// Update status to running
+			await this.store.update(taskId, { status: 'running' });
+			this.emit('taskRunning', { id: taskId });
 
 			// Process the task
 			const result = await Promise.race([
@@ -159,36 +159,36 @@ export class TaskManager extends EventEmitter {
 			]);
 
 			// Update with result
-                        await this.store.update(taskId, {
-                                status: "completed",
-                                result,
-                        });
+			await this.store.update(taskId, {
+				status: 'completed',
+				result,
+			});
 
-                        this.emit("taskCompleted", { ...result, id: taskId });
+			this.emit('taskCompleted', { ...result, id: taskId });
 
-                        return result;
+			return result;
 		} catch (error) {
 			const taskError = {
 				code:
 					error instanceof TaskTimeoutError
 						? A2A_ERROR_CODES.TASK_TIMEOUT
 						: A2A_ERROR_CODES.INTERNAL_ERROR,
-				message: error instanceof Error ? error.message : "Unknown error",
+				message: error instanceof Error ? error.message : 'Unknown error',
 				data: error instanceof Error ? { stack: error.stack } : error,
 			};
 
-                        await this.store.update(taskId, {
-                                status: "failed",
-                                error: taskError,
-                        });
+			await this.store.update(taskId, {
+				status: 'failed',
+				error: taskError,
+			});
 
-                        this.emit("taskFailed", { id: taskId, error: taskError });
+			this.emit('taskFailed', { id: taskId, error: taskError });
 
-                        throw new StructuredError(
-                                "TASK_EXECUTION_FAILED",
-                                `Task ${taskId} failed: ${taskError.message}`,
-                                { taskId, error: taskError },
-                        );
+			throw new StructuredError(
+				'TASK_EXECUTION_FAILED',
+				`Task ${taskId} failed: ${taskError.message}`,
+				{ taskId, error: taskError },
+			);
 		}
 	}
 
@@ -199,7 +199,7 @@ export class TaskManager extends EventEmitter {
 		const task = await this.store.get(params.id);
 		if (!task) {
 			throw new StructuredError(
-				"TASK_NOT_FOUND",
+				'TASK_NOT_FOUND',
 				`Task ${params.id} not found`,
 				{
 					taskId: params.id,
@@ -224,7 +224,7 @@ export class TaskManager extends EventEmitter {
 		const task = await this.store.get(params.id);
 		if (!task) {
 			throw new StructuredError(
-				"TASK_NOT_FOUND",
+				'TASK_NOT_FOUND',
 				`Task ${params.id} not found`,
 				{
 					taskId: params.id,
@@ -233,24 +233,24 @@ export class TaskManager extends EventEmitter {
 			);
 		}
 
-		if (task.status === "completed" || task.status === "failed") {
+		if (task.status === 'completed' || task.status === 'failed') {
 			throw new StructuredError(
-				"TASK_ALREADY_COMPLETED",
+				'TASK_ALREADY_COMPLETED',
 				`Task ${params.id} is already completed`,
 				{ taskId: params.id, status: task.status },
 			);
 		}
 
-                await this.store.update(params.id, {
-                        status: "cancelled",
-                        error: {
-                                code: A2A_ERROR_CODES.TASK_CANCELLED,
-                                message: "Task was cancelled",
-                        },
-                });
+		await this.store.update(params.id, {
+			status: 'cancelled',
+			error: {
+				code: A2A_ERROR_CODES.TASK_CANCELLED,
+				message: 'Task was cancelled',
+			},
+		});
 
-                this.emit("taskCancelled", { id: params.id });
-        }
+		this.emit('taskCancelled', { id: params.id });
+	}
 
 	/**
 	 * List tasks (utility method)
@@ -275,7 +275,7 @@ export class TaskManager extends EventEmitter {
 class TaskTimeoutError extends Error {
 	constructor(message: string) {
 		super(message);
-		this.name = "TaskTimeoutError";
+		this.name = 'TaskTimeoutError';
 	}
 }
 

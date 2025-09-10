@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[codex:doctor] Environment diagnostics" 
+echo "[codex:doctor] Environment diagnostics"
 
 REQ_RUST_MIN="1.82.0" # Anticipated stable for edition 2024; adjust if earlier stabilized
 

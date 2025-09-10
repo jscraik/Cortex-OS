@@ -1,4 +1,4 @@
-import type { PRPState } from "../state.js";
+import type { PRPState } from '../state.js';
 
 export type ExecutionHistory = Map<string, PRPState[]>;
 

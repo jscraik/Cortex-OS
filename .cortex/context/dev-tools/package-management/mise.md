@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 ========================
 CODE SNIPPETS
 ========================
@@ -207,23 +208,22 @@ sudo dnf install mise
 
 ----------------------------------------
 
-TITLE: Standard Pre-commit Framework Setup
-DESCRIPTION: Guides on setting up the standard pre-commit framework using Mise. This involves installing the pre-commit tool and then installing the git hooks defined in the project's configuration.
-
-SOURCE: <https://github.com/jdx/mise/blob/main/llms.txt#_snippet_41>
+TITLE: Local Pre-commit Equivalents (Husky-based)
+DESCRIPTION: Cortex-OS uses Husky for git hooks. Hooks run automatically on commit.
+If you want to run quick pre-commit style checks manually, use these commands.
 
 LANGUAGE: bash
 CODE:
 
 ```
-# Install pre-commit
-mise use pre-commit
+# Format + lint staged files
+pnpm biome:staged
 
-# Install the git hooks
-pre-commit install
+# Run quick, low-risk tests
+pnpm test:safe
 
-# Run pre-commit manually
-pre-commit run --all-files
+# Emergency: bypass hooks (use sparingly)
+HUSKY=0 git commit -m "bypass hooks"
 ```
 
 ----------------------------------------

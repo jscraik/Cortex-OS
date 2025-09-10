@@ -1,20 +1,20 @@
-import { describe, expect, it } from "vitest";
-import { BuildNode } from "../src/nodes/build.js";
-import { EvaluationNode } from "../src/nodes/evaluation.js";
+import { describe, expect, it } from 'vitest';
+import { BuildNode } from '../src/nodes/build.js';
+import { EvaluationNode } from '../src/nodes/evaluation.js';
 
-describe("Validation Logic Fixes", () => {
-	it("should fail API validation when schema is missing", async () => {
+describe('Validation Logic Fixes', () => {
+	it('should fail API validation when schema is missing', async () => {
 		const buildNode = new BuildNode();
 
 		// Mock state with API but no schema
 		const mockState: any = {
 			blueprint: {
-				title: "API Test",
-				description: "Has API",
-				requirements: ["REST API"],
+				title: 'API Test',
+				description: 'Has API',
+				requirements: ['REST API'],
 			},
 			outputs: {
-				"api-check": { hasAPI: true, hasSchema: false },
+				'api-check': { hasAPI: true, hasSchema: false },
 			},
 			evidence: [],
 		};
@@ -24,11 +24,11 @@ describe("Validation Logic Fixes", () => {
 		// Should properly fail when schema is missing
 		expect(result.validationResults.build?.passed).toBe(false);
 		expect(result.validationResults.build?.blockers).toContain(
-			"API schema validation failed",
+			'API schema validation failed',
 		);
 	});
 
-	it("should require ALL phases to pass for cerebrum promotion", async () => {
+	it('should require ALL phases to pass for cerebrum promotion', async () => {
 		const evaluationNode = new EvaluationNode();
 
 		// Mock state with mixed validation results
@@ -43,7 +43,7 @@ describe("Validation Logic Fixes", () => {
 				},
 				build: {
 					passed: false,
-					blockers: ["API schema missing"],
+					blockers: ['API schema missing'],
 					majors: [],
 					evidence: [],
 					timestamp: new Date().toISOString(),

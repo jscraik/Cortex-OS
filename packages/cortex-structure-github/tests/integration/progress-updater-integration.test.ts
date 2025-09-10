@@ -3,12 +3,12 @@
  * Tests resource cleanup and bounded memory usage
  */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LiveProgressUpdater } from "../../src/lib/progress-updater.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LiveProgressUpdater } from '../../src/lib/progress-updater.js';
 
-describe("Progress Updater Integration Tests", () => {
+describe('Progress Updater Integration Tests', () => {
 	let progressUpdater: LiveProgressUpdater;
-	const testToken = "github_pat_test_token";
+	const testToken = 'github_pat_test_token';
 
 	beforeEach(() => {
 		progressUpdater = new LiveProgressUpdater(testToken);
@@ -20,10 +20,10 @@ describe("Progress Updater Integration Tests", () => {
 		}
 	});
 
-	describe("Memory Management", () => {
-		it("enforces maximum task limit", async () => {
+	describe('Memory Management', () => {
+		it('enforces maximum task limit', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
@@ -32,7 +32,7 @@ describe("Progress Updater Integration Tests", () => {
 			for (let i = 0; i < 150; i++) {
 				taskPromises.push(
 					progressUpdater
-						.startProgress(mockPayload, "test-task", "user", [
+						.startProgress(mockPayload, 'test-task', 'user', [
 							{ title: `Task ${i}` },
 						])
 						.catch(() => {}), // Ignore GitHub API errors in tests
@@ -46,9 +46,9 @@ describe("Progress Updater Integration Tests", () => {
 			expect(activeTasks.length).toBeLessThanOrEqual(100);
 		});
 
-		it("cleans up stale progress tasks automatically", async () => {
+		it('cleans up stale progress tasks automatically', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
@@ -60,10 +60,10 @@ describe("Progress Updater Integration Tests", () => {
 
 			// Create a task
 			const _taskId = await progressUpdater
-				.startProgress(mockPayload, "test-task", "user", [
-					{ title: "Test task" },
+				.startProgress(mockPayload, 'test-task', 'user', [
+					{ title: 'Test task' },
 				])
-				.catch(() => "fallback-task-id");
+				.catch(() => 'fallback-task-id');
 
 			// Advance time by more than STALE_TASK_TIMEOUT (30 minutes)
 			Date.now = vi.fn().mockReturnValue(baseTime + 35 * 60 * 1000);
@@ -79,13 +79,13 @@ describe("Progress Updater Integration Tests", () => {
 			Date.now = originalDateNow;
 		});
 
-		it("destroys resources properly", () => {
-			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+		it('destroys resources properly', () => {
+			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 			progressUpdater.destroy();
 
 			expect(consoleSpy).toHaveBeenCalledWith(
-				"LiveProgressUpdater destroyed and resources cleaned up",
+				'LiveProgressUpdater destroyed and resources cleaned up',
 			);
 			expect(progressUpdater.getActiveProgress().length).toBe(0);
 
@@ -93,106 +93,106 @@ describe("Progress Updater Integration Tests", () => {
 		});
 	});
 
-	describe("Progress Tracking", () => {
-		it("tracks progress state correctly", async () => {
+	describe('Progress Tracking', () => {
+		it('tracks progress state correctly', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
 			const taskId = await progressUpdater
-				.startProgress(mockPayload, "test-task", "testuser", [
-					{ title: "Step 1" },
-					{ title: "Step 2" },
+				.startProgress(mockPayload, 'test-task', 'testuser', [
+					{ title: 'Step 1' },
+					{ title: 'Step 2' },
 				])
-				.catch(() => "fallback-task-id");
+				.catch(() => 'fallback-task-id');
 
 			const progress = progressUpdater.getProgress(taskId);
 
 			if (progress) {
-				expect(progress.taskType).toBe("test-task");
-				expect(progress.user).toBe("testuser");
+				expect(progress.taskType).toBe('test-task');
+				expect(progress.user).toBe('testuser');
 				expect(progress.steps).toHaveLength(2);
-				expect(progress.status).toBe("running");
+				expect(progress.status).toBe('running');
 				expect(progress.startTime).toBeInstanceOf(Date);
 			}
 		});
 
-		it("updates step progress correctly", async () => {
+		it('updates step progress correctly', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
 			const taskId = await progressUpdater
-				.startProgress(mockPayload, "test-task", "testuser", [
-					{ title: "Step 1" },
-					{ title: "Step 2" },
+				.startProgress(mockPayload, 'test-task', 'testuser', [
+					{ title: 'Step 1' },
+					{ title: 'Step 2' },
 				])
-				.catch(() => "fallback-task-id");
+				.catch(() => 'fallback-task-id');
 
 			// Update first step
 			await progressUpdater.updateStep(
 				taskId,
 				1,
-				"completed",
-				"Step completed successfully",
+				'completed',
+				'Step completed successfully',
 			);
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
-				expect(progress.steps[0].status).toBe("completed");
-				expect(progress.steps[0].details).toBe("Step completed successfully");
+				expect(progress.steps[0].status).toBe('completed');
+				expect(progress.steps[0].details).toBe('Step completed successfully');
 			}
 		});
 
-		it("completes task correctly", async () => {
+		it('completes task correctly', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
 			const taskId = await progressUpdater
-				.startProgress(mockPayload, "test-task", "testuser", [
-					{ title: "Step 1" },
+				.startProgress(mockPayload, 'test-task', 'testuser', [
+					{ title: 'Step 1' },
 				])
-				.catch(() => "fallback-task-id");
+				.catch(() => 'fallback-task-id');
 
-			await progressUpdater.completeTask(taskId, "Task completed successfully");
+			await progressUpdater.completeTask(taskId, 'Task completed successfully');
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
-				expect(progress.status).toBe("completed");
+				expect(progress.status).toBe('completed');
 				expect(progress.endTime).toBeInstanceOf(Date);
 			}
 		});
 
-		it("handles task errors correctly", async () => {
+		it('handles task errors correctly', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
 			const taskId = await progressUpdater
-				.startProgress(mockPayload, "test-task", "testuser", [
-					{ title: "Step 1" },
+				.startProgress(mockPayload, 'test-task', 'testuser', [
+					{ title: 'Step 1' },
 				])
-				.catch(() => "fallback-task-id");
+				.catch(() => 'fallback-task-id');
 
-			await progressUpdater.errorTask(taskId, "Task failed");
+			await progressUpdater.errorTask(taskId, 'Task failed');
 
 			const progress = progressUpdater.getProgress(taskId);
 			if (progress) {
-				expect(progress.status).toBe("error");
+				expect(progress.status).toBe('error');
 				expect(progress.endTime).toBeInstanceOf(Date);
 			}
 		});
 	});
 
-	describe("Secure Random Generation", () => {
-		it("generates unique task IDs with crypto randomUUID", async () => {
+	describe('Secure Random Generation', () => {
+		it('generates unique task IDs with crypto randomUUID', async () => {
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
@@ -201,7 +201,7 @@ describe("Progress Updater Integration Tests", () => {
 			// Generate multiple task IDs
 			for (let i = 0; i < 10; i++) {
 				const taskId = await progressUpdater
-					.startProgress(mockPayload, "test-task", "user", [{ title: "Test" }])
+					.startProgress(mockPayload, 'test-task', 'user', [{ title: 'Test' }])
 					.catch(() => `fallback-${i}`);
 
 				taskIds.add(taskId);
@@ -217,18 +217,18 @@ describe("Progress Updater Integration Tests", () => {
 		});
 	});
 
-	describe("Error Resilience", () => {
-		it("handles GitHub API failures gracefully", async () => {
+	describe('Error Resilience', () => {
+		it('handles GitHub API failures gracefully', async () => {
 			// Mock Octokit to fail
 			const mockOctokit = {
 				rest: {
 					issues: {
 						createComment: vi
 							.fn()
-							.mockRejectedValue(new Error("GitHub API Error")),
+							.mockRejectedValue(new Error('GitHub API Error')),
 						updateComment: vi
 							.fn()
-							.mockRejectedValue(new Error("GitHub API Error")),
+							.mockRejectedValue(new Error('GitHub API Error')),
 					},
 				},
 			};
@@ -237,23 +237,23 @@ describe("Progress Updater Integration Tests", () => {
 			progressUpdater.octokit = mockOctokit;
 
 			const mockPayload = {
-				repository: { owner: { login: "user" }, name: "repo" },
+				repository: { owner: { login: 'user' }, name: 'repo' },
 				issue: { number: 1 },
 			};
 
 			// Should not throw even when GitHub API fails
 			await expect(() =>
-				progressUpdater.startProgress(mockPayload, "test-task", "user", [
-					{ title: "Test" },
+				progressUpdater.startProgress(mockPayload, 'test-task', 'user', [
+					{ title: 'Test' },
 				]),
 			).not.toThrow();
 		});
 
-		it("handles invalid task IDs gracefully", () => {
+		it('handles invalid task IDs gracefully', () => {
 			expect(() =>
-				progressUpdater.getProgress("invalid-task-id"),
+				progressUpdater.getProgress('invalid-task-id'),
 			).not.toThrow();
-			expect(progressUpdater.getProgress("invalid-task-id")).toBeUndefined();
+			expect(progressUpdater.getProgress('invalid-task-id')).toBeUndefined();
 		});
 	});
 });

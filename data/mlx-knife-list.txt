@@ -6,5 +6,5 @@
    Command: mv /Volumes/ExternalSSD/ai-cache/huggingface/models--* /Volumes/ExternalSSD/ai-cache/huggingface/hub/
    This warning will appear until models are moved.
 
-NAME                                     ID         SIZE       MODIFIED       
-SmolLM-135M-Instruct-4bit                642e06af   82.6 MB    1 days ago     
+NAME                                     ID         SIZE       MODIFIED
+SmolLM-135M-Instruct-4bit                642e06af   82.6 MB    1 days ago

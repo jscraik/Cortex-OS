@@ -1,14 +1,14 @@
-import { createHash } from "node:crypto";
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { createHash } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
 
 export type NodeName =
-	| "plan"
-	| "gather"
-	| "critic"
-	| "synthesize"
-	| "verify"
-	| "done";
+	| 'plan'
+	| 'gather'
+	| 'critic'
+	| 'synthesize'
+	| 'verify'
+	| 'done';
 
 export interface Checkpoint<TState = any> {
 	runId: string;
@@ -27,7 +27,7 @@ export interface CheckpointWithIntegrity<TState = any>
 }
 
 // Current checkpoint format version
-const CHECKPOINT_VERSION = "1.0.0";
+const CHECKPOINT_VERSION = '1.0.0';
 
 /**
  * Calculate checksum for checkpoint integrity validation
@@ -41,7 +41,7 @@ function calculateChecksum(checkpoint: Checkpoint): string {
 		ts: checkpoint.ts,
 		idempotencyKey: checkpoint.idempotencyKey,
 	});
-	return createHash("sha256").update(data, "utf8").digest("hex");
+	return createHash('sha256').update(data, 'utf8').digest('hex');
 }
 
 /**
@@ -54,7 +54,7 @@ function validateCheckpointIntegrity<TState = any>(
 		const expectedChecksum = calculateChecksum(checkpoint);
 		return expectedChecksum === checkpoint.checksum;
 	} catch (error) {
-		console.warn("Failed to validate checkpoint integrity:", error);
+		console.warn('Failed to validate checkpoint integrity:', error);
 		return false;
 	}
 }
@@ -62,7 +62,7 @@ function validateCheckpointIntegrity<TState = any>(
 function getDir(): string {
 	const base =
 		process.env.CORTEX_CHECKPOINT_DIR ||
-		path.join(process.cwd(), "data", "events", "checkpoints");
+		path.join(process.cwd(), 'data', 'events', 'checkpoints');
 	return base;
 }
 
@@ -91,7 +91,7 @@ export async function saveCheckpoint<TState = any>(
 	};
 
 	const line = `${JSON.stringify(checkpointWithIntegrity)}\n`;
-	await fs.appendFile(fileFor(cp.runId), line, "utf8");
+	await fs.appendFile(fileFor(cp.runId), line, 'utf8');
 }
 
 /**
@@ -119,7 +119,7 @@ export async function saveCheckpointWithIntegrity<TState = any>(
 	}
 
 	const line = `${JSON.stringify(checkpointWithIntegrity)}\n`;
-	await fs.appendFile(fileFor(cp.runId), line, "utf8");
+	await fs.appendFile(fileFor(cp.runId), line, 'utf8');
 
 	return checkpointWithIntegrity;
 }
@@ -129,7 +129,7 @@ export async function loadCheckpointHistory<TState = any>(
 ): Promise<Checkpoint<TState>[]> {
 	const file = fileFor(runId);
 	try {
-		const content = await fs.readFile(file, "utf8");
+		const content = await fs.readFile(file, 'utf8');
 		const lines = content.split(/\n+/).filter(Boolean);
 		const checkpoints: Checkpoint<TState>[] = [];
 
@@ -144,7 +144,10 @@ export async function loadCheckpointHistory<TState = any>(
 
 					// Validate integrity
 					if (!validateCheckpointIntegrity(checkpointWithIntegrity)) {
-						console.warn('Checkpoint integrity validation failed (skipping)', { runId, node: parsed.node });
+						console.warn('Checkpoint integrity validation failed (skipping)', {
+							runId,
+							node: parsed.node,
+						});
 						continue;
 					}
 
@@ -154,18 +157,24 @@ export async function loadCheckpointHistory<TState = any>(
 					checkpoints.push(checkpoint);
 				} else {
 					// Legacy checkpoint without integrity validation
-					console.warn('Loading legacy checkpoint without integrity validation', { runId, node: parsed.node });
+					console.warn(
+						'Loading legacy checkpoint without integrity validation',
+						{ runId, node: parsed.node },
+					);
 					checkpoints.push(parsed);
 				}
 			} catch (parseError) {
-				console.warn('Failed to parse checkpoint line', { runId, error: parseError });
+				console.warn('Failed to parse checkpoint line', {
+					runId,
+					error: parseError,
+				});
 				// Continue processing other checkpoints
 			}
 		}
 
 		return checkpoints;
 	} catch (err: any) {
-		if (err && err.code === "ENOENT") return [];
+		if (err && err.code === 'ENOENT') return [];
 		throw err;
 	}
 }
@@ -178,7 +187,7 @@ export async function loadCheckpointHistoryWithIntegrity<TState = any>(
 ): Promise<CheckpointWithIntegrity<TState>[]> {
 	const file = fileFor(runId);
 	try {
-		const content = await fs.readFile(file, "utf8");
+		const content = await fs.readFile(file, 'utf8');
 		const lines = content.split(/\n+/).filter(Boolean);
 		const checkpoints: CheckpointWithIntegrity<TState>[] = [];
 
@@ -194,17 +203,23 @@ export async function loadCheckpointHistoryWithIntegrity<TState = any>(
 					if (validateCheckpointIntegrity(checkpointWithIntegrity)) {
 						checkpoints.push(checkpointWithIntegrity);
 					} else {
-						console.warn('Checkpoint integrity validation failed', { runId, node: parsed.node });
+						console.warn('Checkpoint integrity validation failed', {
+							runId,
+							node: parsed.node,
+						});
 					}
 				}
 			} catch (parseError) {
-				console.warn('Failed to parse checkpoint line', { runId, error: parseError });
+				console.warn('Failed to parse checkpoint line', {
+					runId,
+					error: parseError,
+				});
 			}
 		}
 
 		return checkpoints;
 	} catch (err: any) {
-		if (err && err.code === "ENOENT") return [];
+		if (err && err.code === 'ENOENT') return [];
 		throw err;
 	}
 }
@@ -247,11 +262,15 @@ export async function cleanupOldCheckpoints(
 		const file = fileFor(runId);
 
 		// Rewrite file with only the checkpoints to keep
-		const newContent = `${toKeep.map((checkpoint) => JSON.stringify(checkpoint)).join("\n")}\n`;
+		const newContent = `${toKeep.map((checkpoint) => JSON.stringify(checkpoint)).join('\n')}\n`;
 
-		await fs.writeFile(file, newContent, "utf8");
+		await fs.writeFile(file, newContent, 'utf8');
 
-		console.info('Cleaned up old checkpoints', { runId, kept: toKeep.length, removed: history.length - toKeep.length });
+		console.info('Cleaned up old checkpoints', {
+			runId,
+			kept: toKeep.length,
+			removed: history.length - toKeep.length,
+		});
 	} catch (error) {
 		console.warn('Failed to cleanup old checkpoints', { runId, error });
 	}
@@ -270,7 +289,7 @@ export async function verifyCheckpointFile(runId: string): Promise<{
 	const stats = { total: 0, valid: 0, invalid: 0, legacy: 0 };
 
 	try {
-		const content = await fs.readFile(file, "utf8");
+		const content = await fs.readFile(file, 'utf8');
 		const lines = content.split(/\n+/).filter(Boolean);
 
 		for (const line of lines) {
@@ -294,7 +313,7 @@ export async function verifyCheckpointFile(runId: string): Promise<{
 			}
 		}
 	} catch (err: any) {
-		if (err && err.code !== "ENOENT") {
+		if (err && err.code !== 'ENOENT') {
 			throw err;
 		}
 	}

@@ -75,7 +75,7 @@ Every bullet below represents a separate commit following Conventional Commits (
 
 ## 4. Verification Checklist for Each Commit
 
-1. `pre-commit run --files <changed files>`
+1. Optional quick local checks: `pnpm biome:staged` and `pnpm test:safe`
 2. `pnpm lint`
 3. `pnpm test`
 

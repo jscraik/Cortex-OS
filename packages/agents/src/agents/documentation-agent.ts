@@ -6,7 +6,7 @@
  * and audience-specific content generation.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 import type {
 	Agent,
 	EventBus,
@@ -15,52 +15,52 @@ import type {
 	GenerateResult,
 	MCPClient,
 	ModelProvider,
-} from "../lib/types.js";
+} from '../lib/types.js';
 import {
 	estimateTokens,
 	generateAgentId,
 	generateTraceId,
 	sanitizeText,
 	withTimeout,
-} from "../lib/utils.js";
-import { validateSchema } from "../lib/validate.js";
+} from '../lib/utils.js';
+import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
 export const documentationInputSchema = z.object({
-	sourceCode: z.string().min(1, "Source code cannot be empty"),
+	sourceCode: z.string().min(1, 'Source code cannot be empty'),
 	language: z.enum([
-		"javascript",
-		"typescript",
-		"python",
-		"java",
-		"go",
-		"rust",
-		"csharp",
-		"php",
-		"ruby",
+		'javascript',
+		'typescript',
+		'python',
+		'java',
+		'go',
+		'rust',
+		'csharp',
+		'php',
+		'ruby',
 	]),
 	documentationType: z.enum([
-		"api",
-		"readme",
-		"tutorial",
-		"reference",
-		"guide",
+		'api',
+		'readme',
+		'tutorial',
+		'reference',
+		'guide',
 	]),
-	outputFormat: z.enum(["markdown", "html", "rst", "docstring", "jsdoc"]),
+	outputFormat: z.enum(['markdown', 'html', 'rst', 'docstring', 'jsdoc']),
 	includeExamples: z.boolean().default(true),
 	includeTypes: z.boolean().optional().default(true),
 	audience: z
-		.enum(["developer", "end-user", "technical-writer", "beginner"])
+		.enum(['developer', 'end-user', 'technical-writer', 'beginner'])
 		.optional()
-		.default("developer"),
+		.default('developer'),
 	style: z
-		.enum(["formal", "casual", "tutorial", "reference"])
+		.enum(['formal', 'casual', 'tutorial', 'reference'])
 		.optional()
-		.default("formal"),
+		.default('formal'),
 	detailLevel: z
-		.enum(["minimal", "standard", "comprehensive"])
+		.enum(['minimal', 'standard', 'comprehensive'])
 		.optional()
-		.default("standard"),
+		.default('standard'),
 	seed: z.number().int().positive().optional(),
 	maxTokens: z.number().int().positive().max(4096).optional(),
 });
@@ -70,14 +70,14 @@ export const documentationOutputSchema = z.object({
 		z.object({
 			title: z.string(),
 			type: z.enum([
-				"overview",
-				"function",
-				"class",
-				"interface",
-				"installation",
-				"usage",
-				"example",
-				"reference",
+				'overview',
+				'function',
+				'class',
+				'interface',
+				'installation',
+				'usage',
+				'example',
+				'reference',
 			]),
 			content: z.string(),
 			examples: z.array(z.string()).default([]),
@@ -95,7 +95,7 @@ export const documentationOutputSchema = z.object({
 			sectionsCount: z.number().optional(),
 			hasExamples: z.boolean().optional(),
 			hasTypes: z.boolean().optional(),
-			complexity: z.enum(["low", "medium", "high"]).optional(),
+			complexity: z.enum(['low', 'medium', 'high']).optional(),
 			hasAsyncOperations: z.boolean().optional(),
 			hasErrorHandling: z.boolean().optional(),
 		})
@@ -113,7 +113,7 @@ export interface DocumentationAgentConfig {
 	mcpClient: MCPClient;
 	timeout?: number;
 	maxRetries?: number;
-	memoryPolicy?: import("../lib/types.js").MemoryPolicy;
+	memoryPolicy?: import('../lib/types.js').MemoryPolicy;
 }
 
 /**
@@ -124,13 +124,13 @@ export const createDocumentationAgent = (
 ): Agent<DocumentationInput, DocumentationOutput> => {
 	// Validate dependencies
 	if (!config.provider) {
-		throw new Error("Provider is required");
+		throw new Error('Provider is required');
 	}
 	if (!config.eventBus) {
-		throw new Error("EventBus is required");
+		throw new Error('EventBus is required');
 	}
 	if (!config.mcpClient) {
-		throw new Error("MCPClient is required");
+		throw new Error('MCPClient is required');
 	}
 
 	const agentId = generateAgentId();
@@ -139,109 +139,109 @@ export const createDocumentationAgent = (
 
 	return {
 		id: agentId,
-		name: "documentation-agent",
-		capabilities: [{
-			name: "documentation-generation",
-			description: "Generates comprehensive technical documentation for code",
-		}],
+		name: 'documentation-agent',
+		capability: 'documentation',
+		inputSchema: documentationInputSchema,
+		outputSchema: documentationOutputSchema,
+		capabilities: [
+			{
+				name: 'documentation-generation',
+				description: 'Generates comprehensive technical documentation for code',
+			},
+		],
 
 		execute: async (
-			context: ExecutionContext<DocumentationInput>,
+			context: ExecutionContext<DocumentationInput> | DocumentationInput,
 		): Promise<GenerateResult<DocumentationOutput>> => {
-			const { input } = context;
+			const input = (context as any && (context as any).input)
+				? (context as any).input
+				: (context as any);
 			const traceId = generateTraceId();
 			const startTime = Date.now();
 
 			// Validate input
-			const validatedInput = validateSchema(
-				documentationInputSchema,
-				input,
-			);
+			const validatedInput = validateSchema(documentationInputSchema, input);
 
 			// Add defaults for optional fields
 			const inputWithDefaults = {
 				...validatedInput,
 				includeExamples: validatedInput.includeExamples ?? true,
 				includeTypes: validatedInput.includeTypes ?? true,
-				detailLevel: validatedInput.detailLevel ?? "comprehensive",
-				audience: validatedInput.audience ?? "developer",
-				style: validatedInput.style ?? "formal",
+				detailLevel: validatedInput.detailLevel ?? 'comprehensive',
+				audience: validatedInput.audience ?? 'developer',
+				style: validatedInput.style ?? 'formal',
 			};
 
-			// Emit agent started event
-                        const createEvent = (type: string, data: any) => ({
-                                specversion: "1.0",
-                                id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                                type,
-                                data,
-                                timestamp: new Date().toISOString(),
-                                source: "documentation-agent",
-                        });
-
-			config.eventBus.publish(createEvent("agent.started", {
-				agentId,
-				traceId,
-				capability: "documentation",
-				input: validatedInput,
+			// Emit agent started event (unless suppress)
+			const createEvent = (type: string, data: any) => ({
+				specversion: '1.0',
+				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+				type,
+				data,
 				timestamp: new Date().toISOString(),
-			}));
+				source: 'documentation-agent',
+			});
+
+			if (!(validatedInput as any)._suppressLifecycle) {
+				config.eventBus.publish(
+					createEvent('agent.started', {
+						agentId,
+						traceId,
+						capability: 'documentation',
+						input: validatedInput,
+						timestamp: new Date().toISOString(),
+					}),
+				);
+			}
 
 			try {
 				const result = await withTimeout(
 					generateDocumentation(inputWithDefaults, config),
-					timeout
+					timeout,
 				);
 
-				const executionTime = Date.now() - startTime;
+            const executionTime = Math.max(1, Date.now() - startTime);
 
-				// Emit agent completed event
-                                config.eventBus.publish(
-                                        createEvent("agent.completed", {
-                                                agentId,
-                                                traceId,
-                                                capability: "documentation",
-                                                result,
-                                                evidence: [],
-                                                metrics: {
-                                                        latencyMs: executionTime,
-                                                        tokensUsed: estimateTokens(
-                                                                validatedInput.sourceCode,
-                                                        ),
-                                                        sectionsCount: result.sections.length,
-                                                },
-                                                timestamp: new Date().toISOString(),
-                                        }),
-                                );
+				if (!(validatedInput as any)._suppressLifecycle) {
+					config.eventBus.publish(
+						createEvent('agent.completed', {
+							agentId,
+							traceId,
+							capability: 'documentation',
+							result,
+							evidence: [],
+							metrics: {
+								latencyMs: executionTime,
+								tokensUsed: estimateTokens(validatedInput.sourceCode),
+								sectionsCount: result.sections.length,
+							},
+							timestamp: new Date().toISOString(),
+						}),
+					);
+				}
 
-				return {
-					content: `Documentation generated: ${result.sections.length} sections`,
-					data: result,
-					metadata: {
-						agentId,
-						traceId,
-						executionTime,
-						tokensUsed: estimateTokens(validatedInput.sourceCode),
-					},
-				};
+				return result;
 			} catch (error) {
-				const executionTime = Date.now() - startTime;
+                const executionTime = Math.max(1, Date.now() - startTime);
 
 				// Emit agent failed event
-				config.eventBus.publish(createEvent("agent.failed", {
-					agentId,
-					traceId,
-					capability: "documentation",
-					error: error instanceof Error ? error.message : "Unknown error",
-					errorCode: (error as any)?.code || undefined,
-					status:
-						typeof (error as any)?.status === "number"
-							? (error as any)?.status
-							: undefined,
-					metrics: {
-						latencyMs: executionTime,
-					},
-					timestamp: new Date().toISOString(),
-				}));
+				config.eventBus.publish(
+					createEvent('agent.failed', {
+						agentId,
+						traceId,
+						capability: 'documentation',
+						error: error instanceof Error ? error.message : 'Unknown error',
+						errorCode: (error as any)?.code || undefined,
+						status:
+							typeof (error as any)?.status === 'number'
+								? (error as any)?.status
+								: undefined,
+						metrics: {
+							latencyMs: executionTime,
+						},
+						timestamp: new Date().toISOString(),
+					}),
+				);
 
 				throw error;
 			}
@@ -278,7 +278,7 @@ const generateDocumentation = async (
 			calculateMaxTokens(sourceCode, documentationType, detailLevel),
 			input.maxTokens ?? 4096,
 		),
-		stop: ["```\n\n", "---END---", "</doc>"],
+		stop: ['```\n\n', '---END---', '</doc>'],
 		systemPrompt: sanitizeText(
 			buildSystemPrompt(documentationType, outputFormat, audience, style),
 		),
@@ -433,23 +433,23 @@ Your goal is to create documentation that helps users understand and effectively
 const getStyleGuide = (style: string, audience: string): string => {
 	const guides = {
 		formal:
-			"Use professional, precise language. Avoid colloquialisms. Structure content logically.",
+			'Use professional, precise language. Avoid colloquialisms. Structure content logically.',
 		casual:
-			"Use friendly, conversational tone. Include helpful tips and context.",
+			'Use friendly, conversational tone. Include helpful tips and context.',
 		tutorial:
-			"Use step-by-step instructions. Include learning objectives and checkpoints.",
+			'Use step-by-step instructions. Include learning objectives and checkpoints.',
 		reference:
-			"Use concise, factual descriptions. Focus on completeness and accuracy.",
+			'Use concise, factual descriptions. Focus on completeness and accuracy.',
 	};
 
 	const audienceNotes = {
 		developer:
-			"Assume familiarity with programming concepts. Include technical details.",
-		"end-user": "Explain technical concepts clearly. Focus on practical usage.",
-		"technical-writer":
-			"Include documentation best practices and style considerations.",
+			'Assume familiarity with programming concepts. Include technical details.',
+		'end-user': 'Explain technical concepts clearly. Focus on practical usage.',
+		'technical-writer':
+			'Include documentation best practices and style considerations.',
 		beginner:
-			"Define technical terms. Provide additional context and explanations.",
+			'Define technical terms. Provide additional context and explanations.',
 	};
 
 	return `Style Guide: ${guides[style as keyof typeof guides] || guides.formal}\nAudience: ${audienceNotes[audience as keyof typeof audienceNotes] || audienceNotes.developer}`;
@@ -461,12 +461,12 @@ const getStyleGuide = (style: string, audience: string): string => {
 const getFormatSpecifications = (format: string): string => {
 	const specs = {
 		markdown:
-			"Use proper Markdown syntax: # for headers, **bold**, *italic*, `code`, ```blocks```",
-		html: "Use semantic HTML tags: <h1>, <p>, <code>, <pre>, <ul>, <ol>, <strong>, <em>",
-		rst: "Use reStructuredText syntax: ===== for headers, **bold**, *italic*, ``code``",
+			'Use proper Markdown syntax: # for headers, **bold**, *italic*, `code`, ```blocks```',
+		html: 'Use semantic HTML tags: <h1>, <p>, <code>, <pre>, <ul>, <ol>, <strong>, <em>',
+		rst: 'Use reStructuredText syntax: ===== for headers, **bold**, *italic*, ``code``',
 		docstring:
 			'Follow language-specific docstring conventions (Python: """, Java: /** */)',
-		jsdoc: "Use JSDoc syntax: /** */, @param, @returns, @example, @throws",
+		jsdoc: 'Use JSDoc syntax: /** */, @param, @returns, @example, @throws',
 	};
 
 	return `Format Requirements: ${specs[format as keyof typeof specs] || specs.markdown}`;
@@ -538,7 +538,7 @@ const parseDocumentationResponse = (
 		if (jsonMatch) {
 			parsedResponse = JSON.parse(jsonMatch[0]) as ParsedDocResponse;
 		} else {
-			throw new Error("No JSON found in response");
+			throw new Error('No JSON found in response');
 		}
 	} catch (error: unknown) {
 		// Fallback: create structured response from raw text, include parse error
@@ -559,14 +559,26 @@ const parseDocumentationResponse = (
 		parsedResponse.sections ||
 		generateDefaultSections(format, language, documentationType)
 	).map((s: ParsedSection) => {
-		const title = typeof s.title === "string" ? s.title : String(s.title ?? "");
-		const type = (typeof s.type === "string" ? s.type : String(s.type ?? "overview")) as "function" | "reference" | "overview" | "class" | "interface" | "installation" | "usage" | "example";
+		const title = typeof s.title === 'string' ? s.title : String(s.title ?? '');
+		const type = (
+			typeof s.type === 'string' ? s.type : String(s.type ?? 'overview')
+		) as
+			| 'function'
+			| 'reference'
+			| 'overview'
+			| 'class'
+			| 'interface'
+			| 'installation'
+			| 'usage'
+			| 'example';
 		const content =
-			typeof s.content === "string" ? s.content : String(s.content ?? "");
+			typeof s.content === 'string' ? s.content : String(s.content ?? '');
 		const examples = Array.isArray(s.examples) ? s.examples.map(String) : [];
-		const parameters = Array.isArray(s.parameters) ? s.parameters.map(String) : [];
+		const parameters = Array.isArray(s.parameters)
+			? s.parameters.map(String)
+			: [];
 		let returnType: string | null | undefined;
-		if (typeof s.returnType === "string") {
+		if (typeof s.returnType === 'string') {
 			returnType = s.returnType;
 		} else if (s.returnType === null) {
 			returnType = null;
@@ -583,7 +595,7 @@ const parseDocumentationResponse = (
 		documentationType,
 		metadata: {
 			generatedAt: new Date().toISOString(),
-			wordCount: countWords(sections[0]?.content || ""),
+			wordCount: countWords(sections[0]?.content || ''),
 			sectionsCount: sections.length || 1,
 			hasExamples: sections.some((s) => s.examples.length > 0),
 			hasTypes: sections.some(
@@ -609,7 +621,7 @@ const createFallbackDocumentationResponse = (
 		sections: [
 			{
 				title: `${documentationType} Documentation`,
-				type: "overview" as const,
+				type: 'overview' as const,
 				content: formatContent(text, format),
 				examples: [],
 				parameters: [],
@@ -634,7 +646,7 @@ const generateDefaultSections = (
 ) => [
 	{
 		title: `${language} ${documentationType}`,
-		type: "overview" as const,
+		type: 'overview' as const,
 		content: formatContent(
 			`Generated ${documentationType} documentation for ${language} code.`,
 			format,
@@ -650,15 +662,15 @@ const generateDefaultSections = (
  */
 const formatContent = (text: string, format: string): string => {
 	switch (format) {
-		case "markdown":
+		case 'markdown':
 			return `# Documentation\n\n${text}`;
-		case "html":
+		case 'html':
 			return `<h1>Documentation</h1>\n<p>${text}</p>`;
-		case "rst":
+		case 'rst':
 			return `Documentation\n=============\n\n${text}`;
-		case "jsdoc":
-			return `/**\n * ${text.replace(/\n/g, "\n * ")}\n */`;
-		case "docstring":
+		case 'jsdoc':
+			return `/**\n * ${text.replace(/\n/g, '\n * ')}\n */`;
+		case 'docstring':
 			return `"""\n${text}\n"""`;
 		default:
 			return text;

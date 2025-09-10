@@ -33,8 +33,8 @@ determinism:
 `;
 
 export interface EnsureTestConfigResult {
-    baseDir: string;
-    configPath: string;
+	baseDir: string;
+	configPath: string;
 }
 
 /**
@@ -47,67 +47,67 @@ export interface EnsureTestConfigResult {
  * Returns paths so callers can inspect or add supplemental test fixtures.
  */
 export async function ensureTestASBRConfig(): Promise<EnsureTestConfigResult> {
-    if (__ASBR_CONFIG_READY__ && __ASBR_TEST_BASE__) {
-        return {
-            baseDir: __ASBR_TEST_BASE__,
-            configPath: join(
-                process.env.XDG_CONFIG_HOME || join(__ASBR_TEST_BASE__, 'config'),
-                'cortex',
-                'asbr',
-                'config.yaml',
-            ),
-        };
-    }
+	if (__ASBR_CONFIG_READY__ && __ASBR_TEST_BASE__) {
+		return {
+			baseDir: __ASBR_TEST_BASE__,
+			configPath: join(
+				process.env.XDG_CONFIG_HOME || join(__ASBR_TEST_BASE__, 'config'),
+				'cortex',
+				'asbr',
+				'config.yaml',
+			),
+		};
+	}
 
-    process.env.NODE_ENV = process.env.NODE_ENV || 'test';
-    process.env.ASBR_TEST_MODE = 'true';
+	process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+	process.env.ASBR_TEST_MODE = 'true';
 
-    // If user already set XDG vars and config exists, reuse.
-    if (process.env.XDG_CONFIG_HOME) {
-        const existing = join(
-            process.env.XDG_CONFIG_HOME,
-            'cortex',
-            'asbr',
-            'config.yaml',
-        );
-        if (existsSync(existing)) {
-            __ASBR_CONFIG_READY__ = true;
-            return { baseDir: process.env.XDG_CONFIG_HOME, configPath: existing };
-        }
-    }
+	// If user already set XDG vars and config exists, reuse.
+	if (process.env.XDG_CONFIG_HOME) {
+		const existing = join(
+			process.env.XDG_CONFIG_HOME,
+			'cortex',
+			'asbr',
+			'config.yaml',
+		);
+		if (existsSync(existing)) {
+			__ASBR_CONFIG_READY__ = true;
+			return { baseDir: process.env.XDG_CONFIG_HOME, configPath: existing };
+		}
+	}
 
-    // Create fresh isolated base once per test process
-    if (!__ASBR_TEST_BASE__) {
-        __ASBR_TEST_BASE__ = await mkdtemp(join(tmpdir(), 'asbr-unit-'));
-    }
+	// Create fresh isolated base once per test process
+	if (!__ASBR_TEST_BASE__) {
+		__ASBR_TEST_BASE__ = await mkdtemp(join(tmpdir(), 'asbr-unit-'));
+	}
 
-    const base = __ASBR_TEST_BASE__;
-    const xdgConfigHome = join(base, 'config');
-    const xdgDataHome = join(base, 'data');
-    const xdgStateHome = join(base, 'state');
-    const xdgCacheHome = join(base, 'cache');
+	const base = __ASBR_TEST_BASE__;
+	const xdgConfigHome = join(base, 'config');
+	const xdgDataHome = join(base, 'data');
+	const xdgStateHome = join(base, 'state');
+	const xdgCacheHome = join(base, 'cache');
 
-    process.env.XDG_CONFIG_HOME = xdgConfigHome;
-    process.env.XDG_DATA_HOME = xdgDataHome;
-    process.env.XDG_STATE_HOME = xdgStateHome;
-    process.env.XDG_CACHE_HOME = xdgCacheHome;
+	process.env.XDG_CONFIG_HOME = xdgConfigHome;
+	process.env.XDG_DATA_HOME = xdgDataHome;
+	process.env.XDG_STATE_HOME = xdgStateHome;
+	process.env.XDG_CACHE_HOME = xdgCacheHome;
 
-    const configDir = join(xdgConfigHome, 'cortex', 'asbr');
-    await mkdir(configDir, { recursive: true });
+	const configDir = join(xdgConfigHome, 'cortex', 'asbr');
+	await mkdir(configDir, { recursive: true });
 
-    const configPath = join(configDir, 'config.yaml');
-    if (!existsSync(configPath)) {
-        await writeFile(configPath, MINIMAL_CONFIG_YAML, 'utf-8');
-    }
+	const configPath = join(configDir, 'config.yaml');
+	if (!existsSync(configPath)) {
+		await writeFile(configPath, MINIMAL_CONFIG_YAML, 'utf-8');
+	}
 
-    // Optional allowlist seed (empty array)
-    const allowlistPath = join(configDir, 'mcp-allowlist.yaml');
-    if (!existsSync(allowlistPath)) {
-        await writeFile(allowlistPath, '[]\n', 'utf-8').catch(() => { });
-    }
+	// Optional allowlist seed (empty array)
+	const allowlistPath = join(configDir, 'mcp-allowlist.yaml');
+	if (!existsSync(allowlistPath)) {
+		await writeFile(allowlistPath, '[]\n', 'utf-8').catch(() => {});
+	}
 
-    __ASBR_CONFIG_READY__ = true;
-    return { baseDir: base, configPath };
+	__ASBR_CONFIG_READY__ = true;
+	return { baseDir: base, configPath };
 }
 
 export default ensureTestASBRConfig;

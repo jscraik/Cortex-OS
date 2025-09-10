@@ -8,8 +8,8 @@
  * @maintainer @jamiescottcraik
  */
 
-import express from "express";
-import { ASBRAIMcpServer } from "./asbr-ai-mcp-server";
+import express from 'express';
+import { ASBRAIMcpServer } from './asbr-ai-mcp-server';
 
 /**
  * ASBR AI MCP Integration - Automatically exposes AI capabilities as MCP tools
@@ -28,7 +28,7 @@ export class ASBRAIMcpIntegration {
 	 */
 	async autoRegister(): Promise<void> {
 		if (this.isRegistered) {
-			console.log("✅ ASBR AI capabilities already registered in MCP system");
+			console.log('✅ ASBR AI capabilities already registered in MCP system');
 			return;
 		}
 
@@ -39,17 +39,17 @@ export class ASBRAIMcpIntegration {
 			// Check server health
 			const health = await this.mcpServer.getHealth();
 
-			if (health.status === "healthy") {
-				console.log("✅ ASBR AI MCP server initialized successfully");
+			if (health.status === 'healthy') {
+				console.log('✅ ASBR AI MCP server initialized successfully');
 				console.log(`   - Status: ${health.status}`);
 				console.log(`   - Available tools: ${health.tools}`);
-				console.log(`   - AI features: ${health.features.join(", ")}`);
+				console.log(`   - AI features: ${health.features.join(', ')}`);
 				this.isRegistered = true;
 			} else {
-				console.warn("⚠️ ASBR AI MCP server health check failed");
+				console.warn('⚠️ ASBR AI MCP server health check failed');
 			}
 		} catch (error) {
-			console.error("❌ Error during ASBR AI MCP auto-registration:", error);
+			console.error('❌ Error during ASBR AI MCP auto-registration:', error);
 			throw error;
 		}
 	}
@@ -63,7 +63,7 @@ export class ASBRAIMcpIntegration {
 		app.use(express.json());
 
 		// MCP tools/list endpoint
-		app.get("/mcp/tools/list", async (_req, res) => {
+		app.get('/mcp/tools/list', async (_req, res) => {
 			try {
 				const tools = await this.mcpServer.listTools();
 				res.json(tools);
@@ -71,14 +71,14 @@ export class ASBRAIMcpIntegration {
 				res.status(500).json({
 					error: {
 						message: `MCP tools list error: ${error}`,
-						type: "mcp_tools_error",
+						type: 'mcp_tools_error',
 					},
 				});
 			}
 		});
 
 		// MCP tools/call endpoint
-		app.post("/mcp/tools/call", async (req, res) => {
+		app.post('/mcp/tools/call', async (req, res) => {
 			try {
 				const response = await this.mcpServer.callTool(req.body);
 				if (response.isError) {
@@ -90,14 +90,14 @@ export class ASBRAIMcpIntegration {
 				res.status(500).json({
 					error: {
 						message: `MCP tool call error: ${error}`,
-						type: "mcp_call_error",
+						type: 'mcp_call_error',
 					},
 				});
 			}
 		});
 
 		// Health check endpoint
-		app.get("/health", async (_req, res) => {
+		app.get('/health', async (_req, res) => {
 			try {
 				const health = await this.mcpServer.getHealth();
 				res.json(health);
@@ -107,12 +107,12 @@ export class ASBRAIMcpIntegration {
 		});
 
 		// MCP capabilities endpoint
-		app.get("/mcp/capabilities", async (_req, res) => {
+		app.get('/mcp/capabilities', async (_req, res) => {
 			try {
 				const capabilities = await this.mcpServer.callTool({
-					method: "tools/call",
+					method: 'tools/call',
 					params: {
-						name: "ai_get_capabilities",
+						name: 'ai_get_capabilities',
 						arguments: {},
 					},
 				});
@@ -123,12 +123,12 @@ export class ASBRAIMcpIntegration {
 		});
 
 		// Knowledge base stats endpoint
-		app.get("/mcp/knowledge/stats", async (_req, res) => {
+		app.get('/mcp/knowledge/stats', async (_req, res) => {
 			try {
 				const stats = await this.mcpServer.callTool({
-					method: "tools/call",
+					method: 'tools/call',
 					params: {
-						name: "ai_get_knowledge_stats",
+						name: 'ai_get_knowledge_stats',
 						arguments: {},
 					},
 				});
@@ -139,7 +139,7 @@ export class ASBRAIMcpIntegration {
 		});
 
 		await new Promise<void>((resolve) => {
-			this.httpServer = app.listen(port, "127.0.0.1", () => {
+			this.httpServer = app.listen(port, '127.0.0.1', () => {
 				console.log(
 					`🚀 ASBR AI MCP server running on http://127.0.0.1:${port}`,
 				);
@@ -171,7 +171,7 @@ export class ASBRAIMcpIntegration {
 
 		try {
 			const health = await this.mcpServer.getHealth();
-			return health.status === "healthy";
+			return health.status === 'healthy';
 		} catch {
 			return false;
 		}
@@ -185,7 +185,7 @@ export class ASBRAIMcpIntegration {
 			this.httpServer.close();
 			this.httpServer = undefined;
 			this.isRegistered = false;
-			console.log("🛑 ASBR AI MCP server stopped");
+			console.log('🛑 ASBR AI MCP server stopped');
 		}
 	}
 
@@ -203,25 +203,25 @@ export class ASBRAIMcpIntegration {
 
 		const testCases = [
 			{
-				name: "ai_get_capabilities",
+				name: 'ai_get_capabilities',
 				args: {},
 			},
 			{
-				name: "ai_get_knowledge_stats",
+				name: 'ai_get_knowledge_stats',
 				args: {},
 			},
 			{
-				name: "ai_generate_text",
+				name: 'ai_generate_text',
 				args: {
-					prompt: "Hello, this is a test of the MLX integration.",
+					prompt: 'Hello, this is a test of the MLX integration.',
 					maxTokens: 50,
 				},
 			},
 			{
-				name: "ai_calculate_similarity",
+				name: 'ai_calculate_similarity',
 				args: {
-					text1: "Machine learning is a subset of artificial intelligence",
-					text2: "AI includes machine learning as one of its components",
+					text1: 'Machine learning is a subset of artificial intelligence',
+					text2: 'AI includes machine learning as one of its components',
 				},
 			},
 		];
@@ -229,7 +229,7 @@ export class ASBRAIMcpIntegration {
 		for (const testCase of testCases) {
 			try {
 				const response = await this.mcpServer.callTool({
-					method: "tools/call",
+					method: 'tools/call',
 					params: {
 						name: testCase.name,
 						arguments: testCase.args,
@@ -240,14 +240,14 @@ export class ASBRAIMcpIntegration {
 					failed++;
 					results.push({
 						tool: testCase.name,
-						status: "failed",
+						status: 'failed',
 						error: response.content[0]?.text,
 					});
 				} else {
 					passed++;
 					results.push({
 						tool: testCase.name,
-						status: "passed",
+						status: 'passed',
 						response: `${response.content[0]?.text?.substring(0, 100)}...`,
 					});
 				}
@@ -255,7 +255,7 @@ export class ASBRAIMcpIntegration {
 				failed++;
 				results.push({
 					tool: testCase.name,
-					status: "error",
+					status: 'error',
 					error: String(error),
 				});
 			}
@@ -275,24 +275,24 @@ export const asbrAIMcpIntegration = new ASBRAIMcpIntegration();
  */
 export const ASBR_AI_MCP_TOOLS = {
 	// Text generation tools
-	AI_GENERATE_TEXT: "ai_generate_text",
-	AI_RAG_QUERY: "ai_rag_query",
+	AI_GENERATE_TEXT: 'ai_generate_text',
+	AI_RAG_QUERY: 'ai_rag_query',
 
 	// Knowledge management tools
-	AI_SEARCH_KNOWLEDGE: "ai_search_knowledge",
-	AI_ADD_KNOWLEDGE: "ai_add_knowledge",
-	AI_GET_KNOWLEDGE_STATS: "ai_get_knowledge_stats",
+	AI_SEARCH_KNOWLEDGE: 'ai_search_knowledge',
+	AI_ADD_KNOWLEDGE: 'ai_add_knowledge',
+	AI_GET_KNOWLEDGE_STATS: 'ai_get_knowledge_stats',
 
 	// Embedding and similarity tools
-	AI_GET_EMBEDDING: "ai_get_embedding",
-	AI_CALCULATE_SIMILARITY: "ai_calculate_similarity",
+	AI_GET_EMBEDDING: 'ai_get_embedding',
+	AI_CALCULATE_SIMILARITY: 'ai_calculate_similarity',
 
 	// ASBR evidence tools
-	ASBR_COLLECT_ENHANCED_EVIDENCE: "asbr_collect_enhanced_evidence",
-	ASBR_FACT_CHECK_EVIDENCE: "asbr_fact_check_evidence",
+	ASBR_COLLECT_ENHANCED_EVIDENCE: 'asbr_collect_enhanced_evidence',
+	ASBR_FACT_CHECK_EVIDENCE: 'asbr_fact_check_evidence',
 
 	// System tools
-	AI_GET_CAPABILITIES: "ai_get_capabilities",
+	AI_GET_CAPABILITIES: 'ai_get_capabilities',
 } as const;
 
 /**
@@ -304,7 +304,7 @@ export async function callASBRAITool(
 ): Promise<any> {
 	try {
 		const response = await asbrAIMcpIntegration.getMcpServer().callTool({
-			method: "tools/call",
+			method: 'tools/call',
 			params: {
 				name: toolName,
 				arguments: args,
@@ -312,7 +312,7 @@ export async function callASBRAITool(
 		});
 
 		if (response.isError) {
-			throw new Error(response.content[0]?.text || "Unknown MCP tool error");
+			throw new Error(response.content[0]?.text || 'Unknown MCP tool error');
 		}
 
 		// Parse JSON response if available

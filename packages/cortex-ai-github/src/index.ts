@@ -3,11 +3,11 @@
  * Production-ready AI automation for GitHub repositories
  */
 
-export * from "./core/ai-github-app.js";
+export * from './core/ai-github-app.js';
 // Re-export main classes for convenience
-export { CortexAiGitHubApp } from "./core/ai-github-app.js";
-export * from "./server/webhook-server.js";
-export { CortexWebhookServer } from "./server/webhook-server.js";
+export { CortexAiGitHubApp } from './core/ai-github-app.js';
+export * from './server/webhook-server.js';
+export { CortexWebhookServer } from './server/webhook-server.js';
 export type {
 	AITaskParams,
 	AITaskResult,
@@ -16,5 +16,5 @@ export type {
 	GitHubContext,
 	GitHubModel,
 	GitHubModelsConfig,
-} from "./types/github-models.js";
-export * from "./types/github-models.js";
+} from './types/github-models.js';
+export * from './types/github-models.js';

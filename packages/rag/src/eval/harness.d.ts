@@ -1,21 +1,30 @@
-import type { Embedder, Store } from "../lib";
-import { type EvalSummary } from "./metrics";
+import type { Embedder, Store } from '../lib';
+import { type EvalSummary } from './metrics';
 export interface GoldenItem {
-    id: string;
-    text: string;
+	id: string;
+	text: string;
 }
 export interface GoldenQuery {
-    q: string;
-    relevantDocIds: string[];
+	q: string;
+	relevantDocIds: string[];
 }
 export interface GoldenDataset {
-    name?: string;
-    docs: GoldenItem[];
-    queries: GoldenQuery[];
+	name?: string;
+	docs: GoldenItem[];
+	queries: GoldenQuery[];
 }
 export interface RunEvalOptions {
-    k: number;
+	k: number;
 }
-export declare function prepareStore(dataset: GoldenDataset, E: Embedder, S: Store): Promise<void>;
-export declare function runRetrievalEval(dataset: GoldenDataset, E: Embedder, S: Store, { k }: RunEvalOptions): Promise<EvalSummary>;
+export declare function prepareStore(
+	dataset: GoldenDataset,
+	E: Embedder,
+	S: Store,
+): Promise<void>;
+export declare function runRetrievalEval(
+	dataset: GoldenDataset,
+	E: Embedder,
+	S: Store,
+	{ k }: RunEvalOptions,
+): Promise<EvalSummary>;
 //# sourceMappingURL=harness.d.ts.map

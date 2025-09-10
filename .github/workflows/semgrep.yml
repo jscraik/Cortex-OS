@@ -13,14 +13,27 @@ jobs:
       SEMGREP_SEVERITY_LEVEL: ERROR
     steps:
       - uses: actions/checkout@v4
-      - uses: semgrep/ci@v1
+      - name: Cache Semgrep rules (local memory)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/semgrep
+            ~/.semgrep
+          key: ${{ runner.os }}-semgrep-${{ hashFiles('.semgrep/*.yaml', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-semgrep-
+      - uses: returntocorp/semgrep-action@v1
         with:
           config: |
+            .semgrep/owasp-precise.yaml
+            .semgrep/owasp-top-10-improved.yaml
             .semgrep/owasp-llm-top-ten.yaml
             .semgrep/mitre-atlas.yaml
+          sarif: true
+        env:
+          SEMGREP_SEVERITY_LEVEL: ERROR
       - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
-

@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import crypto from 'node:crypto';
 
 /**
  * Generate deterministic mock embeddings for tests.
@@ -9,7 +9,7 @@ export function generateMockEmbeddings(
 	dimensions = 1024,
 ): number[][] {
 	return texts.map((text) => {
-		const hash = crypto.createHash("md5").update(text).digest("hex");
+		const hash = crypto.createHash('md5').update(text).digest('hex');
 		const embedding: number[] = [];
 		for (let i = 0; i < dimensions; i++) {
 			const byte = parseInt(hash.charAt(i % hash.length), 16) || 0;

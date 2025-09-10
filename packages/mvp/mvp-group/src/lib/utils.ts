@@ -3,10 +3,10 @@
  * @description Utility functions for file operations and process execution
  */
 
-import { exec } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
-import { promisify } from "node:util";
+import { exec } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
 export const execAsync = promisify(exec);
 
@@ -16,30 +16,30 @@ export const fileExists = (filePath: string): boolean => {
 
 export const readJsonFile = <T = any>(filePath: string): T => {
 	try {
-		const content = fs.readFileSync(filePath, "utf8");
+		const content = fs.readFileSync(filePath, 'utf8');
 		return JSON.parse(content);
 	} catch (error) {
-		if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+		if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
 			throw new Error(`JSON file not found: ${filePath}`);
 		}
 		if (error instanceof SyntaxError) {
 			throw new Error(`Invalid JSON in file: ${filePath} - ${error.message}`);
 		}
 		throw new Error(
-			`Failed to read JSON file: ${filePath} - ${error instanceof Error ? error.message : "Unknown error"}`,
+			`Failed to read JSON file: ${filePath} - ${error instanceof Error ? error.message : 'Unknown error'}`,
 		);
 	}
 };
 
 export const readFileSync = (filePath: string): string => {
 	try {
-		return fs.readFileSync(filePath, "utf8");
+		return fs.readFileSync(filePath, 'utf8');
 	} catch (error) {
-		if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+		if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
 			throw new Error(`File not found: ${filePath}`);
 		}
 		throw new Error(
-			`Failed to read file: ${filePath} - ${error instanceof Error ? error.message : "Unknown error"}`,
+			`Failed to read file: ${filePath} - ${error instanceof Error ? error.message : 'Unknown error'}`,
 		);
 	}
 };
@@ -65,11 +65,11 @@ export const getProjectRoot = (): string => {
 };
 
 export const hasPackageJson = (projectRoot: string): boolean => {
-	return fileExists(createFilePath(projectRoot, "package.json"));
+	return fileExists(createFilePath(projectRoot, 'package.json'));
 };
 
 export const hasPyprojectToml = (projectRoot: string): boolean => {
-	return fileExists(createFilePath(projectRoot, "pyproject.toml"));
+	return fileExists(createFilePath(projectRoot, 'pyproject.toml'));
 };
 
 export const truncateString = (str: string, maxLength: number): string => {

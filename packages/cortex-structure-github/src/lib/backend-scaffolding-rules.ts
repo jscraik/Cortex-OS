@@ -21,13 +21,13 @@ export interface BackendFile {
 // Express.js Templates
 export const EXPRESS_TEMPLATES: BackendTemplate[] = [
 	{
-		name: "express-controller",
-		description: "Express.js controller with TypeScript",
-		framework: ["express"],
-		language: ["typescript"],
+		name: 'express-controller',
+		description: 'Express.js controller with TypeScript',
+		framework: ['express'],
+		language: ['typescript'],
 		files: [
 			{
-				path: "src/controllers/{{controllerName}}.controller.ts",
+				path: 'src/controllers/{{controllerName}}.controller.ts',
 				content: `import { Request, Response, NextFunction } from 'express';
 import { {{ServiceName}}Service } from '../services/{{serviceName}}.service';
 import { validate{{ModelName}} } from '../validators/{{modelName}}.validator';
@@ -157,7 +157,7 @@ export class {{ControllerName}}Controller {
 `,
 			},
 			{
-				path: "src/services/{{serviceName}}.service.ts",
+				path: 'src/services/{{serviceName}}.service.ts',
 				content: `import { {{ModelName}} } from '../models/{{modelName}}.model';
 import { Create{{ModelName}}Dto, Update{{ModelName}}Dto } from '../dto/{{modelName}}.dto';
 
@@ -213,7 +213,7 @@ export class {{ServiceName}}Service {
 `,
 			},
 			{
-				path: "src/routes/{{routeName}}.routes.ts",
+				path: 'src/routes/{{routeName}}.routes.ts',
 				content: `import { Router } from 'express';
 import { {{ControllerName}}Controller } from '../controllers/{{controllerName}}.controller';
 import { auth } from '../middleware/auth.middleware';
@@ -278,13 +278,13 @@ export default router;
 // FastAPI Templates
 export const FASTAPI_TEMPLATES: BackendTemplate[] = [
 	{
-		name: "fastapi-router",
-		description: "FastAPI router with Pydantic models",
-		framework: ["fastapi"],
-		language: ["python"],
+		name: 'fastapi-router',
+		description: 'FastAPI router with Pydantic models',
+		framework: ['fastapi'],
+		language: ['python'],
 		files: [
 			{
-				path: "app/routers/{{router_name}}.py",
+				path: 'app/routers/{{router_name}}.py',
 				content: `from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -366,7 +366,7 @@ async def delete_{{singular_name}}(
 `,
 			},
 			{
-				path: "app/services/{{service_name}}_service.py",
+				path: 'app/services/{{service_name}}_service.py',
 				content: `from typing import List, Optional
 from sqlalchemy.orm import Session
 
@@ -433,13 +433,13 @@ class {{ServiceName}}Service:
 // Go Gin Templates
 export const GIN_TEMPLATES: BackendTemplate[] = [
 	{
-		name: "gin-handler",
-		description: "Go Gin handler with proper structure",
-		framework: ["gin"],
-		language: ["go"],
+		name: 'gin-handler',
+		description: 'Go Gin handler with proper structure',
+		framework: ['gin'],
+		language: ['go'],
 		files: [
 			{
-				path: "internal/handlers/{{handler_name}}.go",
+				path: 'internal/handlers/{{handler_name}}.go',
 				content: `package handlers
 
 import (
@@ -604,7 +604,7 @@ func (h *{{HandlerName}}Handler) Delete{{SingularName}}(c *gin.Context) {
 `,
 			},
 			{
-				path: "internal/services/{{service_name}}.go",
+				path: 'internal/services/{{service_name}}.go',
 				content: `package services
 
 import (
@@ -666,13 +666,13 @@ func (s *{{ServiceName}}Service) Delete(id uint) error {
 // Middleware Templates
 export const MIDDLEWARE_TEMPLATES: BackendTemplate[] = [
 	{
-		name: "auth-middleware",
-		description: "Authentication middleware",
-		framework: ["express", "fastapi", "gin"],
-		language: ["typescript", "python", "go"],
+		name: 'auth-middleware',
+		description: 'Authentication middleware',
+		framework: ['express', 'fastapi', 'gin'],
+		language: ['typescript', 'python', 'go'],
 		files: [
 			{
-				path: "src/middleware/auth.middleware.ts",
+				path: 'src/middleware/auth.middleware.ts',
 				content: `import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../errors/auth.errors';
@@ -747,7 +747,7 @@ function extractToken(req: Request): string | null {
   return null;
 }
 `,
-				conditions: ["typescript"],
+				conditions: ['typescript'],
 			},
 		],
 	},
@@ -761,7 +761,7 @@ export function processBackendTemplate(
 	let processed = template;
 
 	for (const [key, value] of Object.entries(variables)) {
-		const regex = new RegExp(`{{${key}}}`, "g");
+		const regex = new RegExp(`{{${key}}}`, 'g');
 		processed = processed.replace(regex, value);
 	}
 
@@ -771,9 +771,9 @@ export function processBackendTemplate(
 // Case conversion utilities for backend templates
 export function toSnakeCase(str: string): string {
 	return str
-		.replace(/([A-Z])/g, "_$1")
+		.replace(/([A-Z])/g, '_$1')
 		.toLowerCase()
-		.replace(/^_/, "");
+		.replace(/^_/, '');
 }
 
 export function toPascalCase(str: string): string {
@@ -787,9 +787,9 @@ export function toCamelCase(str: string): string {
 
 export function toKebabCase(str: string): string {
 	return str
-		.replace(/([A-Z])/g, "-$1")
+		.replace(/([A-Z])/g, '-$1')
 		.toLowerCase()
-		.replace(/^-/, "");
+		.replace(/^-/, '');
 }
 
 export function generateBackendVariables(
@@ -804,8 +804,8 @@ export function generateBackendVariables(
 		ModelName: pascalCase,
 		modelName: camelCase,
 		model_name: snakeCase,
-		"model-name": kebabCase,
-		MODEL_NAME: modelName.toUpperCase().replace(/[-_]/g, "_"),
+		'model-name': kebabCase,
+		MODEL_NAME: modelName.toUpperCase().replace(/[-_]/g, '_'),
 
 		ServiceName: pascalCase,
 		serviceName: camelCase,
@@ -828,7 +828,7 @@ export function generateBackendVariables(
 		PluralName: `${pascalCase}s`,
 		pluralName: `${camelCase}s`,
 		plural_name: `${snakeCase}s`,
-		"plural-name": `${kebabCase}s`,
+		'plural-name': `${kebabCase}s`,
 
 		SingularName: pascalCase,
 		singular_name: snakeCase,

@@ -18,22 +18,22 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 
 export const CORS_OPTIONS = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
+	origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+	credentials: true,
 };
 
 export const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
 export const RATE_LIMIT_MAX = 100; // requests per window
 
 export const MESSAGE_ROLES = {
-  USER: 'user',
-  ASSISTANT: 'assistant',
-  SYSTEM: 'system',
+	USER: 'user',
+	ASSISTANT: 'assistant',
+	SYSTEM: 'system',
 } as const;
 
 export const TOOL_STATUS = {
-  PENDING: 'pending',
-  RUNNING: 'running',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
+	PENDING: 'pending',
+	RUNNING: 'running',
+	COMPLETED: 'completed',
+	FAILED: 'failed',
 } as const;

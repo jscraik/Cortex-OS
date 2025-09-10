@@ -34,10 +34,10 @@ NC='\033[0m' # No Color
 run_test() {
   local description="$1"
   local test_command="$2"
-  
+
   TOTAL_TESTS=$((TOTAL_TESTS + 1))
   echo -e "${BLUE}[TEST]${NC} $description"
-  
+
   if eval "$test_command" >/dev/null 2>&1; then
     PASSED_TESTS=$((PASSED_TESTS + 1))
     echo -e "  ${GREEN}✅ PASSED${NC}"
@@ -51,10 +51,10 @@ run_test() {
 run_warning_test() {
   local description="$1"
   local test_command="$2"
-  
+
   TOTAL_TESTS=$((TOTAL_TESTS + 1))
   echo -e "${BLUE}[TEST]${NC} $description"
-  
+
   if eval "$test_command" >/dev/null 2>&1; then
     WARNINGS=$((WARNINGS + 1))
     echo -e "  ${YELLOW}⚠️  WARNING${NC}"

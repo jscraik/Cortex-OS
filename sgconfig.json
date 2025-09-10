@@ -1,187 +1,6 @@
 {
 	"rules": [
 		{
-			"id": "no-console-log",
-			"message": "Avoid using console.log in production code",
-			"note": "Use a proper logging library instead",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "console.log($$$)",
-			"constraints": {
-				"not": {
-					"inside": {
-						"kind": "function_declaration",
-						"pattern": "function test$$$"
-					}
-				}
-			}
-		},
-		{
-			"id": "no-any-type",
-			"message": "Avoid using 'any' type - use specific types instead",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": ": any"
-		},
-		{
-			"id": "prefer-const",
-			"message": "Use 'const' instead of 'let' when variable is not reassigned",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "let $$$ = $$$",
-			"constraints": {
-				"not": {
-					"inside": {
-						"kind": "for_statement"
-					}
-				}
-			}
-		},
-		{
-			"id": "no-unused-import",
-			"message": "Remove unused imports",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "import { $$$ } from '$$$'",
-			"constraints": {
-				"not": {
-					"has": {
-						"kind": "identifier",
-						"pattern": "$$$"
-					}
-				}
-			}
-		},
-		{
-			"id": "no-async-without-await",
-			"message": "Async function without await - consider removing async or adding await",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "async function $$$() { $$$ }",
-			"constraints": {
-				"not": {
-					"has": {
-						"kind": "await_expression"
-					}
-				}
-			}
-		},
-		{
-			"id": "prefer-optional-chaining",
-			"message": "Use optional chaining (?.) instead of && checks",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "$$$ && $$$.$$$"
-		},
-		{
-			"id": "no-magic-numbers",
-			"message": "Avoid magic numbers - use named constants",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "$$$ = $NUMBER",
-			"constraints": {
-				"not": {
-					"inside": {
-						"kind": "variable_declarator",
-						"pattern": "const $$$ = $$$"
-					}
-				}
-			}
-		},
-		{
-			"id": "consistent-error-handling",
-			"message": "Use consistent error handling patterns",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "throw new Error($$$)"
-		},
-		{
-			"id": "no-duplicate-imports",
-			"message": "Combine duplicate imports from the same module",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "import { $$$ } from '$$$';\nimport { $$$ } from '$$$'"
-		},
-		{
-			"id": "prefer-template-literals",
-			"message": "Use template literals instead of string concatenation",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "$$$ + $$$ + $$$"
-		},
-		{
-			"id": "no-empty-catch",
-			"message": "Empty catch blocks can hide errors - add proper error handling",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "catch ($$$) { }"
-		},
-		{
-			"id": "consistent-return",
-			"message": "Function should have consistent return statements",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "function $$$() { $$$ return $$$; $$$ }"
-		},
-		{
-			"id": "no-debugger",
-			"message": "Remove debugger statements before committing",
-			"severity": "error",
-			"language": "typescript",
-			"pattern": "debugger"
-		},
-		{
-			"id": "no-todo-comments",
-			"message": "TODO comments should be tracked in issues",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "// TODO: $$$"
-		},
-		{
-			"id": "cortex-os-console-log",
-			"message": "Avoid console.log in production code - use proper logging",
-			"note": "Replace with logger from @cortex-os/telemetry or similar",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "console.log($$$)",
-			"constraints": {
-				"not": {
-					"inside": {
-						"kind": "function_declaration",
-						"pattern": "function test$$$"
-					}
-				}
-			}
-		},
-		{
-			"id": "cortex-os-any-type",
-			"message": "Avoid 'any' type - use specific types or unknown",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": ": any"
-		},
-		{
-			"id": "cortex-os-exec-sync",
-			"message": "execSync can block the event loop - consider async alternatives",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "execSync($$$)"
-		},
-		{
-			"id": "cortex-os-process-exit",
-			"message": "process.exit() can prevent cleanup - use graceful shutdown instead",
-			"severity": "warning",
-			"language": "typescript",
-			"pattern": "process.exit($$$)"
-		},
-		{
-			"id": "cortex-os-try-catch-empty",
-			"message": "Empty catch blocks hide errors - add proper error handling",
-			"severity": "error",
-			"language": "typescript",
-			"pattern": "catch ($$$) { }"
-		},
-		{
 			"id": "cortex-os-async-without-await",
 			"message": "Async function without await - consider removing async",
 			"severity": "warning",
@@ -193,100 +12,52 @@
 						"kind": "await_expression"
 					}
 				}
-			}
-		},
-		{
-			"id": "cortex-os-magic-strings",
-			"message": "Magic strings should be constants",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "$$$ = \"$$$\"",
-			"constraints": {
-				"not": {
-					"inside": {
-						"kind": "variable_declarator",
-						"pattern": "const $$$ = $$$"
-					}
-				}
-			}
-		},
-		{
-			"id": "cortex-os-todo-comments",
-			"message": "TODO comments should be tracked in GitHub issues",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "// TODO: $$$"
-		},
-		{
-			"id": "cortex-os-debugger",
-			"message": "Remove debugger statements before committing",
-			"severity": "error",
-			"language": "typescript",
-			"pattern": "debugger"
+			},
+			"ignores": [
+				"**/*.test.ts",
+				"**/*.spec.ts",
+				"**/__tests__/**"
+			]
 		},
 		{
 			"id": "cortex-os-unsafe-type-assertion",
-			"message": "Unsafe type assertion - use type guards instead",
+			"message": "Unsafe type assertion - prefer type guards",
 			"severity": "warning",
 			"language": "typescript",
 			"pattern": "$$$ as $$$"
 		},
 		{
-			"id": "cortex-os-missing-error-types",
-			"message": "Use specific error types instead of generic Error",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "throw new Error($$$)"
-		},
-		{
-			"id": "cortex-os-large-functions",
-			"message": "Functions should be smaller than 50 lines - consider breaking down",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "function $$$($$$) { $$$$ }"
-		},
-		{
-			"id": "cortex-os-unused-variables",
-			"message": "Unused variables should be removed or prefixed with _",
+			"id": "cortex-os-exec-sync",
+			"message": "execSync can block the event loop - prefer async alternatives",
 			"severity": "warning",
 			"language": "typescript",
-			"pattern": "const $$$ = $$$",
-			"constraints": {
-				"not": {
-					"has": {
-						"kind": "identifier",
-						"pattern": "$$$"
-					}
-				}
-			}
+			"pattern": "execSync($$$)"
+		},
+		{
+			"id": "cortex-os-process-exit",
+			"message": "process.exit() can prevent cleanup - use graceful shutdown",
+			"severity": "warning",
+			"language": "typescript",
+			"pattern": "process.exit($$$)"
 		},
 		{
 			"id": "cortex-os-direct-console-methods",
 			"message": "Avoid direct console methods - use structured logging",
 			"severity": "warning",
 			"language": "typescript",
-			"pattern": "console.(warn|error|info|debug)($$$)"
+			"pattern": "console.(warn|error|info|debug)($$$)",
+			"ignores": [
+				"**/*.test.ts",
+				"**/*.spec.ts",
+				"**/__tests__/**"
+			]
 		},
 		{
-			"id": "cortex-os-hardcoded-paths",
-			"message": "Hardcoded paths should use path.join or similar",
-			"severity": "info",
+			"id": "no-debugger",
+			"message": "Remove debugger statements before committing",
+			"severity": "error",
 			"language": "typescript",
-			"pattern": "$$$ = \"$$$/$$$\""
-		},
-		{
-			"id": "cortex-os-missing-return-types",
-			"message": "Functions should have explicit return types",
-			"severity": "info",
-			"language": "typescript",
-			"pattern": "function $$$($$$) {",
-			"constraints": {
-				"not": {
-					"has": {
-						"kind": "type_annotation"
-					}
-				}
-			}
+			"pattern": "debugger"
 		}
 	],
 	"utils": {

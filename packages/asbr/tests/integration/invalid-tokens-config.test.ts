@@ -3,23 +3,23 @@
  */
 // @vitest-environment node
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { initializeASBR } from "../../src/index.js";
-import { ValidationError } from "../../src/types/index.js";
-import { getConfigPath, initializeXDG } from "../../src/xdg/index.js";
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { initializeASBR } from '../../src/index.js';
+import { ValidationError } from '../../src/types/index.js';
+import { getConfigPath, initializeXDG } from '../../src/xdg/index.js';
 
-describe("server initialization", () => {
+describe('server initialization', () => {
 	let tokensPath: string;
 	let originalConfigHome: string | undefined;
 
 	beforeAll(async () => {
-		const tmp = await mkdtemp(join(tmpdir(), "asbr-config-"));
+		const tmp = await mkdtemp(join(tmpdir(), 'asbr-config-'));
 		originalConfigHome = process.env.XDG_CONFIG_HOME;
 		process.env.XDG_CONFIG_HOME = tmp;
-		tokensPath = getConfigPath("tokens.json");
+		tokensPath = getConfigPath('tokens.json');
 	});
 
 	afterAll(async () => {
@@ -31,9 +31,9 @@ describe("server initialization", () => {
 		}
 	});
 
-	it("fails when tokens.json is corrupted", async () => {
+	it('fails when tokens.json is corrupted', async () => {
 		await initializeXDG();
-		await writeFile(tokensPath, "{ invalid json", "utf-8");
+		await writeFile(tokensPath, '{ invalid json', 'utf-8');
 
 		await expect(initializeASBR({ autoStart: false })).rejects.toBeInstanceOf(
 			ValidationError,

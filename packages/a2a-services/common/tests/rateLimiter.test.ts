@@ -1,9 +1,9 @@
-import type { Request, Response } from "express";
-import { describe, expect, it, vi } from "vitest";
-import { createRateLimiter } from "../src/middleware/rateLimiter";
+import type { Request, Response } from 'express';
+import { describe, expect, it, vi } from 'vitest';
+import { createRateLimiter } from '../src/middleware/rateLimiter';
 
 function mockRequest(
-	ip = "127.0.0.1",
+	ip = '127.0.0.1',
 	headers: Record<string, string> = {},
 ): Request {
 	return { ip, headers } as Request;
@@ -38,8 +38,8 @@ function mockResponse(): MockResponse {
 	return res as MockResponse;
 }
 
-describe("rateLimiter", () => {
-	it("limits requests over the threshold", () => {
+describe('rateLimiter', () => {
+	it('limits requests over the threshold', () => {
 		const limiter = createRateLimiter({ limit: 2, windowMs: 1000 });
 		const req = mockRequest();
 		const next = vi.fn();
@@ -56,7 +56,7 @@ describe("rateLimiter", () => {
 		expect(res3.sendCalled).toBe(true);
 	});
 
-	it("resets counters after window", () => {
+	it('resets counters after window', () => {
 		vi.useFakeTimers();
 		const limiter = createRateLimiter({ limit: 1, windowMs: 1000 });
 		const req = mockRequest();
@@ -81,28 +81,28 @@ describe("rateLimiter", () => {
 		vi.useRealTimers();
 	});
 
-	it("uses x-forwarded-for header when present", () => {
+	it('uses x-forwarded-for header when present', () => {
 		const limiter = createRateLimiter({ limit: 1 });
 		const next = vi.fn();
 
-		const req1 = mockRequest("127.0.0.1", { "x-forwarded-for": "10.0.0.1" });
+		const req1 = mockRequest('127.0.0.1', { 'x-forwarded-for': '10.0.0.1' });
 		const res1 = mockResponse();
 		limiter(req1, res1, next);
 		expect(next).toHaveBeenCalledTimes(1);
 
-		const req2 = mockRequest("127.0.0.1", { "x-forwarded-for": "10.0.0.1" });
+		const req2 = mockRequest('127.0.0.1', { 'x-forwarded-for': '10.0.0.1' });
 		const res2 = mockResponse();
 		limiter(req2, res2, next);
 		expect(next).toHaveBeenCalledTimes(1);
 		expect(res2.statusCode).toBe(429);
 
-		const req3 = mockRequest("127.0.0.1");
+		const req3 = mockRequest('127.0.0.1');
 		const res3 = mockResponse();
 		limiter(req3, res3, next);
 		expect(next).toHaveBeenCalledTimes(2);
 	});
 
-	it("sends a Retry-After header when rate limited", () => {
+	it('sends a Retry-After header when rate limited', () => {
 		const limiter = createRateLimiter({ limit: 1, windowMs: 1000 });
 		const req = mockRequest();
 		const next = vi.fn();
@@ -114,7 +114,7 @@ describe("rateLimiter", () => {
 		limiter(req, res2, next);
 
 		expect(res2.statusCode).toBe(429);
-		expect(res2.headers["Retry-After"]).toBeDefined();
-		expect(res2.headers["Retry-After"]).toBeGreaterThan(0);
+		expect(res2.headers['Retry-After']).toBeDefined();
+		expect(res2.headers['Retry-After']).toBeGreaterThan(0);
 	});
 });

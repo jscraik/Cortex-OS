@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cortex-mcp-bridge"
+version = "0.1.0"
+description = "MCP stdio↔HTTP/SSE bridge"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.25.0",
+]
+
+[project.scripts]
+mcp-bridge = "mcp_bridge.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+asyncio_mode = "auto"

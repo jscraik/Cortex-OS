@@ -1,27 +1,27 @@
-import { z } from "zod";
-import { GitHubRepositorySchema, GitHubUserSchema } from "./repository";
+import { z } from 'zod';
+import { GitHubRepositorySchema, GitHubUserSchema } from './repository';
 
 // Error Severity Levels
 export const ErrorSeveritySchema = z.enum([
-	"low",
-	"medium",
-	"high",
-	"critical",
+	'low',
+	'medium',
+	'high',
+	'critical',
 ]);
 export type ErrorSeverity = z.infer<typeof ErrorSeveritySchema>;
 
 // Error Categories
 export const ErrorCategorySchema = z.enum([
-	"authentication",
-	"authorization",
-	"rate_limit",
-	"network",
-	"api",
-	"validation",
-	"timeout",
-	"internal",
-	"configuration",
-	"webhook",
+	'authentication',
+	'authorization',
+	'rate_limit',
+	'network',
+	'api',
+	'validation',
+	'timeout',
+	'internal',
+	'configuration',
+	'webhook',
 ]);
 export type ErrorCategory = z.infer<typeof ErrorCategorySchema>;
 
@@ -29,7 +29,7 @@ export type ErrorCategory = z.infer<typeof ErrorCategorySchema>;
 export const ErrorContextSchema = z.object({
 	operation: z.string(),
 	endpoint: z.string().optional(),
-	method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).optional(),
+	method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']).optional(),
 	status_code: z.number().optional(),
 	retry_count: z.number().default(0),
 	request_id: z.string().optional(),
@@ -63,8 +63,8 @@ export type GitHubError = z.infer<typeof GitHubErrorSchema>;
 // Error Event Schema
 export const ErrorEventSchema = z.object({
 	event_id: z.string().uuid(),
-	event_type: z.literal("github.error"),
-	source: z.literal("github-client"),
+	event_type: z.literal('github.error'),
+	source: z.literal('github-client'),
 	timestamp: z.string().datetime(),
 
 	// Event-specific data
@@ -84,7 +84,7 @@ export const ErrorEventSchema = z.object({
 export type ErrorEvent = z.infer<typeof ErrorEventSchema>;
 
 // Error Event Topic
-export const ERROR_EVENT_TOPIC = "github.error";
+export const ERROR_EVENT_TOPIC = 'github.error';
 
 // Validation Functions
 export function validateErrorEvent(data: unknown): ErrorEvent {
@@ -105,10 +105,10 @@ export function createErrorEvent(
 		autoRetryScheduled?: boolean;
 		nextRetryAt?: string;
 	},
-): Omit<ErrorEvent, "event_id" | "timestamp"> {
+): Omit<ErrorEvent, 'event_id' | 'timestamp'> {
 	return {
-		event_type: "github.error",
-		source: "github-client",
+		event_type: 'github.error',
+		source: 'github-client',
 		error,
 		repository,
 		actor,
@@ -140,21 +140,21 @@ export function isRetryableError(error: GitHubError): boolean {
 }
 
 export function isRateLimitError(error: GitHubError): boolean {
-	return error.category === "rate_limit";
+	return error.category === 'rate_limit';
 }
 
 export function isAuthenticationError(error: GitHubError): boolean {
 	return (
-		error.category === "authentication" || error.category === "authorization"
+		error.category === 'authentication' || error.category === 'authorization'
 	);
 }
 
 export function isNetworkError(error: GitHubError): boolean {
-	return error.category === "network" || error.category === "timeout";
+	return error.category === 'network' || error.category === 'timeout';
 }
 
 export function isCriticalError(error: GitHubError): boolean {
-	return error.severity === "critical";
+	return error.severity === 'critical';
 }
 
 // Error Creation Helpers
@@ -169,11 +169,11 @@ export function createAuthenticationError(
 	return {
 		id: crypto.randomUUID(),
 		message,
-		category: "authentication",
-		severity: "high",
+		category: 'authentication',
+		severity: 'high',
 		is_retryable: false,
 		context: {
-			operation: context.operation ?? "unknown",
+			operation: context.operation ?? 'unknown',
 			...context,
 		},
 		timestamp: new Date().toISOString(),
@@ -190,11 +190,11 @@ export function createRateLimitError(
 	return {
 		id: crypto.randomUUID(),
 		message,
-		category: "rate_limit",
-		severity: "medium",
+		category: 'rate_limit',
+		severity: 'medium',
 		is_retryable: true,
 		context: {
-			operation: context.operation ?? "unknown",
+			operation: context.operation ?? 'unknown',
 			rate_limit_reset: rateLimitReset,
 			...context,
 		},
@@ -209,11 +209,11 @@ export function createNetworkError(
 	return {
 		id: crypto.randomUUID(),
 		message,
-		category: "network",
-		severity: "medium",
+		category: 'network',
+		severity: 'medium',
 		is_retryable: true,
 		context: {
-			operation: context.operation ?? "unknown",
+			operation: context.operation ?? 'unknown',
 			...context,
 		},
 		timestamp: new Date().toISOString(),
@@ -227,11 +227,11 @@ export function createValidationError(
 	return {
 		id: crypto.randomUUID(),
 		message,
-		category: "validation",
-		severity: "low",
+		category: 'validation',
+		severity: 'low',
 		is_retryable: false,
 		context: {
-			operation: context.operation ?? "unknown",
+			operation: context.operation ?? 'unknown',
 			...context,
 		},
 		timestamp: new Date().toISOString(),
@@ -262,7 +262,7 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
 			errorsBySeverity: {} as Record<ErrorSeverity, number>,
 			retryableErrors: 0,
 			criticalErrors: 0,
-			mostCommonCategory: "internal",
+			mostCommonCategory: 'internal',
 			averageRetryCount: 0,
 			timespan: {
 				earliest: new Date().toISOString(),
@@ -278,7 +278,7 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
 		errorsBySeverity: {} as Record<ErrorSeverity, number>,
 		retryableErrors: 0,
 		criticalErrors: 0,
-		mostCommonCategory: "internal",
+		mostCommonCategory: 'internal',
 		averageRetryCount: 0,
 		timespan: {
 			earliest: errors[0].timestamp,
@@ -293,18 +293,18 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
 
 	// Initialize counters
 	const categories: ErrorCategory[] = [
-		"authentication",
-		"authorization",
-		"rate_limit",
-		"network",
-		"api",
-		"validation",
-		"timeout",
-		"internal",
-		"configuration",
-		"webhook",
+		'authentication',
+		'authorization',
+		'rate_limit',
+		'network',
+		'api',
+		'validation',
+		'timeout',
+		'internal',
+		'configuration',
+		'webhook',
 	];
-	const severities: ErrorSeverity[] = ["low", "medium", "high", "critical"];
+	const severities: ErrorSeverity[] = ['low', 'medium', 'high', 'critical'];
 
 	for (const cat of categories) {
 		analysis.errorsByCategory[cat] = 0;
@@ -322,7 +322,7 @@ export function analyzeErrors(errors: GitHubError[]): ErrorAnalysis {
 			analysis.retryableErrors++;
 		}
 
-		if (error.severity === "critical") {
+		if (error.severity === 'critical') {
 			analysis.criticalErrors++;
 		}
 
@@ -369,7 +369,7 @@ export function calculateRetryDelay(
 	error: GitHubError,
 	baseDelayMs: number = 1000,
 ): number {
-	if (error.category === "rate_limit" && error.context.rate_limit_reset) {
+	if (error.category === 'rate_limit' && error.context.rate_limit_reset) {
 		const resetTime = new Date(error.context.rate_limit_reset);
 		const now = new Date();
 		return Math.max(0, resetTime.getTime() - now.getTime());
@@ -383,22 +383,22 @@ export function calculateRetryDelay(
 
 export function getRecoverySuggestion(error: GitHubError): string {
 	switch (error.category) {
-		case "authentication":
-			return "Check your GitHub personal access token or app credentials";
-		case "authorization":
-			return "Verify that your token has the required permissions for this operation";
-		case "rate_limit":
+		case 'authentication':
+			return 'Check your GitHub personal access token or app credentials';
+		case 'authorization':
+			return 'Verify that your token has the required permissions for this operation';
+		case 'rate_limit':
 			return `Wait until ${error.context.rate_limit_reset} before retrying`;
-		case "network":
-		case "timeout":
-			return "Check your network connection and try again";
-		case "validation":
-			return "Review the request parameters and ensure they meet GitHub API requirements";
-		case "configuration":
-			return "Check your GitHub client configuration settings";
-		case "webhook":
-			return "Verify webhook URL is accessible and signature validation is correct";
+		case 'network':
+		case 'timeout':
+			return 'Check your network connection and try again';
+		case 'validation':
+			return 'Review the request parameters and ensure they meet GitHub API requirements';
+		case 'configuration':
+			return 'Check your GitHub client configuration settings';
+		case 'webhook':
+			return 'Verify webhook URL is accessible and signature validation is correct';
 		default:
-			return "Review the error details and consult GitHub API documentation";
+			return 'Review the error details and consult GitHub API documentation';
 	}
 }

@@ -6,15 +6,21 @@
  * @status TDD-DRIVEN
  */
 
-import { z } from "zod";
-import { fixedTimestamp } from "./lib/determinism.js";
+import { z } from 'zod';
+import { fixedTimestamp } from './lib/determinism.js';
 import {
-        createInitialPRPState,
-        type PRPState,
-        validateStateTransition,
-} from "./state.js";
-import { generateId } from "./utils/id.js";
-import type { PRPOrchestrator } from "@cortex-os/prp-runner";
+	createInitialPRPState,
+	type PRPState,
+	validateStateTransition,
+} from './state.js';
+import { generateId } from './utils/id.js';
+
+/**
+ * Minimal interface to break circular dependency
+ */
+interface PRPOrchestrator {
+	getNeuronCount(): number;
+}
 
 // Zod schema for validating generateId inputs and run options
 const RunOptionsSchema = z
@@ -28,7 +34,7 @@ const RunOptionsSchema = z
  * Factory function to create a new CortexKernel instance
  */
 export function createKernel(orchestrator: PRPOrchestrator): CortexKernel {
-        return new CortexKernel(orchestrator);
+	return new CortexKernel(orchestrator);
 }
 
 interface Blueprint {
@@ -76,10 +82,10 @@ export class CortexKernel {
 	): Promise<PRPState> {
 		const newState: PRPState = {
 			...state,
-			phase: "build",
+			phase: 'build',
 			metadata: {
 				...state.metadata,
-				currentNeuron: "build-neuron",
+				currentNeuron: 'build-neuron',
 			},
 		};
 
@@ -89,7 +95,7 @@ export class CortexKernel {
 			majors: [],
 			evidence: [],
 			timestamp: deterministic
-				? fixedTimestamp("build-validation")
+				? fixedTimestamp('build-validation')
 				: new Date().toISOString(),
 		};
 
@@ -114,7 +120,7 @@ export class CortexKernel {
 		const validatedOptions = RunOptionsSchema.parse(options);
 
 		const deterministic = validatedOptions.deterministic || false;
-		const runId = validatedOptions.runId || generateId("run", deterministic);
+		const runId = validatedOptions.runId || generateId('run', deterministic);
 		const state = createInitialPRPState(blueprint, { runId, deterministic });
 
 		// Initialize execution history
@@ -130,7 +136,7 @@ export class CortexKernel {
 			this.addToHistory(runId, strategyState);
 
 			// Check if we should proceed or recycle
-			if (strategyState.phase === "recycled") {
+			if (strategyState.phase === 'recycled') {
 				return strategyState;
 			}
 
@@ -141,7 +147,7 @@ export class CortexKernel {
 			);
 			this.addToHistory(runId, buildState);
 
-			if (buildState.phase === "recycled") {
+			if (buildState.phase === 'recycled') {
 				return buildState;
 			}
 
@@ -157,12 +163,12 @@ export class CortexKernel {
 		} catch (error) {
 			const errorState: PRPState = {
 				...state,
-				phase: "recycled",
+				phase: 'recycled',
 				metadata: {
 					...state.metadata,
-					error: error instanceof Error ? error.message : "Unknown error",
+					error: error instanceof Error ? error.message : 'Unknown error',
 					endTime: deterministic
-						? fixedTimestamp("workflow-error")
+						? fixedTimestamp('workflow-error')
 						: new Date().toISOString(),
 				},
 			};
@@ -180,10 +186,10 @@ export class CortexKernel {
 	): Promise<PRPState> {
 		const newState: PRPState = {
 			...state,
-			phase: "strategy",
+			phase: 'strategy',
 			metadata: {
 				...state.metadata,
-				currentNeuron: "strategy-neuron",
+				currentNeuron: 'strategy-neuron',
 			},
 		};
 
@@ -194,7 +200,7 @@ export class CortexKernel {
 			majors: [],
 			evidence: [],
 			timestamp: deterministic
-				? fixedTimestamp("strategy-validation")
+				? fixedTimestamp('strategy-validation')
 				: new Date().toISOString(),
 		};
 
@@ -217,10 +223,10 @@ export class CortexKernel {
 	): Promise<PRPState> {
 		const newState: PRPState = {
 			...state,
-			phase: "evaluation",
+			phase: 'evaluation',
 			metadata: {
 				...state.metadata,
-				currentNeuron: "evaluation-neuron",
+				currentNeuron: 'evaluation-neuron',
 			},
 		};
 
@@ -231,28 +237,28 @@ export class CortexKernel {
 			majors: [],
 			evidence: [],
 			timestamp: deterministic
-				? fixedTimestamp("evaluation-validation")
+				? fixedTimestamp('evaluation-validation')
 				: new Date().toISOString(),
 		};
 
 		// Final cerebrum decision
 		newState.cerebrum = {
-			decision: "promote",
-			reasoning: "All validation gates passed successfully",
+			decision: 'promote',
+			reasoning: 'All validation gates passed successfully',
 			confidence: 0.95,
 			timestamp: deterministic
-				? fixedTimestamp("cerebrum-decision")
+				? fixedTimestamp('cerebrum-decision')
 				: new Date().toISOString(),
 		};
 
 		// Complete the workflow
 		const completedState: PRPState = {
 			...newState,
-			phase: "completed",
+			phase: 'completed',
 			metadata: {
 				...newState.metadata,
 				endTime: deterministic
-					? fixedTimestamp("workflow-end")
+					? fixedTimestamp('workflow-end')
 					: new Date().toISOString(),
 			},
 		};

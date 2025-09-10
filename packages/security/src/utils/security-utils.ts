@@ -3,8 +3,8 @@
  * @description Utility functions for security operations
  */
 
-import { X509Certificate } from "node:crypto";
-import type { SecurityError } from "../types.js";
+import { X509Certificate } from 'node:crypto';
+import type { SecurityError } from '../types.js';
 
 export type { SecurityError };
 
@@ -15,8 +15,8 @@ export type { SecurityError };
 export function generateNonce(length = 32): string {
 	const array = new Uint8Array(length);
 	crypto.getRandomValues(array);
-	return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-		"",
+	return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+		'',
 	);
 }
 
@@ -67,11 +67,11 @@ export function sanitizeSelectors(
 	for (const [key, value] of Object.entries(selectors)) {
 		// Remove sensitive information from selectors
 		if (
-			key.toLowerCase().includes("secret") ||
-			key.toLowerCase().includes("password") ||
-			key.toLowerCase().includes("token")
+			key.toLowerCase().includes('secret') ||
+			key.toLowerCase().includes('password') ||
+			key.toLowerCase().includes('token')
 		) {
-			sanitized[key] = "[REDACTED]";
+			sanitized[key] = '[REDACTED]';
 		} else {
 			sanitized[key] = value;
 		}
@@ -100,17 +100,17 @@ export function validateSecurityContext(context: {
 	const errors: string[] = [];
 
 	if (!context.spiffeId) {
-		errors.push("SPIFFE ID is required");
+		errors.push('SPIFFE ID is required');
 	} else if (!isValidSpiffeId(context.spiffeId)) {
-		errors.push("Invalid SPIFFE ID format");
+		errors.push('Invalid SPIFFE ID format');
 	}
 
 	if (!context.trustDomain) {
-		errors.push("Trust domain is required");
+		errors.push('Trust domain is required');
 	}
 
 	if (!context.workloadPath) {
-		errors.push("Workload path is required");
+		errors.push('Workload path is required');
 	}
 
 	return {

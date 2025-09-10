@@ -1,2 +1,2 @@
-export * from "./load";
-export * from "./mime";
+export * from './load';
+export * from './mime';

@@ -1,7 +1,7 @@
-import type { Evidence, PRPState } from "../state.js";
+import type { Evidence, PRPState } from '../state.js';
 
-import { generateId } from "../utils/id.js";
-import { currentTimestamp } from "../utils/time.js";
+import { generateId } from '../utils/id.js';
+import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Evaluation Phase Gates:
@@ -19,16 +19,16 @@ export class EvaluationNode {
 		// Gate 1: TDD validation (Red → Green cycle)
 		const tddValidation = await this.validateTDDCycle(state);
 		if (!tddValidation.passed) {
-			blockers.push("TDD cycle not completed - missing tests or failing tests");
+			blockers.push('TDD cycle not completed - missing tests or failing tests');
 		}
 
 		evidence.push({
-			id: generateId("eval-tdd", state.metadata.deterministic),
-			type: "test",
-			source: "tdd_validator",
+			id: generateId('eval-tdd', state.metadata.deterministic),
+			type: 'test',
+			source: 'tdd_validator',
 			content: JSON.stringify(tddValidation),
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 7),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 2: Code review validation
@@ -45,12 +45,12 @@ export class EvaluationNode {
 		}
 
 		evidence.push({
-			id: generateId("eval-review", state.metadata.deterministic),
-			type: "analysis",
-			source: "code_reviewer",
+			id: generateId('eval-review', state.metadata.deterministic),
+			type: 'analysis',
+			source: 'code_reviewer',
 			content: JSON.stringify(reviewValidation),
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 8),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 3: Quality budget validation (A11y, Performance, Security)
@@ -72,18 +72,18 @@ export class EvaluationNode {
 		}
 
 		evidence.push({
-			id: generateId("eval-budgets", state.metadata.deterministic),
-			type: "validation",
-			source: "quality_budgets",
+			id: generateId('eval-budgets', state.metadata.deterministic),
+			type: 'validation',
+			source: 'quality_budgets',
 			content: JSON.stringify(budgetValidation),
 			timestamp: currentTimestamp(state.metadata.deterministic ?? false, 9),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 4: Pre-Cerebrum validation
 		const preCerebrumCheck = await this.preCerebrumValidation(state);
 		if (!preCerebrumCheck.readyForCerebrum) {
-			blockers.push("System not ready for Cerebrum decision");
+			blockers.push('System not ready for Cerebrum decision');
 		}
 
 		return {
@@ -110,14 +110,14 @@ export class EvaluationNode {
 	): Promise<ValidationResult<TDDDetails>> {
 		// Validate that proper TDD cycle was followed
 		const tddEvidence = state.evidence.filter(
-			(e) => e.type === "test" && e.phase === "build",
+			(e) => e.type === 'test' && e.phase === 'build',
 		);
 
 		const hasTests = tddEvidence.length > 0;
 		const hasCoverage = Boolean(
 			state.outputs?.testCoverage ||
 				state.validationResults?.build?.evidence?.some((id) =>
-					state.evidence.find((e) => e.id === id)?.content.includes("coverage"),
+					state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
 				),
 		);
 
@@ -138,24 +138,24 @@ export class EvaluationNode {
 		// Simulated code review - in real implementation would integrate with actual review tools
 		const codeQualityIssues = [
 			{
-				severity: "major",
-				type: "code-complexity",
-				message: "Function complexity exceeds threshold in module X",
-				file: "src/complex-module.ts",
+				severity: 'major',
+				type: 'code-complexity',
+				message: 'Function complexity exceeds threshold in module X',
+				file: 'src/complex-module.ts',
 			},
 			{
-				severity: "minor",
-				type: "naming-convention",
-				message: "Variable names not following camelCase convention",
-				file: "src/utils.ts",
+				severity: 'minor',
+				type: 'naming-convention',
+				message: 'Variable names not following camelCase convention',
+				file: 'src/utils.ts',
 			},
 		];
 
 		const blockers = codeQualityIssues.filter(
-			(issue) => issue.severity === "blocker",
+			(issue) => issue.severity === 'blocker',
 		).length;
 		const majors = codeQualityIssues.filter(
-			(issue) => issue.severity === "major",
+			(issue) => issue.severity === 'major',
 		).length;
 
 		return {
@@ -197,38 +197,36 @@ export class EvaluationNode {
 		};
 	}
 
-        checkPreCerebrumConditions(state: PRPState): boolean {
-                return Object.values(state.validationResults || {}).every(
-                        (result) => result?.passed && result?.blockers.length === 0,
-                );
-        }
+	checkPreCerebrumConditions(state: PRPState): boolean {
+		return Object.values(state.validationResults || {}).every(
+			(result) => result?.passed && result?.blockers.length === 0,
+		);
+	}
 
-        private async preCerebrumValidation(
-                state: PRPState,
-        ): Promise<ReadinessResult<PreCerebrumDetails>> {
-                // Final validation before Cerebrum decision
-                const hasAllPhases = !!(
-                        state.validationResults?.strategy &&
-                        state.validationResults?.build &&
-                        state.validationResults?.evaluation
-                );
+	private async preCerebrumValidation(
+		state: PRPState,
+	): Promise<ReadinessResult<PreCerebrumDetails>> {
+		// Final validation before Cerebrum decision
+		const hasAllPhases = !!(
+			state.validationResults?.strategy &&
+			state.validationResults?.build &&
+			state.validationResults?.evaluation
+		);
 
-                const allPhasesPassedOrAcceptable = Object.values(
-                        state.validationResults || {},
-                ).every(
-                        (result) => result?.passed && result?.blockers.length === 0,
-                );
+		const allPhasesPassedOrAcceptable = Object.values(
+			state.validationResults || {},
+		).every((result) => result?.passed && result?.blockers.length === 0);
 
-                return {
-                        readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,
-                        details: {
-                                phasesComplete: hasAllPhases,
-                                phasesAcceptable: allPhasesPassedOrAcceptable,
-                                evidenceCount: state.evidence.length,
-                                evidenceThreshold: 10, // Minimum evidence required
-                        },
-                };
-        }
+		return {
+			readyForCerebrum: hasAllPhases && allPhasesPassedOrAcceptable,
+			details: {
+				phasesComplete: hasAllPhases,
+				phasesAcceptable: allPhasesPassedOrAcceptable,
+				evidenceCount: state.evidence.length,
+				evidenceThreshold: 10, // Minimum evidence required
+			},
+		};
+	}
 }
 
 // Type definitions for validation methods

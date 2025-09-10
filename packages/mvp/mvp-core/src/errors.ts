@@ -18,36 +18,36 @@ export class AppError extends Error {
 
 export const problems = {
 	badRequest: (detail?: string): Problem => ({
-		type: "about:blank#bad-request",
-		title: "Bad Request",
+		type: 'about:blank#bad-request',
+		title: 'Bad Request',
 		status: 400,
 		detail,
 	}),
 	unauthorized: (): Problem => ({
-		type: "about:blank#unauthorized",
-		title: "Unauthorized",
+		type: 'about:blank#unauthorized',
+		title: 'Unauthorized',
 		status: 401,
 	}),
 	forbidden: (): Problem => ({
-		type: "about:blank#forbidden",
-		title: "Forbidden",
+		type: 'about:blank#forbidden',
+		title: 'Forbidden',
 		status: 403,
 	}),
 	notFound: (detail?: string): Problem => ({
-		type: "about:blank#not-found",
-		title: "Not Found",
+		type: 'about:blank#not-found',
+		title: 'Not Found',
 		status: 404,
 		detail,
 	}),
 	conflict: (detail?: string): Problem => ({
-		type: "about:blank#conflict",
-		title: "Conflict",
+		type: 'about:blank#conflict',
+		title: 'Conflict',
 		status: 409,
 		detail,
 	}),
 	internal: (detail?: string): Problem => ({
-		type: "about:blank#internal",
-		title: "Internal Error",
+		type: 'about:blank#internal',
+		title: 'Internal Error',
 		status: 500,
 		detail,
 	}),

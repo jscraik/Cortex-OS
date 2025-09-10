@@ -6,20 +6,20 @@
  * @status active
  */
 
-import { describe, expect, test } from "vitest";
-import { UnifiedAIEvidenceWorkflow } from "../unified-ai-evidence-workflow.js";
+import { describe, expect, test } from 'vitest';
+import { UnifiedAIEvidenceWorkflow } from '../unified-ai-evidence-workflow.js';
 
-describe("🔄 Unified AI Evidence Workflow (real implementation)", () => {
-	test("initializes workflow with default configuration", async () => {
+describe('🔄 Unified AI Evidence Workflow (real implementation)', () => {
+	test('initializes workflow with default configuration', async () => {
 		const workflow = new UnifiedAIEvidenceWorkflow();
 		const status = await workflow.getWorkflowStatus();
 
-		expect(status.status).toBe("active");
-		expect(status.components.asbrIntegration).toBe("connected");
-		expect(status.components.embeddingAdapter).toBe("connected");
+		expect(status.status).toBe('active');
+		expect(status.components.asbrIntegration).toBe('connected');
+		expect(status.components.embeddingAdapter).toBe('connected');
 	});
 
-	test("supports graceful shutdown", async () => {
+	test('supports graceful shutdown', async () => {
 		const workflow = new UnifiedAIEvidenceWorkflow();
 		await expect(workflow.shutdown()).resolves.not.toThrow();
 	});

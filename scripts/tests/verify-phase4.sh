@@ -13,10 +13,10 @@ PASSED_CHECKS=0
 run_check() {
   local description="$1"
   local check_command="$2"
-  
+
   TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
   echo -n "  🔎 $description... "
-  
+
   if eval "$check_command" >/dev/null 2>&1; then
     echo "✅ PASSED"
     PASSED_CHECKS=$((PASSED_CHECKS + 1))

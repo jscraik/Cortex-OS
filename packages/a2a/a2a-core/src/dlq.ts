@@ -1,5 +1,5 @@
-import type { Envelope } from "@cortex-os/a2a-contracts/envelope";
-import { logWithSpan, withSpan } from "@cortex-os/telemetry";
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 
 /**
  * @file Enhanced Dead Letter Queue Implementation
@@ -7,29 +7,29 @@ import { logWithSpan, withSpan } from "@cortex-os/telemetry";
  */
 
 export enum ErrorCategory {
-	NETWORK = "NETWORK",
-	TIMEOUT = "TIMEOUT",
-	AUTHENTICATION = "AUTHENTICATION",
-	AUTHORIZATION = "AUTHORIZATION",
-	VALIDATION = "VALIDATION",
-	BUSINESS_LOGIC = "BUSINESS_LOGIC",
-	RESOURCE_EXHAUSTED = "RESOURCE_EXHAUSTED",
-	EXTERNAL_SERVICE = "EXTERNAL_SERVICE",
-	INTERNAL_ERROR = "INTERNAL_ERROR",
-	POISON_MESSAGE = "POISON_MESSAGE",
-	UNKNOWN = "UNKNOWN",
+	NETWORK = 'NETWORK',
+	TIMEOUT = 'TIMEOUT',
+	AUTHENTICATION = 'AUTHENTICATION',
+	AUTHORIZATION = 'AUTHORIZATION',
+	VALIDATION = 'VALIDATION',
+	BUSINESS_LOGIC = 'BUSINESS_LOGIC',
+	RESOURCE_EXHAUSTED = 'RESOURCE_EXHAUSTED',
+	EXTERNAL_SERVICE = 'EXTERNAL_SERVICE',
+	INTERNAL_ERROR = 'INTERNAL_ERROR',
+	POISON_MESSAGE = 'POISON_MESSAGE',
+	UNKNOWN = 'UNKNOWN',
 }
 
 export enum QuarantineLevel {
-	SOFT = "SOFT", // Temporary failures, can be retried immediately
-	MEDIUM = "MEDIUM", // Moderate failures, delayed retry
-	HARD = "HARD", // Severe failures, manual intervention required
-	PERMANENT = "PERMANENT", // Never retry, permanently quarantined
+	SOFT = 'SOFT', // Temporary failures, can be retried immediately
+	MEDIUM = 'MEDIUM', // Moderate failures, delayed retry
+	HARD = 'HARD', // Severe failures, manual intervention required
+	PERMANENT = 'PERMANENT', // Never retry, permanently quarantined
 }
 
 export interface ErrorClassification {
 	category: ErrorCategory;
-	severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+	severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 	recoverable: boolean;
 	quarantineLevel: QuarantineLevel;
 	suggestedAction: string;
@@ -39,13 +39,13 @@ export interface QuarantinePolicy {
 	maxRetries: number;
 	quarantineDurationMs: number;
 	circuitBreakerThreshold: number;
-	recoveryStrategy: "IMMEDIATE" | "DELAYED" | "MANUAL" | "EXPONENTIAL_BACKOFF";
+	recoveryStrategy: 'IMMEDIATE' | 'DELAYED' | 'MANUAL' | 'EXPONENTIAL_BACKOFF';
 }
 
 export interface CircuitBreakerState {
 	failureCount: number;
 	lastFailureTime: number;
-	state: "CLOSED" | "OPEN" | "HALF_OPEN";
+	state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 	nextAttemptTime: number;
 }
 
@@ -55,7 +55,7 @@ export interface DeadLetterEnvelope extends Envelope {
 		stack?: string;
 		code?: string;
 		category: ErrorCategory;
-		severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+		severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 	};
 	retryCount: number;
 	firstFailureAt: string;
@@ -117,7 +117,7 @@ export const defaultQuarantinePolicy: QuarantinePolicy = {
 	maxRetries: 5,
 	quarantineDurationMs: 300000, // 5 minutes
 	circuitBreakerThreshold: 10,
-	recoveryStrategy: "EXPONENTIAL_BACKOFF",
+	recoveryStrategy: 'EXPONENTIAL_BACKOFF',
 };
 
 /**
@@ -129,99 +129,99 @@ export function classifyError(error: Error): ErrorClassification {
 
 	// Network errors
 	if (
-		message.includes("network") ||
-		message.includes("connection") ||
-		message.includes("timeout")
+		message.includes('network') ||
+		message.includes('connection') ||
+		message.includes('timeout')
 	) {
 		return {
 			category: ErrorCategory.NETWORK,
-			severity: "MEDIUM",
+			severity: 'MEDIUM',
 			recoverable: true,
 			quarantineLevel: QuarantineLevel.SOFT,
-			suggestedAction: "Retry with exponential backoff",
+			suggestedAction: 'Retry with exponential backoff',
 		};
 	}
 
 	// Authentication/Authorization
 	if (
-		message.includes("unauthorized") ||
-		message.includes("forbidden") ||
-		code === "401" ||
-		code === "403"
+		message.includes('unauthorized') ||
+		message.includes('forbidden') ||
+		code === '401' ||
+		code === '403'
 	) {
 		return {
 			category: ErrorCategory.AUTHENTICATION,
-			severity: "HIGH",
+			severity: 'HIGH',
 			recoverable: false,
 			quarantineLevel: QuarantineLevel.HARD,
-			suggestedAction: "Check credentials and permissions",
+			suggestedAction: 'Check credentials and permissions',
 		};
 	}
 
 	// Validation errors
 	if (
-		message.includes("validation") ||
-		message.includes("invalid") ||
-		message.includes("schema")
+		message.includes('validation') ||
+		message.includes('invalid') ||
+		message.includes('schema')
 	) {
 		return {
 			category: ErrorCategory.VALIDATION,
-			severity: "HIGH",
+			severity: 'HIGH',
 			recoverable: false,
 			quarantineLevel: QuarantineLevel.PERMANENT,
-			suggestedAction: "Fix message format or schema",
+			suggestedAction: 'Fix message format or schema',
 		};
 	}
 
 	// Resource exhausted
 	if (
-		message.includes("rate limit") ||
-		message.includes("quota") ||
-		message.includes("exhausted")
+		message.includes('rate limit') ||
+		message.includes('quota') ||
+		message.includes('exhausted')
 	) {
 		return {
 			category: ErrorCategory.RESOURCE_EXHAUSTED,
-			severity: "MEDIUM",
+			severity: 'MEDIUM',
 			recoverable: true,
 			quarantineLevel: QuarantineLevel.MEDIUM,
-			suggestedAction: "Retry after delay",
+			suggestedAction: 'Retry after delay',
 		};
 	}
 
 	// External service errors
 	if (
-		message.includes("service unavailable") ||
-		message.includes("bad gateway") ||
-		code === "502" ||
-		code === "503"
+		message.includes('service unavailable') ||
+		message.includes('bad gateway') ||
+		code === '502' ||
+		code === '503'
 	) {
 		return {
 			category: ErrorCategory.EXTERNAL_SERVICE,
-			severity: "MEDIUM",
+			severity: 'MEDIUM',
 			recoverable: true,
 			quarantineLevel: QuarantineLevel.MEDIUM,
-			suggestedAction: "Retry with circuit breaker",
+			suggestedAction: 'Retry with circuit breaker',
 		};
 	}
 
 	// Poison messages (repeated validation failures)
-	if (message.includes("poison") || message.includes("malformed")) {
+	if (message.includes('poison') || message.includes('malformed')) {
 		return {
 			category: ErrorCategory.POISON_MESSAGE,
-			severity: "CRITICAL",
+			severity: 'CRITICAL',
 			recoverable: false,
 			quarantineLevel: QuarantineLevel.PERMANENT,
-			suggestedAction: "Quarantine permanently, manual review required",
+			suggestedAction: 'Quarantine permanently, manual review required',
 		};
 	}
 
 	// Default to internal error
 	return {
 		category: ErrorCategory.INTERNAL_ERROR,
-		severity: "HIGH",
+		severity: 'HIGH',
 		recoverable: true,
 		quarantineLevel: QuarantineLevel.MEDIUM,
-		suggestedAction: "Retry with backoff, investigate root cause",
+		suggestedAction: 'Retry with backoff, investigate root cause',
 	};
 }
 
@@ -245,7 +245,7 @@ export class DeadLetterQueue {
 			return {
 				failureCount: 0,
 				lastFailureTime: 0,
-				state: "CLOSED",
+				state: 'CLOSED',
 				nextAttemptTime: 0,
 			};
 		}
@@ -253,8 +253,8 @@ export class DeadLetterQueue {
 		const now = Date.now();
 
 		// Check if circuit should transition from OPEN to HALF_OPEN
-		if (state.state === "OPEN" && now >= state.nextAttemptTime) {
-			state.state = "HALF_OPEN";
+		if (state.state === 'OPEN' && now >= state.nextAttemptTime) {
+			state.state = 'HALF_OPEN';
 		}
 
 		return state;
@@ -274,7 +274,7 @@ export class DeadLetterQueue {
 			state = {
 				failureCount: 0,
 				lastFailureTime: 0,
-				state: "CLOSED",
+				state: 'CLOSED',
 				nextAttemptTime: 0,
 			};
 			this.circuitBreakers.set(messageType, state);
@@ -285,13 +285,13 @@ export class DeadLetterQueue {
 			state.lastFailureTime = now;
 
 			if (state.failureCount >= this.quarantinePolicy.circuitBreakerThreshold) {
-				state.state = "OPEN";
+				state.state = 'OPEN';
 				state.nextAttemptTime =
 					now + this.quarantinePolicy.quarantineDurationMs;
 			}
 		} else {
 			// Success - reset circuit breaker
-			state.state = "CLOSED";
+			state.state = 'CLOSED';
 			state.failureCount = 0;
 		}
 
@@ -303,13 +303,13 @@ export class DeadLetterQueue {
 		retryCount: number = 0,
 		processingTime: number = 0,
 		processorId?: string,
-	): Promise<"retry" | "dlq" | "circuit_open"> {
-		return withSpan("dlq.handleFailed", async (span) => {
+	): Promise<'retry' | 'dlq' | 'circuit_open'> {
+		return withSpan('dlq.handleFailed', async (span) => {
 			span.setAttributes({
-				"envelope.id": envelope.id,
-				"envelope.type": envelope.type,
-				"error.message": error.message,
-				"retry.count": retryCount,
+				'envelope.id': envelope.id,
+				'envelope.type': envelope.type,
+				'error.message': error.message,
+				'retry.count': retryCount,
 			});
 
 			// Classify the error
@@ -318,17 +318,17 @@ export class DeadLetterQueue {
 
 			// Check circuit breaker
 			const circuitState = await this.checkCircuitBreaker(envelope.type);
-			if (circuitState.state === "OPEN") {
+			if (circuitState.state === 'OPEN') {
 				logWithSpan(
-					"warn",
-					"Circuit breaker open, rejecting message",
+					'warn',
+					'Circuit breaker open, rejecting message',
 					{
 						envelopeId: envelope.id,
 						messageType: envelope.type,
 					},
 					span,
 				);
-				return "circuit_open";
+				return 'circuit_open';
 			}
 
 			// Determine if we should retry
@@ -340,7 +340,7 @@ export class DeadLetterQueue {
 				await this.updateCircuitBreaker(envelope.type, true);
 
 				logWithSpan(
-					"info",
+					'info',
 					`Retrying message`,
 					{
 						envelopeId: envelope.id,
@@ -352,7 +352,7 @@ export class DeadLetterQueue {
 					span,
 				);
 
-				return "retry";
+				return 'retry';
 			}
 
 			// Move to DLQ with enhanced metadata
@@ -366,11 +366,11 @@ export class DeadLetterQueue {
 					severity: classification.severity,
 				},
 				retryCount,
-				firstFailureAt: envelope.headers["first-failure-at"] || now,
+				firstFailureAt: envelope.headers['first-failure-at'] || now,
 				lastFailureAt: now,
 				failureReasons: [
-					...(envelope.headers["failure-reasons"]
-						? JSON.parse(envelope.headers["failure-reasons"])
+					...(envelope.headers['failure-reasons']
+						? JSON.parse(envelope.headers['failure-reasons'])
 						: []),
 					error.message,
 				],
@@ -384,8 +384,8 @@ export class DeadLetterQueue {
 				metadata: {
 					processingAttempts: retryCount + 1,
 					totalProcessingTime:
-						(envelope.headers["processing-time"]
-							? parseInt(envelope.headers["processing-time"], 10)
+						(envelope.headers['processing-time']
+							? parseInt(envelope.headers['processing-time'], 10)
 							: 0) + processingTime,
 					lastProcessorId: processorId,
 					relatedMessageIds: envelope.correlationId
@@ -400,7 +400,7 @@ export class DeadLetterQueue {
 			await this.updateCircuitBreaker(envelope.type, true);
 
 			logWithSpan(
-				"error",
+				'error',
 				`Message moved to DLQ`,
 				{
 					envelopeId: envelope.id,
@@ -413,7 +413,7 @@ export class DeadLetterQueue {
 				span,
 			);
 
-			return "dlq";
+			return 'dlq';
 		});
 	}
 
@@ -421,15 +421,15 @@ export class DeadLetterQueue {
 	 * Requeue messages from DLQ for retry
 	 */
 	async requeueMessages(ids: string[]): Promise<void> {
-		return withSpan("dlq.requeueMessages", async (span) => {
+		return withSpan('dlq.requeueMessages', async (span) => {
 			span.setAttributes({
-				"message.count": ids.length,
+				'message.count': ids.length,
 			});
 
 			await this.store.requeue(ids);
 
 			logWithSpan(
-				"info",
+				'info',
 				`Requeued messages from DLQ`,
 				{
 					count: ids.length,
@@ -443,15 +443,15 @@ export class DeadLetterQueue {
 	 * Remove messages from DLQ (successful reprocessing)
 	 */
 	async removeMessages(ids: string[]): Promise<void> {
-		return withSpan("dlq.removeMessages", async (span) => {
+		return withSpan('dlq.removeMessages', async (span) => {
 			span.setAttributes({
-				"message.count": ids.length,
+				'message.count': ids.length,
 			});
 
 			await this.store.remove(ids);
 
 			logWithSpan(
-				"info",
+				'info',
 				`Removed messages from DLQ`,
 				{
 					count: ids.length,
@@ -465,13 +465,13 @@ export class DeadLetterQueue {
 	 * Get DLQ statistics
 	 */
 	async getStats() {
-		return withSpan("dlq.getStats", async (span) => {
+		return withSpan('dlq.getStats', async (span) => {
 			const stats = await this.store.getStats();
 
 			span.setAttributes({
-				"dlq.total": stats.total,
-				"dlq.types": Object.keys(stats.byType).length,
-				"dlq.errors": Object.keys(stats.byError).length,
+				'dlq.total': stats.total,
+				'dlq.types': Object.keys(stats.byType).length,
+				'dlq.errors': Object.keys(stats.byError).length,
 			});
 
 			return stats;
@@ -482,9 +482,9 @@ export class DeadLetterQueue {
 	 * Bulk requeue messages from DLQ for retry
 	 */
 	async bulkRequeueMessages(ids: string[]): Promise<void> {
-		return withSpan("dlq.bulkRequeueMessages", async (span) => {
+		return withSpan('dlq.bulkRequeueMessages', async (span) => {
 			span.setAttributes({
-				"message.count": ids.length,
+				'message.count': ids.length,
 			});
 
 			await this.store.requeue(ids);
@@ -506,11 +506,11 @@ export class DeadLetterQueue {
 			}
 
 			logWithSpan(
-				"info",
+				'info',
 				`Bulk requeued messages from DLQ`,
 				{
 					count: ids.length,
-					affectedTypes: Array.from(messageTypes).join(","),
+					affectedTypes: Array.from(messageTypes).join(','),
 				},
 				span,
 			);
@@ -521,12 +521,12 @@ export class DeadLetterQueue {
 	 * Process expired quarantine messages based on recovery strategy
 	 */
 	async processExpiredQuarantine(): Promise<void> {
-		return withSpan("dlq.processExpiredQuarantine", async (span) => {
+		return withSpan('dlq.processExpiredQuarantine', async (span) => {
 			const now = new Date();
 			const expiredMessages = await this.store.findExpiredQuarantine(now);
 
 			span.setAttributes({
-				"expired.count": expiredMessages.length,
+				'expired.count': expiredMessages.length,
 			});
 
 			const recoverableMessages = expiredMessages.filter(
@@ -540,7 +540,7 @@ export class DeadLetterQueue {
 				await this.bulkRequeueMessages(ids);
 
 				logWithSpan(
-					"info",
+					'info',
 					`Processed expired quarantine messages`,
 					{
 						expiredCount: expiredMessages.length,
@@ -559,9 +559,9 @@ export class DeadLetterQueue {
 	async getMessagesByQuarantineLevel(
 		level: QuarantineLevel,
 	): Promise<DeadLetterEnvelope[]> {
-		return withSpan("dlq.getMessagesByQuarantineLevel", async (span) => {
+		return withSpan('dlq.getMessagesByQuarantineLevel', async (span) => {
 			span.setAttributes({
-				"quarantine.level": level,
+				'quarantine.level': level,
 			});
 
 			return this.store.findByQuarantineLevel(level);
@@ -574,9 +574,9 @@ export class DeadLetterQueue {
 	async getMessagesByErrorCategory(
 		category: ErrorCategory,
 	): Promise<DeadLetterEnvelope[]> {
-		return withSpan("dlq.getMessagesByErrorCategory", async (span) => {
+		return withSpan('dlq.getMessagesByErrorCategory', async (span) => {
 			span.setAttributes({
-				"error.category": category,
+				'error.category': category,
 			});
 
 			return this.store.findByErrorCategory(category);
@@ -588,21 +588,21 @@ export class DeadLetterQueue {
 	 */
 	async forceCircuitBreakerState(
 		messageType: string,
-		state: "CLOSED" | "OPEN",
+		state: 'CLOSED' | 'OPEN',
 	): Promise<void> {
-		return withSpan("dlq.forceCircuitBreakerState", async (span) => {
+		return withSpan('dlq.forceCircuitBreakerState', async (span) => {
 			span.setAttributes({
-				"message.type": messageType,
-				"circuit.state": state,
+				'message.type': messageType,
+				'circuit.state': state,
 			});
 
 			const circuitState: CircuitBreakerState = {
 				failureCount:
-					state === "OPEN" ? this.quarantinePolicy.circuitBreakerThreshold : 0,
-				lastFailureTime: state === "OPEN" ? Date.now() : 0,
+					state === 'OPEN' ? this.quarantinePolicy.circuitBreakerThreshold : 0,
+				lastFailureTime: state === 'OPEN' ? Date.now() : 0,
 				state,
 				nextAttemptTime:
-					state === "OPEN"
+					state === 'OPEN'
 						? Date.now() + this.quarantinePolicy.quarantineDurationMs
 						: 0,
 			};
@@ -611,7 +611,7 @@ export class DeadLetterQueue {
 			await this.store.updateCircuitBreaker(messageType, circuitState);
 
 			logWithSpan(
-				"info",
+				'info',
 				`Forced circuit breaker state change`,
 				{
 					messageType,
@@ -628,7 +628,7 @@ export class DeadLetterQueue {
 	async getCircuitBreakerStatus(): Promise<
 		Record<string, CircuitBreakerState>
 	> {
-		return withSpan("dlq.getCircuitBreakerStatus", async (span) => {
+		return withSpan('dlq.getCircuitBreakerStatus', async (span) => {
 			const status: Record<string, CircuitBreakerState> = {};
 
 			for (const messageType of this.circuitBreakers.keys()) {
@@ -636,7 +636,7 @@ export class DeadLetterQueue {
 			}
 
 			span.setAttributes({
-				"circuit.breakers": Object.keys(status).length,
+				'circuit.breakers': Object.keys(status).length,
 			});
 
 			return status;

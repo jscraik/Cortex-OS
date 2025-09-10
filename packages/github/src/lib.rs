@@ -1,8 +1,8 @@
 //! GitHub API Client Library for Cortex-OS
-//! 
+//!
 //! This library provides comprehensive GitHub API integration with:
 //! - Authentication and token management
-//! - Rate limiting and error handling  
+//! - Rate limiting and error handling
 //! - Repository, Actions, PR, and Issue operations
 //! - A2A event bus integration for real-time updates
 //! - MCP tool compatibility
@@ -67,7 +67,7 @@ impl GitHubClientWithEvents {
         )
     }
 
-    /// Create actions API with event publishing  
+    /// Create actions API with event publishing
     pub fn actions_api(&self) -> actions::ActionsAPI {
         actions::ActionsAPI::with_events(
             self.client.clone(),
@@ -99,7 +99,7 @@ pub async fn create_github_client_from_env() -> Result<GitHubClientWithEvents> {
     })?;
 
     let token_manager = TokenManager::new(auth);
-    
+
     // Check if A2A integration is enabled
     let event_publisher = if std::env::var("CORTEX_A2A_ENABLED").as_deref() != Ok("false") {
         Some(GitHubA2APublisher::from_env().await?)

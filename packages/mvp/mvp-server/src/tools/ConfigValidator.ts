@@ -12,7 +12,7 @@
   we allow a small set of rule exceptions here until a focused refactor is done.
 */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // Local minimal Tool interface (avoid importing missing ../tool.js during lint pass)
 interface Tool {
@@ -25,14 +25,14 @@ interface Tool {
  * Configuration validation schemas
  */
 const CortexConfigSchema = z.object({
-	mode: z.enum(["simple", "advanced"]),
+	mode: z.enum(['simple', 'advanced']),
 	version: z.string(),
 	agentOS: z.object({
 		compatibility: z.boolean(),
 		standardsPath: z.string(),
 	}),
 	accessibility: z.object({
-		wcagLevel: z.enum(["A", "AA", "AAA"]),
+		wcagLevel: z.enum(['A', 'AA', 'AAA']),
 		enforceCompliance: z.boolean(),
 	}),
 	security: z.object({
@@ -58,8 +58,8 @@ const McpConfigSchema = z.object({
 		}),
 	),
 	client: z.object({
-		name: z.string().default("cortex-cli"),
-		version: z.string().default("1.0.0"),
+		name: z.string().default('cortex-cli'),
+		version: z.string().default('1.0.0'),
 		enableMetrics: z.boolean().default(true),
 		heartbeatInterval: z.number().default(30000),
 	}),
@@ -98,7 +98,7 @@ const CliConfigSchema = z.object({
  * Input schema for the validation tool
  */
 const ConfigValidatorInputSchema = z.object({
-	configType: z.enum(["cortex", "mcp", "cli", "custom"]),
+	configType: z.enum(['cortex', 'mcp', 'cli', 'custom']),
 	config: z.unknown(),
 	customSchema: z.unknown().optional(), // For custom validation
 	options: z
@@ -149,14 +149,14 @@ interface ValidationResult {
  * MCP tool for configuration validation
  */
 export class ConfigValidator implements Tool {
-	readonly name = "config-validator";
+	readonly name = 'config-validator';
 	readonly description =
-		"Validates CLI configuration files against their schemas with comprehensive error reporting";
+		'Validates CLI configuration files against their schemas with comprehensive error reporting';
 
 	private readonly schemas = new Map<string, z.ZodSchema>([
-		["cortex", CortexConfigSchema],
-		["mcp", McpConfigSchema],
-		["cli", CliConfigSchema],
+		['cortex', CortexConfigSchema],
+		['mcp', McpConfigSchema],
+		['cli', CliConfigSchema],
 	]);
 
 	async run(args: unknown): Promise<ValidationResult> {
@@ -191,16 +191,16 @@ export class ConfigValidator implements Tool {
 				valid: false,
 				errors: [
 					{
-						path: "root",
+						path: 'root',
 						message: error instanceof Error ? error.message : String(error),
-						code: "VALIDATION_ERROR",
+						code: 'VALIDATION_ERROR',
 					},
 				],
 				warnings: [],
 				metadata: {
-					configType: "unknown",
+					configType: 'unknown',
 					validatedAt: new Date().toISOString(),
-					schema: "unknown",
+					schema: 'unknown',
 					strictMode: false,
 				},
 				performance: {
@@ -211,16 +211,16 @@ export class ConfigValidator implements Tool {
 	}
 
 	private getValidationSchema(input: ConfigValidatorInput): z.ZodSchema {
-		if (input.configType === "custom" && input.customSchema) {
+		if (input.configType === 'custom' && input.customSchema) {
 			// For custom schemas, we'd need to construct them from the provided definition
 			// This is a simplified implementation
 			if (
-				typeof input.customSchema === "object" &&
+				typeof input.customSchema === 'object' &&
 				input.customSchema !== null
 			) {
 				return z.object({}).passthrough(); // Allow any object for now
 			}
-			throw new Error("Invalid custom schema provided");
+			throw new Error('Invalid custom schema provided');
 		}
 
 		const schema = this.schemas.get(input.configType);
@@ -290,9 +290,9 @@ export class ConfigValidator implements Tool {
 		} catch (error) {
 			result.valid = false;
 			result.errors.push({
-				path: "validation",
+				path: 'validation',
 				message: error instanceof Error ? error.message : String(error),
-				code: "SCHEMA_ERROR",
+				code: 'SCHEMA_ERROR',
 			});
 		}
 
@@ -305,7 +305,7 @@ export class ConfigValidator implements Tool {
 		code: string;
 	}> {
 		return issues.map((issue) => ({
-			path: issue.path.join(".") || "root",
+			path: issue.path.join('.') || 'root',
 			message: issue.message,
 			code: issue.code.toUpperCase(),
 		}));
@@ -314,7 +314,7 @@ export class ConfigValidator implements Tool {
 	private async generateWarnings(
 		configType: string,
 		config: unknown,
-		_options: ConfigValidatorInput["options"],
+		_options: ConfigValidatorInput['options'],
 	): Promise<
 		Array<{
 			path: string;
@@ -329,13 +329,13 @@ export class ConfigValidator implements Tool {
 		}> = [];
 
 		switch (configType) {
-			case "cortex":
+			case 'cortex':
 				warnings.push(...this.validateCortexConfig(config));
 				break;
-			case "mcp":
+			case 'mcp':
 				warnings.push(...this.validateMcpConfig(config));
 				break;
-			case "cli":
+			case 'cli':
 				warnings.push(...this.validateCliConfig(config));
 				break;
 		}
@@ -354,37 +354,37 @@ export class ConfigValidator implements Tool {
 			suggestion?: string;
 		}> = [];
 
-		if (typeof config === "object" && config !== null) {
+		if (typeof config === 'object' && config !== null) {
 			const cortexConfig = config as any;
 
 			// Check for deprecated settings
 			if (
-				cortexConfig.mode === "simple" &&
+				cortexConfig.mode === 'simple' &&
 				cortexConfig.development?.verboseLogging
 			) {
 				warnings.push({
-					path: "development.verboseLogging",
-					message: "Verbose logging is typically disabled in simple mode",
+					path: 'development.verboseLogging',
+					message: 'Verbose logging is typically disabled in simple mode',
 					suggestion:
-						"Consider setting verboseLogging to false for simple mode",
+						'Consider setting verboseLogging to false for simple mode',
 				});
 			}
 
 			// Check WCAG level recommendations
-			if (cortexConfig.accessibility?.wcagLevel === "A") {
+			if (cortexConfig.accessibility?.wcagLevel === 'A') {
 				warnings.push({
-					path: "accessibility.wcagLevel",
-					message: "WCAG A level provides minimal accessibility compliance",
-					suggestion: "Consider upgrading to AA level for better accessibility",
+					path: 'accessibility.wcagLevel',
+					message: 'WCAG A level provides minimal accessibility compliance',
+					suggestion: 'Consider upgrading to AA level for better accessibility',
 				});
 			}
 
 			// Check security settings
 			if (!cortexConfig.security?.enforceChecks) {
 				warnings.push({
-					path: "security.enforceChecks",
-					message: "Security checks are disabled",
-					suggestion: "Enable security checks for better protection",
+					path: 'security.enforceChecks',
+					message: 'Security checks are disabled',
+					suggestion: 'Enable security checks for better protection',
 				});
 			}
 		}
@@ -403,34 +403,34 @@ export class ConfigValidator implements Tool {
 			suggestion?: string;
 		}> = [];
 
-		if (typeof config === "object" && config !== null) {
+		if (typeof config === 'object' && config !== null) {
 			const mcpConfig = config as any;
 
 			// Check for no servers configured
 			if (!mcpConfig.servers || mcpConfig.servers.length === 0) {
 				warnings.push({
-					path: "servers",
-					message: "No MCP servers configured",
-					suggestion: "Add at least one MCP server to enable functionality",
+					path: 'servers',
+					message: 'No MCP servers configured',
+					suggestion: 'Add at least one MCP server to enable functionality',
 				});
 			}
 
 			// Check for disabled servers
 			if (mcpConfig.servers?.some((s: any) => !s.enabled)) {
 				warnings.push({
-					path: "servers",
-					message: "Some MCP servers are disabled",
-					suggestion: "Review disabled servers and enable if needed",
+					path: 'servers',
+					message: 'Some MCP servers are disabled',
+					suggestion: 'Review disabled servers and enable if needed',
 				});
 			}
 
 			// Check timeout settings
 			if (mcpConfig.servers?.some((s: any) => s.timeout < 5000)) {
 				warnings.push({
-					path: "servers.timeout",
-					message: "Very short timeout values detected",
+					path: 'servers.timeout',
+					message: 'Very short timeout values detected',
 					suggestion:
-						"Consider increasing timeout values for better reliability",
+						'Consider increasing timeout values for better reliability',
 				});
 			}
 		}
@@ -449,33 +449,33 @@ export class ConfigValidator implements Tool {
 			suggestion?: string;
 		}> = [];
 
-		if (typeof config === "object" && config !== null) {
+		if (typeof config === 'object' && config !== null) {
 			const cliConfig = config as any;
 
 			// Check telemetry settings
 			if (!cliConfig.telemetry?.enabled) {
 				warnings.push({
-					path: "telemetry.enabled",
-					message: "Telemetry is disabled",
-					suggestion: "Enable telemetry to help improve the CLI",
+					path: 'telemetry.enabled',
+					message: 'Telemetry is disabled',
+					suggestion: 'Enable telemetry to help improve the CLI',
 				});
 			}
 
 			// Check performance settings
 			if (cliConfig.performance?.maxMemoryUsage > 1024) {
 				warnings.push({
-					path: "performance.maxMemoryUsage",
-					message: "High memory usage limit configured",
-					suggestion: "Consider reducing memory limit for better performance",
+					path: 'performance.maxMemoryUsage',
+					message: 'High memory usage limit configured',
+					suggestion: 'Consider reducing memory limit for better performance',
 				});
 			}
 
 			// Check for disabled commands
 			if (cliConfig.commands?.some((c: any) => !c.enabled)) {
 				warnings.push({
-					path: "commands",
-					message: "Some commands are disabled",
-					suggestion: "Review disabled commands and enable if needed",
+					path: 'commands',
+					message: 'Some commands are disabled',
+					suggestion: 'Review disabled commands and enable if needed',
 				});
 			}
 		}

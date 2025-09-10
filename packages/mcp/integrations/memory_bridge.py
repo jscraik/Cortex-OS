@@ -10,9 +10,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from neo4j import AsyncGraphDatabase
-from qdrant_client import QdrantClient
-from qdrant_client.http import models as qdrant_models
+# Optional heavy dependencies; import lazily to avoid failing at import time
+try:  # pragma: no cover - import guard
+    from neo4j import AsyncGraphDatabase  # type: ignore
+except Exception:  # pragma: no cover - only used when feature is exercised
+    AsyncGraphDatabase = None  # type: ignore
+
+try:  # pragma: no cover - import guard
+    from qdrant_client import QdrantClient  # type: ignore
+    from qdrant_client.http import models as qdrant_models  # type: ignore
+except Exception:  # pragma: no cover - only used when feature is exercised
+    QdrantClient = None  # type: ignore
+    qdrant_models = None  # type: ignore
 
 from ..core.circuit_breakers import circuit_breaker
 
@@ -140,6 +149,10 @@ class Neo4jMemoryStore:
 
     async def initialize(self) -> None:
         """Initialize Neo4j connection."""
+        if AsyncGraphDatabase is None:
+            raise RuntimeError(
+                "neo4j driver is not installed. Install 'neo4j' to enable Neo4jMemoryStore."
+            )
         try:
             self.driver = AsyncGraphDatabase.driver(
                 self.uri,
@@ -378,6 +391,10 @@ class QdrantVectorStore:
 
     async def initialize(self) -> None:
         """Initialize Qdrant connection and collection."""
+        if QdrantClient is None or qdrant_models is None:
+            raise RuntimeError(
+                "qdrant-client is not installed. Install 'qdrant-client' to enable QdrantVectorStore."
+            )
         try:
             self.client = QdrantClient(host=self.host, port=self.port)
 
@@ -411,6 +428,8 @@ class QdrantVectorStore:
     ) -> None:
         """Store an embedding vector with metadata."""
         self.insert_count += 1
+        if qdrant_models is None or self.client is None:
+            raise RuntimeError("Vector store not initialized or missing qdrant models")
 
         point = qdrant_models.PointStruct(
             id=memory_id,
@@ -433,6 +452,8 @@ class QdrantVectorStore:
     ) -> list[dict[str, Any]]:
         """Search for similar embeddings."""
         self.search_count += 1
+        if qdrant_models is None or self.client is None:
+            raise RuntimeError("Vector store not initialized or missing qdrant models")
 
         search_filter = None
         if filter_conditions:
@@ -466,6 +487,8 @@ class QdrantVectorStore:
 
     async def delete_embedding(self, memory_id: str) -> None:
         """Delete an embedding by memory ID."""
+        if self.client is None or qdrant_models is None:
+            raise RuntimeError("Vector store not initialized")
         self.client.delete(
             collection_name=self.collection_name,
             points_selector=qdrant_models.PointIdsList(
@@ -476,6 +499,8 @@ class QdrantVectorStore:
     async def get_vector_stats(self) -> dict[str, Any]:
         """Get vector store statistics."""
         try:
+            if self.client is None:
+                raise RuntimeError("Vector store not initialized")
             collection_info = self.client.get_collection(self.collection_name)
 
             return {

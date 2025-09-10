@@ -19,7 +19,7 @@ export interface GitHubApiRepository {
 export interface GitHubApiUser {
 	login: string;
 	id: number;
-	type: "User" | "Organization";
+	type: 'User' | 'Organization';
 	html_url: string;
 }
 
@@ -35,7 +35,7 @@ export interface GitHubApiComment {
  * Repository structure analysis result types
  */
 export interface RepositoryStructureAnalysis {
-	type: "frontend" | "backend" | "fullstack" | "unknown";
+	type: 'frontend' | 'backend' | 'fullstack' | 'unknown';
 	framework: DetectedFramework[];
 	structure: ProjectStructure;
 	recommendations: string[];
@@ -77,7 +77,7 @@ export interface StructurePattern {
 }
 
 export interface StructureIssue {
-	severity: "low" | "medium" | "high";
+	severity: 'low' | 'medium' | 'high';
 	category: string;
 	description: string;
 	file?: string;
@@ -88,8 +88,8 @@ export interface StructureIssue {
  * Command processing types
  */
 export interface StructureCommand {
-	type: "analyze" | "scaffold" | "optimize";
-	target: "frontend" | "backend" | "both";
+	type: 'analyze' | 'scaffold' | 'optimize';
+	target: 'frontend' | 'backend' | 'both';
 	options: StructureCommandOptions;
 }
 
@@ -106,7 +106,7 @@ export interface StructureCommandOptions {
 export interface ProgressState {
 	taskId: string;
 	commentId: number;
-	status: "pending" | "running" | "completed" | "failed";
+	status: 'pending' | 'running' | 'completed' | 'failed';
 	steps: ProgressStep[];
 	startTime: Date;
 	endTime?: Date;
@@ -114,7 +114,7 @@ export interface ProgressState {
 
 export interface ProgressStep {
 	title: string;
-	status: "pending" | "running" | "completed" | "failed";
+	status: 'pending' | 'running' | 'completed' | 'failed';
 	details?: string;
 	startTime?: Date;
 	endTime?: Date;

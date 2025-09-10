@@ -1,7 +1,7 @@
-import crypto from "node:crypto";
+import crypto from 'node:crypto';
 
 export interface EmbeddingConfig {
-	provider: "sentence-transformers" | "local";
+	provider: 'sentence-transformers' | 'local';
 	model?: string;
 	dimensions?: number;
 	batchSize?: number;
@@ -37,24 +37,24 @@ export interface EmbeddingState {
 }
 
 export const createEmbeddingState = (
-	provider: EmbeddingConfig["provider"] = "sentence-transformers",
+	provider: EmbeddingConfig['provider'] = 'sentence-transformers',
 ): EmbeddingState => {
-	const configs: Record<EmbeddingConfig["provider"], EmbeddingConfig> = {
-		"sentence-transformers": {
-			provider: "sentence-transformers",
-			model: "Qwen/Qwen3-Embedding-0.6B",
+	const configs: Record<EmbeddingConfig['provider'], EmbeddingConfig> = {
+		'sentence-transformers': {
+			provider: 'sentence-transformers',
+			model: 'Qwen/Qwen3-Embedding-0.6B',
 			dimensions: 1024,
 		},
 		local: {
-			provider: "local",
-			model: "Qwen/Qwen3-Embedding-0.6B",
+			provider: 'local',
+			model: 'Qwen/Qwen3-Embedding-0.6B',
 			dimensions: 1024,
 		},
 	};
 
 	const config = configs[provider];
 	validateConfig(config);
-	return { config, vectorStore: new Map(), pythonPath: "python" };
+	return { config, vectorStore: new Map(), pythonPath: 'python' };
 };
 
 export const generateEmbeddings = async (
@@ -64,13 +64,13 @@ export const generateEmbeddings = async (
 	const textArray = Array.isArray(texts) ? texts : [texts];
 
 	switch (state.config.provider) {
-		case "sentence-transformers":
+		case 'sentence-transformers':
 			return generateWithSentenceTransformers(
 				state.pythonPath,
 				state.config,
 				textArray,
 			);
-		case "local":
+		case 'local':
 			return generateWithLocal(state.pythonPath, textArray);
 		default:
 			throw new Error(
@@ -159,7 +159,7 @@ export const getStats = (state: EmbeddingState) => {
 };
 
 const validateConfig = (config: EmbeddingConfig): void => {
-	if (!["sentence-transformers", "local"].includes(config.provider)) {
+	if (!['sentence-transformers', 'local'].includes(config.provider)) {
 		throw new Error(`Unsupported embedding provider: ${config.provider}`);
 	}
 };
@@ -169,7 +169,7 @@ const generateWithSentenceTransformers = async (
 	config: EmbeddingConfig,
 	texts: string[],
 ): Promise<number[][]> => {
-	const model = config.model || "Qwen/Qwen3-Embedding-0.6B";
+	const model = config.model || 'Qwen/Qwen3-Embedding-0.6B';
 	const pythonScript = `
 import json
 import sys
@@ -243,7 +243,7 @@ except Exception as e:
 
 const cosineSimilarity = (a: number[], b: number[]): number => {
 	if (a.length !== b.length) {
-		throw new Error("Vectors must have the same length");
+		throw new Error('Vectors must have the same length');
 	}
 	let dotProduct = 0;
 	let normA = 0;
@@ -274,9 +274,9 @@ const matchesFilter = (
 
 const generateId = (text: string): string => {
 	return crypto
-		.createHash("sha256")
+		.createHash('sha256')
 		.update(text)
-		.digest("hex")
+		.digest('hex')
 		.substring(0, 16);
 };
 
@@ -285,8 +285,7 @@ const executePythonScript = async (
 	script: string,
 	args: string[] = [],
 ): Promise<string> => {
-	 
 	// @ts-expect-error - dynamic import crosses package boundaries; resolved at runtime
-	const { runPython } = await import("../../../../libs/python/exec.js");
-	return runPython("-c", [script, ...args], { python: pythonPath } as any);
+	const { runPython } = await import('../../../../libs/python/exec.js');
+	return runPython('-c', [script, ...args], { python: pythonPath } as any);
 };

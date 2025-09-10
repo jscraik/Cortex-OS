@@ -3,7 +3,7 @@
  * Implements the SDK surface as specified in the blueprint
  */
 
-import { createHash } from "crypto";
+import { createHash } from 'crypto';
 import type {
 	ArtifactRef,
 	CreateProfileRequest,
@@ -20,7 +20,7 @@ import type {
 	TaskInput,
 	TaskRef,
 	UnsubscribeFunction,
-} from "../types/index.js";
+} from '../types/index.js';
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -38,7 +38,7 @@ export class ASBRClient {
 			token?: string;
 		} = {},
 	) {
-		this.baseUrl = options.baseUrl || "http://127.0.0.1:7439";
+		this.baseUrl = options.baseUrl || 'http://127.0.0.1:7439';
 		this.token = options.token;
 	}
 
@@ -54,11 +54,11 @@ export class ASBRClient {
 			idempotencyKey: opts?.idempotencyKey,
 		};
 
-		const response = await this.fetch("/v1/tasks", {
-			method: "POST",
+		const response = await this.fetch('/v1/tasks', {
+			method: 'POST',
 			headers: {
-				"Content-Type": "application/json",
-				...(opts?.idempotencyKey && { "Idempotency-Key": opts.idempotencyKey }),
+				'Content-Type': 'application/json',
+				...(opts?.idempotencyKey && { 'Idempotency-Key': opts.idempotencyKey }),
 			},
 			body: JSON.stringify(request),
 		});
@@ -84,7 +84,7 @@ export class ASBRClient {
 		eventTypes: EventType[],
 		callback: (event: Event) => void,
 	): UnsubscribeFunction {
-		const subscriptionKey = taskId || "__all__";
+		const subscriptionKey = taskId || '__all__';
 
 		if (!this.eventSubscriptions.has(subscriptionKey)) {
 			this.eventSubscriptions.set(subscriptionKey, new Set());
@@ -120,7 +120,7 @@ export class ASBRClient {
 			});
 		}
 
-		const url = `/v1/artifacts${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+		const url = `/v1/artifacts${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 		const response = await this.fetch(url);
 		const data: ListArtifactsResponse = await response.json();
 		return data.artifacts;
@@ -130,19 +130,19 @@ export class ASBRClient {
 	 * Create or update a user profile
 	 */
 	async upsertProfile(
-		profile: Omit<Profile, "id"> | Profile,
+		profile: Omit<Profile, 'id'> | Profile,
 	): Promise<Profile> {
-		const method = "id" in profile ? "PUT" : "POST";
-		const url = "id" in profile ? `/v1/profiles/${profile.id}` : "/v1/profiles";
+		const method = 'id' in profile ? 'PUT' : 'POST';
+		const url = 'id' in profile ? `/v1/profiles/${profile.id}` : '/v1/profiles';
 
 		const request: CreateProfileRequest = {
-			profile: "id" in profile ? profile : profile,
+			profile: 'id' in profile ? profile : profile,
 		};
 
 		const response = await this.fetch(url, {
 			method,
 			headers: {
-				"Content-Type": "application/json",
+				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify(request),
 		});
@@ -169,8 +169,8 @@ export class ASBRClient {
 	}> {
 		const response = await this.fetch(`/v1/artifacts/${id}`);
 		const content = await response.arrayBuffer();
-		const digest = response.headers.get("Digest") || "";
-		const etag = response.headers.get("ETag") || "";
+		const digest = response.headers.get('Digest') || '';
+		const etag = response.headers.get('ETag') || '';
 
 		return { content, digest, etag };
 	}
@@ -188,7 +188,7 @@ export class ASBRClient {
 			}
 		>
 	> {
-		const response = await this.fetch("/v1/connectors/service-map");
+		const response = await this.fetch('/v1/connectors/service-map');
 		return await response.json();
 	}
 
@@ -197,7 +197,7 @@ export class ASBRClient {
 	 */
 	async cancelTask(taskId: string): Promise<void> {
 		await this.fetch(`/v1/tasks/${taskId}/cancel`, {
-			method: "POST",
+			method: 'POST',
 		});
 	}
 
@@ -206,7 +206,7 @@ export class ASBRClient {
 	 */
 	async resumeTask(taskId: string): Promise<void> {
 		await this.fetch(`/v1/tasks/${taskId}/resume`, {
-			method: "POST",
+			method: 'POST',
 		});
 	}
 
@@ -215,7 +215,7 @@ export class ASBRClient {
 		const headers = new Headers(init?.headers);
 
 		if (this.token) {
-			headers.set("Authorization", `Bearer ${this.token}`);
+			headers.set('Authorization', `Bearer ${this.token}`);
 		}
 
 		const response = await fetch(url, {
@@ -233,9 +233,9 @@ export class ASBRClient {
 
 	private setupEventStream(taskId?: string, eventTypes?: EventType[]): void {
 		const params = new URLSearchParams();
-		params.set("stream", "sse");
-		if (taskId) params.set("taskId", taskId);
-		if (eventTypes) params.set("events", eventTypes.join(","));
+		params.set('stream', 'sse');
+		if (taskId) params.set('taskId', taskId);
+		if (eventTypes) params.set('events', eventTypes.join(','));
 
 		const url = `${this.baseUrl}/v1/events?${params}`;
 		const eventSource = new EventSource(url);
@@ -247,12 +247,12 @@ export class ASBRClient {
 			} catch (error) {
 				// Prefer structured logger when available
 
-				console.error("Failed to parse event:", error);
+				console.error('Failed to parse event:', error);
 			}
 		};
 
 		eventSource.onerror = (error) => {
-			console.error("Event stream error:", error);
+			console.error('Event stream error:', error);
 			// Implement reconnection logic here
 		};
 	}
@@ -272,7 +272,7 @@ export class ASBRClient {
 		}
 
 		// Dispatch to global subscribers
-		const globalCallbacks = this.eventSubscriptions.get("__all__");
+		const globalCallbacks = this.eventSubscriptions.get('__all__');
 		if (globalCallbacks) {
 			for (const callback of globalCallbacks) {
 				callback(event);
@@ -286,7 +286,7 @@ export class ASBRClient {
  */
 class TaskRefImpl implements TaskRef {
 	public readonly id: string;
-	public readonly status: Task["status"];
+	public readonly status: Task['status'];
 	private client: ASBRClient;
 	private eventListeners = new Set<(event: Event) => void>();
 
@@ -302,13 +302,13 @@ class TaskRefImpl implements TaskRef {
 		const unsubscribe = this.client.subscribe(
 			this.id,
 			[
-				"PlanStarted",
-				"StepCompleted",
-				"AwaitingApproval",
-				"Canceled",
-				"Resumed",
-				"DeliverableReady",
-				"Failed",
+				'PlanStarted',
+				'StepCompleted',
+				'AwaitingApproval',
+				'Canceled',
+				'Resumed',
+				'DeliverableReady',
+				'Failed',
 			],
 			callback,
 		);
@@ -348,7 +348,7 @@ export function createASBRClient(options?: {
 export function createTaskInput(
 	title: string,
 	brief: string,
-	options: Partial<Omit<TaskInput, "title" | "brief" | "schema">> = {},
+	options: Partial<Omit<TaskInput, 'title' | 'brief' | 'schema'>> = {},
 ): TaskInput {
 	return {
 		title,
@@ -358,7 +358,7 @@ export function createTaskInput(
 		deadlines: options.deadlines,
 		a11yProfileId: options.a11yProfileId,
 		preferences: options.preferences,
-		schema: "cortex.task.input@1",
+		schema: 'cortex.task.input@1',
 	};
 }
 
@@ -373,7 +373,7 @@ export function createIdempotencyKey(input: TaskInput): string {
 		inputs: input.inputs,
 		scopes: input.scopes.sort(),
 	});
-	const hash = createHash("sha256").update(key).digest("hex");
+	const hash = createHash('sha256').update(key).digest('hex');
 	return hash.slice(0, 32);
 }
 
@@ -386,4 +386,4 @@ export type {
 	TaskInput,
 	TaskRef,
 	UnsubscribeFunction,
-} from "../types/index.js";
+} from '../types/index.js';

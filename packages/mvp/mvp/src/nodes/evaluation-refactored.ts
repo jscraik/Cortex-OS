@@ -5,10 +5,10 @@
  * @version 2.0.0
  */
 
-import type { Evidence, PRPState } from "../state.js";
-import { validateCodeReview } from "./evaluation/code-review-validator.js";
-import { validateQualityBudgets } from "./evaluation/quality-budget-validator.js";
-import { validateTDDCycle } from "./evaluation/tdd-validator.js";
+import type { Evidence, PRPState } from '../state.js';
+import { validateCodeReview } from './evaluation/code-review-validator.js';
+import { validateQualityBudgets } from './evaluation/quality-budget-validator.js';
+import { validateTDDCycle } from './evaluation/tdd-validator.js';
 
 /**
  * Evaluation Phase Gates:
@@ -26,16 +26,16 @@ export class EvaluationNode {
 		// Gate 1: TDD validation (Red → Green cycle)
 		const tddValidation = await validateTDDCycle(state);
 		if (!tddValidation.passed) {
-			blockers.push("TDD cycle not completed - missing tests or failing tests");
+			blockers.push('TDD cycle not completed - missing tests or failing tests');
 		}
 
 		evidence.push({
 			id: `eval-tdd-${Date.now()}`,
-			type: "test",
-			source: "tdd_validator",
+			type: 'test',
+			source: 'tdd_validator',
 			content: JSON.stringify(tddValidation),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 2: Code review validation
@@ -53,32 +53,32 @@ export class EvaluationNode {
 
 		evidence.push({
 			id: `eval-review-${Date.now()}`,
-			type: "analysis",
-			source: "code_reviewer",
+			type: 'analysis',
+			source: 'code_reviewer',
 			content: JSON.stringify(reviewValidation),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 3: Quality budget validation
 		const qualityValidation = await validateQualityBudgets(state);
 		if (!qualityValidation.overall) {
 			const failedBudgets = [
-				!qualityValidation.accessibility.passed && "Accessibility",
-				!qualityValidation.performance.passed && "Performance",
-				!qualityValidation.security.passed && "Security",
+				!qualityValidation.accessibility.passed && 'Accessibility',
+				!qualityValidation.performance.passed && 'Performance',
+				!qualityValidation.security.passed && 'Security',
 			].filter(Boolean);
 
-			majors.push(`Quality budgets failed: ${failedBudgets.join(", ")}`);
+			majors.push(`Quality budgets failed: ${failedBudgets.join(', ')}`);
 		}
 
 		evidence.push({
 			id: `eval-quality-${Date.now()}`,
-			type: "analysis",
-			source: "quality_validator",
+			type: 'analysis',
+			source: 'quality_validator',
 			content: JSON.stringify(qualityValidation),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 4: Cerebrum consensus evaluation
@@ -90,22 +90,22 @@ export class EvaluationNode {
 
 		evidence.push({
 			id: `eval-consensus-${Date.now()}`,
-			type: "analysis",
-			source: "cerebrum",
+			type: 'analysis',
+			source: 'cerebrum',
 			content: JSON.stringify(consensus),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Determine final decision
 		const shouldShip =
-			blockers.length === 0 && consensus.recommendation === "ship";
-		const decision = shouldShip ? "ship" : "recycle";
+			blockers.length === 0 && consensus.recommendation === 'ship';
+		const decision = shouldShip ? 'ship' : 'recycle';
 
 		return {
 			...state,
 			evidence: [...state.evidence, ...evidence],
-			phase: decision === "ship" ? "completed" : "evaluation",
+			phase: decision === 'ship' ? 'completed' : 'evaluation',
 			metadata: {
 				...state.metadata,
 				executionContext: {
@@ -150,23 +150,23 @@ const evaluateCerebrumConsensus = async (
 	const confidence = Math.min(100, totalScore);
 
 	// Determine recommendation
-	let recommendation: "ship" | "recycle";
+	let recommendation: 'ship' | 'recycle';
 	let reasoning: string[];
 
 	if (confidence >= 80 && tdd.passed && review.blockers === 0) {
-		recommendation = "ship";
+		recommendation = 'ship';
 		reasoning = [
-			"All critical gates passed",
+			'All critical gates passed',
 			`High confidence score: ${confidence}%`,
-			"Ready for production deployment",
+			'Ready for production deployment',
 		];
 	} else {
-		recommendation = "recycle";
+		recommendation = 'recycle';
 		reasoning = [
 			confidence < 80 && `Low confidence score: ${confidence}%`,
-			!tdd.passed && "TDD cycle incomplete",
-			review.blockers > 0 && "Blocking issues found in review",
-			!quality.overall && "Quality budgets not met",
+			!tdd.passed && 'TDD cycle incomplete',
+			review.blockers > 0 && 'Blocking issues found in review',
+			!quality.overall && 'Quality budgets not met',
 		].filter(Boolean) as string[];
 	}
 

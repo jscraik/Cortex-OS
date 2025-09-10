@@ -6,9 +6,9 @@
  * @status TDD-DRIVEN
  */
 
-import { z } from "zod";
-import { fixedTimestamp } from "./lib/determinism.js";
-import { generateId } from "./utils/id.js";
+import { z } from 'zod';
+import { fixedTimestamp } from './lib/determinism.js';
+import { generateId } from './utils/id.js';
 
 /**
  * Evidence captured during PRP execution
@@ -16,21 +16,21 @@ import { generateId } from "./utils/id.js";
 export const EvidenceSchema = z.object({
 	id: z.string(),
 	type: z.enum([
-		"file",
-		"command",
-		"test",
-		"analysis",
-		"validation",
-		"llm-generation",
-		"coverage",
-		"a11y",
-		"security",
-		"sbom",
+		'file',
+		'command',
+		'test',
+		'analysis',
+		'validation',
+		'llm-generation',
+		'coverage',
+		'a11y',
+		'security',
+		'sbom',
 	]),
 	source: z.string(),
 	content: z.string(),
 	timestamp: z.string(),
-	phase: z.enum(["strategy", "build", "evaluation"]),
+	phase: z.enum(['strategy', 'build', 'evaluation']),
 	commitSha: z.string().optional(),
 	lineRange: z.string().optional(),
 	metadata: z.record(z.unknown()).optional(),
@@ -40,9 +40,9 @@ export const EvidenceSchema = z.object({
  * Human approval record for gates
  */
 export const HumanApprovalSchema = z.object({
-	gateId: z.enum(["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"]),
+	gateId: z.enum(['G0', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7']),
 	actor: z.string(),
-	decision: z.enum(["approved", "rejected", "pending"]),
+	decision: z.enum(['approved', 'rejected', 'pending']),
 	timestamp: z.string(),
 	commitSha: z.string(),
 	rationale: z.string(),
@@ -53,17 +53,19 @@ export const HumanApprovalSchema = z.object({
  * Gate execution result
  */
 export const GateResultSchema = z.object({
-	id: z.enum(["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"]),
+	id: z.enum(['G0', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7']),
 	name: z.string(),
-	status: z.enum(["pending", "running", "passed", "failed", "skipped"]),
+	status: z.enum(['pending', 'running', 'passed', 'failed', 'skipped']),
 	requiresHumanApproval: z.boolean(),
 	humanApproval: HumanApprovalSchema.optional(),
-	automatedChecks: z.array(z.object({
-		name: z.string(),
-		status: z.enum(["pass", "fail", "skip"]),
-		output: z.string().optional(),
-		duration: z.number().optional(),
-	})),
+	automatedChecks: z.array(
+		z.object({
+			name: z.string(),
+			status: z.enum(['pass', 'fail', 'skip']),
+			output: z.string().optional(),
+			duration: z.number().optional(),
+		}),
+	),
 	artifacts: z.array(z.string()),
 	evidence: z.array(z.string()), // Evidence IDs
 	timestamp: z.string(),
@@ -85,7 +87,7 @@ export const ValidationGateSchema = z.object({
  * Cerebrum decision state
  */
 export const CerebrumDecisionSchema = z.object({
-	decision: z.enum(["promote", "recycle", "pending"]),
+	decision: z.enum(['promote', 'recycle', 'pending']),
 	reasoning: z.string(),
 	confidence: z.number().min(0).max(1),
 	timestamp: z.string(),
@@ -109,7 +111,7 @@ export const EnforcementProfileSchema = z.object({
 		crossBoundaryImports: z.array(z.string()).default([]),
 	}),
 	governance: z.object({
-		licensePolicy: z.string().default("(Apache-2.0 OR Commercial)"),
+		licensePolicy: z.string().default('(Apache-2.0 OR Commercial)'),
 		codeownersMapping: z.record(z.array(z.string())).default({}),
 		structureGuardExceptions: z.array(z.string()).default([]),
 		requiredChecks: z.array(z.string()).default([]),
@@ -125,7 +127,7 @@ export const PRPStateSchema = z.object({
 	runId: z.string(),
 
 	// State machine phase
-	phase: z.enum(["strategy", "build", "evaluation", "completed", "recycled"]),
+	phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
 
 	// Input blueprint
 	blueprint: z.object({
@@ -167,7 +169,7 @@ export const PRPStateSchema = z.object({
 		currentNeuron: z.string().optional(),
 		llmConfig: z
 			.object({
-				provider: z.enum(["mlx", "ollama"]).optional(),
+				provider: z.enum(['mlx', 'ollama']).optional(),
 				model: z.string().optional(),
 			})
 			.optional(),
@@ -188,11 +190,11 @@ export const PRPStateSchema = z.object({
 				id: z.string(),
 				timestamp: z.string(),
 				phase: z.enum([
-					"strategy",
-					"build",
-					"evaluation",
-					"completed",
-					"recycled",
+					'strategy',
+					'build',
+					'evaluation',
+					'completed',
+					'recycled',
 				]),
 				state: z.record(z.unknown()),
 			}),
@@ -217,12 +219,12 @@ export const validateStateTransition = (
 ): boolean => {
 	const fromPhase = fromState.phase;
 	const toPhase = toState.phase;
-	const validTransitions: Record<PRPState["phase"], PRPState["phase"][]> = {
-		strategy: ["build", "recycled"],
-		build: ["evaluation", "recycled"],
-		evaluation: ["completed", "recycled"],
+	const validTransitions: Record<PRPState['phase'], PRPState['phase'][]> = {
+		strategy: ['build', 'recycled'],
+		build: ['evaluation', 'recycled'],
+		evaluation: ['completed', 'recycled'],
 		completed: [], // Terminal state
-		recycled: ["strategy"], // Can restart
+		recycled: ['strategy'], // Can restart
 	};
 
 	return validTransitions[fromPhase]?.includes(toPhase) ?? false;
@@ -232,25 +234,25 @@ export const validateStateTransition = (
  * Create initial PRP state
  */
 export const createInitialPRPState = (
-	blueprint: PRPState["blueprint"],
+	blueprint: PRPState['blueprint'],
 	options: {
 		id?: string;
 		runId?: string;
-		llmConfig?: PRPState["metadata"]["llmConfig"];
+		llmConfig?: PRPState['metadata']['llmConfig'];
 		deterministic?: boolean;
 		enforcementProfile?: EnforcementProfile;
 	} = {},
 ): PRPState => {
 	const now = options.deterministic
-		? fixedTimestamp("workflow-start")
+		? fixedTimestamp('workflow-start')
 		: new Date().toISOString();
-	const id = options.id ?? generateId("prp", options.deterministic);
-	const runId = options.runId ?? generateId("run", options.deterministic);
+	const id = options.id ?? generateId('prp', options.deterministic);
+	const runId = options.runId ?? generateId('run', options.deterministic);
 
 	return {
 		id,
 		runId,
-		phase: "strategy",
+		phase: 'strategy',
 		blueprint,
 		enforcementProfile: options.enforcementProfile,
 		gates: {},

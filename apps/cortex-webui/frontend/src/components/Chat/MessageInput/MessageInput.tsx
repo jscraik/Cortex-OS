@@ -75,8 +75,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
 	}, []);
 
 	const processDocument = async (file: File): Promise<string | null> => {
-		setFileProcessing(prev => [...prev, file.name]);
-		
+		setFileProcessing((prev) => [...prev, file.name]);
+
 		try {
 			const formData = new FormData();
 			formData.append('document', file);
@@ -91,81 +91,99 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			}
 
 			const result = await response.json();
-			
+
 			// Format the document content for insertion
 			let processedContent = `**Document: ${file.name}**\n\n`;
 			if (result.metadata?.pageCount) {
 				processedContent += `*Pages: ${result.metadata.pageCount}*\n\n`;
 			}
-			processedContent += result.text || '[Document processed but no text extracted]';
-			
+			processedContent +=
+				result.text || '[Document processed but no text extracted]';
+
 			return processedContent;
 		} catch (error) {
 			console.error('Error processing document:', error);
 			return `**Error processing ${file.name}**: ${error instanceof Error ? error.message : 'Unknown error'}`;
 		} finally {
-			setFileProcessing(prev => prev.filter(name => name !== file.name));
+			setFileProcessing((prev) => prev.filter((name) => name !== file.name));
 		}
 	};
 
-	const handleDrop = useCallback(async (e: React.DragEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsDragOver(false);
-		dragCounterRef.current = 0;
+	const handleDrop = useCallback(
+		async (e: React.DragEvent) => {
+			e.preventDefault();
+			e.stopPropagation();
+			setIsDragOver(false);
+			dragCounterRef.current = 0;
 
-		const droppedFiles = Array.from(e.dataTransfer.files);
-		if (droppedFiles.length === 0) return;
+			const droppedFiles = Array.from(e.dataTransfer.files);
+			if (droppedFiles.length === 0) return;
 
-		// Separate files that can be processed as documents vs regular file attachments
-		const documentFiles = droppedFiles.filter(file => 
-			file.type === 'application/pdf' || 
-			file.type === 'text/plain' ||
-			file.type.startsWith('image/')
-		);
-		
-		const regularFiles = droppedFiles.filter(file => 
-			!documentFiles.includes(file)
-		);
+			// Separate files that can be processed as documents vs regular file attachments
+			const documentFiles = droppedFiles.filter(
+				(file) =>
+					file.type === 'application/pdf' ||
+					file.type === 'text/plain' ||
+					file.type.startsWith('image/'),
+			);
 
-		// Add regular files to attachments
-		if (regularFiles.length > 0) {
-			setFiles(prev => [...prev, ...regularFiles]);
-		}
+			const regularFiles = droppedFiles.filter(
+				(file) => !documentFiles.includes(file),
+			);
 
-		// Process document files and insert their content into the input
-		if (documentFiles.length > 0) {
-			let combinedContent = input;
-			
-			for (const file of documentFiles) {
-				const processedContent = await processDocument(file);
-				if (processedContent) {
-					combinedContent += (combinedContent ? '\n\n' : '') + processedContent;
-				}
+			// Add regular files to attachments
+			if (regularFiles.length > 0) {
+				setFiles((prev) => [...prev, ...regularFiles]);
 			}
-			
-			setInput(combinedContent);
-		}
-	}, [input, setFiles]);
+
+			// Process document files and insert their content into the input
+			if (documentFiles.length > 0) {
+				let combinedContent = input;
+
+				for (const file of documentFiles) {
+					const processedContent = await processDocument(file);
+					if (processedContent) {
+						combinedContent +=
+							(combinedContent ? '\n\n' : '') + processedContent;
+					}
+				}
+
+				setInput(combinedContent);
+			}
+		},
+		[input, setFiles],
+	);
 
 	const getFileIcon = (file: File) => {
 		if (file.type.startsWith('image/')) {
 			return (
 				<svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-					<path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+					<path
+						fillRule="evenodd"
+						d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+						clipRule="evenodd"
+					/>
 				</svg>
 			);
 		}
 		if (file.type === 'application/pdf') {
 			return (
 				<svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-					<path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+					<path
+						fillRule="evenodd"
+						d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+						clipRule="evenodd"
+					/>
 				</svg>
 			);
 		}
 		return (
 			<svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-				<path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+				<path
+					fillRule="evenodd"
+					d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+					clipRule="evenodd"
+				/>
 			</svg>
 		);
 	};
@@ -185,8 +203,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
 	// Add message to history when sent
 	const addToHistory = useCallback((message: string) => {
-		setMessageHistory(prev => {
-			const newHistory = [message, ...prev.filter(msg => msg !== message)].slice(0, 10); // Keep last 10
+		setMessageHistory((prev) => {
+			const newHistory = [
+				message,
+				...prev.filter((msg) => msg !== message),
+			].slice(0, 10); // Keep last 10
 			return newHistory;
 		});
 		setHistoryIndex(-1);
@@ -206,25 +227,32 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			setTimeout(() => {
 				const textarea = textareaRef.current;
 				if (textarea) {
-					textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+					textarea.selectionStart = textarea.selectionEnd =
+						textarea.value.length;
 				}
 			}, 0);
 		}
 	}, [lastUserMessage]);
 
-	const navigateHistory = useCallback((direction: 'up' | 'down') => {
-		if (messageHistory.length === 0) return;
+	const navigateHistory = useCallback(
+		(direction: 'up' | 'down') => {
+			if (messageHistory.length === 0) return;
 
-		if (direction === 'up') {
-			const newIndex = historyIndex < messageHistory.length - 1 ? historyIndex + 1 : historyIndex;
-			setHistoryIndex(newIndex);
-			setInput(messageHistory[newIndex] || '');
-		} else {
-			const newIndex = historyIndex > 0 ? historyIndex - 1 : -1;
-			setHistoryIndex(newIndex);
-			setInput(newIndex >= 0 ? messageHistory[newIndex] : '');
-		}
-	}, [messageHistory, historyIndex]);
+			if (direction === 'up') {
+				const newIndex =
+					historyIndex < messageHistory.length - 1
+						? historyIndex + 1
+						: historyIndex;
+				setHistoryIndex(newIndex);
+				setInput(messageHistory[newIndex] || '');
+			} else {
+				const newIndex = historyIndex > 0 ? historyIndex - 1 : -1;
+				setHistoryIndex(newIndex);
+				setInput(newIndex >= 0 ? messageHistory[newIndex] : '');
+			}
+		},
+		[messageHistory, historyIndex],
+	);
 
 	// Extract input variables from text
 	const extractInputVariables = (text: string) => {
@@ -338,16 +366,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
 	const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			const newFiles = Array.from(e.target.files);
-			
+
 			// Separate files that can be processed as documents vs regular file attachments
-			const documentFiles = newFiles.filter(file => 
-				file.type === 'application/pdf' || 
-				file.type === 'text/plain' ||
-				file.type.startsWith('image/')
+			const documentFiles = newFiles.filter(
+				(file) =>
+					file.type === 'application/pdf' ||
+					file.type === 'text/plain' ||
+					file.type.startsWith('image/'),
 			);
-			
-			const regularFiles = newFiles.filter(file => 
-				!documentFiles.includes(file)
+
+			const regularFiles = newFiles.filter(
+				(file) => !documentFiles.includes(file),
 			);
 
 			// Add regular files to attachments
@@ -358,14 +387,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
 			// Process document files and insert their content into the input
 			if (documentFiles.length > 0) {
 				let combinedContent = input;
-				
+
 				for (const file of documentFiles) {
 					const processedContent = await processDocument(file);
 					if (processedContent) {
-						combinedContent += (combinedContent ? '\n\n' : '') + processedContent;
+						combinedContent +=
+							(combinedContent ? '\n\n' : '') + processedContent;
 					}
 				}
-				
+
 				setInput(combinedContent);
 			}
 
@@ -483,7 +513,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				onDragOver={handleDragOver}
 				onDrop={handleDrop}
 				className={`flex flex-col gap-2 p-4 border-t ${
-					isDragOver ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' : ''
+					isDragOver
+						? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600'
+						: ''
 				}`}
 			>
 				{/* Character count indicator */}
@@ -517,9 +549,24 @@ const MessageInput: React.FC<MessageInputProps> = ({
 								</div>
 								{fileProcessing.includes(file.name) ? (
 									<div className="animate-spin h-4 w-4 text-blue-500">
-										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-											<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-											<path fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+												className="opacity-25"
+											></circle>
+											<path
+												fill="currentColor"
+												d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+												className="opacity-75"
+											></path>
 										</svg>
 									</div>
 								) : (
@@ -552,13 +599,29 @@ const MessageInput: React.FC<MessageInputProps> = ({
 				{fileProcessing.length > 0 && (
 					<div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
 						<div className="animate-spin h-4 w-4 text-blue-500">
-							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-								<circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle>
-								<path fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									strokeWidth="4"
+									className="opacity-25"
+								></circle>
+								<path
+									fill="currentColor"
+									d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									className="opacity-75"
+								></path>
 							</svg>
 						</div>
 						<span className="text-sm text-blue-700 dark:text-blue-300">
-							Processing {fileProcessing.length} document{fileProcessing.length > 1 ? 's' : ''}...
+							Processing {fileProcessing.length} document
+							{fileProcessing.length > 1 ? 's' : ''}...
 						</span>
 					</div>
 				)}
@@ -625,7 +688,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={toggleWebSearch}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							webSearchEnabled ? 'bg-blue-100 dark:bg-blue-900 border-blue-500' : ''
+							webSearchEnabled
+								? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
+								: ''
 						}`}
 						aria-label="Web search"
 					>
@@ -650,7 +715,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={toggleImageGeneration}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							imageGenerationEnabled ? 'bg-blue-100 dark:bg-blue-900 border-blue-500' : ''
+							imageGenerationEnabled
+								? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
+								: ''
 						}`}
 						aria-label="Image generation"
 					>
@@ -675,7 +742,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={toggleCodeInterpreter}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							codeInterpreterEnabled ? 'bg-blue-100 dark:bg-blue-900 border-blue-500' : ''
+							codeInterpreterEnabled
+								? 'bg-blue-100 dark:bg-blue-900 border-blue-500'
+								: ''
 						}`}
 						aria-label="Code interpreter"
 					>
@@ -700,7 +769,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						onClick={() => setShowVoiceRecording(true)}
 						disabled={disabled}
 						className={`flex items-center gap-1 px-2 py-1 text-sm border rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 ${
-							isRecording ? 'bg-red-100 dark:bg-red-900 border-red-500 animate-pulse' : ''
+							isRecording
+								? 'bg-red-100 dark:bg-red-900 border-red-500 animate-pulse'
+								: ''
 						}`}
 						aria-label="Voice recording"
 					>
@@ -733,12 +804,12 @@ const MessageInput: React.FC<MessageInputProps> = ({
 						placeholder={placeholder}
 						rows={1}
 					/>
-					
+
 					{/* Keyboard shortcut hints (show on focus) */}
 					<div className="absolute bottom-1 right-14 text-xs text-gray-400 dark:text-gray-500 pointer-events-none opacity-0 focus-within:opacity-100 transition-opacity">
 						⏎ Send • ⇧⏎ New line
 					</div>
-					
+
 					<button
 						type="submit"
 						disabled={disabled || (!input.trim() && files.length === 0)}
@@ -763,10 +834,30 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
 				{/* Keyboard shortcuts help */}
 				<div className="text-xs text-gray-500 dark:text-gray-400 space-x-4">
-					<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl+L</kbd> Clear</span>
-					<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Ctrl+R</kbd> Recall last</span>
-					<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">↑↓</kbd> History</span>
-					<span><kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> Unfocus</span>
+					<span>
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+							Ctrl+L
+						</kbd>{' '}
+						Clear
+					</span>
+					<span>
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+							Ctrl+R
+						</kbd>{' '}
+						Recall last
+					</span>
+					<span>
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+							↑↓
+						</kbd>{' '}
+						History
+					</span>
+					<span>
+						<kbd className="px-1 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 rounded">
+							Esc
+						</kbd>{' '}
+						Unfocus
+					</span>
 				</div>
 
 				{/* Hidden file input paired with the visible "Files" button via aria-controls and label */}

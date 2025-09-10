@@ -8,8 +8,8 @@ export interface PlanningContext {
 	inputs?: any[];
 	constraints?: string[];
 	preferences?: {
-		risk?: "low" | "balanced" | "high";
-		verbosity?: "low" | "high";
+		risk?: 'low' | 'balanced' | 'high';
+		verbosity?: 'low' | 'high';
 	};
 }
 
@@ -23,7 +23,7 @@ export interface PlanStep {
 	id: string;
 	title: string;
 	description: string;
-	status: "pending" | "running" | "completed" | "failed";
+	status: 'pending' | 'running' | 'completed' | 'failed';
 	order: number;
 	dependencies?: string[];
 	tools?: string[];
@@ -36,16 +36,16 @@ export interface Plan {
 	description: string;
 	steps: PlanStep[];
 	status:
-		| "planning"
-		| "simulating"
-		| "approved"
-		| "executing"
-		| "completed"
-		| "failed";
+		| 'planning'
+		| 'simulating'
+		| 'approved'
+		| 'executing'
+		| 'completed'
+		| 'failed';
 	createdAt: string;
 	updatedAt: string;
 	simulationResult?: any;
 	evidenceIds?: string[];
 }
 
-export type PlanStatus = Plan["status"];
+export type PlanStatus = Plan['status'];

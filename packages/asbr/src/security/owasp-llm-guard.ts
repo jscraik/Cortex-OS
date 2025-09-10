@@ -3,8 +3,8 @@
  * Implements security controls for ASBR according to OWASP LLM Top 10 (2025)
  */
 
-import type { TaskInput } from "../types/index.js";
-import { MCPToolRegistry } from "../mcp/sandbox.js";
+import type { MCPToolRegistry } from '../mcp/sandbox.js';
+import type { TaskInput } from '../types/index.js';
 
 export interface SecurityScanResult {
 	allowed: boolean;
@@ -15,23 +15,23 @@ export interface SecurityScanResult {
 
 export interface DetectedThreat {
 	type: OWASPLLMThreat;
-	severity: "low" | "medium" | "high" | "critical";
+	severity: 'low' | 'medium' | 'high' | 'critical';
 	description: string;
 	evidence: string;
 	mitigation?: string;
 }
 
 export type OWASPLLMThreat =
-	| "LLM01_PromptInjection"
-	| "LLM02_InsecureOutputHandling"
-	| "LLM03_TrainingDataPoisoning"
-	| "LLM04_ModelDoS"
-	| "LLM05_SupplyChainVulnerabilities"
-	| "LLM06_SensitiveInfoDisclosure"
-	| "LLM07_InsecurePluginDesign"
-	| "LLM08_ExcessiveAgency"
-	| "LLM09_Overreliance"
-	| "LLM10_ModelTheft";
+	| 'LLM01_PromptInjection'
+	| 'LLM02_InsecureOutputHandling'
+	| 'LLM03_TrainingDataPoisoning'
+	| 'LLM04_ModelDoS'
+	| 'LLM05_SupplyChainVulnerabilities'
+	| 'LLM06_SensitiveInfoDisclosure'
+	| 'LLM07_InsecurePluginDesign'
+	| 'LLM08_ExcessiveAgency'
+	| 'LLM09_Overreliance'
+	| 'LLM10_ModelTheft';
 
 export interface SecurityPolicy {
 	enabledControls: OWASPLLMThreat[];
@@ -49,23 +49,23 @@ export interface SecurityPolicy {
  * OWASP LLM Top 10 Security Guard
  */
 export class OWASPLLMGuard {
-        private policy: SecurityPolicy;
-        private registry?: MCPToolRegistry;
-        private requestCounts = new Map<
-                string,
-                { minute: number; hour: number; lastReset: number }
-        >();
-        private auditLog: Array<{
-                timestamp: string;
-                event: string;
-                details: unknown;
-        }> = [];
+	private policy: SecurityPolicy;
+	private registry?: MCPToolRegistry;
+	private requestCounts = new Map<
+		string,
+		{ minute: number; hour: number; lastReset: number }
+	>();
+	private auditLog: Array<{
+		timestamp: string;
+		event: string;
+		details: unknown;
+	}> = [];
 
-        constructor(policy: SecurityPolicy, registry?: MCPToolRegistry) {
-                this.policy = policy;
-                this.registry = registry;
-                this.setupCleanupInterval();
-        }
+	constructor(policy: SecurityPolicy, registry?: MCPToolRegistry) {
+		this.policy = policy;
+		this.registry = registry;
+		this.setupCleanupInterval();
+	}
 
 	/**
 	 * Scan task input for security threats
@@ -74,19 +74,19 @@ export class OWASPLLMGuard {
 		const threats: DetectedThreat[] = [];
 
 		// LLM01: Prompt Injection Detection
-		if (this.policy.enabledControls.includes("LLM01_PromptInjection")) {
+		if (this.policy.enabledControls.includes('LLM01_PromptInjection')) {
 			const injectionThreats = this.detectPromptInjection(input);
 			threats.push(...injectionThreats);
 		}
 
 		// LLM06: Sensitive Information Disclosure
-		if (this.policy.enabledControls.includes("LLM06_SensitiveInfoDisclosure")) {
+		if (this.policy.enabledControls.includes('LLM06_SensitiveInfoDisclosure')) {
 			const sensitiveDataThreats = this.detectSensitiveData(input);
 			threats.push(...sensitiveDataThreats);
 		}
 
 		// LLM08: Excessive Agency
-		if (this.policy.enabledControls.includes("LLM08_ExcessiveAgency")) {
+		if (this.policy.enabledControls.includes('LLM08_ExcessiveAgency')) {
 			const excessiveAgencyThreats = this.detectExcessiveAgency(input);
 			threats.push(...excessiveAgencyThreats);
 		}
@@ -105,7 +105,7 @@ export class OWASPLLMGuard {
 		// Log the scan
 		this.auditLog.push({
 			timestamp: new Date().toISOString(),
-			event: "security_scan",
+			event: 'security_scan',
 			details: { input: input.title, result },
 		});
 
@@ -122,14 +122,14 @@ export class OWASPLLMGuard {
 		const threats: DetectedThreat[] = [];
 
 		// LLM02: Insecure Output Handling
-		if (this.policy.enabledControls.includes("LLM02_InsecureOutputHandling")) {
+		if (this.policy.enabledControls.includes('LLM02_InsecureOutputHandling')) {
 			// use the (possibly-unused) _context parameter to satisfy callers and linter
 			const outputThreats = this.detectInsecureOutput(output, _context);
 			threats.push(...outputThreats);
 		}
 
 		// LLM06: Sensitive Information Disclosure
-		if (this.policy.enabledControls.includes("LLM06_SensitiveInfoDisclosure")) {
+		if (this.policy.enabledControls.includes('LLM06_SensitiveInfoDisclosure')) {
 			const sensitiveDataThreats = this.detectSensitiveDataInOutput(output);
 			threats.push(...sensitiveDataThreats);
 		}
@@ -205,14 +205,14 @@ export class OWASPLLMGuard {
 		const threats: DetectedThreat[] = [];
 
 		// LLM07: Insecure Plugin Design
-		if (this.policy.enabledControls.includes("LLM07_InsecurePluginDesign")) {
+		if (this.policy.enabledControls.includes('LLM07_InsecurePluginDesign')) {
 			const pluginThreats = this.detectInsecurePluginUsage(toolName, args);
 			threats.push(...pluginThreats);
 		}
 
 		// LLM05: Supply Chain Vulnerabilities
 		if (
-			this.policy.enabledControls.includes("LLM05_SupplyChainVulnerabilities")
+			this.policy.enabledControls.includes('LLM05_SupplyChainVulnerabilities')
 		) {
 			const supplyChainThreats = this.detectSupplyChainRisks(toolName);
 			threats.push(...supplyChainThreats);
@@ -267,11 +267,11 @@ export class OWASPLLMGuard {
 		for (const pattern of suspiciousPatterns) {
 			if (pattern.test(textToScan)) {
 				threats.push({
-					type: "LLM01_PromptInjection",
-					severity: "high",
-					description: "Potential prompt injection detected",
+					type: 'LLM01_PromptInjection',
+					severity: 'high',
+					description: 'Potential prompt injection detected',
 					evidence: pattern.source,
-					mitigation: "Input sanitization and validation",
+					mitigation: 'Input sanitization and validation',
 				});
 			}
 		}
@@ -283,28 +283,28 @@ export class OWASPLLMGuard {
 		const threats: DetectedThreat[] = [];
 		const sensitivePatterns = [
 			// Credentials
-			{ pattern: /password\s*[:=]\s*\S+/i, type: "password" },
-			{ pattern: /api[_-]?key\s*[:=]\s*\S+/i, type: "api_key" },
-			{ pattern: /secret\s*[:=]\s*\S+/i, type: "secret" },
-			{ pattern: /token\s*[:=]\s*\S+/i, type: "token" },
+			{ pattern: /password\s*[:=]\s*\S+/i, type: 'password' },
+			{ pattern: /api[_-]?key\s*[:=]\s*\S+/i, type: 'api_key' },
+			{ pattern: /secret\s*[:=]\s*\S+/i, type: 'secret' },
+			{ pattern: /token\s*[:=]\s*\S+/i, type: 'token' },
 
 			// Personal data
-			{ pattern: /\b\d{3}-\d{2}-\d{4}\b/, type: "ssn" },
+			{ pattern: /\b\d{3}-\d{2}-\d{4}\b/, type: 'ssn' },
 			{
 				pattern: /\b4\d{3}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/,
-				type: "credit_card",
+				type: 'credit_card',
 			},
 			{
 				pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
-				type: "email",
+				type: 'email',
 			},
 
 			// File paths that might contain sensitive data
 			{
 				pattern: /^\/(?:home|users)\/[^/\s]+\/\.(?:ssh|aws|config)/i,
-				type: "config_path",
+				type: 'config_path',
 			},
-			{ pattern: /[A-Z]:\\Users\\[^\\]+\\AppData/i, type: "user_data_path" },
+			{ pattern: /[A-Z]:\\Users\\[^\\]+\\AppData/i, type: 'user_data_path' },
 		];
 
 		const textToScan = `${input.title} ${input.brief} ${JSON.stringify(input.inputs)}`;
@@ -312,12 +312,12 @@ export class OWASPLLMGuard {
 		for (const { pattern, type } of sensitivePatterns) {
 			if (pattern.test(textToScan)) {
 				threats.push({
-					type: "LLM06_SensitiveInfoDisclosure",
-					severity: "high",
+					type: 'LLM06_SensitiveInfoDisclosure',
+					severity: 'high',
 					description: `Potential ${type} detected in input`,
 					evidence: pattern.source,
 					mitigation:
-						"Remove sensitive data and use secure credential management",
+						'Remove sensitive data and use secure credential management',
 				});
 			}
 		}
@@ -343,12 +343,12 @@ export class OWASPLLMGuard {
 		for (const pattern of dangerousActions) {
 			if (pattern.test(textToScan)) {
 				threats.push({
-					type: "LLM08_ExcessiveAgency",
-					severity: "high",
+					type: 'LLM08_ExcessiveAgency',
+					severity: 'high',
 					description:
-						"Request involves potentially dangerous system operations",
+						'Request involves potentially dangerous system operations',
 					evidence: pattern.source,
-					mitigation: "Require explicit approval for system-level operations",
+					mitigation: 'Require explicit approval for system-level operations',
 				});
 			}
 		}
@@ -375,11 +375,11 @@ export class OWASPLLMGuard {
 		for (const pattern of scriptPatterns) {
 			if (pattern.test(output)) {
 				threats.push({
-					type: "LLM02_InsecureOutputHandling",
-					severity: "high",
-					description: "Potential script injection in output",
+					type: 'LLM02_InsecureOutputHandling',
+					severity: 'high',
+					description: 'Potential script injection in output',
 					evidence: pattern.source,
-					mitigation: "Sanitize output before rendering",
+					mitigation: 'Sanitize output before rendering',
 				});
 			}
 		}
@@ -392,22 +392,22 @@ export class OWASPLLMGuard {
 
 		// Similar patterns as input detection
 		const sensitivePatterns = [
-			{ pattern: /password\s*[:=]\s*\S+/i, type: "password" },
-			{ pattern: /\b\d{3}-\d{2}-\d{4}\b/, type: "ssn" },
+			{ pattern: /password\s*[:=]\s*\S+/i, type: 'password' },
+			{ pattern: /\b\d{3}-\d{2}-\d{4}\b/, type: 'ssn' },
 			{
 				pattern: /\b4\d{3}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/,
-				type: "credit_card",
+				type: 'credit_card',
 			},
 		];
 
 		for (const { pattern, type } of sensitivePatterns) {
 			if (pattern.test(output)) {
 				threats.push({
-					type: "LLM06_SensitiveInfoDisclosure",
-					severity: "critical",
+					type: 'LLM06_SensitiveInfoDisclosure',
+					severity: 'critical',
 					description: `Sensitive ${type} exposed in output`,
 					evidence: pattern.source,
-					mitigation: "Redact sensitive information from output",
+					mitigation: 'Redact sensitive information from output',
 				});
 			}
 		}
@@ -423,20 +423,20 @@ export class OWASPLLMGuard {
 
 		// Check for dangerous tool combinations
 		const dangerousTools = [
-			"shell",
-			"exec",
-			"eval",
-			"file_delete",
-			"system_modify",
+			'shell',
+			'exec',
+			'eval',
+			'file_delete',
+			'system_modify',
 		];
 
 		if (dangerousTools.includes(toolName.toLowerCase())) {
 			threats.push({
-				type: "LLM07_InsecurePluginDesign",
-				severity: "high",
+				type: 'LLM07_InsecurePluginDesign',
+				severity: 'high',
 				description: `Usage of potentially dangerous tool: ${toolName}`,
 				evidence: `Tool: ${toolName}, Args: ${JSON.stringify(args)}`,
-				mitigation: "Require additional approval for high-risk tools",
+				mitigation: 'Require additional approval for high-risk tools',
 			});
 		}
 
@@ -444,40 +444,40 @@ export class OWASPLLMGuard {
 		const argString = JSON.stringify(args);
 		if (/\.\.|\/etc\/|\/root\/|C:\\Windows\\System32/i.test(argString)) {
 			threats.push({
-				type: "LLM07_InsecurePluginDesign",
-				severity: "medium",
-				description: "Tool arguments contain suspicious paths",
+				type: 'LLM07_InsecurePluginDesign',
+				severity: 'medium',
+				description: 'Tool arguments contain suspicious paths',
 				evidence: argString,
-				mitigation: "Validate and sanitize tool arguments",
+				mitigation: 'Validate and sanitize tool arguments',
 			});
 		}
 
 		return threats;
 	}
 
-        private detectSupplyChainRisks(toolName: string): DetectedThreat[] {
-                const threats: DetectedThreat[] = [];
+	private detectSupplyChainRisks(toolName: string): DetectedThreat[] {
+		const threats: DetectedThreat[] = [];
 
-                if (!this.registry) {
-                        return threats;
-                }
+		if (!this.registry) {
+			return threats;
+		}
 
-                const isTrusted = this.registry
-                        .getAvailableTools()
-                        .some((t) => t.name === toolName);
+		const isTrusted = this.registry
+			.getAvailableTools()
+			.some((t) => t.name === toolName);
 
-                if (!isTrusted) {
-                        threats.push({
-                                type: "LLM05_SupplyChainVulnerabilities",
-                                severity: "medium",
-                                description: `Unverified tool in use: ${toolName}`,
-                                evidence: `Tool: ${toolName}`,
-                                mitigation: "Use only verified and approved tools",
-                        });
-                }
+		if (!isTrusted) {
+			threats.push({
+				type: 'LLM05_SupplyChainVulnerabilities',
+				severity: 'medium',
+				description: `Unverified tool in use: ${toolName}`,
+				evidence: `Tool: ${toolName}`,
+				mitigation: 'Use only verified and approved tools',
+			});
+		}
 
-                return threats;
-        }
+		return threats;
+	}
 
 	private calculateRiskScore(threats: DetectedThreat[]): number {
 		const severityWeights = {
@@ -507,8 +507,8 @@ export class OWASPLLMGuard {
 
 		// Add general mitigations
 		if (threats.length > 0) {
-			mitigations.add("Review and validate all inputs and outputs");
-			mitigations.add("Enable additional monitoring and logging");
+			mitigations.add('Review and validate all inputs and outputs');
+			mitigations.add('Enable additional monitoring and logging');
 		}
 
 		return Array.from(mitigations);
@@ -543,12 +543,12 @@ export class OWASPLLMGuard {
 export function createDefaultSecurityPolicy(): SecurityPolicy {
 	return {
 		enabledControls: [
-			"LLM01_PromptInjection",
-			"LLM02_InsecureOutputHandling",
-			"LLM05_SupplyChainVulnerabilities",
-			"LLM06_SensitiveInfoDisclosure",
-			"LLM07_InsecurePluginDesign",
-			"LLM08_ExcessiveAgency",
+			'LLM01_PromptInjection',
+			'LLM02_InsecureOutputHandling',
+			'LLM05_SupplyChainVulnerabilities',
+			'LLM06_SensitiveInfoDisclosure',
+			'LLM07_InsecurePluginDesign',
+			'LLM08_ExcessiveAgency',
 		],
 		maxRiskScore: 50,
 		blockOnHighRisk: true,

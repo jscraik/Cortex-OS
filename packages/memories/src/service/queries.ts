@@ -7,8 +7,8 @@ export type SearchRequest = {
 
 export function normalizeSearch(
 	req: SearchRequest,
-): Required<Omit<SearchRequest, "vector" | "text">> &
-	Pick<SearchRequest, "vector" | "text"> {
+): Required<Omit<SearchRequest, 'vector' | 'text'>> &
+	Pick<SearchRequest, 'vector' | 'text'> {
 	return {
 		text: req.text,
 		vector: req.vector,

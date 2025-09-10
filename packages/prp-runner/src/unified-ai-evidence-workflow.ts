@@ -6,9 +6,9 @@
  * @status active
  */
 
-import type { AICoreCapabilities } from "./ai-capabilities.js";
-import { ASBRAIIntegration } from "./asbr-ai-integration.js";
-import { EmbeddingAdapter } from "./embedding-adapter";
+import type { AICoreCapabilities } from './ai-capabilities.js';
+import { ASBRAIIntegration } from './asbr-ai-integration.js';
+import { EmbeddingAdapter } from './embedding-adapter';
 
 /**
  * Configuration for the unified evidence collection workflow
@@ -116,8 +116,8 @@ export class UnifiedAIEvidenceWorkflow {
 
 	constructor(config: UnifiedEvidenceConfig = {}) {
 		this.config = {
-			llmModel: config.llmModel || "llama-3.2-3b",
-			embeddingModel: config.embeddingModel || "qwen-3-embedding-0.6b",
+			llmModel: config.llmModel || 'llama-3.2-3b',
+			embeddingModel: config.embeddingModel || 'qwen-3-embedding-0.6b',
 			maxTokens: config.maxTokens || 2048,
 			temperature: config.temperature || 0.7,
 			maxEvidenceItems: config.maxEvidenceItems || 50,
@@ -126,7 +126,7 @@ export class UnifiedAIEvidenceWorkflow {
 			enhancementEnabled: config.enhancementEnabled ?? true,
 			enablePolicyCompliance: config.enablePolicyCompliance ?? true,
 			enableContentSanitization: config.enableContentSanitization ?? true,
-			tenantId: config.tenantId || "default",
+			tenantId: config.tenantId || 'default',
 			concurrencyLimit: config.concurrencyLimit || 5,
 			timeoutMs: config.timeoutMs || 300000, // 5 minutes
 			cacheEnabled: config.cacheEnabled ?? true,
@@ -136,7 +136,7 @@ export class UnifiedAIEvidenceWorkflow {
 		this.asbrIntegration = new ASBRAIIntegration();
 
 		this.embeddingAdapter = new EmbeddingAdapter({
-			provider: "sentence-transformers",
+			provider: 'sentence-transformers',
 			model: this.config.embeddingModel,
 			dimensions: 1024,
 		});
@@ -219,7 +219,7 @@ export class UnifiedAIEvidenceWorkflow {
 	private async analyzeContext(context: EvidenceTaskContext) {
 		return {
 			searchQueries: this.generateSearchQueries(context),
-			evidenceTypes: ["documentation", "code", "requirements", "decisions"],
+			evidenceTypes: ['documentation', 'code', 'requirements', 'decisions'],
 			priorityAreas: this.identifyPriorityAreas(context),
 			estimatedComplexity: this.assessComplexity(context),
 		};
@@ -253,11 +253,11 @@ export class UnifiedAIEvidenceWorkflow {
 						source:
 							result.aiEnhancedEvidence.source ||
 							result.originalEvidence.source ||
-							"asbr-integration",
+							'asbr-integration',
 						relevanceScore: 0.8, // Default relevance score
 						metadata: {
 							query,
-							collectionMethod: "asbr-enhanced",
+							collectionMethod: 'asbr-enhanced',
 							aiEnhanced: true,
 							processingTime: result.aiMetadata.processingTime,
 						},
@@ -267,11 +267,11 @@ export class UnifiedAIEvidenceWorkflow {
 						(additional: any, index: number) => ({
 							id: `evidence-${context.taskId}-${evidence.length + index + 1}`,
 							content: additional.content,
-							source: additional.source || "asbr-integration",
+							source: additional.source || 'asbr-integration',
 							relevanceScore: 0.7, // Slightly lower score for additional evidence
 							metadata: {
 								query,
-								collectionMethod: "asbr-additional",
+								collectionMethod: 'asbr-additional',
 								aiEnhanced: false,
 							},
 						}),
@@ -309,7 +309,7 @@ export class UnifiedAIEvidenceWorkflow {
 						enhancement: {
 							originalContent: item.content,
 							enhancedContent: item.content,
-							improvements: ["No enhancement available"],
+							improvements: ['No enhancement available'],
 						},
 						content: item.content,
 					};
@@ -348,12 +348,12 @@ export class UnifiedAIEvidenceWorkflow {
 					allEvidence.push({
 						id: `semantic-${context.taskId}-${index}`,
 						content,
-						source: related.source || "semantic-search",
+						source: related.source || 'semantic-search',
 						relevanceScore: related.similarity || 0.6,
 						metadata: {
 							similarity: related.similarity,
 							confidence: related.confidence,
-							searchMethod: "semantic",
+							searchMethod: 'semantic',
 						},
 					});
 					existingContent.add(content);
@@ -386,8 +386,8 @@ export class UnifiedAIEvidenceWorkflow {
 						taskId: context.taskId,
 						claim: item.content,
 						confidence: item.relevanceScore || 0.8,
-						riskLevel: "medium" as const,
-						source: { type: "workflow", id: "unified" },
+						riskLevel: 'medium' as const,
+						source: { type: 'workflow', id: 'unified' },
 						timestamp: new Date().toISOString(),
 						tags: [],
 						relatedEvidenceIds: [],
@@ -444,8 +444,8 @@ export class UnifiedAIEvidenceWorkflow {
 				taskId: context.taskId,
 				claim: e.content,
 				confidence: e.relevanceScore || 0.8,
-				riskLevel: "medium" as const,
-				source: { type: "workflow", id: "unified" },
+				riskLevel: 'medium' as const,
+				source: { type: 'workflow', id: 'unified' },
 				timestamp: new Date().toISOString(),
 				tags: [],
 				relatedEvidenceIds: [],
@@ -466,9 +466,9 @@ export class UnifiedAIEvidenceWorkflow {
 			};
 		} catch (_error) {
 			return {
-				keyFindings: ["Evidence collected successfully"],
-				gaps: ["Unable to generate automated insights"],
-				recommendations: ["Manual review recommended"],
+				keyFindings: ['Evidence collected successfully'],
+				gaps: ['Unable to generate automated insights'],
+				recommendations: ['Manual review recommended'],
 				confidence: 0.5,
 			};
 		}
@@ -496,10 +496,10 @@ export class UnifiedAIEvidenceWorkflow {
 	 */
 	private identifyPriorityAreas(_context: EvidenceTaskContext): string[] {
 		return [
-			"technical_specifications",
-			"implementation_details",
-			"security_considerations",
-			"performance_requirements",
+			'technical_specifications',
+			'implementation_details',
+			'security_considerations',
+			'performance_requirements',
 		];
 	}
 
@@ -508,18 +508,18 @@ export class UnifiedAIEvidenceWorkflow {
 	 */
 	private assessComplexity(
 		context: EvidenceTaskContext,
-	): "low" | "medium" | "high" {
+	): 'low' | 'medium' | 'high' {
 		const indicators = [
 			context.requirements?.length || 0,
 			Object.keys(context.constraints || {}).length,
-			context.description.split(" ").length,
+			context.description.split(' ').length,
 		];
 
 		const totalComplexity = indicators.reduce((sum, val) => sum + val, 0);
 
-		if (totalComplexity < 10) return "low";
-		if (totalComplexity < 25) return "medium";
-		return "high";
+		if (totalComplexity < 10) return 'low';
+		if (totalComplexity < 25) return 'medium';
+		return 'high';
 	}
 
 	/**
@@ -527,11 +527,11 @@ export class UnifiedAIEvidenceWorkflow {
 	 */
 	async getWorkflowStatus() {
 		return {
-			status: "active",
+			status: 'active',
 			components: {
-				asbrIntegration: "connected",
-				embeddingAdapter: "connected",
-				aiCapabilities: this.aiCapabilities ? "connected" : "disconnected",
+				asbrIntegration: 'connected',
+				embeddingAdapter: 'connected',
+				aiCapabilities: this.aiCapabilities ? 'connected' : 'disconnected',
 			},
 			configuration: {
 				modelsConfigured:

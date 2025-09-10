@@ -62,21 +62,21 @@ jobs:
           cat > docs/diagrams/generated/system-overview.mmd << 'EOF'
           graph TB
               %% Cortex-OS System Architecture
-              
+
               subgraph "ASBR Runtime"
                   ASBR[ASBR Core]
                   CLI[Cortex CLI]
                   HTTP[HTTP API]
                   WEB[Web UI]
               end
-              
+
               subgraph "Feature Packages"
                   AGENTS[Agents Package]
                   MVP[MVP Package]
                   PLAN[Planner Package]
                   EVID[Evidence Package]
               end
-              
+
               subgraph "Shared Services"
                   A2A[A2A Bus]
                   MCP[MCP Bridge]
@@ -85,44 +85,44 @@ jobs:
                   RAG[RAG Service]
                   SIMLAB[Simulation Lab]
               end
-              
+
               subgraph "External"
                   MARKET[Marketplace]
                   LLM[LLM Providers]
                   TOOLS[External Tools]
               end
-              
+
               %% Connections
               CLI --> ASBR
               HTTP --> ASBR
               WEB --> ASBR
-              
+
               ASBR --> AGENTS
               ASBR --> MVP
               ASBR --> PLAN
               ASBR --> EVID
-              
+
               AGENTS --> A2A
               MVP --> A2A
               PLAN --> A2A
               EVID --> A2A
-              
+
               A2A --> ORCH
               MCP --> TOOLS
               ORCH --> MEM
               ORCH --> RAG
-              
+
               AGENTS --> MCP
               PLAN --> SIMLAB
-              
+
               MCP --> MARKET
               AGENTS --> LLM
-              
+
               classDef runtime fill:#e1f5fe
               classDef feature fill:#f3e5f5
               classDef service fill:#e8f5e8
               classDef external fill:#fff3e0
-              
+
               class ASBR,CLI,HTTP,WEB runtime
               class AGENTS,MVP,PLAN,EVID feature
               class A2A,MCP,MEM,ORCH,RAG,SIMLAB service
@@ -140,7 +140,7 @@ jobs:
               participant MCP as MCP Bridge
               participant ORCH as Orchestration
               participant EXT as External Tools
-              
+
               CLI->>ASBR: Command Request
               ASBR->>AGENT: Mount Feature Package
               AGENT->>A2A: Publish Event
@@ -164,67 +164,67 @@ jobs:
                   API[API Requests]
                   SCHED[Scheduled Tasks]
               end
-              
+
               subgraph "Processing Layer"
                   ASBR[ASBR Runtime]
                   VALID[Input Validation]
                   ROUTE[Request Routing]
               end
-              
+
               subgraph "Business Logic"
                   AGENT[Agent Execution]
                   WORK[Workflow Engine]
                   PROC[Data Processing]
               end
-              
+
               subgraph "Integration Layer"
                   A2A[Event Bus]
                   MCP[Tool Bridge]
                   API_INT[API Integrations]
               end
-              
+
               subgraph "Storage Layer"
                   MEM[Memory Store]
                   CACHE[Cache Layer]
                   FILES[File System]
               end
-              
+
               subgraph "Output Layer"
                   RESP[API Response]
                   NOTIFY[Notifications]
                   EXPORT[Data Export]
               end
-              
+
               USER --> ASBR
               API --> ASBR
               SCHED --> ASBR
-              
+
               ASBR --> VALID
               VALID --> ROUTE
               ROUTE --> AGENT
-              
+
               AGENT --> WORK
               WORK --> PROC
               PROC --> A2A
-              
+
               A2A --> MCP
               MCP --> API_INT
-              
+
               AGENT --> MEM
               PROC --> CACHE
               MCP --> FILES
-              
+
               WORK --> RESP
               AGENT --> NOTIFY
               PROC --> EXPORT
-              
+
               classDef input fill:#e3f2fd
-              classDef process fill:#f1f8e9  
+              classDef process fill:#f1f8e9
               classDef business fill:#fff3e0
               classDef integration fill:#fce4ec
               classDef storage fill:#f3e5f5
               classDef output fill:#e8f5e8
-              
+
               class USER,API,SCHED input
               class ASBR,VALID,ROUTE process
               class AGENT,WORK,PROC business
@@ -324,18 +324,18 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `## 📊 Architecture Diagrams Updated
-              
+
               The architecture diagrams have been automatically updated based on your changes:
-              
+
               ### System Overview
               ![System Overview](https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${context.sha}/docs/diagrams/generated/system-overview.svg)
-              
-              ### Component Interactions  
+
+              ### Component Interactions
               ![Component Interactions](https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${context.sha}/docs/diagrams/generated/component-interactions.svg)
-              
+
               ### Data Flow
               ![Data Flow](https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${context.sha}/docs/diagrams/generated/data-flow.svg)
-              
+
               📁 View all diagrams: [docs/diagrams/](https://github.com/${context.repo.owner}/${context.repo.repo}/tree/${context.sha}/docs/diagrams)
               `
             });

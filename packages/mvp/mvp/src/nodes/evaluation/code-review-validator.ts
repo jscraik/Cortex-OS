@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import type { PRPState } from "../../state.js";
+import type { PRPState } from '../../state.js';
 
 export interface CodeReviewResult {
 	blockers: number;
@@ -18,7 +18,7 @@ export interface CodeReviewResult {
 }
 
 export interface ReviewIssue {
-	severity: "blocker" | "major" | "minor" | "suggestion";
+	severity: 'blocker' | 'major' | 'minor' | 'suggestion';
 	category: string;
 	description: string;
 	file?: string;
@@ -59,28 +59,28 @@ const runStaticAnalysis = async (): Promise<ReviewIssue[]> => {
 	const issues: ReviewIssue[] = [];
 
 	try {
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		// Run TypeScript compiler check
 		try {
-			await execAsync("npx tsc --noEmit --skipLibCheck", {
+			await execAsync('npx tsc --noEmit --skipLibCheck', {
 				timeout: 30000,
 			});
 		} catch (error) {
-			if (error instanceof Error && error.message.includes("error TS")) {
+			if (error instanceof Error && error.message.includes('error TS')) {
 				issues.push({
-					severity: "major",
-					category: "type-safety",
-					description: "TypeScript compilation errors found",
+					severity: 'major',
+					category: 'type-safety',
+					description: 'TypeScript compilation errors found',
 				});
 			}
 		}
 
 		// Run linter
 		try {
-			const { stdout } = await execAsync("pnpm lint --format=json", {
+			const { stdout } = await execAsync('pnpm lint --format=json', {
 				timeout: 30000,
 			});
 
@@ -91,9 +91,9 @@ const runStaticAnalysis = async (): Promise<ReviewIssue[]> => {
 		}
 	} catch (error) {
 		issues.push({
-			severity: "minor",
-			category: "tooling",
-			description: `Static analysis failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+			severity: 'minor',
+			category: 'tooling',
+			description: `Static analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 		});
 	}
 
@@ -107,26 +107,26 @@ const runSecurityScan = async (): Promise<ReviewIssue[]> => {
 	const issues: ReviewIssue[] = [];
 
 	try {
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		// Run security audit
 		try {
-			await execAsync("pnpm audit --audit-level=moderate", {
+			await execAsync('pnpm audit --audit-level=moderate', {
 				timeout: 30000,
 			});
 		} catch (_error) {
 			issues.push({
-				severity: "major",
-				category: "security",
-				description: "Security vulnerabilities found in dependencies",
+				severity: 'major',
+				category: 'security',
+				description: 'Security vulnerabilities found in dependencies',
 			});
 		}
 
 		// Run Semgrep if available
 		try {
-			const { stdout } = await execAsync("semgrep --config=auto --json .", {
+			const { stdout } = await execAsync('semgrep --config=auto --json .', {
 				timeout: 60000,
 			});
 
@@ -137,9 +137,9 @@ const runSecurityScan = async (): Promise<ReviewIssue[]> => {
 		}
 	} catch (error) {
 		issues.push({
-			severity: "minor",
-			category: "security",
-			description: `Security scan failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+			severity: 'minor',
+			category: 'security',
+			description: `Security scan failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
 		});
 	}
 
@@ -156,8 +156,8 @@ const runQualityChecks = async (): Promise<ReviewIssue[]> => {
 	const largeFunctions = await findLargeFunctions();
 	issues.push(
 		...largeFunctions.map((func) => ({
-			severity: "major" as const,
-			category: "complexity",
+			severity: 'major' as const,
+			category: 'complexity',
 			description: `Function exceeds 40 lines: ${func.name}`,
 			file: func.file,
 			line: func.line,
@@ -168,8 +168,8 @@ const runQualityChecks = async (): Promise<ReviewIssue[]> => {
 	const todoComments = await findTodoComments();
 	issues.push(
 		...todoComments.map((todo) => ({
-			severity: "suggestion" as const,
-			category: "technical-debt",
+			severity: 'suggestion' as const,
+			category: 'technical-debt',
 			description: `TODO/FIXME found: ${todo.text}`,
 			file: todo.file,
 			line: todo.line,
@@ -209,7 +209,7 @@ const parseLintOutput = (output: string): ReviewIssue[] => {
 			for (const message of result.messages || []) {
 				issues.push({
 					severity: mapLintSeverity(message.severity),
-					category: "style",
+					category: 'style',
 					description: message.message,
 					file: result.filePath,
 					line: message.line,
@@ -226,10 +226,10 @@ const parseLintOutput = (output: string): ReviewIssue[] => {
 /**
  * Maps lint severity levels
  */
-const mapLintSeverity = (severity: number): ReviewIssue["severity"] => {
-	if (severity >= 2) return "major";
-	if (severity >= 1) return "minor";
-	return "suggestion";
+const mapLintSeverity = (severity: number): ReviewIssue['severity'] => {
+	if (severity >= 2) return 'major';
+	if (severity >= 1) return 'minor';
+	return 'suggestion';
 };
 
 /**
@@ -243,8 +243,8 @@ const parseSecurityOutput = (output: string): ReviewIssue[] => {
 		for (const result of results.results || []) {
 			issues.push({
 				severity: mapSecuritySeverity(result.extra?.severity),
-				category: "security",
-				description: result.check_id || "Security issue found",
+				category: 'security',
+				description: result.check_id || 'Security issue found',
 				file: result.path,
 				line: result.start?.line,
 			});
@@ -259,16 +259,16 @@ const parseSecurityOutput = (output: string): ReviewIssue[] => {
 /**
  * Maps security severity levels
  */
-const mapSecuritySeverity = (severity?: string): ReviewIssue["severity"] => {
+const mapSecuritySeverity = (severity?: string): ReviewIssue['severity'] => {
 	switch (severity?.toLowerCase()) {
-		case "error":
-			return "blocker";
-		case "warning":
-			return "major";
-		case "info":
-			return "minor";
+		case 'error':
+			return 'blocker';
+		case 'warning':
+			return 'major';
+		case 'info':
+			return 'minor';
 		default:
-			return "suggestion";
+			return 'suggestion';
 	}
 };
 
@@ -289,8 +289,8 @@ const findTodoComments = async (): Promise<
 	Array<{ text: string; file: string; line: number }>
 > => {
 	try {
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		const { stdout } = await execAsync(
@@ -301,14 +301,14 @@ const findTodoComments = async (): Promise<
 		);
 
 		const comments = stdout
-			.split("\n")
+			.split('\n')
 			.filter((line) => line.trim())
 			.map((line) => {
-				const [filePath, lineNum, ...textParts] = line.split(":");
+				const [filePath, lineNum, ...textParts] = line.split(':');
 				return {
 					file: filePath,
 					line: parseInt(lineNum, 10),
-					text: textParts.join(":").trim(),
+					text: textParts.join(':').trim(),
 				};
 			});
 

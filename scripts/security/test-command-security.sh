@@ -46,21 +46,21 @@ if command -v grep >/dev/null 2>&1; then
   else
     echo "❌ Command validation not found"
   fi
-  
+
   # Check for parameter sanitization
   if grep -r "sanitize.*command\|re\..*sub" packages/mvp-core/src/python/secure_executor.py 2>/dev/null; then
     echo "✅ Parameter sanitization found"
   else
     echo "❌ Parameter sanitization not found"
   fi
-  
+
   # Check for timeout enforcement
   if grep -r "timeout\|TIMEOUT" packages/mvp-core/src/python/secure_executor.py 2>/dev/null; then
     echo "✅ Timeout enforcement found"
   else
     echo "❌ Timeout enforcement not found"
   fi
-  
+
   # Check for error handling
   if grep -r "try.*except\|except.*Exception" packages/mvp-core/src/python/secure_executor.py 2>/dev/null; then
     echo "✅ Error handling found"

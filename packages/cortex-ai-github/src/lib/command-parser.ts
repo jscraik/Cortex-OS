@@ -3,7 +3,7 @@
  * Pure functions for parsing @cortex commands
  */
 
-import type { AITaskType, CommentTrigger } from "../types/github-models.js";
+import type { AITaskType, CommentTrigger } from '../types/github-models.js';
 
 export interface ParsedCommand {
 	taskType: AITaskType;
@@ -20,8 +20,8 @@ export const parseGitHubComment = (
 	comment: string,
 	triggers: CommentTrigger[],
 ): CommandParseResult => {
-	if (!comment || !comment.includes("@cortex")) {
-		return { error: "No @cortex command found" };
+	if (!comment || !comment.includes('@cortex')) {
+		return { error: 'No @cortex command found' };
 	}
 
 	for (const trigger of triggers) {
@@ -39,16 +39,16 @@ export const parseGitHubComment = (
 		}
 	}
 
-	return { error: "Unknown @cortex command" };
+	return { error: 'Unknown @cortex command' };
 };
 
 export const listAvailableCommands = (triggers: CommentTrigger[]): string => {
 	return triggers
 		.map(
 			(trigger) =>
-				`- \`@cortex ${trigger.taskType.replace("_", " ")}\` - ${trigger.description}`,
+				`- \`@cortex ${trigger.taskType.replace('_', ' ')}\` - ${trigger.description}`,
 		)
-		.join("\n");
+		.join('\n');
 };
 
 export const validateUserPermissions = (
@@ -57,7 +57,7 @@ export const validateUserPermissions = (
 ): boolean => {
 	return command.trigger.requiredPermissions.every(
 		(perm) =>
-			userPermissions.includes(perm) || userPermissions.includes("admin"),
+			userPermissions.includes(perm) || userPermissions.includes('admin'),
 	);
 };
 

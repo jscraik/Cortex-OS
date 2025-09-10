@@ -1,4 +1,4 @@
-import { type errorCodes, StructuredError } from "./structured-error.js";
+import { type errorCodes, StructuredError } from './structured-error.js';
 
 export type OutputMeta = {
 	timestamp: string; // ISO-8601
@@ -32,7 +32,7 @@ export function createJsonOutput<T>(
 
 export function formatError(
 	err: unknown,
-	code: keyof typeof errorCodes = "UNKNOWN_ERROR",
+	code: keyof typeof errorCodes = 'UNKNOWN_ERROR',
 ) {
 	const se =
 		err instanceof StructuredError

@@ -8,7 +8,7 @@
 			"dom",
 			"dom.iterable"
 		],
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
@@ -22,8 +22,7 @@
 		"noImplicitThis": true,
 		"alwaysStrict": true,
 		"types": [
-			"node",
-			"vitest/globals"
+			"node"
 		],
 		"jsx": "react-jsx",
 		"experimentalDecorators": true,

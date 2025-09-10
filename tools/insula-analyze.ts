@@ -3,15 +3,15 @@
  * Scans the workspace, runs StructureValidator, and prints a concise report.
  */
 
-import { promises as fs } from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // Import validator directly from source to avoid a build step
 import {
 	CORTEX_STRUCTURE_RULES,
 	StructureValidator,
-} from "../packages/cortex-structure-github/src/core/structure-validator.js";
+} from '../packages/cortex-structure-github/src/core/structure-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,17 +29,17 @@ function parseArgs(): Options {
 		return idx !== -1 ? args[idx + 1] : fallback;
 	};
 
-	const rootArg = get("--root", process.cwd());
+	const rootArg = get('--root', process.cwd());
 	const root = path.resolve(rootArg ?? process.cwd());
-	const maxStr = get("--max", "3000") ?? "3000";
+	const maxStr = get('--max', '3000') ?? '3000';
 	const maxFiles = Number.parseInt(maxStr, 10);
 	const ignoreCsv =
 		get(
-			"--ignore",
-			"node_modules,.git,.pnpm,dist,build,.next,coverage,apps/api/.venv",
-		) ?? "";
+			'--ignore',
+			'node_modules,.git,.pnpm,dist,build,.next,coverage,apps/api/.venv',
+		) ?? '';
 	const ignore = ignoreCsv
-		.split(",")
+		.split(',')
 		.map((s) => s.trim())
 		.filter(Boolean);
 
@@ -58,11 +58,11 @@ async function walkFiles(
 		return ignore.some((ig) => rel === ig || rel.startsWith(`${ig}/`));
 	};
 
-	async function walk(dir: string, relBase = ""): Promise<void> {
+	async function walk(dir: string, relBase = ''): Promise<void> {
 		const entries = await fs.readdir(dir, { withFileTypes: true });
 		for (const entry of entries) {
 			const rel = path.posix.join(relBase, entry.name);
-			if (entry.name.startsWith(".DS_") || isIgnored(rel)) continue;
+			if (entry.name.startsWith('.DS_') || isIgnored(rel)) continue;
 
 			const full = path.join(dir, entry.name);
 			if (entry.isDirectory()) {
@@ -82,7 +82,7 @@ async function walkFiles(
 function printReport(
 	root: string,
 	fileCount: number,
-	result: ReturnType<StructureValidator["analyzeRepository"]>,
+	result: ReturnType<StructureValidator['analyzeRepository']>,
 ) {
 	const { score, summary, violations } = result;
 
@@ -116,7 +116,7 @@ function printReport(
 		lines.push(`Samples:`);
 		for (const v of samples) {
 			const base = `- ${v.file} → ${v.message}`;
-			const extra = v.suggestedPath ? ` (suggested: ${v.suggestedPath})` : "";
+			const extra = v.suggestedPath ? ` (suggested: ${v.suggestedPath})` : '';
 			lines.push(base + extra);
 		}
 	}
@@ -131,10 +131,10 @@ function printReport(
 		sample: samples,
 	};
 
-	console.log(`\n${lines.join("\n")}`);
-	console.log("\nJSON_RESULT_START");
+	console.log(`\n${lines.join('\n')}`);
+	console.log('\nJSON_RESULT_START');
 	console.log(JSON.stringify(json));
-	console.log("JSON_RESULT_END");
+	console.log('JSON_RESULT_END');
 }
 
 async function main() {
@@ -152,6 +152,6 @@ async function main() {
 }
 
 main().catch((err) => {
-	console.error("Analysis failed:", err);
+	console.error('Analysis failed:', err);
 	process.exit(1);
 });

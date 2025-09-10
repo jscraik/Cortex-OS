@@ -2,30 +2,30 @@
  * Integration test for refactored BuildNode
  */
 
-import { BuildNode } from "./nodes/build.js";
-import type { PRPState } from "./state.js";
+import { BuildNode } from './nodes/build.js';
+import type { PRPState } from './state.js';
 
 async function testRefactoredBuild() {
-	console.log("🧪 Testing refactored BuildNode...");
+	console.log('🧪 Testing refactored BuildNode...');
 
 	const mockState: PRPState = {
-		id: "test-refactor",
-		runId: "run-test-refactor",
-		phase: "build",
+		id: 'test-refactor',
+		runId: 'run-test-refactor',
+		phase: 'build',
 		blueprint: {
-			title: "Test Application",
-			description: "Testing refactored BuildNode functionality",
-			requirements: ["Frontend React UI", "Backend API with authentication"],
+			title: 'Test Application',
+			description: 'Testing refactored BuildNode functionality',
+			requirements: ['Frontend React UI', 'Backend API with authentication'],
 			metadata: { testMode: true },
 		},
 		evidence: [],
 		validationResults: {},
 		outputs: {
-			"api-check": { hasSchema: true },
+			'api-check': { hasSchema: true },
 		},
 		cerebrum: {
-			decision: "pending",
-			reasoning: "Testing refactored build",
+			decision: 'pending',
+			reasoning: 'Testing refactored build',
 			confidence: 0.8,
 			timestamp: new Date().toISOString(),
 		},
@@ -37,7 +37,7 @@ async function testRefactoredBuild() {
 	const buildNode = new BuildNode();
 
 	try {
-		console.log("⚡ Executing BuildNode...");
+		console.log('⚡ Executing BuildNode...');
 		const startTime = Date.now();
 
 		const result = await buildNode.execute(mockState);
@@ -45,7 +45,7 @@ async function testRefactoredBuild() {
 		const duration = Date.now() - startTime;
 
 		// Verify results
-		console.log("✅ BuildNode execution completed");
+		console.log('✅ BuildNode execution completed');
 		console.log(`⏱️  Duration: ${duration}ms`);
 		console.log(`📊 Evidence items: ${result.evidence.length}`);
 		console.log(
@@ -74,14 +74,14 @@ async function testRefactoredBuild() {
 
 		// Verify evidence structure
 		const evidenceTypes = new Set(result.evidence.map((e) => e.source));
-		console.log(`📝 Evidence sources: ${Array.from(evidenceTypes).join(", ")}`);
+		console.log(`📝 Evidence sources: ${Array.from(evidenceTypes).join(', ')}`);
 
 		// Verify all validators ran
 		const expectedSources = [
-			"backend_validation",
-			"api_schema_validation",
-			"security_scanner",
-			"frontend_validation",
+			'backend_validation',
+			'api_schema_validation',
+			'security_scanner',
+			'frontend_validation',
 		];
 
 		const missingValidators = expectedSources.filter(
@@ -89,17 +89,17 @@ async function testRefactoredBuild() {
 		);
 
 		if (missingValidators.length === 0) {
-			console.log("✅ All validators executed successfully");
+			console.log('✅ All validators executed successfully');
 		} else {
-			console.log(`⚠️  Missing validators: ${missingValidators.join(", ")}`);
+			console.log(`⚠️  Missing validators: ${missingValidators.join(', ')}`);
 		}
 
 		console.log(
-			"🎉 Refactoring verification PASSED - All critical bugs fixed!",
+			'🎉 Refactoring verification PASSED - All critical bugs fixed!',
 		);
 	} catch (error) {
-		console.error("❌ BuildNode execution failed:", error);
-		console.log("💥 Refactoring verification FAILED");
+		console.error('❌ BuildNode execution failed:', error);
+		console.log('💥 Refactoring verification FAILED');
 		throw error;
 	}
 }

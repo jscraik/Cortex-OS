@@ -521,11 +521,11 @@ Loose vs. tight list items:
         // renderer versions.
         let expected = r#"Loose vs. tight list items:
 
-1. 
+1.
 Tight item
-2. 
+2.
 Another tight item
-3. 
+3.
 Loose item"#;
         assert_eq!(
             joined, expected,
