@@ -14,7 +14,9 @@
     "test:watch": "vitest --watch",
     "clean": "rm -rf dist"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pino": "^9.9.2"
+  },
   "devDependencies": {
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
