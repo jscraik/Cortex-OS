@@ -14,7 +14,7 @@ function _redact(schema: ZodTypeAny, value: any): any {
     const shape = schema.shape;
     for (const key of Object.keys(shape)) {
       const fieldSchema = shape[key] as ZodTypeAny;
-      if (fieldSchema._def.description === 'redact') {
+      if (fieldSchema.description === 'redact') {
         continue;
       }
       const child = _redact(fieldSchema, value[key]);
