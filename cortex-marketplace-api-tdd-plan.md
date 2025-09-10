@@ -10,7 +10,7 @@ This document summarizes a security-focused review of `apps/cortex-marketplace-a
 - **Type safety** via Zod schemas and TypeScript.
 - **Tests** cover basic URL validation and install utilities but lack coverage for registry operations, MLX workflows, and HTTP endpoints.
 - **Gaps**
-  - Hard-coded registry allowlist and no cryptographic signature verification.
+  - Hardcoded registry allowlist and no cryptographic signature verification.
   - Cache freshness and error paths untested.
   - MLX service only tested for disabled state; no safety or embedding behaviour tests.
   - No Fastify API layer or request validation tests.
