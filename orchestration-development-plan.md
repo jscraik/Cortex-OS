@@ -1,15 +1,19 @@
-# Orchestration Package Development Plan
+# Orchestration Package Operational Readiness Plan
 
-This document details a TDD-driven roadmap to bring `packages/orchestration` to operational readiness. Each task follows strict software engineering practices: red-green-refactor, micro-commits, and Conventional Commits.
+## Objective
 
-## Guiding Principles
+Bring `packages/orchestration` to operational readiness by hardening core features and adding production-grade capabilities.
+
+## Engineering Principles
 
 - **TDD:** start with failing tests, implement minimal code, refactor once green.
 - **Micro-commits:** one focused change per commit including tests and code.
 - **Conventional Commits:** e.g., `feat(orchestration): support branch steps`.
 - **Validation:** `pre-commit run --files <changed>` and `pnpm lint && pnpm test` for code; `pnpm docs:lint` for docs.
 
-## Milestone 0 – Harden Existing Features
+## Roadmap
+
+### Milestone 0 – Harden Existing Features
 
 1. **Deterministic pipelines**
    - _Test:_ validate DAG validator rejects cycles.
@@ -22,49 +26,49 @@ This document details a TDD-driven roadmap to bring `packages/orchestration` to 
    - _Test:_ cover per-step timeout and retry policies.
    - _Impl:_ strengthen backoff logic and deadline propagation.
 
-## Milestone 1 – Conditional Branching
+### Milestone 1 – Conditional Branching
 
 1. Add failing tests for `branch` step routing.
 2. Implement branch executor respecting condition predicates.
 3. Refactor and document branching semantics.
 
-## Milestone 2 – Loop/Map Semantics
+### Milestone 2 – Loop/Map Semantics
 
 1. Add failing tests for iterative `map` steps and loop termination.
 2. Implement loop controller with index & accumulator support.
 3. Refactor for readability and performance.
 
-## Milestone 3 – Hooks System
+### Milestone 3 – Hooks System
 
 1. Define test cases for pre/post step hooks and workflow-level hooks.
 2. Implement hook registration and execution pipeline.
 3. Document hook API and examples.
 
-## Milestone 4 – Pure Runners
+### Milestone 4 – Pure Runners
 
 1. Introduce tests enforcing purity (no side effects) via mocked I/O.
 2. Refactor runners to accept dependencies and emit effects separately.
 3. Provide guidelines for effect handling.
 
-## Milestone 5 – Compensation Actions
+### Milestone 5 – Compensation Actions
 
 1. Write failing tests demonstrating rollback on step failure.
 2. Implement compensation DSL and executor with idempotency checks.
 3. Add documentation and examples.
 
-## Milestone 6 – Cancellation
+### Milestone 6 – Cancellation
 
 1. Tests to ensure `AbortSignal` cancels in-flight steps and propagates.
 2. Implement cancellation middleware and cleanup handlers.
 3. Update documentation.
 
-## Milestone 7 – Typed DSL Builder
+### Milestone 7 – Typed DSL Builder
 
 1. Create tests for type-safe workflow composition and inference.
 2. Implement builder utilities wrapping Zod schemas.
 3. Refactor examples to use typed DSL and document patterns.
 
-## Milestone 8 – Documentation & Examples
+### Milestone 8 – Documentation & Examples
 
 1. Add comprehensive README updates and usage examples.
 2. Ensure all public APIs are documented with JSDoc/TSdoc.
@@ -78,3 +82,8 @@ This document details a TDD-driven roadmap to bring `packages/orchestration` to 
 - [ ] Security review of hook and compensation mechanisms.
 
 Each milestone should conclude with green CI and tagged release candidate.
+
+## Commit Cadence
+
+- Every numbered step above results in a single commit after tests and lint pass.
+- Feature work follows `test → feat → refactor`; documentation uses `docs` commits.
