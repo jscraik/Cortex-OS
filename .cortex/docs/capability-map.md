@@ -6,6 +6,19 @@ Vendor-neutral. Local-first. Deterministic. Governed via ASBR. Accessibility-awa
 
 Key constraint: No cross-feature imports. Communication only via A2A events, DI service interfaces, or MCP tools.
 
+## apps/cortex-os — ASBR-lite brain
+
+Application invariants, step context, and system gatekeeping interact inside the Cortex-OS runtime to anchor the core responsibilities of the ASBR-lite brain:
+
+- **Vision:** One governed runtime.
+- **Mission:** Wire services, enforce contracts, route, prove.
+- **Must:** DI, contract registry, policy router, OTEL, provenance, structure-guard.
+- **Should:** Privacy pin to MLX; cost guardrails; policy hot-reload.
+- **Nice:** Admin health/routing UI.
+- **Use cases:** start workflow; route capability; emit lifecycle events.
+
+See [agents framework](./agents-framework.md) for additional context and component detail.
+
 ## 1) AI Tutor/Mentor
 
 - What: Curriculum + code labs + spaced recall + graded reviews.
