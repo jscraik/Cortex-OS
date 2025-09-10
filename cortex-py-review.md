@@ -8,7 +8,12 @@
 - Test suite currently fails during import of `mlx_unified` because `instructor` is absent, indicating insufficient isolation of optional dependencies.
 
 ## Software engineering principle
-**Principle:** Every cortex‑py component must be environment‑agnostic, dependency-resilient, and fully test-driven: configuration through explicit parameters or environment variables only; no hard-coded platform assumptions; optional dependencies must degrade gracefully; global state minimized; each commit includes tests, documentation, and code verifying operational readiness.
+**Principle:** Every cortex‑py component must be environment‑agnostic, dependency-resilient, and fully test-driven. Specifically:
+- Configuration is done through explicit parameters or environment variables only.
+- No hard-coded platform assumptions.
+- Optional dependencies must degrade gracefully.
+- Global state is minimized.
+- Each commit includes tests, documentation, and code verifying operational readiness.
 
 ## TDD implementation plan
 1. **Graceful `instructor` fallback**
