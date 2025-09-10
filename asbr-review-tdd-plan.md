@@ -5,7 +5,7 @@
 - The main entry point bootstraps XDG directories, authentication, an Express API server, and a paired client before returning tokenized access, concentrating initialization into a single asynchronous helper.
 - Configuration management relies on a handcrafted `deepMerge` that overwrites arrays and primitives, then validates merged results against zod schemas, with hard-coded defaults for event handling and deterministic normalization.
 - Authentication middleware restricts requests to loopback clients and demands Bearer tokens, but error responses expose only a generic `error` field without machine-readable codes.
-- Unit tests reveal an unresolved build artifact check—`build-output.test.ts` fails because compiled files are missing, signaling brittle test/setup coupling.
+- Unit tests in `tests/build-output.test.ts` reveal an unresolved build artifact check—this test fails because compiled files expected from the `scripts/build.ts` process are missing, signaling brittle coupling between the test and the build setup.
 
 ## Engineering Principle
 
