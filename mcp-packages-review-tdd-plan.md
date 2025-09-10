@@ -7,17 +7,17 @@ Adopt a **Contract-Driven Modular Architecture (CDMA)**: every MCP package must 
 ## Technical Review
 
 ### `packages/mcp`
-- Async client manages pending requests via `_pending` map and uses HTTP transport fallback when specified【F:packages/mcp/core/client.py†L16-L47】
-- Server initializes plugins dynamically and registers handlers for tools and hot reloading【F:packages/mcp/core/server.py†L5-L68】【F:packages/mcp/core/server.py†L70-L119】
+- Async client manages pending requests via `_pending` map and uses HTTP transport fallback when specified ([packages/mcp/core/client.py#L16-L47](packages/mcp/core/client.py#L16-L47))
+- Server initializes plugins dynamically and registers handlers for tools and hot reloading ([packages/mcp/core/server.py#L5-L68](packages/mcp/core/server.py#L5-L68), [packages/mcp/core/server.py#L70-L119](packages/mcp/core/server.py#L70-L119))
 
 ### `packages/mcp-core`
-- `createEnhancedClient` supports HTTP/SSE and stdio transports with Zod validation, enabling flexible tool invocation【F:packages/mcp-core/src/client.ts†L1-L60】
+- `createEnhancedClient` supports HTTP/SSE and stdio transports with Zod validation, enabling flexible tool invocation ([packages/mcp-core/src/client.ts#L1-L60](packages/mcp-core/src/client.ts#L1-L60))
 
 ### `packages/mcp-registry`
-- File-system backed registry uses locking and atomic writes to maintain consistency of server entries【F:packages/mcp-registry/src/fs-store.ts†L1-L46】【F:packages/mcp-registry/src/fs-store.ts†L48-L64】
+- File-system backed registry uses locking and atomic writes to maintain consistency of server entries ([packages/mcp-registry/src/fs-store.ts#L1-L46](packages/mcp-registry/src/fs-store.ts#L1-L46), [packages/mcp-registry/src/fs-store.ts#L48-L64](packages/mcp-registry/src/fs-store.ts#L48-L64))
 
 ### `packages/mcp-bridge`
-- Directory not present in repository; references exist in docs and configs, indicating pending implementation【3186b3†L1-L33】
+- Directory not present in repository; references exist in docs and configs, indicating pending implementation ([commit 3186b3, lines 1-33](https://github.com/your-org/your-repo/commit/3186b3#diff-L1-L33))
 
 ## TDD-Driven Implementation Plan
 
