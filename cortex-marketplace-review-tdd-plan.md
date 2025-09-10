@@ -23,10 +23,17 @@
 ## TDD Implementation Plan
 
 1. **Regression test for registries route** – add failing test reproducing `request` undefined error.
-2. Fix registries, categories, stats, servers handlers to use explicit `request`/`reply` params.
-3. **Schema registration test** – failing test for categories route expecting `ServerManifest` schema to resolve.
-4. Register `ServerManifest` schema globally so all routes can reference it.
-5. Add linter rule `no-undef`/`no-unused-vars` to prevent undeclared identifier usage; test lint failure when `request` missing.
+   <details>
+   <summary>Example (Vitest):</summary>
+   
+   ```ts
+   // registries.test.ts
+   it('should fail if request is undefined in handler', async () => {
+     // Simulate calling the route handler without declaring request
+     // @ts-expect-error
+     await expect(registriesHandler()).rejects.toThrow(/request is not defined/);
+   });
+   // Expected error: ReferenceError: request is not defined
 6. Expand unit tests for route validation (invalid params, missing fields) ensuring coverage.
 7. Run `pre-commit`, `pnpm lint`, and `pnpm test` per commit.
 8. Document environment variables and configuration loader behavior in `README.md`; add docs lint test.
