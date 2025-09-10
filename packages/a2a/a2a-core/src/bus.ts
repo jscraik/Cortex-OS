@@ -3,6 +3,7 @@ import { createTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts
 import type { SchemaRegistry } from './schema-registry';
 import { getCurrentTraceContext } from './trace-context-manager';
 import type { Transport } from './transport';
+import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
 
 export type { Transport } from './transport';
 
@@ -10,13 +11,6 @@ export type Handler = {
   type: string;
   handle: (msg: Envelope) => Promise<void>;
 };
-
-export interface TopicACL {
-  [type: string]: {
-    publish?: boolean;
-    subscribe?: boolean;
-  };
-}
 
 export function createBus(
   transport: Transport,

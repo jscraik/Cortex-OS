@@ -3,3 +3,4 @@ export * from "./commands.js";
 export * from "./envelope.js";
 export * from "./events.js";
 export * from "./outbox-types.js";
+export * from "./topic-acl.js";
