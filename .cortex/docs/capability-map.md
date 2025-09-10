@@ -8,7 +8,7 @@ Key constraint: No cross-feature imports. Communication only via A2A events, DI 
 
 ## apps/cortex-os — ASBR-lite brain
 
-A high-level architecture diagram outlines how application invariants, step context and system gatekeeping interact inside the Cortex-OS runtime. It anchors the core responsibilities of the ASBR-lite brain:
+Application invariants, step context, and system gatekeeping interact inside the Cortex-OS runtime to anchor the core responsibilities of the ASBR-lite brain:
 
 - **Vision:** One governed runtime.
 - **Mission:** Wire services, enforce contracts, route, prove.
