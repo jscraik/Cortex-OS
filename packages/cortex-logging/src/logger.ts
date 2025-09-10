@@ -1,4 +1,5 @@
-// Minimal interface to make test compile (but fail)
+import pino, { type DestinationStream } from 'pino';
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -15,44 +16,44 @@ export interface Logger {
 
 export interface LoggerConfig {
   level?: LogLevel;
+  stream?: DestinationStream;
 }
 
-export function createLogger(moduleName: string, config?: LoggerConfig): Logger {
+const levelMap = {
+  [LogLevel.DEBUG]: 'debug',
+  [LogLevel.INFO]: 'info',
+  [LogLevel.WARN]: 'warn',
+  [LogLevel.ERROR]: 'error',
+} as const;
+
+export function createLogger(moduleName: string, config: LoggerConfig = {}): Logger {
   const defaultLevel = process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG;
-  const level = config?.level ?? defaultLevel;
+  const level = config.level ?? defaultLevel;
 
-  const formatTimestamp = (): string => {
-    return new Date().toISOString();
-  };
+  const base = { module: moduleName };
+  const logger = pino(
+    {
+      level: levelMap[level],
+      base,
+      timestamp: pino.stdTimeFunctions.isoTime,
+    },
+    config.stream,
+  );
 
-  const shouldLog = (messageLevel: LogLevel): boolean => {
-    return messageLevel >= level;
-  };
+  const wrap = (method: 'debug' | 'info' | 'warn' | 'error') =>
+    (message: string, ...args: unknown[]) => {
+      const [context] = args;
+      if (context && typeof context === 'object') {
+        (logger as any)[method](context, message);
+      } else {
+        (logger as any)[method](message, ...args);
+      }
+    };
 
   return {
-    debug: (message: string, ...args: unknown[]): void => {
-      if (shouldLog(LogLevel.DEBUG)) {
-        const timestamp = formatTimestamp();
-        console.warn(timestamp, '[DEBUG]', moduleName, message, ...args);
-      }
-    },
-    info: (message: string, ...args: unknown[]): void => {
-      if (shouldLog(LogLevel.INFO)) {
-        const timestamp = formatTimestamp();
-        console.warn(timestamp, '[INFO]', moduleName, message, ...args);
-      }
-    },
-    warn: (message: string, ...args: unknown[]): void => {
-      if (shouldLog(LogLevel.WARN)) {
-        const timestamp = formatTimestamp();
-        console.warn(timestamp, '[WARN]', moduleName, message, ...args);
-      }
-    },
-    error: (message: string, ...args: unknown[]): void => {
-      if (shouldLog(LogLevel.ERROR)) {
-        const timestamp = formatTimestamp();
-        console.error(timestamp, '[ERROR]', moduleName, message, ...args);
-      }
-    },
+    debug: wrap('debug'),
+    info: wrap('info'),
+    warn: wrap('warn'),
+    error: wrap('error'),
   };
 }
