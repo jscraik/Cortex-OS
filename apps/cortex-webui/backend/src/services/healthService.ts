@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { getDatabase } from '../utils/database';
 import logger from '../utils/logger';
+import { getServerConfig, loadConfig } from '../config/config';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -123,8 +124,8 @@ export class HealthService {
   
   private async checkFileSystem(): Promise<HealthCheck> {
     try {
-      const uploadDir = process.env.UPLOAD_DIR || './uploads';
-      const dataDir = path.dirname(process.env.DATABASE_PATH || './data/cortex.db');
+        const { uploadDir, databasePath } = getServerConfig();
+        const dataDir = path.dirname(databasePath);
       
       // Check if directories exist and are writable
       await fs.access(uploadDir, fs.constants.W_OK);
@@ -204,7 +205,8 @@ export class HealthService {
   
   private async checkDiskSpace(): Promise<HealthCheck> {
     try {
-      const dataDir = path.dirname(process.env.DATABASE_PATH || './data/cortex.db');
+        const { databasePath } = getServerConfig();
+        const dataDir = path.dirname(databasePath);
       const stats = await fs.stat(dataDir);
       
       // This is a simplified check - in production you'd want to check actual disk usage
@@ -236,52 +238,34 @@ export class HealthService {
     }
   }
   
-  private async checkEnvironment(): Promise<HealthCheck> {
-    try {
-      const requiredEnvVars = [
-        'JWT_SECRET',
-        'MODEL_API_KEY',
-        'NODE_ENV'
-      ];
-      
-      const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-      
-      if (missingVars.length > 0) {
+    private async checkEnvironment(): Promise<HealthCheck> {
+      try {
+        loadConfig();
+        const { jwtSecret } = getServerConfig();
+        if (jwtSecret.length < 32) {
+          return {
+            status: 'warn',
+            message: 'JWT secret should be at least 32 characters long',
+            componentId: 'environment',
+            componentType: 'system'
+          };
+        }
+        return {
+          status: 'pass',
+          message: 'Environment configuration is valid',
+          componentId: 'environment',
+          componentType: 'system'
+        };
+      } catch (error) {
+        logger.error('Environment health check failed', error);
         return {
           status: 'fail',
-          message: `Missing required environment variables: ${missingVars.join(', ')}`,
+          message: `Environment check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           componentId: 'environment',
           componentType: 'system'
         };
       }
-      
-      // Check JWT secret length
-      if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-        return {
-          status: 'warn',
-          message: 'JWT secret should be at least 32 characters long',
-          componentId: 'environment',
-          componentType: 'system'
-        };
-      }
-      
-      return {
-        status: 'pass',
-        message: 'Environment configuration is valid',
-        componentId: 'environment',
-        componentType: 'system'
-      };
-      
-    } catch (error) {
-      logger.error('Environment health check failed', error);
-      return {
-        status: 'fail',
-        message: `Environment check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        componentId: 'environment',
-        componentType: 'system'
-      };
     }
-  }
   
   private determineOverallStatus(checks: Record<string, HealthCheck>): 'healthy' | 'degraded' | 'unhealthy' {
     const statuses = Object.values(checks).map(check => check.status);
