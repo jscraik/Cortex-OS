@@ -15,7 +15,7 @@
 
 1. **Build Artifact Integrity**
 
-   - Write a failing test that asserts `pnpm test` triggers a build or mocks compiled output.
+   - Write a failing test that asserts `pnpm test` triggers a prebuild step to ensure compiled output exists before tests run.
    - Implement minimal changes (e.g., pre-test build hook or revised test logic) until the test passes.
    - Commit: `test(asbr): ensure build artifacts exist before unit run`.
 
