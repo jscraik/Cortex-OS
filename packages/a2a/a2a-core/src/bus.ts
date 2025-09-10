@@ -3,6 +3,7 @@ import { createTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts
 import type { SchemaRegistry } from './schema-registry';
 import { getCurrentTraceContext } from './trace-context-manager';
 import type { Transport } from './transport';
+import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
 
 export type { Transport } from './transport';
 
@@ -11,13 +12,6 @@ export type Handler = {
   handle: (msg: Envelope) => Promise<void>;
 };
 
-export interface TopicACL {
-  [type: string]: {
-    publish?: boolean;
-    subscribe?: boolean;
-  };
-}
-
 export function createBus(
   transport: Transport,
   validate: (e: Envelope) => Envelope = Envelope.parse,
@@ -25,13 +19,13 @@ export function createBus(
   acl: TopicACL = {},
 ) {
   const assertPublishAllowed = (type: string) => {
-    if (acl[type]?.publish === false) {
+    if (acl[type]?.publish !== true) {
       throw new Error(`Publish not allowed for topic ${type}`);
     }
   };
 
   const assertSubscribeAllowed = (type: string) => {
-    if (acl[type]?.subscribe === false) {
+    if (acl[type]?.subscribe !== true) {
       throw new Error(`Subscribe not allowed for topic ${type}`);
     }
   };
@@ -94,3 +88,4 @@ export function createBus(
 
   return { publish, bind };
 }
+
