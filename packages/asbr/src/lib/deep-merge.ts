@@ -1,6 +1,7 @@
 export function deepMerge<T extends Record<string, unknown>>(base: T, override: Partial<T>): T {
   const result: Record<string, unknown> = { ...base };
-  for (const [key, value] of Object.entries(override as Record<string, unknown>)) {
+  for (const key of Object.keys(override) as Array<keyof T>) {
+    const value = override[key];
     const current = result[key];
     if (
       Array.isArray(current) && Array.isArray(value)
