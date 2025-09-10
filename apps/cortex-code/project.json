@@ -15,6 +15,15 @@
     },
     "coverage": {
       "command": "pnpm codex:test:coverage"
+    },
+    "upstream:diff": {
+      "command": "apps/cortex-code/scripts/upstream-diff.sh"
+    },
+    "upstream:status": {
+      "command": "apps/cortex-code/scripts/upstream-status.sh"
+    },
+    "upstream:pull": {
+      "command": "apps/cortex-code/scripts/codex-rs-subtree.sh pull"
     }
   }
 }
