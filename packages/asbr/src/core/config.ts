@@ -15,30 +15,7 @@ import {
 	VersionPinsSchema,
 } from "../types/index.js";
 import { getConfigPath, pathExists } from "../xdg/index.js";
-
-// Simple deep-merge for plain records (arrays and primitives are overwritten)
-function deepMerge<T extends Record<string, unknown>>(
-	base: T,
-	override: Partial<T>,
-): T {
-	const result: Record<string, unknown> = { ...base };
-	for (const [key, value] of Object.entries(override as Record<string, unknown>)) {
-		const current = result[key];
-		if (
-			value !== null &&
-			typeof value === "object" &&
-			!Array.isArray(value) &&
-			current !== null &&
-			typeof current === "object" &&
-			!Array.isArray(current)
-		) {
-			result[key] = deepMerge(current as Record<string, unknown>, value as Record<string, unknown>);
-			} else {
-				result[key] = value;
-			}
-	}
-	return result as T;
-}
+import { deepMerge } from "../lib/deep-merge.js";
 
 /**
  * Default ASBR configuration
@@ -55,11 +32,12 @@ export const DEFAULT_CONFIG: Config = {
                 max_normalize_bytes: 5_000_000,
                 max_concurrency: 4,
                 normalize: {
-			newline: "LF",
-			trim_trailing_ws: true,
-			strip_dates: true,
-		},
-	},
+                        newline: "LF",
+                        trim_trailing_ws: true,
+                        strip_dates: true,
+                },
+        },
+        cache_ttl_ms: 30000,
 };
 
 /**
