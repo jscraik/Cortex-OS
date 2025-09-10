@@ -4,7 +4,7 @@ This document summarizes a security-focused review of `apps/cortex-marketplace-a
 
 ## Technical Review
 
-- **Registry management** with caching and allow-listed domains for SSRF protection.
+- **Registry management** with caching and allowlisted domains for SSRF protection.
 - **Install command generator** for Claude and JSON clients.
 - **MLX integration** for embeddings, semantic search, reranking, and safety checks.
 - **Type safety** via Zod schemas and TypeScript.
