@@ -10,51 +10,58 @@
 
 ### 1. Frontier adapter support
 
-1. Write failing integration tests for `/chat`, `/embeddings`, and `/rerank` using a Frontier stub.
-2. Implement Frontier adapter and wire it into `ModelRouter`.
-3. Refactor provider configuration to handle Frontier feature flags.
+- test(gateway): integration tests for `/chat`, `/embeddings`, and `/rerank` using a Frontier stub.
+- feat(gateway): add Frontier adapter and wire it into `ModelRouter`.
+- refactor(gateway): handle Frontier feature flags in provider configuration.
 
 ### 2. Parity contracts
 
-1. Add contract tests validating responses against shared schemas/OpenAPI definitions.
-2. Implement runtime validation layer enforcing schema parity across providers.
-3. Add CI step to run contract tests for every provider.
+- test(gateway): contract tests validating responses against shared schemas and OpenAPI definitions.
+- feat(gateway): runtime validation layer enforcing schema parity across providers.
+- chore(ci): run contract tests for every provider in CI.
 
 ### 3. Circuit breakers
 
-1. Add failing tests that simulate provider failure and expect requests to trip a breaker.
-2. Wrap provider calls with a circuit breaker library (e.g., `opossum`).
-3. Export breaker metrics for observability.
+- test(gateway): simulate provider failure and expect requests to trip a breaker.
+- feat(gateway): wrap provider calls with an `opossum` circuit breaker.
+- feat(metrics): export breaker metrics for observability.
 
 ### 4. Sticky sessions
 
-1. Add failing tests ensuring requests with the same session ID hit the same backend.
-2. Implement session-affinity middleware with in-memory mapping and TTL.
-3. Persist mapping to Redis for horizontal scalability.
+- test(gateway): ensure requests with the same session ID hit the same backend.
+- feat(gateway): implement session-affinity middleware with in-memory mapping and TTL.
+- feat(gateway): persist mapping to Redis for horizontal scalability.
 
 ### 5. VRAM/token budget enforcement
 
-1. Add tests verifying requests exceeding `performance-config.json` budgets are rejected.  
-   > **Note:** `performance-config.json` defines per-model VRAM and token budgets. See `docs/performance-config.schema.json` for the schema and documentation.
-2. Implement budget manager enforcing VRAM and token thresholds per request.
-3. Emit metrics and alerts when budgets are breached.
+- test(gateway): reject requests exceeding `performance-config.json` budgets.
+  > **Note:** `performance-config.json` defines per-model VRAM and token budgets. See `docs/performance-config.schema.json` for the schema and documentation.
+- feat(gateway): budget manager enforcing VRAM and token thresholds per request.
+- feat(metrics): emit metrics and alerts when budgets are breached.
 
 ### 6. Health and quality scores
 
-1. Extend `/health` tests to expect per-provider health and quality metrics.
-2. Collect latency/success-rate data to compute quality scores.
-3. Expose metrics endpoint and integrate with monitoring.
+- test(gateway): `/health` endpoint exposes per-provider health and quality metrics.
+- feat(gateway): collect latency/success-rate data to compute quality scores.
+- feat(metrics): expose metrics endpoint and integrate with monitoring.
 
 ### 7. Multi-GPU sharding
 
-1. Add failing tests that distribute requests across multiple GPUs and verify isolation.
-2. Implement sharding layer to map sessions/models to GPU shards.
-3. Add load tests validating throughput and failover.
+- test(gateway): distribute requests across multiple GPUs and verify isolation.
+- feat(gateway): sharding layer mapping sessions/models to GPU shards.
+- test(load): add load tests validating throughput and failover.
 
 ### 8. Documentation & examples
 
-1. After each milestone, update `README` and examples with usage and new features.
-2. Maintain CHANGELOG entries following Conventional Commits.
+- docs(gateway): update `README` and examples with usage and new features after each milestone.
+- docs(gateway): maintain CHANGELOG entries following Conventional Commits.
+
+## Verification Checklist for Each Commit
+
+1. `pre-commit run --files <changed files>`
+2. `pnpm lint`
+3. `pnpm test`
+4. `pnpm docs:lint` for documentation updates
 
 ## Milestones & Commit Cadence
 
