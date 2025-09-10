@@ -85,10 +85,10 @@ class ASBRServerClass {
 		this.port = options.port || 7439;
 		this.host = options.host || "127.0.0.1"; // Loopback only
 
-                this.cacheTtlMs = options.cacheTtlMs || 30000;
-                this.setupMiddleware();
-                this.setupRoutes();
-                this.setupCacheCleanup();
+		this.cacheTtlMs = options.cacheTtlMs || 30000;
+		this.setupMiddleware();
+		this.setupRoutes();
+		this.setupCacheCleanup();
 	}
 
 	private setupMiddleware(): void {
