@@ -21,7 +21,7 @@
 |8|Track coverage threshold|Write failing coverage test enforcing ≥90% statements|Optimize tests/implementation to meet threshold|`chore(agents): enforce coverage threshold`|
 
 ## Testing
-- ⚠️ `pnpm -F @cortex-os/agents test` (fails due to missing dependency and contract mismatches)
+- ⚠️ `pnpm -F @cortex-os/agents test` (currently fails due to missing dependency and contract mismatches)
 
 ## Notes
 - Ensure each task follows TDD: write failing test, implement fix, re-run `pnpm lint` and `pnpm test` before commit.
