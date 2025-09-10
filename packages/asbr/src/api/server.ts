@@ -31,8 +31,9 @@ import { initializeXDG } from "../xdg/index.js";
 import { createAuthMiddleware, requireScopes } from "./auth.js";
 
 export interface ASBRServerOptions {
-	port?: number;
-	host?: string;
+        port?: number;
+        host?: string;
+        cacheTtlMs?: number;
 }
 
 export interface ASBRServer {
@@ -76,7 +77,7 @@ class ASBRServerClass {
 
 	private readonly responseCache = new Map<string, { data: unknown; expiry: number }>();
 	private cacheCleanupInterval?: NodeJS.Timeout;
-	private readonly CACHE_TTL = 30000; // 30 seconds
+        private readonly cacheTtlMs: number;
 	private readonly IDEMPOTENCY_TTL = 5 * 60 * 1000; // 5 minutes
 
 	constructor(options: ASBRServerOptions = {}) {
@@ -84,6 +85,7 @@ class ASBRServerClass {
 		this.port = options.port || 7439;
 		this.host = options.host || "127.0.0.1"; // Loopback only
 
+		this.cacheTtlMs = options.cacheTtlMs || 30000;
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupCacheCleanup();
@@ -98,7 +100,7 @@ class ASBRServerClass {
 			res.setHeader("X-XSS-Protection", "1; mode=block");
 
 			// Performance headers
-			res.setHeader("Cache-Control", "private, max-age=30");
+                        res.setHeader("Cache-Control", `private, max-age=${Math.floor(this.cacheTtlMs / 1000)}`);
 
 			// Request timing (store in locals instead of modifying req)
 			res.locals.startTime = Date.now();
@@ -155,10 +157,12 @@ class ASBRServerClass {
 	}
 
 	private setupRoutes(): void {
-		// Health check
-		this.app.get("/health", (_req, res) => {
-			res.json({ status: "ok", timestamp: new Date().toISOString() });
-		});
+                // Health check
+                const healthHandler = (_req: Request, res: Response) => {
+                        res.json({ status: "ok", timestamp: new Date().toISOString() });
+                };
+                this.app.get("/health", healthHandler);
+                this.app.get("/healthz", healthHandler);
 
 		// Task endpoints
 		this.app.post(
@@ -268,7 +272,7 @@ class ASBRServerClass {
 			for (const [key, value] of this.responseCache) {
 				if (value.expiry <= now) this.responseCache.delete(key);
 			}
-		}, this.CACHE_TTL);
+                }, this.cacheTtlMs);
 	}
 
 	private async createTask(req: Request, res: Response): Promise<void> {
@@ -363,7 +367,7 @@ class ASBRServerClass {
 		};
 
 		if (stream !== "sse") {
-			res.status(400).json({ error: "Unsupported stream type" });
+                    res.status(400).json({ error: "Unsupported stream type", code: "UNSUPPORTED_STREAM" });
 			return;
 		}
 

@@ -252,7 +252,8 @@ export const ConfigSchema = z.object({
 			trim_trailing_ws: z.boolean(),
 			strip_dates: z.boolean(),
 		}),
-	}),
+        }),
+        cache_ttl_ms: z.number().positive(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
