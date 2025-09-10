@@ -10,6 +10,7 @@ import logging
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -26,36 +27,34 @@ except ImportError as e:  # pragma: no cover - diagnostics for missing deps
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_EMBEDDING_MODELS = {
-    "qwen3-embedding-0.6b-mlx": {
-        "path": "Qwen/Qwen3-Embedding-0.6B",
-        "memory_gb": 1.0,
-        "dimensions": 1536,
-        "context_length": 8192,
-    },
-    "qwen3-embedding-4b-mlx": {
-        "path": "Qwen/Qwen3-Embedding-4B",
-        "memory_gb": 4.0,
-        "dimensions": 1536,
-        "context_length": 8192,
-    },
-    "qwen3-embedding-8b-mlx": {
-        "path": "Qwen/Qwen3-Embedding-8B",
-        "memory_gb": 8.0,
-        "dimensions": 1536,
-        "context_length": 8192,
-    },
-}
+DEFAULT_CONFIG_PATH = Path(__file__).with_name("embedding_models.json")
+
+
+def load_model_config(path: str | None = None) -> dict[str, dict[str, Any]]:
+    config_file = Path(path) if path else DEFAULT_CONFIG_PATH
+    if config_file.suffix == ".json":
+        with open(config_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    if config_file.suffix in {".toml", ".tml"}:
+        import tomllib
+        with open(config_file, "rb") as f:
+            return tomllib.load(f)
+    raise ValueError("Unsupported config format")
 
 
 class MLXEmbeddingGenerator:
     """Generate embeddings using Qwen models with MLX acceleration."""
 
-    def __init__(self, model_name: str = "qwen3-embedding-4b-mlx"):
+    def __init__(
+        self,
+        model_name: str = "qwen3-embedding-4b-mlx",
+        config_path: str | None = None,
+    ):
         self.model_name = model_name
         self.model = None
         self.tokenizer = None
-        self.model_config = DEFAULT_EMBEDDING_MODELS.get(model_name)
+        models = load_model_config(config_path)
+        self.model_config = models.get(model_name)
         if not self.model_config:
             raise ValueError(f"Unsupported model: {model_name}")
         if not MLX_AVAILABLE:
@@ -64,7 +63,7 @@ class MLXEmbeddingGenerator:
         if not self._can_use_mlx_model():
             raise RuntimeError(f"Failed to load MLX model: {model_name}")
 
-    def _load_model(self) -> None:
+    def _load_model(self) -> None:  # pragma: no cover - heavy I/O
         model_path = self.model_config["path"]
         logger.info(f"Loading model: {model_path}")
         try:
@@ -94,7 +93,7 @@ class MLXEmbeddingGenerator:
             emb = emb / norm
         return emb.tolist()
 
-    def _generate_mlx_embedding(self, text: str) -> list[float]:
+    def _generate_mlx_embedding(self, text: str) -> list[float]:  # pragma: no cover - heavy
         tokens = self.tokenizer.encode(text)
         if len(tokens) > self.model_config["context_length"]:
             tokens = tokens[: self.model_config["context_length"]]
@@ -115,7 +114,7 @@ class MLXEmbeddingGenerator:
             return embedding[:expected]
         return embedding + [0.0] * (expected - len(embedding))
 
-    def _generate_raw_embedding(self, text: str) -> list[float]:
+    def _generate_raw_embedding(self, text: str) -> list[float]:  # pragma: no cover - heavy
         if not self._can_use_mlx_model():
             raise RuntimeError("MLX model not loaded")
         return self._generate_mlx_embedding(text)
@@ -144,7 +143,7 @@ class MLXEmbeddingGenerator:
         return self.model is not None and self.tokenizer is not None and MLX_AVAILABLE
 
 
-def main():
+def main():  # pragma: no cover - CLI utility
     """Main function for testing the embedding generator."""
     import argparse
 
