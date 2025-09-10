@@ -18,7 +18,7 @@
 ## TDD implementation plan
 1. **Graceful `instructor` fallback**
    - Write a failing test asserting `mlx_unified` imports when `instructor` is absent.
-   - Implement conditional definition of `ChatResponse` using `pydantic.BaseModel` only when available.
+   - Implement conditional definition of `ChatResponse` using `instructor.BaseModel` if available, otherwise falling back to `pydantic.BaseModel`.
 2. **Configurable cache directories**
    - Failing test: verify that setting `HF_HOME`, `TRANSFORMERS_CACHE`, and `MLX_CACHE_DIR` overrides defaults.
    - Refactor constants into environment-aware getters; document behavior.
