@@ -239,7 +239,6 @@ export class HealthService {
   
     private async checkEnvironment(): Promise<HealthCheck> {
       try {
-        loadConfig();
         const { jwtSecret } = getServerConfig();
         if (jwtSecret.length < 32) {
           return {
