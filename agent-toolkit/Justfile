@@ -1,0 +1,24 @@
+default: help
+
+help:
+@echo "Available recipes: scout, codemod, verify, tsq, apply-diff, apply-diff-stdin"
+
+scout pattern path:
+@tools/rg_search.sh {{pattern}} {{path}}
+@tools/semgrep_search.sh {{pattern}} {{path}}
+@tools/astgrep_search.sh {{pattern}} {{path}}
+
+codemod find replace path:
+@tools/comby_rewrite.sh {{find}} {{replace}} {{path}}
+
+verify listfile:
+@tools/run_validators.sh {{listfile}}
+
+tsq query path=".":
+@tools/treesitter_query.sh {{query}} {{path}}
+
+apply-diff diff:
+@tools/patch_apply.sh --diff {{diff}}
+
+apply-diff-stdin:
+@tools/patch_apply.sh --stdin
