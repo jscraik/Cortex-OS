@@ -1,7 +1,7 @@
-import { randomUUID } from 'node:crypto';
-import { EventEmitter } from 'node:events';
 import { createLogger } from '@cortex-os/observability';
 import { TypeGuards } from '@cortex-os/utils';
+import { randomUUID } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 
 interface HitlRequest {
 	id: string;
@@ -37,7 +37,6 @@ export async function waitForApproval(
 		proposal,
 		ts: new Date().toISOString(),
 	};
-	emitter.emit('request', req);
 
 	const timeout = Number(process.env.CORTEX_HITL_TIMEOUT_MS) || 5 * 60_000;
 	return await new Promise<boolean>((resolve, reject) => {
@@ -45,10 +44,14 @@ export async function waitForApproval(
 			pending.delete(id);
 			reject(new Error('HITL approval timeout'));
 		}, timeout);
+		// Register resolver BEFORE emitting so a fast decision isn't lost
 		pending.set(id, (approved) => {
 			clearTimeout(to);
+			pending.delete(id);
 			resolve(approved);
 		});
+		// Emit after resolver is available to avoid race conditions
+		emitter.emit('request', req);
 	});
 }
 
@@ -70,6 +73,15 @@ export function submitDecision(requestId: string, approved: boolean) {
 /** Subscribe to HITL requests. */
 export function onHitlRequest(listener: (req: HitlRequest) => void) {
 	emitter.on('request', listener);
+	// Return unsubscribe to avoid leaks in tests/runtimes
+	return () => emitter.off('request', listener);
+}
+
+/** Reset HITL state: listeners and pending decisions (for tests) */
+export function resetHitl() {
+	emitter.removeAllListeners('request');
+	emitter.removeAllListeners('decision');
+	pending.clear();
 }
 
 export function requiresApproval(proposal: unknown): boolean {

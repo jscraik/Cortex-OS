@@ -612,7 +612,12 @@ impl ChatWidget {
     ) -> Self {
         let mut rng = rand::rng();
         let placeholder = EXAMPLE_PROMPTS[rng.random_range(0..EXAMPLE_PROMPTS.len())].to_string();
-        let codex_op_tx = spawn_agent(config.clone(), app_event_tx.clone(), conversation_manager);
+        let codex_op_tx = if matches!(config.model_provider_id.as_str(), "anthropic" | "zai") {
+            // Route via overlay provider path
+            self::agent::spawn_overlay_agent(config.clone(), app_event_tx.clone())
+        } else {
+            spawn_agent(config.clone(), app_event_tx.clone(), conversation_manager)
+        };
 
         Self {
             app_event_tx: app_event_tx.clone(),

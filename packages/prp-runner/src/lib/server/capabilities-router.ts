@@ -8,7 +8,7 @@ import type { ASBRAIMcpServer } from '../../asbr-ai-mcp-server.js';
 const TOOL_METHOD = 'tools/call';
 const TOOL_NAME = 'ai_get_capabilities';
 
-export function createCapabilitiesRouter(mcpServer: ASBRAIMcpServer) {
+export function createCapabilitiesRouter(mcpServer: ASBRAIMcpServer): Router {
 	const router = Router();
 
 	router.get('/', async (_req, res) => {

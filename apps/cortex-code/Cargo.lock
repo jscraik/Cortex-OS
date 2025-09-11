@@ -708,6 +708,7 @@ dependencies = [
  "codex-mcp-server",
  "codex-protocol",
  "codex-protocol-ts",
+ "codex-providers-ext",
  "codex-tui",
  "serde",
  "serde_json",
@@ -809,10 +810,13 @@ dependencies = [
  "codex-login",
  "codex-ollama",
  "codex-protocol",
+ "codex-providers-ext",
  "core_test_support",
+ "futures-util",
  "libc",
  "owo-colors",
  "predicates",
+ "reqwest",
  "serde_json",
  "shlex",
  "tempfile",
@@ -981,6 +985,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "codex-providers-ext"
+version = "0.0.0"
+dependencies = [
+ "async-stream",
+ "async-trait",
+ "codex-core",
+ "futures",
+ "http",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "wiremock",
+]
+
+[[package]]
 name = "codex-tui"
 version = "0.0.0"
 dependencies = [
@@ -998,9 +1018,11 @@ dependencies = [
  "codex-login",
  "codex-ollama",
  "codex-protocol",
+ "codex-providers-ext",
  "color-eyre",
  "crossterm",
  "diffy",
+ "futures-util",
  "image",
  "insta",
  "itertools 0.14.0",

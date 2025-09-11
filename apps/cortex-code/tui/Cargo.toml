@@ -38,6 +38,7 @@ codex-file-search = { path = "../file-search" }
 codex-login = { path = "../login" }
 codex-ollama = { path = "../ollama" }
 codex-protocol = { path = "../protocol" }
+codex-providers-ext = { path = "../providers-ext" }
 color-eyre = "0.6.3"
 crossterm = { version = "0.28.1", features = [
     "bracketed-paste",
@@ -78,6 +79,7 @@ tokio = { version = "1", features = [
     "signal",
 ] }
 tokio-stream = "0.1.17"
+futures-util = "0.3"
 tracing = { version = "0.1.41", features = ["log"] }
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }

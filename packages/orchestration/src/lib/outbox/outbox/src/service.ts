@@ -2,6 +2,8 @@ import { rateLimiter } from '@cortex-os/a2a-common';
 import express from 'express';
 import { type OutboxMessage, OutboxMessageStatus } from './schema';
 
+type OutboxMessageExt = OutboxMessage & { _simulateFailure?: boolean };
+
 const outbox: OutboxMessage[] = [];
 const poisonQueue: OutboxMessage[] = [];
 const MAX_RETRIES = 3;
@@ -13,8 +15,10 @@ export function createService() {
 	app.use(rateLimiter);
 
 	app.post('/messages', (req, res) => {
-		const message = req.body as OutboxMessage;
+		const message = req.body as OutboxMessageExt;
 		message.status = OutboxMessageStatus.enum.pending;
+		// Persist a test-only flag to force deterministic failure during processing
+		message._simulateFailure = req.query.simulateFailure === 'true';
 		outbox.push(message);
 		res.status(202).json(message);
 	});
@@ -40,18 +44,21 @@ export function createService() {
 
 	app.post('/process-outbox', (_req, res) => {
 		const pendingMessages = outbox.filter(
-			(m) => m.status === OutboxMessageStatus.enum.pending,
+			(m) =>
+				m.status === OutboxMessageStatus.enum.pending ||
+				m.status === OutboxMessageStatus.enum.failed,
 		);
-		for (const message of pendingMessages) {
+		for (const message of pendingMessages as OutboxMessageExt[]) {
 			// In a real application, this would send the message to the destination
-			console.log(`Sending message ${message.id} to ${message.source}`);
+			console.warn(`Sending message ${message.id} to ${message.source}`);
 			try {
 				// Simulate sending message
 				// If sending fails, throw an error
 				// throw new Error('Simulated sending failure');
 				message.status = OutboxMessageStatus.enum.sent;
 				retries.delete(message.id);
-			} catch (_error) {
+			} catch (error) {
+				console.warn('Send failed', error);
 				const retryCount = (retries.get(message.id) || 0) + 1;
 				retries.set(message.id, retryCount);
 
@@ -80,8 +87,9 @@ export function createTestService() {
 	app.use(express.json());
 
 	app.post('/messages', (req, res) => {
-		const message = req.body as OutboxMessage;
+		const message = req.body as OutboxMessageExt;
 		message.status = OutboxMessageStatus.enum.pending;
+		message._simulateFailure = req.query.simulateFailure === 'true';
 		outbox.push(message);
 		res.status(202).json(message);
 	});
@@ -105,16 +113,22 @@ export function createTestService() {
 		res.status(500).send('Internal Server Error');
 	});
 
-	app.post('/process-outbox', (_req, res) => {
+	app.post('/process-outbox', (req, res) => {
 		const pendingMessages = outbox.filter(
-			(m) => m.status === OutboxMessageStatus.enum.pending,
+			(m) =>
+				m.status === OutboxMessageStatus.enum.pending ||
+				m.status === OutboxMessageStatus.enum.failed,
 		);
-		for (const message of pendingMessages) {
+		for (const message of pendingMessages as OutboxMessageExt[]) {
 			// In a real application, this would send the message to the destination
-			console.log(`Sending message ${message.id} to ${message.source}`);
+			console.warn(`Sending message ${message.id} to ${message.source}`);
 
-			// Simulate processing - randomly succeed or fail
-			const shouldFail = Math.random() < 0.3; // 30% failure rate
+			// Deterministic failure for tests when simulateFailure flag is present on the enqueue URL
+			const simulateFailureFlag =
+				message._simulateFailure === true ||
+				req.query.simulateFailure === 'true';
+			// Deterministic failure behavior for tests
+			const shouldFail = simulateFailureFlag;
 
 			if (shouldFail) {
 				const retryCount = (retries.get(message.id) || 0) + 1;

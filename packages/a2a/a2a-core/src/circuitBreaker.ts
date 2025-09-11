@@ -34,7 +34,7 @@ export class SimpleCircuitBreaker<TArgs extends any[], TReturn> {
 			if (now >= this.nextAttempt) {
 				this.state = 'HALF_OPEN';
 			} else {
-				throw new Error('Circuit is open');
+				throw new Error('Breaker is open');
 			}
 		}
 

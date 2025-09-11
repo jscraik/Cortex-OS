@@ -29,11 +29,17 @@ use tracing::debug;
 use tracing::error;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+use std::time::Duration;
 
 use crate::event_processor::CodexStatus;
 use crate::event_processor::EventProcessor;
 
 pub async fn run_main(cli: Cli, codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()> {
+    // Prepare overlay providers (does not alter default routing yet).
+    // This makes Anthropic / Z.ai available for future selection.
+    let mut _provider_registry = codex_core::providers::ProviderRegistry::new();
+    codex_providers_ext::register_default_ext_providers(&mut _provider_registry);
+
     let Cli {
         images,
         model: model_cli_arg,
@@ -132,11 +138,30 @@ pub async fn run_main(cli: Cli, codex_linux_sandbox_exe: Option<PathBuf>) -> any
         None // No model specified, will use the default.
     };
 
-    let model_provider = if oss {
+    let mut model_provider = if oss {
         Some(BUILT_IN_OSS_MODEL_PROVIDER_ID.to_string())
     } else {
         None // No specific model provider override.
     };
+
+    // Auto-detect local Ollama daemon if no explicit provider override was set.
+    if model_provider.is_none() {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_millis(250))
+            .build()
+            .ok();
+        if let Some(c) = client {
+            if let Ok(resp) = c
+                .get("http://127.0.0.1:11434/api/tags")
+                .send()
+                .await
+            {
+                if resp.status().is_success() {
+                    model_provider = Some(BUILT_IN_OSS_MODEL_PROVIDER_ID.to_string());
+                }
+            }
+        }
+    }
 
     // Load configuration and determine approval policy
     let overrides = ConfigOverrides {
@@ -180,6 +205,37 @@ pub async fn run_main(cli: Cli, codex_linux_sandbox_exe: Option<PathBuf>) -> any
             last_message_file.clone(),
         ))
     };
+
+    // Overlay provider routing (anthropic/zai) for single-turn exec streaming.
+    // When selected, stream tokens directly and exit without using ConversationManager.
+    if matches!(config.model_provider_id.as_str(), "anthropic" | "zai") {
+        use codex_core::providers::traits::{CompletionRequest, Message, ModelProvider, StreamEvent};
+        let model = config.model.clone();
+        // Print effective config summary first
+        event_processor.print_config_summary(&config, &prompt);
+        let provider: Box<dyn ModelProvider> = if config.model_provider_id == "anthropic" {
+            Box::new(codex_providers_ext::providers::anthropic::AnthropicProvider::new())
+        } else {
+            Box::new(codex_providers_ext::providers::zai::ZaiProvider::new())
+        };
+        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: prompt.clone() }], &model);
+        let mut stream = provider.complete_streaming(&req).await.map_err(|e| anyhow::anyhow!("overlay stream error: {e}"))?;
+        use futures_util::StreamExt;
+        while let Some(evt) = stream.next().await {
+            match evt {
+                Ok(StreamEvent::Token { text, .. }) => print!("{}", text),
+                Ok(StreamEvent::Finished { .. }) => {
+                    println!();
+                }
+                Ok(_) => {}
+                Err(e) => {
+                    eprintln!("overlay stream error: {e}");
+                    break;
+                }
+            }
+        }
+        return Ok(());
+    }
 
     if oss {
         codex_ollama::ensure_oss_ready(&config)

@@ -19,10 +19,10 @@ export function summarizeEvidence(evidenceCollection: EvidenceItem[]): string {
 }
 
 export async function invokeRagAnalysis(
-	aiCapabilities: { ragQuery: (args: any) => Promise<string> },
+	aiCapabilities: { ragQuery: (args: any) => Promise<{ answer: string; sources?: any[]; prompt?: string; reasoning?: string }> },
 	evidenceSummary: string,
 	taskContext: string,
-): Promise<string> {
+): Promise<{ answer: string; sources?: any[]; prompt?: string; reasoning?: string }> {
 	return aiCapabilities.ragQuery({
 		query: `Analyze this evidence collection for task: ${taskContext}`,
 		systemPrompt: `You are an evidence analyst. Analyze the provided evidence collection and provide:\n  1. A concise summary of key findings\n  2. Risk assessment with specific risks and mitigations\n  3. Actionable recommendations\n  4. Confidence and reliability metrics\n\n    Evidence Collection:\n    ${evidenceSummary}`,

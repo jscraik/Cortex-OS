@@ -339,7 +339,10 @@ Provide quick decision with reasoning.`;
 			if (jsonMatch) {
 				return JSON.parse(jsonMatch[0]);
 			}
-			throw new Error('No JSON found in response');
+			throw new OrchestrationError(
+				'PARSE_ERROR',
+				'No JSON found in response',
+			);
 		} catch (error) {
 			return handleResilience(error, 'parseTaskDecomposition');
 		}

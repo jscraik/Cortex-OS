@@ -112,6 +112,7 @@ export interface UnifiedEvidenceResult {
 export class UnifiedAIEvidenceWorkflow {
 	private asbrIntegration: ASBRAIIntegration;
 	private aiCapabilities: AICoreCapabilities | null = null;
+	private embeddingAdapter: EmbeddingAdapter;
 	private config: Required<UnifiedEvidenceConfig>;
 
 	constructor(config: UnifiedEvidenceConfig = {}) {

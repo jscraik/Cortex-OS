@@ -1,3 +1,4 @@
+import type { ZodError, z } from 'zod';
 import type {
 	RegisteredSchema,
 	SchemaEvolutionResult,
@@ -5,8 +6,7 @@ import type {
 	SchemaRegistryStats,
 	SchemaSearchOptions,
 	ValidationResult,
-} from '@cortex-os/a2a-contracts/schema-registry-types';
-import type { ZodError, z } from 'zod';
+} from '../../a2a-contracts/src/schema-registry-types.js';
 
 /**
  * In-memory schema registry implementation

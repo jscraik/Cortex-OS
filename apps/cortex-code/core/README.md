@@ -18,7 +18,7 @@ The Codex Core includes a comprehensive provider abstraction layer that enables 
 ### Provider Usage
 
 ```rust
-use codex_core::providers::{ModelProvider, ProviderRegistry, Message};
+use codex_providers_ext::providers::{ModelProvider, ProviderRegistry, Message};
 
 // Create and register providers
 let mut registry = ProviderRegistry::new();

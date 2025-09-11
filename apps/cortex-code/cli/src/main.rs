@@ -240,6 +240,11 @@ struct ChatCommand {
     /// Text verbosity for GPT-5 models (low|medium|high)
     #[arg(long = "verbosity", value_name = "LEVEL", value_parser = verbosity_parser)]
     verbosity: Option<Verbosity>,
+
+    /// Force using a specific provider via the overlay path (e.g. anthropic, zai).
+    /// Defaults to core routing for built-in providers (openai, oss).
+    #[arg(long = "provider", value_name = "ID")]
+    provider: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -382,6 +387,34 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             } else {
                 Vec::new()
             };
+
+            // If an overlay provider is explicitly requested, handle it here for this Chat command.
+            if let Some(ref p) = chat_cli.provider {
+                let p = p.to_ascii_lowercase();
+                if (p == "anthropic" || p == "zai") && !chat_cli.repl {
+                    // Single-turn overlay execution path (non-REPL for now).
+                    let prompt_text = chat_cli
+                        .prompt
+                        .clone()
+                        .ok_or_else(|| anyhow::anyhow!("PROMPT is required unless --repl is used"))?;
+                    let text = if prompt_text == "-" { read_stdin_all()? } else { prompt_text };
+
+                    use codex_core::providers::{CompletionRequest, Message, ModelProvider};
+                    let model = cfg.model.clone();
+                    if p == "anthropic" {
+                        let provider = codex_providers_ext::providers::anthropic::AnthropicProvider::new();
+                        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: text }], &model);
+                        let resp = provider.complete(&req).await?;
+                        println!("{}", resp.content);
+                    } else {
+                        let provider = codex_providers_ext::providers::zai::ZaiProvider::new();
+                        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: text }], &model);
+                        let resp = provider.complete(&req).await?;
+                        println!("{}", resp.content);
+                    }
+                    return Ok(());
+                }
+            }
 
             // Create AuthManager and ModelClient like other entry points do.
             let auth_manager = Arc::new(codex_core::AuthManager::new(

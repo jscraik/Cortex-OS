@@ -64,5 +64,6 @@
 	},
 	"[markdown]": {
 		"editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-	}
+	},
+	"python.terminal.useEnvFile": true
 }

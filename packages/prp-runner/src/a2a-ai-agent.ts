@@ -7,13 +7,13 @@
  * @last_updated 2025-08-22
  */
 
-import {
-	type A2AMessage,
-	type AgentCapabilities,
-	type AgentCard,
-	type AgentSkill,
-	TransportProtocol,
-} from '@cortex-os/a2a';
+import type {
+	A2AMessage,
+	AgentCapabilities,
+	AgentCard,
+	AgentSkill,
+} from '@cortex-os/a2a-contracts/agents';
+import { TransportProtocol } from '@cortex-os/a2a-contracts/agents';
 import {
 	type AICoreCapabilities,
 	createAICapabilities,

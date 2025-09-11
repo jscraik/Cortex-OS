@@ -4,7 +4,7 @@
 import { Router } from 'express';
 import type { ASBRAIMcpServer } from '../../asbr-ai-mcp-server.js';
 
-export function createToolsRouter(mcpServer: ASBRAIMcpServer) {
+export function createToolsRouter(mcpServer: ASBRAIMcpServer): Router {
 	const router = Router();
 
 	router.get('/list', async (_req, res) => {

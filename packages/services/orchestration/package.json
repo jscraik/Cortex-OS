@@ -10,7 +10,9 @@
     "test": "vitest"
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@cortex-os/observability": "workspace:*",
+    "@opentelemetry/api": "^1.9.0"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

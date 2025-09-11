@@ -58,30 +58,32 @@ export const TaskSchema = z.object({
 	actualDuration: z.number().optional(),
 });
 
-export const ExecutionPlanSchema = z.object({
-	id: z.string().uuid(),
-	taskId: z.string().uuid(),
-	strategy: z.nativeEnum(OrchestrationStrategy),
-	phases: z.array(z.string()),
-	dependencies: z.record(z.array(z.string())),
-	estimatedDuration: z.number(),
-	resourceRequirements: z.object({
-		minAgents: z.number().min(1),
-		maxAgents: z.number().min(1),
-		requiredCapabilities: z.array(z.string()),
-		memoryRequirement: z.number().optional(),
-		computeRequirement: z.number().optional(),
-	}),
-	checkpoints: z.array(
-		z.object({
-			phase: z.string(),
-			criteria: z.array(z.string()),
-			validation: z.string(),
+export const ExecutionPlanSchema = z
+	.object({
+		id: z.string().uuid(),
+		taskId: z.string().uuid(),
+		strategy: z.nativeEnum(OrchestrationStrategy),
+		phases: z.array(z.string()),
+		dependencies: z.record(z.array(z.string())),
+		estimatedDuration: z.number(),
+		resourceRequirements: z.object({
+			minAgents: z.number().min(1),
+			maxAgents: z.number().min(1),
+			requiredCapabilities: z.array(z.string()),
+			memoryRequirement: z.number().optional(),
+			computeRequirement: z.number().optional(),
 		}),
-	),
-	createdAt: z.date(),
-	updatedAt: z.date().optional(),
-});
+		checkpoints: z.array(
+			z.object({
+				phase: z.string(),
+				criteria: z.array(z.string()),
+				validation: z.string(),
+			}),
+		),
+		createdAt: z.date(),
+		updatedAt: z.date().optional(),
+	})
+	.strict();
 
 // ================================
 // Type Definitions
@@ -340,17 +342,17 @@ export interface DatabaseConfig {
 
 export interface OrchestrationEvent {
 	type:
-		| 'task_created'
-		| 'task_started'
-		| 'task_completed'
-		| 'task_failed'
-		| 'agent_assigned'
-		| 'agent_freed'
-		| 'plan_created'
-		| 'plan_updated'
-		| 'coordination_started'
-		| 'decision_made'
-		| 'resource_allocated';
+	| 'task_created'
+	| 'task_started'
+	| 'task_completed'
+	| 'task_failed'
+	| 'agent_assigned'
+	| 'agent_freed'
+	| 'plan_created'
+	| 'plan_updated'
+	| 'coordination_started'
+	| 'decision_made'
+	| 'resource_allocated';
 	taskId?: string;
 	agentId?: string;
 	planId?: string;
@@ -607,14 +609,14 @@ export interface OrchestrationState {
 	id: string;
 	taskId: string;
 	status:
-		| 'initializing'
-		| 'planning'
-		| 'deciding'
-		| 'executing'
-		| 'validating'
-		| 'completed'
-		| 'failed'
-		| 'cancelled';
+	| 'initializing'
+	| 'planning'
+	| 'deciding'
+	| 'executing'
+	| 'validating'
+	| 'completed'
+	| 'failed'
+	| 'cancelled';
 	strategy: OrchestrationStrategy;
 	planningContext: PlanningContext;
 	currentPhase: string;

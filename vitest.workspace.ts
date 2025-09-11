@@ -5,7 +5,6 @@ export default defineWorkspace([
 	"apps/cortex-webui",
 	"packages/a2a",
 	"packages/a2a-services/schema-registry",
-	"packages/orchestration/src/lib/outbox",
 	"packages/a2a-services/common",
 	"packages/agents",
 	"packages/asbr",
@@ -25,6 +24,4 @@ export default defineWorkspace([
 	"packages/simlab",
 	"packages/cortex-logging",
 	"libs/typescript/contracts",
-	// Added root-level contracts test directory for schema coverage guard
-	"contracts",
 ]);

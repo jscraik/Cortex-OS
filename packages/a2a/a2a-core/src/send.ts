@@ -1,8 +1,8 @@
+import axios from 'axios';
 import {
 	createEnvelope,
 	type Envelope,
-} from '@cortex-os/a2a-contracts/envelope';
-import axios from 'axios';
+} from '../../a2a-contracts/src/envelope.js';
 import { SimpleCircuitBreaker } from './circuitBreaker.js';
 
 const options = {
@@ -17,6 +17,8 @@ export async function send(params: {
 	source: string;
 	data: unknown;
 	outboxUrl: string;
+	// Test-only hint to simulate failures in downstream test services
+	simulateFailure?: boolean;
 }): Promise<Envelope> {
 	const envelope = createEnvelope({
 		type: params.type,
@@ -24,6 +26,11 @@ export async function send(params: {
 		data: params.data,
 	});
 
-	await breaker.fire(params.outboxUrl, envelope);
+	// Pass simulateFailure as a query param hint for cooperating test servers
+	const url = new URL(params.outboxUrl);
+	if (params.simulateFailure) {
+		url.searchParams.set('simulateFailure', 'true');
+	}
+	await breaker.fire(url.toString(), envelope);
 	return envelope;
 }

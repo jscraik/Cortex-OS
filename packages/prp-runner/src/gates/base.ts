@@ -14,6 +14,9 @@ import type {
 	PRPState,
 } from '@cortex-os/kernel';
 
+// Re-export the types for convenience
+export type { EnforcementProfile, Evidence, GateResult, PRPState };
+
 export type GateId = 'G0' | 'G1' | 'G2' | 'G3' | 'G4' | 'G5' | 'G6' | 'G7';
 
 export interface GateContext {
@@ -44,13 +47,13 @@ export interface AutomatedCheck {
 
 export interface HumanApprovalSpec {
 	role:
-		| 'product-owner'
-		| 'architect'
-		| 'qa-lead'
-		| 'code-reviewer'
-		| 'security-reviewer'
-		| 'maintainer'
-		| 'release-manager';
+	| 'product-owner'
+	| 'architect'
+	| 'qa-lead'
+	| 'code-reviewer'
+	| 'security-reviewer'
+	| 'maintainer'
+	| 'release-manager';
 	description: string;
 	requiredDecision: 'approved' | 'rejected';
 	timeoutMs?: number;

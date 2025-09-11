@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 
 export interface EmbeddingConfig {
-	provider: 'sentence-transformers' | 'local';
+	provider: 'sentence-transformers' | 'local' | 'mock';
 	model?: string;
 	dimensions?: number;
 	batchSize?: number;
@@ -50,6 +50,11 @@ export const createEmbeddingState = (
 			model: 'Qwen/Qwen3-Embedding-0.6B',
 			dimensions: 1024,
 		},
+		mock: {
+			provider: 'mock',
+			model: 'mock-embedding',
+			dimensions: 1024,
+		},
 	};
 
 	const config = configs[provider];
@@ -72,6 +77,8 @@ export const generateEmbeddings = async (
 			);
 		case 'local':
 			return generateWithLocal(state.pythonPath, textArray);
+		case 'mock':
+			return generateWithMock(state.config, textArray);
 		default:
 			throw new Error(
 				`Embedding generation not implemented for provider: ${state.config.provider}`,
@@ -159,9 +166,29 @@ export const getStats = (state: EmbeddingState) => {
 };
 
 const validateConfig = (config: EmbeddingConfig): void => {
-	if (!['sentence-transformers', 'local'].includes(config.provider)) {
+	if (!['sentence-transformers', 'local', 'mock'].includes(config.provider)) {
 		throw new Error(`Unsupported embedding provider: ${config.provider}`);
 	}
+};
+
+const generateWithMock = async (
+	config: EmbeddingConfig,
+	texts: string[],
+): Promise<number[][]> => {
+	const dims = config.dimensions || 1024;
+	// Deterministic pseudo-random vector per text based on SHA256
+	return texts.map((t) => {
+		const hash = crypto.createHash('sha256').update(t).digest();
+		const vec: number[] = new Array(dims).fill(0).map((_, i) => {
+			// Use hash bytes cyclically to produce values in [-1,1]
+			const byte = hash[i % hash.length];
+			return (byte / 255) * 2 - 1;
+		});
+		// Normalize to unit length
+		const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0));
+		if (norm === 0) return vec.map(() => 0);
+		return vec.map((v) => v / norm);
+	});
 };
 
 const generateWithSentenceTransformers = async (

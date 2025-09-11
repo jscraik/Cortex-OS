@@ -1,4 +1,4 @@
-import { withSpan } from '../observability/otel';
+import { withSpan } from '@cortex-os/observability/tracing';
 import { auditEvent, record } from './audit';
 import {
 	type Checkpoint,
@@ -111,7 +111,7 @@ async function withRetry(
 	let attempt = 0;
 	// First attempt + retries
 	// attempt 0: initial, then 1..maxRetries for retries
-	for (;;) {
+	for (; ;) {
 		try {
 			return await fn();
 		} catch (err) {
@@ -211,7 +211,7 @@ export async function runSupervisor(
 				await saveCheckpoint(cp);
 				return result;
 			},
-			{ node, runId: ctx.runId },
+			{ runId: ctx.runId, attributes: { node } },
 		);
 
 		const next = edges[node];

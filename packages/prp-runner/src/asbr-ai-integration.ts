@@ -216,35 +216,62 @@ export class ASBRAIIntegration {
 		}
 
 		try {
-			// Add context sources to knowledge base
+			// Add context sources to knowledge base (best-effort)
 			if (contextSources.length > 0) {
-				await this.aiCapabilities.addKnowledge(contextSources);
+				try {
+					await this.aiCapabilities.addKnowledge(contextSources);
+				} catch (err) {
+					// non-fatal: proceed with search even if adding knowledge fails
+					console.warn('addKnowledge failed (continuing):', err);
+				}
 			}
 
-			// Search for related content
-			const searchResults = await this.aiCapabilities.searchKnowledge(
-				claim,
-				options.topK || 5,
-				options.minSimilarity || 0.3,
-			);
+			// Search for related content; ensure we always have an array to map
+			let searchResults: any[] = [];
+			try {
+				const raw = await this.aiCapabilities.searchKnowledge(
+					claim,
+					options.topK || 5,
+					options.minSimilarity || 0.3,
+				);
+				searchResults = Array.isArray(raw) ? raw : [];
+			} catch (err) {
+				console.warn(
+					'searchKnowledge failed, defaulting to empty results:',
+					err,
+				);
+				searchResults = [];
+			}
 
 			const relatedClaims = searchResults.map((result) => ({
-				claim: result.text,
-				similarity: result.similarity,
-				source: result.metadata?.source || 'unknown',
-				confidence: this.calculateClaimConfidence(result.similarity),
+				claim: result?.text || '',
+				similarity:
+					typeof result?.similarity === 'number' ? result.similarity : 0,
+				source: result?.metadata?.source || 'unknown',
+				confidence: this.calculateClaimConfidence(result?.similarity || 0),
 			}));
 
-			// Generate suggested sources using RAG
-			const suggestedSources = await this.generateSourceSuggestions(
-				claim,
-				contextSources,
-			);
+			// Generate suggested sources using RAG (best-effort)
+			let suggestedSources: Array<{
+				type: string;
+				location: string;
+				relevanceScore: number;
+			}> = [];
+			try {
+				suggestedSources = await this.generateSourceSuggestions(
+					claim,
+					contextSources,
+				);
+			} catch (err) {
+				console.warn('generateSourceSuggestions failed (continuing):', err);
+				suggestedSources = [];
+			}
 
 			return { relatedClaims, suggestedSources };
 		} catch (error) {
-			console.warn('AI-enhanced search failed:', error);
-			throw error;
+			// Catch-all - return empty results instead of throwing so callers can handle gracefully
+			console.warn('AI-enhanced search failed unexpectedly:', error);
+			return { relatedClaims: [], suggestedSources: [] };
 		}
 	}
 
@@ -336,13 +363,19 @@ export class ASBRAIIntegration {
 	}> {
 		try {
 			const evidenceSummary = summarizeEvidence(evidenceCollection);
-			const ragResult = await invokeRagAnalysis(
-				this.aiCapabilities,
-				evidenceSummary,
-				taskContext,
-			);
+			let ragResult: any;
+			try {
+				ragResult = await invokeRagAnalysis(
+					this.aiCapabilities,
+					evidenceSummary,
+					taskContext,
+				);
+			} catch (err) {
+				console.warn('invokeRagAnalysis failed (falling back):', err);
+				ragResult = undefined;
+			}
 
-			if (isEmptyAnswer(ragResult.answer)) {
+			if (!ragResult || isEmptyAnswer(ragResult.answer)) {
 				return generateFallbackInsights(
 					evidenceCollection,
 					taskContext,
@@ -351,9 +384,12 @@ export class ASBRAIIntegration {
 				);
 			}
 
-			const { summary, keyFindings, recommendations } = parseInsightsResponse(
-				ragResult.answer,
-			);
+			const parsed = parseInsightsResponse(ragResult.answer || '');
+			const { summary, keyFindings, recommendations } = parsed || {
+				summary: '',
+				keyFindings: [],
+				recommendations: [],
+			};
 
 			if (isInvalidSummary(summary)) {
 				return generateFallbackInsights(
@@ -525,17 +561,25 @@ export class ASBRAIIntegration {
 		}
 
 		try {
-			// Generate evidence gaps analysis
-			const gapsAnalysis = await this.aiCapabilities.ragQuery({
-				query: `What additional evidence would strengthen this claim: "${context.claim}"?`,
-				systemPrompt:
-					'Identify evidence gaps and suggest specific additional evidence that would strengthen or validate the claim.',
-			});
+			// Generate evidence gaps analysis (best-effort)
+			let gapsAnalysis: any;
+			try {
+				gapsAnalysis = await this.aiCapabilities.ragQuery({
+					query: `What additional evidence would strengthen this claim: "${context.claim}"?`,
+					systemPrompt:
+						'Identify evidence gaps and suggest specific additional evidence that would strengthen or validate the claim.',
+				});
+			} catch (err) {
+				console.warn(
+					'ragQuery for additional evidence failed (continuing):',
+					err,
+				);
+				gapsAnalysis = undefined;
+			}
 
 			// Parse suggestions and create evidence entries
-			const suggestions = this.extractListFromResponse(
+			const suggestions = this.extractIssuesFromResponse(
 				gapsAnalysis?.answer || '',
-				'suggestions',
 			);
 
 			for (const suggestion of suggestions.slice(0, 3)) {

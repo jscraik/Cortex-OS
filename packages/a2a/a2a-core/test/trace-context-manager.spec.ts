@@ -1,8 +1,8 @@
+import { describe, expect, it } from 'vitest';
 import {
 	createTraceContext,
 	type TraceContext,
-} from '@cortex-os/a2a-contracts/trace-context';
-import { describe, expect, it } from 'vitest';
+} from '../../a2a-contracts/src/trace-context.js';
 import {
 	ensureTraceContext,
 	getCurrentTraceContext,

@@ -1,9 +1,9 @@
-import { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
+import { Envelope } from '../../a2a-contracts/src/envelope.js';
+import type { TopicACL } from '../../a2a-contracts/src/topic-acl.js';
 import {
   createTraceContext,
   injectTraceContext,
-} from '@cortex-os/a2a-contracts/trace-context';
+} from '../../a2a-contracts/src/trace-context.js';
 import type { SchemaRegistry } from './schema-registry';
 import { getCurrentTraceContext } from './trace-context-manager';
 import type { Transport } from './transport';

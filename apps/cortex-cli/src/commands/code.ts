@@ -10,17 +10,23 @@ export const codeCommand = new Command('code')
   .option('--debug', 'Enable debug logging')
   .argument('[prompt]', 'Prompt to execute (for CI mode)')
   .action(async (prompt, options) => {
-    const codePath = path.join(__dirname, '../../../cortex-code/target/release/cortex-code');
-    const codeBinPath = path.join(__dirname, '../../../bin/cortex-code');
+    // Updated to match Rust binary name (codex)
+    const codePath = path.join(__dirname, '../../../cortex-code/target/release/codex');
+    const codeBinPath = path.join(__dirname, '../../../bin/codex');
+    const homeBin = process.env.HOME ? path.join(process.env.HOME, '.cargo/bin/codex') : null;
 
     // Check if Code binary exists
     let execPath = codePath;
     if (!fs.existsSync(codePath)) {
       if (fs.existsSync(codeBinPath)) {
         execPath = codeBinPath;
+      } else if (homeBin && fs.existsSync(homeBin)) {
+        execPath = homeBin;
       } else {
-        console.error('❌ Cortex Code not found. Please build it first:');
-        console.error('   cd apps/cortex-code && ./build.sh');
+        console.error('❌ Cortex Code binary not found. Please build or install it first:');
+        console.error('   cd apps/cortex-code && cargo build --release');
+        console.error('   # or install to PATH:');
+        console.error('   cd apps/cortex-code && cargo install --path .');
         process.exit(1);
       }
     }
