@@ -155,3 +155,7 @@ Tools under `packages/mcp/`:
 - `packages/kernel/src/graph-simple.ts` provides a non-LangGraph kernel implementation
 - LangGraph integration is available through `packages/agents` and `packages/orchestration`
 - Determinism tests exist (e.g., `packages/kernel/tests/determinism.test.ts`) but are not yet comprehensive
+
+## Agent Toolkit
+
+Use scripts in `agent-toolkit/tools` for search, codemods, diff review and validation as part of the PRP loop.

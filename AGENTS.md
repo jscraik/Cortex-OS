@@ -59,3 +59,8 @@ Code path:
 - Falls back to SQLite or in-memory based on envs.
 
 Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or personal data without consent; prefer encryption where applicable.
+
+## Agent Toolkit
+
+Agents should leverage scripts in `agent-toolkit/tools` for code search, structural rewrites, diff review and validation. Use `just` recipes (`just scout`, `just codemod`, `just verify`) or call the wrappers directly. Run standard checks (`pnpm biome:staged`, `pnpm lint`, `pnpm test`, `pnpm docs:lint`) alongside these tools.
+

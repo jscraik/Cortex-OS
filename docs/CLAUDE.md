@@ -392,3 +392,7 @@ Code Changes → .cortex gates → CI validation → Runtime enforcement
 - Carbon tracking: `carbon-metrics/` (if enabled)
 
 This architecture enables scalable, maintainable AI agent systems while enforcing clear boundaries and comprehensive quality gates.
+
+## Agent Toolkit
+
+Leverage `agent-toolkit/tools` for code search, codemods, diff review and validation. Typical commands: `just scout`, `just codemod`, `tools/run_validators.sh`.

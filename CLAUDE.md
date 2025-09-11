@@ -288,3 +288,7 @@ When conflicts arise, follow this precedence order:
 5. Individual package documentation
 
 Always escalate ambiguities via PR description comments rather than making assumptions.
+
+## Agent Toolkit
+
+Use `agent-toolkit` wrappers for code search, structural rewrites, diff review and validation. Commands include `just scout` and `just codemod`; validate with `tools/run_validators.sh` before committing.
