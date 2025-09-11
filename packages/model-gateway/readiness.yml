@@ -6,12 +6,12 @@ coverage:
   lines: 80
 checklist:
   tdd: true
-  contracts: false
-  a11y: false
-  security: false
+  contracts: true
+  a11y: true
+  security: true
   docs: true
-  architecture: false
-  reliability: false
+  architecture: true
+  reliability: true
 thresholds:
   statements: 70
   branches: 70
