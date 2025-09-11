@@ -252,6 +252,11 @@ fn main() -> anyhow::Result<()> {
 async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()> {
     let cli = MultitoolCli::parse();
 
+    // Initialize provider registry and register external providers from overlay.
+    // This keeps upstream crates clean while enabling Anthropic/Z.ai via overlay.
+    let mut _provider_registry = codex_core::providers::ProviderRegistry::new();
+    codex_providers_ext::register_default_ext_providers(&mut _provider_registry);
+
     match cli.subcommand {
         None => {
             let mut tui_cli = cli.interactive;

@@ -5,4 +5,3 @@ pub use codex_core::providers::*;
 // Additive providers implemented in this overlay crate
 pub mod anthropic;
 pub mod zai;
-pub mod ollama;
