@@ -2,7 +2,7 @@
  * @file packages/prp-runner/src/orchestrator.ts
  * Functional PRP orchestrator using closure state.
  */
-import { LLMBridge, type LLMConfig } from './llm-bridge.js';
+import type { LLMBridge, LLMConfig } from './llm-bridge.js';
 export interface Blueprint {
 	title: string;
 	description: string;
@@ -62,6 +62,7 @@ export interface PRPOrchestrator {
 	getLLMConfig(): LLMConfig | undefined;
 	createLLMBridge(): LLMBridge;
 	executePRPCycle(blueprint: Blueprint): Promise<PRPExecutionResult>;
+	generateProductRequirementsPrompt(blueprint: Blueprint): Promise<string>;
 }
 export declare function createPRPOrchestrator(): PRPOrchestrator;
 //# sourceMappingURL=orchestrator.d.ts.map

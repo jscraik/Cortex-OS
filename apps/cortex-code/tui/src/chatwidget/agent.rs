@@ -72,6 +72,7 @@ pub(crate) fn spawn_overlay_agent(
                     match provider.complete_streaming(&req).await {
                         Ok(mut stream) => {
                             let mut full = String::new();
+                            let mut tool_results: Vec<(String, String)> = Vec::new();
                             while let Some(evt) = stream.next().await {
                                 match evt {
                                     Ok(codex_core::providers::StreamEvent::Token { text: delta, .. }) => {
@@ -83,7 +84,42 @@ pub(crate) fn spawn_overlay_agent(
                                             ),
                                         }));
                                     }
+                                    Ok(codex_core::providers::StreamEvent::System(s)) => {
+                                        if let Ok(v) = serde_json::from_str::<serde_json::Value>(&s) {
+                                            if let Some(tu) = v.get("tool_use") {
+                                                let name = tu.get("name").and_then(|n| n.as_str()).unwrap_or("tool");
+                                                let input = tu.get("input").cloned().unwrap_or(serde_json::json!({}));
+                                                let result = run_overlay_tool_for_tui(name, input);
+                                                let id = tu.get("id").and_then(|n| n.as_str()).unwrap_or("").to_string();
+                                                tool_results.push((id, result.clone()));
+                                                app_event_tx_clone.send(AppEvent::CodexEvent(Event {
+                                                    id: "".into(),
+                                                    msg: EventMsg::AgentMessageDelta(
+                                                        codex_core::protocol::AgentMessageDeltaEvent { delta: format!("\n[tool_result] {} {}", name, result) }
+                                                    ),
+                                                }));
+                                                continue;
+                                            }
+                                        }
+                                        app_event_tx_clone.send(AppEvent::CodexEvent(Event {
+                                            id: "".into(),
+                                            msg: EventMsg::BackgroundEvent(codex_core::protocol::BackgroundEventEvent { message: s })
+                                        }));
+                                    }
                                     Ok(codex_core::providers::StreamEvent::Finished { .. }) => {
+                                        // Optional round-trip (Z.ai/Anthropic) with tool_result blocks
+                                        if overlay_roundtrip_enabled() && !tool_results.is_empty() {
+                                            if let Ok(cont) = overlay_followup_with_tool_results(&provider_id, &config.model, &full, &tool_results).await {
+                                                app_event_tx_clone.send(AppEvent::CodexEvent(Event {
+                                                    id: "".into(),
+                                                    msg: EventMsg::AgentMessage(
+                                                        codex_core::protocol::AgentMessageEvent { message: cont.clone() }
+                                                    ),
+                                                }));
+                                                full.push_str("\n");
+                                                full.push_str(&cont);
+                                            }
+                                        }
                                         // Emit final message and task complete
                                         app_event_tx_clone.send(AppEvent::CodexEvent(Event {
                                             id: "".into(),
@@ -209,4 +245,80 @@ pub(crate) fn spawn_agent_from_existing(
     });
 
     codex_op_tx
+}
+
+// Minimal tool runner for TUI overlay; mirrors CLI helper behavior
+pub(super) fn run_overlay_tool_for_tui(name: &str, input: serde_json::Value) -> String {
+    match name {
+        "echo" => input.get("text").and_then(|v| v.as_str()).unwrap_or(&input.to_string()).to_string(),
+        "time" => chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        _ => format!("unsupported tool: {} input={}", name, input),
+    }
+}
+
+fn overlay_roundtrip_enabled() -> bool {
+    match std::env::var("CODEX_OVERLAY_ROUNDTRIP") {
+        Ok(v) => matches!(v.as_str(), "1" | "true" | "TRUE" | "yes" | "YES"),
+        Err(_) => false,
+    }
+}
+
+async fn overlay_followup_with_tool_results(
+    provider_id: &str,
+    model: &str,
+    previous: &str,
+    results: &[(String, String)],
+) -> anyhow::Result<String> {
+    use reqwest::Client;
+    // Build content blocks
+    let mut content = vec![serde_json::json!({"type":"text","text": previous})];
+    for (id, res) in results.iter() {
+        content.push(serde_json::json!({"type":"tool_result","tool_use_id": id, "content": res }));
+    }
+    let body = serde_json::json!({
+        "model": model,
+        "messages": [ {"role":"user", "content": content } ],
+        "max_tokens": 512
+    });
+    let client = Client::new();
+
+    if provider_id == "zai" {
+        let base = std::env::var("ZAI_BASE_URL").ok().filter(|v| !v.trim().is_empty()).unwrap_or_else(|| "https://api.z.ai/api/anthropic".to_string());
+        let version = std::env::var("ZAI_ANTHROPIC_VERSION").ok().filter(|v| !v.trim().is_empty()).unwrap_or_else(|| "2023-06-01".to_string());
+        let key = std::env::var("ZAI_API_KEY").map_err(|_| anyhow::anyhow!("ZAI_API_KEY required"))?;
+        let url = format!("{}/v1/messages", base.trim_end_matches('/'));
+        let resp = client.post(&url)
+            .header("x-api-key", key)
+            .header("anthropic-version", version)
+            .json(&body)
+            .send()
+            .await?;
+        if !resp.status().is_success() { return Err(anyhow::anyhow!("follow-up status {}", resp.status())); }
+        let v: serde_json::Value = resp.json().await?;
+        if let Some(arr) = v.get("content").and_then(|c| c.as_array()) {
+            let mut text = String::new();
+            for b in arr { if let Some(t) = b.get("text").and_then(|t| t.as_str()) { text.push_str(t); } }
+            if !text.is_empty() { return Ok(text); }
+        }
+        return Ok(v.to_string());
+    } else {
+        // Anthropic
+        let base = std::env::var("ANTHROPIC_BASE_URL").ok().filter(|v| !v.trim().is_empty()).unwrap_or_else(|| "https://api.anthropic.com".to_string());
+        let key = std::env::var("ANTHROPIC_API_KEY").map_err(|_| anyhow::anyhow!("ANTHROPIC_API_KEY required"))?;
+        let url = format!("{}/v1/messages", base.trim_end_matches('/'));
+        let resp = client.post(&url)
+            .header("x-api-key", key)
+            .header("anthropic-version", "2023-06-01")
+            .json(&body)
+            .send()
+            .await?;
+        if !resp.status().is_success() { return Err(anyhow::anyhow!("follow-up status {}", resp.status())); }
+        let v: serde_json::Value = resp.json().await?;
+        if let Some(arr) = v.get("content").and_then(|c| c.as_array()) {
+            let mut text = String::new();
+            for b in arr { if let Some(t) = b.get("text").and_then(|t| t.as_str()) { text.push_str(t); } }
+            if !text.is_empty() { return Ok(text); }
+        }
+        return Ok(v.to_string());
+    }
 }

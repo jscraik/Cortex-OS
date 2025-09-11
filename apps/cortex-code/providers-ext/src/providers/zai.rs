@@ -3,7 +3,6 @@
 use codex_core::providers::errors::ProviderError;
 use codex_core::providers::traits::{
     BoxStream, CompletionRequest, CompletionResponse, ModelProvider, StreamEvent, StreamResult, Usage,
-    response_to_stream,
 };
 use codex_core::error::Result;
 use async_trait::async_trait;
@@ -74,6 +73,24 @@ impl ModelProvider for ZaiProvider {
                             if let Ok(v) = serde_json::from_str::<serde_json::Value>(json_str) {
                                 let typ = v.get("type").and_then(|t| t.as_str()).unwrap_or("");
                                 match typ {
+                                    // Tool-use announcement from Anthropic-compatible stream
+                                    "content_block_start" => {
+                                        if let Some(cb) = v.get("content_block") {
+                                            if cb.get("type").and_then(|t| t.as_str()) == Some("tool_use") {
+                                                let name = cb.get("name").and_then(|n| n.as_str()).unwrap_or("tool");
+                                                let input = cb.get("input").cloned().unwrap_or(serde_json::json!({}));
+                                                let id = cb.get("id").and_then(|n| n.as_str()).unwrap_or("");
+                                                let sys = serde_json::json!({
+                                                    "tool_use": {
+                                                        "id": id,
+                                                        "name": name,
+                                                        "input": input
+                                                    }
+                                                });
+                                                yield StreamEvent::System(sys.to_string());
+                                            }
+                                        }
+                                    }
                                     "content_block_delta" => {
                                         if let Some(text) = v.get("delta").and_then(|d| d.get("text")).and_then(|t| t.as_str()) {
                                             acc_full.push_str(text);

@@ -65,6 +65,7 @@ export const DEFAULT_CONFIG: Config = {
 			strip_dates: true,
 		},
 	},
+	cache_ttl_ms: 300000, // 5 minutes default cache TTL
 };
 
 /**

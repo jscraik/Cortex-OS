@@ -10,6 +10,8 @@ This guide explains how to configure provider credentials and select providers i
 - OpenAI/ChatGPT: `OPENAI_API_KEY` or `codex login` (ChatGPT)
 - Ollama: no key; defaults to `http://127.0.0.1:11434`
 - MLX (OpenAI-compatible): `MLX_BASE_URL` (e.g., `http://127.0.0.1:8080/v1`)
+- Overlay round‑trip (tool_use → tool_result → continuation):
+  - Disabled by default; enable with `CODEX_OVERLAY_ROUNDTRIP=true` for CLI and TUI.
 
 ## Setting Credentials
 
@@ -71,9 +73,29 @@ Secrets remain in environment variables; `config.toml` configures selection and 
 
 ## How cortex-code uses these values
 
-- Anthropic and Z.ai requests include `x-api-key` and `anthropic-version: 2023-06-01`. Streaming uses SSE and renders deltas in the CLI/TUI.
+- Anthropic and Z.ai: requests include `x-api-key` and `anthropic-version: 2023-06-01`. Streaming uses SSE and renders deltas in the CLI/TUI.
 - Ollama auto-detect: When no provider is set, cortex-code checks `http://127.0.0.1:11434/api/tags` and defaults to `oss` if running.
 - MLX uses `MLX_BASE_URL` as an OpenAI-compatible base (e.g., `/v1/chat/completions`).
+
+### Tool Use and Round-Trip (Overlay)
+
+- When the model emits a `tool_use` event (Anthropic-compatible), cortex-code can execute the tool and send a follow-up request with `tool_result` blocks so the assistant continues with the tool output.
+- This “round-trip” is controlled by `CODEX_OVERLAY_ROUNDTRIP=true` (off by default) for both CLI and TUI overlay paths.
+- Tool execution resolution order:
+  1. MCP tools (if configured) — looks up the tool by name (case-insensitive) and passes the JSON input as-is
+  2. Local fallback tools (demo: `echo`, `time`)
+- Z.ai: CLI and TUI support overlay round-trip; Anthropic uses the same parser and behavior.
+
+MCP configuration (example in `~/.codex/config.toml`):
+
+```toml
+[mcp_servers.my_tools]
+command = "/usr/local/bin/my-mcp-server"
+args = []
+env = {}
+```
+
+With MCP configured, overlay tool execution prefers MCP tools by (case-insensitive) name match; otherwise falls back to local demo tools.
 
 ## Verifying Setup
 
@@ -84,7 +106,8 @@ export ANTHROPIC_API_KEY=... && codex-exec -c model_provider=anthropic "Say hell
 # Z.ai
 export ZAI_API_KEY=... && codex-exec -c model_provider=zai "Say hello"
 
-# TUI sessions
+# TUI sessions (with round-trip)
+export CODEX_OVERLAY_ROUNDTRIP=true
 codex -c model_provider=anthropic
 codex -c model_provider=zai
 
@@ -98,4 +121,3 @@ codex -c model_provider=mlx chat "Hello"
 ```
 
 If something looks off, run with higher logging (e.g., `RUST_LOG=info`) and check your environment variables.
-

@@ -710,6 +710,7 @@ dependencies = [
  "codex-protocol-ts",
  "codex-providers-ext",
  "codex-tui",
+ "futures-util",
  "serde",
  "serde_json",
  "tempfile",

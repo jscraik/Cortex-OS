@@ -73,6 +73,7 @@ export interface PRPOrchestrator {
 	getLLMConfig(): LLMConfig | undefined;
 	createLLMBridge(): LLMBridge;
 	executePRPCycle(blueprint: Blueprint): Promise<PRPExecutionResult>;
+	generateProductRequirementsPrompt(blueprint: Blueprint): Promise<string>;
 }
 
 function register(neurons: Map<string, Neuron>, neuron: Neuron): void {
@@ -143,5 +144,32 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 		},
 		executePRPCycle: (blueprint) =>
 			executeCycle(neurons, llmConfig, llmBridge, blueprint),
+		generateProductRequirementsPrompt: async (blueprint: Blueprint) => {
+			// Basic validation similar to tests' expectations
+			if (
+				!blueprint ||
+				typeof blueprint.title !== 'string' ||
+				typeof blueprint.description !== 'string' ||
+				!Array.isArray(blueprint.requirements)
+			) {
+				throw new Error('Invalid blueprint');
+			}
+
+			const strategyNeurons = getByPhase(neurons, 'strategy');
+			const strategyIds = strategyNeurons.map((n) => n.id);
+
+			const lines: string[] = [];
+			lines.push(`Product Requirements for ${blueprint.title}`);
+			lines.push(`Description: ${blueprint.description}`);
+			lines.push('Requirements:');
+			for (const req of blueprint.requirements) {
+				lines.push(`- ${req}`);
+			}
+			if (strategyIds.length > 0) {
+				lines.push(`Contributors: ${strategyIds.join(', ')}`);
+			}
+
+			return lines.join('\n');
+		},
 	};
 }

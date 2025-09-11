@@ -401,3 +401,41 @@ Add a job step (GitHub Actions example) to persist `lcov.info` + HTML:
 - Distinguish `slow` tests with a custom attribute macro
 - Provide a `cargo-xtask` wrapper for richer workflows
 - Gate live tests behind an explicit `CODEx_LIVE=1` env toggle for clarity
+### Providers and Keys
+
+See docs/cortex-code-docs/providers.md for configuring OpenAI/ChatGPT, Anthropic, Z.ai, Ollama, and MLX.
+
+Quick examples:
+
+```bash
+export ANTHROPIC_API_KEY=... && codex -c model_provider=anthropic
+export ZAI_API_KEY=... && codex-exec -c model_provider=zai "Hello"
+codex -c model_provider=oss chat "Hello"     # Ollama local
+export MLX_BASE_URL=http://127.0.0.1:8080/v1 && codex -c model_provider=mlx chat "Hello"
+```
+
+The cortex Node wrapper launches the Rust binary and falls back to `~/.cargo/bin/codex` when needed.
+If you see a "binary not found" error:
+
+```bash
+cd apps/cortex-code && cargo build --release
+# or
+cd apps/cortex-code && cargo install --path .
+```
+
+### Overlay Tool Use and Round-Trip
+
+- Overlay providers (Anthropic/Z.ai) can execute tools and send a follow-up request with `tool_result` so the assistant continues with tool output inline.
+- This behavior is guarded by `CODEX_OVERLAY_ROUNDTRIP=true` for both CLI and TUI (default off):
+
+```bash
+export CODEX_OVERLAY_ROUNDTRIP=true
+export ZAI_API_KEY=...
+codex chat --provider zai --repl
+
+export ANTHROPIC_API_KEY=...
+codex -c model_provider=anthropic
+```
+
+- Tool execution order: MCP tools (if configured; case-insensitive name match; input JSON passed as-is) → local fallback (`echo`, `time`).
+- See docs/cortex-code-docs/providers.md for details and MCP configuration snippet.

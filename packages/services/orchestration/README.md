@@ -5,30 +5,35 @@ A robust workflow orchestration engine for Cortex-OS with enterprise-grade featu
 ## Features
 
 ### 🚀 Core Orchestration
+
 - **DAG-based Workflows**: Directed acyclic graph execution with topological ordering
 - **Conditional Branching**: Dynamic path selection based on runtime predicates
 - **Loop/Map Semantics**: Iterate over collections with parallel execution support
 - **Retry Policies**: Configurable backoff and retry strategies per step
 
 ### 🎣 Hooks System
+
 - **Step-level Hooks**: Pre/post execution hooks for individual steps
 - **Global Hooks**: Apply hooks to all steps in a workflow
 - **Workflow Lifecycle**: Pre/post workflow execution and error handling
 - **Cancellation Hooks**: Cleanup hooks for graceful cancellation
 
 ### 🔄 Compensation Framework (Saga Pattern)
+
 - **Automatic Rollback**: Undo completed steps when failures occur
 - **LIFO Compensation**: Last-in-first-out compensation order
 - **Idempotency**: Safe to retry compensation operations
 - **Compensation Hooks**: Observability into rollback operations
 
 ### ❌ Advanced Cancellation
+
 - **Timeout Support**: Automatic cancellation after specified duration
 - **Cleanup Hooks**: Resource cleanup on cancellation
 - **Partial Rollback**: Compensate only executed steps on cancellation
 - **AbortSignal Integration**: Standard Web API cancellation patterns
 
 ### 👤 Human-in-the-Loop (HITL)
+
 - **Approval Workflows**: Pause execution for human decisions
 - **Timeout Support**: Automatic fallback after approval timeout
 - **Type Safety**: Strongly typed proposal and decision handling
@@ -246,6 +251,7 @@ await run(workflow);
 Executes a workflow with the given options.
 
 **Parameters:**
+
 - `workflow: Workflow` - The workflow definition
 - `options?: RunOptions` - Execution options
 
@@ -354,27 +360,32 @@ const result = await withCancellation(
 The orchestration engine is built with several key components:
 
 ### 1. DAG Executor
+
 - Validates workflow graphs for cycles
 - Performs topological sorting for execution order
 - Handles step dependencies and parallel execution
 
 ### 2. Hook System
+
 - Provides 13+ hook points for workflow lifecycle
 - Supports both step-level and global hooks
 - Error isolation - hook failures don't break workflows
 
 ### 3. Compensation Framework
+
 - Implements the saga pattern for distributed transactions
 - LIFO (last-in-first-out) compensation ordering
 - Automatic rollback on failures
 
 ### 4. Cancellation Engine
+
 - Timeout-based cancellation
 - Resource cleanup hooks
 - Partial rollback for executed steps
 - Standard AbortSignal integration
 
 ### 5. HITL Support
+
 - Human approval workflows
 - Configurable timeout handling
 - Type-safe proposal/decision system
@@ -400,21 +411,25 @@ pnpm test --coverage
 ## Best Practices
 
 ### 1. Step Design
+
 - Keep steps focused and single-purpose
 - Handle `AbortSignal` for cancellation support
 - Use compensation for idempotent rollbacks
 
 ### 2. Error Handling
+
 - Register compensation for reversible operations
 - Use hooks for observability and logging
 - Handle cancellation gracefully
 
 ### 3. Performance
+
 - Leverage parallel execution for independent steps
 - Use appropriate concurrency limits
 - Monitor step execution times
 
 ### 4. Observability
+
 - Add comprehensive logging hooks
 - Include tracing context in metadata
 - Monitor compensation execution

@@ -73,6 +73,29 @@ export function createPRPOrchestrator() {
 		},
 		executePRPCycle: (blueprint) =>
 			executeCycle(neurons, llmConfig, llmBridge, blueprint),
+		generateProductRequirementsPrompt: async (blueprint) => {
+			if (
+				!blueprint ||
+				typeof blueprint.title !== 'string' ||
+				typeof blueprint.description !== 'string' ||
+				!Array.isArray(blueprint.requirements)
+			) {
+				throw new Error('Invalid blueprint');
+			}
+			const strategyNeurons = getByPhase(neurons, 'strategy');
+			const strategyIds = strategyNeurons.map((n) => n.id);
+			const lines = [];
+			lines.push(`Product Requirements for ${blueprint.title}`);
+			lines.push(`Description: ${blueprint.description}`);
+			lines.push('Requirements:');
+			for (const req of blueprint.requirements) {
+				lines.push(`- ${req}`);
+			}
+			if (strategyIds.length > 0) {
+				lines.push(`Contributors: ${strategyIds.join(', ')}`);
+			}
+			return lines.join('\n');
+		},
 	};
 }
 //# sourceMappingURL=orchestrator.js.map

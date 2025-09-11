@@ -19,43 +19,101 @@ import type { ASBRAIMcpServer } from '../asbr-ai-mcp-server.js';
 // Mock dependencies
 vi.mock('../asbr-ai-mcp-server.js', () => ({
 	ASBRAIMcpServer: class {
-		initialize = vi.fn(async () => {});
+		initialize = vi.fn(async () => { });
+
+		// listTools returns full tool registry for tests
 		listTools = vi.fn(async () => ({
 			tools: [
-				{
-					name: 'ai_get_capabilities',
-					description: '',
-					inputSchema: { type: 'object', properties: {}, required: [] },
-				},
+				{ name: 'ai_generate_text', description: '', inputSchema: { type: 'object', properties: {}, required: ['prompt'] } },
+				{ name: 'ai_search_knowledge', description: '', inputSchema: { type: 'object', properties: {}, required: ['query'] } },
+				{ name: 'ai_add_knowledge', description: '', inputSchema: { type: 'object', properties: {}, required: ['documents'] } },
+				{ name: 'ai_rag_query', description: '', inputSchema: { type: 'object', properties: {}, required: ['query'] } },
+				{ name: 'ai_calculate_similarity', description: '', inputSchema: { type: 'object', properties: {}, required: ['text1', 'text2'] } },
+				{ name: 'ai_get_embedding', description: '', inputSchema: { type: 'object', properties: {}, required: ['text'] } },
+				{ name: 'asbr_collect_enhanced_evidence', description: '', inputSchema: { type: 'object', properties: {}, required: ['taskId', 'claim', 'sources'] } },
+				{ name: 'asbr_fact_check_evidence', description: '', inputSchema: { type: 'object', properties: {}, required: ['evidenceId', 'claim', 'taskId'] } },
+				{ name: 'ai_get_capabilities', description: '', inputSchema: { type: 'object', properties: {}, required: [] } },
+				{ name: 'ai_get_knowledge_stats', description: '', inputSchema: { type: 'object', properties: {}, required: [] } },
 			],
 		}));
+
+		// callTool delegates to injected aiCapabilities / asbrIntegration when available
 		callTool = vi.fn(async (req: any) => {
-			if (req.params.name === 'ai_get_capabilities') {
-				return {
-					isError: false,
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify({
-								server_type: 'ASBR-AI-MCP-Server',
-								status: 'operational',
-								features: [],
-							}),
-						},
-					],
-				};
+			const name = req?.params?.name;
+			try {
+				if (name === 'ai_get_capabilities') {
+					if ((this as any).aiCapabilities) {
+						const caps = await (this as any).aiCapabilities.getCapabilities();
+						return { isError: false, content: [{ type: 'text', text: JSON.stringify(caps) }] };
+					}
+					// Default capabilities when none injected
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ llm: { provider: 'mlx', model: 'test', healthy: true }, embedding: { provider: 'qwen', dimensions: 1024 }, features: ['text-generation', 'embeddings', 'rag'], server_type: 'ASBR-AI-MCP-Server' }) }] };
+				}
+
+				if (name === 'ai_generate_text' && (this as any).aiCapabilities) {
+					const generated = await (this as any).aiCapabilities.generate(req.params.arguments?.prompt);
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ generated_text: generated, model: 'MLX' }) }] };
+				}
+
+				if (name === 'ai_search_knowledge' && (this as any).aiCapabilities) {
+					const results = await (this as any).aiCapabilities.searchKnowledge(req.params.arguments?.query, req.params.arguments?.topK);
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ query: req.params.arguments?.query, results_count: results.length, results }) }] };
+				}
+
+				if (name === 'ai_rag_query' && (this as any).aiCapabilities) {
+					const rag = await (this as any).aiCapabilities.ragQuery({ query: req.params.arguments?.query, systemPrompt: req.params.arguments?.systemPrompt });
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ answer: rag.answer, confidence: rag.confidence, sources: rag.sources }) }] };
+				}
+
+				if (name === 'ai_get_knowledge_stats' && (this as any).aiCapabilities) {
+					const stats = await (this as any).aiCapabilities.getKnowledgeStats();
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify(stats) }] };
+				}
+
+				if (name === 'ai_add_knowledge' && (this as any).aiCapabilities) {
+					const ids = await (this as any).aiCapabilities.addKnowledge(req.params.arguments?.documents, req.params.arguments?.metadata);
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ added_documents: req.params.arguments?.documents.length, document_ids: ids, status: 'success' }) }] };
+				}
+
+				if (name === 'ai_calculate_similarity' && (this as any).aiCapabilities) {
+					const sim = await (this as any).aiCapabilities.calculateSimilarity(req.params.arguments?.text1, req.params.arguments?.text2);
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ similarity: sim }) }] };
+				}
+
+				if (name === 'ai_get_embedding' && (this as any).aiCapabilities) {
+					const emb = await (this as any).aiCapabilities.getEmbedding(req.params.arguments?.text);
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ embedding_dimensions: emb?.length, embedding_preview: emb?.slice(0, 5) }) }] };
+				}
+
+				if (name === 'asbr_collect_enhanced_evidence' && (this as any).asbrIntegration) {
+					const res = await (this as any).asbrIntegration.collectEnhancedEvidence(req.params.arguments, {});
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ task_id: req.params.arguments?.taskId, claim: req.params.arguments?.claim, enhancement_methods: res.aiMetadata.enhancementMethods }) }] };
+				}
+
+				if (name === 'asbr_fact_check_evidence' && (this as any).asbrIntegration) {
+					const res = await (this as any).asbrIntegration.factCheckEvidence(req.params.arguments);
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ factual_consistency: res.factualConsistency, supportingEvidence: res.supportingEvidence }) }] };
+				}
+
+				return { isError: true, content: [{ type: 'text', text: `Unknown tool: ${name}` }] };
+			} catch (error) {
+				return { isError: true, content: [{ type: 'text', text: `Tool error: ${error}` }] };
 			}
-			return {
-				isError: true,
-				content: [{ type: 'text', text: `Unknown tool: ${req.params.name}` }],
-			};
 		});
+
 		getHealth = vi.fn(async () => ({
 			status: 'healthy',
-			tools: 1,
+			tools: 10,
 			features: ['mcp-tools-only'],
 		}));
-		initializeForTesting = vi.fn(async () => {});
+
+		initializeForTesting = vi.fn(async () => {
+			try {
+				await this.initialize();
+			} catch (e) {
+				// degrade to testing mode
+			}
+		});
 	},
 }));
 vi.mock('../ai-capabilities.js', () => ({

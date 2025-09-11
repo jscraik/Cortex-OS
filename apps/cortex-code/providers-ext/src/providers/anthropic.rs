@@ -3,7 +3,6 @@
 use codex_core::providers::errors::ProviderError;
 use codex_core::providers::traits::{
     BoxStream, CompletionRequest, CompletionResponse, ModelProvider, StreamResult, Usage,
-    response_to_stream,
 };
 use codex_core::error::Result;
 use async_trait::async_trait;
