@@ -47,7 +47,7 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 						return { isError: false, content: [{ type: 'text', text: JSON.stringify(caps) }] };
 					}
 					// Default capabilities when none injected
-					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ llm: { provider: 'mlx', model: 'test', healthy: true }, embedding: { provider: 'qwen', dimensions: 1024 }, features: ['text-generation', 'embeddings', 'rag'], server_type: 'ASBR-AI-MCP-Server' }) }] };
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ llm: { provider: 'mlx', model: 'test', healthy: true }, embedding: { provider: 'qwen', dimensions: 1024 }, features: ['text-generation', 'embeddings', 'rag'], server_type: 'ASBR-AI-MCP-Server', status: 'healthy' }) }] };
 				}
 
 				if (name === 'ai_generate_text' && (this as any).aiCapabilities) {
@@ -62,7 +62,7 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 
 				if (name === 'ai_rag_query' && (this as any).aiCapabilities) {
 					const rag = await (this as any).aiCapabilities.ragQuery({ query: req.params.arguments?.query, systemPrompt: req.params.arguments?.systemPrompt });
-					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ answer: rag.answer, confidence: rag.confidence, sources: rag.sources }) }] };
+					return { isError: false, content: [{ type: 'text', text: JSON.stringify({ answer: rag.answer, confidence: rag.confidence, sources: rag.sources, sources_count: rag.sources?.length || 0 }) }] };
 				}
 
 				if (name === 'ai_get_knowledge_stats' && (this as any).aiCapabilities) {
@@ -343,6 +343,18 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 		});
 
 		it('should handle ai_get_capabilities tool call', async () => {
+			// Ensure mock is properly injected
+			const mockCaps = {
+				llm: { provider: 'mlx', model: 'test', healthy: true },
+				embedding: { provider: 'qwen', dimensions: 1024 },
+				features: ['text-generation', 'embeddings', 'rag'],
+				server_type: 'ASBR-AI-MCP-Server',
+				status: 'healthy',
+			};
+			(mcpServer as any).aiCapabilities = {
+				getCapabilities: vi.fn().mockResolvedValue(mockCaps),
+			};
+
 			const request = {
 				method: 'tools/call' as const,
 				params: {
@@ -358,6 +370,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 			expect(responseData.llm.provider).toBe('mlx');
 			expect(responseData.features).toContain('text-generation');
 			expect(responseData.server_type).toBe('ASBR-AI-MCP-Server');
+			expect(responseData.status).toBe('healthy');
 		});
 
 		it('should handle ai_search_knowledge tool call', async () => {
@@ -553,6 +566,64 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 	});
 
 	describe('🔗 Helper Functions', () => {
+		beforeEach(async () => {
+			// Mock AI capabilities responses
+			const mockAICapabilities = {
+				generate: vi.fn().mockResolvedValue('Generated text response'),
+				getCapabilities: vi.fn().mockResolvedValue({
+					llm: { provider: 'mlx', model: 'test', healthy: true },
+					embedding: { provider: 'qwen', dimensions: 1024 },
+					features: ['text-generation', 'embeddings', 'rag'],
+					server_type: 'ASBR-AI-MCP-Server',
+					status: 'healthy',
+				}),
+				getKnowledgeStats: vi.fn().mockResolvedValue({
+					documentsStored: 5,
+					embeddingStats: { dimensions: 1024 },
+				}),
+				addKnowledge: vi.fn().mockResolvedValue(['doc1', 'doc2']),
+				searchKnowledge: vi
+					.fn()
+					.mockResolvedValue([
+						{ text: 'Related document', similarity: 0.85, metadata: {} },
+					]),
+				ragQuery: vi.fn().mockResolvedValue({
+					answer: 'RAG response',
+					sources: [{ text: 'Source text', similarity: 0.9 }],
+					confidence: 0.88,
+				}),
+				calculateSimilarity: vi.fn().mockResolvedValue(0.75),
+				getEmbedding: vi.fn().mockResolvedValue(new Array(1024).fill(0.1)),
+			};
+
+			const mockASBRIntegration = {
+				collectEnhancedEvidence: vi.fn().mockResolvedValue({
+					originalEvidence: { id: 'orig-1' },
+					aiEnhancedEvidence: { id: 'enhanced-1' },
+					additionalEvidence: [],
+					insights: { relevanceScore: 0.8 },
+					aiMetadata: {
+						processingTime: 100,
+						enhancementMethods: ['mlx-generation'],
+					},
+				}),
+				factCheckEvidence: vi.fn().mockResolvedValue({
+					factualConsistency: 0.9,
+					potentialIssues: [],
+					supportingEvidence: [{ id: 'support-1' }],
+					contradictingEvidence: [],
+				}),
+			};
+
+			(mcpServer as any).aiCapabilities = mockAICapabilities;
+			(mcpServer as any).asbrIntegration = mockASBRIntegration;
+
+			// Mock the singleton to use the test instance for callASBRAITool tests
+			(mcpIntegration as any).getMcpServer = vi.fn().mockReturnValue(mcpServer);
+
+			await mcpServer.initialize();
+		});
+
 		it('should provide callASBRAITool helper function', async () => {
 			// Test the actual helper function by checking it returns parsed JSON
 			const result = await callASBRAITool('ai_get_capabilities', {});
