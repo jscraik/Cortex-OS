@@ -1,6 +1,5 @@
 // Comprehensive health check service
 
-import { Database } from 'better-sqlite3';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getDatabase } from '../utils/database';
@@ -18,7 +17,7 @@ export interface HealthCheckResult {
 export interface HealthCheck {
   status: 'pass' | 'fail' | 'warn';
   message?: string;
-  observedValue?: any;
+  observedValue?: unknown;
   observedUnit?: string;
   time?: string;
   componentId?: string;
@@ -240,7 +239,7 @@ export class HealthService {
   
     private async checkEnvironment(): Promise<HealthCheck> {
       try {
-        loadConfig();
+
         const { jwtSecret } = getServerConfig();
         if (jwtSecret.length < 32) {
           return {

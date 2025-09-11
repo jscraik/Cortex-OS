@@ -62,7 +62,7 @@ export class FileController {
       const { id } = req.params;
       await FileService.deleteFile(id);
       res.json({ message: 'File deleted successfully' });
-    } catch (_error) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   }

@@ -7,8 +7,9 @@ import { getServerConfig } from '../config/config';
 import type { FileUpload } from '../../../shared/types';
 
 export class FileService {
-  static async initializeUploadDirectory(): Promise<void> {
-    const { uploadDir } = getServerConfig();
+
+  static async initializeUploadDirectory(uploadDir: string): Promise<void> {
+
     try {
       await fs.access(uploadDir);
     } catch {
@@ -17,14 +18,16 @@ export class FileService {
   }
 
   static async uploadFile(file: Express.Multer.File): Promise<FileUpload> {
+    const { uploadDir } = getServerConfig();
+
     // Ensure upload directory exists
-    await FileService.initializeUploadDirectory();
+    await FileService.initializeUploadDirectory(uploadDir);
 
     // Generate unique filename
     const fileId = uuidv4();
     const extension = path.extname(file.originalname);
     const filename = `${fileId}${extension}`;
-    const { uploadDir } = getServerConfig();
+
     const filePath = path.join(uploadDir, filename);
 
     // Move file to upload directory

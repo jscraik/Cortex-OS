@@ -6,7 +6,6 @@ export type ToolEvent = {
   createdAt: string;
 };
 declare global {
-  // eslint-disable-next-line no-var
   var __cortexToolStore: Map<string, ToolEvent[]> | undefined;
 }
 

@@ -61,7 +61,7 @@ export class AuthController {
       // In a real implementation, we might want to blacklist the token
       // For now, we'll just return success
       res.json({ message: 'Logged out successfully' });
-    } catch (_error) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   }

@@ -176,7 +176,7 @@ const startServer = () => {
     console.log('Default models initialized');
 
     // Initialize upload directory
-    FileService.initializeUploadDirectory();
+    FileService.initializeUploadDirectory(SERVER_CONFIG.uploadDir);
     console.log('Upload directory initialized');
 
     // Start server

@@ -5,7 +5,8 @@ const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000,http://localhost:3001'),
-  JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
+
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   DATABASE_PATH: z.string().min(1, 'DATABASE_PATH is required'),
   UPLOAD_DIR: z.string().default('./uploads'),
   LOG_LEVEL: z.string().default('info'),
