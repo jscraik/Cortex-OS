@@ -3,7 +3,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { JWT_EXPIRES_IN, JWT_SECRET } from '../../../shared/constants';
+import { JWT_EXPIRES_IN } from '../../../shared/constants';
+import { getServerConfig } from '../config/config';
 import type { User, UserRecord } from '../../../shared/types';
 import { UserModel } from '../models/user';
 import { getDatabase } from '../utils/database';
@@ -19,12 +20,14 @@ export const AuthService = {
   },
 
   generateToken(userId: string): string {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const { jwtSecret } = getServerConfig();
+    return jwt.sign({ userId }, jwtSecret, { expiresIn: JWT_EXPIRES_IN });
   },
 
   verifyToken(token: string): { userId: string } | null {
     try {
-      return jwt.verify(token, JWT_SECRET) as { userId: string };
+      const { jwtSecret } = getServerConfig();
+      return jwt.verify(token, jwtSecret) as { userId: string };
     } catch {
       return null;
     }
@@ -96,15 +99,15 @@ export const AuthService = {
     const user = UserModel.fromRecord(userRecord);
     const token = AuthService.generateToken(user.id);
 
-      // Remove password from returned user object
-      const { password: _password, ...userWithoutPassword } = user;
+    // Remove password from returned user object
+    const { password: _password, ...userWithoutPassword } = user;
 
       return { user: userWithoutPassword, token };
     },
 
-    async logout(_token: string): Promise<void> {
-      // In a more complex implementation, we might want to blacklist tokens
-      // For now, we'll just let the token expire naturally
-      return;
-    },
+  async logout(_token: string): Promise<void> {
+    // In a more complex implementation, we might want to blacklist tokens
+    // For now, we'll just let the token expire naturally
+    return;
+  },
 };

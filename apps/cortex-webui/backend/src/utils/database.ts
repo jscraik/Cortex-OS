@@ -3,7 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import Database, { Database as DatabaseType } from 'better-sqlite3';
-import { DATABASE_PATH } from '../../../shared/constants';
+import { getServerConfig } from '../config/config';
 import { ConversationModel } from '../models/conversation';
 import { MessageModel } from '../models/message';
 import { ModelModel } from '../models/model';
@@ -16,12 +16,13 @@ export const initializeDatabase = (): DatabaseType => {
     return db;
   }
 
-    const dbDir = path.dirname(DATABASE_PATH);
+    const { databasePath } = getServerConfig();
+    const dbDir = path.dirname(databasePath);
     if (!fs.existsSync(dbDir)) {
       fs.mkdirSync(dbDir, { recursive: true });
     }
 
-    db = new Database(DATABASE_PATH);
+    db = new Database(databasePath);
 
   // Create tables
   db.exec(UserModel.createTableSQL);

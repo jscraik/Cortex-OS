@@ -8,7 +8,7 @@ export class ModelController {
     try {
       const models = ModelService.getAllModels();
       res.json(models);
-    } catch (_error) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -24,7 +24,7 @@ export class ModelController {
       }
 
       res.json(model);
-    } catch (_error) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   }

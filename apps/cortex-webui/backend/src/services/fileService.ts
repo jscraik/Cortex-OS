@@ -3,28 +3,29 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { UPLOAD_DIR } from '../../../shared/constants';
+import { getServerConfig } from '../config/config';
 import type { FileUpload } from '../../../shared/types';
 
 export class FileService {
-  static async initializeUploadDirectory(): Promise<void> {
+  static async initializeUploadDirectory(uploadDir: string): Promise<void> {
     try {
-      await fs.access(UPLOAD_DIR);
+      await fs.access(uploadDir);
     } catch {
-      // Directory doesn't exist, create it
-      await fs.mkdir(UPLOAD_DIR, { recursive: true });
+      await fs.mkdir(uploadDir, { recursive: true });
     }
   }
 
   static async uploadFile(file: Express.Multer.File): Promise<FileUpload> {
+    const { uploadDir } = getServerConfig();
+
     // Ensure upload directory exists
-    await FileService.initializeUploadDirectory();
+    await FileService.initializeUploadDirectory(uploadDir);
 
     // Generate unique filename
     const fileId = uuidv4();
     const extension = path.extname(file.originalname);
     const filename = `${fileId}${extension}`;
-    const filePath = path.join(UPLOAD_DIR, filename);
+    const filePath = path.join(uploadDir, filename);
 
     // Move file to upload directory
     await fs.writeFile(filePath, file.buffer);
@@ -53,6 +54,7 @@ export class FileService {
   }
 
   static getUploadPath(filename: string): string {
-    return path.join(UPLOAD_DIR, filename);
+    const { uploadDir } = getServerConfig();
+    return path.join(uploadDir, filename);
   }
 }

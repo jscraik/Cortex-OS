@@ -28,7 +28,7 @@ export class ConversationController {
 
       const conversations = ConversationService.getConversationsByUserId(req.user.userId);
       res.json(conversations);
-    } catch (_error) {
+    } catch {
       res.status(500).json({ error: 'Internal server error' });
     }
   }

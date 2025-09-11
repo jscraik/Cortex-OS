@@ -128,6 +128,8 @@ async function parsePDF(buffer: Buffer, fileName: string): Promise<DocumentParse
             text = text.slice(0, MAX_TEXT_LENGTH) + '\n\n[Content truncated due to length]';
         }
 
+        const info = data.info as Record<string, unknown>;
+
         return {
             type: 'pdf',
             text,
@@ -137,13 +139,13 @@ async function parsePDF(buffer: Buffer, fileName: string): Promise<DocumentParse
             originalLength,
             truncated: originalLength > MAX_TEXT_LENGTH,
             metadata: {
-                title: (data.info as any)?.Title,
-                author: (data.info as any)?.Author,
-                subject: (data.info as any)?.Subject,
-                creator: (data.info as any)?.Creator,
-                producer: (data.info as any)?.Producer,
-                creationDate: (data.info as any)?.CreationDate,
-                modDate: (data.info as any)?.ModDate,
+                title: info.Title as string | undefined,
+                author: info.Author as string | undefined,
+                subject: info.Subject as string | undefined,
+                creator: info.Creator as string | undefined,
+                producer: info.Producer as string | undefined,
+                creationDate: info.CreationDate as string | undefined,
+                modDate: info.ModDate as string | undefined,
             }
         };
     } catch (error) {
