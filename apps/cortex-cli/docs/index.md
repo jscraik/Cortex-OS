@@ -230,7 +230,7 @@ enhanced simulations, see the `cortex-code` roadmap (if available).
 
 | Version | Date       | Notes                              |
 | ------- | ---------- | ---------------------------------- |
-| 0.1.0   | 2024-01-01 | Initial release; project archived. |
+| 0.1.0   | 2024-01-01 | Initial release (project immediately archived). |
 
 ## Migration & Upgrade
 
