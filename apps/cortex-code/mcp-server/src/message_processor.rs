@@ -336,9 +336,7 @@ impl MessageProcessor {
                 self.handle_tool_call_codex_session_reply(id, arguments)
                     .await
             }
-            "test-echo" => {
-                self.handle_tool_call_test_echo(id, arguments).await;
-            }
+            "test-echo" => self.handle_tool_call_test_echo(id, arguments).await,
             _ => {
                 let result = CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
