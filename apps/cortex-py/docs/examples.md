@@ -2,7 +2,7 @@
 
 ## Python SDK Example
 ```python
-from apps.cortex_py.src.mlx.embedding_generator import MLXEmbeddingGenerator
+from apps.cortex-py.src.mlx.embedding_generator import MLXEmbeddingGenerator
 
 gen = MLXEmbeddingGenerator()
 vec = gen.generate_embedding("sample")
