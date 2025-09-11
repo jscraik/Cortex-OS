@@ -239,6 +239,7 @@ export class HealthService {
   
     private async checkEnvironment(): Promise<HealthCheck> {
       try {
+
         const { jwtSecret } = getServerConfig();
         if (jwtSecret.length < 32) {
           return {

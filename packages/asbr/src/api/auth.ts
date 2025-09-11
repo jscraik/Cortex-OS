@@ -46,17 +46,17 @@ export function createAuthMiddleware() {
         ) => {
 		// Only allow loopback connections
                 const clientIp = req.ip || req.socket?.remoteAddress || "";
-		if (!isLoopbackAddress(clientIp)) {
-			res.status(403).json({ error: "Access denied: loopback only" });
-			return;
-		}
+                if (!isLoopbackAddress(clientIp)) {
+                        res.status(403).json({ error: "Access denied: loopback only", code: "LOOPBACK_ONLY" });
+                        return;
+                }
 
 		// Extract token from Authorization header
 		const authHeader = req.headers.authorization;
-		if (!authHeader || !authHeader.startsWith("Bearer ")) {
-			res.status(401).json({ error: "Authentication required" });
-			return;
-		}
+                if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                        res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+                        return;
+                }
 
 		const token = authHeader.substring(7);
 
@@ -75,9 +75,9 @@ export function createAuthMiddleware() {
 			next();
 		} catch (error) {
                         if (error instanceof AuthenticationError || error instanceof AuthorizationError) {
-                                res.status(error.statusCode).json({ error: error.message });
+                                res.status(error.statusCode).json({ error: error.message, code: error.code });
                         } else {
-                                res.status(500).json({ error: "Authentication failed" });
+                                res.status(500).json({ error: "Authentication failed", code: "AUTH_FAILED" });
                         }
                 }
         };
@@ -93,7 +93,7 @@ export function requireScopes(...requiredScopes: string[]) {
                 next: NextFunction,
         ) => {
                 if (!req.auth) {
-                        res.status(401).json({ error: "Authentication required" });
+                        res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
                         return;
                 }
 
@@ -105,6 +105,7 @@ export function requireScopes(...requiredScopes: string[]) {
                 if (!hasAllScopes) {
                         res.status(403).json({
                                 error: "Insufficient privileges",
+                                code: "FORBIDDEN",
                                 required: requiredScopes,
                                 available: scopes,
                         });

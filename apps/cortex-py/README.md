@@ -75,3 +75,5 @@ Example CI steps (pseudo):
 
 - If tests fail due to missing MLX imports, ensure `uv add` and `uv sync` were run and `.venv` is activated.
 - If model load was attempted and failed, check `HF_HOME` and `MLX_CACHE_DIR` env vars.
+- Set `HF_HOME`, `TRANSFORMERS_CACHE`, or `MLX_CACHE_DIR` to override default cache paths.
+- Override embedding model metadata by supplying a JSON/TOML file to `MLXEmbeddingGenerator(config_path=...)`.

@@ -7,7 +7,9 @@ import { getServerConfig } from '../config/config';
 import type { FileUpload } from '../../../shared/types';
 
 export class FileService {
+
   static async initializeUploadDirectory(uploadDir: string): Promise<void> {
+
     try {
       await fs.access(uploadDir);
     } catch {
@@ -25,6 +27,7 @@ export class FileService {
     const fileId = uuidv4();
     const extension = path.extname(file.originalname);
     const filename = `${fileId}${extension}`;
+
     const filePath = path.join(uploadDir, filename);
 
     // Move file to upload directory

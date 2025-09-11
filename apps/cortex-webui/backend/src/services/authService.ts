@@ -9,6 +9,8 @@ import type { User, UserRecord } from '../../../shared/types';
 import { UserModel } from '../models/user';
 import { getDatabase } from '../utils/database';
 
+const { jwtSecret: JWT_SECRET } = getServerConfig();
+
 export const AuthService = {
   hashPassword(password: string): string {
     const saltRounds = 10;

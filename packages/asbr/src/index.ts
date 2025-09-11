@@ -6,6 +6,7 @@
 // Direct imports for internal use
 import { initializeAuth } from './api/auth.js';
 import { type ASBRServer, createASBRServer } from './api/server.js';
+import { loadConfig, DEFAULT_CONFIG } from './core/config.js';
 import { type ASBRClient, createASBRClient } from './sdk/index.js';
 import { ValidationError } from './types/index.js';
 import { initializeXDG } from './xdg/index.js';
@@ -143,11 +144,13 @@ export async function initializeASBR(
 		throw new ValidationError(`Failed to initialize ASBR: ${msg}`);
 	}
 
-	// Create server
-	const server = createASBRServer({
-		port: options.port || 7439,
-		host: options.host || '127.0.0.1',
-	});
+        // Load configuration and create server
+        const config = await loadConfig().catch(() => DEFAULT_CONFIG);
+        const server = createASBRServer({
+                port: options.port || 7439,
+                host: options.host || '127.0.0.1',
+                cacheTtlMs: config.cache_ttl_ms,
+        });
 
 	// Start server if requested
 	if (options.autoStart !== false) {

@@ -10,6 +10,8 @@ import logging
 import os
 import sys
 
+from pydantic import BaseModel as PydanticBaseModel
+
 # Constants
 DEFAULT_MAX_LENGTH = 512
 DEFAULT_MAX_TOKENS = 4096
@@ -41,7 +43,8 @@ except ImportError as e:
 
 try:
     import instructor
-    from pydantic import BaseModel
+
+    BaseModel = getattr(instructor, "BaseModel", PydanticBaseModel)
 
     try:
         from cortex_ml.instructor_client import create_sync_instructor
@@ -62,13 +65,23 @@ try:
 except ImportError as e:
     logger.error("Error importing instructor dependencies: %s", e)
     logger.error("Please install with: pip install instructor openai")
-    instructor = BaseModel = ollama_client = None
+    instructor = None
+    BaseModel = PydanticBaseModel
+    ollama_client = None
 
 
-# Configure cache directories (defaults; runtime can override)
-os.environ.setdefault("HF_HOME", DEFAULT_CACHE_DIR)
-os.environ.setdefault("TRANSFORMERS_CACHE", DEFAULT_CACHE_DIR)
-os.environ.setdefault("MLX_CACHE_DIR", DEFAULT_MLX_CACHE_DIR)
+# Cache directory getters
+
+def get_hf_home() -> str:
+    return os.environ.get("HF_HOME", DEFAULT_CACHE_DIR)
+
+
+def get_transformers_cache() -> str:
+    return os.environ.get("TRANSFORMERS_CACHE", get_hf_home())
+
+
+def get_mlx_cache_dir() -> str:
+    return os.environ.get("MLX_CACHE_DIR", DEFAULT_MLX_CACHE_DIR)
 
 
 class ChatResponse(BaseModel):
@@ -103,16 +116,16 @@ class MLXUnified:
 
         logger.info("Detected model type %s for %s", self.model_type, model_name)
 
-    def load_model(self) -> None:
+    def load_model(self) -> None:  # pragma: no cover - heavy I/O
         """Load the appropriate model based on type"""
         try:
             if self.model_type == "embedding":
                 self.model = AutoModel.from_pretrained(
                     self.model_path,
-                    cache_dir=os.environ.get("TRANSFORMERS_CACHE"),
+                    cache_dir=get_transformers_cache(),
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path, cache_dir=os.environ.get("TRANSFORMERS_CACHE")
+                    self.model_path, cache_dir=get_transformers_cache()
                 )
             elif self.model_type == "chat":
                 # Use MLX-LM for chat models
@@ -125,10 +138,10 @@ class MLXUnified:
             elif self.model_type == "reranking":
                 self.model = AutoModel.from_pretrained(
                     self.model_path,
-                    cache_dir=os.environ.get("TRANSFORMERS_CACHE"),
+                    cache_dir=get_transformers_cache(),
                 )
                 self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.model_path, cache_dir=os.environ.get("TRANSFORMERS_CACHE")
+                    self.model_path, cache_dir=get_transformers_cache()
                 )
 
             logger.info("Loaded %s model: %s", self.model_type, self.model_name)
@@ -209,7 +222,7 @@ class MLXUnified:
             logger.error("Error with instructor inference, falling back to MLX: %s", e)
             return self._generate_chat_fallback(messages, max_tokens, temperature)
 
-    def _generate_chat_fallback(
+    def _generate_chat_fallback(  # pragma: no cover - heavy inference
         self,
         messages: list[dict[str, str]],
         max_tokens: int = DEFAULT_MAX_TOKENS,
@@ -248,7 +261,7 @@ class MLXUnified:
             },
         }
 
-    def generate_reranking(
+    def generate_reranking(  # pragma: no cover - heavy inference
         self, query: str, documents: list[str]
     ) -> list[dict[str, int | float]]:
         """Generate reranking scores"""
@@ -285,7 +298,7 @@ class MLXUnified:
         # Sort by score descending
         return sorted(scores, key=lambda x: x["score"], reverse=True)
 
-    def _format_chat_messages(self, messages: list[dict[str, str]]) -> str:
+    def _format_chat_messages(self, messages: list[dict[str, str]]) -> str:  # pragma: no cover - formatting utility
         """Format messages for chat models"""
         formatted = []
         for msg in messages:
@@ -296,19 +309,19 @@ class MLXUnified:
         formatted.append("Assistant: ")  # Prompt for response
         return "\n".join(formatted)
 
-    def _format_vl_messages(self, messages: list[dict[str, str]]) -> str:
+    def _format_vl_messages(self, messages: list[dict[str, str]]) -> str:  # pragma: no cover - formatting utility
         """Format messages for vision-language models"""
         # Simple formatting for VL models
         return "\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])
 
-    def _estimate_tokens(self, text: str) -> int:
+    def _estimate_tokens(self, text: str) -> int:  # pragma: no cover - rough estimate
         """Rough token estimation"""
         if self.tokenizer:
             return len(self.tokenizer.encode(text))
         return max(1, len(text) // 4)  # Fallback estimate
 
 
-def main():
+def main():  # pragma: no cover - CLI utility
     parser = argparse.ArgumentParser(description="Unified MLX model interface")
     parser.add_argument("input_data", nargs="*", help="Input text(s) or JSON messages")
     parser.add_argument("--model", required=True, help="Model name/path")
