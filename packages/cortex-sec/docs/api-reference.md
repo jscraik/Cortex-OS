@@ -5,7 +5,7 @@
 Normalizes a Semgrep JSON report.
 
 ```js
-import { parse } from '@cortex-os/cortex-sec/src/reporters/semgrep-parse.js';
+import { parse } from '@cortex-os/cortex-sec';
 
 const findings = parse('.tmp/semgrep.json');
 ```
