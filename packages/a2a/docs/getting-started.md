@@ -14,8 +14,8 @@ pnpm add @cortex-os/a2a
 ## First Launch
 
 ```typescript
-import { createBus } from '@cortex-os/a2a-core/bus';
-import { inproc } from '@cortex-os/a2a-transport/inproc';
+import { createBus } from '@cortex-os/a2a/bus';
+import { inproc } from '@cortex-os/a2a/inproc';
 
 const bus = createBus(inproc());
 await bus.publish({ type: 'demo.event', data: {} });
