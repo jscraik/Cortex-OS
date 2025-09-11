@@ -3,8 +3,8 @@
 Configuration is code-first. Transport selection and options are passed when creating the bus.
 
 ```typescript
-import { createBus } from '@cortex-os/a2a-core/bus';
-import { http } from '@cortex-os/a2a-transport/http';
+import { createBus } from '@cortex-os/a2a';
+import { http } from '@cortex-os/a2a/http';
 
 const bus = createBus(http({ baseUrl: process.env.A2A_HTTP_URL }));
 ```
