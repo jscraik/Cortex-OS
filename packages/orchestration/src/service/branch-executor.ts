@@ -17,7 +17,7 @@ export function executeBranch(rs: RunState, step: Step): RunState {
 
   for (const br of step.branches) {
     const val = get(rs.context, br.when);
-    if (val) {
+    if (val !== undefined && val !== null) {
       return { ...rs, cursor: br.to };
     }
   }
