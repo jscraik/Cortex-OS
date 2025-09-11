@@ -24,17 +24,17 @@ export interface HookRegistry {
   preStep: Map<string, HookFn[]>;
   postStep: Map<string, HookFn[]>;
   onStepError: Map<string, HookFn[]>;
-  
+
   // Global step hooks (apply to all steps)
   globalPreStep: HookFn[];
   globalPostStep: HookFn[];
   globalOnStepError: HookFn[];
-  
+
   // Workflow-level hooks
   preWorkflow: WorkflowHookFn[];
   postWorkflow: WorkflowHookFn[];
   onWorkflowError: WorkflowHookFn[];
-  
+
   // Cancellation/cleanup hooks
   onWorkflowCancelled: WorkflowHookFn[];
   onStepCancelled: Map<string, HookFn[]>;
@@ -145,7 +145,7 @@ export class HookManager {
   async executePreStepHooks(ctx: HookContext): Promise<void> {
     // Execute global pre-step hooks
     await this.executeHooks(this.registry.globalPreStep, ctx);
-    
+
     // Execute step-specific pre-step hooks
     const stepHooks = this.registry.preStep.get(ctx.stepId) || [];
     await this.executeHooks(stepHooks, ctx);
@@ -155,7 +155,7 @@ export class HookManager {
     // Execute step-specific post-step hooks
     const stepHooks = this.registry.postStep.get(ctx.stepId) || [];
     await this.executeHooks(stepHooks, ctx);
-    
+
     // Execute global post-step hooks
     await this.executeHooks(this.registry.globalPostStep, ctx);
   }
@@ -164,7 +164,7 @@ export class HookManager {
     // Execute step-specific error hooks
     const stepHooks = this.registry.onStepError.get(ctx.stepId) || [];
     await this.executeHooks(stepHooks, ctx);
-    
+
     // Execute global error hooks
     await this.executeHooks(this.registry.globalOnStepError, ctx);
   }
@@ -188,7 +188,7 @@ export class HookManager {
   async executeStepCancelledHooks(ctx: HookContext): Promise<void> {
     // Execute global step cancelled hooks
     await this.executeHooks(this.registry.globalOnStepCancelled, ctx);
-    
+
     // Execute step-specific cancelled hooks
     const stepHooks = this.registry.onStepCancelled.get(ctx.stepId);
     if (stepHooks) {
@@ -198,7 +198,7 @@ export class HookManager {
 
   private async executeHooks(hooks: HookFn[], ctx: HookContext): Promise<void> {
     if (ctx.signal?.aborted) return;
-    
+
     for (const hook of hooks) {
       try {
         await hook(ctx);
@@ -211,7 +211,7 @@ export class HookManager {
 
   private async executeWorkflowHooks(hooks: WorkflowHookFn[], ctx: WorkflowHookContext): Promise<void> {
     if (ctx.signal?.aborted) return;
-    
+
     for (const hook of hooks) {
       try {
         await hook(ctx);

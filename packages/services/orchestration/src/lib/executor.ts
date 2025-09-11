@@ -1,7 +1,12 @@
+import {
+  CancellationController,
+  CancellationError,
+  type CancellationOptions,
+  isCancellationError,
+} from './cancellation';
+import type { CompensationManager } from './compensation';
 import { type Graph, topoSort, validateDAG } from './dag';
-import { type HookManager } from './hooks';
-import { type CompensationManager } from './compensation';
-import { CancellationController, CancellationError, isCancellationError, type CancellationOptions } from './cancellation';
+import type { HookManager } from './hooks';
 
 export type StepFn = (ctx: { signal?: AbortSignal }) => Promise<void>;
 
@@ -73,7 +78,8 @@ function computeBranchSkips(
   const preds = buildPredecessors(graph);
 
   // seed queue with unchosen direct targets
-  for (const t of allTargets) if (!chosenTargets.has(t)) seedSkip(t, toSkip, queue);
+  for (const t of allTargets)
+    if (!chosenTargets.has(t)) seedSkip(t, toSkip, queue);
 
   while (queue.length) {
     const u = queue.shift();
@@ -110,9 +116,27 @@ function enqueueChildrenIfAllPredsSkipped(args: {
   toSkip: Set<string>;
   queue: string[];
 }): void {
-  const { graph, preds, node: u, branchNode, allTargets, chosenTargets, toSkip, queue } = args;
+  const {
+    graph,
+    preds,
+    node: u,
+    branchNode,
+    allTargets,
+    chosenTargets,
+    toSkip,
+    queue,
+  } = args;
   for (const v of graph[u] ?? []) {
-    if (shouldSkipChild({ v, preds, branchNode, allTargets, chosenTargets, toSkip })) {
+    if (
+      shouldSkipChild({
+        v,
+        preds,
+        branchNode,
+        allTargets,
+        chosenTargets,
+        toSkip,
+      })
+    ) {
       seedSkip(v, toSkip, queue);
     }
   }
@@ -161,12 +185,12 @@ async function executeStepWithRetry(
   }
 
   // retry loop
-  for (;;) {
+  for (; ;) {
     if (signal?.aborted) throw new Error('Aborted');
     try {
       await fn({ signal });
       executed.push(node);
-      
+
       // Execute post-step hooks on success
       if (hooks) {
         await hooks.executePostStepHooks({
@@ -189,7 +213,7 @@ async function executeStepWithRetry(
       attempt++;
       const delay = policy.backoffMs || 0;
       if (delay) await new Promise((r) => setTimeout(r, delay));
-      
+
       // Update hook context for retry
       hookContext.metadata = { ...hookContext.metadata, attempt };
     }
@@ -206,13 +230,31 @@ async function handleBranch(
   workflowId?: string,
 ): Promise<void> {
   const pred = await branch.predicate({ signal });
-  const chosenTargets = new Set<string>(pred ? branch.trueTargets : branch.falseTargets);
-  const allTargets = new Set<string>([...branch.trueTargets, ...branch.falseTargets]);
-  const toSkip = computeBranchSkips(workflow.graph, node, chosenTargets, allTargets);
+  const chosenTargets = new Set<string>(
+    pred ? branch.trueTargets : branch.falseTargets,
+  );
+  const allTargets = new Set<string>([
+    ...branch.trueTargets,
+    ...branch.falseTargets,
+  ]);
+  const toSkip = computeBranchSkips(
+    workflow.graph,
+    node,
+    chosenTargets,
+    allTargets,
+  );
   for (const s of toSkip) skipped.add(s);
   const fn = workflow.steps[node];
   if (fn) {
-    await executeStepWithRetry(node, fn, undefined, signal, executed, workflow.hooks, workflowId);
+    await executeStepWithRetry(
+      node,
+      fn,
+      undefined,
+      signal,
+      executed,
+      workflow.hooks,
+      workflowId,
+    );
   }
 }
 
@@ -221,8 +263,8 @@ async function handleLoop<T>(
   loop: LoopConfig<T>,
   signal: AbortSignal | undefined,
   executed: string[],
-  hooks?: HookManager,
-  workflowId?: string,
+  _hooks?: HookManager,
+  _workflowId?: string,
 ): Promise<void> {
   const items = await loop.items({ signal });
   for (const item of items) {
@@ -242,7 +284,7 @@ export async function run(
   const skipped = new Set<string>();
 
   // Set up cancellation controller
-  const cancellationController = opts.signal 
+  const cancellationController = opts.signal
     ? CancellationController.fromSignal(opts.signal, opts.cancellation)
     : new CancellationController(opts.cancellation);
 
@@ -250,7 +292,10 @@ export async function run(
 
   // Execute pre-workflow hooks
   if (workflow.hooks && opts.workflowId) {
-    await workflow.hooks.executePreWorkflowHooks({ workflowId: opts.workflowId, signal });
+    await workflow.hooks.executePreWorkflowHooks({
+      workflowId: opts.workflowId,
+      signal,
+    });
   }
 
   try {
@@ -258,15 +303,18 @@ export async function run(
       if (signal.aborted) {
         // Execute cancellation hooks
         if (workflow.hooks && opts.workflowId) {
-          await workflow.hooks.executeWorkflowCancelledHooks({ 
-            workflowId: opts.workflowId, 
+          await workflow.hooks.executeWorkflowCancelledHooks({
+            workflowId: opts.workflowId,
             signal,
-            metadata: { reason: cancellationController.reason }
+            metadata: { reason: cancellationController.reason },
           });
         }
-        throw new CancellationError(cancellationController.reason, cancellationController.cancelledAt);
+        throw new CancellationError(
+          cancellationController.reason,
+          cancellationController.cancelledAt,
+        );
       }
-      
+
       if (skipped.has(node)) continue;
 
       const branch = workflow.branches?.[node];
@@ -275,7 +323,15 @@ export async function run(
         if (workflow.compensation) {
           workflow.compensation.trackExecution(node, { type: 'branch' });
         }
-        await handleBranch(workflow, node, branch, signal, skipped, executed, opts.workflowId);
+        await handleBranch(
+          workflow,
+          node,
+          branch,
+          signal,
+          skipped,
+          executed,
+          opts.workflowId,
+        );
         continue;
       }
 
@@ -285,35 +341,50 @@ export async function run(
         if (workflow.compensation) {
           workflow.compensation.trackExecution(node, { type: 'loop' });
         }
-        await handleLoop(node, loop, signal, executed, workflow.hooks, opts.workflowId);
+        await handleLoop(
+          node,
+          loop,
+          signal,
+          executed,
+          workflow.hooks,
+          opts.workflowId,
+        );
         continue;
       }
 
       const fn = workflow.steps[node];
       if (!fn) continue; // allow structural nodes without a step function
-      
+
       // Track step for potential compensation before execution
       if (workflow.compensation) {
         workflow.compensation.trackExecution(node, { type: 'step' });
       }
-      
+
       const policy = opts.retry?.[node];
-      await executeStepWithRetry(node, fn, policy, signal, executed, workflow.hooks, opts.workflowId);
+      await executeStepWithRetry(
+        node,
+        fn,
+        policy,
+        signal,
+        executed,
+        workflow.hooks,
+        opts.workflowId,
+      );
     }
 
     // Execute post-workflow hooks
     if (workflow.hooks && opts.workflowId) {
-      await workflow.hooks.executePostWorkflowHooks({ 
-        workflowId: opts.workflowId, 
+      await workflow.hooks.executePostWorkflowHooks({
+        workflowId: opts.workflowId,
         signal,
-        metadata: { result: executed } 
+        metadata: { result: executed },
       });
     }
 
     return executed;
   } catch (error) {
     const isCancelled = isCancellationError(error);
-    
+
     // Execute compensation rollback if manager is available
     if (workflow.compensation) {
       try {
@@ -321,22 +392,26 @@ export async function run(
         const compensationResult = await workflow.compensation.compensate({
           workflowId: opts.workflowId,
           signal: isCancelled ? undefined : signal, // Don't use cancelled signal for compensation
-          error
+          error,
         });
-        
+
         // Track rolled back steps in cancellation controller if cancelled
         if (isCancelled) {
           for (const stepId of compensationResult.compensatedSteps) {
             cancellationController.addRolledBackStep(stepId);
           }
         }
-        
+
         // Log compensation errors if any occurred
         if (compensationResult.errors.length > 0) {
           for (const compError of compensationResult.errors) {
             console.error('Compensation failed:', compError.error);
             if (isCancelled) {
-              cancellationController.addCleanupError(new Error(`Compensation failed for ${compError.stepId}: ${compError.error}`));
+              cancellationController.addCleanupError(
+                new Error(
+                  `Compensation failed for ${compError.stepId}: ${compError.error}`,
+                ),
+              );
             }
           }
         }
@@ -348,27 +423,27 @@ export async function run(
         }
       }
     }
-    
+
     // Execute appropriate error hooks
     if (workflow.hooks && opts.workflowId) {
       if (isCancelled) {
-        await workflow.hooks.executeWorkflowCancelledHooks({ 
-          workflowId: opts.workflowId, 
+        await workflow.hooks.executeWorkflowCancelledHooks({
+          workflowId: opts.workflowId,
           signal: undefined, // Don't use cancelled signal for cleanup hooks
-          metadata: { 
+          metadata: {
             error,
-            cancellationResult: cancellationController.getResult()
-          } 
+            cancellationResult: cancellationController.getResult(),
+          },
         });
       } else {
-        await workflow.hooks.executeWorkflowErrorHooks({ 
-          workflowId: opts.workflowId, 
+        await workflow.hooks.executeWorkflowErrorHooks({
+          workflowId: opts.workflowId,
           signal,
-          metadata: { error } 
+          metadata: { error },
         });
       }
     }
-    
+
     throw error;
   }
 }
