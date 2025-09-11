@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 file_list="$1"
+if [[ ! -r "$file_list" ]]; then
+  echo "Error: file_list '$file_list' does not exist or is not readable." >&2
+  exit 1
+fi
 mapfile -t files < "$file_list"
 js=()
 py=()
