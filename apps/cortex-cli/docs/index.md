@@ -272,8 +272,8 @@ The compiled output appears in `dist/`.
 # Create an agent skeleton
 cortex agent create demo
 
-# Bridge two MCP registries
-cortex mcp bridge add my-registry https://example.com/manifest.json
+# List MCP bridges
+cortex mcp bridge --list
 
 # Query RAG data
 cortex rag query "hello world"
