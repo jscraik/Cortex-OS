@@ -1,16 +1,15 @@
-//! Extension crate for provider abstractions.
-//!
-//! Stage 2: Thin re-exports of the local core providers module so downstream
-//! crates can depend on a stable facade. A later stage will migrate
-//! implementation details here while keeping upstream `codex-core` pristine.
+//! Extension crate for provider implementations external to the upstream
+//! codex-core. This keeps upstream crates clean while allowing
+//! Cortex-specific providers to evolve independently.
 
-pub use codex_core::providers::*;
+pub mod providers;
+pub use providers::*;
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn can_list_providers_from_registry() {
+    fn can_construct_registry() {
         let reg = ProviderRegistry::new();
         assert!(reg.list_providers().is_empty());
     }

@@ -22,6 +22,7 @@ chrono = { version = "0.4", features = ["serde"] }
 codex-apply-patch = { path = "../apply-patch" }
 codex-mcp-client = { path = "../mcp-client" }
 codex-protocol = { path = "../protocol" }
+# Overlay providers crate (re-exports under codex_core::providers)
 # codex-zai = { path = "../zai" }  # TODO: Enable after external packages compile
 dirs = "6"
 env-flags = "0.1.1"
