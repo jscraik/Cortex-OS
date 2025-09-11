@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const memoryZ = z.object({
 	id: z.string(),
-	kind: z.enum(["note", "event", "artifact", "embedding"]),
+	kind: z.enum(['note', 'event', 'artifact', 'embedding']),
 	text: z.string().optional(),
 	vector: z.array(z.number()).optional(),
 	tags: z.array(z.string()).default([]),
@@ -10,7 +10,7 @@ export const memoryZ = z.object({
 	createdAt: z.string(),
 	updatedAt: z.string(),
 	provenance: z.object({
-		source: z.enum(["user", "agent", "system"]),
+		source: z.enum(['user', 'agent', 'system']),
 		actor: z.string().optional(),
 		evidence: z
 			.array(
@@ -25,8 +25,10 @@ export const memoryZ = z.object({
 	policy: z
 		.object({
 			pii: z.boolean().optional(),
-			scope: z.enum(["session", "user", "org"]).optional(),
+			scope: z.enum(['session', 'user', 'org']).optional(),
+			requiresConsent: z.boolean().optional(),
 		})
 		.optional(),
 	embeddingModel: z.string().optional(),
+	status: z.enum(['pending', 'approved', 'discarded']).optional(),
 });
