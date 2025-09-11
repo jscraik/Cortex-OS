@@ -38,4 +38,3 @@ Welcome to the Cortex WebUI documentation. This section provides a complete guid
 - [Contributor Setup](./contributor-setup.md)
 - [Accessibility Guidelines](./accessibility.md)
 
-For project structure details, see [Project Structure](./project-structure.md). Development setup instructions are in [Development Setup](./development-setup.md).
