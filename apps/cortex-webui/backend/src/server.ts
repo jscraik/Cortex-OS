@@ -11,7 +11,8 @@ import { WebSocketServer } from 'ws';
 dotenv.config();
 
 // Import constants
-import { API_BASE_PATH, CORS_OPTIONS, WS_BASE_PATH } from '../../shared/constants';
+import { API_BASE_PATH, WS_BASE_PATH } from '../../shared/constants';
+import { getCorsOptions, getServerConfig } from './config/config';
 import { getApprovals, postApproval } from './controllers/approvalsController';
 
 // Import controllers
@@ -37,6 +38,9 @@ import { initializeDatabase } from './utils/database';
 // Create Express app
 const app = express();
 const server = http.createServer(app);
+
+const CORS_OPTIONS = getCorsOptions();
+const SERVER_CONFIG = getServerConfig();
 
 // Create WebSocket server
 const wss = new WebSocketServer({ server, path: WS_BASE_PATH });
@@ -159,7 +163,7 @@ wss.on('connection', (ws) => {
 });
 
 // Initialize database and start server
-const PORT = process.env.PORT || 4000;
+const { port: PORT } = SERVER_CONFIG;
 
 const startServer = () => {
   try {
