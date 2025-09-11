@@ -13,6 +13,7 @@ AgentConfigSchema.parse({ seed: 1, maxTokens: 512, timeoutMs: 1000, memory: { ma
 ## Handling Validation Errors
 ```ts
 const res = A2AMessageSchema.safeParse(data);
+// For debugging purposes only. In production, use a proper logging mechanism.
 if (!res.success) console.error(res.error.format());
 ```
 
