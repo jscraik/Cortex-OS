@@ -3,7 +3,7 @@
 ## Programmatic Use
 
 ```js
-import { parse } from '@cortex-os/cortex-sec/src/reporters/semgrep-parse.js';
+import { parse } from '@cortex-os/cortex-sec/parse';
 const findings = parse('reports/security.json');
 console.log(findings[0]);
 ```
