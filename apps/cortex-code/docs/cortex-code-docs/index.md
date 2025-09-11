@@ -39,6 +39,7 @@ Get up and running with the current implementation:
 - [User Guide](user-guide.md) - Detailed usage instructions for all features
 - [Configuration](configuration.md) - Setting up Cortex Code for your environment
 - [CLI Reference](cli-reference.md) - Command-line interface documentation
+- [Overlay Quickstart](overlay-quickstart.md) - Basic overlay commands and outputs
 - [Cloudflare Tunnel](cloudflare-tunnel.md) - Secure remote access with Cloudflare tunnels
 - [Architecture](architecture.md) - Technical architecture of the current implementation
 - [FAQ](faq.md) - Frequently asked questions and troubleshooting

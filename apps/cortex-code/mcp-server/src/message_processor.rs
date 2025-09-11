@@ -8,6 +8,7 @@ use crate::codex_tool_config::create_tool_for_codex_tool_call_param;
 use crate::codex_tool_config::create_tool_for_codex_tool_call_reply_param;
 use crate::error_code::INVALID_REQUEST_ERROR_CODE;
 use crate::outgoing_message::OutgoingMessageSender;
+use crate::test_tool::create_test_tool;
 use codex_protocol::mcp_protocol::ClientRequest;
 
 use codex_core::AuthManager;
@@ -29,7 +30,7 @@ use mcp_types::RequestId;
 use mcp_types::ServerCapabilitiesTools;
 use mcp_types::ServerNotification;
 use mcp_types::TextContent;
-use serde_json::json;
+use serde_json::{json, Value};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::task;
@@ -312,6 +313,7 @@ impl MessageProcessor {
             tools: vec![
                 create_tool_for_codex_tool_call_param(),
                 create_tool_for_codex_tool_call_reply_param(),
+                create_test_tool(),
             ],
             next_cursor: None,
         };
@@ -334,6 +336,7 @@ impl MessageProcessor {
                 self.handle_tool_call_codex_session_reply(id, arguments)
                     .await
             }
+            "test-echo" => self.handle_tool_call_test_echo(id, arguments).await,
             _ => {
                 let result = CallToolResult {
                     content: vec![ContentBlock::TextContent(TextContent {
@@ -348,6 +351,35 @@ impl MessageProcessor {
                     .await;
             }
         }
+    }
+
+    async fn handle_tool_call_test_echo(
+        &self,
+        id: RequestId,
+        arguments: Option<serde_json::Value>,
+    ) {
+        let message = arguments
+            .and_then(|v| match v {
+                Value::Object(map) => map
+                    .get("message")
+                    .and_then(|m| m.as_str())
+                    .map(|s| s.to_string()),
+                _ => None,
+            })
+            .unwrap_or_default();
+
+        let result = CallToolResult {
+            content: vec![ContentBlock::TextContent(TextContent {
+                r#type: "text".to_string(),
+                text: format!("echo: {message}"),
+                annotations: None,
+            })],
+            is_error: None,
+            structured_content: None,
+        };
+        self
+            .send_response::<mcp_types::CallToolRequest>(id, result)
+            .await;
     }
     async fn handle_tool_call_codex(&self, id: RequestId, arguments: Option<serde_json::Value>) {
         let (initial_prompt, config): (String, Config) = match arguments {

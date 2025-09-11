@@ -266,6 +266,24 @@ impl McpProcess {
         self.send_request("logoutChatGpt", None).await
     }
 
+    /// Send a `tools/list` JSON-RPC request.
+    pub async fn send_tools_list_request(&mut self) -> anyhow::Result<i64> {
+        self.send_request("tools/list", None).await
+    }
+
+    /// Send a `tools/call` JSON-RPC request with the given name and arguments.
+    pub async fn send_tools_call_request(
+        &mut self,
+        name: &str,
+        arguments: serde_json::Value,
+    ) -> anyhow::Result<i64> {
+        let params = Some(json!({
+            "name": name,
+            "arguments": arguments,
+        }));
+        self.send_request("tools/call", params).await
+    }
+
     async fn send_request(
         &mut self,
         method: &str,
