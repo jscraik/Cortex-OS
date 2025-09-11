@@ -41,6 +41,33 @@ class DummyModel:
         return DummyOutputs(self._lh)
 
 
+def test_module_imports_without_instructor(monkeypatch):
+    import sys
+
+    monkeypatch.delitem(sys.modules, "instructor", raising=False)
+    spec = importlib.util.spec_from_file_location("mlx_unified_no_inst", str(module_path))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.instructor is None
+    assert hasattr(module, "ChatResponse")
+
+
+def test_cache_dir_overrides(monkeypatch):
+    import os
+
+    monkeypatch.setenv("HF_HOME", "/tmp/hf")
+    monkeypatch.setenv("TRANSFORMERS_CACHE", "/tmp/transformers")
+    monkeypatch.setenv("MLX_CACHE_DIR", "/tmp/mlx")
+
+    spec = importlib.util.spec_from_file_location("mlx_unified_cache", str(module_path))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.get_hf_home() == "/tmp/hf"
+    assert module.get_transformers_cache() == "/tmp/transformers"
+    assert module.get_mlx_cache_dir() == "/tmp/mlx"
+
+
 def test_generate_embedding_valid(monkeypatch):
     model = MLXUnified("embedding-model")
     model.model_type = "embedding"

@@ -35,6 +35,7 @@ Cortex Orchestration provides **production-ready multi-agent coordination** for 
 - **⚡ Resource Management** - Memory allocation, load balancing, and performance monitoring
 - **🔄 Error Recovery** - Graceful failure handling with agent restart and task redistribution
 - **📊 Performance Monitoring** - Real-time metrics and execution analytics
+- **🔀 Conditional Branching** - Route workflow execution based on runtime context
 
 ### 🛡️ Production Features
 
