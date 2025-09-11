@@ -9,4 +9,3 @@ curl -X POST http://localhost:3001/api/conversations \
   -d '{"title":"Test"}'
 ```
 
-See [API Reference](./api.md) for more endpoints.
