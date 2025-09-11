@@ -16,8 +16,9 @@ pnpm add @cortex-os/a2a
 ```typescript
 import { createBus } from '@cortex-os/a2a/bus';
 import { inproc } from '@cortex-os/a2a/inproc';
+import { createEnvelope } from '@cortex-os/a2a-core/envelope';
 
 const bus = createBus(inproc());
-await bus.publish({ type: 'demo.event', data: {} });
+await bus.publish(createEnvelope({ type: 'demo.event', data: {} }));
 ```
 
