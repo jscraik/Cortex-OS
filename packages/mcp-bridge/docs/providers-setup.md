@@ -1,6 +1,6 @@
 # Providers & Setup
 
-When integrating with third‑party HTTP/SSE providers, export environment variables so credentials are not embedded in scripts:
+When integrating with third-party HTTP/SSE providers, export environment variables so credentials are not embedded in scripts:
 
 ```bash
 export MCP_BRIDGE_OUTBOUND_URL="https://example.com/ingest"
