@@ -19,7 +19,6 @@ Welcome to the Cortex WebUI documentation. This section provides a complete guid
 - [Configuration](./configuration.md)
 - [Architecture](./architecture.md)
 - [CLI Reference](./cli-reference.md)
-- [API Reference](./api.md)
 - [User Guide](./user-guide.md)
 - [Best Practices](./best-practices.md)
 - [Providers Setup](./providers-setup.md)
