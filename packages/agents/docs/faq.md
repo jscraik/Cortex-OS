@@ -7,4 +7,4 @@ Provides a unified interface across agent frameworks.
 Implement an `Executor` and register it with the orchestration layer.
 
 **Is there a CLI?**
-Not yet; see [CLI Reference](./cli-reference.md) for roadmap.
+Not yet; see [CLI Reference](./cli-reference.md) for Roadmap.
