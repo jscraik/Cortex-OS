@@ -7,3 +7,4 @@ mod create_conversation;
 mod interrupt;
 mod login;
 mod send_message;
+mod test_tool;

@@ -29,6 +29,7 @@ mod json_to_toml;
 pub(crate) mod message_processor;
 mod outgoing_message;
 mod patch_approval;
+mod test_tool;
 
 use crate::message_processor::MessageProcessor;
 use crate::outgoing_message::OutgoingMessage;
