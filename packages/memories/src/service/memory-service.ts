@@ -54,7 +54,11 @@ export const createMemoryService = (
 				return store.upsert({ ...withVec, status: 'approved' });
 			});
 		},
-		get: (id) => store.get(id),
+		get: async (id) => {
+			const pendingMem = pending.get(id);
+			if (pendingMem) return pendingMem;
+			return store.get(id);
+		},
 		del: (id) => store.delete(id),
 		search: async (q) => {
 			return withSpan('memories.search', async () => {
