@@ -6,4 +6,4 @@ pnpm build
 pnpm dev
 ```
 
-Follow repository-wide CONTRIBUTING guidelines and run lint/tests before submitting PRs.
+Follow the repository's [CONTRIBUTING.md](../../CONTRIBUTING.md) guidelines and run lint/tests before submitting PRs.
