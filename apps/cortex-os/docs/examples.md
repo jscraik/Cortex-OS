@@ -1,3 +1,3 @@
 # Examples & Tutorials
 
-See `examples/` in the repository for end-to-end scripts demonstrating storage and search workflows.
+Example scripts demonstrating storage and search workflows will be provided in a future update.
