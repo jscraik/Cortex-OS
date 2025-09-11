@@ -3,10 +3,10 @@
 ## Using the Rate Limiter
 ```ts
 import express from 'express';
-import { rateLimiter } from '@cortex-os/a2a-common';
+import { createRateLimiter } from '@cortex-os/a2a-common';
 
 const app = express();
-app.use(rateLimiter);
+app.use(createRateLimiter());
 ```
 
 ## Querying the Schema Registry
