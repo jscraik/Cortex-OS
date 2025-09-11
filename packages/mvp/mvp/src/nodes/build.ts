@@ -5,13 +5,13 @@
  * @version 1.0.0
  */
 
-import { generateEvidenceId, getCurrentTimestamp } from "../lib/utils.js";
-import type { Evidence, PRPState } from "../state.js";
-import { ApiSchemaValidator } from "../validators/api-schema-validator.js";
-import { BackendValidator } from "../validators/backend-validator.js";
-import { DocumentationValidator } from "../validators/documentation-validator.js";
-import { FrontendValidator } from "../validators/frontend-validator.js";
-import { SecurityScanner } from "../validators/security-scanner.js";
+import { generateEvidenceId, getCurrentTimestamp } from '../lib/utils.js';
+import type { Evidence, PRPState } from '../state.js';
+import { ApiSchemaValidator } from '../validators/api-schema-validator.js';
+import { BackendValidator } from '../validators/backend-validator.js';
+import { DocumentationValidator } from '../validators/documentation-validator.js';
+import { FrontendValidator } from '../validators/frontend-validator.js';
+import { SecurityScanner } from '../validators/security-scanner.js';
 
 /**
  * Build Phase Gates:
@@ -35,26 +35,26 @@ export class BuildNode {
 
 		const backendValidation = await this.backendValidator.validate(state);
 		if (!backendValidation.passed) {
-			blockers.push("Backend compilation or tests failed");
+			blockers.push('Backend compilation or tests failed');
 		}
 		evidence.push(
 			this.createEvidence(
-				"backend",
-				"test",
-				"backend_validation",
+				'backend',
+				'test',
+				'backend_validation',
 				backendValidation,
 			),
 		);
 
 		const apiValidation = await this.apiSchemaValidator.validate(state);
 		if (!apiValidation.passed) {
-			blockers.push("API schema validation failed");
+			blockers.push('API schema validation failed');
 		}
 		evidence.push(
 			this.createEvidence(
-				"api",
-				"analysis",
-				"api_schema_validation",
+				'api',
+				'analysis',
+				'api_schema_validation',
 				apiValidation,
 			),
 		);
@@ -72,9 +72,9 @@ export class BuildNode {
 		}
 		evidence.push(
 			this.createEvidence(
-				"security",
-				"analysis",
-				"security_scanner",
+				'security',
+				'analysis',
+				'security_scanner',
 				securityScan,
 			),
 		);
@@ -92,16 +92,16 @@ export class BuildNode {
 		}
 		evidence.push(
 			this.createEvidence(
-				"frontend",
-				"analysis",
-				"frontend_validation",
+				'frontend',
+				'analysis',
+				'frontend_validation',
 				frontendValidation,
 			),
 		);
 
 		const docsValidation = await this.documentationValidator.validate(state);
 		if (!docsValidation.passed) {
-			majors.push("Documentation incomplete - missing API docs or usage notes");
+			majors.push('Documentation incomplete - missing API docs or usage notes');
 		}
 
 		return {
@@ -122,7 +122,7 @@ export class BuildNode {
 
 	private createEvidence(
 		prefix: string,
-		type: Evidence["type"],
+		type: Evidence['type'],
 		source: string,
 		content: any,
 	): Evidence {
@@ -132,7 +132,7 @@ export class BuildNode {
 			source,
 			content: JSON.stringify(content),
 			timestamp: getCurrentTimestamp(),
-			phase: "build",
+			phase: 'build',
 		};
 	}
 }

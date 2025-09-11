@@ -1,8 +1,8 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { byChars } from "../chunk";
-import type { Chunk } from "./types";
-import { discoverFiles, filterPaths } from "../pipeline/file-discovery";
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { byChars } from '../chunk';
+import { discoverFiles, filterPaths } from '../pipeline/file-discovery';
+import type { Chunk } from './types';
 
 interface ResolveOptions {
 	files: string[];
@@ -45,7 +45,7 @@ export function createWorker(opts: WorkerOptions) {
 		while (opts.queue.length) {
 			const file = opts.queue.shift();
 			if (!file) break;
-			const text = await fs.readFile(file, "utf8");
+			const text = await fs.readFile(file, 'utf8');
 			const chunks: Chunk[] = byChars(text, opts.chunkSize, opts.overlap).map(
 				(t, i) => ({
 					id: `${path.basename(file)}#${i}`,

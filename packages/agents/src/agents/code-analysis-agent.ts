@@ -5,7 +5,7 @@
  * security vulnerabilities, and performance bottlenecks.
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 import type {
 	Agent,
 	EventBus,
@@ -15,41 +15,41 @@ import type {
 	MCPClient,
 	MemoryPolicy,
 	ModelProvider,
-} from "../lib/types.js";
+} from '../lib/types.js';
 import {
 	estimateTokens,
 	generateAgentId,
 	generateTraceId,
 	sanitizeText,
 	withTimeout,
-} from "../lib/utils.js";
-import { validateSchema } from "../lib/validate.js";
+} from '../lib/utils.js';
+import { validateSchema } from '../lib/validate.js';
 
 // Input/Output Schemas
 export const codeAnalysisInputSchema = z.object({
-	sourceCode: z.string().min(1, "Source code cannot be empty"),
+	sourceCode: z.string().min(1, 'Source code cannot be empty'),
 	language: z.enum([
-		"javascript",
-		"typescript",
-		"python",
-		"java",
-		"go",
-		"rust",
-		"csharp",
-		"php",
-		"ruby",
+		'javascript',
+		'typescript',
+		'python',
+		'java',
+		'go',
+		'rust',
+		'csharp',
+		'php',
+		'ruby',
 	]),
 	analysisType: z.enum([
-		"review",
-		"refactor",
-		"optimize",
-		"architecture",
-		"security",
+		'review',
+		'refactor',
+		'optimize',
+		'architecture',
+		'security',
 	]),
 	focus: z
-		.array(z.enum(["complexity", "performance", "security", "maintainability"]))
-		.default(["complexity", "maintainability"]),
-	severity: z.enum(["low", "medium", "high"]).optional().default("medium"),
+		.array(z.enum(['complexity', 'performance', 'security', 'maintainability']))
+		.default(['complexity', 'maintainability']),
+	severity: z.enum(['low', 'medium', 'high']).optional().default('medium'),
 	includeMetrics: z.boolean().optional().default(true),
 	includeSuggestions: z.boolean().optional().default(true),
 	seed: z.number().int().positive().optional(),
@@ -59,44 +59,44 @@ export const codeAnalysisInputSchema = z.object({
 export const codeAnalysisOutputSchema = z.object({
 	suggestions: z.array(
 		z.object({
-			type: z.enum(["improvement", "warning", "error", "optimization"]),
+			type: z.enum(['improvement', 'warning', 'error', 'optimization']),
 			message: z.string(),
 			line: z.number().optional(),
-			severity: z.enum(["low", "medium", "high"]),
+			severity: z.enum(['low', 'medium', 'high']),
 			category: z.enum([
-				"complexity",
-				"performance",
-				"security",
-				"maintainability",
+				'complexity',
+				'performance',
+				'security',
+				'maintainability',
 			]),
 		}),
 	),
 	complexity: z.object({
 		cyclomatic: z.number(),
 		cognitive: z.number().optional(),
-		maintainability: z.enum(["poor", "fair", "good", "excellent"]),
+		maintainability: z.enum(['poor', 'fair', 'good', 'excellent']),
 	}),
 	security: z.object({
 		vulnerabilities: z.array(
 			z.object({
 				type: z.string(),
-				severity: z.enum(["low", "medium", "high", "critical"]),
+				severity: z.enum(['low', 'medium', 'high', 'critical']),
 				description: z.string(),
 				line: z.number().optional(),
 			}),
 		),
-		riskLevel: z.enum(["low", "medium", "high", "critical"]),
+		riskLevel: z.enum(['low', 'medium', 'high', 'critical']),
 	}),
 	performance: z.object({
 		bottlenecks: z.array(
 			z.object({
-				type: z.enum(["cpu", "memory", "io", "network"]),
+				type: z.enum(['cpu', 'memory', 'io', 'network']),
 				description: z.string(),
 				line: z.number().optional(),
-				impact: z.enum(["low", "medium", "high"]),
+				impact: z.enum(['low', 'medium', 'high']),
 			}),
 		),
-		memoryUsage: z.enum(["low", "medium", "high"]),
+		memoryUsage: z.enum(['low', 'medium', 'high']),
 		algorithmicComplexity: z.string().optional(),
 	}),
 	confidence: z.number().min(0).max(1),
@@ -123,13 +123,13 @@ export const createCodeAnalysisAgent = (
 ): Agent<CodeAnalysisInput, CodeAnalysisOutput> => {
 	// Validate dependencies
 	if (!config.provider) {
-		throw new Error("Provider is required");
+		throw new Error('Provider is required');
 	}
 	if (!config.eventBus) {
-		throw new Error("EventBus is required");
+		throw new Error('EventBus is required');
 	}
 	if (!config.mcpClient) {
-		throw new Error("MCPClient is required");
+		throw new Error('MCPClient is required');
 	}
 
 	const agentId = generateAgentId();
@@ -138,46 +138,56 @@ export const createCodeAnalysisAgent = (
 
 	return {
 		id: agentId,
-		name: "Code Analysis Agent",
-		capabilities: [{ name: "code-analysis", description: "Code analysis and review" }],
+		name: 'Code Analysis Agent',
+		capability: 'code-analysis',
+		inputSchema: codeAnalysisInputSchema,
+		outputSchema: codeAnalysisOutputSchema,
+		capabilities: [
+			{ name: 'code-analysis', description: 'Code analysis and review' },
+		],
 
-		execute: async (context: ExecutionContext<CodeAnalysisInput>): Promise<GenerateResult<CodeAnalysisOutput>> => {
-			const { input } = context;
+		execute: async (
+			context: ExecutionContext<CodeAnalysisInput> | CodeAnalysisInput,
+		): Promise<GenerateResult<CodeAnalysisOutput>> => {
+			const input = (context as any && (context as any).input)
+				? (context as any).input
+				: (context as any);
 			const traceId = generateTraceId();
 			const startTime = Date.now();
 
 			// Validate input
-			const validatedInput = validateSchema(
-				codeAnalysisInputSchema,
-				input,
-			);
+			const validatedInput = validateSchema(codeAnalysisInputSchema, input);
 
 			// Ensure focus has default value
 			const inputWithDefaults = {
 				...validatedInput,
-				focus: validatedInput.focus || ["security", "maintainability"],
-				severity: validatedInput.severity || "medium" as const,
+				focus: validatedInput.focus || ['security', 'maintainability'],
+				severity: validatedInput.severity || ('medium' as const),
 				includeMetrics: validatedInput.includeMetrics ?? true,
 				includeSuggestions: validatedInput.includeSuggestions ?? true,
 			};
 
-			// Emit agent started event
-                        const createEvent = (type: string, data: any) => ({
-                                specversion: "1.0",
-                                id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                                type,
-                                data,
-                                timestamp: new Date().toISOString(),
-                                source: "code-analysis-agent",
-                        });
-
-			config.eventBus.publish(createEvent("agent.started", {
-				agentId,
-				traceId,
-				capability: "code-analysis",
-				input: validatedInput,
+			// Emit agent started event (unless orchestrator suppresses)
+			const createEvent = (type: string, data: any) => ({
+				specversion: '1.0',
+				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+				type,
+				data,
 				timestamp: new Date().toISOString(),
-			}));
+				source: 'code-analysis-agent',
+			});
+
+			if (!(validatedInput as any)._suppressLifecycle) {
+				config.eventBus.publish(
+					createEvent('agent.started', {
+						agentId,
+						traceId,
+						capability: 'code-analysis',
+						input: validatedInput,
+						timestamp: new Date().toISOString(),
+					}),
+				);
+			}
 
 			try {
 				const result = await withTimeout(
@@ -185,64 +195,55 @@ export const createCodeAnalysisAgent = (
 					timeout,
 				);
 
-				const executionTime = Date.now() - startTime;
+            const executionTime = Math.max(1, Date.now() - startTime);
 
-				// Emit agent completed event
-                                // Construct evidence array with analysis parameters
-                                const evidence = [
-                                        { type: "language", value: validatedInput.language },
-                                        { type: "analysisType", value: validatedInput.analysisType },
-                                        { type: "focus", value: validatedInput.focus },
-                                        { type: "sourceCodeLength", value: validatedInput.sourceCode.length }
-                                ];
-                                config.eventBus.publish(
-                                        createEvent("agent.completed", {
-                                                agentId,
-                                                traceId,
-                                                capability: "code-analysis",
-                                                result,
-                                                evidence,
-                                                metrics: {
-                                                        latencyMs: executionTime,
-                                                        tokensUsed: estimateTokens(
-                                                                validatedInput.sourceCode,
-                                                        ),
-                                                        suggestionsCount:
-                                                                result.suggestions.length,
-                                                },
-                                                timestamp: new Date().toISOString(),
-                                        }),
-                                );
+				// Emit agent completed event (unless suppress)
+				const evidence = [
+					{ type: 'language', value: validatedInput.language },
+					{ type: 'analysisType', value: validatedInput.analysisType },
+					{ type: 'focus', value: validatedInput.focus },
+					{ type: 'sourceCodeLength', value: validatedInput.sourceCode.length },
+				];
+				if (!(validatedInput as any)._suppressLifecycle) {
+					config.eventBus.publish(
+						createEvent('agent.completed', {
+							agentId,
+							traceId,
+							capability: 'code-analysis',
+							result,
+							evidence,
+							metrics: {
+								latencyMs: executionTime,
+								tokensUsed: estimateTokens(validatedInput.sourceCode),
+								suggestionsCount: result.suggestions.length,
+							},
+							timestamp: new Date().toISOString(),
+						}),
+					);
+				}
 
-				return {
-					content: `Code analysis completed: Found ${result.suggestions.length} suggestions with confidence ${result.confidence}`,
-					data: result,
-					metadata: {
-						agentId,
-						traceId,
-						executionTime,
-						tokensUsed: estimateTokens(validatedInput.sourceCode),
-					},
-				};
+				return result;
 			} catch (error) {
-				const executionTime = Date.now() - startTime;
+                const executionTime = Math.max(1, Date.now() - startTime);
 
 				// Emit agent failed event
-				config.eventBus.publish(createEvent("agent.failed", {
-					agentId,
-					traceId,
-					capability: "code-analysis",
-					error: error instanceof Error ? error.message : "Unknown error",
-					errorCode: (error as any)?.code || undefined,
-					status:
-						typeof (error as any)?.status === "number"
-							? (error as any)?.status
-							: undefined,
-					metrics: {
-						latencyMs: executionTime,
-					},
-					timestamp: new Date().toISOString(),
-				}));
+				config.eventBus.publish(
+					createEvent('agent.failed', {
+						agentId,
+						traceId,
+						capability: 'code-analysis',
+						error: error instanceof Error ? error.message : 'Unknown error',
+						errorCode: (error as any)?.code || undefined,
+						status:
+							typeof (error as any)?.status === 'number'
+								? (error as any)?.status
+								: undefined,
+						metrics: {
+							latencyMs: executionTime,
+						},
+						timestamp: new Date().toISOString(),
+					}),
+				);
 
 				throw error;
 			}
@@ -277,7 +278,7 @@ const analyzeCode = async (
 			calculateMaxTokens(sourceCode, analysisType),
 			input.maxTokens ?? 4096,
 		),
-		stop: ["```\n\n", "---END---"],
+		stop: ['```\n\n', '---END---'],
 		systemPrompt: sanitizeText(
 			buildSystemPrompt(language, analysisType, focus),
 		),
@@ -317,7 +318,7 @@ ${sourceCode}
 
 Analysis Requirements:
 - Analysis type: ${analysisType}
-- Focus areas: ${focus.join(", ")}
+- Focus areas: ${focus.join(', ')}
 - Severity level: ${severity}
 - Include metrics: ${includeMetrics}
 - Include suggestions: ${includeSuggestions}
@@ -377,7 +378,7 @@ Your expertise includes:
 4. Code complexity measurement
 5. Best practices evaluation
 
-Focus areas for this analysis: ${focus.join(", ")}
+Focus areas for this analysis: ${focus.join(', ')}
 
 Provide detailed, actionable feedback that helps developers improve their code quality, security, and performance.`;
 };
@@ -391,9 +392,9 @@ const calculateMaxTokens = (
 ): number => {
 	const baseTokens = Math.max(1500, sourceCode.length * 2);
 	const analysisMultiplier =
-		analysisType === "security"
+		analysisType === 'security'
 			? 2
-			: analysisType === "architecture"
+			: analysisType === 'architecture'
 				? 1.8
 				: 1.2;
 	return Math.min(8000, Math.floor(baseTokens * analysisMultiplier));
@@ -403,30 +404,44 @@ const calculateMaxTokens = (
  * Parse analysis response from the model
  */
 const parseAnalysisResponse = (
-	response: any,
-	language: string,
-	analysisType: string,
+    response: any,
+    language: string,
+    analysisType: string,
 ): CodeAnalysisOutput => {
 	let parsedResponse: any;
 
-	try {
-		// Try to parse JSON from response text
-		const jsonMatch = response.text.match(/\{[\s\S]*\}/);
-		if (jsonMatch) {
-			parsedResponse = JSON.parse(jsonMatch[0]);
-		} else {
-			throw new Error("No JSON found in response");
-		}
-	} catch (_error) {
-		// Fallback: create structured response from raw text
-		parsedResponse = createFallbackAnalysisResponse(
-			response.text,
-			language,
-			analysisType,
-		);
-	}
+    try {
+        // Try to parse JSON from response text
+        const jsonMatch = response.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            parsedResponse = JSON.parse(jsonMatch[0]);
+        } else {
+            throw new Error('No JSON found in response');
+        }
+    } catch (_error) {
+        // Fallback: create structured response from raw text
+        parsedResponse = createFallbackAnalysisResponse(
+            response.text,
+            language,
+            analysisType,
+        );
+    }
 
-	// Legacy coercion removed: parsedResponse.suggestions must be structured objects
+    // Coerce legacy suggestions array of strings to structured objects
+    if (
+        Array.isArray(parsedResponse?.suggestions) &&
+        parsedResponse.suggestions.length > 0 &&
+        typeof parsedResponse.suggestions[0] === 'string'
+    ) {
+        parsedResponse.suggestions = parsedResponse.suggestions.map(
+            (s: string) => ({
+                type: 'improvement' as const,
+                message: s,
+                severity: 'low' as const,
+                category: 'maintainability' as const,
+            }),
+        );
+    }
 
 	// Ensure all required fields are present (merge defaults with partials)
 	const complexity = parsedResponse.complexity || {};
@@ -437,39 +452,39 @@ const parseAnalysisResponse = (
 		suggestions: parsedResponse.suggestions || [],
 		complexity: {
 			cyclomatic:
-				typeof complexity.cyclomatic === "number" ? complexity.cyclomatic : 5,
+				typeof complexity.cyclomatic === 'number' ? complexity.cyclomatic : 5,
 			cognitive:
-				typeof complexity.cognitive === "number" ? complexity.cognitive : 3,
+				typeof complexity.cognitive === 'number' ? complexity.cognitive : 3,
 			maintainability:
-				typeof complexity.maintainability === "string"
+				typeof complexity.maintainability === 'string'
 					? complexity.maintainability
-					: ("good" as const),
+					: ('good' as const),
 		},
 		security: {
 			vulnerabilities: Array.isArray(security.vulnerabilities)
 				? security.vulnerabilities
 				: [],
 			riskLevel:
-				typeof security.riskLevel === "string"
+				typeof security.riskLevel === 'string'
 					? security.riskLevel
-					: ("low" as const),
+					: ('low' as const),
 		},
 		performance: {
 			bottlenecks: Array.isArray(performance.bottlenecks)
 				? performance.bottlenecks
 				: [],
 			memoryUsage:
-				typeof performance.memoryUsage === "string"
+				typeof performance.memoryUsage === 'string'
 					? performance.memoryUsage
-					: ("low" as const),
+					: ('low' as const),
 			algorithmicComplexity: performance.algorithmicComplexity,
 		},
 		confidence:
-			typeof parsedResponse.confidence === "number"
+			typeof parsedResponse.confidence === 'number'
 				? parsedResponse.confidence
 				: 0.85,
 		analysisTime:
-			typeof parsedResponse.analysisTime === "number"
+			typeof parsedResponse.analysisTime === 'number'
 				? parsedResponse.analysisTime
 				: response.latencyMs || 1500,
 	};
@@ -486,23 +501,23 @@ const createFallbackAnalysisResponse = (
 	return {
 		suggestions: [
 			{
-				type: "improvement" as const,
-				message: "Code analysis completed successfully",
-				severity: "low" as const,
-				category: "maintainability" as const,
+				type: 'improvement' as const,
+				message: 'Code analysis completed successfully',
+				severity: 'low' as const,
+				category: 'maintainability' as const,
 			},
 		],
 		complexity: {
 			cyclomatic: 5,
-			maintainability: "good" as const,
+			maintainability: 'good' as const,
 		},
 		security: {
 			vulnerabilities: [],
-			riskLevel: "low" as const,
+			riskLevel: 'low' as const,
 		},
 		performance: {
 			bottlenecks: [],
-			memoryUsage: "low" as const,
+			memoryUsage: 'low' as const,
 		},
 		confidence: 0.7,
 		analysisTime: 1500,

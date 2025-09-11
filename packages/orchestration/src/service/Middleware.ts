@@ -1,4 +1,4 @@
-import type { RunState, Step } from "../domain/types.js";
+import type { RunState, Step } from '../domain/types.js';
 
 export type Middleware = (
 	next: (rs: RunState, step: Step) => Promise<RunState>,

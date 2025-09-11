@@ -96,3 +96,25 @@ pnpm build
 ```
 
 The build output will be in the `dist/` directory.
+
+## Notes & Troubleshooting
+
+- Tailwind v4 caveats:
+   - Tailwind v4 introduces some new tooling and stricter scanning rules. If you use `@apply` with opacity slash-notation utilities (for example `bg-white/30`), the scanner can sometimes report "unknown utility". Solutions:
+      1. Include CSS files and `public/index.html` in your `tailwind.config.js` `content` array so Tailwind can discover classes used inside CSS files.
+      2. Replace problematic `@apply` shorthand with equivalent explicit CSS properties (for example use `background-color: rgba(255,255,255,0.3)`), or move the utility classes to markup where the scanner can see them.
+   - The `@tailwindcss/container-queries` plugin is deprecated in Tailwind v4 - container query utilities are now built-in.
+   - We use `@tailwindcss/vite` plugin for optimal build performance in Vite-based projects.
+
+- Native modules / `better-sqlite3`:
+   - `better-sqlite3` is a native addon and must match the Node.js ABI. If you switch Node versions (or see `MODULE_NOT_FOUND` / ABI errors), try:
+
+      ```bash
+      # rebuild native modules across the workspace
+      pnpm -w rebuild
+
+      # or install using a specific Node runtime (e.g. via nvm)
+      nvm use 22 && pnpm -w install
+      ```
+
+   - If tests or the backend fail to require `better-sqlite3`, ensure the package is installed/hoisted into the workspace, then run the rebuild step above. If problems persist, pin the `better-sqlite3` version to one that matches your desired Node runtime (we use `^12.2.0` for Node 22+ in this repo).

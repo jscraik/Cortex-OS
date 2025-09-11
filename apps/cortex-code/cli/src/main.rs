@@ -240,6 +240,11 @@ struct ChatCommand {
     /// Text verbosity for GPT-5 models (low|medium|high)
     #[arg(long = "verbosity", value_name = "LEVEL", value_parser = verbosity_parser)]
     verbosity: Option<Verbosity>,
+
+    /// Force using a specific provider via the overlay path (e.g. anthropic, zai).
+    /// Defaults to core routing for built-in providers (openai, oss).
+    #[arg(long = "provider", value_name = "ID")]
+    provider: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -251,6 +256,11 @@ fn main() -> anyhow::Result<()> {
 
 async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()> {
     let cli = MultitoolCli::parse();
+
+    // Initialize provider registry and register external providers from overlay.
+    // This keeps upstream crates clean while enabling Anthropic/Z.ai via overlay.
+    let mut _provider_registry = codex_core::providers::ProviderRegistry::new();
+    codex_providers_ext::register_default_ext_providers(&mut _provider_registry);
 
     match cli.subcommand {
         None => {
@@ -377,6 +387,93 @@ async fn cli_main(codex_linux_sandbox_exe: Option<PathBuf>) -> anyhow::Result<()
             } else {
                 Vec::new()
             };
+
+            // If an overlay provider is explicitly requested, handle it here for this Chat command.
+            if let Some(ref p) = chat_cli.provider {
+                use codex_core::providers::{CompletionRequest, Message, ModelProvider, StreamEvent};
+                use futures_util::StreamExt;
+                let p = p.to_ascii_lowercase();
+                if p == "anthropic" || p == "zai" {
+                    let model = cfg.model.clone();
+                    async fn stream_overlay_turn(provider_id: &str, model: &str, text: String, as_json: bool) -> anyhow::Result<()> {
+                        let provider: Box<dyn ModelProvider> = if provider_id == "anthropic" {
+                            Box::new(codex_providers_ext::providers::anthropic::AnthropicProvider::new())
+                        } else {
+                            Box::new(codex_providers_ext::providers::zai::ZaiProvider::new())
+                        };
+                        let req = CompletionRequest::new(vec![Message { role: "user".into(), content: text }], model);
+                        let mut stream = provider.complete_streaming(&req).await?;
+                        let mut _full = String::new();
+                        while let Some(evt) = futures_util::StreamExt::next(&mut stream).await {
+                            match evt? {
+                                StreamEvent::Token { text, .. } => {
+                                    _full.push_str(&text);
+                                    if as_json {
+                                        #[derive(serde::Serialize)]
+                                        struct JsonEvt<'a> { r#type: &'static str, delta: &'a str }
+                                        println!("{}", serde_json::to_string(&JsonEvt { r#type: "delta", delta: &text })?);
+                                    } else {
+                                        print!("{}", text);
+                                        use std::io::Write as _; std::io::stdout().flush().ok();
+                                    }
+                                }
+                                StreamEvent::System(s) => {
+                                    if let Ok(v) = serde_json::from_str::<serde_json::Value>(&s) {
+                                        if let Some(tu) = v.get("tool_use") {
+                                            let name = tu.get("name").and_then(|n| n.as_str()).unwrap_or("tool");
+                                            let input = tu.get("input").cloned().unwrap_or(serde_json::json!({}));
+                                            let result = run_overlay_tool(name, input);
+                                            if as_json {
+                                                #[derive(serde::Serialize)] struct JsonTool<'a>{ r#type: &'static str, name: &'a str, result: &'a str }
+                                                println!("{}", serde_json::to_string(&JsonTool { r#type: "tool_result", name, result: &result })?);
+                                            } else {
+                                                println!("\n[tool_result] {} {}", name, result);
+                                            }
+                                            continue;
+                                        }
+                                    }
+                                    if as_json {
+                                        #[derive(serde::Serialize)] struct JsonMsg<'a>{ r#type: &'static str, message: &'a str }
+                                        println!("{}", serde_json::to_string(&JsonMsg { r#type: "system", message: &s })?);
+                                    } else {
+                                        println!("\n{}", s);
+                                    }
+                                }
+                                StreamEvent::Finished { .. } => { if !as_json { println!(); } }
+                                StreamEvent::Error(e) => { if as_json { #[derive(serde::Serialize)] struct JsonErr<'a>{ r#type: &'static str, error: &'a str } println!("{}", serde_json::to_string(&JsonErr { r#type: "error", error: &e })?); } else { eprintln!("overlay error: {}", e); } }
+                                _ => {}
+                            }
+                        }
+                        Ok(())
+                    }
+                    let as_json = matches!(cfg.stream_mode, codex_core::config::StreamMode::Json);
+                    if chat_cli.repl {
+                        if let Some(p0) = chat_cli.prompt.clone() { 
+                            let text = if p0 == "-" { read_stdin_all()? } else { p0 };
+                            stream_overlay_turn(&p, &model, text, as_json).await?;
+                        }
+                        let stdin = std::io::stdin();
+                        let mut buf = String::new();
+                        loop {
+                            buf.clear();
+                            print!("You> "); use std::io::Write as _; std::io::stdout().flush().ok();
+                            if stdin.read_line(&mut buf).is_err() { break; }
+                            let line = buf.trim_end().to_string();
+                            if line.is_empty() || line == ":q" || line == ":quit" { break; }
+                            stream_overlay_turn(&p, &model, line, as_json).await?;
+                        }
+                        return Ok(());
+                    } else {
+                        let prompt_text = chat_cli
+                            .prompt
+                            .clone()
+                            .ok_or_else(|| anyhow::anyhow!("PROMPT is required unless --repl is used"))?;
+                        let text = if prompt_text == "-" { read_stdin_all()? } else { prompt_text };
+                        stream_overlay_turn(&p, &model, text, as_json).await?;
+                        return Ok(());
+                    }
+                }
+            }
 
             // Create AuthManager and ModelClient like other entry points do.
             let auth_manager = Arc::new(codex_core::AuthManager::new(
@@ -894,6 +991,41 @@ fn read_stdin_all() -> anyhow::Result<String> {
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf)?;
     Ok(buf)
+}
+
+fn run_overlay_tool(name: &str, input: serde_json::Value) -> String {
+    match name {
+        "echo" => {
+            if let Some(t) = input.get("text").and_then(|v| v.as_str()) {
+                t.to_string()
+            } else {
+                input.to_string()
+            }
+        }
+        "time" => {
+            let now = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+            format!("{now}")
+        }
+        _ => format!("unsupported tool: {} input={}", name, input),
+    }
+}
+
+#[cfg(test)]
+mod overlay_tool_tests {
+    use super::run_overlay_tool;
+    use serde_json::json;
+
+    #[test]
+    fn echo_tool_returns_text_field() {
+        let out = run_overlay_tool("echo", json!({"text":"hi"}));
+        assert_eq!(out, "hi");
+    }
+
+    #[test]
+    fn time_tool_outputs_rfc3339() {
+        let out = run_overlay_tool("time", json!({}));
+        assert!(out.contains('T') && out.ends_with('Z'));
+    }
 }
 
 #[cfg(test)]

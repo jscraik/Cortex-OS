@@ -1,7 +1,7 @@
-import * as fs from "node:fs/promises";
-import * as tls from "node:tls";
-import { logWithSpan } from "@cortex-os/telemetry";
-import { type MTLSConfig, MTLSError } from "../types.ts";
+import * as fs from 'node:fs/promises';
+import * as tls from 'node:tls';
+import { logWithSpan } from '@cortex-os/telemetry';
+import { type MTLSConfig, MTLSError } from '../types.ts';
 
 export interface CertificateSet {
 	ca: string;
@@ -13,9 +13,9 @@ export async function loadCertificates(
 	config: MTLSConfig,
 ): Promise<CertificateSet> {
 	const [ca, cert, key] = await Promise.all([
-		fs.readFile(config.caCertificate, "utf8"),
-		fs.readFile(config.clientCertificate, "utf8"),
-		fs.readFile(config.clientKey, "utf8"),
+		fs.readFile(config.caCertificate, 'utf8'),
+		fs.readFile(config.clientCertificate, 'utf8'),
+		fs.readFile(config.clientKey, 'utf8'),
 	]);
 	return { ca, cert, key };
 }
@@ -48,8 +48,8 @@ export function createClientSocket(
 			},
 		});
 
-		socket.on("secureConnect", () => {
-			logWithSpan("info", "mTLS connection established successfully", {
+		socket.on('secureConnect', () => {
+			logWithSpan('info', 'mTLS connection established successfully', {
 				host,
 				port,
 				authorized: socket.authorized,
@@ -58,10 +58,10 @@ export function createClientSocket(
 			resolve(socket);
 		});
 
-		socket.on("error", (error) => {
+		socket.on('error', (error) => {
 			const errorMessage =
-				error instanceof Error ? error.message : "Unknown error";
-			logWithSpan("error", "mTLS connection failed", {
+				error instanceof Error ? error.message : 'Unknown error';
+			logWithSpan('error', 'mTLS connection failed', {
 				error: errorMessage,
 				host,
 				port,

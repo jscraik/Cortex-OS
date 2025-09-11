@@ -1,171 +1,171 @@
-import { readFileSync } from "node:fs";
-import { globby } from "globby";
-import micromatch from "micromatch";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
+import { readFileSync } from 'node:fs';
+import { globby } from 'globby';
+import micromatch from 'micromatch';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 // Mock file system
 const mockFiles = [
-	"apps/cortex-os/packages/agents/src/index.ts",
-	"apps/cortex-os/packages/mvp/src/index.ts",
-	"packages/memories/src/index.ts",
-	"packages/memories/package.json",
-	"packages/memories/tsconfig.json",
-	"packages/memories/tests/index.spec.ts",
-	"packages/a2a/src/index.py",
-	"packages/a2a/pyproject.toml",
-	"tools/structure-guard/policy.json",
-	"docs/architecture/decisions/001-adr.md",
-	".github/CODEOWNERS",
-	"pnpm-workspace.yaml",
-	"package.json",
-	"secrets/cred.secret", // This should be denied
-	"random-file.txt", // This should be disallowed
-	"missing-package/src/index.ts", // Package without required files
+	'apps/cortex-os/packages/agents/src/index.ts',
+	'apps/cortex-os/packages/mvp/src/index.ts',
+	'packages/memories/src/index.ts',
+	'packages/memories/package.json',
+	'packages/memories/tsconfig.json',
+	'packages/memories/tests/index.spec.ts',
+	'packages/a2a/src/index.py',
+	'packages/a2a/pyproject.toml',
+	'tools/structure-guard/policy.json',
+	'docs/architecture/decisions/001-adr.md',
+	'.github/CODEOWNERS',
+	'pnpm-workspace.yaml',
+	'package.json',
+	'secrets/cred.secret', // This should be denied
+	'random-file.txt', // This should be disallowed
+	'missing-package/src/index.ts', // Package without required files
 ];
 
 // Mock fs.readFileSync
-vi.mock("node:fs", () => ({
+vi.mock('node:fs', () => ({
 	readFileSync: vi.fn((path: string) => {
-		if (path.includes("policy.json")) {
+		if (path.includes('policy.json')) {
 			return JSON.stringify({
-				version: "2.0.0",
+				version: '2.0.0',
 				allowedPaths: {
-					apps: ["cortex-os"],
-					"apps/cortex-os/packages": [
-						"agents",
-						"mvp",
-						"mvp-core",
-						"mvp-server",
+					apps: ['cortex-os'],
+					'apps/cortex-os/packages': [
+						'agents',
+						'mvp',
+						'mvp-core',
+						'mvp-server',
 					],
 					packages: [
-						"a2a",
-						"mcp",
-						"memories",
-						"orchestration",
-						"simlab",
-						"rag",
+						'a2a',
+						'mcp',
+						'memories',
+						'orchestration',
+						'simlab',
+						'rag',
 					],
-					services: ["ml-inference", "data-pipeline"],
-					"libs/typescript": [
-						"accessibility",
-						"contracts",
-						"errors",
-						"telemetry",
-						"testing",
-						"types",
-						"utils",
+					services: ['ml-inference', 'data-pipeline'],
+					'libs/typescript': [
+						'accessibility',
+						'contracts',
+						'errors',
+						'telemetry',
+						'testing',
+						'types',
+						'utils',
 					],
-					"libs/python": ["cortex_core", "cortex_ml"],
+					'libs/python': ['cortex_core', 'cortex_ml'],
 					tools: [
-						"structure-guard",
-						"eslint-config",
-						"lockfile-sync",
-						"schemas",
-						"scripts",
-						"python",
+						'structure-guard',
+						'eslint-config',
+						'lockfile-sync',
+						'schemas',
+						'scripts',
+						'python',
 					],
-					".cortex": ["rules", "prompts"],
-					docs: ["architecture"],
+					'.cortex': ['rules', 'prompts'],
+					docs: ['architecture'],
 				},
 				allowedRootEntries: [
-					".cortex",
-					"apps",
-					"packages",
-					"libs",
-					"services",
-					"tools",
-					"docs",
-					".github",
-					"pnpm-workspace.yaml",
-					"turbo.json",
-					"package.json",
-					"tsconfig.json",
-					"pyproject.toml",
-					"uv.toml",
-					"nx.json",
-					"vitest.config.ts",
-					"vitest.workspace.ts",
-					"README.md",
-					"LICENSE",
-					"SECURITY.md",
-					"renovate.json",
-					"cliff.toml",
-					"commitlint.config.js",
-					"semantic-release.config.js",
-					"ecosystem.config.cjs",
-					"ecosystem.config.js",
+					'.cortex',
+					'apps',
+					'packages',
+					'libs',
+					'services',
+					'tools',
+					'docs',
+					'.github',
+					'pnpm-workspace.yaml',
+					'turbo.json',
+					'package.json',
+					'tsconfig.json',
+					'pyproject.toml',
+					'uv.toml',
+					'nx.json',
+					'vitest.config.ts',
+					'vitest.workspace.ts',
+					'README.md',
+					'LICENSE',
+					'SECURITY.md',
+					'renovate.json',
+					'cliff.toml',
+					'commitlint.config.js',
+					'semantic-release.config.js',
+					'ecosystem.config.cjs',
+					'ecosystem.config.js',
 				],
 				filePatterns: {
 					typescript: {
-						required: ["package.json", "tsconfig.json"],
-						requireOneOf: ["src/index.ts", "src/index.js", "index.ts"],
+						required: ['package.json', 'tsconfig.json'],
+						requireOneOf: ['src/index.ts', 'src/index.js', 'index.ts'],
 						allowed: [
-							"*.ts",
-							"*.tsx",
-							"*.js",
-							"*.json",
-							"*.md",
-							"tests/**/*",
-							"**/*.spec.ts",
-							"**/*.test.ts",
+							'*.ts',
+							'*.tsx',
+							'*.js',
+							'*.json',
+							'*.md',
+							'tests/**/*',
+							'**/*.spec.ts',
+							'**/*.test.ts',
 						],
 					},
 					python: {
-						required: ["pyproject.toml"],
-						requireOneOf: ["src/__init__.py", "__init__.py", "src/main.py"],
+						required: ['pyproject.toml'],
+						requireOneOf: ['src/__init__.py', '__init__.py', 'src/main.py'],
 						allowed: [
-							"*.py",
-							"*.pyi",
-							"*.toml",
-							"*.md",
-							"tests/**/*",
-							"**/*_test.py",
-							"**/test_*.py",
+							'*.py',
+							'*.pyi',
+							'*.toml',
+							'*.md',
+							'tests/**/*',
+							'**/*_test.py',
+							'**/test_*.py',
 						],
 					},
 				},
 				maxFilesPerChange: 15,
 				overrideRules: {
 					migrationMode: false,
-					overrideRequiresApproval: ["@cortex-os/architects"],
+					overrideRequiresApproval: ['@cortex-os/architects'],
 					maxFilesWithOverride: 50,
 				},
 				protectedFiles: [
-					"apps/cortex-os/**",
-					"packages/memories/**",
-					"packages/orchestration/**",
-					"packages/a2a/**",
-					"packages/mcp/**",
-					"packages/rag/**",
-					"packages/simlab/**",
+					'apps/cortex-os/**',
+					'packages/memories/**',
+					'packages/orchestration/**',
+					'packages/a2a/**',
+					'packages/mcp/**',
+					'packages/rag/**',
+					'packages/simlab/**',
 				],
 				allowedGlobs: [
-					"apps/**",
-					"packages/**",
-					"tools/**",
-					"docs/**",
-					".github/**",
-					"scripts/**",
-					"tsconfig*.json",
-					"package.json",
-					"pnpm-workspace.yaml",
-					".changeset/**",
+					'apps/**',
+					'packages/**',
+					'tools/**',
+					'docs/**',
+					'.github/**',
+					'scripts/**',
+					'tsconfig*.json',
+					'package.json',
+					'pnpm-workspace.yaml',
+					'.changeset/**',
 				],
-				deniedGlobs: ["**/*.secret"],
+				deniedGlobs: ['**/*.secret'],
 				importRules: {
 					bannedPatterns: [
-						"^@cortex-os/.*/dist/.*$",
-						"^@cortex-os/.*/node_modules/.*$",
-						"\\.\\./\\.\\./\\.\\./.*",
-						"^packages/.*/packages/.*",
+						'^@cortex-os/.*/dist/.*$',
+						'^@cortex-os/.*/node_modules/.*$',
+						'\\.\\./\\.\\./\\.\\./.*',
+						'^packages/.*/packages/.*',
 					],
 					allowedCrossPkgImports: [
-						"@cortex-os/contracts",
-						"@cortex-os/types",
-						"@cortex-os/utils",
-						"@cortex-os/telemetry",
-						"@cortex-os/testing",
+						'@cortex-os/contracts',
+						'@cortex-os/types',
+						'@cortex-os/utils',
+						'@cortex-os/telemetry',
+						'@cortex-os/testing',
 					],
 				},
 				enforcement: {
@@ -175,27 +175,27 @@ vi.mock("node:fs", () => ({
 				testRequirements: {
 					minCoverage: 80,
 					requiredTestDirs: [
-						"tests",
-						"test",
-						"__tests__",
-						"src/**/*.spec.ts",
-						"src/**/*.test.ts",
+						'tests',
+						'test',
+						'__tests__',
+						'src/**/*.spec.ts',
+						'src/**/*.test.ts',
 					],
-					excludeFromCoverage: ["*.config.*", "*.setup.*", "*.mock.*"],
+					excludeFromCoverage: ['*.config.*', '*.setup.*', '*.mock.*'],
 				},
 			});
 		}
-		return "";
+		return '';
 	}),
 	existsSync: vi.fn(() => true),
 }));
 
 // Mock globby
-vi.mock("globby", () => ({
+vi.mock('globby', () => ({
 	globby: vi.fn(() => Promise.resolve(mockFiles)),
 }));
 
-describe("enhanced structure guard", () => {
+describe('enhanced structure guard', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -204,50 +204,50 @@ describe("enhanced structure guard", () => {
 		vi.restoreAllMocks();
 	});
 
-	describe("protected globs", () => {
+	describe('protected globs', () => {
 		const patterns = [
-			"pnpm-workspace.yaml",
-			"tools/structure-guard/**/*",
-			"docs/architecture/decisions/*.md",
-			".github/CODEOWNERS",
+			'pnpm-workspace.yaml',
+			'tools/structure-guard/**/*',
+			'docs/architecture/decisions/*.md',
+			'.github/CODEOWNERS',
 		];
 
-		it("matches exact files", () => {
-			expect(micromatch.isMatch("pnpm-workspace.yaml", patterns)).toBe(true);
-			expect(micromatch.isMatch("random.yaml", patterns)).toBe(false);
+		it('matches exact files', () => {
+			expect(micromatch.isMatch('pnpm-workspace.yaml', patterns)).toBe(true);
+			expect(micromatch.isMatch('random.yaml', patterns)).toBe(false);
 		});
 
-		it("matches recursive dir globs", () => {
+		it('matches recursive dir globs', () => {
 			expect(
-				micromatch.isMatch("tools/structure-guard/policy.json", patterns),
+				micromatch.isMatch('tools/structure-guard/policy.json', patterns),
 			).toBe(true);
 			expect(
-				micromatch.isMatch("tools/structure-guard/nested/file.ts", patterns),
+				micromatch.isMatch('tools/structure-guard/nested/file.ts', patterns),
 			).toBe(true);
 			expect(
-				micromatch.isMatch("tools/scripts/generate-sbom.ts", patterns),
+				micromatch.isMatch('tools/scripts/generate-sbom.ts', patterns),
 			).toBe(false);
 		});
 
-		it("matches leaf globs", () => {
+		it('matches leaf globs', () => {
 			expect(
-				micromatch.isMatch("docs/architecture/decisions/001-adr.md", patterns),
+				micromatch.isMatch('docs/architecture/decisions/001-adr.md', patterns),
 			).toBe(true);
 			expect(
-				micromatch.isMatch("docs/architecture/decisions/deep/002.md", patterns),
+				micromatch.isMatch('docs/architecture/decisions/deep/002.md', patterns),
 			).toBe(false);
 		});
 
-		it("matches dotfiles", () => {
+		it('matches dotfiles', () => {
 			expect(
-				micromatch.isMatch(".github/CODEOWNERS", patterns, {
+				micromatch.isMatch('.github/CODEOWNERS', patterns, {
 					dot: true,
 				} as any),
 			).toBe(true);
 		});
 	});
 
-	describe("path policy", () => {
+	describe('path policy', () => {
 		const policySchema = z.object({
 			protectedFiles: z.array(z.string()),
 			allowedGlobs: z.array(z.string()),
@@ -255,127 +255,127 @@ describe("enhanced structure guard", () => {
 		});
 
 		const policy = policySchema.parse(
-			JSON.parse(readFileSync("tools/structure-guard/policy.json", "utf8")),
+			JSON.parse(readFileSync('tools/structure-guard/policy.json', 'utf8')),
 		);
 
-		it("allows and denies paths", () => {
+		it('allows and denies paths', () => {
 			expect(
-				micromatch.isMatch("apps/demo/index.ts", policy.allowedGlobs),
+				micromatch.isMatch('apps/demo/index.ts', policy.allowedGlobs),
 			).toBe(true);
-			expect(micromatch.isMatch("unknown/file.ts", policy.allowedGlobs)).toBe(
+			expect(micromatch.isMatch('unknown/file.ts', policy.allowedGlobs)).toBe(
 				false,
 			);
 			expect(
-				micromatch.isMatch("secrets/cred.secret", policy.deniedGlobs),
+				micromatch.isMatch('secrets/cred.secret', policy.deniedGlobs),
 			).toBe(true);
 		});
 
-		it("handles negated patterns", () => {
-			const patterns = ["**/*.ts", "!**/*.spec.ts"];
-			expect(micromatch.isMatch("src/main.ts", patterns)).toBe(true);
-			expect(micromatch.isMatch("src/main.spec.ts", patterns)).toBe(false);
+		it('handles negated patterns', () => {
+			const patterns = ['**/*.ts', '!**/*.spec.ts'];
+			expect(micromatch.isMatch('src/main.ts', patterns)).toBe(true);
+			expect(micromatch.isMatch('src/main.spec.ts', patterns)).toBe(false);
 		});
 	});
 
-	describe("globby ignores", () => {
-		it("skips node_modules and dist", async () => {
+	describe('globby ignores', () => {
+		it('skips node_modules and dist', async () => {
 			const files = await globby(
-				["**/*", "!**/node_modules/**", "!**/dist/**", "!**/.git/**"],
+				['**/*', '!**/node_modules/**', '!**/dist/**', '!**/.git/**'],
 				{
 					dot: true,
 				},
 			);
-			expect(files.some((f) => f.includes("node_modules"))).toBe(false);
+			expect(files.some((f) => f.includes('node_modules'))).toBe(false);
 		});
 	});
 
-	describe("package structure validation", () => {
-		it("validates TypeScript package requirements", () => {
+	describe('package structure validation', () => {
+		it('validates TypeScript package requirements', () => {
 			// memories package should be valid
 			expect(
-				mockFiles.some((f) => f.includes("packages/memories/package.json")),
+				mockFiles.some((f) => f.includes('packages/memories/package.json')),
 			).toBe(true);
 			expect(
-				mockFiles.some((f) => f.includes("packages/memories/tsconfig.json")),
+				mockFiles.some((f) => f.includes('packages/memories/tsconfig.json')),
 			).toBe(true);
 			expect(
-				mockFiles.some((f) => f.includes("packages/memories/src/index.ts")),
+				mockFiles.some((f) => f.includes('packages/memories/src/index.ts')),
 			).toBe(true);
 		});
 
-		it("validates Python package requirements", () => {
+		it('validates Python package requirements', () => {
 			// a2a package should be valid
 			expect(
-				mockFiles.some((f) => f.includes("packages/a2a/pyproject.toml")),
+				mockFiles.some((f) => f.includes('packages/a2a/pyproject.toml')),
 			).toBe(true);
 			expect(
-				mockFiles.some((f) => f.includes("packages/a2a/src/index.py")),
+				mockFiles.some((f) => f.includes('packages/a2a/src/index.py')),
 			).toBe(true);
 		});
 
-		it("detects missing required files", () => {
+		it('detects missing required files', () => {
 			// missing-package should be detected as invalid
 			expect(
-				mockFiles.some((f) => f.includes("missing-package/src/index.ts")),
+				mockFiles.some((f) => f.includes('missing-package/src/index.ts')),
 			).toBe(true);
 			// But it's missing package.json and tsconfig.json
 			expect(
-				mockFiles.some((f) => f.includes("missing-package/package.json")),
+				mockFiles.some((f) => f.includes('missing-package/package.json')),
 			).toBe(false);
 			expect(
-				mockFiles.some((f) => f.includes("missing-package/tsconfig.json")),
+				mockFiles.some((f) => f.includes('missing-package/tsconfig.json')),
 			).toBe(false);
 		});
 	});
 
-	describe("edge case handling", () => {
-		it("handles complex glob patterns", () => {
+	describe('edge case handling', () => {
+		it('handles complex glob patterns', () => {
 			const complexPatterns = [
-				"packages/{memories,rag,simlab}/**/*",
-				"!packages/memories/node_modules/**",
-				"apps/cortex-os/packages/*/*.ts",
+				'packages/{memories,rag,simlab}/**/*',
+				'!packages/memories/node_modules/**',
+				'apps/cortex-os/packages/*/*.ts',
 			];
 
 			expect(
-				micromatch.isMatch("packages/memories/src/index.ts", complexPatterns),
+				micromatch.isMatch('packages/memories/src/index.ts', complexPatterns),
 			).toBe(true);
 			expect(
 				micromatch.isMatch(
-					"packages/memories/node_modules/pkg/index.js",
+					'packages/memories/node_modules/pkg/index.js',
 					complexPatterns,
 				),
 			).toBe(false);
 			expect(
 				micromatch.isMatch(
-					"apps/cortex-os/packages/agents/src/index.ts",
+					'apps/cortex-os/packages/agents/src/index.ts',
 					complexPatterns,
 				),
 			).toBe(true);
 		});
 
-		it("handles deeply nested structures", () => {
-			const deepPattern = "packages/memories/src/**/deeply/nested/**/*.ts";
+		it('handles deeply nested structures', () => {
+			const deepPattern = 'packages/memories/src/**/deeply/nested/**/*.ts';
 			expect(
 				micromatch.isMatch(
-					"packages/memories/src/utils/deeply/nested/file.ts",
+					'packages/memories/src/utils/deeply/nested/file.ts',
 					deepPattern,
 				),
 			).toBe(true);
 			expect(
-				micromatch.isMatch("packages/memories/src/shallow.ts", deepPattern),
+				micromatch.isMatch('packages/memories/src/shallow.ts', deepPattern),
 			).toBe(false);
 		});
 
-		it("handles file extension matching", () => {
-			const extPatterns = ["*.spec.ts", "*.test.ts"];
+		it('handles file extension matching', () => {
+			const extPatterns = ['*.spec.ts', '*.test.ts'];
 			expect(
 				micromatch.isMatch(
-					"packages/memories/tests/index.spec.ts",
+					'packages/memories/tests/index.spec.ts',
 					extPatterns,
 				),
 			).toBe(true);
 			expect(
-				micromatch.isMatch("packages/memories/src/index.ts", extPatterns),
+				micromatch.isMatch('packages/memories/src/index.ts', extPatterns),
 			).toBe(false);
 		});
 	});

@@ -3,19 +3,19 @@
  * Loopback-only HTTP server implementing the blueprint API specification
  */
 
-import { readFile } from "node:fs/promises";
-import type { Server } from "node:http";
-import { createHash } from "crypto";
-import type { NextFunction, Request, RequestHandler, Response } from "express";
-import express from "express";
-import { Server as IOServer } from "socket.io";
-import { v4 as uuidv4 } from "uuid";
-import { getEventManager, stopEventManager } from "../core/events.js";
-import { createTask as buildTask } from "../lib/create-task.js";
-import { emitPlanStarted } from "../lib/emit-plan-started.js";
-import { logError, logInfo } from "../lib/logger.js";
-import { resolveIdempotency } from "../lib/resolve-idempotency.js";
-import { validateTaskInput } from "../lib/validate-task-input.js";
+import { readFile } from 'node:fs/promises';
+import type { Server } from 'node:http';
+import { createHash } from 'crypto';
+import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import express from 'express';
+import { Server as IOServer } from 'socket.io';
+import { v4 as uuidv4 } from 'uuid';
+import { getEventManager, stopEventManager } from '../core/events.js';
+import { createTask as buildTask } from '../lib/create-task.js';
+import { emitPlanStarted } from '../lib/emit-plan-started.js';
+import { logError, logInfo } from '../lib/logger.js';
+import { resolveIdempotency } from '../lib/resolve-idempotency.js';
+import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
 	type ArtifactRef,
 	type Event,
@@ -26,14 +26,13 @@ import {
 	ServiceMapSchema,
 	type Task,
 	ValidationError,
-} from "../types/index.js";
-import { initializeXDG } from "../xdg/index.js";
-import { createAuthMiddleware, requireScopes } from "./auth.js";
+} from '../types/index.js';
+import { initializeXDG } from '../xdg/index.js';
+import { createAuthMiddleware, requireScopes } from './auth.js';
 
 export interface ASBRServerOptions {
-        port?: number;
-        host?: string;
-        cacheTtlMs?: number;
+	port?: number;
+	host?: string;
 }
 
 export interface ASBRServer {
@@ -75,17 +74,19 @@ class ASBRServerClass {
 		{ taskId: string; expiry: number }
 	>();
 
-	private readonly responseCache = new Map<string, { data: unknown; expiry: number }>();
+	private readonly responseCache = new Map<
+		string,
+		{ data: unknown; expiry: number }
+	>();
 	private cacheCleanupInterval?: NodeJS.Timeout;
-        private readonly cacheTtlMs: number;
+	private readonly CACHE_TTL = 30000; // 30 seconds
 	private readonly IDEMPOTENCY_TTL = 5 * 60 * 1000; // 5 minutes
 
 	constructor(options: ASBRServerOptions = {}) {
 		this.app = express();
 		this.port = options.port || 7439;
-		this.host = options.host || "127.0.0.1"; // Loopback only
+		this.host = options.host || '127.0.0.1'; // Loopback only
 
-		this.cacheTtlMs = options.cacheTtlMs || 30000;
 		this.setupMiddleware();
 		this.setupRoutes();
 		this.setupCacheCleanup();
@@ -95,12 +96,12 @@ class ASBRServerClass {
 		// Performance and security headers
 		this.app.use((_req, res, next) => {
 			// Security headers
-			res.setHeader("X-Content-Type-Options", "nosniff");
-			res.setHeader("X-Frame-Options", "DENY");
-			res.setHeader("X-XSS-Protection", "1; mode=block");
+			res.setHeader('X-Content-Type-Options', 'nosniff');
+			res.setHeader('X-Frame-Options', 'DENY');
+			res.setHeader('X-XSS-Protection', '1; mode=block');
 
 			// Performance headers
-                        res.setHeader("Cache-Control", `private, max-age=${Math.floor(this.cacheTtlMs / 1000)}`);
+			res.setHeader('Cache-Control', 'private, max-age=30');
 
 			// Request timing (store in locals instead of modifying req)
 			res.locals.startTime = Date.now();
@@ -111,15 +112,15 @@ class ASBRServerClass {
 		// Optimize JSON parsing with faster settings
 		this.app.use(
 			express.json({
-				limit: "10mb",
+				limit: '10mb',
 				strict: true,
-				type: "application/json",
+				type: 'application/json',
 			}),
 		);
 		this.app.use(
 			express.urlencoded({
 				extended: false, // Use querystring for better performance
-				limit: "10mb",
+				limit: '10mb',
 			}),
 		);
 
@@ -130,20 +131,20 @@ class ASBRServerClass {
 				const errorObj = err as { type?: string; message?: string };
 				if (
 					errorObj &&
-					(errorObj.type === "entity.parse.failed" ||
+					(errorObj.type === 'entity.parse.failed' ||
 						err instanceof SyntaxError)
 				) {
 					// Expose a clear error body expected by tests
 					return res.status(400).json({
-						error: errorObj.message || "Malformed JSON",
-						code: "INVALID_JSON",
+						error: errorObj.message || 'Malformed JSON',
+						code: 'INVALID_JSON',
 					});
 				}
 				// Handle oversized payloads from body-parser
-				if (errorObj && errorObj.type === "entity.too.large") {
+				if (errorObj && errorObj.type === 'entity.too.large') {
 					return res.status(413).json({
-						error: errorObj.message || "Payload too large",
-						code: "PAYLOAD_TOO_LARGE",
+						error: errorObj.message || 'Payload too large',
+						code: 'PAYLOAD_TOO_LARGE',
 					});
 				}
 				return _next(err);
@@ -151,88 +152,86 @@ class ASBRServerClass {
 		);
 
 		// Authentication middleware (applies to /v1 routes)
-		this.app.use("/v1", (req, res, next) => {
+		this.app.use('/v1', (req, res, next) => {
 			return (createAuthMiddleware() as RequestHandler)(req, res, next);
 		});
 	}
 
 	private setupRoutes(): void {
-                // Health check
-                const healthHandler = (_req: Request, res: Response) => {
-                        res.json({ status: "ok", timestamp: new Date().toISOString() });
-                };
-                this.app.get("/health", healthHandler);
-                this.app.get("/healthz", healthHandler);
+		// Health check
+		this.app.get('/health', (_req, res) => {
+			res.json({ status: 'ok', timestamp: new Date().toISOString() });
+		});
 
 		// Task endpoints
 		this.app.post(
-			"/v1/tasks",
-			requireScopes("tasks:create"),
+			'/v1/tasks',
+			requireScopes('tasks:create'),
 			this.createTask.bind(this),
 		);
 		this.app.get(
-			"/v1/tasks/:id",
-			requireScopes("tasks:read"),
+			'/v1/tasks/:id',
+			requireScopes('tasks:read'),
 			this.getTask.bind(this),
 		);
 		this.app.post(
-			"/v1/tasks/:id/cancel",
-			requireScopes("tasks:write"),
+			'/v1/tasks/:id/cancel',
+			requireScopes('tasks:write'),
 			this.cancelTask.bind(this),
 		);
 		this.app.post(
-			"/v1/tasks/:id/resume",
-			requireScopes("tasks:write"),
+			'/v1/tasks/:id/resume',
+			requireScopes('tasks:write'),
 			this.resumeTask.bind(this),
 		);
 
 		// Event endpoints
 		this.app.get(
-			"/v1/events",
-			requireScopes("events:read"),
+			'/v1/events',
+			requireScopes('events:read'),
 			this.getEvents.bind(this),
 		);
 
 		// Profile endpoints
 		this.app.post(
-			"/v1/profiles",
-			requireScopes("profiles:write"),
+			'/v1/profiles',
+			requireScopes('profiles:write'),
 			this.createProfile.bind(this),
 		);
 		this.app.get(
-			"/v1/profiles/:id",
-			requireScopes("profiles:read"),
+			'/v1/profiles/:id',
+			requireScopes('profiles:read'),
 			this.getProfile.bind(this),
 		);
 		this.app.put(
-			"/v1/profiles/:id",
-			requireScopes("profiles:write"),
+			'/v1/profiles/:id',
+			requireScopes('profiles:write'),
 			this.updateProfile.bind(this),
 		);
 
 		// Artifact endpoints
 		this.app.get(
-			"/v1/artifacts",
-			requireScopes("artifacts:read"),
+			'/v1/artifacts',
+			requireScopes('artifacts:read'),
 			this.listArtifacts.bind(this),
 		);
 		this.app.get(
-			"/v1/artifacts/:id",
-			requireScopes("artifacts:read"),
+			'/v1/artifacts/:id',
+			requireScopes('artifacts:read'),
 			this.getArtifact.bind(this),
 		);
 
 		// Service map
 		this.app.get(
-			"/v1/service-map",
-			requireScopes("system:read"),
+			'/v1/service-map',
+			requireScopes('system:read'),
 			this.getServiceMap.bind(this),
 		);
 
 		// Connector endpoints
 		this.app.get(
-			"/v1/connectors/service-map",
-			requireScopes("connectors:read"),
+			'/v1/connectors/service-map',
+			requireScopes('connectors:read'),
 			this.getConnectorServiceMap.bind(this),
 		);
 
@@ -240,7 +239,7 @@ class ASBRServerClass {
 		// are propagated here and converted to structured JSON responses.
 		this.app.use(
 			(error: unknown, _req: Request, res: Response, _next: NextFunction) => {
-				logError("API Error", { error });
+				logError('API Error', { error });
 
 				if (error instanceof ValidationError) {
 					res.status(error.statusCode).json({
@@ -255,8 +254,8 @@ class ASBRServerClass {
 					});
 				} else {
 					res.status(500).json({
-						error: "Internal server error",
-						code: "INTERNAL_ERROR",
+						error: 'Internal server error',
+						code: 'INTERNAL_ERROR',
 					});
 				}
 			},
@@ -272,7 +271,7 @@ class ASBRServerClass {
 			for (const [key, value] of this.responseCache) {
 				if (value.expiry <= now) this.responseCache.delete(key);
 			}
-                }, this.cacheTtlMs);
+		}, this.CACHE_TTL);
 	}
 
 	private async createTask(req: Request, res: Response): Promise<void> {
@@ -306,7 +305,7 @@ class ASBRServerClass {
 		const task = this.tasks.get(id);
 
 		if (!task) {
-			throw new NotFoundError("Task");
+			throw new NotFoundError('Task');
 		}
 
 		res.json({ task });
@@ -317,17 +316,17 @@ class ASBRServerClass {
 		const task = this.tasks.get(id);
 
 		if (!task) {
-			throw new NotFoundError("Task");
+			throw new NotFoundError('Task');
 		}
 
-		task.status = "canceled";
+		task.status = 'canceled';
 		task.updatedAt = new Date().toISOString();
 
 		await this.emitEvent({
 			id: uuidv4(),
-			type: "Canceled",
+			type: 'Canceled',
 			taskId: task.id,
-			ariaLiveHint: "Task has been canceled",
+			ariaLiveHint: 'Task has been canceled',
 			timestamp: new Date().toISOString(),
 		});
 
@@ -339,21 +338,21 @@ class ASBRServerClass {
 		const task = this.tasks.get(id);
 
 		if (!task) {
-			throw new NotFoundError("Task");
+			throw new NotFoundError('Task');
 		}
 
-		if (task.status !== "paused") {
-			throw new ValidationError("Task must be paused to resume");
+		if (task.status !== 'paused') {
+			throw new ValidationError('Task must be paused to resume');
 		}
 
-		task.status = "running";
+		task.status = 'running';
 		task.updatedAt = new Date().toISOString();
 
 		await this.emitEvent({
 			id: uuidv4(),
-			type: "Resumed",
+			type: 'Resumed',
 			taskId: task.id,
-			ariaLiveHint: "Task has been resumed",
+			ariaLiveHint: 'Task has been resumed',
 			timestamp: new Date().toISOString(),
 		});
 
@@ -366,22 +365,22 @@ class ASBRServerClass {
 			taskId?: string;
 		};
 
-		if (stream !== "sse") {
-                    res.status(400).json({ error: "Unsupported stream type", code: "UNSUPPORTED_STREAM" });
+		if (stream !== 'sse') {
+			res.status(400).json({ error: 'Unsupported stream type' });
 			return;
 		}
 
 		// Set up Server-Sent Events
 		res.writeHead(200, {
-			"Content-Type": "text/event-stream",
-			"Cache-Control": "no-cache",
-			Connection: "keep-alive",
-			"Access-Control-Allow-Origin": "*",
+			'Content-Type': 'text/event-stream',
+			'Cache-Control': 'no-cache',
+			Connection: 'keep-alive',
+			'Access-Control-Allow-Origin': '*',
 		});
 
 		// Send heartbeat every 10 seconds
 		const heartbeat = setInterval(() => {
-			res.write("event: heartbeat\ndata: {}\n\n");
+			res.write('event: heartbeat\ndata: {}\n\n');
 		}, 10000);
 
 		// Send existing events for the task
@@ -397,9 +396,9 @@ class ASBRServerClass {
 		// connection open and send heartbeats.
 
 		const shouldAutoClose =
-			process.env.NODE_ENV === "test" ||
-			String(req.headers["user-agent"] || "").includes("supertest") ||
-			(String(req.headers.accept || "").includes("text/event-stream") &&
+			process.env.NODE_ENV === 'test' ||
+			String(req.headers['user-agent'] || '').includes('supertest') ||
+			(String(req.headers.accept || '').includes('text/event-stream') &&
 				process.env.VITEST !== undefined);
 
 		let autoCloseTimer: NodeJS.Timeout | undefined;
@@ -416,7 +415,7 @@ class ASBRServerClass {
 		}
 
 		// Clean up on client disconnect
-		req.on("close", () => {
+		req.on('close', () => {
 			clearInterval(heartbeat);
 
 			if (autoCloseTimer) clearTimeout(autoCloseTimer);
@@ -433,7 +432,7 @@ class ASBRServerClass {
 		if (!validationResult.success) {
 			const issues = (validationResult.error as unknown as { issues?: unknown })
 				.issues;
-			throw new ValidationError("Invalid profile", {
+			throw new ValidationError('Invalid profile', {
 				errors: issues,
 			});
 		}
@@ -449,7 +448,7 @@ class ASBRServerClass {
 		const profile = this.profiles.get(id);
 
 		if (!profile) {
-			throw new NotFoundError("Profile");
+			throw new NotFoundError('Profile');
 		}
 
 		res.json(profile);
@@ -460,7 +459,7 @@ class ASBRServerClass {
 		const { profile } = req.body as { profile: unknown };
 
 		if (!this.profiles.has(id)) {
-			throw new NotFoundError("Profile");
+			throw new NotFoundError('Profile');
 		}
 
 		const validationResult = ProfileSchema.safeParse({
@@ -470,7 +469,7 @@ class ASBRServerClass {
 		if (!validationResult.success) {
 			const issues = (validationResult.error as unknown as { issues?: unknown })
 				.issues;
-			throw new ValidationError("Invalid profile", {
+			throw new ValidationError('Invalid profile', {
 				errors: issues,
 			});
 		}
@@ -527,22 +526,22 @@ class ASBRServerClass {
 		const artifact = this.artifacts.get(id);
 
 		if (!artifact) {
-			throw new NotFoundError("Artifact");
+			throw new NotFoundError('Artifact');
 		}
 
 		let content: Buffer;
 		try {
 			content = await readFile(artifact.path);
 		} catch {
-			throw new NotFoundError("Artifact");
+			throw new NotFoundError('Artifact');
 		}
 
-		const digest = `sha-256:${createHash("sha256").update(content).digest("base64")}`;
+		const digest = `sha-256:${createHash('sha256').update(content).digest('base64')}`;
 		const etag = `"${artifact.digest}"`;
 
-		res.setHeader("Digest", digest);
-		res.setHeader("ETag", etag);
-		res.setHeader("Content-Type", "application/octet-stream");
+		res.setHeader('Digest', digest);
+		res.setHeader('ETag', etag);
+		res.setHeader('Content-Type', 'application/octet-stream');
 		res.send(content);
 	}
 
@@ -551,15 +550,15 @@ class ASBRServerClass {
 			[]) as any[];
 		const routes = stack
 			.filter(
-				(layer: any) => layer.route && typeof layer.route.path === "string",
+				(layer: any) => layer.route && typeof layer.route.path === 'string',
 			)
-			.filter((layer: any) => layer.route.path.startsWith("/v1"))
+			.filter((layer: any) => layer.route.path.startsWith('/v1'))
 			.map((layer: any) => ({
 				path: layer.route.path,
 				methods: Object.keys(layer.route.methods).map((m) => m.toUpperCase()),
 				version: (() => {
 					const match = layer.route.path.match(/^\/(v\d+)\b/);
-					return match ? match[1] : "";
+					return match ? match[1] : '';
 				})(),
 			}));
 
@@ -593,7 +592,7 @@ class ASBRServerClass {
 					this.server.maxConnections = 1000; // Limit concurrent connections
 				}
 
-				this.io = new IOServer(this.server!, { transports: ["websocket"] });
+				this.io = new IOServer(this.server!, { transports: ['websocket'] });
 				const manager = await getEventManager();
 				manager.attachIO(this.io);
 
@@ -623,7 +622,7 @@ class ASBRServerClass {
 				this.server.close(() => {
 					stopEventManager();
 
-					logInfo("ASBR API server stopped");
+					logInfo('ASBR API server stopped');
 					resolve();
 				});
 			} else {

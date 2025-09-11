@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes } from 'node:crypto';
 
 /**
  * W3C Trace Context utilities for distributed tracing in A2A messaging
@@ -20,14 +20,14 @@ export interface TraceContext {
  * Generate a new trace ID (16 bytes as hex string)
  */
 export function generateTraceId(): string {
-	return randomBytes(16).toString("hex");
+	return randomBytes(16).toString('hex');
 }
 
 /**
  * Generate a new span ID (8 bytes as hex string)
  */
 export function generateSpanId(): string {
-	return randomBytes(8).toString("hex");
+	return randomBytes(8).toString('hex');
 }
 
 /**
@@ -66,11 +66,11 @@ export function createChildSpan(parentContext: TraceContext): TraceContext {
 export function parseTraceParent(
 	traceparent: string,
 ): { traceId: string; spanId: string; traceFlags: number } | null {
-	if (!traceparent?.startsWith("00-")) {
+	if (!traceparent?.startsWith('00-')) {
 		return null;
 	}
 
-	const parts = traceparent.split("-");
+	const parts = traceparent.split('-');
 	if (parts.length !== 4) {
 		return null;
 	}
@@ -98,7 +98,7 @@ export function parseTraceParent(
  * Create W3C traceparent header from trace context
  */
 export function createTraceParent(context: TraceContext): string {
-	return `00-${context.traceId}-${context.spanId}-${context.traceFlags.toString(16).padStart(2, "0")}`;
+	return `00-${context.traceId}-${context.spanId}-${context.traceFlags.toString(16).padStart(2, '0')}`;
 }
 
 /**
@@ -188,7 +188,7 @@ export function addTraceState(
 	vendor: string,
 	value: string,
 ): TraceContext {
-	const existingState = context.traceState ? `${context.traceState},` : "";
+	const existingState = context.traceState ? `${context.traceState},` : '';
 	return {
 		...context,
 		traceState: `${existingState}${vendor}=${value}`,
@@ -206,9 +206,9 @@ export function getTraceState(
 		return null;
 	}
 
-	const pairs = context.traceState.split(",");
+	const pairs = context.traceState.split(',');
 	for (const pair of pairs) {
-		const [key, value] = pair.trim().split("=");
+		const [key, value] = pair.trim().split('=');
 		if (key === vendor) {
 			return value;
 		}
@@ -225,7 +225,7 @@ export function addBaggage(
 	key: string,
 	value: string,
 ): TraceContext {
-	const existingBaggage = context.baggage ? `${context.baggage},` : "";
+	const existingBaggage = context.baggage ? `${context.baggage},` : '';
 	return {
 		...context,
 		baggage: `${existingBaggage}${key}=${encodeURIComponent(value)}`,
@@ -240,9 +240,9 @@ export function getBaggage(context: TraceContext, key: string): string | null {
 		return null;
 	}
 
-	const pairs = context.baggage.split(",");
+	const pairs = context.baggage.split(',');
 	for (const pair of pairs) {
-		const [bagKey, bagValue] = pair.trim().split("=");
+		const [bagKey, bagValue] = pair.trim().split('=');
 		if (bagKey === key) {
 			return decodeURIComponent(bagValue);
 		}

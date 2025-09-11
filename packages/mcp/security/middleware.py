@@ -8,7 +8,7 @@ import time
 from collections.abc import Callable
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 

@@ -1,0 +1,61 @@
+# Exclude common build and vendor directories to speed up Semgrep scans
+**/node_modules/**
+**/.pnpm-store/**
+**/dist/**
+**/build/**
+**/.next/**
+**/.turbo/**
+**/.cache/**
+**/coverage/**
+**/reports/**
+**/logs/**
+**/.git/**
+**/.github/**/artifacts/**
+**/vendor/**
+**/generated/**
+**/*.min.js
+
+# Language-specific
+# Rust
+**/target/**
+# Python
+**/.venv/**
+**/venv/**
+**/__pycache__/**
+**/.mypy_cache/**
+**/.pytest_cache/**
+# Go
+**/bin/**
+**/pkg/**
+# Web assets
+**/wasm/**
+**/*.wasm
+
+# Large data and temp
+**/data/**
+**/tmp/**
+**/temp/**node_modules/
+.nx/
+coverage/
+.turbo/
+.cache/
+
+sbom/
+reports/
+
+.venv/
+__pycache__/
+.pytest_cache/
+
+**/target/
+
+external/
+apps/**/external/
+data/db/
+data/events/
+
+website/build/
+
+.vscode/
+.idea/
+.DS_Store

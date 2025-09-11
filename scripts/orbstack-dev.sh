@@ -28,12 +28,12 @@ check_orbstack() {
         log_error "Docker is not available. Please ensure OrbStack is installed and running."
         exit 1
     fi
-    
+
     if ! docker info &> /dev/null; then
         log_error "Docker daemon is not running. Please start OrbStack."
         exit 1
     fi
-    
+
     # Check if this is OrbStack
     if docker version 2>/dev/null | grep -q "orbstack"; then
         log_success "OrbStack detected and running"
@@ -48,14 +48,14 @@ validate_environment() {
         "$COMPOSE_DIR/docker-compose.dev.yml"
         "$ENV_FILE"
     )
-    
+
     for file in "${required_files[@]}"; do
         if [[ ! -f "$file" ]]; then
             log_error "Required file not found: $file"
             exit 1
         fi
     done
-    
+
     log_success "Environment validation passed"
 }
 
@@ -90,17 +90,17 @@ EOF
 # Start services with specified profiles
 start_services() {
     local profiles="${1:-dev-min}"
-    
+
     log_info "Starting OrbStack development environment..."
     log_info "Profiles: $profiles"
-    
+
     # Convert comma-separated profiles to --profile flags
     local profile_flags=""
     IFS=',' read -ra PROFILE_ARRAY <<< "$profiles"
     for profile in "${PROFILE_ARRAY[@]}"; do
         profile_flags+="--profile $profile "
     done
-    
+
     # Start services
     cd "$ROOT_DIR"
     docker compose \
@@ -109,9 +109,9 @@ start_services() {
         -f "$COMPOSE_DIR/orbstack.yml" \
         $profile_flags \
         up --build -d
-    
+
     log_success "Services started successfully!"
-    
+
     # Show service status
     show_status
 }
@@ -119,28 +119,28 @@ start_services() {
 # Stop services
 stop_services() {
     log_info "Stopping OrbStack development environment..."
-    
+
     cd "$ROOT_DIR"
     docker compose \
         --env-file "$ENV_FILE" \
         -f "$COMPOSE_DIR/docker-compose.dev.yml" \
         -f "$COMPOSE_DIR/orbstack.yml" \
         down
-    
+
     log_success "Services stopped successfully!"
 }
 
 # Show service status
 show_status() {
     log_info "Service Status:"
-    
+
     cd "$ROOT_DIR"
     docker compose \
         --env-file "$ENV_FILE" \
         -f "$COMPOSE_DIR/docker-compose.dev.yml" \
         -f "$COMPOSE_DIR/orbstack.yml" \
         ps
-    
+
     echo
     log_info "Available endpoints:"
     cat << EOF
@@ -166,9 +166,9 @@ EOF
 # Show logs for specified services
 show_logs() {
     local service="${1:-}"
-    
+
     cd "$ROOT_DIR"
-    
+
     if [[ -z "$service" ]]; then
         docker compose \
             --env-file "$ENV_FILE" \
@@ -187,12 +187,12 @@ show_logs() {
 # Clean up volumes and images
 cleanup() {
     local deep="${1:-false}"
-    
+
     log_info "Cleaning up OrbStack environment..."
-    
+
     # Stop services first
     stop_services
-    
+
     # Remove volumes
     if [[ "$deep" == "true" ]]; then
         log_warning "Performing deep cleanup (this will remove all data)..."
@@ -211,13 +211,13 @@ exec_service() {
     local service="$1"
     shift
     local cmd=("$@")
-    
+
     if [[ ${#cmd[@]} -eq 0 ]]; then
         cmd=("/bin/sh")
     fi
-    
+
     log_info "Executing command in $service: ${cmd[*]}"
-    
+
     cd "$ROOT_DIR"
     docker compose \
         --env-file "$ENV_FILE" \

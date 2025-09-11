@@ -3,9 +3,9 @@
  * Functional PRP orchestrator using closure state.
  */
 
-import { createExecutionContext } from "./lib/create-execution-context.js";
-import { executeNeuron } from "./lib/execute-neuron.js";
-import { LLMBridge, type LLMConfig } from "./llm-bridge.js";
+import { createExecutionContext } from './lib/create-execution-context.js';
+import { executeNeuron } from './lib/execute-neuron.js';
+import { LLMBridge, type LLMConfig } from './llm-bridge.js';
 
 export interface Blueprint {
 	title: string;
@@ -15,7 +15,7 @@ export interface Blueprint {
 
 export interface ExecutionState {
 	id: string;
-	phase: "strategy" | "build" | "evaluation";
+	phase: 'strategy' | 'build' | 'evaluation';
 	blueprint: Blueprint;
 	outputs: Record<string, unknown>;
 }
@@ -31,13 +31,13 @@ export interface ExecutionContext {
 }
 
 export interface PRPExecutionResult extends ExecutionState {
-	status: "completed" | "failed";
+	status: 'completed' | 'failed';
 }
 
 export interface Neuron {
 	id: string;
 	role: string;
-	phase: "strategy" | "build" | "evaluation";
+	phase: 'strategy' | 'build' | 'evaluation';
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
@@ -68,11 +68,12 @@ export interface ExecutionMetrics {
 export interface PRPOrchestrator {
 	getNeuronCount(): number;
 	registerNeuron(neuron: Neuron): void;
-	getNeuronsByPhase(phase: "strategy" | "build" | "evaluation"): Neuron[];
+	getNeuronsByPhase(phase: 'strategy' | 'build' | 'evaluation'): Neuron[];
 	configureLLM(config: LLMConfig): void;
 	getLLMConfig(): LLMConfig | undefined;
 	createLLMBridge(): LLMBridge;
 	executePRPCycle(blueprint: Blueprint): Promise<PRPExecutionResult>;
+	generateProductRequirementsPrompt(blueprint: Blueprint): Promise<string>;
 }
 
 function register(neurons: Map<string, Neuron>, neuron: Neuron): void {
@@ -84,7 +85,7 @@ function register(neurons: Map<string, Neuron>, neuron: Neuron): void {
 
 function getByPhase(
 	neurons: Map<string, Neuron>,
-	phase: "strategy" | "build" | "evaluation",
+	phase: 'strategy' | 'build' | 'evaluation',
 ): Neuron[] {
 	return Array.from(neurons.values()).filter((n) => n.phase === phase);
 }
@@ -95,10 +96,10 @@ async function executeCycle(
 	llmBridge: LLMBridge | undefined,
 	blueprint: Blueprint,
 ): Promise<PRPExecutionResult> {
-	if (neurons.size === 0) throw new Error("No neurons registered");
+	if (neurons.size === 0) throw new Error('No neurons registered');
 	const llmNeurons = Array.from(neurons.values()).filter((n) => n.requiresLLM);
 	if (llmNeurons.length > 0 && !llmConfig) {
-		throw new Error("LLM configuration required for LLM-powered neurons");
+		throw new Error('LLM configuration required for LLM-powered neurons');
 	}
 	const context = createExecutionContext(llmBridge);
 	const outputs: Record<string, unknown> = {};
@@ -115,10 +116,10 @@ async function executeCycle(
 	}
 	return {
 		id: cycleId,
-		phase: "strategy",
+		phase: 'strategy',
 		blueprint,
 		outputs,
-		status: "completed",
+		status: 'completed',
 	};
 }
 
@@ -138,10 +139,37 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 		getLLMConfig: () => llmConfig,
 		createLLMBridge: () => {
 			if (!llmBridge)
-				throw new Error("LLM must be configured before creating bridge");
+				throw new Error('LLM must be configured before creating bridge');
 			return llmBridge;
 		},
 		executePRPCycle: (blueprint) =>
 			executeCycle(neurons, llmConfig, llmBridge, blueprint),
+		generateProductRequirementsPrompt: async (blueprint: Blueprint) => {
+			// Basic validation similar to tests' expectations
+			if (
+				!blueprint ||
+				typeof blueprint.title !== 'string' ||
+				typeof blueprint.description !== 'string' ||
+				!Array.isArray(blueprint.requirements)
+			) {
+				throw new Error('Invalid blueprint');
+			}
+
+			const strategyNeurons = getByPhase(neurons, 'strategy');
+			const strategyIds = strategyNeurons.map((n) => n.id);
+
+			const lines: string[] = [];
+			lines.push(`Product Requirements for ${blueprint.title}`);
+			lines.push(`Description: ${blueprint.description}`);
+			lines.push('Requirements:');
+			for (const req of blueprint.requirements) {
+				lines.push(`- ${req}`);
+			}
+			if (strategyIds.length > 0) {
+				lines.push(`Contributors: ${strategyIds.join(', ')}`);
+			}
+
+			return lines.join('\n');
+		},
 	};
 }

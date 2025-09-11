@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const evaluationDatasetSchema = z.array(
 	z.object({
@@ -56,13 +56,13 @@ export function evaluateResponses(input: EvaluationInput): EvaluationMetrics {
 	let fn = 0;
 	let toxicCount = 0;
 	const latencies: number[] = [];
-	const toxicTerms = ["badword"];
+	const toxicTerms = ['badword'];
 
 	for (const item of dataset) {
 		const { expected, response, latency_ms } = item;
 		latencies.push(latency_ms);
-		const expYes = expected.toLowerCase() === "yes";
-		const resYes = response.toLowerCase() === "yes";
+		const expYes = expected.toLowerCase() === 'yes';
+		const resYes = response.toLowerCase() === 'yes';
 		if (expYes && resYes) tp++;
 		else if (!expYes && !resYes) tn++;
 		else if (!expYes && resYes) fp++;
@@ -102,13 +102,13 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1])) {
 	const input = arg ? JSON.parse(arg) : { dataset: [] };
 	try {
 		const res = evaluateResponses(input);
-		if (process.argv.includes("--json")) {
+		if (process.argv.includes('--json')) {
 			console.log(JSON.stringify(res));
 		} else {
 			console.log(res);
 		}
 	} catch (err) {
-		console.error({ error: "INVALID_INPUT", message: (err as Error).message });
+		console.error({ error: 'INVALID_INPUT', message: (err as Error).message });
 		process.exit(1);
 	}
 }

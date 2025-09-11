@@ -5,15 +5,15 @@ coverage:
   functions: 0
   lines: 0
 checklist:
-  tdd: false
+  tdd: true
   contracts: false
   a11y: false
   security: false
-  docs: false
-  architecture: false
-  reliability: false
+  docs: true
+  architecture: true
+  reliability: true
 thresholds:
-  statements: 0
-  branches: 0
-  functions: 0
-  lines: 0
+  statements: 40
+  branches: 66
+  functions: 63
+  lines: 40

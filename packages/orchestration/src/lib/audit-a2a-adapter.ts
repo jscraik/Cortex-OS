@@ -3,11 +3,11 @@ export type Event<T = unknown> = { type: string; payload: T };
 
 export type PublishFn = (evt: Event) => void;
 
-import { setAuditPublisher } from "./audit";
+import { setAuditPublisher } from './audit';
 
 export function makeA2APublisher(publish: PublishFn) {
 	return async (evt: any) => {
-		publish({ type: "audit.event", payload: evt });
+		publish({ type: 'audit.event', payload: evt });
 	};
 }
 

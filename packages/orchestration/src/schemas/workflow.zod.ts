@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const retryZ = z.object({
 	maxRetries: z.number().int().nonnegative(),
@@ -9,7 +9,7 @@ export const retryZ = z.object({
 export const stepZ = z.object({
 	id: z.string(),
 	name: z.string(),
-	kind: z.enum(["agent", "http", "delay", "branch", "map"]),
+	kind: z.enum(['agent', 'http', 'delay', 'branch', 'map']),
 	input: z.unknown().optional(),
 	agentId: z.string().optional(),
 	toolAllowlist: z.array(z.string()).optional(),

@@ -1,4 +1,4 @@
-import type { Memory } from "./types.js";
+import type { Memory } from './types.js';
 
 export function isExpired(
 	m: Memory,

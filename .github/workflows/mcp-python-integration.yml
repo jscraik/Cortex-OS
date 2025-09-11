@@ -65,9 +65,9 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping || exit 1" 
-          --health-interval 2s 
-          --health-timeout 1s 
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval 2s
+          --health-timeout 1s
           --health-retries 30
     steps:
       - name: Checkout

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Common schema validation utilities and patterns for A2A events
@@ -11,7 +11,7 @@ export const BaseEventSchema = z.object({
 	id: z.string().uuid(),
 	type: z.string().min(1),
 	source: z.string().url(),
-	specversion: z.literal("1.0"),
+	specversion: z.literal('1.0'),
 	time: z.string().datetime().optional(),
 	data: z.unknown().optional(),
 	datacontenttype: z.string().optional(),
@@ -80,11 +80,11 @@ export const CommonSchemas = {
 		),
 		total: z.number().positive(),
 		status: z.enum([
-			"pending",
-			"confirmed",
-			"shipped",
-			"delivered",
-			"cancelled",
+			'pending',
+			'confirmed',
+			'shipped',
+			'delivered',
+			'cancelled',
 		]),
 		createdAt: z.string().datetime(),
 		updatedAt: z.string().datetime().optional(),
@@ -96,13 +96,13 @@ export const CommonSchemas = {
 		orderId: z.string().uuid(),
 		amount: z.number().positive(),
 		currency: z.string().length(3).toUpperCase(),
-		method: z.enum(["credit_card", "debit_card", "paypal", "bank_transfer"]),
+		method: z.enum(['credit_card', 'debit_card', 'paypal', 'bank_transfer']),
 		status: z.enum([
-			"pending",
-			"processing",
-			"completed",
-			"failed",
-			"refunded",
+			'pending',
+			'processing',
+			'completed',
+			'failed',
+			'refunded',
 		]),
 		transactionId: z.string().optional(),
 		processedAt: z.string().datetime().optional(),
@@ -115,11 +115,11 @@ export const CommonSchemas = {
 		carrier: z.string().min(1),
 		trackingNumber: z.string().min(1),
 		status: z.enum([
-			"preparing",
-			"shipped",
-			"in_transit",
-			"delivered",
-			"returned",
+			'preparing',
+			'shipped',
+			'in_transit',
+			'delivered',
+			'returned',
 		]),
 		shippedAt: z.string().datetime().optional(),
 		deliveredAt: z.string().datetime().optional(),
@@ -133,34 +133,34 @@ export const CommonSchemas = {
 export const EventPatterns = {
 	// User domain
 	userCreated: z.object({
-		type: z.literal("user.created.v1"),
+		type: z.literal('user.created.v1'),
 		data: CommonSchemas.user,
 	}),
 
 	userUpdated: z.object({
-		type: z.literal("user.updated.v1"),
+		type: z.literal('user.updated.v1'),
 		data: CommonSchemas.user,
 	}),
 
 	// Product domain
 	productCreated: z.object({
-		type: z.literal("product.created.v1"),
+		type: z.literal('product.created.v1'),
 		data: CommonSchemas.product,
 	}),
 
 	productUpdated: z.object({
-		type: z.literal("product.updated.v1"),
+		type: z.literal('product.updated.v1'),
 		data: CommonSchemas.product,
 	}),
 
 	// Order domain
 	orderCreated: z.object({
-		type: z.literal("order.created.v1"),
+		type: z.literal('order.created.v1'),
 		data: CommonSchemas.order,
 	}),
 
 	orderStatusChanged: z.object({
-		type: z.literal("order.status.changed.v1"),
+		type: z.literal('order.status.changed.v1'),
 		data: z.object({
 			orderId: z.string().uuid(),
 			oldStatus: z.string(),
@@ -171,12 +171,12 @@ export const EventPatterns = {
 
 	// Payment domain
 	paymentProcessed: z.object({
-		type: z.literal("payment.processed.v1"),
+		type: z.literal('payment.processed.v1'),
 		data: CommonSchemas.payment,
 	}),
 
 	paymentFailed: z.object({
-		type: z.literal("payment.failed.v1"),
+		type: z.literal('payment.failed.v1'),
 		data: z.object({
 			orderId: z.string().uuid(),
 			amount: z.number().positive(),
@@ -187,12 +187,12 @@ export const EventPatterns = {
 
 	// Shipping domain
 	shipmentCreated: z.object({
-		type: z.literal("shipment.created.v1"),
+		type: z.literal('shipment.created.v1'),
 		data: CommonSchemas.shipping,
 	}),
 
 	shipmentStatusChanged: z.object({
-		type: z.literal("shipment.status.changed.v1"),
+		type: z.literal('shipment.status.changed.v1'),
 		data: z.object({
 			shipmentId: z.string().uuid(),
 			oldStatus: z.string(),
@@ -294,11 +294,11 @@ export function generateSchemaDocs(
 	let docs = `# ${eventType}\n\n`;
 
 	if (isObject) {
-		docs += "## Properties\n\n";
+		docs += '## Properties\n\n';
 		// This is a simplified documentation generation
 		// In production, you might use a library like zod-to-json-schema
-		docs += "| Property | Type | Required |\n";
-		docs += "|----------|------|----------|\n";
+		docs += '| Property | Type | Required |\n';
+		docs += '|----------|------|----------|\n';
 
 		for (const key of shape) {
 			docs += `| ${key} | any | Yes |\n`;
@@ -316,25 +316,25 @@ export function createMigrationGuide(
 	toVersion: string,
 	changes: Array<{
 		field: string;
-		change: "added" | "removed" | "modified";
+		change: 'added' | 'removed' | 'modified';
 		description: string;
 	}>,
 ): string {
 	let guide = `# Migration Guide: ${fromVersion} → ${toVersion}\n\n`;
 
 	if (changes.length === 0) {
-		guide += "No breaking changes. Migration should be seamless.\n";
+		guide += 'No breaking changes. Migration should be seamless.\n';
 	} else {
-		guide += "## Changes\n\n";
+		guide += '## Changes\n\n';
 		for (const change of changes) {
 			guide += `- **${change.change.toUpperCase()}** ${change.field}: ${change.description}\n`;
 		}
 
-		guide += "\n## Migration Steps\n\n";
-		guide += "1. Update your event producers to use the new schema\n";
-		guide += "2. Ensure consumers can handle both old and new formats\n";
-		guide += "3. Deploy schema registry with new version\n";
-		guide += "4. Monitor for any validation errors\n";
+		guide += '\n## Migration Steps\n\n';
+		guide += '1. Update your event producers to use the new schema\n';
+		guide += '2. Ensure consumers can handle both old and new formats\n';
+		guide += '3. Deploy schema registry with new version\n';
+		guide += '4. Monitor for any validation errors\n';
 	}
 
 	return guide;
@@ -346,80 +346,80 @@ export function createMigrationGuide(
 export const PredefinedSchemas = {
 	// User events
 	userCreated: createVersionedSchema(
-		"user.created.v1",
-		"1.0.0",
+		'user.created.v1',
+		'1.0.0',
 		EventPatterns.userCreated,
 		{
-			description: "User account created",
+			description: 'User account created',
 			examples: [
 				{
-					type: "user.created.v1",
+					type: 'user.created.v1',
 					data: {
-						id: "123e4567-e89b-12d3-a456-426614174000",
-						email: "user@example.com",
-						firstName: "John",
-						lastName: "Doe",
-						createdAt: "2023-01-01T00:00:00Z",
+						id: '123e4567-e89b-12d3-a456-426614174000',
+						email: 'user@example.com',
+						firstName: 'John',
+						lastName: 'Doe',
+						createdAt: '2023-01-01T00:00:00Z',
 					},
 				},
 			],
-			tags: ["user", "creation"],
+			tags: ['user', 'creation'],
 		},
 	),
 
 	// Order events
 	orderCreated: createVersionedSchema(
-		"order.created.v1",
-		"1.0.0",
+		'order.created.v1',
+		'1.0.0',
 		EventPatterns.orderCreated,
 		{
-			description: "New order placed",
+			description: 'New order placed',
 			examples: [
 				{
-					type: "order.created.v1",
+					type: 'order.created.v1',
 					data: {
-						id: "123e4567-e89b-12d3-a456-426614174001",
-						userId: "123e4567-e89b-12d3-a456-426614174000",
+						id: '123e4567-e89b-12d3-a456-426614174001',
+						userId: '123e4567-e89b-12d3-a456-426614174000',
 						items: [
 							{
-								productId: "123e4567-e89b-12d3-a456-426614174002",
+								productId: '123e4567-e89b-12d3-a456-426614174002',
 								quantity: 2,
 								price: 29.99,
 							},
 						],
 						total: 59.98,
-						status: "pending",
-						createdAt: "2023-01-01T00:00:00Z",
+						status: 'pending',
+						createdAt: '2023-01-01T00:00:00Z',
 					},
 				},
 			],
-			tags: ["order", "creation", "ecommerce"],
+			tags: ['order', 'creation', 'ecommerce'],
 		},
 	),
 
 	// Payment events
 	paymentProcessed: createVersionedSchema(
-		"payment.processed.v1",
-		"1.0.0",
+		'payment.processed.v1',
+		'1.0.0',
 		EventPatterns.paymentProcessed,
 		{
-			description: "Payment successfully processed",
+			description: 'Payment successfully processed',
 			examples: [
 				{
-					type: "payment.processed.v1",
+					type: 'payment.processed.v1',
 					data: {
-						id: "123e4567-e89b-12d3-a456-426614174003",
-						orderId: "123e4567-e89b-12d3-a456-426614174001",
+						id: '123e4567-e89b-12d3-a456-426614174003',
+						orderId: '123e4567-e89b-12d3-a456-426614174001',
 						amount: 59.98,
-						currency: "USD",
-						method: "credit_card",
-						status: "completed",
-						transactionId: "txn_1234567890",
-						processedAt: "2023-01-01T00:05:00Z",
+						currency: 'USD',
+						method: 'credit_card',
+						status: 'completed',
+						transactionId: 'txn_1234567890',
+						processedAt: '2023-01-01T00:05:00Z',
 					},
 				},
 			],
-			tags: ["payment", "success", "ecommerce"],
+			tags: ['payment', 'success', 'ecommerce'],
 		},
 	),
 };

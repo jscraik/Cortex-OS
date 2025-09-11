@@ -46,14 +46,14 @@ if command -v grep >/dev/null 2>&1; then
   else
     echo "❌ Input validation not found"
   fi
-  
+
   # Check for parameterized queries
   if grep -r "parameterized.*quer" libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then
     echo "✅ Parameterized queries reference found"
   else
     echo "✅ Parameterized queries are used (checked manually)"
   fi
-  
+
   # Check for error handling
   if grep -r "try.*catch\|finally" libs/typescript/utils/src/secure-neo4j.ts 2>/dev/null; then
     echo "✅ Error handling found"

@@ -6,7 +6,7 @@
  * @status active
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock memory service types and interfaces
 interface MockTenantCtx {
@@ -18,7 +18,7 @@ interface MockTenantCtx {
 interface MockMemoryRecord {
 	id: string;
 	tenantId: string;
-	kind: "doc" | "chunk" | "event" | "decision";
+	kind: 'doc' | 'chunk' | 'event' | 'decision';
 	text: string;
 	metadata: Record<string, unknown>;
 	embedding: number[];
@@ -70,11 +70,11 @@ class MockMemoryService {
 
 	async putText(
 		ctx: MockTenantCtx,
-		kind: MockMemoryRecord["kind"],
+		kind: MockMemoryRecord['kind'],
 		text: string,
 		metadata: Record<string, unknown> = {},
 		ttlDays?: number,
-		policy?: MockMemoryRecord["policy"],
+		policy?: MockMemoryRecord['policy'],
 		sourceURI?: string,
 	): Promise<string> {
 		const embedding = await this.embedOne(text);
@@ -100,7 +100,7 @@ class MockMemoryService {
 
 	async search(
 		ctx: MockTenantCtx,
-		query: Omit<MockVectorQuery, "tenantId">,
+		query: Omit<MockVectorQuery, 'tenantId'>,
 	): Promise<MockVectorHit[]> {
 		return this.records
 			.filter((record) => record.tenantId === ctx.tenantId)
@@ -130,7 +130,7 @@ class MockMemoryService {
 	}
 }
 
-describe("🧠 Memory Service Embedding Integration Tests", () => {
+describe('🧠 Memory Service Embedding Integration Tests', () => {
 	let mockEmbedder: { embed: (texts: string[]) => Promise<number[][]> };
 	let memoryService: MockMemoryService;
 	let testContext: MockTenantCtx;
@@ -141,7 +141,7 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			embed: vi.fn().mockImplementation(async (texts: string[]) => {
 				// Generate consistent mock embeddings
 				return texts.map((text) => {
-					const hash = text.split("").reduce((a, b) => {
+					const hash = text.split('').reduce((a, b) => {
 						a = (a << 5) - a + b.charCodeAt(0);
 						return a & a;
 					}, 0);
@@ -157,16 +157,16 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 
 		// Test tenant context
 		testContext = {
-			tenantId: "test-tenant-001",
-			agentId: "ai-agent-001",
-			userId: "user-001",
+			tenantId: 'test-tenant-001',
+			agentId: 'ai-agent-001',
+			userId: 'user-001',
 		};
 
 		vi.clearAllMocks();
 	});
 
-	describe("📊 Memory-Embedding Integration Checklist", () => {
-		it("should verify memory-embedding integration compliance", async () => {
+	describe('📊 Memory-Embedding Integration Checklist', () => {
+		it('should verify memory-embedding integration compliance', async () => {
 			// Test mock embedder initialization
 			expect(mockEmbedder).toBeDefined();
 			expect(mockEmbedder.embed).toBeDefined();
@@ -179,39 +179,39 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			expect(testContext.agentId).toBeDefined();
 			expect(testContext.userId).toBeDefined();
 
-			console.log("✅ Memory-Embedding Integration: PASSED");
-			console.log("   - Embedding Adapter: Initialized with 1024 dimensions");
-			console.log("   - Memory Service: Connected with vector storage");
+			console.log('✅ Memory-Embedding Integration: PASSED');
+			console.log('   - Embedding Adapter: Initialized with 1024 dimensions');
+			console.log('   - Memory Service: Connected with vector storage');
 		});
 	});
 
-	describe("🔗 Embedding Storage Integration", () => {
-		it("should store text with embeddings in memory service", async () => {
+	describe('🔗 Embedding Storage Integration', () => {
+		it('should store text with embeddings in memory service', async () => {
 			const testTexts = [
-				"User authentication implementation with JWT tokens",
-				"Database migration scripts for user management",
-				"API endpoints for real-time chat functionality",
+				'User authentication implementation with JWT tokens',
+				'Database migration scripts for user management',
+				'API endpoints for real-time chat functionality',
 			];
 
 			const recordIds: string[] = [];
 
 			for (const text of testTexts) {
-				const recordId = await memoryService.putText(testContext, "doc", text, {
-					source: "integration-test",
-					type: "documentation",
+				const recordId = await memoryService.putText(testContext, 'doc', text, {
+					source: 'integration-test',
+					type: 'documentation',
 				});
 
 				expect(recordId).toBeDefined();
-				expect(typeof recordId).toBe("string");
+				expect(typeof recordId).toBe('string');
 				recordIds.push(recordId);
 			}
 
 			expect(recordIds).toHaveLength(testTexts.length);
-			expect(new Set(recordIds)).toHaveProperty("size", testTexts.length); // All IDs unique
+			expect(new Set(recordIds)).toHaveProperty('size', testTexts.length); // All IDs unique
 		});
 
-		it("should generate consistent embeddings for identical text", async () => {
-			const text = "Test consistency of embedding generation";
+		it('should generate consistent embeddings for identical text', async () => {
+			const text = 'Test consistency of embedding generation';
 
 			const embedding1 = await memoryService.embedOne(text);
 			const embedding2 = await memoryService.embedOne(text);
@@ -223,27 +223,27 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			expect(embedding1).toEqual(embedding2);
 		});
 
-		it("should validate embedding dimensions match memory service requirements", async () => {
-			const text = "Test embedding dimension validation";
+		it('should validate embedding dimensions match memory service requirements', async () => {
+			const text = 'Test embedding dimension validation';
 
 			const embedding = await memoryService.embedOne(text);
 
 			expect(embedding).toHaveLength(1024);
-			expect(embedding.every((val) => typeof val === "number")).toBe(true);
+			expect(embedding.every((val) => typeof val === 'number')).toBe(true);
 		});
 
-		it("should handle different memory record types", async () => {
-			const recordTypes: Array<MockMemoryRecord["kind"]> = [
-				"doc",
-				"chunk",
-				"event",
-				"decision",
+		it('should handle different memory record types', async () => {
+			const recordTypes: Array<MockMemoryRecord['kind']> = [
+				'doc',
+				'chunk',
+				'event',
+				'decision',
 			];
 			const testTexts = [
-				"Full documentation page content",
-				"Chunk of documentation for vector search",
-				"User performed login action at timestamp",
-				"Decision to implement feature A over feature B",
+				'Full documentation page content',
+				'Chunk of documentation for vector search',
+				'User performed login action at timestamp',
+				'Decision to implement feature A over feature B',
 			];
 
 			for (let i = 0; i < recordTypes.length; i++) {
@@ -261,27 +261,27 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 		});
 	});
 
-	describe("🔍 Semantic Search Integration", () => {
+	describe('🔍 Semantic Search Integration', () => {
 		beforeEach(async () => {
 			// Populate memory service with test data
 			const testDocuments = [
-				"Machine learning models for text classification and sentiment analysis",
-				"React components with TypeScript for user interface development",
-				"Database schemas and migration scripts for PostgreSQL",
-				"API security best practices including authentication and authorization",
-				"Docker containerization for microservices deployment strategies",
+				'Machine learning models for text classification and sentiment analysis',
+				'React components with TypeScript for user interface development',
+				'Database schemas and migration scripts for PostgreSQL',
+				'API security best practices including authentication and authorization',
+				'Docker containerization for microservices deployment strategies',
 			];
 
 			for (const doc of testDocuments) {
-				await memoryService.putText(testContext, "doc", doc, {
-					source: "test-corpus",
+				await memoryService.putText(testContext, 'doc', doc, {
+					source: 'test-corpus',
 					indexed: true,
 				});
 			}
 		});
 
-		it("should perform semantic search using embeddings", async () => {
-			const searchQuery = "How to implement user authentication in APIs?";
+		it('should perform semantic search using embeddings', async () => {
+			const searchQuery = 'How to implement user authentication in APIs?';
 			const queryEmbedding = await memoryService.embedOne(searchQuery);
 
 			const results = await memoryService.search(testContext, {
@@ -293,7 +293,7 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			results.forEach((result) => {
 				expect(result.id).toBeDefined();
 				expect(result.text).toBeDefined();
-				expect(typeof result.score).toBe("number");
+				expect(typeof result.score).toBe('number');
 				expect(result.score).toBeGreaterThan(-1); // Cosine similarity ranges from -1 to 1
 				expect(result.score).toBeLessThanOrEqual(1);
 			});
@@ -304,15 +304,15 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			}
 		});
 
-		it("should handle multi-tenant search isolation", async () => {
+		it('should handle multi-tenant search isolation', async () => {
 			// Add documents for different tenants
-			const tenant1Context = { ...testContext, tenantId: "tenant-001" };
-			const tenant2Context = { ...testContext, tenantId: "tenant-002" };
+			const tenant1Context = { ...testContext, tenantId: 'tenant-001' };
+			const tenant2Context = { ...testContext, tenantId: 'tenant-002' };
 
 			await memoryService.putText(
 				tenant1Context,
-				"doc",
-				"Tenant 1 confidential data",
+				'doc',
+				'Tenant 1 confidential data',
 				{
 					confidential: true,
 				},
@@ -320,14 +320,14 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 
 			await memoryService.putText(
 				tenant2Context,
-				"doc",
-				"Tenant 2 confidential data",
+				'doc',
+				'Tenant 2 confidential data',
 				{
 					confidential: true,
 				},
 			);
 
-			const queryEmbedding = await memoryService.embedOne("confidential data");
+			const queryEmbedding = await memoryService.embedOne('confidential data');
 
 			// Search from tenant 1 perspective
 			const tenant1Results = await memoryService.search(tenant1Context, {
@@ -345,47 +345,47 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			const tenant1Texts = tenant1Results.map((r) => r.text);
 			const tenant2Texts = tenant2Results.map((r) => r.text);
 
-			expect(tenant1Texts.some((text) => text.includes("Tenant 1"))).toBe(true);
-			expect(tenant1Texts.some((text) => text.includes("Tenant 2"))).toBe(
+			expect(tenant1Texts.some((text) => text.includes('Tenant 1'))).toBe(true);
+			expect(tenant1Texts.some((text) => text.includes('Tenant 2'))).toBe(
 				false,
 			);
 
-			expect(tenant2Texts.some((text) => text.includes("Tenant 2"))).toBe(true);
-			expect(tenant2Texts.some((text) => text.includes("Tenant 1"))).toBe(
+			expect(tenant2Texts.some((text) => text.includes('Tenant 2'))).toBe(true);
+			expect(tenant2Texts.some((text) => text.includes('Tenant 1'))).toBe(
 				false,
 			);
 		});
 
-		it("should support filtered semantic search", async () => {
+		it('should support filtered semantic search', async () => {
 			// Add documents with metadata filters
 			await memoryService.putText(
 				testContext,
-				"doc",
-				"Production deployment guide",
+				'doc',
+				'Production deployment guide',
 				{
-					environment: "production",
-					category: "deployment",
+					environment: 'production',
+					category: 'deployment',
 				},
 			);
 
 			await memoryService.putText(
 				testContext,
-				"doc",
-				"Development setup instructions",
+				'doc',
+				'Development setup instructions',
 				{
-					environment: "development",
-					category: "setup",
+					environment: 'development',
+					category: 'setup',
 				},
 			);
 
 			const queryEmbedding = await memoryService.embedOne(
-				"deployment instructions",
+				'deployment instructions',
 			);
 
 			const results = await memoryService.search(testContext, {
 				queryEmbedding,
 				topK: 5,
-				filter: { environment: "production" },
+				filter: { environment: 'production' },
 			});
 
 			// Filter would be implemented in real memory service
@@ -395,8 +395,8 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 		});
 	});
 
-	describe("⚡ Memory Performance with Embeddings", () => {
-		it("should handle batch embedding operations efficiently", async () => {
+	describe('⚡ Memory Performance with Embeddings', () => {
+		it('should handle batch embedding operations efficiently', async () => {
 			const batchTexts = Array(10)
 				.fill(null)
 				.map(
@@ -407,21 +407,21 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			const startTime = performance.now();
 
 			const batchPromises = batchTexts.map((text, i) =>
-				memoryService.putText(testContext, "chunk", text, { batchIndex: i }),
+				memoryService.putText(testContext, 'chunk', text, { batchIndex: i }),
 			);
 
 			const recordIds = await Promise.all(batchPromises);
 			const endTime = performance.now();
 
 			expect(recordIds).toHaveLength(10);
-			expect(recordIds.every((id) => typeof id === "string")).toBe(true);
+			expect(recordIds.every((id) => typeof id === 'string')).toBe(true);
 
 			// Performance should be reasonable for batch operations
 			const processingTime = endTime - startTime;
 			expect(processingTime).toBeLessThan(5000); // 5 seconds for 10 operations
 		});
 
-		it("should maintain search performance with growing data set", async () => {
+		it('should maintain search performance with growing data set', async () => {
 			// Add multiple documents to test search performance
 			const documents = Array(20)
 				.fill(null)
@@ -431,11 +431,11 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 				);
 
 			for (const doc of documents) {
-				await memoryService.putText(testContext, "doc", doc);
+				await memoryService.putText(testContext, 'doc', doc);
 			}
 
 			const queryEmbedding = await memoryService.embedOne(
-				"information about topic",
+				'information about topic',
 			);
 			const startTime = performance.now();
 
@@ -451,33 +451,33 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 		});
 	});
 
-	describe("🛡️ Memory Security with Embeddings", () => {
-		it("should respect access policies in memory records", async () => {
+	describe('🛡️ Memory Security with Embeddings', () => {
+		it('should respect access policies in memory records', async () => {
 			const restrictedPolicy = {
-				canRead: ["admin", "manager"],
-				canWrite: ["admin"],
+				canRead: ['admin', 'manager'],
+				canWrite: ['admin'],
 			};
 
 			const publicPolicy = {
-				canRead: ["*"],
-				canWrite: ["admin", "editor"],
+				canRead: ['*'],
+				canWrite: ['admin', 'editor'],
 			};
 
 			// Add records with different access policies
 			const restrictedId = await memoryService.putText(
 				testContext,
-				"doc",
-				"Restricted confidential information",
-				{ classification: "restricted" },
+				'doc',
+				'Restricted confidential information',
+				{ classification: 'restricted' },
 				undefined,
 				restrictedPolicy,
 			);
 
 			const publicId = await memoryService.putText(
 				testContext,
-				"doc",
-				"Public information accessible to all",
-				{ classification: "public" },
+				'doc',
+				'Public information accessible to all',
+				{ classification: 'public' },
 				undefined,
 				publicPolicy,
 			);
@@ -486,22 +486,22 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			expect(publicId).toBeDefined();
 		});
 
-		it("should handle TTL expiration for memory records", async () => {
+		it('should handle TTL expiration for memory records', async () => {
 			const shortTTL = 1; // 1 day
 			const longTTL = 30; // 30 days
 
 			const shortTermId = await memoryService.putText(
 				testContext,
-				"event",
-				"Short-term event log entry",
+				'event',
+				'Short-term event log entry',
 				{ temporary: true },
 				shortTTL,
 			);
 
 			const longTermId = await memoryService.putText(
 				testContext,
-				"doc",
-				"Long-term documentation",
+				'doc',
+				'Long-term documentation',
 				{ permanent: false },
 				longTTL,
 			);
@@ -510,21 +510,21 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			expect(longTermId).toBeDefined();
 		});
 
-		it("should sanitize embeddings for sensitive content", async () => {
+		it('should sanitize embeddings for sensitive content', async () => {
 			const sensitiveText =
-				"User password: secretpassword123, API key: sk-test123";
+				'User password: secretpassword123, API key: sk-test123';
 
 			// In production, this would be sanitized before embedding
 			const embedding = await memoryService.embedOne(sensitiveText);
 
 			expect(embedding).toHaveLength(1024);
-			expect(embedding.every((val) => typeof val === "number")).toBe(true);
+			expect(embedding.every((val) => typeof val === 'number')).toBe(true);
 			// The actual text should be sanitized in real implementation
 		});
 	});
 
-	describe("📊 Integration Metrics and Monitoring", () => {
-		it("should generate comprehensive memory-embedding metrics", async () => {
+	describe('📊 Integration Metrics and Monitoring', () => {
+		it('should generate comprehensive memory-embedding metrics', async () => {
 			const metricsReport = {
 				embeddingOperations: {
 					totalEmbeddings: 25,
@@ -562,7 +562,7 @@ describe("🧠 Memory Service Embedding Integration Tests", () => {
 			expect(metricsReport.searchPerformance.totalSearches).toBeGreaterThan(0);
 			expect(metricsReport.tenantIsolation.crossTenantLeakage).toBe(0);
 
-			console.log("✅ Memory-Embedding Integration Metrics");
+			console.log('✅ Memory-Embedding Integration Metrics');
 			console.log(
 				`   - Embedding Operations: ${metricsReport.embeddingOperations.totalEmbeddings} completed`,
 			);

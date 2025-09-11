@@ -18,7 +18,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -31,6 +31,7 @@ from ..core.server import MCPServer
 from ..infrastructure.database import get_database_manager
 from ..infrastructure.migrations import run_migrations
 from ..observability.health import get_health_manager
+from ..error_handling.problem_json import as_fastapi_handler
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import correlation_context, get_logger
 from ..security.auth import User, get_current_user
@@ -302,6 +303,11 @@ security_config = setup_security_middleware(app)
 # Add observability middleware (if not already added by security middleware)
 if not any(isinstance(m, ObservabilityMiddleware) for m in app.middleware_stack):
     app.add_middleware(ObservabilityMiddleware)
+
+# Add Problem+JSON error handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+app.add_exception_handler(StarletteHTTPException, as_fastapi_handler())
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="webui/static"), name="static")
@@ -763,6 +769,33 @@ async def prometheus_metrics():
     except Exception as e:
         logger.error("Failed to generate metrics", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to generate metrics") from e
+
+
+@app.get("/api/metrics")
+async def api_metrics():
+    """JSON metrics endpoint including per-tool execution stats."""
+    try:
+        from ..tasks.task_queue import get_tool_metrics
+
+        tools: dict[str, dict[str, float | int]] = {}
+        if task_queue is not None:
+            tools = get_tool_metrics(task_queue)
+            # enrich with avg latency
+            enriched = {}
+            for name, data in tools.items():
+                count = int(data.get("count", 0))
+                total = float(data.get("total_latency", 0.0))
+                enriched[name] = {
+                    **data,
+                    "avg_latency": (total / count) if count > 0 else 0.0,
+                }
+            tools = enriched
+
+        summary = metrics_collector.get_metrics_summary()
+        return {"tools": tools, "summary": summary}
+    except Exception as e:
+        logger.error("Failed to generate API metrics", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to generate API metrics") from e
 
 
 @app.get("/metrics/summary")

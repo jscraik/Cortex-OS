@@ -3,22 +3,22 @@
  */
 
 export enum ProcessingStrategy {
-	NATIVE_TEXT = "NATIVE_TEXT",
-	PDF_NATIVE = "PDF_NATIVE",
-	OCR = "OCR",
-	UNSTRUCTURED = "UNSTRUCTURED",
-	REJECT = "REJECT",
+	NATIVE_TEXT = 'NATIVE_TEXT',
+	PDF_NATIVE = 'PDF_NATIVE',
+	OCR = 'OCR',
+	UNSTRUCTURED = 'UNSTRUCTURED',
+	REJECT = 'REJECT',
 }
 
 export interface ProcessingConfig {
 	chunker:
-		| "text"
-		| "markdown"
-		| "code"
-		| "structured"
-		| "pdf"
-		| "ocr"
-		| "unstructured"
+		| 'text'
+		| 'markdown'
+		| 'code'
+		| 'structured'
+		| 'pdf'
+		| 'ocr'
+		| 'unstructured'
 		| null;
 	requiresOCR: boolean;
 	requiresUnstructured: boolean;
@@ -57,16 +57,16 @@ export class MimePolicyEngine {
 	// MIME type mappings to processing strategies
 	private readonly mimeStrategies = new Map<
 		string,
-		Omit<StrategyDecision, "reason">
+		Omit<StrategyDecision, 'reason'>
 	>([
 		// Native text processing
 		[
-			"text/plain",
+			'text/plain',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 1.0,
 				processing: {
-					chunker: "text",
+					chunker: 'text',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -74,12 +74,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"text/markdown",
+			'text/markdown',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 1.0,
 				processing: {
-					chunker: "markdown",
+					chunker: 'markdown',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -87,12 +87,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"text/csv",
+			'text/csv',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 0.9,
 				processing: {
-					chunker: "structured",
+					chunker: 'structured',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -100,12 +100,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"text/html",
+			'text/html',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 0.8,
 				processing: {
-					chunker: "text",
+					chunker: 'text',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -113,12 +113,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/json",
+			'application/json',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 0.9,
 				processing: {
-					chunker: "structured",
+					chunker: 'structured',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -126,12 +126,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/xml",
+			'application/xml',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 0.9,
 				processing: {
-					chunker: "structured",
+					chunker: 'structured',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -141,12 +141,12 @@ export class MimePolicyEngine {
 
 		// Code files
 		[
-			"application/javascript",
+			'application/javascript',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 1.0,
 				processing: {
-					chunker: "code",
+					chunker: 'code',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -154,12 +154,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"text/x-python",
+			'text/x-python',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 1.0,
 				processing: {
-					chunker: "code",
+					chunker: 'code',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -167,12 +167,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"text/x-java-source",
+			'text/x-java-source',
 			{
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 1.0,
 				processing: {
-					chunker: "code",
+					chunker: 'code',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -182,12 +182,12 @@ export class MimePolicyEngine {
 
 		// PDF files (default to native extraction, may fallback to OCR)
 		[
-			"application/pdf",
+			'application/pdf',
 			{
 				strategy: ProcessingStrategy.PDF_NATIVE,
 				confidence: 0.8,
 				processing: {
-					chunker: "pdf",
+					chunker: 'pdf',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: 100,
@@ -197,12 +197,12 @@ export class MimePolicyEngine {
 
 		// Image files requiring OCR
 		[
-			"image/png",
+			'image/png',
 			{
 				strategy: ProcessingStrategy.OCR,
 				confidence: 0.7,
 				processing: {
-					chunker: "ocr",
+					chunker: 'ocr',
 					requiresOCR: true,
 					requiresUnstructured: false,
 					maxPages: 10,
@@ -210,12 +210,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"image/jpeg",
+			'image/jpeg',
 			{
 				strategy: ProcessingStrategy.OCR,
 				confidence: 0.7,
 				processing: {
-					chunker: "ocr",
+					chunker: 'ocr',
 					requiresOCR: true,
 					requiresUnstructured: false,
 					maxPages: 10,
@@ -223,12 +223,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"image/tiff",
+			'image/tiff',
 			{
 				strategy: ProcessingStrategy.OCR,
 				confidence: 0.7,
 				processing: {
-					chunker: "ocr",
+					chunker: 'ocr',
 					requiresOCR: true,
 					requiresUnstructured: false,
 					maxPages: 10,
@@ -236,12 +236,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"image/bmp",
+			'image/bmp',
 			{
 				strategy: ProcessingStrategy.OCR,
 				confidence: 0.6,
 				processing: {
-					chunker: "ocr",
+					chunker: 'ocr',
 					requiresOCR: true,
 					requiresUnstructured: false,
 					maxPages: 10,
@@ -251,12 +251,12 @@ export class MimePolicyEngine {
 
 		// Office documents - best handled by Unstructured API
 		[
-			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 			{
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.9,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: 50,
@@ -264,12 +264,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/vnd.ms-word",
+			'application/vnd.ms-word',
 			{
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.9,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: 50,
@@ -277,12 +277,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+			'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 			{
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.9,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: 100,
@@ -290,12 +290,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/vnd.ms-powerpoint",
+			'application/vnd.ms-powerpoint',
 			{
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.9,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: 100,
@@ -303,12 +303,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 			{
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.8,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: 20,
@@ -316,12 +316,12 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/vnd.ms-excel",
+			'application/vnd.ms-excel',
 			{
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.8,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: 20,
@@ -331,7 +331,7 @@ export class MimePolicyEngine {
 
 		// Rejected file types for security/practicality
 		[
-			"application/x-executable",
+			'application/x-executable',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -339,7 +339,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/octet-stream",
+			'application/octet-stream',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 0.9,
@@ -347,7 +347,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/zip",
+			'application/zip',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -355,7 +355,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"application/x-rar-compressed",
+			'application/x-rar-compressed',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -363,7 +363,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"video/mp4",
+			'video/mp4',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -371,7 +371,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"video/avi",
+			'video/avi',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -379,7 +379,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"audio/mpeg",
+			'audio/mpeg',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -387,7 +387,7 @@ export class MimePolicyEngine {
 			},
 		],
 		[
-			"audio/wav",
+			'audio/wav',
 			{
 				strategy: ProcessingStrategy.REJECT,
 				confidence: 1.0,
@@ -416,13 +416,13 @@ export class MimePolicyEngine {
 		heuristics?: FileHeuristics,
 	): StrategyDecision {
 		// Input validation
-		if (!mimeType || typeof mimeType !== "string") {
-			return this.createRejectionDecision("Invalid MIME type format");
+		if (!mimeType || typeof mimeType !== 'string') {
+			return this.createRejectionDecision('Invalid MIME type format');
 		}
 
 		if (mimeType.length > 200) {
 			return this.createRejectionDecision(
-				"Invalid MIME type format (too long)",
+				'Invalid MIME type format (too long)',
 			);
 		}
 
@@ -464,7 +464,7 @@ export class MimePolicyEngine {
 			};
 
 			// Apply PDF-specific heuristics
-			if (mimeType === "application/pdf" && heuristics) {
+			if (mimeType === 'application/pdf' && heuristics) {
 				decision = this.applyPdfHeuristics(decision, heuristics);
 			}
 
@@ -491,22 +491,22 @@ export class MimePolicyEngine {
 
 	private normalizeMimeType(mimeType: string): string {
 		// Remove parameters (e.g., "text/plain; charset=utf-8" -> "text/plain")
-		return mimeType.split(";")[0].trim().toLowerCase();
+		return mimeType.split(';')[0].trim().toLowerCase();
 	}
 
 	private findPatternMatch(
 		mimeType: string,
-	): Omit<StrategyDecision, "reason"> | null {
-		const [type, subtype] = mimeType.split("/");
+	): Omit<StrategyDecision, 'reason'> | null {
+		const [type, subtype] = mimeType.split('/');
 		if (!type || !subtype) return null;
 
 		// Images fall back to OCR by default
-		if (type === "image") {
+		if (type === 'image') {
 			return {
 				strategy: ProcessingStrategy.OCR,
 				confidence: 0.5,
 				processing: {
-					chunker: "ocr",
+					chunker: 'ocr',
 					requiresOCR: true,
 					requiresUnstructured: false,
 					maxPages: this.config.ocrMaxPages,
@@ -515,12 +515,12 @@ export class MimePolicyEngine {
 		}
 
 		// Office documents fall back to Unstructured
-		if (type === "application" && /vnd\./.test(subtype)) {
+		if (type === 'application' && /vnd\./.test(subtype)) {
 			return {
 				strategy: ProcessingStrategy.UNSTRUCTURED,
 				confidence: 0.7,
 				processing: {
-					chunker: "unstructured",
+					chunker: 'unstructured',
 					requiresOCR: false,
 					requiresUnstructured: true,
 					maxPages: this.config.unstructuredMaxPages,
@@ -537,7 +537,7 @@ export class MimePolicyEngine {
 				strategy: ProcessingStrategy.NATIVE_TEXT,
 				confidence: 0.2,
 				processing: {
-					chunker: "text",
+					chunker: 'text',
 					requiresOCR: false,
 					requiresUnstructured: false,
 					maxPages: null,
@@ -566,13 +566,13 @@ export class MimePolicyEngine {
 		// Security restrictions
 		if (
 			!this.config.allowExecutables &&
-			mimeType === "application/x-executable"
+			mimeType === 'application/x-executable'
 		) {
-			return this.createRejectionDecision("Executable files are not allowed");
+			return this.createRejectionDecision('Executable files are not allowed');
 		}
 
 		if (!this.config.allowArchives && /zip|rar/.test(mimeType)) {
-			return this.createRejectionDecision("Archive files are not allowed");
+			return this.createRejectionDecision('Archive files are not allowed');
 		}
 
 		return decision;
@@ -587,9 +587,9 @@ export class MimePolicyEngine {
 			return {
 				strategy: ProcessingStrategy.OCR,
 				confidence: Math.min(1, decision.confidence + 0.2),
-				reason: "PDF has no text layer, using OCR",
+				reason: 'PDF has no text layer, using OCR',
 				processing: {
-					chunker: "ocr",
+					chunker: 'ocr',
 					requiresOCR: true,
 					requiresUnstructured: false,
 					maxPages: decision.processing?.maxPages ?? this.config.ocrMaxPages,
@@ -604,13 +604,13 @@ export class MimePolicyEngine {
 		if (!decision.processing) return decision;
 		const proc = { ...decision.processing };
 		if (
-			proc.chunker === "ocr" &&
+			proc.chunker === 'ocr' &&
 			(proc.maxPages ?? 0) > this.config.ocrMaxPages
 		) {
 			proc.maxPages = this.config.ocrMaxPages;
 		}
 		if (
-			proc.chunker === "unstructured" &&
+			proc.chunker === 'unstructured' &&
 			(proc.maxPages ?? 0) > this.config.unstructuredMaxPages
 		) {
 			proc.maxPages = this.config.unstructuredMaxPages;
@@ -626,7 +626,7 @@ export class MimePolicyEngine {
 			case ProcessingStrategy.NATIVE_TEXT:
 				return `Text-friendly format: ${mimeType}`;
 			case ProcessingStrategy.PDF_NATIVE:
-				return "PDF with native text extraction";
+				return 'PDF with native text extraction';
 			case ProcessingStrategy.OCR:
 				return `Image-based or non-text content: ${mimeType}`;
 			case ProcessingStrategy.UNSTRUCTURED:

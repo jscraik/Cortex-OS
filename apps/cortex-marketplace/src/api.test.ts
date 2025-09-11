@@ -3,13 +3,13 @@
  * @description TDD tests for marketplace API server
  */
 
-import type { FastifyInstance } from "fastify";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { build } from "./app.js";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { ServerManifest } from "@cortex-os/mcp-registry";
+import type { FastifyInstance } from "fastify";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { build } from "./app.js";
 
 describe("Marketplace API Server", () => {
         let app: FastifyInstance;

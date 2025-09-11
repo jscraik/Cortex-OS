@@ -1,4 +1,4 @@
-import type { IModelRouter as ModelRouter } from "./model-router";
+import type { IModelRouter as ModelRouter } from './model-router';
 
 export function embeddingsHandler(
 	router: ModelRouter,
@@ -51,12 +51,12 @@ export function chatHandler(
 	router: ModelRouter,
 	body: {
 		model?: string;
-		msgs: Array<{ role: "system" | "user" | "assistant"; content: string }>;
+		msgs: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
 		tools?: unknown;
 	},
 ) {
-	if (!router.hasCapability("chat")) {
-		throw new Error("No chat models available");
+	if (!router.hasCapability('chat')) {
+		throw new Error('No chat models available');
 	}
 
 	return router

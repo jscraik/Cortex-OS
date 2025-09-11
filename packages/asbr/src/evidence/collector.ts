@@ -3,16 +3,16 @@
  * Manages evidence pointer collection and validation per blueprint specification
  */
 
-import { readFile } from "node:fs/promises";
-import { createHash } from "crypto";
-import { v4 as uuidv4 } from "uuid";
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import type {
 	Evidence,
 	EvidencePointer,
 	EvidenceRisk,
-} from "../types/index.js";
-import { EvidenceSchema, ValidationError } from "../types/index.js";
-import { pathExists } from "../xdg/index.js";
+} from '../types/index.js';
+import { EvidenceSchema, ValidationError } from '../types/index.js';
+import { pathExists } from '../xdg/index.js';
 
 export interface EvidenceCollectionOptions {
 	includeContent?: boolean;
@@ -26,7 +26,7 @@ export interface EvidenceContext {
 	step?: string;
 	claim: string;
 	sources: Array<{
-		type: "file" | "url" | "repo" | "note";
+		type: 'file' | 'url' | 'repo' | 'note';
 		path?: string;
 		url?: string;
 		content?: string;
@@ -69,13 +69,13 @@ export class EvidenceCollector {
 			confidence,
 			risk,
 			createdAt: new Date().toISOString(),
-			schema: "cortex.evidence@1",
+			schema: 'cortex.evidence@1',
 		};
 
 		// Validate evidence against schema
 		const validation = EvidenceSchema.safeParse(evidence);
 		if (!validation.success) {
-			throw new ValidationError("Invalid evidence structure", {
+			throw new ValidationError('Invalid evidence structure', {
 				errors: validation.error.errors,
 			});
 		}
@@ -121,7 +121,7 @@ export class EvidenceCollector {
 		if (!evidence) {
 			return {
 				isValid: false,
-				errors: ["Evidence not found"],
+				errors: ['Evidence not found'],
 				warnings: [],
 			};
 		}
@@ -142,27 +142,27 @@ export class EvidenceCollector {
 
 		// Validate confidence score
 		if (evidence.confidence < 0 || evidence.confidence > 1) {
-			errors.push("Confidence score must be between 0 and 1");
+			errors.push('Confidence score must be between 0 and 1');
 		}
 
 		// Check for missing claims
-		if (!evidence.claim || evidence.claim.trim() === "") {
-			errors.push("Evidence must have a non-empty claim");
+		if (!evidence.claim || evidence.claim.trim() === '') {
+			errors.push('Evidence must have a non-empty claim');
 		}
 
 		// Validate risk assessment
-		if (!["low", "medium", "high", "unknown"].includes(evidence.risk)) {
-			errors.push("Invalid risk level");
+		if (!['low', 'medium', 'high', 'unknown'].includes(evidence.risk)) {
+			errors.push('Invalid risk level');
 		}
 
 		// Warning for low confidence
 		if (evidence.confidence < 0.3) {
-			warnings.push("Low confidence evidence may need additional validation");
+			warnings.push('Low confidence evidence may need additional validation');
 		}
 
 		// Warning for high risk with high confidence
-		if (evidence.risk === "high" && evidence.confidence > 0.8) {
-			warnings.push("High-risk evidence with high confidence requires review");
+		if (evidence.risk === 'high' && evidence.confidence > 0.8) {
+			warnings.push('High-risk evidence with high confidence requires review');
 		}
 
 		return {
@@ -261,57 +261,57 @@ export class EvidenceCollector {
 	}
 
 	private async createEvidencePointer(
-		source: EvidenceContext["sources"][0],
+		source: EvidenceContext['sources'][0],
 		_options: EvidenceCollectionOptions,
 	): Promise<EvidencePointer> {
 		let hash: string;
 		let path: string;
 
 		switch (source.type) {
-			case "file": {
+			case 'file': {
 				if (!source.path) {
-					throw new ValidationError("File source requires path");
+					throw new ValidationError('File source requires path');
 				}
 
 				if (!(await pathExists(source.path))) {
 					throw new ValidationError(`File not found: ${source.path}`);
 				}
 
-				const content = await readFile(source.path, "utf-8");
-				hash = createHash("sha256").update(content).digest("hex");
+				const content = await readFile(source.path, 'utf-8');
+				hash = createHash('sha256').update(content).digest('hex');
 				path = source.path;
 				break;
 			}
 
-			case "url":
+			case 'url':
 				if (!source.url) {
-					throw new ValidationError("URL source requires url");
+					throw new ValidationError('URL source requires url');
 				}
 
 				// For URLs, hash the URL itself as a placeholder
 				// In a real implementation, this would fetch and hash the content
-				hash = createHash("sha256").update(source.url).digest("hex");
+				hash = createHash('sha256').update(source.url).digest('hex');
 				path = source.url;
 				break;
 
-			case "repo": {
+			case 'repo': {
 				if (!source.path) {
-					throw new ValidationError("Repo source requires path");
+					throw new ValidationError('Repo source requires path');
 				}
 
 				// For repo sources, create a hash based on path and current state
 				const repoContent = source.content || `repo:${source.path}`;
-				hash = createHash("sha256").update(repoContent).digest("hex");
+				hash = createHash('sha256').update(repoContent).digest('hex');
 				path = source.path;
 				break;
 			}
 
-			case "note":
+			case 'note':
 				if (!source.content) {
-					throw new ValidationError("Note source requires content");
+					throw new ValidationError('Note source requires content');
 				}
 
-				hash = createHash("sha256").update(source.content).digest("hex");
+				hash = createHash('sha256').update(source.content).digest('hex');
 				path = `note:${hash.substring(0, 8)}`;
 				break;
 
@@ -355,7 +355,7 @@ export class EvidenceCollector {
 		}
 
 		// Bonus for specific, detailed claims
-		if (claim.length > 100 && claim.includes("because")) {
+		if (claim.length > 100 && claim.includes('because')) {
 			baseConfidence += 0.1;
 		}
 
@@ -371,27 +371,27 @@ export class EvidenceCollector {
 		// Risk assessment based on confidence and claim content
 
 		if (confidence < 0.3) {
-			return "high"; // Low confidence is risky
+			return 'high'; // Low confidence is risky
 		}
 
 		if (confidence > 0.8 && pointers.length >= 2) {
-			return "low"; // High confidence with multiple sources
+			return 'low'; // High confidence with multiple sources
 		}
 
 		// Check for risk indicators in claim
 		const riskKeywords = [
-			"security",
-			"password",
-			"private",
-			"confidential",
-			"delete",
-			"remove",
-			"destroy",
-			"permanent",
-			"financial",
-			"payment",
-			"billing",
-			"cost",
+			'security',
+			'password',
+			'private',
+			'confidential',
+			'delete',
+			'remove',
+			'destroy',
+			'permanent',
+			'financial',
+			'payment',
+			'billing',
+			'cost',
 		];
 
 		const hasRiskKeywords = riskKeywords.some((keyword) =>
@@ -399,18 +399,18 @@ export class EvidenceCollector {
 		);
 
 		if (hasRiskKeywords) {
-			return confidence > 0.6 ? "medium" : "high";
+			return confidence > 0.6 ? 'medium' : 'high';
 		}
 
 		// Default to medium risk
-		return "medium";
+		return 'medium';
 	}
 
 	private determinePrimarySource(
-		sources: EvidenceContext["sources"],
-	): "file" | "url" | "repo" | "note" {
+		sources: EvidenceContext['sources'],
+	): 'file' | 'url' | 'repo' | 'note' {
 		// Return the first source type as primary
-		return sources[0]?.type || "note";
+		return sources[0]?.type || 'note';
 	}
 
 	private async validatePointer(pointer: EvidencePointer): Promise<{
@@ -424,16 +424,16 @@ export class EvidenceCollector {
 		if (!/^[a-f0-9]{64}$/.test(pointer.hash)) {
 			return {
 				isValid: false,
-				error: "Invalid SHA-256 hash format",
+				error: 'Invalid SHA-256 hash format',
 				warnings,
 			};
 		}
 
 		// Validate path
-		if (!pointer.path || pointer.path.trim() === "") {
+		if (!pointer.path || pointer.path.trim() === '') {
 			return {
 				isValid: false,
-				error: "Missing or empty path",
+				error: 'Missing or empty path',
 				warnings,
 			};
 		}
@@ -443,7 +443,7 @@ export class EvidenceCollector {
 			if (pointer.start < 0 || pointer.end < 0) {
 				return {
 					isValid: false,
-					error: "Range values cannot be negative",
+					error: 'Range values cannot be negative',
 					warnings,
 				};
 			}
@@ -451,16 +451,16 @@ export class EvidenceCollector {
 			if (pointer.start > pointer.end) {
 				return {
 					isValid: false,
-					error: "Range start cannot be greater than end",
+					error: 'Range start cannot be greater than end',
 					warnings,
 				};
 			}
 		}
 
 		// Check if file exists (for file pointers)
-		if (!pointer.path.startsWith("http") && !pointer.path.startsWith("note:")) {
+		if (!pointer.path.startsWith('http') && !pointer.path.startsWith('note:')) {
 			if (!(await pathExists(pointer.path))) {
-				warnings.push("Referenced file does not exist");
+				warnings.push('Referenced file does not exist');
 			}
 		}
 

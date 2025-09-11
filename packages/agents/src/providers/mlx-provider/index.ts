@@ -10,17 +10,17 @@ import type {
 	GenerateOptions,
 	GenerateResult,
 	ModelProvider,
-} from "../../lib/types.js";
-import { sleep, withTimeout } from "../../lib/utils.js";
-import { executeMLXGeneration } from "./gateway-client.js";
-import { checkMemoryStatus, checkThermalStatus } from "./thermal-monitor.js";
+} from '../../lib/types.js';
+import { sleep, withTimeout } from '../../lib/utils.js';
+import { executeMLXGeneration } from './gateway-client.js';
+import { checkMemoryStatus, checkThermalStatus } from './thermal-monitor.js';
 import {
 	DEFAULT_CONFIG,
 	type MemoryStatus,
 	type MLXProviderConfig,
 	type MLXState,
 	type ThermalStatus,
-} from "./types.js";
+} from './types.js';
 
 // Re-export types
 export type { ThermalStatus, MemoryStatus, MLXProviderConfig };
@@ -31,14 +31,14 @@ const createMLXState = (config: MLXProviderConfig): MLXState => ({
 	lastThermalCheck: 0,
 	thermalStatus: {
 		temperature: 0,
-		level: "normal",
+		level: 'normal',
 		throttled: false,
 		timestamp: Date.now(),
 	},
 	memoryStatus: {
 		used: 0,
 		available: 0,
-		pressure: "normal",
+		pressure: 'normal',
 		swapUsed: 0,
 	},
 	requestCount: 0,
@@ -59,7 +59,7 @@ const shouldThrottleRequest = (state: MLXState): boolean => {
 	}
 
 	return (
-		state.thermalStatus.throttled || state.memoryStatus.pressure === "critical"
+		state.thermalStatus.throttled || state.memoryStatus.pressure === 'critical'
 	);
 };
 
@@ -94,12 +94,12 @@ const generate = async (
 
 	const now = Date.now();
 	if (state.cbOpenUntil && now < state.cbOpenUntil) {
-		throw new Error("MLX circuit breaker open");
+		throw new Error('MLX circuit breaker open');
 	}
 
 	if (shouldThrottleRequest(state)) {
-		if (state.thermalStatus.level === "critical") {
-			throw new Error("MLX throttled due to critical thermal state");
+		if (state.thermalStatus.level === 'critical') {
+			throw new Error('MLX throttled due to critical thermal state');
 		}
 
 		await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -136,7 +136,7 @@ const generate = async (
 				return result;
 			} catch (e: any) {
 				lastErr = e;
-				const status = typeof e?.status === "number" ? e.status : undefined;
+				const status = typeof e?.status === 'number' ? e.status : undefined;
 				const retryable = !status || status >= 500;
 				if (attempt < state.config.httpRetries && retryable) {
 					await sleep(state.config.httpBackoffMs * (attempt + 1));
@@ -166,7 +166,7 @@ export const createMLXProvider = (config: MLXProviderConfig): ModelProvider => {
 	const state = createMLXState(config);
 
 	return {
-		name: "mlx",
+		name: 'mlx',
 		generate: (prompt: string, options: GenerateOptions = {}) =>
 			generate(prompt, options, state),
 		isAvailable: () => Promise.resolve(true),
@@ -176,13 +176,13 @@ export const createMLXProvider = (config: MLXProviderConfig): ModelProvider => {
 
 export const createAutoMLXProvider = async (): Promise<ModelProvider> => {
 	const commonPaths = [
-		"~/.cache/huggingface/hub/models--mlx-community--Llama-3.2-3B-Instruct-4bit",
-		"~/.cache/huggingface/hub/models--mlx-community--Qwen2.5-7B-Instruct-4bit",
-		"/opt/homebrew/share/mlx/models",
-		"./models",
+		'~/.cache/huggingface/hub/models--mlx-community--Llama-3.2-3B-Instruct-4bit',
+		'~/.cache/huggingface/hub/models--mlx-community--Qwen2.5-7B-Instruct-4bit',
+		'/opt/homebrew/share/mlx/models',
+		'./models',
 	];
 
-	const expandedPath = commonPaths[0]?.replace("~", process.env.HOME || "");
+	const expandedPath = commonPaths[0]?.replace('~', process.env.HOME || '');
 	return createMLXProvider({
 		modelPath: expandedPath,
 		enableThermalMonitoring: true,

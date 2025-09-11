@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import type { z } from 'zod';
 
 /**
  * Schema registry types for centralized event schema management
@@ -35,13 +35,13 @@ export interface SchemaMetadata {
  */
 export enum SchemaCompatibility {
 	/** New schemas must be backward compatible */
-	BACKWARD = "BACKWARD",
+	BACKWARD = 'BACKWARD',
 	/** New schemas must be forward compatible */
-	FORWARD = "FORWARD",
+	FORWARD = 'FORWARD',
 	/** New schemas must be both backward and forward compatible */
-	FULL = "FULL",
+	FULL = 'FULL',
 	/** No compatibility requirements */
-	NONE = "NONE",
+	NONE = 'NONE',
 }
 
 /**

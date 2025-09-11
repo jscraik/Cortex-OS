@@ -1,17 +1,18 @@
-import type { PRPState } from "../../state.js";
+import type { PRPState } from '../../state.js';
 
 export async function validateTDDCycle(
 	state: PRPState,
 ): Promise<{ passed: boolean; details: any }> {
 	const tddEvidence = state.evidence.filter(
-		(e) => e.type === "test" && e.phase === "build",
+		(e) => e.type === 'test' && e.phase === 'build',
 	);
 	const hasTests = tddEvidence.length > 0;
-	const hasCoverage =
+	const hasCoverage = Boolean(
 		state.outputs?.testCoverage ||
 		state.validationResults?.build?.evidence?.some((id) =>
-			state.evidence.find((e) => e.id === id)?.content.includes("coverage"),
-		);
+			state.evidence.find((e) => e.id === id)?.content.includes('coverage'),
+		)
+	);
 	return {
 		passed: hasTests && hasCoverage,
 		details: {
@@ -28,23 +29,23 @@ export async function validateCodeReview(
 ): Promise<{ blockers: number; majors: number; details: any }> {
 	const codeQualityIssues = [
 		{
-			severity: "major",
-			type: "code-complexity",
-			message: "Function complexity exceeds threshold in module X",
-			file: "src/complex-module.ts",
+			severity: 'major',
+			type: 'code-complexity',
+			message: 'Function complexity exceeds threshold in module X',
+			file: 'src/complex-module.ts',
 		},
 		{
-			severity: "minor",
-			type: "naming-convention",
-			message: "Variable names not following camelCase convention",
-			file: "src/utils.ts",
+			severity: 'minor',
+			type: 'naming-convention',
+			message: 'Variable names not following camelCase convention',
+			file: 'src/utils.ts',
 		},
 	];
 	const blockers = codeQualityIssues.filter(
-		(issue) => issue.severity === "blocker",
+		(issue) => issue.severity === 'blocker',
 	).length;
 	const majors = codeQualityIssues.filter(
-		(issue) => issue.severity === "major",
+		(issue) => issue.severity === 'major',
 	).length;
 	return {
 		blockers,

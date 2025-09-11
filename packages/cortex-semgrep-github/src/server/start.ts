@@ -3,4 +3,4 @@
  * @description Starts the Semgrep GitHub App server
  */
 
-import "./app.js";
+import './app.js';

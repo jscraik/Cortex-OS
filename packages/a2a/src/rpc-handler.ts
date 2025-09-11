@@ -3,7 +3,7 @@
  * Implements proper JSON-RPC message handling with A2A methods
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 import {
 	A2A_ERROR_CODES,
 	type JsonRpcRequest,
@@ -12,8 +12,8 @@ import {
 	TaskCancelParamsSchema,
 	TaskGetParamsSchema,
 	TaskSendParamsSchema,
-} from "./protocol.js";
-import { TaskManager } from "./task-manager.js";
+} from './protocol.js';
+import { TaskManager } from './task-manager.js';
 
 // Simple implementations for dependencies that don't exist yet
 class StructuredError extends Error {
@@ -23,7 +23,7 @@ class StructuredError extends Error {
 		public details?: unknown,
 	) {
 		super(message);
-		this.name = "StructuredError";
+		this.name = 'StructuredError';
 	}
 }
 
@@ -41,7 +41,7 @@ export class A2ARpcHandler implements RpcHandler {
 		try {
 			const result = await this.dispatchMethod(request);
 			return {
-				jsonrpc: "2.0",
+				jsonrpc: '2.0',
 				id: request.id,
 				result,
 			};
@@ -52,28 +52,28 @@ export class A2ARpcHandler implements RpcHandler {
 
 	private async dispatchMethod(request: JsonRpcRequest): Promise<unknown> {
 		switch (request.method) {
-			case "tasks/send": {
+			case 'tasks/send': {
 				const params = TaskSendParamsSchema.parse(request.params);
 				return this.taskManager.sendTask(params);
 			}
 
-			case "tasks/get": {
+			case 'tasks/get': {
 				const params = TaskGetParamsSchema.parse(request.params);
 				return this.taskManager.getTask(params);
 			}
 
-			case "tasks/cancel": {
+			case 'tasks/cancel': {
 				const params = TaskCancelParamsSchema.parse(request.params);
 				await this.taskManager.cancelTask(params);
 				return { success: true };
 			}
 
-			case "tasks/list": {
+			case 'tasks/list': {
 				// Utility method for debugging
 				const status =
 					request.params &&
-					typeof request.params === "object" &&
-					"status" in request.params
+					typeof request.params === 'object' &&
+					'status' in request.params
 						? (request.params.status as any)
 						: undefined;
 				return this.taskManager.listTasks(status);
@@ -81,7 +81,7 @@ export class A2ARpcHandler implements RpcHandler {
 
 			default:
 				throw new StructuredError(
-					"METHOD_NOT_FOUND",
+					'METHOD_NOT_FOUND',
 					`Method '${request.method}' not found`,
 					{
 						method: request.method,
@@ -92,35 +92,35 @@ export class A2ARpcHandler implements RpcHandler {
 	}
 
 	private createErrorResponse(
-		id: JsonRpcRequest["id"],
+		id: JsonRpcRequest['id'],
 		error: unknown,
 	): JsonRpcResponse {
 		if (error instanceof z.ZodError) {
 			return {
-				jsonrpc: "2.0",
+				jsonrpc: '2.0',
 				id,
 				error: {
 					code: A2A_ERROR_CODES.INVALID_PARAMS,
-					message: "Invalid parameters",
+					message: 'Invalid parameters',
 					data: { issues: error.issues },
 				},
 			};
 		}
 
 		// Handle StructuredError - check by name to avoid instanceof issues
-		if (error instanceof Error && error.name === "StructuredError") {
+		if (error instanceof Error && error.name === 'StructuredError') {
 			const structuredError = error as any; // Cast to access custom properties
 
 			// Map StructuredError codes to A2A error codes
 			let errorCode: number = A2A_ERROR_CODES.INTERNAL_ERROR;
-			if (structuredError.code === "TASK_NOT_FOUND") {
+			if (structuredError.code === 'TASK_NOT_FOUND') {
 				errorCode = A2A_ERROR_CODES.TASK_NOT_FOUND;
-			} else if (structuredError.code === "METHOD_NOT_FOUND") {
+			} else if (structuredError.code === 'METHOD_NOT_FOUND') {
 				errorCode = A2A_ERROR_CODES.METHOD_NOT_FOUND;
 			}
 
 			return {
-				jsonrpc: "2.0",
+				jsonrpc: '2.0',
 				id,
 				error: {
 					code: errorCode,
@@ -131,11 +131,11 @@ export class A2ARpcHandler implements RpcHandler {
 		}
 
 		return {
-			jsonrpc: "2.0",
+			jsonrpc: '2.0',
 			id,
 			error: {
 				code: A2A_ERROR_CODES.INTERNAL_ERROR,
-				message: error instanceof Error ? error.message : "Internal error",
+				message: error instanceof Error ? error.message : 'Internal error',
 				data: error instanceof Error ? { stack: error.stack } : error,
 			},
 		};
@@ -152,11 +152,11 @@ export async function handleA2A(input: unknown): Promise<string> {
 		const parseResult = JsonRpcRequestSchema.safeParse(input);
 		if (!parseResult.success) {
 			const errorResponse: JsonRpcResponse = {
-				jsonrpc: "2.0",
+				jsonrpc: '2.0',
 				id: null,
 				error: {
 					code: A2A_ERROR_CODES.INVALID_REQUEST,
-					message: "Invalid JSON-RPC request",
+					message: 'Invalid JSON-RPC request',
 					data: { issues: parseResult.error.issues },
 				},
 			};
@@ -178,11 +178,11 @@ export async function handleA2A(input: unknown): Promise<string> {
 	} catch (error) {
 		// Fallback error response
 		const errorResponse: JsonRpcResponse = {
-			jsonrpc: "2.0",
+			jsonrpc: '2.0',
 			id: null,
 			error: {
 				code: A2A_ERROR_CODES.INTERNAL_ERROR,
-				message: error instanceof Error ? error.message : "Unknown error",
+				message: error instanceof Error ? error.message : 'Unknown error',
 				data: error instanceof Error ? { stack: error.stack } : error,
 			},
 		};

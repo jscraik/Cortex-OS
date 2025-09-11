@@ -21,12 +21,23 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
+
+# Add safe subprocess for security
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../../libs/python"))
+try:
+    from safe_subprocess import SafeSubprocessError, safe_run, SYSTEM_INFO_COMMANDS
+except ImportError:
+    # Fallback if safe_subprocess not available
+    SafeSubprocessError = Exception
+    safe_run = subprocess.run
+    SYSTEM_INFO_COMMANDS = None
 
 try:
     import psutil
@@ -166,14 +177,16 @@ class AppleSiliconThermalMonitor:
             if not sysctl_path:
                 return False
 
-            result = subprocess.run(
+            # Use safe subprocess execution
+            result = safe_run(
                 [sysctl_path, "-n", "machdep.cpu.brand_string"],
+                allowed_commands=SYSTEM_INFO_COMMANDS,
                 capture_output=True,
                 text=True,
                 timeout=1,
             )
             return "Apple" in result.stdout
-        except subprocess.SubprocessError:
+        except (subprocess.SubprocessError, SafeSubprocessError):
             return False
 
     async def get_thermal_metrics(self) -> ThermalMetrics:

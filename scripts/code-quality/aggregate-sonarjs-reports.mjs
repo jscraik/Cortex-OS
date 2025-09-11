@@ -3,8 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 const reportsDir = path.resolve(process.cwd(), "reports");
+const eslintDir = path.join(reportsDir, "eslint");
 async function main() {
 	await fs.promises.mkdir(reportsDir, { recursive: true });
+	await fs.promises.mkdir(eslintDir, { recursive: true });
 	const files = await fs.promises.readdir(reportsDir);
 	const findings = [];
 	for (const f of files) {
@@ -51,6 +53,15 @@ async function main() {
 			`${i + 1}. ${r.package} - ${r.file}:${r.line} (count=${r.count})`,
 		);
 	});
+
+	// Also write a text summary consumed by scheduled-lint workflow summary
+	const txt = [
+		"Top cognitive-complexity findings:",
+		...ranked.slice(0, 50).map((r, i) => `${i + 1}. ${r.package} - ${r.file}:${r.line} (count=${r.count})`),
+	].join("\n");
+	const txtPath = path.join(eslintDir, "sonarjs-aggregate.txt");
+	await fs.promises.writeFile(txtPath, txt, "utf8");
+	console.log(`Wrote ${txtPath}`);
 }
 
 main().catch((err) => {

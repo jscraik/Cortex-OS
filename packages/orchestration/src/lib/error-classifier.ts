@@ -4,24 +4,24 @@
  */
 
 export enum ErrorType {
-	RETRYABLE = "retryable",
-	NON_RETRYABLE = "non_retryable",
-	RATE_LIMITED = "rate_limited",
-	RESOURCE_EXHAUSTED = "resource_exhausted",
-	AUTHENTICATION_ERROR = "authentication_error",
-	AUTHORIZATION_ERROR = "authorization_error",
-	TIMEOUT = "timeout",
-	NETWORK_ERROR = "network_error",
-	VALIDATION_ERROR = "validation_error",
-	INTERNAL_ERROR = "internal_error",
+	RETRYABLE = 'retryable',
+	NON_RETRYABLE = 'non_retryable',
+	RATE_LIMITED = 'rate_limited',
+	RESOURCE_EXHAUSTED = 'resource_exhausted',
+	AUTHENTICATION_ERROR = 'authentication_error',
+	AUTHORIZATION_ERROR = 'authorization_error',
+	TIMEOUT = 'timeout',
+	NETWORK_ERROR = 'network_error',
+	VALIDATION_ERROR = 'validation_error',
+	INTERNAL_ERROR = 'internal_error',
 }
 
 export enum RetryStrategy {
-	NONE = "none",
-	IMMEDIATE = "immediate",
-	LINEAR = "linear",
-	EXPONENTIAL = "exponential",
-	EXPONENTIAL_WITH_JITTER = "exponential_with_jitter",
+	NONE = 'none',
+	IMMEDIATE = 'immediate',
+	LINEAR = 'linear',
+	EXPONENTIAL = 'exponential',
+	EXPONENTIAL_WITH_JITTER = 'exponential_with_jitter',
 }
 
 export interface ErrorClassification {
@@ -109,7 +109,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 2,
 		jitter: true,
 		circuitBreakerEnabled: false,
-		description: "Transient error that may succeed on retry",
+		description: 'Transient error that may succeed on retry',
 	},
 	[ErrorType.NON_RETRYABLE]: {
 		type: ErrorType.NON_RETRYABLE,
@@ -120,7 +120,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 1,
 		jitter: false,
 		circuitBreakerEnabled: false,
-		description: "Permanent error that will not succeed on retry",
+		description: 'Permanent error that will not succeed on retry',
 	},
 	[ErrorType.RATE_LIMITED]: {
 		type: ErrorType.RATE_LIMITED,
@@ -131,7 +131,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 2,
 		jitter: false,
 		circuitBreakerEnabled: true,
-		description: "Rate limit exceeded, use exponential backoff",
+		description: 'Rate limit exceeded, use exponential backoff',
 	},
 	[ErrorType.RESOURCE_EXHAUSTED]: {
 		type: ErrorType.RESOURCE_EXHAUSTED,
@@ -142,7 +142,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 3,
 		jitter: true,
 		circuitBreakerEnabled: true,
-		description: "Resource exhaustion, longer delays needed",
+		description: 'Resource exhaustion, longer delays needed',
 	},
 	[ErrorType.AUTHENTICATION_ERROR]: {
 		type: ErrorType.AUTHENTICATION_ERROR,
@@ -153,7 +153,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 1,
 		jitter: false,
 		circuitBreakerEnabled: false,
-		description: "Authentication failed, requires credential refresh",
+		description: 'Authentication failed, requires credential refresh',
 	},
 	[ErrorType.AUTHORIZATION_ERROR]: {
 		type: ErrorType.AUTHORIZATION_ERROR,
@@ -164,7 +164,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 1,
 		jitter: false,
 		circuitBreakerEnabled: false,
-		description: "Authorization failed, insufficient permissions",
+		description: 'Authorization failed, insufficient permissions',
 	},
 	[ErrorType.TIMEOUT]: {
 		type: ErrorType.TIMEOUT,
@@ -175,7 +175,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 2,
 		jitter: true,
 		circuitBreakerEnabled: true,
-		description: "Operation timed out, may succeed with retry",
+		description: 'Operation timed out, may succeed with retry',
 	},
 	[ErrorType.NETWORK_ERROR]: {
 		type: ErrorType.NETWORK_ERROR,
@@ -186,7 +186,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 2,
 		jitter: true,
 		circuitBreakerEnabled: true,
-		description: "Network connectivity issue, likely transient",
+		description: 'Network connectivity issue, likely transient',
 	},
 	[ErrorType.VALIDATION_ERROR]: {
 		type: ErrorType.VALIDATION_ERROR,
@@ -197,7 +197,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 1,
 		jitter: false,
 		circuitBreakerEnabled: false,
-		description: "Input validation failed, requires correction",
+		description: 'Input validation failed, requires correction',
 	},
 	[ErrorType.INTERNAL_ERROR]: {
 		type: ErrorType.INTERNAL_ERROR,
@@ -208,7 +208,7 @@ const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
 		backoffMultiplier: 2,
 		jitter: true,
 		circuitBreakerEnabled: true,
-		description: "Internal server error, may be transient",
+		description: 'Internal server error, may be transient',
 	},
 };
 
@@ -232,36 +232,36 @@ export function classifyError(error: any): ErrorClassification {
 	}
 
 	// Check error message patterns
-	const message = (error.message || "").toLowerCase();
+	const message = (error.message || '').toLowerCase();
 
-	if (message.includes("timeout")) {
+	if (message.includes('timeout')) {
 		return ERROR_CLASSIFICATIONS[ErrorType.TIMEOUT];
 	}
 
-	if (message.includes("rate limit") || message.includes("too many requests")) {
+	if (message.includes('rate limit') || message.includes('too many requests')) {
 		return ERROR_CLASSIFICATIONS[ErrorType.RATE_LIMITED];
 	}
 
-	if (message.includes("network") || message.includes("connection")) {
+	if (message.includes('network') || message.includes('connection')) {
 		return ERROR_CLASSIFICATIONS[ErrorType.NETWORK_ERROR];
 	}
 
-	if (message.includes("validation") || message.includes("invalid")) {
+	if (message.includes('validation') || message.includes('invalid')) {
 		return ERROR_CLASSIFICATIONS[ErrorType.VALIDATION_ERROR];
 	}
 
 	if (
-		message.includes("auth") ||
-		message.includes("permission") ||
-		message.includes("access denied")
+		message.includes('auth') ||
+		message.includes('permission') ||
+		message.includes('access denied')
 	) {
 		return ERROR_CLASSIFICATIONS[ErrorType.AUTHORIZATION_ERROR];
 	}
 
 	if (
-		message.includes("resource") ||
-		message.includes("memory") ||
-		message.includes("disk")
+		message.includes('resource') ||
+		message.includes('memory') ||
+		message.includes('disk')
 	) {
 		return ERROR_CLASSIFICATIONS[ErrorType.RESOURCE_EXHAUSTED];
 	}
@@ -276,7 +276,7 @@ export function classifyError(error: any): ErrorClassification {
 		backoffMultiplier: 2,
 		jitter: true,
 		circuitBreakerEnabled: false,
-		description: "Unknown error, assuming retryable with conservative settings",
+		description: 'Unknown error, assuming retryable with conservative settings',
 	};
 }
 

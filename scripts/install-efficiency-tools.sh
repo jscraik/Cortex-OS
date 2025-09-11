@@ -127,6 +127,15 @@ install_linux() {
     log "Using apt-get to install packages"
     sudo apt-get update
     sudo apt-get install -y ripgrep universal-ctags hyperfine git-delta gitleaks curl unzip
+    # ast-grep via official Debian package if available, else curl installer
+    if ! command -v ast-grep >/dev/null 2>&1; then
+      if apt-cache show ast-grep >/dev/null 2>&1; then
+        sudo apt-get install -y ast-grep || true
+      else
+        log "Installing ast-grep via official install script"
+        curl -fsSL https://raw.githubusercontent.com/ast-grep/ast-grep/main/install.sh | bash -s -- -b "${BIN_DIR}" || true
+      fi
+    fi
   else
     err "This Linux distro is not using apt-get. Please install prerequisites manually: ripgrep universal-ctags hyperfine git-delta gitleaks curl unzip"
   fi
@@ -141,6 +150,10 @@ install_macos() {
     brew update || true
     # Note: formula is git-delta (a.k.a. delta)
     brew install ripgrep universal-ctags hyperfine git-delta gitleaks curl unzip || true
+    # Install ast-grep via Homebrew if available
+    if ! command -v ast-grep >/dev/null 2>&1; then
+      brew install ast-grep || true
+    fi
   else
     warn "Homebrew not found. Consider installing Homebrew: https://brew.sh"
   fi
@@ -169,5 +182,6 @@ command -v hyperfine >/dev/null 2>&1 && hyperfine --version || true
 command -v delta >/dev/null 2>&1 && delta --version | head -n1 || true
 command -v gitleaks >/dev/null 2>&1 && gitleaks version || true
 command -v semgrep >/dev/null 2>&1 && semgrep --version || true
+command -v ast-grep >/dev/null 2>&1 && ast-grep --version || true
 command -v codeql >/dev/null 2>&1 && codeql --version || true
 command -v src >/dev/null 2>&1 && src version || true

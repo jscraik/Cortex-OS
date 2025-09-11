@@ -8,14 +8,12 @@
 import { z } from 'zod';
 
 // Base event structure following CloudEvents 1.0 spec
-export const baseEventSchema = z.object({
-	specversion: z.literal('1.0'),
-	type: z.string(),
-	data: z.record(z.any()),
-	timestamp: z.string().datetime().optional(),
-	source: z.string().optional(),
-	id: z.string().optional(),
-});
+export const baseEventSchema = z
+  .object({
+    type: z.string(),
+    data: z.record(z.any()),
+  })
+  .passthrough();
 
 // Agent lifecycle events
 export const agentStartedEventSchema = baseEventSchema.extend({
@@ -242,7 +240,6 @@ export const agentEventCatalog = {
 			timestamp: z.string(),
 		}),
 	}),
-	'security.workflow_unauthorized': workflowUnauthorizedEventSchema,
 } as const;
 
 // Unified AgentEvent union for event bus typing

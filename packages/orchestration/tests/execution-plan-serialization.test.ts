@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { ExecutionPlanSchema } from "../src/types.js";
+import { describe, expect, it } from 'vitest';
+import { ExecutionPlanSchema } from '../src/types.js';
 
 const basePlan = {
-	id: "00000000-0000-0000-0000-000000000000",
-	taskId: "00000000-0000-0000-0000-000000000001",
-	strategy: "sequential",
+	id: '00000000-0000-0000-0000-000000000000',
+	taskId: '00000000-0000-0000-0000-000000000001',
+	strategy: 'sequential',
 	phases: [],
 	dependencies: {},
 	estimatedDuration: 0,
@@ -17,15 +17,15 @@ const basePlan = {
 	createdAt: new Date(),
 };
 
-describe("ExecutionPlanSchema serialization", () => {
-	it("parses plan without fallbackStrategies", () => {
+describe('ExecutionPlanSchema serialization', () => {
+	it('parses plan without fallbackStrategies', () => {
 		expect(() => ExecutionPlanSchema.parse(basePlan)).not.toThrow();
 	});
 
-	it("rejects plan with fallbackStrategies", () => {
+	it('rejects plan with fallbackStrategies', () => {
 		const withFallback = {
 			...basePlan,
-			fallbackStrategies: ["sequential"],
+			fallbackStrategies: ['sequential'],
 		} as unknown;
 		expect(() => ExecutionPlanSchema.parse(withFallback)).toThrow();
 	});

@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
+import { z } from 'zod';
 import type { ServerInfo } from './contracts.js';
 import { ServerInfoSchema } from './contracts.js';
-import { z } from 'zod';
 
 export interface EnhancedClient {
 	callTool(input: { name: string; arguments?: unknown }): Promise<unknown>;

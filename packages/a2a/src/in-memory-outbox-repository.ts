@@ -2,7 +2,7 @@ import {
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxRepository,
-} from '@cortex-os/a2a-contracts/outbox-types';
+} from '../a2a-contracts/src/outbox-types.js';
 
 import { v4 as uuidv4 } from 'uuid';
 

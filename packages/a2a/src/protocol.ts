@@ -3,23 +3,23 @@
  * Following the official A2A protocol specification
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // A2A Protocol Core Schemas
 export const TaskIdSchema = z.string().min(1);
 
 export const TaskStatusSchema = z.enum([
-	"pending",
-	"running",
-	"completed",
-	"failed",
-	"cancelled",
+	'pending',
+	'running',
+	'completed',
+	'failed',
+	'cancelled',
 ]);
 
 export const TaskSendParamsSchema = z.object({
 	id: TaskIdSchema.optional(),
 	message: z.object({
-		role: z.enum(["user", "assistant", "system"]),
+		role: z.enum(['user', 'assistant', 'system']),
 		parts: z.array(
 			z.object({
 				text: z.string().optional(),
@@ -30,7 +30,7 @@ export const TaskSendParamsSchema = z.object({
 	context: z
 		.array(
 			z.object({
-				role: z.enum(["user", "assistant", "system"]),
+				role: z.enum(['user', 'assistant', 'system']),
 				parts: z.array(
 					z.object({
 						text: z.string().optional(),
@@ -55,7 +55,7 @@ export const TaskResultSchema = z.object({
 	status: TaskStatusSchema,
 	message: z
 		.object({
-			role: z.enum(["assistant"]),
+			role: z.enum(['assistant']),
 			parts: z.array(
 				z.object({
 					text: z.string().optional(),
@@ -88,14 +88,14 @@ export const TaskResultSchema = z.object({
 });
 
 export const JsonRpcRequestSchema = z.object({
-	jsonrpc: z.literal("2.0"),
+	jsonrpc: z.literal('2.0'),
 	id: z.union([z.string(), z.number(), z.null()]),
 	method: z.string(),
 	params: z.unknown().optional(),
 });
 
 export const JsonRpcResponseSchema = z.object({
-	jsonrpc: z.literal("2.0"),
+	jsonrpc: z.literal('2.0'),
 	id: z.union([z.string(), z.number(), z.null()]),
 	result: z.unknown().optional(),
 	error: z

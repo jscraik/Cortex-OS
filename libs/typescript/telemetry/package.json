@@ -23,9 +23,9 @@
 	},
 	"dependencies": {
 		"@opentelemetry/api": "^1.9.0",
-		"@opentelemetry/sdk-node": "^0.52.1",
-		"@opentelemetry/exporter-jaeger": "^1.28.0",
-		"@opentelemetry/exporter-prometheus": "^0.52.1"
+		"@opentelemetry/sdk-node": "^0.205.0",
+		"@opentelemetry/exporter-jaeger": "^2.1.0",
+		"@opentelemetry/exporter-prometheus": "^0.205.0"
 	},
 	"devDependencies": {
 		"typescript": "^5.5.4"

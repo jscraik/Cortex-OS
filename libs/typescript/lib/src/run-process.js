@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn } from 'node:child_process';
 export async function runProcess(
 	command,
 	args = [],
@@ -6,15 +6,15 @@ export async function runProcess(
 ) {
 	return new Promise((resolve, reject) => {
 		const child = spawn(command, args, {
-			stdio: ["pipe", "pipe", "pipe"],
+			stdio: ['pipe', 'pipe', 'pipe'],
 			env,
 		});
-		let stdout = "";
-		let stderr = "";
-		child.stdout?.on("data", (d) => {
+		let stdout = '';
+		let stderr = '';
+		child.stdout?.on('data', (d) => {
 			stdout += d.toString();
 		});
-		child.stderr?.on("data", (d) => {
+		child.stderr?.on('data', (d) => {
 			stderr += d.toString();
 		});
 		if (input) {
@@ -25,11 +25,11 @@ export async function runProcess(
 			child.kill();
 			reject(new Error(`Process timed out after ${timeoutMs}ms`));
 		}, timeoutMs);
-		child.on("error", (err) => {
+		child.on('error', (err) => {
 			clearTimeout(timer);
 			reject(err);
 		});
-		child.on("close", (code) => {
+		child.on('close', (code) => {
 			clearTimeout(timer);
 			if (code !== 0) {
 				reject(new Error(stderr || `Process exited with code ${code}`));

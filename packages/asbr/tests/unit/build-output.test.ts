@@ -1,13 +1,19 @@
-import { existsSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import { execSync } from 'node:child_process';
+import { existsSync, rmSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 describe('build output', () => {
-  it('includes compiled ASBR dist', () => {
-    const distPath = resolve(__dirname, '../../dist/index.js');
-    expect(existsSync(distPath)).toBe(true);
-  });
+	const root = resolve(__dirname, '../../../..');
+	const pkg = join(root, 'packages/asbr');
+	const dist = join(pkg, 'dist');
+
+	it('emits compiled artifacts', () => {
+		if (existsSync(dist)) rmSync(dist, { recursive: true, force: true });
+
+		execSync('pnpm --filter @cortex-os/asbr build', {
+			cwd: root,
+			stdio: 'inherit',
+		});
+		expect(existsSync(join(dist, 'index.js'))).toBe(true);
+	});
 });

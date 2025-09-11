@@ -46,7 +46,7 @@ blocks:
 
       # INFO:
 
-      # This prompt will install / migrate from eslint/prettier to biomejs 
+      # This prompt will install / migrate from eslint/prettier to biomejs
       https://biomejs.dev/
 
 

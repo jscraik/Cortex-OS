@@ -18,4 +18,3 @@ model Memory {
   @@index([kind])
   @@index([embeddingModel])
 }
-

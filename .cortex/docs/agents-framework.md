@@ -186,4 +186,3 @@ Events are CloudEvents 1.0 compatible and published to the A2A bus and/or JSONL 
 ---
 
 This architecture is local‑first (MLX), with graceful fallbacks to Ollama and MCP, and aligns with OWASP LLM‑10 and PRD governance (CloudEvents, provenance, deterministic tests).
-

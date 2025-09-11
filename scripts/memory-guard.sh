@@ -22,7 +22,7 @@ start_daemon() {
             rm -f "$PID_FILE"
         fi
     fi
-    
+
     echo "Starting memory guard daemon..."
     nohup "$MEMORY_MONITOR" daemon > /tmp/cortex-memory-guard.log 2>&1 &
     echo $! > "$PID_FILE"
@@ -30,7 +30,7 @@ start_daemon() {
     echo "Logs: /tmp/cortex-memory-guard.log"
 }
 
-# Function to stop monitoring daemon  
+# Function to stop monitoring daemon
 stop_daemon() {
     if [ -f "$PID_FILE" ]; then
         local pid
@@ -56,7 +56,7 @@ status_daemon() {
         pid=$(cat "$PID_FILE")
         if kill -0 "$pid" 2>/dev/null; then
             echo "Memory guard daemon is running (PID: $pid)"
-            
+
             # Show recent log entries
             if [ -f "/tmp/cortex-memory-guard.log" ]; then
                 echo "Recent activity:"
@@ -74,23 +74,23 @@ status_daemon() {
 # Emergency kill function
 emergency_kill() {
     echo "🚨 EMERGENCY: Killing all test processes and high-memory Node.js processes"
-    
+
     # Kill all test runners
     pkill -f "vitest" || true
-    pkill -f "jest" || true  
+    pkill -f "jest" || true
     pkill -f "mocha" || true
     pkill -f "pnpm test" || true
     pkill -f "npm test" || true
-    
+
     # Kill high-memory Node processes (>500MB)
     ps aux | awk '/node/ && $6 > 512000 {
         printf "Killing high-memory Node process PID %s using %d MB\n", $2, int($6/1024)
         system("kill -9 " $2)
     }'
-    
+
     # Kill long-running gitleaks
     pkill -f "gitleaks" || true
-    
+
     echo "Emergency cleanup completed"
 }
 
@@ -102,7 +102,7 @@ usage() {
     echo ""
     echo "Commands:"
     echo "  start     - Start memory monitoring daemon"
-    echo "  stop      - Stop memory monitoring daemon" 
+    echo "  stop      - Stop memory monitoring daemon"
     echo "  status    - Check daemon status and recent activity"
     echo "  emergency - Emergency kill of all test processes"
     echo "  monitor   - Run single memory check"

@@ -1,4 +1,4 @@
-declare module "pino" {
+declare module 'pino' {
 	export interface Logger {
 		info: (msg: string, obj?: unknown) => void;
 		warn: (msg: string, obj?: unknown) => void;

@@ -1,7 +1,7 @@
-import { beforeEach, expect, test, vi } from "vitest";
-import { ASBRAIIntegration } from "../asbr-ai-integration.js";
+import { beforeEach, expect, test, vi } from 'vitest';
+import { ASBRAIIntegration } from '../asbr-ai-integration.js';
 
-vi.mock("../ai-capabilities.js", () => ({
+vi.mock('../ai-capabilities.js', () => ({
 	createAICapabilities: vi.fn(() => ({
 		generate: vi.fn(),
 		addKnowledge: vi.fn(),
@@ -16,12 +16,12 @@ let integration: ASBRAIIntegration;
 let mockAICapabilities: { ragQuery: ReturnType<typeof vi.fn> };
 const evidence = [
 	{
-		id: "e1",
-		taskId: "t1",
-		claim: "test claim",
+		id: 'e1',
+		taskId: 't1',
+		claim: 'test claim',
 		confidence: 0.5,
-		riskLevel: "low" as const,
-		source: { type: "file", id: "s1" },
+		riskLevel: 'low' as const,
+		source: { type: 'file', id: 's1' },
 		timestamp: new Date().toISOString(),
 		tags: [],
 		relatedEvidenceIds: [],
@@ -38,16 +38,16 @@ beforeEach(() => {
 	).aiCapabilities;
 });
 
-test("uses fallback when ragQuery returns empty answer", async () => {
-	mockAICapabilities.ragQuery.mockResolvedValue({ answer: "" });
-	const result = await integration.generateEvidenceInsights(evidence, "ctx");
-	expect(result.summary).toBe("");
-	expect(result.keyFindings[0]).toBe("1 evidence items collected");
+test('uses fallback when ragQuery returns empty answer', async () => {
+	mockAICapabilities.ragQuery.mockResolvedValue({ answer: '' });
+	const result = await integration.generateEvidenceInsights(evidence, 'ctx');
+	expect(result.summary).toBe('');
+	expect(result.keyFindings[0]).toBe('1 evidence items collected');
 });
 
-test("uses fallback when summary parsing fails", async () => {
-	mockAICapabilities.ragQuery.mockResolvedValue({ answer: "No sections here" });
-	const result = await integration.generateEvidenceInsights(evidence, "ctx");
-	expect(result.summary).toBe("");
-	expect(result.keyFindings[0]).toBe("1 evidence items collected");
+test('uses fallback when summary parsing fails', async () => {
+	mockAICapabilities.ragQuery.mockResolvedValue({ answer: 'No sections here' });
+	const result = await integration.generateEvidenceInsights(evidence, 'ctx');
+	expect(result.summary).toBe('');
+	expect(result.keyFindings[0]).toBe('1 evidence items collected');
 });

@@ -20,17 +20,42 @@ These instructions apply to all developers and AI agents working in this reposit
 
 ## Validation
 
-Run the following checks before submitting a commit:
+Run the following checks before submitting a commit (Husky hooks run automatically on commit):
 
 ```bash
-# Run pre-commit on specific changed files (replace with actual filenames)
-pre-commit run --files path/to/changed_file1.py path/to/changed_file2.js
-# Or run on all files
-pre-commit run --all-files
-# For code changes
+# Quick local checks
+pnpm biome:staged   # format + lint staged files
 pnpm lint
 pnpm test
 # For documentation-only changes
 pnpm docs:lint
+
+# Emergency bypass (use sparingly)
+# HUSKY=0 git commit -m "..."
 ```
 
+## Persistent Agent Memory (Local Memory)
+
+Enable persistent context across runs using Local Memory.
+
+Setup:
+
+- Start the Local Memory daemon (default base URL `http://localhost:3002/api/v1`).
+- Export envs:
+  - `LOCAL_MEMORY_BASE_URL` (e.g., `http://localhost:3002/api/v1`)
+  - `LOCAL_MEMORY_API_KEY` (if configured)
+  - `LOCAL_MEMORY_NAMESPACE` (optional)
+  - `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
+
+Quick verify:
+
+```bash
+curl -sS http://localhost:3002/api/v1/health | jq .
+```
+
+Code path:
+
+- Use `createStoreFromEnv()` from `@cortex-os/memories` to auto-select Local Memory when `LOCAL_MEMORY_BASE_URL` is present.
+- Falls back to SQLite or in-memory based on envs.
+
+Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or personal data without consent; prefer encryption where applicable.

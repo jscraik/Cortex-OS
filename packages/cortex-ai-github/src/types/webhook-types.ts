@@ -41,7 +41,7 @@ export interface PullRequest {
 	head: GitRef;
 	base: GitRef;
 	labels: Label[];
-	state: "open" | "closed" | "draft";
+	state: 'open' | 'closed' | 'draft';
 	html_url: string;
 	user: User;
 }
@@ -51,7 +51,7 @@ export interface Issue {
 	title: string;
 	body: string | null;
 	labels: Label[];
-	state: "open" | "closed";
+	state: 'open' | 'closed';
 	html_url: string;
 	user: User;
 	pull_request?: PullRequestLink;
@@ -60,7 +60,7 @@ export interface Issue {
 export interface User {
 	login: string;
 	id: number;
-	type: "User" | "Bot";
+	type: 'User' | 'Bot';
 	html_url: string;
 	avatar_url: string;
 }
@@ -91,12 +91,12 @@ export interface Installation {
  * Webhook event types for type-safe event handling
  */
 export type WebhookEventType =
-	| "issue_comment"
-	| "pull_request"
-	| "issues"
-	| "push"
-	| "pull_request_review"
-	| "pull_request_review_comment";
+	| 'issue_comment'
+	| 'pull_request'
+	| 'issues'
+	| 'push'
+	| 'pull_request_review'
+	| 'pull_request_review_comment';
 
 /**
  * Command context for processing user instructions
@@ -115,21 +115,21 @@ export interface CommandContext {
  * Progressive status types for emoji reactions
  */
 export type ProgressiveStatus =
-	| "reading"
-	| "processing"
-	| "working"
-	| "success"
-	| "error"
-	| "warning";
+	| 'reading'
+	| 'processing'
+	| 'working'
+	| 'success'
+	| 'error'
+	| 'warning';
 
 /**
  * Emoji mappings for progressive status updates
  */
 export const STATUS_EMOJIS: Record<ProgressiveStatus, string> = {
-	reading: "👀",
-	processing: "⚙️",
-	working: "🔧",
-	success: "🚀",
-	error: "❌",
-	warning: "⚠️",
+	reading: '👀',
+	processing: '⚙️',
+	working: '🔧',
+	success: '🚀',
+	error: '❌',
+	warning: '⚠️',
 };

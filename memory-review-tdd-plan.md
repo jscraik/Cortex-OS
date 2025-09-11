@@ -6,7 +6,9 @@ This roadmap details micro-tasks to implement a consent-driven memory review wor
 2. **Green code** – implement minimal code to pass tests.
 3. **Refactor** – improve design while keeping tests green.
 4. **Commit strategy** – one focused commit using Conventional Commits.
-5. Run `pre-commit run --files <changed files>` and `pnpm lint && pnpm test` (or `pnpm docs:lint` for docs-only).
+5. Husky runs hooks automatically on commit.
+   Before committing, run `pnpm lint && pnpm test` (or `pnpm docs:lint` for docs-only).
+   Optionally, run `pnpm biome:staged` for staged-format/lint and `pnpm test:safe` for a quick test pass.
 
 Coordinate with `packages/memories/docs/plan/REVISED_TDD_PLAN.md` to stay aligned with broader recovery work.
 
@@ -61,7 +63,7 @@ Coordinate with `packages/memories/docs/plan/REVISED_TDD_PLAN.md` to stay aligne
 
 ## Verification Checklist for Each Commit
 
-1. `pre-commit run --files <changed files>`
+1. Optional quick local checks: `pnpm biome:staged` and `pnpm test:safe`
 2. `pnpm lint`
 3. `pnpm test`
 4. `pnpm docs:lint` for documentation updates

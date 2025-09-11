@@ -3,9 +3,9 @@
  * Handles GitHub webhook events and comment-as-API triggers
  */
 
-import express from 'express';
 import crypto from 'node:crypto';
 import { EventEmitter } from 'node:events';
+import express from 'express';
 import { z } from 'zod';
 import type { CortexAiGitHubApp } from '../core/ai-github-app.js';
 import type { CommentTrigger, GitHubContext } from '../types/github-models.js';
@@ -317,12 +317,20 @@ export class CortexWebhookServer extends EventEmitter<WebhookEvents> {
 						instructions: this.extractInstructions(comment, trigger.pattern),
 					});
 
-					console.log('Queued task', { status: 'ok', taskType: trigger.taskType, taskId, user });
+					console.log('Queued task', {
+						status: 'ok',
+						taskType: trigger.taskType,
+						taskId,
+						user,
+					});
 
 					// Progressive status: Step 3 - Success
 					await this.updateProgressiveStatus(payload, 'success');
 				} catch (error) {
-					console.error('Failed to queue task', { taskType: trigger.taskType, error });
+					console.error('Failed to queue task', {
+						taskType: trigger.taskType,
+						error,
+					});
 
 					// Progressive status: Step 3 - Error
 					await this.updateProgressiveStatus(payload, 'error');

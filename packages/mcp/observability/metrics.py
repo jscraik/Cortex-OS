@@ -147,6 +147,32 @@ class MetricsCollector:
             registry=self.registry,
         )
 
+        # Per-tool metrics
+        self.tool_execution_counter = Counter(
+            "mcp_tool_executions_total",
+            "Total tool executions",
+            ["tool_name"],
+            registry=self.registry,
+        )
+        self.tool_execution_duration = Histogram(
+            "mcp_tool_execution_duration_seconds",
+            "Tool execution durations",
+            ["tool_name"],
+            buckets=(
+                0.005,
+                0.01,
+                0.025,
+                0.05,
+                0.1,
+                0.25,
+                0.5,
+                1.0,
+                2.5,
+                5.0,
+            ),
+            registry=self.registry,
+        )
+
         # System metrics
         self.error_counter = Counter(
             "mcp_errors_total",
@@ -258,6 +284,14 @@ class MetricsCollector:
             self.error_counter.labels(error_type=error_type, component=component).inc()
         except Exception as e:
             self.logger.error(f"Error recording error metric: {e}")
+
+    def record_tool_execution(self, tool_name: str, duration: float) -> None:
+        """Record per-tool execution count and duration."""
+        try:
+            self.tool_execution_counter.labels(tool_name=tool_name).inc()
+            self.tool_execution_duration.labels(tool_name=tool_name).observe(duration)
+        except Exception as e:
+            self.logger.error(f"Error recording tool metric: {e}")
 
     def set_circuit_breaker_state(self, breaker_name: str, state: str):
         """Set circuit breaker state (closed=0, half_open=1, open=2)."""

@@ -7,14 +7,14 @@
  * @status active
  */
 
-import * as net from "node:net";
+import * as net from 'node:net';
 
 /**
  * Check if a port is available for use
  */
 export async function isPortAvailable(
 	port: number,
-	host = "localhost",
+	host = 'localhost',
 ): Promise<boolean> {
 	return new Promise((resolve) => {
 		const server = net.createServer();
@@ -25,7 +25,7 @@ export async function isPortAvailable(
 			});
 		});
 
-		server.on("error", () => {
+		server.on('error', () => {
 			resolve(false);
 		});
 	});
@@ -37,7 +37,7 @@ export async function isPortAvailable(
 export async function findAvailablePort(
 	startPort: number = 3000,
 	maxAttempts: number = 100,
-	host = "localhost",
+	host = 'localhost',
 ): Promise<number> {
 	for (let port = startPort; port < startPort + maxAttempts; port++) {
 		if (await isPortAvailable(port, host)) {
@@ -55,7 +55,7 @@ export async function findAvailablePort(
  */
 export async function getPort(
 	preferredPort?: number,
-	host = "localhost",
+	host = 'localhost',
 ): Promise<number> {
 	if (preferredPort && (await isPortAvailable(preferredPort, host))) {
 		return preferredPort;
@@ -80,7 +80,7 @@ export const PORT_RANGES = {
  */
 export async function getPortInRange(
 	range: { start: number; end: number },
-	host = "localhost",
+	host = 'localhost',
 ): Promise<number> {
 	return findAvailablePort(range.start, range.end - range.start + 1, host);
 }

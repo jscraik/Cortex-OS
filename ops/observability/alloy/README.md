@@ -49,4 +49,3 @@ Notes
   - process metrics from Alloy itself
 - The template keeps a narrow allowlist of metrics to reduce cardinality.
 - To enable additional exporters (node_exporter, Loki), extend the template as needed.
-

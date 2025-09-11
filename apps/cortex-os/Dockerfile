@@ -36,4 +36,3 @@ LABEL \
 
 ENTRYPOINT ["/usr/bin/tini","--"]
 CMD ["node","dist/server.js"]
-

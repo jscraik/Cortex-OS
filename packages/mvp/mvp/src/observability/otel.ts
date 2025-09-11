@@ -12,7 +12,7 @@ let metrics: any[] = [];
 export const startSpan = (name: string) => {
 	const span = {
 		name,
-		status: "OK",
+		status: 'OK',
 		attributes: {} as Record<string, any>,
 		end: function () {
 			spans.push(this);
@@ -33,7 +33,7 @@ export const startSpan = (name: string) => {
 export const recordMetric = (
 	name: string,
 	value: number,
-	unit: string = "",
+	unit: string = '',
 ) => {
 	metrics.push({ name, value, unit });
 };

@@ -1,12 +1,13 @@
 // Main App component
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import {
-    Navigate,
-    Route,
-    BrowserRouter as Router,
-    Routes,
-    useNavigate,
+	Navigate,
+	Route,
+	BrowserRouter as Router,
+	Routes,
+	useNavigate,
 } from 'react-router-dom';
 import useAuth from './hooks/useAuth';
 import useConversations from './hooks/useConversations';
@@ -17,12 +18,19 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import SettingsPage from './pages/SettingsPage';
 import type { Theme } from './utils/theme';
-import { applyMotionPreferences, applyTheme, getEffectiveTheme, getStoredTheme } from './utils/theme';
+import {
+	applyMotionPreferences,
+	applyTheme,
+	getEffectiveTheme,
+	getStoredTheme,
+} from './utils/theme';
 
 const AppContent: React.FC = () => {
 	const navigate = useNavigate();
 	const [theme, setTheme] = useState<Theme>('system');
-	const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
+	const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(
+		'light',
+	);
 	const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
 	const auth = useAuth();

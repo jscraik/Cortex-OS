@@ -7,21 +7,21 @@
  * @version 1.0.0
  */
 
-import { execSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { execSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 // Colors for console output
 const colors = {
-	reset: "\x1b[0m",
-	bright: "\x1b[1m",
+	reset: '\x1b[0m',
+	bright: '\x1b[1m',
 	fg: {
-		red: "\x1b[31m",
-		green: "\x1b[32m",
-		yellow: "\x1b[33m",
-		blue: "\x1b[34m",
-		magenta: "\x1b[35m",
-		cyan: "\x1b[36m",
+		red: '\x1b[31m',
+		green: '\x1b[32m',
+		yellow: '\x1b[33m',
+		blue: '\x1b[34m',
+		magenta: '\x1b[35m',
+		cyan: '\x1b[36m',
 	},
 };
 
@@ -48,30 +48,30 @@ function logHeader(message: string) {
 
 // Simple test runner
 async function runSecurityTests() {
-	logHeader("🚀 Running Security Tests Verification");
+	logHeader('🚀 Running Security Tests Verification');
 
 	try {
 		// Create a temporary test directory
-		const testDir = join(process.cwd(), "temp-security-tests");
+		const testDir = join(process.cwd(), 'temp-security-tests');
 		mkdirSync(testDir, { recursive: true });
 
 		// Change to test directory
 		process.chdir(testDir);
 
 		// Test 1: Verify security test files exist
-		logInfo("Test 1: Verifying security test files exist");
+		logInfo('Test 1: Verifying security test files exist');
 		const testFiles = [
-			"../database-wrapper.unit.test.ts",
-			"../neo4j-wrapper.unit.test.ts",
-			"../command-executor.unit.test.ts",
-			"../security-wrappers.integration.test.ts",
-			"../security-regression.test.ts",
+			'../database-wrapper.unit.test.ts',
+			'../neo4j-wrapper.unit.test.ts',
+			'../command-executor.unit.test.ts',
+			'../security-wrappers.integration.test.ts',
+			'../security-regression.test.ts',
 		];
 
 		let allFilesExist = true;
 		for (const file of testFiles) {
 			try {
-				execSync(`test -f ${file}`, { stdio: "ignore" });
+				execSync(`test -f ${file}`, { stdio: 'ignore' });
 				logSuccess(`✅ Found ${file}`);
 			} catch (_error) {
 				logError(`❌ Missing ${file}`);
@@ -80,16 +80,16 @@ async function runSecurityTests() {
 		}
 
 		if (!allFilesExist) {
-			throw new Error("Some security test files are missing");
+			throw new Error('Some security test files are missing');
 		}
 
 		// Test 2: Verify security scripts exist
-		logInfo("Test 2: Verifying security scripts exist");
-		const scriptFiles = ["../../scripts/run-security-tests.mjs"];
+		logInfo('Test 2: Verifying security scripts exist');
+		const scriptFiles = ['../../scripts/run-security-tests.mjs'];
 
 		for (const file of scriptFiles) {
 			try {
-				execSync(`test -f ${file}`, { stdio: "ignore" });
+				execSync(`test -f ${file}`, { stdio: 'ignore' });
 				logSuccess(`✅ Found ${file}`);
 			} catch (_error) {
 				logError(`❌ Missing ${file}`);
@@ -98,16 +98,16 @@ async function runSecurityTests() {
 		}
 
 		// Test 3: Verify package.json has security test scripts
-		logInfo("Test 3: Verifying package.json has security test scripts");
+		logInfo('Test 3: Verifying package.json has security test scripts');
 		try {
 			const packageJson = JSON.parse(
-				execSync("cat ../../package.json", { encoding: "utf-8" }),
+				execSync('cat ../../package.json', { encoding: 'utf-8' }),
 			);
 
 			const requiredScripts = [
-				"test:security:unit",
-				"test:security:integration",
-				"test:security:regression",
+				'test:security:unit',
+				'test:security:integration',
+				'test:security:regression',
 			];
 
 			for (const script of requiredScripts) {
@@ -124,24 +124,24 @@ async function runSecurityTests() {
 		}
 
 		// Test 4: Verify CI/CD pipeline exists
-		logInfo("Test 4: Verifying CI/CD pipeline exists");
+		logInfo('Test 4: Verifying CI/CD pipeline exists');
 		try {
-			execSync("test -f ../../.github/workflows/security-testing.yml", {
-				stdio: "ignore",
+			execSync('test -f ../../.github/workflows/security-testing.yml', {
+				stdio: 'ignore',
 			});
-			logSuccess("✅ Found security CI/CD pipeline");
+			logSuccess('✅ Found security CI/CD pipeline');
 		} catch (_error) {
-			logError("❌ Missing security CI/CD pipeline");
-			throw new Error("Missing security CI/CD pipeline");
+			logError('❌ Missing security CI/CD pipeline');
+			throw new Error('Missing security CI/CD pipeline');
 		}
 
 		// Test 5: Verify security documentation exists
-		logInfo("Test 5: Verifying security documentation exists");
-		const docFiles = ["../../docs/security/PHASE4_PROGRESS_SUMMARY.md"];
+		logInfo('Test 5: Verifying security documentation exists');
+		const docFiles = ['../../docs/security/PHASE4_PROGRESS_SUMMARY.md'];
 
 		for (const file of docFiles) {
 			try {
-				execSync(`test -f ${file}`, { stdio: "ignore" });
+				execSync(`test -f ${file}`, { stdio: 'ignore' });
 				logSuccess(`✅ Found ${file}`);
 			} catch (_error) {
 				logWarning(`⚠️  Missing ${file} (will be created)`);
@@ -150,7 +150,7 @@ async function runSecurityTests() {
 		}
 
 		// Test 6: Create and run a simple security test
-		logInfo("Test 6: Creating and running a simple security test");
+		logInfo('Test 6: Creating and running a simple security test');
 		const simpleTestContent = `
 import { test, expect } from 'vitest';
 
@@ -162,26 +162,26 @@ test('simple security validation test', () => {
 });
     `;
 
-		const testFileName = "simple-security.test.ts";
+		const testFileName = 'simple-security.test.ts';
 		writeFileSync(testFileName, simpleTestContent);
 
 		logSuccess(`✅ Created ${testFileName}`);
 
 		// Clean up
-		process.chdir("../../");
-		execSync(`rm -rf ${testDir}`, { stdio: "ignore" });
+		process.chdir('../../');
+		execSync(`rm -rf ${testDir}`, { stdio: 'ignore' });
 
-		logSuccess("✅ All security verification tests passed");
+		logSuccess('✅ All security verification tests passed');
 		return true;
 	} catch (error) {
 		logError(`❌ Security verification tests failed: ${error.message}`);
 
 		// Clean up
 		try {
-			process.chdir("../../");
-			execSync("rm -rf temp-security-tests", { stdio: "ignore" });
+			process.chdir('../../');
+			execSync('rm -rf temp-security-tests', { stdio: 'ignore' });
 		} catch (_cleanupError) {
-			logWarning("⚠️  Failed to clean up temporary files");
+			logWarning('⚠️  Failed to clean up temporary files');
 		}
 
 		return false;
@@ -192,10 +192,10 @@ test('simple security validation test', () => {
 runSecurityTests()
 	.then((success) => {
 		if (success) {
-			logHeader("\n🎉 Security verification completed successfully!");
+			logHeader('\n🎉 Security verification completed successfully!');
 			process.exit(0);
 		} else {
-			logHeader("\n💥 Security verification failed!");
+			logHeader('\n💥 Security verification failed!');
 			process.exit(1);
 		}
 	})

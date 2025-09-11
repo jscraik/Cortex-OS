@@ -16,7 +16,7 @@
 	"dependencies": {
 		"@cortex-os/orchestration": "workspace:*",
 		"@opentelemetry/api": "^1.9.0",
-		"@opentelemetry/exporter-trace-otlp-http": "^0.203.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.205.0",
 		"ws": "^8.17.0",
 		"d3": "^7.9.0",
 		"ml-matrix": "^6.11.0",
@@ -41,5 +41,5 @@
 		"real-time-dashboard"
 	],
 	"author": "Cortex OS Team",
-     "license": "Apache-2.0"
+	"license": "Apache-2.0"
 }

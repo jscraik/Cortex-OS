@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { workflowZ } from "./schemas/workflow.zod.js";
+import { createHash } from 'node:crypto';
+import { workflowZ } from './schemas/workflow.zod.js';
 
 // Validation cache to avoid re-validating identical workflows
 const validationCache = new Map<
@@ -15,14 +15,14 @@ const CACHE_CLEANUP_INTERVAL = 10 * 60 * 1000;
 let cacheCleanupTimer: NodeJS.Timeout | null = null;
 
 interface ValidationResult {
-        workflow: any;
-        stats: {
-                totalSteps: number;
-                unreachableSteps: string[];
-                maxDepth: number;
-                cycleDetected: boolean;
-        };
-        topologicalOrder: string[];
+	workflow: any;
+	stats: {
+		totalSteps: number;
+		unreachableSteps: string[];
+		maxDepth: number;
+		cycleDetected: boolean;
+	};
+	topologicalOrder: string[];
 }
 
 /**
@@ -44,7 +44,7 @@ function createWorkflowHash(workflow: any): string {
 		),
 	});
 
-	return createHash("md5").update(structureData, "utf8").digest("hex");
+	return createHash('md5').update(structureData, 'utf8').digest('hex');
 }
 
 /**
@@ -65,70 +65,67 @@ function initializeCacheCleanup(): void {
 }
 
 function topologicalSort(wf: any, nodes: Set<string>): string[] {
-        const inDegree = new Map<string, number>();
-        const adj = new Map<string, string[]>();
+	const inDegree = new Map<string, number>();
+	const adj = new Map<string, string[]>();
 
-        for (const id of nodes) {
-                inDegree.set(id, 0);
-                adj.set(id, []);
-        }
+	for (const id of nodes) {
+		inDegree.set(id, 0);
+		adj.set(id, []);
+	}
 
-        for (const id of nodes) {
-                const step = wf.steps[id];
+	for (const id of nodes) {
+		const step = wf.steps[id];
 
-                if (step.next && nodes.has(step.next)) {
-                        adj.get(id)!.push(step.next);
-                        inDegree.set(step.next, (inDegree.get(step.next) ?? 0) + 1);
-                }
+		if (step.next && nodes.has(step.next)) {
+			adj.get(id)!.push(step.next);
+			inDegree.set(step.next, (inDegree.get(step.next) ?? 0) + 1);
+		}
 
-                if (step.branches) {
-                        for (const branch of step.branches) {
-                                if (nodes.has(branch.to)) {
-                                        adj.get(id)!.push(branch.to);
-                                        inDegree.set(
-                                                branch.to,
-                                                (inDegree.get(branch.to) ?? 0) + 1,
-                                        );
-                                }
-                        }
-                }
-        }
+		if (step.branches) {
+			for (const branch of step.branches) {
+				if (nodes.has(branch.to)) {
+					adj.get(id)!.push(branch.to);
+					inDegree.set(branch.to, (inDegree.get(branch.to) ?? 0) + 1);
+				}
+			}
+		}
+	}
 
-        const queue = Array.from(inDegree.entries())
-                .filter(([, deg]) => deg === 0)
-                .map(([id]) => id)
-                .sort();
+	const queue = Array.from(inDegree.entries())
+		.filter(([, deg]) => deg === 0)
+		.map(([id]) => id)
+		.sort();
 
-        const order: string[] = [];
+	const order: string[] = [];
 
-        while (queue.length > 0) {
-                const id = queue.shift();
-                if (id === undefined) {
-                        // Should not happen, but break defensively
-                        break;
-                }
-                order.push(id);
+	while (queue.length > 0) {
+		const id = queue.shift();
+		if (id === undefined) {
+			// Should not happen, but break defensively
+			break;
+		}
+		order.push(id);
 
-                const neighbors = adj.get(id) ?? [];
-                for (const next of neighbors) {
-                        const nextInDegree = inDegree.get(next);
-                        if (nextInDegree === undefined) {
-                                // Defensive: skip if next is not in inDegree map
-                                continue;
-                        }
-                        inDegree.set(next, nextInDegree - 1);
-                        if (inDegree.get(next) === 0) {
-                                queue.push(next);
-                                queue.sort();
-                        }
-                }
-        }
+		const neighbors = adj.get(id) ?? [];
+		for (const next of neighbors) {
+			const nextInDegree = inDegree.get(next);
+			if (nextInDegree === undefined) {
+				// Defensive: skip if next is not in inDegree map
+				continue;
+			}
+			inDegree.set(next, nextInDegree - 1);
+			if (inDegree.get(next) === 0) {
+				queue.push(next);
+				queue.sort();
+			}
+		}
+	}
 
-        if (order.length !== nodes.size) {
-                throw new Error("Cycle detected during topological sort");
-        }
+	if (order.length !== nodes.size) {
+		throw new Error('Cycle detected during topological sort');
+	}
 
-        return order;
+	return order;
 }
 
 /**
@@ -214,7 +211,7 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 		// Prevent infinite recursion
 		if (depth > MAX_WORKFLOW_DEPTH) {
 			throw new Error(
-				`Workflow depth exceeds maximum (${MAX_WORKFLOW_DEPTH}). Possible infinite loop involving: ${path.slice(-5).join(" -> ")}`,
+				`Workflow depth exceeds maximum (${MAX_WORKFLOW_DEPTH}). Possible infinite loop involving: ${path.slice(-5).join(' -> ')}`,
 			);
 		}
 
@@ -225,7 +222,7 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 		if (stack.has(stepId)) {
 			cycleDetected = true;
 			const cycleStart = path.indexOf(stepId);
-			const cycle = path.slice(cycleStart).concat(stepId).join(" -> ");
+			const cycle = path.slice(cycleStart).concat(stepId).join(' -> ');
 			throw new Error(`Cycle detected: ${cycle}`);
 		}
 
@@ -259,30 +256,30 @@ function validateWorkflowStructure(wf: any): ValidationResult {
 		stack.delete(stepId);
 	};
 
-        // Start validation from entry point
-        visit(wf.entry);
+	// Start validation from entry point
+	visit(wf.entry);
 
-        const order = topologicalSort(wf, visited);
+	const order = topologicalSort(wf, visited);
 
-        const stats = {
-                totalSteps: Object.keys(wf.steps).length,
-                unreachableSteps: Array.from(unreachableSteps),
-                maxDepth,
-                cycleDetected,
+	const stats = {
+		totalSteps: Object.keys(wf.steps).length,
+		unreachableSteps: Array.from(unreachableSteps),
+		maxDepth,
+		cycleDetected,
 	};
 
 	// Warn about unreachable steps (don't fail, just warn)
 	if (stats.unreachableSteps.length > 0) {
 		console.warn(
-			`Workflow contains ${stats.unreachableSteps.length} unreachable steps: ${stats.unreachableSteps.join(", ")}`,
+			`Workflow contains ${stats.unreachableSteps.length} unreachable steps: ${stats.unreachableSteps.join(', ')}`,
 		);
 	}
 
-        return {
-                workflow: wf,
-                stats,
-                topologicalOrder: order,
-        };
+	return {
+		workflow: wf,
+		stats,
+		topologicalOrder: order,
+	};
 }
 
 /**
@@ -294,7 +291,7 @@ export function validateWorkflowWithMetrics(input: unknown): {
 		validationTimeMs: number;
 		cacheHit: boolean;
 		stepCount: number;
-		complexity: "low" | "medium" | "high";
+		complexity: 'low' | 'medium' | 'high';
 	};
 } {
 	const startTime = performance.now();
@@ -306,14 +303,14 @@ export function validateWorkflowWithMetrics(input: unknown): {
 	const endTime = performance.now();
 
 	const stepCount = result.stats.totalSteps;
-	let complexity: "low" | "medium" | "high";
+	let complexity: 'low' | 'medium' | 'high';
 
 	if (stepCount <= 10) {
-		complexity = "low";
+		complexity = 'low';
 	} else if (stepCount <= 50) {
-		complexity = "medium";
+		complexity = 'medium';
 	} else {
-		complexity = "high";
+		complexity = 'high';
 	}
 
 	return {
@@ -393,7 +390,7 @@ export function validateWorkflows(inputs: unknown[]): Array<{
  * Check if workflow is likely to be expensive to validate
  */
 export function estimateValidationCost(input: unknown): {
-	estimatedCost: "low" | "medium" | "high";
+	estimatedCost: 'low' | 'medium' | 'high';
 	stepCount: number;
 	branchingFactor: number;
 	estimatedTimeMs: number;
@@ -416,17 +413,17 @@ export function estimateValidationCost(input: unknown): {
 
 		// Rough estimation based on step count and branching
 		let estimatedTimeMs: number;
-		let estimatedCost: "low" | "medium" | "high";
+		let estimatedCost: 'low' | 'medium' | 'high';
 
 		if (stepCount <= 10) {
 			estimatedTimeMs = 1;
-			estimatedCost = "low";
+			estimatedCost = 'low';
 		} else if (stepCount <= 50) {
 			estimatedTimeMs = stepCount * 0.5;
-			estimatedCost = "medium";
+			estimatedCost = 'medium';
 		} else {
 			estimatedTimeMs = stepCount * branchingFactor * 2;
-			estimatedCost = "high";
+			estimatedCost = 'high';
 		}
 
 		return {
@@ -437,7 +434,7 @@ export function estimateValidationCost(input: unknown): {
 		};
 	} catch {
 		return {
-			estimatedCost: "high",
+			estimatedCost: 'high',
 			stepCount: 0,
 			branchingFactor: 0,
 			estimatedTimeMs: 100,

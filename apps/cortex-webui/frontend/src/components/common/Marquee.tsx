@@ -1,43 +1,44 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 
 interface MarqueeProps {
-  words?: string[];
-  duration?: number;
-  className?: string;
+	words?: string[];
+	duration?: number;
+	className?: string;
 }
 
 const Marquee: React.FC<MarqueeProps> = ({
-  words = ['lorem', 'ipsum'],
-  duration = 4000,
-  className = '',
+	words = ['lorem', 'ipsum'],
+	duration = 4000,
+	className = '',
 }) => {
-  const [idx, setIdx] = useState(0);
+	const [idx, setIdx] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIdx((prevIdx) => (prevIdx + 1) % words.length);
-    }, duration);
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setIdx((prevIdx) => (prevIdx + 1) % words.length);
+		}, duration);
 
-    return () => clearInterval(interval);
-  }, [words.length, duration]);
+		return () => clearInterval(interval);
+	}, [words.length, duration]);
 
-  return (
-    <div className={className}>
-      <div>
-        <div
-          key={idx}
-          className="marquee-item"
-          style={{
-            animation: 'flyIn 1s ease-out forwards',
-          }}
-        >
-          {words[idx]}
-        </div>
-      </div>
+	return (
+		<div className={className}>
+			<div>
+				<div
+					key={idx}
+					className="marquee-item"
+					style={{
+						animation: 'flyIn 1s ease-out forwards',
+					}}
+				>
+					{words[idx]}
+				</div>
+			</div>
 
-      <style jsx>{`
+			<style jsx>{`
         @keyframes flyIn {
           from {
             opacity: 0;
@@ -49,8 +50,8 @@ const Marquee: React.FC<MarqueeProps> = ({
           }
         }
       `}</style>
-    </div>
-  );
+		</div>
+	);
 };
 
 export default Marquee;

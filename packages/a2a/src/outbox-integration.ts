@@ -1,19 +1,19 @@
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import type { Envelope } from '../a2a-contracts/src/envelope.js';
 import {
 	type OutboxConfig,
 	type OutboxMessage,
 	OutboxMessageStatus,
 	type OutboxRepository,
-} from '@cortex-os/a2a-contracts/outbox-types';
+} from '../a2a-contracts/src/outbox-types.js';
 import {
 	DeadLetterQueue,
 	InMemoryDeadLetterStore,
-} from '@cortex-os/a2a-core/dlq';
+} from '../a2a-core/src/dlq.js';
 import {
 	createReliableOutboxProcessor,
 	EnhancedOutbox,
 	ReliableOutboxPublisher,
-} from '@cortex-os/a2a-core/outbox';
+} from '../a2a-core/src/outbox.js';
 import { withSpan } from '@cortex-os/telemetry';
 
 /**

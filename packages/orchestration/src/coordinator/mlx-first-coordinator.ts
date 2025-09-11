@@ -3,20 +3,20 @@
  * Uses your available models with intelligent fallback strategies
  */
 
-import {
-        buildAgentPrompt,
-        parseAgentSelection,
-        type AgentInfo,
-} from "../utils/agent-selection.js";
-import { OrchestrationError } from "../errors.js";
-import { MLXFirstModelProvider } from "../providers/mlx-first-provider.js";
+import { OrchestrationError } from '../errors.js';
+import { MLXFirstModelProvider } from '../providers/mlx-first-provider.js';
 import {
 	coordinateMultiModalTaskSchema,
 	coordinateWorkflowSchema,
 	decomposeTaskSchema,
 	orchestrateCodeTaskSchema,
-} from "../schemas/orchestrator.zod.js";
-import { handleResilience } from "../utils/resilience.js";
+} from '../schemas/orchestrator.zod.js';
+import {
+	type AgentInfo,
+	buildAgentPrompt,
+	parseAgentSelection,
+} from '../utils/agent-selection.js';
+import { handleResilience } from '../utils/resilience.js';
 
 export interface TaskDecomposition {
 	subtasks: Array<{
@@ -33,11 +33,11 @@ export interface TaskDecomposition {
 }
 
 export interface CoordinationDecision {
-	action: "proceed" | "wait" | "escalate" | "abort";
+	action: 'proceed' | 'wait' | 'escalate' | 'abort';
 	reasoning: string;
 	confidence: number;
 	nextSteps: string[];
-	provider: "mlx" | "ollama";
+	provider: 'mlx' | 'ollama';
 }
 
 export class MLXFirstOrchestrator {
@@ -61,7 +61,7 @@ export class MLXFirstOrchestrator {
 			constraints,
 		});
 		if (!parsed.success) {
-			throw new OrchestrationError("INVALID_INPUT", parsed.error.message);
+			throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
 		}
 		const {
 			taskDescription: td,
@@ -72,11 +72,11 @@ export class MLXFirstOrchestrator {
 
 TASK: ${td}
 
-AVAILABLE AGENTS: ${aa.join(", ")}
+AVAILABLE AGENTS: ${aa.join(', ')}
 
 CONSTRAINTS:
-${c?.maxParallelism ? `- Max parallel tasks: ${c.maxParallelism}` : ""}
-${c?.timeLimit ? `- Time limit: ${c.timeLimit} minutes` : ""}
+${c?.maxParallelism ? `- Max parallel tasks: ${c.maxParallelism}` : ''}
+${c?.timeLimit ? `- Time limit: ${c.timeLimit} minutes` : ''}
 
 Provide a structured breakdown with:
 1. Subtasks with dependencies
@@ -88,8 +88,8 @@ Format as JSON with reasoning.`;
 
 		try {
 			// Use complex reasoning model (Mixtral MoE for expert thinking)
-			const response = await this.modelProvider.generate("complexReasoning", {
-				task: "task_decomposition",
+			const response = await this.modelProvider.generate('complexReasoning', {
+				task: 'task_decomposition',
 				prompt,
 				maxTokens: 800,
 				temperature: 0.3,
@@ -97,7 +97,7 @@ Format as JSON with reasoning.`;
 
 			return this.parseTaskDecomposition(response.content);
 		} catch (error) {
-			return handleResilience(error, "decomposeTask");
+			return handleResilience(error, 'decomposeTask');
 		}
 	}
 
@@ -115,7 +115,7 @@ Format as JSON with reasoning.`;
 			codeContext,
 		});
 		if (!parsed.success) {
-			throw new OrchestrationError("INVALID_INPUT", parsed.error.message);
+			throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
 		}
 		const {
 			taskDescription: td,
@@ -139,8 +139,8 @@ Provide decision, reasoning, confidence (0-1), and next steps.`;
 
 		try {
 			// Use vision-language model for multi-modal understanding
-			const response = await this.modelProvider.generate("multiModal", {
-				task: "multimodal_coordination",
+			const response = await this.modelProvider.generate('multiModal', {
+				task: 'multimodal_coordination',
 				prompt,
 				maxTokens: 300,
 				temperature: 0.4,
@@ -151,7 +151,7 @@ Provide decision, reasoning, confidence (0-1), and next steps.`;
 				response.provider,
 			);
 		} catch (error) {
-			return handleResilience(error, "coordinateMultiModalTask");
+			return handleResilience(error, 'coordinateMultiModalTask');
 		}
 	}
 
@@ -174,16 +174,16 @@ Provide decision, reasoning, confidence (0-1), and next steps.`;
 			testRequirements,
 		});
 		if (!parsed.success) {
-			throw new OrchestrationError("INVALID_INPUT", parsed.error.message);
+			throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
 		}
 		const { codeTask: ct, codebase: cb, testRequirements: tr } = parsed.data;
 		const prompt = `Plan this code-related task:
 
 TASK: ${ct}
 
-${cb ? `EXISTING CODEBASE:\n${cb.slice(0, 2000)}...` : ""}
+${cb ? `EXISTING CODEBASE:\n${cb.slice(0, 2000)}...` : ''}
 
-${tr ? `TEST REQUIREMENTS:\n${tr}` : ""}
+${tr ? `TEST REQUIREMENTS:\n${tr}` : ''}
 
 Provide:
 1. Development plan with subtasks
@@ -195,8 +195,8 @@ Focus on maintainable, testable code.`;
 
 		try {
 			// Use specialized coding model
-			const response = await this.modelProvider.generate("codeIntelligence", {
-				task: "code_orchestration",
+			const response = await this.modelProvider.generate('codeIntelligence', {
+				task: 'code_orchestration',
 				prompt,
 				maxTokens: 1000,
 				temperature: 0.2,
@@ -204,7 +204,7 @@ Focus on maintainable, testable code.`;
 
 			return this.parseCodeOrchestrationResponse(response.content);
 		} catch (error) {
-			return handleResilience(error, "orchestrateCodeTask");
+			return handleResilience(error, 'orchestrateCodeTask');
 		}
 	}
 
@@ -222,7 +222,7 @@ Focus on maintainable, testable code.`;
 			incomingEvents,
 		});
 		if (!parsed.success) {
-			throw new OrchestrationError("INVALID_INPUT", parsed.error.message);
+			throw new OrchestrationError('INVALID_INPUT', parsed.error.message);
 		}
 		const {
 			workflowId: wfId,
@@ -235,7 +235,7 @@ WORKFLOW ID: ${wfId}
 CURRENT STATE: ${JSON.stringify(cs, null, 2)}
 
 INCOMING EVENTS:
-${events.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join("\n")}
+${events.map((e, i) => `${i + 1}. ${JSON.stringify(e)}`).join('\n')}
 
 Decide immediate action: proceed, wait, escalate, or abort.
 Consider event priority, resource availability, and dependencies.
@@ -244,8 +244,8 @@ Provide quick decision with reasoning.`;
 
 		try {
 			// Use quick reasoning model
-			const response = await this.modelProvider.generate("quickReasoning", {
-				task: "workflow_coordination",
+			const response = await this.modelProvider.generate('quickReasoning', {
+				task: 'workflow_coordination',
 				prompt,
 				maxTokens: 150,
 				temperature: 0.5,
@@ -256,13 +256,13 @@ Provide quick decision with reasoning.`;
 				response.provider,
 			);
 		} catch (error) {
-			console.warn("Workflow coordination failed:", error);
+			console.warn('Workflow coordination failed:', error);
 			return {
-				action: "wait",
-				reasoning: "Fallback coordination - waiting for additional signals",
+				action: 'wait',
+				reasoning: 'Fallback coordination - waiting for additional signals',
 				confidence: 0.2,
-				nextSteps: ["Monitor workflow state", "Gather more context"],
-				provider: "ollama",
+				nextSteps: ['Monitor workflow state', 'Gather more context'],
+				provider: 'ollama',
 			};
 		}
 	}
@@ -274,20 +274,20 @@ Provide quick decision with reasoning.`;
 	async selectOptimalAgent(
 		taskDescription: string,
 		availableAgents: AgentInfo[],
-		urgency: "low" | "medium" | "high" | "critical" = "medium",
+		urgency: 'low' | 'medium' | 'high' | 'critical' = 'medium',
 	): Promise<{ agentId: string; reasoning: string; confidence: number }> {
 		const prompt = buildAgentPrompt(taskDescription, availableAgents, urgency);
 
 		try {
-			const response = await this.modelProvider.generate("quickReasoning", {
-				task: "agent_selection",
+			const response = await this.modelProvider.generate('quickReasoning', {
+				task: 'agent_selection',
 				prompt,
 				maxTokens: 150,
 			});
 
 			return parseAgentSelection(response.content, availableAgents);
 		} catch (error) {
-			console.warn("Agent selection failed:", error);
+			console.warn('Agent selection failed:', error);
 			// Fallback: least loaded agent
 			const leastLoaded = availableAgents.reduce(
 				(min, agent) => (agent.currentLoad < min.currentLoad ? agent : min),
@@ -296,7 +296,7 @@ Provide quick decision with reasoning.`;
 
 			return {
 				agentId: leastLoaded.id,
-				reasoning: "Fallback selection - chose least loaded agent",
+				reasoning: 'Fallback selection - chose least loaded agent',
 				confidence: 0.3,
 			};
 		}
@@ -311,19 +311,19 @@ Provide quick decision with reasoning.`;
 		recommendations: string[];
 	}> {
 		try {
-			const response = await this.modelProvider.generate("generalChat", {
-				task: "safety_validation",
+			const response = await this.modelProvider.generate('generalChat', {
+				task: 'safety_validation',
 				prompt,
 				maxTokens: 300,
 			});
 
 			return this.parseSafetyAssessment(response.content);
 		} catch (error) {
-			console.warn("Safety validation failed:", error);
+			console.warn('Safety validation failed:', error);
 			return {
 				safe: false,
-				issues: ["Unable to perform safety validation"],
-				recommendations: ["Manual review required"],
+				issues: ['Unable to perform safety validation'],
+				recommendations: ['Manual review required'],
 			};
 		}
 	}
@@ -339,27 +339,30 @@ Provide quick decision with reasoning.`;
 			if (jsonMatch) {
 				return JSON.parse(jsonMatch[0]);
 			}
-			throw new Error("No JSON found in response");
+			throw new OrchestrationError(
+				'PARSE_ERROR',
+				'No JSON found in response',
+			);
 		} catch (error) {
-			return handleResilience(error, "parseTaskDecomposition");
+			return handleResilience(error, 'parseTaskDecomposition');
 		}
 	}
 
 	private parseCoordinationDecision(
 		content: string,
-		provider: "mlx" | "ollama",
+		provider: 'mlx' | 'ollama',
 	): CoordinationDecision {
-		const lines = content.split("\n");
-		let action: CoordinationDecision["action"] = "proceed";
+		const lines = content.split('\n');
+		let action: CoordinationDecision['action'] = 'proceed';
 		let confidence = 0.5;
 		const nextSteps: string[] = [];
 
 		for (const line of lines) {
-			if (line.toLowerCase().includes("abort")) action = "abort";
-			else if (line.toLowerCase().includes("wait")) action = "wait";
-			else if (line.toLowerCase().includes("escalate")) action = "escalate";
+			if (line.toLowerCase().includes('abort')) action = 'abort';
+			else if (line.toLowerCase().includes('wait')) action = 'wait';
+			else if (line.toLowerCase().includes('escalate')) action = 'escalate';
 
-			if (line.includes("confidence:") || line.includes("confidence =")) {
+			if (line.includes('confidence:') || line.includes('confidence =')) {
 				const confRegex = /(\d+\.?\d*)/;
 				const confMatch = confRegex.exec(line);
 				if (confMatch)
@@ -367,10 +370,10 @@ Provide quick decision with reasoning.`;
 			}
 
 			if (
-				line.toLowerCase().includes("next:") ||
-				line.toLowerCase().includes("steps:")
+				line.toLowerCase().includes('next:') ||
+				line.toLowerCase().includes('steps:')
 			) {
-				nextSteps.push(line.replace(/^.*?steps?:?\s*/i, ""));
+				nextSteps.push(line.replace(/^.*?steps?:?\s*/i, ''));
 			}
 		}
 
@@ -386,22 +389,22 @@ Provide quick decision with reasoning.`;
 		try {
 			return JSON.parse(content);
 		} catch (error) {
-			return handleResilience(error, "parseCodeOrchestrationResponse");
+			return handleResilience(error, 'parseCodeOrchestrationResponse');
 		}
 	}
 
 	private parseSafetyAssessment(content: string) {
 		const safe =
-			!content.toLowerCase().includes("unsafe") &&
-			!content.toLowerCase().includes("risk") &&
-			!content.toLowerCase().includes("danger");
+			!content.toLowerCase().includes('unsafe') &&
+			!content.toLowerCase().includes('risk') &&
+			!content.toLowerCase().includes('danger');
 
 		return {
 			safe,
-			issues: safe ? [] : ["Potential safety concerns identified"],
+			issues: safe ? [] : ['Potential safety concerns identified'],
 			recommendations: safe
-				? ["Task appears safe to proceed"]
-				: ["Review task for safety issues"],
+				? ['Task appears safe to proceed']
+				: ['Review task for safety issues'],
 		};
 	}
 }

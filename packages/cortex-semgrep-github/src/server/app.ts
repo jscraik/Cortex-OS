@@ -9,7 +9,10 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { z } from 'zod';
 import { generateScanComment } from '../lib/comment-formatter.js';
-import { runSemgrepScan, type SecurityScanResult } from '../lib/semgrep-scanner.js';
+import {
+	runSemgrepScan,
+	type SecurityScanResult,
+} from '../lib/semgrep-scanner.js';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -44,31 +47,31 @@ app.use('/webhook', express.raw({ type: 'application/json' }));
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
-        res.json({
-                status: 'healthy',
-                service: 'cortex-semgrep-github',
-                timestamp: new Date().toISOString(),
-        });
+	res.json({
+		status: 'healthy',
+		service: 'cortex-semgrep-github',
+		timestamp: new Date().toISOString(),
+	});
 });
- 
+
 type CommentPayload =
-        | EmitterWebhookEvent<'issue_comment.created'>['payload']
-        | EmitterWebhookEvent<'pull_request_review_comment.created'>['payload'];
+	| EmitterWebhookEvent<'issue_comment.created'>['payload']
+	| EmitterWebhookEvent<'pull_request_review_comment.created'>['payload'];
 
 type ReactionContent =
-        | '+1'
-        | '-1'
-        | 'confused'
-        | 'heart'
-        | 'hooray'
-        | 'laugh'
-        | 'rocket'
-        | 'eyes';
+	| '+1'
+	| '-1'
+	| 'confused'
+	| 'heart'
+	| 'hooray'
+	| 'laugh'
+	| 'rocket'
+	| 'eyes';
 // Create GitHub check run (use REST API namespace)
 async function createCheckRun(
-        owner: string,
-        repo: string,
-        headSha: string,
+	owner: string,
+	repo: string,
+	headSha: string,
 	results: SecurityScanResult[],
 ): Promise<void> {
 	const criticalCount = results.filter((r) => r.severity === 'HIGH').length;
@@ -284,19 +287,19 @@ async function handleScanCommand(
 		// Progressive status: Step 1 - Processing
 		await updateProgressiveStatus(payload, 'processing');
 
-                const scanContext = validateScanContext(payload, user);
-                const prData = await fetchPRData(scanContext);
+		const scanContext = validateScanContext(payload, user);
+		const prData = await fetchPRData(scanContext);
 
-                // Progressive status: Step 2 - Working
-                await updateProgressiveStatus(payload, 'working');
+		// Progressive status: Step 2 - Working
+		await updateProgressiveStatus(payload, 'working');
 
-                const results = await runSemgrepScan(
-                        scanContext.owner,
-                        scanContext.repo,
-                        prData.data.head.sha,
-                );
+		const results = await runSemgrepScan(
+			scanContext.owner,
+			scanContext.repo,
+			prData.data.head.sha,
+		);
 
-                await postScanResults(scanContext, results, prData.data.head.sha);
+		await postScanResults(scanContext, results, prData.data.head.sha);
 
 		// Progressive status: Step 3 - Success
 		await updateProgressiveStatus(payload, 'success');
@@ -310,8 +313,8 @@ async function handleScanCommand(
 }
 
 function validateScanContext(
-        payload: CommentPayload,
-        user: string,
+	payload: CommentPayload,
+	user: string,
 ): { owner: string; repo: string; issueNumber: number; prNumber: number } {
 	console.warn(`🔍 ${user} requested security scan`);
 
@@ -363,16 +366,16 @@ async function fetchPRData(context: {
 }
 
 async function postScanResults(
-        context: { owner: string; repo: string; issueNumber: number },
-        results: SecurityScanResult[],
-        sha: string,
+	context: { owner: string; repo: string; issueNumber: number },
+	results: SecurityScanResult[],
+	sha: string,
 ): Promise<void> {
-        const responseComment = generateScanComment(
-                results,
-                context.owner,
-                context.repo,
-                sha,
-        );
+	const responseComment = generateScanComment(
+		results,
+		context.owner,
+		context.repo,
+		sha,
+	);
 
 	await octokit.rest.issues.createComment({
 		owner: context.owner,
@@ -383,28 +386,28 @@ async function postScanResults(
 }
 
 async function addReaction(
-        payload: CommentPayload,
-        reaction: ReactionContent,
+	payload: CommentPayload,
+	reaction: ReactionContent,
 ): Promise<void> {
 	try {
 		const owner = payload.repository.owner.login;
 		const repo = payload.repository.name;
 
-                if ('issue' in payload && payload.issue) {
-                        await octokit.rest.reactions.createForIssueComment({
-                                owner,
-                                repo,
-                                comment_id: payload.comment.id,
-                                content: reaction,
-                        });
-                } else if ('pull_request' in payload && payload.pull_request) {
-                        await octokit.rest.reactions.createForPullRequestReviewComment({
-                                owner,
-                                repo,
-                                comment_id: payload.comment.id,
-                                content: reaction,
-                        });
-                }
+		if ('issue' in payload && payload.issue) {
+			await octokit.rest.reactions.createForIssueComment({
+				owner,
+				repo,
+				comment_id: payload.comment.id,
+				content: reaction,
+			});
+		} else if ('pull_request' in payload && payload.pull_request) {
+			await octokit.rest.reactions.createForPullRequestReviewComment({
+				owner,
+				repo,
+				comment_id: payload.comment.id,
+				content: reaction,
+			});
+		}
 	} catch (error) {
 		console.error(`Failed to add ${reaction} reaction:`, error);
 		// Don't throw - reactions are non-critical
@@ -416,26 +419,26 @@ async function addReaction(
  * Updates reactions in sequence: 👀 → ⚙️ → 🚀/❌
  */
 async function updateProgressiveStatus(
-        payload: CommentPayload,
-        status: 'processing' | 'working' | 'success' | 'error' | 'warning',
+	payload: CommentPayload,
+	status: 'processing' | 'working' | 'success' | 'error' | 'warning',
 ): Promise<void> {
 	try {
 		switch (status) {
-                        case 'processing':
-                                await addReaction(payload, 'eyes');
-                                break;
-                        case 'working':
-                                await addReaction(payload, 'gear');
-                                break;
-                        case 'success':
-                                await addReaction(payload, 'rocket');
-                                break;
-                        case 'error':
-                                await addReaction(payload, '-1');
-                                break;
-                        case 'warning':
-                                await addReaction(payload, 'confused');
-                                break;
+			case 'processing':
+				await addReaction(payload, 'eyes');
+				break;
+			case 'working':
+				await addReaction(payload, 'gear');
+				break;
+			case 'success':
+				await addReaction(payload, 'rocket');
+				break;
+			case 'error':
+				await addReaction(payload, '-1');
+				break;
+			case 'warning':
+				await addReaction(payload, 'confused');
+				break;
 		}
 	} catch (error) {
 		console.error(`Failed to update progressive status ${status}:`, error);
@@ -589,4 +592,3 @@ I'm your security guardian, keeping your code safe from vulnerabilities! 🔒`;
 		console.error('Error handling Semgrep help command:', error);
 	}
 }
-

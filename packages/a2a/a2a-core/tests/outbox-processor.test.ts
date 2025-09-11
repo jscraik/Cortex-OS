@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { processPendingMessages, processRetryMessages } from "../src/outbox.js";
+import { describe, expect, it, vi } from 'vitest';
+import { processPendingMessages, processRetryMessages } from '../src/outbox.js';
 
 const config = {
 	maxRetries: 3,
@@ -13,11 +13,11 @@ const config = {
 	enableIdempotency: false,
 } as const;
 
-describe("processPendingMessages", () => {
-	it("processes messages and dead-letters failures", async () => {
+describe('processPendingMessages', () => {
+	it('processes messages and dead-letters failures', async () => {
 		const messages = [
-			{ id: "1", retryCount: 0 } as unknown,
-			{ id: "2", retryCount: 2 } as any,
+			{ id: '1', retryCount: 0 } as unknown,
+			{ id: '2', retryCount: 2 } as any,
 		];
 		const repo = {
 			findByStatus: vi.fn().mockResolvedValue(messages),
@@ -30,7 +30,7 @@ describe("processPendingMessages", () => {
 		const processMessage = vi
 			.fn<[(typeof messages)[number]], Promise<void>>()
 			.mockResolvedValueOnce()
-			.mockRejectedValueOnce(new Error("boom"));
+			.mockRejectedValueOnce(new Error('boom'));
 
 		const handleError = vi
 			.fn<(typeof messages)[number], string, Promise<void>>()
@@ -48,10 +48,10 @@ describe("processPendingMessages", () => {
 		expect(repo.updateStatus).toHaveBeenCalledTimes(2);
 		expect(repo.markProcessed).toHaveBeenCalledTimes(1);
 		expect(repo.moveToDeadLetter).toHaveBeenCalledWith(
-			"2",
-			"Max retries exceeded",
+			'2',
+			'Max retries exceeded',
 		);
-		expect(repo.incrementRetry).toHaveBeenCalledWith("2", "boom");
+		expect(repo.incrementRetry).toHaveBeenCalledWith('2', 'boom');
 		expect(result).toMatchObject({
 			processed: 2,
 			successful: 1,
@@ -62,11 +62,11 @@ describe("processPendingMessages", () => {
 	});
 });
 
-describe("processRetryMessages", () => {
-	it("processes retryable messages", async () => {
+describe('processRetryMessages', () => {
+	it('processes retryable messages', async () => {
 		const messages = [
-			{ id: "1", retryCount: 0 } as unknown,
-			{ id: "2", retryCount: 1 } as any,
+			{ id: '1', retryCount: 0 } as unknown,
+			{ id: '2', retryCount: 1 } as any,
 		];
 		const repo = {
 			findReadyForRetry: vi.fn().mockResolvedValue(messages),
@@ -77,7 +77,7 @@ describe("processRetryMessages", () => {
 		const processMessage = vi
 			.fn<[(typeof messages)[number]], Promise<void>>()
 			.mockResolvedValueOnce()
-			.mockRejectedValueOnce(new Error("boom"));
+			.mockRejectedValueOnce(new Error('boom'));
 
 		const handleError = vi
 			.fn<(typeof messages)[number], string, Promise<void>>()
@@ -93,7 +93,7 @@ describe("processRetryMessages", () => {
 		);
 
 		expect(repo.markProcessed).toHaveBeenCalledTimes(1);
-		expect(repo.incrementRetry).toHaveBeenCalledWith("2", "boom");
+		expect(repo.incrementRetry).toHaveBeenCalledWith('2', 'boom');
 		expect(result).toMatchObject({
 			processed: 2,
 			successful: 1,

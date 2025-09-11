@@ -9,7 +9,7 @@
  * @ai_provenance_hash N/A
  */
 
-import type { AnalyticsConfig } from "./types.js";
+import type { AnalyticsConfig } from './types.js';
 
 /**
  * Default analytics configuration
@@ -41,10 +41,10 @@ export const defaultAnalyticsConfig: AnalyticsConfig = {
 			response_time: 2000,
 			throughput_drop: 0.3,
 		},
-		notificationChannels: ["console", "websocket"],
+		notificationChannels: ['console', 'websocket'],
 	},
 	storage: {
-		backend: "memory",
+		backend: 'memory',
 		compressionEnabled: false,
 		encryptionEnabled: false,
 	},

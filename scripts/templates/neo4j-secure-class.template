@@ -1,9 +1,9 @@
 /*
  * Neo4j Secure Class Template
- * 
+ *
  * This is a template file used by various scripts to inject Neo4j class implementations.
  * It's designed to be used as a string replacement in existing files.
- * 
+ *
  * Dependencies expected in target file:
  * - INeo4j interface
  * - Driver type from neo4j-driver

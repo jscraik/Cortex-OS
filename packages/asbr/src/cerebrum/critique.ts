@@ -4,7 +4,7 @@
  */
 
 export interface CritiqueOptions {
-	depth?: "shallow" | "deep";
+	depth?: 'shallow' | 'deep';
 	focusAreas?: string[];
 	minLength?: number;
 }
@@ -39,22 +39,22 @@ export class CritiqueEngine {
 
 		// Basic analysis
 		if (input.length < 50) {
-			weaknesses.push("Input is very short and may lack detail");
-			suggestions.push("Consider providing more context and detail");
+			weaknesses.push('Input is very short and may lack detail');
+			suggestions.push('Consider providing more context and detail');
 		} else {
-			strengths.push("Input has sufficient detail");
+			strengths.push('Input has sufficient detail');
 		}
 
-		if (input.includes("TODO") || input.includes("FIXME")) {
-			weaknesses.push("Input contains unresolved items");
-			suggestions.push("Complete all TODO and FIXME items before proceeding");
+		if (input.includes('TODO') || input.includes('FIXME')) {
+			weaknesses.push('Input contains unresolved items');
+			suggestions.push('Complete all TODO and FIXME items before proceeding');
 		}
 
 		if (this.countSentences(input) < 3) {
-			weaknesses.push("Input lacks sufficient explanation");
-			suggestions.push("Add more explanation and context");
+			weaknesses.push('Input lacks sufficient explanation');
+			suggestions.push('Add more explanation and context');
 		} else {
-			strengths.push("Input is well structured");
+			strengths.push('Input is well structured');
 		}
 
 		// Generate a score based on analysis

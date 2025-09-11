@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const decomposeTaskSchema = z.object({
 	taskDescription: z.string().min(1),
@@ -38,7 +38,7 @@ export const selectOptimalAgentSchema = z.object({
 			currentLoad: z.number().int().nonnegative(),
 		}),
 	),
-	urgency: z.enum(["low", "medium", "high", "critical"]).optional(),
+	urgency: z.enum(['low', 'medium', 'high', 'critical']).optional(),
 });
 
 export const validateTaskSafetySchema = z.object({

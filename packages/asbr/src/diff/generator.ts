@@ -3,10 +3,10 @@
  * Generates unified diffs with SHA-256 digests as per blueprint specification
  */
 
-import { createHash } from "crypto";
-import { createTwoFilesPatch } from "diff";
-import type { Config } from "../types/index.js";
-import { ContentNormalizer } from "./normalizer.js";
+import { createHash } from 'crypto';
+import { createTwoFilesPatch } from 'diff';
+import type { Config } from '../types/index.js';
+import { ContentNormalizer } from './normalizer.js';
 
 export interface DiffOptions {
 	context?: number;
@@ -36,7 +36,7 @@ export interface FileDiff {
 	path: string;
 	oldPath?: string;
 	newPath?: string;
-	operation: "add" | "delete" | "modify" | "rename";
+	operation: 'add' | 'delete' | 'modify' | 'rename';
 	diff: DiffResult;
 }
 
@@ -75,7 +75,7 @@ export class DiffGenerator {
 		const diff = this.createUnifiedDiff(
 			oldForDiff,
 			newForDiff,
-			filename || "file",
+			filename || 'file',
 			options,
 		);
 
@@ -103,7 +103,7 @@ export class DiffGenerator {
 			path: string;
 			oldContent?: string;
 			newContent?: string;
-			operation?: "add" | "delete" | "modify" | "rename";
+			operation?: 'add' | 'delete' | 'modify' | 'rename';
 			oldPath?: string;
 			newPath?: string;
 		}>,
@@ -115,27 +115,27 @@ export class DiffGenerator {
 			let diff: DiffResult;
 
 			switch (operation) {
-				case "add":
+				case 'add':
 					diff = this.generateDiff(
-						"",
-						file.newContent || "",
+						'',
+						file.newContent || '',
 						file.path,
 						options,
 					);
 					break;
-				case "delete":
+				case 'delete':
 					diff = this.generateDiff(
-						file.oldContent || "",
-						"",
+						file.oldContent || '',
+						'',
 						file.path,
 						options,
 					);
 					break;
-				case "modify":
-				case "rename":
+				case 'modify':
+				case 'rename':
 					diff = this.generateDiff(
-						file.oldContent || "",
-						file.newContent || "",
+						file.oldContent || '',
+						file.newContent || '',
 						file.path,
 						options,
 					);
@@ -161,9 +161,9 @@ export class DiffGenerator {
 
 		const diffContent = sortedDiffs
 			.map((fileDiff) => `${fileDiff.path}:${fileDiff.diff.diff}`)
-			.join("\n");
+			.join('\n');
 
-		return createHash("sha256").update(diffContent, "utf8").digest("hex");
+		return createHash('sha256').update(diffContent, 'utf8').digest('hex');
 	}
 
 	/**
@@ -193,7 +193,7 @@ export class DiffGenerator {
 		filename: string,
 		options: DiffOptions,
 	): string {
-		const timestamp = options.timestamp ? new Date().toISOString() : "";
+		const timestamp = options.timestamp ? new Date().toISOString() : '';
 
 		const diff = createTwoFilesPatch(
 			filename,
@@ -206,7 +206,7 @@ export class DiffGenerator {
 		);
 
 		if (options.includeFileHeaders === false) {
-			return diff.split("\n").slice(2).join("\n").trim();
+			return diff.split('\n').slice(2).join('\n').trim();
 		}
 
 		return diff.trim();
@@ -217,14 +217,14 @@ export class DiffGenerator {
 		deletions: number;
 		changes: number;
 	} {
-		const lines = diff.split("\n");
+		const lines = diff.split('\n');
 		let additions = 0;
 		let deletions = 0;
 
 		for (const line of lines) {
-			if (line.startsWith("+") && !line.startsWith("+++")) {
+			if (line.startsWith('+') && !line.startsWith('+++')) {
 				additions++;
-			} else if (line.startsWith("-") && !line.startsWith("---")) {
+			} else if (line.startsWith('-') && !line.startsWith('---')) {
 				deletions++;
 			}
 		}
@@ -241,15 +241,15 @@ export class DiffGenerator {
 		newContent?: string;
 		oldPath?: string;
 		newPath?: string;
-	}): "add" | "delete" | "modify" | "rename" {
+	}): 'add' | 'delete' | 'modify' | 'rename' {
 		if (!file.oldContent && file.newContent) {
-			return "add";
+			return 'add';
 		} else if (file.oldContent && !file.newContent) {
-			return "delete";
+			return 'delete';
 		} else if (file.oldPath && file.newPath && file.oldPath !== file.newPath) {
-			return "rename";
+			return 'rename';
 		} else {
-			return "modify";
+			return 'modify';
 		}
 	}
 }

@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { normalizeSearch } from "../src/service/queries.js";
+import { describe, expect, it } from 'vitest';
+import { normalizeSearch } from '../src/service/queries.js';
 
-describe("normalizeSearch", () => {
-	it("fills defaults", () => {
+describe('normalizeSearch', () => {
+	it('fills defaults', () => {
 		const norm = normalizeSearch({});
 		expect(norm).toEqual({
 			text: undefined,
@@ -12,13 +12,13 @@ describe("normalizeSearch", () => {
 		});
 	});
 
-	it("preserves provided fields", () => {
+	it('preserves provided fields', () => {
 		const norm = normalizeSearch({
-			text: "hi",
+			text: 'hi',
 			vector: [1],
 			topK: 5,
-			tags: ["a"],
+			tags: ['a'],
 		});
-		expect(norm).toEqual({ text: "hi", vector: [1], topK: 5, tags: ["a"] });
+		expect(norm).toEqual({ text: 'hi', vector: [1], topK: 5, tags: ['a'] });
 	});
 });

@@ -1,4 +1,4 @@
-declare module "pidusage" {
+declare module 'pidusage' {
 	interface ProcessStats {
 		cpu: number;
 		memory: number;
@@ -10,9 +10,7 @@ declare module "pidusage" {
 	}
 
 	function pidusage(pid: number): Promise<ProcessStats>;
-	function pidusage(
-		pids: number[],
-	): Promise<{ [pid: string]: ProcessStats }>;
+	function pidusage(pids: number[]): Promise<{ [pid: string]: ProcessStats }>;
 
 	export = pidusage;
 }

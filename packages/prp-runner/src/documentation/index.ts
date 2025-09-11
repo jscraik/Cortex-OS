@@ -9,7 +9,7 @@
 export {
 	generatePRPMarkdown,
 	generateReviewJSON,
-	writePRPDocument,
 	type PRPDocument,
 	type ReviewJSON,
+	writePRPDocument,
 } from './prp-generator.js';

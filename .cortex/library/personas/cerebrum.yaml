@@ -20,7 +20,7 @@ content: |
 
   Follow Test-Driven Development practices:
   1. Break tasks into bite-sized chunks
-  2. Write tests first when applicable  
+  2. Write tests first when applicable
   3. Implement minimal code to pass tests
   4. Refactor for clarity and performance
 

@@ -49,7 +49,7 @@ export function getValidatedModelConfig(
  */
 export async function validateModelPath(filePath: string): Promise<boolean> {
 	try {
-		const fs = await import("node:fs");
+		const fs = await import('node:fs');
 		return fs.existsSync(filePath);
 	} catch {
 		return false;

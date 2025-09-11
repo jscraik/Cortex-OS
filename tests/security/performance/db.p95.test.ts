@@ -7,7 +7,7 @@
  * status: active
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 
 function p95(values: number[]): number {
 	const sorted = [...values].sort((a, b) => a - b);
@@ -27,8 +27,8 @@ async function fakeDbQuery(): Promise<number> {
 	return Date.now() - start;
 }
 
-describe("DB performance budget", () => {
-	it("p95 latency ≤ 50ms", async () => {
+describe('DB performance budget', () => {
+	it('p95 latency ≤ 50ms', async () => {
 		const samples: number[] = [];
 		const N = 40;
 		for (let i = 0; i < N; i++) {

@@ -25,13 +25,21 @@ RUN pip install --no-cache-dir \
 # Set working directory
 WORKDIR /app
 
-# Copy MLX server implementation
-COPY mlx-server.py .
-COPY model_manager.py .
-COPY memory_manager.py .
+# Create non-root user for security
+RUN useradd -r -s /bin/false -u 1001 mlxuser && \
+    chown -R mlxuser:mlxuser /app
 
-# Create models directory
-RUN mkdir -p /app/models
+# Copy MLX server implementation
+COPY --chown=mlxuser:mlxuser mlx-server.py .
+COPY --chown=mlxuser:mlxuser model_manager.py .
+COPY --chown=mlxuser:mlxuser memory_manager.py .
+
+# Create models directory with proper ownership
+RUN mkdir -p /app/models && \
+    chown -R mlxuser:mlxuser /app/models
+
+# Switch to non-root user
+USER mlxuser
 
 # Environment variables
 ENV MLX_MEMORY_LIMIT=28672

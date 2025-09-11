@@ -1,6 +1,6 @@
-import { createRateLimiter } from "@cortex-os/a2a-common";
-import express from "express";
-import { type Schema, schemaForSchema } from "./schemas";
+import { createRateLimiter } from '@cortex-os/a2a-common';
+import express from 'express';
+import { type Schema, schemaForSchema } from './schemas';
 
 function isValidVersion(version: string): boolean {
 	return /^\d+\.\d+\.\d+$/.test(version);
@@ -8,8 +8,8 @@ function isValidVersion(version: string): boolean {
 
 // Sorts versions in descending order (e.g., 2.0.0, 1.1.0, 1.0.0)
 function compareVersions(a: string, b: string): number {
-	const pa = a.split(".").map(Number);
-	const pb = b.split(".").map(Number);
+	const pa = a.split('.').map(Number);
+	const pb = b.split('.').map(Number);
 	for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
 		const diff = (pb[i] ?? 0) - (pa[i] ?? 0);
 		if (diff !== 0) return diff;
@@ -27,42 +27,42 @@ export function createService() {
 	// For production use, a persistent database (e.g., PostgreSQL, MongoDB) should be used.
 	const schemas: Schema[] = [];
 
-	app.post("/schemas", (req, res) => {
+	app.post('/schemas', (req, res) => {
 		const parsed = schemaForSchema.safeParse(req.body);
 		if (!parsed.success) {
 			return res.status(400).json({ issues: parsed.error.issues });
 		}
 		const schema = parsed.data;
 		if (!isValidVersion(schema.version)) {
-			return res.status(400).send("Invalid version");
+			return res.status(400).send('Invalid version');
 		}
 		const exists = schemas.some(
 			(s) => s.name === schema.name && s.version === schema.version,
 		);
 		if (exists) {
-			return res.status(409).send("Schema already exists");
+			return res.status(409).send('Schema already exists');
 		}
 		schemas.push(schema);
 		const location = `/schemas/${schema.name}/${schema.version}`;
-		res.setHeader("Location", location);
+		res.setHeader('Location', location);
 		res.status(201).json({ ...schema, location });
 	});
 
-	app.get("/schemas", (_req, res) => {
+	app.get('/schemas', (_req, res) => {
 		res.json(schemas);
 	});
 
-	app.get("/schemas/:name", (req, res) => {
+	app.get('/schemas/:name', (req, res) => {
 		const { name } = req.params;
 		const namedSchemas = schemas.filter((s) => s.name === name);
 		res.json(namedSchemas);
 	});
 
-	app.get("/schemas/:name/latest", (req, res) => {
+	app.get('/schemas/:name/latest', (req, res) => {
 		const { name } = req.params;
 		const candidates = schemas.filter((s) => s.name === name);
 		if (candidates.length === 0) {
-			return res.status(404).send("Schema not found");
+			return res.status(404).send('Schema not found');
 		}
 		const sorted = candidates
 			.slice()
@@ -71,7 +71,7 @@ export function createService() {
 		res.json(latest);
 	});
 
-	app.get("/schemas/:name/:version", (req, res) => {
+	app.get('/schemas/:name/:version', (req, res) => {
 		const { name, version } = req.params;
 		const schema = schemas.find(
 			(s) => s.name === name && s.version === version,
@@ -79,7 +79,7 @@ export function createService() {
 		if (schema) {
 			res.json(schema);
 		} else {
-			res.status(404).send("Schema not found");
+			res.status(404).send('Schema not found');
 		}
 	});
 

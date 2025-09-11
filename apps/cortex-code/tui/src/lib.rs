@@ -23,6 +23,7 @@ use tracing::error;
 use tracing_appender::non_blocking;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::prelude::*;
+use std::time::Duration;
 
 mod app;
 mod app_backtrack;
@@ -77,6 +78,9 @@ pub async fn run_main(
     cli: Cli,
     codex_linux_sandbox_exe: Option<PathBuf>,
 ) -> std::io::Result<codex_core::protocol::TokenUsage> {
+    // Prepare overlay providers (no behavior change yet; enables future selection).
+    let mut _provider_registry = codex_core::providers::ProviderRegistry::new();
+    codex_providers_ext::register_default_ext_providers(&mut _provider_registry);
     let (sandbox_mode, approval_policy) = if cli.full_auto {
         (
             Some(SandboxMode::WorkspaceWrite),
@@ -105,11 +109,25 @@ pub async fn run_main(
         None // No model specified, will use the default.
     };
 
-    let model_provider_override = if cli.oss {
+    let mut model_provider_override = if cli.oss {
         Some(BUILT_IN_OSS_MODEL_PROVIDER_ID.to_owned())
     } else {
         None
     };
+
+    // Auto-detect local Ollama daemon if no explicit provider override was set.
+    if model_provider_override.is_none() {
+        if let Ok(client) = reqwest::Client::builder()
+            .timeout(Duration::from_millis(250))
+            .build()
+        {
+            if let Ok(resp) = client.get("http://127.0.0.1:11434/api/tags").send().await {
+                if resp.status().is_success() {
+                    model_provider_override = Some(BUILT_IN_OSS_MODEL_PROVIDER_ID.to_owned());
+                }
+            }
+        }
+    }
 
     // canonicalize the cwd
     let cwd = cli.cwd.clone().map(|p| p.canonicalize().unwrap_or(p));

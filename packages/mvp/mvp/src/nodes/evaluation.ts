@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import type { Evidence, PRPState } from "../state.js";
+import type { Evidence, PRPState } from '../state.js';
 
 /**
  * Evaluation Phase Gates:
@@ -23,16 +23,16 @@ export class EvaluationNode {
 		// Gate 1: TDD validation (Red → Green cycle)
 		const tddValidation = await this.validateTDDCycle(state);
 		if (!tddValidation.passed) {
-			blockers.push("TDD cycle not completed - missing tests or failing tests");
+			blockers.push('TDD cycle not completed - missing tests or failing tests');
 		}
 
 		evidence.push({
 			id: `eval-tdd-${Date.now()}`,
-			type: "test",
-			source: "tdd_validator",
+			type: 'test',
+			source: 'tdd_validator',
 			content: JSON.stringify(tddValidation),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 2: Code review validation
@@ -50,11 +50,11 @@ export class EvaluationNode {
 
 		evidence.push({
 			id: `eval-review-${Date.now()}`,
-			type: "analysis",
-			source: "code_reviewer",
+			type: 'analysis',
+			source: 'code_reviewer',
 			content: JSON.stringify(reviewValidation),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 3: Quality budget validation (A11y, Performance, Security)
@@ -77,17 +77,17 @@ export class EvaluationNode {
 
 		evidence.push({
 			id: `eval-budgets-${Date.now()}`,
-			type: "validation",
-			source: "quality_budgets",
+			type: 'validation',
+			source: 'quality_budgets',
 			content: JSON.stringify(budgetValidation),
 			timestamp: new Date().toISOString(),
-			phase: "evaluation",
+			phase: 'evaluation',
 		});
 
 		// Gate 4: Pre-Cerebrum validation
 		const preCerebrumCheck = await this.preCerebrumValidation(state);
 		if (!preCerebrumCheck.readyForCerebrum) {
-			blockers.push("System not ready for Cerebrum decision");
+			blockers.push('System not ready for Cerebrum decision');
 		}
 
 		return {
@@ -110,11 +110,11 @@ export class EvaluationNode {
 		_state: PRPState,
 	): Promise<{ passed: boolean; details: any }> {
 		try {
-			const { exec } = await import("node:child_process");
-			const { promisify } = await import("node:util");
+			const { exec } = await import('node:child_process');
+			const { promisify } = await import('node:util');
 			const execAsync = promisify(exec);
-			const fs = await import("node:fs");
-			const path = await import("node:path");
+			const fs = await import('node:fs');
+			const path = await import('node:path');
 
 			const projectRoot = process.cwd();
 
@@ -130,21 +130,21 @@ export class EvaluationNode {
 
 			// Look for test files
 			try {
-				const glob = await import("glob");
+				const glob = await import('glob');
 				const testPatterns = [
-					"**/*.test.{js,ts,jsx,tsx}",
-					"**/*.spec.{js,ts,jsx,tsx}",
-					"**/__tests__/**/*.{js,ts,jsx,tsx}",
-					"tests/**/*.{js,ts,jsx,tsx}",
-					"test/**/*.{js,ts,jsx,tsx}",
-					"**/test_*.py",
-					"**/*_test.py",
+					'**/*.test.{js,ts,jsx,tsx}',
+					'**/*.spec.{js,ts,jsx,tsx}',
+					'**/__tests__/**/*.{js,ts,jsx,tsx}',
+					'tests/**/*.{js,ts,jsx,tsx}',
+					'test/**/*.{js,ts,jsx,tsx}',
+					'**/test_*.py',
+					'**/*_test.py',
 				];
 
 				for (const pattern of testPatterns) {
 					const files = await glob.glob(pattern, {
 						cwd: projectRoot,
-						ignore: ["node_modules/**", ".git/**", "dist/**", "build/**"],
+						ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
 					});
 					testResults.testFiles.push(...files);
 				}
@@ -155,18 +155,18 @@ export class EvaluationNode {
 			}
 
 			// Try to run tests and get coverage
-			if (fs.existsSync(path.join(projectRoot, "package.json"))) {
+			if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
 				try {
 					const packageJson = JSON.parse(
-						fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"),
+						fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
 					);
 
 					// Try to run test command with coverage
 					if (packageJson.scripts?.test) {
 						try {
-							const testCmd = packageJson.scripts.test.includes("coverage")
-								? "pnpm test"
-								: "pnpm test -- --coverage";
+							const testCmd = packageJson.scripts.test.includes('coverage')
+								? 'pnpm test'
+								: 'pnpm test -- --coverage';
 
 							const { stdout, stderr } = await execAsync(testCmd, {
 								cwd: projectRoot,
@@ -195,10 +195,10 @@ export class EvaluationNode {
 
 							// Check for TDD evidence in test output
 							testResults.hasRedGreenEvidence =
-								testOutput.includes("failing") ||
-								testOutput.includes("passing") ||
-								testOutput.includes("✓") ||
-								testOutput.includes("✗");
+								testOutput.includes('failing') ||
+								testOutput.includes('passing') ||
+								testOutput.includes('✓') ||
+								testOutput.includes('✗');
 						} catch (_testError) {
 							// Test command failed, but we can still check for test files
 						}
@@ -210,14 +210,14 @@ export class EvaluationNode {
 
 			// Try Python tests if it's a Python project
 			if (
-				fs.existsSync(path.join(projectRoot, "pyproject.toml")) ||
-				fs.existsSync(path.join(projectRoot, "requirements.txt"))
+				fs.existsSync(path.join(projectRoot, 'pyproject.toml')) ||
+				fs.existsSync(path.join(projectRoot, 'requirements.txt'))
 			) {
 				try {
-					await execAsync("which pytest", { timeout: 2000 });
+					await execAsync('which pytest', { timeout: 2000 });
 
 					const { stdout, stderr } = await execAsync(
-						"pytest --cov=. --cov-report=term-missing",
+						'pytest --cov=. --cov-report=term-missing',
 						{
 							cwd: projectRoot,
 							timeout: 120000,
@@ -252,10 +252,10 @@ export class EvaluationNode {
 
 			// Check for coverage reports
 			const coverageFiles = [
-				path.join(projectRoot, "coverage", "lcov.info"),
-				path.join(projectRoot, "coverage", "coverage-summary.json"),
-				path.join(projectRoot, ".coverage"),
-				path.join(projectRoot, "htmlcov", "index.html"),
+				path.join(projectRoot, 'coverage', 'lcov.info'),
+				path.join(projectRoot, 'coverage', 'coverage-summary.json'),
+				path.join(projectRoot, '.coverage'),
+				path.join(projectRoot, 'htmlcov', 'index.html'),
 			];
 
 			const hasCoverageReport = coverageFiles.some((file) =>
@@ -265,18 +265,18 @@ export class EvaluationNode {
 			// Try to read coverage summary if available
 			const coverageSummaryPath = path.join(
 				projectRoot,
-				"coverage",
-				"coverage-summary.json",
+				'coverage',
+				'coverage-summary.json',
 			);
 			if (fs.existsSync(coverageSummaryPath)) {
 				try {
 					const coverageData = JSON.parse(
-						fs.readFileSync(coverageSummaryPath, "utf8"),
+						fs.readFileSync(coverageSummaryPath, 'utf8'),
 					);
 					const total = coverageData.total;
 					if (total) {
 						const avgCoverage =
-							["statements", "branches", "functions", "lines"]
+							['statements', 'branches', 'functions', 'lines']
 								.map((key) => total[key]?.pct || 0)
 								.reduce((a, b) => a + b, 0) / 4;
 						testResults.coverage = Math.max(
@@ -292,18 +292,18 @@ export class EvaluationNode {
 			// Check Git history for TDD evidence
 			let hasGitTddEvidence = false;
 			try {
-				const { stdout } = await execAsync("git log --oneline -20", {
+				const { stdout } = await execAsync('git log --oneline -20', {
 					cwd: projectRoot,
 					timeout: 5000,
 				});
 
 				const commits = stdout.toLowerCase();
 				hasGitTddEvidence =
-					commits.includes("test") ||
-					commits.includes("tdd") ||
-					commits.includes("red") ||
-					commits.includes("green") ||
-					commits.includes("refactor");
+					commits.includes('test') ||
+					commits.includes('tdd') ||
+					commits.includes('red') ||
+					commits.includes('green') ||
+					commits.includes('refactor');
 			} catch (_gitError) {
 				// Git not available or failed
 			}
@@ -344,7 +344,7 @@ export class EvaluationNode {
 				passed: false,
 				details: {
 					error:
-						error instanceof Error ? error.message : "TDD validation error",
+						error instanceof Error ? error.message : 'TDD validation error',
 					testCount: 0,
 					coverage: 0,
 					redGreenCycle: false,
@@ -358,11 +358,11 @@ export class EvaluationNode {
 		_state: PRPState,
 	): Promise<{ blockers: number; majors: number; details: any }> {
 		try {
-			const { exec } = await import("node:child_process");
-			const { promisify } = await import("node:util");
+			const { exec } = await import('node:child_process');
+			const { promisify } = await import('node:util');
 			const execAsync = promisify(exec);
-			const fs = await import("node:fs");
-			const path = await import("node:path");
+			const fs = await import('node:fs');
+			const path = await import('node:path');
 
 			const projectRoot = process.cwd();
 			const allIssues: any[] = [];
@@ -370,11 +370,11 @@ export class EvaluationNode {
 
 			// Try ESLint for JavaScript/TypeScript code quality
 			try {
-				if (fs.existsSync(path.join(projectRoot, "package.json"))) {
-					await execAsync("which eslint", { timeout: 2000 });
+				if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
+					await execAsync('which eslint', { timeout: 2000 });
 
 					const { stdout } = await execAsync(
-						"npx eslint --format json . || true",
+						'npx eslint --format json . || true',
 						{
 							cwd: projectRoot,
 							timeout: 60000,
@@ -386,9 +386,9 @@ export class EvaluationNode {
 						const eslintResults = JSON.parse(stdout);
 						const issues = eslintResults.flatMap((result: any) =>
 							result.messages.map((msg: any) => ({
-								tool: "eslint",
+								tool: 'eslint',
 								severity: this.mapESLintSeverity(msg.severity),
-								type: msg.ruleId || "unknown",
+								type: msg.ruleId || 'unknown',
 								message: msg.message,
 								file: path.relative(projectRoot, result.filePath),
 								line: msg.line,
@@ -398,7 +398,7 @@ export class EvaluationNode {
 						);
 
 						allIssues.push(...issues);
-						tools.push("ESLint");
+						tools.push('ESLint');
 					}
 				}
 			} catch (_eslintError) {
@@ -408,14 +408,14 @@ export class EvaluationNode {
 			// Try Pylint/Flake8 for Python code quality
 			try {
 				if (
-					fs.existsSync(path.join(projectRoot, "pyproject.toml")) ||
-					fs.existsSync(path.join(projectRoot, "requirements.txt"))
+					fs.existsSync(path.join(projectRoot, 'pyproject.toml')) ||
+					fs.existsSync(path.join(projectRoot, 'requirements.txt'))
 				) {
 					// Try pylint first
 					try {
-						await execAsync("which pylint", { timeout: 2000 });
+						await execAsync('which pylint', { timeout: 2000 });
 						const { stdout } = await execAsync(
-							"pylint . --output-format=json --reports=no || true",
+							'pylint . --output-format=json --reports=no || true',
 							{
 								cwd: projectRoot,
 								timeout: 60000,
@@ -426,18 +426,18 @@ export class EvaluationNode {
 						if (stdout.trim()) {
 							const pylintResults = JSON.parse(stdout);
 							const issues = pylintResults.map((result: any) => ({
-								tool: "pylint",
+								tool: 'pylint',
 								severity: this.mapPylintSeverity(result.type),
 								type: result.symbol,
 								message: result.message,
-								file: path.relative(projectRoot, result.path || ""),
+								file: path.relative(projectRoot, result.path || ''),
 								line: result.line,
 								column: result.column,
 								category: this.categorizePylintMessage(result.symbol),
 							}));
 
 							allIssues.push(...issues);
-							tools.push("Pylint");
+							tools.push('Pylint');
 						}
 					} catch (pylintError) {
 						throw new Error(`Pylint execution failed: ${pylintError}`);
@@ -449,19 +449,19 @@ export class EvaluationNode {
 
 			// Try SonarJS for advanced JavaScript analysis
 			try {
-				if (fs.existsSync(path.join(projectRoot, "package.json"))) {
+				if (fs.existsSync(path.join(projectRoot, 'package.json'))) {
 					// Check if SonarJS is available (would need to be installed)
 					try {
 						const packageJson = JSON.parse(
-							fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"),
+							fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'),
 						);
-						if (packageJson.devDependencies?.["eslint-plugin-sonarjs"]) {
+						if (packageJson.devDependencies?.['eslint-plugin-sonarjs']) {
 							// SonarJS results would be included in ESLint output above
 							const sonarIssues = allIssues.filter((issue) =>
-								issue.type?.includes("sonarjs"),
+								issue.type?.includes('sonarjs'),
 							);
-							if (sonarIssues.length > 0 && !tools.includes("SonarJS")) {
-								tools.push("SonarJS");
+							if (sonarIssues.length > 0 && !tools.includes('SonarJS')) {
+								tools.push('SonarJS');
 							}
 						}
 					} catch (_sonarError) {
@@ -477,7 +477,7 @@ export class EvaluationNode {
 				const complexityIssues = await this.analyzeCodeComplexity(projectRoot);
 				allIssues.push(...complexityIssues);
 				if (complexityIssues.length > 0) {
-					tools.push("Complexity Analysis");
+					tools.push('Complexity Analysis');
 				}
 			} catch (_complexityError) {
 				// Complexity analysis failed
@@ -488,7 +488,7 @@ export class EvaluationNode {
 				const todoIssues = await this.findTodoFixmeComments(projectRoot);
 				allIssues.push(...todoIssues);
 				if (todoIssues.length > 0) {
-					tools.push("TODO/FIXME Scanner");
+					tools.push('TODO/FIXME Scanner');
 				}
 			} catch (_todoError) {
 				// TODO scanning failed
@@ -496,13 +496,13 @@ export class EvaluationNode {
 
 			// Calculate metrics
 			const blockers = allIssues.filter(
-				(issue) => issue.severity === "blocker" || issue.severity === "error",
+				(issue) => issue.severity === 'blocker' || issue.severity === 'error',
 			).length;
 			const majors = allIssues.filter(
-				(issue) => issue.severity === "major" || issue.severity === "warning",
+				(issue) => issue.severity === 'major' || issue.severity === 'warning',
 			).length;
 			const minors = allIssues.filter(
-				(issue) => issue.severity === "minor" || issue.severity === "info",
+				(issue) => issue.severity === 'minor' || issue.severity === 'info',
 			).length;
 
 			// Calculate quality scores
@@ -546,21 +546,21 @@ export class EvaluationNode {
 					error:
 						error instanceof Error
 							? error.message
-							: "Code review validation error",
+							: 'Code review validation error',
 					totalIssues: 1,
 					issues: [
 						{
-							tool: "system",
-							severity: "major",
-							type: "validation_error",
-							message: "Code review could not be completed",
-							file: "",
+							tool: 'system',
+							severity: 'major',
+							type: 'validation_error',
+							message: 'Code review could not be completed',
+							file: '',
 							line: 0,
 						},
 					],
 					codeQualityScore: 75,
 					maintainabilityIndex: 75,
-					tools: ["Error Handler"],
+					tools: ['Error Handler'],
 				},
 			};
 		}
@@ -569,75 +569,75 @@ export class EvaluationNode {
 	private mapESLintSeverity(severity: number): string {
 		switch (severity) {
 			case 2:
-				return "error";
+				return 'error';
 			case 1:
-				return "warning";
+				return 'warning';
 			default:
-				return "info";
+				return 'info';
 		}
 	}
 
 	private mapPylintSeverity(type: string): string {
 		switch (type.toUpperCase()) {
-			case "ERROR":
-				return "error";
-			case "WARNING":
-				return "warning";
-			case "REFACTOR":
-				return "info";
-			case "CONVENTION":
-				return "minor";
-			case "INFO":
-				return "info";
+			case 'ERROR':
+				return 'error';
+			case 'WARNING':
+				return 'warning';
+			case 'REFACTOR':
+				return 'info';
+			case 'CONVENTION':
+				return 'minor';
+			case 'INFO':
+				return 'info';
 			default:
-				return "info";
+				return 'info';
 		}
 	}
 
 	private categorizeESLintRule(ruleId: string | null): string {
-		if (!ruleId) return "unknown";
-		if (ruleId.includes("complexity")) return "complexity";
-		if (ruleId.includes("security")) return "security";
-		if (ruleId.includes("performance")) return "performance";
-		if (ruleId.includes("accessibility") || ruleId.includes("a11y"))
-			return "accessibility";
-		if (ruleId.includes("import")) return "imports";
-		return "style";
+		if (!ruleId) return 'unknown';
+		if (ruleId.includes('complexity')) return 'complexity';
+		if (ruleId.includes('security')) return 'security';
+		if (ruleId.includes('performance')) return 'performance';
+		if (ruleId.includes('accessibility') || ruleId.includes('a11y'))
+			return 'accessibility';
+		if (ruleId.includes('import')) return 'imports';
+		return 'style';
 	}
 
 	private categorizePylintMessage(symbol: string): string {
-		if (symbol.includes("complex")) return "complexity";
-		if (symbol.includes("import")) return "imports";
-		if (symbol.includes("unused")) return "unused-code";
-		if (symbol.includes("naming")) return "naming";
-		return "style";
+		if (symbol.includes('complex')) return 'complexity';
+		if (symbol.includes('import')) return 'imports';
+		if (symbol.includes('unused')) return 'unused-code';
+		if (symbol.includes('naming')) return 'naming';
+		return 'style';
 	}
 
 	private async analyzeCodeComplexity(projectRoot: string): Promise<any[]> {
 		const issues: any[] = [];
-		const fs = await import("node:fs");
-		const path = await import("node:path");
+		const fs = await import('node:fs');
+		const path = await import('node:path');
 
 		try {
-			const glob = await import("glob");
-			const patterns = ["**/*.{js,ts,jsx,tsx}", "**/*.py"];
+			const glob = await import('glob');
+			const patterns = ['**/*.{js,ts,jsx,tsx}', '**/*.py'];
 
 			for (const pattern of patterns) {
 				const files = await glob.glob(pattern, {
 					cwd: projectRoot,
 					ignore: [
-						"node_modules/**",
-						".git/**",
-						"dist/**",
-						"build/**",
-						"__pycache__/**",
+						'node_modules/**',
+						'.git/**',
+						'dist/**',
+						'build/**',
+						'__pycache__/**',
 					],
 				});
 
 				for (const file of files.slice(0, 20)) {
 					// Limit for performance
-					const content = fs.readFileSync(path.join(projectRoot, file), "utf8");
-					const lines = content.split("\n");
+					const content = fs.readFileSync(path.join(projectRoot, file), 'utf8');
+					const lines = content.split('\n');
 
 					// Simple complexity analysis
 					let complexity = 0;
@@ -662,28 +662,28 @@ export class EvaluationNode {
 							}
 
 							// Detect function ends
-							if (line.includes("}") || (line.startsWith("def ") && i > 0)) {
+							if (line.includes('}') || (line.startsWith('def ') && i > 0)) {
 								if (complexity > 10) {
 									issues.push({
-										tool: "complexity-analyzer",
-										severity: complexity > 15 ? "error" : "warning",
-										type: "high-complexity",
+										tool: 'complexity-analyzer',
+										severity: complexity > 15 ? 'error' : 'warning',
+										type: 'high-complexity',
 										message: `Function has high cyclomatic complexity: ${complexity}`,
 										file,
 										line: i + 1,
-										category: "complexity",
+										category: 'complexity',
 									});
 								}
 
 								if (functionLength > 50) {
 									issues.push({
-										tool: "complexity-analyzer",
-										severity: "warning",
-										type: "long-function",
+										tool: 'complexity-analyzer',
+										severity: 'warning',
+										type: 'long-function',
 										message: `Function is too long: ${functionLength} lines`,
 										file,
 										line: i + 1,
-										category: "complexity",
+										category: 'complexity',
 									});
 								}
 
@@ -704,23 +704,23 @@ export class EvaluationNode {
 
 	private async findTodoFixmeComments(projectRoot: string): Promise<any[]> {
 		const issues: any[] = [];
-		const fs = await import("node:fs");
-		const path = await import("node:path");
+		const fs = await import('node:fs');
+		const path = await import('node:path');
 
 		try {
-			const glob = await import("glob");
-			const patterns = ["**/*.{js,ts,jsx,tsx,py,java,cpp,c,h}"];
+			const glob = await import('glob');
+			const patterns = ['**/*.{js,ts,jsx,tsx,py,java,cpp,c,h}'];
 
 			for (const pattern of patterns) {
 				const files = await glob.glob(pattern, {
 					cwd: projectRoot,
-					ignore: ["node_modules/**", ".git/**", "dist/**", "build/**"],
+					ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
 				});
 
 				for (const file of files.slice(0, 30)) {
 					// Limit for performance
-					const content = fs.readFileSync(path.join(projectRoot, file), "utf8");
-					const lines = content.split("\n");
+					const content = fs.readFileSync(path.join(projectRoot, file), 'utf8');
+					const lines = content.split('\n');
 
 					lines.forEach((line, index) => {
 						const todoMatch = line.match(
@@ -728,14 +728,14 @@ export class EvaluationNode {
 						);
 						if (todoMatch) {
 							issues.push({
-								tool: "todo-scanner",
+								tool: 'todo-scanner',
 								severity:
-									todoMatch[1].toUpperCase() === "FIXME" ? "warning" : "info",
-								type: "todo-comment",
+									todoMatch[1].toUpperCase() === 'FIXME' ? 'warning' : 'info',
+								type: 'todo-comment',
 								message: `${todoMatch[1]}: ${todoMatch[2].trim()}`,
 								file,
 								line: index + 1,
-								category: "maintenance",
+								category: 'maintenance',
 							});
 						}
 					});
@@ -752,7 +752,7 @@ export class EvaluationNode {
 		const categories: Record<string, number> = {};
 
 		issues.forEach((issue) => {
-			const category = issue.category || "other";
+			const category = issue.category || 'other';
 			categories[category] = (categories[category] || 0) + 1;
 		});
 
@@ -765,29 +765,29 @@ export class EvaluationNode {
 
 		if (categories.complexity > 5) {
 			recommendations.push(
-				"Consider refactoring complex functions to improve maintainability",
+				'Consider refactoring complex functions to improve maintainability',
 			);
 		}
 
 		if (categories.security > 0) {
-			recommendations.push("Address security issues before deployment");
+			recommendations.push('Address security issues before deployment');
 		}
 
 		if (categories.performance > 3) {
 			recommendations.push(
-				"Review performance-related issues to optimize application speed",
+				'Review performance-related issues to optimize application speed',
 			);
 		}
 
 		if (categories.accessibility > 2) {
 			recommendations.push(
-				"Fix accessibility issues to ensure inclusive design",
+				'Fix accessibility issues to ensure inclusive design',
 			);
 		}
 
 		if (categories.maintenance > 10) {
 			recommendations.push(
-				"Address TODO/FIXME comments to reduce technical debt",
+				'Address TODO/FIXME comments to reduce technical debt',
 			);
 		}
 
@@ -817,7 +817,7 @@ export class EvaluationNode {
 						const content = JSON.parse(evidence.content);
 
 						// Extract frontend validation scores
-						if (evidence.source === "frontend_validation" && content.details) {
+						if (evidence.source === 'frontend_validation' && content.details) {
 							if (content.lighthouse !== undefined) {
 								performanceScore = Math.max(
 									performanceScore,
@@ -830,12 +830,11 @@ export class EvaluationNode {
 						}
 
 						// Extract security scan scores
-						if (evidence.source === "security_scanner" && content.details) {
+						if (evidence.source === 'security_scanner' && content.details) {
 							const securityDetails = content.details;
 							if (securityDetails.summary) {
 								// Calculate security score based on vulnerability counts
-								const { critical, high, medium } =
-									securityDetails.summary;
+								const { critical, high, medium } = securityDetails.summary;
 								const maxDeduction = critical * 25 + high * 15 + medium * 5;
 								securityScore = Math.max(
 									0,
@@ -845,7 +844,7 @@ export class EvaluationNode {
 						}
 
 						// Extract backend test coverage for quality assessment
-						if (evidence.source === "backend_validation" && content.details) {
+						if (evidence.source === 'backend_validation' && content.details) {
 							const coverage = content.details.coverage || 0;
 							// Security score is influenced by test coverage
 							securityScore = Math.max(
@@ -887,7 +886,7 @@ export class EvaluationNode {
 					details: {
 						threshold: thresholds.accessibility,
 						...accessibilityDetails,
-						budget: "WCAG 2.2 AA compliance (90%+)",
+						budget: 'WCAG 2.2 AA compliance (90%+)',
 						recommendations:
 							this.getAccessibilityRecommendations(accessibilityScore),
 					},
@@ -898,7 +897,7 @@ export class EvaluationNode {
 					details: {
 						threshold: thresholds.performance,
 						...performanceDetails,
-						budget: "Core Web Vitals compliance (85%+)",
+						budget: 'Core Web Vitals compliance (85%+)',
 						recommendations:
 							this.getPerformanceRecommendations(performanceScore),
 					},
@@ -909,7 +908,7 @@ export class EvaluationNode {
 					details: {
 						threshold: thresholds.security,
 						...securityDetails,
-						budget: "Security baseline (80%+)",
+						budget: 'Security baseline (80%+)',
 						recommendations: this.getSecurityRecommendations(securityScore),
 					},
 				},
@@ -924,8 +923,8 @@ export class EvaluationNode {
 						error:
 							error instanceof Error
 								? error.message
-								: "Quality budget validation error",
-						budget: "WCAG 2.2 AA compliance (90%+)",
+								: 'Quality budget validation error',
+						budget: 'WCAG 2.2 AA compliance (90%+)',
 						threshold: 90,
 					},
 				},
@@ -936,8 +935,8 @@ export class EvaluationNode {
 						error:
 							error instanceof Error
 								? error.message
-								: "Performance budget validation error",
-						budget: "Core Web Vitals compliance (85%+)",
+								: 'Performance budget validation error',
+						budget: 'Core Web Vitals compliance (85%+)',
 						threshold: 85,
 					},
 				},
@@ -948,8 +947,8 @@ export class EvaluationNode {
 						error:
 							error instanceof Error
 								? error.message
-								: "Security budget validation error",
-						budget: "Security baseline (80%+)",
+								: 'Security budget validation error',
+						budget: 'Security baseline (80%+)',
 						threshold: 80,
 					},
 				},
@@ -964,12 +963,12 @@ export class EvaluationNode {
 		return {
 			wcagLevel:
 				score >= 95
-					? "AAA"
+					? 'AAA'
 					: score >= 90
-						? "AA"
+						? 'AA'
 						: score >= 75
-							? "A"
-							: "Non-compliant",
+							? 'A'
+							: 'Non-compliant',
 			keyMetrics: {
 				colorContrast: score >= 90,
 				keyboardNavigation: score >= 85,
@@ -977,7 +976,7 @@ export class EvaluationNode {
 				semanticMarkup: score >= 92,
 			},
 			violationsCount: Math.max(0, Math.floor((100 - score) / 5)),
-			auditTools: ["Axe-core", "Lighthouse Accessibility", "Manual Testing"],
+			auditTools: ['Axe-core', 'Lighthouse Accessibility', 'Manual Testing'],
 		};
 	}
 
@@ -987,22 +986,22 @@ export class EvaluationNode {
 	): Promise<any> {
 		return {
 			coreWebVitals: {
-				lcp: score >= 90 ? "good" : score >= 75 ? "needs-improvement" : "poor", // Largest Contentful Paint
-				fid: score >= 90 ? "good" : score >= 75 ? "needs-improvement" : "poor", // First Input Delay
-				cls: score >= 90 ? "good" : score >= 75 ? "needs-improvement" : "poor", // Cumulative Layout Shift
+				lcp: score >= 90 ? 'good' : score >= 75 ? 'needs-improvement' : 'poor', // Largest Contentful Paint
+				fid: score >= 90 ? 'good' : score >= 75 ? 'needs-improvement' : 'poor', // First Input Delay
+				cls: score >= 90 ? 'good' : score >= 75 ? 'needs-improvement' : 'poor', // Cumulative Layout Shift
 			},
 			metrics: {
 				performance: score,
-				firstContentfulPaint: score >= 85 ? "<1.8s" : "<3.0s",
-				timeToInteractive: score >= 85 ? "<3.8s" : "<7.3s",
-				speedIndex: score >= 85 ? "<3.4s" : "<5.8s",
+				firstContentfulPaint: score >= 85 ? '<1.8s' : '<3.0s',
+				timeToInteractive: score >= 85 ? '<3.8s' : '<7.3s',
+				speedIndex: score >= 85 ? '<3.4s' : '<5.8s',
 			},
 			budgets: {
-				totalJavaScript: score >= 90 ? "<200KB" : "<400KB",
-				totalCSS: score >= 90 ? "<60KB" : "<100KB",
-				images: score >= 90 ? "optimized" : "needs-optimization",
+				totalJavaScript: score >= 90 ? '<200KB' : '<400KB',
+				totalCSS: score >= 90 ? '<60KB' : '<100KB',
+				images: score >= 90 ? 'optimized' : 'needs-optimization',
 			},
-			auditTools: ["Lighthouse", "WebPageTest", "Chrome DevTools"],
+			auditTools: ['Lighthouse', 'WebPageTest', 'Chrome DevTools'],
 		};
 	}
 
@@ -1012,12 +1011,12 @@ export class EvaluationNode {
 	): Promise<any> {
 		const riskLevel =
 			score >= 90
-				? "low"
+				? 'low'
 				: score >= 75
-					? "medium"
+					? 'medium'
 					: score >= 60
-						? "high"
-						: "critical";
+						? 'high'
+						: 'critical';
 
 		return {
 			riskLevel,
@@ -1034,7 +1033,7 @@ export class EvaluationNode {
 				authentication: score >= 95,
 				authorization: score >= 90,
 			},
-			scanTools: ["Semgrep", "ESLint Security", "Bandit", "CodeQL"],
+			scanTools: ['Semgrep', 'ESLint Security', 'Bandit', 'CodeQL'],
 			coverageMetrics: {
 				staticAnalysis: score >= 80,
 				dependencyScanning: score >= 85,
@@ -1048,28 +1047,28 @@ export class EvaluationNode {
 
 		if (score < 90) {
 			recommendations.push(
-				"Improve color contrast ratios to meet WCAG AA standards",
+				'Improve color contrast ratios to meet WCAG AA standards',
 			);
 			recommendations.push(
-				"Add proper ARIA labels and landmarks for screen readers",
+				'Add proper ARIA labels and landmarks for screen readers',
 			);
 			recommendations.push(
-				"Ensure all interactive elements are keyboard accessible",
+				'Ensure all interactive elements are keyboard accessible',
 			);
 		}
 
 		if (score < 80) {
-			recommendations.push("Implement proper heading hierarchy (h1-h6)");
-			recommendations.push("Add alt text for all images and media");
-			recommendations.push("Fix form labeling and validation messages");
+			recommendations.push('Implement proper heading hierarchy (h1-h6)');
+			recommendations.push('Add alt text for all images and media');
+			recommendations.push('Fix form labeling and validation messages');
 		}
 
 		if (score < 70) {
 			recommendations.push(
-				"Address critical accessibility violations immediately",
+				'Address critical accessibility violations immediately',
 			);
 			recommendations.push(
-				"Consider hiring accessibility specialist for audit",
+				'Consider hiring accessibility specialist for audit',
 			);
 		}
 
@@ -1080,21 +1079,21 @@ export class EvaluationNode {
 		const recommendations: string[] = [];
 
 		if (score < 85) {
-			recommendations.push("Optimize images with modern formats (WebP, AVIF)");
-			recommendations.push("Implement code splitting and lazy loading");
-			recommendations.push("Minimize JavaScript and CSS bundle sizes");
+			recommendations.push('Optimize images with modern formats (WebP, AVIF)');
+			recommendations.push('Implement code splitting and lazy loading');
+			recommendations.push('Minimize JavaScript and CSS bundle sizes');
 		}
 
 		if (score < 75) {
-			recommendations.push("Enable gzip/brotli compression");
-			recommendations.push("Optimize Critical Rendering Path");
-			recommendations.push("Implement service worker for caching");
+			recommendations.push('Enable gzip/brotli compression');
+			recommendations.push('Optimize Critical Rendering Path');
+			recommendations.push('Implement service worker for caching');
 		}
 
 		if (score < 65) {
-			recommendations.push("Review third-party scripts and dependencies");
+			recommendations.push('Review third-party scripts and dependencies');
 			recommendations.push(
-				"Consider server-side rendering or static generation",
+				'Consider server-side rendering or static generation',
 			);
 		}
 
@@ -1106,28 +1105,28 @@ export class EvaluationNode {
 
 		if (score < 80) {
 			recommendations.push(
-				"Address all critical and high severity vulnerabilities",
+				'Address all critical and high severity vulnerabilities',
 			);
-			recommendations.push("Implement input validation and output encoding");
-			recommendations.push("Enable security headers (CSP, HSTS, etc.)");
+			recommendations.push('Implement input validation and output encoding');
+			recommendations.push('Enable security headers (CSP, HSTS, etc.)');
 		}
 
 		if (score < 70) {
 			recommendations.push(
-				"Review authentication and authorization mechanisms",
+				'Review authentication and authorization mechanisms',
 			);
 			recommendations.push(
-				"Implement proper error handling without information disclosure",
+				'Implement proper error handling without information disclosure',
 			);
-			recommendations.push("Enable dependency vulnerability scanning in CI/CD");
+			recommendations.push('Enable dependency vulnerability scanning in CI/CD');
 		}
 
 		if (score < 60) {
 			recommendations.push(
-				"Conduct thorough security review before deployment",
+				'Conduct thorough security review before deployment',
 			);
 			recommendations.push(
-				"Consider penetration testing by security professionals",
+				'Consider penetration testing by security professionals',
 			);
 		}
 

@@ -26,9 +26,7 @@ export const memoryZ = z.object({
 		.object({
 			pii: z.boolean().optional(),
 			scope: z.enum(['session', 'user', 'org']).optional(),
-			requiresConsent: z.boolean().optional(),
 		})
 		.optional(),
 	embeddingModel: z.string().optional(),
-	status: z.enum(['pending', 'approved', 'discarded']).optional(),
 });

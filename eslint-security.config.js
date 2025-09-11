@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import sonarjs from "eslint-plugin-sonarjs";
 import ts from "typescript-eslint";
 
-// Security-focused overlay config. Assumes base config already registered sonarjs.
+// Security-focused overlay config with enhanced vulnerability detection
 export default [
   js.configs.recommended,
   ...ts.configs.recommended,
@@ -11,6 +11,8 @@ export default [
     files: [
       "apps/**/src/**/*.{ts,tsx,js,jsx}",
       "packages/**/src/**/*.{ts,tsx,js,jsx}",
+      "scripts/**/*.{ts,js}",
+      "docker/**/*.{js,ts}",
     ],
     // Register sonarjs plugin exactly once in this file so rules resolve.
     plugins: { "@typescript-eslint": ts.plugin, sonarjs },
@@ -57,6 +59,7 @@ export default [
       "sonarjs/prefer-immediate-return": "error",
       "sonarjs/prefer-object-literal": "error",
       "sonarjs/prefer-single-boolean-return": "error",
+
       // TypeScript security rules
       "@typescript-eslint/no-explicit-any": "error",
       // Unsafe rules require full type info and are expensive on very large monorepos.
@@ -66,13 +69,83 @@ export default [
       "@typescript-eslint/no-unsafe-member-access": "warn",
       "@typescript-eslint/no-unsafe-return": "warn",
       "@typescript-eslint/restrict-template-expressions": ["warn", { allowNumber: true, allowBoolean: true, allowNullish: true }],
-      // General security rules
+
+      // Enhanced security rules
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-new-func": "error",
       "no-script-url": "error",
       "no-console": ["warn", { allow: ["error", "warn"] }],
+
+      // Command injection prevention
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "CallExpression[callee.object.name='child_process'][callee.property.name='exec']",
+          message: "Use child_process.execFile or spawn instead of exec to prevent command injection"
+        },
+        {
+          selector: "CallExpression[callee.name='eval']",
+          message: "eval() is dangerous and should not be used"
+        },
+        {
+          selector: "NewExpression[callee.name='Function']",
+          message: "Function constructor is equivalent to eval() and should not be used"
+        }
+      ],
+
+      // SSRF and injection prevention
+      "no-restricted-modules": ["error", "child_process"],
+
+      // Prototype pollution prevention
+      "no-proto": "error",
+      "no-extend-native": "error",
+
+      // Input validation
+      "no-empty": "error",
+      "no-fallthrough": "error",
+      "no-regex-spaces": "error",
+
+      // Environment and secrets
+      "no-process-env": "warn",
+      "no-process-exit": "warn",
+
+      // Network security
+      "prefer-const": "error",
+      "no-var": "error",
+
+      // Additional TypeScript security
+      "@typescript-eslint/no-non-null-assertion": "warn",
+      "@typescript-eslint/prefer-nullish-coalescing": "warn",
+      "@typescript-eslint/prefer-optional-chain": "warn",
     },
+  },
+  {
+    // Test files - relax some security rules that are acceptable in tests
+    files: ["**/*.test.ts", "**/*.test.js", "**/*.spec.ts", "**/*.spec.js"],
+    rules: {
+      "no-process-env": "off",
+      "no-console": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+    }
+  },
+  {
+    // Config files - allow necessary patterns
+    files: ["**/*.config.js", "**/*.config.ts", "**/vite.config.*", "**/vitest.config.*"],
+    rules: {
+      "no-process-env": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+    }
+  },
+  {
+    // Scripts directory - allow subprocess usage but warn
+    files: ["scripts/**/*"],
+    rules: {
+      "no-process-env": "off",
+      "no-process-exit": "off",
+      "no-console": "off",
+      "no-restricted-modules": "warn",
+    }
   },
   {
     ignores: [

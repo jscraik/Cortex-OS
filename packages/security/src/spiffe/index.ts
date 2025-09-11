@@ -8,4 +8,4 @@ export {
 	convertSelectors,
 	SpiffeClient,
 	splitPEMCertificates,
-} from "./client";
+} from './client';

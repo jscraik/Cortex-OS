@@ -22,10 +22,10 @@ impl AnthropicAdapter {
         let api_key = api_key
             .or_else(|| std::env::var("ANTHROPIC_API_KEY").ok())
             .ok_or_else(|| ProviderError::AuthMissing)?;
-            
+
         let client = anthropic_client::AnthropicClient::new(api_key)
             .map_err(|e| ProviderError::unknown(format!("Failed to create Anthropic client: {}", e)))?;
-            
+
         Ok(Self { client })
     }
 
@@ -40,10 +40,10 @@ impl AnthropicAdapter {
         } else {
             anthropic_client::AnthropicClient::new(api_key)
         };
-        
+
         let client = client
             .map_err(|e| ProviderError::unknown(format!("Failed to create Anthropic client: {}", e)))?;
-            
+
         Ok(Self { client })
     }
 }
@@ -68,7 +68,7 @@ impl ModelProvider for AnthropicAdapter {
             .list_models()
             .await
             .map_err(|e| ProviderError::unknown(format!("Failed to list models: {}", e)))?;
-            
+
         Ok(models.data.into_iter().map(|m| m.id).collect())
     }
 
@@ -219,10 +219,10 @@ impl ZaiAdapter {
         let api_key = api_key
             .or_else(|| std::env::var("ZAI_API_KEY").ok())
             .ok_or_else(|| ProviderError::AuthMissing)?;
-            
+
         let client = zai_client::ZaiClient::new(api_key)
             .map_err(|e| ProviderError::unknown(format!("Failed to create Z.ai client: {}", e)))?;
-            
+
         Ok(Self { client })
     }
 
@@ -242,10 +242,10 @@ impl ZaiAdapter {
         } else {
             zai_client::ZaiClient::new(api_key)
         };
-        
+
         let client = client
             .map_err(|e| ProviderError::unknown(format!("Failed to create Z.ai client: {}", e)))?;
-            
+
         Ok(Self { client })
     }
 }
@@ -269,7 +269,7 @@ impl ModelProvider for ZaiAdapter {
             .list_models()
             .await
             .map_err(|e| ProviderError::unknown(format!("Failed to list models: {}", e)))?;
-            
+
         Ok(models.data.into_iter().map(|m| m.id).collect())
     }
 

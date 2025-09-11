@@ -22,13 +22,13 @@ export VITEST_MIN_FORKS=1
 run_package_tests() {
     local package_dir="$1"
     echo "Running tests for: $package_dir"
-    
+
     # Check if vitest config exists
     if [[ -f "$package_dir/vitest.config.ts" ]]; then
         cd "$package_dir"
         npx vitest run --no-coverage --reporter=dot || echo "Tests failed in $package_dir"
         cd - > /dev/null
-        
+
         # Force garbage collection and wait
         sleep 1
         echo "Completed: $package_dir"

@@ -1,7 +1,5 @@
 {
-	"*.{ts,tsx,js,jsx,cjs,mjs}": [
-		"eslint --fix",
-		"ast-grep scan --config sgconfig.json --report-style rich"
-	],
-	"*.{ts,tsx,js,jsx,json,md,yml,yaml,css,scss}": ["prettier -w"]
+	"**/*.{js,jsx,ts,tsx,json,jsonc}": [
+		"biome check --write --no-errors-on-unmatched --max-diagnostics=none"
+	]
 }

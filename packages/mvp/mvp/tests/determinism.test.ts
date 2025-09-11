@@ -6,11 +6,11 @@
  * @status TDD-CRITICAL
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
-import { SimplePRPGraph } from "../src/graph-simple.js";
-import type { PRPState } from "../src/state.js";
+import { beforeEach, describe, expect, it } from 'vitest';
+import { SimplePRPGraph } from '../src/graph-simple.js';
+import type { PRPState } from '../src/state.js';
 
-describe("Cortex Kernel Determinism", () => {
+describe('Cortex Kernel Determinism', () => {
 	let graph: SimplePRPGraph;
 	let mockOrchestrator: { getNeuronCount: () => number };
 
@@ -21,19 +21,19 @@ describe("Cortex Kernel Determinism", () => {
 		graph = new SimplePRPGraph(mockOrchestrator);
 	});
 
-	describe("Reproducible Execution", () => {
-		it("should produce identical results for identical inputs", async () => {
+	describe('Reproducible Execution', () => {
+		it('should produce identical results for identical inputs', async () => {
 			const blueprint = {
-				title: "Test Project",
-				description: "A test project for determinism validation",
-				requirements: ["Feature A", "Feature B", "Testing"],
+				title: 'Test Project',
+				description: 'A test project for determinism validation',
+				requirements: ['Feature A', 'Feature B', 'Testing'],
 			};
 
 			const run1 = await graph.runPRPWorkflow(blueprint, {
-				runId: "test-run-1",
+				runId: 'test-run-1',
 			});
 			const run2 = await graph.runPRPWorkflow(blueprint, {
-				runId: "test-run-2",
+				runId: 'test-run-2',
 			});
 
 			// Results should be structurally identical (excluding timestamps and run IDs)
@@ -42,24 +42,24 @@ describe("Cortex Kernel Determinism", () => {
 			);
 		});
 
-		it("should maintain consistent state transitions", async () => {
+		it('should maintain consistent state transitions', async () => {
 			const blueprint = {
-				title: "State Transition Test",
-				description: "Testing state machine determinism",
-				requirements: ["Requirement 1"],
+				title: 'State Transition Test',
+				description: 'Testing state machine determinism',
+				requirements: ['Requirement 1'],
 			};
 
 			const _result = await graph.runPRPWorkflow(blueprint, {
-				runId: "transition-test",
+				runId: 'transition-test',
 			});
-			const history = graph.getExecutionHistory("transition-test");
+			const history = graph.getExecutionHistory('transition-test');
 
 			// Verify state transitions follow expected pattern
 			expect(history.length).toBeGreaterThan(0);
 
 			// Check phase progression
 			const phases = history.map((state) => state.phase);
-			expect(phases).toContain("strategy");
+			expect(phases).toContain('strategy');
 		});
 	});
 });
@@ -68,42 +68,42 @@ describe("Cortex Kernel Determinism", () => {
 function normalizeForComparison(state: PRPState): any {
 	return {
 		...state,
-		id: "NORMALIZED",
-		runId: "NORMALIZED",
+		id: 'NORMALIZED',
+		runId: 'NORMALIZED',
 		metadata: {
 			...state.metadata,
-			startTime: "NORMALIZED",
-			endTime: "NORMALIZED",
+			startTime: 'NORMALIZED',
+			endTime: 'NORMALIZED',
 		},
 		evidence: state.evidence.map((e) => ({
 			...e,
-			id: "NORMALIZED",
-			timestamp: "NORMALIZED",
+			id: 'NORMALIZED',
+			timestamp: 'NORMALIZED',
 		})),
 		validationResults: {
 			strategy: state.validationResults.strategy
 				? {
 						...state.validationResults.strategy,
-						timestamp: "NORMALIZED",
+						timestamp: 'NORMALIZED',
 					}
 				: undefined,
 			build: state.validationResults.build
 				? {
 						...state.validationResults.build,
-						timestamp: "NORMALIZED",
+						timestamp: 'NORMALIZED',
 					}
 				: undefined,
 			evaluation: state.validationResults.evaluation
 				? {
 						...state.validationResults.evaluation,
-						timestamp: "NORMALIZED",
+						timestamp: 'NORMALIZED',
 					}
 				: undefined,
 		},
 		cerebrum: state.cerebrum
 			? {
 					...state.cerebrum,
-					timestamp: "NORMALIZED",
+					timestamp: 'NORMALIZED',
 				}
 			: undefined,
 	};

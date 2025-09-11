@@ -1,13 +1,13 @@
 /**
  * Health check router.
  */
-import { Router } from "express";
-import type { ASBRAIMcpServer } from "../../asbr-ai-mcp-server.js";
+import { Router } from 'express';
+import type { ASBRAIMcpServer } from '../../asbr-ai-mcp-server.js';
 
-export function createHealthRouter(mcpServer: ASBRAIMcpServer) {
+export function createHealthRouter(mcpServer: ASBRAIMcpServer): Router {
 	const router = Router();
 
-	router.get("/", async (_req, res) => {
+	router.get('/', async (_req, res) => {
 		try {
 			const health = await mcpServer.getHealth();
 			res.json(health);

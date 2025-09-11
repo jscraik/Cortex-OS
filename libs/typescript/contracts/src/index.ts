@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const TOKENS = {
-	Memories: Symbol.for("Memories"),
-	Orchestration: Symbol.for("Orchestration"),
-	MCPGateway: Symbol.for("MCPGateway"),
+	Memories: Symbol.for('Memories'),
+	Orchestration: Symbol.for('Orchestration'),
+	MCPGateway: Symbol.for('MCPGateway'),
 } as const;
 
 export type Token = (typeof TOKENS)[keyof typeof TOKENS];
@@ -11,7 +11,7 @@ export type Token = (typeof TOKENS)[keyof typeof TOKENS];
 // Shared envelope for cross-domain message contracts
 export const MessageEnvelopeSchema = z.object({
 	id: z.string().min(1),
-	kind: z.enum(["MCP", "A2A", "RAG", "SIMLAB"]),
+	kind: z.enum(['MCP', 'A2A', 'RAG', 'SIMLAB']),
 	ts: z.string().datetime({ offset: true }),
 	payload: z.unknown(),
 	meta: z.object({
@@ -71,4 +71,4 @@ export const SimlabCommandSchema = z.object({
 });
 export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
-export * from "./mcp-events.js";
+export * from './mcp-events.js';

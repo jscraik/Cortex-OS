@@ -252,4 +252,3 @@ npx @modelcontextprotocol/server-everything sse
 ```shell
 npx @modelcontextprotocol/server-everything streamableHttp
 ```
-

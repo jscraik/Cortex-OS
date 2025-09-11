@@ -1,5 +1,5 @@
-import { EventEmitter } from "node:events";
-import { z } from "zod";
+import { EventEmitter } from 'node:events';
+import { z } from 'zod';
 
 // Outbox message schema
 export const OutboxMessageSchema = z.object({
@@ -11,7 +11,7 @@ export const OutboxMessageSchema = z.object({
 	metadata: z.record(z.any()).optional(),
 	createdAt: z.date(),
 	processedAt: z.date().optional(),
-	status: z.enum(["pending", "processing", "processed", "failed"]),
+	status: z.enum(['pending', 'processing', 'processed', 'failed']),
 	retryCount: z.number().default(0),
 	maxRetries: z.number().default(3),
 	error: z.string().optional(),
@@ -66,7 +66,7 @@ export class OutboxProcessor extends EventEmitter {
 		}
 
 		this.isRunning = true;
-		this.emit("started");
+		this.emit('started');
 
 		const processMessages = async () => {
 			if (!this.isRunning) {
@@ -76,12 +76,12 @@ export class OutboxProcessor extends EventEmitter {
 			try {
 				await this.processBatch();
 			} catch (error) {
-				this.emit("error", error);
+				this.emit('error', error);
 			}
 
 			if (this.isRunning) {
 				this.timeoutId = setTimeout(() => {
-					processMessages().catch((error) => this.emit("error", error));
+					processMessages().catch((error) => this.emit('error', error));
 				}, this.config.pollingInterval);
 			}
 		};
@@ -98,7 +98,7 @@ export class OutboxProcessor extends EventEmitter {
 			this.timeoutId = undefined;
 		}
 
-		this.emit("stopped");
+		this.emit('stopped');
 	}
 
 	private async processBatch(): Promise<void> {
@@ -108,7 +108,7 @@ export class OutboxProcessor extends EventEmitter {
 			return;
 		}
 
-		this.emit("batchStarted", messages.length);
+		this.emit('batchStarted', messages.length);
 
 		for (const message of messages) {
 			try {
@@ -118,7 +118,7 @@ export class OutboxProcessor extends EventEmitter {
 			}
 		}
 
-		this.emit("batchCompleted", messages.length);
+		this.emit('batchCompleted', messages.length);
 	}
 
 	private async processMessage(message: OutboxMessage): Promise<void> {
@@ -128,7 +128,7 @@ export class OutboxProcessor extends EventEmitter {
 		// Mark as processed
 		await this.repository.markProcessed(message.id, new Date());
 
-		this.emit("messageProcessed", message.id);
+		this.emit('messageProcessed', message.id);
 	}
 
 	private async handleMessageError(
@@ -139,24 +139,24 @@ export class OutboxProcessor extends EventEmitter {
 		const errorMessage =
 			error instanceof Error
 				? error.message
-				: typeof error === "string"
+				: typeof error === 'string'
 					? error
-					: "Unknown error";
+					: 'Unknown error';
 
 		if (newRetryCount >= this.config.maxRetries) {
 			// Mark as failed
 			await this.repository.markFailed(message.id, errorMessage, newRetryCount);
-			this.emit("messageFailed", message.id, errorMessage);
+			this.emit('messageFailed', message.id, errorMessage);
 		} else {
 			// Mark as pending for retry
 			const retryMessage = {
 				...message,
-				status: "pending" as const,
+				status: 'pending' as const,
 				retryCount: newRetryCount,
 				error: errorMessage,
 			};
 			await this.repository.save(retryMessage);
-			this.emit("messageRetried", message.id, newRetryCount);
+			this.emit('messageRetried', message.id, newRetryCount);
 		}
 	}
 }
@@ -180,7 +180,7 @@ export class OutboxService {
 			payload,
 			metadata,
 			createdAt: new Date(),
-			status: "pending",
+			status: 'pending',
 			retryCount: 0,
 			maxRetries: 3,
 		};

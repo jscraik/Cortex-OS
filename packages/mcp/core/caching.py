@@ -12,8 +12,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-import redis.asyncio as redis
-from redis.asyncio import Redis
+# Optional Redis dependency; guard import to allow memory-only fallback
+try:  # pragma: no cover - import guard
+    import redis.asyncio as redis  # type: ignore
+    from redis.asyncio import Redis  # type: ignore
+    _REDIS_AVAILABLE = True
+except Exception:  # pragma: no cover - fallback to memory cache
+    redis = None  # type: ignore
+    Redis = None  # type: ignore
+    _REDIS_AVAILABLE = False
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -68,9 +75,14 @@ class CacheConfig:
 
     @classmethod
     def from_env(cls) -> "CacheConfig":
-        """Create config from environment variables."""
+        """Create config from environment variables.
+
+        Falls back to MEMORY backend automatically if Redis is unavailable.
+        """
+        desired_backend = os.getenv("CACHE_BACKEND", "redis").lower()
+        backend = CacheBackend(desired_backend if _REDIS_AVAILABLE else "memory")
         return cls(
-            backend=CacheBackend(os.getenv("CACHE_BACKEND", "redis")),
+            backend=backend,
             default_ttl=int(os.getenv("CACHE_DEFAULT_TTL", "3600")),
             max_memory_size=int(os.getenv("CACHE_MAX_MEMORY", "104857600")),
             redis_host=os.getenv("REDIS_HOST", "localhost"),

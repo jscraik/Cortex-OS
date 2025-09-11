@@ -5,13 +5,26 @@
  * @version 1.0.0
  */
 
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { z } from "zod";
-import { runCommand } from "../lib/run-command.js";
-import type { PRPState } from "../state.js";
-import { generateId } from "../utils/id.js";
-import type { Neuron } from "@cortex-os/prp-runner";
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { z } from 'zod';
+import { runCommand } from '../lib/run-command.js';
+import type { PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
+
+interface Neuron {
+	id: string;
+	execute(state: ExecutionState, context: ExecutionContext): Promise<NeuronResult>;
+}
+
+interface ExecutionState {
+	[key: string]: unknown;
+}
+
+interface ExecutionContext {
+	input: unknown;
+	workingDirectory?: unknown;
+}
 
 interface NeuronResult {
 	output: unknown;
@@ -80,7 +93,7 @@ export class MCPAdapter {
 		options: {
 			workingDirectory?: string;
 			enabledTools?: string[];
-			securityPolicy?: Partial<MCPContext["securityPolicy"]>;
+			securityPolicy?: Partial<MCPContext['securityPolicy']>;
 		} = {},
 	): MCPContext {
 		const context: MCPContext = {
@@ -130,7 +143,7 @@ export class MCPAdapter {
 		}
 
 		try {
-			const result = await tool.execute(params, context);
+			const result = await tool.execute(params, context) as Result;
 
 			const evidence = {
 				toolName,
@@ -150,21 +163,21 @@ export class MCPAdapter {
 	/**
 	 * Convert MCP tools to kernel-compatible neurons
 	 */
-        createNeuronFromTool(
-                tool: MCPTool,
-                phase: "strategy" | "build" | "evaluation",
-        ): Neuron {
-                return {
-                        id: `mcp-${tool.name}`,
-                        role: `mcp-tool-${tool.name}`,
-                        phase,
-                        dependencies: [],
-                        tools: [tool.name],
-                        requiresLLM: false,
+	createNeuronFromTool(
+		tool: MCPTool,
+		phase: 'strategy' | 'build' | 'evaluation',
+	): Neuron {
+		return {
+			id: `mcp-${tool.name}`,
+			role: `mcp-tool-${tool.name}`,
+			phase,
+			dependencies: [],
+			tools: [tool.name],
+			requiresLLM: false,
 
 			execute: async (state: PRPState, context: Record<string, unknown>) => {
 				const _mcpContext = this.createContext(state, {
-					workingDirectory: context.workingDirectory,
+					workingDirectory: context.workingDirectory as string,
 				});
 
 				// Extract parameters from blueprint for tool execution
@@ -194,7 +207,7 @@ export class MCPAdapter {
 					evidence: [
 						{
 							id: generateId(`mcp-${tool.name}`, state.metadata.deterministic),
-							type: "command",
+							type: 'command',
 							source: `mcp-${tool.name}`,
 							content: JSON.stringify(execution.evidence),
 							timestamp: new Date().toISOString(),
@@ -206,16 +219,16 @@ export class MCPAdapter {
 					metrics,
 				};
 
-                                return result;
-                        },
-                } as unknown as Neuron;
-        }
+				return result;
+			},
+		} as unknown as Neuron;
+	}
 
 	/**
 	 * Extract tool parameters from blueprint
 	 */
 	private extractToolParams(
-		blueprint: PRPState["blueprint"],
+		blueprint: PRPState['blueprint'],
 		tool: MCPTool,
 	): Record<string, unknown> {
 		// Simple parameter extraction - in real implementation would be more sophisticated
@@ -254,81 +267,78 @@ export class MCPAdapter {
  */
 export const createDefaultMCPTools = (): MCPTool[] => [
 	{
-		name: "file_read",
-		description: "Read file contents for analysis",
+		name: 'file_read',
+		description: 'Read file contents for analysis',
 		inputSchema: {
-			type: "object",
-			properties: { path: { type: "string" } },
-			required: ["path"],
+			type: 'object',
+			properties: { path: { type: 'string' } },
+			required: ['path'],
 		},
 		execute: async (params, context) => {
 			if (!context.securityPolicy.allowFileSystem) {
-				throw new Error("File system access not allowed");
+				throw new Error('File system access not allowed');
 			}
 			const { path: targetPath } = z.object({ path: z.string() }).parse(params);
 			const abs = path.isAbsolute(targetPath)
 				? targetPath
 				: path.join(context.workingDirectory, targetPath);
-			const content = await fs.readFile(abs, "utf-8");
+			const content = await fs.readFile(abs, 'utf-8');
 			return { path: abs, content };
 		},
 	},
 	{
-		name: "code_analysis",
-		description: "Analyze code quality using ESLint",
+		name: 'code_analysis',
+		description: 'Analyze code quality using ESLint',
 		inputSchema: {
-			type: "object",
-			properties: { file: { type: "string" } },
-			required: ["file"],
+			type: 'object',
+			properties: { file: { type: 'string' } },
+			required: ['file'],
 		},
 		execute: async (params, context) => {
 			if (!context.securityPolicy.allowExecution) {
-				throw new Error("Code execution not allowed");
+				throw new Error('Code execution not allowed');
 			}
 			const { file } = z.object({ file: z.string() }).parse(params);
 			const abs = path.isAbsolute(file)
 				? file
 				: path.join(context.workingDirectory, file);
-                        const { stdout } = await runCommand(
-                                `npx eslint "${abs}" -f json`,
-                                {
-                                        cwd: context.workingDirectory,
-                                },
-                        );
+			const { stdout } = await runCommand(`npx eslint "${abs}" -f json`, {
+				cwd: context.workingDirectory,
+			});
 			const parsed = JSON.parse(stdout);
 			if (!Array.isArray(parsed) || parsed.length === 0) {
-				throw new Error("ESLint did not return a valid report for the file.");
+				throw new Error('ESLint did not return a valid report for the file.');
 			}
 			const [report] = parsed;
 			return { file: abs, report };
 		},
 	},
 	{
-		name: "test_runner",
-		description: "Execute tests using a shell command",
+		name: 'test_runner',
+		description: 'Execute tests using a shell command',
 		inputSchema: {
-			type: "object",
-			properties: { command: { type: "string" } },
-			required: ["command"],
+			type: 'object',
+			properties: { command: { type: 'string' } },
+			required: ['command'],
 		},
 		execute: async (params, context) => {
 			if (!context.securityPolicy.allowExecution) {
-				throw new Error("Code execution not allowed");
+				throw new Error('Code execution not allowed');
 			}
 			const { command } = z.object({ command: z.string() }).parse(params);
 			// Whitelist of allowed test commands
 			const allowedCommands = [
-				"npm test",
-				"yarn test",
-				"pnpm test",
-				"npx jest",
-				"npx mocha",
-				"npx vitest",
+				'npm test',
+				'yarn test',
+				'pnpm test',
+				'npx jest',
+				'npx mocha',
+				'npx vitest',
 			];
 			// Only allow exact matches to the whitelist
 			if (!allowedCommands.includes(command.trim())) {
 				throw new Error(
-					`Command "${command}" is not allowed. Allowed commands: ${allowedCommands.join(", ")}`,
+					`Command "${command}" is not allowed. Allowed commands: ${allowedCommands.join(', ')}`,
 				);
 			}
 			const { stdout, stderr } = await runCommand(command, {

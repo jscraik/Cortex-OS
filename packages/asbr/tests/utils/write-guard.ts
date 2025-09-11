@@ -1,7 +1,7 @@
 // Test write guard: prevent writing image files like *.png, *.jpg, *.jpeg, *.gif, *.bmp, *.webp, *.svg during tests.
 // This avoids cluttering the repo or interrupting developer workflows.
-import * as fs from "node:fs";
-import * as os from "node:os";
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 
 try {
 	const origWriteFileSync: (...a: any[]) => any = (
@@ -12,20 +12,20 @@ try {
 	).bind(fs);
 
 	const tmpDirs = [
-		os.tmpdir?.() || "",
-		process.env.TMPDIR || "",
-		process.env.TEMP || "",
-		process.env.TMP || "",
-		"/tmp",
+		os.tmpdir?.() || '',
+		process.env.TMPDIR || '',
+		process.env.TEMP || '',
+		process.env.TMP || '',
+		'/tmp',
 	]
 		.filter(Boolean)
-		.map((d) => d.replace(/\/+$/, ""));
+		.map((d) => d.replace(/\/+$/, ''));
 
 	const allowListPatterns = [/\/tests?\//i, /\/(test-)?fixtures\//i];
 
 	const isBlocked = (p: unknown) => {
 		try {
-			const s = String(p || "");
+			const s = String(p || '');
 			// Only consider .png files
 			if (!/\.png$/i.test(s)) return false;
 			// Allow OS temp dirs (e.g., /tmp)
@@ -52,12 +52,12 @@ try {
 			const target = args?.[0];
 			if (isBlocked(target)) {
 				const cb = args?.[args.length - 1];
-				if (typeof cb === "function") {
+				if (typeof cb === 'function') {
 					const err = Object.assign(
 						new Error(
 							`Blocked writing image file during tests: ${String(target)}`,
 						),
-						{ code: "EACCES" },
+						{ code: 'EACCES' },
 					) as NodeJS.ErrnoException;
 					(cb as (e: NodeJS.ErrnoException | null) => void)(err);
 					return;
@@ -66,11 +66,13 @@ try {
 					`Blocked writing image file during tests: ${String(target)}`,
 				);
 			}
-		} catch {}
+		} catch {
+			// swallow callback errors to mimic fs.writeFile behaviour in tests
+		}
 		return origWriteFile(...args);
 	};
 } catch (err) {
 	if (process.env.DEBUG || process.env.VERBOSE) {
-		console.warn("[asbr/write-guard] not installed:", err);
+		console.warn('[asbr/write-guard] not installed:', err);
 	}
 }

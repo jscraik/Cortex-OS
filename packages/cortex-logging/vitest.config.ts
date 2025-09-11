@@ -1,14 +1,14 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  test: {
-    environment: 'node',
-    globals: true,
-    setupFiles: [],
-  },
-  resolve: {
-    alias: {
-      '@': './src',
-    },
-  },
+	test: {
+		environment: 'node',
+		globals: true,
+		setupFiles: [],
+	},
+	resolve: {
+		alias: {
+			'@': './src',
+		},
+	},
 });

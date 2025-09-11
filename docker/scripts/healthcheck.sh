@@ -21,7 +21,7 @@ log() {
 
 check_nginx() {
     log "Checking Nginx service..."
-    
+
     # Check if Nginx is responding
     if curl -f -s -m $TIMEOUT "http://localhost:$NGINX_PORT/health" > /dev/null; then
         log "${GREEN}✓ Nginx is healthy${NC}"
@@ -34,7 +34,7 @@ check_nginx() {
 
 check_api() {
     log "Checking API service..."
-    
+
     # Check if API is responding
     if curl -f -s -m $TIMEOUT "http://localhost:$API_PORT/health" > /dev/null; then
         log "${GREEN}✓ API is healthy${NC}"
@@ -47,7 +47,7 @@ check_api() {
 
 check_disk_space() {
     log "Checking disk space..."
-    
+
     # Check if disk usage is below 90%
     DISK_USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
     if [ "$DISK_USAGE" -lt 90 ]; then
@@ -61,7 +61,7 @@ check_disk_space() {
 
 check_memory() {
     log "Checking memory usage..."
-    
+
     # Check if memory usage is below 90%
     MEMORY_USAGE=$(free | grep '^Mem:' | awk '{printf "%.0f", $3/$2 * 100.0}')
     if [ "$MEMORY_USAGE" -lt 90 ]; then
@@ -75,7 +75,7 @@ check_memory() {
 
 check_logs() {
     log "Checking for critical errors in logs..."
-    
+
     # Check for recent critical errors in logs
     if [ -f /var/log/nginx/error.log ]; then
         RECENT_ERRORS=$(tail -n 100 /var/log/nginx/error.log | grep -c "emerg\|alert\|crit" || true)
@@ -85,7 +85,7 @@ check_logs() {
             log "${YELLOW}⚠ Found $RECENT_ERRORS critical errors in Nginx logs${NC}"
         fi
     fi
-    
+
     if [ -f /var/log/docs-api/error.log ]; then
         RECENT_API_ERRORS=$(tail -n 100 /var/log/docs-api/error.log | grep -c "ERROR\|CRITICAL" || true)
         if [ "$RECENT_API_ERRORS" -eq 0 ]; then
@@ -99,16 +99,16 @@ check_logs() {
 # Main health check
 main() {
     log "Starting health check..."
-    
+
     # Critical checks - if these fail, container is unhealthy
     check_nginx || exit 1
     check_api || exit 1
-    
+
     # Warning checks - log warnings but don't fail
     check_disk_space || log "${YELLOW}⚠ Disk space warning${NC}"
     check_memory || log "${YELLOW}⚠ Memory usage warning${NC}"
     check_logs
-    
+
     log "${GREEN}✓ All health checks passed${NC}"
     echo "healthy"
     exit 0

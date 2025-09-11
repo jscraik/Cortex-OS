@@ -99,7 +99,7 @@ const server = createServer(async (req, res) => {
       try {
         const jsonRpcRequest = JSON.parse(body);
         const response = await handleA2A(jsonRpcRequest);
-        
+
         res.writeHead(200);
         res.end(response);
       } catch (error) {

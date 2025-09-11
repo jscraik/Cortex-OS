@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD022 MD024 MD025 MD026 MD031 MD032 MD034 MD040 -->
 
 # Production Readiness Action Plan
 
@@ -432,4 +433,3 @@ The following concrete actions provided by the team are now part of the plan. Th
 - Testing: Build scenario tests with expected outcomes following TDD.
 - Documentation: Provide simulation scenario library and guides.
 - Accessibility: Include captions/alt text for simulation visuals.
-

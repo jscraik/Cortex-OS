@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { logWithSpan, withSpan } from "@cortex-os/telemetry";
+import { randomUUID } from 'node:crypto';
+import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 
 /**
  * Saga Pattern Implementation for ASBR
@@ -24,12 +24,12 @@ export interface SagaStep<TCtx = any> {
  * Saga execution state
  */
 export enum SagaState {
-	PENDING = "PENDING",
-	RUNNING = "RUNNING",
-	COMPLETED = "COMPLETED",
-	COMPENSATING = "COMPENSATING",
-	COMPENSATED = "COMPENSATED",
-	FAILED = "FAILED",
+	PENDING = 'PENDING',
+	RUNNING = 'RUNNING',
+	COMPLETED = 'COMPLETED',
+	COMPENSATING = 'COMPENSATING',
+	COMPENSATED = 'COMPENSATED',
+	FAILED = 'FAILED',
 }
 
 /**
@@ -131,9 +131,9 @@ export class SagaOrchestrator<TCtx = any> {
 
 				await withSpan(`saga.step.${step.name}`, async (span) => {
 					span.setAttributes({
-						"saga.id": sagaId,
-						"saga.step": step.name,
-						"saga.stepIndex": i,
+						'saga.id': sagaId,
+						'saga.step': step.name,
+						'saga.stepIndex': i,
 					});
 
 					try {
@@ -155,7 +155,7 @@ export class SagaOrchestrator<TCtx = any> {
 						}
 
 						logWithSpan(
-							"info",
+							'info',
 							`Saga step completed`,
 							{
 								sagaId,
@@ -169,7 +169,7 @@ export class SagaOrchestrator<TCtx = any> {
 							error instanceof Error ? error : new Error(String(error));
 
 						logWithSpan(
-							"error",
+							'error',
 							`Saga step failed`,
 							{
 								sagaId,
@@ -284,16 +284,19 @@ export class SagaOrchestrator<TCtx = any> {
 			try {
 				await withSpan(`saga.compensate.${step.name}`, async (span) => {
 					span.setAttributes({
-						"saga.id": sagaContext.sagaId,
-						"saga.step": step.name,
+						'saga.id': sagaContext.sagaId,
+						'saga.step': step.name,
 					});
 
 					if (step.compensate) {
-						currentContext = await step.compensate(currentContext, originalError);
+						currentContext = await step.compensate(
+							currentContext,
+							originalError,
+						);
 					}
 
 					logWithSpan(
-						"info",
+						'info',
 						`Saga compensation completed`,
 						{
 							sagaId: sagaContext.sagaId,
@@ -308,7 +311,7 @@ export class SagaOrchestrator<TCtx = any> {
 						? compensationError
 						: new Error(String(compensationError));
 
-				logWithSpan("error", `Saga compensation failed`, {
+				logWithSpan('error', `Saga compensation failed`, {
 					sagaId: sagaContext.sagaId,
 					step: step.name,
 					error: err.message,
@@ -327,7 +330,7 @@ export class SagaOrchestrator<TCtx = any> {
 	 */
 	async resume(sagaId: string): Promise<SagaResult<TCtx> | null> {
 		if (!this.contextStore) {
-			throw new Error("Context store required for saga resumption");
+			throw new Error('Context store required for saga resumption');
 		}
 
 		const sagaContext = await this.contextStore.load(sagaId);
@@ -354,13 +357,13 @@ export class SagaOrchestrator<TCtx = any> {
 		sagaContext: SagaContext,
 	): Promise<SagaResult<TCtx>> {
 		if (!this.contextStore) {
-			throw new Error("Context store required for saga resumption");
+			throw new Error('Context store required for saga resumption');
 		}
 
 		// Preserve narrowing across async callbacks
 		const store = this.contextStore;
 
-	let currentContext: TCtx = {} as TCtx;
+		let currentContext: TCtx = {} as TCtx;
 		try {
 			// Load the context from the last known state
 			// Note: This assumes the context is stored separately or can be reconstructed
@@ -378,14 +381,14 @@ export class SagaOrchestrator<TCtx = any> {
 				try {
 					await withSpan(`saga.compensate.${step.name}`, async (span) => {
 						span.setAttributes({
-							"saga.id": sagaContext.sagaId,
-							"saga.step": step.name,
-							"saga.resume": true,
+							'saga.id': sagaContext.sagaId,
+							'saga.step': step.name,
+							'saga.resume': true,
 						});
 
 						const originalError = sagaContext.error
 							? new Error(sagaContext.error.message)
-							: new Error("Unknown error during saga execution");
+							: new Error('Unknown error during saga execution');
 
 						if (step.compensate) {
 							currentContext = await step.compensate(
@@ -395,7 +398,7 @@ export class SagaOrchestrator<TCtx = any> {
 						}
 
 						logWithSpan(
-							"info",
+							'info',
 							`Saga compensation resumed and completed`,
 							{
 								sagaId: sagaContext.sagaId,
@@ -410,7 +413,7 @@ export class SagaOrchestrator<TCtx = any> {
 							? compensationError
 							: new Error(String(compensationError));
 
-					logWithSpan("error", `Saga compensation resume failed`, {
+					logWithSpan('error', `Saga compensation resume failed`, {
 						sagaId: sagaContext.sagaId,
 						step: step.name,
 						error: err.message,
@@ -460,13 +463,13 @@ export class SagaOrchestrator<TCtx = any> {
 		sagaContext: SagaContext,
 	): Promise<SagaResult<TCtx>> {
 		if (!this.contextStore) {
-			throw new Error("Context store required for saga resumption");
+			throw new Error('Context store required for saga resumption');
 		}
 
 		// Preserve narrowing across async callbacks
 		const store = this.contextStore;
 
-	let currentContext: TCtx = {} as TCtx;
+		let currentContext: TCtx = {} as TCtx;
 		try {
 			// Load the context from the last known state
 			// Note: This assumes the context is stored separately or can be reconstructed
@@ -481,10 +484,10 @@ export class SagaOrchestrator<TCtx = any> {
 
 				await withSpan(`saga.step.${step.name}`, async (span) => {
 					span.setAttributes({
-						"saga.id": sagaContext.sagaId,
-						"saga.step": step.name,
-						"saga.stepIndex": i,
-						"saga.resume": true,
+						'saga.id': sagaContext.sagaId,
+						'saga.step': step.name,
+						'saga.stepIndex': i,
+						'saga.resume': true,
 					});
 
 					try {
@@ -504,7 +507,7 @@ export class SagaOrchestrator<TCtx = any> {
 						});
 
 						logWithSpan(
-							"info",
+							'info',
 							`Saga step resumed and completed`,
 							{
 								sagaId: sagaContext.sagaId,
@@ -518,7 +521,7 @@ export class SagaOrchestrator<TCtx = any> {
 							error instanceof Error ? error : new Error(String(error));
 
 						logWithSpan(
-							"error",
+							'error',
 							`Saga step resume failed`,
 							{
 								sagaId: sagaContext.sagaId,

@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import type { PRPState } from "../../state.js";
+import type { PRPState } from '../../state.js';
 
 export interface QualityBudgetResult {
 	accessibility: BudgetMetric;
@@ -55,12 +55,12 @@ export const validateQualityBudgets = async (
 const measureAccessibilityScore = async (): Promise<BudgetMetric> => {
 	try {
 		// Try to run accessibility tests
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		try {
-			const { stdout } = await execAsync("pnpm test:a11y --reporter=json", {
+			const { stdout } = await execAsync('pnpm test:a11y --reporter=json', {
 				timeout: 30000,
 			});
 
@@ -69,7 +69,7 @@ const measureAccessibilityScore = async (): Promise<BudgetMetric> => {
 				score,
 				threshold: QUALITY_THRESHOLDS.ACCESSIBILITY,
 				passed: score >= QUALITY_THRESHOLDS.ACCESSIBILITY,
-				metric: "WCAG 2.1 AA Compliance",
+				metric: 'WCAG 2.1 AA Compliance',
 			};
 		} catch {
 			// Fallback: check for accessibility-related code
@@ -80,7 +80,7 @@ const measureAccessibilityScore = async (): Promise<BudgetMetric> => {
 				score,
 				threshold: QUALITY_THRESHOLDS.ACCESSIBILITY,
 				passed: score >= QUALITY_THRESHOLDS.ACCESSIBILITY,
-				metric: "Accessibility Code Analysis",
+				metric: 'Accessibility Code Analysis',
 			};
 		}
 	} catch (_error) {
@@ -88,7 +88,7 @@ const measureAccessibilityScore = async (): Promise<BudgetMetric> => {
 			score: 0,
 			threshold: QUALITY_THRESHOLDS.ACCESSIBILITY,
 			passed: false,
-			metric: "Accessibility Check Failed",
+			metric: 'Accessibility Check Failed',
 		};
 	}
 };
@@ -106,7 +106,7 @@ const measurePerformanceScore = async (): Promise<BudgetMetric> => {
 				score: performanceData.score,
 				threshold: QUALITY_THRESHOLDS.PERFORMANCE,
 				passed: performanceData.score >= QUALITY_THRESHOLDS.PERFORMANCE,
-				metric: "Lighthouse Performance",
+				metric: 'Lighthouse Performance',
 			};
 		}
 
@@ -118,14 +118,14 @@ const measurePerformanceScore = async (): Promise<BudgetMetric> => {
 			score,
 			threshold: QUALITY_THRESHOLDS.PERFORMANCE,
 			passed: score >= QUALITY_THRESHOLDS.PERFORMANCE,
-			metric: "Bundle Size Analysis",
+			metric: 'Bundle Size Analysis',
 		};
 	} catch (_error) {
 		return {
 			score: 0,
 			threshold: QUALITY_THRESHOLDS.PERFORMANCE,
 			passed: false,
-			metric: "Performance Check Failed",
+			metric: 'Performance Check Failed',
 		};
 	}
 };
@@ -142,14 +142,14 @@ const measureSecurityScore = async (): Promise<BudgetMetric> => {
 			score,
 			threshold: QUALITY_THRESHOLDS.SECURITY,
 			passed: score >= QUALITY_THRESHOLDS.SECURITY,
-			metric: "Security Analysis",
+			metric: 'Security Analysis',
 		};
 	} catch (_error) {
 		return {
 			score: 0,
 			threshold: QUALITY_THRESHOLDS.SECURITY,
 			passed: false,
-			metric: "Security Check Failed",
+			metric: 'Security Check Failed',
 		};
 	}
 };
@@ -176,8 +176,8 @@ const parseAccessibilityScore = (output: string): number => {
  */
 const checkAccessibilityCode = async (): Promise<boolean> => {
 	try {
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		const { stdout } = await execAsync(
@@ -196,8 +196,8 @@ const checkAccessibilityCode = async (): Promise<boolean> => {
  */
 const getPerformanceMetrics = async (): Promise<{ score: number } | null> => {
 	try {
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		// Try to run lighthouse if available
@@ -227,10 +227,10 @@ const getPerformanceMetrics = async (): Promise<{ score: number } | null> => {
  */
 const analyzeBundleSize = async () => {
 	try {
-		const fs = await import("node:fs");
-		const path = await import("node:path");
+		const fs = await import('node:fs');
+		const path = await import('node:path');
 
-		const distPath = path.join(process.cwd(), "dist");
+		const distPath = path.join(process.cwd(), 'dist');
 		if (!fs.existsSync(distPath)) {
 			return { size: 0, gzipSize: 0 };
 		}
@@ -266,8 +266,8 @@ const calculatePerformanceScore = (bundle: {
  * Runs comprehensive security analysis
  */
 const runSecurityAnalysis = async () => {
-	const { exec } = await import("node:child_process");
-	const { promisify } = await import("node:util");
+	const { exec } = await import('node:child_process');
+	const { promisify } = await import('node:util');
 	const execAsync = promisify(exec);
 
 	const issues = {
@@ -278,9 +278,9 @@ const runSecurityAnalysis = async () => {
 
 	try {
 		// Run audit
-		await execAsync("pnpm audit --audit-level=info --json", { timeout: 30000 });
+		await execAsync('pnpm audit --audit-level=info --json', { timeout: 30000 });
 	} catch (error) {
-		if (error instanceof Error && error.message.includes("vulnerabilities")) {
+		if (error instanceof Error && error.message.includes('vulnerabilities')) {
 			// Parse audit output for vulnerability counts
 			const auditMatch = error.message.match(/(\d+) vulnerabilities/);
 			if (auditMatch) {
@@ -291,15 +291,15 @@ const runSecurityAnalysis = async () => {
 
 	try {
 		// Run semgrep if available
-		const { stdout } = await execAsync("semgrep --config=auto --json .", {
+		const { stdout } = await execAsync('semgrep --config=auto --json .', {
 			timeout: 60000,
 		});
 		const results = JSON.parse(stdout);
 
 		for (const result of results.results || []) {
 			const severity = result.extra?.severity?.toLowerCase();
-			if (severity === "error") issues.vulnerabilities++;
-			else if (severity === "warning") issues.warnings++;
+			if (severity === 'error') issues.vulnerabilities++;
+			else if (severity === 'warning') issues.warnings++;
 			else issues.info++;
 		}
 	} catch {
@@ -335,19 +335,19 @@ const buildQualityDetails = (
 	const details: string[] = [];
 
 	details.push(
-		`Accessibility: ${accessibility.score}% (threshold: ${accessibility.threshold}%) - ${accessibility.passed ? "PASS" : "FAIL"}`,
+		`Accessibility: ${accessibility.score}% (threshold: ${accessibility.threshold}%) - ${accessibility.passed ? 'PASS' : 'FAIL'}`,
 	);
 	details.push(
-		`Performance: ${performance.score}% (threshold: ${performance.threshold}%) - ${performance.passed ? "PASS" : "FAIL"}`,
+		`Performance: ${performance.score}% (threshold: ${performance.threshold}%) - ${performance.passed ? 'PASS' : 'FAIL'}`,
 	);
 	details.push(
-		`Security: ${security.score}% (threshold: ${security.threshold}%) - ${security.passed ? "PASS" : "FAIL"}`,
+		`Security: ${security.score}% (threshold: ${security.threshold}%) - ${security.passed ? 'PASS' : 'FAIL'}`,
 	);
 
 	if (accessibility.passed && performance.passed && security.passed) {
-		details.push("All quality budgets met ✅");
+		details.push('All quality budgets met ✅');
 	} else {
-		details.push("Some quality budgets failed ❌");
+		details.push('Some quality budgets failed ❌');
 	}
 
 	return details;

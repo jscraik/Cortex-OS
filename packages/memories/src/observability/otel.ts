@@ -1,6 +1,6 @@
-import { trace } from "@opentelemetry/api";
+import { trace } from '@opentelemetry/api';
 
-export const tracer = trace.getTracer("@cortex-os/memories");
+export const tracer = trace.getTracer('@cortex-os/memories');
 
 export async function withSpan<T>(
 	name: string,

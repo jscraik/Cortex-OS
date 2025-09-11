@@ -1,9 +1,9 @@
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { setTimeout as delay } from "node:timers/promises";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { describe, expect, it } from "vitest";
 import { RegistryService } from "./registry-service.js";
 

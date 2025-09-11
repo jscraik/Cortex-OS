@@ -1,20 +1,29 @@
 {
-    "name": "cortex-code-rust",
-    "projectType": "application",
-    "root": "apps/cortex-codex",
-    "sourceRoot": "apps/cortex-codex",
-    "targets": {
-        "test": {
-            "command": "pnpm codex:test"
-        },
-        "test-unit": {
-            "command": "pnpm codex:test:unit"
-        },
-        "test-integration": {
-            "command": "pnpm codex:test:integration"
-        },
-        "coverage": {
-            "command": "pnpm codex:test:coverage"
-        }
+  "name": "cortex-code",
+  "projectType": "application",
+  "root": "apps/cortex-code",
+  "sourceRoot": "apps/cortex-code",
+  "targets": {
+    "test": {
+      "command": "pnpm codex:test"
+    },
+    "test-unit": {
+      "command": "pnpm codex:test:unit"
+    },
+    "test-integration": {
+      "command": "pnpm codex:test:integration"
+    },
+    "coverage": {
+      "command": "pnpm codex:test:coverage"
+    },
+    "upstream:diff": {
+      "command": "apps/cortex-code/scripts/upstream-diff.sh"
+    },
+    "upstream:status": {
+      "command": "apps/cortex-code/scripts/upstream-status.sh"
+    },
+    "upstream:pull": {
+      "command": "apps/cortex-code/scripts/codex-rs-subtree.sh pull"
     }
+  }
 }

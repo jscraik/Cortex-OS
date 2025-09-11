@@ -6,4 +6,4 @@
 export {
 	WorkloadIdentityAttestor,
 	WorkloadIdentityManager,
-} from "./workload-identity.ts";
+} from './workload-identity.ts';

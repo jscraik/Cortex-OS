@@ -2,10 +2,10 @@
  * PRP orchestration engine using functional API
  */
 
-import { EventEmitter } from "node:events";
-import { PRPOrchestrator, type Neuron } from "@cortex-os/prp-runner";
-import { v4 as uuid } from "uuid";
-import winston from "winston";
+import { EventEmitter } from 'node:events';
+import { type Neuron, PRPOrchestrator } from '@cortex-os/prp-runner';
+import { v4 as uuid } from 'uuid';
+import winston from 'winston';
 
 import type {
 	Agent,
@@ -13,7 +13,7 @@ import type {
 	OrchestrationResult,
 	PlanningContext,
 	Task,
-} from "./types.js";
+} from './types.js';
 
 export interface PRPEngine {
 	config: OrchestrationConfig;
@@ -24,19 +24,19 @@ export interface PRPEngine {
 }
 
 export function createEngine(
-        config: Partial<OrchestrationConfig> = {},
-        logger: winston.Logger = winston.createLogger({
-                level: "info",
-                format: winston.format.combine(
-                        winston.format.timestamp(),
-                        winston.format.json(),
-                ),
-                transports: [new winston.transports.Console()],
-        }),
+	config: Partial<OrchestrationConfig> = {},
+	logger: winston.Logger = winston.createLogger({
+		level: 'info',
+		format: winston.format.combine(
+			winston.format.timestamp(),
+			winston.format.json(),
+		),
+		transports: [new winston.transports.Console()],
+	}),
 ): PRPEngine {
 	const defaults: OrchestrationConfig = {
 		maxConcurrentOrchestrations: 10,
-		defaultStrategy: "neural_prp",
+		defaultStrategy: 'neural_prp',
 		enableMultiAgentCoordination: true,
 		enableAdaptiveDecisions: true,
 		planningTimeout: 300000,
@@ -45,9 +45,8 @@ export function createEngine(
 		performanceMonitoring: true,
 	} as OrchestrationConfig;
 
-
-	if ("fallbackStrategy" in config) {
-		throw new Error("fallbackStrategy option was removed");
+	if ('fallbackStrategy' in config) {
+		throw new Error('fallbackStrategy option was removed');
 	}
 
 	return {
@@ -67,7 +66,7 @@ export async function orchestrateTask(
 	neurons: Neuron[] = [],
 ): Promise<OrchestrationResult> {
 	if (engine.active.size >= engine.config.maxConcurrentOrchestrations) {
-		throw new Error("Maximum concurrent orchestrations reached");
+		throw new Error('Maximum concurrent orchestrations reached');
 	}
 
 	const id = uuid();
@@ -88,12 +87,12 @@ export async function orchestrateTask(
 		.executePRPCycle(blueprint)
 		.then((prp) => {
 			const result = toResult(id, task.id, prp, start);
-			engine.emitter.emit("orchestrationCompleted", {
-				type: "task_completed",
+			engine.emitter.emit('orchestrationCompleted', {
+				type: 'task_completed',
 				taskId: task.id,
 				data: result,
 				timestamp: new Date(),
-				source: "PRPEngine",
+				source: 'PRPEngine',
 			});
 			return result;
 		})
@@ -124,7 +123,7 @@ function toResult(
 	return {
 		orchestrationId: id,
 		taskId,
-		success: prp.phase === "completed",
+		success: prp.phase === 'completed',
 		plan: null,
 		executionResults: prp.outputs || {},
 		coordinationResults: {

@@ -86,3 +86,15 @@ tdd-watch:
 tdd-enforce:
 	@echo "🚀 Running TDD Enforcer script..."
 	./scripts/tdd-enforcer.sh
+# MLX embeddings service (FastAPI)
+.PHONY: mlx-embed.run
+mlx-embed.run:
+	cd services/py-mlx-server && uvicorn py_mlx_server.main:app --host $${HOST:-127.0.0.1} --port $${PORT:-8000}
+
+.PHONY: mlx-embed.docker.build
+mlx-embed.docker.build:
+	docker build -t cortex-mlx-embed:local services/py-mlx-server
+
+.PHONY: mlx-embed.docker.run
+mlx-embed.docker.run:
+	docker run --rm -p $${PORT:-8000}:8000 cortex-mlx-embed:local

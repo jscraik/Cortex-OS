@@ -12,7 +12,7 @@ settings:
     exclude_services:
       - "cortex-codex-*"
       - "*codex*"
-  
+
   # Optimize for development workflow
   development:
     # Fast bind mounts for source code
@@ -21,7 +21,7 @@ settings:
     file_watching: true
     # Optimize network performance
     network_optimization: true
-  
+
   # Resource management
   resources:
     # Automatic memory management
@@ -29,7 +29,7 @@ settings:
       automatic_cleanup: true
       # Cleanup threshold (80% memory usage)
       cleanup_threshold: 0.8
-    
+
     # CPU optimization
     cpu:
       # Use all available cores for build processes
@@ -46,7 +46,7 @@ services:
       - "nodejs_v8_heap_optimization"
       - "pnpm_cache_optimization"
       - "fast_bind_mounts"
-  
+
   # Rust services
   rust_services:
     pattern: "*codex*|*rust*"
@@ -54,7 +54,7 @@ services:
       - "cargo_cache_optimization"
       - "native_arm64_execution"
       - "release_build_caching"
-  
+
   # Python services
   python_services:
     pattern: "*py*|*ml*|*ai*"
@@ -73,7 +73,7 @@ volumes:
       optimization: "fast_ssd"
     - name: "python_cache"
       optimization: "fast_ssd"
-  
+
   # Model storage (can be slower but larger)
   model_volumes:
     - name: "model_cache"
@@ -98,14 +98,14 @@ build:
   local_registry: true
   # Multi-platform build caching
   platform_cache: true
-  
+
   # Build profiles for different scenarios
   profiles:
     development:
       cache_strategy: "aggressive"
       parallel_builds: true
       incremental_builds: true
-    
+
     production:
       cache_strategy: "conservative"
       security_scanning: true

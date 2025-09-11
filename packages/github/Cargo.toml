@@ -6,8 +6,8 @@ description = "GitHub API client and operations for Cortex-OS"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-# HTTP client (pin to avoid ICU/idna requiring newer rustc)
-reqwest = { version = "=0.11.18", features = [
+# HTTP client (updated to fix idna vulnerability)
+reqwest = { version = "0.12", features = [
     "json",
     "stream",
 ], default-features = false }

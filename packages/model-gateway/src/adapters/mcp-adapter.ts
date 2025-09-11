@@ -3,15 +3,15 @@
  * Supports embeddings, chat, and reranking by delegating to MCP tools
  */
 
+import type { ServerInfo } from '@cortex-os/mcp-core';
 // Respect AGENTS.md boundaries: import from public exports
-import { createEnhancedClient } from "@cortex-os/mcp-core";
-import type { ServerInfo } from "@cortex-os/mcp-core";
+import { createEnhancedClient } from '@cortex-os/mcp-core';
 import type {
 	ChatRequest,
 	EmbeddingBatchRequest,
 	EmbeddingRequest,
 	RerankRequest,
-} from "../model-router.js";
+} from '../model-router.js';
 
 export interface MCPAdapter {
 	isAvailable(): Promise<boolean>;
@@ -29,11 +29,11 @@ export interface MCPAdapter {
 
 function getServerInfo(): ServerInfo | null {
 	const transport = (
-		process.env.MCP_TRANSPORT || ""
-	).trim() as ServerInfo["transport"];
-	const name = process.env.MCP_NAME || "model-gateway-mcp";
+		process.env.MCP_TRANSPORT || ''
+	).trim() as ServerInfo['transport'];
+	const name = process.env.MCP_NAME || 'model-gateway-mcp';
 	if (!transport) return null;
-	if (transport === "stdio") {
+	if (transport === 'stdio') {
 		const command = process.env.MCP_COMMAND;
 		if (!command) return null;
 		const args = process.env.MCP_ARGS
@@ -41,7 +41,7 @@ function getServerInfo(): ServerInfo | null {
 			: undefined;
 		return { name, transport, command, args } as ServerInfo;
 	}
-	if (transport === "sse" || transport === "streamableHttp") {
+	if (transport === 'sse' || transport === 'streamableHttp') {
 		const endpoint = process.env.MCP_ENDPOINT;
 		if (!endpoint) return null;
 		return { name, transport, endpoint } as ServerInfo;
@@ -68,7 +68,7 @@ export function createMCPAdapter(): MCPAdapter {
 
 	const withClient = async <T>(fn: (c: any) => Promise<T>): Promise<T> => {
 		const si = getServerInfo();
-		if (!si) throw new Error("MCP not configured");
+		if (!si) throw new Error('MCP not configured');
 		const client = await createEnhancedClient(si);
 		try {
 			return await fn(client);
@@ -82,37 +82,37 @@ export function createMCPAdapter(): MCPAdapter {
 		async generateEmbedding(request) {
 			const result = await withClient(async (c) =>
 				c.callTool({
-					name: "embeddings.create",
+					name: 'embeddings.create',
 					arguments: { texts: [request.text] },
 				}),
 			);
 			const emb = (result?.embeddings?.[0] as number[]) || [];
-			return { embedding: emb, model: result?.model || "mcp:embeddings" };
+			return { embedding: emb, model: result?.model || 'mcp:embeddings' };
 		},
 		async generateEmbeddings(request) {
 			const result = await withClient(async (c) =>
 				c.callTool({
-					name: "embeddings.create",
+					name: 'embeddings.create',
 					arguments: { texts: request.texts },
 				}),
 			);
 			const embs = (result?.embeddings as number[][]) || [];
-			return { embeddings: embs, model: result?.model || "mcp:embeddings" };
+			return { embeddings: embs, model: result?.model || 'mcp:embeddings' };
 		},
 		async generateChat(request) {
 			const result = await withClient(async (c) =>
 				c.callTool({
-					name: "text-generation.generate",
+					name: 'text-generation.generate',
 					arguments: { ...request, model: request.model },
 				}),
 			);
-			const content = result?.content || result?.text || "";
-			return { content, model: result?.model || "mcp:chat" };
+			const content = result?.content || result?.text || '';
+			return { content, model: result?.model || 'mcp:chat' };
 		},
 		async rerank(request) {
 			const result = await withClient(async (c) =>
 				c.callTool({
-					name: "rerank.score",
+					name: 'rerank.score',
 					arguments: {
 						query: request.query,
 						documents: request.documents,
@@ -121,7 +121,7 @@ export function createMCPAdapter(): MCPAdapter {
 				}),
 			);
 			const scores = (result?.scores as number[]) || [];
-			return { scores, model: result?.model || "mcp:rerank" };
+			return { scores, model: result?.model || 'mcp:rerank' };
 		},
 	};
 }

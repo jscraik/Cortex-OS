@@ -75,13 +75,13 @@ impl ProviderRegistry {
     }
 
     /// Get the number of registered providers
-    pub fn len(&self) -> usize { 
-        self.providers.len() 
+    pub fn len(&self) -> usize {
+        self.providers.len()
     }
 
     /// Check if the registry is empty
-    pub fn is_empty(&self) -> bool { 
-        self.providers.is_empty() 
+    pub fn is_empty(&self) -> bool {
+        self.providers.is_empty()
     }
 }
 

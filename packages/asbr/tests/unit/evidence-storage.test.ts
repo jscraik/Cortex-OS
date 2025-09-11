@@ -1,15 +1,15 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { EvidenceStorage } from "../../src/evidence/storage.js";
-import type { Evidence } from "../../src/types/index.js";
-import { getDataPath } from "../../src/xdg/index.js";
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { EvidenceStorage } from '../../src/evidence/storage.js';
+import type { Evidence } from '../../src/types/index.js';
+import { getDataPath } from '../../src/xdg/index.js';
 
 // Node environment for filesystem operations
 // @vitest-environment node
 
-describe("EvidenceStorage", () => {
+describe('EvidenceStorage', () => {
 	let originalDataHome: string | undefined;
 	let originalKey: string | undefined;
 	let tempDir: string;
@@ -17,10 +17,10 @@ describe("EvidenceStorage", () => {
 	beforeEach(async () => {
 		originalDataHome = process.env.XDG_DATA_HOME;
 		originalKey = process.env.EVIDENCE_ENCRYPTION_KEY;
-		tempDir = await mkdtemp(join(tmpdir(), "asbr-storage-"));
+		tempDir = await mkdtemp(join(tmpdir(), 'asbr-storage-'));
 		process.env.XDG_DATA_HOME = tempDir;
 		process.env.EVIDENCE_ENCRYPTION_KEY =
-			"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+			'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 	});
 
 	afterEach(async () => {
@@ -37,32 +37,32 @@ describe("EvidenceStorage", () => {
 		await rm(tempDir, { recursive: true, force: true });
 	});
 
-	it("stores and retrieves evidence with compression and encryption", async () => {
+	it('stores and retrieves evidence with compression and encryption', async () => {
 		const storage = new EvidenceStorage({
 			compression: true,
 			encryption: true,
 		});
 		const evidence: Evidence = {
-			id: "11111111-1111-1111-1111-111111111111",
-			source: "file",
+			id: '11111111-1111-1111-1111-111111111111',
+			source: 'file',
 			pointers: [],
-			claim: "secret",
+			claim: 'secret',
 			confidence: 0.9,
-			risk: "low",
+			risk: 'low',
 			createdAt: new Date().toISOString(),
-			schema: "cortex.evidence@1",
+			schema: 'cortex.evidence@1',
 		};
 
 		await storage.storeEvidence(evidence);
 		const loaded = await storage.getEvidence(evidence.id);
 		expect(loaded).toEqual(evidence);
 
-		const dateStr = evidence.createdAt.split("T")[0];
+		const dateStr = evidence.createdAt.split('T')[0];
 		const filePath = join(
-			getDataPath("evidence", dateStr),
+			getDataPath('evidence', dateStr),
 			`${evidence.id}.json`,
 		);
-		const raw = await readFile(filePath, "utf-8");
+		const raw = await readFile(filePath, 'utf-8');
 		expect(() => JSON.parse(raw)).toThrow();
 	});
 });

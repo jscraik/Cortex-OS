@@ -9,16 +9,16 @@ import {
 	MockEmbeddingProvider,
 	Neo4jProvider,
 	QdrantProvider,
-} from "../packages/memory/index";
+} from '../packages/memory/index';
 
 interface CLIOptions {
-	command: "init" | "index" | "search" | "stats" | "demo";
+	command: 'init' | 'index' | 'search' | 'stats' | 'demo';
 	path?: string;
 	query?: string;
 	type?: string;
 	source?: string;
 	limit?: number;
-	embedding?: "mock";
+	embedding?: 'mock';
 }
 
 class MemoryCLI {
@@ -33,7 +33,7 @@ class MemoryCLI {
 		// Choose embedding provider
 		// Gemini embeddings are no longer auto-selected from the CLI. Use mock by default.
 		this.embeddingProvider = new MockEmbeddingProvider();
-		console.log("🔬 Using mock embeddings (Gemini support removed from CLI)");
+		console.log('🔬 Using mock embeddings (Gemini support removed from CLI)');
 
 		this.indexingService = new IndexingService(
 			this.memoryService,
@@ -50,11 +50,11 @@ class MemoryCLI {
 	}
 
 	async init(): Promise<void> {
-		console.log("🚀 Initializing Cortex Memory System...");
+		console.log('🚀 Initializing Cortex Memory System...');
 
 		try {
 			await this.memoryService.initialize();
-			console.log("✅ Memory system initialized successfully");
+			console.log('✅ Memory system initialized successfully');
 
 			// Test connectivity
 			const neo4jProvider = new Neo4jProvider();
@@ -63,18 +63,18 @@ class MemoryCLI {
 			const neo4jOk = await neo4jProvider.verifyConnectivity();
 			const qdrantOk = await qdrantProvider.verifyConnectivity();
 
-			console.log(`📊 Neo4j: ${neo4jOk ? "✅ Connected" : "❌ Not connected"}`);
+			console.log(`📊 Neo4j: ${neo4jOk ? '✅ Connected' : '❌ Not connected'}`);
 			console.log(
-				`🔍 Qdrant: ${qdrantOk ? "✅ Connected" : "❌ Not connected"}`,
+				`🔍 Qdrant: ${qdrantOk ? '✅ Connected' : '❌ Not connected'}`,
 			);
 
 			if (!neo4jOk && !qdrantOk) {
 				console.log(
-					"⚠️  No databases connected. Run `docker-compose up` to start services.",
+					'⚠️  No databases connected. Run `docker-compose up` to start services.',
 				);
 			}
 		} catch (error) {
-			console.error("❌ Failed to initialize:", error);
+			console.error('❌ Failed to initialize:', error);
 			throw error;
 		}
 	}
@@ -98,9 +98,9 @@ class MemoryCLI {
 				console.log(`⏳ Processing... ${currentStatus.queueLength} remaining`);
 			}
 
-			console.log("✅ Indexing complete");
+			console.log('✅ Indexing complete');
 		} catch (error) {
-			console.error("❌ Indexing failed:", error);
+			console.error('❌ Indexing failed:', error);
 			throw error;
 		}
 	}
@@ -129,20 +129,20 @@ class MemoryCLI {
 				console.log(`\n📝 Summary:\n${result.summary}`);
 			}
 
-			console.log("\n🔍 Results:");
+			console.log('\n🔍 Results:');
 			result.memories.forEach((memory, index) => {
 				console.log(
-					`\n${index + 1}. [${memory.metadata.type}] ${memory.metadata.source || "unknown"}`,
+					`\n${index + 1}. [${memory.metadata.type}] ${memory.metadata.source || 'unknown'}`,
 				);
 				console.log(
 					`   Confidence: ${((memory.metadata.confidence || 1) * 100).toFixed(1)}%`,
 				);
 				console.log(`   Timestamp: ${memory.metadata.timestamp}`);
 				if (memory.metadata.tags && memory.metadata.tags.length > 0) {
-					console.log(`   Tags: ${memory.metadata.tags.join(", ")}`);
+					console.log(`   Tags: ${memory.metadata.tags.join(', ')}`);
 				}
 				console.log(
-					`   Content: ${memory.content.substring(0, 200)}${memory.content.length > 200 ? "..." : ""}`,
+					`   Content: ${memory.content.substring(0, 200)}${memory.content.length > 200 ? '...' : ''}`,
 				);
 			});
 
@@ -152,13 +152,13 @@ class MemoryCLI {
 				);
 			}
 		} catch (error) {
-			console.error("❌ Search failed:", error);
+			console.error('❌ Search failed:', error);
 			throw error;
 		}
 	}
 
 	async showStats(): Promise<void> {
-		console.log("📊 Memory System Statistics:");
+		console.log('📊 Memory System Statistics:');
 
 		try {
 			const stats = await this.memoryService.getMemoryStats();
@@ -169,7 +169,7 @@ class MemoryCLI {
 			);
 			console.log(`🆕 Recent Memories (7 days): ${stats.recentMemories}`);
 
-			console.log("\n📋 Memories by Type:");
+			console.log('\n📋 Memories by Type:');
 			Object.entries(stats.memoriesByType).forEach(([type, count]) => {
 				console.log(`   ${type}: ${count}`);
 			});
@@ -183,7 +183,7 @@ class MemoryCLI {
 				console.log(`   Relationships: ${graphStats.relationshipCount}`);
 
 				if (Object.keys(graphStats.relationshipTypeCounts).length > 0) {
-					console.log("   Relationship Types:");
+					console.log('   Relationship Types:');
 					Object.entries(graphStats.relationshipTypeCounts).forEach(
 						([type, count]) => {
 							console.log(`     ${type}: ${count}`);
@@ -202,67 +202,67 @@ class MemoryCLI {
 				});
 			}
 		} catch (error) {
-			console.error("❌ Failed to get stats:", error);
+			console.error('❌ Failed to get stats:', error);
 			throw error;
 		}
 	}
 
 	async runDemo(): Promise<void> {
-		console.log("🎭 Running Memory System Demo...\n");
+		console.log('🎭 Running Memory System Demo...\n');
 
 		try {
 			// Initialize
 			await this.init();
 
 			// Add sample memories
-			console.log("📝 Adding sample memories...");
+			console.log('📝 Adding sample memories...');
 			const sampleMemories: MemoryEntry[] = [
 				{
-					id: "demo-1",
+					id: 'demo-1',
 					content:
-						"React is a JavaScript library for building user interfaces, particularly web applications.",
+						'React is a JavaScript library for building user interfaces, particularly web applications.',
 					vector: await this.embeddingProvider.generateEmbedding(
-						"React JavaScript library user interfaces",
+						'React JavaScript library user interfaces',
 					),
 					metadata: {
-						type: "knowledge",
-						source: "demo",
+						type: 'knowledge',
+						source: 'demo',
 						timestamp: new Date().toISOString(),
-						tags: ["react", "javascript", "ui", "web"],
+						tags: ['react', 'javascript', 'ui', 'web'],
 						confidence: 1.0,
-						accessibility: { wcag_level: "AA", cognitive_load: "medium" },
+						accessibility: { wcag_level: 'AA', cognitive_load: 'medium' },
 					},
 				},
 				{
-					id: "demo-2",
+					id: 'demo-2',
 					content:
-						"TypeScript is a statically typed superset of JavaScript that compiles to plain JavaScript.",
+						'TypeScript is a statically typed superset of JavaScript that compiles to plain JavaScript.',
 					vector: await this.embeddingProvider.generateEmbedding(
-						"TypeScript statically typed JavaScript",
+						'TypeScript statically typed JavaScript',
 					),
 					metadata: {
-						type: "knowledge",
-						source: "demo",
+						type: 'knowledge',
+						source: 'demo',
 						timestamp: new Date().toISOString(),
-						tags: ["typescript", "javascript", "types", "compilation"],
+						tags: ['typescript', 'javascript', 'types', 'compilation'],
 						confidence: 1.0,
-						accessibility: { wcag_level: "AA", cognitive_load: "medium" },
+						accessibility: { wcag_level: 'AA', cognitive_load: 'medium' },
 					},
 				},
 				{
-					id: "demo-3",
+					id: 'demo-3',
 					content:
-						"Accessibility in web development means making websites usable by people with disabilities.",
+						'Accessibility in web development means making websites usable by people with disabilities.',
 					vector: await this.embeddingProvider.generateEmbedding(
-						"Accessibility web development disabilities usable",
+						'Accessibility web development disabilities usable',
 					),
 					metadata: {
-						type: "knowledge",
-						source: "demo",
+						type: 'knowledge',
+						source: 'demo',
 						timestamp: new Date().toISOString(),
-						tags: ["accessibility", "web", "a11y", "disabilities"],
+						tags: ['accessibility', 'web', 'a11y', 'disabilities'],
 						confidence: 1.0,
-						accessibility: { wcag_level: "AAA", cognitive_load: "low" },
+						accessibility: { wcag_level: 'AAA', cognitive_load: 'low' },
 					},
 				},
 			];
@@ -273,25 +273,25 @@ class MemoryCLI {
 
 			// Create knowledge relationships
 			await this.memoryService.createKnowledgeRelation({
-				from: "demo-1",
-				to: "demo-2",
-				type: "RELATED_TECHNOLOGY",
+				from: 'demo-1',
+				to: 'demo-2',
+				type: 'RELATED_TECHNOLOGY',
 				properties: { confidence: 0.8 },
 			});
 
-			console.log("✅ Sample memories added");
+			console.log('✅ Sample memories added');
 
 			// Test search
-			console.log("\n🔍 Testing search...");
-			await this.search("JavaScript programming", { limit: 5 });
+			console.log('\n🔍 Testing search...');
+			await this.search('JavaScript programming', { limit: 5 });
 
 			// Show stats
-			console.log("\n📊 Final stats:");
+			console.log('\n📊 Final stats:');
 			await this.showStats();
 
-			console.log("\n🎉 Demo completed successfully!");
+			console.log('\n🎉 Demo completed successfully!');
 		} catch (error) {
-			console.error("❌ Demo failed:", error);
+			console.error('❌ Demo failed:', error);
 			throw error;
 		}
 	}
@@ -305,37 +305,37 @@ class MemoryCLI {
 // CLI argument parsing
 function parseArgs(): CLIOptions {
 	const args = process.argv.slice(2);
-	const options: CLIOptions = { command: "demo" };
+	const options: CLIOptions = { command: 'demo' };
 
 	for (let i = 0; i < args.length; i++) {
 		const arg = args[i];
 
 		switch (arg) {
-			case "init":
-			case "index":
-			case "search":
-			case "stats":
-			case "demo":
+			case 'init':
+			case 'index':
+			case 'search':
+			case 'stats':
+			case 'demo':
 				options.command = arg;
 				break;
-			case "--path":
+			case '--path':
 				options.path = args[++i];
 				break;
-			case "--query":
+			case '--query':
 				options.query = args[++i];
 				break;
-			case "--type":
+			case '--type':
 				options.type = args[++i];
 				break;
-			case "--source":
+			case '--source':
 				options.source = args[++i];
 				break;
-			case "--limit":
+			case '--limit':
 				options.limit = parseInt(args[++i], 10);
 				break;
-			case "--embedding": {
+			case '--embedding': {
 				const val = args[++i] as string | undefined;
-				if (val === "mock") options.embedding = "mock";
+				if (val === 'mock') options.embedding = 'mock';
 				break;
 			}
 		}
@@ -385,7 +385,7 @@ Examples:
 async function main(): Promise<void> {
 	const options = parseArgs();
 
-	if (process.argv.includes("--help") || process.argv.includes("-h")) {
+	if (process.argv.includes('--help') || process.argv.includes('-h')) {
 		printUsage();
 		return;
 	}
@@ -395,22 +395,22 @@ async function main(): Promise<void> {
 
 	try {
 		switch (options.command) {
-			case "init":
+			case 'init':
 				await cli.init();
 				break;
 
-			case "index":
+			case 'index':
 				if (!options.path) {
-					console.error("❌ --path is required for index command");
+					console.error('❌ --path is required for index command');
 					process.exit(1);
 				}
 				await cli.init();
 				await cli.indexPath(options.path);
 				break;
 
-			case "search":
+			case 'search':
 				if (!options.query) {
-					console.error("❌ --query is required for search command");
+					console.error('❌ --query is required for search command');
 					process.exit(1);
 				}
 				await cli.search(options.query, {
@@ -420,11 +420,11 @@ async function main(): Promise<void> {
 				});
 				break;
 
-			case "stats":
+			case 'stats':
 				await cli.showStats();
 				break;
 
-			case "demo":
+			case 'demo':
 				await cli.runDemo();
 				break;
 
@@ -434,7 +434,7 @@ async function main(): Promise<void> {
 				process.exit(1);
 		}
 	} catch (error) {
-		console.error("❌ Error:", error);
+		console.error('❌ Error:', error);
 		process.exit(1);
 	} finally {
 		await cli.cleanup();
@@ -442,13 +442,13 @@ async function main(): Promise<void> {
 }
 
 // Handle process termination gracefully
-process.on("SIGINT", async () => {
-	console.log("\n👋 Shutting down gracefully...");
+process.on('SIGINT', async () => {
+	console.log('\n👋 Shutting down gracefully...');
 	process.exit(0);
 });
 
-process.on("SIGTERM", async () => {
-	console.log("\n👋 Shutting down gracefully...");
+process.on('SIGTERM', async () => {
+	console.log('\n👋 Shutting down gracefully...');
 	process.exit(0);
 });
 

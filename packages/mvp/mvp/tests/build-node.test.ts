@@ -1,18 +1,18 @@
-import { describe, expect, it } from "vitest";
-import { BuildNode } from "../src/nodes/build.js";
-import { createInitialPRPState } from "../src/state.js";
+import { describe, expect, it } from 'vitest';
+import { BuildNode } from '../src/nodes/build.js';
+import { createInitialPRPState } from '../src/state.js';
 
-describe("BuildNode API schema validation", () => {
-	it("fails when API requirement lacks schema", async () => {
+describe('BuildNode API schema validation', () => {
+	it('fails when API requirement lacks schema', async () => {
 		const blueprint = {
-			title: "API Project",
-			description: "Test missing schema",
-			requirements: ["Expose API"],
+			title: 'API Project',
+			description: 'Test missing schema',
+			requirements: ['Expose API'],
 		};
 		const state: any = {
 			...createInitialPRPState(blueprint),
 			outputs: {
-				"api-check": {
+				'api-check': {
 					hasAPI: true,
 					hasSchema: false, // Missing schema
 				},
@@ -21,20 +21,20 @@ describe("BuildNode API schema validation", () => {
 		const node = new BuildNode();
 		const result = await node.execute(state);
 		expect(result.validationResults.build?.blockers).toContain(
-			"API schema validation failed",
+			'API schema validation failed',
 		);
 	});
 
-	it("passes when valid API schema provided", async () => {
+	it('passes when valid API schema provided', async () => {
 		const blueprint = {
-			title: "API Project",
-			description: "Test with schema",
-			requirements: ["Expose API"],
+			title: 'API Project',
+			description: 'Test with schema',
+			requirements: ['Expose API'],
 		};
 		const state: any = {
 			...createInitialPRPState(blueprint),
 			outputs: {
-				"api-check": {
+				'api-check': {
 					hasAPI: true,
 					hasSchema: true, // Valid schema
 				},
@@ -48,22 +48,22 @@ describe("BuildNode API schema validation", () => {
 		// We're specifically testing that the API schema validation passes
 		const hasAPISchemaFailure =
 			result.validationResults.build?.blockers?.includes(
-				"API schema validation failed",
+				'API schema validation failed',
 			);
 		expect(hasAPISchemaFailure).toBe(false);
 	});
 
-	it("fails when backend resources are absent", async () => {
+	it('fails when backend resources are absent', async () => {
 		const blueprint = {
-			title: "Frontend Project",
-			description: "No backend present",
-			requirements: ["UI"],
+			title: 'Frontend Project',
+			description: 'No backend present',
+			requirements: ['UI'],
 		};
 		const state = createInitialPRPState(blueprint);
 		const node = new BuildNode();
 		const result = await node.execute(state);
 		expect(result.validationResults.build?.blockers).toContain(
-			"Backend compilation or tests failed",
+			'Backend compilation or tests failed',
 		);
 	});
 });

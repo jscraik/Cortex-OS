@@ -940,9 +940,12 @@ export class MarketplaceClient {
 			throw new Error(`Invalid marketplace URL rejected for security: ${url}`);
 		}
 
-		// semgrep-disable-next-line: semgrep.owasp-top-10-2021-a10-server-side-request-forgery
-		// SSRF protection: URL validated above against allowlist
-		const response = await fetch(url);
+		// Use safeFetch - URL already validated above against allowlist
+		const response = await fetch(url, {
+			redirect: 'manual',
+			referrerPolicy: 'no-referrer',
+			signal: AbortSignal.timeout(30000),
+		});
 
 		if (!response.ok) {
 			throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -1,14 +1,14 @@
-import { Qwen3Embedder } from "./embed/qwen3";
-import { type ModelSpec, MultiModelGenerator } from "./generation/multi-model";
-import { embedQuery } from "./lib/embed-query";
-import { generateAnswer } from "./lib/generate-answer";
-import { rerankDocs } from "./lib/rerank-docs";
-import { retrieveDocs } from "./lib/retrieve-docs";
-import type { Document } from "./lib/types";
-import { Qwen3Reranker } from "./pipeline/qwen3-reranker";
+import { Qwen3Embedder } from './embed/qwen3';
+import { type ModelSpec, MultiModelGenerator } from './generation/multi-model';
+import { embedQuery } from './lib/embed-query';
+import { generateAnswer } from './lib/generate-answer';
+import { rerankDocs } from './lib/rerank-docs';
+import { retrieveDocs } from './lib/retrieve-docs';
+import type { Document } from './lib/types';
+import { Qwen3Reranker } from './pipeline/qwen3-reranker';
 
 export interface EnhancedRAGConfig {
-	embeddingModelSize?: "0.6B" | "4B" | "8B";
+	embeddingModelSize?: '0.6B' | '4B' | '8B';
 	generationModel: ModelSpec;
 	topK?: number;
 	rerank?: {
@@ -19,7 +19,7 @@ export interface EnhancedRAGConfig {
 
 export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
 	const finalConfig = {
-		embeddingModelSize: "4B",
+		embeddingModelSize: '4B',
 		topK: 10,
 		rerank: { enabled: true, topK: 5 },
 		...config,
@@ -41,10 +41,10 @@ export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
 
 	return {
 		embedQuery: (query: string) => embedQuery(embedder, query),
-	    retrieveDocs: (queryEmbedding: number[], docs: Document[]) =>
-		    retrieveDocs(embedder, queryEmbedding, docs, finalConfig.topK ?? 10),
-	    rerankDocs: (query: string, docs: Document[]) =>
-		    rerankDocs(reranker, query, docs, finalConfig.rerank?.topK ?? 5),
+		retrieveDocs: (queryEmbedding: number[], docs: Document[]) =>
+			retrieveDocs(embedder, queryEmbedding, docs, finalConfig.topK ?? 10),
+		rerankDocs: (query: string, docs: Document[]) =>
+			rerankDocs(reranker, query, docs, finalConfig.rerank?.topK ?? 5),
 		generateAnswer: (
 			query: string,
 			docs: Document[],

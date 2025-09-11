@@ -4,11 +4,11 @@
  * @author Cortex-OS Team
  */
 
-import type { SimRunnerConfig } from "./runner.js";
-import type { SimScenario, SimTurn } from "./types.js";
+import type { SimRunnerConfig } from './runner.js';
+import type { SimScenario, SimTurn } from './types.js';
 
 interface PersonaStyle {
-	formality: "casual" | "professional" | "technical";
+	formality: 'casual' | 'professional' | 'technical';
 	locale: string;
 	tone: string;
 }
@@ -73,7 +73,7 @@ export class UserSimulator {
 	/**
 	 * Get communication style based on persona
 	 */
-	private getPersonaStyle(persona: SimScenario["persona"]): PersonaStyle {
+	private getPersonaStyle(persona: SimScenario['persona']): PersonaStyle {
 		return {
 			formality: this.getTechFormalityLevel(persona.tech_fluency),
 			locale: persona.locale,
@@ -85,17 +85,17 @@ export class UserSimulator {
 	 * Map tech fluency to formality level
 	 */
 	private getTechFormalityLevel(
-		techFluency: "low" | "med" | "high",
-	): "casual" | "professional" | "technical" {
+		techFluency: 'low' | 'med' | 'high',
+	): 'casual' | 'professional' | 'technical' {
 		switch (techFluency) {
-			case "low":
-				return "casual";
-			case "med":
-				return "professional";
-			case "high":
-				return "technical";
+			case 'low':
+				return 'casual';
+			case 'med':
+				return 'professional';
+			case 'high':
+				return 'technical';
 			default:
-				return "professional";
+				return 'professional';
 		}
 	}
 
@@ -103,11 +103,11 @@ export class UserSimulator {
 	 * Format initial message based on goal and style
 	 */
 	private formatMessage(goal: string, style: PersonaStyle): string {
-		if (style.formality === "casual") {
+		if (style.formality === 'casual') {
 			return `Hi! ${goal}`;
 		}
 
-		if (style.formality === "technical") {
+		if (style.formality === 'technical') {
 			return `I need assistance with: ${goal}`;
 		}
 
@@ -118,65 +118,65 @@ export class UserSimulator {
 	/**
 	 * Determine if conversation should end
 	 */
-        private shouldEndConversation(
-                agentResponse: string,
-                turnCount: number,
-        ): boolean {
-                const completionIndicators = [
-                        /is there anything else/i,
-                        /glad i could help/i,
-                        /problem solved/i,
-                        /task completed/i,
-                        /happy to assist further/i,
-                ];
+	private shouldEndConversation(
+		agentResponse: string,
+		turnCount: number,
+	): boolean {
+		const completionIndicators = [
+			/is there anything else/i,
+			/glad i could help/i,
+			/problem solved/i,
+			/task completed/i,
+			/happy to assist further/i,
+		];
 
-                const maxTurnsBias =
-                        this.config.timeout && this.config.timeout < 15000 ? 10 : 20;
-                if (turnCount > maxTurnsBias) {
-                        return true;
-                }
+		const maxTurnsBias =
+			this.config.timeout && this.config.timeout < 15000 ? 10 : 20;
+		if (turnCount > maxTurnsBias) {
+			return true;
+		}
 
-                return completionIndicators.some((r) => r.test(agentResponse));
-        }
+		return completionIndicators.some((r) => r.test(agentResponse));
+	}
 
 	/**
 	 * Check if agent response is helpful
 	 */
-        private isHelpful(response: string): boolean {
-                const helpfulIndicators = [
-                        /\bhere(?:'s| is)\b/i,
-                        /i can help/i,
-                        /solution/i,
-                        /answer/i,
-                        /information/i,
-                        /step-by-step/i,
-                ];
+	private isHelpful(response: string): boolean {
+		const helpfulIndicators = [
+			/\bhere(?:'s| is)\b/i,
+			/i can help/i,
+			/solution/i,
+			/answer/i,
+			/information/i,
+			/step-by-step/i,
+		];
 
-                return helpfulIndicators.some((r) => r.test(response));
-        }
+		return helpfulIndicators.some((r) => r.test(response));
+	}
 
 	/**
 	 * Check if agent response needs clarification
 	 */
-        private needsClarification(response: string): boolean {
-                const clarificationIndicators = [
-                        /could you clarify/i,
-                        /need more information/i,
-                        /be more specific/i,
-                        /what do you mean/i,
-                        /unclear/i,
-                ];
-                return clarificationIndicators.some((r) => r.test(response));
-        }
+	private needsClarification(response: string): boolean {
+		const clarificationIndicators = [
+			/could you clarify/i,
+			/need more information/i,
+			/be more specific/i,
+			/what do you mean/i,
+			/unclear/i,
+		];
+		return clarificationIndicators.some((r) => r.test(response));
+	}
 
 	/**
 	 * Generate positive response
 	 */
 	private generatePositiveResponse(style: PersonaStyle): string {
 		const responses = [
-			"Thank you, that helps!",
-			"Great, that works for me.",
-			"Perfect, exactly what I needed.",
+			'Thank you, that helps!',
+			'Great, that works for me.',
+			'Perfect, exactly what I needed.',
 		];
 
 		return this.selectRandomResponse(responses, style);
@@ -187,9 +187,9 @@ export class UserSimulator {
 	 */
 	private generateClarificationRequest(style: PersonaStyle): string {
 		const responses = [
-			"Could you explain that in more detail?",
-			"I need a bit more information about that.",
-			"Can you walk me through that step by step?",
+			'Could you explain that in more detail?',
+			'I need a bit more information about that.',
+			'Can you walk me through that step by step?',
 		];
 
 		return this.selectRandomResponse(responses, style);
@@ -200,9 +200,9 @@ export class UserSimulator {
 	 */
 	private generateFollowUpResponse(style: PersonaStyle): string {
 		const responses = [
-			"I see. What should I do next?",
-			"Okay, can you help me with the next step?",
-			"I understand. Is there anything else I should know?",
+			'I see. What should I do next?',
+			'Okay, can you help me with the next step?',
+			'I understand. Is there anything else I should know?',
 		];
 
 		return this.selectRandomResponse(responses, style);
@@ -216,11 +216,11 @@ export class UserSimulator {
 		style: PersonaStyle,
 	): string {
 		let options = responses;
-		if (style.formality === "casual") {
+		if (style.formality === 'casual') {
 			options = responses.map((r) =>
-				r.replace(/Thank you/gi, "Thanks").replace(/Hello/gi, "Hey"),
+				r.replace(/Thank you/gi, 'Thanks').replace(/Hello/gi, 'Hey'),
 			);
-		} else if (style.formality === "technical") {
+		} else if (style.formality === 'technical') {
 			options = responses.map((r) => `Technical: ${r}`);
 		}
 		const index = Math.floor(this.rng() * options.length);

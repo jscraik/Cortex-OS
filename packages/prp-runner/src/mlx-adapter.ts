@@ -6,8 +6,8 @@
  * @status TDD-DRIVEN
  */
 
-import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 export interface MLXConfig {
 	modelName: string;
@@ -44,7 +44,7 @@ export class MLXAdapter {
 
 	constructor(config: MLXConfig) {
 		this.config = config;
-		this.knifePath = config.knifePath || "mlx-knife";
+		this.knifePath = config.knifePath || 'mlx-knife';
 		this.validateConfig();
 	}
 
@@ -57,7 +57,9 @@ export class MLXAdapter {
 		if (this.config.knifePath && existsSync(this.config.knifePath)) return true;
 		// Best-effort PATH lookup by spawning 'which' synchronously via shell (cheap & safe in tests)
 		try {
-			const resolved = process.env.PATH?.split(":").some((p) => existsSync(`${p}/mlx-knife`));
+			const resolved = process.env.PATH?.split(':').some((p) =>
+				existsSync(`${p}/mlx-knife`),
+			);
 			return Boolean(resolved);
 		} catch {
 			return false;
@@ -69,10 +71,10 @@ export class MLXAdapter {
 	 */
 	private validateConfig(): void {
 		if (!this.config.modelName) {
-			throw new Error("MLX model name is required");
+			throw new Error('MLX model name is required');
 		}
 		if (this.config.timeoutMs !== undefined && this.config.timeoutMs <= 0) {
-			throw new Error("timeoutMs must be positive");
+			throw new Error('timeoutMs must be positive');
 		}
 	}
 
@@ -85,7 +87,7 @@ export class MLXAdapter {
 			return [];
 		}
 		try {
-			const output = await this.executeCommand(["list"]);
+			const output = await this.executeCommand(['list']);
 			return this.parseModelList(output);
 		} catch (error) {
 			throw new Error(
@@ -102,7 +104,7 @@ export class MLXAdapter {
 		try {
 			// Try using mlx-knife show command first (faster than listing all models)
 			const info = await this.getModelInfo(modelName);
-			if (info && info.health === "[OK]") {
+			if (info && info.health === '[OK]') {
 				return true;
 			}
 
@@ -129,7 +131,9 @@ export class MLXAdapter {
 	 */
 	async generate(options: MLXGenerateOptions): Promise<string> {
 		if (!this.isRuntimeAvailable()) {
-			throw new Error(`MLX runtime unavailable: cannot generate with ${this.config.modelName}`);
+			throw new Error(
+				`MLX runtime unavailable: cannot generate with ${this.config.modelName}`,
+			);
 		}
 		const { prompt, maxTokens = 512, temperature = 0.7 } = options;
 
@@ -143,17 +147,17 @@ export class MLXAdapter {
 
 		try {
 			const args = [
-				"run",
+				'run',
 				actualModelName,
 				prompt,
-				"--max-tokens",
+				'--max-tokens',
 				maxTokens.toString(),
-				"--temperature",
+				'--temperature',
 				temperature.toString(),
 			];
 
 			if (options.stopTokens && options.stopTokens.length > 0) {
-				args.push("--stop", ...options.stopTokens);
+				args.push('--stop', ...options.stopTokens);
 			}
 
 			const output = await this.executeCommand(args);
@@ -173,7 +177,7 @@ export class MLXAdapter {
 		const targetModel = modelName || this.config.modelName;
 
 		try {
-			const output = await this.executeCommand(["show", targetModel]);
+			const output = await this.executeCommand(['show', targetModel]);
 			return this.parseModelInfo(output);
 		} catch (_error) {
 			return null;
@@ -185,7 +189,7 @@ export class MLXAdapter {
 	 */
 	async checkHealth(): Promise<{ healthy: boolean; message: string }> {
 		if (!this.isRuntimeAvailable()) {
-			return { healthy: false, message: "MLX runtime unavailable" };
+			return { healthy: false, message: 'MLX runtime unavailable' };
 		}
 		try {
 			const info = await this.getModelInfo();
@@ -196,8 +200,8 @@ export class MLXAdapter {
 				};
 			}
 
-			if (info.health === "[OK]") {
-				return { healthy: true, message: "Model is healthy" };
+			if (info.health === '[OK]') {
+				return { healthy: true, message: 'Model is healthy' };
 			} else {
 				return { healthy: false, message: `Model health: ${info.health}` };
 			}
@@ -215,18 +219,18 @@ export class MLXAdapter {
 	private async executeCommand(args: string[]): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const child = spawn(this.knifePath, args, {
-				stdio: ["pipe", "pipe", "pipe"],
+				stdio: ['pipe', 'pipe', 'pipe'],
 				env: process.env,
 			});
 
-			let stdout = "";
-			let stderr = "";
+			let stdout = '';
+			let stderr = '';
 
-			child.stdout?.on("data", (data) => {
+			child.stdout?.on('data', (data) => {
 				stdout += data.toString();
 			});
 
-			child.stderr?.on("data", (data) => {
+			child.stderr?.on('data', (data) => {
 				stderr += data.toString();
 			});
 
@@ -237,7 +241,7 @@ export class MLXAdapter {
 				reject(new Error(`MLX command timed out after ${timeoutMs}ms`));
 			}, timeoutMs);
 
-			child.on("close", (code) => {
+			child.on('close', (code) => {
 				clearTimeout(timeoutHandle); // Clear timeout on completion
 				if (code === 0) {
 					resolve(stdout);
@@ -246,7 +250,7 @@ export class MLXAdapter {
 				}
 			});
 
-			child.on("error", (error) => {
+			child.on('error', (error) => {
 				clearTimeout(timeoutHandle); // Clear timeout on error
 				reject(new Error(`Failed to spawn mlx-knife: ${error.message}`));
 			});
@@ -258,9 +262,9 @@ export class MLXAdapter {
 	 */
 	private parseModelList(output: string): MLXModelInfo[] {
 		const lines = output
-			.split("\n")
+			.split('\n')
 			.filter(
-				(line) => line.trim() && !line.includes("⚠️") && !line.includes("NAME"),
+				(line) => line.trim() && !line.includes('⚠️') && !line.includes('NAME'),
 			);
 
 		return lines
@@ -271,9 +275,9 @@ export class MLXAdapter {
 						name: parts[0],
 						id: parts[1],
 						size: parts[2],
-						modified: parts.slice(3, -1).join(" "),
-						path: "", // Will be filled by show command if needed
-						health: "[OK]", // Assume OK if listed
+						modified: parts.slice(3, -1).join(' '),
+						path: '', // Will be filled by show command if needed
+						health: '[OK]', // Assume OK if listed
 					};
 				}
 				return null;
@@ -285,22 +289,22 @@ export class MLXAdapter {
 	 * Parse model info output from mlx-knife show
 	 */
 	private parseModelInfo(output: string): MLXModelInfo | null {
-		const lines = output.split("\n");
+		const lines = output.split('\n');
 		const info: Partial<MLXModelInfo> = {};
 
 		for (const line of lines) {
-			if (line.startsWith("Model:")) {
-				info.name = line.split("Model:")[1].trim();
-			} else if (line.startsWith("Path:")) {
-				info.path = line.split("Path:")[1].trim();
-			} else if (line.startsWith("Snapshot:")) {
-				info.id = line.split("Snapshot:")[1].trim();
-			} else if (line.startsWith("Size:")) {
-				info.size = line.split("Size:")[1].trim();
-			} else if (line.startsWith("Modified:")) {
-				info.modified = line.split("Modified:")[1].trim();
-			} else if (line.startsWith("Health:")) {
-				info.health = line.split("Health:")[1].trim();
+			if (line.startsWith('Model:')) {
+				info.name = line.split('Model:')[1].trim();
+			} else if (line.startsWith('Path:')) {
+				info.path = line.split('Path:')[1].trim();
+			} else if (line.startsWith('Snapshot:')) {
+				info.id = line.split('Snapshot:')[1].trim();
+			} else if (line.startsWith('Size:')) {
+				info.size = line.split('Size:')[1].trim();
+			} else if (line.startsWith('Modified:')) {
+				info.modified = line.split('Modified:')[1].trim();
+			} else if (line.startsWith('Health:')) {
+				info.health = line.split('Health:')[1].trim();
 			}
 		}
 
@@ -316,20 +320,20 @@ export class MLXAdapter {
 	 */
 	private cleanMLXOutput(output: string): string {
 		return output
-			.split("\n")
+			.split('\n')
 			.filter((line) => {
 				const lowerLine = line.toLowerCase();
 				return (
-					!line.includes("⚠️") &&
-					!line.includes("Found") &&
-					!line.includes("Command:") &&
-					!lowerLine.includes("please move them to:") &&
-					!lowerLine.includes("this warning will appear") &&
-					!lowerLine.includes("mv /volumes/") &&
+					!line.includes('⚠️') &&
+					!line.includes('Found') &&
+					!line.includes('Command:') &&
+					!lowerLine.includes('please move them to:') &&
+					!lowerLine.includes('this warning will appear') &&
+					!lowerLine.includes('mv /volumes/') &&
 					line.trim().length > 0
 				);
 			})
-			.join("\n")
+			.join('\n')
 			.trim();
 	}
 
@@ -352,7 +356,7 @@ export class MLXAdapter {
 	 * Normalize model name by removing the mlx-community/ prefix if present
 	 */
 	private normalizeModelName(modelName: string): string {
-		return modelName.replace(/^mlx-community\//, "");
+		return modelName.replace(/^mlx-community\//, '');
 	}
 
 	/**
@@ -408,22 +412,22 @@ export const createMLXAdapter = (
  * These names match exactly what mlx-knife list returns
  */
 export const AVAILABLE_MLX_MODELS = {
-	QWEN_SMALL: "Qwen2.5-0.5B-Instruct-4bit",
-	PHI_MINI: "Phi-3-mini-4k-instruct-4bit",
-	QWEN_VL: "Qwen2.5-VL-3B-Instruct-6bit",
-	GLM_4: "GLM-4.5-4bit",
-	MIXTRAL: "Mixtral-8x7B-v0.1-hf-4bit-mlx",
-	QWEN_CODER: "Qwen3-Coder-30B-A3B-Instruct-4bit",
+	QWEN_SMALL: 'Qwen2.5-0.5B-Instruct-4bit',
+	PHI_MINI: 'Phi-3-mini-4k-instruct-4bit',
+	QWEN_VL: 'Qwen2.5-VL-3B-Instruct-6bit',
+	GLM_4: 'GLM-4.5-4bit',
+	MIXTRAL: 'Mixtral-8x7B-v0.1-hf-4bit-mlx',
+	QWEN_CODER: 'Qwen3-Coder-30B-A3B-Instruct-4bit',
 } as const;
 
 /**
  * HuggingFace repository names for reference
  */
 export const HUGGINGFACE_MODEL_REPOS = {
-	QWEN_SMALL: "mlx-community/Qwen2.5-0.5B-Instruct-4bit",
-	PHI_MINI: "mlx-community/Phi-3-mini-4k-instruct-4bit",
-	QWEN_VL: "mlx-community/Qwen2.5-VL-3B-Instruct-6bit",
-	GLM_4: "mlx-community/GLM-4.5-4bit",
-	MIXTRAL: "mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx",
-	QWEN_CODER: "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit",
+	QWEN_SMALL: 'mlx-community/Qwen2.5-0.5B-Instruct-4bit',
+	PHI_MINI: 'mlx-community/Phi-3-mini-4k-instruct-4bit',
+	QWEN_VL: 'mlx-community/Qwen2.5-VL-3B-Instruct-6bit',
+	GLM_4: 'mlx-community/GLM-4.5-4bit',
+	MIXTRAL: 'mlx-community/Mixtral-8x7B-v0.1-hf-4bit-mlx',
+	QWEN_CODER: 'mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit',
 } as const;

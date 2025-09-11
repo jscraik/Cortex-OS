@@ -1,5 +1,5 @@
-import { EventEmitter } from "node:events";
-import { describe, it, vi } from "vitest";
+import { EventEmitter } from 'node:events';
+import { describe, it, vi } from 'vitest';
 
 class MockProc extends EventEmitter {
 	stdout = new EventEmitter();
@@ -8,8 +8,8 @@ class MockProc extends EventEmitter {
 	kill = vi.fn();
 }
 
-describe.skip("Qwen3Reranker", () => {
-	it("times out and kills process", async () => {
+describe.skip('Qwen3Reranker', () => {
+	it('times out and kills process', async () => {
 		// skipped due to unstable timer handling in test environment
 	});
 });

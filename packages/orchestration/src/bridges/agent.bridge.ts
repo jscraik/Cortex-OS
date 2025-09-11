@@ -1,5 +1,5 @@
-import type { Agent, Executor } from "@cortex-os/agents";
-import type { Step } from "../domain/types.js";
+import type { Agent, Executor } from '@cortex-os/agents';
+import type { Step } from '../domain/types.js';
 
 export type AgentBridge = {
 	run: (step: Step, taskId: string, input: unknown) => Promise<any>;
@@ -14,7 +14,7 @@ export const createAgentBridge = (
 		if (!agent) throw new Error(`AGENT_NOT_FOUND:${step.agentId}`);
 		return exec.run(agent, {
 			id: taskId,
-			kind: "custom",
+			kind: 'custom',
 			input,
 			budget: { wallClockMs: step.timeoutMs ?? 30_000, maxSteps: 16 },
 		});

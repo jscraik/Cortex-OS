@@ -1,14 +1,14 @@
-import type { Evidence, PRPState } from "../state.js";
-import { generateId } from "../utils/id.js";
+import type { Evidence, PRPState } from '../state.js';
+import { generateId } from '../utils/id.js';
 
 /** Create standardized evidence entry */
 export function createEvidence(
 	state: PRPState,
 	idPrefix: string,
-	type: Evidence["type"],
+	type: Evidence['type'],
 	source: string,
 	content: unknown,
-	phase: Evidence["phase"],
+	phase: Evidence['phase'],
 ): Evidence {
 	return {
 		id: generateId(idPrefix, state.metadata.deterministic),
@@ -23,7 +23,7 @@ export function createEvidence(
 /** Merge phase results into state */
 export function finalizePhase(
 	state: PRPState,
-	phase: keyof PRPState["validationResults"],
+	phase: keyof PRPState['validationResults'],
 	evidence: Evidence[],
 	blockers: string[],
 	majors: string[],

@@ -1,5 +1,6 @@
 # Production Readiness Report
 
+<!-- markdownlint-disable MD013 -->
 
 This report provides a heuristic production readiness score (0-100%) for each package and app across key quality areas.
 
@@ -34,5 +35,4 @@ This report provides a heuristic production readiness score (0-100%) for each pa
 | cortex-web             | 60           | 55          | 50       | 45      | 40            | 60            | 52      |
 | vscode-extension       | 45           | 40          | 35       | 30      | 25            | 25            | 33      |
 
-_Generated on 2025-08-28T18:34Z_
-
+## Generated on 2025-08-28T18:34Z

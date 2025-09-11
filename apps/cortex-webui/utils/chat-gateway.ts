@@ -1,6 +1,6 @@
-import { env } from "node:process";
+import { env } from 'node:process';
 
-export type ChatRole = "system" | "user" | "assistant";
+export type ChatRole = 'system' | 'user' | 'assistant';
 export type ChatMessage = { role: ChatRole; content: string };
 
 export type StreamParams = {
@@ -21,8 +21,8 @@ export async function streamChat(
 	params: StreamParams,
 	onToken: (token: string) => void,
 ): Promise<{ text: string; usage?: Usage }> {
-	const provider = (env.MODEL_API_PROVIDER || "").toLowerCase();
-	if (provider !== "openai" && provider !== "compatible") {
+	const provider = (env.MODEL_API_PROVIDER || '').toLowerCase();
+	if (provider !== 'openai' && provider !== 'compatible') {
 		throw new Error(
 			'MODEL_API_PROVIDER must be set to "openai" or "compatible"',
 		);
@@ -34,10 +34,10 @@ async function streamOpenAI(
 	params: StreamParams,
 	onToken: (t: string) => void,
 ) {
-	const base = env.MODEL_API_BASE || "http://localhost:11434";
+	const base = env.MODEL_API_BASE || 'http://localhost:11434';
 	const apiKey = env.MODEL_API_KEY; // optional for local providers
 
-	const url = `${base.replace(/\/$/, "")}/v1/chat/completions`;
+	const url = `${base.replace(/\/$/, '')}/v1/chat/completions`;
 	const body = JSON.stringify({
 		model: params.model,
 		messages: params.messages,
@@ -45,9 +45,9 @@ async function streamOpenAI(
 	});
 
 	const res = await fetch(url, {
-		method: "POST",
+		method: 'POST',
 		headers: {
-			"content-type": "application/json",
+			'content-type': 'application/json',
 			...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
 		},
 		body,
@@ -62,11 +62,11 @@ async function streamOpenAI(
 
 async function readSSEStream(res: Response, onToken: (t: string) => void) {
 	const body = res.body;
-	if (!body) return { text: "", usage: undefined };
+	if (!body) return { text: '', usage: undefined };
 	const reader = body.getReader();
 	const dec = new TextDecoder();
-	let buffer = "";
-	let finalText = "";
+	let buffer = '';
+	let finalText = '';
 	let usage: Usage;
 
 	while (true) {
@@ -74,16 +74,16 @@ async function readSSEStream(res: Response, onToken: (t: string) => void) {
 		if (done) break;
 		buffer += dec.decode(value, { stream: true });
 
-		let idx = buffer.indexOf("\n");
+		let idx = buffer.indexOf('\n');
 		while (idx !== -1) {
 			const line = buffer.slice(0, idx).trim();
 			buffer = buffer.slice(idx + 1);
-			idx = buffer.indexOf("\n");
-			if (!line?.startsWith("data:")) {
+			idx = buffer.indexOf('\n');
+			if (!line?.startsWith('data:')) {
 				continue;
 			}
 			const payload = line.slice(5).trim();
-			if (payload === "[DONE]") {
+			if (payload === '[DONE]') {
 				break;
 			}
 			const { content, newUsage } = parseOpenAIStreamChunk(payload);

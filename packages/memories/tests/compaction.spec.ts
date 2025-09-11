@@ -1,64 +1,64 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryStore } from "../src/adapters/store.memory.js";
-import type { Memory } from "../src/domain/types.js";
+import { beforeEach, describe, expect, it } from 'vitest';
+import { InMemoryStore } from '../src/adapters/store.memory.js';
+import type { Memory } from '../src/domain/types.js';
 
-describe("InMemoryStore compaction and purging", () => {
+describe('InMemoryStore compaction and purging', () => {
 	let store: InMemoryStore;
 
 	beforeEach(() => {
 		store = new InMemoryStore();
 	});
 
-	it("purges expired memories correctly", async () => {
+	it('purges expired memories correctly', async () => {
 		const now = new Date().toISOString();
 		const past = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(); // 48 hours ago
 		const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
 
 		// Insert expired memory
 		const expiredMemory: Memory = {
-			id: "1",
-			kind: "note",
-			text: "expired memory",
+			id: '1',
+			kind: 'note',
+			text: 'expired memory',
 			tags: [],
-			ttl: "P1D", // 1 day
+			ttl: 'P1D', // 1 day
 			createdAt: past,
 			updatedAt: past,
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		};
 
 		// Insert fresh memory
 		const freshMemory: Memory = {
-			id: "2",
-			kind: "note",
-			text: "fresh memory",
+			id: '2',
+			kind: 'note',
+			text: 'fresh memory',
 			tags: [],
-			ttl: "P1D", // 1 day
+			ttl: 'P1D', // 1 day
 			createdAt: now,
 			updatedAt: now,
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		};
 
 		// Insert memory without TTL
 		const noTtlMemory: Memory = {
-			id: "3",
-			kind: "note",
-			text: "no ttl memory",
+			id: '3',
+			kind: 'note',
+			text: 'no ttl memory',
 			tags: [],
 			createdAt: past,
 			updatedAt: past,
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		};
 
 		// Insert memory with future expiration
 		const futureMemory: Memory = {
-			id: "4",
-			kind: "note",
-			text: "future expiration memory",
+			id: '4',
+			kind: 'note',
+			text: 'future expiration memory',
 			tags: [],
-			ttl: "P1D", // 1 day
+			ttl: 'P1D', // 1 day
 			createdAt: future,
 			updatedAt: future,
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		};
 
 		// Upsert all memories
@@ -68,34 +68,34 @@ describe("InMemoryStore compaction and purging", () => {
 		await store.upsert(futureMemory);
 
 		// Verify all memories are stored initially
-		expect(await store.get("1")).not.toBeNull();
-		expect(await store.get("2")).not.toBeNull();
-		expect(await store.get("3")).not.toBeNull();
-		expect(await store.get("4")).not.toBeNull();
+		expect(await store.get('1')).not.toBeNull();
+		expect(await store.get('2')).not.toBeNull();
+		expect(await store.get('3')).not.toBeNull();
+		expect(await store.get('4')).not.toBeNull();
 
 		// Purge expired memories and verify only the expired one is removed
 		const purgedCount = await store.purgeExpired(now);
 		expect(purgedCount).toBe(1);
 
-		expect(await store.get("1")).toBeNull();
-		expect(await store.get("2")).not.toBeNull();
-		expect(await store.get("3")).not.toBeNull();
-		expect(await store.get("4")).not.toBeNull();
+		expect(await store.get('1')).toBeNull();
+		expect(await store.get('2')).not.toBeNull();
+		expect(await store.get('3')).not.toBeNull();
+		expect(await store.get('4')).not.toBeNull();
 	});
 
-	it("handles purging with malformed TTL values", async () => {
+	it('handles purging with malformed TTL values', async () => {
 		const now = new Date().toISOString();
 
 		// Insert memory with invalid TTL
 		const invalidTtlMemory: Memory = {
-			id: "5",
-			kind: "note",
-			text: "invalid ttl memory",
+			id: '5',
+			kind: 'note',
+			text: 'invalid ttl memory',
 			tags: [],
-			ttl: "invalid-format",
+			ttl: 'invalid-format',
 			createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), // 30 days ago
 			updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 60 * 30).toISOString(),
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		};
 
 		await store.upsert(invalidTtlMemory);

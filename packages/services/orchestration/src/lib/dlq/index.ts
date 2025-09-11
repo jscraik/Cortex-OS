@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Dead letter queue message schema
 export const DeadLetterMessageSchema = z.object({
@@ -15,11 +15,11 @@ export const DeadLetterMessageSchema = z.object({
 	retryCount: z.number(),
 	maxRetries: z.number(),
 	failureReason: z.enum([
-		"max_retries_exceeded",
-		"message_expired",
-		"invalid_message_format",
-		"processing_error",
-		"infrastructure_failure",
+		'max_retries_exceeded',
+		'message_expired',
+		'invalid_message_format',
+		'processing_error',
+		'infrastructure_failure',
 	]),
 	processingNode: z.string().optional(),
 	stackTrace: z.string().optional(),
@@ -36,14 +36,14 @@ export interface DeadLetterRepository {
 	): Promise<DeadLetterMessage[]>;
 	findByEventType(eventType: string): Promise<DeadLetterMessage[]>;
 	findByFailureReason(
-		reason: DeadLetterMessage["failureReason"],
+		reason: DeadLetterMessage['failureReason'],
 	): Promise<DeadLetterMessage[]>;
 	findAll(limit?: number, offset?: number): Promise<DeadLetterMessage[]>;
 	getById(id: string): Promise<DeadLetterMessage | null>;
 	delete(id: string): Promise<void>;
 	count(): Promise<number>;
 	countByFailureReason(
-		reason: DeadLetterMessage["failureReason"],
+		reason: DeadLetterMessage['failureReason'],
 	): Promise<number>;
 }
 
@@ -76,7 +76,7 @@ export class DeadLetterService {
 		error: string,
 		retryCount: number,
 		maxRetries: number,
-		failureReason: DeadLetterMessage["failureReason"],
+		failureReason: DeadLetterMessage['failureReason'],
 		metadata?: Record<string, unknown>,
 		processingNode?: string,
 		stackTrace?: string,
@@ -130,7 +130,7 @@ export class DeadLetterService {
 	}
 
 	async getMessagesByFailureReason(
-		reason: DeadLetterMessage["failureReason"],
+		reason: DeadLetterMessage['failureReason'],
 	): Promise<DeadLetterMessage[]> {
 		return this.repository.findByFailureReason(reason);
 	}
@@ -145,23 +145,23 @@ export class DeadLetterService {
 
 	async getStatistics(): Promise<{
 		total: number;
-		byFailureReason: Record<DeadLetterMessage["failureReason"], number>;
+		byFailureReason: Record<DeadLetterMessage['failureReason'], number>;
 	}> {
 		const total = await this.repository.count();
-		const byFailureReason: Record<DeadLetterMessage["failureReason"], number> =
+		const byFailureReason: Record<DeadLetterMessage['failureReason'], number> =
 			{
 				max_retries_exceeded: await this.repository.countByFailureReason(
-					"max_retries_exceeded",
+					'max_retries_exceeded',
 				),
 				message_expired:
-					await this.repository.countByFailureReason("message_expired"),
+					await this.repository.countByFailureReason('message_expired'),
 				invalid_message_format: await this.repository.countByFailureReason(
-					"invalid_message_format",
+					'invalid_message_format',
 				),
 				processing_error:
-					await this.repository.countByFailureReason("processing_error"),
+					await this.repository.countByFailureReason('processing_error'),
 				infrastructure_failure: await this.repository.countByFailureReason(
-					"infrastructure_failure",
+					'infrastructure_failure',
 				),
 			};
 
@@ -222,7 +222,7 @@ export class DeadLetterProcessor {
 		filter: {
 			aggregateType?: string;
 			eventType?: string;
-			failureReason?: DeadLetterMessage["failureReason"];
+			failureReason?: DeadLetterMessage['failureReason'];
 		},
 		reprocessor: (message: DeadLetterMessage) => Promise<void>,
 		limit = 100,

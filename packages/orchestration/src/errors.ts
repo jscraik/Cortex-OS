@@ -4,6 +4,6 @@ export class OrchestrationError extends Error {
 		message: string,
 	) {
 		super(message);
-		this.name = "OrchestrationError";
+		this.name = 'OrchestrationError';
 	}
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
-import { SimReporter } from "../report.js";
-import type { SimBatchResult, SimReport } from "../types.js";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
+import { SimReporter } from '../report.js';
+import type { SimBatchResult, SimReport } from '../types.js';
 
 /**
  * Generate simulation reports and analytics
@@ -12,20 +12,20 @@ import type { SimBatchResult, SimReport } from "../types.js";
  * - Writes sim/reports/latest.json and a timestamped archive
  */
 async function generateReport() {
-	console.log("📊 Generating SimLab reports...");
+	console.log('📊 Generating SimLab reports...');
 
 	const cwd = process.cwd();
-	const runsDir = join(cwd, "sim/runs");
-	const reportsDir = join(cwd, "sim/reports");
+	const runsDir = join(cwd, 'sim/runs');
+	const reportsDir = join(cwd, 'sim/reports');
 	mkdirSync(reportsDir, { recursive: true });
 
 	// Discover recent run files (JSON or JSONL)
 	const files = safeListFiles(runsDir)
-		.filter((f) => f.endsWith(".json") || f.endsWith(".jsonl"))
+		.filter((f) => f.endsWith('.json') || f.endsWith('.jsonl'))
 		.sort(); // lexicographic sort keeps date prefixes ordered
 
 	if (files.length === 0) {
-		console.warn("⚠️  No run files found in sim/runs — nothing to report.");
+		console.warn('⚠️  No run files found in sim/runs — nothing to report.');
 		return;
 	}
 
@@ -41,7 +41,7 @@ async function generateReport() {
 		const batch = parseBatchFromFile(abs);
 		// If parsing fails or results empty, skip
 		if (batch && batch.scenarios.length > 0) {
-			const batchId = basename(file).replace(/\.(json|jsonl)$/i, "");
+			const batchId = basename(file).replace(/\.(json|jsonl)$/i, '');
 			const computed = reporter.createBatchResult(
 				batchId,
 				batch.scenarios as any,
@@ -51,19 +51,19 @@ async function generateReport() {
 	}
 
 	if (batchResults.length === 0) {
-		console.warn("⚠️  No valid batch results parsed from sim/runs.");
+		console.warn('⚠️  No valid batch results parsed from sim/runs.');
 		return;
 	}
 
 	const report: SimReport = reporter.createReport(batchResults);
 
 	// Write outputs
-	const latestPath = join(reportsDir, "latest.json");
-	writeFileSync(latestPath, JSON.stringify(report, null, 2), "utf-8");
+	const latestPath = join(reportsDir, 'latest.json');
+	writeFileSync(latestPath, JSON.stringify(report, null, 2), 'utf-8');
 
-	const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+	const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 	const archivePath = join(reportsDir, `${stamp}.json`);
-	writeFileSync(archivePath, JSON.stringify(report, null, 2), "utf-8");
+	writeFileSync(archivePath, JSON.stringify(report, null, 2), 'utf-8');
 
 	console.log(`✅ Report written: ${latestPath}`);
 	console.log(`🗂️  Archived: ${archivePath}`);
@@ -79,8 +79,8 @@ function safeListFiles(dir: string): string[] {
 
 function parseBatchFromFile(absPath: string): { scenarios: any[] } | null {
 	try {
-		const txt = readFileSync(absPath, "utf-8");
-		if (absPath.endsWith(".jsonl")) {
+		const txt = readFileSync(absPath, 'utf-8');
+		if (absPath.endsWith('.jsonl')) {
 			const scenarios = txt
 				.split(/\r?\n/)
 				.map((l) => l.trim())

@@ -33,7 +33,7 @@ export async function withFallback<T>(
 	const { logWarnings = true, errorMessage } = options;
 
 	if (providers.length === 0) {
-		throw new Error("No providers available");
+		throw new Error('No providers available');
 	}
 
 	let lastError: Error | undefined;
@@ -52,7 +52,7 @@ export async function withFallback<T>(
 
 	const message =
 		errorMessage ||
-		`All providers failed. Last error: ${lastError?.message || "Unknown error"}`;
+		`All providers failed. Last error: ${lastError?.message || 'Unknown error'}`;
 
 	throw new Error(message);
 }

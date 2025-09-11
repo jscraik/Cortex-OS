@@ -23,6 +23,7 @@ check_tool gitleaks
 check_tool semgrep
 check_tool codeql
 check_tool src
+check_tool ast-grep
 
 if [ ${#missing[@]} -eq 0 ]; then
   # Everything looks good; be quiet by default

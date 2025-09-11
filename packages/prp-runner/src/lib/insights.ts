@@ -15,14 +15,14 @@ export function summarizeEvidence(evidenceCollection: EvidenceItem[]): string {
 			(e) =>
 				`Claim: ${e.claim}\nConfidence: ${e.confidence}\nRisk: ${e.riskLevel}\nSource: ${e.source.type}`,
 		)
-		.join("\n\n");
+		.join('\n\n');
 }
 
 export async function invokeRagAnalysis(
-	aiCapabilities: { ragQuery: (args: any) => Promise<string> },
+	aiCapabilities: { ragQuery: (args: any) => Promise<{ answer: string; sources?: any[]; prompt?: string; reasoning?: string }> },
 	evidenceSummary: string,
 	taskContext: string,
-): Promise<string> {
+): Promise<{ answer: string; sources?: any[]; prompt?: string; reasoning?: string }> {
 	return aiCapabilities.ragQuery({
 		query: `Analyze this evidence collection for task: ${taskContext}`,
 		systemPrompt: `You are an evidence analyst. Analyze the provided evidence collection and provide:\n  1. A concise summary of key findings\n  2. Risk assessment with specific risks and mitigations\n  3. Actionable recommendations\n  4. Confidence and reliability metrics\n\n    Evidence Collection:\n    ${evidenceSummary}`,
@@ -30,30 +30,30 @@ export async function invokeRagAnalysis(
 }
 
 export function parseInsightsResponse(answer: string) {
-	const summary = extractSection(answer, "summary");
-	const keyFindings = extractList(answer, "findings");
-	const recommendations = extractList(answer, "recommendations");
+	const summary = extractSection(answer, 'summary');
+	const keyFindings = extractList(answer, 'findings');
+	const recommendations = extractList(answer, 'recommendations');
 	return { summary, keyFindings, recommendations };
 }
 
 function extractSection(response: string, sectionName: string): string {
-	const sectionPattern = new RegExp(`${sectionName}[:\\s]*\\n([^#]+)`, "gi");
+	const sectionPattern = new RegExp(`${sectionName}[:\\s]*\\n([^#]+)`, 'gi');
 	const match = response.match(sectionPattern);
 	return match
-		? match[0].replace(new RegExp(`${sectionName}[:\\s]*\\n`, "gi"), "").trim()
-		: "";
+		? match[0].replace(new RegExp(`${sectionName}[:\\s]*\\n`, 'gi'), '').trim()
+		: '';
 }
 
 function extractList(response: string, listName: string): string[] {
 	const listPattern = new RegExp(
 		`${listName}[:\\s]*\\n((?:[-*•\\d.]\\s*[^\\n]+\\n?)+)`,
-		"gi",
+		'gi',
 	);
 	const match = response.match(listPattern);
 	if (!match) return [];
 	return match[0]
-		.split("\n")
-		.map((line) => line.replace(/^[-*•\\d.\\s]+/, "").trim())
+		.split('\n')
+		.map((line) => line.replace(/^[-*•\\d.\\s]+/, '').trim())
 		.filter((line) => line.length > 0)
 		.slice(0, 10);
 }
@@ -66,18 +66,18 @@ export function generateFallbackInsights(
 ) {
 	const keyFindings = [
 		`${evidenceCollection.length} evidence items collected`,
-		"Evidence quality assessment completed",
-		"Risk distribution analysis performed",
-		"Confidence metrics calculated",
+		'Evidence quality assessment completed',
+		'Risk distribution analysis performed',
+		'Confidence metrics calculated',
 	];
 	const recommendations = [
-		"Review evidence confidence levels",
-		"Validate high-risk claims",
-		"Consider additional evidence sources",
-		"Implement evidence validation workflow",
+		'Review evidence confidence levels',
+		'Validate high-risk claims',
+		'Consider additional evidence sources',
+		'Implement evidence validation workflow',
 	];
 	return {
-		summary: "",
+		summary: '',
 		keyFindings,
 		riskAssessment: analyzeRiskDistribution(evidenceCollection),
 		recommendations,
@@ -86,5 +86,5 @@ export function generateFallbackInsights(
 }
 
 export const isEmptyAnswer = (answer: string) =>
-	!answer || answer.trim() === "";
+	!answer || answer.trim() === '';
 export const isInvalidSummary = (summary: string) => summary.length < 10;

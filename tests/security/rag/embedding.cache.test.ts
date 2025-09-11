@@ -1,8 +1,8 @@
-import type { Embeddings } from "@cortex-os/rag-embed/provider";
-import { expect, it } from "vitest";
+import type { Embeddings } from '@cortex-os/rag-embed/provider';
+import { expect, it } from 'vitest';
 
 class CountingEmbedder implements Embeddings {
-	model = "dummy-1.0";
+	model = 'dummy-1.0';
 	dim = 3;
 	calls = 0;
 	async embed(texts: string[]) {
@@ -37,10 +37,10 @@ function caching(inner: Embeddings): Embeddings {
 	};
 }
 
-it("caches repeated embeddings", async () => {
+it('caches repeated embeddings', async () => {
 	const base = new CountingEmbedder();
 	const cached = caching(base);
-	await cached.embed(["a"]);
-	await cached.embed(["a"]);
+	await cached.embed(['a']);
+	await cached.embed(['a']);
 	expect(base.calls).toBe(1);
 });

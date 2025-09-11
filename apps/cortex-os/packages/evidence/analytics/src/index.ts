@@ -9,14 +9,14 @@
  * @ai_provenance_hash N/A
  */
 
-export { AgentTraceCollector } from "./agent-trace-collector.js";
-export { createAnalyticsEngine } from "./analytics-engine.js";
+export { AgentTraceCollector } from './agent-trace-collector.js';
+export { createAnalyticsEngine } from './analytics-engine.js';
 // Core analytics components
-export { MetricsCollector } from "./metrics-collector.js";
-export { OptimizationEngine } from "./optimization-engine.js";
-export { PatternAnalyzer } from "./pattern-analyzer.js";
-export { PerformanceDashboard } from "./performance-dashboard.js";
-export { RealtimeDataStream } from "./realtime-data-stream.js";
+export { MetricsCollector } from './metrics-collector.js';
+export { OptimizationEngine } from './optimization-engine.js';
+export { PatternAnalyzer } from './pattern-analyzer.js';
+export { PerformanceDashboard } from './performance-dashboard.js';
+export { RealtimeDataStream } from './realtime-data-stream.js';
 // Types and interfaces
 // Analytics configuration
 export type {
@@ -32,10 +32,10 @@ export type {
 	ResourceUtilization,
 	TrendAnalysis,
 	WorkflowBottleneck,
-} from "./types.js";
+} from './types.js';
 
 // Version information
-export const version = "1.0.0";
-export const name = "@cortex-os/orchestration-analytics";
+export const version = '1.0.0';
+export const name = '@cortex-os/orchestration-analytics';
 
 // © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.

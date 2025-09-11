@@ -7,26 +7,58 @@ Resolves version conflicts between mlx-openai-server, MCP, and MLX tools
 import subprocess
 
 
-def run_command(cmd, description):
-    """Run a command and handle errors - Security: Use shell=False and split commands"""
-    print(f"{description}...")
+#!/usr/bin/env python3
+"""Fix package dependencies by running install commands."""
+
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# Input validation
+def validate_command_list(cmd_list: list[str]) -> list[str]:
+    """Validate command list for safe execution."""
+    if not cmd_list:
+        raise ValueError("Empty command list")
+    
+    # Validate command name
+    allowed_commands = {'pnpm', 'npm', 'yarn', 'pip', 'pip3', 'uv'}
+    cmd_name = Path(cmd_list[0]).name
+    if cmd_name not in allowed_commands:
+        raise ValueError(f"Command '{cmd_name}' not allowed")
+    
+    # Validate arguments
+    safe_args = []
+    for arg in cmd_list:
+        # Remove null bytes and validate
+        clean_arg = re.sub(r'[\x00]', '', str(arg))
+        # Basic validation - no obvious injection attempts
+        if any(char in clean_arg for char in ['|', '&', ';', '$(']):
+            if not any(safe in clean_arg for safe in ['--', 'install', 'add']):
+                raise ValueError(f"Potentially unsafe argument: {clean_arg}")
+        safe_args.append(clean_arg)
+    
+    return safe_args
+
+def run_safe_command(cmd_list: list[str]) -> subprocess.CompletedProcess:
+    """Run command with validation."""
     try:
-        # Security: Split command to avoid shell injection
-        if isinstance(cmd, str):
-            import shlex
-
-            cmd_list = shlex.split(cmd)
-        else:
-            cmd_list = cmd
-
+        validated_cmd = validate_command_list(cmd_list)
         result = subprocess.run(
-            cmd_list, shell=False, check=True, capture_output=True, text=True
+            validated_cmd, 
+            shell=False, 
+            check=True, 
+            capture_output=True, 
+            text=True,
+            timeout=300  # 5 minute timeout
         )
-        print(f"✅ {description} completed successfully")
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"❌ {description} failed: {e.stderr}")
-        return None
+        return result
+    except ValueError as e:
+        print(f"Command validation failed: {e}", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.TimeoutExpired:
+        print("Command timed out", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
@@ -45,8 +77,12 @@ def main():
 
     success_count = 0
     for cmd, desc in upgrades:
-        if run_command(cmd, desc):
+        try:
+            result = run_safe_command(cmd.split())
+            print(f"✅ {desc}")
             success_count += 1
+        except SystemExit:
+            print(f"❌ Failed: {desc}")
 
     print("\n📊 Dependency Fix Summary:")
     print(f"✅ Successfully upgraded: {success_count}/{len(upgrades)} packages")
@@ -68,11 +104,11 @@ def main():
 
     compatible_count = 0
     for cmd, name in test_commands:
-        result = run_command(cmd, f"Testing {name}")
-        if result:
-            print(f"✅ {name}: {result.strip()}")
+        try:
+            result = run_safe_command(cmd.split())
+            print(f"✅ {name}: {result.stdout.strip()}")
             compatible_count += 1
-        else:
+        except SystemExit:
             print(f"❌ {name}: Incompatible")
 
     print("\n🎯 Compatibility Results:")

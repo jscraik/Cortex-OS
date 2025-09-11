@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 describe('Ingest Package', () => {
-  it('should be importable', () => {
-    expect(true).toBe(true);
-  });
+	it('should be importable', () => {
+		expect(true).toBe(true);
+	});
 });

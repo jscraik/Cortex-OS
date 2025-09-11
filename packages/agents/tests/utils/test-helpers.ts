@@ -1,5 +1,5 @@
-import { vi } from "vitest";
-import type { Agent, CodeAnalysisRequest } from "@/index.js";
+import { vi } from 'vitest';
+import type { Agent, CodeAnalysisRequest } from '@/index.js';
 
 // Security validation helpers
 export class SecurityValidator {
@@ -23,19 +23,19 @@ export class SecurityValidator {
 
 		dangerousPatterns.forEach((pattern) => {
 			if (pattern.test(sanitized)) {
-				sanitized = sanitized.replace(pattern, "[FILTERED]");
+				sanitized = sanitized.replace(pattern, '[FILTERED]');
 			}
 		});
 
 		// Also filter repeated suspicious words
-		const suspiciousWords = ["ignore", "system", "prompt", "instructions"];
+		const suspiciousWords = ['ignore', 'system', 'prompt', 'instructions'];
 		suspiciousWords.forEach((word) => {
 			const repeatedPattern = new RegExp(
 				`\\b${word}\\b.*\\b${word}\\b.*\\b${word}\\b`,
-				"gi",
+				'gi',
 			);
 			if (repeatedPattern.test(sanitized)) {
-				sanitized = sanitized.replace(repeatedPattern, "[FILTERED]");
+				sanitized = sanitized.replace(repeatedPattern, '[FILTERED]');
 			}
 		});
 
@@ -45,24 +45,24 @@ export class SecurityValidator {
 	static detectPII(input: string): string[] {
 		const piiPatterns = [
 			{
-				type: "ssn",
+				type: 'ssn',
 				pattern: /\d{3}-\d{2}-\d{4}/,
-				replacement: "[SSN-REDACTED]",
+				replacement: '[SSN-REDACTED]',
 			},
 			{
-				type: "email",
+				type: 'email',
 				pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
-				replacement: "[EMAIL-REDACTED]",
+				replacement: '[EMAIL-REDACTED]',
 			},
 			{
-				type: "phone",
+				type: 'phone',
 				pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,
-				replacement: "[PHONE-REDACTED]",
+				replacement: '[PHONE-REDACTED]',
 			},
 			{
-				type: "credit_card",
+				type: 'credit_card',
 				pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/,
-				replacement: "[CC-REDACTED]",
+				replacement: '[CC-REDACTED]',
 			},
 		];
 
@@ -78,18 +78,18 @@ export class SecurityValidator {
 
 	static redactPII(input: string): string {
 		const piiPatterns = [
-			{ pattern: /\d{3}-\d{2}-\d{4}/, replacement: "[SSN-REDACTED]" },
+			{ pattern: /\d{3}-\d{2}-\d{4}/, replacement: '[SSN-REDACTED]' },
 			{
 				pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/,
-				replacement: "[EMAIL-REDACTED]",
+				replacement: '[EMAIL-REDACTED]',
 			},
 			{
 				pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,
-				replacement: "[PHONE-REDACTED]",
+				replacement: '[PHONE-REDACTED]',
 			},
 			{
 				pattern: /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/,
-				replacement: "[CC-REDACTED]",
+				replacement: '[CC-REDACTED]',
 			},
 		];
 
@@ -127,25 +127,25 @@ export class AccessibilityValidator {
 		const issues: string[] = [];
 
 		if (!output.type) {
-			issues.push("Missing output type for screen readers");
+			issues.push('Missing output type for screen readers');
 		}
 
 		if (!output.summary) {
-			issues.push("Missing summary for accessibility");
+			issues.push('Missing summary for accessibility');
 		}
 
 		if (output.accessibility) {
 			if (!output.accessibility.screenReaderText) {
-				issues.push("Missing screen reader text");
+				issues.push('Missing screen reader text');
 			}
 			if (!output.accessibility.keyboardShortcuts) {
-				issues.push("Missing keyboard shortcuts");
+				issues.push('Missing keyboard shortcuts');
 			}
 			if (!output.accessibility.colorIndependentIndicators) {
-				issues.push("Missing color-independent indicators");
+				issues.push('Missing color-independent indicators');
 			}
 		} else {
-			issues.push("Missing accessibility metadata");
+			issues.push('Missing accessibility metadata');
 		}
 
 		return {
@@ -158,9 +158,9 @@ export class AccessibilityValidator {
 		if (result.suggestions?.length) {
 			const priority = result.suggestions[0].priority;
 			const count = result.suggestions.length;
-			return `Analysis found ${count} suggestion${count > 1 ? "s" : ""} with ${priority} priority`;
+			return `Analysis found ${count} suggestion${count > 1 ? 's' : ''} with ${priority} priority`;
 		}
-		return "Analysis completed with no suggestions";
+		return 'Analysis completed with no suggestions';
 	}
 }
 
@@ -190,9 +190,9 @@ export class MockFactory {
 
 	static createAgentMock(overrides: Partial<Agent> = {}): Agent {
 		return {
-			id: "mock-agent",
-			name: "Mock Agent",
-			capabilities: ["test-capability"],
+			id: 'mock-agent',
+			name: 'Mock Agent',
+			capabilities: ['test-capability'],
 			...overrides,
 		};
 	}
@@ -237,7 +237,7 @@ export class PerformanceTestHelper {
 export class TestDataGenerator {
 	static generateCodeSample(
 		language: string,
-		complexity: "low" | "medium" | "high" = "medium",
+		complexity: 'low' | 'medium' | 'high' = 'medium',
 	): string {
 		const samples = {
 			javascript: {
@@ -288,11 +288,11 @@ class DataProcessor {
 		overrides: Partial<CodeAnalysisRequest> = {},
 	): CodeAnalysisRequest {
 		return {
-			code: TestDataGenerator.generateCodeSample("javascript", "medium"),
-			language: "javascript",
-			context: "Test analysis request",
-			analysisType: "review",
-			urgency: "medium",
+			code: TestDataGenerator.generateCodeSample('javascript', 'medium'),
+			language: 'javascript',
+			context: 'Test analysis request',
+			analysisType: 'review',
+			urgency: 'medium',
 			...overrides,
 		};
 	}

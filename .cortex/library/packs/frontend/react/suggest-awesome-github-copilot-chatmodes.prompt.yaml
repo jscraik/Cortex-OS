@@ -143,7 +143,7 @@ blocks:
 
 
       | Awesome-Copilot
-      Chatmode                                                                                                  
+      Chatmode
       | Description                      | Already Installed | Similar Local
       Chatmode                | Suggestion
       Rationale                                                     |
@@ -155,13 +155,13 @@ blocks:
       ------------------------------------------------------------------------ |
 
       |
-      [code-reviewer.chatmode.md](https://github.com/github/awesome-copilot/blob/main/chatmodes/code-reviewer.chatmode.md)      
+      [code-reviewer.chatmode.md](https://github.com/github/awesome-copilot/blob/main/chatmodes/code-reviewer.chatmode.md)
       | Specialized code review chatmode | ❌ No             |
       None                                  | Would enhance development workflow
       with dedicated code review assistance |
 
       |
-      [architect.chatmode.md](https://github.com/github/awesome-copilot/blob/main/chatmodes/architect.chatmode.md)              
+      [architect.chatmode.md](https://github.com/github/awesome-copilot/blob/main/chatmodes/architect.chatmode.md)
       | Software architecture guidance   | ✅ Yes            |
       azure_principal_architect.chatmode.md | Already covered by existing
       architecture chatmodes                       |

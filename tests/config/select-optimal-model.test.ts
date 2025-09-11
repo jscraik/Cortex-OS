@@ -1,58 +1,58 @@
-import { describe, expect, it } from "vitest";
-import { selectOptimalModel } from "../../config/model-integration-strategy";
+import { describe, expect, it } from 'vitest';
+import { selectOptimalModel } from '../../config/model-integration-strategy';
 
-describe("selectOptimalModel", () => {
+describe('selectOptimalModel', () => {
 	const base = {
-		complexity: "low",
-		latency: "fast",
-		accuracy: "sufficient",
-		resource_constraint: "moderate",
-		modality: "text",
+		complexity: 'low',
+		latency: 'fast',
+		accuracy: 'sufficient',
+		resource_constraint: 'moderate',
+		modality: 'text',
 	} as const;
 
-	it("prefers fallback for realtime tasks", () => {
-		const model = selectOptimalModel("agents", "codeIntelligence", {
+	it('prefers fallback for realtime tasks', () => {
+		const model = selectOptimalModel('agents', 'codeIntelligence', {
 			...base,
-			latency: "realtime",
-			modality: "code",
+			latency: 'realtime',
+			modality: 'code',
 		});
-		expect(model).toBe("deepseek-coder:6.7b");
+		expect(model).toBe('deepseek-coder:6.7b');
 	});
 
-	it("uses premium when accuracy demanded", () => {
-		const model = selectOptimalModel("a2a", "embedding", {
+	it('uses premium when accuracy demanded', () => {
+		const model = selectOptimalModel('a2a', 'embedding', {
 			...base,
-			accuracy: "premium",
+			accuracy: 'premium',
 		});
-		expect(model).toBe("qwen3-8b");
+		expect(model).toBe('qwen3-8b');
 	});
 
-	it("returns primary for high complexity", () => {
-		const model = selectOptimalModel("a2a", "embedding", {
+	it('returns primary for high complexity', () => {
+		const model = selectOptimalModel('a2a', 'embedding', {
 			...base,
-			complexity: "high",
+			complexity: 'high',
 		});
-		expect(model).toBe("qwen3-4b");
+		expect(model).toBe('qwen3-4b');
 	});
 
-	it("falls back under strict resources", () => {
-		const model = selectOptimalModel("a2a", "embedding", {
+	it('falls back under strict resources', () => {
+		const model = selectOptimalModel('a2a', 'embedding', {
 			...base,
-			resource_constraint: "strict",
+			resource_constraint: 'strict',
 		});
-		expect(model).toBe("qwen3-0.6b");
+		expect(model).toBe('qwen3-0.6b');
 	});
 
-	it("defaults to primary", () => {
-		const model = selectOptimalModel("orchestration", "planning", {
+	it('defaults to primary', () => {
+		const model = selectOptimalModel('orchestration', 'planning', {
 			...base,
-			modality: "text",
+			modality: 'text',
 		});
-		expect(model).toBe("phi4-mini-reasoning:latest");
+		expect(model).toBe('phi4-mini-reasoning:latest');
 	});
 
-	it("throws on unknown category", () => {
-		expect(() => selectOptimalModel("agents", "unknown", base as any)).toThrow(
+	it('throws on unknown category', () => {
+		expect(() => selectOptimalModel('agents', 'unknown', base as any)).toThrow(
 			/Unknown model category/,
 		);
 	});

@@ -1,6 +1,6 @@
 {
 	"name": "@cortex-os/a2a-contracts",
-        "version": "0.2.0",
+	"version": "0.2.0",
 	"private": true,
 	"type": "module",
 	"main": "dist/index.js",
@@ -25,6 +25,10 @@
 		"./trace-context": {
 			"import": "./dist/trace-context.js",
 			"types": "./dist/trace-context.d.ts"
+		},
+		"./agents": {
+			"import": "./dist/agents.js",
+			"types": "./dist/agents.d.ts"
 		}
 	},
 	"scripts": {

@@ -11,11 +11,11 @@
 import {
 	type AICoreCapabilities,
 	createAICapabilities,
-} from "./ai-capabilities.js";
+} from './ai-capabilities.js';
 import {
 	type ASBRAIIntegration,
 	createASBRAIIntegration,
-} from "./asbr-ai-integration.js";
+} from './asbr-ai-integration.js';
 
 /**
  * MCP Tool Definition for ASBR AI Capabilities
@@ -24,7 +24,7 @@ interface MCPTool {
 	name: string;
 	description: string;
 	inputSchema: {
-		type: "object";
+		type: 'object';
 		properties: Record<string, any>;
 		required: string[];
 	};
@@ -34,7 +34,7 @@ interface MCPTool {
  * MCP Request/Response Types
  */
 interface MCPToolCallRequest {
-	method: "tools/call";
+	method: 'tools/call';
 	params: {
 		name: string;
 		arguments: Record<string, any>;
@@ -43,7 +43,7 @@ interface MCPToolCallRequest {
 
 interface MCPToolCallResponse {
 	content: Array<{
-		type: "text";
+		type: 'text';
 		text: string;
 	}>;
 	isError?: boolean;
@@ -64,8 +64,8 @@ export class ASBRAIMcpServer {
 
 	constructor() {
 		// Initialize AI capabilities with full configuration
-		this.aiCapabilities = createAICapabilities("full");
-		this.asbrIntegration = createASBRAIIntegration("balanced");
+		this.aiCapabilities = createAICapabilities('full');
+		this.asbrIntegration = createASBRAIIntegration('balanced');
 	}
 
 	/**
@@ -114,215 +114,215 @@ export class ASBRAIMcpServer {
 	async listTools(): Promise<MCPListToolsResponse> {
 		const tools: MCPTool[] = [
 			{
-				name: "ai_generate_text",
+				name: 'ai_generate_text',
 				description:
-					"Generate text using MLX language models with optional system prompts and parameters",
+					'Generate text using MLX language models with optional system prompts and parameters',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						prompt: {
-							type: "string",
-							description: "The text prompt to generate from",
+							type: 'string',
+							description: 'The text prompt to generate from',
 						},
 						systemPrompt: {
-							type: "string",
-							description: "Optional system prompt to guide the generation",
+							type: 'string',
+							description: 'Optional system prompt to guide the generation',
 						},
 						temperature: {
-							type: "number",
-							description: "Temperature for generation (0.0 to 1.0)",
+							type: 'number',
+							description: 'Temperature for generation (0.0 to 1.0)',
 							minimum: 0.0,
 							maximum: 1.0,
 						},
 						maxTokens: {
-							type: "number",
-							description: "Maximum number of tokens to generate",
+							type: 'number',
+							description: 'Maximum number of tokens to generate',
 							minimum: 1,
 							maximum: 4096,
 						},
 					},
-					required: ["prompt"],
+					required: ['prompt'],
 				},
 			},
 			{
-				name: "ai_search_knowledge",
+				name: 'ai_search_knowledge',
 				description:
-					"Search through the knowledge base using semantic similarity",
+					'Search through the knowledge base using semantic similarity',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						query: {
-							type: "string",
-							description: "Search query to find relevant documents",
+							type: 'string',
+							description: 'Search query to find relevant documents',
 						},
 						topK: {
-							type: "number",
-							description: "Number of top results to return",
+							type: 'number',
+							description: 'Number of top results to return',
 							minimum: 1,
 							maximum: 20,
 						},
 						minSimilarity: {
-							type: "number",
-							description: "Minimum similarity score (0.0 to 1.0)",
+							type: 'number',
+							description: 'Minimum similarity score (0.0 to 1.0)',
 							minimum: 0.0,
 							maximum: 1.0,
 						},
 					},
-					required: ["query"],
+					required: ['query'],
 				},
 			},
 			{
-				name: "ai_add_knowledge",
-				description: "Add documents to the knowledge base for semantic search",
+				name: 'ai_add_knowledge',
+				description: 'Add documents to the knowledge base for semantic search',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						documents: {
-							type: "array",
+							type: 'array',
 							items: {
-								type: "string",
+								type: 'string',
 							},
-							description: "Array of documents to add to the knowledge base",
+							description: 'Array of documents to add to the knowledge base',
 						},
 						metadata: {
-							type: "array",
+							type: 'array',
 							items: {
-								type: "object",
+								type: 'object',
 							},
-							description: "Optional metadata for each document",
+							description: 'Optional metadata for each document',
 						},
 					},
-					required: ["documents"],
+					required: ['documents'],
 				},
 			},
 			{
-				name: "ai_rag_query",
+				name: 'ai_rag_query',
 				description:
-					"Perform Retrieval-Augmented Generation (RAG) query combining search and generation",
+					'Perform Retrieval-Augmented Generation (RAG) query combining search and generation',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						query: {
-							type: "string",
-							description: "Query to answer using RAG",
+							type: 'string',
+							description: 'Query to answer using RAG',
 						},
 						systemPrompt: {
-							type: "string",
-							description: "Optional system prompt for generation",
+							type: 'string',
+							description: 'Optional system prompt for generation',
 						},
 					},
-					required: ["query"],
+					required: ['query'],
 				},
 			},
 			{
-				name: "ai_calculate_similarity",
-				description: "Calculate semantic similarity between two texts",
+				name: 'ai_calculate_similarity',
+				description: 'Calculate semantic similarity between two texts',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						text1: {
-							type: "string",
-							description: "First text for comparison",
+							type: 'string',
+							description: 'First text for comparison',
 						},
 						text2: {
-							type: "string",
-							description: "Second text for comparison",
+							type: 'string',
+							description: 'Second text for comparison',
 						},
 					},
-					required: ["text1", "text2"],
+					required: ['text1', 'text2'],
 				},
 			},
 			{
-				name: "ai_get_embedding",
+				name: 'ai_get_embedding',
 				description:
-					"Generate embeddings for a given text using Qwen3-Embedding model",
+					'Generate embeddings for a given text using Qwen3-Embedding model',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						text: {
-							type: "string",
-							description: "Text to generate embeddings for",
+							type: 'string',
+							description: 'Text to generate embeddings for',
 						},
 					},
-					required: ["text"],
+					required: ['text'],
 				},
 			},
 			{
-				name: "asbr_collect_enhanced_evidence",
+				name: 'asbr_collect_enhanced_evidence',
 				description:
-					"Collect and enhance evidence using AI analysis for ASBR integration",
+					'Collect and enhance evidence using AI analysis for ASBR integration',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						taskId: {
-							type: "string",
-							description: "ASBR task identifier",
+							type: 'string',
+							description: 'ASBR task identifier',
 						},
 						claim: {
-							type: "string",
-							description: "Evidence claim to analyze",
+							type: 'string',
+							description: 'Evidence claim to analyze',
 						},
 						sources: {
-							type: "array",
+							type: 'array',
 							items: {
-								type: "object",
+								type: 'object',
 								properties: {
 									type: {
-										type: "string",
-										enum: ["file", "url", "repo", "note"],
+										type: 'string',
+										enum: ['file', 'url', 'repo', 'note'],
 									},
-									path: { type: "string" },
-									url: { type: "string" },
-									content: { type: "string" },
+									path: { type: 'string' },
+									url: { type: 'string' },
+									content: { type: 'string' },
 								},
 							},
-							description: "Evidence sources to analyze",
+							description: 'Evidence sources to analyze',
 						},
 						includeContent: {
-							type: "boolean",
-							description: "Whether to include source content in evidence",
+							type: 'boolean',
+							description: 'Whether to include source content in evidence',
 						},
 					},
-					required: ["taskId", "claim", "sources"],
+					required: ['taskId', 'claim', 'sources'],
 				},
 			},
 			{
-				name: "asbr_fact_check_evidence",
-				description: "Fact-check evidence using AI analysis",
+				name: 'asbr_fact_check_evidence',
+				description: 'Fact-check evidence using AI analysis',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {
 						evidenceId: {
-							type: "string",
-							description: "Evidence ID to fact-check",
+							type: 'string',
+							description: 'Evidence ID to fact-check',
 						},
 						claim: {
-							type: "string",
-							description: "Claim to fact-check",
+							type: 'string',
+							description: 'Claim to fact-check',
 						},
 						taskId: {
-							type: "string",
-							description: "Associated task ID",
+							type: 'string',
+							description: 'Associated task ID',
 						},
 					},
-					required: ["evidenceId", "claim", "taskId"],
+					required: ['evidenceId', 'claim', 'taskId'],
 				},
 			},
 			{
-				name: "ai_get_capabilities",
+				name: 'ai_get_capabilities',
 				description:
-					"Get information about available AI capabilities and system status",
+					'Get information about available AI capabilities and system status',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {},
 					required: [],
 				},
 			},
 			{
-				name: "ai_get_knowledge_stats",
-				description: "Get statistics about the current knowledge base",
+				name: 'ai_get_knowledge_stats',
+				description: 'Get statistics about the current knowledge base',
 				inputSchema: {
-					type: "object",
+					type: 'object',
 					properties: {},
 					required: [],
 				},
@@ -340,45 +340,45 @@ export class ASBRAIMcpServer {
 			const { name, arguments: args } = request.params;
 
 			switch (name) {
-				case "ai_generate_text":
+				case 'ai_generate_text':
 					return await this.handleGenerateText(args);
 
-				case "ai_search_knowledge":
+				case 'ai_search_knowledge':
 					return await this.handleSearchKnowledge(args);
 
-				case "ai_add_knowledge":
+				case 'ai_add_knowledge':
 					return await this.handleAddKnowledge(args);
 
-				case "ai_rag_query":
+				case 'ai_rag_query':
 					return await this.handleRAGQuery(args);
 
-				case "ai_calculate_similarity":
+				case 'ai_calculate_similarity':
 					return await this.handleCalculateSimilarity(args);
 
-				case "ai_get_embedding":
+				case 'ai_get_embedding':
 					return await this.handleGetEmbedding(args);
 
-				case "asbr_collect_enhanced_evidence":
+				case 'asbr_collect_enhanced_evidence':
 					return await this.handleCollectEnhancedEvidence(args);
 
-				case "asbr_fact_check_evidence":
+				case 'asbr_fact_check_evidence':
 					return await this.handleFactCheckEvidence(args);
 
-				case "ai_get_capabilities":
+				case 'ai_get_capabilities':
 					return await this.handleGetCapabilities(args);
 
-				case "ai_get_knowledge_stats":
+				case 'ai_get_knowledge_stats':
 					return await this.handleGetKnowledgeStats(args);
 
 				default:
 					return {
-						content: [{ type: "text", text: `Unknown tool: ${name}` }],
+						content: [{ type: 'text', text: `Unknown tool: ${name}` }],
 						isError: true,
 					};
 			}
 		} catch (error) {
 			return {
-				content: [{ type: "text", text: `Tool error: ${error}` }],
+				content: [{ type: 'text', text: `Tool error: ${error}` }],
 				isError: true,
 			};
 		}
@@ -397,12 +397,12 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							generated_text: result,
 							prompt_length: args.prompt.length,
-							model: "MLX",
+							model: 'MLX',
 						},
 						null,
 						2,
@@ -422,7 +422,7 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							query: args.query,
@@ -446,12 +446,12 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							added_documents: args.documents.length,
 							document_ids: ids,
-							status: "success",
+							status: 'success',
 						},
 						null,
 						2,
@@ -470,7 +470,7 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							query: args.query,
@@ -498,7 +498,7 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							text1: `${args.text1.substring(0, 50)}...`,
@@ -506,12 +506,12 @@ export class ASBRAIMcpServer {
 							similarity: similarity,
 							interpretation:
 								(similarity || 0) > 0.8
-									? "very similar"
+									? 'very similar'
 									: (similarity || 0) > 0.6
-										? "moderately similar"
+										? 'moderately similar'
 										: (similarity || 0) > 0.3
-											? "somewhat similar"
-											: "not similar",
+											? 'somewhat similar'
+											: 'not similar',
 						},
 						null,
 						2,
@@ -527,12 +527,12 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							text: `${args.text.substring(0, 100)}...`,
 							embedding_dimensions: embedding?.length || 0,
-							model: "Qwen3-Embedding-0.6B",
+							model: 'Qwen3-Embedding-0.6B',
 							embedding_preview: embedding?.slice(0, 5), // Show first 5 dimensions
 						},
 						null,
@@ -564,7 +564,7 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							task_id: args.taskId,
@@ -592,10 +592,10 @@ export class ASBRAIMcpServer {
 			taskId: args.taskId,
 			claim: args.claim,
 			confidence: 0.8,
-			riskLevel: "medium" as const,
-			source: { type: "mcp-tool", id: "fact-check" },
+			riskLevel: 'medium' as const,
+			source: { type: 'mcp-tool', id: 'fact-check' },
 			timestamp: new Date().toISOString(),
-			tags: ["mcp"],
+			tags: ['mcp'],
 			relatedEvidenceIds: [],
 		};
 
@@ -604,7 +604,7 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							evidence_id: args.evidenceId,
@@ -631,18 +631,18 @@ export class ASBRAIMcpServer {
 			return {
 				content: [
 					{
-						type: "text",
+						type: 'text',
 						text: JSON.stringify(
 							{
 								llm: capabilities?.llm || {
-									provider: "unavailable",
-									model: "unknown",
+									provider: 'unavailable',
+									model: 'unknown',
 									healthy: false,
 								},
 								embedding: capabilities?.embedding,
-								features: capabilities?.features || ["mcp-tools-only"],
-								status: capabilities ? "operational" : "degraded",
-								server_type: "ASBR-AI-MCP-Server",
+								features: capabilities?.features || ['mcp-tools-only'],
+								status: capabilities ? 'operational' : 'degraded',
+								server_type: 'ASBR-AI-MCP-Server',
 							},
 							null,
 							2,
@@ -654,18 +654,18 @@ export class ASBRAIMcpServer {
 			return {
 				content: [
 					{
-						type: "text",
+						type: 'text',
 						text: JSON.stringify(
 							{
 								llm: {
-									provider: "unavailable",
-									model: "unknown",
+									provider: 'unavailable',
+									model: 'unknown',
 									healthy: false,
 								},
 								embedding: undefined,
-								features: ["mcp-tools-only"],
-								status: "degraded",
-								server_type: "ASBR-AI-MCP-Server",
+								features: ['mcp-tools-only'],
+								status: 'degraded',
+								server_type: 'ASBR-AI-MCP-Server',
 								error: `AI capabilities unavailable: ${error}`,
 							},
 							null,
@@ -685,7 +685,7 @@ export class ASBRAIMcpServer {
 		return {
 			content: [
 				{
-					type: "text",
+					type: 'text',
 					text: JSON.stringify(
 						{
 							documents_stored: stats.documentsStored,
@@ -713,17 +713,17 @@ export class ASBRAIMcpServer {
 			const tools = await this.listTools();
 
 			return {
-				status: "healthy",
+				status: 'healthy',
 				tools: tools.tools.length,
-				features: capabilities?.features || ["degraded-mode"],
+				features: capabilities?.features || ['degraded-mode'],
 			};
 		} catch (_error) {
 			// Return degraded but operational status for testing scenarios
 			const tools = await this.listTools();
 			return {
-				status: "degraded",
+				status: 'degraded',
 				tools: tools.tools.length,
-				features: ["mcp-tools-only"],
+				features: ['mcp-tools-only'],
 			};
 		}
 	}

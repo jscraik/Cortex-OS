@@ -1,5 +1,5 @@
-import { existsSync, promises as fs } from "node:fs";
-import * as path from "node:path";
+import { existsSync, promises as fs } from 'node:fs';
+import * as path from 'node:path';
 
 /**
  * ConfigManager provides typed access to the repository configuration.
@@ -20,10 +20,10 @@ export interface JsonObject {
 
 function getRepoRoot(): string {
 	let dir = path.dirname(new URL(import.meta.url).pathname);
-	while (!existsSync(path.join(dir, "cortex-config.json"))) {
+	while (!existsSync(path.join(dir, 'cortex-config.json'))) {
 		const parent = path.dirname(dir);
 		if (parent === dir) {
-			throw new Error("Unable to locate repository root from config.ts");
+			throw new Error('Unable to locate repository root from config.ts');
 		}
 		dir = parent;
 	}
@@ -36,7 +36,7 @@ function deepGet<T = JsonValue>(
 ): T | undefined {
 	if (!keyPath) return obj as unknown as T;
 	return keyPath
-		.split(".")
+		.split('.')
 		.reduce<JsonValue | undefined>(
 			(acc, k) => (acc == null ? undefined : (acc as JsonObject)[k]),
 			obj,
@@ -48,11 +48,11 @@ function deepSet(
 	keyPath: string,
 	value: JsonValue,
 ): JsonObject {
-	const parts = keyPath.split(".");
+	const parts = keyPath.split('.');
 	let cur: JsonObject = obj;
 	for (let i = 0; i < parts.length - 1; i++) {
 		const p = parts[i];
-		if (typeof cur[p] !== "object" || cur[p] === null) cur[p] = {};
+		if (typeof cur[p] !== 'object' || cur[p] === null) cur[p] = {};
 		cur = cur[p] as JsonObject;
 	}
 	cur[parts[parts.length - 1]] = value;
@@ -66,7 +66,7 @@ export class ConfigManager {
 
 	private constructor() {
 		// Primary config file at repo root
-		this.configPath = path.resolve(getRepoRoot(), "cortex-config.json");
+		this.configPath = path.resolve(getRepoRoot(), 'cortex-config.json');
 	}
 
 	static getInstance(): ConfigManager {
@@ -76,7 +76,7 @@ export class ConfigManager {
 
 	async loadFile(): Promise<JsonObject> {
 		try {
-			const raw = await fs.readFile(this.configPath, "utf-8");
+			const raw = await fs.readFile(this.configPath, 'utf-8');
 			const json: JsonObject = JSON.parse(raw);
 			if (Object.keys(this.baseline).length === 0) {
 				// Keep the first loaded copy as baseline for reset()
@@ -85,9 +85,9 @@ export class ConfigManager {
 			return json;
 		} catch (err: unknown) {
 			if (
-				typeof err === "object" &&
+				typeof err === 'object' &&
 				err !== null &&
-				(err as { code?: string }).code === "ENOENT"
+				(err as { code?: string }).code === 'ENOENT'
 			) {
 				// Initialize with defaults
 				const defaults: JsonObject = {};
@@ -101,7 +101,7 @@ export class ConfigManager {
 
 	async saveFile(config: JsonObject): Promise<void> {
 		const content = `${JSON.stringify(config, null, 2)}\n`;
-		await fs.writeFile(this.configPath, content, "utf-8");
+		await fs.writeFile(this.configPath, content, 'utf-8');
 	}
 
 	async getValue<T = JsonValue>(key: string): Promise<T | undefined> {

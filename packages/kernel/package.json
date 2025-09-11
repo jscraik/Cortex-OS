@@ -48,7 +48,6 @@
 		"clean": "rm -rf dist"
 	},
 	"dependencies": {
-		"@cortex-os/prp-runner": "workspace:*",
 		"nanoid": "^5.0.4",
 		"zod": "^3.22.4"
 	},

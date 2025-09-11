@@ -1,25 +1,25 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 import {
 	ProcessingDispatcher,
 	type ProcessingFile,
-} from "../src/chunkers/dispatch";
-import { ProcessingStrategy } from "../src/policy/mime";
+} from '../src/chunkers/dispatch';
+import { ProcessingStrategy } from '../src/policy/mime';
 
-describe("UnstructuredChunker", () => {
-	it("produces deterministic chunks", async () => {
+describe('UnstructuredChunker', () => {
+	it('produces deterministic chunks', async () => {
 		const dispatcher = new ProcessingDispatcher();
 		const file: ProcessingFile = {
-			path: "file",
-			content: Buffer.from("dummy"),
-			mimeType: "text/plain",
+			path: 'file',
+			content: Buffer.from('dummy'),
+			mimeType: 'text/plain',
 			size: 5,
 		};
 		const strategy = {
 			strategy: ProcessingStrategy.UNSTRUCTURED,
 			confidence: 1,
-			reason: "",
+			reason: '',
 			processing: {
-				chunker: "unstructured",
+				chunker: 'unstructured',
 				requiresOCR: false,
 				requiresUnstructured: true,
 				maxPages: 2,

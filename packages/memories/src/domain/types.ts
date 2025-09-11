@@ -1,7 +1,5 @@
 export type MemoryId = string;
 
-export type MemoryStatus = 'pending' | 'approved' | 'discarded';
-
 export interface Memory {
 	id: MemoryId;
 	kind: 'note' | 'event' | 'artifact' | 'embedding';
@@ -17,13 +15,8 @@ export interface Memory {
 		evidence?: { uri: string; range?: [number, number] }[];
 		hash?: string;
 	};
-	policy?: {
-		pii?: boolean;
-		scope?: 'session' | 'user' | 'org';
-		requiresConsent?: boolean;
-	};
+	policy?: { pii?: boolean; scope?: 'session' | 'user' | 'org' };
 	embeddingModel?: string;
-	status?: MemoryStatus;
 }
 
 export interface CacheManager {

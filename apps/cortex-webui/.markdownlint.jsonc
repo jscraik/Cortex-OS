@@ -1,0 +1,13 @@
+{
+    // WebUI docs are long and include many code blocks and lists; relax strict layout rules here.
+    "MD013": false,
+    "MD007": false,
+    "MD022": false,
+    "MD031": false,
+    "MD032": false,
+    "MD034": false,
+    "MD040": false,
+    "MD041": {
+        "allow_preamble": true
+    }
+}

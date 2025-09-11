@@ -1,7 +1,7 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { SimRunner } from "../runner.js";
-import type { SimBatchResult, SimScenario } from "../types.js";
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { SimRunner } from '../runner.js';
+import type { SimBatchResult, SimScenario } from '../types.js';
 
 export interface RunSmokeOptions {
 	scenarioFile: string; // relative to cwd, e.g., 'sim/scenarios/critical.json'
@@ -28,12 +28,12 @@ export async function runSmoke(opts: RunSmokeOptions): Promise<RunSmokeResult> {
 		maxTurns = 8,
 		timeout = 30_000,
 		gatePassRate = 0.8,
-		label = "smoke",
+		label = 'smoke',
 	} = opts;
 
 	// Load scenarios
 	const abs = join(process.cwd(), scenarioFile);
-	const scenarios: SimScenario[] = JSON.parse(readFileSync(abs, "utf-8"));
+	const scenarios: SimScenario[] = JSON.parse(readFileSync(abs, 'utf-8'));
 	const selected = scenarios.slice(0, count);
 
 	console.log(`📊 Running ${selected.length} scenarios from ${scenarioFile}`);
@@ -54,7 +54,7 @@ export async function runSmoke(opts: RunSmokeOptions): Promise<RunSmokeResult> {
 		totalScenarios: batch.summary.totalScenarios,
 	};
 
-	console.log("\n📈 Results:");
+	console.log('\n📈 Results:');
 	console.log(`  ✅ Passed: ${passed}/${totalScenarios}`);
 	console.log(`  ❌ Failed: ${failed}`);
 	console.log(`  📊 Pass Rate: ${(passRate * 100).toFixed(1)}%`);
@@ -69,12 +69,12 @@ export async function runSmoke(opts: RunSmokeOptions): Promise<RunSmokeResult> {
 	}
 
 	// Save JSONL for reporting
-	const resultsDir = join(process.cwd(), "sim/runs");
+	const resultsDir = join(process.cwd(), 'sim/runs');
 	mkdirSync(resultsDir, { recursive: true });
-	const stamp = new Date().toISOString().split("T")[0];
+	const stamp = new Date().toISOString().split('T')[0];
 	const filename = `${stamp}-${label}-results.jsonl`;
 	const jsonlPath = join(resultsDir, filename);
-	const jsonl = batch.scenarios.map((s) => JSON.stringify(s)).join("\n");
+	const jsonl = batch.scenarios.map((s) => JSON.stringify(s)).join('\n');
 	writeFileSync(jsonlPath, jsonl);
 	console.log(`💾 Results saved to sim/runs/${filename}`);
 

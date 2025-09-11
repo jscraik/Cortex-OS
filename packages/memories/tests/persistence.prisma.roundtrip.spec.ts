@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PrismaStore } from "../src/adapters/store.prisma/client.js";
-import type { Memory } from "../src/domain/types.js";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PrismaStore } from '../src/adapters/store.prisma/client.js';
+import type { Memory } from '../src/domain/types.js';
 
 // Mock Prisma client for testing
 const mockPrisma = {
@@ -12,7 +12,7 @@ const mockPrisma = {
 	},
 };
 
-describe("PrismaStore persistence", () => {
+describe('PrismaStore persistence', () => {
 	let store: PrismaStore;
 
 	beforeEach(() => {
@@ -21,42 +21,42 @@ describe("PrismaStore persistence", () => {
 		vi.clearAllMocks();
 	});
 
-	it("performs round-trip upsert and get", async () => {
+	it('performs round-trip upsert and get', async () => {
 		const now = new Date().toISOString();
 		const record: Memory = {
-			id: "1",
-			kind: "note",
-			text: "hello world",
+			id: '1',
+			kind: 'note',
+			text: 'hello world',
 			tags: [],
 			createdAt: now,
 			updatedAt: now,
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		};
 
 		// Mock the upsert response
 		mockPrisma.memory.upsert.mockResolvedValue({
-			id: "1",
-			kind: "note",
-			text: "hello world",
+			id: '1',
+			kind: 'note',
+			text: 'hello world',
 			tags: [],
 			createdAt: new Date(now),
 			updatedAt: new Date(now),
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		});
 
 		// Mock the get response
 		mockPrisma.memory.findUnique.mockResolvedValue({
-			id: "1",
-			kind: "note",
-			text: "hello world",
+			id: '1',
+			kind: 'note',
+			text: 'hello world',
 			tags: [],
 			createdAt: new Date(now),
 			updatedAt: new Date(now),
-			provenance: { source: "user" },
+			provenance: { source: 'user' },
 		});
 
 		const saved = await store.upsert(record);
-		const retrieved = await store.get("1");
+		const retrieved = await store.get('1');
 
 		expect(saved).toEqual(record);
 		expect(retrieved).toEqual(record);
@@ -64,45 +64,45 @@ describe("PrismaStore persistence", () => {
 		expect(mockPrisma.memory.findUnique).toHaveBeenCalledTimes(1);
 	});
 
-	it("handles null values correctly during round-trip", async () => {
+	it('handles null values correctly during round-trip', async () => {
 		const now = new Date().toISOString();
 		const record: Memory = {
-			id: "2",
-			kind: "event",
+			id: '2',
+			kind: 'event',
 			// text is optional, so omitting it
-			tags: ["event"],
+			tags: ['event'],
 			createdAt: now,
 			updatedAt: now,
-			provenance: { source: "system" },
-			ttl: "P1D", // 1 day TTL
+			provenance: { source: 'system' },
+			ttl: 'P1D', // 1 day TTL
 		};
 
 		// Mock the upsert response
 		mockPrisma.memory.upsert.mockResolvedValue({
-			id: "2",
-			kind: "event",
+			id: '2',
+			kind: 'event',
 			text: null,
-			tags: ["event"],
-			ttl: "P1D",
+			tags: ['event'],
+			ttl: 'P1D',
 			createdAt: new Date(now),
 			updatedAt: new Date(now),
-			provenance: { source: "system" },
+			provenance: { source: 'system' },
 		});
 
 		// Mock the get response
 		mockPrisma.memory.findUnique.mockResolvedValue({
-			id: "2",
-			kind: "event",
+			id: '2',
+			kind: 'event',
 			text: null,
-			tags: ["event"],
-			ttl: "P1D",
+			tags: ['event'],
+			ttl: 'P1D',
 			createdAt: new Date(now),
 			updatedAt: new Date(now),
-			provenance: { source: "system" },
+			provenance: { source: 'system' },
 		});
 
 		const saved = await store.upsert(record);
-		const retrieved = await store.get("2");
+		const retrieved = await store.get('2');
 
 		expect(saved).toEqual(record);
 		expect(retrieved).toEqual(record);

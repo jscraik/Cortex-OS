@@ -1,4 +1,4 @@
-import type { PRPState } from "../state.js";
+import type { PRPState } from '../state.js';
 /**
  * Evaluation Phase Gates:
  * - ✅ All neurons pass TDD (Red → Green)
@@ -7,11 +7,11 @@ import type { PRPState } from "../state.js";
  * - ✅ Cerebrum consensus: ship or recycle
  */
 export declare class EvaluationNode {
-    execute(state: PRPState): Promise<PRPState>;
-    private validateTDDCycle;
-    private validateCodeReview;
-    private validateQualityBudgets;
-    checkPreCerebrumConditions(state: PRPState): boolean;
-    private preCerebrumValidation;
+	execute(state: PRPState): Promise<PRPState>;
+	private validateTDDCycle;
+	private validateCodeReview;
+	private validateQualityBudgets;
+	checkPreCerebrumConditions(state: PRPState): boolean;
+	private preCerebrumValidation;
 }
 //# sourceMappingURL=evaluation.d.ts.map

@@ -6,8 +6,8 @@
  * @status TDD-DRIVEN
  */
 
-import { randomUUID } from "node:crypto";
-import { z } from "zod";
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 
 /**
  * Generate a deterministic hash from any data structure
@@ -15,7 +15,7 @@ import { z } from "zod";
 export const generateDeterministicHash = (data: any): string => {
 	return Math.abs(
 		JSON.stringify(data)
-			.split("")
+			.split('')
 			.reduce((a, b) => ((a << 5) - a + b.charCodeAt(0)) | 0, 0),
 	).toString();
 };
@@ -26,17 +26,17 @@ export const generateDeterministicHash = (data: any): string => {
 export const EvidenceSchema = z.object({
 	id: z.string(),
 	type: z.enum([
-		"file",
-		"command",
-		"test",
-		"analysis",
-		"validation",
-		"llm-generation",
+		'file',
+		'command',
+		'test',
+		'analysis',
+		'validation',
+		'llm-generation',
 	]),
 	source: z.string(),
 	content: z.string(),
 	timestamp: z.string(),
-	phase: z.enum(["strategy", "build", "evaluation"]),
+	phase: z.enum(['strategy', 'build', 'evaluation']),
 	metadata: z.record(z.any()).optional(),
 });
 
@@ -55,7 +55,7 @@ export const ValidationGateSchema = z.object({
  * Cerebrum decision state
  */
 export const CerebrumDecisionSchema = z.object({
-	decision: z.enum(["promote", "recycle", "pending"]),
+	decision: z.enum(['promote', 'recycle', 'pending']),
 	reasoning: z.string(),
 	confidence: z.number().min(0).max(1),
 	timestamp: z.string(),
@@ -70,7 +70,7 @@ export const PRPStateSchema = z.object({
 	runId: z.string(),
 
 	// State machine phase
-	phase: z.enum(["strategy", "build", "evaluation", "completed", "recycled"]),
+	phase: z.enum(['strategy', 'build', 'evaluation', 'completed', 'recycled']),
 
 	// Input blueprint
 	blueprint: z.object({
@@ -103,7 +103,7 @@ export const PRPStateSchema = z.object({
 		currentNeuron: z.string().optional(),
 		llmConfig: z
 			.object({
-				provider: z.enum(["mlx", "ollama"]).optional(),
+				provider: z.enum(['mlx', 'ollama']).optional(),
 				model: z.string().optional(),
 			})
 			.optional(),
@@ -131,12 +131,12 @@ export const validateStateTransition = (
 ): boolean => {
 	const fromPhase = fromState.phase;
 	const toPhase = toState.phase;
-	const validTransitions: Record<PRPState["phase"], PRPState["phase"][]> = {
-		strategy: ["build", "recycled"],
-		build: ["evaluation", "recycled"],
-		evaluation: ["completed", "recycled"],
+	const validTransitions: Record<PRPState['phase'], PRPState['phase'][]> = {
+		strategy: ['build', 'recycled'],
+		build: ['evaluation', 'recycled'],
+		evaluation: ['completed', 'recycled'],
 		completed: [], // Terminal state
-		recycled: ["strategy"], // Can restart
+		recycled: ['strategy'], // Can restart
 	};
 
 	return validTransitions[fromPhase]?.includes(toPhase) ?? false;
@@ -146,24 +146,24 @@ export const validateStateTransition = (
  * Create initial PRP state
  */
 export const createInitialPRPState = (
-	blueprint: PRPState["blueprint"],
+	blueprint: PRPState['blueprint'],
 	options: {
 		id?: string;
 		runId?: string;
 		deterministic?: boolean;
 		llmConfig?: {
-			provider?: "mlx" | "ollama";
+			provider?: 'mlx' | 'ollama';
 			model?: string;
 		};
 	} = {},
 ): PRPState => {
 	const now = options.deterministic
-		? "2025-01-01T00:00:00.000Z"
+		? '2025-01-01T00:00:00.000Z'
 		: new Date().toISOString();
 
 	const hash = options.deterministic
 		? generateDeterministicHash(blueprint)
-		: "";
+		: '';
 	const id =
 		options.id ??
 		(options.deterministic ? `prp-${hash}` : `prp-${randomUUID()}`);
@@ -175,7 +175,7 @@ export const createInitialPRPState = (
 	return {
 		id,
 		runId,
-		phase: "strategy",
+		phase: 'strategy',
 		blueprint,
 		outputs: {},
 		validationResults: {},

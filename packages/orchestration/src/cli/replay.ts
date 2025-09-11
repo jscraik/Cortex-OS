@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-import { loadCheckpointHistory } from "../lib/checkpoints";
+import { loadCheckpointHistory } from '../lib/checkpoints';
 
 async function main() {
 	const runId = process.argv[2];
 	if (!runId) {
-		console.error("Usage: replay <runId>");
+		console.error('Usage: replay <runId>');
 		process.exit(1);
 	}
 	const history = await loadCheckpointHistory(runId);

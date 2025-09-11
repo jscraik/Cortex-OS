@@ -1,4 +1,4 @@
-import type { Envelope } from "@cortex-os/a2a-contracts/envelope";
+import type { Envelope } from '../../a2a-contracts/src/envelope.js';
 export type Route = {
 	match: (e: Envelope) => boolean;
 	handle: (e: Envelope) => Promise<void>;

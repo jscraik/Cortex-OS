@@ -2,16 +2,16 @@
  * Tests for Agent Orchestration Layer
  */
 
-import { createMockEventBus, createMockMCPClient } from "@tests/setup.js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ModelProvider } from "@/lib/types.js";
+import { createMockEventBus, createMockMCPClient } from '@tests/setup.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ModelProvider } from '@/lib/types.js';
 import {
 	type AgentOrchestrator,
 	createOrchestrator,
 	WorkflowBuilder,
-} from "@/orchestration/agent-orchestrator.js";
+} from '@/orchestration/agent-orchestrator.js';
 
-describe("AgentOrchestrator", () => {
+describe('AgentOrchestrator', () => {
 	let orchestrator: AgentOrchestrator;
 	let mockProvider: ModelProvider;
 	let mockEventBus: ReturnType<typeof createMockEventBus>;
@@ -19,19 +19,19 @@ describe("AgentOrchestrator", () => {
 
 	beforeEach(() => {
 		mockProvider = {
-			name: "test-provider",
+			name: 'test-provider',
 			generate: vi.fn().mockResolvedValue({
 				text: JSON.stringify({
-					suggestions: ["test suggestion"],
-					complexity: { cyclomatic: 5, cognitive: 3, maintainability: "good" },
-					security: { vulnerabilities: [], riskLevel: "low" },
-					performance: { bottlenecks: [], memoryUsage: "low" },
+					suggestions: ['test suggestion'],
+					complexity: { cyclomatic: 5, cognitive: 3, maintainability: 'good' },
+					security: { vulnerabilities: [], riskLevel: 'low' },
+					performance: { bottlenecks: [], memoryUsage: 'low' },
 					confidence: 0.9,
 					analysisTime: 1000,
 				}),
 				usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
 				latencyMs: 1000,
-				provider: "test-provider",
+				provider: 'test-provider',
 			}),
 			shutdown: vi.fn(),
 		};
@@ -53,73 +53,73 @@ describe("AgentOrchestrator", () => {
 		orchestrator.shutdown();
 	});
 
-	describe("Orchestrator Creation", () => {
-		it("should create orchestrator with required config", () => {
+	describe('Orchestrator Creation', () => {
+		it('should create orchestrator with required config', () => {
 			// AgentOrchestrator is a type alias; verify expected shape instead
-			expect(typeof (orchestrator as any).executeWorkflow).toBe("function");
-			expect(typeof (orchestrator as any).getWorkflowStatus).toBe("function");
-			expect(typeof (orchestrator as any).cancelWorkflow).toBe("function");
-			expect(typeof (orchestrator as any).getMetrics).toBe("function");
+			expect(typeof (orchestrator as any).executeWorkflow).toBe('function');
+			expect(typeof (orchestrator as any).getWorkflowStatus).toBe('function');
+			expect(typeof (orchestrator as any).cancelWorkflow).toBe('function');
+			expect(typeof (orchestrator as any).getMetrics).toBe('function');
 		});
 
-		it("should initialize available agents", () => {
+		it('should initialize available agents', () => {
 			const agents = orchestrator.getAvailableAgents();
 
 			expect(agents).toHaveLength(4);
 			const caps = agents.map((a) => a.capability);
-			expect(caps).toContain("code-analysis");
-			expect(caps).toContain("test-generation");
-			expect(caps).toContain("documentation");
-			expect(caps).toContain("security");
+			expect(caps).toContain('code-analysis');
+			expect(caps).toContain('test-generation');
+			expect(caps).toContain('documentation');
+			expect(caps).toContain('security');
 		});
 
-		it("should initialize with empty metrics", () => {
+		it('should initialize with empty metrics', () => {
 			const metrics = orchestrator.getMetrics();
 			expect(metrics.workflowsExecuted).toBe(0);
 			expect(metrics.tasksCompleted).toBe(0);
 		});
 	});
 
-	describe("Sequential Workflow Execution", () => {
-		it("should execute simple sequential workflow", async () => {
-			const workflow = WorkflowBuilder.create("test-workflow", "Test Workflow")
+	describe('Sequential Workflow Execution', () => {
+		it('should execute simple sequential workflow', async () => {
+			const workflow = WorkflowBuilder.create('test-workflow', 'Test Workflow')
 				.addCodeAnalysis(
 					{
-						sourceCode: "function test() { return 42; }",
-						language: "javascript",
-						analysisType: "review",
+						sourceCode: 'function test() { return 42; }',
+						language: 'javascript',
+						analysisType: 'review',
 					},
-					{ id: "analysis-task" },
+					{ id: 'analysis-task' },
 				)
 				.build();
 
 			const result = await orchestrator.executeWorkflow(workflow);
 
-			if (result.status === "failed") {
-				console.log("Workflow failed with errors:", result.errors);
+			if (result.status === 'failed') {
+				console.log('Workflow failed with errors:', result.errors);
 			}
-			expect(result.status).toBe("completed");
-			expect(result.results).toHaveProperty("analysis-task");
+			expect(result.status).toBe('completed');
+			expect(result.results).toHaveProperty('analysis-task');
 			expect(result.metrics.tasksCompleted).toBe(1);
 			expect(result.metrics.tasksTotal).toBe(1);
 		});
 
-		it("should execute workflow with dependencies", async () => {
+		it('should execute workflow with dependencies', async () => {
 			// Mock test generation response
 			vi.mocked(mockProvider.generate).mockImplementation(async (prompt) => {
-				if (prompt.includes("test")) {
+				if (prompt.includes('test')) {
 					return {
 						text: JSON.stringify({
 							tests: [
 								{
-									name: "test",
+									name: 'test',
 									code: 'it("works", () => {})',
-									type: "positive-case",
+									type: 'positive-case',
 								},
 							],
-							framework: "vitest",
-							language: "javascript",
-							testType: "unit",
+							framework: 'vitest',
+							language: 'javascript',
+							testType: 'unit',
 							coverage: { estimated: 90, branches: [], uncoveredPaths: [] },
 							imports: [],
 							confidence: 0.9,
@@ -132,12 +132,12 @@ describe("AgentOrchestrator", () => {
 							totalTokens: 300,
 						},
 						latencyMs: 1000,
-						provider: "test-provider",
+						provider: 'test-provider',
 					};
 				}
 				return {
 					text: JSON.stringify({
-						suggestions: ["test"],
+						suggestions: ['test'],
 						complexity: { cyclomatic: 1 },
 						security: { vulnerabilities: [] },
 						performance: { bottlenecks: [] },
@@ -146,90 +146,90 @@ describe("AgentOrchestrator", () => {
 					}),
 					usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 },
 					latencyMs: 1000,
-					provider: "test-provider",
+					provider: 'test-provider',
 				};
 			});
 
 			const workflow = WorkflowBuilder.create(
-				"dependent-workflow",
-				"Dependent Workflow",
+				'dependent-workflow',
+				'Dependent Workflow',
 			)
 				.addCodeAnalysis(
 					{
-						sourceCode: "function add(a, b) { return a + b; }",
-						language: "javascript",
-						analysisType: "review",
+						sourceCode: 'function add(a, b) { return a + b; }',
+						language: 'javascript',
+						analysisType: 'review',
 					},
-					{ id: "analysis" },
+					{ id: 'analysis' },
 				)
 				.addTestGeneration(
 					{
-						sourceCode: "function add(a, b) { return a + b; }",
-						language: "javascript",
-						testType: "unit",
-						framework: "vitest",
+						sourceCode: 'function add(a, b) { return a + b; }',
+						language: 'javascript',
+						testType: 'unit',
+						framework: 'vitest',
 					},
-					{ id: "tests", dependsOn: ["analysis"] },
+					{ id: 'tests', dependsOn: ['analysis'] },
 				)
 				.build();
 
 			const result = await orchestrator.executeWorkflow(workflow);
 
-			expect(result.status).toBe("completed");
-			expect(result.results).toHaveProperty("analysis");
-			expect(result.results).toHaveProperty("tests");
+			expect(result.status).toBe('completed');
+			expect(result.results).toHaveProperty('analysis');
+			expect(result.results).toHaveProperty('tests');
 			expect(result.metrics.tasksCompleted).toBe(2);
 		});
 
-		it("should handle task failures gracefully", async () => {
+		it('should handle task failures gracefully', async () => {
 			vi.mocked(mockProvider.generate).mockRejectedValue(
-				new Error("Provider failed"),
+				new Error('Provider failed'),
 			);
 
 			const workflow = WorkflowBuilder.create(
-				"failing-workflow",
-				"Failing Workflow",
+				'failing-workflow',
+				'Failing Workflow',
 			)
 				.addCodeAnalysis(
 					{
-						sourceCode: "broken code",
-						language: "javascript",
-						analysisType: "review",
+						sourceCode: 'broken code',
+						language: 'javascript',
+						analysisType: 'review',
 					},
-					{ id: "failing-task" },
+					{ id: 'failing-task' },
 				)
 				.build();
 
 			const result = await orchestrator.executeWorkflow(workflow);
 
-			expect(result.status).toBe("failed");
-			expect(result.errors).toHaveProperty("failing-task");
+			expect(result.status).toBe('failed');
+			expect(result.errors).toHaveProperty('failing-task');
 			expect(result.metrics.tasksCompleted).toBe(0);
 		});
 	});
 
-	describe("Parallel Workflow Execution", () => {
-		it("should execute tasks in parallel", async () => {
+	describe('Parallel Workflow Execution', () => {
+		it('should execute tasks in parallel', async () => {
 			const workflow = WorkflowBuilder.create(
-				"parallel-workflow",
-				"Parallel Workflow",
+				'parallel-workflow',
+				'Parallel Workflow',
 			)
 				.parallel(true)
 				.addCodeAnalysis(
 					{
-						sourceCode: "function test1() {}",
-						language: "javascript",
-						analysisType: "review",
+						sourceCode: 'function test1() {}',
+						language: 'javascript',
+						analysisType: 'review',
 					},
-					{ id: "analysis-1" },
+					{ id: 'analysis-1' },
 				)
 				.addCodeAnalysis(
 					{
-						sourceCode: "function test2() {}",
-						language: "javascript",
-						analysisType: "review",
+						sourceCode: 'function test2() {}',
+						language: 'javascript',
+						analysisType: 'review',
 					},
-					{ id: "analysis-2" },
+					{ id: 'analysis-2' },
 				)
 				.build();
 
@@ -237,9 +237,9 @@ describe("AgentOrchestrator", () => {
 			const result = await orchestrator.executeWorkflow(workflow);
 			const executionTime = Date.now() - startTime;
 
-			expect(result.status).toBe("completed");
-			expect(result.results).toHaveProperty("analysis-1");
-			expect(result.results).toHaveProperty("analysis-2");
+			expect(result.status).toBe('completed');
+			expect(result.results).toHaveProperty('analysis-1');
+			expect(result.results).toHaveProperty('analysis-2');
 			expect(result.metrics.tasksCompleted).toBe(2);
 
 			// Parallel execution should be faster than sequential
@@ -247,48 +247,48 @@ describe("AgentOrchestrator", () => {
 			expect(executionTime).toBeLessThan(3000);
 		});
 
-		it("should execute a security task", async () => {
+		it('should execute a security task', async () => {
 			// Mock provider to return security agent JSON
 			vi.mocked(mockProvider.generate).mockResolvedValueOnce({
 				text: JSON.stringify({
-					decision: "allow",
-					risk: "low",
+					decision: 'allow',
+					risk: 'low',
 					categories: [],
 					findings: [],
 					labels: {},
 					confidence: 0.9,
 				}),
-				provider: "test-provider",
+				provider: 'test-provider',
 				usage: { promptTokens: 20, completionTokens: 10, totalTokens: 30 },
 				latencyMs: 50,
 			});
 
 			const workflow = WorkflowBuilder.create(
-				"security-workflow",
-				"Security Workflow",
+				'security-workflow',
+				'Security Workflow',
 			)
 				.addSecurity(
-					{ content: "Hello", phase: "prompt", context: { toolsAllowed: [] } },
-					{ id: "sec" },
+					{ content: 'Hello', phase: 'prompt', context: { toolsAllowed: [] } },
+					{ id: 'sec' },
 				)
 				.build();
 
 			const result = await orchestrator.executeWorkflow(workflow);
-			expect(result.status).toBe("completed");
-			expect(result.results).toHaveProperty("sec");
+			expect(result.status).toBe('completed');
+			expect(result.results).toHaveProperty('sec');
 		});
 	});
 
-	describe("Workflow Status and Control", () => {
-		it("should track workflow status", async () => {
+	describe('Workflow Status and Control', () => {
+		it('should track workflow status', async () => {
 			const workflow = WorkflowBuilder.create(
-				"status-workflow",
-				"Status Workflow",
+				'status-workflow',
+				'Status Workflow',
 			)
 				.addCodeAnalysis({
-					sourceCode: "function test() {}",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'function test() {}',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 
@@ -296,27 +296,27 @@ describe("AgentOrchestrator", () => {
 			const workflowPromise = orchestrator.executeWorkflow(workflow);
 
 			// Check status while running
-			const status = orchestrator.getWorkflowStatus("status-workflow");
+			const status = orchestrator.getWorkflowStatus('status-workflow');
 			expect(status.isRunning).toBe(true);
 
 			// Wait for completion
 			const result = await workflowPromise;
-			expect(result.status).toBe("completed");
+			expect(result.status).toBe('completed');
 
 			// Check status after completion
-			const finalStatus = orchestrator.getWorkflowStatus("status-workflow");
+			const finalStatus = orchestrator.getWorkflowStatus('status-workflow');
 			expect(finalStatus.isRunning).toBe(false);
 		});
 
-		it("should prevent duplicate workflow execution", async () => {
+		it('should prevent duplicate workflow execution', async () => {
 			const workflow = WorkflowBuilder.create(
-				"duplicate-workflow",
-				"Duplicate Workflow",
+				'duplicate-workflow',
+				'Duplicate Workflow',
 			)
 				.addCodeAnalysis({
-					sourceCode: "function test() {}",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'function test() {}',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 
@@ -330,21 +330,21 @@ describe("AgentOrchestrator", () => {
 			await firstPromise;
 		});
 
-		it("should cancel workflows", async () => {
+		it('should cancel workflows', async () => {
 			const workflow = WorkflowBuilder.create(
-				"cancellable-workflow",
-				"Cancellable Workflow",
+				'cancellable-workflow',
+				'Cancellable Workflow',
 			)
 				.addCodeAnalysis({
-					sourceCode: "function test() {}",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'function test() {}',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 
 			const workflowPromise = orchestrator.executeWorkflow(workflow);
 			const cancelled = await orchestrator.cancelWorkflow(
-				"cancellable-workflow",
+				'cancellable-workflow',
 			);
 
 			expect(cancelled).toBe(true);
@@ -354,16 +354,16 @@ describe("AgentOrchestrator", () => {
 		});
 	});
 
-	describe("Metrics and Monitoring", () => {
-		it("should track orchestrator metrics", async () => {
+	describe('Metrics and Monitoring', () => {
+		it('should track orchestrator metrics', async () => {
 			const workflow = WorkflowBuilder.create(
-				"metrics-workflow",
-				"Metrics Workflow",
+				'metrics-workflow',
+				'Metrics Workflow',
 			)
 				.addCodeAnalysis({
-					sourceCode: "function test() {}",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'function test() {}',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 
@@ -375,15 +375,15 @@ describe("AgentOrchestrator", () => {
 			expect(metrics.totalExecutionTime).toBeGreaterThan(0);
 		});
 
-		it("should publish workflow events", async () => {
+		it('should publish workflow events', async () => {
 			const workflow = WorkflowBuilder.create(
-				"events-workflow",
-				"Events Workflow",
+				'events-workflow',
+				'Events Workflow',
 			)
 				.addCodeAnalysis({
-					sourceCode: "function test() {}",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'function test() {}',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 
@@ -391,20 +391,20 @@ describe("AgentOrchestrator", () => {
 
 			// Should have published workflow.started and workflow.completed events
 			const publishedTypes = mockEventBus.published.map((e) => e.type);
-			expect(publishedTypes).toContain("workflow.started");
-			expect(publishedTypes).toContain("workflow.completed");
+			expect(publishedTypes).toContain('workflow.started');
+			expect(publishedTypes).toContain('workflow.completed');
 		});
 	});
 
-	describe("Error Handling", () => {
-		it("should handle missing agent types", async () => {
+	describe('Error Handling', () => {
+		it('should handle missing agent types', async () => {
 			const workflow = {
-				id: "invalid-workflow",
-				name: "Invalid Workflow",
+				id: 'invalid-workflow',
+				name: 'Invalid Workflow',
 				tasks: [
 					{
-						id: "invalid-task",
-						agentType: "non-existent" as any,
+						id: 'invalid-task',
+						agentType: 'non-existent' as any,
 						input: {},
 					},
 				],
@@ -415,89 +415,89 @@ describe("AgentOrchestrator", () => {
 			).rejects.toThrow();
 		});
 
-		it("should handle circular dependencies", async () => {
+		it('should handle circular dependencies', async () => {
 			const workflow = {
-				id: "circular-workflow",
-				name: "Circular Workflow",
+				id: 'circular-workflow',
+				name: 'Circular Workflow',
 				tasks: [
 					{
-						id: "task-a",
-						agentType: "code-analysis",
+						id: 'task-a',
+						agentType: 'code-analysis',
 						input: {
-							sourceCode: "test",
-							language: "javascript",
-							analysisType: "review",
+							sourceCode: 'test',
+							language: 'javascript',
+							analysisType: 'review',
 						},
-						dependsOn: ["task-b"],
+						dependsOn: ['task-b'],
 					},
 					{
-						id: "task-b",
-						agentType: "code-analysis",
+						id: 'task-b',
+						agentType: 'code-analysis',
 						input: {
-							sourceCode: "test",
-							language: "javascript",
-							analysisType: "review",
+							sourceCode: 'test',
+							language: 'javascript',
+							analysisType: 'review',
 						},
-						dependsOn: ["task-a"],
+						dependsOn: ['task-a'],
 					},
 				],
 			};
 
 			const result = await orchestrator.executeWorkflow(workflow as any);
-			expect(result.status).toBe("failed");
-			expect(result.errors).toHaveProperty("dependency");
+			expect(result.status).toBe('failed');
+			expect(result.errors).toHaveProperty('dependency');
 		});
 	});
 });
 
-describe("WorkflowBuilder", () => {
-	describe("Workflow Construction", () => {
-		it("should build simple workflow", () => {
-			const workflow = WorkflowBuilder.create("simple", "Simple Workflow")
-				.description("A simple workflow for testing")
+describe('WorkflowBuilder', () => {
+	describe('Workflow Construction', () => {
+		it('should build simple workflow', () => {
+			const workflow = WorkflowBuilder.create('simple', 'Simple Workflow')
+				.description('A simple workflow for testing')
 				.addCodeAnalysis({
-					sourceCode: "function test() {}",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'function test() {}',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 
-			expect(workflow.id).toBe("simple");
-			expect(workflow.name).toBe("Simple Workflow");
-			expect(workflow.description).toBe("A simple workflow for testing");
+			expect(workflow.id).toBe('simple');
+			expect(workflow.name).toBe('Simple Workflow');
+			expect(workflow.description).toBe('A simple workflow for testing');
 			expect(workflow.tasks).toHaveLength(1);
-			expect(workflow.tasks[0].agentType).toBe("code-analysis");
+			expect(workflow.tasks[0].agentType).toBe('code-analysis');
 		});
 
-		it("should build complex workflow with all agent types", () => {
-			const workflow = WorkflowBuilder.create("complex", "Complex Workflow")
+		it('should build complex workflow with all agent types', () => {
+			const workflow = WorkflowBuilder.create('complex', 'Complex Workflow')
 				.parallel(true)
 				.timeout(60000)
 				.addCodeAnalysis(
 					{
-						sourceCode: "function add(a, b) { return a + b; }",
-						language: "javascript",
-						analysisType: "review",
+						sourceCode: 'function add(a, b) { return a + b; }',
+						language: 'javascript',
+						analysisType: 'review',
 					},
-					{ priority: "high" },
+					{ priority: 'high' },
 				)
 				.addTestGeneration(
 					{
-						sourceCode: "function add(a, b) { return a + b; }",
-						language: "javascript",
-						testType: "unit",
-						framework: "vitest",
+						sourceCode: 'function add(a, b) { return a + b; }',
+						language: 'javascript',
+						testType: 'unit',
+						framework: 'vitest',
 					},
-					{ dependsOn: ["code-analysis"] },
+					{ dependsOn: ['code-analysis'] },
 				)
 				.addDocumentation(
 					{
-						sourceCode: "function add(a, b) { return a + b; }",
-						language: "javascript",
-						documentationType: "api",
-						outputFormat: "markdown",
+						sourceCode: 'function add(a, b) { return a + b; }',
+						language: 'javascript',
+						documentationType: 'api',
+						outputFormat: 'markdown',
 					},
-					{ priority: "low" },
+					{ priority: 'low' },
 				)
 				.build();
 
@@ -505,29 +505,29 @@ describe("WorkflowBuilder", () => {
 			expect(workflow.timeout).toBe(60000);
 			expect(workflow.tasks).toHaveLength(3);
 			expect(workflow.tasks.map((t) => t.agentType)).toEqual([
-				"code-analysis",
-				"test-generation",
-				"documentation",
+				'code-analysis',
+				'test-generation',
+				'documentation',
 			]);
 		});
 
-		it("should require ID and name", () => {
+		it('should require ID and name', () => {
 			expect(() => {
 				new (WorkflowBuilder as any)().build();
 			}).toThrow();
 		});
 
-		it("should generate task IDs when not provided", () => {
-			const workflow = WorkflowBuilder.create("auto-id", "Auto ID Workflow")
+		it('should generate task IDs when not provided', () => {
+			const workflow = WorkflowBuilder.create('auto-id', 'Auto ID Workflow')
 				.addCodeAnalysis({
-					sourceCode: "test",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'test',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.addCodeAnalysis({
-					sourceCode: "test2",
-					language: "javascript",
-					analysisType: "review",
+					sourceCode: 'test2',
+					language: 'javascript',
+					analysisType: 'review',
 				})
 				.build();
 

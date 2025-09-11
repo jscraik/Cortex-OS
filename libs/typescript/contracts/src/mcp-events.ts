@@ -1,9 +1,9 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // Event type constants for MCP telemetry
 export const McpEventTypes = {
-	ToolCallBegin: "mcp.tool.call.begin",
-	ToolCallEnd: "mcp.tool.call.end",
+	ToolCallBegin: 'mcp.tool.call.begin',
+	ToolCallEnd: 'mcp.tool.call.end',
 } as const;
 
 export const McpToolCallBeginSchema = z.object({

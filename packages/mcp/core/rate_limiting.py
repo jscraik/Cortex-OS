@@ -8,8 +8,15 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-import redis.asyncio as redis
-from redis.asyncio import Redis
+# Optional Redis dependency; guard import and provide memory fallback
+try:  # pragma: no cover - import guard
+    import redis.asyncio as redis  # type: ignore
+    from redis.asyncio import Redis  # type: ignore
+    _REDIS_AVAILABLE = True
+except Exception:  # pragma: no cover - fallback path
+    redis = None  # type: ignore
+    Redis = None  # type: ignore
+    _REDIS_AVAILABLE = False
 
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import get_logger
@@ -203,7 +210,7 @@ class RedisRateLimitBackend(RateLimitBackend):
 
             redis.call('EXPIRE', window_key, window)
 
-            return {allowed and 1 or 0, remaining, limit, window_start + window}
+        return {allowed and 1 or 0, remaining, limit, window_start + window}
         """
 
         # Leaky bucket algorithm
@@ -693,25 +700,85 @@ class RateLimitManager:
 _rate_limit_manager: RateLimitManager | None = None
 
 
+class MemoryRateLimitBackend(RateLimitBackend):
+    """In-memory fallback backend for environments without Redis.
+
+    Implements a simple fixed-window counter per (identifier, rule_key).
+    Suitable for tests and local dev only.
+    """
+
+    def __init__(self) -> None:
+        self._counters: dict[tuple[str, str], dict[str, int]] = {}
+
+    async def check_rate_limit(self, identifier: str, rule: RateLimitRule) -> RateLimitResult:
+        now = int(time.time())
+        window_start = (now // rule.window_seconds) * rule.window_seconds
+        key = (identifier, rule.key)
+        bucket = self._counters.setdefault(key, {"window": window_start, "count": 0})
+
+        # Reset window
+        if bucket["window"] != window_start:
+            bucket["window"] = window_start
+            bucket["count"] = 0
+
+        remaining = max(0, rule.limit - bucket["count"])
+        allowed = bucket["count"] < rule.limit
+        if allowed:
+            bucket["count"] += 1
+            remaining = rule.limit - bucket["count"]
+
+        return RateLimitResult(
+            allowed=allowed,
+            limit=rule.limit,
+            remaining=remaining,
+            reset_time=window_start + rule.window_seconds,
+            algorithm=rule.algorithm.value,
+            rule_key=rule.key,
+            identifier=identifier,
+            current_usage=bucket["count"],
+            window_start=window_start,
+        )
+
+    async def reset_rate_limit(self, identifier: str, rule: RateLimitRule) -> bool:
+        key = (identifier, rule.key)
+        if key in self._counters:
+            self._counters[key]["count"] = 0
+            return True
+        return False
+
+    async def get_usage_stats(self, identifier: str, rule: RateLimitRule) -> dict[str, Any]:
+        key = (identifier, rule.key)
+        bucket = self._counters.get(key, {"count": 0})
+        return {"count": bucket.get("count", 0)}
+
+    async def cleanup_expired(self) -> int:
+        # No-op for simple in-memory backend
+        return 0
+
+
 async def get_rate_limit_manager() -> RateLimitManager:
     """Get or create global rate limit manager."""
     global _rate_limit_manager
 
     if _rate_limit_manager is None:
-        # Initialize Redis connection
-        redis_client = redis.Redis(
-            host=os.getenv("REDIS_HOST", "localhost"),
-            port=int(os.getenv("REDIS_PORT", "6379")),
-            db=int(os.getenv("REDIS_DB", "1")),
-            decode_responses=True,
-            socket_timeout=30.0,
-            socket_connect_timeout=10.0,
-            retry_on_timeout=True,
-        )
+        if _REDIS_AVAILABLE:
+            # Initialize Redis connection
+            redis_client = redis.Redis(
+                host=os.getenv("REDIS_HOST", "localhost"),
+                port=int(os.getenv("REDIS_PORT", "6379")),
+                db=int(os.getenv("REDIS_DB", "1")),
+                decode_responses=True,
+                socket_timeout=30.0,
+                socket_connect_timeout=10.0,
+                retry_on_timeout=True,
+            )
 
-        backend = RedisRateLimitBackend(redis_client)
-        _rate_limit_manager = RateLimitManager(backend)
-
-        logger.info("Rate limit manager initialized with Redis backend")
+            backend = RedisRateLimitBackend(redis_client)
+            _rate_limit_manager = RateLimitManager(backend)
+            logger.info("Rate limit manager initialized with Redis backend")
+        else:
+            backend = MemoryRateLimitBackend()
+            _rate_limit_manager = RateLimitManager(backend)
+            logger.info("Rate limit manager initialized with in-memory backend")
 
     return _rate_limit_manager

@@ -4,7 +4,7 @@
  * @author Cortex-OS Team
  */
 
-import type { SimResult, SimScenario, SimScores, SimTurn } from "./types.js";
+import type { SimResult, SimScenario, SimScores, SimTurn } from './types.js';
 
 export interface JudgeConfig {
 	strictMode?: boolean;
@@ -38,7 +38,7 @@ export class Judge {
 	evaluate(
 		scenario: SimScenario,
 		turns: SimTurn[],
-	): Promise<Omit<SimResult, "runId" | "timestamp">> {
+	): Promise<Omit<SimResult, 'runId' | 'timestamp'>> {
 		const scores = this.calculateScores(scenario, turns);
 		const failures = this.identifyFailures(scenario, turns, scores);
 		const passed = this.determineOverallPass(scores, failures);
@@ -83,7 +83,7 @@ export class Judge {
 		scenario: SimScenario,
 		turns: SimTurn[],
 	): number {
-		const agentTurns = turns.filter((turn) => turn.role === "agent");
+		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 		const successCriteria = scenario.success_criteria || [];
 
 		if (successCriteria.length === 0) {
@@ -113,7 +113,7 @@ export class Judge {
 		scenario: SimScenario,
 		turns: SimTurn[],
 	): number {
-		const agentTurns = turns.filter((turn) => turn.role === "agent");
+		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 		const sopRefs = scenario.sop_refs || [];
 
 		if (sopRefs.length === 0) {
@@ -156,7 +156,7 @@ export class Judge {
 		_scenario: SimScenario,
 		turns: SimTurn[],
 	): number {
-		const agentTurns = turns.filter((turn) => turn.role === "agent");
+		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 
 		let brandScore = 1.0;
 
@@ -189,7 +189,7 @@ export class Judge {
 		_scenario: SimScenario,
 		turns: SimTurn[],
 	): number {
-		const agentTurns = turns.filter((turn) => turn.role === "agent");
+		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 
 		// For initial implementation, assume factual accuracy unless obvious errors
 		let accuracyScore = 1.0;
@@ -222,24 +222,24 @@ export class Judge {
 		const failures: string[] = [];
 
 		if (scores.goal < 0.7) {
-			failures.push("goal_not_achieved");
+			failures.push('goal_not_achieved');
 		}
 
 		if (scores.sop < 0.8) {
-			failures.push("sop_violation");
+			failures.push('sop_violation');
 		}
 
 		if (scores.brand < 0.8) {
-			failures.push("brand_inconsistency");
+			failures.push('brand_inconsistency');
 		}
 
 		if (scores.factual < 0.9) {
-			failures.push("factual_inaccuracy");
+			failures.push('factual_inaccuracy');
 		}
 
 		// Check for required evidence if in strict mode
 		if (this.config.requireEvidence && !this.hasEvidence(turns)) {
-			failures.push("missing_evidence");
+			failures.push('missing_evidence');
 		}
 
 		return failures;
@@ -250,7 +250,7 @@ export class Judge {
 	 */
 	private determineOverallPass(scores: SimScores, failures: string[]): boolean {
 		// Fail if any critical failures
-		const criticalFailures = ["missing_evidence", "sop_violation"];
+		const criticalFailures = ['missing_evidence', 'sop_violation'];
 		if (failures.some((failure) => criticalFailures.includes(failure))) {
 			return false;
 		}
@@ -288,75 +288,80 @@ export class Judge {
 		];
 
 		if (failures.length > 0) {
-			notes.push(`Failures: ${failures.join(", ")}`);
+			notes.push(`Failures: ${failures.join(', ')}`);
 		}
 
 		notes.push(`Conversation Length: ${turns.length} turns`);
 
-		return notes.join(" | ");
+		return notes.join(' | ');
 	}
 
 	// Helper methods for evaluation criteria
 
-        private hasUnprofessionalLanguage(content: string): boolean {
-                const terms = [/\bstupid\b/i, /\bdumb\b/i, /whatever/i, /\bugh\b/i];
-                return terms.some((r) => r.test(content));
-        }
+	private hasUnprofessionalLanguage(content: string): boolean {
+		const terms = [/\bstupid\b/i, /\bdumb\b/i, /whatever/i, /\bugh\b/i];
+		return terms.some((r) => r.test(content));
+	}
 
-        private hasImproperInformationHandling(content: string): boolean {
-                const phrases = [/\bi guess\b/i, /probably/i, /i think maybe/i];
-                return phrases.some((r) => r.test(content));
-        }
+	private hasImproperInformationHandling(content: string): boolean {
+		const phrases = [/\bi guess\b/i, /probably/i, /i think maybe/i];
+		return phrases.some((r) => r.test(content));
+	}
 
-        private missesEscalationOpportunity(content: string): boolean {
-                const issue = /(can't|cannot|unable)/i.test(content);
-                const escalation = /(escalate|transfer|manager)/i.test(content);
-                return issue && !escalation;
-        }
+	private missesEscalationOpportunity(content: string): boolean {
+		const issue = /(can't|cannot|unable)/i.test(content);
+		const escalation = /(escalate|transfer|manager)/i.test(content);
+		return issue && !escalation;
+	}
 
-        private hasHelpfulTone(content: string): boolean {
-                const indicators = [/happy to help/i, /glad to assist/i, /let me help/i];
-                return indicators.some((r) => r.test(content));
-        }
+	private hasHelpfulTone(content: string): boolean {
+		const indicators = [/happy to help/i, /glad to assist/i, /let me help/i];
+		return indicators.some((r) => r.test(content));
+	}
 
-        private isClearAndConcise(content: string): boolean {
-                return content.length < 500 && /[.!?]/.test(content);
-        }
+	private isClearAndConcise(content: string): boolean {
+		return content.length < 500 && /[.!?]/.test(content);
+	}
 
-        private showsAppropriateEmpathy(content: string): boolean {
-                const indicators = [/sorry/i, /understand/i, /apologiz(?:e|ing)/i, /appreciate/i];
-                return indicators.some((r) => r.test(content));
-        }
+	private showsAppropriateEmpathy(content: string): boolean {
+		const indicators = [
+			/sorry/i,
+			/understand/i,
+			/apologiz(?:e|ing)/i,
+			/appreciate/i,
+		];
+		return indicators.some((r) => r.test(content));
+	}
 
-        private containsFactualUncertainty(content: string): boolean {
-                const indicators = [/i'm not sure/i, /maybe/i, /i think/i];
-                return indicators.some((r) => r.test(content));
-        }
+	private containsFactualUncertainty(content: string): boolean {
+		const indicators = [/i'm not sure/i, /maybe/i, /i think/i];
+		return indicators.some((r) => r.test(content));
+	}
 
-        private contradictsEarlierStatements(
-                content: string,
-                agentTurns: SimTurn[],
-        ): boolean {
-                const lower = content.toLowerCase();
-                for (const turn of agentTurns) {
-                        const prev = turn.content.toLowerCase();
-                        if (/i can\b/.test(prev) && /i cannot\b/.test(lower)) {
-                                return true;
-                        }
-                        if (/i cannot\b/.test(prev) && /i can\b/.test(lower)) {
-                                return true;
-                        }
-                }
-                return false;
-        }
+	private contradictsEarlierStatements(
+		content: string,
+		agentTurns: SimTurn[],
+	): boolean {
+		const lower = content.toLowerCase();
+		for (const turn of agentTurns) {
+			const prev = turn.content.toLowerCase();
+			if (/i can\b/.test(prev) && /i cannot\b/.test(lower)) {
+				return true;
+			}
+			if (/i cannot\b/.test(prev) && /i can\b/.test(lower)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	private hasEvidence(turns: SimTurn[]): boolean {
-		const agentTurns = turns.filter((turn) => turn.role === "agent");
+		const agentTurns = turns.filter((turn) => turn.role === 'agent');
 		return agentTurns.some(
 			(turn) =>
-				turn.content.toLowerCase().includes("evidence") ||
-				turn.content.toLowerCase().includes("source") ||
-				turn.content.toLowerCase().includes("reference"),
+				turn.content.toLowerCase().includes('evidence') ||
+				turn.content.toLowerCase().includes('source') ||
+				turn.content.toLowerCase().includes('reference'),
 		);
 	}
 }

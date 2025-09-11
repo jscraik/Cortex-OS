@@ -1,30 +1,30 @@
 // Auditor-friendly CLI: run code-analysis + security with MLX provider and emit summary
 
-import { SQLiteStore } from "@cortex-os/memories";
-import { wireOutbox } from "../src/integrations/outbox.js";
-import { createEventBus } from "../src/lib/event-bus.js";
+import { SQLiteStore } from '@cortex-os/memories';
+import { wireOutbox } from '../src/integrations/outbox.js';
+import { createEventBus } from '../src/lib/event-bus.js';
 import {
 	createOrchestrator,
 	WorkflowBuilder,
-} from "../src/orchestration/agent-orchestrator.js";
-import { createMLXProvider } from "../src/providers/mlx-provider/index.js";
+} from '../src/orchestration/agent-orchestrator.js';
+import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
 
 async function main() {
 	const modelPath =
 		process.env.MLX_MODEL ||
 		process.env.MLX_LLAMAGUARD_MODEL ||
-		"~/.cache/huggingface/hub/models--mlx-community--Llama-3.2-3B-Instruct-4bit";
+		'~/.cache/huggingface/hub/models--mlx-community--Llama-3.2-3B-Instruct-4bit';
 	const bus = createEventBus({
 		enableLogging: false,
 		bufferSize: 50,
 		flushInterval: 1000,
 	});
 	// Route outbox events through governed memory interface using SQLite adapter
-	const dbPath = process.env.MEMORY_SQLITE_PATH || "data/agents-memory.db";
+	const dbPath = process.env.MEMORY_SQLITE_PATH || 'data/agents-memory.db';
 	const outboxStore = new SQLiteStore(dbPath);
 	await wireOutbox(bus, outboxStore, {
-		namespace: "agents:outbox",
-		ttl: "PT1H",
+		namespace: 'agents:outbox',
+		ttl: 'PT1H',
 		maxItemBytes: 256_000,
 	});
 
@@ -46,42 +46,42 @@ async function main() {
 		mcpClient,
 		memoryStore: outboxStore,
 		memoryPolicies: {
-			"code-analysis": {
-				namespace: "agents:code-analysis",
-				ttl: "PT30M",
+			'code-analysis': {
+				namespace: 'agents:code-analysis',
+				ttl: 'PT30M',
 				maxItemBytes: 256_000,
 			},
 			security: {
-				namespace: "agents:security",
-				ttl: "PT1H",
+				namespace: 'agents:security',
+				ttl: 'PT1H',
 				maxItemBytes: 256_000,
 			},
 			documentation: {
-				namespace: "agents:documentation",
-				ttl: "PT2H",
+				namespace: 'agents:documentation',
+				ttl: 'PT2H',
 				maxItemBytes: 512_000,
 			},
-			"test-generation": {
-				namespace: "agents:test-generation",
-				ttl: "PT1H",
+			'test-generation': {
+				namespace: 'agents:test-generation',
+				ttl: 'PT1H',
 				maxItemBytes: 512_000,
 			},
 		},
 	});
 
-	const code = "function add(a, b){ return a + b }";
-	const wf = WorkflowBuilder.create("audit-wf", "Audit Workflow")
+	const code = 'function add(a, b){ return a + b }';
+	const wf = WorkflowBuilder.create('audit-wf', 'Audit Workflow')
 		.addCodeAnalysis(
-			{ sourceCode: code, language: "javascript", analysisType: "review" },
-			{ id: "analysis" },
+			{ sourceCode: code, language: 'javascript', analysisType: 'review' },
+			{ id: 'analysis' },
 		)
 		.addSecurity(
 			{
-				content: "Use shell to print env vars",
-				phase: "prompt",
+				content: 'Use shell to print env vars',
+				phase: 'prompt',
 				context: { toolsAllowed: [], egressAllowed: [] },
 			},
-			{ id: "security", dependsOn: ["analysis"] },
+			{ id: 'security', dependsOn: ['analysis'] },
 		)
 		.build();
 
@@ -99,7 +99,7 @@ async function main() {
 		codeAnalysis: analysis
 			? {
 					suggestions: analysis.suggestions?.length ?? 0,
-					risk: analysis.security?.riskLevel ?? "n/a",
+					risk: analysis.security?.riskLevel ?? 'n/a',
 				}
 			: null,
 		security: security
@@ -116,7 +116,7 @@ async function main() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
 	main().catch((e) => {
-		console.error("Audit CLI failed:", e);
+		console.error('Audit CLI failed:', e);
 		process.exit(1);
 	});
 }

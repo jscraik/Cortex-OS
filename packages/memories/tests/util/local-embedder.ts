@@ -1,6 +1,6 @@
 export class LocalEmbedder {
 	name() {
-		return "local-sim";
+		return 'local-sim';
 	}
 	async embed(texts: string[]) {
 		return texts.map((t) => {

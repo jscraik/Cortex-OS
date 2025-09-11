@@ -8,58 +8,58 @@
  * @phase TDD-RED
  */
 
-import { describe, expect, it } from "vitest";
-import { SimplePRPGraph } from "../src/graph-simple.js";
-import { MCPAdapter } from "../src/mcp/adapter.js";
-import { BuildNode } from "../src/nodes/build.js";
-import { EvaluationNode } from "../src/nodes/evaluation.js";
-import { createInitialPRPState } from "../src/state.js";
+import { describe, expect, it } from 'vitest';
+import { SimplePRPGraph } from '../src/graph-simple.js';
+import { MCPAdapter } from '../src/mcp/adapter.js';
+import { BuildNode } from '../src/nodes/build.js';
+import { EvaluationNode } from '../src/nodes/evaluation.js';
+import { createInitialPRPState } from '../src/state.js';
 
-describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
-	describe("[Critical] Package Exports Validation", () => {
-		it("should successfully import SimplePRPGraph from package exports", async () => {
+describe.skip('🔴 TDD RED PHASE: Critical Issue Detection', () => {
+	describe('[Critical] Package Exports Validation', () => {
+		it('should successfully import SimplePRPGraph from package exports', async () => {
 			// This will FAIL due to package.json export path mismatch
 			try {
 				const { SimplePRPGraph: ExportedGraph } = await import(
-					"@cortex-os/kernel"
+					'@cortex-os/kernel'
 				);
 				expect(ExportedGraph).toBeDefined();
-				expect(typeof ExportedGraph).toBe("function");
+				expect(typeof ExportedGraph).toBe('function');
 			} catch (error) {
 				// Expected failure: export paths don't match build structure
 				expect(error).toBeDefined();
 				throw new Error(
-					"[CRITICAL] Package exports broken - imports will fail in production",
+					'[CRITICAL] Package exports broken - imports will fail in production',
 				);
 			}
 		});
 	});
 
-	describe("[Critical] Type Safety Violations", () => {
-		it("should create valid Neuron objects from MCP tools", () => {
+	describe('[Critical] Type Safety Violations', () => {
+		it('should create valid Neuron objects from MCP tools', () => {
 			const adapter = new MCPAdapter();
 			const mockTool = {
-				name: "test-tool",
-				description: "Test tool",
-				schema: { type: "object" },
+				name: 'test-tool',
+				description: 'Test tool',
+				schema: { type: 'object' },
 			};
 
-			const neuron = adapter.createNeuronFromTool(mockTool, "strategy");
+			const neuron = adapter.createNeuronFromTool(mockTool, 'strategy');
 
 			// These assertions will FAIL due to missing interface implementation
-			expect(neuron).toHaveProperty("id");
-			expect(neuron).toHaveProperty("role");
-			expect(neuron).toHaveProperty("phase");
-			expect(neuron).toHaveProperty("dependencies");
-			expect(neuron).toHaveProperty("tools");
-			expect(neuron).toHaveProperty("execute"); // Missing method!
-			expect(typeof neuron.execute).toBe("function"); // Will throw TypeError
+			expect(neuron).toHaveProperty('id');
+			expect(neuron).toHaveProperty('role');
+			expect(neuron).toHaveProperty('phase');
+			expect(neuron).toHaveProperty('dependencies');
+			expect(neuron).toHaveProperty('tools');
+			expect(neuron).toHaveProperty('execute'); // Missing method!
+			expect(typeof neuron.execute).toBe('function'); // Will throw TypeError
 		});
 
-		it("should match PRPOrchestrator interface from prp-runner", async () => {
+		it('should match PRPOrchestrator interface from prp-runner', async () => {
 			// This will FAIL due to interface mismatch
 			try {
-				const { PRPOrchestrator } = await import("@cortex-os/prp-runner");
+				const { PRPOrchestrator } = await import('@cortex-os/prp-runner');
 				const mockOrchestrator = {
 					getNeuronCount: () => 3,
 					// Missing methods that prp-runner expects
@@ -70,34 +70,34 @@ describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 				expect(kernel).toBeDefined();
 
 				// This assertion will expose the interface mismatch
-				expect(mockOrchestrator).toHaveProperty("executeNeuron"); // May not exist
+				expect(mockOrchestrator).toHaveProperty('executeNeuron'); // May not exist
 			} catch (_error) {
 				throw new Error(
-					"[CRITICAL] Interface compatibility broken with prp-runner",
+					'[CRITICAL] Interface compatibility broken with prp-runner',
 				);
 			}
 		});
 	});
 
-	describe("[Critical] Determinism Guarantee Violations", () => {
-		it("should produce identical results for identical inputs (true determinism)", async () => {
+	describe('[Critical] Determinism Guarantee Violations', () => {
+		it('should produce identical results for identical inputs (true determinism)', async () => {
 			const mockOrchestrator = { getNeuronCount: () => 3 };
 			const kernel = new SimplePRPGraph(mockOrchestrator);
 
 			const blueprint = {
-				title: "Determinism Test",
-				description: "Should be deterministic",
-				requirements: ["Test determinism"],
+				title: 'Determinism Test',
+				description: 'Should be deterministic',
+				requirements: ['Test determinism'],
 			};
 
 			// Run workflows with identical inputs
 			const result1 = await kernel.runPRPWorkflow(blueprint, {
-				runId: "deterministic-test",
+				runId: 'deterministic-test',
 				deterministic: true, // This option doesn't exist yet!
 			});
 
 			const result2 = await kernel.runPRPWorkflow(blueprint, {
-				runId: "deterministic-test",
+				runId: 'deterministic-test',
 				deterministic: true,
 			});
 
@@ -108,15 +108,15 @@ describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 			expect(result1).toEqual(result2); // Will fail due to timing differences
 		});
 
-		it("should generate deterministic IDs when deterministic mode enabled", () => {
+		it('should generate deterministic IDs when deterministic mode enabled', () => {
 			const state1 = createInitialPRPState(
-				{ title: "Test", description: "Test", requirements: [] },
-				{ id: "fixed-id", runId: "fixed-run-id" },
+				{ title: 'Test', description: 'Test', requirements: [] },
+				{ id: 'fixed-id', runId: 'fixed-run-id' },
 			);
 
 			const state2 = createInitialPRPState(
-				{ title: "Test", description: "Test", requirements: [] },
-				{ id: "fixed-id", runId: "fixed-run-id" },
+				{ title: 'Test', description: 'Test', requirements: [] },
+				{ id: 'fixed-id', runId: 'fixed-run-id' },
 			);
 
 			// This should pass, but default ID generation uses Date.now()
@@ -128,19 +128,19 @@ describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 		});
 	});
 
-	describe("[Critical] Validation Logic Errors", () => {
-		it("should fail API validation when schema is missing", () => {
+	describe('[Critical] Validation Logic Errors', () => {
+		it('should fail API validation when schema is missing', () => {
 			const buildNode = new BuildNode();
 
 			// Mock state with API but no schema
 			const mockState = {
 				blueprint: {
-					title: "API Test",
-					description: "Has API",
-					requirements: ["REST API"],
+					title: 'API Test',
+					description: 'Has API',
+					requirements: ['REST API'],
 				},
 				outputs: {
-					"api-check": { hasAPI: true, hasSchema: false },
+					'api-check': { hasAPI: true, hasSchema: false },
 				},
 			} as any;
 
@@ -148,17 +148,17 @@ describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 
 			// This will FAIL due to "hasAPI ? true : true" logic
 			expect(result.passed).toBe(false); // Should fail but returns true!
-			expect(result.details.validation).toBe("failed"); // Should indicate failure
+			expect(result.details.validation).toBe('failed'); // Should indicate failure
 		});
 
-		it("should require ALL phases to pass for cerebrum promotion", () => {
+		it('should require ALL phases to pass for cerebrum promotion', () => {
 			const evaluationNode = new EvaluationNode();
 
 			// Mock state with mixed validation results
 			const mockState = {
 				validationResults: {
 					strategy: { passed: true, blockers: [] },
-					build: { passed: false, blockers: ["API schema missing"] }, // Failed!
+					build: { passed: false, blockers: ['API schema missing'] }, // Failed!
 					evaluation: { passed: true, blockers: [] },
 				},
 			} as any;
@@ -170,21 +170,21 @@ describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 		});
 	});
 
-	describe("[Critical] Interface Implementation Gaps", () => {
-		it("should implement all required Neuron interface methods", () => {
+	describe('[Critical] Interface Implementation Gaps', () => {
+		it('should implement all required Neuron interface methods', () => {
 			const adapter = new MCPAdapter();
 			const mockTool = {
-				name: "test-neuron",
-				description: "Test neuron",
-				schema: { type: "object" },
+				name: 'test-neuron',
+				description: 'Test neuron',
+				schema: { type: 'object' },
 			};
 
-			const neuron = adapter.createNeuronFromTool(mockTool, "build");
+			const neuron = adapter.createNeuronFromTool(mockTool, 'build');
 
 			// These will FAIL due to incomplete interface implementation
 			expect(neuron.dependencies).toBeInstanceOf(Array);
 			expect(neuron.tools).toBeInstanceOf(Array);
-			expect(neuron.phase).toBe("build");
+			expect(neuron.phase).toBe('build');
 
 			// This will throw TypeError - execute method doesn't exist
 			expect(async () => {
@@ -194,9 +194,9 @@ describe.skip("🔴 TDD RED PHASE: Critical Issue Detection", () => {
 	});
 });
 
-describe.skip("🔴 TDD RED PHASE: Backward Compatibility Detection", () => {
-	describe("Unnecessary Wrapper Methods", () => {
-		it("should directly access orchestrator without wrapper methods", () => {
+describe.skip('🔴 TDD RED PHASE: Backward Compatibility Detection', () => {
+	describe('Unnecessary Wrapper Methods', () => {
+		it('should directly access orchestrator without wrapper methods', () => {
 			const mockOrchestrator = { getNeuronCount: () => 5 };
 			const kernel = new SimplePRPGraph(mockOrchestrator);
 
@@ -208,8 +208,8 @@ describe.skip("🔴 TDD RED PHASE: Backward Compatibility Detection", () => {
 		});
 	});
 
-	describe("Non-deterministic Fallbacks", () => {
-		it("should not use Math.random() for ID generation", async () => {
+	describe('Non-deterministic Fallbacks', () => {
+		it('should not use Math.random() for ID generation', async () => {
 			// Check example capture system
 			const originalMathRandom = Math.random;
 			let randomCalled = false;
@@ -222,15 +222,15 @@ describe.skip("🔴 TDD RED PHASE: Backward Compatibility Detection", () => {
 			try {
 				// This will trigger Math.random() usage - should be removed
 				const { ExampleCaptureSystem } = await import(
-					"../src/teaching/example-capture.js"
+					'../src/teaching/example-capture.js'
 				);
 				const system = new ExampleCaptureSystem();
 
 				system.captureExample(
-					"pattern",
+					'pattern',
 					{},
-					"user-action",
-					"outcome",
+					'user-action',
+					'outcome',
 					{},
 					true,
 				);
@@ -242,7 +242,7 @@ describe.skip("🔴 TDD RED PHASE: Backward Compatibility Detection", () => {
 			}
 		});
 
-		it("should not use setTimeout for deterministic execution", async () => {
+		it('should not use setTimeout for deterministic execution', async () => {
 			const mockOrchestrator = { getNeuronCount: () => 3 };
 			const kernel = new SimplePRPGraph(mockOrchestrator);
 
@@ -258,8 +258,8 @@ describe.skip("🔴 TDD RED PHASE: Backward Compatibility Detection", () => {
 			try {
 				// This will trigger setTimeout - should be removable
 				const blueprint = {
-					title: "Test",
-					description: "Test",
+					title: 'Test',
+					description: 'Test',
 					requirements: [],
 				};
 				await kernel.runPRPWorkflow(blueprint, { deterministic: true });

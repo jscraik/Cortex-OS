@@ -293,3 +293,40 @@ If any rule conflicts upward authority, defer & document in PR description.
 <strong>Playbook Consistency Check</strong>: Script (added separately) enforcing repository boundary rules (e.g., forbidding reach-through imports) to keep architecture sound.
 
 </details>
+
+## Local Memory (Persistent Context) Quickstart
+
+Enable persistent agent memory using Local Memory. Auto-selected when `LOCAL_MEMORY_BASE_URL` is set, or explicitly via `MEMORIES_ADAPTER=local` (alias: `MEMORY_STORE=local`).
+
+Env vars:
+
+- `LOCAL_MEMORY_BASE_URL` (default `http://localhost:3002/api/v1`)
+- `LOCAL_MEMORY_API_KEY` (optional)
+- `LOCAL_MEMORY_NAMESPACE` (optional)
+- `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
+
+Verify the service:
+
+```bash
+curl -sS http://localhost:3002/api/v1/health | jq .
+```
+
+Use in code:
+
+```ts
+import { createStoreFromEnv } from '@cortex-os/memories';
+
+process.env.MEMORIES_ADAPTER = 'local';
+process.env.LOCAL_MEMORY_BASE_URL = 'http://localhost:3002/api/v1';
+
+const store = await createStoreFromEnv();
+await store.upsert({
+  id: 'demo-local',
+  kind: 'note',
+  text: 'Persistent memory via Local Memory',
+  tags: ['demo'],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  provenance: { source: 'system' },
+});
+```

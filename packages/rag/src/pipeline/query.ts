@@ -1,4 +1,4 @@
-import type { Embedder, Store } from "../lib";
+import type { Embedder, Store } from '../lib';
 
 export async function query(
 	args: { q: string; topK?: number },

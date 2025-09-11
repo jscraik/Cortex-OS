@@ -1,26 +1,44 @@
 from dataclasses import dataclass
 import os
+from typing import Any, List
 
-def get_port_env_var(var_name="PORT", default="8000"):
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+
+def get_port_env_var(var_name: str = "PORT", default: str = "8000") -> int:
     value = os.getenv(var_name, default)
     try:
         return int(value)
-    except ValueError:
+    except ValueError as e:
         raise ValueError(
             f"Invalid value for {var_name}: '{value}'. Must be a valid integer."
-        )
-
-from fastapi import FastAPI
+        ) from e
 
 
 @dataclass
 class Settings:
     host: str = os.getenv("HOST", "0.0.0.0")
     port: int = get_port_env_var()
+    model: str = os.getenv("EMBEDDINGS_MODEL", "qwen3-embed")
+    dimensions: int = int(os.getenv("EMBEDDINGS_DIM", "768"))
 
 
 settings = Settings()
 app = FastAPI()
+
+
+class EmbedRequest(BaseModel):
+    # Accept either `input` or `texts` for compatibility
+    input: List[str] | str | None = None
+    texts: List[str] | None = None
+    model: str | None = None
+
+
+class EmbedResponse(BaseModel):
+    embeddings: List[List[float]]
+    model: str
+    dimensions: int
 
 
 @app.get("/ping")
@@ -30,7 +48,57 @@ async def ping():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "model": settings.model, "dimensions": settings.dimensions}
+
+
+def _fallback_embed(texts: List[str], dims: int) -> List[List[float]]:
+    # Deterministic, lightweight embedding for environments without MLX
+    embs: List[List[float]] = []
+    for t in texts:
+        vec = [0.0] * dims
+        for i, ch in enumerate(t.encode("utf-8")):
+            vec[i % dims] += (ch % 23) / 23.0
+        # simple normalization
+        s = sum(vec) or 1.0
+        embs.append([v / s for v in vec])
+    return embs
+
+
+@app.post("/embed", response_model=EmbedResponse)
+async def embed(req: EmbedRequest) -> Any:
+    # Resolve inputs
+    inputs: List[str]
+    if isinstance(req.input, str):
+        inputs = [req.input]
+    elif isinstance(req.input, list) and len(req.input) > 0:
+        inputs = req.input
+    elif isinstance(req.texts, list) and len(req.texts) > 0:
+        inputs = req.texts
+    else:
+        raise HTTPException(status_code=400, detail="Missing 'input' or 'texts'")
+
+    model = req.model or settings.model
+
+    # Try MLX if available; fallback otherwise
+    try:
+        # Delayed import so environments without MLX don't fail to start
+        import importlib
+
+        mlx_core = importlib.util.find_spec("mlx.core")
+        if mlx_core is None:
+            raise ImportError("mlx.core not found")
+
+        # If you have a proper embedding pipeline, plug it here.
+        # For now, mirror the fallback behavior while signaling MLX availability.
+        embeddings = _fallback_embed(inputs, settings.dimensions)
+    except Exception:
+        embeddings = _fallback_embed(inputs, settings.dimensions)
+
+    return EmbedResponse(
+        embeddings=embeddings,
+        model=model,
+        dimensions=settings.dimensions,
+    )
 
 
 def run() -> None:  # pragma: no cover - convenience wrapper

@@ -1,6 +1,6 @@
-import { hasTty } from "@cortex-os/utils";
-import chalk from "chalk";
-import { configManager } from "./config.js";
+import { hasTty } from '@cortex-os/utils';
+import chalk from 'chalk';
+import { configManager } from './config.js';
 
 /**
  * Permission engine controlling privileged operations such as shell execution
@@ -8,7 +8,7 @@ import { configManager } from "./config.js";
  * context objects.
  */
 
-export type PermissionMode = "plan" | "ask" | "auto";
+export type PermissionMode = 'plan' | 'ask' | 'auto';
 
 export interface GuardContext {
 	modeOverride?: PermissionMode;
@@ -20,19 +20,19 @@ export interface GuardContext {
 }
 
 async function getModeFromConfig(): Promise<PermissionMode> {
-	const cfgMode = (await configManager.getValue("permissions.mode")) as
+	const cfgMode = (await configManager.getValue('permissions.mode')) as
 		| PermissionMode
 		| undefined;
 	const env = String(
 		(globalThis as { process?: NodeJS.Process }).process?.env
-			?.CORTEX_PERMISSION_MODE || "",
+			?.CORTEX_PERMISSION_MODE || '',
 	).toLowerCase();
-	const envMode = (["plan", "ask", "auto"] as const).includes(
+	const envMode = (['plan', 'ask', 'auto'] as const).includes(
 		env as PermissionMode,
 	)
 		? (env as PermissionMode)
 		: undefined;
-	return envMode || cfgMode || "ask";
+	return envMode || cfgMode || 'ask';
 }
 
 async function defaultPrompt(message: string): Promise<boolean> {
@@ -41,9 +41,9 @@ async function defaultPrompt(message: string): Promise<boolean> {
 	if (
 		!proc?.stdin ||
 		!proc?.stdout ||
-		typeof proc.stdin.once !== "function" ||
-		typeof proc.stdin.off !== "function" ||
-		typeof proc.stdout.write !== "function" ||
+		typeof proc.stdin.once !== 'function' ||
+		typeof proc.stdin.off !== 'function' ||
+		typeof proc.stdout.write !== 'function' ||
 		!hasTty(proc)
 	) {
 		return false;
@@ -52,11 +52,11 @@ async function defaultPrompt(message: string): Promise<boolean> {
 		try {
 			proc.stdout.write(`${message} (y/N) `);
 			const onData = (chunk: unknown) => {
-				const ans = String(chunk ?? "").trim();
-				proc.stdin.off?.("data", onData);
+				const ans = String(chunk ?? '').trim();
+				proc.stdin.off?.('data', onData);
 				resolve(/^y(es)?$/i.test(ans));
 			};
-			proc.stdin.once("data", onData);
+			proc.stdin.once('data', onData);
 		} catch {
 			resolve(false);
 		}
@@ -69,7 +69,7 @@ export async function getMode(ctx?: GuardContext): Promise<PermissionMode> {
 }
 
 export async function setMode(mode: PermissionMode): Promise<void> {
-	await configManager.set("permissions.mode", mode);
+	await configManager.set('permissions.mode', mode);
 }
 
 export async function guardShell<T>(
@@ -79,15 +79,15 @@ export async function guardShell<T>(
 ): Promise<{ executed: boolean; result?: T }> {
 	const logger = ctx?.logger || { info: console.log, warn: console.warn };
 	const mode = await getMode(ctx);
-	if (mode === "plan") {
+	if (mode === 'plan') {
 		logger.warn(chalk.yellow(`PLAN MODE – would execute: ${description}`));
 		return { executed: false };
 	}
-	if (mode === "ask") {
+	if (mode === 'ask') {
 		const prompt = ctx?.prompter || defaultPrompt;
 		const ok = await prompt(`Execute: ${description}?`);
 		if (!ok) {
-			logger.warn(chalk.yellow("Operation cancelled by user"));
+			logger.warn(chalk.yellow('Operation cancelled by user'));
 			return { executed: false };
 		}
 	}
@@ -102,16 +102,16 @@ export async function guardWrite<T>(
 ): Promise<{ executed: boolean; result?: T }> {
 	const logger = ctx?.logger || { info: console.log, warn: console.warn };
 	const mode = await getMode(ctx);
-	if (mode === "plan") {
-		logger.warn(chalk.yellow("PLAN MODE – would write changes:"));
+	if (mode === 'plan') {
+		logger.warn(chalk.yellow('PLAN MODE – would write changes:'));
 		logger.info(preview);
 		return { executed: false };
 	}
-	if (mode === "ask") {
+	if (mode === 'ask') {
 		const prompt = ctx?.prompter || defaultPrompt;
-		const ok = await prompt("Apply these changes?");
+		const ok = await prompt('Apply these changes?');
 		if (!ok) {
-			logger.warn(chalk.yellow("Write cancelled by user"));
+			logger.warn(chalk.yellow('Write cancelled by user'));
 			return { executed: false };
 		}
 	}

@@ -142,7 +142,7 @@ blocks:
 
 
       | Awesome-Copilot
-      Prompt                                                                          
+      Prompt
       | Description                    | Already Installed | Similar Local
       Prompt                        | Suggestion
       Rationale                                                       |
@@ -155,7 +155,7 @@ blocks:
       |
 
       |
-      [code-review.md](https://github.com/github/awesome-copilot/blob/main/prompts/code-review.md)    
+      [code-review.md](https://github.com/github/awesome-copilot/blob/main/prompts/code-review.md)
       | Automated code review prompts  | ❌ No             |
       None                                        | Would enhance development
       workflow with standardized code review processes |
@@ -167,7 +167,7 @@ blocks:
       documentation prompts                          |
 
       |
-      [debugging.md](https://github.com/github/awesome-copilot/blob/main/prompts/debugging.md)        
+      [debugging.md](https://github.com/github/awesome-copilot/blob/main/prompts/debugging.md)
       | Debug assistance prompts       | ❌ No             |
       None                                        | Could improve
       troubleshooting efficiency for development team              |

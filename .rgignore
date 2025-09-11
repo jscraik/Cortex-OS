@@ -1,0 +1,43 @@
+# Generic build and dependency directories
+node_modules/
+dist/
+build/
+coverage/
+.nx/
+.cache/
+.turbo/
+
+# Logs and temp
+logs/
+tmp/
+.temp/
+
+# VCS and IDE
+.git/
+.vscode/
+.idea/
+
+# Python envs and caches
+.venv/
+venv/
+__pycache__/
+.python_cache/
+.pytype/
+.pytest_cache/
+
+# Rust/Cargo
+**/target/
+
+# Data and generated artifacts
+sbom/
+reports/
+.data/
+data/db/
+data/events/
+
+# Vendor/external
+external/
+apps/**/external/
+
+# OS files
+.DS_Store

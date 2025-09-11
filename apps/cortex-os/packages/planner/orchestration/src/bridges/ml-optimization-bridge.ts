@@ -6,12 +6,12 @@
  * error handling, and performance monitoring.
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
-import { EventEmitter } from "node:events";
-import * as fsSync from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
-import { z } from "zod";
+import { type ChildProcess, spawn } from 'node:child_process';
+import { EventEmitter } from 'node:events';
+import * as fsSync from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -19,34 +19,34 @@ const __dirname = path.dirname(__filename);
 
 // Schema definitions for type safety
 const TaskTypeSchema = z.enum([
-	"CODE_GENERATION",
-	"CODE_REVIEW",
-	"INSTRUCTION_FOLLOWING",
-	"REASONING",
-	"SUMMARIZATION",
-	"CONVERSATION",
-	"TRANSLATION",
-	"ANALYSIS",
-	"PLANNING",
-	"DEBUGGING",
+	'CODE_GENERATION',
+	'CODE_REVIEW',
+	'INSTRUCTION_FOLLOWING',
+	'REASONING',
+	'SUMMARIZATION',
+	'CONVERSATION',
+	'TRANSLATION',
+	'ANALYSIS',
+	'PLANNING',
+	'DEBUGGING',
 ]);
 
 const SecurityLevelSchema = z.enum([
-	"MINIMAL",
-	"STANDARD",
-	"STRICT",
-	"COMPLIANCE",
+	'MINIMAL',
+	'STANDARD',
+	'STRICT',
+	'COMPLIANCE',
 ]);
 
-const ModelBackendSchema = z.enum(["MLX", "OLLAMA", "LLAMA_CPP"]);
+const ModelBackendSchema = z.enum(['MLX', 'OLLAMA', 'LLAMA_CPP']);
 
 const OptimizationContextSchema = z.object({
 	task_type: TaskTypeSchema,
-	priority: z.enum(["low", "normal", "high", "critical"]).default("normal"),
+	priority: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
 	max_latency_ms: z.number().optional(),
 	min_quality_score: z.number().min(0).max(1).default(0.5),
 	memory_limit_gb: z.number().positive().optional(),
-	security_level: SecurityLevelSchema.default("STANDARD"),
+	security_level: SecurityLevelSchema.default('STANDARD'),
 	user_preferences: z.record(z.string(), z.any()).default({}),
 	session_id: z.string().optional(),
 });
@@ -74,15 +74,15 @@ const ModelSelectionSchema = z.object({
 const SecurityContextSchema = z.object({
 	user_id: z.string().optional(),
 	session_id: z.string().optional(),
-	security_level: SecurityLevelSchema.default("STANDARD"),
+	security_level: SecurityLevelSchema.default('STANDARD'),
 	source_ip: z.string().optional(),
 	user_agent: z.string().optional(),
 	content_sensitivity: z
-		.enum(["public", "internal", "confidential", "restricted"])
-		.default("public"),
+		.enum(['public', 'internal', 'confidential', 'restricted'])
+		.default('public'),
 	data_classification: z
-		.enum(["general", "personal", "sensitive", "critical"])
-		.default("general"),
+		.enum(['general', 'personal', 'sensitive', 'critical'])
+		.default('general'),
 	gdpr_applicable: z.boolean().default(false),
 	hipaa_applicable: z.boolean().default(false),
 	sox_applicable: z.boolean().default(false),
@@ -96,7 +96,7 @@ const ValidationResultSchema = z.object({
 		.array(
 			z.object({
 				violation_type: z.string(),
-				severity: z.enum(["low", "medium", "high", "critical"]),
+				severity: z.enum(['low', 'medium', 'high', 'critical']),
 				description: z.string(),
 				blocked: z.boolean().default(true),
 				sanitized: z.boolean().default(false),
@@ -170,7 +170,7 @@ interface MLOptimizationConfig {
 	cacheEnabled?: boolean;
 	cacheTtlMs?: number;
 	monitoringEnabled?: boolean;
-	logLevel?: "debug" | "info" | "warn" | "error";
+	logLevel?: 'debug' | 'info' | 'warn' | 'error';
 }
 
 interface CacheEntry<T> {
@@ -216,19 +216,19 @@ export class MLOptimizationBridge extends EventEmitter {
 		super();
 
 		this.config = {
-			pythonPath: config.pythonPath || "python3",
+			pythonPath: config.pythonPath || 'python3',
 			scriptPath:
 				config.scriptPath ||
 				path.join(
 					__dirname,
-					"../../../apps/cortex-py/src/mlx/bridge_server.py",
+					'../../../apps/cortex-py/src/mlx/bridge_server.py',
 				),
 			timeout: config.timeout || 30000,
 			retryAttempts: config.retryAttempts || 3,
 			cacheEnabled: config.cacheEnabled ?? true,
 			cacheTtlMs: config.cacheTtlMs || 60000, // 1 minute default cache
 			monitoringEnabled: config.monitoringEnabled ?? true,
-			logLevel: config.logLevel || "info",
+			logLevel: config.logLevel || 'info',
 		};
 
 		// Clean up cache periodically
@@ -245,10 +245,10 @@ export class MLOptimizationBridge extends EventEmitter {
 			await this.startPythonProcess();
 			await this.healthCheck();
 			this.isInitialized = true;
-			this.emit("initialized");
-			this.log("info", "ML Optimization Bridge initialized successfully");
+			this.emit('initialized');
+			this.log('info', 'ML Optimization Bridge initialized successfully');
 		} catch (error) {
-			this.emit("error", error);
+			this.emit('error', error);
 			throw new Error(`Failed to initialize ML Optimization Bridge: ${error}`);
 		}
 	}
@@ -267,12 +267,12 @@ export class MLOptimizationBridge extends EventEmitter {
 		if (this.config.cacheEnabled && !forceReevaluation) {
 			const cached = this.getFromCache<ModelSelection>(cacheKey);
 			if (cached) {
-				this.log("debug", `Cache hit for model selection: ${cacheKey}`);
+				this.log('debug', `Cache hit for model selection: ${cacheKey}`);
 				return cached;
 			}
 		}
 
-		const result = await this.callPythonMethod("select_optimal_model", {
+		const result = await this.callPythonMethod('select_optimal_model', {
 			context: validatedContext,
 			force_reevaluation: forceReevaluation,
 		});
@@ -284,7 +284,7 @@ export class MLOptimizationBridge extends EventEmitter {
 			this.setCache(cacheKey, modelSelection);
 		}
 
-		this.emit("modelSelected", modelSelection);
+		this.emit('modelSelected', modelSelection);
 		return modelSelection;
 	}
 
@@ -298,7 +298,7 @@ export class MLOptimizationBridge extends EventEmitter {
 	): Promise<ValidationResult> {
 		const validatedContext = SecurityContextSchema.parse(context);
 
-		const result = await this.callPythonMethod("validate_input", {
+		const result = await this.callPythonMethod('validate_input', {
 			input_text: inputText,
 			context: validatedContext,
 			model_name: modelName,
@@ -307,7 +307,7 @@ export class MLOptimizationBridge extends EventEmitter {
 		const validationResult = ValidationResultSchema.parse(result);
 
 		if (!validationResult.is_valid) {
-			this.emit("securityViolation", {
+			this.emit('securityViolation', {
 				inputText: inputText.substring(0, 100),
 				violations: validationResult.violations,
 				context: validatedContext,
@@ -328,7 +328,7 @@ export class MLOptimizationBridge extends EventEmitter {
 	): Promise<ValidationResult> {
 		const validatedContext = SecurityContextSchema.parse(context);
 
-		const result = await this.callPythonMethod("validate_output", {
+		const result = await this.callPythonMethod('validate_output', {
 			output_text: outputText,
 			input_text: inputText,
 			context: validatedContext,
@@ -338,7 +338,7 @@ export class MLOptimizationBridge extends EventEmitter {
 		const validationResult = ValidationResultSchema.parse(result);
 
 		if (!validationResult.is_valid) {
-			this.emit("outputViolation", {
+			this.emit('outputViolation', {
 				outputText: outputText.substring(0, 100),
 				violations: validationResult.violations,
 				context: validatedContext,
@@ -352,7 +352,7 @@ export class MLOptimizationBridge extends EventEmitter {
 	 * Get current performance metrics
 	 */
 	async getPerformanceMetrics(): Promise<PerformanceMetrics> {
-		const result = await this.callPythonMethod("get_performance_metrics", {});
+		const result = await this.callPythonMethod('get_performance_metrics', {});
 		return PerformanceMetricsSchema.parse(result);
 	}
 
@@ -372,7 +372,7 @@ export class MLOptimizationBridge extends EventEmitter {
 			reasoning: string;
 		};
 	}> {
-		const res = await this.callPythonMethod("get_memory_state", {});
+		const res = await this.callPythonMethod('get_memory_state', {});
 		return MemoryStateSchema.parse(res);
 	}
 
@@ -387,7 +387,7 @@ export class MLOptimizationBridge extends EventEmitter {
 			successful_recoveries: number;
 		};
 	}> {
-		const res = await this.callPythonMethod("get_fallback_status", {});
+		const res = await this.callPythonMethod('get_fallback_status', {});
 		return FallbackStatusSchema.parse(res);
 	}
 
@@ -396,15 +396,15 @@ export class MLOptimizationBridge extends EventEmitter {
 	 */
 	async forceModelSwitch(
 		modelName: string,
-		reason = "user_request",
+		reason = 'user_request',
 	): Promise<boolean> {
-		const result = await this.callPythonMethod("force_model_switch", {
+		const result = await this.callPythonMethod('force_model_switch', {
 			model_name: modelName,
 			reason,
 		});
 		const parsed = z.object({ success: z.boolean() }).parse(result);
 		if (parsed.success) {
-			this.emit("modelSwitched", { modelName, reason });
+			this.emit('modelSwitched', { modelName, reason });
 		}
 		return parsed.success;
 	}
@@ -419,7 +419,7 @@ export class MLOptimizationBridge extends EventEmitter {
 		memory_usage_gb: number;
 		average_latency_ms: number;
 	}> {
-		const res = await this.callPythonMethod("get_optimization_stats", {});
+		const res = await this.callPythonMethod('get_optimization_stats', {});
 		return OptimizationStatsSchema.parse(res);
 	}
 
@@ -436,8 +436,8 @@ export class MLOptimizationBridge extends EventEmitter {
 		user_id?: string;
 		session_id?: string;
 	}): Promise<void> {
-		await this.callPythonMethod("record_inference", { metrics });
-		this.emit("inferenceRecorded", metrics);
+		await this.callPythonMethod('record_inference', { metrics });
+		this.emit('inferenceRecorded', metrics);
 	}
 
 	/**
@@ -445,11 +445,11 @@ export class MLOptimizationBridge extends EventEmitter {
 	 */
 	async healthCheck(): Promise<boolean> {
 		try {
-			const result = await this.callPythonMethod("health_check", {}, 5000); // 5 second timeout
+			const result = await this.callPythonMethod('health_check', {}, 5000); // 5 second timeout
 			const status = z.object({ status: z.string() }).parse(result);
-			return status.status === "healthy";
+			return status.status === 'healthy';
 		} catch (error) {
-			this.log("error", `Health check failed: ${this.errorMessage(error)}`);
+			this.log('error', `Health check failed: ${this.errorMessage(error)}`);
 			return false;
 		}
 	}
@@ -469,7 +469,7 @@ export class MLOptimizationBridge extends EventEmitter {
 	 */
 	clearCache(): void {
 		this.cache.clear();
-		this.log("info", "Cache cleared");
+		this.log('info', 'Cache cleared');
 	}
 
 	/**
@@ -477,13 +477,13 @@ export class MLOptimizationBridge extends EventEmitter {
 	 */
 	async shutdown(): Promise<void> {
 		if (this.pythonProcess) {
-			this.pythonProcess.kill("SIGTERM");
+			this.pythonProcess.kill('SIGTERM');
 
 			// Give process time to cleanup
 			await new Promise((resolve) => setTimeout(resolve, 2000));
 
 			if (!this.pythonProcess.killed) {
-				this.pythonProcess.kill("SIGKILL");
+				this.pythonProcess.kill('SIGKILL');
 			}
 
 			this.pythonProcess = null;
@@ -491,8 +491,8 @@ export class MLOptimizationBridge extends EventEmitter {
 
 		this.isInitialized = false;
 		this.clearCache();
-		this.emit("shutdown");
-		this.log("info", "ML Optimization Bridge shutdown");
+		this.emit('shutdown');
+		this.log('info', 'ML Optimization Bridge shutdown');
 	}
 
 	// Private methods
@@ -509,40 +509,40 @@ export class MLOptimizationBridge extends EventEmitter {
 				this.config.pythonPath,
 				[this.config.scriptPath],
 				{
-					stdio: ["pipe", "pipe", "pipe"],
-					env: { ...process.env, PYTHONUNBUFFERED: "1" },
+					stdio: ['pipe', 'pipe', 'pipe'],
+					env: { ...process.env, PYTHONUNBUFFERED: '1' },
 				},
 			);
 
-			let stdoutBuffer = "";
-			let _stderrBuffer = "";
+			let stdoutBuffer = '';
+			let _stderrBuffer = '';
 
-			this.pythonProcess.stdout?.on("data", (data) => {
+			this.pythonProcess.stdout?.on('data', (data) => {
 				stdoutBuffer += data.toString();
 				this.processMessages(stdoutBuffer);
 			});
 
-			this.pythonProcess.stderr?.on("data", (data) => {
+			this.pythonProcess.stderr?.on('data', (data) => {
 				_stderrBuffer += data.toString();
-				if (this.config.logLevel === "debug") {
-					this.log("debug", `Python stderr: ${data.toString()}`);
+				if (this.config.logLevel === 'debug') {
+					this.log('debug', `Python stderr: ${data.toString()}`);
 				}
 			});
 
-			this.pythonProcess.on("error", (error) => {
-				this.log("error", `Python process error: ${error}`);
-				this.emit("error", error);
+			this.pythonProcess.on('error', (error) => {
+				this.log('error', `Python process error: ${error}`);
+				this.emit('error', error);
 				reject(error);
 			});
 
-			this.pythonProcess.on("exit", (code, signal) => {
+			this.pythonProcess.on('exit', (code, signal) => {
 				this.log(
-					"warn",
+					'warn',
 					`Python process exited with code ${code}, signal ${signal}`,
 				);
 				this.pythonProcess = null;
 				this.isInitialized = false;
-				this.emit("processExit", { code, signal });
+				this.emit('processExit', { code, signal });
 			});
 
 			// Wait for process to be ready
@@ -550,7 +550,7 @@ export class MLOptimizationBridge extends EventEmitter {
 				if (this.pythonProcess && !this.pythonProcess.killed) {
 					resolve();
 				} else {
-					reject(new Error("Python process failed to start"));
+					reject(new Error('Python process failed to start'));
 				}
 			}, 2000);
 		});
@@ -566,7 +566,7 @@ export class MLOptimizationBridge extends EventEmitter {
 	}
 
 	private processMessages(buffer: string): void {
-		const lines = buffer.split("\n");
+		const lines = buffer.split('\n');
 
 		for (const line of lines) {
 			if (line.trim()) {
@@ -575,8 +575,8 @@ export class MLOptimizationBridge extends EventEmitter {
 					this.handlePythonMessage(message);
 				} catch (_err) {
 					// Not a JSON message, might be debug output
-					if (this.config.logLevel === "debug") {
-						this.log("debug", `Python output: ${line}`);
+					if (this.config.logLevel === 'debug') {
+						this.log('debug', `Python output: ${line}`);
 					}
 				}
 			}
@@ -593,7 +593,7 @@ export class MLOptimizationBridge extends EventEmitter {
 			level?: string;
 			message?: string;
 		};
-		if (m.type === "response") {
+		if (m.type === 'response') {
 			// Find pending request and resolve it
 			const requestIndex = this.requestQueue.findIndex(
 				(req) => req.id === m.id,
@@ -611,14 +611,14 @@ export class MLOptimizationBridge extends EventEmitter {
 					request.resolve(m.result);
 				}
 			}
-		} else if (m.type === "event") {
+		} else if (m.type === 'event') {
 			// Forward Python events
-			if (typeof m.event === "string") {
+			if (typeof m.event === 'string') {
 				this.emit(m.event, m.data);
 			}
-		} else if (m.type === "log") {
+		} else if (m.type === 'log') {
 			// Forward Python logs
-			this.log(m.level || "info", `Python: ${m.message}`);
+			this.log(m.level || 'info', `Python: ${m.message}`);
 		}
 	}
 	private async callPythonMethod(
@@ -627,7 +627,7 @@ export class MLOptimizationBridge extends EventEmitter {
 		timeoutMs?: number,
 	): Promise<unknown> {
 		if (!this.isInitialized || !this.pythonProcess) {
-			throw new Error("ML Optimization Bridge not initialized");
+			throw new Error('ML Optimization Bridge not initialized');
 		}
 
 		const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -742,7 +742,7 @@ export class MLOptimizationBridge extends EventEmitter {
 
 		if (keysToDelete.length > 0) {
 			this.log(
-				"debug",
+				'debug',
 				`Cleaned up ${keysToDelete.length} expired cache entries`,
 			);
 		}
@@ -750,7 +750,7 @@ export class MLOptimizationBridge extends EventEmitter {
 
 	private log(level: string, message: string): void {
 		if (this.config.monitoringEnabled) {
-			const levels = ["debug", "info", "warn", "error"];
+			const levels = ['debug', 'info', 'warn', 'error'];
 			const currentLevelIndex = levels.indexOf(this.config.logLevel);
 			const messageLevelIndex = levels.indexOf(level);
 

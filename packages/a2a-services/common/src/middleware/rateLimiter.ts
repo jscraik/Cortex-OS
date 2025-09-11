@@ -1,4 +1,4 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from 'express';
 
 // NOTE: This is a simplified rate limiter for demonstration purposes.
 // It is not suitable for production use due to the following limitations:
@@ -26,9 +26,9 @@ export function createRateLimiter({
 	const requestMap = new Map<string, RequestRecord>();
 
 	return function rateLimiter(req: Request, res: Response, next: NextFunction) {
-		const xff = req.headers["x-forwarded-for"];
+		const xff = req.headers['x-forwarded-for'];
 		const forwarded = Array.isArray(xff) ? xff[0] : xff;
-		const ip: string = (forwarded ?? req.ip ?? "").toString();
+		const ip: string = (forwarded ?? req.ip ?? '').toString();
 		const currentTime = Date.now();
 
 		// cleanup stale entries
@@ -50,8 +50,8 @@ export function createRateLimiter({
 			const retryAfter = Math.ceil(
 				(record.startTime + windowMs - currentTime) / 1000,
 			);
-			res.setHeader("Retry-After", retryAfter);
-			res.status(429).send("Too Many Requests");
+			res.setHeader('Retry-After', retryAfter);
+			res.status(429).send('Too Many Requests');
 		} else {
 			next();
 		}

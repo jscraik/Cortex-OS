@@ -11,7 +11,7 @@ import {
 	createRerankerAdapter,
 	type EmbeddingAdapter,
 	type RerankerAdapter,
-} from "./embedding-adapter";
+} from './embedding-adapter';
 import {
 	checkProviderHealth,
 	configureLLM,
@@ -20,13 +20,13 @@ import {
 	type LLMState,
 	generate as llmGenerate,
 	shutdown as shutdownLLM,
-} from "./llm-bridge.js";
-import { AVAILABLE_MLX_MODELS } from "./mlx-adapter.js";
+} from './llm-bridge.js';
+import { AVAILABLE_MLX_MODELS } from './mlx-adapter.js';
 
 export interface AICoreConfig {
 	// LLM Configuration
 	llm: {
-		provider: "mlx" | "ollama";
+		provider: 'mlx' | 'ollama';
 		model?: string;
 		endpoint?: string;
 		mlxModel?: string;
@@ -36,14 +36,14 @@ export interface AICoreConfig {
 
 	// Embedding Configuration
 	embedding?: {
-		provider: "sentence-transformers" | "local";
+		provider: 'sentence-transformers' | 'local';
 		model?: string;
 		dimensions?: number;
 	};
 
 	// Reranker Configuration
 	reranker?: {
-		provider: "transformers" | "local";
+		provider: 'transformers' | 'local';
 		model?: string;
 	};
 
@@ -106,7 +106,7 @@ export class AICoreCapabilities {
 		// Initialize LLM state
 		this.llmState = configureLLM({
 			provider: this.config.llm.provider,
-			endpoint: this.config.llm.endpoint || "",
+			endpoint: this.config.llm.endpoint || '',
 			model: this.config.llm.model,
 			mlxModel: this.config.llm.mlxModel,
 		});
@@ -151,7 +151,7 @@ export class AICoreCapabilities {
 		ids?: string[],
 	): Promise<string[]> {
 		if (!this.embeddingAdapter) {
-			throw new Error("Embedding adapter not configured for knowledge storage");
+			throw new Error('Embedding adapter not configured for knowledge storage');
 		}
 
 		const documentIds = await this.embeddingAdapter.addDocuments(
@@ -182,7 +182,7 @@ export class AICoreCapabilities {
 		threshold: number = 0.3,
 	) {
 		if (!this.embeddingAdapter) {
-			throw new Error("Embedding adapter not configured for knowledge search");
+			throw new Error('Embedding adapter not configured for knowledge search');
 		}
 
 		return this.embeddingAdapter.similaritySearch({
@@ -197,7 +197,7 @@ export class AICoreCapabilities {
 	 */
 	async ragQuery(ragQuery: RAGQuery): Promise<RAGResult> {
 		if (!this.embeddingAdapter) {
-			throw new Error("Embedding adapter not configured for RAG");
+			throw new Error('Embedding adapter not configured for RAG');
 		}
 
 		const { query, systemPrompt, includeEmbeddings = false } = ragQuery;
@@ -340,7 +340,7 @@ export class AICoreCapabilities {
 				: undefined,
 			reranker: this.rerankerAdapter
 				? {
-						provider: "available",
+						provider: 'available',
 						available: true,
 					}
 				: undefined,
@@ -359,7 +359,7 @@ export class AICoreCapabilities {
 		// Clear embedding adapter's vector store if available
 		if (
 			this.embeddingAdapter &&
-			typeof this.embeddingAdapter.clearDocuments === "function"
+			typeof this.embeddingAdapter.clearDocuments === 'function'
 		) {
 			await this.embeddingAdapter.clearDocuments();
 		}
@@ -374,7 +374,7 @@ export class AICoreCapabilities {
 		// Cleanup embedding adapter resources
 		if (
 			this.embeddingAdapter &&
-			typeof this.embeddingAdapter.shutdown === "function"
+			typeof this.embeddingAdapter.shutdown === 'function'
 		) {
 			await this.embeddingAdapter.shutdown();
 		}
@@ -382,7 +382,7 @@ export class AICoreCapabilities {
 		// Cleanup reranker adapter resources
 		if (
 			this.rerankerAdapter &&
-			typeof this.rerankerAdapter.shutdown === "function"
+			typeof this.rerankerAdapter.shutdown === 'function'
 		) {
 			await this.rerankerAdapter.shutdown();
 		}
@@ -416,8 +416,8 @@ export class AICoreCapabilities {
 	): string {
 		const contextSection =
 			context.length > 0
-				? `Context information:\n${context.map((c, i) => `${i + 1}. ${c}`).join("\n\n")}\n\n`
-				: "";
+				? `Context information:\n${context.map((c, i) => `${i + 1}. ${c}`).join('\n\n')}\n\n`
+				: '';
 
 		const system = systemPrompt
 			? `${systemPrompt}\n\n`
@@ -444,18 +444,18 @@ export class AICoreCapabilities {
 	 * Get list of available features
 	 */
 	private getAvailableFeatures(): string[] {
-		const features = ["text-generation"];
+		const features = ['text-generation'];
 
 		if (this.embeddingAdapter) {
-			features.push("embeddings", "semantic-search", "knowledge-base");
+			features.push('embeddings', 'semantic-search', 'knowledge-base');
 		}
 
 		if (this.rerankerAdapter) {
-			features.push("reranking");
+			features.push('reranking');
 		}
 
 		if (this.embeddingAdapter && this.rerankerAdapter) {
-			features.push("rag", "question-answering");
+			features.push('rag', 'question-answering');
 		}
 
 		return features;
@@ -466,26 +466,26 @@ export class AICoreCapabilities {
  * Create AI capabilities with common configurations
  */
 export const createAICapabilities = (
-	preset: "full" | "llm-only" | "rag-focused" = "full",
+	preset: 'full' | 'llm-only' | 'rag-focused' = 'full',
 ): AICoreCapabilities => {
 	const env: any = (globalThis as any).process?.env ?? {};
 	const rerankerProvider = env.RERANKER_PROVIDER as
-		| "transformers"
-		| "local"
-		| "mock"
+		| 'transformers'
+		| 'local'
+		| 'mock'
 		| undefined;
 
 	const configs: Record<string, AICoreConfig> = {
 		full: {
 			llm: {
-				provider: "mlx",
+				provider: 'mlx',
 				mlxModel: AVAILABLE_MLX_MODELS.QWEN_SMALL,
-				endpoint: "",
+				endpoint: '',
 				temperature: 0.7,
 				maxTokens: 512,
 			},
 			embedding: {
-				provider: "sentence-transformers",
+				provider: 'sentence-transformers',
 				dimensions: 1024,
 			},
 			rag: {
@@ -494,22 +494,22 @@ export const createAICapabilities = (
 				rerankTopK: 3,
 			},
 		},
-		"llm-only": {
+		'llm-only': {
 			llm: {
-				provider: "mlx",
+				provider: 'mlx',
 				mlxModel: AVAILABLE_MLX_MODELS.QWEN_SMALL,
-				endpoint: "",
+				endpoint: '',
 			},
 		},
-		"rag-focused": {
+		'rag-focused': {
 			llm: {
-				provider: "mlx",
+				provider: 'mlx',
 				mlxModel: AVAILABLE_MLX_MODELS.QWEN_SMALL,
-				endpoint: "",
+				endpoint: '',
 				temperature: 0.3, // Lower temperature for factual RAG
 			},
 			embedding: {
-				provider: "sentence-transformers",
+				provider: 'sentence-transformers',
 				dimensions: 1024,
 			},
 			rag: {
@@ -521,10 +521,10 @@ export const createAICapabilities = (
 	};
 
 	if (rerankerProvider) {
-		const reranker = { provider: rerankerProvider } as AICoreConfig["reranker"];
+		const reranker = { provider: rerankerProvider } as AICoreConfig['reranker'];
 		if (configs.full.embedding) configs.full.reranker = reranker;
-		if (configs["rag-focused"].embedding)
-			configs["rag-focused"].reranker = reranker;
+		if (configs['rag-focused'].embedding)
+			configs['rag-focused'].reranker = reranker;
 	}
 
 	return new AICoreCapabilities(configs[preset]);
@@ -534,7 +534,7 @@ export const createAICapabilities = (
  * Available AI model presets
  */
 export const AI_PRESETS = {
-	FULL_CAPABILITIES: "full",
-	LLM_ONLY: "llm-only",
-	RAG_FOCUSED: "rag-focused",
+	FULL_CAPABILITIES: 'full',
+	LLM_ONLY: 'llm-only',
+	RAG_FOCUSED: 'rag-focused',
 } as const;

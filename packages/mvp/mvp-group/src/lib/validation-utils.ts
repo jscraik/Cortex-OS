@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import type { Evidence } from "../state.js";
+import type { Evidence } from '../state.js';
 
 /**
  * Create a standardized validation result
@@ -43,10 +43,10 @@ export const hasRequirement = (
  */
 export const createEvidence = (
 	id: string,
-	type: Evidence["type"],
+	type: Evidence['type'],
 	source: string,
 	content: string,
-	phase: "strategy" | "build" | "evaluation",
+	phase: 'strategy' | 'build' | 'evaluation',
 	timestamp?: string,
 ): Evidence => ({
 	id,

@@ -1,9 +1,9 @@
 // Minimal example: run Security Agent with MLX LlamaGuard and DLQ/outbox channels
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { createSecurityAgent } from "../src/agents/security-agent.js";
-import { createEventBus } from "../src/lib/event-bus.js";
-import { createMLXProvider } from "../src/providers/mlx-provider/index.js";
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { createSecurityAgent } from '../src/agents/security-agent.js';
+import { createEventBus } from '../src/lib/event-bus.js';
+import { createMLXProvider } from '../src/providers/mlx-provider/index.js';
 
 // Outbox/DLQ channels: simple subscribers on event bus
 const createBusWithChannels = () => {
@@ -17,16 +17,16 @@ const createBusWithChannels = () => {
 
 	// Capture all lifecycle and provider events to outbox
 	for (const type of [
-		"agent.started",
-		"agent.completed",
-		"provider.fallback",
-		"workflow.started",
-		"workflow.completed",
+		'agent.started',
+		'agent.completed',
+		'provider.fallback',
+		'workflow.started',
+		'workflow.completed',
 	]) {
 		bus.subscribe(type, (evt: any) => outbox.push(evt));
 	}
 	// Failures to DLQ
-	bus.subscribe("agent.failed", (evt: any) => dlq.push(evt));
+	bus.subscribe('agent.failed', (evt: any) => dlq.push(evt));
 
 	return { bus, outbox, dlq } as const;
 };
@@ -35,7 +35,7 @@ async function main() {
 	// Adjust to your local LlamaGuard MLX model path
 	const modelPath =
 		process.env.MLX_LLAMAGUARD_MODEL ||
-		"~/.cache/huggingface/hub/models--mlx-community--LlamaGuard-3-8B";
+		'~/.cache/huggingface/hub/models--mlx-community--LlamaGuard-3-8B';
 
 	const provider = createMLXProvider({
 		modelPath,
@@ -60,40 +60,40 @@ async function main() {
 	});
 
 	const input = {
-		content: "List files in my home directory using shell",
-		phase: "prompt" as const,
-		context: { toolsAllowed: ["fs.read"], egressAllowed: [] },
-		riskThreshold: "medium" as const,
+		content: 'List files in my home directory using shell',
+		phase: 'prompt' as const,
+		context: { toolsAllowed: ['fs.read'], egressAllowed: [] },
+		riskThreshold: 'medium' as const,
 	};
 
 	const res = await securityAgent.execute(input);
 	console.log(
-		"Security decision:",
+		'Security decision:',
 		res.decision,
-		"risk:",
+		'risk:',
 		res.risk,
-		"labels:",
+		'labels:',
 		res.labels,
 	);
-	console.log("Outbox events:", outbox.length, "DLQ events:", dlq.length);
+	console.log('Outbox events:', outbox.length, 'DLQ events:', dlq.length);
 
 	// Persist outbox and DLQ to logs for downstream processing
-	const logsDir = join(process.cwd(), "logs");
+	const logsDir = join(process.cwd(), 'logs');
 	await mkdir(logsDir, { recursive: true });
 	await writeFile(
-		join(logsDir, "security-outbox.jsonl"),
-		`${outbox.map((e) => JSON.stringify(e)).join("\n")}\n`,
+		join(logsDir, 'security-outbox.jsonl'),
+		`${outbox.map((e) => JSON.stringify(e)).join('\n')}\n`,
 	);
 	await writeFile(
-		join(logsDir, "security-dlq.jsonl"),
-		`${dlq.map((e) => JSON.stringify(e)).join("\n")}\n`,
+		join(logsDir, 'security-dlq.jsonl'),
+		`${dlq.map((e) => JSON.stringify(e)).join('\n')}\n`,
 	);
-	console.log("Wrote logs/security-outbox.jsonl and logs/security-dlq.jsonl");
+	console.log('Wrote logs/security-outbox.jsonl and logs/security-dlq.jsonl');
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
 	main().catch((e) => {
-		console.error("Security example failed:", e);
+		console.error('Security example failed:', e);
 		process.exit(1);
 	});
 }

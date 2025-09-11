@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export interface Candidate {
 	text: string;
@@ -15,8 +15,8 @@ export async function callRerankService(
 	candidates: Candidate[],
 ): Promise<Candidate[]> {
 	const res = await fetch(`${baseUrl}/rerank`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ query, candidates }),
 	});
 
@@ -27,7 +27,7 @@ export async function callRerankService(
 	const json = await res.json();
 	const data = responseSchema.parse(json);
 	if (data.scores.length !== candidates.length) {
-		throw new Error("Service returned mismatched scores");
+		throw new Error('Service returned mismatched scores');
 	}
 	return candidates.map((c, i) => ({ ...c, score: data.scores[i] }));
 }

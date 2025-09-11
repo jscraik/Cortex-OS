@@ -9,10 +9,10 @@
  * @ai_provenance_hash N/A
  */
 
-import { EventEmitter } from "node:events";
-import * as net from "node:net";
-import WebSocket from "ws";
-import type { AnalyticsConfig, DashboardData } from "./types.js";
+import { EventEmitter } from 'node:events';
+import * as net from 'node:net';
+import WebSocket from 'ws';
+import type { AnalyticsConfig, DashboardData } from './types.js';
 
 /**
  * Find an available port starting from a base port
@@ -33,13 +33,13 @@ async function isPortAvailable(port: number): Promise<boolean> {
 	return new Promise((resolve) => {
 		const server = net.createServer();
 
-		server.listen(port, "localhost", () => {
+		server.listen(port, 'localhost', () => {
 			server.close(() => {
 				resolve(true);
 			});
 		});
 
-		server.on("error", () => {
+		server.on('error', () => {
 			resolve(false);
 		});
 	});
@@ -65,10 +65,10 @@ export class RealtimeDataStream extends EventEmitter {
 	start(): void {
 		this.server = new WebSocket.Server({ port: this.port });
 
-		this.server.on("connection", (ws) => {
+		this.server.on('connection', (ws) => {
 			this.clients.add(ws);
 
-			ws.on("close", () => {
+			ws.on('close', () => {
 				this.clients.delete(ws);
 			});
 		});

@@ -1,17 +1,17 @@
-import { readFile } from "node:fs/promises";
-import { resolve as resolvePath } from "node:path";
-import Ajv2020 from "ajv/dist/2020";
+import { readFile } from 'node:fs/promises';
+import { resolve as resolvePath } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020';
 import {
 	type DispatchResult,
 	ProcessingDispatcher,
 	type ProcessingFile,
-} from "../chunkers/dispatch";
+} from '../chunkers/dispatch';
 import {
 	type MimePolicyConfig,
 	MimePolicyEngine,
 	type ProcessingConfig,
 	type StrategyDecision,
-} from "./mime";
+} from './mime';
 
 export interface RetrievalPolicy {
 	version?: string;
@@ -41,15 +41,15 @@ export interface LoadedPolicy {
 }
 
 export async function loadRetrievalPolicy(
-	configPath = resolvePath(process.cwd(), "config/retrieval.policy.json"),
+	configPath = resolvePath(process.cwd(), 'config/retrieval.policy.json'),
 	schemaPath = resolvePath(
 		process.cwd(),
-		"schemas/retrieval.policy.schema.json",
+		'schemas/retrieval.policy.schema.json',
 	),
 ): Promise<LoadedPolicy> {
 	const [configRaw, schemaRaw] = await Promise.all([
-		readFile(configPath, "utf8"),
-		readFile(schemaPath, "utf8"),
+		readFile(configPath, 'utf8'),
+		readFile(schemaPath, 'utf8'),
 	]);
 
 	const policyUnknown: unknown = JSON.parse(configRaw);
@@ -61,7 +61,7 @@ export async function loadRetrievalPolicy(
 	);
 	const valid = validate(policyUnknown);
 	if (!valid) {
-		const msg = ajv.errorsText(validate.errors, { separator: "\n" });
+		const msg = ajv.errorsText(validate.errors, { separator: '\n' });
 		throw new Error(`Retrieval policy validation failed:\n${msg}`);
 	}
 	const policy = policyUnknown as RetrievalPolicy;
@@ -76,10 +76,10 @@ export function applyPolicyOverrides(
 ): StrategyDecision {
 	if (!policy.overrides) return decision;
 
-	const normalized = mimeType.split(";")[0].trim().toLowerCase();
+	const normalized = mimeType.split(';')[0].trim().toLowerCase();
 	const exact = policy.overrides[normalized];
 	const wildcard = (() => {
-		const [type] = normalized.split("/");
+		const [type] = normalized.split('/');
 		return policy.overrides?.[`${type}/*`];
 	})();
 
@@ -88,8 +88,8 @@ export function applyPolicyOverrides(
 	if (!decision.processing) return decision;
 
 	const nextProcessing: ProcessingConfig = { ...decision.processing };
-	if (override.processing && typeof override.processing === "object") {
-		if (Object.hasOwn(override.processing, "maxPages")) {
+	if (override.processing && typeof override.processing === 'object') {
+		if (Object.hasOwn(override.processing, 'maxPages')) {
 			nextProcessing.maxPages =
 				(override.processing as { maxPages?: number | null }).maxPages ?? null;
 		}
@@ -117,9 +117,9 @@ export function createDispatcherFromPolicy(
 	if (policy?.dispatcher) {
 		const { timeout, maxChunkSize, enableParallel } = policy.dispatcher;
 		return new ProcessingDispatcher({
-			...(typeof timeout === "number" ? { timeout } : {}),
-			...(typeof maxChunkSize === "number" ? { maxChunkSize } : {}),
-			...(typeof enableParallel === "boolean" ? { enableParallel } : {}),
+			...(typeof timeout === 'number' ? { timeout } : {}),
+			...(typeof maxChunkSize === 'number' ? { maxChunkSize } : {}),
+			...(typeof enableParallel === 'boolean' ? { enableParallel } : {}),
 		});
 	}
 	return new ProcessingDispatcher();

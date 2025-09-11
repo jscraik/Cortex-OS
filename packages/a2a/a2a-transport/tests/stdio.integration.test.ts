@@ -1,13 +1,13 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { stdio } from "../src/stdio.js";
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { stdio } from '../src/stdio.js';
 
-describe("stdio transport", () => {
-	it("terminates child and cleans subscriptions on unsubscribe", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "stdio-test-"));
-		const scriptPath = join(dir, "child.js");
+describe('stdio transport', () => {
+	it('terminates child and cleans subscriptions on unsubscribe', async () => {
+		const dir = mkdtempSync(join(tmpdir(), 'stdio-test-'));
+		const scriptPath = join(dir, 'child.js');
 		writeFileSync(
 			scriptPath,
 			`process.stdin.on('data', d => {\n` +
@@ -16,18 +16,18 @@ describe("stdio transport", () => {
 				`});\n` +
 				`setInterval(() => {}, 1000);\n`,
 		);
-		const transport = stdio("node", [scriptPath]);
+		const transport = stdio('node', [scriptPath]);
 		const pid = transport.pid;
 		const messages: any[] = [];
-		const unsubscribe = await transport.subscribe(["test"], async (m) => {
+		const unsubscribe = await transport.subscribe(['test'], async (m) => {
 			messages.push(m);
 		});
 
 		const env = {
-			id: "1",
-			type: "test",
-			source: "urn:test",
-			specversion: "1.0",
+			id: '1',
+			type: 'test',
+			source: 'urn:test',
+			specversion: '1.0',
 		} as any;
 		await transport.publish(env);
 		await new Promise((r) => setTimeout(r, 200));

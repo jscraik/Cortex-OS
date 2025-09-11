@@ -7,7 +7,7 @@ export type Embedding = { embedding: number[]; model: string };
 export type ChatResponse = { content: string; model: string };
 
 export type Message = {
-	role: "system" | "user" | "assistant";
+	role: 'system' | 'user' | 'assistant';
 	content: string;
 };
 

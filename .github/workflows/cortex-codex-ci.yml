@@ -45,4 +45,3 @@ jobs:
       - name: test (tui)
         working-directory: apps/cortex-codex
         run: cargo test -p codex-tui --lib --features vt100-tests
-

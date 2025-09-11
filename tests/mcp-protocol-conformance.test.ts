@@ -1,49 +1,49 @@
-import { mkdtempSync, readFileSync } from "node:fs";
-import { createServer } from "node:http";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { createTransport } from "../packages/mcp/src/lib/transport.js";
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
+import { createTransport } from '../packages/mcp/src/lib/transport.js';
 
-describe("Transport Integration", () => {
-	it("writes messages to child stdin for stdio transport", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "stdio-test-"));
-		const file = join(dir, "out.txt");
+describe('Transport Integration', () => {
+	it('writes messages to child stdin for stdio transport', async () => {
+		const dir = mkdtempSync(join(tmpdir(), 'stdio-test-'));
+		const file = join(dir, 'out.txt');
 		const transport = createTransport({
-			type: "stdio",
-			command: "node",
+			type: 'stdio',
+			command: 'node',
 			args: [
-				"-e",
+				'-e',
 				"process.stdin.on('data', d => require('fs').appendFileSync(process.env.OUT, d.toString()))",
 			],
 			env: { OUT: file },
 		});
 
 		await transport.connect();
-		const message = { jsonrpc: "2.0" as const, id: 1, method: "ping" };
+		const message = { jsonrpc: '2.0' as const, id: 1, method: 'ping' };
 		await transport.send(message);
 		await new Promise((r) => setTimeout(r, 100));
-		const content = readFileSync(file, "utf8");
+		const content = readFileSync(file, 'utf8');
 		expect(content).toContain(JSON.stringify(message));
 		await transport.disconnect();
 	});
 
-	it("POSTs messages to configured URL for http transport", async () => {
+	it('POSTs messages to configured URL for http transport', async () => {
 		const received: string[] = [];
 		const server = createServer((req, res) => {
-			if (req.method !== "POST") {
+			if (req.method !== 'POST') {
 				res.statusCode = 405;
 				res.end();
 				return;
 			}
-			let body = "";
-			req.on("data", (chunk) => {
+			let body = '';
+			req.on('data', (chunk) => {
 				body += chunk.toString();
 			});
-			req.on("end", () => {
+			req.on('end', () => {
 				received.push(body);
 				res.statusCode = 200;
-				res.end("ok");
+				res.end('ok');
 			});
 		});
 
@@ -51,19 +51,19 @@ describe("Transport Integration", () => {
 		const address = server.address();
 		if (
 			!address ||
-			typeof address === "string" ||
-			typeof (address as any).port !== "number"
+			typeof address === 'string' ||
+			typeof (address as any).port !== 'number'
 		) {
-			throw new Error("Server address is not AddressInfo with port");
+			throw new Error('Server address is not AddressInfo with port');
 		}
-		const port = (address as import("net").AddressInfo).port;
+		const port = (address as import('net').AddressInfo).port;
 		const transport = createTransport({
-			type: "http",
+			type: 'http',
 			url: `http://localhost:${port}`,
 		});
 
 		await transport.connect();
-		const message = { jsonrpc: "2.0" as const, id: 2, method: "ping" };
+		const message = { jsonrpc: '2.0' as const, id: 2, method: 'ping' };
 		await transport.send(message);
 		// Wait until the server has received the message, up to 2 seconds
 		await new Promise((resolve, reject) => {
@@ -74,7 +74,7 @@ describe("Transport Integration", () => {
 					resolve(undefined);
 				} else if (Date.now() - start > 2000) {
 					clearInterval(interval);
-					reject(new Error("Timeout waiting for server to receive message"));
+					reject(new Error('Timeout waiting for server to receive message'));
 				}
 			}, 10);
 		});
@@ -83,14 +83,14 @@ describe("Transport Integration", () => {
 		await new Promise((resolve) => server.close(resolve));
 	});
 
-	it("invokes onError for http network failures", async () => {
+	it('invokes onError for http network failures', async () => {
 		const transport = createTransport({
-			type: "http",
-			url: "http://localhost:65500",
+			type: 'http',
+			url: 'http://localhost:65500',
 		});
 		await transport.connect();
 		const onError = vi.fn();
-		const message = { jsonrpc: "2.0" as const, id: 3, method: "ping" };
+		const message = { jsonrpc: '2.0' as const, id: 3, method: 'ping' };
 		await transport.send(message, onError);
 		expect(onError).toHaveBeenCalled();
 		await transport.disconnect();

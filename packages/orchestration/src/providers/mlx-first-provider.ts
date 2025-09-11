@@ -3,7 +3,7 @@
  * Handles automatic failover and performance optimization
  */
 
-import { MODEL_STRATEGY } from "../lib/model-strategy.js";
+import { MODEL_STRATEGY } from '../lib/model-strategy.js';
 
 export interface ModelRequest {
 	task: string;
@@ -17,7 +17,7 @@ export interface ModelRequest {
 export interface ModelResponse {
 	content: string;
 	model: string;
-	provider: "mlx" | "ollama";
+	provider: 'mlx' | 'ollama';
 	latency: number;
 	tokens?: number;
 	cached?: boolean;
@@ -31,7 +31,7 @@ export interface EmbeddingRequest {
 export interface EmbeddingResponse {
 	embeddings: number[][];
 	model: string;
-	provider: "mlx" | "ollama";
+	provider: 'mlx' | 'ollama';
 	dimensions: number;
 }
 
@@ -59,7 +59,7 @@ export class MLXFirstModelProvider {
 
 		// Try MLX first
 		try {
-			if (this.isHealthy("mlx", config.primary.model)) {
+			if (this.isHealthy('mlx', config.primary.model)) {
 				const response = await this.mlxService.generate({
 					model: config.primary.model,
 					...request,
@@ -67,14 +67,14 @@ export class MLXFirstModelProvider {
 
 				return {
 					...response,
-					provider: "mlx",
+					provider: 'mlx',
 					latency: Date.now() - startTime,
 					model: config.primary.model,
 				};
 			}
 		} catch (error) {
 			console.warn(`MLX generation failed for ${task}:`, error);
-			this.markUnhealthy("mlx", config.primary.model);
+			this.markUnhealthy('mlx', config.primary.model);
 		}
 
 		// Fallback to Ollama
@@ -86,7 +86,7 @@ export class MLXFirstModelProvider {
 
 			return {
 				...response,
-				provider: "ollama",
+				provider: 'ollama',
 				latency: Date.now() - startTime,
 				model: config.fallback.model,
 			};
@@ -104,7 +104,7 @@ export class MLXFirstModelProvider {
 
 		// Try MLX first
 		try {
-			if (this.isHealthy("mlx", config.primary.model)) {
+			if (this.isHealthy('mlx', config.primary.model)) {
 				const response = await this.mlxService.embed({
 					model: config.primary.model,
 					texts: request.texts,
@@ -112,13 +112,13 @@ export class MLXFirstModelProvider {
 
 				return {
 					...response,
-					provider: "mlx",
+					provider: 'mlx',
 					model: config.primary.model,
 				};
 			}
 		} catch (error) {
 			console.warn(`MLX embedding failed:`, error);
-			this.markUnhealthy("mlx", config.primary.model);
+			this.markUnhealthy('mlx', config.primary.model);
 		}
 
 		// Fallback to Frontier API using an Ollama model
@@ -130,7 +130,7 @@ export class MLXFirstModelProvider {
 
 			return {
 				embeddings,
-				provider: "ollama",
+				provider: 'ollama',
 				model: config.fallback.model,
 				dimensions: embeddings[0]?.length || 0,
 			};
@@ -151,18 +151,18 @@ export class MLXFirstModelProvider {
 
 		// Try MLX reranker first
 		try {
-			if (this.isHealthy("mlx", config.primary.model)) {
+			if (this.isHealthy('mlx', config.primary.model)) {
 				const scores = await this.mlxService.rerank({
 					model: config.primary.model,
 					query,
 					documents,
 				});
 
-				return { scores, provider: "mlx" };
+				return { scores, provider: 'mlx' };
 			}
 		} catch (error) {
 			console.warn(`MLX reranking failed:`, error);
-			this.markUnhealthy("mlx", config.primary.model);
+			this.markUnhealthy('mlx', config.primary.model);
 		}
 
 		// Fallback to Ollama with comparison prompts
@@ -171,7 +171,7 @@ export class MLXFirstModelProvider {
 				query,
 				documents,
 			);
-			return { scores, provider: "ollama" };
+			return { scores, provider: 'ollama' };
 		} catch (error) {
 			console.error(`Ollama reranking fallback failed:`, error);
 			throw new Error(`All providers failed for reranking`);
@@ -191,18 +191,18 @@ export class MLXFirstModelProvider {
 	private async checkMLXHealth() {
 		try {
 			const response = await this.mlxService.healthCheck();
-			this.healthChecks.set("mlx", response.healthy);
+			this.healthChecks.set('mlx', response.healthy);
 		} catch {
-			this.healthChecks.set("mlx", false);
+			this.healthChecks.set('mlx', false);
 		}
 	}
 
 	private async checkOllamaHealth() {
 		try {
 			const response = await this.ollamaService.healthCheck();
-			this.healthChecks.set("ollama", response.healthy);
+			this.healthChecks.set('ollama', response.healthy);
 		} catch {
-			this.healthChecks.set("ollama", false);
+			this.healthChecks.set('ollama', false);
 		}
 	}
 
@@ -211,7 +211,7 @@ export class MLXFirstModelProvider {
 		if (model) {
 			const modelKey = `${provider}-${model}`;
 			const modelHealth = this.healthChecks.get(modelKey);
-			if (typeof modelHealth === "boolean") return modelHealth;
+			if (typeof modelHealth === 'boolean') return modelHealth;
 		}
 		return this.healthChecks.get(provider) ?? true; // default to true to attempt primary first
 	}
@@ -237,14 +237,14 @@ export class MLXFirstModelProvider {
 			return config.primary;
 		}
 
-		if (constraints?.maxMemory === "light") {
+		if (constraints?.maxMemory === 'light') {
 			// Prefer lighter models
-			return config.performance.memory === "light"
+			return config.performance.memory === 'light'
 				? config.primary
 				: config.fallback;
 		}
 
-		return this.isHealthy("mlx", config.primary.model)
+		return this.isHealthy('mlx', config.primary.model)
 			? config.primary
 			: config.fallback;
 	}
@@ -255,12 +255,12 @@ export class MLXFirstModelProvider {
  */
 class MLXService {
 	private readonly baseUrl =
-		process.env.MLX_SERVICE_URL || "http://localhost:8765";
+		process.env.MLX_SERVICE_URL || 'http://localhost:8765';
 
 	async generate(request: any): Promise<any> {
 		const response = await fetch(`${this.baseUrl}/generate`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(request),
 		});
 
@@ -273,8 +273,8 @@ class MLXService {
 
 	async embed(request: any): Promise<any> {
 		const response = await fetch(`${this.baseUrl}/embed`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(request),
 		});
 
@@ -287,8 +287,8 @@ class MLXService {
 
 	async rerank(request: any): Promise<number[]> {
 		const response = await fetch(`${this.baseUrl}/rerank`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(request),
 		});
 
@@ -304,7 +304,7 @@ class MLXService {
 		try {
 			// Note: global fetch doesn't support timeout option; use AbortController if needed.
 			const response = await fetch(`${this.baseUrl}/health`, {
-				method: "GET",
+				method: 'GET',
 			} as any);
 			return { healthy: response.ok };
 		} catch {
@@ -317,12 +317,12 @@ class MLXService {
  * Ollama Service Implementation
  */
 class OllamaService {
-	private readonly baseUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+	private readonly baseUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
 
 	async generate(request: any): Promise<any> {
 		const response = await fetch(`${this.baseUrl}/api/generate`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				model: request.model,
 				prompt: request.prompt,
@@ -347,8 +347,8 @@ class OllamaService {
 		texts: string[];
 	}): Promise<number[][]> {
 		const response = await fetch(`${this.baseUrl}/api/embed`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ model: request.model, input: request.texts }),
 		});
 
@@ -368,7 +368,7 @@ class OllamaService {
 
 		for (const doc of documents) {
 			const response = await this.generate({
-				model: "phi4-mini-reasoning:latest",
+				model: 'phi4-mini-reasoning:latest',
 				prompt: `Rate the relevance of this document to the query on a scale of 0-1.
 Query: "${query}"
 Document: "${doc}"
@@ -387,7 +387,7 @@ Output only a decimal number between 0 and 1:`,
 		try {
 			// Note: global fetch doesn't support timeout option; use AbortController if needed.
 			const response = await fetch(`${this.baseUrl}/api/tags`, {
-				method: "GET",
+				method: 'GET',
 			} as any);
 			return { healthy: response.ok };
 		} catch {

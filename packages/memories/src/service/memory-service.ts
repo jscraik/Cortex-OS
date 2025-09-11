@@ -18,9 +18,6 @@ export type MemoryService = {
 	purge: (nowISO?: string) => Promise<number>;
 	// New method to test embedders
 	testEmbedders?: () => Promise<Array<{ name: string; available: boolean }>>;
-	listPending: () => Promise<Memory[]>;
-	approve: (id: string) => Promise<Memory | null>;
-	discard: (id: string) => Promise<void>;
 };
 
 export const createMemoryService = (
@@ -28,8 +25,6 @@ export const createMemoryService = (
 	embedder: Embedder,
 ): MemoryService => {
 	if (!embedder) throw new Error('embedder:missing');
-
-	const pending = new Map<string, Memory>();
 
 	return {
 		save: async (raw) => {
@@ -46,19 +41,10 @@ export const createMemoryService = (
 				} else {
 					withVec = m;
 				}
-				if (withVec.policy?.requiresConsent) {
-					const pendingMem = { ...withVec, status: 'pending' as const };
-					pending.set(pendingMem.id, pendingMem);
-					return pendingMem;
-				}
-				return store.upsert({ ...withVec, status: 'approved' });
+				return store.upsert(withVec);
 			});
 		},
-		get: async (id) => {
-			const pendingMem = pending.get(id);
-			if (pendingMem) return pendingMem;
-			return store.get(id);
-		},
+		get: (id) => store.get(id),
 		del: (id) => store.delete(id),
 		search: async (q) => {
 			return withSpan('memories.search', async () => {
@@ -104,17 +90,6 @@ export const createMemoryService = (
 			withSpan('memories.purge', async () =>
 				store.purgeExpired(nowISO ?? new Date().toISOString()),
 			),
-		listPending: async () => [...pending.values()],
-		approve: async (id) => {
-			const m = pending.get(id);
-			if (!m) return null;
-			pending.delete(id);
-			const saved = await store.upsert({ ...m, status: 'approved' });
-			return saved;
-		},
-		discard: async (id) => {
-			pending.delete(id);
-		},
 		...(embedder instanceof CompositeEmbedder
 			? {
 					testEmbedders: () => (embedder as CompositeEmbedder).testEmbedders(),

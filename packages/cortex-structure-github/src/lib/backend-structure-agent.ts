@@ -3,20 +3,20 @@
  * Specialized analysis for Node.js, Python, Go, Rust, and other backend frameworks
  */
 
-import * as path from "path";
+import * as path from 'path';
 
 export interface BackendStructureConfig {
 	framework:
-		| "express"
-		| "fastapi"
-		| "django"
-		| "flask"
-		| "gin"
-		| "fiber"
-		| "axum"
-		| "auto";
-	architecture: "mvc" | "clean" | "hexagonal" | "layered" | "auto";
-	language: "typescript" | "javascript" | "python" | "go" | "rust" | "auto";
+		| 'express'
+		| 'fastapi'
+		| 'django'
+		| 'flask'
+		| 'gin'
+		| 'fiber'
+		| 'axum'
+		| 'auto';
+	architecture: 'mvc' | 'clean' | 'hexagonal' | 'layered' | 'auto';
+	language: 'typescript' | 'javascript' | 'python' | 'go' | 'rust' | 'auto';
 	enforceLayerSeparation: boolean;
 	maxFunctionSize: number; // lines
 	requireTests: boolean;
@@ -24,15 +24,15 @@ export interface BackendStructureConfig {
 
 export interface BackendViolation {
 	type:
-		| "controller"
-		| "service"
-		| "model"
-		| "middleware"
-		| "route"
-		| "config"
-		| "test"
-		| "database";
-	severity: "error" | "warning" | "info";
+		| 'controller'
+		| 'service'
+		| 'model'
+		| 'middleware'
+		| 'route'
+		| 'config'
+		| 'test'
+		| 'database';
+	severity: 'error' | 'warning' | 'info';
 	file: string;
 	line?: number;
 	message: string;
@@ -77,48 +77,48 @@ interface LayerInfo {
 
 const _BACKEND_PATTERNS = {
 	express: {
-		controllers: ["src/controllers", "controllers", "src/routes", "routes"],
-		services: ["src/services", "services", "src/lib", "lib"],
-		models: ["src/models", "models", "src/entities", "entities"],
-		middleware: ["src/middleware", "middleware"],
-		config: ["src/config", "config"],
-		tests: ["src/__tests__", "__tests__", "tests", "test"],
-		extensions: [".ts", ".js"],
+		controllers: ['src/controllers', 'controllers', 'src/routes', 'routes'],
+		services: ['src/services', 'services', 'src/lib', 'lib'],
+		models: ['src/models', 'models', 'src/entities', 'entities'],
+		middleware: ['src/middleware', 'middleware'],
+		config: ['src/config', 'config'],
+		tests: ['src/__tests__', '__tests__', 'tests', 'test'],
+		extensions: ['.ts', '.js'],
 	},
 	fastapi: {
-		controllers: ["app/api", "src/api", "api"],
-		services: ["app/services", "src/services", "services"],
-		models: ["app/models", "src/models", "models"],
-		schemas: ["app/schemas", "src/schemas", "schemas"],
-		config: ["app/core", "src/core", "config"],
-		tests: ["tests", "test"],
-		extensions: [".py"],
+		controllers: ['app/api', 'src/api', 'api'],
+		services: ['app/services', 'src/services', 'services'],
+		models: ['app/models', 'src/models', 'models'],
+		schemas: ['app/schemas', 'src/schemas', 'schemas'],
+		config: ['app/core', 'src/core', 'config'],
+		tests: ['tests', 'test'],
+		extensions: ['.py'],
 	},
 	django: {
-		apps: ["apps", "src"],
-		models: ["*/models.py", "models"],
-		views: ["*/views.py", "views"],
-		serializers: ["*/serializers.py", "serializers"],
-		urls: ["*/urls.py"],
-		tests: ["*/tests.py", "tests"],
-		extensions: [".py"],
+		apps: ['apps', 'src'],
+		models: ['*/models.py', 'models'],
+		views: ['*/views.py', 'views'],
+		serializers: ['*/serializers.py', 'serializers'],
+		urls: ['*/urls.py'],
+		tests: ['*/tests.py', 'tests'],
+		extensions: ['.py'],
 	},
 	gin: {
-		handlers: ["handlers", "controllers"],
-		services: ["services", "pkg/services"],
-		models: ["models", "pkg/models"],
-		middleware: ["middleware", "pkg/middleware"],
-		config: ["config", "pkg/config"],
-		tests: ["*_test.go"],
-		extensions: [".go"],
+		handlers: ['handlers', 'controllers'],
+		services: ['services', 'pkg/services'],
+		models: ['models', 'pkg/models'],
+		middleware: ['middleware', 'pkg/middleware'],
+		config: ['config', 'pkg/config'],
+		tests: ['*_test.go'],
+		extensions: ['.go'],
 	},
 	axum: {
-		handlers: ["src/handlers", "handlers"],
-		services: ["src/services", "services"],
-		models: ["src/models", "models"],
-		config: ["src/config", "config"],
-		tests: ["tests"],
-		extensions: [".rs"],
+		handlers: ['src/handlers', 'handlers'],
+		services: ['src/services', 'services'],
+		models: ['src/models', 'models'],
+		config: ['src/config', 'config'],
+		tests: ['tests'],
+		extensions: ['.rs'],
 	},
 };
 
@@ -181,60 +181,60 @@ export async function analyzeBackendStructure(
 async function detectLanguage(repoPath: string): Promise<string> {
 	try {
 		// Check for package.json (Node.js)
-		const packageJsonExists = await import("node:fs").then((fs) =>
+		const packageJsonExists = await import('node:fs').then((fs) =>
 			fs.promises
-				.access(path.join(repoPath, "package.json"))
+				.access(path.join(repoPath, 'package.json'))
 				.then(() => true)
 				.catch(() => false),
 		);
 		if (packageJsonExists) {
-			const hasTs = await import("node:fs").then((fs) =>
+			const hasTs = await import('node:fs').then((fs) =>
 				fs.promises
-					.access(path.join(repoPath, "tsconfig.json"))
+					.access(path.join(repoPath, 'tsconfig.json'))
 					.then(() => true)
 					.catch(() => false),
 			);
-			return hasTs ? "typescript" : "javascript";
+			return hasTs ? 'typescript' : 'javascript';
 		}
 
 		// Check for Python files
 		const pythonFiles = [
-			"requirements.txt",
-			"pyproject.toml",
-			"setup.py",
-			"Pipfile",
+			'requirements.txt',
+			'pyproject.toml',
+			'setup.py',
+			'Pipfile',
 		];
 		for (const file of pythonFiles) {
-			const exists = await import("node:fs").then((fs) =>
+			const exists = await import('node:fs').then((fs) =>
 				fs.promises
 					.access(path.join(repoPath, file))
 					.then(() => true)
 					.catch(() => false),
 			);
-			if (exists) return "python";
+			if (exists) return 'python';
 		}
 
 		// Check for Go
-		const goModExists = await import("node:fs").then((fs) =>
+		const goModExists = await import('node:fs').then((fs) =>
 			fs.promises
-				.access(path.join(repoPath, "go.mod"))
+				.access(path.join(repoPath, 'go.mod'))
 				.then(() => true)
 				.catch(() => false),
 		);
-		if (goModExists) return "go";
+		if (goModExists) return 'go';
 
 		// Check for Rust
-		const cargoTomlExists = await import("node:fs").then((fs) =>
+		const cargoTomlExists = await import('node:fs').then((fs) =>
 			fs.promises
-				.access(path.join(repoPath, "Cargo.toml"))
+				.access(path.join(repoPath, 'Cargo.toml'))
 				.then(() => true)
 				.catch(() => false),
 		);
-		if (cargoTomlExists) return "rust";
+		if (cargoTomlExists) return 'rust';
 
-		return "auto";
+		return 'auto';
 	} catch {
-		return "auto";
+		return 'auto';
 	}
 }
 
@@ -244,12 +244,12 @@ async function detectFramework(
 ): Promise<string> {
 	try {
 		switch (language) {
-			case "typescript":
-			case "javascript": {
-				const packageJsonPath = path.join(repoPath, "package.json");
+			case 'typescript':
+			case 'javascript': {
+				const packageJsonPath = path.join(repoPath, 'package.json');
 				const packageJson = JSON.parse(
-					await import("node:fs").then((fs) =>
-						fs.promises.readFile(packageJsonPath, "utf-8"),
+					await import('node:fs').then((fs) =>
+						fs.promises.readFile(packageJsonPath, 'utf-8'),
 					),
 				);
 				const deps = {
@@ -257,57 +257,57 @@ async function detectFramework(
 					...packageJson.devDependencies,
 				};
 
-				if (deps.express) return "express";
-				if (deps["@nestjs/core"]) return "nestjs";
-				if (deps.koa) return "koa";
-				if (deps.fastify) return "fastify";
-				return "express"; // default for Node.js
+				if (deps.express) return 'express';
+				if (deps['@nestjs/core']) return 'nestjs';
+				if (deps.koa) return 'koa';
+				if (deps.fastify) return 'fastify';
+				return 'express'; // default for Node.js
 			}
 
-			case "python": {
-				const requirements = await import("node:fs").then((fs) =>
+			case 'python': {
+				const requirements = await import('node:fs').then((fs) =>
 					fs.promises
-						.readFile(path.join(repoPath, "requirements.txt"), "utf-8")
-						.catch(() => ""),
+						.readFile(path.join(repoPath, 'requirements.txt'), 'utf-8')
+						.catch(() => ''),
 				);
 
-				if (requirements.includes("fastapi")) return "fastapi";
-				if (requirements.includes("django")) return "django";
-				if (requirements.includes("flask")) return "flask";
-				return "fastapi"; // default for Python
+				if (requirements.includes('fastapi')) return 'fastapi';
+				if (requirements.includes('django')) return 'django';
+				if (requirements.includes('flask')) return 'flask';
+				return 'fastapi'; // default for Python
 			}
 
-			case "go": {
-				const goMod = await import("node:fs").then((fs) =>
+			case 'go': {
+				const goMod = await import('node:fs').then((fs) =>
 					fs.promises
-						.readFile(path.join(repoPath, "go.mod"), "utf-8")
-						.catch(() => ""),
+						.readFile(path.join(repoPath, 'go.mod'), 'utf-8')
+						.catch(() => ''),
 				);
 
-				if (goMod.includes("github.com/gin-gonic/gin")) return "gin";
-				if (goMod.includes("github.com/gofiber/fiber")) return "fiber";
-				if (goMod.includes("github.com/gorilla/mux")) return "gorilla";
-				return "gin"; // default for Go
+				if (goMod.includes('github.com/gin-gonic/gin')) return 'gin';
+				if (goMod.includes('github.com/gofiber/fiber')) return 'fiber';
+				if (goMod.includes('github.com/gorilla/mux')) return 'gorilla';
+				return 'gin'; // default for Go
 			}
 
-			case "rust": {
-				const cargoToml = await import("node:fs").then((fs) =>
+			case 'rust': {
+				const cargoToml = await import('node:fs').then((fs) =>
 					fs.promises
-						.readFile(path.join(repoPath, "Cargo.toml"), "utf-8")
-						.catch(() => ""),
+						.readFile(path.join(repoPath, 'Cargo.toml'), 'utf-8')
+						.catch(() => ''),
 				);
 
-				if (cargoToml.includes("axum")) return "axum";
-				if (cargoToml.includes("warp")) return "warp";
-				if (cargoToml.includes("actix-web")) return "actix";
-				return "axum"; // default for Rust
+				if (cargoToml.includes('axum')) return 'axum';
+				if (cargoToml.includes('warp')) return 'warp';
+				if (cargoToml.includes('actix-web')) return 'actix';
+				return 'axum'; // default for Rust
 			}
 
 			default:
-				return "auto";
+				return 'auto';
 		}
 	} catch {
-		return "auto";
+		return 'auto';
 	}
 }
 
@@ -316,7 +316,7 @@ async function detectArchitecture(
 	_framework: string,
 ): Promise<string> {
 	// Check directory structure to infer architecture pattern
-	const directories = await import("node:fs").then((fs) =>
+	const directories = await import('node:fs').then((fs) =>
 		fs.promises
 			.readdir(repoPath, { withFileTypes: true })
 			.then((entries) =>
@@ -326,24 +326,24 @@ async function detectArchitecture(
 	);
 
 	const hasControllers = directories.some(
-		(d) => d.includes("controller") || d.includes("handler"),
+		(d) => d.includes('controller') || d.includes('handler'),
 	);
-	const hasServices = directories.some((d) => d.includes("service"));
+	const hasServices = directories.some((d) => d.includes('service'));
 	const hasModels = directories.some(
-		(d) => d.includes("model") || d.includes("entity"),
+		(d) => d.includes('model') || d.includes('entity'),
 	);
 
 	if (hasControllers && hasServices && hasModels) {
-		const hasDomain = directories.some((d) => d.includes("domain"));
+		const hasDomain = directories.some((d) => d.includes('domain'));
 		const hasInfra = directories.some(
-			(d) => d.includes("infra") || d.includes("infrastructure"),
+			(d) => d.includes('infra') || d.includes('infrastructure'),
 		);
 
-		if (hasDomain && hasInfra) return "clean";
-		return "layered";
+		if (hasDomain && hasInfra) return 'clean';
+		return 'layered';
 	}
 
-	return "mvc"; // default
+	return 'mvc'; // default
 }
 
 async function analyzeBackendLayers(
@@ -446,11 +446,11 @@ function calculateBackendScore(violations: BackendViolation[]): number {
 
 	const penalty = violations.reduce((total, violation) => {
 		switch (violation.severity) {
-			case "error":
+			case 'error':
 				return total + errorWeight;
-			case "warning":
+			case 'warning':
 				return total + warningWeight;
-			case "info":
+			case 'info':
 				return total + infoWeight;
 			default:
 				return total;
@@ -467,22 +467,22 @@ function generateBackendRecommendations(
 	const recommendations: string[] = [];
 
 	const layerViolations = violations.filter((v) =>
-		["controller", "service", "model"].includes(v.type),
+		['controller', 'service', 'model'].includes(v.type),
 	);
 	if (layerViolations.length > 0) {
-		recommendations.push("Improve layer separation and dependency direction");
+		recommendations.push('Improve layer separation and dependency direction');
 	}
 
 	const securityViolations = violations.filter((v) =>
-		v.message.includes("security"),
+		v.message.includes('security'),
 	);
 	if (securityViolations.length > 0) {
-		recommendations.push("Address security vulnerabilities in backend code");
+		recommendations.push('Address security vulnerabilities in backend code');
 	}
 
-	const testViolations = violations.filter((v) => v.type === "test");
+	const testViolations = violations.filter((v) => v.type === 'test');
 	if (testViolations.length > 0) {
-		recommendations.push("Increase test coverage for backend services");
+		recommendations.push('Increase test coverage for backend services');
 	}
 
 	const autoFixableCount = violations.filter((v) => v.autoFixable).length;
@@ -521,25 +521,25 @@ async function applyBackendFix(
 ): Promise<void> {
 	// Implementation would apply specific fixes based on violation type
 	switch (violation.type) {
-		case "controller":
+		case 'controller':
 			// Move files to proper controller directory, fix naming
 			break;
-		case "service":
+		case 'service':
 			// Organize service layer, extract business logic
 			break;
-		case "model":
+		case 'model':
 			// Move models to proper directory, fix schemas
 			break;
-		case "middleware":
+		case 'middleware':
 			// Organize middleware, fix application order
 			break;
-		case "route":
+		case 'route':
 			// Consolidate routes, fix RESTful patterns
 			break;
-		case "config":
+		case 'config':
 			// Organize configuration files
 			break;
-		case "test":
+		case 'test':
 			// Generate missing test files
 			break;
 	}

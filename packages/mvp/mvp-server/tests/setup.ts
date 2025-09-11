@@ -1,10 +1,10 @@
-import { afterEach, vi } from "vitest";
+import { afterEach, vi } from 'vitest';
 
 // Disable any accidental network egress during tests
-process.env.MCP_NETWORK_EGRESS = process.env.MCP_NETWORK_EGRESS || "disabled";
+process.env.MCP_NETWORK_EGRESS = process.env.MCP_NETWORK_EGRESS || 'disabled';
 
 // Mock ws so no real sockets are opened
-vi.mock("ws", () => {
+vi.mock('ws', () => {
 	class MockWebSocket {
 		static OPEN = 1;
 		readyState = 1;

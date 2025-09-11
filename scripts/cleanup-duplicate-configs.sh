@@ -50,19 +50,19 @@ if [[ ${#different_files[@]} -gt 0 ]]; then
     echo "⚠️  Found files that differ from canonical version:"
     for file in "${different_files[@]}"; do
         echo "  - $file"
-        
+
         # Show diff summary
         echo "    Differences:"
         diff --unified=1 "$CANONICAL_CONFIG" "$file" | head -20 | sed 's/^/      /' || true
         echo ""
-        
+
         # Move to .bak for manual review
         backup_file="${file}.bak"
         mv "$file" "$backup_file"
         echo "    → Moved to $backup_file for manual review"
         echo ""
     done
-    
+
     echo "📝 Manual action required:"
     echo "   Review .bak files and either:"
     echo "   1. Delete them if changes are obsolete"

@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import type { PRPState } from "../../state.js";
+import type { PRPState } from '../../state.js';
 
 export interface TDDValidationResult {
 	passed: boolean;
@@ -49,22 +49,22 @@ export const validateTDDCycle = async (
  */
 const findTestFiles = async (): Promise<string[]> => {
 	try {
-		const glob = await import("glob");
+		const glob = await import('glob');
 		const testPatterns = [
-			"**/*.test.{js,ts,jsx,tsx}",
-			"**/*.spec.{js,ts,jsx,tsx}",
-			"**/__tests__/**/*.{js,ts,jsx,tsx}",
-			"tests/**/*.{js,ts,jsx,tsx}",
-			"test/**/*.{js,ts,jsx,tsx}",
-			"**/test_*.py",
-			"**/*_test.py",
+			'**/*.test.{js,ts,jsx,tsx}',
+			'**/*.spec.{js,ts,jsx,tsx}',
+			'**/__tests__/**/*.{js,ts,jsx,tsx}',
+			'tests/**/*.{js,ts,jsx,tsx}',
+			'test/**/*.{js,ts,jsx,tsx}',
+			'**/test_*.py',
+			'**/*_test.py',
 		];
 
 		const allFiles: string[] = [];
 		for (const pattern of testPatterns) {
 			const files = await glob.glob(pattern, {
 				cwd: process.cwd(),
-				ignore: ["node_modules/**", ".git/**", "dist/**", "build/**"],
+				ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**'],
 			});
 			allFiles.push(...files);
 		}
@@ -79,30 +79,30 @@ const findTestFiles = async (): Promise<string[]> => {
  * Runs tests and collects coverage information
  */
 const runTestsWithCoverage = async (): Promise<TestRunResult> => {
-	const { exec } = await import("node:child_process");
-	const { promisify } = await import("node:util");
+	const { exec } = await import('node:child_process');
+	const { promisify } = await import('node:util');
 	const execAsync = promisify(exec);
-	const fs = await import("node:fs");
-	const path = await import("node:path");
+	const fs = await import('node:fs');
+	const path = await import('node:path');
 
 	const projectRoot = process.cwd();
-	const packageJsonPath = path.join(projectRoot, "package.json");
+	const packageJsonPath = path.join(projectRoot, 'package.json');
 
 	if (!fs.existsSync(packageJsonPath)) {
-		return { success: false, output: "No package.json found" };
+		return { success: false, output: 'No package.json found' };
 	}
 
 	try {
-		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 		const testScript =
-			packageJson.scripts?.test || packageJson.scripts?.["test:coverage"];
+			packageJson.scripts?.test || packageJson.scripts?.['test:coverage'];
 
 		if (!testScript) {
-			return { success: false, output: "No test script found in package.json" };
+			return { success: false, output: 'No test script found in package.json' };
 		}
 
 		const { stdout, stderr } = await execAsync(
-			`pnpm run ${testScript.includes("coverage") ? "test:coverage" : "test"}`,
+			`pnpm run ${testScript.includes('coverage') ? 'test:coverage' : 'test'}`,
 			{
 				cwd: projectRoot,
 				timeout: 60000,
@@ -111,7 +111,7 @@ const runTestsWithCoverage = async (): Promise<TestRunResult> => {
 
 		const coverage = extractCoverageFromOutput(stdout);
 		return {
-			success: !stderr.includes("FAILED") && !stderr.includes("ERROR"),
+			success: !stderr.includes('FAILED') && !stderr.includes('ERROR'),
 			coverage,
 			output: stdout,
 		};
@@ -119,7 +119,7 @@ const runTestsWithCoverage = async (): Promise<TestRunResult> => {
 		return {
 			success: false,
 			output:
-				error instanceof Error ? error.message : "Unknown test execution error",
+				error instanceof Error ? error.message : 'Unknown test execution error',
 		};
 	}
 };
@@ -138,8 +138,8 @@ const extractCoverageFromOutput = (output: string): number => {
  */
 const checkRedGreenEvidence = async (state: PRPState): Promise<boolean> => {
 	try {
-		const { exec } = await import("node:child_process");
-		const { promisify } = await import("node:util");
+		const { exec } = await import('node:child_process');
+		const { promisify } = await import('node:util');
 		const execAsync = promisify(exec);
 
 		const { stdout } = await execAsync('git log --oneline -10 --grep="test"', {
@@ -148,12 +148,12 @@ const checkRedGreenEvidence = async (state: PRPState): Promise<boolean> => {
 
 		// Look for evidence of test-first development
 		const testCommits = stdout
-			.split("\n")
+			.split('\n')
 			.filter(
 				(line) =>
-					line.toLowerCase().includes("test") ||
-					line.toLowerCase().includes("red") ||
-					line.toLowerCase().includes("green"),
+					line.toLowerCase().includes('test') ||
+					line.toLowerCase().includes('red') ||
+					line.toLowerCase().includes('green'),
 			);
 
 		return testCommits.length >= 2; // Need at least red and green commits
@@ -161,8 +161,8 @@ const checkRedGreenEvidence = async (state: PRPState): Promise<boolean> => {
 		// If git is not available or fails, check state for test evidence
 		return state.evidence.some(
 			(e) =>
-				e.type === "test" &&
-				(e.content.includes("red") || e.content.includes("green")),
+				e.type === 'test' &&
+				(e.content.includes('red') || e.content.includes('green')),
 		);
 	}
 };
@@ -180,9 +180,9 @@ const buildValidationDetails = (
 	details.push(`Found ${testFiles.length} test files`);
 
 	if (testResult.success) {
-		details.push("All tests are passing");
+		details.push('All tests are passing');
 	} else {
-		details.push("Some tests are failing");
+		details.push('Some tests are failing');
 	}
 
 	if (testResult.coverage !== undefined) {
@@ -190,9 +190,9 @@ const buildValidationDetails = (
 	}
 
 	if (redGreenEvidence) {
-		details.push("Red → Green evidence found in git history");
+		details.push('Red → Green evidence found in git history');
 	} else {
-		details.push("No clear Red → Green evidence found");
+		details.push('No clear Red → Green evidence found');
 	}
 
 	return details;

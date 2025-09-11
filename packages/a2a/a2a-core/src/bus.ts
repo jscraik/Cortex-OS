@@ -1,9 +1,12 @@
-import { Envelope } from '@cortex-os/a2a-contracts/envelope';
-import { createTraceContext, injectTraceContext } from '@cortex-os/a2a-contracts/trace-context';
+import { Envelope } from '../../a2a-contracts/src/envelope.js';
+import type { TopicACL } from '../../a2a-contracts/src/topic-acl.js';
+import {
+  createTraceContext,
+  injectTraceContext,
+} from '../../a2a-contracts/src/trace-context.js';
 import type { SchemaRegistry } from './schema-registry';
 import { getCurrentTraceContext } from './trace-context-manager';
 import type { Transport } from './transport';
-import type { TopicACL } from '@cortex-os/a2a-contracts/topic-acl';
 
 export type { Transport } from './transport';
 
@@ -81,11 +84,13 @@ export function createBus(
           await handler(m);
         }
       } catch (error) {
-        console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
+        console.error(
+          `[A2A Bus] Error handling message type ${m.type}:`,
+          error,
+        );
       }
     });
   };
 
   return { publish, bind };
 }
-

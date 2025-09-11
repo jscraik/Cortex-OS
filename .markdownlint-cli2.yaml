@@ -13,4 +13,6 @@ config:
     allowed_elements:
       - sup
       - img
+  MD041:
+    allow_preamble: true
 # Other rules inherit defaults

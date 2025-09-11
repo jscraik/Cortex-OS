@@ -282,19 +282,24 @@ pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
             },
         ),
         (BUILT_IN_OSS_MODEL_PROVIDER_ID, create_oss_provider()),
+        // Alias: "ollama" behaves like "oss" (OpenAI-compatible endpoint on localhost:11434 by default).
+        ("ollama", create_oss_provider()),
         (
             "anthropic",
             P {
                 name: "Anthropic".into(),
                 base_url: std::env::var("ANTHROPIC_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
-                env_key: Some("ANTHROPIC_API_KEY".into()),
+                // Use explicit header for API key rather than Bearer auth
+                env_key: None,
                 env_key_instructions: Some("Set ANTHROPIC_API_KEY to your Claude API key".into()),
                 wire_api: WireApi::Chat,
                 query_params: None,
                 http_headers: Some([
                     ("anthropic-version".to_string(), "2023-06-01".to_string()),
                 ].into_iter().collect()),
-                env_http_headers: None,
+                env_http_headers: Some([
+                    ("x-api-key".to_string(), "ANTHROPIC_API_KEY".to_string()),
+                ].into_iter().collect()),
                 request_max_retries: None,
                 stream_max_retries: None,
                 stream_idle_timeout_ms: None,
@@ -306,8 +311,31 @@ pub fn built_in_model_providers() -> HashMap<String, ModelProviderInfo> {
             P {
                 name: "Z.ai".into(),
                 base_url: std::env::var("ZAI_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
-                env_key: Some("ZAI_API_KEY".into()),
+                // Use explicit header for API key rather than Bearer auth
+                env_key: None,
                 env_key_instructions: Some("Set ZAI_API_KEY to your Z.ai key".into()),
+                wire_api: WireApi::Chat,
+                query_params: None,
+                http_headers: Some([
+                    ("anthropic-version".to_string(), "2023-06-01".to_string()),
+                ].into_iter().collect()),
+                env_http_headers: Some([
+                    ("x-api-key".to_string(), "ZAI_API_KEY".to_string()),
+                ].into_iter().collect()),
+                request_max_retries: None,
+                stream_max_retries: None,
+                stream_idle_timeout_ms: None,
+                requires_openai_auth: false,
+            },
+        ),
+        // Optional MLX provider if MLX_BASE_URL is configured. Otherwise, omit base_url
+        (
+            "mlx",
+            P {
+                name: "MLX".into(),
+                base_url: std::env::var("MLX_BASE_URL").ok().filter(|v| !v.trim().is_empty()),
+                env_key: None,
+                env_key_instructions: None,
                 wire_api: WireApi::Chat,
                 query_params: None,
                 http_headers: None,

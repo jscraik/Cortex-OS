@@ -1,18 +1,18 @@
-import { z } from "zod";
-import type { Pipeline } from "../lib";
-import { createWorker, resolveFileList, runWorkers } from "../lib/batch-ingest";
+import { z } from 'zod';
+import type { Pipeline } from '../lib';
+import { createWorker, resolveFileList, runWorkers } from '../lib/batch-ingest';
 
 const ingestFilesSchema = z
 	.object({
 		pipeline: z.custom<Pipeline>(
 			(p): p is Pipeline =>
-				typeof p === "object" &&
+				typeof p === 'object' &&
 				p !== null &&
-				typeof (p as Record<string, unknown>).ingest === "function",
+				typeof (p as Record<string, unknown>).ingest === 'function',
 		),
 		files: z.array(z.string()).default([]),
 		root: z.string().optional(),
-		include: z.array(z.string()).default(["**/*"]),
+		include: z.array(z.string()).default(['**/*']),
 		exclude: z.array(z.string()).default([]),
 		includePriority: z.boolean().default(false),
 		chunkSize: z.number().int().positive().default(300),
@@ -20,8 +20,8 @@ const ingestFilesSchema = z
 		concurrency: z.number().int().positive().max(10).default(4),
 	})
 	.refine((v) => v.files.length > 0 || v.root, {
-		message: "files or root is required",
-		path: ["files"],
+		message: 'files or root is required',
+		path: ['files'],
 	});
 
 export type IngestFilesParams = z.infer<typeof ingestFilesSchema>;

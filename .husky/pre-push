@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 . "$(dirname -- "$0")/common.sh"
 
 echo "Running pre-push checks..."
@@ -43,6 +42,32 @@ if git diff --cached --name-only | grep -E '\.(js|ts|mjs|jsx|tsx|py|go|java|rb|p
   fi
 else
   echo "No code changes detected; skipping detailed security scan"
+fi
+
+# Run TypeScript type checking (heavy) at pre-push stage
+if command -v pnpm >/dev/null 2>&1; then
+  echo "Running TypeScript type checking..."
+  if pnpm run | grep -q '^typecheck'; then
+    pnpm typecheck || {
+      echo "❌ TypeScript typecheck failed"
+      exit 1
+    }
+  else
+    echo "Skipping typecheck (script not defined)"
+  fi
+fi
+
+# Run Python checks at pre-push stage if python dir exists
+if [ -d python ]; then
+  if command -v uv >/dev/null 2>&1; then
+    echo "Running Python checks (ruff, pyright)..."
+    (cd python && uv run ruff check . && uv run pyright) || {
+      echo "❌ Python checks failed"
+      exit 1
+    }
+  else
+    echo "⚠️ uv not found; skipping Python checks"
+  fi
 fi
 
 echo "✅ All pre-push checks passed!"

@@ -3,9 +3,9 @@
  * Tests systematic improvements to error handling
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { stdio } from "../stdio";
 import type { Envelope } from "@cortex-os/a2a-contracts/envelope";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stdio } from "../stdio";
 
 // Mock child_process.spawn
 vi.mock("node:child_process", () => ({
@@ -47,7 +47,7 @@ describe("Stdio Transport", () => {
 			error: vi.fn(),
 			debug: vi.fn(),
 		};
-		
+
 		const { createLogger } = vi.mocked(
 			await import("@cortex-os/observability"),
 		);
@@ -61,10 +61,10 @@ describe("Stdio Transport", () => {
 	describe("Transport creation", () => {
 		it("should create transport with default arguments", () => {
 			stdio("test-command");
-			
+
 			expect(mockSpawn).toHaveBeenCalledWith(
-				"test-command", 
-				["stdio"], 
+				"test-command",
+				["stdio"],
 				expect.objectContaining({
 					stdio: ["pipe", "pipe", "pipe"],
 					env: expect.any(Object),
@@ -74,10 +74,10 @@ describe("Stdio Transport", () => {
 
 		it("should create transport with custom arguments", () => {
 			stdio("custom-command", ["arg1", "arg2"], { ENV_VAR: "value" });
-			
+
 			expect(mockSpawn).toHaveBeenCalledWith(
-				"custom-command", 
-				["arg1", "arg2"], 
+				"custom-command",
+				["arg1", "arg2"],
 				expect.objectContaining({
 					env: expect.objectContaining({ ENV_VAR: "value" }),
 				})
@@ -96,19 +96,19 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			// Simulate data event
 			const dataHandler = mockChild.stdout.on.mock.calls.find(
 				([event]) => event === "data"
 			)?.[1];
-			
+
 			if (dataHandler) {
 				// Simulate receiving valid JSON
 				dataHandler(Buffer.from('{"type":"test","data":"valid"}\\n'));
 			}
-			
+
 			// Should not call logger.warn for valid JSON
 			expect(mockLogger.warn).not.toHaveBeenCalled();
 		});
@@ -122,19 +122,19 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			// Get the data handler
 			const dataHandler = mockChild.stdout.on.mock.calls.find(
 				([event]) => event === "data"
 			)?.[1];
-			
+
 			if (dataHandler) {
 				// Simulate receiving invalid JSON
 				dataHandler(Buffer.from("invalid-json\\n"));
 			}
-			
+
 			// Should call structured logging for invalid JSON
 			expect(mockLogger.warn).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -154,13 +154,13 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			const dataHandler = mockChild.stdout.on.mock.calls.find(
 				([event]) => event === "data"
 			)?.[1];
-			
+
 			if (dataHandler) {
 				// Simulate mixed valid/invalid messages
 				const mixedData = [
@@ -169,10 +169,10 @@ describe("Stdio Transport", () => {
 					'{"type":"valid","data":"message2"}',
 					"another-invalid-line"
 				].join("\\n");
-				
+
 				dataHandler(Buffer.from(mixedData));
 			}
-			
+
 			// Should log warnings for both invalid lines
 			expect(mockLogger.warn).toHaveBeenCalledTimes(2);
 		});
@@ -186,18 +186,18 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			const dataHandler = mockChild.stdout.on.mock.calls.find(
 				([event]) => event === "data"
 			)?.[1];
-			
+
 			if (dataHandler) {
 				// Simulate empty lines and whitespace
 				dataHandler(Buffer.from("\\n\\n  \\n\\t\\n"));
 			}
-			
+
 			// Should handle gracefully without logging errors
 			expect(mockLogger.warn).not.toHaveBeenCalled();
 		});
@@ -213,12 +213,12 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			// Should have terminate method
 			expect(typeof transport.terminate).toBe("function");
-			
+
 			// Should call kill on child process
 			await transport.terminate();
 			expect(mockChild.kill).toHaveBeenCalledWith("SIGTERM");
@@ -233,9 +233,9 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			const envelope: Envelope = {
 				spec: "A2A/1.0",
 				type: "test.message",
@@ -244,7 +244,7 @@ describe("Stdio Transport", () => {
 				time: new Date().toISOString(),
 				data: { message: "test" },
 			};
-			
+
 			// Should not throw when publishing
 			expect(() => transport.publish(envelope)).not.toThrow();
 		});
@@ -255,7 +255,7 @@ describe("Stdio Transport", () => {
 			mockSpawn.mockImplementation(() => {
 				throw new Error("Spawn failed");
 			});
-			
+
 			expect(() => stdio("failing-command")).toThrow("Spawn failed");
 		});
 
@@ -268,13 +268,13 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			const dataHandler = mockChild.stdout.on.mock.calls.find(
 				([event]) => event === "data"
 			)?.[1];
-			
+
 			if (dataHandler) {
 				// Simulate non-Buffer data (edge case)
 				expect(() => dataHandler("string-data")).not.toThrow();
@@ -285,7 +285,7 @@ describe("Stdio Transport", () => {
 	describe("Logging integration", () => {
 		it("should create logger with correct component name", () => {
 			stdio("test-command");
-			
+
 			const { createLogger } = vi.mocked(
 				await import("@cortex-os/observability"),
 			);
@@ -301,17 +301,17 @@ describe("Stdio Transport", () => {
 				on: vi.fn(),
 				kill: vi.fn(),
 			};
-			
+
 			mockSpawn.mockReturnValue(mockChild);
-			
+
 			const dataHandler = mockChild.stdout.on.mock.calls.find(
 				([event]) => event === "data"
 			)?.[1];
-			
+
 			if (dataHandler) {
 				dataHandler(Buffer.from("{invalid-json}"));
 			}
-			
+
 			expect(mockLogger.warn).toHaveBeenCalledWith(
 				expect.objectContaining({
 					context: "stdio-message-parsing",

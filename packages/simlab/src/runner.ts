@@ -5,35 +5,40 @@
  */
 
 import {
-        AgentAdapter,
-        type AgentResponse,
-        type PRPExecutor,
-} from "./agent-adapter.js";
-import { Judge } from "./judge.js";
-import { SimReporter } from "./report.js";
-import type { SimBatchResult, SimResult, SimScenario, SimTurn } from "./types.js";
-import { UserSimulator } from "./user-sim.js";
-import { simScenarioSchema } from "./schemas.js";
-import type { FailureInjector } from "./failure-injector.js";
+	AgentAdapter,
+	type AgentResponse,
+	type PRPExecutor,
+} from './agent-adapter.js';
+import type { FailureInjector } from './failure-injector.js';
+import { Judge } from './judge.js';
+import { SimReporter } from './report.js';
+import { simScenarioSchema } from './schemas.js';
+import type {
+	SimBatchResult,
+	SimResult,
+	SimScenario,
+	SimTurn,
+} from './types.js';
+import { UserSimulator } from './user-sim.js';
 
 export interface SimRunnerConfig {
 	deterministic?: boolean;
 	seed?: number;
 	maxTurns?: number;
 	timeout?: number;
-        debug?: boolean;
-        executor?: PRPExecutor;
-        failureInjector?: FailureInjector;
+	debug?: boolean;
+	executor?: PRPExecutor;
+	failureInjector?: FailureInjector;
 }
 
 export class SimRunner {
 	private readonly userSim: UserSimulator;
 	private readonly agentAdapter: AgentAdapter;
 	private readonly judge: Judge;
-        private readonly reporter: SimReporter;
-        private readonly config: SimRunnerConfig;
-        private readonly rng: () => number;
-        private readonly failureInjector?: FailureInjector;
+	private readonly reporter: SimReporter;
+	private readonly config: SimRunnerConfig;
+	private readonly rng: () => number;
+	private readonly failureInjector?: FailureInjector;
 
 	constructor(config: SimRunnerConfig = {}) {
 		this.config = {
@@ -45,33 +50,33 @@ export class SimRunner {
 		};
 
 		this.rng =
-			this.config.deterministic && typeof this.config.seed === "number"
+			this.config.deterministic && typeof this.config.seed === 'number'
 				? this.createSeededRNG(this.config.seed)
 				: Math.random;
 
 		this.userSim = new UserSimulator(this.config);
 		this.agentAdapter = new AgentAdapter(this.config.executor);
-                this.judge = new Judge();
-                this.reporter = new SimReporter();
-                this.failureInjector = this.config.failureInjector;
+		this.judge = new Judge();
+		this.reporter = new SimReporter();
+		this.failureInjector = this.config.failureInjector;
 	}
 
 	/**
 	 * Run a single simulation scenario
 	 */
-        async runScenario(scenario: SimScenario): Promise<SimResult> {
-                const parsedScenario = simScenarioSchema.parse(scenario);
-                const runId = this.generateRunId(parsedScenario.id);
-                const startTime = Date.now();
+	async runScenario(scenario: SimScenario): Promise<SimResult> {
+		const parsedScenario = simScenarioSchema.parse(scenario);
+		const runId = this.generateRunId(parsedScenario.id);
+		const startTime = Date.now();
 
 		try {
 			// Initialize conversation with user simulation
-                        const initialMessage =
-                                await this.userSim.generateInitialMessage(parsedScenario);
+			const initialMessage =
+				await this.userSim.generateInitialMessage(parsedScenario);
 
 			const turns: SimTurn[] = [
 				{
-					role: "user" as const,
+					role: 'user' as const,
 					content: initialMessage,
 					timestamp: new Date().toISOString(),
 				},
@@ -83,43 +88,43 @@ export class SimRunner {
 
 			while (turnCount < (this.config.maxTurns || 10)) {
 				// Agent responds via PRP
-                                const rawResponse = await this.agentAdapter.execute({
-                                        scenario: parsedScenario,
-                                        conversationHistory: turns,
-                                        userMessage: lastResponse,
-                                });
-                                const agentResponse =
-                                        this.failureInjector?.maybeInject({
-                                                scenario: parsedScenario,
-                                                turns,
-                                                agentResponse: rawResponse,
-                                                rng: this.rng,
-                                        }) ?? rawResponse;
+				const rawResponse = await this.agentAdapter.execute({
+					scenario: parsedScenario,
+					conversationHistory: turns,
+					userMessage: lastResponse,
+				});
+				const agentResponse =
+					this.failureInjector?.maybeInject({
+						scenario: parsedScenario,
+						turns,
+						agentResponse: rawResponse,
+						rng: this.rng,
+					}) ?? rawResponse;
 
 				turns.push({
-					role: "agent" as const,
+					role: 'agent' as const,
 					content: agentResponse.content,
 					timestamp: new Date().toISOString(),
 				});
 
 				// Check if conversation should end
-                                if (this.shouldEndConversation(agentResponse, parsedScenario)) {
-                                        break;
-                                }
+				if (this.shouldEndConversation(agentResponse, parsedScenario)) {
+					break;
+				}
 
 				// User simulator responds
-                                const userResponse = await this.userSim.generateResponse(
-                                        parsedScenario,
-                                        turns,
-                                        agentResponse.content,
-                                );
+				const userResponse = await this.userSim.generateResponse(
+					parsedScenario,
+					turns,
+					agentResponse.content,
+				);
 
 				if (!userResponse) {
 					break; // User simulation indicates conversation end
 				}
 
 				turns.push({
-					role: "user" as const,
+					role: 'user' as const,
 					content: userResponse,
 					timestamp: new Date().toISOString(),
 				});
@@ -129,52 +134,52 @@ export class SimRunner {
 			}
 
 			// Judge the conversation
-                        const judged = await this.judge.evaluate(parsedScenario, turns);
-                        const finalResult: SimResult = {
-                                scenarioId: judged.scenarioId,
-                                runId,
-                                passed: judged.passed,
-                                scores: judged.scores,
-                                judgeNotes: judged.judgeNotes,
-                                failures: judged.failures,
-                                turns: judged.turns,
-                                metadata: {
-                                        duration: Date.now() - startTime,
-                                        seed: this.config.seed,
-                                        version: "1.0.0",
-                                },
-                                timestamp: new Date().toISOString(),
-                        };
-                        return finalResult;
-                } catch (error) {
-                        return {
-                                scenarioId: parsedScenario.id,
-                                runId,
-                                passed: false,
-                                scores: { goal: 0, sop: 0, brand: 0, factual: 0 },
-                                judgeNotes: `Simulation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-                                failures: ["simulation_error"],
-                                turns: [],
-                                timestamp: new Date().toISOString(),
-                        };
-                }
-        }
+			const judged = await this.judge.evaluate(parsedScenario, turns);
+			const finalResult: SimResult = {
+				scenarioId: judged.scenarioId,
+				runId,
+				passed: judged.passed,
+				scores: judged.scores,
+				judgeNotes: judged.judgeNotes,
+				failures: judged.failures,
+				turns: judged.turns,
+				metadata: {
+					duration: Date.now() - startTime,
+					seed: this.config.seed,
+					version: '1.0.0',
+				},
+				timestamp: new Date().toISOString(),
+			};
+			return finalResult;
+		} catch (error) {
+			return {
+				scenarioId: parsedScenario.id,
+				runId,
+				passed: false,
+				scores: { goal: 0, sop: 0, brand: 0, factual: 0 },
+				judgeNotes: `Simulation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				failures: ['simulation_error'],
+				turns: [],
+				timestamp: new Date().toISOString(),
+			};
+		}
+	}
 
 	/**
 	 * Run multiple scenarios as a batch
 	 */
-        async runBatch(scenarios: SimScenario[]): Promise<SimBatchResult> {
-                const parsed = scenarios.map((s) => simScenarioSchema.parse(s));
-                const batchId = this.generateBatchId();
-                const results: SimResult[] = [];
+	async runBatch(scenarios: SimScenario[]): Promise<SimBatchResult> {
+		const parsed = scenarios.map((s) => simScenarioSchema.parse(s));
+		const batchId = this.generateBatchId();
+		const results: SimResult[] = [];
 
-                for (const scenario of parsed) {
-                        const result = await this.runScenario(scenario);
-                        results.push(result);
-                }
+		for (const scenario of parsed) {
+			const result = await this.runScenario(scenario);
+			results.push(result);
+		}
 
-                return this.reporter.createBatchResult(batchId, results);
-        }
+		return this.reporter.createBatchResult(batchId, results);
+	}
 
 	private shouldEndConversation(
 		agentResponse: AgentResponse,
@@ -193,7 +198,7 @@ export class SimRunner {
 
 	private generateRunId(scenarioId: string): string {
 		const timestamp = Date.now();
-		const suffix = this.config.deterministic ? "det" : "rnd";
+		const suffix = this.config.deterministic ? 'det' : 'rnd';
 		return `${scenarioId}-${timestamp}-${suffix}`;
 	}
 

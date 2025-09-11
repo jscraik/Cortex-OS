@@ -3,7 +3,7 @@
  * Prevents cascading failures by temporarily disabling failing agents
  */
 
-import { EventEmitter } from "node:events";
+import { EventEmitter } from 'node:events';
 
 export interface CircuitBreakerOptions {
 	failureThreshold: number;
@@ -12,7 +12,7 @@ export interface CircuitBreakerOptions {
 	halfOpenMaxCalls: number;
 }
 
-export type CircuitBreakerState = "closed" | "open" | "half-open";
+export type CircuitBreakerState = 'closed' | 'open' | 'half-open';
 
 export interface CircuitBreakerStats {
 	state: CircuitBreakerState;
@@ -28,7 +28,7 @@ export interface CircuitBreakerStats {
  * Circuit Breaker class to prevent cascading failures
  */
 export class CircuitBreaker extends EventEmitter {
-	private state: CircuitBreakerState = "closed";
+	private state: CircuitBreakerState = 'closed';
 	private failures = 0;
 	private successes = 0;
 	private lastFailureTime = 0;
@@ -58,27 +58,27 @@ export class CircuitBreaker extends EventEmitter {
 		// Check if we need to transition states
 		this.updateState();
 
-		if (this.state === "open") {
+		if (this.state === 'open') {
 			const error = new Error(`Circuit breaker '${this.name}' is open`);
-			(error as any).code = "CIRCUIT_BREAKER_OPEN";
-			this.emit("rejected", { name: this.name, error });
+			(error as any).code = 'CIRCUIT_BREAKER_OPEN';
+			this.emit('rejected', { name: this.name, error });
 			throw error;
 		}
 
 		if (
-			this.state === "half-open" &&
+			this.state === 'half-open' &&
 			this.halfOpenCalls >= this.options.halfOpenMaxCalls
 		) {
 			const error = new Error(
 				`Circuit breaker '${this.name}' half-open call limit exceeded`,
 			);
-			(error as any).code = "CIRCUIT_BREAKER_HALF_OPEN_LIMIT";
-			this.emit("rejected", { name: this.name, error });
+			(error as any).code = 'CIRCUIT_BREAKER_HALF_OPEN_LIMIT';
+			this.emit('rejected', { name: this.name, error });
 			throw error;
 		}
 
 		try {
-			if (this.state === "half-open") {
+			if (this.state === 'half-open') {
 				this.halfOpenCalls++;
 			}
 
@@ -99,22 +99,22 @@ export class CircuitBreaker extends EventEmitter {
 		this.lastSuccessTime = Date.now();
 		this.resetWindowIfNeeded();
 
-		if (this.state === "half-open") {
+		if (this.state === 'half-open') {
 			// If we've had enough successes in half-open state, close the circuit
 			if (this.halfOpenCalls >= this.options.halfOpenMaxCalls) {
-				this.state = "closed";
+				this.state = 'closed';
 				this.failures = 0;
 				this.halfOpenCalls = 0;
-				this.emit("stateChanged", {
+				this.emit('stateChanged', {
 					name: this.name,
-					previousState: "half-open",
-					currentState: "closed",
-					reason: "successful_recovery",
+					previousState: 'half-open',
+					currentState: 'closed',
+					reason: 'successful_recovery',
 				});
 			}
 		}
 
-		this.emit("success", { name: this.name, stats: this.getStats() });
+		this.emit('success', { name: this.name, stats: this.getStats() });
 	}
 
 	/**
@@ -125,44 +125,44 @@ export class CircuitBreaker extends EventEmitter {
 		this.lastFailureTime = Date.now();
 		this.resetWindowIfNeeded();
 
-		if (this.state === "half-open") {
+		if (this.state === 'half-open') {
 			// Failure in half-open state immediately opens the circuit
-			this.state = "open";
+			this.state = 'open';
 			this.halfOpenCalls = 0;
-			this.emit("stateChanged", {
+			this.emit('stateChanged', {
 				name: this.name,
-				previousState: "half-open",
-				currentState: "open",
-				reason: "half_open_failure",
+				previousState: 'half-open',
+				currentState: 'open',
+				reason: 'half_open_failure',
 			});
-		} else if (this.state === "closed" && this.shouldOpen()) {
-			this.state = "open";
-			this.emit("stateChanged", {
+		} else if (this.state === 'closed' && this.shouldOpen()) {
+			this.state = 'open';
+			this.emit('stateChanged', {
 				name: this.name,
-				previousState: "closed",
-				currentState: "open",
-				reason: "threshold_exceeded",
+				previousState: 'closed',
+				currentState: 'open',
+				reason: 'threshold_exceeded',
 			});
 		}
 
-		this.emit("failure", { name: this.name, error, stats: this.getStats() });
+		this.emit('failure', { name: this.name, error, stats: this.getStats() });
 	}
 
 	/**
 	 * Update circuit breaker state based on current conditions
 	 */
 	private updateState(): void {
-		if (this.state === "open") {
+		if (this.state === 'open') {
 			// Check if we should transition to half-open
 			const timeSinceLastFailure = Date.now() - this.lastFailureTime;
 			if (timeSinceLastFailure >= this.options.recoveryTimeoutMs) {
-				this.state = "half-open";
+				this.state = 'half-open';
 				this.halfOpenCalls = 0;
-				this.emit("stateChanged", {
+				this.emit('stateChanged', {
 					name: this.name,
-					previousState: "open",
-					currentState: "half-open",
-					reason: "recovery_timeout_elapsed",
+					previousState: 'open',
+					currentState: 'half-open',
+					reason: 'recovery_timeout_elapsed',
 				});
 			}
 		}
@@ -219,14 +219,14 @@ export class CircuitBreaker extends EventEmitter {
 	 */
 	open(): void {
 		const previousState = this.state;
-		this.state = "open";
+		this.state = 'open';
 		this.lastFailureTime = Date.now();
 
-		this.emit("stateChanged", {
+		this.emit('stateChanged', {
 			name: this.name,
 			previousState,
-			currentState: "open",
-			reason: "manually_opened",
+			currentState: 'open',
+			reason: 'manually_opened',
 		});
 	}
 
@@ -235,15 +235,15 @@ export class CircuitBreaker extends EventEmitter {
 	 */
 	close(): void {
 		const previousState = this.state;
-		this.state = "closed";
+		this.state = 'closed';
 		this.failures = 0;
 		this.halfOpenCalls = 0;
 
-		this.emit("stateChanged", {
+		this.emit('stateChanged', {
 			name: this.name,
 			previousState,
-			currentState: "closed",
-			reason: "manually_closed",
+			currentState: 'closed',
+			reason: 'manually_closed',
 		});
 	}
 
@@ -252,7 +252,7 @@ export class CircuitBreaker extends EventEmitter {
 	 */
 	isOpen(): boolean {
 		this.updateState();
-		return this.state === "open";
+		return this.state === 'open';
 	}
 
 	/**
@@ -260,7 +260,7 @@ export class CircuitBreaker extends EventEmitter {
 	 */
 	isClosed(): boolean {
 		this.updateState();
-		return this.state === "closed";
+		return this.state === 'closed';
 	}
 
 	/**
@@ -268,7 +268,7 @@ export class CircuitBreaker extends EventEmitter {
 	 */
 	isHalfOpen(): boolean {
 		this.updateState();
-		return this.state === "half-open";
+		return this.state === 'half-open';
 	}
 }
 
@@ -295,12 +295,12 @@ export class CircuitBreakerManager extends EventEmitter {
 			});
 
 			// Forward all events from individual circuit breakers
-			circuitBreaker.on("stateChanged", (event) =>
-				this.emit("stateChanged", event),
+			circuitBreaker.on('stateChanged', (event) =>
+				this.emit('stateChanged', event),
 			);
-			circuitBreaker.on("success", (event) => this.emit("success", event));
-			circuitBreaker.on("failure", (event) => this.emit("failure", event));
-			circuitBreaker.on("rejected", (event) => this.emit("rejected", event));
+			circuitBreaker.on('success', (event) => this.emit('success', event));
+			circuitBreaker.on('failure', (event) => this.emit('failure', event));
+			circuitBreaker.on('rejected', (event) => this.emit('rejected', event));
 
 			this.circuitBreakers.set(name, circuitBreaker);
 		}

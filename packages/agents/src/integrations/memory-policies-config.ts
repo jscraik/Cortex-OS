@@ -1,11 +1,11 @@
-import { readFile } from "node:fs/promises";
-import type { MemoryPolicy } from "../lib/types.js";
+import { readFile } from 'node:fs/promises';
+import type { MemoryPolicy } from '../lib/types.js';
 
 export type Capability =
-	| "code-analysis"
-	| "test-generation"
-	| "documentation"
-	| "security";
+	| 'code-analysis'
+	| 'test-generation'
+	| 'documentation'
+	| 'security';
 export type MemoryPolicies = Partial<Record<Capability, MemoryPolicy>>;
 
 /**
@@ -19,7 +19,7 @@ export type MemoryPolicies = Partial<Record<Capability, MemoryPolicy>>;
 export const loadMemoryPoliciesFromFile = async (
 	filePath: string,
 ): Promise<MemoryPolicies> => {
-	const json = await readFile(filePath, "utf8");
+	const json = await readFile(filePath, 'utf8');
 	const parsed = JSON.parse(json);
 	return parsed as MemoryPolicies;
 };
@@ -38,9 +38,9 @@ export const loadMemoryPoliciesFromEnv = async (): Promise<
 		try {
 			return await loadMemoryPoliciesFromFile(file);
 		} catch (e) {
-			if (process.env.NODE_ENV !== "production") {
+			if (process.env.NODE_ENV !== 'production') {
 				console.warn(
-					"[agents] Failed to load memory policies from file:",
+					'[agents] Failed to load memory policies from file:',
 					file,
 					e,
 				);
@@ -52,9 +52,9 @@ export const loadMemoryPoliciesFromEnv = async (): Promise<
 		try {
 			return JSON.parse(inline) as MemoryPolicies;
 		} catch (e) {
-			if (process.env.NODE_ENV !== "production") {
+			if (process.env.NODE_ENV !== 'production') {
 				console.warn(
-					"[agents] Failed to parse AGENTS_MEMORY_POLICIES JSON:",
+					'[agents] Failed to parse AGENTS_MEMORY_POLICIES JSON:',
 					e,
 				);
 			}

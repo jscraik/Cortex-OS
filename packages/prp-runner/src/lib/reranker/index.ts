@@ -1,7 +1,7 @@
-import { pipeline } from "@xenova/transformers";
+import { pipeline } from '@xenova/transformers';
 
 export interface RerankerConfig {
-	provider: "transformers" | "local" | "mock";
+	provider: 'transformers' | 'local' | 'mock';
 	model?: string;
 	batchSize?: number;
 }
@@ -17,19 +17,19 @@ export interface RerankerState {
 }
 
 export const createRerankerState = (
-	provider: RerankerConfig["provider"] = "transformers",
+	provider: RerankerConfig['provider'] = 'transformers',
 ): RerankerState => {
-	const configs: Record<RerankerConfig["provider"], RerankerConfig> = {
+	const configs: Record<RerankerConfig['provider'], RerankerConfig> = {
 		transformers: {
-			provider: "transformers",
-			model: "Qwen/Qwen2.5-coder-cross-encoder",
+			provider: 'transformers',
+			model: 'Qwen/Qwen2.5-coder-cross-encoder',
 		},
 		local: {
-			provider: "local",
-			model: "local-reranker-model",
+			provider: 'local',
+			model: 'local-reranker-model',
 		},
 		mock: {
-			provider: "mock",
+			provider: 'mock',
 		},
 	};
 	const config = configs[provider];
@@ -46,11 +46,11 @@ export const rerank = async (
 	topK?: number,
 ): Promise<RerankerResult[]> => {
 	switch (state.config.provider) {
-		case "transformers":
+		case 'transformers':
 			return rerankWithTransformers(query, documents, topK, state.config.model);
-		case "local":
+		case 'local':
 			return rerankWithLocal(query, documents, topK);
-		case "mock":
+		case 'mock':
 			return rerankWithMock(query, documents, topK);
 		default:
 			throw new Error(
@@ -89,10 +89,10 @@ const rerankWithTransformers = async (
 	query: string,
 	documents: string[],
 	topK?: number,
-	model = "Qwen/Qwen2.5-coder-cross-encoder",
+	model = 'Qwen/Qwen2.5-coder-cross-encoder',
 ): Promise<RerankerResult[]> => {
 	if (!crossEncoder) {
-		crossEncoder = await pipeline("text-classification", model, {
+		crossEncoder = await pipeline('text-classification', model, {
 			quantized: true,
 		});
 	}
@@ -112,6 +112,6 @@ const rerankWithLocal = async (
 	documents: string[],
 	topK?: number,
 ): Promise<RerankerResult[]> => {
-	console.warn("Local reranking not implemented, falling back to mock");
+	console.warn('Local reranking not implemented, falling back to mock');
 	return rerankWithMock(query, documents, topK);
 };

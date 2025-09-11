@@ -8,7 +8,7 @@
    "exports": {
      ".": "./dist/index.js",
 -    "./graph": "./dist/graph.js",
-+    "./graph": "./dist/graph-simple.js", 
++    "./graph": "./dist/graph-simple.js",
      "./state": "./dist/state.js",
      "./nodes": "./dist/nodes/index.js",
      "./mcp": "./dist/mcp/adapter.js"
@@ -24,7 +24,7 @@
 -  const runId = options.runId ?? `run-${Date.now()}`;
 +  const id = options.id ?? `prp-${crypto.randomUUID()}`;
 +  const runId = options.runId ?? `run-${crypto.randomUUID()}`;
-   
+
    return {
 
 3. Remove non-deterministic timing in graph-simple.ts:
@@ -49,7 +49,7 @@
 --- a/src/graph-simple.ts
 +++ b/src/graph-simple.ts
 @@ -8,11 +8,7 @@
- 
+
  import { PRPState, validateStateTransition, createInitialPRPState } from './state.js';
  import { nanoid } from 'nanoid';
 -
@@ -66,7 +66,7 @@
 +++ b/src/nodes/build.ts
 @@ -122,7 +122,7 @@ export class BuildNode {
      );
- 
+
      return {
 -      passed: hasAPI ? true : true, // Skip if no API
 +      passed: hasAPI ? this.validateAPISchemaFile() : true, // Skip if no API
@@ -80,7 +80,7 @@
 +++ b/src/nodes/evaluation.ts
 @@ -189,7 +189,7 @@ export class EvaluationNode {
      );
- 
+
 -    const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {})
 -      .every(result => result?.passed || (result?.blockers.length === 0));
 +    const allPhasesPassedOrAcceptable = Object.values(state.validationResults || {})
@@ -92,7 +92,7 @@
 +++ b/src/mcp/adapter.ts
 @@ -6,6 +6,7 @@
   */
- 
+
  import { PRPState } from '../state.js';
 +import type { Neuron } from '@cortex-os/prp-runner';
 
@@ -112,7 +112,7 @@
 +++ b/src/nodes/strategy.ts
 @@ -7,6 +7,7 @@
   */
- 
+
  import { PRPState, Evidence } from '../state.js';
 +import { nanoid } from 'nanoid';
 

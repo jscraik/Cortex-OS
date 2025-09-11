@@ -1,13 +1,13 @@
-import type { Embedder, Store } from "../lib";
-import { ingestText } from "../pipeline/ingest";
-import { query as doQuery } from "../pipeline/query";
+import type { Embedder, Store } from '../lib';
+import { ingestText } from '../pipeline/ingest';
+import { query as doQuery } from '../pipeline/query';
 import {
 	type EvalSummary,
 	ndcgAtK,
 	precisionAtK,
 	type QueryEval,
 	recallAtK,
-} from "./metrics";
+} from './metrics';
 
 export interface GoldenItem {
 	id: string;
@@ -34,15 +34,15 @@ export async function prepareStore(
 	E: Embedder,
 	S: Store,
 ) {
-        for (const d of dataset.docs) {
-                // Use stable mem:// URI so doc.id is traceable for matching.
-                await ingestText({
-                        source: `mem://${d.id}`,
-                        text: d.text,
-                        embedder: E as any,
-                        store: S as any,
-                });
-        }
+	for (const d of dataset.docs) {
+		// Use stable mem:// URI so doc.id is traceable for matching.
+		await ingestText({
+			source: `mem://${d.id}`,
+			text: d.text,
+			embedder: E as any,
+			store: S as any,
+		});
+	}
 }
 
 export async function runRetrievalEval(
@@ -55,7 +55,7 @@ export async function runRetrievalEval(
 	for (const gq of dataset.queries) {
 		const hits = await doQuery({ q: gq.q, topK: k } as any, E as any, S as any);
 		const binary = hits.map((h: any) =>
-			gq.relevantDocIds.some((id) => (h.id ?? h.uri ?? "").includes(id))
+			gq.relevantDocIds.some((id) => (h.id ?? h.uri ?? '').includes(id))
 				? 1
 				: 0,
 		);

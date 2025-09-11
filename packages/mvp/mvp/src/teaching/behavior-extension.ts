@@ -5,11 +5,11 @@
  * @version 1.0.0
  */
 
-import type { PRPState } from "../state.js";
+import type { PRPState } from '../state.js';
 import type {
 	ExampleCaptureSystem,
 	TeachingPattern,
-} from "./example-capture.js";
+} from './example-capture.js';
 
 /**
  * Behavior extension that can modify kernel behavior
@@ -45,9 +45,9 @@ export interface ExtensionContext {
 export interface ExtensionResult {
 	modified: boolean;
 	changes: {
-		type: "validation_adjustment" | "gate_modification" | "workflow_alteration";
+		type: 'validation_adjustment' | 'gate_modification' | 'workflow_alteration';
 		description: string;
-		impact: "low" | "medium" | "high";
+		impact: 'low' | 'medium' | 'high';
 		parameters: any;
 	}[];
 	reasoning: string;
@@ -185,39 +185,39 @@ export class BehaviorExtensionManager {
 	private initializeDefaultExtensions(): void {
 		// Extension 1: Adaptive validation gates
 		this.registerExtension({
-			id: "adaptive-validation",
-			name: "Adaptive Validation Gates",
-			description: "Adjusts validation thresholds based on project context",
-			trigger: (state) => state.phase === "strategy" || state.phase === "build",
+			id: 'adaptive-validation',
+			name: 'Adaptive Validation Gates',
+			description: 'Adjusts validation thresholds based on project context',
+			trigger: (state) => state.phase === 'strategy' || state.phase === 'build',
 			modify: async (state, _context) => {
 				const projectComplexity = this.assessProjectComplexity(state.blueprint);
 				const historicalSuccess = this.getHistoricalSuccessRate(
 					state.blueprint,
 				);
 
-				if (projectComplexity === "simple" && historicalSuccess > 0.8) {
+				if (projectComplexity === 'simple' && historicalSuccess > 0.8) {
 					return {
 						modified: true,
 						changes: [
 							{
-								type: "validation_adjustment",
+								type: 'validation_adjustment',
 								description:
-									"Relaxed validation for simple, successful project pattern",
-								impact: "low",
+									'Relaxed validation for simple, successful project pattern',
+								impact: 'low',
 								parameters: {
 									maxMajorsAllowed: 5, // Increased from 3
 									skipMinorValidations: true,
 								},
 							},
 						],
-						reasoning: "Project appears simple and follows successful patterns",
+						reasoning: 'Project appears simple and follows successful patterns',
 					};
 				}
 
 				return {
 					modified: false,
 					changes: [],
-					reasoning: "No adjustments needed",
+					reasoning: 'No adjustments needed',
 				};
 			},
 			confidence: 0.7,
@@ -226,36 +226,36 @@ export class BehaviorExtensionManager {
 
 		// Extension 2: Smart gate skipping
 		this.registerExtension({
-			id: "smart-gate-skip",
-			name: "Smart Gate Skipping",
-			description: "Skips redundant validation gates for certain project types",
-			trigger: (state) => state.phase === "build",
+			id: 'smart-gate-skip',
+			name: 'Smart Gate Skipping',
+			description: 'Skips redundant validation gates for certain project types',
+			trigger: (state) => state.phase === 'build',
 			modify: async (state, _context) => {
 				const projectType = this.inferProjectType(state.blueprint);
 
-				if (projectType === "documentation-only") {
+				if (projectType === 'documentation-only') {
 					return {
 						modified: true,
 						changes: [
 							{
-								type: "gate_modification",
-								description: "Skip compilation gates for documentation project",
-								impact: "medium",
+								type: 'gate_modification',
+								description: 'Skip compilation gates for documentation project',
+								impact: 'medium',
 								parameters: {
-									skipGates: ["backend-compilation", "frontend-performance"],
-									reason: "Documentation project detected",
+									skipGates: ['backend-compilation', 'frontend-performance'],
+									reason: 'Documentation project detected',
 								},
 							},
 						],
 						reasoning:
-							"Documentation projects do not require compilation validation",
+							'Documentation projects do not require compilation validation',
 					};
 				}
 
 				return {
 					modified: false,
 					changes: [],
-					reasoning: "No gate skipping applicable",
+					reasoning: 'No gate skipping applicable',
 				};
 			},
 			confidence: 0.8,
@@ -264,9 +264,9 @@ export class BehaviorExtensionManager {
 
 		// Extension 3: Context-aware evidence collection
 		this.registerExtension({
-			id: "context-evidence",
-			name: "Context-Aware Evidence Collection",
-			description: "Adjusts evidence requirements based on project context",
+			id: 'context-evidence',
+			name: 'Context-Aware Evidence Collection',
+			description: 'Adjusts evidence requirements based on project context',
 			trigger: (state) => state.evidence.length < 3,
 			modify: async (state, _context) => {
 				const evidenceNeeds = this.assessEvidenceNeeds(state);
@@ -276,25 +276,25 @@ export class BehaviorExtensionManager {
 						modified: true,
 						changes: [
 							{
-								type: "workflow_alteration",
-								description: "Enhanced evidence collection for project type",
-								impact: "low",
+								type: 'workflow_alteration',
+								description: 'Enhanced evidence collection for project type',
+								impact: 'low',
 								parameters: {
 									additionalEvidence: evidenceNeeds.additional,
 									priority: evidenceNeeds.priority,
 								},
 							},
 						],
-						reasoning: `Project requires additional evidence: ${evidenceNeeds.additional.join(", ")}`,
+						reasoning: `Project requires additional evidence: ${evidenceNeeds.additional.join(', ')}`,
 						suggestedFeedback:
-							"System automatically enhanced evidence collection based on project analysis",
+							'System automatically enhanced evidence collection based on project analysis',
 					};
 				}
 
 				return {
 					modified: false,
 					changes: [],
-					reasoning: "Evidence collection adequate",
+					reasoning: 'Evidence collection adequate',
 				};
 			},
 			confidence: 0.6,
@@ -336,7 +336,7 @@ export class BehaviorExtensionManager {
 				{
 					type: modification.type as any,
 					description: `Applied pattern: ${pattern.name}`,
-					impact: "medium",
+					impact: 'medium',
 					parameters: modification.parameters,
 				},
 			],
@@ -355,18 +355,18 @@ export class BehaviorExtensionManager {
 
 		for (const change of result.changes) {
 			switch (change.type) {
-				case "validation_adjustment":
+				case 'validation_adjustment':
 					// Modify validation thresholds
 					modifiedState = this.adjustValidation(
 						modifiedState,
 						change.parameters,
 					);
 					break;
-				case "gate_modification":
+				case 'gate_modification':
 					// Modify gate behavior
 					modifiedState = this.modifyGates(modifiedState, change.parameters);
 					break;
-				case "workflow_alteration":
+				case 'workflow_alteration':
 					// Alter workflow behavior
 					modifiedState = this.alterWorkflow(modifiedState, change.parameters);
 					break;
@@ -414,18 +414,18 @@ export class BehaviorExtensionManager {
 	 * Assessment helper methods
 	 */
 	private assessProjectComplexity(
-		blueprint: PRPState["blueprint"],
-	): "simple" | "medium" | "complex" {
+		blueprint: PRPState['blueprint'],
+	): 'simple' | 'medium' | 'complex' {
 		const requirementCount = blueprint.requirements?.length || 0;
 		const descriptionLength = blueprint.description.length;
 
-		if (requirementCount <= 3 && descriptionLength < 200) return "simple";
-		if (requirementCount <= 8 && descriptionLength < 500) return "medium";
-		return "complex";
+		if (requirementCount <= 3 && descriptionLength < 200) return 'simple';
+		if (requirementCount <= 8 && descriptionLength < 500) return 'medium';
+		return 'complex';
 	}
 
-	private getHistoricalSuccessRate(_blueprint: PRPState["blueprint"]): number {
-		const examples = this.captureSystem.getExamples({ type: "workflow" });
+	private getHistoricalSuccessRate(_blueprint: PRPState['blueprint']): number {
+		const examples = this.captureSystem.getExamples({ type: 'workflow' });
 		if (examples.length === 0) {
 			return 0;
 		}
@@ -433,21 +433,21 @@ export class BehaviorExtensionManager {
 		return successes / examples.length;
 	}
 
-	private inferProjectType(blueprint: PRPState["blueprint"]): string {
+	private inferProjectType(blueprint: PRPState['blueprint']): string {
 		const title = blueprint.title.toLowerCase();
 		const description = blueprint.description.toLowerCase();
 
-		if (title.includes("doc") || description.includes("documentation")) {
-			return "documentation-only";
+		if (title.includes('doc') || description.includes('documentation')) {
+			return 'documentation-only';
 		}
-		if (title.includes("api") || description.includes("backend")) {
-			return "backend-service";
+		if (title.includes('api') || description.includes('backend')) {
+			return 'backend-service';
 		}
-		if (title.includes("ui") || description.includes("frontend")) {
-			return "frontend-application";
+		if (title.includes('ui') || description.includes('frontend')) {
+			return 'frontend-application';
 		}
 
-		return "full-stack";
+		return 'full-stack';
 	}
 
 	private assessEvidenceNeeds(state: PRPState): {
@@ -457,21 +457,21 @@ export class BehaviorExtensionManager {
 		const needs: string[] = [];
 
 		if (
-			state.phase === "strategy" &&
-			!state.evidence.some((e) => e.type === "analysis")
+			state.phase === 'strategy' &&
+			!state.evidence.some((e) => e.type === 'analysis')
 		) {
-			needs.push("architecture-analysis");
+			needs.push('architecture-analysis');
 		}
 		if (
-			state.phase === "build" &&
-			!state.evidence.some((e) => e.type === "test")
+			state.phase === 'build' &&
+			!state.evidence.some((e) => e.type === 'test')
 		) {
-			needs.push("test-execution");
+			needs.push('test-execution');
 		}
 
 		return {
 			additional: needs,
-			priority: needs.length > 1 ? "high" : "medium",
+			priority: needs.length > 1 ? 'high' : 'medium',
 		};
 	}
 
@@ -485,14 +485,14 @@ export class BehaviorExtensionManager {
 		result: ExtensionResult,
 	): void {
 		this.captureSystem.captureExample(
-			"workflow",
+			'workflow',
 			{
 				prpPhase: originalState.phase,
 				blueprint: originalState.blueprint,
 				inputState: originalState,
 			},
 			{
-				type: "workflow_modification",
+				type: 'workflow_modification',
 				description: `Extension applied: ${extension.name}`,
 				parameters: {
 					extensionId: extension.id,
@@ -506,7 +506,7 @@ export class BehaviorExtensionManager {
 				learningValue: extension.confidence,
 			},
 			{
-				tags: ["extension", "auto-adaptation", originalState.phase],
+				tags: ['extension', 'auto-adaptation', originalState.phase],
 			},
 			(originalState as any).metadata?.deterministic,
 		);

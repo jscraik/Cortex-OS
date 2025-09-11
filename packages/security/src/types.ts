@@ -3,14 +3,14 @@
  * @description Common types for SPIFFE/SPIRE security implementation
  */
 
-import { z } from "zod";
+import { z } from 'zod';
 
 // SPIFFE ID Schema
 export const SpiffeIdSchema = z
 	.string()
 	.regex(
 		/^spiffe:\/\/[^/]+\/[^/]+.*$/,
-		"SPIFFE ID must be in format spiffe://trust-domain/workload-path",
+		'SPIFFE ID must be in format spiffe://trust-domain/workload-path',
 	);
 
 // SPIFFE ID Type
@@ -43,8 +43,8 @@ export const MTLSConfigSchema = z.object({
 	clientKey: z.string(),
 	serverName: z.string().optional(),
 	rejectUnauthorized: z.boolean().default(true),
-	minVersion: z.enum(["TLSv1.2", "TLSv1.3"]).default("TLSv1.2"),
-	maxVersion: z.enum(["TLSv1.2", "TLSv1.3"]).optional(),
+	minVersion: z.enum(['TLSv1.2', 'TLSv1.3']).default('TLSv1.2'),
+	maxVersion: z.enum(['TLSv1.2', 'TLSv1.3']).optional(),
 });
 
 export type MTLSConfig = z.infer<typeof MTLSConfigSchema>;
@@ -85,13 +85,13 @@ export type SpiffeWorkloadResponse = z.infer<
 
 // Security Event Types
 export enum SecurityEventType {
-	WORKLOAD_ATTESTED = "workload.attested",
-	CERTIFICATE_ROTATED = "certificate.rotated",
-	MTLS_CONNECTION_ESTABLISHED = "mtls.connection.established",
-	MTLS_CONNECTION_FAILED = "mtls.connection.failed",
-	SECURITY_CONTEXT_EXPIRED = "security.context.expired",
-	AUTHENTICATION_FAILED = "authentication.failed",
-	AUTHORIZATION_FAILED = "authorization.failed",
+	WORKLOAD_ATTESTED = 'workload.attested',
+	CERTIFICATE_ROTATED = 'certificate.rotated',
+	MTLS_CONNECTION_ESTABLISHED = 'mtls.connection.established',
+	MTLS_CONNECTION_FAILED = 'mtls.connection.failed',
+	SECURITY_CONTEXT_EXPIRED = 'security.context.expired',
+	AUTHENTICATION_FAILED = 'authentication.failed',
+	AUTHORIZATION_FAILED = 'authorization.failed',
 }
 
 // Security Event Schema
@@ -100,7 +100,7 @@ export const SecurityEventSchema = z.object({
 	spiffeId: SpiffeIdSchema,
 	timestamp: z.date(),
 	details: z.record(z.string(), z.unknown()),
-	severity: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+	severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
 });
 
 export type SecurityEvent = z.infer<typeof SecurityEventSchema>;
@@ -110,7 +110,7 @@ export const TrustDomainConfigSchema = z.object({
 	name: z.string(),
 	spireServerAddress: z.string(),
 	spireServerPort: z.number().default(8081),
-	workloadSocketPath: z.string().default("/tmp/spire-agent/public/api.sock"),
+	workloadSocketPath: z.string().default('/tmp/spire-agent/public/api.sock'),
 	certificateFile: z.string().optional(),
 	keyFile: z.string().optional(),
 	caBundleFile: z.string().optional(),
@@ -140,7 +140,7 @@ export class SecurityError extends Error {
 		public details?: Record<string, unknown>,
 	) {
 		super(message);
-		this.name = "SecurityError";
+		this.name = 'SecurityError';
 	}
 }
 
@@ -150,8 +150,8 @@ export class SPIFFEError extends SecurityError {
 		spiffeId?: SpiffeId,
 		details?: Record<string, unknown>,
 	) {
-		super(message, "SPIFFE_ERROR", spiffeId, details);
-		this.name = "SPIFFEError";
+		super(message, 'SPIFFE_ERROR', spiffeId, details);
+		this.name = 'SPIFFEError';
 	}
 }
 
@@ -161,8 +161,8 @@ export class MTLSError extends SecurityError {
 		spiffeId?: SpiffeId,
 		details?: Record<string, unknown>,
 	) {
-		super(message, "MTLS_ERROR", spiffeId, details);
-		this.name = "MTLSError";
+		super(message, 'MTLS_ERROR', spiffeId, details);
+		this.name = 'MTLSError';
 	}
 }
 
@@ -172,7 +172,7 @@ export class WorkloadIdentityError extends SecurityError {
 		spiffeId?: SpiffeId,
 		details?: Record<string, unknown>,
 	) {
-		super(message, "WORKLOAD_IDENTITY_ERROR", spiffeId, details);
-		this.name = "WorkloadIdentityError";
+		super(message, 'WORKLOAD_IDENTITY_ERROR', spiffeId, details);
+		this.name = 'WorkloadIdentityError';
 	}
 }

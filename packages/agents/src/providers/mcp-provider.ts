@@ -4,14 +4,14 @@
  * Provides model access through MCP servers with automatic discovery
  */
 
-import { redactSecrets } from "../lib/secret-store.js";
+import { redactSecrets } from '../lib/secret-store.js';
 import type {
 	GenerateOptions,
 	GenerateResult,
 	MCPClient,
 	ModelProvider,
-} from "../lib/types.js";
-import { estimateTokens, retry, withTimeout } from "../lib/utils.js";
+} from '../lib/types.js';
+import { estimateTokens, retry, withTimeout } from '../lib/utils.js';
 
 export interface MCPProviderConfig {
 	mcpClient: MCPClient;
@@ -39,7 +39,7 @@ const generateViaMCP = async (
 	prompt: string,
 	options: GenerateOptions,
 	config: MCPProviderConfig,
-): Promise<GenerateResult> => {
+): Promise<GenerateResult & { text: string; provider: string; usage: any; latencyMs: number }> => {
 	const startTime = Date.now();
 	const mergedOptions = {
 		...DEFAULT_OPTIONS,
@@ -49,7 +49,7 @@ const generateViaMCP = async (
 
 	try {
 		const call = async () =>
-			(await config.mcpClient.callTool("text-generation", {
+			(await config.mcpClient.callTool('text-generation', {
 				model: config.modelName,
 				prompt,
 				...mergedOptions,
@@ -58,8 +58,8 @@ const generateViaMCP = async (
 
 		const endTime = Date.now();
 
-		if (!result || typeof (result as any).text !== "string") {
-			throw new Error("Invalid response from MCP server");
+		if (!result || typeof (result as any).text !== 'string') {
+			throw new Error('Invalid response from MCP server');
 		}
 
 		const tokenUsage = {
@@ -70,6 +70,12 @@ const generateViaMCP = async (
 				result.usage?.totalTokens ?? estimateTokens(prompt + result.text),
 		};
 		return {
+			// Legacy/test-friendly fields
+			text: result.text,
+			provider: `mcp:${config.modelName}`,
+			usage: tokenUsage,
+			latencyMs: endTime - startTime,
+			// Canonical fields
 			content: result.text,
 			tokenUsage,
 			metadata: {
@@ -80,13 +86,13 @@ const generateViaMCP = async (
 	} catch (error) {
 		const anyErr: any = error;
 		const status = anyErr?.status || anyErr?.response?.status;
-		const title = anyErr?.title || anyErr?.response?.statusText || "mcp_error";
-		const detail = anyErr?.detail || anyErr?.message || "";
+		const title = anyErr?.title || anyErr?.response?.statusText || 'mcp_error';
+		const detail = anyErr?.detail || anyErr?.message || '';
 		const errorMessage = `${title} ${detail}`;
 		const err = new Error(
 			`MCP generation failed: ${redactSecrets(errorMessage)}`,
 		);
-		(err as any).code = anyErr?.type || (status ? String(status) : "mcp_error");
+		(err as any).code = anyErr?.type || (status ? String(status) : 'mcp_error');
 		(err as any).status = status;
 		throw err;
 	}
@@ -109,19 +115,27 @@ export const createMCPProviders = async (
 	mcpClient: MCPClient,
 ): Promise<ModelProvider[]> => {
 	try {
-		const tools = (await mcpClient.listTools?.()) || [];
-		const textGenTools = tools.filter(
-			(tool: any) =>
-				tool.name === "text-generation" &&
-				tool.schema?.properties?.model,
-		);
+		const toolsUnknown = (await mcpClient.listTools?.()) || [];
+		const tools = Array.isArray(toolsUnknown) ? toolsUnknown : [];
+		const textGenTools = tools.filter((tool: unknown) => {
+			if (!tool || typeof tool !== 'object') return false;
+			const t: any = tool;
+			return (
+				t.name === 'text-generation' &&
+				t.schema &&
+				typeof t.schema === 'object' &&
+				t.schema.properties &&
+				typeof t.schema.properties === 'object' &&
+				t.schema.properties.model
+			);
+		});
 
 		if (textGenTools.length === 0) {
 			return [];
 		}
 
-		const modelOptions = textGenTools[0].schema?.properties?.model
-			?.enum || ["default"];
+		const modelOptions: string[] =
+			(textGenTools[0] as any)?.schema?.properties?.model?.enum || ['default'];
 
 		return modelOptions.map((model: string) =>
 			createMCPProvider({
@@ -131,7 +145,7 @@ export const createMCPProviders = async (
 			}),
 		);
 	} catch (error) {
-		console.warn("Failed to discover MCP models:", error);
+		console.warn('Failed to discover MCP models:', error);
 		return [];
 	}
 };
@@ -146,7 +160,7 @@ export const discoverMCPProviders = async (
 	return allProviders
 		.filter(
 			(result): result is PromiseFulfilledResult<ModelProvider[]> =>
-				result.status === "fulfilled",
+				result.status === 'fulfilled',
 		)
 		.flatMap((result) => result.value);
 };

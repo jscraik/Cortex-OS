@@ -3,7 +3,7 @@
  * Monitors agent health, performance, and availability
  */
 
-import { EventEmitter } from "node:events";
+import { EventEmitter } from 'node:events';
 
 export interface AgentHealthMetrics {
 	agentId: string;
@@ -31,7 +31,7 @@ export interface AgentHealthThresholds {
 
 export interface AgentHealthStatus {
 	agentId: string;
-	status: "healthy" | "degraded" | "unhealthy" | "offline";
+	status: 'healthy' | 'degraded' | 'unhealthy' | 'offline';
 	score: number; // 0-100
 	issues: string[];
 	lastChecked: Date;
@@ -99,7 +99,7 @@ export class AgentHealthMonitor extends EventEmitter {
 			try {
 				await this.performHealthChecks();
 			} catch (error) {
-				this.emit("monitoringError", { error, timestamp: new Date() });
+				this.emit('monitoringError', { error, timestamp: new Date() });
 			}
 		}, this.options.healthCheckIntervalMs);
 
@@ -107,7 +107,7 @@ export class AgentHealthMonitor extends EventEmitter {
 			this.cleanupStaleAgents();
 		}, this.options.cleanupIntervalMs);
 
-		this.emit("monitoringStarted", { timestamp: new Date() });
+		this.emit('monitoringStarted', { timestamp: new Date() });
 	}
 
 	/**
@@ -124,7 +124,7 @@ export class AgentHealthMonitor extends EventEmitter {
 			this.cleanupInterval = undefined;
 		}
 
-		this.emit("monitoringStopped", { timestamp: new Date() });
+		this.emit('monitoringStopped', { timestamp: new Date() });
 	}
 
 	/**
@@ -152,7 +152,7 @@ export class AgentHealthMonitor extends EventEmitter {
 
 		const status: AgentHealthStatus = {
 			agentId,
-			status: "healthy",
+			status: 'healthy',
 			score: 100,
 			issues: [],
 			lastChecked: now,
@@ -163,7 +163,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		this.healthMetrics.set(agentId, metrics);
 		this.healthStatus.set(agentId, status);
 
-		this.emit("agentRegistered", { agentId, capabilities, timestamp: now });
+		this.emit('agentRegistered', { agentId, capabilities, timestamp: now });
 	}
 
 	/**
@@ -173,7 +173,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		this.healthMetrics.delete(agentId);
 		this.healthStatus.delete(agentId);
 
-		this.emit("agentUnregistered", { agentId, timestamp: new Date() });
+		this.emit('agentUnregistered', { agentId, timestamp: new Date() });
 	}
 
 	/**
@@ -218,7 +218,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		// Update health status
 		this.updateAgentHealthStatus(agentId);
 
-		this.emit("activityRecorded", {
+		this.emit('activityRecorded', {
 			agentId,
 			success: result.success,
 			responseTime: result.responseTime,
@@ -244,7 +244,7 @@ export class AgentHealthMonitor extends EventEmitter {
 
 		await Promise.allSettled(healthCheckPromises);
 
-		this.emit("healthCheckCompleted", {
+		this.emit('healthCheckCompleted', {
 			agentCount: this.healthMetrics.size,
 			timestamp: new Date(),
 		});
@@ -271,7 +271,7 @@ export class AgentHealthMonitor extends EventEmitter {
 			});
 
 			if (!healthCheckResult.success && healthCheckResult.error) {
-				this.emit("agentHealthCheckFailed", {
+				this.emit('agentHealthCheckFailed', {
 					agentId,
 					error: healthCheckResult.error,
 					responseTime,
@@ -287,7 +287,7 @@ export class AgentHealthMonitor extends EventEmitter {
 				error: error as Error,
 			});
 
-			this.emit("agentHealthCheckError", {
+			this.emit('agentHealthCheckError', {
 				agentId,
 				error,
 				responseTime,
@@ -317,7 +317,7 @@ export class AgentHealthMonitor extends EventEmitter {
 				agentId,
 				success,
 				responseTime,
-				error: success ? undefined : new Error("Agent ping failed"),
+				error: success ? undefined : new Error('Agent ping failed'),
 				timestamp,
 			};
 		} catch (error) {
@@ -382,15 +382,15 @@ export class AgentHealthMonitor extends EventEmitter {
 		}
 
 		// Determine status based on score
-		let healthStatus: AgentHealthStatus["status"];
+		let healthStatus: AgentHealthStatus['status'];
 		if (score >= 80) {
-			healthStatus = "healthy";
+			healthStatus = 'healthy';
 		} else if (score >= 60) {
-			healthStatus = "degraded";
+			healthStatus = 'degraded';
 		} else if (score >= 20) {
-			healthStatus = "unhealthy";
+			healthStatus = 'unhealthy';
 		} else {
-			healthStatus = "offline";
+			healthStatus = 'offline';
 		}
 
 		// Update status
@@ -402,7 +402,7 @@ export class AgentHealthMonitor extends EventEmitter {
 
 		// Emit events for status changes
 		if (previousStatus !== healthStatus) {
-			this.emit("agentStatusChanged", {
+			this.emit('agentStatusChanged', {
 				agentId,
 				previousStatus,
 				newStatus: healthStatus,
@@ -411,8 +411,8 @@ export class AgentHealthMonitor extends EventEmitter {
 				timestamp: now,
 			});
 
-			if (healthStatus === "unhealthy" || healthStatus === "offline") {
-				this.emit("agentUnhealthy", {
+			if (healthStatus === 'unhealthy' || healthStatus === 'offline') {
+				this.emit('agentUnhealthy', {
 					agentId,
 					status: healthStatus,
 					score: status.score,
@@ -421,10 +421,10 @@ export class AgentHealthMonitor extends EventEmitter {
 					timestamp: now,
 				});
 			} else if (
-				previousStatus === "unhealthy" ||
-				previousStatus === "offline"
+				previousStatus === 'unhealthy' ||
+				previousStatus === 'offline'
 			) {
-				this.emit("agentRecovered", {
+				this.emit('agentRecovered', {
 					agentId,
 					previousStatus,
 					newStatus: healthStatus,
@@ -461,7 +461,7 @@ export class AgentHealthMonitor extends EventEmitter {
 	 */
 	isAgentHealthy(agentId: string): boolean {
 		const status = this.healthStatus.get(agentId);
-		return status ? status.status === "healthy" : false;
+		return status ? status.status === 'healthy' : false;
 	}
 
 	/**
@@ -469,7 +469,7 @@ export class AgentHealthMonitor extends EventEmitter {
 	 */
 	getUnhealthyAgents(): AgentHealthStatus[] {
 		return Array.from(this.healthStatus.values()).filter(
-			(status) => status.status === "unhealthy" || status.status === "offline",
+			(status) => status.status === 'unhealthy' || status.status === 'offline',
 		);
 	}
 
@@ -483,7 +483,7 @@ export class AgentHealthMonitor extends EventEmitter {
 		unhealthy: number;
 		offline: number;
 		averageScore: number;
-		systemStatus: "healthy" | "degraded" | "unhealthy";
+		systemStatus: 'healthy' | 'degraded' | 'unhealthy';
 	} {
 		const statuses = this.getAgentHealthStatuses();
 		const totalAgents = statuses.length;
@@ -497,16 +497,16 @@ export class AgentHealthMonitor extends EventEmitter {
 		for (const status of statuses) {
 			totalScore += status.score;
 			switch (status.status) {
-				case "healthy":
+				case 'healthy':
 					healthy++;
 					break;
-				case "degraded":
+				case 'degraded':
 					degraded++;
 					break;
-				case "unhealthy":
+				case 'unhealthy':
 					unhealthy++;
 					break;
-				case "offline":
+				case 'offline':
 					offline++;
 					break;
 			}
@@ -514,13 +514,13 @@ export class AgentHealthMonitor extends EventEmitter {
 
 		const averageScore = totalAgents > 0 ? totalScore / totalAgents : 100;
 
-		let systemStatus: "healthy" | "degraded" | "unhealthy";
+		let systemStatus: 'healthy' | 'degraded' | 'unhealthy';
 		if (averageScore >= 80 && unhealthy === 0 && offline === 0) {
-			systemStatus = "healthy";
+			systemStatus = 'healthy';
 		} else if (averageScore >= 60) {
-			systemStatus = "degraded";
+			systemStatus = 'degraded';
 		} else {
-			systemStatus = "unhealthy";
+			systemStatus = 'unhealthy';
 		}
 
 		return {
@@ -546,7 +546,7 @@ export class AgentHealthMonitor extends EventEmitter {
 
 			if (timeSinceLastSeen > staleThreshold) {
 				this.unregisterAgent(agentId);
-				this.emit("staleAgentRemoved", {
+				this.emit('staleAgentRemoved', {
 					agentId,
 					timeSinceLastSeen,
 					timestamp: now,

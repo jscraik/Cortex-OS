@@ -1,16 +1,16 @@
+import { describe, expect, it } from 'vitest';
 import {
 	createTraceContext,
 	type TraceContext,
-} from "@cortex-os/a2a-contracts/trace-context";
-import { describe, expect, it } from "vitest";
+} from '../../a2a-contracts/src/trace-context.js';
 import {
 	ensureTraceContext,
 	getCurrentTraceContext,
 	withTraceContext,
-} from "../src/trace-context-manager";
+} from '../src/trace-context-manager';
 
-describe("trace-context-manager", () => {
-	it("propagates context across async boundaries", async () => {
+describe('trace-context-manager', () => {
+	it('propagates context across async boundaries', async () => {
 		const context = createTraceContext();
 		await withTraceContext(context, async () => {
 			await new Promise((resolve) => setTimeout(resolve, 0));
@@ -18,7 +18,7 @@ describe("trace-context-manager", () => {
 		});
 	});
 
-	it("reuses existing context in ensureTraceContext", async () => {
+	it('reuses existing context in ensureTraceContext', async () => {
 		const context = createTraceContext();
 		await withTraceContext(context, async () => {
 			await ensureTraceContext(async () => {
@@ -27,7 +27,7 @@ describe("trace-context-manager", () => {
 		});
 	});
 
-	it("creates and propagates context when absent", async () => {
+	it('creates and propagates context when absent', async () => {
 		let captured: TraceContext | undefined;
 		await ensureTraceContext(async () => {
 			captured = getCurrentTraceContext();

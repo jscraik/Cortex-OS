@@ -1,5 +1,5 @@
-import { z } from "zod";
-import type { A2AEventEnvelope } from "./envelope";
+import { z } from 'zod';
+import type { A2AEventEnvelope } from './envelope';
 
 // Routing Rule Schema
 export const RoutingRuleSchema = z.object({
@@ -18,14 +18,14 @@ export const RoutingRuleSchema = z.object({
 		labels: z.record(z.string()).optional(),
 		tags: z.array(z.string()).optional(),
 		priority_levels: z
-			.array(z.enum(["low", "normal", "high", "critical"]))
+			.array(z.enum(['low', 'normal', 'high', 'critical']))
 			.optional(),
 		time_window: z
 			.object({
 				start_hour: z.number().int().min(0).max(23),
 				end_hour: z.number().int().min(0).max(23),
 				days_of_week: z.array(z.number().int().min(0).max(6)), // 0 = Sunday
-				timezone: z.string().default("UTC"),
+				timezone: z.string().default('UTC'),
 			})
 			.optional(),
 	}),
@@ -53,7 +53,7 @@ export const RoutingRuleSchema = z.object({
 		transformations: z
 			.array(
 				z.object({
-					type: z.enum(["filter", "enrich", "aggregate", "split", "route"]),
+					type: z.enum(['filter', 'enrich', 'aggregate', 'split', 'route']),
 					function: z.string(),
 					parameters: z.record(z.unknown()).optional(),
 				}),
@@ -65,16 +65,16 @@ export const RoutingRuleSchema = z.object({
 				z.object({
 					field: z.string(),
 					operator: z.enum([
-						"eq",
-						"ne",
-						"gt",
-						"gte",
-						"lt",
-						"lte",
-						"in",
-						"not_in",
-						"contains",
-						"matches",
+						'eq',
+						'ne',
+						'gt',
+						'gte',
+						'lt',
+						'lte',
+						'in',
+						'not_in',
+						'contains',
+						'matches',
 					]),
 					value: z.unknown(),
 				}),
@@ -97,17 +97,17 @@ export type RoutingRule = z.infer<typeof RoutingRuleSchema>;
 
 // Routing Configuration Schema
 export const RoutingConfigurationSchema = z.object({
-	version: z.string().default("1.0"),
+	version: z.string().default('1.0'),
 	updated_at: z.string().datetime(),
 	rules: z.array(RoutingRuleSchema),
 
 	global_settings: z.object({
 		default_priority: z
-			.enum(["low", "normal", "high", "critical"])
-			.default("normal"),
+			.enum(['low', 'normal', 'high', 'critical'])
+			.default('normal'),
 		default_delivery_mode: z
-			.enum(["fire_and_forget", "at_least_once", "exactly_once"])
-			.default("at_least_once"),
+			.enum(['fire_and_forget', 'at_least_once', 'exactly_once'])
+			.default('at_least_once'),
 		default_retry_policy: z.object({
 			max_attempts: z.number().int().min(1).max(10).default(3),
 			initial_delay_ms: z.number().int().positive().default(1000),
@@ -118,7 +118,7 @@ export const RoutingConfigurationSchema = z.object({
 
 		dead_letter_queue: z.object({
 			enabled: z.boolean().default(true),
-			topic: z.string().default("github.dlq"),
+			topic: z.string().default('github.dlq'),
 			max_retention_hours: z.number().int().positive().default(168), // 7 days
 		}),
 
@@ -132,12 +132,12 @@ export const RoutingConfigurationSchema = z.object({
 	service_registry: z.record(
 		z.object({
 			type: z.enum([
-				"http",
-				"grpc",
-				"websocket",
-				"message_queue",
-				"database",
-				"file",
+				'http',
+				'grpc',
+				'websocket',
+				'message_queue',
+				'database',
+				'file',
 			]),
 			connection: z.record(z.string()),
 			health_check: z
@@ -229,7 +229,7 @@ export class GitHubEventRouter {
 		const routes = this.findRoutes(envelope);
 
 		if (routes.length === 0) {
-			warnings.push("No routing rules matched this envelope");
+			warnings.push('No routing rules matched this envelope');
 		}
 
 		// Validate destinations exist in service registry
@@ -258,14 +258,14 @@ export class GitHubEventRouter {
 	}
 
 	private compileConditions(
-		conditions: RoutingRule["conditions"],
+		conditions: RoutingRule['conditions'],
 	): CompiledConditions {
 		return {
 			eventTypeRegex: conditions.event_types
-				? new RegExp(conditions.event_types.join("|"))
+				? new RegExp(conditions.event_types.join('|'))
 				: null,
 			actionRegex: conditions.actions
-				? new RegExp(conditions.actions.join("|"))
+				? new RegExp(conditions.actions.join('|'))
 				: null,
 			repositoryPatterns: conditions.repository_patterns?.map(
 				(pattern) => new RegExp(this.globToRegex(pattern)),
@@ -292,27 +292,27 @@ export class GitHubEventRouter {
 			if (
 				rule.compiledConditions.eventTypeRegex.test(envelope.event.event_type)
 			) {
-				matched.push("event_type");
+				matched.push('event_type');
 			}
 		}
 
 		// Check action
-		if (rule.compiledConditions.actionRegex && "action" in envelope.event) {
+		if (rule.compiledConditions.actionRegex && 'action' in envelope.event) {
 			if (
 				rule.compiledConditions.actionRegex.test((envelope.event as any).action)
 			) {
-				matched.push("action");
+				matched.push('action');
 			}
 		}
 
 		// Check repository patterns
 		if (rule.compiledConditions.repositoryPatterns) {
 			const event = envelope.event;
-			if ("repository" in event && event.repository) {
+			if ('repository' in event && event.repository) {
 				const repoName = event.repository.full_name;
 				for (const pattern of rule.compiledConditions.repositoryPatterns) {
 					if (pattern.test(repoName)) {
-						matched.push("repository_pattern");
+						matched.push('repository_pattern');
 						break;
 					}
 				}
@@ -322,11 +322,11 @@ export class GitHubEventRouter {
 		// Check actor patterns
 		if (rule.compiledConditions.actorPatterns) {
 			const event = envelope.event;
-			if ("actor" in event && event.actor) {
+			if ('actor' in event && event.actor) {
 				const actorLogin = event.actor.login;
 				for (const pattern of rule.compiledConditions.actorPatterns) {
 					if (pattern.test(actorLogin)) {
-						matched.push("actor_pattern");
+						matched.push('actor_pattern');
 						break;
 					}
 				}
@@ -345,7 +345,7 @@ export class GitHubEventRouter {
 				}
 			}
 			if (allLabelsMatch) {
-				matched.push("labels");
+				matched.push('labels');
 			}
 		}
 
@@ -355,14 +355,14 @@ export class GitHubEventRouter {
 				envelope.metadata.tags.includes(tag),
 			);
 			if (hasAllTags) {
-				matched.push("tags");
+				matched.push('tags');
 			}
 		}
 
 		// Check priority levels
 		if (rule.compiledConditions.priorityLevels) {
 			if (rule.compiledConditions.priorityLevels.includes(envelope.priority)) {
-				matched.push("priority");
+				matched.push('priority');
 			}
 		}
 
@@ -374,7 +374,7 @@ export class GitHubEventRouter {
 					rule.compiledConditions.timeWindow,
 				)
 			) {
-				matched.push("time_window");
+				matched.push('time_window');
 			}
 		}
 
@@ -390,7 +390,7 @@ export class GitHubEventRouter {
 
 	private isInTimeWindow(
 		timestamp: string,
-		timeWindow: NonNullable<RoutingRule["conditions"]["time_window"]>,
+		timeWindow: NonNullable<RoutingRule['conditions']['time_window']>,
 	): boolean {
 		const date = new Date(timestamp);
 		const hour = date.getHours();
@@ -410,9 +410,9 @@ export class GitHubEventRouter {
 
 	private globToRegex(glob: string): string {
 		return glob
-			.replace(/[.+^${}()|[\]\\]/g, "\\$&") // Escape regex special chars
-			.replace(/\*/g, ".*") // Convert * to .*
-			.replace(/\?/g, "."); // Convert ? to .
+			.replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special chars
+			.replace(/\*/g, '.*') // Convert * to .*
+			.replace(/\?/g, '.'); // Convert ? to .
 	}
 }
 
@@ -428,37 +428,37 @@ interface CompiledConditions {
 	actorPatterns?: RegExp[];
 	labels?: Record<string, string>;
 	tags?: string[];
-	priorityLevels?: Array<"low" | "normal" | "high" | "critical">;
-	timeWindow?: NonNullable<RoutingRule["conditions"]["time_window"]>;
+	priorityLevels?: Array<'low' | 'normal' | 'high' | 'critical'>;
+	timeWindow?: NonNullable<RoutingRule['conditions']['time_window']>;
 }
 
 // Default routing configurations
 export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
-	version: "1.0",
+	version: '1.0',
 	updated_at: new Date().toISOString(),
 
 	rules: [
 		// Critical errors route to monitoring
 		{
 			id: crypto.randomUUID(),
-			name: "Critical Errors to Monitoring",
-			description: "Route critical GitHub errors to monitoring service",
+			name: 'Critical Errors to Monitoring',
+			description: 'Route critical GitHub errors to monitoring service',
 			enabled: true,
 			priority: 1000,
 			conditions: {
-				event_types: ["github.error"],
-				priority_levels: ["critical"],
+				event_types: ['github.error'],
+				priority_levels: ['critical'],
 			},
 			actions: {
 				destinations: [
 					{
-						service: "monitoring",
-						topic: "alerts.critical",
-						headers: { "X-Alert-Level": "critical" },
+						service: 'monitoring',
+						topic: 'alerts.critical',
+						headers: { 'X-Alert-Level': 'critical' },
 					},
 					{
-						service: "pagerduty",
-						topic: "incidents.create",
+						service: 'pagerduty',
+						topic: 'incidents.create',
 					},
 				],
 			},
@@ -467,19 +467,19 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		// Workflow failures to CI/CD service
 		{
 			id: crypto.randomUUID(),
-			name: "Workflow Failures to CI/CD",
-			description: "Route failed workflows to CI/CD service",
+			name: 'Workflow Failures to CI/CD',
+			description: 'Route failed workflows to CI/CD service',
 			enabled: true,
 			priority: 800,
 			conditions: {
-				event_types: ["github.workflow"],
-				actions: ["failed", "cancelled"],
+				event_types: ['github.workflow'],
+				actions: ['failed', 'cancelled'],
 			},
 			actions: {
 				destinations: [
 					{
-						service: "cicd",
-						topic: "builds.failed",
+						service: 'cicd',
+						topic: 'builds.failed',
 					},
 				],
 			},
@@ -488,19 +488,19 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		// Pull request events to code review service
 		{
 			id: crypto.randomUUID(),
-			name: "Pull Requests to Code Review",
-			description: "Route PR events to code review service",
+			name: 'Pull Requests to Code Review',
+			description: 'Route PR events to code review service',
 			enabled: true,
 			priority: 600,
 			conditions: {
-				event_types: ["github.pull_request"],
-				actions: ["opened", "synchronized", "ready_for_review"],
+				event_types: ['github.pull_request'],
+				actions: ['opened', 'synchronized', 'ready_for_review'],
 			},
 			actions: {
 				destinations: [
 					{
-						service: "code-review",
-						topic: "reviews.incoming",
+						service: 'code-review',
+						topic: 'reviews.incoming',
 					},
 				],
 			},
@@ -509,19 +509,19 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		// Issue events to project management
 		{
 			id: crypto.randomUUID(),
-			name: "Issues to Project Management",
-			description: "Route issue events to project management service",
+			name: 'Issues to Project Management',
+			description: 'Route issue events to project management service',
 			enabled: true,
 			priority: 400,
 			conditions: {
-				event_types: ["github.issue"],
-				actions: ["opened", "closed", "labeled"],
+				event_types: ['github.issue'],
+				actions: ['opened', 'closed', 'labeled'],
 			},
 			actions: {
 				destinations: [
 					{
-						service: "project-mgmt",
-						topic: "issues.updates",
+						service: 'project-mgmt',
+						topic: 'issues.updates',
 					},
 				],
 			},
@@ -530,17 +530,17 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		// All events to audit log
 		{
 			id: crypto.randomUUID(),
-			name: "All Events to Audit",
-			description: "Route all GitHub events to audit service for compliance",
+			name: 'All Events to Audit',
+			description: 'Route all GitHub events to audit service for compliance',
 			enabled: true,
 			priority: 100,
 			conditions: {}, // No conditions = match all
 			actions: {
 				destinations: [
 					{
-						service: "audit",
-						topic: "github.events",
-						headers: { "X-Event-Source": "github" },
+						service: 'audit',
+						topic: 'github.events',
+						headers: { 'X-Event-Source': 'github' },
 					},
 				],
 			},
@@ -548,8 +548,8 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 	],
 
 	global_settings: {
-		default_priority: "normal",
-		default_delivery_mode: "at_least_once",
+		default_priority: 'normal',
+		default_delivery_mode: 'at_least_once',
 		default_retry_policy: {
 			max_attempts: 3,
 			initial_delay_ms: 1000,
@@ -559,65 +559,65 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		},
 		dead_letter_queue: {
 			enabled: true,
-			topic: "github.dlq",
+			topic: 'github.dlq',
 			max_retention_hours: 168,
 		},
 		metrics: {
 			enabled: true,
 			export_interval_ms: 60000,
 			labels: {
-				source: "github",
-				version: "1.0",
+				source: 'github',
+				version: '1.0',
 			},
 		},
 	},
 
 	service_registry: {
 		monitoring: {
-			type: "http",
+			type: 'http',
 			connection: {
-				base_url: "http://monitoring-service:8080",
-				api_key: "${MONITORING_API_KEY}",
+				base_url: 'http://monitoring-service:8080',
+				api_key: '${MONITORING_API_KEY}',
 			},
 			health_check: {
-				endpoint: "/health",
+				endpoint: '/health',
 				interval_ms: 30000,
 				timeout_ms: 5000,
 			},
 		},
 		pagerduty: {
-			type: "http",
+			type: 'http',
 			connection: {
-				base_url: "https://events.pagerduty.com/v2",
-				integration_key: "${PAGERDUTY_INTEGRATION_KEY}",
+				base_url: 'https://events.pagerduty.com/v2',
+				integration_key: '${PAGERDUTY_INTEGRATION_KEY}',
 			},
 		},
 		cicd: {
-			type: "message_queue",
+			type: 'message_queue',
 			connection: {
-				broker_url: "redis://cicd-redis:6379",
-				queue: "builds",
+				broker_url: 'redis://cicd-redis:6379',
+				queue: 'builds',
 			},
 		},
-		"code-review": {
-			type: "grpc",
+		'code-review': {
+			type: 'grpc',
 			connection: {
-				address: "code-review-service:9090",
-				tls: "true",
+				address: 'code-review-service:9090',
+				tls: 'true',
 			},
 		},
-		"project-mgmt": {
-			type: "websocket",
+		'project-mgmt': {
+			type: 'websocket',
 			connection: {
-				url: "wss://project-mgmt:8081/events",
-				auth_token: "${PROJECT_MGMT_TOKEN}",
+				url: 'wss://project-mgmt:8081/events',
+				auth_token: '${PROJECT_MGMT_TOKEN}',
 			},
 		},
 		audit: {
-			type: "database",
+			type: 'database',
 			connection: {
-				connection_string: "${AUDIT_DB_URL}",
-				table: "github_events",
+				connection_string: '${AUDIT_DB_URL}',
+				table: 'github_events',
 			},
 		},
 	},
@@ -626,7 +626,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 // Routing utilities
 export function createRoutingRule(
 	name: string,
-	conditions: RoutingRule["conditions"],
+	conditions: RoutingRule['conditions'],
 	destinations: Array<{ service: string; topic?: string; endpoint?: string }>,
 	options?: {
 		description?: string;

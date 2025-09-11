@@ -1,5 +1,5 @@
-import type { Qwen3Reranker } from "../pipeline/qwen3-reranker.js";
-import type { Document } from "./types.js";
+import type { Qwen3Reranker } from '../pipeline/qwen3-reranker.js';
+import type { Document } from './types.js';
 
 export async function rerankDocs(
 	reranker: Qwen3Reranker,

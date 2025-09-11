@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y git git-lfs && rm -rf /var/lib/apt/list
     && git lfs install --system
 
 WORKDIR /app
- 
+
 COPY --from=uv /root/.local /root/.local
 COPY --from=uv --chown=app:app /app/.venv /app/.venv
 

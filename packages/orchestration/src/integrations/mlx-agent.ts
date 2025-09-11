@@ -9,12 +9,12 @@
  * @ai_provenance_hash N/A
  */
 
-import { EventEmitter } from "node:events";
-import { type Agent, AgentCapability, AgentRole } from "../types.js";
+import { EventEmitter } from 'node:events';
+import { type Agent, AgentCapability, AgentRole } from '../types.js';
 
 export interface MLXConfig {
 	model: string;
-	device: "local" | "gpu" | "cpu";
+	device: 'local' | 'gpu' | 'cpu';
 	maxTokens: number;
 	temperature: number;
 	topP: number;
@@ -70,7 +70,7 @@ export class MLXAgent extends EventEmitter implements Agent {
 	public readonly name: string;
 	public readonly role: AgentRole;
 	public readonly capabilities: string[];
-	public status: "available" | "busy" | "offline";
+	public status: 'available' | 'busy' | 'offline';
 	public metadata: Record<string, unknown>;
 	public lastSeen: Date;
 
@@ -92,20 +92,20 @@ export class MLXAgent extends EventEmitter implements Agent {
 			AgentCapability.CODE_GENERATION,
 			AgentCapability.TASK_PLANNING,
 		];
-		this.status = "offline";
+		this.status = 'offline';
 		this.metadata = {};
 		this.lastSeen = new Date();
 
 		this.config = {
-			model: config.model || "llama-3.2-3b",
-			device: config.device || "local",
+			model: config.model || 'llama-3.2-3b',
+			device: config.device || 'local',
 			maxTokens: config.maxTokens || 4096,
 			temperature: config.temperature || 0.7,
 			topP: config.topP || 0.9,
 			enableLogging: config.enableLogging ?? true,
 			cacheSize: config.cacheSize || 1024,
 			timeout: config.timeout || 30000,
-			serverUrl: config.serverUrl || "http://localhost",
+			serverUrl: config.serverUrl || 'http://localhost',
 			serverPort: config.serverPort || 8000,
 		};
 	}
@@ -132,18 +132,18 @@ export class MLXAgent extends EventEmitter implements Agent {
 	async initialize(): Promise<void> {
 		if (this.isInitialized) return;
 
-		this.status = "busy";
-		this.emit("statusChange", { agentId: this.id, status: this.status });
+		this.status = 'busy';
+		this.emit('statusChange', { agentId: this.id, status: this.status });
 
 		try {
 			await this.loadModel();
 			this.isInitialized = true;
-			this.status = "available";
+			this.status = 'available';
 			this.lastSeen = new Date();
-			this.emit("initialized", { agentId: this.id, model: this.config.model });
+			this.emit('initialized', { agentId: this.id, model: this.config.model });
 		} catch (error) {
-			this.status = "offline";
-			this.emit("error", { agentId: this.id, error, operation: "initialize" });
+			this.status = 'offline';
+			this.emit('error', { agentId: this.id, error, operation: 'initialize' });
 			throw error;
 		}
 	}
@@ -155,15 +155,15 @@ export class MLXAgent extends EventEmitter implements Agent {
 		request: MLXInferenceRequest,
 	): Promise<MLXInferenceResponse> {
 		if (!this.isInitialized || !this.modelLoaded) {
-			throw new Error("MLX agent not initialized or model not loaded");
+			throw new Error('MLX agent not initialized or model not loaded');
 		}
 
-		if (this.status !== "available") {
+		if (this.status !== 'available') {
 			throw new Error(`MLX agent is ${this.status}, cannot process inference`);
 		}
 
-		this.status = "busy";
-		this.emit("statusChange", { agentId: this.id, status: this.status });
+		this.status = 'busy';
+		this.emit('statusChange', { agentId: this.id, status: this.status });
 
 		try {
 			// Simulate MLX inference (in production, this would call actual MLX library)
@@ -172,9 +172,9 @@ export class MLXAgent extends EventEmitter implements Agent {
 			this.inferenceCount++;
 			this.totalInferenceTime += response.inferenceTime;
 			this.lastSeen = new Date();
-			this.status = "available";
+			this.status = 'available';
 
-			this.emit("inferenceCompleted", {
+			this.emit('inferenceCompleted', {
 				agentId: this.id,
 				request,
 				response,
@@ -183,8 +183,8 @@ export class MLXAgent extends EventEmitter implements Agent {
 
 			return response;
 		} catch (error) {
-			this.status = "available";
-			this.emit("error", { agentId: this.id, error, operation: "inference" });
+			this.status = 'available';
+			this.emit('error', { agentId: this.id, error, operation: 'inference' });
 			throw error;
 		}
 	}
@@ -194,7 +194,7 @@ export class MLXAgent extends EventEmitter implements Agent {
 	 */
 	async generateCode(
 		specification: string,
-		language: string = "typescript",
+		language: string = 'typescript',
 	): Promise<string> {
 		const request: MLXInferenceRequest = {
 			modelId: this.config.model,
@@ -220,7 +220,7 @@ export class MLXAgent extends EventEmitter implements Agent {
 			modelId: this.config.model,
 			prompt: `Create a detailed plan for this task:\n\n${taskDescription}\n\nProvide phases, dependencies, and time estimates.`,
 			systemPrompt:
-				"You are an expert project planner. Create comprehensive, realistic plans.",
+				'You are an expert project planner. Create comprehensive, realistic plans.',
 			maxTokens: 1024,
 			temperature: 0.5,
 		};
@@ -243,14 +243,14 @@ export class MLXAgent extends EventEmitter implements Agent {
 		reasoning: string;
 		confidence: number;
 	}> {
-		const optionsText = options.map((opt, i) => `${i + 1}. ${opt}`).join("\n");
-		const criteriaText = criteria.join(", ");
+		const optionsText = options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+		const criteriaText = criteria.join(', ');
 
 		const request: MLXInferenceRequest = {
 			modelId: this.config.model,
 			prompt: `Context: ${context}\n\nOptions:\n${optionsText}\n\nCriteria: ${criteriaText}\n\nSelect the best option and explain your reasoning.`,
 			systemPrompt:
-				"You are an expert decision maker. Consider all factors and provide clear reasoning.",
+				'You are an expert decision maker. Consider all factors and provide clear reasoning.',
 			maxTokens: 512,
 			temperature: 0.4,
 		};
@@ -272,8 +272,8 @@ export class MLXAgent extends EventEmitter implements Agent {
 
 		try {
 			const response = await fetch(`${serverUrl}/health`, {
-				method: "GET",
-				headers: { "Content-Type": "application/json" },
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' },
 				signal: AbortSignal.timeout(5000), // 5 second timeout for health check
 			});
 
@@ -319,8 +319,8 @@ export class MLXAgent extends EventEmitter implements Agent {
 		try {
 			// Check if MLX server is running
 			const healthResponse = await fetch(`${serverUrl}/health`, {
-				method: "GET",
-				headers: { "Content-Type": "application/json" },
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' },
 			});
 
 			if (!healthResponse.ok) {
@@ -329,8 +329,8 @@ export class MLXAgent extends EventEmitter implements Agent {
 
 			// Load the specified model
 			const loadResponse = await fetch(`${serverUrl}/load_model`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					model_name: this.config.model,
 					device: this.config.device,
@@ -340,7 +340,7 @@ export class MLXAgent extends EventEmitter implements Agent {
 			if (!loadResponse.ok) {
 				const errorData = await loadResponse
 					.json()
-					.catch(() => ({ error: "Unknown error" }));
+					.catch(() => ({ error: 'Unknown error' }));
 				throw new Error(
 					`Failed to load model: ${errorData.error || loadResponse.statusText}`,
 				);
@@ -385,8 +385,8 @@ export class MLXAgent extends EventEmitter implements Agent {
 			};
 
 			const response = await fetch(`${serverUrl}/inference`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(inferencePayload),
 				signal: AbortSignal.timeout(this.config.timeout),
 			});
@@ -394,7 +394,7 @@ export class MLXAgent extends EventEmitter implements Agent {
 			if (!response.ok) {
 				const errorData = await response
 					.json()
-					.catch(() => ({ error: "Unknown error" }));
+					.catch(() => ({ error: 'Unknown error' }));
 				throw new Error(
 					`MLX inference failed: ${errorData.error || response.statusText}`,
 				);
@@ -404,19 +404,19 @@ export class MLXAgent extends EventEmitter implements Agent {
 			const duration = Date.now() - startTime;
 
 			return {
-				response: inferenceResult.text || "",
-				text: inferenceResult.text || "",
+				response: inferenceResult.text || '',
+				text: inferenceResult.text || '',
 				tokenCount: inferenceResult.tokens || 0,
 				tokens: inferenceResult.tokens || 0,
 				inferenceTime: duration,
 				duration,
-				finishReason: inferenceResult.finish_reason || "stop",
+				finishReason: inferenceResult.finish_reason || 'stop',
 			};
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
 
-			if (error instanceof Error && error.name === "AbortError") {
+			if (error instanceof Error && error.name === 'AbortError') {
 				throw new Error(`MLX inference timeout after ${this.config.timeout}ms`);
 			}
 
@@ -434,11 +434,11 @@ export class MLXAgent extends EventEmitter implements Agent {
 	} {
 		// Simplified parsing - in production, this would be more sophisticated
 		return {
-			phases: ["Planning", "Development", "Testing", "Deployment"],
+			phases: ['Planning', 'Development', 'Testing', 'Deployment'],
 			dependencies: {
-				Development: ["Planning"],
-				Testing: ["Development"],
-				Deployment: ["Testing"],
+				Development: ['Planning'],
+				Testing: ['Development'],
+				Deployment: ['Testing'],
 			},
 			estimatedDuration: 5000, // 5 seconds estimated
 		};
@@ -467,11 +467,11 @@ export class MLXAgent extends EventEmitter implements Agent {
 	 * Cleanup resources
 	 */
 	async cleanup(): Promise<void> {
-		this.status = "offline";
+		this.status = 'offline';
 		this.isInitialized = false;
 		this.modelLoaded = false;
 		this.inferenceCount = 0;
-		this.emit("cleanup", { agentId: this.id });
+		this.emit('cleanup', { agentId: this.id });
 	}
 }
 

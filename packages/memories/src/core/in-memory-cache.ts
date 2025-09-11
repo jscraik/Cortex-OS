@@ -1,4 +1,4 @@
-import type { CacheManager } from "../domain/types.js";
+import type { CacheManager } from '../domain/types.js';
 
 interface CacheEntry {
 	value: unknown;
