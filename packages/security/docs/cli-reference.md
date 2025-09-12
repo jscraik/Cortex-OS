@@ -1,9 +1,10 @@
 # CLI Reference
 
-The security package does not currently expose a command-line interface.
+## 🚧 Coming Soon
 
-Planned CLI features include:
+The Cortex Security CLI is not yet available. We are actively working on adding command-line support to the security package.
 
+**Planned CLI features include:**
 - `cortex-security status` – display SPIFFE and mTLS health.
 - `cortex-security rotate` – force certificate rotation.
 
