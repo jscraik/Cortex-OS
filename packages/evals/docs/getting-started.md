@@ -16,7 +16,7 @@ pnpm add @cortex-os/evals
 ```ts
 import { runGate } from '@cortex-os/evals';
 import myDeps from './deps';
-import config from './gate.config.json' assert { type: 'json' };
+import config from './gate.config.json' with { type: 'json' };
 
 const result = await runGate(config, myDeps);
 console.log(result.pass ? 'passed' : 'failed');
