@@ -18,3 +18,7 @@
 - Follow camelCase for variables/functions, PascalCase for types/classes, UPPER_CASE for constants
 - Handle errors with try/catch blocks and provide clear error messages
 - Use consistent indentation (2 spaces) and trailing commas in multi-line objects
+
+## Agent Toolkit
+
+During development, use `agent-toolkit` scripts for code search, codemods, diff review and validation (`tools/run_validators.sh`).

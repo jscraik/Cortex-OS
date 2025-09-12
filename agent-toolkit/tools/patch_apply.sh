@@ -25,7 +25,19 @@ fi
 ts=$(date +%s)
 backup_dir=".patch-backups/$ts"
 mkdir -p "$backup_dir"
+
+if [ $? -ne 0 ]; then
+  jq -n --arg reason "failed to create backup directory" '{tool:"patch",op:"apply",status:"fail",reason:$reason}'
+  rm -rf "$tmpdir"
+  exit 1
+fi
 cp "$diff_file" "$backup_dir/patch.diff"
+if [ $? -ne 0 ]; then
+  jq -n --arg reason "failed to copy patch diff to backup directory" '{tool:"patch",op:"apply",status:"fail",reason:$reason}'
+  rm -rf "$tmpdir"
+  exit 1
+fi
+
 
 git apply "$diff_file"
 

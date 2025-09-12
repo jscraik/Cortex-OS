@@ -330,3 +330,7 @@ await store.upsert({
   provenance: { source: 'system' },
 });
 ```
+
+## Agent Toolkit
+
+Utilize `agent-toolkit/tools` for searches, codemods, diff review and validations. Run `just scout` and `tools/run_validators.sh` before commits.
