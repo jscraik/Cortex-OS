@@ -12,4 +12,4 @@ pnpm install
 - `pnpm test` – run tests
 - `pnpm docs:verify` – lint documentation
 
-Follow the repository's [CONTRIBUTING](../../CONTRIBUTING.md) guidelines and maintain 95% test coverage.
+Follow the repository's [CONTRIBUTING](../../../CONTRIBUTING.md) guidelines and maintain 95% test coverage.
