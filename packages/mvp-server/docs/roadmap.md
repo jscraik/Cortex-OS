@@ -7,5 +7,5 @@
 - Terraform modules for cloud deployment
 
 ## Quickstart Guides
-- [Plugin Development](./examples.md#plugin-example)
-- [Docker Deployment](./deployment.md#docker)
+- [Plugin Development](./examples.md)
+- [Docker Deployment](./deployment.md)
