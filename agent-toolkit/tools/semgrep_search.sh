@@ -2,6 +2,7 @@
 set -euo pipefail
 pattern="$1"
 path="${2:-.}"
+
 semgrep_output_file=$(mktemp)
 semgrep_error_file=$(mktemp)
 semgrep --json --quiet --metrics=off -e "$pattern" "$path" >"$semgrep_output_file" 2>"$semgrep_error_file"
@@ -20,6 +21,7 @@ fi
 output=$(cat "$semgrep_output_file")
 results=$(echo "$output" | jq '[.results[] | {file:.path,start:.start.line,end:.end.line}]' 2>/dev/null || echo '[]')
 rm -f "$semgrep_output_file" "$semgrep_error_file"
+
 
 jq -n --arg pattern "$pattern" --arg path "$path" --argjson results "$results" '{
   tool:"semgrep",

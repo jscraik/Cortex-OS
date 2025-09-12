@@ -1,6 +1,7 @@
 default: help
 
 help:
+
 	@echo "Available recipes:"
 	@echo "  scout pattern path         - Search for a pattern in the codebase using multiple tools (ripgrep, semgrep, ast-grep)."
 	@echo "  codemod find replace path  - Perform a codemod: replace occurrences of 'find' with 'replace' in the given path using comby."

@@ -11,6 +11,7 @@ if ! output=$(ast-grep "$pattern" "$path" -j | jq '[.matches[] | {file:.file, st
   exit 0
 fi
 
+
 jq -n --arg pattern "$pattern" --arg path "$path" --argjson results "$output" '{
   tool:"ast-grep",
   op:"search",
