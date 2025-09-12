@@ -12,7 +12,7 @@ import {
 	type OutboxRepository,
 } from '../../a2a-contracts/src/outbox-types.js';
 import { createTraceParent } from '../../a2a-contracts/src/trace-context.js';
-import { getCurrentTraceContext } from './trace-context-manager';
+import { getCurrentTraceContext } from './trace-context-manager.js';
 
 /**
  * Enhanced Transactional Outbox Pattern Implementation

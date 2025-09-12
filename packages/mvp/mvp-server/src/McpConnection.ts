@@ -1,4 +1,11 @@
 /** Minimal McpConnection implementation to satisfy tests. */
+declare module 'ws' {
+  export interface WebSocket {
+    on(event: string, listener: Function): this;
+    send(data: string): void;
+    close(): void;
+  }
+}
 import type { WebSocket } from 'ws';
 import type { ToolRegistry } from './ToolRegistry.js';
 

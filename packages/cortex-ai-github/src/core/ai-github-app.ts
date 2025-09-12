@@ -327,11 +327,12 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 		pr: GitHubContext['pr'],
 		includePatch: boolean,
 	): string {
+		if (!pr) return 'Pull Request: Not available\n';
 		let section = `Pull Request #${pr.number}: ${pr.title}\n`;
-		section += `Description: ${pr.body}\n`;
+		section += `Description: ${pr.body || 'No description'}\n`;
 		section += `Base: ${pr.base} <- Head: ${pr.head}\n\n`;
 
-		if (pr.files.length > 0) {
+		if (pr.files && pr.files.length > 0) {
 			section += `Changed Files (${pr.files.length}):\n`;
 			pr.files.forEach((file) => {
 				section += `- ${file.filename} (${file.status})\n`;
@@ -345,18 +346,20 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 	}
 
 	private buildIssueSection(issue: GitHubContext['issue']): string {
+		if (!issue) return 'Issue: Not available\n';
 		let section = `Issue #${issue.number}: ${issue.title}\n`;
-		section += `Description: ${issue.body}\n`;
-		if (issue.labels.length > 0) {
+		section += `Description: ${issue.body || 'No description'}\n`;
+		if (issue.labels && issue.labels.length > 0) {
 			section += `Labels: ${issue.labels.join(', ')}\n`;
 		}
 		return section + '\n';
 	}
 
 	private buildCommitSection(commit: GitHubContext['commit']): string {
-		return `Commit: ${commit.sha.substring(0, 7)}\nMessage: ${
-			commit.message
-		}\nAuthor: ${commit.author}\n\n`;
+		if (!commit) return 'Commit: Not available\n';
+		return `Commit: ${commit.sha?.substring(0, 7) || 'unknown'}\nMessage: ${
+			commit.message || 'No message'
+		}\nAuthor: ${commit.author || 'Unknown'}\n\n`;
 	}
 
 	private buildContextMessage(

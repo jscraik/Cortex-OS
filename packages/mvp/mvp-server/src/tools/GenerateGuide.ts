@@ -3,7 +3,7 @@
  * @description GenerateGuide MCP tool for creating documentation and guides
  */
 
-import type { Tool } from '../tool.js';
+import type { Tool } from '../tool';
 
 export interface GenerateGuideArgs {
 	topic: string;

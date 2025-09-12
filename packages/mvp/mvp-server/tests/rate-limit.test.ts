@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 describe('rate limiting', () => {
 	it('caps requests per client', async () => {
 		const app = Fastify();
-		await app.register(rateLimit, { max: 2, timeWindow: '1 minute' });
+		await app.register(rateLimit as any, { max: 2, timeWindow: '1 minute' });
 		app.get('/ping', async () => 'pong');
 		await app.inject({ method: 'GET', url: '/ping' });
 		await app.inject({ method: 'GET', url: '/ping' });
