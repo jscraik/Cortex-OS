@@ -1,9 +1,6 @@
 # Cortex MVP Documentation
 
 [![NPM Version](https://img.shields.io/npm/v/@cortex-os/mvp)](https://www.npmjs.com/package/@cortex-os/mvp)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen)](#)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Central entry point for all Minimum Viable Product (MVP) package documentation.
