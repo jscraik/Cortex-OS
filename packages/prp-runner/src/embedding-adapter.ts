@@ -175,7 +175,9 @@ export interface RerankerAdapter {
 }
 
 class SimpleLexicalReranker implements RerankerAdapter {
-	constructor(private config: RerankerAdapterConfig) {}
+	constructor(_config: RerankerAdapterConfig) {
+		// Config parameter is required by interface but not used in simple implementation
+	}
 
 	async rerank(
 		query: string,

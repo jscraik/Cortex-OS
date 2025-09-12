@@ -285,7 +285,6 @@ export class GitHubEventRouter {
 		rule: CompiledRule,
 	): string[] {
 		const matched: string[] = [];
-		const { conditions } = rule.compiledConditions;
 
 		// Check event type
 		if (rule.compiledConditions.eventTypeRegex) {
@@ -298,9 +297,8 @@ export class GitHubEventRouter {
 
 		// Check action
 		if (rule.compiledConditions.actionRegex && 'action' in envelope.event) {
-			if (
-				rule.compiledConditions.actionRegex.test((envelope.event as any).action)
-			) {
+			const eventWithAction = envelope.event as typeof envelope.event & { action: string };
+			if (rule.compiledConditions.actionRegex.test(eventWithAction.action)) {
 				matched.push('action');
 			}
 		}
@@ -573,6 +571,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 	},
 
 	service_registry: {
+		// eslint-disable no-template-curly-in-string
 		monitoring: {
 			type: 'http',
 			connection: {
@@ -621,9 +620,8 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 			},
 		},
 	},
-};
-
-// Routing utilities
+	// eslint-enable no-template-curly-in-string
+};// Routing utilities
 export function createRoutingRule(
 	name: string,
 	conditions: RoutingRule['conditions'],

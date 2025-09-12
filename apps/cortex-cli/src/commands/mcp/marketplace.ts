@@ -1,8 +1,7 @@
-// @ts-nocheck
-/* eslint-disable */
 /**
  * LEGACY: Deprecated marketplace command implementation retained temporarily for reference.
- * Not used by the CLI. Scheduled for removal after parity is confirmed.
+ * Not invoked by the CLI runtime. Scheduled for removal after parity confirmation.
+ * Kept lint-clean with minimal targeted disables.
  */
 /**
  * @file MCP Marketplace Commands Implementation
@@ -20,29 +19,15 @@
  * Deprecated legacy marketplace command. Replaced by dedicated commands:
  * add/search/get/show/bridge. This stub remains temporarily for compatibility.
  */
+// Intentionally simplified; methods throw to guide users to new commands.
 export class McpMarketplaceCommand {
-	async initialize(): Promise<void> {
-		// no-op (legacy)
-		return;
-	}
-	async search(): Promise<void> {
-		throw new Error('Deprecated command: use "cortex mcp search"');
-	}
-	async show(): Promise<void> {
-		throw new Error('Deprecated command: use "cortex mcp show"');
-	}
-	async add(): Promise<void> {
-		throw new Error('Deprecated command: use "cortex mcp add"');
-	}
-	async remove(): Promise<void> {
-		throw new Error('Deprecated command: use "cortex mcp remove"');
-	}
-	async list(): Promise<void> {
-		throw new Error('Deprecated command: use "cortex mcp list"');
-	}
-	async bridge(): Promise<void> {
-		throw new Error('Deprecated command: use "cortex mcp bridge"');
-	}
+	initialize(): void { /* legacy no-op */ }
+	search(): never { throw new Error('Deprecated command: use "cortex mcp search"'); }
+	show(): never { throw new Error('Deprecated command: use "cortex mcp show"'); }
+	add(): never { throw new Error('Deprecated command: use "cortex mcp add"'); }
+	remove(): never { throw new Error('Deprecated command: use "cortex mcp remove"'); }
+	list(): never { throw new Error('Deprecated command: use "cortex mcp list"'); }
+	bridge(): never { throw new Error('Deprecated command: use "cortex mcp bridge"'); }
 }
 
-export default McpMarketplaceCommand;
+// No default export to encourage named import if ever referenced again.

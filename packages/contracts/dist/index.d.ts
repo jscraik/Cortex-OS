@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 export declare const MessageEnvelopeSchema: z.ZodObject<{
     id: z.ZodString;
     kind: z.ZodEnum<["MCP", "A2A", "RAG", "SIMLAB"]>;
@@ -16,21 +16,21 @@ export declare const MessageEnvelopeSchema: z.ZodObject<{
     }>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    kind: "MCP" | "A2A" | "RAG" | "SIMLAB";
-    ts: string;
     meta: {
         seed: number;
         traceId?: string | undefined;
     };
+    kind: "MCP" | "A2A" | "RAG" | "SIMLAB";
+    ts: string;
     payload?: unknown;
 }, {
     id: string;
-    kind: "MCP" | "A2A" | "RAG" | "SIMLAB";
-    ts: string;
     meta: {
         seed: number;
         traceId?: string | undefined;
     };
+    kind: "MCP" | "A2A" | "RAG" | "SIMLAB";
+    ts: string;
     payload?: unknown;
 }>;
 export type MessageEnvelope = z.infer<typeof MessageEnvelopeSchema>;
@@ -49,13 +49,13 @@ export declare const AgentConfigSchema: z.ZodObject<{
         maxBytes: number;
     }>;
 }, "strip", z.ZodTypeAny, {
-    seed: number;
-    maxTokens: number;
-    timeoutMs: number;
     memory: {
         maxItems: number;
         maxBytes: number;
     };
+    seed: number;
+    maxTokens: number;
+    timeoutMs: number;
 }, {
     memory: {
         maxItems: number;
@@ -103,14 +103,14 @@ export declare const A2AMessageSchema: z.ZodObject<{
     action: z.ZodString;
     data: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
 }, "strip", z.ZodTypeAny, {
+    action: string;
     from: string;
     to: string;
-    action: string;
     data?: Record<string, unknown> | undefined;
 }, {
+    action: string;
     from: string;
     to: string;
-    action: string;
     data?: Record<string, unknown> | undefined;
 }>;
 export type A2AMessage = z.infer<typeof A2AMessageSchema>;

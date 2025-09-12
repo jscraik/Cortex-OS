@@ -106,7 +106,7 @@ export class DocumentController {
 				error instanceof Error ? error.message : 'Unknown error';
 			const status =
 				errorMessage.includes('Invalid PDF') ||
-				errorMessage.includes('Unsupported')
+					errorMessage.includes('Unsupported')
 					? 400
 					: 500;
 
@@ -120,7 +120,7 @@ export class DocumentController {
 	/**
 	 * Get supported document types
 	 */
-	static async getSupportedTypes(req: Request, res: Response) {
+	static async getSupportedTypes(_req: Request, res: Response) {
 		const supportedTypes = {
 			documents: ['PDF', 'TXT', 'MD', 'Markdown'],
 			images: ['JPEG', 'PNG', 'GIF', 'WebP'],
@@ -205,7 +205,7 @@ async function parseTextFile(
 
 		const fileType =
 			fileName.toLowerCase().endsWith('.md') ||
-			fileName.toLowerCase().endsWith('.markdown')
+				fileName.toLowerCase().endsWith('.markdown')
 				? 'markdown'
 				: 'text';
 

@@ -232,7 +232,7 @@ interface Envelope {
   datacontenttype?: string; // MIME type of data
   dataschema?: string; // Schema URI for data
   subject?: string; // Subject of event
-  data?: any; // Event payload
+  data?: unknown; // Event payload
 
   // W3C Trace Context (extensions)
   traceparent?: string; // Distributed tracing header

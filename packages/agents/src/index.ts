@@ -80,7 +80,6 @@ export {
 	createEventBusForEnvironment,
 	createEventPublisher,
 	createEventSubscriber,
-	validateAgentEvent,
 } from './lib/event-bus.js';
 export { getSecret, redactSecrets } from './lib/secret-store.js';
 // Core types and interfaces

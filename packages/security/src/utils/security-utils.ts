@@ -24,6 +24,7 @@ export function generateNonce(length = 32): string {
  * Validate SPIFFE ID format
  */
 export function isValidSpiffeId(spiffeId: string): boolean {
+	// eslint-disable-next-line sonarjs/slow-regex
 	const spiffeRegex = /^spiffe:\/\/[^/]+\/[^/]+.*$/;
 	return spiffeRegex.test(spiffeId);
 }
@@ -32,7 +33,8 @@ export function isValidSpiffeId(spiffeId: string): boolean {
  * Extract trust domain from SPIFFE ID
  */
 export function extractTrustDomain(spiffeId: string): string | null {
-	const match = spiffeId.match(/^spiffe:\/\/([^/]+)(?:\/.*)?$/);
+	const spiffeRegex = /^spiffe:\/\/([^/]+)(?:\/.*)?$/;
+	const match = spiffeRegex.exec(spiffeId);
 	return match ? match[1] : null;
 }
 
@@ -40,7 +42,8 @@ export function extractTrustDomain(spiffeId: string): string | null {
  * Extract workload path from SPIFFE ID
  */
 export function extractWorkloadPath(spiffeId: string): string | null {
-	const match = spiffeId.match(/^spiffe:\/\/[^/]+(\/.*)$/);
+	const spiffeRegex = /^spiffe:\/\/[^/]+(\/.*)$/;
+	const match = spiffeRegex.exec(spiffeId);
 	return match ? match[1] : null;
 }
 

@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
+import { randomUUID } from 'node:crypto';
 
 /**
  * Saga Pattern Implementation for ASBR
@@ -9,7 +9,7 @@ import { logWithSpan, withSpan } from '@cortex-os/telemetry';
 /**
  * Saga step definition with forward and compensation actions
  */
-export interface SagaStep<TCtx = any> {
+export interface SagaStep<TCtx = unknown> {
 	id: string;
 	name: string;
 	execute: (context: TCtx) => Promise<TCtx>;
@@ -48,13 +48,13 @@ export interface SagaContext {
 		message: string;
 		stack?: string;
 	};
-	metadata: Record<string, any>;
+	metadata: Record<string, unknown>;
 }
 
 /**
  * Saga execution result
  */
-export interface SagaResult<TCtx = any> {
+export interface SagaResult<TCtx = unknown> {
 	success: boolean;
 	context: TCtx;
 	sagaContext: SagaContext;
@@ -65,7 +65,7 @@ export interface SagaResult<TCtx = any> {
 /**
  * Saga orchestrator for managing distributed transactions
  */
-export class SagaOrchestrator<TCtx = any> {
+export class SagaOrchestrator<TCtx = unknown> {
 	private readonly steps: SagaStep<TCtx>[] = [];
 	private readonly contextStore?: {
 		save: (context: SagaContext) => Promise<void>;
@@ -99,7 +99,7 @@ export class SagaOrchestrator<TCtx = any> {
 		options?: {
 			sagaId?: string;
 			correlationId?: string;
-			metadata?: Record<string, any>;
+			metadata?: Record<string, unknown>;
 		},
 	): Promise<SagaResult<TCtx>> {
 		const sagaId = options?.sagaId || randomUUID();
@@ -585,7 +585,7 @@ export class SagaOrchestrator<TCtx = any> {
 /**
  * Saga builder for fluent API
  */
-export class SagaBuilder<TCtx = any> {
+export class SagaBuilder<TCtx = unknown> {
 	private readonly orchestrator: SagaOrchestrator<TCtx>;
 
 	constructor(options?: {
@@ -626,7 +626,7 @@ export class SagaBuilder<TCtx = any> {
 /**
  * Create a saga builder
  */
-export function createSaga<TCtx = any>(options?: {
+export function createSaga<TCtx = unknown>(options?: {
 	contextStore?: {
 		save: (context: SagaContext) => Promise<void>;
 		load: (sagaId: string) => Promise<SagaContext | null>;

@@ -15,7 +15,7 @@ vi.mock('../audit.js', () => ({
 	record: vi.fn().mockResolvedValue(undefined),
 }));
 
-const { applyAuditPolicy } = await import('./applyAuditPolicy.ts');
+const { applyAuditPolicy } = await import('./applyAuditPolicy.js');
 const { enforce } = await import('../policy.js');
 const { record } = await import('../audit.js');
 

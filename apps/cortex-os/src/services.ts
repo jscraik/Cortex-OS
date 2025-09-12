@@ -1,13 +1,17 @@
 // Wire real MemoryService using @cortex-os/memories with env-driven store factory
 import type { MemoryService as PkgMemoryService } from '@cortex-os/memories';
-import { createMemoryService, createPolicyAwareStoreFromEnv, createEmbedderFromEnv } from '@cortex-os/memories';
+import {
+	createEmbedderFromEnv,
+	createMemoryService,
+	createPolicyAwareStoreFromEnv,
+} from '@cortex-os/memories';
 
 export type MemoryService = PkgMemoryService;
 
 export function provideMemories(): MemoryService {
-  const store = createPolicyAwareStoreFromEnv();
-  const embedder = createEmbedderFromEnv();
-  return createMemoryService(store, embedder);
+	const store = createPolicyAwareStoreFromEnv();
+	const embedder = createEmbedderFromEnv();
+	return createMemoryService(store, embedder);
 }
 
 export function provideOrchestration() {
@@ -21,22 +25,20 @@ export function provideMCP() {
 		async callTool() {
 			return {};
 		},
-		async close() {},
+		async close() { },
 	};
 }
 
 export const tracer = {
-	startSpan(_name: string) {
+	startSpan() {
 		return {
-			setStatus(_status: unknown) {},
-			recordException(_err: unknown) {},
-			end() {},
+			setStatus() { },
+			recordException() { },
+			end() { },
 		};
 	},
 };
 
-export function configureAuditPublisherWithBus(
-	_publish: (evt: unknown) => void,
-) {
+export function configureAuditPublisherWithBus() {
 	// TODO: wire audit events to bus (currently no-op stub)
 }

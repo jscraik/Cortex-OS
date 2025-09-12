@@ -1,8 +1,8 @@
+import { createTwoFilesPatch } from "diff";
+import { minimatch } from "minimatch";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createTwoFilesPatch } from "diff";
-import { minimatch } from "minimatch";
 import { expandHome, normalizePath } from "./path-utils.js";
 import { isPathWithinAllowedDirectories } from "./path-validation.js";
 
@@ -171,7 +171,9 @@ export async function writeFileContent(
 			} catch (renameError) {
 				try {
 					await fs.unlink(tempPath);
-				} catch {}
+				} catch {
+					// Ignore cleanup errors - temp file may not exist or may already be deleted
+				}
 				throw renameError;
 			}
 		} else {
@@ -272,7 +274,9 @@ export async function applyFileEdits(
 		} catch (error) {
 			try {
 				await fs.unlink(tempPath);
-			} catch {}
+			} catch {
+				// Ignore cleanup errors - temp file may not exist or may already be deleted
+			}
 			throw error;
 		}
 	}
@@ -413,7 +417,9 @@ export async function searchFilesWithValidation(
 				if (entry.isDirectory()) {
 					await search(fullPath);
 				}
-			} catch {}
+			} catch {
+				// Skip files/directories that fail validation during search
+			}
 		}
 	}
 

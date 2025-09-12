@@ -1,5 +1,17 @@
 import { Command } from "commander";
 
+interface EvalOptions {
+	dataset: string;
+	k?: string;
+	minNdcg?: string;
+	"min-ndcg"?: string;
+	minRecall?: string;
+	"min-recall"?: string;
+	minPrecision?: string;
+	"min-precision"?: string;
+	json?: boolean;
+}
+
 export const ragEval = new Command("eval")
 	.description("Evaluate RAG retrieval metrics over a golden dataset")
 	.requiredOption("--dataset <path>", "Path to eval dataset JSON")
@@ -8,13 +20,13 @@ export const ragEval = new Command("eval")
 	.option("--min-recall <f>", "Minimum average Recall@K to pass", "0.8")
 	.option("--min-precision <f>", "Minimum average Precision@K to pass", "0.5")
 	.option("--json", "Output JSON only", false)
-	.action(async (opts: unknown) => {
-		const k = Number.parseInt(opts.k, 10) || 2;
+	.action(async (opts: EvalOptions) => {
+		const k = Number.parseInt(opts.k || "2", 10) || 2;
 		const thresholds = {
-			ndcg: Number.parseFloat(opts.minNdcg ?? opts["min-ndcg"]) || 0,
-			recall: Number.parseFloat(opts.minRecall ?? opts["min-recall"]) || 0,
+			ndcg: Number.parseFloat(opts.minNdcg ?? opts["min-ndcg"] ?? "0") || 0,
+			recall: Number.parseFloat(opts.minRecall ?? opts["min-recall"] ?? "0") || 0,
 			precision:
-				Number.parseFloat(opts.minPrecision ?? opts["min-precision"]) || 0,
+				Number.parseFloat(opts.minPrecision ?? opts["min-precision"] ?? "0") || 0,
 		};
 
 		const fs = await import("node:fs/promises");
@@ -34,10 +46,13 @@ export const ragEval = new Command("eval")
 		const raw = await fs.readFile(datasetPath, "utf8");
 		const dataset = JSON.parse(raw);
 
-		await prepareStore(dataset, E as unknown, S as unknown);
+		// Type assertions needed for embedder interface compatibility
+		// biome-ignore lint/suspicious/noExplicitAny: Required for embedder API
+		await prepareStore(dataset, E as any, S as any);
 		const summary = await runRetrievalEval(
 			dataset,
-			E as unknown,
+			// biome-ignore lint/suspicious/noExplicitAny: Required for embedder API
+			E as any,
 			S as unknown,
 			{ k },
 		);

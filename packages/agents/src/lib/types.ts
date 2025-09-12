@@ -1,9 +1,21 @@
+
+// Local minimal CloudEvents-style envelope used within agents package.
+// (Decoupled from external a2a-contracts to avoid build-time dependency churn.)
 export interface Envelope<T = unknown> {
-	type: string;
-	data: T;
+	specversion: '1.0';
 	id: string;
-	timestamp: string;
+	type: string;
 	source: string;
+	time: string; // RFC3339
+	ttlMs: number;
+	headers: Record<string, string>;
+	datacontenttype?: string;
+	dataschema?: string;
+	subject?: string;
+	correlationId?: string;
+	traceparent?: string;
+	data?: T;
+	baggage?: string;
 }
 
 export interface Agent<TInput = unknown, TOutput = unknown> {
@@ -17,7 +29,7 @@ export interface Agent<TInput = unknown, TOutput = unknown> {
 	// Accept either full execution context or direct input and return output shape
 	execute: (
 		context: ExecutionContext<TInput> | TInput,
-	) => Promise<any>;
+	) => Promise<TOutput>;
 }
 
 export interface AgentCapability {
@@ -38,10 +50,10 @@ export interface EventBusStats {
 }
 
 export interface EventBus {
-	publish: <T = unknown>(msg: Envelope<T>) => Promise<void>;
-	subscribe: <T = unknown>(
+	publish: (msg: Envelope) => Promise<void>;
+	subscribe: (
 		type: string,
-		handler: (msg: Envelope<T>) => void,
+		handler: (msg: Envelope) => void,
 	) => EventSubscription;
 	getStats: () => EventBusStats;
 	shutdown: () => void;

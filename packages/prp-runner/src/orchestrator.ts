@@ -1,3 +1,6 @@
+// Type alias for PRP phases
+export type PRPPhase = 'strategy' | 'build' | 'evaluation';
+
 /**
  * @file packages/prp-runner/src/orchestrator.ts
  * Functional PRP orchestrator using closure state.
@@ -15,7 +18,7 @@ export interface Blueprint {
 
 export interface ExecutionState {
 	id: string;
-	phase: 'strategy' | 'build' | 'evaluation';
+	phase: PRPPhase;
 	blueprint: Blueprint;
 	outputs: Record<string, unknown>;
 }
@@ -37,7 +40,7 @@ export interface PRPExecutionResult extends ExecutionState {
 export interface Neuron {
 	id: string;
 	role: string;
-	phase: 'strategy' | 'build' | 'evaluation';
+	phase: PRPPhase;
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
@@ -48,10 +51,10 @@ export interface Neuron {
 }
 
 export interface NeuronResult {
-	output: any;
-	evidence: any[];
+	output: unknown;
+	evidence: unknown[];
 	nextSteps: string[];
-	artifacts: any[];
+	artifacts: unknown[];
 	metrics: ExecutionMetrics;
 }
 
@@ -68,7 +71,7 @@ export interface ExecutionMetrics {
 export interface PRPOrchestrator {
 	getNeuronCount(): number;
 	registerNeuron(neuron: Neuron): void;
-	getNeuronsByPhase(phase: 'strategy' | 'build' | 'evaluation'): Neuron[];
+	getNeuronsByPhase(phase: PRPPhase): Neuron[];
 	configureLLM(config: LLMConfig): void;
 	getLLMConfig(): LLMConfig | undefined;
 	createLLMBridge(): LLMBridge;
@@ -83,10 +86,7 @@ function register(neurons: Map<string, Neuron>, neuron: Neuron): void {
 	neurons.set(neuron.id, neuron);
 }
 
-function getByPhase(
-	neurons: Map<string, Neuron>,
-	phase: 'strategy' | 'build' | 'evaluation',
-): Neuron[] {
+function getByPhase(neurons: Map<string, Neuron>, phase: PRPPhase): Neuron[] {
 	return Array.from(neurons.values()).filter((n) => n.phase === phase);
 }
 
@@ -112,7 +112,7 @@ async function executeCycle(
 			outputs,
 		};
 		const result = await executeNeuron(neuron, state, context);
-		outputs[neuron.id] = result.output;
+		outputs[neuron.id] = result;
 	}
 	return {
 		id: cycleId,
@@ -133,6 +133,10 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 		registerNeuron: (neuron) => register(neurons, neuron),
 		getNeuronsByPhase: (phase) => getByPhase(neurons, phase),
 		configureLLM: (config) => {
+			// Apply defaults for MLX provider
+			if (config.provider === 'mlx' && !config.endpoint) {
+				config = { ...config, endpoint: 'http://localhost:8000' };
+			}
 			llmConfig = config;
 			llmBridge = new LLMBridge(config);
 		},

@@ -7,14 +7,17 @@ export const a2aSend = new Command("send")
 	.description("Send an A2A message")
 	.requiredOption("--type <string>")
 	.requiredOption("--payload <json>")
-	.action(async (opts: unknown) => {
+	.action(async (opts: { type: string; payload: string }) => {
 		const bus = createBus(inproc());
 		await bus.publish({
 			id: uuid(),
 			type: opts.type,
-			occurredAt: new Date().toISOString(),
-			payload: JSON.parse(opts.payload),
+			source: "cortex://cli/a2a/send",
+			specversion: "1.0",
+			time: new Date().toISOString(),
+			data: JSON.parse(opts.payload),
+			ttlMs: 60000,
 			headers: {},
-		} as unknown);
-		process.stdout.write("sent\n");
+		});
+		process.stdout.write("Event sent\n");
 	});

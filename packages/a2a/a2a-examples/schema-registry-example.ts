@@ -1,318 +1,387 @@
-import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import {
-	PredefinedSchemas,
-	SchemaValidationUtils,
+    createEnvelope,
+    type Envelope,
+} from '@cortex-os/a2a-contracts/envelope';
+import { SchemaCompatibility } from '@cortex-os/a2a-contracts/schema-registry-types';
+import {
+    PredefinedSchemas,
+    SchemaValidationUtils,
 } from '@cortex-os/a2a-contracts/schema-validation-utils';
 import { createBus } from '@cortex-os/a2a-core/bus';
 import { SchemaRegistry } from '@cortex-os/a2a-core/schema-registry';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 import { z } from 'zod';
 
-import { createChildMessage } from './utils/childMessage';
+// Helper function to create child messages with trace context propagation
+function createChildMessage(
+    parentMsg: Envelope,
+    params: {
+        type: string;
+        source: string;
+        data: unknown;
+        subject?: string;
+        causationId?: string;
+        correlationId?: string;
+    },
+): Envelope {
+    return createEnvelope({
+        ...params,
+        causationId: params.causationId || parentMsg.id,
+        correlationId: params.correlationId || parentMsg.correlationId,
+        traceparent: parentMsg.traceparent,
+        tracestate: parentMsg.tracestate,
+        baggage: parentMsg.baggage,
+    });
+}
 
 /**
  * Example demonstrating Event Schema Registry usage and validation
  */
 
 export async function runSchemaRegistryExample() {
-	console.log('=== Event Schema Registry Example ===\n');
+    console.warn('=== Event Schema Registry Example ===\n');
 
-	// Create schema registry
-	const registry = new SchemaRegistry({
-		strictValidation: true,
-		enableCache: true,
-		validateOnRegistration: true,
-	});
+    // Create schema registry
+    const registry = new SchemaRegistry({
+        strictValidation: true,
+        enableCache: true,
+        validateOnRegistration: true,
+    });
 
-	// Register predefined schemas
-	console.log('📋 Registering schemas...');
-	registry.register(PredefinedSchemas.userCreated);
-	registry.register(PredefinedSchemas.orderCreated);
-	registry.register(PredefinedSchemas.paymentProcessed);
+    // Register predefined schemas
+    console.warn('📋 Registering schemas...');
+    registry.register({
+        ...PredefinedSchemas.userCreated,
+        compatibility: SchemaCompatibility.BACKWARD,
+    });
+    registry.register({
+        ...PredefinedSchemas.orderCreated,
+        compatibility: SchemaCompatibility.BACKWARD,
+    });
+    registry.register({
+        ...PredefinedSchemas.paymentProcessed,
+        compatibility: SchemaCompatibility.BACKWARD,
+    });
 
-	// Register a custom schema
-	const customOrderSchema = SchemaValidationUtils.createVersionedSchema(
-		'order.shipped.v1',
-		'1.0.0',
-		z.object({
-			type: z.literal('order.shipped.v1'),
-			data: z.object({
-				orderId: z.string().uuid(),
-				trackingNumber: z.string().min(1),
-				carrier: z.string().min(1),
-				shippedAt: z.string().datetime(),
-			}),
-		}),
-		{
-			description: 'Order shipped event',
-			tags: ['order', 'shipping', 'fulfillment'],
-		},
-	);
-	registry.register(customOrderSchema);
+    // Register a custom schema
+    const customOrderSchema = SchemaValidationUtils.createVersionedSchema(
+        'order.shipped.v1',
+        '1.0.0',
+        z.object({
+            type: z.literal('order.shipped.v1'),
+            data: z.object({
+                orderId: z.string().uuid(),
+                trackingNumber: z.string().min(1),
+                carrier: z.string().min(1),
+                shippedAt: z.string().datetime(),
+            }),
+        }),
+        {
+            description: 'Order shipped event',
+            tags: ['order', 'shipping', 'fulfillment'],
+        },
+    );
+    registry.register(customOrderSchema);
 
-	console.log('✅ Schemas registered successfully\n');
+    console.warn('✅ Schemas registered successfully\n');
 
-	// Create bus with schema validation
-	const bus = createBus(inproc(), undefined, registry);
+    // Create bus with schema validation
+    const bus = createBus(inproc(), undefined, registry);
 
-	// Set up event handlers
-	const handlers = [
-		{
-			type: 'user.created.v1',
-			handle: async (msg: any) => {
-				console.log('👤 User Created Handler:');
-				console.log(`   User: ${msg.data.firstName} ${msg.data.lastName}`);
-				console.log(`   Email: ${msg.data.email}`);
+    // Set up event handlers
+    const USER_CREATED_TYPE = 'user.created.v1';
+    const ORDER_CREATED_TYPE = 'order.created.v1';
+    const PAYMENT_PROCESSED_TYPE = 'payment.processed.v1';
+    const ORDER_SHIPPED_TYPE = 'order.shipped.v1';
 
-				// Create order event
-				const orderMsg = createChildMessage(msg, {
-					type: 'order.created.v1',
-					source: '/order-service',
-					data: {
-						id: 'ord-001',
-						userId: msg.data.id,
-						items: [
-							{
-								productId: 'prod-001',
-								quantity: 2,
-								price: 29.99,
-							},
-						],
-						total: 59.98,
-						status: 'pending',
-						createdAt: new Date().toISOString(),
-					},
-				});
+    const handlers = [
+        {
+            type: USER_CREATED_TYPE,
+            handle: async (msg: Envelope) => {
+                const data = msg.data as {
+                    id: string;
+                    firstName: string;
+                    lastName: string;
+                    email: string;
+                };
+                console.warn('👤 User Created Handler:');
+                console.warn(`   User: ${data.firstName} ${data.lastName}`);
+                console.warn(`   Email: ${data.email}`);
 
-				console.log('📦 Publishing Order Created Event...');
-				await bus.publish(orderMsg);
-			},
-		},
-		{
-			type: 'order.created.v1',
-			handle: async (msg: any) => {
-				console.log('🛒 Order Created Handler:');
-				console.log(`   Order ID: ${msg.data.id}`);
-				console.log(`   Total: $${msg.data.total}`);
-				console.log(`   Items: ${msg.data.items.length}`);
+                // Create order event
+                const orderMsg = createChildMessage(msg, {
+                    type: ORDER_CREATED_TYPE,
+                    source: '/order-service',
+                    data: {
+                        id: 'ord-001',
+                        userId: data.id,
+                        items: [
+                            {
+                                productId: 'prod-001',
+                                quantity: 2,
+                                price: 29.99,
+                            },
+                        ],
+                        total: 59.98,
+                        status: 'pending',
+                        createdAt: new Date().toISOString(),
+                    },
+                });
 
-				// Create payment event
-				const paymentMsg = createChildMessage(msg, {
-					type: 'payment.processed.v1',
-					source: '/payment-service',
-					data: {
-						id: 'pay-001',
-						orderId: msg.data.id,
-						amount: msg.data.total,
-						currency: 'USD',
-						method: 'credit_card',
-						status: 'completed',
-						transactionId: 'txn_1234567890',
-						processedAt: new Date().toISOString(),
-					},
-				});
+                console.warn('📦 Publishing Order Created Event...');
+                await bus.publish(orderMsg);
+            },
+        },
+        {
+            type: ORDER_CREATED_TYPE,
+            handle: async (msg: Envelope) => {
+                const data = msg.data as {
+                    id: string;
+                    total: number;
+                    items: unknown[];
+                };
+                console.warn('🛒 Order Created Handler:');
+                console.warn(`   Order ID: ${data.id}`);
+                console.warn(`   Total: $${data.total}`);
+                console.warn(`   Items: ${data.items.length}`);
 
-				console.log('💳 Publishing Payment Processed Event...');
-				await bus.publish(paymentMsg);
-			},
-		},
-		{
-			type: 'payment.processed.v1',
-			handle: async (msg: any) => {
-				console.log('💰 Payment Processed Handler:');
-				console.log(`   Payment ID: ${msg.data.id}`);
-				console.log(`   Amount: $${msg.data.amount} ${msg.data.currency}`);
-				console.log(`   Status: ${msg.data.status}`);
+                // Create payment event
+                const paymentMsg = createChildMessage(msg, {
+                    type: PAYMENT_PROCESSED_TYPE,
+                    source: '/payment-service',
+                    data: {
+                        id: 'pay-001',
+                        orderId: data.id,
+                        amount: data.total,
+                        currency: 'USD',
+                        method: 'credit_card',
+                        status: 'completed',
+                        transactionId: 'txn_1234567890',
+                        processedAt: new Date().toISOString(),
+                    },
+                });
 
-				// Create shipping event
-				const shippingMsg = createChildMessage(msg, {
-					type: 'order.shipped.v1',
-					source: '/shipping-service',
-					data: {
-						orderId: msg.data.orderId,
-						trackingNumber: 'TRK123456789',
-						carrier: 'UPS',
-						shippedAt: new Date().toISOString(),
-					},
-				});
+                console.warn('💳 Publishing Payment Processed Event...');
+                await bus.publish(paymentMsg);
+            },
+        },
+        {
+            type: PAYMENT_PROCESSED_TYPE,
+            handle: async (msg: Envelope) => {
+                const data = msg.data as {
+                    id: string;
+                    amount: number;
+                    currency: string;
+                    status: string;
+                    orderId: string;
+                };
+                console.warn('💰 Payment Processed Handler:');
+                console.warn(`   Payment ID: ${data.id}`);
+                console.warn(`   Amount: $${data.amount} ${data.currency}`);
+                console.warn(`   Status: ${data.status}`);
 
-				console.log('🚚 Publishing Order Shipped Event...');
-				await bus.publish(shippingMsg);
-			},
-		},
-		{
-			type: 'order.shipped.v1',
-			handle: async (msg: any) => {
-				console.log('📬 Order Shipped Handler:');
-				console.log(`   Order ID: ${msg.data.orderId}`);
-				console.log(
-					`   Tracking: ${msg.data.trackingNumber} (${msg.data.carrier})`,
-				);
-				console.log('   ✅ Order fulfillment complete!\n');
-			},
-		},
-	];
+                // Create shipping event
+                const shippingMsg = createChildMessage(msg, {
+                    type: ORDER_SHIPPED_TYPE,
+                    source: '/shipping-service',
+                    data: {
+                        orderId: data.orderId,
+                        trackingNumber: 'TRK123456789',
+                        carrier: 'UPS',
+                        shippedAt: new Date().toISOString(),
+                    },
+                });
 
-	// Bind handlers
-	await bus.bind(handlers);
+                console.warn('🚚 Publishing Order Shipped Event...');
+                await bus.publish(shippingMsg);
+            },
+        },
+        {
+            type: ORDER_SHIPPED_TYPE,
+            handle: async (msg: Envelope) => {
+                const data = msg.data as {
+                    orderId: string;
+                    trackingNumber: string;
+                    carrier: string;
+                };
+                console.warn('📬 Order Shipped Handler:');
+                console.warn(`   Order ID: ${data.orderId}`);
+                console.warn(`   Tracking: ${data.trackingNumber} (${data.carrier})`);
+                console.warn('   ✅ Order fulfillment complete!\n');
+            },
+        },
+    ];
 
-	// Demonstrate schema validation
-	console.log('🔍 Demonstrating Schema Validation...\n');
+    // Bind handlers
+    await bus.bind(handlers);
 
-	// Valid event
-	const validUserEvent = createEnvelope({
-		type: 'user.created.v1',
-		source: '/user-service',
-		data: {
-			id: 'user-001',
-			email: 'john.doe@example.com',
-			firstName: 'John',
-			lastName: 'Doe',
-			createdAt: new Date().toISOString(),
-		},
-	});
+    // Demonstrate schema validation
+    console.warn('🔍 Demonstrating Schema Validation...\n');
 
-	console.log('✅ Publishing valid user event...');
-	await bus.publish(validUserEvent);
+    // Valid event
+    const validUserEvent = createEnvelope({
+        type: 'user.created.v1',
+        source: '/user-service',
+        data: {
+            id: 'user-001',
+            email: 'john.doe@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            createdAt: new Date().toISOString(),
+        },
+    });
 
-	// Invalid event (missing required field)
-	const invalidUserEvent = createEnvelope({
-		type: 'user.created.v1',
-		source: '/user-service',
-		data: {
-			id: 'user-002',
-			// Missing required fields: email, firstName, lastName, createdAt
-		},
-	});
+    console.warn('✅ Publishing valid user event...');
+    await bus.publish(validUserEvent);
 
-	try {
-		console.log('❌ Attempting to publish invalid user event...');
-		await bus.publish(invalidUserEvent);
-	} catch (error) {
-		console.log(
-			`   Validation Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-		);
-	}
+    // Invalid event (missing required field)
+    const invalidUserEvent = createEnvelope({
+        type: 'user.created.v1',
+        source: '/user-service',
+        data: {
+            id: 'user-002',
+            // Missing required fields: email, firstName, lastName, createdAt
+        },
+    });
 
-	// Wait for all events to be processed
-	await new Promise((resolve) => setTimeout(resolve, 100));
+    try {
+        console.warn('❌ Attempting to publish invalid user event...');
+        await bus.publish(invalidUserEvent);
+    } catch (error) {
+        console.warn(
+            `   Validation Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+    }
 
-	// Demonstrate schema registry features
-	console.log('📊 Schema Registry Features...\n');
+    // Wait for all events to be processed
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
-	// Get registry statistics
-	const stats = registry.getStats();
-	console.log('Registry Statistics:');
-	console.log(`   Total Schemas: ${stats.totalSchemas}`);
-	console.log(`   Event Types: ${stats.uniqueEventTypes}`);
-	console.log(`   Cache Hit Rate: ${(stats.cacheHitRate! * 100).toFixed(1)}%`);
-	console.log(
-		`   Avg Validation Time: ${stats.avgValidationTimeMs?.toFixed(2)}ms\n`,
-	);
+    // Demonstrate schema registry features
+    console.warn('📊 Schema Registry Features...\n');
 
-	// Search schemas
-	const userSchemas = registry.searchSchemas({
-		eventType: 'user.created.v1',
-		limit: 5,
-	});
-	console.log('User Schemas:');
-	userSchemas.forEach((schema) => {
-		console.log(
-			`   ${schema.eventType}:${schema.version} - ${schema.description || 'No description'}`,
-		);
-	});
+    // Get registry statistics
+    const stats = registry.getStats();
+    console.warn('Registry Statistics:');
+    console.warn(`   Total Schemas: ${stats.totalSchemas}`);
+    console.warn(`   Event Types: ${stats.uniqueEventTypes}`);
+    console.warn(
+        `   Cache Hit Rate: ${stats.cacheHitRate ? (stats.cacheHitRate * 100).toFixed(1) : 'N/A'}%`,
+    );
+    console.warn(
+        `   Avg Validation Time: ${stats.avgValidationTimeMs?.toFixed(2)}ms\n`,
+    );
 
-	// Demonstrate schema compatibility checking
-	console.log('\n🔄 Schema Compatibility Check...');
+    // Search schemas
+    const userSchemas = registry.searchSchemas({
+        eventType: 'user.created.v1',
+        limit: 5,
+    });
+    console.warn('User Schemas:');
+    userSchemas.forEach((schema) => {
+        console.warn(
+            `   ${schema.eventType}:${schema.version} - ${schema.description || 'No description'}`,
+        );
+    });
 
-	// Create a new version of the user schema
-	const newUserSchema = z.object({
-		type: z.literal('user.created.v1'),
-		data: z.object({
-			id: z.string().uuid(),
-			email: z.string().email(),
-			firstName: z.string().min(1),
-			lastName: z.string().min(1),
-			phone: z.string().optional(), // New optional field
-			createdAt: z.string().datetime(),
-			updatedAt: z.string().datetime().optional(),
-		}),
-	});
+    // Demonstrate schema compatibility checking
+    console.warn('\n🔄 Schema Compatibility Check...');
 
-	const compatibility = registry.checkCompatibility(
-		'user.created.v1',
-		newUserSchema,
-	);
-	console.log('Compatibility Result:');
-	console.log(`   Compatible: ${compatibility.compatible}`);
-	if (compatibility.issues?.length > 0) {
-		console.log('   Issues:');
-		for (const issue of compatibility.issues) {
-			console.log(`     - ${issue}`);
-		}
-	}
-	if (compatibility.recommendations?.length > 0) {
-		console.log('   Recommendations:');
-		for (const rec of compatibility.recommendations) {
-			console.log(`     - ${rec}`);
-		}
-	}
+    // Create a new version of the user schema
+    const newUserSchema = z.object({
+        type: z.literal('user.created.v1'),
+        data: z.object({
+            id: z.string().uuid(),
+            email: z.string().email(),
+            firstName: z.string().min(1),
+            lastName: z.string().min(1),
+            phone: z.string().optional(), // New optional field
+            createdAt: z.string().datetime(),
+            updatedAt: z.string().datetime().optional(),
+        }),
+    });
 
-	console.log('\n=== Schema Registry Example Complete ===');
+    const compatibility = registry.checkCompatibility(
+        'user.created.v1',
+        newUserSchema,
+    );
+    console.warn('Compatibility Result:');
+    console.warn(`   Compatible: ${compatibility.compatible}`);
+    if (Array.isArray(compatibility.issues) && compatibility.issues.length > 0) {
+        console.warn('   Issues:');
+        for (const issue of compatibility.issues) {
+            console.warn(`     - ${issue}`);
+        }
+    }
+    if (
+        Array.isArray(compatibility.recommendations) &&
+        compatibility.recommendations.length > 0
+    ) {
+        console.warn('   Recommendations:');
+        for (const rec of compatibility.recommendations) {
+            console.warn(`     - ${rec}`);
+        }
+    }
+
+    console.warn('\n=== Schema Registry Example Complete ===');
 }
 
 // Demonstrate manual validation
 export async function demonstrateManualValidation() {
-	console.log('=== Manual Schema Validation Example ===\n');
+    console.warn('=== Manual Schema Validation Example ===\n');
 
-	const registry = new SchemaRegistry();
+    const registry = new SchemaRegistry();
 
-	// Register a schema
-	registry.register(PredefinedSchemas.orderCreated);
+    // Register a schema
+    // Use the enum value for compatibility
+    import { SchemaCompatibility } from '@cortex-os/a2a-contracts/schema-registry-types';
+    registry.register({
+        ...PredefinedSchemas.orderCreated,
+        compatibility: SchemaCompatibility.BACKWARD,
+    });
 
-	// Test data
-	const validOrder = {
-		id: 'ord-123',
-		userId: 'user-456',
-		items: [
-			{
-				productId: 'prod-789',
-				quantity: 2,
-				price: 29.99,
-			},
-		],
-		total: 59.98,
-		status: 'pending',
-		createdAt: new Date().toISOString(),
-	};
+    // Test data
+    const validOrder = {
+        id: 'ord-123',
+        userId: 'user-456',
+        items: [
+            {
+                productId: 'prod-789',
+                quantity: 2,
+                price: 29.99,
+            },
+        ],
+        total: 59.98,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+    };
 
-	const invalidOrder = {
-		id: 'ord-123',
-		userId: 'user-456',
-		// Missing required fields
-	};
+    const invalidOrder = {
+        id: 'ord-123',
+        userId: 'user-456',
+        // Missing required fields
+    };
 
-	console.log('Validating valid order:');
-	const validResult = registry.validate('order.created.v1', validOrder);
-	console.log(`   Valid: ${validResult.valid}`);
-	console.log(`   Schema Version: ${validResult.schemaVersion}`);
+    console.warn('Validating valid order:');
+    const validResult = registry.validate('order.created.v1', validOrder);
+    console.warn(`   Valid: ${validResult.valid}`);
+    console.warn(`   Schema Version: ${validResult.schemaVersion}`);
 
-	console.log('\nValidating invalid order:');
-	const invalidResult = registry.validate('order.created.v1', invalidOrder);
-	console.log(`   Valid: ${invalidResult.valid}`);
-	if (invalidResult.errors) {
-		console.log('   Errors:');
-		invalidResult.errors.forEach((error) => {
-			console.log(`     - ${error.message}`);
-		});
-	}
+    console.warn('\nValidating invalid order:');
+    const invalidResult = registry.validate('order.created.v1', invalidOrder);
+    console.warn(`   Valid: ${invalidResult.valid}`);
+    if (Array.isArray(invalidResult.errors) && invalidResult.errors.length > 0) {
+        console.warn('   Errors:');
+        invalidResult.errors.forEach((error) => {
+            console.warn(`     - ${error.message}`);
+        });
+    }
 
-	console.log('\n=== Manual Validation Example Complete ===');
+    console.warn('\n=== Manual Validation Example Complete ===');
 }
 
 // Run examples if this file is executed directly
 if (require.main === module) {
-	runSchemaRegistryExample()
-		.then(() => demonstrateManualValidation())
-		.catch(console.error);
+    runSchemaRegistryExample()
+        .then(() => demonstrateManualValidation())
+        .catch(console.error);
 }

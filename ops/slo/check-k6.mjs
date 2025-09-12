@@ -29,7 +29,6 @@ function checkSLO(summary, sloCfg) {
 }
 
 function checkBudget(summary, budgetCfg, profile = "quick") {
-	const _iters = getMetric(summary, "iterations");
 	const req = getMetric(summary, "http_reqs");
 	const dur = getMetric(summary, "http_req_duration");
 	const totalReq = req.values.count;

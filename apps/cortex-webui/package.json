@@ -8,11 +8,11 @@
 		"backend"
 	],
 	"scripts": {
-		"dev": "concurrently \"pnpm --filter cortex-webui-backend dev\" \"pnpm --filter cortex-webui-frontend dev\"",
-		"build": "pnpm --filter cortex-webui-backend build && pnpm --filter cortex-webui-frontend build",
 		"test": "vitest -c vitest.config.ts",
-		"lint": "pnpm --filter cortex-webui-backend lint && pnpm --filter cortex-webui-frontend lint",
-		"start": "pnpm --filter cortex-webui-backend start",
+		"dev": "concurrently \"pnpm run dev -w backend\" \"pnpm run dev -w frontend\"",
+		"build": "pnpm run build -w backend && pnpm run build -w frontend",
+		"lint": "pnpm run lint -w backend && pnpm run lint -w frontend",
+		"start": "pnpm run start -w backend",
 		"clean": "rimraf frontend/dist backend/dist"
 	},
 	"keywords": [

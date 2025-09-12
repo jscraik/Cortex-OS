@@ -10,8 +10,8 @@ WORKDIR /workspace
 COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install
 # Build only the app and its deps
-RUN pnpm -r --filter @cortex-os/app... build
-RUN pnpm --filter @cortex-os/app --prod deploy /out/cortex-os
+RUN pnpm build
+RUN pnpm deploy /out/cortex-os
 
 FROM node:20-slim AS runner
 ENV NODE_ENV=production

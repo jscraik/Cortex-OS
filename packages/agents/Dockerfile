@@ -22,7 +22,7 @@ COPY --from=deps /workspace/node_modules ./node_modules
 COPY --from=deps /workspace/packages ./packages
 COPY packages/agents ./packages/agents
 # Build the agents package
-RUN pnpm --filter @cortex-os/agents build
+RUN pnpm build
 
 FROM base AS runtime
 ENV NODE_ENV=production

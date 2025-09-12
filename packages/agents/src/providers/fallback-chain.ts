@@ -235,16 +235,18 @@ const emitProviderFallback = (
 		// best-effort publish; swallow errors via catch on the returned promise
 		void bus
 			.publish({
+				specversion: '1.0',
 				id: crypto.randomUUID(),
 				type: 'provider.fallback',
-				timestamp: new Date().toISOString(),
 				source: 'fallback-chain',
+				time: new Date().toISOString(),
+				ttlMs: 60000,
+				headers: {},
 				data: {
 					failedProvider: provider.name,
 					reason:
 						error instanceof Error ? error.message : String(error ?? 'unknown'),
 					attempt,
-					timestamp: new Date().toISOString(),
 				},
 			})
 			.catch(() => {

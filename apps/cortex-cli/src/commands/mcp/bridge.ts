@@ -1,7 +1,7 @@
+import { Command } from "commander";
 import { promises as fs } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { Command } from "commander";
 import { createMarketplaceClient } from "./marketplace-client.js";
 
 interface BridgeConfig {
@@ -163,7 +163,13 @@ async function addRegistry(
 
 	try {
 		const health = await client.healthCheck(url);
-		printHealthResult(health, { json, url });
+		if (!health.success) {
+			throw new Error(`Registry health check failed: ${health.error.message}`);
+		}
+		printHealthResult({
+			success: true,
+			data: health.data,
+		}, { json, url });
 	} catch (error) {
 		throw new Error(
 			`Registry test failed: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -266,15 +272,21 @@ async function testRegistry(url: string, json: boolean): Promise<void> {
 		const health = await client.healthCheck(url);
 		const elapsed = Date.now() - start;
 
+		if (!health.success) {
+			printHealthResult({
+				success: false,
+				data: {
+					healthy: false,
+					error: health.error.message,
+				},
+			}, { json, url, elapsed });
+			return;
+		}
+
 		printHealthResult(
 			{
-				success: !!health.success,
-				data: {
-					healthy: !!health.data.healthy,
-					serverCount: health.data.serverCount,
-					lastUpdated: health.data.lastUpdated,
-					error: health.data.error,
-				},
+				success: true,
+				data: health.data,
 			},
 			{ json, url, elapsed },
 		);
@@ -327,7 +339,7 @@ function printUsage(): void {
 // Helpers
 function validateUrlOrThrow(url: string): void {
 	try {
-		// eslint-disable-next-line no-new
+		// Removed unused eslint-disable (no-new) – object construction side-effects not present.
 		new URL(url);
 	} catch {
 		throw new Error("Invalid URL format");

@@ -8,7 +8,6 @@
 
 import type { AICoreCapabilities } from './ai-capabilities.js';
 import { ASBRAIIntegration } from './asbr-ai-integration.js';
-import { EmbeddingAdapter } from './embedding-adapter';
 
 /**
  * Configuration for the unified evidence collection workflow
@@ -46,6 +45,33 @@ export interface EvidenceTaskContext {
 	requirements?: string[];
 	constraints?: Record<string, unknown>;
 	metadata?: Record<string, unknown>;
+}
+
+/**
+ * Raw evidence item collected from various sources
+ */
+interface RawEvidenceItem {
+	id: string;
+	content: string;
+	source: string;
+	relevanceScore: number;
+	metadata: Record<string, unknown>;
+}
+
+/**
+ * Enhanced evidence item with AI processing results
+ */
+interface EnhancedEvidenceItem extends RawEvidenceItem {
+	enhancement?: {
+		originalContent: string;
+		enhancedContent: string;
+		improvements: string[];
+	};
+	factCheckResult?: {
+		verified: boolean;
+		confidence: number;
+		supportingEvidence: string[];
+	};
 }
 
 /**
@@ -97,6 +123,13 @@ export interface UnifiedEvidenceResult {
 	};
 }
 
+interface EvidencePlan {
+	searchQueries: string[];
+	evidenceTypes: string[];
+	priorityAreas: string[];
+	estimatedComplexity: string;
+}
+
 /**
  * Unified AI Evidence Collection Workflow
  *
@@ -110,10 +143,9 @@ export interface UnifiedEvidenceResult {
  * 7. Insight Generation & Reporting
  */
 export class UnifiedAIEvidenceWorkflow {
-	private asbrIntegration: ASBRAIIntegration;
-	private aiCapabilities: AICoreCapabilities | null = null;
-	private embeddingAdapter: EmbeddingAdapter;
-	private config: Required<UnifiedEvidenceConfig>;
+	private readonly asbrIntegration: ASBRAIIntegration;
+	private readonly aiCapabilities: AICoreCapabilities | null = null;
+	private readonly config: Required<UnifiedEvidenceConfig>;
 
 	constructor(config: UnifiedEvidenceConfig = {}) {
 		this.config = {
@@ -135,12 +167,6 @@ export class UnifiedAIEvidenceWorkflow {
 
 		// Initialize core components
 		this.asbrIntegration = new ASBRAIIntegration();
-
-		this.embeddingAdapter = new EmbeddingAdapter({
-			provider: 'sentence-transformers',
-			model: this.config.embeddingModel,
-			dimensions: 1024,
-		});
 	}
 
 	/**
@@ -217,7 +243,7 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 1: Analyze context and create collection plan
 	 */
-	private async analyzeContext(context: EvidenceTaskContext) {
+	private async analyzeContext(context: EvidenceTaskContext): Promise<EvidencePlan> {
 		return {
 			searchQueries: this.generateSearchQueries(context),
 			evidenceTypes: ['documentation', 'code', 'requirements', 'decisions'],
@@ -229,8 +255,8 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 2: Collect raw evidence from multiple sources
 	 */
-	private async collectRawEvidence(context: EvidenceTaskContext, plan: any) {
-		const evidence: any[] = [];
+	private async collectRawEvidence(context: EvidenceTaskContext, plan: EvidencePlan): Promise<RawEvidenceItem[]> {
+		const evidence: RawEvidenceItem[] = [];
 
 		// Use ASBR integration for enhanced evidence collection
 		for (const query of plan.searchQueries) {
@@ -244,17 +270,24 @@ export class UnifiedAIEvidenceWorkflow {
 					},
 				);
 
+				const determineSource = (enhancedSource: unknown, originalSource: unknown): string => {
+					if (typeof enhancedSource === 'string') return enhancedSource;
+					if (typeof originalSource === 'string') return originalSource;
+					return 'asbr-integration';
+				};
+
 				// Extract evidence from the single result object
 				const evidenceItems = [
 					{
 						id: `evidence-${context.taskId}-${evidence.length}`,
 						content:
 							result.aiEnhancedEvidence.content ||
-							result.originalEvidence.content,
-						source:
-							result.aiEnhancedEvidence.source ||
-							result.originalEvidence.source ||
-							'asbr-integration',
+							result.originalEvidence.content ||
+							'No content available',
+						source: determineSource(
+							result.aiEnhancedEvidence.source,
+							result.originalEvidence.source
+						),
 						relevanceScore: 0.8, // Default relevance score
 						metadata: {
 							query,
@@ -264,19 +297,19 @@ export class UnifiedAIEvidenceWorkflow {
 						},
 					},
 					// Include additional evidence if available
-					...result.additionalEvidence.map(
-						(additional: any, index: number) => ({
+					...result.additionalEvidence
+						.filter((additional) => additional.content)
+						.map((additional, index: number) => ({
 							id: `evidence-${context.taskId}-${evidence.length + index + 1}`,
-							content: additional.content,
-							source: additional.source || 'asbr-integration',
+							content: additional.content || 'No content',
+							source: typeof additional.source === 'string' ? additional.source : 'asbr-integration',
 							relevanceScore: 0.7, // Slightly lower score for additional evidence
 							metadata: {
 								query,
 								collectionMethod: 'asbr-additional',
 								aiEnhanced: false,
 							},
-						}),
-					),
+						})),
 				];
 
 				evidence.push(...evidenceItems);
@@ -293,9 +326,9 @@ export class UnifiedAIEvidenceWorkflow {
 	 * Phase 3: Process evidence with AI enhancement
 	 */
 	private async processEvidence(
-		evidence: any[],
+		evidence: RawEvidenceItem[],
 		_context: EvidenceTaskContext,
-	) {
+	): Promise<EnhancedEvidenceItem[]> {
 		if (!this.config.enhancementEnabled) {
 			return evidence;
 		}
@@ -314,8 +347,9 @@ export class UnifiedAIEvidenceWorkflow {
 						},
 						content: item.content,
 					};
-				} catch (_error) {
-					// Return original item if enhancement fails
+				} catch (error) {
+					// Log error and return original item if enhancement fails
+					console.warn('Evidence enhancement failed:', error);
 					return item;
 				}
 			}),
@@ -328,9 +362,9 @@ export class UnifiedAIEvidenceWorkflow {
 	 * Phase 4: Enrich with semantic search capabilities
 	 */
 	private async enrichWithSemanticSearch(
-		evidence: any[],
+		evidence: EnhancedEvidenceItem[],
 		context: EvidenceTaskContext,
-	) {
+	): Promise<EnhancedEvidenceItem[]> {
 		try {
 			const relatedEvidence = await this.asbrIntegration.searchRelatedEvidence(
 				context.description,
@@ -343,7 +377,7 @@ export class UnifiedAIEvidenceWorkflow {
 			const existingContent = new Set(evidence.map((e) => e.content));
 
 			// Process related claims from the result
-			relatedEvidence.relatedClaims.forEach((related: any, index: number) => {
+			relatedEvidence.relatedClaims.forEach((related: { claim?: string; text?: string; source?: string; similarity?: number; confidence?: number }, index: number) => {
 				const content = related.claim || related.text || String(related);
 				if (!existingContent.has(content)) {
 					allEvidence.push({
@@ -362,8 +396,9 @@ export class UnifiedAIEvidenceWorkflow {
 			});
 
 			return allEvidence;
-		} catch (_error) {
-			// Return original evidence if semantic search fails
+		} catch (error) {
+			// Log error and return original evidence if semantic search fails
+			console.warn('Semantic search failed:', error);
 			return evidence;
 		}
 	}
@@ -372,9 +407,9 @@ export class UnifiedAIEvidenceWorkflow {
 	 * Phase 5: Validate evidence through fact checking
 	 */
 	private async validateEvidence(
-		evidence: any[],
+		evidence: EnhancedEvidenceItem[],
 		context: EvidenceTaskContext,
-	) {
+	): Promise<EnhancedEvidenceItem[]> {
 		if (!this.config.factCheckingEnabled) {
 			return evidence;
 		}
@@ -401,11 +436,14 @@ export class UnifiedAIEvidenceWorkflow {
 						factCheckResult: {
 							verified: factCheckResult.factualConsistency > 0.7, // Consider verified if consistency > 0.7
 							confidence: factCheckResult.factualConsistency,
-							supportingEvidence: factCheckResult.supportingEvidence,
+							supportingEvidence: factCheckResult.supportingEvidence.map((evidence) =>
+								typeof evidence === 'string' ? evidence : evidence.content || evidence.id
+							),
 						},
 					};
-				} catch (_error) {
-					// Return item without fact check if validation fails
+				} catch (error) {
+					// Log error and return item without fact check if validation fails
+					console.error(`Fact checking failed for evidence ${item.id}:`, error);
 					return {
 						...item,
 						factCheckResult: {
@@ -424,7 +462,7 @@ export class UnifiedAIEvidenceWorkflow {
 	/**
 	 * Phase 6: Ensure security and policy compliance
 	 */
-	private async ensureCompliance(_evidence: any[]) {
+	private async ensureCompliance(_evidence: EnhancedEvidenceItem[]) {
 		return {
 			securityValidated: this.config.enablePolicyCompliance,
 			policyCompliant: this.config.enablePolicyCompliance,
@@ -436,7 +474,7 @@ export class UnifiedAIEvidenceWorkflow {
 	 * Phase 7: Generate insights from collected evidence
 	 */
 	private async generateInsights(
-		evidence: any[],
+		evidence: EnhancedEvidenceItem[],
 		context: EvidenceTaskContext,
 	) {
 		try {
@@ -465,7 +503,8 @@ export class UnifiedAIEvidenceWorkflow {
 				recommendations: insightsResult.recommendations,
 				confidence: insightsResult.confidenceMetrics.averageConfidence,
 			};
-		} catch (_error) {
+		} catch (error) {
+			console.error('Failed to generate insights:', error);
 			return {
 				keyFindings: ['Evidence collected successfully'],
 				gaps: ['Unable to generate automated insights'],

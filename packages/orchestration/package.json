@@ -11,7 +11,7 @@
     }
   },
   "scripts": {
-    "pretest": "pnpm --filter @cortex-os/a2a-core build",
+    "pretest": "pnpm build",
     "dev": "tsc --watch",
     "build": "echo \"No build step required for this package\"",
     "lint": "eslint src --ext .ts --no-ignore",

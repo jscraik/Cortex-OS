@@ -1,8 +1,8 @@
 import js from '@eslint/js';
 import sonarjs from 'eslint-plugin-sonarjs';
-import ts from 'typescript-eslint';
-import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import ts from 'typescript-eslint';
 
 // Consolidated flat config: declare sonarjs plugin once and layer rule sets.
 const baseTypeScript = ts.configs.recommended.map((config) => ({
@@ -63,7 +63,12 @@ export default [
       'commitlint.config.js',
       'tools/**',
       'vitest.config.ts',
-      'apps/**',
+      // NOTE: Previously ignored all `apps/**` which prevented linting production app sources.
+      // Narrow this to generated/build artifacts only so we can lint app source code.
+      'apps/**/dist/**',
+      'apps/**/build/**',
+      'apps/**/node_modules/**',
+      'apps/**/coverage/**',
       'packages/**/dist/**',
       'packages/**/node_modules/**',
       'packages/**/coverage/**',

@@ -12,9 +12,8 @@ import type {
   EventBus,
   ExecutionContext,
   GenerateOptions,
-  GenerateResult,
   MCPClient,
-  ModelProvider,
+  ModelProvider
 } from '../lib/types.js';
 import {
   estimateTokens,
@@ -124,7 +123,7 @@ export const createTestGenerationAgent = (
 
   const agentId = generateAgentId();
   const timeout = config.timeout || 30000;
-  const _maxRetries = config.maxRetries || 3;
+
 
   return {
     id: agentId,
@@ -141,47 +140,98 @@ export const createTestGenerationAgent = (
 
     execute: async (
       context: ExecutionContext<TestGenerationInput> | TestGenerationInput,
-    ): Promise<GenerateResult<TestGenerationOutput>> => {
+    ): Promise<TestGenerationOutput> => {
       const traceId = generateTraceId();
       const startTime = Date.now();
 
-      // Validate input
-      const inputArg = (context as any && (context as any).input)
-        ? (context as any).input
-        : (context as any);
-      const validatedInput = validateSchema(
-        testGenerationInputSchema,
-        inputArg,
-      );
+      // Helpers
+      const createEvent = (type: string, data: Record<string, unknown>) => ({
+        specversion: '1.0' as const,
+        id: (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+          ? crypto.randomUUID()
+          : `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        type,
+        source: 'urn:cortex:agent:test-generation',
+        time: new Date().toISOString(),
+        ttlMs: 60000,
+        headers: {},
+        data,
+      });
 
-      // Add defaults for optional fields
+      function shouldPublishLifecycle(input: unknown): boolean {
+        return !(
+          typeof input === 'object' &&
+          input !== null &&
+          '_suppressLifecycle' in input &&
+          (input as Record<string, unknown>)._suppressLifecycle
+        );
+      }
+
+      function normalizeInput(context: ExecutionContext<TestGenerationInput> | TestGenerationInput): TestGenerationInput {
+        let inputArg: unknown;
+        if (typeof context === 'object' && context !== null && 'input' in context) {
+          inputArg = (context as { input: unknown }).input;
+        } else {
+          inputArg = context;
+        }
+        // Ensure includeEdgeCases is always boolean and coverageTarget is always a number
+        const validated = validateSchema(testGenerationInputSchema, inputArg);
+        return {
+          ...validated,
+          includeEdgeCases: typeof validated.includeEdgeCases === 'boolean' ? validated.includeEdgeCases : false,
+          coverageTarget: typeof validated.coverageTarget === 'number' ? validated.coverageTarget : 80,
+          mockingStrategy: ['minimal', 'comprehensive', 'auto'].includes(String(validated.mockingStrategy))
+            ? validated.mockingStrategy as 'minimal' | 'comprehensive' | 'auto'
+            : 'auto',
+          assertionStyle: ['expect', 'assert', 'should'].includes(String(validated.assertionStyle))
+            ? validated.assertionStyle as 'expect' | 'assert' | 'should'
+            : 'expect',
+        };
+      }
+
+      function publishEvent(type: string, data: Record<string, unknown>) {
+        config.eventBus.publish(createEvent(type, data));
+      }
+
+      function handleError(error: unknown, agentId: string, traceId: string, executionTime: number) {
+        publishEvent('agent.failed', {
+          agentId,
+          traceId,
+          capability: 'test-generation',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          errorCode:
+            typeof error === 'object' && error !== null && 'code' in error
+              ? (error as { code?: string | number }).code
+              : undefined,
+          status:
+            typeof error === 'object' && error !== null && 'status' in error && typeof (error as { status?: unknown }).status === 'number'
+              ? (error as { status?: number }).status
+              : undefined,
+          metrics: {
+            latencyMs: executionTime,
+          },
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Main logic
+      const validatedInput = normalizeInput(context);
       const inputWithDefaults = {
         ...validatedInput,
         coverageTarget: validatedInput.coverageTarget ?? 80,
         assertionStyle: validatedInput.assertionStyle ?? 'expect',
         mockingStrategy: validatedInput.mockingStrategy ?? 'auto',
+        includeEdgeCases: validatedInput.includeEdgeCases ?? false,
       };
 
-      // Emit agent started event (unless suppress)
-      const createEvent = (type: string, data: any) => ({
-        specversion: '1.0',
-        id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        type,
-        data,
-        timestamp: new Date().toISOString(),
-        source: 'test-generation-agent',
-      });
-
-      if (!(validatedInput as any)._suppressLifecycle) {
-        config.eventBus.publish(
-          createEvent('agent.started', {
-            agentId,
-            traceId,
-            capability: 'test-generation',
-            input: validatedInput,
-            timestamp: new Date().toISOString(),
-          }),
-        );
+      if (shouldPublishLifecycle(validatedInput)) {
+        publishEvent('agent.started', {
+          agentId,
+          traceId,
+          capability: 'test-generation',
+          input: validatedInput,
+          timestamp: new Date().toISOString(),
+        });
       }
 
       try {
@@ -189,53 +239,50 @@ export const createTestGenerationAgent = (
           generateTests(inputWithDefaults, config),
           timeout,
         );
-
         const executionTime = Math.max(1, Date.now() - startTime);
 
-        if (!(validatedInput as any)._suppressLifecycle) {
-          config.eventBus.publish(
-            createEvent('agent.completed', {
-              agentId,
-              traceId,
-              capability: 'test-generation',
-              result,
-              evidence: [],
-              metrics: {
-                latencyMs: executionTime,
-                tokensUsed: estimateTokens(validatedInput.sourceCode),
-                testCount: result.testCount,
-              },
-              timestamp: new Date().toISOString(),
-            }),
-          );
-        }
-
-        return result;
-      } catch (error) {
-        const executionTime = Math.max(1, Date.now() - startTime);
-
-        // Emit agent failed event
-        config.eventBus.publish(
-          createEvent('agent.failed', {
+        if (shouldPublishLifecycle(validatedInput)) {
+          publishEvent('agent.completed', {
             agentId,
             traceId,
             capability: 'test-generation',
-            error: error instanceof Error ? error.message : 'Unknown error',
-            errorCode:
-              typeof error === 'object' && error !== null && 'code' in error
-                ? (error as { code?: string | number }).code
-                : undefined,
-            status:
-              typeof (error as any)?.status === 'number'
-                ? (error as any)?.status
-                : undefined,
+            result,
+            evidence: [],
             metrics: {
               latencyMs: executionTime,
+              tokensUsed: estimateTokens(validatedInput.sourceCode),
+              testCount: result.testCount,
             },
             timestamp: new Date().toISOString(),
-          }),
-        );
+          });
+        }
 
+        // Extracted nested ternary for clarity
+        let testCountValue: number;
+        if (typeof result.testCount === 'number') {
+          testCountValue = result.testCount;
+        } else if (Array.isArray(result.tests)) {
+          testCountValue = result.tests.length;
+        } else {
+          testCountValue = 0;
+        }
+        // Return output matching testGenerationOutputSchema (all required fields)
+        return {
+          tests: Array.isArray(result.tests) ? result.tests : [],
+          framework: result.framework || validatedInput.framework,
+          language: result.language || validatedInput.language,
+          testType: result.testType || validatedInput.testType,
+          coverage: result.coverage || { estimated: 0, branches: [], uncoveredPaths: [] },
+          imports: Array.isArray(result.imports) ? result.imports : [],
+          setup: result.setup || '',
+          teardown: result.teardown || '',
+          confidence: typeof result.confidence === 'number' ? result.confidence : 1,
+          testCount: testCountValue,
+          analysisTime: typeof result.analysisTime === 'number' ? result.analysisTime : 0,
+        };
+      } catch (error) {
+        const executionTime = Math.max(1, Date.now() - startTime);
+        handleError(error, agentId, traceId, executionTime);
         throw error;
       }
     },
@@ -249,7 +296,7 @@ const generateTests = async (
   input: TestGenerationInput,
   config: TestGenerationAgentConfig,
 ): Promise<TestGenerationOutput> => {
-  const { sourceCode, language, testType, framework, coverageTarget } = input;
+  const { sourceCode, language, testType, framework } = input;
 
   // Build context-aware prompt
   const prompt = sanitizeText(buildTestGenerationPrompt(input));
@@ -270,10 +317,21 @@ const generateTests = async (
 
   // Call the model provider
   const response = await config.provider.generate(prompt, generateOptions);
+  // Provider may return { text } or { content }
+  let rawText = '';
+  if (typeof response === 'string') {
+    rawText = response;
+  } else if (response && typeof response === 'object') {
+    if ('text' in response && typeof (response as { text?: unknown }).text === 'string') {
+      rawText = (response as { text: string }).text;
+    } else if ('content' in response && typeof (response as { content?: unknown }).content === 'string') {
+      rawText = (response as { content: string }).content;
+    }
+  }
 
   // Parse and structure the response
   const result = parseTestGenerationResponse(
-    response,
+    { text: rawText, latencyMs: (response as { latencyMs?: number })?.latencyMs },
     framework,
     language,
     testType,
@@ -370,8 +428,12 @@ Focus on generating tests that would catch real bugs and provide confidence in t
  */
 const calculateMaxTokens = (sourceCode: string, testType: string): number => {
   const baseTokens = Math.max(1000, sourceCode.length * 2);
-  const typeMultiplier =
-    testType === 'e2e' ? 2 : testType === 'integration' ? 1.5 : 1;
+  let typeMultiplier = 1;
+  if (testType === 'e2e') {
+    typeMultiplier = 2;
+  } else if (testType === 'integration') {
+    typeMultiplier = 1.5;
+  }
   return Math.min(8000, Math.floor(baseTokens * typeMultiplier));
 };
 
@@ -379,7 +441,7 @@ const calculateMaxTokens = (sourceCode: string, testType: string): number => {
  * Parse test generation response from the model
  */
 const parseTestGenerationResponse = (
-  response: any,
+  response: { text: string; latencyMs?: number },
   framework: string,
   language: string,
   testType: string,
@@ -400,11 +462,29 @@ const parseTestGenerationResponse = (
   };
   let parsedResponse: ParsedTestResponse;
 
+
+  // Streaming/balanced-brace JSON extraction (safer than regex)
+  function extractFirstJsonObject(text: string): string | null {
+    let start = -1;
+    let depth = 0;
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === '{') {
+        if (depth === 0) start = i;
+        depth++;
+      } else if (text[i] === '}') {
+        depth--;
+        if (depth === 0 && start !== -1) {
+          return text.slice(start, i + 1);
+        }
+      }
+    }
+    return null;
+  }
+
   try {
-    // Try to parse JSON from response text
-    const jsonMatch = response.text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      parsedResponse = JSON.parse(jsonMatch[0]) as ParsedTestResponse;
+    const jsonStr = extractFirstJsonObject(response.text);
+    if (jsonStr) {
+      parsedResponse = JSON.parse(jsonStr) as ParsedTestResponse;
     } else {
       throw new Error('No JSON found in response');
     }
@@ -424,11 +504,18 @@ const parseTestGenerationResponse = (
 
   // Ensure all required fields are present
   return {
-    tests: (parsedResponse.tests || []).map((test) => ({
-      name: test.name || 'should work correctly',
-      code: test.code || generateBasicTest(framework, language),
-      type: (test.type as any) || 'positive-case',
-    })),
+    tests: (parsedResponse.tests || []).map((test) => {
+      const allowedTypes = ['positive-case', 'negative-case', 'edge-case', 'boundary-case'] as const;
+      function isAllowedType(val: unknown): val is typeof allowedTypes[number] {
+        return typeof val === 'string' && (allowedTypes as readonly string[]).includes(val);
+      }
+      const type = isAllowedType(test.type) ? test.type : 'positive-case';
+      return {
+        name: test.name || 'should work correctly',
+        code: test.code || generateBasicTest(framework),
+        type,
+      };
+    }),
     framework,
     language,
     testType,
@@ -441,7 +528,7 @@ const parseTestGenerationResponse = (
       uncoveredPaths: parsedResponse.coverage?.uncoveredPaths || [],
     },
     imports:
-      parsedResponse.imports || generateDefaultImports(framework, language),
+      parsedResponse.imports || generateDefaultImports(framework),
     setup: parsedResponse.setup,
     teardown: parsedResponse.teardown,
     confidence: parsedResponse.confidence || 0.85,
@@ -463,7 +550,7 @@ const createFallbackResponse = (
     tests: [
       {
         name: 'should work correctly',
-        code: generateBasicTest(framework, language),
+        code: generateBasicTest(framework),
         type: 'positive-case' as const,
       },
     ],
@@ -482,23 +569,12 @@ const createFallbackResponse = (
   };
 };
 
-/**
- * Generate default tests when response parsing fails
- */
-const generateDefaultTests = (framework: string, language: string) => [
-  {
-    name: 'should execute without errors',
-    code: generateBasicTest(framework, language),
-    type: 'positive-case' as const,
-  },
-];
 
 /**
  * Generate default imports for framework and language
  */
 const generateDefaultImports = (
-  framework: string,
-  _language: string,
+  framework: string
 ): string[] => {
   const imports = [];
 
@@ -517,7 +593,7 @@ const generateDefaultImports = (
 /**
  * Generate basic test code for framework
  */
-const generateBasicTest = (framework: string, _language: string): string => {
+const generateBasicTest = (framework: string): string => {
   if (framework === 'vitest' || framework === 'jest') {
     return 'it("should work correctly", () => {\n  expect(true).toBe(true);\n});';
   } else if (framework === 'mocha') {
@@ -525,6 +601,5 @@ const generateBasicTest = (framework: string, _language: string): string => {
   } else if (framework === 'pytest') {
     return 'def test_should_work_correctly():\n    assert True';
   }
-
   return 'test("should work correctly", () => { assert(true); });';
 };

@@ -28,7 +28,7 @@ export class ReliableOutboxPublisher implements OutboxPublisher {
 			publish: (envelope: Envelope) => Promise<void>;
 		},
 		private readonly config: OutboxConfig = {},
-	) {}
+	) { }
 	async publish(message: OutboxMessage): Promise<void> {
 		// Inject current trace context if available
 		const traceContext = getCurrentTraceContext();
@@ -207,7 +207,7 @@ export function createReliableOutboxProcessor(
 				message.idempotencyKey,
 			);
 			if (exists) {
-				console.log(
+				console.warn(
 					`Skipping duplicate message with idempotency key: ${message.idempotencyKey}`,
 				);
 				return;
@@ -248,7 +248,7 @@ export function createReliableOutboxProcessor(
 		if (isRunning) return;
 
 		isRunning = true;
-		console.log('Starting outbox processor...');
+		console.warn('Starting outbox processor...');
 
 		processingTimer = setInterval(async () => {
 			try {
@@ -268,7 +268,7 @@ export function createReliableOutboxProcessor(
 			clearInterval(processingTimer);
 			processingTimer = undefined;
 		}
-		console.log('Stopped outbox processor');
+		console.warn('Stopped outbox processor');
 	};
 
 	return { processPending, processRetries, start, stop };
@@ -282,7 +282,7 @@ export class EnhancedOutbox {
 		private readonly repository: OutboxRepository,
 		readonly _publisher: OutboxPublisher,
 		private readonly processor: OutboxProcessor,
-	) {}
+	) { }
 
 	/**
 	 * Add message to outbox within a database transaction

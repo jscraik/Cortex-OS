@@ -1,6 +1,3 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
 	CallToolRequestSchema,
@@ -24,6 +21,9 @@ import {
 	ToolSchema,
 	UnsubscribeRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
@@ -802,11 +802,10 @@ export const createServer = () => {
 					type: "resource_link",
 					uri: resource.uri,
 					name: resource.name,
-					description: `Resource ${i + 1}: ${
-						resource.mimeType === "text/plain"
+					description: `Resource ${i + 1}: ${resource.mimeType === "text/plain"
 							? "plaintext resource"
 							: "binary blob resource"
-					}`,
+						}`,
 					mimeType: resource.mimeType,
 				});
 			}
@@ -816,7 +815,7 @@ export const createServer = () => {
 
 		if (name === ToolName.STRUCTURED_CONTENT) {
 			// The same response is returned for every input.
-			const _validatedArgs = StructuredContentSchema.input.parse(args);
+			StructuredContentSchema.input.parse(args);
 
 			const weather = {
 				temperature: 22.5,

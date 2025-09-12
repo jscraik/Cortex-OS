@@ -104,9 +104,22 @@ function printPrettyResults(
 }
 
 function printServer(server: ServerManifest): void {
-	const riskBadge = getRiskBadge(server.security?.riskLevel || "medium");
-	const verifiedBadge = server.security?.verifiedPublisher ? " ✓" : "";
-	const categories = server.category;
+	const serverExtended = server as ServerManifest & {
+		security?: { riskLevel?: string; verifiedPublisher?: boolean };
+		category?: string;
+		owner?: string;
+		version?: string;
+		repo?: string;
+	};
+
+	const riskLevel = serverExtended.security?.riskLevel;
+	const normalizedRiskLevel: "low" | "medium" | "high" =
+		(riskLevel === "low" || riskLevel === "medium" || riskLevel === "high")
+			? riskLevel
+			: "medium";
+	const riskBadge = getRiskBadge(normalizedRiskLevel);
+	const verifiedBadge = serverExtended.security?.verifiedPublisher ? " ✓" : "";
+	const categories = serverExtended.category || "unknown";
 	const tags = server.tags ? ` [${server.tags.join(", ")}]` : "";
 
 	process.stdout.write(`${server.id}${verifiedBadge} ${riskBadge}\n`);
@@ -114,17 +127,17 @@ function printServer(server: ServerManifest): void {
 		`  ${server.name} - ${server.description || "No description"}\n`,
 	);
 	process.stdout.write(`  Category: ${categories}${tags}\n`);
-	process.stdout.write(`  Owner: ${server.owner}\n`);
+	process.stdout.write(`  Owner: ${serverExtended.owner || "unknown"}\n`);
 
-	if (server.version) {
-		process.stdout.write(`  Version: ${server.version}\n`);
+	if (serverExtended.version) {
+		process.stdout.write(`  Version: ${serverExtended.version}\n`);
 	}
 
 	const transports = Object.keys(server.transports).join(", ");
 	process.stdout.write(`  Transports: ${transports}\n`);
 
-	if (server.repo) {
-		process.stdout.write(`  Repository: ${server.repo}\n`);
+	if (serverExtended.repo) {
+		process.stdout.write(`  Repository: ${serverExtended.repo}\n`);
 	}
 
 	process.stdout.write("\n");

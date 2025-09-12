@@ -62,7 +62,7 @@ vi.mock('../mlx-adapter.js', async () => {
 		private modelName: string;
 		private availableModels: string[];
 		constructor(config: Record<string, unknown> | undefined) {
-			this.modelName = String((config as Record<string, unknown>)?.modelName || 'Qwen2.5-0.5B-Instruct-4bit');
+			this.modelName = String((config as Record<string, unknown>)?.modelName || 'Qwen2.5-0.5B-Instruct-4bit'); // valid, no change
 			// include both canonical names and short tokens to improve matching
 			this.availableModels = (Object.values(AVAILABLE_MLX_MODELS) as string[]).concat(['qwen', 'phi', 'qwen2.5', 'phi-3']);
 		}
@@ -132,7 +132,7 @@ vi.mock('../mlx-adapter.js', async () => {
 	}
 
 	const AVAILABLE_MLX_MODELS = {
-		QWEN_SMALL: 'Qwen2.5-0.5B-Instruct-4bit',
+		QWEN_SMALL: 'Qwen2.5-0.5B-Instruct-4bit', // valid, no change
 		PHI_MINI: 'Phi-3-mini-4k-instruct-4bit',
 	} as const;
 

@@ -55,24 +55,24 @@ export const simlabRun = new Command("run")
 				const result = await runner.runScenario(scenario);
 
 				if (opts.json) {
-					console.log(JSON.stringify(result, null, 2));
+					process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 				} else {
-					console.log(`SimLab scenario ${opts.id} completed successfully`);
-					console.log(`Turns executed: ${result.turns?.length || 0}`);
-					console.log(
-						`Scores: Goal=${result.scores.goal}, SOP=${result.scores.sop}, Brand=${result.scores.brand}, Factual=${result.scores.factual}`,
+					process.stdout.write(`SimLab scenario ${opts.id} completed successfully\n`);
+					process.stdout.write(`Turns executed: ${result.turns?.length || 0}\n`);
+					process.stdout.write(
+						`Scores: Goal=${result.scores.goal}, SOP=${result.scores.sop}, Brand=${result.scores.brand}, Factual=${result.scores.factual}\n`,
 					);
-					console.log(`Passed: ${result.passed ? "Yes" : "No"}`);
+					process.stdout.write(`Passed: ${result.passed ? "Yes" : "No"}\n`);
 				}
 			} catch (importError) {
 				console.error("SimLab functionality is not available");
 				console.error("Please ensure @cortex-os/simlab package is installed");
 				if (opts.json) {
-					console.log(
-						JSON.stringify({
+					process.stdout.write(
+						`${JSON.stringify({
 							error: "SimLab not available",
 							details: String(importError),
-						}),
+						})}\n`,
 					);
 				}
 				process.exit(1);
@@ -80,8 +80,8 @@ export const simlabRun = new Command("run")
 		} catch (error) {
 			console.error("Failed to run SimLab scenario:", error);
 			if (opts.json) {
-				console.log(
-					JSON.stringify({ error: "Execution failed", details: String(error) }),
+				process.stdout.write(
+					`${JSON.stringify({ error: "Execution failed", details: String(error) })}\n`,
 				);
 			}
 			process.exit(1);

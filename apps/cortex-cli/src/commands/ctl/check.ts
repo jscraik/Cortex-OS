@@ -1,10 +1,10 @@
-import { spawnSync } from "node:child_process";
 import { Command } from "commander";
+import { spawnSync } from "node:child_process";
 
 export const ctlCheck = new Command("check")
 	.description("Run .cortex control-centre checks")
 	.option("--json", "JSON output")
-	.action((opts: unknown) => {
+	.action((opts: { json?: boolean }) => {
 		for (const s of [
 			"check-structure.ts",
 			"check-agents.ts",

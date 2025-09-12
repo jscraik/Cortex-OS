@@ -2,6 +2,7 @@ import { defineWorkspace } from "vitest/config";
 
 export default defineWorkspace([
 	"apps/cortex-os",
+	"apps/cortex-cli",
 	"apps/cortex-webui",
 	"packages/a2a",
 	"packages/a2a-services/schema-registry",

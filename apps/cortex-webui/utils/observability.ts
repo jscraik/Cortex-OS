@@ -57,7 +57,7 @@ export function logEvent(evt: ChatStreamEvent): void {
 	const parsed = ChatStreamEventSchema.safeParse(evt);
 	if (parsed.success) {
 		// eslint-disable-next-line no-console
-		console.log(JSON.stringify(parsed.data));
+		console.warn(JSON.stringify(parsed.data));
 	} else {
 		// eslint-disable-next-line no-console
 		console.error('[observability] invalid event', parsed.error.flatten());

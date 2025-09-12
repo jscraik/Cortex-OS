@@ -1,4 +1,3 @@
-import { nanoid } from 'nanoid';
 import type { Evidence, PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 import { currentTimestamp } from '../utils/time.js';

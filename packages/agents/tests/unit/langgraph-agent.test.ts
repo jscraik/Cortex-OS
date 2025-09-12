@@ -5,6 +5,6 @@ describe('LangGraphAgent', () => {
 	it('increments the counter', async () => {
 		const agent = createLangGraphAgent();
 		const result = await agent.execute({ input: { count: 1 } });
-		expect(result.data?.count).toBe(2);
+		expect(result.count).toBe(2);
 	});
 });

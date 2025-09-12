@@ -1,7 +1,7 @@
-import { spawn } from 'node:child_process';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import type { Transport } from '@cortex-os/a2a-core/transport';
 import { createLogger } from '@cortex-os/observability';
+import { spawn } from 'node:child_process';
 
 const logger = createLogger('a2a-stdio-transport');
 
@@ -35,12 +35,13 @@ export function stdio(
 				cleanup();
 				resolve();
 			});
-			child.kill();
+			child.kill('SIGTERM');
 		});
 
 	child.stdout.on('data', (buf) => {
-		const lines = buf.toString('utf8').split(/\r?\n/).filter(Boolean);
+		const lines = buf.toString('utf8').split(/\r?\n/);
 		for (const line of lines) {
+			if (!line.trim()) continue; // skip empty or whitespace-only lines
 			try {
 				const msg = JSON.parse(line);
 				const handlers = subs.get(msg.type);

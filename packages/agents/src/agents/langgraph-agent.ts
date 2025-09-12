@@ -1,6 +1,6 @@
 import { Annotation, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
-import type { Agent, ExecutionContext, GenerateResult } from '../lib/types.js';
+import type { Agent, ExecutionContext } from '../lib/types.js';
 import { generateAgentId } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
@@ -49,15 +49,17 @@ export const createLangGraphAgent = (): Agent<
 			},
 		],
 		execute: async (
-			context: ExecutionContext<LangGraphInput>,
-		): Promise<GenerateResult<LangGraphOutput>> => {
-			const parsed = await validateSchema(langGraphInputSchema, context.input);
+			context: ExecutionContext<LangGraphInput> | LangGraphInput,
+		): Promise<LangGraphOutput> => {
+			// Type guard for ExecutionContext
+			const input: LangGraphInput =
+				typeof context === 'object' && context !== null && 'input' in context
+					? (context as ExecutionContext<LangGraphInput>).input
+					: (context as LangGraphInput);
+			const parsed = validateSchema(langGraphInputSchema, input);
 			const result = await graph.invoke({ count: parsed.count });
-			const data = await validateSchema(langGraphOutputSchema, result);
-			return {
-				content: `Final count is ${data.count}`,
-				data,
-			};
+			const data = validateSchema(langGraphOutputSchema, result);
+			return { count: data.count };
 		},
 	};
 };

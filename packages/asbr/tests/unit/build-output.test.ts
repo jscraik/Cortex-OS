@@ -10,7 +10,7 @@ describe('build output', () => {
 	it('emits compiled artifacts', () => {
 		if (existsSync(dist)) rmSync(dist, { recursive: true, force: true });
 
-		execSync('pnpm --filter @cortex-os/asbr build', {
+		execSync('pnpm build', {
 			cwd: root,
 			stdio: 'inherit',
 		});

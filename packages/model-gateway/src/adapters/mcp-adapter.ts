@@ -66,7 +66,11 @@ export function createMCPAdapter(): MCPAdapter {
 		}
 	};
 
-	const withClient = async <T>(fn: (c: any) => Promise<T>): Promise<T> => {
+	interface MinimalClient {
+		callTool(input: { name: string; arguments?: unknown }): Promise<unknown>;
+	}
+
+	const withClient = async <T>(fn: (c: MinimalClient) => Promise<T>): Promise<T> => {
 		const si = getServerInfo();
 		if (!si) throw new Error('MCP not configured');
 		const client = await createEnhancedClient(si);
@@ -80,37 +84,52 @@ export function createMCPAdapter(): MCPAdapter {
 	return {
 		isAvailable,
 		async generateEmbedding(request) {
-			const result = await withClient(async (c) =>
+			const raw = await withClient(async (c) =>
 				c.callTool({
 					name: 'embeddings.create',
 					arguments: { texts: [request.text] },
 				}),
 			);
-			const emb = (result?.embeddings?.[0] as number[]) || [];
-			return { embedding: emb, model: result?.model || 'mcp:embeddings' };
+			const result: unknown = raw || {};
+			const embeddings = (typeof result === 'object' && result && 'embeddings' in result) ? (result as { embeddings?: unknown }).embeddings : undefined;
+			const model = (typeof result === 'object' && result && 'model' in result && typeof (result as { model?: unknown }).model === 'string') ? (result as { model: string }).model : 'mcp:embeddings';
+			const emb = Array.isArray(embeddings) ? (embeddings[0] as number[]) : [];
+			return { embedding: emb, model };
 		},
 		async generateEmbeddings(request) {
-			const result = await withClient(async (c) =>
+			const raw = await withClient(async (c) =>
 				c.callTool({
 					name: 'embeddings.create',
 					arguments: { texts: request.texts },
 				}),
 			);
-			const embs = (result?.embeddings as number[][]) || [];
-			return { embeddings: embs, model: result?.model || 'mcp:embeddings' };
+			const result: unknown = raw || {};
+			const embeddings = (typeof result === 'object' && result && 'embeddings' in result) ? (result as { embeddings?: unknown }).embeddings : undefined;
+			const model = (typeof result === 'object' && result && 'model' in result && typeof (result as { model?: unknown }).model === 'string') ? (result as { model: string }).model : 'mcp:embeddings';
+			const embs = Array.isArray(embeddings) ? (embeddings as number[][]) : [];
+			return { embeddings: embs, model };
 		},
 		async generateChat(request) {
-			const result = await withClient(async (c) =>
+			const raw = await withClient(async (c) =>
 				c.callTool({
 					name: 'text-generation.generate',
 					arguments: { ...request, model: request.model },
 				}),
 			);
-			const content = result?.content || result?.text || '';
-			return { content, model: result?.model || 'mcp:chat' };
+			const result: unknown = raw || {};
+			const model = (typeof result === 'object' && result && 'model' in result && typeof (result as { model?: unknown }).model === 'string') ? (result as { model: string }).model : 'mcp:chat';
+			let content = '';
+			if (typeof result === 'object' && result) {
+				if ('content' in result && typeof (result as { content?: unknown }).content === 'string') {
+					content = (result as { content: string }).content;
+				} else if ('text' in result && typeof (result as { text?: unknown }).text === 'string') {
+					content = (result as { text: string }).text;
+				}
+			}
+			return { content, model };
 		},
 		async rerank(request) {
-			const result = await withClient(async (c) =>
+			const raw = await withClient(async (c) =>
 				c.callTool({
 					name: 'rerank.score',
 					arguments: {
@@ -120,8 +139,11 @@ export function createMCPAdapter(): MCPAdapter {
 					},
 				}),
 			);
-			const scores = (result?.scores as number[]) || [];
-			return { scores, model: result?.model || 'mcp:rerank' };
+			const result: unknown = raw || {};
+			const scoresRaw = (typeof result === 'object' && result && 'scores' in result) ? (result as { scores?: unknown }).scores : undefined;
+			const model = (typeof result === 'object' && result && 'model' in result && typeof (result as { model?: unknown }).model === 'string') ? (result as { model: string }).model : 'mcp:rerank';
+			const scores = Array.isArray(scoresRaw) ? (scoresRaw as number[]) : [];
+			return { scores, model };
 		},
 	};
 }

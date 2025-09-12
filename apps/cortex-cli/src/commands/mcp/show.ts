@@ -1,4 +1,28 @@
-import type { ServerManifest, SupportedClient } from "@cortex-os/mcp-registry";
+import type { ServerManifest } from "@cortex-os/mcp-registry";
+
+type ExtendedServerManifest = ServerManifest & {
+	security?: {
+		riskLevel?: string;
+		verifiedPublisher?: boolean;
+		sigstoreBundle?: string;
+		sbom?: string;
+	};
+	category?: string;
+	owner?: string;
+	version?: string;
+	repo?: string;
+	homepage?: string;
+	license?: string;
+	scopes?: string[];
+	install?: Record<string, string>;
+	oauth?: {
+		authType?: string;
+		authorizationEndpoint?: string;
+		tokenEndpoint?: string;
+		scopes?: string[];
+	};
+};
+
 import { Command } from "commander";
 import { createMarketplaceClient } from "./marketplace-client.js";
 
@@ -59,9 +83,9 @@ interface ShowOptions {
 	client?: string;
 }
 
-function displayServerInfo(server: ServerManifest, showClient?: string) {
+function displayServerInfo(server: ExtendedServerManifest, showClient?: string) {
 	const verifiedBadge = server.security?.verifiedPublisher ? " ✓ Verified" : "";
-	const riskBadge = getRiskBadge(server.security?.riskLevel || "medium");
+	const riskBadge = getRiskBadge((server.security?.riskLevel as "low" | "medium" | "high") || "medium");
 	printHeader(server.name, verifiedBadge, riskBadge);
 	printBasicInfo(server);
 	printDescriptionAndTags(server);
@@ -87,16 +111,8 @@ function getRiskBadge(riskLevel: "low" | "medium" | "high"): string {
 	}
 }
 
-function isValidClient(client: string): client is SupportedClient {
-	return [
-		"claude",
-		"cline",
-		"devin",
-		"cursor",
-		"continue",
-		"windsurf",
-		"json",
-	].includes(client);
+function isValidClient(client: string): boolean {
+	return ["claude", "cline"].includes(client);
 }
 
 function printHeader(
@@ -110,7 +126,7 @@ function printHeader(
 	);
 }
 
-function printBasicInfo(server: ServerManifest): void {
+function printBasicInfo(server: ExtendedServerManifest): void {
 	process.stdout.write(`ID: ${server.id}\n`);
 	process.stdout.write(`Owner: ${server.owner}\n`);
 	process.stdout.write(`Category: ${server.category}\n`);
@@ -119,7 +135,7 @@ function printBasicInfo(server: ServerManifest): void {
 	process.stdout.write("\n");
 }
 
-function printDescriptionAndTags(server: ServerManifest): void {
+function printDescriptionAndTags(server: ExtendedServerManifest): void {
 	if (server.description) {
 		process.stdout.write(`Description:\n${server.description}\n\n`);
 	}
@@ -128,7 +144,7 @@ function printDescriptionAndTags(server: ServerManifest): void {
 	}
 }
 
-function printLinks(server: ServerManifest): void {
+function printLinks(server: ExtendedServerManifest): void {
 	if (server.repo || server.homepage) {
 		process.stdout.write("Links:\n");
 		if (server.repo) process.stdout.write(`  Repository: ${server.repo}\n`);
@@ -138,7 +154,7 @@ function printLinks(server: ServerManifest): void {
 	}
 }
 
-function printSecurity(server: ServerManifest): void {
+function printSecurity(server: ExtendedServerManifest): void {
 	process.stdout.write("Security:\n");
 	process.stdout.write(
 		`  Risk Level: ${server.security?.riskLevel || "medium"}\n`,
@@ -157,35 +173,36 @@ function printSecurity(server: ServerManifest): void {
 	process.stdout.write("\n");
 }
 
-function printPermissions(server: ServerManifest): void {
+function printPermissions(server: ExtendedServerManifest): void {
 	process.stdout.write("Required Permissions:\n");
-	for (const scope of server.scopes) {
+	for (const scope of server.scopes || []) {
 		process.stdout.write(`  • ${scope}\n`);
 	}
 	process.stdout.write("\n");
 }
 
-function printTransports(server: ServerManifest): void {
+function printTransports(server: ExtendedServerManifest): void {
 	process.stdout.write("Available Transports:\n");
 	if (server.transports.stdio) {
 		const stdio = server.transports.stdio;
-		process.stdout.write(`  • stdio: ${stdio.command}\n`);
-		if (stdio.args && stdio.args.length > 0) {
-			process.stdout.write(`    Args: ${stdio.args.join(" ")}\n`);
+		const stdioTyped = stdio as { command?: string; args?: string[] };
+		process.stdout.write(`  • stdio: ${stdioTyped.command}\n`);
+		if (stdioTyped.args && stdioTyped.args.length > 0) {
+			process.stdout.write(`    Args: ${stdioTyped.args.join(" ")}\n`);
 		}
 	}
 	if (server.transports.sse) {
-		process.stdout.write(`  • sse: ${server.transports.sse.url}\n`);
+		process.stdout.write(`  • sse: ${(server.transports.sse as { url?: string }).url}\n`);
 	}
 	if (server.transports.streamableHttp) {
 		process.stdout.write(
-			`  • streamableHttp: ${server.transports.streamableHttp.url}\n`,
+			`  • streamableHttp: ${(server.transports.streamableHttp as { url?: string }).url}\n`,
 		);
 	}
 	process.stdout.write("\n");
 }
 
-function printAuth(server: ServerManifest): void {
+function printAuth(server: ExtendedServerManifest): void {
 	if (server.oauth && server.oauth.authType !== "none") {
 		process.stdout.write("Authentication:\n");
 		process.stdout.write(`  Type: ${server.oauth.authType}\n`);
@@ -206,18 +223,27 @@ function printAuth(server: ServerManifest): void {
 	}
 }
 
-function printInstallation(server: ServerManifest, showClient?: string): void {
+function printSpecificClientInstall(server: ExtendedServerManifest, client: string): void {
+	const cmd = server.install?.[client];
+	if (cmd) {
+		process.stdout.write(`  ${client}: ${cmd}\n`);
+	} else {
+		process.stdout.write(`  ${client}: not available\n`);
+	}
+}
+
+function printInstallation(server: ExtendedServerManifest, showClient?: string): void {
 	process.stdout.write("Installation:\n");
 	if (showClient && isValidClient(showClient)) {
 		printSpecificClientInstall(server, showClient);
 	} else {
-		const clients = Object.keys(server.install);
+		const clients = Object.keys(server.install || {});
 		for (const client of clients) {
 			if (client === "json") {
 				process.stdout.write("  json: <configuration object>\n");
 			} else {
 				process.stdout.write(
-					`  ${client}: ${server.install[client as SupportedClient]}\n`,
+					`  ${client}: ${server.install?.[client]}\n`,
 				);
 			}
 		}
@@ -225,37 +251,12 @@ function printInstallation(server: ServerManifest, showClient?: string): void {
 	process.stdout.write("\n");
 }
 
-function printJsonInstall(installCmd: unknown): void {
-	process.stdout.write("  JSON Config:\n");
-	const pretty = JSON.stringify(installCmd, null, 4)
-		.split("\n")
-		.map((line) => `    ${line}`)
-		.join("\n");
-	process.stdout.write(`${pretty}\n`);
-}
-
-function printSpecificClientInstall(
-	server: ServerManifest,
-	client: SupportedClient | string,
-): void {
-	const cmd = server.install[client as SupportedClient];
-	if (!cmd) {
-		process.stdout.write(`  No installation command available for ${client}\n`);
-		return;
-	}
-	if (client === "json") {
-		printJsonInstall(cmd);
-	} else {
-		process.stdout.write(`  ${client}: ${cmd}\n`);
-	}
-}
-
-function printQuickCommands(server: ServerManifest): void {
+function printQuickCommands(server: ExtendedServerManifest): void {
 	process.stdout.write("Quick Commands:\n");
 	process.stdout.write(
 		`  cortex mcp add ${server.id}                    Add to local registry\n`,
 	);
-	const clients = Object.keys(server.install).filter((c) => c !== "json");
+	const clients = Object.keys(server.install || {}).filter((c) => c !== "json");
 	if (clients.length > 0) {
 		process.stdout.write(
 			`  cortex mcp show ${server.id} --client ${clients[0]}    Show install command for ${clients[0]}\n`,

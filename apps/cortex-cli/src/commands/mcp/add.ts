@@ -2,9 +2,10 @@ import {
 	type ServerInfo,
 	ServerInfoSchema,
 } from "@cortex-os/mcp-core/contracts";
-import type { ServerManifest, SupportedClient } from "@cortex-os/mcp-registry";
+import type { ServerManifest } from "@cortex-os/mcp-registry";
 import { upsert } from "@cortex-os/mcp-registry/fs-store";
 import { Command } from "commander";
+import { err, ok, type Result } from "../../utils/result.js";
 import { createMarketplaceClient } from "./marketplace-client.js";
 
 type TransportKind = "stdio" | "sse" | "streamableHttp";
@@ -64,29 +65,32 @@ export const mcpAdd = new Command("add")
 	.option("--registry <url>", "Custom registry URL")
 	.option("--force", "Force add even if server exists")
 	.option("--json", "JSON output")
-	.action(
-		async (nameOrId: string, rest: string[] | undefined, opts: AddOptions) => {
-			try {
-				const restArgs = Array.isArray(rest) ? rest : [];
-				// If transport is specified, or we detect manual positional patterns, treat as manual configuration
-				if (opts.transport || isManualPositional(restArgs)) {
-					await addManualServer(nameOrId, restArgs, opts);
-				} else {
-					// Otherwise, try to add from marketplace
-					await addFromMarketplace(nameOrId, opts);
-				}
-			} catch (error) {
-				const message =
-					error instanceof Error ? error.message : "Unknown error occurred";
-				if (opts.json)
-					process.stderr.write(
-						`${JSON.stringify({ error: message }, null, 2)}\n`,
-					);
-				else process.stderr.write(`Error: ${message}\n`);
-				process.exit(1);
+	.action(async (nameOrId: string, rest: string[] | undefined, opts: AddOptions) => {
+		const outcome = await addCommandHandler(nameOrId, rest, opts);
+		if (!outcome.ok) {
+			const message = outcome.error.message;
+			if (opts.json) {
+				process.stderr.write(`${JSON.stringify({ error: message }, null, 2)}\n`);
+			} else {
+				process.stderr.write(`Error: ${message}\n`);
 			}
-		},
-	);
+			process.exit(1);
+		}
+	});
+
+async function addCommandHandler(nameOrId: string, rest: string[] | undefined, opts: AddOptions): Promise<Result<void, Error>> {
+	try {
+		const restArgs = Array.isArray(rest) ? rest : [];
+		if (opts.transport || isManualPositional(restArgs)) {
+			await addManualServer(nameOrId, restArgs, opts);
+		} else {
+			await addFromMarketplace(nameOrId, opts);
+		}
+		return ok(undefined);
+	} catch (e) {
+		return err(e instanceof Error ? e : new Error(String(e)));
+	}
+}
 
 function collectRepeatable(value: string, previous: string[]) {
 	previous.push(value);
@@ -107,9 +111,10 @@ function isManualPositional(rest: string[]): boolean {
 }
 
 async function addManualServer(name: string, rest: string[], opts: AddOptions) {
-	// Normalize transport alias
-	let transport: ServerInfo["transport"] | undefined = opts.transport;
-	if (transport === "http") transport = "streamableHttp";
+	// Normalize transport alias (allow incoming union that may include 'http')
+	let transport: TransportKindWithHttp | undefined = opts.transport;
+	if (transport === 'http') transport = 'streamableHttp';
+	const normalizedTransport = transport;
 
 	let endpoint = opts.endpoint;
 	let command = opts.command;
@@ -118,12 +123,13 @@ async function addManualServer(name: string, rest: string[], opts: AddOptions) {
 	// Allow positional URL for sse/http
 	if (!endpoint && rest.length > 0 && isUrl(rest[0])) {
 		endpoint = rest[0];
+		rest = rest.slice(1);
 	}
 
 	// Allow stdio passthrough or default http based on positional
 	const providedArgs = safeParseJsonArray(opts.args);
 	({ transport, command, args } = inferTransportAndCommand(
-		transport,
+		normalizedTransport,
 		command,
 		args,
 		rest,
@@ -133,7 +139,7 @@ async function addManualServer(name: string, rest: string[], opts: AddOptions) {
 
 	if (!transport) {
 		throw new Error(
-			"--transport is required for manual server configuration unless using positional syntax",
+			'--transport is required for manual server configuration unless using positional syntax',
 		);
 	}
 
@@ -170,30 +176,27 @@ function buildManualCandidate(input: {
 	headers: Record<string, string>;
 	env: Record<string, string>;
 }): ServerInfo {
-	const {
+	const { name, transport, endpoint, command, args, headers, env } = input;
+	if (!transport) throw new Error("transport required");
+	if (transport === "stdio") {
+		if (!command) throw new Error("--command (or positional) required for stdio transport");
+		return {
+			name,
+			transport: "stdio",
+			command,
+			args,
+			env: Object.keys(env).length ? env : undefined,
+		};
+	}
+	if ((transport === "sse" || transport === "streamableHttp") && !endpoint) {
+		throw new Error("--endpoint (or positional URL) required for network transport");
+	}
+	return {
 		name,
 		transport,
 		endpoint,
-		command,
-		args,
-		providedArgs,
-		headers,
-		env,
-	} = input;
-	if (!transport) throw new Error("Transport resolution failed");
-	const candidate: Partial<ServerInfo> = { name, transport };
-	if (transport === "stdio") {
-		if (!command) throw new Error("Missing command for stdio transport");
-		candidate.command = command;
-		candidate.args = [...args, ...providedArgs];
-		if (Object.keys(env).length > 0) candidate.env = env;
-	} else {
-		if (!endpoint)
-			throw new Error("Missing endpoint URL for sse/http transport");
-		candidate.endpoint = endpoint;
-		if (Object.keys(headers).length > 0) candidate.headers = headers;
-	}
-	return ServerInfoSchema.parse(candidate);
+		headers: Object.keys(headers).length ? headers : undefined,
+	} as ServerInfo;
 }
 
 function inferTransportAndCommand(
@@ -207,10 +210,7 @@ function inferTransportAndCommand(
 	let transport = t;
 	let command = cmd;
 	let args = argList;
-	if (
-		(!transport && rest.length > 0 && !isUrl(rest[0])) ||
-		transport === "stdio"
-	) {
+	if ((!transport && rest.length > 0 && !isUrl(rest[0])) || transport === "stdio") {
 		transport = "stdio";
 		if (!command && rest.length > 0) {
 			command = rest[0];
@@ -272,7 +272,7 @@ async function addFromMarketplace(serverId: string, opts: AddOptions) {
 		opts.registry ? { registryUrl: opts.registry } : {},
 	);
 
-	const server = await client.getServer(serverId);
+	const server = await client.getServer(serverId) as ServerManifest | undefined;
 	if (!server) {
 		throw new Error(
 			`Server "${serverId}" not found in marketplace. Use "cortex mcp search" to find available servers.`,
@@ -363,7 +363,7 @@ function getRiskBadge(riskLevel: "low" | "medium" | "high"): string {
 	}
 }
 
-function isValidClient(client: string): client is SupportedClient {
+function isValidClient(client: string): boolean {
 	return [
 		"claude",
 		"cline",
@@ -376,9 +376,7 @@ function isValidClient(client: string): client is SupportedClient {
 }
 
 function resolveMarketplaceTransportType(
-	server: {
-		transports: Record<string, unknown>;
-	},
+	server: { transports: Record<string, unknown> },
 	requested?: TransportKindWithHttp,
 ): TransportKind {
 	let t = requested || getPreferredTransport(server.transports);
@@ -386,54 +384,98 @@ function resolveMarketplaceTransportType(
 	return t as TransportKind;
 }
 
+// Lightweight runtime accessors mirroring marketplace-client helpers (duplicated minimally to avoid circular import)
+function getOptionalField(server: ServerManifest, key: string): unknown {
+	return (server as unknown as Record<string, unknown>)[key];
+}
+function getStringField(server: ServerManifest, key: string): string | undefined {
+	const v = getOptionalField(server, key);
+	return typeof v === 'string' ? v : undefined;
+}
+function getSecurityInfo(server: ServerManifest): { riskLevel?: 'low' | 'medium' | 'high'; verifiedPublisher?: boolean } | undefined {
+	const sec = getOptionalField(server, 'security');
+	if (!sec || typeof sec !== 'object') return undefined;
+	const secRecord = sec as Record<string, unknown>;
+	const rlVal = secRecord['riskLevel'];
+	const riskLevel = rlVal === 'low' || rlVal === 'medium' || rlVal === 'high' ? rlVal : undefined;
+	const vpVal = secRecord['verifiedPublisher'];
+	return {
+		riskLevel,
+		verifiedPublisher: typeof vpVal === 'boolean' ? vpVal : undefined,
+	};
+}
+
 function outputMarketplaceAddResult(
 	opts: AddOptions,
 	server: ServerManifest,
 	transportType: TransportKind,
 	si: ServerInfo,
-) {
+): void {
+	const security = getSecurityInfo(server);
 	if (opts.json) {
-		process.stdout.write(
-			`${JSON.stringify(
-				{
-					ok: true,
-					added: si,
-					source: "marketplace",
-					marketplaceInfo: {
-						id: server.id,
-						name: server.name,
-						owner: server.owner,
-						version: server.version,
-						category: server.category,
-						riskLevel: server.security?.riskLevel || "medium",
-						verified: server.security?.verifiedPublisher || false,
-					},
-				},
-				null,
-				2,
-			)}\n`,
-		);
+		outputMarketplaceJson(server, si, security);
 		return;
 	}
-	const riskBadge = getRiskBadge(server.security?.riskLevel || "medium");
-	const verifiedBadge = server.security?.verifiedPublisher ? " ✓" : "";
+	outputMarketplaceText(opts, server, transportType, security);
+}
+
+function outputMarketplaceJson(server: ServerManifest, si: ServerInfo, security: ReturnType<typeof getSecurityInfo>): void {
+	const id = getStringField(server, 'id');
+	const name = getStringField(server, 'name');
 	process.stdout.write(
-		`Added MCP server: ${server.name}${verifiedBadge} ${riskBadge}\n`,
+		`${JSON.stringify(
+			{
+				ok: true,
+				added: si,
+				source: 'marketplace',
+				marketplaceInfo: {
+					id,
+					name,
+					owner: getStringField(server, 'owner'),
+					version: getStringField(server, 'version'),
+					category: getStringField(server, 'category'),
+					riskLevel: security?.riskLevel || 'medium',
+					verified: security?.verifiedPublisher || false,
+				},
+			},
+			null,
+			2,
+		)}\n`,
 	);
-	process.stdout.write(`  ID: ${server.id}\n`);
+}
+
+function outputMarketplaceText(
+	opts: AddOptions,
+	server: ServerManifest,
+	transportType: TransportKind,
+	security: ReturnType<typeof getSecurityInfo>,
+): void {
+	const risk: 'low' | 'medium' | 'high' = security?.riskLevel || 'medium';
+	const riskBadge = getRiskBadge(risk);
+	const verifiedBadge = security?.verifiedPublisher ? ' ✓' : '';
+	const id = getStringField(server, 'id') || '(unknown)';
+	const name = getStringField(server, 'name') || '(unknown)';
+	process.stdout.write(`Added MCP server: ${name}${verifiedBadge} ${riskBadge}\n`);
+	process.stdout.write(`  ID: ${id}\n`);
 	process.stdout.write(`  Transport: ${transportType}\n`);
-	process.stdout.write(`  Owner: ${server.owner}\n`);
-	if (server.description) {
-		process.stdout.write(`  Description: ${server.description}\n`);
-	}
+	const owner = getStringField(server, 'owner');
+	if (owner) process.stdout.write(`  Owner: ${owner}\n`);
+	const description = getStringField(server, 'description');
+	if (description) process.stdout.write(`  Description: ${description}\n`);
 	if (opts.client && isValidClient(opts.client)) {
-		const installCmd = server.install[opts.client];
+		const installSection = getOptionalField(server, 'install');
+		let installCmd: unknown;
+		if (installSection && typeof installSection === 'object') {
+			installCmd = (installSection as Record<string, unknown>)[opts.client];
+		}
 		if (installCmd) {
 			process.stdout.write(`\n${opts.client} install command:\n`);
-			if (opts.client === "json") {
+			if (opts.client === 'json') {
 				process.stdout.write(`${JSON.stringify(installCmd, null, 2)}\n`);
-			} else {
+			} else if (typeof installCmd === 'string') {
 				process.stdout.write(`  ${installCmd}\n`);
+			} else {
+				process.stdout.write('  (unsupported install command format)\n');
 			}
 		}
 	}

@@ -4,7 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { JsonRpcRequest, JsonRpcResponse } from './index';
+import type { JsonRpcRequest, JsonRpcResponse, TaskResult } from './index';
 import {
 	A2A_ERROR_CODES,
 	A2ARpcHandler,
@@ -374,7 +374,7 @@ describe('A2A Protocol Implementation', () => {
 	describe('Streaming Support', () => {
 		it('emits taskCompleted events', async () => {
 			const manager = new TaskManager();
-			const events: any[] = [];
+			const events: TaskResult[] = [];
 			manager.on('taskCompleted', (payload) => events.push(payload));
 
 			await manager.sendTask({

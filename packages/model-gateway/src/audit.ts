@@ -3,16 +3,16 @@ import { promises as fs } from 'node:fs';
 export type AuditEvent = {
 	service: string;
 	operation: string;
-	context: Record<string, any>;
-	data: any;
+	context: Record<string, unknown>;
+	data: unknown;
 	timestamp: string;
 };
 
 export function auditEvent(
 	service: string,
 	operation: string,
-	context: Record<string, any>,
-	data: any,
+	context: Record<string, unknown>,
+	data: unknown,
 ): AuditEvent {
 	return {
 		service,
@@ -29,6 +29,6 @@ export async function record(event: AuditEvent): Promise<void> {
 	if (logPath) {
 		await fs.appendFile(logPath, line, 'utf8');
 	} else {
-		console.log('audit', line.trim());
+		console.warn('audit', line.trim());
 	}
 }

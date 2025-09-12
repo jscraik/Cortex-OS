@@ -229,7 +229,7 @@ export class SecurityValidator {
 				return false;
 			}
 
-			console.log(`Sigstore bundle validation passed for ${server.name}`);
+			console.warn(`Sigstore bundle validation passed for ${server.name}`);
 			return true;
 		} catch (error) {
 			console.error(`Sigstore validation error for ${server.name}:`, error);
@@ -282,11 +282,11 @@ export class SecurityValidator {
 				// 2. Verify the signature using the public key and algorithm
 				// 3. Compare with the expected signature
 
-				console.log(`Registry signature validation passed (basic checks)`);
+				console.warn(`Registry signature validation passed (basic checks)`);
 				return true;
 			}
 
-			console.log(
+			console.warn(
 				"Registry signing information validated (no signature to verify)",
 			);
 			return true;
@@ -302,14 +302,14 @@ export class SecurityValidator {
 	): void {
 		// Check for HTTPS URLs
 		if (
-			server.transports.sse?.url &&
+			server.transports?.sse?.url &&
 			!server.transports.sse.url.startsWith("https://")
 		) {
 			warnings.push("SSE transport does not use HTTPS");
 		}
 
 		if (
-			server.transports.streamableHttp?.url &&
+			server.transports?.streamableHttp?.url &&
 			!server.transports.streamableHttp.url.startsWith("https://")
 		) {
 			warnings.push("Streamable HTTP transport does not use HTTPS");
@@ -321,7 +321,7 @@ export class SecurityValidator {
 			"files:write",
 			"network:unrestricted",
 		];
-		const serverHighRiskScopes = server.scopes.filter((scope) =>
+		const serverHighRiskScopes = (server.scopes || []).filter((scope) =>
 			highRiskScopes.some((riskScope) => scope.includes(riskScope)),
 		);
 

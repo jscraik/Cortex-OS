@@ -9,10 +9,11 @@ export function withOtel(handler: Handler): Handler {
 			try {
 				await handler.handle(m);
 				span.setStatus({ code: 1 });
-			} catch (e: any) {
-				span.recordException(e);
-				span.setStatus({ code: 2, message: e?.message });
-				throw e;
+			} catch (e: unknown) {
+				const error = e instanceof Error ? e : new Error(String(e));
+				span.recordException(error);
+				span.setStatus({ code: 2, message: error.message });
+				throw error;
 			} finally {
 				span.end();
 			}

@@ -1,3 +1,4 @@
+import { withSpan } from '@cortex-os/telemetry';
 import type { Envelope } from '../a2a-contracts/src/envelope.js';
 import {
 	type OutboxConfig,
@@ -14,7 +15,6 @@ import {
 	EnhancedOutbox,
 	ReliableOutboxPublisher,
 } from '../a2a-core/src/outbox.js';
-import { withSpan } from '@cortex-os/telemetry';
 
 /**
  * A2A Outbox Integration
@@ -136,7 +136,7 @@ export function createA2AOutboxIntegration(
 	 * Enhanced publish with outbox support
 	 */
 	async function publish(envelope: Envelope): Promise<void> {
-		return withSpan('a2a.outbox.publish', async (span: any) => {
+		return withSpan('a2a.outbox.publish', async (span) => {
 			span.setAttributes({
 				'envelope.id': envelope.id,
 				'envelope.type': envelope.type,
@@ -161,7 +161,7 @@ export function createA2AOutboxIntegration(
 	 * Enhanced batch publish with outbox support
 	 */
 	async function publishBatch(envelopes: Envelope[]): Promise<void> {
-		return withSpan('a2a.outbox.publishBatch', async (span: any) => {
+		return withSpan('a2a.outbox.publishBatch', async (span) => {
 			span.setAttributes({
 				'envelope.count': envelopes.length,
 			});
@@ -224,7 +224,7 @@ export function createA2AOutboxIntegration(
 	 * Clean up old processed messages
 	 */
 	async function cleanup(olderThanDays: number = 30): Promise<number> {
-		return withSpan('a2a.outbox.cleanup', async (span: any) => {
+		return withSpan('a2a.outbox.cleanup', async (span) => {
 			const count = await outbox.cleanup(olderThanDays);
 			span.setAttributes({
 				'cleanup.count': count,

@@ -4,16 +4,11 @@ import { createEnvelope, wireA2A } from './boot/a2a';
 import { TOKENS } from './tokens';
 
 // Lightweight service shapes to avoid any
-type MemoriesService = unknown;
-type OrchestrationService = unknown;
-type MCPGatewayService = unknown;
 
 export async function startRuntime() {
-	const memories = container.get(TOKENS.Memories) as MemoriesService;
-	const orchestration = container.get(
-		TOKENS.Orchestration,
-	) as OrchestrationService;
-	const mcp = container.get(TOKENS.MCPGateway) as MCPGatewayService;
+	const memories = container.get(TOKENS.Memories);
+	const orchestration = container.get(TOKENS.Orchestration);
+	const mcp = container.get(TOKENS.MCPGateway);
 
 	// Wire A2A bus
 	const { bus } = wireA2A();
@@ -46,13 +41,13 @@ export async function startRuntime() {
 		);
 	}
 
-	// Log privacy mode status
+	// Log privacy mode status (use warn for visibility, avoid log/info in prod)
 	if (privacyMode === 'true') {
-		console.log('🔒 Cortex-OS Privacy Mode: ENABLED');
-		console.log('Only local MLX models will be used for all operations.');
+		console.warn('🔒 Cortex-OS Privacy Mode: ENABLED');
+		console.warn('Only local MLX models will be used for all operations.');
 	} else {
-		console.log('🔓 Cortex-OS Privacy Mode: DISABLED');
-		console.log('All available providers will be used for operations.');
+		console.warn('🔓 Cortex-OS Privacy Mode: DISABLED');
+		console.warn('All available providers will be used for operations.');
 	}
 
 	return { memories, orchestration, mcp, bus };

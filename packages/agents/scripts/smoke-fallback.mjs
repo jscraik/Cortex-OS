@@ -13,7 +13,7 @@ const failingProvider = {
 
 const workingProvider = {
 	name: "secondary-ok",
-	generate: async (_prompt) => ({
+	generate: async () => ({
 		text: "ok",
 		provider: "secondary-ok",
 		latencyMs: 10,

@@ -12,9 +12,9 @@ WORKDIR /workspace
 COPY . .
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install
 # Build only the target package and its workspace deps
-RUN pnpm -r --filter @cortex-os/model-gateway... build
+RUN pnpm build
 # Create pruned, production-only package for model-gateway
-RUN pnpm --filter @cortex-os/model-gateway --prod deploy /out/model-gateway
+RUN pnpm deploy /out/model-gateway
 
 # Runtime image
 FROM node:20-slim AS runner
@@ -23,7 +23,7 @@ ENV OLLAMA_AVAILABLE=true
 WORKDIR /app
 RUN groupadd -r nodegrp && useradd -r -g nodegrp nodeusr \
     && apt-get update && apt-get install -y --no-install-recommends \
-        tini curl python3 python3-pip \
+    tini curl python3 python3-pip \
     && pip3 install --no-cache-dir numpy mlx mlx-lm mlx-vlm torch instructor openai \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /out/model-gateway .

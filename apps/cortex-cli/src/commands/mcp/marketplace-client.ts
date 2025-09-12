@@ -9,6 +9,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
+import { getRegistryCacheFilePath, validateMarketplaceUrl } from './infra/marketplace-utils.js';
 
 /**
  * Configuration for marketplace client
@@ -41,6 +42,26 @@ export type ApiResponse<T> =
 		success: false;
 		error: { code: string; message: string; details?: unknown };
 	};
+
+// ----------------------------------
+// Internal helpers (kept local to avoid cross-boundary leakage)
+// ----------------------------------
+function errorMessage(err: unknown, fallback = DEFAULT_UNKNOWN_ERROR): string {
+	if (err instanceof Error && typeof err.message === 'string') return err.message;
+	return fallback;
+}
+
+function failure<T>(code: string, errOrMsg: unknown, fallback?: string, details?: unknown): ApiResponse<T> {
+	const msg = typeof errOrMsg === 'string' ? errOrMsg : errorMessage(errOrMsg, fallback);
+	return { success: false, error: { code, message: msg, ...(details ? { details } : {}) } };
+}
+
+function success<T>(
+	data: T,
+	meta?: { total?: number; offset?: number; limit?: number },
+): ApiResponse<T> {
+	return meta ? { success: true, data, meta } : { success: true, data };
+}
 
 // Simple search request accepted by this client
 export const SearchRequestSchema = z.object({
@@ -83,7 +104,7 @@ function asString(v: unknown): string | undefined {
 
 function asStringArray(v: unknown): string[] | undefined {
 	return Array.isArray(v) && v.every((x) => typeof x === 'string')
-		? (v as string[])
+		? v
 		: undefined;
 }
 
@@ -107,7 +128,7 @@ function getSecurity(server: ServerManifest): ExtendedSecurity | undefined {
 	const riskLevel = asString(sec['riskLevel']);
 	const verifiedPublisher =
 		typeof sec['verifiedPublisher'] === 'boolean'
-			? (sec['verifiedPublisher'] as boolean)
+			? sec['verifiedPublisher']
 			: undefined;
 	const sigstoreBundle = asString(sec['sigstoreBundle']);
 	// Normalize riskLevel
@@ -171,38 +192,10 @@ function hasStreamableHttp(server: ServerManifest): boolean {
 	return !!s?.url;
 }
 
-// Security: Allowlisted domains for marketplace registries
-const ALLOWED_MARKETPLACE_DOMAINS = [
-	'marketplace.cortex-os.com',
-	'marketplace.cortex-os.dev',
-	'registry.cortex-os.com',
-	'registry.cortex-os.dev',
-	'api.cortex-os.com',
-	'localhost',
-	'127.0.0.1',
-	'::1',
-	// Add trusted marketplace domains here
-];
+// Security: Allowlisted domains now imported from infra util for reuse
+const DEFAULT_UNKNOWN_ERROR = 'Unknown error';
 
-/**
- * Security: Validate marketplace URL to prevent SSRF attacks
- */
-function validateMarketplaceUrl(url: string): boolean {
-	try {
-		const parsedUrl = new URL(url);
-
-		// Only allow HTTP/HTTPS protocols
-		if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-			return false;
-		}
-
-		// Check against allowlist
-		const hostname = parsedUrl.hostname.toLowerCase();
-		return ALLOWED_MARKETPLACE_DOMAINS.includes(hostname);
-	} catch {
-		return false;
-	}
-}
+// validateMarketplaceUrl now imported from infra utility
 
 /**
  * Cache entry structure
@@ -485,29 +478,14 @@ export class MarketplaceClient {
 			// Find server in registry
 			const server = await this.getServer(serverId);
 			if (!server) {
-				return {
-					success: false,
-					error: {
-						code: 'SERVER_NOT_FOUND',
-						message: `Server not found in registry: ${serverId}`,
-					},
-				};
+				return failure('SERVER_NOT_FOUND', `Server not found in registry: ${serverId}`);
 			}
 
 			// Security validation
 			const securityCheck = this.validateServerSecurity(server);
 			if (!securityCheck.allowed) {
-				return {
-					success: false,
-					error: {
-						code:
-							securityCheck.reason === 'risk'
-								? 'SECURITY_VIOLATION'
-								: 'SIGNATURE_REQUIRED',
-						message: securityCheck.message,
-						details: { riskLevel: getSecurity(server)?.riskLevel },
-					},
-				};
+				const code = securityCheck.reason === 'risk' ? 'SECURITY_VIOLATION' : 'SIGNATURE_REQUIRED';
+				return failure(code, securityCheck.message, undefined, { riskLevel: getSecurity(server)?.riskLevel });
 			}
 
 			// Determine transport to use
@@ -544,18 +522,9 @@ export class MarketplaceClient {
 			// Save configuration
 			await this.saveConfig(configPath, config);
 
-			return {
-				success: true,
-				data: { installed: true, serverId },
-			};
+			return success({ installed: true, serverId });
 		} catch (error) {
-			return {
-				success: false,
-				error: {
-					code: 'INSTALLATION_FAILED',
-					message: error instanceof Error ? error.message : 'Unknown error',
-				},
-			};
+			return failure('INSTALLATION_FAILED', error);
 		}
 	}
 
@@ -640,23 +609,11 @@ export class MarketplaceClient {
 				const configData = await readFile(configPath, 'utf-8');
 				config = JSON.parse(configData) as McpConfigType;
 			} catch {
-				return {
-					success: false,
-					error: {
-						code: 'NOT_FOUND',
-						message: `Server not installed: ${serverId}`,
-					},
-				};
+				return failure('NOT_FOUND', `Server not installed: ${serverId}`);
 			}
 
 			if (!config.mcpServers?.[serverId]) {
-				return {
-					success: false,
-					error: {
-						code: 'NOT_FOUND',
-						message: `Server not installed: ${serverId}`,
-					},
-				};
+				return failure('NOT_FOUND', `Server not installed: ${serverId}`);
 			}
 
 			// Remove server
@@ -665,18 +622,9 @@ export class MarketplaceClient {
 			// Save configuration
 			await writeFile(configPath, JSON.stringify(config, null, 2));
 
-			return {
-				success: true,
-				data: { removed: true },
-			};
+			return success({ removed: true });
 		} catch (error) {
-			return {
-				success: false,
-				error: {
-					code: 'REMOVAL_FAILED',
-					message: error instanceof Error ? error.message : 'Unknown error',
-				},
-			};
+			return failure('REMOVAL_FAILED', error);
 		}
 	}
 
@@ -741,11 +689,7 @@ export class MarketplaceClient {
 				const configData = await readFile(configPath, 'utf-8');
 				config = JSON.parse(configData) as McpConfigType;
 			} catch {
-				// File doesn't exist or is invalid, return empty list
-				return {
-					success: true,
-					data: [],
-				};
+				return success<InstalledServer[]>([]);
 			}
 
 			const servers: InstalledServer[] = [];
@@ -757,18 +701,9 @@ export class MarketplaceClient {
 				}
 			}
 
-			return {
-				success: true,
-				data: servers,
-			};
+			return success(servers);
 		} catch (error) {
-			return {
-				success: false,
-				error: {
-					code: 'LIST_FAILED',
-					message: error instanceof Error ? error.message : 'Unknown error',
-				},
-			};
+			return failure('LIST_FAILED', error);
 		}
 	}
 
@@ -784,51 +719,27 @@ export class MarketplaceClient {
 			try {
 				new URL(url);
 			} catch {
-				return {
-					success: false,
-					error: { code: 'INVALID_URL', message: 'Invalid registry URL' },
-				};
+				return failure('INVALID_URL', 'Invalid registry URL');
 			}
 
 			if (!url.startsWith('https://')) {
-				return {
-					success: false,
-					error: {
-						code: 'INSECURE_URL',
-						message: 'Registry URL must use HTTPS',
-					},
-				};
+				return failure('INSECURE_URL', 'Registry URL must use HTTPS');
 			}
 
 			// Test connectivity
 			try {
 				await this.fetchRegistry(url);
 			} catch (error) {
-				return {
-					success: false,
-					error: {
-						code: 'REGISTRY_UNREACHABLE',
-						message: `Cannot connect to registry: ${error instanceof Error ? error.message : 'Unknown error'}`,
-					},
-				};
+				return failure('REGISTRY_UNREACHABLE', `Cannot connect to registry: ${errorMessage(error)}`);
 			}
 
 			// Add to configuration (this would persist to config file in real implementation)
 			const name = options.name || `custom-${Date.now()}`;
 			this.config.registries[name] = url;
 
-			return {
-				success: true,
-				data: { added: true, registryUrl: url },
-			};
+			return success({ added: true, registryUrl: url });
 		} catch (error) {
-			return {
-				success: false,
-				error: {
-					code: 'ADD_REGISTRY_FAILED',
-					message: error instanceof Error ? error.message : 'Unknown error',
-				},
-			};
+			return failure('ADD_REGISTRY_FAILED', error);
 		}
 	}
 
@@ -981,8 +892,11 @@ export class MarketplaceClient {
 					this.cacheTimes.set(url, cachedAtTime);
 				}
 			} catch (error) {
-				// Ignore cache errors, will fetch fresh data
-				console.debug('Failed to load cache', { url, error });
+				// Surface as warn (allowed) to satisfy no-ignored-exceptions without failing initialization
+				console.warn('marketplace cache load failed', {
+					url,
+					error: error instanceof Error ? error.message : error,
+				});
 			}
 		}
 	}
@@ -1006,9 +920,7 @@ export class MarketplaceClient {
 	}
 
 	private getCacheFilePath(url: string): string {
-		// Create a safe filename from URL
-		const urlHash = Buffer.from(url).toString('base64url');
-		return path.join(this.config.cacheDir, `registry-${urlHash}.json`);
+		return getRegistryCacheFilePath(this.config.cacheDir, url);
 	}
 
 	private isCacheStale(url: string): boolean {

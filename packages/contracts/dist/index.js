@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from 'zod';
 // Shared envelope for cross-domain message contracts
 export const MessageEnvelopeSchema = z.object({
     id: z.string().min(1),
-    kind: z.enum(["MCP", "A2A", "RAG", "SIMLAB"]),
+    kind: z.enum(['MCP', 'A2A', 'RAG', 'SIMLAB']),
     ts: z.string().datetime({ offset: true }),
     payload: z.unknown(),
     meta: z.object({

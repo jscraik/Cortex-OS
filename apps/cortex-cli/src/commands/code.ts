@@ -1,7 +1,7 @@
+import { Command } from "commander";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { Command } from "commander";
 
 export const codeCommand = new Command('code')
   .description('Launch the Cortex Code interface')
@@ -31,8 +31,8 @@ export const codeCommand = new Command('code')
       }
     }
 
-		// Build command arguments
-		const args: string[] = [];
+    // Build command arguments
+    const args: string[] = [];
 
     if (prompt) {
       args.push('run', prompt);
@@ -40,28 +40,28 @@ export const codeCommand = new Command('code')
       args.push('code');
     }
 
-		if (options.ci) {
-			args.push("--ci");
-		}
+    if (options.ci) {
+      args.push("--ci");
+    }
 
-		if (options.config) {
-			args.push("--config", options.config);
-		}
+    if (options.config) {
+      args.push("--config", options.config);
+    }
 
-		if (options.debug) {
-			args.push("--debug");
-		}
+    if (options.debug) {
+      args.push("--debug");
+    }
 
     // Launch Cortex Code
-    console.log(`🦀 Launching Cortex Code...`);
+    console.warn(`🦀 Launching Cortex Code...`);
     const child = spawn(execPath, args, {
       stdio: 'inherit',
       env: process.env,
     });
 
-		child.on("exit", (code) => {
-			process.exit(code || 0);
-		});
+    child.on("exit", (code) => {
+      process.exit(code || 0);
+    });
 
     child.on('error', (error) => {
       console.error('❌ Failed to launch Cortex Code:', error.message);

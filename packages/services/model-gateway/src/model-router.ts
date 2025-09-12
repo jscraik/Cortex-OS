@@ -417,10 +417,9 @@ export class ModelRouter implements IModelRouter {
 			m: ModelConfig,
 		): Promise<{ embeddings: number[][]; model: string }> => {
 			if (m.provider === 'mlx') {
-				const responses = await this.mlxAdapter.generateEmbeddings(
-					request.texts,
-					m.name,
-				);
+				const responses = await this.mlxAdapter.generateEmbeddings({
+					texts: request.texts,
+				});
 				return {
 					embeddings: responses.map(
 						(r: { embedding: number[] }) => r.embedding,

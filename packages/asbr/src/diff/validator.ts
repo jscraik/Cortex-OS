@@ -385,8 +385,8 @@ export class DiffValidator {
 			const line = diffLines[i];
 
 			if (line.startsWith('@@')) {
-				// Parse hunk header
-				const match = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/);
+				// Parse hunk header - use RegExp.exec for better performance
+				const match = /@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
 				if (match) {
 					lineOffset = parseInt(match[1], 10) - 1;
 				}

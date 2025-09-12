@@ -36,7 +36,7 @@ export const validateScanRequest = (
 	}
 
 	const sha =
-		payload.pull_request?.head?.sha ||
+		(typeof payload === 'object' && payload && 'pull_request' in payload ? (payload as { pull_request?: { head?: { sha?: string } } }).pull_request?.head?.sha : undefined) ||
 		payload.repository.default_branch ||
 		'HEAD';
 
@@ -58,7 +58,7 @@ export const executeScan = async (
 	request: ScanRequest,
 ): Promise<SecurityScanResult[]> => {
 	console.warn(`🔍 ${request.userId} requested security scan`);
-	console.log(`Scanning ${request.owner}/${request.repo} at ${request.sha}`);
+	console.warn(`Scanning ${request.owner}/${request.repo} at ${request.sha}`);
 
 	return runSemgrepScan(request.owner, request.repo, request.sha);
 };

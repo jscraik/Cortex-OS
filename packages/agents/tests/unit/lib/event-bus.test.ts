@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEventBus, validateAgentEvent } from '@/lib/event-bus.js';
+import { createEventBus } from '../../../src/lib/event-bus.js';
+import type { Envelope } from '../../../src/lib/types.js';
 
 describe('Event Bus', () => {
 	it('publishes and receives events via subscribe', async () => {
@@ -10,7 +11,7 @@ describe('Event Bus', () => {
 		});
 
 		const handler = vi.fn();
-		const sub = bus.subscribe('agent.started', (event: any) => handler(event));
+		const sub = bus.subscribe('agent.started', (event: Envelope) => handler(event));
 
 		const evt = {
 			type: 'agent.started',
@@ -23,23 +24,32 @@ describe('Event Bus', () => {
 			},
 		};
 
-		// Validate event fits schema
-		const validated = validateAgentEvent(evt);
-		await bus.publish(validated);
+		// Directly publish a fully shaped envelope (legacy validator removed)
+		const envelope = {
+			specversion: '1.0' as const,
+			id: 'evt-1',
+			type: evt.type,
+			source: 'test',
+			time: new Date().toISOString(),
+			ttlMs: 60_000,
+			headers: {},
+			data: evt.data,
+		};
+		await bus.publish(envelope);
 
 		expect(handler).toHaveBeenCalledTimes(1);
 		expect(handler.mock.calls[0][0].type).toBe('agent.started');
 
 		sub.unsubscribe();
-		await bus.publish(validated);
-		expect(handler).toHaveBeenCalledTimes(1);
+		await bus.publish(envelope);
+		expect(handler).toHaveBeenCalledTimes(1); // no change after unsubscribe
 	});
 
 	it('supports workflow.* events with validation', async () => {
 		const bus = createEventBus({ enableLogging: false });
 		const seen: string[] = [];
-		bus.subscribe('workflow.started', (e: any) => seen.push(e.type));
-		bus.subscribe('workflow.completed', (e: any) => seen.push(e.type));
+		bus.subscribe('workflow.started', (e: Envelope) => seen.push(e.type));
+		bus.subscribe('workflow.completed', (e: Envelope) => seen.push(e.type));
 
 		const started = {
 			type: 'workflow.started',
@@ -65,8 +75,28 @@ describe('Event Bus', () => {
 			},
 		};
 
-		await bus.publish(validateAgentEvent(started));
-		await bus.publish(validateAgentEvent(completed));
+		const startedEnvelope = {
+			specversion: '1.0' as const,
+			id: 'wf-started',
+			type: started.type,
+			source: 'test',
+			time: new Date().toISOString(),
+			ttlMs: 60_000,
+			headers: {},
+			data: started.data,
+		};
+		const completedEnvelope = {
+			specversion: '1.0' as const,
+			id: 'wf-completed',
+			type: completed.type,
+			source: 'test',
+			time: new Date().toISOString(),
+			ttlMs: 60_000,
+			headers: {},
+			data: completed.data,
+		};
+		await bus.publish(startedEnvelope);
+		await bus.publish(completedEnvelope);
 
 		expect(seen).toEqual(['workflow.started', 'workflow.completed']);
 	});

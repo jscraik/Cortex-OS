@@ -192,7 +192,7 @@ export function createServer(
 			endTimer();
 			return reply.send(resBody);
 		} catch (error) {
-			console.error('Embedding error:', error);
+			app.log.error({ err: error }, 'Embedding error');
 			reqCounter.inc({ route: 'embeddings', status: '500' });
 			endTimer();
 			return reply.status(500).send({
@@ -272,7 +272,7 @@ export function createServer(
 			endTimer();
 			return reply.send(resBody);
 		} catch (error) {
-			console.error('Reranking error:', error);
+			app.log.error({ err: error }, 'Reranking error');
 			reqCounter.inc({ route: 'rerank', status: '500' });
 			endTimer();
 			return reply.status(500).send({
@@ -350,7 +350,7 @@ export function createServer(
 			endTimer();
 			return reply.send(resBody);
 		} catch (error) {
-			console.error('Chat error:', error);
+			app.log.error({ err: error }, 'Chat error');
 			reqCounter.inc({ route: 'chat', status: '500' });
 			endTimer();
 			return reply.status(500).send({
@@ -371,19 +371,15 @@ export async function start(
 	);
 
 	try {
-		console.log('Initializing ModelRouter...');
+		console.warn('Initializing ModelRouter...');
 		await modelRouter.initialize();
-		console.log('ModelRouter initialized successfully!');
+		console.warn('ModelRouter initialized successfully!');
 
 		// Log privacy mode status
 		if (modelRouter.isPrivacyModeEnabled()) {
-			console.log(
-				'🔒 Privacy mode is ENABLED. Only local MLX models will be used.',
-			);
+			console.warn('🔒 Privacy mode is ENABLED. Only local MLX models will be used.');
 		} else {
-			console.log(
-				'🔓 Privacy mode is DISABLED. All available providers will be used.',
-			);
+			console.warn('🔓 Privacy mode is DISABLED. All available providers will be used.');
 		}
 	} catch (error) {
 		console.error('Failed to initialize ModelRouter:', error);
@@ -394,7 +390,7 @@ export async function start(
 
 	// Handle graceful shutdown
 	const closeServer = async () => {
-		console.log('Shutting down server...');
+		app.log.info('Shutting down server...');
 		await app.close();
 		policyRouter.close();
 		process.exit(0);
@@ -404,13 +400,11 @@ export async function start(
 	process.once('SIGTERM', closeServer);
 
 	await app.listen({ port, host: '127.0.0.1' });
-	console.log(`Model Gateway server listening on http://127.0.0.1:${port}`);
+	app.log.info(`Model Gateway server listening on http://127.0.0.1:${port}`);
 
 	// Log privacy mode status after startup
 	if (modelRouter.isPrivacyModeEnabled()) {
-		console.log(
-			'🔒 Privacy mode is ACTIVE. Only local MLX models will be used.',
-		);
+		app.log.info('🔒 Privacy mode is ACTIVE. Only local MLX models will be used.');
 	}
 
 	return app;

@@ -4,6 +4,18 @@ import type { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { DEFAULT_RATE_LIMITS } from '../config/constants';
 
+// Augment express Request interface to include rateLimit property
+declare module 'express' {
+	interface Request {
+		rateLimit?: {
+			resetTime?: Date;
+			limit: number;
+			current: number;
+			remaining: number;
+		};
+	}
+}
+
 // Enhanced request interface to include user info
 interface AuthenticatedRequest extends Request {
 	user?: {

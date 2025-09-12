@@ -1,10 +1,33 @@
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import {
 	addBaggage,
 	createTraceContext,
 } from '@cortex-os/a2a-contracts/trace-context';
 import { createBus } from '@cortex-os/a2a-core/bus';
-import { createChildMessage } from '@cortex-os/a2a-core/message-utils';
+
+// Helper function to create child messages with trace context propagation
+function createChildMessage(
+	parentMsg: Envelope,
+	params: {
+		type: string;
+		source: string;
+		data: unknown;
+		subject?: string;
+		causationId?: string;
+		correlationId?: string;
+	},
+): Envelope {
+	return createEnvelope({
+		...params,
+		causationId: params.causationId || parentMsg.id,
+		correlationId: params.correlationId || parentMsg.correlationId,
+		traceparent: parentMsg.traceparent,
+		tracestate: parentMsg.tracestate,
+		baggage: parentMsg.baggage,
+	});
+}
+
 import { getCurrentTraceContext } from '@cortex-os/a2a-core/trace-context-manager';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 
@@ -13,19 +36,25 @@ import { inproc } from '@cortex-os/a2a-transport/inproc';
  */
 
 export async function runTraceContextExample() {
-	console.log('=== W3C Trace Context Example ===\n');
+	console.warn('=== W3C Trace Context Example ===\n');
 
 	const bus = createBus(inproc());
 
 	// Set up handlers that demonstrate trace context propagation
+	const ORDER_CREATED_TYPE = 'order.created.v1';
+	const PAYMENT_PROCESSED_TYPE = 'payment.processed.v1';
+	const SHIPPING_SCHEDULED_TYPE = 'shipping.scheduled.v1';
+
 	const handlers = [
 		{
-			type: 'order.created.v1',
-			handle: async (msg: any) => {
-				console.log('📦 Order Created Handler:');
-				console.log(`   Message ID: ${msg.id}`);
-				console.log(`   Trace Context: ${msg.traceparent || 'none'}`);
-				console.log(
+			type: ORDER_CREATED_TYPE,
+			handle: async (
+				msg: import('@cortex-os/a2a-contracts/envelope').Envelope,
+			) => {
+				console.warn('📦 Order Created Handler:');
+				console.warn(`   Message ID: ${msg.id}`);
+				console.warn(`   Trace Context: ${msg.traceparent || 'none'}`);
+				console.warn(
 					`   Current Context: ${JSON.stringify(getCurrentTraceContext())}`,
 				);
 
@@ -33,26 +62,29 @@ export async function runTraceContextExample() {
 				await new Promise((resolve) => setTimeout(resolve, 10));
 
 				// Create child message with propagated trace context
+				const data = msg.data as { orderId: string; amount: number };
 				const paymentMsg = createChildMessage(msg, {
-					type: 'payment.processed.v1',
+					type: PAYMENT_PROCESSED_TYPE,
 					source: '/order-service',
-					data: { orderId: msg.data.orderId, amount: msg.data.amount },
+					data: { orderId: data.orderId, amount: data.amount },
 				});
 
-				console.log('💳 Publishing Payment Processed Event:');
-				console.log(`   Child Message ID: ${paymentMsg.id}`);
-				console.log(`   Child Trace Context: ${paymentMsg.traceparent}`);
+				console.warn('💳 Publishing Payment Processed Event:');
+				console.warn(`   Child Message ID: ${paymentMsg.id}`);
+				console.warn(`   Child Trace Context: ${paymentMsg.traceparent}`);
 
 				await bus.publish(paymentMsg);
 			},
 		},
 		{
-			type: 'payment.processed.v1',
-			handle: async (msg: any) => {
-				console.log('💰 Payment Processed Handler:');
-				console.log(`   Message ID: ${msg.id}`);
-				console.log(`   Trace Context: ${msg.traceparent || 'none'}`);
-				console.log(
+			type: PAYMENT_PROCESSED_TYPE,
+			handle: async (
+				msg: import('@cortex-os/a2a-contracts/envelope').Envelope,
+			) => {
+				console.warn('💰 Payment Processed Handler:');
+				console.warn(`   Message ID: ${msg.id}`);
+				console.warn(`   Trace Context: ${msg.traceparent || 'none'}`);
+				console.warn(
 					`   Current Context: ${JSON.stringify(getCurrentTraceContext())}`,
 				);
 
@@ -60,32 +92,35 @@ export async function runTraceContextExample() {
 				await new Promise((resolve) => setTimeout(resolve, 10));
 
 				// Create child message with propagated trace context
+				const data = msg.data as { orderId: string };
 				const shippingMsg = createChildMessage(msg, {
-					type: 'shipping.scheduled.v1',
+					type: SHIPPING_SCHEDULED_TYPE,
 					source: '/payment-service',
 					data: {
-						orderId: msg.data.orderId,
+						orderId: data.orderId,
 						trackingNumber: `TRK${Date.now()}`,
 					},
 				});
 
-				console.log('🚚 Publishing Shipping Scheduled Event:');
-				console.log(`   Child Message ID: ${shippingMsg.id}`);
-				console.log(`   Child Trace Context: ${shippingMsg.traceparent}`);
+				console.warn('🚚 Publishing Shipping Scheduled Event:');
+				console.warn(`   Child Message ID: ${shippingMsg.id}`);
+				console.warn(`   Child Trace Context: ${shippingMsg.traceparent}`);
 
 				await bus.publish(shippingMsg);
 			},
 		},
 		{
-			type: 'shipping.scheduled.v1',
-			handle: async (msg: any) => {
-				console.log('📬 Shipping Scheduled Handler:');
-				console.log(`   Message ID: ${msg.id}`);
-				console.log(`   Trace Context: ${msg.traceparent || 'none'}`);
-				console.log(
+			type: SHIPPING_SCHEDULED_TYPE,
+			handle: async (
+				msg: import('@cortex-os/a2a-contracts/envelope').Envelope,
+			) => {
+				console.warn('📬 Shipping Scheduled Handler:');
+				console.warn(`   Message ID: ${msg.id}`);
+				console.warn(`   Trace Context: ${msg.traceparent || 'none'}`);
+				console.warn(
 					`   Current Context: ${JSON.stringify(getCurrentTraceContext())}`,
 				);
-				console.log('   ✅ Order fulfillment complete!\n');
+				console.warn('   ✅ Order fulfillment complete!\n');
 			},
 		},
 	];
@@ -111,11 +146,11 @@ export async function runTraceContextExample() {
 		baggage: enhancedContext2.baggage,
 	});
 
-	console.log('🛒 Publishing Initial Order Created Event:');
-	console.log(`   Message ID: ${orderMsg.id}`);
-	console.log(`   Trace Context: ${orderMsg.traceparent}`);
-	console.log(`   Trace State: ${orderMsg.tracestate || 'none'}`);
-	console.log(`   Baggage: ${orderMsg.baggage || 'none'}\n`);
+	console.warn('🛒 Publishing Initial Order Created Event:');
+	console.warn(`   Message ID: ${orderMsg.id}`);
+	console.warn(`   Trace Context: ${orderMsg.traceparent}`);
+	console.warn(`   Trace State: ${orderMsg.tracestate || 'none'}`);
+	console.warn(`   Baggage: ${orderMsg.baggage || 'none'}\n`);
 
 	// Publish initial message
 	await bus.publish(orderMsg);
@@ -123,7 +158,7 @@ export async function runTraceContextExample() {
 	// Wait for all messages to be processed
 	await new Promise((resolve) => setTimeout(resolve, 100));
 
-	console.log('=== Trace Context Example Complete ===');
+	console.warn('=== Trace Context Example Complete ===');
 }
 
 // Run the example if this file is executed directly

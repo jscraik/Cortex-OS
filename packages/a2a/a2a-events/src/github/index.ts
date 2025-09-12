@@ -14,7 +14,7 @@ export * from "./workflow";
 import type { A2AEventEnvelope, GitHubEventData } from "./envelope";
 import { type ErrorEvent, isErrorEvent, validateErrorEvent } from "./error";
 
-import { type IssueEvent, isIssueEvent, validateIssueEvent } from "./issue";
+import { isIssueEvent, type IssueEvent, validateIssueEvent } from "./issue";
 import {
 	isPullRequestEvent,
 	type PullRequestEvent,
@@ -394,7 +394,7 @@ export async function processEventStream(
 			processed++;
 		} catch (error) {
 			errors++;
-			console.error("Error processing GitHub event:", error, { eventData });
+			console.warn("Error processing GitHub event:", error, { eventData });
 		}
 	}
 
@@ -403,15 +403,11 @@ export async function processEventStream(
 
 // Export type helpers for external consumers
 export type {
-	// Core events
-	RepositoryEvent,
-	PullRequestEvent,
-	IssueEvent,
-	WorkflowEvent,
-	ErrorEvent,
 	// Envelope and routing
-	A2AEventEnvelope,
-	GitHubEventData,
+	A2AEventEnvelope, ErrorEvent,
 	// Utilities
-	GitHubEvent,
+	GitHubEvent, GitHubEventData, IssueEvent, PullRequestEvent,
+	// Core events
+	RepositoryEvent, WorkflowEvent
 };
+

@@ -116,6 +116,18 @@ describe('Event Contract: agentEventCatalog', () => {
 				score: 100,
 				timestamp: iso(),
 			}),
+			'security.workflow_unauthorized': base(
+				'security.workflow_unauthorized',
+				{
+					workflowId: 'wf1',
+					attemptedAction: 'deploy',
+					requiredCapability: 'deployment:write',
+					actor: 'user123',
+					reason: 'missing capability',
+					severity: 'high',
+					timestamp: iso(),
+				},
+			),
 		};
 
 		for (const key of Object.keys(agentEventCatalog)) {

@@ -9,7 +9,7 @@ RUN corepack enable && pnpm install --frozen-lockfile
 # Copy application source
 COPY apps/cortex-web ./apps/cortex-web
 
-RUN pnpm --filter ./apps/cortex-web... build || echo "No build script; skipping"
+RUN pnpm build || echo "No build script; skipping"
 
 FROM node:20-alpine AS runner
 WORKDIR /app

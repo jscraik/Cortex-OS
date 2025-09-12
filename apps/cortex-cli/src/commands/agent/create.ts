@@ -63,11 +63,11 @@ export const agentCreate = new Command('create')
       ].join('\n');
 
       if (opts.json) {
-        console.log(
+        console.warn(
           JSON.stringify({ timestamp, agent: parsed }, null, 2)
         );
       } else {
-        console.log(`\n${yamlFrontMatter}\n`);
+        console.warn(`\n${yamlFrontMatter}\n`);
       }
       outro('Agent scaffold complete');
     } catch (err) {

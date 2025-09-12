@@ -1,4 +1,4 @@
-type Fn<TArgs extends any[], TReturn> = (...args: TArgs) => Promise<TReturn>;
+type Fn<TArgs extends unknown[], TReturn> = (...args: TArgs) => Promise<TReturn>;
 
 export interface CircuitBreakerOptions {
 	timeout?: number; // ms
@@ -6,7 +6,7 @@ export interface CircuitBreakerOptions {
 	resetTimeout?: number; // ms
 }
 
-export class SimpleCircuitBreaker<TArgs extends any[], TReturn> {
+export class SimpleCircuitBreaker<TArgs extends unknown[], TReturn> {
 	private readonly fn: Fn<TArgs, TReturn>;
 	private readonly timeout: number;
 	private readonly errorThresholdPercentage: number;

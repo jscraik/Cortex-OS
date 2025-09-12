@@ -1,5 +1,5 @@
-import type { Envelope } from '../../a2a-contracts/src/envelope.js';
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
+import type { Envelope } from '../../a2a-contracts/src/envelope.js';
 
 /**
  * @file Enhanced Dead Letter Queue Implementation
@@ -125,7 +125,7 @@ export const defaultQuarantinePolicy: QuarantinePolicy = {
  */
 export function classifyError(error: Error): ErrorClassification {
 	const message = error.message.toLowerCase();
-	const code = (error as any).code;
+	const code = (error as Error & { code?: string | number }).code;
 
 	// Network errors
 	if (
@@ -232,7 +232,7 @@ export class DeadLetterQueue {
 		private readonly store: DeadLetterStore,
 		private readonly retryPolicy: RetryPolicy = defaultRetryPolicy,
 		private readonly quarantinePolicy: QuarantinePolicy = defaultQuarantinePolicy,
-	) {}
+	) { }
 
 	/**
 	 * Check circuit breaker state for a message type
@@ -361,7 +361,7 @@ export class DeadLetterQueue {
 				error: {
 					message: error.message,
 					stack: error.stack,
-					code: (error as any).code,
+					code: (error as Error & { code?: string | number }).code?.toString(),
 					category: classification.category,
 					severity: classification.severity,
 				},
@@ -377,8 +377,8 @@ export class DeadLetterQueue {
 				quarantineLevel: classification.quarantineLevel,
 				nextRetryAt: classification.recoverable
 					? new Date(
-							Date.now() + this.quarantinePolicy.quarantineDurationMs,
-						).toISOString()
+						Date.now() + this.quarantinePolicy.quarantineDurationMs,
+					).toISOString()
 					: undefined,
 				circuitBreakerState: circuitState,
 				metadata: {

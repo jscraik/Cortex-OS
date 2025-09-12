@@ -671,7 +671,7 @@ fi
 git diff --cached --name-only | xargs pnpm structure:guard --files || exit 1
 pnpm madge --circular --extensions ts,tsx ./packages ./apps || true
 pnpm lint-staged || true
-pnpm turbo typecheck --filter="...HEAD^" || true
+pnpm turbo typecheck || true
 SH
 chmod +x .husky/pre-commit
 

@@ -20,7 +20,7 @@ describe('Reranker', () => {
 				[{ score: 0.9 }],
 				[{ score: 0.5 }],
 			]);
-		(pipeline as unknown as vi.Mock).mockResolvedValue(inference);
+		(pipeline as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(inference);
 
 		const state = createRerankerState('transformers');
 		const docs = ['a', 'b', 'c'];

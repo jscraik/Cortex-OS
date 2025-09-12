@@ -1,4 +1,4 @@
-import chokidar from 'chokidar';
+import chokidar, { type FSWatcher } from 'chokidar';
 import { EventEmitter } from 'events';
 import fs from 'fs';
 import { z } from 'zod';
@@ -73,9 +73,9 @@ export class AdvancedPolicyRouter extends EventEmitter {
 			},
 		},
 	};
-	private watcher: chokidar.FSWatcher | null = null;
+	private watcher: FSWatcher | null = null;
 
-	constructor(private policyFilePath?: string) {
+	constructor(private readonly policyFilePath?: string) {
 		super();
 		if (this.policyFilePath) {
 			this.loadPolicyFromFile();
@@ -91,7 +91,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 				const policyData = JSON.parse(policyContent);
 				this.policies = AdvancedPolicySchema.parse(policyData);
 				this.emit('policyUpdated', this.policies);
-				console.log('[policy-router] Policy loaded successfully from file');
+				console.warn('[policy-router] Policy loaded successfully from file');
 			}
 		} catch (error) {
 			console.error('[policy-router] Failed to load policy from file:', error);
@@ -109,11 +109,11 @@ export class AdvancedPolicyRouter extends EventEmitter {
 		});
 
 		this.watcher.on('change', () => {
-			console.log('[policy-router] Policy file changed, reloading...');
+			console.warn('[policy-router] Policy file changed, reloading...');
 			this.loadPolicyFromFile();
 		});
 
-		this.watcher.on('error', (error) => {
+		this.watcher.on('error', (error: unknown) => {
 			console.error('[policy-router] File watcher error:', error);
 			this.emit('policyError', error);
 		});
@@ -145,7 +145,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 				JSON.stringify(this.policies, null, 2),
 				'utf-8',
 			);
-			console.log('[policy-router] Policy saved to file');
+			console.warn('[policy-router] Policy saved to file');
 		} catch (error) {
 			console.error('[policy-router] Failed to save policy to file:', error);
 			this.emit('policyError', error);
@@ -225,7 +225,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 		}
 
 		// Check per-hour limit
-		if (limits.perHour) {
+		if ('perHour' in limits && limits.perHour) {
 			const counter = serviceCounters.get(`${operation}:hour`) || {
 				count: 0,
 				reset: now + 3_600_000,
@@ -246,7 +246,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 		}
 
 		// Check per-day limit
-		if (limits.perDay) {
+		if ('perDay' in limits && limits.perDay) {
 			const counter = serviceCounters.get(`${operation}:day`) || {
 				count: 0,
 				reset: now + 86_400_000,
@@ -276,7 +276,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 	): Promise<void> {
 		// This is a simplified implementation
 		// In a real system, this would evaluate conditions and apply transformations
-		console.log(
+		console.warn(
 			`[policy-router] Applying routing rules for ${service}:${operation}`,
 		);
 
@@ -285,7 +285,7 @@ export class AdvancedPolicyRouter extends EventEmitter {
 				// Evaluate condition (simplified - in reality this would be a proper expression evaluator)
 				const conditionResult = this.evaluateCondition(rule.condition, body);
 				if (conditionResult) {
-					console.log(
+					console.warn(
 						`[policy-router] Rule matched: ${rule.condition}, routing to ${rule.destination}`,
 					);
 					// In a real implementation, this would actually route the request
@@ -306,9 +306,18 @@ export class AdvancedPolicyRouter extends EventEmitter {
 		try {
 			// Simple string matching for demonstration
 			if (condition.includes('model.startsWith')) {
-				const modelName = (body as any)?.model || '';
-				const match = condition.match(/model\.startsWith\(['"](.+?)['"]\)/);
-				if (match && match[1]) {
+				let modelName = '';
+				if (
+					typeof body === 'object' &&
+					body !== null &&
+					'model' in body &&
+					typeof (body as { model?: unknown }).model === 'string'
+				) {
+					modelName = (body as { model: string }).model;
+				}
+				const regex = /model\.startsWith\(['"](.+?)['"]\)/;
+				const match = regex.exec(condition);
+				if (match?.[1]) {
 					return modelName.startsWith(match[1]);
 				}
 			}

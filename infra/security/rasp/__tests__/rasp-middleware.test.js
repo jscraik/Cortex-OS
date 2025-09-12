@@ -14,7 +14,7 @@ describe("RASp middleware", () => {
 			const tmpDir = path.join(__dirname, "..", "tmp-events");
 			if (fs.existsSync(tmpDir))
 				fs.rmSync(tmpDir, { recursive: true, force: true });
-		} catch (_e) {
+		} catch {
 			// ignore cleanup errors
 		}
 	});
@@ -23,7 +23,7 @@ describe("RASp middleware", () => {
 		const mw = raspMiddleware({ eventsDir, threshold: 2, failClosed: true });
 		const req = { ip: "1.2.3.4", authFailed: true, path: "/a" };
 		const res = { status: (s) => ({ json: (b) => ({ status: s, body: b }) }) };
-		const next = () => {};
+		const next = () => { };
 
 		await mw(req, res, next);
 		const out2 = await mw(req, res, next);
@@ -50,7 +50,7 @@ describe("RASp middleware", () => {
 				return this;
 			},
 		};
-		await mw(req, res, () => {});
+		await mw(req, res, () => { });
 		const files = fs.existsSync(tmpDir) ? fs.readdirSync(tmpDir) : [];
 		expect(res._code).toBe(403);
 		expect(res._body).toEqual({ error: "quarantined" });

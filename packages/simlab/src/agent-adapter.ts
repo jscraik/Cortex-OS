@@ -35,7 +35,7 @@ export interface PRPExecutor {
  * default for tests.
  */
 export class AgentAdapter {
-	constructor(private executor: PRPExecutor = new BasicPRPExecutor()) {}
+	constructor(private executor: PRPExecutor = new BasicPRPExecutor()) { }
 
 	async execute(request: AgentRequest): Promise<AgentResponse> {
 		const parsed = agentRequestSchema.parse(request);
@@ -54,9 +54,8 @@ export class AgentAdapter {
 			};
 		} catch (error) {
 			return {
-				content: `I apologize, but I encountered an error processing your request: ${
-					error instanceof Error ? error.message : 'Unknown error'
-				}`,
+				content: `I apologize, but I encountered an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'
+					}`,
 				completed: false,
 				metadata: {
 					error: true,
@@ -148,15 +147,22 @@ export class RealPRPExecutor implements PRPExecutor {
 			dependencies: [],
 			tools: [],
 			requiresLLM: false,
-			async execute() {
+			async execute(_state: unknown, _context: unknown) {
+				const startTime = new Date().toISOString();
+				const endTime = new Date().toISOString();
 				return {
 					output: 'PRP response',
 					evidence: [],
 					nextSteps: [],
 					artifacts: [],
 					metrics: {
-						startTime: new Date().toISOString(),
-						endTime: new Date().toISOString(),
+						startTime,
+						endTime,
+						duration: 0,
+						toolsUsed: [],
+						filesCreated: 0,
+						filesModified: 0,
+						commandsExecuted: 0,
 					},
 				};
 			},
@@ -165,8 +171,14 @@ export class RealPRPExecutor implements PRPExecutor {
 	}
 
 	async executePRP({ scenario }: AgentRequest): Promise<AgentResponse> {
+		let title = '';
+		if (typeof scenario.name === 'string' && scenario.name.length > 0) {
+			title = scenario.name;
+		} else if (typeof scenario.goal === 'string') {
+			title = scenario.goal;
+		}
 		const blueprint: Blueprint = {
-			title: scenario.name,
+			title,
 			description: scenario.goal,
 			requirements: [],
 		};

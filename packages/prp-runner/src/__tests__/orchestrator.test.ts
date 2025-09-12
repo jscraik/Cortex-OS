@@ -102,7 +102,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 				phase: 'strategy' as const,
 				dependencies: [],
 				tools: [],
-				execute: async (_state, _context) => ({
+				execute: async (_state: unknown, _context: unknown) => ({
 					output: {},
 					evidence: [],
 					nextSteps: [],
@@ -176,7 +176,7 @@ function createMockNeuron(
 		phase,
 		dependencies: [],
 		tools: [],
-		execute: async (_state, _context) => ({
+		execute: async (_state: unknown, _context: unknown) => ({
 			output: { [`${id}-result`]: true },
 			evidence: [],
 			nextSteps: [],

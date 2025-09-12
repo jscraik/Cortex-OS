@@ -1,6 +1,6 @@
 // Comprehensive health check service
 
-import { Database } from 'better-sqlite3';
+
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getDatabase } from '../utils/database';
@@ -27,7 +27,7 @@ export interface HealthCheck {
 export class HealthService {
 	private static instance: HealthService;
 
-	private constructor() {}
+	private constructor() { }
 
 	public static getInstance(): HealthService {
 		if (!HealthService.instance) {

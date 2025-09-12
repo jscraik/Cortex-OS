@@ -129,7 +129,7 @@ export function extractTraceContext(envelope: {
  * Inject trace context into envelope headers
  */
 export function injectTraceContext(
-	envelope: Record<string, any>,
+	envelope: Record<string, unknown>,
 	context: TraceContext,
 ): void {
 	envelope.traceparent = createTraceParent(context);
@@ -151,7 +151,7 @@ export function propagateTraceContext(
 		tracestate?: string;
 		baggage?: string;
 	},
-	outgoingEnvelope: Record<string, any>,
+	outgoingEnvelope: Record<string, unknown>,
 ): void {
 	const parentContext = extractTraceContext(incomingEnvelope);
 	if (parentContext) {

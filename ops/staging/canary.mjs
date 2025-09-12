@@ -23,7 +23,9 @@ async function main() {
 	try {
 		const j = await res.json();
 		msg = j?.meta?.timestamp || "";
-	} catch {}
+	} catch {
+		// Ignore JSON parsing errors for logging
+	}
 	console.log(`[canary] ${ok ? "OK" : "FAIL"} ${res.status} ${msg}`);
 	process.exit(ok ? 0 : 1);
 }

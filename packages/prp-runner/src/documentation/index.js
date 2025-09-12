@@ -5,9 +5,5 @@
  * @version 1.0.0
  * @status IMPLEMENTATION_READY
  */
-export {
-	generatePRPMarkdown,
-	generateReviewJSON,
-	writePRPDocument,
-} from './prp-generator.js';
+export { generatePRPMarkdown, generateReviewJSON, writePRPDocument, } from './prp-generator.js';
 //# sourceMappingURL=index.js.map

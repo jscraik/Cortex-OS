@@ -290,18 +290,21 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 
 		it('should fail - memory efficiency with large evidence collections', async () => {
 			// RED: This should fail because memory management isn't optimized
-			const largeEvidenceCollection = Array.from({ length: 100 }, (_, i) => ({
-				id: `evidence-${i}`,
-				taskId: 'memory-test',
-				claim: `Large evidence claim ${i}`,
-				confidence: 0.5 + (i % 5) * 0.1,
-				riskLevel: ['low', 'medium', 'high'][i % 3] as const,
-				source: { type: 'file', id: `file-${i}` },
-				timestamp: new Date().toISOString(),
-				tags: [`tag-${i % 10}`],
-				relatedEvidenceIds: [],
-				content: 'Large content block '.repeat(100), // Simulate large content
-			}));
+			const largeEvidenceCollection = Array.from({ length: 100 }, (_, i) => {
+				const riskLevels = ['low', 'medium', 'high'] as const;
+				return {
+					id: `evidence-${i}`,
+					taskId: 'memory-test',
+					claim: `Large evidence claim ${i}`,
+					confidence: 0.5 + (i % 5) * 0.1,
+					riskLevel: riskLevels[i % 3],
+					source: { type: 'file', id: `file-${i}` },
+					timestamp: new Date().toISOString(),
+					tags: [`tag-${i % 10}`],
+					relatedEvidenceIds: [],
+					content: 'Large content block '.repeat(100), // Simulate large content
+				};
+			});
 
 			// Track memory usage
 			const memoryBefore = process.memoryUsage().heapUsed;
@@ -356,7 +359,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 			});
 
 			// Should not have race conditions in cache
-			const cacheSize = (asbrAI as any).processingCache.size;
+			const cacheSize = (asbrAI as unknown as { processingCache: Map<string, unknown> }).processingCache.size;
 			expect(cacheSize).toBe(5);
 		});
 
@@ -374,14 +377,7 @@ describe('🟢 TDD GREEN PHASE: ASBR AI Integration Tests', () => {
 				],
 			};
 
-			// Mock ASBR client integration (would be real implementation)
-			const _mockASBRClient = {
-				createTask: vi.fn(),
-				getTask: vi.fn(),
-				listArtifacts: vi.fn(),
-			};
-
-			// Should integrate with ASBR server API
+			// Mock ASBR client integration (would be real implementation)			// Should integrate with ASBR server API
 			const result = await asbrAI.collectEnhancedEvidence(context);
 
 			// Evidence should be properly formatted for ASBR (now uses crypto.randomUUID())

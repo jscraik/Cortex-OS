@@ -11,14 +11,14 @@ const upload = multer({
 	limits: {
 		fileSize: 10 * 1024 * 1024, // 10MB limit
 	},
-	fileFilter: (req, file, cb) => {
+	fileFilter: (_req, file, cb) => {
 		// Allow common document types
 		if (
 			file.mimetype === 'text/plain' ||
 			file.mimetype === 'application/pdf' ||
 			file.mimetype === 'application/msword' ||
 			file.mimetype ===
-				'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+			'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
 			file.mimetype === 'application/json'
 		) {
 			cb(null, true);
@@ -66,7 +66,7 @@ export class FileController {
 			const { id } = req.params;
 			await FileService.deleteFile(id);
 			res.json({ message: 'File deleted successfully' });
-		} catch (_error) {
+		} catch {
 			res.status(500).json({ error: 'Internal server error' });
 		}
 	}

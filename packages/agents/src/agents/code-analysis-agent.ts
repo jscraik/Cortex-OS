@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 /**
  * Code Analysis Agent
  *
@@ -11,10 +12,9 @@ import type {
 	EventBus,
 	ExecutionContext,
 	GenerateOptions,
-	GenerateResult,
 	MCPClient,
 	MemoryPolicy,
-	ModelProvider,
+	ModelProvider
 } from '../lib/types.js';
 import {
 	estimateTokens,
@@ -134,7 +134,6 @@ export const createCodeAnalysisAgent = (
 
 	const agentId = generateAgentId();
 	const timeout = config.timeout || 30000;
-	const _maxRetries = config.maxRetries || 3;
 
 	return {
 		id: agentId,
@@ -148,36 +147,34 @@ export const createCodeAnalysisAgent = (
 
 		execute: async (
 			context: ExecutionContext<CodeAnalysisInput> | CodeAnalysisInput,
-		): Promise<GenerateResult<CodeAnalysisOutput>> => {
-			const input = (context as any && (context as any).input)
-				? (context as any).input
-				: (context as any);
+		): Promise<CodeAnalysisOutput> => {
+			const input = (typeof context === 'object' && context !== null && 'input' in context)
+				? context.input
+				: context;
 			const traceId = generateTraceId();
 			const startTime = Date.now();
 
-			// Validate input
 			const validatedInput = validateSchema(codeAnalysisInputSchema, input);
-
-			// Ensure focus has default value
-			const inputWithDefaults = {
+			const inputWithDefaults: CodeAnalysisInput = {
 				...validatedInput,
-				focus: validatedInput.focus || ['security', 'maintainability'],
-				severity: validatedInput.severity || ('medium' as const),
+				focus: validatedInput.focus ?? ['security', 'maintainability'],
+				severity: validatedInput.severity ?? 'medium',
 				includeMetrics: validatedInput.includeMetrics ?? true,
 				includeSuggestions: validatedInput.includeSuggestions ?? true,
 			};
 
-			// Emit agent started event (unless orchestrator suppresses)
-			const createEvent = (type: string, data: any) => ({
-				specversion: '1.0',
-				id: `event_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+			const createEvent = (type: string, data: Record<string, unknown>) => ({
+				specversion: '1.0' as const,
+				id: randomUUID(),
 				type,
+				source: 'urn:cortex:agent:code-analysis',
+				time: new Date().toISOString(),
+				ttlMs: 60000,
+				headers: {},
 				data,
-				timestamp: new Date().toISOString(),
-				source: 'code-analysis-agent',
 			});
 
-			if (!(validatedInput as any)._suppressLifecycle) {
+			if (!(validatedInput as Record<string, unknown>)._suppressLifecycle) {
 				config.eventBus.publish(
 					createEvent('agent.started', {
 						agentId,
@@ -195,16 +192,15 @@ export const createCodeAnalysisAgent = (
 					timeout,
 				);
 
-            const executionTime = Math.max(1, Date.now() - startTime);
+				const executionTime = Math.max(1, Date.now() - startTime);
 
-				// Emit agent completed event (unless suppress)
 				const evidence = [
 					{ type: 'language', value: validatedInput.language },
 					{ type: 'analysisType', value: validatedInput.analysisType },
 					{ type: 'focus', value: validatedInput.focus },
 					{ type: 'sourceCodeLength', value: validatedInput.sourceCode.length },
 				];
-				if (!(validatedInput as any)._suppressLifecycle) {
+				if (!(validatedInput as Record<string, unknown>)._suppressLifecycle) {
 					config.eventBus.publish(
 						createEvent('agent.completed', {
 							agentId,
@@ -222,21 +218,28 @@ export const createCodeAnalysisAgent = (
 					);
 				}
 
-				return result;
+				// Return output matching codeAnalysisOutputSchema (all required fields)
+				return {
+					suggestions: Array.isArray(result.suggestions) ? result.suggestions : [],
+					complexity: result.complexity || { cyclomatic: 0, maintainability: 'poor' },
+					security: result.security || { vulnerabilities: [], riskLevel: 'low' },
+					performance: result.performance || { bottlenecks: [], memoryUsage: 'low' },
+					confidence: typeof result.confidence === 'number' ? result.confidence : 1,
+					analysisTime: typeof result.analysisTime === 'number' ? result.analysisTime : 0,
+				};
 			} catch (error) {
-                const executionTime = Math.max(1, Date.now() - startTime);
+				const executionTime = Math.max(1, Date.now() - startTime);
 
-				// Emit agent failed event
 				config.eventBus.publish(
 					createEvent('agent.failed', {
 						agentId,
 						traceId,
 						capability: 'code-analysis',
 						error: error instanceof Error ? error.message : 'Unknown error',
-						errorCode: (error as any)?.code || undefined,
+						errorCode: (error as { code?: string | number })?.code || undefined,
 						status:
-							typeof (error as any)?.status === 'number'
-								? (error as any)?.status
+							typeof (error as { status?: unknown })?.status === 'number'
+								? (error as { status?: number })?.status
 								: undefined,
 						metrics: {
 							latencyMs: executionTime,
@@ -258,15 +261,7 @@ const analyzeCode = async (
 	input: CodeAnalysisInput,
 	config: CodeAnalysisAgentConfig,
 ): Promise<CodeAnalysisOutput> => {
-	const {
-		sourceCode,
-		language,
-		analysisType,
-		focus,
-		severity,
-		includeMetrics,
-		includeSuggestions,
-	} = input;
+	const { sourceCode, language, analysisType, focus } = input;
 
 	// Build context-aware prompt
 	const prompt = sanitizeText(buildAnalysisPrompt(input));
@@ -286,10 +281,16 @@ const analyzeCode = async (
 	};
 
 	// Call the model provider
-	const response = await config.provider.generate(prompt, generateOptions);
+	const providerResult = await config.provider.generate(prompt, generateOptions);
+
+	// Ensure the object passed to parseAnalysisResponse has the correct shape
+	const response = {
+		text: (providerResult as { content?: string }).content ?? '',
+		latencyMs: (providerResult as { latencyMs?: number }).latencyMs,
+	};
 
 	// Parse and structure the response
-	const result = parseAnalysisResponse(response, language, analysisType);
+	const result = parseAnalysisResponse(response);
 
 	// Validate output schema
 	return validateSchema(codeAnalysisOutputSchema, result);
@@ -391,12 +392,12 @@ const calculateMaxTokens = (
 	analysisType: string,
 ): number => {
 	const baseTokens = Math.max(1500, sourceCode.length * 2);
-	const analysisMultiplier =
-		analysisType === 'security'
-			? 2
-			: analysisType === 'architecture'
-				? 1.8
-				: 1.2;
+	let analysisMultiplier = 1.2;
+	if (analysisType === 'security') {
+		analysisMultiplier = 2;
+	} else if (analysisType === 'architecture') {
+		analysisMultiplier = 1.8;
+	}
 	return Math.min(8000, Math.floor(baseTokens * analysisMultiplier));
 };
 
@@ -404,100 +405,88 @@ const calculateMaxTokens = (
  * Parse analysis response from the model
  */
 const parseAnalysisResponse = (
-    response: any,
-    language: string,
-    analysisType: string,
+	response: { text: string; latencyMs?: number },
 ): CodeAnalysisOutput => {
-	let parsedResponse: any;
+	type PartialAnalysis = Partial<CodeAnalysisOutput>;
+	let parsedResponse: PartialAnalysis;
 
-    try {
-        // Try to parse JSON from response text
-        const jsonMatch = response.text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            parsedResponse = JSON.parse(jsonMatch[0]);
-        } else {
-            throw new Error('No JSON found in response');
-        }
-    } catch (_error) {
-        // Fallback: create structured response from raw text
-        parsedResponse = createFallbackAnalysisResponse(
-            response.text,
-            language,
-            analysisType,
-        );
-    }
+	// Streaming/balanced-brace parser for first JSON object
+	function extractFirstJSONObject(text: string): string | null {
+		let start = -1;
+		let depth = 0;
+		for (let i = 0; i < text.length; i++) {
+			if (text[i] === '{') {
+				if (depth === 0) start = i;
+				depth++;
+			} else if (text[i] === '}') {
+				depth--;
+				if (depth === 0 && start !== -1) {
+					return text.slice(start, i + 1);
+				}
+			}
+		}
+		return null;
+	}
 
-    // Coerce legacy suggestions array of strings to structured objects
-    if (
-        Array.isArray(parsedResponse?.suggestions) &&
-        parsedResponse.suggestions.length > 0 &&
-        typeof parsedResponse.suggestions[0] === 'string'
-    ) {
-        parsedResponse.suggestions = parsedResponse.suggestions.map(
-            (s: string) => ({
-                type: 'improvement' as const,
-                message: s,
-                severity: 'low' as const,
-                category: 'maintainability' as const,
-            }),
-        );
-    }
+	try {
+		const jsonString = extractFirstJSONObject(response.text);
+		if (jsonString) {
+			parsedResponse = JSON.parse(jsonString);
+		} else {
+			throw new Error('No JSON found in response');
+		}
+	} catch {
+		parsedResponse = createFallbackAnalysisResponse();
+	}
+
+	// Coerce legacy suggestions array of strings to structured objects
+	if (
+		Array.isArray(parsedResponse?.suggestions) &&
+		parsedResponse.suggestions.length > 0 &&
+		typeof parsedResponse.suggestions[0] === 'string'
+	) {
+		parsedResponse.suggestions = parsedResponse.suggestions.map((s) =>
+			typeof s === 'string'
+				? {
+					type: 'improvement' as const,
+					message: s,
+					severity: 'low' as const,
+					category: 'maintainability' as const,
+				}
+				: s
+		);
+	}
 
 	// Ensure all required fields are present (merge defaults with partials)
-	const complexity = parsedResponse.complexity || {};
-	const security = parsedResponse.security || {};
-	const performance = parsedResponse.performance || {};
+	const complexity = parsedResponse.complexity;
+	const security = parsedResponse.security;
+	const performance = parsedResponse.performance;
 
 	return {
-		suggestions: parsedResponse.suggestions || [],
+		suggestions: parsedResponse.suggestions ?? [],
 		complexity: {
-			cyclomatic:
-				typeof complexity.cyclomatic === 'number' ? complexity.cyclomatic : 5,
-			cognitive:
-				typeof complexity.cognitive === 'number' ? complexity.cognitive : 3,
-			maintainability:
-				typeof complexity.maintainability === 'string'
-					? complexity.maintainability
-					: ('good' as const),
+			cyclomatic: typeof complexity?.cyclomatic === 'number' ? complexity.cyclomatic : 5,
+			cognitive: typeof complexity?.cognitive === 'number' ? complexity.cognitive : 3,
+			maintainability: typeof complexity?.maintainability === 'string' ? complexity.maintainability : 'good',
 		},
 		security: {
-			vulnerabilities: Array.isArray(security.vulnerabilities)
-				? security.vulnerabilities
-				: [],
-			riskLevel:
-				typeof security.riskLevel === 'string'
-					? security.riskLevel
-					: ('low' as const),
+			vulnerabilities: Array.isArray(security?.vulnerabilities) ? security.vulnerabilities : [],
+			riskLevel: typeof security?.riskLevel === 'string' ? security.riskLevel : 'low',
 		},
 		performance: {
-			bottlenecks: Array.isArray(performance.bottlenecks)
-				? performance.bottlenecks
-				: [],
-			memoryUsage:
-				typeof performance.memoryUsage === 'string'
-					? performance.memoryUsage
-					: ('low' as const),
-			algorithmicComplexity: performance.algorithmicComplexity,
+			bottlenecks: Array.isArray(performance?.bottlenecks) ? performance.bottlenecks : [],
+			memoryUsage: typeof performance?.memoryUsage === 'string' ? performance.memoryUsage : 'low',
+			algorithmicComplexity: performance?.algorithmicComplexity,
 		},
-		confidence:
-			typeof parsedResponse.confidence === 'number'
-				? parsedResponse.confidence
-				: 0.85,
-		analysisTime:
-			typeof parsedResponse.analysisTime === 'number'
-				? parsedResponse.analysisTime
-				: response.latencyMs || 1500,
+		confidence: typeof parsedResponse.confidence === 'number' ? parsedResponse.confidence : 0.85,
+		analysisTime: typeof parsedResponse.analysisTime === 'number' ? parsedResponse.analysisTime : response.latencyMs || 1500,
 	};
 };
 
 /**
  * Create fallback response when JSON parsing fails
  */
-const createFallbackAnalysisResponse = (
-	_text: string,
-	_language: string,
-	_analysisType: string,
-): any => {
+const createFallbackAnalysisResponse = (): CodeAnalysisOutput => {
 	return {
 		suggestions: [
 			{

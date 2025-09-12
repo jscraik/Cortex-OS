@@ -4,11 +4,11 @@ import type { Request, Response } from 'express';
 import { ModelService } from '../services/modelService';
 
 export class ModelController {
-	static getModels(req: Request, res: Response): void {
+	static getModels(_req: Request, res: Response): void {
 		try {
 			const models = ModelService.getAllModels();
 			res.json(models);
-		} catch (_error) {
+		} catch {
 			res.status(500).json({ error: 'Internal server error' });
 		}
 	}
@@ -24,7 +24,7 @@ export class ModelController {
 			}
 
 			res.json(model);
-		} catch (_error) {
+		} catch {
 			res.status(500).json({ error: 'Internal server error' });
 		}
 	}

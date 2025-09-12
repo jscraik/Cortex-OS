@@ -7,6 +7,7 @@ import {
 	FrontierAdapter,
 	type FrontierAdapterApi,
 } from './adapters/frontier-adapter.js';
+import type { MCPAdapter } from './adapters/mcp-adapter.js';
 import { MLXAdapter, type MLXAdapterApi } from './adapters/mlx-adapter.js';
 import {
 	OllamaAdapter,
@@ -83,8 +84,7 @@ export class ModelRouter implements IModelRouter {
 	private readonly mlxAdapter: MLXAdapterApi;
 	private readonly ollamaAdapter: OllamaAdapterApi;
 	private readonly frontierAdapter: FrontierAdapterApi;
-	// biome-ignore lint/suspicious/noExplicitAny: MCP adapter is dynamically loaded
-	private mcpAdapter: any = null;
+	private mcpAdapter: MCPAdapter | null = null;
 	private mcpLoaded = false;
 	private readonly availableModels: Map<ModelCapability, ModelConfig[]> =
 		new Map();
@@ -271,7 +271,7 @@ export class ModelRouter implements IModelRouter {
 						fallback: m.fallback,
 					});
 				} else {
-					console.log(
+					console.warn(
 						`[model-router] Ollama model ${m.name} not installed; skipping`,
 					);
 				}
@@ -422,6 +422,7 @@ export class ModelRouter implements IModelRouter {
 				);
 				return { embedding: response.embedding, model: m.name };
 			} else {
+				if (!this.mcpAdapter) throw new Error('MCP adapter not loaded');
 				const response = await this.mcpAdapter.generateEmbedding(request);
 				return { embedding: response.embedding, model: response.model };
 			}
@@ -449,8 +450,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All embedding models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -484,6 +484,7 @@ export class ModelRouter implements IModelRouter {
 				);
 				return { embeddings: responses.map((r) => r.embedding), model: m.name };
 			} else {
+				if (!this.mcpAdapter) throw new Error('MCP adapter not loaded');
 				const res = await this.mcpAdapter.generateEmbeddings(request);
 				return { embeddings: res.embeddings, model: res.model };
 			}
@@ -511,8 +512,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All batch embedding models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All batch embedding models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -576,8 +576,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All chat models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All chat models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
@@ -661,8 +660,7 @@ export class ModelRouter implements IModelRouter {
 				}
 			}
 			throw new Error(
-				`All reranking models failed. Last error: ${
-					error instanceof Error ? error.message : 'Unknown error'
+				`All reranking models failed. Last error: ${error instanceof Error ? error.message : 'Unknown error'
 				}`,
 			);
 		}
