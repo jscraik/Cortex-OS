@@ -7,9 +7,7 @@ pnpm add @cortex-os/mvp-group
 
 ## First Workflow
 ```ts
-import { runPRPWorkflow } from '@cortex-os/mvp-group';
-import { createOrchestrator } from '@cortex-os/mvp-core';
-
+import { runPRPWorkflow, createOrchestrator } from '@cortex-os/mvp-group';
 const orchestrator = createOrchestrator();
 const blueprint = {
   title: 'Hello MVP',
