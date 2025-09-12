@@ -3,7 +3,7 @@
 Run unit tests:
 
 ```bash
-pnpm test packages/github
+pnpm --filter github test
 ```
 
 Coverage goals: critical paths > 80%.
