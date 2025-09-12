@@ -62,3 +62,19 @@ export const memoryService = createMemoryService(store, embedder);
 ```
 
 Example runnable script: `examples/memories-mlx/ingest-and-search.ts` (uses `MLX_EMBED_BASE_URL` or `MLX_SERVICE_URL`).
+
+## Docker Compose
+A minimal container setup:
+```yaml
+services:
+  neo4j:
+    image: neo4j:5
+    ports: ["7687:7687"]
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports: ["6333:6333"]
+```
+Start services:
+```bash
+docker compose up -d neo4j qdrant
+```
