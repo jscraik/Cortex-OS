@@ -10,4 +10,4 @@ pnpm install
 pnpm test packages/mvp-core
 ```
 
-Refer to the [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+Refer to the [CONTRIBUTING.md](/CONTRIBUTING.md) for guidelines.
