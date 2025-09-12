@@ -4,29 +4,39 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { WebSocket } from 'ws';
 import { McpConnection } from '../src/McpConnection';
 import { ToolRegistry } from '../src/ToolRegistry.js';
 
-// Mock WebSocket
-class MockWebSocket extends WebSocket {
+// Minimal MockWebSocket implementing the interface declared in src/types/ws.d.ts
+class MockWebSocket {
 	messages: string[] = [];
-	readyState = WebSocket.OPEN;
+	readyState = 1; // OPEN
+	private listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
 
-	constructor() {
-		super('ws://localhost');
-		this.readyState = WebSocket.OPEN;
+	on(event: string, listener: (...args: unknown[]) => void) {
+		this.listeners[event] = this.listeners[event] || [];
+		this.listeners[event].push(listener);
+		return this;
 	}
 
 	send(data: string) {
 		this.messages.push(data);
 	}
 
+	close(_code?: number, _reason?: string) {
+		// no-op for tests
+	}
+
+	emit(event: string, ...args: unknown[]) {
+		(this.listeners[event] || []).forEach((l) => { l(...args); });
+		return true;
+	}
+
 	getLastMessage() {
 		return this.messages[this.messages.length - 1];
 	}
 
-	simulateMessage(message: any) {
+	simulateMessage(message: unknown) {
 		this.emit('message', Buffer.from(JSON.stringify(message)));
 	}
 }
@@ -44,7 +54,7 @@ describe('McpConnection', () => {
 		const testTool = {
 			name: 'test_tool',
 			description: 'A test tool',
-			async run(args: any) {
+			async run(args: unknown) {
 				return { result: 'success', args };
 			},
 		};

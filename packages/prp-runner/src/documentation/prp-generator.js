@@ -16,7 +16,7 @@ export function generatePRPMarkdown(state, document, reviewJson) {
         generateScopeAndNonGoals(state),
         generateConstraints(state),
         generateDesignSummary(state),
-        generateInterfacesAndContracts(),
+        generateInterfacesAndContracts(state),
         generateTestPlan(state),
         generateVerificationResults(state),
         generateReviewerSummary(reviewJson),
@@ -103,14 +103,14 @@ function generateDesignSummary(state) {
     const designContent = designEvidence.length > 0
         ? designEvidence
             .map((e) => {
-                try {
-                    const parsed = JSON.parse(e.content);
-                    return `- ${parsed.summary || e.source}`;
-                }
-                catch {
-                    return `- ${e.source}`;
-                }
-            })
+            try {
+                const parsed = JSON.parse(e.content);
+                return `- ${parsed.summary || e.source}`;
+            }
+            catch {
+                return `- ${e.source}`;
+            }
+        })
             .join('\n')
         : '- Design summary to be captured during G1 Specification gate';
     return `## 4. Design Summary
@@ -120,7 +120,7 @@ ${designContent}
 **Architecture Diagrams:** To be provided in design phase
 **Sequence Flows:** To be documented in /docs/`;
 }
-function generateInterfacesAndContracts() {
+function generateInterfacesAndContracts(_state) {
     return `## 5. Interfaces & Contracts
 
 **API Specifications:** To be defined during specification phase
@@ -154,13 +154,13 @@ No gates have been executed yet.`;
     }
     const results = completedGates
         .map((gate) => {
-            const passed = gate.automatedChecks.filter((c) => c.status === 'pass').length;
-            const total = gate.automatedChecks.length;
-            return `**${gate.name} (${gate.id}):**
+        const passed = gate.automatedChecks.filter((c) => c.status === 'pass').length;
+        const total = gate.automatedChecks.length;
+        return `**${gate.name} (${gate.id}):**
 - Status: ${gate.status}
 - Checks: ${passed}/${total} passed
 - Evidence: ${gate.evidence.length} items`;
-        })
+    })
         .join('\n\n');
     return `## 7. Verification Results
 
@@ -183,12 +183,12 @@ Review JSON will be generated upon completion of verification gates.`;
   "scores": ${JSON.stringify(reviewJson.scores, null, 2)},
   "findings": [
     ${reviewJson.findings
-            .map((f) => `{
+        .map((f) => `{
       "id": "${f.id}",
       "severity": "${f.severity}",
       "recommendation": "${f.recommendation}"
     }`)
-            .join(',\n    ')}
+        .join(',\n    ')}
   ]
 }
 \`\`\`
@@ -205,24 +205,24 @@ No approvals recorded yet.`;
     }
     const approvalText = approvals
         .map((approval) => {
-            const gateNames = {
-                G0: 'Product Approval',
-                G1: 'Architecture',
-                G2: 'Test Plan',
-                G3: 'Code Review',
-                G4: 'Verification',
-                G5: 'Triage',
-                G6: 'Release Readiness',
-                G7: 'Release',
-            };
-            const gateName = gateNames[approval.gateId] || approval.gateId;
-            const date = new Date(approval.timestamp).toISOString().split('T')[0];
-            const time = new Date(approval.timestamp)
-                .toISOString()
-                .split('T')[1]
-                .split('.')[0];
-            return `- **${gateName}** — ${approval.decision} by ${approval.actor} @ ${date}T${time}Z (SHA: ${approval.commitSha.slice(0, 7)})`;
-        })
+        const gateNames = {
+            G0: 'Product Approval',
+            G1: 'Architecture',
+            G2: 'Test Plan',
+            G3: 'Code Review',
+            G4: 'Verification',
+            G5: 'Triage',
+            G6: 'Release Readiness',
+            G7: 'Release',
+        };
+        const gateName = gateNames[approval.gateId] || approval.gateId;
+        const date = new Date(approval.timestamp).toISOString().split('T')[0];
+        const time = new Date(approval.timestamp)
+            .toISOString()
+            .split('T')[1]
+            .split('.')[0];
+        return `- **${gateName}** — ${approval.decision} by ${approval.actor} @ ${date}T${time}Z (SHA: ${approval.commitSha.slice(0, 7)})`;
+    })
         .join('\n');
     return `## 9. Decisions & Approvals
 

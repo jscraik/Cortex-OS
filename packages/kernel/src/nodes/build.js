@@ -115,7 +115,7 @@ export class BuildNode {
             },
         };
     }
-    async runSecurityScan() {
+    async runSecurityScan(_state) {
         // Mock security scan - in real implementation would run CodeQL, Semgrep, etc.
         return {
             blockers: 0,

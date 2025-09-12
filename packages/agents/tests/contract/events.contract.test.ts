@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { agentEventCatalog } from '@/events/agent-events.js';
 
 const iso = () => new Date().toISOString();
-const base = (type: string, data: any) => ({ specversion: '1.0', type, data });
+const base = (type: string, data: unknown) => ({ specversion: '1.0', type, data });
 
 describe('Event Contract: agentEventCatalog', () => {
 	it('validates all known event schemas with sample payloads', () => {
-		const samples: Record<string, any> = {
+	const samples: Record<string, unknown> = {
 			'agent.started': base('agent.started', {
 				agentId: 'a',
 				traceId: 't',

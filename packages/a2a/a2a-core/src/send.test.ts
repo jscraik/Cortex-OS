@@ -15,7 +15,10 @@ describe('send', () => {
   });
 
   it('sends envelope to outboxUrl and returns envelope', async () => {
-    const axios = (await import('axios')).default as any;
+    const axios = (await import('axios')).default as {
+      post: (url: string, data?: unknown, config?: unknown) => Promise<{ status: number; data?: unknown }>;
+      get: (url: string, config?: unknown) => Promise<{ status: number; data?: unknown }>;
+    };
     axios.post.mockResolvedValue({});
 
     const { send } = await import('./send.js');
@@ -38,7 +41,10 @@ describe('send', () => {
   });
 
   it('propagates errors from axios', async () => {
-    const axios = (await import('axios')).default as any;
+    const axios = (await import('axios')).default as {
+      post: (url: string, data?: unknown, config?: unknown) => Promise<{ status: number; data?: unknown }>;
+      get: (url: string, config?: unknown) => Promise<{ status: number; data?: unknown }>;
+    };
     axios.post.mockRejectedValue(new Error('network error'));
 
     const { send } = await import('./send.js');

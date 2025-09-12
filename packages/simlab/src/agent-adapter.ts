@@ -3,12 +3,12 @@
  * @version 1.0.0
  */
 
-// Local import of PRP runner to avoid build dependency
+// Import PRP runner from package boundary (avoid deep relative imports)
 import {
 	type Blueprint,
 	createPRPOrchestrator,
 	type Neuron,
-} from '../../prp-runner/src/index.js';
+} from '@cortex-os/prp-runner';
 import { agentRequestSchema } from './schemas.js';
 import type { SimScenario, SimTurn } from './types.js';
 
@@ -35,7 +35,7 @@ export interface PRPExecutor {
  * default for tests.
  */
 export class AgentAdapter {
-	constructor(private executor: PRPExecutor = new BasicPRPExecutor()) { }
+	constructor(private readonly executor: PRPExecutor = new BasicPRPExecutor()) { }
 
 	async execute(request: AgentRequest): Promise<AgentResponse> {
 		const parsed = agentRequestSchema.parse(request);
@@ -137,7 +137,7 @@ class BasicPRPExecutor implements PRPExecutor {
 }
 
 export class RealPRPExecutor implements PRPExecutor {
-	private orchestrator = createPRPOrchestrator();
+	private readonly orchestrator = createPRPOrchestrator();
 
 	constructor() {
 		const neuron: Neuron = {
@@ -148,6 +148,9 @@ export class RealPRPExecutor implements PRPExecutor {
 			tools: [],
 			requiresLLM: false,
 			async execute(_state: unknown, _context: unknown) {
+				// Mark unused parameters as intentionally unused to satisfy lint rules
+				const __unused_state = _state; // eslint-disable-line @typescript-eslint/no-unused-vars
+				const __unused_context = _context; // eslint-disable-line @typescript-eslint/no-unused-vars
 				const startTime = new Date().toISOString();
 				const endTime = new Date().toISOString();
 				return {

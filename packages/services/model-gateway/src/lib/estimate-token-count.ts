@@ -15,7 +15,7 @@ export function estimateTokenCount(
 	model = 'gpt-3.5-turbo',
 ): number {
 	try {
-		const enc = encodingForModel(model as any);
+		const enc = encodingForModel(model as 'gpt-3.5-turbo' | 'gpt-4' | 'text-davinci-003' | string);
 		const tokens = enc.encode(text);
 		return tokens.length;
 	} catch {

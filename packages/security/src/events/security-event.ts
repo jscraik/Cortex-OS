@@ -23,7 +23,7 @@ export class SecurityEventEmitter {
 			registry: ContractRegistry;
 			policyRouter: PolicyRouter;
 		},
-	) {}
+	) { }
 
 	async emit<T>(options: SecurityEventOptions<T>): Promise<Envelope> {
 		return withSpan('security.event.emit', async (span) => {

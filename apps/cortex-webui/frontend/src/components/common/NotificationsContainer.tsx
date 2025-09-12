@@ -39,11 +39,11 @@ const NotificationsContainer: React.FC = () => {
 
 	// Expose addNotification to global scope for easy access
 	useEffect(() => {
-		// @ts-expect-error
+		// @ts-expect-error - adding custom method to window object
 		window.addNotification = addNotification;
 
 		return () => {
-			// @ts-expect-error
+			// @ts-expect-error - deleting custom method from window object
 			delete window.addNotification;
 		};
 	}, []);

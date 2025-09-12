@@ -8,28 +8,34 @@ import { vi } from 'vitest';
 
 // Mock sharp to avoid native binary requirement in CI / local without install.
 vi.mock('sharp', () => {
-	return {
-		default: (input?: any) => createMockSharpInstance(input),
+	type SharpApi = {
+		resize: (w: number, h?: number) => SharpApi;
+		toFormat: (fmt: string, opts?: Record<string, unknown>) => SharpApi;
+		png: (opts?: Record<string, unknown>) => SharpApi;
+		jpeg: (opts?: Record<string, unknown>) => SharpApi;
+		webp: (opts?: Record<string, unknown>) => SharpApi;
+		toBuffer: () => Promise<Buffer>;
+		metadata: () => Promise<{ width: number; height: number; format: string }>;
 	};
-
-	function createMockSharpInstance(_input: any) {
-		const api: any = {
+	const createMockSharpInstance = (_input?: unknown): SharpApi => {
+		const api: SharpApi = {
 			resize: (_w: number, _h?: number) => api,
-			toFormat: (_fmt: string, _opts?: any) => api,
-			png: (_opts?: any) => api,
-			jpeg: (_opts?: any) => api,
-			webp: (_opts?: any) => api,
+			toFormat: (_fmt: string, _opts?: Record<string, unknown>) => api,
+			png: (_opts?: Record<string, unknown>) => api,
+			jpeg: (_opts?: Record<string, unknown>) => api,
+			webp: (_opts?: Record<string, unknown>) => api,
 			toBuffer: async () => Buffer.from('mock-image-bytes'),
 			metadata: async () => ({ width: 0, height: 0, format: 'mock' }),
 		};
 		return api;
-	}
+	};
+	return { default: (input?: unknown) => createMockSharpInstance(input) };
 });
 
 // Mock any optional heavy model loaders if they appear later (placeholder)
 vi.mock('@xenova/transformers', () => {
 	return {
-		pipeline: async () => async (_args: any) => ({ embedding: [0, 0, 0] }),
+		pipeline: async () => async (_args: unknown) => ({ embedding: [0, 0, 0] as number[] }),
 	};
 });
 
@@ -37,7 +43,7 @@ vi.mock('@xenova/transformers', () => {
 vi.mock('ollama', () => {
 	class MockOllama {
 		host: string | undefined;
-		constructor(opts: any) {
+		constructor(opts: { host?: string } | undefined) {
 			this.host = opts?.host;
 		}
 		async generate({ prompt }: { prompt: string }) {

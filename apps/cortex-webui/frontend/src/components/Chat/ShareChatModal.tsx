@@ -42,15 +42,15 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 			setIsCopied(true);
 			setTimeout(() => setIsCopied(false), 2000);
 
-			// @ts-expect-error
+			// @ts-expect-error - window.addNotification is added by external script
 			if (typeof window !== 'undefined' && window.addNotification) {
-				// @ts-expect-error
+				// @ts-expect-error - window.addNotification is added by external script
 				window.addNotification('success', 'Link copied to clipboard!');
 			}
 		} catch (err) {
-			// @ts-expect-error
+			// @ts-expect-error - window.addNotification is added by external script
 			if (typeof window !== 'undefined' && window.addNotification) {
-				// @ts-expect-error
+				// @ts-expect-error - window.addNotification is added by external script
 				window.addNotification('error', 'Failed to copy link');
 			}
 		}
@@ -60,9 +60,9 @@ const ShareChatModal: React.FC<ShareChatModalProps> = ({
 		// In a real implementation, this would call an API to create the share
 		generateShareLink();
 
-		// @ts-expect-error
+		// @ts-expect-error - window.addNotification is added by external script
 		if (typeof window !== 'undefined' && window.addNotification) {
-			// @ts-expect-error
+			// @ts-expect-error - window.addNotification is added by external script
 			window.addNotification('success', 'Chat sharing link generated!');
 		}
 	};

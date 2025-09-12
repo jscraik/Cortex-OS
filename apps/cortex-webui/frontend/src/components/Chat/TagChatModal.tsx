@@ -63,9 +63,9 @@ const TagChatModal: React.FC<TagChatModalProps> = ({
 		onTagsUpdate(tags);
 		onClose();
 
-		// @ts-expect-error
+		// @ts-expect-error - window.addNotification is added by external script
 		if (typeof window !== 'undefined' && window.addNotification) {
-			// @ts-expect-error
+			// @ts-expect-error - window.addNotification is added by external script
 			window.addNotification('success', 'Tags updated successfully!');
 		}
 	};

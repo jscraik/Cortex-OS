@@ -18,16 +18,36 @@ interface SettingsModalProps {
 	onClose: () => void;
 }
 
+interface Settings {
+	general?: {
+		theme?: string;
+		language?: string;
+		fontSize?: string;
+		defaultModel?: string;
+		defaultPrompt?: string;
+		autoScrollOutput?: boolean;
+		enterToSubmit?: boolean;
+		doubleEnterToSubmit?: boolean;
+		showUsernameInChat?: boolean;
+		showModelNameInChat?: boolean;
+	};
+	notifications?: {
+		webhook_url?: string;
+	};
+	// Add other setting categories as needed
+	[key: string]: unknown;
+}
+
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 	const [activeTab, setActiveTab] = useState('general');
 
-	const saveSettings = (newSettings: any) => {
+	const saveSettings = (newSettings: Settings) => {
 		// In a real implementation, this would save to a store or API
 		console.log('Saving settings:', newSettings);
 		// For now, we'll just show a notification
-		// @ts-expect-error
+		// @ts-expect-error - window.addNotification is added by external script
 		if (typeof window !== 'undefined' && window.addNotification) {
-			// @ts-expect-error
+			// @ts-expect-error - window.addNotification is added by external script
 			window.addNotification('success', 'Settings saved successfully!');
 		}
 	};

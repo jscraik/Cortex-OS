@@ -3,7 +3,7 @@
 // Validation script to check all configuration and dependencies
 
 const fs = require('fs');
-const path = require('path');
+// const path = require('path'); // Removed unused import
 
 const errors = [];
 const warnings = [];

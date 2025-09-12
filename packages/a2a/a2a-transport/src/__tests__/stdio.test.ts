@@ -3,7 +3,7 @@
  * Tests systematic improvements to error handling
  */
 
-import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
   afterEach,
   beforeEach,
@@ -240,14 +240,13 @@ describe('Stdio Transport', () => {
       };
       mockSpawn.mockReturnValue(mockChild);
       const transport = stdio('test-command');
-      const envelope: Envelope = {
-        spec: 'A2A/1.0',
-        type: 'test.message',
-        source: '/test/source',
+      const envelope: Envelope = createEnvelope({
         id: 'test-id-123',
-        time: new Date().toISOString(),
+        type: 'test.message',
+        // Provide a valid absolute URI for source per schema
+        source: 'https://example.com/test/source',
         data: { message: 'test' },
-      };
+      });
       // Should not throw when publishing
       expect(() => transport.publish(envelope)).not.toThrow();
     });

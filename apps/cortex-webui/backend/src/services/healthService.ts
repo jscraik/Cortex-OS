@@ -15,13 +15,13 @@ export interface HealthCheckResult {
 }
 
 export interface HealthCheck {
-	status: 'pass' | 'fail' | 'warn';
-	message?: string;
-	observedValue?: any;
-	observedUnit?: string;
-	time?: string;
-	componentId?: string;
-	componentType?: string;
+  status: 'pass' | 'fail' | 'warn';
+  message?: string;
+  observedValue?: number | string | boolean;
+  observedUnit?: string;
+  time?: string;
+  componentId?: string;
+  componentType?: string;
 }
 
 export class HealthService {
@@ -41,13 +41,18 @@ export class HealthService {
 		const checks: Record<string, HealthCheck> = {};
 
 		// Perform all health checks
-		await Promise.allSettled([
-			this.checkDatabase().then((result) => (checks.database = result)),
-			this.checkFileSystem().then((result) => (checks.filesystem = result)),
-			this.checkMemory().then((result) => (checks.memory = result)),
-			this.checkDiskSpace().then((result) => (checks.diskspace = result)),
-			this.checkEnvironment().then((result) => (checks.environment = result)),
+		const [db, fsCheck, mem, disk, env] = await Promise.all([
+			this.checkDatabase(),
+			this.checkFileSystem(),
+			this.checkMemory(),
+			this.checkDiskSpace(),
+			this.checkEnvironment(),
 		]);
+		checks.database = db;
+		checks.filesystem = fsCheck;
+		checks.memory = mem;
+		checks.diskspace = disk;
+		checks.environment = env;
 
 		// Determine overall status
 		const overallStatus = this.determineOverallStatus(checks);

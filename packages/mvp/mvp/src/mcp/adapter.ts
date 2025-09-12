@@ -33,6 +33,26 @@ export interface ExecutionMetrics {
 	commandsExecuted: number;
 }
 
+// Test summary shape & type guard (used by test_runner tool). Hoisted top-level
+// to avoid re-declaration inside the execute function (ensures single symbol &
+// cleaner type narrowing during build).
+interface TestSummaryShape {
+	numPassedTests?: number;
+	numFailedTests?: number;
+	numTotalTests?: number;
+	// Allow arbitrary additional reporter keys without losing excess property checks.
+	[key: string]: unknown;
+}
+
+const isTestSummary = (v: unknown): v is TestSummaryShape =>
+	!!v &&
+	typeof v === 'object' &&
+	(
+		'numPassedTests' in (v as Record<string, unknown>) ||
+		'numFailedTests' in (v as Record<string, unknown>) ||
+		'numTotalTests' in (v as Record<string, unknown>)
+	);
+
 export interface MCPTool {
 	name: string;
 	description: string;
@@ -400,9 +420,10 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 					maxBuffer: 10 * 1024 * 1024,
 				});
 				const duration = Date.now() - started;
-				let summary: unknown;
+				let summary: TestSummaryShape | undefined;
 				try {
-					summary = JSON.parse(stdout);
+					const parsed = JSON.parse(stdout) as unknown;
+					if (isTestSummary(parsed)) summary = parsed;
 				} catch (_parseSummaryError) {
 					// Ignore JSON parse errors: we'll return raw stdout which still contains useful info.
 				}
@@ -438,10 +459,10 @@ export const createDefaultMCPTools = (): MCPTool[] => [
 				let passed = 0,
 					failed = 0,
 					total = 0;
-				if (summary && summary.numPassedTests !== undefined) {
+				if (isTestSummary(summary) && typeof summary.numPassedTests === 'number') {
 					passed = summary.numPassedTests;
-					failed = summary.numFailedTests || 0;
-					total = summary.numTotalTests || passed + failed;
+					failed = typeof summary.numFailedTests === 'number' ? summary.numFailedTests : 0;
+					total = typeof summary.numTotalTests === 'number' ? summary.numTotalTests : passed + failed;
 				}
 				return {
 					command: cmd,

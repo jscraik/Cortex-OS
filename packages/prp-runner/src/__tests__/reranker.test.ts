@@ -5,7 +5,11 @@
 
 import { pipeline } from '@xenova/transformers';
 import { describe, expect, it, vi } from 'vitest';
-import { createRerankerState, rerank } from '../lib/reranker/index.js';
+import {
+	createRerankerState,
+	type RerankerConfig,
+	rerank,
+} from '../lib/reranker/index.js';
 
 vi.mock('@xenova/transformers', () => ({
 	pipeline: vi.fn(),
@@ -20,7 +24,9 @@ describe('Reranker', () => {
 				[{ score: 0.9 }],
 				[{ score: 0.5 }],
 			]);
-		(pipeline as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(inference);
+		(pipeline as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+			inference,
+		);
 
 		const state = createRerankerState('transformers');
 		const docs = ['a', 'b', 'c'];
@@ -34,7 +40,9 @@ describe('Reranker', () => {
 			/Unsupported reranker provider/,
 		);
 
-		const badState = { config: { provider: 'unknown' } } as any;
+		const badState = {
+			config: { provider: 'unknown' as RerankerConfig['provider'] },
+		};
 		await expect(rerank(badState, 'q', ['a'])).rejects.toThrow(
 			/Reranking not implemented/,
 		);

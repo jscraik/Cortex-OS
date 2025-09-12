@@ -96,7 +96,7 @@ export class EvaluationNode {
             },
         };
     }
-    async validateCodeReview() {
+    async validateCodeReview(_state) {
         // Simulated code review - in real implementation would integrate with actual review tools
         const codeQualityIssues = [
             {
@@ -125,7 +125,7 @@ export class EvaluationNode {
             },
         };
     }
-    async validateQualityBudgets() {
+    async validateQualityBudgets(_state) {
         // Extract scores from build phase validation
         // Mock quality scores - in real implementation would extract from actual tools
         const accessibilityScore = 95; // From Axe results

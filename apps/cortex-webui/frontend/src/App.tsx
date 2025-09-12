@@ -99,9 +99,9 @@ const AppContent: React.FC = () => {
 
 	return (
 		<div className="App">
-			{/* @ts-ignore */}
+			{/* @ts-expect-error - Routes component type issues with React Router */}
 			<Routes>
-				{/* @ts-ignore */}
+				{/* @ts-expect-error - Route component prop types */}
 				<Route
 					path="/login"
 					element={
@@ -112,7 +112,7 @@ const AppContent: React.FC = () => {
 						/>
 					}
 				/>
-				{/* @ts-ignore */}
+				{/* @ts-expect-error - Route component prop types */}
 				<Route
 					path="/register"
 					element={
@@ -123,7 +123,7 @@ const AppContent: React.FC = () => {
 						/>
 					}
 				/>
-				{/* @ts-ignore */}
+				{/* @ts-expect-error - Route component prop types */}
 				<Route
 					path="/dashboard"
 					element={
@@ -143,7 +143,7 @@ const AppContent: React.FC = () => {
 						)
 					}
 				/>
-				{/* @ts-ignore */}
+				{/* @ts-expect-error - Route component prop types */}
 				<Route
 					path="/chat/:conversationId"
 					element={
@@ -168,7 +168,7 @@ const AppContent: React.FC = () => {
 						)
 					}
 				/>
-				{/* @ts-ignore */}
+				{/* @ts-expect-error - Route component prop types */}
 				<Route
 					path="/settings"
 					element={
@@ -183,7 +183,7 @@ const AppContent: React.FC = () => {
 						)
 					}
 				/>
-				{/* @ts-ignore */}
+				{/* @ts-expect-error - Route component prop types */}
 				<Route
 					path="/"
 					element={

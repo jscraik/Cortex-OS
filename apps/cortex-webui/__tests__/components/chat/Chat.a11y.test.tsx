@@ -21,14 +21,14 @@ expect.extend(toHaveNoViolations);
 describe('Chat Component Accessibility', () => {
 	beforeEach(() => {
 		// jsdom lacks crypto.randomUUID in older versions; provide a stub if missing
-		// @ts-expect-error
+		// @ts-expect-error - crypto may not exist in test environment
 		if (!global.crypto) {
-			// @ts-expect-error
+			// @ts-expect-error - adding crypto stub to global
 			global.crypto = {};
 		}
-		// @ts-expect-error
+		// @ts-expect-error - randomUUID may not exist on crypto stub
 		if (!global.crypto.randomUUID) {
-			// @ts-expect-error
+			// @ts-expect-error - adding randomUUID method to crypto stub
 			global.crypto.randomUUID = () => '00000000-0000-4000-8000-000000000000';
 		}
 	});

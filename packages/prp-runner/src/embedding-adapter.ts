@@ -13,7 +13,7 @@ export interface EmbeddingAdapterConfig {
 
 export interface AddDocumentsResultMeta {
 	text: string;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 	addedAt: string;
 	embedding: number[]; // stored for similarity search
 }
@@ -28,7 +28,7 @@ export interface SimilaritySearchResult {
 	id: string;
 	text: string;
 	similarity: number;
-	metadata?: Record<string, any>;
+	metadata?: Record<string, unknown>;
 }
 
 export interface EmbeddingAdapterStats {
@@ -67,8 +67,8 @@ function cosine(a: number[], b: number[]): number {
 }
 
 export class EmbeddingAdapter {
-	private config: Required<EmbeddingAdapterConfig>;
-	private documents: Map<string, AddDocumentsResultMeta> = new Map();
+	private readonly config: Required<EmbeddingAdapterConfig>;
+	private readonly documents: Map<string, AddDocumentsResultMeta> = new Map();
 	private idCounter = 0;
 
 	constructor(config: EmbeddingAdapterConfig) {
@@ -92,7 +92,7 @@ export class EmbeddingAdapter {
 	 */
 	async addDocuments(
 		documents: string[],
-		metadata?: Record<string, any>[],
+		metadata?: Record<string, unknown>[],
 		ids?: string[],
 	): Promise<string[]> {
 		const assigned: string[] = [];
@@ -175,9 +175,7 @@ export interface RerankerAdapter {
 }
 
 class SimpleLexicalReranker implements RerankerAdapter {
-	constructor(_config: RerankerAdapterConfig) {
-		// Config parameter is required by interface but not used in simple implementation
-	}
+	// No constructor needed (stateless)
 
 	async rerank(
 		query: string,

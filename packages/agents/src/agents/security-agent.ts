@@ -10,23 +10,23 @@
 
 import { z } from 'zod';
 import {
-	assessDependabotConfig,
-	loadDependabotConfig,
+    assessDependabotConfig,
+    loadDependabotConfig,
 } from '../integrations/dependabot.js';
 import type {
-	Agent,
-	EventBus,
-	ExecutionContext,
-	GenerateOptions,
-	GenerateResult,
-	MCPClient,
-	MemoryPolicy,
-	ModelProvider,
+    Agent,
+    EventBus,
+    ExecutionContext,
+    GenerateOptions,
+    GenerateResult,
+    MCPClient,
+    MemoryPolicy,
+    ModelProvider,
 } from '../lib/types.js';
 import {
-	generateAgentId,
-	generateTraceId,
-	withTimeout,
+    generateAgentId,
+    generateTraceId,
+    withTimeout,
 } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
@@ -348,7 +348,6 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 			const newCategories = Array.from(
 				new Set([...(out.categories || []), 'supply-chain', 'dependabot']),
 			);
-			// @ts-expect-error - Type compatibility issue with zod schema inference
 			out = validateSchema(securityOutputSchema, {
 				...out,
 				categories: newCategories,

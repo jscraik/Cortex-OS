@@ -52,85 +52,55 @@ export const documentUploadMiddleware = multer({
 	},
 });
 
-export class DocumentController {
-	/**
-	 * Parse document (PDF, text, markdown, or image) and extract content
-	 */
-	static async parseDocument(req: Request, res: Response) {
-		try {
-			if (!req.file) {
-				return res.status(400).json({ error: 'No file provided' });
-			}
+export async function parseDocument(req: Request, res: Response) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
+    }
+    const file = req.file;
+    const fileName = file.originalname;
+    const mimeType = file.mimetype;
+    const buffer = file.buffer;
+    let result: DocumentParseResult;
+    if (mimeType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf')) {
+      result = await parsePDF(buffer, fileName);
+    } else if (
+      mimeType.startsWith('text/') ||
+      fileName.toLowerCase().endsWith('.txt') ||
+      fileName.toLowerCase().endsWith('.md') ||
+      fileName.toLowerCase().endsWith('.markdown')
+    ) {
+      result = await parseTextFile(buffer, fileName);
+    } else if (mimeType.startsWith('image/')) {
+      result = await parseImageFile(buffer, fileName);
+    } else {
+      try {
+        result = await parseTextFile(buffer, fileName);
+      } catch {
+        return res.status(400).json({
+          error: 'Unsupported file type',
+          supportedTypes: ['PDF', 'TXT', 'MD', 'Images (JPG, PNG, GIF, WebP)'],
+        });
+      }
+    }
+    return res.json(result);
+  } catch (error) {
+    console.error('Document parsing error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const status = errorMessage.includes('Invalid PDF') || errorMessage.includes('Unsupported') ? 400 : 500;
+    return res.status(status).json({ error: 'Document parsing failed', message: errorMessage });
+  }
+}
 
-			const file = req.file;
-			const fileName = file.originalname;
-			const mimeType = file.mimetype;
-			const buffer = file.buffer;
-
-			let result: DocumentParseResult;
-
-			// Handle different file types
-			if (mimeType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf')) {
-				result = await parsePDF(buffer, fileName);
-			} else if (
-				mimeType.startsWith('text/') ||
-				fileName.toLowerCase().endsWith('.txt') ||
-				fileName.toLowerCase().endsWith('.md') ||
-				fileName.toLowerCase().endsWith('.markdown')
-			) {
-				result = await parseTextFile(buffer, fileName);
-			} else if (mimeType.startsWith('image/')) {
-				result = await parseImageFile(buffer, fileName);
-			} else {
-				// Try to parse as text as fallback
-				try {
-					result = await parseTextFile(buffer, fileName);
-				} catch {
-					return res.status(400).json({
-						error: 'Unsupported file type',
-						supportedTypes: [
-							'PDF',
-							'TXT',
-							'MD',
-							'Images (JPG, PNG, GIF, WebP)',
-						],
-					});
-				}
-			}
-
-			return res.json(result);
-		} catch (error) {
-			console.error('Document parsing error:', error);
-
-			const errorMessage =
-				error instanceof Error ? error.message : 'Unknown error';
-			const status =
-				errorMessage.includes('Invalid PDF') ||
-					errorMessage.includes('Unsupported')
-					? 400
-					: 500;
-
-			return res.status(status).json({
-				error: 'Document parsing failed',
-				message: errorMessage,
-			});
-		}
-	}
-
-	/**
-	 * Get supported document types
-	 */
-	static async getSupportedTypes(_req: Request, res: Response) {
-		const supportedTypes = {
-			documents: ['PDF', 'TXT', 'MD', 'Markdown'],
-			images: ['JPEG', 'PNG', 'GIF', 'WebP'],
-			maxFileSize: '50MB',
-			maxPages: MAX_PAGES,
-			maxTextLength: MAX_TEXT_LENGTH,
-		};
-
-		return res.json(supportedTypes);
-	}
+export async function getSupportedTypes(_req: Request, res: Response) {
+  const supportedTypes = {
+    documents: ['PDF', 'TXT', 'MD', 'Markdown'],
+    images: ['JPEG', 'PNG', 'GIF', 'WebP'],
+    maxFileSize: '50MB',
+    maxPages: MAX_PAGES,
+    maxTextLength: MAX_TEXT_LENGTH,
+  };
+  return res.json(supportedTypes);
 }
 
 /**
@@ -142,6 +112,19 @@ async function parsePDF(
 ): Promise<DocumentParseResult> {
 	try {
 		const data = await pdf(buffer);
+
+		// Narrow pdf-parse info type (library doesn't export a detailed TS interface for all optional fields)
+		// Keep optional so absence of metadata doesn't cause runtime errors
+		interface PdfDocumentInfo {
+			Title?: string;
+			Author?: string;
+			Subject?: string;
+			Creator?: string;
+			Producer?: string;
+			CreationDate?: string;
+			ModDate?: string;
+		}
+		const info: PdfDocumentInfo | undefined = (data as { info?: PdfDocumentInfo }).info;
 
 		// Check page limit
 		if (data.numpages > MAX_PAGES) {
@@ -169,13 +152,13 @@ async function parsePDF(
 			originalLength,
 			truncated: originalLength > MAX_TEXT_LENGTH,
 			metadata: {
-				title: (data.info as any)?.Title,
-				author: (data.info as any)?.Author,
-				subject: (data.info as any)?.Subject,
-				creator: (data.info as any)?.Creator,
-				producer: (data.info as any)?.Producer,
-				creationDate: (data.info as any)?.CreationDate,
-				modDate: (data.info as any)?.ModDate,
+				title: info?.Title,
+				author: info?.Author,
+				subject: info?.Subject,
+				creator: info?.Creator,
+				producer: info?.Producer,
+				creationDate: info?.CreationDate,
+				modDate: info?.ModDate,
 			},
 		};
 	} catch (error) {

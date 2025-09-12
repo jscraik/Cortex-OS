@@ -1,7 +1,5 @@
-export type MemoryId = string;
-
 export interface Memory {
-  id: MemoryId;
+  id: string;
   kind: 'note' | 'event' | 'artifact' | 'embedding';
   text?: string;
   vector?: number[];
@@ -24,7 +22,7 @@ export interface Memory {
 }
 
 export interface CacheManager {
-  get(key: string): Promise<unknown | null>;
+  get(key: string): Promise<Record<string, unknown> | string | number | boolean | null>;
   set(key: string, value: unknown, ttl?: number): Promise<void>;
   has(key: string): Promise<boolean>;
   clear(): Promise<void>;

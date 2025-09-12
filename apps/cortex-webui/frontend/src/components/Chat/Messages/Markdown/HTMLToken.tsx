@@ -36,7 +36,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 					className="w-full my-2"
 					src={videoSrc.replaceAll('&amp;', '&')}
 					title="Video player"
-					// @ts-expect-error
+					// @ts-expect-error - frameborder is deprecated HTML attribute
 					frameborder="0"
 					referrerPolicy="strict-origin-when-cross-origin"
 					controls
@@ -79,7 +79,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 					className="w-full aspect-video my-2"
 					src={`https://www.youtube.com/embed/${ytId}`}
 					title="YouTube video player"
-					// @ts-expect-error
+					// @ts-expect-error frameborder is HTML4 attribute not in React types
 					frameborder="0"
 					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
 					referrerPolicy="strict-origin-when-cross-origin"
@@ -99,13 +99,13 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 					className="w-full my-2"
 					src={iframeSrc}
 					title="Embedded content"
-					// @ts-expect-error
+					// @ts-expect-error frameborder is HTML4 attribute not in React types
 					frameborder="0"
 					sandbox=""
 					onLoad={(e) => {
 						const iframe = e.target as HTMLIFrameElement;
 						try {
-							// @ts-expect-error
+							// @ts-expect-error contentWindow may be null due to cross-origin restrictions
 							iframe.style.height =
 								iframe.contentWindow.document.body.scrollHeight + 20 + 'px';
 						} catch (err) {
@@ -156,7 +156,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 					className="w-full my-2"
 					src={`${WEBUI_BASE_URL}/api/v1/files/${fileId}/content/html`}
 					title="Content"
-					// @ts-expect-error
+					// @ts-expect-error frameborder is HTML4 attribute not in React types
 					frameborder="0"
 					sandbox={sandboxOptions}
 					referrerPolicy="strict-origin-when-cross-origin"
@@ -165,7 +165,7 @@ const HTMLToken: React.FC<HTMLTokenProps> = ({ id, token, onSourceClick }) => {
 					onLoad={(e) => {
 						const iframe = e.target as HTMLIFrameElement;
 						try {
-							// @ts-expect-error
+							// @ts-expect-error contentWindow may be null due to cross-origin restrictions
 							iframe.style.height =
 								iframe.contentWindow.document.body.scrollHeight + 20 + 'px';
 						} catch (err) {
