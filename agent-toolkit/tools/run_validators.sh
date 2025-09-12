@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 file_list="$1"
+if [[ ! -f "$file_list" ]]; then
+  echo "Error: File list '$file_list' does not exist or is not a regular file." >&2
+  exit 1
+fi
 mapfile -t files < "$file_list"
 js=()
 py=()
