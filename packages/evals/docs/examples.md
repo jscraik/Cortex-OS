@@ -5,7 +5,7 @@
 ```ts
 import { runGate } from '@cortex-os/evals';
 import { createDeps } from './rag-deps';
-import config from './rag.config.json' assert { type: 'json' };
+import config from './rag.config.json' with { type: 'json' };
 
 await runGate(config, { rag: await createDeps() });
 ```
