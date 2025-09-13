@@ -148,9 +148,7 @@ export class RealPRPExecutor implements PRPExecutor {
 			tools: [],
 			requiresLLM: false,
 			async execute(_state: unknown, _context: unknown) {
-				// Mark unused parameters as intentionally unused to satisfy lint rules
-				const __unused_state = _state; // eslint-disable-line @typescript-eslint/no-unused-vars
-				const __unused_context = _context; // eslint-disable-line @typescript-eslint/no-unused-vars
+				// Parameters prefixed with _ are intentionally unused
 				const startTime = new Date().toISOString();
 				const endTime = new Date().toISOString();
 				return {
