@@ -1,5 +1,5 @@
-import { Command } from "commander";
 import type { Embedder, Store } from "@cortex-os/rag/lib/types";
+import { Command } from "commander";
 
 interface EvalOptions {
 	dataset: string;
@@ -39,7 +39,7 @@ export const ragEval = new Command("eval")
 
 		// Simple static embedder for offline eval consistency
 		const E: Embedder = {
-			embed: async (texts: string[]): Promise<number[][]> => 
+			embed: async (texts: string[]): Promise<number[][]> =>
 				texts.map((t) => [t.length, 0, 0]),
 		};
 		const S: Store = memoryStore();

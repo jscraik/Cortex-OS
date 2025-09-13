@@ -6,37 +6,41 @@ export {
 	BatchToolExecutorUseCase,
 	CodeQualityUseCase,
 	CodeSearchUseCase,
-	ToolExecutorUseCase,
+	ToolExecutorUseCase
 } from './app/UseCases.js';
 export type {
 	ToolExecutionContext,
 	ToolExecutionEvents,
-	ToolExecutor,
+	ToolExecutor
 } from './domain/ToolExecutor.js';
 export type {
 	CodemodTool,
 	SearchTool,
 	ToolRegistry,
-	ValidationTool,
+	ValidationTool
 } from './domain/ToolInterfaces.js';
 export { CombyAdapter } from './infra/CodemodAdapters.js';
 // Infrastructure adapters
 export {
 	AstGrepAdapter,
 	RipgrepAdapter,
-	SemgrepAdapter,
+	SemgrepAdapter
 } from './infra/SearchAdapters.js';
 
 export {
 	CargoAdapter,
 	ESLintAdapter,
 	MultiValidatorAdapter,
-	RuffAdapter,
+	RuffAdapter
 } from './infra/ValidationAdapters.js';
 
 // Convenience factory function
 import { DefaultToolRegistry } from './app/ToolRegistry.js';
-import { ToolExecutorUseCase } from './app/UseCases.js';
+import {
+	CodeQualityUseCase,
+	CodeSearchUseCase,
+	ToolExecutorUseCase,
+} from './app/UseCases.js';
 import { CombyAdapter } from './infra/CodemodAdapters.js';
 import {
 	AstGrepAdapter,

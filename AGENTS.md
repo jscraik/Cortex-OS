@@ -103,3 +103,84 @@ Agent-toolkit follows Cortex-OS principles:
 rewrites, diff review and validation. Use `just` recipes (`just scout`, `just codemod`, `just verify`)  
 or call the wrappers directly. Run standard checks (`pnpm biome:staged`, `pnpm lint`, `pnpm test`,  
 `pnpm docs:lint`) alongside these tools.
+
+## 🚀 Smart Nx Execution (Affected-Only)
+
+All agents MUST prefer the smart wrapper for build/test/lint/typecheck operations:
+
+```bash
+pnpm build:smart       # node scripts/nx-smart.mjs build
+pnpm test:smart        # node scripts/nx-smart.mjs test
+pnpm lint:smart        # node scripts/nx-smart.mjs lint
+pnpm typecheck:smart   # node scripts/nx-smart.mjs typecheck
+
+# Dry-run mode (preview affected projects without execution)
+node scripts/nx-smart.mjs build --dry-run
+```
+
+Behavior:
+
+- Auto-detects `base`/`head` via environment (`NX_BASE`, `NX_HEAD`) or falls back to the previous commit.
+- Runs `nx print-affected` first (fast fail + transparency) then executes `nx affected -t <target>`.
+- Falls back to full `run-many` only if diff detection fails (rare – logs a warning banner).
+- Emits a concise strategy line: `strategy=affected|all changed=<count>` for observability.
+- Supports `--dry-run` to preview affected projects without execution (useful for PR preflight).
+
+Rationale: Prevents wasteful monorepo-wide execution and reduces memory churn + CI wall time.
+
+## 🤖 Non-Interactive Nx Mode
+
+The wrapper enforces non-interactive execution by default:
+
+- Sets `NX_INTERACTIVE=false` (and `CI=true` if unset) for deterministic, prompt-free runs.
+- Passes `--no-interactive` ONLY to the top-level Nx CLI (not forwarded to underlying toolchains like `tsc`, `vitest`, or `tsup`).
+- Override (rare) by exporting `CORTEX_NX_INTERACTIVE=1` before invoking a smart script.
+
+Example override:
+
+```bash
+CORTEX_NX_INTERACTIVE=1 pnpm build:smart
+```
+
+Policy: Do **not** override in automation / CI pipelines. Interactive mode is only for local
+diagnostic exploration when inspecting task graph decisions.
+
+## 📊 Wrapper Diagnostics
+
+Each invocation prints a header line:
+
+```text
+[nx-smart] target=test base=<sha> head=<sha> changed=<n> strategy=affected
+```
+
+Dry-run mode shows affected summary:
+
+```text
+📋 Affected Projects Summary:
+Target: build
+Base: origin/main  
+Head: abc123
+Changed files: 15
+Affected projects: @cortex-os/agents, @cortex-os/mcp-core
+
+💡 To execute: pnpm build:smart
+```
+
+If diff resolution fails, you will see:
+
+```text
+[nx-smart][warn] unable to resolve git diff – falling back to full run-many
+```
+
+Action for agents: investigate git environment (shallow clone? detached HEAD?) before re-running.
+
+## 🧪 When Writing New Automation
+
+- Use smart scripts inside composite commands (e.g., release gates) instead of raw `nx run-many`.
+- Avoid chaining `pnpm build && pnpm test`; prefer targeted: `pnpm build:smart && pnpm test:smart`.
+- For security / structure validations, run AFTER `build:smart` to leverage any generated artifacts.
+
+## 🧹 Pending Deprecations
+
+Legacy scripts using blanket `nx run-many` will be pruned; keep memory management scripts (`memory:*`)
+intact. Prefer adding any new orchestration logic to the smart wrapper or agent-toolkit utilities.

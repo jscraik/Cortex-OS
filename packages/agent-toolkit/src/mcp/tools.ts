@@ -1,3 +1,6 @@
+import type {
+    AgentToolkitSearchInput
+} from '@cortex-os/contracts';
 import { createAgentToolkit } from '../index.js';
 
 // Input type definitions for the tools
@@ -47,9 +50,10 @@ export const createSearchTool = (): SimpleMcpTool => ({
         },
         required: ['pattern', 'path'],
     },
-    handler: async (input: AgentToolkitSearchInput) => {
+    handler: async (input: Record<string, unknown>) => {
+        const searchInput = input as AgentToolkitSearchInput;
         const toolkit = createAgentToolkit();
-        const result = await toolkit.search(input.pattern, input.path);
+        const result = await toolkit.search(searchInput.pattern, searchInput.path);
 
         return {
             content: [
@@ -77,9 +81,13 @@ export const createMultiSearchTool = (): SimpleMcpTool => ({
         },
         required: ['pattern', 'path'],
     },
-    handler: async (input: AgentToolkitSearchInput) => {
+    handler: async (input: Record<string, unknown>) => {
+        const searchInput = input as AgentToolkitSearchInput;
         const toolkit = createAgentToolkit();
-        const result = await toolkit.multiSearch(input.pattern, input.path);
+        const result = await toolkit.multiSearch(
+            searchInput.pattern,
+            searchInput.path,
+        );
 
         return {
             content: [

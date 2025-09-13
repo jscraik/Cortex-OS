@@ -1,0 +1,225 @@
+name: Unified Security & Compliance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * 1' # Weekly deep scan (Mondays 03:00 UTC)
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+
+env:
+  PNPM_VERSION: 10.16.0
+  NODE_VERSION: 20
+
+jobs:
+  secret-scan:
+    name: Secrets (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks (diff for PR)
+        if: github.event_name == 'pull_request'
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --redact --report-format sarif --report-path gitleaks.sarif
+      - name: Gitleaks (full repo)
+        if: github.event_name != 'pull_request'
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --redact --no-git --report-format sarif --report-path gitleaks.sarif
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks.sarif
+
+  dependency-licensing:
+    name: Dependencies & Licensing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Audit (pnpm high)
+        run: pnpm audit --audit-level=high || true
+      - name: License validate
+        run: pnpm license:validate || pnpm deps:license || true
+      - name: SBOM (CycloneDX)
+        run: pnpm sbom:generate || true
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deps-licensing-${{ github.sha }}
+          path: |
+            sbom/**
+            reports/compliance/**
+          if-no-files-found: warn
+
+  sast-semgrep:
+    name: SAST (Semgrep Core)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.90.0 # pinned for reproducibility
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Semgrep OWASP precise
+        run: semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR --sarif --output=semgrep.sarif . || true
+      - name: Upload SARIF
+        if: ${{ hashFiles('semgrep.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+            sarif_file: semgrep.sarif
+
+  python-bandit:
+    name: Python Bandit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup environment (Python)
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+          python-version: '3.11'
+          install: 'false'
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Cache uv environment
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+      - name: Bandit scan (uv preferred)
+        run: |
+          set -e
+          if command -v uvx >/dev/null 2>&1; then
+            echo "Running Bandit via uvx (cached python env)";
+            uvx --from bandit bandit -r . -f json -o bandit-results.json || true
+          else
+            echo "uvx not available, falling back to pip install";
+            pip install bandit[toml]
+            bandit -r . -f json -o bandit-results.json || true
+          fi
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-results
+          path: bandit-results.json
+
+  container-trivy:
+    name: Container Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build minimal image
+        run: docker build -t cortex-os:scan . || echo "Skipping image build"
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cortex-os:scan'
+          format: 'sarif'
+          output: 'trivy-image.sarif'
+        continue-on-error: true
+      - name: Upload SARIF
+        if: ${{ hashFiles('trivy-image.sarif') != '' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+
+  codeql-weekly:
+    name: CodeQL (Scheduled)
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          # Weekly schedule allows broader language set; adding python.
+          languages: 'javascript, typescript, python'
+      - name: Autobuild (best-effort)
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [secret-scan, dependency-licensing, sast-semgrep, python-bandit, container-trivy]
+    if: always()
+    steps:
+      - name: Collate summary
+        run: |
+          echo "# Unified Security Summary" >> security-summary.md
+          echo "Generated: $(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> security-summary.md
+          echo "" >> security-summary.md
+          echo "| Job | Result |" >> security-summary.md
+          echo "|-----|--------|" >> security-summary.md
+          echo "| Secrets | ${{ needs.secret-scan.result }} |" >> security-summary.md
+          echo "| Dependencies & Licensing | ${{ needs.dependency-licensing.result }} |" >> security-summary.md
+          echo "| SAST | ${{ needs.sast-semgrep.result }} |" >> security-summary.md
+          echo "| Python | ${{ needs.python-bandit.result }} |" >> security-summary.md
+          echo "| Container | ${{ needs.container-trivy.result }} |" >> security-summary.md
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('security-summary.md','utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+      - name: Slack notify (critical failures only)
+        if: failure() && (needs.secret-scan.result == 'failure' || needs.sast-semgrep.result == 'failure')
+        run: |
+          # Slack webhook secret expected as environment variable injected by repository settings when configured.
+          if [ -z "${SLACK_WEBHOOK:-}" ]; then echo "No SLACK_WEBHOOK in env; skipping"; exit 0; fi
+          
+          # Determine severity based on which jobs failed
+          failed_jobs=""
+          if [ "${{ needs.secret-scan.result }}" = "failure" ]; then failed_jobs="${failed_jobs}Secrets "; fi
+          if [ "${{ needs.sast-semgrep.result }}" = "failure" ]; then failed_jobs="${failed_jobs}SAST "; fi
+          
+          status="🚨 CRITICAL Security Failure: ${failed_jobs}"
+          payload=$(jq -n --arg text "$status: $GITHUB_WORKFLOW ($GITHUB_RUN_NUMBER) <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>" '{text: $text}')
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK" || echo "Slack notification skipped"

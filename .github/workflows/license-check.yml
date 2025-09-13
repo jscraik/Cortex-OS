@@ -1,9 +1,8 @@
-name: License Compliance
+name: License Compliance (LEGACY - Consolidated)
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  # Disabled, license validation now part of unified-security & CI governance.
+  workflow_dispatch:
 
 jobs:
   license:

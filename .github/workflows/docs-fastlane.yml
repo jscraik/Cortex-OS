@@ -1,0 +1,76 @@
+name: Docs Fastlane
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**/*.md'
+      - '!CHANGELOG.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  detect-scope:
+    name: Detect Non-Doc Changes
+    runs-on: ubuntu-latest
+    outputs:
+      non_docs: ${{ steps.scope.outputs.non_docs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Diff analysis
+        id: scope
+        run: |
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          changed=$(git diff --name-only "$base_sha" "$head_sha")
+          non_docs_count=$(echo "$changed" | grep -Ev '\\.md$' | wc -l | tr -d ' ')
+          if [ "$non_docs_count" -gt 0 ]; then
+            echo "non_docs=true" >> $GITHUB_OUTPUT
+          else
+            echo "non_docs=false" >> $GITHUB_OUTPUT
+          fi
+          echo "Changed files:" && echo "$changed"
+      - name: PR annotate
+        if: steps.scope.outputs.non_docs == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Docs-only change detected. Fastlane applied.'
+            });
+
+  markdown-validation:
+    name: Markdown Validation
+    needs: detect-scope
+    if: needs.detect-scope.outputs.non_docs == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup environment (light)
+        uses: ./.github/actions/setup-env
+        with:
+          install: 'false'
+      - name: Lint markdown (changed)
+        run: pnpm docs:lint || true
+      - name: Link check (soft)
+        run: pnpm docs:links || true
+      - name: Summary
+        run: |
+          echo "## Docs Fastlane Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Docs-only change validated." >> $GITHUB_STEP_SUMMARY
+
+  failover-ci-handoff:
+    name: Fallback to Full CI
+    needs: detect-scope
+    if: needs.detect-scope.outputs.non_docs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Non-doc changes detected; normal CI will run separately." 

@@ -1,9 +1,7 @@
-name: security-and-sbom
+name: security-and-sbom (LEGACY - Pending Decommission)
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-  push:
-    branches: [main]
+  # Disabled; replaced by `unified-security.yml` (SBOM handled there via deps job).
+  workflow_dispatch:
 jobs:
   security:
     runs-on: ubuntu-latest

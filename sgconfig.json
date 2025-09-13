@@ -58,6 +58,19 @@
 			"severity": "error",
 			"language": "typescript",
 			"pattern": "debugger"
+		},
+		{
+			"id": "cortex-os-no-legacy-nx-run-many",
+			"message": "Use pnpm build:smart/test:smart/lint:smart instead of nx run-many",
+			"severity": "error",
+			"language": "javascript",
+			"pattern": "nx run-many",
+			"ignores": [
+				"scripts/nx-smart.mjs",
+				"**/*.md",
+				"**/*.txt",
+				"docs/**"
+			]
 		}
 	],
 	"utils": {

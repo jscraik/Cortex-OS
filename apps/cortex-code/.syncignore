@@ -1,0 +1,11 @@
+# Lines beginning with # are comments (this is NOT a markdown file despite linter treating it as such)
+
+# Add glob patterns to exclude from vendoring sync (rsync --exclude)
+
+# Examples
+
+# target/
+
+# **/tests/
+
+# *.md

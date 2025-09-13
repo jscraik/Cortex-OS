@@ -1,12 +1,8 @@
-name: Security - Enhanced SAST and Linting
+name: Security - Enhanced SAST and Linting (LEGACY - Pending Decommission)
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    types: [opened, synchronize, reopened]
-  schedule:
-    - cron: '0 2 * * 1' # Weekly Monday 02:00 UTC
+  # Disabled; semgrep core SAST now in unified-security. Re-enable if rollback needed.
+  workflow_dispatch:
 
 permissions:
   contents: read

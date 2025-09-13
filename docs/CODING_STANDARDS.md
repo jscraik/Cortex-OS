@@ -323,3 +323,18 @@ All code search, codemod, and validation operations in Cortex-OS **must** use th
 See `AGENTS.md` and `.github/copilot-instructions.md` for full details and usage patterns.
 
 This document should be updated as new patterns emerge and should be referenced during code reviews to maintain consistency across the codebase.
+
+### Agent Toolkit pnpm Scripts
+
+Use the standardized scripts instead of ad-hoc commands:
+
+```bash
+pnpm at:search "TODO" src/
+pnpm at:multi "security" packages/
+pnpm at:codemod "oldName" "newName" packages/agent-toolkit/src
+pnpm at:validate src/index.ts src/util.ts
+pnpm at:validate:project "**/*.{ts,tsx,js,jsx}" "**/*.py"
+pnpm at:validate:changed
+```
+
+These wrap the contract-driven APIs and enforce consistent tooling.

@@ -1,11 +1,8 @@
-name: Gitleaks Secret Scan
+name: Gitleaks Secret Scan (LEGACY - Consolidated)
 
 on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
-  workflow_dispatch: {}
+  # Disabled, secret scanning moved to unified-security.
+  workflow_dispatch:
 
 permissions:
   contents: read

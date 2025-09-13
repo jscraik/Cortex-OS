@@ -1,7 +1,14 @@
-name: Security
+name: Security (LEGACY - Pending Decommission)
+
+# DEPRECATION NOTICE:
+# This workflow is superseded by `unified-security.yml` which consolidates
+# secret scanning, dependency/license, SAST, Python, and container scans.
+# Retained temporarily for rollback confidence. Remove after validation window.
 
 on:
-  pull_request:
+  # Intentionally disabled triggers to avoid duplicate cost.
+  # Re-enable manually if rollback required.
+  workflow_dispatch:
 
 jobs:
   security:

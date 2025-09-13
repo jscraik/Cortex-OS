@@ -1,4 +1,5 @@
-import type { ToolInput, ToolResult } from '@cortex-os/contracts/agent-toolkit';
+
+import type { AgentToolkitInput, AgentToolkitResult } from '@cortex-os/contracts';
 
 /**
  * Abstract base class for all agent toolkit tools
@@ -11,12 +12,12 @@ export abstract class Tool {
   /**
    * Execute the tool with given inputs
    */
-  abstract execute(input: ToolInput, context?: ToolExecutionContext): Promise<ToolResult>;
+  abstract execute(input: AgentToolkitInput, context?: ToolExecutionContext): Promise<AgentToolkitResult>;
 
   /**
    * Validate input before execution
    */
-  abstract validateInput(input: unknown): ToolInput;
+  abstract validateInput(input: unknown): AgentToolkitInput;
 
   /**
    * Get tool metadata for MCP registration

@@ -143,7 +143,7 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 						},
 					},
 					404: {
-						type: "object", 
+						type: "object",
 						properties: {
 							error: { type: "string" },
 							code: { type: "string" },

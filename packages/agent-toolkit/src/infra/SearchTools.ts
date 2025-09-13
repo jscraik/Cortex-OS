@@ -89,7 +89,7 @@ export class SemgrepTool extends Tool {
     ]);
 
     const enrichedResult = {
-      ...result,
+      ...(result as object),
       timestamp: new Date().toISOString(),
       inputs: validatedInput,
     };
@@ -147,7 +147,7 @@ export class AstGrepTool extends Tool {
     ]);
 
     const enrichedResult = {
-      ...result,
+      ...(result as object),
       timestamp: new Date().toISOString(),
       inputs: validatedInput,
     };

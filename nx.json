@@ -6,15 +6,87 @@
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/nx.json",
       "{workspaceRoot}/.eslintrc.json",
-      "{workspaceRoot}/biome.json"
+      "{workspaceRoot}/biome.json",
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/eslint.config.js"
+    ],
+    "default": [
+      "{projectRoot}/**/*",
+      "!{projectRoot}/dist/**",
+      "!{projectRoot}/coverage/**",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/**/__tests__/**",
+      "!{projectRoot}/**/*.spec.tsx",
+      "!{projectRoot}/**/*.test.tsx"
+    ],
+    "test": [
+      "default"
+    ],
+    "lint": [
+      "default"
+    ],
+    "typecheck": [
+      "default"
     ]
+  },
+  "targetDefaults": {
+    "build": {
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    },
+    "test": {
+      "inputs": [
+        "test",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/coverage"
+      ],
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": true
+    },
+    "lint": {
+      "inputs": [
+        "lint",
+        "^production"
+      ],
+      "cache": true
+    },
+    "typecheck": {
+      "inputs": [
+        "typecheck",
+        "^production"
+      ],
+      "cache": true
+    }
   },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
         "cacheDirectory": ".nx/cache",
-        "cacheableOperations": ["build","test","lint","typecheck"]
+        "cacheableOperations": [
+          "build",
+          "test",
+          "lint",
+          "typecheck"
+        ],
+        "parallel": 1,
+        "maxParallel": 1,
+        "useDependencyGraph": true
       }
     }
   }

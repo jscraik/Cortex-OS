@@ -1,6 +1,8 @@
 import {
     AgentToolkitCodemodInputSchema,
+    AgentToolkitSearchInputSchema,
     AgentToolkitSearchResultSchema,
+    AgentToolkitValidationInputSchema,
 } from '@cortex-os/contracts';
 import { describe, expect, it } from 'vitest';
 
@@ -58,7 +60,7 @@ describe('Agent Toolkit Contracts', () => {
 
         const result =
             AgentToolkitValidationInputSchema.parse(validValidationInput);
-        expected(result.files).toHaveLength(3);
+        expect(result.files).toHaveLength(3);
         expect(result.files).toContain('test1.ts');
     });
 
@@ -112,11 +114,8 @@ describe('Agent Toolkit Contracts', () => {
             ],
         };
 
-        const result =
-            agentToolkitSchema.AgentToolkitSearchResult.parse(validSearchResult);
-        expect(result.tool).toBe('ripgrep');
-        expect(result.results).toHaveLength(1);
-        expect(result.results[0].file).toBe('test.ts');
+        const result = AgentToolkitSearchResultSchema.parse(validSearchResult);
+        expect(result).toEqual(validSearchResult);
     });
 
     it('should validate codemod input schema', () => {
@@ -136,12 +135,10 @@ describe('Agent Toolkit Contracts', () => {
             files: ['test1.ts', 'test2.js', 'test3.py'],
         };
 
-        const result =
-            agentToolkitSchema.AgentToolkitValidationInput.parse(
-                validValidationInput,
-            );
-        expect(result.files).toHaveLength(3);
-        expect(result.files).toContain('test1.ts');
+        const result = AgentToolkitValidationInputSchema.parse(
+            validValidationInput,
+        );
+        expect(result).toEqual(validValidationInput);
     });
 
     it('should reject invalid search input', () => {
@@ -151,7 +148,7 @@ describe('Agent Toolkit Contracts', () => {
         };
 
         expect(() =>
-            agentToolkitSchema.AgentToolkitSearchInput.parse(invalidInput),
+            AgentToolkitSearchInputSchema.parse(invalidInput),
         ).toThrow();
     });
 
@@ -161,7 +158,7 @@ describe('Agent Toolkit Contracts', () => {
         };
 
         expect(() =>
-            agentToolkitSchema.AgentToolkitValidationInput.parse(invalidInput),
+            AgentToolkitValidationInputSchema.parse(invalidInput),
         ).toThrow();
     });
 

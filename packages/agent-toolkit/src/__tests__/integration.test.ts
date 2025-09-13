@@ -8,6 +8,7 @@ import {
 import { createAgentToolkit } from '../index.js';
 import { CombyAdapter } from '../infra/CodemodAdapters.js';
 import { RipgrepAdapter } from '../infra/SearchAdapters.js';
+import { MultiValidatorAdapter } from '../infra/ValidationAdapters.js';
 
 describe('Agent Toolkit Integration', () => {
     let registry: DefaultToolRegistry;
@@ -31,8 +32,8 @@ describe('Agent Toolkit Integration', () => {
             registry.registerSearchTool('ripgrep', new RipgrepAdapter());
             registry.registerCodemodTool('comby', new CombyAdapter());
             registry.registerValidationTool(
-                'auto-validator',
-                new AutoValidatorAdapter(),
+                'multi-validator',
+                new MultiValidatorAdapter(),
             );
 
             const tools = registry.listTools();
@@ -47,8 +48,8 @@ describe('Agent Toolkit Integration', () => {
             registry.registerSearchTool('ripgrep', new RipgrepAdapter());
             registry.registerCodemodTool('comby', new CombyAdapter());
             registry.registerValidationTool(
-                'auto-validator',
-                new AutoValidatorAdapter(),
+                'multi-validator',
+                new MultiValidatorAdapter(),
             );
         });
 
@@ -137,8 +138,8 @@ describe('Agent Toolkit Integration', () => {
 
         beforeEach(() => {
             registry.registerValidationTool(
-                'auto-validator',
-                new AutoValidatorAdapter(),
+                'multi-validator',
+                new MultiValidatorAdapter(),
             );
             _codeQuality = new CodeQualityUseCase(executor);
         });

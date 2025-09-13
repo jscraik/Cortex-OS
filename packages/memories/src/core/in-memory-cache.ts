@@ -18,7 +18,7 @@ export class MemoryCacheManager implements CacheManager {
 		this.config = config;
 	}
 
-	async get(key: string): Promise<unknown | null> {
+	async get(key: string): Promise<unknown> {
 		const entry = this.cache.get(key);
 
 		if (!entry) {

@@ -1,23 +1,275 @@
-name: verify
-on: [push, pull_request]
+name: CI (Consolidated)
+
+# NOTE: This workflow replaces the legacy 'verify' & portions of 'advanced-ci'.
+# Remaining specialised workflows (release, heavy security, scheduled governance) stay separate.
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PNPM_VERSION: 10.16.0
+  NODE_VERSION: 20
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
-  toolchains:
+  detect-docs-only:
+    name: Detect Docs-Only Change
     runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.diff.outputs.docs_only }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install mise
+        with:
+          fetch-depth: 0
+      - name: Determine changed files
+        id: diff
         run: |
-          curl -fsSL https://mise.run | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - run: mise --version
-      - run: mise install
-      - run: node -v && pnpm -v && python --version || true && rustc -V || true
-  build:
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="${{ github.event.before }}"
+            head="${{ github.sha }}"
+          fi
+          changed=$(git diff --name-only "$base" "$head")
+          echo "$changed" | sed 's/^/ - /'
+          non_docs=$(echo "$changed" | grep -Ev '\\.md$' || true)
+          if [ -z "$non_docs" ]; then
+            echo "docs_only=true" >> $GITHUB_OUTPUT
+          else
+            echo "docs_only=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Annotate PR (docs fast path)
+        if: github.event_name == 'pull_request' && steps.diff.outputs.docs_only == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🟢 CI: Docs-only change detected. Heavy build/test skipped.'
+            });
+  affected-fastcheck:
+    name: Affected Fast Check
     runs-on: ubuntu-latest
+    needs: detect-docs-only
+    if: needs.detect-docs-only.outputs.docs_only == 'false'
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Install mise
-        uses: jdx/mise-action@v2
-      - run: mise install
-      - run: corepack enable && pnpm install --frozen-lockfile
-      - run: pnpm nx run-many -t biome lint typecheck test build --parallel
+      - name: Setup environment (no full install reuse)
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+      - name: Print base/head refs
+        run: |
+          echo "Base ref: $(echo '${{ github.base_ref }}' | tr -cd '[:alnum:]/._-')"
+      - name: Nx affected lint/typecheck
+        run: pnpm nx affected -t biome lint typecheck --parallel
+      - name: Nx affected build
+        run: pnpm nx affected -t build --parallel
+      - name: Nx affected tests
+        run: pnpm nx affected -t test --parallel
+      - name: List affected projects
+        id: affected
+        run: |
+          projects=$(pnpm nx print-affected --select=projects || true)
+          echo "projects=$projects" >> $GITHUB_OUTPUT
+          echo "$projects" | tr ',' '\n' | sed 's/^/- /' || true
+      - name: Annotate PR (affected projects)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const projects = `${{ steps.affected.outputs.projects || '' }}`.split(',').filter(Boolean);
+            const body = projects.length
+              ? `🧭 Nx Affected Projects (fast check):\n\n` + projects.map(p=>`- ${p}`).join('\n')
+              : '🧭 Nx Affected Projects: (none detected or evaluation skipped)';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+      - name: Summarize affected graph
+        run: pnpm nx affected:graph --file=affected-graph.html || true
+      - name: Upload affected graph
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: affected-graph-${{ github.sha }}
+          path: affected-graph.html
+          if-no-files-found: ignore
+
+  build-test:
+    name: Build, Lint, Test
+    runs-on: ubuntu-latest
+    needs: [detect-docs-only, affected-fastcheck]
+    if: needs.detect-docs-only.outputs.docs_only == 'false'
+    timeout-minutes: 30
+    steps:
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+          python-version: ''
+          rust: 'false'
+
+      - name: Quality gates (biome, lint, typecheck)
+        run: pnpm nx run-many -t biome lint typecheck --parallel
+
+      - name: Run unit tests
+        run: pnpm nx run-many -t test --parallel
+
+      - name: Build packages
+        run: pnpm nx run-many -t build --parallel
+
+      - name: Upload dist artifacts (summary)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: |
+            packages/**/dist
+            apps/**/dist
+          if-no-files-found: warn
+          retention-days: 5
+
+  structure-governance:
+    name: Structure & Compliance (Light)
+    runs-on: ubuntu-latest
+    needs: [detect-docs-only, affected-fastcheck, build-test]
+    if: needs.detect-docs-only.outputs.docs_only == 'false'
+    timeout-minutes: 15
+    steps:
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          pnpm-version: ${{ env.PNPM_VERSION }}
+          install: 'true'
+      - name: Structure validation
+        run: pnpm structure:validate
+      - name: License validation
+        run: pnpm license:validate
+      - name: SBOM (quick)
+        run: pnpm sbom:generate || true
+      - name: Upload compliance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-${{ github.sha }}
+          path: |
+            reports/compliance/*
+            sbom/**
+          if-no-files-found: warn
+
+  artifact-reuse-smoke:
+    name: Dist Artifact Smoke (Push)
+    runs-on: ubuntu-latest
+    needs: [build-test]
+    if: github.event_name == 'push'
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist-download
+        continue-on-error: true
+      - name: List dist contents
+        run: |
+          if [ -d dist-download ]; then
+            echo "Downloaded artifact contents:";
+            find dist-download -maxdepth 3 -type f | sed 's/^/ - /';
+          else
+            echo "No dist artifact found to smoke test.";
+          fi
+      - name: Basic smoke (JS file count)
+        run: |
+          if [ -d dist-download ]; then
+            count=$(find dist-download -type f -name '*.js' | wc -l | tr -d ' ')
+            echo "JavaScript files: $count";
+          fi
+
+  provenance:
+    name: Build Provenance Attestation
+    runs-on: ubuntu-latest
+    needs: [build-test, structure-governance]
+    if: github.event_name == 'push'
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist
+      - name: Download compliance artifacts (SBOM)
+        uses: actions/download-artifact@v4
+        with:
+          name: compliance-${{ github.sha }}
+          path: compliance
+        continue-on-error: true
+      - name: Generate build provenance (SLSA)
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: dist/**
+      - name: Generate SBOM attestation
+        if: hashFiles('compliance/sbom/**') != ''
+        uses: actions/attest-sbom@v1
+        with:
+          subject-path: dist/**
+          sbom-path: compliance/sbom/**/*.json
+
+  # container-provenance:
+  #   name: Container Provenance (Future)
+  #   runs-on: ubuntu-latest
+  #   needs: [build-test]
+  #   if: github.event_name == 'push' && false # Enable when container builds added
+  #   permissions:
+  #     id-token: write
+  #     contents: read
+  #     attestations: write
+  #   steps:
+  #     - name: Download container metadata
+  #       run: echo "Container image digest and metadata would be downloaded here"
+  #     - name: Generate container provenance
+  #       uses: actions/attest-build-provenance@v1
+  #       with:
+  #         subject-name: ghcr.io/${{ github.repository }}
+  #         subject-digest: sha256:placeholder
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [detect-docs-only, build-test, structure-governance]
+    if: always()
+    steps:
+      - name: Produce job summary
+        run: |
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Docs-only: ${{ needs.detect-docs-only.outputs.docs_only }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.detect-docs-only.outputs.docs_only }}" = "false" ]; then
+            echo "Build/Test: ${{ needs.build-test.result }}" >> $GITHUB_STEP_SUMMARY
+            echo "Governance: ${{ needs.structure-governance.result }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Build/Test: skipped (docs-only)" >> $GITHUB_STEP_SUMMARY
+            echo "Governance: skipped (docs-only)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "Commit: $GITHUB_SHA" >> $GITHUB_STEP_SUMMARY
+

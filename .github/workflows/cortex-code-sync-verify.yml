@@ -1,0 +1,122 @@
+name: Cortex Code Sync Summary Verify
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'apps/cortex-code/**'
+      - 'scripts/sync-cortex-code.sh'
+      - 'SYNC_CRATE_SUMMARY.json'
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-summary:
+    if: startsWith(github.head_ref, 'sync/cortex-code-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify summary file exists
+        run: |
+          if [ ! -f SYNC_CRATE_SUMMARY.json ]; then
+            echo "SYNC_CRATE_SUMMARY.json is missing. Run sync script to generate." >&2; exit 1; fi
+
+      - name: Validate JSON schema (keys)
+        run: |
+          jq -e '. | has("upstreamCommit") and has("previousUpstream") and has("added") and has("removed") and has("modified") and has("locAdded") and has("locDeleted") and has("filesChanged") and has("generatedAt")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "Missing required keys"; cat SYNC_CRATE_SUMMARY.json; exit 1; }
+          # Optional keys: versionChanges, licenseChanges, sbomDeltaFile
+          for opt in versionChanges licenseChanges sbomDeltaFile dependencyImpact spdxSbomFile versionGating; do
+            if jq -e ". | has(\"$opt\")" SYNC_CRATE_SUMMARY.json >/dev/null; then
+              echo "Detected optional key: $opt";
+            fi
+          done
+
+      - name: Validate crate name arrays
+        run: |
+          for arr in added removed modified; do
+            jq -e ".[\"$arr\"] | type == \"array\"" SYNC_CRATE_SUMMARY.json >/dev/null || { echo "Key $arr not array"; exit 1; }
+            # crate name pattern: lowercase letters, digits, underscore, hyphen
+            bad=$(jq -r ".[$arr][]" SYNC_CRATE_SUMMARY.json | grep -Ev '^[a-z0-9_-]+$' || true)
+            if [ -n "$bad" ]; then
+              echo "Invalid crate names in $arr: $bad" >&2; exit 1; fi
+          done
+          if jq -e '.versionChanges|type=="array"' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            jq -e '.versionChanges[] | has("crate") and has("previousVersion") and has("newVersion") and has("bumpType")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "versionChanges entries incomplete"; exit 1; }
+            # Validate riskScore if present
+            if jq -e '.versionChanges[0] | has("riskScore")' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+              jq -e '.versionChanges[] | .riskScore | type == "number"' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "riskScore must be numeric"; exit 1; }
+            fi
+          fi
+          if jq -e '.licenseChanges|type=="object"' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            jq -e '.licenseChanges | has("added") and has("removed") and has("modified")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "licenseChanges shape invalid"; exit 1; }
+            # Validate severities if present
+            if jq -e '.licenseChanges | has("severities")' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+              jq -e '.licenseChanges.severities | type == "array"' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "licenseChanges.severities must be array"; exit 1; }
+              jq -e '.licenseChanges.severities[] | has("file") and has("change") and has("severity")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "license severity entries incomplete"; exit 1; }
+            fi
+          fi
+          if jq -e '.dependencyImpact|type=="object"' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            jq -e '.dependencyImpact | has("totalCrates") and has("highRiskChanges") and has("mediumRiskChanges") and has("thresholds")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "dependencyImpact shape invalid"; exit 1; }
+          fi
+          if jq -e '.versionGating|type=="object"' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            jq -e '.versionGating | has("violations") and has("bypassReasons") and has("strictMode")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "versionGating shape invalid"; exit 1; }
+          fi
+          if jq -e '.dependencyAnalysis|type=="object"' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            jq -e '.dependencyAnalysis | has("riskScores") and has("totalDependencies")' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "dependencyAnalysis shape invalid"; exit 1; }
+            jq -e '.dependencyAnalysis.riskScores | type == "array"' SYNC_CRATE_SUMMARY.json >/dev/null || { echo "riskScores must be array"; exit 1; }
+          fi
+          if jq -e '.spdxSbomFile|type=="string"' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            spdx_file=$(jq -r '.spdxSbomFile' SYNC_CRATE_SUMMARY.json)
+            if [ -f "$spdx_file" ]; then echo "SPDX SBOM file exists: $spdx_file"; else echo "Warning: SPDX file referenced but missing: $spdx_file"; fi
+          fi
+
+      - name: Validate numeric fields
+        run: |
+          for k in locAdded locDeleted filesChanged; do
+            val=$(jq -r ".[\"$k\"]" SYNC_CRATE_SUMMARY.json)
+            echo "$k=$val"
+            if ! echo "$val" | grep -Eq '^[0-9]+$'; then
+              echo "Field $k not numeric" >&2; exit 1; fi
+          done
+
+      - name: Validate chronological consistency
+        run: |
+          up=$(jq -r '.upstreamCommit' SYNC_CRATE_SUMMARY.json)
+          if ! git cat-file -e "$up" 2>/dev/null; then
+            echo "Warning: upstream commit $up not present locally (expected for remote-only)"; fi
+          prev=$(jq -r '.previousUpstream' SYNC_CRATE_SUMMARY.json)
+          if [ "$prev" != "null" ] && [ -n "$prev" ] && git cat-file -e "$prev" 2>/dev/null; then
+            if git merge-base --is-ancestor "$prev" "$up"; then
+              echo "Previous commit is ancestor (ok)"; else echo "Previous not ancestor of upstream (may be force push)"; fi
+          fi
+
+      - name: Summary report
+        run: |
+          echo "==== SYNC_CRATE_SUMMARY.json ===="
+          cat SYNC_CRATE_SUMMARY.json
+          
+          # Validate referenced files exist
+          if jq -e '.sbomDeltaFile' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            sbom_file=$(jq -r '.sbomDeltaFile' SYNC_CRATE_SUMMARY.json)
+            if [ -f "$sbom_file" ]; then
+              echo "SBOM delta file exists: $sbom_file"
+            else
+              echo "Warning: referenced SBOM delta file missing: $sbom_file"
+            fi
+          fi
+          if jq -e '.spdxSbomFile' SYNC_CRATE_SUMMARY.json >/dev/null 2>&1; then
+            spdx_file=$(jq -r '.spdxSbomFile' SYNC_CRATE_SUMMARY.json)
+            if [ -f "$spdx_file" ]; then
+              echo "SPDX SBOM file exists: $spdx_file"
+              # Basic SPDX validation
+              jq -e '.spdxVersion and .dataLicense and .SPDXID and .packages' "$spdx_file" >/dev/null || echo "Warning: SPDX file structure invalid"
+            else
+              echo "Warning: referenced SPDX SBOM file missing: $spdx_file"
+            fi
+          fi

@@ -24,6 +24,12 @@
     },
     "upstream:pull": {
       "command": "apps/cortex-code/scripts/codex-rs-subtree.sh pull"
+    },
+    "sync:dry": {
+      "command": "bash scripts/sync-cortex-code.sh"
+    },
+    "sync:run": {
+      "command": "bash scripts/sync-cortex-code.sh --run"
     }
   }
 }

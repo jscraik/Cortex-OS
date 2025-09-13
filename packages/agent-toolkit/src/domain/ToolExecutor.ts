@@ -1,7 +1,7 @@
 import type {
 	AgentToolkitInput,
 	AgentToolkitResult,
-} from '@cortex-os/contracts/agent-toolkit';
+} from '@cortex-os/contracts';
 
 /**
  * Core abstraction for executing agent toolkit tools

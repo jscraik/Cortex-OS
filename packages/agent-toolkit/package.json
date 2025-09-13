@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",
-    "@cortex-os/mcp": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
     "zod": "^3.22.0"
   },

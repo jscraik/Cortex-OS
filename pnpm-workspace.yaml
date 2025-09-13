@@ -9,3 +9,15 @@ packages:
   - "website"
 neverBuiltDependencies: []
 packageImportMethod: auto
+# Memory & build tuning additions (added by assistant)
+# Limit concurrent child build processes during install to reduce peak RSS.
+childConcurrency: 2
+
+# Enforce a single Node version for workspace scripts; helps avoid duplicate tsserver / watchers.
+useNodeVersion: 24.7.0
+engineStrict: true
+
+# Skip optional deps that are frequently heavy or not required (adjust if needed). Currently empty for safety.
+ignoredOptionalDependencies: []
+# Future consideration: sideEffectsCache: false (left unset; defaults usually beneficial)
+# Future consideration: enableGlobalVirtualStore: false (leave default until baseline improves)

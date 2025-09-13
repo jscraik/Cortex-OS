@@ -1,1 +1,47 @@
-# (intentionally empty)
+# Exclude heavy / generated / ephemeral directories from Nx file hashing & project graph
+# Reduces watcher & hash memory overhead during installs and task runs.
+
+# Build outputs
+**/dist
+**/build
+
+# Coverage reports
+**/coverage
+coverage/
+
+# Logs & reports
+logs/
+**/logs
+report/
+reports/
+
+# Temporary / scratch artifacts
+.tmp/
+**/.tmp
+.tmp
+**/tmp
+/tmp
+**/temp
+
+# Caches
+.nx/cache/
+**/.cache
+.cache/
+
+# Artifact archives
+*.tgz
+
+# Large data samples (adjust path if needed by builds)
+data/
+!data/README.md
+
+# Node module nested cache directories
+**/node_modules/.cache
+
+# Python / virtual env noise
+**/.venv
+**/__pycache__
+
+# IDE & OS
+.vscode/
+.DS_Store

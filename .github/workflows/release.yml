@@ -15,18 +15,55 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-        with: { fetch-depth: 0 }
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          version: 9
-      - uses: astral-sh/setup-uv@8d55fbecc275b1c35dbe060458839f8d30439ccf
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+          fetch-depth: 0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
         with:
           node-version: 20
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-      - run: pnpm install --frozen-lockfile
+          pnpm-version: 10.16.0
+          install: 'true'
+
+      - name: Attempt download CI build artifacts
+        id: fetch_dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: ./
+        continue-on-error: true
+
+      - name: Rebuild (fallback if no dist)
+        if: steps.fetch_dist.outcome != 'success'
+        run: |
+          echo "No prior dist artifact; performing build."
+          pnpm nx run-many -t build --parallel
+
+      - name: List dist contents
+        run: |
+          echo "Dist snapshot:" || true
+          find packages -maxdepth 3 -type f -name package.json | head -n 20 || true
+          du -sh packages/*/dist 2>/dev/null || true
+
+      - name: Package artifact manifest
+        id: manifest
+        run: |
+          echo "Generating artifact manifest (sha256 sums)."
+          mkdir -p provenance
+          find packages -type f -path '*/dist/*' -not -name '*.map' -exec sha256sum {} \; > provenance/dist-sha256.txt || true
+          lines=$(wc -l < provenance/dist-sha256.txt || echo 0)
+          echo "artifact_count=$lines" >> $GITHUB_OUTPUT
+          head -n 20 provenance/dist-sha256.txt || true
+
+      - name: Upload artifact manifest
+        if: ${{ steps.manifest.outputs.artifact_count != '0' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-manifest-${{ github.sha }}
+          path: provenance/dist-sha256.txt
+
       - name: Generate SBOM
         run: pnpm sbom:generate
       - name: Verify SBOM
@@ -40,17 +77,27 @@ jobs:
         with:
           name: sbom-${{ github.sha }}
           path: sbom-*.json
-      - name: Generate provenance
-        id: provenance
+      - name: Attest SBOM provenance
+        id: sbom_prov
         uses: actions/attest-build-provenance@92c65d2898f1f53cfdc910b962cecff86e7f8fcc
         with:
           subject-path: sbom-*.json
-      - name: Verify provenance
+
+      - name: Attest dist artifact provenance
+        if: ${{ steps.manifest.outputs.artifact_count != '0' }}
+        id: dist_prov
+        uses: actions/attest-build-provenance@92c65d2898f1f53cfdc910b962cecff86e7f8fcc
+        with:
+          subject-path: |
+            provenance/dist-sha256.txt
+      - name: Verify provenance bundles
         run: |
-          if [ ! -f "${{ steps.provenance.outputs.bundle-path }}" ]; then
-            echo "Provenance bundle missing"
-            exit 1
-          fi
+          missing=0
+          for bundle in "${{ steps.sbom_prov.outputs.bundle-path }}" "${{ steps.dist_prov.outputs.bundle-path }}"; do
+            if [ -n "$bundle" ] && [ ! -f "$bundle" ]; then
+              echo "Missing expected provenance bundle: $bundle"; missing=1; fi
+          done
+          if [ $missing -ne 0 ]; then exit 1; fi
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@04d574e831923498156e0b2b93152878063203a3

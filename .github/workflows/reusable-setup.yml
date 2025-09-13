@@ -1,0 +1,87 @@
+name: Reusable Monorepo Setup
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '20'
+      pnpm-version:
+        required: false
+        type: string
+        default: '10.16.0'
+      run-install:
+        required: false
+        type: boolean
+        default: true
+      run-quality:
+        required: false
+        type: boolean
+        default: false
+      python-version:
+        required: false
+        type: string
+        default: ''
+      rust:
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      cache-hit:
+        description: 'Indicates if pnpm cache was restored'
+        value: ${{ jobs.setup.outputs.cache-hit }}
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ inputs.pnpm-version }}
+
+      - name: Derive store
+        id: store
+        shell: bash
+        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Cache pnpm store
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        if: inputs.run-install
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Python
+        if: inputs.python-version != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Setup Rust
+        if: inputs.rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Quality (optional)
+        if: inputs.run-quality
+        run: pnpm nx run-many -t biome lint typecheck --parallel

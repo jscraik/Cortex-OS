@@ -1,0 +1,95 @@
+name: Cortex Code Upstream Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: "Set to true to perform real sync (otherwise dry run)"
+        required: false
+        default: "false"
+  schedule:
+    - cron: '17 4 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git user
+        run: |
+          git config user.name "cortex-bot"
+          git config user.email "cortex-bot@users.noreply.github.com"
+
+      - name: Dry run sync
+        if: inputs.run != 'true'
+        run: |
+          bash scripts/sync-cortex-code.sh || true
+
+      - name: Perform sync
+        if: inputs.run == 'true'
+        run: |
+          bash scripts/sync-cortex-code.sh --run
+
+      - name: Parse crate summary
+        if: inputs.run == 'true'
+        id: crate_summary
+        run: |
+          if [ -f SYNC_CRATE_SUMMARY.json ]; then
+            echo "summary file present";
+          else
+            echo "SYNC_CRATE_SUMMARY.json missing" >&2; exit 0; fi
+          ADDED=$(jq -r '.added[]?' SYNC_CRATE_SUMMARY.json | tr '\n' ',' | sed 's/,$//')
+          REMOVED=$(jq -r '.removed[]?' SYNC_CRATE_SUMMARY.json | tr '\n' ',' | sed 's/,$//')
+            MODIFIED=$(jq -r '.modified[]?' SYNC_CRATE_SUMMARY.json | tr '\n' ',' | sed 's/,$//')
+          label_list="cortex-code,sync,dependencies"
+          added_count=$(jq '.added|length' SYNC_CRATE_SUMMARY.json)
+          removed_count=$(jq '.removed|length' SYNC_CRATE_SUMMARY.json)
+          modified_count=$(jq '.modified|length' SYNC_CRATE_SUMMARY.json)
+          loc_added=$(jq '.locAdded // 0' SYNC_CRATE_SUMMARY.json)
+          files_changed=$(jq '.filesChanged // 0' SYNC_CRATE_SUMMARY.json)
+          threshold_loc=${THRESHOLD_LOC_ADDED:-2000}
+          threshold_files=${THRESHOLD_FILES_CHANGED:-200}
+          if [ "$added_count" -gt 0 ]; then label_list="$label_list,crate-added"; fi
+          if [ "$removed_count" -gt 0 ]; then label_list="$label_list,crate-removed"; fi
+          if [ "$modified_count" -gt 0 ]; then label_list="$label_list,crate-modified"; fi
+          if [ "$loc_added" -gt "$threshold_loc" ] || [ "$files_changed" -gt "$threshold_files" ]; then
+            echo "::warning title=Large vendor sync::High churn detected: locAdded=$loc_added filesChanged=$files_changed thresholds loc=$threshold_loc files=$threshold_files"
+            label_list="$label_list,large-sync"
+          fi
+          echo "labels=$label_list" >> $GITHUB_OUTPUT
+          echo "added=$ADDED" >> $GITHUB_OUTPUT
+          echo "removed=$REMOVED" >> $GITHUB_OUTPUT
+          echo "modified=$MODIFIED" >> $GITHUB_OUTPUT
+
+      - name: Detect branch
+        id: detect_branch
+        run: |
+          BR=$(git branch --show-current)
+          echo "branch=$BR" >> $GITHUB_OUTPUT
+
+      - name: Create PR
+        if: inputs.run == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: ${{ steps.detect_branch.outputs.branch }}
+          title: "chore(cortex-code): automated upstream vendor sync"
+          commit-message: "chore(cortex-code): automated upstream vendor sync"
+          body: |
+            Automated sync of upstream codex Rust sources.
+
+            Trigger: ${{ github.event_name }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            Added crates: ${{ steps.crate_summary.outputs.added || 'none' }}
+            Removed crates: ${{ steps.crate_summary.outputs.removed || 'none' }}
+            Modified crates: ${{ steps.crate_summary.outputs.modified || 'none' }}
+          labels: ${{ steps.crate_summary.outputs.labels }}
+          signoff: false

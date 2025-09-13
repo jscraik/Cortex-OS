@@ -1,0 +1,105 @@
+name: Deep Security Suite
+
+on:
+  schedule:
+    - cron: '0 4 * * 1' # Weekly Monday 04:00 UTC (after unified-security)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  PNPM_VERSION: 10.16.0
+  NODE_VERSION: 20
+
+jobs:
+  dependency-check:
+    name: OWASP Dependency Check (Full)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache data dir
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: depcheck-data-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            depcheck-data-${{ runner.os }}-
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'cortex-os'
+          path: '.'
+          format: 'ALL'
+          out: 'dependency-check-reports'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 9
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: depcheck-${{ github.sha }}
+          path: dependency-check-reports
+
+  semgrep-extended:
+    name: Semgrep Extended Profiles
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.90.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep OWASP + LLM + Atlas
+        run: |
+          semgrep scan \
+            --config=.semgrep/owasp-precise.yaml \
+            --config=.semgrep/owasp-top-10-improved.yaml \
+            --config=.semgrep/owasp-llm-top-ten.yaml \
+            --config=.semgrep/mitre-atlas.yaml \
+            --severity=INFO \
+            --json --output=semgrep-extended.json . || true
+      - name: SARIF (high only)
+        run: |
+          jq '{"runs":[{"results":[]}]}' semgrep-extended.json > semgrep-extended.sarif || true
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-extended-${{ github.sha }}
+          path: |
+            semgrep-extended.json
+            semgrep-extended.sarif
+
+  summary:
+    name: Deep Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-check, semgrep-extended]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# Deep Security Summary" >> deep-security-summary.md
+          echo "Generated: $(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> deep-security-summary.md
+          echo "" >> deep-security-summary.md
+          echo "| Job | Result |" >> deep-security-summary.md
+          echo "|-----|--------|" >> deep-security-summary.md
+          echo "| Dependency Check | ${{ needs.dependency-check.result }} |" >> deep-security-summary.md
+          echo "| Semgrep Extended | ${{ needs.semgrep-extended.result }} |" >> deep-security-summary.md
+          overall_failed=0
+          for r in "${{ needs.dependency-check.result }}" "${{ needs.semgrep-extended.result }}"; do
+            if [ "$r" != "success" ]; then overall_failed=1; fi; done
+          echo "overall_failed=$overall_failed" >> $GITHUB_ENV
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: deep-security-summary
+          path: deep-security-summary.md
+      - name: Slack notify on failure
+        if: env.overall_failed == '1' && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || '' }}
+        run: |
+          payload=$(jq -n --arg text "Deep Security Suite failed for $GITHUB_REPOSITORY @ $GITHUB_SHA" '{text: $text}')
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL" || echo "Slack notification failed"

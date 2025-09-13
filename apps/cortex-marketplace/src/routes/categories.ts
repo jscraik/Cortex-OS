@@ -121,14 +121,14 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
 			const queryObj = _request.query as Record<string, unknown>;
 
 			const sortBy = queryObj.sortBy as string;
-			const validSortBy = ["relevance", "downloads", "rating", "updated"].includes(sortBy) 
-				? sortBy as "relevance" | "downloads" | "rating" | "updated" 
+			const validSortBy = ["relevance", "downloads", "rating", "updated"].includes(sortBy)
+				? sortBy as "relevance" | "downloads" | "rating" | "updated"
 				: "relevance";
 			const sortOrder = queryObj.sortOrder as string;
-			const validSortOrder = ["asc", "desc"].includes(sortOrder) 
-				? sortOrder as "asc" | "desc" 
+			const validSortOrder = ["asc", "desc"].includes(sortOrder)
+				? sortOrder as "asc" | "desc"
 				: "desc";
-			
+
 			const searchRequest = {
 				category,
 				limit: Number(queryObj.limit) || 20,

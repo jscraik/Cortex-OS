@@ -3,9 +3,9 @@
  * @description Integration tests for TDD implementation verification
  */
 
+import { ServerInfoSchema } from "@cortex-os/mcp-core/contracts";
 import os from "node:os";
 import path from "node:path";
-import { ServerInfoSchema } from "@cortex-os/mcp-core/contracts";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { MarketplaceConfig } from "./marketplace-client.js";
 import { MarketplaceClient } from "./marketplace-client.js";
@@ -75,7 +75,7 @@ describe("MCP Marketplace Integration", () => {
 			const result = await client.search(invalidRequest);
 			expect(result.success).toBe(false);
 			expect(result.success).toBe(true);
-		expect(result.data).toBeDefined();
+			expect(result.data).toBeDefined();
 		});
 	});
 

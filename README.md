@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable MD013 -->
 
-![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-20.x%20or%2022.x-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)
+![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg) ![Node.js Version](https://img.shields.io/badge/node-20.x%20or%2022.x-brightgreen) ![Package Manager](https://img.shields.io/badge/pnpm-10.3.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue) ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Test Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen) ![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green) ![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen) ![Smart Nx Mode](https://img.shields.io/badge/Smart%20Nx-Active-success)
 
 <!-- Future: replace static coverage badge with dynamic endpoint (GitHub Pages JSON endpoint reading reports/coverage-badge.json) -->
 
@@ -46,6 +46,70 @@ Agent-toolkit follows Cortex-OS principles:
 - **Event-driven**: A2A integration ready
 - **MCP compatible**: Tool exposure for agent consumption
 - **Layered design**: Clean domain/app/infra separation
+
+---
+
+## 🚀 Smart Nx Execution (Affected-Only)
+
+Use smart wrappers instead of blanket `run-many`:
+
+```bash
+pnpm build:smart       # affected build with base/head auto-detect
+pnpm test:smart        # affected test
+pnpm lint:smart        # affected lint
+pnpm typecheck:smart   # affected typecheck
+
+# Dry-run mode (preview affected projects without execution)
+pnpm build:smart --dry-run
+node scripts/nx-smart.mjs test --dry-run
+```
+
+Features:
+
+- Detects `base` / `head` via `NX_BASE`, `NX_HEAD` or previous commit fallback.
+- Preflight `nx print-affected` summary (fast fail + transparency).
+- Falls back to full run only if diff cannot be resolved (warns explicitly).
+- Emits: `[nx-smart] target=<t> base=<sha> head=<sha> changed=<n> strategy=affected|all`.
+
+Override interactive (rare / local only):
+
+```bash
+CORTEX_NX_INTERACTIVE=1 pnpm build:smart
+```
+
+## 🤖 Non-Interactive Nx Mode
+
+Default behavior sets `NX_INTERACTIVE=false` (and `CI=true` if unset) ensuring no prompts (no `h`/`q`).
+`--no-interactive` is applied only to Nx CLI – not forwarded to underlying tools (`tsc`, `vitest`, `tsup`).
+
+Why: deterministic CI logs, lower cognitive load for agents, consistent caching decisions.
+
+Diagnostics examples:
+
+```text
+[nx-smart] target=test base=<sha> head=<sha> changed=<n> strategy=affected
+```
+
+Dry-run output:
+
+```text
+📋 Affected Projects Summary:
+Target: build
+Base: origin/main
+Head: abc123
+Changed files: 15
+Affected projects: @cortex-os/agents, @cortex-os/mcp-core
+
+💡 To execute: pnpm build:smart
+```
+
+Fallback warning:
+
+```text
+[nx-smart][warn] unable to resolve git diff – falling back to full run-many
+```
+
+Add new automation using smart scripts rather than chaining raw `nx run-many`.
 
 ---
 
@@ -161,6 +225,7 @@ Full guide: [Python Integration](./docs/python-integration.md)
 - **[Testing Guide](./docs/testing.md)** – Strategies and practices
 - **[Contributing Guide](./CONTRIBUTING.md)** – How to contribute
 - **[Code of Conduct](./CODE_OF_CONDUCT.md)** – Community guidelines
+- **[Memory Tuning Guide](./docs/memory-tuning.md)** – Current temporary workspace memory mitigation
 
 ### 📖 Package Documentation
 
@@ -237,6 +302,85 @@ scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config fil
 
 > **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
 > and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
+
+---
+
+## 🔋 Memory Management & Agent Guidance
+
+This repository experienced a transient spike in memory usage during
+`pnpm install` and concurrent Nx tasks. A focused, reversible mitigation
+set is in place. Agents (LLMs, automation scripts) and developers must
+respect these constraints until the baseline is declared stable.
+
+### Implemented Mitigations (Active)
+
+| Layer | Change | File | Purpose | Revisit When |
+|-------|--------|------|---------|--------------|
+| pnpm  | `childConcurrency: 2` | `pnpm-workspace.yaml` | Limit simultaneous lifecycle scripts | After two stable low-RSS installs |
+| pnpm  | `useNodeVersion: 24.7.0`, `engineStrict: true` | `pnpm-workspace.yaml` | Avoid duplicate toolchains / watchers | If multi-version testing required |
+| Nx    | `parallel: 1`, `maxParallel: 1` | `nx.json` | Serialize heavy tasks to lower peak | When memory plateau acceptable |
+| Graph | Added `.nxignore` patterns | `.nxignore` | Reduce hashing + watcher churn | If excluded dirs become needed |
+| Tool  | Memory sampler script | `scripts/sample-memory.mjs` | Consistent RSS / heap telemetry | Likely keep (low overhead) |
+
+Full detail & rollback: **[Memory Tuning Guide](./docs/memory-tuning.md)**.
+
+### Required Behaviors (Agents & Devs)
+
+1. Do **not** raise Nx parallelism or remove `childConcurrency` without two
+  comparative sampler runs (before vs after).
+2. Always sample during bulk ops: `node scripts/sample-memory.mjs --tag <label> \
+  --out .memory/<label>.jsonl -- pnpm <command>`.
+3. Prefer incremental refactors—avoid unnecessary workspace-wide rebuilds.
+4. Large dependency PRs: include sampler diff (pre/post install) + rationale.
+5. Agents must use `@cortex-os/agent-toolkit` `multiSearch` instead of raw
+  recursive greps to minimize IO storms.
+
+### Quick Sampling Examples
+
+Install (cold):
+
+```bash
+rm -rf node_modules .pnpm-store
+node scripts/sample-memory.mjs --tag install-cold --interval 1500 --out .memory/install-cold.jsonl -- pnpm install
+```
+
+Focused build:
+
+```bash
+node scripts/sample-memory.mjs --tag build --interval 2000 --out .memory/build.jsonl -- pnpm nx run cortex-os:build
+```
+
+Tail peak candidate:
+
+```bash
+awk '{print $0}' .memory/build.jsonl | jq '.rssMB' | sort -n | tail -1
+```
+
+### Escalation Criteria
+
+Open an issue titled `perf(memory): escalation` if ANY:
+
+- Peak RSS > 2.5x baseline after a small dependency addition
+- Sustained upward drift across three comparable runs
+- Install > 15 min wall time with unchanged dependency graph
+
+### Rollback (Condensed)
+
+See full guide, but nominally:
+
+```bash
+sed -i.bak 's/"parallel": 1/"parallel": 2/' nx.json
+sed -i.bak 's/"maxParallel": 1/"maxParallel": 2/' nx.json
+# Edit pnpm-workspace.yaml to remove childConcurrency/useNodeVersion/engineStrict if justified
+```
+
+### Future (Optional)
+
+- Add automated peak parser to CI summary
+- Enforce memory budget via sentinel script (fail if > threshold)
+- Integrate flamegraphs for largest builds
+
+---
 
 ### 🛡️ Code Quality & Security Automation
 

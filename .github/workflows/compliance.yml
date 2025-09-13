@@ -1,9 +1,8 @@
-name: Compliance
+name: Compliance (LEGACY - Consolidated)
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  # Disabled, compliance integrated into CI + unified security.
+  workflow_dispatch:
 
 jobs:
   compliance:

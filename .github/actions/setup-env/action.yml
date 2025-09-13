@@ -1,0 +1,99 @@
+name: "Setup Monorepo Environment"
+description: "Checkout, setup Node & pnpm with cache, and optional Python/Rust toolchains for Cortex-OS"
+inputs:
+  node-version:
+    description: "Node.js version to use"
+    required: false
+    default: "20"
+  pnpm-version:
+    description: "pnpm version to install"
+    required: false
+    default: "10.16.0"
+  install:
+    description: "Whether to run pnpm install --frozen-lockfile"
+    required: false
+    default: "true"
+  fetch-depth:
+    description: "git fetch-depth for checkout"
+    required: false
+    default: "0"
+  python-version:
+    description: "Optional Python version (empty to skip)"
+    required: false
+    default: ""
+  rust:
+    description: "Install Rust toolchain (true/false)"
+    required: false
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: "pnpm"
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+
+    - name: Derive pnpm store path
+      id: pnpm-store
+      shell: bash
+      run: echo "store=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+    - name: Cache pnpm store
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.pnpm-store.outputs.store }}
+        key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-
+
+    - name: Setup Python
+      if: inputs.python-version != ''
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Cache uv environment
+      if: inputs.python-version != ''
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/uv
+          ~/.local/share/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
+    - name: Install uv (Python project manager) if Python requested
+      if: inputs.python-version != ''
+      shell: bash
+      run: |
+        pip install --upgrade pip
+        pip install uv || true
+
+    - name: Install Rust toolchain
+      if: inputs.rust == 'true'
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: pnpm install
+      if: inputs.install == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: Show tool versions
+      shell: bash
+      run: |
+        node -v
+        pnpm -v
+        if command -v python >/dev/null 2>&1; then python --version; fi
+        if command -v rustc  >/dev/null 2>&1; then rustc -V; fi
