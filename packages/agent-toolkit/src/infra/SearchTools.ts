@@ -21,9 +21,9 @@ export class RipgrepTool extends Tool {
 
   async execute(input: AgentToolkitSearchInput, _context?: ToolExecutionContext): Promise<AgentToolkitSearchResult> {
     const validatedInput = this.validateInput(input);
-    
+
     await this.adapter['validateScript']();
-    
+
     const result = await this.adapter['executeScript']([
       validatedInput.pattern,
       validatedInput.path,
@@ -80,9 +80,9 @@ export class SemgrepTool extends Tool {
 
   async execute(input: AgentToolkitSearchInput, context?: ToolExecutionContext): Promise<AgentToolkitSearchResult> {
     const validatedInput = this.validateInput(input);
-    
+
     await this.adapter['validateScript']();
-    
+
     const result = await this.adapter['executeScript']([
       validatedInput.pattern,
       validatedInput.path,
@@ -138,9 +138,9 @@ export class AstGrepTool extends Tool {
 
   async execute(input: AgentToolkitSearchInput, context?: ToolExecutionContext): Promise<AgentToolkitSearchResult> {
     const validatedInput = this.validateInput(input);
-    
+
     await this.adapter['validateScript']();
-    
+
     const result = await this.adapter['executeScript']([
       validatedInput.pattern,
       validatedInput.path,

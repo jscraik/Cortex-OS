@@ -305,4 +305,21 @@ pnpm structure:validate
 pnpm security:scan:diff
 ```
 
+## Agent Toolkit Integration (MANDATORY)
+
+All code search, codemod, and validation operations in Cortex-OS **must** use the `agent-toolkit` package. This ensures contract-driven, event-ready, and uniform tooling across the monorepo.
+
+- **Do not** use raw grep, sed, or ad-hoc scripts for these operations.
+- Use the provided `pnpm` scripts (e.g., `pnpm lint`, `pnpm biome:staged`, `pnpm test`, `pnpm docs:lint`) and `just` recipes (`just scout`, `just codemod`, `just verify`) which invoke agent-toolkit under the hood.
+- The agent-toolkit is required for:
+  1. Code Search Operations (multi-tool, cross-language)
+  2. Structural Modifications (codemods, refactors)
+  3. Quality Validation (pre-commit, CI, and PR checks)
+  4. Cross-Language Tasks (TypeScript, Python, Rust)
+  5. Pre-Commit Workflows (automated validation pipelines)
+
+**Rationale:** This enforces monorepo uniformity, contract-first development, and high code quality. All agents and developers must comply.
+
+See `AGENTS.md` and `.github/copilot-instructions.md` for full details and usage patterns.
+
 This document should be updated as new patterns emerge and should be referenced during code reviews to maintain consistency across the codebase.
