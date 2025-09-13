@@ -37,6 +37,7 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 				},
 			},
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		async (_request, _reply) => {
 			const registries = await fastify.registryService.listRegistries();
 
@@ -94,7 +95,7 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 			},
 		},
 		async (_request, _reply) => {
-			const { name } = request.params as { name: string };
+			const { name } = _request.params as { name: string };
 
 			try {
 				const status = await fastify.registryService.getRegistryStatus(name);
@@ -105,7 +106,7 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 				};
 			} catch (error) {
 				if (error instanceof Error && error.message.includes("not found")) {
-					return reply.status(404).send({
+					return _reply.status(404).send({
 						success: false,
 						error: {
 							code: "REGISTRY_NOT_FOUND",
@@ -141,11 +142,18 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 							message: { type: "string" },
 						},
 					},
+					404: {
+						type: "object", 
+						properties: {
+							error: { type: "string" },
+							code: { type: "string" },
+						},
+					},
 				},
 			},
 		},
 		async (_request, _reply) => {
-			const { name } = request.params as { name: string };
+			const { name } = _request.params as { name: string };
 
 			try {
 				await fastify.registryService.refreshRegistry(name);
@@ -156,7 +164,7 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 				};
 			} catch (error) {
 				if (error instanceof Error && error.message.includes("not found")) {
-					return reply.status(404).send({
+					return _reply.status(404).send({
 						success: false,
 						error: {
 							code: "REGISTRY_NOT_FOUND",
@@ -192,32 +200,31 @@ export async function registryRoutes(fastify: FastifyInstance): Promise<void> {
 							},
 						},
 					},
+					500: {
+						type: "object",
+						properties: {
+							error: { type: "string" },
+							code: { type: "string" },
+						},
+					},
 				},
 			},
 		},
 		async (_request, _reply) => {
-			const registryNames = Object.keys(
-				fastify.registryService.config.registries,
-			);
-			const results = { refreshed: [] as string[], failed: [] as string[] };
-
-			await Promise.allSettled(
-				registryNames.map(async (name) => {
-					try {
-						await fastify.registryService.refreshRegistry(name);
-						results.refreshed.push(name);
-					} catch (error) {
-						results.failed.push(name);
-						fastify.log.error(`Failed to refresh registry ${name}:`, error);
-					}
-				}),
-			);
-
-			return {
-				success: true,
-				message: `Refreshed ${results.refreshed.length} of ${registryNames.length} registries`,
-				results,
-			};
+			try {
+				const registries = await fastify.registryService.listRegistries();
+				await fastify.registryService.refreshAll();
+				return {
+					success: true,
+					message: `Refreshed all ${registries.length} registries`,
+				};
+			} catch (error) {
+				fastify.log.error(`Failed to refresh registries: ${error instanceof Error ? error.message : String(error)}`);
+				return _reply.status(500).send({
+					error: 'Failed to refresh registries',
+					code: 'REFRESH_FAILED',
+				});
+			}
 		},
 	);
 }

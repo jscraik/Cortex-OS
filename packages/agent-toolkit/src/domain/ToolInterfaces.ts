@@ -5,7 +5,7 @@ import type {
 	AgentToolkitSearchResult,
 	AgentToolkitValidationInput,
 	AgentToolkitValidationResult,
-} from '@cortex-os/contracts/agent-toolkit';
+} from '@cortex-os/contracts';
 
 /**
  * Search tool interface for code search operations

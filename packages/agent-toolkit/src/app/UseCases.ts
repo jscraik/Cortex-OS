@@ -1,14 +1,16 @@
 import type {
+	AgentToolkitCodemodInput,
 	AgentToolkitInput,
 	AgentToolkitResult,
-	AgentToolkitCodemodInput,
 	AgentToolkitSearchInput,
 	AgentToolkitValidationInput,
 } from '@cortex-os/contracts/agent-toolkit';
 import type {
-	ToolRegistry,
-} from '../domain/ToolInterfaces.js';
-import type { ToolExecutor, ToolExecutionContext, ToolExecutionEvents } from '../domain/ToolExecutor.js';
+	ToolExecutionContext,
+	ToolExecutionEvents,
+	ToolExecutor,
+} from '../domain/ToolExecutor.js';
+import type { ToolRegistry } from '../domain/ToolInterfaces.js';
 
 /**
  * Main use case for executing agent toolkit tools
@@ -19,7 +21,10 @@ export class ToolExecutorUseCase implements ToolExecutor {
 		private readonly events?: ToolExecutionEvents,
 	) {}
 
-	async execute(toolName: string, inputs: AgentToolkitInput): Promise<AgentToolkitResult> {
+	async execute(
+		toolName: string,
+		inputs: AgentToolkitInput,
+	): Promise<AgentToolkitResult> {
 		const context: ToolExecutionContext = {
 			toolId: `${toolName}-${Date.now()}`,
 			requestedBy: 'agent-toolkit',
@@ -79,15 +84,21 @@ export class ToolExecutorUseCase implements ToolExecutor {
 		return [...tools.search, ...tools.codemod, ...tools.validation];
 	}
 
-	private isSearchInput(inputs: AgentToolkitInput): inputs is AgentToolkitSearchInput {
+	private isSearchInput(
+		inputs: AgentToolkitInput,
+	): inputs is AgentToolkitSearchInput {
 		return 'pattern' in inputs && 'path' in inputs;
 	}
 
-	private isCodemodInput(inputs: AgentToolkitInput): inputs is AgentToolkitCodemodInput {
+	private isCodemodInput(
+		inputs: AgentToolkitInput,
+	): inputs is AgentToolkitCodemodInput {
 		return 'find' in inputs && 'replace' in inputs && 'path' in inputs;
 	}
 
-	private isValidationInput(inputs: AgentToolkitInput): inputs is AgentToolkitValidationInput {
+	private isValidationInput(
+		inputs: AgentToolkitInput,
+	): inputs is AgentToolkitValidationInput {
 		return 'files' in inputs && Array.isArray(inputs.files);
 	}
 }
@@ -134,7 +145,10 @@ export class CodeSearchUseCase {
 	/**
 	 * Multi-tool search: searches using ripgrep, semgrep, and ast-grep
 	 */
-	async multiSearch(pattern: string, path: string): Promise<{
+	async multiSearch(
+		pattern: string,
+		path: string,
+	): Promise<{
 		ripgrep: AgentToolkitResult;
 		semgrep: AgentToolkitResult;
 		astGrep: AgentToolkitResult;
@@ -153,7 +167,10 @@ export class CodeSearchUseCase {
 	/**
 	 * Smart search: tries multiple tools and returns the first successful result
 	 */
-	async smartSearch(pattern: string, path: string): Promise<AgentToolkitResult> {
+	async smartSearch(
+		pattern: string,
+		path: string,
+	): Promise<AgentToolkitResult> {
 		const searchInput: AgentToolkitSearchInput = { pattern, path };
 		const tools = ['ripgrep', 'semgrep', 'ast-grep'];
 
@@ -163,10 +180,7 @@ export class CodeSearchUseCase {
 				if (result.results && result.results.length > 0) {
 					return result;
 				}
-			} catch {
-				// Continue to next tool on error
-				continue;
-			}
+			} catch {}
 		}
 
 		// If all tools failed or returned no results
@@ -205,14 +219,16 @@ export class CodeQualityUseCase {
 		let totalIssues = 0;
 
 		// Categorize files by type
-		const jsFiles = files.filter(f => f.match(/\.(ts|tsx|js|jsx)$/));
-		const pyFiles = files.filter(f => f.match(/\.py$/));
-		const rsFiles = files.filter(f => f.match(/\.rs$/));
+		const jsFiles = files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/));
+		const pyFiles = files.filter((f) => f.match(/\.py$/));
+		const rsFiles = files.filter((f) => f.match(/\.rs$/));
 
 		// Run appropriate validators
 		if (jsFiles.length > 0) {
 			try {
-				const result = await this.toolExecutor.execute('eslint', { files: jsFiles });
+				const result = await this.toolExecutor.execute('eslint', {
+					files: jsFiles,
+				});
 				results.eslint = result;
 				toolsRun.push('eslint');
 				totalIssues += result.results?.length || 0;
@@ -223,7 +239,9 @@ export class CodeQualityUseCase {
 
 		if (pyFiles.length > 0) {
 			try {
-				const result = await this.toolExecutor.execute('ruff', { files: pyFiles });
+				const result = await this.toolExecutor.execute('ruff', {
+					files: pyFiles,
+				});
 				results.ruff = result;
 				toolsRun.push('ruff');
 				totalIssues += result.results?.length || 0;
@@ -234,7 +252,10 @@ export class CodeQualityUseCase {
 
 		if (rsFiles.length > 0) {
 			try {
-				const result = await this.toolExecutor.execute('cargo', validationInput);
+				const result = await this.toolExecutor.execute(
+					'cargo',
+					validationInput,
+				);
 				results.cargo = result;
 				toolsRun.push('cargo');
 				totalIssues += result.results?.length || 0;

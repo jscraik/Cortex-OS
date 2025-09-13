@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import type { Embedder, Store } from "@cortex-os/rag/lib/types";
 
 interface EvalOptions {
 	dataset: string;
@@ -36,24 +37,23 @@ export const ragEval = new Command("eval")
 		);
 		const { memoryStore } = await import("@cortex-os/rag/store/memory");
 
-		// Simple static embedder for offline eval consistency unless an endpoint is provided later.
-		const E = {
-			embed: async (texts: string[]) => texts.map((t) => [t.length, 0, 0]),
+		// Simple static embedder for offline eval consistency
+		const E: Embedder = {
+			embed: async (texts: string[]): Promise<number[][]> => 
+				texts.map((t) => [t.length, 0, 0]),
 		};
-		const S = memoryStore();
+		const S: Store = memoryStore();
 
 		const datasetPath = path.resolve(String(opts.dataset));
 		const raw = await fs.readFile(datasetPath, "utf8");
 		const dataset = JSON.parse(raw);
 
-		// Type assertions needed for embedder interface compatibility
-		// biome-ignore lint/suspicious/noExplicitAny: Required for embedder API
-		await prepareStore(dataset, E as any, S as any);
+		// Prepare store and run evaluation with properly typed interfaces
+		await prepareStore(dataset, E, S);
 		const summary = await runRetrievalEval(
 			dataset,
-			// biome-ignore lint/suspicious/noExplicitAny: Required for embedder API
-			E as any,
-			S as unknown,
+			E,
+			S,
 			{ k },
 		);
 

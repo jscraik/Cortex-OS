@@ -1,57 +1,53 @@
 // Domain exports
-export type {
-	ToolExecutor,
-	ToolExecutionContext,
-	ToolExecutionEvents,
-} from './domain/ToolExecutor.js';
-
-export type {
-	SearchTool,
-	CodemodTool,
-	ValidationTool,
-	ToolRegistry,
-} from './domain/ToolInterfaces.js';
-
-// Application layer exports
-export {
-	ToolExecutorUseCase,
-	BatchToolExecutorUseCase,
-	CodeSearchUseCase,
-	CodeQualityUseCase,
-} from './app/UseCases.js';
 
 export { DefaultToolRegistry } from './app/ToolRegistry.js';
-
+// Application layer exports
+export {
+	BatchToolExecutorUseCase,
+	CodeQualityUseCase,
+	CodeSearchUseCase,
+	ToolExecutorUseCase,
+} from './app/UseCases.js';
+export type {
+	ToolExecutionContext,
+	ToolExecutionEvents,
+	ToolExecutor,
+} from './domain/ToolExecutor.js';
+export type {
+	CodemodTool,
+	SearchTool,
+	ToolRegistry,
+	ValidationTool,
+} from './domain/ToolInterfaces.js';
+export { CombyAdapter } from './infra/CodemodAdapters.js';
 // Infrastructure adapters
 export {
+	AstGrepAdapter,
 	RipgrepAdapter,
 	SemgrepAdapter,
-	AstGrepAdapter,
 } from './infra/SearchAdapters.js';
 
-export { CombyAdapter } from './infra/CodemodAdapters.js';
-
 export {
-	ESLintAdapter,
-	RuffAdapter,
 	CargoAdapter,
-	AutoValidatorAdapter,
+	ESLintAdapter,
+	MultiValidatorAdapter,
+	RuffAdapter,
 } from './infra/ValidationAdapters.js';
 
 // Convenience factory function
 import { DefaultToolRegistry } from './app/ToolRegistry.js';
 import { ToolExecutorUseCase } from './app/UseCases.js';
-import {
-	RipgrepAdapter,
-	SemgrepAdapter,
-	AstGrepAdapter,
-} from './infra/SearchAdapters.js';
 import { CombyAdapter } from './infra/CodemodAdapters.js';
 import {
-	ESLintAdapter,
-	RuffAdapter,
+	AstGrepAdapter,
+	RipgrepAdapter,
+	SemgrepAdapter,
+} from './infra/SearchAdapters.js';
+import {
 	CargoAdapter,
-	AutoValidatorAdapter,
+	ESLintAdapter,
+	MultiValidatorAdapter,
+	RuffAdapter,
 } from './infra/ValidationAdapters.js';
 
 /**
@@ -72,7 +68,10 @@ export function createAgentToolkit(toolsPath?: string) {
 	registry.registerValidationTool('eslint', new ESLintAdapter(toolsPath));
 	registry.registerValidationTool('ruff', new RuffAdapter(toolsPath));
 	registry.registerValidationTool('cargo', new CargoAdapter(toolsPath));
-	registry.registerValidationTool('auto-validator', new AutoValidatorAdapter(toolsPath));
+	registry.registerValidationTool(
+		'multi-validator',
+		new MultiValidatorAdapter(toolsPath),
+	);
 
 	const executor = new ToolExecutorUseCase(registry);
 
@@ -87,7 +86,7 @@ export function createAgentToolkit(toolsPath?: string) {
 		codemod: (find: string, replace: string, path: string) =>
 			executor.execute('comby', { find, replace, path }),
 		validate: (files: string[]) =>
-			executor.execute('auto-validator', { files }),
+			executor.execute('multi-validator', { files }),
 		validateProject: (files: string[]) =>
 			new CodeQualityUseCase(executor).validateProject(files),
 	};

@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DefaultToolRegistry } from '../app/ToolRegistry.js';
-import {
-	CodeQualityUseCase,
-	CodeSearchUseCase,
-	ToolExecutorUseCase,
-} from '../app/UseCases.js';
+import { CodeSearchUseCase, ToolExecutorUseCase } from '../app/UseCases.js';
 import { createAgentToolkit } from '../index.js';
 import { CombyAdapter } from '../infra/CodemodAdapters.js';
 import { RipgrepAdapter } from '../infra/SearchAdapters.js';
+import { MultiValidatorAdapter } from '../infra/ValidationAdapters.js';
 
 describe('Agent Toolkit Integration', () => {
 	let registry: DefaultToolRegistry;
@@ -31,8 +28,8 @@ describe('Agent Toolkit Integration', () => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
 			registry.registerValidationTool(
-				'auto-validator',
-				new AutoValidatorAdapter(),
+				'multi-validator',
+				new MultiValidatorAdapter(),
 			);
 
 			const tools = registry.listTools();
@@ -47,8 +44,8 @@ describe('Agent Toolkit Integration', () => {
 			registry.registerSearchTool('ripgrep', new RipgrepAdapter());
 			registry.registerCodemodTool('comby', new CombyAdapter());
 			registry.registerValidationTool(
-				'auto-validator',
-				new AutoValidatorAdapter(),
+				'multi-validator',
+				new MultiValidatorAdapter(),
 			);
 		});
 
@@ -120,10 +117,10 @@ describe('Agent Toolkit Integration', () => {
 			expect(typeof toolkit.validate).toBe('function');
 		});
 
-		it('should provide convenience methods', async () => {
+		it('should provide convenience methods', () => {
 			const toolkit = createAgentToolkit();
 
-			// These will likely fail in test environment, but we can check they exist
+			// These are just function type checks, not execution
 			expect(typeof toolkit.search).toBe('function');
 			expect(typeof toolkit.multiSearch).toBe('function');
 			expect(typeof toolkit.codemod).toBe('function');
@@ -132,22 +129,11 @@ describe('Agent Toolkit Integration', () => {
 		});
 	});
 
-	describe('CodeQualityUseCase', () => {
-		let _codeQuality: CodeQualityUseCase;
-
-		beforeEach(() => {
-			registry.registerValidationTool(
-				'auto-validator',
-				new AutoValidatorAdapter(),
-			);
-			_codeQuality = new CodeQualityUseCase(executor);
-		});
-
-		it('should categorize files correctly', async () => {
+	describe('File categorization', () => {
+		it('should categorize files correctly', () => {
 			const files = ['test.ts', 'script.js', 'main.py', 'lib.rs'];
 
-			// This will likely fail in test environment due to shell script dependencies
-			// but we can test the file categorization logic by mocking
+			// Test file categorization logic
 			expect(files.filter((f) => f.match(/\.(ts|tsx|js|jsx)$/))).toHaveLength(
 				2,
 			);

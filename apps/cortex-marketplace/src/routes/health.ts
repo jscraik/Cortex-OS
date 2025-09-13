@@ -125,7 +125,8 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 				const healthyRegistries = registries.filter((r) => r.healthy);
 				checks.registries = healthyRegistries.length > 0;
 				if (!checks.registries) allReady = false;
-			} catch (_error) {
+			} catch {
+				fastify.log.error('Registry health check failed');
 				checks.registries = false;
 				allReady = false;
 			}
@@ -138,7 +139,7 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
 
 			const status = allReady ? 200 : 503;
 
-			return reply.status(status).send({
+			return _reply.status(status).send({
 				ready: allReady,
 				checks,
 			});

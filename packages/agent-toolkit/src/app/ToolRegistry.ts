@@ -1,8 +1,8 @@
 import type {
-	SearchTool,
 	CodemodTool,
-	ValidationTool,
+	SearchTool,
 	ToolRegistry,
+	ValidationTool,
 } from '../domain/ToolInterfaces.js';
 
 /**

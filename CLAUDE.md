@@ -292,3 +292,52 @@ Always escalate ambiguities via PR description comments rather than making assum
 ## Agent Toolkit
 
 Use `agent-toolkit` wrappers for code search, structural rewrites, diff review and validation. Commands include `just scout` and `just codemod`; validate with `tools/run_validators.sh` before committing.
+
+## 🔧 Agent Toolkit Integration
+
+The `packages/agent-toolkit` provides a unified interface for development tools essential for maintaining monorepo uniformity and code quality. This toolkit is **mandatory** for agents performing code analysis, modification, or validation tasks.
+
+### When to Use Agent-Toolkit
+
+**REQUIRED for:**
+- Code search operations (pattern matching, AST queries)
+- Structural code modifications (refactoring, codemods)
+- Code quality validation (linting, type checking)
+- Pre-commit validation workflows
+- Cross-language development tasks
+
+**Key Operations:**
+```typescript
+import { createAgentToolkit } from '@cortex-os/agent-toolkit';
+
+const toolkit = createAgentToolkit();
+// Multi-tool search for comprehensive coverage
+await toolkit.multiSearch('pattern', './src');
+// Structural code modifications
+await toolkit.codemod('find(:[x])', 'replace(:[x])', './src');
+// Project-wide validation
+await toolkit.validateProject(['*.ts', '*.js', '*.py']);
+```
+
+**Shell Interface:**
+- `just scout "pattern" path` - Multi-tool search (ripgrep + semgrep + ast-grep)
+- `just codemod 'find' 'replace' path` - Structural modifications via Comby
+- `just verify changed.txt` - Auto-validation based on file extensions
+
+### Architecture Integration
+
+Agent-toolkit follows Cortex-OS architectural principles:
+- **Contract-first**: Zod schemas in `libs/typescript/contracts`
+- **Layered design**: domain/app/infra separation
+- **Event-driven**: Ready for A2A integration
+- **MCP compatible**: Tool exposure for agent consumption
+
+### Compliance Requirements
+
+All agents MUST use agent-toolkit for:
+1. **Code Search**: Instead of raw `grep`/`rg` commands
+2. **Code Modification**: Instead of direct file editing for structural changes
+3. **Quality Validation**: Before any code commits or PRs
+4. **Cross-language Tasks**: Unified interface across TypeScript, Python, Rust
+
+This ensures consistent tooling, proper error handling, and maintained code quality across the entire monorepo.

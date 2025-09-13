@@ -186,7 +186,7 @@ export class RealPRPExecutor implements PRPExecutor {
 			requirements: [],
 		};
 		const result = await this.orchestrator.executePRPCycle(blueprint);
-		const content = String(result.outputs['simple'] ?? '');
+		const content = String(result.outputs.simple ?? '');
 		return { content: `PRP: ${content}` };
 	}
 }

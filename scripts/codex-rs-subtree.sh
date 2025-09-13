@@ -22,19 +22,14 @@ USAGE
 }
 
 require_subtree() {
-  set +e  # Temporarily disable exit on error
-  git subtree >/dev/null 2>&1
-  local exit_code=$?
-  set -e  # Re-enable exit on error
-  # Exit code 129 means usage error, which is expected for `git subtree` with no args
-  if [[ $exit_code -ne 129 ]] && [[ $exit_code -ne 0 ]]; then
+  if ! git subtree --help >/dev/null 2>&1; then
     echo "git subtree not available. Install a recent Git with subtree support." >&2
     exit 1
   fi
 }
 
 split_update() {
-  git -C "$UPSTREAM_REPO_PATH" fetch origin --prune --tags || true
+  git -C "$UPSTREAM_REPO_PATH" fetch origin --prune --tags -q
   # Create/refresh a split branch inside the upstream repo for codex-rs
   git -C "$UPSTREAM_REPO_PATH" branch -D "$SPLIT_BRANCH" 2>/dev/null || true
   (cd "$UPSTREAM_REPO_PATH" && git subtree split --prefix=codex-rs "$UPSTREAM_BRANCH" -b "$SPLIT_BRANCH")

@@ -41,6 +41,7 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
 				},
 			},
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		async (_request, _reply) => {
 			const categories = await fastify.marketplaceService.getCategories();
 
@@ -114,16 +115,26 @@ export async function categoryRoutes(fastify: FastifyInstance): Promise<void> {
 				},
 			},
 		},
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		async (_request, _reply) => {
-			const { category } = request.params as { category: string };
-			const query = request.query as unknown;
+			const { category } = _request.params as { category: string };
+			const queryObj = _request.query as Record<string, unknown>;
 
+			const sortBy = queryObj.sortBy as string;
+			const validSortBy = ["relevance", "downloads", "rating", "updated"].includes(sortBy) 
+				? sortBy as "relevance" | "downloads" | "rating" | "updated" 
+				: "relevance";
+			const sortOrder = queryObj.sortOrder as string;
+			const validSortOrder = ["asc", "desc"].includes(sortOrder) 
+				? sortOrder as "asc" | "desc" 
+				: "desc";
+			
 			const searchRequest = {
 				category,
-				limit: query.limit || 20,
-				offset: query.offset || 0,
-				sortBy: query.sortBy || "relevance",
-				sortOrder: query.sortOrder || "desc",
+				limit: Number(queryObj.limit) || 20,
+				offset: Number(queryObj.offset) || 0,
+				sortBy: validSortBy,
+				sortOrder: validSortOrder,
 			};
 
 			const result = await fastify.marketplaceService.search(searchRequest);

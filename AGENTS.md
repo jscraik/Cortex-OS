@@ -60,7 +60,46 @@ Code path:
 
 Privacy note: follow `.cortex/rules/RULES_OF_AI.md` — avoid storing secrets or personal data without consent; prefer encryption where applicable.
 
-## Agent Toolkit
+## 🔧 Agent Toolkit (MANDATORY)
 
-Agents should leverage scripts in `agent-toolkit/tools` for code search, structural rewrites, diff review and validation. Use `just` recipes (`just scout`, `just codemod`, `just verify`) or call the wrappers directly. Run standard checks (`pnpm biome:staged`, `pnpm lint`, `pnpm test`, `pnpm docs:lint`) alongside these tools.
+The `packages/agent-toolkit` provides a **unified, contract-driven interface** for all development  
+operations. This toolkit is **REQUIRED** for maintaining monorepo uniformity and code quality.
 
+### Core Integration Pattern
+
+```typescript
+import { createAgentToolkit } from '@cortex-os/agent-toolkit';
+
+const toolkit = createAgentToolkit();
+// Use TypeScript interface for programmatic access
+await toolkit.multiSearch('pattern', './src');
+await toolkit.validateProject(['*.ts', '*.py', '*.rs']);
+```
+
+### Shell Interface (Just Recipes)
+
+- `just scout "pattern" path` - Multi-tool search (ripgrep + semgrep + ast-grep)
+- `just codemod 'find(:[x])' 'replace(:[x])' path` - Structural modifications
+- `just verify changed.txt` - Auto-validation based on file types
+
+### When Agents MUST Use Agent-Toolkit
+
+1. **Code Search Operations** - Instead of raw grep/rg commands
+2. **Structural Modifications** - For any refactoring or codemod operations  
+3. **Quality Validation** - Before commits, PRs, or code changes
+4. **Cross-Language Tasks** - Unified interface for TypeScript/Python/Rust
+5. **Pre-Commit Workflows** - Automated validation pipelines
+
+### Architecture Compliance
+
+Agent-toolkit follows Cortex-OS principles:
+
+- **Contract-first**: Zod schemas ensure type safety
+- **Event-driven**: A2A integration ready
+- **MCP compatible**: Tool exposure for agent consumption
+- **Layered design**: Clean domain/app/infra separation
+
+**Legacy Note**: Agents should leverage scripts in `agent-toolkit/tools` for code search, structural  
+rewrites, diff review and validation. Use `just` recipes (`just scout`, `just codemod`, `just verify`)  
+or call the wrappers directly. Run standard checks (`pnpm biome:staged`, `pnpm lint`, `pnpm test`,  
+`pnpm docs:lint`) alongside these tools.
