@@ -78,7 +78,7 @@ export class SemgrepTool extends Tool {
     })();
   }
 
-  async execute(input: SearchInput, context?: ToolExecutionContext): Promise<SearchResult> {
+  async execute(input: AgentToolkitSearchInput, context?: ToolExecutionContext): Promise<AgentToolkitSearchResult> {
     const validatedInput = this.validateInput(input);
     
     await this.adapter['validateScript']();
@@ -94,11 +94,11 @@ export class SemgrepTool extends Tool {
       inputs: validatedInput,
     };
 
-    return searchResultSchema.parse(enrichedResult);
+    return AgentToolkitSearchResultSchema.parse(enrichedResult);
   }
 
-  validateInput(input: unknown): SearchInput {
-    return searchInputSchema.parse(input);
+  validateInput(input: unknown): AgentToolkitSearchInput {
+    return AgentToolkitSearchInputSchema.parse(input);
   }
 
   protected getInputSchema(): Record<string, unknown> {
@@ -136,7 +136,7 @@ export class AstGrepTool extends Tool {
     })();
   }
 
-  async execute(input: SearchInput, context?: ToolExecutionContext): Promise<SearchResult> {
+  async execute(input: AgentToolkitSearchInput, context?: ToolExecutionContext): Promise<AgentToolkitSearchResult> {
     const validatedInput = this.validateInput(input);
     
     await this.adapter['validateScript']();
@@ -152,11 +152,11 @@ export class AstGrepTool extends Tool {
       inputs: validatedInput,
     };
 
-    return searchResultSchema.parse(enrichedResult);
+    return AgentToolkitSearchResultSchema.parse(enrichedResult);
   }
 
-  validateInput(input: unknown): SearchInput {
-    return searchInputSchema.parse(input);
+  validateInput(input: unknown): AgentToolkitSearchInput {
+    return AgentToolkitSearchInputSchema.parse(input);
   }
 
   protected getInputSchema(): Record<string, unknown> {
