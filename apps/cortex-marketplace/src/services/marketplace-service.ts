@@ -3,7 +3,16 @@
  * @description Core business logic for marketplace operations
  */
 
-import type { ServerManifest } from "@cortex-os/mcp-registry";
+// Local type definitions for mcp-registry (to avoid import path issues)
+interface ServerManifest {
+	id: string;
+	name: string;
+	description?: string;
+	tags?: string[];
+	transports: Record<string, unknown>;
+}
+
+// import type { ServerManifest } from "../../packages/mcp-registry/dist/types";
 import { z } from "zod";
 import { DEFAULT_LIMIT, MAX_LIMIT } from "../constants.js";
 import type { RegistryService } from "./registry-service.js";
@@ -111,7 +120,7 @@ export class MarketplaceService {
                                                 server.name.toLowerCase().includes(query) ||
                                                 server.description.toLowerCase().includes(query) ||
                                                 server.id.toLowerCase().includes(query) ||
-                                                server.tags?.some((tag) =>
+                                                server.tags?.some((tag: string) =>
                                                         tag.toLowerCase().includes(query),
                                                 );
 
@@ -300,7 +309,7 @@ export class MarketplaceService {
                                 server.name.toLowerCase().includes(query) ||
                                 server.description.toLowerCase().includes(query) ||
                                 server.id.toLowerCase().includes(query) ||
-                                server.tags?.some((tag) => tag.toLowerCase().includes(query));
+                                server.tags?.some((tag: string) => tag.toLowerCase().includes(query));
                         if (!matches) {
                                 return false;
                         }
@@ -343,8 +352,8 @@ export class MarketplaceService {
                         if (
                                 !(
                                         server.tags &&
-                                        request.tags.some((tag) =>
-                                                server.tags?.some((serverTag) =>
+                                        request.tags.some((tag: string) =>
+                                                server.tags?.some((serverTag: string) =>
                                                         serverTag.toLowerCase().includes(tag.toLowerCase()),
                                                 ),
                                         )

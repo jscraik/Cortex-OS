@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { EvaluationNode } from '../nodes/index.js';
+import { EvaluationNode } from '@cortex-os/kernel';
 
 const evaluationNode = new EvaluationNode();
 

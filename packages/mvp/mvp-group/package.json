@@ -15,7 +15,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "nanoid": "^5.0.4"
+    "nanoid": "^5.0.4",
+    "@cortex-os/kernel": "workspace:*",
+    "@cortex-os/observability": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

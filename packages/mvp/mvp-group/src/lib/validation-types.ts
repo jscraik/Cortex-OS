@@ -3,7 +3,7 @@
  * @description Type definitions and interfaces for validation system
  */
 
-import type { PRPState } from '../state.js';
+import type { PRPState } from '@cortex-os/kernel';
 
 export interface ValidationResult {
 	passed: boolean;

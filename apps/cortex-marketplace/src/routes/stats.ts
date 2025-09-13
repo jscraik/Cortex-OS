@@ -93,7 +93,7 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 				},
 			},
 		},
-		async (_request, _reply) => {
+		async (request, _reply) => {
 			const query = request.query as { period?: string; limit?: number };
 
 			// For now, return recently updated servers as trending
@@ -154,7 +154,7 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 				},
 			},
 		},
-		async (_request, _reply) => {
+		async (request, _reply) => {
 			const query = request.query as { category?: string; limit?: number };
 
 			const searchRequest = {
@@ -221,7 +221,7 @@ export async function statsRoutes(fastify: FastifyInstance): Promise<void> {
 				},
 			},
 		},
-		async (_request, _reply) => {
+		async (request, _reply) => {
 			const query = request.query as {
 				category?: string;
 				minDownloads?: number;

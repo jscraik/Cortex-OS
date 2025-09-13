@@ -145,7 +145,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				};
 			} catch (error) {
 				if (error instanceof z.ZodError) {
-					return reply.status(400).send({
+					return (reply as any).status(400).send({
 						success: false,
 						error: {
 							code: "INVALID_REQUEST",
@@ -209,7 +209,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				const server = await fastify.marketplaceService.getServer(validatedId);
 
 				if (!server) {
-					return reply.status(404).send({
+					return (reply as any).status(404).send({
 						success: false,
 						error: {
 							code: "SERVER_NOT_FOUND",
@@ -224,7 +224,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 				};
 			} catch (error) {
 				if (error instanceof z.ZodError) {
-					return reply.status(400).send({
+					return (reply as any).status(400).send({
 						success: false,
 						error: {
 							code: "INVALID_REQUEST",
@@ -301,7 +301,7 @@ export async function serverRoutes(fastify: FastifyInstance): Promise<void> {
 			const server = await fastify.marketplaceService.getServer(validatedId);
 
 			if (!server) {
-				return reply.status(404).send({
+				return (reply as any).status(404).send({
 					success: false,
 					error: {
 						code: "SERVER_NOT_FOUND",

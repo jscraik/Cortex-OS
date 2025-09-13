@@ -20,9 +20,12 @@ export { createDefaultMCPTools, MCPAdapter } from './mcp/adapter.js';
 
 // Workflow nodes
 export {
+	BuildNode,
+	EvaluationNode, 
 	runBuildNode,
 	runEvaluationNode,
 	runStrategyNode,
+	StrategyNode,
 } from './nodes/index.js';
 export type {
 	CerebrumDecision,

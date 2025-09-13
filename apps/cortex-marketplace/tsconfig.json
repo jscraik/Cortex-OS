@@ -5,7 +5,7 @@
 		"rootDir": "./src",
 		"baseUrl": "./src",
 		"paths": {
-			"@cortex-os/mcp-registry": ["../../packages/mcp-registry/src"],
+			"@cortex-os/mcp-registry": ["../../packages/mcp-registry/dist"],
 			"@cortex-os/mcp": ["../../packages/mcp/src"]
 		}
 	},
