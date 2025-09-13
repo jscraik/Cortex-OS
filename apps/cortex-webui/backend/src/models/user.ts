@@ -1,6 +1,6 @@
 // User model for Cortex WebUI backend
 
-import type { UserRecord, UserWithPassword } from '../../../shared/types';
+import type { UserRecord, UserWithPassword } from '@shared/types';
 
 export const UserModel = {
 	tableName: 'users' as const,

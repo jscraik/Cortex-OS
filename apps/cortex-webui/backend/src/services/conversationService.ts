@@ -1,7 +1,7 @@
 // Conversation service for Cortex WebUI backend
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Conversation } from '../../../shared/types';
+import type { Conversation } from '@shared/types';
 import {
 	ConversationModel,
 	type ConversationRecord,

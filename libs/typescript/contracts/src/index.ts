@@ -71,4 +71,6 @@ export const SimlabCommandSchema = z.object({
 });
 export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
+export * from './agent-toolkit.js';
 export * from './mcp-events.js';
+

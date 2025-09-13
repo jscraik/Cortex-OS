@@ -1,6 +1,6 @@
 // User service for Cortex WebUI backend
 
-import type { User, UserRecord } from '../../../shared/types';
+import type { User, UserRecord } from '@shared/types';
 import { UserModel } from '../models/user';
 import { getDatabase } from '../utils/database';
 

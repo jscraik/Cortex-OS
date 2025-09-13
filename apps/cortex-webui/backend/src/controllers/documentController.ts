@@ -157,8 +157,8 @@ async function parsePDF(
 				subject: info?.Subject,
 				creator: info?.Creator,
 				producer: info?.Producer,
-				creationDate: info?.CreationDate,
-				modDate: info?.ModDate,
+				creationDate: info?.CreationDate ? new Date(info.CreationDate) : undefined,
+				modDate: info?.ModDate ? new Date(info.ModDate) : undefined,
 			},
 		};
 	} catch (error) {

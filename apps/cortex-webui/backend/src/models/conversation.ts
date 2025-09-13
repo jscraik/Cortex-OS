@@ -1,6 +1,6 @@
 // Conversation model for Cortex WebUI backend
 
-import type { Conversation } from '../../../shared/types';
+import type { Conversation } from '@shared/types';
 
 export interface ConversationRecord {
 	id: string;

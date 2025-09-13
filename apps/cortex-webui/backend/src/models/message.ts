@@ -1,6 +1,6 @@
 // Message model for Cortex WebUI backend
 
-import type { Message } from '../../../shared/types';
+import type { Message } from '@shared/types';
 
 export interface MessageRecord {
 	id: string;

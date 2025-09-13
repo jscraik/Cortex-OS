@@ -1,6 +1,6 @@
 // AI Model service for Cortex WebUI backend
 
-import type { Model } from '../../../shared/types';
+import type { Model } from '@shared/types';
 import { ModelModel, type ModelRecord } from '../models/model';
 import { getDatabase } from '../utils/database';
 

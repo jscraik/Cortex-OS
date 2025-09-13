@@ -1,7 +1,7 @@
 // Message service for Cortex WebUI backend
 
 import { v4 as uuidv4 } from 'uuid';
-import type { Message } from '../../../shared/types';
+import type { Message } from '@shared/types';
 import { MessageModel, type MessageRecord } from '../models/message';
 import { getDatabase } from '../utils/database';
 

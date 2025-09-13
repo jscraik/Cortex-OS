@@ -3,8 +3,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { JWT_EXPIRES_IN, JWT_SECRET } from '../../../shared/constants';
-import type { User, UserRecord } from '../../../shared/types';
+import { JWT_EXPIRES_IN, JWT_SECRET } from '@shared/constants';
+import type { User, UserRecord } from '@shared/types';
 import { UserModel } from '../models/user';
 import { getDatabase } from '../utils/database';
 

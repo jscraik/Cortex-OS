@@ -1,6 +1,6 @@
 // AI Model model for Cortex WebUI backend
 
-import type { Model } from '../../../shared/types';
+import type { Model } from '@shared/types';
 
 export interface ModelRecord {
 	id: string;

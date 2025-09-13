@@ -3,8 +3,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { UPLOAD_DIR } from '../../../shared/constants';
-import type { FileUpload } from '../../../shared/types';
+import { UPLOAD_DIR } from '@shared/constants';
+import type { FileUpload } from '@shared/types';
 
 export class FileService {
 	static async initializeUploadDirectory(): Promise<void> {

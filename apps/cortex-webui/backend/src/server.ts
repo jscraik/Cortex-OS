@@ -15,7 +15,7 @@ import {
     API_BASE_PATH,
     CORS_OPTIONS,
     WS_BASE_PATH,
-} from '../../shared/constants';
+} from '@shared/constants';
 import { getApprovals, postApproval } from './controllers/approvalsController';
 
 // Import controllers
