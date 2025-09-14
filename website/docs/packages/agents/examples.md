@@ -8,7 +8,7 @@ sidebar_label: Examples
 ```typescript
 import { Agent } from '@cortex-os/agents';
 
-const echo: Agent &#61; {
+const echo: Agent = {
   id: 'echo',
   name: 'Echo Agent',
   capabilities: ['echo'],
@@ -16,4 +16,5 @@ const echo: Agent &#61; {
     return { success: true, result: task.input };
   },
 };
+
 ```

@@ -9,4 +9,3 @@ sidebar_label: Migration
 - Replace deprecated `runFull` with `runBatch`.
 - Update report generators to new JSON schema.
 - Review roadmap for additional breaking changes.
-

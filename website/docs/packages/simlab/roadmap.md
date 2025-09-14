@@ -16,4 +16,3 @@ sidebar_label: Roadmap
 - `pnpm simlab:smoke` - fast feedback on critical paths
 - `pnpm simlab:critical` - enterprise gate for P0 scenarios
 - `pnpm simlab:full` - exhaustive evaluation before releases
-

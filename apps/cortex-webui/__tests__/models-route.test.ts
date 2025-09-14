@@ -1,26 +1,28 @@
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('node:fs', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('node:fs')>();
+	return {
+		...actual,
+		promises: {
+			...actual.promises,
+			readFile: vi.fn().mockResolvedValue(
+				JSON.stringify({
+					chat_models: {
+						'gpt-4': { label: 'GPT-4' },
+						'gpt-3.5-turbo': { label: 'GPT-3.5 Turbo' },
+					},
+					default_models: {
+						chat: 'gpt-4',
+					},
+				}),
+			),
+		},
+	};
+});
+
 describe('models route', () => {
 	it('returns models list with default and minimal shape', async () => {
-		// Mock the file system read to return a sample config
-		vi.mock('node:fs', () => {
-			return {
-				promises: {
-					readFile: vi.fn().mockResolvedValue(
-						JSON.stringify({
-							chat_models: {
-								'gpt-4': { label: 'GPT-4' },
-								'gpt-3.5-turbo': { label: 'GPT-3.5 Turbo' },
-							},
-							default_models: {
-								chat: 'gpt-4',
-							},
-						}),
-					),
-				},
-			};
-		});
-
 		const { getUiModels } = await import(
 			'../backend/src/controllers/uiModelsController'
 		);

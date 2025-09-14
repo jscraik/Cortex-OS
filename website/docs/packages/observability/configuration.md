@@ -12,6 +12,7 @@ Environment variables control exporters:
 
 Example `.env`:
 ```env
-TRACE_EXPORTER&#61;jaeger
-METRIC_EXPORTER&#61;otlp
+TRACE_EXPORTER=jaeger
+METRIC_EXPORTER=otlp
+
 ```

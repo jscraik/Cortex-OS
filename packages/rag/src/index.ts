@@ -16,6 +16,25 @@ import {
 import { memoryStore } from './store/memory.js';
 
 export type {
+	RAGIngestCompleteEvent,
+	RAGIngestEvent,
+	RAGQueryEvent,
+	RAGQueryResultEvent,
+} from './events/rag-events.js';
+// A2A Events for inter-package communication
+export {
+	createRAGIngestCompleteEvent,
+	createRAGIngestEvent,
+	createRAGQueryEvent,
+	createRAGQueryResultEvent,
+	RAGEventSchemas,
+	RAGEventTypes,
+	ragIngestCompleteEventSchema,
+	ragIngestEventSchema,
+	ragQueryEventSchema,
+	ragQueryResultEventSchema,
+} from './events/rag-events.js';
+export type {
 	ArchonRAGConfig,
 	DocumentSyncResult,
 	MinimalStore,
@@ -33,6 +52,16 @@ export {
 } from './integrations/archon-mcp.js';
 export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
 export * as lib from './lib/index.js';
+// MCP Tools for external AI agent integration
+export {
+	ragIngestTool,
+	ragIngestToolSchema,
+	ragMcpTools,
+	ragQueryTool,
+	ragQueryToolSchema,
+	ragStatusTool,
+	ragStatusToolSchema,
+} from './mcp/tools.js';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { fileStore } from './store/file.js';
 export { memoryStore } from './store/memory.js';

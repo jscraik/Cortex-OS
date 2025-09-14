@@ -9,7 +9,7 @@ sidebar_label: User Guide
 1. Start the bridge:
    ```bash
    mcp-bridge --outbound-url https://example.com/ingest
-   ```
+```
 2. Write JSON lines to stdin; each line is POSTed to the outbound URL.
 
 ## Receiving Events
@@ -18,5 +18,7 @@ sidebar_label: User Guide
 
 ## Keyboard Shortcuts
 | Key | Action |
-|-----|--------|
+| ----- | -------- |
 | `Ctrl+C` | Terminate the bridge gracefully. |
+
+```

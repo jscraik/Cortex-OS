@@ -5,17 +5,17 @@ sidebar_label: Index
 
 # Cortex RAG Documentation
 
-[![NPM Version](https://img.shields.io/npm/v/@cortex-os/rag)](https://www.npmjs.com/package/@cortex-os/rag)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Test Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#security)
+[](https://www.npmjs.com/package/@cortex-os/rag)
+[](#)
+[](#)
+[](#security)
 
 Cortex RAG provides retrieval-augmented generation utilities for Cortex-OS. This index links to all documentation sections.
 
 ## Features
 
 | Status | Feature | Description |
-|---|---|---|
+| --- | --- | --- |
 | ✅ | Advanced chunking | Overlapping document chunking for improved recall |
 | ✅ | Multi-provider embeddings | Combine Python, composite and custom embedders |
 | ✅ | Memory and vector stores | Pluggable storage backends |
@@ -26,7 +26,7 @@ Cortex RAG provides retrieval-augmented generation utilities for Cortex-OS. This
 ## Documentation
 
 | Guide | Purpose |
-|---|---|
+| --- | --- |
 | [Introduction](./introduction.md) | Package goals and core problems |
 | [Getting Started](./getting-started.md) | Install, configure, and run the pipeline |
 | [Configuration](./configuration.md) | Environment variables and config files |
@@ -51,4 +51,3 @@ Cortex RAG provides retrieval-augmented generation utilities for Cortex-OS. This
 | [Glossary](./glossary.md) | Domain terminology |
 | [Contributor Setup](./contributing.md) | Developer environment |
 | [Accessibility](./accessibility.md) | WCAG considerations |
-

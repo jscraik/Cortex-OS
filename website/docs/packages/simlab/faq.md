@@ -13,4 +13,3 @@ A: Yes. Use `SimRunner.runScenario` directly or provide a filtered list to `runB
 
 **Q: Where are reports stored?**
 A: By default, reports are written to the current working directory. Use `--output` to customize the path.
-

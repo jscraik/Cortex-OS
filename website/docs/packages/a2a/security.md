@@ -9,4 +9,3 @@ sidebar_label: Security
 - Use transport-level encryption (HTTPS/WSS) for remote communication.
 - Rotate any shared tokens or keys regularly.
 - Monitor message age and reject expired events.
-

@@ -216,4 +216,14 @@ export const packageInfo = {
 	] as const,
 };
 
+// MCP Tools for external AI agent integration
+export type {
+	AgentTool,
+	CreateAgentInput,
+	ExecuteAgentInput,
+	GetAgentStatusInput,
+	ListAgentsInput,
+} from './mcp/tools';
+export { agentMcpTools } from './mcp/tools';
+
 // Implementations are provided and exported above per TDD plan

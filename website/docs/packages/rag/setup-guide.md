@@ -71,42 +71,43 @@ pip install torch transformers numpy
 ### Core Python Dependencies
 
 ```txt
+```
 # Core ML dependencies
-torch&gt;&#61;2.0.0
-transformers&gt;&#61;4.30.0
-numpy&gt;&#61;1.21.0
+torch&gt;=2.0.0
+transformers&gt;=4.30.0
+numpy&gt;=1.21.0
 
 # MLX dependencies (Apple Silicon only)
-mlx&gt;&#61;0.0.10
-mlx-lm&gt;&#61;0.1.0
+mlx&gt;=0.0.10
+mlx-lm&gt;=0.1.0
 
 # Document processing dependencies
-pdfplumber&gt;&#61;0.9.0
-python-docx&gt;&#61;0.8.11
-python-pptx&gt;&#61;0.6.21
-openpyxl&gt;&#61;3.1.0
-beautifulsoup4&gt;&#61;4.12.0
-lxml&gt;&#61;4.9.0
+pdfplumber&gt;=0.9.0
+python-docx&gt;=0.8.11
+python-pptx&gt;=0.6.21
+openpyxl&gt;=3.1.0
+beautifulsoup4&gt;=4.12.0
+lxml&gt;=4.9.0
 
 # OCR dependencies
-pytesseract&gt;&#61;0.3.10
-Pillow&gt;&#61;9.0.0
+pytesseract&gt;=0.3.10
+Pillow&gt;=9.0.0
 
 # Audio processing dependencies
-openai-whisper&gt;&#61;20231106
-pydub&gt;&#61;0.25.1
+openai-whisper&gt;=20231106
+pydub&gt;=0.25.1
 
 # Web crawling dependencies
-requests&gt;&#61;2.31.0
-selenium&gt;&#61;4.15.0
-playwright&gt;&#61;1.40.0
+requests&gt;=2.31.0
+selenium&gt;=4.15.0
+playwright&gt;=1.40.0
 
 # Code analysis dependencies
-tree-sitter&gt;&#61;0.20.0
-tree-sitter-languages&gt;&#61;1.8.0
+tree-sitter&gt;=0.20.0
+tree-sitter-languages&gt;=1.8.0
 
 # Graph database dependencies
-neo4j&gt;&#61;5.14.0
+neo4j&gt;=5.14.0
 ```
 
 ### Installing Optional Dependencies
@@ -141,7 +142,7 @@ pip install neo4j
 3. Set environment variable:
 
 ```bash
-export HUGGINGFACE_TOKEN&#61;your_token_here
+export HUGGINGFACE_TOKEN=your_token_here
 ```
 
 ### YouTube API (for video processing)
@@ -152,7 +153,7 @@ export HUGGINGFACE_TOKEN&#61;your_token_here
 4. Set environment variable:
 
 ```bash
-export YOUTUBE_API_KEY&#61;your_api_key_here
+export YOUTUBE_API_KEY=your_api_key_here
 ```
 
 ### OCR Services
@@ -178,8 +179,8 @@ sudo apt-get install tesseract-ocr
 4. Set environment variables:
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS&#61;path/to/credentials.json
-export OCR_PROVIDER&#61;google_vision
+export GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
+export OCR_PROVIDER=google_vision
 ```
 
 ### Speech-to-Text Services
@@ -198,8 +199,8 @@ export OCR_PROVIDER&#61;google_vision
 3. Set environment variables:
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS&#61;path/to/credentials.json
-export TRANSCRIPTION_PROVIDER&#61;google_speech
+export GOOGLE_APPLICATION_CREDENTIALS=path/to/credentials.json
+export TRANSCRIPTION_PROVIDER=google_speech
 ```
 
 ## Graph Database Setup
@@ -218,7 +219,7 @@ docker run -p 7687:7687 -p 7444:7444 -p 3000:3000 memgraph/memgraph-platform:lat
 
 ```bash
 # Using Docker
-docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH&#61;neo4j/password neo4j:latest
+docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password neo4j:latest
 
 # Or install locally
 # Follow instructions at: https://neo4j.com/docs/operations-manual/current/installation/
@@ -230,30 +231,30 @@ Create a `.env` file in the RAG package directory:
 
 ```bash
 # Document Processing
-DOCUMENT_PROCESSOR_BACKEND&#61;markitdown
-OCR_PROVIDER&#61;tesseract
-TRANSCRIPTION_PROVIDER&#61;whisper
+DOCUMENT_PROCESSOR_BACKEND=markitdown
+OCR_PROVIDER=tesseract
+TRANSCRIPTION_PROVIDER=whisper
 
 # Multimodal
-VLM_PROVIDER&#61;openai
-GRAPH_DATABASE_URL&#61;memgraph://localhost:7687
+VLM_PROVIDER=openai
+GRAPH_DATABASE_URL=memgraph://localhost:7687
 
 # Web Acquisition
-CRAWLER_RESPECT_ROBOTS&#61;true
-CRAWLER_RATE_LIMIT&#61;10
-YOUTUBE_API_KEY&#61;your_api_key_here
+CRAWLER_RESPECT_ROBOTS=true
+CRAWLER_RATE_LIMIT=10
+YOUTUBE_API_KEY=your_api_key_here
 
 # Code Analysis
-TREE_SITTER_PARSER_PATH&#61;/usr/local/lib/tree-sitter
-CODE_GRAPH_DATABASE&#61;neo4j://localhost:7687
+TREE_SITTER_PARSER_PATH=/usr/local/lib/tree-sitter
+CODE_GRAPH_DATABASE=neo4j://localhost:7687
 
 # Hugging Face
-HUGGINGFACE_TOKEN&#61;your_token_here
+HUGGINGFACE_TOKEN=your_token_here
 
 # Model Paths (if using local models)
-QWEN_EMBED_MODEL_PATH&#61;/path/to/qwen/embedding/model
-QWEN_RERANKER_MODEL_PATH&#61;/path/to/qwen/reranker/model
-MLX_MODEL_PATH&#61;/path/to/mlx/model
+QWEN_EMBED_MODEL_PATH=/path/to/qwen/embedding/model
+QWEN_RERANKER_MODEL_PATH=/path/to/qwen/reranker/model
+MLX_MODEL_PATH=/path/to/mlx/model
 ```
 
 ## Development Setup
@@ -275,7 +276,7 @@ git clone https://github.com/run-llama/semtools.git
 
 ```bash
 # Install Rust
-curl --proto '&#61;https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Install semtools
 cargo install semtools
@@ -368,15 +369,15 @@ pnpm docs:check
 
    # Reinstall dependencies
    pip install -r requirements.txt
-   ```
+```
 
 2. **MLX Not Available**
 
    ```bash
    # MLX is only available on Apple Silicon Macs
    # Use Ollama fallback for other platforms
-   export MODEL_BACKEND&#61;ollama
-   ```
+   export MODEL_BACKEND=ollama
+```
 
 3. **Graph Database Connection Issues**
 
@@ -386,7 +387,7 @@ pnpm docs:check
 
    # Start database if not running
    docker start memgraph-container
-   ```
+```
 
 4. **Insufficient Storage for Models**
 
@@ -396,7 +397,7 @@ pnpm docs:check
 
    # Clear model cache if needed
    rm -rf ~/.cache/huggingface/
-   ```
+```
 
 ### Getting Help
 
@@ -411,3 +412,5 @@ pnpm docs:check
 2. Run the initial test suite to verify setup
 3. Begin implementation of Phase 1 components
 4. Update this document as new dependencies are added
+
+```

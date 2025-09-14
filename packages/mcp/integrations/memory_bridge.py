@@ -9,6 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 # Optional heavy dependencies; import lazily to avoid failing at import time
 try:  # pragma: no cover - import guard
@@ -23,7 +24,7 @@ except Exception:  # pragma: no cover - only used when feature is exercised
     QdrantClient = None  # type: ignore
     qdrant_models = None  # type: ignore
 
-from ..core.circuit_breakers import circuit_breaker
+from core.circuit_breakers import circuit_breaker
 
 logger = logging.getLogger(__name__)
 
@@ -124,20 +125,18 @@ class Neo4jMemoryStore:
         self.uri = uri
         self.username = username
 
-        # Get password from environment or parameter
+        # Get password from environment or parameter (optional in dev)
         if password is not None:
             self.password = password
         elif "NEO4J_PASSWORD" in os.environ:
             self.password = os.environ["NEO4J_PASSWORD"]
         else:
-            raise ValueError(
-                "Neo4j password must be provided either via 'password' parameter "
-                "or 'NEO4J_PASSWORD' environment variable. "
-                "Hardcoded passwords are not allowed for security."
-            )
+            # Degrade gracefully when Neo4j is not configured
+            self.password = None
 
         self.database = database
         self.driver: Any | None = None
+        self.available: bool = False
 
         # Connection metrics
         self.connection_errors = 0
@@ -149,10 +148,13 @@ class Neo4jMemoryStore:
 
     async def initialize(self) -> None:
         """Initialize Neo4j connection."""
-        if AsyncGraphDatabase is None:
-            raise RuntimeError(
-                "neo4j driver is not installed. Install 'neo4j' to enable Neo4jMemoryStore."
-            )
+        # If the driver is unavailable or password not configured, skip init gracefully
+        if AsyncGraphDatabase is None or not self.password:
+            logger.warning("Neo4j not configured; graph features disabled (driver=%s, password=%s)",
+                           "missing" if AsyncGraphDatabase is None else "present",
+                           "set" if self.password else "missing")
+            self.available = False
+            return
         try:
             self.driver = AsyncGraphDatabase.driver(
                 self.uri,
@@ -168,12 +170,14 @@ class Neo4jMemoryStore:
             # Create indexes for performance
             await self._create_indexes()
 
+            self.available = True
             logger.info("Neo4j memory store initialized successfully")
 
         except Exception as e:
             self.connection_errors += 1
             logger.error(f"Failed to initialize Neo4j: {e}")
-            raise
+            self.available = False
+            # Do not raise; allow the app to continue without Neo4j
 
     async def close(self) -> None:
         """Close Neo4j connection."""
@@ -201,6 +205,9 @@ class Neo4jMemoryStore:
     @circuit_breaker("neo4j_query")
     async def store_memory_node(self, memory_node: MemoryNode) -> None:
         """Store a memory node in Neo4j."""
+        if not self.available or self.driver is None:
+            logger.warning("Neo4j unavailable; skipping store_memory_node(%s)", memory_node.node_id)
+            return
         self.query_count += 1
         self.last_query_time = time.time()
 
@@ -228,6 +235,8 @@ class Neo4jMemoryStore:
     @circuit_breaker("neo4j_query")
     async def get_memory_node(self, node_id: str) -> MemoryNode | None:
         """Retrieve a memory node by ID."""
+        if not self.available or self.driver is None:
+            return None
         self.query_count += 1
         self.last_query_time = time.time()
 
@@ -266,6 +275,9 @@ class Neo4jMemoryStore:
         properties: dict[str, Any] | None = None,
     ) -> None:
         """Create a relationship between memory nodes."""
+        if not self.available or self.driver is None:
+            logger.warning("Neo4j unavailable; skipping create_relationship %s->%s", from_node_id, to_node_id)
+            return
         self.query_count += 1
         self.last_query_time = time.time()
 
@@ -302,6 +314,8 @@ class Neo4jMemoryStore:
         limit: int = 50,
     ) -> list[MemoryNode]:
         """Find memories related to a given node."""
+        if not self.available or self.driver is None:
+            return []
         self.query_count += 1
         self.last_query_time = time.time()
 
@@ -349,6 +363,15 @@ class Neo4jMemoryStore:
 
     async def get_memory_stats(self) -> dict[str, Any]:
         """Get memory store statistics."""
+        if not self.available or self.driver is None:
+            return {
+                "total_nodes": 0,
+                "memory_types": [],
+                "connection_errors": self.connection_errors,
+                "query_count": self.query_count,
+                "last_query_time": self.last_query_time,
+                "unavailable": True,
+            }
         query = """
         MATCH (m:Memory)
         RETURN count(m) as total_nodes,
@@ -376,13 +399,29 @@ class QdrantVectorStore:
         host: str = "localhost",
         port: int = 6333,
         collection_name: str = "mcp_memories",
-        vector_size: int = 1536,  # OpenAI embedding size
+        vector_size: int = 1536,  # default; will be overridden by env if set
     ):
-        self.host = host
-        self.port = port
-        self.collection_name = collection_name
-        self.vector_size = vector_size
+        # Allow environment to override connection details
+        env_url = os.getenv("QDRANT_URL")
+        env_host = os.getenv("QDRANT_HOST")
+        env_port = os.getenv("QDRANT_PORT")
+        env_collection = os.getenv("QDRANT_COLLECTION")
+        env_vec = os.getenv("QDRANT_VECTOR_SIZE")
+
+        self.url = env_url.strip() if env_url else None
+        self.host = (env_host or host).strip()
+        try:
+            self.port = int(env_port) if env_port else int(port)
+        except Exception:
+            self.port = port
+        self.collection_name = (env_collection or collection_name).strip()
+        try:
+            self.vector_size = int(env_vec) if env_vec else int(vector_size)
+        except Exception:
+            self.vector_size = vector_size
+
         self.client: QdrantClient | None = None
+        self._available: bool = False  # graceful-degradation flag
 
         # Metrics
         self.search_count = 0
@@ -396,7 +435,17 @@ class QdrantVectorStore:
                 "qdrant-client is not installed. Install 'qdrant-client' to enable QdrantVectorStore."
             )
         try:
-            self.client = QdrantClient(host=self.host, port=self.port)
+            # Prefer explicit URL; fall back to host/port. Disable gRPC for local dev; set timeouts.
+            if self.url:
+                self.client = QdrantClient(
+                    url=self.url, timeout=10.0, prefer_grpc=False
+                )
+                logger.info(f"Qdrant client using URL: {self.url}")
+            else:
+                self.client = QdrantClient(
+                    host=self.host, port=self.port, timeout=10.0, prefer_grpc=False
+                )
+                logger.info(f"Qdrant client using host/port: {self.host}:{self.port}")
 
             # Create collection if it doesn't exist
             collections = self.client.get_collections().collections
@@ -410,14 +459,18 @@ class QdrantVectorStore:
                         distance=qdrant_models.Distance.COSINE,
                     ),
                 )
-                logger.info(f"Created Qdrant collection: {self.collection_name}")
+                logger.info(
+                    f"Created Qdrant collection: {self.collection_name} (size={self.vector_size})"
+                )
 
+            self._available = True
             logger.info("Qdrant vector store initialized successfully")
 
         except Exception as e:
             self.connection_errors += 1
+            self._available = False
             logger.error(f"Failed to initialize Qdrant: {e}")
-            raise
+            # Do not raise — allow server to start and degrade gracefully
 
     @circuit_breaker("qdrant_operation")
     async def store_embedding(
@@ -428,11 +481,24 @@ class QdrantVectorStore:
     ) -> None:
         """Store an embedding vector with metadata."""
         self.insert_count += 1
-        if qdrant_models is None or self.client is None:
-            raise RuntimeError("Vector store not initialized or missing qdrant models")
+        if not self._available or qdrant_models is None or self.client is None:
+            logger.warning(
+                "Vector store unavailable; skipping upsert for %s", memory_id
+            )
+            return
+
+        # Normalize point ID for Qdrant: must be unsigned int or UUID
+        if not memory_id:
+            point_id = str(uuid4())
+        else:
+            try:
+                point_id = str(UUID(memory_id))  # already a valid UUID
+            except Exception:
+                # derive a deterministic UUID from the provided id
+                point_id = str(uuid5(NAMESPACE_URL, f"mem:{memory_id}"))
 
         point = qdrant_models.PointStruct(
-            id=memory_id,
+            id=point_id,
             vector=embedding,
             payload=metadata or {},
         )
@@ -452,8 +518,9 @@ class QdrantVectorStore:
     ) -> list[dict[str, Any]]:
         """Search for similar embeddings."""
         self.search_count += 1
-        if qdrant_models is None or self.client is None:
-            raise RuntimeError("Vector store not initialized or missing qdrant models")
+        if not self._available or qdrant_models is None or self.client is None:
+            logger.warning("Vector store unavailable; returning empty search results")
+            return []
 
         search_filter = None
         if filter_conditions:
@@ -487,8 +554,9 @@ class QdrantVectorStore:
 
     async def retrieve(self, memory_id: str) -> dict[str, Any] | None:
         """Retrieve a stored embedding payload by memory ID."""
-        if self.client is None:
-            raise RuntimeError("Vector store not initialized")
+        if not self._available or self.client is None:
+            logger.warning("Vector store unavailable; retrieve(%s) -> None", memory_id)
+            return None
         try:
             result = self.client.retrieve(
                 collection_name=self.collection_name,
@@ -507,8 +575,9 @@ class QdrantVectorStore:
 
     async def retrieve_many(self, memory_ids: list[str]) -> list[dict[str, Any]]:
         """Batch retrieve payloads by memory IDs."""
-        if self.client is None:
-            raise RuntimeError("Vector store not initialized")
+        if not self._available or self.client is None:
+            logger.warning("Vector store unavailable; retrieve_many -> []")
+            return []
         if not memory_ids:
             return []
         try:
@@ -531,8 +600,11 @@ class QdrantVectorStore:
 
     async def delete_embedding(self, memory_id: str) -> None:
         """Delete an embedding by memory ID."""
-        if self.client is None or qdrant_models is None:
-            raise RuntimeError("Vector store not initialized")
+        if not self._available or self.client is None or qdrant_models is None:
+            logger.warning(
+                "Vector store unavailable; delete_embedding(%s) skipped", memory_id
+            )
+            return
         self.client.delete(
             collection_name=self.collection_name,
             points_selector=qdrant_models.PointIdsList(
@@ -543,6 +615,16 @@ class QdrantVectorStore:
     async def get_vector_stats(self) -> dict[str, Any]:
         """Get vector store statistics."""
         try:
+            if not self._available:
+                return {
+                    "collection_name": self.collection_name,
+                    "vector_count": 0,
+                    "vector_size": self.vector_size,
+                    "search_count": self.search_count,
+                    "insert_count": self.insert_count,
+                    "connection_errors": self.connection_errors,
+                    "unavailable": True,
+                }
             if self.client is None:
                 raise RuntimeError("Vector store not initialized")
             collection_info = self.client.get_collection(self.collection_name)
@@ -583,7 +665,11 @@ class MemoryBridge:
 
     async def initialize(self) -> None:
         """Initialize both memory stores."""
-        await self.neo4j_store.initialize()
+        # Initialize stores; tolerate missing Neo4j in dev
+        try:
+            await self.neo4j_store.initialize()
+        except Exception as e:
+            logger.warning("Neo4j init skipped/failed: %s", e)
         await self.vector_store.initialize()
         logger.info("Memory bridge initialized successfully")
 
@@ -594,26 +680,30 @@ class MemoryBridge:
 
     def _default_embedding(self, text: str) -> list[float]:
         """Default embedding function (placeholder)."""
-        # In production, use OpenAI embeddings or similar
-        # This is a simple hash-based embedding for testing
+        # In production, use OpenAI embeddings or similar. For tests/dev, make a
+        # deterministic fixed-length vector derived from a hash and match the
+        # configured vector size of the backing store.
         import hashlib
 
-        hash_obj = hashlib.md5(text.encode())
-        hash_bytes = hash_obj.digest()
-
-        # Convert to float array (not semantically meaningful)
-        embedding = []
+        # Base pseudo-embedding from MD5 bytes
+        hash_bytes = hashlib.md5(text.encode()).digest()
+        values: list[float] = []
         for i in range(0, len(hash_bytes), 4):
             chunk = hash_bytes[i : i + 4]
             if len(chunk) == 4:
-                value = int.from_bytes(chunk, byteorder="big")
-                embedding.append(float(value) / (2**32))
+                values.append(int.from_bytes(chunk, "big") / float(2**32))
 
-        # Pad or truncate to required size
-        while len(embedding) < 128:  # Smaller size for testing
-            embedding.append(0.0)
+        # Determine target size from vector store (fallback to 128)
+        target_size = getattr(self.vector_store, "vector_size", 128) or 128
 
-        return embedding[:128]
+        # Repeat the base pattern to fill target size, then truncate
+        if not values:
+            values = [0.0]
+        out: list[float] = []
+        while len(out) < target_size:
+            need = min(len(values), target_size - len(out))
+            out.extend(values[:need])
+        return out[:target_size]
 
     async def store_tool_context(
         self,
@@ -722,12 +812,20 @@ class MemoryBridge:
             filter_conditions=filter_conditions,
         )
 
-        # Retrieve full memory nodes from Neo4j
+        # Retrieve full memory nodes from Neo4j or stub if unavailable
         memories = []
         for result in similar_results:
-            memory_node = await self.neo4j_store.get_memory_node(result["memory_id"])
-            if memory_node:
-                memories.append(memory_node)
+            if getattr(self.neo4j_store, "available", False):
+                memory_node = await self.neo4j_store.get_memory_node(result["memory_id"])
+                if memory_node:
+                    memories.append(memory_node)
+            else:
+                # Minimal stub when graph store is unavailable
+                memories.append(MemoryNode(
+                    node_id=result["memory_id"],
+                    memory_type=MemoryType.CONVERSATIONAL,
+                    content={"_stub": True},
+                ))
 
         return memories
 
@@ -806,9 +904,17 @@ class MemoryBridge:
 
         memories = []
         for result in similar_results:
-            memory_node = await self.neo4j_store.get_memory_node(result["memory_id"])
-            if memory_node and memory_node.memory_type == MemoryType.TOOL_CONTEXT:
-                memories.append(memory_node)
+            if getattr(self.neo4j_store, "available", False):
+                memory_node = await self.neo4j_store.get_memory_node(result["memory_id"])
+                if memory_node and memory_node.memory_type == MemoryType.TOOL_CONTEXT:
+                    memories.append(memory_node)
+            else:
+                # Minimal stub when graph store is unavailable
+                memories.append(MemoryNode(
+                    node_id=result["memory_id"],
+                    memory_type=MemoryType.CONVERSATIONAL,
+                    content={"_stub": True},
+                ))
 
         return memories
 

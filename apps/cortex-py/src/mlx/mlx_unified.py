@@ -18,45 +18,19 @@ _FALLBACK_MAX_TOKENS = 4096
 _FALLBACK_TEMPERATURE = 0.7
 
 
-def _read_int_env(var: str, default: int) -> int:
-    val = os.getenv(var)
-    if not val:
-        return default
-    try:
-        parsed = int(val)
-        if parsed <= 0:
-            return default
-        return parsed
-    except ValueError:
-        return default
-
-
-def _read_float_env(var: str, default: float) -> float:
-    val = os.getenv(var)
-    if not val:
-        return default
-    try:
-        parsed = float(val)
-        if parsed <= 0:
-            return default
-        return parsed
-    except ValueError:
-        return default
-
-
+# Simplified environment reads - removed complex validation
 def get_default_max_length() -> int:
-    return _read_int_env("MLX_DEFAULT_MAX_LENGTH", _FALLBACK_MAX_LENGTH)
+    return int(os.getenv("MLX_DEFAULT_MAX_LENGTH") or _FALLBACK_MAX_LENGTH)
 
 
 def get_default_max_tokens() -> int:
-    return _read_int_env("MLX_DEFAULT_MAX_TOKENS", _FALLBACK_MAX_TOKENS)
+    return int(os.getenv("MLX_DEFAULT_MAX_TOKENS") or _FALLBACK_MAX_TOKENS)
 
 
 def get_default_temperature() -> float:
-    return _read_float_env("MLX_DEFAULT_TEMPERATURE", _FALLBACK_TEMPERATURE)
+    return float(os.getenv("MLX_DEFAULT_TEMPERATURE") or _FALLBACK_TEMPERATURE)
 
 
-# Backward-compatible aliases used elsewhere in argument parsing
 DEFAULT_MAX_LENGTH = get_default_max_length()
 DEFAULT_MAX_TOKENS = get_default_max_tokens()
 DEFAULT_TEMPERATURE = get_default_temperature()
@@ -93,33 +67,14 @@ except ImportError as e:  # pragma: no cover - sentence transformers optional
     logger.info("SentenceTransformers not available for CPU fallback: %s", e)
     SentenceTransformer = None
 
+# Simplified instructor import - complex fallback removed
 try:
     import instructor
-
-    BaseModel = getattr(instructor, "BaseModel", PydanticBaseModel)
-
-    try:
-        from cortex_ml.instructor_client import create_sync_instructor
-
-        ollama_client = create_sync_instructor()
-    except Exception:
-        # Fallback: construct directly via openai
-        from openai import OpenAI
-
-        base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1")
-        base = OpenAI(base_url=base_url, api_key="ollama")
-        mode = getattr(getattr(instructor, "Mode", None), "JSON", None)
-        ollama_client = (
-            instructor.from_openai(base, mode=mode)
-            if mode is not None
-            else instructor.from_openai(base)
-        )
-except ImportError as e:
-    logger.error("Error importing instructor dependencies: %s", e)
-    logger.error("Please install with: pip install instructor openai")
+except ImportError:
     instructor = None
-    BaseModel = PydanticBaseModel
-    ollama_client = None
+
+BaseModel = PydanticBaseModel
+ollama_client = None
 
 
 # Cache directory getters

@@ -5,7 +5,7 @@ sidebar_label: Policy Terms
 
 # Policy & Terms
 
-Use of this package is governed by the repository's [LICENSE](../../../LICENSE) and [CODE_OF_CONDUCT](../../../CODE_OF_CONDUCT.md).
+Use of this package is governed by the repository's [LICENSE](../../../LICENSE) and [CODE_OF_CONDUCT](/docs/references/code-of-conduct.
 
 By using the evaluation suites you agree to:
 

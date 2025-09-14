@@ -1,0 +1,4 @@
+# file: /Users/jamiecraik/.Cortex-OS/libs/python/safe_subprocess/safe_subprocess.py
+# hypothesis_version: 6.138.16
+
+['\x00', '$(', '&', ',', '--version', '-v', ';', 'C', 'Empty command', 'HOME', 'LANG', 'PATH', 'USER', '`', 'git', 'hostname', 'id', 'mlx-knife', 'mlxknife', 'node', 'npm', 'pip', 'pip3', 'pnpm', 'python', 'python3', 'shell', 'stdin', 'sysctl', 'timeout', 'uname', 'uv', 'which', 'whoami', 'yarn', '|']

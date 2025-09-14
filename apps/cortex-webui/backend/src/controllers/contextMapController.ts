@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import type { Request, Response } from 'express';
+import logger from '../utils/logger';
 
 type MapFile = { path: string; kind: 'repo' | 'context' };
 
@@ -33,7 +34,7 @@ export async function getContextMap(_req: Request, res: Response) {
 		const nodes = files.map((f) => ({ path: f.path, kind: f.kind }));
 		res.json({ files: nodes });
 	} catch (error) {
-		console.error('Error getting context map:', error);
+		logger.error('context_map:fetch_failed', { error });
 		res.status(500).json({ error: 'Failed to get context map' });
 	}
 }

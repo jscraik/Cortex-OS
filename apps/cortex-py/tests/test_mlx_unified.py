@@ -1,8 +1,37 @@
 import importlib.util
+import os
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+
+# If running under shim (CORTEX_MLX_SHIM=1) we inject lightweight fake transformers
+# so importing mlx_unified exercises code paths without heavy dependencies.
+if os.environ.get("CORTEX_MLX_SHIM") == "1":  # pragma: no cover - environment specific
+    fake_tr = type(
+        "_FakeTransformers",
+        (),
+        {
+            "AutoModel": type(
+                "AutoModel",
+                (),
+                {"from_pretrained": staticmethod(lambda *a, **k: object())},
+            ),
+            "AutoTokenizer": type(
+                "AutoTokenizer",
+                (),
+                {
+                    "from_pretrained": staticmethod(
+                        lambda *a, **k: type(
+                            "Tok", (), {"encode": lambda self, x: [0, 1]}
+                        )()
+                    ),
+                },
+            ),
+        },
+    )
+    sys.modules.setdefault("transformers", fake_tr)  # type: ignore[arg-type]
 
 # Load module directly from file path to avoid import issues with hyphenated
 # package directories (apps/cortex-py). This makes tests independent of

@@ -10,10 +10,11 @@ See `examples/mcp-core` (planned).
 Quick snippet:
 
 ```ts
-const client &#61; await createEnhancedClient({
+const client = await createEnhancedClient({
   name: "local",
   transport: "stdio",
   command: "node",
   args: ["./tool.js"]
 });
+
 ```

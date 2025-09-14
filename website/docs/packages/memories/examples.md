@@ -13,10 +13,11 @@ A minimal Express integration:
 ```typescript
 import express from 'express';
 import { createMemoryService, createEmbedderFromEnv, createPolicyAwareStoreFromEnv } from '@cortex-os/memories';
-const app &#61; express();
-const svc &#61; createMemoryService(createPolicyAwareStoreFromEnv(), createEmbedderFromEnv());
-app.post('/remember', async (req, res) &#61;&gt; {
+const app = express();
+const svc = createMemoryService(createPolicyAwareStoreFromEnv(), createEmbedderFromEnv());
+app.post('/remember', async (req, res) ⇒ {
   await svc.upsert({ id: req.body.id, text: req.body.text });
   res.sendStatus(204);
 });
+
 ```

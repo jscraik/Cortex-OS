@@ -18,6 +18,7 @@ pnpm add @cortex-os/memories
 ## First Use
 ```typescript
 import { MemoryStore } from '@cortex-os/memories';
-const store &#61; new MemoryStore();
+const store = new MemoryStore();
 await store.upsert({ id: 'greeting', text: 'hello' });
+
 ```

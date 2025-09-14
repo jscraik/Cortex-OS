@@ -1,9 +1,13 @@
+"""Embeddings Service API powered by MLX + FastAPI.
+
+This module creates an embeddings API server using FastAPI with MLX backend,
+providing compatibility between CLI/API test patterns and production behavior.
+"""
+
+from __future__ import annotations
+
 import logging
 import os
-
-# Ensure this file can be imported directly (tests insert src path). If executed in a context
-# where the package isn't recognized, append parent directory so that 'mlx.embedding_generator'
-# absolute import resolves without needing a fragile relative fallback.
 import sys as _sys
 from collections.abc import Callable
 from pathlib import Path as _Path
@@ -13,14 +17,52 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+# Ensure this file can be imported directly (tests insert src path). If executed in a context
+# where the package isn't recognized, append parent directory so that 'mlx.embedding_generator'
+# absolute import resolves without needing a fragile relative fallback.
 _HERE = _Path(__file__).resolve().parent
 if str(_HERE) not in _sys.path:
     _sys.path.insert(0, str(_HERE))
-# Import resolution (tests may adjust sys.path). Fallback rarely triggers.
-try:  # pragma: no cover
-    from mlx.embedding_generator import MLXEmbeddingGenerator  # type: ignore
-except Exception:  # pragma: no cover
-    from .mlx.embedding_generator import MLXEmbeddingGenerator  # type: ignore
+
+from mlx.embedding_generator import MLXEmbeddingGenerator
+
+logger = logging.getLogger(__name__)
+FAST_TEST = os.getenv("CORTEX_PY_FAST_TEST") == "1"
+
+
+class DummyEmbeddingGenerator:
+    """Lightweight fallback / fast-test stub.
+
+    Used for testing without heavy MLX dependencies or when MLX is unavailable.
+    """
+
+    def __init__(self, dims: int = 384):
+        self.dimensions = dims
+        self.can_use_mlx = False
+        self.can_use_sentence_transformers = False
+
+    def generate_embedding(self, text: str) -> list[float]:
+        if not text.strip():
+            raise ValueError("text must be non-empty string")
+        return [0.0] * self.dimensions
+
+    def generate_embeddings(self, texts: list[str]) -> list[list[float]]:
+        return [[0.0] * self.dimensions for _ in texts]
+
+    def get_model_info(self) -> dict[str, Any]:
+        # Read the environment dynamically so tests that mutate CORTEX_PY_FAST_TEST
+        # after module import still get an accurate reflection (FAST_TEST constant
+        # is only evaluated once at import time). This keeps behavior predictable
+        # for runtime while allowing tests to toggle fast-test mode explicitly.
+        fast_mode = os.getenv("CORTEX_PY_FAST_TEST") == "1"
+        return {
+            "model_name": "dummy-fast-test" if fast_mode else "dummy-fallback",
+            "dimensions": self.dimensions,
+            "backend": "unavailable",
+            "sentence_transformers_available": False,
+            "mlx_available": False,
+            "model_loaded": not fast_mode,  # fast mode indicates intentionally not loaded
+        }
 
 
 class LazyEmbeddingGenerator:
@@ -113,8 +155,6 @@ def create_app(generator: Any | None = None) -> FastAPI:
         text = req.text
         if text is None:
             return _validation_error("text field missing")
-        if not isinstance(text, str):  # pragma: no cover - defensive (pydantic coerces)
-            return _validation_error("text must be a string")
         if not text.strip():
             return _validation_error("text must not be empty or whitespace")
         if len(text) > max_chars:
@@ -135,10 +175,10 @@ def create_app(generator: Any | None = None) -> FastAPI:
 
     @app.post("/embeddings", responses={422: {"model": ErrorResponse}})
     def embeddings(req: EmbedRequest):  # batch endpoint expected by tests
-        if req.texts is None or not isinstance(req.texts, list) or not req.texts:
+        if req.texts is None or not req.texts:
             return _validation_error("texts field must be a non-empty list")
         for t in req.texts:
-            if not isinstance(t, str) or not t.strip():
+            if not t.strip():
                 return _validation_error("each text must be a non-empty string")
             if len(t) > max_chars:
                 return _validation_error(
@@ -147,9 +187,14 @@ def create_app(generator: Any | None = None) -> FastAPI:
                 )
         try:
             current_gen = getattr(app, "embedding_generator", gen)  # type: ignore[attr-defined]
-            embs = current_gen.generate_embeddings(
-                req.texts, normalize=req.normalize is not False
-            )
+            # Check if the generator supports normalize parameter
+            try:
+                embs = current_gen.generate_embeddings(
+                    req.texts, normalize=req.normalize is not False
+                )
+            except TypeError:
+                # Fallback for generators that don't support normalize parameter
+                embs = current_gen.generate_embeddings(req.texts)
             return {"embeddings": embs}
         except Exception as e:  # pragma: no cover - unexpected runtime error
             logger.exception("batch embedding generation failed: %s", e)
@@ -187,57 +232,3 @@ def create_app(generator: Any | None = None) -> FastAPI:
         }
 
     return app
-
-
-FAST_TEST = os.getenv("CORTEX_PY_FAST_TEST") == "1"
-
-
-class DummyEmbeddingGenerator:  # lightweight fallback / fast-test stub
-    def __init__(self, dims: int = 384):
-        self.dimensions = dims
-        self.can_use_mlx = False
-        self.can_use_sentence_transformers = False
-
-    def generate_embedding(self, text: str):  # type: ignore[no-untyped-def]
-        if not isinstance(text, str) or not text:
-            raise ValueError("text must be non-empty string")
-        return [0.0] * self.dimensions
-
-    def generate_embeddings(self, texts, normalize: bool = True):  # type: ignore[no-untyped-def]
-        return [[0.0] * self.dimensions for _ in texts]
-
-    def get_model_info(self):  # type: ignore[no-untyped-def]
-        # Read the environment dynamically so tests that mutate CORTEX_PY_FAST_TEST
-        # after module import still get an accurate reflection (FAST_TEST constant
-        # is only evaluated once at import time). This keeps behavior predictable
-        # for runtime while allowing tests to toggle fast-test mode explicitly.
-        fast_mode = os.getenv("CORTEX_PY_FAST_TEST") == "1"
-        return {
-            "model_name": "dummy-fast-test" if fast_mode else "dummy-fallback",
-            "dimensions": self.dimensions,
-            "backend": "unavailable",
-            "sentence_transformers_available": False,
-            "mlx_available": False,
-            "model_loaded": not fast_mode,  # fast mode indicates intentionally not loaded
-        }
-
-
-if FAST_TEST:
-    embedding_generator_instance = DummyEmbeddingGenerator(384)
-    app = create_app(embedding_generator_instance)
-    embedding_generator = embedding_generator_instance  # type: ignore
-else:
-
-    def _factory() -> Any:
-        try:
-            return MLXEmbeddingGenerator()
-        except Exception:  # pragma: no cover
-            logger.warning(
-                "MLXEmbeddingGenerator unavailable during first use; using dummy fallback",
-                exc_info=True,
-            )
-            return DummyEmbeddingGenerator(384)
-
-    embedding_generator_instance = LazyEmbeddingGenerator(_factory)
-    app = create_app(embedding_generator_instance)
-    embedding_generator = embedding_generator_instance  # type: ignore

@@ -3,7 +3,7 @@
 import Database, { type Database as DatabaseType } from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
-import { DATABASE_PATH } from '@shared/constants';
+import { DATABASE_PATH } from '../config/constants';
 import { ConversationModel } from '../models/conversation';
 import { MessageModel } from '../models/message';
 import { ModelModel } from '../models/model';

@@ -7,4 +7,3 @@ sidebar_label: Changelog
 
 ## 1.0.0
 - Initial public release of A2A package.
-

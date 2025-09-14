@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
+
 from mcp.integrations.a2a_bridge import A2ABridge, A2AEvent
 from mcp.security.auth import MCPAuthenticator
 from mcp.webui.app import app

@@ -1,10 +1,11 @@
 // Authentication service for Cortex WebUI backend
 
+import type { User, UserRecord } from '@shared/types';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { JWT_EXPIRES_IN, JWT_SECRET } from '@shared/constants';
-import type { User, UserRecord } from '@shared/types';
+import { getServerConfig } from '../config/config';
+import { JWT_EXPIRES_IN } from '../config/constants';
 import { UserModel } from '../models/user';
 import { getDatabase } from '../utils/database';
 
@@ -19,12 +20,20 @@ export const AuthService = {
 	},
 
 	generateToken(userId: string): string {
-		return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+		const { jwtSecret } = getServerConfig();
+		if (!jwtSecret) {
+			throw new Error('JWT secret missing (validated config)');
+		}
+		return jwt.sign({ userId }, jwtSecret, { expiresIn: JWT_EXPIRES_IN });
 	},
 
 	verifyToken(token: string): { userId: string } | null {
+		const { jwtSecret } = getServerConfig();
+		if (!jwtSecret) {
+			throw new Error('JWT secret missing (validated config)');
+		}
 		try {
-			return jwt.verify(token, JWT_SECRET) as { userId: string };
+			return jwt.verify(token, jwtSecret) as { userId: string };
 		} catch {
 			return null;
 		}

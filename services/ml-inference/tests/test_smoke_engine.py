@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 
+
 def _safe_find(name: str):  # pragma: no cover - defensive
     try:
         return importlib.util.find_spec(name)

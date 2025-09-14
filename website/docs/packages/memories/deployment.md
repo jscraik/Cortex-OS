@@ -61,9 +61,9 @@ In your app bootstrap, wire the service with env-driven store + embedder:
 ```ts
 import { createMemoryService, createPolicyAwareStoreFromEnv, createEmbedderFromEnv } from '@cortex-os/memories';
 
-const store &#61; createPolicyAwareStoreFromEnv();
-const embedder &#61; createEmbedderFromEnv();
-export const memoryService &#61; createMemoryService(store, embedder);
+const store = createPolicyAwareStoreFromEnv();
+const embedder = createEmbedderFromEnv();
+export const memoryService = createMemoryService(store, embedder);
 ```
 
 Example runnable script: `examples/memories-mlx/ingest-and-search.ts` (uses `MLX_EMBED_BASE_URL` or `MLX_SERVICE_URL`).
@@ -82,4 +82,5 @@ services:
 Start services:
 ```bash
 docker compose up -d neo4j qdrant
+
 ```

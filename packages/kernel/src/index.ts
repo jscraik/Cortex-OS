@@ -6,6 +6,20 @@
  * @status TDD-DRIVEN
  */
 
+// A2A Events for inter-package communication
+export type {
+	GraphStateChangedEvent,
+	NodeExecutionCompletedEvent,
+	NodeExecutionFailedEvent,
+	NodeExecutionStartedEvent,
+} from './events/kernel-events.js';
+export {
+	createKernelEvent,
+	GraphStateChangedEventSchema,
+	NodeExecutionCompletedEventSchema,
+	NodeExecutionFailedEventSchema,
+	NodeExecutionStartedEventSchema,
+} from './events/kernel-events.js';
 // Core kernel exports
 export { CortexKernel, createKernel } from './graph-simple.js';
 // History helper
@@ -21,7 +35,7 @@ export { createDefaultMCPTools, MCPAdapter } from './mcp/adapter.js';
 // Workflow nodes
 export {
 	BuildNode,
-	EvaluationNode, 
+	EvaluationNode,
 	runBuildNode,
 	runEvaluationNode,
 	runStrategyNode,

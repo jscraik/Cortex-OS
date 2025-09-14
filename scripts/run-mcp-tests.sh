@@ -33,12 +33,12 @@ run_tests_with_constraints() {
     cd "$package_path"
     
     case "$package_name" in
-        "mcp-core"|"mcp-registry")
+        "mcp-core"|"mcp-registry"|"mcp-bridge")
             # Run Node.js tests with memory constraints
             NODE_OPTIONS="--max-old-space-size=2048" \
             npx vitest run --config vitest.config.ts
             ;;
-        "mcp-bridge"|"mcp")
+        "mcp")
             # Run Python tests
             python -m pytest tests/ -v
             ;;
@@ -64,12 +64,12 @@ run_tests_with_coverage() {
     cd "$package_path"
     
     case "$package_name" in
-        "mcp-core"|"mcp-registry")
+        "mcp-core"|"mcp-registry"|"mcp-bridge")
             # Run Node.js tests with coverage and memory constraints
             NODE_OPTIONS="--max-old-space-size=2048" \
             npx vitest run --config vitest.config.ts --coverage
             ;;
-        "mcp-bridge"|"mcp")
+        "mcp")
             # Run Python tests with coverage
             python -m pytest tests/ -v --cov
             ;;

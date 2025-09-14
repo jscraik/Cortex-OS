@@ -40,7 +40,9 @@ class TestE2EEmbedding:
         }
 
     @pytest.fixture
-    def mock_config_file(self, mock_model_config: dict[str, dict[str, object]]) -> Iterator[str]:
+    def mock_config_file(
+        self, mock_model_config: dict[str, dict[str, object]]
+    ) -> Iterator[str]:
         """Create temporary config file"""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(mock_model_config, f)
@@ -233,13 +235,16 @@ class TestOperationalReadiness:
         """Test environment variable configuration works"""
         original_cache = os.environ.get("HF_CACHE_PATH")
         import tempfile as _tf
+
         test_cache_dir = _tf.mkdtemp(prefix="cortex-py-cache-")
 
         try:
             os.environ["HF_CACHE_PATH"] = test_cache_dir
             # Import after setting env var
             import importlib
+
             import mlx.embedding_generator as embedding_module
+
             importlib.reload(embedding_module)
             # Validate env var is set
             assert os.environ["HF_CACHE_PATH"] == test_cache_dir
@@ -292,5 +297,3 @@ class TestOperationalReadiness:
             assert info["model_loaded"] is True
         with contextlib.suppress(FileNotFoundError):
             os.unlink(cfg_path)
-
-

@@ -12,4 +12,3 @@ transport  -&gt; pluggable transport implementations
 ```
 
 Messages flow from producer to transport, into the bus, then to registered handlers. Trace context is preserved end-to-end.
-

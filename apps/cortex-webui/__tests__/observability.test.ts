@@ -10,17 +10,17 @@ import {
 
 describe('observability helpers', () => {
 	const originalEnv = { ...process.env };
-	let logSpy: ReturnType<typeof vi.spyOn>;
+	let warnSpy: ReturnType<typeof vi.spyOn>;
 	let errorSpy: ReturnType<typeof vi.spyOn>;
 
 	beforeEach(() => {
 		process.env = { ...originalEnv };
-		logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+		warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 	});
 
 	afterEach(() => {
-		logSpy.mockRestore();
+		warnSpy.mockRestore();
 		errorSpy.mockRestore();
 	});
 
@@ -62,7 +62,7 @@ describe('observability helpers', () => {
 		expect(parsed).toBeTruthy();
 
 		logEvent(good);
-		expect(logSpy).toHaveBeenCalledTimes(1);
+		expect(warnSpy).toHaveBeenCalledTimes(1);
 		expect(errorSpy).not.toHaveBeenCalled();
 
 		// invalid: missing required field
@@ -73,7 +73,6 @@ describe('observability helpers', () => {
 			model: 'm',
 		} as unknown;
 		// Should not throw; should print an error
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		logEvent(bad as unknown);
 		expect(errorSpy).toHaveBeenCalledTimes(1);
 	});

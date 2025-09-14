@@ -28,7 +28,7 @@ Central hub for the `@cortex-os/security` package. Use the links below to explor
 - [User Guide](./user-guide.md)
 - [Best Practices](./best-practices.md)
 - [Providers & Setup](./providers.md)
-- [Security](./security.md)
+- [Security Overview](./security-overview.md)
 - [Policy & Terms](./policy-terms.md)
 - [FAQ](./faq.md)
 - [Roadmap & Enterprise Quickstarts](./roadmap.md)

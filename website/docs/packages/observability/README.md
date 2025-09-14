@@ -5,9 +5,9 @@ sidebar_label: Monitoring & Observability
 
 # Observability Package Documentation
 
-[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)](https://www.typescriptlang.org/)
+[](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[](https://opensource.org/licenses/Apache-2.0)
+[](https://www.typescriptlang.org/)
 
 Central reference for `@cortex-os/observability`, the OpenTelemetry helper layer for Cortex-OS services.
 
@@ -31,7 +31,7 @@ Central reference for `@cortex-os/observability`, the OpenTelemetry helper layer
 import { initializeObservability, withSpan } from '@cortex-os/observability';
 
 initializeObservability('demo-service');
-await withSpan('task', async () &#61;&gt; { /* ... */ });
+await withSpan('task', async () =&gt; { /* ... */ });
 ```
 
 ## Documentation Index

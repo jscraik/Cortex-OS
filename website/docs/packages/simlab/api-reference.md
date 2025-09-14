@@ -14,9 +14,10 @@ import type { SimScenario } from '@cortex-os/schemas';
 
 No authentication is required. Main entry points:
 
-- `SimRunner.runScenario(scenario: SimScenario): Promise&lt;SimResult&gt;`
-- `SimRunner.runBatch(scenarios: SimScenario[]): Promise&lt;SimResult[]&gt;`
+- `SimRunner.runScenario(scenario: SimScenario): Promise<SimResult>`
+- `SimRunner.runBatch(scenarios: SimScenario[]): Promise<SimResult[]>`
 - `generateReport(results: SimResult[], options?)`
 
 Type definitions are published in the package and can be imported from `@cortex-os/simlab/types`.
 
+```

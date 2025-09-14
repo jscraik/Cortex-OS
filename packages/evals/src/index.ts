@@ -51,4 +51,15 @@ export async function runGate(
 	return { pass, outcomes, startedAt, finishedAt } satisfies GateResult;
 }
 
+// A2A Events
+export {
+	type BenchmarkResultEvent,
+	createEvalsEvent,
+	type EvaluationCompletedEvent,
+	type EvaluationStartedEvent,
+	type TestCaseExecutedEvent,
+} from './events/evals-events.js';
+
+// MCP Integration
+export { evalsMcpTools } from './mcp/tools.js';
 export type { GateConfig, GateResult } from './types';

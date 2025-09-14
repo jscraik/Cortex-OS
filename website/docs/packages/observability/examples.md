@@ -10,7 +10,7 @@ sidebar_label: Examples
 import { initializeObservability, withSpan } from '@cortex-os/observability';
 
 initializeObservability('example');
-await withSpan('work', async () &#61;&gt; {
+await withSpan('work', async () =&gt; {
   // do work
 });
 ```
@@ -18,4 +18,5 @@ await withSpan('work', async () &#61;&gt; {
 ## Flamegraph generation
 ```bash
 node -e "require('@cortex-os/observability').generateFlamegraph('app.js','./flame')"
+
 ```

@@ -10,4 +10,3 @@ sidebar_label: Roadmap
 - Message queue adapters
 - Message replay and event sourcing
 - Advanced metrics dashboard
-

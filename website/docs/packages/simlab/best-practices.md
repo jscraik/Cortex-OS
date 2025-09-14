@@ -10,4 +10,3 @@ sidebar_label: Best Practices
 - Require evidence in agent responses to pass quality gates.
 - Calibrate the judge periodically against human-reviewed transcripts.
 - Expand scenario coverage as new user journeys emerge.
-

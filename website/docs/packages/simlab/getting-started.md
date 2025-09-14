@@ -19,7 +19,8 @@ pnpm install
 import { SimRunner } from '@cortex-os/simlab';
 import type { SimScenario } from '@cortex-os/schemas';
 
-const scenario: SimScenario &#61; {
+
+const scenario: SimScenario = {
   id: 'demo-001',
   goal: 'User creates an account',
   persona: {
@@ -33,13 +34,13 @@ const scenario: SimScenario &#61; {
   success_criteria: ['account created']
 };
 
-const runner &#61; new SimRunner({ deterministic: true, seed: 42 });
-const result &#61; await runner.runScenario(scenario);
+const runner = new SimRunner({ deterministic: true, seed: 42 });
+const result = await runner.runScenario(scenario);
 console.log(result.passed ? 'PASS' : 'FAIL');
 ```
 
 Run the example with:
 ```bash
 pnpm tsx demo.ts
-```
 
+```

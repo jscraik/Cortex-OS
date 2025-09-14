@@ -1,8 +1,19 @@
 import { z } from 'zod';
 
+// Central transport kind (extensible) used across MCP components.
+// 'streamableHttp' retained for backward compatibility; prefer 'http' going forward.
+export const TransportKindSchema = z.enum([
+	'stdio',
+	'http',
+	'sse',
+	'ws',
+	'streamableHttp',
+]);
+export type TransportKind = z.infer<typeof TransportKindSchema>;
+
 export const ServerInfoSchema = z.object({
 	name: z.string(),
-	transport: z.enum(['stdio', 'sse', 'streamableHttp']),
+	transport: TransportKindSchema,
 	// stdio
 	command: z.string().optional(),
 	args: z.array(z.string()).optional(),

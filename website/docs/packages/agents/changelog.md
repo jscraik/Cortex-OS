@@ -5,4 +5,4 @@ sidebar_label: Changelog
 
 # Changelog / Release Notes
 
-See [../CHANGES.md](../CHANGES.md) for detailed version history and upgrade notes.
+See [../CHANGES.md](/docs/references/changelog for detailed version history and upgrade notes.

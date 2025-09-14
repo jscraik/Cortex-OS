@@ -1,10 +1,10 @@
 // File service for Cortex WebUI backend
 
+import type { FileUpload } from '@shared/types';
 import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { UPLOAD_DIR } from '@shared/constants';
-import type { FileUpload } from '@shared/types';
+import { UPLOAD_DIR } from '../config/constants';
 
 export class FileService {
 	static async initializeUploadDirectory(): Promise<void> {
@@ -49,7 +49,13 @@ export class FileService {
 		// 3. Remove the record from the database
 
 		// For now, we'll just simulate the process
-		console.log(`Deleting file with ID: ${id}`);
+		// Placeholder structured log (no-op for now)
+		// When implementing persistence, replace with actual deletion logic.
+		// Using info level to reflect a user-initiated deletion request.
+		// Lazy import to avoid circular deps if any
+		void import('../utils/logger').then(({ default: logger }) =>
+			logger.info('file:delete_requested', { id }),
+		);
 	}
 
 	static getUploadPath(filename: string): string {

@@ -16,10 +16,11 @@ The library integrates with external MCP servers.
 Mapping to `ServerInfo`:
 
 ```ts
-const server &#61; {
+const server = {
   name: "remote",
   transport: "streamableHttp",
   endpoint: process.env.MCP_ENDPOINT,
   headers: { Authorization: `Bearer ${process.env.MCP_TOKEN}` }
 };
+
 ```

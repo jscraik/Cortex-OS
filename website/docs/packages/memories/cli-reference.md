@@ -28,4 +28,5 @@ Options:
 Bootstraps the system by writing a health-check node.
 ```
 init-memory
+
 ```

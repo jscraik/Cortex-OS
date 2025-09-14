@@ -8,7 +8,7 @@ sidebar_label: User Guide
 ## Fetch an Identity
 
 ```typescript
-const identity &#61; await client.fetchWorkloadIdentity();
+const identity = await client.fetchWorkloadIdentity();
 ```
 
 ## Establish mTLS
@@ -25,3 +25,5 @@ await emitter.emit({ type: 'security.audit', data: { action: 'login' } });
 ```
 
 _No keyboard shortcuts are required; the package exposes a programmatic API only._
+
+```

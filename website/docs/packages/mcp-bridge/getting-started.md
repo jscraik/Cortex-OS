@@ -22,4 +22,5 @@ echo '{"msg": "hi"}' | mcp-bridge --outbound-url https://example.com/ingest
 Subscribe to SSE and print events:
 ```bash
 echo '{"msg": "hi"}' | mcp-bridge --outbound-url https://example.com/ingest --sse-subscribe-url https://example.com/events
+
 ```

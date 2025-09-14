@@ -178,7 +178,8 @@ const logDir = process.env.LOG_DIR || './logs';
 try {
 	mkdirSync(logDir, { recursive: true });
 } catch (error) {
-	console.warn('Could not create logs directory:', error);
+	// Cannot use logger before it's fully created; fall back to stderr with structured prefix
+	console.error('[logger:init] could not create logs directory', error);
 }
 
 export default logger;

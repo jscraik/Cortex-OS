@@ -6,32 +6,32 @@ export {
 	BatchToolExecutorUseCase,
 	CodeQualityUseCase,
 	CodeSearchUseCase,
-	ToolExecutorUseCase
+	ToolExecutorUseCase,
 } from './app/UseCases.js';
 export type {
 	ToolExecutionContext,
 	ToolExecutionEvents,
-	ToolExecutor
+	ToolExecutor,
 } from './domain/ToolExecutor.js';
 export type {
 	CodemodTool,
 	SearchTool,
 	ToolRegistry,
-	ValidationTool
+	ValidationTool,
 } from './domain/ToolInterfaces.js';
 export { CombyAdapter } from './infra/CodemodAdapters.js';
 // Infrastructure adapters
 export {
 	AstGrepAdapter,
 	RipgrepAdapter,
-	SemgrepAdapter
+	SemgrepAdapter,
 } from './infra/SearchAdapters.js';
 
 export {
 	CargoAdapter,
 	ESLintAdapter,
 	MultiValidatorAdapter,
-	RuffAdapter
+	RuffAdapter,
 } from './infra/ValidationAdapters.js';
 
 // Convenience factory function
@@ -100,3 +100,14 @@ export function createAgentToolkit(toolsPath?: string) {
  * Default instance using standard tools path
  */
 export const agentToolkit = createAgentToolkit();
+
+// A2A Events
+export {
+	type CodeModificationEvent,
+	createAgentToolkitEvent,
+	type SearchResultsEvent,
+	type ToolExecutionStartedEvent,
+	type ValidationReportEvent,
+} from './events/agent-toolkit-events.js';
+// MCP Integration
+export { agentToolkitMcpTools } from './mcp/tools.js';

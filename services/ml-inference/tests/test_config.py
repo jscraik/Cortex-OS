@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+
 def _safe_has_module(name: str) -> bool:
     try:
         spec = importlib_util.find_spec(name)

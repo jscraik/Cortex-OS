@@ -12,4 +12,5 @@ sidebar_label: Examples
 Run examples with:
 ```bash
 node -r ts-node/register examples/basic.ts
+
 ```

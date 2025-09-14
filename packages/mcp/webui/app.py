@@ -18,20 +18,20 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from ..core.caching import get_cache
 from ..core.circuit_breakers import circuit_breaker_registry
 from ..core.connection_pool import MCPConnectionPool
 from ..core.rate_limiting import get_rate_limit_manager
 from ..core.server import MCPServer
+from ..error_handling.problem_json import as_fastapi_handler
 from ..infrastructure.database import get_database_manager
 from ..infrastructure.migrations import run_migrations
 from ..observability.health import get_health_manager
-from ..error_handling.problem_json import as_fastapi_handler
 from ..observability.metrics import get_metrics_collector
 from ..observability.structured_logging import correlation_context, get_logger
 from ..security.auth import User, get_current_user

@@ -5,9 +5,9 @@ sidebar_label: Autonomous Agents
 
 # Agents Package Documentation
 
-[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)](https://www.typescriptlang.org/)
+[](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[](https://opensource.org/licenses/Apache-2.0)
+[](https://www.typescriptlang.org/)
 
 Central reference for `@cortex-os/agents`, the multi-framework agent execution system.
 
@@ -33,7 +33,8 @@ Central reference for `@cortex-os/agents`, the multi-framework agent execution s
 ```typescript
 import { Agent } from '@cortex-os/agents';
 
-const example: Agent &#61; {
+
+const example: Agent = {
   id: 'demo',
   name: 'Demo Agent',
   capabilities: ['echo'],

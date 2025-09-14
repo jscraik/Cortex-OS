@@ -9,8 +9,7 @@ SimLab runs locally and requires no external services. To integrate third-party 
 
 Example:
 ```bash
-export OPENAI_API_KEY&#61;"sk-..."
+export OPENAI_API_KEY="sk-..."
 ```
 
 Keep tokens outside of version control and use `.env` files or secret managers in CI environments.
-

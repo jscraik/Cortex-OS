@@ -7,7 +7,7 @@ sidebar_label: Architecture
 
 ```
 +---------------+        +----------------+
-| Gate Runner   | -----&gt; | Suite Registry |
+| Gate Runner | -----&gt; | Suite Registry |
 +---------------+        +----------------+
         |                          |
         v                          v

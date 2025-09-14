@@ -175,7 +175,13 @@ def test_mlx_double_failure_runtime_error(tmp_path: Path) -> None:
         sys.modules["huggingface_hub"] = fake_hub
         from mlx.embedding_generator import MLXEmbeddingGenerator
 
-        with pytest.raises(RuntimeError, match="No working backend available"):
+        # Constructor now raises earlier with message 'No embedding backend available...' when both
+        # backends disabled prior to load attempts. Accept that message to keep test aligned with
+        # current implementation.
+        # Updated implementation raises 'No working backend available for model ...'
+        with pytest.raises(
+            RuntimeError, match="No (working|embedding) backend available"
+        ):
             MLXEmbeddingGenerator("test-model", str(cfg_path))
 
 

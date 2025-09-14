@@ -4,13 +4,14 @@ import logging
 import os
 import secrets
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import jwt
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 # Optional dependency; provide a safe fallback if passlib isn't installed
 try:  # pragma: no cover - import guard
     from passlib.context import CryptContext  # type: ignore
@@ -165,7 +166,7 @@ class UserStore:
             hashed_password=pwd_context.hash("admin123"),
             is_admin=True,
             permissions=Permission.get_all_permissions(),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         self.users["admin"] = admin_user
 
@@ -183,7 +184,7 @@ class UserStore:
                 Permission.VIEW_STATUS,
                 Permission.VIEW_METRICS,
             ],
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         self.users["user"] = user
 
@@ -208,7 +209,7 @@ class UserStore:
             hashed_password=pwd_context.hash(user_data["password"]),
             is_admin=user_data.get("is_admin", False),
             permissions=user_data.get("permissions", []),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         self.users[user.username] = user
@@ -236,7 +237,7 @@ class UserStore:
         """Update user's last login time."""
         user = self.users.get(username)
         if user:
-            user.last_login = datetime.now(timezone.utc)
+            user.last_login = datetime.now(UTC)
 
 
 class MCPAuthenticator:
@@ -316,11 +317,11 @@ class MCPAuthenticator:
         to_encode = data.copy()
 
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
-        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "type": "access"})
+        to_encode.update({"exp": expire, "iat": datetime.now(UTC), "type": "access"})
 
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
@@ -328,9 +329,9 @@ class MCPAuthenticator:
     def create_refresh_token(self, data: dict[str, Any]) -> str:
         """Create JWT refresh token."""
         to_encode = data.copy()
-        expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
-        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc), "type": "refresh"})
+        to_encode.update({"exp": expire, "iat": datetime.now(UTC), "type": "refresh"})
 
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt

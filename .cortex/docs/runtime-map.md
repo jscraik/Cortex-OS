@@ -74,7 +74,7 @@ Deliverables: External integration diagram, connection points, config examples, 
 
 - HTTP in/out
   - apps/api exposes REST endpoints and receives webhooks
-  - packages/model-gateway exposes ML endpoints on <http://127.0.0.1:8081>: `/embeddings`, `/rerank`, `/chat`
+  - packages/model-gateway exposes ML endpoints on `http://127.0.0.1:8081`: `/embeddings`, `/rerank`, `/chat`
 - MCP in/out
   - packages/mcp hosts MCP client adapters and registers outbound MCP servers
 - A2A bus
@@ -151,7 +151,7 @@ Direct imports between feature packages are forbidden.
 
   // packages/a2a/src/bus.ts
   export type Event = "github.push"|"rag.ingest"|"memories.ttl.expired";
-  export interface Bus { publish&lt;T&gt;(type:Event,payload:T):Promise&lt;void&gt;; on&lt;T&gt;(type:Event,fn:(p:T)=>Promise&lt;void&gt;):void; }
+  export interface Bus { publish<T>(type:Event,payload:T):Promise<void>; on<T>(type:Event,fn:(p:T)=>Promise<void>):void; }
   export const bus: Bus = null as any; // impl with queue + backpressure
   export const publish = bus.publish.bind(bus);
   export const on = bus.on.bind(bus);
@@ -173,8 +173,8 @@ Result: RAG reacts to GitHub without knowing GitHub or agents.
 
   // packages/mvp/src/contracts/memories.ts
   export interface Memories {
-  put(k:string,v:unknown,ttl?:number):Promise&lt;void&gt;;
-  get&lt;T=unknown&gt;(k:string):Promise&lt;T|null&gt;;
+  put(k:string,v:unknown,ttl?:number):Promise<void>;
+  get<T=unknown>(k:string):Promise<T|null>;
   }
   export const TOKENS = { Memories: Symbol("Memories") };
 
@@ -187,12 +187,12 @@ Result: RAG reacts to GitHub without knowing GitHub or agents.
   import { TOKENS, Memories } from "@cortex-os/mvp/contracts/memories";
   import { provideMemories } from "@cortex-os/memories/service";
   import { container } from "./di";
-  container.bind&lt;Memories&gt;(TOKENS.Memories).toConstantValue(provideMemories());
+  container.bind<Memories>(TOKENS.Memories).toConstantValue(provideMemories());
 
   // packages/orchestration/src/plan.ts
   import { inject } from "@cortex-os/mvp/di";
   import { TOKENS, Memories } from "@cortex-os/mvp/contracts/memories";
-  const memories = inject&lt;Memories&gt;(TOKENS.Memories);
+  const memories = inject<Memories>(TOKENS.Memories);
   export async function planTask(id:string){ await memories.put(`plan:${id}`, {status:"queued"}); }
 
 Result: Orchestration uses Memories through an interface, not a concrete package.

@@ -11,4 +11,3 @@ sidebar_label: Glossary
 | Trace Context | W3C headers for distributed tracing |
 | Envelope | A CloudEvents message with metadata |
 | Handler | Function processing a specific message type |
-

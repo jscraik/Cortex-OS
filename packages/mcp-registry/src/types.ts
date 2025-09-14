@@ -1,6 +1,7 @@
+import { TransportKindSchema } from '@cortex-os/mcp-core';
 import { z } from 'zod';
 
-export const TransportTypeSchema = z.enum(['stdio', 'sse', 'streamableHttp']);
+export const TransportTypeSchema = TransportKindSchema;
 
 export const ServerManifestSchema = z.object({
 	id: z.string(),

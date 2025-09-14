@@ -13,4 +13,3 @@ SimLab is composed of four core modules:
 4. **Judge** - scores each turn for goal achievement, SOP adherence, brand alignment, and factual accuracy
 
 Communication between components is synchronous and runs entirely in-process for deterministic behavior.
-

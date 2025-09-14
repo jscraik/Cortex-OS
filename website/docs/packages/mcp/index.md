@@ -5,8 +5,6 @@ sidebar_label: Index
 
 # MCP Documentation
 
-![Status: Beta](https://img.shields.io/badge/status-beta-yellow)
-
 Central entry point for the `cortex-mcp` package. It distinguishes current features from planned work and links to all documentation sections.
 
 ## Current Features

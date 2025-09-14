@@ -1,7 +1,7 @@
 import json
 
-import pytest
 import httpx
+import pytest
 
 from cortex_mlx.mcp_client import MCPClient
 

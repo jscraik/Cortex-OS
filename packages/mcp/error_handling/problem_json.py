@@ -6,16 +6,16 @@ without coupling core logic to the web framework.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 def problem_detail(
     title: str,
     status: int,
-    detail: Optional[str] = None,
+    detail: str | None = None,
     type_: str = "about:blank",
-    instance: Optional[str] = None,
-    extra: Optional[dict[str, Any]] = None,
+    instance: str | None = None,
+    extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Create a Problem+JSON compatible dictionary.
 

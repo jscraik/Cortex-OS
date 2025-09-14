@@ -71,6 +71,19 @@ export const SimlabCommandSchema = z.object({
 });
 export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
+export * from './agent-events.js';
 export * from './agent-toolkit.js';
+export * from './gateway-events.js';
+// New event schemas for comprehensive MCP/A2A integration
+export * from './kernel-events.js';
 export * from './mcp-events.js';
+export * from './memory-events.js';
+export * from './model-gateway-events.js';
+export * from './observability-events.js';
+export * from './rag-events.js';
+export * from './security-events.js';
 
+// Note: Additional package event contracts are available directly from package imports
+// Use: import { createAsbrEvent } from '@cortex-os/asbr';
+// Use: import { createEvalsEvent } from '@cortex-os/evals';
+// etc.

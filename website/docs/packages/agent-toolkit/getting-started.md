@@ -25,4 +25,5 @@ just scout "pattern" src/
 Apply a codemod:
 ```bash
 just codemod 'foo(:[x])' 'bar(:[x])' src/
+
 ```

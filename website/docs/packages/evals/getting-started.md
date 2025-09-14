@@ -23,7 +23,7 @@ import { runGate } from '@cortex-os/evals';
 import myDeps from './deps';
 import config from './gate.config.json' with { type: 'json' };
 
-const result &#61; await runGate(config, myDeps);
+const result = await runGate(config, myDeps);
 console.log(result.pass ? 'passed' : 'failed');
 ```
 

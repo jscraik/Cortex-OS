@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import os
-from typing import Any, List
+from dataclasses import dataclass
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -30,13 +30,13 @@ app = FastAPI()
 
 class EmbedRequest(BaseModel):
     # Accept either `input` or `texts` for compatibility
-    input: List[str] | str | None = None
-    texts: List[str] | None = None
+    input: list[str] | str | None = None
+    texts: list[str] | None = None
     model: str | None = None
 
 
 class EmbedResponse(BaseModel):
-    embeddings: List[List[float]]
+    embeddings: list[list[float]]
     model: str
     dimensions: int
 
@@ -51,9 +51,9 @@ async def health():
     return {"status": "ok", "model": settings.model, "dimensions": settings.dimensions}
 
 
-def _fallback_embed(texts: List[str], dims: int) -> List[List[float]]:
+def _fallback_embed(texts: list[str], dims: int) -> list[list[float]]:
     # Deterministic, lightweight embedding for environments without MLX
-    embs: List[List[float]] = []
+    embs: list[list[float]] = []
     for t in texts:
         vec = [0.0] * dims
         for i, ch in enumerate(t.encode("utf-8")):
@@ -67,7 +67,7 @@ def _fallback_embed(texts: List[str], dims: int) -> List[List[float]]:
 @app.post("/embed", response_model=EmbedResponse)
 async def embed(req: EmbedRequest) -> Any:
     # Resolve inputs
-    inputs: List[str]
+    inputs: list[str]
     if isinstance(req.input, str):
         inputs = [req.input]
     elif isinstance(req.input, list) and len(req.input) > 0:

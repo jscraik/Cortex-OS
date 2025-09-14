@@ -14,4 +14,3 @@ docker build -t cortex-a2a .
 ```
 
 Include configuration environment variables at runtime.
-

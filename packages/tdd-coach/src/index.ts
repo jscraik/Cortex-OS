@@ -1,5 +1,15 @@
 export { ContextualCoach } from './core/ContextualCoach.js';
 export { TDDStateMachine } from './core/TDDStateMachine.js';
+// A2A Events
+export {
+	createTddCoachEvent,
+	type ImplementationSuggestedEvent,
+	type RefactoringOpportunityEvent,
+	type TddCycleStartedEvent,
+	type TestWrittenEvent,
+} from './events/tdd-coach-events.js';
+// MCP Integration
+export { tddCoachMcpTools } from './mcp/tools.js';
 export {
 	GoTestReporter,
 	JestReporter,

@@ -17,4 +17,5 @@ Fastify (HTTP server)
      ├─ /api/v1/categories
      ├─ /api/v1/stats
      └─ /health
+
 ```

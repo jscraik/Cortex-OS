@@ -10,4 +10,3 @@ sidebar_label: Best Practices
 - Keep handlers idempotent and side-effect free.
 - Propagate `traceparent` for end-to-end observability.
 - Set reasonable TTLs to avoid processing stale messages.
-

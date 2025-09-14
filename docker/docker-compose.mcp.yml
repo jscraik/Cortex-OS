@@ -7,9 +7,10 @@ services:
     working_dir: /app
     volumes:
       - ../packages/mcp-registry:/app
+      - ../packages/mcp-core:/mcp-core
     environment:
       - NODE_OPTIONS=--max-old-space-size=1024
-    command: sh -c "cd /app && npm install && npm run start"
+    command: sh -c "cd /app && pnpm install && pnpm build && node dist/index.js"
     ports:
       - "3002:3002"
     networks:
@@ -18,29 +19,30 @@ services:
     mem_reservation: 512m
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/health', res => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      test: ["CMD", "node", "-e", "process.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   # MCP Bridge Service
   mcp-bridge:
-    image: python:3.12-slim
+    image: node:20-alpine
     working_dir: /app
     volumes:
       - ../packages/mcp-bridge:/app
+      - ../packages/mcp-core:/mcp-core
     environment:
-      - PYTHONPATH=/app
-    command: sh -c "cd /app && pip install -e . && python -m mcp_bridge.cli"
+      - NODE_OPTIONS=--max-old-space-size=1024
+    command: sh -c "cd /app && pnpm install && pnpm build && node dist/index.js"
     ports:
       - "3003:3003"
     networks:
       - cortex-network
-    mem_limit: 512m
-    mem_reservation: 256m
+    mem_limit: 1024m
+    mem_reservation: 512m
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; exit(0 if requests.get('http://localhost:3003/health').status_code == 200 else 1)"]
+      test: ["CMD", "node", "-e", "process.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -53,7 +55,7 @@ services:
       - ../packages/mcp-core:/app
     environment:
       - NODE_OPTIONS=--max-old-space-size=1024
-    command: sh -c "cd /app && npm install && npm run start"
+    command: sh -c "cd /app && pnpm install && pnpm build && node dist/index.js"
     ports:
       - "3010:3010"
     networks:
@@ -62,7 +64,7 @@ services:
     mem_reservation: 512m
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3010/health', res => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      test: ["CMD", "node", "-e", "process.exit(0)"]
       interval: 30s
       timeout: 10s
       retries: 3

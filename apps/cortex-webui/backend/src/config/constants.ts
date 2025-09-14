@@ -1,54 +1,20 @@
-// Configuration constants for Cortex WebUI Backend
+// Backend-specific constants for Cortex WebUI
+// Migrated from shared/constants to establish proper domain boundaries.
 
 export const API_BASE_PATH = '/api';
 export const WS_BASE_PATH = '/ws';
 
-export const CORS_OPTIONS = {
-	origin: (
-		origin: string | undefined,
-		callback: (err: Error | null, allow?: boolean) => void,
-	) => {
-		const allowedOrigins = (
-			process.env.ALLOWED_ORIGINS ||
-			'http://localhost:3000,http://localhost:3001'
-		)
-			.split(',')
-			.map((o) => o.trim());
+// Database and filesystem paths (backend-only)
+export const DATABASE_PATH = './data/cortex.db';
+export const UPLOAD_DIR = './uploads';
+export const LOG_DIR = './logs';
 
-		// Allow requests with no origin (mobile apps, curl, etc.)
-		if (!origin) return callback(null, true);
+// Auth configuration (backend-only)
+export const JWT_EXPIRES_IN = '24h';
 
-		if (allowedOrigins.includes(origin)) {
-			callback(null, true);
-		} else {
-			callback(new Error('Not allowed by CORS'), false);
-		}
-	},
-	credentials: true,
-	optionsSuccessStatus: 200,
-	methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-	allowedHeaders: [
-		'Content-Type',
-		'Authorization',
-		'X-API-Key',
-		'X-Requested-With',
-	],
-};
+// Pagination defaults (used primarily by backend)
+export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;
 
-export const DEFAULT_RATE_LIMITS = {
-	windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes
-	maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
-	authMaxRequests: 5, // Strict limit for auth endpoints
-	chatMaxRequests: 30, // Per minute for chat
-	uploadMaxRequests: 20, // Per hour for uploads
-} as const;
-
-export const SERVER_CONFIG = {
-	port: parseInt(process.env.PORT || '3001', 10),
-	nodeEnv: process.env.NODE_ENV || 'development',
-	jwtSecret: process.env.JWT_SECRET || '',
-	frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-	databasePath: process.env.DATABASE_PATH || './data/cortex.db',
-	uploadDir: process.env.UPLOAD_DIR || './uploads',
-	logLevel: process.env.LOG_LEVEL || 'info',
-} as const;
+// NOTE: Legacy CORS, rate limit, and server config constants removed.
+// Use validated helpers in config.ts instead: getCorsOptions(), getServerConfig(), getRateLimitConfig().

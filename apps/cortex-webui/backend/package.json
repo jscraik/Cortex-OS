@@ -5,9 +5,9 @@
   "description": "Backend for Cortex WebUI - API server for AI models",
   "main": "src/server.ts",
   "scripts": {
-    "dev": "ts-node --project tsconfig.dev.json src/server.ts",
+    "dev": "ts-node -r dotenv/config src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node -r dotenv/config dist/backend/src/server.js",
     "test": "vitest",
     "lint": "eslint \"src/**/*.ts\" --report-unused-disable-directives --max-warnings 0"
   },
@@ -39,7 +39,9 @@
     "@types/sqlite3": "^5.1.0",
     "@types/uuid": "^9.0.1",
     "@types/ws": "^8.5.4",
+    "@types/supertest": "^2.0.16",
     "eslint": "^9.8.0",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2",
     "typescript-eslint": "^8.41.0",

@@ -10,3 +10,14 @@ export function createAGUIAdapter(emitter: EventEmitter) {
 
 	return agui;
 }
+
+// A2A Events
+export {
+	type AiRecommendationEvent,
+	createAguiEvent,
+	type UiComponentRenderedEvent,
+	type UiStateChangedEvent,
+	type UserInteractionEvent,
+} from './events/agui-events.js';
+// MCP Integration
+export { aguiMcpTools } from './mcp/tools.js';

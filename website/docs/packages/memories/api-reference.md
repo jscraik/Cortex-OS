@@ -8,9 +8,9 @@ sidebar_label: Api Reference
 ## MemoryService
 ```typescript
 import { MemoryService } from '@cortex-os/memories';
-const svc &#61; await MemoryService.fromEnv(embedder);
+const svc = await MemoryService.fromEnv(embedder);
 await svc.upsert({ id: '1', text: 'hello' });
-const result &#61; await svc.search('hello');
+const result = await svc.search('hello');
 ```
 Key methods:
 - `initialize()` - connect to configured stores
@@ -22,3 +22,5 @@ Key methods:
 - `createMemoryService(store, embedder)` - compose a service manually
 - `createPolicyAwareStoreFromEnv()` - build store using env vars
 - `createEmbedderFromEnv()` - build embedding pipeline from env vars
+
+```

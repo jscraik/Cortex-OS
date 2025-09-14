@@ -10,7 +10,7 @@ sidebar_label: Api Reference
 Fetches SVIDs from SPIRE.
 
 ```typescript
-const client &#61; new SpiffeClient({ socketPath, trustDomain });
+const client = new SpiffeClient({ socketPath, trustDomain });
 await client.fetchWorkloadIdentity();
 ```
 
@@ -37,6 +37,7 @@ const tlsOptions &#61; await mtls.createServerOptions();
 Emits CloudEvents after contract validation.
 
 ```typescript
-const emitter &#61; new SecurityEventEmitter({ registry, policyRouter });
+const emitter = new SecurityEventEmitter({ registry, policyRouter });
 await emitter.emit(event);
+
 ```

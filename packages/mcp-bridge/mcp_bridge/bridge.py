@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
-from typing import Any, AsyncIterator, Callable, Optional
+from typing import Any
 
 try:  # pragma: no cover - optional import
     import httpx
@@ -26,7 +27,7 @@ class MCPBridge:
         self,
         outbound_url: str | None = None,
         rate: RateConfig | None = None,
-        sleep_func: Optional[Callable[[float], Any]] = None,
+        sleep_func: Callable[[float], Any] | None = None,
     ) -> None:
         self.outbound_url = outbound_url
         self.rate = rate or RateConfig()

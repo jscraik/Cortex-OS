@@ -20,4 +20,5 @@ Import the package and register an agent:
 ```typescript
 import { Agent } from '@cortex-os/agents';
 // see README usage for a full example
+
 ```

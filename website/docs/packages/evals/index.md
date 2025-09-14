@@ -5,9 +5,6 @@ sidebar_label: Index
 
 # Evals Package Documentation
 
-![build status](https://img.shields.io/badge/status-experimental-yellow)
-![license](https://img.shields.io/badge/license-Apache--2.0-blue)
-
 ## Overview
 
 `@cortex-os/evals` provides reusable evaluation "gates" for Cortex systems. Gates run one or more suites that assert quality thresholds before features are promoted.

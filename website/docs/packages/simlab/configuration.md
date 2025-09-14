@@ -20,4 +20,3 @@ SimLab reads configuration objects when constructing components. Key options:
 - `weights` (object): scoring weights per dimension
 
 Configuration can be supplied directly in code or via JSON files loaded with standard Node.js patterns.
-

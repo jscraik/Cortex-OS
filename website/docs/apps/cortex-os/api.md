@@ -8,9 +8,9 @@ sidebar_label: Api
 ```ts
 import { provideMemories } from '@cortex-os/memories';
 
-const memories &#61; await provideMemories();
+const memories = await provideMemories();
 await memories.store({ text: 'hello world' });
-const results &#61; await memories.search('hello');
+const results = await memories.search('hello');
 ```
 
 `provideMemories()` reads env vars to configure stores, encryption, embedders, and decay. Returned objects implement CRUD and vector search methods.

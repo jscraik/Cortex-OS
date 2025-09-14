@@ -19,8 +19,9 @@ Set environment variables or provide a configuration object with the following o
 Example:
 
 ```bash
-export REGISTRIES&#61;'{"official":"https://registry.cortex-os.dev"}'
-export CACHE_DIR&#61;~/.cache/cortex-marketplace
-export CACHE_TTL&#61;3600
+export REGISTRIES='{"official":"https://registry.cortex-os.dev"}'
+export CACHE_DIR=~/.cache/cortex-marketplace
+export CACHE_TTL=3600
 pnpm --filter @cortex-os/marketplace-api start
+
 ```

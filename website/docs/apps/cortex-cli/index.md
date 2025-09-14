@@ -5,10 +5,6 @@ sidebar_label: Index
 
 # Cortex CLI Documentation
 
-![Status: Deprecated](https://img.shields.io/badge/status-deprecated-red)
-![Node.js](https://img.shields.io/badge/node-%3E=20-blue)
-![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)
-
 This site documents the archived `@cortex-os/cli` package and guides migration to the actively maintained
 [`cortex-code`](../cortex-code/docs).
 
@@ -150,31 +146,31 @@ environment variables.
 
    ```bash
    cortex mcp list
-   ```
+```
 
 2. **Send an A2A message**
 
    ```bash
    cortex a2a send --type ping --payload '{"msg":"hi"}'
-   ```
+```
 
 3. **Query RAG**
 
    ```bash
    cortex rag query "What is Cortex OS?"
-   ```
+```
 
 4. **Run a simulation**
 
    ```bash
    cortex simlab run demo
-   ```
+```
 
 5. **Check system status**
 
    ```bash
    cortex ctl check
-   ```
+```
 
 ## Best Practices
 
@@ -202,8 +198,8 @@ Set environment variables for external services before running commands:
 ## Policy & Terms
 
 Usage is governed by the repository [LICENSE](../../LICENSE),
-[COMMERCIAL-LICENSE](../../COMMERCIAL-LICENSE.md) for enterprise use, and the
-[CODE OF CONDUCT](../../CODE_OF_CONDUCT.md). By invoking the CLI you accept these terms.
+[COMMERCIAL-LICENSE](/docs/references/commercial-license for enterprise use, and the
+[CODE OF CONDUCT](/docs/references/code-of-conduct. By invoking the CLI you accept these terms.
 
 ## FAQ
 
@@ -233,9 +229,9 @@ enhanced simulations, see the `cortex-code` roadmap (if available).
 
 ## Changelog / Release Notes
 
-| Version | Date       | Notes                              |
+| Version | Date | Notes |
 | ------- | ---------- | ---------------------------------- |
-| 0.1.0   | 2024-01-01 | Initial release (project immediately archived). |
+| 0.1.0 | 2024-01-01 | Initial release (project immediately archived). |
 
 ## Migration & Upgrade
 
@@ -301,7 +297,7 @@ Higher‑performance benchmarking is available in `cortex-code`.
 Enable verbose logging with:
 
 ```bash
-DEBUG&#61;cortex* cortex mcp list
+DEBUG=cortex* cortex mcp list
 ```
 
 Logs are written to stdout; integrate with observability stacks via shell redirection or external collectors.
@@ -321,23 +317,23 @@ Logs are written to stdout; integrate with observability stacks via shell redire
 
    ```bash
    pnpm install
-   ```
+```
 
 3. Run in watch mode:
 
    ```bash
    pnpm dev
-   ```
+```
 
 4. Build:
 
    ```bash
    pnpm build
-   ```
+```
 
 ## Accessibility Guidelines
 
 - The CLI outputs plain text compatible with screen readers.
-- Disable colors with `--no-color` or `FORCE_COLOR&#61;0` for high‑contrast terminals.
+- Disable colors with `--no-color` or `FORCE_COLOR=0` for high‑contrast terminals.
 - Keyboard navigation follows standard shell conventions.
 - For TUI mode, use terminal accessibility features and report issues upstream.

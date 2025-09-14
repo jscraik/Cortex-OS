@@ -4,18 +4,19 @@ OrbStack-specific metrics collector for Cortex-OS
 Monitors container performance, resource usage, and OrbStack-specific metrics
 """
 
-import time
 import logging
 import os
+import threading
+import time
+from datetime import datetime
+from typing import Any
+
 import docker
 import psutil
-from datetime import datetime
-from typing import Dict, List, Any
-from prometheus_client import start_http_server, Gauge, Counter, Histogram
-from fastapi import FastAPI
-from pydantic import BaseModel
 import uvicorn
-import threading
+from fastapi import FastAPI
+from prometheus_client import Counter, Gauge, Histogram, start_http_server
+from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(
@@ -119,7 +120,7 @@ class OrbStackMonitor:
                 platform = 'unknown'
         return platform
 
-    def collect_container_metrics(self) -> List[ContainerMetrics]:
+    def collect_container_metrics(self) -> list[ContainerMetrics]:
         """Collect metrics from all running containers"""
         containers = []
 
@@ -188,7 +189,7 @@ class OrbStackMonitor:
 
         return containers
 
-    def update_prometheus_metrics(self, containers: List[ContainerMetrics]):
+    def update_prometheus_metrics(self, containers: list[ContainerMetrics]):
         """Update Prometheus metrics with collected data"""
         rosetta_count = 0
         native_count = 0
@@ -265,7 +266,7 @@ class OrbStackMonitor:
         except Exception as e:
             logger.error(f"Failed to collect volume metrics: {e}")
 
-    def get_all_container_metrics(self) -> Dict[str, Any]:
+    def get_all_container_metrics(self) -> dict[str, Any]:
         """Get all container metrics as JSON"""
         containers = self.collect_container_metrics()
         return {
@@ -278,7 +279,7 @@ class OrbStackMonitor:
             }
         }
 
-    def get_orbstack_specific_metrics(self) -> Dict[str, Any]:
+    def get_orbstack_specific_metrics(self) -> dict[str, Any]:
         """Get OrbStack-specific metrics"""
         try:
             # System information

@@ -32,7 +32,7 @@ from typing import Any
 # Add safe subprocess for security
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../../../libs/python"))
 try:
-    from safe_subprocess import SafeSubprocessError, safe_run, SYSTEM_INFO_COMMANDS
+    from safe_subprocess import SYSTEM_INFO_COMMANDS, SafeSubprocessError, safe_run
 except ImportError:
     # Fallback if safe_subprocess not available
     SafeSubprocessError = Exception

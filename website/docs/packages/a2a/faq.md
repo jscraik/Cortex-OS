@@ -10,4 +10,3 @@ A: Yes. Messages are CloudEvents JSON and can be produced or consumed by any lan
 
 **Q: Can I plug in my own transport?**
 A: Implement the transport interface and pass it to `createBus`.
-

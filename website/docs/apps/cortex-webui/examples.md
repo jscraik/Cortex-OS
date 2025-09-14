@@ -12,5 +12,5 @@ curl -X POST http://localhost:3001/api/conversations \
   -H "Authorization: Bearer &lt;TOKEN&gt;" \
   -H "Content-Type: application/json" \
   -d '{"title":"Test"}'
-```
 
+```

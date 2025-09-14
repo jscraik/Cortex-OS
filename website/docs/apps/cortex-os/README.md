@@ -5,8 +5,6 @@ sidebar_label: Core Runtime
 
 # Cortex-OS App Documentation
 
-![status](https://img.shields.io/badge/status-alpha-orange)
-
 ## Index / Overview
 
 | Section | Description |

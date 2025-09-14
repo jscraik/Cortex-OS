@@ -26,21 +26,32 @@ async function readJson<T>(file: string, fallback: T): Promise<T> {
 async function writeJson(file: string, value: unknown): Promise<void> {
 	await fs.mkdir(dirname(file), { recursive: true });
 	const lock = `${file}.lock`;
-	const handle = await fs.open(lock, 'wx').catch((err) => {
-		if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
-			return null;
+	const maxAttempts = 5;
+	let attempt = 0;
+	// Simple retry loop for transient contention
+	while (attempt < maxAttempts) {
+		const handle = await fs.open(lock, 'wx').catch((err) => {
+			if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+				return null;
+			}
+			throw err;
+		});
+		if (!handle) {
+			attempt += 1;
+			await new Promise((r) => setTimeout(r, 10 * attempt));
+			continue;
 		}
-		throw err;
-	});
-	if (!handle) throw new Error('Registry file is locked');
-	try {
-		const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
-		await fs.writeFile(tmp, JSON.stringify(value, null, 2));
-		await fs.rename(tmp, file);
-	} finally {
-		await handle.close();
-		await fs.unlink(lock).catch(() => {});
+		try {
+			const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
+			await fs.writeFile(tmp, JSON.stringify(value, null, 2));
+			await fs.rename(tmp, file);
+			return; // success
+		} finally {
+			await handle.close();
+			await fs.unlink(lock).catch(() => {});
+		}
 	}
+	throw new Error('Registry file is locked');
 }
 
 export async function readAll(): Promise<ServerInfo[]> {

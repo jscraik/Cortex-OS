@@ -21,11 +21,12 @@ pnpm add @cortex-os/security
 ```typescript
 import { SpiffeClient } from '@cortex-os/security';
 
-const client &#61; new SpiffeClient({
+const client = new SpiffeClient({
   socketPath: '/tmp/spire-agent/public/api.sock',
   trustDomain: 'cortex-os.local',
 });
 
-const identity &#61; await client.fetchWorkloadIdentity();
+const identity = await client.fetchWorkloadIdentity();
 console.log(identity.spiffeId);
+
 ```

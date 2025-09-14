@@ -14,5 +14,6 @@ nohup mcp-bridge --outbound-url https://example.com/ingest &
 
 ## Container
 ```bash
-docker run -e MCP_BRIDGE_OUTBOUND_URL&#61;https://example.com/ingest cortex/mcp-bridge:latest
+docker run -e MCP_BRIDGE_OUTBOUND_URL=https://example.com/ingest cortex/mcp-bridge:latest
+
 ```

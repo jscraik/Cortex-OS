@@ -6,7 +6,7 @@ sidebar_label: Glossary
 # Glossary
 
 | Term | Definition |
-|---|---|
+| --- | --- |
 | RAG | Retrieval-Augmented Generation, combining search with generation |
 | Chunk | Slice of text produced during ingestion |
 | Embedder | Component that converts text to vectors |

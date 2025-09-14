@@ -8,9 +8,9 @@ import os
 import shlex
 import shutil
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 from subprocess import Popen
-from collections.abc import Callable
 from typing import Any
 
 

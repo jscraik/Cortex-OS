@@ -12,4 +12,3 @@ sidebar_label: User Guide
 
 ### Keyboard Shortcuts
 The CLI tools support standard shell navigation. No additional shortcuts are required.
-

@@ -379,3 +379,14 @@ export class SchemaRegistry {
 if (import.meta.url === `file://${process.argv[1]}`) {
 	new SchemaRegistry().start();
 }
+
+// A2A Events
+export {
+	type ComponentRegisteredEvent,
+	type ComponentUpdatedEvent,
+	createRegistryEvent,
+	type DependencyResolvedEvent,
+	type RegistryQueryEvent,
+} from './events/registry-events.js';
+// MCP Integration
+export { registryMcpTools } from './mcp/tools.js';

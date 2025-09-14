@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@cortex-os/mcp-core": "workspace:*",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "typescript": "^5.9.2",
     "vitest": "^2.1.9"
   }

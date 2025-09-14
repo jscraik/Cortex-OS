@@ -8,8 +8,9 @@ sidebar_label: Api Reference
 ```python
 from mcp_bridge.bridge import MCPBridge, RateConfig
 
-rate &#61; RateConfig(messages_per_sec&#61;5, max_queue&#61;50)
-bridge &#61; MCPBridge(outbound_url&#61;"https://example.com/ingest", rate&#61;rate)
+
+rate = RateConfig(messages_per_sec=5, max_queue=50)
+bridge = MCPBridge(outbound_url="https://example.com/ingest", rate=rate)
 ```
 
 ## MCPBridge

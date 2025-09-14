@@ -9,14 +9,16 @@ sidebar_label: Contributor Setup
    ```bash
    git clone https://github.com/cortexso/Cortex-OS.git
    cd Cortex-OS/packages/mcp-bridge
-   ```
+```
 2. Create a virtual environment and install dev deps:
    ```bash
    python -m venv .venv
    source .venv/bin/activate
    pip install -e .[dev]
-   ```
+```
 3. Run tests:
    ```bash
    pytest
-   ```
+```
+
+```

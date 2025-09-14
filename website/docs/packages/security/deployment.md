@@ -17,6 +17,7 @@ CMD ["node", "dist/index.js"]
 
 ```bash
 docker run -v /tmp/spire-agent/public/api.sock:/tmp/spire-agent/public/api.sock \
-  -e SPIRE_SOCKET&#61;/tmp/spire-agent/public/api.sock \
-  -e TRUST_DOMAIN&#61;cortex-os.local myservice
+  -e SPIRE_SOCKET=/tmp/spire-agent/public/api.sock \
+  -e TRUST_DOMAIN=cortex-os.local myservice
+
 ```

@@ -14,4 +14,3 @@ sidebar_label: Troubleshooting
 - Run with `debug: true` to enable verbose logging.
 - Use Node.js `--inspect` flag to attach a debugger.
 - Review generated reports for judge notes and evidence.
-

@@ -58,4 +58,62 @@ describe('createEnhancedClient', () => {
 			} as any),
 		).rejects.toThrow();
 	});
+
+	it('throws error for HTTP transport without endpoint', async () => {
+		await expect(
+			createEnhancedClient({
+				name: 'test',
+				transport: 'streamableHttp',
+			}),
+		).rejects.toThrow('endpoint required for http transports');
+	});
+
+	it('throws error for stdio transport without command', async () => {
+		await expect(
+			createEnhancedClient({
+				name: 'test',
+				transport: 'stdio',
+			}),
+		).rejects.toThrow('command required for stdio transport');
+	});
+
+	it('throws error for unsupported transport', async () => {
+		await expect(
+			createEnhancedClient({
+				name: 'test',
+				transport: 'unsupported' as 'stdio',
+			}),
+		).rejects.toThrow(/Invalid enum value.*unsupported/);
+	});
+
+	it('throws error for sse transport without endpoint', async () => {
+		await expect(
+			createEnhancedClient({
+				name: 'test',
+				transport: 'sse',
+			}),
+		).rejects.toThrow('endpoint required for http transports');
+	});
+
+	it('handles HTTP error responses', async () => {
+		const server = http.createServer((_req, res) => {
+			res.statusCode = 500;
+			res.end('Server Error');
+		});
+		await new Promise<void>((resolve) => server.listen(0, () => resolve()));
+		const port = (server.address() as AddressInfo).port;
+
+		const client = await createEnhancedClient({
+			name: 'http-error-test',
+			transport: 'streamableHttp',
+			endpoint: `http://127.0.0.1:${port}`,
+		});
+
+		await expect(
+			client.callTool({ name: 'tool', arguments: { a: 1 } }),
+		).rejects.toThrow('HTTP 500');
+
+		await client.close();
+		server.close();
+	});
 });

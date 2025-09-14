@@ -26,6 +26,30 @@ const JsonRpcResponseSchema = z.object({
 type JsonRpcRequest = z.infer<typeof JsonRpcRequestSchema>;
 type JsonRpcResponse = z.infer<typeof JsonRpcResponseSchema>;
 
+// Circuit breaker observability event schemas
+// Minimal shape to avoid coupling to a broader event bus yet; can be promoted later.
+export const CircuitOpenedEventSchema = z.object({
+	type: z.literal('circuit.opened'),
+	service: z.string(),
+	failures: z.number(),
+	threshold: z.number(),
+	time: z.string(),
+});
+export const CircuitHalfOpenEventSchema = z.object({
+	type: z.literal('circuit.half_open'),
+	service: z.string(),
+	failures: z.number(),
+	threshold: z.number(),
+	time: z.string(),
+});
+export const CircuitClosedEventSchema = z.object({
+	type: z.literal('circuit.closed'),
+	service: z.string(),
+	failures: z.number(),
+	threshold: z.number(),
+	time: z.string(),
+});
+
 // Configuration interfaces
 export interface RateLimitOptions {
 	maxRequests: number;
@@ -52,13 +76,45 @@ export interface StdioHttpBridgeOptions {
 	rateLimitOptions?: RateLimitOptions;
 	retryOptions?: RetryOptions;
 	circuitBreakerOptions?: CircuitBreakerOptions;
+	/** Optional per-request timeout in milliseconds (HTTP, SSE connect, and stdio line processing forward calls). */
+	requestTimeoutMs?: number;
+}
+
+export class TimeoutError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'TimeoutError';
+	}
+}
+
+function withTimeout<T>(
+	promise: Promise<T>,
+	ms: number | undefined,
+	label: string,
+): Promise<T> {
+	if (!ms || ms <= 0) return promise;
+	return new Promise<T>((resolve, reject) => {
+		const timer = setTimeout(() => {
+			reject(new TimeoutError(`${label} timed out after ${ms}ms`));
+		}, ms);
+		promise.then(
+			(v) => {
+				clearTimeout(timer);
+				resolve(v);
+			},
+			(e) => {
+				clearTimeout(timer);
+				reject(e instanceof Error ? e : new Error(String(e)));
+			},
+		);
+	});
 }
 
 // Rate limiter implementation
 class RateLimiter {
 	private requests: number[] = [];
 
-	constructor(private options: RateLimitOptions) {}
+	constructor(private readonly options: RateLimitOptions) {}
 
 	canMakeRequest(): boolean {
 		const now = Date.now();
@@ -86,13 +142,44 @@ class CircuitBreaker {
 	private lastFailureTime = 0;
 	private state: 'closed' | 'open' | 'half-open' = 'closed';
 
-	constructor(private options: CircuitBreakerOptions) {}
+	constructor(
+		private readonly options: CircuitBreakerOptions,
+		private readonly emitter: EventEmitter,
+		private readonly service: string,
+	) {}
+
+	private emit(
+		event: 'circuit.opened' | 'circuit.half_open' | 'circuit.closed',
+	) {
+		const base = {
+			service: this.service,
+			failures: this.failures,
+			threshold: this.options.failureThreshold,
+			time: new Date().toISOString(),
+		};
+		if (event === 'circuit.opened')
+			this.emitter.emit(
+				'circuit.opened',
+				CircuitOpenedEventSchema.parse({ type: event, ...base }),
+			);
+		else if (event === 'circuit.half_open')
+			this.emitter.emit(
+				'circuit.half_open',
+				CircuitHalfOpenEventSchema.parse({ type: event, ...base }),
+			);
+		else
+			this.emitter.emit(
+				'circuit.closed',
+				CircuitClosedEventSchema.parse({ type: event, ...base }),
+			);
+	}
 
 	async execute<T>(fn: () => Promise<T>): Promise<T> {
 		if (this.state === 'open') {
 			const now = Date.now();
 			if (now - this.lastFailureTime > this.options.resetTimeout) {
 				this.state = 'half-open';
+				this.emit('circuit.half_open');
 			} else {
 				throw new Error('Circuit breaker is open');
 			}
@@ -103,6 +190,7 @@ class CircuitBreaker {
 			if (this.state === 'half-open') {
 				this.state = 'closed';
 				this.failures = 0;
+				this.emit('circuit.closed');
 			}
 			return result;
 		} catch (error) {
@@ -110,7 +198,10 @@ class CircuitBreaker {
 			this.lastFailureTime = Date.now();
 
 			if (this.failures >= this.options.failureThreshold) {
-				this.state = 'open';
+				if (this.state === 'closed' || this.state === 'half-open') {
+					this.state = 'open';
+					this.emit('circuit.opened');
+				}
 			}
 
 			throw error;
@@ -118,22 +209,27 @@ class CircuitBreaker {
 	}
 
 	reset(): void {
+		const wasOpen = this.state === 'open' || this.state === 'half-open';
 		this.state = 'closed';
 		this.failures = 0;
 		this.lastFailureTime = 0;
+		if (wasOpen) {
+			this.emit('circuit.closed');
+		}
 	}
 }
 
 // Main bridge implementation
 export class StdioHttpBridge extends EventEmitter {
-	private rateLimiter?: RateLimiter;
-	private circuitBreaker?: CircuitBreaker;
-	private stdin: Readable;
-	private stdout: Writable;
+	private readonly rateLimiter?: RateLimiter;
+	private readonly circuitBreaker?: CircuitBreaker;
+	private readonly stdin: Readable;
+	private readonly stdout: Writable;
 	private sseClient?: http.ClientRequest;
 	private isRunning = false;
+	private closed = false;
 
-	constructor(private options: StdioHttpBridgeOptions) {
+	constructor(private readonly options: StdioHttpBridgeOptions) {
 		super();
 
 		this.stdin = options.stdin || process.stdin;
@@ -149,11 +245,16 @@ export class StdioHttpBridge extends EventEmitter {
 		}
 
 		if (options.circuitBreakerOptions) {
-			this.circuitBreaker = new CircuitBreaker(options.circuitBreakerOptions);
+			this.circuitBreaker = new CircuitBreaker(
+				options.circuitBreakerOptions,
+				this,
+				options.httpEndpoint,
+			);
 		}
 	}
 
 	async forward(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+		if (this.closed) throw new Error('BridgeClosedError: bridge is closed');
 		// Validate request
 		const validatedRequest = JsonRpcRequestSchema.parse(request);
 
@@ -184,7 +285,11 @@ export class StdioHttpBridge extends EventEmitter {
 
 		for (let attempt = 0; attempt <= retryOptions.maxRetries; attempt++) {
 			try {
-				return await this.makeHttpRequest(request);
+				return await withTimeout(
+					this.makeHttpRequest(request),
+					this.options.requestTimeoutMs,
+					'HTTP request',
+				);
 			} catch (error) {
 				lastError = error as Error;
 
@@ -226,8 +331,14 @@ export class StdioHttpBridge extends EventEmitter {
 				});
 
 				res.on('end', () => {
-					if (res.statusCode && res.statusCode >= 500) {
-						reject(new Error(`Server error: ${res.statusCode}`));
+					const status = res.statusCode ?? 0;
+					if (status >= 400) {
+						const snippet = data.slice(0, 256);
+						reject(
+							new Error(
+								`HTTP ${status}: ${snippet}${data.length > 256 ? '…' : ''}`,
+							),
+						);
 						return;
 					}
 
@@ -236,7 +347,9 @@ export class StdioHttpBridge extends EventEmitter {
 						const validated = JsonRpcResponseSchema.parse(response);
 						resolve(validated);
 					} catch (error) {
-						reject(new Error(`Invalid response: ${error}`));
+						reject(
+							new Error(`Invalid response JSON: ${(error as Error).message}`),
+						);
 					}
 				});
 			});
@@ -249,8 +362,18 @@ export class StdioHttpBridge extends EventEmitter {
 
 	async connect(): Promise<void> {
 		if (this.options.transport === 'sse') {
-			return this.connectSSE();
+			return withTimeout(
+				this.connectSSE(),
+				this.options.requestTimeoutMs,
+				'SSE connection',
+			);
 		}
+	}
+
+	async ping(): Promise<void> {
+		if (this.closed) throw new Error('BridgeClosedError: bridge is closed');
+		// lightweight JSON-RPC style ping
+		await this.forward({ id: '__ping', method: 'ping', params: {} });
 	}
 
 	private connectSSE(): Promise<void> {
@@ -290,7 +413,7 @@ export class StdioHttpBridge extends EventEmitter {
 							try {
 								const parsed = JSON.parse(data);
 								this.emit('event', parsed);
-							} catch (_error) {
+							} catch {
 								// Ignore invalid JSON
 							}
 						}
@@ -316,27 +439,57 @@ export class StdioHttpBridge extends EventEmitter {
 
 		this.isRunning = true;
 
-		// Set up stdin listener
-		this.stdin.on('data', async (data) => {
-			try {
-				const request = JSON.parse(data.toString());
-				const response = await this.forward(request);
-				this.stdout.write(`${JSON.stringify(response)}\n`);
-			} catch (error) {
-				const errorResponse = {
-					id: null,
-					error: {
-						code: -32700,
-						message: 'Parse error',
-						data: error instanceof Error ? error.message : String(error),
-					},
-				};
-				this.stdout.write(`${JSON.stringify(errorResponse)}\n`);
-			}
+		// Line-buffered stdin processing to safely handle partial/multiple frames
+		let buffer = '';
+		this.stdin.on('data', (chunk) => {
+			buffer += chunk.toString();
+			const lines = buffer.split(/\r?\n/);
+			buffer = lines.pop() ?? '';
+			lines.forEach((raw) => {
+				void this.processInputLine(raw);
+			});
 		});
 	}
 
+	private async processInputLine(raw: string): Promise<void> {
+		const line = raw.trim();
+		if (!line) return;
+		try {
+			const request = JSON.parse(line);
+			const response = await withTimeout(
+				this.forward(request),
+				this.options.requestTimeoutMs,
+				'forward request',
+			);
+			this.stdout.write(`${JSON.stringify(response)}\n`);
+		} catch (error) {
+			let id: string | number | null = null;
+			try {
+				const maybe = JSON.parse(line);
+				if (maybe && typeof maybe === 'object' && 'id' in maybe) {
+					const candidate = (maybe as Record<string, unknown>).id;
+					if (typeof candidate === 'string' || typeof candidate === 'number') {
+						id = candidate;
+					}
+				}
+			} catch {
+				// ignore secondary parse failure
+			}
+			const errorResponse = {
+				id,
+				error: {
+					code: -32700,
+					message: 'Parse error',
+					data: error instanceof Error ? error.message : String(error),
+				},
+			};
+			this.stdout.write(`${JSON.stringify(errorResponse)}\n`);
+		}
+	}
+
 	async close(): Promise<void> {
+		if (this.closed) return;
+		this.closed = true;
 		this.isRunning = false;
 
 		if (this.sseClient) {

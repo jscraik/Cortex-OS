@@ -191,7 +191,7 @@ describe('StdioHttpBridge', () => {
 					id: '1',
 					method: 'test',
 					params: { foo: 'bar' },
-				}),
+				}) + '\n',
 			);
 
 			// Wait for processing

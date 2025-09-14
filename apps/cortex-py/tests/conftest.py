@@ -13,6 +13,7 @@ covers only the API surface the tests exercise:
 
 If the real module is importable, we do nothing.
 """
+
 from __future__ import annotations
 
 import os
@@ -30,7 +31,9 @@ if str(_SRC) not in sys.path:  # pragma: no cover - environment wiring
 os.environ.setdefault("CORTEX_PY_FAST_TEST", "1")
 
 try:  # pragma: no cover - prefer real implementation if available
-    from mlx.embedding_generator import MLXEmbeddingGenerator  # type: ignore  # pragma: no cover
+    from mlx.embedding_generator import (
+        MLXEmbeddingGenerator,  # type: ignore  # pragma: no cover
+    )
 except Exception:  # pragma: no cover - provide shim
     # Signal to tests that we're using the lightweight shim (no real MLX runtime)
     os.environ.setdefault("CORTEX_MLX_SHIM", "1")
@@ -39,14 +42,40 @@ except Exception:  # pragma: no cover - provide shim
     # after tests delete and re-import shim modules (e.g., in normalization tests).
     # Direct assignment is safe; if it fails we ignore via contextlib.suppress for safety.
     import contextlib
+
     with contextlib.suppress(Exception):  # pragma: no cover - defensive
         mlx_pkg.__path__ = []
-        # Provide a synthetic ModuleSpec so importlib.util.find_spec("mlx") does not raise
+        # Provide a synthetic ModuleSpec with a minimal loader so importlib.util.find_spec("mlx")
+        # returns a spec whose loader is non-None. Some libraries (e.g. transformers) treat a
+        # None loader as an invalid spec and may attempt alternative discovery paths which can
+        # raise during shim-based testing. Supplying a lightweight loader keeps resolution fast
+        # and predictable while avoiding heavy imports.
         import importlib.machinery as _mach  # local import to avoid overhead globally
+        import types as _types
 
-        if getattr(mlx_pkg, "__spec__", None) is None:  # pragma: no cover - idempotent guard
+        class _ShimLoader(_mach.SourceFileLoader):  # pragma: no cover - trivial loader
+            def __init__(self):
+                # name and path are largely unused; supply placeholders
+                super().__init__("mlx", "<shim-mlx>")
+
+            # create_module/exec_module fall back to default behavior; for safety we implement
+            # minimal no-op variants (returning existing module) to satisfy Loader protocol.
+            def create_module(self, spec):  # type: ignore[no-untyped-def]
+                return (
+                    _types.ModuleType(spec.name)
+                    if spec and spec.loader is self
+                    else None
+                )
+
+            def exec_module(self, module):  # type: ignore[no-untyped-def]
+                # Nothing to execute; module attributes are assigned below.
+                return None
+
+        if (
+            getattr(mlx_pkg, "__spec__", None) is None
+        ):  # pragma: no cover - idempotent guard
             mlx_pkg.__spec__ = _mach.ModuleSpec(
-                name="mlx", loader=None, is_package=True
+                name="mlx", loader=_ShimLoader(), is_package=True
             )
     embedding_mod = types.ModuleType("mlx.embedding_generator")
     unified_mod = types.ModuleType("mlx.mlx_unified")
@@ -54,7 +83,12 @@ except Exception:  # pragma: no cover - provide shim
     class ShimMLXEmbeddingGenerator:  # Shim implementation
         dim: int = 16
 
-        def __init__(self, model_name: str = "test-model", config_path: str | None = None, **_: object) -> None:
+        def __init__(
+            self,
+            model_name: str = "test-model",
+            config_path: str | None = None,
+            **_: object,
+        ) -> None:
             self.model_name = model_name
             self.config_path = config_path
             self.backend = self._select_backend()
@@ -129,7 +163,9 @@ except Exception:  # pragma: no cover - provide shim
         def generate_chat(self, messages):  # type: ignore[no-untyped-def]
             if not messages:
                 raise ValueError("Messages must be a non-empty list")
-            if not isinstance(messages, list) or not all(isinstance(m, dict) for m in messages):
+            if not isinstance(messages, list) or not all(
+                isinstance(m, dict) for m in messages
+            ):
                 raise ValueError("Messages must be a non-empty list")
             if not self.model:
                 raise ValueError("Chat model not loaded")

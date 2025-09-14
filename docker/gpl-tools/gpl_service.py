@@ -13,7 +13,6 @@ ai_provenance_hash: combined-gpl-service-features
 import logging
 import os
 import re
-import shlex
 import subprocess
 import tempfile
 from pathlib import Path
@@ -27,7 +26,7 @@ from pydantic import BaseModel, Field, validator
 # Input validation helpers
 ALLOWED_TOOLS = {
     'figlet': '/usr/bin/figlet',
-    'toilet': '/usr/bin/toilet', 
+    'toilet': '/usr/bin/toilet',
     'jp2a': '/usr/bin/jp2a',
     'img2txt': '/usr/bin/img2txt'
 }
@@ -36,12 +35,12 @@ def validate_tool_name(tool: str) -> str:
     """Validate tool name against allowlist with absolute paths."""
     if tool not in ALLOWED_TOOLS:
         raise ValueError(f"Tool '{tool}' not in allowlist")
-    
+
     # Verify tool exists at expected path
     tool_path = ALLOWED_TOOLS[tool]
     if not os.path.exists(tool_path):
         raise ValueError(f"Tool '{tool}' not found at {tool_path}")
-    
+
     return tool_path
 
 def sanitize_text_input(text: str) -> str:

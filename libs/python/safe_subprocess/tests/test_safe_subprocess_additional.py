@@ -7,6 +7,7 @@ Exercises:
  - Environment allowlist filtering
  - Streaming output line by line
 """
+
 from __future__ import annotations
 
 import sys
@@ -40,7 +41,10 @@ def test_run_command_non_zero() -> None:
 def test_run_command_timeout(tmp_path: Path) -> None:
     start = time.time()
     # Use a command that sleeps longer than timeout; portable via Python
-    result = run_command([sys.executable, "-c", "import time\nimport time as _t\n_t.sleep(2)"] , timeout=0.2)
+    result = run_command(
+        [sys.executable, "-c", "import time\nimport time as _t\n_t.sleep(2)"],
+        timeout=0.2,
+    )
     elapsed = time.time() - start
     assert result.timed_out is True
     assert elapsed < 1.5  # ensure timeout triggered early
@@ -61,9 +65,6 @@ def test_run_command_env_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_stream_command_lines() -> None:
     # Emit three lines with flush to ensure they are captured separately
-    code = (
-        "for i in range(3):\n"
-        "    print(f'L{i}')\n"
-    )
+    code = "for i in range(3):\n    print(f'L{i}')\n"
     lines = list(stream_command([sys.executable, "-u", "-c", code]))
     assert [line.strip() for line in lines if line.strip()] == ["L0", "L1", "L2"]

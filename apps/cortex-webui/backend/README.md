@@ -55,6 +55,44 @@ This is the backend component of the Cortex WebUI project, built with Node.js, E
    pnpm start
    ```
 
+## Server Architecture
+
+The backend uses a **composable factory pattern** for better testability and modularity:
+
+### Factory Functions
+
+- `createApp()`: Returns configured Express app (pure, testable)
+- `createServer()`: Returns full server with HTTP + WebSocket + lifecycle methods
+- Auto-start fallback when running `node src/server.ts` directly
+
+### Programmatic Usage
+
+```typescript
+import { createServer } from './src/server';
+
+const { app, server, wss, start, stop } = createServer();
+
+// Start server
+await start();
+
+// Stop server (for tests or graceful shutdown)
+await stop();
+```
+
+### Test Integration
+
+Tests can create isolated server instances on ephemeral ports:
+
+```typescript
+import { createServer } from '../src/server';
+
+const { server, stop } = createServer();
+await new Promise<void>((resolve) => server.listen(0, resolve));
+const port = (server.address() as any).port;
+// ... run tests against http://localhost:${port}
+await stop();
+```
+
 ## Project Structure
 
 ```
@@ -133,6 +171,24 @@ Run tests with Vitest:
 
 ```bash
 pnpm test
+```
+
+### Contract Tests
+
+The test suite includes contract tests for core endpoints and WebSocket behavior:
+
+- **Health endpoint**: Validates `/health` JSON response schema
+- **WebSocket**: Tests welcome message and echo functionality
+- **Server lifecycle**: Ensures proper start/stop for test isolation
+
+Test files use the server factory pattern for clean setup/teardown:
+
+```typescript
+// test/health.contract.test.ts
+import { createServer } from '../src/server';
+
+const { server, stop } = createServer();
+// ... test setup with ephemeral port
 ```
 
 ## Building

@@ -2,7 +2,6 @@ import asyncio
 import json
 
 import pytest
-
 from mcp_bridge.bridge import MCPBridge, RateConfig
 
 

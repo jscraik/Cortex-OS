@@ -11,4 +11,3 @@ sidebar_label: Contributors
 4. For iterative development, use `pnpm dev`.
 
 Please follow Conventional Commits and include tests with changes.
-

@@ -5,11 +5,11 @@ sidebar_label: Index
 
 # Cortex Memories Documentation
 
-[![NPM Version](https://img.shields.io/npm/v/@cortex-os/memories)](https://www.npmjs.com/package/@cortex-os/memories)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)](#)
-[![Security Scan](https://img.shields.io/badge/security-OWASP%20compliant-green)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[](https://www.npmjs.com/package/@cortex-os/memories)
+[](#)
+[](#)
+[](#)
+[](https://opensource.org/licenses/MIT)
 
 ## Overview
 Cortex Memories provides long-term state management for Cortex-OS agents with governed policies, hybrid storage, and MLX-powered embeddings.

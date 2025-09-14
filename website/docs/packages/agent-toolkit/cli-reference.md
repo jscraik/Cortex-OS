@@ -8,7 +8,7 @@ sidebar_label: Cli Reference
 Wrapper scripts return JSON envelopes to stderr-safe output.
 
 | Command | Description |
-|---------|-------------|
+| --------- | ------------- |
 | `tools/rg_search.sh &lt;pattern&gt; &lt;path&gt;` | regex search via ripgrep |
 | `tools/semgrep_search.sh &lt;pattern&gt; &lt;path&gt;` | Semgrep rule search |
 | `tools/astgrep_search.sh &lt;pattern&gt; &lt;path&gt;` | AST-grep search |

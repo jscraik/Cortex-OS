@@ -32,3 +32,5 @@ const result &#61; await pipeline.retrieveMultiModal({
 
 ## Custom Strategies
 Implement a `RetrievalStrategy` and pass via the `retrievalStrategy` option to override default retrieval behavior.
+
+```

@@ -9,7 +9,8 @@
         "clear": "docusaurus clear",
         "typecheck": "tsc",
         "sync": "tsx sync-docs.ts",
-        "dev": "pnpm sync && pnpm start:local"
+        "dev": "pnpm sync && pnpm start:local",
+        "test": "vitest run --passWithNoTests"
     },
     "dependencies": {
         "@docusaurus/core": "^3.5.2",
@@ -24,8 +25,10 @@
     "devDependencies": {
         "@docusaurus/module-type-aliases": "^3.5.2",
         "@docusaurus/types": "^3.5.2",
+        "@types/node": "^24.4.0",
         "tsx": "^4.19.0",
-        "typescript": "~5.2.0"
+        "typescript": "~5.2.0",
+        "vitest": "^3.2.4"
     },
     "browserslist": {
         "production": [

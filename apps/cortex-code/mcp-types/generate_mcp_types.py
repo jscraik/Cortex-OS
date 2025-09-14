@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-# flake8: noqa: E501
 
 import argparse
 import json
 import subprocess
 import sys
 import tempfile
-
 from dataclasses import (
     dataclass,
 )
@@ -16,7 +14,6 @@ from shutil import copy2
 
 # Helper first so it is defined when other functions call it.
 from typing import Any, Literal
-
 
 SCHEMA_VERSION = "2025-06-18"
 JSONRPC_VERSION = "2.0"
@@ -296,7 +293,7 @@ def add_definition(name: str, definition: dict[str, Any], out: list[str]) -> Non
         out.extend(define_any_of(name, any_of, description))
         return
 
-    type_prop = definition.get("type", None)
+    type_prop = definition.get("type")
     if type_prop:
         if type_prop == "string":
             # Newtype pattern
@@ -313,7 +310,7 @@ def add_definition(name: str, definition: dict[str, Any], out: list[str]) -> Non
             return
         raise ValueError(f"Unknown type: {type_prop} in {name}")
 
-    ref_prop = definition.get("$ref", None)
+    ref_prop = definition.get("$ref")
     if ref_prop:
         ref = type_from_ref(ref_prop)
         out.extend(f"pub type {name} = {ref};\n\n")
@@ -594,11 +591,11 @@ def map_type(
     struct_name: str | None = None,
 ) -> str:
     """typedef must have a `type` key, but may also have an `items`key."""
-    ref_prop = typedef.get("$ref", None)
+    ref_prop = typedef.get("$ref")
     if ref_prop:
         return type_from_ref(ref_prop)
 
-    any_of = typedef.get("anyOf", None)
+    any_of = typedef.get("anyOf")
     if any_of:
         assert prop_name is not None
         assert struct_name is not None
@@ -606,13 +603,13 @@ def map_type(
         extra_defs.extend(define_any_of(custom_type, any_of))
         return custom_type
 
-    type_prop = typedef.get("type", None)
+    type_prop = typedef.get("type")
     if type_prop is None:
         # Likely `unknown` in TypeScript, like the JSONRPCError.data property.
         return "serde_json::Value"
 
     if type_prop == "string":
-        if const_prop := typedef.get("const", None):
+        if const_prop := typedef.get("const"):
             assert isinstance(const_prop, str)
             return f'&\'static str = "{const_prop}"'
         else:
@@ -624,7 +621,7 @@ def map_type(
     elif type_prop == "boolean":
         return "bool"
     elif type_prop == "array":
-        item_type = typedef.get("items", None)
+        item_type = typedef.get("items")
         if item_type:
             item_type = map_type(item_type, prop_name, struct_name)
             assert isinstance(item_type, str)

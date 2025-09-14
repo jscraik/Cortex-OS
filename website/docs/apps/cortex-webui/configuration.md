@@ -12,10 +12,10 @@ Cortex WebUI uses environment files for both backend and frontend.
 `backend/.env`
 
 ```env
-PORT&#61;3001
-NODE_ENV&#61;development
-JWT_SECRET&#61;change_me
-FRONTEND_URL&#61;http://localhost:3000
+PORT=3001
+NODE_ENV=development
+JWT_SECRET=change_me
+FRONTEND_URL=http://localhost:3000
 ```
 
 ## Frontend

@@ -8,8 +8,8 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from ..core.circuit_breakers import circuit_breaker
-from ..tasks.task_queue import TaskPriority, TaskQueue
+from mcp.core.circuit_breakers import circuit_breaker
+from mcp.tasks.task_queue import TaskPriority, TaskQueue
 
 logger = logging.getLogger(__name__)
 

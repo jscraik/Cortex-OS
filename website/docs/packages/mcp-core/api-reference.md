@@ -5,7 +5,7 @@ sidebar_label: Api Reference
 
 # API Reference
 
-## `createEnhancedClient(options: ServerInfo): Promise&lt;EnhancedClient&gt;`
+## `createEnhancedClient(options: ServerInfo): Promise<EnhancedClient>`
 
 Creates an `EnhancedClient` using the supplied `ServerInfo`.
 
@@ -14,12 +14,12 @@ Creates an `EnhancedClient` using the supplied `ServerInfo`.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `name` | string | yes | logical server name |
-| `transport` | ``'stdio' ` ` \|``'sse' `\` | `'streamableHttp'` | yes | communication method |
+| `transport` | 'stdio' \ | 'sse' \ | 'streamableHttp' | yes | communication method |
 | `command` | string | conditional | binary to spawn when `transport` is `stdio` |
 | `args` | string[] | no | arguments for stdio |
-| `env` | Record&lt;string,string&gt; | no | env vars for stdio |
+| `env` | `Record<string,string>` | no | env vars for stdio |
 | `endpoint` | string | conditional | required for HTTP transports |
-| `headers` | Record&lt;string,string&gt; | no | HTTP headers |
+| `headers` | `Record<string,string>` | no | HTTP headers |
 
 ### EnhancedClient
 

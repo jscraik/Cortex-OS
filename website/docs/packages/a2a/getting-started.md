@@ -23,7 +23,7 @@ import { createBus } from '@cortex-os/a2a/bus';
 import { inproc } from '@cortex-os/a2a/inproc';
 import { createEnvelope } from '@cortex-os/a2a-core/envelope';
 
-const bus &#61; createBus(inproc());
+const bus = createBus(inproc());
 await bus.publish(createEnvelope({ type: 'demo.event', data: {} }));
-```
 
+```

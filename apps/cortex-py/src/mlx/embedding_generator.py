@@ -121,8 +121,10 @@ class MLXEmbeddingGenerator:
         import platform
 
         self.is_darwin = platform.system() == "Darwin"
-        # Re-evaluate in case env toggles changed after module import
-        self.can_use_mlx = compute_mlx_available() and self.is_darwin
+        # Re-evaluate in case env toggles changed after module import. Allow the test harness
+        # to force MLX_AVAILABLE True (monkeypatch) to simulate a functional MLX environment
+        # for backend ordering tests even when native components are absent.
+        self.can_use_mlx = (compute_mlx_available() or MLX_AVAILABLE) and self.is_darwin
         self.can_use_sentence_transformers = SENTENCE_TRANSFORMERS_AVAILABLE
         self.selected_backend: str | None = None
         self.fast_test_mode = _is_fast_test_mode()

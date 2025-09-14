@@ -9,6 +9,7 @@ sidebar_label: Examples
 ```typescript
 import { SimRunner } from '@cortex-os/simlab';
 
+
 await new SimRunner().runScenario({
   id: 'ping',
   goal: 'Say hello',
@@ -24,4 +25,3 @@ await new SimRunner().runScenario({
 1. Create a set of scenarios in `scenarios/`.
 2. Run `pnpm simlab:smoke` to validate basic behavior.
 3. Inspect generated reports for areas of improvement.
-

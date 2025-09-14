@@ -7,7 +7,7 @@ sidebar_label: Architecture
 
 ```
 +--------------+        +-------------------------+
-| FastAPI App  | &lt;----&gt; | MLXEmbeddingGenerator   |
+| FastAPI App | &lt;----&gt; | MLXEmbeddingGenerator |
 +--------------+        +-------------------------+
           |                       |
           v                       v

@@ -8,8 +8,8 @@ sidebar_label: Examples
 - **List servers**:
   ```bash
   curl http://localhost:3000/api/v1/servers | jq .
-  ```
+```
 - **Check health**:
   ```bash
   curl http://localhost:3000/health
-  ```
+```

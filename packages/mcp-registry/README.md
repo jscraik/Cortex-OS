@@ -1,7 +1,7 @@
 # @cortex-os/mcp-registry
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Coverage Status](https://img.shields.io/badge/coverage-90%25-brightgreen.svg)](coverage)
+[![Coverage Status](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](coverage)
 
 File-system backed registry for managing MCP server configurations.
 
@@ -48,7 +48,7 @@ await remove('example-server');
 
 ## Test Coverage
 
-This package maintains 90%+ test coverage. Run tests with:
+This package maintains 94%+ test coverage. Run tests with:
 
 ```bash
 ./scripts/run-mcp-tests.sh mcp-registry true

@@ -5,7 +5,7 @@ sidebar_label: Api Reference
 
 # API Reference
 
-## `runGate(config, deps): Promise&lt;GateResult&gt;`
+## `runGate(config, deps): Promise<GateResult>`
 
 Executes all enabled suites defined in `config` using the provided dependencies.
 
@@ -38,10 +38,11 @@ interface RagDeps {
 ### Router Suite
 ```ts
 interface Router {
-  initialize(): Promise&lt;void&gt;;
-  generateEmbedding(req: {text: string}): Promise&lt;{embedding: number[]}&gt;;
-  generateChat(req: {messages: {role: string; content: string}[]}): Promise&lt;{content: string}&gt;;
-  rerank(req: {query: string; documents: string[]}): Promise&lt;{scores: number[]}&gt;;
+  initialize(): Promise<void>`;
+  generateEmbedding(req: {text: string}): `Promise<{embedding: number[]}>`;
+  generateChat(req: {messages: {role: string; content: string}[]}): Promise<{content: string}>`;
+  rerank(req: {query: string; documents: string[]}): `Promise<{scores: number[]}>`;
   hasAvailableModels(capability: 'embedding' | 'chat' | 'reranking'): boolean;
 }
+
 ```

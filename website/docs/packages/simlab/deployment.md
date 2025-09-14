@@ -15,4 +15,3 @@ SimLab is designed for local and CI environments. Typical deployment involves ad
 ```
 
 No server deployment is required.
-

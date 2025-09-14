@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import logger from './logger';
 
 export const ChatStreamStartSchema = z.object({
 	ts: z.string().datetime(),
@@ -53,8 +54,8 @@ export function makeDoneEvent(
 export function logEvent(evt: ChatStreamEvent): void {
 	const parsed = ChatStreamEventSchema.safeParse(evt);
 	if (parsed.success) {
-		console.log(JSON.stringify(parsed.data));
+		logger.info('obs:event', parsed.data);
 	} else {
-		console.error('[observability] invalid event', parsed.error.flatten());
+		logger.warn('obs:event_invalid', parsed.error.flatten());
 	}
 }

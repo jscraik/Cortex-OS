@@ -35,7 +35,10 @@
   },
   "include": [
     "src/**/*",
-    "../shared/**/*"
+    "../shared/**/*",
+    "__tests__/**/*",
+    "test/**/*",
+    "vitest.config.ts"
   ],
   "exclude": [
     "node_modules",

@@ -23,12 +23,12 @@ Before you begin, ensure you have the following installed:
    ```bash
    git clone &lt;repository-url&gt;
    cd cortex-webui
-   ```
+```
 
 2. Install root dependencies:
    ```bash
    pnpm install
-   ```
+```
 
 ## Backend Setup
 
@@ -36,39 +36,39 @@ Before you begin, ensure you have the following installed:
 
    ```bash
    cd backend
-   ```
+```
 
 2. Install backend dependencies:
 
    ```bash
    pnpm install
-   ```
+```
 
 3. Create a `.env` file from the example:
 
    ```bash
    cp .env.example .env
-   ```
+```
 
 4. Configure the `.env` file:
 
    ```env
-   PORT&#61;3001
-   NODE_ENV&#61;development
-   JWT_SECRET&#61;your_secure_jwt_secret_here
-   FRONTEND_URL&#61;http://localhost:3000
+   PORT=3001
+   NODE_ENV=development
+   JWT_SECRET=your_secure_jwt_secret_here
+   FRONTEND_URL=http://localhost:3000
    ```
 
 5. Initialize the database directory:
 
    ```bash
    mkdir -p data
-   ```
+```
 
 6. Start the backend development server:
    ```bash
    pnpm dev
-   ```
+```
 
 The backend server will start on port 3001.
 
@@ -78,30 +78,30 @@ The backend server will start on port 3001.
 
    ```bash
    cd frontend
-   ```
+```
 
 2. Install frontend dependencies:
 
    ```bash
    pnpm install
-   ```
+```
 
 3. Create a `.env` file from the example:
 
    ```bash
    cp .env.example .env
-   ```
+```
 
 4. Configure the `.env` file:
 
    ```env
-   VITE_API_BASE_URL&#61;http://localhost:3001/api
+   VITE_API_BASE_URL=http://localhost:3001/api
    ```
 
 5. Start the frontend development server:
    ```bash
    pnpm dev
-   ```
+```
 
 The frontend server will start on port 3000.
 
@@ -112,7 +112,7 @@ To run both frontend and backend simultaneously:
 1. From the root directory:
    ```bash
    pnpm dev
-   ```
+```
 
 This will start both servers concurrently.
 
@@ -137,12 +137,12 @@ The database includes the following tables:
 
    ```bash
    cd backend
-   ```
+```
 
 2. Run tests:
    ```bash
    pnpm test
-   ```
+```
 
 ### Frontend Testing
 
@@ -150,12 +150,12 @@ The database includes the following tables:
 
    ```bash
    cd frontend
-   ```
+```
 
 2. Run tests:
    ```bash
    pnpm test
-   ```
+```
 
 ## Linting
 
@@ -216,13 +216,13 @@ To develop with Docker:
 
    ```bash
    docker-compose build
-   ```
+```
 
 2. Start the services:
 
    ```bash
    docker-compose up
-   ```
+```
 
 3. Access the application:
    - Frontend: http://localhost:3000
@@ -237,8 +237,8 @@ The backend uses console logging for debugging. In development, detailed error m
 To enable more verbose logging, set:
 
 ```env
-NODE_ENV&#61;development
-DEBUG&#61;*
+NODE_ENV=development
+DEBUG=*
 ```
 
 ### Frontend Debugging
@@ -276,12 +276,12 @@ If you encounter port conflicts:
 1. Change the port in the backend `.env` file:
 
    ```env
-   PORT&#61;3002
+   PORT=3002
    ```
 
 2. Update the frontend `.env` file to match:
    ```env
-   VITE_API_BASE_URL&#61;http://localhost:3002/api
+   VITE_API_BASE_URL=http://localhost:3002/api
    ```
 
 ### Database Issues
@@ -300,7 +300,7 @@ If you encounter dependency issues:
 
    ```bash
    pnpm store prune
-   ```
+```
 
 2. Remove node_modules directories:
 
@@ -308,12 +308,12 @@ If you encounter dependency issues:
    rm -rf node_modules
    rm -rf frontend/node_modules
    rm -rf backend/node_modules
-   ```
+```
 
 3. Reinstall dependencies:
    ```bash
    pnpm install
-   ```
+```
 
 ## Code Quality
 

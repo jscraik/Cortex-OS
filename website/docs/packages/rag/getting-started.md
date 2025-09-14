@@ -25,10 +25,11 @@ npm install @cortex-os/rag
 ```typescript
 import { RAGPipeline, PythonEmbedder, MemoryStore } from '@cortex-os/rag';
 
-const embedder &#61; new PythonEmbedder({ endpoint: 'http://localhost:8000/embed' });
-const store &#61; new MemoryStore();
-const pipeline &#61; new RAGPipeline({ embedder, store });
+const embedder = new PythonEmbedder({ endpoint: 'http://localhost:8000/embed' });
+const store = new MemoryStore();
+const pipeline = new RAGPipeline({ embedder, store });
 
 await pipeline.ingest([{ id: 'doc-1', text: 'Hello world' }]);
-const results &#61; await pipeline.retrieve('world');
+const results = await pipeline.retrieve('world');
+
 ```

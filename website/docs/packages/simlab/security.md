@@ -9,4 +9,3 @@ sidebar_label: Security
 - All inter-component communication occurs in-process, avoiding network exposure.
 - Use TLS when integrating external providers.
 - Regularly rotate credentials used in simulations.
-

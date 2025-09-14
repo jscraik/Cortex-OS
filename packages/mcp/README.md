@@ -59,9 +59,9 @@ docker-compose -f docker/docker-compose.mcp.yml up
 
 All MCP packages maintain 90%+ test coverage:
 
-- `mcp-core`: 90%+ coverage
-- `mcp-registry`: 90%+ coverage
-- `mcp-bridge`: 90%+ coverage
+- `mcp-core`: 94%+ coverage
+- `mcp-registry`: 94%+ coverage  
+- `mcp-bridge`: 94%+ coverage
 - `mcp`: 90%+ coverage
 
 ## Development Guidelines

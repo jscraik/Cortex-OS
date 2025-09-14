@@ -5,8 +5,8 @@ sidebar_label: Index
 
 # MCP Core
 
-[![npm version](https://img.shields.io/npm/v/@cortex-os/mcp-core)](https://www.npmjs.com/package/@cortex-os/mcp-core)
-[![build status](https://img.shields.io/github/actions/workflow/status/Cortex-OS/Cortex-OS/ci.yml?branch=main&label=CI)](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml)
+[](https://www.npmjs.com/package/@cortex-os/mcp-core)
+[](https://github.com/Cortex-OS/Cortex-OS/actions/workflows/ci.yml)
 
 Minimal building blocks for the Model Context Protocol.
 

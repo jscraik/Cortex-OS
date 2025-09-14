@@ -22,11 +22,28 @@ from ..tasks.task_queue import TaskQueue
 from ..webui.app import app
 
 # Import and register subcommand groups (kept adjacent to other imports)
-from .auth import auth_commands
-from .plugins import plugin_commands
 from .server import server_commands
-from .tasks import task_commands
 from .tools import tool_commands
+
+
+# Create minimal placeholder commands for missing modules
+@click.group()
+def auth_commands() -> None:
+    """Authentication commands (placeholder)."""
+    pass
+
+
+@click.group()
+def plugin_commands() -> None:
+    """Plugin commands (placeholder)."""
+    pass
+
+
+@click.group()
+def task_commands() -> None:
+    """Task commands (placeholder)."""
+    pass
+
 
 console: Any = Console()
 

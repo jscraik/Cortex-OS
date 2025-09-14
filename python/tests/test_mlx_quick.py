@@ -1,4 +1,3 @@
-import pytest
 
 from cortex_mlx.router import ModelRouter
 

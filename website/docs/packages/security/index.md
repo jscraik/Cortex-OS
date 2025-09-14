@@ -5,9 +5,9 @@ sidebar_label: Index
 
 # Security Package Documentation
 
-[![CI](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml/badge.svg)](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-95%25+-brightgreen)](./testing.md)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../LICENSE)
+[](https://github.com/cortex-os/cortex-os/actions/workflows/ci.yml)
+[](./testing.md)
+[](../LICENSE)
 
 Central hub for the `@cortex-os/security` package. Use the links below to explore current capabilities, planned features, and in-depth guides.
 
@@ -15,12 +15,12 @@ Central hub for the `@cortex-os/security` package. Use the links below to explor
 
 | Feature | Status |
 | --- | --- |
-| SPIFFE/SPIRE identity | ![Current](https://img.shields.io/badge/status-current-brightgreen) |
-| mTLS for services | ![Current](https://img.shields.io/badge/status-current-brightgreen) |
-| Security event emitter | ![Current](https://img.shields.io/badge/status-current-brightgreen) |
-| Contract validation | ![Current](https://img.shields.io/badge/status-current-brightgreen) |
-| FIDO2 hardware auth | ![Planned](https://img.shields.io/badge/status-planned-lightgrey) |
-| Policy DSL | ![Planned](https://img.shields.io/badge/status-planned-lightgrey) |
+| SPIFFE/SPIRE identity |  |
+| mTLS for services |  |
+| Security event emitter |  |
+| Contract validation |  |
+| FIDO2 hardware auth |  |
+| Policy DSL |  |
 
 ## Documentation
 
@@ -33,7 +33,7 @@ Central hub for the `@cortex-os/security` package. Use the links below to explor
 - [User Guide](./user-guide.md)
 - [Best Practices](./best-practices.md)
 - [Providers & Setup](./providers.md)
-- [Security](./security.md)
+- [Security Overview](./security-overview.md)
 - [Policy & Terms](./policy-terms.md)
 - [FAQ](./faq.md)
 - [Roadmap & Enterprise Quickstarts](./roadmap.md)

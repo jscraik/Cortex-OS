@@ -10,4 +10,5 @@ sidebar_label: Cli Reference
 Generate a flamegraph:
 ```bash
 node -e "require('@cortex-os/observability').generateFlamegraph('app.js','./flame')"
+
 ```

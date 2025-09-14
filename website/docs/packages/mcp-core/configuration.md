@@ -22,8 +22,8 @@ sidebar_label: Configuration
 Example `.env`:
 
 ```env
-MCP_ENDPOINT&#61;http://localhost:3000/tool
-MCP_TOKEN&#61;secret
+MCP_ENDPOINT=http://localhost:3000/tool
+MCP_TOKEN=secret
 ```
 
 Using in code:
@@ -35,4 +35,5 @@ const server &#61; {
   endpoint: process.env.MCP_ENDPOINT,
   headers: { Authorization: `Bearer ${process.env.MCP_TOKEN}` }
 };
+
 ```

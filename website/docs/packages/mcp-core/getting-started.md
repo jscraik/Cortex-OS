@@ -21,12 +21,13 @@ pnpm add @cortex-os/mcp-core
 ```ts
 import { createEnhancedClient } from "@cortex-os/mcp-core";
 
-const client &#61; await createEnhancedClient({
+const client = await createEnhancedClient({
   name: "example",
   transport: "streamableHttp",
   endpoint: "http://localhost:3000/tool"
 });
 
-const result &#61; await client.callTool({ name: "ping" });
+const result = await client.callTool({ name: "ping" });
 await client.close();
+
 ```

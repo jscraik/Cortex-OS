@@ -8,7 +8,7 @@ sidebar_label: Configuration
 The bridge is configured through CLI flags or corresponding environment variables.
 
 | Option | Environment | Description |
-|--------|-------------|-------------|
+| -------- | ------------- | ------------- |
 | `--outbound-url` | `MCP_BRIDGE_OUTBOUND_URL` | HTTP endpoint receiving POST requests. |
 | `--rate` | `MCP_BRIDGE_RATE` | Messages per second limit; unset means unlimited. |
 | `--queue-limit` | `MCP_BRIDGE_QUEUE_LIMIT` | Maximum number of pending messages. |

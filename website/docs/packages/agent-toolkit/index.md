@@ -5,9 +5,21 @@ sidebar_label: Index
 
 # Agent Toolkit Documentation
 
-![status: experimental](https://img.shields.io/badge/status-experimental-orange)
-
 Central documentation for the Agent Toolkit. Links distinguish current features from planned enhancements.
+
+## Features
+- Unified code search via ripgrep, Semgrep and AST-grep
+- Comby and AST-grep structural rewrite helpers
+- Difftastic structural diff review
+- Validator orchestration for ESLint, Ruff, Cargo and Pytest
+- Safe patch application workflow
+
+## Quick Start
+```bash
+just scout "pattern" src/
+just codemod 'match' 'rewrite' src/
+just verify
+```
 
 ## Sections
 - [Introduction](introduction.md)

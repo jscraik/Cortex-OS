@@ -20,4 +20,5 @@ Configuration files may be supplied via `security.config.json` in the project ro
   "socketPath": "/tmp/spire-agent/public/api.sock",
   "trustDomain": "cortex-os.local"
 }
+
 ```

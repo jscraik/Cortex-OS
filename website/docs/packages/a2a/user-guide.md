@@ -18,6 +18,6 @@ await bus.publish(createEnvelope({
 ## Register a Handler
 
 ```typescript
-bus.bind([{ type: 'user.greeting', handle: async e &#61;&gt; console.log(e.data) }]);
-```
+bus.bind([{ type: 'user.greeting', handle: async e ⇒ console.log(e.data) }]);
 
+```

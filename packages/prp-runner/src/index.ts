@@ -10,6 +10,7 @@ export * from './gates/g5-triage.js';
 export * from './gates/g6-release-readiness.js';
 export * from './gates/g7-release.js';
 export * from './runner.js';
+
 /**
  * @file packages/prp-runner/src/index.ts
  * @description Main export for PRP Runner package
@@ -18,10 +19,20 @@ export * from './runner.js';
  * @status TDD-COMPLIANT
  */
 
+// A2A Events
+export {
+	createPrpRunnerEvent,
+	type PrProcessingCompletedEvent,
+	type PrProcessingStartedEvent,
+	type ReviewGeneratedEvent,
+	type TaskExecutedEvent,
+} from './events/prp-runner-events.js';
 export { createExecutionContext } from './lib/create-execution-context.js';
 export { executeNeuron } from './lib/execute-neuron.js';
 export type { LLMConfig } from './llm-bridge.js';
 export { LLMBridge } from './llm-bridge.js';
+// MCP Integration
+export { prpRunnerMcpTools } from './mcp/tools.js';
 export type {
 	Blueprint,
 	ExecutionContext,

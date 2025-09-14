@@ -2,7 +2,8 @@
 
 import type { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { DEFAULT_RATE_LIMITS } from '../config/constants';
+// Use validated config instead of legacy DEFAULT_RATE_LIMITS fallbacks
+import { getRateLimitConfig } from '../config/config';
 
 // Augment express Request interface to include rateLimit property
 declare module 'express' {
@@ -62,10 +63,19 @@ const rateLimitHandler = (req: Request, res: Response): void => {
 	});
 };
 
+// Lazy load validated config to avoid forcing all env vars at module import (improves test ergonomics)
+let _rateLimitCfg: ReturnType<typeof getRateLimitConfig> | null = null;
+const rateLimitCfg = () => {
+	if (!_rateLimitCfg) {
+		_rateLimitCfg = getRateLimitConfig();
+	}
+	return _rateLimitCfg;
+};
+
 // General API rate limiter
 export const generalRateLimit = rateLimit({
-	windowMs: DEFAULT_RATE_LIMITS.windowMs,
-	max: DEFAULT_RATE_LIMITS.maxRequests,
+	windowMs: rateLimitCfg().windowMs,
+	max: rateLimitCfg().maxRequests,
 	message: 'Too many requests from this IP, please try again later.',
 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
@@ -76,8 +86,8 @@ export const generalRateLimit = rateLimit({
 
 // Strict rate limiter for auth endpoints
 export const authRateLimit = rateLimit({
-	windowMs: DEFAULT_RATE_LIMITS.windowMs,
-	max: DEFAULT_RATE_LIMITS.authMaxRequests,
+	windowMs: rateLimitCfg().windowMs,
+	max: rateLimitCfg().authMaxRequests,
 	message: 'Too many authentication attempts, please try again later.',
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -88,7 +98,7 @@ export const authRateLimit = rateLimit({
 // Chat endpoints rate limiter (more generous for authenticated users)
 export const chatRateLimit = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
-	max: DEFAULT_RATE_LIMITS.chatMaxRequests,
+	max: rateLimitCfg().chatMaxRequests,
 	message: 'Too many chat messages, please slow down.',
 	standardHeaders: true,
 	legacyHeaders: false,
@@ -100,7 +110,7 @@ export const chatRateLimit = rateLimit({
 // File upload rate limiter
 export const uploadRateLimit = rateLimit({
 	windowMs: 60 * 60 * 1000, // 1 hour
-	max: DEFAULT_RATE_LIMITS.uploadMaxRequests,
+	max: rateLimitCfg().uploadMaxRequests,
 	message: 'Upload limit exceeded, please try again later.',
 	standardHeaders: true,
 	legacyHeaders: false,

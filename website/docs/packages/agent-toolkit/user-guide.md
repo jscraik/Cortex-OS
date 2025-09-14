@@ -19,6 +19,7 @@ Review the diff and apply with `tools/patch_apply.sh`.
 
 ## Validating Changes
 ```bash
-changed&#61;$(git diff --name-only)
+changed=$(git diff --name-only)
 ./agent-toolkit/tools/run_validators.sh "$changed"
+
 ```

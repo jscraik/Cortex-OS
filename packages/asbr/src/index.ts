@@ -73,11 +73,21 @@ export {
 export { createDiffGenerator, DiffGenerator } from './diff/generator.js';
 export { ContentNormalizer, createNormalizer } from './diff/normalizer.js';
 export { createDiffValidator, DiffValidator } from './diff/validator.js';
+// A2A Events
+export {
+	createASBREvent,
+	type FeedbackSubmittedEvent,
+	type ReviewCompletedEvent,
+	type ReviewCreatedEvent,
+	type SecurityScanExecutedEvent,
+} from './events/asbr-events.js';
 // Evidence system
 export { EvidenceCollector } from './evidence/collector.js';
 export { EvidenceStorage } from './evidence/storage.js';
 // MCP and security
 export { MCPSandbox, MCPToolRegistry } from './mcp/sandbox.js';
+// MCP Integration
+export { asbrMcpTools } from './mcp/tools.js';
 export {
 	createDefaultSecurityPolicy,
 	OWASPLLMGuard,
