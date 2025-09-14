@@ -219,14 +219,8 @@ def main() -> None:
 
     try:
         # Use FastMCP's built-in run method with SSE transport
-        # This method should keep the server running
-        import asyncio
-        
-        async def run_server():
-            await server.run(transport="sse", host="0.0.0.0", port=3000)
-        
-        # Run the server in an event loop
-        asyncio.run(run_server())
+        # This should be a blocking call that keeps the server running
+        server.run(transport="sse", host="0.0.0.0", port=3000)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
