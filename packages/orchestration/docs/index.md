@@ -26,7 +26,6 @@ Cortex Orchestration coordinates multi-agent workflows for Cortex-OS using LangG
 - [Configuration](./configuration.md)
 - [Architecture](./architecture.md)
 - [CLI Reference](./cli-reference.md)
-- [API Reference](./api-reference.md)
 - [User Guide](./user-guide.md)
 - [Best Practices](./best-practices.md)
 - [Providers & Setup](./providers-setup.md)
