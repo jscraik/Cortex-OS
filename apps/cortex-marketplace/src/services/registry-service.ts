@@ -6,7 +6,8 @@
 import { constants as fsConstants } from "node:fs";
 import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { RegistryData } from "@cortex-os/mcp-registry";
+// import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
+import type { RegistryIndex } from "../../packages/mcp-registry/dist/types";
 
 export interface RegistryConfig {
 	registries: Record<string, string>;
@@ -29,7 +30,7 @@ export interface RegistryInfo {
  */
 export class RegistryService {
 	private config: RegistryConfig;
-	private cache = new Map<string, { data: RegistryData; timestamp: number }>();
+	private cache = new Map<string, { data: RegistryIndex; timestamp: number }>();
 
 	constructor(config: RegistryConfig) {
 		this.config = config;
@@ -70,7 +71,7 @@ export class RegistryService {
 	/**
 	 * Get registry data with caching
 	 */
-	async getRegistry(name: string): Promise<RegistryData | null> {
+	async getRegistry(name: string): Promise<RegistryIndex | null> {
 		const url = this.config.registries[name];
 		if (!url) {
 			throw new Error(`Registry '${name}' not found`);
@@ -158,11 +159,11 @@ export class RegistryService {
 	/**
 	 * Fetch registry data from URL
 	 */
-        private async fetchRegistry(url: string): Promise<RegistryData> {
+        private async fetchRegistry(url: string): Promise<RegistryIndex> {
                 if (url.startsWith("file://")) {
                         const fileUrl = new URL(url);
                         const content = await readFile(fileUrl, "utf-8");
-                        return JSON.parse(content) as RegistryData;
+                        return JSON.parse(content) as RegistryIndex;
                 }
 
                 const controller = new AbortController();
@@ -196,7 +197,7 @@ export class RegistryService {
                                 throw new Error("Invalid registry data: servers must be an array");
                         }
 
-                        return data as RegistryData;
+                        return data as RegistryIndex;
                 } finally {
                         clearTimeout(timeout);
                 }
@@ -207,7 +208,7 @@ export class RegistryService {
 	 */
         private async loadFromDisk(
                 name: string,
-        ): Promise<{ data: RegistryData; timestamp: number } | null> {
+        ): Promise<{ data: RegistryIndex; timestamp: number } | null> {
                 const cachePath = this.getCachePath(name);
 
                 try {
@@ -236,7 +237,7 @@ export class RegistryService {
 	 */
 	private async saveToDisk(
 		name: string,
-		cacheEntry: { data: RegistryData; timestamp: number },
+		cacheEntry: { data: RegistryIndex; timestamp: number },
 	): Promise<void> {
 		const cachePath = this.getCachePath(name);
 

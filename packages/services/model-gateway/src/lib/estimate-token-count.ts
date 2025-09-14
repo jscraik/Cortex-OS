@@ -3,7 +3,7 @@
  * Estimate token count for text (rough approximation).
  */
 
-import { encodingForModel } from 'js-tiktoken';
+import { encodingForModel, type TiktokenModel } from 'js-tiktoken';
 
 /**
  * Estimate token count for text using tiktoken. Falls back to a simple
@@ -15,7 +15,11 @@ export function estimateTokenCount(
 	model = 'gpt-3.5-turbo',
 ): number {
 	try {
-		const enc = encodingForModel(model as 'gpt-3.5-turbo' | 'gpt-4' | 'text-davinci-003' | string);
+		// Cast to TiktokenModel with fallback to supported models
+		const tikTokenModel = (['gpt-3.5-turbo', 'gpt-4', 'text-davinci-003'].includes(model) 
+			? model 
+			: 'gpt-3.5-turbo') as TiktokenModel;
+		const enc = encodingForModel(tikTokenModel);
 		const tokens = enc.encode(text);
 		return tokens.length;
 	} catch {

@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { BuildNode } from '../nodes/index.js';
+import { BuildNode } from '@cortex-os/kernel';
 
 const buildNode = new BuildNode();
 

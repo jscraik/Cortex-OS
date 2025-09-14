@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import type { Evidence } from '../state.js';
+import type { Evidence } from '@cortex-os/kernel';
 
 /**
  * Create a standardized validation result
