@@ -6,6 +6,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { DEFAULT_LIMIT, MAX_LIMIT } from "../constants.js";
+
 // Local enriched shape used by marketplace (non-breaking superset of base registry manifest)
 type MarketplaceServer = import('@cortex-os/mcp-registry').ServerManifest & {
 	install?: Record<string, unknown>;

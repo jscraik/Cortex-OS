@@ -10,10 +10,7 @@
 import { describe, it } from 'vitest';
 
 describe.skip('outbox.behavior (legacy-corrupted placeholder)', () => {
-    it('is intentionally skipped', () => {
-        // no-op: behavior validated in clean tests
-    });
+	it('is intentionally skipped', () => {
+		// no-op: behavior validated in clean tests
+	});
 });
-
-export { };
-

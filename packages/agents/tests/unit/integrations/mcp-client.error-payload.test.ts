@@ -6,28 +6,38 @@ import { createAgentMCPClient } from '../../../src/integrations/mcp-client.js';
 // We assert upstream wrapper (getAvailableTools) surfaces a thrown Error.
 
 describe('AgentMCPClient JSON-RPC error payload branch', () => {
-    let originalFetch: typeof fetch;
+	let originalFetch: typeof fetch;
 
-    beforeAll(() => {
-        originalFetch = global.fetch as typeof fetch;
-        global.fetch = vi.fn(async () => {
-            // Always return HTTP 200 with an error-shaped JSON-RPC response
-            return {
-                ok: true,
-                json: async () => ({ jsonrpc: '2.0', id: 1, error: { code: -32000, message: 'Upstream failure' } }),
-            } as any;
-        }) as any;
-    });
+	beforeAll(() => {
+		originalFetch = global.fetch as typeof fetch;
+		global.fetch = vi.fn(async () => {
+			// Always return HTTP 200 with an error-shaped JSON-RPC response
+			return {
+				ok: true,
+				json: async () => ({
+					jsonrpc: '2.0',
+					id: 1,
+					error: { code: -32000, message: 'Upstream failure' },
+				}),
+			} as any;
+		}) as any;
+	});
 
-    afterAll(() => { global.fetch = originalFetch; });
+	afterAll(() => {
+		global.fetch = originalFetch;
+	});
 
-    it('surfaces JSON-RPC error from list tools call', async () => {
-        const client = createAgentMCPClient({ mcpServerUrl: 'http://fake-host:9999' });
-        // First initialize will also receive error payload and throw
-        await expect(client.initialize()).rejects.toThrow(/Upstream failure|MCP initialization failed/i);
-        // isConnected remains false, subsequent getAvailableTools should still fail fast on ensureConnected
-        await expect(client.getAvailableTools()).rejects.toThrow(/not connected/i);
-    });
+	it('surfaces JSON-RPC error from list tools call', async () => {
+		const client = createAgentMCPClient({
+			mcpServerUrl: 'http://fake-host:9999',
+		});
+		// First initialize will also receive error payload and throw
+		await expect(client.initialize()).rejects.toThrow(
+			/Upstream failure|MCP initialization failed/i,
+		);
+		// isConnected remains false, subsequent getAvailableTools should still fail fast on ensureConnected
+		await expect(client.getAvailableTools()).rejects.toThrow(/not connected/i);
+	});
 });
 
 // EOF

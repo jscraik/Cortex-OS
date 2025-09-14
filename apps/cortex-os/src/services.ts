@@ -26,7 +26,7 @@ export function provideMCP() {
 		async callTool() {
 			return {};
 		},
-		async close() { },
+		async close() {},
 	};
 }
 

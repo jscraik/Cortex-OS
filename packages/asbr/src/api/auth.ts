@@ -3,9 +3,9 @@
  * Loopback-only scoped token authentication with TTL and least privilege
  */
 
-import { createHash, randomBytes } from 'crypto';
-import type { NextFunction, Request, Response } from 'express';
+import { createHash, randomBytes } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
+import type { NextFunction, Request, Response } from 'express';
 import {
 	AuthenticationError,
 	AuthorizationError,
@@ -39,11 +39,11 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function isTestLikeEnvironment(): boolean {
-  return (
-    process.env.NODE_ENV === 'test' ||
-    typeof process.env.VITEST_WORKER_ID !== 'undefined' ||
-    process.env.ASBR_TEST_FORCE_BYPASS === '1'
-  );
+	return (
+		process.env.NODE_ENV === 'test' ||
+		typeof process.env.VITEST_WORKER_ID !== 'undefined' ||
+		process.env.ASBR_TEST_FORCE_BYPASS === '1'
+	);
 }
 
 export function createAuthMiddleware() {
@@ -54,7 +54,10 @@ export function createAuthMiddleware() {
 	) => {
 		// Global test environment optimization: bypass intensive validation ONLY if a bearer token header is present
 		// This preserves 401 responses for missing auth in tests while still avoiding per-request IO / hashing cost.
-		if (isTestLikeEnvironment() && req.headers.authorization?.startsWith('Bearer ')) {
+		if (
+			isTestLikeEnvironment() &&
+			req.headers.authorization?.startsWith('Bearer ')
+		) {
 			req.auth ??= { tokenId: 'test-env', scopes: ['*'] };
 			return next();
 		}
@@ -70,7 +73,10 @@ export function createAuthMiddleware() {
 		if (!authHeader?.startsWith('Bearer ')) {
 			res
 				.status(401)
-				.json({ error: 'Authentication required', code: 'AUTHENTICATION_ERROR' });
+				.json({
+					error: 'Authentication required',
+					code: 'AUTHENTICATION_ERROR',
+				});
 			return;
 		}
 
@@ -100,7 +106,10 @@ export function createAuthMiddleware() {
 			} else {
 				res
 					.status(500)
-					.json({ error: 'Authentication failed', code: 'AUTHENTICATION_ERROR' });
+					.json({
+						error: 'Authentication failed',
+						code: 'AUTHENTICATION_ERROR',
+					});
 			}
 		}
 	};
@@ -114,7 +123,10 @@ export function requireScopes(...requiredScopes: string[]) {
 		if (!req.auth) {
 			res
 				.status(401)
-				.json({ error: 'Authentication required', code: 'AUTHENTICATION_ERROR' });
+				.json({
+					error: 'Authentication required',
+					code: 'AUTHENTICATION_ERROR',
+				});
 			return;
 		}
 

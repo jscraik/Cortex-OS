@@ -53,10 +53,13 @@ def compute_mlx_available() -> bool:
 
 MLX_AVAILABLE = compute_mlx_available()
 
-# Optional sentence-transformers backend
+# Optional sentence-transformers backend; some environments with a shimmed
+# `mlx` package can cause dependency utilities to raise non-ImportError
+# exceptions (e.g., ValueError during importlib.find_spec checks). We guard
+# broadly to keep this optional path from failing hard in constrained tests.
 try:  # pragma: no cover - optional dependency
     from sentence_transformers import SentenceTransformer
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover - treat any failure as absence
     SentenceTransformer = None  # type: ignore
 
 SENTENCE_TRANSFORMERS_AVAILABLE = SentenceTransformer is not None

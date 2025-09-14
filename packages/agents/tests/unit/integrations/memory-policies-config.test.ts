@@ -3,11 +3,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { MemoryPolicies } from '../../../src/integrations/memory-policies-config.js';
-import { loadMemoryPoliciesFromEnv, loadMemoryPoliciesFromFile } from '../../../src/integrations/memory-policies-config.js';
+import {
+	loadMemoryPoliciesFromEnv,
+	loadMemoryPoliciesFromFile,
+} from '../../../src/integrations/memory-policies-config.js';
 
 describe('memory-policies-config (clean)', () => {
 	let cwd: string;
-	beforeEach(async () => { cwd = await mkdtemp(join(tmpdir(), 'mem-policies-')); });
+	beforeEach(async () => {
+		cwd = await mkdtemp(join(tmpdir(), 'mem-policies-'));
+	});
 	afterEach(async () => {
 		delete process.env.AGENTS_MEMORY_POLICIES_FILE;
 		delete process.env.AGENTS_MEMORY_POLICIES;
@@ -27,16 +32,24 @@ describe('memory-policies-config (clean)', () => {
 
 	it('prefers file over inline env', async () => {
 		const file = join(cwd, 'file.json');
-		await writeFile(file, JSON.stringify({ security: { namespace: 'file' } }), 'utf8');
+		await writeFile(
+			file,
+			JSON.stringify({ security: { namespace: 'file' } }),
+			'utf8',
+		);
 		process.env.AGENTS_MEMORY_POLICIES_FILE = file;
-		process.env.AGENTS_MEMORY_POLICIES = JSON.stringify({ security: { namespace: 'inline' } });
+		process.env.AGENTS_MEMORY_POLICIES = JSON.stringify({
+			security: { namespace: 'inline' },
+		});
 		const loaded = await loadMemoryPoliciesFromEnv();
 		expect(loaded?.security?.namespace).toBe('file');
 	});
 
 	it('falls back to inline JSON when file missing', async () => {
 		process.env.AGENTS_MEMORY_POLICIES_FILE = join(cwd, 'missing.json');
-		process.env.AGENTS_MEMORY_POLICIES = JSON.stringify({ security: { namespace: 'inline' } });
+		process.env.AGENTS_MEMORY_POLICIES = JSON.stringify({
+			security: { namespace: 'inline' },
+		});
 		const loaded = await loadMemoryPoliciesFromEnv();
 		expect(loaded?.security?.namespace).toBe('inline');
 	});

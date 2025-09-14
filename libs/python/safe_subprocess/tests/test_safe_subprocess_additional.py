@@ -50,7 +50,10 @@ def test_run_command_env_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("SAFE_SUBPROC_ALLOW_ENV", "KEEP_ME")
     monkeypatch.setenv("KEEP_ME", "yes")
     monkeypatch.setenv("DROP_ME", "no")
-    code = "import os, json; print(json.dumps({'has_keep': 'KEEP_ME' in os.environ, 'has_drop': 'DROP_ME' in os.environ}))"
+    code = (
+        "import os, json\n"
+        "print(json.dumps({'has_keep': 'KEEP_ME' in os.environ, 'has_drop': 'DROP_ME' in os.environ}))"
+    )
     result = run_command([sys.executable, "-c", code])
     assert '"has_keep": true' in result.stdout
     assert '"has_drop": false' in result.stdout
@@ -58,6 +61,9 @@ def test_run_command_env_allowlist(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_stream_command_lines() -> None:
     # Emit three lines with flush to ensure they are captured separately
-    code = "import sys; [print(f'L{i}') for i in range(3)]"
+    code = (
+        "for i in range(3):\n"
+        "    print(f'L{i}')\n"
+    )
     lines = list(stream_command([sys.executable, "-u", "-c", code]))
     assert [line.strip() for line in lines if line.strip()] == ["L0", "L1", "L2"]

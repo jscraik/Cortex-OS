@@ -12,34 +12,34 @@
 export type {
 	CodeAnalysisAgentConfig,
 	CodeAnalysisInput,
-	CodeAnalysisOutput
+	CodeAnalysisOutput,
 } from './agents/code-analysis-agent';
 // Agents - Single-focused implementations
 export { createCodeAnalysisAgent } from './agents/code-analysis-agent';
-export { createDocumentationAgent } from './agents/documentation-agent';
 export type {
 	DocumentationAgentConfig,
 	DocumentationInput,
-	DocumentationOutput
+	DocumentationOutput,
 } from './agents/documentation-agent';
-export { createLangGraphAgent } from './agents/langgraph-agent';
+export { createDocumentationAgent } from './agents/documentation-agent';
 export type {
 	LangGraphInput,
-	LangGraphOutput
+	LangGraphOutput,
 } from './agents/langgraph-agent';
+export { createLangGraphAgent } from './agents/langgraph-agent';
 export type {
 	SecurityAgentConfig,
 	SecurityInput,
-	SecurityOutput
+	SecurityOutput,
 } from './agents/security-agent';
 // Security Agent (LlamaGuard-backed via MLX or provider chain)
 export { createSecurityAgent } from './agents/security-agent';
-export { createTestGenerationAgent } from './agents/test-generation-agent';
 export type {
 	TestGenerationAgentConfig,
 	TestGenerationInput,
-	TestGenerationOutput
+	TestGenerationOutput,
 } from './agents/test-generation-agent';
+export { createTestGenerationAgent } from './agents/test-generation-agent';
 export type {
 	AgentCompletedEvent,
 	AgentFailedEvent,
@@ -50,7 +50,7 @@ export type {
 	MemoryPressureEvent,
 	ProviderFallbackEvent,
 	ProviderSuccessEvent,
-	ThermalThrottleEvent
+	ThermalThrottleEvent,
 } from './events/agent-events';
 // Event schemas and types
 export {
@@ -63,17 +63,19 @@ export {
 	memoryPressureEventSchema,
 	providerFallbackEventSchema,
 	providerSuccessEventSchema,
-	thermalThrottleEventSchema
+	thermalThrottleEventSchema,
 } from './events/agent-events';
 export {
-	AgentMCPClient, MCPCapableAgent, createAgentMCPClient
+	AgentMCPClient,
+	createAgentMCPClient,
+	MCPCapableAgent,
 } from './integrations/mcp-client';
-export { DynamicSpeculativePlanner } from './lib/dsp';
 export type { DSPConfig } from './lib/dsp';
+export { DynamicSpeculativePlanner } from './lib/dsp';
 export type {
 	CloudEvent,
 	EventBusConfig,
-	EventSubscriber
+	EventSubscriber,
 } from './lib/event-bus';
 // Event Bus Integration
 export {
@@ -81,13 +83,15 @@ export {
 	createEventBus,
 	createEventBusForEnvironment,
 	createEventPublisher,
-	createEventSubscriber
+	createEventSubscriber,
 } from './lib/event-bus';
 export { getSecret, redactSecrets } from './lib/secret-store';
 // Core types and interfaces
 export type {
+	Agent as BaseAgent,
 	AgentCapability,
-	AgentDependencies, Agent as BaseAgent, EventBus,
+	AgentDependencies,
+	EventBus,
 	EventSubscription,
 	ExecutionContext,
 	GenerateOptions,
@@ -95,7 +99,7 @@ export type {
 	MCPClient,
 	MCPServerInfo,
 	ModelProvider,
-	ProviderChainConfig
+	ProviderChainConfig,
 } from './lib/types';
 // Error types
 export { AgentError, ProviderError, ValidationError } from './lib/types';
@@ -114,7 +118,7 @@ export {
 	throttle,
 	timeout,
 	truncateToTokens,
-	withTimeout
+	withTimeout,
 } from './lib/utils';
 // Validation utilities
 export {
@@ -124,40 +128,43 @@ export {
 	validateExecutionContext,
 	validateInput,
 	validateOutput,
-	validateSchema
+	validateSchema,
 } from './lib/validate';
 export type {
 	AgentOrchestrator,
 	OrchestrationResult,
 	OrchestratorConfig,
 	Workflow,
-	WorkflowTask
+	WorkflowTask,
 } from './orchestration/agent-orchestrator';
 // Orchestration Layer
 export {
-	WorkflowBuilder, createOrchestrator
+	createOrchestrator,
+	WorkflowBuilder,
 } from './orchestration/agent-orchestrator';
+export type { FallbackChainConfig } from './providers/fallback-chain';
 export {
 	createFallbackChain,
 	createLocalFallbackChain,
-	createStandardFallbackChain
+	createStandardFallbackChain,
 } from './providers/fallback-chain';
-export type { FallbackChainConfig } from './providers/fallback-chain';
 export type { MCPProviderConfig } from './providers/mcp-provider';
 // Providers - Full implementation with MLX integration
 export {
 	createMCPProvider,
 	createMCPProviders,
-	discoverMCPProviders
+	discoverMCPProviders,
 } from './providers/mcp-provider';
+export type {
+	MemoryStatus,
+	MLXProviderConfig,
+	ThermalStatus,
+} from './providers/mlx-provider/index';
 export {
 	createAutoMLXProvider,
 	createMLXProvider,
 	getMLXMemoryStatus,
-	getMLXThermalStatus
-} from './providers/mlx-provider/index';
-export type {
-	MLXProviderConfig, MemoryStatus, ThermalStatus
+	getMLXThermalStatus,
 } from './providers/mlx-provider/index';
 // MCP Integration for Archon
 export type {
@@ -175,7 +182,7 @@ export type {
 	Task,
 	TaskCreationResult,
 	TaskStatus,
-	ToolParameter
+	ToolParameter,
 } from './types/mcp';
 
 // Package information

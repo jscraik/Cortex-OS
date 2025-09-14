@@ -23,11 +23,7 @@ import type {
 	MemoryPolicy,
 	ModelProvider,
 } from '../lib/types.js';
-import {
-	generateAgentId,
-	generateTraceId,
-	withTimeout,
-} from '../lib/utils.js';
+import { generateAgentId, generateTraceId, withTimeout } from '../lib/utils.js';
 import { validateSchema } from '../lib/validate.js';
 
 // Input schema
@@ -86,11 +82,14 @@ export interface SecurityAgentConfig {
 	memoryPolicy?: MemoryPolicy; // per-capability limits (TTL/size/namespacing)
 }
 
-
 // Helper: publish event
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
-function publishEvent(eventBus: EventBus, type: string, data: Record<string, unknown>) {
+function publishEvent(
+	eventBus: EventBus,
+	type: string,
+	data: Record<string, unknown>,
+) {
 	eventBus.publish({
 		specversion: '1.0' as const,
 		id: randomUUID(),
@@ -104,7 +103,10 @@ function publishEvent(eventBus: EventBus, type: string, data: Record<string, unk
 }
 
 // Helper: load dependabot config and publish event
-async function loadAndPublishDependabot(eventBus: EventBus, dependabotPath?: string) {
+async function loadAndPublishDependabot(
+	eventBus: EventBus,
+	dependabotPath?: string,
+) {
 	const dep = await loadDependabotConfig(process.cwd(), dependabotPath);
 	if (dep) {
 		publishEvent(eventBus, 'security.dependabot_config_loaded', {
@@ -116,7 +118,9 @@ async function loadAndPublishDependabot(eventBus: EventBus, dependabotPath?: str
 	return dep;
 }
 
-export function createSecurityAgent(config: SecurityAgentConfig): Agent<SecurityInput, SecurityOutput> {
+export function createSecurityAgent(
+	config: SecurityAgentConfig,
+): Agent<SecurityInput, SecurityOutput> {
 	const agentId = generateAgentId();
 	const timeout = config.timeout ?? 60000;
 	// Minimal system prompt builder for security agent
@@ -138,7 +142,8 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 	};
 
 	function findFirstJsonBounds(text: string): [number, number] | null {
-		let depth = 0, start = -1;
+		let depth = 0,
+			start = -1;
 		for (let i = 0; i < text.length; i++) {
 			if (text[i] === '{') {
 				if (depth === 0) start = i;
@@ -181,9 +186,16 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		}));
 	}
 
-	function buildHeuristicFallback(raw: string, latency: number): SecurityOutput {
-		const blockHeuristic = /\bblock\b/.test(raw) && (raw.includes('policy violation') || /\bunsafe\b/.test(raw));
-		const decision: 'allow' | 'flag' | 'block' = blockHeuristic ? 'block' : 'flag';
+	function buildHeuristicFallback(
+		raw: string,
+		latency: number,
+	): SecurityOutput {
+		const blockHeuristic =
+			/\bblock\b/.test(raw) &&
+			(raw.includes('policy violation') || /\bunsafe\b/.test(raw));
+		const decision: 'allow' | 'flag' | 'block' = blockHeuristic
+			? 'block'
+			: 'flag';
 		const cats: string[] = [];
 		if (/tool|command|shell/.test(raw)) cats.push('tool-abuse');
 		if (/exfil|leak|secret/.test(raw)) cats.push('data-exfiltration');
@@ -203,7 +215,14 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 				},
 			],
 			mitigations: ['Re-run with stricter policy', 'Manual review required'],
-			labels: { owasp_llm10: [], mitre_attack: [], mitre_atlas: [], cwe: [], capec: [], d3fend: [] },
+			labels: {
+				owasp_llm10: [],
+				mitre_attack: [],
+				mitre_atlas: [],
+				cwe: [],
+				capec: [],
+				d3fend: [],
+			},
 			confidence: 0.5,
 			processingTime: latency,
 		};
@@ -215,7 +234,10 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 			const safe = ensureObjectType(parsed);
 			// If no JSON object was detected at all (empty parse), treat as parsing failure -> fallback
 			if (Object.keys(safe).length === 0) {
-				return buildHeuristicFallback(response.text.toLowerCase(), response.latencyMs || 1000);
+				return buildHeuristicFallback(
+					response.text.toLowerCase(),
+					response.latencyMs || 1000,
+				);
 			}
 			const labels = ensureObjectType(safe.labels);
 
@@ -230,14 +252,21 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 				findings: normalizeFindings(safe.findings),
 				mitigations: Array.isArray(safe.mitigations) ? safe.mitigations : [],
 				labels: {
-					owasp_llm10: Array.isArray(labels.owasp_llm10) ? labels.owasp_llm10 : [],
-					mitre_attack: Array.isArray(labels.mitre_attack) ? labels.mitre_attack : [],
-					mitre_atlas: Array.isArray(labels.mitre_atlas) ? labels.mitre_atlas : [],
+					owasp_llm10: Array.isArray(labels.owasp_llm10)
+						? labels.owasp_llm10
+						: [],
+					mitre_attack: Array.isArray(labels.mitre_attack)
+						? labels.mitre_attack
+						: [],
+					mitre_atlas: Array.isArray(labels.mitre_atlas)
+						? labels.mitre_atlas
+						: [],
 					cwe: Array.isArray(labels.cwe) ? labels.cwe : [],
 					capec: Array.isArray(labels.capec) ? labels.capec : [],
 					d3fend: Array.isArray(labels.d3fend) ? labels.d3fend : [],
 				},
-				confidence: typeof safe.confidence === 'number' ? safe.confidence : 0.75,
+				confidence:
+					typeof safe.confidence === 'number' ? safe.confidence : 0.75,
 				processingTime: response.latencyMs || 1000,
 			};
 			return merged;
@@ -249,9 +278,14 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 
 	// Helper functions to reduce cognitive complexity
 	const ensureObjectType = (val: unknown): Record<string, unknown> =>
-		typeof val === 'object' && val !== null ? val as Record<string, unknown> : {};
+		typeof val === 'object' && val !== null
+			? (val as Record<string, unknown>)
+			: {};
 
-	const determineSecurityDecision = (safe: Record<string, unknown>, rawText: string): string => {
+	const determineSecurityDecision = (
+		safe: Record<string, unknown>,
+		rawText: string,
+	): string => {
 		if ('decision' in safe && typeof safe.decision === 'string') {
 			return safe.decision;
 		}
@@ -262,7 +296,8 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		// stricter semantics while reducing false positives.
 		const raw = rawText.toLowerCase();
 		const hasBlock = /\bblock\b/.test(raw);
-		const hasViolationPhrase = raw.includes('policy violation') || /\bunsafe\b/.test(raw);
+		const hasViolationPhrase =
+			raw.includes('policy violation') || /\bunsafe\b/.test(raw);
 		if (hasBlock && hasViolationPhrase) return 'block';
 		if (hasBlock) return 'flag';
 		if (/\bflag\b|\brisk\b|\bunsafe\b|\bviolation\b/.test(raw)) return 'flag';
@@ -273,7 +308,10 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		return hasFindings ? 'flag' : 'allow';
 	};
 
-	const determineRiskLevel = (safe: Record<string, unknown>, decision: string): string => {
+	const determineRiskLevel = (
+		safe: Record<string, unknown>,
+		decision: string,
+	): string => {
 		if ('risk' in safe && typeof safe.risk === 'string') {
 			return safe.risk;
 		}
@@ -283,7 +321,10 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		return decision === 'allow' ? 'low' : 'medium';
 	};
 
-	const determineCategories = (safe: Record<string, unknown>, rawText: string): string[] => {
+	const determineCategories = (
+		safe: Record<string, unknown>,
+		rawText: string,
+	): string[] => {
 		if (Array.isArray(safe.categories) && safe.categories.length > 0) {
 			return safe.categories;
 		}
@@ -297,7 +338,9 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		return cats.length > 0 ? cats : ['unclassified'];
 	};
 
-	const createFallbackSecurityOutput = (processingTime: number): SecurityOutput => {
+	const createFallbackSecurityOutput = (
+		processingTime: number,
+	): SecurityOutput => {
 		const fallback: SecurityOutput = {
 			decision: 'flag',
 			risk: 'medium',
@@ -327,8 +370,6 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		return fallback;
 	};
 
-
-
 	const evaluate = async (input: SecurityInput): Promise<SecurityOutput> => {
 		const systemPrompt = buildSystemPrompt(input.phase);
 		// Enrich context with Dependabot configuration when available
@@ -337,7 +378,9 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 			config.dependabotPath,
 		);
 		if (dep && input.context && typeof input.context === 'object') {
-			(input.context as { dependabot?: unknown }).dependabot = { projects: dep.projects };
+			(input.context as { dependabot?: unknown }).dependabot = {
+				projects: dep.projects,
+			};
 		}
 		const prompt = buildPrompt(input);
 		const options: GenerateOptions = {
@@ -351,8 +394,13 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		const extractText = (r: unknown): string => {
 			if (typeof r === 'string') return r;
 			if (r && typeof r === 'object') {
-				if ('text' in r && typeof (r as { text?: unknown }).text === 'string') return (r as { text: string }).text;
-				if ('content' in r && typeof (r as { content?: unknown }).content === 'string') return (r as { content: string }).content;
+				if ('text' in r && typeof (r as { text?: unknown }).text === 'string')
+					return (r as { text: string }).text;
+				if (
+					'content' in r &&
+					typeof (r as { content?: unknown }).content === 'string'
+				)
+					return (r as { content: string }).content;
 			}
 			return '';
 		};
@@ -398,7 +446,9 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 
 	// createEvent helper removed (publishEvent used directly for consistency)
 
-	interface SecurityGenerateResult extends GenerateResult<SecurityOutput>, SecurityOutput { }
+	interface SecurityGenerateResult
+		extends GenerateResult<SecurityOutput>,
+			SecurityOutput {}
 
 	return {
 		id: agentId,
@@ -415,9 +465,10 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		execute: async (
 			context: ExecutionContext<SecurityInput> | SecurityInput,
 		): Promise<SecurityGenerateResult> => {
-			const input = (typeof context === 'object' && context !== null && 'input' in context)
-				? context.input
-				: context;
+			const input =
+				typeof context === 'object' && context !== null && 'input' in context
+					? context.input
+					: context;
 			const traceId = generateTraceId();
 			const start = Date.now();
 			const validated = validateSchema(securityInputSchema, input);
@@ -440,7 +491,11 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 				timestamp: new Date().toISOString(),
 			});
 
-			if (typeof validatedWithContext === 'object' && validatedWithContext !== null && '_suppressLifecycle' in validatedWithContext) {
+			if (
+				typeof validatedWithContext === 'object' &&
+				validatedWithContext !== null &&
+				'_suppressLifecycle' in validatedWithContext
+			) {
 				// proceed without emitting lifecycle; orchestrator proxies events
 			}
 
@@ -448,7 +503,12 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 				await loadAndPublishDependabot(config.eventBus, config.dependabotPath);
 				const out = await withTimeout(evaluate(validatedWithContext), timeout);
 				const dur = Math.max(1, Date.now() - start);
-				const suppress = typeof validatedWithContext === 'object' && validatedWithContext !== null && '_suppressLifecycle' in validatedWithContext && (validatedWithContext as Record<string, unknown>)._suppressLifecycle === true;
+				const suppress =
+					typeof validatedWithContext === 'object' &&
+					validatedWithContext !== null &&
+					'_suppressLifecycle' in validatedWithContext &&
+					(validatedWithContext as Record<string, unknown>)
+						._suppressLifecycle === true;
 				if (!suppress) {
 					publishEvent(config.eventBus, 'agent.completed', {
 						agentId,
@@ -482,10 +542,17 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 					traceId,
 					capability: 'security',
 					error: err instanceof Error ? err.message : 'Unknown error',
-					errorCode: typeof err === 'object' && err !== null && 'code' in err ? (err as { code?: string }).code : undefined,
-					status: typeof err === 'object' && err !== null && 'status' in err && typeof (err as { status?: number }).status === 'number'
-						? (err as { status?: number }).status
-						: undefined,
+					errorCode:
+						typeof err === 'object' && err !== null && 'code' in err
+							? (err as { code?: string }).code
+							: undefined,
+					status:
+						typeof err === 'object' &&
+						err !== null &&
+						'status' in err &&
+						typeof (err as { status?: number }).status === 'number'
+							? (err as { status?: number }).status
+							: undefined,
 					metrics: { latencyMs: dur },
 					timestamp: new Date().toISOString(),
 				});
@@ -522,4 +589,3 @@ export function createSecurityAgent(config: SecurityAgentConfig): Agent<Security
 		},
 	};
 }
-

@@ -2,8 +2,8 @@
  * PRP orchestration engine using functional API
  */
 
-import { type Neuron, PRPOrchestrator } from '@cortex-os/prp-runner';
 import { EventEmitter } from 'node:events';
+import { type Neuron, PRPOrchestrator } from '@cortex-os/prp-runner';
 import { v4 as uuid } from 'uuid';
 import winston from 'winston';
 
@@ -93,7 +93,11 @@ export async function orchestrateTask(
 	const timeoutPromise = new Promise<never>((_, reject) => {
 		timeoutId = setTimeout(() => {
 			timedOut = true;
-			reject(new Error(`Task execution timeout after ${timeoutMs}ms for task ${task.id}`));
+			reject(
+				new Error(
+					`Task execution timeout after ${timeoutMs}ms for task ${task.id}`,
+				),
+			);
 		}, timeoutMs);
 	});
 
@@ -123,7 +127,9 @@ export async function orchestrateTask(
 		.catch((err) => {
 			// If timed out already, swallow to prevent unhandled rejection; otherwise propagate
 			if (timedOut) {
-				engine.logger.debug('Suppressed post-timeout PRP resolution', { taskId: task.id });
+				engine.logger.debug('Suppressed post-timeout PRP resolution', {
+					taskId: task.id,
+				});
 				return toResult(id, task.id, { phase: undefined }, start);
 			}
 			if (timeoutId) {
@@ -134,14 +140,13 @@ export async function orchestrateTask(
 		});
 
 	// Race between execution and timeout; ensure cleanup
-	const run = Promise.race([executionPromise, timeoutPromise])
-		.finally(() => {
-			engine.active.delete(id);
-			if (timeoutId) {
-				clearTimeout(timeoutId);
-				timeoutId = null;
-			}
-		});
+	const run = Promise.race([executionPromise, timeoutPromise]).finally(() => {
+		engine.active.delete(id);
+		if (timeoutId) {
+			clearTimeout(timeoutId);
+			timeoutId = null;
+		}
+	});
 
 	engine.active.set(id, run);
 	return run;

@@ -1,5 +1,6 @@
 // Shared fallback message to reduce literal duplication and satisfy lint rule
 const UNKNOWN_ERROR_MESSAGE = 'Unknown error';
+
 /**
  * @file SPIFFE Client Implementation
  * @description SPIFFE Workload API client for certificate management and workload attestation
@@ -87,7 +88,7 @@ export class SpiffeClient {
 		{ bundle: CertificateBundle; expiresAt: number }
 	> = new Map();
 	private readonly certificateTtl: number;
-// TLS cert material retained for potential future https.Agent usage (not bound now)
+	// TLS cert material retained for potential future https.Agent usage (not bound now)
 
 	constructor(config: TrustDomainConfig, certificateTtl = 3600000) {
 		this.config = config;
@@ -201,7 +202,8 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch workload identity',
 					{
-						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+						error:
+							error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						trustDomain: this.config.name,
 					},
 					span,
@@ -294,7 +296,8 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch SVID certificates',
 					{
-						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+						error:
+							error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						spiffeId: spiffeId || 'default',
 					},
 					span,
@@ -390,7 +393,8 @@ export class SpiffeClient {
 					'error',
 					'Failed to fetch trust bundle',
 					{
-						error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+						error:
+							error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
 						trustDomain: this.config.name,
 					},
 					span,

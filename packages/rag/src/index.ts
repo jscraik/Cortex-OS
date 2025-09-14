@@ -20,7 +20,7 @@ export type {
 	DocumentSyncResult,
 	MinimalStore,
 	RemoteRetrievalOptions,
-	StoreLike
+	StoreLike,
 } from './integrations/archon-mcp.js';
 // Archon MCP Integration
 export {
@@ -29,10 +29,10 @@ export {
 	ArchonEnhancedStore,
 	createArchonEmbedder,
 	createArchonEnhancedStore,
-	createArchonIngestionManager
+	createArchonIngestionManager,
 } from './integrations/archon-mcp.js';
-export * as lib from './lib/index.js';
 export type { Chunk, Embedder, Pipeline, Store } from './lib/index.js';
+export * as lib from './lib/index.js';
 export { RAGPipeline, type RAGPipelineConfig } from './rag-pipeline.js';
 export { fileStore } from './store/file.js';
 export { memoryStore } from './store/memory.js';

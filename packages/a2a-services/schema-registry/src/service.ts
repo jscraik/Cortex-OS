@@ -1,5 +1,11 @@
 import { createRedactor, createTopicAcl } from '@cortex-os/a2a';
-import { createBurstSmoother, createPerAgentQuota, createQuota, createRateLimiter, serviceMetrics } from '@cortex-os/a2a-common';
+import {
+	createBurstSmoother,
+	createPerAgentQuota,
+	createQuota,
+	createRateLimiter,
+	serviceMetrics,
+} from '@cortex-os/a2a-common';
 import { busMetrics } from '@cortex-os/a2a-core';
 import express from 'express';
 import { type Schema, schemaForSchema } from './schemas';
@@ -33,7 +39,10 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		enableQuota = envFlag('SCHEMA_SVC_GLOBAL_QUOTA', true),
 		enablePerAgentQuota = envFlag('SCHEMA_SVC_PER_AGENT_QUOTA', true),
 		aclConfig,
-		redactionPaths = envList('SCHEMA_SVC_REDACT_PATHS', ['schema.secret', 'schema.credentials']),
+		redactionPaths = envList('SCHEMA_SVC_REDACT_PATHS', [
+			'schema.secret',
+			'schema.credentials',
+		]),
 	} = opts;
 	const app = express();
 	app.use(express.json());
@@ -50,17 +59,30 @@ export function createService(opts: RegistryServiceOptions = {}) {
 	const perAgentWindow = envNumber('PER_AGENT_WINDOW_MS', quotaWindow);
 
 	// Keep references for metrics
-	const smoother = enableSmoothing ? createBurstSmoother({ ratePerSec, burst }) : undefined;
+	const smoother = enableSmoothing
+		? createBurstSmoother({ ratePerSec, burst })
+		: undefined;
 	if (smoother) app.use(smoother);
 	const rateLimiter = createRateLimiter({ limit: rlLimit, windowMs: rlWindow });
 	app.use(rateLimiter);
-	const quotaMw = enableQuota ? createQuota({ globalLimit: quotaGlobal, windowMs: quotaWindow }) : undefined;
+	const quotaMw = enableQuota
+		? createQuota({ globalLimit: quotaGlobal, windowMs: quotaWindow })
+		: undefined;
 	if (quotaMw) app.use(quotaMw);
-	const perAgentQuotaMw = enablePerAgentQuota ? createPerAgentQuota({ globalLimit: perAgentGlobal, perAgentLimit, windowMs: perAgentWindow }) : undefined;
+	const perAgentQuotaMw = enablePerAgentQuota
+		? createPerAgentQuota({
+				globalLimit: perAgentGlobal,
+				perAgentLimit,
+				windowMs: perAgentWindow,
+			})
+		: undefined;
 	if (perAgentQuotaMw) app.use(perAgentQuotaMw);
 
 	const acl = aclConfig ? createTopicAcl(aclConfig) : undefined;
-	const redactor = createRedactor({ redactPaths: redactionPaths, replacement: '***' });
+	const redactor = createRedactor({
+		redactPaths: redactionPaths,
+		replacement: '***',
+	});
 
 	// NOTE: This is a simplified schema registry for demonstration purposes.
 	// It uses in-memory storage and will lose all data on restart.
@@ -74,9 +96,14 @@ export function createService(opts: RegistryServiceOptions = {}) {
 		const intent = req.method === 'POST' ? 'publish' : 'subscribe';
 		const pseudoTopic = 'registry.schemas';
 		const role = (req.headers['x-role'] as string) || 'anonymous';
-		const decision = intent === 'publish' ? acl.canPublish(pseudoTopic, role) : acl.canSubscribe(pseudoTopic, role);
+		const decision =
+			intent === 'publish'
+				? acl.canPublish(pseudoTopic, role)
+				: acl.canSubscribe(pseudoTopic, role);
 		if (!decision.allowed) {
-			return res.status(403).json({ error: 'Forbidden', reason: decision.reason });
+			return res
+				.status(403)
+				.json({ error: 'Forbidden', reason: decision.reason });
 		}
 		return next();
 	});
@@ -109,7 +136,9 @@ export function createService(opts: RegistryServiceOptions = {}) {
 
 	app.get('/schemas/:name', (req, res) => {
 		const { name } = req.params;
-		const namedSchemas = schemas.filter((s) => s.name === name).map((s) => redactor.redact(s));
+		const namedSchemas = schemas
+			.filter((s) => s.name === name)
+			.map((s) => redactor.redact(s));
 		res.json(namedSchemas);
 	});
 
@@ -144,7 +173,15 @@ export function createService(opts: RegistryServiceOptions = {}) {
 			uptimeMs: process.uptime() * 1000,
 			smoothing: smoother ? smoother.metrics?.() : undefined,
 			config: {
-				ratePerSec, burst, rlLimit, rlWindow, quotaGlobal, quotaWindow, perAgentGlobal, perAgentLimit, perAgentWindow,
+				ratePerSec,
+				burst,
+				rlLimit,
+				rlWindow,
+				quotaGlobal,
+				quotaWindow,
+				perAgentGlobal,
+				perAgentLimit,
+				perAgentWindow,
 			},
 		});
 	});
@@ -158,17 +195,23 @@ export function createService(opts: RegistryServiceOptions = {}) {
 			lines.push('# HELP a2a_bus_events_total Total events published');
 			lines.push('# TYPE a2a_bus_events_total counter');
 			lines.push(`a2a_bus_events_total ${bm.eventsPublished}`);
-			lines.push('# HELP a2a_bus_duplicates_dropped_total Total duplicate events dropped by idempotency');
+			lines.push(
+				'# HELP a2a_bus_duplicates_dropped_total Total duplicate events dropped by idempotency',
+			);
 			lines.push('# TYPE a2a_bus_duplicates_dropped_total counter');
 			lines.push(`a2a_bus_duplicates_dropped_total ${bm.duplicatesDropped}`);
-			lines.push('# HELP a2a_quota_global_reject_total Total requests rejected due to global quota');
+			lines.push(
+				'# HELP a2a_quota_global_reject_total Total requests rejected due to global quota',
+			);
 			lines.push('# TYPE a2a_quota_global_reject_total counter');
 			lines.push(`a2a_quota_global_reject_total ${sm.quotaGlobalReject}`);
-			lines.push('# HELP a2a_quota_agent_reject_total Total requests rejected due to per-agent quota');
+			lines.push(
+				'# HELP a2a_quota_agent_reject_total Total requests rejected due to per-agent quota',
+			);
 			lines.push('# TYPE a2a_quota_agent_reject_total counter');
 			lines.push(`a2a_quota_agent_reject_total ${sm.quotaAgentReject}`);
 			res.setHeader('Content-Type', 'text/plain; version=0.0.4');
-			res.send(lines.join('\n') + '\n');
+			res.send(`${lines.join('\n')}\n`);
 		});
 	}
 
@@ -190,5 +233,8 @@ function envNumber(name: string, def: number): number {
 function envList(name: string, def: string[]): string[] {
 	const v = process.env[name];
 	if (!v) return def;
-	return v.split(',').map(s => s.trim()).filter(Boolean);
+	return v
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean);
 }

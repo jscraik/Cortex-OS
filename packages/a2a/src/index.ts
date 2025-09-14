@@ -13,7 +13,7 @@
  */
 
 // ACL, Redaction, Replay utilities
-export { TopicAcl, createTopicAcl } from './acl.js';
+export { createTopicAcl, TopicAcl } from './acl.js';
 // In-memory outbox repository
 export { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
 export type { A2AOutboxIntegration } from './outbox-integration.js';
@@ -28,7 +28,7 @@ export type {
 	TaskId,
 	TaskResult,
 	TaskSendParams,
-	TaskStatus
+	TaskStatus,
 } from './protocol.js';
 // Re-export core types and schemas
 export {
@@ -40,9 +40,9 @@ export {
 	TaskIdSchema,
 	TaskResultSchema,
 	TaskSendParamsSchema,
-	TaskStatusSchema
+	TaskStatusSchema,
 } from './protocol.js';
-export { Redactor, createRedactor } from './redaction.js';
+export { createRedactor, Redactor } from './redaction.js';
 export { replayPending } from './replay.js';
 // Re-export RPC handling
 export type { RpcHandler } from './rpc-handler.js';
@@ -50,7 +50,7 @@ export type { RpcHandler } from './rpc-handler.js';
 export {
 	A2ARpcHandler,
 	createA2ARpcHandler,
-	handleA2A
+	handleA2A,
 } from './rpc-handler.js';
 // SQLite outbox repository
 export { SqliteOutboxRepository } from './sqlite-outbox-repository.js';
@@ -59,9 +59,10 @@ export { createTaskEventStream } from './streaming.js';
 export type { Task, TaskProcessor, TaskStore } from './task-manager.js';
 // Re-export task management
 export {
+	createTaskManager,
 	EchoTaskProcessor,
 	InMemoryTaskStore,
-	TaskManager, createTaskManager
+	TaskManager,
 } from './task-manager.js';
 
 // handleA2A is already exported above in the main handler block

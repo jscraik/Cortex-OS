@@ -67,7 +67,8 @@ export const executeMLXGeneration = async (
 			}
 			const status = res.status;
 			const title = problem?.title || 'mlx_gateway_error';
-			const detail = problem?.detail || (problem ? JSON.stringify(problem) : '');
+			const detail =
+				problem?.detail || (problem ? JSON.stringify(problem) : '');
 			const msg = `MLX gateway error: ${status} ${title} ${detail}`.trim();
 			const error = new Error(redactSecrets(msg)) as Error & {
 				code?: string;
@@ -80,7 +81,7 @@ export const executeMLXGeneration = async (
 	} catch (e: unknown) {
 		if (
 			typeof (e as { message?: string })?.message === 'string' &&
-			(e as { message?: string }).message!.includes('MLX gateway error')
+			(e as { message?: string }).message?.includes('MLX gateway error')
 		) {
 			throw e;
 		}

@@ -7,24 +7,23 @@
 
 // Re-export types from dependencies for convenience
 export type {
-    Agent,
-    ArchonIntegrationConfig,
-    KnowledgeSearchFilters,
-    KnowledgeSearchResult,
-    Task
+	Agent,
+	ArchonIntegrationConfig,
+	KnowledgeSearchFilters,
+	KnowledgeSearchResult,
+	Task,
 } from '@cortex-os/agents';
 export type {
-    ArchonRAGConfig,
-    DocumentSyncResult,
-    RemoteRetrievalOptions
+	ArchonRAGConfig,
+	DocumentSyncResult,
+	RemoteRetrievalOptions,
 } from '@cortex-os/rag';
-export {
-    CortexArchonService,
-    createCortexArchonService
-} from './service.js';
 export type {
-    ArchonServiceEvents,
-    ArchonServiceStatus,
-    CortexArchonConfig
+	ArchonServiceEvents,
+	ArchonServiceStatus,
+	CortexArchonConfig,
 } from './service.js';
-
+export {
+	CortexArchonService,
+	createCortexArchonService,
+} from './service.js';

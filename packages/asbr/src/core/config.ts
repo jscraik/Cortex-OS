@@ -3,8 +3,8 @@
  * Handles loading and validation of configuration files from XDG directories
  */
 
-import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import { readFile, writeFile } from 'node:fs/promises';
+import { dump as yamlDump, load as yamlLoad } from 'js-yaml';
 import { deepMerge } from '../lib/deep-merge.js';
 import {
 	type Config,

@@ -1,7 +1,7 @@
-export { StdioHttpBridge } from './stdio-http.js';
 export type {
-	StdioHttpBridgeOptions,
+	CircuitBreakerOptions,
 	RateLimitOptions,
 	RetryOptions,
-	CircuitBreakerOptions,
+	StdioHttpBridgeOptions,
 } from './stdio-http.js';
+export { StdioHttpBridge } from './stdio-http.js';

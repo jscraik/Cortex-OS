@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-import { StdioHttpBridge } from '../src/stdio-http.js';
-import type { ServerInfo } from '@cortex-os/mcp-core';
-import http from 'node:http';
 import { EventEmitter } from 'node:events';
+import http from 'node:http';
 import type { AddressInfo } from 'node:net';
+import type { ServerInfo } from '@cortex-os/mcp-core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { StdioHttpBridge } from '../src/stdio-http.js';
 
 describe('StdioHttpBridge', () => {
 	let bridge: StdioHttpBridge;
@@ -22,10 +22,12 @@ describe('StdioHttpBridge', () => {
 				res.setHeader('Content-Type', 'application/json');
 
 				// Echo back with a test response
-				res.end(JSON.stringify({
-					id: payload.id,
-					result: { echo: payload.method, params: payload.params }
-				}));
+				res.end(
+					JSON.stringify({
+						id: payload.id,
+						result: { echo: payload.method, params: payload.params },
+					}),
+				);
 			});
 		});
 
@@ -48,40 +50,40 @@ describe('StdioHttpBridge', () => {
 
 	describe('stdio to HTTP bridging', () => {
 		it('bridges stdio commands to HTTP endpoints', async () => {
-			const serverInfo: ServerInfo = {
+			const _serverInfo: ServerInfo = {
 				name: 'test-server',
 				transport: 'stdio',
 				command: 'echo',
-				args: ['test']
+				args: ['test'],
 			};
 
 			bridge = new StdioHttpBridge({
 				httpEndpoint: `http://localhost:${serverPort}`,
-				enableRateLimiting: false
+				enableRateLimiting: false,
 			});
 
 			const result = await bridge.forward({
 				id: '1',
 				method: 'test.method',
-				params: { key: 'value' }
+				params: { key: 'value' },
 			});
 
 			expect(result).toEqual({
 				id: '1',
 				result: {
 					echo: 'test.method',
-					params: { key: 'value' }
-				}
+					params: { key: 'value' },
+				},
 			});
 		});
 
 		it('handles SSE transport', async () => {
 			// Create SSE server
-			const sseServer = http.createServer((req, res) => {
+			const sseServer = http.createServer((_req, res) => {
 				res.writeHead(200, {
 					'Content-Type': 'text/event-stream',
 					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive'
+					Connection: 'keep-alive',
 				});
 
 				// Send test event
@@ -102,7 +104,7 @@ describe('StdioHttpBridge', () => {
 			const sseBridge = new StdioHttpBridge({
 				httpEndpoint: `http://localhost:${ssePort}`,
 				transport: 'sse',
-				enableRateLimiting: false
+				enableRateLimiting: false,
 			});
 
 			const events: any[] = [];
@@ -113,7 +115,7 @@ describe('StdioHttpBridge', () => {
 			await sseBridge.connect();
 
 			// Wait for events
-			await new Promise(resolve => setTimeout(resolve, 200));
+			await new Promise((resolve) => setTimeout(resolve, 200));
 
 			expect(events).toHaveLength(2);
 			expect(events[0]).toEqual({ test: 'event' });
@@ -129,8 +131,8 @@ describe('StdioHttpBridge', () => {
 				enableRateLimiting: true,
 				rateLimitOptions: {
 					maxRequests: 2,
-					windowMs: 1000
-				}
+					windowMs: 1000,
+				},
 			});
 
 			// First two requests should succeed
@@ -139,18 +141,18 @@ describe('StdioHttpBridge', () => {
 
 			// Third request should be rate limited
 			await expect(
-				bridge.forward({ id: '3', method: 'test', params: {} })
+				bridge.forward({ id: '3', method: 'test', params: {} }),
 			).rejects.toThrow('Rate limit exceeded');
 		});
 
 		it('handles connection errors gracefully', async () => {
 			bridge = new StdioHttpBridge({
 				httpEndpoint: 'http://localhost:99999', // Invalid port
-				enableRateLimiting: false
+				enableRateLimiting: false,
 			});
 
 			await expect(
-				bridge.forward({ id: '1', method: 'test', params: {} })
+				bridge.forward({ id: '1', method: 'test', params: {} }),
 			).rejects.toThrow();
 		});
 
@@ -164,38 +166,41 @@ describe('StdioHttpBridge', () => {
 					if (event === 'data') {
 						mockStdio.on('stdin', handler);
 					}
-				})
+				}),
 			};
 
 			const mockStdout = {
 				write: vi.fn((data) => {
 					stdinData.push(JSON.parse(data));
-				})
+				}),
 			};
 
 			bridge = new StdioHttpBridge({
 				httpEndpoint: `http://localhost:${serverPort}`,
 				stdin: mockStdin as any,
 				stdout: mockStdout as any,
-				enableRateLimiting: false
+				enableRateLimiting: false,
 			});
 
 			await bridge.start();
 
 			// Simulate stdin input
-			mockStdio.emit('stdin', JSON.stringify({
-				id: '1',
-				method: 'test',
-				params: { foo: 'bar' }
-			}));
+			mockStdio.emit(
+				'stdin',
+				JSON.stringify({
+					id: '1',
+					method: 'test',
+					params: { foo: 'bar' },
+				}),
+			);
 
 			// Wait for processing
-			await new Promise(resolve => setTimeout(resolve, 100));
+			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			expect(mockStdout.write).toHaveBeenCalled();
 			expect(stdinData[0]).toMatchObject({
 				id: '1',
-				result: expect.any(Object)
+				result: expect.any(Object),
 			});
 		});
 	});
@@ -203,7 +208,7 @@ describe('StdioHttpBridge', () => {
 	describe('error recovery', () => {
 		it('retries failed requests with exponential backoff', async () => {
 			let attempts = 0;
-			const retryServer = http.createServer((req, res) => {
+			const retryServer = http.createServer((_req, res) => {
 				attempts++;
 				if (attempts < 3) {
 					res.statusCode = 503;
@@ -225,14 +230,14 @@ describe('StdioHttpBridge', () => {
 				enableRateLimiting: false,
 				retryOptions: {
 					maxRetries: 3,
-					retryDelay: 10
-				}
+					retryDelay: 10,
+				},
 			});
 
 			const result = await bridge.forward({
 				id: '1',
 				method: 'test',
-				params: {}
+				params: {},
 			});
 
 			expect(attempts).toBe(3);
@@ -242,7 +247,7 @@ describe('StdioHttpBridge', () => {
 		});
 
 		it('handles circuit breaker activation', async () => {
-			const failingServer = http.createServer((req, res) => {
+			const failingServer = http.createServer((_req, res) => {
 				res.statusCode = 500;
 				res.end('Internal Server Error');
 			});
@@ -258,19 +263,22 @@ describe('StdioHttpBridge', () => {
 				enableRateLimiting: false,
 				circuitBreakerOptions: {
 					failureThreshold: 2,
-					resetTimeout: 100
-				}
+					resetTimeout: 100,
+				},
 			});
 
 			// Trigger circuit breaker
-			await expect(bridge.forward({ id: '1', method: 'test', params: {} }))
-				.rejects.toThrow();
-			await expect(bridge.forward({ id: '2', method: 'test', params: {} }))
-				.rejects.toThrow();
+			await expect(
+				bridge.forward({ id: '1', method: 'test', params: {} }),
+			).rejects.toThrow();
+			await expect(
+				bridge.forward({ id: '2', method: 'test', params: {} }),
+			).rejects.toThrow();
 
 			// Circuit should be open now
-			await expect(bridge.forward({ id: '3', method: 'test', params: {} }))
-				.rejects.toThrow('Circuit breaker is open');
+			await expect(
+				bridge.forward({ id: '3', method: 'test', params: {} }),
+			).rejects.toThrow('Circuit breaker is open');
 
 			failingServer.close();
 		});

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { AgentError, ProviderError, ValidationError } from '../../../src/lib/types.js';
+import {
+	AgentError,
+	ProviderError,
+	ValidationError,
+} from '../../../src/lib/types.js';
 
 /**
  * FINAL CLEAN VERSION (file fully rewritten)

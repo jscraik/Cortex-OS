@@ -6,7 +6,7 @@
  */
 
 import { promises as fs } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,7 +24,7 @@ interface DocsStructure {
 const DOCS_STRUCTURE: DocsStructure = {
   apps: {
     'cortex-os': 'Core Runtime',
-    'cortex-cli': 'Command Line Interface', 
+    'cortex-cli': 'Command Line Interface',
     'cortex-webui': 'Web Interface',
     'cortex-py': 'Python Integration',
     'cortex-marketplace': 'Marketplace',
@@ -63,13 +63,13 @@ const ensureDir = async (dir: string): Promise<void> => {
   }
 };
 
-const isMarkdownFile = (filename: string): boolean => 
+const isMarkdownFile = (filename: string): boolean =>
   filename.endsWith('.md');
 
 const shouldSkipFile = (filename: string): boolean => {
   const skipPatterns = [
     /^tdd-plan.*\.md$/i,
-    /^initiative-summary\.md$/i, 
+    /^initiative-summary\.md$/i,
     /^.*-summary\.md$/i,
     /^temp-.*\.md$/i
   ];
@@ -81,7 +81,7 @@ const sanitizeMdxContent = (content: string): string => {
   return content
     // Remove HTML comments
     .replace(/<!--[\s\S]*?-->/g, '')
-    
+
     // Fix JavaScript/TypeScript code blocks that could be parsed as JSX
     .replace(/```(\w+)?\n([\s\S]*?)\n```/g, (_, lang, code) => {
       const sanitizedCode = code
@@ -89,7 +89,7 @@ const sanitizeMdxContent = (content: string): string => {
         .replace(/>/g, '&gt;');
       return `\`\`\`${lang || ''}\n${sanitizedCode}\n\`\`\``;
     })
-    
+
     // Fix inline code that contains < or >
     .replace(/`([^`]*[<>=][^`]*)`/g, (_, code) => {
       const sanitized = code
@@ -98,40 +98,40 @@ const sanitizeMdxContent = (content: string): string => {
         .replace(/=/g, '&#61;');
       return `\`${sanitized}\``;
     })
-    
+
     // Fix problematic operators in text
     .replace(/(\s)(<=)(\s)/g, '$1≤$3')
     .replace(/(\s)(>=)(\s)/g, '$1≥$3')
     .replace(/(\s)(=>)(\s)/g, '$1⇒$3')
-    
+
     // Handle TypeScript/JavaScript type annotations
     .replace(/Record<([^>]+)>/g, '`Record<$1>`')
     .replace(/Array<([^>]+)>/g, '`Array<$1>`')
     .replace(/Promise<([^>]+)>/g, '`Promise<$1>`')
-    
+
     // Fix table cell content with type unions
     .replace(/\|\s*([^|]*)\s*\\\|\s*([^|]*)\s*\\\|\s*([^|]*)\s*\|/g, '| `$1` \\| `$2` \\| `$3` |')
     .replace(/\|\s*([^|]*)\s*\\\|\s*([^|]*)\s*\|/g, '| `$1` \\| `$2` |')
-    
+
     // Fix generic type parameters in table cells
     .replace(/\|\s*([^<|]*)<([^>|]*)>\s*\|/g, '| `$1<$2>` |')
-    
+
     // Normalize unicode characters  
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, '-')
     .replace(/\u2026/g, '...')
-    
+
     // Remove empty links/images
     .replace(/\[([^\]]*)\]\(\s*\)/g, '$1')
     .replace(/!\[([^\]]*)\]\(\s*\)/g, '')
-    
+
     // Fix JSX-like syntax that's not actually JSX
     .replace(/<([A-Z]\w*)\s+([^>]+)>/g, '&lt;$1 $2&gt;')
     .replace(/<([a-z]\w*)\s*=\s*[^>]*>/g, (match) => {
       return '`' + match.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '`';
     })
-    
+
     // Clean whitespace
     .replace(/\n{4,}/g, '\n\n\n')
     .replace(/[ \t]+$/gm, '');
@@ -155,11 +155,11 @@ const processMarkdownFile = async (
   try {
     let content = await fs.readFile(sourcePath, 'utf8');
     content = sanitizeMdxContent(content);
-    
+
     if (!content.startsWith('---')) {
       content = createFrontmatter(filename, displayName) + content;
     }
-    
+
     await fs.writeFile(targetPath, content);
   } catch (error) {
     throw new Error(`Failed to process ${sourcePath}: ${error}`);
@@ -187,7 +187,7 @@ const syncPackageDocs = async (
   }
 
   console.log(`📁 Syncing ${category}/${packageName} -> ${targetDir}`);
-  
+
   try {
     await ensureDir(targetDir);
     const entries = await fs.readdir(sourceDocsDir, { withFileTypes: true });
@@ -202,7 +202,7 @@ const syncPackageDocs = async (
 
         const sourcePath = join(sourceDocsDir, entry.name);
         const targetPath = join(targetDir, entry.name);
-        
+
         await processMarkdownFile(sourcePath, targetPath, entry.name, displayName);
         fileCount++;
       }
@@ -247,7 +247,7 @@ const generateSidebarConfig = async (): Promise<object> => {
         items: []
       } as SidebarCategory,
       {
-        type: 'category', 
+        type: 'category',
         label: 'Core Packages',
         collapsed: false,
         items: []
@@ -272,9 +272,9 @@ const generateSidebarConfig = async (): Promise<object> => {
       const mdFiles = files
         .filter(f => f.endsWith('.md') && f !== 'README.md')
         .map(f => `apps/${packageName}/${f.replace('.md', '')}`);
-        
+
       if (mdFiles.length > 0) {
-        const appsCategory = sidebar.tutorialSidebar.find(item => 
+        const appsCategory = sidebar.tutorialSidebar.find(item =>
           typeof item === 'object' && item !== null && 'label' in item && item.label === 'Applications'
         ) as SidebarCategory;
         appsCategory.items.push({ type: 'category', label: displayName, items: mdFiles });
@@ -292,9 +292,9 @@ const generateSidebarConfig = async (): Promise<object> => {
       const mdFiles = files
         .filter(f => f.endsWith('.md') && f !== 'README.md')
         .map(f => `packages/${packageName}/${f.replace('.md', '')}`);
-        
+
       if (mdFiles.length > 0) {
-        const packagesCategory = sidebar.tutorialSidebar.find(item => 
+        const packagesCategory = sidebar.tutorialSidebar.find(item =>
           typeof item === 'object' && item !== null && 'label' in item && item.label === 'Core Packages'
         ) as SidebarCategory;
         packagesCategory.items.push({ type: 'category', label: displayName, items: mdFiles });
@@ -322,7 +322,7 @@ const syncAllDocs = async (): Promise<void> => {
     for (const [packageName, displayName] of Object.entries(packages)) {
       const result = await syncPackageDocs(category, packageName, displayName);
       results.push(result);
-      
+
       if (!result.success && !result.error?.includes('No docs found')) {
         console.warn(`⚠️  ${result.error}`);
       }
@@ -348,7 +348,7 @@ export default sidebars;
   // Summary
   const successful = results.filter(r => r.success);
   const totalFiles = successful.reduce((sum, r) => sum + r.fileCount, 0);
-  
+
   console.log(`✅ Synced ${successful.length} packages/apps (${totalFiles} files)`);
   console.log('📝 Updated sidebars.ts');
   console.log('🎉 Documentation sync complete!');
@@ -363,4 +363,5 @@ if (import.meta.url === `file://${__filename}`) {
 }
 
 // Named exports only (Sept 2025 standard)
-export { syncAllDocs, DOCS_STRUCTURE, sanitizeMdxContent };
+export { DOCS_STRUCTURE, sanitizeMdxContent, syncAllDocs };
+

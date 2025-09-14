@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import https from 'node:https';
-import { Readable, Writable } from 'node:stream';
+import type { Readable, Writable } from 'node:stream';
 import { z } from 'zod';
 
 // Request/Response schemas
@@ -14,11 +14,13 @@ const JsonRpcRequestSchema = z.object({
 const JsonRpcResponseSchema = z.object({
 	id: z.union([z.string(), z.number()]),
 	result: z.any().optional(),
-	error: z.object({
-		code: z.number(),
-		message: z.string(),
-		data: z.any().optional(),
-	}).optional(),
+	error: z
+		.object({
+			code: z.number(),
+			message: z.string(),
+			data: z.any().optional(),
+		})
+		.optional(),
 });
 
 type JsonRpcRequest = z.infer<typeof JsonRpcRequestSchema>;
@@ -63,7 +65,7 @@ class RateLimiter {
 		const windowStart = now - this.options.windowMs;
 
 		// Clean old requests
-		this.requests = this.requests.filter(time => time > windowStart);
+		this.requests = this.requests.filter((time) => time > windowStart);
 
 		if (this.requests.length >= this.options.maxRequests) {
 			return false;
@@ -142,7 +144,7 @@ export class StdioHttpBridge extends EventEmitter {
 				options.rateLimitOptions || {
 					maxRequests: 10,
 					windowMs: 1000,
-				}
+				},
 			);
 		}
 
@@ -170,7 +172,9 @@ export class StdioHttpBridge extends EventEmitter {
 		return executeFn();
 	}
 
-	private async sendHttpRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+	private async sendHttpRequest(
+		request: JsonRpcRequest,
+	): Promise<JsonRpcResponse> {
 		const retryOptions = this.options.retryOptions || {
 			maxRetries: 0,
 			retryDelay: 1000,
@@ -187,10 +191,10 @@ export class StdioHttpBridge extends EventEmitter {
 				if (attempt < retryOptions.maxRetries) {
 					// Exponential backoff
 					const delay = Math.min(
-						retryOptions.retryDelay * Math.pow(2, attempt),
-						retryOptions.maxDelay || 30000
+						retryOptions.retryDelay * 2 ** attempt,
+						retryOptions.maxDelay || 30000,
 					);
-					await new Promise(resolve => setTimeout(resolve, delay));
+					await new Promise((resolve) => setTimeout(resolve, delay));
 				}
 			}
 		}
@@ -261,7 +265,7 @@ export class StdioHttpBridge extends EventEmitter {
 				path: url.pathname,
 				method: 'GET',
 				headers: {
-					'Accept': 'text/event-stream',
+					Accept: 'text/event-stream',
 					'Cache-Control': 'no-cache',
 				},
 			};
@@ -286,7 +290,7 @@ export class StdioHttpBridge extends EventEmitter {
 							try {
 								const parsed = JSON.parse(data);
 								this.emit('event', parsed);
-							} catch (error) {
+							} catch (_error) {
 								// Ignore invalid JSON
 							}
 						}
@@ -317,7 +321,7 @@ export class StdioHttpBridge extends EventEmitter {
 			try {
 				const request = JSON.parse(data.toString());
 				const response = await this.forward(request);
-				this.stdout.write(JSON.stringify(response) + '\n');
+				this.stdout.write(`${JSON.stringify(response)}\n`);
 			} catch (error) {
 				const errorResponse = {
 					id: null,
@@ -327,7 +331,7 @@ export class StdioHttpBridge extends EventEmitter {
 						data: error instanceof Error ? error.message : String(error),
 					},
 				};
-				this.stdout.write(JSON.stringify(errorResponse) + '\n');
+				this.stdout.write(`${JSON.stringify(errorResponse)}\n`);
 			}
 		});
 	}

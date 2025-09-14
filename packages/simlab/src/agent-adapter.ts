@@ -35,7 +35,9 @@ export interface PRPExecutor {
  * default for tests.
  */
 export class AgentAdapter {
-	constructor(private readonly executor: PRPExecutor = new BasicPRPExecutor()) { }
+	constructor(
+		private readonly executor: PRPExecutor = new BasicPRPExecutor(),
+	) {}
 
 	async execute(request: AgentRequest): Promise<AgentResponse> {
 		const parsed = agentRequestSchema.parse(request);
@@ -54,8 +56,9 @@ export class AgentAdapter {
 			};
 		} catch (error) {
 			return {
-				content: `I apologize, but I encountered an error processing your request: ${error instanceof Error ? error.message : 'Unknown error'
-					}`,
+				content: `I apologize, but I encountered an error processing your request: ${
+					error instanceof Error ? error.message : 'Unknown error'
+				}`,
 				completed: false,
 				metadata: {
 					error: true,

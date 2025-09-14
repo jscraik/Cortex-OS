@@ -4,4 +4,3 @@ import { createService } from './service.db';
 
 export { createService, SqliteSchemaRepository };
 export type { SchemaRepository };
-

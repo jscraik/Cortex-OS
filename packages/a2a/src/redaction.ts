@@ -1,4 +1,38 @@
-export interface RedactorConfig { redactPaths: string[]; replacement?: string }
-function redactAtPath(obj: any, segments: string[], replacement: string) { if (!obj || typeof obj !== 'object') return; const last = segments[segments.length - 1]; let current = obj; for (let i = 0; i < segments.length - 1; i++) { const seg = segments[i]; if (current && typeof current === 'object') { current = current[seg] } else { return } } if (current && typeof current === 'object' && last in current) { current[last] = replacement } }
-export class Redactor { private readonly paths: string[][]; private readonly replacement: string; constructor(cfg: RedactorConfig) { this.paths = cfg.redactPaths.map(p => p.split('.')); this.replacement = cfg.replacement ?? '***' } redact<T>(value: T): T { const clone = JSON.parse(JSON.stringify(value)); for (const path of this.paths) { redactAtPath(clone as any, path, this.replacement) } return clone } }
-export function createRedactor(config: RedactorConfig): Redactor { return new Redactor(config) }
+export interface RedactorConfig {
+	redactPaths: string[];
+	replacement?: string;
+}
+function redactAtPath(obj: any, segments: string[], replacement: string) {
+	if (!obj || typeof obj !== 'object') return;
+	const last = segments[segments.length - 1];
+	let current = obj;
+	for (let i = 0; i < segments.length - 1; i++) {
+		const seg = segments[i];
+		if (current && typeof current === 'object') {
+			current = current[seg];
+		} else {
+			return;
+		}
+	}
+	if (current && typeof current === 'object' && last in current) {
+		current[last] = replacement;
+	}
+}
+export class Redactor {
+	private readonly paths: string[][];
+	private readonly replacement: string;
+	constructor(cfg: RedactorConfig) {
+		this.paths = cfg.redactPaths.map((p) => p.split('.'));
+		this.replacement = cfg.replacement ?? '***';
+	}
+	redact<T>(value: T): T {
+		const clone = JSON.parse(JSON.stringify(value));
+		for (const path of this.paths) {
+			redactAtPath(clone as any, path, this.replacement);
+		}
+		return clone;
+	}
+}
+export function createRedactor(config: RedactorConfig): Redactor {
+	return new Redactor(config);
+}

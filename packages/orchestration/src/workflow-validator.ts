@@ -43,7 +43,7 @@ export class LoggerMetricsEmitter implements ValidationMetricsEmitter {
 			format: winston.format.json(),
 			transports: [new winston.transports.Console()],
 		}),
-	) { }
+	) {}
 
 	incrementCounter(
 		metric: string,
@@ -161,14 +161,14 @@ function topologicalSort(wf: Workflow, nodes: Set<string>): string[] {
 		const step = wf.steps[id];
 
 		if (step.next && nodes.has(step.next)) {
-			adj.get(id)!.push(step.next);
+			adj.get(id)?.push(step.next);
 			inDegree.set(step.next, (inDegree.get(step.next) ?? 0) + 1);
 		}
 
 		if (step.branches) {
 			for (const branch of step.branches) {
 				if (nodes.has(branch.to)) {
-					adj.get(id)!.push(branch.to);
+					adj.get(id)?.push(branch.to);
 					inDegree.set(branch.to, (inDegree.get(branch.to) ?? 0) + 1);
 				}
 			}
@@ -228,7 +228,7 @@ export function validateWorkflow(input: unknown): ValidationResult {
 		const now = Date.now();
 
 		// Check soft TTL (10 minutes) - mark stale but still usable
-		const softTtl = 10 * 60 * 1000; // 10 minutes
+		const _softTtl = 10 * 60 * 1000; // 10 minutes
 		const isStale = cached.softExpiry && now > cached.softExpiry;
 
 		if (cached.valid && cached.result) {
